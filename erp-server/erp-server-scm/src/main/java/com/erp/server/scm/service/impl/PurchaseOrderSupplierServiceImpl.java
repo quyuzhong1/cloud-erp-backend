@@ -94,7 +94,7 @@ public class PurchaseOrderSupplierServiceImpl extends SuperServiceImpl<PurchaseO
 
         PurchaseOrderSupplierEntity old = this.getById(dto.getId());
         if (ObjectUtils.isEmpty(old)) {
-            throw new ServiceException(ApiError.ERROR_98036);
+            throw new ServiceException(ApiError.ERROR_SCM_PO_SUPPLIER_INFO_NOT_FOUND);
         }
         //操作日志
         moduleOperateLogService.addModuleOperateLogByObj(old, entity, ModuleTypeEnum.PURCHASE_ORDER.getCode(), purchaseOrderId, "", "");
@@ -161,7 +161,7 @@ public class PurchaseOrderSupplierServiceImpl extends SuperServiceImpl<PurchaseO
         }
         int count = baseMapper.getRefSupplierCount(supplierIds);
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_98053);
+            throw new ServiceException(ApiError.ERROR_SCM_PO_HAS_SUPPLIER_DELETE_FORBIDDEN);
         }
 
 
@@ -181,7 +181,7 @@ public class PurchaseOrderSupplierServiceImpl extends SuperServiceImpl<PurchaseO
     private void doOpHandleDataId(String supplierId, PurchaseOrderSupplierEntity entity) {
         SupplierEntity supplierEntity = supplierService.getById(supplierId);
         if (ObjectUtils.isEmpty(supplierEntity)) {
-            throw new ServiceException(ApiError.ERROR_98039);
+            throw new ServiceException(ApiError.ERROR_SCM_SUPPLIER_CONTACT_NOT_FOUND);
         }
         entity.setSupplierName(supplierEntity.getName());
     }

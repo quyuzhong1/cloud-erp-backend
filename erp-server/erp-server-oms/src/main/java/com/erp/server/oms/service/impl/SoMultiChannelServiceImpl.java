@@ -226,7 +226,7 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
         old = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "多渠道订单主单"));
         // 待提交和审核不通过允许修改
         if (!ApproveStatusEnum.allowUpdateStatus(old.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_1029);
+            throw new ServiceException(ApiError.ERROR_UPDATE_STATUS_NOT_ALLOWED);
         }
         SoMultiChannelEntity soMultiChannelEntity = BeanMapperUtils.map(SoMultiChannelEntity.class, addOrUpdateDTO);
 
@@ -334,7 +334,7 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
     public BatchResultDTO approve(ApproveOneDTO dto) {
         ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(dto.getType());
         if (Objects.equals(approveType, ApproveTypeEnum.REJECT) && StrUtils.isEmpty(dto.getComment())) {
-            throw new ServiceException(ApiError.REJECT_COMMENT_NOT_EMPTY);
+            throw new ServiceException(ApiError.ERROR_PLM_REJECT_COMMENT_REQUIRED);
         }
         SoMultiChannelEntity entity = getById(dto.getId());
         // 审核中的数据允许审核
@@ -407,7 +407,7 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
     private Boolean validateDisApprove(SoMultiChannelEntity entity) {
         // 已审核支持反审核
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE)) {
-            throw new ServiceException(ApiError.ERROR_98014);
+            throw new ServiceException(ApiError.ERROR_REVERSE_APPROVAL_ALLOWED_APPROVED_ONLY);
         }
         //只允许创建失败允许反审核
         if (!(Objects.equals(entity.getCreateStatus(), CreateStatusEnum.FAILED.getCode()) || Objects.equals(entity.getCreateStatus(), CreateStatusEnum.CANCEL.getCode()))) {
@@ -422,7 +422,7 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
         SoMultiChannelEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到多渠道订单主单数据"));
         // 只有待提交数据允许删除
         if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT, entity.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_DELETE);
+            throw new ServiceException(ApiError.ERROR_SCM_DELETE_ALLOWED_STATUS_ONLY);
         }
         if (InvalidStatusEnum.VOIDED.getStatus().equals(entity.getInvalidStatus())){
             throw new ServiceException("已作废订单不允许删除");
@@ -451,7 +451,7 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
         SoMultiChannelEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到多渠道订单主单数据"));
         // 只有审核中的单据允许撤销
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
-            throw new ServiceException(ApiError.ERROR_98007);
+            throw new ServiceException(ApiError.ERROR_REVOKE_PROCESS_ALLOWED_STATUS_ONLY);
         }
         // TODO 撤销流程
         log.info("撤销 开始撤销流程，id：【{}】", id);

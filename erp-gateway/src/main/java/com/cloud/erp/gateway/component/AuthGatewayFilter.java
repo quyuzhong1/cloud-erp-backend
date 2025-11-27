@@ -130,7 +130,7 @@ public class AuthGatewayFilter implements GlobalFilter, Order {
                 String token = headers.getFirst(TokenConstants.AUTHENTICATION);
                 if (StringUtils.isBlank(token)) {
                     // 响应中放入返回的状态吗, 没有权限访问
-                    Mono<Void> mono = unauthorizedResponse(exchange, ApiError.ERROR_FORBIDDEN.getMsg(), ApiError.ERROR_FORBIDDEN.getCode());
+                    Mono<Void> mono = unauthorizedResponse(exchange, ApiError.ERROR_FORBIDDEN.getMessageKey(), ApiError.ERROR_FORBIDDEN.getCode());
                     return mono;
                 }
                 //解析token

@@ -417,7 +417,7 @@ public class BiOrderItemSplitServiceImpl extends ServiceImpl<BiOrderItemSplitMap
                 errorLogEntity.setItemId(splitSkuDTO.getId());
                 errorLogEntity.setFinancialCode("");
                 errorLogEntity.setSkuNo(skuNo);
-                errorLogEntity.setMsg(String.format(ApiError.MABANG_BOM_EXIST.msg, skuNo));
+                errorLogEntity.setMsg(String.format(ApiError.MABANG_BOM_EXIST.getMsg(), skuNo));
                 dmpSplitErrorLogService.save(errorLogEntity);
             }
 
@@ -428,7 +428,7 @@ public class BiOrderItemSplitServiceImpl extends ServiceImpl<BiOrderItemSplitMap
                 errorLogEntity.setItemId(splitSkuDTO.getId());
                 errorLogEntity.setFinancialCode(dmpBomEntity.getFinancialCode());
                 errorLogEntity.setSkuNo(skuNo);
-                errorLogEntity.setMsg(String.format(ApiError.CLEAN_SPLIT_FINANCIAL_EXIST.msg, skuNo));
+                errorLogEntity.setMsg(String.format(ApiError.ERROR_FIN_CODE_NOT_FOUND_FOR_SKU.getMsg(), skuNo));
                 dmpSplitErrorLogService.save(errorLogEntity);
             }
             //3、获取到马帮的财务编码，匹配ERP的bom
@@ -510,7 +510,7 @@ public class BiOrderItemSplitServiceImpl extends ServiceImpl<BiOrderItemSplitMap
             errorLogEntity.setItemId(splitSkuDTO.getId());
             errorLogEntity.setFinancialCode("");
             errorLogEntity.setSkuNo(skuNo);
-            errorLogEntity.setMsg(String.format(ApiError.ERP_DMP_SKU_NOT_COST.msg,skuNo));
+            errorLogEntity.setMsg(String.format(ApiError.ERP_DMP_SKU_NOT_COST.getMsg(),skuNo));
             errorList.add(errorLogEntity);
         }
         //拆分订单

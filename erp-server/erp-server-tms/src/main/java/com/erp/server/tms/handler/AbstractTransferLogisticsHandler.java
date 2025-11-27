@@ -70,7 +70,7 @@ public abstract class AbstractTransferLogisticsHandler extends BaseController im
         try {
             TransferLogisticsContext.setAuthMap(authConfig);
             ApiResult<List<TransferLogisticsChannelEntity>>  result = this.getShippingMethodList();
-            return result.isSuccess()?ApiResult.success():ApiResult.error(ApiError.ERROR_AUTHORIZE_FAIL.code,"授权失败:"+result.getMsg());
+            return result.isSuccess()?ApiResult.success():ApiResult.error(ApiError.ERROR_AUTHORIZE_FAIL.getCode(),"授权失败:"+result.getMsg());
         } finally {
             TransferLogisticsContext.remove();
         }
@@ -164,10 +164,10 @@ public abstract class AbstractTransferLogisticsHandler extends BaseController im
             pushOperateLog(businessType,result.getCode(),erpBusinessCode,false);
             return result;
         } catch (Exception e){
-            log.error(ApiError.THIRD_WAREHOUSE_INTERFACE_EXCEPTION.msg,e);
+            log.error(ApiError.THIRD_WAREHOUSE_INTERFACE_EXCEPTION.getMsg(),e);
             TransferLogisticsContext.setMsg(ExceptionUtil.stacktraceToString(e,2000));
             pushOperateLog(businessType,2000,erpBusinessCode,false);
-            return ApiResult.error(ApiError.THIRD_WAREHOUSE_INTERFACE_EXCEPTION.code,e.getMessage());
+            return ApiResult.error(ApiError.THIRD_WAREHOUSE_INTERFACE_EXCEPTION.getCode(),e.getMessage());
         } finally {
             // remove thread-local
             TransferLogisticsContext.remove();

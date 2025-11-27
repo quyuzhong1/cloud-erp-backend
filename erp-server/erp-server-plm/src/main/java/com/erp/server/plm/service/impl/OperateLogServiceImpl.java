@@ -96,7 +96,7 @@ public class OperateLogServiceImpl extends ServiceImpl<OperateLogMapper, Operate
                 }
             } else if (type == 2) {
                 //枚举
-                if (StringUtils.isBlank(sysLogFieldEntity.getEnumClass())) {
+                if (StringUtils.isBlank(cfgOperateLogFieldEntity.getEnumClass())) {
                     throw new ServiceException(ApiError.ERROR_ENUM_CONVERT_FAILED);
                 }
                 Class<?> aClass = null;
@@ -226,7 +226,7 @@ public class OperateLogServiceImpl extends ServiceImpl<OperateLogMapper, Operate
         String content = entity.getContent();
         if (StringUtils.isBlank(content)) {
             if (StringUtils.isBlank(entity.getFieldName())) {
-                throw new ServiceException(ApiError.ERROR_95089);
+                throw new ServiceException(ApiError.ERROR_PLM_SUBMIT_APPROVAL_STATUS_INVALID);
             }
             if (StringUtils.isBlank(entity.getOldValue())) {
                 content = "编辑了[".concat(entity.getFieldName()).concat("]").concat("由空值变更为[").concat(entity.getNewValue()).concat("]");

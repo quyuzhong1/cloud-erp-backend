@@ -94,7 +94,7 @@ public class DmpFeignController extends BaseController {
         PlatformEntity platformEntity = platformService.getByName(PlatformEnum.KINGDEE.getDesc());
         if (ObjectUtils.isEmpty(platformEntity)) {
             log.error("第三方平台【{}】未找到！", PlatformEnum.KINGDEE.getDesc());
-            throw new ServiceException(ApiError.ERROR_97022);
+            throw new ServiceException(ApiError.ERROR_DMP_PLATFORM_NAME_NOT_FOUND);
         }
         Map<String, Object> map = new LinkedHashMap<>();
         map.put("syncKingdeeId", dto.getId());

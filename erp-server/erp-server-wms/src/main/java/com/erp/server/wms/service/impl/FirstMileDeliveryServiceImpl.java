@@ -2728,7 +2728,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         }
         //限制B2B类型,未作废,审核状态为未审核 才可下推报关单
         if(Objects.equals(entity.getInvalidStatus(), Boolean.TRUE) || Objects.equals(ApproveStatusEnum.APPROVE, entity.getApproveStatus())){
-            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_DELIVERY_NOTICE_REQUIRED.msg );
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_DELIVERY_NOTICE_REQUIRED.getMsg() );
         }
         //根据装箱状态生成报关单
         generateByPacked(entity,BillGenerateTimingEnum.AFTER_PACKING);

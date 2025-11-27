@@ -929,7 +929,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         List<ShopInfoEntity> shopInfoEntities = shopInfoFeign.listShopInfoByWarehouseIds(Collections.singletonList(entity.getId()));
         ShopInfoEntity shopInfoEntity = shopInfoEntities.stream().filter(req -> req.getWarehouseId().equals(entity.getId())).distinct().findFirst().orElse(null);
         if (ObjectUtil.isNotEmpty(shopInfoEntity)) {
-            return BatchResultDTO.fail(entity.getId(),entity.getName(),String.format(ApiError.SHOP_INFO_EXIST_WAREHOUSE_NOT_DISAPPROVE.msg(), shopInfoEntity.getName()));
+            return BatchResultDTO.fail(entity.getId(),entity.getName(),String.format(ApiError.SHOP_INFO_EXIST_WAREHOUSE_NOT_DISAPPROVE.getMsg(), shopInfoEntity.getName()));
         }
         this.updateApproveStatus(Collections.singletonList(entity), ApproveStatusEnum.WAIT_SUBMIT);
         //仓库下绑定第三方店铺不能进行反审核
@@ -974,7 +974,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
 //        String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
 //        long count = list.stream().filter(s -> !waitSubmitStatus.equals(s.getApproveStatus().getStatus())).count();
 //        if (count > 0) {
-//            throw new ServiceException(ApiError.ERROR_98009);
+//            throw new ServiceException(ApiError.ERROR_DELETE_ALLOWED_STATUS_ONLY);
 //        }
         List<WarehouseEntity> removeList=new ArrayList<>();
         List<BatchResultDTO> resultDTOList=new ArrayList<>();

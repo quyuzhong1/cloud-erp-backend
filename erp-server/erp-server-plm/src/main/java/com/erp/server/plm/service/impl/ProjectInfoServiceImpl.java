@@ -115,7 +115,7 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
     public ProjectInfoDTO projectInfo(ProductTaskCountShowDTO productTaskCountShowDTO) {
         ProductInfoEntity entity = productInfoService.getById(productTaskCountShowDTO.getProductId());
         if (Objects.isNull(entity)) {
-            throw new ServiceException(ApiError.ERROR_95010);
+            throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_NOT_FOUND);
         }
         ProjectInfoDTO result = new ProjectInfoDTO();
         List<ProjectTaskEntity> taskList = projectTaskService.getByProductId(productTaskCountShowDTO.getProductId());
@@ -170,16 +170,16 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
         String projectId = dto.getProjectId();
         ProjectInfoEntity project = this.getById(projectId);
         if (Objects.isNull(project)) {
-            throw new ServiceException(ApiError.ERROR_95188);
+            throw new ServiceException(ApiError.ERROR_PLM_PROJECT_NOT_INITIATED);
         }
         //检查是否有SKU生成
         List<ProductDetailEntity> skuList = productDetailService.getSkuListByProductId(dto.getProductId());
         if (CollectionUtils.isEmpty(skuList)) {
-            throw new ServiceException(ApiError.ERROR_95067);
+            throw new ServiceException(ApiError.ERROR_PLM_SKU_NOT_GENERATED);
         }
         Integer status = project.getProjectStatus();
         if (!ProjectStateEnum.NOT_START.getState().equals(status)) {
-            throw new ServiceException(ApiError.ERROR_95184);
+            throw new ServiceException(ApiError.ERROR_PLM_PROJECT_START_STATUS_INVALID);
         }
 
         String chargeId = dto.getChargeId();
@@ -232,12 +232,12 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
         List<String> projectIdList = dto.getProjectIdList();
         List<ProjectInfoEntity> projectList = this.listByIds(projectIdList);
         if (CollectionUtils.isEmpty(projectList)) {
-            throw new ServiceException(ApiError.ERROR_95189);
+            throw new ServiceException(ApiError.ERROR_PLM_PROJECT_NOT_INITIATED_EXISTS);
         }
         Integer notStart = ProjectStateEnum.NOT_START.getState();
         long count = projectList.stream().filter(p -> !p.getProjectStatus().equals(notStart)).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_95184);
+            throw new ServiceException(ApiError.ERROR_PLM_PROJECT_START_STATUS_INVALID);
         }
         List<String> productIdList = projectList.stream().map(ProjectInfoEntity::getProductId).collect(Collectors.toList());
         List<ProductInfoEntity> productList = productInfoService.listByIds(productIdList);
@@ -246,18 +246,18 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
         LocalDate launchDate = dto.getProjectLaunchDate();
         long count1 = productList.stream().filter(product -> launchDate.isBefore(product.getApprovalTime().toLocalDate())).count();
         if(count1 > 0){
-            throw new ServiceException(ApiError.ERROR_95269);
+            throw new ServiceException(ApiError.ERROR_PLM_START_DATE_AFTER_INITIATION_REQUIRED);
         }
 
         //检查是否有SKU生成
         List<ProductDetailEntity> skuList = productDetailService.listSkuByProductIds(productIdList);
         if (CollectionUtils.isEmpty(skuList)) {
-            throw new ServiceException(ApiError.ERROR_95067);
+            throw new ServiceException(ApiError.ERROR_PLM_SKU_NOT_GENERATED);
         }
         for (String productId : productIdList) {
             long productSku = skuList.stream().filter(s -> s.getProductId().equals(productId)).count();
             if (productSku == 0) {
-                throw new ServiceException(ApiError.ERROR_95067);
+                throw new ServiceException(ApiError.ERROR_PLM_SKU_NOT_GENERATED);
             }
         }
 
@@ -591,7 +591,7 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
         Integer suspend = ProjectStateEnum.SUSPEND.getState();
         long count = projectInfoList.stream().filter(p -> !suspend.equals(p.getProjectStatus())).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_95174);
+            throw new ServiceException(ApiError.ERROR_PLM_PROJECT_RESUME_STATUS_INVALID);
         }
         for (ProjectInfoEntity item : projectInfoList) {
             Integer suspendBeforeStatus = item.getSuspendBeforeStatus();
@@ -617,7 +617,7 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
             List<ProductInfoEntity> productInfoList = productInfoService.listByIds(unstartProductIdList);
             long productCount = productInfoList.stream().filter(p -> !productSuspend.equals(p.getApprovalStatus())).count();
             if (productCount > 0) {
-                throw new ServiceException(ApiError.ERROR_95174);
+                throw new ServiceException(ApiError.ERROR_PLM_PROJECT_RESUME_STATUS_INVALID);
             }
             for (ProductInfoEntity item : productInfoList) {
                 //暂停前的状态
@@ -659,7 +659,7 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
 
         //实际情况下，detailIds可能为空
         if(CollectionUtils.isEmpty(detailIds)){
-            throw new ServiceException(ApiError.ERROR_95271);
+            throw new ServiceException(ApiError.ERROR_PLM_SKU_REQUIRED_FOR_OPERATION);
         }
 
         switch (ProjectStateEnum.getEnum(projectState)) {
@@ -724,7 +724,7 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
         projectStatusList.add(ProjectStateEnum.TERMINATE.getState());
         long stateCount = projectInfoList.stream().filter(p -> projectStatusList.contains(p.getProjectStatus())).count();
         if (stateCount > 0) {
-            throw new ServiceException(ApiError.ERROR_95180);
+            throw new ServiceException(ApiError.ERROR_PLM_PROJECT_PAUSE_STATUS_INVALID);
         }
 
         Integer suspend = ProjectStateEnum.SUSPEND.getState();
@@ -747,7 +747,7 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
             List<Integer> productStatusList = Arrays.asList(terminateCode, suspendCode, approvalCode);
             long terminateCount = productInfoList.stream().filter(p -> productStatusList.contains(p.getApprovalStatus())).count();
             if (terminateCount > 0) {
-                throw new ServiceException(ApiError.ERROR_95181);
+                throw new ServiceException(ApiError.ERROR_PLM_PROJECT_PAUSE_FORBIDDEN_ALREADY_INITIATED);
             }
             Integer productSuspend = ApprovalStatusEnum.SUSPEND.getCode();
             for (ProductInfoEntity item : productInfoList) {
@@ -786,7 +786,7 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
             long projectCount = projectInfoList.stream().filter(p -> terminate.equals(p.getProjectStatus())).count();
 
             if (projectCount > 0) {
-                throw new ServiceException(ApiError.ERROR_95192);
+                throw new ServiceException(ApiError.ERROR_PLM_PROJECT_TERMINATED_RETERMINATE_FORBIDDEN);
             }
             projectInfoList.stream().forEach(p -> p.setProjectStatus(terminate));
             result = this.updateBatchById(projectInfoList);
@@ -807,7 +807,7 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
             Integer terminate = ApprovalStatusEnum.TERMINATE.getCode();
             long productCount = productList.stream().filter(p -> terminate.equals(p.getApprovalStatus())).count();
             if (productCount > 0) {
-                throw new ServiceException(ApiError.ERROR_95192);
+                throw new ServiceException(ApiError.ERROR_PLM_PROJECT_TERMINATED_RETERMINATE_FORBIDDEN);
             }
             Integer approval = ApprovalStatusEnum.APPROVAL.getCode();
             productList.stream().filter(p->!approval.equals(p.getApprovalStatus())).forEach(p -> p.setApprovalStatus(terminate));
@@ -834,20 +834,20 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
 
         List<ProjectInfoEntity> projectInfoList = this.listByProductIds(ids);
         if (CollectionUtils.isEmpty(projectInfoList)) {
-            throw new ServiceException(ApiError.ERROR_95026);
+            throw new ServiceException(ApiError.ERROR_PLM_PROJECT_NOT_FOUND);
         }
         List<Integer> statusList = new ArrayList<>(2);
         statusList.add(ProjectStateEnum.YES_START.getState());
         statusList.add(ProjectStateEnum.ING.getState());
         long stateCount = projectInfoList.stream().filter(p -> !statusList.contains(p.getProjectStatus())).count();
         if (stateCount > 0) {
-            throw new ServiceException(ApiError.ERROR_95182);
+            throw new ServiceException(ApiError.ERROR_PLM_PROJECT_CLOSE_STATUS_INVALID);
         }
 
         //校验：结项日期不能早于启动日期
         final long count = projectInfoList.stream().filter(project -> finishDate.isBefore(project.getProjectLaunchDate())).count();
         if(count > 0){
-            throw new ServiceException(ApiError.ERROR_95270);
+            throw new ServiceException(ApiError.ERROR_PLM_CLOSE_DATE_AFTER_START_REQUIRED);
         }
 
         List<String> productIds = projectInfoList.stream().map(ProjectInfoEntity::getProductId).collect(Collectors.toList());
@@ -913,12 +913,12 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
         Integer finishState = ProjectStateEnum.FINISH.getState();
         List<ProjectInfoEntity> projectList = this.getByProductIdList(productIdList);
         if (CollectionUtils.isEmpty(projectList)) {
-            throw new ServiceException(ApiError.ERROR_95019);
+            throw new ServiceException(ApiError.ERROR_PLM_PROJECT_NOT_DONE_ARCHIVE_FORBIDDEN);
         }
         //检查项目完成情况
         long count = projectList.stream().filter(p -> !finishState.equals(p.getProjectStatus())).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_95019);
+            throw new ServiceException(ApiError.ERROR_PLM_PROJECT_NOT_DONE_ARCHIVE_FORBIDDEN);
         }
         //添加归档信息
         Boolean flag = archiveService.batchAddArchive(productIdList);
@@ -947,7 +947,7 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
         queryWrapper.eq(ProjectInfoEntity::getProjectStatus, ProjectStateEnum.FINISH.getState());
         ProjectInfoEntity entity = baseMapper.selectOne(queryWrapper);
         if (Objects.isNull(entity)) {
-            throw new ServiceException(ApiError.ERROR_95019);
+            throw new ServiceException(ApiError.ERROR_PLM_PROJECT_NOT_DONE_ARCHIVE_FORBIDDEN);
         }
     }
 

@@ -143,7 +143,7 @@ public class ProductFieldServiceImpl extends ServiceImpl<ProductFieldMapper, Pro
         queryWrapper.eq(ProductFieldEntity::getProductId, productId);
         ProductFieldEntity entity = this.getOne(queryWrapper);
         if (entity != null) {
-           throw new ServiceException(ApiError.ERROR_95022);
+           throw new ServiceException(ApiError.ERROR_PLM_PROJECT_FIELD_ALREADY_EXISTS);
         }
     }
 
@@ -177,7 +177,7 @@ public class ProductFieldServiceImpl extends ServiceImpl<ProductFieldMapper, Pro
     public void checkFieldName(String id, String name) {
         List<String> fieldNames = getFieldNames(id);
         if (CollectionUtils.isNotEmpty(fieldNames) && fieldNames.contains(name)) {
-            throw new ServiceException(ApiError.ERROR_95004);
+            throw new ServiceException(ApiError.ERROR_PLM_FIELD_NAME_EXISTS);
         }
     }
 

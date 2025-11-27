@@ -162,7 +162,7 @@ public class SyncKingdeePayableInfoServiceImpl implements SyncKingdeePayableInfo
         //组织机构编码
         List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Collections.singletonList(entity.getOrgId()));
         if (CollectionUtils.isEmpty(accountingCompanyList)) {
-            throw new ServiceException(ApiError.ERROR_9014);
+            throw new ServiceException(ApiError.ERROR_COMPANY_NOT_FOUND);
         }
 
         //组织机构编码
@@ -176,7 +176,7 @@ public class SyncKingdeePayableInfoServiceImpl implements SyncKingdeePayableInfo
         resultMap.put("remark", entity.getRemark());
 
         if (CollectionUtils.isEmpty(detailList)) {
-            throw new ServiceException(ApiError.ERROR_99048);
+            throw new ServiceException(ApiError.ERROR_WMS_TRANSFER_DIRECT_DETAIL_NOT_FOUND);
         }
 
         //获取sku的id集合

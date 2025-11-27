@@ -229,7 +229,7 @@ public class RemotePostcodeDetailServiceImpl extends SuperServiceImpl<RemotePost
         try {
             new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
         } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_1015);
+            throw new ServiceException(ApiError.ERROR_FILE_EXPORT_FAILED);
         }
     }
 
@@ -353,7 +353,7 @@ public class RemotePostcodeDetailServiceImpl extends SuperServiceImpl<RemotePost
             wb.close();
         } catch (Exception e) {
             log.error("warehouse downloadTemplate  出错了 e==", e);
-            throw new ServiceException(ApiError.ERROR_95131);
+            throw new ServiceException(ApiError.ERROR_IMPORT_TEMPLATE_DOWNLOAD_FAILED);
         }
     }
 }

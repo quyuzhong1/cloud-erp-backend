@@ -61,7 +61,7 @@ public class SysCodeServiceImpl implements SysCodeService {
         //产品信息
         ProductInfoEntity entity = productInfoService.getById(productId);
         if (ObjectUtils.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_95010);
+            throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_NOT_FOUND);
         }
         SysCodeSkuDTO dto = new SysCodeSkuDTO();
         //查询产品分类代码
@@ -69,7 +69,7 @@ public class SysCodeServiceImpl implements SysCodeService {
         basicCategoryService.getBestEntity(entity.getCategoryId(),bestEntity);
 
         if (ObjectUtils.isEmpty(bestEntity) || StringUtils.isBlank(bestEntity.getCode())) {
-            throw new ServiceException(ApiError.ERROR_95069);
+            throw new ServiceException(ApiError.ERROR_PLM_CATEGORY_CODE_REQUIRED);
         }
         //产品类目
         dto.setCategory(bestEntity.getCode());
@@ -88,17 +88,17 @@ public class SysCodeServiceImpl implements SysCodeService {
         //父级品类
         List<BasicCategoryEntity> categoryList = basicCategoryService.listParentEntity(categoryId);
         if (CollectionUtils.isEmpty(categoryList)) {
-            throw new ServiceException(ApiError.ERROR_95091);
+            throw new ServiceException(ApiError.ERROR_PLM_CATEGORY_CODE_NOT_FOUND);
         }
         //一级品类
         BasicCategoryEntity bestEntity = categoryList.stream().filter(obj -> "0".equals(obj.getPid())).findFirst().orElse(null);
         if (ObjectUtils.isEmpty(bestEntity) || StringUtils.isBlank(bestEntity.getCode())) {
-            throw new ServiceException(ApiError.ERROR_95091);
+            throw new ServiceException(ApiError.ERROR_PLM_CATEGORY_CODE_NOT_FOUND);
         }
         //二级品类
         BasicCategoryEntity secondEntity = categoryList.stream().filter(obj -> bestEntity.getId().equals(obj.getPid())).findFirst().orElse(null);
         if (ObjectUtils.isEmpty(secondEntity) || StringUtils.isBlank(secondEntity.getCode())) {
-            throw new ServiceException(ApiError.ERROR_95092);
+            throw new ServiceException(ApiError.ERROR_PLM_CATEGORY_CODE_NOT_FOUND);
         }
         SysCodeDTO dto = new SysCodeDTO();
         //分类组合

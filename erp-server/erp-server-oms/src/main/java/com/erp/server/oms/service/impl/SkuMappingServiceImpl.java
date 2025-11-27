@@ -220,7 +220,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             wb.close();
         } catch (Exception e) {
             log.error("SkuMaping downloadTemplate  出错了 e>>>>>>>{}", e);
-            throw new ServiceException(ApiError.ERROR_95131);
+            throw new ServiceException(ApiError.ERROR_IMPORT_TEMPLATE_DOWNLOAD_FAILED);
         }
     }
 
@@ -434,11 +434,11 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         //step1 参数校验
         String id = dto.getId();
         if (Objects.isNull(skuMapping)) {
-            throw new ServiceException(ApiError.ERROR_92051);
+            throw new ServiceException(ApiError.ERROR_SKU_MAPPING_NOT_FOUND);
         }
         //启用日期不能大于上个映射关系的开始时间
         if (dto.getEffectiveTime().isBefore(skuMapping.getEffectiveTime())){
-            throw new ServiceException(ApiError.ERROR_92151,skuMapping.getEffectiveTime());
+            throw new ServiceException(ApiError.ERROR_MAPPING_START_DATE_BEFORE_PREVIOUS,skuMapping.getEffectiveTime());
         }
         // 历史skuId
         String historyProductSkuId = skuMapping.getProductSkuId();
@@ -446,12 +446,12 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         String productSkuId = dto.getProductSkuId();
         List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(Arrays.asList(productSkuId));
         if (CollectionUtils.isEmpty(skuVOList)) {
-            throw new ServiceException(ApiError.ERROR_95107);
+            throw new ServiceException(ApiError.ERROR_PLM_SKU_NOT_FOUND);
         }
         String platformDict = dto.getDictPlatform();
         DictBasicEntity dictBasic = dictBasicService.getByTypeAndValue(DictBasicTypeEnum.SALES_PLATFORM.getType(), platformDict);
         if (Objects.isNull(dictBasic)) {
-            throw new ServiceException(ApiError.ERROR_92053);
+            throw new ServiceException(ApiError.ERROR_PLATFORM_NOT_FOUND);
         }
         String platformSkuNo = dto.getPlatformSkuNo();
         if (null == listing) {
@@ -692,16 +692,16 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         String id = dto.getId();
         SkuMappingEntity skuMapping = this.getById(id);
         if (Objects.isNull(skuMapping)) {
-            throw new ServiceException(ApiError.ERROR_92051);
+            throw new ServiceException(ApiError.ERROR_SKU_MAPPING_NOT_FOUND);
         }
         //启用日期不能大于上个映射关系的开始时间
         if (dto.getEffectiveTime().isBefore(skuMapping.getEffectiveTime())){
-            throw new ServiceException(ApiError.ERROR_92151,skuMapping.getEffectiveTime());
+            throw new ServiceException(ApiError.ERROR_MAPPING_START_DATE_BEFORE_PREVIOUS,skuMapping.getEffectiveTime());
         }
         String productSkuId = dto.getProductSkuId();
         List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(Arrays.asList(productSkuId));
         if (CollectionUtils.isEmpty(skuVOList)) {
-            throw new ServiceException(ApiError.ERROR_95107);
+            throw new ServiceException(ApiError.ERROR_PLM_SKU_NOT_FOUND);
         }
         String thirdBarcode = dto.getThirdBarcode();
         String warehouseSkuNo = dto.getWarehouseSkuNo();
@@ -1193,7 +1193,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         }
         long count = this.count(queryWrapper);
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_92052);
+            throw new ServiceException(ApiError.ERROR_SKU_MAPPING_DUPLICATE_PLATFORM_SHOP);
         }
 
 

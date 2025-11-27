@@ -776,7 +776,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         List<QcInfoEntity> qcList = qcInfoService.listQCBySourceId(entity.getId());
         if (CollectionUtils.isNotEmpty(qcList)) {
             String codes = qcList.stream().map(QcInfoEntity::getCode).collect(Collectors.joining(","));
-            return BatchResultDTO.fail(entity.getId(),entity.getCode(),CharSequenceUtil.format(ApiError.ERROR_QC_ALREADY_PUSHED_REVERSE_FORBIDDEN.msg, codes));
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),CharSequenceUtil.format(ApiError.ERROR_QC_ALREADY_PUSHED_REVERSE_FORBIDDEN.getMsg(), codes));
         }
         //修改状态为待提交
         lambdaUpdate().set(WarehouseReceiveEntity::getApproveStatus, ApproveStatusEnum.WAIT_SUBMIT.getStatus())
@@ -1375,7 +1375,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
                     //退货补货数量
                     Integer returnQty = returnDetailEntityList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(entity.getId()) && obj.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus()) && obj.getReturnMode().equals(ReturnModeEnum.REPLENISHMENT.getCode())).map(PoReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
                     if (receiveQty > purchaseQty + returnQty - alreadyReceiveQty) {
-                        throw new ServiceException(ApiError.ERROR_WMS_RECEIPT_QTY_EXCEEDS_UNDELIVERED.code, String.format(ApiError.ERROR_WMS_RECEIPT_QTY_EXCEEDS_UNDELIVERED.msg, entity.getSkuNo()));
+                        throw new ServiceException(ApiError.ERROR_WMS_RECEIPT_QTY_EXCEEDS_UNDELIVERED.getCode(), String.format(ApiError.ERROR_WMS_RECEIPT_QTY_EXCEEDS_UNDELIVERED.getMsg(), entity.getSkuNo()));
                     }
                     if (alreadyReceiveQty >= entity.getPurchaseQty() + returnQty) {
                         continue;
@@ -1432,7 +1432,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
                     //退货补货数量
                     Integer returnQty = returnDetailEntityList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(entity.getId()) && obj.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus()) && obj.getReturnMode().equals(ReturnModeEnum.REPLENISHMENT.getCode())).map(PoReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
                     if (receiveQty > purchaseQty + returnQty - alreadyReceiveQty) {
-                        throw new ServiceException(ApiError.ERROR_WMS_RECEIPT_QTY_EXCEEDS_UNDELIVERED.code, String.format(ApiError.ERROR_WMS_RECEIPT_QTY_EXCEEDS_UNDELIVERED.msg, entity.getSkuNo()));
+                        throw new ServiceException(ApiError.ERROR_WMS_RECEIPT_QTY_EXCEEDS_UNDELIVERED.getCode(), String.format(ApiError.ERROR_WMS_RECEIPT_QTY_EXCEEDS_UNDELIVERED.getMsg(), entity.getSkuNo()));
                     }
                     if (alreadyReceiveQty >= entity.getPurchaseQty() + returnQty) {
                         continue;

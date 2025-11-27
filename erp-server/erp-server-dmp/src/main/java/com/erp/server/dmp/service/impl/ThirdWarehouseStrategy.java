@@ -409,7 +409,7 @@ public class ThirdWarehouseStrategy implements ThirdMappingStrategy {
         String sysName = thirdMappingEntity.getSysName();
         //校验系统仓库是否存在
         List<WarehouseDTO.ListDTO> listDTOS = Optional.ofNullable(wmsWarehouseFeign.listByIds(Collections.singletonList(thirdMappingEntity.getSysId())))
-                .orElseThrow(() -> new ServiceException(ApiError.ERROR_92058));
+                .orElseThrow(() -> new ServiceException(ApiError.ERROR_SHOP_NOT_FOUND));
         if (PlatformDictEnum.WDT.getCode().equals(thirdMappingEntity.getThirdSysType())) {
 
             //校验第三方仓库是否存在

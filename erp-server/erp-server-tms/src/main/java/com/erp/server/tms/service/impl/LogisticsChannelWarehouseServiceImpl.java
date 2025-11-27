@@ -105,7 +105,7 @@ public class LogisticsChannelWarehouseServiceImpl extends SuperServiceImpl<Logis
         List<String> warehouseIdList = list.stream().map(LogisticsChannelWarehouseEntity::getWarehouseId).collect(Collectors.toList());
         List<WarehouseDTO.ListDTO> warehouseList = wmsWarehouseFeign.listByIds(warehouseIdList);
         if (CollectionUtils.isEmpty(warehouseList)) {
-            throw new ServiceException(ApiError.ERROR_99002);
+            throw new ServiceException(ApiError.ERROR_WMS_WAREHOUSE_NOT_FOUND);
         }
         List<String> warehouseNameList = warehouseList.stream().map(WarehouseDTO.ListDTO::getName).collect(Collectors.toList());
 

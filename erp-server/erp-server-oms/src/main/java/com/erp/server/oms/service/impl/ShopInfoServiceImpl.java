@@ -270,7 +270,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
     private void checkWarehouseExist(Boolean isHaveWarehouse, String warehouseId) {
         if (Objects.nonNull(isHaveWarehouse) && isHaveWarehouse) {
             if (StringUtils.isBlank(warehouseId)) {
-                throw new ServiceException(ApiError.ERROR_99001);
+                throw new ServiceException(ApiError.ERROR_WMS_WAREHOUSE_REQUIRED);
             }
         }
     }
@@ -573,7 +573,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
     	}
         ShopInfoEntity shopInfo = this.getById(dto.getId());
         if (Objects.isNull(shopInfo)) {
-            throw new ServiceException(ApiError.ERROR_92058);
+            throw new ServiceException(ApiError.ERROR_SHOP_NOT_FOUND);
         }
 
         String customerId = shopInfo.getCustomerId();
@@ -747,7 +747,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
     public ShopInfoEntity updateInternalShop(ShopDTO.UpdateInternalDTO dto) {
         ShopInfoEntity shopInfo = this.getById(dto.getId());
         if (Objects.isNull(shopInfo)) {
-            throw new ServiceException(ApiError.ERROR_92058);
+            throw new ServiceException(ApiError.ERROR_SHOP_NOT_FOUND);
         }
 
         String customerId = shopInfo.getCustomerId();
@@ -823,7 +823,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         if (StringUtils.isNotBlank(customerId)) {
             CustomerInfoEntity customerInfoEntity = customerInfoService.getById(customerId);
             if (ObjectUtil.isEmpty(customerInfoEntity)) {
-                throw new ServiceException(ApiError.ERROR_92011);
+                throw new ServiceException(ApiError.ERROR_CUSTOMER_NOT_FOUND);
             }
             ShopInfoEntity other = this.lambdaQuery().eq(ShopInfoEntity::getCustomerId,customerId).ne(StringUtils.isNotBlank(shopInfo.getId()),ShopInfoEntity::getId,shopInfo.getId()).last("limit 1").one();
             if(Objects.nonNull(other)){
@@ -847,7 +847,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
                 eq(ShopInfoEntity::getType, ShopTypeEnum.INTERNAL.getCode()).
                 list();
         if (CollectionUtils.isNotEmpty(shopInfoList)) {
-            throw new ServiceException(ApiError.ERROR_97007);
+            throw new ServiceException(ApiError.ERROR_DMP_SHOP_NAME_EXISTS);
         }
     }
 

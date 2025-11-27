@@ -312,7 +312,7 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
                     .eq(DictHsCodeEntity::getCountry,"CN")
                     .eq(DictHsCodeEntity::getHsCode, customsCode).list();
             if(CollUtil.isEmpty(hsCodeList)){
-                throw new ServiceException(ApiError.ERROR_95292);
+                throw new ServiceException(ApiError.ERROR_PLM_CN_EXPORT_DECLARATION_HS_NOT_FOUND);
             }
         }
 
@@ -604,7 +604,7 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
         }
         // 待提交或审核不通过并且未作废允许提交
         if ((!ApproveStatusEnum.WAIT_SUBMIT.equals(entity.getApproveStatus()) && !ApproveStatusEnum.REJECT.equals(entity.getApproveStatus()))) {
-            throw new ServiceException(ApiError.ERROR_98010);
+            throw new ServiceException(ApiError.ERROR_SUBMIT_ALLOWED_STATUS_ONLY);
         }
 
         // 更新单据审核状态
@@ -634,7 +634,7 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
         }
         // 只有审核中的单据允许撤销
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
-            throw new ServiceException(ApiError.ERROR_98007);
+            throw new ServiceException(ApiError.ERROR_REVOKE_PROCESS_ALLOWED_STATUS_ONLY);
         }
 
         log.info("撤销 开始修改物流产品状态，id：【{}】", id);
@@ -662,7 +662,7 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
     public BatchResultDTO approve(ApproveOneDTO dto) {
         ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(dto.getType());
         if(Objects.equals(approveType, ApproveTypeEnum.REJECT) && StrUtils.isEmpty(dto.getComment())) {
-            throw new ServiceException(ApiError.REJECT_COMMENT_NOT_EMPTY);
+            throw new ServiceException(ApiError.ERROR_PLM_REJECT_COMMENT_REQUIRED);
         }
         ProductLogisticsEntity entity = productLogisticsService.getById(dto.getId());
         if (ObjectUtil.isEmpty(entity)) {
@@ -695,7 +695,7 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
         }
         // 已审核支持反审核
         if (!Objects.equals(ApproveStatusEnum.APPROVE, entity.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_98014);
+            throw new ServiceException(ApiError.ERROR_REVERSE_APPROVAL_ALLOWED_APPROVED_ONLY);
         }
         //校验下推是否备案
         List<ProductRegistrationEntity> productRegistrationList = forecastFeign.listBySkuId(entity.getSkuId());
@@ -936,7 +936,7 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
                 String customsCode = item.getCustomsCode();
                 DictHsCodeEntity dictHsCodeEntity = hsCodeMap.getOrDefault(customsCode, null);
                 if(Objects.isNull(dictHsCodeEntity)){
-                    errorMsgList.add(ApiError.ERROR_95292.getMsg());
+                    errorMsgList.add(ApiError.ERROR_PLM_CN_EXPORT_DECLARATION_HS_NOT_FOUND.getMsg());
                 }else {
                     //如果logistics中报关名、报关单位、申报要素不存在或者为空，则使用dictHsCodeEntity的值
                     newLogistics.setDeclareChineseName(isBlank(newLogistics.getDeclareChineseName()) ? dictHsCodeEntity.getDescription() : newLogistics.getDeclareChineseName());

@@ -10,7 +10,9 @@ import com.common.core.anno.LogSystemModule;
 import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.ApiError;
 import com.common.core.enums.LogActionEnum;
+import com.common.core.exception.ServiceException;
 import com.erp.model.sys.dto.CfgNoticeDTO;
 import com.erp.server.sys.service.CfgNoticeService;
 import lombok.extern.slf4j.Slf4j;
@@ -87,8 +89,9 @@ public class CfgNoticeController extends BaseController {
     @LogViewService
     @GetMapping("/view")
     public ApiResult<CfgNoticeDTO.ViewDTO> view(@Param("id") String id) {
-        CfgNoticeDTO.ViewDTO dto = cfgNoticeService.view(id);
-        return success(dto);
+        throw new ServiceException(ApiError.ERROR_UNAUTHORIZED_ACCESS);
+//        CfgNoticeDTO.ViewDTO dto = cfgNoticeService.view(id);
+//        return success(dto);
     }
 
     /**

@@ -298,7 +298,7 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
         //主表信息
         SubcontractOrderEntity entity = subcontractOrderService.getById(mainId);
         if (ObjectUtils.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_98073);
+            throw new ServiceException(ApiError.ERROR_SCM_OUTSOURCING_ORDER_NOT_FOUND);
         }
 
         //采购申请单明细
@@ -331,7 +331,7 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
             }
             //下推单据数量验证
             if (qty > applyQty - pushdownQty) {
-                throw new ServiceException(new ApiResult(ApiError.ERROR_98074.code, StrUtil.format(ApiError.ERROR_98074.msg,entity.getCode(),skuNo,applyQty - pushdownQty)));
+                throw new ServiceException(new ApiResult(ApiError.ERROR_SCM_OUTSOURCING_PARENT_SKU_QTY_EXCEEDS.getCode(), StrUtil.format(ApiError.ERROR_SCM_OUTSOURCING_PARENT_SKU_QTY_EXCEEDS.getMsg(),entity.getCode(),skuNo,applyQty - pushdownQty)));
             }
         }
     }
@@ -377,7 +377,7 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
         //委外订单
         SubcontractOrderEntity subcontractOrderEntity = subcontractOrderService.getById(mainId);
         if (ObjectUtils.isEmpty(subcontractOrderEntity)) {
-            throw new ServiceException(ApiError.ERROR_98073);
+            throw new ServiceException(ApiError.ERROR_SCM_OUTSOURCING_ORDER_NOT_FOUND);
         }
         //获取采购单价
         String purchaseOrgId = subcontractOrderEntity.getPurchaseOrgId();
@@ -400,7 +400,7 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
         //BOM信息
         List<BomChildrenSkuDTO> bomChildrenList = plmTaskFeign.listHistoryBomChildBySkuIds(parentSkuIds);
         if (CollectionUtils.isEmpty(bomChildrenList)) {
-            throw new ServiceException(ApiError.ERROR_95163);
+            throw new ServiceException(ApiError.ERROR_PLM_BOM_NOT_FOUND);
         }
         //产品信息
         List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(allSkuIds);
@@ -446,13 +446,13 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
                 Integer pushdownQty = purchaseQty+subcontractQty;
 
                 if (detailEntity.getQty() > applyQty - pushdownQty) {
-                    throw new ServiceException(new ApiResult(ApiError.ERROR_98091.code,StrUtil.format(ApiError.ERROR_98091.msg,skuVO.getSkuNo(),applyQty - pushdownQty)));
+                    throw new ServiceException(new ApiResult(ApiError.ERROR_SCM_PARENT_SKU_QTY_EXCEEDS_REMAIN.getCode(),StrUtil.format(ApiError.ERROR_SCM_PARENT_SKU_QTY_EXCEEDS_REMAIN.getMsg(),skuVO.getSkuNo(),applyQty - pushdownQty)));
                 }
             }
             //bom信息
             BomChildrenSkuDTO bomChildrenSkuDTO = bomChildrenList.stream().filter(obj -> obj.getParentSkuId().equals(detailEntity.getSkuId())).max(Comparator.comparingDouble(obj -> Double.valueOf(obj.getBomVersion()))).orElse(null);
             if (ObjectUtils.isEmpty(bomChildrenSkuDTO)) {
-                throw new ServiceException(ApiError.ERROR_95163);
+                throw new ServiceException(ApiError.ERROR_PLM_BOM_NOT_FOUND);
             }
 
             detailEntity.setIsAdd(Boolean.FALSE);
@@ -470,7 +470,7 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
             if (CollectionUtils.isNotEmpty(warehouseList)) {
                 WarehouseDTO.UpdateDTO updateDTO = warehouseList.stream().filter(obj -> obj.getId().equals(detailEntity.getWarehouseId())).findFirst().orElse(null);
                 if (ObjectUtils.isEmpty(updateDTO)) {
-                    throw new ServiceException(ApiError.ERROR_99002);
+                    throw new ServiceException(ApiError.ERROR_WMS_WAREHOUSE_NOT_FOUND);
                 }
                 //仓库组织匹配校验
                 if (!StrUtil.equals(updateDTO.getOrgId(),subcontractOrderEntity.getSubcontractOrgId())) {
@@ -504,7 +504,7 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
                 //仓库名称
                 WarehouseDTO.UpdateDTO updateDTO = warehouseList.stream().filter(obj -> obj.getId().equals(childEntity.getWarehouseId())).findFirst().orElse(null);
                 if (ObjectUtils.isEmpty(updateDTO)) {
-                    throw new ServiceException(ApiError.ERROR_99002);
+                    throw new ServiceException(ApiError.ERROR_WMS_WAREHOUSE_NOT_FOUND);
                 }
                 childEntity.setWarehouseName(updateDTO.getName());
                 //供应商名称

@@ -91,7 +91,7 @@ public class RuleLogisticsServiceImpl extends SuperServiceImpl<RuleLogisticsMapp
         BeanMapperUtils.copy(addDTO, ruleLogisticsEntity);
         handleData(ruleLogisticsEntity);
         if(Boolean.TRUE.equals(ruleLogisticsEntity.getAutoGetTrackNo()) && Boolean.TRUE.equals(ruleLogisticsEntity.getAutoGetTrackNotOfRangeDelivery())){
-            throw new ServiceException(ApiError.ERROR_92163);
+            throw new ServiceException(ApiError.ERROR_DELIVERY_AUTO_SUBMIT_OPTION_LIMIT);
         }
         boolean save = super.save(ruleLogisticsEntity);
         if (!save) {
@@ -132,7 +132,7 @@ public class RuleLogisticsServiceImpl extends SuperServiceImpl<RuleLogisticsMapp
         // 数据处理
         handleData(ruleLogisticsEntity);
         if(Boolean.TRUE.equals(ruleLogisticsEntity.getAutoGetTrackNo()) && Boolean.TRUE.equals(ruleLogisticsEntity.getAutoGetTrackNotOfRangeDelivery())){
-            throw new ServiceException(ApiError.ERROR_92163);
+            throw new ServiceException(ApiError.ERROR_DELIVERY_AUTO_SUBMIT_OPTION_LIMIT);
         }
         boolean save = super.updateById(ruleLogisticsEntity);
         if (!save) {
@@ -206,7 +206,7 @@ public class RuleLogisticsServiceImpl extends SuperServiceImpl<RuleLogisticsMapp
         isExist(ruleLogistics);
         Boolean disabled = ruleLogistics.getDisabled();
         if (disabled.equals(dto.getState())) {
-            throw new ServiceException(ApiError.ERROR_98027);
+            throw new ServiceException(ApiError.ERROR_SCM_INCONSISTENT_DISABLE_STATUS);
         }
         String content = String.format("启用状态[%s]变更为[%s]", Boolean.TRUE.equals(disabled) ? "停用" : "启用", Boolean.TRUE.equals(disabled) ? "启用" : "停用");
         ruleLogistics.setDisabled(dto.getState());

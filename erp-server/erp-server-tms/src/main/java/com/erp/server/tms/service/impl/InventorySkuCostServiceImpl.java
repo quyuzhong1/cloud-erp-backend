@@ -236,7 +236,7 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
     public BatchResultDTO disApprove(InventorySkuCostEntity entity) {
         //已审核允许反审核
         if (!ApproveStatusEnum.APPROVE.getStatus().equals(entity.getStatus())) {
-            return BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_98014.getMsg());
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_REVERSE_APPROVAL_ALLOWED_APPROVED_ONLY.getMsg());
         }
         List<InventorySkuCostDetailEntity> detailEntityList = inventorySkuCostDetailService.listByMainIds(Collections.singletonList(entity.getId()));
         List<String> detailIds = detailEntityList.stream().map(InventorySkuCostDetailEntity::getId).distinct().collect(Collectors.toList());
@@ -257,7 +257,7 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
     public BatchResultDTO cancel(InventorySkuCostEntity entity) {
         //审核中允许撤销
         if (!ApproveStatusEnum.APPROVE_ING.getStatus().equals(entity.getStatus())) {
-            return BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_98007.getMsg());
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_REVOKE_PROCESS_ALLOWED_STATUS_ONLY.getMsg());
         }
         return approve(entity, ApproveTypeEnum.CANCEL.getStatus(), "", Boolean.FALSE);
     }
@@ -266,7 +266,7 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
     public BatchResultDTO submit(InventorySkuCostEntity entity) {
         //只有待提交状态才能发起提交
         if (!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(entity.getStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(entity.getStatus())) {
-            return BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_98032.getMsg());
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_SCM_SUBMIT_ALLOWED_STATUS_ONLY.getMsg());
         }
         log.info("SKU成本记录提交审核，code=【{}】", entity.getCode());
         //更新单据为审核中
@@ -322,7 +322,7 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
             wb.write(output);
             wb.close();
         } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_95131);
+            throw new ServiceException(ApiError.ERROR_IMPORT_TEMPLATE_DOWNLOAD_FAILED);
         }
     }
 

@@ -168,7 +168,7 @@ public class SyncKingdeeTransferOutServiceImpl implements SyncKingdeeTransferOut
         //组织机构编码
         List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(entity.getInOrgId(), entity.getOutOrgId()));
         if (CollectionUtils.isEmpty(accountingCompanyList)) {
-            throw new ServiceException(ApiError.ERROR_9014);
+            throw new ServiceException(ApiError.ERROR_COMPANY_NOT_FOUND);
         }
         //调入组织机构编码
         String inOrgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getInOrgId()))
@@ -181,7 +181,7 @@ public class SyncKingdeeTransferOutServiceImpl implements SyncKingdeeTransferOut
         resultMap.put("outOrgCode", outOrgCode);
 
         if (CollectionUtils.isEmpty(detailList)) {
-            throw new ServiceException(ApiError.ERROR_99048);
+            throw new ServiceException(ApiError.ERROR_WMS_TRANSFER_DIRECT_DETAIL_NOT_FOUND);
         }
 
         //获取sku的id集合

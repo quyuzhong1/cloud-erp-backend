@@ -142,7 +142,7 @@ public class CommonServiceImpl implements CommonService {
     @Override
     public List<String> uploadImg(MultipartFile[] multipartFileList) {
         if (ObjectUtil.isNull(multipartFileList)) {
-            throw new ServiceException(ApiError.ERROR_95185);
+            throw new ServiceException(ApiError.ERROR_PLM_FILE_NOT_FOUND);
         }
         Long size = 0L;
         //获取压缩图片大小的配置

@@ -56,7 +56,7 @@ public class CustomerSellerServiceImpl extends SuperServiceImpl<CustomerSellerMa
             List<SellerDTO.AddDTO> list = sellerList.stream().filter(c -> c.getEndDate() != null && c.getStartDate() != null).collect(Collectors.toList());
             long count = list.stream().filter(c -> c.getEndDate().compareTo(c.getStartDate()) < 0).count();
             if (count > 0) {
-                throw new ServiceException(ApiError.ERROR_92008);
+                throw new ServiceException(ApiError.ERROR_DATE_RANGE_INVALID);
             }
             List<LocalDate> dateList = new ArrayList<>(sellerList.size());
             for (SellerDTO.AddDTO item : sellerList) {
@@ -65,7 +65,7 @@ public class CustomerSellerServiceImpl extends SuperServiceImpl<CustomerSellerMa
             //判断是否按序排序
             for (int i = 0; i < dateList.size() - 1; i++) {
                 if (dateList.get(i).compareTo(dateList.get(i + 1)) > 0) {
-                    throw new ServiceException(ApiError.ERROR_92048);
+                    throw new ServiceException(ApiError.ERROR_DATE_SORT_ASC_REQUIRED);
                 }
             }
         }

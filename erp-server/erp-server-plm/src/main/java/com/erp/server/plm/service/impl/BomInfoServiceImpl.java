@@ -154,7 +154,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         //sku信息
         List<BomSkuDTO> bomSkuList = dto.getSkuList();
         if (CollectionUtils.isEmpty(bomSkuList)) {
-            throw new ServiceException(ApiError.ERROR_95094);
+            throw new ServiceException(ApiError.ERROR_PLM_SKU_REQUIRED);
         }
         //数据验证
         checkRepeatBomSku(BeanMapperUtils.map(UpdateBomDTO.class,dto));
@@ -169,7 +169,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         bom.setSourceType(dto.getSourceType());
         Boolean saveResult = this.save(bom);
         if (!saveResult) {
-            throw new ServiceException(ApiError.ERROR_1002);
+            throw new ServiceException(ApiError.ERROR_PERSIST_SAVE_FAILED);
         }
         //添加 bom 与sku 关系
         bomSkuService.saveBomSku(bomId, bomSkuList);
@@ -251,7 +251,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         List<String> bomIds = records.stream().map(BomSkuPageDTO.ListDTO::getBomId).collect(Collectors.toList());
         List<BomSkuPageDTO.ChildDTO> childList = baseMapper.listBomSkuByBomIds(bomIds);
         if (CollectionUtils.isEmpty(childList)) {
-            throw new ServiceException(ApiError.ERROR_95166);
+            throw new ServiceException(ApiError.ERROR_PLM_BOM_CHILD_NOT_FOUND);
         }
 
         List<String> supplierIds = records.stream().filter(obj -> StringUtils.isNotBlank(obj.getSupplierId())).map(BomSkuPageDTO.ListDTO::getSupplierId).collect(Collectors.toList());
@@ -357,7 +357,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
     public BatchResultDTO approve(ApproveOneDTO dto) {
         ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(dto.getType());
         if(Objects.equals(approveType, ApproveTypeEnum.REJECT) && StrUtils.isEmpty(dto.getComment())) {
-            throw new ServiceException(ApiError.REJECT_COMMENT_NOT_EMPTY);
+            throw new ServiceException(ApiError.ERROR_PLM_REJECT_COMMENT_REQUIRED);
         }
         BomInfoEntity entity = getById(dto.getId());
         // 审核中的数据允许审核
@@ -415,7 +415,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         }
         List<BomSkuEntity> bomList = bomSkuService.listBomSkuByBomId(entity.getId());
         if (CollUtil.isEmpty(bomList)) {
-            throw new ServiceException(ApiError.ERROR_95095);
+            throw new ServiceException(ApiError.ERROR_PLM_BOM_REQUIRED);
         }
         String parentSkuNo = bomList.stream().map(BomSkuEntity::getParentSkuNo).collect(Collectors.joining(","));
         variablesMap.put("parentSkuNo", parentSkuNo);
@@ -457,11 +457,11 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
     public BatchResultDTO cancelProcess(String id) {
         BomInfoEntity entity = this.getById(id);
         if (ObjectUtil.isNotEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_95163);
+            throw new ServiceException(ApiError.ERROR_PLM_BOM_NOT_FOUND);
         }
         // 只有审核中的单据允许撤销
         if (!Objects.equals(entity.getState(), BomStateEnum.AUDIT_ING)) {
-            throw new ServiceException(ApiError.ERROR_98007);
+            throw new ServiceException(ApiError.ERROR_REVOKE_PROCESS_ALLOWED_STATUS_ONLY);
         }
         updateForApprove(id, BomStateEnum.AUDIT_ING.getState(),"");
         //操作日志
@@ -560,7 +560,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         BomDTO result = new BomDTO();
         BomInfoEntity bom = this.getById(id);
         if (Objects.isNull(bom)) {
-            throw new ServiceException(ApiError.ERROR_95095);
+            throw new ServiceException(ApiError.ERROR_PLM_BOM_REQUIRED);
         }
         BeanMapper.copy(bom, result);
         result.setVersion(bom.getBomVersion());
@@ -585,7 +585,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         String id = dto.getId();
         BomInfoEntity bom = this.getById(id);
         if (Objects.isNull(bom)) {
-            throw new ServiceException(ApiError.ERROR_95095);
+            throw new ServiceException(ApiError.ERROR_PLM_BOM_REQUIRED);
         }
         //数据验证
         checkRepeatBomSku(dto);
@@ -697,7 +697,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
     public Boolean deleteById(String bomId) {
         BomInfoEntity bomInfoEntity = this.getById(bomId);
         if (ObjectUtils.isEmpty(bomInfoEntity)) {
-            throw new ServiceException(ApiError.ERROR_95163);
+            throw new ServiceException(ApiError.ERROR_PLM_BOM_NOT_FOUND);
         }
         //更新金蝶
         List<DmpPushTaskEntity> pushTaskList = syncKingdeeBomInfoService.syncDataToKingdee(bomInfoEntity, SyncOperateEnum.OPERATE_DELETE.getCode());
@@ -735,11 +735,11 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
     public BatchResultDTO submitAudit(String bomId,Boolean isStartProcess) {
         BomInfoEntity bom = this.getById(bomId);
         if (Objects.isNull(bom)) {
-            throw new ServiceException(ApiError.ERROR_95095);
+            throw new ServiceException(ApiError.ERROR_PLM_BOM_REQUIRED);
         }
         Integer state = bom.getState();
         if (!BomStateEnum.WAIT_SUBMIT_AUDIT.getState().equals(state) && !BomStateEnum.AUDIT_NO_PASS.getState().equals(state)) {
-            throw new ServiceException(ApiError.ERROR_95098);
+            throw new ServiceException(ApiError.ERROR_PLM_SUBMIT_APPROVAL_STATUS_INVALID);
         }
         bom.setState(BomStateEnum.AUDIT_ING.getState());
         //提交流程
@@ -790,16 +790,16 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
     public Boolean freeze(String bomId) {
         BomInfoEntity bom = this.getById(bomId);
         if (Objects.isNull(bom)) {
-            throw new ServiceException(ApiError.ERROR_95095);
+            throw new ServiceException(ApiError.ERROR_PLM_BOM_REQUIRED);
         }
         Integer state = bom.getState();
         if (!BomStateEnum.AUDIT_PASS.getState().equals(state)) {
-            throw new ServiceException(ApiError.ERROR_95100);
+            throw new ServiceException(ApiError.ERROR_PLM_FREEZE_STATUS_INVALID);
         }
         List<String> bomIds = Arrays.asList(bomId);
         List<String> changeIngSourceIds = productChangeService.getBySourceId(bomIds);
         if (changeIngSourceIds.contains(bomId)) {
-            throw new ServiceException(ApiError.ERROR_95114);
+            throw new ServiceException(ApiError.ERROR_PLM_CHANGE_IN_PROGRESS_ACTION_FORBIDDEN);
         }
         bom.setState(BomStateEnum.FREEZE.getState());
         Boolean result = this.updateById(bom);
@@ -822,11 +822,11 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
     public Boolean defrost(String bomId) {
         BomInfoEntity bom = this.getById(bomId);
         if (Objects.isNull(bom)) {
-            throw new ServiceException(ApiError.ERROR_95095);
+            throw new ServiceException(ApiError.ERROR_PLM_BOM_REQUIRED);
         }
         Integer state = bom.getState();
         if (!BomStateEnum.FREEZE.getState().equals(state)) {
-            throw new ServiceException(ApiError.ERROR_95101);
+            throw new ServiceException(ApiError.ERROR_PLM_UNFREEZE_STATUS_INVALID);
         }
         bom.setState(BomStateEnum.AUDIT_PASS.getState());
         Boolean result = this.updateById(bom);
@@ -849,14 +849,14 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
     public Boolean scrap(String bomId) {
         BomInfoEntity bom = this.getById(bomId);
         if (Objects.isNull(bom)) {
-            throw new ServiceException(ApiError.ERROR_95095);
+            throw new ServiceException(ApiError.ERROR_PLM_BOM_REQUIRED);
         }
         Integer state = bom.getState();
         List<Integer> stateList = new ArrayList<>(2);
         stateList.add(BomStateEnum.AUDIT_PASS.getState());
         stateList.add(BomStateEnum.FREEZE.getState());
         if (!stateList.contains(state)) {
-            throw new ServiceException(ApiError.ERROR_95102);
+            throw new ServiceException(ApiError.ERROR_PLM_SCRAP_STATUS_INVALID);
         }
         bom.setState(BomStateEnum.SCRAP.getState());
         Boolean result = this.updateById(bom);
@@ -879,11 +879,11 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
     public Boolean recover(String bomId) {
         BomInfoEntity bom = this.getById(bomId);
         if (Objects.isNull(bom)) {
-            throw new ServiceException(ApiError.ERROR_95095);
+            throw new ServiceException(ApiError.ERROR_PLM_BOM_REQUIRED);
         }
         Integer state = bom.getState();
         if (!BomStateEnum.SCRAP.getState().equals(state)) {
-            throw new ServiceException(ApiError.ERROR_95103);
+            throw new ServiceException(ApiError.ERROR_PLM_RESTORE_STATUS_INVALID);
         }
         bom.setState(BomStateEnum.AUDIT_PASS.getState());
 
@@ -911,16 +911,16 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
     public Boolean removeArchive(String bomId) {
         BomInfoEntity bom = this.getById(bomId);
         if (Objects.isNull(bom)) {
-            throw new ServiceException(ApiError.ERROR_95095);
+            throw new ServiceException(ApiError.ERROR_PLM_BOM_REQUIRED);
         }
         Integer state = bom.getState();
         if (!BomStateEnum.AUDIT_PASS.getState().equals(state)) {
-            throw new ServiceException(ApiError.ERROR_95108);
+            throw new ServiceException(ApiError.ERROR_PLM_UNARCHIVE_STATUS_INVALID);
         }
         List<String> bomIds = Arrays.asList(bomId);
         List<String> changeIngSourceIds = productChangeService.getBySourceId(bomIds);
         if (changeIngSourceIds.contains(bomId)) {
-            throw new ServiceException(ApiError.ERROR_95114);
+            throw new ServiceException(ApiError.ERROR_PLM_CHANGE_IN_PROGRESS_ACTION_FORBIDDEN);
         }
         //检查能否反审核
         checkRemoveArchive(bomId);
@@ -983,16 +983,16 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
     public void checkIfChange(String sourceId, String detailsJson) {
         BomInfoEntity infoEntity = this.getById(sourceId);
         if (Objects.isNull(infoEntity)) {
-            throw new ServiceException(ApiError.ERROR_95095);
+            throw new ServiceException(ApiError.ERROR_PLM_BOM_REQUIRED);
         }
         Integer state = infoEntity.getState();
         //只有归档才能变更
         if (!BomStateEnum.AUDIT_PASS.getState().equals(state)) {
-            throw new ServiceException(ApiError.ERROR_95104);
+            throw new ServiceException(ApiError.ERROR_PLM_CHANGE_REQUEST_STATUS_INVALID);
         }
         List<String> changeIngSourceIds = productChangeService.getBySourceId(Arrays.asList(sourceId));
         if (CollectionUtils.isNotEmpty(changeIngSourceIds)) {
-            throw new ServiceException(ApiError.ERROR_95113);
+            throw new ServiceException(ApiError.ERROR_PLM_BOM_CHANGING);
         }
         BomDTO bom = JSON.parseObject(detailsJson, BomDTO.class);
         UpdateBomDTO updateBom = new UpdateBomDTO();
@@ -1128,7 +1128,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
             stateList.add(BomStateEnum.WAIT_SUBMIT_AUDIT.getState());
             stateList.add(BomStateEnum.AUDIT_NO_PASS.getState());
             if (!stateList.contains(state)) {
-                throw new ServiceException(ApiError.ERROR_95096);
+                throw new ServiceException(ApiError.ERROR_PLM_EDIT_ALLOWED_STATUS_ONLY);
             }
         }
         //如果是变更申请 只有审核通过 就是归档 才能申请
@@ -1136,7 +1136,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
             List<Integer> stateList = new ArrayList<>(2);
             stateList.add(BomStateEnum.AUDIT_PASS.getState());
             if (!stateList.contains(state)) {
-                throw new ServiceException(ApiError.ERROR_95096);
+                throw new ServiceException(ApiError.ERROR_PLM_EDIT_ALLOWED_STATUS_ONLY);
             }
         }
     }
@@ -1241,7 +1241,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
             //父级SKU
             SkuVO parentSkuVO = skuList.stream().filter(obj -> obj.getSkuNo().equals(key)).findFirst().orElse(null);
             if (parentSkuVO == null) {
-                throw new ServiceException(ApiError.ERROR_95166);
+                throw new ServiceException(ApiError.ERROR_PLM_BOM_CHILD_NOT_FOUND);
             }
             BomInfoEntity bomInfoEntity = bomInfoList.stream().filter(obj -> obj.getParentSkuId().equals(parentSkuVO.getSkuId())).findFirst().orElse(null);
             if (bomInfoEntity == null) {
@@ -1276,12 +1276,12 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         //父级sku是否审核
         SkuVO parentSkuVO = skuList.stream().filter(obj -> obj.getSkuNo().equals(addDTO.getParentSku())).findFirst().orElse(null);
         if (ObjectUtils.isEmpty(parentSkuVO)) {
-            errorMsgList.add(ApiError.ERROR_95152.getMsg());
+            errorMsgList.add(ApiError.ERROR_PLM_PARENT_SKU_APPROVED_REQUIRED.getMsg());
         }
         //子级sku是否审核
         SkuVO childSkuVO = skuList.stream().filter(obj -> obj.getSkuNo().equals(addDTO.getChildSku())).findFirst().orElse(null);
         if (ObjectUtils.isEmpty(childSkuVO)) {
-            errorMsgList.add(ApiError.ERROR_95153.getMsg());
+            errorMsgList.add(ApiError.ERROR_PLM_CHILD_SKU_APPROVED_REQUIRED.getMsg());
         }
         //仅待提交或者审核不通过数据修改
         if (CollectionUtils.isNotEmpty(bomInfoList)) {
@@ -1315,7 +1315,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
             //子级SKU
             SkuVO childSkuVO = skuList.stream().filter(obj -> obj.getSkuNo().equals(bomInfoExcelDTO.getChildSku())).findFirst().orElse(null);
             if (childSkuVO == null) {
-                throw new ServiceException(ApiError.ERROR_95166);
+                throw new ServiceException(ApiError.ERROR_PLM_BOM_CHILD_NOT_FOUND);
             }
             childDTO.setSkuId(childSkuVO.getSkuId());
             childDTO.setSkuNo(childSkuVO.getSkuNo());

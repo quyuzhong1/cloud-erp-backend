@@ -163,7 +163,7 @@ public class ProjectTemplateServiceImpl extends ServiceImpl<ProjectTemplateMappe
     public Boolean updateTemplateStatus(ProjectTemplateUpdateStatusDTO dto) {
         ProjectTemplateEntity entity = this.getById(dto.getId());
         if (ObjectUtils.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_95051);
+            throw new ServiceException(ApiError.ERROR_PLM_TEMPLATE_NOT_FOUND);
         }
         //获取登录人信息
         LoginUser loginUser = UserContext.getLoginUser();
@@ -224,7 +224,7 @@ public class ProjectTemplateServiceImpl extends ServiceImpl<ProjectTemplateMappe
                 .eq(ProjectTemplateEntity::getId, dto.getTemplateId())
                 .one();
         if (null == templateEntity) {
-            throw new ServiceException(ApiError.ERROR_95051);
+            throw new ServiceException(ApiError.ERROR_PLM_TEMPLATE_NOT_FOUND);
         }
         List<PreTaskListVO> preTaskList;
 
@@ -253,7 +253,7 @@ public class ProjectTemplateServiceImpl extends ServiceImpl<ProjectTemplateMappe
                 .eq(ProjectTemplateEntity::getId, dto.getTemplateId())
                 .one();
         if (null == templateEntity) {
-            throw new ServiceException(ApiError.ERROR_95051);
+            throw new ServiceException(ApiError.ERROR_PLM_TEMPLATE_NOT_FOUND);
         }
         // 根据模板类型查询模板及前置任务
         List<PreTaskUpdateDTO> list = dto.getList();
@@ -261,7 +261,7 @@ public class ProjectTemplateServiceImpl extends ServiceImpl<ProjectTemplateMappe
         List<TemplatePreTaskEntity> updateList = list.stream().map(TemplatePreTaskEntity::new).collect(Collectors.toList());
         boolean result = templatePreTaskService.updateBatchById(updateList);
         if (!result) {
-            throw new ServiceException(ApiError.ERROR_95151);
+            throw new ServiceException(ApiError.ERROR_PLM_TEMPLATE_PREREQUISITE_UPDATE_FAILED);
         }
         return Boolean.TRUE;
     }
@@ -514,7 +514,7 @@ public class ProjectTemplateServiceImpl extends ServiceImpl<ProjectTemplateMappe
         }
         int count = this.count(queryWrapper);
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_95011);
+            throw new ServiceException(ApiError.ERROR_PLM_TEMPLATE_NAME_EXISTS);
         }
     }
 

@@ -51,7 +51,7 @@ public class YunTuService {
         String url = authMap.get("url");
         validate(appKey,appSecret,url);
         List<Map<String,Object>> paramsMapList =  BeanMapUtil.beanToMapList(request);
-        log.warn("云途下单请求参数:{}", JSONObject.toJSONString(paramsMapList));
+        log.warn("云途下单请求参数:{}", JSON.toJSONString(paramsMapList));
         String response = YunTuUtils.sendPost(url,YunTuConstants.METHOD_CREATE_ORDER,paramsMapList,appKey,appSecret);
 
         log.warn("下单完成：{}", JSON.toJSONString(response));

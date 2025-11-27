@@ -121,14 +121,14 @@ public class SupplierController extends BaseController {
         try {
             entity = supplierService.addSupplier(dto);
             if (Objects.isNull(entity)) {
-                return  failure(ApiError.ERROR_1019.msg, new BaseResultDTO.AddAndSubmmitDTO("","",Boolean.FALSE));
+                return  failure(ApiError.ERROR_CREATE_FAILED.getMsg(), new BaseResultDTO.AddAndSubmmitDTO("","",Boolean.FALSE));
             }
         } catch (ServiceException e) {
             log.error("新增失败，dto: {}", dto, e);
             return failure(e.getMessage(),new BaseResultDTO.AddAndSubmmitDTO("","",Boolean.FALSE));
         } catch (Exception e) {
             log.error("新增失败，dto: {}", dto, e);
-            return  failure(ApiError.ERROR_1019.msg, new BaseResultDTO.AddAndSubmmitDTO("","",Boolean.FALSE));
+            return  failure(ApiError.ERROR_CREATE_FAILED.getMsg(), new BaseResultDTO.AddAndSubmmitDTO("","",Boolean.FALSE));
         }
 
         try {
@@ -142,7 +142,7 @@ public class SupplierController extends BaseController {
             return failure(e.getMessage(),new BaseResultDTO.AddAndSubmmitDTO(entity.getId(),entity.getCode(),Boolean.TRUE));
         } catch (Exception e) {
             log.error("提交审批失败，ID: {}", entity.getId(), e);
-            return failure(ApiError.RETRY_SUBMIT_ERROR.msg,new BaseResultDTO.AddAndSubmmitDTO(entity.getId(),entity.getCode(),Boolean.TRUE));
+            return failure(ApiError.RETRY_SUBMIT_ERROR.getMsg(),new BaseResultDTO.AddAndSubmmitDTO(entity.getId(),entity.getCode(),Boolean.TRUE));
         }
 
         return success(new BaseResultDTO.AddAndSubmmitDTO(entity.getId(), entity.getCode(),Boolean.TRUE));
@@ -233,20 +233,20 @@ public class SupplierController extends BaseController {
         try {
             supplierId = supplierService.updateSupplier(dto);
             if (StringUtils.isBlank(supplierId)) {
-                return failure(ApiError.ERROR_1020.msg,new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.FALSE));
+                return failure(ApiError.ERROR_UPDATE_FAILED.getMsg(),new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.FALSE));
             }
         } catch (ServiceException e) {
             log.error("更新失败，dto: {}", dto, e);
             return failure(e.getMessage(), new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.FALSE));
         } catch (Exception e) {
             log.error("更新失败，dto: {}", dto, e);
-            return failure(ApiError.ERROR_1020.msg,new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.FALSE));
+            return failure(ApiError.ERROR_UPDATE_FAILED.getMsg(),new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.FALSE));
         }
         //提审
         try {
             SupplierEntity entity = supplierService.getById(supplierId);
             if (ObjUtil.isEmpty(entity)) {
-                throw new ServiceException(ApiError.ERROR_98031);
+                throw new ServiceException(ApiError.ERROR_SCM_SUPPLIER_INFO_REQUIRED);
             }
             supplierService.submit(entity);
         } catch (ServiceException e) {
@@ -254,7 +254,7 @@ public class SupplierController extends BaseController {
             return failure( e.getMessage(),new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.TRUE));
         } catch (Exception e) {
             log.error("提交审批失败，ID: {}", dto.getId(), e);
-            return failure(ApiError.RETRY_SUBMIT_ERROR.msg,new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.TRUE));
+            return failure(ApiError.RETRY_SUBMIT_ERROR.getMsg(),new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.TRUE));
         }
         return success(new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.TRUE));
     }

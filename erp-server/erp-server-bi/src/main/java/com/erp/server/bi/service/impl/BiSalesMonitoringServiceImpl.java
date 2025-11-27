@@ -57,7 +57,7 @@ public class BiSalesMonitoringServiceImpl extends ServiceImpl<BiSalesMonitoringM
     @Override
     public Boolean batchAdd(List<BiSalesMonitoringDTO> list) {
         if (list.isEmpty()) {
-            throw new ServiceException(ApiError.ERROR_97016);
+            throw new ServiceException(ApiError.ERROR_DMP_SALES_MONITOR_SETTING_REQUIRED);
         }
         List<BiSalesMonitoringEntity> entityList = new ArrayList<>();
         //当前登录人
@@ -70,7 +70,7 @@ public class BiSalesMonitoringServiceImpl extends ServiceImpl<BiSalesMonitoringM
             List<BiSalesMonitoringDTO> value = entry.getValue();
             int size = value.size();
             if (size > 1) {
-                throw new ServiceException(ApiError.ERROR_97018);
+                throw new ServiceException(ApiError.ERROR_DMP_SALES_MONITOR_TYPE_DUPLICATE);
             }
             BiSalesMonitoringEntity entity = new BiSalesMonitoringEntity();
             BiSalesMonitoringDTO biSalesMonitoringDTO = value.get(0);

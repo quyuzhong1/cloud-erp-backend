@@ -48,7 +48,7 @@ public class OmsPushMsgServiceImpl extends SuperServiceImpl<OmsPushMsgMapper, Om
         }
 
         // 操作日志
-        String msg =  CharSequenceUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), ApiError.ERROR_92160.msg , omsPushMsgEntity.getId());
+        String msg =  CharSequenceUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), ApiError.ERROR_LOCAL_PUSH_MESSAGE.getMsg() , omsPushMsgEntity.getId());
         operateLogService.addModuleOperateLog(msg, null, omsPushMsgEntity.getId(), "新增操作");
         return new BaseResultDTO.AddDTO(omsPushMsgEntity.getId(), omsPushMsgEntity.getId());
     }
@@ -61,7 +61,7 @@ public class OmsPushMsgServiceImpl extends SuperServiceImpl<OmsPushMsgMapper, Om
     public Boolean update(OmsPushMsgDTO.UpdateDTO updateDTO) {
         OmsPushMsgEntity old = super.getById(updateDTO.getId());
         if(null == old){
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, ApiError.ERROR_92160.getMsg());
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, ApiError.ERROR_LOCAL_PUSH_MESSAGE.getMsg());
         }
         OmsPushMsgEntity omsPushMsgEntity =  BeanMapperUtils.map(OmsPushMsgEntity.class, updateDTO);
         log.info("编辑 开始修改本地推送消息单数据，id：【{}】", old.getId());
@@ -71,7 +71,7 @@ public class OmsPushMsgServiceImpl extends SuperServiceImpl<OmsPushMsgMapper, Om
         }
         // 记录主单操作日志
             log.info("编辑 开始记录本地推送消息单日志数据，id：【{}】", omsPushMsgEntity.getId());
-            String msg =  CharSequenceUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), omsPushMsgEntity.getId(), ApiError.ERROR_92160.getMsg());
+            String msg =  CharSequenceUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), omsPushMsgEntity.getId(), ApiError.ERROR_LOCAL_PUSH_MESSAGE.getMsg());
         operateLogService.addModuleOperateLogByObj(old, omsPushMsgEntity, null, omsPushMsgEntity.getId(), msg);
         return Boolean.TRUE;
     }

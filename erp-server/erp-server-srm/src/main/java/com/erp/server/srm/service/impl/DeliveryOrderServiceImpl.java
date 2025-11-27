@@ -568,10 +568,10 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
         isExist(entity);
         SupplierEntity supplier = supplierFeign.getSupplierById(entity.getSupplierId());
         if(Objects.isNull(supplier)){
-            throw new ServiceException(ApiError.ERROR_96001);
+            throw new ServiceException(ApiError.ERROR_SUPPLIER_NOT_FOUND);
         }
         if(!supplier.getId().equals(entity.getSupplierId())){
-            throw new ServiceException(ApiError.ERROR_96002);
+            throw new ServiceException(ApiError.ERROR_SUPPLIER_DOC_USER_MISMATCH);
         }
         List<DeliveryOrderDetailEntity> detailEntityList = detailService.listByMainId(entity.getId());
         DeliveryOrderDTO.ViewDTO viewDTO = DeliveryOrderConverter.INSTANCE.viewConvert(entity,detailEntityList);

@@ -44,13 +44,13 @@ public class QcProductController extends BaseController {
     @GetMapping("/skuView")
     public ApiResult<ProductVO.ProductPackVO> getSkuInfo(@RequestParam("skuId") String skuId) {
         if (CharSequenceUtil.isBlank(skuId)) {
-            throw new ServiceException(ApiError.ERROR_95107);
+            throw new ServiceException(ApiError.ERROR_PLM_SKU_NOT_FOUND);
         }
         List<String> skuIdList = new ArrayList<>();
         skuIdList.add(skuId);
         List<ProductVO.ProductPackVO> packVOList = plmTaskFeign.getProductPackBySkuIds(skuIdList);
         if (CollectionUtils.isEmpty(packVOList)) {
-            throw new ServiceException(ApiError.ERROR_95107);
+            throw new ServiceException(ApiError.ERROR_PLM_SKU_NOT_FOUND);
         }
         return success(packVOList.get(0));
     }

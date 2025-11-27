@@ -51,7 +51,7 @@ public class ExportPlmProductTaskViewHandler extends AbstractPageFileEventHandle
         ProductTaskViewSearchDTO dto = threadLocal.get();
         String excelPath = "";
         if (Objects.isNull(dto.getType())) {
-            throw new ServiceException(ApiError.ERROR_95075);
+            throw new ServiceException(ApiError.ERROR_PLM_TASK_VIEW_EXPORT_TYPE_REQUIRED);
         }
         switch (dto.getType()) {
             case 1:

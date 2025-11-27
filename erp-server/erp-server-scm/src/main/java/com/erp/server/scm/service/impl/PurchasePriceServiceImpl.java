@@ -239,7 +239,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
     public PurchasePriceDTO.ViewDTO view(String id) {
         PurchasePriceEntity purchasePrice = this.getById(id);
         if (Objects.isNull(purchasePrice)) {
-            throw new ServiceException(ApiError.ERROR_98024);
+            throw new ServiceException(ApiError.ERROR_SCM_PURCHASE_PRICE_LIST_NOT_FOUND);
         }
         PurchasePriceDTO.ViewDTO viewDTO = new PurchasePriceDTO.ViewDTO();
         BeanMapper.copy(purchasePrice, viewDTO);
@@ -292,7 +292,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         String id = dto.getId();
         PurchasePriceEntity purchasePrice = this.getById(id);
         if (Objects.isNull(purchasePrice)) {
-            throw new ServiceException(ApiError.ERROR_98024);
+            throw new ServiceException(ApiError.ERROR_SCM_PURCHASE_PRICE_LIST_NOT_FOUND);
         }
         ApproveStatusEnum status = purchasePrice.getApproveStatus();
         PurchasePriceEntity old = new PurchasePriceEntity();
@@ -305,7 +305,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         statusList.add(rejectStatus);
         statusList.add(waitSubmitStatus);
         if (!statusList.contains(status.getStatus())) {
-            throw new ServiceException(ApiError.ERROR_98019);
+            throw new ServiceException(ApiError.ERROR_EDIT_ALLOWED_STATUS_ONLY);
         }
         BeanMapper.copy(dto, purchasePrice);
         //编号
@@ -353,7 +353,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
     public PurchasePriceEntity addAndSubmit(PurchasePriceDTO.AddDTO dto) {
         PurchasePriceEntity entity = this.add(dto);
         if (null == entity) {
-            throw new ServiceException(ApiError.ERROR_1019);
+            throw new ServiceException(ApiError.ERROR_CREATE_FAILED);
         }
         entity = this.getById(entity.getId());
         this.submitEntity(entity);
@@ -375,7 +375,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
     public PurchasePriceEntity updateAndSubmit(PurchasePriceDTO.UpdateDTO dto) {
         PurchasePriceEntity entity = this.updatePurchasePrice(dto);
         if (null == entity) {
-            throw new ServiceException(ApiError.ERROR_1020);
+            throw new ServiceException(ApiError.ERROR_UPDATE_FAILED);
         }
         this.submitEntity(entity);
         return entity;
@@ -397,7 +397,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
         long count = Stream.of(entity).filter(p -> !p.getApproveStatus().getStatus().equals(waitSubmitStatus)).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_98009);
+            throw new ServiceException(ApiError.ERROR_DELETE_ALLOWED_STATUS_ONLY);
         }
         List<String> ids = Collections.singletonList(entity.getId());
         //删除价目表
@@ -542,7 +542,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         String approveIngStatus = ApproveStatusEnum.APPROVE_ING.getStatus();
         long count = Stream.of(entity).filter(s -> !s.getApproveStatus().getStatus().equals(approveIngStatus)).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_98007);
+            throw new ServiceException(ApiError.ERROR_REVOKE_PROCESS_ALLOWED_STATUS_ONLY);
         }
         List<String> ids = Collections.singletonList(entity.getId());
 
@@ -603,7 +603,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
                 listApiResult = workflowFeign.curApprover(dtoList);
                 Integer code = listApiResult.getCode();
                 if (200 != code) {
-                    throw new ServiceException(new ApiResult(ApiError.DEFAULT.code,listApiResult.getMsg()));
+                    throw new ServiceException(new ApiResult(ApiError.DEFAULT.getCode(),listApiResult.getMsg()));
                 }
             }
 
@@ -657,7 +657,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         if (CollectionUtils.isNotEmpty(supplierIds)) {
             long count = lambdaQuery().in(PurchasePriceEntity::getSupplierId, supplierIds).count();
             if (count > 0) {
-                throw new ServiceException(ApiError.ERROR_98052);
+                throw new ServiceException(ApiError.ERROR_SCM_PURCHASE_PRICE_HAS_SUPPLIER_DELETE_FORBIDDEN);
             }
         }
 
@@ -898,10 +898,10 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public BatchResultDTO disApprove(PurchasePriceEntity entity,List<PurchasePriceDetailEntity> purchasePriceDetailEntities,List<PurchasePriceChangeDetailEntity> changeDetailEntityList) {
         if (!Objects.equals(ApproveStatusEnum.APPROVE, entity.getApproveStatus())) {
-            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_98014.getMsg());
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_REVERSE_APPROVAL_ALLOWED_APPROVED_ONLY.getMsg());
         }
         if (CollectionUtils.isNotEmpty(changeDetailEntityList)) {
-            return BatchResultDTO.fail(entity.getId(),entity.getCode(),String.format(ApiError.ERROR_NOT_DISAPPROVE_CHANGE.msg, entity.getCode()));
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),String.format(ApiError.ERROR_NOT_DISAPPROVE_CHANGE.getMsg(), entity.getCode()));
         }
         Boolean result = this.updateApproveStatus(Collections.singletonList(entity), ApproveStatusEnum.WAIT_SUBMIT);
         //反审核时移除sku和采购组织表记录

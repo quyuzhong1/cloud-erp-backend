@@ -268,7 +268,7 @@ public class ShopInfoController extends BaseController {
                         if (Objects.nonNull(disabled) && !Objects.equals(disabled, shop.getDisabled()) && Objects.equals(disabled, true)) {
                             Boolean flag = checkDmpThirdMapping(id);
                             if (!flag) {
-                                submit = BatchResultDTO.fail(id, shop.getName(), CharSequenceUtil.format(ApiError.EXIST_THIRD_SHOP_MAPPING.msg,shop.getName()));
+                                submit = BatchResultDTO.fail(id, shop.getName(), CharSequenceUtil.format(ApiError.EXIST_THIRD_SHOP_MAPPING.getMsg(),shop.getName()));
                             }else{
                                 flagCode = shop.getName();
                                 submit = shopInfoService.updateStatus(shop, disabled);

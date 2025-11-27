@@ -1060,7 +1060,7 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         //根据销售出库单id查询物流单
         List<LogisticsBillEntity> logisticsBillEntityList = logisticsBillService.listByOutstockIdList(Arrays.asList(soOutstockEntity.getId()));
         if (logisticsBillEntityList == null) {
-            throw new ServiceException(ApiError.ERROR_99058);
+            throw new ServiceException(ApiError.ERROR_WMS_SO_OUTBOUND_NOT_FOUND);
         }
         LogisticsBillEntity logisticsBillEntity = logisticsBillEntityList.get(0);
         List<LogisticsBillDetailEntity> billDetailEntities = logisticsBillDetailService.listByMainIds(Arrays.asList(logisticsBillEntityList.get(0).getId()));

@@ -188,7 +188,7 @@ public class SysUserFeignController extends BaseController {
         // 1. 获取用户基本信息
         FindUserDTO userByUserId = sysUserInfoService.getUserByUserId(userId);
         if (userByUserId == null) {
-            return failure(ApiError.USER_NOT_EXIST, null);
+            return failure(ApiError.ERROR_USER_NOT_FOUND, null);
         }
 
         SysUserDTO sysUserDTO = new SysUserDTO();

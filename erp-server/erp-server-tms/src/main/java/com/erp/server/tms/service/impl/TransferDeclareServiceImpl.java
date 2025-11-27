@@ -413,7 +413,7 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
     @Transactional(rollbackFor = Exception.class)
     public Boolean delete(List<String> ids) {
         if (CollectionUtil.isEmpty(ids)) {
-            throw new ServiceException(ApiError.ERROR_98004);
+            throw new ServiceException(ApiError.ERROR_SELECTION_REQUIRED);
         }
 
         //上传成功不能删除

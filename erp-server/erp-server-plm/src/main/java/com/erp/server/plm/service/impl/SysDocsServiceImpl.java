@@ -58,7 +58,7 @@ public class SysDocsServiceImpl extends ServiceImpl<SysDocsMapper, SysDocsEntity
         //获取到所有的文档名 如果存在id 就去掉这个name
         List<String> docsNames = getDocsNames(id);
         if (CollectionUtils.isNotEmpty(docsNames) && docsNames.contains(name)) {
-            throw new ServiceException(ApiError.ERROR_95003);
+            throw new ServiceException(ApiError.ERROR_PLM_DOC_NAME_EXISTS);
         }
         if (StringUtils.isBlank(id)) {
             docsEntity.setCreateUser(userName);

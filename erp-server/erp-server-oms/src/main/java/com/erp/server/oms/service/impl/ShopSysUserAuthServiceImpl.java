@@ -104,19 +104,19 @@ public class ShopSysUserAuthServiceImpl extends SuperServiceImpl<ShopSysUserAuth
         List<String> shopIdList = list.stream().map(ShopSysUserAuthEntity::getShopId).collect(Collectors.toList());
         List<ShopInfoEntity> shopList = shopInfoService.listByIds(shopIdList);
         if (CollectionUtils.isEmpty(shopList)) {
-            throw new ServiceException(ApiError.ERROR_92058);
+            throw new ServiceException(ApiError.ERROR_SHOP_NOT_FOUND);
         }
         //平台信息
         List<DictBasicDTO.ViewDTO> dictList = dictBasicService.getByKey(DictBasicTypeEnum.SALES_PLATFORM.getType());
         if (CollectionUtils.isEmpty(dictList)) {
-            throw new ServiceException(ApiError.ERROR_92053);
+            throw new ServiceException(ApiError.ERROR_PLATFORM_NOT_FOUND);
         }
         List<ShopSysUserAuthDTO.ViewShopDTO> detailList = new ArrayList<>();
         for (ShopSysUserAuthEntity entity : list) {
             //店铺
             ShopInfoEntity shopInfoEntity = shopList.stream().filter(obj -> obj.getId().equals(entity.getShopId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(shopInfoEntity)) {
-                throw new ServiceException(ApiError.ERROR_92058);
+                throw new ServiceException(ApiError.ERROR_SHOP_NOT_FOUND);
             }
             //平台
             String dictPlatformName = dictList.stream().filter(obj -> obj.getValue().equals(shopInfoEntity.getDictPlatform())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");

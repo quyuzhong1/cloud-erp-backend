@@ -395,7 +395,7 @@ public class SoPriceChangeDetailServiceImpl extends SuperServiceImpl<SoPriceChan
         }
         SoPriceChangeEntity soPriceChangeEntity = soPriceChangeService.getById(soPriceChangeId);
         if (ObjUtil.isEmpty(soPriceChangeEntity)) {
-            throw new ServiceException(ApiError.ERROR_98028);
+            throw new ServiceException(ApiError.ERROR_SCM_PURCHASE_PRICE_CHANGE_NOT_FOUND);
         }
         //区间验证
         checkSoPriceChangeDetail(soPriceChangeEntity.getSoOrgId(),list);

@@ -1074,7 +1074,7 @@ public class PackagePlanServiceImpl extends SuperServiceImpl<PackagePlanMapper, 
         addTaskDTO.setFirstNodeInputData(map);
         workflowTaskRecordEntities = workflowTaskRecordService.addTask(addTaskDTO);
         if(CollUtil.isEmpty(workflowTaskRecordEntities)){
-            throw new ServiceException(ApiError.NOT_EXIST,DictBasicTypeEnum.WORKFLOW_TASK_NODE.getDesc());
+            throw new ServiceException(ApiError.ERROR_NOT_EXIST,DictBasicTypeEnum.WORKFLOW_TASK_NODE.getDesc());
         }
         SendResult result = mqProducerService.syncClassMsgWithDelayLevel(RocketMqTopic.OMS_WORKFLOW_TASK_RECORD_TOPIC, RocketMqTagEnum.OMS_WORKFLOW_TASK_RECORD_TAG.getName(), addTaskDTO, dto.getSoId(),2);
         if (!result.getSendStatus().equals(SendStatus.SEND_OK)) {

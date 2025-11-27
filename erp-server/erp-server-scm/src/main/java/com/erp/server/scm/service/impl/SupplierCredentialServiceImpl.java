@@ -482,7 +482,7 @@ public class SupplierCredentialServiceImpl extends SuperServiceImpl<SupplierCred
             List<SupplierCredentialDTO.AddDTO> list = credentialList.stream().filter(c -> c.getEffectiveDate() != null && c.getExpireDate() != null).collect(Collectors.toList());
             long count = list.stream().filter(c -> c.getExpireDate().compareTo(c.getEffectiveDate()) < 0).count();
             if (count > 0) {
-                throw new ServiceException(ApiError.ERROR_98037);
+                throw new ServiceException(ApiError.ERROR_SCM_QUALIFICATION_VALID_FROM_NOT_AFTER_TO);
             }
         }
     }
@@ -500,7 +500,7 @@ public class SupplierCredentialServiceImpl extends SuperServiceImpl<SupplierCred
             LocalDate effectiveDate = supplierCredentialEntity.getEffectiveDate();
             LocalDate expireDate = supplierCredentialEntity.getExpireDate();
             if(Objects.nonNull(effectiveDate) && Objects.nonNull(expireDate) && expireDate.compareTo(effectiveDate) < 0){
-                throw new ServiceException(ApiError.ERROR_98037);
+                throw new ServiceException(ApiError.ERROR_SCM_QUALIFICATION_VALID_FROM_NOT_AFTER_TO);
             }
         }
     }

@@ -189,7 +189,7 @@ public class TemplateMembersServiceImpl extends ServiceImpl<TemplateMembersMappe
     public Boolean saveTemplateMembers(TemplateMembersAddOrUpdateDTO dto) {
         List<TemplateMembersDTO> membersDtoList = dto.getMembersList();
         if (CollectionUtils.isEmpty(membersDtoList)) {
-            throw new ServiceException(ApiError.ERROR_95060);
+            throw new ServiceException(ApiError.ERROR_PLM_TEMPLATE_MEMBER_REQUIRED);
         }
         //角色和成员关联表数据集合
         List<TemplateRoleRefMembersEntity> roleRefMembersList = new ArrayList<>();
@@ -203,7 +203,7 @@ public class TemplateMembersServiceImpl extends ServiceImpl<TemplateMembersMappe
             List<String> intersectionList = (List<String>) CollectionUtils.intersection(collect1, collect2);
             //表示有交集不能再次生成
             if (CollectionUtils.isNotEmpty(intersectionList)) {
-                throw new ServiceException(ApiError.ERROR_95061);
+                throw new ServiceException(ApiError.ERROR_PLM_TEMPLATE_ROLE_MEMBER_ALREADY_EXISTS);
             }
         }
         //获取登录人信息
@@ -252,7 +252,7 @@ public class TemplateMembersServiceImpl extends ServiceImpl<TemplateMembersMappe
     public Boolean updateTemplateMembers(TemplateMembersAddOrUpdateDTO dto) {
         List<TemplateMembersDTO> membersDtoList = dto.getMembersList();
         if (CollectionUtils.isEmpty(membersDtoList)) {
-            throw new ServiceException(ApiError.ERROR_95060);
+            throw new ServiceException(ApiError.ERROR_PLM_TEMPLATE_MEMBER_REQUIRED);
         }
         //编辑时成员仅有一个
         TemplateMembersDTO templateMembersDTO = membersDtoList.stream().findFirst().orElse(null);
@@ -261,7 +261,7 @@ public class TemplateMembersServiceImpl extends ServiceImpl<TemplateMembersMappe
         if (CollectionUtils.isNotEmpty(membersList)) {
             long count = membersList.stream().filter(obj -> obj.getMemberId().equals(templateMembersDTO.getMemberId()) && !obj.getId().equals(templateMembersDTO.getId())).count();
             if (count > 0) {
-                throw new ServiceException(ApiError.ERROR_95061);
+                throw new ServiceException(ApiError.ERROR_PLM_TEMPLATE_ROLE_MEMBER_ALREADY_EXISTS);
             }
         }
         //获取登录人信息
@@ -321,13 +321,13 @@ public class TemplateMembersServiceImpl extends ServiceImpl<TemplateMembersMappe
             //判断成员是否被引用
             List<TemplateTaskEntity> templateTaskList = templateTaskService.listByRoleId(roleRefMembers.getRoleId());
             if (CollectionUtils.isNotEmpty(templateTaskList)) {
-                throw new ServiceException(ApiError.ERROR_95129);
+                throw new ServiceException(ApiError.ERROR_PLM_ROLE_REF_DELETE_FORBIDDEN);
             }
             TemplateRoleEntity templateRoleEntity = templateRoleService.getByTemplateIdAndRoleId(roleRefMembers.getTemplateId(), roleRefMembers.getRoleId());
             if (ObjectUtils.isNotEmpty(templateRoleEntity)) {
                 List<TaskChargeDistributionEntity> taskChargeDistributionList = taskChargeDistributionService.listBySourceAndRoleName(Arrays.asList(MathUtil.ONE, MathUtil.TWO), templateRoleEntity.getName());
                 if (CollectionUtils.isNotEmpty(taskChargeDistributionList)) {
-                    throw new ServiceException(ApiError.ERROR_95129);
+                    throw new ServiceException(ApiError.ERROR_PLM_ROLE_REF_DELETE_FORBIDDEN);
                 }
                 templateRoleService.removeByIdAndTemplateId(roleRefMembers.getRoleId(), roleRefMembers.getTemplateId());
 

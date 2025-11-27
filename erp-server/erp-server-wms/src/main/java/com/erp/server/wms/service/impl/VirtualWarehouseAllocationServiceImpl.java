@@ -729,13 +729,13 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
                 if (v > 1) {
                     switch (VirtualWarehouseAllocationTypeEnum.getEnum(type)) {
                         case ALLOCATION:
-                            msg.append(CharSequenceUtil.format(ApiError.ERROR_ALLOCATION_UNIQUE_ERROR.msg, split[0], split[1], split[3]));
+                            msg.append(CharSequenceUtil.format(ApiError.ERROR_ALLOCATION_UNIQUE_ERROR.getMsg(), split[0], split[1], split[3]));
                             break;
                         case TRANSFER:
-                            msg.append(CharSequenceUtil.format(ApiError.ERROR_ALLOCATION_TRANSFER_UNIQUE_ERROR.msg, split[0], split[1], split[2], split[3]));
+                            msg.append(CharSequenceUtil.format(ApiError.ERROR_ALLOCATION_TRANSFER_UNIQUE_ERROR.getMsg(), split[0], split[1], split[2], split[3]));
                             break;
                         case CANCEL:
-                            msg.append(CharSequenceUtil.format(ApiError.ERROR_ALLOCATION_CANCEL_UNIQUE_ERROR.msg, split[0], split[1], split[2]));
+                            msg.append(CharSequenceUtil.format(ApiError.ERROR_ALLOCATION_CANCEL_UNIQUE_ERROR.getMsg(), split[0], split[1], split[2]));
                             break;
                         default:
                             throw new ServiceException(ApiError.ERROR_ALLOCATION_UNIQUE_ERROR);

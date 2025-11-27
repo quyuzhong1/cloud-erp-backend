@@ -47,7 +47,7 @@ public class SupplierGradeServiceImpl extends SuperServiceImpl<SupplierGradeMapp
         //查询是否 有供应商占用 要删除的id 如果有就不能删除
         int occupiedCount = supplierService.occupiedGrade(deleteIdList);
         if (occupiedCount > 0) {
-            throw new ServiceException(ApiError.ERROR_98044);
+            throw new ServiceException(ApiError.ERROR_SCM_SUPPLIER_LEVEL_IN_USE);
         }
 
 
@@ -71,7 +71,7 @@ public class SupplierGradeServiceImpl extends SuperServiceImpl<SupplierGradeMapp
     public Boolean checkDelete(String id) {
         int occupiedCount = supplierService.occupiedGrade(Arrays.asList(id));
         if (occupiedCount > 0) {
-            throw new ServiceException(ApiError.ERROR_98044);
+            throw new ServiceException(ApiError.ERROR_SCM_SUPPLIER_LEVEL_IN_USE);
         }
         return true;
     }
@@ -126,7 +126,7 @@ public class SupplierGradeServiceImpl extends SuperServiceImpl<SupplierGradeMapp
         }
 
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_98000);
+            throw new ServiceException(ApiError.ERROR_SCM_SUPPLIER_LEVEL_NAME_EXISTS);
         }
 
     }

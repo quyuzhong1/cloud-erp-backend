@@ -216,7 +216,7 @@ public class RuleOrderApprovalServiceImpl extends SuperServiceImpl<RuleOrderAppr
         isExist(ruleOrderApproval);
         Boolean disabled = ruleOrderApproval.getDisabled();
         if (disabled.equals(dto.getState())) {
-            throw new ServiceException(ApiError.ERROR_98027);
+            throw new ServiceException(ApiError.ERROR_SCM_INCONSISTENT_DISABLE_STATUS);
         }
         String content = String.format("启用状态[%s]变更为[%s]", disabled ? "停用" : "启用", disabled ? "启用" : "停用");
         ruleOrderApproval.setDisabled(dto.getState());

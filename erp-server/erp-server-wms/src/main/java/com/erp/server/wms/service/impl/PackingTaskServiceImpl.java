@@ -445,7 +445,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
                 packQty += packedQty;
             }
             if (packQty> deliveryQty){
-                throw new ServiceException(CharSequenceUtil.format(ApiError.ERROR_PACKING_QTY_NOT_ZERO.msg,taskDetailEntity.getSkuNo(), packQty, deliveryQty));
+                throw new ServiceException(CharSequenceUtil.format(ApiError.ERROR_PACKING_QTY_NOT_ZERO.getMsg(),taskDetailEntity.getSkuNo(), packQty, deliveryQty));
             }
         });
     }
@@ -509,7 +509,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
                 packQty += packedQty;
             }
             if (packQty> deliveryQty){
-                throw new ServiceException(CharSequenceUtil.format(ApiError.ERROR_PACKING_SKU_FNSKU_QTY_EXCEEDS_DELIVERY.msg,taskDetailEntity.getSkuNo(),taskDetailEntity.getFnSku(), packQty, deliveryQty));
+                throw new ServiceException(CharSequenceUtil.format(ApiError.ERROR_PACKING_SKU_FNSKU_QTY_EXCEEDS_DELIVERY.getMsg(),taskDetailEntity.getSkuNo(),taskDetailEntity.getFnSku(), packQty, deliveryQty));
             }
         });
     }
@@ -1549,7 +1549,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
                 //校验累计装箱数量不可大于发货数量
                 Integer deliveryQty = taskDetailEntityList.stream().filter(e -> Objects.nonNull(e) && e.getSkuId().equals(adjustDetailDTO.getSkuId()) && Objects.equals(adjustDetailDTO.getFnSku(), e.getFnSku())).map(PackingTaskDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
                 if ((packQty + adjustQty)> deliveryQty){
-                    throw new ServiceException(CharSequenceUtil.format(ApiError.ERROR_PACKING_SKU_FNSKU_QTY_EXCEEDS_DELIVERY.msg,adjustDetailDTO.getSkuNo(), packQty + adjustQty, deliveryQty));
+                    throw new ServiceException(CharSequenceUtil.format(ApiError.ERROR_PACKING_SKU_FNSKU_QTY_EXCEEDS_DELIVERY.getMsg(),adjustDetailDTO.getSkuNo(), packQty + adjustQty, deliveryQty));
                 }
             });
 
@@ -1598,7 +1598,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
                 //校验累计装箱数量不可大于发货数量
                 Integer deliveryQty = taskDetailEntityList.stream().filter(e -> Objects.nonNull(e) && e.getSkuId().equals(adjustDetailDTO.getSkuId()) && Objects.equals(adjustDetailDTO.getFnSku(), e.getFnSku())).map(PackingTaskDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
                 if (adjustQty > deliveryQty){
-                    throw new ServiceException(CharSequenceUtil.format(ApiError.ERROR_PACKING_SKU_FNSKU_QTY_EXCEEDS_DELIVERY.msg,adjustDetailDTO.getSkuNo(), adjustQty, deliveryQty));
+                    throw new ServiceException(CharSequenceUtil.format(ApiError.ERROR_PACKING_SKU_FNSKU_QTY_EXCEEDS_DELIVERY.getMsg(),adjustDetailDTO.getSkuNo(), adjustQty, deliveryQty));
                 }
             });
         }

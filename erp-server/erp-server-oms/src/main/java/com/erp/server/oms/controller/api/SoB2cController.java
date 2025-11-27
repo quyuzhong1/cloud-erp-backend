@@ -1623,7 +1623,7 @@ public class SoB2cController extends BaseController {
             }
             //订单更换发货SKU操作只能在待提交和审核不通过状态操作
             if (!(ApproveStatusEnum.WAIT_SUBMIT.equals(entity.getApproveStatus()) || ApproveStatusEnum.REJECT.equals(entity.getApproveStatus()))){
-                result = BatchResultDTO.fail(dto.getId(), entity.getCode(), StrUtil.format(ApiError.ERROR_92154.msg, entity.getCode()));
+                result = BatchResultDTO.fail(dto.getId(), entity.getCode(), StrUtil.format(ApiError.ERROR_SO_REPLACE_SKU_FORBIDDEN.getMsg(), entity.getCode()));
                 resultDTOS.add(result);
                 continue;
             }

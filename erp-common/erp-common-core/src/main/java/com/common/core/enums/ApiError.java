@@ -666,6 +666,7 @@ public enum ApiError implements Serializable {
     ERROR_EDIT_ALLOWED_STATUS_ONLY(98019,"只有审核不通过和待提交才能编辑"),
     ERROR_SCM_SUPPLIER_STAGE_INVALID(98020,"供应商当前阶段有误"),
     ERROR_SCM_EDIT_ALLOWED_STATUS_ONLY(98021,"只有审核不通过和待提交才能编辑"),
+    ERROR_REPEAT_SKU(98022,"存在重复的SKU,不可提交"),
     ERROR_INTERVAL_OVERLAP(98023,"区间存在重叠，不可提交"),
     ERROR_INTERVAL_SUPPLIER_OVERLAP(98047,"该供应商SKU区间存在重叠，不可提交"),
     ERROR_MACHINE_EXIST_TRANSFER_INFO(98102,"【{}】已存在下推直接调拨单，不支持反审核"),
@@ -1641,7 +1642,6 @@ public enum ApiError implements Serializable {
     ERROR_MARKETPLACE_UNAUTHORIZED(100000,"亚马逊店铺已被禁用:{}"),
 
     ERROR_PO_APPLY_QTY_MORE(99998,"采购申请单【{}】下级SKU【{}】采购数量不能大于待申请数量"),
-    ERROR_99998(99998,"采购申请单【{}】下级SKU【{}】采购数量不能大于待申请数量"),
     ERROR_99999(99999, "参数错误"),
 
     // 单点登录相关错误码

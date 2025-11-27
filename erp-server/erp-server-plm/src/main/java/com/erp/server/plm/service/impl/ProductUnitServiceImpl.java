@@ -58,7 +58,7 @@ public class ProductUnitServiceImpl extends ServiceImpl<ProductUnitMapper, Produ
     public Boolean delete(String id){
         ProductUnitEntity entity = this.getById(id);
         if (entity.getOccupyStatus()) {
-            throw new ServiceException(ApiError.ERROR_95168);
+            throw new ServiceException(ApiError.ERROR_PLM_VARIANT_VALUES_REF_DELETE_FORBIDDEN);
         }
         LambdaQueryWrapper<ProductUnitEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(ProductUnitEntity::getId, id);

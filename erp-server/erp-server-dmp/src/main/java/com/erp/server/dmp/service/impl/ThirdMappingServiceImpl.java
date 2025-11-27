@@ -626,7 +626,7 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
         if (ThirdSysTypeEnum.SHOP.getCode().equals(thirdMappingEntity.getType())) {
             //校验系统店铺是否存在
             ShopInfoEntity shopInfoEntity = Optional.ofNullable(shopInfoFeign.getShopInfoById(thirdMappingEntity.getSysId()))
-                    .orElseThrow(() -> new ServiceException(ApiError.ERROR_92058));
+                    .orElseThrow(() -> new ServiceException(ApiError.ERROR_SHOP_NOT_FOUND));
             //校验第三方店铺是否存在
             ThirdShopEntity thirdShopEntity = thirdShopService.getByIdOpt(thirdMappingEntity.getThirdId())
                     .orElseThrow(() -> new ServiceException(ApiError.ERROR_THIRD_SHOP_NOTFOUND));
@@ -637,7 +637,7 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
         } else {
             //校验系统仓库是否存在
             List<WarehouseDTO.ListDTO> listDTOS = Optional.ofNullable(wmsWarehouseFeign.listByIds(Collections.singletonList(thirdMappingEntity.getSysId())))
-                    .orElseThrow(() -> new ServiceException(ApiError.ERROR_92058));
+                    .orElseThrow(() -> new ServiceException(ApiError.ERROR_SHOP_NOT_FOUND));
             if (PlatformDictEnum.WDT.getCode().equals(thirdMappingEntity.getThirdSysType())) {
 
                 //校验第三方仓库是否存在

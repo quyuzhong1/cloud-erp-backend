@@ -242,7 +242,7 @@ public class SoB2cCoreServiceImpl implements SoB2cCoreService {
     @Transactional(rollbackFor = Exception.class)
     public Boolean retryOutstock(List<SoB2cCoreDTO.RetryOutstockDTO> list) {
         if (CollUtil.isEmpty(list)) {
-            throw new ServiceException(ApiError.ERROR_98004);
+            throw new ServiceException(ApiError.ERROR_SELECTION_REQUIRED);
         }
         List<String> b2cSoIdList = list.stream().map(SoB2cCoreDTO.RetryOutstockDTO::getB2cSoId).distinct().collect(Collectors.toList());
         List<SoB2cEntity> soB2cList = soB2cService.listByIds(b2cSoIdList);

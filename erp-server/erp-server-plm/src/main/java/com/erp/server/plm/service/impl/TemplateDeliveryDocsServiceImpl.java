@@ -270,7 +270,7 @@ public class TemplateDeliveryDocsServiceImpl extends ServiceImpl<TemplateDeliver
             Long count = deliveryDocsList.stream().filter(d -> d.getDocsNameId().equals(dto.getId())&& StringUtils.isNotBlank(d.getTaskId())).count();
             //表示有引用
             if (count > 0) {
-                throw new ServiceException(ApiError.ERROR_95156);
+                throw new ServiceException(ApiError.ERROR_PLM_DOC_REF_CLOSE_FORBIDDEN);
             }
         }
         taskDocsNameEntity.setStatus(dto.getStatus());

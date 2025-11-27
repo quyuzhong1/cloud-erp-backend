@@ -34,7 +34,7 @@ public class CommonServiceImpl implements CommonService {
         //查询供应商信息
         SupplierEntity supplier = supplierFeign.getSupplierByUid(loginUser.getUid());
         if(Objects.isNull(supplier)){
-            throw new ServiceException(ApiError.ERROR_96001);
+            throw new ServiceException(ApiError.ERROR_SUPPLIER_NOT_FOUND);
         }
         return supplier;
     }

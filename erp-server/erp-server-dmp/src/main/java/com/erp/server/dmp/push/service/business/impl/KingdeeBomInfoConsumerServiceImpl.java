@@ -64,7 +64,7 @@ public class KingdeeBomInfoConsumerServiceImpl implements KingdeeBomInfoConsumer
 
         PlatformEntity platformEntity = kingdeeCommonService.getPlatformEntity(map, PlatformEnum.KINGDEE.getDesc());
         if (ObjectUtils.isEmpty(platformEntity)) {
-            throw new ServiceException(ApiError.ERROR_97022);
+            throw new ServiceException(ApiError.ERROR_DMP_PLATFORM_NAME_NOT_FOUND);
         }
         //读取配置，初始化SDK
         KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.ENG_BOM.getCode());

@@ -672,9 +672,9 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
         List<CfgApiFieldMapDTO> mapList = cfgApiFieldMapService.getByParams(dto);
         //未配置发送字段
         if (CollectionUtil.isEmpty(mapList)) {
-            log.error(ApiError.ERROR_97025.getMsg());
+            log.error(ApiError.ERROR_DMP_FIELD_MAPPING_NOT_SET_PUSH_FORBIDDEN.getMsg());
             //错误日志
-            throw new ServiceException(ApiError.ERROR_97025);
+            throw new ServiceException(ApiError.ERROR_DMP_FIELD_MAPPING_NOT_SET_PUSH_FORBIDDEN);
         }
         JSONObject json = kingdeeCommonService.makeApiFieldJson(dataMap, platformEntity.getId(), modelType);
         KingdeeParamDTO.SaveParamDTO param = new KingdeeParamDTO.SaveParamDTO(json);
@@ -688,7 +688,7 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
         boolean save = saveResult.getResponseStatus().isIsSuccess();
         if (!save) {
             log.error("KingdeeCommonServiceImpl>>>addKingdeeRecord>>>调用金蝶保存接口失败saveResult:{}", saveResult);
-            throw new ServiceException(ApiError.ERROR_KINGDEE_SAVE);
+            throw new ServiceException(ApiError.ERROR_K3_SAVE_FAILED);
         }
         return saveResult.getId();
     }

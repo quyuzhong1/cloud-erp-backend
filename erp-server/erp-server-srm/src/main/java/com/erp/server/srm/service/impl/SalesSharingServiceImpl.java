@@ -127,7 +127,7 @@ public class SalesSharingServiceImpl extends SuperServiceImpl<SalesSharingMapper
 
         String permission = cfgSupplierSalesList.get(0).getPermission();
         if(!Objects.equals(permission, CfgSupplierSalesPermissionEnum.DOWNLOAD.getCode())){
-            return ApiError.NO_PERMISSION.msg;
+            return ApiError.ERROR_PERM_DENIED.getMsg();
         }
         //供应商id
         pagingDTO.setSupplierId(supplierIds.get(0));

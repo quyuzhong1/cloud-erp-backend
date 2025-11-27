@@ -137,7 +137,7 @@ public class PurchaseApplicationDetailServiceImpl extends SuperServiceImpl<Purch
         List<String> destWarehouseIdList = newList.stream().map(PurchaseApplicationDetailEntity::getDestWarehouseId).distinct().collect(Collectors.toList());
         List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(destWarehouseIdList);
         if (CollectionUtils.isEmpty(warehouseList)) {
-            throw new ServiceException(ApiError.ERROR_99002);
+            throw new ServiceException(ApiError.ERROR_WMS_WAREHOUSE_NOT_FOUND);
         }
         List<String> orgIds = warehouseList.stream().map(WarehouseDTO.UpdateDTO::getOrgId).distinct().collect(Collectors.toList());
 
@@ -164,14 +164,14 @@ public class PurchaseApplicationDetailServiceImpl extends SuperServiceImpl<Purch
 
             WarehouseDTO.UpdateDTO warehouseDTO = warehouseList.stream().filter(obj -> obj.getId().equals(entity.getDestWarehouseId())).findFirst().orElse(null);
             if (org.springframework.util.ObjectUtils.isEmpty(warehouseDTO)) {
-                throw new ServiceException(ApiError.ERROR_99002);
+                throw new ServiceException(ApiError.ERROR_WMS_WAREHOUSE_NOT_FOUND);
             }
             entity.setDestWarehouseName(warehouseDTO.getName());
             entity.setReceiveOrgId(warehouseDTO.getOrgId());
             entity.setSourceJson(JSONUtil.parseArray(entity.getSourceJsonList()));
             //核算公司
             if (CollectionUtils.isEmpty(accountingCompanyList)) {
-                throw new ServiceException(ApiError.ERROR_9040);
+                throw new ServiceException(ApiError.ERROR_COMPANY_NOT_FOUND);
             }
 
             //采购组织名称
@@ -203,7 +203,7 @@ public class PurchaseApplicationDetailServiceImpl extends SuperServiceImpl<Purch
             if (StringUtils.isNotBlank(entity.getId())) {
                 PurchaseApplicationDetailEntity old = this.getById(entity.getId());
                 if (ObjectUtils.isEmpty(old)) {
-                    throw new ServiceException(ApiError.ERROR_98017);
+                    throw new ServiceException(ApiError.ERROR_SCM_PO_APPLY_DETAIL_NOT_FOUND);
                 }
                 moduleOperateLogService.addModuleOperateLogByObj(old,entity, ModuleTypeEnum.PURCHASE_APPLICATION.getCode(),purchaseApplicationId,"",String.format("【%s】",old.getSkuNo()));
             }

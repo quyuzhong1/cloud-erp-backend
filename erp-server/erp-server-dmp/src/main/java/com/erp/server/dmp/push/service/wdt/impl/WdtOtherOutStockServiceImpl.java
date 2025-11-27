@@ -66,15 +66,15 @@ public class WdtOtherOutStockServiceImpl implements WdtOtherOutStockService {
                 List<String> skuList = goodsList.stream().filter(item -> item.getPositionNo().equals(positionNo)).map(CreateOtherStockoutRequest.GoodsList::getSpecNo).distinct().collect(Collectors.toList());
                 message.append("，受影响SKU：").append(String.join(",", skuList));
             }
-            throw new ServiceException(ApiError.ERROR_3000.code, String.format("推送旺店通其他出库单异常: %s", message));
+            throw new ServiceException(ApiError.ERROR_WDT_API.getCode(), String.format("推送旺店通其他出库单异常: %s", message));
         }
         if(response.getStatus() != 0){
             log.error("旺店通其他出库单推送失败，request：{}， response：{}", stockoutRequest, response);
-            throw new ServiceException(ApiError.ERROR_3000.code, String.format("推送旺店通其他出库单失败: %s, %s, %s", stockoutRequest.getOuterNo(), response.getStatus(), response.getMessage()));
+            throw new ServiceException(ApiError.ERROR_WDT_API.getCode(), String.format("推送旺店通其他出库单失败: %s, %s, %s", stockoutRequest.getOuterNo(), response.getStatus(), response.getMessage()));
         }
         if(null != response.getData() && null != response.getData().getStatus() && 0 != response.getData().getStatus()){
             log.error("旺店通其他出库单审核失败，request：{}，response：{}", stockoutRequest, response);
-            throw new ServiceException(ApiError.ERROR_3000.code, String.format("推送旺店通其他出库单审核失败: %s, %s", response.getData().getStatus(), response.getData().getMessage()));
+            throw new ServiceException(ApiError.ERROR_WDT_API.getCode(), String.format("推送旺店通其他出库单审核失败: %s, %s", response.getData().getStatus(), response.getData().getMessage()));
         }
     }
 
@@ -111,16 +111,16 @@ public class WdtOtherOutStockServiceImpl implements WdtOtherOutStockService {
             response = stockExternalOutApi.createOrder(request.get("order"), request.get("order_details"), request.get("is_check"));
         } catch (WdtErpException e) {
             log.error("推送旺店通其他出库单失败:{}", e.getMessage(), e);
-            throw new ServiceException(ApiError.ERROR_3000.code, String.format("推送旺店通其他出库单失败: %s", e.getMessage()));
+            throw new ServiceException(ApiError.ERROR_WDT_API.getCode(), String.format("推送旺店通其他出库单失败: %s", e.getMessage()));
         }
         if(response.getStatus() != 0){
             log.error("推送旺店通其他出库单失败:{}", response.getMessage());
-            throw new ServiceException(ApiError.ERROR_3000.code, String.format("推送旺店通其他出库单失败: %s", response.getMessage()));
+            throw new ServiceException(ApiError.ERROR_WDT_API.getCode(), String.format("推送旺店通其他出库单失败: %s", response.getMessage()));
         }
         Map<String, Object> data = response.getData();
         if(ObjectUtils.isNotEmpty(data) && !data.get("status").equals("0")) {
             log.error("推送旺店通其他出库单异常:{}", data.get("message"));
-            throw new ServiceException(ApiError.ERROR_3000.code, String.format("推送旺店通其他入库单异常: %s", data.get("message")));
+            throw new ServiceException(ApiError.ERROR_WDT_API.getCode(), String.format("推送旺店通其他入库单异常: %s", data.get("message")));
         }
     }
 

@@ -425,7 +425,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
 
         //明细字段转换
         if (CollUtil.isEmpty(details)) {
-            throw new ServiceException(ApiError.ERROR_92029);
+            throw new ServiceException(ApiError.ERROR_SO_OUTBOUND_DETAIL_REQUIRED);
         }
         //订单明细
         List<BiDeliveryDetailItemEntity> orderItemEntities = new ArrayList<>(details.size());

@@ -58,7 +58,7 @@ public class SysTaskPhaseServiceImpl extends ServiceImpl<SysTaskPhaseMapper, Sys
             Integer isProjectApproval = entity.getIsProjectApproval();
             //如果是立项任务阶段名  那就不能更改
             if (IsConstant.YES.equals(isProjectApproval) && !taskPhaseName.equals(entity.getName())) {
-                throw new ServiceException(ApiError.ERROR_95008);
+                throw new ServiceException(ApiError.ERROR_PLM_STAGE_INITIATION_NAME_IMMUTABLE);
             }
         }
         this.updateById(entity);
@@ -76,7 +76,7 @@ public class SysTaskPhaseServiceImpl extends ServiceImpl<SysTaskPhaseMapper, Sys
     @Override
     public void batchSaveOrUpdate(List<UpdateBasicNameDTO> list) {
         if (CollectionUtils.isEmpty(list)) {
-            throw new ServiceException(ApiError.ERROR_95002);
+            throw new ServiceException(ApiError.ERROR_PLM_STAGE_TASK_NAME_REQUIRED);
         }
         List<String> phaseNames = list.stream().filter(p -> StringUtils.isBlank(p.getId())).map(UpdateBasicNameDTO::getName).collect(Collectors.toList());
         //获取系统 任务阶段名集合
@@ -132,7 +132,7 @@ public class SysTaskPhaseServiceImpl extends ServiceImpl<SysTaskPhaseMapper, Sys
         projectTaskSysService.checkQuotePhase(id);
 
         if (!Objects.isNull(taskPhase) && IsConstant.YES.equals(taskPhase.getIsProjectApproval())) {
-            throw new ServiceException(ApiError.ERROR_95020);
+            throw new ServiceException(ApiError.ERROR_PLM_STAGE_INITIATION_NAME_DELETE_FORBIDDEN);
         }
         return this.removeById(id);
     }
@@ -191,7 +191,7 @@ public class SysTaskPhaseServiceImpl extends ServiceImpl<SysTaskPhaseMapper, Sys
         queryWrapper.eq(SysTaskPhaseEntity::getName, taskPhaseName);
         int count = this.count(queryWrapper);
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_95001);
+            throw new ServiceException(ApiError.ERROR_PLM_STAGE_TASK_NAME_EXISTS);
         }
 
     }

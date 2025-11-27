@@ -183,14 +183,14 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
         //主表信息
         SalesDemandEntity entity = this.getById(id);
         if (ObjectUtils.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_98001);
+            throw new ServiceException(ApiError.ERROR_SCM_STOCK_APPLY_NOT_FOUND);
         }
         BeanMapperUtils.copy(entity, dto);
 
         //明细信息
         List<SalesDemandDetailEntity> entityDetails = salesDemandDetailService.listBySalesDemandId(id);
         if (CollectionUtils.isEmpty(entityDetails)) {
-            throw new ServiceException(ApiError.ERROR_98002);
+            throw new ServiceException(ApiError.ERROR_SCM_STOCK_APPLY_DETAIL_NOT_FOUND);
         }
         List<SalesDemandDetailDTO.UpdateDTO> details = BeanMapperUtils.copyList(SalesDemandDetailDTO.UpdateDTO.class, entityDetails);
         dto.setDetails(details);
@@ -205,11 +205,11 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
         //非待提交和审核不通过不能作废
         long count = list.stream().filter(obj -> !ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(obj.getApproveStatus())).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_98005);
+            throw new ServiceException(ApiError.ERROR_VOID_ALLOWED_STATUS_ONLY);
         }
         long invalidCount = list.stream().filter(obj -> InvalidStatusEnum.VOIDED.getStatus().equals(obj.getInvalidStatus())).count();
         if (invalidCount > 0) {
-            throw new ServiceException(ApiError.ERROR_98012);
+            throw new ServiceException(ApiError.ERROR_ALREADY_VOID_CANNOT_VOID_AGAIN);
         }
         log.info("备货申请单作废，ids=【{}】", JSONUtil.toJsonStr(ids));
 
@@ -263,7 +263,7 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
         //审核中允许审核
         long count = list.stream().filter(obj -> !ApproveStatusEnum.APPROVE_ING.getStatus().equals(obj.getApproveStatus())).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_98007);
+            throw new ServiceException(ApiError.ERROR_REVOKE_PROCESS_ALLOWED_STATUS_ONLY);
         }
         log.info("备货申请单撤销流程，id=【{}】", ids);
 
@@ -289,7 +289,7 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
     public BatchResultDTO disApprove(SalesDemandEntity entity) {
         //已审核允许反审核
         if (!ApproveStatusEnum.APPROVE.getStatus().equals(entity.getApproveStatus())) {
-            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_98014.getMsg());
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_REVERSE_APPROVAL_ALLOWED_APPROVED_ONLY.getMsg());
         }
         log.info("备货申请单反审核，id=【{}】", entity.getId());
 
@@ -310,13 +310,13 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
         //待提交允许删除
 //        long count = list.stream().filter(obj -> !ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus())).count();
 //        if (count > 0) {
-//            throw new ServiceException(ApiError.ERROR_98009);
+//            throw new ServiceException(ApiError.ERROR_DELETE_ALLOWED_STATUS_ONLY);
 //        }
         List<SalesDemandEntity> removeList=new ArrayList<>();
         List<BatchResultDTO> resultDTOList=new ArrayList<>();
         for (SalesDemandEntity entity : list) {
             if (!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(entity.getApproveStatus())){
-                resultDTOList.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_98009.getMsg()));
+                resultDTOList.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_DELETE_ALLOWED_STATUS_ONLY.getMsg()));
                 continue;
             }
             removeList.add(entity);
@@ -344,7 +344,7 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
         //待提交或审核不通过并且未作废允许提交
         long count = list.stream().filter(obj -> (!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(obj.getApproveStatus())) || !InvalidStatusEnum.NOT_VOIDED.getStatus().equals(obj.getInvalidStatus())).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_98010);
+            throw new ServiceException(ApiError.ERROR_SUBMIT_ALLOWED_STATUS_ONLY);
         }
         log.info("备货申请单提交，ids=【{}】", JSONUtil.toJsonStr(ids));
 
@@ -404,7 +404,7 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
         //新增
         String id = this.add(dto);
         if (StringUtils.isBlank(id)) {
-            throw new ServiceException(ApiError.ERROR_1019);
+            throw new ServiceException(ApiError.ERROR_CREATE_FAILED);
         }
         //提交
         return this.submit(Arrays.asList(id));
@@ -436,7 +436,7 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
     @Transactional(rollbackFor = Exception.class)
     public Boolean generateSalesDemand(ValidList<SalesDemandDTO.GenerateSalesDemandDTO> list) {
         if (CollectionUtils.isEmpty(list)) {
-            throw new ServiceException(ApiError.ERROR_98004);
+            throw new ServiceException(ApiError.ERROR_SELECTION_REQUIRED);
         }
         //备货申请单明细
         List<String> sourceDetailIds = list.stream().map(SalesDemandDTO.GenerateSalesDemandDTO::getSourceDetailId).collect(Collectors.toList());
@@ -456,7 +456,7 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
                     //已下推数量
                     Integer totalQty = salesDemandDetailList.stream().filter(obj -> obj.getSourceDetailId().equals(dto.getSourceDetailId())).map(SalesDemandDetailEntity::getPlanStockQty).reduce(MathUtil.ZERO, Integer::sum);
                     if (dto.getPlanStockQty().intValue() > dto.getQty().intValue() - totalQty.intValue()) {
-                        throw new ServiceException(ApiError.ERROR_98062.code, String.format(ApiError.ERROR_98062.msg, dto.getSourceCode(), dto.getSkuNo(), dto.getQty().intValue() - totalQty.intValue()));
+                        throw new ServiceException(ApiError.ERROR_SALE_ORDER_PUSH_STOCK_APPLY_QTY_EXCEEDS.getCode(), String.format(ApiError.ERROR_SALE_ORDER_PUSH_STOCK_APPLY_QTY_EXCEEDS.getMsg(), dto.getSourceCode(), dto.getSkuNo(), dto.getQty().intValue() - totalQty.intValue()));
                     }
                 }
 
@@ -527,7 +527,7 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
         if (StringUtils.isNotBlank(applyDeptId)) {
             SysDepartmentDTO depart = sysUserFeign.getUserDeptById(applyDeptId);
             if (ObjectUtils.isEmpty(depart)) {
-                throw new ServiceException(ApiError.ERROR_9029);
+                throw new ServiceException(ApiError.ERROR_DEPT_NOT_FOUND);
             }
             entity.setApplyDeptName(depart.getName());
         }
@@ -535,7 +535,7 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
         if (StringUtils.isNotBlank(shopId)) {
             BiShopInfoDTO dmpShopInfoDTO = dmpTaskFeign.getShopById(shopId);
             if (ObjectUtils.isEmpty(dmpShopInfoDTO)) {
-                throw new ServiceException(ApiError.ERROR_9029);
+                throw new ServiceException(ApiError.ERROR_DEPT_NOT_FOUND);
             }
             entity.setShopName(dmpShopInfoDTO.getName());
         }
@@ -575,11 +575,11 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
      */
     private List<SalesDemandEntity> getList(List<String> ids) {
         if (CollectionUtils.isEmpty(ids)) {
-            throw new ServiceException(ApiError.ERROR_98004);
+            throw new ServiceException(ApiError.ERROR_SELECTION_REQUIRED);
         }
         List<SalesDemandEntity> list = this.listByIds(ids);
         if (CollectionUtils.isEmpty(list)) {
-            throw new ServiceException(ApiError.ERROR_98001);
+            throw new ServiceException(ApiError.ERROR_SCM_STOCK_APPLY_NOT_FOUND);
         }
         return list;
     }

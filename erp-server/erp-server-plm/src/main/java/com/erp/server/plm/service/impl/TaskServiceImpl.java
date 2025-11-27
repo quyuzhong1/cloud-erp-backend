@@ -132,7 +132,7 @@ public class TaskServiceImpl extends ServiceImpl<ProjectTaskMapper, ProjectTaskE
             page = baseMapper.changeExport(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
         }
         if (CollectionUtils.isEmpty(page.getRecords())) {
-            throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
+            throw new ServiceException(ApiError.ERROR_EXPORT_DATA_EMPTY);
         }
         //获取到任务id 集合
         List<String> taskIds = page.getRecords().stream().map(TaskDTO.TaskExportDTO::getTaskId).collect(Collectors.toList());

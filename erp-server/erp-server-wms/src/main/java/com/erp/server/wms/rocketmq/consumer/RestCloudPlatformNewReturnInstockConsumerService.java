@@ -183,7 +183,7 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 		}else{
 			OverseasProviderWarehouseEntity overseasProviderWarehouseEntity = overseasProviderWarehouseService.getByPlatform(dto.getAuthId(),dto.getWarehouseCode());
 			if(Objects.isNull(overseasProviderWarehouseEntity) || CharSequenceUtil.isBlank(overseasProviderWarehouseEntity.getWarehouseId())){
-				throw new ServiceException(ApiError.NOT_EXIST,"仓库信息");
+				throw new ServiceException(ApiError.ERROR_NOT_EXIST,"仓库信息");
 			}
 			warehouseEntity = warehouseService.getById(overseasProviderWarehouseEntity.getWarehouseId());
 		}

@@ -390,7 +390,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         //验证调出入仓库是否相同
         for (TransferInfoDetailEntity detailEntity : detailList) {
             if (detailEntity.getInWarehouseId().equals(detailEntity.getOutWarehouseId())) {
-                throw new ServiceException(new ApiResult(ApiError.ERROR_TRANSFER_IN_OUT_WAREHOUSE_MUST_DIFFER.code,CharSequenceUtil.format(ApiError.ERROR_TRANSFER_IN_OUT_WAREHOUSE_MUST_DIFFER.msg,entity.getCode())));
+                throw new ServiceException(new ApiResult(ApiError.ERROR_TRANSFER_IN_OUT_WAREHOUSE_MUST_DIFFER.getCode(),CharSequenceUtil.format(ApiError.ERROR_TRANSFER_IN_OUT_WAREHOUSE_MUST_DIFFER.getMsg(),entity.getCode())));
             }
         }
         log.info("直接调拨单提交，id=【{}】", entity.getId());
@@ -510,7 +510,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
 //        //待提交并且未作废允许删除
 //        long count = list.stream().filter(obj -> !ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus()) || obj.getInvalidStatus() ).count();
 //        if (count > 0) {
-//            throw new ServiceException(ApiError.ERROR_98009);
+//            throw new ServiceException(ApiError.ERROR_DELETE_ALLOWED_STATUS_ONLY);
 //        }
 //        String codes = list.stream().filter(obj -> ThirdPartySystemEnum.ENUM_MB.getCode().equals(obj.getCode())).map(TransferInfoEntity::getCode).collect(Collectors.joining(","));
 //        //马帮直接调拨单不允许删除 TODO

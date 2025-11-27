@@ -443,7 +443,7 @@ public class PurchasePriceChangeDetailServiceImpl extends SuperServiceImpl<Purch
         }
         PurchasePriceChangeEntity purchasePriceChangeEntity = purchasePriceChangeService.getById(purchasePriceChangeId);
         if (ObjUtil.isEmpty(purchasePriceChangeEntity)) {
-            throw new ServiceException(ApiError.ERROR_98028);
+            throw new ServiceException(ApiError.ERROR_SCM_PURCHASE_PRICE_CHANGE_NOT_FOUND);
         }
         //区间验证
         checkPurchasePriceChangeDetail(purchasePriceChangeEntity.getPurchaseOrgId(),list);

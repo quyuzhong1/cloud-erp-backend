@@ -264,7 +264,7 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         PilotApplicationEntity oldEntity = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "试产申请"));
         // 待提交和审核不通过允许修改
         if (!ApproveStatusEnum.allowUpdateStatus(oldEntity.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_1029);
+            throw new ServiceException(ApiError.ERROR_UPDATE_STATUS_NOT_ALLOWED);
         }
         // 数据处理
         PilotApplicationEntity pilotApplicationEntity = new PilotApplicationEntity();
@@ -419,7 +419,7 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
     public BatchResultDTO approve(ApproveOneDTO dto, PilotApplicationDTO.ApproveDTO approveDTO) {
         ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(dto.getType());
         if (Objects.equals(approveType, ApproveTypeEnum.REJECT) && StrUtils.isEmpty(dto.getComment())) {
-            throw new ServiceException(ApiError.REJECT_COMMENT_NOT_EMPTY);
+            throw new ServiceException(ApiError.ERROR_PLM_REJECT_COMMENT_REQUIRED);
         }
         PilotApplicationEntity entity = getById(dto.getId());
         // 审核中的数据允许审核
@@ -670,7 +670,7 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
     private Boolean validateDisApprove(PilotApplicationEntity entity) {
         // 已审核支持反审核
         if (entity.getApproveStatus().compareTo(ApproveStatusEnum.APPROVE) != 0) {
-            throw new ServiceException(ApiError.ERROR_98014);
+            throw new ServiceException(ApiError.ERROR_REVERSE_APPROVAL_ALLOWED_APPROVED_ONLY);
         }
         // 已下推采购申请单，不能反审
         List<PurchaseApplicationEntity> purchaseApplicationList = purchaseApplicationFeign.listBySourceIds(Collections.singletonList(entity.getId()));
@@ -707,7 +707,7 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         PilotApplicationEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL,"试产申请"));
         // 只有审核中的单据允许撤销
         if (entity.getApproveStatus().compareTo(ApproveStatusEnum.APPROVE_ING) != 0) {
-            throw new ServiceException(ApiError.ERROR_98007);
+            throw new ServiceException(ApiError.ERROR_REVOKE_PROCESS_ALLOWED_STATUS_ONLY);
         }
         log.info("撤销 开始撤销流程，id：【{}】", id);
         updateApproveStatus(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
@@ -1104,7 +1104,7 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
     private void validateSubmit(PilotApplicationEntity entity) {
         // 待提交或审核不通过并且未作废允许提交
         if (!ApproveStatusEnum.allowUpdateStatus(entity.getApproveStatus()) || entity.getInvalidStatus()) {
-            throw new ServiceException(ApiError.ERROR_98010);
+            throw new ServiceException(ApiError.ERROR_SUBMIT_ALLOWED_STATUS_ONLY);
         }
         //校验包装信息是否完整
         validateProductSize(entity.getId());
@@ -1116,7 +1116,7 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
     private void validatePurchasePriceDetail(String id) {
         List<PilotApplicationDetailEntity> detailList = pilotApplicationDetailService.lambdaQuery().in(PilotApplicationDetailEntity::getMainId, id).list();
         if (CollUtil.isEmpty(detailList)) {
-            throw new ServiceException(ApiError.ERROR_95281);
+            throw new ServiceException(ApiError.ERROR_PLM_TRIAL_MASS_PROD_DETAIL_NOT_FOUND);
         }
         List<String> skuIdList = detailList.stream().map(PilotApplicationDetailEntity::getSkuId).collect(Collectors.toList());
         Map<String, List<BomDTO.BomSku>> singleBomMap = bomSkuService.getSingleBomInfo(skuIdList).stream()
@@ -1169,10 +1169,10 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
             }
         }
         if(StringUtils.isNotBlank(error.toString())){
-            throw new ServiceException(ApiError.ERROR_95288, error.toString());
+            throw new ServiceException(ApiError.ERROR_PLM_VENDOR_PRICE_LIST_NOT_SUBMITTED, error.toString());
         }
         if(StringUtils.isNotBlank(ruleError.toString())){
-            throw new ServiceException(ApiError.ERROR_95289, ruleError.toString());
+            throw new ServiceException(ApiError.ERROR_PLM_VENDOR_PRICE_LIST_NOT_FOUND, ruleError.toString());
         }
     }
 
@@ -1186,10 +1186,10 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         try {
             taxPriceList = purchasePriceDetailFeign.getTaxPrice(priceSearchDTO);
         } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_95282, priceSearchDTO.getSkuNo(), priceSearchDTO.getPurchaseQty());
+            throw new ServiceException(ApiError.ERROR_PLM_VENDOR_PRICE_LIST_FETCH_FAILED, priceSearchDTO.getSkuNo(), priceSearchDTO.getPurchaseQty());
         }
         if (CollUtil.isEmpty(taxPriceList)) {
-            throw new ServiceException(ApiError.ERROR_95282, priceSearchDTO.getSkuNo(), priceSearchDTO.getPurchaseQty());
+            throw new ServiceException(ApiError.ERROR_PLM_VENDOR_PRICE_LIST_FETCH_FAILED, priceSearchDTO.getSkuNo(), priceSearchDTO.getPurchaseQty());
         }
         boolean flag = false;
         for (PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO priceViewDTO : taxPriceList) {
@@ -1199,7 +1199,7 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
             }
         }
         if (!flag) {
-            throw new ServiceException(ApiError.ERROR_95288, priceSearchDTO.getSkuNo(), priceSearchDTO.getPurchaseQty());
+            throw new ServiceException(ApiError.ERROR_PLM_VENDOR_PRICE_LIST_NOT_SUBMITTED, priceSearchDTO.getSkuNo(), priceSearchDTO.getPurchaseQty());
         }
     }
 
@@ -1216,32 +1216,32 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
              */
             ProductPackEntity productPackEntity = productPackList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSkuId(), detailEntity.getId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(productPackEntity)) {
-                errMsg.append(CharSequenceUtil.format(ApiError.ERROR_PRODUCT_PACK_NOT_EXIST.msg,detailEntity.getSkuNo())).append(ProductConstant.HTML_BR);
+                errMsg.append(CharSequenceUtil.format(ApiError.ERROR_PRODUCT_PACK_NOT_EXIST.getMsg(),detailEntity.getSkuNo())).append(ProductConstant.HTML_BR);
                 continue;
             }
             //包装尺寸
             if (MathUtil.compareTo(BigDecimal.ZERO, productPackEntity.getProductLength()) >= 0  || MathUtil.compareTo(BigDecimal.ZERO, productPackEntity.getProductWidth()) >= 0 || MathUtil.compareTo(BigDecimal.ZERO, productPackEntity.getProductHeight()) >= 0) {
-                errMsg.append(CharSequenceUtil.format(ApiError.ERROR_PRODUCT_SIZE_NOT_EXIST.msg, detailEntity.getSkuNo())).append(ProductConstant.HTML_BR);
+                errMsg.append(CharSequenceUtil.format(ApiError.ERROR_PRODUCT_SIZE_NOT_EXIST.getMsg(), detailEntity.getSkuNo())).append(ProductConstant.HTML_BR);
             }
             //箱规
             if (MathUtil.compareTo(BigDecimal.ZERO, productPackEntity.getBoxLength()) >= 0 ||MathUtil.compareTo(BigDecimal.ZERO, productPackEntity.getBoxWidth()) >= 0 || MathUtil.compareTo(BigDecimal.ZERO, productPackEntity.getBoxHeight()) >= 0) {
-                errMsg.append(CharSequenceUtil.format(ApiError.ERROR_BOX_SIZE_NOT_EXIST.msg, detailEntity.getSkuNo())).append(ProductConstant.HTML_BR);
+                errMsg.append(CharSequenceUtil.format(ApiError.ERROR_BOX_SIZE_NOT_EXIST.getMsg(), detailEntity.getSkuNo())).append(ProductConstant.HTML_BR);
             }
             //毛重
             if (MathUtil.compareTo(productPackEntity.getGrossWeight(), MathUtil.ZERO) == MathUtil.ZERO) {
-                errMsg.append(CharSequenceUtil.format(ApiError.ERROR_GROSS_WEIGHT_NOT_EXIST.msg, detailEntity.getSkuNo())).append(ProductConstant.HTML_BR);
+                errMsg.append(CharSequenceUtil.format(ApiError.ERROR_GROSS_WEIGHT_NOT_EXIST.getMsg(), detailEntity.getSkuNo())).append(ProductConstant.HTML_BR);
             }
             //单箱重量
             if (MathUtil.compareTo(productPackEntity.getBoxWeight(), MathUtil.ZERO) == MathUtil.ZERO) {
-                errMsg.append(CharSequenceUtil.format(ApiError.ERROR_BOX_WEIGHT_NOT_EXIST.msg, detailEntity.getSkuNo())).append(ProductConstant.HTML_BR);
+                errMsg.append(CharSequenceUtil.format(ApiError.ERROR_BOX_WEIGHT_NOT_EXIST.getMsg(), detailEntity.getSkuNo())).append(ProductConstant.HTML_BR);
             }
             //净重
             if (MathUtil.compareTo(productPackEntity.getNetWeight(), MathUtil.ZERO) == MathUtil.ZERO) {
-                errMsg.append(CharSequenceUtil.format(ApiError.ERROR_NET_WEIGHT_NOT_EXIST.msg, detailEntity.getSkuNo())).append(ProductConstant.HTML_BR);
+                errMsg.append(CharSequenceUtil.format(ApiError.ERROR_NET_WEIGHT_NOT_EXIST.getMsg(), detailEntity.getSkuNo())).append(ProductConstant.HTML_BR);
             }
             //单箱数量
             if (MathUtil.compareTo(productPackEntity.getBoxQty(), MathUtil.ZERO) == MathUtil.ZERO) {
-                errMsg.append(CharSequenceUtil.format(ApiError.ERROR_BOX_QTY_NOT_EXIST.msg, detailEntity.getSkuNo()));
+                errMsg.append(CharSequenceUtil.format(ApiError.ERROR_BOX_QTY_NOT_EXIST.getMsg(), detailEntity.getSkuNo()));
             }
             if (CharSequenceUtil.isNotBlank(msg)) {
                 msg.append("SKU【").append(detailEntity.getSkuNo()).append("】").append(errMsg).append(",");
@@ -1582,11 +1582,11 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
     public BatchResultDTO invalid(String id, String remark) {
         PilotApplicationEntity old = Optional.ofNullable(super.getById(id)).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "试产量产单"));
         if (old.getInvalidStatus()) {
-            return BatchResultDTO.fail(old.getId(),old.getCode(),ApiError.ERROR_98012.getMsg());
+            return BatchResultDTO.fail(old.getId(),old.getCode(),ApiError.ERROR_ALREADY_VOID_CANNOT_VOID_AGAIN.getMsg());
         }
         //仅支持待提交/审核不通过可作废
         if (!old.getApproveStatus().equals(ApproveStatusEnum.WAIT_SUBMIT) && !old.getApproveStatus().equals(ApproveStatusEnum.REJECT)) {
-            return BatchResultDTO.fail(old.getId(),old.getCode(),ApiError.ERROR_98005.getMsg());
+            return BatchResultDTO.fail(old.getId(),old.getCode(),ApiError.ERROR_VOID_ALLOWED_STATUS_ONLY.getMsg());
         }
         //创建人
         LoginUser userInfo = UserContext.getDefaultLoginUser();

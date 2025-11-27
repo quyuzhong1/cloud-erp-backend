@@ -164,7 +164,7 @@ public class ContractInfoServiceImpl extends SuperServiceImpl<ContractInfoMapper
         LocalDate effectiveDate = contractInfoEntity.getEffectiveDate();
         LocalDate expireDate = contractInfoEntity.getExpireDate();
         if (Objects.nonNull(effectiveDate) && Objects.nonNull(expireDate) && expireDate.compareTo(effectiveDate) < 0) {
-            throw new ServiceException(ApiError.ERROR_98125);
+            throw new ServiceException(ApiError.ERROR_EXPIRE_AFTER_EFFECTIVE_REQUIRED);
         }
 
 
@@ -180,7 +180,7 @@ public class ContractInfoServiceImpl extends SuperServiceImpl<ContractInfoMapper
         old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "合同管理单"));
         // 待提交和审核不通过允许修改
         if (!ApproveStatusEnum.allowUpdateStatus(old.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_1029);
+            throw new ServiceException(ApiError.ERROR_UPDATE_STATUS_NOT_ALLOWED);
         }
         ContractInfoEntity contractInfoEntity =  BeanMapperUtils.map(ContractInfoEntity.class, addOrUpdateDTO);
 
@@ -412,7 +412,7 @@ public class ContractInfoServiceImpl extends SuperServiceImpl<ContractInfoMapper
         ContractInfoEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到合同管理单数据"));
         // 只有待提交数据允许删除
         if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT.getCode(), entity.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_98009);
+            throw new ServiceException(ApiError.ERROR_DELETE_ALLOWED_STATUS_ONLY);
         }
         // 删除主单数据
         log.info("删除 开始删除合同管理单主单数据，id：【{}】", id);
@@ -460,7 +460,7 @@ public class ContractInfoServiceImpl extends SuperServiceImpl<ContractInfoMapper
     private void validateSubmit(ContractInfoEntity entity) {
         // 待提交或审核不通过并且未作废允许提交
         if(!ApproveStatusEnum.allowUpdateStatus(entity.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_98010);
+            throw new ServiceException(ApiError.ERROR_SUBMIT_ALLOWED_STATUS_ONLY);
         }
         return;
     }
@@ -471,7 +471,7 @@ public class ContractInfoServiceImpl extends SuperServiceImpl<ContractInfoMapper
     public BatchResultDTO approve(ApproveOneDTO dto) {
         ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(dto.getType());
         if(Objects.equals(approveType, ApproveTypeEnum.REJECT) && StrUtils.isEmpty(dto.getComment())) {
-            throw new ServiceException(ApiError.REJECT_COMMENT_NOT_EMPTY);
+            throw new ServiceException(ApiError.ERROR_PLM_REJECT_COMMENT_REQUIRED);
         }
         ContractInfoEntity entity = getById(dto.getId());
         // 审核中的数据允许审核
@@ -572,7 +572,7 @@ public class ContractInfoServiceImpl extends SuperServiceImpl<ContractInfoMapper
     private Boolean validateDisApprove(ContractInfoEntity entity) {
         // 已审核支持反审核
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus())) {
-            throw new ServiceException(ApiError.ERROR_98014);
+            throw new ServiceException(ApiError.ERROR_REVERSE_APPROVAL_ALLOWED_APPROVED_ONLY);
         }
         return true;
     }
@@ -588,7 +588,7 @@ public class ContractInfoServiceImpl extends SuperServiceImpl<ContractInfoMapper
         ContractInfoEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到合同管理单数据"));
         // 只有审核中的单据允许撤销
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())) {
-            throw new ServiceException(ApiError.ERROR_98007);
+            throw new ServiceException(ApiError.ERROR_REVOKE_PROCESS_ALLOWED_STATUS_ONLY);
         }
         log.info("撤销 开始修改合同管理单状态，id：【{}】", id);
         updateApproveStatus(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
@@ -702,7 +702,7 @@ public class ContractInfoServiceImpl extends SuperServiceImpl<ContractInfoMapper
     public ExportZipResultDTO exportZip(ContractInfoDTO.PagingParamDTO pagingParamDTO) {
         List<ContractInfoDTO.ListAttachDTO> list = this.baseMapper.listAttachByIds(pagingParamDTO);
         if(CollUtil.isEmpty(list)){
-            throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
+            throw new ServiceException(ApiError.ERROR_EXPORT_DATA_EMPTY);
         }
         // 动态生成文件名
         String fileName = SourceTypeEnum.CONTRACT_INFO.getName()+"_"+ LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME) + ".zip";

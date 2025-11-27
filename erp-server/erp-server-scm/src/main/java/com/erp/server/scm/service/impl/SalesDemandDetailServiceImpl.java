@@ -144,7 +144,7 @@ public class SalesDemandDetailServiceImpl extends SuperServiceImpl<SalesDemandDe
                 refQty = salesDemandDetailList.stream().filter(obj -> obj.getSourceDetailId().equals(sourceDetailId) && !obj.getId().equals(entity.getId())).map(SalesDemandDetailEntity::getPlanStockQty).reduce(MathUtil.ZERO, Integer::sum);
             }
             if (entity.getPlanStockQty().intValue() > qty.intValue() - refQty.intValue()) {
-                throw new ServiceException(ApiError.ERROR_98064.code,String.format(ApiError.ERROR_98064.msg,entity.getSkuNo(),qty.intValue() - refQty.intValue()));
+                throw new ServiceException(ApiError.ERROR_SCM_STOCK_APPLY_SKU_QTY_EXCEEDS.getCode(),String.format(ApiError.ERROR_SCM_STOCK_APPLY_SKU_QTY_EXCEEDS.getMsg(),entity.getSkuNo(),qty.intValue() - refQty.intValue()));
             }
         }
     }
@@ -226,7 +226,7 @@ public class SalesDemandDetailServiceImpl extends SuperServiceImpl<SalesDemandDe
             if (StringUtils.isNotBlank(entity.getId())) {
                 SalesDemandDetailEntity old = this.getById(entity.getId());
                 if (ObjectUtils.isEmpty(old)) {
-                    throw new ServiceException(ApiError.ERROR_98002);
+                    throw new ServiceException(ApiError.ERROR_SCM_STOCK_APPLY_DETAIL_NOT_FOUND);
                 }
                 moduleOperateLogService.addModuleOperateLogByObj(old,entity, ModuleTypeEnum.SALES_DEMAND.getCode(),salesDemandId,"",String.format("【%s】",old.getSkuNo()));
             }

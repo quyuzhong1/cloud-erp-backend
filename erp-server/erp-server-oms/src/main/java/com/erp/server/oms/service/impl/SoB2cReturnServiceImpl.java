@@ -521,12 +521,12 @@ public class SoB2cReturnServiceImpl extends SuperServiceImpl<SoB2cReturnMapper, 
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO submit(SoB2cReturnEntity entity, Boolean isNeedProcess) {
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_98004);
+            throw new ServiceException(ApiError.ERROR_SELECTION_REQUIRED);
         }
         //未作废、待提交、审核不通过才可以提交
         if ((!entity.getApproveStatus().equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus())
                 && !entity.getApproveStatus().equals(ApproveStatusEnum.REJECT.getStatus()))) {
-            throw new ServiceException(ApiError.ERROR_98010);
+            throw new ServiceException(ApiError.ERROR_SUBMIT_ALLOWED_STATUS_ONLY);
         }
         //提交流程
         if(isNeedProcess){
@@ -600,7 +600,7 @@ public class SoB2cReturnServiceImpl extends SuperServiceImpl<SoB2cReturnMapper, 
         ApiResult<ProcessManagementDTO.ApproveResultDTO> listApiResult = workflowFeign.approve(approveDTO);
         Integer code = listApiResult.getCode();
         if (200 != code) {
-            throw new ServiceException(ApiError.ERROR_94006);
+            throw new ServiceException(ApiError.ERROR_WF_APPROVAL_FAILED);
         }
         ProcessManagementDTO.ApproveResultDTO data = listApiResult.getData();
         if (ObjectUtil.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()) {
@@ -644,7 +644,7 @@ public class SoB2cReturnServiceImpl extends SuperServiceImpl<SoB2cReturnMapper, 
     public BatchResultDTO disApprove(SoB2cReturnEntity entity) {
         //已审核支持反审核
         if (!ApproveStatusEnum.APPROVE.getStatus().equals(entity.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_98006);
+            throw new ServiceException(ApiError.ERROR_APPROVE_ALLOWED_STATUS_ONLY);
         }
         //修改状态为待提交
         lambdaUpdate().set(SoB2cReturnEntity::getApproveStatus, ApproveStatusEnum.WAIT_SUBMIT.getStatus())
@@ -661,7 +661,7 @@ public class SoB2cReturnServiceImpl extends SuperServiceImpl<SoB2cReturnMapper, 
     public BatchResultDTO cancelProcess(SoB2cReturnEntity entity) {
         // 只有审核中的单据允许撤销
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
-            throw new ServiceException(ApiError.ERROR_98007);
+            throw new ServiceException(ApiError.ERROR_REVOKE_PROCESS_ALLOWED_STATUS_ONLY);
         }
 
         log.info("撤销 开始修改退货订单状态，id：【{}】", entity.getId());
@@ -776,7 +776,7 @@ public class SoB2cReturnServiceImpl extends SuperServiceImpl<SoB2cReturnMapper, 
         ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = ids.stream().map(obj -> new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.SO_B2C_RETURN.getCode(), obj)).collect(Collectors.toCollection(ValidList::new));
         ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = workflowFeign.curApprover(dtoList);
         if (200 != listApiResult.getCode()) {
-            throw new ServiceException(new ApiResult(ApiError.DEFAULT.code,listApiResult.getMsg()));
+            throw new ServiceException(new ApiResult(ApiError.DEFAULT.getCode(),listApiResult.getMsg()));
         }
 
         List<String> shopIds = list.stream().map(SoB2cReturnDTO.PagingViewDTO::getShopId).filter(StringUtil::isNotBlank).distinct().collect(Collectors.toList());

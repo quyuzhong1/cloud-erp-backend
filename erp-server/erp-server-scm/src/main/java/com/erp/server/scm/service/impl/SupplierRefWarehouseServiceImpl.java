@@ -264,7 +264,7 @@ public class SupplierRefWarehouseServiceImpl extends SuperServiceImpl<SupplierRe
     public BatchResultDTO updateDisabled(String id,Boolean disabled) {
         SupplierRefWarehouseEntity entity = this.getById(id);
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.NOT_EXIST,"仓库绑定数据");
+            throw new ServiceException(ApiError.ERROR_NOT_EXIST,"仓库绑定数据");
         }
         Boolean oldDisabled = entity.getDisabled();
         if (oldDisabled.equals(disabled)) {

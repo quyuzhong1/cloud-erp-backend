@@ -149,7 +149,7 @@ public class BiSettlementExchangeRateServiceImpl extends ServiceImpl<BiSettlemen
         BeanMapperUtils.copy(addDTO,entity);
         boolean save = this.save(entity);
         if (!save) {
-            throw new ServiceException(ApiError.ERROR_1019);
+            throw new ServiceException(ApiError.ERROR_CREATE_FAILED);
         }
         return entity.getId();
     }
@@ -160,7 +160,7 @@ public class BiSettlementExchangeRateServiceImpl extends ServiceImpl<BiSettlemen
         BeanMapperUtils.copy(updateDTO,entity);
         boolean update = this.updateById(entity);
         if (!update) {
-            throw new ServiceException(ApiError.ERROR_1019);
+            throw new ServiceException(ApiError.ERROR_CREATE_FAILED);
         }
         return update;
     }
@@ -193,7 +193,7 @@ public class BiSettlementExchangeRateServiceImpl extends ServiceImpl<BiSettlemen
         //待提交或审核不通过并且未作废允许提交
         long count = list.stream().filter(obj -> (!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(obj.getApproveStatus()))).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_98010);
+            throw new ServiceException(ApiError.ERROR_SUBMIT_ALLOWED_STATUS_ONLY);
         }
         log.info("汇率提交，ids=【{}】", JSONUtil.toJsonStr(ids));
 
@@ -265,7 +265,7 @@ public class BiSettlementExchangeRateServiceImpl extends ServiceImpl<BiSettlemen
         //已审核允许反审核
         long count = list.stream().filter(obj -> !ApproveStatusEnum.APPROVE.getStatus().equals(obj.getApproveStatus())).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_98014);
+            throw new ServiceException(ApiError.ERROR_REVERSE_APPROVAL_ALLOWED_APPROVED_ONLY);
         }
 
         log.info("汇率反审核，ids=【{}】", JSONUtil.toJsonStr(ids));
@@ -370,11 +370,11 @@ public class BiSettlementExchangeRateServiceImpl extends ServiceImpl<BiSettlemen
      */
     private List<BiSettlementExchangeRateEntity> getList(List<String> ids) {
         if (CollectionUtils.isEmpty(ids)) {
-            throw new ServiceException(ApiError.ERROR_98004);
+            throw new ServiceException(ApiError.ERROR_SELECTION_REQUIRED);
         }
         List<BiSettlementExchangeRateEntity> list = this.listByIds(ids);
         if (CollectionUtils.isEmpty(list)) {
-            throw new ServiceException(ApiError.ERROR_99052);
+            throw new ServiceException(ApiError.ERROR_WMS_PROCESS_ORDER_NOT_FOUND);
         }
         return list;
     }
@@ -408,7 +408,7 @@ public class BiSettlementExchangeRateServiceImpl extends ServiceImpl<BiSettlemen
         LocalDate date3 = LocalDate.parse(settlementDateBegin2);
         LocalDate date4 = LocalDate.parse(settlementDateEnd2);
         if (date1.isAfter(date2) || date3.isAfter(date4)) {
-            throw new ServiceException(ApiError.ERROR_97011);
+            throw new ServiceException(ApiError.ERROR_DMP_EXPIRE_BEFORE_EFFECTIVE);
         }
         return (date1.compareTo(date3) >= 0 && date4.compareTo(date1) >= 0) || (date3.compareTo(date1) >= 0 && date2.compareTo(date3) >= 0);
     }

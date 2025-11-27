@@ -87,7 +87,7 @@ public class LarkMessageServiceImpl implements LarkMessageService {
         //是否存在
         String redisValue = redisService.getCacheObject(redisKey);
         if (StringUtils.isNotBlank(redisValue)) {
-            throw new ServiceException(ApiError.ERROR_95178);
+            throw new ServiceException(ApiError.ERROR_PLM_PROJECT_REMIND_RATE_LIMIT);
         }
         List<LarkPressMessageDTO.SendUserInfo> pressUserList = new ArrayList<>(10);
         switch (businessType) {
@@ -95,7 +95,7 @@ public class LarkMessageServiceImpl implements LarkMessageService {
                 PilotApplicationDTO.ApprovePilotNoticeDTO entity = pilotApplicationService.getPilotApplicationNoticeData(dto.getBusinessId());
                 if(null != entity) {
                     if (!entity.getApproveStatus().getCode().equals(ApproveStatusEnum.APPROVE_ING.getCode())) {
-                        throw new ServiceException(ApiError.ERROR_95273);
+                        throw new ServiceException(ApiError.ERROR_PLM_URGE_ONLY_IN_APPROVING);
                     }
                     noticeFlag = NoticeEnum.AUDIT_PILOT_APPLICATION;
                     long timeInMillis = Calendar.getInstance().getTimeInMillis();
@@ -149,7 +149,7 @@ public class LarkMessageServiceImpl implements LarkMessageService {
                 }
                 ProductShowDTO productInfo = productInfoService.getProductInfo(task.getProductId());
                 if (null == productInfo) {
-                    throw new ServiceException(ApiError.ERROR_95010);
+                    throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_NOT_FOUND);
                 }
                 dto.setBusinessName(task.getName());
                 processId = task.getProcessId();
@@ -221,7 +221,7 @@ public class LarkMessageServiceImpl implements LarkMessageService {
             PilotApplicationDTO.ApprovePilotNoticeDTO entity = pilotApplicationService.getPilotApplicationNoticeData(dto.getBusinessId());
             if(null != entity) {
                 if (!entity.getApproveStatus().getCode().equals(ApproveStatusEnum.APPROVE_ING.getCode())) {
-                    result.add(msg + "【"+entity.getCode()+"】"+ApiError.ERROR_95273.getMsg());
+                    result.add(msg + "【"+entity.getCode()+"】"+ApiError.ERROR_PLM_URGE_ONLY_IN_APPROVING.getMsg());
                     continue;
                 }
                 //是否存在
@@ -233,7 +233,7 @@ public class LarkMessageServiceImpl implements LarkMessageService {
                     long nowTime = cal.getTimeInMillis();
                     long min = (nowTime - lastTime) / (60 * 1000);
                     redisValue = split[0] + " " + min + "分钟前";
-                    result.add(String.format(ApiError.ERROR_95274.msg, redisValue));
+                    result.add(String.format(ApiError.ERROR_PLM_URGE_RATE_LIMITED.getMsg(), redisValue));
                     continue;
                 }
 
@@ -390,9 +390,9 @@ public class LarkMessageServiceImpl implements LarkMessageService {
             }
         }else if (CollectionUtils.isNotEmpty(alreadyPress)) {
             String name = alreadyPress.stream().collect(Collectors.joining(","));
-            ApiError error = ApiError.ERROR_95191;
-            String message = error.msg;
-            throw new ServiceException(error.code, String.format(message, name));
+            ApiError error = ApiError.ERROR_PLM_PROJECT_REMIND_RATE_LIMIT_WITH;
+            String message = error.getMsg();
+            throw new ServiceException(error.getCode(), String.format(message, name));
         }
         return Boolean.TRUE;
     }

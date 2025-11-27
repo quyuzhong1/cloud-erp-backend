@@ -289,7 +289,7 @@ public class PurchaseOrderFeignController {
     public String addPurchaseOrder(@RequestBody PurchaseOrderDTO.AddDTO addDTO) {
         PurchaseOrderEntity purchaseOrderEntity = purchaseOrderService.add(addDTO);
         if (ObjectUtils.isEmpty(purchaseOrderEntity)) {
-            throw new ServiceException(ApiError.ERROR_1019);
+            throw new ServiceException(ApiError.ERROR_CREATE_FAILED);
         }
         return purchaseOrderEntity.getCode();
     }

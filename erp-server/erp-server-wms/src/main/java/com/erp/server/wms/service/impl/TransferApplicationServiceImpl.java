@@ -187,7 +187,7 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
 
         //验证调出入仓库是否相同
         if (dto.getInWarehouseId().equals(dto.getOutWarehouseId())) {
-            throw new ServiceException(new ApiResult(ApiError.ERROR_TRANSFER_IN_OUT_WAREHOUSE_MUST_DIFFER.code, CharSequenceUtil.format(ApiError.ERROR_TRANSFER_IN_OUT_WAREHOUSE_MUST_DIFFER.msg,"")));
+            throw new ServiceException(new ApiResult(ApiError.ERROR_TRANSFER_IN_OUT_WAREHOUSE_MUST_DIFFER.getCode(), CharSequenceUtil.format(ApiError.ERROR_TRANSFER_IN_OUT_WAREHOUSE_MUST_DIFFER.getMsg(),"")));
         }
 
         log.info("调拨申请单新增");
@@ -240,7 +240,7 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
         }
         //验证调出入仓库是否相同
         if (dto.getInWarehouseId().equals(dto.getOutWarehouseId())) {
-            throw new ServiceException(new ApiResult(ApiError.ERROR_TRANSFER_IN_OUT_WAREHOUSE_MUST_DIFFER.code,CharSequenceUtil.format(ApiError.ERROR_TRANSFER_IN_OUT_WAREHOUSE_MUST_DIFFER.msg,old.getCode())));
+            throw new ServiceException(new ApiResult(ApiError.ERROR_TRANSFER_IN_OUT_WAREHOUSE_MUST_DIFFER.getCode(),CharSequenceUtil.format(ApiError.ERROR_TRANSFER_IN_OUT_WAREHOUSE_MUST_DIFFER.getMsg(),old.getCode())));
         }
 
         TransferApplicationEntity entity = new TransferApplicationEntity();
@@ -283,7 +283,7 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
         }
         //验证调出入仓库是否相同
         if (entity.getInWarehouseId().equals(entity.getOutWarehouseId())) {
-            throw new ServiceException(new ApiResult(ApiError.ERROR_TRANSFER_IN_OUT_WAREHOUSE_MUST_DIFFER.code,CharSequenceUtil.format(ApiError.ERROR_TRANSFER_IN_OUT_WAREHOUSE_MUST_DIFFER.msg,entity.getCode())));
+            throw new ServiceException(new ApiResult(ApiError.ERROR_TRANSFER_IN_OUT_WAREHOUSE_MUST_DIFFER.getCode(),CharSequenceUtil.format(ApiError.ERROR_TRANSFER_IN_OUT_WAREHOUSE_MUST_DIFFER.getMsg(),entity.getCode())));
         }
 
         log.info("调拨申请单提交，id=【{}】", entity.getId());
@@ -362,7 +362,7 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
         //待提交并且未作废允许删除
 //        long count = list.stream().filter(obj -> !ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus()) || obj.getInvalidStatus() ).count();
 //        if (count > 0) {
-//            throw new ServiceException(ApiError.ERROR_98009);
+//            throw new ServiceException(ApiError.ERROR_DELETE_ALLOWED_STATUS_ONLY);
 //        }
         List<TransferApplicationEntity> removeList=new ArrayList<>();
         List<BatchResultDTO> resultDTOList=new ArrayList<>();
@@ -805,7 +805,7 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
             //已调拨数量
             transferOutQty = transferOutDetailList.stream().filter(obj -> obj.getSourceDetailId().equals(sourceDetailId)).map(TransferOutDetailEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
             if (pickingQty.intValue() == transferOutQty.intValue()) {
-                throw new ServiceException(ApiError.ERROR_WMS_TRANSFER_APPLY_ALREADY_COMPLETED_STEP_OUT.code, String.format(ApiError.ERROR_WMS_TRANSFER_APPLY_ALREADY_COMPLETED_STEP_OUT.msg,dto.getSourceCode(), skuNo));
+                throw new ServiceException(ApiError.ERROR_WMS_TRANSFER_APPLY_ALREADY_COMPLETED_STEP_OUT.getCode(), String.format(ApiError.ERROR_WMS_TRANSFER_APPLY_ALREADY_COMPLETED_STEP_OUT.getMsg(),dto.getSourceCode(), skuNo));
             }
         }
         //调拨数量校验（直接调拨数量+分步式调出数量+本次调拨数量 不能大于 拣货数量）
@@ -1162,7 +1162,7 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
             listApiResult = workflowFeign.curApprover(dtoList);
             Integer code = listApiResult.getCode();
             if (200 != code) {
-                throw new ServiceException(new ApiResult(ApiError.DEFAULT.code,listApiResult.getMsg()));
+                throw new ServiceException(new ApiResult(ApiError.DEFAULT.getCode(),listApiResult.getMsg()));
             }
         }
 

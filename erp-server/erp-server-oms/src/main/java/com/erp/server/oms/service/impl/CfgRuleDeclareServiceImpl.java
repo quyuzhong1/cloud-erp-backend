@@ -187,7 +187,7 @@ public class CfgRuleDeclareServiceImpl extends SuperServiceImpl<CfgRuleDeclareMa
         }
         Boolean disabled = entity.getDisabled();
         if (disabled.equals(dto.getState())) {
-            throw new ServiceException(ApiError.ERROR_98027);
+            throw new ServiceException(ApiError.ERROR_SCM_INCONSISTENT_DISABLE_STATUS);
         }
         String content = String.format("启用状态[%s]变更为[%s]", Boolean.TRUE.equals(disabled) ? "停用" : "启用", Boolean.TRUE.equals(disabled) ? "启用" : "停用");
         entity.setDisabled(dto.getState());

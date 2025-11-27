@@ -133,7 +133,7 @@ public class CfgAppClientServiceImpl extends SuperServiceImpl<CfgAppClientMapper
         }
         ShopInfoEntity shopInfo = shopInfoFeign.getShopInfoById(shopId);
         if (null == shopInfo) {
-            throw new ServiceException(ApiError.ERROR_92058);
+            throw new ServiceException(ApiError.ERROR_SHOP_NOT_FOUND);
         }
         if (shopInfo.getDisabled()){
             throw new ServiceException(ApiError.ERROR_MARKETPLACE_UNAUTHORIZED, shopInfo.getId());

@@ -138,7 +138,7 @@ public class SoPriceChangeServiceImpl extends SuperServiceImpl<SoPriceChangeMapp
         //保存成功
         boolean addResult = this.save(changeEntity);
         if (!addResult) {
-            throw new ServiceException(ApiError.ERROR_1002);
+            throw new ServiceException(ApiError.ERROR_PERSIST_SAVE_FAILED);
         }
         Class<SoPriceChangeEntity> credentialClass = SoPriceChangeEntity.class;
         TableName tableName = credentialClass.getDeclaredAnnotation(TableName.class);
@@ -169,11 +169,11 @@ public class SoPriceChangeServiceImpl extends SuperServiceImpl<SoPriceChangeMapp
     public SoPriceChangeEntity addAndSubmit(SoPriceChangeDTO.AddDTO dto) {
         SoPriceChangeEntity entity = this.add(dto);
         if (null == entity) {
-            throw new ServiceException(ApiError.ERROR_1019);
+            throw new ServiceException(ApiError.ERROR_CREATE_FAILED);
         }
         Boolean result = this.submit(Collections.singletonList(entity.getId()), Boolean.TRUE);
         if (!result) {
-            throw new ServiceException(ApiError.ERROR_1002);
+            throw new ServiceException(ApiError.ERROR_PERSIST_SAVE_FAILED);
         }
         return entity;
     }
@@ -190,7 +190,7 @@ public class SoPriceChangeServiceImpl extends SuperServiceImpl<SoPriceChangeMapp
     public SoPriceChangeDTO.ViewDTO view(String id) {
         SoPriceChangeEntity changeEntity = this.getById(id);
         if (Objects.isNull(changeEntity)) {
-            throw new ServiceException(ApiError.ERROR_98028);
+            throw new ServiceException(ApiError.ERROR_SCM_PURCHASE_PRICE_CHANGE_NOT_FOUND);
         }
         SoPriceChangeDTO.ViewDTO viewDTO = new SoPriceChangeDTO.ViewDTO();
         BeanMapper.copy(changeEntity, viewDTO);
@@ -240,7 +240,7 @@ public class SoPriceChangeServiceImpl extends SuperServiceImpl<SoPriceChangeMapp
         String id = dto.getId();
         SoPriceChangeEntity priceChangeEntity = this.getById(id);
         if (Objects.isNull(priceChangeEntity)) {
-            throw new ServiceException(ApiError.ERROR_98028);
+            throw new ServiceException(ApiError.ERROR_SCM_PURCHASE_PRICE_CHANGE_NOT_FOUND);
         }
         SoPriceChangeEntity old = new SoPriceChangeEntity();
         BeanMapper.copy(priceChangeEntity, old);
@@ -254,7 +254,7 @@ public class SoPriceChangeServiceImpl extends SuperServiceImpl<SoPriceChangeMapp
         statusList.add(rejectStatus);
         statusList.add(waitSubmitStatus);
         if (!statusList.contains(status)) {
-            throw new ServiceException(ApiError.ERROR_98019);
+            throw new ServiceException(ApiError.ERROR_EDIT_ALLOWED_STATUS_ONLY);
         }
         //code
         String code = priceChangeEntity.getCode();
@@ -274,7 +274,7 @@ public class SoPriceChangeServiceImpl extends SuperServiceImpl<SoPriceChangeMapp
         //修改成功
         Boolean result = this.updateById(priceChangeEntity);
         if (!result) {
-           throw new ServiceException(ApiError.ERROR_1002);
+           throw new ServiceException(ApiError.ERROR_PERSIST_SAVE_FAILED);
         }
        //添加日志
         moduleOperateLogService.addModuleOperateLogByObj(old, priceChangeEntity, ModuleTypeEnum.SO_PRICE_CHANGE.getCode(), id, "", "");
@@ -415,7 +415,7 @@ public class SoPriceChangeServiceImpl extends SuperServiceImpl<SoPriceChangeMapp
         String approveIngStatus = ApproveStatusEnum.APPROVE_ING.getStatus();
         long count = list.stream().filter(s -> !s.getApproveStatus().getStatus().equals(approveIngStatus)).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_98007);
+            throw new ServiceException(ApiError.ERROR_REVOKE_PROCESS_ALLOWED_STATUS_ONLY);
         }
         //撤销现有流程
         LoginUser userInfo = UserContext.getDefaultLoginUser();
@@ -470,7 +470,7 @@ public class SoPriceChangeServiceImpl extends SuperServiceImpl<SoPriceChangeMapp
     public Boolean updateAndSubmit(SoPriceChangeDTO.UpdateDTO dto) {
         String id = this.updateSoPriceChange(dto);
         if (StringUtils.isBlank(id)) {
-            throw new ServiceException(ApiError.ERROR_1020);
+            throw new ServiceException(ApiError.ERROR_UPDATE_FAILED);
         }
         return this.submit(Collections.singletonList(id), Boolean.TRUE);
     }
@@ -485,12 +485,12 @@ public class SoPriceChangeServiceImpl extends SuperServiceImpl<SoPriceChangeMapp
         String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
         long count = priceChangeList.stream().filter(p -> !p.getApproveStatus().getStatus().equals(waitSubmitStatus)).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_98009);
+            throw new ServiceException(ApiError.ERROR_DELETE_ALLOWED_STATUS_ONLY);
         }
         //删除价目表
         Boolean result = this.removeByIds(ids);
         if (!result) {
-          throw new ServiceException(ApiError.ERROR_1002);
+          throw new ServiceException(ApiError.ERROR_PERSIST_SAVE_FAILED);
         }
         //添加日志
         String content = "删除价目表[%s]";
@@ -731,7 +731,7 @@ public class SoPriceChangeServiceImpl extends SuperServiceImpl<SoPriceChangeMapp
             listApiResult = workflowFeign.curApprover(dtoList);
             Integer code = listApiResult.getCode();
             if (200 != code) {
-                throw new ServiceException(new ApiResult(ApiError.DEFAULT.code,listApiResult.getMsg()));
+                throw new ServiceException(new ApiResult(ApiError.DEFAULT.getCode(),listApiResult.getMsg()));
             }
         }
         //历史调价数据

@@ -310,18 +310,18 @@ public class PurchaseApplicationController extends BaseController {
             }
             List<PurchaseApplicationDetailEntity> detailEntityList = detailList.stream().filter(e -> e.getPurchaseApplicationId().equals(id)).collect(Collectors.toList());
             if (CollectionUtils.isEmpty(detailEntityList)) {
-                resultDTOS.add(BatchResultDTO.fail(id,id,ApiError.ERROR_98017.getMsg()));
+                resultDTOS.add(BatchResultDTO.fail(id,id,ApiError.ERROR_SCM_PO_APPLY_DETAIL_NOT_FOUND.getMsg()));
                 continue;
             }
             //只有未生成的单才能反审核
             long createCount = detailEntityList.stream().filter(obj -> !CreatePoTypeEnum.NOT_GENERATED.getStatus().equals(obj.getCreatePoType())).count();
             if (createCount > 0) {
-                resultDTOS.add(BatchResultDTO.fail(id,id,ApiError.ERROR_98030.getMsg()));
+                resultDTOS.add(BatchResultDTO.fail(id,id,ApiError.ERROR_SCM_REVERSE_APPROVAL_ALLOWED_ONLY_WHEN_PO_NOT_GENERATED.getMsg()));
                 continue;
             }
             List<SubcontractOrderEntity> subcontractOrderEntityList = subcontractOrderList.stream().filter(e -> e.getSourceId().equals(id)).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(subcontractOrderEntityList)) {
-                resultDTOS.add(BatchResultDTO.fail(id,id,ApiError.ERROR_98090.getMsg()));
+                resultDTOS.add(BatchResultDTO.fail(id,id,ApiError.ERROR_SCM_STOCK_APPLY_ALREADY_PUSHED_OUTSOURCING_REVERSE_FORBIDDEN.getMsg()));
                 continue;
             }
             try {
@@ -493,7 +493,7 @@ public class PurchaseApplicationController extends BaseController {
             wb.write(output);
             wb.close();
         } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_95131);
+            throw new ServiceException(ApiError.ERROR_IMPORT_TEMPLATE_DOWNLOAD_FAILED);
         }
         return success();
     }
@@ -622,7 +622,7 @@ public class PurchaseApplicationController extends BaseController {
             wb.write(output);
             wb.close();
         } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_95131);
+            throw new ServiceException(ApiError.ERROR_IMPORT_TEMPLATE_DOWNLOAD_FAILED);
         }
         return success();
     }

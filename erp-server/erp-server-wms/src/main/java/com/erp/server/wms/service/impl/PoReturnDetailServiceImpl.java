@@ -156,7 +156,7 @@ public class PoReturnDetailServiceImpl extends SuperServiceImpl<PoReturnDetailMa
                     if (dto.getSourceType().equals(SourceTypeEnum.PO_RECEIVE.getCode())) {
                         Integer receiveQty = detailEntityList.stream().filter(req -> req.getPurchaseOrderDetailId().equals(addDTO.getPurchaseOrderDetailId()) && req.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
                         if (addDTO.getReturnQty() > receiveQty) {
-                            throw new ServiceException(ApiError.ERROR_WMS_RETURN_QTY_EXCEEDS_RECEIPT.code, String.format(ApiError.ERROR_WMS_RETURN_QTY_EXCEEDS_RECEIPT.msg, purchaseOrderDetailEntity.getSkuNo()));
+                            throw new ServiceException(ApiError.ERROR_WMS_RETURN_QTY_EXCEEDS_RECEIPT.getCode(), String.format(ApiError.ERROR_WMS_RETURN_QTY_EXCEEDS_RECEIPT.getMsg(), purchaseOrderDetailEntity.getSkuNo()));
                         }
                     } else if (dto.getSourceType().equals(ReturnOrderSourceEnum.QC.getCode())) {
                         Integer inventoryTotal = inventoryService.getInventoryTotal(warehouseOrgId, dto.getReturnWarehouseId(), addDTO.getSkuId(), addDTO.getWarehouseLocation(), InventoryStatusEnum.WAIT_QC.getCode());
@@ -340,7 +340,7 @@ public class PoReturnDetailServiceImpl extends SuperServiceImpl<PoReturnDetailMa
                     if (entity.getSourceType().equals(SourceTypeEnum.PO_RECEIVE.getCode())) {
                         Integer receiveQty = detailEntityList.stream().filter(req -> req.getPurchaseOrderDetailId().equals(updateDTO.getPurchaseOrderDetailId()) && req.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
                         if (updateDTO.getReturnQty() > receiveQty) {
-                            throw new ServiceException(ApiError.ERROR_WMS_RETURN_QTY_EXCEEDS_RECEIPT.code, String.format(ApiError.ERROR_WMS_RETURN_QTY_EXCEEDS_RECEIPT.msg, purchaseOrderDetailEntity.getSkuNo()));
+                            throw new ServiceException(ApiError.ERROR_WMS_RETURN_QTY_EXCEEDS_RECEIPT.getCode(), String.format(ApiError.ERROR_WMS_RETURN_QTY_EXCEEDS_RECEIPT.getMsg(), purchaseOrderDetailEntity.getSkuNo()));
                         }
                     } else if (entity.getSourceType().equals(ReturnOrderSourceEnum.QC.getCode())) {
                         Integer inventoryTotal = inventoryService.getInventoryTotal(warehouse.getOrgId(), warehouse.getId(), updateDTO.getSkuId(), updateDTO.getWarehouseLocation(), InventoryStatusEnum.WAIT_QC.getCode());
@@ -361,7 +361,7 @@ public class PoReturnDetailServiceImpl extends SuperServiceImpl<PoReturnDetailMa
                                 .map(PoReturnDetailEntity::getReturnQty)
                                 .reduce(MathUtil.ZERO, Integer::sum);
                         if (updateDTO.getReturnQty() + returnQty > stockInQty) {
-                            throw new ServiceException(ApiError.ERROR_WMS_RETURN_TOTAL_QTY_EXCEEDS_INBOUND.code, String.format(ApiError.ERROR_WMS_RETURN_TOTAL_QTY_EXCEEDS_INBOUND.msg, purchaseOrderDetailEntity.getSkuNo()));
+                            throw new ServiceException(ApiError.ERROR_WMS_RETURN_TOTAL_QTY_EXCEEDS_INBOUND.getCode(), String.format(ApiError.ERROR_WMS_RETURN_TOTAL_QTY_EXCEEDS_INBOUND.getMsg(), purchaseOrderDetailEntity.getSkuNo()));
                         }
                     }
                     if (CollectionUtils.isNotEmpty(currency)) {

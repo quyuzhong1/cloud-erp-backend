@@ -143,7 +143,7 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
         Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "头程对账单"));
         // 待提交和审核不通过允许修改
         if (!ApproveStatusEnum.allowUpdateStatus(ApproveStatusEnum.getByStatus(old.getApproveStatus()))) {
-            throw new ServiceException(ApiError.ERROR_1029);
+            throw new ServiceException(ApiError.ERROR_UPDATE_STATUS_NOT_ALLOWED);
         }
         TmsFirstMileReconciliationEntity tmsFirstMileReconciliationEntity = BeanMapperUtils.map(TmsFirstMileReconciliationEntity.class, updateDTO);
 
@@ -162,7 +162,7 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
                 List<TmsFirstMileReconciliationDetailEntity> detailEntityList1 = detailEntityList.stream().filter(e -> Objects.nonNull(e) && updateDTO.getReconciliationMonth().equals(e.getReconciliationMonth())).collect(Collectors.toList());
                 if (!CollectionUtils.isEmpty(detailEntityList1)) {
                     List<String> sourceCodes = detailEntityList1.stream().map(TmsFirstMileReconciliationDetailEntity::getSourceCode).distinct().collect(Collectors.toList());
-                    throw new ServiceException(ApiError.ERROR_92260, String.join(",", sourceCodes), updateDTO.getReconciliationMonth(), SupplierTypeEnum.getName(old.getSupplierType()),old.getLogisticsSupplierName());
+                    throw new ServiceException(ApiError.ERROR_FINANCE_RECONCILIATION_DUPLICATE, String.join(",", sourceCodes), updateDTO.getReconciliationMonth(), SupplierTypeEnum.getName(old.getSupplierType()),old.getLogisticsSupplierName());
                 }
             }
 
@@ -274,7 +274,7 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
     public BatchResultDTO approve(ApproveOneDTO dto) {
         ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(dto.getType());
         if (Objects.equals(approveType, ApproveTypeEnum.REJECT) && StrUtils.isEmpty(dto.getComment())) {
-            throw new ServiceException(ApiError.REJECT_COMMENT_NOT_EMPTY);
+            throw new ServiceException(ApiError.ERROR_PLM_REJECT_COMMENT_REQUIRED);
         }
         TmsFirstMileReconciliationEntity entity = getById(dto.getId());
         // 审核中的数据允许审核
@@ -348,19 +348,19 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
     private Boolean validateDisApprove(TmsFirstMileReconciliationEntity entity) {
         // 已审核支持反审核
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus())) {
-            throw new ServiceException(ApiError.ERROR_98014);
+            throw new ServiceException(ApiError.ERROR_REVERSE_APPROVAL_ALLOWED_APPROVED_ONLY);
         }
         //对账单明细已进行费用分摊 不能进行反审核
         List<FirstMileCostAllocationEntity> entityList = firstMileCostAllocationService.listByReconciliationIds(Collections.singletonList(entity.getId()));
         if (!CollectionUtils.isEmpty(entityList)) {
-            throw new ServiceException(ApiError.ERROR_92241);
+            throw new ServiceException(ApiError.ERROR_FINANCE_COST_ALLOCATION_REVERSE_FORBIDDEN);
         }
         List<TmsFirstMileReconciliationDetailEntity> detailEntityList = tmsFirstMileReconciliationDetailService.listByMainIds(Collections.singletonList(entity.getId()));
         if (!CollectionUtils.isEmpty(detailEntityList)) {
             List<String> detailIds = detailEntityList.stream().map(TmsFirstMileReconciliationDetailEntity::getId).distinct().collect(Collectors.toList());
             List<FirstMileSkuCostAllocationEntity> detailList = firstMileSkuCostAllocationService.listByReconciliationDetailIds(detailIds);
             if (!CollectionUtils.isEmpty(detailList)) {
-                throw new ServiceException(ApiError.ERROR_92241);
+                throw new ServiceException(ApiError.ERROR_FINANCE_COST_ALLOCATION_REVERSE_FORBIDDEN);
             }
         }
         // 下游盘点计划单反审核
@@ -373,7 +373,7 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
         TmsFirstMileReconciliationEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到头程对账单数据"));
         // 只有待提交数据允许删除
         if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT.getCode(), entity.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_98032);
+            throw new ServiceException(ApiError.ERROR_SCM_SUBMIT_ALLOWED_STATUS_ONLY);
         }
         // 删除明细数据（如果有明细数据的话）
         //清除明细
@@ -399,7 +399,7 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
         TmsFirstMileReconciliationEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到头程对账单数据"));
         // 只有审核中的单据允许撤销
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())) {
-            throw new ServiceException(ApiError.ERROR_98007);
+            throw new ServiceException(ApiError.ERROR_REVOKE_PROCESS_ALLOWED_STATUS_ONLY);
         }
         //撤销流程
         log.info("撤销 开始撤销流程，id：【{}】", id);
@@ -698,7 +698,7 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
     private void validateSubmit(TmsFirstMileReconciliationEntity entity) {
         // 待提交或审核不通过并且未作废允许提交
         if (!ApproveStatusEnum.allowUpdateStatus(ApproveStatusEnum.getByStatus(entity.getApproveStatus()))) {
-            throw new ServiceException(ApiError.ERROR_98010);
+            throw new ServiceException(ApiError.ERROR_SUBMIT_ALLOWED_STATUS_ONLY);
         }
         // 是否所有明细确认
         List<TmsFirstMileReconciliationDetailEntity> detailList = tmsFirstMileReconciliationDetailService.listByMainIds(Collections.singletonList(entity.getId()));
@@ -796,7 +796,7 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
         Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "头程对账单"));
         // 待提交和审核不通过允许修改
         if (!ApproveStatusEnum.allowUpdateStatus(ApproveStatusEnum.getByStatus(old.getApproveStatus()))) {
-            throw new ServiceException(ApiError.ERROR_1029);
+            throw new ServiceException(ApiError.ERROR_UPDATE_STATUS_NOT_ALLOWED);
         }
         //数据转换
         TmsFirstMileReconciliationEntity tmsFirstMileReconciliationEntity = TmsFirstMileReconciliationConverter.INSTANCE.updateDtoToEntity(updateDTO);
@@ -811,7 +811,7 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
                         && updateDTO.getReconciliationMonth().equals(e.getReconciliationMonth())).collect(Collectors.toList());
                 if (!CollectionUtils.isEmpty(detailEntityList1)) {
                     List<String> sourceCodes = detailEntityList1.stream().map(TmsFirstMileReconciliationDetailEntity::getSourceCode).distinct().collect(Collectors.toList());
-                    throw new ServiceException(ApiError.ERROR_92260, String.join(",", sourceCodes), updateDTO.getReconciliationMonth(),SupplierTypeEnum.getName(old.getSupplierType()), old.getLogisticsSupplierName());
+                    throw new ServiceException(ApiError.ERROR_FINANCE_RECONCILIATION_DUPLICATE, String.join(",", sourceCodes), updateDTO.getReconciliationMonth(),SupplierTypeEnum.getName(old.getSupplierType()), old.getLogisticsSupplierName());
                 }
             }
             this.lambdaUpdate().set(TmsFirstMileReconciliationEntity::getReconciliationMonth, updateDTO.getReconciliationMonth())
@@ -861,7 +861,7 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
     @Override
     public BatchResultDTO updatePayStatus(TmsFirstMileReconciliationDTO.UpdatePayStatusDTO dto, String id) {
         if (CollUtil.isEmpty(dto.getIds())) {
-            throw new ServiceException(ApiError.ERROR_98004);
+            throw new ServiceException(ApiError.ERROR_SELECTION_REQUIRED);
         }
 
         TmsFirstMileReconciliationEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到头程对账单数据"));

@@ -467,13 +467,13 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
         MouldInfoEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到模具数据"));
         List<MouldDetailDTO.ViewDTO> viewDTOS = mouldDetailService.listByMouldId(entity.getId());
         if (CollectionUtils.isEmpty(viewDTOS)) {
-            throw new ServiceException(ApiError.ERROR_1041, entity.getName());
+            throw new ServiceException(ApiError.ERROR_DOC_DETAIL_REQUIRED, entity.getName());
         }
         verifyData(viewDTOS);
         // 待提交或审核不通过并且未作废允许提交
         if (Boolean.FALSE.equals(ApproveStatusEnum.allowUpdateStatus(ApproveStatusEnum.getByStatus(entity.getStatus())))
                 || Boolean.TRUE.equals(entity.getInvalidStatus())) {
-            throw new ServiceException(ApiError.ERROR_98010);
+            throw new ServiceException(ApiError.ERROR_SUBMIT_ALLOWED_STATUS_ONLY);
         }
         log.info("提交 开始启动模具表流程，id=：【{}】", entity.getId());
         startProcess(entity);
@@ -606,7 +606,7 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
         MouldInfoEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到模具数据"));
         // 审核中的数据允许撤销
         if (!Objects.equals(ApproveStatusEnum.APPROVE_ING.getStatus(), entity.getStatus())) {
-            throw new ServiceException(ApiError.ERROR_98007);
+            throw new ServiceException(ApiError.ERROR_REVOKE_PROCESS_ALLOWED_STATUS_ONLY);
         }
         String userId = UserContext.getDefaultLoginUser().getUid();
         ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
@@ -625,7 +625,7 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
     public BatchResultDTO approve(ApproveOneDTO dto) {
         ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(dto.getType());
         if (Objects.equals(approveType, ApproveTypeEnum.REJECT) && StrUtils.isEmpty(dto.getComment())) {
-            throw new ServiceException(ApiError.REJECT_COMMENT_NOT_EMPTY);
+            throw new ServiceException(ApiError.ERROR_PLM_REJECT_COMMENT_REQUIRED);
         }
         MouldInfoEntity entity = super.getByIdOpt(dto.getId()).orElseThrow(() -> new ServiceException("未找到模具数据"));
         // 审核中的数据允许审核
@@ -693,7 +693,7 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
         MouldInfoEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到模具数据"));
         // 已审核的数据才可以反审核
         if (!Objects.equals(ApproveStatusEnum.APPROVE.getStatus(), entity.getStatus())) {
-            throw new ServiceException(ApiError.ERROR_98014);
+            throw new ServiceException(ApiError.ERROR_REVERSE_APPROVAL_ALLOWED_APPROVED_ONLY);
         }
         this.updateApproveStatus(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus(), null);
         String msg = CharSequenceUtil.format("模具【{}】反审核流程", entity.getMouldCategoryCode());
@@ -707,11 +707,11 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
         MouldInfoEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到模具数据"));
         // 待提交或审核不通过并且未作废允许作废
         if (Boolean.FALSE.equals(ApproveStatusEnum.allowUpdateStatus(ApproveStatusEnum.getByStatus(entity.getStatus())))) {
-            throw new ServiceException(ApiError.ERROR_98005);
+            throw new ServiceException(ApiError.ERROR_VOID_ALLOWED_STATUS_ONLY);
         }
         //已作废数据不支持作废
         if (Boolean.TRUE.equals(entity.getInvalidStatus())) {
-            throw new ServiceException(ApiError.ERROR_98012);
+            throw new ServiceException(ApiError.ERROR_ALREADY_VOID_CANNOT_VOID_AGAIN);
         }
         log.info("作废 开始修改模具状态数据，id：【{}】", id);
         lambdaUpdate().eq(MouldInfoEntity::getId, id)
@@ -732,7 +732,7 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
         MouldDetailEntity detail = mouldDetailService.getByIdOpt(id).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "模具明细"));
         MouldInfoEntity entity = super.getByIdOpt(detail.getMainId()).orElseThrow(() -> new ServiceException("未找到模具数据"));
         if (Boolean.TRUE.equals(entity.getInvalidStatus())) {
-            throw new ServiceException(ApiError.ERROR_95285);
+            throw new ServiceException(ApiError.ERROR_PLM_DOC_VOID_EDIT_FORBIDDEN);
         }
         //更新备注
         detail.setRemark(remark);
@@ -749,7 +749,7 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
         MouldDetailEntity detail = mouldDetailService.getByIdOpt(id).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "模具明细"));
         MouldInfoEntity entity = super.getByIdOpt(detail.getMainId()).orElseThrow(() -> new ServiceException("未找到模具数据"));
         if (Boolean.TRUE.equals(entity.getInvalidStatus())) {
-            throw new ServiceException(ApiError.ERROR_95285);
+            throw new ServiceException(ApiError.ERROR_PLM_DOC_VOID_EDIT_FORBIDDEN);
         }
         MouldStoreLocationEntity old = Optional.ofNullable(mouldStoreLocationService.getByMouldDetailId(id)).orElse(new MouldStoreLocationEntity());
         MouldStoreLocationEntity storeLocation = new MouldStoreLocationEntity();
@@ -790,7 +790,7 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
         MouldDetailEntity detail = mouldDetailService.getByIdOpt(id).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "模具明细"));
         MouldInfoEntity entity = super.getByIdOpt(detail.getMainId()).orElseThrow(() -> new ServiceException("未找到模具数据"));
         if (Boolean.TRUE.equals(entity.getInvalidStatus())) {
-            throw new ServiceException(ApiError.ERROR_95285);
+            throw new ServiceException(ApiError.ERROR_PLM_DOC_VOID_EDIT_FORBIDDEN);
         }
         //更新启用时间
         detail.setEnableDate(enableTime);

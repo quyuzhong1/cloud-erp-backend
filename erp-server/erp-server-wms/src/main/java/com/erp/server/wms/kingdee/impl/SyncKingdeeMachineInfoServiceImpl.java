@@ -149,14 +149,14 @@ public class SyncKingdeeMachineInfoServiceImpl implements SyncKingdeeMachineInfo
         //加工明细
         List<MachineDetailEntity> detailList = machineDetailService.listByMainId(entity.getId());
         if (CollectionUtils.isEmpty(detailList)) {
-            throw new ServiceException(ApiError.ERROR_99052);
+            throw new ServiceException(ApiError.ERROR_WMS_PROCESS_ORDER_NOT_FOUND);
         }
         List<String> detailIds = detailList.stream().map(MachineDetailEntity::getId).collect(Collectors.toList());
 
         //子件明细
         List<MachineSubComponentsEntity> machineSubComponentsList = machineSubComponentsService.listByDetailIds(detailIds);
         if (CollectionUtils.isEmpty(machineSubComponentsList)) {
-            throw new ServiceException(ApiError.ERROR_99053);
+            throw new ServiceException(ApiError.ERROR_WMS_PROCESS_ORDER_DETAIL_NOT_FOUND);
         }
         List<String> warehouseIds = machineSubComponentsList.stream().map(MachineSubComponentsEntity::getWarehouseId).collect(Collectors.toList());
         warehouseIds.add(entity.getWarehouseId());

@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
 import com.common.business.dto.FindUserDTO;
@@ -323,7 +324,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
                 Integer noticeQty = detail.getQcNoticeQty();
                 Integer inventoryQty = skuInventoryMap.getOrDefault(skuId, 0);
                 if (inventoryQty <= 0 || inventoryQty.intValue() < noticeQty.intValue()) {
-                    sb.append(StrUtil.format(ApiError.ERROR_QC_STOCK_INSUFFICIENT.msg, skuNo, noticeQty, inventoryQty));
+                    sb.append(StrUtil.format(ApiError.ERROR_QC_STOCK_INSUFFICIENT.getMsg(), skuNo, noticeQty, inventoryQty));
                     sb.append(";");
                 }
             }
@@ -395,7 +396,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
                 sb.append(map.get(qcInfo.getSourceDetailId()));
                 sb.append(";");
             }
-            return BatchResultDTO.fail(entity.getId(), entity.getCode(), CharSequenceUtil.format(ApiError.ERROR_QC_ALREADY_COMPLETED_REVERSE_FORBIDDEN.msg,sb.toString()));
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), CharSequenceUtil.format(ApiError.ERROR_QC_ALREADY_COMPLETED_REVERSE_FORBIDDEN.getMsg(),sb.toString()));
         }
         //反审核成功后，自动删除待质检的质检单，通知单状态变更为待提交
         updateForDisApprove(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
@@ -731,7 +732,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
                 List<QcNoticeDetailEntity> waitList = qcNoticeDetailList.stream().filter(e -> e.getQcStatus().equals(QcNoticeStatusEnum.WAIT.getCode())).collect(Collectors.toList());
                 if(CollUtil.isNotEmpty(waitList)){
                     String skuNos = waitList.stream().map(QcNoticeDetailEntity::getSkuNo).collect(Collectors.joining("，"));
-                    BatchResultDTO fail = BatchResultDTO.fail(qcNoticeEntity.getId(), qcNoticeEntity.getCode(), CharSequenceUtil.format(ApiError.ERROR_QC_NOT_COMPLETED_REVERSE_FORBIDDEN.msg, qcNoticeEntity.getCode(),skuNos));
+                    BatchResultDTO fail = BatchResultDTO.fail(qcNoticeEntity.getId(), qcNoticeEntity.getCode(), CharSequenceUtil.format(ApiError.ERROR_QC_NOT_COMPLETED_REVERSE_FORBIDDEN.getMsg(), qcNoticeEntity.getCode(),skuNos));
                     results.add(fail);
                     continue;
                 }
@@ -759,14 +760,14 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
                             BatchResultDTO success = BatchResultDTO.success(qcNoticeEntity.getId(), qcNoticeEntity.getCode(), "撤销质检");
                             results.add(success);
                         }else {
-                            BatchResultDTO fail = BatchResultDTO.fail(qcNoticeEntity.getId(), qcNoticeEntity.getCode(), CharSequenceUtil.format(ApiError.ERROR_QC_NO_TRANSFER_OUT.msg, qcNoticeEntity.getCode()));
+                            BatchResultDTO fail = BatchResultDTO.fail(qcNoticeEntity.getId(), qcNoticeEntity.getCode(), CharSequenceUtil.format(ApiError.ERROR_QC_NO_TRANSFER_OUT.getMsg(), qcNoticeEntity.getCode()));
                             results.add(fail);
                         }
                     }else {
                         for (TransferOutEntity transferOutEntity : transferOutMap.get(qcNoticeId)) {
                             if(transferOutEntity.getApproveStatus().equals(ApproveStatusEnum.APPROVE_ING.getCode())
                                     || transferOutEntity.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getCode())){
-                                BatchResultDTO fail = BatchResultDTO.fail(qcNoticeEntity.getId(), qcNoticeEntity.getCode(), CharSequenceUtil.format(ApiError.ERROR_QC_TRANSFER_OUT_ALREADY_GENERATED.msg, qcNoticeEntity.getCode(),transferOutEntity.getCode()));
+                                BatchResultDTO fail = BatchResultDTO.fail(qcNoticeEntity.getId(), qcNoticeEntity.getCode(), CharSequenceUtil.format(ApiError.ERROR_QC_TRANSFER_OUT_ALREADY_GENERATED.getMsg(), qcNoticeEntity.getCode(),transferOutEntity.getCode()));
                                 results.add(fail);
                             }else {
                                 List<TransferOutDetailEntity> transferOutDetailEntities = transferOutDetailService.listByMainId(transferOutEntity.getId());
@@ -854,7 +855,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             Integer noticeQty = detail.getQcNoticeQty();
             Integer inventoryQty = skuInventoryMap.getOrDefault(skuId, 0);
             if (inventoryQty <= 0 || inventoryQty.intValue() < noticeQty.intValue()) {
-                results.add(BatchResultDTO.fail(skuId, skuNo, CharSequenceUtil.format(ApiError.ERROR_QC_STOCK_INSUFFICIENT_CONTINUE_CONFIRM.msg, noticeQty, inventoryQty)));
+                results.add(BatchResultDTO.fail(skuId, skuNo, CharSequenceUtil.format(ApiError.ERROR_QC_STOCK_INSUFFICIENT_CONTINUE_CONFIRM.getMsg(), noticeQty, inventoryQty)));
             }
         }
         return results;

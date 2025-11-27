@@ -54,7 +54,7 @@ public class SsoController {
             String appId = httpRequest.getHeader("App-Id");
             
             if (StringUtils.isBlank(appId)) {
-                return ApiResult.error(ApiError.ERROR_PARAM_INVALID.code, "请求头App-Id不能为空");
+                return ApiResult.error(ApiError.ERROR_PARAM_INVALID.getCode(), "请求头App-Id不能为空");
             }
             
             // 后端生成Sign-Session-Id用于标识会话密钥存储位置
@@ -134,7 +134,7 @@ public class SsoController {
         try {
             String appId = httpRequest.getHeader("App-Id");
             if (StringUtils.isBlank(appId)) {
-                return ApiResult.error(ApiError.ERROR_PARAM_INVALID.code, "请求头App-Id不能为空");
+                return ApiResult.error(ApiError.ERROR_PARAM_INVALID.getCode(), "请求头App-Id不能为空");
             }
             
             // 使用Feign调用SysUserInfoService的方法
@@ -142,14 +142,14 @@ public class SsoController {
             
             if (result == null || !result.isSuccess()) {
                 log.warn("获取飞书用户UnionId失败，appId: {}, 错误信息: {}", appId, result != null ? result.getMsg() : "调用失败");
-                return ApiResult.error(ApiError.ERROR_SYS_UNKNOWN.code, result != null ? result.getMsg() : "获取飞书用户UnionId失败");
+                return ApiResult.error(ApiError.ERROR_SYS_UNKNOWN.getCode(), result != null ? result.getMsg() : "获取飞书用户UnionId失败");
             }
             String unionId = result.getData();
             log.info("成功获取飞书用户UnionId：{}，appId：{}", unionId, appId);
             return ApiResult.success(unionId);
         } catch (Exception e) {
             log.error("获取飞书用户UnionId异常", e);
-            return ApiResult.error(ApiError.ERROR_SYS_UNKNOWN.code, "获取飞书用户UnionId失败：" + e.getMessage());
+            return ApiResult.error(ApiError.ERROR_SYS_UNKNOWN.getCode(), "获取飞书用户UnionId失败：" + e.getMessage());
         }
     }
 

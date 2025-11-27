@@ -119,7 +119,7 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
 
         PurchasePriceEntity purchasePriceEntity = priceService.getById(purchasePriceId);
         if (ObjectUtils.isEmpty(purchasePriceEntity)) {
-            throw new ServiceException(ApiError.ERROR_98024);
+            throw new ServiceException(ApiError.ERROR_SCM_PURCHASE_PRICE_LIST_NOT_FOUND);
         }
         //验证时间
         checkPurchasePriceDetail(purchasePriceEntity.getSupplierId(),purchasePriceEntity.getPurchaseOrgId(),addList);
@@ -312,7 +312,7 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
 
         PurchasePriceEntity purchasePriceEntity = priceService.getById(purchasePriceId);
         if (ObjectUtils.isEmpty(purchasePriceEntity)) {
-            throw new ServiceException(ApiError.ERROR_98024);
+            throw new ServiceException(ApiError.ERROR_SCM_PURCHASE_PRICE_LIST_NOT_FOUND);
         }
         for (PurchasePriceDetailDTO.UpdateDTO item : purchasePriceDetailList) {
             PurchasePriceDetailEntity entity = new PurchasePriceDetailEntity();
@@ -393,7 +393,7 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
             wb.close();
         } catch (Exception e) {
             log.error("warehouse downloadTemplate  出错了 e==", e);
-            throw new ServiceException(ApiError.ERROR_95131);
+            throw new ServiceException(ApiError.ERROR_IMPORT_TEMPLATE_DOWNLOAD_FAILED);
         }
 
     }
@@ -456,7 +456,7 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
         Boolean disabled = dto.getDisabled();
         long count = detailList.stream().filter(d -> !d.getDisabled() == disabled).count();
         if (count != detailList.size()) {
-            throw new ServiceException(ApiError.ERROR_98027);
+            throw new ServiceException(ApiError.ERROR_SCM_INCONSISTENT_DISABLE_STATUS);
         }
         detailList.forEach(d -> d.setDisabled(disabled));
 
@@ -531,7 +531,7 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
         for (PurchasePriceEntity purchasePriceEntity : purchasePriceEntities) {
             String approveStatus = purchasePriceEntity.getApproveStatus().getStatus();
             if (!approveStatus.equals(ApproveStatusEnum.APPROVE.getStatus())) {
-                throw new ServiceException(ApiError.ERROR_98029);
+                throw new ServiceException(ApiError.ERROR_SCM_PURCHASE_PRICE_CHANGE_ALLOWED_APPROVED_ONLY);
             }
         }
 
@@ -571,7 +571,7 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
             //采购价目信息
             PurchasePriceEntity purchasePriceEntity = purchasePriceEntities.stream().filter(req -> item.getPurchasePriceId().equals(req.getId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(purchasePriceEntity)) {
-                throw new ServiceException(ApiError.ERROR_98024);
+                throw new ServiceException(ApiError.ERROR_SCM_PURCHASE_PRICE_LIST_NOT_FOUND);
             }
 
             //供应商名称

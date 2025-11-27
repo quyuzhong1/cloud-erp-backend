@@ -275,7 +275,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = ids.stream().map(obj -> new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.SO_RETURN_INSTOCK.getCode(), obj)).collect(Collectors.toCollection(ValidList::new));
         ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = workflowFeign.curApprover(dtoList);
         if (200 != listApiResult.getCode()) {
-            throw new ServiceException(new ApiResult(ApiError.DEFAULT.code,listApiResult.getMsg()));
+            throw new ServiceException(new ApiResult(ApiError.DEFAULT.getCode(),listApiResult.getMsg()));
         }
 
         if (CollectionUtils.isNotEmpty(records)) {
@@ -785,7 +785,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         Map<String, Object> variablesMap = BeanUtil.beanToMap(entity);
         List<SoReturnInstockDetailEntity> detailList = soReturnInstockDetailService.lambdaQuery().eq(SoReturnInstockDetailEntity::getMainId,entity.getId()).list();
         if (CollUtil.isEmpty(detailList)) {
-            throw new ServiceException(ApiError.ERROR_92174);
+            throw new ServiceException(ApiError.ERROR_RETURN_INBOUND_DETAIL_REQUIRED);
         }
         variablesMap.put(ThirdConstants.DETAIL_LIST, BeanUtil.copyToList(detailList,Map.class));
         return variablesMap;
@@ -832,7 +832,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         }
         SoReturnInstockEntity entity = this.getById(id);
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_99083);
+            throw new ServiceException(ApiError.ERROR_WMS_RETURN_INBOUND_NOT_FOUND);
         }
         BatchResultDTO submit = this.submit(entity, Boolean.TRUE);
         return submit.getSuccess();
@@ -847,7 +847,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         }
         SoReturnInstockEntity entity = this.getById(dto.getId());
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_99083);
+            throw new ServiceException(ApiError.ERROR_WMS_RETURN_INBOUND_NOT_FOUND);
         }
         BatchResultDTO submit = this.submit(entity, Boolean.TRUE);
         return submit.getSuccess();
@@ -899,7 +899,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         ApiResult<ProcessManagementDTO.ApproveResultDTO> listApiResult = workflowFeign.approve(approveDTO);
         Integer code = listApiResult.getCode();
         if (200 != code) {
-            throw new ServiceException(ApiError.ERROR_94006);
+            throw new ServiceException(ApiError.ERROR_WF_APPROVAL_FAILED);
         }
         ProcessManagementDTO.ApproveResultDTO data = listApiResult.getData();
         if (ObjectUtil.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()) {
@@ -1922,7 +1922,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         }
         SoReturnInstockEntity entity = this.getById(id);
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_99083);
+            throw new ServiceException(ApiError.ERROR_WMS_RETURN_INBOUND_NOT_FOUND);
         }
         BatchResultDTO submit = this.submit(entity, Boolean.TRUE);
         return submit.getSuccess();
@@ -1937,7 +1937,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         }
         SoReturnInstockEntity entity = this.getById(dto.getId());
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_99083);
+            throw new ServiceException(ApiError.ERROR_WMS_RETURN_INBOUND_NOT_FOUND);
         }
         BatchResultDTO submit = this.submit(entity, Boolean.TRUE);
         return submit.getSuccess();
@@ -1972,7 +1972,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = ids.stream().map(obj -> new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.SO_RETURN_INSTOCK.getCode(), obj)).collect(Collectors.toCollection(ValidList::new));
         ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = workflowFeign.curApprover(dtoList);
         if (200 != listApiResult.getCode()) {
-            throw new ServiceException(new ApiResult(ApiError.DEFAULT.code,listApiResult.getMsg()));
+            throw new ServiceException(new ApiResult(ApiError.DEFAULT.getCode(),listApiResult.getMsg()));
         }
 
         for (SoReturnInstockDTO.PagingView obj : pagingViews.getRecords()) {
@@ -2510,7 +2510,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
 //                && entity.getApproveStatus().equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus())
 //        ).count();
 //        if (count != entityList.size()) {
-//            throw new ServiceException(ApiError.ERROR_98009);
+//            throw new ServiceException(ApiError.ERROR_DELETE_ALLOWED_STATUS_ONLY);
 //        }
 
         List<SoReturnInstockEntity> removeList=new ArrayList<>();

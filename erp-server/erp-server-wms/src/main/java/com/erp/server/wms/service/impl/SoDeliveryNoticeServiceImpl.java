@@ -236,7 +236,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = ids.stream().map(obj -> new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.SO_DELIVERY_NOTICE.getCode(), obj)).collect(Collectors.toCollection(ValidList::new));
         ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = workflowFeign.curApprover(dtoList);
         if (200 != listApiResult.getCode()) {
-            throw new ServiceException(new ApiResult(ApiError.DEFAULT.code,listApiResult.getMsg()));
+            throw new ServiceException(new ApiResult(ApiError.DEFAULT.getCode(),listApiResult.getMsg()));
         }
 
         if (CollectionUtils.isNotEmpty(records)) {
@@ -666,7 +666,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         }
         SoDeliveryNoticeEntity entity = this.getById(id);
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_NOT_DELIVERY_NOTICE);
+            throw new ServiceException(ApiError.ERROR_NOT_DELIVERY_NOTICE_DETAIL);
         }
         BatchResultDTO submit = this.submit(entity, Boolean.TRUE);
         return submit.getSuccess();
@@ -680,7 +680,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         }
         SoDeliveryNoticeEntity entity = this.getById(dto.getId());
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_NOT_DELIVERY_NOTICE);
+            throw new ServiceException(ApiError.ERROR_NOT_DELIVERY_NOTICE_DETAIL);
         }
         BatchResultDTO submit = this.submit(entity, Boolean.TRUE);
         return submit.getSuccess();
@@ -737,7 +737,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         ApiResult<ProcessManagementDTO.ApproveResultDTO> listApiResult = workflowFeign.approve(approveDTO);
         Integer code = listApiResult.getCode();
         if (200 != code) {
-            throw new ServiceException(ApiError.ERROR_94006);
+            throw new ServiceException(ApiError.ERROR_WF_APPROVAL_FAILED);
         }
         ProcessManagementDTO.ApproveResultDTO data = listApiResult.getData();
         if (ObjectUtil.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()) {
@@ -1961,7 +1961,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = ids.stream().map(obj -> new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.SO_DELIVERY_NOTICE.getCode(), obj)).collect(Collectors.toCollection(ValidList::new));
         ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = workflowFeign.curApprover(dtoList);
         if (200 != listApiResult.getCode()) {
-            throw new ServiceException(new ApiResult(ApiError.DEFAULT.code,listApiResult.getMsg()));
+            throw new ServiceException(new ApiResult(ApiError.DEFAULT.getCode(),listApiResult.getMsg()));
         }
 
         for (SoDeliveryNoticeDTO.PagingView pagingView : pagingViews.getRecords()) {
@@ -2669,13 +2669,13 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO updateIsAllowOutstock(SoDeliveryNoticeEntity entity, SoDeliveryNoticeDTO.PermitOutstockDTO dto) {
         if (!IsAllowOutstockEnum.WAIT_NOTICE.getCode().equals(entity.getIsAllowOutstock())) {
-            return BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_UPDATE_IS_ALLOW_OUTSTOCK.msg);
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_UPDATE_IS_ALLOW_OUTSTOCK.getMsg());
         }
         entity.setIsAllowOutstock(IsAllowOutstockEnum.PERMIT.getCode());
         entity.setRemark(dto.getRemark());
         boolean update = super.updateById(entity);
         if (!update) {
-            throw new ServiceException(ApiError.ERROR_1002);
+            throw new ServiceException(ApiError.ERROR_PERSIST_SAVE_FAILED);
         }
         //添加附件
         WmsAttachmentEntity attachmentEntity = new WmsAttachmentEntity();
@@ -2759,7 +2759,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
 //        ).count();
 //
 //        if (count != deliveryNoticeEntityList.size()) {
-//            throw new ServiceException(ApiError.ERROR_98009);
+//            throw new ServiceException(ApiError.ERROR_DELETE_ALLOWED_STATUS_ONLY);
 //        }
 
         List<PackingTaskEntity> taskEntityList = packingTaskService.listBySourceCodes(removeList.stream().map(SoDeliveryNoticeEntity::getCode).collect(Collectors.toList()));

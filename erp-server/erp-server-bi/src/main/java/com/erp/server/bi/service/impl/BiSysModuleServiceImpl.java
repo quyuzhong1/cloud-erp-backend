@@ -114,7 +114,7 @@ public class BiSysModuleServiceImpl extends ServiceImpl<BiSysModuleMapper, BiSys
     public ModuleSysConfigurationDTO getBySysModuleId(String sysModuleId) {
         BiSysModuleEntity biSysModuleEntity = this.getById(sysModuleId);
         if (ObjectUtils.isEmpty(biSysModuleEntity)) {
-            throw new ServiceException(ApiError.ERROR_97012);
+            throw new ServiceException(ApiError.ERROR_DMP_SYSTEM_MODULE_NOT_FOUND);
         }
         ModuleSysConfigurationDTO dto = new ModuleSysConfigurationDTO();
         BeanUtils.copyProperties(biSysModuleEntity,dto);
@@ -137,7 +137,7 @@ public class BiSysModuleServiceImpl extends ServiceImpl<BiSysModuleMapper, BiSys
         queryWrapper.last("LIMIT 1");
         int count = this.count(queryWrapper);
         if (count > 0) {
-           throw new ServiceException(ApiError.ERROR_97003);
+           throw new ServiceException(ApiError.ERROR_DMP_MODULE_NAME_EXISTS);
         }
     }
 }

@@ -288,7 +288,7 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
         }
         ProductInfoEntity infoEntity = productInfoService.getById(productId);
         if (Objects.isNull(infoEntity)) {
-            throw new ServiceException(ApiError.ERROR_95010);
+            throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_NOT_FOUND);
         }
         List<ProjectTaskEntity> projectTaskList = projectTaskService.getByProductId(productId);
         List<FindUserDTO> sysUserList = sysUserFeign.getUserList();
@@ -297,7 +297,7 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
             read(excelFile.getInputStream(), ScheduleTaskExportErrorExcelVO.class, excelListenerUtil).sheet(0).doRead();
             List<ScheduleTaskExportErrorExcelVO> dataList = excelListenerUtil.getDataList();
             if (CollectionUtils.isEmpty(dataList)) {
-                throw new ServiceException(ApiError.ERROR_95133);
+                throw new ServiceException(ApiError.ERROR_PLM_TEMPLATE_DATA_EMPTY);
             }
             List<ScheduleTaskExportErrorExcelVO> errorList = excelListenerUtil.getErrorList();
             if (CollectionUtils.isEmpty(errorList)) {
@@ -412,7 +412,7 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
             Long count = taskList.stream().filter(p -> !waitAudit.equals(p.getScheduleStatus()))
                     .count();
             if (count > 0) {
-                throw new ServiceException(ApiError.ERROR_95121);
+                throw new ServiceException(ApiError.ERROR_PLM_TASK_CANCEL_SUBMIT_INVALID);
             }
 
             List<ProjectPlanTaskEntity> planTaskList = this.getByTaskIdList(productId, dto.getTaskIdList());
@@ -462,14 +462,14 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
         if (CollectionUtils.isNotEmpty(dto.getTaskIdList())) {
             List<ScheduleTaskVO> taskList = projectTaskService.getScheduleTaskByTaskIds(productId, dto.getTaskIdList());
             if (CollectionUtils.isEmpty(taskList)) {
-                throw new ServiceException(ApiError.ERROR_95119);
+                throw new ServiceException(ApiError.ERROR_PLM_RESUBMIT_STATUS_INVALID);
             }
             String auditNoPassStatus = BaseStatusEnum.AUDIT_NO_PASS.getStatus();
             //初始提交
             Long count = taskList.stream().filter(p -> !auditNoPassStatus.equals(p.getScheduleStatus()))
                     .count();
             if (count > 0) {
-                throw new ServiceException(ApiError.ERROR_95119);
+                throw new ServiceException(ApiError.ERROR_PLM_RESUBMIT_STATUS_INVALID);
             }
             //待审核
             String waitAuditStatus = BaseStatusEnum.WAIT_AUDIT.getStatus();
@@ -537,28 +537,28 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
             //去重的任务id
             List<String> deTaskIdList = taskIdList.stream().distinct().collect(Collectors.toList());
             if (taskIdList.size() != deTaskIdList.size()) {
-                throw new ServiceException(ApiError.ERROR_95150);
+                throw new ServiceException(ApiError.ERROR_PLM_TASK_DUPLICATE);
             }
             List<ScheduleTaskVO> taskList = projectTaskService.getScheduleTaskByTaskIds(productId, taskIdList);
 
             Long subTaskCount = taskList.stream().filter(p -> !p.getPid().equals("0"))
                     .count();
             if (subTaskCount > 0) {
-                throw new ServiceException(ApiError.ERROR_95143);
+                throw new ServiceException(ApiError.ERROR_PLM_SUBTASK_SCHEDULE_CHANGE_FORBIDDEN);
             }
 
             String auditPassStatus = BaseStatusEnum.AUDIT_PASS.getStatus();
             Long count = taskList.stream().filter(p -> !auditPassStatus.equals(p.getScheduleStatus()))
                     .count();
             if (count > 0) {
-                throw new ServiceException(ApiError.ERROR_95120);
+                throw new ServiceException(ApiError.ERROR_PLM_CHANGE_STATUS_INVALID);
             }
             //检查时间
             long timeCount = taskList.stream().
                     filter(t -> Objects.isNull(t.getPlanEndTime()) || Objects.isNull(t.getPlanStartTime())).
                     count();
             if (timeCount > 0) {
-                throw new ServiceException(ApiError.ERROR_95010);
+                throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_NOT_FOUND);
             }
 
             result = projectPlanService.changeSchedule(productId, list);
@@ -716,7 +716,7 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
         }
         ProductInfoEntity infoEntity = productInfoService.getById(productId);
         if (Objects.isNull(infoEntity)) {
-            throw new ServiceException(ApiError.ERROR_95010);
+            throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_NOT_FOUND);
         }
         List<ProjectTaskEntity> projectTaskList = projectTaskService.getByProductId(productId);
         List<FindUserDTO> sysUserList = sysUserFeign.getUserList();
@@ -726,7 +726,7 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
             read(excelFile.getInputStream(), ScheduleTaskExportErrorExcelVO.class, excelListener).sheet(0).doRead();
             List<ScheduleTaskExportErrorExcelVO> list = excelListener.getDataList();
             if (CollectionUtils.isEmpty(list)) {
-                throw new ServiceException(ApiError.ERROR_95133);
+                throw new ServiceException(ApiError.ERROR_PLM_TEMPLATE_DATA_EMPTY);
             }
 
 

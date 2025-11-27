@@ -183,7 +183,7 @@ public class PreTaskServiceImpl extends ServiceImpl<PreTaskMapper, PreTaskEntity
             List<Integer> excludeStatusList=Arrays.asList(TaskStateEnum.FINISH.getCode(),TaskStateEnum.APPROVAL_PASS.getCode(),TaskStateEnum.CLOSE.getCode());
             int count = projectTaskService.countUndoneByTaskIds(excludeStatusList,preTaskIds);
             if (count > 0) {
-                throw new ServiceException(ApiError.ERROR_95035);
+                throw new ServiceException(ApiError.ERROR_PLM_TASK_PREDECESSOR_UNFINISHED);
             }
         }
 

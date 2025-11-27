@@ -523,7 +523,7 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
     public void addInstockPoReconciliationDetail (PoReconciliationDetailDTO.GenerateParamDTO paramDTO) {
         List<PoInstockEntity> poInstockList = FeignQuery.create(PoInstockEntity.class).eq(PoInstockEntity::getCode, paramDTO.getCode()).list();
         if (CollUtil.isEmpty(poInstockList)) {
-            throw new ServiceException(ApiError.ERROR_98050);
+            throw new ServiceException(ApiError.ERROR_SCM_PURCHASE_INBOUND_NOT_FOUND);
         }
         PoInstockEntity entity = poInstockList.get(0);
         if (!CharSequenceUtil.equals(ApproveStatusEnum.APPROVE.getStatus(),entity.getApproveStatus())) {
@@ -535,7 +535,7 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
                 .eq(CharSequenceUtil.isNotBlank(paramDTO.getDetailId()),PoInstockDetailEntity::getId,paramDTO.getDetailId())
                 .list();
         if (CollectionUtils.isEmpty(poInstockDetailList)) {
-            throw new ServiceException(ApiError.ERROR_98051);
+            throw new ServiceException(ApiError.ERROR_SCM_PURCHASE_INBOUND_DETAIL_NOT_FOUND);
         }
         //收货单信息
         List<String> sourceDetailIdList = poInstockDetailList.stream().map(PoInstockDetailEntity::getSourceDetailId).collect(Collectors.toList());
@@ -592,7 +592,7 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
     public void addReturnPoReconciliationDetail (PoReconciliationDetailDTO.GenerateParamDTO paramDTO) {
         List<PoReturnEntity> poReturnEntityList = FeignQuery.create(PoReturnEntity.class).eq(PoReturnEntity::getCode, paramDTO.getCode()).list();
         if (CollectionUtils.isEmpty(poReturnEntityList)) {
-           throw new ServiceException(ApiError.ERROR_99008);
+           throw new ServiceException(ApiError.ERROR_WMS_RETURN_DATA_NOT_FOUND);
         }
         PoReturnEntity entity = poReturnEntityList.get(0);
         if (!CharSequenceUtil.equals(ApproveStatusEnum.APPROVE.getStatus(),entity.getApproveStatus())) {
@@ -607,7 +607,7 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
                 .eq(CharSequenceUtil.isNotBlank(paramDTO.getDetailId()),PoInstockDetailEntity::getId,paramDTO.getDetailId())
                 .list();
         if (CollectionUtils.isEmpty(poReturnDetailList)) {
-            throw new ServiceException(ApiError.ERROR_99008);
+            throw new ServiceException(ApiError.ERROR_WMS_RETURN_DATA_NOT_FOUND);
         }
         List<PoReconciliationDetailDTO.AddDTO> addList = new ArrayList<>();
         for (PoReturnDetailEntity poReturnDetailEntity : poReturnDetailList) {

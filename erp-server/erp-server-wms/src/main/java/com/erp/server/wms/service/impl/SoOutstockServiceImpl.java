@@ -474,7 +474,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO submit(SoOutstockEntity entity,Boolean isNeedProcess) {
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_98004);
+            throw new ServiceException(ApiError.ERROR_SELECTION_REQUIRED);
         }
         //未作废、待提交、审核不通过才可以提交
         if (Boolean.TRUE.equals(entity.getInvalidStatus()) || (!entity.getApproveStatus().getCode().equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus())
@@ -1339,7 +1339,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         //下游单据【报关单】生成后不可操作反审核：报关单[单号]已生成不可操作反审核
         List<TmsDeclareBillEntity> tmsDeclareBillEntities = tmsDeclareBillFeign.listBySourceIds(Collections.singletonList(entity.getSoId()));
         if (CollUtil.isNotEmpty(tmsDeclareBillEntities)) {
-            return BatchResultDTO.fail(entity.getId(),entity.getCode(), CharSequenceUtil.format(ApiError.TMS_DECLARE_BILL_EXISTS.msg,tmsDeclareBillEntities.get(0).getCode()));
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(), CharSequenceUtil.format(ApiError.TMS_DECLARE_BILL_EXISTS.getMsg(),tmsDeclareBillEntities.get(0).getCode()));
         }
 
         //审核通过
@@ -1831,7 +1831,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = ids.stream().map(obj -> new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.SO_OUTSTOCK.getCode(), obj)).collect(Collectors.toCollection(ValidList::new));
         ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = workflowFeign.curApprover(dtoList);
         if (200 != listApiResult.getCode()) {
-            throw new ServiceException(new ApiResult(ApiError.DEFAULT.code,listApiResult.getMsg()));
+            throw new ServiceException(new ApiResult(ApiError.DEFAULT.getCode(),listApiResult.getMsg()));
         }
 
         //查询虚拟仓信息
@@ -2976,7 +2976,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 }
                 BatchResultDTO submit = this.submit(entity, Boolean.FALSE);
                 if (!submit.getSuccess()) {
-                    throw new ServiceException(ApiError.ERROR_1042,"销售出库单");
+                    throw new ServiceException(ApiError.ERROR_DOC_SUBMIT_FAILED,"销售出库单");
                 }
             }
             //审核中
@@ -4325,12 +4325,12 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     public BatchResultDTO generateB2bDeclar(String id) {
         SoOutstockEntity entity = getById(id);
         if (Objects.isNull(entity)) {
-            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_WMS_SO_OUTBOUND_NOT_FOUND.msg );
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_WMS_SO_OUTBOUND_NOT_FOUND.getMsg() );
         }
         //限制B2B类型,未作废,审核状态为未审核 才可下推报关单
         Boolean isB2B = OrderTypeEnum.B2B.getCode().equals(entity.getOrderType());
         if(!isB2B || Objects.equals(entity.getInvalidStatus(), Boolean.TRUE)){
-            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_SO_OUTBOUND_B2B_REQUIRED.msg );
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_SO_OUTBOUND_B2B_REQUIRED.getMsg() );
         }
         //生成B2B报关单
         if (!"CN".equalsIgnoreCase(entity.getCountry()) && entity.getDeclareStatus().equals(WmsDeclareStatusEnum.WAIT.getCode()) && entity.getOrderType().equals(OrderTypeEnum.B2B.getCode())) {

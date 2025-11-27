@@ -1481,7 +1481,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
             List<TmsFirstMileReconciliationDetailEntity> detailEntityList1 = tmsFirstMileReconciliationDetailEntityList.stream().filter(e -> Objects.nonNull(e) && CharSequenceUtil.isNotBlank(e.getMainId()) && dayOfMonth.equals(e.getReconciliationMonth()) && supplierType.equals(e.getSupplierType()) && e.getLogisticsSupplierId().equals(supplierId)).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(detailEntityList1)){
                 List<String> sourceCodes = detailEntityList1.stream().map(TmsFirstMileReconciliationDetailEntity::getSourceCode).distinct().collect(Collectors.toList());
-                throw new ServiceException(ApiError.ERROR_92260,String.join(",",sourceCodes), dayOfMonth, SupplierTypeEnum.getName(supplierType), supplierName);
+                throw new ServiceException(ApiError.ERROR_FINANCE_RECONCILIATION_DUPLICATE,String.join(",",sourceCodes), dayOfMonth, SupplierTypeEnum.getName(supplierType), supplierName);
             }
             // 之前已添加账单
             reconciliationEntity = currentMainEntityMap.get(mainKey);

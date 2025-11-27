@@ -89,7 +89,7 @@ public class SyncTransferInfoServiceImpl implements SyncTransferInfoService {
              * 2、如果拉取数据非已审核数据则修改数据后无需提交审核
              */
             if (!oldTransferInfo.getSourceType().equals(newTransferInfo.getSourceType())) {
-                throw new ServiceException(ApiError.ERROR_99077,oldTransferInfo.getCode());
+                throw new ServiceException(ApiError.ERROR_WMS_TRANSFER_ALREADY_EXISTS,oldTransferInfo.getCode());
             }
 
             if (ApproveStatusEnum.APPROVE.getStatus().equals(oldTransferInfo.getApproveStatus())) {
@@ -121,17 +121,17 @@ public class SyncTransferInfoServiceImpl implements SyncTransferInfoService {
     private void submitAndApprove(String id) {
         TransferInfoEntity entity = transferInfoService.getById(id);
         if (ObjUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_99047);
+            throw new ServiceException(ApiError.ERROR_WMS_TRANSFER_DIRECT_NOT_FOUND);
         }
 
         //提交
         BatchResultDTO submit = transferInfoService.submit(entity, Boolean.FALSE);
         if (!submit.getSuccess()) {
-            throw new ServiceException(ApiError.ERROR_1042);
+            throw new ServiceException(ApiError.ERROR_DOC_SUBMIT_FAILED);
         }
         TransferInfoEntity approveEntity = transferInfoService.getById(id);
         if (ObjUtil.isEmpty(approveEntity)) {
-            throw new ServiceException(ApiError.ERROR_99047);
+            throw new ServiceException(ApiError.ERROR_WMS_TRANSFER_DIRECT_NOT_FOUND);
         }
         //审核
         transferInfoService.approve(approveEntity,WmsConstant.PASS, "", null,Boolean.TRUE, Boolean.FALSE);
@@ -150,7 +150,7 @@ public class SyncTransferInfoServiceImpl implements SyncTransferInfoService {
 
         List<DmpTransferInfoDetailDTO> dmpDetailList = entity.getDetailList();
         if (CollectionUtils.isEmpty(dmpDetailList)) {
-            throw new ServiceException(ApiError.ERROR_99048);
+            throw new ServiceException(ApiError.ERROR_WMS_TRANSFER_DIRECT_DETAIL_NOT_FOUND);
         }
 
         //核算公司信息
@@ -215,7 +215,7 @@ public class SyncTransferInfoServiceImpl implements SyncTransferInfoService {
         List<String> warehouseCodeList = dmpDetailList.stream().flatMap(obj -> Stream.of(obj.getInWarehouseCode(), obj.getOutWarehouseCode())).distinct().collect(Collectors.toList());
         List<WarehouseEntity> warehouseList = warehouseService.listByKingdeeCodeList(warehouseCodeList);
         if (CollectionUtils.isEmpty(warehouseList)) {
-            throw new ServiceException(ApiError.ERROR_99076, JSONUtil.toJsonStr(warehouseCodeList));
+            throw new ServiceException(ApiError.ERROR_WMS_K3_WAREHOUSE_CODE_NOT_FOUND, JSONUtil.toJsonStr(warehouseCodeList));
         }
 
         List<TransferInfoDetailEntity> detailList = new ArrayList<>();
@@ -230,7 +230,7 @@ public class SyncTransferInfoServiceImpl implements SyncTransferInfoService {
             if (ObjectUtils.isNotEmpty(viewDTO)) {
                 List<TransferInfoDetailDTO.ViewDTO> viewDetailList = viewDTO.getDetailList();
                 if (CollectionUtils.isEmpty(viewDetailList)) {
-                    throw new ServiceException(ApiError.ERROR_99048);
+                    throw new ServiceException(ApiError.ERROR_WMS_TRANSFER_DIRECT_DETAIL_NOT_FOUND);
                 }
                 String detailId = viewDetailList.stream().filter(obj -> obj.getSourceDetailId().equals(dmpDetailEntity.getSourceDetailId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getId())).orElse("");
                 detailEntity.setId(detailId);
@@ -239,13 +239,13 @@ public class SyncTransferInfoServiceImpl implements SyncTransferInfoService {
             //调入仓库
             String inWarehouseId = warehouseList.stream().filter(obj -> obj.getKingdeeWarehouseCode().equals(dmpDetailEntity.getInWarehouseCode())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getId())).orElse("");
             if (CharSequenceUtil.isBlank(inWarehouseId)) {
-                throw new ServiceException(ApiError.ERROR_99076,dmpDetailEntity.getInWarehouseCode());
+                throw new ServiceException(ApiError.ERROR_WMS_K3_WAREHOUSE_CODE_NOT_FOUND,dmpDetailEntity.getInWarehouseCode());
             }
             detailEntity.setInWarehouseId(inWarehouseId);
             //调出仓库
             String outWarehouseId = warehouseList.stream().filter(obj -> obj.getKingdeeWarehouseCode().equals(dmpDetailEntity.getOutWarehouseCode())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getId())).orElse("");
             if (CharSequenceUtil.isBlank(outWarehouseId)) {
-                throw new ServiceException(ApiError.ERROR_99076,dmpDetailEntity.getOutWarehouseCode());
+                throw new ServiceException(ApiError.ERROR_WMS_K3_WAREHOUSE_CODE_NOT_FOUND,dmpDetailEntity.getOutWarehouseCode());
             }
             detailEntity.setOutWarehouseId(outWarehouseId);
 

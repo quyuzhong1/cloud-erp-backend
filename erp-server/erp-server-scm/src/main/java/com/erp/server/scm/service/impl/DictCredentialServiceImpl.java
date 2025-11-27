@@ -52,7 +52,7 @@ public class DictCredentialServiceImpl extends SuperServiceImpl<DictCredentialMa
                 .eq(DictCredentialEntity::getDisabled, false)
                 .count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_98124);
+            throw new ServiceException(ApiError.ERROR_CERT_NAME_EXISTS);
         }
 
         log.info("开始新增供应商资质字典单");

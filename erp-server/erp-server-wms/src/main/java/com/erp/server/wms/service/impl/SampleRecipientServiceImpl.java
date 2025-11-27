@@ -298,7 +298,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
 
         // 待提交和审核不通过允许修改
         if (!ApproveStatusEnum.allowUpdateStatus(old.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_1029);
+            throw new ServiceException(ApiError.ERROR_UPDATE_STATUS_NOT_ALLOWED);
         }
         SampleRecipientEntity sampleRecipientEntity =  BeanMapperUtils.map(SampleRecipientEntity.class, addOrUpdateDTO);
         
@@ -653,7 +653,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
     public BatchResultDTO approve(ApproveOneDTO dto, ClientTypeEnum clientType) {
         ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(dto.getType());
         if(Objects.equals(approveType, ApproveTypeEnum.REJECT) && StrUtils.isEmpty(dto.getComment())) {
-            throw new ServiceException(ApiError.REJECT_COMMENT_NOT_EMPTY);
+            throw new ServiceException(ApiError.ERROR_PLM_REJECT_COMMENT_REQUIRED);
         }
         SampleRecipientEntity entity = getById(dto.getId());
 
@@ -784,7 +784,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
     private Boolean validateDisApprove(SampleRecipientEntity entity) {
         // 已审核支持反审核
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE)) {
-            throw new ServiceException(ApiError.ERROR_98014);
+            throw new ServiceException(ApiError.ERROR_REVERSE_APPROVAL_ALLOWED_APPROVED_ONLY);
         }
 
         // 检查是否有下推的其他出库单
@@ -805,7 +805,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
         SampleRecipientEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到样品领用单数据"));
         // 只有待提交数据允许删除
         if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT, entity.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_98032);
+            throw new ServiceException(ApiError.ERROR_SCM_SUBMIT_ALLOWED_STATUS_ONLY);
         }
         // 检查单据是否已作废
         if (InvalidStatusEnum.VOIDED.getStatus().equals(entity.getInvalidStatus())) {
@@ -851,7 +851,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
         SampleRecipientEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到样品领用单数据"));
         // 待提交或审核不通过并且未作废允许作废
         if ((!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(entity.getApproveStatus().getStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(entity.getApproveStatus().getStatus())) || !InvalidStatusEnum.NOT_VOIDED.getStatus().equals(entity.getInvalidStatus())) {
-           throw new ServiceException(ApiError.ERROR_98005);
+           throw new ServiceException(ApiError.ERROR_VOID_ALLOWED_STATUS_ONLY);
         }
         log.info("作废 开始修改样品领用单状态数据，id：【{}】", id);
         lambdaUpdate().eq(SampleRecipientEntity::getId, id)
@@ -887,7 +887,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
 
         // 只有审核中的单据允许撤销
         if (!Objects.equals(entity.getApproveStatus().getStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())) {
-            throw new ServiceException(ApiError.ERROR_98007);
+            throw new ServiceException(ApiError.ERROR_REVOKE_PROCESS_ALLOWED_STATUS_ONLY);
         }
         // TODO 撤销流程
         log.info("撤销 开始撤销流程，id：【{}】",id);
@@ -1314,7 +1314,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
             listApiResult = workflowFeign.curApprover(dtoList);
             Integer code = listApiResult.getCode();
             if (200 != code) {
-                throw new ServiceException(new ApiResult(ApiError.DEFAULT.code, listApiResult.getMsg()));
+                throw new ServiceException(new ApiResult(ApiError.DEFAULT.getCode(), listApiResult.getMsg()));
             }
         }
 
@@ -1368,7 +1368,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
     private void validateSubmit(SampleRecipientEntity entity) {
         // 待提交或审核不通过并且未作废允许提交
         if(!ApproveStatusEnum.allowUpdateStatus(entity.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_98010);
+            throw new ServiceException(ApiError.ERROR_SUBMIT_ALLOWED_STATUS_ONLY);
         }
         return;
     }
@@ -2290,7 +2290,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
             // 调用其他出库单服务创建出库单 并审核通过
             String outboundOrderId = otherOutstockService.add(addDTO);
             if (CharSequenceUtil.isBlank(outboundOrderId)) {
-                throw new ServiceException(ApiError.ERROR_1019);
+                throw new ServiceException(ApiError.ERROR_CREATE_FAILED);
             }
             
             if (StringUtils.isNotBlank(outboundOrderId)) {

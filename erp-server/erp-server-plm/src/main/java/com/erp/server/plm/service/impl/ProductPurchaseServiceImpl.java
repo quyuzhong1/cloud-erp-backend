@@ -143,7 +143,7 @@ public class ProductPurchaseServiceImpl extends ServiceImpl<ProductPurchaseMappe
             if (CharSequenceUtil.isNotBlank(entity.getEan())) {
                 List<ProductPurchaseEntity> eanList = eanMap.get(entity.getEan());
                 if (eanList.size() > 1) {
-                    throw new ServiceException(ApiError.ERROR_95164);
+                    throw new ServiceException(ApiError.ERROR_PLM_EAN_CODE_DUPLICATE);
                 }
                 //验证数据
                 checkProductPurchase(eanList.get(0));
@@ -196,7 +196,7 @@ public class ProductPurchaseServiceImpl extends ServiceImpl<ProductPurchaseMappe
         if (CollectionUtils.isNotEmpty(list)) {
             List<String> ids = list.stream().map(ProductPurchaseEntity::getId).collect(Collectors.toList());
             if (ids.size() > 1 || !ids.contains(entity.getId())) {
-                throw new ServiceException(ApiError.ERROR_95164);
+                throw new ServiceException(ApiError.ERROR_PLM_EAN_CODE_DUPLICATE);
             }
         }
     }

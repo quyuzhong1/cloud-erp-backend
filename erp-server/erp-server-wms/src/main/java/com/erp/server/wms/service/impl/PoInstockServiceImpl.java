@@ -889,7 +889,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
                     //提交
                     Boolean submit = this.submit(Collections.singletonList(entity.getId()));
                     if (!submit) {
-                        throw new ServiceException(ApiError.ERROR_1042,"子件入库单");
+                        throw new ServiceException(ApiError.ERROR_DOC_SUBMIT_FAILED,"子件入库单");
                     }
                     //审核
                     entity.setApproveStatus(ApproveStatusEnum.APPROVE_ING.getCode());
@@ -970,7 +970,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         //判断是否已经生成委外发料单
         if (CollectionUtils.isNotEmpty(issueEntityList)) {
             String subcontractOrderCodes = issueEntityList.stream().map(SubcontractIssueEntity::getSubcontractOrderCode).collect(Collectors.joining(","));
-            return BatchResultDTO.fail(entity.getId(),entity.getCode(),String.format(ApiError.ERROR_PO_INSTOCK_PUSH_SUBCONTRACT_ISSUE.msg, subcontractOrderCodes));
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),String.format(ApiError.ERROR_PO_INSTOCK_PUSH_SUBCONTRACT_ISSUE.getMsg(), subcontractOrderCodes));
         }
         //校验是否存在
         checkPoReconciliation(entity);

@@ -175,7 +175,7 @@ public class CfgRuleInvoiceServiceImpl extends SuperServiceImpl<CfgRuleInvoiceMa
     public BatchResultDTO updateStatus(CfgRuleInvoiceEntity entity, Boolean state) {
         Boolean disabled = entity.getDisabled();
         if (disabled.equals(state)) {
-            throw new ServiceException(ApiError.ERROR_98027);
+            throw new ServiceException(ApiError.ERROR_SCM_INCONSISTENT_DISABLE_STATUS);
         }
         String content = String.format("启用状态[%s]变更为[%s]", Boolean.TRUE.equals(disabled) ? "禁用" : "启用", Boolean.TRUE.equals(disabled) ? "启用" : "禁用");
         entity.setDisabled(state);

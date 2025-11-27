@@ -83,7 +83,7 @@ public class SyncFbaDeliveryServiceImpl implements SyncFbaDeliveryService {
             RedisMabngSkuEntity mabangSkuInfo = redisUtil.getHashMap(RedisKeyConstant.MABANG_STOCK_SKU_LIST_KEY, item.getSkuNo());
             if(Objects.isNull(mabangSkuInfo)) {
                 log.warn("马帮FBA发货单【{}】的加工组合品SKU【{}】在马帮SKU列表中不存在", entity.getDeliveryNo(), item.getSkuNo());
-                throw new ServiceException(ApiError.MABANG_SKU_NOT_EXIST, item.getSkuNo());
+                throw new ServiceException(ApiError.ERROR_MABANG_FIN_CODE_NOT_FOUND_FOR_SKU, item.getSkuNo());
             }
             item.setSkuNo(mabangSkuInfo.getFinancial());
 //            if(StrUtils.isNotEmpty(item.getSkuNo()) && item.getSkuNo().startsWith(MACHINE_SKU_PREFIX) ) {
@@ -243,7 +243,7 @@ public class SyncFbaDeliveryServiceImpl implements SyncFbaDeliveryService {
 
                 if(StrUtils.isEmpty(subSkuId)) {
                     String errmsg = CharSequenceUtil.format("FBA发货单同步生成加工单子级SKU【{}】在ERP中不存在，对应的父级SKU【{}】", dmpBomEntity.getSkuNo(), parentSkuNo);
-                    throw new ServiceException(ApiError.ERROR_NOT_FOUND_SKU.code, errmsg);
+                    throw new ServiceException(ApiError.ERROR_NOT_FOUND_SKU.getCode(), errmsg);
                 }
                 subDTO.setId(null);
                 subDTO.setSkuId(subSkuId);
@@ -275,7 +275,7 @@ public class SyncFbaDeliveryServiceImpl implements SyncFbaDeliveryService {
         List<WarehouseEntity> warehouseEntityList = warehouseService.listByKingdeeCodeList(Collections.singletonList(entity.getWarehouseCode()));
         if(CollUtil.isEmpty(warehouseEntityList)) {
             String errmsg = CharSequenceUtil.format("FBA发货单同步生成ERP加工单仓库【{}】在ERP中不存在", entity.getWarehouseCode());
-            throw new ServiceException(ApiError.ERROR_99076.code, errmsg);
+            throw new ServiceException(ApiError.ERROR_WMS_K3_WAREHOUSE_CODE_NOT_FOUND.getCode(), errmsg);
         }
         WarehouseEntity warehouseEntity = warehouseEntityList.get(0);
         addDTO.setWarehouseId(warehouseEntity.getId());
@@ -301,7 +301,7 @@ public class SyncFbaDeliveryServiceImpl implements SyncFbaDeliveryService {
                     findFirst().map(BomInfoEntity::getParentSkuId).orElse("");
             if (CharSequenceUtil.isBlank(parentSkuId)) {
                 String errmsg = CharSequenceUtil.format("FBA发货单同步生成ERP加工单父级SKU【{}】在ERP中不存在", parentSkuNo);
-                throw new ServiceException(ApiError.ERROR_NOT_FOUND_SKU.code,errmsg);
+                throw new ServiceException(ApiError.ERROR_NOT_FOUND_SKU.getCode(),errmsg);
             }
             member.setSkuId(parentSkuId);
 
@@ -315,7 +315,7 @@ public class SyncFbaDeliveryServiceImpl implements SyncFbaDeliveryService {
             List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listBomChildBySkuIds(Collections.singletonList(parentSkuId));
             if(CollUtil.isEmpty(bomChildrenSkuList)) {
                 String errmsg = CharSequenceUtil.format("FBA发货单同步生成ERP加工单父级SKU【{}】在ERP中未查询到BOM信息",parentSkuNo);
-                throw new ServiceException(ApiError.ERROR_95173.code,errmsg);
+                throw new ServiceException(ApiError.ERROR_PLM_BOM_CHILD_NOT_FOUND_FOR_PARENT_SKU.getCode(),errmsg);
             }
 
             List<BomChildrenSkuDTO> bomList = bomChildrenSkuList.stream().filter(obj -> Objects.equals(obj.getParentSkuId(), parentSkuId)).collect(Collectors.toList());
@@ -331,7 +331,7 @@ public class SyncFbaDeliveryServiceImpl implements SyncFbaDeliveryService {
                 String subSkuId = bomList.stream().filter(s -> Objects.equals(s.getSkuNo(), dmpBomEntity.getSkuNo())).findFirst().map(BomChildrenSkuDTO::getSkuId).orElse("");
                 if(StrUtils.isEmpty(subSkuId)) {
                     String errmsg = CharSequenceUtil.format("FBA发货单同步生成ERP加工单子级SKU【{}】在ERP中不存在，对应的父级SKU【{}】", dmpBomEntity.getSkuNo(), parentSkuNo);
-                    throw new ServiceException(ApiError.ERROR_NOT_FOUND_SKU.code,errmsg);
+                    throw new ServiceException(ApiError.ERROR_NOT_FOUND_SKU.getCode(),errmsg);
                 }
                 subDTO.setSkuId(subSkuId);
                 subDTO.setSkuNo(dmpBomEntity.getSkuNo());

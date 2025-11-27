@@ -173,7 +173,7 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
         ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = idList.stream().map(obj -> new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.SO_RETURN_NOTICE.getCode(), obj)).collect(Collectors.toCollection(ValidList::new));
         ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = workflowFeign.curApprover(dtoList);
         if (200 != listApiResult.getCode()) {
-            throw new ServiceException(new ApiResult(ApiError.DEFAULT.code,listApiResult.getMsg()));
+            throw new ServiceException(new ApiResult(ApiError.DEFAULT.getCode(),listApiResult.getMsg()));
         }
 
         if (CollectionUtils.isNotEmpty(records)) {
@@ -615,7 +615,7 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
         Map<String, Object> variablesMap = BeanUtil.beanToMap(entity);
         List<SoReturnNoticeDetailEntity> detailList = soReturnNoticeDetailService.lambdaQuery().eq(SoReturnNoticeDetailEntity::getMainId,entity.getId()).list();
         if (CollUtil.isEmpty(detailList)) {
-            throw new ServiceException(ApiError.ERROR_92173);
+            throw new ServiceException(ApiError.ERROR_RETURN_SIGN_DETAIL_REQUIRED);
         }
         variablesMap.put(ThirdConstants.DETAIL_LIST, BeanUtil.copyToList(detailList,Map.class));
         return variablesMap;
@@ -629,7 +629,7 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
         }
         SoReturnNoticeEntity entity = this.getById(id);
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_92172);
+            throw new ServiceException(ApiError.ERROR_RETURN_NOTICE_DETAIL_REQUIRED);
         }
         BatchResultDTO submit = this.submit(entity, Boolean.TRUE);
         return submit.getSuccess();
@@ -643,7 +643,7 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
         }
         SoReturnNoticeEntity entity = this.getById(dto.getId());
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_92172);
+            throw new ServiceException(ApiError.ERROR_RETURN_NOTICE_DETAIL_REQUIRED);
         }
         BatchResultDTO submit = this.submit(entity, Boolean.TRUE);
         return submit.getSuccess();
@@ -684,7 +684,7 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
         ApiResult<ProcessManagementDTO.ApproveResultDTO> listApiResult = workflowFeign.approve(approveDTO);
         Integer code = listApiResult.getCode();
         if (200 != code) {
-            throw new ServiceException(ApiError.ERROR_94006);
+            throw new ServiceException(ApiError.ERROR_WF_APPROVAL_FAILED);
         }
         ProcessManagementDTO.ApproveResultDTO data = listApiResult.getData();
         if (ObjectUtil.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()) {
@@ -1039,7 +1039,7 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
         ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = idList.stream().map(obj -> new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.SO_RETURN_NOTICE.getCode(), obj)).collect(Collectors.toCollection(ValidList::new));
         ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = workflowFeign.curApprover(dtoList);
         if (200 != listApiResult.getCode()) {
-            throw new ServiceException(new ApiResult(ApiError.DEFAULT.code,listApiResult.getMsg()));
+            throw new ServiceException(new ApiResult(ApiError.DEFAULT.getCode(),listApiResult.getMsg()));
         }
 
 
@@ -1121,7 +1121,7 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
 //                && entity.getApproveStatus().equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus())
 //        ).count();
 //        if (count != entityList.size()) {
-//            throw new ServiceException(ApiError.ERROR_98009);
+//            throw new ServiceException(ApiError.ERROR_DELETE_ALLOWED_STATUS_ONLY);
 //        }
 
         List<SoReturnNoticeEntity> removeList=new ArrayList<>();

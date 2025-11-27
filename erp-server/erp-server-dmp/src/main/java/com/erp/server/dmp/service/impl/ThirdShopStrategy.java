@@ -279,7 +279,7 @@ public class ThirdShopStrategy implements ThirdMappingStrategy {
     private void handleData(ThirdMappingEntity thirdMappingEntity) {
         //校验系统店铺是否存在
         ShopInfoEntity shopInfoEntity = Optional.ofNullable(shopInfoFeign.getShopInfoById(thirdMappingEntity.getSysId()))
-                .orElseThrow(() -> new ServiceException(ApiError.ERROR_92058));
+                .orElseThrow(() -> new ServiceException(ApiError.ERROR_SHOP_NOT_FOUND));
         //校验第三方店铺是否存在
         ThirdShopEntity thirdShopEntity = thirdShopService.getByIdOpt(thirdMappingEntity.getThirdId())
                 .orElseThrow(() -> new ServiceException(ApiError.ERROR_THIRD_SHOP_NOTFOUND));

@@ -2,6 +2,7 @@ package com.erp.server.wms.service.impl;
 
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.entity.BaseEntity;

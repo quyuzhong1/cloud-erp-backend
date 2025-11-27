@@ -271,7 +271,7 @@ public class FullyManagedOrderServiceImpl extends SuperServiceImpl<SoB2cMapper, 
             throw new ServiceException(ApiError.ERROR_FILE_IMPORT_FORMAT_INVALID_XLSX);
         }catch (ExcelAnalysisException e){
             log.error("导入错误！>>>{}", e);
-            throw new ServiceException(ApiError.ERROR_1033);
+            throw new ServiceException(ApiError.ERROR_FILE_IMPORT_PARSE_FAILED);
         }
         return Boolean.TRUE;
 
@@ -494,7 +494,7 @@ public class FullyManagedOrderServiceImpl extends SuperServiceImpl<SoB2cMapper, 
         ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = ids.stream().map(obj -> new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.TIK_TOK_FULLY.getCode(), obj)).collect(Collectors.toCollection(ValidList::new));
         ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = workflowFeign.curApprover(dtoList);
         if (200 != listApiResult.getCode()) {
-            throw new ServiceException(new ApiResult(ApiError.DEFAULT.code,listApiResult.getMsg()));
+            throw new ServiceException(new ApiResult(ApiError.DEFAULT.getCode(),listApiResult.getMsg()));
         }
 
         List<String> codeList = new ArrayList<>();

@@ -64,7 +64,7 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
                 throw new ServiceException("系统配置管理保存失败");
             }
             // 操作日志
-            String msg = CharSequenceUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), ApiError.CONTENT_96018.msg, cfgSettingEntity.getId());
+            String msg = CharSequenceUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), ApiError.ERROR_SYSTEM_CONFIG_MANAGEMENT.getMsg(), cfgSettingEntity.getId());
             operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SRM_USER.getCode(), cfgSettingEntity.getId(), "新增操作");
         }
 
@@ -99,7 +99,7 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
 
                 CfgSettingEntity old = super.getById(cfgSettingEntity.getId());
                 if(null == old){
-                    throw  new ServiceException(ApiError.NOT_EXIST_BILL, ApiError.CONTENT_96018.getMsg());
+                    throw  new ServiceException(ApiError.NOT_EXIST_BILL, ApiError.ERROR_SYSTEM_CONFIG_MANAGEMENT.getMsg());
                 }
                 log.info("编辑 开始修改系统配置管理数据，id：【{}】", old.getId());
                 boolean save = super.updateById(cfgSettingEntity);
@@ -108,7 +108,7 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
                 }
                 // 记录主单操作日志
                 log.info("编辑 开始记录系统配置管理日志数据，id：【{}】", cfgSettingEntity.getId());
-                String msg =  CharSequenceUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), cfgSettingEntity.getId(), ApiError.CONTENT_96018.getMsg());
+                String msg =  CharSequenceUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), cfgSettingEntity.getId(), ApiError.ERROR_SYSTEM_CONFIG_MANAGEMENT.getMsg());
                 operateLogService.addModuleOperateLogByObj(old, cfgSettingEntity, ModuleTypeEnum.SRM_USER.getCode(), cfgSettingEntity.getId(), msg);
             }
         }
@@ -330,7 +330,7 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
                 .ne(StringUtils.isNotEmpty(cfgSettingEntity.getId()), CfgSettingEntity::getId, cfgSettingEntity.getId())
                 .count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_96000);
+            throw new ServiceException(ApiError.ERROR_SUPPLIER_CONFIG_EXISTS);
         }
         cfgSettingEntity.setSupplierId(userService.getSupplierId());
         cfgSettingEntity.setDisabled(false);

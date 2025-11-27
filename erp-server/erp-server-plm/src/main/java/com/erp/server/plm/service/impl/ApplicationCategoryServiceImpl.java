@@ -89,12 +89,12 @@ public class ApplicationCategoryServiceImpl extends SuperServiceImpl<Application
         int nameCount = count(Wrappers.<ApplicationCategoryEntity>lambdaQuery().eq(ApplicationCategoryEntity::getName, name)
                 .ne(StringUtils.hasText(id), ApplicationCategoryEntity::getId, id));
         if (nameCount > 0) {
-            throw new ServiceException(ApiError.ERROR_95245);
+            throw new ServiceException(ApiError.ERROR_PLM_APP_CATEGORY_NAME_EXISTS);
         }
         int codeCount = count(Wrappers.<ApplicationCategoryEntity>lambdaQuery().eq(ApplicationCategoryEntity::getCode, code)
                 .ne(StringUtils.hasText(id), ApplicationCategoryEntity::getId, id));
         if (codeCount > 0) {
-            throw new ServiceException(ApiError.ERROR_95244);
+            throw new ServiceException(ApiError.ERROR_PLM_APP_CATEGORY_CODE_EXISTS);
         }
     }
 

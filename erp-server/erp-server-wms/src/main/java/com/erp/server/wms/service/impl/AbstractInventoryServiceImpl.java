@@ -225,7 +225,7 @@ public abstract class AbstractInventoryServiceImpl implements InventoryStockServ
                 transactionFlowService.updateUnapprovedById(txnFlow.getId(), txnFlow.getVersion());
             } catch (Exception e) {
                 log.error("反审核》》》，交易业务：【{}】，来源单据：【{}】，单据id：【{}】，SKU编号：【{}】，库存操作异常", businessTypeEnum.getName(), InventorySourceTypeEnum.getByCode(txnFlow.getSourceType()).getName(), txnFlow.getSourceId(), txnFlow.getSkuNo(), e);
-                ServiceException.runError(ApiError.DEFAULT.code, e.getMessage());
+                ServiceException.runError(ApiError.DEFAULT.getCode(), e.getMessage());
             } finally {
                 //释放锁  锁是否存在，是当前执行线程的锁
                 if (rLock.isLocked() && rLock.isHeldByCurrentThread()) {
@@ -316,9 +316,9 @@ public abstract class AbstractInventoryServiceImpl implements InventoryStockServ
         String inventoryStatusName = InventoryStatusEnum.getNameByCode(transactionFlow.getDictInventoryStatus());
         // 仓库是否允许负库存
         if (null == inventoryDetail) {
-            String errMsg = CharSequenceUtil.format(ApiError.ERROR_WMS_INSUFFICIENT_STOCK.msg, transactionFlow.getSkuNo(), transactionFlow.getWarehouseName(), warehouseLocationEntity.getName(), inventoryStatusName, (Objects.isNull(inventoryDetail) ? "无" : inventoryDetail.getQty()), transactionFlow.getQty());
+            String errMsg = CharSequenceUtil.format(ApiError.ERROR_WMS_INSUFFICIENT_STOCK.getMsg(), transactionFlow.getSkuNo(), transactionFlow.getWarehouseName(), warehouseLocationEntity.getName(), inventoryStatusName, (Objects.isNull(inventoryDetail) ? "无" : inventoryDetail.getQty()), transactionFlow.getQty());
             log.error(errMsg);
-            ServiceException.runError(ApiError.ERROR_WMS_INSUFFICIENT_STOCK.code, errMsg);
+            ServiceException.runError(ApiError.ERROR_WMS_INSUFFICIENT_STOCK.getCode(), errMsg);
         }
         return inventoryDetail;
     }
@@ -338,9 +338,9 @@ public abstract class AbstractInventoryServiceImpl implements InventoryStockServ
 
         // 仓库是否允许负库存
         if (null == inventory || (inventory.getQty() + transactionFlow.getQty() < 0 && !this.allowNegativeInventory(transactionFlow.getWarehouseId()))) {
-            String errMsg = CharSequenceUtil.format(ApiError.ERROR_WMS_INSUFFICIENT_STOCK.msg, transactionFlow.getSkuNo(), transactionFlow.getWarehouseName(), warehouseLocationEntity.getName(), inventoryStatusName, inventory == null ? "无" : inventory.getQty(), transactionFlow.getQty());
+            String errMsg = CharSequenceUtil.format(ApiError.ERROR_WMS_INSUFFICIENT_STOCK.getMsg(), transactionFlow.getSkuNo(), transactionFlow.getWarehouseName(), warehouseLocationEntity.getName(), inventoryStatusName, inventory == null ? "无" : inventory.getQty(), transactionFlow.getQty());
             log.error(errMsg);
-            ServiceException.runError(ApiError.ERROR_WMS_INSUFFICIENT_STOCK.code, errMsg);
+            ServiceException.runError(ApiError.ERROR_WMS_INSUFFICIENT_STOCK.getCode(), errMsg);
         }
 
         return inventory;
@@ -494,14 +494,14 @@ public abstract class AbstractInventoryServiceImpl implements InventoryStockServ
     private void checkHasLtZeroNegativeInventory(InOutStockCoreDTO param, InventoryEntity curInventory, InventoryEntity inventory, WarehouseDTO.UpdateDTO warehouseInfo, WarehouseLocationEntity warehouseLocationEntity, String inventoryStatusName) {
         if (curInventory.getQty() < 0 && !this.allowNegativeInventory(param.getWarehouseId())) {
             log.warn("库存id:{}出库后的库存数量变为:{}，不允许出库", inventory.getId(), curInventory.getQty());
-            throw new ServiceException(ApiError.ERROR_WMS_INSUFFICIENT_STOCK.code, CharSequenceUtil.format(ApiError.ERROR_WMS_INSUFFICIENT_STOCK.msg, param.getSkuNo(), warehouseInfo.getName(), warehouseLocationEntity.getName(), inventoryStatusName, curInventory.getQty(), param.getQty()));
+            throw new ServiceException(ApiError.ERROR_WMS_INSUFFICIENT_STOCK.getCode(), CharSequenceUtil.format(ApiError.ERROR_WMS_INSUFFICIENT_STOCK.getMsg(), param.getSkuNo(), warehouseInfo.getName(), warehouseLocationEntity.getName(), inventoryStatusName, curInventory.getQty(), param.getQty()));
         }
     }
 
     private void checkHasGtZeroNegativeInventory(InOutStockCoreDTO param, Integer waitOutQty, WarehouseDTO.UpdateDTO warehouseInfo, WarehouseLocationEntity warehouseLocationEntity, String inventoryStatusName, InventoryEntity inventory) {
         if (waitOutQty > 0 && !this.allowNegativeInventory(param.getWarehouseId())) {
             // 仓库允许负库存判断
-            throw new ServiceException(ApiError.ERROR_WMS_INSUFFICIENT_STOCK.code, CharSequenceUtil.format(ApiError.ERROR_WMS_INSUFFICIENT_STOCK.msg, param.getSkuNo(), warehouseInfo.getName(), warehouseLocationEntity.getName(), inventoryStatusName, inventory.getQty(), param.getQty()));
+            throw new ServiceException(ApiError.ERROR_WMS_INSUFFICIENT_STOCK.getCode(), CharSequenceUtil.format(ApiError.ERROR_WMS_INSUFFICIENT_STOCK.getMsg(), param.getSkuNo(), warehouseInfo.getName(), warehouseLocationEntity.getName(), inventoryStatusName, inventory.getQty(), param.getQty()));
         }
     }
 
@@ -522,9 +522,9 @@ public abstract class AbstractInventoryServiceImpl implements InventoryStockServ
             inventoryDetails = inventoryDetailService.findListQtyLeZero(inventory.getId());
             if (CollUtil.isEmpty(inventoryDetails)) {
                 log.warn("仓库【{}】SKU【{}】允许负库存，即时库存id【{}】,且没有大于0的库存明细，也没有小于等于0的库存明细", warehouseInfo.getName(), param.getSkuNo(), inventory.getId());
-                String errMsg = CharSequenceUtil.format(ApiError.ERROR_WMS_INSUFFICIENT_STOCK.msg, param.getSkuNo(), warehouseInfo.getName(), warehouseLocationEntity.getName(), inventoryStatusName, inventory.getQty(), param.getQty());
+                String errMsg = CharSequenceUtil.format(ApiError.ERROR_WMS_INSUFFICIENT_STOCK.getMsg(), param.getSkuNo(), warehouseInfo.getName(), warehouseLocationEntity.getName(), inventoryStatusName, inventory.getQty(), param.getQty());
                 log.error(errMsg);
-                ServiceException.runError(ApiError.ERROR_WMS_INSUFFICIENT_STOCK.code, errMsg);
+                ServiceException.runError(ApiError.ERROR_WMS_INSUFFICIENT_STOCK.getCode(), errMsg);
             } else {
                 // 取最后一条负库存明细
                 log.warn("仓库【{}】SKU【{}】允许负库存，即时库存id【{}】,有小于等于0的库存明细，从最后一条库存明细出库", warehouseInfo.getName(), param.getSkuNo(), inventory.getId());
@@ -538,7 +538,7 @@ public abstract class AbstractInventoryServiceImpl implements InventoryStockServ
 
     private void checkHasNegativeInventory(InOutStockCoreDTO param, InventoryEntity inventory, Integer waitOutQty, WarehouseDTO.UpdateDTO warehouseInfo, WarehouseLocationEntity warehouseLocationEntity, String inventoryStatusName) {
         if (inventory.getQty() < waitOutQty && !this.allowNegativeInventory(param.getWarehouseId())) {
-            String errMsg = CharSequenceUtil.format(ApiError.ERROR_WMS_INSUFFICIENT_STOCK.msg, param.getSkuNo(), warehouseInfo.getName(), warehouseLocationEntity.getName(), inventoryStatusName, inventory.getQty(), param.getQty());
+            String errMsg = CharSequenceUtil.format(ApiError.ERROR_WMS_INSUFFICIENT_STOCK.getMsg(), param.getSkuNo(), warehouseInfo.getName(), warehouseLocationEntity.getName(), inventoryStatusName, inventory.getQty(), param.getQty());
             log.error(errMsg);
             throw new ServiceException(ApiError.ERROR_WMS_INSUFFICIENT_STOCK, errMsg);
         }
@@ -580,7 +580,7 @@ public abstract class AbstractInventoryServiceImpl implements InventoryStockServ
         List<TransactionRuleDTO> outTransactionRules;
         log.info("库存状态从配置中取，业务类型：【{}】，单据类型：【{}】，单据id：【{}】，单据日期：【{}】，SKU编号：【{}】", businessType.getName(), sourceTypeEnum.getName(), sourceId, billDate, param.getSkuNo());
         if (CollUtil.isEmpty(transactionRules)) {
-            ServiceException.runError(ApiError.ERROR_WMS_STOCK_RULE_BIZ_TYPE_ERROR.code, CharSequenceUtil.format(ApiError.ERROR_WMS_STOCK_RULE_BIZ_TYPE_ERROR.msg, businessType.getName()));
+            ServiceException.runError(ApiError.ERROR_WMS_STOCK_RULE_BIZ_TYPE_ERROR.getCode(), CharSequenceUtil.format(ApiError.ERROR_WMS_STOCK_RULE_BIZ_TYPE_ERROR.getMsg(), businessType.getName()));
         }
         if (Objects.nonNull(param.getWarehouseOption())) { // 调拨类业务，包含当前仓和目的仓
             outTransactionRules = transactionRules.stream().filter(r -> Objects.equals(r.getTransactionMode(), InventoryModeEnum.OUT_STOCK)
@@ -645,7 +645,7 @@ public abstract class AbstractInventoryServiceImpl implements InventoryStockServ
                 businessType.getName(), status.getName(), qty, inventory.getQty());
 
         if (inventory.getQty() < qty && !allowNegativeInventory(warehouseId)) {
-            ServiceException.runError(ApiError.ERROR_WMS_INSUFFICIENT_STOCK.code, CharSequenceUtil.format(ApiError.ERROR_WMS_INSUFFICIENT_STOCK.msg, skuNo, warehouseDetail.getName(), warehouseLocationEntity.getName(), inventoryStatusName, inventory.getQty(), qty));
+            ServiceException.runError(ApiError.ERROR_WMS_INSUFFICIENT_STOCK.getCode(), CharSequenceUtil.format(ApiError.ERROR_WMS_INSUFFICIENT_STOCK.getMsg(), skuNo, warehouseDetail.getName(), warehouseLocationEntity.getName(), inventoryStatusName, inventory.getQty(), qty));
         }
         /**
          * 1. 调拨单：手动创建、调拨申请下推

@@ -80,7 +80,7 @@ public class WangDianProductDetailServiceImpl implements WangDianProductDetailSe
                 }
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
-                throw new ServiceException(ApiError.ERROR_1026);
+                throw new ServiceException(ApiError.ERROR_DATA_LOCKED);
             } finally {
                 lock.unlock();
             }

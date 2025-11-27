@@ -106,7 +106,7 @@ public class PackingTaskController extends BaseController {
     public ApiResult<WmsCartonSpecDTO.WmsCartonSpecView> packingViewBySourceCode(@RequestParam("sourceCode") String sourceCode) {
         List<PackingTaskEntity> taskEntityList = packingTaskService.listBySourceCodes(Collections.singletonList(sourceCode));
         if (CollUtil.isEmpty(taskEntityList)){
-            throw new ServiceException(ApiError.ERROR_92141);
+            throw new ServiceException(ApiError.ERROR_PACKING_TASK_NOT_FOUND);
         }
         WmsCartonSpecDTO.WmsCartonSpecView wmsCartonSpecView = packingTaskService.packingView(taskEntityList.get(0).getId());
         return success(wmsCartonSpecView);

@@ -276,7 +276,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
     public PurchasePriceChangeEntity addAndSubmit(PurchasePriceChangeDTO.AddDTO dto) {
         PurchasePriceChangeEntity entity = this.add(dto);
         if (null == entity) {
-            throw new ServiceException(ApiError.ERROR_1019);
+            throw new ServiceException(ApiError.ERROR_CREATE_FAILED);
         }
         Boolean result = this.submitApprove(Collections.singletonList(entity.getId()), Boolean.TRUE);
         return entity;
@@ -294,7 +294,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
     public PurchasePriceChangeDTO.ViewDTO view(String id) {
         PurchasePriceChangeEntity changeEntity = this.getById(id);
         if (Objects.isNull(changeEntity)) {
-            throw new ServiceException(ApiError.ERROR_98028);
+            throw new ServiceException(ApiError.ERROR_SCM_PURCHASE_PRICE_CHANGE_NOT_FOUND);
         }
         PurchasePriceChangeDTO.ViewDTO viewDTO = new PurchasePriceChangeDTO.ViewDTO();
         BeanMapper.copy(changeEntity, viewDTO);
@@ -356,7 +356,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
         String id = dto.getId();
         PurchasePriceChangeEntity priceChangeEntity = this.getById(id);
         if (Objects.isNull(priceChangeEntity)) {
-            throw new ServiceException(ApiError.ERROR_98028);
+            throw new ServiceException(ApiError.ERROR_SCM_PURCHASE_PRICE_CHANGE_NOT_FOUND);
         }
         PurchasePriceChangeEntity old = new PurchasePriceChangeEntity();
         BeanMapper.copy(priceChangeEntity, old);
@@ -370,7 +370,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
         statusList.add(rejectStatus);
         statusList.add(waitSubmitStatus);
         if (!statusList.contains(status)) {
-            throw new ServiceException(ApiError.ERROR_98019);
+            throw new ServiceException(ApiError.ERROR_EDIT_ALLOWED_STATUS_ONLY);
         }
         //code
         String code = priceChangeEntity.getCode();
@@ -427,7 +427,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
         String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
         long count = priceChangeList.stream().filter(p -> !p.getApproveStatus().getStatus().equals(waitSubmitStatus)).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_98009);
+            throw new ServiceException(ApiError.ERROR_DELETE_ALLOWED_STATUS_ONLY);
         }
         //删除价目表
         Boolean result = this.removeByIds(ids);
@@ -696,7 +696,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
         String approveIngStatus = ApproveStatusEnum.APPROVE_ING.getStatus();
         long count = list.stream().filter(s -> !s.getApproveStatus().getStatus().equals(approveIngStatus)).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_98007);
+            throw new ServiceException(ApiError.ERROR_REVOKE_PROCESS_ALLOWED_STATUS_ONLY);
         }
         //撤销现有流程
         LoginUser userInfo = UserContext.getDefaultLoginUser();
@@ -753,7 +753,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
                 listApiResult = workflowFeign.curApprover(dtoList);
                 Integer code = listApiResult.getCode();
                 if (200 != code) {
-                    throw new ServiceException(new ApiResult(ApiError.DEFAULT.code,listApiResult.getMsg()));
+                    throw new ServiceException(new ApiResult(ApiError.DEFAULT.getCode(),listApiResult.getMsg()));
                 }
             }
             //历史调价数据
@@ -847,7 +847,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
     public Boolean updateAndSubmit(PurchasePriceChangeDTO.UpdateDTO dto) {
         String id = this.updatePurchasePriceChange(dto);
         if (StringUtils.isBlank(id)) {
-            throw new ServiceException(ApiError.ERROR_1020);
+            throw new ServiceException(ApiError.ERROR_UPDATE_FAILED);
         }
         return this.submitApprove(Arrays.asList(id), Boolean.TRUE);
     }

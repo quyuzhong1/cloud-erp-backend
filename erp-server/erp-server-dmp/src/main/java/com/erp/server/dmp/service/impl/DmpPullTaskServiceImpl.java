@@ -297,7 +297,7 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
     @Override
     public Boolean batchNoNeedSync(List<String> ids) {
         if (CollectionUtils.isEmpty(ids)) {
-            throw new ServiceException(ApiError.ERROR_98004);
+            throw new ServiceException(ApiError.ERROR_SELECTION_REQUIRED);
         }
         //获取数据
         List<DmpPullTaskEntity> list = this.listByIds(ids);

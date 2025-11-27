@@ -2177,7 +2177,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
                     Integer badQty = qcInfo.getQcBadQty();
                     Integer qcQty = qcInfo.getQcQty();
                     if (!isExemption && (goodQty + badQty > qcQty)) {
-                        Integer errorCode = ApiError.ERROR_QC_INVALID_TOTAL.code;
+                        Integer errorCode = ApiError.ERROR_QC_INVALID_TOTAL.getCode();
                         String errorMsg = String.format("质检单【%s】, 质检不良数+合格数不能超过质检数量", item.getCode());
                         throw new ServiceException(errorCode, errorMsg);
                     }

@@ -218,7 +218,7 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
         //供应商信息
         PurchaseOrderSupplierEntity supplierEntity = purchaseOrderSupplierService.getByPurchaseOrderId(entity.getPurchaseOrderId());
         if (ObjectUtils.isEmpty(supplierEntity)) {
-            throw new ServiceException(ApiError.ERROR_98036);
+            throw new ServiceException(ApiError.ERROR_SCM_PO_SUPPLIER_INFO_NOT_FOUND);
         }
         PurchaseOrderSupplierDTO.UpdateDTO supplierDTO = new PurchaseOrderSupplierDTO.UpdateDTO();
         BeanMapperUtils.copy(supplierEntity,supplierDTO);
@@ -266,11 +266,11 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
         //非待提交和审核不通过不能作废
         long count = Stream.of(entity).filter(obj -> !ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(obj.getApproveStatus())).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_98005);
+            throw new ServiceException(ApiError.ERROR_VOID_ALLOWED_STATUS_ONLY);
         }
         long invalidCount = Stream.of(entity).filter(obj -> InvalidStatusEnum.VOIDED.getStatus().equals(obj.getInvalidStatus())).count();
         if (invalidCount > 0) {
-            throw new ServiceException(ApiError.ERROR_98012);
+            throw new ServiceException(ApiError.ERROR_ALREADY_VOID_CANNOT_VOID_AGAIN);
         }
         List<String> ids = Collections.singletonList(entity.getId());
         //验证存货核算是否关账
@@ -328,7 +328,7 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
 
                 Integer purchaseQty = req.getQty();
                 if (returnQty > receiveQty) {
-                    throw new ServiceException(ApiError.ERROR_99030.code, String.format(ApiError.ERROR_99030.msg, req.getSkuNo()));
+                    throw new ServiceException(ApiError.ERROR_WMS_RETURN_QTY_EXCEEDS_RECEIPT.getCode(), String.format(ApiError.ERROR_WMS_RETURN_QTY_EXCEEDS_RECEIPT.getMsg(), req.getSkuNo()));
                 }
 
                 approveArrivalState(returnQty, receiveQty, purchaseQty, req.getPurchaseOrderDetailId());
@@ -409,7 +409,7 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
         //新增
         PurchaseChangeEntity entity = this.add(dto);
         if (StringUtils.isBlank(entity.getId())) {
-            throw new ServiceException(ApiError.ERROR_1019);
+            throw new ServiceException(ApiError.ERROR_CREATE_FAILED);
         }
         entity = this.getById(entity.getId());
         //提交
@@ -430,7 +430,7 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
     public BatchResultDTO cancelProcess(PurchaseChangeEntity entity) {
         long count = Stream.of(entity).filter(obj -> !ApproveStatusEnum.APPROVE_ING.getStatus().equals(obj.getApproveStatus()) ).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_98007);
+            throw new ServiceException(ApiError.ERROR_REVOKE_PROCESS_ALLOWED_STATUS_ONLY);
         }
         List<String> ids = Collections.singletonList(entity.getId());
         log.info("采购申请单撤销流程，ids=【{}】", ids);
@@ -557,7 +557,7 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
         if (StringUtils.isNotBlank(changeDeptId)) {
             SysDepartmentDTO depart = sysUserFeign.getUserDeptById(changeDeptId);
             if (ObjectUtils.isEmpty(depart)) {
-                throw new ServiceException(ApiError.ERROR_9029);
+                throw new ServiceException(ApiError.ERROR_DEPT_NOT_FOUND);
             }
             entity.setChangeDeptName(depart.getName());
         }
@@ -568,11 +568,11 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
      */
     private List<PurchaseChangeEntity>  getList(List<String> ids) {
         if (CollectionUtils.isEmpty(ids)) {
-            throw new ServiceException(ApiError.ERROR_98004);
+            throw new ServiceException(ApiError.ERROR_SELECTION_REQUIRED);
         }
         List<PurchaseChangeEntity> list = this.listByIds(ids);
         if (CollectionUtils.isEmpty(list)) {
-            throw new ServiceException(ApiError.ERROR_98016);
+            throw new ServiceException(ApiError.ERROR_SCM_PO_APPLY_NOT_FOUND);
         }
         return list;
     }
@@ -661,12 +661,12 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
             throw new ServiceException(ApiError.ERROR_SCM_PO_NOT_FOUND);
         }
         if (!ApproveStatusEnum.APPROVE.getStatus().equals(purchaseOrderEntity.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_98045);
+            throw new ServiceException(ApiError.ERROR_SCM_PO_NOT_APPROVED_CHANGE_FORBIDDEN);
         }
         //采购供应商
         PurchaseOrderSupplierEntity supplierEntity = purchaseOrderSupplierService.getByPurchaseOrderId(purchaseOrderId);
         if (ObjectUtils.isEmpty(supplierEntity)) {
-            throw new ServiceException(ApiError.ERROR_98036);
+            throw new ServiceException(ApiError.ERROR_SCM_PO_SUPPLIER_INFO_NOT_FOUND);
         }
         entity.setSupplierId(supplierEntity.getSupplierId());
         entity.setSupplierName(supplierEntity.getSupplierName());
@@ -734,7 +734,7 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
         //待提交或审核不通过并且未作废允许提交
         long count = Stream.of(entity).filter(obj -> (!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(obj.getApproveStatus())) || !InvalidStatusEnum.NOT_VOIDED.getStatus().equals(obj.getInvalidStatus()) ).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_98010);
+            throw new ServiceException(ApiError.ERROR_SUBMIT_ALLOWED_STATUS_ONLY);
         }
         List<String> ids = Collections.singletonList(entity.getId());
 

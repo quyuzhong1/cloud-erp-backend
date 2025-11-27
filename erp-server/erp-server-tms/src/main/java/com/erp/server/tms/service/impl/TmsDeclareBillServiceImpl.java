@@ -371,7 +371,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     @Override
     public TmsDeclareBillDTO.ViewDTO view(String id) {
         TmsDeclareBillEntity entity = this.getById(id);
-        Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST, "报关单"));
+        Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.ERROR_NOT_EXIST, "报关单"));
         TmsDeclareBillDTO.ViewDTO viewDTO = BeanUtil.copyProperties(entity,TmsDeclareBillDTO.ViewDTO.class);
         List<String> list = Arrays.asList(entity.getMergeSourceId().split(","));
         List<String> sourceCodeList = new ArrayList<>();
@@ -982,7 +982,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             try {
                 new ExcelPrintUtils().patchExport(exportDTO.getProductDetailList(),exportDTO, response, sb.toString(), excelPath);
             } catch (Exception e) {
-                throw new ServiceException(ApiError.ERROR_1015);
+                throw new ServiceException(ApiError.ERROR_FILE_EXPORT_FAILED);
             }
         }else{
             List<ExcelData> excelDataList = new ArrayList<>();

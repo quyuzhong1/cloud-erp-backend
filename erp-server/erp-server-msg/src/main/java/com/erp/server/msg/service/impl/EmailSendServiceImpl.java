@@ -95,8 +95,8 @@ public class EmailSendServiceImpl extends BaseMessageSendService {
             msgResult.setCode(200);
             msgResult.setMsg("操作成功");
         } else {
-            ApiError sendMailError = ApiError.ERROR_1010;
-            msgResult.setCode(sendMailError.code);
+            ApiError sendMailError = ApiError.ERROR_MAIL_SEND_FAILED;
+            msgResult.setCode(sendMailError.getCode());
             msgResult.setMsg(sendMailError.getMsg());
         }
         return msgResult;

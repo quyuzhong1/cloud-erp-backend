@@ -628,7 +628,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             listApiResult = workflowFeign.curApprover(dtoList);
             Integer code = listApiResult.getCode();
             if (200 != code) {
-                throw new ServiceException(new ApiResult(ApiError.DEFAULT.code, listApiResult.getMsg()));
+                throw new ServiceException(new ApiResult(ApiError.DEFAULT.getCode(), listApiResult.getMsg()));
             }
         }
         //TODO 获取srm 供应商订单规则
@@ -773,7 +773,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
 //        String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
 //        long count = supplierList.stream().filter(s -> !s.getApproveStatus().getStatus().equals(waitSubmitStatus)).count();
 //        if (count > 0) {
-//            throw new ServiceException(ApiError.ERROR_98009);
+//            throw new ServiceException(ApiError.ERROR_DELETE_ALLOWED_STATUS_ONLY);
 //        }
         List<SupplierEntity> removeList=new ArrayList<>();
         List<BatchResultDTO> resultDTOList=new ArrayList<>();

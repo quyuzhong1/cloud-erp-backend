@@ -159,7 +159,7 @@ public class SysCodeServiceImpl extends ServiceImpl<SysCodeMapper, SysCodeEntity
 //            isLock = lock.tryLock(5, TimeUnit.SECONDS);
 //            log.info("是否获取到分布式锁: {}", isLock);
 //            if (!isLock) {
-//                throw new ServiceException(ApiError.ERROR_1026);
+//                throw new ServiceException(ApiError.ERROR_DATA_LOCKED);
 //            }
 //            //生成单号
 //            getOrSaveSysCode(dto);
@@ -181,7 +181,7 @@ public class SysCodeServiceImpl extends ServiceImpl<SysCodeMapper, SysCodeEntity
 //            return sysCode.toString();
 //        }  catch (InterruptedException e) {
 //            log.error("生成单号获取锁异常",e);
-//            throw new ServiceException(ApiError.ERROR_1026);
+//            throw new ServiceException(ApiError.ERROR_DATA_LOCKED);
 //        } finally {
 //            //释放锁  锁是否存在，是当前执行线程的锁
 //            if(lock.isLocked() && lock.isHeldByCurrentThread()){

@@ -99,7 +99,7 @@ public class ProductDetailImagesServiceImpl extends ServiceImpl<ProductDetailMap
         }
         Integer status = productDetailEntity.getStatus();
         if (status.equals(ProductDetailStatusEnum.APPROVAL_ING.getCode())) {
-            throw new ServiceException(ApiError.ERROR_95291);
+            throw new ServiceException(ApiError.ERROR_PLM_UPLOAD_FORBIDDEN_IN_APPROVING);
         }
 
         String oldImagesUrl = productDetailEntity.getImagesUrl();

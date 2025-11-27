@@ -548,7 +548,7 @@ public class BiTargetShopSettingServiceImpl extends SuperServiceImpl<BiTargetSho
             wb.close();
         } catch (Exception e) {
             log.error(" downloadTemplate  出错了 e=={}", e);
-            throw new ServiceException(ApiError.ERROR_95131);
+            throw new ServiceException(ApiError.ERROR_IMPORT_TEMPLATE_DOWNLOAD_FAILED);
         }
     }
 

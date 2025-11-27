@@ -206,7 +206,7 @@ public class SubcontractChangeDetailServiceImpl extends SuperServiceImpl<Subcont
         //BOM信息
         List<BomChildrenSkuDTO> bomChildrenList = plmTaskFeign.listBomChildBySkuIds(parentSkuIds);
         if (CollectionUtils.isEmpty(bomChildrenList)) {
-            throw new ServiceException(ApiError.ERROR_95163);
+            throw new ServiceException(ApiError.ERROR_PLM_BOM_NOT_FOUND);
         }
         //产品信息
         List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(allSkuIds);
@@ -222,7 +222,7 @@ public class SubcontractChangeDetailServiceImpl extends SuperServiceImpl<Subcont
         //主表信息
         SubcontractChangeEntity changeEntity = subcontractChangeService.getById(mainId);
         if (ObjectUtils.isEmpty(changeEntity)) {
-            throw new ServiceException(ApiError.ERROR_98084);
+            throw new ServiceException(ApiError.ERROR_SCM_OUTSOURCING_CHANGE_NOT_FOUND);
         }
 
         //仓库信息
@@ -235,7 +235,7 @@ public class SubcontractChangeDetailServiceImpl extends SuperServiceImpl<Subcont
             //bom信息
             BomChildrenSkuDTO bomChildrenSkuDTO = bomChildrenList.stream().filter(obj -> obj.getParentSkuId().equals(detailEntity.getSkuId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(bomChildrenSkuDTO)) {
-                throw new ServiceException(ApiError.ERROR_95163);
+                throw new ServiceException(ApiError.ERROR_PLM_BOM_NOT_FOUND);
             }
             //父级SKU信息
             SkuVO skuVO = skuList.stream().filter(obj -> obj.getSkuId().equals(detailEntity.getSkuId())).findFirst().orElse(null);

@@ -150,7 +150,7 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
         //查询产品信息
         ProductPlanEntity productPlanEntity = this.getById(id);
         if (ObjectUtils.isEmpty(productPlanEntity)) {
-            throw new ServiceException(ApiError.ERROR_95133);
+            throw new ServiceException(ApiError.ERROR_PLM_TEMPLATE_DATA_EMPTY);
         }
         ProductPlanDTO productPlanDTO = new ProductPlanDTO();
         BeanMapperUtils.copy(productPlanEntity, productPlanDTO);
@@ -201,7 +201,7 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
         //查询采购信息
         ProductPlanPurchaseEntity productPlanPurchaseEntity = productPlanPurchaseService.getByProductPlanId(id);
         if (ObjectUtils.isEmpty(productPlanPurchaseEntity)) {
-            throw new ServiceException(ApiError.ERROR_95134);
+            throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_PLAN_NOT_FOUND);
         }
         ProductPlanPurchaseDTO productPlanPurchaseDTO = new ProductPlanPurchaseDTO();
         BeanMapperUtils.copy(productPlanPurchaseEntity, productPlanPurchaseDTO);
@@ -211,7 +211,7 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
         //查询销售信息
         ProductPlanSaleEntity productPlanSaleEntity = productPlanSaleService.getByProductPlanId(id);
         if (ObjectUtils.isEmpty(productPlanPurchaseEntity)) {
-            throw new ServiceException(ApiError.ERROR_95134);
+            throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_PLAN_NOT_FOUND);
         }
         ProductPlanSaleDTO productPlanSaleDTO = new ProductPlanSaleDTO();
         BeanMapperUtils.copy(productPlanSaleEntity, productPlanSaleDTO);
@@ -257,10 +257,10 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
     public Boolean deleteById(String id) {
         ProductPlanEntity productPlanEntity = this.getById(id);
         if (ObjectUtils.isEmpty(productPlanEntity)) {
-            throw new ServiceException(ApiError.ERROR_95133);
+            throw new ServiceException(ApiError.ERROR_PLM_TEMPLATE_DATA_EMPTY);
         }
         if (StringUtils.isNotBlank(productPlanEntity.getProductId())) {
-            throw new ServiceException(ApiError.ERROR_95149);
+            throw new ServiceException(ApiError.ERROR_PLM_PLAN_LINKED_PRODUCT_DELETE_FORBIDDEN);
         }
         //删除采购信息
         productPlanPurchaseService.removeByProductPlanId(id);
@@ -319,7 +319,7 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
     public Boolean addRemark(ProductPlanRemarkDTO dto) {
         ProductPlanEntity productPlanEntity = this.getById(dto.getProductPlanId());
         if (ObjectUtils.isEmpty(productPlanEntity)) {
-            throw new ServiceException(ApiError.ERROR_95133);
+            throw new ServiceException(ApiError.ERROR_PLM_TEMPLATE_DATA_EMPTY);
         }
         //新增备注
         ProductPlanRemarkEntity productPlanRemarkEntity = new ProductPlanRemarkEntity();
@@ -332,10 +332,10 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
     public Boolean planDevelopProduct(ProductPlanDevelopDTO dto) {
         ProductPlanEntity productPlanEntity = this.getById(dto.getId());
         if (ObjectUtils.isEmpty(productPlanEntity)) {
-            throw new ServiceException(ApiError.ERROR_95134);
+            throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_PLAN_NOT_FOUND);
         }
         if (StringUtils.isNotBlank(productPlanEntity.getProductId())) {
-            throw new ServiceException(ApiError.ERROR_95138);
+            throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_PLAN_LINKED_PRODUCT_EXISTS);
         }
 
         //产品等级编码
@@ -371,14 +371,14 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
             //当需要新增产品时
             String productId = productInfoService.saveOrUpdateProduct(productDTO);
             if (StringUtils.isBlank(productId)) {
-                throw new ServiceException(ApiError.ERROR_95139);
+                throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_CREATE_FAILED);
             }
             productInfoEntity = productInfoService.getById(productId);
         } else {
             //判断产品是否已关联规划
             ProductPlanEntity found = this.getByProductId(productInfoEntity.getId());
             if (ObjectUtils.isNotEmpty(found)) {
-                throw new ServiceException(ApiError.ERROR_95142);
+                throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_ALREADY_LINKED_TO_PLAN);
             }
         }
         //存在数据则关联规划并且需要同步的数据以产品的为准
@@ -408,7 +408,7 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
         }
         ProductPlanEntity productPlanEntity = this.getById(productPlanId);
         if (ObjectUtils.isEmpty(productPlanEntity)) {
-            throw new ServiceException(ApiError.ERROR_95134);
+            throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_PLAN_NOT_FOUND);
         }
         //更新同步规划数据
         updateProductPlanByProduct(productPlanEntity, entity);
@@ -419,7 +419,7 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
         if (ObjectUtils.isEmpty(productPlanEntity)
                 || ObjectUtils.isEmpty(productInfoEntity)
                 || StringUtils.isBlank(productPlanEntity.getId())) {
-            throw new ServiceException(ApiError.ERROR_95140);
+            throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_PLAN_SYNC_FAILED);
         }
         productPlanEntity.setProductId(productInfoEntity.getId());
         productPlanEntity.setChargeId(productInfoEntity.getChargeId());
@@ -577,7 +577,7 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
         MonthEnum[] values = MonthEnum.values();
         Integer year = dto.getYear();
         if (ObjectUtils.isEmpty(dto.getYear())) {
-            throw new ServiceException(ApiError.ERROR_95141);
+            throw new ServiceException(ApiError.ERROR_PLM_YEAR_REQUIRED);
         }
         LocalDate localDate = LocalDateTimeUtil.parseDate(String.valueOf(year), "yyyy");
         //所选年份的
@@ -627,7 +627,7 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
     public Boolean uploadImageUrl(MultipartFile multipartFiles, String id) {
         ProductPlanEntity productPlanEntity = this.getById(id);
         if (ObjectUtils.isEmpty(productPlanEntity)) {
-            throw new ServiceException(ApiError.ERROR_95133);
+            throw new ServiceException(ApiError.ERROR_PLM_TEMPLATE_DATA_EMPTY);
         }
         String filePath = filefeign.uploadFile(multipartFiles);
         productPlanEntity.setImageUrl(filePath);
@@ -760,7 +760,7 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
             //已关联产品
             ProductInfoEntity productInfoEntity = productInfoService.getById(productId);
             if (ObjectUtils.isEmpty(productInfoEntity)) {
-                throw new ServiceException(ApiError.ERROR_95010);
+                throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_NOT_FOUND);
             }
             if (ProductPlanProcessEnum.PRODUCT_DEVELOP.getName().equals(typeName)) {
                 //转开发
@@ -829,7 +829,7 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
     public ProductPlanDevelopDTO getProductPlanDevelopById(String id) {
         ProductPlanEntity productPlanEntity = this.getById(id);
         if (ObjectUtils.isEmpty(productPlanEntity)) {
-            throw new ServiceException(ApiError.ERROR_95134);
+            throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_PLAN_NOT_FOUND);
         }
         ProductPlanDevelopDTO dto = new ProductPlanDevelopDTO();
         BeanMapperUtils.copy(productPlanEntity, dto);

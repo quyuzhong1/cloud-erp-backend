@@ -261,7 +261,7 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
         //店铺集合
         ShopInfoEntity shopInfo = FeignQuery.getById(ShopInfoEntity.class, soB2cEntity.getShopId());
         if (ObjUtil.isEmpty(shopInfo)) {
-            throw new ServiceException(ApiError.ERROR_92058);
+            throw new ServiceException(ApiError.ERROR_SHOP_NOT_FOUND);
         }
         //验证店铺是否管理
         if (CollUtil.isEmpty(cfgInvoiceSettingDetailList)) {
@@ -1082,7 +1082,7 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
         List<InvoiceInfoDTO.ExportAttachDTO> exportResultList = baseMapper.listExportUrl(dto,AttachmentTypeEnum.INVOICE_INFO_XML.getCode());
 
         if (CollUtil.isEmpty(exportResultList)) {
-            throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
+            throw new ServiceException(ApiError.ERROR_EXPORT_DATA_EMPTY);
         }
         // 动态生成文件名
         String fileName = "invoiceXml_" + LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME) + ".zip";
@@ -1099,7 +1099,7 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
         List<InvoiceInfoDTO.ExportAttachDTO> exportResultList = baseMapper.listExportUrl(dto,AttachmentTypeEnum.INVOICE_INFO_PDF.getCode());
 
         if (CollUtil.isEmpty(exportResultList)) {
-            throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
+            throw new ServiceException(ApiError.ERROR_EXPORT_DATA_EMPTY);
         }
         // 动态生成文件名
         String fileName = "invoicePdf_" + LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME) + ".zip";
@@ -1112,12 +1112,12 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
     @Override
     public List<InvoiceTaxDTO.CheckGenerateInvoiceDTO> checkGenerateInvoice(List<String> soIdList, Boolean isCheckInvoiceTax) {
         if (CollUtil.isEmpty(soIdList)) {
-            throw new ServiceException(ApiError.ERROR_98004);
+            throw new ServiceException(ApiError.ERROR_SELECTION_REQUIRED);
         }
         //销售订单
         List<SoB2cEntity> soB2cEntityList = soB2cService.listByIds(soIdList);
         if (CollUtil.isEmpty(soB2cEntityList)){
-            throw new ServiceException(ApiError.ERROR_92016);
+            throw new ServiceException(ApiError.ERROR_SO_NOT_FOUND);
         }
         long count = soB2cEntityList.stream().filter(obj -> SoB2cNfeStatusEnum.INVOICING.getCode().equals(obj.getNfeInvoiceStatus())).count();
         if (count > 0 && Objects.nonNull(isCheckInvoiceTax) && isCheckInvoiceTax) {

@@ -152,7 +152,7 @@ public class TmsWarehouseMappingServiceImpl extends SuperServiceImpl<TmsWarehous
             wb.write(output);
             wb.close();
         } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_95131);
+            throw new ServiceException(ApiError.ERROR_IMPORT_TEMPLATE_DOWNLOAD_FAILED);
         }
     }
 
@@ -271,7 +271,7 @@ public class TmsWarehouseMappingServiceImpl extends SuperServiceImpl<TmsWarehous
     private void handleData(TmsWarehouseMappingEntity tmsWarehouseMappingEntity) {
         List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Arrays.asList(tmsWarehouseMappingEntity.getErpWarehouseId()));
         if (CollectionUtils.isEmpty(warehouseList)) {
-            throw new ServiceException(ApiError.ERROR_99002);
+            throw new ServiceException(ApiError.ERROR_WMS_WAREHOUSE_NOT_FOUND);
         }
         tmsWarehouseMappingEntity.setErpWarehouseName(warehouseList.get(0).getName());
     }

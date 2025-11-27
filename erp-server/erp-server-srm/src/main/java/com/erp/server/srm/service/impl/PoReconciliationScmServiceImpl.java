@@ -356,7 +356,7 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
             wb.write(output);
             wb.close();
         } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_95131);
+            throw new ServiceException(ApiError.ERROR_IMPORT_TEMPLATE_DOWNLOAD_FAILED);
         }
     }
 
@@ -561,7 +561,7 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
             try {
                 new ExcelPrintUtils().patchExport(detailDTOList,exportDTO, response, sb.toString(), excelPath);
             } catch (Exception e) {
-                throw new ServiceException(ApiError.ERROR_1015);
+                throw new ServiceException(ApiError.ERROR_FILE_EXPORT_FAILED);
             }
         }
     }

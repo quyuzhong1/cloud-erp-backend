@@ -138,7 +138,7 @@ public class SyncExchangeRateServiceImpl implements SyncExchangeRateService {
             paramDTO.setType(ApproveType.PASS);
             biSettlementExchangeRateService.approve(paramDTO);
         } else {
-            throw new ServiceException(ApiError.ERROR_1042);
+            throw new ServiceException(ApiError.ERROR_DOC_SUBMIT_FAILED);
         }
     }
 

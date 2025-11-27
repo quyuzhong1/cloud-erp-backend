@@ -857,7 +857,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
     @Override
     public SoDetailDTO.SkuDTO getSkuInfoBySkuNo(String skuNo, String warehouseId) {
         if (StringUtils.isEmpty(warehouseId)) {
-            throw new ServiceException(ApiError.ERROR_99001);
+            throw new ServiceException(ApiError.ERROR_WMS_WAREHOUSE_REQUIRED);
         }
         SoDetailDTO.SkuDTO result = new SoDetailDTO.SkuDTO();
         List<String> skuIdList = new ArrayList<>(1);
@@ -866,7 +866,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         param.put("skuNo", skuNo);
         ProductDetailDTO sku = plmTaskFeign.getSkuByParam(param);
         if (Objects.isNull(sku)) {
-            throw new ServiceException(ApiError.ERROR_95107);
+            throw new ServiceException(ApiError.ERROR_PLM_SKU_NOT_FOUND);
         }
         String skuId = sku.getId();
         skuIdList.add(skuId);
@@ -1016,7 +1016,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
     public List<SoDetailDTO.ViewDTO> listBySoId(String soId) {
         SoInfoEntity soInfo = soInfoService.getById(soId);
         if (Objects.isNull(soInfo)) {
-            throw new ServiceException(ApiError.ERROR_92016);
+            throw new ServiceException(ApiError.ERROR_SO_NOT_FOUND);
         }
         String warehouseId = soInfo.getWarehouseId();
 
@@ -1273,7 +1273,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
     /**
      * 添加销售订单明细
      *
-     * @param mainId detailList
+     * @param addEntity
      * @param isTax  是否含税  true 是
      * @return
      * @author yl
@@ -1491,7 +1491,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         //客户信息
         CustomerInfoEntity customerInfoEntity = customerInfoService.getCustomerById(soInfoEntity.getCustomerId());
         if (ObjectUtil.isEmpty(customerInfoEntity)) {
-            throw new ServiceException(ApiError.ERROR_92011);
+            throw new ServiceException(ApiError.ERROR_CUSTOMER_NOT_FOUND);
         }
         //虚拟仓库信息
         VirtualWarehouseChannelDTO.PlatformDTO platformDTO = new VirtualWarehouseChannelDTO.PlatformDTO();
@@ -1699,12 +1699,12 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
     public BatchResultDTO saveLockVirtualInventory(SoInfoDTO.LockVirtualInventorySaveDTO saveDTO) {
         SoDetailEntity soDetailEntity = this.getById(saveDTO.getDetailId());
         if (ObjectUtil.isEmpty(soDetailEntity)) {
-            throw new ServiceException(ApiError.ERROR_92015);
+            throw new ServiceException(ApiError.ERROR_SO_DETAIL_NOT_FOUND);
         }
         //销售订单
         SoInfoEntity soInfoEntity = soInfoService.getById(soDetailEntity.getMainId());
         if (ObjectUtil.isEmpty(soInfoEntity)) {
-            throw new ServiceException(ApiError.ERROR_92016);
+            throw new ServiceException(ApiError.ERROR_SO_NOT_FOUND);
         }
         if (CharSequenceUtil.equals(soInfoEntity.getApproveStatus().getStatus(), BillApproveStatusEnum.DRAFT.getStatus())) {
             throw new ServiceException("暂存状态不允许锁定");
@@ -1757,11 +1757,11 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
     public BatchResultDTO batchUnLockVirtualInventory(String detailId,SoInfoEntity oldEntity) {
         SoDetailEntity old =  this.getById(detailId);
         if (ObjectUtil.isEmpty(old)) {
-            throw new ServiceException(ApiError.ERROR_92015);
+            throw new ServiceException(ApiError.ERROR_SO_DETAIL_NOT_FOUND);
         }
         SoInfoEntity soInfoEntity = ObjectUtil.isEmpty(oldEntity) ? soInfoService.getById(old.getMainId()) : oldEntity;
         if (ObjectUtil.isEmpty(soInfoEntity)) {
-            throw new ServiceException(ApiError.ERROR_92016);
+            throw new ServiceException(ApiError.ERROR_SO_NOT_FOUND);
         }
         //无虚拟仓库
         if (StrUtil.isBlank(soInfoEntity.getVirtualWarehouseId())) {
@@ -1796,11 +1796,11 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
     public BatchResultDTO batchUnLockVirtualInventory(List<String> detailIdList,SoInfoEntity oldEntity) {
         List<SoDetailEntity> oldList =  this.listByIds(detailIdList);
         if (CollectionUtils.isEmpty(oldList)) {
-            throw new ServiceException(ApiError.ERROR_92015);
+            throw new ServiceException(ApiError.ERROR_SO_DETAIL_NOT_FOUND);
         }
         SoInfoEntity soInfoEntity = ObjectUtil.isEmpty(oldEntity) ? soInfoService.getById(oldList.get(0).getMainId()) : oldEntity;
         if (ObjectUtil.isEmpty(soInfoEntity)) {
-            throw new ServiceException(ApiError.ERROR_92016);
+            throw new ServiceException(ApiError.ERROR_SO_NOT_FOUND);
         }
         //无虚拟仓库
         if (StrUtil.isBlank(soInfoEntity.getVirtualWarehouseId())) {
@@ -1977,7 +1977,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             //明细
             SoDetailEntity soDetailEntity = dbList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), updateDTO.getId())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(soDetailEntity)) {
-                throw new ServiceException(ApiError.ERROR_92015);
+                throw new ServiceException(ApiError.ERROR_SO_DETAIL_NOT_FOUND);
             }
             //有效数量
             Integer noticeQty = soDeliveryNoticeDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSourceDetailId(), updateDTO.getId()))

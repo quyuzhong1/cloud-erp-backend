@@ -424,7 +424,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             wb.write(output);
             wb.close();
         } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_95131);
+            throw new ServiceException(ApiError.ERROR_IMPORT_TEMPLATE_DOWNLOAD_FAILED);
         }
     }
 
@@ -537,7 +537,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         //物流单号
         LogisticsBillEntity logisticsBillEntity = logisticsBillService.getById(entity.getLogisticsBillId());
         if (ObjectUtil.isEmpty(logisticsBillEntity)) {
-            throw new ServiceException(ApiError.NOT_EXIST,"物流订单");
+            throw new ServiceException(ApiError.ERROR_NOT_EXIST,"物流订单");
         }
         entity.setTransportNo(logisticsBillEntity.getTransportNo());
         entity.setChannelId(logisticsBillEntity.getChannelId());

@@ -177,7 +177,7 @@ public class DataIdempotentAspect {
 //                    }
 //                });
 //            } catch (Exception exception) {
-//                throw new ServiceException(ApiError.ERROR_1026);
+//                throw new ServiceException(ApiError.ERROR_DATA_LOCKED);
 //            } finally {
 //                LOCK_THREAD.remove();
 //            }

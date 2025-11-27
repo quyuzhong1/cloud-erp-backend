@@ -450,7 +450,7 @@ public class DsfLogisticsHandlerImpl extends AbstractLogisticsHandler {
                 logisticsOperateService.pushOperateLog(logisticsUpdateWeightVO.getOrderId(),
                         logisticsUpdateWeightVO.getDeliveryNo(), BusinessTypeEnum.UPDATE_WEIGHT.getCode(), LogisticsPlatformEnum.DSF.getCode(),
                         RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsUpdateWeightVO), JSONUtil.toJsonStr(response),false);
-                return ApiResult.error(ApiError.CALL_THIRD_LOGISTICS_PLATFORM_ERROR.code,response.getMsg());
+                return ApiResult.error(ApiError.CALL_THIRD_LOGISTICS_PLATFORM_ERROR.getCode(),response.getMsg());
             }
             logisticsOperateService.pushOperateLog(logisticsUpdateWeightVO.getOrderId(),
                     logisticsUpdateWeightVO.getDeliveryNo(), BusinessTypeEnum.UPDATE_WEIGHT.getCode(), LogisticsPlatformEnum.DSF.getCode(),

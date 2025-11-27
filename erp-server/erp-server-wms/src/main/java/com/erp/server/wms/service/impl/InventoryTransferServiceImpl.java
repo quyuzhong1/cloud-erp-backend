@@ -171,7 +171,7 @@ public class InventoryTransferServiceImpl extends AbstractInventoryServiceImpl {
         if(Objects.nonNull(param.getInventoryStatus())) { // 参数传输了要改的状态
             log.info("参数已传库存状态：【{}】，业务类型：【{}】，单据类型：【{}】，单据id：【{}】，单据日期：【{}】,SKU编号：【{}】", param.getInventoryStatus().getName(), businessType.getName(), param.getSourceType().getName(), param.getSourceId(), param.getBillDate(), param.getSkuNo());
             InventoryModeEnum inventoryModeEnum = param.getInventoryMode();
-            ValidatorUtil.isTrue(Objects.nonNull(inventoryModeEnum),()->new ServiceException(ApiError.ERROR_PARAM_INVALID.code, "交易类型不能为空"));
+            ValidatorUtil.isTrue(Objects.nonNull(inventoryModeEnum),()->new ServiceException(ApiError.ERROR_PARAM_INVALID.getCode(), "交易类型不能为空"));
             // 转换成出入库参数
             InOutStockCoreDTO inOutStockCoreDTO = InventoryUtils.wrapCoreParamByTransfer(param, InventoryOperationModeEnum.APPROVE);
             if(Objects.equals(InventoryModeEnum.IN_STOCK, inventoryModeEnum)) { //入库
@@ -181,13 +181,13 @@ public class InventoryTransferServiceImpl extends AbstractInventoryServiceImpl {
             }
         } else {
             if(CollUtil.isEmpty(transactionRuleParams)) {
-                ServiceException.runError(ApiError.ERROR_WMS_STOCK_RULE_BIZ_TYPE_ERROR.code, CharSequenceUtil.format(ApiError.ERROR_WMS_STOCK_RULE_BIZ_TYPE_ERROR.msg, businessType.getName()));
+                ServiceException.runError(ApiError.ERROR_WMS_STOCK_RULE_BIZ_TYPE_ERROR.getCode(), CharSequenceUtil.format(ApiError.ERROR_WMS_STOCK_RULE_BIZ_TYPE_ERROR.getMsg(), businessType.getName()));
             }
             log.info("参数未传库存状态，从配置读取，业务类型：【{}】，单据类型：【{}】，单据id：【{}】，单据日期：【{}】,SKU编号：【{}】,交易配置信息：【{}】", businessType.getName(), param.getSourceType().getName(), param.getSourceId(), param.getBillDate(), param.getSkuNo(), JSONObject.toJSONString(transactionRuleParams));
             // 判断当前仓是入库还是出库
             transactionRuleParams = transactionRuleParams.stream().filter(r->Objects.equals(r.getWarehouseOption(), param.getWarehouseOptionEnum())).collect(Collectors.toList());
             if(CollUtil.isEmpty(transactionRuleParams)) {
-                ServiceException.runError(ApiError.ERROR_WMS_STOCK_RULE_BIZ_TYPE_ERROR.code, CharSequenceUtil.format(ApiError.ERROR_WMS_STOCK_RULE_BIZ_TYPE_ERROR.msg, businessType.getName()));
+                ServiceException.runError(ApiError.ERROR_WMS_STOCK_RULE_BIZ_TYPE_ERROR.getCode(), CharSequenceUtil.format(ApiError.ERROR_WMS_STOCK_RULE_BIZ_TYPE_ERROR.getMsg(), businessType.getName()));
             }
             transactionRuleParams = transactionRuleParams.stream()
                     .sorted(Comparator.comparing(inventoryStatus -> inventoryStatus.getInventoryStatus().getCode()))

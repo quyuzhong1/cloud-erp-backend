@@ -145,7 +145,7 @@ public class SyncSoReturnServiceImpl implements SyncSoReturnService {
         List<SkuVO> skuNoList = plmTaskFeign.listBySkuNoList(kingdeeSkuNoList);
         //金蝶sku和plm对应不上跳过
         if (CollectionUtils.isEmpty(skuNoList)) {
-            throw new ServiceException(ApiError.ERROR_92057, StringUtil.join(skuNoList, ","));
+            throw new ServiceException(ApiError.ERROR_K3_B2C_RETURN_SKU_NOT_FOUND, StringUtil.join(skuNoList, ","));
         }
 
         //获取退货单明细
@@ -203,7 +203,7 @@ public class SyncSoReturnServiceImpl implements SyncSoReturnService {
             WarehouseEntity warehouseEntity = warehouseEntities.stream().filter(req -> req.getKingdeeWarehouseCode().equals(kingdeeReturnOrderItemEntity.getFStockNumber())).findFirst().orElse(null);
             //如果仓库不存在抛出异常
             if (ObjectUtil.isEmpty(warehouseEntity)) {
-                throw new ServiceException(ApiError.ERROR_92056, kingdeeReturnOrderItemEntity.getFStockNumber());
+                throw new ServiceException(ApiError.ERROR_K3_B2C_RETURN_WAREHOUSE_NOT_FOUND, kingdeeReturnOrderItemEntity.getFStockNumber());
             }
 
             instockDetailEntity.setWarehouseId(warehouseEntity.getId());

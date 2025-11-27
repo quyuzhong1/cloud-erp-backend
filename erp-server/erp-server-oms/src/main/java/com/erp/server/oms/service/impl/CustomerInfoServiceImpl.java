@@ -448,11 +448,11 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         Boolean result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(ingStatus), "");
         if (result) {
             //添加日志
-            String content = String.format(ApiError.ERROR_STATUS_CHANGE.msg, ApproveStatusEnum.WAIT_SUBMIT.getName(), ApproveStatusEnum.APPROVE_ING.getName());
+            String content = String.format(ApiError.ERROR_STATUS_CHANGE.getMsg(), ApproveStatusEnum.WAIT_SUBMIT.getName(), ApproveStatusEnum.APPROVE_ING.getName());
             operateLogService.batchAddModuleOperateLog(content, ModuleTypeEnum.CUSTOMER.getCode(), pairList, "状态变更");
 
             //审核不通过
-            String rejectContent = String.format(ApiError.ERROR_STATUS_CHANGE.msg, ApproveStatusEnum.REJECT.getName(), ApproveStatusEnum.APPROVE_ING.getName());
+            String rejectContent = String.format(ApiError.ERROR_STATUS_CHANGE.getMsg(), ApproveStatusEnum.REJECT.getName(), ApproveStatusEnum.APPROVE_ING.getName());
             operateLogService.batchAddModuleOperateLog(rejectContent, ModuleTypeEnum.PURCHASE_PRICE_CHANGE.getCode(), rejectPairList, "状态变更");
         }
         return result;
@@ -591,7 +591,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             listApiResult = workflowFeign.curApprover(dtoList);
             Integer code = listApiResult.getCode();
             if (200 != code) {
-                throw new ServiceException(new ApiResult(ApiError.DEFAULT.code, listApiResult.getMsg()));
+                throw new ServiceException(new ApiResult(ApiError.DEFAULT.getCode(), listApiResult.getMsg()));
             }
         }
         //平台信息
@@ -1010,7 +1010,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         //反审核
         if (result) {
             //添加日志
-            String ingContent = String.format(ApiError.ERROR_STATUS_CHANGE.msg, ApproveStatusEnum.APPROVE.getName(), ApproveStatusEnum.WAIT_SUBMIT.getName());
+            String ingContent = String.format(ApiError.ERROR_STATUS_CHANGE.getMsg(), ApproveStatusEnum.APPROVE.getName(), ApproveStatusEnum.WAIT_SUBMIT.getName());
             operateLogService.batchAddModuleOperateLog(ingContent, ModuleTypeEnum.CUSTOMER.getCode(), pairList, "状态变更");
 
             //发送金蝶
@@ -1037,12 +1037,12 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
 //        String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
 //        long count = list.stream().filter(s -> !s.getApproveStatus().getStatus().equals(waitSubmitStatus)).count();
 //        if (count > 0) {
-//            throw new ServiceException(ApiError.ERROR_98009);
+//            throw new ServiceException(ApiError.ERROR_DELETE_ALLOWED_STATUS_ONLY);
 //        }
 //        //占用状态
 //        long occupyCount = list.stream().filter(s -> s.getOccupyStatus()).count();
 //        if (occupyCount > 0) {
-//            throw new ServiceException(ApiError.ERROR_92018);
+//            throw new ServiceException(ApiError.ERROR_SO_IN_USE_DELETE_FORBIDDEN);
 //        }
         List<CustomerInfoEntity> removeList=new ArrayList<>();
         List<BatchResultDTO> resultDTOList=new ArrayList<>();
@@ -2236,7 +2236,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             listApiResult = workflowFeign.curApprover(dtoList);
             Integer code = listApiResult.getCode();
             if (200 != code) {
-                throw new ServiceException(new ApiResult(ApiError.DEFAULT.code, listApiResult.getMsg()));
+                throw new ServiceException(new ApiResult(ApiError.DEFAULT.getCode(), listApiResult.getMsg()));
             }
         }
         // 国家
@@ -2358,7 +2358,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             listApiResult = workflowFeign.curApprover(dtoList);
             Integer code = listApiResult.getCode();
             if (200 != code) {
-                throw new ServiceException(new ApiResult(ApiError.DEFAULT.code, listApiResult.getMsg()));
+                throw new ServiceException(new ApiResult(ApiError.DEFAULT.getCode(), listApiResult.getMsg()));
             }
         }
         // 国家

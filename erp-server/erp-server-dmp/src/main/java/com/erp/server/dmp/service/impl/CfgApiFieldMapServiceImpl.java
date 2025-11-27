@@ -64,7 +64,7 @@ public class CfgApiFieldMapServiceImpl extends ServiceImpl<CfgApiFieldMapMapper,
         //查询平台名称
         PlatformEntity platformEntity = platformService.getById(dto.getApiPlatformId());
         if (ObjectUtils.isEmpty(platformEntity)) {
-            throw new ServiceException(ApiError.ERROR_97022);
+            throw new ServiceException(ApiError.ERROR_DMP_PLATFORM_NAME_NOT_FOUND);
         }
         CfgApiFieldMapEntity entity = new CfgApiFieldMapEntity();
         BeanMapperUtils.copy(dto,entity);
@@ -75,7 +75,7 @@ public class CfgApiFieldMapServiceImpl extends ServiceImpl<CfgApiFieldMapMapper,
             if (ApiFieldTypeEnum.FIELD_VALUE_MAP.getCode().equals(dto.getFieldType())) {
                 List<CfgApiFieldMapValueDTO> valueList = dto.getValueList();
                 if (CollectionUtils.isEmpty(valueList)) {
-                    throw new ServiceException(ApiError.ERROR_97023);
+                    throw new ServiceException(ApiError.ERROR_DMP_FIELD_VALUE_MAPPING_REQUIRED);
                 }
                 valueList.forEach(obj-> obj.setFieldMapId(entity.getId()));
                 List<CfgApiFieldMapValueEntity> detailList = BeanMapperUtils.copyList(CfgApiFieldMapValueEntity.class, valueList);
@@ -106,7 +106,7 @@ public class CfgApiFieldMapServiceImpl extends ServiceImpl<CfgApiFieldMapMapper,
         //查询平台名称
         PlatformEntity platformEntity = platformService.getById(Integer.valueOf(dto.getApiPlatformId()));
         if (ObjectUtils.isEmpty(platformEntity)) {
-            throw new ServiceException(ApiError.ERROR_97022);
+            throw new ServiceException(ApiError.ERROR_DMP_PLATFORM_NAME_NOT_FOUND);
         }
         //更新明细数据
         List<CfgApiFieldMapValueDTO> valueList = dto.getValueList();
@@ -165,7 +165,7 @@ public class CfgApiFieldMapServiceImpl extends ServiceImpl<CfgApiFieldMapMapper,
     @Transactional(rollbackFor = Exception.class)
     public void batchDelete(List<String> ids) {
         if (CollectionUtils.isEmpty(ids)) {
-            throw new ServiceException(ApiError.ERROR_1003);
+            throw new ServiceException(ApiError.ERROR_PARAM_ID_REQUIRED);
         }
         //删除字段值对应关系数据
         cfgApiFieldMapValueService.removeByFieldMapIds(ids);
@@ -186,7 +186,7 @@ public class CfgApiFieldMapServiceImpl extends ServiceImpl<CfgApiFieldMapMapper,
     public CfgApiFieldMapDTO getCfgApiFieldMapById(String id) {
         CfgApiFieldMapDTO dto = new CfgApiFieldMapDTO();
         if (StringUtils.isBlank(id)) {
-            throw new ServiceException(ApiError.ERROR_1003);
+            throw new ServiceException(ApiError.ERROR_PARAM_ID_REQUIRED);
         }
         CfgApiFieldMapEntity entity = this.getById(id);
         if (ObjectUtils.isEmpty(entity)) {
@@ -225,7 +225,7 @@ public class CfgApiFieldMapServiceImpl extends ServiceImpl<CfgApiFieldMapMapper,
     private void checkCfgApiFieldMap(CfgApiFieldMapDTO dto) {
         CfgApiFieldMapEntity selfEntity = getByCfgApiFieldMap(dto);
         if (ObjectUtils.isNotEmpty(selfEntity) && !selfEntity.getId().equals(dto.getId())) {
-            throw new ServiceException(ApiError.ERROR_97021);
+            throw new ServiceException(ApiError.ERROR_DMP_FIELD_DUPLICATE_IN_PLATFORM_MODULE);
         }
 
     }

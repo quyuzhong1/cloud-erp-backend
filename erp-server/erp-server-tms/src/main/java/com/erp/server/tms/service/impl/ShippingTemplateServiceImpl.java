@@ -348,7 +348,7 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
             wb.write(output);
             wb.close();
         } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_95131);
+            throw new ServiceException(ApiError.ERROR_IMPORT_TEMPLATE_DOWNLOAD_FAILED);
         }
     }
 
@@ -783,7 +783,7 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
                 return "excel/shippingTemplateError_warehouse2.xlsx";
             }
         }
-        throw new ServiceException(ApiError.ERROR_95131);
+        throw new ServiceException(ApiError.ERROR_IMPORT_TEMPLATE_DOWNLOAD_FAILED);
     }
 
     /**
@@ -820,7 +820,7 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
                 return "classpath:excel/shippingTemplate_warehouse2.xlsx";
             }
         }
-        throw new ServiceException(ApiError.ERROR_95131);
+        throw new ServiceException(ApiError.ERROR_IMPORT_TEMPLATE_DOWNLOAD_FAILED);
     }
 
     /**

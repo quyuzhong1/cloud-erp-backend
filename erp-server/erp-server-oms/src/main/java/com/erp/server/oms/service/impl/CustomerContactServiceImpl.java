@@ -67,7 +67,7 @@ public class CustomerContactServiceImpl extends SuperServiceImpl<CustomerContact
         }
         long count = contactList.stream().filter(c -> c.getIsDefault() != null && c.getIsDefault()).count();
         if (count > 1) {
-            throw new ServiceException(ApiError.ERROR_92005);
+            throw new ServiceException(ApiError.ERROR_CUSTOMER_DEFAULT_CONTACT_LIMIT);
         }
     }
 

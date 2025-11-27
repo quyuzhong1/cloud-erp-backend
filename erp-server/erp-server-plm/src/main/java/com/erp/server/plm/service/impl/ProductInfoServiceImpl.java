@@ -322,7 +322,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         if (flag && StringUtils.isBlank(dto.getId()) && StringUtils.isNotBlank(templateId)) {
             ProjectTemplateEntity template = templateService.getById(templateId);
             if (Objects.isNull(template)) {
-                throw new ServiceException(ApiError.ERROR_95051);
+                throw new ServiceException(ApiError.ERROR_PLM_TEMPLATE_NOT_FOUND);
             }
             //复制模板团队成员
 
@@ -403,7 +403,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
     public Boolean updateCategory(MoveCategoryDTO dto) {
         BasicCategoryEntity category = basicCategoryService.getById(dto.getCategoryId());
         if (Objects.isNull(category)) {
-            throw new ServiceException(ApiError.ERROR_95025);
+            throw new ServiceException(ApiError.ERROR_PLM_CATEGORY_NOT_FOUND);
         }
         List<ProductInfoEntity> list = new ArrayList<>();
 
@@ -499,7 +499,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         ProductInfoEntity entity = this.getById(productId);
         if (!Objects.isNull(entity)) {
             if (!entity.getName().equals(dto.getProductName())) {
-                throw new ServiceException(ApiError.ERROR_95009);
+                throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_NAME_MISMATCH);
             }
             entity.setIsDeleted(Boolean.TRUE);
             flag = this.removeById(productId);
@@ -1050,7 +1050,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         }
         int count = this.count(queryWrapper);
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_95007);
+            throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_NAME_EXISTS);
         }
     }
 
@@ -1074,7 +1074,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
          */
         ProductInfoEntity productInfo = this.getById(productId);
         if (Objects.isNull(productInfo)) {
-            throw new ServiceException(ApiError.ERROR_95010);
+            throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_NOT_FOUND);
         }
 
         //保存模板
@@ -1177,7 +1177,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
     public ProductDTO info(String id) {
         ProductInfoEntity entity = this.getById(id);
         if (Objects.isNull(entity)) {
-            throw new ServiceException(ApiError.ERROR_95010);
+            throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_NOT_FOUND);
         }
         ProductDTO result = new ProductDTO();
         BeanMapper.copy(entity, result);
@@ -1434,34 +1434,34 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         Integer ingStatus = ProjectStateEnum.ING.getState();
         //当前状态为终止的时候
         if (terminateStatus.equals(currentStatus)) {
-            throw new ServiceException(ApiError.ERROR_95187);
+            throw new ServiceException(ApiError.ERROR_PLM_PROJECT_TERMINATED_CHANGE_FORBIDDEN);
         }
         switch (status) {
             //完成
             case FINISH:
                 if (!Arrays.asList(yesStartStatus, ingStatus).contains(currentStatus)) {
-                    throw new ServiceException(ApiError.ERROR_95182);
+                    throw new ServiceException(ApiError.ERROR_PLM_PROJECT_CLOSE_STATUS_INVALID);
                 }
                 break;
                 //暂停
             case SUSPEND:
                 if (finishStatus.equals(currentStatus) || suspendStatus.equals(currentStatus)) {
-                    throw new ServiceException(ApiError.ERROR_95180);
+                    throw new ServiceException(ApiError.ERROR_PLM_PROJECT_PAUSE_STATUS_INVALID);
                 }
                 break;
             case NOT_START:
                 if (suspendStatus.equals(currentStatus)) {
-                    throw new ServiceException(ApiError.ERROR_95193);
+                    throw new ServiceException(ApiError.ERROR_PLM_PROJECT_PAUSED_RESUME_ONLY);
                 }
                 break;
             case YES_START:
                 if (suspendStatus.equals(currentStatus)) {
-                    throw new ServiceException(ApiError.ERROR_95193);
+                    throw new ServiceException(ApiError.ERROR_PLM_PROJECT_PAUSED_RESUME_ONLY);
                 }
                 break;
             case ING:
                 if (suspendStatus.equals(currentStatus)) {
-                    throw new ServiceException(ApiError.ERROR_95193);
+                    throw new ServiceException(ApiError.ERROR_PLM_PROJECT_PAUSED_RESUME_ONLY);
                 }
                 break;
         }
@@ -1486,34 +1486,34 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         Integer terminateStatus = ApprovalStatusEnum.TERMINATE.getCode();
         //当前状态为终止的时候
         if (terminateStatus.equals(currentStatus)) {
-            throw new ServiceException(ApiError.ERROR_95187);
+            throw new ServiceException(ApiError.ERROR_PLM_PROJECT_TERMINATED_CHANGE_FORBIDDEN);
         }
         switch (status) {
             //立项
             case APPROVAL:
                 if (approvalStatus.equals(currentStatus) || suspendStatus.equals(currentStatus)) {
-                    throw new ServiceException(ApiError.ERROR_95183);
+                    throw new ServiceException(ApiError.ERROR_PLM_PROJECT_INITIATION_FORBIDDEN);
                 }
                 break;
                 //暂停
             case SUSPEND:
                 if (approvalStatus.equals(currentStatus) || suspendStatus.equals(currentStatus)) {
-                    throw new ServiceException(ApiError.ERROR_95181);
+                    throw new ServiceException(ApiError.ERROR_PLM_PROJECT_PAUSE_FORBIDDEN_ALREADY_INITIATED);
                 }
                 break;
             case WAIT:
                 if (suspendStatus.equals(currentStatus)) {
-                    throw new ServiceException(ApiError.ERROR_95193);
+                    throw new ServiceException(ApiError.ERROR_PLM_PROJECT_PAUSED_RESUME_ONLY);
                 }
                 break;
             case PROBE:
                 if (suspendStatus.equals(currentStatus)) {
-                    throw new ServiceException(ApiError.ERROR_95193);
+                    throw new ServiceException(ApiError.ERROR_PLM_PROJECT_PAUSED_RESUME_ONLY);
                 }
                 break;
             case ID_DESIGN_ING:
                 if (suspendStatus.equals(currentStatus)) {
-                    throw new ServiceException(ApiError.ERROR_95193);
+                    throw new ServiceException(ApiError.ERROR_PLM_PROJECT_PAUSED_RESUME_ONLY);
                 }
                 break;
         }
@@ -1712,13 +1712,13 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
     public void checkProduct(String productId) {
         List<String> archiveProductIds = archiveService.getArchiveProductIds();
         if (archiveProductIds.contains(productId)) {
-            throw new ServiceException(ApiError.ERROR_95076);
+            throw new ServiceException(ApiError.ERROR_PLM_TASK_SAVE_FAILED_PRODUCT_OR_PROJECT_ARCHIVED);
         }
         ProjectInfoEntity projectInfo = projectInfoService.getByProductId(productId);
         if (!Objects.isNull(projectInfo)) {
             Integer projectState = projectInfo.getProjectStatus();
             if (ProjectStateEnum.FINISH.getState().equals(projectState)) {
-                throw new ServiceException(ApiError.ERROR_95076);
+                throw new ServiceException(ApiError.ERROR_PLM_TASK_SAVE_FAILED_PRODUCT_OR_PROJECT_ARCHIVED);
             }
 
         }
@@ -1804,7 +1804,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
     public Boolean setProgressStatus(SetProductProgressStatusDTO dto) {
         ProductInfoEntity entity = this.getById(dto.getProductId());
         if (Objects.isNull(entity)) {
-            throw new ServiceException(ApiError.ERROR_95010);
+            throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_NOT_FOUND);
         }
         entity.setProgressStatus(dto.getProgressStatus());
         return this.updateById(entity);
@@ -1821,7 +1821,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
     public Boolean setSchematicImageUrl(SetSchematicImageUrlDTO dto) {
         ProductInfoEntity entity = this.getById(dto.getProductId());
         if (Objects.isNull(entity)) {
-            throw new ServiceException(ApiError.ERROR_95010);
+            throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_NOT_FOUND);
         }
         entity.setImageUrl(dto.getImageUrl());
         return this.updateById(entity);
@@ -2144,11 +2144,11 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         List<Integer> statusList = Arrays.asList(suspendCode, terminateCode);
         long terminateCount = productInfoList.stream().filter(p -> statusList.contains(p.getApprovalStatus())).count();
         if (terminateCount > 0) {
-            throw new ServiceException(ApiError.ERROR_95179);
+            throw new ServiceException(ApiError.ERROR_PLM_PROJECT_FORBIDDEN_TERMINATED);
         }
         long approvalCount = productInfoList.stream().filter(p -> approvalCode.equals(p.getApprovalStatus())).count();
         if (approvalCount > 0) {
-            throw new ServiceException(ApiError.ERROR_95177);
+            throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_ALREADY_INITIATED);
         }
 
         /**

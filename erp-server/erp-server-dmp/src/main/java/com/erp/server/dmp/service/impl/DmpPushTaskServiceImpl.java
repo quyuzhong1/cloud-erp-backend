@@ -351,7 +351,7 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
     @Override
     public Boolean batchNoNeedSync(List<String> ids) {
         if (CollectionUtils.isEmpty(ids)) {
-            throw new ServiceException(ApiError.ERROR_98004);
+            throw new ServiceException(ApiError.ERROR_SELECTION_REQUIRED);
         }
         //获取数据
         List<DmpPushTaskEntity> list = this.listByIds(ids);
@@ -370,7 +370,7 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
     @Override
     public Boolean batchNoNeedSyncBySourceId(List<String> sourceIds) {
         if (CollectionUtils.isEmpty(sourceIds)) {
-            throw new ServiceException(ApiError.ERROR_98004);
+            throw new ServiceException(ApiError.ERROR_SELECTION_REQUIRED);
         }
         //获取数据
         List<DmpPushTaskEntity> list = this.list(new LambdaQueryWrapper<DmpPushTaskEntity>().in(DmpPushTaskEntity::getSourceId,sourceIds));

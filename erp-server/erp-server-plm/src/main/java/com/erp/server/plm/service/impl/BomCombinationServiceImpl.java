@@ -127,7 +127,7 @@ public class BomCombinationServiceImpl implements BomCombinationService {
 
         List<BomSkuDTO> bomList = bomSkuService.getByBomId(dto.getId());
         if (CollectionUtils.isEmpty(bomList)) {
-            throw new ServiceException(ApiError.ERROR_95163);
+            throw new ServiceException(ApiError.ERROR_PLM_BOM_NOT_FOUND);
         }
         BomSkuDTO bomSkuDTO = bomList.get(0);
 
@@ -259,7 +259,7 @@ public class BomCombinationServiceImpl implements BomCombinationService {
             wb.close();
         } catch (Exception e) {
             log.error("组合产品 downloadTemplate  出错了 e==={}", e);
-            throw new ServiceException(ApiError.ERROR_95131);
+            throw new ServiceException(ApiError.ERROR_IMPORT_TEMPLATE_DOWNLOAD_FAILED);
         }
     }
 
@@ -569,7 +569,7 @@ public class BomCombinationServiceImpl implements BomCombinationService {
         //提交
         BatchResultDTO submit = productDetailService.submit(id,Boolean.FALSE);
         if (!submit.getSuccess()) {
-            throw new ServiceException(ApiError.ERROR_1042);
+            throw new ServiceException(ApiError.ERROR_DOC_SUBMIT_FAILED);
         }
         //审核
         ApproveOneDTO dto = new ApproveOneDTO();
@@ -648,7 +648,7 @@ public class BomCombinationServiceImpl implements BomCombinationService {
 
         BomInfoEntity bomInfoEntity = bomInfoService.getById(dto.getId());
         if (ObjectUtils.isEmpty(bomInfoEntity)) {
-            throw new ServiceException(ApiError.ERROR_95163);
+            throw new ServiceException(ApiError.ERROR_PLM_BOM_NOT_FOUND);
         }
         if (!BomStateEnum.AUDIT_PASS.getState().equals(bomInfoEntity.getState()) && !BomStateEnum.AUDIT_ING.getState().equals(bomInfoEntity.getState())) {
             throw new ServiceException(ApiError.ERROR_BOM_COMBINATION_STATE);
@@ -717,7 +717,7 @@ public class BomCombinationServiceImpl implements BomCombinationService {
         //提交
         BatchResultDTO resultDTO = bomInfoService.submitAudit(bomId,Boolean.FALSE);
         if (!resultDTO.getSuccess()) {
-            throw new ServiceException(ApiError.ERROR_1042);
+            throw new ServiceException(ApiError.ERROR_DOC_SUBMIT_FAILED);
         }
         ApproveOneDTO dto = new ApproveOneDTO();
         dto.setId(bomId);

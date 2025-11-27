@@ -242,7 +242,7 @@ public class AmazonDownloadServiceImpl implements AmazonDownloadService {
                     // 获取锁异常等重试
                     if (error instanceof InterruptedException) {
                         XxlJobHelper.log("请求亚马逊逊获取锁异常：{}", error.getMessage());
-                        throw new ServiceException(ApiError.ERROR_1026);
+                        throw new ServiceException(ApiError.ERROR_DATA_LOCKED);
                     }
                     XxlJobHelper.log("[拉取亚马逊商品详情任务] amazonProductDetail下载失败，uniqueId={}, error={}",
                             newDto.getUniqueId(),

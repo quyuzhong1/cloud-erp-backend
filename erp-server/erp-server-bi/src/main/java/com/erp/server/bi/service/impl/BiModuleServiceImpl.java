@@ -139,7 +139,7 @@ public class BiModuleServiceImpl extends ServiceImpl<BiModuleMapper, BiModuleEnt
     public Boolean updateState(UpdateStateDTO dto) {
         BiModuleEntity entity = this.getById(dto.getId());
         if (Objects.isNull(entity)) {
-            throw new ServiceException(ApiError.ERROR_97004);
+            throw new ServiceException(ApiError.ERROR_DMP_MODULE_REQUIRED);
         }
         Boolean stateFlag = dto.getState();
         if (Boolean.TRUE.equals(stateFlag)) {
@@ -190,7 +190,7 @@ public class BiModuleServiceImpl extends ServiceImpl<BiModuleMapper, BiModuleEnt
     public ModuleDTO details(String moduleId) {
         BiModuleEntity module = this.getById(moduleId);
         if (Objects.isNull(module)) {
-            throw new ServiceException(ApiError.ERROR_97004);
+            throw new ServiceException(ApiError.ERROR_DMP_MODULE_REQUIRED);
         }
         ModuleDTO result = new ModuleDTO();
         BeanMapper.copy(module, result);
@@ -233,7 +233,7 @@ public class BiModuleServiceImpl extends ServiceImpl<BiModuleMapper, BiModuleEnt
     public BatchResultDTO updateShare(List<String> shareFlagIdList, String mainId, String shareFlag) {
         BiModuleEntity entity = this.getById(mainId);
         if (Objects.isNull(entity)) {
-            throw new ServiceException(ApiError.ERROR_97004);
+            throw new ServiceException(ApiError.ERROR_DMP_MODULE_REQUIRED);
         }
         modulePermissionService.checkAndAddModulePermission(shareFlagIdList, mainId, shareFlag);
 
@@ -256,11 +256,11 @@ public class BiModuleServiceImpl extends ServiceImpl<BiModuleMapper, BiModuleEnt
         Object imageObject = biModule.getImageFile();
         String moduleName = biModule.getName();
         if (moduleName.length() > 30) {
-            throw new ServiceException(ApiError.ERROR_97026);
+            throw new ServiceException(ApiError.ERROR_DMP_MODULE_NAME_MAX);
         }
         String remark = biModule.getRemark();
         if (remark.length() > 200) {
-            throw new ServiceException(ApiError.ERROR_97027);
+            throw new ServiceException(ApiError.ERROR_DMP_MODULE_DESC_MAX);
         }
         String fileUrl = "";
         if (imageObject != null && !"null".equals(imageObject)) {
@@ -320,7 +320,7 @@ public class BiModuleServiceImpl extends ServiceImpl<BiModuleMapper, BiModuleEnt
         queryWrapper.last("LIMIT 1");
         int count = this.count(queryWrapper);
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_97003);
+            throw new ServiceException(ApiError.ERROR_DMP_MODULE_NAME_EXISTS);
         }
 
     }
@@ -336,7 +336,7 @@ public class BiModuleServiceImpl extends ServiceImpl<BiModuleMapper, BiModuleEnt
         queryWrapper.last("LIMIT 1");
         int count = this.count(queryWrapper);
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_97009);
+            throw new ServiceException(ApiError.ERROR_DMP_CODE_EXISTS);
         }
 
     }
@@ -351,15 +351,15 @@ public class BiModuleServiceImpl extends ServiceImpl<BiModuleMapper, BiModuleEnt
     public Boolean update(ModuleDTO biModule) {
         BiModuleEntity module = this.getById(biModule.getId());
         if (Objects.isNull(module)) {
-            throw new ServiceException(ApiError.ERROR_97004);
+            throw new ServiceException(ApiError.ERROR_DMP_MODULE_REQUIRED);
         }
         String name = biModule.getName();
         if (name.length() > 30) {
-            throw new ServiceException(ApiError.ERROR_97026);
+            throw new ServiceException(ApiError.ERROR_DMP_MODULE_NAME_MAX);
         }
         String remark = biModule.getRemark();
         if (remark.length() > 200) {
-            throw new ServiceException(ApiError.ERROR_97027);
+            throw new ServiceException(ApiError.ERROR_DMP_MODULE_DESC_MAX);
         }
 
         checkName(biModule.getId(), name);
@@ -422,7 +422,7 @@ public class BiModuleServiceImpl extends ServiceImpl<BiModuleMapper, BiModuleEnt
         //校验是否已使用
         List<BiLayoutRefModuleEntity> refModuleServiceByModuleIds = layoutRefModuleService.getByModuleIds(Collections.singletonList(id));
         if (CollectionUtils.isNotEmpty(refModuleServiceByModuleIds)){
-            throw new ServiceException(ApiError.ERROR_97044);
+            throw new ServiceException(ApiError.ERP_DMP_SKU_NOT_COST);
         }
         Boolean flag = this.removeById(id);
         if (Boolean.TRUE.equals(flag)) {

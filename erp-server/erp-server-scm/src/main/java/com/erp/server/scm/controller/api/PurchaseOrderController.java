@@ -628,7 +628,7 @@ public class PurchaseOrderController extends BaseController {
             wb.write(output);
             wb.close();
         } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_95131);
+            throw new ServiceException(ApiError.ERROR_IMPORT_TEMPLATE_DOWNLOAD_FAILED);
         }
         return success();
     }
@@ -800,7 +800,7 @@ public class PurchaseOrderController extends BaseController {
             wb.write(output);
             wb.close();
         } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_95131);
+            throw new ServiceException(ApiError.ERROR_IMPORT_TEMPLATE_DOWNLOAD_FAILED);
         }
         return success();
     }
@@ -852,10 +852,10 @@ public class PurchaseOrderController extends BaseController {
         //采购订单是否是该供应商合同
         PurchaseOrderSupplierEntity orderSupplier = purchaseOrderSupplierService.getByPurchaseOrderId(id);
         if (ObjectUtils.isEmpty(orderSupplier)) {
-            throw new ServiceException(ApiError.ERROR_98036);
+            throw new ServiceException(ApiError.ERROR_SCM_PO_SUPPLIER_INFO_NOT_FOUND);
         }
         if (StringUtils.isEmpty(orderSupplier.getSupplierId()) || !orderSupplier.getSupplierId().equals(info.getSupplierId())){
-            throw new ServiceException(ApiError.ERROR_98120, info.getSupplierName());
+            throw new ServiceException(ApiError.ERROR_SCM_PO_CONTRACT_EXPORT_FORBIDDEN_FOR_OTHER_SUPPLIER, info.getSupplierName());
         }
         PurchaseOrderDTO.ExportPdfDTO exportPdfDTO = purchaseOrderService.listPurchaseContractPdf(id);
         return success(exportPdfDTO);
@@ -876,10 +876,10 @@ public class PurchaseOrderController extends BaseController {
         //采购订单是否是该供应商合同
         PurchaseOrderSupplierEntity orderSupplier = purchaseOrderSupplierService.getByPurchaseOrderId(dto.getId());
         if (ObjectUtils.isEmpty(orderSupplier)) {
-            throw new ServiceException(ApiError.ERROR_98036);
+            throw new ServiceException(ApiError.ERROR_SCM_PO_SUPPLIER_INFO_NOT_FOUND);
         }
         if (StringUtils.isEmpty(orderSupplier.getSupplierId()) || !orderSupplier.getSupplierId().equals(info.getSupplierId())){
-            throw new ServiceException(ApiError.ERROR_98120, info.getSupplierName());
+            throw new ServiceException(ApiError.ERROR_SCM_PO_CONTRACT_EXPORT_FORBIDDEN_FOR_OTHER_SUPPLIER, info.getSupplierName());
         }
         purchaseOrderService.exportPurchaseContractPdf(dto.getId(),response);
     }
@@ -1009,7 +1009,7 @@ public class PurchaseOrderController extends BaseController {
             wb.write(output);
             wb.close();
         } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_95131);
+            throw new ServiceException(ApiError.ERROR_IMPORT_TEMPLATE_DOWNLOAD_FAILED);
         }
         return success();
     }

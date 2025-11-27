@@ -222,7 +222,7 @@ public class FullyManagedImportExcelListener extends AnalysisEventListener<Fully
             //店铺
             ShopInfoDTO.ListDTO shop = shopList.stream().filter(v -> v.getName().equals(excelDTO.getShopName())).findFirst().orElse(null);
             if(Objects.isNull(shop)){
-                errorMsgList.add(ApiError.SHOP_NOT_EXIST_NO_PERMISSION.getMsg());
+                errorMsgList.add(ApiError.ERROR_SHOP_NOT_EXIST_NO_PERMISSION.getMsg());
             }else {
                 excelDTO.setShopId(shop.getId());
             }

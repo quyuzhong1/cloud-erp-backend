@@ -398,7 +398,7 @@ public class QcRuleServiceImpl extends SuperServiceImpl<QcRuleMapper, QcRuleEnti
 //        String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
 //        long count = list.stream().filter(s -> !waitSubmitStatus.equals(s.getApproveStatus())).count();
 //        if (count > 0) {
-//            throw new ServiceException(ApiError.ERROR_98009);
+//            throw new ServiceException(ApiError.ERROR_DELETE_ALLOWED_STATUS_ONLY);
 //        }
         List<QcRuleEntity> removeList=new ArrayList<>();
         List<BatchResultDTO> resultDTOList=new ArrayList<>();

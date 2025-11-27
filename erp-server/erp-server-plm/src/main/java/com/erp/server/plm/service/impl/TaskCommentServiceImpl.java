@@ -71,7 +71,7 @@ public class TaskCommentServiceImpl extends ServiceImpl<TaskCommentMapper, TaskC
         entity.setComment(dto.getComment());
         ProjectTaskEntity taskEntity = projectTaskService.getById(taskId);
         if (Objects.isNull(taskEntity)) {
-            throw new ServiceException(ApiError.ERROR_95027);
+            throw new ServiceException(ApiError.ERROR_PLM_TASK_NOT_FOUND);
         }
         Boolean flag = this.save(entity);
         //保存成功 发送评论提醒

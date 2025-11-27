@@ -219,7 +219,7 @@ public class VirtualWarehouseAllocationController extends BaseController {
                 } else {
                     //只有待提交状态可以修改
                     if (!Objects.equals(waitSubmitStatus, allocationEntity.getStatus())) {
-                        submit = BatchResultDTO.fail(id, allocationEntity.getCode(), ApiError.ERROR_98009.getMsg());
+                        submit = BatchResultDTO.fail(id, allocationEntity.getCode(), ApiError.ERROR_DELETE_ALLOWED_STATUS_ONLY.getMsg());
                     } else {
                         flagCode = allocationEntity.getCode();
                         submit = virtualWarehouseAllocationService.invalid(allocationEntity, VirtualWarehouseAllocationStatusEnum.INVALID.getCode(), dto.getRemark());
@@ -274,7 +274,7 @@ public class VirtualWarehouseAllocationController extends BaseController {
             wb.write(output);
             wb.close();
         } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_95131);
+            throw new ServiceException(ApiError.ERROR_IMPORT_TEMPLATE_DOWNLOAD_FAILED);
         }
     }
 

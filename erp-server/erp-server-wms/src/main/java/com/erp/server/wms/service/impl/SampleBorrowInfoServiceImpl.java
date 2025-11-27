@@ -230,7 +230,7 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
         old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "样品借用单"));
         // 待提交和审核不通过允许修改
         if (!ApproveStatusEnum.allowUpdateStatus(old.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_1029);
+            throw new ServiceException(ApiError.ERROR_UPDATE_STATUS_NOT_ALLOWED);
         }
         // 校验明细不能为空
         if (CollUtil.isEmpty(addOrUpdateDTO.getDetailList())) {
@@ -489,7 +489,7 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
     public BatchResultDTO approve(ApproveOneDTO dto, ClientTypeEnum clientType) {
         ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(dto.getType());
         if(Objects.equals(approveType, ApproveTypeEnum.REJECT) && StrUtils.isEmpty(dto.getComment())) {
-            throw new ServiceException(ApiError.REJECT_COMMENT_NOT_EMPTY);
+            throw new ServiceException(ApiError.ERROR_PLM_REJECT_COMMENT_REQUIRED);
         }
         SampleBorrowInfoEntity entity = getById(dto.getId());
         // 审核中的数据允许审核
@@ -597,7 +597,7 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
     private Boolean validateDisApprove(SampleBorrowInfoEntity entity) {
         // 已审核支持反审核
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE)) {
-            throw new ServiceException(ApiError.ERROR_98014);
+            throw new ServiceException(ApiError.ERROR_REVERSE_APPROVAL_ALLOWED_APPROVED_ONLY);
         }
 
         Integer count = sampleReturnInfoService.lambdaQuery()
@@ -647,11 +647,11 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
         SampleBorrowInfoEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到样品借用单数据"));
         // 只有待提交、审核不通过数据允许作废
         if (!(Objects.equals(ApproveStatusEnum.WAIT_SUBMIT, entity.getApproveStatus()) || Objects.equals(ApproveStatusEnum.REJECT, entity.getApproveStatus()))) {
-            throw new ServiceException(ApiError.ERROR_98005);
+            throw new ServiceException(ApiError.ERROR_VOID_ALLOWED_STATUS_ONLY);
         }
         //已作废不支持作废
         if(entity.getInvalidStatus()){
-            throw new ServiceException(ApiError.ERROR_98012);
+            throw new ServiceException(ApiError.ERROR_ALREADY_VOID_CANNOT_VOID_AGAIN);
         }
         // 删除主单数据
         log.info("作废 开始作废样品借用单主单数据，id：【{}】", id);
@@ -676,7 +676,7 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
         SampleBorrowInfoEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到样品借用单数据"));
         // 只有审核中的单据允许撤销
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
-            throw new ServiceException(ApiError.ERROR_98007);
+            throw new ServiceException(ApiError.ERROR_REVOKE_PROCESS_ALLOWED_STATUS_ONLY);
         }
         log.info("撤销 开始撤销流程，id：【{}】",id);
 
@@ -849,17 +849,17 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
 
                 //关联台账
                 if (CollUtil.isEmpty(skuAvailableQtyDTOS)) {
-                    errorMsg = errorMsg + indexTemp + "、" + ApiError.ERROR_SAMPLE_LEDGER_NOT_EXIST.msg + "；";
+                    errorMsg = errorMsg + indexTemp + "、" + ApiError.ERROR_SAMPLE_LEDGER_NOT_EXIST.getMsg() + "；";
                 } else {
                     SampleLedgerDTO.SkuAvailableQtyDTO skuAvailableQtyDTO = skuAvailableQtyDTOS.stream().filter(e -> e.getSkuId().equals(importDTO.getSkuId()) && e.getUseUserName().equals(importDTO.getUseUserName())).findFirst().orElse(null);
                     if (Objects.isNull(skuAvailableQtyDTO)) {
-                        errorMsg = errorMsg + indexTemp + "、" + ApiError.ERROR_SAMPLE_LEDGER_NOT_EXIST.msg + "；";
+                        errorMsg = errorMsg + indexTemp + "、" + ApiError.ERROR_SAMPLE_LEDGER_NOT_EXIST.getMsg() + "；";
                     } else {
 
                         Integer ledgerQty = Objects.isNull(skuAvailableQtyDTO.getLedgerQty()) ? 0 : skuAvailableQtyDTO.getLedgerQty();
                         Integer borrowedQty = Objects.isNull(importDTO.getBorrowQty()) ? 0 : Integer.valueOf(importDTO.getBorrowQty());
                         if (borrowedQty.compareTo(ledgerQty) > 0) {
-                            errorMsg = errorMsg + indexTemp + "、" + CharSequenceUtil.format(ApiError.ERROR_SAMPLE_AVAILABLE_QTY.msg, importDTO.getSkuNo(), "借用") + "；";
+                            errorMsg = errorMsg + indexTemp + "、" + CharSequenceUtil.format(ApiError.ERROR_SAMPLE_AVAILABLE_QTY.getMsg(), importDTO.getSkuNo(), "借用") + "；";
                         } else {
                             importDTO.setSampleLedgerId(skuAvailableQtyDTO.getSampleLedgerId());
                             //防止超量借用
@@ -1078,7 +1078,7 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
             listApiResult = workflowFeign.curApprover(dtoList);
             Integer code = listApiResult.getCode();
             if (200 != code) {
-                throw new ServiceException(new ApiResult(ApiError.DEFAULT.code, listApiResult.getMsg()));
+                throw new ServiceException(new ApiResult(ApiError.DEFAULT.getCode(), listApiResult.getMsg()));
             }
         }
 
@@ -1143,7 +1143,7 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
     private void validateSubmit(SampleBorrowInfoEntity entity) {
         // 待提交或审核不通过并且未作废允许提交
         if(!ApproveStatusEnum.allowUpdateStatus(entity.getApproveStatus()) || entity.getInvalidStatus()) {
-            throw new ServiceException(ApiError.ERROR_98010);
+            throw new ServiceException(ApiError.ERROR_SUBMIT_ALLOWED_STATUS_ONLY);
         }
         validateQty(entity);
     }
@@ -1208,27 +1208,27 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
 
         FindUserDTO borrowUser = users.stream().filter(e -> Objects.equals(e.getUserId(), borrowUserId)).findFirst().orElse(null);
         if(Objects.isNull(borrowUser)){
-            throw new ServiceException(ApiError.NOT_EXIST,"借入人");
+            throw new ServiceException(ApiError.ERROR_NOT_EXIST,"借入人");
         }
         FindUserDTO lendUser = users.stream().filter(e -> Objects.equals(e.getUserId(), lendUserId)).findFirst().orElse(null);
         if(Objects.isNull(lendUser)){
-            throw new ServiceException(ApiError.NOT_EXIST,"借出人");
+            throw new ServiceException(ApiError.ERROR_NOT_EXIST,"借出人");
         }
 
         String borrowDeptId = sampleBorrowInfoEntity.getBorrowDeptId();
         String lendDeptId = sampleBorrowInfoEntity.getLendDeptId();
         List<SysDepartmentEntity> sysDepartmentEntities = sysUserFeign.listDeptByIds(Arrays.asList(borrowDeptId, lendDeptId));
         if(CollUtil.isEmpty(sysDepartmentEntities)){
-            throw new ServiceException(ApiError.ERROR_9029);
+            throw new ServiceException(ApiError.ERROR_DEPT_NOT_FOUND);
         }
 
         SysDepartmentEntity borrowDept = sysDepartmentEntities.stream().filter(e -> Objects.equals(e.getId(), borrowDeptId)).findFirst().orElse(null);
         if(Objects.isNull(borrowDept)){
-            throw new ServiceException(ApiError.NOT_EXIST,"借入部门");
+            throw new ServiceException(ApiError.ERROR_NOT_EXIST,"借入部门");
         }
         SysDepartmentEntity lendDept = sysDepartmentEntities.stream().filter(e -> Objects.equals(e.getId(), lendDeptId)).findFirst().orElse(null);
         if(Objects.isNull(lendDept)){
-            throw new ServiceException(ApiError.NOT_EXIST,"借入部门");
+            throw new ServiceException(ApiError.ERROR_NOT_EXIST,"借入部门");
         }
 
         //赋值

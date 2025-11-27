@@ -127,7 +127,7 @@ public class BaoHongLogisticsHandlerImp extends AbstractLogisticsHandler {
                     logisticsOperateService.pullOperateLog(logisticsGetLabelVO.getOrderId(),
                             logisticsGetLabelVO.getDeliveryNo(), BusinessTypeEnum.GET_LABEL.getCode(), LogisticsPlatformEnum.BAO_HONG.getCode(),
                             RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsGetLabelVO), JSONUtil.toJsonStr(response));
-                    return ApiResult.error(ApiError.CALL_THIRD_LOGISTICS_PLATFORM_ERROR.code,response.getMessage());
+                    return ApiResult.error(ApiError.CALL_THIRD_LOGISTICS_PLATFORM_ERROR.getCode(),response.getMessage());
                 }
                 LogisticsPrintLabelResponse logisticsPrintLabelResponse = new LogisticsPrintLabelResponse();
                 logisticsPrintLabelResponse.setBase64(response.getData());

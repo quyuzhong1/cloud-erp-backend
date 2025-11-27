@@ -122,7 +122,7 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
         List<CfgSettingEntity> list = new ArrayList<>();
         List<DictBasicDTO.ViewDTO> dictList = dictBasicService.getByKey(DictBasicTypeEnum.CFG_SETTING.getType());
         if (CollectionUtils.isEmpty(dictList)) {
-            throw new ServiceException(ApiError.ERROR_98004);
+            throw new ServiceException(ApiError.ERROR_SELECTION_REQUIRED);
         }
         //查询已有配置信息
         List<CfgSettingEntity> cfgSettingList = listCfgSetting();

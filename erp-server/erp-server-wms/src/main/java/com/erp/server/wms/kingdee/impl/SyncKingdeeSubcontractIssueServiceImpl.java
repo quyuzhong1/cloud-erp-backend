@@ -169,7 +169,7 @@ public class SyncKingdeeSubcontractIssueServiceImpl implements SyncKingdeeSubcon
         //委外订单
         List<SubcontractOrderEntity> subcontractOrderList = scmTaskFeign.listSubcontractOrderByIds(Collections.singletonList(entity.getSubcontractOrderId()));
         if (CollectionUtils.isEmpty(subcontractOrderList)) {
-            throw new ServiceException(ApiError.ERROR_98073);
+            throw new ServiceException(ApiError.ERROR_SCM_OUTSOURCING_ORDER_NOT_FOUND);
         }
         //委外订单明细
         List<SubcontractOrderDetailEntity> subcontractOrderDetailList = scmTaskFeign.listSubcontractDetailByMainIds(Collections.singletonList(entity.getSourceId()));

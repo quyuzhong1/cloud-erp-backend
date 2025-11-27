@@ -213,7 +213,7 @@ public class TemplateRoleServiceImpl extends ServiceImpl<TemplateRoleMapper, Tem
         queryWrapper.eq(TemplateRoleEntity::getTemplateId, tempalteId);
         int count = this.count(queryWrapper);
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_95059);
+            throw new ServiceException(ApiError.ERROR_PLM_TEMPLATE_ROLE_ALREADY_EXISTS);
         }
     }
 }

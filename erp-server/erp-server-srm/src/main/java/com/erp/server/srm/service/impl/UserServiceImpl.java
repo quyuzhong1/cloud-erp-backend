@@ -77,14 +77,14 @@ public class UserServiceImpl implements UserService {
                 //用户不存在
                 throw new ServiceException(ApiError.ERROR_AUTH_CREDENTIALS_INVALID);
             }else if (Objects.isNull(user.getUserState()) || 0 == user.getUserState()){
-                throw new ServiceException(ApiError.ERROR_9016);
+                throw new ServiceException(ApiError.ERROR_ACCOUNT_DISABLED);
             }
             //获取用户关联供应商
             SupplierUserInfoVO info = supplierUserFeign.info(uid);
             if (Objects.nonNull(info) && StringUtils.isNotEmpty(info.getSupplierId())){
                 //用户是否禁用
                 if (Objects.isNull(info.getUserState()) || 0 == info.getUserState()) {
-                    throw new ServiceException(ApiError.ERROR_9016);
+                    throw new ServiceException(ApiError.ERROR_ACCOUNT_DISABLED);
                 }else {
                     return info.getSupplierId();
                 }

@@ -376,7 +376,7 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
             listApiResult = workflowFeign.curApprover(dtoList);
             Integer code = listApiResult.getCode();
             if (200 != code) {
-                throw new ServiceException(new ApiResult(ApiError.DEFAULT.code,listApiResult.getMsg()));
+                throw new ServiceException(new ApiResult(ApiError.DEFAULT.getCode(),listApiResult.getMsg()));
             }
         }
 
@@ -410,7 +410,7 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
     public String addAndSubmit(CustomerB2CDTO.AddDTO dto) {
         String id = this.add(dto);
         if (StringUtils.isBlank(id)) {
-            throw new ServiceException(ApiError.ERROR_1019);
+            throw new ServiceException(ApiError.ERROR_CREATE_FAILED);
         }
         Boolean result = this.submit(Arrays.asList(id));
         if (result) {
@@ -434,7 +434,7 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
         CustomerB2CDTO.ViewDTO view = new CustomerB2CDTO.ViewDTO();
         CustomerB2cEntity customer = this.getById(id);
         if (Objects.isNull(customer)) {
-            throw new ServiceException(ApiError.ERROR_92011);
+            throw new ServiceException(ApiError.ERROR_CUSTOMER_NOT_FOUND);
         }
         BeanMapper.copy(customer, view);
         String areaId = customer.getAreaId();
@@ -496,7 +496,7 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
         String id = dto.getId();
         CustomerB2cEntity customer = this.getById(id);
         if (Objects.isNull(customer)) {
-            throw new ServiceException(ApiError.ERROR_92011);
+            throw new ServiceException(ApiError.ERROR_CUSTOMER_NOT_FOUND);
         }
 
         //检查名称
@@ -610,7 +610,7 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
     public Boolean updateAndSubmit(CustomerB2CDTO.UpdateDTO dto) {
         String id = this.updateCustomer(dto);
         if (StringUtils.isBlank(id)) {
-            throw new ServiceException(ApiError.ERROR_1020);
+            throw new ServiceException(ApiError.ERROR_UPDATE_FAILED);
         }
         return this.submit(Arrays.asList(id));
     }
@@ -699,7 +699,7 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
 
         long count = list.stream().filter(s -> !statusList.contains(s.getApproveStatus().getStatus())).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_98014);
+            throw new ServiceException(ApiError.ERROR_REVERSE_APPROVAL_ALLOWED_APPROVED_ONLY);
         }
 
         List<Pair<String, String>> rejectPairList = list.stream().filter(s -> s.getApproveStatus().equals(ApproveStatusEnum.getByStatus(approveStatus))).
@@ -731,22 +731,22 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
 //        String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
 //        long count = list.stream().filter(s -> !s.getApproveStatus().getStatus().equals(waitSubmitStatus)).count();
 //        if (count > 0) {
-//            throw new ServiceException(ApiError.ERROR_98009);
+//            throw new ServiceException(ApiError.ERROR_DELETE_ALLOWED_STATUS_ONLY);
 //        }
 //        //占用状态
 //        long occupyCount = list.stream().filter(s -> s.getOccupyStatus()).count();
 //        if (occupyCount > 0) {
-//            throw new ServiceException(ApiError.ERROR_92018);
+//            throw new ServiceException(ApiError.ERROR_SO_IN_USE_DELETE_FORBIDDEN);
 //        }
         List<CustomerB2cEntity> removeList=new ArrayList<>();
         List<BatchResultDTO> resultDTOList=new ArrayList<>();
         for (CustomerB2cEntity entity : list) {
             if (!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(entity.getApproveStatus().getStatus()) ){
-                resultDTOList.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_98009.getMsg()));
+                resultDTOList.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_DELETE_ALLOWED_STATUS_ONLY.getMsg()));
                 continue;
             }
             if (entity.getOccupyStatus()){
-                resultDTOList.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_92018.getMsg()));
+                resultDTOList.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_SO_IN_USE_DELETE_FORBIDDEN.getMsg()));
                 continue;
             }
             removeList.add(entity);
@@ -854,19 +854,19 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
         List<String> ids = dto.getIds();
         List<CustomerB2cEntity> customerList = this.listByIds(ids);
         if (CollectionUtils.isEmpty(customerList)) {
-            throw new ServiceException(ApiError.ERROR_92011);
+            throw new ServiceException(ApiError.ERROR_CUSTOMER_NOT_FOUND);
         }
 
         Boolean disabled = dto.getDisabled();
         long count = customerList.stream().filter(d -> !d.getDisabled() == disabled).count();
         if (count != customerList.size()) {
-            throw new ServiceException(ApiError.ERROR_98027);
+            throw new ServiceException(ApiError.ERROR_SCM_INCONSISTENT_DISABLE_STATUS);
         }
         if (disabled) {
             //客户是否有使用
             Boolean isUseCustomer = soInfoService.getIsUseCustomer(ids);
             if (isUseCustomer) {
-                throw new ServiceException(ApiError.ERROR_92044);
+                throw new ServiceException(ApiError.ERROR_CUSTOMER_DISABLE_FORBIDDEN);
             }
         }
         customerList.forEach(d -> d.setDisabled(disabled));
@@ -906,7 +906,7 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
         List<CustomerB2cEntity> list = this.listByIds(ids);
         long count = list.stream().filter(obj -> !ApproveStatusEnum.APPROVE_ING.getStatus().equals(obj.getApproveStatus().getStatus())).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_98007);
+            throw new ServiceException(ApiError.ERROR_REVOKE_PROCESS_ALLOWED_STATUS_ONLY);
         }
 
         //撤销现有流程
@@ -969,7 +969,7 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
         CustomerB2CDTO.BaseDTO base = new CustomerB2CDTO.BaseDTO();
         CustomerB2cEntity customer = this.getById(customerId);
         if (Objects.isNull(customer)) {
-            throw new ServiceException(ApiError.ERROR_92011);
+            throw new ServiceException(ApiError.ERROR_CUSTOMER_NOT_FOUND);
         }
         base.setId(customer.getId());
         base.setCode(customer.getCode());
@@ -1060,7 +1060,7 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
         queryWrapper.last("LIMIT 1");
         int count = this.count(queryWrapper);
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_1028);
+            throw new ServiceException(ApiError.ERROR_DATA_CUSTOMER_NAME_DUPLICATE);
         }
     }
 
