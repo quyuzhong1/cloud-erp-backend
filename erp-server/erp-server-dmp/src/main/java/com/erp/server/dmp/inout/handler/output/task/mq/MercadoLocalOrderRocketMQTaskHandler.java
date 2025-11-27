@@ -15,6 +15,7 @@ import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
 import com.erp.model.dmp.entity.DmpSoDetailEntity;
 import com.erp.model.dmp.entity.DmpSoInfoEntity;
 import com.erp.model.dmp.entity.DmpSoReceiverEntity;
+import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.enums.SoB2cPayStatusEnum;
 import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
@@ -351,6 +352,8 @@ public class MercadoLocalOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskH
         detailDTO.setWarehouseLocation("");
         //包裹号
         detailDTO.setPlatformPackageId(soDetailEntity.getPlatformPackageId());
+
+        detailDTO.setPlatformSubSoCode(soDetailEntity.getPlatformSubSoCode());
 
         return detailDTO;
     }
