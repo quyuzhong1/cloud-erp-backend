@@ -47,4 +47,14 @@ public interface FmsWorkflowFeign extends BaseWorkflowService{
     @PostMapping("/feign/fmsWorkflow/cancelProcess")
     Boolean cancelProcess(ApproveDTO.CancelProcessDTO dto);
 
+    /**
+     * 添加评论
+     * @author will
+     * @date 2025/6/18 10:40
+     * @param dto
+     * @return Boolean
+     */
+    @PostMapping("/feign/fmsWorkflow/addComment")
+    Boolean addComment(ApproveDTO.AddCommentDTO dto);
+
 }

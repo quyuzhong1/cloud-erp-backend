@@ -137,7 +137,7 @@
         SELECT
         approve_status AS tabFlag,
         count(*)  AS count
-        FROM  asset_stocktaking_plan
+        FROM  asset_stocktaking_plan asp
         WHERE is_deleted=FALSE
         <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}

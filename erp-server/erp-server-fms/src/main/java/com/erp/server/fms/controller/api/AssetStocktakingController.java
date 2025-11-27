@@ -84,7 +84,7 @@ public class AssetStocktakingController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "fms:assetStocktaking:paging",
-            tableAlias = ""
+            tableAlias = "ast"
     )
     public ApiResult<List<AssetStocktakingDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
        return success(assetStocktakingService.tabList(dto));

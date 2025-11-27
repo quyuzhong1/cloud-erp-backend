@@ -64,6 +64,12 @@ public class DictBasicEntity extends BaseEntity<DictBasicEntity> {
      */
     @TableField("parent_id")
     private String parentId;
+    
+    /**
+     * 启用状态
+     */
+    @TableField("status")
+    private Boolean status;
 
     public static final String CODE = "code";
 

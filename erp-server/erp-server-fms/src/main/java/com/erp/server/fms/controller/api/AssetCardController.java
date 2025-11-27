@@ -88,7 +88,7 @@ public class AssetCardController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "fms:assetCard:paging",
-            tableAlias = ""
+            tableAlias = "ac"
     )
     public ApiResult<List<AssetCardDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
        return success(assetCardService.tabList(dto));

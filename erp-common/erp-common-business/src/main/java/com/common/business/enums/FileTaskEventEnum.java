@@ -34,7 +34,17 @@ public enum FileTaskEventEnum implements EnumMessage {
     EXPORT_PUSH_TASK("EXPORT_PUSH_TASK","中台推送任务表","","",""),
     EXPORT_PULL_TASK("EXPORT_PULL_TASK","中台拉取任务表","","",""),
     EXPORT_NEW_DMP_PUSH_TASK("EXPORT_NEW_DMP_PUSH_TASK","中台推送任务表","","",""),
+    EXPORT_RESTCLOUD_PUSH_TASK("EXPORT_RESTCLOUD_PUSH_TASK","谷云推送任务表","","",""),
     EXPORT_DMP_AFTER_SALE("EXPORT_DMP_AFTER_SALE","售后申请表","","",""),
+    EXPORT_DMP_BASIC_SYSTEM("EXPORT_DMP_BASIC_SYSTEM", "DMP平台管理导出", "", "", ""),
+    EXPORT_DMP_CFG_ETL("EXPORT_DMP_CFG_ETL", "DMP清洗调度导出", "", "", ""),
+    EXPORT_DMP_CFG_INPUT("EXPORT_DMP_CFG_INPUT", "DMP拉取配置导出", "", "", ""),
+    EXPORT_DMP_CFG_INPUT_DETAIL("EXPORT_DMP_CFG_INPUT_DETAIL", "DMP拉取调度导出", "", "", ""),
+    EXPORT_DMP_CFG_OUTPUT("EXPORT_DMP_CFG_OUTPUT", "DMP推送配置导出", "", "", ""),
+    EXPORT_DMP_CFG_OUTPUT_DETAIL("EXPORT_DMP_CFG_OUTPUT_DETAIL", "DMP推送调度导出", "", "", ""),
+    EXPORT_DMP_ETL_TASK("EXPORT_DMP_ETL_TASK", "DMP清洗任务导出", "", "", ""),
+    EXPORT_DMP_INPUT_TASK("EXPORT_DMP_INPUT_TASK", "DMP拉取任务导出", "", "", ""),
+    EXPORT_DMP_OUTPUT_TASK("EXPORT_DMP_OUTPUT_TASK", "DMP推送任务导出", "", "", ""),
 
     //plm
     EXPORT_PLM_BOM("EXPORT_PLM_BOM", "BOM数据","","",""),
@@ -149,6 +159,7 @@ public enum FileTaskEventEnum implements EnumMessage {
     EXPORT_SYS_GLOBAL_AREA("EXPORT_SYS_GLOBAL_AREA","区域Excel导出","","",""),
     EXPORT_SYS_THIRD_NOTICE("EXPORT_SYS_THIRD_NOTICE", "三方通知配置导出","","",""),
     EXPORT_SYS_THIRD_NOTICE_RECORD("EXPORT_SYS_THIRD_NOTICE_RECORD", "三方通知推送导出","","",""),
+    EXPORT_DICT_BASIC_ALL("EXPORT_DICT_BASIC_ALL", "字典数据导出","","",""),
     //wms
     EXPORT_WMS_INVENTORY("EXPORT_WMS_INVENTORY","即时库存导出","","",""),
     EXPORT_WMS_B2C_DELIVERY_ORDER("EXPORT_WMS_B2C_DELIVERY_ORDER", "发货单导出","","",""),

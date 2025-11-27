@@ -3,14 +3,8 @@ package com.erp.model.scm.dto;
 import java.math.BigDecimal;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
 import java.io.Serializable;
-import java.time.LocalDateTime;
-import java.util.List;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
-import javax.validation.constraints.Digits;
+import javax.validation.constraints.*;
 
 /**
  * <p>
@@ -216,6 +210,7 @@ public class AssetPurchaseChangeDetailDTO implements Serializable {
         */
         @Digits(integer = 12, fraction = 4, message = "新采购数量整数位不能超过12位，小数位不能超过4位")
         @NotNull(message = "新采购数量不能为空")
+        @Min(value = 1)
         private BigDecimal purchaseQty;
 
         /**

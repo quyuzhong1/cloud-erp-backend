@@ -51,7 +51,8 @@ public class ExportFmsFeignController {
     @PostMapping("/getAssetLocationPageData")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
-            menuCode = "fms:assetLocation:export"
+            menuCode = "fms:assetLocation:export",
+            tableAlias = "al"
     )
     @WebAdvanceQuery(handler = AssetLocationQueryHandler.class)
     public PagingVO<AssetLocationDTO.ListDTO> getAssetLocationPageData(@RequestBody PagingDTO<AssetLocationDTO.ExportDTO> dto) {
@@ -61,7 +62,8 @@ public class ExportFmsFeignController {
     @PostMapping("/getAssetAcceptPageData")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
-            menuCode = "fms:assetAccept:export"
+            menuCode = "fms:assetAccept:export",
+            tableAlias = "aa"
     )
     @WebAdvanceQuery(handler = AssetAcceptQueryHandler.class)
     public PagingVO<AssetAcceptDTO.ListDTO> getAssetAcceptPageData(@RequestBody PagingDTO<AssetAcceptDTO.ExportDTO> dto) {
@@ -71,7 +73,8 @@ public class ExportFmsFeignController {
     @PostMapping("/getAssetCardPageData")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
-            menuCode = "fms:assetCard:export"
+            menuCode = "fms:assetCard:export",
+            tableAlias = "ac"
     )
     @WebAdvanceQuery(handler = AssetCardQueryHandler.class)
     public PagingVO<AssetCardDTO.ListDTO> getAssetCardPageData(@RequestBody PagingDTO<AssetCardDTO.ExportDTO> dto) {
@@ -81,7 +84,8 @@ public class ExportFmsFeignController {
     @PostMapping("/getAssetStocktakingPlanPageData")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
-            menuCode = "fms:assetStocktakingPlan:export"
+            menuCode = "fms:assetStocktakingPlan:export",
+            tableAlias = "asp"
     )
     @WebAdvanceQuery(handler = AssetStocktakingPlanQueryHandler.class)
     public PagingVO<AssetStocktakingPlanDTO.ListDTO> getAssetStocktakingPlanPageData(@RequestBody PagingDTO<AssetStocktakingPlanDTO.ExportDTO> dto) {
@@ -91,6 +95,11 @@ public class ExportFmsFeignController {
 
     @PostMapping("/exportAssetDisposal")
     @WebAdvanceQuery(handler = AssetDisposalQueryHandler.class)
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "fms:assetDisposal:export",
+            tableAlias = "ad"
+    )
     public PagingVO<AssetDisposalDTO.ListDTO> exportAssetDisposal(@RequestBody  PagingDTO<AssetDisposalDTO.PagingParamDTO> dto) {
         return assetDisposalService.paging(dto);
     }

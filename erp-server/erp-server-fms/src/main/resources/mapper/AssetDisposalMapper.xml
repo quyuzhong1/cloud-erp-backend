@@ -105,7 +105,7 @@ add.tax_amount AS taxAmount
         SELECT
         approve_status AS tabFlag,
         count(*)  AS count
-        FROM  asset_disposal
+        FROM  asset_disposal ad
         WHERE is_deleted=FALSE
         <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}

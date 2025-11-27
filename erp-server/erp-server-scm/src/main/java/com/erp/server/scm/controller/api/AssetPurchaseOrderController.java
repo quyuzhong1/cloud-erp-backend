@@ -98,7 +98,7 @@ public class AssetPurchaseOrderController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "scm:assetPurchaseOrder:paging",
-            tableAlias = ""
+            tableAlias = "apo"
     )
     public ApiResult<List<AssetPurchaseOrderDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
        return success(assetPurchaseOrderService.tabList(dto));

@@ -84,14 +84,14 @@ mrs.sku_qty AS skuQty
 
     <select id="tabList" resultType="com.erp.model.plm.dto.MoldRefSkuDTO$TabListDTO">
         SELECT
-        approve_status AS tabFlag,
+        mrs.approve_status AS tabFlag,
         count(*)  AS count
-        FROM  mold_ref_sku
-        WHERE is_deleted=FALSE
+        FROM  mold_ref_sku mrs
+        WHERE mrs.is_deleted=FALSE
         <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
         </if>
-        GROUP BY approve_status
+        GROUP BY mrs.approve_status
     </select>
 
     <select id="searchMoldRefSku" resultType="com.erp.model.plm.dto.MoldRefSkuDTO$SearchMoldRefSkuDTO">
