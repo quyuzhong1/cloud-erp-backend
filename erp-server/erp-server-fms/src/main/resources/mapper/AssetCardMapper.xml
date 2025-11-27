@@ -1,0 +1,278 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.fms.mapper.AssetCardMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.fms.entity.AssetCardEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="approve_status" property="approveStatus" />
+       <result column="approve_user_id" property="approveUserId" />
+       <result column="approve_user_name" property="approveUserName" />
+       <result column="approve_time" property="approveTime" />
+       <result column="invalid_status" property="invalidStatus" />
+       <result column="invalid_remark" property="invalidRemark" />
+       <result column="invalid_time" property="invalidTime" />
+       <result column="source_code" property="sourceCode" />
+       <result column="source_type" property="sourceType" />
+       <result column="source_id" property="sourceId" />
+       <result column="org_id" property="orgId" />
+       <result column="org_name" property="orgName" />
+       <result column="type" property="type" />
+       <result column="code" property="code" />
+       <result column="status" property="status" />
+       <result column="change_method" property="changeMethod" />
+       <result column="name" property="name" />
+       <result column="unit" property="unit" />
+       <result column="qty" property="qty" />
+       <result column="start_use_date" property="startUseDate" />
+       <result column="asset_code" property="assetCode" />
+       <result column="asset_location_id" property="assetLocationId" />
+       <result column="disposal_status" property="disposalStatus" />
+       <result column="remark" property="remark" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_user_id,
+        create_user_name,
+        create_time,
+        update_user_id,
+        update_user_name,
+        update_time,
+        version,
+        is_deleted,
+        approve_status, approve_user_id, approve_user_name, approve_time, invalid_status, invalid_remark, invalid_time, source_code, source_type, source_id, org_id, org_name, type, code, status, change_method, name, unit, qty, start_use_date, asset_code, asset_location_id, disposal_status, remark
+    </sql>
+
+    <select id="paging" resultType="com.erp.model.fms.dto.AssetCardDTO$ListDTO">
+        SELECT
+            ac.id,
+            ac.approve_status AS approveStatus,
+            ac.approve_user_id AS approveUserId,
+            ac.approve_user_name AS approveUserName,
+            ac.approve_time AS approveTime,
+            ac.invalid_status AS invalidStatus,
+            ac.invalid_remark AS invalidRemark,
+            ac.invalid_time AS invalidTime,
+            ac.source_code AS sourceCode,
+            ac.source_type AS sourceType,
+            ac.source_id AS sourceId,
+            ac.org_id AS orgId,
+            ac.org_name AS orgName,
+            ac.type,
+            ac.code,
+            ac.status,
+            ac.change_method AS changeMethod,
+            ac.name,
+            ac.unit,
+            ac.qty,
+            ac.start_use_date AS startUseDate,
+            ac.asset_code AS assetCode,
+            ac.asset_location_id AS assetLocationId,
+            ac.disposal_status AS disposalStatus,
+            ac.remark,
+            ac.create_time AS createTime,
+            ac.create_user_name AS createUserName,
+            -- 明细表字段（不包含通用字段）
+            acd.id AS detailId,
+            acd.source_detail_id AS sourceDetailId,
+            acd.asset_code AS detailAssetCode,
+            acd.asset_location_id AS detailAssetLocationId,
+            acd.qty AS detailQty,
+            acd.supplier_id AS supplierId,
+            acd.supplier_name AS supplierName,
+            acd.use_dept_name AS useDeptName,
+            acd.use_dept_id AS useDeptId,
+            acd.cost_type AS costType,
+            acd.remark AS detailRemark
+        FROM asset_card ac
+        LEFT JOIN asset_card_detail acd ON acd.main_id = ac.id AND acd.is_deleted = false
+        WHERE
+        ${params.sqlMap.default}
+        AND ac.is_deleted = false
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        ac.create_time DESC
+    </select>
+
+    <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
+        select approve_status, count(id) from asset_card where is_deleted = false group by approve_status
+    </select>
+
+    <select id="listExport" resultType="com.erp.model.fms.dto.AssetCardDTO$ListDTO">
+        SELECT
+            ac.id,
+            ac.approve_status AS approveStatus,
+            ac.approve_user_id AS approveUserId,
+            ac.approve_user_name AS approveUserName,
+            ac.approve_time AS approveTime,
+            ac.invalid_status AS invalidStatus,
+            ac.invalid_remark AS invalidRemark,
+            ac.invalid_time AS invalidTime,
+            ac.source_code AS sourceCode,
+            ac.source_type AS sourceType,
+            ac.source_id AS sourceId,
+            ac.org_id AS orgId,
+            ac.org_name AS orgName,
+            ac.type,
+            ac.code,
+            ac.status,
+            ac.change_method AS changeMethod,
+            ac.name,
+            ac.unit,
+            ac.qty,
+            ac.start_use_date AS startUseDate,
+            ac.asset_code AS assetCode,
+            ac.asset_location_id AS assetLocationId,
+            ac.disposal_status AS disposalStatus,
+            ac.remark,
+            ac.create_time AS createTime,
+            ac.create_user_name AS createUserName,
+            -- 明细表字段（不包含通用字段）
+            acd.id AS detailId,
+            acd.source_detail_id AS sourceDetailId,
+            acd.asset_code AS detailAssetCode,
+            acd.asset_location_id AS detailAssetLocationId,
+            acd.qty AS detailQty,
+            acd.supplier_id AS supplierId,
+            acd.supplier_name AS supplierName,
+            acd.use_dept_name AS useDeptName,
+            acd.use_dept_id AS useDeptId,
+            acd.cost_type AS costType,
+            acd.remark AS detailRemark
+        FROM asset_card ac
+        LEFT JOIN asset_card_detail acd ON acd.main_id = ac.id AND acd.is_deleted = false
+        WHERE
+        ${params.sqlMap.default}
+        AND ac.is_deleted = false
+        <if test="params.ids != null and params.ids.size() > 0">
+            AND ac.id IN
+            <foreach collection="params.ids" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        ac.create_time DESC
+    </select>
+    <select id="tabList" resultType="com.erp.model.fms.dto.AssetCardDTO$TabListDTO">
+        SELECT
+        approve_status AS tabFlag,
+        count(*)  AS count
+        FROM  asset_card
+        WHERE is_deleted=FALSE
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        GROUP BY approve_status
+    </select>
+
+    <select id="getApprovedCardList" resultType="com.erp.model.fms.dto.AssetCardDTO$ApprovedCardDTO">
+        SELECT
+            ac.id,
+            ac.code,
+            ac.name,
+            ac.type,
+            '' as typeName,
+            ac.unit,
+            ac.qty,
+            ac.change_method,
+            ac.org_id,
+            ac.org_name,
+            ac.status
+        FROM asset_card ac
+        WHERE ac.is_deleted = false
+        AND ac.approve_status = 'approve'
+        <if test="params.code != null and params.code != ''">
+            AND ac.code LIKE '%' || #{params.code} || '%'
+        </if>
+        <if test="params.startCode != null and params.startCode != ''">
+            AND ac.code &gt;= #{params.startCode}
+        </if>
+        ORDER BY ac.code ASC
+        LIMIT 100
+    </select>
+
+
+    <select id="searchApprovedCard" resultType="com.erp.model.fms.dto.AssetCardDTO$ApprovedCardDTO">
+        SELECT
+        ac.id,
+        ac.code,
+        ac.name,
+        ac.type,
+        ac.unit,
+        ac.qty,
+        ac.change_method,
+        ac.org_id,
+        ac.org_name,
+        ac.status
+        FROM asset_card ac
+        WHERE ac.is_deleted = false
+        AND ac.approve_status = 'approve'
+        <if test="params.codes != null and params.codes.size() > 0">
+            AND ac.code IN
+            <foreach collection="params.codes" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.searchKeyword != null and params.searchKeyword != ''">
+            and ac.code ILIKE concat('%',#{params.searchKeyword}::text,'%')
+            ORDER BY
+            case when ac.code ILIKE concat(#{params.searchKeyword}::text,'%') THEN 1
+            when ac.code ILIKE concat('%',#{params.searchKeyword}::text) THEN 2
+            when ac.code ILIKE concat('%',#{params.searchKeyword}::text,'%') THEN 3
+            end , ac.code
+        </if>
+    </select>
+
+    <select id="listApproveDetailByIds" resultType="com.erp.model.fms.dto.AssetCardDTO$ApprovedCardDetailDTO">
+        SELECT
+        ac.id,
+        ac.code,
+        ac.name,
+        ac.type,
+        ac.unit,
+        ac.qty,
+        ac.change_method,
+        ac.org_id,
+        ac.org_name,
+        ac.status,
+        acd.id AS detailId,
+        acd.asset_code AS assetCode,
+        acd.asset_location_id AS assetLocationId,
+        acd.qty AS detailQty
+        FROM asset_card ac
+        left join asset_card_detail acd on acd.main_id = ac.id and acd.is_deleted = false
+        WHERE ac.is_deleted = false
+        AND ac.approve_status = 'approve'
+        <if test="ids != null and ids.size() > 0">
+            AND ac.id IN
+            <foreach collection="ids" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+    </select>
+
+</mapper>

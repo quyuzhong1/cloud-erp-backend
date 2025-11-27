@@ -170,6 +170,21 @@ public class QcNoticeDTO implements Serializable {
         */
         private String createUserName;
 
+        /**
+        * 是否作废
+        */
+        private Boolean invalidStatus;
+        /**
+         * 是否作废名称
+         */
+        private String invalidStatusName;
+
+
+        /**
+        * 作废原因
+        */
+        private String invalidRemark;
+
 
         /**
          * sku_id
@@ -486,6 +501,25 @@ public class QcNoticeDTO implements Serializable {
          * 错误url
          */
         private String errorUrl;
+    }
+
+    /**
+    * 作废DTO
+    */
+    @Data
+    @NoArgsConstructor
+    public static class InvalidDTO {
+        /**
+        * ID集合
+        */
+        @NotEmpty(message = "ID不能为空")
+        private List<String> ids;
+
+        /**
+        * 作废备注
+        */
+        @Size(max = 500, message = "作废备注最大长度不能超过500位")
+        private String remark;
     }
 
 }

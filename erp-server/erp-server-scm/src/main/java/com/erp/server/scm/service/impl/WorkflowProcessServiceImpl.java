@@ -30,6 +30,17 @@ public class WorkflowProcessServiceImpl implements WorkflowProcessService {
     private ApproveEndHandlerFactory approveEndHandlerFactory;
 
     @Override
+    public BatchResultDTO approve(ApproveDTO.ApproveOneDTO dto) {
+        String businessKey = dto.getBusinessKey();
+        SourceTypeEnum sourceType = SourceTypeEnum.getByCode(businessKey);
+        if (null == sourceType) {
+            throw new ServiceException(ApiError.ERROR_NOT_FOUND_APPROVE_BUSINESSKEY,ApproveTypeEnum.getName(dto.getType()),businessKey);
+        }
+        AbstractApproveHandler handler = approveEndHandlerFactory.getHandler(sourceType);
+        return  handler.approve(BeanUtil.toBean(dto, ApproveOneDTO.class));
+    }
+
+    @Override
     public Boolean approveEnd(EndProcessDTO dto) {
         String businessKey = dto.getBusinessKey();
         SourceTypeEnum sourceType = SourceTypeEnum.getByCode(businessKey);

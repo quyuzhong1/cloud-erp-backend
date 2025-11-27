@@ -49,6 +49,11 @@ public class SoPriceApproveHandler extends AbstractApproveHandler {
     private OperateLogService operateLogService;
 
     @Override
+    public BatchResultDTO approve(ApproveOneDTO dto) {
+        return soPriceService.approve(soPriceService.getById(dto.getId()),dto);
+    }
+
+    @Override
     public Boolean cancelProcess(ApproveDTO.CancelProcessDTO dto) {
         SoPriceEntity entity = soPriceService.getById(dto.getId());
         if (ObjectUtil.isEmpty(entity)) {

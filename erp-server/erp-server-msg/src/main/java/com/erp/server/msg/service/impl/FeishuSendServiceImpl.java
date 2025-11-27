@@ -1,5 +1,6 @@
 package com.erp.server.msg.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.text.CharSequenceUtil;
@@ -37,10 +38,7 @@ import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
 import java.io.IOException;
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.erp.server.msg.enums.FeishuMessageTypeEnum.INTERACTIVE;
@@ -123,13 +121,25 @@ public class FeishuSendServiceImpl extends BaseMessageSendService {
             log.error("存在禁用人员，飞书接收人为空，本次不发生消息");
             return null;
         }
-        MsgResultVO<T> msgResult;
+        MsgResultVO<T> msgResult = new MsgResultVO<T>();
         noticeMsgWrapInfoDTO.setReceiverUserIds(userIdList);
         boolean isBatch = userIdList.size() >  1;
         if(!isBatch) { // 单条消息
             msgResult = sendSingleMsg(noticeMsgInfo);
         } else { // 批量消息
-            msgResult = sendBatchMsg(noticeMsgInfo);
+            for (String userId : userIdList) {
+                MsgSendChannelWrapParam singleNoticeMsgInfo = new MsgSendChannelWrapParam();
+                // 复制外层属性，排除内部的 noticeMsgWrapInfoDTO，防止修改原对象
+                BeanUtil.copyProperties(noticeMsgInfo, singleNoticeMsgInfo, "noticeMsgWrapInfoDTO");
+                // 复制并设置单用户的 receiverUserIds
+                NoticeMsgWrapInfoDTO singleWrap = new NoticeMsgWrapInfoDTO();
+                BeanUtil.copyProperties(noticeMsgWrapInfoDTO, singleWrap);
+                singleWrap.setReceiverUserIds(new ArrayList<>(Collections.singletonList(userId)));
+                singleNoticeMsgInfo.setNoticeMsgWrapInfoDTO(singleWrap);
+                // 发送单条消息，使用为当前 userId 构造的 singleNoticeMsgInfo
+                msgResult = sendSingleMsg(singleNoticeMsgInfo);
+            }
+//            msgResult = sendBatchMsg(noticeMsgInfo);
         }
         return msgResult;
     }

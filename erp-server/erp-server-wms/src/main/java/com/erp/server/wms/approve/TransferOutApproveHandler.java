@@ -6,6 +6,7 @@ import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.ApproveBusinessKey;
 import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.ApproveOneDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.ApprovePlatformEnum;
 import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
@@ -36,6 +37,11 @@ public class TransferOutApproveHandler extends AbstractApproveHandler {
     @Resource
     private OperateLogService operateLogService;
 
+
+    @Override
+    public BatchResultDTO approve(ApproveOneDTO dto) {
+        return transferOutService.approve(dto,transferOutService.getById(dto.getId()));
+    }
 
     @Override
     public Boolean cancelProcess(ApproveDTO.CancelProcessDTO dto) {

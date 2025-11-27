@@ -34,6 +34,11 @@ public class BomInfoApproveHandler extends AbstractApproveHandler {
 
 
     @Override
+    public BatchResultDTO approve(ApproveOneDTO dto) {
+        return bomInfoService.approve(dto);
+    }
+
+    @Override
     public Boolean cancelProcess(ApproveDTO.CancelProcessDTO dto) {
         BatchResultDTO resultDTO = bomInfoService.cancelProcess(dto.getId());
         return resultDTO.getSuccess();

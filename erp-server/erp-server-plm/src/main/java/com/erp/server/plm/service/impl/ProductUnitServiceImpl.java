@@ -33,6 +33,22 @@ public class ProductUnitServiceImpl extends ServiceImpl<ProductUnitMapper, Produ
     @Override
     public Boolean saveOrUpdateBatch(List<ProductUnitDTO> productUnitList) {
         List<ProductUnitEntity> productUnitEntities = BeanMapper.copyList(productUnitList, ProductUnitEntity.class);
+        // 校验 name + is_deleted 唯一性（只检查未删除的记录）
+        for (ProductUnitEntity entity : productUnitEntities) {
+            if (entity.getName() != null) {
+                LambdaQueryWrapper<ProductUnitEntity> queryWrapper = new LambdaQueryWrapper<>();
+                queryWrapper.eq(ProductUnitEntity::getName, entity.getName());
+                queryWrapper.eq(ProductUnitEntity::getIsDeleted, Boolean.FALSE);
+                // 如果是更新操作，排除自身
+                if (entity.getId() != null) {
+                    queryWrapper.ne(ProductUnitEntity::getId, entity.getId());
+                }
+                ProductUnitEntity existEntity = this.getOne(queryWrapper);
+                if (existEntity != null) {
+                    throw new ServiceException(ApiError.ERROR_DUPLICATION_NAME);
+                }
+            }
+        }
         return this.saveOrUpdateBatch(productUnitEntities);
     }
 
@@ -44,7 +60,9 @@ public class ProductUnitServiceImpl extends ServiceImpl<ProductUnitMapper, Produ
      **/
     @Override
     public List<ProductUnitEntity> listProductUnit(){
-        return this.list();
+        LambdaQueryWrapper<ProductUnitEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(ProductUnitEntity::getIsDeleted, Boolean.FALSE);
+        return this.list(queryWrapper);
     }
 
     /**
@@ -76,6 +94,7 @@ public class ProductUnitServiceImpl extends ServiceImpl<ProductUnitMapper, Produ
     public ProductUnitEntity checkUnitName(String name){
         LambdaQueryWrapper<ProductUnitEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(ProductUnitEntity::getName, name);
+        queryWrapper.eq(ProductUnitEntity::getIsDeleted, Boolean.FALSE);
         queryWrapper.last("LIMIT 1");
         return this.getOne(queryWrapper);
     }
@@ -98,6 +117,7 @@ public class ProductUnitServiceImpl extends ServiceImpl<ProductUnitMapper, Produ
     @Override
     public ProductUnitEntity getByName(String name) {
         ProductUnitEntity entity = lambdaQuery().eq(ProductUnitEntity::getName, name)
+                .eq(ProductUnitEntity::getIsDeleted, Boolean.FALSE)
                 .last("limit 1")
                 .one();
         return entity;

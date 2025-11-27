@@ -33,6 +33,11 @@ public class ProductChangeApproveHandler extends AbstractApproveHandler {
     private BomOperateLogService bomOperateLogService;
 
     @Override
+    public BatchResultDTO approve(ApproveOneDTO dto) {
+        return productChangeService.approve(dto);
+    }
+
+    @Override
     public Boolean cancelProcess(ApproveDTO.CancelProcessDTO dto) {
         BatchResultDTO resultDTO = productChangeService.cancelProcess(dto.getId());
         return resultDTO.getSuccess();

@@ -3,6 +3,7 @@ package com.erp.server.scm.controller.feign;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.core.controller.BaseController;
+import com.common.core.controller.vo.ApiResult;
 import com.erp.model.scm.dto.SupplierDTO;
 import com.erp.model.scm.dto.SupplierPlantAddrDTO;
 import com.erp.model.scm.entity.PurchaseOrderSupplierEntity;
@@ -160,6 +161,17 @@ public class SupplierFeignController extends BaseController {
     @PostMapping("/checkImportPlantAddr")
     List<SupplierPlantAddrDTO.AddDTO> checkImportPlantAddr(@RequestBody SupplierDTO.AddPlantAddrDTO addPlantAddrDTO){
         return supplierService.checkImportPlantAddr(addPlantAddrDTO.getCountylist(),addPlantAddrDTO.getCityList(),addPlantAddrDTO.getPlantAddr(),addPlantAddrDTO.getErrorMsgList(),addPlantAddrDTO.getIsUpdatePart());
+    }
+
+    /**
+     * 根据供应商类型 获取到已审核的对应供应商
+     * 未审核通过的会置为禁用
+     *
+     * @return
+     */
+    @GetMapping("/listApproveSupplierByCategoryType")
+    public List<SupplierDTO.SupplierSimpleDTO> listApproveSupplierByCategoryType(@RequestParam("categoryType") String categoryType) {
+        return supplierService.listApproveSupplierByCategoryType(categoryType);
     }
 
 }

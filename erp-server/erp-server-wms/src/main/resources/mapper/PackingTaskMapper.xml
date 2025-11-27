@@ -361,19 +361,4 @@
             ${permissionSql}
         </if>
     </select>
-    <select id="countPackingQtyBySourceIds" resultType="com.erp.model.wms.dto.WmsCartonDTO$CountDTO">
-        select
-            pt.source_id as sourceId,
-            pt.packing_status as packingStatus,
-            wcd.sku_id as skuId,
-            COALESCE(SUM(wcd.pack_qty), 0) as packingQty
-        from packing_task pt
-        left join wms_carton wc on wc.packing_task_id = pt.id and wc.is_deleted = false
-        left join wms_carton_detail wcd on wcd.main_id = wc.id and wcd.is_deleted = false
-        where pt.is_deleted = false and pt.source_id IN
-        <foreach collection="sourceIds" item="item" open="(" close=")" separator=",">
-            #{item}
-        </foreach>
-        group by pt.source_id,pt.packing_status,wcd.sku_id
-    </select>
 </mapper>

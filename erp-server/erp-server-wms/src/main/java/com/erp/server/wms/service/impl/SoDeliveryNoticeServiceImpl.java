@@ -104,7 +104,10 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -151,6 +154,11 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
     @Resource
     private SoOutstockDetailService soOutstockDetailService;
 
+
+    @Resource
+    private InventoryService inventoryService;
+
+
     @Resource
     private CustomerFeign customerFeign;
 
@@ -175,6 +183,9 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
     private CfgRuleOutService cfgRuleOutService;
     @Resource
     private CfgRulePickingStagingService  cfgRulePickingStagingService;
+
+    @Resource
+    private CfgSettingService cfgSettingService;
     @Resource
     private PackingTaskService packingTaskService;
 
@@ -252,7 +263,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         // 等待所有查询完成
         CompletableFuture.allOf(
                 warehouseFuture, customerFuture, approvalFuture,
-                 packingCountFuture
+                packingCountFuture
         ).join();
 
         //中转仓map
@@ -273,7 +284,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
             records.forEach(obj -> {
 //                pickStatusList.stream().filter(e -> e.getNoticeId().equals(obj.getId())).findFirst().ifPresent(p -> obj.setGenerationPickStatus(p.getGenerationPickStatus()));
                 WmsCartonDTO.CountDTO countDTO = countDTOS.stream().filter(e -> Objects.nonNull(e.getSourceId()) && e.getSourceId().equals(obj.getId())
-                                && Objects.nonNull(e.getSkuId()) && e.getSkuId().equals(obj.getSkuId())).findFirst().orElse(null);
+                        && Objects.nonNull(e.getSkuId()) && e.getSkuId().equals(obj.getSkuId())).findFirst().orElse(null);
                 obj.setPackingQty(Objects.isNull(countDTO) ? 0 : countDTO.getPackingQty());
                 obj.setPackingStatus(Objects.isNull(countDTO) ? PackingTaskStatusEnum.WAIT.getCode() : countDTO.getPackingStatus());
                 if (CharSequenceUtil.isNotBlank(obj.getPackingStatus())) {
@@ -326,7 +337,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
                 //最新审核人
                 if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
                     String curApprove = listApiResult.getData().stream().filter(e -> e.getBusinessId().equals(obj.getId()) && CharSequenceUtil.isNotBlank(e.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
-                   obj.setApproveUserName(CharSequenceUtil.blankToDefault(curApprove,obj.getApproveUserName()));
+                    obj.setApproveUserName(CharSequenceUtil.blankToDefault(curApprove,obj.getApproveUserName()));
                 }
             });
         }

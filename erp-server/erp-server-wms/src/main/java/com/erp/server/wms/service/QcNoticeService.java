@@ -133,6 +133,16 @@ public interface QcNoticeService extends SuperService<QcNoticeEntity> {
     BatchResultDTO cancelProcess(String id);
 
     /**
+    * 作废
+    * @author jack
+    * @date: 2025-11-10
+    * @param id
+    * @param remark 作废备注
+    * @return
+    */
+    BatchResultDTO invalid(String id, String remark);
+
+    /**
     * 导出Excel
     * @author jack
     * @date: 2025-04-21

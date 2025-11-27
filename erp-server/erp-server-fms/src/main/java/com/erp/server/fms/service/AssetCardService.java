@@ -1,0 +1,215 @@
+package com.erp.server.fms.service;
+import com.erp.model.fms.dto.excel.AssetCardImportExcelDTO;
+import com.erp.model.fms.entity.AssetCardEntity;
+import com.common.business.service.SuperService;
+import com.common.business.dto.base.*;
+import com.erp.model.fms.dto.AssetCardDTO;
+import com.common.business.vo.PagingVO;
+
+import java.util.List;
+import java.util.Map;
+
+/**
+ * <p>
+ * 资产卡片主表 服务类
+ * </p>
+ *
+ * @author wuht
+ * @since 2025-10-11
+ */
+public interface AssetCardService extends SuperService<AssetCardEntity> {
+
+    /**
+    * 新增
+    * @author wuht
+    * @date: 2025-10-11
+    * @param dto
+    * @return
+    */
+    BaseResultDTO.AddDTO add(AssetCardDTO.AddDTO dto);
+
+    /**
+    * 修改
+    * @author wuht
+    * @date: 2025-10-11
+    * @param dto
+    * @return
+    */
+    Boolean update(AssetCardDTO.UpdateDTO dto);
+
+    /**
+    * 分页列表查询
+    * @author wuht
+    * @date: 2025-10-11
+    * @param pagingParamDTO
+    * @return PagingVO<AssetCardDTO.ListDTO>>
+    */
+    PagingVO<AssetCardDTO.ListDTO> paging(PagingDTO<AssetCardDTO.PagingParamDTO> pagingParamDTO);
+
+    /**
+    * 状态统计
+    * @author wuht
+    * @date: 2025-10-11
+    * @param dto
+    * @return List<AssetCardDTO.TabListDTO>>
+    */
+    List<AssetCardDTO.TabListDTO> tabList(PermissionsDTO dto);
+
+    /**
+    * 详情
+    * @author wuht
+    * @date: 2025-10-11
+    * @param id
+    * @return
+    */
+    AssetCardDTO.ViewDTO view(String id);
+
+    /**
+    * 新增并提交审核
+    * @author wuht
+    * @date: 2025-10-11
+    * @param dto
+    * @return BaseResultDTO.AddDTO
+    */
+    BaseResultDTO.AddDTO addAndSubmit(AssetCardDTO.AddDTO dto);
+
+    /**
+    * 修改并提交审核
+    * @author wuht
+    * @date: 2025-10-11
+    * @param dto
+    * @return
+    */
+    void updateAndSubmit(AssetCardDTO.UpdateDTO dto);
+
+     /**
+      * 提交审核
+      *
+      * @param id
+      * @param isNeedProcess
+      * @return
+      * @author wuht
+      * @date: 2025-10-11
+      */
+    BatchResultDTO submit(String id, boolean isNeedProcess);
+
+    /**
+    * 审核
+    * @author wuht
+    * @date: 2025-10-11
+    * @param dto
+    * @return
+    */
+    BatchResultDTO approve(ApproveOneDTO dto);
+
+    /**
+    * 反审核
+    * @author wuht
+    * @date: 2025-10-11
+    * @param id
+    * @return
+    */
+    BatchResultDTO disApprove(String id);
+
+    /**
+    * 删除
+    * @author wuht
+    * @date: 2025-10-11
+    * @param id
+    * @return
+    */
+    BatchResultDTO delete(String id);
+    /**
+    * 作废
+    * @author wuht
+    * @date: 2025-10-11
+    * @param id
+    * @param remark
+    * @return
+    */
+    BatchResultDTO invalid(String id, String remark);
+
+    /**
+    * 撤销
+    * @author wuht
+    * @date: 2025-10-11
+    * @param id
+    * @return
+    */
+    BatchResultDTO cancelProcess(String id);
+
+
+    /**
+     * 获取资产卡片分页数据（用于异步导出）
+     * @param dto
+     * @return
+     */
+    PagingVO<AssetCardDTO.ListDTO> getAssetCardPageData(PagingDTO<AssetCardDTO.ExportDTO> dto);
+
+    /**
+     * 获取已审核资产卡片列表（用于盘点方案）
+     * @param dto
+     * @return
+     */
+    List<AssetCardDTO.ApprovedCardDTO> getApprovedCardList(AssetCardDTO.QueryApprovedDTO dto);
+
+    /**
+    * 审核通过回调方法
+    * @param dto
+    * @param entity
+    * @return
+    */
+    Boolean approveEnd(ApproveOneDTO dto, AssetCardEntity entity);
+
+    /**
+    * 导入Excel
+    * @author wuht
+    * @date: 2025-01-10
+    * @param dto
+    * @return
+    */
+    Boolean importFile(BaseDTO.ImportDTO dto);
+
+    /**
+    * 异步导入资产卡片
+    * @author wuht
+    * @date: 2025-01-10
+    * @param dto
+    */
+    void importAssetCard(BaseDTO.ImportDTO dto);
+
+    /**
+    * 批量处理导入成功的数据
+    * @author wuht
+    * @date: 2025-01-10
+    * @param successList 成功数据列表
+    * @param errorNoList 错误编号列表
+    * @param errorList2 错误数据列表
+    * @param importType 导入类型
+    */
+    void handleImportSuccessList(List<AssetCardImportExcelDTO> successList,
+                                List<String> errorNoList,
+                                List<AssetCardImportExcelDTO> errorList2,
+                                String importType);
+
+    /**
+    * 下载导入模板
+    * @author wuht
+    * @date: 2025-11-03
+    * @param response
+    */
+    void downloadTemplate(javax.servlet.http.HttpServletResponse response);
+
+    List<AssetCardDTO.ApprovedCardDTO> searchApprovedCard(AssetCardDTO.SearchParamDTO dto);
+
+    /**
+    * 获取流程变量Map
+    * @author wuht
+    * @date: 2025-11-06
+    * @param entity
+    * @return Map<String, Object>
+    */
+    Map<String, Object> getVariablesMap(AssetCardEntity entity);
+
+    List<AssetCardDTO.ApprovedCardDetailDTO>  listApproveDetailByIds(List<String> ids);
+}
