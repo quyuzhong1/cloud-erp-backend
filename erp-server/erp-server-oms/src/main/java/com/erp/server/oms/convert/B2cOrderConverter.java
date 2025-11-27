@@ -200,6 +200,7 @@ public interface B2cOrderConverter {
             @Mapping(target = "updateUserId", ignore = true),
             @Mapping(target = "updateUserName", ignore = true),
             @Mapping(target = "version", ignore = true),
+            @Mapping(target = "isUserSystem", ignore = true),
             @Mapping(target = "declareLabel", ignore = true)
     })
     SoB2cDeclareProductEntity convertDeclareProductByMap(Map<String, Object> detailMap);

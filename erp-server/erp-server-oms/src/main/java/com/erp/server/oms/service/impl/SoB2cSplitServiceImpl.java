@@ -981,7 +981,7 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
                 operateLogService.addModuleOperateLogBySystem(msg, ModuleTypeEnum.SO_B2C.getCode(), add.getId(), "审核操作");
                 ApproveOneDTO approveOneDTO = new ApproveOneDTO();
                 approveOneDTO.setType(ApproveTypeEnum.PASS.getStatus());
-                approveOneDTO.setIsSubmitAutoApprove(true);
+                approveOneDTO.setIsUserSystem(true);
                 soB2cService.approveEnd(approveOneDTO,add,true);
                 needRuleList.add(add);
             }else{

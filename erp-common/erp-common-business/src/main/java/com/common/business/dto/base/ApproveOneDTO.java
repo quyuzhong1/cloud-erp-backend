@@ -65,9 +65,9 @@ public class ApproveOneDTO extends PermissionsDTO {
     private Map<String,Object> variablesMap;
 
     /**
-     * 是否是提审后自动审核
+     * 是否使用系统用户
      */
-    private Boolean isSubmitAutoApprove = false;
+    private Boolean isUserSystem = false;
 
     public ApproveOneDTO (String id,String type,String comment) {
         this.id = id;

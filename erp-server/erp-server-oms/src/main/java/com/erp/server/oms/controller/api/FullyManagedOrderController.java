@@ -209,7 +209,7 @@ public class FullyManagedOrderController extends BaseController {
                 ApproveResultDTO submit1 = soB2cService.submit(entity,error,logisticsEntity, Boolean.TRUE);
                 if (submit1.getSuccess() && !submit1.getIsExistProcess()){
                     ApproveOneDTO approveOneDTO = new ApproveOneDTO(id, ApproveTypeEnum.PASS.getStatus(), "提审自动审核");
-                    approveOneDTO.setIsSubmitAutoApprove(true);
+                    approveOneDTO.setIsUserSystem(true);
                     approveOneDTO.setIsNeedProcess(false);
                     submit = soB2cService.approve(approveOneDTO, null, "");
                     //速卖通平台仓订单不走任何规则
