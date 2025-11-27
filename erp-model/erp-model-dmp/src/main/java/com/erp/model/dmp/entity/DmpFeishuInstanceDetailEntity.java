@@ -5,6 +5,7 @@ import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
 import com.common.core.entity.BaseEntity;
 import com.baomidou.mybatisplus.annotation.TableField;
 import java.io.Serializable;
@@ -14,6 +15,7 @@ import java.util.List;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -30,7 +32,8 @@ import org.apache.commons.lang3.StringUtils;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
-@TableName("dmp_feishu_instance_detail")
+@NoArgsConstructor
+@TableName(value = "dmp_feishu_instance_detail", autoResultMap = true)
 public class DmpFeishuInstanceDetailEntity extends BaseEntity<DmpFeishuInstanceDetailEntity> {
 
     /**
@@ -116,18 +119,18 @@ public class DmpFeishuInstanceDetailEntity extends BaseEntity<DmpFeishuInstanceD
     /**
     * 任务列表(JSON文本)
     */
-    @TableField("task_list")
-    private String taskList;
+    @TableField(value = "task_list", typeHandler = JacksonTypeHandler.class)
+    private JSONArray taskList;
     /**
     * 评论列表(JSON文本)
     */
-    @TableField("comment_list")
-    private String commentList;
+    @TableField(value = "comment_list", typeHandler = JacksonTypeHandler.class)
+    private JSONArray commentList;
     /**
     * 时间线(JSON文本)
     */
-    @TableField("timeline")
-    private String timeline;
+    @TableField(value = "timeline", typeHandler = JacksonTypeHandler.class)
+    private JSONArray timeline;
     /**
     * 修改后实例编码
     */
