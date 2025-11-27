@@ -30,5 +30,5 @@ public interface DictBasicAllService{
 	
 	PagingVO<ViewDTO> paging(PagingDTO<PagingParamDTO> dto);
 	
-	Boolean exportExcel(PagingDTO<DictBasicAllDTO.ExpotParamDTO> dto);
+	Boolean exportExcel(DictBasicAllDTO.ExpotParamDTO dto);
 }
