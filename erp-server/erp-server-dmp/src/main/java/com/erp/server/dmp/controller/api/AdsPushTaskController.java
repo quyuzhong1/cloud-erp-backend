@@ -3,6 +3,7 @@ package com.erp.server.dmp.controller.api;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import javax.annotation.Resource;
 
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
@@ -27,13 +29,18 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.dmp.dto.AdsPushTaskDTO;
+import com.erp.model.dmp.dto.AdsPushTaskDTO.OutputDto;
 import com.erp.model.dmp.dto.DmpOutputTaskRecordDTO;
+import com.erp.model.dmp.entity.DmpCfgOutputEntity;
 import com.erp.model.dmp.entity.DmpOutputTaskRecordEntity;
 import com.erp.model.dmp.entity.doris.AdsPushTaskEntity;
 import com.erp.model.dmp.enums.DmpOutputTaskRecordStatusEnum;
 import com.erp.server.dmp.query.AdsPushTaskQueryHandler;
 import com.erp.server.dmp.service.AdsPushTaskService;
+import com.erp.server.dmp.service.DmpCfgOutputBlackService;
+import com.erp.server.dmp.service.DmpCfgOutputService;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import lombok.extern.slf4j.Slf4j;
 
@@ -51,6 +58,10 @@ public class AdsPushTaskController extends BaseController {
 
     @Resource
     private AdsPushTaskService adsPushTaskService;
+    @Resource
+    private DmpCfgOutputBlackService dmpCfgOutputBlackService;
+    @Resource
+    private DmpCfgOutputService dmpCfgOutputService;
 
     /**
     * 新增
@@ -147,8 +158,14 @@ public class AdsPushTaskController extends BaseController {
      **/
     @PostMapping("/addOutputBlack")
     @LogAction(value = LogActionEnum.INSERT, desc = "加入黑名单")
-    public ApiResult<BaseResultDTO.AddDTO> addOutputBlack(@RequestBody @Validated DmpOutputTaskRecordDTO.AddOutputBlackDTO dto) {
-        Boolean flag = adsPushTaskService.addOutputBlack(dto);
+    public ApiResult<BaseResultDTO.AddDTO> addOutputBlack(@RequestBody @Validated AdsPushTaskDTO.AddOutputBlackDTO dto) {
+        List<String> ids = dto.getIds();
+        Boolean flag = true;
+        if(CollUtil.isNotEmpty(ids)) {
+        	flag = adsPushTaskService.addOutputBlack(dto);
+        }else {
+        	dmpCfgOutputBlackService.add(dto.getAddDto());
+        }
         return flag ? success() : failure();
     }
 
@@ -189,4 +206,22 @@ public class AdsPushTaskController extends BaseController {
         Boolean flag = adsPushTaskService.batchSync(dto.getIds());
         return flag == true ? success() : failure();
     }
+    
+    /**
+     * 获取主id信息下拉
+     * @Author Luo_WG
+     * @Date 2024/9/6 15:58
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @PostMapping(value = "/getRestCloudOutputId")
+    public ApiResult<List<OutputDto>> getRestCloudOutputId() {
+    	List<DmpCfgOutputEntity> list = dmpCfgOutputService.lambdaQuery().eq(DmpCfgOutputEntity::getExecSystem, "restCloud").eq(DmpCfgOutputEntity::getDisabled, false).list();
+    	return success(list.stream().map(l -> {
+    		OutputDto dto = new OutputDto();
+    		dto.setId(l.getId());
+    		dto.setName(l.getFlowName());
+    		return dto;
+    	}).collect(Collectors.toList())) ;
+    } 
 }

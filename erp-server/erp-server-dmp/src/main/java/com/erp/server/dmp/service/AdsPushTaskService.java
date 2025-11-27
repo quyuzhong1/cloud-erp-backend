@@ -82,7 +82,7 @@ public interface AdsPushTaskService extends SuperService<AdsPushTaskEntity> {
      * @param dto
      * @return java.lang.Object
      **/
-    Boolean addOutputBlack(DmpOutputTaskRecordDTO.AddOutputBlackDTO dto);
+    Boolean addOutputBlack(AdsPushTaskDTO.AddOutputBlackDTO dto);
 
     /**
      * 取消黑名单

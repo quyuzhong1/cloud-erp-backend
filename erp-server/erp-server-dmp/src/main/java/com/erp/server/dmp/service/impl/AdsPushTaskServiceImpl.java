@@ -229,11 +229,11 @@ public class AdsPushTaskServiceImpl extends SuperServiceImpl<AdsPushTaskMapper, 
 	}
 
 	@Override
-	public Boolean addOutputBlack(AddOutputBlackDTO dto) {
+	public Boolean addOutputBlack(AdsPushTaskDTO.AddOutputBlackDTO dto) {
 		return lambdaUpdate().in(AdsPushTaskEntity::getId, dto.getIds())
 				.set(AdsPushTaskEntity::getPushStatus, "black")
 				.set(AdsPushTaskEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
-				.set(AdsPushTaskEntity::getResponseData, dto.getRemark())
+				.set(AdsPushTaskEntity::getResponseData, dto.getAddDto().getRemark())
 				.update();
 	}
 

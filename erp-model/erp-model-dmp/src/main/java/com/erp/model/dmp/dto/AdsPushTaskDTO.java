@@ -5,9 +5,14 @@ import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.List;
+
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
+
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.erp.model.dmp.dto.DmpOutputTaskRecordDTO.CustomizeBlackParam;
 
 /**
  * <p>
@@ -157,6 +162,36 @@ public class AdsPushTaskDTO implements Serializable {
         @NotBlank(message = "主键id不能为空")
         private String id;
 
+    }
+    
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class AddOutputBlackDTO {
+        /**
+         * 输出任务id
+         */
+        private List<String> ids;
+
+        /**
+         * 黑名单信息
+         */
+        private DmpCfgOutputBlackDTO.AddDTO addDto;
+
+    }
+    
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class OutputDto {
+        /**
+         * id
+         */
+        private String id;
+        /**
+         * 名称
+         */
+        private String name;
     }
 
     @Data
