@@ -103,7 +103,7 @@ public class DmpBasicSystemController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "dmp:dmpBasicSystem:paging",
-            tableAlias = ""
+            tableAlias = "dbs"
     )
     public ApiResult<List<DmpBasicSystemDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
         return success(dmpBasicSystemService.tabList(dto));
@@ -120,7 +120,7 @@ public class DmpBasicSystemController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "dmp:dmpBasicSystem:paging",
-            tableAlias = ""
+            tableAlias = "dbs"
     )
     @WebAdvanceQuery(handler = DmpBasicSystemQueryHandler.class)
     public ApiResult<PagingVO<DmpBasicSystemDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<DmpBasicSystemDTO.PagingParamDTO> dto) {
@@ -273,7 +273,7 @@ public class DmpBasicSystemController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "dmp:dmpBasicSystem:export",
-            tableAlias = ""
+            tableAlias = "dbs"
     )
     @LogAction(value = LogActionEnum.EXPORT, desc = "平台管理导出Excel数据")
     @WebAdvanceQuery(handler = DmpBasicSystemQueryHandler.class)

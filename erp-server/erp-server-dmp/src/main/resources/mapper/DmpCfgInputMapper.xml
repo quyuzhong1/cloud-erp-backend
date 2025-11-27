@@ -117,14 +117,14 @@
 
     <select id="tabList" resultType="com.erp.model.dmp.dto.DmpCfgInputDTO$TabListDTO">
         SELECT
-        disabled AS tabFlag,
-        CASE WHEN disabled = FALSE THEN '启用' ELSE '停用' END AS tabFlagName,
+        dci.disabled AS tabFlag,
+        CASE WHEN dci.disabled = FALSE THEN '启用' ELSE '停用' END AS tabFlagName,
         count(*) AS count
-        FROM dmp_cfg_input
-        WHERE is_deleted=FALSE
+        FROM dmp_cfg_input dci
+        WHERE dci.is_deleted=FALSE
         <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
         </if>
-        GROUP BY disabled
+        GROUP BY dci.disabled
     </select>
 </mapper>
