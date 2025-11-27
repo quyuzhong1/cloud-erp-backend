@@ -304,4 +304,11 @@ public interface PackingTaskService extends SuperService<PackingTaskEntity> {
     List<PackingTaskEntity> getPackingStatusByFirstMileDelivery(FirstMileDeliveryEntity firstMileDeliveryEntity);
 
     PagingVO<WmsCartonDetailDTO.ListPackingDetailDTO> exportPackingTaskDetailMerge(PagingDTO<PackingTaskDTO.ExportDTO> dto);
+
+    /**
+     * 根据sourceId查询已装箱数量
+     * @param sourceIds
+     * @return
+     */
+    List<WmsCartonDTO.CountDTO> countPackingQtyBySourceIds(List<String> sourceIds);
 }

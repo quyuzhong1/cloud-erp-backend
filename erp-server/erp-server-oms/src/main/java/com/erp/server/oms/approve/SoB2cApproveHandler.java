@@ -37,6 +37,11 @@ public class SoB2cApproveHandler extends AbstractApproveHandler {
     private OperateLogService operateLogService;
 
     @Override
+    public BatchResultDTO approve(ApproveOneDTO dto) {
+        return soB2cService.approve(dto,null,"");
+    }
+
+    @Override
     public Boolean cancelProcess(ApproveDTO.CancelProcessDTO dto) {
         BatchResultDTO resultDTO = soB2cService.cancelProcess(dto);
         return resultDTO.getSuccess();

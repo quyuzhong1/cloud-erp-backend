@@ -38,6 +38,11 @@ public class PurchaseOrderApproveHandler extends AbstractApproveHandler {
     private ModuleOperateLogService operateLogService;
 
     @Override
+    public BatchResultDTO approve(ApproveOneDTO dto) {
+        return purchaseOrderService.approve(dto);
+    }
+
+    @Override
     public Boolean cancelProcess(ApproveDTO.CancelProcessDTO dto) {
         PurchaseOrderEntity entity = purchaseOrderService.getById(dto.getId());
         if (ObjectUtil.isEmpty(entity)) {

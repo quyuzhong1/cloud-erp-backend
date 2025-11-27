@@ -37,6 +37,11 @@ public class PlmWorkOptionFeignController {
     @Resource
     private PilotApplicationService pilotApplicationService;
 
+    @Resource
+    private MoldInfoService moldInfoService;
+    @Resource
+    private MoldRefSkuService moldRefSkuService;
+
     /**
      * 根据入参查询单据数量
      * @Author Luo_WG
@@ -121,5 +126,26 @@ public class PlmWorkOptionFeignController {
         PilotApplicationDTO.ApproveDTO approveDTO = new PilotApplicationDTO.ApproveDTO();
         pilotApplicationService.approve(dto, approveDTO);
         pilotApplicationService.approvePilotApplicationNotice(dto.getId());
+    }
+
+    /**
+     * 模具档案审核
+     * @param dto
+     * @return ApiResult
+     */
+    @PostMapping("/moldInfoApprove")
+    public Boolean moldInfoApprove(@RequestBody @Validated ApproveOneDTO dto) {
+        BatchResultDTO resultDTO = moldInfoService.approve(dto);
+        return resultDTO.getSuccess();
+    }
+    /**
+     * 模具档案审核
+     * @param dto
+     * @return ApiResult
+     */
+    @PostMapping("/moldRefSkuApprove")
+    public Boolean moldRefSkuApprove(@RequestBody @Validated ApproveOneDTO dto) {
+        BatchResultDTO resultDTO = moldRefSkuService.approve(dto);
+        return resultDTO.getSuccess();
     }
 }

@@ -44,6 +44,7 @@ import com.erp.model.wms.enums.InstockTypeEnum;
 import com.erp.model.wms.enums.InventoryDirectionEnum;
 import com.erp.model.wms.enums.SampleLedgerTypeEnum;
 import com.erp.model.workflow.dto.CfgQueryOptionDTO;
+import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
 import com.erp.model.workflow.enums.CfgQueryOptionBussinessKeyEnum;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
@@ -721,6 +722,21 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
     public List<ExhibitionOrderDTO.TabListDTO> tabList(PermissionsDTO param) {
         ExhibitionOrderDTO.PagingParamDTO searchParam = new ExhibitionOrderDTO.PagingParamDTO();
         searchParam.setPermissionSql(param.getPermissionSql());
+
+        //待我审核
+        //根据单据id查询审核流程
+        ProcessManagementDTO.TaskKeyInfoDTO dto = new ProcessManagementDTO.TaskKeyInfoDTO();
+        dto.setBusinessKey(SourceTypeEnum.EXHIBITION_ORDER.getCode());
+        dto.setTaskStatus(ApproveStatusEnum.APPROVE_ING.getCode());
+        dto.setCurApproveId(UserContext.getNonLoginUser().getUid());
+        List<ProcessTaskManagementEntity> processTaskManagementList = workflowFeign.listProcessByBusinessKey(dto);
+        if (CollectionUtils.isNotEmpty(processTaskManagementList)) {
+            List<String> ids = processTaskManagementList.stream().map(ProcessTaskManagementEntity::getBusinessId).collect(Collectors.toList());
+            searchParam.setIds(ids);
+        }else {
+            searchParam.setIds(Arrays.asList("-1"));
+        }
+
         List<ExhibitionOrderDTO.TabListDTO> list = baseMapper.tabList(searchParam);
         // 获取状态列表
         List<String> statusList = ApproveStatusEnum.getStatusList();
@@ -732,13 +748,19 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
             }
         });
         list.stream().forEach(e ->{
-            e.setTabFlagName(ApproveStatusEnum.getName(e.getTabFlag()));
+            if(Objects.equals(ApproveStatusEnum.APPROVE_ING.getCode(), e.getTabFlag())){
+                e.setTabFlagName("待我审核");
+            } else {
+                e.setTabFlagName(ApproveStatusEnum.getName(e.getTabFlag()));
+            }
         });
         // 修改为按照 ApproveStatusEnum 枚举声明顺序排序
         list.sort(Comparator.comparingInt(tabDto -> {
             ApproveStatusEnum statusEnum = ApproveStatusEnum.getByStatus(tabDto.getTabFlag());
             return statusEnum != null ? statusEnum.ordinal() : Integer.MAX_VALUE;
         }));
+
+        list.add(0,new ExhibitionOrderDTO.TabListDTO("all", "全部", 0));
         return list;
     }
 

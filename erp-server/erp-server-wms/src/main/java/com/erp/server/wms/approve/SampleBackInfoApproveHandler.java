@@ -26,6 +26,11 @@ public class SampleBackInfoApproveHandler extends AbstractApproveHandler {
     private SampleBackInfoService sampleBackInfoService;
 
     @Override
+    public BatchResultDTO approve(ApproveOneDTO dto) {
+        return sampleBackInfoService.approve(dto);
+    }
+
+    @Override
     public Boolean cancelProcess(ApproveDTO.CancelProcessDTO dto) {
         BatchResultDTO result = sampleBackInfoService.cancelProcess(dto.getId());
         return result.getSuccess();

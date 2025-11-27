@@ -179,6 +179,9 @@ public interface ProcessManagementService extends SuperService<ProcessManagement
      * @param processInstanceId
      */
     Boolean endExecutionHandle(String processInstanceId);
+
+    BatchResultDTO approveFeign(ApproveDTO.ApproveOneDTO dto);
+
     /**
      * 审核结果回调
      * @author will

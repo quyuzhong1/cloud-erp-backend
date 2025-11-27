@@ -171,10 +171,24 @@ public enum ModuleTypeEnum {
     SAMPLE_LEDGER_INIT("137", "样品期初台账"),
     PACKAGE_PLAN("138", "组包计划"),
     SAMPLE_TRANSFER_INFO("146", "样品转移单"),
+    SAMPLE_ADJUSTMENT_INFO("160", "样品调整单"),
     PAYABLE_INFO("145", "应付单"),
     SO_B2C_REFUND("146", "售后订单"),
 
+
+    // ==================== 资产相关模块 ====================
+    ASSET_LOCATION("146", "资产位置"),
+    ASSET_ACCEPTANCE("147", "资产验收单"),
+    ASSET_CARD("148", "资产卡片"),
+    ASSET_STOCKTAKING_PLAN("149", "盘点方案"),
+    ASSET_STOCKTAKING("150", "资产盘点表"),
+    ASSET_PROFIT_LOSS("151", "盘盈盘亏单"),
+    ASSET_DISPOSAL("152", "资产处置单"),
+    ASSET_NOTICE("153","资产通知单"),
+    ASSET_PURCHASE_ORDER("154","资产采购单"),
+    ASSET_PURCHASE_CHANGE("155","资产采购变更单"),
     ;
+
 
 
 
