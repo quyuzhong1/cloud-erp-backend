@@ -9,6 +9,7 @@ import com.common.business.service.IPlatformService;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.oms.dto.SoB2cDTO;
+import com.erp.model.oms.dto.SplitResultDTO;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
@@ -43,21 +44,22 @@ public abstract class AbstractShipOrder implements IPlatformService {
      * @param falseDeliveryFlag
      * @return
      */
-    public List<SoB2cDetailEntity> handleSplit(List<SoB2cDetailEntity> detailList, boolean falseDeliveryFlag){
+    public SplitResultDTO handleSplit(List<SoB2cDetailEntity> detailList, boolean falseDeliveryFlag){
         List<SoB2cDetailEntity> allDetailList = detailList;
         detailList = detailList.stream().filter(v -> CharSequenceUtil.isNotBlank(v.getSplitDetailId())).collect(Collectors.toList());
         //没有捆绑商品拆分，直接返回
         if (CollectionUtils.isEmpty(detailList)) {
-            return allDetailList;
+            return new SplitResultDTO(detailList, Collections.emptyList());
         }
         String mainId = detailList.get(0).getMainId();
         Map<String, List<SoB2cDetailEntity>> splitDetailMap = detailList.stream().collect(Collectors.groupingBy(SoB2cDetailEntity::getSplitDetailId));
         List<String> filterDetailList = new ArrayList<>();
+        List<SoB2cEntity> allEntityList = new ArrayList<>();
         splitDetailMap.forEach((key, value) -> {
             //查询关联的捆绑商品对应明细
             SoB2cDTO.CombinationDTO soCombinationDTO = soB2cFeign.listRefBomSplit(key);
             //不包括本身 并且未作废的其他订单主表
-            List<SoB2cEntity> otherMainList = soCombinationDTO.getSoB2cEntityList().stream().filter(v -> !mainId.equals(v.getId())&& !v.getInvalidStatus()).collect(Collectors.toList());
+            List<SoB2cEntity> otherMainList = soCombinationDTO.getSoB2cEntityList().stream().filter(v -> !mainId.equals(v.getId())).collect(Collectors.toList());
             List<String> otherMainIds = otherMainList.stream().map(v->v.getId()).collect(Collectors.toList());
             //不包括本身 并且未作废的其他明细
             List<SoB2cDetailEntity> otherDetailList = soCombinationDTO.getSoB2cDetailEntityList().stream().filter(v -> otherMainIds.contains(v.getMainId())).collect(Collectors.toList());
@@ -72,6 +74,7 @@ public abstract class AbstractShipOrder implements IPlatformService {
                     if (CollectionUtils.isNotEmpty(soB2cDetailEntity)) {
                         value.forEach(v -> v.setQty(soB2cDetailEntity.get(0).getQty()));
                     }
+                    allEntityList.addAll(soCombinationDTO.getSoB2cEntityList());
                 }
             }else{
                 //有别的订单未发货或者 有别的明细已发货
@@ -83,6 +86,7 @@ public abstract class AbstractShipOrder implements IPlatformService {
                     if (CollectionUtils.isNotEmpty(soB2cDetailEntity)) {
                         value.forEach(v -> v.setQty(soB2cDetailEntity.get(0).getQty()));
                     }
+                    allEntityList.addAll(soCombinationDTO.getSoB2cEntityList());
                 }
             }
         });
@@ -92,7 +96,7 @@ public abstract class AbstractShipOrder implements IPlatformService {
                 .collect(Collectors.toList());
         //将allDetailList 相同的来源明细id去重
         allDetailList = allDetailList.stream().collect(Collectors.collectingAndThen(Collectors.toCollection(() -> new TreeSet<>(Comparator.comparing(SoB2cDetailEntity::getSourceDetailId))), ArrayList::new));
-        return allDetailList;
+        return new SplitResultDTO(allDetailList, allEntityList);
     }
 
     /**

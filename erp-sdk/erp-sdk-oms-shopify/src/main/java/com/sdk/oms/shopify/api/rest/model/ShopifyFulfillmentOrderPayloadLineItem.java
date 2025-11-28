@@ -10,6 +10,4 @@ import lombok.NoArgsConstructor;
 public class ShopifyFulfillmentOrderPayloadLineItem {
 	private String id;
 	private long quantity;
-
-
 }
