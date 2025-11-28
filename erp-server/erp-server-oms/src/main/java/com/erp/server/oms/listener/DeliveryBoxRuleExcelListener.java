@@ -7,6 +7,8 @@ import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.dto.base.BaseDTO;
 import com.common.business.enums.FileTaskStatusEnum;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.FieldValidUtil;
 import com.erp.model.oms.dto.DeliveryBoxRuleDTO;
 import com.erp.model.oms.dto.DeliveryBoxRuleDetailDTO;
@@ -17,9 +19,8 @@ import com.erp.server.oms.service.DeliveryBoxRuleService;
 import lombok.Getter;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.ObjectUtils;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @Author: wtr
@@ -62,12 +63,6 @@ public class DeliveryBoxRuleExcelListener extends AnalysisEventListener<Delivery
      */
     private List<SkuVO> skuList;
 
-    private final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-
-    private final DateTimeFormatter dateTimeFormatter2 = DateTimeFormatter.ofPattern("yyyy/M/d");
-
-    private final DateTimeFormatter dateTimeFormatter3 = DateTimeFormatter.ofPattern("yyyy/MM/dd");
-
     private final DeliveryBoxRuleService deliveryBoxRuleService = SpringUtil.getBean(DeliveryBoxRuleService.class);
 
     private final DownloadTaskFeign downloadTaskFeign = SpringUtil.getBean(DownloadTaskFeign.class);
@@ -83,6 +78,12 @@ public class DeliveryBoxRuleExcelListener extends AnalysisEventListener<Delivery
     }
     // 在类级别添加一个Map来按serialNumber分组存储detail数据
     Map<String, DeliveryBoxRuleDTO.ImportDTO> excelDTOMap = new HashMap<>();
+
+    // 负责校验sku和发货sku是否重复
+    Set<String> skuDeliverySkuPairSet = new HashSet<>();
+
+    // 负责校验相同sku下，sort是否重复
+    Set<String> skuSortSet = new HashSet<>();
 
     @Override
     public void invoke(DeliveryBoxRuleImportExcelDTO importExcelDTO, AnalysisContext analysisContext) {
@@ -110,12 +111,12 @@ public class DeliveryBoxRuleExcelListener extends AnalysisEventListener<Delivery
         }
 
         // 检查serialNumber是否已存在
-        String getSkuNo = importExcelDTO.getSkuNo();
+        String skuNo = importExcelDTO.getSkuNo();
         DeliveryBoxRuleDTO.ImportDTO excelDTO;
 
-        if (excelDTOMap.containsKey(getSkuNo)) {
+        if (excelDTOMap.containsKey(skuNo)) {
             // 如果已存在，获取现有的excelDTO
-            excelDTO = excelDTOMap.get(getSkuNo);
+            excelDTO = excelDTOMap.get(skuNo);
         } else {
             // 如果不存在，创建新的excelDTO并设置公共字段
             excelDTO = new DeliveryBoxRuleDTO.ImportDTO();
@@ -124,7 +125,7 @@ public class DeliveryBoxRuleExcelListener extends AnalysisEventListener<Delivery
             } else {
                 if (StringUtils.isNotBlank(importExcelDTO.getSkuNo())) {
                     SkuVO skuVO = skuList.stream()
-                            .filter(obj -> obj.getSkuNo().equals(importExcelDTO.getDeliverySkuNo()))
+                            .filter(obj -> obj.getSkuNo().equals(importExcelDTO.getSkuNo()))
                             .findFirst()
                             .orElse(null);
                     if (ObjectUtils.isEmpty(skuVO)) {
@@ -139,7 +140,7 @@ public class DeliveryBoxRuleExcelListener extends AnalysisEventListener<Delivery
 
             // 初始化detailList
             excelDTO.setDetailImportDTOList(new ArrayList<>());
-            excelDTOMap.put(getSkuNo, excelDTO);
+            excelDTOMap.put(skuNo, excelDTO);
         }
 
         // 创建新的detail并设置属性
@@ -147,23 +148,54 @@ public class DeliveryBoxRuleExcelListener extends AnalysisEventListener<Delivery
 
         // 发货sku
         if (CollectionUtils.isEmpty(skuList)) {
-            errorMsgList.add("系统中未发现已启用的sku信息");
+            errorMsgList.add("系统中未发现已启用的 SKU 信息");
         } else {
-            if (StringUtils.isNotBlank(importExcelDTO.getSkuNo())) {
-                SkuVO skuVO = skuList.stream()
-                        .filter(obj -> obj.getSkuNo().equals(importExcelDTO.getDeliverySkuNo()))
-                        .findFirst()
-                        .orElse(null);
-                if (ObjectUtils.isEmpty(skuVO)) {
-                    errorMsgList.add("请录入启用的sku信息");
+            String deliverySkuNo = importExcelDTO.getDeliverySkuNo();
+            SkuVO deliverySkuVO = skuList.stream()
+                    .filter(obj -> obj.getSkuNo().equals(deliverySkuNo))
+                    .findFirst()
+                    .orElse(null);
+
+            if (ObjectUtils.isEmpty(deliverySkuVO)) {
+                errorMsgList.add("请录入启用的发货 SKU 信息");
+            } else {
+                // 校验 SKU 和发货 SKU 是否相同
+                if (skuNo.equals(deliverySkuNo)) {
+                    errorMsgList.add("主 SKU 和发货 SKU 不能相同");
+                }
+
+                // 校验 SKU + 发货 SKU 是否重复
+                String pairKey = excelDTO.getSkuId() + "_" + deliverySkuVO.getSkuId();
+                if (skuDeliverySkuPairSet.contains(pairKey)) {
+                    errorMsgList.add("SKU [" + skuNo + "] ,发货 SKU [" + deliverySkuNo + "]在文件中重复，请勿重复录入");
                 } else {
-                    detail.setDeliverySkuNo(skuVO.getSkuId());
-                    detail.setDeliverySkuNo(skuVO.getSkuNo());
-                    detail.setDeliveryProductName(skuVO.getSkuName());
+                    skuDeliverySkuPairSet.add(pairKey);
+                    detail.setDeliverySkuId(deliverySkuVO.getSkuId());
+                    detail.setDeliverySkuNo(deliverySkuVO.getSkuNo());
+                    detail.setDeliveryProductName(deliverySkuVO.getSkuName());
                 }
             }
         }
 
+        // 优先级
+        if (isPositiveInteger(importExcelDTO.getSort())) {
+            String pairKey = excelDTO.getSkuId() + "_" + importExcelDTO.getSort();
+            if (skuSortSet.contains(pairKey)) {
+                errorMsgList.add("SKU [" + skuNo + "] ,优先级 [" + importExcelDTO.getSort() + "]在文件中重复，请勿重复录入");
+            } else {
+                skuSortSet.add(pairKey);
+                detail.setSort(Integer.parseInt(importExcelDTO.getSort()));
+            }
+        } else {
+            errorMsgList.add("优先级需要是正整数");
+        }
+
+        // 发货箱规
+        if (isPositiveInteger(importExcelDTO.getPerBoxQty())) {
+            detail.setPerBoxQty(Integer.parseInt(importExcelDTO.getPerBoxQty()));
+        } else {
+            errorMsgList.add("发货箱规需要是正整数");
+        }
 
         // 存在错误数据则直接返回
         if (errorMsgList.size() > 0) {
@@ -172,16 +204,6 @@ public class DeliveryBoxRuleExcelListener extends AnalysisEventListener<Delivery
             return;
         }
 
-        // 判断是不是正整数
-        if (isPositiveInteger(importExcelDTO.getPerBoxQty())) {
-            detail.setPerBoxQty(Integer.parseInt(importExcelDTO.getPerBoxQty()));
-        }
-
-        if (isPositiveInteger(importExcelDTO.getSort())) {
-            detail.setSort(Integer.parseInt(importExcelDTO.getSort()));
-        }
-
-        // 将detail添加到对应的excelDTO的detailList中
         excelDTO.getDetailImportDTOList().add(detail);
 
     }
@@ -201,6 +223,26 @@ public class DeliveryBoxRuleExcelListener extends AnalysisEventListener<Delivery
             }
         }
         return true;
+    }
+
+    private void checkSortDuplicate(List<DeliveryBoxRuleDetailDTO.DetailImportDTO> detail) {
+        Map<Integer, Long> sortCountMap = detail.stream()
+                .collect(Collectors.groupingBy(
+                        DeliveryBoxRuleDetailDTO.DetailImportDTO::getSort,
+                        Collectors.counting()
+                ));
+
+        List<Integer> duplicateSorts = sortCountMap.entrySet().stream()
+                .filter(entry -> entry.getValue() > 1)
+                .map(Map.Entry::getKey)
+                .collect(Collectors.toList());
+
+        if (org.apache.commons.collections4.CollectionUtils.isNotEmpty(duplicateSorts)) {
+            throw new ServiceException(
+                    ApiError.ERROR_DUPLICATE_SORT,
+                    duplicateSorts
+            );
+        }
     }
 
     @Override

@@ -181,7 +181,7 @@ public class DeliveryBoxRuleServiceImpl extends SuperServiceImpl<DeliveryBoxRule
     @Override
     public Boolean importFile(BaseDTO.ImportDTO dto) {
         dto.setUserId(UserContext.getDefaultLoginUser().getUid());
-        downloadTaskFeign.saveImportTask("导入开模通知单", IMPORT_OMS_DELIVERY_BOX_RULE.getCode(), dto);
+        downloadTaskFeign.saveImportTask("导入发货箱规", IMPORT_OMS_DELIVERY_BOX_RULE.getCode(), dto);
         return Boolean.TRUE;
     }
 
@@ -322,10 +322,6 @@ public class DeliveryBoxRuleServiceImpl extends SuperServiceImpl<DeliveryBoxRule
                 //需要重写equals，跳过了不需要修改的对象
                 deliveryBoxRuleDetailEntityList.removeIf(oldList::contains);
 
-                // 检查 sort 是否重复
-                checkSortDuplicate(deliveryBoxRuleDetailEntityList);
-
-
                 Map<String, DeliveryBoxRuleDetailEntity> oldMap = oldList.stream()
                         .collect(Collectors.toMap(DeliveryBoxRuleDetailEntity::getId, Function.identity()));
 
@@ -392,6 +388,7 @@ public class DeliveryBoxRuleServiceImpl extends SuperServiceImpl<DeliveryBoxRule
                 //新增
                 for (DeliveryBoxRuleDetailEntity deliveryBoxRuleDetailEntity : addList) {
                     deliveryBoxRuleDetailEntity.setMainId(deliveryBoxRuleId);
+                    deliveryBoxRuleDetailEntity.setInvalidStatus(InvalidStatusEnum.NOT_VOIDED.getStatus());
                 }
 
                 boolean addSuccess = deliveryBoxRuleDetailService.saveBatch(addList);
@@ -417,28 +414,6 @@ public class DeliveryBoxRuleServiceImpl extends SuperServiceImpl<DeliveryBoxRule
             }
         } catch (Exception e) {
             throw new ServiceException("发货箱规导入失败", e);
-        }
-    }
-
-
-    private void checkSortDuplicate(List<DeliveryBoxRuleDetailEntity> detailEntityList) {
-        Map<Integer, Long> sortCountMap = detailEntityList.stream()
-                .filter(obj -> obj.getInvalidStatus().equals(InvalidStatusEnum.NOT_VOIDED.getStatus()))
-                .collect(Collectors.groupingBy(
-                        DeliveryBoxRuleDetailEntity::getSort,
-                        Collectors.counting()
-                ));
-
-        List<Integer> duplicateSorts = sortCountMap.entrySet().stream()
-                .filter(entry -> entry.getValue() > 1)
-                .map(Map.Entry::getKey)
-                .collect(Collectors.toList());
-
-        if (CollectionUtils.isNotEmpty(duplicateSorts)) {
-            throw new ServiceException(
-                    ApiError.ERROR_DUPLICATE_SORT,
-                    duplicateSorts
-            );
         }
     }
 
