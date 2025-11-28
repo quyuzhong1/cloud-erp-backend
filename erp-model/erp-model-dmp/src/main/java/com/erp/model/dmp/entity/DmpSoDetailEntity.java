@@ -292,6 +292,12 @@ public class DmpSoDetailEntity extends BaseEntity<DmpSoDetailEntity> {
      */
     @TableField("suite_qty")
     private Integer suiteQty;
+    
+    /**
+     * 原始单号
+     */
+    @TableField("src_tid")
+    private String srcTid;
 
     /**
      * 平台子单号
