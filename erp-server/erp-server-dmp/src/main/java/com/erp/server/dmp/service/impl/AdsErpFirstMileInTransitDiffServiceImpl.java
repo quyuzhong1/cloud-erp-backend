@@ -1,24 +1,22 @@
 package com.erp.server.dmp.service.impl;
 
-import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
 import com.common.business.enums.FileTaskEventEnum;
 import com.common.business.enums.OperationTypeEnum;
-import com.common.business.vo.LoginUser;
 
 import cn.hutool.core.util.StrUtil;
-import com.erp.model.dmp.entity.doris.AdsErpInventoryDiffKingdeeEntity;
+import com.erp.model.dmp.dto.excel.FirstMileInTransitAdjustExcelDTO;
+import com.erp.model.dmp.dto.excel.FirstMileInTransitInitExcelDTO;
+import com.erp.model.dmp.entity.doris.DwdFirstMileShipmentChangeFEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.wms.dto.FbaTransitCalculateReportDTO;
 import com.erp.model.wms.dto.excel.FbaTransitExcelDTO;
-import com.erp.model.wms.entity.FbaTransitCalculateDetailReportEntity;
-import com.erp.model.wms.entity.FbaTransitCalculateReportEntity;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
-import io.seata.spring.annotation.GlobalTransactional;
-import com.common.business.annotation.DistributeLocker;
-import com.common.business.dto.base.BaseResultDTO;
+import com.erp.server.dmp.listener.FirstMileInTransitAdjustExcelListener;
+import com.erp.server.dmp.listener.FirstMileInTransitInitExcelListener;
+import com.erp.server.dmp.service.DwdFirstMileShipmentChangeFService;
 import com.erp.model.dmp.entity.doris.AdsErpFirstMileInTransitDiffEntity;
 import com.erp.server.dmp.mapper.doris.AdsErpFirstMileInTransitDiffMapper;
 import com.erp.server.dmp.service.AdsErpFirstMileInTransitDiffService;
@@ -27,39 +25,24 @@ import com.common.business.threadlocal.UserContext;
 import com.erp.server.dmp.service.OperateLogService;
 import com.common.core.exception.ServiceException;
 import cn.hutool.core.util.ObjectUtil;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.springframework.core.io.DefaultResourceLoader;
-import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.dmp.dto.AdsErpFirstMileInTransitDiffDTO;
 
 import javax.annotation.Resource;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.nio.charset.StandardCharsets;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.stream.Collectors;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import cn.hutool.core.collection.CollUtil;
-import com.google.common.collect.Sets;
-import com.alibaba.fastjson.JSONObject;
-import com.google.common.collect.Lists;
-import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.business.dto.base.*;
-import com.erp.model.sys.dto.SysCodeDTO;
-import com.common.core.excel.ExcelPrintUtils;
-import com.common.core.utils.date.DateUtil;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -81,6 +64,8 @@ public class AdsErpFirstMileInTransitDiffServiceImpl extends SuperServiceImpl<Ad
     private OperateLogService operateLogService;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+    @Resource
+    private DwdFirstMileShipmentChangeFService dwdFirstMileShipmentChangeFService;
 
     @Override
     public PagingVO<AdsErpFirstMileInTransitDiffDTO.ListDTO> paging(PagingDTO<AdsErpFirstMileInTransitDiffDTO.PagingParamDTO> pagingParamDTO) {
@@ -144,73 +129,158 @@ public class AdsErpFirstMileInTransitDiffServiceImpl extends SuperServiceImpl<Ad
         if (Objects.isNull(entity)){
             throw new ServiceException(ApiError.NOT_EXIST,"平台在途报告记录");
         }
-//        //存在下期在途记录不能调整
-//        LocalDateTime reportMonth = entity.getCheckMonthQuery();
-//        //下个月
-//        LocalDateTime nextMonth = reportMonth.minusMonths(-1);
-//        String shipmentCode = entity.getShipmentCode();
-//        String asin = detailReportEntity.getAsin();
-//        String msku = detailReportEntity.getMsku();
-//        List<FbaTransitCalculateDetailReportEntity> list = fbaTransitCalculateDetailReportService.listTransitDetail(nextMonth, shipmentCode, asin, msku);
-//
-//        if (CollUtil.isNotEmpty(list)){
-//            throw new ServiceException("存在【{}】在途核对数据，不能调整本月在途数量", nextMonth.format(DateTimeFormatter.ofPattern("yyyy-MM")));
-//        }
-//        fbaTransitCalculateDetailReportService.updateAdjustQty(adjustDTO,detailReportEntity);
-//
-//        int afterAdjustQty = detailReportEntity.getEndPeriodTransitQty() + adjustDTO.getAdjustQty();
-//        if (afterAdjustQty < 0){
-//            throw new ServiceException("期末在途(调整后)不能小于0");
-//        }
-//        this.lambdaUpdate().eq(FbaTransitCalculateDetailReportEntity::getId, adjustDTO.getDetailId())
-//                .set(FbaTransitCalculateDetailReportEntity::getEndPeriodTransitAdjustQty,adjustDTO.getAdjustQty())
-//                .set(FbaTransitCalculateDetailReportEntity::getAfterEndPeriodTransitQty,afterAdjustQty)
-//                .set(FbaTransitCalculateDetailReportEntity::getAdjustReason,adjustDTO.getAdjustReason())
-//                .set(FbaTransitCalculateDetailReportEntity::getAdjustTime, LocalDateTime.now())
-//                .set(FbaTransitCalculateDetailReportEntity::getAdjustUserId, UserContext.getDefaultLoginUser().getUid())
-//                .set(FbaTransitCalculateDetailReportEntity::getAdjustUserName, UserContext.getDefaultLoginUser().getUserName())
-//                .update();
-//        String msg = CharSequenceUtil.format("编辑期末在途调整数量从【{}】变为【{}】,调整原因：【{}】", detailReportEntity.getAfterEndPeriodTransitQty(),afterAdjustQty, adjustDTO.getAdjustReason());
-//        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.FBA_TRANSIT_CALCULATE_REPORT.getCode(), detailReportEntity.getId(), "编辑操作");
+        //存在下期在途记录不能调整
+        LocalDateTime reportMonth = LocalDateTimeUtil.parse(entity.getCheckMonthQuery(),  "yyyy-MM-dd HH:mm:ss");
+        //下个月
+        LocalDateTime nextMonth = reportMonth.minusMonths(-1);
+        Integer count = this.lambdaQuery()
+                .eq(AdsErpFirstMileInTransitDiffEntity::getExecStatus, "doing")
+                .count();
+        if (count > 0){
+            throw new ServiceException("存在【{}】在途核对数据，不能调整本月在途数量", nextMonth.format(DateTimeFormatter.ofPattern("yyyy-MM")));
+        }
+        DwdFirstMileShipmentChangeFEntity newEntity = buildChangeEntity("firstMileAdjust", entity, adjustDTO.getAdjustQty(), entity.getAdjustReason(), entity.getCheckMonth(), reportMonth);
+        dwdFirstMileShipmentChangeFService.save(newEntity);
+
+        int afterAdjustQty = entity.getEndPeriodTransitQty() + adjustDTO.getAdjustQty();
+        if (afterAdjustQty < 0){
+            throw new ServiceException("期末在途(调整后)不能小于0");
+        }
+        String msg = CharSequenceUtil.format("编辑期末在途调整数量从【{}】变为【{}】,调整原因：【{}】", entity.getAfterEndPeriodTransitQty(),afterAdjustQty, adjustDTO.getAdjustReason());
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.ADS_ERP_FIRST_MILE_IN_TRANSIT_DIFF.getCode(), entity.getId(), "编辑操作");
         return Boolean.TRUE;
+    }
+
+    private DwdFirstMileShipmentChangeFEntity buildChangeEntity(
+                                                                String changeBillType,
+                                                                AdsErpFirstMileInTransitDiffEntity entity,
+                                                                Integer adjustQty,
+                                                                String adjustReason,
+                                                                String checkMonth,
+                                                                LocalDateTime checkMonthQuery
+    ) {
+        DwdFirstMileShipmentChangeFEntity newEntity = new DwdFirstMileShipmentChangeFEntity();
+        newEntity.setCheckMonth(checkMonth);
+        newEntity.setCheckMonthQuery(checkMonthQuery);
+        newEntity.setSourceSystem(entity.getSourceSystem());
+        newEntity.setSourcePlatform(entity.getSourceSystem());
+        newEntity.setAccountCode(entity.getAccountCode());
+        newEntity.setCheckMonth(entity.getCheckMonth());
+        newEntity.setNextLevelId(entity.getNextLevelId());
+        newEntity.setBillTopic(changeBillType);
+        newEntity.setPlatformShipmentId(entity.getShipmentId());
+        newEntity.setPlatformShipmentCode(entity.getShipmentCode());
+        newEntity.setShopId(entity.getShopId());
+        newEntity.setShopName(entity.getShopName());
+        newEntity.setCustomerId(entity.getCustomerId());
+        newEntity.setCustomerName(entity.getCustomerName());
+        newEntity.setShipmentStatus(entity.getShipmentStatus());
+        newEntity.setShipmentCreateTime(entity.getShipmentCreateTime());
+        newEntity.setWarehouseId(entity.getWarehouseId());
+        newEntity.setWarehouseName(entity.getWarehouseName());
+        newEntity.setPlatformSpuNo(entity.getPlatformSpuNo());
+        newEntity.setPlatformSkuNo(entity.getPlatformSkuNo());
+        newEntity.setIntransitWarehouseId(entity.getIntransitWarehouseId());
+        newEntity.setIntransitWarehouseName(entity.getIntransitWarehouseName());
+        newEntity.setPlatformSpuNo(entity.getPlatformSpuNo());
+        newEntity.setPlatformSkuNo(entity.getPlatformSkuNo());
+        newEntity.setPlatformSkuNo(entity.getPlatformSkuNo());
+        newEntity.setSkuId(entity.getSkuId());
+        newEntity.setSkuNo(entity.getSkuNo());
+        newEntity.setChangeQty(adjustQty);
+        newEntity.setRemark(adjustReason);
+        return newEntity;
     }
 
     @Override
     public Boolean importInitFile(MultipartFile excelFile, HttpServletResponse response) {
-//        FbaTransitExcelListener excelListenerUtil = new FbaTransitExcelListener();
-//        try {
-//            EasyExcel.read(excelFile.getInputStream(), FbaTransitExcelDTO.class, excelListenerUtil).sheet(0).doRead();
-//        } catch (IOException e) {
-//            log.error("导入错误！", e);
-//            throw new ServiceException(ApiError.ERROR_95124);
-//        } catch (ExcelCommonException e) {
-//            log.error("导入格式错误！", e);
-//            throw new ServiceException(ApiError.ERROR_1016);
-//        }catch (Exception e){
-//            log.error("导入数据错误！", e);
-//            throw new ServiceException(ApiError.ERROR_1012);
-//        }
-//        List<FbaTransitExcelDTO> excelDateList = excelListenerUtil.getExcelDateList();
-//        if (CollectionUtils.isEmpty(excelDateList)) {
-//            throw new ServiceException(ApiError.ERROR_95123);
-//        } else if (excelDateList.size() > 5000) {
-//            throw new ServiceException(ApiError.ERROR_EXCEL_IMPORT_SIZE);
-//        }
-//        List<FbaTransitExcelDTO> errorList = excelListenerUtil.getErrorList();
-//        List<FbaTransitExcelDTO> successList = excelListenerUtil.getSuccessList();
-//        //异步生成上月期末数据
-//        service.asyncCreateTransitCalculateReport(successList);
-//        if (CollUtil.isNotEmpty(errorList)) {
-//            String fileName = "FBA期初在途错误数据.xlsx";
-//            ExcelUtil.export(fileName, "error", errorList, FbaTransitExcelDTO.class, response);
-//            return Boolean.FALSE;
-//        }
+        FirstMileInTransitInitExcelListener excelListenerUtil = new FirstMileInTransitInitExcelListener();
+        try {
+            EasyExcel.read(excelFile.getInputStream(), FirstMileInTransitInitExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+        } catch (IOException e) {
+            log.error("导入错误！", e);
+            throw new ServiceException(ApiError.ERROR_95124);
+        } catch (ExcelCommonException e) {
+            log.error("导入格式错误！", e);
+            throw new ServiceException(ApiError.ERROR_1016);
+        }catch (Exception e){
+            log.error("导入数据错误！", e);
+            throw new ServiceException(ApiError.ERROR_1012);
+        }
+        List<FirstMileInTransitInitExcelDTO> excelDateList = excelListenerUtil.getExcelDateList();
+        if (CollectionUtils.isEmpty(excelDateList)) {
+            throw new ServiceException(ApiError.ERROR_95123);
+        } else if (excelDateList.size() > 5000) {
+            throw new ServiceException(ApiError.ERROR_EXCEL_IMPORT_SIZE);
+        }
+        List<FirstMileInTransitInitExcelDTO> errorList = excelListenerUtil.getErrorList();
+        List<FirstMileInTransitInitExcelDTO> successList = excelListenerUtil.getSuccessList();
+        //异步生成上月期末数据
+        List<DwdFirstMileShipmentChangeFEntity> newListEntity = successList.stream().map(e ->
+                buildChangeEntity(
+                        "firstMileInit",
+                        e.getEntity(),
+                        Integer.parseInt(e.getInitTransitQty()),
+                        "",
+                        e.getReportMonth(),
+                        LocalDateTimeUtil.parse(e.getReportMonth(), "yyyy-MM-dd HH:mm:ss")
+                )).collect(Collectors.toList());
+        if (!CollectionUtils.isEmpty(newListEntity)) {
+            dwdFirstMileShipmentChangeFService.saveBatch(newListEntity);
+        }
+
+        //异步生成上月期末数据
+        // TODO
+        if (CollUtil.isNotEmpty(errorList)) {
+            String fileName = "FBA期初在途错误数据.xlsx";
+            ExcelUtil.export(fileName, "error", errorList, FbaTransitExcelDTO.class, response);
+            return Boolean.FALSE;
+        }
         return true;
     }
 
     @Override
     public Boolean importAdjustFile(MultipartFile excelFile, HttpServletResponse response) {
-
+        FirstMileInTransitAdjustExcelListener excelListenerUtil = new FirstMileInTransitAdjustExcelListener();
+        try {
+            EasyExcel.read(excelFile.getInputStream(), FirstMileInTransitAdjustExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+        } catch (IOException e) {
+            log.error("导入错误！", e);
+            throw new ServiceException(ApiError.ERROR_95124);
+        } catch (ExcelCommonException e) {
+            log.error("导入格式错误！", e);
+            throw new ServiceException(ApiError.ERROR_1016);
+        }catch (Exception e){
+            log.error("导入数据错误！", e);
+            throw new ServiceException(ApiError.ERROR_1012);
+        }
+        List<FirstMileInTransitAdjustExcelDTO> excelDateList = excelListenerUtil.getExcelDateList();
+        if (CollectionUtils.isEmpty(excelDateList)) {
+            throw new ServiceException(ApiError.ERROR_95123);
+        } else if (excelDateList.size() > 5000) {
+            throw new ServiceException(ApiError.ERROR_EXCEL_IMPORT_SIZE);
+        }
+        List<FirstMileInTransitAdjustExcelDTO> errorList = excelListenerUtil.getErrorList();
+        List<FirstMileInTransitAdjustExcelDTO> successList = excelListenerUtil.getSuccessList();
+        //异步生成上月期末数据
+        List<DwdFirstMileShipmentChangeFEntity> newListEntity = successList.stream().map(e ->
+                buildChangeEntity(
+                        "firstMileAdjust",
+                        e.getEntity(),
+                        Integer.parseInt(e.getAdjustQty()),
+                        e.getRemark(),
+                        e.getReportMonth(),
+                        LocalDateTimeUtil.parse(e.getReportMonth(), "yyyy-MM-dd HH:mm:ss")
+                )).collect(Collectors.toList());
+        if (!CollectionUtils.isEmpty(newListEntity)) {
+            dwdFirstMileShipmentChangeFService.saveBatch(newListEntity);
+        }
+        // TODO
+        if (CollUtil.isNotEmpty(errorList)) {
+            String fileName = "FBA在途调整错误数据.xlsx";
+            ExcelUtil.export(fileName, "error", errorList, FbaTransitExcelDTO.class, response);
+            return Boolean.FALSE;
+        }
         return true;
     }
 

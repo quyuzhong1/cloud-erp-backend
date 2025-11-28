@@ -103,7 +103,7 @@ public class AdsErpFirstMileInTransitDiffEntity extends BaseEntity<AdsErpFirstMi
      * 核对周期页面查询
      */
     @TableField("check_month_query")
-    private LocalDateTime checkMonthQuery;
+    private String checkMonthQuery;
     /**
     * 货件ID
     */
@@ -143,17 +143,17 @@ public class AdsErpFirstMileInTransitDiffEntity extends BaseEntity<AdsErpFirstMi
     * 货件创建时间
     */
     @TableField("shipment_create_time")
-    private Date shipmentCreateTime;
+    private LocalDateTime shipmentCreateTime;
     /**
     * 货件签收时间
     */
     @TableField("shipment_receive_time")
-    private Date shipmentReceiveTime;
+    private LocalDateTime shipmentReceiveTime;
     /**
     * 货件调整时间
     */
     @TableField("shipment_adjust_time")
-    private Date shipmentAdjustTime;
+    private LocalDateTime shipmentAdjustTime;
     /**
     * 目的仓库id
     */
@@ -279,6 +279,21 @@ public class AdsErpFirstMileInTransitDiffEntity extends BaseEntity<AdsErpFirstMi
     */
     @TableField("remark")
     private String remark;
+    /**
+     * 执行状态
+     */
+    @TableField("exec_status")
+    private String execStatus;
+    /**
+     * 执行状态名称
+     */
+    @TableField("exec_status_name")
+    private String execStatusName;
+    /**
+     * 执行完成时间
+     */
+    @TableField("finish_time")
+    private LocalDateTime finishTime;
 
 
     public static final String UNIQUE_CODE = "unique_code";

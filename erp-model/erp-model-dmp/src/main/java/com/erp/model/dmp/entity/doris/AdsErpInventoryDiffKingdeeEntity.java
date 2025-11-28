@@ -4,6 +4,9 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
 import com.baomidou.mybatisplus.annotation.TableField;
 import java.io.Serializable;
+import java.time.LocalDateTime;
+import java.util.Date;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -236,6 +239,21 @@ public class AdsErpInventoryDiffKingdeeEntity extends BaseEntity<AdsErpInventory
     */
     @TableField("remark")
     private String remark;
+    /**
+     * 执行状态
+     */
+    @TableField("exec_status")
+    private String execStatus;
+    /**
+     * 执行状态名称
+     */
+    @TableField("exec_status_name")
+    private String execStatusName;
+    /**
+     * 执行完成时间
+     */
+    @TableField("finish_time")
+    private LocalDateTime finishTime;
 
 
     public static final String UNIQUE_CODE = "unique_code";
