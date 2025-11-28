@@ -43,6 +43,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.collectingAndThen;
@@ -803,6 +804,7 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
     private void checkThirdAddList(List<ThirdAddDTO> thirdList, String sysName, ThirdMappingDTO.AddDTO addDTO, String dictPlatform) {
         String type = addDTO.getType();
         String sysId = addDTO.getSysId();
+        AtomicInteger count = new AtomicInteger();
         thirdList.forEach(thirdAddDTO -> {
             String thirdName = null;
             switch (ThirdSysTypeEnum.getByCode(type)) {
@@ -816,6 +818,11 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
                         thirdAddDTO.setThirdCode(thirdWarehouseEntity.getCode());
                     }
                     if (OmsPlatformEnum.getByCode(thirdAddDTO.getSysType()) != null) {
+                        //校验是否只添加了一个海外仓
+                        count.getAndIncrement();
+                        if (count.get() > 1) {
+                            throw new ServiceException(ApiError.ERROR_THIRD_NOT_ALLOW_MULTIPLE);
+                        }
                         OverseasProviderDTO.FeignDTO feignDTO = new OverseasProviderDTO.FeignDTO();
                         feignDTO.setCode(thirdAddDTO.getSysType());
                         feignDTO.setPlatformShortName(thirdAddDTO.getThirdShortName());

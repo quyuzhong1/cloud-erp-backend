@@ -290,6 +290,11 @@ public class DeliveryBoxRuleServiceImpl extends SuperServiceImpl<DeliveryBoxRule
 
                         detailViews.add(defaultDetail);
                     }
+
+                    // 对明细列表按sort正序排序
+                    detailViews.sort(Comparator.comparingInt(
+                            d -> d.getSort() == null ? 0 : d.getSort()
+                    ));
                 }
                 viewDTO.setDeliveryBoxRuleDetailDTOList(detailViews);
             } else {

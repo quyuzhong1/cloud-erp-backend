@@ -102,6 +102,24 @@ public class DeliveryBoxRuleDetailServiceImpl extends SuperServiceImpl<DeliveryB
     @Override
     @Transactional
     public Boolean save(List<DeliveryBoxRuleDetailDTO.AddDTO> deliveryBoxRuleDetailDTOList, String deliveryBoxRuleId) {
+        Map<Integer, Long> sortCountMap = deliveryBoxRuleDetailDTOList.stream()
+                .collect(Collectors.groupingBy(
+                        DeliveryBoxRuleDetailDTO.AddDTO::getSort,
+                        Collectors.counting()
+                ));
+
+        List<Integer> duplicateSorts = sortCountMap.entrySet().stream()
+                .filter(entry -> entry.getValue() > 1)
+                .map(Map.Entry::getKey)
+                .collect(Collectors.toList());
+
+        if (CollectionUtils.isNotEmpty(duplicateSorts)) {
+            throw new ServiceException(
+                    ApiError.ERROR_DUPLICATE_SORT,
+                    duplicateSorts
+            );
+        }
+
         List<DeliveryBoxRuleDetailEntity> deliveryBoxRuleDetailEntityList = BeanMapperUtils.copyList(DeliveryBoxRuleDetailEntity.class, deliveryBoxRuleDetailDTOList);
         for (DeliveryBoxRuleDetailEntity deliveryBoxRuleDetailEntity : deliveryBoxRuleDetailEntityList) {
             deliveryBoxRuleDetailEntity.setMainId(deliveryBoxRuleId);
