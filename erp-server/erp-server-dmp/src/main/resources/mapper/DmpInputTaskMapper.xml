@@ -117,6 +117,7 @@
         where
             ${params.sqlMap.default}
         and dit.is_deleted = false
+        and dit.task_type != 'child'
         <if test="params.ids != null and params.ids.size > 0">
             and dit.id in
             <foreach collection="params.ids" item="id" open="(" separator="," close=")">
@@ -156,6 +157,7 @@
         COUNT(*) AS count
         FROM dmp_input_task as dit
         WHERE dit.is_deleted = FALSE
+          and dit.task_type != 'child'
         <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
         </if>
