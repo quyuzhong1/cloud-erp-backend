@@ -865,24 +865,15 @@ public class ContractInfoServiceImpl extends SuperServiceImpl<ContractInfoMapper
      */
     @Override
     public List<ContractInfoDTO.ProviderResultDTO> listContractByProvider(ContractInfoDTO.ProviderParamsDTO dto) {
-        // 查询适用于所有服务商的合同
+        List<String> serviceProviderIds = Arrays.asList(dto.getServiceProviderId(), "all");
+        // 查询适用于所有服务商的合同(已审核，启用，更新时间倒序)
         List<ContractInfoEntity> list = lambdaQuery()
-                .eq(ContractInfoEntity::getServiceProviderId, "all")
+                .in(ContractInfoEntity::getServiceProviderId, serviceProviderIds)
                 .eq(ContractInfoEntity::getApproveStatus, ApproveStatusEnum.APPROVE.getCode())
+                .eq(ContractInfoEntity::getDisable, Boolean.FALSE)
                 .ne(ContractInfoEntity::getTemplateId, "")
                 .orderByDesc(ContractInfoEntity::getUpdateTime)
                 .list();
-
-        // 查询指定服务商下所有已审核、已绑定模板的合同信息
-        List<ContractInfoEntity> listByServiceProviderId = lambdaQuery()
-                .eq(ContractInfoEntity::getServiceProviderId, dto.getServiceProviderId())
-                .eq(ContractInfoEntity::getApproveStatus, ApproveStatusEnum.APPROVE.getCode())
-                .ne(ContractInfoEntity::getTemplateId, "")
-                .orderByDesc(ContractInfoEntity::getUpdateTime)
-                .list();
-
-        //合并
-        list.addAll(listByServiceProviderId);
         if(CollUtil.isEmpty(list)){
             throw new ServiceException(ApiError.ERROR_CONTACT_NOT_BINDING);
         }
@@ -918,7 +909,10 @@ public class ContractInfoServiceImpl extends SuperServiceImpl<ContractInfoMapper
         List<String> templateIds = list.stream().map(ContractInfoEntity::getTemplateId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
 
         // 批量查询模板信息
-        List<TemplateManagementEntity> templateManagementList = FeignQuery.create(TemplateManagementEntity.class).in(TemplateManagementEntity::getId, templateIds).list();
+        List<TemplateManagementEntity> templateManagementList = FeignQuery.create(TemplateManagementEntity.class)
+                .in(TemplateManagementEntity::getId, templateIds)
+                .eq(TemplateManagementEntity::getDisabled, Boolean.FALSE)
+                .list();
 
         if (CollUtil.isEmpty(templateManagementList)) {
             throw new ServiceException(ApiError.ERROR_CONTACT_NOT_BINDING);
