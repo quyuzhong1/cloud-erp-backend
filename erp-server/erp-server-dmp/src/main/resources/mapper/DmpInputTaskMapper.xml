@@ -117,7 +117,7 @@
         where
             ${params.sqlMap.default}
         and dit.is_deleted = false
-        and dit.task_tyoe != 'child'
+        and dit.task_type != 'child'
         <if test="params.ids != null and params.ids.size > 0">
             and dit.id in
             <foreach collection="params.ids" item="id" open="(" separator="," close=")">
