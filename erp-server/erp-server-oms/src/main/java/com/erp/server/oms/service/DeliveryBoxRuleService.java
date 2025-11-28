@@ -66,7 +66,7 @@ public interface DeliveryBoxRuleService extends SuperService<DeliveryBoxRuleEnti
     /**
      * 根据sku查询箱规
      */
-    List<DeliveryBoxRuleDTO.ViewDTO> listBoxRuleBySku(List<DeliveryBoxRuleDTO.SkuDTO> skuList);
+    List<DeliveryBoxRuleDTO.ListBoxRuleBySkuDTO> listBoxRuleBySku(List<DeliveryBoxRuleDTO.SkuDTO> skuList);
 
     void handleImportSuccessList(List<DeliveryBoxRuleDTO.ImportDTO> successList);
 }

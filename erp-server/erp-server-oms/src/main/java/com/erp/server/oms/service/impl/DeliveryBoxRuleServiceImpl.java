@@ -236,31 +236,89 @@ public class DeliveryBoxRuleServiceImpl extends SuperServiceImpl<DeliveryBoxRule
     }
 
     @Override
-    public List<DeliveryBoxRuleDTO.ViewDTO> listBoxRuleBySku(List<DeliveryBoxRuleDTO.SkuDTO> skuList) {
-        List<DeliveryBoxRuleDTO.ViewDTO> viewDTOList = new ArrayList<>();
+    public List<DeliveryBoxRuleDTO.ListBoxRuleBySkuDTO> listBoxRuleBySku(List<DeliveryBoxRuleDTO.SkuDTO> skuList) {
+        List<DeliveryBoxRuleDTO.ListBoxRuleBySkuDTO> viewDTOList = new ArrayList<>();
+
+        // 批量查询SKU信息
+        List<String> skuNoList = skuList.stream()
+                .map(DeliveryBoxRuleDTO.SkuDTO::getSkuNo)
+                .collect(Collectors.toList());
+        List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(skuNoList);
+        Map<String, SkuVO> skuInfoMap = skuVOList.stream()
+                .collect(Collectors.toMap(SkuVO::getSkuNo, Function.identity()));
+
         for (DeliveryBoxRuleDTO.SkuDTO skuDTO : skuList) {
-            DeliveryBoxRuleDTO.ViewDTO viewDTO = new DeliveryBoxRuleDTO.ViewDTO();
+            SkuVO skuInfo = skuInfoMap.get(skuDTO.getSkuNo());
+            if (skuInfo == null) {
+                throw new ServiceException(ApiError.ERROR_NOT_FOUND_SKU, skuDTO.getSkuNo());
+            }
 
             DeliveryBoxRuleEntity deliveryBoxRuleEntity = this.lambdaQuery()
                     .eq(DeliveryBoxRuleEntity::getSkuNo, skuDTO.getSkuNo())
                     .one();
-            BeanUtils.copyProperties(deliveryBoxRuleEntity,viewDTO);
 
-            // 查询箱规下的所有有效明细记录（未作废的）
-            List<DeliveryBoxRuleDetailEntity> detailEntityList = deliveryBoxRuleDetailService.lambdaQuery()
-                    .eq(DeliveryBoxRuleDetailEntity::getMainId, deliveryBoxRuleEntity.getId())  // 关联主表ID
-                    .eq(DeliveryBoxRuleDetailEntity::getInvalidStatus, InvalidStatusEnum.NOT_VOIDED.getStatus())  // 未作废状态
-                    .list();
+            DeliveryBoxRuleDTO.ListBoxRuleBySkuDTO viewDTO = createDefaultViewDTO(skuInfo);
+            List<DeliveryBoxRuleDetailDTO.ListBoxRuleBySkuDetailDTO> detailViews = new ArrayList<>();
+            if (deliveryBoxRuleEntity != null) {
+                BeanUtils.copyProperties(deliveryBoxRuleEntity, viewDTO);
+                // 查询有效的箱规明细
+                List<DeliveryBoxRuleDetailEntity> detailEntities = deliveryBoxRuleDetailService.lambdaQuery()
+                        .eq(DeliveryBoxRuleDetailEntity::getMainId, deliveryBoxRuleEntity.getId())
+                        .eq(DeliveryBoxRuleDetailEntity::getInvalidStatus, InvalidStatusEnum.NOT_VOIDED.getStatus())
+                        .list();
 
-            List<DeliveryBoxRuleDetailDTO.ViewDTO> viewDTOS = BeanMapperUtils.copyList(
-                    DeliveryBoxRuleDetailDTO.ViewDTO.class, detailEntityList);
+                detailViews.addAll(BeanMapperUtils.copyList(DeliveryBoxRuleDetailDTO.ListBoxRuleBySkuDetailDTO.class, detailEntities));
 
-            viewDTO.setDeliveryBoxRuleDetailDTOList(viewDTOS);
+                if (!detailViews.isEmpty()) {
+                    // 检查是否已经存在单箱数量为1的明细
+                    boolean hasDefaultBox = detailViews.stream().anyMatch(d -> d.getPerBoxQty() != null && d.getPerBoxQty() == 1);
+
+                    if (!hasDefaultBox) {
+                        // 创建默认箱规明细（放在最后）
+                        DeliveryBoxRuleDetailDTO.ListBoxRuleBySkuDetailDTO defaultDetail = new DeliveryBoxRuleDetailDTO.ListBoxRuleBySkuDetailDTO();
+                        defaultDetail.setDeliverySkuId(deliveryBoxRuleEntity.getSkuId());
+                        defaultDetail.setDeliverySkuNo(deliveryBoxRuleEntity.getSkuNo());
+                        defaultDetail.setDeliveryProductName(deliveryBoxRuleEntity.getProductName());
+                        defaultDetail.setPerBoxQty(1);
+
+                        // 最大优先级+1
+                        int maxSort = detailViews.stream()
+                                .mapToInt(d -> d.getSort() == null ? 0 : d.getSort())
+                                .max()
+                                .orElse(0);
+                        defaultDetail.setSort(maxSort + 1);
+
+                        detailViews.add(defaultDetail);
+                    }
+                }
+                viewDTO.setDeliveryBoxRuleDetailDTOList(detailViews);
+            } else {
+                // 如果没有有效明细，则创建一个单箱数量为1的箱规
+                DeliveryBoxRuleDetailDTO.ListBoxRuleBySkuDetailDTO defaultDetail = new DeliveryBoxRuleDetailDTO.ListBoxRuleBySkuDetailDTO();
+                defaultDetail.setDeliverySkuId(viewDTO.getSkuId());
+                defaultDetail.setDeliverySkuNo(viewDTO.getSkuNo());
+                defaultDetail.setDeliveryProductName(viewDTO.getProductName());
+                defaultDetail.setPerBoxQty(1);
+                defaultDetail.setSort(1);
+                detailViews.add(defaultDetail);
+                viewDTO.setDeliveryBoxRuleDetailDTOList(detailViews);
+            }
             viewDTOList.add(viewDTO);
         }
 
-        // 返回结果列表
         return viewDTOList;
+    }
+
+    /**
+     * 创建默认视图DTO（当没有箱规时使用）
+     */
+    private DeliveryBoxRuleDTO.ListBoxRuleBySkuDTO createDefaultViewDTO(SkuVO skuInfo) {
+        DeliveryBoxRuleDTO.ListBoxRuleBySkuDTO viewDTO = new DeliveryBoxRuleDTO.ListBoxRuleBySkuDTO();
+        viewDTO.setSkuId(skuInfo.getSkuId());
+        viewDTO.setSkuNo(skuInfo.getSkuNo());
+        viewDTO.setProductName(skuInfo.getSkuName());
+        viewDTO.setDeliveryBoxRuleDetailDTOList(new ArrayList<>());
+        return viewDTO;
     }
 
     @Override

@@ -169,7 +169,7 @@ public class DeliveryBoxRuleController extends BaseController {
      */
     @PostMapping("/listBoxRuleBySku")
     @LogViewService
-    public ApiResult<List<DeliveryBoxRuleDTO.ViewDTO>> listBoxRuleBySku(@RequestBody List<DeliveryBoxRuleDTO.SkuDTO> skuList) {
+    public ApiResult<List<DeliveryBoxRuleDTO.ListBoxRuleBySkuDTO>> listBoxRuleBySku(@RequestBody List<DeliveryBoxRuleDTO.SkuDTO> skuList) {
         return success(deliveryBoxRuleService.listBoxRuleBySku(skuList));
     }
 }

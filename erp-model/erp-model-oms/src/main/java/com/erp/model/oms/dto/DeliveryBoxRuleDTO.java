@@ -295,4 +295,30 @@ public class DeliveryBoxRuleDTO implements Serializable {
 
     }
 
+    /**
+     * 详情
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ListBoxRuleBySkuDTO {
+
+        /**
+         * skuId
+         */
+        private String skuId;
+
+        /**
+         * sku编码
+         */
+        private String skuNo;
+
+        /**
+         * sku名称
+         */
+        private String productName;
+
+
+        private List<DeliveryBoxRuleDetailDTO.ListBoxRuleBySkuDetailDTO> deliveryBoxRuleDetailDTOList;
+    }
+
 }
