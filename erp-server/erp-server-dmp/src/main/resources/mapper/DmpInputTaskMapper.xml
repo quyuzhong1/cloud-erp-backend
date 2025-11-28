@@ -157,6 +157,7 @@
         COUNT(*) AS count
         FROM dmp_input_task as dit
         WHERE dit.is_deleted = FALSE
+          and dit.task_type != 'child'
         <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
         </if>
