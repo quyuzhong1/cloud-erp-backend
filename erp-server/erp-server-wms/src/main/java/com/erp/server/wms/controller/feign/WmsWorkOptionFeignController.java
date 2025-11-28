@@ -44,6 +44,8 @@ public class WmsWorkOptionFeignController {
     private PoInstockService poInstockService;
 
     @Resource
+    private SoOutstockService soOutstockService;
+    @Resource
     private PoReturnService poReturnService;
     @Resource
     private PoReturnDetailService poReturnDetailService;
@@ -169,7 +171,34 @@ public class WmsWorkOptionFeignController {
         }
         return resultDTOS;
     }
-
+    /**
+     * 销售出库审核
+     *
+     * @param dto
+     */
+    @PostMapping("/soOutstockApprove")
+    public List<BatchResultDTO> soOutstockApprove(@RequestBody @Validated BaseApproveParamDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<SoOutstockEntity> entityList = soOutstockService.listByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            SoOutstockEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"采购收货单记录不存在"));
+                continue;
+            }
+            try {
+                ApproveOneDTO approveOneDTO = new ApproveOneDTO();
+                approveOneDTO.setId(id);
+                approveOneDTO.setType(dto.getType());
+                approveOneDTO.setComment(dto.getComment());
+                resultDTOS.add(soOutstockService.approve(approveOneDTO));
+            }catch (Exception e){
+                log.error("销售出库单审核失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS;
+    }
     /**
      * 采购退货审核
      *

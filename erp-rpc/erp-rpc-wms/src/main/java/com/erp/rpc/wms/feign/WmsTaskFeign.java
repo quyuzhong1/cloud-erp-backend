@@ -135,6 +135,13 @@ public interface WmsTaskFeign {
     List<BatchResultDTO> poInstockApprove(@RequestBody @Validated BaseApproveParamDTO baseApproveParamDTO);
 
     /**
+     * 销售出库单审核
+     * @return ApiResult
+     */
+    @PostMapping("feign/wmsWorkOption/soOutstockApprove")
+    List<BatchResultDTO> soOutstockApprove(@RequestBody @Validated BaseApproveParamDTO baseApproveParamDTO);
+
+    /**
      * 采购退货审核
      * @Author Luo_WG
      * @Date 2023/4/6 19:06
