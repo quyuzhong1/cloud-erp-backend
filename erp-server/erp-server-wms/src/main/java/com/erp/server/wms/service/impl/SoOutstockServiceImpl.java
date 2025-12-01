@@ -2557,7 +2557,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             updateList = updateList.stream().filter(v -> v.getApproveStatus().getCode().equalsIgnoreCase(ApproveStatusEnum.APPROVE.getCode())).collect(Collectors.toList());
             if(update && CollectionUtils.isNotEmpty(updateList)){
                 //推送金蝶同步任务
-                sendPushTask(updateList,SyncOperateEnum.OPERATE_APPROVE.getCode());
+//                sendPushTask(updateList,SyncOperateEnum.OPERATE_APPROVE.getCode());
 
                 //推送到订货通
                 List<String> idList = updateList.stream().map(SoOutstockEntity::getId).distinct().collect(Collectors.toList());

@@ -83,6 +83,7 @@ public class DmpInputFeishuGetInstancesInitHandler extends DmpInputInitHandler {
                 }
                 try {
                     GetInstanceResp instance = fsService.getInstance(instanceId);
+                    log.warn("调用飞书获取审批实例返回数据: {}", JSON.toJSONString(instance));
                     GetInstanceRespBody data = instance.getData();
 					String jsonString = JSON.toJSONString(data);
 					JSONObject parseObject = JSON.parseObject(jsonString);

@@ -1,6 +1,7 @@
 package com.erp.server.wms.service;
 
 
+import com.alibaba.fastjson.JSONObject;
 import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.service.SuperService;
 import com.erp.model.wms.dto.DictBasicDTO;
@@ -18,6 +19,9 @@ import java.util.List;
  */
 public interface DictBasicService extends SuperService<DictBasicEntity> {
 
+	boolean saveJsonObject(JSONObject jsonObject);
+
+	boolean updateJsonObject(List<JSONObject> jsonObjects);
     
     /**
      * 保存或者修改字典信息

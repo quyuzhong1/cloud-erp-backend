@@ -154,4 +154,21 @@
         </where>
     </select>
 
+
+    <select id="listSkuPrice" resultType="com.erp.model.scm.dto.PurchasePriceDTO$SupplierSkuPrice">
+        SELECT
+        pp.supplier_id,
+        ppd.sku_id,
+        ppd.sku_no,
+        ppd.tax_price,
+        ppd.tax_rate,
+        ppd.min_qty,
+        ppd.max_qty,
+        ppd.currency,
+        pp.purchase_org_id as purchaseOrgId,
+        pp.purchase_org_name as purchaseOrgName
+        FROM purchase_price pp
+        LEFT JOIN purchase_price_detail ppd ON pp.id = ppd.purchase_price_id and ppd.is_deleted = false
+        WHERE pp.is_deleted = false and ppd.disabled = false and approve_status = 'approve'
+    </select>
 </mapper>

@@ -10,6 +10,7 @@ import feign.RequestInterceptor;
 import feign.RequestTemplate;
 import io.seata.core.context.RootContext;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.RequestContextHolder;
@@ -56,6 +57,7 @@ public class FeignInterceptor implements RequestInterceptor {
         if (requestAttributes == null) {
             return;
         }
+        HttpServletRequest request = ((ServletRequestAttributes) requestAttributes).getRequest();
         //用户修改为system
         if(Objects.nonNull(UserContext.getIsUserSystem()) && UserContext.getIsUserSystem()){
             LoginUser loginUser = new LoginUser();
@@ -64,8 +66,10 @@ public class FeignInterceptor implements RequestInterceptor {
             loginUser.setUserAccount("");
             String userJson = JSON.toJSONString(loginUser);
             requestTemplate.header("tokenuserinfo", userJson);
+        }else if(StringUtils.isNotBlank((String)request.getAttribute("isQuickApproveCallback"))){
+            requestTemplate.header("tokenuserinfo", (String)request.getAttribute("tokenUserInfo"));
         }
-        HttpServletRequest request = ((ServletRequestAttributes) requestAttributes).getRequest();
+
         Enumeration<String> headerNames = request.getHeaderNames();
         List<String> headNameList = Lists.newArrayList();
         if (headerNames != null) {

@@ -2,6 +2,7 @@ package com.erp.server.dmp.inout.handler.input.task.dmp;
 
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.entity.BaseEntity;
+import com.common.core.exception.ServiceException;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
@@ -45,9 +46,8 @@ public abstract class DmpInputAmzReportReturnCommonDmpHandler extends DmpInputDb
     /**
      * 获取店铺信息
      */
-    protected ShopInfoEntity checkShopInfo(TreeMap<String, Object> dmpDataMap, String shopId, List<SoB2cEntity> orderList, List<ShopInfoEntity> shopList) {
-        String orderId = dmpDataMap.getOrDefault(ORDER_ID, "").toString();
-        String platformShopCode = dmpDataMap.getOrDefault(PLATFORM_SHOP_CODE, "").toString();
+    protected ShopInfoEntity checkShopInfo(Map<String, Object> dmpDataMap, String shopId, List<SoB2cEntity> orderList, List<ShopInfoEntity> shopList, String platformShopCode) {
+        String orderId = dmpDataMap.getOrDefault("platformOrderCode", "").toString();
         List<ShopInfoEntity> sameAccountShopInfo = shopList.stream().filter(e -> e.getPlatformShopCode().equalsIgnoreCase(platformShopCode)).collect(Collectors.toList());
         if (CollectionUtils.isEmpty(sameAccountShopInfo)){
             return shopList.stream().filter(e->e.getId().equalsIgnoreCase(shopId)).findFirst().orElse(null);
@@ -78,7 +78,10 @@ public abstract class DmpInputAmzReportReturnCommonDmpHandler extends DmpInputDb
                 if (StringUtils.isBlank(platformShopCode)){
                     platformShopCode = treeMap.getOrDefault(PLATFORM_SHOP_CODE, "").toString();
                 }
-                String orderId = treeMap.getOrDefault(ORDER_ID, "").toString();
+                if (StringUtils.isBlank(platformShopCode)){
+                    platformShopCode = getPlatformShopCodeByKey(entry.getKey());
+                }
+                String orderId = treeMap.getOrDefault("platformOrderCode", "").toString();
                 if (StringUtils.isNotBlank(orderId)){
                     orderIds.add(orderId);
                 }
@@ -90,5 +93,15 @@ public abstract class DmpInputAmzReportReturnCommonDmpHandler extends DmpInputDb
         return FeignQuery.create(SoB2cEntity.class)
                 .in(SoB2cEntity::getPlatformCode, orderIds)
                 .list();
+    }
+
+    protected String getPlatformShopCodeByKey(List<Map<String, Object>> key) {
+        String platformShopCode;
+        Object platformShopCodeObj = key.stream().map(e -> e.getOrDefault(PLATFORM_SHOP_CODE, "")).findFirst().orElse(null);
+        if (null == platformShopCodeObj){
+            ServiceException.runError("DMP处理任务获取订单平台店铺编码失败");
+        }
+        platformShopCode = platformShopCodeObj.toString();
+        return platformShopCode;
     }
 }

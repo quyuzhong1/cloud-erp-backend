@@ -363,4 +363,6 @@ public interface PoInstockService extends SuperService<PoInstockEntity> {
      * 单撤销
      */
     BatchResultDTO cancelProcess(PoInstockEntity entity);
+
+    List<PoInstockDTO.PoInStockInfoDTO> getPoStockInByParams(PoInstockDTO.PoInStockParamDTO dto);
 }

@@ -118,6 +118,10 @@ public class PilotApplicationDetailDTO implements Serializable {
          * sku审核状态名称
          */
         private String statusName;
+        /**
+         * 变体属性
+         */
+        private String variantProperty;
     }
 
     /**

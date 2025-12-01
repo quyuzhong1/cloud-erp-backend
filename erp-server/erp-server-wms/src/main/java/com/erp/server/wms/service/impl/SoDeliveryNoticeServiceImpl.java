@@ -2,6 +2,7 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.date.StopWatch;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
@@ -87,6 +88,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.csource.common.MyException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -102,6 +104,10 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -207,9 +213,14 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
     private OmsListingInfoFeign omsListingInfoFeign;
     @Autowired
     private SoDeliveryNoticeService soDeliveryNoticeService;
+    @Resource
+    @Qualifier("wmsTaskExecutorPool")
+    private ExecutorService wmsTaskExecutorPool;
 
     @Override
-    public PagingVO<SoDeliveryNoticeDTO.PagingView> paging(PagingDTO<SoDeliveryNoticeDTO.PagingParam> pagingParamDTO) {
+    public PagingVO<SoDeliveryNoticeDTO.PagingView> paging(PagingDTO<SoDeliveryNoticeDTO.PagingParam> pagingParamDTO) throws ExecutionException, InterruptedException {
+        StopWatch stopWatch = StopWatch.create("SoDeliveryNoticeServiceImpl paging");
+        stopWatch.start("paging");
         SoDeliveryNoticeDTO.PagingParam params = pagingParamDTO.getParams();
         DynamicDataSourceTypeEnum dynamicDataSourceTypeEnum = DynamicDataSourceThreadLocal.get();
         if(dynamicDataSourceTypeEnum == null) {
@@ -217,38 +228,65 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         }
         params.setDynamicDataSource(dynamicDataSourceTypeEnum.getCode());
         params.setPermissionSql(pagingParamDTO.getPermissionSql());
-        Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
+        Page<SoDeliveryNoticeDTO.PagingView> query = new Page<>(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
         IPage<SoDeliveryNoticeDTO.PagingView> pageData = this.baseMapper.paging(query, pagingParamDTO.getParams());
         if (CollectionUtils.isEmpty(pageData.getRecords())) {
-            return new PagingVO(new Page());
+            return new PagingVO<>(new Page<>());
         }
-
+        stopWatch.stop();
+        stopWatch.start("整理数据");
         //明细数据
         List<SoDeliveryNoticeDTO.PagingView> records = pageData.getRecords();
-        //获取sku的id集合
-        List<String> skuIdList = records.stream().map(SoDeliveryNoticeDTO.PagingView::getSkuId).collect(Collectors.toList());
-        //根据ids查询sku信息
-        List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIdList);
-        //获取界面传过来的采购单详情表id集合
-        List<String> orderDetailIds = records.stream().map(SoDeliveryNoticeDTO.PagingView::getSourceDetailId).collect(Collectors.toList());
-        //获取销售单详情信息
-        List<SoDetailEntity> soDetailEntities = soInfoFeign.listSoDetailByIds(orderDetailIds);
         List<String> customerIds = records.stream().filter(e -> CharSequenceUtil.isNotBlank(e.getCustomerId())).map(SoDeliveryNoticeDTO.PagingView::getCustomerId).distinct().collect(Collectors.toList());
-        List<CustomerInfoEntity> customerInfoEntities = CollUtil.isNotEmpty(customerIds) ? customerFeign.listCustomerByIds(customerIds) : new ArrayList<>();
         Map<String,Integer> qtyMap = new HashMap<>();
-        //中转仓map
-        Map<String, String> warehouseMap =  warehouseService.lambdaQuery().select(WarehouseEntity::getId, WarehouseEntity::getName).list().stream().collect(Collectors.toMap(WarehouseEntity::getId, WarehouseEntity::getName));
-
-        //查询审核流程
+        List<String> warehouseIds = records.stream().map(SoDeliveryNoticeDTO.PagingView::getTransferWarehouseIds)
+                .filter(CharSequenceUtil::isNotBlank).flatMap(s -> Arrays.stream(s.split(","))).map(String::trim)
+                .filter(CharSequenceUtil::isNotBlank).collect(Collectors.toList());
         List<String> ids = records.stream().map(SoDeliveryNoticeDTO.PagingView::getId).distinct().collect(Collectors.toList());
         ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = ids.stream().map(obj -> new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.SO_DELIVERY_NOTICE.getCode(), obj)).collect(Collectors.toCollection(ValidList::new));
-        ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = workflowFeign.curApprover(dtoList);
-        if (200 != listApiResult.getCode()) {
-            throw new ServiceException(new ApiResult(ApiError.DEFAULT.code,listApiResult.getMsg()));
-        }
 
+        // 并行执行所有查询
+        CompletableFuture<Map<String, String>> warehouseFuture =
+                this.queryWarehouseMapAsync(warehouseIds);
+
+        CompletableFuture<List<CustomerInfoEntity>> customerFuture =
+                this.queryCustomerInfoAsync(customerIds);
+
+        CompletableFuture<ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>>> approvalFuture =
+                this.queryApprovalProcessAsync(dtoList);
+
+//        CompletableFuture<List<SoDeliveryNoticeDTO.PickStatus>> pickStatusFuture =
+//                this.queryPickStatusAsync(ids);
+
+        CompletableFuture<List<WmsCartonDTO.CountDTO>> packingCountFuture =
+                this.queryPackingCountAsync(ids);
+        // 等待所有查询完成
+        CompletableFuture.allOf(
+                warehouseFuture, customerFuture, approvalFuture,
+                packingCountFuture
+        ).join();
+
+        //中转仓map
+        Map<String, String> warehouseMap =  warehouseFuture.get();
+        List<CustomerInfoEntity> customerInfoEntities = customerFuture.get();
+        //查询审核流程
+        ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = approvalFuture.get();
+        if (200 != listApiResult.getCode()) {
+            throw new ServiceException("查询审核流程异常:{}", listApiResult.getMsg());
+        }
+        //查询拣货单生成状态
+//        List<SoDeliveryNoticeDTO.PickStatus> pickStatusList = pickStatusFuture.get();
+        //查询装箱数量
+        List<WmsCartonDTO.CountDTO> countDTOS = packingCountFuture.get();
+        stopWatch.stop();
+        stopWatch.start("合并数据");
         if (CollectionUtils.isNotEmpty(records)) {
             records.forEach(obj -> {
+//                pickStatusList.stream().filter(e -> e.getNoticeId().equals(obj.getId())).findFirst().ifPresent(p -> obj.setGenerationPickStatus(p.getGenerationPickStatus()));
+                WmsCartonDTO.CountDTO countDTO = countDTOS.stream().filter(e -> Objects.nonNull(e.getSourceId()) && e.getSourceId().equals(obj.getId())
+                        && Objects.nonNull(e.getSkuId()) && e.getSkuId().equals(obj.getSkuId())).findFirst().orElse(null);
+                obj.setPackingQty(Objects.isNull(countDTO) ? 0 : countDTO.getPackingQty());
+                obj.setPackingStatus(Objects.isNull(countDTO) ? PackingTaskStatusEnum.WAIT.getCode() : countDTO.getPackingStatus());
                 if (CharSequenceUtil.isNotBlank(obj.getPackingStatus())) {
                     obj.setPackingStatusName(PackingTaskStatusEnum.getName(obj.getPackingStatus()));
                 }else{
@@ -263,11 +301,6 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
                     obj.setDeliveryStatusName(DeliveryStatusEnum.UN_SHIPPED.getName());
                 }
                 obj.setIsPicked(obj.getDeliveryQty().equals(obj.getPickedQty()));
-                ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(entityClass -> entityClass.getId().equals(obj.getSkuId())).findFirst().orElse(new ProductDetailEntity());
-                SoDetailEntity soDetailEntity = soDetailEntities.stream().filter(detail -> detail.getId().equals(obj.getSourceDetailId())).findFirst().orElse(new SoDetailEntity());
-                obj.setProductName(productDetailEntity.getName());
-                obj.setSalesQty(soDetailEntity.getQty());
-                obj.setUnit(productDetailEntity.getUnitName());
                 CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(obj.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
                 obj.setCustomerName(customerInfoEntity.getName());
                 obj.setIsAllowOutstockName(IsAllowOutstockEnum.getNameByCode(obj.getIsAllowOutstock()));
@@ -304,7 +337,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
                 //最新审核人
                 if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
                     String curApprove = listApiResult.getData().stream().filter(e -> e.getBusinessId().equals(obj.getId()) && CharSequenceUtil.isNotBlank(e.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
-                   obj.setApproveUserName(CharSequenceUtil.blankToDefault(curApprove,obj.getApproveUserName()));
+                    obj.setApproveUserName(CharSequenceUtil.blankToDefault(curApprove,obj.getApproveUserName()));
                 }
             });
         }
@@ -314,57 +347,156 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
                 pagingView.setIsPicked(pagingView.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getCode())&&val.stream().allMatch(SoDeliveryNoticeDTO.PagingView::getIsPicked));
             }
         });
-        return new PagingVO(pageData);
+        stopWatch.stop();
+        log.warn("SoDeliveryNoticeServiceImpl paging 耗时:{}",stopWatch.prettyPrint(TimeUnit.SECONDS));
+        return new PagingVO<>(pageData);
     }
 
+    public CompletableFuture<Map<String, String>> queryWarehouseMapAsync(List<String> warehouseIds) {
+        if (CollUtil.isEmpty(warehouseIds)) {
+            return CompletableFuture.completedFuture(new HashMap<>());
+        }
+
+        return CompletableFuture.supplyAsync(() ->
+                        warehouseService.lambdaQuery()
+                                .select(WarehouseEntity::getId, WarehouseEntity::getName)
+                                .in(WarehouseEntity::getId, warehouseIds)
+                                .list()
+                                .stream()
+                                .collect(Collectors.toMap(WarehouseEntity::getId, WarehouseEntity::getName)),
+                wmsTaskExecutorPool
+        );
+    }
+
+    public CompletableFuture<List<CustomerInfoEntity>> queryCustomerInfoAsync(List<String> customerIds) {
+        if (CollUtil.isEmpty(customerIds)) {
+            return CompletableFuture.completedFuture(new ArrayList<>());
+        }
+
+        return CompletableFuture.supplyAsync(() ->
+                        customerFeign.listCustomerByIds(customerIds),
+                wmsTaskExecutorPool
+        );
+    }
+
+    public CompletableFuture<ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>>> queryApprovalProcessAsync(ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList) {
+        return CompletableFuture.supplyAsync(() ->
+                        workflowFeign.curApprover(dtoList),
+                wmsTaskExecutorPool
+        );
+    }
+
+    public CompletableFuture<List<WmsCartonDTO.CountDTO>> queryPackingCountAsync(List<String> ids) {
+        return CompletableFuture.supplyAsync(() ->
+                        packingTaskService.countPackingQtyBySourceIds(ids),
+                wmsTaskExecutorPool
+        );
+    }
     @Override
     public List<SoDeliveryNoticeDTO.StatusCountDTO> listCount(PermissionsDTO dto) {
         OsDeliveryChangeListTypeEnum[] values = OsDeliveryChangeListTypeEnum.values();
         List<SoDeliveryNoticeDTO.StatusCountDTO> list = new ArrayList<>();
-        for (OsDeliveryChangeListTypeEnum item : values) {
-            SoDeliveryNoticeDTO.PagingParam pagingParam = new SoDeliveryNoticeDTO.PagingParam();
-            pagingParam.setPermissionSql(dto.getPermissionSql());
-            SoDeliveryNoticeDTO.StatusCountDTO resultDTO = new SoDeliveryNoticeDTO.StatusCountDTO();
-            Integer count = MathUtil.ZERO;
-            if (OsDeliveryChangeListTypeEnum.WAIT_SUBMIT.getCode().equals(item.getCode())) {
+        // 创建异步任务列表
+        List<CompletableFuture<SoDeliveryNoticeDTO.StatusCountDTO>> futures =
+                Arrays.stream(values)
+                        .map(item -> CompletableFuture.supplyAsync(() -> processSingleStatus(item, dto)))
+                        .collect(Collectors.toList());
+
+        // 等待所有任务完成并收集结果
+        return futures.stream()
+                .map(CompletableFuture::join)
+                .collect(Collectors.toList());
+
+//        for (OsDeliveryChangeListTypeEnum item : values) {
+//            SoDeliveryNoticeDTO.PagingParam pagingParam = new SoDeliveryNoticeDTO.PagingParam();
+//            pagingParam.setPermissionSql(dto.getPermissionSql());
+//            SoDeliveryNoticeDTO.StatusCountDTO resultDTO = new SoDeliveryNoticeDTO.StatusCountDTO();
+//            Integer count = MathUtil.ZERO;
+//            if (OsDeliveryChangeListTypeEnum.WAIT_SUBMIT.getCode().equals(item.getCode())) {
+//                pagingParam.setApproveStatusList(Collections.singletonList(ApproveStatusEnum.WAIT_SUBMIT.getStatus()));
+//                count = this.baseMapper.listCount(pagingParam);
+//            }
+//            if (OsDeliveryChangeListTypeEnum.TO_BE_APPROVE.getCode().equals(item.getCode())) {
+//                pagingParam.setApproveStatusList(Collections.singletonList(ApproveStatusEnum.APPROVE_ING.getStatus()));
+//                count = this.baseMapper.listCount(pagingParam);
+//            }
+//            if (OsDeliveryChangeListTypeEnum.TO_BE_APPROVE.getCode().equals(item.getCode())) {
+//                pagingParam.setApproveStatusList(Collections.singletonList(ApproveStatusEnum.APPROVE_ING.getStatus()));
+//                count = this.baseMapper.listCount(pagingParam);
+//            }
+//            if (OsDeliveryChangeListTypeEnum.PACKING_COMPLETED.getCode().equals(item.getCode())) {
+//                pagingParam.setDeliveryStatus(Boolean.FALSE);
+//                pagingParam.setIsAllowOutstock(IsAllowOutstockEnum.WAIT_NOTICE.getCode());
+//                pagingParam.setApproveStatusList(Collections.singletonList(ApproveStatusEnum.APPROVE.getStatus()));
+//                count = this.baseMapper.listCount(pagingParam);
+//            }
+//            if (OsDeliveryChangeListTypeEnum.UN_SHIPPED.getCode().equals(item.getCode())) {
+//                pagingParam.setDeliveryStatus(Boolean.FALSE);
+//                pagingParam.setIsAllowOutstock(IsAllowOutstockEnum.PERMIT.getCode());
+//                pagingParam.setApproveStatusList(Collections.singletonList(ApproveStatusEnum.APPROVE.getStatus()));
+//                count = this.baseMapper.listCount(pagingParam);
+//            }
+//            if (OsDeliveryChangeListTypeEnum.REJECT.getCode().equals(item.getCode())) {
+//                pagingParam.setApproveStatusList(Collections.singletonList(ApproveStatusEnum.REJECT.getStatus()));
+//                count = this.baseMapper.listCount(pagingParam);
+//            }
+//            if (OsDeliveryChangeListTypeEnum.COMPLETE_SHIPMENT.getCode().equals(item.getCode())) {
+//                pagingParam.setDeliveryStatus(Boolean.TRUE);
+//                count = this.baseMapper.listCount(pagingParam);
+//            }
+//            resultDTO.setCount(ObjectUtils.isEmpty(count) ? MathUtil.ZERO : count);
+//            resultDTO.setType(item.getCode());
+//            list.add(resultDTO);
+//        }
+//        return list;
+    }
+    private SoDeliveryNoticeDTO.StatusCountDTO processSingleStatus(OsDeliveryChangeListTypeEnum item, PermissionsDTO dto) {
+        SoDeliveryNoticeDTO.PagingParam pagingParam = new SoDeliveryNoticeDTO.PagingParam();
+        pagingParam.setPermissionSql(dto.getPermissionSql());
+        SoDeliveryNoticeDTO.StatusCountDTO resultDTO = new SoDeliveryNoticeDTO.StatusCountDTO();
+        Integer count = MathUtil.ZERO;
+
+        // 根据不同的状态类型设置参数并统计
+        switch (item.getCode()) {
+            case "waitSubmit":
                 pagingParam.setApproveStatusList(Collections.singletonList(ApproveStatusEnum.WAIT_SUBMIT.getStatus()));
                 count = this.baseMapper.listCount(pagingParam);
-            }
-            if (OsDeliveryChangeListTypeEnum.TO_BE_APPROVE.getCode().equals(item.getCode())) {
+                break;
+
+            case "toBeApprove":
                 pagingParam.setApproveStatusList(Collections.singletonList(ApproveStatusEnum.APPROVE_ING.getStatus()));
                 count = this.baseMapper.listCount(pagingParam);
-            }
-            if (OsDeliveryChangeListTypeEnum.TO_BE_APPROVE.getCode().equals(item.getCode())) {
-                pagingParam.setApproveStatusList(Collections.singletonList(ApproveStatusEnum.APPROVE_ING.getStatus()));
-                count = this.baseMapper.listCount(pagingParam);
-            }
-            if (OsDeliveryChangeListTypeEnum.PACKING_COMPLETED.getCode().equals(item.getCode())) {
+                break;
+
+            case "packingCompleted":
                 pagingParam.setDeliveryStatus(Boolean.FALSE);
                 pagingParam.setIsAllowOutstock(IsAllowOutstockEnum.WAIT_NOTICE.getCode());
                 pagingParam.setApproveStatusList(Collections.singletonList(ApproveStatusEnum.APPROVE.getStatus()));
                 count = this.baseMapper.listCount(pagingParam);
-            }
-            if (OsDeliveryChangeListTypeEnum.UN_SHIPPED.getCode().equals(item.getCode())) {
+                break;
+
+            case "unShipped":
                 pagingParam.setDeliveryStatus(Boolean.FALSE);
                 pagingParam.setIsAllowOutstock(IsAllowOutstockEnum.PERMIT.getCode());
                 pagingParam.setApproveStatusList(Collections.singletonList(ApproveStatusEnum.APPROVE.getStatus()));
                 count = this.baseMapper.listCount(pagingParam);
-            }
-            if (OsDeliveryChangeListTypeEnum.REJECT.getCode().equals(item.getCode())) {
+                break;
+
+            case "reject":
                 pagingParam.setApproveStatusList(Collections.singletonList(ApproveStatusEnum.REJECT.getStatus()));
                 count = this.baseMapper.listCount(pagingParam);
-            }
-            if (OsDeliveryChangeListTypeEnum.COMPLETE_SHIPMENT.getCode().equals(item.getCode())) {
+                break;
+
+            case "completeShipment":
                 pagingParam.setDeliveryStatus(Boolean.TRUE);
                 count = this.baseMapper.listCount(pagingParam);
-            }
-            resultDTO.setCount(ObjectUtils.isEmpty(count) ? MathUtil.ZERO : count);
-            resultDTO.setType(item.getCode());
-            list.add(resultDTO);
+                break;
         }
-        return list;
-    }
 
+        resultDTO.setCount(ObjectUtils.isEmpty(count) ? MathUtil.ZERO : count);
+        resultDTO.setType(item.getCode());
+        return resultDTO;
+    }
     @Override
     @Transactional(rollbackFor = Exception.class)
     public String add(SoDeliveryNoticeDTO.Add dto) {

@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.fms.mapper.AssetCardDetailMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.fms.entity.AssetCardDetailEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="source_detail_id" property="sourceDetailId" />
+       <result column="main_id" property="mainId" />
+       <result column="asset_code" property="assetCode" />
+       <result column="asset_location_id" property="assetLocationId" />
+       <result column="qty" property="qty" />
+       <result column="supplier_id" property="supplierId" />
+       <result column="supplier_name" property="supplierName" />
+       <result column="use_dept_name" property="useDeptName" />
+       <result column="use_dept_id" property="useDeptId" />
+       <result column="cost_type" property="costType" />
+       <result column="remark" property="remark" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_user_id,
+        create_user_name,
+        create_time,
+        update_user_id,
+        update_user_name,
+        update_time,
+        version,
+        is_deleted,
+        source_detail_id, main_id, asset_code, asset_location_id, qty, supplier_id, supplier_name, use_dept_name, use_dept_id, cost_type, remark
+    </sql>
+
+    <select id="searchAssetCardDetail"
+            resultType="com.erp.model.fms.dto.AssetCardDetailDTO$SearchCardDetailDTO">
+        select
+        <include refid="Base_Column_List"></include>
+        from asset_card_detail
+        where
+        is_deleted = false
+        <if test="params.cardIds != null and params.cardIds != ''">
+            and main_id in
+            <foreach collection="params.cardIds" item="cardId" open="(" separator="," close=")">
+                #{cardId}
+            </foreach>
+        </if>
+        <if test="params.searchKeyword != null and params.searchKeyword != ''">
+            AND
+            (
+            code ILIKE concat('%',#{params.searchKeyword}::text,'%')
+            OR
+            name ILIKE concat('%',#{params.searchKeyword}::text,'%')
+            )
+            ORDER BY
+            case when code ILIKE concat(#{params.searchKeyword}::text,'%') THEN 1
+            when code ILIKE concat('%',#{params.searchKeyword}::text) THEN 2
+            when code ILIKE concat('%',#{params.searchKeyword}::text,'%') THEN 3
+            end , code
+        </if>
+
+    </select>
+
+    <!-- 根据盘点方案的资产范围查询符合条件的资产卡片明细（使用JOIN关联查询，避免大量ID的IN查询） -->
+    <select id="queryCardDetailsByScopeWithJoin" resultMap="BaseResultMap">
+        SELECT
+            d.id,
+            d.create_user_id,
+            d.create_user_name,
+            d.create_time,
+            d.update_user_id,
+            d.update_user_name,
+            d.update_time,
+            d.version,
+            d.is_deleted,
+            d.source_detail_id,
+            d.main_id,
+            d.asset_code,
+            d.asset_location_id,
+            d.qty,
+            d.supplier_id,
+            d.supplier_name,
+            d.use_dept_name,
+            d.use_dept_id,
+            d.cost_type,
+            d.remark
+        FROM
+            asset_card_detail d
+        INNER JOIN asset_card c ON d.main_id = c.id
+        WHERE
+            d.is_deleted = false
+            AND c.is_deleted = false
+            AND c.approve_status = 'approve'
+            <if test="cardCodeStart != null and cardCodeStart != ''">
+                AND c.code &gt;= #{cardCodeStart}
+            </if>
+            <if test="cardCodeEnd != null and cardCodeEnd != ''">
+                AND c.code &lt;= #{cardCodeEnd}
+            </if>
+    </select>
+
+
+</mapper>
