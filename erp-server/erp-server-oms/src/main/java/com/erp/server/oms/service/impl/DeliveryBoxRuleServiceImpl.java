@@ -128,6 +128,11 @@ public class DeliveryBoxRuleServiceImpl extends SuperServiceImpl<DeliveryBoxRule
     public Boolean update(DeliveryBoxRuleDTO.UpdateDTO addOrUpdateDTO) {
         DeliveryBoxRuleEntity old = super.getById(addOrUpdateDTO.getId());
         old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, ""));
+        this.lambdaUpdate().set(DeliveryBoxRuleEntity::getUpdateUserId,UserContext.getDefaultLoginUser().getUid())
+                .set(DeliveryBoxRuleEntity::getUpdateUserName,UserContext.getDefaultLoginUser().getUserName())
+                .set(DeliveryBoxRuleEntity::getUpdateTime,LocalDateTime.now())
+                .eq(DeliveryBoxRuleEntity::getId,addOrUpdateDTO.getId())
+                .update();
 
         //只更新明细
         return deliveryBoxRuleDetailService.update(addOrUpdateDTO.getDeliveryBoxRuleDetailDTOList(),old.getId());
