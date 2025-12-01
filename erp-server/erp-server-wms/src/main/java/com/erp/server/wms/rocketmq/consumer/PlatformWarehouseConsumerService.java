@@ -121,6 +121,7 @@ public class PlatformWarehouseConsumerService<T extends DmpSyncTaskIdDTO> extend
     }
 
     private void updateOverseasWarehouse(OverseasProviderWarehouseEntity dbEntity, OverseasProviderWarehouseEntity mqEntity) {
+        dbEntity.setPlatformWarehouseType(mqEntity.getPlatformWarehouseType());
         dbEntity.setPlatformWarehouseName(mqEntity.getPlatformWarehouseName());
         dbEntity.setCountry(mqEntity.getCountry());
         dbEntity.setCountryName(mqEntity.getCountryName());
