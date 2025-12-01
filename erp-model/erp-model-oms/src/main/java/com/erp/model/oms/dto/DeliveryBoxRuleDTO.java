@@ -180,6 +180,11 @@ public class DeliveryBoxRuleDTO implements Serializable {
         private Integer  perBoxQty;
 
         /**
+         * 优先级
+         */
+        private Integer sort;
+
+        /**
          * 作废状态
          */
         private Boolean invalidStatus;

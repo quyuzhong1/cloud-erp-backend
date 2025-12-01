@@ -42,6 +42,7 @@
         dbrd.delivery_sku_no as deliverySkuNo,
         dbrd.delivery_product_name as deliveryProductName,
         dbrd.per_box_qty as perBoxQty,
+        dbrd.sort as sort,
         dbrd.invalid_time as invalidTime,
         dbrd.invalid_status as invalidStatus,
         dbr.create_user_id as createUserId,
