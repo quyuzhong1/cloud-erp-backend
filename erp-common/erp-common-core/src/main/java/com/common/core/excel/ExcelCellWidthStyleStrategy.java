@@ -14,7 +14,7 @@ import java.util.Map;
 
 public class ExcelCellWidthStyleStrategy extends AbstractColumnWidthStyleStrategy {
     // 可以根据这里的最大宽度，按自己需要进行调整,搭配单元格样式实现类中的，自动换行，效果更好
-    private static final int MAX_COLUMN_WIDTH = 500;
+    private static final int MAX_COLUMN_WIDTH = 255;
     private  Map<Integer, Map<Integer, Integer>> CACHE = new HashMap(30);
 
     @Override

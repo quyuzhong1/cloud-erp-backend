@@ -40,6 +40,10 @@
        <result column="source_code" property="sourceCode" />
        <result column="source_type" property="sourceType" />
        <result column="sku_total_cost" property="skuTotalCost" />
+       <result column="is_outstock_required" property="isOutstockRequired" />
+       <result column="no_outstock_reason" property="noOutstockReason" />
+       <result column="is_ledger_required" property="isLedgerRequired" />
+       <result column="warehouse_charge_id" property="warehouseChargeId" />
     </resultMap>
 
     <!-- 通用查询结果列 -->
@@ -54,6 +58,7 @@
         version,
         is_deleted,
         approve_status, approve_user_id, approve_user_name, approve_time, invalid_status, invalid_remark, invalid_time, code, recipient_date, usage, warehouse_id, user_id, user_name, dept_id, pick_org_id, pick_org_name, usage_scope, use_user_id, use_user_name, remark, is_delivery, receive_address, receiver_name, receive_phone, source_id, source_code, source_type, sku_total_cost
+          ,is_outstock_required,no_outstock_reason,isLedgerRequired,warehouse_charge_id
     </sql>
 
             <select id="paging" resultType="com.erp.model.wms.dto.SampleRecipientDTO$ListDTO">
@@ -100,7 +105,11 @@
                 ELSE (srd.recipient_qty - srd.delivery_qty)
             END AS reservedQty,
             srd.exec_status AS execStatus,
-            srd.remark AS detailRemark
+            srd.remark AS detailRemark,
+                sr.is_outstock_required as isOutstockRequired,
+                sr.no_outstock_reason as noOutstockReason,
+                sr.is_ledger_required as isLedgerRequired,
+                sr.warehouse_charge_id as warehouseChargeId
         FROM sample_recipient sr
         LEFT JOIN sample_recipient_detail srd
         ON srd.main_id = sr.id AND srd.is_deleted = false
@@ -234,7 +243,11 @@
                 ELSE (srd.recipient_qty - srd.delivery_qty)
             END AS reservedQty,
             srd.exec_status AS execStatus,
-            srd.remark AS detailRemark
+            srd.remark AS detailRemark,
+        sr.is_outstock_required as isOutstockRequired,
+        sr.no_outstock_reason as noOutstockReason,
+        sr.is_ledger_required as isLedgerRequired,
+        sr.warehouse_charge_id as warehouseChargeId
         FROM sample_recipient sr
         LEFT JOIN sample_recipient_detail srd
         ON srd.main_id = sr.id AND srd.is_deleted = false
@@ -309,7 +322,11 @@
                 ELSE (srd.recipient_qty - srd.delivery_qty)
             END AS reservedQty,
             srd.exec_status AS execStatus,
-            srd.remark AS detailRemark
+            srd.remark AS detailRemark,
+        sr.is_outstock_required as isOutstockRequired,
+        sr.no_outstock_reason as noOutstockReason,
+        sr.is_ledger_required as isLedgerRequired,
+        sr.warehouse_charge_id as warehouseChargeId
         FROM sample_recipient sr
         LEFT JOIN sample_recipient_detail srd
         ON srd.main_id = sr.id AND srd.is_deleted = false
@@ -341,31 +358,52 @@
 
     <!-- 获取所有状态的统计数量（一个SQL查询完成） -->
     <select id="getAllStatusCounts" resultType="com.erp.model.wms.dto.SampleRecipientDTO$TabListDTO">
-        SELECT 
+        SELECT
             'waitSubmit' AS tabFlag,
             COUNT(DISTINCT sr.id) AS count
         FROM sample_recipient sr
         WHERE sr.is_deleted = FALSE
         AND approve_status = 'waitSubmit'
-        <if test="permissionSql != null and permissionSql != ''">
-            ${permissionSql}
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
         </if>
-        
+
         UNION ALL
-        
-        SELECT 
+
+        SELECT
             'approveIng' AS tabFlag,
             COUNT(DISTINCT sr.id) AS count
         FROM sample_recipient sr
         WHERE sr.is_deleted = FALSE
-        AND approve_status = 'approveIng'
-        <if test="permissionSql != null and permissionSql != ''">
-            ${permissionSql}
+        AND sr.approve_status = 'approveIng'
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
         </if>
-        
+        <if test="params.ids != null and params.ids.size > 0">
+            and sr.id in
+            <foreach collection="params.ids" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
+
         UNION ALL
-        
-        SELECT 
+
+        SELECT
+        'noOutstock' AS tabFlag,
+        COUNT(DISTINCT srd.id) AS count
+        FROM sample_recipient sr
+        INNER JOIN sample_recipient_detail srd ON sr.id = srd.main_id
+        WHERE sr.is_deleted = FALSE
+        and srd.is_deleted = FALSE
+        AND sr.approve_status = 'approve'
+        AND srd.exec_status = 'noOutstock'
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+
+        UNION ALL
+
+        SELECT
             'waitOutstock' AS tabFlag,
             COUNT(DISTINCT srd.id) AS count
         FROM sample_recipient sr
@@ -374,13 +412,13 @@
         and srd.is_deleted = FALSE
         AND sr.approve_status = 'approve'
         AND srd.exec_status IN ('waitOutstock', 'partOutstock')
-        <if test="permissionSql != null and permissionSql != ''">
-            ${permissionSql}
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
         </if>
-        
+
         UNION ALL
-        
-        SELECT 
+
+        SELECT
             'completeOutstock' AS tabFlag,
             COUNT(DISTINCT srd.id) AS count
         FROM sample_recipient sr
@@ -388,20 +426,20 @@
         WHERE sr.is_deleted = FALSE
         and srd.is_deleted = FALSE
         AND srd.exec_status = 'completeOutstock'
-        <if test="permissionSql != null and permissionSql != ''">
-            ${permissionSql}
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
         </if>
-        
+
         UNION ALL
-        
-        SELECT 
+
+        SELECT
             'reject' AS tabFlag,
             COUNT(DISTINCT sr.id) AS count
         FROM sample_recipient sr
         WHERE sr.is_deleted = FALSE
         AND approve_status = 'reject'
-        <if test="permissionSql != null and permissionSql != ''">
-            ${permissionSql}
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
         </if>
     </select>
 

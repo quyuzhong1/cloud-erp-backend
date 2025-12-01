@@ -30,6 +30,7 @@ public class CommonInterceptor implements HandlerInterceptor {
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
         }
+        UserContext.setIsUserSystem(false);
         return true;
     }
 
@@ -47,6 +48,7 @@ public class CommonInterceptor implements HandlerInterceptor {
         if (!pathList.contains(uri)) {
             UserContext.clear();
         }
+        UserContext.clearIsUserSystem();
         HandlerInterceptor.super.afterCompletion(request, response, handler, ex);
     }
 }

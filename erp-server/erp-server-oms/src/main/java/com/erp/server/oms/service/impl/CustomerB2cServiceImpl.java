@@ -390,7 +390,7 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
             //最新审核人
             if (listApiResult != null && CollectionUtils.isNotEmpty(listApiResult.getData())) {
                 String curApprove = listApiResult.getData().stream().filter(obj -> obj.getBusinessId().equals(item.getId()) && StringUtils.isNotBlank(obj.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
-                item.setApproveUserName(curApprove);
+                item.setApproveUserName(CharSequenceUtil.blankToDefault(curApprove,item.getApproveUserName()));
             }
         }
 

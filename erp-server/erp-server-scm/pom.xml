@@ -37,14 +37,6 @@
             <scope>compile</scope>
         </dependency>
 
-
-        <dependency>
-            <groupId>org.postgresql</groupId>
-            <artifactId>postgresql</artifactId>
-            <version>42.5.4</version>
-            <scope>compile</scope>
-        </dependency>
-
         <dependency>
             <groupId>com.cloud.erp</groupId>
             <artifactId>erp-model-scm</artifactId>
@@ -135,6 +127,24 @@
             <groupId>com.cloud.erp</groupId>
             <artifactId>erp-common-business</artifactId>
             <version>0.0.1-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>com.cloud.erp</groupId>
+            <artifactId>erp-rpc-fms</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.cloud.erp</groupId>
+            <artifactId>erp-rpc-scm</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.cloud.erp</groupId>
+            <artifactId>erp-model-fms</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+            <scope>compile</scope>
         </dependency>
     </dependencies>
 

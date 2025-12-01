@@ -331,7 +331,7 @@
         FROM first_mile_delivery fmd LEFT JOIN requisition_application_detail rad on fmd.source_id = rad.main_id and rad.is_deleted = FALSE WHERE fmd.id = pt.source_id AND fmd.is_deleted = FALSE),0) as pickQty
         FROM
         packing_task pt
-        where pt.is_deleted = FALSE and pt.source_type in ('FBA','thirdWarehouse')
+        where pt.is_deleted = FALSE and pt.source_type in ('FBA','thirdWarehouse','aliexpress')
         <if test="taskIds!= null and taskIds.size > 0">
             AND pt.id IN
             <foreach collection="taskIds" item="item" open="(" close=")" separator=",">
@@ -360,5 +360,21 @@
         <if test="permissionSql != null and permissionSql != ''">
             ${permissionSql}
         </if>
+    </select>
+
+    <select id="countPackingQtyBySourceIds" resultType="com.erp.model.wms.dto.WmsCartonDTO$CountDTO">
+        select
+        pt.source_id as sourceId,
+        pt.packing_status as packingStatus,
+        wcd.sku_id as skuId,
+        COALESCE(SUM(wcd.pack_qty), 0) as packingQty
+        from packing_task pt
+        left join wms_carton wc on wc.packing_task_id = pt.id and wc.is_deleted = false
+        left join wms_carton_detail wcd on wcd.main_id = wc.id and wcd.is_deleted = false
+        where pt.is_deleted = false and pt.source_id IN
+        <foreach collection="sourceIds" item="item" open="(" close=")" separator=",">
+            #{item}
+        </foreach>
+        group by pt.source_id,pt.packing_status,wcd.sku_id
     </select>
 </mapper>

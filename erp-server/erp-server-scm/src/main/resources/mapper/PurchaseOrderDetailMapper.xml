@@ -56,7 +56,8 @@
             pod.tax_rate as taxRate,
             pod.currency,
             pod.currency_symbol as currencySymbol,
-            pod.warehouse_location as warehouseLocation
+            pod.warehouse_location as warehouseLocation,
+            pod.first_mass_product as firstMassProduct
         from purchase_order po
         inner join purchase_order_detail pod on po.id = pod.purchase_order_id and pod.is_deleted = false
         <where>

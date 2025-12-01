@@ -34,6 +34,7 @@ import com.erp.model.workflow.entity.WorkOptionEntity;
 import com.erp.model.workflow.enums.ApproveSearchOptionEnum;
 import com.erp.model.workflow.enums.SysClassifyEnum;
 import com.erp.rpc.oms.feign.*;
+import com.erp.rpc.fms.feign.FmsTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.scm.feign.ScmTaskFeign;
 import com.erp.rpc.scm.feign.SupplierFeign;
@@ -80,6 +81,9 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
 
     @Resource
     private WmsTaskFeign wmsTaskFeign;
+
+    @Resource
+    private FmsTaskFeign fmsTaskFeign;
 
     @Resource
     private PlmTaskFeign plmTaskFeign;
@@ -498,6 +502,9 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
             case FM:
                 wmsApprove(dto, entity);
                 break;
+            case FMS:
+                fmsApprove(dto, entity);
+                break;
             case OMS:
                 omsApprove(dto, entity);
                 break;
@@ -554,6 +561,20 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
                 approveDTO.setType(dto.getType());
                 plmTaskFeign.productChangeApprove(approveDTO);
                 break;
+            case MOLD_INFO:
+                ApproveOneDTO moldApproveDTO = new ApproveOneDTO();
+                moldApproveDTO.setId(dto.getId());
+                moldApproveDTO.setComment(dto.getComment());
+                moldApproveDTO.setType(dto.getType());
+                plmTaskFeign.moldInfoApprove(moldApproveDTO);
+                break;
+            case MOLD_REF_SKU:
+                ApproveOneDTO moldRefSkuApproveDTO = new ApproveOneDTO();
+                moldRefSkuApproveDTO.setId(dto.getId());
+                moldRefSkuApproveDTO.setComment(dto.getComment());
+                moldRefSkuApproveDTO.setType(dto.getType());
+                plmTaskFeign.moldRefSkuApprove(moldRefSkuApproveDTO);
+                break;
             default:
                 throw new ServiceException(ApiError.ERROR_94006);
         }
@@ -595,6 +616,15 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
                 break;
             case SUBCONTRACT_ORDER:
                 scmTaskFeign.subcontractOrderApprove(approveOneDTO);
+                break;
+            case ASSET_NOTICE:
+                scmTaskFeign.assetNoticeApprove(baseApproveParamDTO);
+                break;
+            case ASSET_PURCHASE_ORDER:
+                scmTaskFeign.assetPurchaseOrderApprove(baseApproveParamDTO);
+                break;
+            case ASSET_PURCHASE_CHANGE:
+                scmTaskFeign.assetPurchaseChangeApprove(baseApproveParamDTO);
                 break;
             default:
                 throw new ServiceException(ApiError.ERROR_94006);
@@ -653,7 +683,7 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
                 resultDTOList = wmsTaskFeign.otherOutstockApprove(baseApproveParamDTO);
                 break;
             case TRANSFER_IN:
-                resultDTOList = wmsTaskFeign.otherOutstockApprove(baseApproveParamDTO);
+                resultDTOList = wmsTaskFeign.transferInApprove(baseApproveParamDTO);
                 break;
             case TRANSFER_OUT:
                 resultDTOList = wmsTaskFeign.transferOutApprove(baseApproveParamDTO);
@@ -679,7 +709,48 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
             case SAMPLE_TRANSFER_INFO:
                 resultDTOList = wmsTaskFeign.sampleTransferApprove(baseApproveParamDTO);
                 break;
+            case SAMPLE_ADJUSTMENT_INFO:
+                resultDTOList = wmsTaskFeign.sampleAdjustmentApprove(baseApproveParamDTO);
+                break;
                 
+            default:
+                throw new ServiceException(ApiError.ERROR_94006);
+        }
+        BatchResultDTO resultDTO = resultDTOList.stream().filter(req -> !req.getSuccess()).findFirst().orElse(null);
+        if (resultDTO != null) {
+            throw new ServiceException(resultDTO.getMsg());
+        }
+        return Boolean.TRUE;
+    }
+
+    private Boolean fmsApprove(ApproveParamDTO dto, ProcessManagementEntity entity) {
+        BaseApproveParamDTO baseApproveParamDTO = new BaseApproveParamDTO();
+        baseApproveParamDTO.setIds(Arrays.asList(dto.getId()));
+        baseApproveParamDTO.setType(dto.getType());
+        baseApproveParamDTO.setComment(dto.getComment());
+        List<BatchResultDTO> resultDTOList = new ArrayList<>();
+        switch (SourceTypeEnum.getByCode(entity.getBusinessKey())) {
+            case ASSET_CARD:
+                resultDTOList = fmsTaskFeign.assetCardApprove(baseApproveParamDTO);
+                break;
+            case ASSET_ACCEPTANCE:
+                resultDTOList = fmsTaskFeign.assetAcceptApprove(baseApproveParamDTO);
+                break;
+            case ASSET_PROFIT_LOSS:
+                resultDTOList = fmsTaskFeign.assetProfitLossApprove(baseApproveParamDTO);
+                break;
+            case ASSET_STOCKTAKING:
+                resultDTOList = fmsTaskFeign.assetStocktakingApprove(baseApproveParamDTO);
+                break;
+            case ASSET_STOCKTAKING_PLAN:
+                resultDTOList = fmsTaskFeign.assetStocktakingPlanApprove(baseApproveParamDTO);
+                break;
+            case ASSET_LOCATION:
+                resultDTOList = fmsTaskFeign.assetLocationApprove(baseApproveParamDTO);
+                break;
+            case ASSET_DISPOSAL:
+                resultDTOList = fmsTaskFeign.assetDisposalApprove(baseApproveParamDTO);
+                break;
             default:
                 throw new ServiceException(ApiError.ERROR_94006);
         }

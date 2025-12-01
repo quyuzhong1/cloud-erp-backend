@@ -44,6 +44,7 @@ import com.erp.model.wms.enums.InstockTypeEnum;
 import com.erp.model.wms.enums.InventoryDirectionEnum;
 import com.erp.model.wms.enums.SampleLedgerTypeEnum;
 import com.erp.model.workflow.dto.CfgQueryOptionDTO;
+import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
 import com.erp.model.workflow.enums.CfgQueryOptionBussinessKeyEnum;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
@@ -192,6 +193,10 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
         ExhibitionOrderEntity exhibitionOrderEntity = new ExhibitionOrderEntity();
         BeanMapperUtils.copy(addDTO, exhibitionOrderEntity);
 
+        // 校验明细不能为空
+        if (CollUtil.isEmpty(addDTO.getDetailList())) {
+            throw new ServiceException("展会订单明细不能为空");
+        }
         // 数据处理
         handleData(exhibitionOrderEntity);
 
@@ -342,6 +347,10 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
         // 待提交和审核不通过允许修改
         if (!ApproveStatusEnum.allowUpdateStatus(old.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_1029);
+        }
+        // 校验明细不能为空
+        if (CollUtil.isEmpty(addOrUpdateDTO.getDetailList())) {
+            throw new ServiceException("展会订单明细不能为空");
         }
         ExhibitionOrderEntity exhibitionOrderEntity = BeanMapperUtils.map(ExhibitionOrderEntity.class, addOrUpdateDTO);
 
@@ -713,6 +722,21 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
     public List<ExhibitionOrderDTO.TabListDTO> tabList(PermissionsDTO param) {
         ExhibitionOrderDTO.PagingParamDTO searchParam = new ExhibitionOrderDTO.PagingParamDTO();
         searchParam.setPermissionSql(param.getPermissionSql());
+
+        //待我审核
+        //根据单据id查询审核流程
+        ProcessManagementDTO.TaskKeyInfoDTO dto = new ProcessManagementDTO.TaskKeyInfoDTO();
+        dto.setBusinessKey(SourceTypeEnum.EXHIBITION_ORDER.getCode());
+        dto.setTaskStatus(ApproveStatusEnum.APPROVE_ING.getCode());
+        dto.setCurApproveId(UserContext.getNonLoginUser().getUid());
+        List<ProcessTaskManagementEntity> processTaskManagementList = workflowFeign.listProcessByBusinessKey(dto);
+        if (CollectionUtils.isNotEmpty(processTaskManagementList)) {
+            List<String> ids = processTaskManagementList.stream().map(ProcessTaskManagementEntity::getBusinessId).collect(Collectors.toList());
+            searchParam.setIds(ids);
+        }else {
+            searchParam.setIds(Arrays.asList("-1"));
+        }
+
         List<ExhibitionOrderDTO.TabListDTO> list = baseMapper.tabList(searchParam);
         // 获取状态列表
         List<String> statusList = ApproveStatusEnum.getStatusList();
@@ -724,13 +748,19 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
             }
         });
         list.stream().forEach(e ->{
-            e.setTabFlagName(ApproveStatusEnum.getName(e.getTabFlag()));
+            if(Objects.equals(ApproveStatusEnum.APPROVE_ING.getCode(), e.getTabFlag())){
+                e.setTabFlagName("待我审核");
+            } else {
+                e.setTabFlagName(ApproveStatusEnum.getName(e.getTabFlag()));
+            }
         });
         // 修改为按照 ApproveStatusEnum 枚举声明顺序排序
         list.sort(Comparator.comparingInt(tabDto -> {
             ApproveStatusEnum statusEnum = ApproveStatusEnum.getByStatus(tabDto.getTabFlag());
             return statusEnum != null ? statusEnum.ordinal() : Integer.MAX_VALUE;
         }));
+
+        list.add(0,new ExhibitionOrderDTO.TabListDTO("all", "全部", 0));
         return list;
     }
 
@@ -869,10 +899,10 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
         ExhibitionOrderEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到展会订单信息单数据"));
         // 反审核条件判断
         validateDisApprove(entity);
-        
+
         // 使用分布式锁进行数量校验（反审核时也需要校验）
         validateSampleLedgerQtyWithLock(entity, ApproveTypeEnum.DIS_APPROVE);
-        
+
         // 更新审核信息
         updateForDisApprove(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
         //判断上一次的审核的任务是否已经全部执行成功
@@ -1138,6 +1168,9 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
 
         addDTO.setDetailList(addDTOS);
 
+        //自动生成功能系统标识
+        Boolean originalValue = UserContext.getIsUserSystem();
+        UserContext.setIsUserSystem(Boolean.TRUE);
         String soId;
         try {
             soId = soInfoService.add(addDTO);
@@ -1145,12 +1178,16 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
             log.error("B2B订单新增异常，请求参数: {}", addDTO, e);
             mqResponseDTO.setErrorMsg(e.getMessage());
             return mqResponseDTO;
+        }finally {
+            //恢复系统标识
+            UserContext.setIsUserSystem(originalValue);
         }
 
         Map<String, Object> map = new HashMap<>();
         map.put("soId", soId);
         mqResponseDTO.setData(map);
 
+        UserContext.setIsUserSystem(Boolean.TRUE);
         SoInfoEntity soInfoEntity = soInfoService.getById(soId);
         try {
             soInfoService.submit(soInfoEntity,Boolean.FALSE,false);
@@ -1158,8 +1195,12 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
             log.error("B2B订单提交异常，soId: {}", soId, e);
             mqResponseDTO.setErrorMsg(e.getMessage());
             return mqResponseDTO;
+        }finally {
+            //恢复系统标识
+            UserContext.setIsUserSystem(originalValue);
         }
 
+        UserContext.setIsUserSystem(Boolean.TRUE);
         try {
             BaseApproveParamDTO baseApproveParamDTO = new BaseApproveParamDTO();
             baseApproveParamDTO.setIds(Collections.singletonList(soId));
@@ -1171,6 +1212,9 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
             log.error("B2B订单审批通过异常，soId: {}", soId, e);
             mqResponseDTO.setErrorMsg(e.getMessage());
             return mqResponseDTO;
+        }finally {
+            //恢复系统标识
+            UserContext.setIsUserSystem(originalValue);
         }
 
         return mqResponseDTO;
@@ -1201,6 +1245,9 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
         }
         SoInfoEntity entity = soInfoService.getById(soId);
         if(Objects.nonNull(entity)){
+            //自动生成功能系统标识
+            Boolean originalValue = UserContext.getIsUserSystem();
+            UserContext.setIsUserSystem(Boolean.TRUE);
             List<SoChangeEntity> soChangeList = soChangeService.listBySoIds(Arrays.asList(entity.getId()));
             try {
                 BatchResultDTO result = soInfoService.disApprove(entity, soChangeList);
@@ -1212,8 +1259,12 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
                 log.error("B2B销售订单反审核失败",e);
                 mqResponseDTO.setErrorMsg(StrUtil.format("B2B销售订单反审核失败,soId:{},e:{}",entity.getId(),e.getMessage()));
                 return mqResponseDTO;
+            } finally {
+                //恢复系统标识
+                UserContext.setIsUserSystem(originalValue);
             }
 
+            UserContext.setIsUserSystem(Boolean.TRUE);
             try {
                 List<BatchResultDTO> resultDTOList =soInfoService.deleteByIds(Arrays.asList(entity.getId()));
                 if(!resultDTOList.get(0).getSuccess()){
@@ -1224,6 +1275,9 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
                 log.error("B2B销售订单删除失败",e);
                 mqResponseDTO.setErrorMsg(StrUtil.format("B2B销售订单删除失败,soId:{},e:{}",entity.getId(),e.getMessage()));
                 return mqResponseDTO;
+            } finally {
+                //恢复系统标识
+                UserContext.setIsUserSystem(originalValue);
             }
         }
         return mqResponseDTO;
@@ -2378,7 +2432,7 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
         List<ExhibitionOrderDetailEntity> detailList = exhibitionOrderDetailService.lambdaQuery()
                 .eq(ExhibitionOrderDetailEntity::getMainId, entity.getId())
                 .list();
-        
+
         // 使用通用工具类进行数量校验
         sampleDocumentAuditUtil.validateSampleDocumentQty(
             entity.getCode(),

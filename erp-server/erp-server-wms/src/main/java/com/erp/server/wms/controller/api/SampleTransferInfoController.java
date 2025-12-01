@@ -85,7 +85,7 @@ public class SampleTransferInfoController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "wms:sampleTransferInfo:paging",
-            tableAlias = ""
+            tableAlias = "sti"
     )
     public ApiResult<List<SampleTransferInfoDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
        return success(sampleTransferInfoService.tabList(dto));
@@ -102,7 +102,7 @@ public class SampleTransferInfoController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "wms:sampleTransferInfo:paging",
-            tableAlias = ""
+            tableAlias = "sti"
     )
     @WebAdvanceQuery(handler = SampleTransferInfoQueryHandler.class)
     public ApiResult<PagingVO<SampleTransferInfoDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<SampleTransferInfoDTO.PagingParamDTO> dto) {
@@ -132,7 +132,7 @@ public class SampleTransferInfoController extends BaseController {
     @PostMapping("/updateAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "wms:sampleTransferInfo:updateAndSubmit",
+            menuCode = "wms:sampleTransferInfo:update",
             serviceClass = SampleTransferInfoService.class,
             keyIdName = "id")
     public ApiResult<Void> updateAndSubmit(@RequestBody @Validated SampleTransferInfoDTO.UpdateDTO dto) {

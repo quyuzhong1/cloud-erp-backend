@@ -33,6 +33,7 @@ public class PlatformLabelPrintConsumerService implements RocketMQListener<Logis
 
     @Override
     public void onMessage(LogisticsBillDTO.PrintLogisticsWaybillDTO dto) {
+        dto.setIsFromMq(true);
         List<SoB2cDTO.WaybillDTO> waybillDTOList = logisticsBillService.printLogisticsWaybill(Arrays.asList(dto));
         List<SoB2cLabelDTO.UpdateDTO> dtoList = new ArrayList<>();
         for (SoB2cDTO.WaybillDTO waybillDTO : waybillDTOList) {

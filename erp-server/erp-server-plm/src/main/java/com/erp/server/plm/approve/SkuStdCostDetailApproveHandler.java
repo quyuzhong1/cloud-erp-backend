@@ -27,6 +27,19 @@ public class SkuStdCostDetailApproveHandler extends AbstractApproveHandler {
     private SkuStdCostService skuStdCostService;
 
     @Override
+    public BatchResultDTO approve(ApproveOneDTO dto) {
+        SkuStdCostDetailEntity entity = skuStdCostDetailService.getById(dto.getId());
+        if (ObjectUtil.isEmpty(entity)) {
+            throw new ServiceException("未找到sku标准成本单数据");
+        }
+        SkuStdCostEntity mainEntity = skuStdCostService.getById(entity.getMainId());
+        if (ObjectUtil.isEmpty(mainEntity)) {
+            throw new ServiceException("未找到sku标准成本单主数据");
+        }
+        return skuStdCostDetailService.approve(dto,entity,mainEntity);
+    }
+
+    @Override
     public Boolean cancelProcess(ApproveDTO.CancelProcessDTO dto) {
         SkuStdCostDetailEntity entity = skuStdCostDetailService.getById(dto.getId());
         if (ObjectUtil.isEmpty(entity)) {
@@ -65,5 +78,10 @@ public class SkuStdCostDetailApproveHandler extends AbstractApproveHandler {
         approveOne.setId(dto.getBusinessId());
         approveOne.setVariablesMap(dto.getVariablesMap());
         return skuStdCostDetailService.approveEnd(approveOne,entity);
+    }
+
+    @Override
+    public void addComment(ApproveDTO.AddCommentDTO dto) {
+
     }
 }

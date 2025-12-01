@@ -992,6 +992,10 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         //物流单编码
         String logisticsCode = dto.getBarCode();
         String errorPortCode = CfgRuleOutEnum.EquipmentSortingPortEnum.NINE.getCode();
+        
+        //校验并调整尺寸（长≥宽≥高）
+        validateAndAdjustDimensions(dto);
+        
         //物流单信息
         SoB2cLogisticsEntity soB2cLogisticsEntity = soB2cFeign.getByTrackNoOrTransportNo(logisticsCode);
         if (ObjectUtil.isEmpty(soB2cLogisticsEntity)) {
@@ -2133,7 +2137,12 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             List<SoB2cDeliveryDetailEntity> detailEntities = detailList.stream().filter(v -> v.getMainId().equals(entity.getId())).collect(Collectors.toList());
             List<String> skus = generatePickingDetail(entity, detailEntities,dto.getWaveType());
             if (CollectionUtils.isNotEmpty(skus)) {
-                generateReplenish(detailEntities, entity, skus);
+                try {
+                    UserContext.setIsUserSystem(true);
+                    generateReplenish(detailEntities, entity, skus);
+                }finally {
+                    UserContext.clearIsUserSystem();
+                }
                 //生成拣货单失败，发货单生成异常
                 updateAbnormal(Collections.singletonList(entity.getId()), AbnormalCauseEnum.GENERATION_WAVE);
                 dto.getIds().remove(entity.getId());
@@ -2289,7 +2298,16 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         moveDto.setSourceCode(old.getCode());
         moveDto.setSourceType(SourceTypeEnum.SO_B2C_DELIVERY.getCode());
         moveDto.setDetailList(moveDetailList);
-        warehouseLocationMoveService.addAndApprove(moveDto);
+        //自动生成功能系统标识
+        Boolean originalValue = UserContext.getIsUserSystem();
+        UserContext.setIsUserSystem(Boolean.TRUE);
+        try {
+            warehouseLocationMoveService.addAndApprove(moveDto);
+        } finally {
+            //恢复系统标识
+            UserContext.setIsUserSystem(originalValue);
+        }
+
         //取消保宏预报
         BaseIdsDTO.IdsDTO idDto = new BaseIdsDTO.IdsDTO();
         idDto.setIds(Collections.singletonList(soB2cEntity.getId()));
@@ -2988,5 +3006,30 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     @Override
     public List<VirtualFlowRefactorDTO.OutInStockDTO> rebuildB2cVirtualFlow() {
         return baseMapper.rebuildB2cVirtualFlow();
+    }
+
+    /**
+     * 校验尺寸（长≥宽≥高）
+     * 如果尺寸不符合规则，抛出异常
+     * 
+     * @param dto 包含尺寸信息的DTO
+     */
+    private void validateAndAdjustDimensions(DimensionalWeightDTO dto) {
+        BigDecimal length = dto.getLength();
+        BigDecimal width = dto.getWidth();
+        BigDecimal height = dto.getHeight();
+        
+        if (length == null || width == null || height == null) {
+            return;
+        }
+        
+        // 校验：长≥宽≥高
+        if (length.compareTo(width) < 0) {
+            throw new ServiceException("包装尺寸不符合规则：长度必须大于等于宽度");
+        }
+        
+        if (width.compareTo(height) < 0) {
+            throw new ServiceException("包装尺寸不符合规则：宽度必须大于等于高度");
+        }
     }
 }

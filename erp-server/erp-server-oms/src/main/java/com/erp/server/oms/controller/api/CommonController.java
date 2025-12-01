@@ -1,15 +1,19 @@
 package com.erp.server.oms.controller.api;
 
 import cn.hutool.core.collection.CollUtil;
+import com.common.business.dto.base.BaseDTO;
+import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.utils.EnumCacheUtils;
+import com.erp.server.oms.service.OmsAttachmentService;
 import com.google.common.collect.Maps;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
 
+import javax.annotation.Resource;
+import javax.validation.Valid;
 import java.util.List;
 import java.util.Map;
 
@@ -24,6 +28,8 @@ import java.util.Map;
 @RequestMapping("common")
 public class CommonController extends BaseController {
 
+    @Resource
+    private OmsAttachmentService omsAttachmentService;
     /**
      * 批量获取枚举下拉框，供前端调用，不用每个枚举类都提供一个单独的接口（每个服务都有专属自己的）
      * @param types
@@ -49,5 +55,17 @@ public class CommonController extends BaseController {
         Map<String,List<Map<String,Object>>> enumMaps = EnumCacheUtils.getInstance().getData();
         return success(enumMaps.get(type));
 
+    }
+    /**
+     * 新增附件
+     * @return
+     */
+    @PostMapping("addAttachment")
+    public ApiResult<BatchResultDTO> addAttachment(@RequestBody @Validated BaseDTO.AddAttachmentDTO addAttachmentDTO){
+        BatchResultDTO batchResultDTO = omsAttachmentService.addAttachment(addAttachmentDTO);
+        if(batchResultDTO.getSuccess()){
+            return success(batchResultDTO);
+        }
+        return failure(batchResultDTO);
     }
 }

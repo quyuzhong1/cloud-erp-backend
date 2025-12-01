@@ -84,6 +84,16 @@ public class ProductInfoDTO {
     private String brandId;
 
     /**
+     * 研发团队名称
+     */
+    private String rdtTeamName;
+
+    /**
+     * 研发团队id
+     */
+    private String rdtTeamId;
+
+    /**
      * 分类id
      */
     @NotBlank(message = "产品分类不能为空")

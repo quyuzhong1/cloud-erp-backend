@@ -1,5 +1,6 @@
 package com.erp.server.sys.service.impl;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.utils.BeanMapper;
@@ -61,5 +62,14 @@ public class DictCurrencyServiceImpl extends SuperServiceImpl<DictCurrencyMapper
             return Collections.EMPTY_LIST;
         }
         return BeanMapperUtils.copyList(CurrencyDTO.ViewDTO.class,list);
+    }
+
+    @Override
+    public DictCurrencyEntity getCurrencyByNum(String num) {
+        if (CharSequenceUtil.isBlank(num)){
+            return null;
+        }
+        return this.lambdaQuery().select(DictCurrencyEntity::getId,DictCurrencyEntity::getCurrencyNum,DictCurrencyEntity::getSymbol)
+                .eq(DictCurrencyEntity::getCurrencyNum, num).last("limit 1").one();
     }
 }

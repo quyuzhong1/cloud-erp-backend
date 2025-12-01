@@ -47,54 +47,57 @@ public class WeiShiInboundInitHandler extends DmpInputInitHandler {
 	
 	@Override
 	public List<DmpInputTaskInitDTO> getInitData(DmpInputInitRequest dmpRequest, DmpInputTaskResponse dmpResponse) {
-        //查询待签收、部分签收状态的入库单
-        List<String> receiveCodeList = overseasWarehouseFeign.getReceiptNumbersForStatus(Arrays.asList(OverseasInstockStatusEnum.TO_BE_SIGNED.getCode()
-                ,OverseasInstockStatusEnum.PARTIAL_SIGNED.getCode()
-                ,OverseasInstockStatusEnum.MANUAL_COMPLETION.getCode()), OmsPlatformEnum.WEI_SHI.getCode());
-        List<WeiShiInboundResp.RowsDTO> allResult = new ArrayList<>();
-        
-        if(CollUtil.isNotEmpty(receiveCodeList)) {
 
-			List<OverseasProviderEntity> overseasProviderEntityList = FeignQuery.create(OverseasProviderEntity.class)
-					.eq(OverseasProviderEntity::getAuthStatus, AuthStatusEnum.ALREADY.getCode())
-					.eq(OverseasProviderEntity::getCode, DmpBasicSystemCodeEnum.WEI_SHI.getCode())
-					.list();
-            if(CollUtil.isEmpty(overseasProviderEntityList)) {
-            	throw new ServiceException("纬狮授权信息不存在");
-            }
-			// 取对应授权ID授权
-			OverseasProviderEntity overseasProviderEntity = overseasProviderEntityList.stream()
-					.filter(e -> e.getId().equalsIgnoreCase(dmpInputTaskEntity.getNextLevelId()))
-					.findFirst()
-					.orElse(null);
-			if(null == overseasProviderEntity) {
-				throw new ServiceException("纬狮对应授权ID信息不存在");
+        List<WeiShiInboundResp.RowsDTO> allResult = new ArrayList<>();
+
+
+		List<OverseasProviderEntity> overseasProviderEntityList = FeignQuery.create(OverseasProviderEntity.class)
+				.eq(OverseasProviderEntity::getAuthStatus, AuthStatusEnum.ALREADY.getCode())
+				.eq(OverseasProviderEntity::getCode, DmpBasicSystemCodeEnum.WEI_SHI.getCode())
+				.list();
+		if (CollUtil.isEmpty(overseasProviderEntityList)) {
+			throw new ServiceException("纬狮授权信息不存在");
+		}
+		// 取对应授权ID授权
+		OverseasProviderEntity overseasProviderEntity = overseasProviderEntityList.stream()
+				.filter(e -> e.getId().equalsIgnoreCase(dmpInputTaskEntity.getNextLevelId()))
+				.findFirst()
+				.orElse(null);
+		if (null == overseasProviderEntity) {
+			throw new ServiceException("纬狮对应授权ID信息不存在");
+		}
+		//查询待签收、部分签收状态的入库单
+		List<String> receiveCodeList = overseasWarehouseFeign.getReceiptNumbersForStatus(Arrays.asList(OverseasInstockStatusEnum.TO_BE_SIGNED.getCode()
+				, OverseasInstockStatusEnum.PARTIAL_SIGNED.getCode()
+				, OverseasInstockStatusEnum.MANUAL_COMPLETION.getCode()), overseasProviderEntity.getId());
+
+		if (CollUtil.isEmpty(receiveCodeList)) {
+			return Collections.emptyList();
+		}
+		List<List<String>> splitList = CollUtil.split(receiveCodeList, 100);
+		for (List<String> codeList : splitList) {
+			WeiShiQueryInboundRequest weiShiCancelInboundRequest = new WeiShiQueryInboundRequest();
+			weiShiCancelInboundRequest.setOrderNoList(codeList);
+			weiShiCancelInboundRequest.setPageSize(50);
+			weiShiCancelInboundRequest.setPageNum(1);
+			WeiShiBaseResp<WeiShiInboundResp> weiShiInboundResp = weiShiService.getInbound(weiShiCancelInboundRequest, overseasProviderEntity.getAuthJson());
+			if (null == weiShiInboundResp || weiShiInboundResp.getData() == null) {
+				throw new ServiceException("纬狮获取入库列表失败: 响应结果为空");
 			}
-			List<List<String>> splitList = CollUtil.split(receiveCodeList, 100);
-			for (List<String> codeList : splitList) {
-				WeiShiQueryInboundRequest weiShiCancelInboundRequest = new WeiShiQueryInboundRequest();
-				weiShiCancelInboundRequest.setOrderNoList(codeList);
-				weiShiCancelInboundRequest.setPageSize(50);
-				weiShiCancelInboundRequest.setPageNum(1);
-				WeiShiBaseResp<WeiShiInboundResp> weiShiInboundResp = weiShiService.getInbound(weiShiCancelInboundRequest,overseasProviderEntity.getAuthJson());
-				if (null == weiShiInboundResp || weiShiInboundResp.getData() == null) {
-					throw new ServiceException("纬狮获取入库列表失败: 响应结果为空");
-				}
-				if(!weiShiInboundResp.getCode().equals(200)){
-					throw new ServiceException("纬狮获取入库单列表失败: " + weiShiInboundResp.getMsg());
-				}
-				if (CollUtil.isEmpty(weiShiInboundResp.getData().getList())) {
-					return Collections.emptyList();
-				}
-				weiShiInboundResp.getData().getList().forEach(v->{
-					v.getInboundBoxList().forEach(box -> {
-						box.setFinishPutawayTime(v.getReceiptLastTime());
-					});
+			if (!weiShiInboundResp.getCode().equals(200)) {
+				throw new ServiceException("纬狮获取入库单列表失败: " + weiShiInboundResp.getMsg());
+			}
+			if (CollUtil.isEmpty(weiShiInboundResp.getData().getList())) {
+				return Collections.emptyList();
+			}
+			weiShiInboundResp.getData().getList().forEach(v -> {
+				v.getInboundBoxList().forEach(box -> {
+					box.setFinishPutawayTime(v.getReceiptLastTime());
 				});
-				allResult.addAll(weiShiInboundResp.getData().getList());
-			}
-            
-        }
+			});
+			allResult.addAll(weiShiInboundResp.getData().getList());
+		}
+
 		
 		DmpInputTaskInitDTO dmpInputTaskInitDTO = new DmpInputTaskInitDTO();
 		dmpInputTaskInitDTO.setMsg(JSONObject.toJSONString(allResult));

@@ -17,6 +17,7 @@ import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.sys.openapi.DimensionalWeightDTO;
 import com.erp.model.sys.openapi.UploadSkuDTO;
 import com.erp.model.workflow.dto.WorkOptionDTO;
+import com.erp.server.plm.mapper.ProductDetailMapper;
 import com.erp.server.plm.rocketmq.sync.kingdee.SyncKingdeeService;
 import com.erp.server.plm.service.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -71,6 +72,9 @@ public class ProductSkuFeignController {
 
     @Autowired
     private ProductPurchaseService productPurchaseService;
+
+    @Autowired
+    private ProductDetailMapper productDetailMapper;
 
     /**
      * 根据sku查询sku表信息
@@ -209,6 +213,21 @@ public class ProductSkuFeignController {
     @GetMapping("/listApproveSku")
     public List<SkuVO> listApproveSku() {
         List<SkuVO> skuList = productDetailService.searchSku(null);
+        return skuList;
+    }
+
+    /**
+     * @return List<SkuVO>
+     * @description: 获取所有sku（不限制审核状态）
+     * @author System
+     * @date: 2025/01/XX
+     */
+    @GetMapping("/listAllSku")
+    public List<SkuVO> listAllSku() {
+        ProductDetailDTO.SearchDTO dto = new ProductDetailDTO.SearchDTO();
+        dto.setSearchKeyword(null);
+        dto.setStatus(null);
+        List<SkuVO> skuList = productDetailService.searchSkuInfo(dto);
         return skuList;
     }
 
@@ -620,5 +639,10 @@ public class ProductSkuFeignController {
     @PostMapping("/listSku" )
     public PagingVO<ProductDetailDTO.SkuDTO> listSku(@RequestBody PagingDTO<ProductSkuDTO> pagingDTO){
         return productDetailService.listSku(pagingDTO);
+    }
+
+    @PostMapping("/listAssetProduct" )
+    public List<SkuVO> listAssetProduct(){
+        return productDetailMapper.listAssetProduct();
     }
 }

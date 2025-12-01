@@ -36,6 +36,7 @@ import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.SampleLedgerTypeEnum;
 import com.erp.model.workflow.dto.CfgQueryOptionDTO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
+import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
 import com.erp.model.workflow.enums.CfgQueryOptionBussinessKeyEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.file.feign.FileFeign;
@@ -233,6 +234,10 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
         if (!ApproveStatusEnum.allowUpdateStatus(old.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_1029);
         }
+        // 校验明细不能为空
+        if (CollUtil.isEmpty(addOrUpdateDTO.getDetailList())) {
+            throw new ServiceException("样品归还单明细不能为空");
+        }
         SampleReturnInfoEntity sampleReturnInfoEntity =  BeanMapperUtils.map(SampleReturnInfoEntity.class, addOrUpdateDTO);
 
         // 数据处理
@@ -385,6 +390,19 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
     public List<SampleReturnInfoDTO.TabListDTO> tabList(PermissionsDTO param) {
         SampleReturnInfoDTO.PagingParamDTO searchParam = new SampleReturnInfoDTO.PagingParamDTO();
         searchParam.setPermissionSql(param.getPermissionSql());
+        //待我审核
+        //根据单据id查询审核流程
+        ProcessManagementDTO.TaskKeyInfoDTO dto = new ProcessManagementDTO.TaskKeyInfoDTO();
+        dto.setBusinessKey(SourceTypeEnum.SAMPLE_RETURN_INFO.getCode());
+        dto.setTaskStatus(ApproveStatusEnum.APPROVE_ING.getCode());
+        dto.setCurApproveId(UserContext.getNonLoginUser().getUid());
+        List<ProcessTaskManagementEntity> processTaskManagementList = workflowFeign.listProcessByBusinessKey(dto);
+        if (CollectionUtils.isNotEmpty(processTaskManagementList)) {
+            List<String> ids = processTaskManagementList.stream().map(ProcessTaskManagementEntity::getBusinessId).collect(Collectors.toList());
+            searchParam.setIds(ids);
+        }else {
+            searchParam.setIds(Arrays.asList("-1"));
+        }
         List<SampleReturnInfoDTO.TabListDTO> list = baseMapper.tabList(searchParam);
         // 获取状态列表
         List<String> statusList = ApproveStatusEnum.getStatusList();
@@ -396,13 +414,19 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
             }
         });
         list.stream().forEach(e ->{
-            e.setTabFlagName(ApproveStatusEnum.getName(e.getTabFlag()));
+            if(Objects.equals(ApproveStatusEnum.APPROVE_ING.getCode(), e.getTabFlag())){
+                e.setTabFlagName("待我审核");
+            } else {
+                e.setTabFlagName(ApproveStatusEnum.getName(e.getTabFlag()));
+            }
         });
         // 修改为按照 ApproveStatusEnum 枚举声明顺序排序
         list.sort(Comparator.comparingInt(tabDto -> {
             ApproveStatusEnum statusEnum = ApproveStatusEnum.getByStatus(tabDto.getTabFlag());
             return statusEnum != null ? statusEnum.ordinal() : Integer.MAX_VALUE;
         }));
+        // 在列表开头添加"全部"统计
+        list.add(0, new SampleReturnInfoDTO.TabListDTO("all","全部", 0));
         return list;
     }
 
@@ -414,7 +438,7 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
 
         List<SampleReturnInfoDTO.TabListDTO> list = new ArrayList<>();
         list.add(new SampleReturnInfoDTO.TabListDTO(ApproveStatusEnum.WAIT_SUBMIT.getCode()+"/"+ApproveStatusEnum.REJECT.getCode(), "待提交/不通过" ,map.get(ApproveStatusEnum.WAIT_SUBMIT.getCode()) + map.get(ApproveStatusEnum.REJECT.getCode()) ));
-        list.add(new SampleReturnInfoDTO.TabListDTO(ApproveStatusEnum.APPROVE_ING.getCode(), "审核中" , map.get(ApproveStatusEnum.APPROVE_ING.getCode())));
+        list.add(new SampleReturnInfoDTO.TabListDTO(ApproveStatusEnum.APPROVE_ING.getCode(), "待我审核" , map.get(ApproveStatusEnum.APPROVE_ING.getCode())));
         list.add(new SampleReturnInfoDTO.TabListDTO(ApproveStatusEnum.APPROVE.getCode(), "已审核" , map.get(ApproveStatusEnum.APPROVE.getCode())));
         return list;
     }
@@ -675,6 +699,9 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
         if (ObjectUtil.isEmpty(entity)) {
             return Boolean.TRUE;
         }
+        //使用分布式锁进行数量校验
+        validateSampleLedgerQtyWithLock(entity, ApproveTypeEnum.getByCode(dto.getType()));
+
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
         updateForApprove(entity.getId(), approveStatus.getStatus());
 

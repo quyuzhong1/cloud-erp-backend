@@ -6,8 +6,13 @@ import com.common.core.utils.FieldValidUtil;
 import com.erp.model.plm.dto.ProductDetailUpdateExcelDTO;
 import com.erp.model.plm.dto.ProductInfoDTO;
 import com.erp.model.plm.entity.BasicCategoryEntity;
+import com.erp.model.plm.entity.ProductBrandEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.plm.entity.ProductRDTTeamEntity;
+import com.erp.server.plm.service.ProductBrandService;
+import com.erp.server.plm.service.ProductRDTTeamService;
 import lombok.Getter;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
@@ -22,6 +27,8 @@ public class ProductDetailUpdateExcelListener extends AnalysisEventListener<Prod
     private List<BasicCategoryEntity> categoryList;
     private Map<String, String> applicationCategoryMap;
     private List<ProductDetailEntity> productDetailEntityList;
+    private ProductBrandService productBrandService;
+    private ProductRDTTeamService productRDTTeamService;
 
     /**
      * 错误信息
@@ -37,10 +44,12 @@ public class ProductDetailUpdateExcelListener extends AnalysisEventListener<Prod
      */
     private List<ProductInfoDTO> successList = new ArrayList<>();
 
-    public ProductDetailUpdateExcelListener(List<BasicCategoryEntity> categoryList, Map<String, String> applicationCategoryMap, List<ProductDetailEntity> productDetailEntityList) {
+    public ProductDetailUpdateExcelListener(List<BasicCategoryEntity> categoryList, Map<String, String> applicationCategoryMap, List<ProductDetailEntity> productDetailEntityList, ProductBrandService productBrandService, ProductRDTTeamService productRDTTeamService) {
         this.categoryList = categoryList;
         this.applicationCategoryMap = applicationCategoryMap;
         this.productDetailEntityList = productDetailEntityList;
+        this.productBrandService = productBrandService;
+        this.productRDTTeamService = productRDTTeamService;
     }
     /**
      * @Description 每解析一行数据回调一遍
@@ -107,6 +116,33 @@ public class ProductDetailUpdateExcelListener extends AnalysisEventListener<Prod
             }
         }
         productSpuBaseInfoDTO.setApplicationCategoryId(applicationCategoryId);
+        
+        //品牌处理
+        if (StringUtils.isNotBlank(data.getBrandName())) {
+            ProductBrandEntity productBrand = productBrandService.getByName(data.getBrandName());
+            if (ObjectUtils.isEmpty(productBrand)) {
+                data.setErrorMsg("产品品牌在系统中未找到");
+                errorList.add(data);
+                return;
+            } else {
+                productSpuBaseInfoDTO.setBrandId(productBrand.getId());
+                productSpuBaseInfoDTO.setBrandName(productBrand.getName());
+            }
+        }
+        
+        //研发团队处理
+        if (StringUtils.isNotBlank(data.getRdtTeamName())) {
+            ProductRDTTeamEntity productRDTTeam = productRDTTeamService.getByName(data.getRdtTeamName());
+            if (ObjectUtils.isEmpty(productRDTTeam)) {
+                data.setErrorMsg("研发团队在系统中未找到");
+                errorList.add(data);
+                return;
+            } else {
+                productSpuBaseInfoDTO.setRdtTeamId(productRDTTeam.getId());
+                productSpuBaseInfoDTO.setRdtTeamName(productRDTTeam.getName());
+            }
+        }
+        
         //存在错误数据则直接返回
         if (!CollectionUtils.isEmpty(errorList)) {
             return;

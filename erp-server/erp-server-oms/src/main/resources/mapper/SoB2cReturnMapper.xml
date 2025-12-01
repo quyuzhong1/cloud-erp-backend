@@ -67,7 +67,11 @@
             sbr.create_time as sysCreateTime,
             sbr.sys_return_time as sysReturnTime,
             sbr.return_logistic_code as returnLogisticCode,
-            sbr.update_time as updateTime
+            sbr.update_time as updateTime,
+            sbr.approve_user_id as approveUserId,
+            sbr.approve_user_name as approveUserName,
+            sbr.approve_time as approveTime,
+            sbr.create_user_name as createUserName
         from so_b2c_return sbr
         inner join so_b2c_return_detail sbrd on sbr.id = sbrd.main_id and sbrd.is_deleted = false
         where ${params.sqlMap.default}

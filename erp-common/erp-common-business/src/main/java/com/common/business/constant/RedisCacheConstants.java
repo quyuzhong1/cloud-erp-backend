@@ -252,4 +252,7 @@ public interface RedisCacheConstants {
      */
     String DMP_OUTPUT_RECORD_HIS_COUNT = "dmp:output:record:his:count";
 
+
+    String TMS_LOGISTIC_LABEL = "tms:logistic:label:{}:{}";
+
 }
