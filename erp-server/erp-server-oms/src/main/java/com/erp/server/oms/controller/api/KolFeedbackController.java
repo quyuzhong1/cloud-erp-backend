@@ -5,6 +5,8 @@ import com.common.business.annotation.WebAdvanceQuery;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
+
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import com.common.core.anno.LogAction;
@@ -21,10 +23,13 @@ import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.KolFeedbackDTO;
-import org.springframework.web.multipart.MultipartFile;
 
-import javax.servlet.http.HttpServletResponse;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+import cn.hutool.core.util.ObjectUtil;
+import com.erp.model.oms.entity.KolFeedbackEntity;
 
 /**
  * KOL回片列表
@@ -122,8 +127,32 @@ public class KolFeedbackController extends BaseController {
             serviceClass = KolFeedbackService.class,
             keyIdName = "ids")
     public ApiResult<?> batchDelete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        kolFeedbackService.batchDelete(dto);
-        return success();
+        List<String> ids = dto.getIds();
+
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+
+        List<KolFeedbackEntity> list = kolFeedbackService.lambdaQuery().in(KolFeedbackEntity::getId, ids).list();
+
+        Map<String, KolFeedbackEntity> idEntityMap = list.stream().collect(Collectors.toMap(KolFeedbackEntity::getId, w -> w));
+
+        for (String id : dto.getIds()) {
+            BatchResultDTO deleteResult;
+            try {
+                deleteResult = kolFeedbackService.delete(id);
+            } catch (Exception e) {
+                log.error("KOL回片列表删除失败", e);
+                KolFeedbackEntity entity = idEntityMap.get(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    deleteResult = BatchResultDTO.fail(id, id, "KOL回片列表不存在, 删除失败");
+                    resultDTOS.add(deleteResult);
+                    continue;
+                }
+                deleteResult = BatchResultDTO.fail(entity.getId(), entity.getSourceCode(), e.getMessage());
+            }
+            resultDTOS.add(deleteResult);
+        }
+
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**
@@ -131,7 +160,6 @@ public class KolFeedbackController extends BaseController {
      * @author wuhaotian
      * @date:  2025-12-01
      * @param dto
-     * @param response
      */
     @PostMapping("/export")
     @LogAction(value = LogActionEnum.EXPORT, desc = "KOL回片列表导出")
@@ -139,22 +167,22 @@ public class KolFeedbackController extends BaseController {
             tableField = "create_user_id",
             menuCode = "oms:kolFeedback:export",
             tableAlias = "kf")
-    public void export(@RequestBody @Validated PagingDTO<KolFeedbackDTO.ParamDTO> dto, HttpServletResponse response) {
-        kolFeedbackService.export(dto, response);
+    public ApiResult<Boolean> export(@RequestBody @Validated PagingDTO<KolFeedbackDTO.ParamDTO> dto) {
+        return success(kolFeedbackService.export(dto));
     }
 
     /**
      * 导入
      * @author wuhaotian
      * @date:  2025-12-01
-     * @param file
+     * @param dto
      * @return ApiResult
      */
     @PostMapping("/import")
     @LogAction(value = LogActionEnum.IMPORT, desc = "KOL回片列表导入")
-    public ApiResult<?> importData(@RequestParam("file") MultipartFile file) {
-        kolFeedbackService.importData(file);
-        return success();
+    public ApiResult<Boolean> importData(@RequestBody BaseDTO.ImportDTO dto) {
+        Boolean flag = kolFeedbackService.importExcel(dto);
+        return flag == true ? success() : failure();
     }
 
     /**

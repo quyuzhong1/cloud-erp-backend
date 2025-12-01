@@ -5,17 +5,13 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
-import com.common.business.dto.base.BatchResultDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PermissionsDTO;
-import com.common.business.dto.base.BaseIdsDTO;
+import com.common.business.dto.base.*;
 import com.common.business.vo.PagingVO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import io.seata.spring.annotation.GlobalTransactional;
 import com.common.business.annotation.DistributeLocker;
-import com.common.business.dto.base.BaseResultDTO;
 import com.erp.model.oms.entity.KolFeedbackEntity;
 import com.erp.server.oms.mapper.KolFeedbackMapper;
 import com.erp.server.oms.service.KolFeedbackService;
@@ -40,8 +36,29 @@ import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.erp.model.oms.enums.FeedbackStatusEnum;
 import org.springframework.beans.BeanUtils;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.file.feign.FileFeign;
+import com.erp.rpc.sys.feign.SysUserFeign;
+import com.common.business.dto.FindUserDTO;
+import com.common.business.vo.LoginUser;
+import com.common.business.enums.FileTaskStatusEnum;
+import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.exception.ExcelCommonException;
+import java.io.ByteArrayInputStream;
+import java.time.LocalDateTime;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+import java.util.Objects;
+import com.erp.model.oms.dto.excel.KolFeedbackExcelDTO;
+import com.erp.server.oms.listener.KolFeedbackExcelListener;
+import com.common.core.utils.ExcelUtil;
+import com.common.core.utils.FastDFSClientUtil;
+import java.io.File;
 
 import javax.servlet.http.HttpServletResponse;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_OMS_KOL_FEEDBACK;
+import static com.common.business.enums.FileTaskEventEnum.IMPORT_OMS_KOL_FEEDBACK;
 
 /**
  * <p>
@@ -62,6 +79,15 @@ public class KolFeedbackServiceImpl extends SuperServiceImpl<KolFeedbackMapper, 
 
     @Autowired
     private DocNoGenHelper docNoGenHelper;
+
+    @Autowired
+    private DownloadTaskFeign downloadTaskFeign;
+
+    @Autowired
+    private FileFeign fileFeign;
+
+    @Autowired
+    private SysUserFeign sysUserFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -132,7 +158,20 @@ public class KolFeedbackServiceImpl extends SuperServiceImpl<KolFeedbackMapper, 
         if (CollUtil.isEmpty(dto.getIds())) {
             throw new ServiceException("删除ID列表不能为空");
         }
-        // TODO 实现批量删除逻辑
+        
+        // 检查是否有已回片状态的数据，已回片不允许删除
+        List<KolFeedbackEntity> list = super.listByIds(dto.getIds());
+        if (CollUtil.isEmpty(list)) {
+            throw new ServiceException("未找到要删除的数据");
+        }
+        
+        for (KolFeedbackEntity entity : list) {
+            if (FeedbackStatusEnum.COMPLETED.getCode().equals(entity.getFeedbackStatus())) {
+                throw new ServiceException("已回片状态不允许删除");
+            }
+        }
+        
+        // 执行批量删除
         boolean remove = super.removeByIds(dto.getIds());
         if (!remove) {
             throw new ServiceException("批量删除失败");
@@ -140,13 +179,137 @@ public class KolFeedbackServiceImpl extends SuperServiceImpl<KolFeedbackMapper, 
     }
 
     @Override
-    public void export(PagingDTO<KolFeedbackDTO.ParamDTO> dto, HttpServletResponse response) {
-        // TODO 实现导出逻辑
+    public BatchResultDTO delete(String id) {
+        KolFeedbackEntity entity = super.getById(id);
+        if (entity == null) {
+            throw new ServiceException("KOL回片列表不存在");
+        }
+        
+        // 检查状态，已回片不允许删除
+        if (FeedbackStatusEnum.COMPLETED.getCode().equals(entity.getFeedbackStatus())) {
+            throw new ServiceException("已回片状态不允许删除");
+        }
+        
+        // 执行删除
+        boolean remove = super.removeById(id);
+        if (!remove) {
+            throw new ServiceException("删除失败");
+        }
+        
+        return BatchResultDTO.success(entity.getId(), entity.getSourceCode());
     }
 
     @Override
-    public void importData(MultipartFile file) {
-        // TODO 实现导入逻辑
+    public Boolean export(PagingDTO<KolFeedbackDTO.ParamDTO> dto) {
+        downloadTaskFeign.saveDownloadTask("KOL回片列表导出", EXPORT_OMS_KOL_FEEDBACK.getCode(), dto);
+        return true;
+    }
+
+    /**
+     * 异步导入
+     */
+    @Override
+    public Boolean importExcel(BaseDTO.ImportDTO dto) {
+        dto.setUserId(UserContext.getDefaultLoginUser().getUid());
+        downloadTaskFeign.saveImportTask("KOL回片列表导入", IMPORT_OMS_KOL_FEEDBACK.getCode(), dto);
+        return Boolean.TRUE;
+    }
+
+    /**
+     * 导入KOL回片列表
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void importKolFeedback(BaseDTO.ImportDTO dto) {
+        // 用户
+        List<FindUserDTO> userList = sysUserFeign.getUserList();
+        //设置操作人
+        FindUserDTO findUserDTO = userList.stream()
+                .filter(e -> StringUtils.isNotBlank(dto.getUserId()) && Objects.equals(e.getUserId(), dto.getUserId()))
+                .findFirst()
+                .orElse(null);
+        if (Objects.nonNull(findUserDTO)) {
+            LoginUser user = new LoginUser();
+            user.setUid(findUserDTO.getUserId());
+            user.setUserName(findUserDTO.getUserName());
+            user.setRealName(findUserDTO.getRealName());
+            user.setUserAccount(findUserDTO.getMobile());
+            user.setMobile(findUserDTO.getMobile());
+            UserContext.setLoginUser(user);
+        }
+
+        KolFeedbackExcelListener excelListenerUtil = new KolFeedbackExcelListener(dto.getTaskId(), dto.getImportType(), dto.getImportCount());
+        try {
+            byte[] bytes = fileFeign.downloadFile(dto.getFileUrl());
+            EasyExcel.read(new ByteArrayInputStream(bytes), KolFeedbackExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+        } catch (ExcelCommonException e) {
+            log.error("导入格式错误！", e);
+            throw new ServiceException(ApiError.ERROR_1016);
+        }
+
+        BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
+        importResultDTO.setTaskId(dto.getTaskId());
+        importResultDTO.setCount(excelListenerUtil.getCount());
+        List<KolFeedbackExcelDTO> errorList = excelListenerUtil.getErrorList();
+        String url = "";
+        if (CollectionUtils.isNotEmpty(errorList)) {
+            String fileName = "KOL回片列表错误信息.xlsx";
+            File file = ExcelUtil.exportFile(fileName, "error", errorList, KolFeedbackExcelDTO.class);
+            if (!file.isDirectory()) {
+                url = FastDFSClientUtil.uploadFile(file, fileName);
+            }
+        }
+        importResultDTO.setRemark("处理完成，失败" + errorList.size() + "条");
+        importResultDTO.setErrorUrl(url);
+        importResultDTO.setFinishTime(LocalDateTime.now());
+        importResultDTO.setStatus(FileTaskStatusEnum.FINISH.getCode());
+        downloadTaskFeign.updateTask(importResultDTO);
+    }
+
+    /**
+     * 处理导入成功的数据
+     */
+    @Transactional(rollbackFor = Exception.class, propagation = org.springframework.transaction.annotation.Propagation.NESTED)
+    @Override
+    public void handleImportSuccessList(List<KolFeedbackExcelDTO> successList, List<String> errorNoList, List<KolFeedbackExcelDTO> errorList2, String importType) {
+        if (CollectionUtils.isEmpty(successList)) {
+            return;
+        }
+
+        if (CollUtil.isNotEmpty(errorNoList)) {
+            // 过滤掉错误单号的数据
+            successList = successList.stream()
+                    .filter(e -> StrUtil.isBlank(e.getSourceCode()) || !errorNoList.contains(e.getSourceCode()))
+                    .collect(Collectors.toList());
+
+            // 将错误单号的数据添加到错误列表
+            List<KolFeedbackExcelDTO> collect = successList.stream()
+                    .filter(e -> StrUtil.isNotBlank(e.getSourceCode()) && errorNoList.contains(e.getSourceCode()))
+                    .collect(Collectors.toList());
+            errorList2.addAll(collect);
+        }
+
+        // 批量保存数据
+        for (KolFeedbackExcelDTO excelDTO : successList) {
+            try {
+                KolFeedbackEntity entity = new KolFeedbackEntity();
+                BeanMapperUtils.copy(excelDTO, entity);
+                
+                // 数据处理
+                handleData(entity);
+                
+                // 保存数据
+                boolean save = super.save(entity);
+                if (!save) {
+                    excelDTO.setErrorMsg("保存失败");
+                    errorList2.add(excelDTO);
+                }
+            } catch (Exception e) {
+                log.error("导入KOL回片列表数据失败", e);
+                excelDTO.setErrorMsg(e.getMessage().length() > 50 ? e.getMessage().substring(0, 50) : e.getMessage());
+                errorList2.add(excelDTO);
+            }
+        }
     }
 
     @Override

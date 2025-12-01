@@ -4,8 +4,6 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.oms.dto.KolFeedbackDTO;
 import com.common.business.vo.PagingVO;
-import org.springframework.web.multipart.MultipartFile;
-
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
@@ -64,21 +62,50 @@ public interface KolFeedbackService extends SuperService<KolFeedbackEntity> {
     void batchDelete(BaseIdsDTO.IdsDTO dto);
 
     /**
+     * 单个删除
+     * @author wuhaotian
+     * @date: 2025-12-01
+     * @param id
+     * @return
+     */
+    BatchResultDTO delete(String id);
+
+    /**
      * 导出
      * @author wuhaotian
      * @date: 2025-12-01
      * @param dto
-     * @param response
+     * @return
      */
-    void export(PagingDTO<KolFeedbackDTO.ParamDTO> dto, HttpServletResponse response);
+    Boolean export(PagingDTO<KolFeedbackDTO.ParamDTO> dto);
 
     /**
-     * 导入
+     * 异步导入
      * @author wuhaotian
      * @date: 2025-12-01
-     * @param file
+     * @param dto
+     * @return
      */
-    void importData(MultipartFile file);
+    Boolean importExcel(BaseDTO.ImportDTO dto);
+
+    /**
+     * 导入KOL回片列表
+     * @author wuhaotian
+     * @date: 2025-12-01
+     * @param dto
+     */
+    void importKolFeedback(BaseDTO.ImportDTO dto);
+
+    /**
+     * 处理导入成功的数据
+     * @author wuhaotian
+     * @date: 2025-12-01
+     * @param successList
+     * @param errorNoList
+     * @param errorList2
+     * @param importType
+     */
+    void handleImportSuccessList(List<com.erp.model.oms.dto.excel.KolFeedbackExcelDTO> successList, List<String> errorNoList, List<com.erp.model.oms.dto.excel.KolFeedbackExcelDTO> errorList2, String importType);
 
     /**
      * 下载导入模板

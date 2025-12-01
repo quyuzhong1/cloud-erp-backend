@@ -72,6 +72,8 @@ public class ExportOmsFeignController {
     @Resource
     private PackagePlanService packagePlanService;
 
+    @Resource
+    private KolFeedbackService kolFeedbackService;
 
     @Resource
     private SoReceiptService soReceiptService;
@@ -328,6 +330,23 @@ public class ExportOmsFeignController {
     @WebAdvanceQuery(handler = ExhibitionOrderQueryHandler.class)
     public PagingVO<ExhibitionOrderDTO.ListDTO> exportExhibitionOrder(@RequestBody PagingDTO<ExhibitionOrderDTO.PagingParamDTO> dto) {
         return exhibitionOrderService.paging(dto);
+    }
+
+    /**
+     * 导出KOL回片列表
+     * @author wuhaotian
+     * @date:  2025-12-01
+     * @param dto
+     * @return
+     */
+    @PostMapping("/exportKolFeedback")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "oms:kolFeedback:export",
+            tableAlias = "kf")
+    @WebAdvanceQuery
+    public PagingVO<KolFeedbackDTO.ListDTO> exportKolFeedback(@RequestBody PagingDTO<KolFeedbackDTO.ParamDTO> dto) {
+        return kolFeedbackService.paging(dto);
     }
 
 }
