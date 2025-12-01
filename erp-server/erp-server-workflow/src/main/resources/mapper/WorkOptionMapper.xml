@@ -97,7 +97,11 @@
             pm.business_id as businessId,
             pm.business_key as businessKey,
             pm.create_user_id as createUserId,
-            COALESCE(EXTRACT(EPOCH FROM (pm.end_time - pm.start_time)),0) AS approveDuration,
+        CASE
+        WHEN pm.approve_status = 'approveIng'
+        THEN COALESCE(EXTRACT(EPOCH FROM (CURRENT_TIMESTAMP - pm.start_time)), 0)
+        ELSE COALESCE(EXTRACT(EPOCH FROM (pm.end_time - pm.start_time)), 0)
+        END AS approveDuration,
             pm.create_time as createTime,
             pm.approve_status as approveStatus,
             case when wm.is_multi_tab = true then replace(concat(wm.detail_url,pm.business_id), '?', concat('/',pm.business_id,'?')) else concat(wm.detail_url,pm.business_id)  end as detailUrl,
