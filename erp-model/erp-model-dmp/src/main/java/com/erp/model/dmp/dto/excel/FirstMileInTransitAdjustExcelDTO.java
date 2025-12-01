@@ -31,7 +31,7 @@ public class FirstMileInTransitAdjustExcelDTO implements Serializable {
      * ASIN
      */
     @ExcelProperty(value = "ASIN", index = 2)
-    @FieldValid(fieldName = "*ASIN）",isNotBlank = true,maxLength = 200)
+    @FieldValid(fieldName = "*ASIN）",maxLength = 200)
     private String asin;
     /**
      * MSKU
@@ -49,8 +49,8 @@ public class FirstMileInTransitAdjustExcelDTO implements Serializable {
     /**
      * 备注
      */
-    @ExcelProperty(value = "备注", index = 5)
-    @FieldValid(fieldName = "*备注）",isNotBlank = true,maxLength = 255)
+    @ExcelProperty(value = "调整原因", index = 5)
+    @FieldValid(fieldName = "*调整原因）",isNotBlank = true,maxLength = 255)
     private String remark;
 
     /**

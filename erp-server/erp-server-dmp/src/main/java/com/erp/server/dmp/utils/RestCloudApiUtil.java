@@ -37,7 +37,7 @@ public class RestCloudApiUtil {
         return resultBool;
     }
 
-    private static boolean requestRestCloud(String url, Map<String, Object> map, boolean resultBool) {
+    public static boolean requestRestCloud(String url, Map<String, Object> map, boolean resultBool) {
         String restUrl = "http://" + restcloudUrl + ":" + restcloudPort + "/restcloud/" + url;
         HttpResponse response = HttpRequest.post(restUrl)
                 .header("Content-Type", "application/json")

@@ -34,7 +34,7 @@ public class FirstMileInTransitInitExcelDTO implements Serializable {
      * ASIN
      */
     @ExcelProperty(value = "ASIN", index = 2)
-    @FieldValid(fieldName = "*ASIN）",isNotBlank = true,maxLength = 200)
+    @FieldValid(fieldName = "*ASIN）",maxLength = 200)
     private String asin;
     /**
      * MSKU

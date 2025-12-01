@@ -60,13 +60,13 @@ public class FirstMileInTransitInitExcelListener extends AnalysisEventListener<F
         List<AdsErpFirstMileInTransitDiffEntity> shipmentList = adsErpFirstMileInTransitDiffService.lambdaQuery()
                 .eq(AdsErpFirstMileInTransitDiffEntity::getShipmentCode, excelDTO.getShipmentCode())
                 .list();
-        if (CollectionUtils.isNotEmpty(shipmentList)) {
+        if (CollectionUtils.isEmpty(shipmentList)) {
             errorMsgList.add(CharSequenceUtil.format("货件单号【{}】记录不存在",excelDTO.getShipmentCode()));
         }
         //校验数据是否已存在
         AdsErpFirstMileInTransitDiffEntity entity = shipmentList.stream()
-                .filter(e -> e.getPlatformSkuNo().equals(excelDTO.getPlatformSkuNo()))
-                .filter(e -> StringUtils.isNotBlank(excelDTO.getAsin()) && e.getPlatformSpuNo().equalsIgnoreCase(excelDTO.getAsin()))
+                .filter(e -> e.getPlatformSkuNo().equals(excelDTO.getPlatformSkuNo())
+                        && (StringUtils.isBlank(excelDTO.getAsin()) || e.getPlatformSpuNo().equals(excelDTO.getAsin())))
                 .findFirst()
                 .orElse(null);
         if (Objects.isNull(entity)){
@@ -82,6 +82,8 @@ public class FirstMileInTransitInitExcelListener extends AnalysisEventListener<F
         }
         if (Objects.nonNull(reportMonth)){
             List<AdsErpFirstMileInTransitDiffEntity> collect = shipmentList.stream()
+                    .filter(e -> e.getPlatformSkuNo().equals(excelDTO.getPlatformSkuNo())
+                            && (StringUtils.isBlank(excelDTO.getAsin()) || e.getPlatformSpuNo().equals(excelDTO.getAsin())))
                     .filter(e -> e.getReceiveQty() > 0)
                     .collect(Collectors.toList());
             if (CollUtil.isNotEmpty(collect)){
@@ -96,9 +98,10 @@ public class FirstMileInTransitInitExcelListener extends AnalysisEventListener<F
             errorMsgList.add(CharSequenceUtil.format("期初在途数字类型错误:【{}】",initTransitQty));
         }
         //判断记录是否已存在
-        FirstMileInTransitInitExcelDTO fbaTransitExcelDTO = dataList.stream().filter(e -> CharSequenceUtil.isNotBlank(excelDTO.getShipmentCode()) && excelDTO.getShipmentCode().equals(e.getShipmentCode())
-                && CharSequenceUtil.isNotBlank(excelDTO.getAsin()) && excelDTO.getAsin().equals(e.getAsin())
-                && CharSequenceUtil.isNotBlank(excelDTO.getPlatformSkuNo()) && excelDTO.getPlatformSkuNo().equals(e.getPlatformSkuNo())
+        FirstMileInTransitInitExcelDTO fbaTransitExcelDTO = dataList.stream().filter(
+                e -> CharSequenceUtil.isNotBlank(excelDTO.getShipmentCode()) && excelDTO.getShipmentCode().equals(e.getShipmentCode())
+                && (StringUtils.isBlank(excelDTO.getAsin()) || e.getAsin().equals(excelDTO.getAsin()))
+                && excelDTO.getPlatformSkuNo().equals(e.getPlatformSkuNo())
         ).findFirst().orElse(null);
         if (Objects.nonNull(fbaTransitExcelDTO)){
             errorMsgList.add("重复记录");

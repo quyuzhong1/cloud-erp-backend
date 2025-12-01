@@ -2,6 +2,8 @@ package com.erp.model.dmp.dto;
 
 import java.util.Date;
 
+import com.baomidou.mybatisplus.annotation.FieldFill;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.base.SortDTO;
 
 import java.util.List;
@@ -941,4 +943,133 @@ public class AdsErpFirstMileInTransitDiffDTO implements Serializable {
         private String adjustReason;
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class FirstMileShipmentChangeFDTO implements Serializable{
+        /**
+         * 提交的数据ID
+         */
+        private String dataId;
+        /**
+         * 来源系统：amazon
+         */
+        private String sourceSystem;
+        /**
+         * 来源平台
+         */
+        private String sourcePlatform;
+        /**
+         * 平台账号编码
+         */
+        private String accountCode;
+        /**
+         * 核对周期
+         */
+        private String checkMonth;
+        /**
+         * 核对周期(时间格式)
+         */
+        private String checkMonthQuery;
+        /**
+         * 店铺ID/授权ID
+         */
+        private String nextLevelId;
+        /**
+         * 业务类型:firstMileInit=期初,firstMileAdjust=调整
+         */
+        private String billTopic;
+        /**
+         * 平台货件ID
+         */
+        private String platformShipmentId;
+        /**
+         * 平台货件单号
+         */
+        private String platformShipmentCode;
+        /**
+         * 店铺id
+         */
+        private String shopId;
+        /**
+         * 店铺名称
+         */
+        private String shopName;
+        /**
+         * 客户id
+         */
+        private String customerId;
+        /**
+         * 客户姓名
+         */
+        private String customerName;
+        /**
+         * 货件状态
+         */
+        private String shipmentStatus;
+        /**
+         * 货件创建时间
+         */
+        private LocalDateTime shipmentCreateTime;
+        /**
+         * 目的仓库id
+         */
+        private String warehouseId;
+        /**
+         * 目的仓库名称
+         */
+        private String warehouseName;
+        /**
+         * 在途仓库id
+         */
+        private String intransitWarehouseId;
+        /**
+         * 在途仓库名称
+         */
+        private String intransitWarehouseName;
+        /**
+         * 平台产品id（ASIN）
+         */
+        private String platformSpuNo;
+        /**
+         * 平台sku（MSKU）/销售平台SKU
+         */
+        private String platformSkuNo;
+        /**
+         * FNSKU/平台库存SKU
+         */
+        private String platformStockSku;
+        /**
+         * SKU ID
+         */
+        private String skuId;
+        /**
+         * ERP SKU编码
+         */
+        private String skuNo;
+        /**
+         * 变更数量
+         */
+        private Integer changeQty;
+        /**
+         * 备份
+         */
+        private String remark;
+        /**
+         * 创建人id
+         */
+        private String createUserId;
+        /**
+         * 创建人名称
+         */
+        private String createUserName;
+        /**
+         * 修改人id
+         */
+        private String updateUserId;
+        /**
+         * 修改人名称
+         */
+        private String updateUserName;
+
+    }
 }

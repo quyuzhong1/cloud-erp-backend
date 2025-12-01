@@ -61,17 +61,23 @@ public class FirstMileInTransitAdjustExcelListener extends AnalysisEventListener
         List<AdsErpFirstMileInTransitDiffEntity> shipmentList = adsErpFirstMileInTransitDiffService.lambdaQuery()
                 .eq(AdsErpFirstMileInTransitDiffEntity::getShipmentCode, excelDTO.getShipmentCode())
                 .list();
-        if (CollectionUtils.isNotEmpty(shipmentList)) {
+        if (CollectionUtils.isEmpty(shipmentList)) {
             errorMsgList.add(CharSequenceUtil.format("货件单号【{}】记录不存在",excelDTO.getShipmentCode()));
+        }
+        long count = shipmentList.stream()
+                .filter(e -> e.getExecStatus().equals("doing"))
+                .count();
+        if (count > 0){
+            errorMsgList.add(CharSequenceUtil.format("货件单号【{}】存在执行中的头程在途差异调整单，请等处理完成后再导入",excelDTO.getShipmentCode()));
         }
         //校验数据是否已存在
         AdsErpFirstMileInTransitDiffEntity entity = shipmentList.stream()
-                .filter(e -> e.getPlatformSkuNo().equals(excelDTO.getPlatformSkuNo()))
-                .filter(e -> StringUtils.isNotBlank(excelDTO.getAsin()) && e.getPlatformSpuNo().equalsIgnoreCase(excelDTO.getAsin()))
-                .filter(e -> e.getCheckMonth().contains(excelDTO.getReportMonth()))
+                .filter(e -> (e.getPlatformSkuNo().equals(excelDTO.getPlatformSkuNo()) || e.getPlatformStockSku().equals(excelDTO.getPlatformSkuNo()))
+                && (StringUtils.isBlank(excelDTO.getAsin()) || e.getPlatformSpuNo().equals(excelDTO.getAsin()))
+                && e.getCheckMonthQuery().contains(excelDTO.getReportMonth()))
                 .findFirst()
                 .orElse(null);
-        if (Objects.isNull(entity)){
+        if (null == entity){
             errorMsgList.add(CharSequenceUtil.format("货件单号【{}】ASIN【{}】MSKU【{}】货件明细不存在",excelDTO.getShipmentCode(),excelDTO.getAsin(),excelDTO.getPlatformSkuNo()));
         }
         String reportMonthStr = excelDTO.getReportMonth();
@@ -82,14 +88,10 @@ public class FirstMileInTransitAdjustExcelListener extends AnalysisEventListener
         }catch (Exception e){
             errorMsgList.add(CharSequenceUtil.format("导入月份格式【yyyy-MM-dd】错误:【{}】",reportMonthStr));
         }
-        if (Objects.nonNull(reportMonth)){
-            List<AdsErpFirstMileInTransitDiffEntity> collect = shipmentList.stream()
-                    .filter(e -> e.getReceiveQty() > 0)
-                    .collect(Collectors.toList());
-            if (CollUtil.isNotEmpty(collect)){
-                List<String> monthList = collect.stream().map(AdsErpFirstMileInTransitDiffEntity::getCheckMonth).distinct().collect(Collectors.toList());
-                errorMsgList.add(CharSequenceUtil.format("在途货件单号【{}】ASIN【{}】MSKU【{}】记录已存在【{}】在途数据", excelDTO.getShipmentCode(), excelDTO.getAsin(), excelDTO.getPlatformSkuNo(), String.join(",",monthList)));
-            }
+        // 上个月1日
+        LocalDate beforeMonth = LocalDate.now().withDayOfMonth(1).minusMonths(1);
+        if (null != reportMonth && reportMonth.isBefore(beforeMonth)){
+            errorMsgList.add(CharSequenceUtil.format("导入月份错误:只能是上个月之后的数据:【{}】",reportMonthStr));
         }
         String adjustQty = excelDTO.getAdjustQty();
         try {
@@ -99,7 +101,7 @@ public class FirstMileInTransitAdjustExcelListener extends AnalysisEventListener
         }
         //判断记录是否已存在
         FirstMileInTransitAdjustExcelDTO fbaTransitExcelDTO = dataList.stream().filter(e -> CharSequenceUtil.isNotBlank(excelDTO.getShipmentCode()) && excelDTO.getShipmentCode().equals(e.getShipmentCode())
-                && CharSequenceUtil.isNotBlank(excelDTO.getAsin()) && excelDTO.getAsin().equals(e.getAsin())
+                && (StringUtils.isBlank(excelDTO.getAsin()) || e.getAsin().equals(excelDTO.getAsin()))
                 && CharSequenceUtil.isNotBlank(excelDTO.getPlatformSkuNo()) && excelDTO.getPlatformSkuNo().equals(e.getPlatformSkuNo())
         ).findFirst().orElse(null);
         if (Objects.nonNull(fbaTransitExcelDTO)){
