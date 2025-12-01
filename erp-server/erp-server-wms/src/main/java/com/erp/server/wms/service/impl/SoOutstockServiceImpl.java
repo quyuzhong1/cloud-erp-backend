@@ -4448,7 +4448,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             soOutstock.setCarrierId(logisticsInfo.getSupplierId());
             soOutstock.setTrackNo(dto.getTransportNo());
             soOutstock.setLogisticsChannelId(dto.getChannelId());
-            //2024.09.11 jack 销售出库单增加物流渠道名称logisticsChannelName
             soOutstock.setLogisticsChannelName(logisticsInfo.getName());
             updateList.add(soOutstock);
         }
