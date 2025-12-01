@@ -437,7 +437,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             throw new ServiceException(ApiError.ERROR_92051);
         }
         //启用日期不能大于上个映射关系的开始时间
-        if (dto.getEffectiveTime().isBefore(skuMapping.getEffectiveTime())){
+        if (Objects.nonNull(skuMapping.getEffectiveTime()) && dto.getEffectiveTime().isBefore(skuMapping.getEffectiveTime())){
             throw new ServiceException(ApiError.ERROR_92151,skuMapping.getEffectiveTime());
         }
         // 历史skuId
@@ -695,7 +695,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             throw new ServiceException(ApiError.ERROR_92051);
         }
         //启用日期不能大于上个映射关系的开始时间
-        if (dto.getEffectiveTime().isBefore(skuMapping.getEffectiveTime())){
+        if (Objects.nonNull(skuMapping.getEffectiveTime()) && dto.getEffectiveTime().isBefore(skuMapping.getEffectiveTime())){
             throw new ServiceException(ApiError.ERROR_92151,skuMapping.getEffectiveTime());
         }
         String productSkuId = dto.getProductSkuId();
