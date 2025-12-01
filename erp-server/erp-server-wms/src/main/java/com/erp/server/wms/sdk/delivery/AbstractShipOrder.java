@@ -49,7 +49,7 @@ public abstract class AbstractShipOrder implements IPlatformService {
         detailList = detailList.stream().filter(v -> CharSequenceUtil.isNotBlank(v.getSplitDetailId())).collect(Collectors.toList());
         //没有捆绑商品拆分，直接返回
         if (CollectionUtils.isEmpty(detailList)) {
-            return new SplitResultDTO(detailList, Collections.emptyList());
+            return new SplitResultDTO(allDetailList, Collections.emptyList());
         }
         String mainId = detailList.get(0).getMainId();
         Map<String, List<SoB2cDetailEntity>> splitDetailMap = detailList.stream().collect(Collectors.groupingBy(SoB2cDetailEntity::getSplitDetailId));
