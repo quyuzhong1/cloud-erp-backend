@@ -1,11 +1,13 @@
 package com.erp.server.oms.controller.api;
 
 
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogViewService;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.oms.dto.DeliveryBoxRuleDTO;
+import com.erp.server.oms.query.DeliveryBoxRuleQueryHandler;
 import com.erp.server.oms.service.DeliveryBoxRuleService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -89,6 +91,7 @@ public class DeliveryBoxRuleController extends BaseController {
             menuCode = "oms:deliveryBoxRule:paging",
             tableAlias = "dbr"
     )
+    @WebAdvanceQuery(handler = DeliveryBoxRuleQueryHandler.class)
     public ApiResult<PagingVO<DeliveryBoxRuleDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<DeliveryBoxRuleDTO.PagingParamDTO> dto) {
         return success(deliveryBoxRuleService.paging(dto));
     }
