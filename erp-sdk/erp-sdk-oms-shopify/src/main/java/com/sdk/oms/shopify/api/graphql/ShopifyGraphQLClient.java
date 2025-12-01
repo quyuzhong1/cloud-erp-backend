@@ -1,5 +1,7 @@
 package com.sdk.oms.shopify.api.graphql;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.TypeReference;
 import com.common.core.exception.ServiceException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -129,13 +131,12 @@ public class ShopifyGraphQLClient {
         variablesMap.put("fulfillmentOrderLineItems",lineItems);
 
         String jsonString = runQuery("shipOrder", variablesMap);
-        ObjectMapper objectMapper = new ObjectMapper();
         try {
-            ShopifyFulfillmentShipOrderResp response = objectMapper.readValue(jsonString, ShopifyFulfillmentShipOrderResp.class);
+            ShopifyFulfillmentShipOrderResp response = JSON.parseObject(jsonString,new TypeReference<ShopifyFulfillmentShipOrderResp>() {}.getType());
             return response;
         } catch (Exception e) {
             log.error("shopify获取订单信息转换异常", e);
-            return null;
+            throw new ServiceException("shopify获取订单信息转换异常", e);
         }
     }
     ;

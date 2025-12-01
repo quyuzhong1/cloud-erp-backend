@@ -163,7 +163,6 @@ public class ShopifyShipOrder extends AbstractShipOrder {
                 List<ShopifyFulfillmentOrderPayloadLineItem> items = new LinkedList<>();
                 // 组合请求参数
                 ShopifyLineItemsByFulfillmentOrder orderRequestDTO = new ShopifyLineItemsByFulfillmentOrder();
-                List<String> fullmentSoIds = new ArrayList<>();
                 for (ShopifyFulfillmentOrderLineItem lineItem : fulfillmentOrder.getLineItems()) {
                     SoB2cDetailEntity detailEntity = detailEntityMap.get(lineItem.getLineItemId());
                     if (null == detailEntity) {
@@ -174,7 +173,6 @@ public class ShopifyShipOrder extends AbstractShipOrder {
                     item.setId(lineItem.getId());
                     items.add(item);
                     signShippedDetailList.add(detailEntity.getId());
-                    fullmentSoIds.add(detailEntity.getMainId());
                 }
                 orderRequestDTO.setFulfillmentOrderId(fulfillmentOrder.getId());
                 orderRequestDTO.setFulfillmentOrderLineItems(items);
@@ -184,11 +182,8 @@ public class ShopifyShipOrder extends AbstractShipOrder {
                 ShopifyTrackingInfo trackingInfo = new ShopifyTrackingInfo();
 
                 //获取渠道标发单号
-                List<SoB2cLogisticsEntity> currentLogisticsList = soB2cLogisticsEntityList.stream()
-                        .filter(e -> fullmentSoIds.contains(e.getMainId()))
-                        .collect(Collectors.toList());
                 List<String> trackingNumberList = new ArrayList<>();
-                for (SoB2cLogisticsEntity soB2cLogisticsEntity : currentLogisticsList) {
+                for (SoB2cLogisticsEntity soB2cLogisticsEntity : soB2cLogisticsEntityList) {
                     LogisticsChannelDTO.SignShipDTO tmsScaleChannelShipDTO = tmsScaleChannelShipDTOList.stream()
                             .filter(e -> e.getLogisticsChannelId().equals(soB2cLogisticsEntity.getLogisticsChannelId()))
                             .findFirst()
@@ -197,12 +192,11 @@ public class ShopifyShipOrder extends AbstractShipOrder {
                     String trackingNumber = CharSequenceUtil.equals(OrderDeliveryMarkTypeEnum.TRANSPORT_NO.getCode(),standardOrderType)
                             ? soB2cLogisticsEntity.getCode() : soB2cLogisticsEntity.getTrackNo();
                     if(StringUtils.isBlank(trackingNumber)){
-                        SoB2cEntity errorEntity = allEntityList.stream()
-                                .filter(e -> e.getId().equals(soB2cLogisticsEntity.getMainId()))
-                                .findFirst()
-                                .orElse(new SoB2cEntity());
-                        throw new ServiceException("操作失败，{}的渠道标发单号为空",errorEntity.getCode());
+                        if(soB2cLogisticsEntity.getMainId().equals(mainEntity.getId())){
+                            throw new ServiceException("操作失败，渠道标发单号为空");
+                        }
                     }
+                    trackingNumberList.add(trackingNumber);
                 }
                 if (CollectionUtils.isEmpty(trackingNumberList)) {
                     throw new ServiceException("操作失败，渠道标发单号为空");
