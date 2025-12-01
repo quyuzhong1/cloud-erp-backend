@@ -254,7 +254,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         soB2cDeliveryDetailService.add(soB2cDeliveryDetailEntities, soB2cDeliveryEntity.getId());
 
         //冻结虚拟库存
-        freezeVirtualInventory(soB2cDeliveryEntity,soB2cDeliveryDetailEntities);
+        freezeVirtualInventory(soB2cDeliveryEntity,soB2cDeliveryDetailEntities, Boolean.FALSE);
 
         return soB2cDeliveryEntity;
     }
@@ -1713,6 +1713,9 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             soB2cDeliveryDetailService.removeByMainIds(Collections.singletonList(id));
             return;
         }
+        List<SoB2cDeliveryDetailEntity> detailList = soB2cDeliveryDetailService.listByMainIds(Collections.singletonList(id));
+        //冻结库存还原
+        freezeVirtualInventory(deliveryEntity,detailList,Boolean.TRUE);
         this.removeById(id);
         //删除配送明细
         soB2cDeliveryDetailService.removeByMainIds(Collections.singletonList(id));
@@ -2499,7 +2502,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         }
         if (isAddQty) {
             //提交发货冻结虚拟库存
-            freezeVirtualInventory(soB2cDeliveryEntity,detailList);
+            freezeVirtualInventory(soB2cDeliveryEntity,detailList,Boolean.FALSE);
         }
         //发货出库
         outFreezeVirtualInventory(soB2cDeliveryEntity);
@@ -3005,8 +3008,9 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
      * @date 2024/6/12 10:58
      * @param entity
      * @param soB2cDeliveryDetailList
+     * @param isRollback 是否还原库存
      */
-    private void freezeVirtualInventory (SoB2cDeliveryEntity entity,List<SoB2cDeliveryDetailEntity> soB2cDeliveryDetailList) {
+    private void freezeVirtualInventory (SoB2cDeliveryEntity entity,List<SoB2cDeliveryDetailEntity> soB2cDeliveryDetailList, Boolean isRollback) {
         List<VirtualInventoryStockDTO.OutInStockDTO> paramList = new ArrayList<>();
         for (SoB2cDeliveryDetailEntity detailEntity : soB2cDeliveryDetailList) {
             VirtualInventoryStockDTO.OutInStockDTO outInStockDTO = new VirtualInventoryStockDTO.OutInStockDTO();
@@ -3032,6 +3036,11 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         //添加冻结库存
         VirtualInventoryStockDTO.StockParamDTO dto = new VirtualInventoryStockDTO.StockParamDTO();
         dto.setParamList(paramList);
+        if (isRollback){
+            dto.setBusinessType(VirtualInventoryBusinessTypeEnum.SO_B2C_DELIVERY_ROLLBACK.getCode());
+        }else {
+            dto.setBusinessType(VirtualInventoryBusinessTypeEnum.SO_B2C_DELIVERY.getCode());
+        }
         dto.setBusinessType(VirtualInventoryBusinessTypeEnum.SO_B2C_DELIVERY.getCode());
         //更新库存
         log.warn("冻结b2c发货单虚拟库存={}", JSONUtil.toJsonStr(dto));
