@@ -119,8 +119,8 @@ public class DeliveryBoxRuleController extends BaseController {
      */
     @LogAction(value = LogActionEnum.IMPORT, desc = "导入发货箱规")
     @PostMapping("/importFile")
-    public ApiResult importFile(@RequestBody BaseDTO.ImportDTO dto) {
-        Boolean result = deliveryBoxRuleService.importFile(dto);
+    public ApiResult importFile(@RequestBody BaseDTO.ImportDTO dto,HttpServletResponse response) {
+        Boolean result = deliveryBoxRuleService.importFile(dto, response);
         return result ? success() : failure();
     }
 

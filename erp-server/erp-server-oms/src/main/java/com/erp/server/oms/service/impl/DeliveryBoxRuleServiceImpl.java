@@ -20,7 +20,6 @@ import com.erp.model.oms.dto.excel.DeliveryBoxRuleImportExcelDTO;
 import com.erp.model.oms.entity.DeliveryBoxRuleDetailEntity;
 import com.erp.model.oms.entity.DeliveryBoxRuleEntity;
 import com.erp.model.plm.vo.SkuVO;
-import com.erp.model.scm.enums.CreatePoTypeEnum;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
@@ -179,10 +178,38 @@ public class DeliveryBoxRuleServiceImpl extends SuperServiceImpl<DeliveryBoxRule
     }
 
     @Override
-    public Boolean importFile(BaseDTO.ImportDTO dto) {
-        dto.setUserId(UserContext.getDefaultLoginUser().getUid());
-        downloadTaskFeign.saveImportTask("导入发货箱规", IMPORT_OMS_DELIVERY_BOX_RULE.getCode(), dto);
-        return Boolean.TRUE;
+    public Boolean importFile(BaseDTO.ImportDTO dto,HttpServletResponse response) {
+        //审核通过的sku
+        List<SkuVO> skuVOList = plmTaskFeign.listApproveSku();
+
+        if(StringUtils.isNotBlank(dto.getUserId())){
+            FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(dto.getUserId());
+            if(Objects.nonNull(findUserDTO)){
+                LoginUser user = new LoginUser();
+                user.setUid(findUserDTO.getUserId());
+                user.setUserName(findUserDTO.getUserName());
+                user.setRealName(findUserDTO.getRealName());
+                user.setUserAccount(findUserDTO.getMobile());
+                user.setMobile(findUserDTO.getMobile());
+                UserContext.setLoginUser(user);
+            }
+        }
+
+        DeliveryBoxRuleExcelListener excelListenerUtil = new DeliveryBoxRuleExcelListener(dto.getTaskId(),dto.getImportType(),dto.getImportCount(),skuVOList);
+        try {
+            byte[] bytes = fileFeign.downloadFile(dto.getFileUrl());
+            EasyExcel.read(new ByteArrayInputStream(bytes), DeliveryBoxRuleImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+            List<DeliveryBoxRuleImportExcelDTO> errorList = excelListenerUtil.getErrorList();
+            if (CollectionUtils.isEmpty(errorList)) {
+                return true;
+            }
+            String fileName = "发货箱规错误信息";
+            ExcelUtil.export(fileName, "task", errorList, DeliveryBoxRuleImportExcelDTO.class, response);
+        } catch (ExcelCommonException e) {
+            log.error("导入格式错误！", e);
+            throw new ServiceException(ApiError.ERROR_1016);
+        }
+        return false;
     }
 
     public void importDeliveryBoxRule(BaseDTO.ImportDTO dto) {

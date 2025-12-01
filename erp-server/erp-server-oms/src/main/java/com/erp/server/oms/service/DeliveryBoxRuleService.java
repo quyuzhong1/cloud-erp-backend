@@ -57,7 +57,7 @@ public interface DeliveryBoxRuleService extends SuperService<DeliveryBoxRuleEnti
     PagingVO<DeliveryBoxRuleDTO.ListDTO> paging(PagingDTO<DeliveryBoxRuleDTO.PagingParamDTO> dto);
 
 
-    Boolean importFile(BaseDTO.ImportDTO dto);
+    Boolean importFile(BaseDTO.ImportDTO dto,HttpServletResponse response);
 
     void importDeliveryBoxRule(BaseDTO.ImportDTO dto);
 

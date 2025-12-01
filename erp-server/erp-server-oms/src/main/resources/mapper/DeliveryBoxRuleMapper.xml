@@ -64,6 +64,6 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        dbr.sku_no asc
+        dbr.create_time desc
     </select>
 </mapper>
