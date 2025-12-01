@@ -2566,6 +2566,11 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                     batchResultDTOList.add(batchResultDTO);
                     continue;
                 }
+                if(BillTypeEnum.B2C.getCode().equals(soOutstock.getOrderType())){
+                    BatchResultDTO batchResultDTO = BatchResultDTO.fail(pagingUpdateDTO.getId(),soOutstock.getCode(),"只允许B2B订单更新跟踪号");
+                    batchResultDTOList.add(batchResultDTO);
+                    continue;
+                }
                 LogisticsBillDTO.BatchUpdateTrackNoDTO batchUpdateTrackNoDTO = new LogisticsBillDTO.BatchUpdateTrackNoDTO();
                 batchUpdateTrackNoDTO.setTrackNoList(pagingUpdateDTO.getTrackNoList());
                 batchUpdateTrackNoDTO.setSoOutstockEntity(soOutstock);
@@ -4738,6 +4743,37 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             if(Objects.nonNull(skuVO)){
                 v.setProductName(skuVO.getSkuName());
                 v.setSkuUnit(skuVO.getUnitName());
+            }
+        }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public void updateSoB2cLogisticsInfo(SoB2cLogisticsDTO.transferOrderDTO dto) {
+        List<SoOutstockEntity> soOutstockEntityList = this.listBySoIds(Collections.singletonList(dto.getId()));
+        if(CollectionUtils.isEmpty(soOutstockEntityList)){
+            return;
+        }
+        List<LogisticsChannelDTO.BaseDTO> logisticsInfoList = logisticsFeign.listChannelInfoById(Collections.singletonList(dto.getChannelId()));
+        LogisticsChannelDTO.BaseDTO logisticsInfo = logisticsInfoList.get(0);
+        List<SoOutstockEntity> updateList = new ArrayList<>();
+        for (SoOutstockEntity soOutstock : soOutstockEntityList) {
+            soOutstock.setCarrierId(logisticsInfo.getSupplierId());
+            soOutstock.setTrackNo(dto.getTransportNo());
+            soOutstock.setLogisticsChannelId(dto.getChannelId());
+            //2024.09.11 jack 销售出库单增加物流渠道名称logisticsChannelName
+            soOutstock.setLogisticsChannelName(logisticsInfo.getName());
+            updateList.add(soOutstock);
+        }
+
+        if(CollectionUtils.isNotEmpty(updateList)){
+            boolean update = this.updateBatchById(updateList);
+            //只批量同步更新审核通过的销售出库单
+            updateList = updateList.stream().filter(v -> v.getApproveStatus().getCode().equalsIgnoreCase(ApproveStatusEnum.APPROVE.getCode())).collect(Collectors.toList());
+            if(update && CollectionUtils.isNotEmpty(updateList)){
+                //推送金蝶同步任务
+                sendPushTask(updateList,SyncOperateEnum.OPERATE_APPROVE.getCode());
             }
         }
     }

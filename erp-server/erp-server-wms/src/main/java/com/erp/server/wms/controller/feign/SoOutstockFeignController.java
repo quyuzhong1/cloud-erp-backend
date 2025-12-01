@@ -8,6 +8,7 @@ import com.common.business.enums.DataAttributeEnum;
 import com.common.message.constant.RedisKeyConstant;
 import com.erp.model.oms.dto.ExhibitionOrderDTO;
 import com.erp.model.oms.dto.PlatformGenerateSoOutstockDTO;
+import com.erp.model.oms.dto.SoB2cLogisticsDTO;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
@@ -293,6 +294,15 @@ public class SoOutstockFeignController {
     @PostMapping("/listSoOutstockByTime")
     public List<SoOutstockDTO.KolSoOutstockDTO> listSoOutstockByTime(@RequestBody SoOutstockDTO.KolSoOutstockDateDTO dto){
         return soOutstockDetailService.listSoOutstockByTime(dto);
+    }
+
+    /**
+     * 更新物流信息
+     * @return
+     */
+    @PostMapping("/updateSoB2cLogisticsInfo")
+    public void updateSoB2cLogisticsInfo(@RequestBody SoB2cLogisticsDTO.transferOrderDTO dto){
+        soOutstockService.updateSoB2cLogisticsInfo(dto);
     }
 }
 
