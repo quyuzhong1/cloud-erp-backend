@@ -1,13 +1,10 @@
 package com.erp.server.dmp.service;
-import com.erp.model.dmp.dto.AdsErpInventoryDiffDTO;
 import com.erp.model.dmp.entity.doris.AdsErpInventoryDiffKingdeeEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.dmp.dto.AdsErpInventoryDiffKingdeeDTO;
 import com.common.business.vo.PagingVO;
 import javax.servlet.http.HttpServletResponse;
-import javax.validation.constraints.Size;
-import java.util.List;
 
 /**
  * <p>
@@ -84,4 +81,11 @@ public interface AdsErpInventoryDiffKingdeeService extends SuperService<AdsErpIn
      * @return
      */
     BatchResultDTO updateRemark(String id,String remark);
+
+    /**
+     * 重新生成
+     * @param dto
+     * @return
+     */
+    Boolean generateDiff(AdsErpInventoryDiffKingdeeDTO.GenerateDiffDTO dto);
 }

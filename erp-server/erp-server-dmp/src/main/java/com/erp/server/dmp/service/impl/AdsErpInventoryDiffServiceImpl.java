@@ -5,6 +5,7 @@ import com.common.business.enums.FileTaskEventEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.wrapper.FeignQuery;
 import com.erp.model.dmp.entity.ThirdMappingEntity;
+import com.erp.model.dmp.entity.doris.AdsErpInventoryDiffKingdeeEntity;
 import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
@@ -13,6 +14,7 @@ import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.dmp.service.CfgSettingService;
 import com.erp.server.dmp.service.ThirdMappingService;
+import com.erp.server.dmp.utils.RestCloudApiUtil;
 import io.seata.spring.annotation.GlobalTransactional;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.dto.base.BaseResultDTO;
@@ -242,5 +244,28 @@ public class AdsErpInventoryDiffServiceImpl extends SuperServiceImpl<AdsErpInven
             resultList.addAll(collect);
         }
         return resultList;
+    }
+
+    @Override
+    public Boolean generateDiff(AdsErpInventoryDiffDTO.GenerateDiffDTO dto) {
+        String checkMonth = dto.getCheckMonth();
+        checkMonth = checkMonth.replace("-", "年") + "月";
+        if(!cn.hutool.core.date.DateUtil.format(cn.hutool.core.date.DateUtil.offsetMonth(new Date(), -1), "yyyy年MM月").equals(checkMonth)) {
+            throw new ServiceException("只允许重新生成上月核对任务");
+        }
+        Integer count = lambdaQuery().eq(AdsErpInventoryDiffEntity::getCheckMonth, checkMonth)
+                .eq(AdsErpInventoryDiffEntity::getExecStatus, "doing").count();
+        if(count != null && count > 0) {
+            throw new ServiceException(dto.getCheckMonth() + "核对任务正在执行中");
+        }
+        boolean reCreate = RestCloudApiUtil.reCreate("", "dbtodb/check_month_diff_so_outstock");
+        if(reCreate) {
+            lambdaUpdate().eq(AdsErpInventoryDiffEntity::getCheckMonth, checkMonth)
+                    .set(AdsErpInventoryDiffEntity::getExecStatus, "doing")
+                    .set(AdsErpInventoryDiffEntity::getExecStatusName, "执行中")
+                    .setSql(" finish_time = null ")
+                    .update();
+        }
+        return true;
     }
 }

@@ -88,4 +88,10 @@ public interface AdsErpInventoryDiffService extends SuperService<AdsErpInventory
      */
     List<AdsErpInventoryDiffDTO.WarehouseListDTO> getCanDiffWarehouseList();
 
+    /**
+     * 重新生成差异数据
+     * @param dto
+     * @return
+     */
+    Boolean generateDiff(AdsErpInventoryDiffDTO.GenerateDiffDTO dto);
 }

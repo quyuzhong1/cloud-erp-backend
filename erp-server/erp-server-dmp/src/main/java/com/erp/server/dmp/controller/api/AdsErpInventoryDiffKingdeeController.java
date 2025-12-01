@@ -3,10 +3,7 @@ package com.erp.server.dmp.controller.api;
 
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.WebAdvanceQuery;
-import com.erp.model.dmp.dto.AdsErpInventoryDiffDTO;
-import com.erp.model.dmp.entity.doris.AdsErpInventoryDiffEntity;
 import com.erp.model.dmp.entity.doris.AdsErpInventoryDiffKingdeeEntity;
-import com.erp.server.dmp.query.AdsErpFirstMileInTransitDiffQueryHandler;
 import com.erp.server.dmp.query.AdsErpInventoryDiffKingdeeQueryHandler;
 import lombok.extern.slf4j.Slf4j;
 
@@ -155,7 +152,8 @@ public class AdsErpInventoryDiffKingdeeController extends BaseController {
     @PostMapping("/generateDiff")
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "重新生成")
     public ApiResult<Boolean> generateDiff(@RequestBody @Validated AdsErpInventoryDiffKingdeeDTO.GenerateDiffDTO dto) {
-        // TODO 请求restCloud
-        return ApiResult.success(true);
+        //  请求restCloud
+        Boolean result = adsErpInventoryDiffKingdeeService.generateDiff(dto);
+        return ApiResult.success(result);
     }
 }
