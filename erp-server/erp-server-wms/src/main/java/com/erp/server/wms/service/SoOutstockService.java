@@ -13,6 +13,7 @@ import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.ExhibitionOrderDTO;
 import com.erp.model.oms.dto.PlatformGenerateSoOutstockDTO;
+import com.erp.model.oms.dto.SoB2cLogisticsDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
@@ -614,4 +615,6 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
     void updateSkuStdCostOutstock(SoOutstockEntity entity);
 
     List<ExhibitionOrderDTO.DownstreamListDTO> listSoOutstockByExhibitionId(String exhibitionId);
+
+    void updateSoB2cLogisticsInfo(SoB2cLogisticsDTO.transferOrderDTO dto);
 }
