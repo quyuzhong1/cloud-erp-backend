@@ -101,7 +101,7 @@ public class KolFeedbackEntity extends BaseEntity<KolFeedbackEntity> {
     @TableField("remark")
     private String remark;
     /**
-     * 回片状态
+     * 回片状态 com.erp.model.oms.enums.FeedbackStatusEnum
      */
     @TableField("feedback_status")
     private String feedbackStatus;

@@ -174,7 +174,7 @@ public class KolFeedbackDTO implements Serializable {
         private String remark;
 
         /**
-         * 回片状态
+         * 回片状态 com.erp.model.oms.enums.FeedbackStatusEnum
          */
         private String feedbackStatus;
 
@@ -288,7 +288,7 @@ public class KolFeedbackDTO implements Serializable {
         private String remark;
 
         /**
-         * 回片状态
+         * 回片状态 com.erp.model.oms.enums.FeedbackStatusEnum
          */
         private String feedbackStatus;
 
@@ -410,7 +410,7 @@ public class KolFeedbackDTO implements Serializable {
         private String remark;
 
         /**
-         * 回片状态
+         * 回片状态 com.erp.model.oms.enums.FeedbackStatusEnum
          */
         @Size(max = 50,message = "回片状态最大长度不能超过50位")
         private String feedbackStatus;
