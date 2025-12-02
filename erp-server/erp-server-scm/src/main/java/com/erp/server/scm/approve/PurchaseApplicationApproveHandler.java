@@ -39,6 +39,11 @@ public class PurchaseApplicationApproveHandler extends AbstractApproveHandler {
 
 
     @Override
+    public BatchResultDTO approve(ApproveOneDTO dto) {
+        return purchaseApplicationService.approve(purchaseApplicationService.getById(dto.getId()),dto);
+    }
+
+    @Override
     public Boolean cancelProcess(ApproveDTO.CancelProcessDTO dto) {
         PurchaseApplicationEntity entity = purchaseApplicationService.getById(dto.getId());
         if (ObjectUtil.isEmpty(entity)) {

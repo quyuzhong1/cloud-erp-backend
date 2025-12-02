@@ -1,16 +1,15 @@
 package com.erp.model.wms.entity;
 
-import com.baomidou.mybatisplus.annotation.TableName;
-import com.common.core.entity.BaseEntity;
-import java.time.LocalDateTime;
 import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
-
-import jdk.nashorn.internal.ir.annotations.Ignore;
+import com.baomidou.mybatisplus.annotation.TableName;
+import com.common.business.enums.ApproveStatusEnum;
+import com.common.core.entity.BaseEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
+
+import java.io.Serializable;
+import java.time.LocalDateTime;
 
 
 /**
@@ -78,10 +77,22 @@ public class QcNoticeEntity extends BaseEntity<QcNoticeEntity> {
     @TableField("remark")
     private String remark;
     /**
-    * 备注
+    * 质检时效
     */
     @TableField("qc_timeliness")
     private Integer qcTImeliness;
+    
+    /**
+    * 是否作废
+    */
+    @TableField("invalid_status")
+    private Boolean invalidStatus;
+    
+    /**
+    * 作废原因
+    */
+    @TableField("invalid_remark")
+    private String invalidRemark;
 
 
     public static final String APPROVE_STATUS = "approve_status";
@@ -103,6 +114,18 @@ public class QcNoticeEntity extends BaseEntity<QcNoticeEntity> {
     public static final String QC_STATUS = "qc_status";
 
     public static final String REMARK = "remark";
+
+    public static final String QC_TIMELINESS = "qc_timeliness";
+
+    public static final String INVALID_STATUS = "invalid_status";
+
+    public static final String INVALID_TIME = "invalid_time";
+
+    public static final String INVALID_USER_ID = "invalid_user_id";
+
+    public static final String INVALID_USER_NAME = "invalid_user_name";
+
+    public static final String INVALID_REMARK = "invalid_remark";
 
     @TableField(exist = false)
     private String qcWarehouseName;

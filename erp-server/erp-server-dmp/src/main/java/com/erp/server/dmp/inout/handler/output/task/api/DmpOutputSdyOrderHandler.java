@@ -792,6 +792,9 @@ public class DmpOutputSdyOrderHandler extends DmpOutputSdyBaseTaskHandler {
     					shudiyunB2cOrderDTO.setGoods_taxation(goods_transaction_amount.multiply(shudiyunB2cOrderDTO.getTaxation()).divide(total_goods_transaction_amount , 4 , RoundingMode.HALF_UP));
     				}
     			}
+            }else {
+            	shudiyunB2cOrderDTO.setRoot_node_no_initial(dmpSoDetailEntity.getSrcTid());
+            	shudiyunB2cOrderDTO.setRoot_node_no(dmpSoDetailEntity.getSrcTid());
             }
             
             shudiyunB2cOrderDTO.setSuite_no(dmpSoDetailEntity.getSuiteNo());

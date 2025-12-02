@@ -164,6 +164,11 @@ public class LogisticsFeignController {
         return logisticsChannelService.getScaleChannelByChannelById(logisticsChannelId, dictPlatform);
     }
 
+    @GetMapping("/getScaleChannelByChannelByIds")
+    private List<LogisticsChannelDTO.SignShipDTO> getScaleChannelByChannelByIds(@RequestParam("logisticsChannelIdList") List<String> logisticsChannelIdList, @RequestParam("dictPlatform") String dictPlatform){
+        return logisticsChannelService.getScaleChannelByChannelByIds(logisticsChannelIdList, dictPlatform);
+    }
+
     @GetMapping("/getChannelByCodeAndOverseasWarehouseId")
     private LogisticsSaleChannelEntity getChannelByCodeAndOverseasWarehouseId(@RequestParam("logisticsProductCode")String logisticsProductCode, @RequestParam("transferWarehouseId") String transferWarehouseId) {
         return logisticsChannelService.getChannelByCodeAndOverseasWarehouseId(logisticsProductCode, transferWarehouseId);

@@ -22,6 +22,7 @@ import com.erp.server.dmp.inout.handler.input.task.mongo.DmpInputMongoHandler;
 import com.erp.server.dmp.service.DmpSoDetailService;
 import com.erp.server.dmp.service.DmpSoInfoService;
 import com.erp.server.dmp.service.DmpSoReceiverService;
+import io.seata.common.util.StringUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
@@ -105,6 +106,18 @@ public class MercadoLocalOrderDmpHandler extends MercadoLocalDmpHandler {
 
                 dmpDataMap.put("nextLevelId", parentTaskEntityList.get(0).getNextLevelId());
                 dmpDataMap.put("shopId", parentTaskEntityList.get(0).getNextLevelId());
+
+                String platformCode;
+                Object platformCodeObj = dmpDataMap.get("packId");
+                if(Objects.nonNull(platformCodeObj)){
+                    platformCode = platformCodeObj.toString();
+                    if(StringUtils.isBlank(platformCode) || platformCode.equals("0")){
+                        platformCode = dmpDataMap.get("thirdCode").toString();
+                    }
+                }else{
+                    platformCode = dmpDataMap.get("thirdCode").toString();
+                }
+                dmpDataMap.put("platformCode", platformCode);
 
                 //创建时间
                 Object createTimeObj = dmpDataMap.get("dateCreated");

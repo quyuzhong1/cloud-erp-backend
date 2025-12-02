@@ -1,5 +1,6 @@
 package com.erp.model.tms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -34,7 +35,10 @@ public class LogisticsMappingDTO implements Serializable {
         * 主键id
         */
         private String  id;
-
+        /**
+         * 物流渠道id
+         */
+        private String logisticsChannelId;
 
         /**
         * 物流平台

@@ -1,21 +1,24 @@
 package com.erp.server.workflow.handler;
-import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson.JSON;
 import com.alibaba.nacos.common.utils.StringUtils;
+import com.common.business.dto.ApproveDTO;
+import com.common.business.dto.FindUserDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.ThirdpartyPlatformEnum;
+import com.common.business.vo.LoginUser;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.sys.entity.SysUserThirdEntity;
-import com.erp.model.workflow.dto.EndProcessDTO;
 import com.erp.model.workflow.dto.FsCallbackApiReqDTO;
-import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.model.workflow.entity.*;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.workflow.service.*;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,6 +28,8 @@ import javax.crypto.Cipher;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
+import javax.servlet.http.HttpServletRequest;
+import java.net.URLEncoder;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
@@ -59,8 +64,9 @@ public class CfgApproveSyncCallbackHandler {
      * @author jack
      * @date 2025-05-22
      */
-    @Transactional(rollbackFor = Exception.class)
-    public void quickApproveCallbackHandler(FsCallbackApiReqDTO req ) {
+//    @GlobalTransactional(rollbackFor = Exception.class)
+//    @Transactional(rollbackFor = Exception.class)
+    public void quickApproveCallbackHandler(FsCallbackApiReqDTO req ,HttpServletRequest request) {
         Map<String, Object> dataJson = cfgSettingService.getFsActionCallback();
         if (Objects.nonNull(dataJson)) {
             String str = CBCDecrypter(String.valueOf(dataJson.get("actionCallbackKey")), req.getEncrypt());
@@ -74,8 +80,10 @@ public class CfgApproveSyncCallbackHandler {
                     log.error("调用quickApproveCallbackHandler 数据转换异常失败，数据={}", ex);
                     throw new ServiceException("数据转换异常失败");
                 }
-                //消息id
+                //消息id（卡片操作时必填）
                 String messageId = callbackData.getMessageId();
+                //任务 ID（列表操作时必填）
+                String taskId = callbackData.getTaskId();
                 //原因
                 String reason = callbackData.getReason();
                 //审批任务操作类型  APPROVE：同意   REJECT：拒绝
@@ -86,17 +94,28 @@ public class CfgApproveSyncCallbackHandler {
                 if (Objects.isNull(sysUserThirdEntity)) {
                     throw new ServiceException("用户未绑定飞书");
                 }
+                FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(sysUserThirdEntity.getUserId());
 
-                ProcessTaskManagementExtEntity processTaskManagementExtEntity = processTaskManagementExtService.lambdaQuery().eq(ProcessTaskManagementExtEntity::getMessageId, messageId).last("limit 1").one();
-                if (Objects.isNull(processTaskManagementExtEntity)) {
-                    throw new ServiceException(ApiError.ERROR_94000);
+                ProcessTaskManagementEntity processTaskManagementEntity = null;
+                if(StringUtils.isNotBlank(messageId)){//来自卡片审批
+                    ProcessTaskManagementExtEntity processTaskManagementExtEntity = processTaskManagementExtService.lambdaQuery().eq(ProcessTaskManagementExtEntity::getMessageId, messageId).last("limit 1").one();
+                    if (Objects.isNull(processTaskManagementExtEntity)) {
+                        throw new ServiceException(ApiError.ERROR_94000);
+                    }
+                    String processTaskManagementId = processTaskManagementExtEntity.getProcessTaskManagementId();
+                    processTaskManagementEntity = processTaskManagementService.getById(processTaskManagementId);
+                    if (Objects.isNull(processTaskManagementEntity)) {
+                        throw new ServiceException(ApiError.ERROR_94000);
+                    }
+                }else if(StringUtils.isNotBlank(taskId)){//来自审批中心审批
+                    processTaskManagementEntity = processTaskManagementService.getById(taskId);
+                    if (Objects.isNull(processTaskManagementEntity)) {
+                        throw new ServiceException(ApiError.ERROR_94000);
+                    }
+                }else {
+                    throw new ServiceException("messageId和taskId不能为空");
                 }
 
-                String processTaskManagementId = processTaskManagementExtEntity.getProcessTaskManagementId();
-                ProcessTaskManagementEntity processTaskManagementEntity = processTaskManagementService.getById(processTaskManagementId);
-                if (Objects.isNull(processTaskManagementEntity)) {
-                    throw new ServiceException(ApiError.ERROR_94000);
-                }
                 //判断流程节点状态是可以审批状态
                 if (!processTaskManagementEntity.getTaskStatus().equals(ApproveStatusEnum.APPROVE_ING)) {
                     throw new ServiceException(ApiError.ERROR_98006);
@@ -107,29 +126,61 @@ public class CfgApproveSyncCallbackHandler {
                 if (Objects.isNull(processManagementEntity)) {
                     throw new ServiceException(ApiError.ERROR_PROCESS_NOT_EXIST);
                 }
-                //调用各个系统的approveEnd方法
-                EndProcessDTO endProcessDTO = new EndProcessDTO();
-                endProcessDTO.setBusinessId(processManagementEntity.getBusinessId());
-                endProcessDTO.setBusinessKey(processManagementEntity.getBusinessKey());
-                endProcessDTO.setApproveStatus(actionType.equals("APPROVE") ? ApproveTypeEnum.PASS : ApproveTypeEnum.REJECT);
-                Map<String, Object> variablesMap = new HashMap<>();
 
-                ProcessManagementDTO.ApproveDTO dto = new ProcessManagementDTO.ApproveDTO();
-                dto.setBusinessId(processManagementEntity.getBusinessId());
-                dto.setBusinessKey(processManagementEntity.getBusinessKey());
-                dto.setApproveType(actionType.equals("APPROVE") ? ApproveTypeEnum.PASS : ApproveTypeEnum.REJECT);
-                dto.setComment(reason);
-                dto.setUserId(sysUserThirdEntity.getUserId());
-                dto.setVariablesMap(variablesMap);
-                log.info("#####ProcessFeignController :::::approve>>>>> 流程审核入参 dto={}", JSONUtil.toJsonStr(dto));
-                ProcessManagementDTO.ApproveResultDTO data = processManagementService.approveProcess(dto, Boolean.TRUE);
-                if (ObjectUtil.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()) {
-                    //调用各个系统的approveEnd方法
-                    if(processManagementService.callFeign(processManagementEntity.getBusinessKey(), endProcessDTO)){
-                        throw new ServiceException("审批失败");
-                    }
+                //自动生成功能系统标识
+                LoginUser loginUser = new LoginUser();
+                loginUser.setUid(findUserDTO.getUserId());
+                loginUser.setUserAccount(findUserDTO.getMobile());
+                loginUser.setUserName(findUserDTO.getUserName());
+                loginUser.setRealName(findUserDTO.getRealName());
+                loginUser.setMobile(findUserDTO.getMobile());
+//                UserContext.setLoginUser(loginUser);
+//                UserContext.setIsUserSystem(false);
+                try {
+                    String encode = URLEncoder.encode(JSON.toJSONString(loginUser), "UTF-8");
+                    request.setAttribute("isQuickApproveCallback",encode);
+                    request.setAttribute("tokenUserInfo",encode);
+                } catch (Exception e) {
+                    log.error("添加请求头失败", e);
                 }
+
+                ApproveDTO.ApproveOneDTO dto = new ApproveDTO.ApproveOneDTO();
+                dto.setBusinessKey(processManagementEntity.getBusinessKey());
+                dto.setId(processManagementEntity.getBusinessId());
+                dto.setType(actionType.equals("APPROVE") ? ApproveTypeEnum.PASS.getStatus() : ApproveTypeEnum.REJECT.getStatus());
+                dto.setComment(reason);
+                dto.setIsNeedProcess(Boolean.TRUE);
+                log.info("#####quickApproveCallbackHandler :::::approveFeign>>>>> 流程审核入参 dto={}", JSONUtil.toJsonStr(dto));
+                BatchResultDTO result = processManagementService.approveFeign(dto);
+                if (Objects.isNull(result) || !result.getSuccess()) {
+                    log.error("#####quickApproveCallbackHandler :::::approveFeign>>>>> 批量审批失败 result={}", JSONUtil.toJsonStr(result));
+                    throw new ServiceException("审批失败{}", result.getMsg());
+                }
+//                //调用各个系统的approveEnd方法
+//                EndProcessDTO endProcessDTO = new EndProcessDTO();
+//                endProcessDTO.setBusinessId(processManagementEntity.getBusinessId());
+//                endProcessDTO.setBusinessKey(processManagementEntity.getBusinessKey());
+//                endProcessDTO.setApproveStatus(actionType.equals("APPROVE") ? ApproveTypeEnum.PASS : ApproveTypeEnum.REJECT);
+//                Map<String, Object> variablesMap = new HashMap<>();
+//
+//                ProcessManagementDTO.ApproveDTO dto = new ProcessManagementDTO.ApproveDTO();
+//                dto.setBusinessId(processManagementEntity.getBusinessId());
+//                dto.setBusinessKey(processManagementEntity.getBusinessKey());
+//                dto.setApproveType(actionType.equals("APPROVE") ? ApproveTypeEnum.PASS : ApproveTypeEnum.REJECT);
+//                dto.setComment(reason);
+//                dto.setUserId(sysUserThirdEntity.getUserId());
+//                dto.setVariablesMap(variablesMap);
+//                log.info("#####ProcessFeignController :::::approve>>>>> 流程审核入参 dto={}", JSONUtil.toJsonStr(dto));
+//                ProcessManagementDTO.ApproveResultDTO data = processManagementService.approveProcess(dto, Boolean.TRUE);
+//                if (ObjectUtil.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()) {
+//                    //调用各个系统的approveEnd方法
+//                    if(processManagementService.callFeign(processManagementEntity.getBusinessKey(), endProcessDTO)){
+//                        throw new ServiceException("审批失败");
+//                    }
+//                }
             }
+        }else {
+            log.error("飞书审批回调未配置回调地址fsActionCallback");
         }
     }
 
@@ -167,15 +218,19 @@ public class CfgApproveSyncCallbackHandler {
         }
     }
 
+
+    //请把对应的回调地址以及encrypt填充后，在cmd即可进行回调测试
+    //curl -X POST "回调地址/api/workflow/fs/callback/api/approve" -H "Content-Type: application/json" -d "{\"encrypt\":\"\"}"
     public static void main(String[] args) {
         try {
             String key = "9527";
             String source ="{\n" +
                     "  \"action_type\": \"APPROVE\",\n" +
-                    "  \"user_id\": \"594g34ac\",\n" +
-                    "  \"approval_code\": \"8F902F59-30CA-4903-A5FC-BAF7A413AA32\",\n" +
-                    "  \"message_id\": \"7527340773822464003\",\n" +
-                    "  \"reason\": \"1234564894654\"\n" +
+                    "  \"user_id\": \"ee745246\",\n" +
+                    "  \"approval_code\": \"09BC408A-8D2C-4D9D-AB50-535389DD8F88\",\n" +
+                    "  \"message_id\": \"7576174901405453516\",\n" +
+                    "  \"task_id\": \"1992842576919146497\",\n" +
+                    "  \"reason\": \"123123123\"\n" +
                     "}";
             MessageDigest messageDigest = MessageDigest.getInstance("SHA-256");
             messageDigest.reset();

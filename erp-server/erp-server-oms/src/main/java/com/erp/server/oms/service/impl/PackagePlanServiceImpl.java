@@ -113,8 +113,6 @@ public class PackagePlanServiceImpl extends SuperServiceImpl<PackagePlanMapper, 
     private WmsTaskFeign wmsTaskFeign;
     @Resource
     private FileFeign fileFeign;
-    @Value("${oms.sdk.wildberries.sandbox}")
-    private String sandbox;
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -266,7 +264,7 @@ public class PackagePlanServiceImpl extends SuperServiceImpl<PackagePlanMapper, 
                 .name(soB2cEntity.getCode())
                 .build();
         try {
-            CreateSupplyResponse supply = wildberriesSDKService.createSupply(authEntity.getToken(), request,sandbox);
+            CreateSupplyResponse supply = wildberriesSDKService.createSupply(authEntity.getToken(), request);
             if (CharSequenceUtil.isBlank(supply.getId())){
                 mqResponseDTO.setErrorMsg(supply.getDetail());
                 return mqResponseDTO;
@@ -377,7 +375,7 @@ public class PackagePlanServiceImpl extends SuperServiceImpl<PackagePlanMapper, 
                 .amount(1)
                 .build();
         try {
-            AddBoxToSupplyResponse addBoxToSupplyResponse = wildberriesSDKService.addBoxToSupply(authEntity.getToken(), packageNo, request, sandbox);
+            AddBoxToSupplyResponse addBoxToSupplyResponse = wildberriesSDKService.addBoxToSupply(authEntity.getToken(), packageNo, request);
             if (CollUtil.isEmpty(addBoxToSupplyResponse.getTrbxIds())){
                 mqResponseDTO.setErrorMsg(addBoxToSupplyResponse.getDetail());
                 return mqResponseDTO;
@@ -492,7 +490,7 @@ public class PackagePlanServiceImpl extends SuperServiceImpl<PackagePlanMapper, 
                 .orderId(Long.valueOf(platformCode))
                 .build();
         try {
-            AddOrderToSupplyResponse response = wildberriesSDKService.addOrderToSupply(authEntity.getToken(), request, sandbox);
+            AddOrderToSupplyResponse response = wildberriesSDKService.addOrderToSupply(authEntity.getToken(), request);
             if (Objects.nonNull(response) && !"204".equals(response.getCode())) {
                 mqResponseDTO.setErrorMsg(response.getCode());
                 return mqResponseDTO;
@@ -627,7 +625,7 @@ public class PackagePlanServiceImpl extends SuperServiceImpl<PackagePlanMapper, 
                 .type("png")
                 .build();
         try {
-            OrderLabelResponse response = wildberriesSDKService.getOrderLabel(authEntity.getToken(), request, sandbox);
+            OrderLabelResponse response = wildberriesSDKService.getOrderLabel(authEntity.getToken(), request);
             if (CharSequenceUtil.isNotBlank(response.getDetail())) {
                 mqResponseDTO.setErrorMsg("获取订单标签失败:" + JSONUtil.toJsonStr(response));
                 return mqResponseDTO;
@@ -771,7 +769,7 @@ public class PackagePlanServiceImpl extends SuperServiceImpl<PackagePlanMapper, 
             return mqResponseDTO;
         }
         try {
-            BaseResponse response = wildberriesSDKService.signDelivery(authEntity.getToken(), packageNo, sandbox);
+            BaseResponse response = wildberriesSDKService.signDelivery(authEntity.getToken(), packageNo);
             if (Objects.nonNull(response) && CharSequenceUtil.isNotBlank(response.getCode()) && !"SupplyClosed".equals(response.getCode())) {
                 mqResponseDTO.setErrorMsg("将供货单转入已完成失败:" + JSONUtil.toJsonStr(response));
                 return mqResponseDTO;
@@ -1137,7 +1135,7 @@ public class PackagePlanServiceImpl extends SuperServiceImpl<PackagePlanMapper, 
         if (CharSequenceUtil.isNotBlank(handoverLabelUrl)){
             throw new ServiceException("组包计划单交接标签已存在");
         }
-        SupplyLabelResponse response = wildberriesSDKService.getSupplyLabel(authEntity.getToken(), packageNo,sandbox);
+        SupplyLabelResponse response = wildberriesSDKService.getSupplyLabel(authEntity.getToken(), packageNo);
         if (CharSequenceUtil.isNotBlank(response.getMessage())){
             throw new ServiceException("获取交接标签失败:" + response.getMessage());
         }

@@ -21,6 +21,11 @@ public class SampleReturnApproveHandler extends AbstractApproveHandler {
     private SampleReturnInfoService sampleReturnInfoService;
 
     @Override
+    public BatchResultDTO approve(ApproveOneDTO dto) {
+        return sampleReturnInfoService.approve(dto,ClientTypeEnum.WEB);
+    }
+
+    @Override
     public Boolean cancelProcess(ApproveDTO.CancelProcessDTO dto) {
         BatchResultDTO result = sampleReturnInfoService.cancelProcess(dto.getId(), ClientTypeEnum.WEB);
         return result.getSuccess();

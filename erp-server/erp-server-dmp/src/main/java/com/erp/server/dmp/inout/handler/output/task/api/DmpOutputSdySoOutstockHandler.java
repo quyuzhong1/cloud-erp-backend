@@ -33,6 +33,8 @@ import com.erp.server.dmp.service.DictBasicService;
 import com.erp.server.dmp.service.DmpAmzSoOutstockDetailService;
 import com.erp.server.dmp.service.DmpSoDetailService;
 import com.erp.server.dmp.service.DmpSoInfoService;
+import com.erp.server.dmp.service.DmpSoOutstockDetailService;
+import com.erp.server.dmp.service.DmpSoOutstockService;
 
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -50,6 +52,7 @@ import com.common.core.utils.Tools;
 import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO.ViewDTO;
+import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.dmp.inout.dto.request.DmpOutputHotfixCreateRequest;
@@ -85,6 +88,10 @@ public class DmpOutputSdySoOutstockHandler extends DmpOutputSdyBaseTaskHandler {
 	private DmpSoInfoService dmpSoInfoService;
 	@Resource
 	private DmpSoDetailService dmpSoDetailService;
+	@Resource
+	private DmpSoOutstockService dmpSoOutstockService;
+	@Resource
+	private DmpSoOutstockDetailService dmpSoOutstockDetailService;
 
     @Override
     public Map<String, String> getPushJsonDataMap(DmpOutputTaskRequest dmpRequest, DmpOutputTaskResponse dmpResponse) {
@@ -219,6 +226,35 @@ public class DmpOutputSdySoOutstockHandler extends DmpOutputSdyBaseTaskHandler {
 							(v1, v2) -> v1 // 遇到重复 key 时取第一个
 					));
 			cfgMaps.put("kingdeeDeptList", kingdeeDeptListMap);
+			
+			Map<String, String> wdtPlatformCodeMap = new HashMap<>();
+			Map<DmpSoOutstockDetailEntity, DmpSoOutstockEntity> thirdPlatformCodeMaps = new HashMap<>();
+			for(DmpSoOutstockDetailEntity dmpSoOutstockDetailEntity : changeDmpSoOutstockDetailEntity) {
+				DmpSoOutstockEntity dmpSoOutstockEntity = dmpSoOutstockEntityMap.get(dmpSoOutstockDetailEntity.getMainId());
+				String thirdBillNo = dmpSoOutstockEntity.getThirdBillNo();
+				if(thirdBillNo.startsWith("CK") && dmpSoOutstockDetailEntity.getThirdOrderCode().contains(",")) {
+					thirdPlatformCodeMaps.put(dmpSoOutstockDetailEntity , dmpSoOutstockEntity);
+				}
+			}
+			if(!thirdPlatformCodeMaps.isEmpty()) {
+				List<String> erpDetailIds = thirdPlatformCodeMaps.keySet().stream().map(DmpSoOutstockDetailEntity::getThirdDetailId)
+						.filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+				Map<String, String> detailSourceDetailIdMap = FeignQuery.getByIds(SoOutstockDetailEntity.class, erpDetailIds).stream()
+						.collect(Collectors.toMap(SoOutstockDetailEntity::getId, SoOutstockDetailEntity::getSourceDetailId));
+				Map<String , String> thirdCodeIdMap = dmpSoOutstockService.lambdaQuery()
+						.in(DmpSoOutstockEntity::getThirdCode, thirdPlatformCodeMaps.values().stream().map(DmpSoOutstockEntity::getThirdBillNo).distinct().collect(Collectors.toList()))
+						.list().stream().collect(Collectors.toMap(DmpSoOutstockEntity::getThirdCode, DmpSoOutstockEntity::getId , (c1 , c2) -> c1));
+				Map<String, String> srcPlatformMap = dmpSoOutstockDetailService.lambdaQuery()
+						.in(DmpSoOutstockDetailEntity::getMainId, thirdCodeIdMap.values()).in(DmpSoOutstockDetailEntity::getSrcOrderDetailId, detailSourceDetailIdMap.values())
+				.list().stream().collect(Collectors.toMap(DmpSoOutstockDetailEntity::getSrcOrderDetailId, DmpSoOutstockDetailEntity::getPlatformOrderCode , (c1 , c2) -> c1));
+				for(Map.Entry<DmpSoOutstockDetailEntity, DmpSoOutstockEntity> thirdPlatformCodeMap : thirdPlatformCodeMaps.entrySet()) {
+					DmpSoOutstockDetailEntity key = thirdPlatformCodeMap.getKey();
+					String thirdDetailId = key.getThirdDetailId();
+					String sourceDetailId = detailSourceDetailIdMap.get(thirdDetailId);
+					wdtPlatformCodeMap.put(thirdDetailId, srcPlatformMap.get(sourceDetailId));
+				}
+			}
+			cfgMaps.put("wdtPlatformCodeMap", wdtPlatformCodeMap);
 		}
 
 
@@ -447,6 +483,18 @@ public class DmpOutputSdySoOutstockHandler extends DmpOutputSdyBaseTaskHandler {
                 		}
                 	}
                 }
+    	        
+    	        Map<String, String> wdtPlatformCodeMap = cfgMaps.get("wdtPlatformCodeMap");
+    	        if(wdtPlatformCodeMap != null) {
+    	        	if(thirdBillNo.startsWith("CK") && dmpSoOutstockDetailEntity.getThirdOrderCode().contains(",")) {
+    	        		String rootNodeNo = wdtPlatformCodeMap.get(dmpSoOutstockDetailEntity.getThirdDetailId());
+    	        		if(StringUtils.isNotBlank(rootNodeNo)) {
+    	        			shudiyunB2cOrderDTO.setRoot_node_no(rootNodeNo);
+        	        		shudiyunB2cOrderDTO.setRoot_node_no_initial(rootNodeNo);
+    	        		}
+    				}
+    	        }
+    	        
     	        shudiyunB2cOrderDTO.setDefaultValue();
     			result.put(detailId, shudiyunB2cOrderDTO);
     		}

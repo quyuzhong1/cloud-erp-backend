@@ -38,7 +38,8 @@ public class DmpInputAmzReportParseFbaReturnDmpHandler extends DmpInputAmzReport
             for (TreeMap<String, Object> dmpDataMap : dmpDataMaps) {
                 String shopId = dmpDataMap.getOrDefault(NEXT_LEVEL_ID, "").toString();
                 String shopName = "";
-                ShopInfoEntity shopInfo = checkShopInfo(dmpDataMap, shopId, orderList, shopList);
+                String platformShopCode = getPlatformShopCodeByKey(dmpInputDataDmpRelationMap.getKey());
+                ShopInfoEntity shopInfo = checkShopInfo(dmpDataMap, shopId, orderList, shopList, platformShopCode);
                 dmpDataMap.put(SHOP_ID, shopId);
                 if (null != shopInfo){
                     shopName = shopInfo.getName();

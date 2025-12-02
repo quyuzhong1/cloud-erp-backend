@@ -154,6 +154,17 @@ public class WmsExecutorPoolConfig {
         service.setRejectedExecutionHandler(handler);
         return service;
     }
+    @Bean(name = "wmsTaskExecutorPool")
+    public ExecutorService wmsTaskExecutorPool() {
+        ThreadPoolExecutor service = new ThreadPoolExecutor(5, 10,
+                5L, TimeUnit.SECONDS,
+                new LinkedBlockingQueue<Runnable>(100));
+        //设置线城池的饱和策略
+        RejectedExecutionHandler handler = new ThreadPoolExecutor.CallerRunsPolicy();
+        service.setRejectedExecutionHandler(handler);
+
+        return service;
+    }
     @Bean(name = "printLabelPool")
     public ExecutorService printLabelPool() {
         ThreadPoolExecutor service = new ThreadPoolExecutor(10, 20,

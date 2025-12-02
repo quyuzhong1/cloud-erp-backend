@@ -43,21 +43,16 @@ public class SampleTransferInfoDTO implements Serializable {
          * 类型
          */
          private String tabFlag;
+         /**
+          * 类型名称
+          */
+         private String tabFlagName;
 
          /**
          * 数量
          */
          private Integer count;
 
-         public TabListDTO(String tabFlag, Integer count) {
-             this.tabFlag = tabFlag;
-             this.count = count;
-         }
-
-         /**
-         * 类型名称
-         */
-         private String tabFlagName;
 
      }
      /**
@@ -76,6 +71,11 @@ public class SampleTransferInfoDTO implements Serializable {
             * sqlMap 默认key default
         */
         private Map<String,String> sqlMap;
+
+         /**
+          * 勾选的id集合
+          */
+         private List<String> ids;
 
      }
     /**
@@ -233,10 +233,7 @@ public class SampleTransferInfoDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class ExportDTO extends PagingParamDTO {
-        /**
-        * 勾选的id集合
-        */
-        private List<String> ids;
+
     }
 
     /**

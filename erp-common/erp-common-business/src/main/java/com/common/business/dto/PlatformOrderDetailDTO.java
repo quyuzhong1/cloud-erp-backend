@@ -143,4 +143,9 @@ public class PlatformOrderDetailDTO {
      * 变体属性
      */
     private String variantProperty;
+
+    /**
+     * 平台子单号
+     */
+    private String platformSubSoCode;
 }

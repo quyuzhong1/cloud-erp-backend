@@ -368,4 +368,6 @@ public interface WarehouseReceiveService extends SuperService<WarehouseReceiveEn
      * @return List<ReceiveSourceDTO>
      */
     List<WarehouseReceiveDTO.ReceiveSourceDTO> listReceiveSourceByDetailIds(List<String> idList);
+
+    List<WarehouseReceiveDTO.ReceiveInfoDTO> getReceiveByParams(WarehouseReceiveDTO.ReceiveParamDTO dto);
 }
