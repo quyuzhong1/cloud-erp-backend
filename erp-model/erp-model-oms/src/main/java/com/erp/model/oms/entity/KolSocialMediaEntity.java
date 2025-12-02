@@ -32,13 +32,13 @@ public class KolSocialMediaEntity extends BaseEntity<KolSocialMediaEntity> {
     /**
     * 来源平台，如小红书、微博、抖音等（对应第三方sourceName）
     */
-    @TableField("media_plateform")
-    private String mediaPlateform;
+    @TableField("media_platform")
+    private String mediaPlatform;
     /**
     * 第三方平台
     */
-    @TableField("thrid_plateform")
-    private String thridPlateform;
+    @TableField("third_platform")
+    private String thirdPlatform;
     /**
     * 账号ID（对应第三方userId）
     */
@@ -113,9 +113,9 @@ public class KolSocialMediaEntity extends BaseEntity<KolSocialMediaEntity> {
 
     public static final String TYPE = "type";
 
-    public static final String MEDIA_PLATEFORM = "media_plateform";
+    public static final String MEDIA_PLATFORM = "media_platform";
 
-    public static final String THRID_PLATEFORM = "thrid_plateform";
+    public static final String THIRD_PLATFORM = "third_platform";
 
     public static final String PLATFORM_ACCOUNT_ID = "platform_account_id";
 

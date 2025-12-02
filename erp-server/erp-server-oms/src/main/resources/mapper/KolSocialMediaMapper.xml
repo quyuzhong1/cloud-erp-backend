@@ -13,8 +13,8 @@
        <result column="version" property="version" />
        <result column="is_deleted" property="isDeleted" />
        <result column="type" property="type" />
-       <result column="media_plateform" property="mediaPlateform" />
-       <result column="thrid_plateform" property="thridPlateform" />
+       <result column="media_platform" property="mediaPlatform" />
+       <result column="third_platform" property="thirdPlatform" />
        <result column="platform_account_id" property="platformAccountId" />
        <result column="platform_account_name" property="platformAccountName" />
        <result column="publish_time" property="publishTime" />
@@ -42,7 +42,7 @@
         update_time,
         version,
         is_deleted,
-        type, media_plateform, thrid_plateform, platform_account_id, platform_account_name, publish_time, url, url_hash, title, insert_timestamp, follower_count, view_count, play_count, comment_count, like_count, repost_count, unique_key
+        type, media_platform, third_platform, platform_account_id, platform_account_name, publish_time, url, url_hash, title, insert_timestamp, follower_count, view_count, play_count, comment_count, like_count, repost_count, unique_key
     </sql>
 
 

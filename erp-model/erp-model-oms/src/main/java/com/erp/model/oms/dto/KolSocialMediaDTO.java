@@ -44,12 +44,12 @@ public class KolSocialMediaDTO implements Serializable {
         /**
         * 来源平台，如小红书、微博、抖音等（对应第三方sourceName）
         */
-        private String mediaPlateform;
+        private String mediaPlatform;
 
         /**
         * 第三方平台
         */
-        private String thridPlateform;
+        private String thirdPlatform;
 
         /**
         * 账号ID（对应第三方userId）
@@ -165,14 +165,14 @@ public class KolSocialMediaDTO implements Serializable {
         */
         @NotBlank(message = "来源平台，如小红书、微博、抖音等（对应第三方sourceName）不能为空")
         @Size(max = 100,message = "来源平台，如小红书、微博、抖音等（对应第三方sourceName）最大长度不能超过100位")
-        private String mediaPlateform;
+        private String mediaPlatform;
 
         /**
         * 第三方平台
         */
         @NotBlank(message = "第三方平台不能为空")
         @Size(max = 100,message = "第三方平台最大长度不能超过100位")
-        private String thridPlateform;
+        private String thirdPlatform;
 
         /**
         * 账号ID（对应第三方userId）
