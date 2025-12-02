@@ -221,6 +221,7 @@ public enum ApiError implements Serializable {
     ERROR_SDY_NOT_FOUND_SHOP(80015,"数据同步数帝云未找到店铺信息，店铺id【{}】"),
     ERROR_SDY_NOT_FOUND_CUSTOMER(80016,"店铺未绑定客户信息，店铺id【{}】"),
     ERROR_THIRD_LOGISTICS_NOTFOUND(80017,"第三方渠道不存在"),
+    ERROR_THIRD_NOT_ALLOW_MULTIPLE(80018,"不允许绑定多个海外三方仓"),
 
     /**
      * 工作流错误 workflow
@@ -1643,8 +1644,12 @@ public enum ApiError implements Serializable {
     ERROR_INVOICE_NFE_RETURN(92193,"退票发票失败，原因：{}"),
     ERROR_INVOICE_NFE_VOIDED(92194,"作废发票失败，原因：{}"),
     ERROR_BOX_RULE_REPEAT(92195,"箱规sku已存在"),
-
-
+    ERROR_BATCH_UPDATE_BOX_RULE(92196,"批量更新箱规失败"),
+    ERROR_DUPLICATE_SORT(92197,"箱规优先级【{}】重复"),
+    ERROR_BATCH_ADD_BOX_RULE(92198,"批量新增箱规失败"),
+    ERROR_SO_CHANGE_QTY_MUST_INTEGER_MULTIPLE_BOX_RULE(92199,"变更数量必须是发货箱规的整数倍"),
+    ERROR_DUPLICATE_SKU(92200,"箱规SKU【{}】重复"),
+    ERROR_DUPLICATE_QTY(92201,"箱规单箱数量【{}】重复"),
     /**
      * TMS 错误
      * 从94000 开始

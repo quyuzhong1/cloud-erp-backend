@@ -482,7 +482,7 @@ public class SoDetailDTO implements Serializable {
         /**
          * 单箱数量
          */
-        private String perBoxQty;
+        private Integer perBoxQty;
 
         /**
          * 发货skuId
@@ -497,7 +497,7 @@ public class SoDetailDTO implements Serializable {
         /**
          * 发货箱数
          */
-        private String boxQty;
+        private Integer boxQty;
     }
 
     /**

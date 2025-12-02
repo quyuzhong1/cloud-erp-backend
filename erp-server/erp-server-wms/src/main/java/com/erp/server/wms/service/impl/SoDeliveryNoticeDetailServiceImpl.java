@@ -111,8 +111,8 @@ public class SoDeliveryNoticeDetailServiceImpl extends SuperServiceImpl<SoDelive
             String idStr = IdWorker.getIdStr();
             soDeliveryNoticeDetailEntity.setId(idStr);
             soDeliveryNoticeDetailEntity.setMainId(id);
-            soDeliveryNoticeDetailEntity.setSkuId(soDetailEntity.getSkuId());
-            soDeliveryNoticeDetailEntity.setSkuNo(soDetailEntity.getSkuNo());
+            soDeliveryNoticeDetailEntity.setSkuId(soDetailEntity.getDeliverySkuId());
+            soDeliveryNoticeDetailEntity.setSkuNo(soDetailEntity.getDeliverySkuNo());
             soDeliveryNoticeDetailEntity.setBomVersion(soDetailEntity.getBomVersion());
             soDeliveryNoticeDetailEntity.setPlatformSkuNo(soDetailEntity.getCustomerSkuNo());
             soDeliveryNoticeDetailEntity.setCustomerPO(soDetailEntity.getCustomerPO());

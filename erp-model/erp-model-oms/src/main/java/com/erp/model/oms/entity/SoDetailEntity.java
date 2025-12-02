@@ -315,7 +315,7 @@ public class SoDetailEntity extends BaseEntity<SoDetailEntity> {
      * 发货箱数
      */
     @TableField("box_qty")
-    private String boxQty;
+    private Integer boxQty;
 
 
     public static final String MAIN_ID = "main_id";

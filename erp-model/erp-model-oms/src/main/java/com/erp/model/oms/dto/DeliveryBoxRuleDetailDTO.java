@@ -3,8 +3,12 @@ package com.erp.model.oms.dto;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
+import org.apache.xpath.operations.Bool;
+
 import java.io.Serializable;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
@@ -67,27 +71,32 @@ public class DeliveryBoxRuleDetailDTO implements Serializable {
         /**
          * 作废时间
          */
-        private Integer invalidTime;
+        private LocalDateTime invalidTime;
 
         /**
          * 作废用户id
          */
-        private Integer invalidUserId;
+        private String invalidUserId;
 
         /**
          * 作废用户名
          */
-        private Integer invalidUserName;
+        private String invalidUserName;
 
         /**
          * 作废原因
          */
-        private Integer invalidReason;
+        private String invalidReason;
 
         /**
          * 作废状态
          */
-        private Integer invalidStatus;
+        private Boolean invalidStatus;
+
+        /**
+         * 作废状态名称
+         */
+        private String invalidStatusName;
     }
 
     /**
@@ -113,6 +122,12 @@ public class DeliveryBoxRuleDetailDTO implements Serializable {
         @NotBlank(message = "主键id不能为空")
         private String id;
 
+        /**
+         * 作废状态
+         */
+        @NotNull(message = "作废状态不能为空")
+        private Boolean invalidStatus;
+
     }
 
     @Data
@@ -122,7 +137,6 @@ public class DeliveryBoxRuleDetailDTO implements Serializable {
         /**
          * 箱规头id
          */
-        @NotBlank(message = "箱规id不能为空")
         private String mainId;
 
         /**
@@ -159,28 +173,93 @@ public class DeliveryBoxRuleDetailDTO implements Serializable {
         /**
          * 作废时间
          */
-        private Integer invalidTime;
+        private LocalDateTime invalidTime;
 
         /**
          * 作废用户id
          */
-        private Integer invalidUserId;
+        private String invalidUserId;
 
         /**
          * 作废用户名
          */
-        private Integer invalidUserName;
+        private String invalidUserName;
 
         /**
          * 作废原因
          */
-        private Integer invalidReason;
+        private String invalidReason;
 
         /**
          * 作废状态
          */
-        private Integer invalidStatus;
+        private Boolean invalidStatus;
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class DetailImportDTO {
+        /**
+         * 发货skuId
+         */
+        private String deliverySkuId;
+        /**
+         * 发货skuNo
+         */
+        private String deliverySkuNo;
+        /**
+         * 发货skuNo
+         */
+        private String deliveryProductName;
+
+        /**
+         * 发货箱规
+         */
+        private Integer perBoxQty;
+
+        /**
+         * 优先级
+         */
+        private Integer sort;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ListBoxRuleBySkuDetailDTO{
+
+        /**
+         * 明细id
+         */
+        private String id;
+        /**
+         * 发货skuId
+         */
+        private String deliverySkuId;
+
+        /**
+         * 发货sku编码
+         */
+        private String deliverySkuNo;
+
+        /**
+         * 发货sku名称
+         */
+        private String deliveryProductName;
+
+        /**
+         * 每箱数量
+         */
+        private Integer perBoxQty;
+
+        /**
+         * 优先级
+         */
+        private Integer sort;
+
+        /**
+         * 作废状态
+         */
+        private Boolean invalidStatus;
+    }
 
 }

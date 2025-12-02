@@ -4,6 +4,9 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
 import com.baomidou.mybatisplus.annotation.TableField;
 import java.io.Serializable;
+import java.time.LocalDateTime;
+import java.util.Objects;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -44,7 +47,7 @@ public class DeliveryBoxRuleDetailEntity extends BaseEntity<DeliveryBoxRuleDetai
     * 发货sku名称
     */
     @TableField("delivery_product_name")
-    private String productName;
+    private String deliveryProductName;
     /**
     * 每箱数量
     */
@@ -53,8 +56,20 @@ public class DeliveryBoxRuleDetailEntity extends BaseEntity<DeliveryBoxRuleDetai
     /**
     * 优先级
     */
-    @TableField("priority")
-    private Integer priority;
+    @TableField("sort")
+    private Integer sort;
+
+    @TableField("invalid_time")
+    private LocalDateTime invalidTime;
+
+    @TableField("invalid_status")
+    private Boolean invalidStatus;
+
+    @TableField("invalid_user_id")
+    private String invalidUserId;
+
+    @TableField("invalid_user_name")
+    private String invalidUserName;
 
 
     public static final String SKU_ID = "sku_id";
@@ -70,6 +85,22 @@ public class DeliveryBoxRuleDetailEntity extends BaseEntity<DeliveryBoxRuleDetai
     @Override
     public Serializable pkVal() {
         return null;
+    }
+
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        DeliveryBoxRuleDetailEntity that = (DeliveryBoxRuleDetailEntity) o;
+        return Objects.equals(deliverySkuNo, that.deliverySkuNo) &&
+                Objects.equals(perBoxQty, that.perBoxQty) &&
+                Objects.equals(sort, that.sort);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(deliverySkuNo, perBoxQty, sort);
     }
 
 }

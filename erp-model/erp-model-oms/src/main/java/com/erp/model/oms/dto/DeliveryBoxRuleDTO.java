@@ -180,6 +180,21 @@ public class DeliveryBoxRuleDTO implements Serializable {
         private Integer  perBoxQty;
 
         /**
+         * 优先级
+         */
+        private Integer sort;
+
+        /**
+         * 作废状态
+         */
+        private Boolean invalidStatus;
+
+        /**
+         * 作废状态名称
+         */
+        private String invalidStatusName;
+
+        /**
          * 创建用户id
          */
         private String  createUserId;
@@ -209,6 +224,8 @@ public class DeliveryBoxRuleDTO implements Serializable {
          * 更新时间
          */
         private LocalDateTime updateTime;
+
+
     }
 
     @Data
@@ -236,5 +253,81 @@ public class DeliveryBoxRuleDTO implements Serializable {
 
     }
 
+    /**
+     * 导出Excel
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ExportDTO extends PagingParamDTO {
+        /**
+         * 勾选的id集合
+         */
+        private List<String> ids;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class SkuDTO {
+
+        /**
+         * sku编码
+         */
+        @NotBlank(message = "sku编码不能为空")
+        private String skuNo;
+
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ImportDTO {
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * sku编码(相同的为一张单)
+         */
+        private String skuNo;
+        /**
+         * sku名称
+         */
+        private String productName;
+        /**
+         * 明细
+         */
+        private List<DeliveryBoxRuleDetailDTO.DetailImportDTO> detailImportDTOList;
+
+    }
+
+    /**
+     * 详情
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ListBoxRuleBySkuDTO {
+
+        /**
+         * id
+         */
+        private String id;
+        /**
+         * skuId
+         */
+        private String skuId;
+
+        /**
+         * sku编码
+         */
+        private String skuNo;
+
+        /**
+         * sku名称
+         */
+        private String productName;
+
+
+        private List<DeliveryBoxRuleDetailDTO.ListBoxRuleBySkuDetailDTO> deliveryBoxRuleDetailDTOList;
+    }
 
 }
