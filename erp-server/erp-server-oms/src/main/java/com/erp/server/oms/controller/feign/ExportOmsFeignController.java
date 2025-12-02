@@ -344,7 +344,7 @@ public class ExportOmsFeignController {
             tableField = "create_user_id",
             menuCode = "oms:kolFeedback:export",
             tableAlias = "kf")
-    @WebAdvanceQuery
+    @WebAdvanceQuery(handler = KolFeedbackQueryHandler.class)
     public PagingVO<KolFeedbackDTO.ListDTO> exportKolFeedback(@RequestBody PagingDTO<KolFeedbackDTO.ParamDTO> dto) {
         return kolFeedbackService.paging(dto);
     }

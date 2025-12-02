@@ -2,6 +2,7 @@ package com.erp.server.oms.controller.api;
 
 
 import com.common.business.annotation.WebAdvanceQuery;
+import com.erp.server.oms.query.KolFeedbackQueryHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import javax.annotation.Resource;
@@ -90,7 +91,7 @@ public class KolFeedbackController extends BaseController {
             tableField = "create_user_id",
             menuCode = "oms:kolFeedback:paging",
             tableAlias = "kf")
-    @WebAdvanceQuery
+    @WebAdvanceQuery(handler = KolFeedbackQueryHandler.class)
     public ApiResult<PagingVO<KolFeedbackDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<KolFeedbackDTO.ParamDTO> dto) {
         return success(kolFeedbackService.paging(dto));
     }
@@ -107,7 +108,7 @@ public class KolFeedbackController extends BaseController {
             tableField = "create_user_id",
             menuCode = "oms:kolFeedback:paging",
             tableAlias = "kf")
-    @WebAdvanceQuery
+    @WebAdvanceQuery(handler = KolFeedbackQueryHandler.class)
     public ApiResult<List<KolFeedbackDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
         return success(kolFeedbackService.tabList(dto));
     }
