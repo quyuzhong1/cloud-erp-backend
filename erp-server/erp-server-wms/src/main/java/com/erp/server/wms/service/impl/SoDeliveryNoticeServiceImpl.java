@@ -673,9 +673,10 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         //获取销售单详情信息
         List<SoDetailEntity> soDetailEntities = soInfoFeign.listSoDetailByIds(orderDetailIds);
 
-        List<CustomerInfoEntity> customerInfoEntities = customerFeign.listCustomer();
-        CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(soDeliveryNoticeEntity.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
-        viewDTO.setCustomerName(customerInfoEntity.getName());
+        CustomerInfoEntity customerInfoEntity = customerFeign.getCustomerById(soDeliveryNoticeEntity.getCustomerId());
+        if(ObjectUtil.isNotEmpty(customerInfoEntity)) {
+            viewDTO.setCustomerName(customerInfoEntity.getName());
+        }
         viewDTO.setApproveStatusName(ApproveStatusEnum.getName(viewDTO.getApproveStatus()));
         viewDTO.setInvalidStatusName(InvalidStatusEnum.getName(viewDTO.getInvalidStatus()));
         viewDTO.setTypeName(BillTypeEnum.getName(viewDTO.getType()));
@@ -701,6 +702,8 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         List<CustomerAddressEntity> customerAddressEntities = customerFeign.listCustomerAddressByIds(Collections.singletonList(soInfoEntity.getReceiveAddressId()));
         CustomerAddressEntity customerAddressEntity = customerAddressEntities.stream().filter(req -> req.getId().equals(soInfoEntity.getReceiveAddressId())).findFirst().orElse(new CustomerAddressEntity());
         viewDTO.setReceiveAddress(customerAddressEntity.getAddress());
+        List<String> detailIds = detailEntityList.stream().map(SoDeliveryNoticeDetailEntity::getId).collect(Collectors.toList());
+        List<WmsAttachmentDTO.UpdateDTO> attachmentList = wmsAttachmentService.getByBusinessIds(detailIds);
         for (SoDeliveryNoticeDetailEntity deliveryNoticeDetailEntity : detailEntityList) {
             SoDeliveryNoticeDetailDTO.View detailView = new SoDeliveryNoticeDetailDTO.View();
             BeanMapperUtils.copy(deliveryNoticeDetailEntity, detailView);
@@ -714,11 +717,13 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
             SoDetailEntity soDetailEntity = soDetailEntities.stream().filter(detail -> detail.getId().equals(deliveryNoticeDetailEntity.getSourceDetailId())).findFirst().orElse(new SoDetailEntity());
             detailView.setSalesQty(soDetailEntity.getQty());
 
-            List<WmsAttachmentDTO.UpdateDTO> attachmentList = wmsAttachmentService.getByBusinessIds(Collections.singletonList(deliveryNoticeDetailEntity.getId()));
-            List<String> attachmentUrlList = attachmentList.stream().
+            List<WmsAttachmentDTO.UpdateDTO> currentAttachmentList = attachmentList.stream().
+                    filter(attachment -> attachment.getBusinessId().equals(deliveryNoticeDetailEntity.getId())).
+                    collect(Collectors.toList());
+            List<String> attachmentUrlList = currentAttachmentList.stream().
                     map(WmsAttachmentDTO.UpdateDTO::getAttachUrl).
                     collect(Collectors.toList());
-            List<String> attachmentNameList = attachmentList.stream().
+            List<String> attachmentNameList = currentAttachmentList.stream().
                     map(WmsAttachmentDTO.UpdateDTO::getAttachName).
                     collect(Collectors.toList());
             detailView.setAttachUrlList(attachmentUrlList);
