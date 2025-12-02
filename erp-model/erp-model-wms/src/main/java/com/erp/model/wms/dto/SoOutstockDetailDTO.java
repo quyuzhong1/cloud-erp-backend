@@ -398,6 +398,7 @@ public class SoOutstockDetailDTO implements Serializable {
             this.platformCode = addDTO.getPlatformCode();
             this.platformDetailId = addDTO.getPlatformDetailId();
             this.virtualWarehouseId = addDTO.getVirtualWarehouseId();
+            this.platformSubSoCode = addDTO.getPlatformSubSoCode();
         }
     }
 
