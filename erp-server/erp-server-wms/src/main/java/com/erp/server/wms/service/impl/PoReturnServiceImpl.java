@@ -312,7 +312,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
                 .collect(Collectors.toList());
         checkReplenishQty(validateList);
         //校验SKU是否有入库信息
-        checkSkuInstockQty(dto.getSupplierId(), dto.getPurchasePriceDetailList());
+        checkSkuInstockQty(dto.getSupplierId(), dto.getPurchasePriceDetailList(), dto.getSourceType());
         //获取核算公司
         List<BaseIdDTO.CodeDTO> companyEntityList = sysUserFeign.getAccountingCompanyList(Arrays.asList(dto.getReturnOrgId(),dto.getPurchaseOrgId()));
         //获取仓库信息
@@ -446,7 +446,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
                 .collect(Collectors.toList());
         checkReplenishQty(validateList);
         //校验SKU是否有入库信息
-        checkSkuInstockQtyForUpdate(dto.getSupplierId(), dto.getPurchasePriceDetailList());
+        checkSkuInstockQtyForUpdate(dto.getSupplierId(), dto.getPurchasePriceDetailList(), oldEntity.getSourceType());
         //设置收货单主表
         PoReturnEntity poReturnEntity = new PoReturnEntity();
         BeanMapperUtils.copy(dto, poReturnEntity);
@@ -678,7 +678,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
                     .map(PurchaseReturnOrderDTO.ReplenishQtyValidateDTO::from)
                     .collect(Collectors.toList());
             checkReplenishQty(validateList);
-            checkSkuInstockQtyForSubmit( entity.getSupplierId(), detailList);
+            checkSkuInstockQtyForSubmit( entity.getSupplierId(), detailList, entity.getSourceType());
         }
         //迭代1.27.5新增校验 ：校验退货数量不能大于已收货数量(已审核)-已入库数量(已审核)【按照SKU明细校验】
         List<PoReturnDetailEntity> allPoReturnDetailEntities = poReturnDetailService.listByMainIds(ids);
@@ -3389,9 +3389,17 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
      *
      * @param supplierId 供应商ID
      * @param detailList 退货明细列表
+     * @param sourceType 退货单来源类型
      */
     private void checkSkuInstockQty(String supplierId,
-                                    List<PurchaseReturnOrderDetailDTO.AddDTO> detailList) {
+                                    List<PurchaseReturnOrderDetailDTO.AddDTO> detailList,
+                                    String sourceType) {
+        // 只针对库存退货类型做校验
+        ReturnOrderSourceEnum returnOrderSourceEnum = ReturnOrderSourceEnum.checkLastReturnOrderSource(sourceType);
+        if (!returnOrderSourceEnum.equals(ReturnOrderSourceEnum.OTHER)) {
+            return;
+        }
+        
         if (CollectionUtils.isEmpty(detailList)) {
             return;
         }
@@ -3431,7 +3439,8 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
      * 校验SKU是否存在已审核的采购入库单（修改时使用）
      */
     private void checkSkuInstockQtyForUpdate(String supplierId,
-                                             List<PurchaseReturnOrderDetailDTO.UpdateDTO> detailList) {
+                                             List<PurchaseReturnOrderDetailDTO.UpdateDTO> detailList,
+                                             String sourceType) {
         if (CollectionUtils.isEmpty(detailList)) {
             return;
         }
@@ -3446,14 +3455,15 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
                 })
                 .collect(Collectors.toList());
 
-        checkSkuInstockQty(supplierId, addDTOList);
+        checkSkuInstockQty(supplierId, addDTOList, sourceType);
     }
 
     /**
      * 校验SKU是否存在已审核的采购入库单（提交时使用）
      */
     private void checkSkuInstockQtyForSubmit(String supplierId,
-                                             List<PoReturnDetailEntity> detailList) {
+                                             List<PoReturnDetailEntity> detailList,
+                                             String sourceType) {
         if (CollectionUtils.isEmpty(detailList)) {
             return;
         }
@@ -3468,7 +3478,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
                 })
                 .collect(Collectors.toList());
 
-        checkSkuInstockQty(supplierId, addDTOList);
+        checkSkuInstockQty(supplierId, addDTOList, sourceType);
     }
 
 
