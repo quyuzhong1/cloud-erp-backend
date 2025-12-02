@@ -1,12 +1,11 @@
 package com.erp.server.dmp.inout.handler.input.task.init;
 
-import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.ObjUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.common.business.wrapper.FeignQuery;
-import com.erp.model.workflow.entity.ThirdProcessDefinitionEntity;
-import com.erp.model.workflow.enums.ThirdProcessDefinitionStatusEnum;
+import com.common.core.exception.ServiceException;
+import com.erp.model.dmp.entity.DmpCfgInputDetailEntity;
 import com.erp.sdk.fs.service.FsService;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputInitRequest;
@@ -18,7 +17,7 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -36,32 +35,24 @@ public class DmpInputFeishuApprovalsInitHandler extends DmpInputInitHandler{
 	
 	@Override
 	public List<DmpInputTaskInitDTO> getInitData(DmpInputInitRequest dmpRequest, DmpInputTaskResponse dmpResponse) {
-		List<DmpInputTaskInitDTO> dmpInputTaskInitDTOList = new ArrayList<>();
-		List<ThirdProcessDefinitionEntity> thirdProcessDefinitionEntityList = FeignQuery.create(ThirdProcessDefinitionEntity.class)
-				.isNotNull(ThirdProcessDefinitionEntity::getApprovalCode)
-				.eq(ThirdProcessDefinitionEntity::getEnableStatus , Boolean.TRUE)
-				.eq(ThirdProcessDefinitionEntity::getStatus, ThirdProcessDefinitionStatusEnum.ACTIVE.getCode().toLowerCase())
-				.eq(ThirdProcessDefinitionEntity::getIsDeleted,Boolean.FALSE)
-				.ne(ThirdProcessDefinitionEntity::getApprovalCode , "")
-				.list();
-		JSONArray result = new JSONArray();
-		if(CollUtil.isNotEmpty(thirdProcessDefinitionEntityList)) {
-			for(ThirdProcessDefinitionEntity thirdProcessDefinitionEntity : thirdProcessDefinitionEntityList) {
-				String approvalCode = thirdProcessDefinitionEntity.getApprovalCode();
-				try {
-					GetApprovalResp approval = fsService.getApproval(approvalCode);
-					GetApprovalRespBody data = approval.getData();
-					String jsonString = JSON.toJSONString(data);
-					JSONObject parseObject = JSON.parseObject(jsonString);
-					parseObject.put("ulanzi_approval_code", approvalCode);
-					result.add(parseObject);
-				} catch (Exception e) {
-					log.error("调用飞书失败,e= {}",e.getMessage());
-				}
-			}
+		DmpCfgInputDetailEntity detailEntity = dmpResponse.getDmpCfgInputDetailEntity();
+		if (ObjUtil.isEmpty(detailEntity)) {
+			return Collections.emptyList();
 		}
-		dmpInputTaskInitDTOList.add(DmpInputTaskInitDTO.initMsg(result.toJSONString()));
-		return dmpInputTaskInitDTOList;
+		JSONArray result = new JSONArray();
+		String approvalCode = detailEntity.getNextLevelId();
+		try {
+			GetApprovalResp approval = fsService.getApproval(approvalCode);
+			GetApprovalRespBody data = approval.getData();
+			String jsonString = JSON.toJSONString(data);
+			JSONObject parseObject = JSON.parseObject(jsonString);
+			parseObject.put("ulanzi_approval_code", approvalCode);
+			result.add(parseObject);
+		} catch (Exception e) {
+			log.error("调用飞书失败,e= {}",e.getMessage());
+			throw new ServiceException("调用飞书失败,msg= {}",e.getMessage());
+		}
+		return Collections.singletonList(DmpInputTaskInitDTO.initMsg(result.toJSONString()));
 	}
 	
 }

@@ -94,7 +94,7 @@ public class EBayShipOrder extends AbstractShipOrder {
             currentDetailEntityList = currentDetailEntityList.stream()
                     .filter(e -> CharSequenceUtil.isNotBlank(e.getSourceDetailId()))
                     .collect(Collectors.toList());
-            List<SoB2cDetailEntity> detailEntityList = super.handleSplit(currentDetailEntityList, dto.isFalseDeliveryFlag());
+            List<SoB2cDetailEntity> detailEntityList = super.handleSplit(currentDetailEntityList, dto.isFalseDeliveryFlag()).getDetailList();
             if (CollectionUtils.isEmpty(detailEntityList)) {
                 log.warn("【EBay标记发货】订单【{}】所有明细来源ID为空,不请求领星接口", mainEntity.getCode());
                 continue;

@@ -22,6 +22,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.DynamicDataSourceThreadLocal;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.utils.JasperHelperUtil;
 import com.common.business.vo.LoginUser;
@@ -1871,8 +1872,9 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         //b2b
         List<PackingTaskDTO.StatusDTO> statusDTOS = baseMapper.selectB2BPackingStatusByIds(packingTaskIds, sourceCodeList);
         //头程
-        List<PackingTaskDTO.StatusDTO> statusDTOS1 = baseMapper.selectRequisitionPackingStatusByIds(packingTaskIds, sourceCodeList);
-        return Stream.concat(statusDTOS1.stream(),statusDTOS.stream()).collect(Collectors.toList());
+//        List<PackingTaskDTO.StatusDTO> statusDTOS1 = baseMapper.selectRequisitionPackingStatusByIds(packingTaskIds, sourceCodeList);
+//        return Stream.concat(statusDTOS1.stream(),statusDTOS.stream()).collect(Collectors.toList());
+        return statusDTOS;
     }
 
     @Override
@@ -2128,12 +2130,23 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
      */
     @Override
     public PagingVO<PackingTaskDTO.PagingViewDTO> paging(PagingDTO<PackingTaskDTO.PagingParamDTO> dto) {
+        StopWatch stopWatch = new StopWatch("装箱任务-分页查询");
+        stopWatch.start("paging");
         Page<PackingTaskDTO.PagingViewDTO> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
         PackingTaskDTO.PagingParamDTO params = dto.getParams();
         params.setPermissionSql(dto.getPermissionSql());
+        DynamicDataSourceTypeEnum dynamicDataSourceTypeEnum = DynamicDataSourceThreadLocal.get();
+        if(dynamicDataSourceTypeEnum == null) {
+            dynamicDataSourceTypeEnum = DynamicDataSourceTypeEnum.POSTGRES;
+        }
+        params.setDynamicDataSource(dynamicDataSourceTypeEnum.getCode());
         IPage<PackingTaskDTO.PagingViewDTO> pageData = baseMapper.paging(query, params);
+        stopWatch.stop();
+        stopWatch.start("buildPackingTask");
         //补充数据
         buildPackingTask(pageData.getRecords());
+        stopWatch.stop();
+        log.warn(stopWatch.prettyPrint());
         return new PagingVO<>(pageData);
     }
 
@@ -2146,17 +2159,17 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
             return;
         }
         //获取发货通知单的拣货数量进行填充
-        List<String> packingIds = records.stream().map(PackingTaskDTO.PagingViewDTO::getId).collect(Collectors.toList());
-        List<PackingTaskDetailEntity> packingTaskDetailEntities = packingTaskDetailService.listByMainIds(packingIds);
-        List<String> packingDetailIds = packingTaskDetailEntities.stream().map(PackingTaskDetailEntity::getSourceDetailId).collect(Collectors.toList());
-        List<SoDeliveryNoticeDetailEntity> soDeliveryNoticeDetailEntities = soDeliveryNoticeDetailService.listByIds(packingDetailIds);
-        Map<String, Integer> pickingQtyMap = soDeliveryNoticeDetailEntities.stream().collect(Collectors.groupingBy(SoDeliveryNoticeDetailEntity::getMainId, Collectors.summingInt(SoDeliveryNoticeDetailEntity::getPickingQty)));
+//        List<String> packingIds = records.stream().map(PackingTaskDTO.PagingViewDTO::getId).collect(Collectors.toList());
+//        List<PackingTaskDetailEntity> packingTaskDetailEntities = packingTaskDetailService.listByMainIds(packingIds);
+//        List<String> packingDetailIds = packingTaskDetailEntities.stream().map(PackingTaskDetailEntity::getSourceDetailId).collect(Collectors.toList());
+//        List<SoDeliveryNoticeDetailEntity> soDeliveryNoticeDetailEntities = soDeliveryNoticeDetailService.listByIds(packingDetailIds);
+//        Map<String, Integer> pickingQtyMap = soDeliveryNoticeDetailEntities.stream().collect(Collectors.groupingBy(SoDeliveryNoticeDetailEntity::getMainId, Collectors.summingInt(SoDeliveryNoticeDetailEntity::getPickingQty)));
 
         List<String> taskIds = records.stream().map(PackingTaskDTO.PagingViewDTO::getId).distinct().collect(Collectors.toList());
         //装箱状态 称重状态 异常原因 装箱数量 装箱重量（设备更新） 拣货数量
         List<PackingTaskDTO.StatusDTO> statusDTOList = this.selectPackingStatusByIds(taskIds, null);
-        List<PackingTaskDTO.ProductDTO> productDTOS = baseMapper.selectProductNumByIds(taskIds);
-        Map<String, Integer> productMap = productDTOS.stream().filter(e -> CharSequenceUtil.isNotBlank(e.getTaskId()) && Objects.nonNull(e.getProductNum())).collect(Collectors.toMap(PackingTaskDTO.ProductDTO::getTaskId, PackingTaskDTO.ProductDTO::getProductNum));
+//        List<PackingTaskDTO.ProductDTO> productDTOS = baseMapper.selectProductNumByIds(taskIds);
+//        Map<String, Integer> productMap = productDTOS.stream().filter(e -> CharSequenceUtil.isNotBlank(e.getTaskId()) && Objects.nonNull(e.getProductNum())).collect(Collectors.toMap(PackingTaskDTO.ProductDTO::getTaskId, PackingTaskDTO.ProductDTO::getProductNum));
         Map<String, PackingTaskDTO.StatusDTO> statusDTOMap = statusDTOList.stream().collect(Collectors.toMap(PackingTaskDTO.StatusDTO::getId, Function.identity()));
         records.forEach(pagingViewDTO -> {
             PackingTaskDTO.StatusDTO statusDTO = statusDTOMap.get(pagingViewDTO.getId());
@@ -2169,7 +2182,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
                 pagingViewDTO.setWeightingStatusName(PackingWeightStatusEnum.getName(weightingStatus));
                 pagingViewDTO.setErrorMsg(CharSequenceUtil.isBlank(statusDTO.getErrorMsg())? "" : statusDTO.getErrorMsg());
                 pagingViewDTO.setPackedQty(Objects.isNull(statusDTO.getPackedQty())? MathUtil.ZERO: statusDTO.getPackedQty());
-                pagingViewDTO.setPickedQty(statusDTO.getPickQty());
+//                pagingViewDTO.setPickedQty(statusDTO.getPickQty());
                 BigDecimal packageWeight = Objects.isNull(statusDTO.getPackingWeight()) ? BigDecimal.ZERO : statusDTO.getPackingWeight();
                 pagingViewDTO.setPackageWeight(packageWeight);
                 pagingViewDTO.setPackageWeightStr(packageWeight.toPlainString() + UnitEnum.WeightUnitEnum.KG.getName());
@@ -2180,11 +2193,11 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
                 pagingViewDTO.setWeightingStatusName(PackingWeightStatusEnum.UNWEIGHED.getName());
                 pagingViewDTO.setPackedQty(MathUtil.ZERO);
             }
-            if(pickingQtyMap.containsKey(pagingViewDTO.getSourceId())){
-                pagingViewDTO.setPickedQty(pickingQtyMap.get(pagingViewDTO.getSourceId()));
-            }
-            Integer productNum = productMap.get(pagingViewDTO.getId());
-            pagingViewDTO.setProductNum(Objects.isNull(productNum) ? MathUtil.ZERO:productNum);
+//            if(pickingQtyMap.containsKey(pagingViewDTO.getSourceId())){
+//                pagingViewDTO.setPickedQty(pickingQtyMap.get(pagingViewDTO.getSourceId()));
+//            }
+//            Integer productNum = productMap.get(pagingViewDTO.getId());
+//            pagingViewDTO.setProductNum(Objects.isNull(productNum) ? MathUtil.ZERO:productNum);
             String sourceType = pagingViewDTO.getSourceType();
             pagingViewDTO.setSourceTypeName(PickingSourceTypeEnum.getName(sourceType));
         });
@@ -2511,25 +2524,6 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         buildPackingDetailTask(page.getRecords());
         //切换为装箱清单导出
         buildPackingDetailExportTask(page.getRecords());
-        return new PagingVO<>(page);
-    }
-
-    @Override
-    public PagingVO<PackingTaskDTO.PagingViewDTO> exportPackingTask(PagingDTO<PackingTaskDTO.PagingParamDTO> dto) {
-        StopWatch stopWatch = new StopWatch("exportPackingTask");
-        PackingTaskDTO.PagingParamDTO params = dto.getParams();
-        params.setPermissionSql(dto.getPermissionSql());
-        stopWatch.start("pagingList");
-        Page<PackingTaskDTO.PagingViewDTO> page = baseMapper.pagingList(new Page<>(dto.getCurrPage(), dto.getPageSize()), params);
-        stopWatch.stop();
-        stopWatch.start("buildPackingTask");
-        //补充数据
-        buildPackingTask(page.getRecords());
-        stopWatch.stop();
-        log.warn(stopWatch.prettyPrint(TimeUnit.SECONDS));
-        if (CollectionUtils.isEmpty(page.getRecords())) {
-            throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
-        }
         return new PagingVO<>(page);
     }
 

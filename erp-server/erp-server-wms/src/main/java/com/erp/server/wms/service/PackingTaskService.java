@@ -254,8 +254,6 @@ public interface PackingTaskService extends SuperService<PackingTaskEntity> {
 
     PagingVO<WmsCartonDetailDTO.ListPackingDetailDTO> exportPackingTaskDetail(PagingDTO<PackingTaskDTO.ExportDTO> dto);
 
-    PagingVO<PackingTaskDTO.PagingViewDTO> exportPackingTask(PagingDTO<PackingTaskDTO.PagingParamDTO> dto);
-
     /**
      *  根据任务id更新装箱状态
      * @param taskId
