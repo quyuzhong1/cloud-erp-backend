@@ -32,7 +32,7 @@ public interface TongYouCreateInboundConverter {
 
 
     @Mappings({
-            @Mapping(target = "ck_sku", source = "productSku"),
+            @Mapping(target = "ck_sku", source = "thirdBarcode"),
             @Mapping(target = "nums", source = "quantity"),
             @Mapping(target = "zxh", source = "boxNo"),
             @Mapping(target = "weight", source = "packageWeight"),

@@ -23,8 +23,11 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.enums.SettingEnum;
+import com.erp.model.oms.dto.ListingInfoDTO;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.SkuMappingDTO;
+import com.erp.model.oms.entity.ListingInfoEntity;
+import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.entity.DictCityEntity;
@@ -266,6 +269,12 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         // OpenCollectingServiceEnum： 0=自送货物，1=上门提货
         OverseasDeliveryModeEnum deliveryModeEnum = OverseasDeliveryModeEnum.getByCode(mainEntity.getDeliveryMode());
         String collectingService = null == deliveryModeEnum ? "" : deliveryModeEnum.getCode();
+        //listingInfo信息
+        ListingInfoDTO.QueryDTO queryDTO = new ListingInfoDTO.QueryDTO();
+        queryDTO.setType(RuleTypeEnum.WAREHOUSE.getCode());
+        List<String> platformSkuNoList = deliveryDetailEntityList.stream().map(FirstMileDeliveryDetailEntity::getPlatformSkuNo).distinct().collect(Collectors.toList());
+        queryDTO.setPlatformSkuNoList(platformSkuNoList);
+        List<ListingInfoEntity> listingInfoList = omsListingInfoFeign.listInfoByPlatformSkuNo(queryDTO);
 
         // 装箱信息item
         List<ThirdWarehouseCreateInboundReq.Item> itemList = new LinkedList<>();
@@ -275,8 +284,12 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                 String msg = CharSequenceUtil.format("海外仓入库单明细中找不到skuId为【{}】的明细", itemDTO.getSkuId());
                 throw new ServiceException(msg);
             }
+            //三方条码
+            String thirdBarcode = listingInfoList.stream().filter(obj -> CharSequenceUtil.equals(obj.getPlatformSkuNo(), firstMileDeliveryDetailEntity.getPlatformSkuNo())).map(ListingInfoEntity::getThirdBarcode).findFirst().orElse("");
+
             ThirdWarehouseCreateInboundReq.Item currentItem = BeanUtil.copyProperties(itemDTO, ThirdWarehouseCreateInboundReq.Item.class);
             currentItem.setProductSku(firstMileDeliveryDetailEntity.getPlatformSkuNo());
+            currentItem.setThirdBarcode(thirdBarcode);
             currentItem.setQuantity(itemDTO.getPackQty());
             currentItem.setBoxNo(Integer.parseInt(itemDTO.getBoxNo()));
             itemList.add(currentItem);

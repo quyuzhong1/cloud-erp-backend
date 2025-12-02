@@ -288,6 +288,10 @@ public class ThirdWarehouseCreateInboundReq {
          * 海外仓产品SKU
          */
         private String productSku;
+        /**
+         * 产品条码（三方仓商品条码）
+         */
+        private String thirdBarcode;
 
         /**
          * 海外仓产品SKUId

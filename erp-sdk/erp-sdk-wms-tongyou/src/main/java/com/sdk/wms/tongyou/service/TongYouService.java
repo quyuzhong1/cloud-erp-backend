@@ -14,6 +14,7 @@ import com.sdk.wms.tongyou.dto.response.TongYouInboundResp;
 import com.sdk.wms.tongyou.dto.response.TongYouLogisticChannelResp;
 import com.sdk.wms.tongyou.dto.response.TongYouOutboundResp;
 import com.sdk.wms.tongyou.utils.TongYouUtils;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.validation.annotation.Validated;
 
@@ -26,6 +27,7 @@ import java.util.Map;
 /**
  * @author liuruipeng
  */
+@Slf4j
 @Component
 @Validated
 public class TongYouService {
@@ -100,6 +102,7 @@ public class TongYouService {
         Object object = ThirdWarehouseContext.getAuthMap().get("appToken");
         tongYouCreateInboundReq.setToken(ObjectUtil.isEmpty(object) ? "" : object.toString());
 
+        log.warn("通邮 createInboundBill request:{}",JSONObject.toJSONString(tongYouCreateInboundReq));
         String bodyStr = OkHttpUtils.doPostJson(getPreUrl()+path,JSONObject.toJSONString(tongYouCreateInboundReq), headerMap);
         ThirdWarehouseContext.setRequestJson(JSONObject.toJSONString(tongYouCreateInboundReq));
         TongYouBaseResp<TongYouInboundResp> respDto = TongYouUtils.parseToTongYouResp(bodyStr, TongYouInboundResp.class);
@@ -114,6 +117,8 @@ public class TongYouService {
         String path = "hwc_api/add_order.php";
         Map<String, String> headerMap = new HashMap<>();
         ThirdWarehouseContext.setRequestJson(JSONObject.toJSONString(TongYouCreateOutboundReq));
+
+        log.warn("通邮 createOutboundBill request:{}",JSONObject.toJSONString(TongYouCreateOutboundReq));
         String bodyStr = OkHttpUtils.doPostJson(getPreUrl()+path,JSONObject.toJSONString(TongYouCreateOutboundReq), headerMap);
         TongYouBaseResp<TongYouOutboundResp> respDto = TongYouUtils.parseToTongYouResp(bodyStr, TongYouOutboundResp.class);
         ThirdWarehouseContext.setResponseJson(bodyStr);
@@ -132,6 +137,7 @@ public class TongYouService {
         bodyMap.put("token",ObjectUtil.isEmpty(object) ? "" : object.toString());
         bodyMap.put("deliver_list", Collections.singletonList(TongYouCancelOutboundReq.getOrderNo()));
 
+        log.warn("通邮 cancelOutboundBill request:{}",JSONObject.toJSONString(TongYouCancelOutboundReq));
 
         ThirdWarehouseContext.setRequestJson(JSONObject.toJSONString(TongYouCancelOutboundReq));
         String bodyStr = OkHttpUtils.doPostJson(getPreUrl()+path,JSONObject.toJSONString(TongYouCancelOutboundReq), headerMap);
