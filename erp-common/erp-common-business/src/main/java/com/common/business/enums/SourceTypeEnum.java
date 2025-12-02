@@ -101,6 +101,7 @@ public enum SourceTypeEnum {
     SAMPLE_TRANSFER_INFO("sampleTransferInfo","样品转移单","sample_transfer_info"),
     SAMPLE_ADJUSTMENT_INFO("sampleAdjustmentInfo","样品调整单","sample_adjustment_info"),
     WAREHOUSE_LOCATION_MOVE_INFO("warehouseLocationMoveInfo","仓位移动","warehouse_location_move"),
+    KOL_B2B_APPLICATION("kolB2bApplication","B2B寄样申请","kol_b2b_application"),
 
 
     //OMS

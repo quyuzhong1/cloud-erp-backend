@@ -1,0 +1,47 @@
+package com.erp.server.oms.service;
+
+import com.common.business.service.SuperService;
+import com.erp.model.oms.dto.KolB2bApplicationDetailDTO;
+import com.erp.model.oms.entity.KolB2bApplicationDetailEntity;
+
+import java.util.List;
+
+/**
+ * <p>
+ * B2B寄养申请明细表 服务类
+ * </p>
+ *
+ * @author will
+ * @since 2025-12-01
+ */
+public interface KolB2bApplicationDetailService extends SuperService<KolB2bApplicationDetailEntity> {
+
+    /**
+    * 新增
+    * @author will
+    * @date: 2025-12-01
+    * @param detailList
+    * @param mainId
+    * @return
+    */
+    Boolean add(List<KolB2bApplicationDetailDTO.AddDTO> detailList,String mainId);
+
+    /**
+    * 修改
+    * @author will
+    * @date: 2025-12-01
+    * @param detailList
+    * @param mainId
+    * @return
+    */
+    Boolean update(List<KolB2bApplicationDetailDTO.UpdateDTO> detailList,String mainId);
+
+    /**
+     * 根据主表id删除明细
+     * @author will
+     * @date 2025/12/1 19:12
+     * @param mainId
+     * @return Boolean
+     */
+    Boolean deleteByMainId(String mainId);
+}

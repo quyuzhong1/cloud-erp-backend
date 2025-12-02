@@ -188,6 +188,18 @@ public enum ModuleTypeEnum {
     ASSET_PURCHASE_ORDER("154","资产采购单"),
     ASSET_PURCHASE_CHANGE("155","资产采购变更单"),
     DICT_BASIC("150", "字典数据"),
+    KOL_B2B_APPLICATION("156", "B2B寄样申请单"),
+
+
+
+
+
+
+
+
+
+
+
     // DMP配置
     DMP_BASIC_SYSTEM("1000", "平台管理"),
     DMP_CFG_INPUT("1001", "拉取配置"),
