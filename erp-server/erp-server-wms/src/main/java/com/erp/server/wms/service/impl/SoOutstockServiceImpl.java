@@ -1017,9 +1017,10 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             return;
         }
         String businessType = VirtualInventoryBusinessTypeEnum.OUT_USABLE.getCode();
-        if(Objects.nonNull(soB2cEntity) && soB2cEntity.getIsNotOutbound()){
-            businessType = VirtualInventoryBusinessTypeEnum.OUT_USABLE.getCode();
-        }else if (SourceTypeEnum.SO_B2C_DELIVERY.getCode().equals(entity.getSourceType())){
+//        if(Objects.nonNull(soB2cEntity) && soB2cEntity.getIsNotOutbound()){
+//            businessType = VirtualInventoryBusinessTypeEnum.OUT_USABLE.getCode();
+//        }else
+        if (SourceTypeEnum.SO_B2C_DELIVERY.getCode().equals(entity.getSourceType())){
             businessType = VirtualInventoryBusinessTypeEnum.SO_OUT_STOCK.getCode();
             //历史流水
             List<SoOutstockDetailEntity> soOutstockDetailList = soOutstockDetailService.listByMainIds(Collections.singletonList(entity.getId()));
