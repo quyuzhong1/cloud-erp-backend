@@ -1,6 +1,5 @@
 package com.erp.model.oms.entity;
 
-import java.math.BigDecimal;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
 import java.time.LocalDate;
@@ -60,7 +59,7 @@ public class KolFeedbackEntity extends BaseEntity<KolFeedbackEntity> {
     * 数量
     */
     @TableField("qty")
-    private BigDecimal qty;
+    private Integer qty;
     /**
     * 达人昵称
     */

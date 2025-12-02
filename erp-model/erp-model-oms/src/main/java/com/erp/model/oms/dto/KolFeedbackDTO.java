@@ -1,6 +1,5 @@
 package com.erp.model.oms.dto;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -127,7 +126,7 @@ public class KolFeedbackDTO implements Serializable {
         /**
          * 数量
          */
-        private BigDecimal qty;
+        private Integer qty;
 
         /**
          * 达人昵称
@@ -241,7 +240,7 @@ public class KolFeedbackDTO implements Serializable {
         /**
         * 数量
         */
-        private BigDecimal qty;
+        private Integer qty;
 
         /**
         * 达人昵称
@@ -350,8 +349,7 @@ public class KolFeedbackDTO implements Serializable {
         * 数量
         */
         @NotNull(message = "数量不能为空")
-        @Digits(integer = 16, fraction = 2, message = "数量整数位不能超过16位，小数位不能超过2位")
-        private BigDecimal qty;
+        private Integer qty;
 
         /**
         * 达人昵称

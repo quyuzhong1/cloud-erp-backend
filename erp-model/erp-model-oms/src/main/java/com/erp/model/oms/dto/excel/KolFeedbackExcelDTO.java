@@ -9,7 +9,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
-import java.math.BigDecimal;
 import java.time.LocalDate;
 
 /**
@@ -49,7 +48,7 @@ public class KolFeedbackExcelDTO implements Serializable {
     @FieldValid(fieldName = "*数量", isNotBlank = true, formatPattern = FieldFormatPatternTypeEnum.NUMBER)
     private String qtyStr;
     @ExcelIgnore
-    private BigDecimal qty;
+    private Integer qty;
 
     /**
      * 达人昵称

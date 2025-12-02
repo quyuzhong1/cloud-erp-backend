@@ -191,14 +191,14 @@ public class KolFeedbackExcelListener extends AnalysisEventListener<KolFeedbackE
         // 解析数量
         if (StringUtils.isNotBlank(data.getQtyStr())) {
             try {
-                java.math.BigDecimal qty = new java.math.BigDecimal(data.getQtyStr());
-                if (qty.compareTo(java.math.BigDecimal.ZERO) <= 0) {
+                Integer qty = Integer.valueOf(data.getQtyStr());
+                if (qty <= 0) {
                     errorMsgList.add("数量必须大于0");
                 } else {
                     data.setQty(qty);
                 }
             } catch (NumberFormatException e) {
-                errorMsgList.add("数量格式错误：" + data.getQtyStr() + "，必须为数字");
+                errorMsgList.add("数量格式错误：" + data.getQtyStr() + "，必须为整数");
             }
         } else {
             errorMsgList.add("数量不能为空");

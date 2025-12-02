@@ -7,9 +7,11 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.base.*;
 import com.common.business.vo.PagingVO;
+import com.erp.model.oms.entity.KolPartnerInfoEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.server.oms.service.KolPartnerInfoService;
 import io.seata.spring.annotation.GlobalTransactional;
 import com.common.business.annotation.DistributeLocker;
 import com.erp.model.oms.entity.KolFeedbackEntity;
@@ -91,6 +93,9 @@ public class KolFeedbackServiceImpl extends SuperServiceImpl<KolFeedbackMapper, 
 
     @Autowired
     private com.erp.server.oms.service.DictBasicService dictBasicService;
+
+    @Autowired
+    private KolPartnerInfoService kolPartnerInfoService;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -446,11 +451,13 @@ public class KolFeedbackServiceImpl extends SuperServiceImpl<KolFeedbackMapper, 
             }
         }
 
-        // 达人昵称 TODO（因为还没写）
-        // if (StrUtil.isNotBlank(kolFeedbackEntity.getPartnerId()) && StrUtil.isBlank(kolFeedbackEntity.getPartnerNickname())) {
-        //     String partnerNickname = commonService.getPartnerNicknameByPartnerId(kolFeedbackEntity.getPartnerId());
-        //     kolFeedbackEntity.setPartnerNickname(partnerNickname);
-        // }
+        // 达人昵称
+         if (StrUtil.isNotBlank(kolFeedbackEntity.getPartnerId()) && StrUtil.isBlank(kolFeedbackEntity.getPartnerNickname())) {
+             KolPartnerInfoEntity kolPartnerInfoEntity = kolPartnerInfoService.getById(kolFeedbackEntity.getPartnerId());
+             if (kolPartnerInfoEntity!=null&& StringUtils.isNotBlank(kolPartnerInfoEntity.getNickname())){
+                 kolFeedbackEntity.setPartnerNickname(kolPartnerInfoEntity.getNickname());
+             }
+         }
 
         // urlHash 用 hutool hash 工具（如果 url 不为空）
         if (StrUtil.isNotBlank(kolFeedbackEntity.getUrl())) {
