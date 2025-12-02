@@ -151,6 +151,8 @@ public enum BusinessNoTypeEnum {
     CODE_MPO(112 ,"MPO","资产采购单",BusinessNoConstant.MPO),
     CODE_MPOCC(113 ,"MPOCC","资产采购变更单",BusinessNoConstant.MPOCC),
     CODE_ZC(114 ,"ZC","资产编码",BusinessNoConstant.ZC),
+
+    CODE_HP(115 ,"HP","回片列表",BusinessNoConstant.HP),
     CODE_KOLB(115 ,"KOLB","B2B寄样申请单",BusinessNoConstant.KOLB)
 
     ;

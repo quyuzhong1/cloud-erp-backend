@@ -93,4 +93,10 @@ public interface ExportOmsFeign {
      */
     @PostMapping("/feign/export/b2bPlatformSku")
     PagingVO<SkuMappingDTO.PagingViewDTO> exportB2bPlatformSku(PagingDTO<SkuMappingDTO.PagingParamDTO> dto);
+
+    /**
+     * 导出KOL回片列表
+     */
+    @PostMapping("/feign/export/exportKolFeedback")
+    PagingVO<KolFeedbackDTO.ListDTO> exportKolFeedback(@RequestBody PagingDTO<KolFeedbackDTO.ParamDTO> dto);
 }
