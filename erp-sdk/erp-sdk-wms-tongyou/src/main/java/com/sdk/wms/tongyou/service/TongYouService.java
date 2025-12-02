@@ -86,6 +86,7 @@ public class TongYouService {
     public TongYouBaseResp<List<TongYouInboundResp>> getInboundBill(Map<String, Object> authJson){
         Map<String, String> headerMap = new HashMap<>();
         String path = "hwc_api/hwc_order_tc.php";
+        log.warn("通邮 getInboundBill request:{}",JSONObject.toJSONString(authJson));
         String bodyStr = OkHttpUtils.doPostJson(getPreUrl()+path,authJson, headerMap);
         return TongYouUtils.parseToTongYouResp(bodyStr, new TypeReference<TongYouBaseResp<List<TongYouInboundResp>>>() {});
 
