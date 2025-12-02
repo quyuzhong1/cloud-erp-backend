@@ -3,6 +3,7 @@ package com.erp.server.plm.service.impl;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
@@ -26,6 +27,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
+import com.common.core.utils.MessageUtils;
 import com.common.core.utils.ProjectImportUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.dto.*;
@@ -1108,7 +1110,7 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
         //阶段信息
         List<ProjectImportDTO> phaseList = list.stream().filter(obj -> MathUtil.TWO.equals(obj.getTaskOutlineLevel())).collect(Collectors.toList());
         if (CollectionUtils.isEmpty(phaseList)) {
-            throw new ServiceException(new ApiResult<>(ApiError.ERROR_PROJECT_IMPORT_LEVEL_TASK_REQUIRED.getCode(), format(ApiError.ERROR_PROJECT_IMPORT_LEVEL_TASK_REQUIRED.getMsg(), "二级")));
+            throw new ServiceException(ApiError.ERROR_PROJECT_IMPORT_LEVEL_TASK_REQUIRED, "二");
         }
         List<ProjectPhaseEntity> oldPhaseList = projectPhaseService.getByProductId(productId);
 
@@ -1131,12 +1133,12 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
         //任务信息
         List<ProjectImportDTO> taskList = list.stream().filter(obj -> MathUtil.THREE.equals(obj.getTaskOutlineLevel())).collect(Collectors.toList());
         if (CollectionUtils.isEmpty(taskList)) {
-            throw new ServiceException(new ApiResult<>(ApiError.ERROR_PROJECT_IMPORT_LEVEL_TASK_REQUIRED.getCode(), format(ApiError.ERROR_PROJECT_IMPORT_LEVEL_TASK_REQUIRED.getMsg(), "三")));
+            throw new ServiceException(ApiError.ERROR_PROJECT_IMPORT_LEVEL_TASK_REQUIRED,"三");
         }
         //任务负责人不能为空
         long chargeCount = taskList.stream().filter(obj -> ObjectUtils.isEmpty(obj.getCustomFieldValues()) || StringUtils.isBlank(obj.getCustomFieldValues().get("taskCharge"))).count();
         if (chargeCount > 0) {
-            throw new ServiceException(new ApiResult<>(ApiError.ERROR_PROJECT_IMPORT_LEVEL_TASK_OWNER_REQUIRED.getCode(), format(ApiError.ERROR_PROJECT_IMPORT_LEVEL_TASK_OWNER_REQUIRED.getMsg(), "二")));
+            throw new ServiceException(ApiError.ERROR_PROJECT_IMPORT_LEVEL_TASK_OWNER_REQUIRED, "二");
         }
         //任务交付物
         List<DocsDTO> docsList = handleDocName(taskList, productId);
@@ -1150,7 +1152,7 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
         }).distinct().collect(Collectors.toList());
         List<FindUserDTO> findUserList = sysUserFeign.listUserByUserNames(taskChargeList, UserTypeEnum.ERP.code);
         if (CollectionUtils.isEmpty(findUserList)) {
-            throw new ServiceException(new ApiResult<>(ApiError.ERROR_PROJECT_OWNER_NOT_FOUND.getCode(), format(ApiError.ERROR_PROJECT_OWNER_NOT_FOUND.getMsg(), "二")));
+            throw new ServiceException(ApiError.ERROR_PROJECT_OWNER_NOT_FOUND, "二");
         }
 
         //产品下已存在的任务
@@ -1164,7 +1166,7 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
 
             //任务名称
             if (StringUtils.isBlank(projectImportDTO.getTaskName())) {
-                throw new ServiceException(new ApiResult<>(ApiError.ERROR_PROJECT_IMPORT_LEVEL_TASK_NAME_REQUIRED.getCode(), format(ApiError.ERROR_PROJECT_IMPORT_LEVEL_TASK_NAME_REQUIRED.getMsg(), "二")));
+                throw new ServiceException(ApiError.ERROR_PROJECT_IMPORT_LEVEL_TASK_NAME_REQUIRED,"二");
             }
             //任务负责人
             Map<String, String> customFieldValues = projectImportDTO.getCustomFieldValues();
@@ -1174,7 +1176,7 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
             for (String taskChargeName : taskChargeNameList) {
                 String chargeId = findUserList.stream().filter(obj -> obj.getUserName().equals(taskChargeName)).map(FindUserDTO::getUserId).findFirst().orElse("");
                 if (StringUtils.isBlank(chargeId)) {
-                    throw new ServiceException(new ApiResult<>(ApiError.ERROR_USER_NOT_FOUND.getCode(), format(ApiError.ERROR_USER_NOT_FOUND.getMsg(), taskChargeName)));
+                    throw new ServiceException(ApiError.ERROR_USER_NOT_FOUND, taskChargeName);
                 }
                 chargeIds.add(chargeId);
             }

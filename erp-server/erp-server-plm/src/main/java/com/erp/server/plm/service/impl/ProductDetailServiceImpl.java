@@ -4071,10 +4071,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                     //验证关联任务是否已全部完成
                     List<ProjectTaskEntity> relatedTaskList = taskAllList.stream().filter(obj -> !RelatedSkuTypeEnum.NOT_RELATED.getCode().equals(obj.getRelatedSkuType()) && !TaskStateEnum.FINISH.getCode().equals(obj.getStatus()) && configTaskIds.contains(obj.getId())).collect(Collectors.toList());
                     if (relatedTaskList.size() > 0) {
-                        String warning = ApiError.ERROR_TASK_UNFINISHED.getMsg();
                         String taskNames = relatedTaskList.stream().map(ProjectTaskEntity::getName).collect(Collectors.joining(","));
-                        String warningMsg = String.format(warning, taskNames);
-                        throw new ServiceException(ApiError.ERROR_TASK_UNFINISHED.getCode(), warningMsg);
+                        throw new ServiceException(ApiError.ERROR_TASK_UNFINISHED, taskNames);
                     }
                 }
             }
@@ -4086,7 +4084,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         entity.setStatus(ProductDetailStatusEnum.APPROVAL_ING.getCode());
         Boolean result = this.updateById(entity);
         if (!result) {
-          throw new ServiceException(ApiError.ERROR_DOC_SUBMIT_FAILED,"产品信息");
+          throw new ServiceException(ApiError.ERROR_DOC_SUBMIT_FAILED, SourceTypeEnum.LISTING_INFO.getName());
         }
         //操作日志
         String operateContent = String.format(BomOperateContent.STATE_CHANGE, ProductDetailStatusEnum.WAIT_COMMIT.getName(), ProductDetailStatusEnum.APPROVAL_ING.getName());
@@ -5119,12 +5117,12 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                     List<BasicCategoryEntity> categoryList = new ArrayList<>();
                     this.setParentEntity(basicCategoryEntity.getId(), categoryList, categoryEntityList);
                     if (com.baomidou.mybatisplus.core.toolkit.CollectionUtils.isEmpty(categoryList)) {
-                        errorMsgList.add(ApiError.ERROR_PLM_CATEGORY_CODE_NOT_FOUND.getMsg());
+                        errorMsgList.add(MessageUtils.getMessage(ApiError.ERROR_PLM_CATEGORY_CODE_NOT_FOUND));
                     }
                     //一级品类
                     BasicCategoryEntity bestEntity = categoryList.stream().filter(obj -> "0".equals(obj.getPid())).findFirst().orElse(null);
                     if (ObjectUtils.isEmpty(bestEntity) || StringUtils.isBlank(bestEntity.getCode())) {
-                        errorMsgList.add(ApiError.ERROR_PLM_CATEGORY_CODE_NOT_FOUND.getMsg());
+                        errorMsgList.add(MessageUtils.getMessage(ApiError.ERROR_PLM_CATEGORY_CODE_NOT_FOUND));
                     }
                     //二级品类
                     String secondaryCategory = dto.getSecondaryCategory();
@@ -5956,12 +5954,12 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 List<BasicCategoryEntity> categoryList = new ArrayList<>();
                 this.setParentEntity(basicCategoryEntity.getId(), categoryList, categoryEntityList);
                 if (com.baomidou.mybatisplus.core.toolkit.CollectionUtils.isEmpty(categoryList)) {
-                    errorMsgList.add(ApiError.ERROR_PLM_CATEGORY_CODE_NOT_FOUND.getMsg());
+                    errorMsgList.add(MessageUtils.getMessage(ApiError.ERROR_PLM_CATEGORY_CODE_NOT_FOUND));
                 }
                 //一级品类
                 BasicCategoryEntity bestEntity = categoryList.stream().filter(obj -> "0".equals(obj.getPid())).findFirst().orElse(null);
                 if (ObjectUtils.isEmpty(bestEntity) || StringUtils.isBlank(bestEntity.getCode())) {
-                    errorMsgList.add(ApiError.ERROR_PLM_CATEGORY_CODE_NOT_FOUND.getMsg());
+                    errorMsgList.add(MessageUtils.getMessage(ApiError.ERROR_PLM_CATEGORY_CODE_NOT_FOUND));
                 }
                 //二级品类
                 String secondaryCategory = dto.getSecondaryCategory();
@@ -5973,7 +5971,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 } else {
                     BasicCategoryEntity secondEntity = categoryList.stream().filter(obj -> secondaryCategoryEntity.getPid().equals(obj.getId())).findFirst().orElse(null);
                     if (ObjectUtils.isEmpty(secondEntity) || StringUtils.isBlank(secondaryCategoryEntity.getCode())) {
-                        errorMsgList.add(ApiError.ERROR_PLM_CATEGORY_CODE_NOT_FOUND.getMsg());
+                        errorMsgList.add(MessageUtils.getMessage(ApiError.ERROR_PLM_CATEGORY_CODE_NOT_FOUND));
                     }
                     if (!bestEntity.getId().equals(secondaryCategoryEntity.getPid())) {
                         errorMsgList.add("产品分类一级类目和二级类目的关系不匹配");

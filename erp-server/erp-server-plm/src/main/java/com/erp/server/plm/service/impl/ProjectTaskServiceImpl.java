@@ -3665,9 +3665,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             List<String> notFinishSkuList = projectTaskRefSkuService.checkTaskRefSkuFinish(taskIds);
             if (CollectionUtils.isNotEmpty(notFinishSkuList)) {
                 String skuNo = notFinishSkuList.stream().collect(Collectors.joining(","));
-                String warning = ApiError.ERROR_SUBMIT_CONFIRM.getMsg();
-                String warningMsg = String.format(warning, skuNo);
-                throw new ServiceException(ApiError.ERROR_SUBMIT_CONFIRM.getCode(), warningMsg);
+                throw new ServiceException(ApiError.ERROR_SUBMIT_CONFIRM, skuNo);
             }
 
         }
@@ -4747,7 +4745,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     private void checkTaskName(String taskId, String productId, String name) {
         int nameLength = name.length();
         if (nameLength > 50) {
-            throw new ServiceException(ApiError.ERROR_PLM_TASK_NAME_TOO_LONG);
+            throw new ServiceException(ApiError.ERROR_PLM_TASK_NAME_TOO_LONG, String.valueOf(nameLength));
         }
         //根据产品很任务id 获取任务名
         List<ProjectTaskEntity> taskList = getByProductId(productId);

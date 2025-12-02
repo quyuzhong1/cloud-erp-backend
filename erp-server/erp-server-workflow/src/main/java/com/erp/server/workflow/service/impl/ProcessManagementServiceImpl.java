@@ -1022,7 +1022,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
             //查询三方生成查询记录
              taskInfo = approveTaskInfoService.getByBusinessIdAndKey(dto.getBusinessKey(),dto.getBusinessId());
         }catch (Exception e){
-            throw new ServiceException(ApiError.PROCESS_APPROVE_TASK_INFO_ERROR);
+            throw new ServiceException(ApiError.PROCESS_APPROVE_TASK_INFO_ERROR, e.getMessage());
         }
             //判断是否走飞书审批
             if (ObjectUtil.isNotEmpty(taskInfo)) {

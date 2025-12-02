@@ -11,6 +11,7 @@ import com.common.business.dto.FindUserDTO;
 import com.common.business.enums.ErpServerModuleEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.MessageUtils;
 import com.common.core.utils.OkHttpUtils;
 import com.common.core.utils.StrUtils;
 import com.erp.model.msg.dto.WarnMsgInfoDTO;
@@ -156,14 +157,14 @@ public class FeishuSendServiceImpl extends BaseMessageSendService {
         MsgResultVO<T> msgResult = new MsgResultVO<T>();
         if(Objects.isNull(tenantAccessToken)) {
             msgResult.setCode(ApiError.ERROR_LARK_TOKEN_IS_NULL.getCode());
-            msgResult.setMsg(ApiError.ERROR_LARK_TOKEN_IS_NULL.getMsg());
+            msgResult.setMsg(MessageUtils.getMessage(ApiError.ERROR_LARK_TOKEN_IS_NULL));
             msgResult.setNeedReSend(false);
             return msgResult;
         }
         if (StringUtils.isBlank(tenantAccessToken)) {
             log.error("发送飞书消息失败 token为空");
             msgResult.setCode(ApiError.ERROR_LARK_TOKEN_IS_NULL.getCode());
-            msgResult.setMsg(ApiError.ERROR_LARK_TOKEN_IS_NULL.getMsg());
+            msgResult.setMsg(MessageUtils.getMessage(ApiError.ERROR_LARK_TOKEN_IS_NULL));
             msgResult.setNeedReSend(true);
             return msgResult;
         }
@@ -176,7 +177,7 @@ public class FeishuSendServiceImpl extends BaseMessageSendService {
         if(StrUtils.isEmpty(thirdUnionDTOs.get(0).getThirdUnionId())) {
             log.warn("用户【{}】未找到绑定的飞书信息",thirdUnionDTOs.get(0).getUserName());
             msgResult.setCode(ApiError.ERROR_LARK_TOKEN_IS_NULL.getCode());
-            msgResult.setMsg(ApiError.ERROR_LARK_TOKEN_IS_NULL.getMsg());
+            msgResult.setMsg(MessageUtils.getMessage(ApiError.ERROR_LARK_TOKEN_IS_NULL));
             msgResult.setNeedReSend(false);
             return msgResult;
         }
@@ -204,7 +205,7 @@ public class FeishuSendServiceImpl extends BaseMessageSendService {
         if(null == result || 0 != result.getCode()){
             log.error("发送飞书消息失败，请求内容体参数=【{}】，响应内容=【{}】", JSONUtil.toJsonStr(bodyMap), JSONUtil.toJsonStr(result));
             msgResult.setCode(ApiError.ERROR_LARK_SEND_MSG_FAIL.getCode());
-            msgResult.setMsg(ApiError.ERROR_LARK_SEND_MSG_FAIL.getMsg());
+            msgResult.setMsg(MessageUtils.getMessage(ApiError.ERROR_LARK_SEND_MSG_FAIL));
             msgResult.setNeedReSend(true);
 
             WarnMsgInfoDTO warnMsgInfoDTO = new WarnMsgInfoDTO();
@@ -244,14 +245,14 @@ public class FeishuSendServiceImpl extends BaseMessageSendService {
         MsgResultVO<T> msgResult = new MsgResultVO<T>();
         if(Objects.isNull(tenantAccessToken)) {
             msgResult.setCode(ApiError.ERROR_LARK_TOKEN_IS_NULL.getCode());
-            msgResult.setMsg(ApiError.ERROR_LARK_TOKEN_IS_NULL.getMsg());
+            msgResult.setMsg(MessageUtils.getMessage(ApiError.ERROR_LARK_TOKEN_IS_NULL));
             msgResult.setNeedReSend(false);
             return msgResult;
         }
         if (StringUtils.isBlank(tenantAccessToken)) {
             log.error("发送飞书消息失败 token为空");
             msgResult.setCode(ApiError.ERROR_LARK_TOKEN_IS_NULL.getCode());
-            msgResult.setMsg(ApiError.ERROR_LARK_TOKEN_IS_NULL.getMsg());
+            msgResult.setMsg(MessageUtils.getMessage(ApiError.ERROR_LARK_TOKEN_IS_NULL));
             msgResult.setNeedReSend(true);
             return msgResult;
         }

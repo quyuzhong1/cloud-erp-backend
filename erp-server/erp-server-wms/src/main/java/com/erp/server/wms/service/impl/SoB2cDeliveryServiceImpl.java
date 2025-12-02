@@ -33,10 +33,7 @@ import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.BeanMapper;
-import com.common.core.utils.BeanMapperUtils;
-import com.common.core.utils.FastDFSClientUtil;
-import com.common.core.utils.MathUtil;
+import com.common.core.utils.*;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
@@ -363,7 +360,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         }
         SoB2cDeliveryEntity entity = this.getById(id);
         if (ObjectUtil.isEmpty(entity)) {
-            return BatchResultDTO.fail(id, entity.getCode(), ApiError.B2C_SO_DELIVERY_NOT_EXISTS.getMsg());
+            return BatchResultDTO.fail(id, entity.getCode(), MessageUtils.getMessage(ApiError.B2C_SO_DELIVERY_NOT_EXISTS));
         }
 
         //查询是否冻结
@@ -377,7 +374,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                 || SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getCode().equals(entity.getStatus())
                 || SoB2cDeliveryStatusEnum.EXCEPTION_ORDER.getCode().equals(entity.getStatus())
                 || SoB2cDeliveryStatusEnum.WAIT_HANDLE.getCode().equals(entity.getStatus())){
-            return BatchResultDTO.fail(id, entity.getCode(), ApiError.IS_NOT_MANUAL_DELIVERY.getMsg());
+            return BatchResultDTO.fail(id, entity.getCode(), MessageUtils.getMessage(ApiError.IS_NOT_MANUAL_DELIVERY));
         }
         if (Objects.nonNull(soB2cEntity)) {
             String transferStatus = soB2cEntity.getTransferStatus();
@@ -439,7 +436,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         //手动标发，已发货，取消发货的数据不允许操作手动标发
         if (SoB2cDeliveryStatusEnum.SHIPPED.getCode().equals(entity.getStatus())
                 || SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getCode().equals(entity.getStatus())) {
-            return BatchResultDTO.fail(id, entity.getCode(), ApiError.IS_NOT_FALSE_SHIPMENT.getMsg());
+            return BatchResultDTO.fail(id, entity.getCode(), MessageUtils.getMessage(ApiError.IS_NOT_FALSE_SHIPMENT));
         }
 
         //查询是否冻结
@@ -1931,7 +1928,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                             && req.getLogisticsChannelId().equals(deliveryEntities.get(0).getLogisticsChannelId())
                     ).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(logisticsPrintTypeEntity) && !param.getPrintType().equals(SoB2cDeliveryPrintTypeEnum.LOGISTICS_BILL.getCode())) {
-                waybillDTO.setErrorMsg(CharSequenceUtil.format(ApiError.LOGISTICS_PRINT_TYPE_SETTING_NOT_EXIST.getMsg(), deliveryEntities.get(0).getLogisticsChannelName()));
+                waybillDTO.setErrorMsg(MessageUtils.getMessage(ApiError.LOGISTICS_PRINT_TYPE_SETTING_NOT_EXIST, deliveryEntities.get(0).getLogisticsChannelName()));
                 waybillDTO.setDisabled(Boolean.TRUE);
             }
 
@@ -1957,7 +1954,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                     case LOGISTICS_BILL :
                         //打印面单预览
                         if ("N".equalsIgnoreCase(logisticsPlatformEnum.getPrintLabel())) {
-                            waybillDTO.setErrorMsg(CharSequenceUtil.format(ApiError.LOGISTICS_NOT_PRINT_LOGISTICS_BILL.getMsg(), logisticsPlatformEnum.getName()));
+                            waybillDTO.setErrorMsg(MessageUtils.getMessage(ApiError.LOGISTICS_NOT_PRINT_LOGISTICS_BILL, logisticsPlatformEnum.getName()));
                             waybillDTO.setDisabled(Boolean.TRUE);
                         }
                         break;
@@ -1965,7 +1962,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                         //打印配货单预览
                         if (ObjectUtil.isNotEmpty(logisticsPrintTypeEntity) && LogisticsLabelTypeEnum.AUTHORITY.getCode().equals(logisticsPrintTypeEntity.getLabelType())) {
                             if ("N".equalsIgnoreCase(logisticsPlatformEnum.getPrintDelivery())) {
-                                waybillDTO.setErrorMsg(CharSequenceUtil.format(ApiError.LOGISTICS_NOT_PRINT_ALLOCATE_CARGO_BILL.getMsg(), logisticsPlatformEnum.getName()));
+                                waybillDTO.setErrorMsg(MessageUtils.getMessage(ApiError.LOGISTICS_NOT_PRINT_ALLOCATE_CARGO_BILL, logisticsPlatformEnum.getName()));
                                 waybillDTO.setDisabled(Boolean.TRUE);
                             }
                         }
@@ -2000,7 +1997,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                 SoB2cEntity soB2cEntity = soB2cEntities.stream().filter(req -> req.getId().equals(deliveryEntity.getSourceId())).findFirst().orElse(null);
                 if (ObjectUtil.isNotEmpty(soB2cEntity)) {
                     if (soB2cEntity.getIsFrozen()) {
-                        waybillDTO.setErrorMsg(CharSequenceUtil.format(ApiError.ORDER_IS_INTERCEPT_NOT_UPDATE.getMsg(), soB2cEntity.getCode()));
+                        waybillDTO.setErrorMsg(MessageUtils.getMessage(ApiError.ORDER_IS_INTERCEPT_NOT_UPDATE, soB2cEntity.getCode()));
                         waybillDTO.setDisabled(Boolean.TRUE);
                     }
                 }

@@ -559,7 +559,7 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
         //提交
         BatchResultDTO submit = this.submit(add.getId(),Boolean.FALSE);
         if (!submit.getSuccess()) {
-            throw new ServiceException(ApiError.ERROR_DOC_SUBMIT_FAILED,"委外发料");
+            throw new ServiceException(ApiError.ERROR_DOC_SUBMIT_FAILED, SourceTypeEnum.SUBCONTRACT_ISSUE.getName());
         }
         //审核
         ApproveOneDTO oneDTO = new ApproveOneDTO();
@@ -568,7 +568,7 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
         oneDTO.setType(ApproveTypeEnum.PASS.getStatus());
         BatchResultDTO approve = this.approve(oneDTO);
         if (!approve.getSuccess()) {
-            throw new ServiceException(ApiError.ERROR_BILL_APPROVE,"委外发料");
+            throw new ServiceException(ApiError.ERROR_BILL_APPROVE, SourceTypeEnum.SUBCONTRACT_ISSUE.getName());
         }
         //恢复系统标识
         UserContext.setIsUserSystem(originalValue);

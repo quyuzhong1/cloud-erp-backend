@@ -887,7 +887,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         // 删除缓存
         removeCache(Collections.singletonList(entity.getId()));
         if (!ApproveStatusEnum.APPROVE_ING.getStatus().equals(entity.getApproveStatus().getStatus())) {
-            return BatchResultDTO.fail(entity.getId(),entity.getName(),ApiError.ERROR_APPROVE_ALLOWED_STATUS_ONLY.getMsg());
+            return BatchResultDTO.fail(entity.getId(),entity.getName(),MessageUtils.getMessage(ApiError.ERROR_APPROVE_ALLOWED_STATUS_ONLY));
         }
         //当前登陆人,启用流程后可删除
         LoginUser userInfo = UserContext.getDefaultLoginUser();
@@ -922,14 +922,14 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         // 删除缓存
         removeCache(Collections.singletonList(entity.getId()));
         if (!ApproveStatusEnum.APPROVE.getStatus().equals(entity.getApproveStatus().getStatus())) {
-            return BatchResultDTO.fail(entity.getId(),entity.getName(),ApiError.ERROR_WMS_REVERSE_APPROVAL_ALLOWED_APPROVED_ONLY.getMsg());
+            return BatchResultDTO.fail(entity.getId(),entity.getName(),MessageUtils.getMessage(ApiError.ERROR_WMS_REVERSE_APPROVAL_ALLOWED_APPROVED_ONLY));
         }
         List<WarehouseEntity> list = Collections.singletonList(entity);
         //仓库已绑定店铺不允许反审核
         List<ShopInfoEntity> shopInfoEntities = shopInfoFeign.listShopInfoByWarehouseIds(Collections.singletonList(entity.getId()));
         ShopInfoEntity shopInfoEntity = shopInfoEntities.stream().filter(req -> req.getWarehouseId().equals(entity.getId())).distinct().findFirst().orElse(null);
         if (ObjectUtil.isNotEmpty(shopInfoEntity)) {
-            return BatchResultDTO.fail(entity.getId(),entity.getName(),String.format(ApiError.SHOP_INFO_EXIST_WAREHOUSE_NOT_DISAPPROVE.getMsg(), shopInfoEntity.getName()));
+            return BatchResultDTO.fail(entity.getId(),entity.getName(),MessageUtils.getMessage(ApiError.SHOP_INFO_EXIST_WAREHOUSE_NOT_DISAPPROVE, shopInfoEntity.getName()));
         }
         this.updateApproveStatus(Collections.singletonList(entity), ApproveStatusEnum.WAIT_SUBMIT);
         //仓库下绑定第三方店铺不能进行反审核
@@ -980,7 +980,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         List<BatchResultDTO> resultDTOList=new ArrayList<>();
         for (WarehouseEntity entity : list) {
             if (!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(entity.getApproveStatus().getStatus())){
-                resultDTOList.add(BatchResultDTO.fail(entity.getId(), entity.getKingdeeWarehouseCode(), ApiError.ERROR_DELETE_ALLOWED_STATUS_ONLY.getMsg()));
+                resultDTOList.add(BatchResultDTO.fail(entity.getId(), entity.getKingdeeWarehouseCode(), MessageUtils.getMessage(ApiError.ERROR_DELETE_ALLOWED_STATUS_ONLY)));
                 continue;
             }
             removeList.add(entity);

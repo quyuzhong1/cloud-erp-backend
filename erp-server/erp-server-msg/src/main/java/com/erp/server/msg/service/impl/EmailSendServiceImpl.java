@@ -5,6 +5,7 @@ import cn.hutool.extra.mail.MailAccount;
 import cn.hutool.extra.mail.MailUtil;
 import com.alibaba.fastjson.JSON;
 import com.common.core.enums.ApiError;
+import com.common.core.utils.MessageUtils;
 import com.common.core.utils.StrUtils;
 import com.erp.model.msg.dto.WarnMsgInfoDTO;
 import com.erp.model.msg.enums.MessageChannelEnum;
@@ -97,7 +98,7 @@ public class EmailSendServiceImpl extends BaseMessageSendService {
         } else {
             ApiError sendMailError = ApiError.ERROR_MAIL_SEND_FAILED;
             msgResult.setCode(sendMailError.getCode());
-            msgResult.setMsg(sendMailError.getMsg());
+            msgResult.setMsg(MessageUtils.getMessage(sendMailError));
         }
         return msgResult;
     }

@@ -7,6 +7,8 @@ import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.constant.ApproveType;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.BusinessTypeEnum;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
@@ -138,7 +140,7 @@ public class SyncExchangeRateServiceImpl implements SyncExchangeRateService {
             paramDTO.setType(ApproveType.PASS);
             biSettlementExchangeRateService.approve(paramDTO);
         } else {
-            throw new ServiceException(ApiError.ERROR_DOC_SUBMIT_FAILED);
+            throw new ServiceException(ApiError.ERROR_DOC_SUBMIT_FAILED, SourceTypeEnum.TRANSFER_INFO.getName());
         }
     }
 

@@ -288,7 +288,7 @@ public class SoB2cRefundServiceImpl extends SuperServiceImpl<SoB2cRefundMapper, 
         SoB2cRefundEntity submitEntity = this.getById(addDTO.getId());
         BatchResultDTO submit = this.submit(submitEntity, Boolean.FALSE);
         if (!submit.getSuccess()) {
-            throw new ServiceException(ApiError.ERROR_DOC_SUBMIT_FAILED,"售后订单");
+            throw new ServiceException(ApiError.ERROR_DOC_SUBMIT_FAILED, SourceTypeEnum.SO_B2C_REFUND.getName());
         }
         SoB2cRefundEntity approveEntity = this.getById(addDTO.getId());
         BatchResultDTO approve = this.approve(approveEntity, new ApproveOneDTO(approveEntity.getId(), ApproveTypeEnum.PASS.getStatus(), "自动审核"));

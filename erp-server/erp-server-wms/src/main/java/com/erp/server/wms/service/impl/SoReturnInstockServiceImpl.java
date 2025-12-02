@@ -1685,7 +1685,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         //自动提交
         Boolean submit = machineInfoService.submit(ids);
         if (!submit) {
-            throw new ServiceException(ApiError.ERROR_DOC_SUBMIT_FAILED);
+            throw new ServiceException(ApiError.ERROR_DOC_SUBMIT_FAILED, SourceTypeEnum.SO_RETURN_INSTOCK.getName());
         }
         //自动审核
         List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());

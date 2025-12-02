@@ -13,6 +13,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.FieldValidUtil;
 import com.common.core.utils.MathUtil;
+import com.common.core.utils.MessageUtils;
 import com.erp.model.plm.dto.excel.ProductPlanExcelDTO;
 import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.BasicDictTypeEnum;
@@ -141,12 +142,12 @@ public class ProductPlanExcelListener extends AnalysisEventListener<ProductPlanE
                 //一级品类
                 BasicCategoryEntity bestEntity = categoryList.stream().filter(obj -> "0".equals(obj.getPid())).findFirst().orElse(null);
                 if (ObjectUtils.isEmpty(bestEntity) || StringUtils.isBlank(bestEntity.getCode())) {
-                    errorMsgList.add(ApiError.ERROR_PLM_CATEGORY_CODE_NOT_FOUND.getMsg());
+                    errorMsgList.add(MessageUtils.getMessage(ApiError.ERROR_PLM_CATEGORY_CODE_NOT_FOUND));
                 }
                 //二级品类
                 BasicCategoryEntity secondEntity = categoryList.stream().filter(obj -> bestEntity.getId().equals(obj.getPid())).findFirst().orElse(null);
                 if (ObjectUtils.isEmpty(secondEntity) || StringUtils.isBlank(secondEntity.getCode())) {
-                    errorMsgList.add(ApiError.ERROR_PLM_CATEGORY_CODE_NOT_FOUND.getMsg());
+                    errorMsgList.add(MessageUtils.getMessage(ApiError.ERROR_PLM_CATEGORY_CODE_NOT_FOUND));
                 }
                 productPlanEntity.setCategoryId(basicCategoryEntity.getId());
             }

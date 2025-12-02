@@ -2972,11 +2972,11 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             if (ApproveStatusEnum.WAIT_SUBMIT.equals(approveStatus)) {
                 SoOutstockEntity entity = this.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    throw new ServiceException(ApiError.NOT_EXIST_BILL,"销售出库单");
+                    throw new ServiceException(ApiError.NOT_EXIST_BILL, SourceTypeEnum.SO_OUTSTOCK.getName());
                 }
                 BatchResultDTO submit = this.submit(entity, Boolean.FALSE);
                 if (!submit.getSuccess()) {
-                    throw new ServiceException(ApiError.ERROR_DOC_SUBMIT_FAILED,"销售出库单");
+                    throw new ServiceException(ApiError.ERROR_DOC_SUBMIT_FAILED, SourceTypeEnum.SO_OUTSTOCK.getName());
                 }
             }
             //审核中

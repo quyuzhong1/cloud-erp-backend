@@ -791,7 +791,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
         if (CollectionUtils.isNotEmpty(foundList)) {
             String sourceCodes = foundList.stream().map(PurchaseApplicationDTO.ViewGenerateSubcontractOrderDTO::getSourceCode).collect(Collectors.joining());
             log.error("单据【{}】未审核完成，不支持下推",sourceCodes);
-            throw new ServiceException(new ApiResult<>(ApiError.ERROR_DOC_PUSH_DOWN_NOT_ALLOWED.getCode(), CharSequenceUtil.format(ApiError.ERROR_DOC_PUSH_DOWN_NOT_ALLOWED.getMsg(),sourceCodes)));
+            throw new ServiceException(ApiError.ERROR_DOC_PUSH_DOWN_NOT_ALLOWED,sourceCodes);
         }
 
         //已下推信息
@@ -970,7 +970,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
         String codes = purchaseApplicationList.stream().filter(obj -> !ApproveStatusEnum.APPROVE.getStatus().equals(obj.getApproveStatus())).map(PurchaseApplicationEntity::getCode).collect(Collectors.joining());
         if (StringUtils.isNotBlank(codes)) {
             log.error("单据【{}】未审核完成，不支持下推",codes);
-            throw new ServiceException(new ApiResult<>(ApiError.ERROR_DOC_PUSH_DOWN_NOT_ALLOWED.getCode(), CharSequenceUtil.format(ApiError.ERROR_DOC_PUSH_DOWN_NOT_ALLOWED.getMsg(),codes)));
+            throw new ServiceException(ApiError.ERROR_DOC_PUSH_DOWN_NOT_ALLOWED, codes);
         }
         List<String> sourceDetailIds = list.stream().map(PurchaseApplicationDTO.GenerateSubcontractOrderDTO::getSourceDetailId).collect(Collectors.toList());
         //申请单明细
@@ -1311,7 +1311,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
             exceptionDataMap.put("purchaseApplicationDetailIds", prohibitDetailIds);
             prohibitDetails.stream().forEach(detail->{
                 PurchaseApplicationEntity entity = detailMainMap.get(detail.getId());
-                errMsg.append(CharSequenceUtil.format(ApiError.ERROR_PO_APPLY_QTY_MORE.getMsg(),entity.getCode(),detail.getSkuNo())).append("</br>");
+                errMsg.append(MessageUtils.getMessage(ApiError.ERROR_PO_APPLY_QTY_MORE,entity.getCode(),detail.getSkuNo())).append("</br>");
             });
             throw new ServiceException(new ApiResult<>(ApiError.ERROR_PO_APPLY_QTY_MORE.getCode(),errMsg.toString(), exceptionDataMap));
         }

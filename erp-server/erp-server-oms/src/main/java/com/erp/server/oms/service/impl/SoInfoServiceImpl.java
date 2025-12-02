@@ -1608,7 +1608,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     public BatchResultDTO approve(BaseApproveParamDTO dto, SoInfoEntity entity) {
         String ingStatus = ApproveStatusEnum.APPROVE_ING.getStatus();
         if(!ingStatus.equals(entity.getApproveStatus().getStatus())){
-            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_APPROVE_ALLOWED_STATUS_ONLY.getMsg());
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),MessageUtils.getMessage(ApiError.ERROR_APPROVE_ALLOWED_STATUS_ONLY));
         }
         //审核流程
         approveProcess(entity, dto);
@@ -1730,7 +1730,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
 
         if(!BillApproveStatusEnum.APPROVE.equals(entity.getApproveStatus())){
-            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_REVERSE_APPROVAL_ALLOWED_APPROVED_ONLY.getMsg());
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),MessageUtils.getMessage(ApiError.ERROR_REVERSE_APPROVAL_ALLOWED_APPROVED_ONLY));
         }
 
         //检查关联单据
@@ -1890,7 +1890,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         List<BatchResultDTO> resultDTOList=new ArrayList<>();
         for (SoInfoEntity entity : list) {
             if (!statusList.contains(entity.getApproveStatus().getStatus())){
-                resultDTOList.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_SO_DELETE_FORBIDDEN.getMsg()));
+                resultDTOList.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), MessageUtils.getMessage(ApiError.ERROR_SO_DELETE_FORBIDDEN)));
                 continue;
             }
             removeList.add(entity);
@@ -2269,7 +2269,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         //未审核完成不支持下推备货申请单
         SoInfoDTO.ViewGenerateSalesDemandDTO viewGenerateSalesDemandDTO = list.stream().filter(obj -> !ApproveStatusEnum.APPROVE.getStatus().equals(obj.getApproveStatus())).findFirst().orElse(null);
         if (ObjectUtils.isNotEmpty(viewGenerateSalesDemandDTO)) {
-            throw new ServiceException(ApiError.ERROR_SO_NOT_APPROVED_CANNOT_PUSH_STOCKREQ.getCode(), String.format(ApiError.ERROR_SO_NOT_APPROVED_CANNOT_PUSH_STOCKREQ.getMsg(), viewGenerateSalesDemandDTO.getSourceCode()));
+            throw new ServiceException(ApiError.ERROR_SO_NOT_APPROVED_CANNOT_PUSH_STOCKREQ.getCode(), MessageUtils.getMessage(ApiError.ERROR_SO_NOT_APPROVED_CANNOT_PUSH_STOCKREQ, viewGenerateSalesDemandDTO.getSourceCode()));
         }
 
         List<String> skuIds = list.stream().map(SoInfoDTO.ViewGenerateSalesDemandDTO::getSkuId).collect(Collectors.toList());
@@ -4327,7 +4327,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             String warehouseId = "";
             String warehouseOrgId = "";
             if (Objects.isNull(warehouse)) {
-                errorMsgList.add(ApiError.WAREHOUSE_NOT_EXIST_NO_PERMISSION.getMsg());
+                errorMsgList.add(MessageUtils.getMessage(ApiError.WAREHOUSE_NOT_EXIST_NO_PERMISSION));
             } else {
                 warehouseId = warehouse.getId();
                 warehouseOrgId = warehouse.getOrgId();

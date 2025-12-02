@@ -15,6 +15,7 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.enums.LogActionEnum;
+import com.common.core.utils.MessageUtils;
 import com.erp.model.dmp.dto.ThirdMappingDTO;
 import com.erp.model.dmp.enums.ThirdSysTypeEnum;
 import com.erp.model.oms.dto.*;
@@ -268,7 +269,7 @@ public class ShopInfoController extends BaseController {
                         if (Objects.nonNull(disabled) && !Objects.equals(disabled, shop.getDisabled()) && Objects.equals(disabled, true)) {
                             Boolean flag = checkDmpThirdMapping(id);
                             if (!flag) {
-                                submit = BatchResultDTO.fail(id, shop.getName(), CharSequenceUtil.format(ApiError.EXIST_THIRD_SHOP_MAPPING.getMsg(),shop.getName()));
+                                submit = BatchResultDTO.fail(id, shop.getName(), MessageUtils.getMessage(ApiError.EXIST_THIRD_SHOP_MAPPING, shop.getName()));
                             }else{
                                 flagCode = shop.getName();
                                 submit = shopInfoService.updateStatus(shop, disabled);

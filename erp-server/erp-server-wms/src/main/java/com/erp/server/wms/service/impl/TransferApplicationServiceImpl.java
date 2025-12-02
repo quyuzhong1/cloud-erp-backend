@@ -222,7 +222,7 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
         //提交
         BatchResultDTO submit = this.submit(entity);
         if (!submit.getSuccess()) {
-            throw new ServiceException(ApiError.ERROR_DOC_SUBMIT_FAILED,"调拨申请单");
+            throw new ServiceException(ApiError.ERROR_DOC_SUBMIT_FAILED, SourceTypeEnum.TRANSFER_INFO.getName());
         }
         return id;
     }

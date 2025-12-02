@@ -1557,7 +1557,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         if (CharSequenceUtil.isNotBlank(dto.getPoFollowerId())) {
             FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(dto.getPoFollowerId());
             if (ObjectUtil.isEmpty(findUserDTO)) {
-                throw new ServiceException(ApiError.ERROR_USER_NOT_FOUND);
+                throw new ServiceException(ApiError.ERROR_USER_NOT_FOUND, dto.getPoFollowerId());
             }
             entity.setPoFollowerId(dto.getPoFollowerId());
             content = CharSequenceUtil.format("采购跟单员更新为【{}】",  findUserDTO.getUserName());

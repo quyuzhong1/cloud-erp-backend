@@ -24,6 +24,7 @@ import com.common.core.enums.LogActionEnum;
 import com.common.core.enums.LogStatusEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.IpUtils;
+import com.common.core.utils.MessageUtils;
 import com.erp.model.sys.dto.SysLogRecordDTO;
 import com.erp.model.sys.dto.SysLogRecordFieldDTO;
 import com.erp.model.sys.dto.SysLogRecordFieldListDTO;
@@ -987,7 +988,7 @@ public class SysLoggingAspect {
                     // 调用globalExceptionHandler失败：全局异常解析失败
                     ApiResult<?> result = new ApiResult<>();
                     result.setCode(ApiError.GLOBAL_EXCEPTION_HANDLER_METHOD_ERROR.getCode());
-                    result.setMsg(StrUtil.format(ApiError.GLOBAL_EXCEPTION_HANDLER_METHOD_ERROR.getMsg(), e.getMessage()));
+                    result.setMsg(MessageUtils.getMessage(ApiError.GLOBAL_EXCEPTION_HANDLER_METHOD_ERROR, e.getMessage()));
                     return result;
                 }
             }
@@ -995,7 +996,7 @@ public class SysLoggingAspect {
         // 找不到globalExceptionHandler异常, 默认提示未知异常
         ApiResult<?> result = new ApiResult<>();
         result.setCode(ApiError.ERROR_SYS_UNKNOWN.getCode());
-        result.setMsg(StrUtil.format(ApiError.ERROR_SYS_UNKNOWN.getMsg(), JSONUtil.toJsonStr(obj)));
+        result.setMsg(MessageUtils.getMessage(ApiError.ERROR_SYS_UNKNOWN, JSONUtil.toJsonStr(obj)));
         return result;
     }
 

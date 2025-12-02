@@ -177,7 +177,7 @@ public class ProductFieldServiceImpl extends ServiceImpl<ProductFieldMapper, Pro
     public void checkFieldName(String id, String name) {
         List<String> fieldNames = getFieldNames(id);
         if (CollectionUtils.isNotEmpty(fieldNames) && fieldNames.contains(name)) {
-            throw new ServiceException(ApiError.ERROR_PLM_FIELD_NAME_EXISTS);
+            throw new ServiceException(ApiError.ERROR_PLM_FIELD_NAME_EXISTS, name);
         }
     }
 

@@ -9,6 +9,7 @@ import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
+import com.common.core.utils.MessageUtils;
 import com.erp.model.scm.dto.PurchaseChangeDetailDTO;
 import com.erp.model.scm.dto.PurchasePriceDTO;
 import com.erp.model.scm.entity.PurchaseChangeDetailEntity;
@@ -299,10 +300,10 @@ public class PurchaseChangeDetailServiceImpl extends SuperServiceImpl<PurchaseCh
                 }
             } else {
                 if (isNotBlank(receiveMsg)) {
-                    throw new ServiceException(ApiError.DEFAULT.getCode(),receiveMsg);
+                    throw new ServiceException(MessageUtils.getMessage(ApiError.DEFAULT),receiveMsg);
                 }
                 if (isNotBlank(stockInMsg)) {
-                    throw new ServiceException(ApiError.DEFAULT.getMsg(),stockInMsg);
+                    throw new ServiceException(MessageUtils.getMessage(ApiError.DEFAULT),stockInMsg);
                 }
             }
 

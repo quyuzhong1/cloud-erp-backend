@@ -32,10 +32,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.enums.CurrencyEnum;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.BeanMapperUtils;
-import com.common.core.utils.ExcelUtil;
-import com.common.core.utils.FieldValidUtil;
-import com.common.core.utils.MathUtil;
+import com.common.core.utils.*;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.mrp.dto.*;
 import com.erp.model.mrp.dto.excel.DeliverySuggestImportExcelDTO;
@@ -437,11 +434,11 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
         DeliverySuggestEntity old = Optional.ofNullable(super.getById(id)).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "补货计划"));
         Boolean isPush = isPushDeliveryPlan(id);
         if (isPush) {
-            return BatchResultDTO.fail(old.getId(),old.getCode(),ApiError.ERROR_SUGGEST_INVALID.getMsg());
+            return BatchResultDTO.fail(old.getId(),old.getCode(), MessageUtils.getMessage(ApiError.ERROR_SUGGEST_INVALID));
         }
 
         if (old.getInvalidStatus()) {
-            return BatchResultDTO.fail(old.getId(),old.getCode(),ApiError.ERROR_ALREADY_VOID_CANNOT_VOID_AGAIN.getMsg());
+            return BatchResultDTO.fail(old.getId(),old.getCode(),MessageUtils.getMessage(ApiError.ERROR_ALREADY_VOID_CANNOT_VOID_AGAIN));
         }
         //创建人
         LoginUser userInfo = UserContext.getDefaultLoginUser();

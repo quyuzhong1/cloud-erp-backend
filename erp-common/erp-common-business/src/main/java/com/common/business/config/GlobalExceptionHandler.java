@@ -152,7 +152,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MaxUploadSizeExceededException.class)
     public ApiResult<?> handleMaxUpload(MaxUploadSizeExceededException e) {
         log.error("[MaxUploadSizeExceededException]", e);
-        return buildResult(ApiError.ERROR_FILE_TOO_LARGE);
+        return buildResult(ApiError.ERROR_FILE_TOO_LARGE, e.getMaxUploadSize());
     }
 
     @ExceptionHandler(IllegalStateException.class)

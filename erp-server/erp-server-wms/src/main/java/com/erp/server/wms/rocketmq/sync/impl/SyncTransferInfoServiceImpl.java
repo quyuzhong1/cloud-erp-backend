@@ -127,7 +127,7 @@ public class SyncTransferInfoServiceImpl implements SyncTransferInfoService {
         //提交
         BatchResultDTO submit = transferInfoService.submit(entity, Boolean.FALSE);
         if (!submit.getSuccess()) {
-            throw new ServiceException(ApiError.ERROR_DOC_SUBMIT_FAILED);
+            throw new ServiceException(ApiError.ERROR_DOC_SUBMIT_FAILED, SourceTypeEnum.TRANSFER_INFO.getName());
         }
         TransferInfoEntity approveEntity = transferInfoService.getById(id);
         if (ObjUtil.isEmpty(approveEntity)) {

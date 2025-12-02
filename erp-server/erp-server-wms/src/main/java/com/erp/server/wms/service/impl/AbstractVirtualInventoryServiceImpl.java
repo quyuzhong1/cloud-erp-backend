@@ -9,6 +9,7 @@ import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
+import com.common.core.utils.MessageUtils;
 import com.common.core.utils.ValidatorUtil;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.wms.dto.VirtualTransFlowDTO;
@@ -241,7 +242,7 @@ public abstract class AbstractVirtualInventoryServiceImpl implements VirtualInve
         String inventoryStatusName = InventoryStatusEnum.getNameByCode(virtualTransFlowEntity.getDictInventoryStatus());
         //判断反审核回退库存是否足够
         if(ObjectUtil.isEmpty(virtualInventoryEntity) || (virtualInventoryEntity.getQty() + virtualTransFlowEntity.getQty() < 0 )) {
-            String errMsg = CharSequenceUtil.format(ApiError.ERROR_VIRTUAL_INVENTORY_INSUFFICIENT.getMsg(), virtualTransFlowEntity.getSkuNo(), virtualWarehouseEntity.getName(),warehouseEntity.getName(),inventoryStatusName,virtualInventoryEntity == null ? "无":virtualInventoryEntity.getQty(),virtualTransFlowEntity.getQty());
+            String errMsg = MessageUtils.getMessage(ApiError.ERROR_VIRTUAL_INVENTORY_INSUFFICIENT, virtualTransFlowEntity.getSkuNo(), virtualWarehouseEntity.getName(),warehouseEntity.getName(),inventoryStatusName,virtualInventoryEntity == null ? "无":virtualInventoryEntity.getQty(),virtualTransFlowEntity.getQty());
             log.error(errMsg);
             throw new ServiceException(ApiError.ERROR_VIRTUAL_INVENTORY_INSUFFICIENT.getCode(), errMsg);
         }
@@ -318,7 +319,7 @@ public abstract class AbstractVirtualInventoryServiceImpl implements VirtualInve
         String inventoryStatusName = Optional.of(inventoryStatusEnum).map(InventoryStatusEnum::getName).orElse("");
         // 仓库负库存是否允许
         if(ObjectUtil.isNotEmpty(found) &&  found.getQty() < waitOutQty ) {
-            String errMsg = CharSequenceUtil.format(ApiError.ERROR_VIRTUAL_INVENTORY_INSUFFICIENT.getMsg(), param.getSkuNo(),virtualWarehouseEntity.getName(), warehouseInfo.getName(), inventoryStatusName,found.getQty(),param.getQty());
+            String errMsg = MessageUtils.getMessage(ApiError.ERROR_VIRTUAL_INVENTORY_INSUFFICIENT, param.getSkuNo(),virtualWarehouseEntity.getName(), warehouseInfo.getName(), inventoryStatusName,found.getQty(),param.getQty());
             log.error(errMsg);
             throw new ServiceException(ApiError.ERROR_VIRTUAL_INVENTORY_INSUFFICIENT.getCode(), errMsg);
         }
@@ -416,7 +417,7 @@ public abstract class AbstractVirtualInventoryServiceImpl implements VirtualInve
         VirtualInventoryEntity inventory = virtualInventoryService.findVirtualInventoryStock(param.getVirtualWarehouseId(),param.getWarehouseId(),param.getSkuId(),status.getCode());
         String inventoryStatusName = status.getName();
         if(ObjectUtil.isEmpty(inventory) || inventory.getQty() < param.getQty()) {
-            throw new ServiceException(ApiError.ERROR_VIRTUAL_INVENTORY_INSUFFICIENT.getCode(), CharSequenceUtil.format(ApiError.ERROR_VIRTUAL_INVENTORY_INSUFFICIENT.getMsg(), param.getSkuNo(), virtualWarehouseEntity.getName(), warehouseInfo.getName(), inventoryStatusName,ObjectUtil.isEmpty(inventory) ? MathUtil.ZERO : inventory.getQty(),param.getQty()));
+            throw new ServiceException(ApiError.ERROR_VIRTUAL_INVENTORY_INSUFFICIENT.getCode(), MessageUtils.getMessage(ApiError.ERROR_VIRTUAL_INVENTORY_INSUFFICIENT, param.getSkuNo(), virtualWarehouseEntity.getName(), warehouseInfo.getName(), inventoryStatusName,ObjectUtil.isEmpty(inventory) ? MathUtil.ZERO : inventory.getQty(),param.getQty()));
         }
     }
 

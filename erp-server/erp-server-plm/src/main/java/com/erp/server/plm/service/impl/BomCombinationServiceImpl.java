@@ -569,7 +569,7 @@ public class BomCombinationServiceImpl implements BomCombinationService {
         //提交
         BatchResultDTO submit = productDetailService.submit(id,Boolean.FALSE);
         if (!submit.getSuccess()) {
-            throw new ServiceException(ApiError.ERROR_DOC_SUBMIT_FAILED);
+            throw new ServiceException(ApiError.ERROR_DOC_SUBMIT_FAILED, SourceTypeEnum.LISTING_INFO.getName());
         }
         //审核
         ApproveOneDTO dto = new ApproveOneDTO();
@@ -717,7 +717,7 @@ public class BomCombinationServiceImpl implements BomCombinationService {
         //提交
         BatchResultDTO resultDTO = bomInfoService.submitAudit(bomId,Boolean.FALSE);
         if (!resultDTO.getSuccess()) {
-            throw new ServiceException(ApiError.ERROR_DOC_SUBMIT_FAILED);
+            throw new ServiceException(ApiError.ERROR_DOC_SUBMIT_FAILED, SourceTypeEnum.PRODUCT_BOM_INFO.getName());
         }
         ApproveOneDTO dto = new ApproveOneDTO();
         dto.setId(bomId);

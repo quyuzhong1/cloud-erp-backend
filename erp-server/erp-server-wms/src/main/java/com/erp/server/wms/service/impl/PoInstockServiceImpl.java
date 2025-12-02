@@ -1347,7 +1347,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         if (CharSequenceUtil.isNotBlank(stockInUserId)) {
             FindUserDTO userDTO = sysUserFeign.getUserByUserId(stockInUserId);
             if (ObjectUtils.isEmpty(userDTO)) {
-                throw new ServiceException(ApiError.ERROR_USER_NOT_FOUND);
+                throw new ServiceException(ApiError.ERROR_USER_NOT_FOUND, stockInUserId);
             }
             entity.setStockInUserName(userDTO.getUserName());
         }

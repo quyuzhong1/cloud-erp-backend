@@ -1044,7 +1044,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         //获取用户信息
         FindUserDTO userDTO = sysUserFeign.getUserByUserId(userInfo.getUid());
         if (ObjectUtil.isEmpty(userDTO)) {
-            throw new ServiceException(ApiError.ERROR_USER_NOT_FOUND);
+            throw new ServiceException(ApiError.ERROR_USER_NOT_FOUND, userInfo.getUid());
         }
         //获取用户部门
         SysDepartmentUserNumberDTO deptByUserId = sysUserFeign.getDeptByUserId(userInfo.getUid());

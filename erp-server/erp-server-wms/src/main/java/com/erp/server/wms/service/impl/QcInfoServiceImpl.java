@@ -759,7 +759,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         if (CharSequenceUtil.isNotBlank(qcUserId)) {
             FindUserDTO userDTO = sysUserFeign.getUserByUserId(qcUserId);
             if (ObjectUtils.isEmpty(userDTO)) {
-                throw new ServiceException(ApiError.ERROR_USER_NOT_FOUND);
+                throw new ServiceException(ApiError.ERROR_USER_NOT_FOUND, qcUserId);
             }
             entity.setQcUserName(userDTO.getUserName());
         }
