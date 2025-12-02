@@ -4087,7 +4087,17 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         }
         List<String> skuIds = soDetailEntityList.stream().map(SoDetailEntity::getSkuId).distinct().collect(Collectors.toList());
         List<SkuVO> skuVOS = plmTaskFeign.listSkuProductByIds(skuIds);
+        List<String> deliverySkuIds = soDetailEntityList.stream().map(SoDetailEntity::getDeliverySkuId).distinct().collect(Collectors.toList());
+        //库存sku映射查询
+        ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
+        paramDTO.setWarehouseIdList(Collections.singletonList(warehouseId));
+        paramDTO.setType(RuleTypeEnum.WAREHOUSE.getCode());
+        paramDTO.setSkuIdList(deliverySkuIds);
+        List<ListingInfoWithSkuMappingDTO> listDto = skuMappingService.findListDto(paramDTO);
         B2bThirdDeliveryDTO.ViewDTO viewDTO = SoInfoConverter.INSTANCE.toB2bThirdDeliveryViewDTO(soInfoEntity,soDetailEntityList);
+        if (CharSequenceUtil.isBlank(viewDTO.getDeliveryWarehouseName())){
+            viewDTO.setDeliveryWarehouseName(updateDTOList.get(0).getName());
+        }
         viewDTO.getDetailList().forEach(e -> {
             skuVOS.stream().filter(f -> f.getSkuId().equals(e.getSkuId())).findFirst().ifPresent(p ->{
                 e.setProductName(p.getSkuName());
@@ -4097,6 +4107,9 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             }else {
                 e.setBoxQty(MathUtil.ZERO);
             }
+            listDto.stream().filter(f -> f.getProductSkuId().equals(e.getDeliverySkuId())).findFirst().ifPresent(p ->{
+                e.setWarehousePlatformSku(p.getPlatformSkuNo());
+            });
         });
         return viewDTO;
     }

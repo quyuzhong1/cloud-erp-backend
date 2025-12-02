@@ -1144,7 +1144,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             if (finalDeliverQty >= qty) {
                 item.setDeliveryStatus(DeliveryStatusEnum.COMPLETE_SHIPMENT.getCode());
             }
-            if (finalDeliverQty < qty && finalDeliverQty >= 0) {
+            if (finalDeliverQty < qty && finalDeliverQty > 0) {
                 item.setDeliveryStatus(DeliveryStatusEnum.PARTIAL_SHIPMENT.getCode());
             }
             if (finalDeliverQty <= 0) {

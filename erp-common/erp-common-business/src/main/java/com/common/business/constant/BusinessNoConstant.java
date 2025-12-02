@@ -219,6 +219,7 @@ public interface BusinessNoConstant {
     String YPZY="YPZY";
     //资质字典
     String DC="DC";
+    String SFFH="SFFH";
 
 
 }

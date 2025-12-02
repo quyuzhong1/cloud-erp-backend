@@ -51,6 +51,58 @@
         is_deleted,
         code, status, so_id, so_code, delivery_time, warehouse_org_id, warehouse_org_name, platform_order_code, delivery_warehouse_id, delivery_warehouse_name, warehouse_operation_type, operation_desc, remark, logistics_channel_id, logistics_channel_name, delivery_method, track_no, receiver_name, tel_number, country_name, province, city, postal_code, is_api_delivery
     </sql>
+    <select id="tabList" resultType="com.erp.model.wms.dto.B2bThirdDeliveryDTO$TabListDTO">
+        SELECT
+            status AS tabFlag,
+            COUNT ( status ) AS COUNT
+        FROM
+            b2b_third_delivery
+        WHERE
+            is_deleted = FALSE
+        GROUP BY
+            status
+    </select>
+    <select id="paging" resultType="com.erp.model.wms.dto.B2bThirdDeliveryDTO$PagingViewDTO">
+        SELECT
+            btd.id,
+            btd.code as code,
+            btd.so_id as soId,
+            btd.so_code as soCode,
+            btd.receiver_name as receiverName,
+            btd.warehouse_org_id,
+            btd.warehouse_org_name,
+            btd.platform_order_code,
+            btd.status as status,
+            btd.delivery_warehouse_id,
+            btd.delivery_warehouse_name as deliveryWarehouseName,
+            btd.delivery_method as deliveryMethod,
+            btd.warehouse_operation_type as warehouseOperationType,
+            btd.delivery_time,
+            btd.create_time,
+            btd.create_user_name as createUserName,
+            btd.error_message as errorMessage,
+            btd.push_type as pushType,
+            btd.is_api_delivery as isApiDelivery,
+            btdd.id as deatilId,
+            btdd.sku_id as skuId,
+            btdd.sku_no,
+            btdd.delivery_qty,
+            btdd.delivery_sku_id,
+            btdd.delivery_sku_no,
+            btdd.warehouse_platform_sku,
+            btdd.per_box_qty,
+            btdd.box_qty
+        FROM b2b_third_delivery btd
+                 LEFT JOIN b2b_third_delivery_detail btdd ON btd.id = btdd.main_id AND btdd.is_deleted=false
+        WHERE ${params.sqlMap.default} and btd.is_deleted=false
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        btd.trade_time desc
+    </select>
 
 
 </mapper>

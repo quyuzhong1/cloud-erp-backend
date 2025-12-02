@@ -111,6 +111,11 @@ public abstract class AbstractThirdWarehouseHandler extends BaseController imple
         }
         return handleAndRemoveContext(() -> createOutboundBill(createOutboundReq), authId,SourceTypeEnum.THIRD_WAREHOUSE_CREATE_OUTBOUND_BILL,createOutboundReq.getReferenceNo());
     }
+    @Override
+    public ApiResult<String> createFbaOutboundBill(ThirdWarehouseCreateFbaOutboundReq createOutboundReq, String authId) {
+        log.error("createFbaOutboundBill authId:{} request:{}", authId, JSONUtil.toJsonStr(createOutboundReq));
+        return handleAndRemoveContext(() -> createFbaOutboundBill(createOutboundReq), authId,SourceTypeEnum.THIRD_WAREHOUSE_CREATE_FBA_OUTBOUND_BILL,createOutboundReq.getReferenceNo());
+    }
 
     @Override
     public ApiResult<String> cancelOutboundBill(ThirdWarehouseCancelOutboundReq cancelOutboundReq, String authId) {
@@ -118,8 +123,17 @@ public abstract class AbstractThirdWarehouseHandler extends BaseController imple
     }
 
     @Override
+    public ApiResult<String> cancelFbaOutboundBill(ThirdWarehouseCancelFbaOutboundReq cancelOutboundReq, String authId) {
+        return handleAndRemoveContext(() -> cancelFbaOutboundBill(cancelOutboundReq), authId,SourceTypeEnum.THIRD_WAREHOUSE_CANCEL_OUTBOUND_BILL,cancelOutboundReq.getOrderCode());
+    }
+
+    @Override
     public ApiResult<String> queryOutboundBill(ThirdWarehouseQueryOutboundReq queryOutboundReq, String authId) {
         return handleAndRemoveContext(() -> queryOutboundBill(queryOutboundReq), authId,SourceTypeEnum.THIRD_WAREHOUSE_QUERY_OUTBOUND_BILL,queryOutboundReq.getErpOrderCode());
+    }
+    @Override
+    public ApiResult<List<ThirdWarehouseQueryFbaOutboundResponse>> queryFbaOutboundBill(ThirdWarehouseQueryFbaOutboundReq queryOutboundReq, String authId) {
+        return handleAndRemoveContext(() -> queryFbaOutboundBill(queryOutboundReq), authId,SourceTypeEnum.THIRD_WAREHOUSE_QUERY_OUTBOUND_BILL,String.join(",", queryOutboundReq.getErpOrderCodeList()));
     }
 
     @Override
@@ -169,7 +183,9 @@ public abstract class AbstractThirdWarehouseHandler extends BaseController imple
 
 
     protected abstract ApiResult<String> cancelOutboundBill(@Valid ThirdWarehouseCancelOutboundReq cancelOutboundReq);
+    protected abstract ApiResult<String> cancelFbaOutboundBill(@Valid ThirdWarehouseCancelFbaOutboundReq cancelOutboundReq);
     protected abstract ApiResult<String> queryOutboundBill(@Valid ThirdWarehouseQueryOutboundReq queryOutboundReq);
+    protected abstract ApiResult<List<ThirdWarehouseQueryFbaOutboundResponse>> queryFbaOutboundBill(@Valid ThirdWarehouseQueryFbaOutboundReq req);
 
     protected abstract Boolean warehouseAuthorize(OverseasProviderDTO.AuthorizeParamDTO dto);
 

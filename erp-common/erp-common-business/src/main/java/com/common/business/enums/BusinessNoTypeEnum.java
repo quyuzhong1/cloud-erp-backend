@@ -135,6 +135,7 @@ public enum BusinessNoTypeEnum {
     CODE_YPZY(103, "YPZY","样品转移单", BusinessNoConstant.YPZY),
 
     CODE_DC(114 ,"DC","资质字典表",BusinessNoConstant.DC),
+    CODE_SFFH(115 ,"SFFH","B2B三方发货单",BusinessNoConstant.SFFH),
 
     ;
 

@@ -16,24 +16,9 @@ import java.util.List;
  */
 public interface B2bThirdDeliveryDetailService extends SuperService<B2bThirdDeliveryDetailEntity> {
 
-    /**
-    * 新增
-    * @author zdy
-    * @date: 2025-11-26
-    * @param dto
-    * @return
-    */
-    BaseResultDTO.AddDTO add(B2bThirdDeliveryDetailDTO.AddDTO dto);
-
-    /**
-    * 修改
-    * @author zdy
-    * @date: 2025-11-26
-    * @param dto
-    * @return
-    */
-    Boolean update(B2bThirdDeliveryDetailDTO.UpdateDTO dto);
 
 
     List<B2bThirdDeliveryDetailEntity> listByMainIds(List<String> ids);
+
+    List<B2bThirdDeliveryDetailEntity> batchAdd(String id, List<B2bThirdDeliveryDetailDTO.AddDTO> detailList);
 }

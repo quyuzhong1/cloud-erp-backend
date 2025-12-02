@@ -175,6 +175,7 @@ public enum ModuleTypeEnum {
     SO_B2C_REFUND("146", "售后订单"),
 
     DELIVERY_BOX_RULE("156", "发货箱规"),
+    B2B_THIRD_DELIVERY("157", "B2B三方发货单"),
 
     ;
 

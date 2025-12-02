@@ -2,9 +2,11 @@ package com.erp.model.wms.dto;
 
 import java.time.LocalDateTime;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.AttachDTO;
 import com.common.business.dto.base.SortDTO;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
@@ -194,7 +196,7 @@ public class B2bThirdDeliveryDTO implements Serializable {
         /**
          * 附件
          */
-        private List<AttachDTO> attachList;
+        private List<WmsAttachmentDTO.UpdateDTO> attachList;
     }
 
     /**
@@ -229,7 +231,7 @@ public class B2bThirdDeliveryDTO implements Serializable {
         /**
          * 明细
          */
-        private List<B2bThirdDeliveryDetailDTO.UpdateDTO> detailList;
+        private List<B2bThirdDeliveryDetailDTO.AddDTO> detailList;
         /**
          * 附件
          */
@@ -326,7 +328,7 @@ public class B2bThirdDeliveryDTO implements Serializable {
         /**
         * 渠道id
         */
-        @NotBlank(message = "渠道id不能为空")
+//        @NotBlank(message = "渠道id不能为空")
         @Size(max = 19,message = "渠道id最大长度不能超过19位")
         private String logisticsChannelId;
 
@@ -372,6 +374,7 @@ public class B2bThirdDeliveryDTO implements Serializable {
 //        @NotBlank(message = "收货国家不能为空")
         @Size(max = 255,message = "收货国家最大长度不能超过255位")
         private String countryName;
+        private String countryId;
 
         /**
         * 省/州
@@ -387,6 +390,10 @@ public class B2bThirdDeliveryDTO implements Serializable {
         * 邮编
         */
         private String postalCode;
+        /**
+         * 详细地址
+         */
+        private String receiveAddress;
 
         /**
         * 是否API发货
@@ -401,7 +408,9 @@ public class B2bThirdDeliveryDTO implements Serializable {
      * tab
      */
     @Data
+    @Builder
     @NoArgsConstructor
+    @AllArgsConstructor
     public static class TabListDTO {
 
         private String tabFlag;
@@ -423,20 +432,26 @@ public class B2bThirdDeliveryDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class PagingViewDTO {
+
         /**
          * 主键id
          */
         private String  id;
 
         /**
-         * 单据编号
+         * 单据编号 [可排序]
          */
         private String code;
 
         /**
-         * 单据状态
+         * 单据状态[可排序]
+         * ThirdDeliveryStatusEnum
          */
         private String status;
+        /**
+         * 单据状态名称
+         */
+        private String statusName;
 
         /**
          * 销售订单id
@@ -447,6 +462,10 @@ public class B2bThirdDeliveryDTO implements Serializable {
          * 销售订单编码
          */
         private String soCode;
+        /**
+         * 客户
+         */
+        private String receiverName;
 
         /**
          * 发货时间
@@ -474,80 +493,100 @@ public class B2bThirdDeliveryDTO implements Serializable {
         private String deliveryWarehouseId;
 
         /**
-         * 发货仓库名称
+         * 发货仓库名称[可排序]
          */
         private String deliveryWarehouseName;
 
         /**
-         * 仓库操作类型
+         * 仓库操作类型[可排序]
+         * WarehouseOperationTypeEnum
          */
         private String warehouseOperationType;
+        private String warehouseOperationTypeName;
+
 
         /**
-         * 仓库操作描述
-         */
-        private String operationDesc;
-
-        /**
-         * 备注
-         */
-        private String remark;
-
-        /**
-         * 渠道id
-         */
-        private String logisticsChannelId;
-
-        /**
-         * 渠道名称
-         */
-        private String logisticsChannelName;
-
-        /**
-         * 交货方式
+         * 交货方式[可排序]
          * DeliveryMethodEnum
          */
         private String deliveryMethod;
-
         /**
-         * 物流跟踪号
+         * 交货方式名称
          */
-        private String trackNo;
-
-        /**
-         * 收货人
-         */
-        private String receiverName;
-
-        /**
-         * 联系人电话
-         */
-        private String telNumber;
-
-        /**
-         * 收货国家
-         */
-        private String countryName;
-
-        /**
-         * 省/州
-         */
-        private String province;
-
-        /**
-         * 城市
-         */
-        private String city;
-
-        /**
-         * 邮编
-         */
-        private String postalCode;
+        private String deliveryMethodName;
 
         /**
          * 是否API发货
          */
         private Boolean isApiDelivery;
+        /**
+         * 产品明细
+         */
+        /**
+         * 明细id
+         */
+        private String  detailId;
+
+        /**
+         * 产品id
+         */
+        private String skuId;
+
+        /**
+         * 产品编号
+         */
+        private String skuNo;
+
+        /**
+         * 发货数量
+         */
+        private Integer deliveryQty;
+
+        /**
+         * 单箱数量
+         */
+        private Integer perBoxQty;
+
+        /**
+         * 发货sku
+         */
+        private String deliverySkuNo;
+
+        /**
+         * 发货skuid
+         */
+        private String deliverySkuId;
+
+        /**
+         * 三方仓SKU
+         */
+        private String warehousePlatformSku;
+
+        /**
+         * 发货箱数
+         */
+        private Integer boxQty;
+
+        /**
+         * 异常原因[可排序]
+         */
+
+        private String errorMessage;
+        /**
+         * 推送类型
+         * B2BDeliveryPushTypeEnum
+         */
+        private String pushType;
+
+        private String pushTypeName;
+        /**
+         * 创建人
+         */
+        private String createUserName;
+        /**
+         * 创建时间
+         */
+        private LocalDateTime createTime;
     }
 
     /**

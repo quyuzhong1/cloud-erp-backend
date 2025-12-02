@@ -208,6 +208,8 @@ public class ExportWmsFeignController {
     private SampleInitialLedgerService sampleInitialLedgerService;
     @Resource
     private SampleTransferInfoService sampleTransferInfoService;
+    @Resource
+    private B2bThirdDeliveryService b2bThirdDeliveryService;
 
     @PostMapping("/b2cDelivery")
     @DataPermission(operationType = DataAttributeEnum.LIST,
@@ -1235,5 +1237,12 @@ public class ExportWmsFeignController {
     public PagingVO<SampleTransferInfoDTO.ListDTO> getSampleTransferInfoPageData(@RequestBody PagingDTO<SampleTransferInfoDTO.ExportDTO> dto) {
         return sampleTransferInfoService.getSampleTransferInfoPageData(dto);
     }
-
+    /**
+     * 导出B2B三方发货单
+     */
+    @PostMapping("/exportB2bThirdDelivery")
+    @WebAdvanceQuery(handler = B2bThirdWarehouseDeliveryQueryHandler.class)
+    public PagingVO<B2bThirdDeliveryDTO.PagingViewDTO> exportB2bThirdDelivery(PagingDTO<B2bThirdDeliveryDTO.PagingParamDTO> dto){
+        return b2bThirdDeliveryService.paging(dto);
+    }
 }

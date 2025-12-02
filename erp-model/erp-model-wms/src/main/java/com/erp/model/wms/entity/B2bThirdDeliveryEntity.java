@@ -77,6 +77,11 @@ public class B2bThirdDeliveryEntity extends BaseEntity<B2bThirdDeliveryEntity> {
     @TableField("delivery_warehouse_name")
     private String deliveryWarehouseName;
     /**
+    * 三方仓代码
+    */
+    @TableField("third_warehouse_code")
+    private String thirdWarehouseCode;
+    /**
     * 虚拟仓库id
     */
     @TableField("virtual_warehouse_id")
@@ -107,6 +112,11 @@ public class B2bThirdDeliveryEntity extends BaseEntity<B2bThirdDeliveryEntity> {
     */
     @TableField("logistics_channel_name")
     private String logisticsChannelName;
+    /**
+     * 渠道编码
+     */
+    @TableField("logistics_channel_code")
+    private String logisticsChannelCode;
     /**
     * 交货方式
      * DeliveryMethodEnum
@@ -164,6 +174,18 @@ public class B2bThirdDeliveryEntity extends BaseEntity<B2bThirdDeliveryEntity> {
     */
     @TableField("is_api_delivery")
     private Boolean isApiDelivery;
+
+    /**
+     * 异常原因
+     */
+    @TableField("error_message")
+    private String errorMessage;
+    /**
+     * 推送类型
+     * B2BDeliveryPushTypeEnum
+     */
+    @TableField("push_type")
+    private String pushType;
 
 
     public static final String CODE = "code";

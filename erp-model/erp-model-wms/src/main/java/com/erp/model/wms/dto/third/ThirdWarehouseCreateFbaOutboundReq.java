@@ -17,216 +17,112 @@ import java.util.List;
 @NoArgsConstructor
 public class ThirdWarehouseCreateFbaOutboundReq extends ThirdWarehouseAuth {
 
+    private String sourceId;
+    private String sourceCode;
+    private String soCode;
     /**
-     * 订单参考号
+     * 客户单号，唯一，取ERP的B2B三方发货单单号
      */
     private String referenceNo;
     /**
-     * 平台
+     * 仓库，取ERP发货通知单的发货仓库映射的三方仓编码
      */
-    private String platform;
+    private String thirdWarehouseCode;
+    /**
+     * 收货国家，取发货通知的客户的收货国家二字码
+     */
+    private String receiverCountryCode;
+    /**
+     * 派送方式，取发货通知下推时选择的派送方式
+     * EXPRESS:渠道订单
+     * SELF:自提订单
+     * TRUCK:卡车订单
+     * TRUCK_SELF:卡车自提
+     */
+    private String deliveryType;
+    /**
+     * 产品代码(派送方式为【渠道订单】时必填)
+     * 取发货通知下推时选择的物流渠道编码
+     */
+    private String channelCode;
 
     /**
-     * 平台订单号
+     * 平台发货号，默认N/A
      */
-    private String platformCode;
+    private String platformShipNo;
 
     /**
-     * erp销售订单号
+     * 货件追踪编码，默认N/A
      */
-    private String soCode;
+    private String platformRefNo;
 
     /**
-     * 店铺id
+     * 文件URL地址(仅支持jpg、png、gif、zip、pdf的文件)
      */
-    private String shopId;
+    private String fileUrl;
 
     /**
-     * 尾程服务商
+     * 是否为FBA地址 1：是 0：否
+     * 默认0
      */
-    private String lastMileCarrier;
+    private Integer fbaAddressFlag = 0;
 
     /**
-     * 店铺名称
+     * 取发货通知备注
      */
-    private String shopName;
-    /**
-     * 货主编码
-     */
-    private String ownerCode;
-    /**
-     * 配送方式
-     */
-    private String shippingMethod;
+    private String remark;
 
     /**
-     * 配送方式名称
+     * 收件地址(fbaAddressFlag为1时必填)
      */
-    private String shippingMethodName;
+    private String shortName;
 
     /**
-     * 配送方式Id
+     * 收件人，取发货通知的收件人姓名
      */
-    private String shippingMethodId;
+    private String receiverName;
     /**
-     * 配送仓库
+     * 收件人电话，取发货通知的联系电话
      */
-    private String warehouseCode;
-
+    private String telNumber;
     /**
-     * 是否审核 默认1
+     * 收件人电话拓展，默认为空
      */
-    private Integer verify;
-
-    /**
-     * 是否线上订单
-     */
-    private boolean onlineFlag;
+    private String telNumberExt;
 
     /**
-     * 面单base64数据
+     * 收件人省州，取发货通知的省/州
      */
-    private String labelData;
+    private String province;
 
     /**
-     * 发票base64数据
+     * 收件人城市，取发货通知的城市
      */
-    private String invoiceData;
-
+    private String city;
     /**
-     * 线上订单物流单号
+     * 收件人地址1，取发货通知的详细地址
      */
-    private String trackingNo;
-
+    private String address1;
     /**
-     * 线上面单url
+     * 收件人地址2，
      */
-    private String labelUrl;
-
-    //配送商
-    private String carrierType;
-
-    //收件人信息
-    private ReceiverInfo receiverInfo;
-
+    private String address2;
     /**
-     * EORI税号
+     * 收件人地址3，
      */
-    private String eoriTaxNo;
-
-    @Data
-    @AllArgsConstructor
-    @NoArgsConstructor
-    @Builder
-    public static class ReceiverInfo implements ReceiverDTO {
-        /**
-         * 买家姓名
-         */
-        private String buyerName;
-        /**
-         * 买家电话
-         */
-        private String buyerNumber;
-        /**
-         * 收件人姓名
-         */
-        private String name;
-
-        /**
-         * 收件人联系方式
-         */
-        private String phone;
-
-        /**
-         * 收件人邮箱
-         */
-        private String email;
-
-        /**
-         * 收件人国家
-         */
-        private String countryCode;
-
-        /**
-         * 省
-         */
-        private String province;
-
-        /**
-         * 城市
-         */
-        private String city;
-
-        /**
-         * 区域
-         */
-        private String district;
-
-        /**
-         * 邮编
-         */
-        private String zipcode;
-
-        /**
-         * 地址1
-         */
-        private String address1;
-
-        /**
-         * 地址2
-         */
-        private String address2;
-
-        /**
-         * 地址3
-         */
-        private String address3;
-
-        /**
-         * 收件人税号
-         */
-        private String taxNumber;
-
-        @Override
-        public String getAddressFirst() {
-            return address1;
-        }
-
-        @Override
-        public void setAddressFirst(String addressFirst) {
-            this.address1 = addressFirst;
-        }
-
-        @Override
-        public String getTelNumber() {
-            return phone;
-        }
-
-        @Override
-        public void setTelNumber(String telNumber) {
-            this.phone = telNumber;
-        }
-
-        @Override
-        public String getZipCode() {
-            return zipcode;
-        }
-
-        @Override
-        public void setZipCode(String zipCode) {
-            this.zipcode = zipCode;
-        }
-
-        @Override
-        public String getContact() {
-            return name;
-        }
-
-        @Override
-        public void setContact(String contact) {
-            this.name = contact;
-        }
-    }
+    private String address3;
+    /**
+     * 收件人邮编，取发货通知的邮编
+     */
+    private String postalCode;
+    /**
+     * 收件人门牌号
+     */
+    private String houseNumber;
+    /**
+     * 收件人邮箱
+     */
+    private String email;
 
     /**
      * 入库单明细
@@ -238,58 +134,55 @@ public class ThirdWarehouseCreateFbaOutboundReq extends ThirdWarehouseAuth {
     @NoArgsConstructor
     @Builder
     public static class Item {
-
-        /**
-         * 海外仓产品SKU
-         */
-        private String productSku;
-
-        /**
-         * 海外仓产品SKU id
-         */
-        private String productSkuId;
-
-        /**
-         * 数量
-         */
-        private Integer quantity;
+        private String id;
 
         private String skuId;
-
         private String skuNo;
-
-        private String sourceSkuNo;
-
-        private String sourceSkuId;
-
-        private String platformDetailId;
-        private String detailId;
         /**
-         * 海关编码
+         * 发货sku
          */
-        private String hsCode;
+        private String deliverySkuNo;
 
-        public Item(String productSku, Integer quantity,String hsCode,String productSkuId) {
-            this.productSku = productSku;
-            this.productSkuId = productSkuId;
-            this.quantity = quantity;
-            this.hsCode = hsCode;
-        }
+        /**
+         * 发货skuid
+         */
+        private String deliverySkuId;
+        /**
+         * 客户商品编码，取发货通知的库存SKU
+         */
+        private String warehousePlatformSku;
+
+        /**
+         * 单箱数量
+         */
+        private Integer perBoxQty;
+        /**
+         * 发货箱数
+         */
+        private Integer boxQty;
+        /**
+         * 规格编号（ZXGG0001）
+         */
+        private String boxSpecNo;
     }
-
     /**
-     * 订单附件
+     * 指令信息
      */
-    private List<Attach> attach;
-
-    @Data
-    @AllArgsConstructor
-    @NoArgsConstructor
-    @Builder
-    public static class Attach {
-
-        private String fileType;
-
-        private Integer attachId;
-    }
+    /**
+     * 仓库操作类型
+     * WarehouseOperationTypeEnum
+     * 操作指令类型，取发货通知仓库操作类型
+     * NO_OPEN_RELABLE：不开箱换SKU标
+     * OPEN_RELABLE：开箱换SKU标
+     * PASTE_LABEL：贴板标
+     * PASTE_PACKAGE：贴箱唛
+     * OTHER：其他
+     */
+    private String warehouseOperationType;
+    /**
+     * 仓库操作描述
+     * 指令描述，例如需开箱换标，请填写：开箱换标，更换标签为：xx
+     * 取发货通知仓库操作描述
+     */
+    private String operationDesc;
 }

@@ -1100,6 +1100,7 @@ public enum ApiError implements Serializable {
     WAIT_HANDLE_HANDLE(99133,"待处理状态的要货单才能处理"),
     HANDLE_ING_FINISH(99134,"单号【{}】处理中状态的要货单才能完成"),
     NOT_FOUND_OVERSEAS_PROVIDE(99135,"未查询到服务商信息"),
+    NOT_FOUND_OVERSEAS_PROVIDE_WAREHOUSE(99135,"未查询到仓库关联三方仓信息"),
     OVERSEAS_PROVIDE_NOT_AUTH(99136,"海外仓服务商未授权"),
     PACKING_SKU_IS_NOT_NULL(99134,"箱规【{}】中sku不能为空"),
     PACKING_SKU_PACK_QTY_IS_NOT_NULL(99135,"箱规【{}】中sku【{}】未填写装箱数量"),
@@ -1114,7 +1115,8 @@ public enum ApiError implements Serializable {
     HANDLE_ING_OR_HANDLE_IS_PRINT_PICKING(99144,"处理中和已处理才能打印拣货单"),
     NOT_EXISTS_OVERSEAS_WAREHOUSE_INBOUND_NOT_APPROVE(99145,"没有找到海外仓入库单，请先下推海外仓入库单再审核"),
     DEST_WAREHOUSE_BINDING_PLATFORM_WAREHOUSE(99146,"目的仓未绑定第三方仓，请在【海外仓设置】绑定"),
-    OVERSEAS_PROVIDE_NOT_SERVICE(99147,"服务商服务未开发"),
+    OVERSEAS_PROVIDE_NOT_SERVICE(99147,"服务商【{}】服务未开发"),
+    FBA_OUTBOUND_BILL_CREATE_FAILED(99147,"B2B三方发货单创建失败：{}"),
     NOT_PACKING_NOT_GENERATE_INBOUND(99148,"装箱未完成，不能下推入库单"),
     WAREHOUSE_REPEAT_BINDING(99149,"仓库【{}】绑定了多个第三方仓，一个仓库只能绑定一个第三方仓"),
     GENERATE_INBOUND_NOT_DIS_APPROVE(99150,"已下推海外仓入库单【{}】不能反审核"),
@@ -1311,6 +1313,9 @@ public enum ApiError implements Serializable {
     ERROR_92247(92247,"存在有效下推单据【委外退料单{}】【采购退货单{}】,不支持反审"),
     ERROR_SO_DELIVERY_NOTICE_DETAIL_NOT_EXIST(92248,"销售通知单明细未找到"),
     ERROR_SO_DETAIL_NOT_EXIST(92248,"销售订单明细未找到"),
+    ERROR_THIRD_DELIVERY_INTERCEPT(92248,"只有待发货允许发货拦截"),
+
+
 
     ERROR_92248(92248,"中转规则自动产生的直接调拨单,不支持修改"),
     ERROR_92249(92249,"打印FNSKU标签失败"),

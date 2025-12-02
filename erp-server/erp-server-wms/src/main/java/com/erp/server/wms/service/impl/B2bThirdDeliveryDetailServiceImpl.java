@@ -2,7 +2,12 @@ package com.erp.server.wms.service.impl;
 
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
+import com.erp.model.oms.dto.SoDetailDTO;
+import com.erp.model.wms.entity.B2bThirdDeliveryEntity;
+import com.erp.rpc.oms.feign.SoInfoFeign;
+import com.erp.server.wms.convert.B2bThirdDeliveryConverter;
 import io.seata.spring.annotation.GlobalTransactional;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.dto.base.BaseResultDTO;
@@ -22,6 +27,9 @@ import com.erp.model.wms.dto.B2bThirdDeliveryDetailDTO;
 import java.util.*;
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
+
+import javax.annotation.Resource;
+
 /**
  * <p>
  * B2B三方发货单明细 服务实现类
@@ -35,59 +43,8 @@ import com.common.core.enums.ApiError;
 public class B2bThirdDeliveryDetailServiceImpl extends SuperServiceImpl<B2bThirdDeliveryDetailMapper, B2bThirdDeliveryDetailEntity> implements B2bThirdDeliveryDetailService {
     @Autowired
     private OperateLogService operateLogService;
-
-    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
-    @Transactional(rollbackFor = Exception.class)
-    @Override
-    public BaseResultDTO.AddDTO add(B2bThirdDeliveryDetailDTO.AddDTO addDTO) {
-        B2bThirdDeliveryDetailEntity b2bThirdDeliveryDetailEntity = new B2bThirdDeliveryDetailEntity();
-        BeanMapperUtils.copy(addDTO, b2bThirdDeliveryDetailEntity);
-
-        // 数据处理
-        handleData(b2bThirdDeliveryDetailEntity);
-
-        log.info("开始新增B2B三方发货单明细");
-        boolean save = super.save(b2bThirdDeliveryDetailEntity);
-        if(!save) {
-            throw new ServiceException("B2B三方发货单明细保存失败");
-        }
-
-        // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "B2B三方发货单明细" , b2bThirdDeliveryDetailEntity.getId());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, b2bThirdDeliveryDetailEntity.getId(), "新增操作");
-        // TODO 新增明细（如果有明细的话）
-
-        return new BaseResultDTO.AddDTO(b2bThirdDeliveryDetailEntity.getId(), b2bThirdDeliveryDetailEntity.getId());
-    }
-
-    /**
-    * 修改
-    */
-    @DistributeLocker(keyName = "addOrUpdateDTO.getId()")
-    @Transactional(rollbackFor = Exception.class)
-    @Override
-    public Boolean update(B2bThirdDeliveryDetailDTO.UpdateDTO addOrUpdateDTO) {
-        B2bThirdDeliveryDetailEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "B2B三方发货单明细"));
-        B2bThirdDeliveryDetailEntity b2bThirdDeliveryDetailEntity =  BeanMapperUtils.map(B2bThirdDeliveryDetailEntity.class, addOrUpdateDTO);
-
-        // 数据处理
-        handleData(b2bThirdDeliveryDetailEntity);
-        log.info("编辑 开始修改B2B三方发货单明细数据，id：【{}】", old.getId());
-        boolean save = super.updateById(b2bThirdDeliveryDetailEntity);
-        if(!save) {
-            throw new ServiceException("B2B三方发货单明细保存失败");
-        }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
-
-        // 记录主单操作日志
-            log.info("编辑 开始记录B2B三方发货单明细日志数据，id：【{}】", b2bThirdDeliveryDetailEntity.getId());
-            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), b2bThirdDeliveryDetailEntity.getId(), "B2B三方发货单明细");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLogByObj(old, b2bThirdDeliveryDetailEntity, null, b2bThirdDeliveryDetailEntity.getId(), msg);
-        return Boolean.TRUE;
-    }
+    @Resource
+    private SoInfoFeign soInfoFeign;
 
     @Override
     public List<B2bThirdDeliveryDetailEntity> listByMainIds(List<String> ids) {
@@ -95,6 +52,50 @@ public class B2bThirdDeliveryDetailServiceImpl extends SuperServiceImpl<B2bThird
             return Collections.emptyList();
         }
         return this.lambdaQuery().in(B2bThirdDeliveryDetailEntity::getMainId,ids).list();
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public List<B2bThirdDeliveryDetailEntity> batchAdd(String id, List<B2bThirdDeliveryDetailDTO.AddDTO> detailList) {
+        this.deleteByMainId(id);//直接移除明细记录（发货数量在创建失败/取消发货时已经退到订单那边，不用重复回退）
+        List<B2bThirdDeliveryDetailEntity> detailEntityList = B2bThirdDeliveryConverter.INSTANCE.toB2bThirdDeliveryDetail(detailList);
+        List<SoDetailDTO.UpdateDeliveryStatusDTO> paramList = new ArrayList<>(detailEntityList.size());
+        detailEntityList.forEach(e -> {
+            e.setMainId(id);
+            e.setBoxSpecNo(getBoxSpecNo(e.getSort()));
+            SoDetailDTO.UpdateDeliveryStatusDTO statusDTO = new SoDetailDTO.UpdateDeliveryStatusDTO();
+            statusDTO.setId(e.getSoDetailId());
+            statusDTO.setDeliveryQty(e.getDeliveryQty());
+            paramList.add(statusDTO);
+        });
+        //扣除已发货数量
+        soInfoFeign.updateDeliveryStatus(paramList);
+        this.saveBatch(detailEntityList);
+        return detailEntityList;
+    }
+
+    private void deleteByMainId(String id) {
+        if (CharSequenceUtil.isNotBlank(id)){
+            this.lambdaUpdate().eq(B2bThirdDeliveryDetailEntity::getMainId,id).remove();
+        }
+    }
+
+    private String getBoxSpecNo(Integer number) {
+        //ZXGG0001
+        String prefix = "ZXGG";
+        String formatStr;
+
+        if (number < 10) {
+            formatStr = "000" + number;  // 个位数：000X
+        } else if (number < 100) {
+            formatStr = "00" + number;   // 十位数：00XX
+        } else if (number < 1000) {
+            formatStr = "0" + number;    // 百位数：0XXX
+        } else {
+            formatStr = String.valueOf(number); // 千位数：XXXX
+        }
+
+        return prefix + formatStr;
     }
 
 

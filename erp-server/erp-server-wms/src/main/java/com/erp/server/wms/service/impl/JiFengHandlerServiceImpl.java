@@ -223,6 +223,12 @@ public class JiFengHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         }
         return success(ThirdWarehouseCancelResultEnum.INTERCEPTION_SUCCESSFUL.getCode());
     }
+
+    @Override
+    protected ApiResult<String> cancelFbaOutboundBill(ThirdWarehouseCancelFbaOutboundReq cancelOutboundReq) {
+        return null;
+    }
+
     @Override
     protected ApiResult<String> queryOutboundBill(@Valid ThirdWarehouseQueryOutboundReq queryOutboundReq){
         JiFengBaseResp<JiFengOutboundResp> outBound = jiFengService.getOutBound(ThirdWarehouseContext.getAuthMap(), queryOutboundReq.getErpOrderCode());
@@ -231,6 +237,12 @@ public class JiFengHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         }
         return Objects.nonNull(outBound.getData()) ? success(outBound.getData().getOrderNo()) : failure(outBound.getMessage());
     }
+
+    @Override
+    protected ApiResult<List<ThirdWarehouseQueryFbaOutboundResponse>> queryFbaOutboundBill(ThirdWarehouseQueryFbaOutboundReq req) {
+        return null;
+    }
+
     @Override
     protected Boolean warehouseAuthorize(OverseasProviderDTO.AuthorizeParamDTO dto) {
         Map<String, Object> authJson = dto.getAuthJson();

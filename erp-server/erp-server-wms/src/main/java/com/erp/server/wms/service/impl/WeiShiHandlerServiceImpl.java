@@ -228,6 +228,12 @@ public class WeiShiHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         }
         return success(ThirdWarehouseCancelResultEnum.INTERCEPTION_SUCCESSFUL.getCode());
     }
+
+    @Override
+    protected ApiResult<String> cancelFbaOutboundBill(ThirdWarehouseCancelFbaOutboundReq cancelOutboundReq) {
+        return failure("ERP功能暂不支持");
+    }
+
     @Override
     protected ApiResult<String> queryOutboundBill(@Valid ThirdWarehouseQueryOutboundReq queryOutboundReq){
         WeiShiGetOutboundRequest weiShiGetOutboundRequest = new WeiShiGetOutboundRequest();
@@ -242,6 +248,12 @@ public class WeiShiHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         }
         return success(resp.getData().getOrderNo());
     }
+
+    @Override
+    protected ApiResult<List<ThirdWarehouseQueryFbaOutboundResponse>> queryFbaOutboundBill(ThirdWarehouseQueryFbaOutboundReq req) {
+        return failure("ERP功能暂不支持");
+    }
+
     @Override
     protected Boolean warehouseAuthorize(OverseasProviderDTO.AuthorizeParamDTO dto) {
         Map<String, Object> authJson = dto.getAuthJson();

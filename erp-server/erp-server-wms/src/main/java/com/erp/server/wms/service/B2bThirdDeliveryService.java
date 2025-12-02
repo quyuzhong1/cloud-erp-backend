@@ -43,4 +43,24 @@ public interface B2bThirdDeliveryService extends SuperService<B2bThirdDeliveryEn
     void export(B2bThirdDeliveryDTO.PagingParamDTO dto);
 
     B2bThirdDeliveryDTO.ViewDTO view(String id, String soId);
+
+    /**
+     * 更新单据状态
+     *
+     * @param id
+     * @param status
+     * @param errorMsg
+     * @param platformOrderCode 三方仓订单号
+     * @param remark
+     * @param trackNo
+     */
+    void updateStatus(String id, String status, String errorMsg, String platformOrderCode, String remark, String trackNo);
+
+    /**
+     * 发货拦截
+     * @param id
+     * @param remark
+     * @return
+     */
+    BatchResultDTO deliveryIntercept(String id, String remark);
 }

@@ -76,37 +76,6 @@ public class SoMultiChannelController extends BaseController {
     private DmpAmazonFeign dmpAmazonFeign;
     @Resource
     private SyncAmazonSoMultiChannelService syncAmazonSoMultiChannelService;
-//    /**
-//    * 新增
-//    * @author zdy
-//    * @date:  2025-08-20
-//    * @param dto
-//    * @return ApiResult<String>
-//    */
-//    @PostMapping("/add")
-//    @LogAction(value = LogActionEnum.INSERT, desc = "多渠道订单主表新增")
-//    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated SoMultiChannelDTO.AddDTO dto) {
-//        return success(soMultiChannelService.add(dto));
-//    }
-
-//    /**
-//    * 修改
-//    * @author zdy
-//    * @date:  2025-08-20
-//    * @param dto
-//    * @return ApiResult
-//    */
-//    @PostMapping("/update")
-//    @LogAction(value = LogActionEnum.UPDATE, desc = "多渠道订单主表修改")
-//        @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-//        tableField = "create_user_id",
-//        menuCode = "oms:soMultiChannel:update",
-//        serviceClass = SoMultiChannelService.class,
-//        keyIdName = "id")
-//    public ApiResult<?> update(@RequestBody @Validated SoMultiChannelDTO.UpdateDTO dto) {
-//        soMultiChannelService.update(dto);
-//        return success();
-//    }
 
     /**
      * 获取状态统计
@@ -143,37 +112,6 @@ public class SoMultiChannelController extends BaseController {
     public ApiResult<PagingVO<SoMultiChannelDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<SoMultiChannelDTO.PagingParamDTO> dto) {
         return success(soMultiChannelService.paging(dto));
     }
-
-//    /**
-//    * 新增并提交审核
-//    * @author zdy
-//    * @date:  2025-08-20
-//    * @param dto
-//    * @return ApiResult<Void>
-//    */
-//    @PostMapping("/addAndSubmit")
-//    public ApiResult<BaseResultDTO.AddDTO> addAndSubmit(@RequestBody @Validated SoMultiChannelDTO.AddDTO dto) {
-//        BaseResultDTO.AddDTO result = soMultiChannelService.addAndSubmit(dto);
-//        return success(result);
-//    }
-
-//    /**
-//    * 修改并提交审核
-//    * @author zdy
-//    * @date:  2025-08-20
-//    * @param dto
-//    * @return ApiResult<Void>
-//    */
-//    @PostMapping("/updateAndSubmit")
-//    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-//            tableField = "create_user_id",
-//            menuCode = "oms:soMultiChannel:updateAndSubmit",
-//            serviceClass = SoMultiChannelService.class,
-//            keyIdName = "id")
-//    public ApiResult<Void> updateAndSubmit(@RequestBody @Validated SoMultiChannelDTO.UpdateDTO dto) {
-//        soMultiChannelService.updateAndSubmit(dto);
-//        return success();
-//    }
 
     /**
      * 提交审核

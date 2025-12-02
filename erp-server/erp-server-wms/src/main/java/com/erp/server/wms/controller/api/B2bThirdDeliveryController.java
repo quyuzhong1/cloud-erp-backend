@@ -1,29 +1,34 @@
 package com.erp.server.wms.controller.api;
 
 
+import cn.hutool.core.util.ObjectUtil;
+import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.base.BaseIdsDTO;
+import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
-import com.erp.model.wms.dto.ThirdWarehouseDeliveryDTO;
-import com.erp.server.wms.query.ThirdWarehouseDeliveryQueryHandler;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import javax.annotation.Resource;
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
-import com.common.core.anno.LogViewService;
+import com.common.core.controller.BaseController;
+import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
-import com.common.business.dto.base.*;
+import com.erp.model.oms.entity.SoB2cEntity;
+import com.erp.model.wms.dto.B2bThirdDeliveryDTO;
+import com.erp.model.wms.entity.B2bThirdDeliveryEntity;
+import com.erp.server.wms.query.B2bThirdWarehouseDeliveryQueryHandler;
+import com.erp.server.wms.service.B2bThirdDeliveryService;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.common.core.controller.BaseController;
-import com.erp.server.wms.service.B2bThirdDeliveryService;
-import com.common.core.controller.vo.ApiResult;
-import com.common.business.annotation.DataPermission;
-import com.common.business.enums.DataAttributeEnum;
-import com.erp.model.wms.dto.B2bThirdDeliveryDTO;
-
+import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -57,7 +62,7 @@ public class B2bThirdDeliveryController extends BaseController {
      * @return
      */
     @PostMapping("/paging")
-    @WebAdvanceQuery(handler = ThirdWarehouseDeliveryQueryHandler.class)
+    @WebAdvanceQuery(handler = B2bThirdWarehouseDeliveryQueryHandler.class)
     public ApiResult<PagingVO<B2bThirdDeliveryDTO.PagingViewDTO>> paging(@RequestBody @Validated PagingDTO<B2bThirdDeliveryDTO.PagingParamDTO> dto) {
         PagingVO<B2bThirdDeliveryDTO.PagingViewDTO> pagingVO = b2bThirdDeliveryService.paging(dto);
         return success(pagingVO);
@@ -69,7 +74,6 @@ public class B2bThirdDeliveryController extends BaseController {
      * @return
      */
     @PostMapping("/export")
-    @WebAdvanceQuery(handler = ThirdWarehouseDeliveryQueryHandler.class)
     public ApiResult export(@RequestBody @Validated B2bThirdDeliveryDTO.PagingParamDTO dto) {
         b2bThirdDeliveryService.export(dto);
         return success(true);
@@ -118,5 +122,36 @@ public class B2bThirdDeliveryController extends BaseController {
     }
 
 
+    /**
+     * 发货拦截
+     *
+     * @param dto
+     * @return ApiResult<List < BatchResultDTO>>
+     * @author Will
+     * @date: 2023/8/18 16:51
+     */
+    @PostMapping("/deliveryIntercept")
+    @LogAction(value = LogActionEnum.INSERT, desc = "发货拦截")
+    public ApiResult<List<BatchResultDTO>> deliveryIntercept(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<B2bThirdDeliveryEntity> entities = b2bThirdDeliveryService.listByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            BatchResultDTO result;
+            B2bThirdDeliveryEntity entity = entities.stream().filter(item -> item.getId().equals(id)).findFirst().orElse(null);
+            if (ObjectUtil.isEmpty(entity)) {
+                result = BatchResultDTO.fail(id, id, "B2B三方发货单不存在, 发货拦截失败");
+                resultDTOS.add(result);
+                continue;
+            }
+            try {
+                result = b2bThirdDeliveryService.deliveryIntercept(id, dto.getRemark());
+            } catch (Exception e) {
+                log.error("全平台销售订单发货拦截失败", e);
+                result = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(result);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
 
 }

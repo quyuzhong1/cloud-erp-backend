@@ -45,6 +45,7 @@ public enum InventorySourceTypeEnum {
     SO_INFO("soInfo", "B2B销售订单"),
     SO_B2C_DELIVERY_INTERCEPT("soB2cDeliveryIntercept", "b2c发货拦截单"),
     VIRTUAL_ADJUST("virtualAdjust", "虚拟库存调整"),
+    B2B_THIRD_DELIVERY("b2bThirdDelivery", "B2B三方发货单"),
     ;
 
     /**
