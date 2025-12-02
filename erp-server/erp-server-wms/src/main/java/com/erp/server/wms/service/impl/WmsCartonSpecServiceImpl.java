@@ -148,7 +148,8 @@ public class WmsCartonSpecServiceImpl extends SuperServiceImpl<WmsCartonSpecMapp
             List<WmsCartonDetailEntity> detailEntityList = wmsCartonDetailService.listByMainIds(Collections.singletonList(cartonEntity.getId()));
             List<WmsCartonDetailDTO.ViewDTO> detailList = BeanMapper.copyList(detailEntityList, WmsCartonDetailDTO.ViewDTO.class);
             for (WmsCartonDetailDTO.ViewDTO dto : detailList) {
-                int deliveryQty = taskDetailEntityList.stream().filter(req -> dto.getSkuId().equals(req.getSkuId()) && dto.getFnSku().equals(req.getFnSku())).mapToInt(PackingTaskDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
+                int deliveryQty = taskDetailEntityList.stream().filter(req -> dto.getSkuId().equals(req.getSkuId())
+                        && dto.getFnSku().equals(req.getFnSku()) && req.getCustomerPO().equals(cartonEntity.getCustomerPO())).mapToInt(PackingTaskDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
                 dto.setDeliveryQty(deliveryQty);
                 //待装箱数量=发货数量-所有已装箱数量
                 int packQtySum = packDateDTOS.stream().filter(req -> req.getSkuId().equals(dto.getSkuId()) && dto.getFnSku().equals(req.getFnSku())).mapToInt(WmsCartonSpecDTO.PackDateDTO::getPackQty).sum();

@@ -1156,6 +1156,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         List<PackingTaskDetailEntity> taskDetailEntityList = packingTaskDetailService.listByMainIds(Collections.singletonList(packingTaskEntity.getId()));
         //装箱进度
         List<WmsCartonEntity> cartonEntityList = wmsCartonService.listByTaskIds(Collections.singletonList(packingTaskEntity.getId()));
+        cartonEntityList = cartonEntityList.stream().filter(v->v.getCustomerPO().equals(searchDTO.getCustomerPO())).collect(Collectors.toList());
         List<String> cartonIds = cartonEntityList.stream().map(WmsCartonEntity::getId).distinct().collect(Collectors.toList());
         List<WmsCartonDetailEntity> detailEntityList = wmsCartonDetailService.listByMainIds(cartonIds);
         view.setSourceId(packingTaskEntity.getSourceId());
@@ -1216,7 +1217,10 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
                 //拣货数量
                 cartonDetailDTO.setPickedQty(deliveryQty1);
                 //已装数量
-                Integer packQty1 = detailEntityList.stream().filter(e -> Objects.nonNull(e) && e.getSkuId().equals(groupSkuDTO.getSkuId()) && Objects.equals(e.getFnSku(), groupSkuDTO.getFnSku()))
+                Integer packQty1 = detailEntityList.stream().filter(e -> Objects.nonNull(e)
+                                && e.getSkuId().equals(groupSkuDTO.getSkuId())
+                                && Objects.equals(e.getFnSku(), groupSkuDTO.getFnSku())
+                        )
                         .map(WmsCartonDetailEntity::getPackQty).reduce(MathUtil.ZERO, Integer::sum);
                 cartonDetailDTO.setPackedQty(packQty1);
                 //当前箱已装数量
