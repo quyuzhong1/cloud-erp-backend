@@ -265,10 +265,18 @@ public class DeliveryBoxRuleDetailServiceImpl extends SuperServiceImpl<DeliveryB
                         DeliveryBoxRuleDetailDTO.UpdateDTO::getDeliverySkuNo,
                         Collectors.counting()
                 ));
+
         List<String> duplicateSkus = skuCountMap.entrySet().stream()
                 .filter(entry -> entry.getValue() > 1)
                 .map(Map.Entry::getKey)
                 .collect(Collectors.toList());
+
+        if (!duplicateSkus.isEmpty()) {
+            throw new ServiceException(
+                    ApiError.ERROR_DUPLICATE_SKU,
+                    String.join("】, 【", duplicateSkus)
+            );
+        }
 
         //提取 oldList 中的字段值
         Set<String> oldSkus = oldList.stream()
@@ -282,10 +290,10 @@ public class DeliveryBoxRuleDetailServiceImpl extends SuperServiceImpl<DeliveryB
                 .distinct()
                 .collect(Collectors.toList());
 
-        if (!crossDuplicateSkus.isEmpty() || !duplicateSkus.isEmpty()) {
+        if (!crossDuplicateSkus.isEmpty()) {
             throw new ServiceException(
                     ApiError.ERROR_DUPLICATE_SKU,
-                    crossDuplicateSkus
+                    String.join("】, 【", crossDuplicateSkus)
             );
         }
 
@@ -302,6 +310,13 @@ public class DeliveryBoxRuleDetailServiceImpl extends SuperServiceImpl<DeliveryB
                 .map(Map.Entry::getKey)
                 .collect(Collectors.toList());
 
+        if (!duplicateQtys.isEmpty()) {
+            throw new ServiceException(
+                    ApiError.ERROR_DUPLICATE_QTY,
+                    String.join("】, 【", duplicateQtys.toString())
+            );
+        }
+
         Set<Integer> oldQtys = oldList.stream()
                 .map(DeliveryBoxRuleDetailEntity::getPerBoxQty)
                 .collect(Collectors.toSet());
@@ -313,10 +328,10 @@ public class DeliveryBoxRuleDetailServiceImpl extends SuperServiceImpl<DeliveryB
                 .distinct()
                 .collect(Collectors.toList());
 
-        if (!crossDuplicateQtys.isEmpty() || !duplicateQtys.isEmpty()) {
+        if (!crossDuplicateQtys.isEmpty()) {
             throw new ServiceException(
                     ApiError.ERROR_DUPLICATE_QTY,
-                    crossDuplicateQtys
+                    String.join("】, 【", crossDuplicateQtys.toString())
             );
         }
 
@@ -326,10 +341,18 @@ public class DeliveryBoxRuleDetailServiceImpl extends SuperServiceImpl<DeliveryB
                         DeliveryBoxRuleDetailDTO.UpdateDTO::getSort,
                         Collectors.counting()
                 ));
+
         List<Integer> duplicateSorts = sortCountMap.entrySet().stream()
                 .filter(entry -> entry.getValue() > 1)
                 .map(Map.Entry::getKey)
                 .collect(Collectors.toList());
+
+        if (!duplicateSorts.isEmpty()) {
+            throw new ServiceException(
+                    ApiError.ERROR_DUPLICATE_SORT,
+                    String.join("】, 【", duplicateSorts.toString())
+            );
+        }
 
         Set<Integer> oldSorts = oldList.stream()
                 .map(DeliveryBoxRuleDetailEntity::getSort)
@@ -342,10 +365,10 @@ public class DeliveryBoxRuleDetailServiceImpl extends SuperServiceImpl<DeliveryB
                 .distinct()
                 .collect(Collectors.toList());
 
-        if (!crossDuplicateSorts.isEmpty() || !duplicateSorts.isEmpty()) {
+        if (!crossDuplicateSorts.isEmpty()) {
             throw new ServiceException(
                     ApiError.ERROR_DUPLICATE_SORT,
-                    crossDuplicateSorts
+                    String.join("】, 【", crossDuplicateSorts.toString())
             );
         }
     }
