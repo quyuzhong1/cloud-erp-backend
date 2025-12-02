@@ -21,18 +21,10 @@ import java.time.LocalDate;
 public class KolFeedbackExcelDTO implements Serializable {
 
     /**
-     * 来源单号
-     */
-    @ColumnWidth(25)
-    @ExcelProperty(value = "来源单号", index = 0)
-    @FieldValid(fieldName = "来源单号", maxLength = 100)
-    private String sourceCode;
-
-    /**
      * SKU编码
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "*SKU编码", index = 1)
+    @ExcelProperty(value = "*SKU编码", index = 0)
     @FieldValid(fieldName = "*SKU编码", isNotBlank = true)
     private String skuNo;
     @ExcelIgnore
@@ -44,7 +36,7 @@ public class KolFeedbackExcelDTO implements Serializable {
      * 数量
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "*数量", index = 2)
+    @ExcelProperty(value = "*数量", index = 1)
     @FieldValid(fieldName = "*数量", isNotBlank = true, formatPattern = FieldFormatPatternTypeEnum.NUMBER)
     private String qtyStr;
     @ExcelIgnore
@@ -54,8 +46,8 @@ public class KolFeedbackExcelDTO implements Serializable {
      * 达人昵称
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "达人昵称", index = 3)
-    @FieldValid(fieldName = "达人昵称", maxLength = 100)
+    @ExcelProperty(value = "*达人昵称", index = 2)
+    @FieldValid(fieldName = "*达人昵称", isNotBlank = true, maxLength = 100)
     private String partnerNickname;
     @ExcelIgnore
     private String partnerId;
@@ -64,7 +56,7 @@ public class KolFeedbackExcelDTO implements Serializable {
      * 回片链接
      */
     @ColumnWidth(50)
-    @ExcelProperty(value = "*回片链接", index = 4)
+    @ExcelProperty(value = "*回片链接", index = 3)
     @FieldValid(fieldName = "*回片链接", isNotBlank = true, maxLength = 500)
     private String url;
     @ExcelIgnore
@@ -74,7 +66,7 @@ public class KolFeedbackExcelDTO implements Serializable {
      * 发布形式
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "发布形式", index = 5)
+    @ExcelProperty(value = "发布形式", index = 4)
     @FieldValid(fieldName = "发布形式", maxLength = 50)
     private String publishType;
 
@@ -82,27 +74,17 @@ public class KolFeedbackExcelDTO implements Serializable {
      * 发布日期
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "发布日期", index = 6)
+    @ExcelProperty(value = "发布日期", index = 5)
     @FieldValid(fieldName = "发布日期")
     private String publishDateStr;
     @ExcelIgnore
     private LocalDate publishDate;
 
     /**
-     * 回片状态
-     */
-    @ColumnWidth(20)
-    @ExcelProperty(value = "回片状态", index = 7)
-    @FieldValid(fieldName = "回片状态", maxLength = 20)
-    private String feedbackStatusStr;
-    @ExcelIgnore
-    private String feedbackStatus;
-
-    /**
      * 备注
      */
     @ColumnWidth(30)
-    @ExcelProperty(value = "备注", index = 8)
+    @ExcelProperty(value = "备注", index = 6)
     @FieldValid(fieldName = "备注", maxLength = 500)
     private String remark;
 

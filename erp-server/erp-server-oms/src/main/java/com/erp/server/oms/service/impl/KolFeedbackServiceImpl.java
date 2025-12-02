@@ -58,6 +58,12 @@ import com.common.core.utils.FastDFSClientUtil;
 import java.io.File;
 
 import javax.servlet.http.HttpServletResponse;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.core.io.DefaultResourceLoader;
+import org.springframework.core.io.ResourceLoader;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_OMS_KOL_FEEDBACK;
 import static com.common.business.enums.FileTaskEventEnum.IMPORT_OMS_KOL_FEEDBACK;
@@ -293,19 +299,6 @@ public class KolFeedbackServiceImpl extends SuperServiceImpl<KolFeedbackMapper, 
             return;
         }
 
-        if (CollUtil.isNotEmpty(errorNoList)) {
-            // 过滤掉错误单号的数据
-            successList = successList.stream()
-                    .filter(e -> StrUtil.isBlank(e.getSourceCode()) || !errorNoList.contains(e.getSourceCode()))
-                    .collect(Collectors.toList());
-
-            // 将错误单号的数据添加到错误列表
-            List<KolFeedbackExcelDTO> collect = successList.stream()
-                    .filter(e -> StrUtil.isNotBlank(e.getSourceCode()) && errorNoList.contains(e.getSourceCode()))
-                    .collect(Collectors.toList());
-            errorList2.addAll(collect);
-        }
-
         // 批量保存数据
         for (KolFeedbackExcelDTO excelDTO : successList) {
             try {
@@ -331,7 +324,27 @@ public class KolFeedbackServiceImpl extends SuperServiceImpl<KolFeedbackMapper, 
 
     @Override
     public void downloadTemplate(HttpServletResponse response) {
-
+        // 下载KOL回片列表导入模板
+        String path = "classpath:excel/kolFeedbackTemplate.xlsx";
+        String excelName = "KOL回片列表导入模板.xlsx";
+        ResourceLoader resourceLoader = new DefaultResourceLoader();
+        try {
+            InputStream inputStream = resourceLoader.getResource(path).getInputStream();
+            XSSFWorkbook wb = new XSSFWorkbook(inputStream);
+            // 输出Excel文件
+            OutputStream output = response.getOutputStream();
+            response.reset();
+            // 设置文件头
+            response.setHeader("Content-Disposition",
+                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), StandardCharsets.ISO_8859_1));
+            response.setContentType("application/msexcel");
+            wb.write(output);
+            wb.close();
+            log.info("开始下载KOL回片列表导入模板");
+        } catch (Exception e) {
+            log.error("KOL回片列表导入模板下载失败", e);
+            throw new ServiceException("下载模板失败：" + e.getMessage());
+        }
     }
 
     /**

@@ -13,10 +13,12 @@ import com.common.business.vo.LoginUser;
 import com.common.core.utils.FieldValidUtil;
 import com.erp.model.oms.dto.excel.KolFeedbackExcelDTO;
 import com.erp.model.oms.enums.FeedbackStatusEnum;
+import com.erp.model.oms.entity.KolPartnerInfoEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.oms.service.KolFeedbackService;
+import com.erp.server.oms.service.KolPartnerInfoService;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -51,9 +53,11 @@ public class KolFeedbackExcelListener extends AnalysisEventListener<KolFeedbackE
     // 缓存相关常量
     private static final String CACHE_SKU_NO_TO_ID = "kol_feedback:sku_no_to_id:";
     private static final String CACHE_SKU_ID_TO_PRODUCT_NAME = "kol_feedback:sku_id_to_product_name:";
+    private static final String CACHE_PARTNER_NICKNAME_TO_ID = "kol_feedback:partner_nickname_to_id:";
     private static final int CACHE_EXPIRE_TIME = 300; // 五分钟
 
     private final KolFeedbackService kolFeedbackService = SpringUtil.getBean(KolFeedbackService.class);
+    private final KolPartnerInfoService kolPartnerInfoService = SpringUtil.getBean(KolPartnerInfoService.class);
     private final PlmTaskFeign plmTaskFeign = SpringUtil.getBean(PlmTaskFeign.class);
     private final DownloadTaskFeign downloadTaskFeign = SpringUtil.getBean(DownloadTaskFeign.class);
     private final RedissonClient redissonClient = SpringUtil.getBean(RedissonClient.class);
@@ -102,13 +106,8 @@ public class KolFeedbackExcelListener extends AnalysisEventListener<KolFeedbackE
         successList.add(data);
         if (successList.size() >= BATCH_COUNT) {
             try {
-                List<String> errorNoList = errorList.stream()
-                        .map(KolFeedbackExcelDTO::getSourceCode)
-                        .filter(Objects::nonNull)
-                        .distinct()
-                        .collect(Collectors.toList());
                 List<KolFeedbackExcelDTO> errorList2 = new ArrayList<>();
-                kolFeedbackService.handleImportSuccessList(successList, errorNoList, errorList2, importType);
+                kolFeedbackService.handleImportSuccessList(successList, Collections.emptyList(), errorList2, importType);
                 errorList.addAll(errorList2);
             } catch (Exception e) {
                 successList.forEach(excelDTO1 -> excelDTO1.setErrorMsg(
@@ -127,13 +126,8 @@ public class KolFeedbackExcelListener extends AnalysisEventListener<KolFeedbackE
         
         if (!successList.isEmpty()) {
             try {
-                List<String> errorNoList = errorList.stream()
-                        .map(KolFeedbackExcelDTO::getSourceCode)
-                        .filter(Objects::nonNull)
-                        .distinct()
-                        .collect(Collectors.toList());
                 List<KolFeedbackExcelDTO> errorList2 = new ArrayList<>();
-                kolFeedbackService.handleImportSuccessList(successList, errorNoList, errorList2, importType);
+                kolFeedbackService.handleImportSuccessList(successList, Collections.emptyList(), errorList2, importType);
                 errorList.addAll(errorList2);
             } catch (Exception e) {
                 successList.forEach(excelDTO1 -> excelDTO1.setErrorMsg(
@@ -204,24 +198,12 @@ public class KolFeedbackExcelListener extends AnalysisEventListener<KolFeedbackE
             errorMsgList.add("数量不能为空");
         }
 
-        // 验证回片状态
-        if (StringUtils.isNotBlank(data.getFeedbackStatusStr())) {
-            FeedbackStatusEnum statusEnum = FeedbackStatusEnum.getByCode(data.getFeedbackStatusStr());
-            if (statusEnum == null) {
-                // 尝试通过名称查找
-                statusEnum = Arrays.stream(FeedbackStatusEnum.values())
-                        .filter(e -> e.getName().equals(data.getFeedbackStatusStr()))
-                        .findFirst()
-                        .orElse(null);
-            }
-            if (statusEnum != null) {
-                data.setFeedbackStatus(statusEnum.getCode());
-            } else {
-                errorMsgList.add("回片状态【" + data.getFeedbackStatusStr() + "】不存在");
-            }
+        // 验证达人昵称是否存在并解析达人ID
+        String partnerId = getPartnerIdByNickname(data.getPartnerNickname());
+        if (StrUtil.isBlank(partnerId)) {
+            errorMsgList.add("达人昵称【" + data.getPartnerNickname() + "】不存在");
         } else {
-            // 默认状态为待回片
-            data.setFeedbackStatus(FeedbackStatusEnum.PENDING.getCode());
+            data.setPartnerId(partnerId);
         }
 
         // URL哈希值计算
@@ -347,6 +329,42 @@ public class KolFeedbackExcelListener extends AnalysisEventListener<KolFeedbackE
             return null;
         } catch (Exception e) {
             log.error("查询产品名称失败，SKU ID：{}，错误：{}", skuId, e.getMessage(), e);
+            return null;
+        }
+    }
+
+    /**
+     * 根据达人昵称查询达人ID（带缓存）
+     */
+    private String getPartnerIdByNickname(String nickname) {
+        if (StrUtil.isBlank(nickname)) {
+            return null;
+        }
+
+        // 先从缓存获取
+        String cacheKey = CACHE_PARTNER_NICKNAME_TO_ID + nickname;
+        String partnerId = (String) redissonClient.getBucket(cacheKey).get();
+        if (StrUtil.isNotBlank(partnerId)) {
+            return partnerId;
+        }
+
+        try {
+            // 根据昵称查询达人信息
+            KolPartnerInfoEntity partnerInfo = kolPartnerInfoService.lambdaQuery()
+                    .eq(KolPartnerInfoEntity::getNickname, nickname)
+                    .eq(KolPartnerInfoEntity::getIsDeleted, false)
+                    .one();
+            
+            if (partnerInfo != null && StrUtil.isNotBlank(partnerInfo.getId())) {
+                // 缓存结果
+                redissonClient.getBucket(cacheKey).set(partnerInfo.getId(), CACHE_EXPIRE_TIME, TimeUnit.SECONDS);
+                return partnerInfo.getId();
+            }
+
+            log.warn("未找到达人昵称：{}", nickname);
+            return null;
+        } catch (Exception e) {
+            log.error("查询达人ID失败，达人昵称：{}，错误：{}", nickname, e.getMessage(), e);
             return null;
         }
     }
