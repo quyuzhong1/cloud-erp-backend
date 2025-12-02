@@ -338,6 +338,46 @@ public class QcNoticeController extends BaseController {
     }
 
     /**
+    * 作废
+    * @author jack  
+    * @date:  2025-11-10
+    * @param dto
+    * @return ApiResult<List<BatchResultDTO>>
+    */
+    @PostMapping("/invalid")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:qcNotice:invalid",
+            serviceClass = QcNoticeService.class,
+            keyIdName = "ids")
+    @LogAction(value = LogActionEnum.INVALID, desc = "质检通知单作废")
+    public ApiResult<List<BatchResultDTO>> invalid(@RequestBody @Validated BaseIdsDTO.RemarkDTO  dto) {
+        List<String> ids = dto.getIds();
+        String remark = dto.getRemark();
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+        List<QcNoticeEntity> list = qcNoticeService.lambdaQuery().in(QcNoticeEntity::getId, ids).list();
+        Map<String, QcNoticeEntity> idEntityMap = list.stream().collect(Collectors.toMap(QcNoticeEntity::getId, w -> w));
+        
+        for (String id : ids) {
+            BatchResultDTO invalidResult;
+            try {
+                invalidResult = qcNoticeService.invalid(id, remark);
+            }catch (Exception e){
+                log.error("质检通知单作废失败",e);
+                QcNoticeEntity entity = idEntityMap.get(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    invalidResult = BatchResultDTO.fail(id, id, "质检通知单不存在, 作废失败");
+                    resultDTOS.add(invalidResult);
+                    continue;
+                }
+                invalidResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(invalidResult);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+    /**
     * 详情
     * @author jack
     * @date:  2025-04-21

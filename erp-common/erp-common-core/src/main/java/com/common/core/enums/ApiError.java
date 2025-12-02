@@ -141,6 +141,7 @@ public enum ApiError implements Serializable {
     ERROR_DISABLE_FAIL(1066,"数据未启用不支持禁用"),
     ERROR_NOT_FOUND(1067,"{0}未找到"),
     ERROR_HAS_EXIST(1068,"{0}已存在"),
+    ERROR_1069(1069,"只有已禁用数据支持删除"),
 
 
 
@@ -220,6 +221,7 @@ public enum ApiError implements Serializable {
     ERROR_SDY_NOT_FOUND_SHOP(80015,"数据同步数帝云未找到店铺信息，店铺id【{0}】"),
     ERROR_SDY_NOT_FOUND_CUSTOMER(80016,"店铺未绑定客户信息，店铺id【{0}】"),
     ERROR_THIRD_LOGISTICS_NOTFOUND(80017,"第三方渠道不存在"),
+    ERROR_CFG_SETTING_NOTFOUND(80018,"未找到推送配置项【{0}】"),
 
     /**
      * 工作流错误 workflow
@@ -579,6 +581,19 @@ public enum ApiError implements Serializable {
     ERROR_PLM_VENDOR_PRICE_LIST_NOT_FOUND(95289,"供应商采购价目表不存在，请联系采购开发提交后提审:{0}"),
     ERROR_PLM_UPLOAD_FORBIDDEN_IN_APPROVING(95291,"审核中不支持上传"),
     ERROR_PLM_CN_EXPORT_DECLARATION_HS_NOT_FOUND(95292,"中国海关编码不存在于出口申报要素"),
+    ERROR_EXIST_SKU(95293,"SKU【{}】已存在,不允许反审核"),
+    ERROR_MOLD_NOT_EXIST(95294,"模具档案不存在"),
+    ERROR_95294(95294,"只允许选择已审核的模具档案批量关联SKU"),
+    ERROR_MOLD_REF_SKU_EXIST(95295,"模具档案已存在关联SKU"),
+    ERROR_95296(95296,"只有未生成模具采购订单的通知单单才能反审核"),
+    ERROR_95297(95297,"未找到开模通知单"),
+    ERROR_95298(95298,"未找到开模通知单明细"),
+    ERROR_95299(95299,"未找到可以下推的开模通知单"),
+    ERROR_95300(95300,"开模通知单【{}】,资产【{}】采购数量不能大于待申请数量"),
+    ERROR_MOLD_NOT_APPROVE(95301,"模具未审核通过"),
+    ERROR_95302(95302,"寿命数量不能小于预警寿命数量"),
+    ERROR_MOLD_RETURN_EXIST(95303,"模具档案已存在返还策略"),
+    ERROR_MOLD_ALERT_EXIST(95304,"模具档案已存在预警策略"),
 
 
     /**
@@ -586,6 +601,7 @@ public enum ApiError implements Serializable {
      * 从96000 开始
      */
     CALL_THIRD_LOGISTICS_PLATFORM_ERROR(96000, "调用第三方物流平台接口异常"),
+    BATCH_UPDATE_TRACK_INFO_HAS_EMPTY(96001, "物流单号不能为空"),
     LABEL_TYPE_NOT_EMPTY(96002, "标签类型不能为空"),
     ERROR_EXISTS_LOGISTICS_LARGE(96003, "已生成物流大表不能重复生成"),
     ERROR_EXISTS_ESTIMATED_LOGISTICS_LARGE(96004, "已存在预估账单的物流大表信息，请不要重复下推"),
@@ -631,6 +647,9 @@ public enum ApiError implements Serializable {
     SEARCH_TYPE_EXIST(97034, "搜索类型不存在"),
     ERROR_DATE_TYPE(97035, "财务销售额只支持月，季，年维度查询"),
 
+    ERROR_HAS_EXIST_DICT_VALUE(97036, "系统字典表值{}数据重复"),
+    ERROR_EXIST_DICT_VALUE(97037, "系统字典表值{}已存在"),
+    ERROR_EMPTY_DICT_TYPE(97038, "系统字典类型不能为空"),
     ERROR_EMPTY_LIST(97039, "请求参数不能为空"),
     ERROR_DATE_RANGE_THIRTY_ONE(97040, "日范围不能大于31天"),
     ERROR_DATE_RANGE_WEEK_DAY(97041, "周范围不能大于12周"),
@@ -800,7 +819,29 @@ public enum ApiError implements Serializable {
     ERROR_PURCHASE_PRICE_CHANGE_ADJUST(98129,"该调价表数据非最新报价数据不支持批量调价"),
     ERROR_PURCHASE_PRICE_SKU(98130,"SKU【{0}】未找到数量【{1}】的供应商报价信息"),
     ERROR_SUPPLIER_UPDATE_FIELD_APPROVEING(98131,"状态在审核中不可更新"),
-
+    ERROR_98132(98132,"开模通知单已下推模具采购单"),
+    ERROR_98133(98133,"模具采购订单已下推模具采购变更单"),
+    ERROR_98134(98134,"未找到模具采购订单"),
+    ERROR_98135(98135,"未找到模具采购订单明细"),
+    ERROR_98136(98136,"未找到可以下推的模具采购订单"),
+    ERROR_98137(98137,"未审核的模具采购单不允许变更"),
+    ERROR_98138(98138,"下推的模具采购单不允许新增明细"),
+    ERROR_98139(98139,"采购数量不能大于待申请数量"),
+    ERROR_98140(98140,"sku【{}】未找到价目表"),
+    ERROR_98141(98141,"变更日期不能小于今天"),
+    ERROR_98142(98142,"采购变更数量不能大于待申请数量"),
+    ERROR_98143(98143,"请选择同一模具采购订单下明细进行变更!"),
+    ERROR_98144(98144,"未找到模具采购供应商信息"),
+    ERROR_98145(98145,"未找到模具采购变更单明细"),
+    ERROR_98146(98146,"只有已审核的模具采购单才可以结束验收"),
+    ERROR_98147(98147,"已验收和已关闭的明细行不允许变更"),
+    ERROR_98148(98148,"已存在下推资产验收单，不支持反审核"),
+    ERROR_98149(98149,"更新sku【{}】占用状态失败"),
+    ERROR_98150(98150,"sku【{}】变更数量不能小于已验收数量"),
+    ERROR_98151(98151,"sku【{}】采购数量不能小于等于0"),
+    ERROR_98152(98152,"sku【{}】的新采购数量不能小于已验收数量"),
+    ERROR_98153(98153,"模具编码【{}】验收数量不能超过可验收数量"),
+    ERROR_98154(98154,"没有找到供应商的账户信息"),
 
     /**
      * WMS 错误
@@ -880,6 +921,8 @@ public enum ApiError implements Serializable {
     ERROR_WMS_RETURN_QTY_EXCEEDS_PENDING_QC(99079,"【{0}】退货数量不能大于待检库存"),
     ERROR_WMS_RETURN_INBOUND_ALLOWED_APPROVED_ONLY(99081,"只有已审核的单据才能下推退货入库单"),
     ERROR_WMS_RETURN_INBOUND_NOT_FOUND(99083,"退货入库单不存在"),
+    ERROR_99080(99080,"已作废的质检单不支持{}操作"),
+    ERROR_99200(99200,"已作废的质检通知单不支持{}操作"),
 
     ERROR_WMS_REQ_PUSHED_DELIVERY_PICKLIST_LOCKED(99086,"要货申请下推发货单后，拣货单不允许修改和删除"),
 
@@ -1244,7 +1287,7 @@ public enum ApiError implements Serializable {
     ERROR_CUSTOMER_DEFAULT_CONTACT_LIMIT(92005,"默认联系人不能超过一个"),
     ERROR_CUSTOMER_DEFAULT_ADDRESS_LIMIT(92006,"默认地址不能超过一个"),
     ERROR_CUSTOMER_DEFAULT_BANK_LIMIT(92007,"默认开户行不能超过一个"),
-    ERROR_DATE_RANGE_INVALID(92008,"开始日期不能 大于结束日期"),
+    ERROR_DATE_RANGE_INVALID(92008,"开始日期不能大于结束日期"),
     ERROR_RETURN_QTY_EXCEEDS_OUTBOUND(92009,"退货数量不能大于已出库数量"),
     ERROR_DELIVERY_QTY_EXCEEDS_SALES(92010,"发货总数量不能大于销售数量"),
     ERROR_CUSTOMER_NOT_FOUND(92011,"客户不存在"),
@@ -1581,6 +1624,10 @@ public enum ApiError implements Serializable {
     ERROR_WIDTH_BOX_LITTER_THAN_PRODUCT(94202,"箱规宽度必须大于等于包装宽度"),
     ERROR_HEIGHT_BOX_LITTER_THAN_PRODUCT(94203,"箱规高度必须大于等于包装高度"),
     ERROR_WEIGHT_GROSS_LITTER_THAN_NET(94204,"毛重必须大于等于净重"),
+    ERROR_PRODUCT_LENGTH_LESS_THAN_WIDTH(94205,"包装尺寸：长度必须大于等于宽度"),
+    ERROR_PRODUCT_WIDTH_LESS_THAN_HEIGHT(94206,"包装尺寸：宽度必须大于等于高度"),
+    ERROR_BOX_LENGTH_LESS_THAN_WIDTH(94207,"箱规尺寸：长度必须大于等于宽度"),
+    ERROR_BOX_WIDTH_LESS_THAN_HEIGHT(94208,"箱规尺寸：宽度必须大于等于高度"),
 
     ERROR_SKU_LENGTH_BOX_LITTER_THAN_PRODUCT(94201,"【{0}】箱规长度必须大于等于包装长度"),
     ERROR_SKU_WIDTH_BOX_LITTER_THAN_PRODUCT(94202,"【{0}】箱规宽度必须大于等于包装宽度"),
@@ -1624,8 +1671,13 @@ public enum ApiError implements Serializable {
     ERROR_VERIFY_START_DATE(97037,"开始日期不能早于选中数据试算开始日期"),
     ERROR_CALC_SIZE(97038,"一个模板下，以“SKU*店铺”计算，最多支持999999条任务"),
 
-
-
+    /**
+     * FMS 错误
+     * 从100000 开始
+     */
+    ERROR_100000(100000,"资产验收单验收数量超过模具采购单采购数量"),
+    ERROR_100001(100001,"资产卡片【{}】不存在"),
+    ERROR_100002(100002,"资产编码【{}】处置数量不能大于账存数量"),
 
 
 

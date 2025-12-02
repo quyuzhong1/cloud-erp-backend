@@ -5,6 +5,7 @@ import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.ApproveBusinessKey;
 import com.common.business.dto.ApproveDTO;
+import com.common.business.dto.base.ApproveOneDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.ApprovePlatformEnum;
 import com.common.business.enums.ApproveTypeEnum;
@@ -46,6 +47,11 @@ public class PurchasePriceApproveHandler extends AbstractApproveHandler {
 
     @Resource
     private ModuleOperateLogService operateLogService;
+
+    @Override
+    public BatchResultDTO approve(ApproveOneDTO dto) {
+        return purchasePriceService.approve(purchasePriceService.getById(dto.getId()),dto.getType(),dto.getComment(),dto.getIsNeedProcess());
+    }
 
     @Override
     public Boolean cancelProcess(ApproveDTO.CancelProcessDTO dto) {

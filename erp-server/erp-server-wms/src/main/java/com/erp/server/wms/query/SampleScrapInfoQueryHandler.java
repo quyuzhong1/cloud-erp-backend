@@ -12,8 +12,10 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
+import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
 import com.erp.rpc.workflow.WorkflowFeign;
 import jodd.util.StringUtil;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -77,6 +79,19 @@ public class SampleScrapInfoQueryHandler extends AbstractQueryHandler {
         }
         if(Objects.equals(value, ApproveStatusEnum.WAIT_SUBMIT.getCode()+"/"+ApproveStatusEnum.REJECT.getCode())){ //待提交/审核不通过
             return "ssi.approve_status in ('"+ApproveStatusEnum.WAIT_SUBMIT.getCode()+"','"+ApproveStatusEnum.REJECT.getCode()+"')";
+        }else if(Objects.equals(value, ApproveStatusEnum.APPROVE_ING.getCode())){ //待我审核
+            //待我审批流程信息
+            ProcessManagementDTO.TaskKeyInfoDTO dto = new ProcessManagementDTO.TaskKeyInfoDTO();
+            dto.setBusinessKey(SourceTypeEnum.SAMPLE_SCRAP_INFO.getCode());
+            dto.setTaskStatus(ApproveStatusEnum.APPROVE_ING.getCode());
+            dto.setCurApproveId(UserContext.getNonLoginUser().getUid());
+            List<ProcessTaskManagementEntity> processTaskManagementList = workflowFeign.listProcessByBusinessKey(dto);
+            List<String> ids = processTaskManagementList.stream().map(ProcessTaskManagementEntity::getBusinessId).collect(Collectors.toList());
+            if(CollectionUtils.isNotEmpty(ids)){
+                super.buildSplicingSQLDTO("ssi.id", QueryConditionEnum.IN_LIST, ids, QueryDataTypeEnum.STRING);
+            }else {
+                super.buildDefaultDTO("ssi.id", "-1");
+            }
         }
         super.buildDefaultDTO("ssi.approve_status", value);
         return super.getSplicingSQL();

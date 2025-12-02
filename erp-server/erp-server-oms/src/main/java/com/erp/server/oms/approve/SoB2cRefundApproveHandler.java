@@ -35,6 +35,11 @@ public class SoB2cRefundApproveHandler extends AbstractApproveHandler {
 
 
     @Override
+    public BatchResultDTO approve(ApproveOneDTO dto) {
+        return soB2cRefundService.approve(soB2cRefundService.getById(dto.getId()),dto);
+    }
+
+    @Override
     public Boolean cancelProcess(ApproveDTO.CancelProcessDTO dto) {
         SoB2cRefundEntity entity = soB2cRefundService.getById(dto.getId());
         if (ObjectUtil.isEmpty(entity)) {

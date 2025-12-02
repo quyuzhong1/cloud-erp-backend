@@ -2,7 +2,9 @@ package com.erp.server.dmp.inout.handler.input.task.dmp;
 
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.common.business.dto.PlatformOrderDTO;
 import com.erp.model.dmp.entity.DmpProductInfoEntity;
 import com.erp.server.dmp.service.DmpProductInfoService;
 import org.apache.commons.collections4.CollectionUtils;
@@ -10,10 +12,7 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -37,7 +36,7 @@ public class MercadoLocalSkuDmpHandler extends DmpInputDbConvertDmpHandler {
             List<TreeMap<String, Object>> dmpDataMaps = dmpInputDataDmpRelationMap.getValue();
             List<Map<String, Object>> mongoDataMaps = dmpInputDataDmpRelationMap.getKey();
             Map<String, Object> mongoDataMap = mongoDataMaps.get(0);
-
+            List<TreeMap<String, Object>> newAddList = new ArrayList<>();
 
             for (TreeMap<String, Object> dmpDataMap : dmpDataMaps) {
                 dmpDataMap.put("nextLevelId", nextLevelId);
@@ -85,6 +84,84 @@ public class MercadoLocalSkuDmpHandler extends DmpInputDbConvertDmpHandler {
                         }
                     }
                 }
+
+                //如果有多个变体，每个变体生成一个平台sku
+                //规格属性
+                Object variations = dmpDataMap.get("variations");
+                if (ObjectUtils.isNotEmpty(variations)) {
+                    List<Map<String, Object>> variationsList = (List<Map<String, Object>>) variations;
+                    if (CollectionUtil.isNotEmpty(variationsList)) {
+                        for (Map<String, Object> map : variationsList) {
+                            if(map.containsKey("attributes")){
+                                Object attributesObj = map.get("attributes");
+                                List<Map<String, Object>> attributesList = (List<Map<String, Object>>) attributesObj;
+                                //校验attributesList是否存在SELLER_SKU
+                                boolean isExistSku = false;
+                                if (CollectionUtils.isNotEmpty(attributesList)) {
+                                    isExistSku = attributesList.stream()
+                                            .filter(Objects::nonNull)
+                                            .anyMatch(curMap -> "SELLER_SKU".equals(curMap.get("id")));
+                                }
+                                if(!isExistSku){
+                                    continue;
+                                }
+                                //深拷贝map
+                                TreeMap<String, Object> copyMap = JSONUtil.toBean(JSONUtil.toJsonStr(dmpDataMap), TreeMap.class);
+                                for (Map<String, Object> attributeMap : attributesList) {
+                                    if ("SELLER_SKU".equalsIgnoreCase(String.valueOf(attributeMap.get("id")))) {
+                                        copyMap.put("skuNo", attributeMap.get("value_name"));
+                                    }
+
+                                    if ("BRAND".equalsIgnoreCase(String.valueOf(attributeMap.get("id")))) {
+                                        copyMap.put("brandName", attributeMap.get("value_name"));
+                                    }
+
+                                    if ("PACKAGE_LENGTH".equalsIgnoreCase(String.valueOf(attributeMap.get("id")))) {
+                                        List<Map<String, Object>> valuesList = (List<Map<String, Object>>) attributeMap.get("values");
+                                        if (CollectionUtils.isNotEmpty(valuesList)) {
+                                            Map<String, Object> structMap = (Map<String, Object>) valuesList.get(0).get("struct");
+                                            if (null != structMap) {
+                                                copyMap.put("packageLength", structMap.get("number"));
+                                            }
+                                        }
+                                    }
+                                    if ("PACKAGE_WIDTH".equalsIgnoreCase(String.valueOf(attributeMap.get("id")))) {
+                                        List<Map<String, Object>> valuesList = (List<Map<String, Object>>) attributeMap.get("values");
+                                        if (CollectionUtils.isNotEmpty(valuesList)) {
+                                            Map<String, Object> structMap = (Map<String, Object>) valuesList.get(0).get("struct");
+                                            if (null != structMap) {
+                                                copyMap.put("packageWidth", structMap.get("number"));
+                                            }
+                                        }
+                                    }
+                                    if ("PACKAGE_HEIGHT".equalsIgnoreCase(String.valueOf(attributeMap.get("id")))) {
+                                        List<Map<String, Object>> valuesList = (List<Map<String, Object>>) attributeMap.get("values");
+                                        if (CollectionUtils.isNotEmpty(valuesList)) {
+                                            Map<String, Object> structMap = (Map<String, Object>) valuesList.get(0).get("struct");
+                                            if (null != structMap) {
+                                                copyMap.put("packageHeight", structMap.get("number"));
+                                                copyMap.put("packageUnit", structMap.get("unit"));
+                                            }
+                                        }
+                                    }
+
+                                    if ("PACKAGE_WEIGHT".equalsIgnoreCase(String.valueOf(attributeMap.get("id")))) {
+                                        List<Map<String, Object>> valuesList = (List<Map<String, Object>>) attributeMap.get("values");
+                                        if (CollectionUtils.isNotEmpty(valuesList)) {
+                                            Map<String, Object> structMap = (Map<String, Object>) valuesList.get(0).get("struct");
+                                            if (null != structMap) {
+                                                copyMap.put("grossWeight", structMap.get("number"));
+                                                copyMap.put("weightUnit", structMap.get("unit"));
+                                            }
+                                        }
+                                    }
+                                    newAddList.add(copyMap);
+                                }
+                            }
+                        }
+                    }
+                }
+
 
                 //规格属性
                 Object attributesObj = dmpDataMap.get("attributes");
@@ -143,7 +220,9 @@ public class MercadoLocalSkuDmpHandler extends DmpInputDbConvertDmpHandler {
                         }
                     }
                 }
+
             }
+            dmpDataMaps.addAll(newAddList);
         }
     }
 }

@@ -541,6 +541,7 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
                     .build();
         }
         List<SoB2cEntity> soB2cEntityList = listByIds(mainIds);
+        soB2cEntityList = soB2cEntityList.stream().filter(v->!v.getInvalidStatus()).collect(Collectors.toList());
         return SoB2cDTO.CombinationDTO.builder()
                 .soB2cEntityList(soB2cEntityList)
                 .soB2cDetailEntityList(soB2cDetailEntityList)

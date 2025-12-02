@@ -2,6 +2,7 @@ package com.sdk.wms.iml.service;
 
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.TypeReference;
 import com.common.business.constant.BusinessCommonConstants;
@@ -15,6 +16,7 @@ import com.sdk.wms.iml.dto.response.*;
 import com.sdk.wms.iml.utils.ImlUtils;
 import io.seata.common.util.StringUtils;
 import jodd.util.StringUtil;
+import okhttp3.*;
 import org.springframework.stereotype.Component;
 import org.springframework.validation.annotation.Validated;
 
@@ -26,6 +28,8 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 /**
  * @author liuruipeng
@@ -44,29 +48,101 @@ public class ImlService {
         }
     }
 
-    private static final String APP_ID = "1929841041771364354";
-    private static final String APP_SECRET = "dx-zosnwtgwo3=u=276qgzu+3weguyst";
-    private static final String API_URL = "https://pre-open.imlb2c.cn/open-sdk/oms/stock_age_query";
-    private static final String REQUEST_TOKEN = "ZOFsMc85N29ly-sA4qKbDXQgJS6QF2A8IzlCWWXH_UgoaGoY6Az8aZuU_uWuQ6s0";
+    private static final String APP_ID = "1979003219754110977";
+    private static final String APP_SECRET = "7m=j5-+gpydwadwii8y+eawg6-909-ij";
+    private static final String API_URL = "https://open.imlb2c.com/open-sdk/oms/stock_age_query";
+    private static final String REQUEST_TOKEN = "fewR7gRJix5l6Xbu7HBPEAtmrXZmYVjHu0DD76oVjNaz0_k6W7D2dRwppWXETUAV   ";
 
     public static void main(String[] args) {
-        Map<String,Object> body = new HashMap<>();
-        body.put("platformCustomerCode","80565");
-//        body.put("pageSize",50);
-        //查询前一天的时间戳的数据
-        long startTime = LocalDateTime.now().minusDays(300).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
-        long endTime = LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
-        String timestamp = String.valueOf(new Date().getTime());
-        String appSign = Md5Util.md5(APP_SECRET + timestamp + JSONObject.toJSONString(body));
-        Map<String,String> headerMap = new HashMap<>();
-        headerMap.put("x-app-id",APP_ID);
-        headerMap.put("x-app-sign",appSign);
-        headerMap.put("x-request-time",timestamp);
-        headerMap.put("x-request-token",REQUEST_TOKEN);
-        System.out.println(JSONObject.toJSONString(body));
-        System.out.println(JSONObject.toJSONString(headerMap));
-        String bodyStr = OkHttpUtils.doPostJson(API_URL,body, headerMap);
-        System.out.println(bodyStr);
+//        Map<String,Object> body = new HashMap<>();
+//        body.put("platformCustomerCode","86526");
+////        body.put("pageSize",50);
+//        body.put("pageIndex",1);
+//        body.put("pageSize",100);
+//        //查询前一天的时间戳的数据
+//        long startTime = LocalDateTime.now().minusDays(300).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
+//        long endTime = LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
+//        String timestamp = String.valueOf(new Date().getTime());
+//        String appSign = Md5Util.md5(APP_SECRET + timestamp + JSONObject.toJSONString(body));
+//        Map<String,String> headerMap = new HashMap<>();
+//        headerMap.put("x-app-id",APP_ID);
+//        headerMap.put("x-app-sign",appSign);
+//        headerMap.put("x-request-time",timestamp);
+//        headerMap.put("x-request-token",REQUEST_TOKEN);
+//        System.out.println(JSONObject.toJSONString(body));
+//        System.out.println(JSONObject.toJSONString(headerMap));
+//        String bodyStr = OkHttpUtils.doPostJson(API_URL,body, headerMap);
+//        System.out.println(bodyStr);
+
+        try {
+            boolean isNext = true;
+            int page = 1;
+            while (isNext){
+                // 准备请求数据
+                String timestamp = String.valueOf(new Date().getTime());
+                Map<String,Object> bodyMap = new HashMap<>();
+                bodyMap.put("pageIndex",page);
+                bodyMap.put("pageSize",100);
+                bodyMap.put("platformCustomerCode","86526");
+                String postJson = JSONObject.toJSONString(bodyMap);
+
+                // 计算签名
+                String appSign = Md5Util.md5(APP_SECRET + timestamp + postJson);
+
+                // 创建请求体
+                RequestBody body = RequestBody.create(
+                        MediaType.parse("application/json; charset=utf-8"),
+                        postJson
+                );
+
+                // 创建请求
+                Request request = new Request.Builder()
+                        .url(API_URL)
+                        .post(body)
+                        .addHeader("x-app-id", APP_ID)
+                        .addHeader("x-app-sign", appSign)
+                        .addHeader("x-request-time", timestamp)
+                        .addHeader("x-request-token", REQUEST_TOKEN)
+                        .build();
+
+                // 发送请求
+                OkHttpClient client = new OkHttpClient.Builder()
+                        .connectTimeout(30, TimeUnit.SECONDS)  // 连接超时
+                        .readTimeout(60, TimeUnit.SECONDS)     // 读取超时
+                        .writeTimeout(30, TimeUnit.SECONDS)    // 写入超时
+                        .build();
+                try (Response response = client.newCall(request).execute()) {
+                    if (response.isSuccessful()) {
+                        String responseBody = response.body().string();
+                        JSONObject responseJson = JSON.parseObject(responseBody);
+                        if (responseJson.getInteger("code") != 0) {
+                            throw new RuntimeException("API返回错误: " + responseJson);
+                        }
+                        isNext = responseJson.getJSONObject("data").getBooleanValue("hasNext");
+                        JSONArray dataList = responseJson.getJSONObject("data").getJSONArray("list");
+                        if (dataList != null) {
+                            //过滤掉bizType 为TOB的数据
+                            List<Object> filteredList = dataList.stream()
+                                    .filter(obj -> {
+                                        if (obj instanceof JSONObject) {
+                                            JSONObject jsonObj = (JSONObject) obj;
+                                            String bizType = jsonObj.getString("bizType");
+                                            return !"TOB".equals(bizType);
+                                        }
+                                        return true; // 如果不是JSONObject，保留原数据
+                                    })
+                                    .collect(Collectors.toList());
+                            dataList = new JSONArray(filteredList);
+                        }
+                        page = page +1;
+                    } else {
+                        throw new RuntimeException("请求失败: " + response.code() + " - " + response.message() + "-" +response.body().string() );
+                    }
+                }
+            }
+        }catch (Exception e){
+            throw new RuntimeException("请求异常: " + e.getMessage(), e);
+        }
     }
 
 //    public static void main(String[] args) {

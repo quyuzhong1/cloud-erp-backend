@@ -841,6 +841,7 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
                 detailDTO.setProductName(sku.getName());
                 detailDTO.setStatus(sku.getStatus());
                 detailDTO.setStatusName(ProductDetailStatusEnum.getName(sku.getStatus()));
+                detailDTO.setVariantProperty(sku.getVariantProperty());
             });
             //类型 试产trial  量产batch
             if(detailDTO.getType().equals(PilotApplicationTypeEnum.TRIAL.getCode())){

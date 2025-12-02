@@ -83,6 +83,16 @@ public class ProductNoDetailDTO {
     private String brandId;
 
     /**
+     * 研发团队名称
+     */
+    private String rdtTeamName;
+
+    /**
+     * 研发团队id
+     */
+    private String rdtTeamId;
+
+    /**
      * 产品属性
      */
     private String property;

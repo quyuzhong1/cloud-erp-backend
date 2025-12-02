@@ -5,8 +5,7 @@ import com.common.business.enums.FileTaskStatusEnum;
 import com.common.core.exception.ServiceException;
 import com.erp.model.plm.enums.SkuStdCostImportTypeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
-import com.erp.server.plm.service.ProductDetailImagesService;
-import com.erp.server.plm.service.SkuStdCostDetailService;
+import com.erp.server.plm.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -26,6 +25,14 @@ public class ImportPlmFeignController {
     private ProductDetailImagesService productDetailImagesService;
     @Resource
     private SkuStdCostDetailService skuStdCostDetailService;
+    @Resource
+    private MoldInfoService moldInfoService;
+    @Resource
+    private MoldRefSkuService moldRefSkuService;
+    @Resource
+    private CfgMoldReturnAlertRuleService cfgMoldReturnAlertRuleService;
+    @Resource
+    private CfgMoldAlertRuleService cfgMoldAlertRuleService;
 
     private void updateTask(String taskId, Exception e) {
         BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
@@ -61,6 +68,46 @@ public class ImportPlmFeignController {
             }
         } catch (Exception e) {
             log.error("【SKU标准成本导入】失败", e);
+            updateTask(dto.getTaskId(), e);
+        }
+    }
+
+    @PostMapping("/importMoldInfo")
+    public void importMoldInfo(@RequestBody BaseDTO.ImportDTO dto) {
+        try {
+            moldInfoService.importMoldInfo(dto);
+        } catch (Exception e) {
+            log.error("导入模具档案失败", e);
+            updateTask(dto.getTaskId(), e);
+        }
+    }
+
+    @PostMapping("/importMoldRefSku")
+    public void importMoldRefSku(@RequestBody BaseDTO.ImportDTO dto) {
+        try {
+            moldRefSkuService.importMoldRefSku(dto);
+        } catch (Exception e) {
+            log.error("导入模具档案失败", e);
+            updateTask(dto.getTaskId(), e);
+        }
+    }
+
+    @PostMapping("/importCfgMoldReturn")
+    public void importCfgMoldReturn(@RequestBody BaseDTO.ImportDTO dto) {
+        try {
+            cfgMoldReturnAlertRuleService.importCfgMoldReturn(dto);
+        } catch (Exception e) {
+            log.error("导入模具返还策略失败", e);
+            updateTask(dto.getTaskId(), e);
+        }
+    }
+
+    @PostMapping("/importCfgMoldAlert")
+    public void importCfgMoldAlert(@RequestBody BaseDTO.ImportDTO dto) {
+        try {
+            cfgMoldAlertRuleService.importCfgMoldAlert(dto);
+        } catch (Exception e) {
+            log.error("导入模具返还策略失败", e);
             updateTask(dto.getTaskId(), e);
         }
     }

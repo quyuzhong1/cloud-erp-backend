@@ -662,8 +662,10 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
             throw new ServiceException(ApiError.ERROR_PO_RECONCILIATION_DELETE);
         }
         log.info("开始删除，id = {}",id);
+        //反审核并且删除应付单
+        payableInfoService.deleteBySourceId(id);
         //删除
-        this.removeById(id);
+        super.removeById(id);
         //清除明细主表信息
         poReconciliationDetailScmService.cleanDetailByMainId(id);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);

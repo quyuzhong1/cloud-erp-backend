@@ -53,9 +53,6 @@ public class WildberriesAuthorize implements IShopAuthorizeService<T> {
 
     @Resource
     private RedisUtil redisUtil;
-
-    @Value("${oms.sdk.wildberries.sandbox}")
-    private String sandbox;
     /**
      * 获取授权地址
      */
@@ -84,7 +81,7 @@ public class WildberriesAuthorize implements IShopAuthorizeService<T> {
         }
 
         WildberriesSDKService sdkService = new WildberriesSDKService();
-        WildberriesResponse response1 = sdkService.checkToken(shopAuth.getAccessToken(),sandbox);
+        WildberriesResponse response1 = sdkService.checkToken(shopAuth.getAccessToken());
         if (!response1.isSuccess()){
             throw new ServiceException("授权校验失败：{}", response1.getMsg());
         }

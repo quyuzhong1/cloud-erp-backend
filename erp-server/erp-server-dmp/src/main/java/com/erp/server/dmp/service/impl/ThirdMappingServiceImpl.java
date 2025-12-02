@@ -17,10 +17,7 @@ import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.dmp.dto.DictBasicDTO;
 import com.erp.model.dmp.dto.ThirdMappingDTO;
 import com.erp.model.dmp.dto.ThirdMappingDTO.ThirdAddDTO;
-import com.erp.model.dmp.entity.ThirdLogisticsEntity;
-import com.erp.model.dmp.entity.ThirdMappingEntity;
-import com.erp.model.dmp.entity.ThirdShopEntity;
-import com.erp.model.dmp.entity.ThirdWarehouseEntity;
+import com.erp.model.dmp.entity.*;
 import com.erp.model.dmp.enums.ThirdSysTypeEnum;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -74,14 +71,14 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
     private ThirdLogisticsService thirdLogisticsService;
 //    @Resource
 //    private ThirdMappingService thirdMappingService;
-
     @Resource
     private LogisticsFeign logisticsFeign;
-
     @Resource
     private OverseasProviderFeign overseasProviderFeign;
     @Resource
     private DictBasicService dictBasicService;
+    @Resource
+    private DmpBasicSystemService dmpBasicSystemService;
 
 //    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
 //    @Transactional(rollbackFor = Exception.class)
@@ -156,12 +153,24 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
         String kingDeeCode = checkData(addDTO, addDTO.getSaveList(), addDTO.getDeleteList(), addDTO.getUpdateList());
         //删除数据
         List<ThirdMappingEntity> deleteList = addDTO.getDeleteList();
+        // 平台系统信息
+        Map<String, String> thirdPlatformSysTypeMap =  dictBasicService.lambdaQuery()
+                    .eq(DictBasicEntity::getType, "thirdPlatformSysType")
+                    .list().stream().collect(Collectors.toMap(DictBasicEntity::getValue, DictBasicEntity::getName,  (v1, v2) -> v1));
+
         if (CollectionUtils.isNotEmpty(deleteList)) {
             deleteList.forEach(existMapping -> {
                 if("logistics".equals(existMapping.getType())){
                     // 操作日志
                     String msg = StrUtil.format("编辑了【{}】的渠道由【{}】到【{}】", EnumMessage.getNameByCode(PlatformDictEnum.class, existMapping.getThirdSysType()),
                             existMapping.getThirdName(), "");
+                    operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_THIRD_MAPPING.getCode(), existMapping.getSysId(), "编辑操作");
+                } else if ("platform".equals(existMapping.getType())){
+                    String msg = StrUtil.format("解除绑定的平台【{}】：三方平台代号【{}】，三方平台【{}】",
+                            thirdPlatformSysTypeMap.getOrDefault(existMapping.getThirdSysType(), ""),
+                            existMapping.getThirdCode(),
+                            existMapping.getThirdName()
+                    );
                     operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_THIRD_MAPPING.getCode(), existMapping.getSysId(), "编辑操作");
                 }else{
                     // 操作日志
@@ -190,6 +199,14 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
                     String msg = StrUtil.format("编辑了【{}】的渠道由【{}】到【{}】", EnumMessage.getNameByCode(PlatformDictEnum.class, existMapping.getThirdSysType()),
                             oldEntity.getThirdName(), existMapping.getThirdName());
                     operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_THIRD_MAPPING.getCode(), existMapping.getSysId(), "编辑操作");
+                } else if ("platform".equals(existMapping.getType())){
+                    // 操作日志
+                    String msg = StrUtil.format("编辑绑定的平台【{}】：三方平台代号【{}】，三方平台【{}】",
+                            thirdPlatformSysTypeMap.getOrDefault(existMapping.getThirdSysType(), ""),
+                            existMapping.getThirdCode(),
+                            existMapping.getThirdName()
+                    );
+                    operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_THIRD_MAPPING.getCode(), existMapping.getSysId(), "编辑操作");
                 }else{
                     // 操作日志
                     String msg = StrUtil.format("编辑了【{}】的仓库由【{}】到【{}】", EnumMessage.getNameByCode(PlatformDictEnum.class, existMapping.getThirdSysType()),
@@ -212,6 +229,14 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
                     // 操作日志
                     String msg = StrUtil.format("编辑了【{}】的渠道由【{}】到【{}】", EnumMessage.getNameByCode(PlatformDictEnum.class, newEntity.getThirdSysType()),
                             "", newEntity.getThirdName());
+                    operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_THIRD_MAPPING.getCode(), newEntity.getSysId(), "新增操作");
+                } else if ("platform".equals(newEntity.getType())){
+                    // 操作日志
+                    String msg = StrUtil.format("新增了绑定的平台【{}】：三方平台代号【{}】，三方平台【{}】",
+                            newEntity.getSysName(),
+                            newEntity.getThirdCode(),
+                            newEntity.getThirdName()
+                    );
                     operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_THIRD_MAPPING.getCode(), newEntity.getSysId(), "新增操作");
                 }else{
                     // 操作日志
@@ -735,6 +760,13 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
                 }
                 sysName = logisticsChannelEntity.getName();
                 break;
+            case PLATFORM:
+                DmpBasicSystemEntity systemEntity = dmpBasicSystemService.getById(addDTO.getSysId());
+                if (Objects.isNull(systemEntity)) {
+                    throw new ServiceException("系统为空");
+                }
+                sysName =  systemEntity.getName();
+                break;
             default:
                 throw new ServiceException(ApiError.ERROR_PARAM_INVALID);
         }
@@ -859,6 +891,11 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
                     thirdName = thirdLogisticsEntity.getChannelName();
                     thirdAddDTO.setThirdInfoId(thirdLogisticsEntity.getId());
                     thirdAddDTO.setThirdCode(thirdLogisticsEntity.getChannelName());
+                    break;
+                case PLATFORM:
+                    thirdAddDTO.setThirdId(thirdAddDTO.getThirdCode());
+                    thirdAddDTO.setThirdInfoId("");
+                    thirdName = thirdAddDTO.getThirdName();
                     break;
                 default:
                     throw new ServiceException(ApiError.ERROR_PARAM_INVALID);

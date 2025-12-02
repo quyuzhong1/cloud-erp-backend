@@ -12,6 +12,7 @@ import com.common.business.enums.OrderDeliveryMarkTypeEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.erp.model.oms.dto.SplitResultDTO;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
@@ -20,6 +21,9 @@ import com.erp.model.tms.dto.LogisticsChannelDTO;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.rpc.tms.feign.LogisticsMappingFeign;
+import com.sdk.oms.shopify.api.graphql.ShopifyGraphQLClient;
+import com.sdk.oms.shopify.api.graphql.ShopifyGraphQLClientService;
+import com.sdk.oms.shopify.api.graphql.model.ShopifyOrderResponse;
 import com.sdk.oms.shopify.api.rest.ShopifyRestClient;
 import com.sdk.oms.shopify.api.rest.ShopifyRestClientService;
 import com.sdk.oms.shopify.api.rest.model.*;
@@ -46,6 +50,9 @@ public class ShopifyShipOrder extends AbstractShipOrder {
     private LogisticsMappingFeign logisticsMappingFeign;
 
     @Resource
+    private ShopifyGraphQLClientService shopifyGraphQLClientService;
+
+    @Resource
     private ShopifyRestClientService shopifyRestClientService;
 
     @Resource
@@ -61,8 +68,6 @@ public class ShopifyShipOrder extends AbstractShipOrder {
         List<SoB2cEntity> sourceOrderList = tuple.get(0);
         // 对应明细
         Map<String, List<SoB2cDetailEntity>> soB2cDetailEntityListMap = tuple.get(1);
-        // 当前单据物流信息
-        SoB2cLogisticsEntity logisticsEntity = tuple.get(2);
 
         List<String> signShippedDetailList = new ArrayList<>();
         for (SoB2cEntity mainEntity : sourceOrderList) {
@@ -75,9 +80,6 @@ public class ShopifyShipOrder extends AbstractShipOrder {
             soB2cDetailEntityList =  soB2cDetailEntityList.stream()
                     .filter(e -> CharSequenceUtil.isNotBlank(e.getSourceDetailId()))
                     .collect(Collectors.toList());
-//            if (detailEntityList.stream().anyMatch(e -> CharSequenceUtil.isBlank(e.getSourceDetailId()))) {
-//                throw new ServiceException("平台来源详情ID为空");
-//            }
             if (CollectionUtils.isEmpty(soB2cDetailEntityList)) {
                 log.warn("订单【{}】所有明细来源ID为空,不请求接口", mainEntity.getCode());
                 continue;
@@ -85,10 +87,15 @@ public class ShopifyShipOrder extends AbstractShipOrder {
             if (soB2cDetailEntityList.stream().anyMatch(e -> CharSequenceUtil.isBlank(e.getSourceDetailId()))) {
                 throw new ServiceException("平台来源详情ID为空");
             }
-            soB2cDetailEntityList = super.handleSplit(soB2cDetailEntityList, dto.isFalseDeliveryFlag());
+            SplitResultDTO splitResultDTO = super.handleSplit(soB2cDetailEntityList, dto.isFalseDeliveryFlag());
+            soB2cDetailEntityList = splitResultDTO.getDetailList();
             if (CollectionUtils.isEmpty(soB2cDetailEntityList)) {
                 log.warn("订单【{}】所有明细来源ID为空,不请求shopify接口", mainEntity.getCode());
                 continue;
+            }
+            List<SoB2cEntity> allEntityList = splitResultDTO.getAllEntityList();
+            if(CollectionUtils.isEmpty(allEntityList)){
+                allEntityList = Arrays.asList(mainEntity);
             }
             Map<String, SoB2cDetailEntity> detailEntityMap = soB2cDetailEntityList.stream().collect(Collectors.toMap(SoB2cDetailEntity::getSourceDetailId, Function.identity()));
             log.warn("[Shopify标记发货] 平台订单号【{}】,当前提交明细IDS:{}", mainEntity.getPlatformCode(), JSONUtil.toJsonStr(detailEntityMap.keySet()));
@@ -130,10 +137,16 @@ public class ShopifyShipOrder extends AbstractShipOrder {
                 log.error("[Shopify标记发货]Shopify数据异常: json={}", JSONUtil.toJsonStr(fulfillmentOrdersFromOrderList));
                 throw new ServiceException("Shopify数据异常：详情LineItems为空");
             }
-
+            List<String> allSoIds = allEntityList.stream().map(v->v.getId()).collect(Collectors.toList());
+            List<SoB2cLogisticsEntity> soB2cLogisticsEntityList = soB2cFeign.listSoB2cLogisticsByMainIdList(allSoIds);
+            List<String> channelIds = soB2cLogisticsEntityList.stream()
+                    .map(SoB2cLogisticsEntity::getLogisticsChannelId)
+                    .filter(Objects::nonNull)
+                    .distinct()
+                    .collect(Collectors.toList());
             //获取销售渠道信息
-            LogisticsChannelDTO.SignShipDTO tmsScaleChannelShipDTO = logisticsFeign.getScaleChannelByChannelById(
-                    logisticsEntity.getLogisticsChannelId(),
+            List<LogisticsChannelDTO.SignShipDTO> tmsScaleChannelShipDTOList = logisticsFeign.getScaleChannelByChannelByIds(
+                    channelIds,
                     PlatformDictEnum.SHOPIFY.getCode()
             );
 
@@ -164,16 +177,29 @@ public class ShopifyShipOrder extends AbstractShipOrder {
                 ShopifyTrackingInfo trackingInfo = new ShopifyTrackingInfo();
 
                 //获取渠道标发单号
-                String standardOrderType = tmsScaleChannelShipDTO.checkAndGetOrderDeliveryMarkType();
-                String trackingNumber = CharSequenceUtil.equals(OrderDeliveryMarkTypeEnum.TRANSPORT_NO.getCode(),standardOrderType)
-                        ? logisticsEntity.getCode() : logisticsEntity.getTrackNo();
-                if (CharSequenceUtil.isBlank(trackingNumber)) {
+                List<String> trackingNumberList = new ArrayList<>();
+                for (SoB2cLogisticsEntity soB2cLogisticsEntity : soB2cLogisticsEntityList) {
+                    LogisticsChannelDTO.SignShipDTO tmsScaleChannelShipDTO = tmsScaleChannelShipDTOList.stream()
+                            .filter(e -> e.getLogisticsChannelId().equals(soB2cLogisticsEntity.getLogisticsChannelId()))
+                            .findFirst()
+                            .orElse(null);
+                    String standardOrderType = tmsScaleChannelShipDTO.checkAndGetOrderDeliveryMarkType();
+                    String trackingNumber = CharSequenceUtil.equals(OrderDeliveryMarkTypeEnum.TRANSPORT_NO.getCode(),standardOrderType)
+                            ? soB2cLogisticsEntity.getCode() : soB2cLogisticsEntity.getTrackNo();
+                    if(StringUtils.isBlank(trackingNumber)){
+                        if(soB2cLogisticsEntity.getMainId().equals(mainEntity.getId())){
+                            throw new ServiceException("操作失败，渠道标发单号为空");
+                        }
+                    }
+                    trackingNumberList.add(trackingNumber);
+                }
+                if (CollectionUtils.isEmpty(trackingNumberList)) {
                     throw new ServiceException("操作失败，渠道标发单号为空");
                 }
 
-                trackingInfo.setNumber(trackingNumber);
+                trackingInfo.setNumbers(trackingNumberList);
                 trackingInfo.setUrl("");
-                trackingInfo.setCompany(tmsScaleChannelShipDTO.getCode());
+                trackingInfo.setCompany(tmsScaleChannelShipDTOList.get(0).getCode());
                 payload.setLineItemsByFulfillmentOrder(orderList);
                 payload.setTrackingInfo(trackingInfo);
                 ShopifyFulfillmentPayloadRoot request = new ShopifyFulfillmentPayloadRoot();
@@ -189,19 +215,33 @@ public class ShopifyShipOrder extends AbstractShipOrder {
                 if (!BusinessCommonConstants.hasProfile("prod")){
                     // 在非正式环境，店铺域名带test允许触发平台标记发货
                     if (shopifyShopDomain.contains("test")){
-                        log.warn("[Shopify测试账号触发标记发货] platformCode={},创建Fulfillment参数：,dto={}", platformOrderId, JSONUtil.toJsonStr(request));
-                        final ShopifyFulfillment actualShopifyFulfillment = shopifyRestClient.createFulfillment(request);
-                        log.warn("[Shopify测试账号触发标记发货] platformCode={},创建Fulfillment结果：{}", platformOrderId, JSONUtil.toJsonStr(actualShopifyFulfillment));
+                        log.warn("[Shopify标记发货]platformCode={},创建Fulfillment参数：,dto={}", platformOrderId, JSONUtil.toJsonStr(request));
+                        ShopifyGraphQLClient shopifyGraphQLClient = shopifyGraphQLClientService.getShopifyGraphQLClient(shopInfoDTO.getShopDomain(), shopInfoDTO.getAccessToken());
+                        ShopifyFulfillmentShipOrderResp shipOrderResp = shopifyGraphQLClient.shipOrder(request);
+                        log.warn("[Shopify标记发货] platformCode={},创建Fulfillment结果：{}", platformOrderId, JSONUtil.toJsonStr(shipOrderResp));
+                        if(CollectionUtils.isNotEmpty(shipOrderResp.getData().getFulfillmentCreate().getUserErrors())){
+                            String errorMsg = shipOrderResp.getData().getFulfillmentCreate().getUserErrors().stream()
+                                    .map(ShopifyFulfillmentShipOrderResp.DataDTO.FulfillmentCreateDTO.UserErrorsDTO::getMessage)
+                                    .filter(StringUtils::isNotBlank)
+                                    .collect(Collectors.joining(";"));
+                            log.error("[Shopify标记发货] platformCode={},创建Fulfillment失败：{}", platformOrderId, errorMsg);
+                            throw new ServiceException("Shopify创建Fulfillment失败：{}", errorMsg);
+                        }
                     } else {
                         log.warn("【{}】非正式环境不带test域名的店铺：不请求Shopify接口:请求参数={}", mainEntity.getPlatformCode(), JSONUtil.toJsonStr(request));
                     }
                 }else{
                     log.warn("[Shopify标记发货]platformCode={},创建Fulfillment参数：,dto={}", platformOrderId, JSONUtil.toJsonStr(request));
-                    // Creates a fulfillment for one or many fulfillment orders
-                    final ShopifyFulfillment actualShopifyFulfillment = shopifyRestClient.createFulfillment(request);
-                    log.warn("[Shopify标记发货] platformCode={},创建Fulfillment结果：{}", platformOrderId, JSONUtil.toJsonStr(actualShopifyFulfillment));
-                    if (null == actualShopifyFulfillment) {
-                        throw new ServiceException("Shopify创建Fulfillment失败");
+                    ShopifyGraphQLClient shopifyGraphQLClient = shopifyGraphQLClientService.getShopifyGraphQLClient(shopInfoDTO.getShopDomain(), shopInfoDTO.getAccessToken());
+                    ShopifyFulfillmentShipOrderResp shipOrderResp = shopifyGraphQLClient.shipOrder(request);
+                    log.warn("[Shopify标记发货] platformCode={},创建Fulfillment结果：{}", platformOrderId, JSONUtil.toJsonStr(shipOrderResp));
+                    if(CollectionUtils.isNotEmpty(shipOrderResp.getData().getFulfillmentCreate().getUserErrors())){
+                        String errorMsg = shipOrderResp.getData().getFulfillmentCreate().getUserErrors().stream()
+                                .map(ShopifyFulfillmentShipOrderResp.DataDTO.FulfillmentCreateDTO.UserErrorsDTO::getMessage)
+                                .filter(StringUtils::isNotBlank)
+                                .collect(Collectors.joining(";"));
+                        log.error("[Shopify标记发货] platformCode={},创建Fulfillment失败：{}", platformOrderId, errorMsg);
+                        throw new ServiceException("Shopify创建Fulfillment失败：{}", errorMsg);
                     }
                 }
             }

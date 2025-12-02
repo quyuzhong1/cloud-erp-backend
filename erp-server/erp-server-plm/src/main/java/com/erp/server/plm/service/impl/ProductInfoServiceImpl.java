@@ -228,6 +228,9 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
 
+    @Autowired
+    private ProductBrandService productBrandService;
+
     /**
      * 查询 分类id 下有多少产品
      *
@@ -1246,6 +1249,22 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             productInfoEntity.setIterateRefSkuId("");
             productInfoEntity.setIterateRefSkuNo("");
         }
+        
+        // 确保 brandName 不为 null（数据库 NOT NULL 约束）
+        if (StringUtils.isBlank(productInfoEntity.getBrandName())) {
+            // 如果有 brandId，尝试根据 brandId 查询品牌名称
+            if (StringUtils.isNotBlank(productInfoEntity.getBrandId())) {
+                ProductBrandEntity productBrand = productBrandService.getById(productInfoEntity.getBrandId());
+                if (ObjectUtils.isNotEmpty(productBrand)) {
+                    productInfoEntity.setBrandName(productBrand.getName());
+                } else {
+                    productInfoEntity.setBrandName("");
+                }
+            } else {
+                productInfoEntity.setBrandName("");
+            }
+        }
+        
         this.saveOrUpdate(productInfoEntity);
         return productInfoEntity.getId();
     }

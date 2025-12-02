@@ -123,9 +123,9 @@ public class SampleBackDetailServiceImpl extends SuperServiceImpl<SampleBackDeta
 
     @Override
     public SampleBackDetailDTO.ImportDTO importFile(MultipartFile excelFile, String backUserId, HttpServletResponse response) {
-        //sku信息
+        //sku信息（获取所有sku，不限制审核状态）
         List<FindUserDTO> userList = sysUserFeign.getUserList();
-        List<SkuVO> skuList = plmTaskFeign.listApproveSku();
+        List<SkuVO> skuList = plmTaskFeign.listAllSku();
         Map<String, SkuVO> map = skuList.stream().collect(Collectors.toMap(SkuVO::getSkuNo, e -> e,(o1, o2)->o1));
 
         SampleBackDetailExcelListener excelListenerUtil = new SampleBackDetailExcelListener(sampleLedgerService, map, backUserId,userList);

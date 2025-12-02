@@ -107,6 +107,10 @@ public class MercadoLocalOrderApiInitHandler implements DmpInputApiInitHandler {
                     }
                     sleepTime = sleepTime + 1000;
                     count = count + 1;
+                }else if (!Objects.equals(apiResult.getCode(), 200) && !Objects.equals(apiResult.getCode(), 201)){
+                    log.error("调用url={},入参params={}, 美客多marketplace/orders/search数据失败，返回值 responseMap={}", sb.toString(), params.toString(), JSONUtil.toJsonStr(apiResult));
+                    throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 数据解析失败，返回值 responseMap={}",
+                            sb.toString(), params.toString(), JSONUtil.toJsonStr(apiResult)));
                 }
                 data = apiResult.getData();
             }

@@ -108,6 +108,13 @@ public class ProductDetailImprotUpdateExcelDTO {
     private String brandName;
 
     /**
+     * 研发团队
+     */
+    @FieldValid(fieldName = "研发团队" , maxLength = 50)
+    @ExcelProperty("研发团队")
+    private String rdtTeamName;
+
+    /**
      * 产品开发状态
      */
     @FieldValid(fieldName = "产品开发状态",enumClass = ProductDetailStateEnum.class)

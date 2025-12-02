@@ -315,6 +315,9 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
             throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_INFO_NOT_FOUND);
         }
 
+        //收集所有SKU校验错误信息
+        List<String> errorMessages = new ArrayList<>();
+
         for (SubcontractOrderDetailEntity detailEntity : sourceDetailList) {
             //sku编码
             String skuNo = skuList.stream().filter(obj -> obj.getSkuId().equals(detailEntity.getSkuId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getSkuNo())).orElse("");
@@ -331,8 +334,14 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
             }
             //下推单据数量验证
             if (qty > applyQty - pushdownQty) {
-                throw new ServiceException(new ApiResult(ApiError.ERROR_SCM_OUTSOURCING_PARENT_SKU_QTY_EXCEEDS.getCode(), StrUtil.format(ApiError.ERROR_SCM_OUTSOURCING_PARENT_SKU_QTY_EXCEEDS.getMsg(),entity.getCode(),skuNo,applyQty - pushdownQty)));
+                errorMessages.add(StrUtil.format("委外订单【{}】SKU【{}】可下推数量为【{}】，请检查", entity.getCode(), skuNo, applyQty - pushdownQty));
             }
+        }
+
+        //统一抛出所有错误信息
+        if (CollectionUtils.isNotEmpty(errorMessages)) {
+            String errorMsg = String.join("；\n", errorMessages);
+            throw new ServiceException("委外订单下推数量校验失败：\n" + errorMsg);
         }
     }
 
@@ -347,6 +356,9 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
      */
     private List<SubcontractOrderDetailEntity> generateResultDetail (List<SubcontractOrderDetailEntity> newList, String mainId,Boolean isAdd) {
         List<SubcontractOrderDetailEntity> resultList = new ArrayList<>();
+        //收集所有SKU校验错误信息
+        List<String> errorMessages = new ArrayList<>();
+
         //父级skuIds
         List<String> parentSkuIds = new ArrayList<>();
         //全部skuIds
@@ -420,7 +432,8 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
             //父级SKU信息
             SkuVO skuVO = skuList.stream().filter(obj -> obj.getSkuId().equals(detailEntity.getSkuId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(skuVO)) {
-                throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_INFO_NOT_FOUND);
+                errorMessages.add(StrUtil.format("父级SKU【{}】产品信息不存在", detailEntity.getSkuId()));
+                continue;
             }
 
             //申请数量校验
@@ -446,13 +459,15 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
                 Integer pushdownQty = purchaseQty+subcontractQty;
 
                 if (detailEntity.getQty() > applyQty - pushdownQty) {
-                    throw new ServiceException(new ApiResult(ApiError.ERROR_SCM_PARENT_SKU_QTY_EXCEEDS_REMAIN.getCode(),StrUtil.format(ApiError.ERROR_SCM_PARENT_SKU_QTY_EXCEEDS_REMAIN.getMsg(),skuVO.getSkuNo(),applyQty - pushdownQty)));
+                    errorMessages.add(StrUtil.format("SKU【{}】可下推数量为【{}】，请检查", skuVO.getSkuNo(), applyQty - pushdownQty));
+                    continue;
                 }
             }
             //bom信息
             BomChildrenSkuDTO bomChildrenSkuDTO = bomChildrenList.stream().filter(obj -> obj.getParentSkuId().equals(detailEntity.getSkuId())).max(Comparator.comparingDouble(obj -> Double.valueOf(obj.getBomVersion()))).orElse(null);
             if (ObjectUtils.isEmpty(bomChildrenSkuDTO)) {
-                throw new ServiceException(ApiError.ERROR_PLM_BOM_NOT_FOUND);
+                errorMessages.add(StrUtil.format("SKU【{}】未找到对应的BOM信息", skuVO.getSkuNo()));
+                continue;
             }
 
             detailEntity.setIsAdd(Boolean.FALSE);
@@ -470,11 +485,13 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
             if (CollectionUtils.isNotEmpty(warehouseList)) {
                 WarehouseDTO.UpdateDTO updateDTO = warehouseList.stream().filter(obj -> obj.getId().equals(detailEntity.getWarehouseId())).findFirst().orElse(null);
                 if (ObjectUtils.isEmpty(updateDTO)) {
-                    throw new ServiceException(ApiError.ERROR_WMS_WAREHOUSE_NOT_FOUND);
+                    errorMessages.add(StrUtil.format("SKU【{}】仓库信息不存在", skuVO.getSkuNo()));
+                    continue;
                 }
                 //仓库组织匹配校验
                 if (!StrUtil.equals(updateDTO.getOrgId(),subcontractOrderEntity.getSubcontractOrgId())) {
-                    throw new ServiceException(ApiError.ERROR_SUBCONTRACT_ORDER_WAREHOUSE_ORG,updateDTO.getName(),subcontractOrderEntity.getSubcontractOrgName());
+                    errorMessages.add(StrUtil.format("SKU【{}】仓库【{}】所属组织与委外组织【{}】不一致", skuVO.getSkuNo(), updateDTO.getName(), subcontractOrderEntity.getSubcontractOrgName()));
+                    continue;
                 }
                 detailEntity.setWarehouseName(updateDTO.getName());
             }
@@ -485,15 +502,20 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
             }
             handleSupplierTaxPrice(detailEntity,Boolean.FALSE,subcontractOrderEntity.getSubcontractOrgId(), priceList);
             //子集SKU信息
-            List<SubcontractOrderDetailEntity>   childList = BeanMapperUtils.copyList(SubcontractOrderDetailEntity.class, detailEntity.getChildList());
+            List<SubcontractOrderDetailEntity> childList = BeanMapperUtils.copyList(SubcontractOrderDetailEntity.class, detailEntity.getChildList());
+            boolean hasChildError = false;
             for (SubcontractOrderDetailEntity childEntity : childList) {
                 //产品信息
                 SkuVO childSkuVO = skuList.stream().filter(obj -> obj.getSkuId().equals(childEntity.getSkuId())).findFirst().orElse(null);
                 if (ObjectUtils.isEmpty(childSkuVO)) {
-                    throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_INFO_NOT_FOUND);
+                    errorMessages.add(StrUtil.format("父级SKU【{}】的子件SKU【{}】产品信息不存在", skuVO.getSkuNo(), childEntity.getSkuId()));
+                    hasChildError = true;
+                    break;
                 }
                 if (StringUtils.isBlank(childEntity.getWarehouseLocation())) {
-                    throw new ServiceException(ApiError.ERROR_SUB_CHILD_LOCATION_BLANK,childEntity.getSkuNo());
+                    errorMessages.add(StrUtil.format("父级SKU【{}】的子件SKU【{}】仓位不能为空", skuVO.getSkuNo(), childSkuVO.getSkuNo()));
+                    hasChildError = true;
+                    break;
                 }
 
                 childEntity.setMainId(mainId);
@@ -504,7 +526,9 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
                 //仓库名称
                 WarehouseDTO.UpdateDTO updateDTO = warehouseList.stream().filter(obj -> obj.getId().equals(childEntity.getWarehouseId())).findFirst().orElse(null);
                 if (ObjectUtils.isEmpty(updateDTO)) {
-                    throw new ServiceException(ApiError.ERROR_WMS_WAREHOUSE_NOT_FOUND);
+                    errorMessages.add(StrUtil.format("父级SKU【{}】的子件SKU【{}】仓库信息不存在", skuVO.getSkuNo(), childSkuVO.getSkuNo()));
+                    hasChildError = true;
+                    break;
                 }
                 childEntity.setWarehouseName(updateDTO.getName());
                 //供应商名称
@@ -514,10 +538,23 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
                 }
                 handleSupplierTaxPrice(childEntity,Boolean.TRUE,subcontractOrderEntity.getSubcontractOrgId(), priceList);
             }
+
+            //如果子件有错误，跳过本条父级SKU
+            if (hasChildError) {
+                continue;
+            }
+
             resultList.add(detailEntity);
             resultList.addAll(childList);
 
         }
+
+        //统一抛出所有错误信息
+        if (CollectionUtils.isNotEmpty(errorMessages)) {
+            String errorMsg = String.join("；\n", errorMessages);
+            throw new ServiceException("委外订单校验失败：\n" + errorMsg);
+        }
+
         //添加修改操作日志
         for (SubcontractOrderDetailEntity resultEntity : resultList) {
             SubcontractOrderDetailEntity old = this.getById(resultEntity.getId());

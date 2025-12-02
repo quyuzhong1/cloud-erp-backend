@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.fms.mapper.AssetProfitLossMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.fms.entity.AssetProfitLossEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="approve_status" property="approveStatus" />
+       <result column="approve_user_id" property="approveUserId" />
+       <result column="approve_user_name" property="approveUserName" />
+       <result column="approve_time" property="approveTime" />
+       <result column="invalid_status" property="invalidStatus" />
+       <result column="invalid_remark" property="invalidRemark" />
+       <result column="invalid_time" property="invalidTime" />
+       <result column="source_code" property="sourceCode" />
+       <result column="source_type" property="sourceType" />
+       <result column="source_id" property="sourceId" />
+       <result column="code" property="code" />
+       <result column="doc_type" property="docType" />
+       <result column="plan_id" property="planId" />
+       <result column="plan_code" property="planCode" />
+       <result column="asset_org_id" property="assetOrgId" />
+       <result column="asset_org_name" property="assetOrgName" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_user_id,
+        create_user_name,
+        create_time,
+        update_user_id,
+        update_user_name,
+        update_time,
+        version,
+        is_deleted,
+        approve_status, approve_user_id, approve_user_name, approve_time, invalid_status, invalid_remark, invalid_time, source_code, source_type, source_id, code, doc_type, plan_id, plan_code, asset_org_id, asset_org_name
+    </sql>
+
+    <select id="paging" resultType="com.erp.model.fms.dto.AssetProfitLossDTO$ListDTO">
+        SELECT
+            apl.id,
+            apl.approve_status AS approveStatus,
+            apl.approve_user_id AS approveUserId,
+            apl.approve_user_name AS approveUserName,
+            apl.approve_time AS approveTime,
+            apl.invalid_status AS invalidStatus,
+            apl.invalid_remark AS invalidRemark,
+            apl.invalid_time AS invalidTime,
+            apl.source_code AS sourceCode,
+            apl.source_type AS sourceType,
+            apl.source_id AS sourceId,
+            apl.code,
+            apl.doc_type AS docType,
+            apl.plan_id AS planId,
+            apl.plan_code AS planCode,
+            apl.asset_org_id AS assetOrgId,
+            apl.asset_org_name AS assetOrgName,
+            apl.create_time AS createTime,
+            apl.create_user_name AS createUserName,
+            apld.id AS detailId,
+            apld.asset_category AS assetCategory,
+            apld.card_code AS cardCode,
+            apld.card_id AS cardId,
+            apld.asset_name AS assetName,
+            apld.asset_code AS assetCode,
+            apld.unit,
+            apld.diff_qty AS qty,
+            apld.book_qty AS bookQty,
+            apld.actual_qty AS actualQty,
+            asp.plan_name AS planName,
+            apld.actual_location as actualLocation
+        FROM asset_profit_loss apl
+        LEFT JOIN asset_profit_loss_detail apld ON apld.main_id = apl.id AND apld.is_deleted = false
+        LEFT JOIN asset_stocktaking_plan asp ON asp.id = apl.plan_id AND asp.is_deleted = false
+        WHERE
+        ${params.sqlMap.default}
+        AND apl.is_deleted = false
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        apl.create_time DESC
+    </select>
+
+    <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
+        select approve_status, count(id) from asset_profit_loss where is_deleted = false group by approve_status
+    </select>
+
+    <select id="listExport" resultType="com.erp.model.fms.dto.AssetProfitLossDTO$ListDTO">
+        SELECT
+            apl.id,
+            apl.approve_status AS approveStatus,
+            apl.approve_user_id AS approveUserId,
+            apl.approve_user_name AS approveUserName,
+            apl.approve_time AS approveTime,
+            apl.invalid_status AS invalidStatus,
+            apl.invalid_remark AS invalidRemark,
+            apl.invalid_time AS invalidTime,
+            apl.source_code AS sourceCode,
+            apl.source_type AS sourceType,
+            apl.source_id AS sourceId,
+            apl.code,
+            apl.doc_type AS docType,
+            apl.plan_id AS planId,
+            apl.plan_code AS planCode,
+            apl.asset_org_id AS assetOrgId,
+            apl.asset_org_name AS assetOrgName,
+            apl.create_time AS createTime,
+            apl.create_user_name AS createUserName,
+            apld.id AS detailId,
+            apld.asset_category AS assetCategory,
+            apld.card_code AS cardCode,
+            apld.card_id AS cardId,
+            apld.asset_name AS assetName,
+            apld.asset_code AS assetCode,
+            apld.unit,
+            apld.diff_qty AS qty,
+            apld.book_qty AS bookQty,
+            apld.actual_qty AS actualQty,
+            asp.plan_name AS planName
+        FROM asset_profit_loss apl
+        LEFT JOIN asset_profit_loss_detail apld ON apld.main_id = apl.id AND apld.is_deleted = false
+        LEFT JOIN asset_stocktaking_plan asp ON asp.id = apl.plan_id AND asp.is_deleted = false
+        WHERE
+        ${params.sqlMap.default}
+        AND apl.is_deleted = false
+        <if test="params.ids != null and params.ids.size() > 0">
+            AND apl.id IN
+            <foreach collection="params.ids" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        apl.create_time DESC
+    </select>
+    <select id="tabList" resultType="com.erp.model.fms.dto.AssetProfitLossDTO$TabListDTO">
+        SELECT
+        approve_status AS tabFlag,
+        count(*)  AS count
+        FROM  asset_profit_loss apl
+        WHERE is_deleted=FALSE
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        GROUP BY approve_status
+    </select>
+
+</mapper>

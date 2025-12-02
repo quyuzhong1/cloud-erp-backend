@@ -1156,6 +1156,16 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
     }
 
 
+    @Override
+    public List<InventoryDTO.LocationInventory> recommendedLocations(InventoryDTO.RecommendedLocationParams params) {
+        List<InventoryDTO.LocationInventory> result = new ArrayList<>();
+        for (InventoryDTO.RecommendedLocationParam locationParam : params.getList()) {
+            result.add(recommendedLocation(locationParam)) ;
+        }
+        return result;
+    }
+
+
     /**
      * 获取最接近传入数量的仓位
      * @param param param

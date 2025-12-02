@@ -217,6 +217,12 @@ public class DmpSoReturnDetailEntity extends BaseEntity<DmpSoReturnDetailEntity>
       */
     @TableField("total_amount")
     private BigDecimal totalAmount = BigDecimal.ZERO;
+    
+    /**
+     * 原始单号
+     */
+    @TableField("tid")
+    private String tid;
 
     public static final String MAIN_ID = "main_id";
 

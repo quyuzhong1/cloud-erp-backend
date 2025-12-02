@@ -23,6 +23,11 @@ public class SoReceiptApproveHandler extends AbstractApproveHandler {
     private SoReceiptService soReceiptService;
 
     @Override
+    public BatchResultDTO approve(ApproveOneDTO dto) {
+        return soReceiptService.approve(dto);
+    }
+
+    @Override
     public Boolean cancelProcess(ApproveDTO.CancelProcessDTO dto) {
         return soReceiptService.cancelProcess(dto.getId());
     }

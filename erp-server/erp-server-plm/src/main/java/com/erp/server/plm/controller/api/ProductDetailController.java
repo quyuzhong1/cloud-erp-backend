@@ -21,6 +21,8 @@ import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.dto.excel.ProductWarehouseLocationExcelDTO;
 import com.erp.model.plm.entity.*;
+import com.erp.server.plm.service.ProductBrandService;
+import com.erp.server.plm.service.ProductRDTTeamService;
 import com.erp.model.plm.enums.ProductDetailStatusEnum;
 import com.erp.model.plm.vo.SkuSimpleVO;
 import com.erp.model.plm.vo.SkuVO;
@@ -97,6 +99,12 @@ public class ProductDetailController extends BaseController {
 
     @Resource
     private ProductUnitService productUnitService;
+
+    @Resource
+    private ProductBrandService productBrandService;
+
+    @Resource
+    private ProductRDTTeamService productRDTTeamService;
 
     @Resource
     private ProductDetailApproverService productDetailApproverService;
@@ -699,6 +707,120 @@ public class ProductDetailController extends BaseController {
     //@RequestPermissions("plm:product:detail:deleteProductUnit")
     public ApiResult deleteProductUnit(String id) {
         Boolean flag = productUnitService.delete(id);
+        return flag == true ? this.success() : this.failure();
+    }
+
+    /**
+     * 产品信息-品牌管理-新增|修改
+     *
+     * @param productBrandList productBrandList
+     * @return com.common.core.vo.ApiResult
+     * @Author Auto
+     * @Date 2025/01/20
+     **/
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "产品信息-品牌管理-新增|修改：品牌名称={name}", keyIdName = "name")
+    @PostMapping("/saveOrUpdateProductBrand")
+    //@RequestPermissions("plm:product:detail:saveOrUpdateProductBrand")
+    public ApiResult<?> saveOrUpdateProductBrand(@RequestBody @Validated List<ProductBrandDTO> productBrandList) {
+        List<BatchResultDTO> resultDTOS = new LinkedList<>();
+        for (ProductBrandDTO dto : productBrandList) {
+            try {
+                Boolean flag = productBrandService.saveOrUpdateBatch(Collections.singletonList(dto));
+                if (flag){
+                    resultDTOS.add(BatchResultDTO.success(dto.getId(), dto.getName(),"品牌管理-新增|修改成功"));
+                } else {
+                    resultDTOS.add(BatchResultDTO.fail(dto.getId(),dto.getName(),"品牌管理-新增|修改失败"));
+                }
+            }catch (Exception e){
+                log.error("品牌管理-新增|修改失败",e);
+                resultDTOS.add(BatchResultDTO.fail(dto.getId(), dto.getName(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+    /**
+     * 产品信息-品牌管理-查询
+     *
+     * @return com.common.core.vo.ApiResult<java.util.List < com.erp.model.plm.entity.ProductBrandEntity>>
+     * @Author Auto
+     * @Date 2025/01/20
+     **/
+    @GetMapping("/listProductBrand")
+    public ApiResult<List<ProductBrandEntity>> listProductBrand() {
+        List<ProductBrandEntity> list = productBrandService.listProductBrand();
+        return this.success(list);
+    }
+
+    /**
+     * 产品信息-品牌管理-删除
+     *
+     * @param id 品牌列表id
+     * @return com.common.core.vo.ApiResult
+     * @Author Auto
+     * @Date 2025/01/20
+     **/
+    @LogAction(value = LogActionEnum.DELETE, desc = "产品信息-品牌管理-删除")
+    @PostMapping("/deleteProductBrand")
+    //@RequestPermissions("plm:product:detail:deleteProductBrand")
+    public ApiResult deleteProductBrand(String id) {
+        Boolean flag = productBrandService.delete(id);
+        return flag == true ? this.success() : this.failure();
+    }
+
+    /**
+     * 产品信息-研发团队管理-新增|修改
+     *
+     * @param productRDTTeamList productRDTTeamList
+     * @return com.common.core.vo.ApiResult
+     * @Author Auto
+     * @Date 2025/01/20
+     **/
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "产品信息-研发团队管理-新增|修改：研发团队名称={name}", keyIdName = "name")
+    @PostMapping("/saveOrUpdateProductRDTTeam")
+    //@RequestPermissions("plm:product:detail:saveOrUpdateProductRDTTeam")
+    public ApiResult<?> saveOrUpdateProductRDTTeam(@RequestBody @Validated List<ProductRDTTeamDTO> productRDTTeamList) {
+        List<BatchResultDTO> resultDTOS = new LinkedList<>();
+        for (ProductRDTTeamDTO dto : productRDTTeamList) {
+            try {
+                Boolean flag = productRDTTeamService.saveOrUpdateBatch(Collections.singletonList(dto));
+                if (flag){
+                    resultDTOS.add(BatchResultDTO.success(dto.getId(), dto.getName(),"研发团队管理-新增|修改成功"));
+                } else {
+                    resultDTOS.add(BatchResultDTO.fail(dto.getId(),dto.getName(),"研发团队管理-新增|修改失败"));
+                }
+            }catch (Exception e){
+                log.error("研发团队管理-新增|修改失败",e);
+                resultDTOS.add(BatchResultDTO.fail(dto.getId(), dto.getName(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+    /**
+     * 产品信息-研发团队管理-查询
+     *
+     * @return com.common.core.vo.ApiResult<java.util.List < com.erp.model.plm.entity.ProductRDTTeamEntity>>
+     * @Author Auto
+     * @Date 2025/01/20
+     **/
+    @GetMapping("/listProductRDTTeam")
+    public ApiResult<List<ProductRDTTeamEntity>> listProductRDTTeam() {
+        List<ProductRDTTeamEntity> list = productRDTTeamService.listProductRDTTeam();
+        return this.success(list);
+    }
+
+    /**
+     * 产品信息-研发团队管理-删除
+     *
+     * @param id 研发团队列表id
+     * @return com.common.core.vo.ApiResult
+     * @Author Auto
+     * @Date 2025/01/20
+     **/
+    @LogAction(value = LogActionEnum.DELETE, desc = "产品信息-研发团队管理-删除")
+    @PostMapping("/deleteProductRDTTeam")
+    //@RequestPermissions("plm:product:detail:deleteProductRDTTeam")
+    public ApiResult deleteProductRDTTeam(String id) {
+        Boolean flag = productRDTTeamService.delete(id);
         return flag == true ? this.success() : this.failure();
     }
 

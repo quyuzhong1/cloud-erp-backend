@@ -555,7 +555,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             }
         }
         // 海外仓退货存在未关联订单，允许修改客户
-        if (SourceTypeEnum.THIRD_WAREHOUSE_RETURN_INSTOCK.getCode().equalsIgnoreCase(entity.getSourceType())){
+        if (SourceTypeEnum.THIRD_WAREHOUSE_RETURN_INSTOCK.getCode().equalsIgnoreCase(entity.getSourceType()) || SourceTypeEnum.SELF_ADD.getCode().equalsIgnoreCase(entity.getSourceType())){
             CustomerInfoEntity customerInfo = customerFeign.getCustomerById(dto.getCustomerId());
             if (null == customerInfo){
                 ServiceException.runError(ApiError.ERROR_CUSTOMER_NOT_FOUND);

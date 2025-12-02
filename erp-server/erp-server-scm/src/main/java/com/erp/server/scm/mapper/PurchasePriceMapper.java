@@ -60,4 +60,11 @@ public interface PurchasePriceMapper extends BaseMapper<PurchasePriceEntity> {
      * @return Integer
      */
     Integer tabList(@Param("params")PurchaseOrderDTO.SearchParamDTO searchParamDTO);
+
+    /**
+     * 获取所有价目表
+     * @param ids
+     * @return
+     */
+    List<PurchasePriceDTO.SupplierSkuPrice> listSkuPrice();
 }

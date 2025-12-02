@@ -1099,6 +1099,11 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         updateApproveStatus(Collections.singletonList(purchasePriceEntity), approveStatus);
     }
 
+    @Override
+    public List<PurchasePriceDTO.SupplierSkuPrice> listSkuPrice() {
+        return baseMapper.listSkuPrice();
+    }
+
     /**
      * @description: 提交流程
      * @author Will

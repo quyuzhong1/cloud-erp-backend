@@ -91,6 +91,7 @@ public class MercadoLocalProductDetailInitHandler extends DmpInputInitHandler {
 			HashMap<String, Object> params = new HashMap<>(1);
 			params.put("ids", org.thymeleaf.util.StringUtils.join(list,","));
 			params.put("userId", shopInfoDTO.getUserId().toString());
+			params.put("include_attributes", "all");
 
 			//设置请求头
 			Map<String, String> headerMap = new HashMap<>(1);

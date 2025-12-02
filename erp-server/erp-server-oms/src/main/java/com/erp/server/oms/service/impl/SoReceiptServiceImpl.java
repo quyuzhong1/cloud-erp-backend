@@ -27,6 +27,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.StrUtils;
+import com.erp.model.oms.dto.OmsAttachmentDTO;
 import com.erp.model.oms.dto.SoReceiptDTO;
 import com.erp.model.oms.dto.SoReceiptDetailDTO;
 import com.erp.model.oms.entity.*;
@@ -1101,6 +1102,42 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
             if(existDetail == null){
                 return true;
             }
+        }
+        //校验附件是否有变更
+        // 1. 收集数据库中已存在的所有附件URL（主表附件 + 所有明细附件）
+        Set<String> existingAttachUrls = new HashSet<>();
+        List<String> businessIds = new ArrayList<>();
+        businessIds.add(exist.getId());
+        businessIds.addAll(existList.stream().map(SoReceiptDetailEntity::getId).collect(Collectors.toList())); // 所有明细业务ID
+        List<OmsAttachmentDTO.UpdateDTO> dbAttachments = omsAttachmentService.getByBusinessIds(businessIds);
+        // 提取数据库附件的URL（去重，避免重复判断）
+        for (OmsAttachmentDTO.UpdateDTO dbAttach : dbAttachments) {
+            if (dbAttach.getAttachUrl() != null) { // 避免空URL干扰
+                existingAttachUrls.add(dbAttach.getAttachUrl().trim());
+            }
+        }
+
+        Set<String> newAttachUrls = new HashSet<>();
+        if (dto.getAttachmentList() != null) {
+            for (AttachDTO newAttach : dto.getAttachmentList()) {
+                if (newAttach.getAttachUrl() != null) {
+                    newAttachUrls.add(newAttach.getAttachUrl().trim());
+                }
+            }
+        }
+        // 2.2 所有明细附件（每个明细DTO的attachmentList）
+        for (PlatformReceiptDetailDTO detailDTO : platformReceiptDetailDTOList) {
+            if (detailDTO.getAttachmentList() != null) {
+                for (AttachDTO detailAttach : detailDTO.getAttachmentList()) {
+                    if (detailAttach.getAttachUrl() != null) {
+                        newAttachUrls.add(detailAttach.getAttachUrl().trim());
+                    }
+                }
+            }
+        }
+        // 3. 对比两个URL集合：若不相等，则说明附件有新增、删除或变更
+        if (!existingAttachUrls.equals(newAttachUrls)) {
+            return true;
         }
 
         return false;

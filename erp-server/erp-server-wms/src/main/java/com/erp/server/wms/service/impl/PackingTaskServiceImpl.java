@@ -4,6 +4,7 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.ListUtil;
+import cn.hutool.core.date.StopWatch;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.alibaba.excel.EasyExcel;
@@ -86,6 +87,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -2514,11 +2516,17 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
 
     @Override
     public PagingVO<PackingTaskDTO.PagingViewDTO> exportPackingTask(PagingDTO<PackingTaskDTO.PagingParamDTO> dto) {
+        StopWatch stopWatch = new StopWatch("exportPackingTask");
         PackingTaskDTO.PagingParamDTO params = dto.getParams();
         params.setPermissionSql(dto.getPermissionSql());
+        stopWatch.start("pagingList");
         Page<PackingTaskDTO.PagingViewDTO> page = baseMapper.pagingList(new Page<>(dto.getCurrPage(), dto.getPageSize()), params);
+        stopWatch.stop();
+        stopWatch.start("buildPackingTask");
         //补充数据
         buildPackingTask(page.getRecords());
+        stopWatch.stop();
+        log.warn(stopWatch.prettyPrint(TimeUnit.SECONDS));
         if (CollectionUtils.isEmpty(page.getRecords())) {
             throw new ServiceException(ApiError.ERROR_EXPORT_DATA_EMPTY);
         }
@@ -2982,6 +2990,15 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         page.setRecords(detailDTOS);
         return new PagingVO<>(page);
     }
+
+    @Override
+    public List<WmsCartonDTO.CountDTO> countPackingQtyBySourceIds(List<String> sourceIds) {
+        if (CollUtil.isEmpty(sourceIds)){
+            return Collections.emptyList();
+        }
+        return baseMapper.countPackingQtyBySourceIds(sourceIds);
+    }
+
 
     private List<WmsCartonDetailDTO.ListPackingDetailDTO> buildPackingDetailExportTaskMerge(List<WmsCartonDetailDTO.ListPackingDetailDTO> records) {
         if (CollectionUtils.isEmpty(records)){

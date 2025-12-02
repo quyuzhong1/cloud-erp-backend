@@ -5,6 +5,7 @@ import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.ApproveBusinessKey;
 import com.common.business.dto.ApproveDTO;
+import com.common.business.dto.base.ApproveOneDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.ApprovePlatformEnum;
@@ -24,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -38,6 +40,17 @@ public class CustomerInfoApproveHandler extends AbstractApproveHandler {
     @Resource
     private OperateLogService operateLogService;
 
+
+    @Override
+    public BatchResultDTO approve(ApproveOneDTO dto) {
+        BaseApproveParamDTO baseApproveParamDTO = new BaseApproveParamDTO();
+        baseApproveParamDTO.setIds(Arrays.asList(dto.getId()));
+        baseApproveParamDTO.setType( dto.getType());
+        baseApproveParamDTO.setComment(dto.getComment());
+        baseApproveParamDTO.setIsNeedProcess(dto.getIsNeedProcess());
+        baseApproveParamDTO.setDeliveryDate(dto.getDeliveryDate());
+        return customerInfoService.approve(baseApproveParamDTO,customerInfoService.getById(dto.getId()));
+    }
 
     @Override
     public Boolean cancelProcess(ApproveDTO.CancelProcessDTO dto) {

@@ -288,7 +288,7 @@ public class DmpOutputSdyReturnInstockHandler extends DmpOutputSdyBaseTaskHandle
 					// 旺店通退货入库取refund_no
 					shudiyunB2cOrderDTO.setParent_node_no(dmpSoReturnInfoEntities.get(0).getPlatformCode());
 				} else {
-					shudiyunB2cOrderDTO.setParent_node_no(dmpReturnInstockEntity.getPlatformReturnInstockCode());
+					shudiyunB2cOrderDTO.setParent_node_no(platformOrderCode);
 				}
 
     	        

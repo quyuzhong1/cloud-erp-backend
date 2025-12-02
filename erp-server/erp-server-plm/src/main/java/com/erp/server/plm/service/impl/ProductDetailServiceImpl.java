@@ -62,7 +62,6 @@ import com.erp.model.sys.dto.DictCountryDTO;
 import com.erp.model.sys.dto.SysUserDeptDTO;
 import com.erp.model.sys.dto.UserSuperiorDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
-import com.erp.model.sys.enums.ChargeSuperiorEnum;
 import com.erp.model.sys.openapi.DimensionalWeightDTO;
 import com.erp.model.sys.openapi.UploadSkuDTO;
 import com.erp.model.tms.dto.CfgSettingValueDTO;
@@ -256,6 +255,12 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     private ProductUnitService productUnitService;
 
     @Autowired
+    private ProductBrandService productBrandService;
+
+    @Autowired
+    private ProductRDTTeamService productRDTTeamService;
+
+    @Autowired
     private ProductVariantPropertyService productVariantPropertyService;
 
     @Autowired
@@ -315,6 +320,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
     @Resource
     private SoOutstockFeign soOutstockFeign;
+
+    @Resource
+    private MoldInfoService moldInfoService;
 
     //变更财务人员审核
     @Value("${changeFinancialAudit}")
@@ -381,6 +389,12 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         List<String> mainSupplierIds = list.stream().map(ProductDetailShowDTO::getMainSupplier).distinct().collect(Collectors.toList());
         Map<String, SupplierDTO.SupplierSimpleDTO> supplierMap = supplierFeign.getSupplierSimpleInfo(mainSupplierIds);
 
+        //是否存在资产属性
+        List<String> moldCodeList = list.stream().map(ProductDetailShowDTO::getSkuNo).distinct().collect(Collectors.toList());
+        List<MoldInfoEntity> moldList = moldInfoService.lambdaQuery().in(MoldInfoEntity::getCode, moldCodeList).list();
+        Map<String, MoldInfoEntity> moldMap = moldList.stream().collect(Collectors.toMap(MoldInfoEntity::getCode, Function.identity()));
+
+
         List<String> skuIdList = list.stream().map(ProductDetailShowDTO::getSkuId).collect(Collectors.toList());
         //获取子SKU集合
         List<BomChildrenSkuDTO> bomChildrenSkuDTOS = bomSkuService.listBomChildBySkuIds(skuIdList);
@@ -436,6 +450,16 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             // 一级供应商名称
             if (StrUtils.isNotEmpty(item.getMainSupplier()) && supplierMap.containsKey(item.getMainSupplier())) {
                 item.setMainSupplierName(supplierMap.get(item.getMainSupplier()).getName());
+            }
+
+            //模具档案
+            MoldInfoEntity moldInfoEntity = moldMap.getOrDefault(item.getSkuNo(), null);
+            if(Objects.nonNull(moldInfoEntity)){
+                item.setMoldId(moldInfoEntity.getId());
+                item.setMoldCode(moldInfoEntity.getCode());
+                item.setMoldName(moldInfoEntity.getName());
+                item.setTag(moldInfoEntity.getTag());
+                item.setTagName(MoldInfoTagEnum.getName(moldInfoEntity.getTag()));
             }
         }
 
@@ -1265,6 +1289,26 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 productSpuBaseInfoDTO.setGrade(basicDict.getValue());
             }
         }
+        //品牌
+        if (StringUtils.isNotBlank(productSpuBaseInfoDTO.getBrandId())) {
+            //根据id查询品牌表中的品牌
+            ProductBrandEntity productBrand = productBrandService.getById(productSpuBaseInfoDTO.getBrandId());
+            if (ObjectUtils.isNotEmpty(productBrand)) {
+                productSpuBaseInfoDTO.setBrandName(productBrand.getName());
+            }
+            // 设置品牌占用状态
+            productBrandService.setupOccupy(Arrays.asList(productSpuBaseInfoDTO.getBrandId()));
+        }
+        //研发团队
+        if (StringUtils.isNotBlank(productSpuBaseInfoDTO.getRdtTeamId())) {
+            //根据id查询研发团队表中的研发团队
+            ProductRDTTeamEntity productRDTTeam = productRDTTeamService.getById(productSpuBaseInfoDTO.getRdtTeamId());
+            if (ObjectUtils.isNotEmpty(productRDTTeam)) {
+                productSpuBaseInfoDTO.setRdtTeamName(productRDTTeam.getName());
+            }
+            // 设置研发团队占用状态
+            productRDTTeamService.setupOccupy(Arrays.asList(productSpuBaseInfoDTO.getRdtTeamId()));
+        }
 
         //产品款名和产品品名关系处理
         handleProductNames(productNoSpecDTO);
@@ -1498,9 +1542,19 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
     private void checkSizeAndWeight(ProductPackDTO productPackDTO) {
         if (ObjectUtils.isNotEmpty(productPackDTO)) {
+            //校验包装尺寸：长≥宽≥高
+            compareDimensions(productPackDTO.getProductLength(), productPackDTO.getProductWidth(), ApiError.ERROR_PRODUCT_LENGTH_LESS_THAN_WIDTH);
+            compareDimensions(productPackDTO.getProductWidth(), productPackDTO.getProductHeight(), ApiError.ERROR_PRODUCT_WIDTH_LESS_THAN_HEIGHT);
+            
+            //校验箱规尺寸：长≥宽≥高
+            compareDimensions(productPackDTO.getBoxLength(), productPackDTO.getBoxWidth(), ApiError.ERROR_BOX_LENGTH_LESS_THAN_WIDTH);
+            compareDimensions(productPackDTO.getBoxWidth(), productPackDTO.getBoxHeight(), ApiError.ERROR_BOX_WIDTH_LESS_THAN_HEIGHT);
+            
+            //校验箱规必须大于等于包装尺寸
             compareDimensions(productPackDTO.getBoxLength(), productPackDTO.getProductLength(), ApiError.ERROR_LENGTH_BOX_LITTER_THAN_PRODUCT);
             compareDimensions(productPackDTO.getBoxWidth(), productPackDTO.getProductWidth(), ApiError.ERROR_WIDTH_BOX_LITTER_THAN_PRODUCT);
             compareDimensions(productPackDTO.getBoxHeight(), productPackDTO.getProductHeight(), ApiError.ERROR_HEIGHT_BOX_LITTER_THAN_PRODUCT);
+            
             //毛重大于等于净重
             compareDimensions(productPackDTO.getGrossWeight(), productPackDTO.getNetWeight(), ApiError.ERROR_WEIGHT_GROSS_LITTER_THAN_NET);
         }
@@ -1517,9 +1571,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
      */
     @Override
     public void compareDimensions(BigDecimal larger, BigDecimal smaller, ApiError apiError) {
-        if (Objects.nonNull(larger) && larger.compareTo(BigDecimal.ZERO) > 0
-                && Objects.nonNull(smaller) && smaller.compareTo(BigDecimal.ZERO) > 0
-                && larger.compareTo(smaller) < 0) {
+        // 【为空则忽略不校验】- 如果larger或smaller为null，则不校验
+        // 如果两个值都不为null，则进行校验（允许值为0的情况也校验）
+        if (Objects.nonNull(larger) && Objects.nonNull(smaller) && larger.compareTo(smaller) < 0) {
              throw new ServiceException(apiError);
         }
     }
@@ -1623,6 +1677,26 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             if (ObjectUtils.isNotEmpty(basicDict)) {
                 productInfoDTO.setGrade(basicDict.getValue());
             }
+        }
+        //品牌
+        if (StringUtils.isNotBlank(productInfoDTO.getBrandId())) {
+            //根据id查询品牌表中的品牌
+            ProductBrandEntity productBrand = productBrandService.getById(productInfoDTO.getBrandId());
+            if (ObjectUtils.isNotEmpty(productBrand)) {
+                productInfoDTO.setBrandName(productBrand.getName());
+            }
+            // 设置品牌占用状态
+            productBrandService.setupOccupy(Arrays.asList(productInfoDTO.getBrandId()));
+        }
+        //研发团队
+        if (StringUtils.isNotBlank(productInfoDTO.getRdtTeamId())) {
+            //根据id查询研发团队表中的研发团队
+            ProductRDTTeamEntity productRDTTeam = productRDTTeamService.getById(productInfoDTO.getRdtTeamId());
+            if (ObjectUtils.isNotEmpty(productRDTTeam)) {
+                productInfoDTO.setRdtTeamName(productRDTTeam.getName());
+            }
+            // 设置研发团队占用状态
+            productRDTTeamService.setupOccupy(Arrays.asList(productInfoDTO.getRdtTeamId()));
         }
         if(CollectionUtils.isNotEmpty(productInfoDTO.getApplicationCategoryIdList())){
             productInfoDTO.setApplicationCategoryId(String.join(",", productInfoDTO.getApplicationCategoryIdList()));
@@ -2848,7 +2922,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                     .skuIdList(skuIds)
                     .build();
             List<InventoryEntity> inventoryEntities = inventoryFeign.listInventoryBySkuIds(dto);
-            List<InventoryEntity> collect = inventoryEntities.stream().filter(e -> Objects.nonNull(e) && e.getQty() > 0).collect(Collectors.toList());
+            List<InventoryEntity> collect = inventoryEntities.stream().filter(e -> Objects.nonNull(e) && e.getQty() > 0 && (CharSequenceUtil.equals(e.getDictInventoryStatus(),InventoryStatusEnum.USABLE.getCode()) || CharSequenceUtil.equals(e.getDictInventoryStatus(),InventoryStatusEnum.FROZEN.getCode()) )).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(collect)){
                 List<String> skuNoList = collect.stream().map(InventoryEntity::getSkuNo).distinct().collect(Collectors.toList());
                 throw new ServiceException(ApiError.ERROR_WMS_SKU_STOCK_EXISTS_SPU_CHANGE_FORBIDDEN, String.join(",",skuNoList));
@@ -4989,15 +5063,24 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                     }
                 }
 
-                BasicDictEntity productBrand = null;
+                //品牌处理 - 从品牌管理表中获取
                 if(StringUtils.isNotBlank(dto.getBrandName())){
-                    productBrand = basicDictList.stream().filter(b -> BasicDictTypeEnum.PRODUCT_BRAND.getCode().equals(b.getType()) && b.getValue().
-                            equals(dto.getBrandName())).findFirst().orElse(null);
+                    ProductBrandEntity productBrand = productBrandService.getByName(dto.getBrandName());
                     if (ObjectUtils.isEmpty(productBrand)) {
                         errorMsgList.add("产品品牌在系统中未找到");
                     }else {
                         productInfoDTO.setBrandId(productBrand.getId());
-                        productInfoDTO.setBrandName(productBrand.getValue());
+                        productInfoDTO.setBrandName(productBrand.getName());
+                    }
+                }
+                //研发团队处理 - 从研发团队管理表中获取
+                if(StringUtils.isNotBlank(dto.getRdtTeamName())){
+                    ProductRDTTeamEntity productRDTTeam = productRDTTeamService.getByName(dto.getRdtTeamName());
+                    if (ObjectUtils.isEmpty(productRDTTeam)) {
+                        errorMsgList.add("研发团队在系统中未找到");
+                    }else {
+                        productInfoDTO.setRdtTeamId(productRDTTeam.getId());
+                        productInfoDTO.setRdtTeamName(productRDTTeam.getName());
                     }
                 }
 
@@ -5856,10 +5939,25 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 }
             }
 
-            BasicDictEntity productBrand = basicDictList.stream().filter(b -> BasicDictTypeEnum.PRODUCT_BRAND.getCode().equals(b.getType()) && b.getValue().
-                    equals(dto.getBrandName())).findFirst().orElse(null);
-            if (ObjectUtils.isEmpty(productBrand)) {
-                errorMsgList.add("产品品牌在系统中未找到");
+            //品牌处理 - 从品牌管理表中获取
+            if(StringUtils.isNotBlank(dto.getBrandName())){
+                ProductBrandEntity productBrand = productBrandService.getByName(dto.getBrandName());
+                if (ObjectUtils.isEmpty(productBrand)) {
+                    errorMsgList.add("产品品牌在系统中未找到");
+                }else {
+                    productInfoDTO.setBrandId(productBrand.getId());
+                    productInfoDTO.setBrandName(productBrand.getName());
+                }
+            }
+            //研发团队处理 - 从研发团队管理表中获取
+            if(StringUtils.isNotBlank(dto.getRdtTeamName())){
+                ProductRDTTeamEntity productRDTTeam = productRDTTeamService.getByName(dto.getRdtTeamName());
+                if (ObjectUtils.isEmpty(productRDTTeam)) {
+                    errorMsgList.add("研发团队在系统中未找到");
+                }else {
+                    productInfoDTO.setRdtTeamId(productRDTTeam.getId());
+                    productInfoDTO.setRdtTeamName(productRDTTeam.getName());
+                }
             }
 
             //迭代产品校验
@@ -6075,8 +6173,26 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             ProductNoSpecDTO productNoSpecDTO = new ProductNoSpecDTO();
 
 
-            productInfoDTO.setBrandId(productBrand.getId());
-            productInfoDTO.setBrandName(productBrand.getValue());
+            //品牌处理 - 从品牌管理表中获取
+            if(StringUtils.isNotBlank(dto.getBrandName())){
+                ProductBrandEntity productBrand = productBrandService.getByName(dto.getBrandName());
+                if (ObjectUtils.isEmpty(productBrand)) {
+                    errorMsgList.add("产品品牌在系统中未找到");
+                }else {
+                    productInfoDTO.setBrandId(productBrand.getId());
+                    productInfoDTO.setBrandName(productBrand.getName());
+                }
+            }
+            //研发团队处理 - 从研发团队管理表中获取
+            if(StringUtils.isNotBlank(dto.getRdtTeamName())){
+                ProductRDTTeamEntity productRDTTeam = productRDTTeamService.getByName(dto.getRdtTeamName());
+                if (ObjectUtils.isEmpty(productRDTTeam)) {
+                    errorMsgList.add("研发团队在系统中未找到");
+                }else {
+                    productInfoDTO.setRdtTeamId(productRDTTeam.getId());
+                    productInfoDTO.setRdtTeamName(productRDTTeam.getName());
+                }
+            }
             productInfoDTO.setApprovalStatus(0);
 
             productInfoDTO.setIsNoSpecAdd(MathUtil.ONE);
@@ -6426,6 +6542,30 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }
         Page<ProductDetailDTO.SkuDTO> query = new Page<>(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
         IPage<ProductDetailDTO.SkuDTO> pageData=  baseMapper.listSku(query, pagingDTO.getParams());
+        List<ProductDetailDTO.SkuDTO> list = pageData.getRecords();
+        if (CollectionUtils.isEmpty(list)) {
+            return new PagingVO<>(pageData);
+        }
+        //是否存在资产属性
+        List<String> moldCodeList = list.stream().map(ProductDetailDTO.SkuDTO::getSkuNo).distinct().collect(Collectors.toList());
+        List<MoldInfoEntity> moldList = moldInfoService.lambdaQuery().in(MoldInfoEntity::getCode, moldCodeList).list();
+        Map<String, MoldInfoEntity> moldMap = moldList.stream().collect(Collectors.toMap(MoldInfoEntity::getCode, Function.identity()));
+        if(moldMap.size() > 0){
+            for (ProductDetailDTO.SkuDTO item : list) {
+                //模具档案
+                MoldInfoEntity moldInfoEntity = moldMap.getOrDefault(item.getSkuNo(), null);
+                if(Objects.nonNull(moldInfoEntity)){
+                    item.setMoldId(moldInfoEntity.getId());
+                    item.setMoldCode(moldInfoEntity.getCode());
+                    item.setMoldName(moldInfoEntity.getName());
+                    item.setTag(moldInfoEntity.getTag());
+                    item.setTagName(MoldInfoTagEnum.getName(moldInfoEntity.getTag()));
+                }
+            }
+        }
+
+
+
         return new PagingVO<>(pageData);
     }
 
@@ -6885,10 +7025,19 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 throw new ServiceException(errMsg.toString());
             }
 
-
+            //校验包装尺寸：长≥宽≥高
+            compareDimensions(productPackDTO.getProductLength(), productPackDTO.getProductWidth(), ApiError.ERROR_PRODUCT_LENGTH_LESS_THAN_WIDTH);
+            compareDimensions(productPackDTO.getProductWidth(), productPackDTO.getProductHeight(), ApiError.ERROR_PRODUCT_WIDTH_LESS_THAN_HEIGHT);
+            
+            //校验箱规尺寸：长≥宽≥高
+            compareDimensions(productPackDTO.getBoxLength(), productPackDTO.getBoxWidth(), ApiError.ERROR_BOX_LENGTH_LESS_THAN_WIDTH);
+            compareDimensions(productPackDTO.getBoxWidth(), productPackDTO.getBoxHeight(), ApiError.ERROR_BOX_WIDTH_LESS_THAN_HEIGHT);
+            
+            //校验箱规必须大于等于包装尺寸
             compareDimensions(productPackDTO.getBoxLength(), productPackDTO.getProductLength(), ApiError.ERROR_LENGTH_BOX_LITTER_THAN_PRODUCT);
             compareDimensions(productPackDTO.getBoxWidth(), productPackDTO.getProductWidth(), ApiError.ERROR_WIDTH_BOX_LITTER_THAN_PRODUCT);
             compareDimensions(productPackDTO.getBoxHeight(), productPackDTO.getProductHeight(), ApiError.ERROR_HEIGHT_BOX_LITTER_THAN_PRODUCT);
+            
             //毛重大于等于净重
             compareDimensions(productPackDTO.getGrossWeight(), productPackDTO.getNetWeight(), ApiError.ERROR_WEIGHT_GROSS_LITTER_THAN_NET);
         }
@@ -6915,7 +7064,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         List<ApplicationCategoryEntity> categoryEntityList = applicationCategoryService.list();
         Map<String, String> applicationCategoryMap = categoryEntityList.stream().collect(Collectors.toMap(ApplicationCategoryEntity::getName, ApplicationCategoryEntity::getId));
         List<ProductDetailEntity> productDetailEntityList = this.list();
-        ProductDetailUpdateExcelListener excelListenerUtil = new ProductDetailUpdateExcelListener(categoryList, applicationCategoryMap, productDetailEntityList);
+        ProductDetailUpdateExcelListener excelListenerUtil = new ProductDetailUpdateExcelListener(categoryList, applicationCategoryMap, productDetailEntityList, productBrandService, productRDTTeamService);
         try {
             read(excelFile.getInputStream(), ProductDetailUpdateExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (IOException e) {
@@ -7241,4 +7390,18 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         return skuList;
     }
 
+    /**
+     * 根据skuid 获取产品属性为资产并且已审核通过的 的sku信息
+     * @author jack
+     * @date 2025-10-13
+     * @param skuNos
+     * @return List<SkuVO>
+     */
+    @Override
+    public List<SkuVO> listByApprovePropertyNotAsset(List<String> skuNos) {
+        if (CollectionUtils.isEmpty(skuNos)) {
+            return Collections.emptyList();
+        }
+        return baseMapper.listByApprovePropertyNotAsset(skuNos);
+    }
 }

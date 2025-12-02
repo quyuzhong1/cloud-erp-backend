@@ -80,7 +80,13 @@ public class DmpCfgInputEntity extends BaseEntity<DmpCfgInputEntity> {
      */
     @TableField("exec_system")
     private String execSystem;
-    
+
+    /**
+     * RestCloud执行路径
+     */
+    @TableField("exec_url")
+    private String execUrl;
+
     public static final String SYSTEM_ID = "system_id";
 
     public static final String CODE = "code";

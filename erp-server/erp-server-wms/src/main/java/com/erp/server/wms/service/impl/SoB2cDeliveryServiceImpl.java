@@ -989,6 +989,10 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         //物流单编码
         String logisticsCode = dto.getBarCode();
         String errorPortCode = CfgRuleOutEnum.EquipmentSortingPortEnum.NINE.getCode();
+        
+        //校验并调整尺寸（长≥宽≥高）
+        validateAndAdjustDimensions(dto);
+        
         //物流单信息
         SoB2cLogisticsEntity soB2cLogisticsEntity = soB2cFeign.getByTrackNoOrTransportNo(logisticsCode);
         if (ObjectUtil.isEmpty(soB2cLogisticsEntity)) {
@@ -2999,5 +3003,30 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     @Override
     public List<VirtualFlowRefactorDTO.OutInStockDTO> rebuildB2cVirtualFlow() {
         return baseMapper.rebuildB2cVirtualFlow();
+    }
+
+    /**
+     * 校验尺寸（长≥宽≥高）
+     * 如果尺寸不符合规则，抛出异常
+     * 
+     * @param dto 包含尺寸信息的DTO
+     */
+    private void validateAndAdjustDimensions(DimensionalWeightDTO dto) {
+        BigDecimal length = dto.getLength();
+        BigDecimal width = dto.getWidth();
+        BigDecimal height = dto.getHeight();
+        
+        if (length == null || width == null || height == null) {
+            return;
+        }
+        
+        // 校验：长≥宽≥高
+        if (length.compareTo(width) < 0) {
+            throw new ServiceException("包装尺寸不符合规则：长度必须大于等于宽度");
+        }
+        
+        if (width.compareTo(height) < 0) {
+            throw new ServiceException("包装尺寸不符合规则：宽度必须大于等于高度");
+        }
     }
 }

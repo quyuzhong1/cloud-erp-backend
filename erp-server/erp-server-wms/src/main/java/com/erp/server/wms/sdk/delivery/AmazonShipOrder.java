@@ -86,7 +86,7 @@ public class AmazonShipOrder extends AbstractShipOrder {
             detailEntityList =  detailEntityList.stream()
                     .filter(e -> CharSequenceUtil.isNotBlank(e.getSourceDetailId()))
                     .collect(Collectors.toList());
-            detailEntityList = super.handleSplit(detailEntityList, dto.isFalseDeliveryFlag());
+            detailEntityList = super.handleSplit(detailEntityList, dto.isFalseDeliveryFlag()).getDetailList();
             if (CollectionUtils.isEmpty(detailEntityList)) {
                 log.warn("订单【{}】所有明细来源ID为空,不请求亚马逊接口", mainEntity.getCode());
                 continue;

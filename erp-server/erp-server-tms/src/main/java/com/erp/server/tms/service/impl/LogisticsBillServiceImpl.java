@@ -13,6 +13,7 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.constant.RedisCacheConstants;
 import com.common.business.dto.AdvanceQueryContainer;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -20,6 +21,7 @@ import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
+import com.common.business.utils.RedisUtil;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.constant.SqlConstants;
@@ -158,6 +160,9 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
     @Resource
     private LogisticsSupplierService logisticsSupplierService;
 
+    @Resource
+    private RedisUtil redisUtil;
+
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean add(LogisticsBillDTO.AddDTO addDTO) {
@@ -249,6 +254,12 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         if(CharSequenceUtil.isNotBlank(logisticsBillEntity.getOutstockId())){
             List<FirstMileDeliveryDTO.BusinessDTO> businessDTOList = wmsFirstMileDeliveryFeign.getBusinessCodeByIds(Collections.singletonList(logisticsBillEntity.getOutstockId()));
             logisticsBillEntity.setBusinessCode(CollectionUtils.isNotEmpty(businessDTOList) ? businessDTOList.get(0).getBusinessCode() : "");
+        }
+        if (CharSequenceUtil.isNotBlank(logisticsBillEntity.getChannelId()) && CharSequenceUtil.isBlank(logisticsBillEntity.getChannelName())){
+            LogisticsChannelEntity channelEntity = logisticsChannelService.getById(logisticsBillEntity.getChannelId());
+            if(Objects.nonNull(channelEntity)){
+                logisticsBillEntity.setChannelName(channelEntity.getName());
+            }
         }
     }
 
@@ -1068,13 +1079,12 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                     }
                 }
                 getLabelVO.setPlatformCode(soB2cEntity.getPlatformCode());
-                //运单号
-                getLabelVO.setTransportNo(dto.getTransportNo());
                 //物流跟踪号
                 SoB2cLogisticsEntity soB2cLogisticsEntity = logisticsEntityList.stream().filter(v->v.getMainId().equals(soB2cEntity.getId())).findFirst().orElse(null);
                 if (Objects.isNull(soB2cLogisticsEntity)){
                     throw new ServiceException("销售订单【{}】物流信息为空不能进行面单打印", soB2cEntity.getCode());
                 }
+
                 getLabelVO.setTransportNo(soB2cLogisticsEntity.getCode());
                 getLabelVO.setTrackNo(soB2cLogisticsEntity.getTrackNo());
                 getLabelVO.setPushPlatformCode(CharSequenceUtil.isNotBlank(dto.getPushPlatformCode())? dto.getPushPlatformCode() : soB2cLogisticsEntity.getPushPlatformCode());
@@ -1116,6 +1126,15 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                 for (LogisticsPrintLabelResponse datum : labelList.getData()) {
                     if ("500".equals(datum.getCode())) {
                         throw new ServiceException(ApiError.PRINT_WAYBILL_ERROR, datum.getMessage());
+                    }
+                }
+                //判断redis是否有值没有跳过
+                if(Objects.nonNull(dto.getIsFromMq()) && dto.getIsFromMq()){
+                    String labelRedisKey = StrUtil.format(RedisCacheConstants.TMS_LOGISTIC_LABEL,dto.getB2cSoId(),soB2cLogisticsEntity.getCode());
+                    Object redisVal = redisUtil.get(labelRedisKey);
+                    if(Objects.isNull(redisVal)){
+                        log.warn("销售订单【{}】物流单号【{}】面单打印Redis值已过期或被清除",soB2cEntity.getCode(),soB2cLogisticsEntity.getCode());
+                        continue;
                     }
                 }
                 //获取标签信息
@@ -1198,6 +1217,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                 }
                 logisticsBillEntity.setLogisticsSupplierId(logisticsChannelEntity.getMainId());
                 logisticsBillEntity.setChannelId(batchUpdateTrackNoDTO.getLogisticsChannelId());
+                logisticsBillEntity.setChannelName(logisticsChannelEntity.getName());
                 if (CollectionUtils.isNotEmpty(batchUpdateTrackNoDTO.getTrackNoList())){
                     logisticsBillEntity.setTransportNo(String.join(",", batchUpdateTrackNoDTO.getTrackNoList()));
                 }

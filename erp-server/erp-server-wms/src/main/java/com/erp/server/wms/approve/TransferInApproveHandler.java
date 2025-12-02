@@ -39,6 +39,11 @@ public class TransferInApproveHandler extends AbstractApproveHandler {
     private OperateLogService operateLogService;
 
     @Override
+    public BatchResultDTO approve(ApproveOneDTO dto) {
+        return transferInService.approve(dto,transferInService.getById(dto.getId()));
+    }
+
+    @Override
     public Boolean cancelProcess(ApproveDTO.CancelProcessDTO dto) {
         return transferInService.cancelProcess(Collections.singletonList(dto.getId()));
     }

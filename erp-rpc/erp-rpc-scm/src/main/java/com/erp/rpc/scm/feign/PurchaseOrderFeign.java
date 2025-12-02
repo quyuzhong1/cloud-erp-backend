@@ -144,4 +144,7 @@ public interface PurchaseOrderFeign {
 
     @PostMapping("/feign/purchaseOrder/saveAndUpdate")
     void saveAndUpdate(PurchaseOrderEntity purchaseOrderEntity);
+
+    @PostMapping("/feign/purchaseOrder/getPurchaseOrderByParams")
+    List<PurchaseOrderDTO.PurchaseCalcQtyDTO> getPurchaseOrderByParams(PurchaseOrderDTO.PurchaseCalcQtyParamsDTO purchaseCalcQtyParamsDTO);
 }

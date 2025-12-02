@@ -88,6 +88,9 @@ public class ConnectionProxyXA extends AbstractConnectionProxyXA implements Hold
                 transactionTimeout = DefaultValues.DEFAULT_GLOBAL_TRANSACTION_TIMEOUT;
             }
             timeout = Math.max(BRANCH_EXECUTION_TIMEOUT, transactionTimeout);
+            if(timeout < 120000) {
+            	timeout = 120000;
+            }
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }

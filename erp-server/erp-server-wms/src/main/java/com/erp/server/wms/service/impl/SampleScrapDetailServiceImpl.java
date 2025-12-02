@@ -54,8 +54,8 @@ public class SampleScrapDetailServiceImpl extends SuperServiceImpl<SampleScrapDe
 
     @Override
     public SampleScrapDetailDTO.ImportDTO importFile(MultipartFile excelFile,String id,String scrapUserId, HttpServletResponse response) {
-        //sku信息
-        List<SkuVO> skuList = plmTaskFeign.listApproveSku();
+        //sku信息（获取所有sku，不限制审核状态）
+        List<SkuVO> skuList = plmTaskFeign.listAllSku();
         Map<String, SkuVO> map = skuList.stream().collect(Collectors.toMap(SkuVO::getSkuNo, e -> e,(o1, o2)->o1));
 
         SampleScrapDetailExcelListener excelListenerUtil = new SampleScrapDetailExcelListener(sampleLedgerService, map, scrapUserId,id);

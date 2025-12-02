@@ -1,9 +1,15 @@
 package com.sdk.oms.shopify.api.graphql;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.TypeReference;
 import com.common.core.exception.ServiceException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sdk.oms.shopify.api.graphql.model.*;
+import com.sdk.oms.shopify.api.rest.model.ShopifyFulfillmentOrderPayloadLineItem;
+import com.sdk.oms.shopify.api.rest.model.ShopifyFulfillmentPayloadRoot;
+import com.sdk.oms.shopify.api.rest.model.ShopifyFulfillmentShipOrderResp;
+import com.sdk.oms.shopify.api.rest.model.ShopifyLineItemsByFulfillmentOrder;
 import io.netty.channel.ChannelOption;
 import io.netty.handler.timeout.ReadTimeoutHandler;
 import io.netty.handler.timeout.WriteTimeoutHandler;
@@ -18,6 +24,7 @@ import reactor.netty.tcp.ProxyProvider;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /*
@@ -95,7 +102,7 @@ public class ShopifyGraphQLClient {
     ;
 
     public ShopifyOrderResponse getOrderLocalizationExtensions(String orderId) {
-        Map<String, String> variablesMap = new HashMap<>();
+        Map<String, Object> variablesMap = new HashMap<>();
         variablesMap.put("id", "gid://shopify/Order/" + orderId);
         String jsonString = runQuery("orderLocalizationExtensions", variablesMap);
         ObjectMapper objectMapper = new ObjectMapper();
@@ -108,6 +115,29 @@ public class ShopifyGraphQLClient {
         }
     }
 
+
+    public ShopifyFulfillmentShipOrderResp shipOrder(ShopifyFulfillmentPayloadRoot shopifyFulfillmentPayloadRoot) {
+        Map<String, Object> variablesMap = new HashMap<>();
+        ShopifyLineItemsByFulfillmentOrder shopifyLineItemsByFulfillmentOrder =  shopifyFulfillmentPayloadRoot.getFulfillment().getLineItemsByFulfillmentOrder().get(0);
+        List<ShopifyFulfillmentOrderPayloadLineItem> lineItems = shopifyLineItemsByFulfillmentOrder.getFulfillmentOrderLineItems();
+        String fulfillmentOrderId = shopifyLineItemsByFulfillmentOrder.getFulfillmentOrderId();
+        variablesMap.put("fulfillmentOrderId", "gid://shopify/FulfillmentOrder/" + fulfillmentOrderId);
+        lineItems.forEach(v->{
+            v.setId("gid://shopify/FulfillmentOrderLineItem/"+ v.getId());
+        });
+        variablesMap.put("numbers",shopifyFulfillmentPayloadRoot.getFulfillment().getTrackingInfo().getNumbers());
+        variablesMap.put("company",shopifyFulfillmentPayloadRoot.getFulfillment().getTrackingInfo().getCompany());
+        variablesMap.put("fulfillmentOrderLineItems",lineItems);
+
+        String jsonString = runQuery("shipOrder", variablesMap);
+        try {
+            ShopifyFulfillmentShipOrderResp response = JSON.parseObject(jsonString,new TypeReference<ShopifyFulfillmentShipOrderResp>() {}.getType());
+            return response;
+        } catch (Exception e) {
+            log.error("shopify获取订单信息转换异常", e);
+            throw new ServiceException("shopify获取订单信息转换异常", e);
+        }
+    }
     ;
 
 
@@ -123,30 +153,6 @@ public class ShopifyGraphQLClient {
         return products;
     }
 
-
-    /**
-     * @param product
-     * @return Product
-     */
-    /*
-     * A simple GraphQL query to create a product with very basic information. The request is configured in the
-     * resources/graphql/createProduct.graphql file and createProductVariables.json file.
-     */
-    public Product createProduct(Product product) {
-        Map<String, String> variablesMap = new HashMap<String, String>();
-        variablesMap.put("$titleValue", product.getTitle());
-
-        String jsonString = runQuery("createProduct", variablesMap);
-        ProductCreate createdProduct = handleResponse(jsonString, ProductCreate.class);
-        if (createdProduct != null) {
-            return createdProduct.getProduct();
-        } else {
-            log.error("Error creating product");
-            return null;
-        }
-    }
-
-
     /**
      * @param queryFileName
      * @param variablesMap
@@ -155,7 +161,7 @@ public class ShopifyGraphQLClient {
     /*
      * This method is used to run a GraphQL query, with an optional variables file, and return the response as a JSON String.
      */
-    private String runQuery(String queryFileName, Map<String, String> variablesMap) {
+    private String runQuery(String queryFileName, Map<String, Object> variablesMap) {
         String jsonString = null;
         try {
             // Load the query from a file
@@ -170,7 +176,6 @@ public class ShopifyGraphQLClient {
         }
         return jsonString;
     }
-
 
     /**
      * @param queryFileName
@@ -239,7 +244,7 @@ public class ShopifyGraphQLClient {
     }
 
     public String getOrderReturn(String orderId) {
-        Map<String, String> variablesMap = new HashMap<>();
+        Map<String, Object> variablesMap = new HashMap<>();
         variablesMap.put("input", "gid://shopify/Refund/" + orderId);
         String jsonString = runQuery("orderRefund", variablesMap);
         ObjectMapper objectMapper = new ObjectMapper();

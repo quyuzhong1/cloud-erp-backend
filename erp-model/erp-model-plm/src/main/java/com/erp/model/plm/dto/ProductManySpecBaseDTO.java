@@ -52,6 +52,16 @@ public class ProductManySpecBaseDTO implements Serializable{
     private String brandId;
 
     /**
+     * 研发团队名称
+     */
+    private String rdtTeamName;
+
+    /**
+     * 研发团队Id
+     */
+    private String rdtTeamId;
+
+    /**
      * 产品属性
      */
     private String property;

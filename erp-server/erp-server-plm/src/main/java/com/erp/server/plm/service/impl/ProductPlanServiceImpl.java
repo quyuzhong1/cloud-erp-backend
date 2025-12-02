@@ -98,6 +98,9 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
     private BasicCategoryService basicCategoryService;
 
     @Resource
+    private ProductBrandService productBrandService;
+
+    @Resource
     private ProductDetailService productDetailService;
 
     @Resource
@@ -276,7 +279,7 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
 
     @Override
     public Boolean importFile(MultipartFile excelFile, HttpServletResponse response) {
-        ProductPlanExcelListener excelListenerUtil = new ProductPlanExcelListener(this, basicDictService, basicCategoryService, productPlanSaleService, productPlanSaleInfoService,
+        ProductPlanExcelListener excelListenerUtil = new ProductPlanExcelListener(this, basicDictService, productBrandService, basicCategoryService, productPlanSaleService, productPlanSaleInfoService,
                 productPlanPurchaseService, productPlanRemarkService, sysUserFeign, applicationCategoryService);
         try {
             EasyExcel.read(excelFile.getInputStream(), ProductPlanExcelDTO.class, excelListenerUtil).sheet(0).doRead();

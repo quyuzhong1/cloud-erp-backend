@@ -187,6 +187,24 @@ public interface PurchaseOrderMapper extends BaseMapper<PurchaseOrderEntity> {
     List<PurchaseOrderDTO.ListDTO> listByDetailIds(@Param("detailIds") List<String> purchaseDetailIds);
 
     /**
+     * 根据查询条件获取采购订单明细id集合
+     * @param params 查询条件
+     * @return 明细id集合
+     */
+    List<String> listPurchaseDetailIds(@Param("params") PurchaseOrderDTO.SearchParamDTO params);
+
+    /**
+     * 基于主键游标分页获取采购订单明细id集合
+     * @param params 查询条件
+     * @param lastId 上一页最后一个id（首次可传null）
+     * @param limit  每页条数
+     * @return 明细id集合（按id升序）
+     */
+    List<String> listPurchaseDetailIdsByLastId(@Param("params") PurchaseOrderDTO.SearchParamDTO params,
+                                               @Param("lastId") String lastId,
+                                               @Param("limit") Integer limit);
+
+    /**
      * 根据状态查询列表数据 获取近一天内的变更数据
      * @return
      */
