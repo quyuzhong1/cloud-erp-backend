@@ -308,6 +308,10 @@ public class DeliveryBoxRuleDTO implements Serializable {
     public static class ListBoxRuleBySkuDTO {
 
         /**
+         * id
+         */
+        private String id;
+        /**
          * skuId
          */
         private String skuId;

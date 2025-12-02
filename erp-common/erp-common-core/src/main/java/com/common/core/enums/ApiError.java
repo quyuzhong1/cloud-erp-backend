@@ -1643,6 +1643,8 @@ public enum ApiError implements Serializable {
     ERROR_DUPLICATE_SORT(92197,"箱规优先级【{}】重复"),
     ERROR_BATCH_ADD_BOX_RULE(92198,"批量新增箱规失败"),
     ERROR_SO_CHANGE_QTY_MUST_INTEGER_MULTIPLE_BOX_RULE(92199,"变更数量必须是发货箱规的整数倍"),
+    ERROR_DUPLICATE_SKU(92200,"箱规SKU【{}】重复"),
+    ERROR_DUPLICATE_QTY(92201,"箱规单箱数量【{}】重复"),
     /**
      * TMS 错误
      * 从94000 开始

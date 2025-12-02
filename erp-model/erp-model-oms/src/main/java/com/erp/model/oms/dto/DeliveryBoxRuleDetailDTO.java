@@ -226,6 +226,11 @@ public class DeliveryBoxRuleDetailDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class ListBoxRuleBySkuDetailDTO{
+
+        /**
+         * 明细id
+         */
+        private String id;
         /**
          * 发货skuId
          */
@@ -250,6 +255,11 @@ public class DeliveryBoxRuleDetailDTO implements Serializable {
          * 优先级
          */
         private Integer sort;
+
+        /**
+         * 作废状态
+         */
+        private Boolean invalidStatus;
     }
 
 }

@@ -293,10 +293,9 @@ public class DeliveryBoxRuleServiceImpl extends SuperServiceImpl<DeliveryBoxRule
             List<DeliveryBoxRuleDetailDTO.ListBoxRuleBySkuDetailDTO> detailViews = new ArrayList<>();
             if (deliveryBoxRuleEntity != null) {
                 BeanUtils.copyProperties(deliveryBoxRuleEntity, viewDTO);
-                // 查询有效的箱规明细
+                // 查询所有箱规明细
                 List<DeliveryBoxRuleDetailEntity> detailEntities = deliveryBoxRuleDetailService.lambdaQuery()
                         .eq(DeliveryBoxRuleDetailEntity::getMainId, deliveryBoxRuleEntity.getId())
-                        .eq(DeliveryBoxRuleDetailEntity::getInvalidStatus, InvalidStatusEnum.NOT_VOIDED.getStatus())
                         .list();
 
                 detailViews.addAll(BeanMapperUtils.copyList(DeliveryBoxRuleDetailDTO.ListBoxRuleBySkuDetailDTO.class, detailEntities));
@@ -337,6 +336,7 @@ public class DeliveryBoxRuleServiceImpl extends SuperServiceImpl<DeliveryBoxRule
                 defaultDetail.setDeliveryProductName(viewDTO.getProductName());
                 defaultDetail.setPerBoxQty(1);
                 defaultDetail.setSort(1);
+                defaultDetail.setInvalidStatus(InvalidStatusEnum.NOT_VOIDED.getStatus());
                 detailViews.add(defaultDetail);
                 viewDTO.setDeliveryBoxRuleDetailDTOList(detailViews);
             }
