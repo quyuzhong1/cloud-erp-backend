@@ -495,14 +495,14 @@ public class KolB2bApplicationDTO implements Serializable {
         private LocalDate date;
 
         /**
-        * 寄样类型
+        * 寄样类型，/api/oms/cfgKolOption/select?type=kolB2bSampleType
         */
         @NotBlank(message = "寄样类型不能为空")
         @Size(max = 64,message = "寄样类型最大长度不能超过64位")
         private String type;
 
         /**
-        * 客户id
+        * 客户id，/api/oms/customer/listEnable
         */
         @NotBlank(message = "客户id不能为空")
         @Size(max = 19,message = "客户id最大长度不能超过19位")
@@ -515,14 +515,14 @@ public class KolB2bApplicationDTO implements Serializable {
         private String applyRemark;
 
         /**
-        * 申请人id
+        * 申请人id，/api/plm/common/findUserList
         */
         @NotBlank(message = "申请人id不能为空")
         @Size(max = 19,message = "申请人id最大长度不能超过19位")
         private String applyUserId;
 
         /**
-        * 申请部门id
+        * 申请部门id，/api/sys/department/drop/down
         */
         @Size(max = 19,message = "申请部门id最大长度不能超过19位")
         private String applyDeptId;
@@ -548,16 +548,16 @@ public class KolB2bApplicationDTO implements Serializable {
         private String telNumber;
 
         /**
-        * 收货地址
+        * 收货地址，/api/oms/customer/listCustomerAddress?customerId=
         */
         @NotBlank(message = "收货地址不能为空")
         @Size(max = 255,message = "收货地址最大长度不能超过255位")
         private String receiveAddress;
 
         /**
-        * 地址类型，CustomerAddressTypeEnum枚举
+        * 地址类型，/api/oms/common/enumDropDown?type=CustomerAddressType
         */
-        @NotBlank(message = "地址类型，CustomerAddressTypeEnum枚举不能为空")
+        @NotBlank(message = "地址类型不能为空")
         @Size(max = 32,message = "地址类型，CustomerAddressTypeEnum枚举最大长度不能超过32位")
         private String addressType;
 
