@@ -4846,7 +4846,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             throw new ServiceException(ApiError.ERROR_92015);
         }
         //产品信息
-        List<String> skuIdList = soDetailList.stream().map(SoDetailEntity::getSkuId).distinct().collect(Collectors.toList());
+        List<String> skuIdList = soDetailList.stream().map(SoDetailEntity::getDeliverySkuId).distinct().collect(Collectors.toList());
         List<ProductDetailEntity> productDetailList = FeignQuery.getByIds(ProductDetailEntity.class, skuIdList);
 
         //根据SKU查询BOM判断是否是组合SKU
@@ -4876,8 +4876,9 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             SoInfoDTO.LockVirtualInventoryDetailDTO detailDTO = BeanMapperUtils.map(SoInfoDTO.LockVirtualInventoryDetailDTO.class, soDetailEntity);
             //明细id
             detailDTO.setDetailId(soDetailEntity.getId());
-
-            String productName = productDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), soDetailEntity.getSkuId())).map(ProductDetailEntity::getName).findFirst().orElse("");
+            detailDTO.setSkuId(soDetailEntity.getDeliverySkuId());
+            detailDTO.setSkuNo(soDetailEntity.getDeliverySkuNo());
+            String productName = productDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), soDetailEntity.getDeliverySkuId())).map(ProductDetailEntity::getName).findFirst().orElse("");
             detailDTO.setProductName(productName);
 
             detailDTO.setFrozenQty(soDetailEntity.getFrozenQty());
