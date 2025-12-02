@@ -49,6 +49,8 @@ public class WildberriesLogisticsHandlerImpl extends AbstractLogisticsHandler {
     private LogisticsOperateService logisticsOperateService;
     @Resource
     private ShopInfoFeign shopInfoFeign;
+    @Resource
+    private FileFeign fileFeign;
     /**
      * 查询店铺授权
      * @param shopId
