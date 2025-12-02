@@ -451,7 +451,7 @@ public class SoB2cCoreServiceImpl implements SoB2cCoreService {
 
         //判断是三方仓还是自发货生成不同的发货单
         //检测是否是API 对接的仓库
-        try {
+//        try {
             List<OverseasProviderWarehouseDTO.ViewDTO> overseasWarehouseList = wmsOverseasWarehouseFeign.listByWarehouseIdList(Collections.singletonList(dto.getWarehouseId()));
             Boolean isThirdWarehouse = CollectionUtils.isNotEmpty(overseasWarehouseList);
             if(isThirdWarehouse){
@@ -461,14 +461,14 @@ public class SoB2cCoreServiceImpl implements SoB2cCoreService {
                 GenerateDeliveryAndOutStockDTO generateDeliveryAndOutStockDTO = new GenerateDeliveryAndOutStockDTO(entity,detailEntityList,dto,new OverseasProviderWarehouseDTO.ViewDTO(),soB2cLogisticsEntity);
                 soB2cDeliveryFeign.generateDeliveryAndOutStock(generateDeliveryAndOutStockDTO);
             }
-        }catch (Exception e){
-            log.error("订单{}不出库发货生成发货单或出库单失败，异常信息：{}", entity.getCode(), e.getMessage());
+//        }catch (Exception e){
+//            log.error("订单{}不出库发货生成发货单或出库单失败，异常信息：{}", entity.getCode(), e.getMessage());
 //            entity.setSignOrderError(SoB2cErrorTypeEnum.GENERATE_OUTSTOCK.getCode());
 //            entity.setBillStatus(SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode());
 //            entity.setIsNotOutbound(false);
 //            soB2cService.updateById(entity);
-            throw new ServiceException(e.getMessage());
-        }
+//            throw new ServiceException(e.getMessage());
+//        }
     }
 
     @Override

@@ -3,6 +3,7 @@ package com.erp.server.oms.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.ListUtil;
+import cn.hutool.core.date.StopWatch;
 import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.IdUtil;
@@ -10930,19 +10931,24 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public BatchResultDTO cancelDeliveryWithNotOutbound(String id, SoB2cEntity soB2cEntity, SoOutstockEntity soOutstockEntity, SoB2cDeliveryEntity deliveryEntity) {
         if (Objects.isNull(soB2cEntity.getIsNotOutbound()) || !soB2cEntity.getIsNotOutbound()){
             return BatchResultDTO.fail(id, id, "只允许不出库发货的订单操作撤销");
         }
+        StopWatch stopWatch = new StopWatch("取消不出库发货");
+        stopWatch.start("deleteSoOutstock");
         if (Objects.nonNull(soOutstockEntity)){
             //查询关联的出库单自动反审核删除-查询关联的中转调拨单反审核删除
             soOutstockFeign.deleteSoOutstock(soOutstockEntity.getId());
         }
+        stopWatch.stop();
+        stopWatch.start("deleteSoB2cDelivery");
         if (Objects.nonNull(deliveryEntity)){
             //查询关联的发货单自动删除
             soB2cDeliveryFeign.deleteSoB2cDelivery(deliveryEntity.getId());
         }
+        stopWatch.stop();
+        stopWatch.start("updateSoB2cEntity");
         //- 订单状态自动变更为待提交-待配货，清除不出库发货标签
         this.lambdaUpdate()
                 .set(SoB2cEntity::getIsNotOutbound, Boolean.FALSE)
@@ -10963,8 +10969,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             soB2cDeclareProductService.removeBySoId(id);
             operateLogService.addModuleOperateLog(CharSequenceUtil.format(msg, soB2cEntity.getCode()), ModuleTypeEnum.SO_B2C.getCode(), id, "反审核流程");
         }
+        stopWatch.stop();
         String msg = "用户操作销售订单【{}】撤销不出库发货";
         operateLogService.addModuleOperateLog(CharSequenceUtil.format(msg, soB2cEntity.getCode()), ModuleTypeEnum.SO_B2C.getCode(), id, "撤销不出库发货");
+        log.warn("取消不出库发货耗时:{}", stopWatch.prettyPrint());
         return BatchResultDTO.success(id, soB2cEntity.getCode(), "撤销不出库发货成功");
     }
 
