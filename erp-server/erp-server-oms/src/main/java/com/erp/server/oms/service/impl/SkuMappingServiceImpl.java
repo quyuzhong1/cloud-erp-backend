@@ -462,9 +462,9 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         //检查映射关系是否存在
         checkExist(id, listing.getId(), shopId);
         //检查历史映射关系是否存在
-        if(!historyProductSkuId.equals(productSkuId)){
-            checkHistory(id, listing.getId(), shopId, dto.getProductSkuId());
-        }
+//        if(!historyProductSkuId.equals(productSkuId)){
+//            checkHistory(id, listing.getId(), shopId, dto.getProductSkuId());
+//        }
 
         // 平台sku校验
         if (PlatformDictEnum.hasConnectionPlatform().contains(platformSkuNo)) {
