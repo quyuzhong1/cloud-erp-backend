@@ -44,4 +44,12 @@ public interface KolB2bApplicationDetailService extends SuperService<KolB2bAppli
      * @return Boolean
      */
     Boolean deleteByMainId(String mainId);
+    /**
+     * 根据主表id列表获取明细列表
+     * @author will
+     * @date 2025/12/2 09:35
+     * @param strings
+     * @return List<KolB2bApplicationDetailEntity>
+     */
+    List<KolB2bApplicationDetailEntity> listByMainIdList(List<String> strings);
 }

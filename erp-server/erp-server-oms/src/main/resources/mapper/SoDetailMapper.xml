@@ -231,4 +231,41 @@
         </where>
         order by si.id desc
     </select>
+
+    <!-- 根据来源明细id集合查询 -->
+    <select id="listBySourceDetailIdList" resultType="com.erp.model.oms.entity.SoDetailEntity">
+        select
+            si.approve_status,
+            sd.id,
+            sd.main_id,
+            sd.sku_id,
+            sd.sku_no,
+            sd.price,
+            sd.exchange_rate,
+            sd.amount,
+            sd.amount_local_currency,
+            sd.qty,
+            sd.is_gift,
+            sd.is_close,
+            sd.delivery_status,
+            sd.remark,
+            sd.create_time,
+            sd.update_time,
+            sd.create_user_name,
+            sd.create_user_id,
+            sd.update_user_name,
+            sd.update_user_id,
+            sd.version,
+            sd.is_deleted,
+            sd.currency,
+            sd.currency_symbol
+        from so_info si
+        inner join so_detail sd on si.id = sd.main_id and sd.is_deleted = false
+        <where>
+            si.is_deleted = false and si.invalid_status = false and sd.source_detail_id in
+            <foreach collection="sourceDetailIdList" item="sourceDetailId" open="(" separator="," close=")">
+                #{sourceDetailId}
+            </foreach>
+        </where>
+    </select>
 </mapper>

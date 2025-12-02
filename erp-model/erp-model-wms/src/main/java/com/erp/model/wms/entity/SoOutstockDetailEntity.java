@@ -177,6 +177,12 @@ public class SoOutstockDetailEntity extends BaseEntity<SoOutstockDetailEntity> {
     @TableField(exist = false)
     private String soId ;
 
+    /**
+     * 运输单号
+     */
+    @TableField(exist = false)
+    private String trackNo;
+
     public static final String MAIN_ID = "main_id";
 
     public static final String SKU_ID = "sku_id";
