@@ -161,7 +161,7 @@ public class CfgMoldAlertRuleServiceImpl extends SuperServiceImpl<CfgMoldAlertRu
 
         //校验寿命数量必须大于预警寿命（数量）
         if(entity.getLifeQty() < entity.getAlertLifeQty()){
-            throw new ServiceException(ApiError.ERROR_95302);
+            throw new ServiceException(ApiError.ERROR_MOULD_LIFESPAN_TOO_SMALL);
         }
 
         //寿命数量、预警寿命（数量）、预警寿命（%）都有值时，修改寿命数量，则计算预警寿命（数量）=寿命数量*预警寿命（%）；若至少存在一个字段值为空，则不做自动计算

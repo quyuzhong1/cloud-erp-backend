@@ -967,7 +967,7 @@ public class MoldInfoServiceImpl extends SuperServiceImpl<MoldInfoMapper, MoldIn
         List<MoldInfoEntity> moldInfoEntities = listByIds(ids);
         long count = moldInfoEntities.stream().filter(e -> !Objects.equals(e.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus())).count();
         if(count > 0){
-            throw new ServiceException(ApiError.ERROR_95294);
+            throw new ServiceException(ApiError.ERROR_MOULD_FILE_AUDITED_ONLY);
         }
         Map<String, MoldInfoEntity> moldMap = moldInfoEntities.stream().collect(Collectors.toMap(MoldInfoEntity::getId, Function.identity(), (o1, o2) -> o1));
 

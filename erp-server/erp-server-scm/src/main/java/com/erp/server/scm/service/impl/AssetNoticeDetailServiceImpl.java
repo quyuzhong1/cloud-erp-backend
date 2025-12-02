@@ -170,7 +170,7 @@ public class AssetNoticeDetailServiceImpl extends SuperServiceImpl<AssetNoticeDe
             plmTaskFeign.updateOccupyStatus(skuIds);
         } catch (Exception e) {
             log.warn("更新 SKU 占用状态失败，skuIds={}", skuIds, e);
-            throw new ServiceException(ApiError.ERROR_98149,skuIds);
+            throw new ServiceException(ApiError.ERROR_SKU_OCCUPY_STATE_UPDATE_FAIL,skuIds);
         }
     }
 

@@ -516,7 +516,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         }
         // 检查是否已作废
         if (Objects.equals(bill.getInvalidStatus(), InvalidStatusEnum.VOIDED.getStatus())) {
-            throw new ServiceException(ApiError.ERROR_99080, "完成质检");
+            throw new ServiceException(ApiError.ERROR_QC_VOIDED_OPERATION_NOT_ALLOWED, "完成质检");
         }
         //质检信息
         QcResultDTO.AddDTO qcInfo = dto.getQcInfo();
@@ -1000,7 +1000,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         }
         // 检查是否已作废
         if (Objects.equals(bill.getInvalidStatus(), InvalidStatusEnum.VOIDED.getStatus())) {
-            throw new ServiceException(ApiError.ERROR_99080, "免检");
+            throw new ServiceException(ApiError.ERROR_QC_VOIDED_OPERATION_NOT_ALLOWED, "免检");
         }
         if (!CharSequenceUtil.equals(bill.getQcStatus().getCode(),QcBillStatusEnum.DRAFT.getCode()) && !CharSequenceUtil.equals(bill.getQcStatus().getCode(),QcBillStatusEnum.WAIT_QC.getCode())) {
             throw new ServiceException(ApiError.ERROR_QC_EXEMPT_ALLOWED_STATUS_ONLY);
@@ -1125,7 +1125,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         List<QcInfoEntity> qcList = Collections.singletonList(entity);
         // 检查是否已作废
         if (Objects.equals(entity.getInvalidStatus(), InvalidStatusEnum.VOIDED.getStatus())) {
-            throw new ServiceException(ApiError.ERROR_99080, "完成质检");
+            throw new ServiceException(ApiError.ERROR_QC_VOIDED_OPERATION_NOT_ALLOWED, "完成质检");
         }
         String qcStatus = QcBillStatusEnum.WAIT_QC.getCode();
         long count = qcList.stream().filter(s -> !s.getQcStatus().getCode().equals(qcStatus)).count();
@@ -1181,7 +1181,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         List<QcInfoEntity> qcList = Collections.singletonList(entity);
         // 检查是否已作废
         if (Objects.equals(entity.getInvalidStatus(), InvalidStatusEnum.VOIDED.getStatus())) {
-            throw new ServiceException(ApiError.ERROR_99080, "免检");
+            throw new ServiceException(ApiError.ERROR_QC_VOIDED_OPERATION_NOT_ALLOWED, "免检");
         }
         long count = qcList.stream().filter(s -> !Arrays.asList(QcBillStatusEnum.DRAFT.getCode(),QcBillStatusEnum.WAIT_QC.getCode()).contains(s.getQcStatus().getCode())).count();
         if (count > 0) {
@@ -1243,7 +1243,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         List<QcInfoEntity> qcList = Collections.singletonList(entity);
         // 检查是否已作废
         if (Objects.equals(entity.getInvalidStatus(), InvalidStatusEnum.VOIDED.getStatus())) {
-            throw new ServiceException(ApiError.ERROR_99080, "取消质检");
+            throw new ServiceException(ApiError.ERROR_QC_VOIDED_OPERATION_NOT_ALLOWED, "取消质检");
         }
         String qcStatus = QcBillStatusEnum.WAIT_QC.getCode();
         long count = qcList.stream().filter(s -> !s.getQcStatus().getCode().equals(qcStatus)).count();
@@ -1351,7 +1351,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         List<QcInfoEntity> qcList = Collections.singletonList(entity);
         // 检查是否已作废
         if (Objects.equals(entity.getInvalidStatus(), InvalidStatusEnum.VOIDED.getStatus())) {
-            throw new ServiceException(ApiError.ERROR_99080, "撤销质检");
+            throw new ServiceException(ApiError.ERROR_QC_VOIDED_OPERATION_NOT_ALLOWED, "撤销质检");
         }
         List<String> statusList = new ArrayList<>(2);
         statusList.add(QcBillStatusEnum.EXEMPTION.getCode());
@@ -2579,7 +2579,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             }
             // 检查是否已作废
             if (Objects.equals(qcInfoEntity.getInvalidStatus(), InvalidStatusEnum.VOIDED.getStatus())) {
-                throw new ServiceException(ApiError.ERROR_99080, "复检抽检");
+                throw new ServiceException(ApiError.ERROR_QC_VOIDED_OPERATION_NOT_ALLOWED, "复检抽检");
             }
             if(qcInfoEntity.getSourceType().equals(SourceTypeEnum.QC_NOTICE.getCode())){
                 throw new ServiceException("数据来源质检通知单不可在此操作");

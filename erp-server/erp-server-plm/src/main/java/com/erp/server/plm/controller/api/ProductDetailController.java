@@ -900,7 +900,7 @@ public class ProductDetailController extends BaseController {
             path = "classpath:excel/productUpdateApproveTemplate.xlsx";
         }
         if(StringUtils.isEmpty(path)){
-            throw new ServiceException(ApiError.ERROR_99999);
+            throw new ServiceException(ApiError.ERROR_PARAM_INVALID);
         }
 
         ResourceLoader resourceLoader = new DefaultResourceLoader();

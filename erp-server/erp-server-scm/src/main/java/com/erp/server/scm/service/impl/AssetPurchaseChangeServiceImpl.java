@@ -1,7 +1,6 @@
 package com.erp.server.scm.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
-import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.conditions.update.LambdaUpdateChainWrapper;
 import com.common.business.constant.ApproveType;
@@ -35,7 +34,6 @@ import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
 import com.common.core.controller.vo.ApiResult;
 import cn.hutool.core.util.ObjectUtil;
-import org.checkerframework.checker.units.qual.A;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -55,7 +53,6 @@ import java.time.LocalDateTime;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.*;
-import java.util.stream.Stream;
 
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
@@ -381,7 +378,7 @@ public class AssetPurchaseChangeServiceImpl extends SuperServiceImpl<AssetPurcha
                 .list();
 
         if (list.isEmpty()) {
-            throw new ServiceException(ApiError.ERROR_98145);
+            throw new ServiceException(ApiError.ERROR_MOULD_PURCHASE_CHANGE_DETAIL_NOT_FOUND);
         }
 
         List<String> collect = list.stream().map(obj -> obj.getId()).collect(Collectors.toList());
@@ -558,7 +555,7 @@ public class AssetPurchaseChangeServiceImpl extends SuperServiceImpl<AssetPurcha
                 .one();
 
         if (Objects.isNull(assetPurchaseOrderEntity)) {
-            throw new ServiceException(ApiError.ERROR_98134);
+            throw new ServiceException(ApiError.ERROR_MOULD_PURCHASE_ORDER_NOT_FOUND);
         }
 
         AssetPurchaseOrderSupplierEntity assetPurchaseOrderSupplierEntity = assetPurchaseOrderSupplierService.lambdaQuery()
@@ -567,7 +564,7 @@ public class AssetPurchaseChangeServiceImpl extends SuperServiceImpl<AssetPurcha
                 .one();
 
         if (Objects.isNull(assetPurchaseOrderSupplierEntity)) {
-            throw new ServiceException(ApiError.ERROR_98144);
+            throw new ServiceException(ApiError.ERROR_MOULD_PURCHASE_SUPPLIER_INFO_MISSING);
         }
 
         BeanUtils.copyProperties(assetPurchaseOrderSupplierEntity,supplierViewDTO);
@@ -707,7 +704,7 @@ public class AssetPurchaseChangeServiceImpl extends SuperServiceImpl<AssetPurcha
     private void handleAddData(AssetPurchaseChangeDTO.AddDTO addDTO,AssetPurchaseChangeEntity assetPurchaseChangeEntity) {
         AssetPurchaseOrderEntity assetPurchaseOrderEntity = assetPurchaseOrderService.getById(addDTO.getAssetPurchaseOrderId());
         if (Objects.isNull(assetPurchaseOrderEntity)) {
-            throw new ServiceException(ApiError.ERROR_98134);
+            throw new ServiceException(ApiError.ERROR_MOULD_PURCHASE_ORDER_NOT_FOUND);
         }
 
         for (AssetPurchaseChangeDetailDTO.AddDTO dto : addDTO.getAssetPurchaseChangeDetailDTOList()) {
@@ -721,18 +718,18 @@ public class AssetPurchaseChangeServiceImpl extends SuperServiceImpl<AssetPurcha
             }
             //新采购数量不能小于等于0
             if (dto.getPurchaseQty().compareTo(BigDecimal.ZERO) <= 0) {
-                throw new ServiceException(ApiError.ERROR_98151,dto.getAssetCode());
+                throw new ServiceException(ApiError.ERROR_SKU_PURCHASE_QTY_INVALID,dto.getAssetCode());
             }
             //已验收数量
             Integer acceptQty = assetAceptFeign.getAcceptQtyByDetailId(dto.getSourceDetailId());
             //新采购数量不能小于已验收数量
             if (dto.getPurchaseQty().compareTo(new BigDecimal(acceptQty)) < 0) {
-                throw new ServiceException(ApiError.ERROR_98152,dto.getAssetCode());
+                throw new ServiceException(ApiError.ERROR_SKU_NEW_QTY_LT_ACCEPTED,dto.getAssetCode());
             }
         }
 
         if (!ApproveStatusEnum.APPROVE.getStatus().equals(assetPurchaseOrderEntity.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_98137);
+            throw new ServiceException(ApiError.ERROR_MOULD_PURCHASE_NOT_AUDITED_CHANGE_FORBIDDEN);
         }
 
         //变更日期
@@ -801,7 +798,7 @@ public class AssetPurchaseChangeServiceImpl extends SuperServiceImpl<AssetPurcha
         List<String> purchaseOrderDetailIds = list.stream().map(AssetPurchaseChangeDetailEntity::getSourceDetailId).collect(Collectors.toList());
         List<AssetPurchaseOrderDetailEntity> assetPurchaseOrderDetailEntityList = assetPurchaseOrderDetailService.listByIds(purchaseOrderDetailIds);
         if (CollectionUtils.isEmpty(assetPurchaseOrderDetailEntityList)) {
-            throw new ServiceException(ApiError.ERROR_98135);
+            throw new ServiceException(ApiError.ERROR_MOULD_PURCHASE_DETAIL_NOT_FOUND);
         }
 
         //采购订单
@@ -812,7 +809,7 @@ public class AssetPurchaseChangeServiceImpl extends SuperServiceImpl<AssetPurcha
                 .one();
 
         if (Objects.isNull(assetPurchaseOrderEntity)) {
-            throw new ServiceException(ApiError.ERROR_98134);
+            throw new ServiceException(ApiError.ERROR_MOULD_PURCHASE_ORDER_NOT_FOUND);
         }
 
         //明细条数不允许增加
@@ -821,7 +818,7 @@ public class AssetPurchaseChangeServiceImpl extends SuperServiceImpl<AssetPurcha
                 .eq(AssetPurchaseOrderDetailEntity::getIsDeleted, Boolean.FALSE)
                 .list();
         if (addDTO.getAssetPurchaseChangeDetailDTOList().size() > detailList.size()) {
-            throw new ServiceException(ApiError.ERROR_98138);
+            throw new ServiceException(ApiError.ERROR_MOULD_PURCHASE_PUSHED_NO_NEW_DETAIL);
         }
 
         //申请数量不允许超过剩余数量
@@ -845,14 +842,14 @@ public class AssetPurchaseChangeServiceImpl extends SuperServiceImpl<AssetPurcha
                         .one();
                 //申请数量-除了当前单的已采购数量 > 传入的采购数量 才可以保存
                 if (assetNoticeDetailEntity.getApplyQty().subtract(purchaseQtySum).compareTo(assetPurchaseOrderDetailEntity.getPurchaseQty()) < 0) {
-                    throw new ServiceException(ApiError.ERROR_98139);
+                    throw new ServiceException(ApiError.ERROR_MOULD_PURCHASE_QTY_EXCEED);
                 }
             } else {
                 //如果没有开模通知单，数量比对应采购单明细数量少就可以
                 for (AssetPurchaseChangeDetailDTO.AddDTO dto : addDTO.getAssetPurchaseChangeDetailDTOList()) {
                     if (dto.getSourceDetailId().equals(assetPurchaseOrderDetailEntity.getId())
                             && dto.getPurchaseQty().compareTo(assetPurchaseOrderDetailEntity.getPurchaseQty()) > 0) {
-                        throw new ServiceException(ApiError.ERROR_98139);
+                        throw new ServiceException(ApiError.ERROR_MOULD_PURCHASE_QTY_EXCEED);
                     }
                 }
             }
@@ -871,7 +868,7 @@ public class AssetPurchaseChangeServiceImpl extends SuperServiceImpl<AssetPurcha
                     .one();
 
             if (Objects.isNull(assetPurchaseOrderDetailEntity)) {
-                throw new ServiceException(ApiError.ERROR_98135);
+                throw new ServiceException(ApiError.ERROR_MOULD_PURCHASE_DETAIL_NOT_FOUND);
             }
 
             if (purchaseChangeDetailEntity.getSourceDetailId().equals(assetPurchaseOrderDetailEntity.getId())) {
@@ -898,7 +895,7 @@ public class AssetPurchaseChangeServiceImpl extends SuperServiceImpl<AssetPurcha
 
     private AssetPurchaseChangeEntity handleUpdateData(AssetPurchaseChangeEntity entity){
         if (entity.getChangeDate().compareTo(LocalDate.now()) < 0) {
-            new ServiceException(ApiError.ERROR_98141);
+            new ServiceException(ApiError.ERROR_MOULD_PURCHASE_DATE_INVALID);
         }
 
         AssetPurchaseChangeEntity assetPurchaseChangeEntity = new AssetPurchaseChangeEntity();
@@ -1016,7 +1013,7 @@ public class AssetPurchaseChangeServiceImpl extends SuperServiceImpl<AssetPurcha
             if (Objects.nonNull(assetAcceptList)) {
                 BigDecimal sum = assetAcceptList.stream().map(obj -> obj.getAcceptQty()).reduce(BigDecimal.ZERO, BigDecimal::add);
                 if (addDTO.getPurchaseQty().compareTo(sum) < 0) {
-                    throw new ServiceException(ApiError.ERROR_98150);
+                    throw new ServiceException(ApiError.ERROR_SKU_CHANGE_QTY_LT_ACCEPTED);
                 }
             }
         }

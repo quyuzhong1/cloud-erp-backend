@@ -26,7 +26,7 @@ import java.io.Serializable;
  * TRANSFER → 调拨
  * PROCESS → 加工
  * SO → 销售订单/出库
- * 占位符统一：统一 {} 避免混用
+ * 占位符统一：统一国际化占位符 {0} {1}{2}{3} 避免混用
  */
 
 public enum ApiError implements Serializable {
@@ -581,17 +581,17 @@ public enum ApiError implements Serializable {
     ERROR_PLM_VENDOR_PRICE_LIST_NOT_FOUND(95289,"供应商采购价目表不存在，请联系采购开发提交后提审:{0}"),
     ERROR_PLM_UPLOAD_FORBIDDEN_IN_APPROVING(95291,"审核中不支持上传"),
     ERROR_PLM_CN_EXPORT_DECLARATION_HS_NOT_FOUND(95292,"中国海关编码不存在于出口申报要素"),
-    ERROR_EXIST_SKU(95293,"SKU【{}】已存在,不允许反审核"),
+    ERROR_EXIST_SKU(95293,"SKU【{0}】已存在,不允许反审核"),
     ERROR_MOLD_NOT_EXIST(95294,"模具档案不存在"),
-    ERROR_95294(95294,"只允许选择已审核的模具档案批量关联SKU"),
+    ERROR_MOULD_FILE_AUDITED_ONLY(95294,"只允许选择已审核的模具档案批量关联SKU"),
     ERROR_MOLD_REF_SKU_EXIST(95295,"模具档案已存在关联SKU"),
-    ERROR_95296(95296,"只有未生成模具采购订单的通知单单才能反审核"),
-    ERROR_95297(95297,"未找到开模通知单"),
-    ERROR_95298(95298,"未找到开模通知单明细"),
-    ERROR_95299(95299,"未找到可以下推的开模通知单"),
-    ERROR_95300(95300,"开模通知单【{}】,资产【{}】采购数量不能大于待申请数量"),
+    ERROR_MOULD_NOTICE_UNDER_PURCHASE_ONLY(95296,"只有未生成模具采购订单的通知单单才能反审核"),
+    ERROR_MOULD_NOTICE_NOT_FOUND(95297,"未找到开模通知单"),
+    ERROR_MOULD_NOTICE_DETAIL_NOT_FOUND(95298,"未找到开模通知单明细"),
+    ERROR_MOULD_NOTICE_NO_PUSHABLE(95299,"未找到可以下推的开模通知单"),
+    ERROR_MOULD_NOTICE_QTY_EXCEED(95300,"开模通知单【{0}】,资产【{1}】采购数量不能大于待申请数量"),
     ERROR_MOLD_NOT_APPROVE(95301,"模具未审核通过"),
-    ERROR_95302(95302,"寿命数量不能小于预警寿命数量"),
+    ERROR_MOULD_LIFESPAN_TOO_SMALL(95302,"寿命数量不能小于预警寿命数量"),
     ERROR_MOLD_RETURN_EXIST(95303,"模具档案已存在返还策略"),
     ERROR_MOLD_ALERT_EXIST(95304,"模具档案已存在预警策略"),
 
@@ -647,8 +647,8 @@ public enum ApiError implements Serializable {
     SEARCH_TYPE_EXIST(97034, "搜索类型不存在"),
     ERROR_DATE_TYPE(97035, "财务销售额只支持月，季，年维度查询"),
 
-    ERROR_HAS_EXIST_DICT_VALUE(97036, "系统字典表值{}数据重复"),
-    ERROR_EXIST_DICT_VALUE(97037, "系统字典表值{}已存在"),
+    ERROR_HAS_EXIST_DICT_VALUE(97036, "系统字典表值{0}数据重复"),
+    ERROR_EXIST_DICT_VALUE(97037, "系统字典表值{0}已存在"),
     ERROR_EMPTY_DICT_TYPE(97038, "系统字典类型不能为空"),
     ERROR_EMPTY_LIST(97039, "请求参数不能为空"),
     ERROR_DATE_RANGE_THIRTY_ONE(97040, "日范围不能大于31天"),
@@ -819,29 +819,29 @@ public enum ApiError implements Serializable {
     ERROR_PURCHASE_PRICE_CHANGE_ADJUST(98129,"该调价表数据非最新报价数据不支持批量调价"),
     ERROR_PURCHASE_PRICE_SKU(98130,"SKU【{0}】未找到数量【{1}】的供应商报价信息"),
     ERROR_SUPPLIER_UPDATE_FIELD_APPROVEING(98131,"状态在审核中不可更新"),
-    ERROR_98132(98132,"开模通知单已下推模具采购单"),
-    ERROR_98133(98133,"模具采购订单已下推模具采购变更单"),
-    ERROR_98134(98134,"未找到模具采购订单"),
-    ERROR_98135(98135,"未找到模具采购订单明细"),
-    ERROR_98136(98136,"未找到可以下推的模具采购订单"),
-    ERROR_98137(98137,"未审核的模具采购单不允许变更"),
-    ERROR_98138(98138,"下推的模具采购单不允许新增明细"),
-    ERROR_98139(98139,"采购数量不能大于待申请数量"),
-    ERROR_98140(98140,"sku【{}】未找到价目表"),
-    ERROR_98141(98141,"变更日期不能小于今天"),
-    ERROR_98142(98142,"采购变更数量不能大于待申请数量"),
-    ERROR_98143(98143,"请选择同一模具采购订单下明细进行变更!"),
-    ERROR_98144(98144,"未找到模具采购供应商信息"),
-    ERROR_98145(98145,"未找到模具采购变更单明细"),
-    ERROR_98146(98146,"只有已审核的模具采购单才可以结束验收"),
-    ERROR_98147(98147,"已验收和已关闭的明细行不允许变更"),
-    ERROR_98148(98148,"已存在下推资产验收单，不支持反审核"),
-    ERROR_98149(98149,"更新sku【{}】占用状态失败"),
-    ERROR_98150(98150,"sku【{}】变更数量不能小于已验收数量"),
-    ERROR_98151(98151,"sku【{}】采购数量不能小于等于0"),
-    ERROR_98152(98152,"sku【{}】的新采购数量不能小于已验收数量"),
-    ERROR_98153(98153,"模具编码【{}】验收数量不能超过可验收数量"),
-    ERROR_98154(98154,"没有找到供应商的账户信息"),
+    ERROR_MOULD_NOTICE_ALREADY_PUSHED(98132,"开模通知单已下推模具采购单"),
+    ERROR_MOULD_PURCHASE_ALREADY_CHANGED(98133,"模具采购订单已下推模具采购变更单"),
+    ERROR_MOULD_PURCHASE_ORDER_NOT_FOUND(98134,"未找到模具采购订单"),
+    ERROR_MOULD_PURCHASE_DETAIL_NOT_FOUND(98135,"未找到模具采购订单明细"),
+    ERROR_MOULD_PURCHASE_NO_PUSHABLE(98136,"未找到可以下推的模具采购订单"),
+    ERROR_MOULD_PURCHASE_NOT_AUDITED_CHANGE_FORBIDDEN(98137,"未审核的模具采购单不允许变更"),
+    ERROR_MOULD_PURCHASE_PUSHED_NO_NEW_DETAIL(98138,"下推的模具采购单不允许新增明细"),
+    ERROR_MOULD_PURCHASE_QTY_EXCEED(98139,"采购数量不能大于待申请数量"),
+    ERROR_MOULD_PURCHASE_SKU_PRICE_NOT_FOUND(98140,"sku【{0}】未找到价目表"),
+    ERROR_MOULD_PURCHASE_DATE_INVALID(98141,"变更日期不能小于今天"),
+    ERROR_MOULD_PURCHASE_CHANGE_QTY_EXCEED(98142,"采购变更数量不能大于待申请数量"),
+    ERROR_MOULD_PURCHASE_DETAIL_MUST_BE_SAME_ORDER(98143,"请选择同一模具采购订单下明细进行变更!"),
+    ERROR_MOULD_PURCHASE_SUPPLIER_INFO_MISSING(98144,"未找到模具采购供应商信息"),
+    ERROR_MOULD_PURCHASE_CHANGE_DETAIL_NOT_FOUND(98145,"未找到模具采购变更单明细"),
+    ERROR_MOULD_PURCHASE_AUDITED_ONLY_FOR_ACCEPTANCE(98146,"只有已审核的模具采购单才可以结束验收"),
+    ERROR_MOULD_PURCHASE_ROW_CHANGE_FORBIDDEN(98147,"已验收和已关闭的明细行不允许变更"),
+    ERROR_MOULD_PURCHASE_PUSHED_ACCEPT_REVIEW_FORBIDDEN(98148,"已存在下推资产验收单，不支持反审核"),
+    ERROR_SKU_OCCUPY_STATE_UPDATE_FAIL(98149,"更新sku【{0}】占用状态失败"),
+    ERROR_SKU_CHANGE_QTY_LT_ACCEPTED(98150,"sku【{0}】变更数量不能小于已验收数量"),
+    ERROR_SKU_PURCHASE_QTY_INVALID(98151,"sku【{0}】采购数量不能小于等于0"),
+    ERROR_SKU_NEW_QTY_LT_ACCEPTED(98152,"sku【{0}】的新采购数量不能小于已验收数量"),
+    ERROR_MOULD_CODE_ACCEPT_QTY_EXCEED(98153,"模具编码【{0}】验收数量不能超过可验收数量"),
+    ERROR_SUPPLIER_ACCOUNT_NOT_FOUND(98154,"没有找到供应商的账户信息"),
 
     /**
      * WMS 错误
@@ -921,8 +921,8 @@ public enum ApiError implements Serializable {
     ERROR_WMS_RETURN_QTY_EXCEEDS_PENDING_QC(99079,"【{0}】退货数量不能大于待检库存"),
     ERROR_WMS_RETURN_INBOUND_ALLOWED_APPROVED_ONLY(99081,"只有已审核的单据才能下推退货入库单"),
     ERROR_WMS_RETURN_INBOUND_NOT_FOUND(99083,"退货入库单不存在"),
-    ERROR_99080(99080,"已作废的质检单不支持{}操作"),
-    ERROR_99200(99200,"已作废的质检通知单不支持{}操作"),
+    ERROR_QC_VOIDED_OPERATION_NOT_ALLOWED(99080,"已作废的质检单不支持{0}操作"),
+    ERROR_QC_NOTICE_VOIDED_OPERATION_NOT_ALLOWED(99200,"已作废的质检通知单不支持{0}操作"),
 
     ERROR_WMS_REQ_PUSHED_DELIVERY_PICKLIST_LOCKED(99086,"要货申请下推发货单后，拣货单不允许修改和删除"),
 
@@ -1675,9 +1675,9 @@ public enum ApiError implements Serializable {
      * FMS 错误
      * 从100000 开始
      */
-    ERROR_100000(100000,"资产验收单验收数量超过模具采购单采购数量"),
-    ERROR_100001(100001,"资产卡片【{}】不存在"),
-    ERROR_100002(100002,"资产编码【{}】处置数量不能大于账存数量"),
+    ERROR_ASSET_ACCEPT_QTY_EXCEED_PURCHASE(100000,"资产验收单验收数量超过模具采购单采购数量"),
+    ERROR_ASSET_NOT_FOUND(100001,"资产卡片【{0}】不存在"),
+    ERROR_ASSET_DISPOSAL_QTY_EXCEED(100002,"资产编码【{0}】处置数量不能大于账存数量"),
 
 
 
@@ -1694,7 +1694,6 @@ public enum ApiError implements Serializable {
     ERROR_MARKETPLACE_UNAUTHORIZED(100000,"亚马逊店铺已被禁用:{0}"),
 
     ERROR_PO_APPLY_QTY_MORE(99998,"采购申请单【{0}】下级SKU【{1}】采购数量不能大于待申请数量"),
-    ERROR_99999(99999, "参数错误"),
 
     // 单点登录相关错误码
     SSO_APP_NOT_FOUND(20001, "应用不存在"),

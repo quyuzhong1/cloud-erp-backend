@@ -3,7 +3,6 @@ package com.erp.server.scm.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import com.alibaba.excel.EasyExcel;
-import com.alibaba.excel.EasyExcelFactory;
 import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
@@ -62,7 +61,6 @@ import com.common.business.dto.base.*;
 import javax.servlet.http.HttpServletResponse;
 import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -71,7 +69,6 @@ import java.util.*;
 import java.util.stream.Stream;
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
-import org.springframework.web.multipart.MultipartFile;
 
 import static com.common.business.enums.FileTaskEventEnum.*;
 
@@ -333,7 +330,7 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
         List<AssetNoticeDTO.ViewGeneratePurchaseOrderDTO> viewGeneratePurchaseOrderDTOS = new ArrayList<>();
         List<AssetNoticeDetailEntity> assetNoticeDetailEntityList = assetNoticeDetailService.listByIds(idList);
         if (assetNoticeDetailEntityList.isEmpty()) {
-            throw new ServiceException(ApiError.ERROR_95298);
+            throw new ServiceException(ApiError.ERROR_MOULD_NOTICE_DETAIL_NOT_FOUND);
         }
 
 
@@ -341,7 +338,7 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
         List<AssetNoticeDetailEntity> collect = assetNoticeDetailEntityList.stream()
                 .filter(obj -> !CreatePoTypeEnum.ALL_GENERATED.getStatus().equals(obj.getCreatePoType())).collect(Collectors.toList());
         if (CollectionUtils.isEmpty(collect)) {
-            throw new ServiceException(ApiError.ERROR_95299);
+            throw new ServiceException(ApiError.ERROR_MOULD_NOTICE_NO_PUSHABLE);
         }
 
         for (AssetNoticeDetailEntity assetNoticeDetailEntity : collect) {
@@ -350,7 +347,7 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
             AssetNoticeEntity assetNoticeEntity = this.getById(assetNoticeDetailEntity.getMainId());
             //主表数据
             if (Objects.isNull(assetNoticeEntity)) {
-                throw new ServiceException(ApiError.ERROR_95297);
+                throw new ServiceException(ApiError.ERROR_MOULD_NOTICE_NOT_FOUND);
             }
             BeanUtils.copyProperties(assetNoticeDetailEntity,viewGeneratePurchaseOrderDTO);
 
@@ -400,13 +397,13 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
         List<AssetNoticeEntity> mainList = this.listByIds(ids);
 
         if (CollectionUtils.isEmpty(mainList)) {
-            throw new ServiceException(ApiError.ERROR_95297);
+            throw new ServiceException(ApiError.ERROR_MOULD_NOTICE_NOT_FOUND);
         }
 
         //已审核数据才能生成采购单
         long statusCount = mainList.stream().filter(obj -> !ApproveStatusEnum.APPROVE.getStatus().equals(obj.getApproveStatus())).count();
         if (statusCount > 0) {
-            throw new ServiceException(ApiError.ERROR_95299);
+            throw new ServiceException(ApiError.ERROR_MOULD_NOTICE_NO_PUSHABLE);
         }
 
         //sku信息
@@ -506,7 +503,7 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
                     .orElseGet(() -> supplierAccountList.stream().findFirst().orElse(null));
             // 供应商账户
             if (Objects.isNull(supplierAccount)) {
-                throw new ServiceException(ApiError.ERROR_98154);
+                throw new ServiceException(ApiError.ERROR_SUPPLIER_ACCOUNT_NOT_FOUND);
             }
             supplierDTO.setBankName(supplierAccount.getBankSubbranch());
             supplierDTO.setBankAccount(supplierAccount.getBankAccount());
@@ -569,7 +566,7 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
         //明细数据
         List<AssetNoticeDetailEntity> detailList = assetNoticeDetailService.listByIds(detailIds);
         if (CollectionUtils.isEmpty(detailList)) {
-            throw new ServiceException(ApiError.ERROR_95298);
+            throw new ServiceException(ApiError.ERROR_MOULD_NOTICE_DETAIL_NOT_FOUND);
         }
 
         // 不允许下推的申请单明细id集合
@@ -612,9 +609,9 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
             exceptionDataMap.put("assetNoticeDetailIds", prohibitDetailIds);
             prohibitDetails.stream().forEach(detail->{
                 AssetNoticeEntity entity = detailMainMap.get(detail.getId());
-                errMsg.append(CharSequenceUtil.format(ApiError.ERROR_95300.msg,entity.getCode(),detail.getAssetCode())).append("</br>");
+                errMsg.append(CharSequenceUtil.format(ApiError.ERROR_MOULD_NOTICE_QTY_EXCEED.msg,entity.getCode(),detail.getAssetCode())).append("</br>");
             });
-            throw new ServiceException(new ApiResult<>(ApiError.ERROR_95300.code,errMsg.toString(), exceptionDataMap));
+            throw new ServiceException(new ApiResult<>(ApiError.ERROR_MOULD_NOTICE_QTY_EXCEED.code,errMsg.toString(), exceptionDataMap));
         }
         return  detailList;
     }
@@ -680,7 +677,7 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
 
         List<AssetPurchaseOrderEntity> purchaseOrderEntityList = assetPurchaseOrderService.list(lambdaQueryWrapper);
         if (CollectionUtils.isNotEmpty(purchaseOrderEntityList)) {
-            throw new ServiceException(ApiError.ERROR_98132);
+            throw new ServiceException(ApiError.ERROR_MOULD_NOTICE_ALREADY_PUSHED);
         }
 
         return true;
@@ -701,7 +698,7 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
                 .list();
 
         if (list.isEmpty()) {
-            throw new ServiceException(ApiError.ERROR_98135);
+            throw new ServiceException(ApiError.ERROR_MOULD_PURCHASE_DETAIL_NOT_FOUND);
         }
 
         List<String> collect = list.stream().map(obj -> obj.getId()).collect(Collectors.toList());
@@ -860,7 +857,7 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
         queryWrapper.eq(AssetNoticeDetailEntity::getMainId,id);
         List<AssetNoticeDetailEntity> detailList = assetNoticeDetailService.list(queryWrapper);
         if (CollectionUtils.isEmpty(detailList)) {
-            throw new ServiceException(ApiError.ERROR_95298);
+            throw new ServiceException(ApiError.ERROR_MOULD_NOTICE_DETAIL_NOT_FOUND);
         }
         List<AssetNoticeDetailDTO.ViewDTO> dtoList = BeanMapperUtils.copyList(AssetNoticeDetailDTO.ViewDTO.class, detailList);
         fillViewList(dtoList);

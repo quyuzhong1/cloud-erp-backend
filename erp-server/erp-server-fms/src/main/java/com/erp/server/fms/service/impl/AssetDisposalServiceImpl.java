@@ -14,7 +14,6 @@ import com.common.core.enums.CurrencyEnum;
 import com.erp.model.fms.dto.*;
 import com.erp.model.fms.dto.excel.AssetDisposalImportExcelDTO;
 import com.erp.model.fms.entity.*;
-import com.erp.model.fms.enums.AssetCardStatusEnum;
 import com.erp.model.fms.enums.AssetDisposalDetailInvoiceTypeEnum;
 import com.erp.model.fms.enums.AssetDisposalDisposalMethodEnum;
 import com.erp.model.fms.enums.DisposalStatusEnum;
@@ -525,7 +524,7 @@ public class AssetDisposalServiceImpl extends SuperServiceImpl<AssetDisposalMapp
         }
         String error = sb.toString();
         if(StringUtils.isNotBlank(error)){
-            return new ValidationResult(BatchResultDTO.fail(entity.getId(), entity.getCode(),StrUtil.format(ApiError.ERROR_100001.msg,error)));
+            return new ValidationResult(BatchResultDTO.fail(entity.getId(), entity.getCode(),StrUtil.format(ApiError.ERROR_ASSET_NOT_FOUND.msg,error)));
         }
 
         List<String> detailIds = assetDisposalDetailEntities.stream().map(AssetDisposalDetailEntity::getId).collect(Collectors.toList());
@@ -572,7 +571,7 @@ public class AssetDisposalServiceImpl extends SuperServiceImpl<AssetDisposalMapp
         if(!isDisApprove) {
             error = sb.toString();
             if(StringUtils.isNotBlank(error)){
-                return new ValidationResult(BatchResultDTO.fail(entity.getId(), entity.getCode(),StrUtil.format(ApiError.ERROR_100002.msg,error)));
+                return new ValidationResult(BatchResultDTO.fail(entity.getId(), entity.getCode(),StrUtil.format(ApiError.ERROR_ASSET_DISPOSAL_QTY_EXCEED.msg,error)));
             }
         }
 
