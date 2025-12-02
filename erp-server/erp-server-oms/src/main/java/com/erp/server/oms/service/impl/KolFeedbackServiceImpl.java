@@ -347,27 +347,30 @@ public class KolFeedbackServiceImpl extends SuperServiceImpl<KolFeedbackMapper, 
         // 使用一个SQL查询获取所有状态的统计数量
         List<KolFeedbackDTO.TabListDTO> list = baseMapper.tabList(searchParam);
         
-        // 设置tabFlagName，使用FeedbackStatusEnum获取状态名称
-        list.forEach(e -> {
-            if (StrUtil.isNotBlank(e.getTabFlag())) {
-                FeedbackStatusEnum statusEnum = FeedbackStatusEnum.getByCode(e.getTabFlag());
-                if (statusEnum != null) {
-                    e.setTabFlagName(statusEnum.getName());
-                } else {
-                    e.setTabFlagName(e.getTabFlag());
-                }
-            } else {
-                e.setTabFlagName("");
-            }
-        }); 
+        // 将查询结果转换为Map，方便查找
+        Map<String, Integer> statusCountMap = list.stream()
+                .collect(Collectors.toMap(
+                        KolFeedbackDTO.TabListDTO::getTabFlag,
+                        KolFeedbackDTO.TabListDTO::getCount,
+                        (k1, k2) -> k1
+                ));
+        
+        // 确保所有枚举状态都存在，如果不存在则添加数量为0的标签
+        List<KolFeedbackDTO.TabListDTO> resultList = new ArrayList<>();
+        for (FeedbackStatusEnum statusEnum : FeedbackStatusEnum.values()) {
+            String code = statusEnum.getCode();
+            Integer count = statusCountMap.getOrDefault(code, 0);
+            KolFeedbackDTO.TabListDTO tabDTO = new KolFeedbackDTO.TabListDTO(code, statusEnum.getName(), count);
+            resultList.add(tabDTO);
+        }
         
         // 计算合计数量并添加"全部"标签
-        int totalCount = list.stream().mapToInt(KolFeedbackDTO.TabListDTO::getCount).sum();
+        int totalCount = resultList.stream().mapToInt(KolFeedbackDTO.TabListDTO::getCount).sum();
         KolFeedbackDTO.TabListDTO allTab = new KolFeedbackDTO.TabListDTO("all", "全部", totalCount);
-        list.add(0, allTab); // 添加到第一位
+        resultList.add(0, allTab); // 添加到第一位
         
         // 排序：全部 -> 待回片 -> 已回片
-        list.sort((a, b) -> {
+        resultList.sort((a, b) -> {
             // "all" 排在最前面
             if ("all".equals(a.getTabFlag())) {
                 return -1;
@@ -385,7 +388,7 @@ public class KolFeedbackServiceImpl extends SuperServiceImpl<KolFeedbackMapper, 
             return 0;
         });
         
-        return list;
+        return resultList;
     }
 
     /**
