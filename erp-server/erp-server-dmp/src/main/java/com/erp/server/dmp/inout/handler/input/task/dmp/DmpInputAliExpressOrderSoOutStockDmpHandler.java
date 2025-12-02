@@ -35,6 +35,7 @@ public class DmpInputAliExpressOrderSoOutStockDmpHandler extends DmpInputAliExpr
 
 	public static final String DELIVERY_TIME = "deliveryTime";
 	public static final String SEND_FULFILL_TIME = "send_fulfill_time";
+	public static final String OUT_BOUND_TIME = "out_bound_time";
 
 
 	@Override
@@ -46,6 +47,11 @@ public class DmpInputAliExpressOrderSoOutStockDmpHandler extends DmpInputAliExpr
 					LocalDateTime deliveryTime = LocalDateTime.ofInstant(Instant.ofEpochMilli((Long) sendFulfillTimeObj), ZoneId.systemDefault());
 					dmpInputMongoChild.put(DELIVERY_TIME, deliveryTime);
 				}
+                Object outBoundTimeObj = dmpInputMongoChild.get(OUT_BOUND_TIME);
+                if (null == sendFulfillTimeObj && null != outBoundTimeObj){
+                    LocalDateTime deliveryTime = LocalDateTime.ofInstant(Instant.ofEpochMilli((Long) outBoundTimeObj), ZoneId.systemDefault());
+                    dmpInputMongoChild.put(DELIVERY_TIME, deliveryTime);
+                }
 			}
 		}
 		return dmpInputMongoChildList;
