@@ -495,7 +495,7 @@ public class KolB2bApplicationDTO implements Serializable {
         private LocalDate date;
 
         /**
-        * 寄样类型，/api/oms/cfgKolOption/select?type=kolB2bSampleType
+        * 寄样类型，/api/oms/cfgKolOption/select?type=kolSampleType
         */
         @NotBlank(message = "寄样类型不能为空")
         @Size(max = 64,message = "寄样类型最大长度不能超过64位")
@@ -578,16 +578,55 @@ public class KolB2bApplicationDTO implements Serializable {
         private List<String> attachUrlList;
     }
 
-
+    /**
+     * 生成销售订单信息
+     */
     @Data
     @NoArgsConstructor
     public static class GenerateSoInfoDTO {
-
+        /**
+         * B2B寄养申请明细Id
+         */
+        private String detailId;
+        /**
+         * 销售组织Id
+         */
+        private String soOrgId;
+        /**
+         * 仓库Id
+         */
+        private String warehouseId;
     }
 
+    /**
+     * 生成回片登记信息
+     */
     @Data
     @NoArgsConstructor
     public static class GenerateFeedbackDTO {
-
+        /**
+         * B2B寄养申请明细Id
+         */
+        private String detailId;
+        /**
+         * 达人Id
+         */
+        private String partnerId;
+        /**
+         * 回片链接
+         */
+        private String url;
+        /**
+         * 回片发布日期
+         */
+        private LocalDate publishDate;
+        /**
+         * 发布形式
+         */
+        private String publishType;
+        /**
+         * 备注
+         */
+        private String remark;
     }
 }

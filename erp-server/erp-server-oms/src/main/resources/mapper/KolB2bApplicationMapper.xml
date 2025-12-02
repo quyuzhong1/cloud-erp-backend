@@ -49,8 +49,47 @@
         code, date, approve_status, approve_user_id, approve_user_name, approve_time, invalid_status, invalid_remark, invalid_time, type, customer_id, apply_remark, apply_user_id, apply_dept_id, country_id, country_name, receiver_name, tel_number, receive_address, address_type, remark
     </sql>
 
+    <!-- 分页查询 -->
     <select id="paging" resultType="com.erp.model.oms.dto.KolB2bApplicationDTO$ListDTO">
-
+        select
+            kba.code,
+            kba.date,
+            kba.approve_status,
+            kba.approve_user_name,
+            kba.approve_time,
+            kba.invalid_status,
+            kba.type,
+            kba.customer_id,
+            kba.apply_remark,
+            kba.apply_user_id,
+            kba.apply_dept_id,
+            kba.create_time,
+            kba.create_user_name,
+            kbad.sku_id,
+            kbad.sku_no,
+            kbad.qty,
+            kbad.plan_feedback_date,
+            kbad.project_tag,
+            kbad.remark as detail_remark,
+            ci.name as customer_name
+        from kol_b2b_application kba
+        inner join kol_b2b_application_detail kbad on kba.id = kbad.kol_b2b_application_id and kbad.is_deleted = false
+        left join customer_info ci on kba.customer_id = ci.id and ci.is_deleted = false
+        <where>
+            ${params.sqlMap.default}
+            and kba.is_deleted = false
+            <!--权限-->
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
+            </if>
+            ORDER BY
+            <if test="params.sortList != null and params.sortList.size > 0">
+                <foreach collection="params.sortList" item="item" separator="," close=",">
+                    ${item.field} ${item.sort}
+                </foreach>
+            </if>
+            kba.id desc
+        </where>
     </select>
 
     <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">

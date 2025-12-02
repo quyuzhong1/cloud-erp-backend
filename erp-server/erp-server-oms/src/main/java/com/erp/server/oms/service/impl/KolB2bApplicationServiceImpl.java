@@ -2,36 +2,50 @@ package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.config.DocNoGenHelper;
+import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.MathUtil;
 import com.common.core.utils.StrUtils;
 import com.erp.model.oms.dto.KolB2bApplicationDTO;
 import com.erp.model.oms.entity.KolB2bApplicationEntity;
+import com.erp.model.oms.entity.SoDetailEntity;
+import com.erp.model.oms.enums.KolB2bDeliveryStatusEnum;
+import com.erp.model.oms.enums.KolB2bRefStatusEnum;
+import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.sys.dto.SysDepartmentDTO;
+import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.wms.feign.SoOutstockFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.oms.mapper.KolB2bApplicationMapper;
 import com.erp.server.oms.service.KolB2bApplicationDetailService;
 import com.erp.server.oms.service.KolB2bApplicationService;
 import com.erp.server.oms.service.OperateLogService;
+import com.erp.server.oms.service.SoDetailService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -40,10 +54,8 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDateTime;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.common.business.enums.FileTaskEventEnum.IMPORT_WMS_KOL_B2B_APPLICATION_REPORT;
 
@@ -69,6 +81,14 @@ public class KolB2bApplicationServiceImpl extends SuperServiceImpl<KolB2bApplica
     private KolB2bApplicationDetailService kolB2bApplicationDetailService;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+
+    @Resource
+    private SysUserFeign sysUserFeign;
+    @Resource
+    private SoOutstockFeign soOutstockFeign;
+    @Resource
+    private SoDetailService soDetailService;
+
 
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
@@ -136,14 +156,14 @@ public class KolB2bApplicationServiceImpl extends SuperServiceImpl<KolB2bApplica
     @Override
     public PagingVO<KolB2bApplicationDTO.ListDTO> paging(PagingDTO<KolB2bApplicationDTO.PagingParamDTO> pagingParamDTO) {
         pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
-        Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
+        Page<Object> query = new Page<>(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
         IPage<KolB2bApplicationDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingParamDTO.getParams());
         if(CollUtil.isEmpty(pageData.getRecords())) {
-           return new PagingVO(pageData);
+           return new PagingVO<>(pageData);
         }
         // 数据处理
         fillList(pageData.getRecords());
-        return new PagingVO(pageData);
+        return new PagingVO<>(pageData);
     }
 
     @Override
@@ -469,12 +489,74 @@ public class KolB2bApplicationServiceImpl extends SuperServiceImpl<KolB2bApplica
         if(CollUtil.isEmpty(list)) {
            return;
         }
+        //产品信息
+        List<String> skuIdList = list.stream().map(KolB2bApplicationDTO.ListDTO::getSkuId).distinct().collect(Collectors.toList());
+        List<ProductDetailEntity> skuList = FeignQuery.getByIds(ProductDetailEntity.class, skuIdList);
+        Map<String,String> skuMap = CollUtil.isEmpty(skuList) ? new HashMap<>() :
+                skuList.stream().collect(Collectors.toMap(ProductDetailEntity::getId, ProductDetailEntity::getName));
+        //用户
+        List<FindUserDTO> userList = sysUserFeign.getUserList();
+        Map<String,String> userMap = CollUtil.isEmpty(userList) ? new HashMap<>() :
+                userList.stream().collect(Collectors.toMap(FindUserDTO::getUserId, FindUserDTO::getUserName));
+        //部门
+        List<SysDepartmentDTO> deptList = sysUserFeign.getDeptList();
+        Map<String,String> deptMap = CollUtil.isEmpty(deptList) ? new HashMap<>() :
+                deptList.stream().collect(Collectors.toMap(SysDepartmentDTO::getId, SysDepartmentDTO::getName));
+
+        //销售订单信息
+        List<String> detailIdList = list.stream().map(KolB2bApplicationDTO.ListDTO::getDetailId).distinct().collect(Collectors.toList());
+        List<SoDetailEntity> soDetailList = soDetailService.listBySourceDetailIdList(detailIdList);
+        Map<String,SoDetailEntity> soDetailMap = CollUtil.isEmpty(soDetailList) ? new HashMap<>() :
+                soDetailList.stream().collect(Collectors.toMap(SoDetailEntity::getSourceDetailId, soDetailEntity -> soDetailEntity));
+
+        //销售出库单
+        List<String> soIdList = soDetailList.stream().map(SoDetailEntity::getMainId).distinct().collect(Collectors.toList());
+        List<SoOutstockDetailEntity> soOutstockDetailList = soOutstockFeign.listDetailBySoIds(soIdList);
+
+        //回片信息
+
 
         // 属性赋值
         for(KolB2bApplicationDTO.ListDTO data : list) {
+            //状态名称
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
             data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
-            // TODO 其他如需要显示名称的字段赋值
+
+            //产品名称
+            data.setProductName(skuMap.get(data.getSkuId()));
+            //申请人名称
+            data.setApplyUserName(userMap.get(data.getApplyUserId()));
+            //申请部门名称
+            data.setApplyDeptName(deptMap.get(data.getApplyDeptId()));
+
+            //销售订单
+            String b2bRefStatusName = KolB2bRefStatusEnum.WAIT_GENERATE.getName();
+            SoDetailEntity soDetailEntity = soDetailMap.get(data.getDetailId());
+            if (ObjectUtil.isNotEmpty(soDetailEntity)) {
+                if (CharSequenceUtil.equals(soDetailEntity.getApproveStatus(),ApproveStatusEnum.APPROVE.getStatus())) {
+                    b2bRefStatusName = KolB2bRefStatusEnum.APPROVED.getName();
+                } else {
+                    b2bRefStatusName = KolB2bRefStatusEnum.WAIT_APPROVE.getName();
+                }
+
+                //运单号集合
+                List<String> trackNoList = soOutstockDetailList.stream().filter(s -> s.getSoId().equals(soDetailEntity.getMainId())
+                                && StringUtils.isNotBlank(s.getTrackNo())).
+                        map(SoOutstockDetailEntity::getTrackNo).distinct().collect(Collectors.toList());
+                data.setTrackNo(String.join(",", trackNoList));
+
+                //销售出库单已出库数量
+                Integer outstockQty = soOutstockDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus()) && CharSequenceUtil.equals(obj.getSoDetailId(), soDetailEntity.getId()))
+                        .map(SoOutstockDetailEntity::getActualQty).reduce(MathUtil.ZERO, Integer::sum);
+                String deliveryStatusName = KolB2bRefStatusEnum.WAIT_GENERATE.getName();
+                if (MathUtil.compareTo(outstockQty,data.getQty()) >= MathUtil.ZERO) {
+                    deliveryStatusName = KolB2bDeliveryStatusEnum.SHIPPED.getName();
+                } else if (outstockQty > MathUtil.ZERO) {
+                    deliveryStatusName = KolB2bDeliveryStatusEnum.PARTIAL_SHIPPED.getName();
+                }
+                data.setDeliveryStatusName(deliveryStatusName);
+            }
+            data.setB2bRefStatusName(b2bRefStatusName);
         }
     }
     /**
