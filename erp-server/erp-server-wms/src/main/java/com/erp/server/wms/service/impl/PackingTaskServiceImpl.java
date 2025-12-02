@@ -22,6 +22,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.DynamicDataSourceThreadLocal;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.utils.JasperHelperUtil;
 import com.common.business.vo.LoginUser;
@@ -2134,6 +2135,11 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         Page<PackingTaskDTO.PagingViewDTO> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
         PackingTaskDTO.PagingParamDTO params = dto.getParams();
         params.setPermissionSql(dto.getPermissionSql());
+        DynamicDataSourceTypeEnum dynamicDataSourceTypeEnum = DynamicDataSourceThreadLocal.get();
+        if(dynamicDataSourceTypeEnum == null) {
+            dynamicDataSourceTypeEnum = DynamicDataSourceTypeEnum.POSTGRES;
+        }
+        params.setDynamicDataSource(dynamicDataSourceTypeEnum.getCode());
         IPage<PackingTaskDTO.PagingViewDTO> pageData = baseMapper.paging(query, params);
         stopWatch.stop();
         stopWatch.start("buildPackingTask");
@@ -2518,25 +2524,6 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         buildPackingDetailTask(page.getRecords());
         //切换为装箱清单导出
         buildPackingDetailExportTask(page.getRecords());
-        return new PagingVO<>(page);
-    }
-
-    @Override
-    public PagingVO<PackingTaskDTO.PagingViewDTO> exportPackingTask(PagingDTO<PackingTaskDTO.PagingParamDTO> dto) {
-        StopWatch stopWatch = new StopWatch("exportPackingTask");
-        PackingTaskDTO.PagingParamDTO params = dto.getParams();
-        params.setPermissionSql(dto.getPermissionSql());
-        stopWatch.start("pagingList");
-        Page<PackingTaskDTO.PagingViewDTO> page = baseMapper.pagingList(new Page<>(dto.getCurrPage(), dto.getPageSize()), params);
-        stopWatch.stop();
-        stopWatch.start("buildPackingTask");
-        //补充数据
-        buildPackingTask(page.getRecords());
-        stopWatch.stop();
-        log.warn(stopWatch.prettyPrint(TimeUnit.SECONDS));
-        if (CollectionUtils.isEmpty(page.getRecords())) {
-            throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
-        }
         return new PagingVO<>(page);
     }
 
