@@ -284,8 +284,8 @@
         si.id as sourceId,
         si.code as sourceCode,
         sd.id as sourceDetailId,
-        sd.sku_id as skuId,
-        sd.sku_no as skuNo,
+        sd.delivery_sku_id as skuId,
+        sd.delivery_sku_no as skuNo,
         sd.qty,
         si.warehouse_id as warehouseId
         from so_info si
@@ -307,8 +307,8 @@
         si.warehouse_id,
         sd.id AS detailId,
         sd.main_id AS soId,
-        sd.sku_id,
-        sd.sku_no,
+        sd.delivery_sku_id as skuId,
+        sd.delivery_sku_no as skuNo,
         sd.platform_sku_no,
         sd.is_close,
         sd.qty AS salesQty,

@@ -1748,9 +1748,9 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         virtualInventoryFeign.approveByType(stockParamDTO);
 
         //添加日志
-        String content = StrUtil.format("操作了锁定库存，SKU【{}】 从【{}】到【{}】",soDetailEntity.getSkuNo(),oldFrozenQty,frozenQty);
+        String content = StrUtil.format("操作了锁定库存，SKU【{}】 从【{}】到【{}】",soDetailEntity.getDeliverySkuNo(),oldFrozenQty,frozenQty);
         operateLogService.addModuleOperateLog(content, ModuleTypeEnum.SO.getCode(), soInfoEntity.getId(), "锁定库存操作");
-        return new BatchResultDTO(soDetailEntity.getId(), CharSequenceUtil.format("【{}】{}",soInfoEntity.getCode(),soDetailEntity.getSkuNo()),"库存锁定成功",Boolean.TRUE);
+        return new BatchResultDTO(soDetailEntity.getId(), CharSequenceUtil.format("【{}】{}",soInfoEntity.getCode(),soDetailEntity.getDeliverySkuNo()),"库存锁定成功",Boolean.TRUE);
     }
 
     @Override
@@ -1882,8 +1882,10 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
      */
     private List<VirtualInventoryStockDTO.OutInStockDTO> lockVirtualInventory(SoInfoEntity soInfoEntity,SoDetailEntity soDetailEntity,Integer qty) {
         VirtualInventoryStockDTO.OutInStockDTO outInStockDTO = new VirtualInventoryStockDTO.OutInStockDTO();
-        outInStockDTO.setSkuId(soDetailEntity.getSkuId());
-        outInStockDTO.setSkuNo(soDetailEntity.getSkuNo());
+//        outInStockDTO.setSkuId(soDetailEntity.getSkuId());
+//        outInStockDTO.setSkuNo(soDetailEntity.getSkuNo());
+        outInStockDTO.setSkuId(soDetailEntity.getDeliverySkuId());
+        outInStockDTO.setSkuNo(soDetailEntity.getDeliverySkuNo());
         outInStockDTO.setWarehouseId(soInfoEntity.getWarehouseId());
         outInStockDTO.setVirtualWarehouseId(soInfoEntity.getVirtualWarehouseId());
         outInStockDTO.setBillDate(LocalDate.now());
@@ -1930,8 +1932,10 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         List<VirtualInventoryStockDTO.OutInStockDTO> resultList = new ArrayList<>();
         for (SoDetailEntity soDetailEntity : soDetailEntityList) {
             VirtualInventoryStockDTO.OutInStockDTO outInStockDTO = new VirtualInventoryStockDTO.OutInStockDTO();
-            outInStockDTO.setSkuId(soDetailEntity.getSkuId());
-            outInStockDTO.setSkuNo(soDetailEntity.getSkuNo());
+//            outInStockDTO.setSkuId(soDetailEntity.getSkuId());
+//            outInStockDTO.setSkuNo(soDetailEntity.getSkuNo());
+            outInStockDTO.setSkuId(soDetailEntity.getDeliverySkuId());
+            outInStockDTO.setSkuNo(soDetailEntity.getDeliverySkuNo());
             outInStockDTO.setWarehouseId(soInfoEntity.getWarehouseId());
             outInStockDTO.setVirtualWarehouseId(soInfoEntity.getVirtualWarehouseId());
             outInStockDTO.setBillDate(LocalDate.now());

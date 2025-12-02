@@ -580,6 +580,11 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
                 soDetail.setRemark(item.getRemark());
                 soDetail.setMainId(soId);
                 soDetail.setPlatformSkuNo(item.getPlatformSkuNo());
+                //发货sku信息
+                soDetail.setDeliverySkuId(item.getSkuId());
+                soDetail.setDeliverySkuNo(item.getSkuNo());
+                soDetail.setBoxQty(item.getQty());
+                soDetail.setPerBoxQty(1);
                 //添加的话id 为null
                 if (addType.equals(changeType)) {
                     soDetail.setId(null);
@@ -758,6 +763,13 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
                 if (qty < deliveryQty) {
                     throw new ServiceException(ApiError.ERROR_92049);
                 }
+                //发货箱规校验
+                SoDetailEntity soDetailEntity = soDetailService.getById(item.getSoDetailId());
+                //数量必须是箱规的整数倍
+                if (item.getQty() % soDetailEntity.getPerBoxQty() != 0) {
+                    throw new ServiceException(ApiError.ERROR_SO_CHANGE_QTY_MUST_INTEGER_MULTIPLE_BOX_RULE);
+                }
+
             }
         }
         //这个是终止
