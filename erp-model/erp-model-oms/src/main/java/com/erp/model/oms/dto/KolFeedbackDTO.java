@@ -99,6 +99,11 @@ public class KolFeedbackDTO implements Serializable {
         private String sourceId;
 
         /**
+         * 来源明细ID
+         */
+        private String sourceDetailId;
+
+        /**
          * 来源类型
          */
         private String sourceType;
@@ -218,6 +223,11 @@ public class KolFeedbackDTO implements Serializable {
         private String sourceId;
 
         /**
+        * 来源明细ID
+        */
+        private String sourceDetailId;
+
+        /**
         * 来源类型
         */
         private String sourceType;
@@ -325,6 +335,12 @@ public class KolFeedbackDTO implements Serializable {
         */
         @Size(max = 19,message = "来源ID最大长度不能超过19位")
         private String sourceId;
+
+        /**
+        * 来源明细ID
+        */
+        @Size(max = 19,message = "来源明细ID最大长度不能超过19位")
+        private String sourceDetailId;
 
         /**
         * 来源类型

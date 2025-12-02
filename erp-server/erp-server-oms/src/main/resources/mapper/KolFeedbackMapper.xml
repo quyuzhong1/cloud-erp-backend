@@ -14,6 +14,7 @@
        <result column="is_deleted" property="isDeleted" />
        <result column="source_code" property="sourceCode" />
        <result column="source_id" property="sourceId" />
+       <result column="source_detail_id" property="sourceDetailId" />
        <result column="source_type" property="sourceType" />
        <result column="sku_no" property="skuNo" />
        <result column="sku_id" property="skuId" />
@@ -40,7 +41,7 @@
         update_time,
         version,
         is_deleted,
-        source_code, source_id, source_type, sku_no, sku_id, product_name, qty, partner_nickname, partner_id, url, url_hash, publish_type, publish_date, remark, feedback_status
+        source_code, source_id, source_detail_id, source_type, sku_no, sku_id, product_name, qty, partner_nickname, partner_id, url, url_hash, publish_type, publish_date, remark, feedback_status
     </sql>
 
     <select id="paging" resultType="com.erp.model.oms.dto.KolFeedbackDTO$ListDTO">
@@ -48,6 +49,7 @@
             kf.id,
             kf.source_code AS sourceCode,
             kf.source_id AS sourceId,
+            kf.source_detail_id AS sourceDetailId,
             kf.source_type AS sourceType,
             kf.sku_no AS skuNo,
             kf.sku_id AS skuId,

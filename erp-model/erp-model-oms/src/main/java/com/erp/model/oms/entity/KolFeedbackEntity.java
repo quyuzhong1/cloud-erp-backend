@@ -36,6 +36,11 @@ public class KolFeedbackEntity extends BaseEntity<KolFeedbackEntity> {
     @TableField("source_id")
     private String sourceId;
     /**
+    * 来源明细ID
+    */
+    @TableField("source_detail_id")
+    private String sourceDetailId;
+    /**
     * 来源类型
     */
     @TableField("source_type")
@@ -105,6 +110,8 @@ public class KolFeedbackEntity extends BaseEntity<KolFeedbackEntity> {
     public static final String SOURCE_CODE = "source_code";
 
     public static final String SOURCE_ID = "source_id";
+
+    public static final String SOURCE_DETAIL_ID = "source_detail_id";
 
     public static final String SOURCE_TYPE = "source_type";
 
