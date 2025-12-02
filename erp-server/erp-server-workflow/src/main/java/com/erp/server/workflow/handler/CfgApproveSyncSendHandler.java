@@ -121,6 +121,7 @@ public class CfgApproveSyncSendHandler {
                 sendApproveNotice(NoticeTemplateEnum.APPROVE,summaries,createUserId, processTaskManagementEntities, thirdUnionMap, cfgApproveSyncEntity, pcLinkByEnv,syncRecordEntity);
 
                 //发送抄送通知
+                syncRecordEntity.setNoticeNode(CfgApproveNoticeNoticeTypeEnum.CC.getCode());
                 commonSendNotice(NoticeTemplateEnum.CC, cfgApproveSyncEntity, createUserId, approveIds, ccIds, thirdUnionMap, summaries, pcLinkByEnv,syncRecordEntity);
             }
         }
