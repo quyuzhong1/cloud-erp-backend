@@ -70,10 +70,16 @@ public class OverseasProviderWarehouseEntity extends BaseEntity<OverseasProvider
     @TableField("disabled")
     private Boolean disabled;
     /**
-     * 仓库类型 0标准 1中转 2虚拟
+     * 第三方仓库状态 0:不可用;1:可用;2:停用
      */
     @TableField("platform_warehouse_status")
     private String platformWarehouseStatus;
+
+    /**
+     * 默认为0 。 第三方仓库类型 0标准 1中转 2虚拟
+     */
+    @TableField("platform_warehouse_type")
+    private String platformWarehouseType;
 
     public static final String MAIN_ID = "main_id";
 

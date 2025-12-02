@@ -38,4 +38,24 @@ public class SysFeignDTO {
             this.userId = startUserId;
         }
     }
+
+    @Data
+    @NoArgsConstructor
+    public static class UserLoginInfoDTO {
+        /**
+         * 用户ID
+         */
+        @NotNull(message = "用户ID不能为空")
+        private String userId;
+
+        /**
+         * 用户类型
+         */
+        private String userType;
+
+        public UserLoginInfoDTO(String userId, String userType) {
+            this.userId = userId;
+            this.userType = userType;
+        }
+    }
 }

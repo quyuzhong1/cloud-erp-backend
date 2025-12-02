@@ -3,6 +3,7 @@ package com.erp.model.wms.dto;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.AttachDTO;
 import com.common.business.dto.base.SortDTO;
+import com.erp.model.wms.entity.PoReturnDetailEntity;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -1644,5 +1645,45 @@ public class PurchaseReturnOrderDTO {
          * 产品名称
          */
         private String productName;
+    }
+
+    /**
+     * 补货数量校验DTO（内部类）
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ReplenishQtyValidateDTO {
+        private String skuId;
+        private String skuNo;
+        private Integer returnQty;
+        private Integer replenishQty;
+
+        public static ReplenishQtyValidateDTO from(PurchaseReturnOrderDetailDTO.AddDTO dto) {
+            ReplenishQtyValidateDTO validateDTO = new ReplenishQtyValidateDTO();
+            validateDTO.setSkuId(dto.getSkuId());
+            validateDTO.setSkuNo(dto.getSkuNo());
+            validateDTO.setReturnQty(dto.getReturnQty());
+            validateDTO.setReplenishQty(dto.getReplenishQty());
+            return validateDTO;
+        }
+
+        public static ReplenishQtyValidateDTO from(PurchaseReturnOrderDetailDTO.UpdateDTO dto) {
+            ReplenishQtyValidateDTO validateDTO = new ReplenishQtyValidateDTO();
+            validateDTO.setSkuId(dto.getSkuId());
+            validateDTO.setSkuNo(dto.getSkuNo());
+            validateDTO.setReturnQty(dto.getReturnQty());
+            validateDTO.setReplenishQty(dto.getReplenishQty());
+            return validateDTO;
+        }
+
+        public static ReplenishQtyValidateDTO from(PoReturnDetailEntity entity) {
+            ReplenishQtyValidateDTO validateDTO = new ReplenishQtyValidateDTO();
+            validateDTO.setSkuId(entity.getSkuId());
+            validateDTO.setSkuNo(entity.getSkuNo());
+            validateDTO.setReturnQty(entity.getReturnQty());
+            validateDTO.setReplenishQty(entity.getReplenishQty());
+            return validateDTO;
+        }
     }
 }

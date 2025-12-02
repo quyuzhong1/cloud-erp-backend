@@ -77,4 +77,12 @@ public interface AuthUserShopService extends SuperService<AuthUserShopEntity> {
     void batchSaveOrUpdate(String uid, List<String> shopIdList, String shopAuthType);
 
     void addUserShopAuth(AuthUserShopDTO.AddUserShopAuthDTO addUserShopAuthDTO);
+    /**
+     * 查询平台下登陆的用户店铺权限
+     * @author will
+     * @date 2025/8/7 15:08
+     * @param paramDTO
+     * @return List<ShopAuthListDTO>
+     */
+    List<AuthUserShopDTO.ShopAuthListDTO> listAuthShop(AuthUserShopDTO.ShopAuthParamDTO paramDTO);
 }

@@ -9,6 +9,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
+import com.common.business.constant.UserStateConstants;
 import com.common.business.dto.AttachDTO;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
@@ -305,6 +306,13 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
                 throw new ServiceException(ApiError.ERROR_92261);
             }
         }
+        //校验补货数量不能大于退货数量
+        List<PurchaseReturnOrderDTO.ReplenishQtyValidateDTO> validateList = dto.getPurchasePriceDetailList().stream()
+                .map(PurchaseReturnOrderDTO.ReplenishQtyValidateDTO::from)
+                .collect(Collectors.toList());
+        checkReplenishQty(validateList);
+        //校验SKU是否有入库信息
+        checkSkuInstockQty(dto.getSupplierId(), dto.getPurchasePriceDetailList());
         //获取核算公司
         List<BaseIdDTO.CodeDTO> companyEntityList = sysUserFeign.getAccountingCompanyList(Arrays.asList(dto.getReturnOrgId(),dto.getPurchaseOrgId()));
         //获取仓库信息
@@ -432,6 +440,13 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
                 throw new ServiceException(ApiError.ERROR_92261);
             }
         }
+        //校验补货数量不能大于退货数量
+        List<PurchaseReturnOrderDTO.ReplenishQtyValidateDTO> validateList = dto.getPurchasePriceDetailList().stream()
+                .map(PurchaseReturnOrderDTO.ReplenishQtyValidateDTO::from)
+                .collect(Collectors.toList());
+        checkReplenishQty(validateList);
+        //校验SKU是否有入库信息
+        checkSkuInstockQtyForUpdate(dto.getSupplierId(), dto.getPurchasePriceDetailList());
         //设置收货单主表
         PoReturnEntity poReturnEntity = new PoReturnEntity();
         BeanMapperUtils.copy(dto, poReturnEntity);
@@ -654,6 +669,17 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         if (CharSequenceUtil.isNotBlank(codes)) {
             throw new ServiceException(CharSequenceUtil.format("采购退货单【{}】采购组织不能为空",codes));
         }
+
+        //提交时校验SKU入库数量
+        for (PoReturnEntity entity : purchaseReturnOrderEntities) {
+            List<PoReturnDetailEntity> detailList = poReturnDetailService.listByMainIds(Collections.singletonList(entity.getId()));
+            //校验补货数量不能大于退货数量
+            List<PurchaseReturnOrderDTO.ReplenishQtyValidateDTO> validateList = detailList.stream()
+                    .map(PurchaseReturnOrderDTO.ReplenishQtyValidateDTO::from)
+                    .collect(Collectors.toList());
+            checkReplenishQty(validateList);
+            checkSkuInstockQtyForSubmit( entity.getSupplierId(), detailList);
+        }
         //迭代1.27.5新增校验 ：校验退货数量不能大于已收货数量(已审核)-已入库数量(已审核)【按照SKU明细校验】
         List<PoReturnDetailEntity> allPoReturnDetailEntities = poReturnDetailService.listByMainIds(ids);
         List<String> podIds = allPoReturnDetailEntities.stream().map(PoReturnDetailEntity::getPurchaseOrderDetailId).collect(Collectors.toList());
@@ -764,11 +790,20 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         if (!entity.getApproveStatus().equals(ApproveStatusEnum.APPROVE_ING.getStatus())) {
             return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_98006.msg);
         }
+        //当前登陆人,启用流程后可删除
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
+        if (CharSequenceUtil.equals(entity.getCreateUserId(),userInfo.getUid()) && !CharSequenceUtil.equals(entity.getCreateUserId(), UserStateConstants.USER_SYSTEM_ID)) {
+            throw new ServiceException(ApiError.WORKFLOW_APPROVE_CREATE_APPROVE_DIFF,userInfo.getUserName());
+        }
+        //校验补货数量不能大于退货数量
+        List<PurchaseReturnOrderDTO.ReplenishQtyValidateDTO> validateList = poReturnDetailList.stream()
+                .map(PurchaseReturnOrderDTO.ReplenishQtyValidateDTO::from)
+                .collect(Collectors.toList());
+        checkReplenishQty(validateList);
         //库存校验
         checkInventoryQty(entity);
         //操作日志
         operateLogService.addModuleOperateLog(String.format("审核【%s】了一个采购退货单【%s】", ApproveTypeEnum.getName(type),entity.getCode()).concat(CharSequenceUtil.isNotBlank(comment) ? String.format(",意见：%s", comment) : ""), ModuleTypeEnum.PURCHASE_RETURN_ORDER.getCode(), entity.getId(), "审核操作");
-        LoginUser userInfo = UserContext.getDefaultLoginUser();
         //TODO 待加审核流程
         if (ApproveTypeEnum.PASS.getStatus().equals(type)) {
             String confirmStatus = "";
@@ -822,7 +857,15 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
             List<String> purchaseDetailIdList = new ArrayList<>();
 
             //审核通过-自动生成-委外退料单，purchaseDetailIdList用于取退货子级采购订单明细更新执行状态
-            List<PoReturnEntity> poReturnEntityList1 = autoAddSubcontractReturn(entity, poReturnDetailList, confirmStatus,purchaseDetailIdList);
+            Boolean originalValue = UserContext.getIsUserSystem();
+            UserContext.setIsUserSystem(Boolean.TRUE);
+            List<PoReturnEntity> poReturnEntityList1;
+            try {
+                poReturnEntityList1 = autoAddSubcontractReturn(entity, poReturnDetailList, confirmStatus,purchaseDetailIdList);
+            } finally {
+                UserContext.setIsUserSystem(originalValue);
+            }
+
             if (CollectionUtils.isNotEmpty(poReturnEntityList1)){
                 poReturnEntityList1.add(entity);
             }else {
@@ -862,10 +905,15 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         if (CollectionUtils.isNotEmpty(purchaseDetailIdList)) {
             updateArrivalState(purchaseDetailIdList);
         }
+        //自动生成功能系统标识
+        Boolean originalValue = UserContext.getIsUserSystem();
+        UserContext.setIsUserSystem(Boolean.TRUE);
         //自动生成补货采购订单
         autoAddPurchaseOrder(poReturnEntityList1, Boolean.TRUE);
         //审核通过生成对账明细
         autoAddPoReconciliationDetail(poReturnEntityList1);
+        //恢复系统标识
+        UserContext.setIsUserSystem(originalValue);
     }
 
     /**
@@ -1673,24 +1721,6 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
     }
 
 
-    /**
-     * 批量生成退货单
-     *
-     * @param list
-     * @return java.lang.Boolean
-     * @author yl
-     * @date 2023-04-25 11:09
-     */
-    @Override
-    public Boolean batchAdd(List<PurchaseReturnOrderDTO.AddDTO> list) {
-        if (CollectionUtils.isNotEmpty(list)) {
-            for (PurchaseReturnOrderDTO.AddDTO item : list) {
-                this.add(item);
-            }
-        }
-        return Boolean.TRUE;
-
-    }
 
     /**
      * 修改到货状态
@@ -3351,6 +3381,144 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
             return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
         } else {
             return BatchResultDTO.fail(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
+        }
+    }
+
+    /**
+     * 校验SKU是否存在已审核的采购入库单
+     *
+     * @param supplierId 供应商ID
+     * @param detailList 退货明细列表
+     */
+    private void checkSkuInstockQty(String supplierId,
+                                    List<PurchaseReturnOrderDetailDTO.AddDTO> detailList) {
+        if (CollectionUtils.isEmpty(detailList)) {
+            return;
+        }
+
+        // 收集所有SKU ID
+        List<String> skuIdList = detailList.stream()
+                .map(PurchaseReturnOrderDetailDTO.AddDTO::getSkuId)
+                .distinct()
+                .collect(Collectors.toList());
+
+        // 查询该供应商+SKU下已审核的采购入库单中存在的SKU
+        List<String> instockedSkuIds = baseMapper.listInstockedSkuIds(supplierId, skuIdList);
+
+        // 查询SKU信息用于显示SKU编码
+        List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIdList);
+        Map<String, String> skuNoMap = skuList.stream()
+                .collect(Collectors.toMap(SkuVO::getSkuId, SkuVO::getSkuNo, (k1, k2) -> k1));
+
+        // 收集所有没有入库记录的SKU编码
+        List<String> errorSkuNoList = new ArrayList<>();
+        for (PurchaseReturnOrderDetailDTO.AddDTO detail : detailList) {
+            String skuId = detail.getSkuId();
+            if (!instockedSkuIds.contains(skuId)) {
+                String skuNo = skuNoMap.getOrDefault(skuId, skuId);
+                errorSkuNoList.add(skuNo);
+            }
+        }
+
+        // 如果存在没有入库记录的SKU，一次性提示所有
+        if (CollectionUtils.isNotEmpty(errorSkuNoList)) {
+            String errorMessage = String.join("】、【", errorSkuNoList);
+            throw new ServiceException(CharSequenceUtil.format("SKU【{}】未找到入库信息，无法退货", errorMessage));
+        }
+    }
+
+    /**
+     * 校验SKU是否存在已审核的采购入库单（修改时使用）
+     */
+    private void checkSkuInstockQtyForUpdate(String supplierId,
+                                             List<PurchaseReturnOrderDetailDTO.UpdateDTO> detailList) {
+        if (CollectionUtils.isEmpty(detailList)) {
+            return;
+        }
+
+        // 转换为AddDTO格式进行校验
+        List<PurchaseReturnOrderDetailDTO.AddDTO> addDTOList = detailList.stream()
+                .map(updateDTO -> {
+                    PurchaseReturnOrderDetailDTO.AddDTO addDTO = new PurchaseReturnOrderDetailDTO.AddDTO();
+                    addDTO.setSkuId(updateDTO.getSkuId());
+                    addDTO.setSkuNo(updateDTO.getSkuNo());
+                    return addDTO;
+                })
+                .collect(Collectors.toList());
+
+        checkSkuInstockQty(supplierId, addDTOList);
+    }
+
+    /**
+     * 校验SKU是否存在已审核的采购入库单（提交时使用）
+     */
+    private void checkSkuInstockQtyForSubmit(String supplierId,
+                                             List<PoReturnDetailEntity> detailList) {
+        if (CollectionUtils.isEmpty(detailList)) {
+            return;
+        }
+
+        // 转换为AddDTO格式进行校验
+        List<PurchaseReturnOrderDetailDTO.AddDTO> addDTOList = detailList.stream()
+                .map(entity -> {
+                    PurchaseReturnOrderDetailDTO.AddDTO addDTO = new PurchaseReturnOrderDetailDTO.AddDTO();
+                    addDTO.setSkuId(entity.getSkuId());
+                    addDTO.setSkuNo(entity.getSkuNo());
+                    return addDTO;
+                })
+                .collect(Collectors.toList());
+
+        checkSkuInstockQty(supplierId, addDTOList);
+    }
+
+
+
+    /**
+     * 统一校验补货数量不能大于退货数量
+     *
+     * @param validateList 校验数据列表
+     */
+    private void checkReplenishQty(List<PurchaseReturnOrderDTO.ReplenishQtyValidateDTO> validateList) {
+        if (CollectionUtils.isEmpty(validateList)) {
+            return;
+        }
+
+        // 查询SKU信息
+        List<String> skuIdList = validateList.stream()
+                .map(PurchaseReturnOrderDTO.ReplenishQtyValidateDTO::getSkuId)
+                .distinct()
+                .collect(Collectors.toList());
+        List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIdList);
+        Map<String, String> skuNoMap = skuList.stream()
+                .collect(Collectors.toMap(SkuVO::getSkuId, SkuVO::getSkuNo, (k1, k2) -> k1));
+
+        // 收集所有不符合条件的SKU
+        List<String> errorSkuNoList = new ArrayList<>();
+        for (PurchaseReturnOrderDTO.ReplenishQtyValidateDTO validate : validateList) {
+            Integer replenishQty = validate.getReplenishQty();
+            Integer returnQty = validate.getReturnQty();
+
+            // 如果补货数量为null或0，跳过校验
+            if (replenishQty == null || replenishQty == 0) {
+                continue;
+            }
+
+            // 如果退货数量为null，视为0
+            if (returnQty == null) {
+                returnQty = 0;
+            }
+
+            // 补货数量不能大于退货数量
+            if (replenishQty > returnQty) {
+                String skuNo = skuNoMap.getOrDefault(validate.getSkuId(), validate.getSkuNo());
+                errorSkuNoList.add(skuNo);
+            }
+        }
+
+        // 一次性提示所有不符合条件的SKU
+        if (CollectionUtils.isNotEmpty(errorSkuNoList)) {
+            String errorMessage = String.join("】、【", errorSkuNoList);
+            throw new ServiceException(CharSequenceUtil.format("SKU【{}】补货数量不能大于退货数量", errorMessage));
         }
     }
 }

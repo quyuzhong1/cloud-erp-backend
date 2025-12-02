@@ -103,8 +103,7 @@
                su.real_name   AS realName,
                su.mobile   AS mobile,
                su.user_state AS userState,
-               su.delete_state AS deleteState,
-               su.user_state AS userState,
+               su.is_deleted AS deleteState,
                krp.erp_user_id AS userId
         FROM kingdee_operator_ref_post ko
                  LEFT JOIN kingdee_user_ref_post krp
@@ -114,7 +113,7 @@
                  LEFT JOIN sys_user_info su
                            ON su.uid = krp.erp_user_id
                  LEFT JOIN sys_department sd ON sd.id = kd.erp_dept_id
-        WHERE ko.is_deleted = FALSE AND krp.erp_user_id is not null AND kd.erp_dept_id is not null
+        WHERE ko.is_deleted = FALSE AND krp.erp_user_id is not null AND kd.erp_dept_id is not null and su.is_deleted = false
           AND ko.type_code = #{params.type}
           AND ko.use_org_id = #{params.orgId}
         and ko.disabled = false
@@ -140,6 +139,43 @@
                 #{item}
             </foreach>
         </if>
+    </select>
+
+    <!-- 根据业务员类型和组织id集合查询用户信息 -->
+    <select id="listUser" resultType="com.erp.model.sys.dto.UserInfoDTO$BusinessOperationUserDTO">
+        SELECT
+        distinct
+        ko.kingdee_id AS syncKingdeeId,
+        krp.code AS code,
+        krp.kingdee_department_id AS kingdeeDepartmentId,
+        kd.kingdee_dept_name  AS kingdeeDepartmentName,
+        kd.erp_dept_id  AS departmentId,
+        sd.name  AS departmentName,
+        su.user_name   AS userName,
+        su.real_name   AS realName,
+        su.mobile   AS mobile,
+        su.user_state AS userState,
+        su.is_deleted AS deleteState,
+        krp.erp_user_id AS userId
+        FROM kingdee_operator_ref_post ko
+        LEFT JOIN kingdee_user_ref_post krp
+        ON krp.id = ko.user_post_id AND krp.is_deleted = FALSE
+        LEFT JOIN kingdee_department kd
+        ON kd.id = krp.kingdee_department_id AND kd.is_deleted = FALSE
+        LEFT JOIN sys_user_info su
+        ON su.uid = krp.erp_user_id
+        LEFT JOIN sys_department sd ON sd.id = kd.erp_dept_id
+        WHERE ko.is_deleted = FALSE AND krp.erp_user_id is not null AND kd.erp_dept_id is not null
+        <if test="params.orgIdList != null and params.orgIdList.size > 0">
+            AND ko.use_org_id in
+            <foreach collection="params.orgIdList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.type != null and params.type != ''">
+            AND ko.type_code = #{params.type}
+        </if>
+        and ko.disabled = false
     </select>
 
 

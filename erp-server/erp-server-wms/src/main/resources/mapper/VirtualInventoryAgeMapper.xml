@@ -84,6 +84,11 @@
             SELECT sku_id,warehouse_id,virtual_warehouse_id,frozen_qty FROM so_b2b_processing WHERE is_deleted = false
             UNION ALL
             SELECT sku_id,warehouse_id,virtual_warehouse_id,frozen_qty FROM so_b2c_processing WHERE is_deleted = false
+            UNION ALL
+            select vad.sku_id,vad.warehouse_id,vad.virtual_warehouse_id,sum(vad.qty) from virtual_adjust va
+            inner join virtual_adjust_detail vad on va.id = vad.main_id and vad.is_deleted = false
+            where va.is_deleted = false and va.approve_status = 'approve' and vad.inventory_status = 'frozen'
+            group by vad.sku_id,vad.warehouse_id,vad.virtual_warehouse_id
             ) AS combined
             GROUP BY sku_id, warehouse_id, virtual_warehouse_id
         )

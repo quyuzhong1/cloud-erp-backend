@@ -30,4 +30,10 @@ public interface ImportWmsFeign {
     @PostMapping("/feign/import/importSampleInitialLedger")
     void importSampleInitialLedger(@RequestBody BaseDTO.ImportDTO dto);
 
+    @PostMapping("/feign/import/importSampleTransfer")
+    void importSampleTransfer(@RequestBody BaseDTO.ImportDTO dto);
+
+    @PostMapping("/feign/import/importSampleAdjustment")
+    void importSampleAdjustment(@RequestBody BaseDTO.ImportDTO dto);
+
 }

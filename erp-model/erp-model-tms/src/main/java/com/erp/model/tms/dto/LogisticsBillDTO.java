@@ -696,6 +696,11 @@ public class LogisticsBillDTO implements Serializable {
         private String voecTaxNo;
 
         /**
+         * EORI税号
+         */
+        private String eoriTaxNo;
+
+        /**
          * 币别
          */
         private String currency;
@@ -779,6 +784,10 @@ public class LogisticsBillDTO implements Serializable {
          * 跟踪单号
          */
         private String trackNo;
+        /**
+         * 推送平台单号（记录物流下单时单号）
+         */
+        private String pushPlatformCode;
         /**
          * ioss税号
          */
@@ -1085,6 +1094,10 @@ public class LogisticsBillDTO implements Serializable {
          */
         @NotBlank(message = "发货单号不能为空")
         private String deliveryNo;
+        /**
+         * 推送平台单号（记录物流下单时单号）
+         */
+        private String pushPlatformCode;
 
         /**
          * 店铺id
@@ -1096,6 +1109,10 @@ public class LogisticsBillDTO implements Serializable {
          */
         private String logisticType;
 
+        /**
+         * 是否来自mq消费
+         */
+        private Boolean isFromMq = false;
     }
 
 

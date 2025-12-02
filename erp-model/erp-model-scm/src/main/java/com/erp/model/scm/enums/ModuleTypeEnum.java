@@ -169,8 +169,35 @@ public enum ModuleTypeEnum {
     SAMPLE_BACK_INFO("135", "样品退回单"),
     SAMPLE_LEDGER("136", "样品台账"),
     SAMPLE_LEDGER_INIT("137", "样品期初台账"),
+    PACKAGE_PLAN("138", "组包计划"),
+    SAMPLE_TRANSFER_INFO("146", "样品转移单"),
+    SAMPLE_ADJUSTMENT_INFO("160", "样品调整单"),
     PAYABLE_INFO("145", "应付单"),
+    SO_B2C_REFUND("146", "售后订单"),
 
+
+    // ==================== 资产相关模块 ====================
+    ASSET_LOCATION("146", "资产位置"),
+    ASSET_ACCEPTANCE("147", "资产验收单"),
+    ASSET_CARD("148", "资产卡片"),
+    ASSET_STOCKTAKING_PLAN("149", "盘点方案"),
+    ASSET_STOCKTAKING("150", "资产盘点表"),
+    ASSET_PROFIT_LOSS("151", "盘盈盘亏单"),
+    ASSET_DISPOSAL("152", "资产处置单"),
+    ASSET_NOTICE("153","资产通知单"),
+    ASSET_PURCHASE_ORDER("154","资产采购单"),
+    ASSET_PURCHASE_CHANGE("155","资产采购变更单"),
+    DICT_BASIC("150", "字典数据"),
+    // DMP配置
+    DMP_BASIC_SYSTEM("1000", "平台管理"),
+    DMP_CFG_INPUT("1001", "拉取配置"),
+    DMP_CFG_INPUT_DETAIL("1002", "拉取调度"),
+    DMP_INPUT_TASK("1003", "拉取任务"),
+    DMP_CFG_ETL("1004", "清洗调度"),
+    DMP_ETL_TASK("1005", "清洗任务"),
+    DMP_CFG_OUTPUT("1006", "推送配置"),
+    DMP_CFG_OUTPUT_DETAIL("1007", "推送调度"),
+    DMP_OUTPUT_TASK("1008", "推送任务"),
     ;
 
 

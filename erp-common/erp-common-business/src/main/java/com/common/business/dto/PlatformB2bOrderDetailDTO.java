@@ -51,6 +51,16 @@ public class PlatformB2bOrderDetailDTO extends UniqueDto {
     private BigDecimal price;
 
     /**
+     * 含税单价
+     */
+    private BigDecimal taxPrice;
+
+    /**
+     * 税率
+     */
+    private BigDecimal taxRate;
+
+    /**
      * 平台是否已删除
      */
     private Boolean platformIsDeleted;

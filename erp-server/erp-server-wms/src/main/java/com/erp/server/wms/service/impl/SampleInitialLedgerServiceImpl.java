@@ -1,83 +1,77 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.common.business.dto.FindUserDTO;
-import com.common.business.enums.*;
-import com.common.business.enums.SourceTypeEnum;
-import com.common.business.validator.ValidList;
-import com.common.business.vo.LoginUser;
-
-import cn.hutool.core.util.StrUtil;
-import com.common.business.dto.base.BaseResultDTO;
-import com.erp.model.plm.vo.SkuVO;
-import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.sys.entity.SysDepartmentEntity;
-import com.erp.model.wms.dto.SampleBackInfoDTO;
-import com.erp.model.wms.dto.SampleRecipientDTO;
-import com.erp.model.wms.entity.SampleInitialLedgerEntity;
-import com.erp.model.wms.entity.SampleRecipientEntity;
-import com.erp.rpc.plm.feign.PlmTaskFeign;
-import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.server.wms.mapper.SampleInitialLedgerMapper;
-import com.erp.server.wms.service.*;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.threadlocal.UserContext;
-import com.common.core.exception.ServiceException;
-import com.common.business.config.DocNoGenHelper;
-import com.common.core.controller.vo.ApiResult;
-import cn.hutool.core.util.ObjectUtil;
-import org.apache.commons.collections4.CollectionUtils;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
-import io.seata.spring.annotation.GlobalTransactional;
-import lombok.extern.slf4j.Slf4j;
-import com.erp.model.wms.dto.SampleInitialLedgerDTO;
-import com.erp.model.workflow.dto.ProcessManagementDTO;
-import com.erp.rpc.workflow.WorkflowFeign;
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import cn.hutool.core.collection.CollUtil;
-import com.google.common.collect.Sets;
-import com.alibaba.fastjson.JSONObject;
-import com.google.common.collect.Lists;
-
-import com.erp.model.scm.enums.InvalidStatusEnum;
-import com.common.business.vo.LoginUser;
-import com.common.business.vo.PagingVO;
-import com.common.business.dto.base.*;
-import com.erp.model.sys.dto.SysCodeDTO;
-import com.common.core.excel.ExcelPrintUtils;
-import com.common.core.utils.date.DateUtil;
-
-import javax.servlet.http.HttpServletResponse;
-import java.time.LocalDateTime;
-import javax.annotation.Resource;
-import java.util.stream.Collectors;
-import java.util.*;
-import java.util.Collections;
-import com.common.core.utils.*;
-import com.erp.rpc.file.feign.DownloadTaskFeign;
-import com.common.core.utils.ExcelUtil;
-import com.common.business.enums.FileTaskEventEnum;
-import com.erp.server.wms.listener.SampleInitialLedgerExcelListener;
+import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
-import com.common.core.utils.FastDFSClientUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.config.DocNoGenHelper;
+import com.common.business.dto.FindUserDTO;
+import com.common.business.dto.base.*;
+import com.common.business.enums.*;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.utils.ApplicationContextUtils;
-import com.common.business.enums.ImportTypeEnum;
+import com.common.business.utils.SampleDocumentAuditUtil;
+import com.common.business.utils.SampleLedgerLockUtil;
+import com.common.business.utils.SampleLedgerQtyValidator;
+import com.common.business.validator.ValidList;
+import com.common.business.vo.LoginUser;
+import com.common.business.vo.PagingVO;
+import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.ExcelUtil;
+import com.common.core.utils.FastDFSClientUtil;
+import com.common.core.utils.StrUtils;
+import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.scm.enums.InvalidStatusEnum;
+import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.sys.dto.SysDepartmentDTO;
+import com.erp.model.sys.entity.SysDepartmentEntity;
+import com.erp.model.wms.dto.SampleInitialLedgerDTO;
+import com.erp.model.wms.dto.SampleLedgerDTO;
+import com.erp.model.wms.dto.SampleLedgerFlowDTO;
+import com.erp.model.wms.entity.SampleInitialLedgerDetailEntity;
+import com.erp.model.wms.entity.SampleInitialLedgerEntity;
+import com.erp.model.wms.entity.SampleRecipientEntity;
+import com.erp.model.workflow.dto.CfgQueryOptionDTO;
+import com.erp.model.workflow.dto.ProcessManagementDTO;
+import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
+import com.erp.model.workflow.enums.CfgQueryOptionBussinessKeyEnum;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.file.feign.FileFeign;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.workflow.WorkflowFeign;
+import com.erp.rpc.workflow.feign.CfgQueryOptionFeign;
+import com.erp.server.wms.listener.SampleInitialLedgerExcelListener;
+import com.erp.server.wms.mapper.SampleInitialLedgerMapper;
+import com.erp.server.wms.service.*;
+import io.seata.spring.annotation.GlobalTransactional;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.math3.util.Pair;
+import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
+
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import java.io.ByteArrayInputStream;
 import java.io.File;
-import org.springframework.transaction.annotation.Propagation;
-import org.apache.commons.lang3.StringUtils;
-import com.common.core.enums.ApiError;
-import com.erp.model.wms.dto.SampleLedgerFlowDTO;
-import com.erp.model.sys.dto.SysDepartmentDTO;
-import com.erp.model.plm.entity.ProductDetailEntity;
-import com.erp.model.wms.entity.SampleInitialLedgerDetailEntity;
-import org.apache.commons.math3.util.Pair;
+import java.time.LocalDateTime;
+import java.util.*;
+import java.util.stream.Collectors;
 /**
  * <p>
  * 样品期初台账 服务实现类
@@ -109,6 +103,18 @@ public class SampleInitialLedgerServiceImpl extends SuperServiceImpl<SampleIniti
     @Autowired
     private FileFeign fileFeign;
 
+    @Autowired
+    private SampleDocumentAuditUtil sampleDocumentAuditUtil;
+
+    @Autowired
+    private SampleLedgerService sampleLedgerService;
+    @Autowired
+    private SampleLedgerLockUtil sampleLedgerLockUtil;
+    @Autowired
+    private SampleLedgerQtyValidator sampleLedgerQtyValidator;
+    @Autowired
+    private CfgQueryOptionFeign cfgQueryOptionFeign;
+
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -120,6 +126,10 @@ public class SampleInitialLedgerServiceImpl extends SuperServiceImpl<SampleIniti
         handleData(sampleInitialLedgerEntity);
 
         log.info("开始新增样品期初台账");
+        // 校验明细不能为空
+        if (CollUtil.isEmpty(addDTO.getDetailList())) {
+            throw new ServiceException("样品期初台账明细不能为空");
+        }
         // 生成单号
         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QCTZ);
         sampleInitialLedgerEntity.setCode(code);
@@ -188,6 +198,19 @@ public class SampleInitialLedgerServiceImpl extends SuperServiceImpl<SampleIniti
     public List<SampleInitialLedgerDTO.TabListDTO> tabList(PermissionsDTO param) {
         SampleInitialLedgerDTO.PagingParamDTO searchParam = new SampleInitialLedgerDTO.PagingParamDTO();
         searchParam.setPermissionSql(param.getPermissionSql());
+        //待我审核
+        //根据单据id查询审核流程
+        ProcessManagementDTO.TaskKeyInfoDTO dto = new ProcessManagementDTO.TaskKeyInfoDTO();
+        dto.setBusinessKey(SourceTypeEnum.SAMPLE_LEDGER_INIT.getCode());
+        dto.setTaskStatus(ApproveStatusEnum.APPROVE_ING.getCode());
+        dto.setCurApproveId(UserContext.getNonLoginUser().getUid());
+        List<ProcessTaskManagementEntity> processTaskManagementList = workflowFeign.listProcessByBusinessKey(dto);
+        if (CollectionUtils.isNotEmpty(processTaskManagementList)) {
+            List<String> ids = processTaskManagementList.stream().map(ProcessTaskManagementEntity::getBusinessId).collect(Collectors.toList());
+            searchParam.setIds(ids);
+        }else {
+            searchParam.setIds(Arrays.asList("-1"));
+        }
         List<SampleInitialLedgerDTO.TabListDTO> list = baseMapper.tabList(searchParam);
         // 获取状态列表
         List<String> statusList = ApproveStatusEnum.getStatusList();
@@ -199,21 +222,21 @@ public class SampleInitialLedgerServiceImpl extends SuperServiceImpl<SampleIniti
         }
         });
 
-        list.forEach(e ->{
-            e.setTabFlagName(ApproveStatusEnum.getName(e.getTabFlag()));
+        list.stream().forEach(e ->{
+            if(Objects.equals(ApproveStatusEnum.APPROVE_ING.getCode(), e.getTabFlag())){
+                e.setTabFlagName("待我审核");
+            } else {
+                e.setTabFlagName(ApproveStatusEnum.getName(e.getTabFlag()));
+            }
         });
+
+        // 修改为按照 ApproveStatusEnum 枚举声明顺序排序
+        list.sort(Comparator.comparingInt(tabDto -> {
+            ApproveStatusEnum statusEnum = ApproveStatusEnum.getByStatus(tabDto.getTabFlag());
+            return statusEnum != null ? statusEnum.ordinal() : Integer.MAX_VALUE;
+        }));
         
-        // 按照指定顺序排序
-        List<String> orderList = Arrays.asList("waitSubmit", "approveIng", "approved", "rejected");
-        list.sort((a, b) -> {
-            int indexA = orderList.indexOf(a.getTabFlag());
-            int indexB = orderList.indexOf(b.getTabFlag());
-            if (indexA == -1) indexA = Integer.MAX_VALUE;
-            if (indexB == -1) indexB = Integer.MAX_VALUE;
-            return Integer.compare(indexA, indexB);
-        });
-        
-        list.add(0,new SampleInitialLedgerDTO.TabListDTO("all", "全部", list.stream().mapToInt(SampleInitialLedgerDTO.TabListDTO::getCount).sum()));
+        list.add(0,new SampleInitialLedgerDTO.TabListDTO("all", "全部", 0));
         // 计算合计数量
         return list;
     }
@@ -265,6 +288,20 @@ public class SampleInitialLedgerServiceImpl extends SuperServiceImpl<SampleIniti
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.SUBMIT);
     }
 
+    /**
+     *
+     *
+     * @param entity
+     * @return
+     */
+    private Map<String,Object> getVariablesMap(SampleInitialLedgerEntity entity){
+        CfgQueryOptionDTO.VariablesParamsDTO dto = new CfgQueryOptionDTO.VariablesParamsDTO();
+        dto.setBusinessKey(CfgQueryOptionBussinessKeyEnum.SAMPLE_LEDGER_INIT.getCode());
+        dto.setVariablesMap(BeanUtil.beanToMap(entity));
+        Map<String, Object> map = cfgQueryOptionFeign.getVariablesMapByBusinessKey(dto);
+        return map;
+    }
+
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -299,6 +336,10 @@ public class SampleInitialLedgerServiceImpl extends SuperServiceImpl<SampleIniti
         if(!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
             throw new ServiceException(ApiError.ERROR_98006);
         }
+
+        // 期初台账单审核时需要校验负数数量的台账是否足够扣减
+        validateSampleLedgerQtyWithLock(entity, approveType);
+
         // 调用流程审核
         approveProcess(entity, dto);
         // 操作日志
@@ -321,7 +362,7 @@ public class SampleInitialLedgerServiceImpl extends SuperServiceImpl<SampleIniti
         approveDTO.setApproveType(ApproveTypeEnum.getByCode(dto.getType()));
         approveDTO.setComment(dto.getComment());
         approveDTO.setUserId(userInfo.getUid());
-        approveDTO.setVariablesMap(BeanUtil.beanToMap(entity));
+        approveDTO.setVariablesMap(getVariablesMap(entity));
         ApiResult<ProcessManagementDTO.ApproveResultDTO> approveResult = workflowFeign.approve(approveDTO);
         Integer code = approveResult.getCode();
         if (200 != code) {
@@ -451,9 +492,11 @@ public class SampleInitialLedgerServiceImpl extends SuperServiceImpl<SampleIniti
         if (ObjectUtil.isEmpty(entity)) {
             return Boolean.TRUE;
         }
+        // 期初台账单审核时需要校验负数数量的台账是否足够扣减
+        validateSampleLedgerQtyWithLock(entity, ApproveTypeEnum.getByCode(dto.getType()));
+
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
         updateForApprove(entity.getId(), approveStatus.getStatus());
-
         // 只有审核通过和反审核才记录台账流水
         ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(dto.getType());
         if (ApproveTypeEnum.PASS.equals(approveType) || ApproveTypeEnum.DIS_APPROVE.equals(approveType)) {
@@ -476,7 +519,8 @@ public class SampleInitialLedgerServiceImpl extends SuperServiceImpl<SampleIniti
     @Override
     public SampleInitialLedgerDTO.ViewDTO view(String id) {
         SampleInitialLedgerEntity sampleInitialLedgerEntity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到样品期初台账数据"));
-        SampleInitialLedgerDTO.ViewDTO data = BeanMapperUtils.map(SampleInitialLedgerDTO.ViewDTO.class, sampleInitialLedgerEntity);
+        SampleInitialLedgerDTO.ViewDTO data = new SampleInitialLedgerDTO.ViewDTO();
+        BeanUtils.copyProperties(sampleInitialLedgerEntity, data);
         data.setApproveStatus(sampleInitialLedgerEntity.getApproveStatus().getCode());
         // 数据填充处理
         fillOne(data);
@@ -517,7 +561,7 @@ public class SampleInitialLedgerServiceImpl extends SuperServiceImpl<SampleIniti
         startDTO.setBusinessKey(SourceTypeEnum.SAMPLE_LEDGER_INIT.getCode());
         startDTO.setBusinessName(entity.getCode());
         startDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
-        startDTO.setVariablesMap(BeanUtil.beanToMap(entity));
+        startDTO.setVariablesMap(getVariablesMap(entity));
         ApiResult<ProcessManagementDTO.StartResultDTO> result = workflowFeign.start(startDTO);
         if (!result.isSuccess()) {
             throw new ServiceException(result.getMsg());
@@ -541,6 +585,20 @@ public class SampleInitialLedgerServiceImpl extends SuperServiceImpl<SampleIniti
             if (CollUtil.isNotEmpty(userList)) {
                 FindUserDTO user = userList.get(0);
                 data.setUserName(user.getUserName());
+            }
+        }
+        
+        //最新审核人：先判断流程中的审核人是否存在，如果存在则使用流程中的，否则保持数据库原值
+        ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = new ValidList<>();
+        dtoList.add(new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.SAMPLE_LEDGER_INIT.getCode(), data.getId()));
+        ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = workflowFeign.curApprover(dtoList);
+        if (listApiResult.isSuccess() && CollectionUtils.isNotEmpty(listApiResult.getData())) {
+            String curApprove = listApiResult.getData().stream()
+                .filter(e -> e.getBusinessId().equals(data.getId()) && StringUtils.isNotBlank(e.getCurApproveName()))
+                .map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName)
+                .collect(Collectors.joining(","));
+            if (StringUtils.isNotBlank(curApprove)) {
+                data.setApproveUserName(curApprove);
             }
         }
     }
@@ -582,7 +640,10 @@ public class SampleInitialLedgerServiceImpl extends SuperServiceImpl<SampleIniti
     @Transactional(rollbackFor = Exception.class)
     public void updateApproveStatus(String id, String approveStatus) {
         lambdaUpdate().eq(SampleInitialLedgerEntity::getId, id)
-        .set(SampleInitialLedgerEntity::getApproveStatus, approveStatus)
+                .set(SampleInitialLedgerEntity::getApproveUserId, "")
+                .set(SampleInitialLedgerEntity::getApproveUserName, "")
+                .set(SampleInitialLedgerEntity::getApproveStatus, approveStatus)
+                .set(SampleInitialLedgerEntity::getApproveTime, null)
         .update(new SampleInitialLedgerEntity());
     }
 
@@ -639,10 +700,12 @@ public class SampleInitialLedgerServiceImpl extends SuperServiceImpl<SampleIniti
                 data.setUserName(userName);
             }
 
-            //最新审核人
+            //最新审核人：先判断流程中的审核人是否存在，如果存在则使用流程中的，否则保持数据库原值
             if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
                 String curApprove = listApiResult.getData().stream().filter(e -> e.getBusinessId().equals(data.getId()) && StringUtils.isNotBlank(e.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
-                data.setApproveUserName(curApprove);
+                if (StringUtils.isNotBlank(curApprove)) {
+                    data.setApproveUserName(curApprove);
+                }
             }
         }
     }
@@ -1114,6 +1177,94 @@ public class SampleInitialLedgerServiceImpl extends SuperServiceImpl<SampleIniti
                 bean.add(addDTO);
             }
         }
+    }
+
+    /**
+     * 使用分布式锁校验样品台账数量
+     * 期初台账单特殊逻辑：
+     * - qty 本身可以是正数或负数
+     * - 正数（+X）：审核时增加台账，不需要校验
+     * - 负数（-X）：审核时扣减台账，需要校验是否足够扣减
+     * - 没有反审核功能
+     */
+    private void validateSampleLedgerQtyWithLock(SampleInitialLedgerEntity entity, ApproveTypeEnum approveType) {
+        // 获取样品期初台账单明细
+        List<SampleInitialLedgerDetailEntity> detailList = sampleInitialLedgerDetailService.list(
+            new LambdaQueryWrapper<SampleInitialLedgerDetailEntity>()
+                .eq(SampleInitialLedgerDetailEntity::getMainId, entity.getId())
+        );
+        
+        if (CollUtil.isEmpty(detailList)) {
+            log.info("样品期初台账单明细为空，跳过数量校验，单据编号：{}", entity.getCode());
+            return;
+        }
+        
+        // 只筛选负数数量的明细（扣减操作）
+        List<SampleInitialLedgerDetailEntity> negativeQtyDetails = detailList.stream()
+                .filter(detail -> detail.getQty() != null && detail.getQty() < 0)
+                .collect(Collectors.toList());
+        
+        if (CollUtil.isEmpty(negativeQtyDetails)) {
+            log.info("没有需要校验的负数数量明细，跳过数量校验，单据编号：{}", entity.getCode());
+            return;
+        }
+        
+        // 批量查询台账：收集所有需要查询的SKU ID
+        List<String> skuIds = negativeQtyDetails.stream()
+                .map(SampleInitialLedgerDetailEntity::getSkuId)
+                .distinct()
+                .collect(Collectors.toList());
+        
+        // 一次性批量查询所有台账
+        SampleLedgerDTO.SearchDTO searchDTO = new SampleLedgerDTO.SearchDTO();
+        searchDTO.setUserId(entity.getUserId());
+        searchDTO.setUseUserId(entity.getUserId());
+        searchDTO.setSkuIds(skuIds);
+        
+        List<SampleLedgerDTO.SkuAvailableQtyDTO> ledgerList = sampleLedgerService.listLedgerByUserId(searchDTO);
+        
+        // 构建 skuId -> ledgerId 的映射
+        Map<String, String> skuIdToLedgerIdMap = new HashMap<>();
+        if (CollUtil.isNotEmpty(ledgerList)) {
+            skuIdToLedgerIdMap = ledgerList.stream()
+                    .collect(Collectors.toMap(
+                            SampleLedgerDTO.SkuAvailableQtyDTO::getSkuId,
+                            SampleLedgerDTO.SkuAvailableQtyDTO::getSampleLedgerId,
+                            (existing, replacement) -> existing
+                    ));
+        }
+        
+        // 收集需要校验的台账ID和数量
+        List<String> sampleLedgerIds = new ArrayList<>();
+        List<Integer> qtys = new ArrayList<>();
+        List<String> skuNos = new ArrayList<>();
+        
+        for (SampleInitialLedgerDetailEntity detail : negativeQtyDetails) {
+            String ledgerId = skuIdToLedgerIdMap.get(detail.getSkuId());
+            if (StrUtil.isNotBlank(ledgerId)) {
+                sampleLedgerIds.add(ledgerId);
+                qtys.add(detail.getQty()); // 直接使用负数数量
+                skuNos.add(detail.getSkuNo());
+            } else {
+                log.warn("未找到台账，SKU：{}，使用方：{}，单据编号：{}", 
+                    detail.getSkuNo(), entity.getUserName(), entity.getCode());
+                throw new ServiceException(StrUtil.format("SKU【{}】的样品台账不存在，无法审核负数数量", detail.getSkuNo()));
+            }
+        }
+        
+        if (CollUtil.isEmpty(sampleLedgerIds)) {
+            log.info("没有需要校验的样品台账，跳过数量校验，单据编号：{}", entity.getCode());
+            return;
+        }
+        
+        log.info("开始校验样品期初台账单台账数量（负数明细），单据编号：{}，台账数量：{}", entity.getCode(), sampleLedgerIds.size());
+        
+        // 使用分布式锁进行数量校验
+        sampleLedgerLockUtil.executeWithLock(sampleLedgerIds, () -> {
+            sampleLedgerQtyValidator.validateQty(sampleLedgerIds, qtys, approveType, skuNos, sampleLedgerService::getLedgerQtyMap);
+            log.info("样品期初台账单台账数量校验通过，单据编号：{}", entity.getCode());
+            return null;
+        });
     }
 
 }

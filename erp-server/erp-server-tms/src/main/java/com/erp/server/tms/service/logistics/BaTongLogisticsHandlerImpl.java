@@ -267,6 +267,7 @@ public class BaTongLogisticsHandlerImpl extends AbstractLogisticsHandler {
             try {
                 Map<String, String> authMap = item.getAuthMap();
                 String deliveryNo = item.getDeliveryNo();
+                String pushPlatformCode = item.getPushPlatformCode();
                 //是否打印配货单
                 Boolean isPrintPacking = "Y".equalsIgnoreCase(item.getIsPdn());
                 //是否打印报关单
@@ -292,7 +293,7 @@ public class BaTongLogisticsHandlerImpl extends AbstractLogisticsHandler {
                 additionalInfo.setLabelPrintDatetime("Y");
                 additionalInfo.setCustomsDeclarationPrintActualWeight("N");
                 configInfo.setAdditionalInfo(additionalInfo);
-                ListOrder listOrder = ListOrder.builder().referenceNo(deliveryNo).build();
+                ListOrder listOrder = ListOrder.builder().referenceNo(pushPlatformCode).build();
                 LabelRequest labelRequest = LabelRequest.builder().
                         configInfo(configInfo).
                         orderList(Arrays.asList(listOrder)).build();

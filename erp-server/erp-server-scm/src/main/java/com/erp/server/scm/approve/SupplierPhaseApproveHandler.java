@@ -4,6 +4,7 @@ import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.ApproveBusinessKey;
 import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.ApproveOneDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.handler.AbstractApproveHandler;
 import com.common.core.enums.ApiError;
@@ -23,6 +24,11 @@ public class SupplierPhaseApproveHandler extends AbstractApproveHandler {
     private SupplierPhaseService supplierPhaseService;
 
     @Override
+    public BatchResultDTO approve(ApproveOneDTO dto) {
+        return supplierPhaseService.approve(supplierPhaseService.getById(dto.getId()),dto);
+    }
+
+    @Override
     public Boolean cancelProcess(ApproveDTO.CancelProcessDTO dto) {
         return supplierPhaseService.cancelProcess(Collections.singletonList(dto.getId()));
     }
@@ -40,5 +46,10 @@ public class SupplierPhaseApproveHandler extends AbstractApproveHandler {
             throw new ServiceException(ApiError.ERROR_SUPPLIER_ABSENCE);
         }
         return supplierPhaseService.approveEnd(new ApproveOneDTO(entity.getId(),dto.getApproveStatus().getStatus(),dto.getComment()),entity);
+    }
+
+    @Override
+    public void addComment(ApproveDTO.AddCommentDTO dto) {
+
     }
 }

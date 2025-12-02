@@ -178,7 +178,7 @@ public class DaMaiServiceTest {
     @Test
     public void getOrderList() {
         DaMaiGetOrderRequest daMaiCancelOrderRequest = new DaMaiGetOrderRequest();
-        daMaiCancelOrderRequest.setCustRefNoList(Arrays.asList("wj2025080801","wj20250801111","OD-7DX-20250718-0001"));
+        daMaiCancelOrderRequest.setCustRefNoList(Arrays.asList("XTT54"));
         DaMaiBaseResp<List<DaMaiGetOrderResp>>  resp = daMaiService.getOrderList(authMap,daMaiCancelOrderRequest);
         System.out.println(JSONUtil.toJsonStr(resp));
     }

@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * @description:
@@ -31,5 +32,13 @@ public interface SampleLedgerFeign {
      */
     @PostMapping("/feign/sampleLedger/addSampleLedgerFlow")
     Boolean addSampleLedgerFlow(@RequestBody SampleLedgerFlowDTO.AddFlowDTO addDTO);
+
+    /**
+     * 批量查询样品台账数量
+     * @param sampleLedgerIds 样品台账ID列表
+     * @return 台账ID到数量的映射 Map<sampleLedgerId, qty>
+     */
+    @PostMapping("/feign/sampleLedger/getLedgerQtyMap")
+    Map<String, Integer> getLedgerQtyMap(@RequestBody List<String> sampleLedgerIds);
 
 }

@@ -37,12 +37,22 @@ public class SoDeliveryNoticeQueryHandler extends AbstractQueryHandler {
                 super.buildSplicingSQLDTO("sdn.delivery_status", QueryConditionEnum.EQ, true, QueryDataTypeEnum.BOOLEAN);
             }
         }
-
+        //是否装箱
         if("isPacked".equals(field)) {
             if((Boolean) value){
-                super.buildDefaultDTO("pt.packing_status", PackingTaskStatusEnum.PACKED.getCode());
+                return " EXISTS (SELECT 1 FROM packing_task pt WHERE pt.source_id = sdn.id AND pt.is_deleted = FALSE and pt.packing_status = '" + PackingTaskStatusEnum.PACKED.getCode() + "')";
             }else{
-                super.buildSplicingSQLDTO("pt.packing_status",QueryConditionEnum.NE,PackingTaskStatusEnum.PACKED.getCode() ,QueryDataTypeEnum.STRING);
+                return " NOT EXISTS (SELECT 1 FROM packing_task pt WHERE pt.source_id = sdn.id AND pt.is_deleted = FALSE and pt.packing_status = '" + PackingTaskStatusEnum.PACKED.getCode() + "')";
+            }
+        }
+        //拣货单状态
+        if ("generationPickStatus".equals(field)) {
+            if ("未生成".equals(value)) {
+                return " total.total_picked_qty = 0 ";
+            } else if ("已生成".equals(value)){
+                return "total.total_delivery_qty = total.total_picked_qty";
+            } else if ("部分生成".equals(value)){
+                return "total.total_delivery_qty > total.total_picked_qty AND total.total_picked_qty > 0";
             }
         }
         return null;

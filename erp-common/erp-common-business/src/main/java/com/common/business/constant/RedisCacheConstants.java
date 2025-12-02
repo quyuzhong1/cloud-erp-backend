@@ -258,4 +258,7 @@ public interface RedisCacheConstants {
      */
     String FEI_SHU_RESULT_PREFIX = "fei_shu_api_result:{}:{}";
 
+
+    String TMS_LOGISTIC_LABEL = "tms:logistic:label:{}:{}";
+
 }

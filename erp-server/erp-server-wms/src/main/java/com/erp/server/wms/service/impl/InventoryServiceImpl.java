@@ -1156,6 +1156,16 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
     }
 
 
+    @Override
+    public List<InventoryDTO.LocationInventory> recommendedLocations(InventoryDTO.RecommendedLocationParams params) {
+        List<InventoryDTO.LocationInventory> result = new ArrayList<>();
+        for (InventoryDTO.RecommendedLocationParam locationParam : params.getList()) {
+            result.add(recommendedLocation(locationParam)) ;
+        }
+        return result;
+    }
+
+
     /**
      * 获取最接近传入数量的仓位
      * @param param param
@@ -1388,8 +1398,8 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
         return inventoryMapper.getQtyByLocation(warehouseId, warehouseLocation == null ? "" : warehouseLocation);
     }
     @Override
-    @Transactional(rollbackFor = Exception.class, propagation = Propagation.REQUIRES_NEW)
-    @GlobalTransactional(rollbackFor = Exception.class, propagation = io.seata.tm.api.transaction.Propagation.REQUIRES_NEW)
+//    @Transactional(rollbackFor = Exception.class, propagation = Propagation.REQUIRES_NEW)
+//    @GlobalTransactional(rollbackFor = Exception.class, propagation = io.seata.tm.api.transaction.Propagation.REQUIRES_NEW)
     public InventoryEntity getInventory(InventoryTransactionDTO transactionDTO) {
         LambdaQueryWrapper<InventoryEntity> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(InventoryEntity::getSkuId, transactionDTO.getSkuId())

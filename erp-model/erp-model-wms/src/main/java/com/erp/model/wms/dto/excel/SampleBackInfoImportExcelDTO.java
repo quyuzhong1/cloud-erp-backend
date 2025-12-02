@@ -100,20 +100,18 @@ public class SampleBackInfoImportExcelDTO implements Serializable {
     @ExcelIgnore
     private String productName;
 
+    @ColumnWidth(20)
+    @ExcelProperty(value = "*使用方", index = 8)
+    @FieldValid(fieldName = "*使用方", isNotBlank = true)
+    private String useUserName;
+
     /**
      * 退回数量
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "*退回数量", index = 8)
+    @ExcelProperty(value = "*退回数量", index = 9)
     @FieldValid(fieldName = "*退回数量", isNotBlank = true)
     private String qty;
-
-
-
-    @ColumnWidth(20)
-    @ExcelProperty(value = "*使用方", index = 9)
-    @FieldValid(fieldName = "*使用方", isNotBlank = true)
-    private String useUserName;
 
     /**
      * 明细备注

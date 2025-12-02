@@ -52,7 +52,7 @@ public class ThirdMappingController extends BaseController {
 
 
     /**
-     * 修改
+     * 查询详情
      *
      * @param viewParamDTO
      * @return ApiResult

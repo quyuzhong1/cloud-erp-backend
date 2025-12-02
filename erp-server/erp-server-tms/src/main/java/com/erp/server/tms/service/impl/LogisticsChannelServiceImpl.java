@@ -15,6 +15,7 @@ import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.constant.EnumMessage;
+import com.common.core.constant.SqlConstants;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
@@ -28,6 +29,7 @@ import com.erp.model.tms.enums.DeliveryTypeEnum;
 import com.erp.model.tms.enums.LogisticsMappingTypeEnum;
 import com.erp.model.tms.enums.PaperSizeEnum;
 import com.erp.model.tms.enums.UnDeliverableDecisionEnum;
+import com.erp.model.wms.dto.DictBasicDTO;
 import com.erp.model.wms.entity.OverseasProviderEntity;
 import com.erp.model.wms.entity.OverseasProviderWarehouseEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
@@ -653,6 +655,9 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         if(StringUtils.isBlank(logisticsChannelEntity.getLastMileCarrier())){
             logisticsChannelEntity.setLastMileCarrier("");
         }
+        if(StringUtils.isBlank(logisticsChannelEntity.getHandoverDocType())){
+            logisticsChannelEntity.setHandoverDocType("");
+        }
         logisticsChannelEntity.setMaxCustomsAmount(maxCustomsAmount);
         BigDecimal minCustomsAmount = logisticsChannelEntity.getMinCustomsAmount();
         if (Objects.isNull(minCustomsAmount)) {
@@ -698,6 +703,7 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
                     && !LogisticsPlatformEnum.MERCADOLIBRE_LOCAL.getCode().equals(platform)
                     && !LogisticsPlatformEnum.TIK_TOK_FULLY.getCode().equals(platform)
                     && !LogisticsPlatformEnum.CAINIAO.getCode().equals(platform)
+                    && !LogisticsPlatformEnum.WILDBERRIES.getCode().equals(platform)
                     && !LogisticsPlatformEnum.AMZ_MULTI_CHANNEL.getCode().equals(platform)) {
                 throw new ServiceException(ApiError.ERROR_SALES_CHANNEL_NOT_EXIST, logisticsChannelEntity.getName());
             }
@@ -935,5 +941,78 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
             return Collections.emptyList();
         }
         return baseMapper.listByPlatformCode(platformCodeList);
+    }
+
+    @Override
+    public List<DictBasicDTO.DropDownDTO> getByPlatformWarehouseAndType(LogisticsChannelDTO.PlatformWarehouseDTO dto) {
+        return baseMapper.getByPlatformWarehouseAndType(dto);
+    }
+
+    @Override
+    public LogisticsSaleChannelEntity getChannelByCodeAndOverseasWarehouseId(String logisticsProductCode, String transferWarehouseId) {
+        if(StringUtils.isBlank(logisticsProductCode) || StringUtils.isBlank(transferWarehouseId)){
+            return null;
+        }
+        return logisticsSaleChannelService.lambdaQuery().eq(LogisticsSaleChannelEntity::getCode,logisticsProductCode)
+                .eq(LogisticsSaleChannelEntity::getOverseasWarehouseId,transferWarehouseId)
+                .last(SqlConstants.LIMIT_1)
+                .one();
+    }
+
+    @Override
+    public List<LogisticsChannelDTO.SignShipDTO> getScaleChannelByChannelByIds(List<String> logisticsChannelIdList, String dictPlatform) {
+        if(CollectionUtils.isEmpty(logisticsChannelIdList)){
+            return Collections.emptyList();
+        }
+        List<LogisticsChannelEntity> channelEntity = this.listByIds(logisticsChannelIdList);
+        if(CollectionUtils.isEmpty(channelEntity)){
+            return Collections.emptyList();
+        }
+        if (StringUtils.isBlank(dictPlatform)){
+            throw new ServiceException("关联的销售平台不能为空");
+        }
+        List<LogisticsMappingDTO.ViewDTO> mappingList = logisticsMappingService.listByChannelIdsAndType(logisticsChannelIdList, LogisticsMappingTypeEnum.PLATFORM.getCode());
+        if (CollectionUtils.isEmpty(mappingList)){
+            throw new ServiceException("物流渠道关联的销售平台物流渠道为空");
+        }
+        List<LogisticsMappingDTO.ViewDTO> viewDTOList = mappingList.stream().filter(e -> e.getSalesPlatform().equalsIgnoreCase(dictPlatform)).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(viewDTOList)){
+            throw new ServiceException("物流渠道关联无对应销售平台物流渠道");
+        }
+        List<String> platformLogisticsChannelIds = viewDTOList.stream().map(LogisticsMappingDTO.ViewDTO::getPlatformLogisticsChannelId).distinct().collect(Collectors.toList());
+        List<LogisticsSaleChannelEntity> entityList = logisticsSaleChannelService.listByIds(platformLogisticsChannelIds);
+        if (null == entityList){
+            throw new ServiceException("对应销售平台物流渠道信息不存在");
+        }
+        // 承运商代号
+        String carrierCode = viewDTOList.get(0).getCarrierCode();
+        // 承运商轨迹查询地址(部分速卖通物流渠道必填)
+        String logisticsTrackUrl = "";
+        if (StringUtils.isNotBlank(carrierCode)){
+            TmsCarrierEntity carrierEntity = tmsCarrierService.getByCodeAndSalesPlatform(carrierCode, dictPlatform);
+            if (null != carrierEntity){
+                logisticsTrackUrl = carrierEntity.getLogisticsTrackUrl();
+            }
+        }
+        List<LogisticsChannelDTO.SignShipDTO> resultList = new ArrayList<>();
+        for (LogisticsMappingDTO.ViewDTO viewDTO : viewDTOList) {
+            LogisticsSaleChannelEntity logisticsSaleChannelEntity = entityList.stream()
+                    .filter(e -> e.getId().equals(viewDTO.getPlatformLogisticsChannelId()))
+                    .findFirst()
+                    .orElse(new LogisticsSaleChannelEntity());
+            LogisticsChannelEntity logisticsChannelEntity = channelEntity.stream()
+                    .filter(e -> e.getId().equals(viewDTO.getLogisticsChannelId()))
+                    .findFirst()
+                    .orElse(new LogisticsChannelEntity());
+            resultList.add(new LogisticsChannelDTO.SignShipDTO(logisticsSaleChannelEntity.getId(),
+                    viewDTO.getLogisticsChannelId(),logisticsChannelEntity.getName(),
+                    logisticsSaleChannelEntity.getCode(),
+                    logisticsSaleChannelEntity.getCnName(),
+                    viewDTO.getOrderDeliveryMarkType(),
+                    carrierCode,
+                    logisticsTrackUrl
+            ));
+        }
+        return resultList;
     }
 }

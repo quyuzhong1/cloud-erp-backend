@@ -85,13 +85,9 @@ public class SampleInitialLedgerDetailExcelListener extends AnalysisEventListene
         if (StringUtils.isNotBlank(qtyStr)) {
             try {
                 Integer qty = Integer.valueOf(qtyStr);
-                if (qty <= 0) {
-                    errorMsgList.add("期初数量必须大于0");
-                } else {
-                    addDTO.setQty(qty);
-                }
+                addDTO.setQty(qty);
             } catch (NumberFormatException e) {
-                errorMsgList.add("期初数量格式错误，必须为正整数");
+                errorMsgList.add("期初数量格式错误");
             }
         }
 

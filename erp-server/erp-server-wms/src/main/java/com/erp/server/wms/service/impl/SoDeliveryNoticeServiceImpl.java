@@ -1,12 +1,13 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.date.StopWatch;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.extra.spring.SpringUtil;
-import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -14,17 +15,22 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.FileTemplateConstant;
+import com.common.business.constant.ThirdConstants;
+import com.common.business.dto.base.ApproveOneDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.DynamicDataSourceThreadLocal;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.utils.JasperHelperUtil;
 import com.common.business.utils.PdfUtil;
+import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
+import com.common.core.controller.vo.ApiResult;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -60,6 +66,7 @@ import com.erp.model.wms.enums.*;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.model.wms.enums.inventory.VirtualInventoryBusinessTypeEnum;
+import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.CustomerFeign;
 import com.erp.rpc.oms.feign.OmsListingInfoFeign;
@@ -80,6 +87,8 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.csource.common.MyException;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -95,6 +104,10 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -198,33 +211,82 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
     private FileTemplateFeign fileTemplateFeign;
     @Resource
     private OmsListingInfoFeign omsListingInfoFeign;
+    @Autowired
+    private SoDeliveryNoticeService soDeliveryNoticeService;
+    @Resource
+    @Qualifier("wmsTaskExecutorPool")
+    private ExecutorService wmsTaskExecutorPool;
 
     @Override
-    public PagingVO<SoDeliveryNoticeDTO.PagingView> paging(PagingDTO<SoDeliveryNoticeDTO.PagingParam> pagingParamDTO) {
-        pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
-        Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
+    public PagingVO<SoDeliveryNoticeDTO.PagingView> paging(PagingDTO<SoDeliveryNoticeDTO.PagingParam> pagingParamDTO) throws ExecutionException, InterruptedException {
+        StopWatch stopWatch = StopWatch.create("SoDeliveryNoticeServiceImpl paging");
+        stopWatch.start("paging");
+        SoDeliveryNoticeDTO.PagingParam params = pagingParamDTO.getParams();
+        DynamicDataSourceTypeEnum dynamicDataSourceTypeEnum = DynamicDataSourceThreadLocal.get();
+        if(dynamicDataSourceTypeEnum == null) {
+            dynamicDataSourceTypeEnum = DynamicDataSourceTypeEnum.POSTGRES;
+        }
+        params.setDynamicDataSource(dynamicDataSourceTypeEnum.getCode());
+        params.setPermissionSql(pagingParamDTO.getPermissionSql());
+        Page<SoDeliveryNoticeDTO.PagingView> query = new Page<>(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
         IPage<SoDeliveryNoticeDTO.PagingView> pageData = this.baseMapper.paging(query, pagingParamDTO.getParams());
         if (CollectionUtils.isEmpty(pageData.getRecords())) {
-            return new PagingVO(new Page());
+            return new PagingVO<>(new Page<>());
         }
-
+        stopWatch.stop();
+        stopWatch.start("整理数据");
         //明细数据
         List<SoDeliveryNoticeDTO.PagingView> records = pageData.getRecords();
-        //获取sku的id集合
-        List<String> skuIdList = records.stream().map(SoDeliveryNoticeDTO.PagingView::getSkuId).collect(Collectors.toList());
-        //根据ids查询sku信息
-        List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIdList);
-        //获取界面传过来的采购单详情表id集合
-        List<String> orderDetailIds = records.stream().map(SoDeliveryNoticeDTO.PagingView::getSourceDetailId).collect(Collectors.toList());
-        //获取销售单详情信息
-        List<SoDetailEntity> soDetailEntities = soInfoFeign.listSoDetailByIds(orderDetailIds);
-        List<CustomerInfoEntity> customerInfoEntities = customerFeign.listCustomer();
+        List<String> customerIds = records.stream().filter(e -> CharSequenceUtil.isNotBlank(e.getCustomerId())).map(SoDeliveryNoticeDTO.PagingView::getCustomerId).distinct().collect(Collectors.toList());
         Map<String,Integer> qtyMap = new HashMap<>();
-        //中转仓map
-        Map<String, String> warehouseMap =  warehouseService.list().stream().collect(Collectors.toMap(WarehouseEntity::getId, WarehouseEntity::getName));
+        List<String> warehouseIds = records.stream().map(SoDeliveryNoticeDTO.PagingView::getTransferWarehouseIds)
+                .filter(CharSequenceUtil::isNotBlank).flatMap(s -> Arrays.stream(s.split(","))).map(String::trim)
+                .filter(CharSequenceUtil::isNotBlank).collect(Collectors.toList());
+        List<String> ids = records.stream().map(SoDeliveryNoticeDTO.PagingView::getId).distinct().collect(Collectors.toList());
+        ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = ids.stream().map(obj -> new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.SO_DELIVERY_NOTICE.getCode(), obj)).collect(Collectors.toCollection(ValidList::new));
 
+        // 并行执行所有查询
+        CompletableFuture<Map<String, String>> warehouseFuture =
+                this.queryWarehouseMapAsync(warehouseIds);
+
+        CompletableFuture<List<CustomerInfoEntity>> customerFuture =
+                this.queryCustomerInfoAsync(customerIds);
+
+        CompletableFuture<ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>>> approvalFuture =
+                this.queryApprovalProcessAsync(dtoList);
+
+//        CompletableFuture<List<SoDeliveryNoticeDTO.PickStatus>> pickStatusFuture =
+//                this.queryPickStatusAsync(ids);
+
+        CompletableFuture<List<WmsCartonDTO.CountDTO>> packingCountFuture =
+                this.queryPackingCountAsync(ids);
+        // 等待所有查询完成
+        CompletableFuture.allOf(
+                warehouseFuture, customerFuture, approvalFuture,
+                packingCountFuture
+        ).join();
+
+        //中转仓map
+        Map<String, String> warehouseMap =  warehouseFuture.get();
+        List<CustomerInfoEntity> customerInfoEntities = customerFuture.get();
+        //查询审核流程
+        ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = approvalFuture.get();
+        if (200 != listApiResult.getCode()) {
+            throw new ServiceException("查询审核流程异常:{}", listApiResult.getMsg());
+        }
+        //查询拣货单生成状态
+//        List<SoDeliveryNoticeDTO.PickStatus> pickStatusList = pickStatusFuture.get();
+        //查询装箱数量
+        List<WmsCartonDTO.CountDTO> countDTOS = packingCountFuture.get();
+        stopWatch.stop();
+        stopWatch.start("合并数据");
         if (CollectionUtils.isNotEmpty(records)) {
             records.forEach(obj -> {
+//                pickStatusList.stream().filter(e -> e.getNoticeId().equals(obj.getId())).findFirst().ifPresent(p -> obj.setGenerationPickStatus(p.getGenerationPickStatus()));
+                WmsCartonDTO.CountDTO countDTO = countDTOS.stream().filter(e -> Objects.nonNull(e.getSourceId()) && e.getSourceId().equals(obj.getId())
+                        && Objects.nonNull(e.getSkuId()) && e.getSkuId().equals(obj.getSkuId())).findFirst().orElse(null);
+                obj.setPackingQty(Objects.isNull(countDTO) ? 0 : countDTO.getPackingQty());
+                obj.setPackingStatus(Objects.isNull(countDTO) ? PackingTaskStatusEnum.WAIT.getCode() : countDTO.getPackingStatus());
                 if (CharSequenceUtil.isNotBlank(obj.getPackingStatus())) {
                     obj.setPackingStatusName(PackingTaskStatusEnum.getName(obj.getPackingStatus()));
                 }else{
@@ -239,11 +301,6 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
                     obj.setDeliveryStatusName(DeliveryStatusEnum.UN_SHIPPED.getName());
                 }
                 obj.setIsPicked(obj.getDeliveryQty().equals(obj.getPickedQty()));
-                ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(entityClass -> entityClass.getId().equals(obj.getSkuId())).findFirst().orElse(new ProductDetailEntity());
-                SoDetailEntity soDetailEntity = soDetailEntities.stream().filter(detail -> detail.getId().equals(obj.getSourceDetailId())).findFirst().orElse(new SoDetailEntity());
-                obj.setProductName(productDetailEntity.getName());
-                obj.setSalesQty(soDetailEntity.getQty());
-                obj.setUnit(productDetailEntity.getUnitName());
                 CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(obj.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
                 obj.setCustomerName(customerInfoEntity.getName());
                 obj.setIsAllowOutstockName(IsAllowOutstockEnum.getNameByCode(obj.getIsAllowOutstock()));
@@ -276,6 +333,12 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
                     }
                     obj.setTransferWarehouseNames(sb.substring(0, sb.length() - 1));
                 }
+
+                //最新审核人
+                if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
+                    String curApprove = listApiResult.getData().stream().filter(e -> e.getBusinessId().equals(obj.getId()) && CharSequenceUtil.isNotBlank(e.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
+                    obj.setApproveUserName(CharSequenceUtil.blankToDefault(curApprove,obj.getApproveUserName()));
+                }
             });
         }
         Map<String,List<SoDeliveryNoticeDTO.PagingView>> map = records.stream().collect(Collectors.groupingBy(SoDeliveryNoticeDTO.PagingView::getId));
@@ -284,57 +347,156 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
                 pagingView.setIsPicked(pagingView.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getCode())&&val.stream().allMatch(SoDeliveryNoticeDTO.PagingView::getIsPicked));
             }
         });
-        return new PagingVO(pageData);
+        stopWatch.stop();
+        log.warn("SoDeliveryNoticeServiceImpl paging 耗时:{}",stopWatch.prettyPrint(TimeUnit.SECONDS));
+        return new PagingVO<>(pageData);
     }
 
+    public CompletableFuture<Map<String, String>> queryWarehouseMapAsync(List<String> warehouseIds) {
+        if (CollUtil.isEmpty(warehouseIds)) {
+            return CompletableFuture.completedFuture(new HashMap<>());
+        }
+
+        return CompletableFuture.supplyAsync(() ->
+                        warehouseService.lambdaQuery()
+                                .select(WarehouseEntity::getId, WarehouseEntity::getName)
+                                .in(WarehouseEntity::getId, warehouseIds)
+                                .list()
+                                .stream()
+                                .collect(Collectors.toMap(WarehouseEntity::getId, WarehouseEntity::getName)),
+                wmsTaskExecutorPool
+        );
+    }
+
+    public CompletableFuture<List<CustomerInfoEntity>> queryCustomerInfoAsync(List<String> customerIds) {
+        if (CollUtil.isEmpty(customerIds)) {
+            return CompletableFuture.completedFuture(new ArrayList<>());
+        }
+
+        return CompletableFuture.supplyAsync(() ->
+                        customerFeign.listCustomerByIds(customerIds),
+                wmsTaskExecutorPool
+        );
+    }
+
+    public CompletableFuture<ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>>> queryApprovalProcessAsync(ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList) {
+        return CompletableFuture.supplyAsync(() ->
+                        workflowFeign.curApprover(dtoList),
+                wmsTaskExecutorPool
+        );
+    }
+
+    public CompletableFuture<List<WmsCartonDTO.CountDTO>> queryPackingCountAsync(List<String> ids) {
+        return CompletableFuture.supplyAsync(() ->
+                        packingTaskService.countPackingQtyBySourceIds(ids),
+                wmsTaskExecutorPool
+        );
+    }
     @Override
     public List<SoDeliveryNoticeDTO.StatusCountDTO> listCount(PermissionsDTO dto) {
         OsDeliveryChangeListTypeEnum[] values = OsDeliveryChangeListTypeEnum.values();
         List<SoDeliveryNoticeDTO.StatusCountDTO> list = new ArrayList<>();
-        for (OsDeliveryChangeListTypeEnum item : values) {
-            SoDeliveryNoticeDTO.PagingParam pagingParam = new SoDeliveryNoticeDTO.PagingParam();
-            pagingParam.setPermissionSql(dto.getPermissionSql());
-            SoDeliveryNoticeDTO.StatusCountDTO resultDTO = new SoDeliveryNoticeDTO.StatusCountDTO();
-            Integer count = MathUtil.ZERO;
-            if (OsDeliveryChangeListTypeEnum.WAIT_SUBMIT.getCode().equals(item.getCode())) {
+        // 创建异步任务列表
+        List<CompletableFuture<SoDeliveryNoticeDTO.StatusCountDTO>> futures =
+                Arrays.stream(values)
+                        .map(item -> CompletableFuture.supplyAsync(() -> processSingleStatus(item, dto)))
+                        .collect(Collectors.toList());
+
+        // 等待所有任务完成并收集结果
+        return futures.stream()
+                .map(CompletableFuture::join)
+                .collect(Collectors.toList());
+
+//        for (OsDeliveryChangeListTypeEnum item : values) {
+//            SoDeliveryNoticeDTO.PagingParam pagingParam = new SoDeliveryNoticeDTO.PagingParam();
+//            pagingParam.setPermissionSql(dto.getPermissionSql());
+//            SoDeliveryNoticeDTO.StatusCountDTO resultDTO = new SoDeliveryNoticeDTO.StatusCountDTO();
+//            Integer count = MathUtil.ZERO;
+//            if (OsDeliveryChangeListTypeEnum.WAIT_SUBMIT.getCode().equals(item.getCode())) {
+//                pagingParam.setApproveStatusList(Collections.singletonList(ApproveStatusEnum.WAIT_SUBMIT.getStatus()));
+//                count = this.baseMapper.listCount(pagingParam);
+//            }
+//            if (OsDeliveryChangeListTypeEnum.TO_BE_APPROVE.getCode().equals(item.getCode())) {
+//                pagingParam.setApproveStatusList(Collections.singletonList(ApproveStatusEnum.APPROVE_ING.getStatus()));
+//                count = this.baseMapper.listCount(pagingParam);
+//            }
+//            if (OsDeliveryChangeListTypeEnum.TO_BE_APPROVE.getCode().equals(item.getCode())) {
+//                pagingParam.setApproveStatusList(Collections.singletonList(ApproveStatusEnum.APPROVE_ING.getStatus()));
+//                count = this.baseMapper.listCount(pagingParam);
+//            }
+//            if (OsDeliveryChangeListTypeEnum.PACKING_COMPLETED.getCode().equals(item.getCode())) {
+//                pagingParam.setDeliveryStatus(Boolean.FALSE);
+//                pagingParam.setIsAllowOutstock(IsAllowOutstockEnum.WAIT_NOTICE.getCode());
+//                pagingParam.setApproveStatusList(Collections.singletonList(ApproveStatusEnum.APPROVE.getStatus()));
+//                count = this.baseMapper.listCount(pagingParam);
+//            }
+//            if (OsDeliveryChangeListTypeEnum.UN_SHIPPED.getCode().equals(item.getCode())) {
+//                pagingParam.setDeliveryStatus(Boolean.FALSE);
+//                pagingParam.setIsAllowOutstock(IsAllowOutstockEnum.PERMIT.getCode());
+//                pagingParam.setApproveStatusList(Collections.singletonList(ApproveStatusEnum.APPROVE.getStatus()));
+//                count = this.baseMapper.listCount(pagingParam);
+//            }
+//            if (OsDeliveryChangeListTypeEnum.REJECT.getCode().equals(item.getCode())) {
+//                pagingParam.setApproveStatusList(Collections.singletonList(ApproveStatusEnum.REJECT.getStatus()));
+//                count = this.baseMapper.listCount(pagingParam);
+//            }
+//            if (OsDeliveryChangeListTypeEnum.COMPLETE_SHIPMENT.getCode().equals(item.getCode())) {
+//                pagingParam.setDeliveryStatus(Boolean.TRUE);
+//                count = this.baseMapper.listCount(pagingParam);
+//            }
+//            resultDTO.setCount(ObjectUtils.isEmpty(count) ? MathUtil.ZERO : count);
+//            resultDTO.setType(item.getCode());
+//            list.add(resultDTO);
+//        }
+//        return list;
+    }
+    private SoDeliveryNoticeDTO.StatusCountDTO processSingleStatus(OsDeliveryChangeListTypeEnum item, PermissionsDTO dto) {
+        SoDeliveryNoticeDTO.PagingParam pagingParam = new SoDeliveryNoticeDTO.PagingParam();
+        pagingParam.setPermissionSql(dto.getPermissionSql());
+        SoDeliveryNoticeDTO.StatusCountDTO resultDTO = new SoDeliveryNoticeDTO.StatusCountDTO();
+        Integer count = MathUtil.ZERO;
+
+        // 根据不同的状态类型设置参数并统计
+        switch (item.getCode()) {
+            case "waitSubmit":
                 pagingParam.setApproveStatusList(Collections.singletonList(ApproveStatusEnum.WAIT_SUBMIT.getStatus()));
                 count = this.baseMapper.listCount(pagingParam);
-            }
-            if (OsDeliveryChangeListTypeEnum.TO_BE_APPROVE.getCode().equals(item.getCode())) {
+                break;
+
+            case "toBeApprove":
                 pagingParam.setApproveStatusList(Collections.singletonList(ApproveStatusEnum.APPROVE_ING.getStatus()));
                 count = this.baseMapper.listCount(pagingParam);
-            }
-            if (OsDeliveryChangeListTypeEnum.TO_BE_APPROVE.getCode().equals(item.getCode())) {
-                pagingParam.setApproveStatusList(Collections.singletonList(ApproveStatusEnum.APPROVE_ING.getStatus()));
-                count = this.baseMapper.listCount(pagingParam);
-            }
-            if (OsDeliveryChangeListTypeEnum.PACKING_COMPLETED.getCode().equals(item.getCode())) {
+                break;
+
+            case "packingCompleted":
                 pagingParam.setDeliveryStatus(Boolean.FALSE);
                 pagingParam.setIsAllowOutstock(IsAllowOutstockEnum.WAIT_NOTICE.getCode());
                 pagingParam.setApproveStatusList(Collections.singletonList(ApproveStatusEnum.APPROVE.getStatus()));
                 count = this.baseMapper.listCount(pagingParam);
-            }
-            if (OsDeliveryChangeListTypeEnum.UN_SHIPPED.getCode().equals(item.getCode())) {
+                break;
+
+            case "unShipped":
                 pagingParam.setDeliveryStatus(Boolean.FALSE);
                 pagingParam.setIsAllowOutstock(IsAllowOutstockEnum.PERMIT.getCode());
                 pagingParam.setApproveStatusList(Collections.singletonList(ApproveStatusEnum.APPROVE.getStatus()));
                 count = this.baseMapper.listCount(pagingParam);
-            }
-            if (OsDeliveryChangeListTypeEnum.REJECT.getCode().equals(item.getCode())) {
+                break;
+
+            case "reject":
                 pagingParam.setApproveStatusList(Collections.singletonList(ApproveStatusEnum.REJECT.getStatus()));
                 count = this.baseMapper.listCount(pagingParam);
-            }
-            if (OsDeliveryChangeListTypeEnum.COMPLETE_SHIPMENT.getCode().equals(item.getCode())) {
+                break;
+
+            case "completeShipment":
                 pagingParam.setDeliveryStatus(Boolean.TRUE);
                 count = this.baseMapper.listCount(pagingParam);
-            }
-            resultDTO.setCount(ObjectUtils.isEmpty(count) ? MathUtil.ZERO : count);
-            resultDTO.setType(item.getCode());
-            list.add(resultDTO);
+                break;
         }
-        return list;
-    }
 
+        resultDTO.setCount(ObjectUtils.isEmpty(count) ? MathUtil.ZERO : count);
+        resultDTO.setType(item.getCode());
+        return resultDTO;
+    }
     @Override
     @Transactional(rollbackFor = Exception.class)
     public String add(SoDeliveryNoticeDTO.Add dto) {
@@ -397,7 +559,12 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         //操作日志
         operateLogService.addModuleOperateLog(String.format("新增了一个发货通知单【%s】", code), ModuleTypeEnum.SO_DELIVERY_NOTICE.getCode(), soDeliveryNoticeEntity.getId(), "新增操作");
         //生成装箱任务
-        packingTaskService.addPackingByB2BDelivery(soDeliveryNoticeEntity);
+        try {
+            UserContext.setIsUserSystem(true);
+            packingTaskService.addPackingByB2BDelivery(soDeliveryNoticeEntity);
+        }finally {
+            UserContext.clearIsUserSystem();
+        }
         return soDeliveryNoticeEntity.getId();
     }
 
@@ -564,35 +731,72 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean submit(List<String> ids,Boolean isNeedProcess) {
-        List<SoDeliveryNoticeEntity> soDeliveryNoticeEntityList = this.listByIds(ids);
-        if (CollectionUtils.isEmpty(soDeliveryNoticeEntityList)) {
+    public BatchResultDTO submit(SoDeliveryNoticeEntity entity,Boolean isNeedProcess) {
+        if (ObjectUtil.isEmpty(entity)) {
             throw new ServiceException(ApiError.ERROR_98004);
         }
-
         //未作废、待提交、审核不通过才可以提交
-        long count = soDeliveryNoticeEntityList.stream().filter(entity -> entity.getInvalidStatus() == false
-                && (entity.getApproveStatus().equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus())
-                || entity.getApproveStatus().equals(ApproveStatusEnum.REJECT.getStatus()))
-        ).count();
-
-        if (count != soDeliveryNoticeEntityList.size()) {
+        if (Boolean.TRUE.equals(entity.getInvalidStatus()) || (!entity.getApproveStatus().equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus())
+                && !entity.getApproveStatus().equals(ApproveStatusEnum.REJECT.getStatus()))) {
             throw new ServiceException(ApiError.ERROR_98010);
         }
-        //TODO 待加审核流程
+        //提交流程
         if(isNeedProcess){
-
+            startProcess(entity);
         }
         //操作日志
-        List<Pair<String, String>> pairList = soDeliveryNoticeEntityList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
-        operateLogService.batchAddModuleOperateLog("提交了一个发货通知单【%s】", ModuleTypeEnum.SO_DELIVERY_NOTICE.getCode(), pairList, "提交操作");
+        operateLogService.addModuleOperateLog(String.format("提交了一个发货通知单【%s】",entity.getCode()), ModuleTypeEnum.SO_DELIVERY_NOTICE.getCode(),entity.getId(), "提交操作");
 
         //更新审核状态
         lambdaUpdate().set(SoDeliveryNoticeEntity::getApproveStatus, ApproveStatusEnum.APPROVE_ING.getStatus())
-                .in(SoDeliveryNoticeEntity::getId, ids)
+                .set(SoDeliveryNoticeEntity::getApproveUserId,"")
+                .set(SoDeliveryNoticeEntity::getApproveUserName,"")
+                .set(SoDeliveryNoticeEntity::getApproveTime,null)
+                .eq(SoDeliveryNoticeEntity::getId, entity.getId())
                 .update();
-        return Boolean.TRUE;
+        return BatchResultDTO.success(entity.getId(),entity.getCode(),"操作成功");
     }
+
+    /**
+     * 启动流程
+     *
+     * @param entity
+     * @return void
+     * @Author will
+     * @Date 2025/10/22 12:07
+     **/
+
+    public void startProcess(SoDeliveryNoticeEntity entity) {
+        ProcessManagementDTO.StartDTO startDTO = new ProcessManagementDTO.StartDTO();
+        startDTO.setBusinessId(entity.getId());
+        startDTO.setBusinessCode(entity.getCode());
+        startDTO.setBusinessKey(SourceTypeEnum.SO_DELIVERY_NOTICE.getCode());
+        startDTO.setBusinessName(entity.getCode());
+        startDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
+        startDTO.setVariablesMap(getVariablesMap(entity));
+        ApiResult<ProcessManagementDTO.StartResultDTO> listApiResult = workflowFeign.start(startDTO);
+        if (!listApiResult.isSuccess()) {
+            throw new ServiceException(listApiResult.getMsg());
+        }
+    }
+
+    /**
+     * variablesMap值赋值
+     * @author will
+     * @date 2025/10/22 10:51
+     * @param entity
+     * @return Map<String,Object>
+     */
+    private Map<String,Object> getVariablesMap(SoDeliveryNoticeEntity entity) {
+        Map<String, Object> variablesMap = BeanUtil.beanToMap(entity);
+        List<SoDeliveryNoticeDetailEntity> detailList = soDeliveryNoticeDetailService.lambdaQuery().eq(SoDeliveryNoticeDetailEntity::getMainId,entity.getId()).list();
+        if (CollUtil.isEmpty(detailList)) {
+            throw new ServiceException(ApiError.ERROR_NOT_DELIVERY_NOTICE_DETAIL);
+        }
+        variablesMap.put(ThirdConstants.DETAIL_LIST, BeanUtil.copyToList(detailList,Map.class));
+        return variablesMap;
+    }
+
 
     @Override
     public Boolean addAndSubmit(SoDeliveryNoticeDTO.Add dto) {
@@ -600,7 +804,12 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         if (CharSequenceUtil.isBlank(id)) {
             throw new ServiceException(ApiError.ERROR_1019);
         }
-        return this.submit(Collections.singletonList(id),Boolean.TRUE);
+        SoDeliveryNoticeEntity entity = this.getById(id);
+        if (ObjectUtil.isEmpty(entity)) {
+            throw new ServiceException(ApiError.ERROR_NOT_DELIVERY_NOTICE);
+        }
+        BatchResultDTO submit = this.submit(entity, Boolean.TRUE);
+        return submit.getSuccess();
     }
 
     @Override
@@ -609,7 +818,12 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         if (!update) {
             throw new ServiceException(ApiError.ERROR_1020);
         }
-        return this.submit(Collections.singletonList(dto.getId()),Boolean.TRUE);
+        SoDeliveryNoticeEntity entity = this.getById(dto.getId());
+        if (ObjectUtil.isEmpty(entity)) {
+            throw new ServiceException(ApiError.ERROR_NOT_DELIVERY_NOTICE);
+        }
+        BatchResultDTO submit = this.submit(entity, Boolean.TRUE);
+        return submit.getSuccess();
     }
 
     @Override
@@ -619,25 +833,69 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         if (!Boolean.FALSE.equals(entity.getInvalidStatus()) || !ApproveStatusEnum.APPROVE_ING.getStatus().equals(entity.getApproveStatus())) {
             throw new ServiceException("只有未作废和审核中的数据允许审核");
         }
-        PackingTaskEntity taskEntity = packingTaskService.getBySourceCode(entity.getCode());
-        if (Objects.isNull(taskEntity)) {
-            throw new ServiceException("未生成装箱任务，不允许审核");
-        }
-        //检查出库配置，是否需要状态
-        CfgRuleOutDTO.CfgOverweightDetailDTO cfgOverweightDetailDTO = cfgRuleOutService.getCfgOverweightDetailDTOByType(taskEntity.getSourceType());
-        if(Objects.nonNull(cfgOverweightDetailDTO) && cfgOverweightDetailDTO.isCheckStatusWhenApprove()){
-            if(!(taskEntity.getPackingStatus().equals(PackingTaskStatusEnum.PACKED.getCode()) && taskEntity.getWeightingStatus().equals(PackingWeightStatusEnum.WEIGHTED.getCode()))){
-                throw new ServiceException("{已装箱+全部称重}才能审核通过");
+
+        // 非展会订单需要执行
+        if(!Objects.equals(entity.getSoInfoSourceType(),SourceTypeEnum.EXHIBITION_ORDER.getCode())){
+            PackingTaskEntity taskEntity = packingTaskService.getBySourceCode(entity.getCode());
+            if (Objects.isNull(taskEntity)) {
+                throw new ServiceException("未生成装箱任务，不允许审核");
+            }
+            //检查出库配置，是否需要状态
+            CfgRuleOutDTO.CfgOverweightDetailDTO cfgOverweightDetailDTO = cfgRuleOutService.getCfgOverweightDetailDTOByType(taskEntity.getSourceType());
+            if(Objects.nonNull(cfgOverweightDetailDTO) && cfgOverweightDetailDTO.isCheckStatusWhenApprove()){
+                if(!(taskEntity.getPackingStatus().equals(PackingTaskStatusEnum.PACKED.getCode()) && taskEntity.getWeightingStatus().equals(PackingWeightStatusEnum.WEIGHTED.getCode()))){
+                    throw new ServiceException("{已装箱+全部称重}才能审核通过");
+                }
             }
         }
 
-        if (ApproveTypeEnum.PASS.getStatus().equals(type)) {
+        //调用审核流程
+        approveProcess(entity, new ApproveOneDTO(entity.getId(), type, comment));
+        //操作日志
+        operateLogService.addModuleOperateLog(String.format("审核【%s】了一个发货通知单【%s】", ApproveTypeEnum.getName(type),entity.getCode()).concat(CharSequenceUtil.isNotBlank(comment) ? String.format(",意见：%s", comment) : ""), ModuleTypeEnum.SO_DELIVERY_NOTICE.getCode(), entity.getId(), "审核操作");
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), "操作成功");
+    }
+
+
+    /**
+     * 审核流程调用
+     * @author will
+     * @date 2025/10/22 16:23
+     * @param entity
+     * @param dto
+     * @return void
+     */
+    private void approveProcess(SoDeliveryNoticeEntity entity, ApproveOneDTO dto) {
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
+        ProcessManagementDTO.ApproveDTO approveDTO = new ProcessManagementDTO.ApproveDTO();
+        approveDTO.setBusinessId(entity.getId());
+        approveDTO.setBusinessKey(SourceTypeEnum.SO_DELIVERY_NOTICE.getCode());
+        approveDTO.setApproveType(ApproveTypeEnum.getByCode(dto.getType()));
+        approveDTO.setComment(dto.getComment());
+        approveDTO.setUserId(userInfo.getUid());
+        approveDTO.setVariablesMap(getVariablesMap(entity));
+        ApiResult<ProcessManagementDTO.ApproveResultDTO> listApiResult = workflowFeign.approve(approveDTO);
+        Integer code = listApiResult.getCode();
+        if (200 != code) {
+            throw new ServiceException(ApiError.ERROR_94006);
+        }
+        ProcessManagementDTO.ApproveResultDTO data = listApiResult.getData();
+        if (ObjectUtil.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()) {
+            // 无需走流程的数据则直接更新状态
+            approveEnd(dto, entity);
+        }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 180000)
+    public Boolean approveEnd(ApproveOneDTO dto, SoDeliveryNoticeEntity entity) {
+        //意见
+        if (ApproveTypeEnum.PASS.getStatus().equals(dto.getType())) {
             List<SoDeliveryNoticeChangeEntity> soDeliveryNoticeChangeEntities = soDeliveryNoticeChangeService.listNoApproveByNoticeId(entity.getId());
             if(CollectionUtils.isNotEmpty(soDeliveryNoticeChangeEntities)){
                 throw new ServiceException("存在未审核的变更单，无法审核通知单");
             }
-            List<SoDeliveryNoticeDetailEntity> soDeliveryNoticeDetailEntityList = soDeliveryNoticeDetailService.listDetailByMainId(entity.getId());
-
 
             LoginUser userInfo = UserContext.getDefaultLoginUser();
             //审核通过
@@ -648,23 +906,24 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
                     .eq(SoDeliveryNoticeEntity::getId, entity.getId())
                     .update();
 
-            //销售通知明细信息
-            List<SoDeliveryNoticeDetailEntity> detailList = soDeliveryNoticeDetailService.listDetailByMainIds(Collections.singletonList(entity.getId()));
-            if (CollectionUtils.isEmpty(detailList)) {
-                throw new ServiceException(ApiError.ERROR_99044);
-            }
+            // 非展会订单需要执行
+            if(!Objects.equals(entity.getSoInfoSourceType(),SourceTypeEnum.EXHIBITION_ORDER.getCode())){
+                //销售通知明细信息
+                List<SoDeliveryNoticeDetailEntity> detailList = soDeliveryNoticeDetailService.listDetailByMainIds(Collections.singletonList(entity.getId()));
+                if (CollectionUtils.isEmpty(detailList)) {
+                    throw new ServiceException(ApiError.ERROR_99044);
+                }
 
-            //针对拣货单进行库存的多退少补
-            handleApproveVirtualInventoryQty(entity);
+                //针对拣货单进行库存的多退少补
+                handleApproveVirtualInventoryQty(entity);
+            }
         } else {
             //审核不通过
             lambdaUpdate().set(SoDeliveryNoticeEntity::getApproveStatus, ApproveStatusEnum.REJECT.getStatus())
                     .eq(SoDeliveryNoticeEntity::getId, entity.getId())
                     .update();
         }
-        //操作日志
-        operateLogService.addModuleOperateLog(String.format("审核【%s】了一个发货通知单【%s】", ApproveTypeEnum.getName(type),entity.getCode()).concat(CharSequenceUtil.isNotBlank(comment) ? String.format(",意见：%s", comment) : ""), ModuleTypeEnum.SO_DELIVERY_NOTICE.getCode(), entity.getId(), "审核操作");
-        return BatchResultDTO.success(entity.getId(), entity.getCode(), "操作成功");
+        return Boolean.TRUE;
     }
 
     @Override
@@ -684,6 +943,9 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         }
         //修改状态为待提交
         lambdaUpdate().set(SoDeliveryNoticeEntity::getApproveStatus, ApproveStatusEnum.WAIT_SUBMIT.getStatus())
+                .set(SoDeliveryNoticeEntity::getApproveUserId,"")
+                .set(SoDeliveryNoticeEntity::getApproveUserName,"")
+                .set(SoDeliveryNoticeEntity::getApproveTime,null)
                 .eq(SoDeliveryNoticeEntity::getId, entity.getId())
                 .update();
 //        //回滚库存
@@ -714,9 +976,19 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
             throw new ServiceException(ApiError.ERROR_98007);
         }
         //撤销现有流程
-        workflowFeign.cancelProcess(ids);
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
+        ids.forEach(obj -> {
+            ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
+            revokeDTO.setBusinessId(obj);
+            revokeDTO.setBusinessKey(SourceTypeEnum.SO_DELIVERY_NOTICE.getCode());
+            revokeDTO.setUserId(userInfo.getUid());
+            workflowFeign.revokeProcess(revokeDTO);
+        });
         //修改状态为待提交
         lambdaUpdate().set(SoDeliveryNoticeEntity::getApproveStatus, ApproveStatusEnum.WAIT_SUBMIT.getStatus())
+                .set(SoDeliveryNoticeEntity::getApproveUserId,"")
+                .set(SoDeliveryNoticeEntity::getApproveUserName,"")
+                .set(SoDeliveryNoticeEntity::getApproveTime,null)
                 .in(SoDeliveryNoticeEntity::getId, ids)
                 .update();
 
@@ -1824,6 +2096,14 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         //中转仓map
         Map<String, String> warehouseMap =  warehouseService.list().stream().collect(Collectors.toMap(WarehouseEntity::getId, WarehouseEntity::getName));
 
+        //查询审核流程
+        List<String> ids = pagingViews.getRecords().stream().map(SoDeliveryNoticeDTO.PagingView::getId).distinct().collect(Collectors.toList());
+        ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = ids.stream().map(obj -> new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.SO_DELIVERY_NOTICE.getCode(), obj)).collect(Collectors.toCollection(ValidList::new));
+        ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = workflowFeign.curApprover(dtoList);
+        if (200 != listApiResult.getCode()) {
+            throw new ServiceException(new ApiResult(ApiError.DEFAULT.code,listApiResult.getMsg()));
+        }
+
         for (SoDeliveryNoticeDTO.PagingView pagingView : pagingViews.getRecords()) {
             pagingView.setApproveStatusName(ApproveStatusEnum.getName(pagingView.getApproveStatus()));
             pagingView.setInvalidStatusName(InvalidStatusEnum.getName(pagingView.getInvalidStatus()));
@@ -1848,6 +2128,12 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
                     sb.append(warehouseMap.get(s)).append(",");
                 }
                 pagingView.setTransferWarehouseNames(sb.substring(0, sb.length() - 1));
+            }
+
+            //最新审核人
+            if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
+                String curApprove = listApiResult.getData().stream().filter(e -> e.getBusinessId().equals(pagingView.getId()) && CharSequenceUtil.isNotBlank(e.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
+                pagingView.setApproveUserName(CharSequenceUtil.blankToDefault(curApprove,pagingView.getApproveUserName()));
             }
         }
         return new PagingVO<>(pagingViews);
@@ -2322,6 +2608,9 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         SoDeliveryNoticeEntity soDeliveryNoticeEntity = null;
 
         SoInfoEntity soInfoEntity = null;
+        //自动生成功能系统标识
+        Boolean originalValue = UserContext.getIsUserSystem();
+        UserContext.setIsUserSystem(Boolean.TRUE);
         try {
             //获取销售单信息
             soInfoEntity = soInfoFeign.getSoInfoById(soId);
@@ -2334,30 +2623,43 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
             log.error("发货通知单新增异常，soId: {}", soId, e);
             mqResponseDTO.setErrorMsg(e.getMessage());
             return mqResponseDTO;
+        } finally {
+            //恢复系统标识
+            UserContext.setIsUserSystem(originalValue);
         }
 
+        //自动生成功能系统标识
+        UserContext.setIsUserSystem(Boolean.TRUE);
         try {
-            submit(Arrays.asList(soDeliveryNoticeEntity.getId()), Boolean.FALSE);
+            SoDeliveryNoticeEntity entity = soDeliveryNoticeService.getById(soDeliveryNoticeEntity.getId());
+            if (ObjectUtil.isEmpty(entity)) {
+                throw new ServiceException(ApiError.ERROR_SO_DELIVERY_NOTICE_NOT_EXIST);
+            }
+            submit(entity, Boolean.FALSE);
         }catch (Exception e) {
             log.error("发货通知单提交异常，soId: {}", soId, e);
             mqResponseDTO.setErrorMsg(e.getMessage());
             return mqResponseDTO;
+        }finally {
+            //恢复系统标识
+            UserContext.setIsUserSystem(originalValue);
         }
 
+        //自动生成功能系统标识
+        UserContext.setIsUserSystem(Boolean.TRUE);
         try {
-            String id = soDeliveryNoticeEntity.getId();
-//            approve(soDeliveryNoticeEntity,ApproveTypeEnum.PASS.getStatus(),"展会订单自动审核通过", Boolean.FALSE);
             //审核通过
-            lambdaUpdate().set(SoDeliveryNoticeEntity::getApproveStatus, ApproveStatusEnum.APPROVE.getStatus())
-                    .eq(SoDeliveryNoticeEntity::getId, id)
-                    .update();
-            //操作日志
+            SoDeliveryNoticeEntity entity = soDeliveryNoticeService.getById(soDeliveryNoticeEntity.getId());
+            entity.setSoInfoSourceType(SourceTypeEnum.EXHIBITION_ORDER.getCode());
             String comment = "展会订单自动审核通过";
-            operateLogService.addModuleOperateLog(String.format("审核【%s】了一个发货通知单【%s】", ApproveTypeEnum.PASS.getName(),soDeliveryNoticeEntity.getCode()).concat(CharSequenceUtil.isNotBlank(comment) ? String.format(",意见：%s", comment) : ""), ModuleTypeEnum.SO_DELIVERY_NOTICE.getCode(), id, "审核操作");
+            approve(entity,ApproveTypeEnum.PASS.getStatus(), comment,Boolean.FALSE);
         }catch (Exception e) {
             log.error("发货通知单审批通过异常，soId: {}", soId, e);
             mqResponseDTO.setErrorMsg(e.getMessage());
             return mqResponseDTO;
+        }finally {
+            //恢复系统标识
+            UserContext.setIsUserSystem(originalValue);
         }
 
         Map<String, Object> map = new HashMap<>();
@@ -2416,6 +2718,9 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
                 String idsStr = soDeliveryNoticeEntities.stream()
                         .map(SoDeliveryNoticeEntity::getId)
                         .collect(Collectors.joining(","));
+                //自动生成功能系统标识
+                Boolean originalValue = UserContext.getIsUserSystem();
+                UserContext.setIsUserSystem(Boolean.TRUE);
                 try {
                     Boolean delete = bean.delete(ids);
                     if(!delete){
@@ -2427,6 +2732,9 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
                     mqResponseDTO.setErrorMsg(StrUtil.format("发货通知单删除失败,soOutstockId:{},e:{}",idsStr,e.getMessage()));
                     log.error("发货通知单删除失败",e);
                     return mqResponseDTO;
+                } finally {
+                    //恢复系统标识
+                    UserContext.setIsUserSystem(originalValue);
                 }
             }else {
                 mqResponseDTO.setErrorMsg(sb.toString());

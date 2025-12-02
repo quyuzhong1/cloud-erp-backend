@@ -601,8 +601,14 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
         if (CollUtil.isEmpty(poReconciliationDetailList)) {
             throw new ServiceException(ApiError.NOT_EXIST_BILL,"对账单");
         }
+
+        //打系统标识
+        Boolean originalValue = UserContext.getIsUserSystem();
+        UserContext.setIsUserSystem(Boolean.TRUE);
         //添加应付单
         payableInfoService.generatePayableInfo(entity,poReconciliationDetailList);
+        //恢复系统标识
+        UserContext.setIsUserSystem(originalValue);
 
         log.info("确认 开始记录对账单日志数据，id：【{}】", id);
         String msg =  CharSequenceUtil.format("用户【{}】单号为【{}】的【{}】单据确认 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "对账单");
@@ -656,8 +662,10 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
             throw new ServiceException(ApiError.ERROR_PO_RECONCILIATION_DELETE);
         }
         log.info("开始删除，id = {}",id);
+        //反审核并且删除应付单
+        payableInfoService.deleteBySourceId(id);
         //删除
-        this.removeById(id);
+        super.removeById(id);
         //清除明细主表信息
         poReconciliationDetailScmService.cleanDetailByMainId(id);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);

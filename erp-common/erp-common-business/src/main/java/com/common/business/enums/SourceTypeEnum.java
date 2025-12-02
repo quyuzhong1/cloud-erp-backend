@@ -98,6 +98,9 @@ public enum SourceTypeEnum {
     SAMPLE_RECIPIENT("sampleRecipient","样品领用单","sample_recipient"),
     SAMPLE_BACK_INFO("sampleBackInfo","样品退回单","sample_back_info"),
     SAMPLE_LEDGER_INIT("sampleLedgerInit","样品期初台账","sample_ledger_init"),
+    SAMPLE_TRANSFER_INFO("sampleTransferInfo","样品转移单","sample_transfer_info"),
+    SAMPLE_ADJUSTMENT_INFO("sampleAdjustmentInfo","样品调整单","sample_adjustment_info"),
+    WAREHOUSE_LOCATION_MOVE_INFO("warehouseLocationMoveInfo","仓位移动","warehouse_location_move"),
 
 
     //OMS
@@ -129,6 +132,9 @@ public enum SourceTypeEnum {
     EXHIBITION_ORDER("exhibitionOrder", "展会订单","exhibition_order"),
 
     SO_RECEIPT("soReceipt", "收款单","so_receipt"),
+    SO_B2C_REFUND("soB2cRefund", "售后订单","so_b2c_refund"),
+
+
     //SRM
     DELIVERY_ORDER( "deliveryOrder", "送货单","delivery_order"),
     PO_RECONCILIATION( "poReconciliation", "对账单","po_reconciliation"),
@@ -160,7 +166,11 @@ public enum SourceTypeEnum {
 
     LX_PRODUCT_DETAIL("lx_productDetail", "领星产品管理","product_detail"),
     SKU_STD_COST_DETAIL( "skuStdCostDetail", "SKU标准成本明细","sku_std_cost_detail"),
-
+    MOLD_INFO("moldInfo", "模具档案","mold_info"),
+    MOLD_REF_SKU("moldRefSku", "模具关联SKU","mold_ref_sku"),
+    ASSET_NOTICE("assetNotice","资产通知","asset_notice"),
+    ASSET_PURCHASE_ORDER("assetPurchaseOrder","资产采购单","asset_purchase_order"),
+    ASSET_PURCHASE_CHANGE("assetPurchaseChange","资产采购变更单","asset_purchase_change"),
 
     //SYS
     SYS_DEPARTMENT("sysDepartment", "部门","sys_department"),
@@ -218,6 +228,7 @@ public enum SourceTypeEnum {
     LOGISTICS_CANCEL_ORDER("cancelOrder", "物流系统取消订单","dmp_push_task"),
 
     THIRD_WAREHOUSE("thirdWarehouse","第三方仓库",""),
+    THIRD_WAREHOUSE_DELIVERY("thirdWarehouseDelivery","第三方仓库发货","third_warehouse_delivery"),
     THIRD_WAREHOUSE_GET_SKU("thirdWarehouseGetSku", "第三方仓产品数据拉取","dmp_pull_task"),
     THIRD_WAREHOUSE_GET_WAREHOUSE("thirdWarehouseGetWarehouse", "第三方仓仓库数据拉取","dmp_pull_task"),
     THIRD_WAREHOUSE_GET_BASE_ADDRESS("thirdWarehouseGetBaseAddress", "第三方仓地址基础信息拉取","dmp_pull_task"),
@@ -234,6 +245,7 @@ public enum SourceTypeEnum {
     THIRD_WAREHOUSE_CALCULATE_FEE("thirdWarehouseCalculateFee", "第三方仓运费试算","dmp_push_task"),
     THIRD_WAREHOUSE_UPLOAD_FILE("thirdWarehouseUploadFile", "第三方仓上传附件","dmp_push_task"),
     THIRD_WAREHOUSE_UPLOAD_ORDER_LABEL("thirdWarehouseUploadOrderLabel", "第三方仓上传面单","dmp_push_task"),
+    THIRD_WAREHOUSE_UPLOAD_HANDOVER_FILE("thirdWarehouseUploadHandoverFile", "第三方仓上传交接文件","dmp_push_task"),
     THIRD_WAREHOUSE_REFRESH_TOKEN("thirdWarehouseRefreshToken", "第三方仓刷新token","dmp_pull_task"),
 
     TRANSFER_LOGISTICS_GET_SHIPPING("transferLogisticsGetShipping", "物流报关商获取物流产品数据","dmp_pull_task"),
@@ -281,6 +293,16 @@ public enum SourceTypeEnum {
 
 
 
+
+
+    //FMS
+    ASSET_LOCATION("assetLocation", "资产位置","asset_location"),
+    ASSET_ACCEPTANCE("assetAcceptance", "资产验收单","asset_accept"),
+    ASSET_CARD("assetCard", "资产卡片","asset_card"),
+    ASSET_STOCKTAKING_PLAN("assetStocktakingPlan", "盘点方案","asset_stocktaking_plan"),
+    ASSET_STOCKTAKING("assetStocktaking", "资产盘点表","asset_stocktaking"),
+    ASSET_PROFIT_LOSS("assetProfitLoss", "盘盈盘亏单","asset_profit_loss"),
+    ASSET_DISPOSAL("assetDisposal", "资产处置单","asset_disposal"),
 
 
     //售后申请

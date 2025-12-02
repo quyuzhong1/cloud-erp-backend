@@ -73,6 +73,11 @@ public class SampleInitialLedgerDTO implements Serializable {
          */
         private String permissionSql;
 
+         /**
+          * 勾选的id集合
+          */
+         private List<String> ids;
+
      }
     /**
     * 分页列表
@@ -205,10 +210,7 @@ public class SampleInitialLedgerDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class ExportDTO extends PagingParamDTO {
-        /**
-        * 勾选的id集合
-        */
-        private List<String> ids;
+
     }
 
     /**
@@ -222,6 +224,36 @@ public class SampleInitialLedgerDTO implements Serializable {
         * 主键id
         */
         private String  id;
+
+        /**
+        * 创建人id
+        */
+        private String createUserId;
+
+        /**
+        * 创建人名称
+        */
+        private String createUserName;
+
+        /**
+        * 创建时间
+        */
+        private LocalDateTime createTime;
+
+        /**
+        * 修改人id
+        */
+        private String updateUserId;
+
+        /**
+        * 修改人名称
+        */
+        private String updateUserName;
+
+        /**
+        * 更新时间
+        */
+        private LocalDateTime updateTime;
 
         /**
         * 审批状态

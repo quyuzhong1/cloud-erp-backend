@@ -36,6 +36,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -120,9 +122,9 @@ public class PlatformB2bOrderConsumerService extends AbstractRestCloudPlatformCo
 //				erpInfoDTO.setWarehouseId(viewDTOList.get(0).getValue());
 //			}
 //		}
-
+		SysAccountingCompanyEntity sysAccountingCompanyEntity = null;
 		if(StringUtils.isNotBlank(dto.getKindgeeOrgId())){
-			SysAccountingCompanyEntity sysAccountingCompanyEntity = sysUserFeign.getCompanyByKindgeeId(dto.getKindgeeOrgId());
+			sysAccountingCompanyEntity = sysUserFeign.getCompanyByKindgeeId(dto.getKindgeeOrgId());
 			if(Objects.nonNull(sysAccountingCompanyEntity)){
 				erpInfoDTO.setSalesOrgId(sysAccountingCompanyEntity.getId());
 			}
@@ -148,7 +150,7 @@ public class PlatformB2bOrderConsumerService extends AbstractRestCloudPlatformCo
 				erpInfoDTO.setReceiverName(customerAddressEntity.getPerson());
 				erpInfoDTO.setTelNumber(customerAddressEntity.getTelNumber());
 			}
-			erpInfoDTO.setIsDeclare(customerInfo.getCountryId().equals(CountrySiteEnum.CHINA.getSite()));
+			erpInfoDTO.setIsDeclare(false);
 		}
 		//过滤掉明细已删除和已作废
 		if(CollectionUtils.isNotEmpty(dto.getDetail())) {
@@ -163,6 +165,14 @@ public class PlatformB2bOrderConsumerService extends AbstractRestCloudPlatformCo
 		listingInfoParamDTO.setPlatformSkuNoList(platformSkuNoList);
 		listingInfoParamDTO.setPlatform(dto.getThirdSystem());
 		List<ListingInfoWithSkuMappingDTO> mappingDTOList = skuMappingService.findListDto(listingInfoParamDTO);
+		if(Objects.isNull(sysAccountingCompanyEntity) && StringUtils.isNotBlank(erpInfoDTO.getSalesOrgId())){
+			sysAccountingCompanyEntity = sysUserFeign.getCompanyById(erpInfoDTO.getSalesOrgId());
+			if(Objects.nonNull(sysAccountingCompanyEntity) && sysAccountingCompanyEntity.getVatRate().compareTo(BigDecimal.ZERO)>0){
+				erpInfoDTO.setIsTax(true);
+			}else{
+				erpInfoDTO.setIsTax(false);
+			}
+		}
 		for (PlatformB2bOrderDetailDTO platformB2bOrderDetailDTO : platformB2bOrderDetailDTOS) {
 			if(StringUtils.isNotBlank(platformB2bOrderDetailDTO.getPlatformSkuNo())) {
 				List<ListingInfoWithSkuMappingDTO> collect = mappingDTOList.stream().filter(e -> e.getPlatformSkuNo().equals(platformB2bOrderDetailDTO.getPlatformSkuNo())).collect(Collectors.toList());
@@ -171,6 +181,17 @@ public class PlatformB2bOrderConsumerService extends AbstractRestCloudPlatformCo
 					platformB2bOrderDetailDTO.setSkuNo(collect.get(0).getProductSkuNo());
 				}
 			}
+			if(Objects.nonNull(sysAccountingCompanyEntity) && Objects.nonNull(sysAccountingCompanyEntity.getVatRate())){
+				platformB2bOrderDetailDTO.setTaxRate(sysAccountingCompanyEntity.getVatRate());
+			}else{
+				platformB2bOrderDetailDTO.setTaxRate(BigDecimal.ZERO);
+			}
+			//计算含税单价
+			BigDecimal taxRate = platformB2bOrderDetailDTO.getTaxRate().divide(new BigDecimal("100"),2, RoundingMode.HALF_UP);
+			BigDecimal taxPrice = platformB2bOrderDetailDTO.getTaxPrice();
+			BigDecimal onePlusTax = BigDecimal.ONE.add(taxRate);
+			BigDecimal price = taxPrice.divide(onePlusTax, 2, RoundingMode.HALF_UP);
+			platformB2bOrderDetailDTO.setPrice(price);
 		}
 		//通过客户id 和产品sku查到客户sku
 		List<String> skuIdList = platformB2bOrderDetailDTOS.stream().map(PlatformB2bOrderDetailDTO::getSkuId).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());

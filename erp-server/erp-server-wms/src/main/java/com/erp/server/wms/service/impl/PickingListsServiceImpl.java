@@ -374,7 +374,15 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
             moveDto.setSourceType(SourceTypeEnum.PICKING_LISTS_ADD.getCode());
             moveDto.setSourceCode(pickingListsEntity.getCode());
             moveDto.setDetailList(addDTOS);
-            warehouseLocationMoveService.addAndApprove(moveDto);
+            //自动生成功能系统标识
+            Boolean originalValue = UserContext.getIsUserSystem();
+            UserContext.setIsUserSystem(Boolean.TRUE);
+            try {
+                warehouseLocationMoveService.addAndApprove(moveDto);
+            } finally {
+                //恢复系统标识
+                UserContext.setIsUserSystem(originalValue);
+            }
         }
         if (!CollectionUtils.isEmpty(subtractDTOS)) {
             WarehouseLocationMoveDTO.AddDTO moveDto = new WarehouseLocationMoveDTO.AddDTO();
@@ -384,7 +392,15 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
             moveDto.setSourceType(SourceTypeEnum.PICKING_LISTS_SUBTRACT.getCode());
             moveDto.setSourceCode(pickingListsEntity.getCode());
             moveDto.setDetailList(subtractDTOS);
-            warehouseLocationMoveService.addAndApprove(moveDto);
+            //自动生成功能系统标识
+            Boolean originalValue = UserContext.getIsUserSystem();
+            UserContext.setIsUserSystem(Boolean.TRUE);
+            try {
+                warehouseLocationMoveService.addAndApprove(moveDto);
+            } finally {
+                //恢复系统标识
+                UserContext.setIsUserSystem(originalValue);
+            }
         }
         List<String> sourceDetailIds = updatePickingList.stream().map(PickingDetailEntity::getSourceDetailId).distinct().collect(Collectors.toList());
         if (SourceTypeEnum.REQUISITION_APPLICATION.getCode().equals(pickingListsEntity.getSourceType())) {
@@ -752,7 +768,15 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
         operateLogService.addModuleOperateLog(CharSequenceUtil.format("生成拣货单【{}】", entity.getCode()), ModuleTypeEnum.PICKING_LISTS.getCode(), entity.getId(), "新增操作");
         entities.forEach(v -> v.setActualQty(v.getQty()));
         pickingDetailService.saveBatch(entities);
-        warehouseLocationMoveService.addAndApprove(moveDto);
+        //自动生成功能系统标识
+        Boolean originalValue = UserContext.getIsUserSystem();
+        UserContext.setIsUserSystem(Boolean.TRUE);
+        try {
+            warehouseLocationMoveService.addAndApprove(moveDto);
+        } finally {
+            //恢复系统标识
+            UserContext.setIsUserSystem(originalValue);
+        }
     }
 
     @Override
@@ -783,7 +807,15 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                 }).collect(Collectors.toList());
         dto.setDetailList(moveDetailList);
         baseMapper.deleteById(id);
-        warehouseLocationMoveService.addAndApprove(dto);
+        //自动生成功能系统标识
+        Boolean originalValue = UserContext.getIsUserSystem();
+        UserContext.setIsUserSystem(Boolean.TRUE);
+        try {
+            warehouseLocationMoveService.addAndApprove(dto);
+        } finally {
+            //恢复系统标识
+            UserContext.setIsUserSystem(originalValue);
+        }
         pickingDetailService.remove(Wrappers.<PickingDetailEntity>lambdaQuery()
                 .eq(PickingDetailEntity::getMainId, id));
         List<String> sourceDetailIds = entityList.stream().map(PickingDetailEntity::getSourceDetailId).collect(Collectors.toList());
@@ -1201,7 +1233,15 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
             moveDto.setSourceType(SourceTypeEnum.PICKING_LISTS_ADD.getCode());
             moveDto.setSourceCode(entity.getCode());
             moveDto.setDetailList(addDTOS);
-            warehouseLocationMoveService.addAndApprove(moveDto);
+            //自动生成功能系统标识
+            Boolean originalValue = UserContext.getIsUserSystem();
+            UserContext.setIsUserSystem(Boolean.TRUE);
+            try {
+                warehouseLocationMoveService.addAndApprove(moveDto);
+            } finally {
+                //恢复系统标识
+                UserContext.setIsUserSystem(originalValue);
+            }
         }
         if (!CollectionUtils.isEmpty(subtractDTOS)) {
             WarehouseLocationMoveDTO.AddDTO moveDto = new WarehouseLocationMoveDTO.AddDTO();
@@ -1211,7 +1251,15 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
             moveDto.setSourceType(SourceTypeEnum.PICKING_LISTS_SUBTRACT.getCode());
             moveDto.setSourceCode(entity.getCode());
             moveDto.setDetailList(subtractDTOS);
-            warehouseLocationMoveService.addAndApprove(moveDto);
+            //自动生成功能系统标识
+            Boolean originalValue = UserContext.getIsUserSystem();
+            UserContext.setIsUserSystem(Boolean.TRUE);
+            try {
+                warehouseLocationMoveService.addAndApprove(moveDto);
+            } finally {
+                //恢复系统标识
+                UserContext.setIsUserSystem(originalValue);
+            }
         }
         List<String> sourceDetailIds = detailList.stream().map(PickingDetailEntity::getSourceDetailId).distinct().collect(Collectors.toList());
         if (SourceTypeEnum.REQUISITION_APPLICATION.getCode().equals(entity.getSourceType())) {

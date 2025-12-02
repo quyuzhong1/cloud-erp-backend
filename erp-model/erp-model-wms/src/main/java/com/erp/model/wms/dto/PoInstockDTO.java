@@ -1104,4 +1104,44 @@ public class PoInstockDTO implements Serializable {
          */
         private Integer count;
     }
+
+
+    /**
+     *
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class PoInStockParamDTO {
+
+        /**
+         * SKU集合
+         */
+        private List<String> skuIds;
+
+    }
+
+    /**
+     *
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class PoInStockInfoDTO {
+
+        private String id;
+
+        private String detailId;
+
+        private String skuId;
+
+        private String approveStatus;
+
+        private LocalDate approveTime;
+
+        private LocalDate stockInDate;
+
+        private Integer qty;
+
+    }
 }

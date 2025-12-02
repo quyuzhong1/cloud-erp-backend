@@ -126,4 +126,14 @@ public class BomChildrenSkuDTO  implements Serializable {
     @DecimalMin(value = "1",message ="最小值为1" )
     private Integer quantity;
 
+    /**
+     * 子件虚拟仓可用库存
+     */
+    private Integer virtualUsableQty;
+
+    /**
+     * 子件实体仓可用库存
+     */
+    private Integer warehouseUsableQty;
+
 }

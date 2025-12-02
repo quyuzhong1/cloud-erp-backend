@@ -1,6 +1,6 @@
 /*
  * Selling Partner API for Listings Items
- * The Selling Partner API for Listings Items (Listings Items API) provides programmatic access to selling partner listings on Amazon. Use this API in collaboration with the Selling Partner API for Product Type Definitions, which you use to retrieve the information about Amazon product types needed to use the Listings Items API.  For more information, see the [Listings Items API Use Case Guide](doc:listings-items-api-v2021-08-01-use-case-guide).
+ * The Selling Partner API for Listings Items (Listings Items API) provides programmatic access to selling partner listings on Amazon. Use this API in collaboration with the Selling Partner API for Product Type Definitions, which you use to retrieve the information about Amazon product types needed to use the Listings Items API.  For more information, see the [Listings Items API Use Case Guide](https://developer-docs.amazon.com/sp-api/docs/listings-items-api-v2021-08-01-use-case-guide).
  *
  * OpenAPI spec version: 2021-08-01
  * 
@@ -10,36 +10,39 @@
  * Do not edit the class manually.
  */
 
-
 package com.erp.sdk.oms.amz.spapi.model.listingsitems;
 
+import java.util.Objects;
+import java.util.Arrays;
 import com.google.gson.TypeAdapter;
 import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.annotations.SerializedName;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
-
+import java.util.Map;
 /**
  * Individual JSON Patch operation for an HTTP PATCH request.
  */
 
-@javax.annotation.Generated(value = "io.swagger.codegen.languages.JavaClientCodegen", date = "2022-07-24T13:44:38.380+08:00")
+@javax.annotation.Generated(value = "io.swagger.codegen.v3.generators.java.JavaClientCodegen", date = "2025-08-07T17:52:05.725887800+08:00[Asia/Shanghai]")
+
 public class PatchOperation {
   /**
-   * Type of JSON Patch operation. Supported JSON Patch operations include add, replace, and delete. See &lt;https://tools.ietf.org/html/rfc6902&gt;.
+   * Type of JSON Patch operation. Supported JSON Patch operations include &#x60;add&#x60;, &#x60;replace&#x60;, &#x60;merge&#x60; and &#x60;delete&#x60;. Refer to &lt;https://tools.ietf.org/html/rfc6902&gt;.
    */
   @JsonAdapter(OpEnum.Adapter.class)
   public enum OpEnum {
+    @SerializedName("add")
     ADD("add"),
-    
+    @SerializedName("replace")
     REPLACE("replace"),
-    
+    @SerializedName("merge")
+    MERGE("merge"),
+    @SerializedName("delete")
     DELETE("delete");
 
     private String value;
@@ -47,7 +50,6 @@ public class PatchOperation {
     OpEnum(String value) {
       this.value = value;
     }
-
     public String getValue() {
       return value;
     }
@@ -56,38 +58,34 @@ public class PatchOperation {
     public String toString() {
       return String.valueOf(value);
     }
-
-    public static OpEnum fromValue(String text) {
+    public static OpEnum fromValue(String input) {
       for (OpEnum b : OpEnum.values()) {
-        if (String.valueOf(b.value).equals(text)) {
+        if (b.value.equals(input)) {
           return b;
         }
       }
       return null;
     }
-
     public static class Adapter extends TypeAdapter<OpEnum> {
       @Override
       public void write(final JsonWriter jsonWriter, final OpEnum enumeration) throws IOException {
-        jsonWriter.value(enumeration.getValue());
+        jsonWriter.value(String.valueOf(enumeration.getValue()));
       }
 
       @Override
       public OpEnum read(final JsonReader jsonReader) throws IOException {
-        String value = jsonReader.nextString();
-        return OpEnum.fromValue(String.valueOf(value));
+        Object value = jsonReader.nextString();
+        return OpEnum.fromValue((String)(value));
       }
     }
-  }
-
-  @SerializedName("op")
+  }  @SerializedName("op")
   private OpEnum op = null;
 
   @SerializedName("path")
   private String path = null;
 
   @SerializedName("value")
-  private List<Object> value = null;
+  private List<Map<String, Object>> value = null;
 
   public PatchOperation op(OpEnum op) {
     this.op = op;
@@ -95,10 +93,10 @@ public class PatchOperation {
   }
 
    /**
-   * Type of JSON Patch operation. Supported JSON Patch operations include add, replace, and delete. See &lt;https://tools.ietf.org/html/rfc6902&gt;.
+   * Type of JSON Patch operation. Supported JSON Patch operations include &#x60;add&#x60;, &#x60;replace&#x60;, &#x60;merge&#x60; and &#x60;delete&#x60;. Refer to &lt;https://tools.ietf.org/html/rfc6902&gt;.
    * @return op
   **/
-
+  
   public OpEnum getOp() {
     return op;
   }
@@ -113,10 +111,10 @@ public class PatchOperation {
   }
 
    /**
-   * JSON Pointer path of the element to patch. See &lt;https://tools.ietf.org/html/rfc6902&gt;.
+   * JSON Pointer path of the element to patch. Refer to [JavaScript Object Notation (JSON) Patch](https://tools.ietf.org/html/rfc6902) for more information.
    * @return path
   **/
-
+  
   public String getPath() {
     return path;
   }
@@ -125,29 +123,29 @@ public class PatchOperation {
     this.path = path;
   }
 
-  public PatchOperation value(List<Object> value) {
+  public PatchOperation value(List<Map<String, Object>> value) {
     this.value = value;
     return this;
   }
 
-  public PatchOperation addValueItem(Object valueItem) {
+  public PatchOperation addValueItem(Map<String, Object> valueItem) {
     if (this.value == null) {
-      this.value = new ArrayList<Object>();
+      this.value = new ArrayList<Map<String, Object>>();
     }
     this.value.add(valueItem);
     return this;
   }
 
    /**
-   * JSON value to add, replace, or delete.
+   * JSON value to &#x60;add&#x60;, &#x60;replace&#x60;, &#x60;merge&#x60; or &#x60;delete&#x60;.
    * @return value
   **/
-
-  public List<Object> getValue() {
+  
+  public List<Map<String, Object>> getValue() {
     return value;
   }
 
-  public void setValue(List<Object> value) {
+  public void setValue(List<Map<String, Object>> value) {
     this.value = value;
   }
 
@@ -196,4 +194,3 @@ public class PatchOperation {
   }
 
 }
-

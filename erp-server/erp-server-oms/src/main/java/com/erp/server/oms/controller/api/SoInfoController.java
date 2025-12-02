@@ -953,4 +953,11 @@ public class SoInfoController extends BaseController {
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
+
+    @PostMapping("/updateIsDeclare")
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "更新是否报关")
+    public ApiResult<Boolean> updateIsDeclare(@RequestBody @Validated SoB2cDTO.UpdateIsDeclareDTO dto) {
+        return success(soInfoService.updateIsDeclare(dto));
+    }
+
 }

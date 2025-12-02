@@ -381,4 +381,12 @@ public interface FirstMileDeliveryService extends SuperService<FirstMileDelivery
     List<OverseasProviderWarehouseDTO.ProviderDTO> listOverseasProvider(List<String> deliveryIds);
 
     BatchResultDTO generateFirstMileDeclare(String id);
+    /**
+     * 重新出库
+     * @author will
+     * @date 2025/8/6 17:01
+     * @param id
+     * @return BatchResultDTO
+     */
+    BatchResultDTO retryOutstock(String id);
 }

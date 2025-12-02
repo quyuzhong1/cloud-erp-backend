@@ -168,10 +168,14 @@ public class DmpOutputSdyReturnHandler extends DmpOutputSdyBaseTaskHandler {
                     return result;
                 }
             	
-            	if(StringUtils.isNotBlank(dmpSoReturnEntity.getPlatformCode())) {
-            		sdyDTO.setBiz_no(dmpSoReturnEntity.getPlatformCode());
+            	if("WDT".equals(dmpSoReturnEntity.getSourceSystem())) {
+            		sdyDTO.setBiz_no(dmpSoReturnEntity.getThirdCode());
             	}else {
-            		sdyDTO.setBiz_no(dmpSoReturnEntity.getPlatformOrderCode());
+            		if(StringUtils.isNotBlank(dmpSoReturnEntity.getPlatformCode())) {
+                		sdyDTO.setBiz_no(dmpSoReturnEntity.getPlatformCode());
+                	}else {
+                		sdyDTO.setBiz_no(dmpSoReturnEntity.getPlatformOrderCode());
+                	}
             	}
                 
                 Map<String, Object> shopListMap = cacheMap.get("shopList");
@@ -200,7 +204,7 @@ public class DmpOutputSdyReturnHandler extends DmpOutputSdyBaseTaskHandler {
                 }
 
             } else {
-                if (CharSequenceUtil.isNotBlank(dmpSoReturnEntity.getNextLevelId())) {
+                if (CharSequenceUtil.isBlank(dmpSoReturnEntity.getShopId())) {
                     shopId = dmpSoReturnEntity.getNextLevelId();
                 } else {
                     shopId = dmpSoReturnEntity.getShopId();
@@ -227,15 +231,17 @@ public class DmpOutputSdyReturnHandler extends DmpOutputSdyBaseTaskHandler {
             if(customerInfoMap == null) {
             	customerInfoMap = new HashMap<>();
             }
-            String customerId = shopInfo.getCustomerId();
-            Object customerInfobject = customerInfoMap.get(customerId);
             CustomerInfoEntity customerInfo = null;
-            if(customerInfobject == null) {
-            	customerInfo = FeignQuery.getById(CustomerInfoEntity.class, customerId);
-            }else {
-            	customerInfo = (CustomerInfoEntity)customerInfobject; 
+            if(shopInfo != null) {
+            	String customerId = shopInfo.getCustomerId();
+            	Object customerInfobject = customerInfoMap.get(customerId);
+                if(customerInfobject == null) {
+                	customerInfo = FeignQuery.getById(CustomerInfoEntity.class, customerId);
+                }else {
+                	customerInfo = (CustomerInfoEntity)customerInfobject; 
+                }
+                customerInfoMap.put(customerId, customerInfo);
             }
-            customerInfoMap.put(customerId, customerInfo);
             cacheMap.put("customerInfo", customerInfoMap);
             
             if (ObjectUtil.isNotEmpty(customerInfo)) {
@@ -315,25 +321,27 @@ public class DmpOutputSdyReturnHandler extends DmpOutputSdyBaseTaskHandler {
             if(dictCurrencyMap == null) {
             	dictCurrencyMap = new HashMap<>();
             }
-            String tradeCurrency = shopInfo.getTradeCurrency();
-            if (CharSequenceUtil.isNotBlank(dmpSoReturnEntity.getCurrencyCode())) {
-            	tradeCurrency = dmpSoReturnEntity.getCurrencyCode();
+            if(shopInfo != null) {
+            	String tradeCurrency = shopInfo.getTradeCurrency();
+                if (CharSequenceUtil.isNotBlank(dmpSoReturnEntity.getCurrencyCode())) {
+                	tradeCurrency = dmpSoReturnEntity.getCurrencyCode();
+                }
+                Object dictCurrencybject = dictCurrencyMap.get(tradeCurrency);
+                DictCurrencyEntity dictCurrency = null;
+                if(dictCurrencybject == null) {
+                	dictCurrency = FeignQuery.getById(DictCurrencyEntity.class, tradeCurrency);
+                }else {
+                	dictCurrency = (DictCurrencyEntity)dictCurrencybject; 
+                }
+                dictCurrencyMap.put(tradeCurrency, dictCurrency);
+                cacheMap.put("dictCurrency", dictCurrencyMap);
+                
+                if (ObjectUtil.isNotEmpty(dictCurrency)) {
+                    sdyDTO.setTransaction_currency(dictCurrency.getName());
+                }
+                sdyDTO.setTransaction_currency_code(tradeCurrency);
+                sdyDTO.setSettlement_currency_code(shopInfo.getSettlementCurrency());
             }
-            Object dictCurrencybject = dictCurrencyMap.get(tradeCurrency);
-            DictCurrencyEntity dictCurrency = null;
-            if(dictCurrencybject == null) {
-            	dictCurrency = FeignQuery.getById(DictCurrencyEntity.class, tradeCurrency);
-            }else {
-            	dictCurrency = (DictCurrencyEntity)dictCurrencybject; 
-            }
-            dictCurrencyMap.put(tradeCurrency, dictCurrency);
-            cacheMap.put("dictCurrency", dictCurrencyMap);
-            
-            if (ObjectUtil.isNotEmpty(dictCurrency)) {
-                sdyDTO.setTransaction_currency(dictCurrency.getName());
-            }
-            sdyDTO.setTransaction_currency_code(tradeCurrency);
-            sdyDTO.setSettlement_currency_code(shopInfo.getSettlementCurrency());
 
             sdyDTO.setUnit("PCS");
             if (StringUtils.isNotBlank(dmpSoReturnEntity.getPlatformOrderCode())){
@@ -364,6 +372,11 @@ public class DmpOutputSdyReturnHandler extends DmpOutputSdyBaseTaskHandler {
                 sdyDTO.setRoot_node_no_initial(dmpSoReturnEntity.getPlatformOrderCode());
             } else {
                 sdyDTO.setRoot_node_no_initial(dmpSoReturnEntity.getPlatformCode());
+            }
+            
+            if (PlatformDictEnum.WDT.getCode().equalsIgnoreCase(dmpSoReturnEntity.getSourceSystem())) {
+            	sdyDTO.setRoot_node_no_initial(dmpSoReturnDetailEntity.getTid());
+            	sdyDTO.setRoot_node_no(dmpSoReturnDetailEntity.getTid());
             }
             result.put(dmpSoReturnDetailEntity.getId(), sdyDTO);
         }

@@ -465,7 +465,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         soB2cEntityList = soB2cEntityList.stream().filter(SoB2cEntity::hasPlatformWarehouseOrder).collect(Collectors.toList());
         if(CollectionUtils.isEmpty(soB2cEntityList)){
             log.warn("同步temu销售出库单失败，未查询到对应的销售订单，平台订单号：{}", entity.getPlatformOrderCode());
-            return;
+            throw new ServiceException("同步temu销售出库单失败，未查询到对应的销售订单，平台订单号：{}", entity.getPlatformOrderCode());
         }
         //查询仓库映射
         List<ThirdMappingDTO.WarehouseMappingDTO> warehouseMappingDTOS = dmpThirdMappingFeign.listMappingBySysIds(new ArrayList<>(),PlatformDictEnum.TE_MU.getCode());

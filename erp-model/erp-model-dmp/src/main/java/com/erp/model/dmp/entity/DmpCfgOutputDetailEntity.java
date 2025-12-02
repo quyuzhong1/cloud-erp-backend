@@ -75,6 +75,21 @@ public class DmpCfgOutputDetailEntity extends BaseEntity<DmpCfgOutputDetailEntit
     */
     @TableField("extend_json")
     private String extendJson;
+    /**
+     * 最大间隔时间，长度单位：秒
+     */
+    @TableField("max_interval_time")
+    private Integer maxIntervalTime;
+    /**
+     * 延迟时间
+     */
+    @TableField("dealy_time")
+    private Integer dealyTime;
+    /**
+     * 备注
+     */
+    @TableField("remark")
+    private String remark;
 
 
     public static final String MAIN_ID = "main_id";

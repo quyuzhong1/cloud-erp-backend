@@ -98,6 +98,30 @@
             </if>
             GROUP BY ssd.sample_ledger_id ) as aa on aa.sample_ledger_id = sl.id
         </if>
+        <if test="params.type != null and params.type == 'transfer'">
+            left join (
+            select ssd.sample_ledger_id , sum(ssd.transfer_qty) as freezeQty  from  sample_transfer_info ssi
+            inner join sample_transfer_detail ssd on ssi.id = ssd.main_id and ssd.is_deleted = false
+            where ssi.is_deleted = false
+            and ssi.invalid_status = false
+            and ssi.approve_status !='approve'
+            <if test="params.type != null and params.type == 'transfer' and params.childId != null and params.childId != ''">
+                and ssi.id != #{params.childId}
+            </if>
+            GROUP BY ssd.sample_ledger_id ) as aa on aa.sample_ledger_id = sl.id
+        </if>
+        <if test="params.type != null and params.type == 'adjustment'">
+            left join (
+            select ssd.sample_ledger_id , sum(ssd.difference_qty) as freezeQty  from  sample_adjustment_info ssi
+            inner join sample_adjustment_detail ssd on ssi.id = ssd.main_id and ssd.is_deleted = false
+            where ssi.is_deleted = false
+            and ssi.invalid_status = false
+            and ssi.approve_status !='approve'
+            <if test="params.type != null and params.type == 'adjustment' and params.childId != null and params.childId != ''">
+                and ssi.id != #{params.childId}
+            </if>
+            GROUP BY ssd.sample_ledger_id ) as aa on aa.sample_ledger_id = sl.id
+        </if>
         WHERE
         sl.is_deleted = FALSE
         <if test="params.userId != null and params.userId != ''">
@@ -185,7 +209,8 @@
     <!-- 获取状态统计（支持数量为0不显示） -->
     <select id="getAllStatusCounts" resultType="com.erp.model.wms.dto.SampleLedgerDTO$TabListDTO">
         SELECT 
-            'all' as status,
+            'all' as tabFlag,
+            '全部' as tabFlagName,
             COUNT(*) as count
         FROM sample_ledger sl
         WHERE sl.is_deleted = FALSE

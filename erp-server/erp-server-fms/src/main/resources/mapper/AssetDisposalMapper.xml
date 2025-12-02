@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.fms.mapper.AssetDisposalMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.fms.entity.AssetDisposalEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="approve_status" property="approveStatus" />
+       <result column="approve_user_id" property="approveUserId" />
+       <result column="approve_user_name" property="approveUserName" />
+       <result column="approve_time" property="approveTime" />
+       <result column="invalid_status" property="invalidStatus" />
+       <result column="invalid_remark" property="invalidRemark" />
+       <result column="invalid_time" property="invalidTime" />
+       <result column="source_type" property="sourceType" />
+       <result column="code" property="code" />
+       <result column="business_date" property="businessDate" />
+       <result column="disposal_method" property="disposalMethod" />
+       <result column="asset_org_id" property="assetOrgId" />
+       <result column="asset_org_name" property="assetOrgName" />
+       <result column="reason" property="reason" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        ad.id AS id,
+ad.create_user_id AS createUserId,
+ad.create_user_name AS createUserName,
+ad.create_time AS createTime,
+ad.update_user_id AS updateUserId,
+ad.update_user_name AS updateUserName,
+ad.update_time AS updateTime,
+ad.version AS version,
+ad.is_deleted AS isDeleted,
+ad.approve_status AS approveStatus,
+ad.approve_user_id AS approveUserId,
+ad.approve_user_name AS approveUserName,
+ad.approve_time AS approveTime,
+ad.invalid_status AS invalidStatus,
+ad.invalid_remark AS invalidRemark,
+ad.invalid_time AS invalidTime,
+ad.source_type AS sourceType,
+ad.code AS code,
+ad.business_date AS businessDate,
+ad.disposal_method AS disposalMethod,
+ad.asset_org_id AS assetOrgId,
+ad.asset_org_name AS assetOrgName,
+ad.reason AS reason
+    </sql>
+
+    <sql id="detail_Column_List">
+        add.id AS assetDisposalDetailId,
+add.source_id AS sourceId,
+add.source_code AS sourceCode,
+add.asset_name AS assetName,
+add.unit AS unit,
+add.qty AS qty,
+add.disposal_qty AS disposalQty,
+add.disposal_currency AS disposalCurrency,
+add.cleanup_cost AS cleanupCost,
+add.residual_value AS residualValue,
+add.invoice_type AS invoiceType,
+add.tax_rate AS taxRate,
+add.tax_amount AS taxAmount
+    </sql>
+
+    <select id="paging" resultType="com.erp.model.fms.dto.AssetDisposalDTO$ListDTO">
+        SELECT
+        <include refid="Base_Column_List"></include>
+            ,
+        <include refid="detail_Column_List"></include>
+        FROM
+        asset_disposal ad
+        left join asset_disposal_detail add on add.is_deleted = FALSE and ad.id = add.main_id
+        where
+        ${params.sqlMap.default}
+        AND ad.is_deleted = FALSE
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        ad.create_time desc
+    </select>
+
+    <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
+        select approve_status, count(id) from asset_disposal where is_deleted = false group by approve_status
+    </select>
+
+    <select id="listExport" resultType="com.erp.model.fms.dto.AssetDisposalDTO$ListDTO">
+
+    </select>
+    <select id="tabList" resultType="com.erp.model.fms.dto.AssetDisposalDTO$TabListDTO">
+        SELECT
+        approve_status AS tabFlag,
+        count(*)  AS count
+        FROM  asset_disposal ad
+        WHERE is_deleted=FALSE
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        GROUP BY approve_status
+    </select>
+    <select id="listBySourceIds" resultType="com.erp.model.fms.dto.AssetDisposalDTO$SourceDetailDTO">
+        SELECT
+            ad.code,
+            ad.source_type,
+            add.source_id AS sourceId
+        FROM
+            asset_disposal AS ad
+                INNER JOIN asset_disposal_detail AS add on ad.id = add.main_id and add.is_deleted = false
+        where ad.is_deleted = false
+          and ad.invalid_status = false
+        <if test="sourceType != null and sourceType != ''">
+            and ad.source_type = #{sourceType}
+        </if>
+        <if test="ids != null and ids.size > 0">
+            and add.source_id in
+            <foreach item="item" index="index" collection="ids" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+    </select>
+
+</mapper>

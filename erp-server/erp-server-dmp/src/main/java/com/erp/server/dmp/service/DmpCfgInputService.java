@@ -3,7 +3,8 @@ import com.erp.model.dmp.entity.DmpCfgInputEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.dmp.dto.DmpCfgInputDTO;
-
+import com.common.business.vo.PagingVO;
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -59,4 +60,36 @@ public interface DmpCfgInputService extends SuperService<DmpCfgInputEntity> {
      * @return java.util.List<com.erp.model.dmp.dto.DmpCfgInputDTO.ListDmpCfgInputDTO>
      **/
     List<DmpCfgInputDTO.ListDmpCfgInputDTO> allDmpCfgInput();
+
+    /**
+     * 删除
+     * @author Jim
+     * @date: 2025-10-23
+     * @param id
+     * @return
+     */
+    BatchResultDTO delete(String id);
+
+
+    PagingVO<DmpCfgInputDTO.ListDTO> paging(PagingDTO<DmpCfgInputDTO.PagingParamDTO> pagingParamDTO);
+
+    List<DmpCfgInputDTO.TabListDTO> tabList(PermissionsDTO param);
+
+    /**
+     * 导出Excel
+     * @author Jim
+     * @date: 2025-10-23
+     * @param dto
+     * @param response
+     * @return
+     */
+    void exportList(DmpCfgInputDTO.ExportDTO dto, HttpServletResponse response);
+
+    DmpCfgInputDTO.ViewDTO view(String id);
+
+    DmpCfgInputEntity viewEntity(String id);
+
+    BatchResultDTO enable(DmpCfgInputEntity entity);
+
+    BatchResultDTO disable(DmpCfgInputEntity entity);
 }

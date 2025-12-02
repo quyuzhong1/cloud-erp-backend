@@ -9,6 +9,7 @@ import com.erp.model.tms.dto.*;
 import com.erp.model.tms.entity.LogisticsAddressEntity;
 import com.erp.model.tms.entity.LogisticsChannelBlacklistEntity;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
+import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.tms.vo.request.LogisticsQueryBaseVO;
 import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
 import com.erp.server.tms.service.*;
@@ -161,6 +162,16 @@ public class LogisticsFeignController {
                                                                          @RequestParam("dictPlatform") String dictPlatform
     ) {
         return logisticsChannelService.getScaleChannelByChannelById(logisticsChannelId, dictPlatform);
+    }
+
+    @GetMapping("/getScaleChannelByChannelByIds")
+    private List<LogisticsChannelDTO.SignShipDTO> getScaleChannelByChannelByIds(@RequestParam("logisticsChannelIdList") List<String> logisticsChannelIdList, @RequestParam("dictPlatform") String dictPlatform){
+        return logisticsChannelService.getScaleChannelByChannelByIds(logisticsChannelIdList, dictPlatform);
+    }
+
+    @GetMapping("/getChannelByCodeAndOverseasWarehouseId")
+    private LogisticsSaleChannelEntity getChannelByCodeAndOverseasWarehouseId(@RequestParam("logisticsProductCode")String logisticsProductCode, @RequestParam("transferWarehouseId") String transferWarehouseId) {
+        return logisticsChannelService.getChannelByCodeAndOverseasWarehouseId(logisticsProductCode, transferWarehouseId);
     }
     /**
      * 根据地址类型获取地址列表

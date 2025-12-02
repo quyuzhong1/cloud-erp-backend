@@ -19,6 +19,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.validator.constraints.Range;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
@@ -352,6 +353,10 @@ public class SupplierDTO implements Serializable {
          * 分类id
          */
         private String categoryId;
+        /**
+         * 分类名
+         */
+        private String categoryName;
 
         /**
          * 等级id
@@ -633,6 +638,8 @@ public class SupplierDTO implements Serializable {
         /**
          * 税率
          */
+        @NotNull(message = "税率不能为空")
+        @Range(min = 0, max = 100, message = "税率范围0-100%")
         private BigDecimal taxRate;
 
         /**

@@ -229,7 +229,12 @@ public class AmazonAuthorize implements IShopAuthorizeService<T> {
             if(AuthStatusEnum.ALREADY.getCode().equalsIgnoreCase(shopInfo.getAuthStatus())){
                 throw new ServiceException(ApiError.ERROR_SHOP_ALREADY_AUTH);
             }
-
+            // 添加授权账号校验
+            if (StringUtils.isNotBlank(shopInfo.getPlatformShopCode())){
+                if (!shopInfo.getPlatformShopCode().equals(dto.getSelling_partner_id())){
+                    throw new ServiceException("当前授权账号与店铺账号不一致");
+                }
+            }
             shopInfo.setPlatformShopCode(dto.getSelling_partner_id());
             shopInfo.setAuthStatus(AuthStatusEnum.ALREADY.getCode());
             shopInfo.setAuthTime(LocalDateTime.now());

@@ -1,6 +1,7 @@
 package com.erp.server.dmp.inout.utils;
 
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -18,6 +19,7 @@ import com.erp.model.dmp.entity.DmpBasicSystemEntity;
 import com.erp.model.dmp.entity.DmpCfgOutputEntity;
 import com.erp.model.dmp.entity.DmpOutputTaskEntity;
 import com.erp.model.dmp.entity.DmpOutputTaskRecordEntity;
+import com.erp.model.dmp.enums.DmpCfgOutputTypeEnum;
 import com.erp.model.dmp.enums.DmpOutputTaskRecordStatusEnum;
 import com.erp.model.msg.dto.WarnMsgInfoDTO;
 import com.erp.model.msg.enums.WarnMsgTypeEnum;
@@ -51,21 +53,35 @@ public class DmpOutputUtils{
 		if(responseData == null) {
 			responseData = "";
 		}
-		if(status.contains(DmpOutputTaskRecordStatusEnum.ERROR.getCode())) {
-			DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity = dmpOutputTaskRecordService.getById(id);
-			errorCount = dmpOutputTaskRecordEntity.getErrorCount();
-			code = dmpOutputTaskRecordEntity.getSourceCode();
-			String mainId = dmpOutputTaskRecordEntity.getMainId();
-			DmpOutputTaskEntity dmpOutputTaskEntity = dmpOutputTaskService.getById(mainId);
-			List<DmpCfgOutputEntity> dmpCfgOutputEntityList = dmpHandlerCache.getDmpCfgOutputEntityList(d -> d.getId().equals(dmpOutputTaskEntity.getCfgOutputId()));
-			if(CollUtil.isNotEmpty(dmpCfgOutputEntityList)) {
-				List<DmpBasicSystemEntity> dmpBasicSystemEntityList = dmpHandlerCache.getDmpBasicSystemEntityList(d -> d.getId().equals(dmpCfgOutputEntityList.get(0).getSystemId()));
-				if(CollUtil.isNotEmpty(dmpBasicSystemEntityList)) {
-					systemName = dmpBasicSystemEntityList.get(0).getName();
-				}
+		DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity = dmpOutputTaskRecordService.getById(id);
+		errorCount = dmpOutputTaskRecordEntity.getErrorCount();
+		code = dmpOutputTaskRecordEntity.getSourceCode();
+		String mainId = dmpOutputTaskRecordEntity.getMainId();
+		DmpOutputTaskEntity dmpOutputTaskEntity = dmpOutputTaskService.getById(mainId);
+		List<DmpCfgOutputEntity> dmpCfgOutputEntityList = dmpHandlerCache.getDmpCfgOutputEntityList(d -> d.getId().equals(dmpOutputTaskEntity.getCfgOutputId()));
+		List<DmpOutputTaskRecordEntity> gtCreateTimeList = null;
+		if(CollUtil.isNotEmpty(dmpCfgOutputEntityList)) {
+			DmpCfgOutputEntity dmpCfgOutputEntity = dmpCfgOutputEntityList.get(0);
+			List<DmpBasicSystemEntity> dmpBasicSystemEntityList = dmpHandlerCache.getDmpBasicSystemEntityList(d -> d.getId().equals(dmpCfgOutputEntity.getSystemId()));
+			if(CollUtil.isNotEmpty(dmpBasicSystemEntityList)) {
+				systemName = dmpBasicSystemEntityList.get(0).getName();
 			}
+			
+			if(DmpCfgOutputTypeEnum.MQ.getCode().equals(dmpCfgOutputEntity.getType()) && 
+					(status.contains(DmpOutputTaskRecordStatusEnum.ERROR.getCode()) || status.equals(DmpOutputTaskRecordStatusEnum.FINISH.getCode()))) {
+				gtCreateTimeList = dmpOutputTaskRecordService.lambdaQuery()
+					.select(DmpOutputTaskRecordEntity::getId)
+					.eq(DmpOutputTaskRecordEntity::getDataId, dmpOutputTaskRecordEntity.getDataId())
+					.eq(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
+					.gt(DmpOutputTaskRecordEntity::getCreateTime, dmpOutputTaskRecordEntity.getCreateTime())
+					.last(" and main_id in (select id from dmp_output_task where cfg_output_id = '"+ dmpOutputTaskEntity.getCfgOutputId() +"') order by id desc limit 1 ")
+					.list();
+					
+			}
+		}
+		if(status.contains(DmpOutputTaskRecordStatusEnum.ERROR.getCode())) {
+			errorCount = errorCount + 1;
 			if(!(responseData.contains("数据已被他人锁住，为避免数据错误，请稍后再试") || responseData.contains("获取锁失败"))) {
-				errorCount = errorCount + 1;
 				if(errorCount >= 3 && errorCount%3 == 0) {
 					status = DmpOutputTaskRecordStatusEnum.ERROR.getCode();
 				}
@@ -79,6 +95,15 @@ public class DmpOutputUtils{
 			.set(StringUtils.isNotBlank(responseData) , DmpOutputTaskRecordEntity::getResponseData, responseData)
 			.set(DmpOutputTaskRecordEntity::getUpdateTime, LocalDateTime.now())
 			.update();
+		if(CollUtil.isNotEmpty(gtCreateTimeList)) {
+			String gtId = gtCreateTimeList.get(0).getId();
+			dmpOutputTaskRecordService.lambdaUpdate()
+            .set(DmpOutputTaskRecordEntity::getIsNeedSync, Boolean.TRUE)
+            .set(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.INIT.getCode())
+            .eq(DmpOutputTaskRecordEntity::getId, gtId)
+            .update();
+			dmpOutputTaskRecordService.batchSync(dmpOutputTaskRecordService.listByIds(Arrays.asList(gtId)));
+		}
 		if(status.equals(DmpOutputTaskRecordStatusEnum.ERROR.getCode())) {
 			
 			WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();

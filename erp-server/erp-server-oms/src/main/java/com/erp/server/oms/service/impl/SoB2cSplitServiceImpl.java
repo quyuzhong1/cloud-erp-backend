@@ -541,6 +541,7 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
                     .build();
         }
         List<SoB2cEntity> soB2cEntityList = listByIds(mainIds);
+        soB2cEntityList = soB2cEntityList.stream().filter(v->!v.getInvalidStatus()).collect(Collectors.toList());
         return SoB2cDTO.CombinationDTO.builder()
                 .soB2cEntityList(soB2cEntityList)
                 .soB2cDetailEntityList(soB2cDetailEntityList)
@@ -762,6 +763,10 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
         SoB2cEntity entity = this.getById(dto.getId());
         if (ObjectUtils.isEmpty(entity)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
+        }
+        //wildberries不支持拆分合并
+        if (PlatformDictEnum.WILDBERRIES.getCode().equals(entity.getDictPlatform())){
+            throw new ServiceException(ApiError.ERROR_SO_B2C_WILDBERRIES_NOT_ALLOWED, entity.getCode());
         }
         //已拆分数据不能再次拆分
         List<SoB2cRefEntity> soB2cRefList = soB2cRefService.listBySourceIdOrTargetId(Arrays.asList(dto.getId()));

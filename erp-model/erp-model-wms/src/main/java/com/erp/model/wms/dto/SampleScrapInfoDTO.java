@@ -233,6 +233,36 @@ public class SampleScrapInfoDTO implements Serializable {
         private String  id;
 
         /**
+        * 创建人id
+        */
+        private String createUserId;
+
+        /**
+        * 创建人名称
+        */
+        private String createUserName;
+
+        /**
+        * 创建时间
+        */
+        private LocalDateTime createTime;
+
+        /**
+        * 修改人id
+        */
+        private String updateUserId;
+
+        /**
+        * 修改人名称
+        */
+        private String updateUserName;
+
+        /**
+        * 更新时间
+        */
+        private LocalDateTime updateTime;
+
+        /**
         * 报废单编号
         */
         private String code;

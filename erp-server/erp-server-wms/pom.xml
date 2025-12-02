@@ -34,13 +34,6 @@
         </dependency>
 
         <!--公共服务-->
-
-        <dependency>
-            <groupId>com.cloud.erp</groupId>
-            <artifactId>erp-model-sys</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
-        </dependency>
-
         <dependency>
             <groupId>com.cloud.erp</groupId>
             <artifactId>erp-model-wms</artifactId>
@@ -57,10 +50,6 @@
         <!--公共服务结束-->
 
         <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-        </dependency>
-        <dependency>
             <groupId>org.mapstruct</groupId>
             <artifactId>mapstruct</artifactId>
             <version>${mapstruct.version}</version>
@@ -71,12 +60,6 @@
             <groupId>org.mapstruct</groupId>
             <artifactId>mapstruct-processor</artifactId>
             <version>${mapstruct.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.postgresql</groupId>
-            <artifactId>postgresql</artifactId>
-            <version>42.5.4</version>
         </dependency>
 
         <dependency>

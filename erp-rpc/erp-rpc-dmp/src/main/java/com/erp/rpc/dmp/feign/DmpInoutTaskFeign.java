@@ -37,6 +37,12 @@ public interface DmpInoutTaskFeign {
     Boolean doInputTask(@RequestBody List<DmpInoutDTO.CreateInputDTO> createDTOList);
 
     /**
+     * 公共-创建快速输入任务
+     */
+    @PostMapping("feign/inout/doHotfixReturnInputTask")
+    List<String> doHotfixReturnInputTask(@RequestBody List<DmpInoutDTO.CreateInputDTO> createDTOList);
+
+    /**
      * 公共-查询输入任务最新状态
      */
     @PostMapping("feign/inout/newInputTaskList")

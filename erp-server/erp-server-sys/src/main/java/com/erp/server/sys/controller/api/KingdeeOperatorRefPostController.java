@@ -142,6 +142,19 @@ public class KingdeeOperatorRefPostController extends BaseController {
     }
 
     /**
+     * 根据业务员类型和组织id集合查询用户信息
+     * @author will
+     * @date 2025/8/6 14:25
+     * @param dto
+     * @return ApiResult<List<BusinessOperationUserDTO>>
+     */
+    @PostMapping("/listUser")
+    public ApiResult<List<UserInfoDTO.BusinessOperationUserDTO>> listUser (@RequestBody KingdeeBusinessOperatorDTO.ListBusinessOperatorUserDTO dto) {
+        List<UserInfoDTO.BusinessOperationUserDTO> list = kingdeeOperatorRefPostService.listUser(dto);
+        return success(list);
+    }
+
+    /**
      * 批量启用/停用
      */
     @PostMapping("/updateState")

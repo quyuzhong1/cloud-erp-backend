@@ -5,6 +5,7 @@ import com.erp.model.wms.dto.VirtualWarehouseDTO;
 import com.erp.model.wms.entity.VirtualWarehouseEntity;
 import com.erp.model.wms.entity.VirtualWarehouseRelationEntity;
 import com.erp.server.wms.service.VirtualWarehouseChannelService;
+import com.erp.server.wms.service.VirtualWarehouseRelationService;
 import com.erp.server.wms.service.VirtualWarehouseService;
 import org.springframework.web.bind.annotation.*;
 
@@ -24,6 +25,9 @@ public class VirtualWarehouseFeignController {
 
     @Resource
    private VirtualWarehouseChannelService virtualWarehouseChannelService;
+
+    @Resource
+    private VirtualWarehouseRelationService virtualWarehouseRelationService;
 
     /**
      * 根据IDS返回仓库信息
@@ -59,9 +63,23 @@ public class VirtualWarehouseFeignController {
         return virtualWarehouseChannelService.listCfgRuleVirtualWarehouse(platformList);
     }
 
+    /**
+     * 高级查询虚拟仓
+     * @param compareCodeSplicingValueSql 高级查询参数
+     */
     @GetMapping("/listWarehouseBySql")
-    List<String> listWarehouseBySql(@RequestParam String compareCodeSplicingValueSql){
+    public List<String> listWarehouseBySql(@RequestParam String compareCodeSplicingValueSql){
         return virtualWarehouseService.listWarehouseBySql(compareCodeSplicingValueSql);
+    }
+
+    /**
+     * 根据仓库ID列表查询虚拟仓关联关系
+     * @param warehouseIdList 仓库ID列表
+     * @return List<VirtualWarehouseRelationEntity>
+     */
+    @PostMapping("/getByWarehouseIds")
+    public List<VirtualWarehouseRelationEntity> getByWarehouseIds(@RequestBody List<String> warehouseIdList){
+        return virtualWarehouseRelationService.getByWarehouseId(warehouseIdList);
     }
 }
 

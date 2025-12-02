@@ -247,6 +247,17 @@ public class SoReceiptDTO implements Serializable {
          * 客户名称
          */
         private String customerName;
+
+        /**
+         * 销售组织id
+         */
+        private String salesOrgId;
+
+        /**
+         * 销售组织名称
+         */
+        private String salesOrgName;
+
         /**
         * 审核状态
         */

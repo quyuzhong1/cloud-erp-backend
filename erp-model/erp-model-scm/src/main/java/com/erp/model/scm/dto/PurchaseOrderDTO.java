@@ -395,6 +395,16 @@ public class PurchaseOrderDTO implements Serializable {
          * 合计金额
          */
         private BigDecimal totalAmount;
+
+        /**
+         * 已入库数量
+         */
+        private Integer totalStockInQty;
+
+        /**
+         * 已退货数量
+         */
+        private Integer totalReturnQty;
     }
 
     @Data
@@ -1835,6 +1845,19 @@ public class PurchaseOrderDTO implements Serializable {
          * 创建时间
          */
         private LocalDateTime createTime;
+        /**
+         * 审核时间
+         */
+        private LocalDate approveTime;
+        /**
+         * 采购时间
+         */
+        private LocalDate purchaseDate;
+
+        /**
+         * 审核状态
+         */
+        private String approveStatus;
 
     }
 

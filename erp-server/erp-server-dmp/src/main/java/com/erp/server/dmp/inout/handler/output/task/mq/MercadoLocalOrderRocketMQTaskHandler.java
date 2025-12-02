@@ -15,20 +15,29 @@ import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
 import com.erp.model.dmp.entity.DmpSoDetailEntity;
 import com.erp.model.dmp.entity.DmpSoInfoEntity;
 import com.erp.model.dmp.entity.DmpSoReceiverEntity;
+import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.enums.SoB2cPayStatusEnum;
 import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
 import java.math.BigDecimal;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
 @Scope("prototype")
 public class MercadoLocalOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler {
+
+    private final static DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX");
 
     @Override
     public Map<String, String> getPushJsonDataMap(DmpOutputTaskRequest dmpRequest, DmpOutputTaskResponse dmpResponse) {
@@ -186,10 +195,10 @@ public class MercadoLocalOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskH
         orderDTO.setSourceType(SourceTypeEnum.SO_B2C.getCode());
 
         // 来源id
-        orderDTO.setSourceId(dmpSoInfoEntityList.get(0).getThirdCode());
+        orderDTO.setSourceId(dmpSoInfoEntityList.get(0).getPlatformCode());
 
         // 来源编码
-        orderDTO.setSourceCode(dmpSoInfoEntityList.get(0).getThirdCode());
+        orderDTO.setSourceCode(dmpSoInfoEntityList.get(0).getPlatformCode());
 
         // 异常原因（1、订单规则审核不通过；2、配货规则匹配失败；3、人工审核不通过）
         orderDTO.setAbnormalType("");
@@ -231,10 +240,13 @@ public class MercadoLocalOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskH
         orderDTO.setTotalDiscount(totalDiscount);
         //扩展字段
         orderDTO.setExtendData(dmpSoInfoEntityList.get(0).getExtendData());
+        //订单扩展表
+        buildExtend(dmpSoInfoEntityList.get(0), orderDTO);
         // 税金
         orderDTO.setTotalTaxFee(dmpSoInfoEntityList.get(0).getTotalTaxFee());
         // 税后支付金额
         orderDTO.setAfterTaxAmount(dmpSoInfoEntityList.get(0).getAfterTaxAmount());
+
 
         // 订单明细
         List<PlatformOrderDetailDTO> details = parseDetailDto(dmpSoInfoEntityList, dmpSoDetailEntityList);
@@ -248,6 +260,19 @@ public class MercadoLocalOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskH
         //B2C销售订单财务信息表
         orderDTO.setFinances(parseFinances(dmpSoInfoEntityList, dmpSoDetailEntityList));
         return orderDTO;
+    }
+
+    private void buildExtend(DmpSoInfoEntity dmpSoInfoEntity, PlatformOrderDTO orderDTO) {
+        if(StringUtils.isNotBlank(dmpSoInfoEntity.getExtendData())){
+            JSONObject extendDataJson = JSONObject.parseObject(dmpSoInfoEntity.getExtendData());
+            PlatformOrderExtendDTO platformOrderExtendDTO = new PlatformOrderExtendDTO();
+            if (extendDataJson.containsKey("slaExpectedDate")) {
+                // 转换为 LocalDateTime
+                OffsetDateTime offsetDateTime = OffsetDateTime.parse(String.valueOf(extendDataJson.get("slaExpectedDate")), formatter);
+                platformOrderExtendDTO.setRequiredDeliveryTime(offsetDateTime.toLocalDateTime());
+            }
+            orderDTO.setExtend(platformOrderExtendDTO);
+        }
     }
 
     /**
@@ -305,7 +330,7 @@ public class MercadoLocalOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskH
         // 含税成本（本位币）
         detailDTO.setTaxCost(BigDecimal.ZERO);
         // 来源明细id
-        detailDTO.setSourceDetailId(soDetailEntity.getThirdDetailId());
+        detailDTO.setSourceDetailId(soDetailEntity.getPlatformSubSoCode() +"_"+soDetailEntity.getPlatformSku());
 
         // 当前明细标签
         Map<String, Object> lableMap = new HashMap<>();
@@ -327,6 +352,8 @@ public class MercadoLocalOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskH
         detailDTO.setWarehouseLocation("");
         //包裹号
         detailDTO.setPlatformPackageId(soDetailEntity.getPlatformPackageId());
+
+        detailDTO.setPlatformSubSoCode(soDetailEntity.getPlatformSubSoCode());
 
         return detailDTO;
     }
@@ -399,6 +426,7 @@ public class MercadoLocalOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskH
                 .actualShippingCurrency("")
                 .estimatedShippingCurrency("")
                 .logisticType(dmpSoInfoEntityList.get(0).getLogisticType())
+                .name(dmpSoInfoEntityList.get(0).getBuyerSelectedLogistics())
                 .build();
         logisticsDTOS.add(dto);
         return logisticsDTOS;

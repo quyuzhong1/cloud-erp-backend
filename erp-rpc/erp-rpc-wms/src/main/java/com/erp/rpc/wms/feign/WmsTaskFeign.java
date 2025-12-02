@@ -89,12 +89,6 @@ public interface WmsTaskFeign {
     String addWarehouseReceive(WarehouseReceiveDTO.AddDTO dto);
 
     /**
-     * 批量新增退货单
-     */
-    @PostMapping("feign/purchaseReturnOrder/addReturnOrder")
-    Boolean batchAddReturnOrder(List<PurchaseReturnOrderDTO.AddDTO> dto);
-
-    /**
      * 获取入库数量
      **/
     @PostMapping("feign/purchaseStockIn/getStockInQty")
@@ -445,4 +439,84 @@ public interface WmsTaskFeign {
      */
     @PostMapping("/feign/warehouseReceive/listReceiveSourceByDetailIds")
     List<WarehouseReceiveDTO.ReceiveSourceDTO> listReceiveSourceByDetailIds(@RequestBody List<String> idList);
+
+    /**
+     * 根据SKU集合获取收货信息
+     * @param dto
+     * @return List<WarehouseReceiveDTO.ReceiveInfoDTO>
+     */
+    @PostMapping("feign/warehouseReceive/getReceiveByParams")
+    List<WarehouseReceiveDTO.ReceiveInfoDTO> getReceiveByParams(@RequestBody WarehouseReceiveDTO.ReceiveParamDTO dto);
+
+    /**
+     * 根据SKU集合获取入库信息
+     * @param dto
+     * @return List<WarehouseReceiveDTO.PoInStockInfoDTO>
+     */
+    @PostMapping("feign/purchaseStockIn/getPoStockInByParams")
+    List<PoInstockDTO.PoInStockInfoDTO> getPoStockInByParams(@RequestBody PoInstockDTO.PoInStockParamDTO dto);
+
+    /**
+     * 样品领用单审核
+     * @param baseApproveParamDTO
+     * @return
+     */
+    @PostMapping("feign/wmsWorkOption/sampleRecipientApprove")
+    List<BatchResultDTO> sampleRecipientApprove(@RequestBody BaseApproveParamDTO baseApproveParamDTO);
+
+    /**
+     * 样品归还单审核
+     * @param baseApproveParamDTO
+     * @return
+     */
+    @PostMapping("feign/wmsWorkOption/sampleReturnApprove")
+    List<BatchResultDTO> sampleReturnApprove(@RequestBody BaseApproveParamDTO baseApproveParamDTO);
+
+    /**
+     * 样品借用单审核
+     * @param baseApproveParamDTO
+     * @return
+     */
+    @PostMapping("feign/wmsWorkOption/sampleBorrowApprove")
+    List<BatchResultDTO> sampleBorrowApprove(@RequestBody BaseApproveParamDTO baseApproveParamDTO);
+
+    /**
+     * 样品报废单审核
+     * @param baseApproveParamDTO
+     * @return
+     */
+    @PostMapping("feign/wmsWorkOption/sampleScrapApprove")
+    List<BatchResultDTO> sampleScrapApprove(@RequestBody BaseApproveParamDTO baseApproveParamDTO);
+
+    /**
+     * 样品退回单审核
+     * @param baseApproveParamDTO
+     * @return
+     */
+    @PostMapping("feign/wmsWorkOption/sampleBackApprove")
+    List<BatchResultDTO> sampleBackApprove(@RequestBody BaseApproveParamDTO baseApproveParamDTO);
+
+    /**
+     * 样品期初台账审核
+     * @param baseApproveParamDTO
+     * @return
+     */
+    @PostMapping("feign/wmsWorkOption/sampleLedgerInitApprove")
+    List<BatchResultDTO> sampleLedgerInitApprove(@RequestBody BaseApproveParamDTO baseApproveParamDTO);
+
+    /**
+     * 样品转移单审核
+     * @param baseApproveParamDTO
+     * @return
+     */
+    @PostMapping("feign/wmsWorkOption/sampleTransferApprove")
+    List<BatchResultDTO> sampleTransferApprove(@RequestBody BaseApproveParamDTO baseApproveParamDTO);
+
+    /**
+     * 样品调整单审核
+     * @param baseApproveParamDTO
+     * @return
+     */
+    @PostMapping("feign/wmsWorkOption/sampleAdjustmentApprove")
+    List<BatchResultDTO> sampleAdjustmentApprove(@RequestBody BaseApproveParamDTO baseApproveParamDTO);
 }

@@ -35,7 +35,7 @@ public class JiFengOutBoundDmpHandler extends DmpInputDbConvertDmpHandler {
 				// 解析为 LocalDateTime 对象
 				LocalDateTime shippedTime = LocalDateTime.parse(shippedTimeStr, formatter);
 				for(TreeMap<String, Object> dmpDataMap : dmpDataMaps) {
-					dmpDataMap.put("date_shipping", shippedTime);
+					dmpDataMap.put("dateShipping", shippedTime);
 				}
 			}
 			if(mongoData.containsKey("createTime") && Objects.nonNull(mongoData.get("createTime"))){
@@ -44,7 +44,7 @@ public class JiFengOutBoundDmpHandler extends DmpInputDbConvertDmpHandler {
 				// 解析为 LocalDateTime 对象
 				LocalDateTime createTime = LocalDateTime.parse(createTimeStr, formatter);
 				for(TreeMap<String, Object> dmpDataMap : dmpDataMaps) {
-					dmpDataMap.put("platform_create_time", createTime);
+					dmpDataMap.put("platformCreateTime", createTime);
 				}
 			}
 		}

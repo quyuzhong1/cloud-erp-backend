@@ -568,7 +568,10 @@ public class WmsDeliveryPlanDTO implements Serializable {
          * 主表id
          */
         private String sourceId;
-
+        /**
+         * 目的仓id
+         */
+        private String toWarehouseId;
         /**
          * 明细id
          */

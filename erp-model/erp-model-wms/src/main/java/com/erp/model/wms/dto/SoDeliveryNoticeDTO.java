@@ -92,6 +92,10 @@ public class SoDeliveryNoticeDTO {
          * 创建时间
          */
         private List<LocalDate> createTimeList;
+        /**
+         * 动态数据源
+         */
+        private String dynamicDataSource;
     }
 
     /**
@@ -795,5 +799,12 @@ public class SoDeliveryNoticeDTO {
          * 备注
          */
         private String remark;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class PickStatus{
+        private String noticeId;
+        private String generationPickStatus;
     }
 }

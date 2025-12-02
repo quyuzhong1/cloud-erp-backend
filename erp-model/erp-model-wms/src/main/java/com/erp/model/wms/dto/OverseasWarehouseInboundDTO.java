@@ -396,6 +396,15 @@ public class OverseasWarehouseInboundDTO implements Serializable {
          * 揽收时间起
          */
         private LocalDateTime collectStartTime;
+        /**
+         * 备货类型
+         */
+        private String demandType;
+
+        /**
+         * 备货类型名称
+         */
+        private String demandTypeName;
 
         /**
          * 揽收时间止
@@ -440,6 +449,10 @@ public class OverseasWarehouseInboundDTO implements Serializable {
          */
         private String instockStatus;
 
+        /**
+         * 海外仓库ID
+         */
+        private String overseasWarehouseId;
         /**
          * 入库状态名称
          */

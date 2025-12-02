@@ -8,6 +8,7 @@ import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.base.BaseDTO;
+import com.common.business.enums.BooleanEnum;
 import com.common.business.enums.FileTaskStatusEnum;
 import com.common.business.enums.UserTypeEnum;
 import com.common.business.threadlocal.UserContext;
@@ -19,13 +20,15 @@ import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.sys.dto.SampleUseUserDTO;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.sys.entity.SysDepartmentEntity;
+import com.erp.model.wms.dto.DictBasicDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.excel.SampleRecipientExcelDTO;
-import com.erp.model.wms.enums.SampleUsageEnum;
+import com.erp.model.wms.enums.DictBasicEnum;
 import com.erp.model.wms.enums.SampleUsageScopeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.server.wms.service.DictBasicService;
 import com.erp.server.wms.service.SampleRecipientDetailService;
 import com.erp.server.wms.service.SampleRecipientService;
 import com.erp.server.wms.service.WarehouseService;
@@ -37,10 +40,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -70,6 +70,7 @@ public class SampleRecipientExcelListener extends AnalysisEventListener<SampleRe
     // 缓存相关常量
     private static final String CACHE_ORG_NAME_TO_ID = "sample_recipient:org_name_to_id:";
     private static final String CACHE_WAREHOUSE_NAME_TO_ID = "sample_recipient:warehouse_name_to_id:";
+    private static final String CACHE_WAREHOUSE_CHARGE_TO_ID = "sample_recipient:warehouse_charge_to_id:";
     private static final String CACHE_USER_NAME_TO_ID = "sample_recipient:user_name_to_id:";
     private static final String CACHE_DEPT_NAME_TO_ID = "sample_recipient:dept_name_to_id:";
     private static final String CACHE_SKU_NO_TO_ID = "sample_recipient:sku_no_to_id:";
@@ -92,6 +93,10 @@ public class SampleRecipientExcelListener extends AnalysisEventListener<SampleRe
 
     private final  DownloadTaskFeign downloadTaskFeign=SpringUtil.getBean(DownloadTaskFeign.class);
 
+    private final  DictBasicService dictBasicService=SpringUtil.getBean(DictBasicService.class);
+    
+    // 样品用途字典映射：中文名称 -> 值（懒加载）
+    private Map<String, String> usageNameToValueMap;
 
 
     @Override
@@ -121,7 +126,25 @@ public class SampleRecipientExcelListener extends AnalysisEventListener<SampleRe
         
         // 设置创建人信息
         setCreateUserInfo(data);
-        
+
+        // 是否需要出库
+        data.setIsOutstockRequired(Boolean.TRUE); //默认值
+        String isOutstockRequiredStr = data.getIsOutstockRequiredStr();
+        if(StringUtils.isNotBlank(isOutstockRequiredStr)){
+            if(Objects.equals(isOutstockRequiredStr , BooleanEnum.FALSE.getName())){
+                data.setIsOutstockRequired(Boolean.FALSE);
+            }
+        }
+
+        // 是否需要入台账
+        data.setIsLedgerRequired(Boolean.TRUE);//默认值
+        String isLedgerRequiredStr = data.getIsLedgerRequiredStr();
+        if(StringUtils.isNotBlank(isLedgerRequiredStr)){
+            if(Objects.equals(isLedgerRequiredStr , BooleanEnum.FALSE.getName())){
+                data.setIsLedgerRequired(Boolean.FALSE);
+            }
+        }
+
         // 存在错误数据则直接返回
         if (errorMsgList.size() > 0) {
             data.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
@@ -166,6 +189,28 @@ public class SampleRecipientExcelListener extends AnalysisEventListener<SampleRe
     }
 
     /**
+     * 懒加载获取样品用途字典Map（中文名称 -> 值）
+     */
+    private Map<String, String> getUsageNameToValueMap() {
+        if (usageNameToValueMap == null) {
+            try {
+                List<DictBasicDTO.ListDTO> usageDictList = dictBasicService.getByKey(DictBasicEnum.SAMPLE_USAGE.getKey());
+                if (CollUtil.isNotEmpty(usageDictList)) {
+                    usageNameToValueMap = usageDictList.stream()
+                            .collect(Collectors.toMap(DictBasicDTO.ListDTO::getName, DictBasicDTO.ListDTO::getValue, (v1, v2) -> v1));
+                } else {
+                    usageNameToValueMap = Collections.emptyMap();
+                    log.warn("样品用途字典为空");
+                }
+            } catch (Exception e) {
+                log.error("查询样品用途字典失败", e);
+                usageNameToValueMap = Collections.emptyMap();
+            }
+        }
+        return usageNameToValueMap;
+    }
+
+    /**
      * 日期转换处理
      */
     private void convertDateFields(SampleRecipientExcelDTO data, List<String> errorMsgList) {
@@ -196,7 +241,8 @@ public class SampleRecipientExcelListener extends AnalysisEventListener<SampleRe
      */
     private void validateAndResolveIds(SampleRecipientExcelDTO data, List<String> errorMsgList) {
 
-        String usage = SampleUsageEnum.getUsageByName(data.getUsageStr());
+        // 使用字典服务获取样品用途值
+        String usage = getUsageNameToValueMap().get(data.getUsageStr());
         if (StringUtils.isBlank(usage)){
             errorMsgList.add(CharSequenceUtil.format("未知用途:{}",data.getUsageStr()));
         }else {
@@ -209,6 +255,14 @@ public class SampleRecipientExcelListener extends AnalysisEventListener<SampleRe
             errorMsgList.add("发货仓库【" + data.getWarehouseName() + "】不存在");
         } else {
             data.setWarehouseId(warehouseId);
+
+            // 验证仓库名称是否存在并解析仓库ID
+            String warehouseChargeId = getWarehouseChargeByName(data.getWarehouseName());
+            if (StrUtil.isBlank(warehouseChargeId)) {
+                errorMsgList.add("发货仓库【" + data.getWarehouseName() + "】不存在");
+            } else {
+                data.setWarehouseChargeId(warehouseChargeId);
+            }
         }
 
         // 验证用户名称是否存在并解析用户ID
@@ -399,7 +453,9 @@ public class SampleRecipientExcelListener extends AnalysisEventListener<SampleRe
                 // 返回第一个匹配的仓库ID
                 String result = warehouseList.get(0).getId();
                 // 缓存结果
-                redissonClient.getBucket(cacheKey).set(result, CACHE_EXPIRE_TIME, TimeUnit.SECONDS);
+                redissonClient.getBucket(cacheKey).set(warehouseList.get(0).getId(), CACHE_EXPIRE_TIME, TimeUnit.SECONDS);
+                // 额外缓存仓库负责人id
+                redissonClient.getBucket(CACHE_WAREHOUSE_CHARGE_TO_ID + warehouseName).set(warehouseList.get(0).getChargeId(), CACHE_EXPIRE_TIME, TimeUnit.SECONDS);
                 return result;
             }
 
@@ -407,6 +463,45 @@ public class SampleRecipientExcelListener extends AnalysisEventListener<SampleRe
             return null;
         } catch (Exception e) {
             log.error("查询仓库ID失败，仓库名称：{}，错误：{}", warehouseName, e.getMessage(), e);
+            return null;
+        }
+    }
+    /**
+     * 根据仓库名称查询仓库负责人ID（带缓存）
+     */
+    private String getWarehouseChargeByName(String warehouseName) {
+        if (StrUtil.isBlank(warehouseName)) {
+            return null;
+        }
+
+        // 先从缓存获取
+        String cacheKey = CACHE_WAREHOUSE_CHARGE_TO_ID + warehouseName;
+        String warehouseChargeId = (String) redissonClient.getBucket(cacheKey).get();
+        if (StrUtil.isNotBlank(warehouseChargeId)) {
+            return warehouseChargeId;
+        }
+
+        try {
+            // 调用仓库服务根据名称查询仓库信息
+            List<WarehouseDTO.ListDTO> warehouseList = warehouseService.listWarehouseByParams(
+                    WarehouseDTO.ListParamDTO.builder()
+                            .warehouseName(warehouseName)
+                            .showByAuth(false)
+                            .build()
+            );
+
+            if (CollUtil.isNotEmpty(warehouseList)) {
+                // 返回第一个匹配的仓库ID
+                String result = warehouseList.get(0).getChargeId();
+                // 缓存结果
+                redissonClient.getBucket(cacheKey).set(result, CACHE_EXPIRE_TIME, TimeUnit.SECONDS);
+                return result;
+            }
+
+            log.warn("未找到仓库名称：{}", warehouseName);
+            return null;
+        } catch (Exception e) {
+            log.error("查询仓库负责人ID失败，仓库名称：{}，错误：{}", warehouseName, e.getMessage(), e);
             return null;
         }
     }

@@ -14,16 +14,21 @@ import java.util.stream.Collectors;
  */
 public enum SampleUsageEnum implements EnumMessage {
     OFFICE_USE("officeUse", "办公领用"),
-    PHOTOGRAPHY("photography", "拍摄"),
+    PHOTOGRAPHY("photography", "拍摄 (文案/视觉/视频拍摄)"),
     RESEARCH_DEVELOPMENT("researchDevelopment", "研发"),
     DOUYIN_LIVE("douyinLive", "抖音直播"),
-    CUSTOMER_USE("customerUse", "客户领用（客户使用指导）"),
+    CUSTOMER_USE("customerUse", "客户领用 (客户使用指导)"),
     EXHIBITION("exhibition", "参展"),
     MARKETING_SAMPLE("marketingSample", "营销样品"),
+    GIFT_TO_CUSTOMER("giftToCustomer", "赠送客户"),
     CERTIFICATION_TESTING("certificationTesting", "认证检测"),
+    INTERNAL_TESTING("internalTesting", "内部检测/测试"),
     SUPPLY_CHAIN_PRODUCTION("supplyChainProduction", "供应链生产组装"),
-    USER_EXPERIENCE("userExperience", "用户新品体验（仓库提供）"),
-    DEFECT_ANALYSIS("defectAnalysis", "不良品分析（从售后仓领样）"),
+    USER_EXPERIENCE_SUPPLIER("userExperienceSupplier", "用户新品体验 (供应商提供)"),
+    USER_EXPERIENCE("userExperience", "用户新品体验 (仓库提供)"),
+    DEFECT_ANALYSIS("defectAnalysis", "不良品分析 (从售后仓领样)"),
+    SMALL_COLLECTION_BRAND_SAMPLE("smallCollectionBrandSample", "小集品牌送样"),
+    PVT("PVT", "PVT阶段-供应商产线领样"),
     GALAXY_OFFLINE_STORE("galaxyOfflineStore", "星河线下店领用"),
     OTHER("other", "其他")
     ;

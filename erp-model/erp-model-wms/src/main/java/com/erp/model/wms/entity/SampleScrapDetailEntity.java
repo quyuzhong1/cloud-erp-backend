@@ -8,6 +8,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.utils.SampleDocumentAuditUtil;
 
 
 /**
@@ -22,7 +23,8 @@ import com.common.business.enums.ApproveStatusEnum;
 @EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
 @TableName("sample_scrap_detail")
-public class SampleScrapDetailEntity extends BaseEntity<SampleScrapDetailEntity> {
+public class SampleScrapDetailEntity extends BaseEntity<SampleScrapDetailEntity> 
+        implements SampleDocumentAuditUtil.SampleDocumentDetail {
 
     /**
     * 关联报废单主表ID
@@ -76,6 +78,15 @@ public class SampleScrapDetailEntity extends BaseEntity<SampleScrapDetailEntity>
     @Override
     public Serializable pkVal() {
         return null;
+    }
+
+    /**
+     * 实现接口方法：获取数量
+     * 报废单使用 scrapQty 字段
+     */
+    @Override
+    public Integer getQty() {
+        return this.scrapQty;
     }
 
 }

@@ -168,7 +168,8 @@ public class ThirdWarehouseDeliveryServiceImpl extends SuperServiceImpl<ThirdWar
         if(StringUtils.isBlank(code)){
             return null;
         }
-        return lambdaQuery().eq(ThirdWarehouseDeliveryEntity::getCode, code).one();
+        return lambdaQuery().eq(ThirdWarehouseDeliveryEntity::getCode, code)
+                .orderByDesc(ThirdWarehouseDeliveryEntity::getCreateTime).last("LIMIT 1").one();
     }
 
     @Override
@@ -568,6 +569,15 @@ public class ThirdWarehouseDeliveryServiceImpl extends SuperServiceImpl<ThirdWar
         }
         operateLogService.batchAddModuleOperateLog(operateLogList);
 
+    }
+
+    @Override
+    public void deleteById(String id) {
+        if(CharSequenceUtil.isEmpty(id)){
+            return;
+        }
+        this.removeById(id);
+        detailService.removeByMainIds(Collections.singletonList(id));
     }
 
 }

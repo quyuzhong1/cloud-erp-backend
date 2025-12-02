@@ -1,6 +1,7 @@
 package com.erp.server.plm.service;
 
 import com.common.business.dto.ApproveDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.erp.model.workflow.dto.EndProcessDTO;
 
 import java.util.Map;
@@ -12,6 +13,12 @@ import java.util.Map;
  * @date 2023/8/2 16:04
  */
 public interface WorkflowProcessService {
+    /**
+     * 审核
+     * @author jack
+     * @date 2025-11-19
+     */
+    BatchResultDTO approve(ApproveDTO.ApproveOneDTO dto) ;
 
     /**
      * @description: 结束审核
@@ -47,4 +54,13 @@ public interface WorkflowProcessService {
      * @return Boolean
      */
     Boolean cancelProcess(ApproveDTO.CancelProcessDTO dto);
+
+    /**
+     * 添加评论
+     * @author will
+     * @date 2025/11/27 15:04
+     * @param dto
+     * @return Boolean
+     */
+    Boolean addComment(ApproveDTO.AddCommentDTO dto);
 }

@@ -8,10 +8,14 @@ import com.erp.model.dmp.entity.DmpInputTaskEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 import org.apache.ibatis.annotations.Mapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.apache.ibatis.annotations.Param;
 
-import java.util.List;
+import com.erp.model.dmp.dto.DmpInputTaskDTO;
+import com.common.business.dto.base.ApproveStatusQtyDTO;
 
+import java.util.List;
 
 /**
  * <p>
@@ -35,4 +39,28 @@ public interface DmpInputTaskMapper extends BaseMapper<DmpInputTaskEntity> {
     List<DmpInoutDTO.LastOneDTO> lastBySystemCodeAndBillType(@Param("systemCodeList") List<String> systemCodeList, @Param("billTypeList") List<String> billTypeList, @Param("nextLevelIdList") List<String> nextLevelIdList);
 
     DmpInputTaskEntity getByInputIdAndExtendJson(@Param("inputId")String inputId,@Param("key") String key,@Param("value") String value);
+
+    /**
+     * 分页查询
+     * @param query
+     * @param params
+     * @return
+     */
+    IPage<DmpInputTaskDTO.ListDTO> paging(Page query, @Param("params") DmpInputTaskDTO.PagingParamDTO params);
+
+    /**
+     * 导出Excel查询
+     * @param params
+     * @return
+     */
+    List<DmpInputTaskDTO.ListDTO> listExport(@Param("params") DmpInputTaskDTO.ExportDTO params);
+
+
+    /**
+     * 获取状态统计
+     * @param searchParam
+     * @return
+     */
+    List<DmpInputTaskDTO.TabListDTO> tabList(@Param("params") DmpInputTaskDTO.PagingParamDTO searchParam);
+
 }
