@@ -108,7 +108,6 @@ public class KolFeedbackController extends BaseController {
             tableField = "create_user_id",
             menuCode = "oms:kolFeedback:paging",
             tableAlias = "kf")
-    @WebAdvanceQuery(handler = KolFeedbackQueryHandler.class)
     public ApiResult<List<KolFeedbackDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
         return success(kolFeedbackService.tabList(dto));
     }
