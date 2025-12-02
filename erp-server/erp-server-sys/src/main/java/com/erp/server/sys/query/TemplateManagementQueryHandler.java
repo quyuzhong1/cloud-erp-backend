@@ -81,10 +81,10 @@ public class TemplateManagementQueryHandler extends AbstractQueryHandler {
             return "";
         }
         if ("false".equals(value)) {
-            return "tm.disabled ="+ Boolean.TRUE;
+            return "tm.disabled ="+ Boolean.FALSE;
         }
         if ("true".equals(value)) {
-            return "tm.disabled ="+ Boolean.FALSE;
+            return "tm.disabled ="+ Boolean.TRUE;
         }
         return "";
     }

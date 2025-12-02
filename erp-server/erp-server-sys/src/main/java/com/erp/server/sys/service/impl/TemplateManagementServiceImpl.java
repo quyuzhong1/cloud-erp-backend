@@ -138,6 +138,8 @@ public class TemplateManagementServiceImpl extends SuperServiceImpl<TemplateMana
         // 记录操作日志
         log.info("编辑 开始记录模板管理日志数据，单号：【{}】", templateManagementEntity.getCode());
         String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), old.getCode(), "模板管理");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.TEMPLATE_MANAGEMENT.getCode(), templateManagementEntity.getId(), "编辑信息");
+        //再记录一个修改字段的日志
         operateLogService.addModuleOperateLogByObj(old, templateManagementEntity, ModuleTypeEnum.TEMPLATE_MANAGEMENT.getCode(), templateManagementEntity.getId(), msg);
         return Boolean.TRUE;
     }
