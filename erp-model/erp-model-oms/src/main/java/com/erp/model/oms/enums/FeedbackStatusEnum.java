@@ -1,5 +1,6 @@
 package com.erp.model.oms.enums;
 
+import com.common.core.constant.EnumMessage;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -11,7 +12,7 @@ import lombok.Getter;
  */
 @Getter
 @AllArgsConstructor
-public enum FeedbackStatusEnum {
+public enum FeedbackStatusEnum  implements EnumMessage {
 
     /**
      * 待回片
@@ -55,6 +56,10 @@ public enum FeedbackStatusEnum {
             }
         }
         return null;
+    }
+    @Override
+    public String getCode() {
+        return code;
     }
 }
 

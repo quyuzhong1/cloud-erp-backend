@@ -89,6 +89,9 @@ public class KolFeedbackServiceImpl extends SuperServiceImpl<KolFeedbackMapper, 
     @Autowired
     private SysUserFeign sysUserFeign;
 
+    @Autowired
+    private com.erp.server.oms.service.DictBasicService dictBasicService;
+
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -150,6 +153,8 @@ public class KolFeedbackServiceImpl extends SuperServiceImpl<KolFeedbackMapper, 
         if(CollUtil.isEmpty(pageData.getRecords())) {
            return new PagingVO<>(pageData);
         }
+        // 数据处理
+        fillList(pageData.getRecords());
         return new PagingVO<>(pageData);
     }
 
@@ -372,12 +377,52 @@ public class KolFeedbackServiceImpl extends SuperServiceImpl<KolFeedbackMapper, 
     }
 
     /**
+     * 填充列表数据（枚举值转换）
+     */
+    private void fillList(List<KolFeedbackDTO.ListDTO> list) {
+        if (CollUtil.isEmpty(list)) {
+            return;
+        }
+        // 查询发布形式字典
+        List<com.erp.model.oms.dto.DictBasicDTO.ViewDTO> publishTypeDictList = dictBasicService.getByKey("publishType");
+        Map<String, String> publishTypeNameMap = publishTypeDictList.stream()
+                .collect(Collectors.toMap(com.erp.model.oms.dto.DictBasicDTO.ViewDTO::getValue, 
+                        com.erp.model.oms.dto.DictBasicDTO.ViewDTO::getName, (v1, v2) -> v1));
+
+        // 属性赋值
+        for (KolFeedbackDTO.ListDTO data : list) {
+            // 来源单据枚举转换
+            if (StringUtils.isNotBlank(data.getSourceType())) {
+                SourceTypeEnum sourceTypeEnum = SourceTypeEnum.getByCode(data.getSourceType());
+                if (sourceTypeEnum != null) {
+                    data.setSourceTypeName(sourceTypeEnum.getName());
+                }
+            }
+
+            // 回片状态枚举转换
+            if (StringUtils.isNotBlank(data.getFeedbackStatus())) {
+                FeedbackStatusEnum feedbackStatusEnum = FeedbackStatusEnum.getByCode(data.getFeedbackStatus());
+                if (feedbackStatusEnum != null) {
+                    data.setFeedbackStatusName(feedbackStatusEnum.getName());
+                }
+            }
+
+            // 发布形式字典转换
+            if (StringUtils.isNotBlank(data.getPublishType())) {
+                String publishTypeName = publishTypeNameMap.getOrDefault(data.getPublishType(), "");
+                data.setPublishTypeName(publishTypeName);
+            }
+
+        }
+    }
+
+    /**
     * 新增修改处理数据
     */
     private void handleData(KolFeedbackEntity kolFeedbackEntity) {
-        // 如果 sourceType 为空，默认设置为当前文档的 SourceTypeEnum
+        // 如果 sourceType 为空，默认设置为手工新增
         if (StrUtil.isBlank(kolFeedbackEntity.getSourceType())) {
-            kolFeedbackEntity.setSourceType(SourceTypeEnum.KOL_FEEDBACK.getCode());
+            kolFeedbackEntity.setSourceType(SourceTypeEnum.SELF_ADD.getCode());
         }
 
         // 如果 sourceCode 为空，使用 docNoGenHelper.generateCode() 生成

@@ -105,6 +105,11 @@ public class KolFeedbackDTO implements Serializable {
         private String sourceType;
 
         /**
+         * 来源类型名称
+         */
+        private String sourceTypeName;
+
+        /**
          * SKU编码
          */
         private String skuNo;
@@ -150,6 +155,11 @@ public class KolFeedbackDTO implements Serializable {
         private String publishType;
 
         /**
+         * 发布形式名称
+         */
+        private String publishTypeName;
+
+        /**
          * 发布日期
          */
         private LocalDate publishDate;
@@ -165,9 +175,19 @@ public class KolFeedbackDTO implements Serializable {
         private String feedbackStatus;
 
         /**
+         * 回片状态名称
+         */
+        private String feedbackStatusName;
+
+        /**
          * 创建时间
          */
         private LocalDateTime createTime;
+
+        /**
+         * 创建人ID
+         */
+        private String createUserId;
 
         /**
          * 创建人
@@ -355,7 +375,6 @@ public class KolFeedbackDTO implements Serializable {
         /**
         * 回片链接哈希值（MD5或SHA256，用于唯一键）
         */
-        @NotBlank(message = "回片链接哈希值（MD5或SHA256，用于唯一键）不能为空")
         @Size(max = 64,message = "回片链接哈希值（MD5或SHA256，用于唯一键）最大长度不能超过64位")
         private String urlHash;
 
