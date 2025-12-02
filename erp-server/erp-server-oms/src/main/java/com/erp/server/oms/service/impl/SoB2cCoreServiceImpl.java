@@ -429,26 +429,6 @@ public class SoB2cCoreServiceImpl implements SoB2cCoreService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void generateDeliveryAndOutStock(SoB2cEntity entity, List<SoB2cDetailEntity> detailEntityList, SoB2cDTO.DeliveryWithNotOutboundDTO dto,SoB2cLogisticsEntity soB2cLogisticsEntity,SoB2cReceiverEntity soB2cReceiverEntity) {
-        //虚拟仓库查询
-        VirtualWarehouseChannelDTO.PlatformDTO platformDTO = new VirtualWarehouseChannelDTO.PlatformDTO();
-        platformDTO.setDictPlatform(entity.getDictPlatform());
-        platformDTO.setRelationId(entity.getShopId());
-        platformDTO.setWarehouseIdList(Collections.singletonList(dto.getWarehouseId()));
-        platformDTO.setPartitionId(Objects.nonNull(soB2cReceiverEntity) ? soB2cReceiverEntity.getPartitionId() : "");
-        List<VirtualWarehouseRelationEntity> virtualWarehouseList = wmsVirtualWarehouseFeign.getVirtualWarehouse(platformDTO);
-        for (SoB2cDetailEntity detailEntity : detailEntityList) {
-            if(CollectionUtils.isNotEmpty(virtualWarehouseList)){
-                String virtualWarehouseId = virtualWarehouseList.get(0).getVirtualWarehouseId();
-                detailEntity.setVirtualWarehouseId(virtualWarehouseId);
-            }else{
-                detailEntity.setVirtualWarehouseId("");
-            }
-        }
-        //先更新订单信息
-        entity.setSignOrderError("");
-        soB2cService.updateById(entity);
-        soB2cDetailService.updateBatchById(detailEntityList);
-
         //判断是三方仓还是自发货生成不同的发货单
         //检测是否是API 对接的仓库
 //        try {

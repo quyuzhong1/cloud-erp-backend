@@ -31,14 +31,17 @@ import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.oms.enums.SoB2cInvalidTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.tms.dto.LogisticsChannelDTO;
+import com.erp.model.wms.dto.VirtualWarehouseChannelDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 import com.erp.model.wms.entity.SoOutstockEntity;
+import com.erp.model.wms.entity.VirtualWarehouseRelationEntity;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.rpc.wms.feign.SoB2cDeliveryFeign;
 import com.erp.rpc.wms.feign.SoOutstockFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
+import com.erp.rpc.wms.feign.WmsVirtualWarehouseFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.oms.query.SoB2cQueryHandler;
 import com.erp.server.oms.service.*;
@@ -113,6 +116,8 @@ public class SoB2cController extends BaseController {
     private LogisticsFeign logisticsFeign;
     @Resource
     private SoB2cReceiverService soB2cReceiverService;
+    @Resource
+    private WmsVirtualWarehouseFeign wmsVirtualWarehouseFeign;
     /**
      * 获取状态统计
      *
@@ -1407,22 +1412,63 @@ public class SoB2cController extends BaseController {
             SoB2cLogisticsEntity soB2cLogisticsEntity = soB2cLogisticsEntityList.stream().filter(v -> v.getMainId().equals(soB2cEntity.getId())).findFirst().orElse(new SoB2cLogisticsEntity());
             List<SoB2cDetailEntity> detailEntityList = soB2cDetailEntityList.stream().filter(e -> Objects.nonNull(e) && Objects.equals(e.getMainId(), soB2cEntity.getId())).collect(Collectors.toList());
             SoB2cReceiverEntity soB2cReceiverEntity = soB2cReceiverEntities.stream().filter(e -> Objects.equals(e.getMainId(), soB2cEntity.getId())).findFirst().orElse(new SoB2cReceiverEntity());
-            //将仓库会写到订单的明细发货仓库
-            if (CollectionUtils.isNotEmpty(detailEntityList)) {
-                detailEntityList.forEach(e -> {
-                    e.setWarehouseId(dto.getWarehouseId());
-                    e.setWarehouseName(updateDTO.getName());
-                });
-            }
+            //前置数据处理
+            beforeDelivery(dto, soB2cLogisticsEntity, baseDTO, soB2cEntity,soB2cReceiverEntity,updateDTO,detailEntityList);
             try {
                 BatchResultDTO resultDTO = soB2cService.deliveryWithNotOutbound(dto,soB2cEntity,soB2cLogisticsEntity,detailEntityList,soB2cReceiverEntity,baseDTO, noInventorySkuIdList);
                 resultDTOList.add(resultDTO);
             }catch (Exception e){
+                //回退订单状态
+                soB2cService.lambdaUpdate().set(SoB2cEntity::getSoOutstockDate, null).set(SoB2cEntity::getBillStatus, SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode())
+                                .eq(SoB2cEntity::getId, soB2cEntity.getId()).update();
                 resultDTOList.add(BatchResultDTO.fail(soB2cEntity.getId(), soB2cEntity.getCode(), e.getMessage()));
             }
         }
         return resultDTOList.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOList) : failure(resultDTOList);
     }
+
+    private void beforeDelivery(SoB2cDTO.DeliveryWithNotOutboundDTO dto, SoB2cLogisticsEntity soB2cLogisticsEntity, LogisticsChannelDTO.BaseDTO baseDTO, SoB2cEntity soB2cEntity, SoB2cReceiverEntity soB2cReceiverEntity, WarehouseDTO.UpdateDTO updateDTO, List<SoB2cDetailEntity> detailEntityList) {
+        soB2cLogisticsEntity.setCode(dto.getTrackNo());
+        soB2cLogisticsEntity.setLogisticsChannelId(dto.getLogisticsChannelId());
+        soB2cLogisticsEntity.setLogisticsChannelName(baseDTO.getName());
+        soB2cLogisticsEntity.setDeliveryTime(dto.getDeliveryTime());
+        soB2cLogisticsService.updateById(soB2cLogisticsEntity);
+        soB2cEntity.setBillStatus(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
+        soB2cEntity.setAbnormalType("");
+        soB2cEntity.setIsMatchLogisticsRule(true);
+        soB2cEntity.setIsMatchOrderRule(true);
+        soB2cEntity.setIsNotOutbound(true);
+        soB2cEntity.setApproveStatus(ApproveStatusEnum.APPROVE);
+        soB2cEntity.setSoOutstockDate(dto.getDeliveryTime().toLocalDate());
+        if (!dto.getPlatformShipFlag() && !soB2cEntity.getApproveStatus().equals(ApproveStatusEnum.APPROVE)) {
+            ApproveOneDTO approveOneDTO = new ApproveOneDTO();
+            approveOneDTO.setType(ApproveTypeEnum.PASS.getStatus());
+            soB2cService.approveEnd(approveOneDTO, soB2cEntity, true);
+            soB2cEntity.setApproveStatus(ApproveStatusEnum.APPROVE);
+        }
+        //虚拟仓库查询
+        VirtualWarehouseChannelDTO.PlatformDTO platformDTO = new VirtualWarehouseChannelDTO.PlatformDTO();
+        platformDTO.setDictPlatform(soB2cEntity.getDictPlatform());
+        platformDTO.setRelationId(soB2cEntity.getShopId());
+        platformDTO.setWarehouseIdList(Collections.singletonList(dto.getWarehouseId()));
+        platformDTO.setPartitionId(Objects.nonNull(soB2cReceiverEntity) ? soB2cReceiverEntity.getPartitionId() : "");
+        List<VirtualWarehouseRelationEntity> virtualWarehouseList = wmsVirtualWarehouseFeign.getVirtualWarehouse(platformDTO);
+        for (SoB2cDetailEntity detailEntity : detailEntityList) {
+            if(org.apache.commons.collections4.CollectionUtils.isNotEmpty(virtualWarehouseList)){
+                String virtualWarehouseId = virtualWarehouseList.get(0).getVirtualWarehouseId();
+                detailEntity.setVirtualWarehouseId(virtualWarehouseId);
+            }else{
+                detailEntity.setVirtualWarehouseId("");
+            }
+            detailEntity.setWarehouseId(dto.getWarehouseId());
+            detailEntity.setWarehouseName(updateDTO.getName());
+        }
+        //先更新订单信息
+        soB2cEntity.setSignOrderError("");
+        soB2cService.updateById(soB2cEntity);
+        soB2cDetailService.updateBatchById(detailEntityList);
+    }
+
     /**
      * 撤销不出库发货
      * @param dto

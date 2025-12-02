@@ -3041,7 +3041,6 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         }else {
             dto.setBusinessType(VirtualInventoryBusinessTypeEnum.SO_B2C_DELIVERY.getCode());
         }
-        dto.setBusinessType(VirtualInventoryBusinessTypeEnum.SO_B2C_DELIVERY.getCode());
         //更新库存
         log.warn("冻结b2c发货单虚拟库存={}", JSONUtil.toJsonStr(dto));
         virtualInventoryTransCoreService.approve(dto);

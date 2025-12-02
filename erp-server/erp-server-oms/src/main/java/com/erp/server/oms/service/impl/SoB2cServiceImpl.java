@@ -10870,24 +10870,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Override
     public BatchResultDTO deliveryWithNotOutbound(SoB2cDTO.DeliveryWithNotOutboundDTO dto, SoB2cEntity soB2cEntity, SoB2cLogisticsEntity soB2cLogisticsEntity, List<SoB2cDetailEntity> detailEntityList, SoB2cReceiverEntity soB2cReceiverEntity, LogisticsChannelDTO.BaseDTO baseDTO, List<String> noInventorySkuIdList) {
         dto.setLogisticsChannelCode(baseDTO.getCode());
-        soB2cLogisticsEntity.setCode(dto.getTrackNo());
-        soB2cLogisticsEntity.setLogisticsChannelId(dto.getLogisticsChannelId());
-        soB2cLogisticsEntity.setLogisticsChannelName(baseDTO.getName());
-        soB2cLogisticsEntity.setDeliveryTime(dto.getDeliveryTime());
-        soB2cLogisticsService.updateById(soB2cLogisticsEntity);
-        soB2cEntity.setBillStatus(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
-        soB2cEntity.setAbnormalType("");
-        soB2cEntity.setIsMatchLogisticsRule(true);
-        soB2cEntity.setIsMatchOrderRule(true);
-        soB2cEntity.setIsNotOutbound(true);
-        soB2cEntity.setApproveStatus(ApproveStatusEnum.APPROVE);
-        soB2cEntity.setSoOutstockDate(dto.getDeliveryTime().toLocalDate());
-        if (!dto.getPlatformShipFlag() && !soB2cEntity.getApproveStatus().equals(ApproveStatusEnum.APPROVE)) {
-            ApproveOneDTO approveOneDTO = new ApproveOneDTO();
-            approveOneDTO.setType(ApproveTypeEnum.PASS.getStatus());
-            this.approveEnd(approveOneDTO, soB2cEntity, true);
-            soB2cEntity.setApproveStatus(ApproveStatusEnum.APPROVE);
-        }
         //生成发货单和出库单
         try {
             UserContext.setIsUserSystem(true);
