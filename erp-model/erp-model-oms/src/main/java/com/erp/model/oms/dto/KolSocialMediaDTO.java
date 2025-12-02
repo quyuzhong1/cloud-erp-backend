@@ -156,8 +156,6 @@ public class KolSocialMediaDTO implements Serializable {
         /**
         * 类型：manual-手动，auto-自动
         */
-        @NotBlank(message = "类型：manual不能为空")
-        @Size(max = 20,message = "类型：manual最大长度不能超过20位")
         private String type;
 
         /**
@@ -168,9 +166,8 @@ public class KolSocialMediaDTO implements Serializable {
         private String mediaPlatform;
 
         /**
-        * 第三方平台
+        * 第三方平台 erp 或者 yunting 云听 默认erp
         */
-        @NotBlank(message = "第三方平台不能为空")
         @Size(max = 100,message = "第三方平台最大长度不能超过100位")
         private String thirdPlatform;
 
@@ -191,13 +188,13 @@ public class KolSocialMediaDTO implements Serializable {
         /**
         * 发布时间，格式：yyyy-MM-dd HH:mm:ss（对应第三方publishTime）
         */
-        @NotBlank(message = "发布时间，格式：yyyy不能为空")
         @Size(max = 50,message = "发布时间，格式：yyyy最大长度不能超过50位")
         private String publishTime;
 
         /**
         * 原平台链接（完整链接，对应第三方url）
         */
+        @NotBlank(message = "原平台链接不能为空")
         private String url;
 
         /**
@@ -217,50 +214,42 @@ public class KolSocialMediaDTO implements Serializable {
         /**
         * 入库时间，毫秒时间戳（对应第三方insertTimestamp）
         */
-        @NotNull(message = "入库时间，毫秒时间戳（对应第三方insertTimestamp）不能为空")
         private Long insertTimestamp;
 
         /**
         * 粉丝量
         */
-        @NotNull(message = "粉丝量不能为空")
         private Long followerCount;
 
         /**
         * 阅读量（对应第三方views）
         */
-        @NotNull(message = "阅读量（对应第三方views）不能为空")
         private Long viewCount;
 
         /**
         * 播放量
         */
-        @NotNull(message = "播放量不能为空")
         private Long playCount;
 
         /**
         * 评论数（对应第三方comments）
         */
-        @NotNull(message = "评论数（对应第三方comments）不能为空")
         private Long commentCount;
 
         /**
         * 点赞数（对应第三方likes）
         */
-        @NotNull(message = "点赞数（对应第三方likes）不能为空")
         private Long likeCount;
 
         /**
         * 转发量
         */
-        @NotNull(message = "转发量不能为空")
         private Long repostCount;
 
         /**
         * 唯一键，用于去重覆盖（对应第三方unique）。云听系统可能因模型优化等原因重跑数据，同一条数据的字段可能更新。此类变更不会影响unique值，但会更新insertTimestamp入库时间，因此，请始终以最新拉取的数据为准，按unique主键进行幂等性写入，覆盖本地旧数据
         */
-        @NotBlank(message = "唯一键，用于去重覆盖（对应第三方unique）。云听系统可能因模型优化等原因重跑数据，同一条数据的字段可能更新。此类变更不会影响unique值，但会更新insertTimestamp入库时间，因此，请始终以最新拉取的数据为准，按unique主键进行幂等性写入，覆盖本地旧数据不能为空")
-        @Size(max = 200,message = "唯一键，用于去重覆盖（对应第三方unique）。云听系统可能因模型优化等原因重跑数据，同一条数据的字段可能更新。此类变更不会影响unique值，但会更新insertTimestamp入库时间，因此，请始终以最新拉取的数据为准，按unique主键进行幂等性写入，覆盖本地旧数据最大长度不能超过200位")
+        @Size(max = 200,message = "唯一键最大长度不能超过200位")
         private String uniqueKey;
 
 

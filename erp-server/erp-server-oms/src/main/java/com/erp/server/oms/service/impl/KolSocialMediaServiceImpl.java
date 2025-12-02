@@ -21,6 +21,9 @@ import com.erp.model.oms.dto.KolSocialMediaDTO;
 import java.util.*;
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
+import cn.hutool.crypto.digest.DigestUtil;
+import com.erp.model.oms.enums.KolSocialMediaTypeEnum;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 /**
  * <p>
  * 达人社媒数据表 服务实现类
@@ -53,9 +56,7 @@ public class KolSocialMediaServiceImpl extends SuperServiceImpl<KolSocialMediaMa
 
         // 操作日志
         String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "达人社媒数据单" , kolSocialMediaEntity.getId());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, kolSocialMediaEntity.getId(), "新增操作");
-        // TODO 新增明细（如果有明细的话）
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.KOL_SOCIAL_MEDIA.getCode(), kolSocialMediaEntity.getId(), "新增操作");
 
         return new BaseResultDTO.AddDTO(kolSocialMediaEntity.getId(), kolSocialMediaEntity.getId());
     }
@@ -78,13 +79,11 @@ public class KolSocialMediaServiceImpl extends SuperServiceImpl<KolSocialMediaMa
         if(!save) {
             throw new ServiceException("达人社媒数据单保存失败");
         }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
 
         // 记录主单操作日志
-            log.info("编辑 开始记录达人社媒数据单日志数据，id：【{}】", kolSocialMediaEntity.getId());
-            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), kolSocialMediaEntity.getId(), "达人社媒数据单");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLogByObj(old, kolSocialMediaEntity, null, kolSocialMediaEntity.getId(), msg);
+        log.info("编辑 开始记录达人社媒数据单日志数据，id：【{}】", kolSocialMediaEntity.getId());
+        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), kolSocialMediaEntity.getId(), "达人社媒数据单");
+        operateLogService.addModuleOperateLogByObj(old, kolSocialMediaEntity, ModuleTypeEnum.KOL_SOCIAL_MEDIA.getCode(), kolSocialMediaEntity.getId(), msg);
         return Boolean.TRUE;
     }
 
@@ -93,6 +92,35 @@ public class KolSocialMediaServiceImpl extends SuperServiceImpl<KolSocialMediaMa
     * 新增修改处理数据
     */
     private void handleData(KolSocialMediaEntity kolSocialMediaEntity) {
-    // TODO 验证数据 & 数据赋值
+        // type 枚举校验（如果为空，可以设置默认值，或者保持为空）
+        if (StrUtil.isNotBlank(kolSocialMediaEntity.getType())) {
+            KolSocialMediaTypeEnum typeEnum = KolSocialMediaTypeEnum.getByCode(kolSocialMediaEntity.getType());
+            if (typeEnum == null) {
+                throw new ServiceException("类型【" + kolSocialMediaEntity.getType() + "】不存在，请使用 manual（手动）或 auto（自动）");
+            }
+        }else {
+            kolSocialMediaEntity.setType(KolSocialMediaTypeEnum.MANUAL.getCode());
+        }
+
+        // 第三平台如果为空，默认填 "erp"
+        if (StrUtil.isBlank(kolSocialMediaEntity.getThirdPlatform())) {
+            kolSocialMediaEntity.setThirdPlatform("erp");
+        }
+
+        // urlHash 用 hutool hash 工具（如果 url 不为空）
+        if (StrUtil.isNotBlank(kolSocialMediaEntity.getUrl())) {
+            String urlHash = DigestUtil.md5Hex(kolSocialMediaEntity.getUrl());
+            kolSocialMediaEntity.setUrlHash(urlHash);
+        }
+
+        // 入库时间填当前时间戳（毫秒）
+        if (kolSocialMediaEntity.getInsertTimestamp() == null) {
+            kolSocialMediaEntity.setInsertTimestamp(System.currentTimeMillis());
+        }
+
+        // uniqueKey 填 urlHash
+        if (StrUtil.isNotBlank(kolSocialMediaEntity.getUrlHash())) {
+            kolSocialMediaEntity.setUniqueKey(kolSocialMediaEntity.getUrlHash());
+        }
     }
 }

@@ -118,19 +118,18 @@ public class KolFeedbackCostDTO implements Serializable {
         /**
         * 回片链接（完整链接）
         */
+        @NotBlank(message = "回片链接不能为空")
         private String url;
 
         /**
         * 回片链接哈希值（MD5或SHA256，用于唯一键）
         */
-        @NotBlank(message = "回片链接哈希值（MD5或SHA256，用于唯一键）不能为空")
         @Size(max = 64,message = "回片链接哈希值（MD5或SHA256，用于唯一键）最大长度不能超过64位")
         private String urlHash;
 
         /**
         * 费用名称
         */
-        @NotBlank(message = "费用名称不能为空")
         @Size(max = 100,message = "费用名称最大长度不能超过100位")
         private String costType;
 
@@ -159,14 +158,13 @@ public class KolFeedbackCostDTO implements Serializable {
         * 金额（原币）
         */
         @NotNull(message = "金额（原币）不能为空")
-        @Digits(integer = 12, fraction = 4, message = "金额（原币）整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 12, fraction = 6, message = "金额（原币）整数位不能超过12位，小数位不能超过6位")
         private BigDecimal originalAmount;
 
         /**
         * 金额（本位币）
         */
-        @NotNull(message = "金额（本位币）不能为空")
-        @Digits(integer = 12, fraction = 4, message = "金额（本位币）整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 12, fraction = 6, message = "金额（本位币）整数位不能超过12位，小数位不能超过6位")
         private BigDecimal baseAmount;
 
         /**

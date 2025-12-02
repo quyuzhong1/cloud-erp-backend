@@ -21,6 +21,11 @@ import com.erp.model.oms.dto.KolFeedbackCostDTO;
 import java.util.*;
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
+import com.erp.model.scm.enums.ModuleTypeEnum;
+import cn.hutool.crypto.digest.DigestUtil;
+import com.erp.server.oms.service.CfgKolOptionService;
+import com.erp.model.oms.entity.CfgKolOptionEntity;
+import java.math.BigDecimal;
 /**
  * <p>
  * KOL回片费用表 服务实现类
@@ -35,6 +40,9 @@ public class KolFeedbackCostServiceImpl extends SuperServiceImpl<KolFeedbackCost
     @Autowired
     private OperateLogService operateLogService;
 
+    @Autowired
+    private CfgKolOptionService cfgKolOptionService;
+
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -45,6 +53,9 @@ public class KolFeedbackCostServiceImpl extends SuperServiceImpl<KolFeedbackCost
         // 数据处理
         handleData(kolFeedbackCostEntity);
 
+        // 校验唯一性：费用名称ID + urlHash
+        checkUnique(kolFeedbackCostEntity, null);
+
         log.info("开始新增KOL回片费用单");
         boolean save = super.save(kolFeedbackCostEntity);
         if(!save) {
@@ -53,9 +64,7 @@ public class KolFeedbackCostServiceImpl extends SuperServiceImpl<KolFeedbackCost
 
         // 操作日志
         String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "KOL回片费用单" , kolFeedbackCostEntity.getId());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, kolFeedbackCostEntity.getId(), "新增操作");
-        // TODO 新增明细（如果有明细的话）
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.KOL_FEEDBACK_COST.getCode(), kolFeedbackCostEntity.getId(), "新增操作");
 
         return new BaseResultDTO.AddDTO(kolFeedbackCostEntity.getId(), kolFeedbackCostEntity.getId());
     }
@@ -73,6 +82,10 @@ public class KolFeedbackCostServiceImpl extends SuperServiceImpl<KolFeedbackCost
 
         // 数据处理
         handleData(kolFeedbackCostEntity);
+        
+        // 校验唯一性：费用名称ID + urlHash
+        checkUnique(kolFeedbackCostEntity, old.getId());
+        
         log.info("编辑 开始修改KOL回片费用单数据，id：【{}】", old.getId());
         boolean save = super.updateById(kolFeedbackCostEntity);
         if(!save) {
@@ -81,10 +94,9 @@ public class KolFeedbackCostServiceImpl extends SuperServiceImpl<KolFeedbackCost
         // TODO 修改明细数据（包含增删改）（如果有明细的话）
 
         // 记录主单操作日志
-            log.info("编辑 开始记录KOL回片费用单日志数据，id：【{}】", kolFeedbackCostEntity.getId());
-            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), kolFeedbackCostEntity.getId(), "KOL回片费用单");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLogByObj(old, kolFeedbackCostEntity, null, kolFeedbackCostEntity.getId(), msg);
+        log.info("编辑 开始记录KOL回片费用单日志数据，id：【{}】", kolFeedbackCostEntity.getId());
+        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), kolFeedbackCostEntity.getId(), "KOL回片费用单");
+        operateLogService.addModuleOperateLogByObj(old, kolFeedbackCostEntity, ModuleTypeEnum.KOL_FEEDBACK_COST.getCode(), kolFeedbackCostEntity.getId(), msg);
         return Boolean.TRUE;
     }
 
@@ -93,6 +105,51 @@ public class KolFeedbackCostServiceImpl extends SuperServiceImpl<KolFeedbackCost
     * 新增修改处理数据
     */
     private void handleData(KolFeedbackCostEntity kolFeedbackCostEntity) {
-    // TODO 验证数据 & 数据赋值
+        // urlHash 用 hutool hash 工具（如果 url 不为空）
+        if (StrUtil.isNotBlank(kolFeedbackCostEntity.getUrl())) {
+            String urlHash = DigestUtil.md5Hex(kolFeedbackCostEntity.getUrl());
+            kolFeedbackCostEntity.setUrlHash(urlHash);
+        }
+
+        // costType 通过 costTypeId 查询 CfgKolOptionService
+        if (StrUtil.isNotBlank(kolFeedbackCostEntity.getCostTypeId())) {
+            try {
+                CfgKolOptionEntity cfgKolOptionEntity = cfgKolOptionService.getById(kolFeedbackCostEntity.getCostTypeId());
+                if (cfgKolOptionEntity != null && StrUtil.isNotBlank(cfgKolOptionEntity.getName())) {
+                    kolFeedbackCostEntity.setCostType(cfgKolOptionEntity.getName());
+                }
+            } catch (Exception e) {
+                log.warn("获取费用类型信息失败，costTypeId: {}", kolFeedbackCostEntity.getCostTypeId(), e);
+            }
+        }
+
+        // 计算本位币金额：baseAmount = originalAmount * exchangeRate
+        if (kolFeedbackCostEntity.getOriginalAmount() != null && kolFeedbackCostEntity.getExchangeRate() != null) {
+            BigDecimal baseAmount = MathUtil.multiplyWithTwo(kolFeedbackCostEntity.getOriginalAmount(), kolFeedbackCostEntity.getExchangeRate());
+            kolFeedbackCostEntity.setBaseAmount(baseAmount);
+        }
+    }
+
+    /**
+     * 校验唯一性：费用名称ID + urlHash
+     * @param kolFeedbackCostEntity 当前实体
+     * @param excludeId 排除的ID（修改时使用，排除当前记录）
+     */
+    private void checkUnique(KolFeedbackCostEntity kolFeedbackCostEntity, String excludeId) {
+        if (StrUtil.isBlank(kolFeedbackCostEntity.getCostTypeId()) || StrUtil.isBlank(kolFeedbackCostEntity.getUrlHash())) {
+            return;
+        }
+
+        // 查询是否存在相同的费用名称ID和urlHash的记录
+        KolFeedbackCostEntity existEntity = lambdaQuery()
+                .eq(KolFeedbackCostEntity::getCostTypeId, kolFeedbackCostEntity.getCostTypeId())
+                .eq(KolFeedbackCostEntity::getUrlHash, kolFeedbackCostEntity.getUrlHash())
+                .eq(KolFeedbackCostEntity::getIsDeleted, false)
+                .ne(excludeId != null, KolFeedbackCostEntity::getId, excludeId)
+                .one();
+
+        if (existEntity != null) {
+            throw new ServiceException("该回片链接和费用名称的组合已存在，不能重复添加");
+        }
     }
 }

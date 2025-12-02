@@ -190,6 +190,8 @@ public enum ModuleTypeEnum {
     DICT_BASIC("150", "字典数据"),
 
     KOL_FEEDBACK("161", "回片列表"),
+    KOL_FEEDBACK_COST("162", "回片费用"),
+    KOL_SOCIAL_MEDIA("163", "达人社媒数据"),
 
 
     KOL_B2B_APPLICATION("156", "B2B寄样申请单"),

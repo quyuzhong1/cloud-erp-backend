@@ -107,6 +107,9 @@ public class KolFeedbackServiceImpl extends SuperServiceImpl<KolFeedbackMapper, 
         // 数据处理
         handleData(kolFeedbackEntity);
 
+        // 校验唯一性：source_code + sku_no + url_hash
+        checkUnique(kolFeedbackEntity, null);
+
         log.info("开始新增KOL回片列单");
         boolean save = super.save(kolFeedbackEntity);
         if(!save) {
@@ -138,6 +141,10 @@ public class KolFeedbackServiceImpl extends SuperServiceImpl<KolFeedbackMapper, 
 
         // 数据处理
         handleData(kolFeedbackEntity);
+        
+        // 校验唯一性：source_code + sku_no + url_hash
+        checkUnique(kolFeedbackEntity, old.getId());
+        
         log.info("编辑 开始修改KOL回片列单数据，id：【{}】", old.getId());
         boolean save = super.updateById(kolFeedbackEntity);
         if(!save) {
@@ -468,6 +475,32 @@ public class KolFeedbackServiceImpl extends SuperServiceImpl<KolFeedbackMapper, 
         // feedbackStatus 回片状态默认 "待回片"
         if (StrUtil.isBlank(kolFeedbackEntity.getFeedbackStatus())) {
             kolFeedbackEntity.setFeedbackStatus(FeedbackStatusEnum.PENDING.getCode());
+        }
+    }
+
+    /**
+     * 校验唯一性：source_code + sku_no + url_hash
+     * @param kolFeedbackEntity 当前实体
+     * @param excludeId 排除的ID（修改时使用，排除当前记录）
+     */
+    private void checkUnique(KolFeedbackEntity kolFeedbackEntity, String excludeId) {
+        if (StrUtil.isBlank(kolFeedbackEntity.getSourceCode()) || 
+            StrUtil.isBlank(kolFeedbackEntity.getSkuNo()) || 
+            StrUtil.isBlank(kolFeedbackEntity.getUrlHash())) {
+            return;
+        }
+
+        // 查询是否存在相同的source_code、sku_no和url_hash的记录
+        KolFeedbackEntity existEntity = lambdaQuery()
+                .eq(KolFeedbackEntity::getSourceCode, kolFeedbackEntity.getSourceCode())
+                .eq(KolFeedbackEntity::getSkuNo, kolFeedbackEntity.getSkuNo())
+                .eq(KolFeedbackEntity::getUrlHash, kolFeedbackEntity.getUrlHash())
+                .eq(KolFeedbackEntity::getIsDeleted, false)
+                .ne(excludeId != null, KolFeedbackEntity::getId, excludeId)
+                .one();
+
+        if (existEntity != null) {
+            throw new ServiceException("该来源单号、SKU编码和回片链接的组合已存在，不能重复添加");
         }
     }
 }
