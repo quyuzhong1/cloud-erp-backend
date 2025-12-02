@@ -502,7 +502,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                 throw new ServiceException("【deliveryMode】交货方式不能为空");
             }
             // 查询设置中转仓信息
-            if (OmsPlatformEnum.OMS_IML.getCode().equalsIgnoreCase(dictPlatform)){
+            if (OmsPlatformEnum.OMS_IML.getCode().equalsIgnoreCase(dictPlatform) || OmsPlatformEnum.TONG_YOU.getCode().equalsIgnoreCase(dictPlatform)){
                 transferWarehouse = overseasProviderWarehouseService.getById(commonDTO.getTransferWarehouseId());
                 if(Objects.isNull(transferWarehouse)){
                     throw new ServiceException("未找到中转仓");
@@ -562,7 +562,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                     throw new ServiceException("【transferWarehouseId】中转仓ID不能为空");
                 }
                 // 查询设置中转仓信息
-                if (OmsPlatformEnum.OMS_IML.getCode().equalsIgnoreCase(dictPlatform)){
+                if (OmsPlatformEnum.OMS_IML.getCode().equalsIgnoreCase(dictPlatform) || OmsPlatformEnum.TONG_YOU.getCode().equalsIgnoreCase(dictPlatform)){
                     OverseasProviderWarehouseEntity overseasProviderWarehouseEntity = overseasProviderWarehouseService.getById(commonDTO.getTransferWarehouseId());
                     if(Objects.isNull(overseasProviderWarehouseEntity)){
                         throw new ServiceException("未找到中转仓");
@@ -685,7 +685,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         mainEntity.setDeliveryWarehouseName(deliveryEntity.getDeliveryWarehouseName());
         mainEntity.setPlatformToWarehouseCode(null == toEntity ? "" : toEntity.getPlatformWarehouseCode());
         mainEntity.setCountryName(null == toEntity ? "" : toEntity.getCountryName());
-        if(OmsPlatformEnum.OMS_IML.getCode().equalsIgnoreCase(dictPlatform)){
+        if(OmsPlatformEnum.OMS_IML.getCode().equalsIgnoreCase(dictPlatform) || OmsPlatformEnum.TONG_YOU.getCode().equalsIgnoreCase(dictPlatform)){
             mainEntity.setPlatformTransferWarehouseCode(null == transferWarehouse ? "" : transferWarehouse.getPlatformWarehouseCode());
         }else{
             mainEntity.setPlatformTransferWarehouseCode(null == transferEntity ? "" : transferEntity.getPlatformWarehouseCode());
