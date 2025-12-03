@@ -391,7 +391,9 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
                             continue;
                         }
                         if (v.getFnSku().equals(packingTaskDetailEntity.getFnSku())){
+                            Integer deliveryQty = packingTaskDetailEntity.getDeliveryQty();
                             packingTaskDetailEntity.setDeliveryQty(Math.max(packingTaskDetailEntity.getDeliveryQty() - totalNum,0));
+                            totalNum = totalNum - deliveryQty;
                         }
                     }
                     addDTOList.add(v);
