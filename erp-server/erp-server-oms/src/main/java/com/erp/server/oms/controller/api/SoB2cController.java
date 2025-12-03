@@ -1419,7 +1419,7 @@ public class SoB2cController extends BaseController {
                 resultDTOList.add(resultDTO);
             }catch (Exception e){
                 //回退订单状态
-                soB2cService.lambdaUpdate().set(SoB2cEntity::getSoOutstockDate, null).set(SoB2cEntity::getBillStatus, SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode())
+                soB2cService.lambdaUpdate().set(SoB2cEntity::getSoOutstockDate, null).set(SoB2cEntity::getBillStatus, SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode()).set(SoB2cEntity::getIsNotOutbound, false)
                                 .eq(SoB2cEntity::getId, soB2cEntity.getId()).update();
                 resultDTOList.add(BatchResultDTO.fail(soB2cEntity.getId(), soB2cEntity.getCode(), e.getMessage()));
             }
