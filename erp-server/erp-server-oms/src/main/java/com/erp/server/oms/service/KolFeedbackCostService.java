@@ -3,6 +3,7 @@ import com.erp.model.oms.entity.KolFeedbackCostEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.oms.dto.KolFeedbackCostDTO;
+import com.common.business.vo.PagingVO;
 import java.util.List;
 
 /**
@@ -42,5 +43,13 @@ public interface KolFeedbackCostService extends SuperService<KolFeedbackCostEnti
     */
     Boolean update(KolFeedbackCostDTO.UpdateDTO dto);
 
+    /**
+    * 分页查询
+    * @author wuhaotian
+    * @date: 2025-12-03
+    * @param dto
+    * @return
+    */
+    PagingVO<KolFeedbackCostDTO.ListDTO> paging(PagingDTO<KolFeedbackCostDTO.ParamDTO> dto);
 
 }

@@ -7,7 +7,8 @@ import org.apache.commons.lang3.StringUtils;
 
 public enum CfgKolOptionTypeEnum implements EnumMessage {
 
-    KOL_SAMPLE_TYPE("kolSampleType", "寄样类型")
+    KOL_SAMPLE_TYPE("kolSampleType", "寄样类型"),
+    COST_TYPE("costType", "费用名称"),
     ;
     /**
      * 类型

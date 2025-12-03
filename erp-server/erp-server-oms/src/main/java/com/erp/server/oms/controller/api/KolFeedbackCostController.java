@@ -18,6 +18,7 @@ import com.erp.server.oms.service.KolFeedbackCostService;
 import com.common.core.controller.vo.ApiResult;
 import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
+import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.KolFeedbackCostDTO;
 import com.erp.model.oms.entity.KolFeedbackCostEntity;
 import cn.hutool.core.util.ObjectUtil;
@@ -143,6 +144,22 @@ public class KolFeedbackCostController extends BaseController {
         }
         
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+    /**
+    * 分页查询
+    * @author wuhaotian
+    * @date:  2025-12-03
+    * @param dto
+    * @return ApiResult<PagingVO<KolFeedbackCostDTO.ListDTO>>
+    */
+    @PostMapping("/paging")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "oms:kolFeedbackCost:paging",
+            tableAlias = "kfc")
+    public ApiResult<PagingVO<KolFeedbackCostDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<KolFeedbackCostDTO.ParamDTO> dto) {
+        return success(kolFeedbackCostService.paging(dto));
     }
 
 }

@@ -1,15 +1,19 @@
 package com.erp.model.oms.dto;
 
-import java.math.BigDecimal;
+import com.common.business.dto.AdvanceQueryDTO;
+import com.common.business.dto.base.SortDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
-import java.io.Serializable;
-import java.time.LocalDateTime;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
+
 import javax.validation.constraints.Digits;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
+import java.io.Serializable;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -23,8 +27,108 @@ import javax.validation.constraints.Digits;
 @NoArgsConstructor
 public class KolFeedbackCostDTO implements Serializable {
 
+    /**
+     * 分页查询参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ParamDTO extends SortDTO {
 
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
 
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String,String> sqlMap;
+
+        /**
+         * 权限SQL
+         */
+        private String permissionSql;
+
+    }
+
+    /**
+     * 分页列表
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ListDTO {
+
+        /**
+         * 主键id
+         */
+        private String id;
+
+        /**
+         * 回片链接（完整链接）
+         */
+        private String url;
+
+        /**
+         * 回片链接哈希值（MD5或SHA256，用于唯一键）
+         */
+        private String urlHash;
+
+        /**
+         * 费用名称
+         */
+        private String costType;
+
+        /**
+         * 费用名称ID
+         */
+        private String costTypeId;
+
+        /**
+         * 付费币别
+         */
+        private String currency;
+
+        /**
+         * 付费币别名称
+         */
+        private String currencyName;
+
+        /**
+         * 汇率
+         */
+        private BigDecimal exchangeRate;
+
+        /**
+         * 金额（原币）
+         */
+        private BigDecimal originalAmount;
+
+        /**
+         * 金额（原币）显示（symbol + 金额）
+         */
+        private String originalAmountDisplay;
+
+        /**
+         * 金额（本位币）
+         */
+        private BigDecimal baseAmount;
+
+        /**
+         * 金额（本位币）显示（CNY symbol + 金额）
+         */
+        private String baseAmountDisplay;
+
+        /**
+         * 备注
+         */
+        private String remark;
+
+        /**
+         * 创建时间
+         */
+        private LocalDateTime createTime;
+
+    }
 
     /**
     * 详情

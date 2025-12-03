@@ -2,9 +2,15 @@ package com.erp.server.oms.service.impl;
 
 
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.collection.CollUtil;
+import com.erp.model.oms.dto.KolFeedbackDTO;
 import io.seata.spring.annotation.GlobalTransactional;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.vo.PagingVO;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.oms.entity.KolFeedbackCostEntity;
 import com.erp.server.oms.mapper.KolFeedbackCostMapper;
 import com.erp.server.oms.service.KolFeedbackCostService;
@@ -25,6 +31,10 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import cn.hutool.crypto.digest.DigestUtil;
 import com.erp.server.oms.service.CfgKolOptionService;
 import com.erp.model.oms.entity.CfgKolOptionEntity;
+import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.model.sys.entity.DictCurrencyEntity;
+import org.apache.commons.lang3.StringUtils;
+import java.util.stream.Collectors;
 import java.math.BigDecimal;
 import com.common.business.dto.base.BatchResultDTO;
 /**
@@ -43,6 +53,9 @@ public class KolFeedbackCostServiceImpl extends SuperServiceImpl<KolFeedbackCost
 
     @Autowired
     private CfgKolOptionService cfgKolOptionService;
+
+    @Autowired
+    private SysUserFeign sysUserFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -127,6 +140,18 @@ public class KolFeedbackCostServiceImpl extends SuperServiceImpl<KolFeedbackCost
         return Boolean.TRUE;
     }
 
+    @Override
+    public PagingVO<KolFeedbackCostDTO.ListDTO> paging(PagingDTO<KolFeedbackCostDTO.ParamDTO> dto) {
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
+        Page<KolFeedbackCostDTO.ListDTO> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
+        IPage<KolFeedbackCostDTO.ListDTO> pageData = this.baseMapper.paging(query, dto.getParams());
+        if(CollUtil.isEmpty(pageData.getRecords())) {
+           return new PagingVO<>(pageData);
+        }
+        // 数据处理
+        fillList(pageData.getRecords());
+        return new PagingVO<>(pageData);
+    }
 
     /**
     * 新增修改处理数据
@@ -177,6 +202,53 @@ public class KolFeedbackCostServiceImpl extends SuperServiceImpl<KolFeedbackCost
 
         if (existEntity != null) {
             throw new ServiceException("该回片链接和费用名称的组合已存在，不能重复添加");
+        }
+    }
+    /**
+     * 填充列表数据（币别转换、金额拼接）
+     */
+    private void fillList(List<KolFeedbackCostDTO.ListDTO> list) {
+        if (CollUtil.isEmpty(list)) {
+            return;
+        }
+        
+        // 获取所有币别信息
+        List<DictCurrencyEntity> currencyList = sysUserFeign.currencyList();
+        if (CollUtil.isEmpty(currencyList)) {
+            return;
+        }
+        
+        // 构建币别 ID -> 币别实体的映射
+        Map<String, DictCurrencyEntity> currencyMap = currencyList.stream()
+                .collect(Collectors.toMap(DictCurrencyEntity::getId, c -> c, (k1, k2) -> k1));
+        
+        // 获取 CNY 的 symbol
+        String cnySymbol = currencyList.stream()
+                .filter(c -> "CNY".equals(c.getSymbol()))
+                .findFirst()
+                .map(DictCurrencyEntity::getSymbol)
+                .orElse("¥");
+        
+        // 遍历列表进行数据填充
+        for (KolFeedbackCostDTO.ListDTO data : list) {
+            // 设置币别名称
+            if (StringUtils.isNotBlank(data.getCurrency())) {
+                DictCurrencyEntity currency = currencyMap.get(data.getCurrency());
+                if (currency != null) {
+                    data.setCurrencyName(currency.getName());
+                    
+                    // 拼接原币金额显示：symbol + 金额
+                    if (data.getOriginalAmount() != null) {
+                        String symbol = StringUtils.isNotBlank(currency.getSymbol()) ? currency.getSymbol() : "";
+                        data.setOriginalAmountDisplay(symbol + " " + data.getOriginalAmount());
+                    }
+                }
+            }
+            
+            // 拼接本位币金额显示：CNY symbol + 金额
+            if (data.getBaseAmount() != null) {
+                data.setBaseAmountDisplay(cnySymbol + " " + data.getBaseAmount());
+            }
         }
     }
 }

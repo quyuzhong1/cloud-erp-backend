@@ -37,5 +37,33 @@
         url, url_hash, cost_type, cost_type_id, currency, exchange_rate, original_amount, base_amount, remark
     </sql>
 
+    <select id="paging" resultType="com.erp.model.oms.dto.KolFeedbackCostDTO$ListDTO">
+        SELECT
+            kfc.id,
+            kfc.url,
+            kfc.url_hash AS urlHash,
+            kfc.cost_type AS costType,
+            kfc.cost_type_id AS costTypeId,
+            kfc.currency,
+            kfc.exchange_rate AS exchangeRate,
+            kfc.original_amount AS originalAmount,
+            kfc.base_amount AS baseAmount,
+            kfc.remark,
+            kfc.create_time AS createTime
+        FROM kol_feedback_cost kfc
+        WHERE
+        ${params.sqlMap.default}
+        AND kfc.is_deleted = false
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        kfc.create_time DESC
+    </select>
 
 </mapper>
