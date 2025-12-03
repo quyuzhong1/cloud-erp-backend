@@ -89,19 +89,6 @@ public class KolPartnerInfoExcelListener extends AnalysisEventListener<KolPartne
             return;
         }
         successList.add(excelDTO);
-        if (successList.size() >= BATCH_COUNT){
-            try {
-                List<String> errorNoList = errorList.stream().map(KolPartnerInfoImportExcelDTO::getNo).distinct().collect(Collectors.toList());
-                List<KolPartnerInfoImportExcelDTO> errorList2 = new ArrayList<>();
-//                kolPartnerInfoService.handleImportSuccessList(successList,errorNoList, errorList2,importType);
-                errorList.addAll(errorList2);
-            }catch (Exception e){
-                successList.forEach(excelDTO1 -> excelDTO1.setErrorMsg(e.getMessage().length() > 50 ? e.getMessage().substring(0, 50) : e.getMessage()));
-                errorList.addAll(successList);
-            }
-            successList.clear();
-            updateTask(count);
-        }
     }
 
 
@@ -113,9 +100,9 @@ public class KolPartnerInfoExcelListener extends AnalysisEventListener<KolPartne
     public void doAfterAllAnalysed(AnalysisContext analysisContext) {
         if (!successList.isEmpty()){
             try {
-                List<String> errorNoList = errorList.stream().map(KolPartnerInfoImportExcelDTO::getNo).distinct().collect(Collectors.toList());
+                List<String> errorNoList = errorList.stream().map(KolPartnerInfoImportExcelDTO::getNickname).distinct().collect(Collectors.toList());
                 List<KolPartnerInfoImportExcelDTO> errorList2 = new ArrayList<>();
-//                kolPartnerInfoService.handleImportSuccessList(successList,errorNoList, errorList2,importType);
+                kolPartnerInfoService.handleImportSuccessList(successList,errorNoList, errorList2,importType);
                 errorList.addAll(errorList2);
             }catch (Exception e){
                 successList.forEach(excelDTO1 -> excelDTO1.setErrorMsg(e.getMessage().length() > 50 ? e.getMessage().substring(0, 50) : e.getMessage()));

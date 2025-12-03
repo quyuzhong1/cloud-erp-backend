@@ -22,299 +22,257 @@ public class KolPartnerInfoImportExcelDTO implements Serializable {
 
 
     /**
-     * 序号
+     * 达人昵称
      */
     @ColumnWidth(25)
-    @ExcelProperty(value = "*序号", index = 0)
-    @FieldValid(fieldName = "*序号",isNotBlank = true )
-    private String no;
+    @ExcelProperty(value = "*达人昵称", index = 0)
+    @FieldValid(fieldName = "*达人昵称",isNotBlank = true )
+    private String nickname;
 
 
     /**
-     * 单据日期
+     * 达人类型
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "*单据日期", index = 1)
-    @FieldValid(fieldName = "*单据日期",isNotBlank = true)
-    private String billDateStr;
+    @ExcelProperty(value = "达人类型", index = 1)
+    @FieldValid(fieldName = "达人类型")
+    private String typeName;
     @ExcelIgnore
-    private LocalDate billDate;
+    private String type;
+
 
     /**
-     * 销售组织
+     * 合作类型
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "*销售组织", index = 2)
-    @FieldValid(fieldName = "*销售组织",isNotBlank = true)
-    private String salesOrgName;
+    @ExcelProperty(value = "合作类型", index = 2)
+    @FieldValid(fieldName = "合作类型")
+    private String cooperationTypeName;
     @ExcelIgnore
-    private String salesOrgId;
+    private String cooperationType;
 
     /**
-     * 领用人
+     * 合作日期
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "*领用人", index = 3)
-    @FieldValid(fieldName = "*领用人",isNotBlank = true)
-    private String recipientUserName;
+    @ExcelProperty(value = "合作日期", index = 3)
+    @FieldValid(fieldName = "合作日期")
+    private String cooperationDateStr;
+    @ExcelIgnore
+    private LocalDate cooperationDate;
 
     /**
-     * 销售部门
+     * 国家
      */
     @ColumnWidth(30)
-    @ExcelProperty(value = "*销售部门", index = 4)
-    @FieldValid(fieldName = "*销售部门",isNotBlank = true)
-    private String salesDeptName;
+    @ExcelProperty(value = "*国家", index = 4)
+    @FieldValid(fieldName = "*国家",isNotBlank = true)
+    private String countryName;
     @ExcelIgnore
-    private String salesDeptId;
+    private String countryId;
 
     /**
-     * 销售员
+     * 语言
      */
     @ColumnWidth(30)
-    @ExcelProperty(value = "*销售员", index = 5)
-    @FieldValid(fieldName = "*销售员",isNotBlank = true)
-    private String sellerName;
+    @ExcelProperty(value = "语言", index = 5)
+    @FieldValid(fieldName = "语言")
+    private String languageName;
     @ExcelIgnore
-    private String sellerId;
+    private String language;
 
 
     /**
-     * 仓库
+     * 邮箱
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "*仓库", index = 6)
-    @FieldValid(fieldName = "*仓库",isNotBlank = true)
-    private String warehouseName;
-    @ExcelIgnore
-    private String warehouseId;
+    @ExcelProperty(value = "邮箱", index = 6)
+    @FieldValid(fieldName = "邮箱")
+    private String email;
 
     /**
-     * 收款日期
+     * 电话
      */
     @ColumnWidth(30)
-    @ExcelProperty(value = "*收款日期", index = 7)
-    @FieldValid(fieldName = "*收款日期",isNotBlank = true)
-    private String receiveDate;
+    @ExcelProperty(value = "电话", index = 7)
+    @FieldValid(fieldName = "电话")
+    private String phone;
 
     /**
-     * 收款方式
+     * 负责人
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "*收款方式", index = 8)
-    @FieldValid(fieldName = "*收款方式",isNotBlank = true)
-    private String receiveMethod;
+    @ExcelProperty(value = "*负责人", index = 8)
+    @FieldValid(fieldName = "*负责人",isNotBlank = true)
+    private String chargeName;
+    @ExcelIgnore
+    private String chargeId;
 
     /**
-     * 收款账号
+     * 负责部门
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "*收款账号", index = 9)
-    @FieldValid(fieldName = "*收款账号",isNotBlank = true)
-    private String receiveAccount;
-
-    /**
-     * 收款金额
-     */
-    @ColumnWidth(20)
-    @ExcelProperty(value = "*收款金额", index = 10)
-    @FieldValid(fieldName = "*收款金额",isNotBlank = true,formatPattern = FieldFormatPatternTypeEnum.AMOUNT4)
-    private String receiveAmount;
-
-
-    /**
-     * 是否收取运费
-     */
-    @ColumnWidth(20)
-    @ExcelProperty(value = "是否收取运费", index = 11)
-    @FieldValid(fieldName = "是否收取运费")
-    private String isCollectShippingFee;
-
-    /**
-     * 运费金额
-     */
-    @ColumnWidth(20)
-    @ExcelProperty(value = "运费金额", index = 12)
-    @FieldValid(fieldName = "运费金额",formatPattern = FieldFormatPatternTypeEnum.AMOUNT4)
-    private String shippingFee;
-
-    /**
-     * 展会名称
-     */
-    @ColumnWidth(20)
-    @ExcelProperty(value = "展会名称", index = 13)
-    @FieldValid(fieldName = "展会名称")
-    private String exhibitionTitle;
-
-    /**
-     * 贸易条款
-     */
-    @ColumnWidth(20)
-    @ExcelProperty(value = "贸易条款", index = 14)
-    @FieldValid(fieldName = "贸易条款")
-    private String tradeTerm;
-
-    /**
-     * 折扣总额
-     */
-    @ColumnWidth(20)
-    @ExcelProperty(value = "折扣总额", index = 15)
-    @FieldValid(fieldName = "折扣总额",formatPattern = FieldFormatPatternTypeEnum.AMOUNT4)
-    private String discountAmount;
-
-    /**
-     * 客户
-     */
-    @ColumnWidth(20)
-    @ExcelProperty(value = "*客户", index = 16)
-    @FieldValid(fieldName = "*客户",isNotBlank = true)
-    private String customerName;
-
-    /**
-     * 收货人
-     */
-    @ColumnWidth(20)
-    @ExcelProperty(value = "收货人", index = 17)
-    @FieldValid(fieldName = "收货人")
-    private String receiverName;
-
-    /**
-     * 联系电话
-     */
-    @ColumnWidth(20)
-    @ExcelProperty(value = "联系电话", index = 18)
-    @FieldValid(fieldName = "联系电话")
-    private String telNumber;
-
-    /**
-     * 收货地址
-     */
-    @ColumnWidth(20)
-    @ExcelProperty(value = "*收货地址", index = 19)
-    @FieldValid(fieldName = "*收货地址",isNotBlank = true)
-    private String receiveAddress;
-
-    /**
-     * 交货方式
-     */
-    @ColumnWidth(20)
-    @ExcelProperty(value = "*交货方式", index = 20)
-    @FieldValid(fieldName = "*交货方式",isNotBlank = true)
-    private String deliveryMode;
-
-    /**
-     * 结算币别
-     */
-    @ColumnWidth(20)
-    @ExcelProperty(value = "*结算币别", index = 21)
-    @FieldValid(fieldName = "*结算币别",isNotBlank = true)
-    private String currency;
-
-    /**
-     * 是否含税
-     */
-    @ColumnWidth(20)
-    @ExcelProperty(value = "*是否含税", index = 22)
-    @FieldValid(fieldName = "*是否含税",isNotBlank = true)
-    private String isTax;
-
-    /**
-     * 地址类型
-     */
-    @ColumnWidth(20)
-    @ExcelProperty(value = "*地址类型", index = 23)
-    @FieldValid(fieldName = "*地址类型",isNotBlank = true)
-    private String addressType;
-
-    /**
-     * 收款条件
-     */
-    @ColumnWidth(20)
-    @ExcelProperty(value = "*收款条件", index = 24)
-    @FieldValid(fieldName = "*收款条件",isNotBlank = true)
-    private String receiveCondition;
+    @ExcelProperty(value = "负责部门", index = 9)
+    @FieldValid(fieldName = "负责部门")
+    private String deptName;
+    @ExcelIgnore
+    private String deptId;
 
     /**
      * 备注
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "备注", index = 25)
-    @FieldValid(fieldName = "备注",maxLength =200)
+    @ExcelProperty(value = "备注", index = 10)
+    @FieldValid(fieldName = "备注",maxLength = 200)
     private String remark;
 
 
     /**
-     * SKU
+     * *合作平台
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "*SKU", index = 26)
-    @FieldValid(fieldName = "*SKU",isNotBlank = true)
-    private String skuNo;
+    @ExcelProperty(value = "*合作平台", index = 11)
+    @FieldValid(fieldName = "*合作平台",isNotBlank = true)
+    private String platformName;
 
     /**
-     * 使用方
+     * 账号ID
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "*使用方", index = 27)
-    @FieldValid(fieldName = "*使用方",isNotBlank = true)
-    private String useUserName;
-
+    @ExcelProperty(value = "账号ID", index = 12)
+    @FieldValid(fieldName = "账号ID")
+    private String platformAccountId;
 
     /**
-     * 销售数量
+     * 账号名称
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "*销售数量", index = 28)
-    @FieldValid(fieldName = "*销售数量",isNotBlank = true,formatPattern = FieldFormatPatternTypeEnum.POSITIVEINTEGER)
-    private String qty;
+    @ExcelProperty(value = "账号名称", index = 13)
+    @FieldValid(fieldName = "账号名称")
+    private String platformAccountName;
 
     /**
-     * 销售单价
+     * 粉丝数量
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "销售单价", index = 29)
-    @FieldValid(fieldName = "销售单价",isNotBlank = true,formatPattern = FieldFormatPatternTypeEnum.AMOUNT4)
-    private String price;
+    @ExcelProperty(value = "粉丝数量", index = 14)
+    @FieldValid(fieldName = "粉丝数量",formatPattern = FieldFormatPatternTypeEnum.POSITIVEINTEGER)
+    private Integer followerCount;
 
     /**
-     * 税率(%)
+     * 主页链接
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "税率(%)", index = 30)
-    @FieldValid(fieldName = "税率(%)",formatPattern = FieldFormatPatternTypeEnum.AMOUNT2)
-    private String taxRate;
+    @ExcelProperty(value = "主页链接", index = 15)
+    @FieldValid(fieldName = "主页链接")
+    private String homepageUrl;
 
     /**
-     *  含税单价
+     * 平台备注
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "含税单价", index = 31)
-    @FieldValid(fieldName = "含税单价",formatPattern = FieldFormatPatternTypeEnum.AMOUNT4)
-    private String taxPrice;
+    @ExcelProperty(value = "平台备注", index = 16)
+    @FieldValid(fieldName = "平台备注",maxLength = 200)
+    private String platformRemark;
 
     /**
-     * 是否赠品
+     * 国家
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "*是否赠品", index = 32)
-    @FieldValid(fieldName = "*是否赠品",isNotBlank = true)
-    private String isGift;
-
-    /**
-     * 明细备注
-     */
-    @ColumnWidth(20)
-    @ExcelProperty(value = "明细备注", index = 33)
-    @FieldValid(fieldName = "明细备注",maxLength =200)
-    private String detailRemark;
-
+    @ExcelProperty(value = "*地址信息国家", index = 17)
+    @FieldValid(fieldName = "*地址信息国家",isNotBlank = true)
+    private String addressCountryName;
     @ExcelIgnore
-    private String sampleLedgerId;
+    private String addressCountryId;
+
+    /**
+     * 联系电话
+     */
+    @ColumnWidth(20)
+    @ExcelProperty(value = "省/州", index = 18)
+    @FieldValid(fieldName = "省/州")
+    private String province;
+    /**
+     * 城市
+     */
+    @ColumnWidth(20)
+    @ExcelProperty(value = "*城市", index = 19)
+    @FieldValid(fieldName = "*城市",isNotBlank = true)
+    private String city;
+
+    /**
+     * 区域
+     */
+    @ColumnWidth(20)
+    @ExcelProperty(value = "区域", index = 20)
+    @FieldValid(fieldName = "区域")
+    private String district;
+
+    /**
+     * 详细地址
+     */
+    @ColumnWidth(20)
+    @ExcelProperty(value = "*详细地址", index = 21)
+    @FieldValid(fieldName = "*详细地址",isNotBlank = true)
+    private String detailAddress;
+
+    /**
+     * 联系人
+     */
+    @ColumnWidth(20)
+    @ExcelProperty(value = "*联系人", index = 22)
+    @FieldValid(fieldName = "*联系人",isNotBlank = true)
+    private String contactPerson;
+
+    /**
+     * 联系人电话
+     */
+    @ColumnWidth(20)
+    @ExcelProperty(value = "*联系人电话", index = 23)
+    @FieldValid(fieldName = "*联系人电话",isNotBlank = true)
+    private String contactPersonPhone;
+
+    /**
+     * 联系人邮编
+     */
+    @ColumnWidth(20)
+    @ExcelProperty(value = "联系人邮编", index = 24)
+    @FieldValid(fieldName = "联系人邮编")
+    private String zipCode;
+
+    /**
+     * 是否默认地址
+     */
+    @ColumnWidth(20)
+    @ExcelProperty(value = "默认地址", index = 25)
+    @FieldValid(fieldName = "默认地址")
+    private String isDefaultName;
+    @ExcelIgnore
+    private Boolean isDefault;
+
+    /**
+     * 启用状态
+     */
+    @ColumnWidth(20)
+    @ExcelProperty(value = "启用状态", index = 26)
+    @FieldValid(fieldName = "启用状态")
+    private String disabledName;
+    @ExcelIgnore
+    private Boolean disabled = false;
+
+
+    /**
+     * 地址备注
+     */
+    @ColumnWidth(20)
+    @ExcelProperty(value = "地址备注", index = 27)
+    @FieldValid(fieldName = "地址备注")
+    private String addressRemark;
 
     /**
      * 错误数据
      */
-    @ExcelProperty(value = "错误数据", index = 34)
+    @ExcelProperty(value = "错误数据", index = 28)
     @ColumnWidth(50)
     private String  errorMsg = "";
 }

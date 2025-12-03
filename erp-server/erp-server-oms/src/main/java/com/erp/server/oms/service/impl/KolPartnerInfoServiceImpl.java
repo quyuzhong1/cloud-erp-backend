@@ -12,12 +12,16 @@ import com.common.business.vo.LoginUser;
 import com.erp.model.oms.dto.ExhibitionOrderImportExcelDTO;
 import com.erp.model.oms.dto.KolAddressInfoDTO;
 import com.erp.model.oms.dto.KolCooperationPlatformDTO;
+import com.erp.model.oms.dto.excel.KolPartnerInfoImportExcelDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.sys.dto.DictCountryDTO;
+import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.file.feign.FileFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.oms.listener.ExhibitionOrderExcelListener;
+import com.erp.server.oms.listener.KolPartnerInfoExcelListener;
 import com.erp.server.oms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import com.common.business.annotation.DistributeLocker;
@@ -42,6 +46,7 @@ import com.common.business.dto.base.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.Valid;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.time.LocalDateTime;
@@ -275,24 +280,22 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
             }
         }
 
-        ExhibitionOrderExcelListener excelListenerUtil = new ExhibitionOrderExcelListener(dto.getTaskId(),dto.getImportType(),dto.getImportCount());
+        KolPartnerInfoExcelListener excelListenerUtil = new KolPartnerInfoExcelListener(dto.getTaskId(),dto.getImportType(),dto.getImportCount());
         try {
             byte[] bytes = fileFeign.downloadFile(dto.getFileUrl());
-            EasyExcel.read(new ByteArrayInputStream(bytes), ExhibitionOrderImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+            EasyExcel.read(new ByteArrayInputStream(bytes), KolPartnerInfoImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (ExcelCommonException e) {
             log.error("导入格式错误！", e);
             throw new ServiceException(ApiError.ERROR_1016);
         }
-
-
         BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
         importResultDTO.setTaskId(dto.getTaskId());
         importResultDTO.setCount(excelListenerUtil.getCount());
-        List<ExhibitionOrderImportExcelDTO> errorList = excelListenerUtil.getErrorList();
+        List<KolPartnerInfoImportExcelDTO> errorList = excelListenerUtil.getErrorList();
         String url = "";
         if (CollectionUtils.isNotEmpty(errorList)) {
             String fileName = "企业达人库错误信息.xlsx";
-            File file = ExcelUtil.exportFile(fileName, "error", errorList, ExhibitionOrderImportExcelDTO.class);
+            File file = ExcelUtil.exportFile(fileName, "error", errorList, KolPartnerInfoImportExcelDTO.class);
             if (!file.isDirectory()) {
                 url = FastDFSClientUtil.uploadFile(file, fileName);
             }
@@ -302,6 +305,163 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
         importResultDTO.setFinishTime(LocalDateTime.now());
         importResultDTO.setStatus(FileTaskStatusEnum.FINISH.getCode());
         downloadTaskFeign.updateTask(importResultDTO);
+    }
+
+    @Override
+    public void handleImportSuccessList(List<KolPartnerInfoImportExcelDTO> successList, List<String> errorNoList, List<KolPartnerInfoImportExcelDTO> errorList, String importType) {
+        if (CollectionUtils.isEmpty(successList)) {
+            return;
+        }
+
+        if(CollUtil.isNotEmpty(errorNoList)){
+            successList = successList.stream().filter(e -> StringUtils.isNotBlank(e.getNickname()) && !errorNoList.contains(e.getNickname())).collect(Collectors.toList());
+
+            //全部返回到错误列表
+            List<KolPartnerInfoImportExcelDTO> collect = successList.stream().filter(e -> StringUtils.isBlank(e.getNickname()) || errorNoList.contains(e.getNickname())).collect(Collectors.toList());
+            errorList.addAll(collect);
+        }
+
+        if(CollUtil.isNotEmpty(successList)){
+            // 获取数据字典
+            List<CfgKolOptionEntity> cfgKolOptionEntities = cfgKolOptionService.lambdaQuery().in(CfgKolOptionEntity::getId, Arrays.asList("cooperationType", "partnerType")).list();
+            Map<String, String> map = cfgKolOptionEntities.stream().collect(Collectors.toMap(CfgKolOptionEntity::getId, CfgKolOptionEntity::getName));
+            // 获取语言字典
+            List<DictLanguageEntity> dictLanguageEntities = dictLanguageService.list();
+            Map<String, String> languageMap = dictLanguageEntities.stream().collect(Collectors.toMap(DictLanguageEntity::getId, DictLanguageEntity::getNameZh));
+            //部门
+            List<SysDepartmentDTO> deptList = sysUserFeign.getDeptList();
+            Map<String, String> deptMap = deptList.stream().collect(Collectors.toMap(SysDepartmentDTO::getName, SysDepartmentDTO::getId));
+            //用户
+            List<FindUserDTO> userList = sysUserFeign.getUserList();
+            Map<String, String> userMap = userList.stream().collect(Collectors.toMap(FindUserDTO::getUserName, FindUserDTO::getUserId));
+            //国家
+            List<DictCountryDTO.ListDTO> dictCountryList = sysUserFeign.countryList();
+            Map<String, String> dictCountryMap = dictCountryList.stream().collect(Collectors.toMap(DictCountryDTO.ListDTO::getNameCn, DictCountryDTO.ListDTO::getId));
+
+            //按昵称分组
+            Map<String, List<KolPartnerInfoImportExcelDTO>> collect = successList.stream().collect(Collectors.groupingBy(KolPartnerInfoImportExcelDTO::getNickname));
+            for (Map.Entry<String, List<KolPartnerInfoImportExcelDTO>> entry : collect.entrySet()) {
+                String nickname = entry.getKey();
+                List<KolPartnerInfoImportExcelDTO> list = entry.getValue();
+                KolPartnerInfoImportExcelDTO mainInfo = list.get(0);
+                List<String> errorMsgList = new ArrayList<>();
+
+
+
+                //达人类型
+                String typeName = mainInfo.getTypeName();
+                if(StringUtils.isNotBlank(typeName)){
+                    String[] split = typeName.split(",");
+                    for (String e : Arrays.asList(split)) {
+                        if(!map.containsKey(e)){
+                            errorMsgList.add("达人类型不存在");
+                            break;
+                        }
+                    }
+
+                    String type = Arrays.stream(typeName.split(","))
+                            .map(map::get)
+                            .filter(StringUtils::isNotBlank)
+                            .collect(Collectors.joining(","));
+                    mainInfo.setType(type);
+                }
+
+                //合作类型
+                String cooperationTypeName = mainInfo.getCooperationTypeName();
+                if(StringUtils.isNotBlank(cooperationTypeName)){
+                    String[] split = cooperationTypeName.split(",");
+                    for (String e : Arrays.asList(split)) {
+                        if(!map.containsKey(e)){
+                            errorMsgList.add("合作类型不存在");
+                            break;
+                        }
+                    }
+
+                    String cooperationType = Arrays.stream(split)
+                            .map(map::get)
+                            .filter(StringUtils::isNotBlank)
+                            .collect(Collectors.joining(","));
+                    mainInfo.setCooperationType(cooperationType);
+                }
+
+                //国家
+                String countryId = dictCountryMap.getOrDefault(mainInfo.getCountryName(), "");
+                if(StringUtils.isNotBlank(countryId)){
+                    mainInfo.setCountryId(countryId);
+                }else {
+                    errorMsgList.add("国家名称不存在");
+                }
+                //语言
+                String language = languageMap.getOrDefault(mainInfo.getLanguageName(), "");
+                if(StringUtils.isNotBlank(language)){
+                    mainInfo.setLanguage(language);
+                }else {
+                    errorMsgList.add("语言不存在");
+                }
+                //负责人
+                String chargeId = userMap.getOrDefault(mainInfo.getChargeName(), "");
+                if(StringUtils.isNotBlank(chargeId)){
+                    mainInfo.setChargeId(chargeId);
+                }else {
+                    errorMsgList.add("负责人不存在");
+                }
+                //部门
+                String deptName = mainInfo.getDeptName();
+                if(StringUtils.isNotBlank(deptName)){
+                    String deptId = deptMap.getOrDefault(deptName, "");
+                    if(StringUtils.isNotBlank(deptId)){
+                        mainInfo.setDeptId(deptId);
+                    }else {
+                        errorMsgList.add("部门不存在");
+                    }
+                }
+
+                KolPartnerInfoDTO.AddDTO addDTO = new KolPartnerInfoDTO.AddDTO();
+                List<KolAddressInfoDTO.AddDTO> kolAddressInfoDTOList = new ArrayList<>();
+                List<KolCooperationPlatformDTO.AddDTO> kolCooperationPlatformDTOList = new ArrayList<>();
+                Boolean isDefault = false ;
+                for (KolPartnerInfoImportExcelDTO item : list) {
+                    List<String> msgList = new ArrayList<>();
+                    //地址信息
+                    KolAddressInfoDTO.AddDTO kolAddressInfoDTO = new KolAddressInfoDTO.AddDTO();
+
+                    //国家
+                    String addressCountryId = dictCountryMap.getOrDefault(item.getAddressCountryName(), "");
+                    if(StringUtils.isNotBlank(addressCountryId)){
+                        kolAddressInfoDTO.setCountryId(addressCountryId);
+                        kolAddressInfoDTO.setCountryName(item.getAddressCountryName());
+                    }else {
+                        msgList.add("地址信息--国家名称不存在");
+                    }
+
+                    kolAddressInfoDTO.setProvince(item.getProvince());
+                    kolAddressInfoDTO.setCity(item.getCity());
+                    kolAddressInfoDTO.setDistrict(item.getDistrict());
+                    kolAddressInfoDTO.setDetailAddress(item.getDetailAddress());
+                    kolAddressInfoDTO.setContactPerson(item.getContactPerson());
+                    kolAddressInfoDTO.setPhone(item.getContactPersonPhone());
+                    kolAddressInfoDTO.setZipCode(item.getZipCode());
+
+                    String isDefaultName = item.getIsDefaultName();
+                    if(){
+
+                    }
+                    kolAddressInfoDTO.setDisabled(item.getDisabled());
+                    kolAddressInfoDTO.setRemark(item.getAddressRemark());
+
+
+
+                    //合作平台
+                    KolCooperationPlatformDTO.AddDTO kolCooperationPlatformDTO = new KolCooperationPlatformDTO.AddDTO();
+
+
+                }
+
+            }
+        }
+
+
+
 
     }
 

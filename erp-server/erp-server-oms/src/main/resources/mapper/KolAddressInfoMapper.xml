@@ -15,10 +15,8 @@
        <result column="main_id" property="mainId" />
        <result column="country_id" property="countryId" />
        <result column="country_name" property="countryName" />
-       <result column="province_id" property="provinceId" />
-       <result column="province_name" property="provinceName" />
-       <result column="city_id" property="cityId" />
-       <result column="city_name" property="cityName" />
+       <result column="province" property="province" />
+       <result column="city" property="city" />
        <result column="district" property="district" />
        <result column="detail_address" property="detailAddress" />
        <result column="contact_person" property="contactPerson" />
@@ -44,10 +42,8 @@ kai.is_deleted AS isDeleted,
 kai.main_id AS mainId,
 kai.country_id AS countryId,
 kai.country_name AS countryName,
-kai.province_id AS provinceId,
-kai.province_name AS provinceName,
-kai.city_id AS cityId,
-kai.city_name AS cityName,
+kai.province AS province,
+kai.city AS city,
 kai.district AS district,
 kai.detail_address AS detailAddress,
 kai.contact_person AS contactPerson,

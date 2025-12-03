@@ -1,4 +1,5 @@
 package com.erp.server.oms.service;
+import com.erp.model.oms.dto.excel.KolPartnerInfoImportExcelDTO;
 import com.erp.model.oms.entity.KolPartnerInfoEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -91,4 +92,6 @@ public interface KolPartnerInfoService extends SuperService<KolPartnerInfoEntity
     Boolean importFile(BaseDTO.ImportDTO dto);
 
     void importExhibitionOrder(BaseDTO.ImportDTO dto);
+
+    void handleImportSuccessList(List<KolPartnerInfoImportExcelDTO> successList, List<String> errorNoList, List<KolPartnerInfoImportExcelDTO> errorList2, String importType);
 }
