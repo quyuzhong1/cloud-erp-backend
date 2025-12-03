@@ -4,6 +4,7 @@ import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.TypeReference;
 import com.common.business.enums.OmsPlatformEnum;
+import com.common.business.threadlocal.ThirdWarehouseContext;
 import com.sdk.wms.antu.constants.AntuConstants;
 import com.sdk.wms.antu.dto.request.*;
 import com.sdk.wms.antu.dto.response.*;
@@ -106,6 +107,8 @@ public class AntuService {
         log.warn("getOrderByRefCode request :{}", JSONUtil.toJsonStr(antuGetOutboundRefReq));
         String response = AntuUtils.callService(platformEnum,AntuConstants.GET_ORDER_BY_REF_CODE,antuGetOutboundRefReq);
         log.warn("getOrderByRefCode response :{}", response);
+        ThirdWarehouseContext.setRequestJson(JSONUtil.toJsonStr(antuGetOutboundRefReq));
+        ThirdWarehouseContext.setResponseJson(response);
         return JSON.parseObject(response,new TypeReference<AntuResponse<AntuOutboundResp>>() {}.getType());
     }
     /**

@@ -381,6 +381,8 @@ public class JiFengService {
         Map<String,Object> paramMap = new HashMap<>();
         paramMap.put("erpNo",erpNo);
         String bodyStr = OkHttpUtils.doPostJson(url+path, paramMap, headerMap);
+        ThirdWarehouseContext.setRequestJson(JSONUtil.toJsonStr(paramMap));
+        ThirdWarehouseContext.setResponseJson(bodyStr);
         JiFengBaseResp<JiFengOutboundResp> response = JiFengUtils.parseToJiFengResp(bodyStr,JiFengOutboundResp.class);
         if(Objects.isNull(response)){
             log.error("极风获取入库单详情失败，返回结果为空,返回值:{}",bodyStr);

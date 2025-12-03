@@ -298,6 +298,8 @@ public class DaMaiService {
         String path = "/omsService/non/soApi/getOrderList";
         Map<String, String> headerMap = buildHearderMap(authMap);
         String bodyStr = OkHttpUtils.doPostJson(getPreUrl() + path, JSONUtil.toJsonStr(daMaiGetOrderRequest), headerMap);
+        ThirdWarehouseContext.setRequestJson(JSONUtil.toJsonStr(daMaiGetOrderRequest));
+        ThirdWarehouseContext.setResponseJson(bodyStr);
         DaMaiBaseResp<List<DaMaiGetOrderResp>> response = DaMaiUtils.parseToResp(bodyStr,new TypeReference<DaMaiBaseResp<List<DaMaiGetOrderResp>>>() {});
         return response;
     }
