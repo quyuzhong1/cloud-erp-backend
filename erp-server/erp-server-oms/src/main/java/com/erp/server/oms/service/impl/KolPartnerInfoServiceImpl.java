@@ -443,9 +443,7 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
                     kolAddressInfoDTO.setZipCode(item.getZipCode());
 
                     String isDefaultName = item.getIsDefaultName();
-                    if(){
 
-                    }
                     kolAddressInfoDTO.setDisabled(item.getDisabled());
                     kolAddressInfoDTO.setRemark(item.getAddressRemark());
 
