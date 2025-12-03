@@ -2021,7 +2021,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
     private List<WmsCartonSpecDTO.NoPackingViewDTO> buildNoPackingDetailList(List<PackingTaskDTO.DetailDTO> detailDTOList,
                                                                              List<WmsCartonSpecDTO.PackDateDTO> packDateDTOS,
                                                                              PackingTaskEntity packingTaskEntity) {
-        Map<String, List<WmsCartonSpecDTO.PackDateDTO>> packedMap = packDateDTOS.stream().collect(Collectors.groupingBy(e -> e.getSkuId() + e.getFnSku()));
+        Map<String, List<WmsCartonSpecDTO.PackDateDTO>> packedMap = packDateDTOS.stream().collect(Collectors.groupingBy(e -> e.getSkuId() + e.getFnSku()+e.getCustomerPO()));
         List<WmsCartonSpecDTO.NoPackingViewDTO> list = new ArrayList<>();
         for (PackingTaskDTO.DetailDTO dto : detailDTOList){
             int deliveryQty = 0;
@@ -2031,7 +2031,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
             String skuId = dto.getSkuId();
             String fnSku = dto.getFnSku();
             int packQty = 0;
-            List<WmsCartonSpecDTO.PackDateDTO> packDateDTOList = packedMap.get(skuId + fnSku);
+            List<WmsCartonSpecDTO.PackDateDTO> packDateDTOList = packedMap.get(skuId + fnSku+dto.getCustomerPO());
             if (CollectionUtils.isNotEmpty(packDateDTOList)){
                 packQty = packDateDTOList.stream().map(WmsCartonSpecDTO.PackDateDTO::getPackQty).reduce(MathUtil.ZERO,Integer::sum);
             }
@@ -2718,7 +2718,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
      */
     private List<WmsCartonSpecDTO.NoPackingViewDTO> batchBuildNoPackingDetailList(List<PackingTaskDTO.DetailDTO> detailDTOList, List<WmsCartonSpecDTO.PackingQtyDTO> packingQtyDTOS,
                                                                                    List<PackingTaskEntity> taskEntityList) {
-        Map<String, List<WmsCartonSpecDTO.PackingQtyDTO>> packedMap = packingQtyDTOS.stream().collect(Collectors.groupingBy(e -> e.getSkuId() + e.getFnSku() + e.getId()));
+        Map<String, List<WmsCartonSpecDTO.PackingQtyDTO>> packedMap = packingQtyDTOS.stream().collect(Collectors.groupingBy(e -> e.getSkuId() + e.getFnSku() + e.getId()+e.getCustomerPO()));
         Map<String, PackingTaskEntity> taskEntityMap = taskEntityList.stream().collect(Collectors.toMap(PackingTaskEntity::getId, Function.identity()));
         List<WmsCartonSpecDTO.NoPackingViewDTO> list = new ArrayList<>();
         for (PackingTaskDTO.DetailDTO dto : detailDTOList){
@@ -2733,7 +2733,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
             String skuId = dto.getSkuId();
             String fnSku = dto.getFnSku();
             int packQty = 0;
-            List<WmsCartonSpecDTO.PackingQtyDTO> packDateDTOList = packedMap.get(skuId + fnSku + dto.getTaskId());
+            List<WmsCartonSpecDTO.PackingQtyDTO> packDateDTOList = packedMap.get(skuId + fnSku + dto.getTaskId()+dto.getCustomerPO());
             if (CollectionUtils.isNotEmpty(packDateDTOList)){
                 packQty = packDateDTOList.stream().map(WmsCartonSpecDTO.PackingQtyDTO::getPackQty).reduce(MathUtil.ZERO,Integer::sum);
             }

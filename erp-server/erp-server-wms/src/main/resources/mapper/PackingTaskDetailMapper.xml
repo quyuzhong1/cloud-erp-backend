@@ -41,6 +41,7 @@
             ptd.sku_id,
             ptd.sku_no,
             ptd.fn_sku,
+            ptd.customer_po,
             SUM(ptd.delivery_qty) as deliveryQty
         FROM
             packing_task pt
@@ -54,7 +55,8 @@
             pt.id,
             ptd.sku_id,
             ptd.sku_no,
-            ptd.fn_sku
+            ptd.fn_sku,
+            ptd.customer_po
     </select>
     <select id="countDeliveryQty" resultType="java.lang.Integer">
         select sum(delivery_qty) FROM packing_task_detail where main_id = #{taskId}

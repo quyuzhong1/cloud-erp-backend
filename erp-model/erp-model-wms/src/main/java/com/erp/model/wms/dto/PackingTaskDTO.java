@@ -398,6 +398,9 @@ public class PackingTaskDTO implements Serializable {
         private String skuId;
         private String skuNo;
         private String fnSku;
+
+
+        private String customerPO;
         /**
          * 发货数量
          */

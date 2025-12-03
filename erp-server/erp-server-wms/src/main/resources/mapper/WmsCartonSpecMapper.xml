@@ -82,6 +82,7 @@
             SUM(wcd.pack_qty) AS packQty,
             SUM(wcd.gross_weight) AS grossWeight,
             SUM(wcs.box_qty) AS boxQty,
+        wc.customer_po,
             wcs.box_spec_no,
             wc.box_no
         FROM wms_carton_spec wcs
@@ -97,7 +98,8 @@
             wcd.sku_no,
             wcd.fn_sku,
             wcs.box_spec_no,
-            wc.box_no
+            wc.box_no,
+        wc.customer_po
     </select>
     <select id="selectBoxSpecNo" resultType="java.lang.Integer">
         SELECT
