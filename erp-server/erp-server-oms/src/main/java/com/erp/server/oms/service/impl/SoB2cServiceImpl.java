@@ -10913,6 +10913,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public BatchResultDTO cancelDeliveryWithNotOutbound(String id, SoB2cEntity soB2cEntity, SoOutstockEntity soOutstockEntity, SoB2cDeliveryEntity deliveryEntity) {
         if (Objects.isNull(soB2cEntity.getIsNotOutbound()) || !soB2cEntity.getIsNotOutbound()){
             return BatchResultDTO.fail(id, id, "只允许不出库发货的订单操作撤销");
