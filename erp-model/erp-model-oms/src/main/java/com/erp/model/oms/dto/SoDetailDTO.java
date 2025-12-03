@@ -162,11 +162,13 @@ public class SoDetailDTO implements Serializable {
         /**
          * 单箱数量
          */
+        @Min(value = 1)
         private Integer perBoxQty;
 
         /**
          * 发货skuId
          */
+        @NotBlank(message = "发货sku不能为空")
         private String deliverySkuId;
 
         /**
@@ -177,6 +179,7 @@ public class SoDetailDTO implements Serializable {
         /**
          * 发货箱数
          */
+        @Min(value = 1)
         private Integer boxQty;
     }
 
