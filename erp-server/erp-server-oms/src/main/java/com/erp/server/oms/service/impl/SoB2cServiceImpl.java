@@ -3166,6 +3166,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
         createOutboundReq.setCarrierType(channelEntity.getCarrierType());
         ThirdWarehouseDeliveryEntity thirdWarehouseDeliveryEntity = thirdWarehouseDeliveryFeign.getLatestBySoId(entity.getId());
+        if (Objects.nonNull(thirdWarehouseDeliveryEntity)){
+            createOutboundReq.setReferenceNo(thirdWarehouseDeliveryEntity.getCode());
+        }
         log.warn("第三方仓下单请求:{}", JSONUtil.toJsonStr(entity.getCode()));
         ApiResult<String> apiResult = soB2cService.createThirdWarehouseOutbound(entity, warehouseId, createOutboundReq, 0, thirdWarehouseDeliveryEntity);
         log.warn("第三方仓下单结果:{}", JSONUtil.toJsonStr(apiResult));
