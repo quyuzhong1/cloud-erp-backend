@@ -29,7 +29,6 @@ public enum VirtualInventoryBusinessTypeEnum {
      * b2c发货单，减可用，加冻结
      */
     SO_B2C_DELIVERY("so_b2c_delivery", "04","b2c发货单"),
-    SO_B2C_DELIVERY_ROLLBACK("so_b2c_delivery_rollback", "23","b2c发货单冻结库存还原"),
 
     /**
      * 发货通知单，减可用
