@@ -94,24 +94,18 @@
     </select>
     <select id="selectB2BPackingStatusByIds" resultType="com.erp.model.wms.dto.PackingTaskDTO$StatusDTO">
         SELECT
-        pt.id,
-        pt.source_code AS sourceCode,
-        pt.packing_status AS packingStatus,
-        pt.weighting_status AS weightingStatus,
-        -- 获取最后一个箱子的错误信息
-        CASE WHEN wc.error_msg IS NULL OR wc.error_msg = '' THEN '' ELSE CONCAT('第', wc.box_no, '箱:', wc.error_msg) END AS errorMsg,
-        -- 计算总的已装数量
-        COALESCE(SUM(wcd.pack_qty), 0) AS packedQty,
-        -- 计算总的包装重量
-        COALESCE(SUM(wcs.package_weight), 0) AS packingWeight,
-        wc.box_no
+            pt.id,
+            pt.source_code as sourceCode,
+            pt.packing_status as packingStatus,
+            pt.weighting_status as weightingStatus,
+            (SELECT CASE WHEN error_msg is null or error_msg = '' THEN '' ELSE concat('第',wc.box_no,'箱:',wc.error_msg) END AS errorMsg FROM wms_carton wc WHERE wc.packing_task_id = pt.ID AND wc.is_deleted = FALSE order by wc.create_time DESC limit 1) as errorMsg,
+            (SELECT COALESCE(SUM(wcd.pack_qty), 0) FROM wms_carton wc LEFT JOIN wms_carton_detail wcd ON wcd.main_id = wc.id and wcd.is_deleted = false WHERE wc.packing_task_id = pt.ID AND wc.is_deleted = FALSE) as packedQty,
+            (SELECT COALESCE(SUM(wcs.package_weight), 0) FROM wms_carton_spec wcs WHERE wcs.main_id = pt.ID AND wcs.is_deleted = FALSE) as packingWeight
+--             (SELECT COALESCE(SUM(pd.qty), 0) FROM picking_lists pl LEFT JOIN picking_detail pd on pd.main_id = pl.id and pd.is_deleted = FALSE WHERE pl.source_id = pt.source_id AND pl.is_deleted = FALSE) as pickQty
         FROM
-        packing_task pt
-        LEFT JOIN wms_carton wc ON wc.packing_task_id = pt.id AND wc.is_deleted = FALSE
-        LEFT JOIN wms_carton_detail wcd ON wcd.main_id = wc.id AND wcd.is_deleted = FALSE
-        LEFT JOIN wms_carton_spec wcs ON wcs.main_id = pt.id AND wcs.is_deleted = FALSE
-        WHERE
-        pt.is_deleted = FALSE
+            packing_task pt
+        where pt.is_deleted = FALSE
+--           and pt.source_type in ('B2B')
         <if test="taskIds!= null and taskIds.size > 0">
             AND pt.id IN
             <foreach collection="taskIds" item="item" open="(" close=")" separator=",">
@@ -124,10 +118,7 @@
                 #{item}
             </foreach>
         </if>
-        GROUP BY
-        pt.id, pt.source_code, pt.packing_status, pt.weighting_status, wc.box_no, wc.error_msg
-        ORDER BY
-        pt.id;
+        group by pt.id,pt.source_code,pt.packing_status,pt.weighting_status
     </select>
     <select id="listGroupSkuByMainId" resultType="com.erp.model.wms.dto.WmsCartonSpecDTO$GroupSkuDTO">
         SELECT
