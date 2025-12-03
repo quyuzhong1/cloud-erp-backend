@@ -2544,6 +2544,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         if (ObjectUtils.isEmpty(list)) {
             throw new ServiceException(ApiError.SO_OUTBOUND_NOT_FOUND);
         }
+
         List<String> channelIds = dtoList.stream().map(SoOutstockDTO.PagingUpdateDTO::getLogisticsChannelId).collect(Collectors.toList());
         //物流供应商信息
         List<LogisticsChannelDTO.BaseDTO> logisticsInfoList = logisticsFeign.listChannelInfoById(channelIds);
@@ -2571,6 +2572,22 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                     batchResultDTOList.add(batchResultDTO);
                     continue;
                 }
+                if (CollectionUtils.isNotEmpty(pagingUpdateDTO.getTrackNoList())){
+
+                    boolean hasTrackNoError = false;
+                    //跟踪号只能是数字或英文
+                    for (String trackNo : pagingUpdateDTO.getTrackNoList()) {
+                        if (!trackNo.matches("^[a-zA-Z0-9]+$")) {
+                            hasTrackNoError = true;
+                            BatchResultDTO batchResultDTO = BatchResultDTO.fail(pagingUpdateDTO.getId(),soOutstock.getCode(),"跟踪号只能是数字或英文");
+                            batchResultDTOList.add(batchResultDTO);
+                        }
+                    }
+                    if(hasTrackNoError){
+                        continue;
+                    }
+                }
+
                 LogisticsBillDTO.BatchUpdateTrackNoDTO batchUpdateTrackNoDTO = new LogisticsBillDTO.BatchUpdateTrackNoDTO();
                 batchUpdateTrackNoDTO.setTrackNoList(pagingUpdateDTO.getTrackNoList());
                 batchUpdateTrackNoDTO.setSoOutstockEntity(soOutstock);
