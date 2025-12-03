@@ -250,6 +250,10 @@ public interface BusinessNoConstant {
     String HP="HP";
     //B2B寄样申请单
     String KOLB="KOLB";
+    //企业达人库
+    String DR="DR";
+    //B2C寄样申请单
+    String KOLC="KOLC";
 
 
 }

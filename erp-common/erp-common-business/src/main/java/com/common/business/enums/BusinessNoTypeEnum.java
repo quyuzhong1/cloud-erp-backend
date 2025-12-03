@@ -153,7 +153,14 @@ public enum BusinessNoTypeEnum {
     CODE_ZC(114 ,"ZC","资产编码",BusinessNoConstant.ZC),
 
     CODE_HP(115 ,"HP","回片列表",BusinessNoConstant.HP),
-    CODE_KOLB(115 ,"KOLB","B2B寄样申请单",BusinessNoConstant.KOLB)
+    CODE_KOLB(115 ,"KOLB","B2B寄样申请单",BusinessNoConstant.KOLB),
+
+
+    CODE_DR(120 ,"DR","企业达人库",BusinessNoConstant.DR),
+    CODE_KOLC(121 ,"KOLC","B2C寄样申请单",BusinessNoConstant.KOLC),
+
+
+
 
     ;
 

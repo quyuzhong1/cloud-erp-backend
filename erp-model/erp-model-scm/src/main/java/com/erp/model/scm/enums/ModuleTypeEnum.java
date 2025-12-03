@@ -195,6 +195,8 @@ public enum ModuleTypeEnum {
 
 
     KOL_B2B_APPLICATION("156", "B2B寄样申请单"),
+    KOL_PARTNER_INFO("157", "企业达人库"),
+    KOL_B2C_APPLICATION("158", "B2C寄样申请单"),
 
 
 

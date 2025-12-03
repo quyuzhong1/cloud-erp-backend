@@ -1,24 +1,24 @@
 package com.erp.server.oms.service.impl;
 
-import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.OperationTypeEnum;
-import com.common.business.vo.LoginUser;
-
 import cn.hutool.core.util.StrUtil;
+import com.common.business.service.SuperService;
+import com.common.core.entity.BaseEntity;
+import com.erp.model.oms.dto.KolAddressInfoDTO;
+import com.erp.model.oms.dto.KolCooperationPlatformDTO;
+import com.erp.model.oms.entity.*;
+import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.server.oms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.dto.base.BaseResultDTO;
-import com.erp.model.oms.entity.KolPartnerInfoEntity;
 import com.erp.server.oms.mapper.KolPartnerInfoMapper;
-import com.erp.server.oms.service.KolPartnerInfoService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
-import com.erp.server.oms.service.OperateLogService;
-import com.erp.server.oms.service.CommonService;
 import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
-import com.common.core.controller.vo.ApiResult;
 import cn.hutool.core.util.ObjectUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
@@ -26,24 +26,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.oms.dto.KolPartnerInfoDTO;
-import com.erp.model.workflow.dto.ProcessManagementDTO;
-import com.erp.rpc.workflow.WorkflowFeign;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import cn.hutool.core.collection.CollUtil;
-
-import com.common.business.enums.ApproveStatusEnum;
-import com.common.business.enums.ApproveTypeEnum;
-import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.business.dto.base.*;
-import com.erp.model.sys.dto.SysCodeDTO;
-import com.common.core.excel.ExcelPrintUtils;
-import com.common.core.utils.date.DateUtil;
-
 import javax.servlet.http.HttpServletResponse;
-import java.time.LocalDateTime;
 import javax.annotation.Resource;
+import java.lang.reflect.Field;
 import java.util.stream.Collectors;
 import java.util.*;
 import com.common.core.utils.*;
@@ -62,9 +52,15 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
     @Autowired
     private OperateLogService operateLogService;
     @Autowired
+    private CfgKolOptionService cfgKolOptionService;
+    @Autowired
     private DocNoGenHelper docNoGenHelper;
     @Autowired
-    private WorkflowFeign workflowFeign;
+    private KolAddressInfoService kolAddressInfoService;
+    @Autowired
+    private KolCooperationPlatformService kolCooperationPlatformService;
+    @Autowired
+    private DictLanguageService dictLanguageService;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -78,8 +74,7 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
 
         log.info("开始新增企业达人库");
         // 生成单号
-        // TODO 此处的null需填写生成单号类型，type查看BusinessNoTypeEnum枚举类 注意需要填写prefix 为单号前缀
-        String code = docNoGenHelper.generateCode(null);
+        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_DR);
         kolPartnerInfoEntity.setCode(code);
         boolean save = super.save(kolPartnerInfoEntity);
         if(!save) {
@@ -88,10 +83,23 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
 
         // 操作日志
         String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "企业达人库" , kolPartnerInfoEntity.getCode());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, kolPartnerInfoEntity.getId(), "新增操作");
-        // TODO 新增明细（如果有明细的话）
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.KOL_PARTNER_INFO.getCode(), kolPartnerInfoEntity.getId(), "新增操作");
 
+        String id = kolPartnerInfoEntity.getId();
+
+        List<KolAddressInfoDTO.AddDTO> kolAddressInfoDTOList = addDTO.getKolAddressInfoDTOList();
+        if(CollUtil.isNotEmpty(kolAddressInfoDTOList)){
+            List<KolAddressInfoEntity> list = BeanMapperUtils.copyList(KolAddressInfoEntity.class, kolAddressInfoDTOList);
+            list.forEach(e -> e.setMainId(id));
+            kolAddressInfoService.saveBatch(list);
+        }
+
+        List<KolCooperationPlatformDTO.AddDTO> kolCooperationPlatformDTOList = addDTO.getKolCooperationPlatformDTOList();
+        if(CollUtil.isNotEmpty(kolCooperationPlatformDTOList)){
+            List<KolCooperationPlatformEntity> list = BeanMapperUtils.copyList(KolCooperationPlatformEntity.class, kolCooperationPlatformDTOList);
+            list.forEach(e -> e.setMainId(id));
+            kolCooperationPlatformService.saveBatch(list);
+        }
         return new BaseResultDTO.AddDTO(kolPartnerInfoEntity.getId(), code);
     }
 
@@ -114,16 +122,118 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
         if(!save) {
             throw new ServiceException("企业达人库保存失败");
         }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
 
         // 记录主单操作日志
-            log.info("编辑 开始记录企业达人库日志数据，单号：【{}】", kolPartnerInfoEntity.getCode());
-            String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), kolPartnerInfoEntity.getCode(), "企业达人库");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLogByObj(old, kolPartnerInfoEntity, null, kolPartnerInfoEntity.getId(), msg);
+        log.info("编辑 开始记录企业达人库日志数据，单号：【{}】", kolPartnerInfoEntity.getCode());
+        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), kolPartnerInfoEntity.getCode(), "企业达人库");
+        operateLogService.addModuleOperateLogByObj(old, kolPartnerInfoEntity, ModuleTypeEnum.KOL_PARTNER_INFO.getCode(), kolPartnerInfoEntity.getId(), msg);
+
+        List<KolCooperationPlatformEntity> oldKolCooperationPlatformEntities = kolCooperationPlatformService.lambdaQuery().eq(KolCooperationPlatformEntity::getMainId, kolPartnerInfoEntity.getId()).list();
+        List<KolCooperationPlatformDTO.UpdateDTO> kolCooperationPlatformDTOList = addOrUpdateDTO.getKolCooperationPlatformDTOList();
+        if(CollUtil.isEmpty(kolCooperationPlatformDTOList)){
+            if (CollUtil.isNotEmpty(oldKolCooperationPlatformEntities)){
+                kolCooperationPlatformService.lambdaUpdate().set(KolCooperationPlatformEntity::getIsDeleted, true).eq(KolCooperationPlatformEntity::getMainId, kolPartnerInfoEntity.getId()).update();
+                // 操作日志
+                String detailMsg = StrUtil.format("用户【{}】删除所有合作平台信息", UserContext.getDefaultLoginUser().getUserName());
+                operateLogService.addModuleOperateLog(detailMsg, ModuleTypeEnum.KOL_PARTNER_INFO.getCode(), kolPartnerInfoEntity.getId(), "编辑信息");
+            }
+        }else{
+            List<KolCooperationPlatformEntity> kolCooperationPlatformEntities = BeanMapperUtils.copyList(KolCooperationPlatformEntity.class, kolCooperationPlatformDTOList);
+            this.updateDetail(kolPartnerInfoEntity.getId(),ModuleTypeEnum.KOL_PARTNER_INFO.getCode(),kolCooperationPlatformService,  kolCooperationPlatformEntities, oldKolCooperationPlatformEntities,"platformName");
+        }
+
+        List<KolAddressInfoEntity> oldKolAddressInfoEntities = kolAddressInfoService.lambdaQuery().eq(KolAddressInfoEntity::getMainId, kolPartnerInfoEntity.getId()).list();
+        List<KolAddressInfoDTO.UpdateDTO> kolAddressInfoDTOList = addOrUpdateDTO.getKolAddressInfoDTOList();
+
+        if(CollUtil.isEmpty(kolAddressInfoDTOList)){
+            if (CollUtil.isNotEmpty(oldKolAddressInfoEntities)){
+                kolAddressInfoService.lambdaUpdate().set(KolAddressInfoEntity::getIsDeleted, true).eq(KolAddressInfoEntity::getMainId, kolPartnerInfoEntity.getId()).update();
+                // 操作日志
+                String detailMsg = StrUtil.format("用户【{}】删除所有地址信息", UserContext.getDefaultLoginUser().getUserName());
+                operateLogService.addModuleOperateLog(detailMsg, ModuleTypeEnum.KOL_PARTNER_INFO.getCode(), kolPartnerInfoEntity.getId(), "编辑信息");
+            }
+        }else {
+            List<KolAddressInfoEntity> kolAddressInfoEntities = BeanMapperUtils.copyList(KolAddressInfoEntity.class, kolAddressInfoDTOList);
+            this.updateDetail(kolPartnerInfoEntity.getId(), ModuleTypeEnum.KOL_PARTNER_INFO.getCode(), kolAddressInfoService, kolAddressInfoEntities, oldKolAddressInfoEntities, "contactPerson");
+        }
         return Boolean.TRUE;
     }
 
+    private <T extends BaseEntity> void updateDetail(String businessId, String moduleType, SuperService service, List<T> detailList, List<T> oldDetailList, String keyFieldName) {
+        // 处理需要删除的数据
+        if (CollUtil.isNotEmpty(oldDetailList)) {
+            List<String> detailIds = detailList.stream()
+                    .map(BaseEntity::getId)
+                    .filter(StringUtils::isNotBlank)
+                    .collect(Collectors.toList());
+
+            List<T> remove = oldDetailList.stream()
+                    .filter(oldEntity -> !detailIds.contains(oldEntity.getId()))
+                    .collect(Collectors.toList());
+
+            if (CollUtil.isNotEmpty(remove)) {
+                service.removeByIds(remove.stream().map(BaseEntity::getId).collect(Collectors.toList()));
+                //添加日志
+                for (T entity : remove) {
+                    try {
+                        // 获取实体类的Class对象
+                        Class<?> clazz = entity.getClass();
+                        // 同样地，可以获取其他字段的值
+                        Field nameField = clazz.getDeclaredField(keyFieldName); // 替换为你想访问的字段名
+                        nameField.setAccessible(true);
+                        Object nameValue = nameField.get(entity);
+                        // 添加日志记录的逻辑
+                        operateLogService.addModuleOperateLog(StrUtil.format("删除【{}】",nameValue.toString()), moduleType, businessId, "编辑信息");
+                    } catch (NoSuchFieldException | IllegalAccessException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }
+
+        // 处理需要新增的数据
+        List<T> addList = detailList.stream()
+                .filter(e -> StringUtils.isBlank(e.getId()))
+                .collect(Collectors.toList());
+        if (CollUtil.isNotEmpty(addList)) {
+            service.saveBatch(addList);
+            //添加日志
+            for (T entity : addList) {
+                try {
+                    // 获取实体类的Class对象
+                    Class<?> clazz = entity.getClass();
+                    // 同样地，可以获取其他字段的值
+                    Field nameField = clazz.getDeclaredField(keyFieldName); // 替换为你想访问的字段名
+                    nameField.setAccessible(true);
+                    Object nameValue = nameField.get(entity);
+                    // 添加日志记录的逻辑
+                    operateLogService.addModuleOperateLog(StrUtil.format("新增【{}】",nameValue.toString()), moduleType, businessId, "编辑信息");
+                } catch (NoSuchFieldException | IllegalAccessException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+        // 处理需要更新的数据
+        List<T> updateList = detailList.stream()
+                .filter(e -> StringUtils.isNotBlank(e.getId()))
+                .collect(Collectors.toList());
+
+        if (CollUtil.isNotEmpty(updateList)) {
+            service.updateBatchById(updateList);
+            //如何从updateList获取到指定的字段的值
+            for (T entity : updateList) {
+                T oldDetail = (T) oldDetailList.stream()
+                        .filter(e -> Objects.equals(e.getId(), entity.getId()))
+                        .findFirst()
+                        .orElse(null);
+                if (Objects.nonNull(oldDetail)) {
+                    // 可以在这里添加日志记录的逻辑
+                    operateLogService.addModuleOperateLogByObj(oldDetail, entity, moduleType, oldDetail.getId(), "编辑信息");
+                }
+            }
+        }
+    }
 
     @Override
     public PagingVO<KolPartnerInfoDTO.ListDTO> paging(PagingDTO<KolPartnerInfoDTO.PagingParamDTO> pagingParamDTO) {
@@ -143,163 +253,20 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
         KolPartnerInfoDTO.PagingParamDTO searchParam = new KolPartnerInfoDTO.PagingParamDTO();
         searchParam.setPermissionSql(param.getPermissionSql());
         List<KolPartnerInfoDTO.TabListDTO> list = baseMapper.tabList(searchParam);
-        // 获取状态列表
-        List<String> statusList = ApproveStatusEnum.getStatusList();
-        // 不存在的状态赋值为0
-        List<String> existStatusList = list.stream().map(KolPartnerInfoDTO.TabListDTO::getTabFlag).collect(Collectors.toList());
-        statusList.parallelStream().forEach(status -> {
-            if(!existStatusList.contains(status)) {
-            list.add(new KolPartnerInfoDTO.TabListDTO(status, 0));
-        }
-        });
-        list.add(new KolPartnerInfoDTO.TabListDTO("all", list.stream().mapToInt(KolPartnerInfoDTO.TabListDTO::getCount).sum()));
+        list.add(0,(new KolPartnerInfoDTO.TabListDTO("all","全部",0)));
         // 计算合计数量
         return list;
     }
 
     @Override
-    public void exportList(KolPartnerInfoDTO.ExportDTO param, HttpServletResponse response) {
-        List<KolPartnerInfoDTO.ListDTO> list = this.baseMapper.listExport(param);
-        if(CollUtil.isEmpty(list)) {
-           return;
-        }
-        // 数据处理
-        fillList(list);
+    public void exportList(KolPartnerInfoDTO.PagingParamDTO param, HttpServletResponse response) {
 
-        // 导出数据
-        StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/kolPartnerInfo.xlsx";
-        String name = "企业达人库导出";
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date).append(name);
-        try {
-            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
-        } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_1015);
-        }
-    }
-
-    @Transactional(rollbackFor = Exception.class)
-    @Override
-    public BatchResultDTO submit(String id) {
-        KolPartnerInfoEntity entity = getById(id);
-        if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException("未找到企业达人库数据");
-        }
-        validateSubmit(entity);
-        // 更新单据审核状态
-        log.info("提交 开始修改企业达人库状态数据，id：【{}】", id);
-        this.updateApproveStatus(id, ApproveStatusEnum.APPROVE_ING.getStatus());
-
-        // TODO 启动流程（如果需要的话）
-        log.info("提交 开始启动企业达人库流程，id=：【{}】", entity.getId());
-        startProcess(entity);
-        // 记录操作日志
-        log.info("提交 开始记录企业达人库日志数据，id：【{}】", id);
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据提交审核 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "企业达人库");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, entity.getId(), "提交操作");
-        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.SUBMIT);
-    }
-
-    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
-    @Transactional(rollbackFor = Exception.class)
-    @Override
-    public BaseResultDTO.AddDTO addAndSubmit(KolPartnerInfoDTO.AddDTO dto) {
-        // 新增
-        BaseResultDTO.AddDTO result = this.add(dto);
-        // 提交
-        this.submit(result.getId());
-        return result;
-    }
-
-    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
-    @Transactional(rollbackFor = Exception.class)
-    @Override
-    public void updateAndSubmit(KolPartnerInfoDTO.UpdateDTO dto) {
-        // 修改
-        this.update(dto);
-        // 提交
-        this.submit(dto.getId());
-    }
-
-    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
-    @Transactional(rollbackFor = Exception.class)
-    @Override
-    public BatchResultDTO approve(ApproveOneDTO dto) {
-        ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(dto.getType());
-        if(Objects.equals(approveType, ApproveTypeEnum.REJECT) && StrUtils.isEmpty(dto.getComment())) {
-            throw new ServiceException(ApiError.REJECT_COMMENT_NOT_EMPTY);
-        }
-        KolPartnerInfoEntity entity = getById(dto.getId());
-
-        // 调用流程审核
-        approveProcess(entity, dto);
-        // 操作日志
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作  审核结果：【{}】 审核意见 ：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "企业达人库", approveType.getName(), dto.getComment());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, entity.getId(), "审核操作");
-        ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(approveType);
-        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.approveStatus(approveStatus));
-    }
-
-    /**
-    * 审核流程处理
-    * @param entity
-    * @param dto
-    */
-    private void approveProcess(KolPartnerInfoEntity entity, ApproveOneDTO dto) {
-        LoginUser userInfo = UserContext.getDefaultLoginUser();
-        ProcessManagementDTO.ApproveDTO approveDTO = new ProcessManagementDTO.ApproveDTO();
-        approveDTO.setBusinessId(entity.getId());
-        // TODO 此处的null需修改为流程模块类型，BusinessKey查看SourceTypeEnum枚举类
-        approveDTO.setBusinessKey(null);
-        approveDTO.setApproveType(ApproveTypeEnum.getByCode(dto.getType()));
-        approveDTO.setComment(dto.getComment());
-        approveDTO.setUserId(userInfo.getUid());
-        approveDTO.setVariablesMap(BeanUtil.beanToMap(entity));
-        ApiResult<ProcessManagementDTO.ApproveResultDTO> approveResult = workflowFeign.approve(approveDTO);
-        Integer code = approveResult.getCode();
-        if (200 != code) {
-            throw new ServiceException(ApiError.ERROR_94006);
-        }
-        ProcessManagementDTO.ApproveResultDTO data = approveResult.getData();
-        if (ObjectUtil.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()) {
-            // 无需走流程的数据则直接更新状态
-            approveEnd(dto, entity);
-        }
-    }
-
-    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
-    @Transactional(rollbackFor = Exception.class)
-    @Override
-    public BatchResultDTO disApprove(String id) {
-        KolPartnerInfoEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到企业达人库单数据"));
-        // 反审核条件判断
-        validateDisApprove(entity);
-        // TODO 检查是否有下推单据（如果支持下推的话）明细数据
-
-        // 更新审核信息
-        updateForDisApprove(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
-
-        // 操作日志
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据反审核操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "企业达人库");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, entity.getId(), "反审核操作");
-        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DISAPPROVE);
-    }
-
-    private Boolean validateDisApprove(KolPartnerInfoEntity entity) {
-
-        return true;
     }
 
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BatchResultDTO delete(String id) {
         KolPartnerInfoEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到企业达人库数据"));
-        // TODO 删除明细数据（如果有明细数据的话）
-
         // 删除主单数据
         log.info("删除 开始删除企业达人库主单数据，id：【{}】", id);
         super.removeById(id);
@@ -307,48 +274,34 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
         log.info("删除 开始删除企业达人库日志数据，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "企业达人库");
         operateLogService.addModuleOperateLog(msg, null, entity.getCode(), "删除企业达人库数据");
+
+        kolCooperationPlatformService.lambdaUpdate().eq(KolCooperationPlatformEntity::getMainId, id).set(KolCooperationPlatformEntity::getIsDeleted, true).update();
+
+        kolAddressInfoService.lambdaUpdate().eq(KolAddressInfoEntity::getMainId, id).set(KolAddressInfoEntity::getIsDeleted, true).update();
+
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
     }
 
-    /**
-    * 撤销
-    */
-    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BatchResultDTO cancelProcess(String id) {
+    public BatchResultDTO disabled(String id, Boolean disabled) {
         KolPartnerInfoEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到企业达人库数据"));
-        // TODO 撤销流程
-        log.info("撤销 开始撤销流程，id：【{}】",id);
+        if(!entity.getDisabled().equals(disabled)){
 
-        log.info("撤销 开始修改企业达人库状态，id：【{}】", id);
-        updateApproveStatus(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
+            entity.setDisabled(disabled);
 
-        //操作日志
-        log.info("撤销 开始记录操作日志，id：【{}】", id);
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据撤销流程操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "企业达人库");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, entity.getId(), "取消流程操作");
-        ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
-        revokeDTO.setBusinessId(entity.getId());
-        // TODO 此处的null需修改为日志模块类型，BusinessKey查看SourceTypeEnum枚举类
-        revokeDTO.setBusinessKey(null);
-        revokeDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
-        workflowFeign.revokeProcess(revokeDTO);
-        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.CANCEL_PROCESS);
+            updateById(entity);
+
+            String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据{}操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "企业达人库",disabled ? "禁用" : "启用");
+            operateLogService.addModuleOperateLog(msg, null, entity.getCode(), disabled ? "禁用" : "启用" + "企业达人库数据");
+        }
+
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DISABLED);
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
-    public Boolean approveEnd(ApproveOneDTO dto, KolPartnerInfoEntity entity) {
-        if (ObjectUtil.isEmpty(entity)) {
-            return Boolean.TRUE;
-        }
-        ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
-        updateForApprove(entity.getId(), approveStatus.getStatus());
-        // todo 明细数据处理 上下游数据处理
-
-        return Boolean.TRUE;
+    public Boolean importFile(BaseDTO.ImportDTO dto) {
+        return null;
     }
 
 
@@ -358,64 +311,32 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
         KolPartnerInfoDTO.ViewDTO data = BeanMapperUtils.map(KolPartnerInfoDTO.ViewDTO.class, kolPartnerInfoEntity);
         // 数据填充处理
         fillOne(data);
-        // TODO 查询明细数据（如果有的话）
         return data;
     }
-    /**
-    * 启动流程
-    *
-    * @param entity
-    * @return void
-    * @Date 2023/7/4 10:07
-    **/
 
-    public void startProcess(KolPartnerInfoEntity entity) {
-        ProcessManagementDTO.StartDTO startDTO = new ProcessManagementDTO.StartDTO();
-        startDTO.setBusinessId(entity.getId());
-        startDTO.setBusinessCode(entity.getCode());
-        // TODO 此处的null需修改为日志模块类型，BusinessKey查看SourceTypeEnum枚举类
-        startDTO.setBusinessKey(null);
-        startDTO.setBusinessName(entity.getCode());
-        startDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
-        startDTO.setVariablesMap(BeanUtil.beanToMap(entity));
-        ApiResult<ProcessManagementDTO.StartResultDTO> result = workflowFeign.start(startDTO);
-        if (!result.isSuccess()) {
-            throw new ServiceException(result.getMsg());
-        }
-    }
     private void fillOne(KolPartnerInfoDTO.ViewDTO data) {
         if (ObjectUtil.isEmpty(data)) {
             return;
         }
-    }
 
-    /**
-    * 审核更新审核信息
-    * @param id
-    * @param approveStatus
-    */
-    public void updateForApprove(String id, String approveStatus) {
-        //当前登录人
-        LoginUser userInfo = UserContext.getDefaultLoginUser();
-     }
+        List<CfgKolOptionEntity> cfgKolOptionEntities = cfgKolOptionService.lambdaQuery().in(CfgKolOptionEntity::getId, Arrays.asList("cooperationType", "partnerType")).list();
+        Map<String, String> map = cfgKolOptionEntities.stream().collect(Collectors.toMap(CfgKolOptionEntity::getId, CfgKolOptionEntity::getName));
 
-    /**
-    * 反审核更新审核信息
-    * @param id
-    * @param approveStatus
-    */
-    @Transactional(rollbackFor = Exception.class)
-    public void updateForDisApprove(String id, String approveStatus) {
+        List<DictLanguageEntity> dictLanguageEntities = dictLanguageService.list();
+        Map<String, String> languageMap = dictLanguageEntities.stream().collect(Collectors.toMap(DictLanguageEntity::getId, DictLanguageEntity::getNameZh));
 
-    }
+        data.setCooperationTypeName(map.get(data.getCooperationType()));
 
-    /**
-    * 更新审核状态
-    */
-    @Transactional(rollbackFor = Exception.class)
-    public void updateApproveStatus(String id, String approveStatus) {
-        lambdaUpdate().eq(KolPartnerInfoEntity::getId, id)
-        .update(new KolPartnerInfoEntity());
+        data.setTypeName(map.get(data.getType()));
+
+        data.setLanguageName(languageMap.get(data.getLanguage()));
+
+        List<KolCooperationPlatformEntity> kolCooperationPlatformEntities = kolCooperationPlatformService.lambdaQuery().eq(KolCooperationPlatformEntity::getMainId, data.getId()).orderByDesc(KolCooperationPlatformEntity::getCreateTime).list();
+        data.setKolCooperationPlatformDTOList(kolCooperationPlatformEntities);
+
+        List<KolAddressInfoEntity> kolAddressInfoEntities = kolAddressInfoService.lambdaQuery().eq(KolAddressInfoEntity::getMainId, data.getId()).orderByDesc(KolAddressInfoEntity::getCreateTime).list();
+        data.setKolAddressInfoDTOList(kolAddressInfoEntities);
+
     }
 
     /**
@@ -426,8 +347,22 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
            return;
         }
 
+        List<CfgKolOptionEntity> cfgKolOptionEntities = cfgKolOptionService.lambdaQuery().in(CfgKolOptionEntity::getId, Arrays.asList("cooperationType", "partnerType")).list();
+        Map<String, String> map = cfgKolOptionEntities.stream().collect(Collectors.toMap(CfgKolOptionEntity::getId, CfgKolOptionEntity::getName));
+
+        List<DictLanguageEntity> dictLanguageEntities = dictLanguageService.list();
+        Map<String, String> languageMap = dictLanguageEntities.stream().collect(Collectors.toMap(DictLanguageEntity::getId, DictLanguageEntity::getNameZh));
+
+
         // 属性赋值
         for(KolPartnerInfoDTO.ListDTO data : list) {
+
+            data.setCooperationTypeName(map.get(data.getCooperationType()));
+
+            data.setTypeName(map.get(data.getType()));
+
+            data.setLanguageName(languageMap.get(data.getLanguage()));
+
         }
     }
     /**
@@ -440,7 +375,9 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
     * 新增修改处理数据
     */
     private void handleData(KolPartnerInfoEntity kolPartnerInfoEntity) {
-    // TODO 验证数据 & 数据赋值
+
+
+
     }
 
 
@@ -461,4 +398,5 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
         List<KolPartnerInfoEntity> list = this.list(queryWrapper);
         return BeanMapperUtils.copyList(KolPartnerInfoDTO.DropDownDTO.class, list);
     }
+
 }

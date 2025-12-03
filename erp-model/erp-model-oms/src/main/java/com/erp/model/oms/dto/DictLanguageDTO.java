@@ -1,5 +1,6 @@
 package com.erp.model.oms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
@@ -37,9 +38,9 @@ public class DictLanguageDTO implements Serializable {
         private String  id;
 
         /**
-        * 编号
-        */
-        private String code;
+         * 本地语言名
+         */
+        private String nameNative;
 
         /**
         * 英文名称
@@ -108,9 +109,13 @@ public class DictLanguageDTO implements Serializable {
     @NoArgsConstructor
     public static class ListDTO {
         /**
-         * 编号
+         * id
          */
-        private String code;
+        private String id;
+        /**
+         * 本地语言名
+         */
+        private String nameNative;
 
         /**
          * 英文名称

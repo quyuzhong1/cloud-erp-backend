@@ -39,14 +39,6 @@ public interface KolPartnerInfoMapper extends BaseMapper<KolPartnerInfoEntity> {
     List<ApproveStatusQtyDTO> listCount(@Param("params") KolPartnerInfoDTO.PagingParamDTO params);
 
     /**
-    * 导出Excel查询
-    * @param params
-    * @return
-    */
-    List<KolPartnerInfoDTO.ListDTO> listExport(@Param("params") KolPartnerInfoDTO.ExportDTO params);
-
-
-    /**
     * 获取状态统计
     * @param searchParam
     * @return

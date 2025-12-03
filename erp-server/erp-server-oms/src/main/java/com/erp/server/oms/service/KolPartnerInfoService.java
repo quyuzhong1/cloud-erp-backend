@@ -5,6 +5,7 @@ import com.common.business.dto.base.*;
 import com.erp.model.oms.dto.KolPartnerInfoDTO;
 import com.common.business.vo.PagingVO;
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.constraints.NotNull;
 import java.util.List;
 
 /**
@@ -63,51 +64,6 @@ public interface KolPartnerInfoService extends SuperService<KolPartnerInfoEntity
     KolPartnerInfoDTO.ViewDTO view(String id);
 
     /**
-    * 新增并提交审核
-    * @author jack
-    * @date: 2025-12-02
-    * @param dto
-    * @return BaseResultDTO.AddDTO
-    */
-    BaseResultDTO.AddDTO addAndSubmit(KolPartnerInfoDTO.AddDTO dto);
-
-    /**
-    * 修改并提交审核
-    * @author jack
-    * @date: 2025-12-02
-    * @param dto
-    * @return
-    */
-    void updateAndSubmit(KolPartnerInfoDTO.UpdateDTO dto);
-
-     /**
-     * 提交审核
-     * @author jack
-     * @date: 2025-12-02
-     * @param id
-     * @return
-     */
-    BatchResultDTO submit(String id);
-
-    /**
-    * 审核
-    * @author jack
-    * @date: 2025-12-02
-    * @param dto
-    * @return
-    */
-    BatchResultDTO approve(ApproveOneDTO dto);
-
-    /**
-    * 反审核
-    * @author jack
-    * @date: 2025-12-02
-    * @param id
-    * @return
-    */
-    BatchResultDTO disApprove(String id);
-
-    /**
     * 删除
     * @author jack
     * @date: 2025-12-02
@@ -116,14 +72,6 @@ public interface KolPartnerInfoService extends SuperService<KolPartnerInfoEntity
     */
     BatchResultDTO delete(String id);
 
-    /**
-    * 撤销
-    * @author jack
-    * @date: 2025-12-02
-    * @param id
-    * @return
-    */
-    BatchResultDTO cancelProcess(String id);
 
     /**
     * 导出Excel
@@ -133,15 +81,12 @@ public interface KolPartnerInfoService extends SuperService<KolPartnerInfoEntity
     * @param response
     * @return
     */
-    void exportList(KolPartnerInfoDTO.ExportDTO dto, HttpServletResponse response);
+    void exportList(KolPartnerInfoDTO.PagingParamDTO dto, HttpServletResponse response);
 
-    /**
-    * 审核通过回调方法
-    * @param dto
-    * @param entity
-    * @return
-    */
-    Boolean approveEnd(ApproveOneDTO dto, KolPartnerInfoEntity entity);
 
     List<KolPartnerInfoDTO.DropDownDTO> dropDown(KolPartnerInfoDTO.SelectDTO dto);
+
+    BatchResultDTO disabled(String id,  Boolean disabled);
+
+    Boolean importFile(BaseDTO.ImportDTO dto);
 }
