@@ -406,7 +406,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Resource
     private PackagePlanService packagePlanService;
     private static final int MAX_RETRY_COUNT = 3;
-    private static final long RETRY_DELAY_SECONDS = 10000;
+    private static final long RETRY_DELAY_SECONDS = 30000;
 
     @Resource
     private SyncThirdWarehouseService syncThirdWarehouseService;
@@ -3301,7 +3301,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 //重试查询
                 try {
                     //等待30秒后重试
-                    log.error("10秒后进行第" + (retryCount + 2) + "次重试");
+                    log.error("30秒后进行第" + (retryCount + 2) + "次重试");
                     Thread.sleep(RETRY_DELAY_SECONDS);
                     apiResult = createThirdWarehouseOutbound(entity, warehouseId, createOutboundReq, retryCount + 1, thirdWarehouseDeliveryEntity);
                     return apiResult;
