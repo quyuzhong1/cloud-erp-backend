@@ -105,7 +105,7 @@ public class KolSocialMediaController extends BaseController {
     * 批量修改
     * @author wuhaotian
     * @date:  2025-12-03
-    * @param dtoList
+    * @param dto
     * @return ApiResult<List<BatchResultDTO>>
     */
     @PostMapping("/batchUpdate")
@@ -115,27 +115,28 @@ public class KolSocialMediaController extends BaseController {
         menuCode = "oms:kolSocialMedia:update",
         serviceClass = KolSocialMediaService.class,
         keyIdName = "id")
-    public ApiResult<List<BatchResultDTO>> batchUpdate(@RequestBody @Validated List<KolSocialMediaDTO.UpdateDTO> dtoList) {
+    public ApiResult<List<BatchResultDTO>> batchUpdate(@RequestBody @Validated KolSocialMediaDTO.BatchUpdateDTO dto) {
+        List<KolSocialMediaDTO.UpdateDTO> dtoList = dto.getList();
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dtoList.size());
         
         List<String> ids = dtoList.stream().map(KolSocialMediaDTO.UpdateDTO::getId).collect(Collectors.toList());
         List<KolSocialMediaEntity> list = kolSocialMediaService.lambdaQuery().in(KolSocialMediaEntity::getId, ids).list();
         Map<String, KolSocialMediaEntity> idEntityMap = list.stream().collect(Collectors.toMap(KolSocialMediaEntity::getId, e -> e));
         
-        for (KolSocialMediaDTO.UpdateDTO dto : dtoList) {
+        for (KolSocialMediaDTO.UpdateDTO updateDTO : dtoList) {
             BatchResultDTO updateResult;
             try {
-                kolSocialMediaService.update(dto);
-                KolSocialMediaEntity entity = idEntityMap.get(dto.getId());
-                String code = entity != null ? entity.getId() : dto.getId();
-                updateResult = BatchResultDTO.success(dto.getId(), code, "修改成功");
+                kolSocialMediaService.update(updateDTO);
+                KolSocialMediaEntity entity = idEntityMap.get(updateDTO.getId());
+                String code = entity != null ? entity.getId() : updateDTO.getId();
+                updateResult = BatchResultDTO.success(updateDTO.getId(), code, "修改成功");
             } catch (Exception e) {
                 log.error("达人社媒数据表批量修改失败", e);
-                KolSocialMediaEntity entity = idEntityMap.get(dto.getId());
+                KolSocialMediaEntity entity = idEntityMap.get(updateDTO.getId());
                 if (entity == null) {
-                    updateResult = BatchResultDTO.fail(dto.getId(), dto.getId(), "达人社媒数据不存在，修改失败");
+                    updateResult = BatchResultDTO.fail(updateDTO.getId(), updateDTO.getId(), "达人社媒数据不存在，修改失败");
                 } else {
-                    updateResult = BatchResultDTO.fail(dto.getId(), entity.getId(), e.getMessage());
+                    updateResult = BatchResultDTO.fail(updateDTO.getId(), entity.getId(), e.getMessage());
                 }
             }
             resultDTOS.add(updateResult);

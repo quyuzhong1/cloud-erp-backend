@@ -165,6 +165,22 @@ public class KolSocialMediaDTO implements Serializable {
 
     }
 
+    /**
+    * 批量修改
+    */
+    @Data
+    @NoArgsConstructor
+    public static class BatchUpdateDTO {
+
+        /**
+        * 修改列表
+        */
+        @NotNull(message = "修改列表不能为空")
+        @Size(min = 1, message = "至少需要一条数据")
+        private java.util.List<UpdateDTO> list;
+
+    }
+
     @Data
     @NoArgsConstructor
     public static class CommonDTO {

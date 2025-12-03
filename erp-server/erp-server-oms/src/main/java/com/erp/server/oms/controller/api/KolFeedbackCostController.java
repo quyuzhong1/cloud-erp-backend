@@ -105,7 +105,7 @@ public class KolFeedbackCostController extends BaseController {
     * 批量修改
     * @author wuhaotian
     * @date:  2025-12-03
-    * @param dtoList
+    * @param dto
     * @return ApiResult<List<BatchResultDTO>>
     */
     @PostMapping("/batchUpdate")
@@ -115,27 +115,28 @@ public class KolFeedbackCostController extends BaseController {
         menuCode = "oms:kolFeedbackCost:update",
         serviceClass = KolFeedbackCostService.class,
         keyIdName = "id")
-    public ApiResult<List<BatchResultDTO>> batchUpdate(@RequestBody @Validated List<KolFeedbackCostDTO.UpdateDTO> dtoList) {
+    public ApiResult<List<BatchResultDTO>> batchUpdate(@RequestBody @Validated KolFeedbackCostDTO.BatchUpdateDTO dto) {
+        List<KolFeedbackCostDTO.UpdateDTO> dtoList = dto.getList();
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dtoList.size());
         
         List<String> ids = dtoList.stream().map(KolFeedbackCostDTO.UpdateDTO::getId).collect(Collectors.toList());
         List<KolFeedbackCostEntity> list = kolFeedbackCostService.lambdaQuery().in(KolFeedbackCostEntity::getId, ids).list();
         Map<String, KolFeedbackCostEntity> idEntityMap = list.stream().collect(Collectors.toMap(KolFeedbackCostEntity::getId, e -> e));
         
-        for (KolFeedbackCostDTO.UpdateDTO dto : dtoList) {
+        for (KolFeedbackCostDTO.UpdateDTO updateDTO : dtoList) {
             BatchResultDTO updateResult;
             try {
-                kolFeedbackCostService.update(dto);
-                KolFeedbackCostEntity entity = idEntityMap.get(dto.getId());
-                String code = entity != null ? entity.getId() : dto.getId();
-                updateResult = BatchResultDTO.success(dto.getId(), code, "修改成功");
+                kolFeedbackCostService.update(updateDTO);
+                KolFeedbackCostEntity entity = idEntityMap.get(updateDTO.getId());
+                String code = entity != null ? entity.getId() : updateDTO.getId();
+                updateResult = BatchResultDTO.success(updateDTO.getId(), code, "修改成功");
             } catch (Exception e) {
                 log.error("KOL回片费用表批量修改失败", e);
-                KolFeedbackCostEntity entity = idEntityMap.get(dto.getId());
+                KolFeedbackCostEntity entity = idEntityMap.get(updateDTO.getId());
                 if (entity == null) {
-                    updateResult = BatchResultDTO.fail(dto.getId(), dto.getId(), "KOL回片费用不存在，修改失败");
+                    updateResult = BatchResultDTO.fail(updateDTO.getId(), updateDTO.getId(), "KOL回片费用不存在，修改失败");
                 } else {
-                    updateResult = BatchResultDTO.fail(dto.getId(), entity.getId(), e.getMessage());
+                    updateResult = BatchResultDTO.fail(updateDTO.getId(), entity.getId(), e.getMessage());
                 }
             }
             resultDTOS.add(updateResult);

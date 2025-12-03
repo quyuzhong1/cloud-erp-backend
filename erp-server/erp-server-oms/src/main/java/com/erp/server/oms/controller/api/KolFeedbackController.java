@@ -112,7 +112,7 @@ public class KolFeedbackController extends BaseController {
     * 批量修改
     * @author wuhaotian
     * @date:  2025-12-03
-    * @param dtoList
+    * @param dto
     * @return ApiResult<List<BatchResultDTO>>
     */
     @PostMapping("/batchUpdate")
@@ -122,27 +122,28 @@ public class KolFeedbackController extends BaseController {
         menuCode = "oms:kolFeedback:update",
         serviceClass = KolFeedbackService.class,
         keyIdName = "id")
-    public ApiResult<List<BatchResultDTO>> batchUpdate(@RequestBody @Validated List<KolFeedbackDTO.UpdateDTO> dtoList) {
+    public ApiResult<List<BatchResultDTO>> batchUpdate(@RequestBody @Validated KolFeedbackDTO.BatchUpdateDTO dto) {
+        List<KolFeedbackDTO.UpdateDTO> dtoList = dto.getList();
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dtoList.size());
         
         List<String> ids = dtoList.stream().map(KolFeedbackDTO.UpdateDTO::getId).collect(Collectors.toList());
         List<KolFeedbackEntity> list = kolFeedbackService.lambdaQuery().in(KolFeedbackEntity::getId, ids).list();
         Map<String, KolFeedbackEntity> idEntityMap = list.stream().collect(Collectors.toMap(KolFeedbackEntity::getId, e -> e));
         
-        for (KolFeedbackDTO.UpdateDTO dto : dtoList) {
+        for (KolFeedbackDTO.UpdateDTO updateDTO : dtoList) {
             BatchResultDTO updateResult;
             try {
-                kolFeedbackService.update(dto);
-                KolFeedbackEntity entity = idEntityMap.get(dto.getId());
-                String code = entity != null ? entity.getSourceCode() : dto.getId();
-                updateResult = BatchResultDTO.success(dto.getId(), code, "修改成功");
+                kolFeedbackService.update(updateDTO);
+                KolFeedbackEntity entity = idEntityMap.get(updateDTO.getId());
+                String code = entity != null ? entity.getSourceCode() : updateDTO.getId();
+                updateResult = BatchResultDTO.success(updateDTO.getId(), code, "修改成功");
             } catch (Exception e) {
                 log.error("KOL回片列表批量修改失败", e);
-                KolFeedbackEntity entity = idEntityMap.get(dto.getId());
+                KolFeedbackEntity entity = idEntityMap.get(updateDTO.getId());
                 if (entity == null) {
-                    updateResult = BatchResultDTO.fail(dto.getId(), dto.getId(), "KOL回片列表不存在，修改失败");
+                    updateResult = BatchResultDTO.fail(updateDTO.getId(), updateDTO.getId(), "KOL回片列表不存在，修改失败");
                 } else {
-                    updateResult = BatchResultDTO.fail(dto.getId(), entity.getSourceCode(), e.getMessage());
+                    updateResult = BatchResultDTO.fail(updateDTO.getId(), entity.getSourceCode(), e.getMessage());
                 }
             }
             resultDTOS.add(updateResult);
