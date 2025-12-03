@@ -33,10 +33,40 @@ import com.erp.server.oms.service.CfgKolOptionService;
 import com.erp.model.oms.entity.CfgKolOptionEntity;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.model.sys.entity.DictCurrencyEntity;
+import com.erp.model.sys.dto.CurrencyDTO;
+import com.common.business.dto.FindUserDTO;
+import com.common.business.vo.LoginUser;
+import com.common.business.enums.FileTaskStatusEnum;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.file.feign.FileFeign;
+import com.erp.rpc.dmp.feign.DmpTaskFeign;
+import com.erp.model.oms.dto.excel.KolFeedbackCostExcelDTO;
+import com.erp.server.oms.listener.KolFeedbackCostExcelListener;
+import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.exception.ExcelCommonException;
+import com.common.core.utils.ExcelUtil;
+import com.common.core.utils.FastDFSClientUtil;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.core.io.DefaultResourceLoader;
+import org.springframework.core.io.ResourceLoader;
+import javax.servlet.http.HttpServletResponse;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.stream.Collectors;
 import java.math.BigDecimal;
 import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.BaseDTO;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_OMS_KOL_FEEDBACK_COST;
+import static com.common.business.enums.FileTaskEventEnum.IMPORT_OMS_KOL_FEEDBACK_COST;
 /**
  * <p>
  * KOL回片费用表 服务实现类
@@ -56,6 +86,15 @@ public class KolFeedbackCostServiceImpl extends SuperServiceImpl<KolFeedbackCost
 
     @Autowired
     private SysUserFeign sysUserFeign;
+
+    @Autowired
+    private DownloadTaskFeign downloadTaskFeign;
+
+    @Autowired
+    private FileFeign fileFeign;
+
+    @Autowired
+    private DmpTaskFeign dmpTaskFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -220,6 +259,203 @@ public class KolFeedbackCostServiceImpl extends SuperServiceImpl<KolFeedbackCost
         // 返回成功结果，使用备注作为 code
         String code = StrUtil.isNotBlank(entity.getRemark()) ? entity.getRemark() : entity.getId();
         return BatchResultDTO.success(entity.getId(), code);
+    }
+
+    @Override
+    public Boolean export(PagingDTO<KolFeedbackCostDTO.ParamDTO> dto) {
+        downloadTaskFeign.saveDownloadTask("KOL回片费用导出", EXPORT_OMS_KOL_FEEDBACK_COST.getCode(), dto);
+        return true;
+    }
+
+    /**
+     * 异步导入
+     */
+    @Override
+    public Boolean importExcel(BaseDTO.ImportDTO dto) {
+        dto.setUserId(UserContext.getDefaultLoginUser().getUid());
+        downloadTaskFeign.saveImportTask("KOL回片费用导入", IMPORT_OMS_KOL_FEEDBACK_COST.getCode(), dto);
+        return Boolean.TRUE;
+    }
+
+    /**
+     * 导入KOL回片费用
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void importKolFeedbackCost(BaseDTO.ImportDTO dto) {
+        // 用户
+        List<FindUserDTO> userList = sysUserFeign.getUserList();
+        //设置操作人
+        FindUserDTO findUserDTO = userList.stream()
+                .filter(e -> StringUtils.isNotBlank(dto.getUserId()) && Objects.equals(e.getUserId(), dto.getUserId()))
+                .findFirst()
+                .orElse(null);
+        if (Objects.nonNull(findUserDTO)) {
+            LoginUser user = new LoginUser();
+            user.setUid(findUserDTO.getUserId());
+            user.setUserName(findUserDTO.getUserName());
+            user.setRealName(findUserDTO.getRealName());
+            user.setUserAccount(findUserDTO.getMobile());
+            user.setMobile(findUserDTO.getMobile());
+            UserContext.setLoginUser(user);
+        }
+
+        KolFeedbackCostExcelListener excelListenerUtil = new KolFeedbackCostExcelListener(dto.getTaskId(), dto.getImportType(), dto.getImportCount());
+        try {
+            byte[] bytes = fileFeign.downloadFile(dto.getFileUrl());
+            EasyExcel.read(new ByteArrayInputStream(bytes), KolFeedbackCostExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+        } catch (ExcelCommonException e) {
+            log.error("导入格式错误！", e);
+            throw new ServiceException(ApiError.ERROR_1016);
+        }
+
+        BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
+        importResultDTO.setTaskId(dto.getTaskId());
+        importResultDTO.setCount(excelListenerUtil.getCount());
+        List<KolFeedbackCostExcelDTO> errorList = excelListenerUtil.getErrorList();
+        String url = "";
+        if (CollectionUtils.isNotEmpty(errorList)) {
+            String fileName = "KOL回片费用错误信息.xlsx";
+            File file = ExcelUtil.exportFile(fileName, "error", errorList, KolFeedbackCostExcelDTO.class);
+            if (!file.isDirectory()) {
+                url = FastDFSClientUtil.uploadFile(file, fileName);
+            }
+        }
+        importResultDTO.setRemark("处理完成，失败" + errorList.size() + "条");
+        importResultDTO.setErrorUrl(url);
+        importResultDTO.setFinishTime(LocalDateTime.now());
+        importResultDTO.setStatus(FileTaskStatusEnum.FINISH.getCode());
+        downloadTaskFeign.updateTask(importResultDTO);
+    }
+
+    /**
+     * 处理导入成功的数据
+     */
+    @Transactional(rollbackFor = Exception.class, propagation = org.springframework.transaction.annotation.Propagation.NESTED)
+    @Override
+    public void handleImportSuccessList(List<KolFeedbackCostExcelDTO> successList, List<String> errorNoList, List<KolFeedbackCostExcelDTO> errorList2, String importType) {
+        if (CollectionUtils.isEmpty(successList)) {
+            return;
+        }
+
+        // 批量查询费用类型配置
+        List<CfgKolOptionEntity> cfgKolOptionList = cfgKolOptionService.list();
+        Map<String, String> costTypeNameToIdMap = cfgKolOptionList.stream()
+                .collect(Collectors.toMap(CfgKolOptionEntity::getName, CfgKolOptionEntity::getId, (k1, k2) -> k1));
+
+        // 批量查询币别信息
+        List<DictCurrencyEntity> currencyList = sysUserFeign.currencyList();
+        Map<String, String> currencyNameToIdMap = currencyList.stream()
+                .collect(Collectors.toMap(DictCurrencyEntity::getName, DictCurrencyEntity::getId, (k1, k2) -> k1));
+        // 获取当前日期，用于查询汇率
+        String currentDate = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+
+        // 遍历数据进行校验和保存
+        for (KolFeedbackCostExcelDTO excelDTO : successList) {
+            List<String> errorMsgList = new ArrayList<>();
+            
+            try {
+                // 数据校验和ID解析
+                // 验证费用类型是否存在并解析ID
+                String costTypeName = excelDTO.getCostTypeName();
+                String costTypeId = costTypeNameToIdMap.get(costTypeName);
+                if (StrUtil.isBlank(costTypeId)) {
+                    errorMsgList.add("费用名称【" + costTypeName + "】不存在");
+                } else {
+                    excelDTO.setCostTypeId(costTypeId);
+                }
+
+                // 验证币别是否存在并解析ID
+                String currencyName = excelDTO.getCurrencyName();
+                String currency = currencyNameToIdMap.get(currencyName);
+                if (StrUtil.isBlank(currency)) {
+                    errorMsgList.add("付费币别【" + currencyName + "】不存在");
+                } else {
+                    excelDTO.setCurrency(currency);
+                    try {
+                        BigDecimal exchangeRate = dmpTaskFeign.getRate(currentDate, currency);
+                        if (exchangeRate != null && exchangeRate.compareTo(BigDecimal.ZERO) > 0) {
+                            excelDTO.setExchangeRate(exchangeRate);
+                        } else {
+                            errorMsgList.add("未找到币别【" + currencyName + "】在日期【" + currentDate + "】的汇率");
+                        }
+                    } catch (Exception e) {
+                        log.warn("查询汇率失败，币别：{}，日期：{}", currency, currentDate, e);
+                        errorMsgList.add("查询汇率失败：" + e.getMessage());
+                    }
+                }
+
+                // 解析原币金额
+                if (StringUtils.isNotBlank(excelDTO.getOriginalAmountStr())) {
+                    try {
+                        BigDecimal originalAmount = new BigDecimal(excelDTO.getOriginalAmountStr());
+                        if (originalAmount.compareTo(BigDecimal.ZERO) <= 0) {
+                            errorMsgList.add("金额（原币）必须大于0");
+                        } else {
+                            excelDTO.setOriginalAmount(originalAmount);
+                        }
+                    } catch (NumberFormatException e) {
+                        errorMsgList.add("金额（原币）格式错误：" + excelDTO.getOriginalAmountStr());
+                    }
+                }
+
+                // URL哈希值计算
+                if (StrUtil.isNotBlank(excelDTO.getUrl())) {
+                    String urlHash = cn.hutool.crypto.digest.DigestUtil.md5Hex(excelDTO.getUrl());
+                    excelDTO.setUrlHash(urlHash);
+                }
+
+                // 如果有校验错误，添加到错误列表
+                if (CollUtil.isNotEmpty(errorMsgList)) {
+                    excelDTO.setErrorMsg(com.common.core.utils.FieldValidUtil.getMsgSort(errorMsgList));
+                    errorList2.add(excelDTO);
+                    continue;
+                }
+
+                // 复制数据并保存
+                KolFeedbackCostEntity entity = new KolFeedbackCostEntity();
+                BeanMapperUtils.copy(excelDTO, entity);
+                
+                // 数据处理
+                handleData(entity);
+                
+                // 保存数据
+                boolean save = super.save(entity);
+                if (!save) {
+                    excelDTO.setErrorMsg("保存失败");
+                    errorList2.add(excelDTO);
+                }
+            } catch (Exception e) {
+                log.error("导入KOL回片费用数据失败", e);
+                excelDTO.setErrorMsg(e.getMessage().length() > 50 ? e.getMessage().substring(0, 50) : e.getMessage());
+                errorList2.add(excelDTO);
+            }
+        }
+    }
+
+    @Override
+    public void downloadTemplate(HttpServletResponse response) {
+        // 下载KOL回片费用导入模板
+        String path = "classpath:excel/kolFeedbackCostTemplate.xlsx";
+        String excelName = "KOL回片费用导入模板.xlsx";
+        ResourceLoader resourceLoader = new DefaultResourceLoader();
+        try {
+            InputStream inputStream = resourceLoader.getResource(path).getInputStream();
+            XSSFWorkbook wb = new XSSFWorkbook(inputStream);
+            // 输出Excel文件
+            OutputStream output = response.getOutputStream();
+            response.reset();
+            // 设置文件头
+            response.setHeader("Content-Disposition",
+                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), StandardCharsets.ISO_8859_1));
+            response.setContentType("application/msexcel");
+            wb.write(output);
+            wb.close();
+            log.info("开始下载KOL回片费用导入模板");
+        } catch (Exception e) {
+            log.error("KOL回片费用导入模板下载失败", e);
+            throw new ServiceException("下载模板失败：" + e.getMessage());
+        }
     }
 
     /**

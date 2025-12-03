@@ -76,6 +76,8 @@ public class ExportOmsFeignController {
 
     @Resource
     private KolFeedbackService kolFeedbackService;
+    @Resource
+    private KolFeedbackCostService kolFeedbackCostService;
 
     @Resource
     private SoReceiptService soReceiptService;
@@ -352,6 +354,19 @@ public class ExportOmsFeignController {
     @WebAdvanceQuery(handler = KolFeedbackQueryHandler.class)
     public PagingVO<KolFeedbackDTO.ListDTO> exportKolFeedback(@RequestBody PagingDTO<KolFeedbackDTO.ParamDTO> dto) {
         return kolFeedbackService.paging(dto);
+    }
+
+    /**
+     * KOL回片费用导出
+     */
+    @PostMapping("/exportKolFeedbackCost")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "oms:kolFeedbackCost:export",
+            tableAlias = "kfc")
+    @WebAdvanceQuery
+    public PagingVO<KolFeedbackCostDTO.ListDTO> exportKolFeedbackCost(@RequestBody PagingDTO<KolFeedbackCostDTO.ParamDTO> dto) {
+        return kolFeedbackCostService.paging(dto);
     }
 
     /**

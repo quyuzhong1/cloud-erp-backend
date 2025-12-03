@@ -6,6 +6,7 @@ import com.erp.server.oms.query.KolFeedbackQueryHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import com.common.core.anno.LogAction;
@@ -207,6 +208,48 @@ public class KolFeedbackCostController extends BaseController {
         }
 
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+    /**
+     * 导出
+     * @author wuhaotian
+     * @date:  2025-12-03
+     * @param dto
+     */
+    @PostMapping("/export")
+    @LogAction(value = LogActionEnum.EXPORT, desc = "KOL回片费用表导出")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "oms:kolFeedbackCost:export",
+            tableAlias = "kfc")
+    public ApiResult<Boolean> export(@RequestBody @Validated PagingDTO<KolFeedbackCostDTO.ParamDTO> dto) {
+        return success(kolFeedbackCostService.export(dto));
+    }
+
+    /**
+     * 导入
+     * @author wuhaotian
+     * @date:  2025-12-03
+     * @param dto
+     * @return ApiResult
+     */
+    @PostMapping("/import")
+    @LogAction(value = LogActionEnum.IMPORT, desc = "KOL回片费用表导入")
+    public ApiResult<Boolean> importData(@RequestBody BaseDTO.ImportDTO dto) {
+        Boolean flag = kolFeedbackCostService.importExcel(dto);
+        return flag == true ? success() : failure();
+    }
+
+    /**
+     * 下载导入模板
+     * @author wuhaotian
+     * @date:  2025-12-03
+     * @param response
+     */
+    @PostMapping("/downloadTemplate")
+    public ApiResult<Object> downloadTemplate(HttpServletResponse response) {
+        kolFeedbackCostService.downloadTemplate(response);
+        return success();
     }
 
 }

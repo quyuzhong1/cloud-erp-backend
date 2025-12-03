@@ -100,6 +100,11 @@ public interface ExportOmsFeign {
     @PostMapping("/feign/export/exportKolFeedback")
     PagingVO<KolFeedbackDTO.ListDTO> exportKolFeedback(@RequestBody PagingDTO<KolFeedbackDTO.ParamDTO> dto);
     /**
+     * KOL回片费用导出
+     */
+    @PostMapping("/feign/export/exportKolFeedbackCost")
+    PagingVO<KolFeedbackCostDTO.ListDTO> exportKolFeedbackCost(@RequestBody PagingDTO<KolFeedbackCostDTO.ParamDTO> dto);
+    /**
      * 企业达人库导出
      * @date 2025-12-03
      * @author jack

@@ -21,4 +21,10 @@ public interface ImportOmsFeign {
     @PostMapping("/feign/import/kolFeedback")
     void importKolFeedback(@RequestBody BaseDTO.ImportDTO dto);
 
+    /**
+     * 导入KOL回片费用
+     */
+    @PostMapping("feign/importKolFeedbackCost")
+    void importKolFeedbackCost(@RequestBody BaseDTO.ImportDTO dto);
+
 }
