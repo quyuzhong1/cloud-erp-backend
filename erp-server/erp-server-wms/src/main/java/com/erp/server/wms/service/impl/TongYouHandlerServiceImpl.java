@@ -63,7 +63,7 @@ public class TongYouHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     public ApiResult<String> createInboundBill(ThirdWarehouseCreateInboundReq createInboundReq) {
         // 通邮推送需要默认ERP的头程发货单号-HH+MM+SS
         String timeFormatter = LocalDateTime.now().format(DateTimeFormatter.ofPattern("HHmmss"));
-        createInboundReq.setReceivingCode(CharSequenceUtil.format("{}-{}",createInboundReq.getReferenceNo(),timeFormatter));
+        createInboundReq.setReceivingCode(CharSequenceUtil.format("{}_{}",createInboundReq.getReferenceNo(),timeFormatter));
 
         TongYouCreateInboundReq tongYouCreateInboundReq =  this.buildInboundDto(createInboundReq);
         TongYouBaseResp<TongYouInboundResp> TongYouInboundRespTongYouBaseResp = tongYouService.createInboundBill(tongYouCreateInboundReq);
