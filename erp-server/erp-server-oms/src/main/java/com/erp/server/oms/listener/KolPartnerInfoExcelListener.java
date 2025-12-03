@@ -108,7 +108,6 @@ public class KolPartnerInfoExcelListener extends AnalysisEventListener<KolPartne
                 successList.forEach(excelDTO1 -> excelDTO1.setErrorMsg(e.getMessage().length() > 50 ? e.getMessage().substring(0, 50) : e.getMessage()));
                 errorList.addAll(successList);
             }
-            successList.clear();
             updateTask(count);
         }
     }

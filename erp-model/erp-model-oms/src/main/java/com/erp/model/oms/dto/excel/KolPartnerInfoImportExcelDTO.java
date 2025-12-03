@@ -247,8 +247,6 @@ public class KolPartnerInfoImportExcelDTO implements Serializable {
     @ExcelProperty(value = "默认地址", index = 25)
     @FieldValid(fieldName = "默认地址")
     private String isDefaultName;
-    @ExcelIgnore
-    private Boolean isDefault;
 
     /**
      * 启用状态
@@ -257,8 +255,7 @@ public class KolPartnerInfoImportExcelDTO implements Serializable {
     @ExcelProperty(value = "启用状态", index = 26)
     @FieldValid(fieldName = "启用状态")
     private String disabledName;
-    @ExcelIgnore
-    private Boolean disabled = false;
+
 
 
     /**
