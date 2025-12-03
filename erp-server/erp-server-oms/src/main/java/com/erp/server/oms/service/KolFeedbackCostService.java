@@ -3,6 +3,7 @@ import com.erp.model.oms.entity.KolFeedbackCostEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.oms.dto.KolFeedbackCostDTO;
+import java.util.List;
 
 /**
  * <p>
@@ -22,6 +23,15 @@ public interface KolFeedbackCostService extends SuperService<KolFeedbackCostEnti
     * @return
     */
     BaseResultDTO.AddDTO add(KolFeedbackCostDTO.AddDTO dto);
+
+    /**
+    * 批量新增
+    * @author wuhaotian
+    * @date: 2025-12-03
+    * @param dto
+    * @return
+    */
+    List<BatchResultDTO> batchAdd(KolFeedbackCostDTO.BatchAddDTO dto);
 
     /**
     * 修改

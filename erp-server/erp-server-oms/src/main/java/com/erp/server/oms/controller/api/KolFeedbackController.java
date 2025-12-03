@@ -61,6 +61,20 @@ public class KolFeedbackController extends BaseController {
     }
 
     /**
+    * 批量新增
+    * @author wuhaotian
+    * @date:  2025-12-03
+    * @param dto
+    * @return ApiResult<List<BatchResultDTO>>
+    */
+    @PostMapping("/batchAdd")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_INSERT, desc = "KOL回片列表批量新增")
+    public ApiResult<?> batchAdd(@RequestBody @Validated KolFeedbackDTO.BatchAddDTO dto) {
+        List<BatchResultDTO> resultDTOS = kolFeedbackService.batchAdd(dto);
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+    /**
     * 修改
     * @author wuhaotian
     * @date:  2025-12-01

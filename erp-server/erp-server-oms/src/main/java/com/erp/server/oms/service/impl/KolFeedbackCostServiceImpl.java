@@ -26,6 +26,7 @@ import cn.hutool.crypto.digest.DigestUtil;
 import com.erp.server.oms.service.CfgKolOptionService;
 import com.erp.model.oms.entity.CfgKolOptionEntity;
 import java.math.BigDecimal;
+import com.common.business.dto.base.BatchResultDTO;
 /**
  * <p>
  * KOL回片费用表 服务实现类
@@ -67,6 +68,32 @@ public class KolFeedbackCostServiceImpl extends SuperServiceImpl<KolFeedbackCost
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.KOL_FEEDBACK_COST.getCode(), kolFeedbackCostEntity.getId(), "新增操作");
 
         return new BaseResultDTO.AddDTO(kolFeedbackCostEntity.getId(), kolFeedbackCostEntity.getId());
+    }
+
+    /**
+    * 批量新增
+    */
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public List<BatchResultDTO> batchAdd(KolFeedbackCostDTO.BatchAddDTO dto) {
+        List<KolFeedbackCostDTO.AddDTO> list = dto.getList();
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(list.size());
+
+        for (KolFeedbackCostDTO.AddDTO addDTO : list) {
+            BatchResultDTO addResult;
+            try {
+                BaseResultDTO.AddDTO result = add(addDTO);
+                addResult = BatchResultDTO.success(result.getId(), result.getCode(), "新增成功");
+            } catch (Exception e) {
+                log.error("KOL回片费用批量新增失败", e);
+                String remark = addDTO.getRemark() != null ? addDTO.getRemark() : "";
+                addResult = BatchResultDTO.fail("", remark, e.getMessage());
+            }
+            resultDTOS.add(addResult);
+        }
+
+        return resultDTOS;
     }
 
     /**

@@ -129,6 +129,32 @@ public class KolFeedbackServiceImpl extends SuperServiceImpl<KolFeedbackMapper, 
     }
 
     /**
+    * 批量新增
+    */
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public List<BatchResultDTO> batchAdd(KolFeedbackDTO.BatchAddDTO dto) {
+        List<KolFeedbackDTO.AddDTO> list = dto.getList();
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(list.size());
+
+        for (KolFeedbackDTO.AddDTO addDTO : list) {
+            BatchResultDTO addResult;
+            try {
+                BaseResultDTO.AddDTO result = add(addDTO);
+                addResult = BatchResultDTO.success(result.getId(), result.getCode(), "新增成功");
+            } catch (Exception e) {
+                log.error("KOL回片列表批量新增失败", e);
+                String sourceCode = addDTO.getSourceCode() != null ? addDTO.getSourceCode() : "";
+                addResult = BatchResultDTO.fail("", sourceCode, e.getMessage());
+            }
+            resultDTOS.add(addResult);
+        }
+
+        return resultDTOS;
+    }
+
+    /**
     * 修改
     */
     @DistributeLocker(keyName = "addOrUpdateDTO.getId()")

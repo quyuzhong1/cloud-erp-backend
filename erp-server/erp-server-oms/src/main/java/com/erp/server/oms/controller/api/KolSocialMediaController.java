@@ -19,6 +19,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.oms.dto.KolSocialMediaDTO;
+import java.util.List;
 
 /**
  * 达人社媒数据表
@@ -46,6 +47,20 @@ public class KolSocialMediaController extends BaseController {
     @LogAction(value = LogActionEnum.INSERT, desc = "达人社媒数据表新增")
     public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated KolSocialMediaDTO.AddDTO dto) {
         return success(kolSocialMediaService.add(dto));
+    }
+
+    /**
+    * 批量新增
+    * @author wuhaotian
+    * @date:  2025-12-03
+    * @param dto
+    * @return ApiResult<List<BatchResultDTO>>
+    */
+    @PostMapping("/batchAdd")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_INSERT, desc = "达人社媒数据表批量新增")
+    public ApiResult<?> batchAdd(@RequestBody @Validated KolSocialMediaDTO.BatchAddDTO dto) {
+        List<BatchResultDTO> resultDTOS = kolSocialMediaService.batchAdd(dto);
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**

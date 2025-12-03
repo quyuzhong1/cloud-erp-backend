@@ -24,6 +24,7 @@ import com.common.core.enums.ApiError;
 import cn.hutool.crypto.digest.DigestUtil;
 import com.erp.model.oms.enums.KolSocialMediaTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.common.business.dto.base.BatchResultDTO;
 /**
  * <p>
  * 达人社媒数据表 服务实现类
@@ -59,6 +60,32 @@ public class KolSocialMediaServiceImpl extends SuperServiceImpl<KolSocialMediaMa
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.KOL_SOCIAL_MEDIA.getCode(), kolSocialMediaEntity.getId(), "新增操作");
 
         return new BaseResultDTO.AddDTO(kolSocialMediaEntity.getId(), kolSocialMediaEntity.getId());
+    }
+
+    /**
+    * 批量新增
+    */
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public List<BatchResultDTO> batchAdd(KolSocialMediaDTO.BatchAddDTO dto) {
+        List<KolSocialMediaDTO.AddDTO> list = dto.getList();
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(list.size());
+
+        for (KolSocialMediaDTO.AddDTO addDTO : list) {
+            BatchResultDTO addResult;
+            try {
+                BaseResultDTO.AddDTO result = add(addDTO);
+                addResult = BatchResultDTO.success(result.getId(), result.getCode(), "新增成功");
+            } catch (Exception e) {
+                log.error("达人社媒数据批量新增失败", e);
+                String title = addDTO.getTitle() != null ? addDTO.getTitle() : "";
+                addResult = BatchResultDTO.fail("", title, e.getMessage());
+            }
+            resultDTOS.add(addResult);
+        }
+
+        return resultDTOS;
     }
 
     /**

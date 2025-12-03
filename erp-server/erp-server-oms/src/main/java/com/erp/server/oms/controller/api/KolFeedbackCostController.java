@@ -19,6 +19,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.oms.dto.KolFeedbackCostDTO;
+import java.util.List;
 
 /**
  * KOL回片费用表
@@ -46,6 +47,20 @@ public class KolFeedbackCostController extends BaseController {
     @LogAction(value = LogActionEnum.INSERT, desc = "KOL回片费用表新增")
     public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated KolFeedbackCostDTO.AddDTO dto) {
         return success(kolFeedbackCostService.add(dto));
+    }
+
+    /**
+    * 批量新增
+    * @author wuhaotian
+    * @date:  2025-12-03
+    * @param dto
+    * @return ApiResult<List<BatchResultDTO>>
+    */
+    @PostMapping("/batchAdd")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_INSERT, desc = "KOL回片费用表批量新增")
+    public ApiResult<?> batchAdd(@RequestBody @Validated KolFeedbackCostDTO.BatchAddDTO dto) {
+        List<BatchResultDTO> resultDTOS = kolFeedbackCostService.batchAdd(dto);
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**

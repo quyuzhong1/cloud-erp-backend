@@ -27,6 +27,15 @@ public interface KolFeedbackService extends SuperService<KolFeedbackEntity> {
     BaseResultDTO.AddDTO add(KolFeedbackDTO.AddDTO dto);
 
     /**
+    * 批量新增
+    * @author wuhaotian
+    * @date: 2025-12-03
+    * @param dto
+    * @return
+    */
+    List<BatchResultDTO> batchAdd(KolFeedbackDTO.BatchAddDTO dto);
+
+    /**
     * 修改
     * @author wuhaotian
     * @date: 2025-12-01
