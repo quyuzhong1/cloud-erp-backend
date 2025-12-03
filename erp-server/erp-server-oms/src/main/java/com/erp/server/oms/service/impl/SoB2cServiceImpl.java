@@ -440,6 +440,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             	if(DynamicDataSourceTypeEnum.DORIS.getCode().equals(dynamicDataSource)) {
             		int queryCount = 0;
             		String defaultSql = params.getSqlMap().get("default");
+                    //转成 pgsql的条件
+                    String pgSql = defaultSql.replace("erp_wms.third_warehouse_delivery","foreign_third_warehouse_delivery");
             		boolean unSameCountFlag = true;
         			while(queryCount < 3) {
         				DynamicDataSourceContextHolder.poll();
@@ -463,7 +465,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         				DynamicDataSourceThreadLocal.set(DynamicDataSourceTypeEnum.POSTGRES);
         	            DynamicDataSourceContextHolder.push(DynamicDataSourceTypeEnum.POSTGRES.getCode());
         				params.setDynamicDataSource(DynamicDataSourceTypeEnum.POSTGRES.getCode());
-        				params.getSqlMap().put("default", defaultSql + " and sb2c.id in (" + pageData.getRecords().stream().map(d -> d.getId()).collect(Collectors.joining("','", "'", "'")) +")");
+        				params.getSqlMap().put("default", pgSql + " and sb2c.id in (" + pageData.getRecords().stream().map(d -> d.getId()).collect(Collectors.joining("','", "'", "'")) +")");
         				Page pgQuery = new Page(1, -1 , dorisCurrentCount , false);
         				pageData = this.baseMapper.paging(pgQuery, params, null);
         				if(CollUtil.isNotEmpty(pageData.getRecords()) && (dorisCurrentCount == pageData.getRecords().size())) {
@@ -477,7 +479,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         				queryCount = queryCount + 1;
         			}
         			if(unSameCountFlag) {
-        				params.getSqlMap().put("default", defaultSql);
+        				params.getSqlMap().put("default", pgSql);
         				pageData = this.baseMapper.paging(query, params, null);
         			}
             	}else {
