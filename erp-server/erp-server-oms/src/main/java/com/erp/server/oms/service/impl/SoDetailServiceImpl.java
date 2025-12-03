@@ -348,7 +348,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         //发货通知单的
         List<SoDeliveryNoticeDetailDTO.ListDTO> soDeliveryNoticeList = soDeliveryNoticeFeign.listBySourceIdList(Arrays.asList(mainId));
         for (SoDetailDTO.ViewDTO item : resultList) {
-            String skuId = item.getSkuId();
+            String skuId = item.getDeliverySkuId();
             String skuName = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().
                     flatMap(obj -> Optional.ofNullable(obj.getSkuName())).orElse("");
             item.setProductName(skuName);
