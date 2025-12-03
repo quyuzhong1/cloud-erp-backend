@@ -70,7 +70,22 @@ public class KolFeedbackController extends BaseController {
     @PostMapping("/batchAdd")
     @LogAction(value = LogActionEnum.CUSTOM_BATCH_INSERT, desc = "KOL回片列表批量新增")
     public ApiResult<?> batchAdd(@RequestBody @Validated KolFeedbackDTO.BatchAddDTO dto) {
-        List<BatchResultDTO> resultDTOS = kolFeedbackService.batchAdd(dto);
+        List<KolFeedbackDTO.AddDTO> list = dto.getList();
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(list.size());
+
+        for (KolFeedbackDTO.AddDTO addDTO : list) {
+            BatchResultDTO addResult;
+            try {
+                BaseResultDTO.AddDTO result = kolFeedbackService.add(addDTO);
+                addResult = BatchResultDTO.success(result.getId(), result.getCode(), "新增成功");
+            } catch (Exception e) {
+                log.error("KOL回片列表批量新增失败", e);
+                String sourceCode = addDTO.getSourceCode() != null ? addDTO.getSourceCode() : "";
+                addResult = BatchResultDTO.fail("", sourceCode, e.getMessage());
+            }
+            resultDTOS.add(addResult);
+        }
+
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
@@ -91,6 +106,49 @@ public class KolFeedbackController extends BaseController {
     public ApiResult<?> update(@RequestBody @Validated KolFeedbackDTO.UpdateDTO dto) {
         kolFeedbackService.update(dto);
         return success();
+    }
+
+    /**
+    * 批量修改
+    * @author wuhaotian
+    * @date:  2025-12-03
+    * @param dtoList
+    * @return ApiResult<List<BatchResultDTO>>
+    */
+    @PostMapping("/batchUpdate")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "KOL回片列表批量修改")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+        tableField = "create_user_id",
+        menuCode = "oms:kolFeedback:update",
+        serviceClass = KolFeedbackService.class,
+        keyIdName = "id")
+    public ApiResult<List<BatchResultDTO>> batchUpdate(@RequestBody @Validated List<KolFeedbackDTO.UpdateDTO> dtoList) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dtoList.size());
+        
+        List<String> ids = dtoList.stream().map(KolFeedbackDTO.UpdateDTO::getId).collect(Collectors.toList());
+        List<KolFeedbackEntity> list = kolFeedbackService.lambdaQuery().in(KolFeedbackEntity::getId, ids).list();
+        Map<String, KolFeedbackEntity> idEntityMap = list.stream().collect(Collectors.toMap(KolFeedbackEntity::getId, e -> e));
+        
+        for (KolFeedbackDTO.UpdateDTO dto : dtoList) {
+            BatchResultDTO updateResult;
+            try {
+                kolFeedbackService.update(dto);
+                KolFeedbackEntity entity = idEntityMap.get(dto.getId());
+                String code = entity != null ? entity.getSourceCode() : dto.getId();
+                updateResult = BatchResultDTO.success(dto.getId(), code, "修改成功");
+            } catch (Exception e) {
+                log.error("KOL回片列表批量修改失败", e);
+                KolFeedbackEntity entity = idEntityMap.get(dto.getId());
+                if (entity == null) {
+                    updateResult = BatchResultDTO.fail(dto.getId(), dto.getId(), "KOL回片列表不存在，修改失败");
+                } else {
+                    updateResult = BatchResultDTO.fail(dto.getId(), entity.getSourceCode(), e.getMessage());
+                }
+            }
+            resultDTOS.add(updateResult);
+        }
+        
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**

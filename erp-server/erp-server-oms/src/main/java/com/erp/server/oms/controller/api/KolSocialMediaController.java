@@ -19,7 +19,12 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.oms.dto.KolSocialMediaDTO;
+import com.erp.model.oms.entity.KolSocialMediaEntity;
+import cn.hutool.core.util.ObjectUtil;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * 达人社媒数据表
@@ -59,7 +64,21 @@ public class KolSocialMediaController extends BaseController {
     @PostMapping("/batchAdd")
     @LogAction(value = LogActionEnum.CUSTOM_BATCH_INSERT, desc = "达人社媒数据表批量新增")
     public ApiResult<?> batchAdd(@RequestBody @Validated KolSocialMediaDTO.BatchAddDTO dto) {
-        List<BatchResultDTO> resultDTOS = kolSocialMediaService.batchAdd(dto);
+        List<KolSocialMediaDTO.AddDTO> list = dto.getList();
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(list.size());
+
+        for (KolSocialMediaDTO.AddDTO addDTO : list) {
+            BatchResultDTO addResult;
+            try {
+                BaseResultDTO.AddDTO result = kolSocialMediaService.add(addDTO);
+                addResult = BatchResultDTO.success(result.getId(), result.getCode(), "新增成功");
+            } catch (Exception e) {
+                log.error("达人社媒数据表批量新增失败", e);
+                addResult = BatchResultDTO.fail("", "", e.getMessage());
+            }
+            resultDTOS.add(addResult);
+        }
+
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
@@ -82,6 +101,47 @@ public class KolSocialMediaController extends BaseController {
         return success();
     }
 
-
+    /**
+    * 批量修改
+    * @author wuhaotian
+    * @date:  2025-12-03
+    * @param dtoList
+    * @return ApiResult<List<BatchResultDTO>>
+    */
+    @PostMapping("/batchUpdate")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "达人社媒数据表批量修改")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+        tableField = "create_user_id",
+        menuCode = "oms:kolSocialMedia:update",
+        serviceClass = KolSocialMediaService.class,
+        keyIdName = "id")
+    public ApiResult<List<BatchResultDTO>> batchUpdate(@RequestBody @Validated List<KolSocialMediaDTO.UpdateDTO> dtoList) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dtoList.size());
+        
+        List<String> ids = dtoList.stream().map(KolSocialMediaDTO.UpdateDTO::getId).collect(Collectors.toList());
+        List<KolSocialMediaEntity> list = kolSocialMediaService.lambdaQuery().in(KolSocialMediaEntity::getId, ids).list();
+        Map<String, KolSocialMediaEntity> idEntityMap = list.stream().collect(Collectors.toMap(KolSocialMediaEntity::getId, e -> e));
+        
+        for (KolSocialMediaDTO.UpdateDTO dto : dtoList) {
+            BatchResultDTO updateResult;
+            try {
+                kolSocialMediaService.update(dto);
+                KolSocialMediaEntity entity = idEntityMap.get(dto.getId());
+                String code = entity != null ? entity.getId() : dto.getId();
+                updateResult = BatchResultDTO.success(dto.getId(), code, "修改成功");
+            } catch (Exception e) {
+                log.error("达人社媒数据表批量修改失败", e);
+                KolSocialMediaEntity entity = idEntityMap.get(dto.getId());
+                if (entity == null) {
+                    updateResult = BatchResultDTO.fail(dto.getId(), dto.getId(), "达人社媒数据不存在，修改失败");
+                } else {
+                    updateResult = BatchResultDTO.fail(dto.getId(), entity.getId(), e.getMessage());
+                }
+            }
+            resultDTOS.add(updateResult);
+        }
+        
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
 
 }
