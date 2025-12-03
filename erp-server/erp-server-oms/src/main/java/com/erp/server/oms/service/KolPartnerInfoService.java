@@ -89,4 +89,6 @@ public interface KolPartnerInfoService extends SuperService<KolPartnerInfoEntity
     BatchResultDTO disabled(String id,  Boolean disabled);
 
     Boolean importFile(BaseDTO.ImportDTO dto);
+
+    void importExhibitionOrder(BaseDTO.ImportDTO dto);
 }

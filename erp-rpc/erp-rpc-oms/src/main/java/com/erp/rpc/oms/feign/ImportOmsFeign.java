@@ -21,4 +21,7 @@ public interface ImportOmsFeign {
     @PostMapping("/feign/import/kolFeedback")
     void importKolFeedback(@RequestBody BaseDTO.ImportDTO dto);
 
+    @PostMapping("/feign/import/importKolPartnerInfo")
+    void importKolPartnerInfo(@RequestBody BaseDTO.ImportDTO dto);
+
 }

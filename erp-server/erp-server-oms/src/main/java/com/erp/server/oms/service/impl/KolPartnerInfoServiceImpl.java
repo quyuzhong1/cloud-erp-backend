@@ -1,16 +1,23 @@
 package com.erp.server.oms.service.impl;
 
+import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.common.business.dto.FindUserDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
+import com.common.business.enums.FileTaskStatusEnum;
 import com.common.business.enums.OperationTypeEnum;
 import cn.hutool.core.util.StrUtil;
-import com.common.business.service.SuperService;
-import com.common.core.entity.BaseEntity;
+import com.common.business.vo.LoginUser;
+import com.erp.model.oms.dto.ExhibitionOrderImportExcelDTO;
 import com.erp.model.oms.dto.KolAddressInfoDTO;
 import com.erp.model.oms.dto.KolCooperationPlatformDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.file.feign.FileFeign;
+import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.server.oms.listener.ExhibitionOrderExcelListener;
 import com.erp.server.oms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import com.common.business.annotation.DistributeLocker;
@@ -21,9 +28,9 @@ import com.common.business.threadlocal.UserContext;
 import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
 import cn.hutool.core.util.ObjectUtil;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.oms.dto.KolPartnerInfoDTO;
@@ -32,12 +39,18 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import cn.hutool.core.collection.CollUtil;
 import com.common.business.vo.PagingVO;
 import com.common.business.dto.base.*;
+
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.time.LocalDateTime;
 import java.util.stream.Collectors;
 import java.util.*;
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
-import static com.common.business.enums.FileTaskEventEnum.EXPORT_OMS_KOL_PARTNER_INFO;
+
+import static com.common.business.enums.FileTaskEventEnum.*;
 
 /**
  * <p>
@@ -50,22 +63,26 @@ import static com.common.business.enums.FileTaskEventEnum.EXPORT_OMS_KOL_PARTNER
 @Slf4j
 @Service
 public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMapper, KolPartnerInfoEntity> implements KolPartnerInfoService {
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
-    @Autowired
+    @Resource
     private CfgKolOptionService cfgKolOptionService;
-    @Autowired
+    @Resource
     private DocNoGenHelper docNoGenHelper;
-    @Autowired
+    @Resource
     private KolAddressInfoService kolAddressInfoService;
-    @Autowired
+    @Resource
     private KolCooperationPlatformService kolCooperationPlatformService;
-    @Autowired
+    @Resource
     private DictLanguageService dictLanguageService;
-    @Autowired
+    @Resource
     private CommonService commonService;
-    @Autowired
+    @Resource
     private DownloadTaskFeign downloadTaskFeign;
+    @Resource
+    private SysUserFeign sysUserFeign;
+    @Resource
+    private FileFeign fileFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -237,7 +254,55 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
 
     @Override
     public Boolean importFile(BaseDTO.ImportDTO dto) {
-        return null;
+        dto.setUserId(UserContext.getDefaultLoginUser().getUid());
+        downloadTaskFeign.saveImportTask("导入企业达人库", IMPORT_OMS_KOL_PARTNER_INFO.getCode(), dto);
+        return Boolean.TRUE;
+    }
+
+    @Override
+    public void importExhibitionOrder(BaseDTO.ImportDTO dto) {
+        //设置操作人
+        if(StringUtils.isNotBlank(dto.getUserId())){
+            FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(dto.getUserId());
+            if(Objects.nonNull(findUserDTO)){
+                LoginUser user = new LoginUser();
+                user.setUid(findUserDTO.getUserId());
+                user.setUserName(findUserDTO.getUserName());
+                user.setRealName(findUserDTO.getRealName());
+                user.setUserAccount(findUserDTO.getMobile());
+                user.setMobile(findUserDTO.getMobile());
+                UserContext.setLoginUser(user);
+            }
+        }
+
+        ExhibitionOrderExcelListener excelListenerUtil = new ExhibitionOrderExcelListener(dto.getTaskId(),dto.getImportType(),dto.getImportCount());
+        try {
+            byte[] bytes = fileFeign.downloadFile(dto.getFileUrl());
+            EasyExcel.read(new ByteArrayInputStream(bytes), ExhibitionOrderImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+        } catch (ExcelCommonException e) {
+            log.error("导入格式错误！", e);
+            throw new ServiceException(ApiError.ERROR_1016);
+        }
+
+
+        BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
+        importResultDTO.setTaskId(dto.getTaskId());
+        importResultDTO.setCount(excelListenerUtil.getCount());
+        List<ExhibitionOrderImportExcelDTO> errorList = excelListenerUtil.getErrorList();
+        String url = "";
+        if (CollectionUtils.isNotEmpty(errorList)) {
+            String fileName = "企业达人库错误信息.xlsx";
+            File file = ExcelUtil.exportFile(fileName, "error", errorList, ExhibitionOrderImportExcelDTO.class);
+            if (!file.isDirectory()) {
+                url = FastDFSClientUtil.uploadFile(file, fileName);
+            }
+        }
+        importResultDTO.setRemark("处理完成，失败" + errorList.size() + "条");
+        importResultDTO.setErrorUrl(url);
+        importResultDTO.setFinishTime(LocalDateTime.now());
+        importResultDTO.setStatus(FileTaskStatusEnum.FINISH.getCode());
+        downloadTaskFeign.updateTask(importResultDTO);
+
     }
 
 

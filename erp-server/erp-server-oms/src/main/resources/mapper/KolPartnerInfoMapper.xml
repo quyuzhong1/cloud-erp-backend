@@ -77,7 +77,7 @@ kcp.remark AS platformRemark
             kol_partner_info kpi
         LEFT JOIN Kol_cooperation_platform kcp ON kpi.id = kcp.main_id AND kcp.is_deleted = FALSE
         WHERE
-            ${ params.sqlMap.DEFAULT}
+            ${params.sqlMap.default}
           AND kpi.is_deleted = FALSE
         ORDER BY
         <if test="params.sortList != null and params.sortList.size > 0">

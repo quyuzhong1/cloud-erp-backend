@@ -239,7 +239,7 @@ public class KolPartnerInfoController extends BaseController {
      */
     @LogAction(value = LogActionEnum.IMPORT, desc = "导入企业达人库")
     @PostMapping("/import")
-    public ApiResult<?> importFile(@RequestBody BaseDTO.ImportDTO dto) {
+    public ApiResult importFile(@RequestBody BaseDTO.ImportDTO dto) {
         Boolean result = kolPartnerInfoService.importFile(dto);
         return result ? success() : failure();
     }
