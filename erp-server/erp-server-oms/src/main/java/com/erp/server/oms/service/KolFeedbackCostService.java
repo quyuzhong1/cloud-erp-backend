@@ -52,4 +52,13 @@ public interface KolFeedbackCostService extends SuperService<KolFeedbackCostEnti
     */
     PagingVO<KolFeedbackCostDTO.ListDTO> paging(PagingDTO<KolFeedbackCostDTO.ParamDTO> dto);
 
+    /**
+     * 单个删除
+     * @author wuhaotian
+     * @date: 2025-12-03
+     * @param id
+     * @return
+     */
+    BatchResultDTO delete(String id);
+
 }

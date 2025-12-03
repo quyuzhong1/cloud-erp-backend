@@ -204,6 +204,24 @@ public class KolFeedbackCostServiceImpl extends SuperServiceImpl<KolFeedbackCost
             throw new ServiceException("该回片链接和费用名称的组合已存在，不能重复添加");
         }
     }
+    @Override
+    public BatchResultDTO delete(String id) {
+        KolFeedbackCostEntity entity = super.getById(id);
+        if (entity == null) {
+            throw new ServiceException("KOL回片费用不存在");
+        }
+        
+        // 执行删除
+        boolean remove = super.removeById(id);
+        if (!remove) {
+            throw new ServiceException("删除失败");
+        }
+        
+        // 返回成功结果，使用备注作为 code
+        String code = StrUtil.isNotBlank(entity.getRemark()) ? entity.getRemark() : entity.getId();
+        return BatchResultDTO.success(entity.getId(), code);
+    }
+
     /**
      * 填充列表数据（币别转换、金额拼接）
      */

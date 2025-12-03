@@ -1,6 +1,8 @@
 package com.erp.server.oms.controller.api;
 
 
+import com.common.business.annotation.WebAdvanceQuery;
+import com.erp.server.oms.query.KolFeedbackQueryHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import javax.annotation.Resource;
@@ -158,8 +160,53 @@ public class KolFeedbackCostController extends BaseController {
             tableField = "create_user_id",
             menuCode = "oms:kolFeedbackCost:paging",
             tableAlias = "kfc")
+    @WebAdvanceQuery
     public ApiResult<PagingVO<KolFeedbackCostDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<KolFeedbackCostDTO.ParamDTO> dto) {
         return success(kolFeedbackCostService.paging(dto));
+    }
+
+    /**
+     * 批量删除
+     * @author wuhaotian
+     * @date:  2025-12-03
+     * @param dto
+     * @return ApiResult
+     */
+    @PostMapping("/batchDelete")
+    @LogAction(value = LogActionEnum.DELETE, desc = "KOL回片费用表批量删除")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "oms:kolFeedbackCost:batchDelete",
+            serviceClass = KolFeedbackCostService.class,
+            keyIdName = "ids")
+    public ApiResult<?> batchDelete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<String> ids = dto.getIds();
+
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+
+        List<KolFeedbackCostEntity> list = kolFeedbackCostService.lambdaQuery().in(KolFeedbackCostEntity::getId, ids).list();
+
+        Map<String, KolFeedbackCostEntity> idEntityMap = list.stream().collect(Collectors.toMap(KolFeedbackCostEntity::getId, w -> w));
+
+        for (String id : dto.getIds()) {
+            BatchResultDTO deleteResult;
+            try {
+                deleteResult = kolFeedbackCostService.delete(id);
+            } catch (Exception e) {
+                log.error("KOL回片费用删除失败", e);
+                KolFeedbackCostEntity entity = idEntityMap.get(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    deleteResult = BatchResultDTO.fail(id, id, "KOL回片费用不存在, 删除失败");
+                    resultDTOS.add(deleteResult);
+                    continue;
+                }
+                String code = entity.getRemark() != null ? entity.getRemark() : entity.getId();
+                deleteResult = BatchResultDTO.fail(entity.getId(), code, e.getMessage());
+            }
+            resultDTOS.add(deleteResult);
+        }
+
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
 }
