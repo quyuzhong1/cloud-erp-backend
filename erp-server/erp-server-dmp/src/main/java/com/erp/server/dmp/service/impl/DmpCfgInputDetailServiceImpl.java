@@ -1,5 +1,13 @@
 package com.erp.server.dmp.service.impl;
 
+
+import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.ObjUtil;
+import cn.hutool.core.util.StrUtil;
+import com.common.business.constant.DmpPullConstant;
+import com.common.business.dto.DmpInputFeignDTO;
+import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.enums.OperationTypeEnum;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
@@ -17,8 +25,11 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.dmp.dto.DmpCfgInputDetailDTO;
 import com.erp.model.dmp.dto.DmpInoutDTO;
+import com.erp.model.dmp.dto.DmpInoutDTO;
 import com.erp.model.dmp.entity.DmpBasicSystemEntity;
 import com.erp.model.dmp.entity.DmpCfgInputDetailEntity;
+import com.erp.model.dmp.entity.DmpCfgOutputDetailEntity;
+import com.erp.model.dmp.enums.DmpInputTaskTaskTypeEnum;
 import com.erp.model.dmp.entity.DmpCfgInputEntity;
 import com.erp.model.dmp.enums.DmpCfgInputExecSystemEnum;
 import com.erp.model.dmp.enums.DmpInputTaskTaskTypeEnum;
@@ -29,10 +40,18 @@ import com.erp.server.dmp.inout.handler.factory.DmpInputCreateFactory;
 import com.erp.server.dmp.mapper.DmpCfgInputDetailMapper;
 import com.erp.server.dmp.service.DmpBasicSystemService;
 import com.erp.server.dmp.service.DmpCfgInputDetailService;
+import com.erp.server.dmp.service.DmpCfgOutputDetailService;
 import com.erp.server.dmp.service.DmpCfgInputService;
 import com.erp.server.dmp.service.OperateLogService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import javax.annotation.Resource;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -53,6 +72,10 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class DmpCfgInputDetailServiceImpl extends SuperServiceImpl<DmpCfgInputDetailMapper, DmpCfgInputDetailEntity> implements DmpCfgInputDetailService {
+
+   @Resource
+   private DmpCfgOutputDetailService dmpCfgOutputDetailService;
+
     @Resource
     private OperateLogService operateLogService;
     @Resource
@@ -122,6 +145,92 @@ public class DmpCfgInputDetailServiceImpl extends SuperServiceImpl<DmpCfgInputDe
         return baseMapper.listBySystemCodeAndBillType(systemCodeList, billTypeList, nextLevelIdList);
     }
 
+    @Override
+    public void optionDmpCfgInputDetail(DmpInputFeignDTO.CfgOptionDTO cfgOptionDTO) {
+        DmpCfgInputDetailEntity inputDetailEntity = optionCfgInputDetail(cfgOptionDTO);
+        if (ObjUtil.isEmpty(inputDetailEntity)) {
+            throw new ServiceException("飞书配置输入明细未找到，编码：" + cfgOptionDTO.getCode());
+        }
+
+        //只有审批定义输出明细需要添加
+        if (CharSequenceUtil.equals(cfgOptionDTO.getSystem(),DmpPullConstant.FS) && CharSequenceUtil.equals(cfgOptionDTO.getCode(), DmpPullConstant.FS_APPROVALS)) {
+            return;
+        }
+        optionCfgOutputDetail(cfgOptionDTO, inputDetailEntity);
+    }
+
+    /**
+     *  操作输出明细配置
+     * @author will
+     * @date 2025/11/24 10:51
+     * @param cfgOptionDTO
+     * @param detailEntity
+     * @return void
+     */
+    private void optionCfgOutputDetail(DmpInputFeignDTO.CfgOptionDTO cfgOptionDTO, DmpCfgInputDetailEntity detailEntity) {
+        //添加输出配置
+        DmpCfgOutputDetailEntity outputDetailEntity = dmpCfgOutputDetailService.getDmpCfgOutputDetailByOption(detailEntity.getMainId(),detailEntity.getNextLevelId());
+        if (ObjUtil.isEmpty(outputDetailEntity)) {
+            throw new ServiceException(ApiError.NOT_EXIST, CharSequenceUtil.format("{}平台{}编码输出配置不存在,请检查", cfgOptionDTO.getSystem(), cfgOptionDTO.getCode()));
+        }
+        if (OperationTypeEnum.ADD.getStatus().equals(cfgOptionDTO.getOption()) || OperationTypeEnum.UPDATE.getStatus().equals(cfgOptionDTO.getOption())) {
+            outputDetailEntity.setNextLevelId(cfgOptionDTO.getNextLevelId());
+            dmpCfgOutputDetailService.saveOrUpdate(outputDetailEntity);
+            return;
+        }
+        if (OperationTypeEnum.DELETE.getStatus().equals(cfgOptionDTO.getOption())) {
+            if(CharSequenceUtil.isBlank(detailEntity.getId())) {
+                //删除时如果没有id则说明配置不存在，无需删除
+                return;
+            }
+            //删除
+            super.removeById(outputDetailEntity.getId());
+        }
+    }
+
+
+    /**
+     * 操作输入明细配置
+     * @author will
+     * @date 2025/11/24 10:50
+     * @param cfgOptionDTO
+     * @return DmpCfgInputDetailEntity
+     */
+    private DmpCfgInputDetailEntity optionCfgInputDetail(DmpInputFeignDTO.CfgOptionDTO cfgOptionDTO) {
+        //需要添加的输入配置不存在则新增，存在则修改
+        DmpCfgInputDetailEntity detailEntity = baseMapper.getDmpCfgInputDetailByOption(cfgOptionDTO);
+        if (ObjUtil.isEmpty(detailEntity)) {
+            throw new ServiceException(ApiError.NOT_EXIST, CharSequenceUtil.format("{}平台{}编码输入配置不存在,请检查", cfgOptionDTO.getSystem(), cfgOptionDTO.getCode()));
+        }
+        if (CharSequenceUtil.isBlank(detailEntity.getId())) {
+            LocalDateTime now = LocalDateTime.now();
+            detailEntity.setNextLevelId(cfgOptionDTO.getNextLevelId());
+            detailEntity.setLastTime(now);
+            detailEntity.setNextTime(now);
+            detailEntity.setIntervalTime(600);
+            detailEntity.setOverrideTime(0);
+            detailEntity.setMaxRetryCount(3);
+            detailEntity.setExecTimeout(1200);
+            detailEntity.setTaskType(DmpInputTaskTaskTypeEnum.NORMAL.getCode());
+            detailEntity.setMaxIntervalTime(3);
+        }
+        if (OperationTypeEnum.ADD.getStatus().equals(cfgOptionDTO.getOption()) || OperationTypeEnum.UPDATE.getStatus().equals(cfgOptionDTO.getOption())) {
+            //新增或更新
+            detailEntity.setDisabled(Boolean.FALSE);
+            detailEntity.setNextLevelId(cfgOptionDTO.getNextLevelId());
+            super.saveOrUpdate(detailEntity);
+            return detailEntity;
+        }
+        if (OperationTypeEnum.DELETE.getStatus().equals(cfgOptionDTO.getOption())) {
+            if(CharSequenceUtil.isBlank(detailEntity.getId())) {
+                //删除时如果没有id则说明配置不存在，无需删除
+                return detailEntity;
+            }
+            //删除
+            super.removeById(detailEntity.getId());
+        }
+        return detailEntity;
+    }
 
     /**
     * 新增修改处理数据
@@ -133,7 +242,7 @@ public class DmpCfgInputDetailServiceImpl extends SuperServiceImpl<DmpCfgInputDe
         } else {
             // 校验是否json格式
             if (!JSON.isValid(updateDTO.getExtendJson())) {
-                throw new RuntimeException("extendJson 不是合法的 JSON 格式");
+                ServiceException.runError("【拓展json】不是合法的JSON格式");
             }
             dmpCfgInputDetailEntity.setExtendJson(updateDTO.getExtendJson());
         }

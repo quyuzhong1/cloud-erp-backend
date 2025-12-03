@@ -356,6 +356,11 @@ public class SoOutstockDetailDTO implements Serializable {
         private String platformCode;
 
         /**
+         * 平台子单号
+         */
+        private String platformSubSoCode;
+
+        /**
          * 平台销售出库单明细ID
          */
         private String platformDetailId;
@@ -393,6 +398,7 @@ public class SoOutstockDetailDTO implements Serializable {
             this.platformCode = addDTO.getPlatformCode();
             this.platformDetailId = addDTO.getPlatformDetailId();
             this.virtualWarehouseId = addDTO.getVirtualWarehouseId();
+            this.platformSubSoCode = addDTO.getPlatformSubSoCode();
         }
     }
 

@@ -47,6 +47,7 @@ public interface B2cOrderConsumerConverter {
             @Mapping(target = "imageUrl", source = "imageUrl"),
             @Mapping(target = "platformSpuNo", source = "platformSpuNo"),
             @Mapping(target = "saleFee", source = "detailDTO.saleFee"),
+            @Mapping(target = "platformSubSoCode", source = "detailDTO.platformSubSoCode"),
             @Mapping(target = "variantProperty", source = "detailDTO.variantProperty"),
     })
     SoB2cDetailEntity convertNewDetail(PlatformOrderDetailDTO detailDTO, String mainId, String skuId, String skuNo, String imageUrl, String platformSpuNo);
@@ -159,6 +160,7 @@ public interface B2cOrderConsumerConverter {
             @Mapping(target = "imageUrl", source = "imageUrl"),
             @Mapping(target = "saleFee", source = "detailDTO.saleFee"),
             @Mapping(target = "platformSpuNo", source = "platformSpuNo"),
+            @Mapping(target = "platformSubSoCode", source = "detailDTO.platformSubSoCode"),
             @Mapping(target = "variantProperty", source = "detailDTO.variantProperty"),
 
     })
