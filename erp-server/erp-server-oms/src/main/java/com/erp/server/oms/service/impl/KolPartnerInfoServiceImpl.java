@@ -10,6 +10,7 @@ import com.erp.model.oms.dto.KolAddressInfoDTO;
 import com.erp.model.oms.dto.KolCooperationPlatformDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.oms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import com.common.business.annotation.DistributeLocker;
@@ -32,12 +33,12 @@ import cn.hutool.core.collection.CollUtil;
 import com.common.business.vo.PagingVO;
 import com.common.business.dto.base.*;
 import javax.servlet.http.HttpServletResponse;
-import javax.annotation.Resource;
-import java.lang.reflect.Field;
 import java.util.stream.Collectors;
 import java.util.*;
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_OMS_KOL_PARTNER_INFO;
+
 /**
  * <p>
  * 企业达人库 服务实现类
@@ -61,6 +62,10 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
     private KolCooperationPlatformService kolCooperationPlatformService;
     @Autowired
     private DictLanguageService dictLanguageService;
+    @Autowired
+    private CommonService commonService;
+    @Autowired
+    private DownloadTaskFeign downloadTaskFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -70,7 +75,10 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
         BeanMapperUtils.copy(addDTO, kolPartnerInfoEntity);
 
         // 数据处理
-        handleData(kolPartnerInfoEntity);
+        String type = String.join(",", addDTO.getTypeList());
+        String cooperationType = String.join(",", addDTO.getCooperationTypeList());
+        kolPartnerInfoEntity.setType(type);
+        kolPartnerInfoEntity.setCooperationType(cooperationType);
 
         log.info("开始新增企业达人库");
         // 生成单号
@@ -116,7 +124,11 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
         KolPartnerInfoEntity kolPartnerInfoEntity =  BeanMapperUtils.map(KolPartnerInfoEntity.class, addOrUpdateDTO);
 
         // 数据处理
-        handleData(kolPartnerInfoEntity);
+        String type = String.join(",", addOrUpdateDTO.getTypeList());
+        String cooperationType = String.join(",", addOrUpdateDTO.getCooperationTypeList());
+        kolPartnerInfoEntity.setType(type);
+        kolPartnerInfoEntity.setCooperationType(cooperationType);
+
         log.info("编辑 开始修改企业达人库数据，单号：【{}】", old.getCode());
         boolean save = super.updateById(kolPartnerInfoEntity);
         if(!save) {
@@ -139,7 +151,7 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
             }
         }else{
             List<KolCooperationPlatformEntity> kolCooperationPlatformEntities = BeanMapperUtils.copyList(KolCooperationPlatformEntity.class, kolCooperationPlatformDTOList);
-            this.updateDetail(kolPartnerInfoEntity.getId(),ModuleTypeEnum.KOL_PARTNER_INFO.getCode(),kolCooperationPlatformService,  kolCooperationPlatformEntities, oldKolCooperationPlatformEntities,"platformName");
+            commonService.updateDetail(kolPartnerInfoEntity.getId(),ModuleTypeEnum.KOL_PARTNER_INFO.getCode(),kolCooperationPlatformService,  kolCooperationPlatformEntities, oldKolCooperationPlatformEntities,"platformName");
         }
 
         List<KolAddressInfoEntity> oldKolAddressInfoEntities = kolAddressInfoService.lambdaQuery().eq(KolAddressInfoEntity::getMainId, kolPartnerInfoEntity.getId()).list();
@@ -154,85 +166,9 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
             }
         }else {
             List<KolAddressInfoEntity> kolAddressInfoEntities = BeanMapperUtils.copyList(KolAddressInfoEntity.class, kolAddressInfoDTOList);
-            this.updateDetail(kolPartnerInfoEntity.getId(), ModuleTypeEnum.KOL_PARTNER_INFO.getCode(), kolAddressInfoService, kolAddressInfoEntities, oldKolAddressInfoEntities, "contactPerson");
+            commonService.updateDetail(kolPartnerInfoEntity.getId(), ModuleTypeEnum.KOL_PARTNER_INFO.getCode(), kolAddressInfoService, kolAddressInfoEntities, oldKolAddressInfoEntities, "contactPerson");
         }
         return Boolean.TRUE;
-    }
-
-    private <T extends BaseEntity> void updateDetail(String businessId, String moduleType, SuperService service, List<T> detailList, List<T> oldDetailList, String keyFieldName) {
-        // 处理需要删除的数据
-        if (CollUtil.isNotEmpty(oldDetailList)) {
-            List<String> detailIds = detailList.stream()
-                    .map(BaseEntity::getId)
-                    .filter(StringUtils::isNotBlank)
-                    .collect(Collectors.toList());
-
-            List<T> remove = oldDetailList.stream()
-                    .filter(oldEntity -> !detailIds.contains(oldEntity.getId()))
-                    .collect(Collectors.toList());
-
-            if (CollUtil.isNotEmpty(remove)) {
-                service.removeByIds(remove.stream().map(BaseEntity::getId).collect(Collectors.toList()));
-                //添加日志
-                for (T entity : remove) {
-                    try {
-                        // 获取实体类的Class对象
-                        Class<?> clazz = entity.getClass();
-                        // 同样地，可以获取其他字段的值
-                        Field nameField = clazz.getDeclaredField(keyFieldName); // 替换为你想访问的字段名
-                        nameField.setAccessible(true);
-                        Object nameValue = nameField.get(entity);
-                        // 添加日志记录的逻辑
-                        operateLogService.addModuleOperateLog(StrUtil.format("删除【{}】",nameValue.toString()), moduleType, businessId, "编辑信息");
-                    } catch (NoSuchFieldException | IllegalAccessException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-        }
-
-        // 处理需要新增的数据
-        List<T> addList = detailList.stream()
-                .filter(e -> StringUtils.isBlank(e.getId()))
-                .collect(Collectors.toList());
-        if (CollUtil.isNotEmpty(addList)) {
-            service.saveBatch(addList);
-            //添加日志
-            for (T entity : addList) {
-                try {
-                    // 获取实体类的Class对象
-                    Class<?> clazz = entity.getClass();
-                    // 同样地，可以获取其他字段的值
-                    Field nameField = clazz.getDeclaredField(keyFieldName); // 替换为你想访问的字段名
-                    nameField.setAccessible(true);
-                    Object nameValue = nameField.get(entity);
-                    // 添加日志记录的逻辑
-                    operateLogService.addModuleOperateLog(StrUtil.format("新增【{}】",nameValue.toString()), moduleType, businessId, "编辑信息");
-                } catch (NoSuchFieldException | IllegalAccessException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-
-        // 处理需要更新的数据
-        List<T> updateList = detailList.stream()
-                .filter(e -> StringUtils.isNotBlank(e.getId()))
-                .collect(Collectors.toList());
-
-        if (CollUtil.isNotEmpty(updateList)) {
-            service.updateBatchById(updateList);
-            //如何从updateList获取到指定的字段的值
-            for (T entity : updateList) {
-                T oldDetail = (T) oldDetailList.stream()
-                        .filter(e -> Objects.equals(e.getId(), entity.getId()))
-                        .findFirst()
-                        .orElse(null);
-                if (Objects.nonNull(oldDetail)) {
-                    // 可以在这里添加日志记录的逻辑
-                    operateLogService.addModuleOperateLogByObj(oldDetail, entity, moduleType, oldDetail.getId(), "编辑信息");
-                }
-            }
-        }
     }
 
     @Override
@@ -260,7 +196,7 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
 
     @Override
     public void exportList(KolPartnerInfoDTO.PagingParamDTO param, HttpServletResponse response) {
-
+        downloadTaskFeign.saveDownloadTask("企业达人库导出", EXPORT_OMS_KOL_PARTNER_INFO.getCode(), param);
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -325,9 +261,17 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
         List<DictLanguageEntity> dictLanguageEntities = dictLanguageService.list();
         Map<String, String> languageMap = dictLanguageEntities.stream().collect(Collectors.toMap(DictLanguageEntity::getId, DictLanguageEntity::getNameZh));
 
-        data.setCooperationTypeName(map.get(data.getCooperationType()));
+        String cooperationTypeName = Arrays.stream(data.getCooperationType().split(","))
+                .map(map::get)
+                .filter(StringUtils::isNotBlank)
+                .collect(Collectors.joining(","));
+        data.setCooperationTypeName(cooperationTypeName);
 
-        data.setTypeName(map.get(data.getType()));
+        String typeName = Arrays.stream(data.getType().split(","))
+                .map(map::get)
+                .filter(StringUtils::isNotBlank)
+                .collect(Collectors.joining(","));
+        data.setTypeName(typeName);
 
         data.setLanguageName(languageMap.get(data.getLanguage()));
 
@@ -357,12 +301,19 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
         // 属性赋值
         for(KolPartnerInfoDTO.ListDTO data : list) {
 
-            data.setCooperationTypeName(map.get(data.getCooperationType()));
+            String cooperationTypeName = Arrays.stream(data.getCooperationType().split(","))
+                    .map(map::get)
+                    .filter(StringUtils::isNotBlank)
+                    .collect(Collectors.joining(","));
+            data.setCooperationTypeName(cooperationTypeName);
 
-            data.setTypeName(map.get(data.getType()));
+            String typeName = Arrays.stream(data.getType().split(","))
+                    .map(map::get)
+                    .filter(StringUtils::isNotBlank)
+                    .collect(Collectors.joining(","));
+            data.setTypeName(typeName);
 
             data.setLanguageName(languageMap.get(data.getLanguage()));
-
         }
     }
     /**
@@ -370,17 +321,6 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
     */
     private void validateSubmit(KolPartnerInfoEntity entity) {
     }
-
-    /**
-    * 新增修改处理数据
-    */
-    private void handleData(KolPartnerInfoEntity kolPartnerInfoEntity) {
-
-
-
-    }
-
-
 
     @Override
     public List<KolPartnerInfoDTO.DropDownDTO> dropDown(KolPartnerInfoDTO.SelectDTO dto) {

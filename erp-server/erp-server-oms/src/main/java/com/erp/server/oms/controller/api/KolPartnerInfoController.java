@@ -1,10 +1,12 @@
 package com.erp.server.oms.controller.api;
 
 
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.enums.ClientTypeEnum;
 import com.common.core.utils.ExcelUtil;
 import com.erp.model.wms.dto.SampleBorrowInfoDTO;
 import com.erp.model.wms.entity.SampleBorrowInfoEntity;
+import com.erp.server.oms.query.KolPartnerInfoQueryHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import javax.annotation.Resource;
@@ -105,6 +107,7 @@ public class KolPartnerInfoController extends BaseController {
             menuCode = "oms:kolPartnerInfo:paging",
             tableAlias = "kpi"
     )
+    @WebAdvanceQuery(handler = KolPartnerInfoQueryHandler.class)
     public ApiResult<PagingVO<KolPartnerInfoDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<KolPartnerInfoDTO.PagingParamDTO> dto) {
         return success(kolPartnerInfoService.paging(dto));
     }
@@ -220,8 +223,10 @@ public class KolPartnerInfoController extends BaseController {
             tableAlias = "kpi"
     )
     @LogAction(value = LogActionEnum.EXPORT, desc = "企业达人库导出Excel数据")
-    public void exportList(@RequestBody @Validated KolPartnerInfoDTO.PagingParamDTO dto, HttpServletResponse response) {
+    @WebAdvanceQuery(handler = KolPartnerInfoQueryHandler.class)
+    public  ApiResult<Object> exportList(@RequestBody @Validated KolPartnerInfoDTO.PagingParamDTO dto, HttpServletResponse response) {
         kolPartnerInfoService.exportList(dto, response);
+        return success();
     }
 
 

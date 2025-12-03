@@ -95,6 +95,7 @@ public class KolPartnerInfoDTO implements Serializable {
         * 是否启用
         */
         private Boolean disabled;
+        private String disabledName;
 
         /**
         * 备注
@@ -375,16 +376,16 @@ public class KolPartnerInfoDTO implements Serializable {
         /**
         * 达人类型
         */
-        @NotBlank(message = "达人类型不能为空")
-        @Size(max = 100,message = "达人类型最大长度不能超过100位")
         private String type;
+        @NotEmpty(message = "达人类型不能为空")
+        private List<String> typeList;
 
         /**
         * 合作类型
         */
-        @NotBlank(message = "合作类型不能为空")
-        @Size(max = 100,message = "合作类型最大长度不能超过100位")
         private String cooperationType;
+        @NotEmpty(message = "合作类型不能为空")
+        private List<String> cooperationTypeList;
 
         /**
         * 合作日期

@@ -92,11 +92,18 @@ public interface ExportOmsFeign {
      * @return PagingVO<PagingViewDTO>
      */
     @PostMapping("/feign/export/b2bPlatformSku")
-    PagingVO<SkuMappingDTO.PagingViewDTO> exportB2bPlatformSku(PagingDTO<SkuMappingDTO.PagingParamDTO> dto);
+    PagingVO<SkuMappingDTO.PagingViewDTO> exportB2bPlatformSku(@RequestBody PagingDTO<SkuMappingDTO.PagingParamDTO> dto);
 
     /**
      * 导出KOL回片列表
      */
     @PostMapping("/feign/export/exportKolFeedback")
     PagingVO<KolFeedbackDTO.ListDTO> exportKolFeedback(@RequestBody PagingDTO<KolFeedbackDTO.ParamDTO> dto);
+    /**
+     * 企业达人库导出
+     * @date 2025-12-03
+     * @author jack
+     */
+    @PostMapping("/feign/export/exportKolPartnerInfo")
+    PagingVO<KolPartnerInfoDTO.ListDTO> exportKolPartnerInfo(@RequestBody PagingDTO<KolPartnerInfoDTO.PagingParamDTO> dto);
 }
