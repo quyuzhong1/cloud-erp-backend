@@ -109,7 +109,7 @@ public class KolSocialMediaController extends BaseController {
     * @return ApiResult<List<BatchResultDTO>>
     */
     @PostMapping("/batchUpdate")
-    @LogAction(value = LogActionEnum.UPDATE, desc = "达人社媒数据表批量修改")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "达人社媒数据表批量修改")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
         tableField = "create_user_id",
         menuCode = "oms:kolSocialMedia:update",

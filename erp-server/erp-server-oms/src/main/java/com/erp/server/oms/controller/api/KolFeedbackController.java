@@ -116,7 +116,7 @@ public class KolFeedbackController extends BaseController {
     * @return ApiResult<List<BatchResultDTO>>
     */
     @PostMapping("/batchUpdate")
-    @LogAction(value = LogActionEnum.UPDATE, desc = "KOL回片列表批量修改")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "KOL回片列表批量修改")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
         tableField = "create_user_id",
         menuCode = "oms:kolFeedback:update",
