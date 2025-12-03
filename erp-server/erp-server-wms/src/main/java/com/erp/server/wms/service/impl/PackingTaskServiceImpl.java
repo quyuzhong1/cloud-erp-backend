@@ -799,7 +799,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         Map<String, PackingTaskEntity> taskMap = taskEntityList.stream().collect(Collectors.toMap(PackingTaskEntity::getId, Function.identity()));
         //装箱状态 称重状态 异常原因 装箱数量 装箱重量（设备更新） 拣货数量
         List<PackingTaskDTO.StatusDTO> statusDTOList = this.selectPackingStatusByIds(taskIds, null);
-        Map<String, PackingTaskDTO.StatusDTO> statusDTOMap = statusDTOList.stream().collect(Collectors.toMap(PackingTaskDTO.StatusDTO::getId, Function.identity()));
+        Map<String, PackingTaskDTO.StatusDTO> statusDTOMap = statusDTOList.stream().collect(Collectors.toMap(PackingTaskDTO.StatusDTO::getId, statusDTO -> statusDTO, (existing, replacement) -> existing));
         List<String> sourceIds = taskEntityList.stream().map(PackingTaskEntity::getSourceId).distinct().collect(Collectors.toList());
         List<FirstMileDeliveryEntity> firstMileDeliveryEntityList = this.listFirstMileDeliveryByTask(sourceIds);
         List<String> deliveryIds = firstMileDeliveryEntityList.stream().map(BaseEntity::getId).distinct().collect(Collectors.toList());
@@ -2159,18 +2159,10 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
             return;
         }
         //获取发货通知单的拣货数量进行填充
-//        List<String> packingIds = records.stream().map(PackingTaskDTO.PagingViewDTO::getId).collect(Collectors.toList());
-//        List<PackingTaskDetailEntity> packingTaskDetailEntities = packingTaskDetailService.listByMainIds(packingIds);
-//        List<String> packingDetailIds = packingTaskDetailEntities.stream().map(PackingTaskDetailEntity::getSourceDetailId).collect(Collectors.toList());
-//        List<SoDeliveryNoticeDetailEntity> soDeliveryNoticeDetailEntities = soDeliveryNoticeDetailService.listByIds(packingDetailIds);
-//        Map<String, Integer> pickingQtyMap = soDeliveryNoticeDetailEntities.stream().collect(Collectors.groupingBy(SoDeliveryNoticeDetailEntity::getMainId, Collectors.summingInt(SoDeliveryNoticeDetailEntity::getPickingQty)));
-
         List<String> taskIds = records.stream().map(PackingTaskDTO.PagingViewDTO::getId).distinct().collect(Collectors.toList());
         //装箱状态 称重状态 异常原因 装箱数量 装箱重量（设备更新） 拣货数量
         List<PackingTaskDTO.StatusDTO> statusDTOList = this.selectPackingStatusByIds(taskIds, null);
-//        List<PackingTaskDTO.ProductDTO> productDTOS = baseMapper.selectProductNumByIds(taskIds);
-//        Map<String, Integer> productMap = productDTOS.stream().filter(e -> CharSequenceUtil.isNotBlank(e.getTaskId()) && Objects.nonNull(e.getProductNum())).collect(Collectors.toMap(PackingTaskDTO.ProductDTO::getTaskId, PackingTaskDTO.ProductDTO::getProductNum));
-        Map<String, PackingTaskDTO.StatusDTO> statusDTOMap = statusDTOList.stream().collect(Collectors.toMap(PackingTaskDTO.StatusDTO::getId, Function.identity()));
+        Map<String, PackingTaskDTO.StatusDTO> statusDTOMap = statusDTOList.stream().collect(Collectors.toMap(PackingTaskDTO.StatusDTO::getId, statusDTO -> statusDTO, (existing, replacement) -> existing));
         records.forEach(pagingViewDTO -> {
             PackingTaskDTO.StatusDTO statusDTO = statusDTOMap.get(pagingViewDTO.getId());
             if (Objects.nonNull(statusDTO)){
@@ -2181,9 +2173,8 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
                 pagingViewDTO.setWeightingStatus(weightingStatus);
                 pagingViewDTO.setWeightingStatusName(PackingWeightStatusEnum.getName(weightingStatus));
                 pagingViewDTO.setErrorMsg(CharSequenceUtil.isBlank(statusDTO.getErrorMsg())? "" : statusDTO.getErrorMsg());
-                pagingViewDTO.setPackedQty(Objects.isNull(statusDTO.getPackedQty())? MathUtil.ZERO: statusDTO.getPackedQty());
-//                pagingViewDTO.setPickedQty(statusDTO.getPickQty());
-                BigDecimal packageWeight = Objects.isNull(statusDTO.getPackingWeight()) ? BigDecimal.ZERO : statusDTO.getPackingWeight();
+                pagingViewDTO.setPackedQty(statusDTOList.stream().filter(e -> e.getId().equals(pagingViewDTO.getId())).mapToInt(PackingTaskDTO.StatusDTO::getPackedQty).sum());
+                BigDecimal packageWeight = statusDTOList.stream().filter(e -> e.getId().equals(pagingViewDTO.getId())).map(PackingTaskDTO.StatusDTO::getPackingWeight).reduce(BigDecimal.ZERO, BigDecimal::add);
                 pagingViewDTO.setPackageWeight(packageWeight);
                 pagingViewDTO.setPackageWeightStr(packageWeight.toPlainString() + UnitEnum.WeightUnitEnum.KG.getName());
             }else {
@@ -2193,11 +2184,6 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
                 pagingViewDTO.setWeightingStatusName(PackingWeightStatusEnum.UNWEIGHED.getName());
                 pagingViewDTO.setPackedQty(MathUtil.ZERO);
             }
-//            if(pickingQtyMap.containsKey(pagingViewDTO.getSourceId())){
-//                pagingViewDTO.setPickedQty(pickingQtyMap.get(pagingViewDTO.getSourceId()));
-//            }
-//            Integer productNum = productMap.get(pagingViewDTO.getId());
-//            pagingViewDTO.setProductNum(Objects.isNull(productNum) ? MathUtil.ZERO:productNum);
             String sourceType = pagingViewDTO.getSourceType();
             pagingViewDTO.setSourceTypeName(PickingSourceTypeEnum.getName(sourceType));
         });
