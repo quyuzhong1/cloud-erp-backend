@@ -120,6 +120,11 @@ public class TongYouHandlerServiceImpl extends AbstractThirdWarehouseHandler {
 
         TongYouBaseResp<List<TongYouInboundResp>> resp = tongYouService.getInboundBill(authJson);
         if(!isSuccess(resp.getError())){
+            //没有数据默认已取消
+            if (CharSequenceUtil.equals("没有数据",resp.getContent())) {
+                log.warn("通邮入库单{}未查询到数据，默认已取消",cancelInboundReq.getReceivingCode());
+                return success();
+            }
             throw new ServiceException("查询通邮入库单失败,"+resp.getContent());
         }
         if (CollUtil.isEmpty(resp.getData())) {
