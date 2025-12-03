@@ -1,5 +1,5 @@
 package com.erp.server.oms.mapper;
-import com.erp.model.oms.entity.DictLanguageEntity;
+import com.erp.model.oms.entity.KolAddressInfoEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 import org.apache.ibatis.annotations.Mapper;
@@ -7,13 +7,13 @@ import org.apache.ibatis.annotations.Mapper;
 
 /**
  * <p>
- * ISO 639-1 语言标准 Mapper 接口
+ * 达人地址信息 Mapper 接口
  * </p>
  *
  * @author jack
  * @since 2025-12-02
  */
 @Mapper
-public interface DictLanguageMapper extends BaseMapper<DictLanguageEntity> {
+public interface KolAddressInfoMapper extends BaseMapper<KolAddressInfoEntity> {
 
 }

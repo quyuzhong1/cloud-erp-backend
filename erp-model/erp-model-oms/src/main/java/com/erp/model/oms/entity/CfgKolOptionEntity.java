@@ -40,7 +40,7 @@ public class CfgKolOptionEntity extends BaseEntity<CfgKolOptionEntity> {
     @TableField("remark")
     private String remark;
     /**
-    * 类型
+    * 类型  cooperationType: 合作类型  , partnerType: 达人类型
     */
     @TableField("type")
     private String type;

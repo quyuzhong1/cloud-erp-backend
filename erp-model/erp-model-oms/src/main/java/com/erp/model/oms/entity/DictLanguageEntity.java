@@ -16,7 +16,7 @@ import com.common.business.enums.ApproveStatusEnum;
  * </p>
  *
  * @author jack
- * @since 2025-12-01
+ * @since 2025-12-02
 */
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -25,15 +25,15 @@ import com.common.business.enums.ApproveStatusEnum;
 public class DictLanguageEntity extends BaseEntity<DictLanguageEntity> {
 
     /**
-    * 编号
-    */
-    @TableField("code")
-    private String code;
-    /**
-    * 英文名称
+    * 本地语言名
     */
     @TableField("name_en")
     private String nameEn;
+    /**
+    * 本地语言名
+    */
+    @TableField("name_native")
+    private String nameNative;
     /**
     * 中文名称
     */
@@ -41,9 +41,9 @@ public class DictLanguageEntity extends BaseEntity<DictLanguageEntity> {
     private String nameZh;
 
 
-    public static final String CODE = "code";
-
     public static final String NAME_EN = "name_en";
+
+    public static final String NAME_NATIVE = "name_native";
 
     public static final String NAME_ZH = "name_zh";
 

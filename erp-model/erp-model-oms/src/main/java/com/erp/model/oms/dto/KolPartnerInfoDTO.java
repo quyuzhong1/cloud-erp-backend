@@ -2,13 +2,19 @@ package com.erp.model.oms.dto;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.SortDTO;
 import java.util.List;
+
+import com.erp.model.oms.entity.KolAddressInfoEntity;
+import com.erp.model.oms.entity.KolCooperationPlatformEntity;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
@@ -42,6 +48,8 @@ public class KolPartnerInfoDTO implements Serializable {
          */
          private String tabFlag;
 
+         private String tabFlagName;
+
          /**
          * 数量
          */
@@ -64,6 +72,11 @@ public class KolPartnerInfoDTO implements Serializable {
             * sqlMap 默认key default
         */
         private Map<String,String> sqlMap;
+
+         /**
+          * 勾选的id集合
+          */
+         private List<String> ids;
 
      }
     /**
@@ -102,11 +115,13 @@ public class KolPartnerInfoDTO implements Serializable {
         * 达人类型
         */
         private String type;
+        private String typeName;
 
         /**
         * 合作类型
         */
         private String cooperationType;
+        private String cooperationTypeName;
 
         /**
         * 合作日期
@@ -127,6 +142,7 @@ public class KolPartnerInfoDTO implements Serializable {
         * 语言
         */
         private String language;
+        private String languageName;
 
         /**
         * 邮箱
@@ -166,21 +182,39 @@ public class KolPartnerInfoDTO implements Serializable {
         /**
         * 创建人名称
         */
+        private String createUserId;
         private String createUserName;
-    }
 
-    /**
-    * 导出Excel
-    */
-    @Data
-    @NoArgsConstructor
-    public static class ExportDTO extends PagingParamDTO {
         /**
-        * 勾选的id集合
-        */
-        private List<String> ids;
-    }
+         * 合作平台名称
+         */
+        private String platformName;
 
+        /**
+         * 平台ID
+         */
+        private String platformAccountId;
+
+        /**
+         * 账号名称
+         */
+        private String platformAccountName;
+
+        /**
+         * 粉丝数量
+         */
+        private Integer followerCount;
+
+        /**
+         * 主页链接
+         */
+        private String homepageUrl;
+
+        /**
+         * 平台备注
+         */
+        private String platformRemark;
+    }
     /**
     * 详情
     */
@@ -217,11 +251,13 @@ public class KolPartnerInfoDTO implements Serializable {
         * 达人类型
         */
         private String type;
+        private String typeName;
 
         /**
         * 合作类型
         */
         private String cooperationType;
+        private String cooperationTypeName;
 
         /**
         * 合作日期
@@ -242,6 +278,8 @@ public class KolPartnerInfoDTO implements Serializable {
         * 语言
         */
         private String language;
+
+        private String languageName;
 
         /**
         * 邮箱
@@ -273,6 +311,10 @@ public class KolPartnerInfoDTO implements Serializable {
         */
         private String deptName;
 
+        private List<KolAddressInfoEntity> kolAddressInfoDTOList;
+
+        private List<KolCooperationPlatformEntity> kolCooperationPlatformDTOList;
+
 
     }
 
@@ -284,6 +326,9 @@ public class KolPartnerInfoDTO implements Serializable {
     public static class AddDTO extends CommonDTO {
 
 
+        private List<KolAddressInfoDTO.@Valid AddDTO> kolAddressInfoDTOList;
+
+        private List<KolCooperationPlatformDTO. @Valid AddDTO> kolCooperationPlatformDTOList;
     }
 
     /**
@@ -299,6 +344,10 @@ public class KolPartnerInfoDTO implements Serializable {
         @NotBlank(message = "主键id不能为空")
         private String id;
 
+        private List<KolAddressInfoDTO.@Valid UpdateDTO> kolAddressInfoDTOList;
+
+        private List<KolCooperationPlatformDTO. @Valid UpdateDTO> kolCooperationPlatformDTOList;
+
     }
 
     @Data
@@ -308,13 +357,11 @@ public class KolPartnerInfoDTO implements Serializable {
         /**
         * 是否启用
         */
-        @NotNull(message = "是否启用不能为空")
         private Boolean disabled;
 
         /**
         * 备注
         */
-        @NotBlank(message = "备注不能为空")
         @Size(max = 200,message = "备注最大长度不能超过200位")
         private String remark;
 
@@ -354,8 +401,6 @@ public class KolPartnerInfoDTO implements Serializable {
         /**
         * 国家名称
         */
-        @NotBlank(message = "国家名称不能为空")
-        @Size(max = 50,message = "国家名称最大长度不能超过50位")
         private String countryName;
 
         /**
@@ -389,8 +434,6 @@ public class KolPartnerInfoDTO implements Serializable {
         /**
         * 负责人姓名
         */
-        @NotBlank(message = "负责人姓名不能为空")
-        @Size(max = 50,message = "负责人姓名最大长度不能超过50位")
         private String chargeName;
 
         /**
@@ -403,8 +446,6 @@ public class KolPartnerInfoDTO implements Serializable {
         /**
         * 部门名称
         */
-        @NotBlank(message = "部门名称不能为空")
-        @Size(max = 100,message = "部门名称最大长度不能超过100位")
         private String deptName;
 
 
@@ -465,6 +506,24 @@ public class KolPartnerInfoDTO implements Serializable {
          * 关键词
          */
         private String searchKeyword;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class IdsDTO {
+
+        /**
+         * id
+         */
+        @NotEmpty(message = "ids不能为空")
+        private List<String> ids;
+        /**
+         * true 禁用 false 启用
+         */
+        @NotNull(message = "操作类型不能为空")
+        private Boolean disabled;
+
     }
 
 

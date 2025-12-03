@@ -12,8 +12,8 @@
        <result column="update_time" property="updateTime" />
        <result column="version" property="version" />
        <result column="is_deleted" property="isDeleted" />
-       <result column="code" property="code" />
        <result column="name_en" property="nameEn" />
+       <result column="name_native" property="nameNative" />
        <result column="name_zh" property="nameZh" />
     </resultMap>
 
@@ -28,7 +28,7 @@
         update_time,
         version,
         is_deleted,
-        code, name_en, name_zh
+        name_en, name_native, name_zh
     </sql>
 
 
