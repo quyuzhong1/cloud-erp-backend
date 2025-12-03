@@ -12,25 +12,15 @@ import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.core.utils.FieldValidUtil;
 import com.erp.model.oms.dto.excel.KolFeedbackExcelDTO;
-import com.erp.model.oms.enums.FeedbackStatusEnum;
-import com.erp.model.oms.entity.KolPartnerInfoEntity;
-import com.erp.model.plm.vo.SkuVO;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
-import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.oms.service.KolFeedbackService;
-import com.erp.server.oms.service.KolPartnerInfoService;
-import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.redisson.api.RedissonClient;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 /**
  * KOL回片列表Excel导入监听器
@@ -50,17 +40,8 @@ public class KolFeedbackExcelListener extends AnalysisEventListener<KolFeedbackE
     private final List<String> errorNoList = new ArrayList<>();
     private int count = 0;
 
-    // 缓存相关常量
-    private static final String CACHE_SKU_NO_TO_ID = "kol_feedback:sku_no_to_id:";
-    private static final String CACHE_SKU_ID_TO_PRODUCT_NAME = "kol_feedback:sku_id_to_product_name:";
-    private static final String CACHE_PARTNER_NICKNAME_TO_ID = "kol_feedback:partner_nickname_to_id:";
-    private static final int CACHE_EXPIRE_TIME = 300; // 五分钟
-
     private final KolFeedbackService kolFeedbackService = SpringUtil.getBean(KolFeedbackService.class);
-    private final KolPartnerInfoService kolPartnerInfoService = SpringUtil.getBean(KolPartnerInfoService.class);
-    private final PlmTaskFeign plmTaskFeign = SpringUtil.getBean(PlmTaskFeign.class);
     private final DownloadTaskFeign downloadTaskFeign = SpringUtil.getBean(DownloadTaskFeign.class);
-    private final RedissonClient redissonClient = SpringUtil.getBean(RedissonClient.class);
 
     public KolFeedbackExcelListener(String taskId, String importType, Integer importCount) {
         this.taskId = taskId;
@@ -89,9 +70,6 @@ public class KolFeedbackExcelListener extends AnalysisEventListener<KolFeedbackE
         
         // 日期转换处理
         convertDateFields(data, errorMsgList);
-        
-        // 数据校验和ID解析
-        validateAndResolveIds(data, errorMsgList);
         
         // 设置创建人信息
         setCreateUserInfo(data);
@@ -166,54 +144,6 @@ public class KolFeedbackExcelListener extends AnalysisEventListener<KolFeedbackE
     }
 
     /**
-     * 数据校验和ID解析
-     */
-    private void validateAndResolveIds(KolFeedbackExcelDTO data, List<String> errorMsgList) {
-        // 验证SKU是否存在并解析SKU ID和产品名称
-        String skuId = getSkuIdBySkuNo(data.getSkuNo());
-        if (StrUtil.isBlank(skuId)) {
-            errorMsgList.add("SKU【" + data.getSkuNo() + "】不存在");
-        } else {
-            data.setSkuId(skuId);
-            // 获取产品名称
-            String productName = getProductNameBySkuId(skuId);
-            if (StrUtil.isNotBlank(productName)) {
-                data.setProductName(productName);
-            }
-        }
-
-        // 解析数量
-        if (StringUtils.isNotBlank(data.getQtyStr())) {
-            try {
-                Integer qty = Integer.valueOf(data.getQtyStr());
-                if (qty <= 0) {
-                    errorMsgList.add("数量必须大于0");
-                } else {
-                    data.setQty(qty);
-                }
-            } catch (NumberFormatException e) {
-                errorMsgList.add("数量格式错误：" + data.getQtyStr() + "，必须为整数");
-            }
-        } else {
-            errorMsgList.add("数量不能为空");
-        }
-
-        // 验证达人昵称是否存在并解析达人ID
-        String partnerId = getPartnerIdByNickname(data.getPartnerNickname());
-        if (StrUtil.isBlank(partnerId)) {
-            errorMsgList.add("达人昵称【" + data.getPartnerNickname() + "】不存在");
-        } else {
-            data.setPartnerId(partnerId);
-        }
-
-        // URL哈希值计算
-        if (StrUtil.isNotBlank(data.getUrl())) {
-            String urlHash = cn.hutool.crypto.digest.DigestUtil.md5Hex(data.getUrl());
-            data.setUrlHash(urlHash);
-        }
-    }
-
-    /**
      * 设置创建人信息
      */
     private void setCreateUserInfo(KolFeedbackExcelDTO data) {
@@ -260,113 +190,6 @@ public class KolFeedbackExcelListener extends AnalysisEventListener<KolFeedbackE
 
     public int getCount() {
         return count;
-    }
-
-    /**
-     * 根据SKU编号查询SKU ID（带缓存）
-     */
-    private String getSkuIdBySkuNo(String skuNo) {
-        if (StrUtil.isBlank(skuNo)) {
-            return null;
-        }
-
-        // 先从缓存获取
-        String cacheKey = CACHE_SKU_NO_TO_ID + skuNo;
-        String skuId = (String) redissonClient.getBucket(cacheKey).get();
-        if (StrUtil.isNotBlank(skuId)) {
-            return skuId;
-        }
-
-        try {
-            // 调用PLM服务根据SKU编号查询SKU信息
-            List<SkuVO> skuVOS = plmTaskFeign.listBySkuNoList(Collections.singletonList(skuNo));
-            if (CollectionUtils.isNotEmpty(skuVOS)) {
-                SkuVO skuVO = skuVOS.get(0);
-
-                if (skuVO != null && StrUtil.isNotBlank(skuVO.getSkuId())) {
-                    // 缓存结果
-                    redissonClient.getBucket(cacheKey).set(skuVO.getSkuId(), CACHE_EXPIRE_TIME, TimeUnit.SECONDS);
-                    return skuVO.getSkuId();
-                }
-            }
-
-            log.warn("未找到SKU编号：{}", skuNo);
-            return null;
-        } catch (Exception e) {
-            log.error("查询SKU ID失败，SKU编号：{}，错误：{}", skuNo, e.getMessage(), e);
-            return null;
-        }
-    }
-
-    /**
-     * 根据SKU ID查询产品名称（带缓存）
-     */
-    private String getProductNameBySkuId(String skuId) {
-        if (StrUtil.isBlank(skuId)) {
-            return null;
-        }
-
-        // 先从缓存获取
-        String cacheKey = CACHE_SKU_ID_TO_PRODUCT_NAME + skuId;
-        String productName = (String) redissonClient.getBucket(cacheKey).get();
-        if (StrUtil.isNotBlank(productName)) {
-            return productName;
-        }
-
-        try {
-            // 调用PLM服务根据SKU ID查询产品信息
-            List<com.erp.model.plm.vo.ProductVO.ProductPackVO> productPackBySkuIds = 
-                    plmTaskFeign.getProductPackBySkuIds(Collections.singletonList(skuId));
-            if (CollectionUtils.isNotEmpty(productPackBySkuIds)) {
-                com.erp.model.plm.vo.ProductVO.ProductPackVO productPackVO = productPackBySkuIds.get(0);
-                if (productPackVO != null && StrUtil.isNotBlank(productPackVO.getProductName())) {
-                    // 缓存结果
-                    redissonClient.getBucket(cacheKey).set(productPackVO.getProductName(), CACHE_EXPIRE_TIME, TimeUnit.SECONDS);
-                    return productPackVO.getProductName();
-                }
-            }
-            log.warn("未找到产品信息，SKU ID：{}", skuId);
-            return null;
-        } catch (Exception e) {
-            log.error("查询产品名称失败，SKU ID：{}，错误：{}", skuId, e.getMessage(), e);
-            return null;
-        }
-    }
-
-    /**
-     * 根据达人昵称查询达人ID（带缓存）
-     */
-    private String getPartnerIdByNickname(String nickname) {
-        if (StrUtil.isBlank(nickname)) {
-            return null;
-        }
-
-        // 先从缓存获取
-        String cacheKey = CACHE_PARTNER_NICKNAME_TO_ID + nickname;
-        String partnerId = (String) redissonClient.getBucket(cacheKey).get();
-        if (StrUtil.isNotBlank(partnerId)) {
-            return partnerId;
-        }
-
-        try {
-            // 根据昵称查询达人信息
-            KolPartnerInfoEntity partnerInfo = kolPartnerInfoService.lambdaQuery()
-                    .eq(KolPartnerInfoEntity::getNickname, nickname)
-                    .eq(KolPartnerInfoEntity::getIsDeleted, false)
-                    .one();
-            
-            if (partnerInfo != null && StrUtil.isNotBlank(partnerInfo.getId())) {
-                // 缓存结果
-                redissonClient.getBucket(cacheKey).set(partnerInfo.getId(), CACHE_EXPIRE_TIME, TimeUnit.SECONDS);
-                return partnerInfo.getId();
-            }
-
-            log.warn("未找到达人昵称：{}", nickname);
-            return null;
-        } catch (Exception e) {
-            log.error("查询达人ID失败，达人昵称：{}，错误：{}", nickname, e.getMessage(), e);
-            return null;
-        }
     }
 }
 

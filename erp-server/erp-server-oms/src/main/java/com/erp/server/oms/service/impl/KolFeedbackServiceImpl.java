@@ -9,6 +9,8 @@ import com.common.business.dto.base.*;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.entity.KolPartnerInfoEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.plm.vo.ProductVO;
+import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.oms.service.KolPartnerInfoService;
@@ -325,9 +327,118 @@ public class KolFeedbackServiceImpl extends SuperServiceImpl<KolFeedbackMapper, 
             return;
         }
 
-        // 批量保存数据
+        // 批量查询SKU信息
+        List<String> skuNoList = successList.stream()
+                .map(KolFeedbackExcelDTO::getSkuNo)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        List<SkuVO> skuList = new ArrayList<>();
+        if (CollUtil.isNotEmpty(skuNoList)) {
+            skuList = plmTaskFeign.listBySkuNoList(skuNoList);
+        }
+        Map<String, SkuVO> skuMap = skuList.stream()
+                .collect(Collectors.toMap(SkuVO::getSkuNo, sku -> sku, (k1, k2) -> k1));
+
+        // 批量查询SKU ID对应的产品名称
+        List<String> skuIdList = skuList.stream()
+                .map(SkuVO::getSkuId)
+                .filter(StringUtils::isNotBlank)
+                .collect(Collectors.toList());
+        Map<String, String> skuIdToProductNameMap = new HashMap<>();
+        if (CollUtil.isNotEmpty(skuIdList)) {
+            List<ProductVO.ProductPackVO> productPackList = 
+                    plmTaskFeign.getProductPackBySkuIds(skuIdList);
+            if (CollUtil.isNotEmpty(productPackList)) {
+                skuIdToProductNameMap = productPackList.stream()
+                        .filter(p -> StringUtils.isNotBlank(p.getSkuId()) && StringUtils.isNotBlank(p.getProductName()))
+                        .collect(Collectors.toMap(
+                                ProductVO.ProductPackVO::getSkuId, 
+                                ProductVO.ProductPackVO::getProductName,
+                                (k1, k2) -> k1
+                        ));
+            }
+        }
+
+        // 批量查询达人信息
+        List<String> partnerNicknameList = successList.stream()
+                .map(KolFeedbackExcelDTO::getPartnerNickname)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        Map<String, String> partnerNicknameToIdMap = new HashMap<>();
+        if (CollUtil.isNotEmpty(partnerNicknameList)) {
+            List<KolPartnerInfoEntity> partnerList = kolPartnerInfoService.lambdaQuery()
+                    .in(KolPartnerInfoEntity::getNickname, partnerNicknameList)
+                    .eq(KolPartnerInfoEntity::getIsDeleted, false)
+                    .list();
+            partnerNicknameToIdMap = partnerList.stream()
+                    .collect(Collectors.toMap(
+                            KolPartnerInfoEntity::getNickname, 
+                            KolPartnerInfoEntity::getId,
+                            (k1, k2) -> k1
+                    ));
+        }
+
+        // 遍历数据进行校验和保存
         for (KolFeedbackExcelDTO excelDTO : successList) {
+            List<String> errorMsgList = new ArrayList<>();
+            
             try {
+                // 数据校验和ID解析
+                // 验证SKU是否存在并解析SKU ID和产品名称
+                String skuNo = excelDTO.getSkuNo();
+                SkuVO skuVO = skuMap.get(skuNo);
+                if (skuVO == null || StrUtil.isBlank(skuVO.getSkuId())) {
+                    errorMsgList.add("SKU【" + skuNo + "】不存在");
+                } else {
+                    excelDTO.setSkuId(skuVO.getSkuId());
+                    // 获取产品名称
+                    String productName = skuIdToProductNameMap.get(skuVO.getSkuId());
+                    if (StrUtil.isNotBlank(productName)) {
+                        excelDTO.setProductName(productName);
+                    }
+                }
+
+                // 解析数量
+                if (StringUtils.isNotBlank(excelDTO.getQtyStr())) {
+                    try {
+                        Integer qty = Integer.valueOf(excelDTO.getQtyStr());
+                        if (qty <= 0) {
+                            errorMsgList.add("数量必须大于0");
+                        } else {
+                            excelDTO.setQty(qty);
+                        }
+                    } catch (NumberFormatException e) {
+                        errorMsgList.add("数量格式错误：" + excelDTO.getQtyStr() + "，必须为整数");
+                    }
+                } else {
+                    errorMsgList.add("数量不能为空");
+                }
+
+                // 验证达人昵称是否存在并解析达人ID
+                String partnerNickname = excelDTO.getPartnerNickname();
+                String partnerId = partnerNicknameToIdMap.get(partnerNickname);
+                if (StrUtil.isBlank(partnerId)) {
+                    errorMsgList.add("达人昵称【" + partnerNickname + "】不存在");
+                } else {
+                    excelDTO.setPartnerId(partnerId);
+                }
+
+                // URL哈希值计算
+                if (StrUtil.isNotBlank(excelDTO.getUrl())) {
+                    String urlHash = DigestUtil.md5Hex(excelDTO.getUrl());
+                    excelDTO.setUrlHash(urlHash);
+                }
+
+                // 如果有校验错误，添加到错误列表
+                if (CollUtil.isNotEmpty(errorMsgList)) {
+                    excelDTO.setErrorMsg(com.common.core.utils.FieldValidUtil.getMsgSort(errorMsgList));
+                    errorList2.add(excelDTO);
+                    continue;
+                }
+
+                // 复制数据并保存
                 KolFeedbackEntity entity = new KolFeedbackEntity();
                 BeanMapperUtils.copy(excelDTO, entity);
                 
