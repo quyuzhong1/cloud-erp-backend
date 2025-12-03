@@ -242,6 +242,9 @@ public class DaMaiHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         if(!isSuccess(resp)){
             return failure(resp.getMsg());
         }
+        if("订单取消失败".equals(resp.getMsg())){
+            return failure(resp.getMsg());
+        }
         return success(ThirdWarehouseCancelResultEnum.INTERCEPTION_SUCCESSFUL.getCode());
     }
     @Override
