@@ -266,4 +266,12 @@ public interface LogisticsChannelService extends SuperService<LogisticsChannelEn
     List<DictBasicDTO.DropDownDTO> getByPlatformWarehouseAndType(LogisticsChannelDTO.PlatformWarehouseDTO dto);
 
     LogisticsSaleChannelEntity getChannelByCodeAndOverseasWarehouseId(String logisticsProductCode, String transferWarehouseId);
+    /**
+     * 根据仓库id查询海外仓物流渠道
+     * @author will
+     * @date 2025/12/4 14:15
+     * @param dto
+     * @return List<WarehouseChannelDTO>
+     */
+    List<LogisticsChannelDTO.WarehouseChannelDTO> listThirdWarehouseChannel(LogisticsChannelDTO.WarehouseChannelParamDTO dto);
 }
