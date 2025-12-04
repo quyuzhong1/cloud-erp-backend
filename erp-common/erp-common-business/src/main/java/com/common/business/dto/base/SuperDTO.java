@@ -7,8 +7,6 @@ import java.io.Serializable;
 
 @Data
 @NoArgsConstructor
-@AllArgsConstructor
-@Builder
 public class SuperDTO implements Serializable {
 
     private Boolean isUserSystem = false;
