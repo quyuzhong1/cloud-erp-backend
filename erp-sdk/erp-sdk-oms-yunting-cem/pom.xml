@@ -31,11 +31,6 @@
             <version>${gson.version}</version>
         </dependency>
 
-        <!-- Hutool工具包 -->
-        <dependency>
-            <groupId>cn.hutool</groupId>
-            <artifactId>hutool-all</artifactId>
-        </dependency>
 
         <!-- Spring Boot Starter -->
         <dependency>
