@@ -146,7 +146,7 @@ public class KolAddressInfoDTO implements Serializable {
         */
         @NotBlank(message = "国家id不能为空")
         @Size(max = 19,message = "国家id最大长度不能超过19位")
-            private String countryId;
+        private String countryId;
 
         /**
         * 国家
@@ -188,7 +188,6 @@ public class KolAddressInfoDTO implements Serializable {
         /**
         * 邮箱
         */
-        @NotBlank(message = "邮箱不能为空")
         @Size(max = 100,message = "邮箱最大长度不能超过100位")
         private String email;
 
