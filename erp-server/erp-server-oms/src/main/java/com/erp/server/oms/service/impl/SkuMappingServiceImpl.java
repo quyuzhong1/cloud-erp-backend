@@ -79,6 +79,8 @@ import com.erp.server.oms.listener.SkuMappingExcelListener;
 import com.erp.server.oms.listener.SkuMappingWarehouseExcelListener;
 import com.erp.server.oms.mapper.SkuMappingMapper;
 import com.erp.server.oms.service.*;
+import io.seata.spring.annotation.GlobalTransactional;
+import io.seata.tm.api.transaction.Propagation;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -1860,6 +1862,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
     }
 
     @Override
+    @GlobalTransactional(propagation = Propagation.NOT_SUPPORTED)
     public List<SkuMappingDTO.SkuMappingViewDTO> listSkuMappingByParams(ListingInfoDTO.QueryDTO queryDTO) {
         if (Objects.isNull(queryDTO)){
             return Collections.emptyList();

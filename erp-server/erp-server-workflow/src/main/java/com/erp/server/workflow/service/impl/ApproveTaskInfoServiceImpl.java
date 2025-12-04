@@ -81,6 +81,10 @@ public class ApproveTaskInfoServiceImpl extends SuperServiceImpl<ApproveTaskInfo
     public BaseResultDTO.AddDTO add(ApproveTaskInfoDTO.AddDTO addDTO) {
         ApproveTaskInfoEntity approveTaskInfoEntity = new ApproveTaskInfoEntity();
         BeanMapperUtils.copy(addDTO, approveTaskInfoEntity);
+
+        //根据erp业务编号查询如果已存在则删除已存在的数据
+        deleteByBussiness(addDTO.getBussinessKey(),addDTO.getBussinessId());
+
         // 数据处理
         handleData(approveTaskInfoEntity);
 
@@ -95,6 +99,8 @@ public class ApproveTaskInfoServiceImpl extends SuperServiceImpl<ApproveTaskInfo
 
         return new BaseResultDTO.AddDTO(approveTaskInfoEntity.getId(), approveTaskInfoEntity.getId());
     }
+
+
 
     /**
     * 修改
@@ -312,6 +318,18 @@ public class ApproveTaskInfoServiceImpl extends SuperServiceImpl<ApproveTaskInfo
                 map.put(entryEntity.getKey(), value.get(0).getSysFieldValue());
             }
         }
+    }
+
+    /**
+     * 根据业务id和业务编码删除数据
+     * @author will
+     * @date 2025/12/4 11:22
+     * @param bussinessKey
+     * @param bussinessId
+     * @return Boolean
+     */
+    private Boolean deleteByBussiness (String bussinessKey,String bussinessId) {
+        return lambdaUpdate().eq(ApproveTaskInfoEntity::getBussinessKey,bussinessKey).eq(ApproveTaskInfoEntity::getBussinessId,bussinessId).remove();
     }
 
     /**

@@ -42,7 +42,7 @@ import java.util.List;
  */
 @Slf4j
 @RestController
-@LogSystemModule("上传记录")
+@LogSystemModule("开票清单")
 @RequestMapping("/invoiceInfo")
 public class InvoiceInfoController extends BaseController {
 

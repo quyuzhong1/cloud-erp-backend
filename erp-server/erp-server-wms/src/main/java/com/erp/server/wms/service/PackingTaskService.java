@@ -303,6 +303,8 @@ public interface PackingTaskService extends SuperService<PackingTaskEntity> {
 
     PagingVO<WmsCartonDetailDTO.ListPackingDetailDTO> exportPackingTaskDetailMerge(PagingDTO<PackingTaskDTO.ExportDTO> dto);
 
+    PackingTaskDTO.CustomerPoDTO listCustomerPoByTaskId(String id);
+
     /**
      * 根据sourceId查询已装箱数量
      * @param sourceIds

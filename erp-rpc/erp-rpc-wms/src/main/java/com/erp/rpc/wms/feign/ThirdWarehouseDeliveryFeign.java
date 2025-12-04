@@ -58,4 +58,6 @@ public interface ThirdWarehouseDeliveryFeign {
 
     @PostMapping("feign/thirdWarehouseDelivery/listWaitShipByWarehouseIds")
     List<ThirdWarehouseDeliveryEntity> listWaitShipByWarehouseIds(@RequestBody List<String> warehouseIds);
+    @PostMapping("feign/thirdWarehouseDelivery/listBySourceId")
+    List<ThirdWarehouseDeliveryEntity> listBySourceId(@RequestBody List<String> sourceIds);
 }

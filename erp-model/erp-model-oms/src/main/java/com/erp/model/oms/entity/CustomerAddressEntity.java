@@ -82,7 +82,14 @@ public class CustomerAddressEntity extends BaseEntity<CustomerAddressEntity> {
      */
     @TableField("type")
     private String type;
+    /**
+     * 国家id
+     */
+    @TableField("country_id")
+    private String countryId;
 
+    @TableField(exist = false)
+    private String countryName;
 
     public static final String MAIN_ID = "main_id";
 

@@ -1022,6 +1022,8 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
             if (CollectionUtils.isNotEmpty(productDetailList)) {
                 String productName = productDetailList.stream().filter(e -> e.getId().equals(dto.getSkuId())).map(ProductDetailEntity::getName).findFirst().orElse(null);
                 dto.setProductName(productName);
+                //单位名称
+                dto.setUnitName(productDetailList.stream().filter(e -> e.getId().equals(dto.getSkuId())).map(ProductDetailEntity::getUnitName).findFirst().orElse(null));
             }
             //调拨方向名称
             if (CollectionUtils.isNotEmpty(transferDirectionList)) {

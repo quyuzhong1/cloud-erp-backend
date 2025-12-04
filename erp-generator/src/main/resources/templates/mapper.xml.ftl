@@ -38,7 +38,7 @@
         ${table.fieldNames}
     </sql>
 
-    <#if fieldMap["approveStatus"]?? && fieldMap["code"]??>
+<#--    <#if fieldMap["approveStatus"]?? && fieldMap["code"]??>-->
     <select id="paging" resultType="${package.Dto}.${table.dtoName}$ListDTO">
 
     </select>
@@ -63,7 +63,7 @@
         </if>
         GROUP BY approve_status
     </select>
-    </#if>
+<#--    </#if>-->
 
 </#if>
 </mapper>

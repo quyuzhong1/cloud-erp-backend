@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.dmp.mapper.doris.AdsErpInventoryDiffMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.dmp.entity.doris.AdsErpInventoryDiffEntity">
+       <result column="id" property="id" />
+       <result column="create_time" property="createTime" />
+       <result column="update_time" property="updateTime" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="unique_code" property="uniqueCode" />
+       <result column="data_encrypt" property="dataEncrypt" />
+       <result column="source_system" property="sourceSystem" />
+       <result column="account_code" property="accountCode" />
+       <result column="next_level_id" property="nextLevelId" />
+       <result column="bill_topic" property="billTopic" />
+       <result column="flow_id" property="flowId" />
+       <result column="etl_status" property="etlStatus" />
+       <result column="node_id" property="nodeId" />
+       <result column="instance_id" property="instanceId" />
+       <result column="task_id" property="taskId" />
+       <result column="source_id" property="sourceId" />
+       <result column="last_update_flag" property="lastUpdateFlag" />
+       <result column="check_month" property="checkMonth" />
+       <result column="warehouse_id" property="warehouseId" />
+       <result column="warehouse_code" property="warehouseCode" />
+       <result column="warehouse_name" property="warehouseName" />
+       <result column="sku_id" property="skuId" />
+       <result column="sku_no" property="skuNo" />
+       <result column="product_name" property="productName" />
+       <result column="init_qty" property="initQty" />
+       <result column="outstock_qty" property="outstockQty" />
+       <result column="instock_qty" property="instockQty" />
+       <result column="closing_qty" property="closingQty" />
+       <result column="estimated_closing_qty" property="estimatedClosingQty" />
+       <result column="platform_closing_intransit_qty" property="platformClosingIntransitQty" />
+       <result column="platform_closing_qty" property="platformClosingQty" />
+       <result column="platform_closing_total_qty" property="platformClosingTotalQty" />
+       <result column="diff_closing_total_qty" property="diffClosingTotalQty" />
+       <result column="diff_closing_qty" property="diffClosingQty" />
+       <result column="diff_closing_intransit_qty" property="diffClosingIntransitQty" />
+       <result column="remark" property="remark" />
+       <result column="finish_time" property="finishTime" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_time,
+        update_time,
+        create_user_name,
+        create_user_id,
+        update_user_name,
+        update_user_id,
+        version,
+        is_deleted,
+        unique_code, data_encrypt, source_system, account_code, next_level_id, bill_topic, flow_id, etl_status, node_id, instance_id, task_id, source_id, last_update_flag, check_month, warehouse_id, warehouse_code, warehouse_name, sku_id, sku_no, product_name, init_qty, outstock_qty, instock_qty, closing_qty, estimated_closing_qty, platform_closing_intransit_qty, platform_closing_qty, platform_closing_total_qty, diff_closing_total_qty, diff_closing_qty, diff_closing_intransit_qty, remark, finish_time
+    </sql>
+
+    <select id="paging" resultType="com.erp.model.dmp.dto.AdsErpInventoryDiffDTO$ListDTO">
+        SELECT
+            aeid.id AS id,
+            aeid.create_time AS createTime,
+            aeid.update_time AS updateTime,
+            aeid.create_user_name AS createUserName,
+            aeid.create_user_id AS createUserId,
+            aeid.update_user_name AS updateUserName,
+            aeid.update_user_id AS updateUserId,
+            aeid.unique_code AS uniqueCode,
+            aeid.source_system AS sourceSystem,
+            aeid.account_code AS accountCode,
+            aeid.source_id AS sourceId,
+            aeid.last_update_flag AS lastUpdateFlag,
+            aeid.check_month AS checkMonth,
+            aeid.warehouse_id AS warehouseId,
+            aeid.warehouse_code AS warehouseCode,
+            aeid.warehouse_name AS warehouseName,
+            aeid.sku_id AS skuId,
+            aeid.sku_no AS skuNo,
+            aeid.product_name AS productName,
+            aeid.init_qty AS initQty,
+            aeid.outstock_qty AS outstockQty,
+            aeid.instock_qty AS instockQty,
+            aeid.closing_qty AS closingQty,
+            aeid.intransit_qty AS intransitQty,
+            aeid.estimated_closing_qty AS estimatedClosingQty,
+            aeid.platform_closing_intransit_qty AS platformClosingIntransitQty,
+            aeid.platform_closing_qty AS platformClosingQty,
+            aeid.platform_closing_total_qty AS platformClosingTotalQty,
+            aeid.diff_closing_total_qty AS diffClosingTotalQty,
+            aeid.diff_closing_qty AS diffClosingQty,
+            aeid.diff_closing_intransit_qty AS diffClosingIntransitQty,
+            aeid.remark AS remark,
+            aeid.finish_time AS finishTime
+        FROM ads_erp_inventory_diff aeid
+        WHERE ${params.sqlMap.default}
+        and aeid.is_deleted = FALSE
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+    </select>
+
+
+    <select id="listExport" resultType="com.erp.model.dmp.dto.AdsErpInventoryDiffDTO$ListDTO">
+
+    </select>
+
+    <select id="statistics" resultType="com.erp.model.dmp.dto.AdsErpInventoryDiffDTO$StatisticsDTO">
+        SELECT
+        sum(abs(closing_qty)) AS closingQty,
+        sum(abs(platform_closing_total_qty)) AS platformClosingQty,
+        sum(abs(diff_closing_qty)) AS diffClosingQty
+        FROM ads_erp_inventory_diff aeid
+        WHERE ${params.sqlMap.default}
+          and is_deleted = FALSE
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+    </select>
+
+</mapper>

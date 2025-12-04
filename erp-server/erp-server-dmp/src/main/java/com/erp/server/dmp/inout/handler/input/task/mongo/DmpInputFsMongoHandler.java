@@ -21,6 +21,7 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BinaryOperator;
@@ -34,7 +35,7 @@ import java.util.stream.Collectors;
 @Service
 @Scope("prototype")
 @Slf4j
-public class DmpInputFsMongoHandler extends DmpInputBaseMongoHandler{
+public class DmpInputFsMongoHandler extends DmpInputParentIdMongoHandler{
 
 	@Override
 	public void doDmpHandler(DmpInputTaskRequest dmpRequest, DmpInputTaskResponse dmpResponse, DmpHandlerChain chain) {

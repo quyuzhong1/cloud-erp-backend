@@ -24,6 +24,7 @@ import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.TransferInfoDetailMapper;
 import com.erp.server.wms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
@@ -43,6 +44,7 @@ import java.util.stream.Stream;
  * @author will
  * @since 2023-05-10
  */
+@Slf4j
 @Service
 public class TransferInfoDetailServiceImpl extends SuperServiceImpl<TransferInfoDetailMapper, TransferInfoDetailEntity> implements TransferInfoDetailService {
 
@@ -81,6 +83,7 @@ public class TransferInfoDetailServiceImpl extends SuperServiceImpl<TransferInfo
         doOpHandleDetails(list,mainId,Boolean.FALSE);
 
         this.saveBatch(list);
+        log.warn("直接调拨单新增明细表={}", JSONUtil.toJsonStr(list));
         //标记SKU
         List<String> skuIds = list.stream().map(TransferInfoDetailEntity::getSkuId).collect(Collectors.toList());
         plmTaskFeign.updateOccupyStatus(skuIds);

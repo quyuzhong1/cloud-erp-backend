@@ -42,6 +42,11 @@ public class SoChangeDetailDTO implements Serializable {
          */
         @NotBlank(message = "sku不能为空")
         private String skuId;
+        /**
+         * 单位
+         */
+        @NotBlank(message = "单位不能为空")
+        private String unitName;
 
 
         /**
@@ -223,7 +228,12 @@ public class SoChangeDetailDTO implements Serializable {
         /**
          * 单位
          */
+        @Deprecated
         private String unit;
+        /**
+         * 单位名称
+         */
+        private String unitName;
 
         /**
          * 新销售金额
@@ -376,7 +386,12 @@ public class SoChangeDetailDTO implements Serializable {
         /**
          * 单位
          */
+        @Deprecated
         private String unit;
+        /**
+         * 单位名称
+         */
+        private String unitName;
 
         /**
          * 新销售金额

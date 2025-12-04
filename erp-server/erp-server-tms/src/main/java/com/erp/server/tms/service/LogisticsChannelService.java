@@ -263,9 +263,13 @@ public interface LogisticsChannelService extends SuperService<LogisticsChannelEn
 
     List<LogisticsChannelDTO.PlatformChannelDTO> listByPlatformCode(List<String> platformCodeList);
 
+    List<LogisticsChannelEntity> getChannelByCode(String channelCode);
+
     List<DictBasicDTO.DropDownDTO> getByPlatformWarehouseAndType(LogisticsChannelDTO.PlatformWarehouseDTO dto);
 
     LogisticsSaleChannelEntity getChannelByCodeAndOverseasWarehouseId(String logisticsProductCode, String transferWarehouseId);
+
+    LogisticsChannelDTO.BaseDTO getChannelByCodeAndPlatform(String channelCode, String logisticsType);
 
     List<LogisticsChannelDTO.SignShipDTO> getScaleChannelByChannelByIds(List<String> logisticsChannelIdList, String dictPlatform);
 }

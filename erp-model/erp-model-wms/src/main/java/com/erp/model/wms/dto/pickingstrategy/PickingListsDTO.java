@@ -426,7 +426,7 @@ public class PickingListsDTO {
         /**
          * 客户PO号
          */
-        private String customerPo;
+        private String customerPO;
 
     }
 

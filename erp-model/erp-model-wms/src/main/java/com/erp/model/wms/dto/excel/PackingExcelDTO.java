@@ -90,11 +90,16 @@ public class PackingExcelDTO implements Serializable {
     @ExcelProperty(value = "每箱体积高(CM)",index = 8)
 //    @FieldValid(fieldName = "每箱体积高(CM)", formatPattern = FieldFormatPatternTypeEnum.DECIMAL)
     private BigDecimal singleBoxHeight;
+    /**
+     * 客户PO号
+     */
+    @ExcelProperty(value = "客户PO号",index = 9)
+    private String customerPO;
 
 
     /**
      * 错误数据
      */
-    @ExcelProperty(value = "错误数据", index = 9)
+    @ExcelProperty(value = "错误数据", index = 10)
     private String errorMsg;
 }

@@ -158,6 +158,7 @@ public class TransferOutDetailServiceImpl extends SuperServiceImpl<TransferOutDe
                 SkuVO skuInfo = skuMap.get(data.getSkuId()).get(0);
                 data.setProductName(skuInfo.getSkuName()); //产品名称
                 data.setVariantProperty(skuInfo.getVariantProperty()); // 变体信息
+                data.setUnitName(skuInfo.getUnitName()); // 变体信息
             }
             data.setSourceType(SourceTypeEnum.TRANSFER_OUT.getCode());
             data.setSourceDetailId(data.getId());
