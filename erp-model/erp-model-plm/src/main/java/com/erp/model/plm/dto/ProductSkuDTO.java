@@ -98,6 +98,10 @@ public class ProductSkuDTO extends PermissionsDTO {
      */
     private List<String> brandList;
 
+    /**
+     * 研发团队
+     */
+    private List<String> rdtTeamList;
 
     /**
      * 产品 经理
@@ -114,6 +118,7 @@ public class ProductSkuDTO extends PermissionsDTO {
      * 产品 属性
      */
     private List<String> propertyList;
+    private List<String> notPropertyList;
 
 
     /**

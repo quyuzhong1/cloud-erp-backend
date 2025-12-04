@@ -296,6 +296,10 @@ public class WarehouseDTO implements Serializable {
          * 平台名称
          */
         private String platformName;
+        /**
+         * 仓库负责人id
+         */
+        private String chargeId;
 
         /**
          * 是否b2b发货

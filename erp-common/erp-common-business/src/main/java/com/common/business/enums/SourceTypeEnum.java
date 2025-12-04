@@ -58,6 +58,7 @@ public enum SourceTypeEnum {
     WAREHOUSE("warehouse", "仓库","warehouse"),
     SDY_WAREHOUSE("sdy_warehouse", "仓库","warehouse"),
     SO_B2C_DELIVERY("soB2cDelivery", "B2C发货单","so_b2c_delivery"),
+    SO_B2C_DELIVERY_NOT_OUTBOUND("soB2cDeliveryNotOutbound", "B2C发货单-不出库发货","so_b2c_delivery"),
     B2B_THIRD_DELIVERY("b2bThirdDelivery", "B2B三方发货单","b2b_third_delivery"),
     SO_B2C_DELIVERY_INTERCEPT("soB2cDeliveryIntercept", "B2C发货单拦截","so_b2c_delivery_intercept"),
     PLATFORM_SO_OUT_STOCK("platformSoOutStock", "平台销售出库单",""),
@@ -100,6 +101,7 @@ public enum SourceTypeEnum {
     SAMPLE_BACK_INFO("sampleBackInfo","样品退回单","sample_back_info"),
     SAMPLE_LEDGER_INIT("sampleLedgerInit","样品期初台账","sample_ledger_init"),
     SAMPLE_TRANSFER_INFO("sampleTransferInfo","样品转移单","sample_transfer_info"),
+    SAMPLE_ADJUSTMENT_INFO("sampleAdjustmentInfo","样品调整单","sample_adjustment_info"),
     WAREHOUSE_LOCATION_MOVE_INFO("warehouseLocationMoveInfo","仓位移动","warehouse_location_move"),
 
 
@@ -166,7 +168,11 @@ public enum SourceTypeEnum {
 
     LX_PRODUCT_DETAIL("lx_productDetail", "领星产品管理","product_detail"),
     SKU_STD_COST_DETAIL( "skuStdCostDetail", "SKU标准成本明细","sku_std_cost_detail"),
-
+    MOLD_INFO("moldInfo", "模具档案","mold_info"),
+    MOLD_REF_SKU("moldRefSku", "模具关联SKU","mold_ref_sku"),
+    ASSET_NOTICE("assetNotice","资产通知","asset_notice"),
+    ASSET_PURCHASE_ORDER("assetPurchaseOrder","资产采购单","asset_purchase_order"),
+    ASSET_PURCHASE_CHANGE("assetPurchaseChange","资产采购变更单","asset_purchase_change"),
 
     //SYS
     SYS_DEPARTMENT("sysDepartment", "部门","sys_department"),
@@ -290,6 +296,16 @@ public enum SourceTypeEnum {
 
 
 
+
+
+    //FMS
+    ASSET_LOCATION("assetLocation", "资产位置","asset_location"),
+    ASSET_ACCEPTANCE("assetAcceptance", "资产验收单","asset_accept"),
+    ASSET_CARD("assetCard", "资产卡片","asset_card"),
+    ASSET_STOCKTAKING_PLAN("assetStocktakingPlan", "盘点方案","asset_stocktaking_plan"),
+    ASSET_STOCKTAKING("assetStocktaking", "资产盘点表","asset_stocktaking"),
+    ASSET_PROFIT_LOSS("assetProfitLoss", "盘盈盘亏单","asset_profit_loss"),
+    ASSET_DISPOSAL("assetDisposal", "资产处置单","asset_disposal"),
 
 
     //售后申请

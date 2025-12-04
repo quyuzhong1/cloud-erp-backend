@@ -21,7 +21,7 @@
        <result column="exec_timeout" property="execTimeout" />
        <result column="extend_json" property="extendJson" />
        <result column="next_exec_time" property="nextExecTime" />
-       <result column="etl_instance_id" property="etlInstanceId" />
+       <result column="instance_id" property="instanceId" />
     </resultMap>
 
     <!-- 通用查询结果列 -->
@@ -35,8 +35,82 @@
         update_user_id,
         version,
         is_deleted,
-        cfg_etl_id, start_time, end_time, status, error_message, error_count, exec_timeout, extend_json, next_exec_time, etl_instance_id
+        cfg_etl_id, start_time, end_time, status, error_message, error_count, exec_timeout, extend_json, next_exec_time, instance_id
     </sql>
 
+    <!-- DmpEtlTask -->
+    <select id="paging" resultType="com.erp.model.dmp.dto.DmpEtlTaskDTO$ListDTO">
+        SELECT
+            det.id AS id,
+            det.create_time AS createTime,
+            det.update_time AS updateTime,
+            det.create_user_name AS createUserName,
+            det.create_user_id AS createUserId,
+            det.update_user_name AS updateUserName,
+            det.update_user_id AS updateUserId,
+            det.version AS version,
+            det.is_deleted AS isDeleted,
+            det.cfg_etl_id AS cfgEtlId,
+            det.start_time AS startTime,
+            det.end_time AS endTime,
+            det.status AS status,
+            det.error_message AS errorMessage,
+            det.error_count AS errorCount,
+            det.exec_timeout AS execTimeout,
+            det.extend_json AS extendJson,
+            det.next_exec_time AS nextExecTime,
+            det.instance_id AS instanceId,
+            'restCloud' AS execSystem,
+            dce.exec_url AS execUrl,
+            dce.flow_name AS flowName
+        from dmp_etl_task det
+        left join dmp_cfg_etl dce on det.cfg_etl_id = dce.id
+        where
+        ${params.sqlMap.default}
+        and det.is_deleted = false
+        <if test="params.ids != null and params.ids.size > 0">
+            and dci.id in
+            <foreach collection="params.ids" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        det.id DESC
+    </select>
+
+    <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
+        select approve_status, count(id) from dmp_etl_task where is_deleted = false group by approve_status
+    </select>
+
+    <select id="tabList" resultType="com.erp.model.dmp.dto.DmpEtlTaskDTO$TabListDTO">
+        SELECT
+        CASE
+        WHEN det.status IN ('init', 'fds', 'mongo', 'dmp') THEN 'waitFinish'
+        WHEN det.status = 'error' THEN 'error'
+        WHEN det.status = 'finish' THEN 'finish'
+        ELSE det.status
+        END AS tabFlag,
+        CASE
+        WHEN det.status IN ('init', 'fds', 'mongo', 'dmp') THEN '待完成'
+        WHEN det.status = 'error' THEN '异常'
+        WHEN det.status = 'finish' THEN '完成'
+        ELSE det.status
+        END AS tabFlagName,
+        COUNT(*) AS count
+        FROM dmp_etl_task det
+        WHERE det.is_deleted = FALSE
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        GROUP BY tabFlag, tabFlagName
+    </select>
 
 </mapper>

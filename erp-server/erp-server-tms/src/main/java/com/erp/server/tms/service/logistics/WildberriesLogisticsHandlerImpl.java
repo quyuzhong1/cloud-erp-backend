@@ -47,8 +47,6 @@ public class WildberriesLogisticsHandlerImpl extends AbstractLogisticsHandler {
     private LogisticsOperateService logisticsOperateService;
     @Resource
     private ShopInfoFeign shopInfoFeign;
-    @Value("${oms.sdk.wildberries.sandbox}")
-    private String sandbox;
     /**
      * 查询店铺授权
      * @param shopId
@@ -92,7 +90,7 @@ public class WildberriesLogisticsHandlerImpl extends AbstractLogisticsHandler {
                 .build();
         LogisticsPrintLabelResponse response = new LogisticsPrintLabelResponse();
         try {
-            OrderLabelResponse orderLabelResponse = wildberriesSDKService.getOrderLabel(logisticsGetLabelVO.getAuthMap().get("token"), request, sandbox);
+            OrderLabelResponse orderLabelResponse = wildberriesSDKService.getOrderLabel(logisticsGetLabelVO.getAuthMap().get("token"), request);
             //失败
             if (CollUtil.isEmpty(orderLabelResponse.getStickers())) {
                 logisticsOperateService.pullOperateLog(logisticsGetLabelVO.getOrderId(),

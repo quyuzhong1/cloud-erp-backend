@@ -525,9 +525,16 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
             viewProductDTO.setReceiveQty(receiveQty);
             //未收货数量
             viewProductDTO.setUnReceiveQty(viewProductDTO.getPurchaseQty() + returnQty - receiveQty);
-
+            SkuVO skuVO = skuList.stream().filter(obj -> obj.getSkuId().equals(viewProductDTO.getSkuId())).findFirst().orElse(null);
+            String supplierId;
+            if (Objects.nonNull(skuVO)) {
+                viewProductDTO.setUnitName(skuVO.getUnitName());
+                viewProductDTO.setEan(skuVO.getEan());
+                supplierId = skuVO.getSupplierId();
+            } else {
+                supplierId = "";
+            }
             //参考供应商
-            String supplierId = skuList.stream().filter(obj -> obj.getSkuId().equals(viewProductDTO.getSkuId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getSupplierId())).orElse("");
             if (CollectionUtils.isNotEmpty(supplierIdList)) {
                 String supplierName = supplierList.stream().filter(obj -> obj.getId().equals(supplierId)).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
                 viewProductDTO.setMainSupplierId(supplierId);
@@ -563,6 +570,9 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
             //仓位名称填充
             WarehouseLocationEntity warehouseLocationEntity = warehouseLocationEntityList.stream().filter(e -> e.getWarehouseId().equals(viewProductDTO.getDeliveryWarehouseId()) && e.getCode().equals(viewProductDTO.getWarehouseLocation())).findFirst().orElse(new WarehouseLocationEntity());
             viewProductDTO.setWarehouseLocationName(warehouseLocationEntity.getName());
+
+            //新品首批名称填充
+            viewProductDTO.setFirstMassProductName(com.erp.model.plm.enums.FirstMassProductTypeEnum.getName(viewProductDTO.getFirstMassProduct()));
         }
         return list;
     }

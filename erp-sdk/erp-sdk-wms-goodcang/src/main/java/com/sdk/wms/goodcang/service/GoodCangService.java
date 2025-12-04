@@ -1,7 +1,9 @@
 package com.sdk.wms.goodcang.service;
 
+import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.TypeReference;
+import com.common.business.threadlocal.ThirdWarehouseContext;
 import com.common.core.exception.ServiceException;
 import com.sdk.wms.goodcang.constants.GoodCangConstants;
 import com.sdk.wms.goodcang.dto.request.*;
@@ -198,6 +200,8 @@ public class GoodCangService {
         Map<String,Object> paramsMap = new HashMap<>();
         paramsMap.put("reference_no",referenceNo);
         String response = GoodCangUtils.sendPost(GoodCangConstants.METHOD_GET_OUT_BOUND_CODE,paramsMap);
+        ThirdWarehouseContext.setRequestJson(JSONUtil.toJsonStr(paramsMap));
+        ThirdWarehouseContext.setResponseJson(response);
         //处理返回值
         GoodCangResponse<String> respDto = JSON.parseObject(response,new TypeReference<GoodCangResponse<String>>() {}.getType());
         if(Objects.isNull(respDto)){

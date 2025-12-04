@@ -28,8 +28,12 @@ public class FeishuConstant {
     /**
      * 飞书发送单条API
      */
-    public final static String LARK_SEND_MESSAGE_URL = "https://open.feishu.cn/open-apis/im/v1/messages?receive_id_type=union_id";
+//    public final static String LARK_SEND_MESSAGE_URL = "https://open.feishu.cn/open-apis/im/v1/messages?receive_id_type=union_id";
 
+    /**
+     * 飞书发送单条API-应用互通（灰度）
+     */
+    public final static String LARK_SEND_MESSAGE_URL = "https://open.feishu.cn/open-apis/trust_party/v1/trust_party_messages?receive_id_type=union_id";
     /**
      * 飞书加急API
      */

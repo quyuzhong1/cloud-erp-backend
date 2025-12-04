@@ -2,6 +2,7 @@ package com.erp.server.workflow.service;
 
 import com.erp.model.workflow.dto.DictBasicDTO;
 import com.erp.model.workflow.entity.DictBasicEntity;
+import com.alibaba.fastjson.JSONObject;
 import com.common.business.service.SuperService;
 
 import java.util.List;
@@ -16,7 +17,10 @@ import java.util.Map;
  * @since 2023-04-21
  */
 public interface DictBasicService extends SuperService<DictBasicEntity> {
-
+	
+	boolean saveJsonObject(JSONObject jsonObject);
+	
+	boolean updateJsonObject(List<JSONObject> jsonObjects);
     /**
      * 下拉列表
      * @param type

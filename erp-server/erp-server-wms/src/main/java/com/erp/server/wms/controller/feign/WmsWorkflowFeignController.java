@@ -1,6 +1,8 @@
 package com.erp.server.wms.controller.feign;
 
 import com.common.business.dto.ApproveDTO;
+import com.common.business.dto.base.ApproveOneDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.erp.model.workflow.dto.EndProcessDTO;
 import com.erp.server.wms.service.WorkflowProcessService;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -22,6 +24,17 @@ public class WmsWorkflowFeignController {
     @Resource
     private WorkflowProcessService workflowProcessService;
 
+    /**
+     * @description: 审核
+     * @author jack
+     * @date: 2025-11-21
+     * @param dto
+     * @return Boolean
+     */
+    @PostMapping("/approve")
+    public BatchResultDTO approve(@RequestBody ApproveDTO.ApproveOneDTO dto) {
+      return workflowProcessService.approve(dto);
+    }
     /**
      * @description: 结束审核
      * @author Will
@@ -56,5 +69,17 @@ public class WmsWorkflowFeignController {
     @PostMapping("/cancelProcess")
     public void cancelProcess(@RequestBody ApproveDTO.CancelProcessDTO dto) {
         workflowProcessService.cancelProcess(dto);
+    }
+
+    /**
+     * 撤销流程
+     * @author will
+     * @date 2025/6/18 10:41
+     * @param dto
+     * @return void
+     */
+    @PostMapping("/addComment")
+    public void addComment(@RequestBody ApproveDTO.AddCommentDTO dto) {
+        workflowProcessService.addComment(dto);
     }
 }

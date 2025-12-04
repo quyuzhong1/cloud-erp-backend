@@ -55,8 +55,10 @@
         ps.is_marketable,
         pd.process_id,
         pi.property,
+        pi.property_id,
         pi.name_en,
         pi.brand_name,
+        pi.rdt_team_name,
         pi.grade,
         pd.charge_name AS productChargeName,
         pd.first_mass_product_date,
@@ -97,7 +99,7 @@
         pi.iterate_ref_sku_id,
         pi.iterate_ref_sku_no,
         pi.application_category_id,
-        pl.product_property as productProperty
+        ps.product_property as productProperty
         FROM product_info pi
         INNER JOIN product_detail pd ON pi.id = pd.product_id AND pd.is_deleted = FALSE
         LEFT JOIN product_purchase pp ON pp.sku_id = pd."id" AND pp.is_deleted = FALSE
@@ -181,9 +183,22 @@
             </foreach>
         </if>
 
+        <if test="params.rdtTeamList !=null and params.rdtTeamList.size>0">
+            AND pi.rdt_team_id IN
+            <foreach collection="params.rdtTeamList" item="rdtTeamId" open="(" separator="," close=")">
+                #{rdtTeamId}
+            </foreach>
+        </if>
+
         <if test="params.propertyList !=null and params.propertyList.size>0">
             AND pi.property_id IN
             <foreach collection="params.propertyList" item="propertyId" open="(" separator="," close=")">
+                #{propertyId}
+            </foreach>
+        </if>
+        <if test="params.notPropertyList !=null and params.notPropertyList.size>0">
+            AND pi.property_id not IN
+            <foreach collection="params.notPropertyList" item="propertyId" open="(" separator="," close=")">
                 #{propertyId}
             </foreach>
         </if>
@@ -343,6 +358,8 @@
                pi.charge_id,
                pi.brand_name,
                pi.brand_id,
+               pi.rdt_team_name,
+               pi.rdt_team_id,
                pi.property,
                pi.property_id,
                pi.grade_id,
@@ -391,6 +408,8 @@
                pi.charge_id,
                pi.brand_name,
                pi.brand_id,
+               pi.rdt_team_name,
+               pi.rdt_team_id,
                pi.property,
                pi.property_id,
                pi.grade_id,
@@ -433,6 +452,8 @@
                pi.charge_id,
                pi.brand_name,
                pi.brand_id,
+               pi.rdt_team_name,
+               pi.rdt_team_id,
                pi.property,
                pi.property_id,
                pi.grade_id,
@@ -475,6 +496,7 @@
         pd.name_en,
         pi.property,
         pi.brand_name as brandName,
+        pi.rdt_team_name as rdtTeamName,
         pd.product_state as productStateName,
         pi.grade,
         pi.sales_channel,
@@ -522,7 +544,7 @@
         ps.data_url,
         CASE WHEN ps.is_marketable = 1 THEN '是' ELSE '否' END isMarketable,
         ps.sales_platform,
-        pl.product_property,
+        ps.product_property,
         pl.declare_price,
         pl.declare_chinese_name,
         pl.declare_english_name,
@@ -542,14 +564,14 @@
         ppk.net_weight,
         ppk.box_weight,
         ppk.box_qty,
-        pl.product_property_id,
+        ps.product_property_id,
         pd.charge_id,
         pi.iterate_ref_sku_id,
         pi.iterate_ref_sku_no,
         pd.warehouse_location,
         pd.warehouse_location_large,
         pi.application_category_id,
-        pl.insurance_property
+        ps.insurance_property
         FROM product_info pi
         INNER JOIN product_detail pd ON pi.id = pd.product_id AND pd.is_deleted = FALSE
         LEFT JOIN product_purchase pp ON pp.sku_id = pd."id" AND pp.is_deleted = FALSE
@@ -558,7 +580,7 @@
         LEFT JOIN product_pack ppk ON ppk.sku_id = pd."id" AND ppk.is_deleted = FALSE
         LEFT JOIN product_logistics pl ON pl.sku_id = pd."id" AND pl.is_deleted = FALSE
         LEFT JOIN product_unit unit ON pd.unit_id = unit.id AND unit.is_deleted = FALSE
-        LEFT JOIN basic_dict dp ON pl.product_property_id = dp.id AND dp.is_deleted = FALSE
+        LEFT JOIN basic_dict dp ON ps.product_property_id = dp.id AND dp.is_deleted = FALSE
         WHERE ${params.sqlMap.default} and pi.is_deleted = FALSE
         <if test="params.skuIds != null and params.skuIds.size>0">
             AND pd.id IN
@@ -631,6 +653,13 @@
             AND pi.brand_id IN
             <foreach collection="params.brandList" item="brandId" open="(" separator="," close=")">
                 #{brandId}
+            </foreach>
+        </if>
+
+        <if test="params.rdtTeamList !=null and params.rdtTeamList.size>0">
+            AND pi.rdt_team_id IN
+            <foreach collection="params.rdtTeamList" item="rdtTeamId" open="(" separator="," close=")">
+                #{rdtTeamId}
             </foreach>
         </if>
 
@@ -767,12 +796,13 @@
         pd.variant_property as variantProperty,
         pl.declare_chinese_name as declareName,
         pl.declare_model as declareModel,
-        pl.product_property_id AS productPropertyId,
+        ps.product_property_id AS productPropertyId,
         pl.declare_currency_symbol as declareCurrencySymbol,
         pi.materials,
         pi.function_desc,
         pi.grade AS productGrade,
         pi.brand_name as brandName,
+        pi.rdt_team_name as rdtTeamName,
         ps.sale_state as saleState,
         pd.unit_name,
         pd.status,
@@ -829,6 +859,7 @@
         pd.status,
         pp.moq,
         pp.main_supplier,
+        pp.ean,
         ppk.box_qty,
         pc.retail_price
         FROM product_detail pd
@@ -874,7 +905,9 @@
         pp.box_qty as unitQty,
         pl.declare_chinese_name as declareName,
         pl.declare_model as declareModel,
-        pd.unit_name
+        pd.unit_name,
+        pi.property_id as propertyId,
+        pi.property as propertyName
         FROM product_detail pd
         LEFT JOIN product_info pi ON pi.id = pd.product_id AND pi.is_deleted = FALSE
         left join product_pack pp on pd.id = pp.sku_id AND pp.is_deleted = FALSE
@@ -927,7 +960,9 @@
         pi.spu_no,
         pi.name AS spuName,
         pd.sku_no,
-        pd.name AS skuName
+        pd.name AS skuName,
+        pi.property_id,
+        pi.property as propertyName
         FROM product_detail pd
         LEFT JOIN product_info pi ON pi.id = pd.product_id AND pi.is_deleted = FALSE
         WHERE pd.is_deleted = FALSE
@@ -994,7 +1029,7 @@
         pd.variant_property as variantProperty,
         pl.declare_chinese_name as declareName,
         pl.declare_model as declareModel,
-        pl.product_property_id AS productPropertyId,
+        ps.product_property_id AS productPropertyId,
         pl.declare_element as declareElement,
         pl.declare_currency_symbol as declareCurrencySymbol,
         pi.spec_type,
@@ -1002,6 +1037,7 @@
         pi.function_desc,
         pi.grade AS productGrade,
         pi.brand_name as brandName,
+        pi.rdt_team_name as rdtTeamName,
         pi.category_id AS categoryId,
         ps.sale_state as saleState,
         pp.moq,
@@ -1094,7 +1130,7 @@
         select pd.id as sku_id, pd.sku_no
         from product_info pi
                  inner join product_detail pd on pd.product_id = pi.id
-        where pi.property in ('费用', '服务')
+        where pi.property in ('费用', '服务','资产')
           and pd.status = 2
           and pi.is_deleted = false
           and pd.is_deleted = false
@@ -1423,7 +1459,7 @@
             pl.exemption AS exemption,
             pl.combination_declare_type AS combinationDeclareType,
             pl.customs_code AS customsCode,
-            pl.product_property_id AS propertyId,
+        ps.product_property_id AS propertyId,
             pl. product_property AS logisticsPropertyName,
             pl.first_qty AS firstQty,
             pl.second_qty AS secondQty,
@@ -1651,7 +1687,7 @@
 
     <select id="listLogisticsProduct" resultType="com.erp.model.plm.dto.LogisticsProductDTO$ProductDTO">
         SELECT
-        pl.sku_id,pl.product_property,pl.product_property_id,pl.declare_chinese_name,pl.declare_english_name,
+        pl.sku_id,ps.product_property,ps.product_property_id,pl.declare_chinese_name,pl.declare_english_name,
         pl.declare_price,pl.customs_code,pl.declare_element,pl.english_material,pl.english_usage,
         pl.create_time,pl.create_user_id,pl.update_time,pl.update_user_id,pl.create_user_name,pl.update_user_name,
         pl.declare_model,pl.declare_unit,pl.declare_currency,pl.declare_currency_symbol,pl.dest_declare_price,
@@ -1662,7 +1698,7 @@
         pp.box_width / 10 AS boxSizeWide,
         pp.box_height / 10 AS boxSizeHigh,
         pp.product_length as productLength,pp.product_width as productWidth,pp.product_height as productHeight,
-        (select value from basic_dict  where is_deleted=false and id=pl.product_property_id LIMIT 1) AS productProperty,
+        (select value from basic_dict  where is_deleted=false and id=ps.product_property_id LIMIT 1) AS productProperty,
         (select name from basic_dict  where is_deleted=false and value=pl.declare_unit and type ='declareUnit' LIMIT 1) AS declareUnitName,
         pd.name as cnName,pd.name_en as enName,
         pi.spu_no as spuNo,
@@ -1674,6 +1710,7 @@
         LEFT join product_logistics pl on pl.sku_id = pd.id and pl.is_deleted = false
         LEFT JOIN product_info pi ON pi.id = pd.product_id AND pi.is_deleted = FALSE
         left join product_pack pp on pp.sku_id = pl.sku_id and pp.is_deleted = false
+        left join product_sale ps on pd.id = ps.sku_id and ps.is_deleted = false
         WHERE  pd.is_deleted=false
         <if test="skuIdList !=null and skuIdList.size>0">
             AND pd.id IN
@@ -1736,11 +1773,12 @@
             pd.variant_property as variantProperty,
             pl.declare_chinese_name as declareName,
             pl.declare_model as declareModel,
-            pl.product_property_id AS productPropertyId,
+            ps.product_property_id AS productPropertyId,
             pi.materials,
             pi.function_desc,
             pi.grade AS productGrade,
             pi.brand_name as brandName,
+        pi.rdt_team_name as rdtTeamName,
             ps.sale_state as saleState,
             pd.unit_name,
             pd.status,
@@ -1766,7 +1804,7 @@
            and pi.is_deleted = FALSE AND pd.is_deleted = FALSE
     </select>
     <select id="listSku" resultType="com.erp.model.plm.dto.ProductDetailDTO$SkuDTO">
-        select id,sku_id,spu_no,sku_no,productName ,retailPrice from
+        select id,sku_id,spu_no,sku_no,productName ,retailPrice,variantProperty from
        (
             select
                 pi."id",
@@ -1774,7 +1812,8 @@
                 pi.spu_no,
                 pi.name as productName,
                 pd.sku_no,
-                pc.retail_price as retailPrice
+                pc.retail_price as retailPrice,
+                pd.variant_property as variantProperty
             FROM product_info pi
                      INNER JOIN product_detail pd ON pi.id = pd.product_id AND pd.is_deleted = FALSE
                      left join product_cost pc on  pd.id = pc.sku_id and pc.is_deleted = FALSE
@@ -1789,6 +1828,18 @@
                     #{item}
                 </foreach>
             </if>
+        <if test="params.propertyList !=null and params.propertyList.size>0">
+            AND pi.property_id IN
+            <foreach collection="params.propertyList" item="propertyId" open="(" separator="," close=")">
+                #{propertyId}
+            </foreach>
+        </if>
+        <if test="params.notPropertyList !=null and params.notPropertyList.size>0">
+            AND pi.property_id not IN
+            <foreach collection="params.notPropertyList" item="propertyId" open="(" separator="," close=")">
+                #{propertyId}
+            </foreach>
+        </if>
             order by
                 case when pd.sku_no ILIKE concat(#{params.remoteSearchSku}::text,'%') THEN 1
                      when pd.sku_no ILIKE concat('%',#{params.remoteSearchSku}::text) THEN 2
@@ -1905,6 +1956,7 @@
         pi.function_desc,
         pi.grade AS productGrade,
         pi.brand_name as brandName,
+        pi.rdt_team_name as rdtTeamName,
         pi.category_id as categoryId,
         pi.sale_method,
         pd.version,
@@ -1937,6 +1989,7 @@
         pi.function_desc,
         pi.grade AS productGrade,
         pi.brand_name as brandName,
+        pi.rdt_team_name as rdtTeamName,
         pi.category_id as categoryId,
         pi.sale_method,
         pd.version,
@@ -1979,6 +2032,7 @@
         pi.function_desc,
         pi.grade AS productGrade,
         pi.brand_name as brandName,
+        pi.rdt_team_name as rdtTeamName,
         pi.category_id as categoryId,
         pi.sale_method,
         pd.version,
@@ -2014,6 +2068,7 @@
         pi.function_desc,
         pi.grade AS productGrade,
         pi.brand_name as brandName,
+        pi.rdt_team_name as rdtTeamName,
         pi.category_id as categoryId,
         pi.sale_method,
         pd.version,
@@ -2029,12 +2084,13 @@
         pd.warehouse_location_large as warehouseLocationLarge,
         pl.declare_chinese_name as declareName,
         pl.declare_model as declareModel,
-        pl.product_property_id AS productPropertyId,
+        ps.product_property_id AS productPropertyId,
         pl.declare_element as declareElement,
         pl.declare_currency_symbol as declareCurrencySymbol
         FROM product_detail pd
         LEFT JOIN product_info pi ON pi.id = pd.product_id AND pi.is_deleted = FALSE
         left join product_logistics pl on pd.id = pl.sku_id AND pl.is_deleted = FALSE
+        left join product_sale ps on pd.id = ps.sku_id AND ps.is_deleted = FALSE
         WHERE pd.is_deleted = FALSE
         <if test="skuIds != null and skuIds.size>0">
             AND pd.id IN
@@ -2053,6 +2109,7 @@
         pi.function_desc,
         pi.grade AS productGrade,
         pi.brand_name as brandName,
+        pi.rdt_team_name as rdtTeamName,
         pi.category_id as categoryId,
         pi.sale_method,
         pd.version,
@@ -2088,6 +2145,7 @@
         pi.function_desc,
         pi.grade AS productGrade,
         pi.brand_name as brandName,
+        pi.rdt_team_name as rdtTeamName,
         pi.category_id as categoryId,
         pi.sale_method,
         pd.version,
@@ -2105,7 +2163,8 @@
         pp.main_supplier as supplierId,
         pp.main_supplier as mainSupplier,
         pp.second_supplier as secondSupplier,
-        pp.ean
+        pp.ean,
+        pp.delivery_cycle as deliveryCycle
         FROM  product_detail pd
         LEFT JOIN product_info pi ON pi.id = pd.product_id AND pi.is_deleted = FALSE
         LEFT JOIN product_purchase pp ON pp.sku_id = pd."id" AND pp.is_deleted = FALSE
@@ -2320,5 +2379,43 @@
                 #{skuId}
             </foreach>
         </if>
+    </select>
+
+    <select id="listByApprovePropertyNotAsset" resultType="com.erp.model.plm.vo.SkuVO">
+        SELECT
+        pd.id AS skuId,
+        pi.id AS productId,
+        pi.name AS spuName,
+        pd.sku_no,
+        pd.name AS skuName
+        FROM  product_info pi
+        INNER JOIN product_detail pd ON pi.id = pd.product_id AND pd.is_deleted = FALSE
+        WHERE
+            pi.is_deleted = FALSE
+        AND pd.status= 2
+        and pi.property != '资产'
+        <if test="skuNos != null and skuNos.size>0">
+            AND pd.sku_no IN
+            <foreach collection="skuNos" item="skuNo" open="(" separator="," close=")">
+                #{skuNo}
+            </foreach>
+        </if>
+    </select>
+
+    <select id="listAssetProduct" resultType="com.erp.model.plm.vo.SkuVO">
+        SELECT
+        pd.id AS skuId,
+        pi.id AS productId,
+        pi.spu_no,
+        pi.name AS spuName,
+        pd.sku_no,
+        pd.name AS skuName
+        FROM  product_info pi
+        INNER JOIN product_detail pd ON pi.id = pd.product_id AND pd.is_deleted = FALSE
+        WHERE
+        pi.is_deleted = FALSE
+        AND pd.status= 2
+        and pi.property = '资产'
+
     </select>
 </mapper>

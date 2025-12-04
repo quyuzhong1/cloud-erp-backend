@@ -175,6 +175,7 @@ public class MergePackageDeliveryConsumer implements RocketMQListener<String> {
                 SendResult sendResult = mqProducerService.syncClassMsgWithDelayLevel(RocketMqTopic.ASYNC_MERGE_PACKAGE_DELIVERY_TOPIC, RocketMqTagEnum.ASYNC_MERGE_PACKAGE_DELIVERY_TAG.getName(),
                         soId, soId, convertSoOutStockDelayLevel(retryCount));
                 if (!SendStatus.SEND_OK.equals(sendResult.getSendStatus())) {
+                    log.error("【组包处理消费】销售单【{}】发送MQ数据异常，{}", curDeliveryEntity.getSoCode(), JSONUtil.toJsonStr(sendResult));
                     throw new RuntimeException(CharSequenceUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(sendResult)));
                 }
                 // 当前停止

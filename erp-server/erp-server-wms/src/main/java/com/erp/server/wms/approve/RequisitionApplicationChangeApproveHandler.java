@@ -37,6 +37,11 @@ public class RequisitionApplicationChangeApproveHandler extends AbstractApproveH
     private OperateLogService operateLogService;
 
     @Override
+    public BatchResultDTO approve(ApproveOneDTO dto) {
+        return null;
+    }
+
+    @Override
     public Boolean cancelProcess(ApproveDTO.CancelProcessDTO dto) {
         BatchResultDTO resultDTO = requisitionApplicationChangeService.cancelProcess(dto.getId());
         return resultDTO.getSuccess();

@@ -4,6 +4,8 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import com.common.business.constant.ThirdConstants;
 import com.common.business.dto.ApproveDTO;
+import com.common.business.dto.base.ApproveOneDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.factory.ApproveEndHandlerFactory;
@@ -54,6 +56,17 @@ public class WorkflowProcessServiceImpl implements WorkflowProcessService {
     private ProductChangeService productChangeService;
     @Resource
     private ProductChangeDetailsService productChangeDetailService;
+
+    @Override
+    public BatchResultDTO approve(ApproveDTO.ApproveOneDTO dto) {
+        String businessKey = dto.getBusinessKey();
+        SourceTypeEnum sourceType = SourceTypeEnum.getByCode(businessKey);
+        if (null == sourceType) {
+            throw new ServiceException(ApiError.ERROR_NOT_FOUND_APPROVE_BUSINESSKEY,ApproveTypeEnum.getName(dto.getType()),businessKey);
+        }
+        AbstractApproveHandler handler = approveEndHandlerFactory.getHandler(sourceType);
+        return  handler.approve(BeanUtil.toBean(dto, ApproveOneDTO.class));
+    }
 
     @Override
     public Map<String, Object> getVariablesMap(EndProcessDTO dto) {
@@ -118,6 +131,19 @@ public class WorkflowProcessServiceImpl implements WorkflowProcessService {
         }
         AbstractApproveHandler handler = approveEndHandlerFactory.getHandler(sourceType);
         return  handler.cancelProcess(dto);
+    }
+
+
+    @Override
+    public Boolean addComment(ApproveDTO.AddCommentDTO dto) {
+        String businessKey = dto.getBusinessKey();
+        SourceTypeEnum sourceType = SourceTypeEnum.getByCode(businessKey);
+        if (null == sourceType) {
+            throw new ServiceException(ApiError.ERROR_NOT_FOUND_APPROVE_BUSINESSKEY, "添加评论",businessKey);
+        }
+        AbstractApproveHandler handler = approveEndHandlerFactory.getHandler(sourceType);
+        handler.addComment(dto);
+        return Boolean.TRUE;
     }
 
     /**

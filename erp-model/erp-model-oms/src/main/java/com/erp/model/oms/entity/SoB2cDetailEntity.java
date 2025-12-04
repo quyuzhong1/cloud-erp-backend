@@ -263,6 +263,12 @@ public class SoB2cDetailEntity extends BaseEntity<SoB2cDetailEntity> {
     private String platformSkuId;
 
     /**
+     * 平台子单号
+     */
+    @TableField("platform_sub_so_code")
+    private String platformSubSoCode;
+
+    /**
      * 产品名称
      */
     @TableField(exist = false)

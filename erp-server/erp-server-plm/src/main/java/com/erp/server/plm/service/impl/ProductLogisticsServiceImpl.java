@@ -1,10 +1,12 @@
 package com.erp.server.plm.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.core.enums.CurrencyEnum;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.plm.dto.*;
@@ -14,13 +16,11 @@ import com.erp.model.plm.entity.BomSkuEntity;
 import com.erp.model.plm.entity.ProductLogisticsEntity;
 import com.erp.model.plm.enums.BasicDictTypeEnum;
 import com.erp.model.plm.enums.BomTypeEnum;
+import com.erp.model.plm.enums.SysLogClassPathEnum;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.server.plm.mapper.ProductLogisticsMapper;
-import com.erp.server.plm.service.BasicDictService;
-import com.erp.server.plm.service.BomInfoService;
-import com.erp.server.plm.service.BomSkuService;
-import com.erp.server.plm.service.ProductLogisticsService;
+import com.erp.server.plm.service.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -54,6 +54,9 @@ public class ProductLogisticsServiceImpl extends ServiceImpl<ProductLogisticsMap
 
     @Resource
     private ProductLogisticsService service;
+
+    @Resource
+    private OperateLogService operateLogService;
 
     /**
      * @param productId:产品信息表id
@@ -162,7 +165,13 @@ public class ProductLogisticsServiceImpl extends ServiceImpl<ProductLogisticsMap
                 logisticsEntity.setId(list.get(0).getId());
             }
         }
+        String id = logisticsEntity.getId();
         boolean result = service.saveOrUpdate(logisticsEntity);
+        if(StringUtils.isBlank(id)){
+            //日志
+            String msg = CharSequenceUtil.format("用户【{}】新增物流产品信息", UserContext.getDefaultLoginUser().getUserName());
+            operateLogService.addSysLogBySave(msg, SysLogClassPathEnum.PRODUCTLOGISTICSENTITY.getDesc(), logisticsEntity.getId(), "");
+        }
         this.saveOrUpdateParentPropertyIdByChildSkuId(Arrays.asList(logisticsEntity.getSkuId()));
         return result;
     }

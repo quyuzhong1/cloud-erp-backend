@@ -36,6 +36,12 @@ public class DeliveryNoticeChangeApproveHandler extends AbstractApproveHandler {
     @Resource
     private OperateLogService operateLogService;
 
+
+    @Override
+    public BatchResultDTO approve(ApproveOneDTO dto) {
+        return soDeliveryNoticeChangeService.approve(dto);
+    }
+
     @Override
     public Boolean cancelProcess(ApproveDTO.CancelProcessDTO dto) {
         BatchResultDTO resultDTO = soDeliveryNoticeChangeService.cancelProcess(dto.getId());

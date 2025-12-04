@@ -343,6 +343,14 @@ public class PurchaseOrderDetailDTO implements Serializable {
          * sku编码
          */
         private String  skuNo;
+        /**
+         * 单位名称
+         */
+        private String unitName;
+        /**
+         * ean编码
+         */
+        private String ean;
 
         /**
          * 产品名称
@@ -479,6 +487,16 @@ public class PurchaseOrderDetailDTO implements Serializable {
          * 采购员
          */
         private String purchaseUserName;
+
+        /**
+         * 新品首批
+         */
+        private String firstMassProduct;
+
+        /**
+         * 新品首批名称
+         */
+        private String firstMassProductName;
     }
 
     /**
