@@ -8,6 +8,10 @@ import java.time.LocalDateTime;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
+import com.common.business.dto.base.SortDTO;
+import com.common.business.dto.AdvanceQueryDTO;
+import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -21,8 +25,153 @@ import javax.validation.constraints.Size;
 @NoArgsConstructor
 public class KolSocialMediaDTO implements Serializable {
 
+    /**
+     * 分页列表查询参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ParamDTO extends SortDTO {
 
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
 
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String,String> sqlMap;
+
+        /**
+         * 权限SQL
+         */
+        private String permissionSql;
+
+    }
+
+    /**
+     * 分页列表
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ListDTO {
+
+        /**
+        * 主键id
+        */
+        private String  id;
+
+        /**
+        * 类型：manual-手动，auto-自动
+        */
+        private String type;
+
+        /**
+        * 类型名称
+        */
+        private String typeName;
+
+        /**
+        * 来源平台，如小红书、微博、抖音等
+        */
+        private String mediaPlatform;
+
+        /**
+        * 来源平台名称
+        */
+        private String mediaPlatformName;
+
+        /**
+        * 第三方平台
+        */
+        private String thirdPlatform;
+
+        /**
+        * 账号ID
+        */
+        private String platformAccountId;
+
+        /**
+        * 账号名称
+        */
+        private String platformAccountName;
+
+        /**
+        * 发布时间
+        */
+        private String publishTime;
+
+        /**
+        * 原平台链接
+        */
+        private String url;
+
+        /**
+        * 原平台链接哈希值
+        */
+        private String urlHash;
+
+        /**
+        * 帖子标题
+        */
+        private String title;
+
+        /**
+        * 入库时间，毫秒时间戳
+        */
+        private Long insertTimestamp;
+
+        /**
+        * 入库时间（timestamp类型）
+        */
+        private LocalDateTime insertTime;
+
+        /**
+        * 粉丝量
+        */
+        private Long followerCount;
+
+        /**
+        * 阅读量
+        */
+        private Long viewCount;
+
+        /**
+        * 播放量
+        */
+        private Long playCount;
+
+        /**
+        * 评论数
+        */
+        private Long commentCount;
+
+        /**
+        * 点赞数
+        */
+        private Long likeCount;
+
+        /**
+        * 转发量
+        */
+        private Long repostCount;
+
+        /**
+        * 唯一键
+        */
+        private String uniqueKey;
+
+        /**
+        * 创建时间
+        */
+        private LocalDateTime createTime;
+
+        /**
+        * 创建人名称
+        */
+        private String createUserName;
+
+    }
 
     /**
     * 详情
@@ -85,6 +234,11 @@ public class KolSocialMediaDTO implements Serializable {
         * 入库时间，毫秒时间戳（对应第三方insertTimestamp）
         */
         private Long insertTimestamp;
+
+        /**
+        * 入库时间（timestamp类型）
+        */
+        private LocalDateTime insertTime;
 
         /**
         * 粉丝量
@@ -247,6 +401,11 @@ public class KolSocialMediaDTO implements Serializable {
         * 入库时间，毫秒时间戳（对应第三方insertTimestamp）
         */
         private Long insertTimestamp;
+
+        /**
+        * 入库时间（timestamp类型）
+        */
+        private LocalDateTime insertTime;
 
         /**
         * 粉丝量

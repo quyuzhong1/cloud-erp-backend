@@ -111,4 +111,11 @@ public interface ExportOmsFeign {
      */
     @PostMapping("/feign/export/exportKolPartnerInfo")
     PagingVO<KolPartnerInfoDTO.ListDTO> exportKolPartnerInfo(@RequestBody PagingDTO<KolPartnerInfoDTO.PagingParamDTO> dto);
+    /**
+     * 达人社媒数据表导出
+     * @date 2025-12-04
+     * @author wuhaotian
+     */
+    @PostMapping("/feign/export/exportKolSocialMedia")
+    PagingVO<KolSocialMediaDTO.ListDTO> exportKolSocialMedia(@RequestBody PagingDTO<KolSocialMediaDTO.ParamDTO> dto);
 }

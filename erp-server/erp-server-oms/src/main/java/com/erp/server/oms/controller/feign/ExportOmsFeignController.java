@@ -85,6 +85,9 @@ public class ExportOmsFeignController {
     @Resource
     private KolPartnerInfoService kolPartnerInfoService;
 
+    @Resource
+    private KolSocialMediaService kolSocialMediaService;
+
     @PostMapping("/customerB2BSellerChange")
     @WebAdvanceQuery(handler = CustomerInfoQueryHandler.class)
     public PagingVO<CustomerB2bSellerExcelDTO> exportCustomerB2BSellerChange(@RequestBody PagingDTO<CustomerB2bSellerChangeDTO.ParamDTO> dto) {
@@ -380,6 +383,23 @@ public class ExportOmsFeignController {
     @WebAdvanceQuery(handler = KolPartnerInfoQueryHandler.class)
     public PagingVO<KolPartnerInfoDTO.ListDTO> exportKolPartnerInfo(@RequestBody @Validated PagingDTO<KolPartnerInfoDTO.PagingParamDTO> dto) {
         return kolPartnerInfoService.paging(dto);
+    }
+
+    /**
+     * 达人社媒数据表导出
+     * @author wuhaotian
+     * @date: 2025-12-04
+     * @param dto
+     * @return PagingVO<KolSocialMediaDTO.ListDTO>
+     */
+    @PostMapping("/exportKolSocialMedia")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "oms:kolSocialMedia:export",
+            tableAlias = "ksm")
+    @WebAdvanceQuery
+    public PagingVO<KolSocialMediaDTO.ListDTO> exportKolSocialMedia(@RequestBody PagingDTO<KolSocialMediaDTO.ParamDTO> dto) {
+        return kolSocialMediaService.paging(dto);
     }
 
 }

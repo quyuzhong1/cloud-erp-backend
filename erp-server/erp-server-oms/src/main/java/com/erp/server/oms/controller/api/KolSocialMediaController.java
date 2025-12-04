@@ -11,6 +11,8 @@ import com.common.core.anno.LogSystemModule;
 import com.common.core.anno.LogViewService;
 import com.common.core.enums.LogActionEnum;
 import com.common.business.dto.base.*;
+import com.common.business.vo.PagingVO;
+import com.common.business.annotation.WebAdvanceQuery;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.common.core.controller.BaseController;
@@ -143,6 +145,82 @@ public class KolSocialMediaController extends BaseController {
         }
         
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+    /**
+     * 分页查询
+     * @author wuhaotian
+     * @date:  2025-12-04
+     * @param dto
+     * @return ApiResult<PagingVO<KolSocialMediaDTO.ListDTO>>
+     */
+    @PostMapping("/paging")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "oms:kolSocialMedia:paging",
+            tableAlias = "ksm")
+    @WebAdvanceQuery
+    public ApiResult<PagingVO<KolSocialMediaDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<KolSocialMediaDTO.ParamDTO> dto) {
+        return success(kolSocialMediaService.paging(dto));
+    }
+
+    /**
+     * 批量删除
+     * @author wuhaotian
+     * @date:  2025-12-04
+     * @param dto
+     * @return ApiResult
+     */
+    @PostMapping("/batchDelete")
+    @LogAction(value = LogActionEnum.DELETE, desc = "达人社媒数据表批量删除")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "oms:kolSocialMedia:batchDelete",
+            serviceClass = KolSocialMediaService.class,
+            keyIdName = "ids")
+    public ApiResult<?> batchDelete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<String> ids = dto.getIds();
+
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+
+        List<KolSocialMediaEntity> list = kolSocialMediaService.lambdaQuery().in(KolSocialMediaEntity::getId, ids).list();
+
+        Map<String, KolSocialMediaEntity> idEntityMap = list.stream().collect(Collectors.toMap(KolSocialMediaEntity::getId, w -> w));
+
+        for (String id : dto.getIds()) {
+            BatchResultDTO deleteResult;
+            try {
+                deleteResult = kolSocialMediaService.delete(id);
+            } catch (Exception e) {
+                log.error("达人社媒数据表删除失败", e);
+                KolSocialMediaEntity entity = idEntityMap.get(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    deleteResult = BatchResultDTO.fail(id, id, "达人社媒数据不存在, 删除失败");
+                    resultDTOS.add(deleteResult);
+                    continue;
+                }
+                deleteResult = BatchResultDTO.fail(entity.getId(), entity.getId(), e.getMessage());
+            }
+            resultDTOS.add(deleteResult);
+        }
+
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+    /**
+     * 导出
+     * @author wuhaotian
+     * @date:  2025-12-04
+     * @param dto
+     */
+    @PostMapping("/export")
+    @LogAction(value = LogActionEnum.EXPORT, desc = "达人社媒数据表导出")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "oms:kolSocialMedia:export",
+            tableAlias = "ksm")
+    public ApiResult<Boolean> export(@RequestBody @Validated PagingDTO<KolSocialMediaDTO.ParamDTO> dto) {
+        return success(kolSocialMediaService.export(dto));
     }
 
 }

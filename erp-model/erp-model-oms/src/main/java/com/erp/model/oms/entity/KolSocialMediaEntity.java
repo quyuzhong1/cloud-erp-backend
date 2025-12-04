@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
 import com.baomidou.mybatisplus.annotation.TableField;
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -75,6 +76,11 @@ public class KolSocialMediaEntity extends BaseEntity<KolSocialMediaEntity> {
     @TableField("insert_timestamp")
     private Long insertTimestamp;
     /**
+    * 入库时间（timestamp类型）
+    */
+    @TableField("insert_time")
+    private LocalDateTime insertTime;
+    /**
     * 粉丝量
     */
     @TableField("follower_count")
@@ -130,6 +136,8 @@ public class KolSocialMediaEntity extends BaseEntity<KolSocialMediaEntity> {
     public static final String TITLE = "title";
 
     public static final String INSERT_TIMESTAMP = "insert_timestamp";
+
+    public static final String INSERT_TIME = "insert_time";
 
     public static final String FOLLOWER_COUNT = "follower_count";
 
