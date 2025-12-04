@@ -180,6 +180,7 @@ public class AdsErpInventoryDiffController extends BaseController {
             CfgSettingEntity newEntity = new CfgSettingEntity()
                     .setKey(SettingEnum.ADS_ERP_INVENTORY_DIFF_WAREHOUSE_LIST)
                     .setType(SettingEnum.ADS_ERP_INVENTORY_DIFF_WAREHOUSE_LIST.getType())
+                    .setStatus(true)
                     .setValue(ids).setRemark(SettingEnum.ADS_ERP_INVENTORY_DIFF_WAREHOUSE_LIST.getValue());
             result = cfgSettingService.save(newEntity);
         }
