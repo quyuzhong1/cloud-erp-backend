@@ -665,6 +665,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                     }
                 });
             }
+            noSpecDetailById.setEan(purchaseShowDTOList.get(0).getEan());
         }
         ProductDetailEntity entity = this.getById(skuId);
         productNoSpecDetailAllDTO.setProductPurchaseShowDTOList(purchaseShowDTOList);
