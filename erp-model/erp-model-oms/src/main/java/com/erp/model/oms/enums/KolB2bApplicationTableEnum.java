@@ -5,10 +5,14 @@ import com.common.core.constant.EnumMessage;
 import com.fasterxml.jackson.annotation.JsonValue;
 import org.apache.commons.lang3.StringUtils;
 
-public enum KolB2bDeliveryStatusEnum implements EnumMessage {
+public enum KolB2bApplicationTableEnum implements EnumMessage {
 
-    WAIT_DELIVERY("waitShipped", "代发货"),
-    PARTIAL_SHIPPED("partialShipped", "部分发货"),
+
+    ALL("all", "全部"),
+    TO_BE_APPROVE("toBeApprove", "待我审核"),
+    APPROVE("approve", "审核通过"),
+    REJECT("reject", "审核拒绝"),
+    WAIT_SHIPPED("waitShipped", "待发货"),
     SHIPPED("shipped", "已发货"),
 
     ;
@@ -24,7 +28,7 @@ public enum KolB2bDeliveryStatusEnum implements EnumMessage {
     private String name;
 
 
-    KolB2bDeliveryStatusEnum(String code, String name) {
+    KolB2bApplicationTableEnum(String code, String name) {
         this.code = code;
         this.name = name;
     }
@@ -41,7 +45,7 @@ public enum KolB2bDeliveryStatusEnum implements EnumMessage {
         if (StringUtils.isBlank(code)) {
             return "";
         }
-        for (KolB2bDeliveryStatusEnum billTypeEnum : KolB2bDeliveryStatusEnum.values()) {
+        for (KolB2bApplicationTableEnum billTypeEnum : KolB2bApplicationTableEnum.values()) {
             if (code.equals(billTypeEnum.getCode())) {
                 return billTypeEnum.getName();
             }
@@ -53,7 +57,7 @@ public enum KolB2bDeliveryStatusEnum implements EnumMessage {
         if (StringUtils.isBlank(name)) {
             return "";
         }
-        for (KolB2bDeliveryStatusEnum billTypeEnum : KolB2bDeliveryStatusEnum.values()) {
+        for (KolB2bApplicationTableEnum billTypeEnum : KolB2bApplicationTableEnum.values()) {
             if (name.trim().equals(billTypeEnum.getName())) {
                 return billTypeEnum.getCode();
             }

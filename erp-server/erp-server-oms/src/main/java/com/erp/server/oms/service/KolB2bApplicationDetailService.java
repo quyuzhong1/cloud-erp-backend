@@ -8,7 +8,7 @@ import java.util.List;
 
 /**
  * <p>
- * B2B寄养申请明细表 服务类
+ * B2B寄样申请明细表 服务类
  * </p>
  *
  * @author will

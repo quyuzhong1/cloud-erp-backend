@@ -5,12 +5,10 @@ import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
-import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.dto.excel.CustomerB2bSellerExcelDTO;
 import com.erp.model.oms.dto.excel.SoPriceChangeExportExcelDTO;
 import com.erp.model.oms.dto.excel.SoPriceExportExcelDTO;
-import com.erp.model.wms.dto.SampleReturnInfoDTO;
 import com.erp.server.oms.query.*;
 import com.erp.server.oms.service.*;
 import org.springframework.validation.annotation.Validated;
@@ -87,6 +85,9 @@ public class ExportOmsFeignController {
 
     @Resource
     private KolSocialMediaService kolSocialMediaService;
+
+    @Resource
+    private KolB2bApplicationService kolB2bApplicationService;
 
     @PostMapping("/customerB2BSellerChange")
     @WebAdvanceQuery(handler = CustomerInfoQueryHandler.class)
@@ -402,4 +403,22 @@ public class ExportOmsFeignController {
         return kolSocialMediaService.paging(dto);
     }
 
+
+    /**
+     * 导出B2B寄样申请列表
+     * @author will
+     * @date 2025/12/3 09:15
+     * @param dto
+     * @return PagingVO<ListDTO>
+     */
+    @PostMapping("/exportKolB2bApplication")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "oms:kolB2bApplication:paging",
+            tableAlias = "kba"
+    )
+    @WebAdvanceQuery(handler = KolB2bApplicationQueryHandler.class)
+    public PagingVO<KolB2bApplicationDTO.ListDTO> exportKolB2bApplication(@RequestBody PagingDTO<KolB2bApplicationDTO.PagingParamDTO> dto) {
+        return kolB2bApplicationService.paging(dto);
+    }
 }

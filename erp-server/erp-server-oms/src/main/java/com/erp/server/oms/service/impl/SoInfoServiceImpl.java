@@ -4070,6 +4070,16 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         return true;
     }
 
+    @Override
+    public List<SoInfoEntity> listBySourceId(String sourceId) {
+        return lambdaQuery().eq(SoInfoEntity::getSourceId, sourceId).eq(SoInfoEntity::getInvalidStatus,Boolean.FALSE).list();
+    }
+
+    @Override
+    public List<KolB2bApplicationDTO.B2bSoInfoDTO> listRefBill(String sourceId) {
+        return baseMapper.listRefBill(sourceId);
+    }
+
     /**
      * 更新平台订单ID
      * @author will

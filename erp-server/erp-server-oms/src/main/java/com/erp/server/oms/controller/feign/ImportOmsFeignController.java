@@ -4,6 +4,7 @@ import com.common.business.dto.base.BaseDTO;
 import com.common.business.enums.FileTaskStatusEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.oms.service.ExhibitionOrderService;
+import com.erp.server.oms.service.KolB2bApplicationService;
 import com.erp.server.oms.service.KolFeedbackService;
 import com.erp.server.oms.service.KolFeedbackCostService;
 import com.erp.server.oms.service.KolPartnerInfoService;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
 import javax.annotation.Resource;
 
 @Slf4j
@@ -32,6 +34,9 @@ public class ImportOmsFeignController {
 
     @Resource
     private KolPartnerInfoService kolPartnerInfoService;
+
+    @Resource
+    private KolB2bApplicationService kolB2bApplicationService;
 
     @PostMapping("/exhibitionOrder")
     public void importExhibitionOrder(@RequestBody BaseDTO.ImportDTO dto) {
@@ -90,4 +95,25 @@ public class ImportOmsFeignController {
         }
     }
 
+
+    /**
+     * 导入KOL B2B寄样申请单
+     * @author will
+     * @date 2025/12/3 09:41
+     * @param dto
+     * @return void
+     */
+    @PostMapping("/kolB2bApplication")
+    public void importKolB2bApplication(@RequestBody BaseDTO.ImportDTO dto) {
+        try {
+            kolB2bApplicationService.importKolB2bApplication(dto);
+        } catch (Exception e) {
+            log.error("导入KOL B2B寄样申请单失败", e);
+            BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
+            importResultDTO.setTaskId(dto.getTaskId());
+            importResultDTO.setStatus(FileTaskStatusEnum.FAIL.getCode());
+            importResultDTO.setRemark(e.getMessage().length() > 490 ? e.getMessage().substring(0, 490) : e.getMessage());
+            downloadTaskFeign.updateTask(importResultDTO);
+        }
+    }
 }

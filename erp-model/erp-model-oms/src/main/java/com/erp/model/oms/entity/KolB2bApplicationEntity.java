@@ -1,20 +1,21 @@
 package com.erp.model.oms.entity;
 
-import com.baomidou.mybatisplus.annotation.TableName;
-import com.common.core.entity.BaseEntity;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
 import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
+import com.baomidou.mybatisplus.annotation.TableName;
+import com.common.business.enums.ApproveStatusEnum;
+import com.common.core.entity.BaseEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
+
+import java.io.Serializable;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 
 /**
  * <p>
- * B2B寄养申请主表
+ * B2B寄样申请主表
  * </p>
  *
  * @author will
@@ -121,6 +122,14 @@ public class KolB2bApplicationEntity extends BaseEntity<KolB2bApplicationEntity>
     */
     @TableField("receive_address")
     private String receiveAddress;
+    /**
+     * 收货人id地址
+     * 来源 http://172.16.100.11:3002/project/110/interface/api/13561
+     * <p>
+     * 这个是地址下拉 http://172.16.100.11:3002/project/110/interface/api/13786
+     */
+    @TableField("receive_address_id")
+    private String receiveAddressId;
     /**
     * 地址类型，CustomerAddressTypeEnum枚举
     */

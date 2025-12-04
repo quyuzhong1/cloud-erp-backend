@@ -94,4 +94,22 @@
         GROUP BY feedback_status
     </select>
 
+    <!-- 根据来源类型和来源ID统计反馈数量明细 -->
+    <select id="listFeedbackQtyBySourceDetailIdList"
+            resultType="com.erp.model.oms.dto.KolFeedbackDTO$FeedbackQtyDTO">
+        select
+        kf.source_detail_id,
+        count(0) as feedbackedQty,
+        sum(case when kf.feedback_status = 'completed' then 1 else 0 end) as captureFeedbackQty,
+        "max"(kf.url) as feedbackUrl
+        from kol_feedback kf
+        <where>
+            kf.is_deleted = false and kf.source_detail_id in
+            <foreach collection="sourceDetailIdList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </where>
+        group by kf.source_detail_id
+    </select>
+
 </mapper>

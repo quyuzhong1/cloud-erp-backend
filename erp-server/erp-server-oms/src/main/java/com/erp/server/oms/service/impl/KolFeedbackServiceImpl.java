@@ -1,65 +1,61 @@
 package com.erp.server.oms.service.impl;
 
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.crypto.digest.DigestUtil;
+import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.annotation.DistributeLocker;
 import com.common.business.config.DocNoGenHelper;
+import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
+import com.common.business.enums.BusinessNoTypeEnum;
+import com.common.business.enums.FileTaskStatusEnum;
+import com.common.business.enums.SourceTypeEnum;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
+import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.ExcelUtil;
+import com.common.core.utils.FastDFSClientUtil;
+import com.erp.model.oms.dto.KolFeedbackDTO;
+import com.erp.model.oms.dto.excel.KolFeedbackExcelDTO;
+import com.erp.model.oms.entity.KolFeedbackEntity;
 import com.erp.model.oms.entity.KolPartnerInfoEntity;
+import com.erp.model.oms.enums.FeedbackStatusEnum;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.ProductVO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.rpc.plm.feign.PlmTaskFeign;
-import com.erp.server.oms.service.KolPartnerInfoService;
-import io.seata.spring.annotation.GlobalTransactional;
-import com.common.business.annotation.DistributeLocker;
-import com.erp.model.oms.entity.KolFeedbackEntity;
-import com.erp.server.oms.mapper.KolFeedbackMapper;
-import com.erp.server.oms.service.KolFeedbackService;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.threadlocal.UserContext;
-import com.erp.server.oms.service.OperateLogService;
-import com.erp.server.oms.service.CommonService;
-import com.common.core.exception.ServiceException;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
-import lombok.extern.slf4j.Slf4j;
-import com.erp.model.oms.dto.KolFeedbackDTO;
-import java.util.*;
-import java.util.stream.Collectors;
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
-import org.springframework.web.multipart.MultipartFile;
-import cn.hutool.core.collection.CollUtil;
-import cn.hutool.crypto.digest.DigestUtil;
-import com.common.business.enums.SourceTypeEnum;
-import com.common.business.enums.BusinessNoTypeEnum;
-import com.erp.model.oms.enums.FeedbackStatusEnum;
-import org.springframework.beans.BeanUtils;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.file.feign.FileFeign;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
-import com.common.business.dto.FindUserDTO;
-import com.common.business.vo.LoginUser;
-import com.common.business.enums.FileTaskStatusEnum;
-import com.alibaba.excel.EasyExcel;
-import com.alibaba.excel.exception.ExcelCommonException;
-import java.io.ByteArrayInputStream;
-import java.time.LocalDateTime;
+import com.erp.server.oms.listener.KolFeedbackExcelListener;
+import com.erp.server.oms.mapper.KolFeedbackMapper;
+import com.erp.server.oms.service.KolFeedbackService;
+import com.erp.server.oms.service.KolPartnerInfoService;
+import com.erp.server.oms.service.OperateLogService;
+import io.seata.spring.annotation.GlobalTransactional;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import java.util.Objects;
-import com.erp.model.oms.dto.excel.KolFeedbackExcelDTO;
-import com.erp.server.oms.listener.KolFeedbackExcelListener;
-import com.common.core.utils.ExcelUtil;
-import com.common.core.utils.FastDFSClientUtil;
-import java.io.File;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.servlet.http.HttpServletResponse;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.time.LocalDateTime;
+import java.util.*;
+import java.util.stream.Collectors;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
@@ -482,6 +478,19 @@ public class KolFeedbackServiceImpl extends SuperServiceImpl<KolFeedbackMapper, 
             log.error("KOL回片列表导入模板下载失败", e);
             throw new ServiceException("下载模板失败：" + e.getMessage());
         }
+    }
+
+    @Override
+    public List<KolFeedbackDTO.FeedbackQtyDTO> listFeedbackQtyBySourceDetailIdList(List<String> sourceDetailIdList) {
+        if (CollUtil.isEmpty(sourceDetailIdList)) {
+            return Collections.emptyList();
+        }
+        return baseMapper.listFeedbackQtyBySourceDetailIdList(sourceDetailIdList);
+    }
+
+    @Override
+    public List<KolFeedbackEntity> listBySourceId(String sourceId) {
+        return lambdaQuery().eq(KolFeedbackEntity::getSourceId,sourceId).list();
     }
 
     /**

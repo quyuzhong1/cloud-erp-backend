@@ -122,7 +122,8 @@ public enum FileTaskEventEnum implements EnumMessage {
     EXPORT_OMS_KOL_PARTNER_INFO("EXPORT_OMS_KOL_PARTNER_INFO", "企业达人库导出","","",""),
     IMPORT_OMS_KOL_PARTNER_INFO("IMPORT_OMS_KOL_PARTNER_INFO","企业达人库导入","com.erp.rpc.oms.feign.ImportOmsFeign","importKolPartnerInfo",""),
     EXPORT_OMS_KOL_SOCIAL_MEDIA("EXPORT_OMS_KOL_SOCIAL_MEDIA", "达人社媒数据表导出","","",""),
-
+    EXPORT_OMS_KOL_B2B_APPLICATION_REPORT("IMPORT_OMS_KOL_B2B_APPLICATION_REPORT","B2B寄样申请导出","","",""),
+    IMPORT_OMS_KOL_B2B_APPLICATION("IMPORT_OMS_KOL_B2B_APPLICATION","B2B寄样申请导入","com.erp.rpc.wms.feign.ImportWmsFeign","importKolB2bApplication",""),
     //scm
     EXPORT_SCM_SUPPLIER_USER("EXPORT_SCM_SUPPLIER_USER","供应商协同用户列表","","",""),
     EXPORT_SCM_PURCHASE_PRICE_CHANGE("EXPORT_SCM_PURCHASE_PRICE_CHANGE","采购调价数据","","",""),
@@ -281,8 +282,7 @@ public enum FileTaskEventEnum implements EnumMessage {
     IMPORT_WMS_SAMPLE_TRANSFER_INFO("IMPORT_WMS_SAMPLE_TRANSFER_INFO","样品转移单导入","com.erp.rpc.wms.feign.ImportWmsFeign","importSampleTransfer",""),
     EXPORT_WMS_SAMPLE_ADJUSTMENT_INFO_REPORT("EXPORT_WMS_SAMPLE_ADJUSTMENT_INFO_REPORT", "样品调整单导出","","",""),
     IMPORT_WMS_SAMPLE_ADJUSTMENT_INFO("IMPORT_WMS_SAMPLE_ADJUSTMENT_INFO","样品调整单导入","com.erp.rpc.wms.feign.ImportWmsFeign","importSampleAdjustment",""),
-    IMPORT_WMS_KOL_B2B_APPLICATION_REPORT("IMPORT_WMS_KOL_B2B_APPLICATION_REPORT","B2B寄样申请导出","","",""),
-    IMPORT_WMS_KOL_B2B_APPLICATION("IMPORT_WMS_KOL_B2B_APPLICATION","B2B寄样申请导入","com.erp.rpc.wms.feign.ImportWmsFeign","importKolB2bApplication",""),
+
 
 
     //tms

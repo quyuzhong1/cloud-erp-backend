@@ -36,5 +36,12 @@ public interface KolFeedbackMapper extends BaseMapper<KolFeedbackEntity> {
      * @return
      */
     List<KolFeedbackDTO.TabListDTO> tabList(@Param("params") KolFeedbackDTO.ParamDTO params);
-
+    /**
+     * 根据来源明细查询回片数量
+     * @author will 
+     * @date 2025/12/2 16:32
+     * @param sourceDetailIdList 
+     * @return List<FeedbackQtyDTO>
+     */
+    List<KolFeedbackDTO.FeedbackQtyDTO> listFeedbackQtyBySourceDetailIdList(@Param("sourceDetailIdList")List<String> sourceDetailIdList);
 }

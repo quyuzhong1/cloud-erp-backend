@@ -11,7 +11,7 @@ import java.time.LocalDate;
 
 /**
  * <p>
- * B2B寄养申请明细表请求响应实体
+ * B2B寄样申请明细表请求响应实体
  * </p>
  *
  * @author will

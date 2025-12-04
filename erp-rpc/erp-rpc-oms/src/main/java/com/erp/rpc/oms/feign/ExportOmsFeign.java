@@ -7,7 +7,6 @@ import com.erp.model.oms.dto.*;
 import com.erp.model.oms.dto.excel.CustomerB2bSellerExcelDTO;
 import com.erp.model.oms.dto.excel.SoPriceChangeExportExcelDTO;
 import com.erp.model.oms.dto.excel.SoPriceExportExcelDTO;
-import com.erp.model.wms.dto.SampleBorrowInfoDTO;
 import feign.Request;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -99,6 +98,12 @@ public interface ExportOmsFeign {
      */
     @PostMapping("/feign/export/exportKolFeedback")
     PagingVO<KolFeedbackDTO.ListDTO> exportKolFeedback(@RequestBody PagingDTO<KolFeedbackDTO.ParamDTO> dto);
+
+    /**
+     * 导出KOLB2B寄样申请列表
+     */
+    @PostMapping("/feign/export/exportKolB2bApplication")
+    PagingVO<KolB2bApplicationDTO.ListDTO> exportKolB2bApplication(PagingDTO<KolB2bApplicationDTO.PagingParamDTO> dto);
     /**
      * KOL回片费用导出
      */

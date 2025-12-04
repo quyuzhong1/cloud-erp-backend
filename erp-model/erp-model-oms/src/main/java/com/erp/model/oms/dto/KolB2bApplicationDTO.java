@@ -19,7 +19,7 @@ import java.util.Map;
 
 /**
  * <p>
- * B2B寄养申请主表请求响应实体
+ * B2B寄样申请主表请求响应实体
  * </p>
  *
  * @author will
@@ -122,10 +122,6 @@ public class KolB2bApplicationDTO implements Serializable {
         * 寄样类型
         */
         private String type;
-        /**
-         * 寄样类型名称
-         */
-        private String typeName;
 
         /**
         * 客户id
@@ -195,7 +191,7 @@ public class KolB2bApplicationDTO implements Serializable {
         /**
          * 登记回片数
          */
-        private Integer registerFeedbackQty;
+        private Integer feedbackQty;
         /**
          * 抓取回片数
          */
@@ -285,11 +281,6 @@ public class KolB2bApplicationDTO implements Serializable {
         * 寄样类型
         */
         private String type;
-
-        /**
-         * 寄样类型名称
-         */
-        private String typeName;
 
         /**
         * 客户id
@@ -398,7 +389,15 @@ public class KolB2bApplicationDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class B2bSoInfoDTO {
+    public static class  B2bSoInfoDTO {
+        /**
+         * 销售订单id
+         */
+        private String soId;
+        /**
+         * 销售订单明细id
+         */
+        private String soDetailId;
         /**
          * 销售订单号
          */
@@ -584,8 +583,9 @@ public class KolB2bApplicationDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class GenerateSoInfoDTO {
+
         /**
-         * B2B寄养申请明细Id
+         * B2B寄样申请明细Id
          */
         private String detailId;
         /**
@@ -605,11 +605,11 @@ public class KolB2bApplicationDTO implements Serializable {
     @NoArgsConstructor
     public static class GenerateFeedbackDTO {
         /**
-         * B2B寄养申请明细Id
+         * B2B寄样申请明细Id
          */
         private String detailId;
         /**
-         * 达人Id
+         * 达人Id,http://172.16.100.11:3002/project/110/interface/api/41971
          */
         private String partnerId;
         /**
@@ -617,11 +617,11 @@ public class KolB2bApplicationDTO implements Serializable {
          */
         private String url;
         /**
-         * 回片发布日期
+         * 回片发布日期,
          */
         private LocalDate publishDate;
         /**
-         * 发布形式
+         * 发布形式,/oms/drop/down/dict/list?key=publishType
          */
         private String publishType;
         /**

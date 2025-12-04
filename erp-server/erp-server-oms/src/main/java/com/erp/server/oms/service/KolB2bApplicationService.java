@@ -1,9 +1,12 @@
 package com.erp.server.oms.service;
-import com.erp.model.oms.entity.KolB2bApplicationEntity;
-import com.common.business.service.SuperService;
+
 import com.common.business.dto.base.*;
-import com.erp.model.oms.dto.KolB2bApplicationDTO;
+import com.common.business.service.SuperService;
+import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
+import com.erp.model.oms.dto.KolB2bApplicationDTO;
+import com.erp.model.oms.dto.excel.KolB2bApplicationImportExcelDTO;
+import com.erp.model.oms.entity.KolB2bApplicationEntity;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
@@ -11,7 +14,7 @@ import java.util.List;
 
 /**
  * <p>
- * B2B寄养申请主表 服务类
+ * B2B寄样申请主表 服务类
  * </p>
  *
  * @author will
@@ -158,7 +161,6 @@ public interface KolB2bApplicationService extends SuperService<KolB2bApplication
      * @author will
      * @date 2025/12/1 16:25
      * @param excelFile
-     * @param response
      * @return Boolean
      */
     Boolean importFile(MultipartFile excelFile, HttpServletResponse response);
@@ -174,16 +176,25 @@ public interface KolB2bApplicationService extends SuperService<KolB2bApplication
      * 生成销售订单保存
      * @author will
      * @date 2025/12/1 18:47
-     * @param dto
+     * @param list
      * @return Boolean
      */
-    Boolean generateSoInfo(KolB2bApplicationDTO.GenerateSoInfoDTO dto);
+    Boolean generateSoInfo(ValidList<KolB2bApplicationDTO.GenerateSoInfoDTO> list);
     /**
      * 生成回片登记保存
      * @author will
      * @date 2025/12/1 18:48
-     * @param dto
+     * @param list
      * @return Boolean
      */
-    Boolean generateFeedback(KolB2bApplicationDTO.GenerateFeedbackDTO dto);
+    Boolean generateFeedback(ValidList<KolB2bApplicationDTO.GenerateFeedbackDTO> list);
+    /**
+     * 导入数据处理
+     * @author will
+     * @date 2025/12/3 10:39
+     * @param successList
+     * @param errorList
+     * @return void
+     */
+    void handleImportSuccessList(List<KolB2bApplicationImportExcelDTO> successList, List<KolB2bApplicationImportExcelDTO> errorList);
 }

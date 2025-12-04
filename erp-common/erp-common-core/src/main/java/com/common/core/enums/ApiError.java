@@ -1676,6 +1676,12 @@ public enum ApiError implements Serializable {
     ERROR_INVOICE_NFE_CREATE_INVOICING(92192,"选择订单开票中不支持重新生成发票"),
     ERROR_INVOICE_NFE_RETURN(92193,"退票发票失败，原因：{}"),
     ERROR_INVOICE_NFE_VOIDED(92194,"作废发票失败，原因：{}"),
+    ERROR_KOL_B2B_APPLICATION_NOT_EXIST(92195,"B2B寄样申请单不存在"),
+    ERROR_KOL_B2B_APPLICATION_DETAIL_NOT_EXIST(92196,"B2B寄样申请明细单不存在"),
+    ERROR_KOL_B2B_APPLICATION_NOT_APPROVE(92197,"B2B寄样申请单【{}】未审核完成不支持下推"),
+    ERROR_PUSH_DETAIL_ID_NOT_EXIST(92198,"明细id【{}】未找到B2B寄样申请单明细数据"),
+    ERROR_PUSH_DETAIL_ID_WAREHOUSE_DIFF(92199,"B2B寄样申请单【{}】明细下推发货仓库不一致"),
+    ERROR_PUSH_DETAIL_ID_ORG_DIFF(92200,"B2B寄样申请单【{}】明细下推销售组织不一致"),
 
 
 

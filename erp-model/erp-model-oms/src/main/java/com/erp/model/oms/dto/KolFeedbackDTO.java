@@ -1,18 +1,18 @@
 package com.erp.model.oms.dto;
 
-import java.time.LocalDate;
+import com.common.business.dto.AdvanceQueryDTO;
+import com.common.business.dto.base.SortDTO;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
-import java.io.Serializable;
-import java.time.LocalDateTime;
-import javax.validation.constraints.NotNull;
+
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
-import javax.validation.constraints.Digits;
-import com.common.business.dto.base.SortDTO;
+import java.io.Serializable;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
-import com.common.business.dto.AdvanceQueryDTO;
 import java.util.Map;
 
 /**
@@ -388,22 +388,10 @@ public class KolFeedbackDTO implements Serializable {
         private String skuId;
 
         /**
-        * 产品名称
-        */
-        @Size(max = 200,message = "产品名称最大长度不能超过200位")
-        private String productName;
-
-        /**
         * 数量
         */
         @NotNull(message = "数量不能为空")
         private Integer qty;
-
-        /**
-        * 达人昵称
-        */
-        @Size(max = 100,message = "达人昵称最大长度不能超过100位")
-        private String partnerNickname;
 
         /**
         * 达人ID
@@ -417,12 +405,6 @@ public class KolFeedbackDTO implements Serializable {
         */
         @NotBlank(message = "回片链接不能为空")
         private String url;
-
-        /**
-        * 回片链接哈希值（MD5或SHA256，用于唯一键）
-        */
-        @Size(max = 64,message = "回片链接哈希值（MD5或SHA256，用于唯一键）最大长度不能超过64位")
-        private String urlHash;
 
         /**
         * 发布形式
@@ -440,15 +422,27 @@ public class KolFeedbackDTO implements Serializable {
          */
         @Size(max = 500,message = "备注最大长度不能超过500位")
         private String remark;
-
-        /**
-         * 回片状态 com.erp.model.oms.enums.FeedbackStatusEnum
-         */
-        @Size(max = 50,message = "回片状态最大长度不能超过50位")
-        private String feedbackStatus;
-
-
     }
 
-
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class FeedbackQtyDTO {
+        /**
+         * 来源明细id，（寄样申请明细id）
+         */
+        private String sourceDetailId;
+        /**
+         * 回片数量
+         */
+        private Integer feedbackQty;
+        /**
+         * 回片数量
+         */
+        private Integer captureFeedbackQty;
+        /**
+         * 回片连接
+         */
+        private String feedbackUrl;
+    }
 }

@@ -13,7 +13,7 @@ import com.common.business.enums.ApproveStatusEnum;
 
 /**
  * <p>
- * B2B寄养申请明细表
+ * B2B寄样申请明细表
  * </p>
  *
  * @author will

@@ -33,7 +33,7 @@ import java.util.stream.Collectors;
 
 /**
  * <p>
- * B2B寄养申请明细表 服务实现类
+ * B2B寄样申请明细表 服务实现类
  * </p>
  *
  * @author will
@@ -57,10 +57,10 @@ public class KolB2bApplicationDetailServiceImpl extends SuperServiceImpl<KolB2bA
         // 数据处理
         handleData(list,mainId);
 
-        log.info("开始新增B2B寄养申请明细单");
+        log.info("开始新增B2B寄样申请明细单");
         boolean save = super.saveBatch(list);
         if(!save) {
-            throw new ServiceException("B2B寄养申请明细单保存失败");
+            throw new ServiceException("B2B寄样申请明细单保存失败");
         }
         return save;
     }
@@ -90,10 +90,10 @@ public class KolB2bApplicationDetailServiceImpl extends SuperServiceImpl<KolB2bA
 
         // 数据处理
         handleData(list,mainId);
-        log.info("编辑 开始修改B2B寄养申请明细单数据，mainId：【{}】", mainId);
+        log.info("编辑 开始修改B2B寄样申请明细单数据，mainId：【{}】", mainId);
         boolean save = super.saveOrUpdateBatch(list);
         if(!save) {
-            throw new ServiceException("B2B寄养申请明细单保存失败");
+            throw new ServiceException("B2B寄样申请明细单保存失败");
         }
         return Boolean.TRUE;
     }
@@ -108,7 +108,7 @@ public class KolB2bApplicationDetailServiceImpl extends SuperServiceImpl<KolB2bA
         if (CollUtil.isEmpty(mainIdList)) {
             return Collections.emptyList();
         }
-        return lambdaQuery().in(KolB2bApplicationDetailEntity::getMainId,mainIdList).list();
+        return lambdaQuery().in(KolB2bApplicationDetailEntity::getMainId,mainIdList).orderByDesc(KolB2bApplicationDetailEntity::getId).list();
     }
 
 

@@ -6,10 +6,7 @@ import com.common.business.dto.PlatformB2bOrderDTO;
 import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
-import com.erp.model.oms.dto.ExhibitionOrderDTO;
-import com.erp.model.oms.dto.SoB2cDTO;
-import com.erp.model.oms.dto.SoDetailDTO;
-import com.erp.model.oms.dto.SoInfoDTO;
+import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.SoChangeEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
 import org.springframework.web.multipart.MultipartFile;
@@ -550,4 +547,20 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
     Boolean updateDhfPlatformOrderId(SoInfoDTO.UpdatePlatformOrderIdDTO dto);
 
     Boolean updateIsDeclare(SoB2cDTO.UpdateIsDeclareDTO dto);
+    /**
+     * 根据来源id查询销售订单
+     * @author will 
+     * @date 2025/12/2 17:40
+     * @param sourceId 
+     * @return List<SoInfoEntity>
+     */
+    List<SoInfoEntity> listBySourceId(String sourceId);
+    /**
+     * 根据来源id查询
+     * @author will
+     * @date 2025/12/2 18:08
+     * @param sourceId
+     * @return List<B2bSoInfoDTO>
+     */
+    List<KolB2bApplicationDTO.B2bSoInfoDTO> listRefBill(String sourceId);
 }

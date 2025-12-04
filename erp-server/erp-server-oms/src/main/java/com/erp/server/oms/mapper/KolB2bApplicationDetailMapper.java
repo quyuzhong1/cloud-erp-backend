@@ -7,7 +7,7 @@ import org.apache.ibatis.annotations.Mapper;
 
 /**
  * <p>
- * B2B寄养申请明细表 Mapper 接口
+ * B2B寄样申请明细表 Mapper 接口
  * </p>
  *
  * @author will
