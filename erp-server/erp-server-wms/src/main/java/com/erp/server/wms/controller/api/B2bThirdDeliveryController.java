@@ -18,6 +18,7 @@ import com.common.core.enums.LogActionEnum;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.wms.dto.B2bThirdDeliveryDTO;
 import com.erp.model.wms.entity.B2bThirdDeliveryEntity;
+import com.erp.model.wms.entity.SoDeliveryNoticeEntity;
 import com.erp.server.wms.query.B2bThirdWarehouseDeliveryQueryHandler;
 import com.erp.server.wms.service.B2bThirdDeliveryService;
 import lombok.extern.slf4j.Slf4j;
@@ -30,6 +31,7 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * B2B三方发货单
@@ -146,7 +148,38 @@ public class B2bThirdDeliveryController extends BaseController {
             try {
                 result = b2bThirdDeliveryService.deliveryIntercept(id, dto.getRemark());
             } catch (Exception e) {
-                log.error("全平台销售订单发货拦截失败", e);
+                log.error("B2B三方发货单发货拦截失败", e);
+                result = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(result);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+    /**
+     * 手动发货
+     *
+     * @param dto
+     * @return ApiResult<List < BatchResultDTO>>
+     * @author Will
+     * @date: 2023/8/18 16:51
+     */
+    @PostMapping("/manualDelivery")
+    @LogAction(value = LogActionEnum.INSERT, desc = "手动发货")
+    public ApiResult<List<BatchResultDTO>> manualDelivery(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<B2bThirdDeliveryEntity> entities = b2bThirdDeliveryService.listByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            BatchResultDTO result;
+            B2bThirdDeliveryEntity entity = entities.stream().filter(item -> item.getId().equals(id)).findFirst().orElse(null);
+            if (Objects.isNull(entity)) {
+                result = BatchResultDTO.fail(id, id, "B2B三方发货单不存在, 手动发货失败");
+                resultDTOS.add(result);
+                continue;
+            }
+            try {
+                result = b2bThirdDeliveryService.manualDelivery(entity);
+            } catch (Exception e) {
+                log.error("B2B三方发货单手动发货失败", e);
                 result = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
             }
             resultDTOS.add(result);
@@ -154,4 +187,35 @@ public class B2bThirdDeliveryController extends BaseController {
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
+
+    /**
+     * 重新生成销售出库单
+     *
+     * @return com.common.core.controller.vo.ApiResult
+     * @Author Luo_WG
+     * @Date 2023/4/13 18:5
+     **/
+    @LogAction(value = LogActionEnum.INSERT, desc = "下推销售出库单")
+    @PostMapping(value = "/generateB2bThirdDelivery")
+    public ApiResult<List<BatchResultDTO>> generateB2bThirdDelivery(@RequestBody BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<B2bThirdDeliveryEntity> entities = b2bThirdDeliveryService.listByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            BatchResultDTO resultDTO;
+            B2bThirdDeliveryEntity entity = entities.stream().filter(item -> item.getId().equals(id)).findFirst().orElse(null);
+            if (Objects.isNull(entity)) {
+                resultDTO = BatchResultDTO.fail(id, id, "B2B三方发货单不存在, 下推销售出库单失败");
+                resultDTOS.add(resultDTO);
+                continue;
+            }
+            try {
+                resultDTO = b2bThirdDeliveryService.generateB2bThirdDelivery(id);
+            }catch (Exception e){
+                log.error("B2B三方发货单不存在, 下推销售出库单失败",e);
+                resultDTO = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(resultDTO);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
 }

@@ -322,6 +322,7 @@ public class DaMaiService {
     public DaMaiBaseResp<List<DaMaiGetOrderResp>> getOrderList(Map<String,Object> authMap, DaMaiGetOrderRequest daMaiGetOrderRequest){
         String path = "/omsService/non/soApi/getOrderList";
         Map<String, String> headerMap = buildHearderMap(authMap);
+        ThirdWarehouseContext.setRequestJson(JSONUtil.toJsonStr(daMaiGetOrderRequest));
         String bodyStr = OkHttpUtils.doPostJson(getPreUrl() + path, JSONUtil.toJsonStr(daMaiGetOrderRequest), headerMap);
         DaMaiBaseResp<List<DaMaiGetOrderResp>> response = DaMaiUtils.parseToResp(bodyStr,new TypeReference<DaMaiBaseResp<List<DaMaiGetOrderResp>>>() {});
         return response;
@@ -335,6 +336,7 @@ public class DaMaiService {
     public DaMaiBaseResp<List<DaMaiGetFbaOrderResp>> getFbaOrderList(Map<String,Object> authMap, DaMaiGetFbaOrderRequest request){
         String path = "/omsService/non/fbaApi/getFbaOrderList";
         Map<String, String> headerMap = buildHearderMap(authMap);
+        ThirdWarehouseContext.setRequestJson(JSONUtil.toJsonStr(request));
         String bodyStr = OkHttpUtils.doPostJson(getPreUrl() + path, JSONUtil.toJsonStr(request), headerMap);
         DaMaiBaseResp<List<DaMaiGetFbaOrderResp>> response = DaMaiUtils.parseToResp(bodyStr,new TypeReference<DaMaiBaseResp<List<DaMaiGetFbaOrderResp>>>() {});
         return response;

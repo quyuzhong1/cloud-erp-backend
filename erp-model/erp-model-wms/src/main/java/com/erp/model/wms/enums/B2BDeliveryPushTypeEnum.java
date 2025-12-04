@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.annotation.EnumValue;
 import com.common.core.constant.EnumMessage;
 import com.fasterxml.jackson.annotation.JsonValue;
 import lombok.Getter;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.stream.Stream;
 
@@ -45,15 +46,15 @@ public enum B2BDeliveryPushTypeEnum implements EnumMessage {
         return this.name;
     }
 
-    /**
-     * 通过code查询
-     * DeliverTypeEnum
-     * 枚举
-     */
-    public static B2BDeliveryPushTypeEnum getByCode(String code) {
-        return Stream.of(B2BDeliveryPushTypeEnum.values())
-                .filter(e -> e.getCode().equalsIgnoreCase(code))
-                .findFirst()
-                .orElse(null);
+    public static String getName(String code) {
+        if (StringUtils.isBlank(code)) {
+            return "";
+        }
+        for (WarehouseOperationTypeEnum billTypeEnum : WarehouseOperationTypeEnum.values()) {
+            if (code.equals(billTypeEnum.getCode())) {
+                return billTypeEnum.getName();
+            }
+        }
+        return "";
     }
 }

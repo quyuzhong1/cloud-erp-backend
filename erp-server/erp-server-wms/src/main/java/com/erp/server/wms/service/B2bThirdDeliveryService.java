@@ -4,6 +4,7 @@ import com.erp.model.wms.entity.B2bThirdDeliveryEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.wms.dto.B2bThirdDeliveryDTO;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -57,10 +58,23 @@ public interface B2bThirdDeliveryService extends SuperService<B2bThirdDeliveryEn
     void updateStatus(String id, String status, String errorMsg, String platformOrderCode, String remark, String trackNo);
 
     /**
+     * 生成三方发货单 销售出库单
+     * @param id
+     */
+    BatchResultDTO generateB2bThirdDelivery(String id);
+
+    /**
      * 发货拦截
      * @param id
      * @param remark
      * @return
      */
     BatchResultDTO deliveryIntercept(String id, String remark);
+
+    /**
+     * 取消发货
+     * @param entity
+     * @return
+     */
+    BatchResultDTO manualDelivery(B2bThirdDeliveryEntity entity);
 }

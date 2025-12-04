@@ -1315,6 +1315,9 @@ public enum ApiError implements Serializable {
     ERROR_SO_DELIVERY_NOTICE_DETAIL_NOT_EXIST(92248,"销售通知单明细未找到"),
     ERROR_SO_DETAIL_NOT_EXIST(92248,"销售订单明细未找到"),
     ERROR_THIRD_DELIVERY_INTERCEPT(92248,"只有待发货允许发货拦截"),
+    ERROR_THIRD_DELIVERY_MANUAL_DELIVERY(92248,"只有未开启B2B发货的允许手动发货"),
+    ERROR_THIRD_DELIVERY_WAIT_SHIPPED_DELIVERY(92248,"只有待发货状态的允许发货"),
+    ERROR_THIRD_DELIVERY_GENERATE_OUTSTOCK(92248,"只有已发货状态的允许生成销售出库单"),
 
 
 
