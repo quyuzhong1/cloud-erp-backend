@@ -26,6 +26,12 @@ public class KolPartnerInfoQueryHandler extends AbstractQueryHandler {
         if ("all".equals(value)|| "".equals(value)){
             return getQueryAllSql();
         }
+        if("true".equals(value)){
+            return " kpi.disabled = true";
+        }
+        if("false".equals(value)){
+            return " kpi.disabled = false";
+        }
         return super.getSplicingSQL();
     }
 }

@@ -39,26 +39,17 @@ public class KolAddressInfoEntity extends BaseEntity<KolAddressInfoEntity> {
     */
     @TableField("country_name")
     private String countryName;
-    /**
-    * 省/州id
-    */
-    @TableField("province_id")
-    private String provinceId;
+
     /**
     * 省/州
     */
-    @TableField("province_name")
-    private String provinceName;
-    /**
-    * 城市id
-    */
-    @TableField("city_id")
-    private String cityId;
+    @TableField("province")
+    private String province;
     /**
     * 城市
     */
-    @TableField("city_name")
-    private String cityName;
+    @TableField("city")
+    private String city;
     /**
     * 区域
     */

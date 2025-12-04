@@ -377,14 +377,12 @@ public class KolPartnerInfoDTO implements Serializable {
         * 达人类型
         */
         private String type;
-        @NotEmpty(message = "达人类型不能为空")
         private List<String> typeList;
 
         /**
         * 合作类型
         */
         private String cooperationType;
-        @NotEmpty(message = "合作类型不能为空")
         private List<String> cooperationTypeList;
 
         /**
@@ -407,21 +405,17 @@ public class KolPartnerInfoDTO implements Serializable {
         /**
         * 语言
         */
-        @NotBlank(message = "语言不能为空")
-        @Size(max = 30,message = "语言最大长度不能超过30位")
         private String language;
 
         /**
         * 邮箱
         */
-        @NotBlank(message = "邮箱不能为空")
         @Size(max = 100,message = "邮箱最大长度不能超过100位")
         private String email;
 
         /**
         * 联系电话
         */
-        @NotBlank(message = "联系电话不能为空")
         @Size(max = 20,message = "联系电话最大长度不能超过20位")
         private String phone;
 
@@ -429,7 +423,6 @@ public class KolPartnerInfoDTO implements Serializable {
         * 负责人ID
         */
         @NotBlank(message = "负责人ID不能为空")
-        @Size(max = 19,message = "负责人ID最大长度不能超过19位")
         private String chargeId;
 
         /**
@@ -440,8 +433,6 @@ public class KolPartnerInfoDTO implements Serializable {
         /**
         * 部门ID
         */
-        @NotBlank(message = "部门ID不能为空")
-        @Size(max = 19,message = "部门ID最大长度不能超过19位")
         private String deptId;
 
         /**
