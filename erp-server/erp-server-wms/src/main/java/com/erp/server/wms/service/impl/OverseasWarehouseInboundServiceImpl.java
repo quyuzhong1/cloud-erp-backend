@@ -1177,6 +1177,32 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                 .map(entry -> new PlatformInboundDTO.Item(entry.getKey(), entry.getValue()))
                 .collect(Collectors.toList()));
     }
+    /**
+     * 根据产品条码查询sku
+     * @author will
+     * @date 2025/12/4 11:50
+     * @param dto
+     * @return void
+     */
+    private void handleThirdBarcode (PlatformInboundDTO dto) {
+        List<String> thirdBarcodeList = dto.getItems().stream().map(PlatformInboundDTO.Item::getThirdBarcode).distinct().collect(Collectors.toList());
+        if (CollUtil.isEmpty(thirdBarcodeList) || !CharSequenceUtil.equals(dto.getPlatform(), PlatformDictEnum.TONG_YOU_WAREHOUSE.getCode())) {
+            return;
+        }
+        List<ListingInfoEntity> list = FeignQuery.create(ListingInfoEntity.class)
+                .eq(ListingInfoEntity::getPlatform, dto.getPlatform())
+                .eq(ListingInfoEntity::getAuthId, dto.getAuthId())
+                .in(ListingInfoEntity::getThirdBarcode, thirdBarcodeList)
+                .list();
+        if (CollUtil.isEmpty(list)) {
+            return;
+        }
+        for (PlatformInboundDTO.Item item : dto.getItems()) {
+            list.stream().filter(obj -> CharSequenceUtil.equals(dto.getAuthId(),obj.getAuthId()) && CharSequenceUtil.equals(dto.getPlatform(),obj.getPlatform()) && CharSequenceUtil.equals(item.getThirdBarcode(),obj.getThirdBarcode()))
+                    .findFirst()
+                    .ifPresent(obj -> item.setProductSku(obj.getPlatformSkuNo()));
+        }
+    }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -1186,6 +1212,8 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         if(StringUtils.isBlank(dto.getReceivingCode()) && StringUtils.isBlank(dto.getSourceCode())){
             return ApiResult.success();
         }
+        //根据产品条码查询sku
+        handleThirdBarcode(dto);
         //根据sku汇总数量
         this.groupBySku(dto);
         //通过单号查询主表记录
