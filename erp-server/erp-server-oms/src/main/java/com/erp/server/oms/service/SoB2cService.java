@@ -20,6 +20,7 @@ import com.erp.model.wms.dto.WmsDataCompareTaskDTO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 import com.erp.model.wms.entity.SoOutstockEntity;
+import com.erp.model.wms.entity.ThirdWarehouseDeliveryEntity;
 import org.apache.poi.ss.formula.functions.T;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -1127,13 +1128,15 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
 
     /**
      * 撤销未出仓发货
+     *
      * @param id
      * @param soB2cEntity
      * @param soOutstockEntity
      * @param deliveryEntity
+     * @param thirdWarehouseDeliveryEntity
      * @return
      */
-    BatchResultDTO cancelDeliveryWithNotOutbound(String id, SoB2cEntity soB2cEntity, SoOutstockEntity soOutstockEntity, SoB2cDeliveryEntity deliveryEntity);
+    BatchResultDTO cancelDeliveryWithNotOutbound(String id, SoB2cEntity soB2cEntity, SoOutstockEntity soOutstockEntity, SoB2cDeliveryEntity deliveryEntity, ThirdWarehouseDeliveryEntity thirdWarehouseDeliveryEntity);
 
     /**
      * 生成组包计划预览
