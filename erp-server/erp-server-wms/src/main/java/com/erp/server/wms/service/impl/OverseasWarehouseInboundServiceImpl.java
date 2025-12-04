@@ -336,6 +336,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                 .declareType(mainEntity.getDeclareType())
                 .remark(mainEntity.getRemark())
                 .countryName(mainEntity.getCountryName())
+                .logisticsChannel(mainEntity.getLogisticsProductCode())
                 //发货信息
                 .shiperInfo(ThirdWarehouseCreateInboundReq.ShiperInfo.builder()
                         .contacterName(contactName)
