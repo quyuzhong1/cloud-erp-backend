@@ -580,20 +580,25 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
                 soDetail.setRemark(item.getRemark());
                 soDetail.setMainId(soId);
                 soDetail.setPlatformSkuNo(item.getPlatformSkuNo());
-                //发货sku信息
-                soDetail.setDeliverySkuId(item.getSkuId());
-                soDetail.setDeliverySkuNo(item.getSkuNo());
-                soDetail.setBoxQty(item.getQty());
-                soDetail.setPerBoxQty(1);
+
                 //添加的话id 为null
                 if (addType.equals(changeType)) {
                     soDetail.setId(null);
+                    //新增发货sku信息
+                    soDetail.setDeliverySkuId(item.getSkuId());
+                    soDetail.setDeliverySkuNo(item.getSkuNo());
+                    soDetail.setBoxQty(item.getQty());
+                    soDetail.setPerBoxQty(1);
                 } else {
                     SoDetailEntity dbEntity = soDetailEntityList.stream().filter(v->v.getId().equals(soDetailId)).findFirst().orElse(null);
                     if(Objects.nonNull(dbEntity)){
                         soDetail.setExchangeRate(dbEntity.getExchangeRate());
                     }
                     soDetail.setId(soDetailId);
+                    //修改发货sku信息
+                    SoDetailEntity soDetailEntity = soDetailService.getById(soDetailId);
+                    //新的发货箱数
+                    soDetail.setBoxQty(item.getQty() / soDetailEntity.getPerBoxQty());
                 }
 
                 saveOrUpdateList.add(soDetail);
