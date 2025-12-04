@@ -362,7 +362,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
                     flatMap(obj -> Optional.ofNullable(obj.getInventoryTotal())).orElse(0);
             item.setCurInventoryQty(curInventoryQty);
             //销售数量
-            Integer qty = item.getQty();
+            Integer qty = item.getBoxQty();
             /**
              * 缺货数量
              * 当可用即时库存数量小于销售数量时， 缺货数量=可用即时库存数量-(销售数量-发货通知单数量)；
