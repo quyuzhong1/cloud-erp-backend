@@ -62,6 +62,7 @@ public class DictBasicController extends BaseController {
      *             handleModeType 质检单 处理措施 qcReportResult 质检单 质检报告结果 inventoryDirection 库存方向
      *              machineHandleType 加工处理类型    collectMode 揽收方式 issueType 发料类型 soB2cExportType b2c销售订单导出类型
      *             CfgSettingOrderStatistics 配置订单统计,CfgSettingSalesStatistics 配置销售量统计
+     *             thirdDeliveryStatus B2B三方发货单单据类型,warehouseOperationType 仓库操作类型,deliveryMethod 交货方式,deliveryPushType 推送类型
      * @param remark 备注
      * @return
      */

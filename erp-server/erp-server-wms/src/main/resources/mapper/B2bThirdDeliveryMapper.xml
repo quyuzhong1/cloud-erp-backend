@@ -83,7 +83,7 @@
             btd.error_message as errorMessage,
             btd.push_type as pushType,
             btd.is_api_delivery as isApiDelivery,
-            btdd.id as deatilId,
+            btdd.id as detailId,
             btdd.sku_id as skuId,
             btdd.sku_no,
             btdd.delivery_qty,
@@ -101,7 +101,7 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        btd.trade_time desc
+        btd.create_time desc
     </select>
 
 

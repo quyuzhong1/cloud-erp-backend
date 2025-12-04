@@ -6,7 +6,7 @@ import com.fasterxml.jackson.annotation.JsonValue;
 import org.apache.commons.lang3.StringUtils;
 
 /**
- * 单据类型
+ * 仓库操作类型
  */
 public enum WarehouseOperationTypeEnum implements EnumMessage {
     NO_OPEN_RELABLE("NO_OPEN_RELABLE", "不开箱换SKU标"),
