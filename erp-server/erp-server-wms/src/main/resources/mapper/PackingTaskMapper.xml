@@ -174,7 +174,7 @@
             wcs.box_width as width,
             wcs.box_height as height,
             (select string_agg(wcd.sku_no|| '*' || wcd.pack_qty, ';') from wms_carton_detail wcd where wcd.is_deleted = false and wcd.main_id = wc.id) as sku,
-        (select string_agg(CASE WHEN ptd.customer_po = '' THEN NULL ELSE ptd.customer_po END, ',') from packing_task_detail ptd where ptd.is_deleted = false and ptd.main_id = wc.packing_task_id and ptd.sku_id = wcd.sku_id) as customerPO
+           wc.customer_po as customerPO
         FROM wms_carton wc
         INNER JOIN wms_carton_spec wcs ON wcs.id = wc.spec_id AND wcs.is_deleted = FALSE
         JOIN wms_carton_detail wcd ON wcd.main_id = wc.id and wcd.is_deleted = FALSE
@@ -204,7 +204,7 @@
             pt.code as taskCode,
             wc.box_no,
             concat(wcs.box_length, wcs.size_unit,'*', wcs.box_width, wcs.size_unit,'*', wcs.box_height,wcs.size_unit) AS boxSize,
-        (select string_agg(CASE WHEN ptd.customer_po = '' THEN NULL ELSE ptd.customer_po END, ',') from packing_task_detail ptd where ptd.is_deleted = false and ptd.main_id = wc.packing_task_id and ptd.sku_id = wcd.sku_id) as customerPO,
+        wc.customer_po as customerPO,
             wcs.package_weight,
             wcs.weight_unit,
             wc.weighting_status,
