@@ -156,8 +156,6 @@ public class KolAddressInfoDTO implements Serializable {
         /**
         * 省/州id
         */
-        @NotBlank(message = "省/州id不能为空")
-        @Size(max = 100,message = "省/州id最大长度不能超过100位")
         private String province;
 
         /**
@@ -171,8 +169,6 @@ public class KolAddressInfoDTO implements Serializable {
         /**
         * 区域
         */
-        @NotBlank(message = "区域不能为空")
-        @Size(max = 50,message = "区域最大长度不能超过50位")
         private String district;
 
         /**
