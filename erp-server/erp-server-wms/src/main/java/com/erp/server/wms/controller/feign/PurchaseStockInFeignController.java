@@ -88,4 +88,9 @@ public class PurchaseStockInFeignController {
         return poInstockService.getInstockInfoBySupplierIds(dto);
     }
 
+    @PostMapping("/getPoStockInByParams")
+    public List<PoInstockDTO.PoInStockInfoDTO> getPoStockInByParams(@RequestBody PoInstockDTO.PoInStockParamDTO dto) {
+        return poInstockService.getPoStockInByParams(dto);
+    }
+
 }

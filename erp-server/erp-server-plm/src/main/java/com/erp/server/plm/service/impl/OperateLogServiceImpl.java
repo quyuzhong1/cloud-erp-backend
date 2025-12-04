@@ -193,6 +193,22 @@ public class OperateLogServiceImpl extends ServiceImpl<OperateLogMapper, Operate
     }
 
     @Override
+    public Boolean addSysLogBySave(String content, String classPath, String businessId, String pid, String operation) {
+        OperateLogEntity entity = new OperateLogEntity();
+        LoginUser loginUser = UserContext.getDefaultLoginUser();
+        String userName = loginUser.getUserName();
+        String userId = loginUser.getUid();
+        entity.setClassPath(classPath)
+                .setBusinessId(businessId)
+                .setPid(pid)
+                .setContent(content)
+                .setOperation(operation)
+                .setCreateUserId(userId)
+                .setCreateUserName(userName);
+        return this.save(entity);
+    }
+
+    @Override
     public Boolean addSysLogByBatchSave(List<OperateLogEntity> list) {
 
         LoginUser loginUser = UserContext.getDefaultLoginUser();

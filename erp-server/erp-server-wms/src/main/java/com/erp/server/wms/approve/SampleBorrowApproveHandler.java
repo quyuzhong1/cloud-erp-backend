@@ -22,6 +22,11 @@ public class SampleBorrowApproveHandler extends AbstractApproveHandler {
     private SampleBorrowInfoService sampleBorrowInfoService;
 
     @Override
+    public BatchResultDTO approve(ApproveOneDTO dto) {
+        return sampleBorrowInfoService.approve(dto,ClientTypeEnum.WEB);
+    }
+
+    @Override
     public Boolean cancelProcess(ApproveDTO.CancelProcessDTO dto) {
         BatchResultDTO result = sampleBorrowInfoService.cancelProcess(dto.getId(), ClientTypeEnum.WEB);
         return result.getSuccess();

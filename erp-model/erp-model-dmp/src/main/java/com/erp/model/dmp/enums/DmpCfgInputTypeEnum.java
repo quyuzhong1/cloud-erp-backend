@@ -13,7 +13,7 @@ import org.apache.commons.lang3.StringUtils;
  * @since 2024-06-11 09:37:12
  */
 public enum DmpCfgInputTypeEnum implements EnumMessage {
-	TASK("task", "自动任务"),
+//	TASK("task", "自动任务"),
 	API("api", "接口订阅"),
 	MQ("mq", "MQ订阅"),
 	DB("db", "DB直连"),

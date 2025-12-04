@@ -49,6 +49,8 @@ public class AssigneeStrategyService {
         assigneeStrategyMap.put("designated_role", value -> assigneeStrategyTypeService.designatedRoleAssignee(value));
         //DQE负责人
         assigneeStrategyMap.put("dqe_owner", value -> assigneeStrategyTypeService.dqeOwnerAssignee(value));
+        //表单内联系人
+        assigneeStrategyMap.put("formInternalContact", value -> assigneeStrategyTypeService.formInternalContactAssignee(value));
 
     }
     public List<String> getResult(CamundaDTO.PropertiesDTO propertiesDTO, String startUserId, String candidateUsers, Map<String, Object> variables) {

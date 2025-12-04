@@ -14,6 +14,7 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.wms.dto.SampleBackInfoDTO;
+import com.erp.model.wms.dto.SampleRecipientDTO;
 import com.erp.model.wms.entity.SampleBackInfoEntity;
 import com.erp.server.wms.query.SampleBackInfoQueryHandler;
 import com.erp.server.wms.service.SampleBackInfoService;
@@ -438,5 +439,16 @@ public class SampleBackInfoController extends BaseController {
         return success();
     }
 
+    /**
+     * 根据退回人带出退回组织
+     * @author jack
+     * @date: 2025-11-14
+     * @param dto
+     * @return ApiResult
+     */
+    @PostMapping(value = "/getBaseByUserId")
+    public ApiResult<SampleBackInfoDTO.BaseUserDTO> getBaseByUserId(@RequestBody  @Validated SampleBackInfoDTO.BaseUserDTO dto) {
+        return success(sampleBackInfoService.getBaseByUserId(dto));
+    }
 
 }

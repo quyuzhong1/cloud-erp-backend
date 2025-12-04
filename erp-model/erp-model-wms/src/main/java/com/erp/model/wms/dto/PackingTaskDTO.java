@@ -294,6 +294,10 @@ public class PackingTaskDTO implements Serializable {
          * 关联单号
          */
         private String sourceCode;
+        /**
+         * 动态数据源
+         */
+        private String dynamicDataSource;
     }
 
     /**

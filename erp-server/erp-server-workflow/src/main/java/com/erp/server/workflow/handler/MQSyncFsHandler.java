@@ -82,7 +82,7 @@ public class MQSyncFsHandler {
         //转换审核装填
         handlerApproveStatus(dto, approveType, processManagementEntity, syncRecordEntity);
 
-        //任务
+        //任务 (根据cur_approve_id, cur_activity_id做唯一，取id最小的一条记录)
         List<ProcessTaskManagementEntity> processTaskManagementEntities = processTaskManagementService.listTask(dto.getInstanceId());
         //抄送任务
         List<String> taskManagementIds = processTaskManagementEntities.stream().map(ProcessTaskManagementEntity::getId).collect(Collectors.toList());

@@ -112,6 +112,9 @@ public interface LogisticsFeign {
                                                                  @RequestParam("dictPlatform") String dictPlatform
     );
 
+    @GetMapping("/feign/logistics/getScaleChannelByChannelByIds")
+    List<LogisticsChannelDTO.SignShipDTO> getScaleChannelByChannelByIds(@RequestParam("logisticsChannelIdList") List<String> logisticsChannelIdList, @RequestParam("dictPlatform") String dictPlatform);
+
     /**
      * 根据地址类型获取地址列表
      *

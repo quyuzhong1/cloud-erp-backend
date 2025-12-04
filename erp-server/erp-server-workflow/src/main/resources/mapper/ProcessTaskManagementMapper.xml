@@ -148,4 +148,14 @@
         </if>
     </select>
 
+    <select id="listTaskByProcessInstanceId"
+            resultType="com.erp.model.workflow.entity.ProcessTaskManagementEntity">
+        SELECT DISTINCT ON (cur_approve_id, cur_activity_id)
+            *
+        FROM process_task_management
+        WHERE
+            process_instance_id = #{processInstanceId}
+        ORDER BY cur_approve_id, cur_activity_id, id
+    </select>
+
 </mapper>

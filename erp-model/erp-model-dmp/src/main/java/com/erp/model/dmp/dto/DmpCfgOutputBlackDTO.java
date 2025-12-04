@@ -94,7 +94,7 @@ public class DmpCfgOutputBlackDTO implements Serializable {
     public static class CommonDTO {
 
         /**
-        * 父id
+        * 父id，http://172.16.100.11:3002/project/119/interface/api/41759	获取
         */
         @NotBlank(message = "父id不能为空")
         @Size(max = 19,message = "父id最大长度不能超过19位")

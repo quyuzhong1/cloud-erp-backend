@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.scm.mapper.AssetPurchaseChangeDetailMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.scm.entity.AssetPurchaseChangeDetailEntity">
+       <result column="id" property="id" />
+       <result column="create_time" property="createTime" />
+       <result column="update_time" property="updateTime" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="main_id" property="mainId" />
+       <result column="asset_id" property="assetId" />
+       <result column="asset_code" property="assetCode" />
+       <result column="asset_name" property="assetName" />
+       <result column="old_purchase_qty" property="oldPurchaseQty" />
+       <result column="old_tax_price" property="oldTaxPrice" />
+       <result column="old_total_amount" property="oldTotalAmount" />
+       <result column="purchase_qty" property="purchaseQty" />
+       <result column="tax_price" property="taxPrice" />
+       <result column="total_price" property="totalPrice" />
+       <result column="currency" property="currency" />
+       <result column="currency_symbol" property="currencySymbol" />
+       <result column="tax_rate" property="taxRate" />
+       <result column="remark" property="remark" />
+       <result column="kingdee_detail_id" property="kingdeeDetailId" />
+       <result column="source_detail_id" property="sourceDetailId" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_time,
+        update_time,
+        create_user_name,
+        create_user_id,
+        update_user_name,
+        update_user_id,
+        version,
+        is_deleted,
+        main_id, asset_id, asset_code, asset_name, old_purchase_qty, old_tax_price, old_total_amount, purchase_qty, tax_price, total_price, currency, currency_symbol, tax_rate, remark, kingdee_detail_id, source_detail_id
+    </sql>
+
+
+</mapper>

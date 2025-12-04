@@ -124,4 +124,6 @@ public interface WarehouseReceiveMapper extends BaseMapper<WarehouseReceiveEntit
      * @return List<ReceiveSourceDTO>
      */
     List<WarehouseReceiveDTO.ReceiveSourceDTO> listReceiveSourceByDetailIds(@Param("idList")List<String> idList);
+
+    List<WarehouseReceiveDTO.ReceiveInfoDTO> getReceiveByParams(@Param("params") WarehouseReceiveDTO.ReceiveParamDTO params);
 }

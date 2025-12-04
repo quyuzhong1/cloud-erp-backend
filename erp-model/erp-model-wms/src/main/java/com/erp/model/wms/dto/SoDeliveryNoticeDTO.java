@@ -806,4 +806,11 @@ public class SoDeliveryNoticeDTO {
          */
         private String remark;
     }
+
+    @Data
+    @NoArgsConstructor
+    public static class PickStatus{
+        private String noticeId;
+        private String generationPickStatus;
+    }
 }

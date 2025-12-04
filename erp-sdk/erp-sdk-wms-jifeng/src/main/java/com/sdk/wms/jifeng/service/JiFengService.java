@@ -32,13 +32,13 @@ public class JiFengService {
         JiFengService jiFengService = new JiFengService();
         Map<String,Object> authMap = new HashMap<>();
         authMap.put("domain","sureparcel");
-        authMap.put("accessToken","d57ee2fa8c224d3089a301845afa4b64");
+        authMap.put("accessToken","25b38a96170245aa982636dfe04fde63");
         authMap.put("appKey","a03b35bf7f0c4c4f8e23e0599b5be649");
         authMap.put("userId","7471");
         authMap.put("appToken","f9af8dc7afea488991a216485987746c");
-//        List<String> erpNo = new ArrayList<>();
-//        erpNo.add("WFHD25101603694");
-        JiFengBaseResp<JiFengCreateInboundResp> a = jiFengService.cancelInbound(authMap,"IN5200096","FHD25110100002");
+        List<String> erpNo = new ArrayList<>();
+        erpNo.add("WFHD25101603694");
+        JiFengBaseResp<JiFengInboundResp> a = jiFengService.getInbound(authMap,"IN5200073");
         System.out.println(JSONObject.toJSONString( a));
     }
 //    public static void main(String[] args) {
@@ -381,6 +381,8 @@ public class JiFengService {
         Map<String,Object> paramMap = new HashMap<>();
         paramMap.put("erpNo",erpNo);
         String bodyStr = OkHttpUtils.doPostJson(url+path, paramMap, headerMap);
+        ThirdWarehouseContext.setRequestJson(JSONUtil.toJsonStr(paramMap));
+        ThirdWarehouseContext.setResponseJson(bodyStr);
         JiFengBaseResp<JiFengOutboundResp> response = JiFengUtils.parseToJiFengResp(bodyStr,JiFengOutboundResp.class);
         if(Objects.isNull(response)){
             log.error("极风获取入库单详情失败，返回结果为空,返回值:{}",bodyStr);

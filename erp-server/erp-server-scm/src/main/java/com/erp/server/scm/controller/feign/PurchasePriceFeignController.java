@@ -81,4 +81,13 @@ public class PurchasePriceFeignController {
     public List<PurchaseSkuOrgRefEntity> getBySkuIdList(@RequestBody @Validated PurchaseSkuOrgRefDTO.QuerySkuDTO querySkuDTO) {
         return purchaseSkuOrgRefService.getBySkuIdList(querySkuDTO.getSkuIdList());
     }
+
+    /**
+     * 根据供应商Ids查询最新的sku价格信息
+     *
+     **/
+    @PostMapping("/listSkuPrice")
+    public List<PurchasePriceDTO.SupplierSkuPrice> listSkuPrice() {
+        return purchasePriceService.listSkuPrice();
+    }
 }

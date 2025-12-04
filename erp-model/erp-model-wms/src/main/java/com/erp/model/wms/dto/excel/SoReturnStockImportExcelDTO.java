@@ -65,7 +65,7 @@ public class SoReturnStockImportExcelDTO implements Serializable {
      * SKU
      */
     @ExcelProperty(value = "*SKU", index = 6)
-    @FieldValid(fieldName = "SKU", isNotBlank = true, maxLength = 32)
+    @FieldValid(fieldName = "SKU", isNotBlank = true)
     private String skuNo;
 
     /**

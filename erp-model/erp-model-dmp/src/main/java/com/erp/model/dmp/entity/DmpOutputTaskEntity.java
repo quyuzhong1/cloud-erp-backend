@@ -87,6 +87,13 @@ public class DmpOutputTaskEntity extends BaseEntity<DmpOutputTaskEntity> {
       @TableField("exec_system")
       private String execSystem;
 
+      /**
+       * 实例id
+       */
+      @TableField("instance_id")
+      private String instanceId;
+
+
     public static final String CFG_OUTPUT_ID = "cfg_output_id";
 
     public static final String NEXT_LEVEL_ID = "next_level_id";

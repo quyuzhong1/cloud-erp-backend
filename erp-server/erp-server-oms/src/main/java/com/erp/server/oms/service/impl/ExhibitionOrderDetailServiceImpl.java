@@ -158,7 +158,8 @@ public class ExhibitionOrderDetailServiceImpl extends SuperServiceImpl<Exhibitio
 
     @Override
     public ExhibitionOrderDetailDTO.ImportDTO importFile(MultipartFile excelFile,String id, String recipientUserId, Boolean isTax, HttpServletResponse response) {
-        List<SkuVO> skuList = plmTaskFeign.listApproveSku();
+        //sku信息（获取所有sku，不限制审核状态）
+        List<SkuVO> skuList = plmTaskFeign.listAllSku();
 
         // 构造查询条件：根据用户ID和SKU列表查询样品台账中的可用数量
         SampleLedgerDTO.SearchDTO dto = new SampleLedgerDTO.SearchDTO();

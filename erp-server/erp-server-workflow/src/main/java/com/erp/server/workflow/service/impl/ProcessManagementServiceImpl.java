@@ -1518,6 +1518,25 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         // 流程信息传递给业务系统
         return new EndProcessDTO(entity, lastApproveType,lastApproveTime,lastApprover,lastComment, deliveryDate,variables);
     }
+
+    /**
+     * 审核
+     * @author jack
+     * @date 2025-11-20
+     * @param dto
+     */
+    @Override
+    public BatchResultDTO approveFeign(ApproveDTO.ApproveOneDTO dto) {
+        WorkMenuEntity menuEntity = workMenuService.getByModuleCode(dto.getBusinessKey());
+        String feignBeanName = menuEntity.getFeignBeanName();
+        if (CharSequenceUtil.isBlank(feignBeanName)) {
+            throw new ServiceException(ApiError.ERROR_WORK_MENU_FEIGN);
+        }
+        BaseWorkflowService feignService = SpringUtil.getBean(feignBeanName);
+        return feignService.approve(dto);
+    }
+
+
     /**
      * 回调更新状态
      * @author will
@@ -1557,6 +1576,17 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         }
         BaseWorkflowService feignService = SpringUtil.getBean(feignBeanName);
         return feignService.cancelProcess(dto);
+    }
+
+    @Override
+    public void addComment(ApproveDTO.AddCommentDTO dto) {
+        WorkMenuEntity menuEntity = workMenuService.getByModuleCode(dto.getBusinessKey());
+        String feignBeanName = menuEntity.getFeignBeanName();
+        if (CharSequenceUtil.isBlank(feignBeanName)) {
+            throw new ServiceException(ApiError.ERROR_WORK_MENU_FEIGN);
+        }
+        BaseWorkflowService feignService = SpringUtil.getBean(feignBeanName);
+        feignService.addComment(dto);
     }
 
     @Override

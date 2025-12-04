@@ -24,5 +24,5 @@ public class GraphqlRequestBody {
     private String query;
 
     /* GraphQL variables */
-    private Map<String,String> variables;
+    private Map<String,Object> variables;
 }

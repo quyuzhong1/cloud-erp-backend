@@ -24,6 +24,7 @@ import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -71,6 +72,12 @@ public class PlatformOrderConsumerService<T extends DmpSyncTaskIdDTO> extends Ab
             platformOrderConsumerHandleService.updateTikTokDetail(dto);
             if(continueFlag){
                 platformOrderConsumerHandleService.handleAll(dto);
+            }
+        }//之前美客多是子单号当成平台订单号，一个子单号对应一张订单，现在调整为母单号当做平台订单号一个订单对应多个子单号，判断，如果ERP已存在之前清洗的子单号的订单，则按照子单号更新
+        else if(PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode().equalsIgnoreCase(dto.getDictPlatform())){
+            List<PlatformOrderDTO> dtoList = platformOrderConsumerHandleService.handleMercadolibre(dto);
+            for (PlatformOrderDTO orderDTO : dtoList) {
+                platformOrderConsumerHandleService.handleAll(orderDTO);
             }
         }else{
             platformOrderConsumerHandleService.handleAll(dto);
