@@ -94,26 +94,4 @@ public class ImportOmsFeignController {
             downloadTaskFeign.updateTask(importResultDTO);
         }
     }
-
-
-    /**
-     * 导入KOL B2B寄样申请单
-     * @author will
-     * @date 2025/12/3 09:41
-     * @param dto
-     * @return void
-     */
-    @PostMapping("/kolB2bApplication")
-    public void importKolB2bApplication(@RequestBody BaseDTO.ImportDTO dto) {
-        try {
-            kolB2bApplicationService.importKolB2bApplication(dto);
-        } catch (Exception e) {
-            log.error("导入KOL B2B寄样申请单失败", e);
-            BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
-            importResultDTO.setTaskId(dto.getTaskId());
-            importResultDTO.setStatus(FileTaskStatusEnum.FAIL.getCode());
-            importResultDTO.setRemark(e.getMessage().length() > 490 ? e.getMessage().substring(0, 490) : e.getMessage());
-            downloadTaskFeign.updateTask(importResultDTO);
-        }
-    }
 }
