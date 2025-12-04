@@ -920,6 +920,12 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
      */
     private void buildPackingDetailTask(List<WmsCartonDetailDTO.ListPackingDetailDTO> listPackingDetailDTOS) {
         listPackingDetailDTOS.forEach(listPackingDetailDTO -> {
+            String customerPos = listPackingDetailDTO.getCustomerPO();
+            if(StringUtils.isNotBlank(customerPos)){
+                //转成List 去重
+                List<String> customerPoList = Arrays.stream(customerPos.split(",")).distinct().collect(Collectors.toList());
+                listPackingDetailDTO.setCustomerPO(String.join(",", customerPoList));
+            }
             listPackingDetailDTO.setPackingStatusName(PackingTaskStatusEnum.getName(listPackingDetailDTO.getPackingStatus()));
             listPackingDetailDTO.setWeightingStatusName(PackingWeightStatusEnum.getName(listPackingDetailDTO.getWeightingStatus()));
             listPackingDetailDTO.setMeasureSourceName(MeasureSourceEnum.getName(listPackingDetailDTO.getMeasureSource()));
@@ -3214,6 +3220,14 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
             }
             boxMap.keySet().stream().sorted().forEach(boxNo ->{
                 LinkedList<WmsCartonDetailDTO.ListPackingDetailDTO> detailDTOList = boxMap.get(boxNo);
+                detailDTOList.forEach(v->{
+                    String customerPos = v.getCustomerPO();
+                    if(StringUtils.isNotBlank(customerPos)){
+                        //转成List 去重
+                        List<String> customerPoList = Arrays.stream(customerPos.split(",")).distinct().collect(Collectors.toList());
+                        v.setCustomerPO(String.join(",", customerPoList));
+                    }
+                });
                 detailDTOS.addAll(detailDTOList);
             });
         }
