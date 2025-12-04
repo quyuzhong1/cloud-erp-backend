@@ -97,6 +97,7 @@
         SELECT
         count(kba.id)
         FROM  kol_b2b_application kba
+        inner join kol_b2b_application_detail kbad on kba.id = kbad.main_id and kbad.is_deleted = false
         WHERE
         ${params.sqlMap.default}
         and kba.is_deleted = FALSE
