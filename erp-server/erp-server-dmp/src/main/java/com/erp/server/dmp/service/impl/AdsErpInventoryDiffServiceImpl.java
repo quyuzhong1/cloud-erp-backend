@@ -224,8 +224,8 @@ public class AdsErpInventoryDiffServiceImpl extends SuperServiceImpl<AdsErpInven
         List<ThirdMappingEntity> mapppingWarehouseList = thirdMappingService.lambdaQuery()
                 .in(ThirdMappingEntity::getThirdSysType, platformList)
                 .list();
+        List<String> finalWarehouseList = warehouseList;
         if (CollectionUtils.isNotEmpty(mapppingWarehouseList)){
-            List<String> finalWarehouseList = warehouseList;
             List<AdsErpInventoryDiffDTO.WarehouseListDTO> collect = mapppingWarehouseList.stream()
                     .map(e -> new AdsErpInventoryDiffDTO.WarehouseListDTO(e.getSysId(), e.getSysName(), finalWarehouseList.contains(e.getSysId())))
                     .collect(Collectors.toList());
@@ -237,7 +237,6 @@ public class AdsErpInventoryDiffServiceImpl extends SuperServiceImpl<AdsErpInven
                 .in(ShopInfoEntity::getDictPlatform, platformList)
                 .list();
         if (CollectionUtils.isNotEmpty(shopList)){
-            List<String> finalWarehouseList = warehouseList;
             List<AdsErpInventoryDiffDTO.WarehouseListDTO> collect = shopList.stream()
                     .map(e -> new AdsErpInventoryDiffDTO.WarehouseListDTO(e.getWarehouseId(), e.getWarehouseName(), finalWarehouseList.contains(e.getWarehouseId())))
                     .collect(Collectors.toList());
