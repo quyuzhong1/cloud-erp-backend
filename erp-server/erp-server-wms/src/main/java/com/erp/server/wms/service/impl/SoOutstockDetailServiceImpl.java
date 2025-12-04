@@ -920,24 +920,42 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
         bomChildrenSkuDTOS = bomChildrenSkuDTOS.stream().filter(v-> BomTypeEnum.COMBINATION.getType().equals(v.getType())).collect(Collectors.toList());
         List<String> childSkuList = bomChildrenSkuDTOS.stream().map(BomChildrenSkuDTO::getSkuId).collect(Collectors.toList());
         List<SkuVO> skuVOList = plmTaskFeign.listSkuCostByIds(childSkuList);
+
         //子件含税成本Map ,key : 父sku val: 含税总成本
         Map<String,BigDecimal> costMap = new HashMap<>();
+        // 子件数量Map, key: 父sku val: 总数量
+        Map<String, BigDecimal> quantityMap = new HashMap<>();
+        //已更新的BOM
+        Set<String> addedKeys = new HashSet<>();
         for (SoOutstockDetailEntity detailEntity : detailList) {
+            SoB2cDetailEntity soDetailEntity = soDetailList.stream().filter(obj -> obj.getId().equals(detailEntity.getSoDetailId())).findFirst().orElse(null);
+            if(Objects.nonNull(soDetailEntity) && soDetailEntity.getSkuId().equals(detailEntity.getSkuId())){
+                continue;
+            }
             BomChildrenSkuDTO bomChildrenSkuDTO = bomChildrenSkuDTOS.stream().filter(obj -> obj.getSkuId().equals(detailEntity.getSkuId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(bomChildrenSkuDTO)) {
                 continue;
             }
+            String key = bomChildrenSkuDTO.getId() + "-" + bomChildrenSkuDTO.getSkuId();
+            if (addedKeys.contains(key)) {
+                continue;
+            }
+            addedKeys.add(key);
             SkuVO skuVO = skuVOList.stream().filter(v -> v.getSkuId().equals(bomChildrenSkuDTO.getSkuId())).findFirst().orElse(null);
+
+            // 计算数量（用于成本分摊）
+            BigDecimal quantity = new BigDecimal(bomChildrenSkuDTO.getQuantity());
+
+            // 更新数量Map
+            quantityMap.merge(bomChildrenSkuDTO.getParentSkuId(), quantity, BigDecimal::add);
+
             if (Objects.isNull(skuVO) || Objects.isNull(skuVO.getActualTaxCost()) || skuVO.getActualTaxCost().compareTo(BigDecimal.ZERO) == 0) {
                 continue;
             }
-            if(costMap.containsKey(bomChildrenSkuDTO.getParentSkuId())){
-                costMap.put(bomChildrenSkuDTO.getParentSkuId(),
-                        costMap.get(bomChildrenSkuDTO.getParentSkuId()).add(skuVO.getActualTaxCost().multiply(new BigDecimal(bomChildrenSkuDTO.getQuantity()))));
-            }else{
-                costMap.put(bomChildrenSkuDTO.getParentSkuId(), skuVO.getActualTaxCost().multiply(new BigDecimal(bomChildrenSkuDTO.getQuantity())));
-            }
+            costMap.merge(bomChildrenSkuDTO.getParentSkuId(), skuVO.getActualTaxCost().multiply(new BigDecimal(bomChildrenSkuDTO.getQuantity())), BigDecimal::add);
+
         }
+
         for (SoOutstockDetailEntity detailEntity : detailList) {
             String symbol = currencyList.stream().filter(c -> c.getId().equals(detailEntity.getCurrency())).findFirst().map(CurrencyDTO.ViewDTO::getSymbol).orElse("");
             detailEntity.setCurrencySymbol(symbol);
@@ -962,14 +980,24 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
                     //查询出库单明细是否有其他子件
                     List<BomChildrenSkuDTO> sameBomChildrenSkuDTOList = bomChildrenSkuDTOS.stream().filter(v->v.getParentSkuId().equals(bomChildrenSkuDTO.getParentSkuId()) && outSkuIds.contains(v.getSkuId())).collect(Collectors.toList());
                     if (sameBomChildrenSkuDTOList.size() > 1) {
-                        //有其他子件 将单价分摊
-                        SkuVO skuVO = skuVOList.stream().filter(v -> v.getSkuId().equals(bomChildrenSkuDTO.getSkuId())).findFirst().orElse(new SkuVO());
-                        if(Objects.isNull(skuVO.getActualTaxCost()) ||skuVO.getActualTaxCost().compareTo(BigDecimal.ZERO)==0){
-                            price = BigDecimal.ZERO;
-                        }else{
-                            BigDecimal totalCost = costMap.get(bomChildrenSkuDTO.getParentSkuId());
-                            BigDecimal currentCost = skuVO.getActualTaxCost().multiply(new BigDecimal(bomChildrenSkuDTO.getQuantity()));
-                            price = soDetailEntity.getPrice().multiply(currentCost.divide(totalCost, 4, RoundingMode.HALF_UP)).divide(new BigDecimal(bomChildrenSkuDTO.getQuantity()), 4, RoundingMode.HALF_UP);
+                        // 有其他子件 将单价分摊
+                        BigDecimal totalCost = costMap.get(bomChildrenSkuDTO.getParentSkuId());
+                        BigDecimal totalQuantity = quantityMap.get(bomChildrenSkuDTO.getParentSkuId());
+
+                        // 判断是否有成本价，如果没有则按数量比例分摊
+                        if (totalCost != null && totalCost.compareTo(BigDecimal.ZERO) != 0) {
+                            //有其他子件 将单价分摊
+                            SkuVO skuVO = skuVOList.stream().filter(v -> v.getSkuId().equals(bomChildrenSkuDTO.getSkuId())).findFirst().orElse(new SkuVO());
+                            if(Objects.isNull(skuVO.getActualTaxCost()) ||skuVO.getActualTaxCost().compareTo(BigDecimal.ZERO)==0){
+                                price = BigDecimal.ZERO;
+                            }else{
+                                BigDecimal currentCost = skuVO.getActualTaxCost().multiply(new BigDecimal(bomChildrenSkuDTO.getQuantity()));
+                                price = soDetailEntity.getPrice().multiply(currentCost.divide(totalCost, 4, RoundingMode.HALF_UP)).divide(new BigDecimal(bomChildrenSkuDTO.getQuantity()), 4, RoundingMode.HALF_UP);
+                            }
+                        } else if (totalQuantity != null && totalQuantity.compareTo(BigDecimal.ZERO) != 0) {
+                            // 按数量比例分摊
+                            BigDecimal currentQuantity = new BigDecimal(bomChildrenSkuDTO.getQuantity());
+                            price = soDetailEntity.getPrice().multiply(currentQuantity.divide(totalQuantity, 4, RoundingMode.HALF_UP)).divide(new BigDecimal(bomChildrenSkuDTO.getQuantity()), 4, RoundingMode.HALF_UP);
                         }
                     }
                 }else{
@@ -977,6 +1005,37 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
                 }
             }else{
                 price = soDetailEntity.getPrice();
+                if(!detailEntity.getSkuId().equals(soDetailEntity.getSkuId())){
+                    //不是组合品直接取单价
+                    String soSkuId = soDetailEntity.getSkuId();
+                    //判断是否是订单是组合品，出库单是子件的情况，如果是的话，通过子件分摊成本计算单价
+                    BomChildrenSkuDTO bomChildrenSkuDTO = bomChildrenSkuDTOS.stream().filter(obj -> obj.getSkuId().equals(detailEntity.getSkuId()) && obj.getParentSkuId().equals(soSkuId)).findFirst().orElse(null);
+                    if(ObjectUtils.isNotEmpty(bomChildrenSkuDTO)){
+                        //查询出库单明细是否有其他子件
+                        List<BomChildrenSkuDTO> sameBomChildrenSkuDTOList = bomChildrenSkuDTOS.stream().filter(v->v.getParentSkuId().equals(bomChildrenSkuDTO.getParentSkuId()) && outSkuIds.contains(v.getSkuId())).collect(Collectors.toList());
+                        if (sameBomChildrenSkuDTOList.size() > 1) {
+                            // 有其他子件 将单价分摊
+                            BigDecimal totalCost = costMap.get(bomChildrenSkuDTO.getParentSkuId());
+                            BigDecimal totalQuantity = quantityMap.get(bomChildrenSkuDTO.getParentSkuId());
+
+                            // 判断是否有成本价，如果没有则按数量比例分摊
+                            if (totalCost != null && totalCost.compareTo(BigDecimal.ZERO) != 0) {
+                                //有其他子件 将单价分摊
+                                SkuVO skuVO = skuVOList.stream().filter(v -> v.getSkuId().equals(bomChildrenSkuDTO.getSkuId())).findFirst().orElse(new SkuVO());
+                                if(Objects.isNull(skuVO.getActualTaxCost()) ||skuVO.getActualTaxCost().compareTo(BigDecimal.ZERO)==0){
+                                    price = BigDecimal.ZERO;
+                                }else{
+                                    BigDecimal currentCost = skuVO.getActualTaxCost().multiply(new BigDecimal(bomChildrenSkuDTO.getQuantity()));
+                                    price = soDetailEntity.getPrice().multiply(currentCost.divide(totalCost, 4, RoundingMode.HALF_UP)).divide(new BigDecimal(bomChildrenSkuDTO.getQuantity()), 4, RoundingMode.HALF_UP);
+                                }
+                            } else if (totalQuantity != null && totalQuantity.compareTo(BigDecimal.ZERO) != 0) {
+                                // 按数量比例分摊
+                                BigDecimal currentQuantity = new BigDecimal(bomChildrenSkuDTO.getQuantity()).multiply(new BigDecimal(detailEntity.getActualQty()));
+                                price = soDetailEntity.getPrice().multiply(currentQuantity.divide(totalQuantity, 4, RoundingMode.HALF_UP)).divide(new BigDecimal(bomChildrenSkuDTO.getQuantity()), 4, RoundingMode.HALF_UP);
+                            }
+                        }
+                    }
+                }
             }
             //虚拟仓库
             if(StringUtils.isBlank(detailEntity.getVirtualWarehouseId())){

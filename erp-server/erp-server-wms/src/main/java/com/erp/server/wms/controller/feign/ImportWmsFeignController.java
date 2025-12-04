@@ -9,6 +9,7 @@ import com.erp.server.wms.service.SampleScrapInfoService;
 import com.erp.server.wms.service.SampleBackInfoService;
 import com.erp.server.wms.service.SampleInitialLedgerService;
 import com.erp.server.wms.service.SampleTransferInfoService;
+import com.erp.server.wms.service.SampleAdjustmentInfoService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -39,6 +40,9 @@ public class ImportWmsFeignController {
 
     @Resource
     private SampleTransferInfoService sampleTransferInfoService;
+
+    @Resource
+    private SampleAdjustmentInfoService sampleAdjustmentInfoService;
 
     @PostMapping("/sampleRecipient")
     public void importSampleRecipient(@RequestBody BaseDTO.ImportDTO dto) {
@@ -116,6 +120,20 @@ public class ImportWmsFeignController {
             sampleTransferInfoService.importSampleTransfer(dto);
         } catch (Exception e) {
             log.error("导入样品转移单失败", e);
+            BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
+            importResultDTO.setTaskId(dto.getTaskId());
+            importResultDTO.setStatus(FileTaskStatusEnum.FAIL.getCode());
+            importResultDTO.setRemark(e.getMessage().length() > 490 ? e.getMessage().substring(0, 490) : e.getMessage());
+            downloadTaskFeign.updateTask(importResultDTO);
+        }
+    }
+
+    @PostMapping("/importSampleAdjustment")
+    public void importSampleAdjustment(@RequestBody BaseDTO.ImportDTO dto) {
+        try {
+            sampleAdjustmentInfoService.importSampleAdjustment(dto);
+        } catch (Exception e) {
+            log.error("导入样品调整单失败", e);
             BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
             importResultDTO.setTaskId(dto.getTaskId());
             importResultDTO.setStatus(FileTaskStatusEnum.FAIL.getCode());

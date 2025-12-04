@@ -10,9 +10,8 @@ import com.common.business.factory.ApproveEndHandlerFactory;
 import com.common.business.handler.AbstractApproveHandler;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.erp.model.scm.entity.*;
 import com.erp.model.workflow.dto.EndProcessDTO;
-import com.erp.server.scm.service.*;
+import com.erp.server.scm.service.WorkflowProcessService;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -28,6 +27,17 @@ public class WorkflowProcessServiceImpl implements WorkflowProcessService {
 
     @Resource
     private ApproveEndHandlerFactory approveEndHandlerFactory;
+
+    @Override
+    public BatchResultDTO approve(ApproveDTO.ApproveOneDTO dto) {
+        String businessKey = dto.getBusinessKey();
+        SourceTypeEnum sourceType = SourceTypeEnum.getByCode(businessKey);
+        if (null == sourceType) {
+            throw new ServiceException(ApiError.ERROR_NOT_FOUND_APPROVE_BUSINESSKEY,ApproveTypeEnum.getName(dto.getType()),businessKey);
+        }
+        AbstractApproveHandler handler = approveEndHandlerFactory.getHandler(sourceType);
+        return  handler.approve(BeanUtil.toBean(dto, ApproveOneDTO.class));
+    }
 
     @Override
     public Boolean approveEnd(EndProcessDTO dto) {
@@ -60,5 +70,17 @@ public class WorkflowProcessServiceImpl implements WorkflowProcessService {
         }
         AbstractApproveHandler handler = approveEndHandlerFactory.getHandler(sourceType);
         return  handler.cancelProcess(dto);
+    }
+
+    @Override
+    public Boolean addComment(ApproveDTO.AddCommentDTO dto) {
+        String businessKey = dto.getBusinessKey();
+        SourceTypeEnum sourceType = SourceTypeEnum.getByCode(businessKey);
+        if (null == sourceType) {
+            throw new ServiceException(ApiError.ERROR_NOT_FOUND_APPROVE_BUSINESSKEY, "添加评论",businessKey);
+        }
+        AbstractApproveHandler handler = approveEndHandlerFactory.getHandler(sourceType);
+        handler.addComment(dto);
+        return Boolean.TRUE;
     }
 }

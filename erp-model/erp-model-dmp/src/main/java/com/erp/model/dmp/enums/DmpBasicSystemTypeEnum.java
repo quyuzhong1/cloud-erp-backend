@@ -16,6 +16,9 @@ public enum DmpBasicSystemTypeEnum implements EnumMessage {
 	WMS("wms", "仓储"),
 	TMS("tms", "物流"),
 	FINANCE("finance", "财务"),
+    BI("bi", "BI"),
+    OMS("oms", "销售平台"),
+    THIRD_ERP("thirdErp", "第三方ERP"),
     ;
     /**
      * 类型

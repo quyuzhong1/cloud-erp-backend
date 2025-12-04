@@ -16,6 +16,7 @@ public enum SysClassifyEnum {
     WMS("wms", "WMS系统"),
     OMS("oms", "OMS系统"),
     FM("fm", "头程系统"),
+    FMS("fms", "FMS系统"),
     ;
 
     @EnumValue

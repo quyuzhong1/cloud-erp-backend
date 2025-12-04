@@ -168,4 +168,8 @@ public interface TransactionFlowService extends SuperService<TransactionFlowEnti
      * @return List<String>
      */
     List<String> listByOrgId(LocalDate startDate, String orgId, String inventoryId, Boolean fromTable);
+
+    PagingVO<InventoryReportDTO.ListDailyInventoryDTO> dailyInventoryPagingByLocation(PagingDTO<InventoryReportDTO.DailyInventoryParamDTO> dto);
+
+    void exportDailyInventoryByLocation(InventoryReportDTO.DailyInventoryParamDTO dto);
 }

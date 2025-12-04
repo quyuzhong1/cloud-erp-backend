@@ -282,4 +282,5 @@ public interface SampleBackInfoService extends SuperService<SampleBackInfoEntity
      */
     BatchResultDTO cancelProcess(String id, ClientTypeEnum clientType);
 
+    SampleBackInfoDTO.BaseUserDTO getBaseByUserId(SampleBackInfoDTO.BaseUserDTO dto);
 }

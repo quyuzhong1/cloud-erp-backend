@@ -570,6 +570,9 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
             //仓位名称填充
             WarehouseLocationEntity warehouseLocationEntity = warehouseLocationEntityList.stream().filter(e -> e.getWarehouseId().equals(viewProductDTO.getDeliveryWarehouseId()) && e.getCode().equals(viewProductDTO.getWarehouseLocation())).findFirst().orElse(new WarehouseLocationEntity());
             viewProductDTO.setWarehouseLocationName(warehouseLocationEntity.getName());
+
+            //新品首批名称填充
+            viewProductDTO.setFirstMassProductName(com.erp.model.plm.enums.FirstMassProductTypeEnum.getName(viewProductDTO.getFirstMassProduct()));
         }
         return list;
     }

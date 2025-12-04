@@ -102,6 +102,10 @@ public class ProductSkuExcelDTO extends PermissionsDTO {
      */
     private List<String> brandList;
 
+    /**
+     * 研发团队
+     */
+    private List<String> rdtTeamList;
 
     /**
      * 产品 经理
@@ -119,6 +123,15 @@ public class ProductSkuExcelDTO extends PermissionsDTO {
      */
     private List<String> propertyList;
 
+    /**
+     * 不包含的产品属性
+     */
+    private List<String> notPropertyList;
+
+    /**
+     * 应用分类id
+     */
+    private List<String> applicationCategoryIds;
 
     /**
      * 开始时间

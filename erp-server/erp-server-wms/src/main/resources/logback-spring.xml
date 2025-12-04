@@ -46,9 +46,9 @@
 		<filter class="ch.qos.logback.classic.filter.ThresholdFilter">
 			<level>DEBUG</level>
 		</filter>
-		<file>${LOG_HOME}/debug.log</file>
+		<file>${LOG_HOME}/debug-${ServerIP}-${ServerPort}.log</file>
 		<rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
-			<fileNamePattern>${LOG_HOME}/debug-%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+			<fileNamePattern>${LOG_HOME}/debug-${ServerIP}-${ServerPort}-%d{yyyy-MM-dd}.%i.log</fileNamePattern>
 			<maxFileSize>${maxFileSize}</maxFileSize>
 			<maxHistory>${maxHistory}</maxHistory>
 			<totalSizeCap>${totalSizeCap}</totalSizeCap>
@@ -62,9 +62,9 @@
 		<filter class="ch.qos.logback.classic.filter.ThresholdFilter">
 			<level>INFO</level>
 		</filter>
-		<file>${LOG_HOME}/info.log</file>
+		<file>${LOG_HOME}/info-${ServerIP}-${ServerPort}.log</file>
 		<rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
-			<fileNamePattern>${LOG_HOME}/info-%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+			<fileNamePattern>${LOG_HOME}/info-${ServerIP}-${ServerPort}-%d{yyyy-MM-dd}.%i.log</fileNamePattern>
 			<maxFileSize>${maxFileSize}</maxFileSize>
 			<maxHistory>${maxHistory}</maxHistory>
 			<totalSizeCap>${totalSizeCap}</totalSizeCap>
@@ -78,9 +78,9 @@
 		<filter class="ch.qos.logback.classic.filter.ThresholdFilter">
 			<level>WARN</level>
 		</filter>
-		<file>${LOG_HOME}/warn.log</file>
+		<file>${LOG_HOME}/warn-${ServerIP}-${ServerPort}.log</file>
 		<rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
-			<fileNamePattern>${LOG_HOME}/warn-%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+			<fileNamePattern>${LOG_HOME}/warn-${ServerIP}-${ServerPort}-%d{yyyy-MM-dd}.%i.log</fileNamePattern>
 			<maxFileSize>${maxFileSize}</maxFileSize>
 			<maxHistory>${maxHistory}</maxHistory>
 			<totalSizeCap>${totalSizeCap}</totalSizeCap>
@@ -94,9 +94,9 @@
 		<filter class="ch.qos.logback.classic.filter.ThresholdFilter">
 			<level>ERROR</level>
 		</filter>
-		<file>${LOG_HOME}/error.log</file>
+		<file>${LOG_HOME}/error-${ServerIP}-${ServerPort}.log</file>
 		<rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
-			<fileNamePattern>${LOG_HOME}/error-%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+			<fileNamePattern>${LOG_HOME}/error-${ServerIP}-${ServerPort}-%d{yyyy-MM-dd}.%i.log</fileNamePattern>
 			<maxFileSize>${maxFileSize}</maxFileSize>
 			<maxHistory>${maxHistory}</maxHistory>
 			<totalSizeCap>${totalSizeCap}</totalSizeCap>

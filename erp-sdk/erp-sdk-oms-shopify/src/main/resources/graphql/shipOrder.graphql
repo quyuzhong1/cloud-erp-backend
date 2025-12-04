@@ -1,0 +1,27 @@
+mutation (
+  $numbers: [String!]!
+  $company: String!
+  $fulfillmentOrderId: ID!
+  $fulfillmentOrderLineItems: [FulfillmentOrderLineItemInput!]!
+) {
+  fulfillmentCreate(fulfillment: {
+    notifyCustomer: false,
+    trackingInfo: {
+      numbers: $numbers,
+      company: $company
+    },
+    lineItemsByFulfillmentOrder: {
+      fulfillmentOrderId: $fulfillmentOrderId,
+      fulfillmentOrderLineItems: $fulfillmentOrderLineItems
+    }
+  }) {
+    fulfillment {
+      id
+      status
+    }
+    userErrors {
+      field
+      message
+    }
+  }
+}

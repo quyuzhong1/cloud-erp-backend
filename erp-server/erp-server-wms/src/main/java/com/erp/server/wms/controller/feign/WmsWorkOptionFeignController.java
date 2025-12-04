@@ -99,6 +99,9 @@ public class WmsWorkOptionFeignController {
     private SampleInitialLedgerService sampleInitialLedgerService;
 
     @Resource
+    private SampleAdjustmentInfoService sampleAdjustmentInfoService;
+
+    @Resource
     private SampleTransferInfoService sampleTransferInfoService;
 
     /**
@@ -564,6 +567,25 @@ public class WmsWorkOptionFeignController {
                 resultDTOS.add(sampleTransferInfoService.approve(new ApproveOneDTO(id, dto.getType(), dto.getComment()), ClientTypeEnum.WEB));
             } catch (Exception e) {
                 log.error("样品转移单审核失败", e);
+                resultDTOS.add(BatchResultDTO.fail(id, id, e.getMessage()));
+            }
+        }
+        return resultDTOS;
+    }
+
+    /**
+     * 样品调整单审核
+     * @param dto
+     * @return
+     */
+    @PostMapping("/sampleAdjustmentApprove")
+    public List<BatchResultDTO> sampleAdjustmentApprove(@RequestBody BaseApproveParamDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            try {
+                resultDTOS.add(sampleAdjustmentInfoService.approve(new ApproveOneDTO(id, dto.getType(), dto.getComment())));
+            } catch (Exception e) {
+                log.error("样品调整单审核失败", e);
                 resultDTOS.add(BatchResultDTO.fail(id, id, e.getMessage()));
             }
         }

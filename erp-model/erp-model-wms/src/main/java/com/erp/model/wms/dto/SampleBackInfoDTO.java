@@ -2,6 +2,8 @@ package com.erp.model.wms.dto;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.base.SortDTO;
 import java.util.List;
 
@@ -71,6 +73,11 @@ public class SampleBackInfoDTO implements Serializable {
             * sqlMap 默认key default
         */
         private Map<String,String> sqlMap;
+
+         /**
+          * 勾选的id集合
+          */
+         private List<String> ids;
 
      }
     /**
@@ -246,10 +253,7 @@ public class SampleBackInfoDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class ExportDTO extends PagingParamDTO {
-        /**
-        * 勾选的id集合
-        */
-        private List<String> ids;
+
     }
 
     /**
@@ -597,5 +601,33 @@ public class SampleBackInfoDTO implements Serializable {
         private String remark;
     }
 
-
+    @Data
+    @NoArgsConstructor
+    public class BaseUserDTO {
+        /**
+         * 退回人ID
+         */
+        @NotBlank(message = "退回人ID不能为空")
+        private String userId;
+        /**
+         * 退回人姓名
+         */
+        private String userName;
+        /**
+         * 退回部门ID
+         */
+        private String deptId;
+        /**
+         * 退回部门名称
+         */
+        private String deptName;
+        /**
+         * 退回组织ID
+         */
+        private String orgId;
+        /**
+         * 退回组织名称
+         */
+        private String orgName;
+    }
 }

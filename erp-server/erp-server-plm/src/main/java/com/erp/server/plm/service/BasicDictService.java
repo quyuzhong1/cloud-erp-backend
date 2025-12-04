@@ -1,5 +1,6 @@
 package com.erp.server.plm.service;
 
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.plm.dto.BasicDictDTO;
@@ -18,6 +19,10 @@ import java.util.Map;
  * @since 2022-09-13
  */
 public interface BasicDictService extends IService<BasicDictEntity> {
+	
+	boolean saveJsonObject(JSONObject jsonObject);
+	
+	boolean updateJsonObject(List<JSONObject> jsonObjects);
 
     Boolean saveOrUpdateDict(List<BasicDictDTO> dtos);
 

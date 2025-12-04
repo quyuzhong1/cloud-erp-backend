@@ -59,30 +59,30 @@ public class JiFengInboundInitHandler extends DmpInputInitHandler {
 	
 	@Override
 	public List<DmpInputTaskInitDTO> getInitData(DmpInputInitRequest dmpRequest, DmpInputTaskResponse dmpResponse) {
-        //查询待签收、部分签收状态的入库单
+		List<OverseasProviderEntity> overseasProviderEntityList = FeignQuery.create(OverseasProviderEntity.class)
+				.eq(OverseasProviderEntity::getAuthStatus, AuthStatusEnum.ALREADY.getCode())
+				.eq(OverseasProviderEntity::getCode, DmpBasicSystemCodeEnum.JIFENG.getCode())
+				.list();
+		if(CollUtil.isEmpty(overseasProviderEntityList)) {
+			throw new ServiceException("极风授权信息不存在");
+		}
+		// 取对应授权ID授权
+		OverseasProviderEntity overseasProviderEntity = overseasProviderEntityList.stream()
+				.filter(e -> e.getId().equalsIgnoreCase(dmpInputTaskEntity.getNextLevelId()))
+				.findFirst()
+				.orElse(null);
+		if(null == overseasProviderEntity) {
+			throw new ServiceException("极风对应授权ID信息不存在");
+		}
+
+		//查询待签收、部分签收状态的入库单
         List<String> receiveCodeList = overseasWarehouseFeign.getReceiptNumbersForStatus(Arrays.asList(OverseasInstockStatusEnum.TO_BE_SIGNED.getCode()
                 ,OverseasInstockStatusEnum.PARTIAL_SIGNED.getCode()
-                ,OverseasInstockStatusEnum.MANUAL_COMPLETION.getCode()), OmsPlatformEnum.JIFENG.getCode());
+                ,OverseasInstockStatusEnum.MANUAL_COMPLETION.getCode()), overseasProviderEntity.getId());
         List<JiFengInboundResp> allResult = new ArrayList<>();
         
         if(CollUtil.isNotEmpty(receiveCodeList)) {
 
-			List<OverseasProviderEntity> overseasProviderEntityList = FeignQuery.create(OverseasProviderEntity.class)
-					.eq(OverseasProviderEntity::getAuthStatus, AuthStatusEnum.ALREADY.getCode())
-					.eq(OverseasProviderEntity::getCode, DmpBasicSystemCodeEnum.JIFENG.getCode())
-					.list();
-            if(CollUtil.isEmpty(overseasProviderEntityList)) {
-            	throw new ServiceException("极风授权信息不存在");
-            }
-			// 取对应授权ID授权
-			OverseasProviderEntity overseasProviderEntity = overseasProviderEntityList.stream()
-					.filter(e -> e.getId().equalsIgnoreCase(dmpInputTaskEntity.getNextLevelId()))
-					.findFirst()
-					.orElse(null);
-			if(null == overseasProviderEntity) {
-				throw new ServiceException("极风对应授权ID信息不存在");
-			}
-            
             for(String receiveCode : receiveCodeList) {
 				JiFengBaseResp<JiFengInboundResp> resp = jiFengService.getInbound(overseasProviderEntity.getAuthJson(),receiveCode);
             	if(resp.getCode() != 0) {
