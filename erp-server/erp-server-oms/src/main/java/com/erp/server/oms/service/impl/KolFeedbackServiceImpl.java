@@ -115,8 +115,8 @@ public class KolFeedbackServiceImpl extends SuperServiceImpl<KolFeedbackMapper, 
         // 数据处理
         handleData(kolFeedbackEntity);
 
-        // 校验唯一性：source_code + sku_no + url_hash
-        checkUnique(kolFeedbackEntity, null);
+//        // 校验唯一性：source_code + sku_no + url_hash
+//        checkUnique(kolFeedbackEntity, null);
 
         log.info("开始新增KOL回片列单");
         boolean save = super.save(kolFeedbackEntity);
@@ -176,8 +176,8 @@ public class KolFeedbackServiceImpl extends SuperServiceImpl<KolFeedbackMapper, 
         // 数据处理
         handleData(kolFeedbackEntity);
         
-        // 校验唯一性：source_code + sku_no + url_hash
-        checkUnique(kolFeedbackEntity, old.getId());
+//        // 校验唯一性：source_code + sku_no + url_hash
+//        checkUnique(kolFeedbackEntity, old.getId());
         
         log.info("编辑 开始修改KOL回片列单数据，id：【{}】", old.getId());
         boolean save = super.updateById(kolFeedbackEntity);
