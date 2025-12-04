@@ -116,6 +116,8 @@ public class KolB2bApplicationServiceImpl extends SuperServiceImpl<KolB2bApplica
     private SoInfoService soInfoService;
     @Resource
     private KolB2bApplicationQueryHandler kolB2bApplicationQueryHandler;
+
+    @Resource
     @Qualifier("soB2cTabExecutorPool")
     private ExecutorService soB2cTabExecutorPool;
 
