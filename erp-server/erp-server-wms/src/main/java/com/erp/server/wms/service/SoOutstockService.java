@@ -617,7 +617,9 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
 
     /**
      * 自动反审核并删除出库单
+     *
      * @param id
+     * @param deliveryId
      */
-    void deleteSoOutstock(String id);
+    void deleteSoOutstock(String id, String deliveryId);
 }

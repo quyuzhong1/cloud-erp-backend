@@ -279,8 +279,8 @@ public class SoOutstockFeignController {
      * @param id
      */
     @GetMapping("/deleteSoOutstock")
-    void deleteSoOutstock(@RequestParam(value = "id") String id){
-        soOutstockService.deleteSoOutstock(id);
+    void deleteSoOutstock(@RequestParam(value = "id") String id, @RequestParam(value = "deliveryId",required = false)String deliveryId){
+        soOutstockService.deleteSoOutstock(id, deliveryId);
     }
 }
 
