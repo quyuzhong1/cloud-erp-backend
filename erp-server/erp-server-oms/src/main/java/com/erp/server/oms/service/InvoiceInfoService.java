@@ -196,4 +196,13 @@ public interface InvoiceInfoService extends SuperService<InvoiceInfoEntity> {
     void initNfeInvoiceKey();
 
     InvoiceInfoDTO.ProductAmountRuleResultDTO productAmountRule(SoB2cEntity soB2cEntity);
+
+    /**
+     * 根据soId查询最新的开票记录
+     * @author zdy
+     * @date 2025/4/15 10:32
+     * @param soId
+     * @return InvoiceInfoEntity
+     */
+    InvoiceInfoEntity findLatestInvoice(String soId);
 }

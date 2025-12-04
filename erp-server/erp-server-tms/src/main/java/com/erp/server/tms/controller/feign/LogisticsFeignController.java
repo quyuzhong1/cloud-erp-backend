@@ -101,6 +101,18 @@ public class LogisticsFeignController {
         return logisticsChannelService.getById(channelId);
     }
     /**
+     * 根据渠道编码 获取渠道信息
+     * @param channelCode
+     * @param logisticsPlatform
+     * @return
+     */
+    @GetMapping("/getChannelByCodeAndPlatform")
+    public LogisticsChannelDTO.BaseDTO getChannelByCodeAndPlatform(@RequestParam("channelCode") String channelCode,
+                                                   @RequestParam("logisticsPlatform") String logisticsPlatform){
+        return logisticsChannelService.getChannelByCodeAndPlatform(channelCode,logisticsPlatform);
+    }
+
+    /**
      * 获取渠道 根据渠道名称
      * @param channelName
      * @return
@@ -108,6 +120,15 @@ public class LogisticsFeignController {
     @PostMapping("/getChannelByName")
     public List<LogisticsChannelEntity> getChannelByName(@RequestBody String channelName){
         return logisticsChannelService.getChannelByName(channelName);
+    }
+    /**
+     * 根据渠道编码 获取渠道信息
+     * @param channelCode
+     * @return
+     */
+    @PostMapping("/getChannelByCode")
+    public List<LogisticsChannelEntity> getChannelByCode(@RequestBody String channelCode){
+        return logisticsChannelService.getChannelByCode(channelCode);
     }
     /**
      * 获取渠道 根据渠道名称

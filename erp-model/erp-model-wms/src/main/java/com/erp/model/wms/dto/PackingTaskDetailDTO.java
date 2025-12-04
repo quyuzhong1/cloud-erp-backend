@@ -38,6 +38,10 @@ public class PackingTaskDetailDTO implements Serializable {
         private String  id;
 
         /**
+         * 客户PO号
+         */
+        private String customerPO;
+        /**
         * 主表id
         */
         private String mainId;

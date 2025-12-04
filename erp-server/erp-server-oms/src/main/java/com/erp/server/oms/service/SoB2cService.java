@@ -12,15 +12,14 @@ import com.erp.model.oms.enums.SoB2cCategoryTypeEnum;
 import com.erp.model.oms.enums.SoB2cInvalidTypeEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductCustomsEntity;
-import com.erp.model.tms.dto.SettingForecastDTO;
-import com.erp.model.tms.dto.TransferDeclareDTO;
-import com.erp.model.tms.dto.TransferDeclareDetailDTO;
-import com.erp.model.tms.dto.TransferDeclareGenerationSettingDTO;
+import com.erp.model.tms.dto.*;
 import com.erp.model.wms.dto.ReportOrderDataDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.WmsDataCompareTaskDTO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
+import com.erp.model.wms.entity.SoB2cDeliveryEntity;
+import com.erp.model.wms.entity.SoOutstockEntity;
 import org.apache.poi.ss.formula.functions.T;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -850,8 +849,6 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
 
     Boolean autoCancelOrderForecast(SoB2cEntity mainEntity);
 
-    List<BatchResultDTO> deliveryWithNotOutbound(List<SoB2cDTO.DeliveryWithNotOutboundDTO> ids);
-
     /**
      * 申报信息规则信息整理
      *
@@ -1129,6 +1126,16 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
     void updateSoB2cDistribution(SoMultiChannelEntity soMultiChannelEntity);
 
     /**
+     * 撤销未出仓发货
+     * @param id
+     * @param soB2cEntity
+     * @param soOutstockEntity
+     * @param deliveryEntity
+     * @return
+     */
+    BatchResultDTO cancelDeliveryWithNotOutbound(String id, SoB2cEntity soB2cEntity, SoOutstockEntity soOutstockEntity, SoB2cDeliveryEntity deliveryEntity);
+
+    /**
      * 生成组包计划预览
      * @param soIds
      * @return
@@ -1136,4 +1143,6 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
     List<PackagePlanDTO.SoB2cDTO> packagePlanPreview(List<String> soIds);
 
     BatchResultDTO retryPackagePlan(String soId);
+
+    BatchResultDTO deliveryWithNotOutbound(SoB2cDTO.DeliveryWithNotOutboundDTO dto, SoB2cEntity soB2cEntity, SoB2cLogisticsEntity soB2cLogisticsEntity, List<SoB2cDetailEntity> detailEntityList, SoB2cReceiverEntity soB2cReceiverEntity, LogisticsChannelDTO.BaseDTO baseDTO, List<String> noInventorySkuIdList);
 }

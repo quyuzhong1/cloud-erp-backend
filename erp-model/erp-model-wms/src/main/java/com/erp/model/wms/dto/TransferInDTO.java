@@ -284,6 +284,11 @@ public class TransferInDTO implements Serializable {
          */
         @NotBlank(message = "sku no不能为空")
         private String skuNo;
+        /**
+         * 单位名称
+         */
+        @NotBlank(message = "单位名称不能为空")
+        private String unitName;
 
         /**
          * 产品名称

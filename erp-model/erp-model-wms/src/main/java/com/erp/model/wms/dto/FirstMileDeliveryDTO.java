@@ -824,6 +824,11 @@ public class FirstMileDeliveryDTO implements Serializable {
          * 主表id
          */
         private String mainId;
+
+        /**
+         * 加工日期
+         */
+        private LocalDate billDate;
         /**
          * 发货单号
          */

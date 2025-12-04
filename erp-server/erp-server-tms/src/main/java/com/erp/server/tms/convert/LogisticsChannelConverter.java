@@ -20,6 +20,7 @@ import com.sdk.tms.ubi.model.catalog.response.ServiceCataLog;
 import com.sdk.tms.weishi.dto.response.WeiShiChannel;
 import com.sdk.tms.yanwen.dto.response.YanWenChannel;
 import com.sdk.tms.yuntu.dto.response.YunTuChannel;
+import com.sdk.wangdian.sdk.api.setting.dto.LogisticsQueryResponse;
 import com.sdk.wms.antu.dto.response.AntuLogisticsProductsResp;
 import com.sdk.wms.goodcang.dto.response.GoodCangLogisticsProductsResp;
 import com.sdk.wms.iml.dto.response.ImlInventoryLogisticsProductsResp;
@@ -29,6 +30,7 @@ import org.mapstruct.Mapping;
 import org.mapstruct.Mappings;
 import org.mapstruct.factory.Mappers;
 
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -295,5 +297,35 @@ public interface LogisticsChannelConverter {
     })
     LogisticsSaleChannelEntity channelConvertByAntu(AntuLogisticsProductsResp data);
     List<LogisticsSaleChannelEntity> channelConvertByAntu(List<AntuLogisticsProductsResp> data);
-
+    @Mappings({
+            @Mapping(target = "code", source = "logisticsNo"),
+            @Mapping(target = "cnName", source = "logisticsName"),
+            @Mapping(target = "enName", source = "logisticsName"),
+            @Mapping(target = "isTrack", constant = "false"),
+            @Mapping(target = "logisticsPlatform", expression = "java(com.common.business.enums.LogisticsPlatformEnum.WDT.getCode())"),
+            @Mapping(target = "overseasWarehouseId", ignore = true),
+            @Mapping(target = "platformWarehouseCode", ignore = true),
+            @Mapping(target = "id", ignore = true),
+            @Mapping(target = "aging", ignore = true),
+            @Mapping(target = "carrierType", ignore = true),
+            @Mapping(target = "channelStatus", source = "disabled",qualifiedByName = "booleanToStatus"),
+            @Mapping(target = "createTime", ignore = true),
+            @Mapping(target = "createUserId", ignore = true),
+            @Mapping(target = "createUserName", ignore = true),
+            @Mapping(target = "destinationCountry", ignore = true),
+            @Mapping(target = "isDeleted", ignore = true),
+            @Mapping(target = "originCountry", ignore = true),
+            @Mapping(target = "platformChannelId", source = "logisticsId"),
+            @Mapping(target = "servicePlatform", constant = "tms"),
+            @Mapping(target = "shipmentMethod", ignore = true),
+            @Mapping(target = "sourceData", ignore = true),
+            @Mapping(target = "supplierCode", ignore = true),
+            @Mapping(target = "supplierName", ignore = true),
+            @Mapping(target = "updateTime", ignore = true),
+            @Mapping(target = "updateUserId", ignore = true),
+            @Mapping(target = "updateUserName", ignore = true),
+            @Mapping(target = "version", ignore = true)
+    })
+    LogisticsSaleChannelEntity channelConvertByWdt(LogisticsQueryResponse.Details detail);
+    List<LogisticsSaleChannelEntity> channelConvertByWdt(List<LogisticsQueryResponse.Details> detailList);
 }

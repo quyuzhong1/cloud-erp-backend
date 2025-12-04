@@ -91,7 +91,11 @@ public class SoMultiChannelDetailEntity extends BaseEntity<SoMultiChannelDetailE
      */
     @TableField("outstock_status")
     private String outstockStatus;
-
+    /**
+     * fba库存id
+     */
+    @TableField("fba_inventory_id")
+    private String fbaInventoryId;
 
     public static final String MAIN_ID = "main_id";
 

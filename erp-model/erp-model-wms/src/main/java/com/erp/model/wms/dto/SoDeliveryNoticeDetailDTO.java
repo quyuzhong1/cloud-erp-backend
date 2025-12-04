@@ -47,6 +47,11 @@ public class SoDeliveryNoticeDetailDTO {
          * 附件url集合
          */
         private List<String> attachUrlList;
+        /**
+         * 单位名称
+         */
+        @NotBlank(message = "单位不能为空")
+        private String unitName;
 
     }
 
@@ -81,6 +86,11 @@ public class SoDeliveryNoticeDetailDTO {
          * skuNo
          */
         private String skuNo;
+        /**
+         * 单位
+         */
+        @NotBlank(message = "单位不能为空")
+        private String unitName;
         /**
          * 是否关闭
          */
@@ -134,6 +144,10 @@ public class SoDeliveryNoticeDetailDTO {
          * sku编号
          */
         private String skuNo;
+        /**
+         * 产品名称
+         */
+        private String unitName;
         /**
          * 产品名称
          */

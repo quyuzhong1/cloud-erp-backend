@@ -406,8 +406,9 @@ public class AssetStocktakingController extends BaseController {
             tableAlias = ""
     )
     @LogAction(value = LogActionEnum.EXPORT, desc = "资产盘点表导出Excel数据")
-    public void exportList(@RequestBody @Validated AssetStocktakingDTO.ExportDTO dto, HttpServletResponse response) {
+    public ApiResult<Boolean> exportList(@RequestBody @Validated AssetStocktakingDTO.ExportDTO dto, HttpServletResponse response) {
         assetStocktakingService.exportList(dto, response);
+        return success(true);
     }
 
     /**
