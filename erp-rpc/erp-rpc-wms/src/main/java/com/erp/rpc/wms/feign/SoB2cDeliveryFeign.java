@@ -153,10 +153,4 @@ public interface SoB2cDeliveryFeign {
 
     @PostMapping("/feign/soB2cDelivery/getDeliveryCodeBySourceId")
     Map<String,String> getDeliveryCodeBySourceId(@RequestParam("sourceIds") List<String> sourceIds);
-    /**
-     * 自动反审核并删除发货单
-     * @param id
-     */
-    @GetMapping("/feign/soB2cDelivery/deleteSoB2cDelivery")
-    void deleteSoB2cDelivery(@RequestParam(value = "id") String id);
 }
