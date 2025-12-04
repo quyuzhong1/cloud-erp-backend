@@ -203,8 +203,6 @@ public enum ModuleTypeEnum {
     DELIVERY_BOX_RULE("156", "发货箱规"),
     B2B_THIRD_DELIVERY("157", "B2B三方发货单"),
 
-    ;
-
     // doris
     ADS_ERP_INVENTORY_DIFF("2000", "平台库存差异"),
     ADS_ERP_INVENTORY_DIFF_KINGDEE("2001", "金蝶库存差异"),
