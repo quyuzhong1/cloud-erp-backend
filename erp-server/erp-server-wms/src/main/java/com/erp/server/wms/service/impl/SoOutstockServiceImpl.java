@@ -4656,7 +4656,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             thirdWarehouseDeliveryService.deleteByIds(Collections.singletonList(soOutstockEntity.getSourceId()));
         }
         if (StringUtils.isNotBlank(deliveryId)){
-            soB2cDeliveryService.deleteSoB2cDelivery(id);
+            soB2cDeliveryService.deleteSoB2cDelivery(deliveryId);
         }
     }
 
