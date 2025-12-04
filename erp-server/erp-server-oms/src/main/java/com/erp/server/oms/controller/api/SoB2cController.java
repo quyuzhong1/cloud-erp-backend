@@ -35,13 +35,11 @@ import com.erp.model.wms.dto.VirtualWarehouseChannelDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 import com.erp.model.wms.entity.SoOutstockEntity;
+import com.erp.model.wms.entity.ThirdWarehouseDeliveryEntity;
 import com.erp.model.wms.entity.VirtualWarehouseRelationEntity;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
-import com.erp.rpc.wms.feign.SoB2cDeliveryFeign;
-import com.erp.rpc.wms.feign.SoOutstockFeign;
-import com.erp.rpc.wms.feign.WmsTaskFeign;
-import com.erp.rpc.wms.feign.WmsVirtualWarehouseFeign;
+import com.erp.rpc.wms.feign.*;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.oms.query.SoB2cQueryHandler;
 import com.erp.server.oms.service.*;
@@ -118,6 +116,8 @@ public class SoB2cController extends BaseController {
     private SoB2cReceiverService soB2cReceiverService;
     @Resource
     private WmsVirtualWarehouseFeign wmsVirtualWarehouseFeign;
+    @Resource
+    private ThirdWarehouseDeliveryFeign thirdWarehouseDeliveryFeign;
     /**
      * 获取状态统计
      *
@@ -1481,6 +1481,7 @@ public class SoB2cController extends BaseController {
         List<SoB2cEntity> soB2cEntityList = soB2cService.listByIds(ids);
         List<SoOutstockEntity> soOutstockEntityList = soOutstockFeign.listBySoIds(ids);
         List<SoB2cDeliveryEntity> deliveryEntityList = soB2cDeliveryFeign.listBySourceId(ids);
+        List<ThirdWarehouseDeliveryEntity> thirdWarehouseDeliveryEntityList = thirdWarehouseDeliveryFeign.listBySourceId(ids);
         List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
         for (String id : ids){
             SoB2cEntity soB2cEntity = soB2cEntityList.stream().filter(entity -> entity.getId().equals(id)).findFirst().orElse(null);
@@ -1490,8 +1491,9 @@ public class SoB2cController extends BaseController {
             }
             SoOutstockEntity soOutstockEntity = soOutstockEntityList.stream().filter(entity -> entity.getSoId().equals(id)).findFirst().orElse(null);
             SoB2cDeliveryEntity deliveryEntity = deliveryEntityList.stream().filter(entity -> entity.getSourceId().equals(id)).findFirst().orElse(null);
+            ThirdWarehouseDeliveryEntity thirdWarehouseDeliveryEntity = thirdWarehouseDeliveryEntityList.stream().filter(entity -> entity.getSoId().equals(id)).findFirst().orElse(null);
             try {
-                BatchResultDTO resultDTO = soB2cService.cancelDeliveryWithNotOutbound(id, soB2cEntity, soOutstockEntity, deliveryEntity);
+                BatchResultDTO resultDTO = soB2cService.cancelDeliveryWithNotOutbound(id, soB2cEntity, soOutstockEntity, deliveryEntity, thirdWarehouseDeliveryEntity);
                 resultDTOS.add(resultDTO);
             }catch (Exception e){
                 log.error("B2C撤销不出库发货失败",e);

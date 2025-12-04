@@ -10920,15 +10920,22 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
-    public BatchResultDTO cancelDeliveryWithNotOutbound(String id, SoB2cEntity soB2cEntity, SoOutstockEntity soOutstockEntity, SoB2cDeliveryEntity deliveryEntity) {
+    public BatchResultDTO cancelDeliveryWithNotOutbound(String id, SoB2cEntity soB2cEntity, SoOutstockEntity soOutstockEntity, SoB2cDeliveryEntity deliveryEntity, ThirdWarehouseDeliveryEntity thirdWarehouseDeliveryEntity) {
         if (Objects.isNull(soB2cEntity.getIsNotOutbound()) || !soB2cEntity.getIsNotOutbound()){
             return BatchResultDTO.fail(id, id, "只允许不出库发货的订单操作撤销");
         }
         StopWatch stopWatch = new StopWatch("取消不出库发货");
         stopWatch.start("deleteSoOutstock");
+        String deliveryEntityId = Objects.nonNull(deliveryEntity) ? deliveryEntity.getId() : "";
         if (Objects.nonNull(soOutstockEntity)){
             //查询关联的出库单自动反审核删除-查询关联的中转调拨单反审核删除
-            soOutstockFeign.deleteSoOutstock(soOutstockEntity.getId(), deliveryEntity.getId());
+            soOutstockFeign.deleteSoOutstock(soOutstockEntity.getId(), deliveryEntityId);
+        }else if (Objects.nonNull(deliveryEntity)){
+            //查询关联的发货单自动反审核删除
+            soB2cDeliveryFeign.deleteSoB2cDelivery(deliveryEntity.getId());
+        } else if (Objects.nonNull(thirdWarehouseDeliveryEntity)){
+            //查询关联的中转调拨单反审核删除
+            thirdWarehouseDeliveryFeign.deleteById(thirdWarehouseDeliveryEntity.getId());
         }
         stopWatch.stop();
         stopWatch.start("updateSoB2cEntity");
