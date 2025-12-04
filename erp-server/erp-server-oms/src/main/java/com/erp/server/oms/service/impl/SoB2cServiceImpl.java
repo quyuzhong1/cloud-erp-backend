@@ -10928,13 +10928,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         stopWatch.start("deleteSoOutstock");
         if (Objects.nonNull(soOutstockEntity)){
             //查询关联的出库单自动反审核删除-查询关联的中转调拨单反审核删除
-            soOutstockFeign.deleteSoOutstock(soOutstockEntity.getId());
-        }
-        stopWatch.stop();
-        stopWatch.start("deleteSoB2cDelivery");
-        if (Objects.nonNull(deliveryEntity)){
-            //查询关联的发货单自动删除
-            soB2cDeliveryFeign.deleteSoB2cDelivery(deliveryEntity.getId());
+            soOutstockFeign.deleteSoOutstock(soOutstockEntity.getId(), deliveryEntity.getId());
         }
         stopWatch.stop();
         stopWatch.start("updateSoB2cEntity");
