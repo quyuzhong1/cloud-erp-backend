@@ -763,7 +763,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
                     detailList.forEach(v->{
                         if(CharSequenceUtil.isBlank(v.getFnSku())){
                             Integer totalNum = v.getPackQty();
-                            List<PackingTaskDetailEntity> taskDetailList = copyList.stream().filter(obj->obj.getSkuId().equals(v.getSkuId())).collect(Collectors.toList());
+                            List<PackingTaskDetailEntity> taskDetailList = copyList.stream().filter(obj->obj.getSkuId().equals(v.getSkuId())&& obj.getCustomerPO().equals(addDTO.getCustomerPO())).collect(Collectors.toList());
                             for(PackingTaskDetailEntity packingTaskDetailEntity : taskDetailList){
                                 if(totalNum <= 0){
                                     continue;
