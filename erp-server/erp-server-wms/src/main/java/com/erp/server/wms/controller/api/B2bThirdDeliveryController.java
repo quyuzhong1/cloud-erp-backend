@@ -88,7 +88,7 @@ public class B2bThirdDeliveryController extends BaseController {
      */
     @PostMapping("/view")
     public ApiResult<B2bThirdDeliveryDTO.ViewDTO> view(@RequestBody @Validated B2bThirdDeliveryDTO.ViewQueryDTO dto) {
-        return success(b2bThirdDeliveryService.view(dto.getId(),dto.getSoId()));
+        return success(b2bThirdDeliveryService.view(dto));
     }
 
     /**

@@ -43,7 +43,7 @@ public interface B2bThirdDeliveryService extends SuperService<B2bThirdDeliveryEn
 
     void export(B2bThirdDeliveryDTO.PagingParamDTO dto);
 
-    B2bThirdDeliveryDTO.ViewDTO view(String id, String soId);
+    B2bThirdDeliveryDTO.ViewDTO view(B2bThirdDeliveryDTO.ViewQueryDTO dto);
 
     /**
      * 更新单据状态

@@ -3,15 +3,14 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.config.DocNoGenHelper;
-import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.dto.base.BaseResultDTO;
-import com.common.business.dto.base.BatchResultDTO;
-import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.*;
+import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.DynamicDataSourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -23,11 +22,15 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.oms.dto.SoDetailDTO;
+import com.erp.model.oms.entity.SoDetailEntity;
+import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.wms.dto.B2bThirdDeliveryDTO;
 import com.erp.model.wms.dto.OverseasProviderWarehouseDTO;
+import com.erp.model.wms.dto.SoOutstockDTO;
+import com.erp.model.wms.dto.SoOutstockDetailDTO;
 import com.erp.model.wms.dto.inventory.InventoryUnApproveDTO;
 import com.erp.model.wms.dto.inventory.VirtualInventoryStockDTO;
 import com.erp.model.wms.entity.B2bThirdDeliveryDetailEntity;
@@ -55,6 +58,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.time.LocalDate;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_B2B_THIRD_DELIVERY_REPORT;
 
@@ -258,17 +262,17 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
     }
 
     @Override
-    public B2bThirdDeliveryDTO.ViewDTO view(String id, String soId) {
-        if (CharSequenceUtil.isBlank(id)){
-            return soInfoFeign.getB2bThirdDeliveryView(soId);
+    public B2bThirdDeliveryDTO.ViewDTO view(B2bThirdDeliveryDTO.ViewQueryDTO dto) {
+        if (CharSequenceUtil.isBlank(dto.getId())){
+            return soInfoFeign.getB2bThirdDeliveryView(dto);
         }else {
-            B2bThirdDeliveryEntity entity = this.getById(id);
+            B2bThirdDeliveryEntity entity = this.getById(dto.getId());
             if (Objects.isNull(entity)){
                 throw new ServiceException(ApiError.NOT_EXIST,"B2B三方发货单");
             }
-            List<B2bThirdDeliveryDetailEntity> detailEntityList = b2bThirdDeliveryDetailService.listByMainIds(Collections.singletonList(id));
+            List<B2bThirdDeliveryDetailEntity> detailEntityList = b2bThirdDeliveryDetailService.listByMainIds(Collections.singletonList(dto.getId()));
             B2bThirdDeliveryDTO.ViewDTO viewDTO = B2bThirdDeliveryConverter.INSTANCE.toB2bThirdDeliveryViewDTO(entity, detailEntityList);
-            viewDTO.setAttachList(wmsAttachmentService.getByBusinessIds(Collections.singletonList(id),ModuleTypeEnum.B2B_THIRD_DELIVERY.getCode()));
+            viewDTO.setAttachList(wmsAttachmentService.getByBusinessIds(Collections.singletonList(dto.getId()),ModuleTypeEnum.B2B_THIRD_DELIVERY.getCode()));
             return viewDTO;
         }
     }
@@ -331,10 +335,41 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
         if (Objects.nonNull(outstockEntity)){
             return BatchResultDTO.success(id, entity.getCode(), "销售出库单已生成");
         }
-        //TODO 生成销售出库单
+        SoInfoEntity soInfoEntity = soInfoFeign.getSoInfoById(entity.getSoId());
+        if (Objects.isNull(soInfoEntity)){
+            throw new ServiceException(ApiError.NOT_EXIST,"销售订单");
+        }
+        SoOutstockDTO.AddDTO addDTO = B2bThirdDeliveryConverter.INSTANCE.toSoOutstockAddDTO(entity,soInfoEntity);
+
+        List<B2bThirdDeliveryDetailEntity> detailEntityList = b2bThirdDeliveryDetailService.listByMainIds(Collections.singletonList(id));
+        List<String> soDetailIds = detailEntityList.stream().map(B2bThirdDeliveryDetailEntity::getSoDetailId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        List<SoDetailEntity> soDetailList = CollUtil.isNotEmpty(soDetailIds) ? soInfoFeign.listSoDetailByIds(soDetailIds) : new ArrayList<>();
+        List<SoOutstockDetailDTO.AddDTO> detailList = new ArrayList<>(detailEntityList.size());
+        detailEntityList.forEach(e -> {
+            //根据soDetailId查询soDetailEntity
+            SoDetailEntity soDetailEntity = CollUtil.isNotEmpty(soDetailList) ? soDetailList.stream().filter(e1 -> e1.getId().equals(e.getSoDetailId())).findFirst().orElse(null) : null;
+            if (Objects.isNull(soDetailEntity)){
+                log.warn("销售订单明细【{}】不存在", e.getSoDetailId());
+                throw new ServiceException(ApiError.NOT_EXIST,"销售订单明细不存在");
+            }
+            SoOutstockDetailDTO.AddDTO detailDTO = B2bThirdDeliveryConverter.INSTANCE.toSoOutstockAddDetailDTO(entity,e,soDetailEntity);
+            detailList.add(detailDTO);
+        });
+        addDTO.setDetailList(detailList);
         //构建销售出库单数据
-
-
+        String outstockId = soOutstockService.add(addDTO);
+        if (CharSequenceUtil.isBlank(id)) {
+            throw new ServiceException(ApiError.ERROR_1019);
+        }
+        SoOutstockEntity soOutstockEntity = soOutstockService.getById(outstockId);
+        if (ObjectUtil.isEmpty(soOutstockEntity)) {
+            throw new ServiceException(ApiError.NOT_EXIST_BILL,"销售出库单");
+        }
+        BatchResultDTO submit = soOutstockService.submit(soOutstockEntity, Boolean.TRUE);
+        if (!submit.getSuccess()){
+            throw new ServiceException(ApiError.ERROR_1042,submit.getMsg());
+        }
+        soOutstockService.approve(new ApproveOneDTO(outstockId, ApproveTypeEnum.PASS.getStatus(),"三方仓出库完成出库单自动审核通过"));
         return BatchResultDTO.success(id, entity.getCode(), "生成销售出库单成功");
     }
 

@@ -118,9 +118,10 @@ public interface SoInfoFeign {
 
     /**
      * 获取B2B三方发货单详情
-     * @param soId
+     *
+     * @param dto
      * @return
      */
     @PostMapping("feign/soInfo/getB2bThirdDeliveryView")
-    B2bThirdDeliveryDTO.ViewDTO getB2bThirdDeliveryView(@RequestBody String soId);
+    B2bThirdDeliveryDTO.ViewDTO getB2bThirdDeliveryView(@RequestBody B2bThirdDeliveryDTO.ViewQueryDTO dto);
 }

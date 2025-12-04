@@ -570,6 +570,7 @@ public class SoOutstockDTO implements Serializable {
          * 订单标签
          */
         private String tradeLabel;
+        private String remark;
 
         /**
          * 详情

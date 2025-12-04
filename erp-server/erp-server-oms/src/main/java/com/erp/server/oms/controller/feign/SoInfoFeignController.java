@@ -243,11 +243,11 @@ public class SoInfoFeignController extends BaseController {
 
     /**
      * 获取B2B三方发货单详情
-     * @param soId
+     * @param dto
      * @return
      */
     @PostMapping("/getB2bThirdDeliveryView")
-    public B2bThirdDeliveryDTO.ViewDTO getB2bThirdDeliveryView(@RequestBody String soId){
-        return soInfoService.getB2bThirdDeliveryView(soId);
+    public B2bThirdDeliveryDTO.ViewDTO getB2bThirdDeliveryView(@RequestBody B2bThirdDeliveryDTO.ViewQueryDTO dto){
+        return soInfoService.getB2bThirdDeliveryView(dto);
     }
 }
