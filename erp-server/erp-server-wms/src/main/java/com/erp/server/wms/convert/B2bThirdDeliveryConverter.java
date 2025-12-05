@@ -30,7 +30,7 @@ public interface B2bThirdDeliveryConverter {
     @Mapping(target = "attachList", ignore = true)
     @Mapping(target = "warehouseOperationTypeName", expression = "java(com.erp.model.wms.enums.WarehouseOperationTypeEnum.getName(entity.getWarehouseOperationType()))")
     @Mapping(target = "statusName", expression = "java(com.erp.model.wms.enums.ThirdDeliveryStatusEnum.getName(entity.getWarehouseOperationType()))")
-    @Mapping(target = "deliveryMethodName", expression = "java(com.erp.model.wms.enums.DeliveryMethodEnum.TRUCK_SELF.getName())")
+    @Mapping(target = "deliveryMethodName", expression = "java(com.erp.model.oms.enums.DeliveryModeEnum.TRUCK_SELF.getName())")
     @Mapping(target = "detailList", source = "detailEntityList")
     B2bThirdDeliveryDTO.ViewDTO toB2bThirdDeliveryViewDTO(B2bThirdDeliveryEntity entity, List<B2bThirdDeliveryDetailEntity> detailEntityList);
     B2bThirdDeliveryDetailDTO.ViewDTO toB2bThirdDeliveryDetailViewDTO(B2bThirdDeliveryDetailEntity deliveryDetail);

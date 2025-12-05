@@ -384,7 +384,7 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
             throw new ServiceException("未找到销售订单明细");
         }
         //交货方式
-        if (entity.getDeliveryMode().equals(DeliveryModeEnum.SELF_EXTRACTION.getCode()) || entity.getDeliveryMode().equals(DeliveryModeEnum.TRUCK_SELF_ORDER.getCode())) {
+        if (entity.getDeliveryMode().equals(DeliveryModeEnum.SELF.getCode()) || entity.getDeliveryMode().equals(DeliveryModeEnum.TRUCK_SELF.getCode())) {
             //自提
             resultMap.put("deliveryMode", "selfExtraction");
         } else {

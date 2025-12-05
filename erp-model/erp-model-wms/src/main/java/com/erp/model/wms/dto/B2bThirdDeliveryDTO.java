@@ -134,7 +134,7 @@ public class B2bThirdDeliveryDTO implements Serializable {
 
         /**
         * 交货方式
-         * DeliveryMethodEnum
+         * DeliveryModeEnum
         */
         private String deliveryMethod;
         /**
@@ -341,7 +341,7 @@ public class B2bThirdDeliveryDTO implements Serializable {
 
         /**
         * 交货方式
-         * DeliveryMethodEnum
+         * DeliveryModeEnum
         */
         @NotBlank(message = "交货方式不能为空")
         @Size(max = 50,message = "交货方式最大长度不能超过50位")
@@ -507,7 +507,7 @@ public class B2bThirdDeliveryDTO implements Serializable {
 
         /**
          * 交货方式[可排序]
-         * DeliveryMethodEnum
+         * DeliveryModeEnum
          */
         private String deliveryMethod;
         /**

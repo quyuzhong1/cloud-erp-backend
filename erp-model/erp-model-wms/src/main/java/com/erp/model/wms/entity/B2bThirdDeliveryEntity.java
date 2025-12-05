@@ -119,7 +119,7 @@ public class B2bThirdDeliveryEntity extends BaseEntity<B2bThirdDeliveryEntity> {
     private String logisticsChannelCode;
     /**
     * 交货方式
-     * DeliveryMethodEnum
+     * DeliveryModeEnum
     */
     @TableField("delivery_method")
     private String deliveryMethod;

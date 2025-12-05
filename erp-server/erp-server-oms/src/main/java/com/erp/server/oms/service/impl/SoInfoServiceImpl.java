@@ -3769,7 +3769,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             updateDTO.setTransactionSubType(OrderSubTypeEnum.ONLINE_ORDER.code);
             updateDTO.setRemark(dto.getRemark());
             updateDTO.setIsTax(erpInfoDTO.getIsTax());
-            updateDTO.setDeliveryMode(DeliveryModeEnum.CHANNEL_ORDER.getCode());
+            updateDTO.setDeliveryMode(DeliveryModeEnum.EXPRESS.getCode());
             updateDTO.setAddressType(CustomerAddressTypeEnum.DELIVER.getCode());
             List<String> attachUrlList = dto.getAttachment().stream().map(AttachDTO::getAttachUrl).filter(StringUtils::isNotBlank).collect(Collectors.toList());
             List<String> attachNameList = dto.getAttachment().stream().map(AttachDTO::getAttachName).filter(StringUtils::isNotBlank).collect(Collectors.toList());
@@ -3852,7 +3852,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             addDTO.setRemark(dto.getRemark());
             addDTO.setIsTax(erpInfoDTO.getIsTax());
             addDTO.setAddressType(CustomerAddressTypeEnum.DELIVER.getCode());
-            addDTO.setDeliveryMode(DeliveryModeEnum.CHANNEL_ORDER.getCode());
+            addDTO.setDeliveryMode(DeliveryModeEnum.EXPRESS.getCode());
             List<String> attachUrlList = dto.getAttachment().stream().map(AttachDTO::getAttachUrl).filter(StringUtils::isNotBlank).collect(Collectors.toList());
             List<String> attachNameList = dto.getAttachment().stream().map(AttachDTO::getAttachName).filter(StringUtils::isNotBlank).collect(Collectors.toList());
             addDTO.setAttachUrlList(attachUrlList);

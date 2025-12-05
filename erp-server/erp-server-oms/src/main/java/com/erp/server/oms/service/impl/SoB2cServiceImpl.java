@@ -6095,8 +6095,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             country = receiver.getCountry();
             countryName = receiver.getCountryName();
         }
-        String deliveryMode = DeliveryModeEnum.CHANNEL_ORDER.getCode();
-        String deliveryModeName = DeliveryModeEnum.CHANNEL_ORDER.getName();
+        String deliveryMode = DeliveryModeEnum.EXPRESS.getCode();
+        String deliveryModeName = DeliveryModeEnum.EXPRESS.getName();
         b2cCustomer.setDeliveryMode(deliveryMode);
         b2cCustomer.setDeliveryModeName(deliveryModeName);
         if (StringUtils.isBlank(countryName) && StringUtils.isNotBlank(country)) {
