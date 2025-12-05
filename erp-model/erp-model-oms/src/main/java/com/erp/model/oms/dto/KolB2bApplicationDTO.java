@@ -588,11 +588,12 @@ public class KolB2bApplicationDTO implements Serializable {
          */
         private String detailId;
         /**
-         * 销售组织Id
+         * 销售组织Id,/api/sys/company/list
          */
         private String soOrgId;
         /**
-         * 仓库Id
+         * 仓库Id,/api/wms/warehouse/list
+         * http://172.16.100.11:3002/project/92/interface/api/42235
          */
         private String warehouseId;
     }
