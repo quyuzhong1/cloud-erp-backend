@@ -3,32 +3,28 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.StrUtil;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.erp.model.oms.dto.SoDetailDTO;
-import com.erp.model.wms.entity.B2bThirdDeliveryEntity;
+import com.erp.model.oms.entity.SoDetailEntity;
+import com.erp.model.wms.dto.B2bThirdDeliveryDetailDTO;
+import com.erp.model.wms.entity.B2bThirdDeliveryDetailEntity;
 import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.server.wms.convert.B2bThirdDeliveryConverter;
-import io.seata.spring.annotation.GlobalTransactional;
-import com.common.business.annotation.DistributeLocker;
-import com.common.business.dto.base.BaseResultDTO;
-import com.erp.model.wms.entity.B2bThirdDeliveryDetailEntity;
 import com.erp.server.wms.mapper.B2bThirdDeliveryDetailMapper;
 import com.erp.server.wms.service.B2bThirdDeliveryDetailService;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.threadlocal.UserContext;
 import com.erp.server.wms.service.OperateLogService;
-import com.erp.server.wms.service.CommonService;
-import com.common.core.exception.ServiceException;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.wms.dto.B2bThirdDeliveryDetailDTO;
-import java.util.*;
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -59,6 +55,8 @@ public class B2bThirdDeliveryDetailServiceImpl extends SuperServiceImpl<B2bThird
     public List<B2bThirdDeliveryDetailEntity> batchAdd(String id, List<B2bThirdDeliveryDetailDTO.AddDTO> detailList) {
         this.deleteByMainId(id);//直接移除明细记录（发货数量在创建失败/取消发货时已经退到订单那边，不用重复回退）
         List<B2bThirdDeliveryDetailEntity> detailEntityList = B2bThirdDeliveryConverter.INSTANCE.toB2bThirdDeliveryDetail(detailList);
+        //校验发货数量
+        checkDeliveryQty(detailEntityList);
         List<SoDetailDTO.UpdateDeliveryStatusDTO> paramList = new ArrayList<>(detailEntityList.size());
         detailEntityList.forEach(e -> {
             e.setMainId(id);
@@ -72,6 +70,20 @@ public class B2bThirdDeliveryDetailServiceImpl extends SuperServiceImpl<B2bThird
         soInfoFeign.updateDeliveryStatus(paramList);
         this.saveBatch(detailEntityList);
         return detailEntityList;
+    }
+
+    private void checkDeliveryQty(List<B2bThirdDeliveryDetailEntity> detailEntityList) {
+        List<String> soDetailIds = detailEntityList.stream().map(B2bThirdDeliveryDetailEntity::getSoDetailId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        List<SoDetailEntity> soDetailEntityList = soInfoFeign.listSoDetailByIds(soDetailIds);
+        detailEntityList.forEach(deliveryDetail -> {
+            SoDetailEntity soDetailEntity = soDetailEntityList.stream().filter(e -> e.getId().equals(deliveryDetail.getSoDetailId())).findFirst().orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "销售订单明细不存在"));
+            Integer qty = soDetailEntity.getQty();
+            Integer deliveryQty = soDetailEntity.getDeliveryQty();
+            Integer unDeliveryQty = deliveryDetail.getDeliveryQty();
+            if (qty < (deliveryQty+unDeliveryQty)){
+                throw new ServiceException("SKU【{}】销售数量【{}】已发数量【{}】下发数量【{}】超过了可发数量【】",soDetailEntity.getSkuNo(),qty,deliveryQty,unDeliveryQty,qty-deliveryQty);
+            }
+        });
     }
 
     @Override

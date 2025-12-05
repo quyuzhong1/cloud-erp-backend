@@ -4118,7 +4118,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 e.setProductName(p.getSkuName());
             });
             if (e.getDeliveryQty() > 0 && e.getPerBoxQty() > 0){
-                e.setBoxQty(e.getDeliveryQty() % e.getPerBoxQty());
+                e.setBoxQty(e.getDeliveryQty() / e.getPerBoxQty());//这里一定是整数倍
             }else {
                 e.setBoxQty(MathUtil.ZERO);
             }
