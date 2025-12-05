@@ -127,7 +127,7 @@ public class VirtualInventoryController extends BaseController {
      * @param dto
      * @return ApiResult<List<AllInventoryDTO>>
      */
-    @GetMapping("/getAllUseInventory")
+    @PostMapping("/getAllUseInventory")
     public ApiResult<VirtualInventoryDTO.AllInventoryDTO> getAllUseInventory(@RequestBody @Validated VirtualInventoryDTO.AllInventoryParamDTO dto){
         VirtualInventoryDTO.AllInventoryDTO resultDTO = virtualInventoryService.getAllUseInventory(dto);
         return success(resultDTO);
