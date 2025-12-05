@@ -77,4 +77,11 @@ public interface B2bThirdDeliveryService extends SuperService<B2bThirdDeliveryEn
      * @return
      */
     BatchResultDTO manualDelivery(B2bThirdDeliveryEntity entity);
+
+    /**
+     * 删除
+     * @param entity
+     * @return
+     */
+    BatchResultDTO delete(B2bThirdDeliveryEntity entity);
 }

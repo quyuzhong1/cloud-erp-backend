@@ -107,7 +107,7 @@ public class B2bThirdDeliveryController extends BaseController {
     /**
     * 修改
     * @author zdy
-    * @date:  2025-11-26
+    * @date:  2025/12/5 18:5
     * @param dto
     * @return ApiResult
     */
@@ -129,8 +129,8 @@ public class B2bThirdDeliveryController extends BaseController {
      *
      * @param dto
      * @return ApiResult<List < BatchResultDTO>>
-     * @author Will
-     * @date: 2023/8/18 16:51
+     * @author zdy
+     * @date: 2025/12/5 18:5
      */
     @PostMapping("/deliveryIntercept")
     @LogAction(value = LogActionEnum.INSERT, desc = "发货拦截")
@@ -160,8 +160,8 @@ public class B2bThirdDeliveryController extends BaseController {
      *
      * @param dto
      * @return ApiResult<List < BatchResultDTO>>
-     * @author Will
-     * @date: 2023/8/18 16:51
+     * @author zdy
+     * @date: 2025/12/5 18:5
      */
     @PostMapping("/manualDelivery")
     @LogAction(value = LogActionEnum.INSERT, desc = "手动发货")
@@ -192,8 +192,8 @@ public class B2bThirdDeliveryController extends BaseController {
      * 重新生成销售出库单
      *
      * @return com.common.core.controller.vo.ApiResult
-     * @Author Luo_WG
-     * @Date 2023/4/13 18:5
+     * @Author zdy
+     * @Date 2025/12/5 18:5
      **/
     @LogAction(value = LogActionEnum.INSERT, desc = "下推销售出库单")
     @PostMapping(value = "/generateB2bThirdDelivery")
@@ -210,6 +210,36 @@ public class B2bThirdDeliveryController extends BaseController {
             }
             try {
                 resultDTO = b2bThirdDeliveryService.generateB2bThirdDelivery(id);
+            }catch (Exception e){
+                log.error("B2B三方发货单不存在, 下推销售出库单失败",e);
+                resultDTO = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(resultDTO);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+    /**
+     * 批量删除
+     *
+     * @return com.common.core.controller.vo.ApiResult
+     * @Author zdy
+     * @Date 2025/12/5 18:5
+     **/
+    @LogAction(value = LogActionEnum.INSERT, desc = "批量删除")
+    @PostMapping(value = "/batchDelete")
+    public ApiResult<List<BatchResultDTO>> batchDelete(@RequestBody BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<B2bThirdDeliveryEntity> entities = b2bThirdDeliveryService.listByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            BatchResultDTO resultDTO;
+            B2bThirdDeliveryEntity entity = entities.stream().filter(item -> item.getId().equals(id)).findFirst().orElse(null);
+            if (Objects.isNull(entity)) {
+                resultDTO = BatchResultDTO.fail(id, id, "B2B三方发货单不存在, 批量删除失败");
+                resultDTOS.add(resultDTO);
+                continue;
+            }
+            try {
+                resultDTO = b2bThirdDeliveryService.delete(entity);
             }catch (Exception e){
                 log.error("B2B三方发货单不存在, 下推销售出库单失败",e);
                 resultDTO = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());

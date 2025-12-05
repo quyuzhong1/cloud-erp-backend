@@ -411,6 +411,18 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "手动发货成功");
     }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public BatchResultDTO delete(B2bThirdDeliveryEntity entity) {
+        //只有创建失败、取消发货允许删除
+        if (!ThirdDeliveryStatusEnum.FAILED.getCode().equals(entity.getStatus()) && !ThirdDeliveryStatusEnum.CANCEL_DELIVERY.getCode().equals(entity.getStatus())){
+            throw new ServiceException(ApiError.ERROR_THIRD_DELIVERY_DELETE_STATUS);
+        }
+        this.removeById(entity.getId());
+        b2bThirdDeliveryDetailService.deleteByMainIds(Collections.singletonList(entity.getId()));
+        return BatchResultDTO.success(entity.getId(),entity.getCode(), "删除成功");
+    }
+
 
     /**
     * 新增修改处理数据

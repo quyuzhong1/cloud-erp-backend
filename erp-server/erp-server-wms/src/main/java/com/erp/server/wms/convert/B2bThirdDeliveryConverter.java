@@ -91,6 +91,7 @@ public interface B2bThirdDeliveryConverter {
     @Mapping(target = "remark", constant = "三方仓发货自动生成出销售出库单")
     SoOutstockDTO.AddDTO toSoOutstockAddDTO(B2bThirdDeliveryEntity entity, SoInfoEntity soInfoEntity);
 
+    @Mapping(target = "platformSubSoCode", ignore = true)
     @Mapping(target = "warehouseName", source = "entity.deliveryWarehouseName")
     @Mapping(target = "warehouseId", source = "entity.deliveryWarehouseId")
     @Mapping(target = "virtualWarehouseId", source = "entity.virtualWarehouseId")
@@ -101,5 +102,14 @@ public interface B2bThirdDeliveryConverter {
     @Mapping(target = "attachUrlList", ignore = true)
     @Mapping(target = "attachNameList", ignore = true)
     @Mapping(target = "actualQty", source = "deliveryDetail.boxQty")
+    @Mapping(target = "skuId", source = "deliveryDetail.deliverySkuId")
+    @Mapping(target = "skuNo", source = "deliveryDetail.deliverySkuNo")
+    @Mapping(target = "remark", source = "soDetailEntity.remark")
+    @Mapping(target = "sourceDetailId", source = "deliveryDetail.id")
+    @Mapping(target = "soDetailId", source = "soDetailEntity.id")
+    @Mapping(target = "exchangeRate", source = "soDetailEntity.exchangeRate")
+    @Mapping(target = "currency", source = "soDetailEntity.currency")
+    @Mapping(target = "price", expression = "java(com.common.core.utils.MathUtil.multiplyWithFour(soDetailEntity.getPrice(),new java.math.BigDecimal(soDetailEntity.getPerBoxQty())))")
+    @Mapping(target = "amount", source = "soDetailEntity.taxRate")
     SoOutstockDetailDTO.AddDTO toSoOutstockAddDetailDTO(B2bThirdDeliveryEntity entity, B2bThirdDeliveryDetailEntity deliveryDetail, SoDetailEntity soDetailEntity);
 }
