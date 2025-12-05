@@ -70,6 +70,11 @@ public class B2bThirdDeliveryDTO implements Serializable {
         * 销售订单编码
         */
         private String soCode;
+        /**
+         * 客户名称
+         */
+        private String customerName;
+        private String customerId;
 
         /**
         * 发货时间
@@ -394,6 +399,8 @@ public class B2bThirdDeliveryDTO implements Serializable {
          * 详细地址
          */
         private String receiveAddress;
+        private String customerId;
+        private String customerName;
 
         /**
         * 是否API发货

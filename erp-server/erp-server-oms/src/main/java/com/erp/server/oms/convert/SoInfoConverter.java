@@ -128,6 +128,7 @@ public interface SoInfoConverter {
     })
     SoOutstockDTO.GenerateSoOutstockViewDTO soOutViewToGenerateSoOut(SoInfoDTO.GenerateSoOutView soOutView);
 
+    @Mapping(target = "attachList", ignore = true)
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "code", ignore = true)
     @Mapping(target = "warehouseOperationTypeName", expression = "java(com.erp.model.wms.enums.WarehouseOperationTypeEnum.NO_OPEN_RELABLE.getName())")
@@ -144,6 +145,8 @@ public interface SoInfoConverter {
     @Mapping(target = "detailList", source = "soDetailEntityList")
     @Mapping(target = "deliveryWarehouseName", ignore = true)
     @Mapping(target = "deliveryWarehouseId", source = "soInfoEntity.warehouseId")
+    @Mapping(target = "customerName", ignore = true)
+    @Mapping(target = "customerId", source = "soInfoEntity.customerId")
     @Mapping(target = "deliveryTime", ignore = true)
     @Mapping(target = "deliveryMethod", expression = "java(com.erp.model.oms.enums.DeliveryModeEnum.TRUCK_SELF.getCode())")
     @Mapping(target = "deliveryMethodName", expression = "java(com.erp.model.oms.enums.DeliveryModeEnum.TRUCK_SELF.getName())")

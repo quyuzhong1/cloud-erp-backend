@@ -186,6 +186,16 @@ public class B2bThirdDeliveryEntity extends BaseEntity<B2bThirdDeliveryEntity> {
      */
     @TableField("push_type")
     private String pushType;
+    /**
+     * 客户id
+     */
+    @TableField("customer_id")
+    private String customerId;
+    /**
+     * 客户名称
+     */
+    @TableField("customer_name")
+    private String customerName;
 
 
     public static final String CODE = "code";

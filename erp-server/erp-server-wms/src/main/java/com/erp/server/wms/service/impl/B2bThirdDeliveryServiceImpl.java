@@ -22,6 +22,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.oms.dto.SoDetailDTO;
+import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -43,6 +44,7 @@ import com.erp.model.wms.enums.WarehouseOperationTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.model.wms.enums.inventory.VirtualInventoryBusinessTypeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.oms.feign.CustomerFeign;
 import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.convert.B2bThirdDeliveryConverter;
@@ -95,6 +97,8 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
     private DownloadTaskFeign downloadTaskFeign;
     @Resource
     private SoOutstockService soOutstockService;
+    @Resource
+    private CustomerFeign customerFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -223,8 +227,6 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
                 tabListDTOS.add(B2bThirdDeliveryDTO.TabListDTO.builder().tabFlag(value.getCode()).tabFlagName(value.getName()).count(0).build());
             }
         }
-        int sum = list.stream().mapToInt(B2bThirdDeliveryDTO.TabListDTO::getCount).sum();
-        tabListDTOS.add(B2bThirdDeliveryDTO.TabListDTO.builder().tabFlag("all").tabFlagName("全部").count(sum).build());
         return tabListDTOS;
     }
 
@@ -466,6 +468,11 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
         }else {
             b2bThirdDeliveryEntity.setStatus(ThirdDeliveryStatusEnum.CREATING.getCode());
             b2bThirdDeliveryEntity.setPushType(B2BDeliveryPushTypeEnum.API.getCode());
+        }
+        //客户名称
+        if (CharSequenceUtil.isNotBlank(b2bThirdDeliveryEntity.getCustomerId()) && CharSequenceUtil.isBlank(b2bThirdDeliveryEntity.getCustomerName())){
+            List<CustomerInfoEntity> customerInfoEntities = customerFeign.listCustomerByIds(Collections.singletonList(b2bThirdDeliveryEntity.getCustomerId()));
+            b2bThirdDeliveryEntity.setCustomerName(CollUtil.isNotEmpty(customerInfoEntities) ? customerInfoEntities.get(0).getName() : "");
         }
     }
 }

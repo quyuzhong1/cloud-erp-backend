@@ -4109,6 +4109,10 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         if (CharSequenceUtil.isBlank(viewDTO.getDeliveryWarehouseName())){
             viewDTO.setDeliveryWarehouseName(updateDTOList.get(0).getName());
         }
+        if (CharSequenceUtil.isNotBlank(viewDTO.getCustomerId())){
+            CustomerInfoEntity customerInfo = customerInfoService.getById(viewDTO.getCustomerId());
+            viewDTO.setCustomerName(Objects.nonNull(customerInfo) ? customerInfo.getName() : "");
+        }
         viewDTO.getDetailList().forEach(e -> {
             skuVOS.stream().filter(f -> f.getSkuId().equals(e.getSkuId())).findFirst().ifPresent(p ->{
                 e.setProductName(p.getSkuName());
