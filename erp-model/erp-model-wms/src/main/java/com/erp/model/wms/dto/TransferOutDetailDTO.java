@@ -98,7 +98,12 @@ public class TransferOutDetailDTO implements Serializable {
         /**
          * 单位
          */
+        @Deprecated
         private String unit;
+        /**
+         * 单位名称
+         */
+        private String unitName;
 
         /**
          * 备注
@@ -172,6 +177,8 @@ public class TransferOutDetailDTO implements Serializable {
          * 单位
          */
         private String unit;
+        @NotBlank(message = "单位不能为空")
+        private String unitName;
 
         /**
          * 来源明细id

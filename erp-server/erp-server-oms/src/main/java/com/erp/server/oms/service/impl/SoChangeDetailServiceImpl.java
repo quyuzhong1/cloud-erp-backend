@@ -240,6 +240,7 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
                 variantProperty = sku.getVariantProperty();
             }
             item.setUnit(unit);
+            item.setUnitName(unit);
             item.setProductName(productName);
             item.setVariantProperty(variantProperty);
             //税率
@@ -332,6 +333,7 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
                     variantProperty = sku.getVariantProperty();
                 }
                 view.setUnit(unit);
+                view.setUnitName(unit);
                 view.setProductName(productName);
                 view.setVariantProperty(variantProperty);
                 viewList.add(view);
@@ -442,17 +444,10 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
             view.setDeliveryQty(deliveryQty);
             view.setWaitQty(waitQty);
             SkuVO sku = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().orElse(null);
-            String unit = "";
-            String productName = "";
-            String variantProperty = "";
-            if (sku != null) {
-                unit = sku.getUnitName();
-                productName = sku.getSkuName();
-                variantProperty = sku.getVariantProperty();
-            }
-            view.setUnit(unit);
-            view.setProductName(productName);
-            view.setVariantProperty(variantProperty);
+            view.setUnit(Objects.nonNull(sku) ? sku.getUnitName() : "");
+            view.setUnitName(Objects.nonNull(sku) ? sku.getUnitName() : "");
+            view.setProductName(Objects.nonNull(sku) ? sku.getSkuName() : "");
+            view.setVariantProperty(Objects.nonNull(sku) ? sku.getVariantProperty() : "");
             viewList.add(view);
         }
         return viewList;

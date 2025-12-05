@@ -146,6 +146,16 @@ public interface QcInfoService extends SuperService<QcInfoEntity> {
     BatchResultDTO cancelProcess(QcInfoEntity entity);
 
     /**
+     * 作废
+     * @author jack
+     * @date 2025-11-10
+     * @param id
+     * @param remark 作废备注
+     * @return BatchResultDTO
+     */
+    BatchResultDTO invalid(String id, String remark);
+
+    /**
      * 分配质检员
      * @author yl
      * @date 2023-04-20 17:58

@@ -135,6 +135,13 @@ public interface WmsTaskFeign {
     List<BatchResultDTO> poInstockApprove(@RequestBody @Validated BaseApproveParamDTO baseApproveParamDTO);
 
     /**
+     * 销售出库单审核
+     * @return ApiResult
+     */
+    @PostMapping("feign/wmsWorkOption/soOutstockApprove")
+    List<BatchResultDTO> soOutstockApprove(@RequestBody @Validated BaseApproveParamDTO baseApproveParamDTO);
+
+    /**
      * 采购退货审核
      * @Author Luo_WG
      * @Date 2023/4/6 19:06
@@ -441,6 +448,22 @@ public interface WmsTaskFeign {
     List<WarehouseReceiveDTO.ReceiveSourceDTO> listReceiveSourceByDetailIds(@RequestBody List<String> idList);
 
     /**
+     * 根据SKU集合获取收货信息
+     * @param dto
+     * @return List<WarehouseReceiveDTO.ReceiveInfoDTO>
+     */
+    @PostMapping("feign/warehouseReceive/getReceiveByParams")
+    List<WarehouseReceiveDTO.ReceiveInfoDTO> getReceiveByParams(@RequestBody WarehouseReceiveDTO.ReceiveParamDTO dto);
+
+    /**
+     * 根据SKU集合获取入库信息
+     * @param dto
+     * @return List<WarehouseReceiveDTO.PoInStockInfoDTO>
+     */
+    @PostMapping("feign/purchaseStockIn/getPoStockInByParams")
+    List<PoInstockDTO.PoInStockInfoDTO> getPoStockInByParams(@RequestBody PoInstockDTO.PoInStockParamDTO dto);
+
+    /**
      * 样品领用单审核
      * @param baseApproveParamDTO
      * @return
@@ -495,4 +518,12 @@ public interface WmsTaskFeign {
      */
     @PostMapping("feign/wmsWorkOption/sampleTransferApprove")
     List<BatchResultDTO> sampleTransferApprove(@RequestBody BaseApproveParamDTO baseApproveParamDTO);
+
+    /**
+     * 样品调整单审核
+     * @param baseApproveParamDTO
+     * @return
+     */
+    @PostMapping("feign/wmsWorkOption/sampleAdjustmentApprove")
+    List<BatchResultDTO> sampleAdjustmentApprove(@RequestBody BaseApproveParamDTO baseApproveParamDTO);
 }

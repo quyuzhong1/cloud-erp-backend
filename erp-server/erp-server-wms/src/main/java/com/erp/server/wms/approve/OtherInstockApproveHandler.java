@@ -38,6 +38,11 @@ public class OtherInstockApproveHandler extends AbstractApproveHandler {
     private OperateLogService operateLogService;
 
     @Override
+    public BatchResultDTO approve(ApproveOneDTO dto) {
+        return otherInstockService.approve(dto.getId(),dto.getType(),dto.getComment(), true);
+    }
+
+    @Override
     public Boolean cancelProcess(ApproveDTO.CancelProcessDTO dto) {
         return otherInstockService.cancelProcess(Collections.singletonList(dto.getId()));
     }

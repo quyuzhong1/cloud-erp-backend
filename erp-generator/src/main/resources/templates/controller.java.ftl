@@ -31,22 +31,22 @@ import ${superControllerClassPackage};
 </#if>
 import ${package.Service}.${table.serviceName};
 import com.common.core.controller.vo.ApiResult;
-<#if fieldMap["approveStatus"]?? && fieldMap["code"]??>
+<#--<#if fieldMap["approveStatus"]?? && fieldMap["code"]??>-->
 import com.common.business.vo.PagingVO;
 import com.common.business.dto.base.*;
 import cn.hutool.core.util.ObjectUtil;
-</#if>
+<#--</#if>-->
 <#if dataPermission>
 import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
 </#if>
 import ${package.Dto}.${table.dtoName};
-<#if fieldMap["approveStatus"]?? && fieldMap["code"]??>
+<#--<#if fieldMap["approveStatus"]?? && fieldMap["code"]??>-->
 import javax.servlet.http.HttpServletResponse;
 import java.util.*;
 import java.util.stream.Collectors;
 import ${package.Entity}.${entity};
-</#if>
+<#--</#if>-->
 
 /**
  * ${table.comment!}
@@ -108,7 +108,7 @@ public class ${table.controllerName} {
         return success();
     }
 
-   <#if fieldMap["approveStatus"]?? && fieldMap["code"]??>
+
     /**
     * 获取状态统计
     * @return
@@ -144,6 +144,7 @@ public class ${table.controllerName} {
         return success(${serviceBean}.paging(dto));
     }
 
+   <#if fieldMap["approveStatus"]?? && fieldMap["code"]??>
     /**
     * 新增并提交审核
     * @author ${author}
@@ -424,6 +425,7 @@ public class ${table.controllerName} {
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
+    </#if>
 
     /**
     * 详情
@@ -465,7 +467,6 @@ public class ${table.controllerName} {
     public void exportList(@RequestBody @Validated ${table.dtoName}.ExportDTO dto, HttpServletResponse response) {
         ${serviceBean}.exportList(dto, response);
     }
-   </#if>
 
 
 }

@@ -68,9 +68,10 @@ public interface PackingTaskDetailService extends SuperService<PackingTaskDetail
      * @param taskId
      * @param searchKey
      * @param searchMode
+     * @param customerPO
      * @return
      */
-    List<PackingTaskDetailDTO.ViewDTO> searchProductBySearchKey(String taskId, String searchKey, String searchMode);
+    List<PackingTaskDetailDTO.ViewDTO> searchProductBySearchKey(String taskId, String searchKey, String searchMode, String customerPO);
 
     List<PackingTaskDetailEntity> listBySourceIds(List<String> sourceDetailIds);
 

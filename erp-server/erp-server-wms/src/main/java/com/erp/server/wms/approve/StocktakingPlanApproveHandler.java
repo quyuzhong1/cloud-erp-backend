@@ -36,6 +36,11 @@ public class StocktakingPlanApproveHandler extends AbstractApproveHandler {
     private OperateLogService operateLogService;
 
     @Override
+    public BatchResultDTO approve(ApproveOneDTO dto) {
+        return stocktakingPlanService.approve(dto);
+    }
+
+    @Override
     public Boolean cancelProcess(ApproveDTO.CancelProcessDTO dto) {
         BatchResultDTO resultDTO = stocktakingPlanService.cancelProcess(dto.getId());
         return resultDTO.getSuccess();

@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
@@ -120,6 +121,7 @@ public class DmpOutputWdtOrderReturnRocketMQTaskHandler extends DmpOutputRocketM
         resultEntity.setShopName(entity.getShopName());
 		resultEntity.setCreated(platformCreateTime);
         resultEntity.setModified(entity.getPlatformUpdateTime());
+		resultEntity.setPlatformOrderCode(CharSequenceUtil.isNotBlank(entity.getPlatformOrderCode()) ? entity.getPlatformOrderCode() : itemList.stream().map(DmpSoReturnDetailEntity::getPlatformOrderCode).distinct().collect(Collectors.joining(",")));
         //仓库id
         resultEntity.setWarehouseId(itemList.stream().map(DmpSoReturnDetailEntity::getWarehouseId).filter(StringUtils::isNotBlank).findAny().orElse(""));
         resultEntity.setWarehouseName(itemList.stream().map(DmpSoReturnDetailEntity::getWarehouseName).filter(StringUtils::isNotBlank).findAny().orElse(""));

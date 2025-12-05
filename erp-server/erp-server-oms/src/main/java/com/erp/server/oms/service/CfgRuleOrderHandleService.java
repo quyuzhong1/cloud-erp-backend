@@ -6,6 +6,7 @@ import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.CfgRuleOrderHandleDTO;
+import com.erp.model.oms.dto.SoMultiChannelDTO;
 import com.erp.model.oms.entity.CfgRuleOrderHandleEntity;
 import com.erp.model.tms.vo.request.LogisticsOrderRuleVO;
 import com.erp.model.tms.vo.request.LogisticsOrderVO;
@@ -79,4 +80,6 @@ public interface CfgRuleOrderHandleService extends SuperService<CfgRuleOrderHand
     LogisticsOrderVO handleRuleOrderLogistic(LogisticsOrderRuleVO logisticsOrderRuleVO);
 
     ThirdWarehouseCreateOutboundReq handleRuleOrderThirdWarehouse(ThirdWarehouseCreateOutboundReq createOutboundReq, Map<String, Object> map);
+
+    SoMultiChannelDTO.ReceiverInfo handleRuleOrderSoMultiChannel(SoMultiChannelDTO.ReceiverInfo receiverInfo, Map<String, Object> map);
 }

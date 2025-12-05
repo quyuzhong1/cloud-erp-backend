@@ -122,17 +122,24 @@ public class NfeInvoiceService {
         String uploadStatus = InvoiceInfoUploadStatusEnum.WAIT_UPLOAD.getCode();
         //配置信息
         CfgInvoiceSettingDetailEntity invoiceSettingDetail = null;
+        CfgInvoiceSettingEntity invoiceSetting = null;
         //发票规则
         String dictInvoiceRule;
         BigDecimal ratio;
         //匹配产品总价计算规则
-        InvoiceInfoDTO.ProductAmountRuleResultDTO ruleResultDTO = invoiceInfoService.productAmountRule(soB2cEntity);
-        if (ruleResultDTO.getIsMatch()){
+        InvoiceInfoDTO.ProductAmountRuleResultDTO ruleResultDTO = null;
+        try {
+            ruleResultDTO = invoiceInfoService.productAmountRule(soB2cEntity);
+        }catch (Exception e){
+            log.error("产品总价值规则匹配失败！销售订单：{}", soB2cEntity.getCode(),e);
+        }
+        if (Objects.nonNull(ruleResultDTO) && ruleResultDTO.getIsMatch()){
             invoiceSettingDetail = ruleResultDTO.getInvoiceSettingDetail();
+            invoiceSetting = ruleResultDTO.getInvoiceSetting();
             dictInvoiceRule = ruleResultDTO.getDictInvoiceRule();
             ratio = ruleResultDTO.getRatio();
         }else {
-            String msg = CharSequenceUtil.isNotBlank(ruleResultDTO.getMsg()) ? ruleResultDTO.getMsg() : "产品总价值规则匹配失败";
+            String msg = Objects.nonNull(ruleResultDTO) && CharSequenceUtil.isNotBlank(ruleResultDTO.getMsg()) ? "产品总价值" + ruleResultDTO.getMsg() : "产品总价值规则匹配失败";
             //开票失败更新开票状态
             InvoiceInfoEntity invoiceInfoEntity = invoiceInfoService.getInvoicingBySoId(soB2cEntity.getId());
             invoiceInfoEntity.setStatus(InvoiceInfoStatusEnum.INVOICE_FAILED.getCode());
@@ -143,7 +150,11 @@ public class NfeInvoiceService {
         }
         NfeInvoiceDTO.NfeCreateDTO createDTO = new NfeInvoiceDTO.NfeCreateDTO();
         String invoiceAddress = "";
+        String sellerTaxNo = "";
+        String companyName = "";
         try {
+            companyName = invoiceSetting.getCompanyName();
+            sellerTaxNo = invoiceSetting.getLeiCode();
             createDTO.setEmailDev("gray@ulanzi.cn");
             //地址信息
             NfeInvoiceDTO.NfeClienteDTO nfeClienteDTO = getNfeClienteDTO(soB2cEntity,invoiceSettingDetail);
@@ -165,9 +176,12 @@ public class NfeInvoiceService {
             log.error("请求参数-body:{}", JSONUtil.toJsonStr(createDTO));
             //开票失败更新开票状态
             InvoiceInfoEntity invoiceInfoEntity = invoiceInfoService.getInvoicingBySoId(soB2cEntity.getId());
+            invoiceInfoEntity.setCfgId(invoiceSettingDetail.getId());
             invoiceInfoEntity.setStatus(InvoiceInfoStatusEnum.INVOICE_FAILED.getCode());
             invoiceInfoEntity.setRemark(e.getMessage());
             invoiceInfoEntity.setInvoiceAddress(invoiceAddress);
+            invoiceInfoEntity.setSellerTaxNo(sellerTaxNo);
+            invoiceInfoEntity.setCompanyName(companyName);
             invoiceInfoService.updateNfeStatusById(invoiceInfoEntity);
             operateLogService.addModuleOperateLog(e.getMessage(), ModuleTypeEnum.INVOICE_INFO.getCode(), soB2cEntity.getId(),"开票失败");
             return Boolean.FALSE;
@@ -212,9 +226,12 @@ public class NfeInvoiceService {
 //            throw new ServiceException(ApiError.ERROR_INVOICE_NFE_CREATE_JSON_HANDLE);
             //开票失败更新开票状态
             InvoiceInfoEntity invoiceInfoEntity = invoiceInfoService.getInvoicingBySoId(soB2cEntity.getId());
+            invoiceInfoEntity.setCfgId(invoiceSettingDetail.getId());
             invoiceInfoEntity.setStatus(InvoiceInfoStatusEnum.INVOICE_FAILED.getCode());
             invoiceInfoEntity.setRemark(e.getMessage());
             invoiceInfoEntity.setInvoiceAddress(invoiceAddress);
+            invoiceInfoEntity.setSellerTaxNo(sellerTaxNo);
+            invoiceInfoEntity.setCompanyName(companyName);
             invoiceInfoService.updateNfeStatusById(invoiceInfoEntity);
             operateLogService.addModuleOperateLog(e.getMessage(), ModuleTypeEnum.INVOICE_INFO.getCode(), soB2cEntity.getId(),"开票失败");
             return Boolean.FALSE;
@@ -224,9 +241,12 @@ public class NfeInvoiceService {
 //            throw new ServiceException(ApiError.ERROR_INVOICE_NFE_CREATE_INVOICE,"未知");
             //开票失败更新开票状态
             InvoiceInfoEntity invoiceInfoEntity = invoiceInfoService.getInvoicingBySoId(soB2cEntity.getId());
+            invoiceInfoEntity.setCfgId(invoiceSettingDetail.getId());
             invoiceInfoEntity.setStatus(InvoiceInfoStatusEnum.INVOICE_FAILED.getCode());
             invoiceInfoEntity.setRemark(JSONUtil.toJsonStr(resultDTO));
             invoiceInfoEntity.setInvoiceAddress(invoiceAddress);
+            invoiceInfoEntity.setSellerTaxNo(sellerTaxNo);
+            invoiceInfoEntity.setCompanyName(companyName);
             invoiceInfoService.updateNfeStatusById(invoiceInfoEntity);
             operateLogService.addModuleOperateLog(CharSequenceUtil.format("返回信息：{}",JSONUtil.toJsonStr(resultDTO)), ModuleTypeEnum.INVOICE_INFO.getCode(), soB2cEntity.getId(),"开票失败");
             return Boolean.FALSE;
@@ -235,6 +255,7 @@ public class NfeInvoiceService {
         cfgInvoiceSettingService.updateSerialNoById(invoiceSettingDetail.getMainId(),resultDTO.getSerie(),resultDTO.getNumeroNfe());
         //更新开票状态
         InvoiceInfoEntity invoiceInfoEntity = invoiceInfoService.getInvoicingBySoId(soB2cEntity.getId());
+        invoiceInfoEntity.setCfgId(invoiceSettingDetail.getId());
         invoiceInfoEntity.setStatus(invoiceStatus);
         invoiceInfoEntity.setUploadStatus(PlatformDictEnum.ALI_EXPRESS.getCode().equals(soB2cEntity.getDictPlatform()) ? InvoiceInfoUploadStatusEnum.NOT_NEED_UPLOAD.getCode() : uploadStatus);
         invoiceInfoEntity.setQueryId(resultDTO.getId());
@@ -243,6 +264,8 @@ public class NfeInvoiceService {
         invoiceInfoEntity.setNo(resultDTO.getSerie());
         invoiceInfoEntity.setStartCode(String.valueOf(resultDTO.getNumeroNfe()));
         invoiceInfoEntity.setInvoiceAddress(invoiceAddress);
+        invoiceInfoEntity.setSellerTaxNo(sellerTaxNo);
+        invoiceInfoEntity.setCompanyName(companyName);
         invoiceInfoService.updateNfeStatusById(invoiceInfoEntity);
 
         //上传xml、pdf
@@ -831,6 +854,7 @@ public class NfeInvoiceService {
                 operateLogService.addModuleOperateLog(CharSequenceUtil.format("用户【{}】销售订单【{}】生成NF-e发票【{}】",UserContext.getDefaultLoginUser().getUserName(),soB2cEntity.getCode(),invoiceInfoEntity.getCode()), ModuleTypeEnum.SO_B2C.getCode(), soB2cEntity.getId(), "开票失败");
             }
         }catch (Exception e){
+            log.error("创建发票失败,返回错误信息,返回信息:{}", e.getMessage());
             InvoiceInfoEntity entity = invoiceInfoService.getInvoicingBySoId(soB2cEntity.getId());
             entity.setStatus(InvoiceInfoStatusEnum.INVOICE_FAILED.getCode());
             entity.setRemark(e.getMessage());

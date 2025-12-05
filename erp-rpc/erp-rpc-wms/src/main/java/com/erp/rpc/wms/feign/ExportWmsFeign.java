@@ -80,6 +80,9 @@ public interface ExportWmsFeign {
     @PostMapping("/feign/export/inventoryDaily")
     PagingVO<InventoryReportDTO.ListDailyInventoryDTO> exportInventoryDaily(@RequestBody PagingDTO<InventoryReportDTO.DailyInventoryParamDTO> dto);
 
+    @PostMapping("/feign/export/exportDailyInventoryByLocation")
+    PagingVO<InventoryReportDTO.ListDailyInventoryDTO> exportDailyInventoryByLocation(@RequestBody PagingDTO<InventoryReportDTO.DailyInventoryParamDTO> dto);
+
     @PostMapping("/feign/export/inventoryInOutStock")
     PagingVO<InventoryDTO.InOutStockTransFlowPagingViewDTO> exportInventoryInOutStock(@RequestBody PagingDTO<InventoryDTO.ExportInOutStockTransFlowSearchParamDTO> dto);
 
@@ -388,6 +391,12 @@ public interface ExportWmsFeign {
      */
     @PostMapping("/feign/export/getSampleTransferInfoPageData")
     PagingVO<SampleTransferInfoDTO.ListDTO> getSampleTransferInfoPageData(@RequestBody PagingDTO<SampleTransferInfoDTO.ExportDTO> dto);
+
+    /**
+     * 导出样品调整单
+     */
+    @PostMapping("/feign/export/exportSampleAdjustmentInfo")
+    PagingVO<SampleAdjustmentInfoDTO.ListDTO> exportSampleAdjustmentInfo(@RequestBody PagingDTO<SampleAdjustmentInfoDTO.PagingParamDTO> dto);
 
     /**
      * 导出B2B三方发货单

@@ -45,4 +45,8 @@ public class ExportWmsPackingTaskHandler extends AbstractPageFileEventHandler<Pa
 
         return "excel/wms/packingTaskExport.xlsx";
     }
+    @Override
+    public int getPageSize() {
+        return 1000;
+    }
 }

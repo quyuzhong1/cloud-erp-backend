@@ -41,6 +41,7 @@
             ptd.sku_id,
             ptd.sku_no,
             ptd.fn_sku,
+            ptd.customer_po,
             SUM(ptd.delivery_qty) as deliveryQty
         FROM
             packing_task pt
@@ -54,7 +55,8 @@
             pt.id,
             ptd.sku_id,
             ptd.sku_no,
-            ptd.fn_sku
+            ptd.fn_sku,
+            ptd.customer_po
     </select>
     <select id="countDeliveryQty" resultType="java.lang.Integer">
         select sum(delivery_qty) FROM packing_task_detail where main_id = #{taskId}
@@ -68,7 +70,8 @@
             ptd.fn_sku,
             ptd.third_barcode,
             ptd.source_detail_id,
-            pp.ean
+            pp.ean,
+            ptd.customer_po as customerPO
         FROM
             packing_task_detail ptd
                 LEFT JOIN product_purchase pp ON ptd.sku_id = pp.sku_id AND pp.is_deleted = FALSE
@@ -83,6 +86,9 @@
         </if>
         <if test="taskId != null and taskId != ''">
             AND ptd.main_id = #{taskId}
+        </if>
+        <if test="customerPO != null">
+            AND ptd.customer_po = #{customerPO}
         </if>
     </select>
 

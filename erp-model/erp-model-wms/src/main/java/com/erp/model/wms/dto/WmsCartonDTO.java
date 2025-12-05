@@ -55,6 +55,12 @@ public class WmsCartonDTO {
          *精确 perfect 模糊 fuzzy
          */
         private String searchMode;
+
+        /**
+         * 客户PO号
+         */
+        private String customerPO;
+
         /**
          * 调整装箱类型
          * 接口地址： http://172.16.100.11:3002/project/92/interface/api/13147 type=packingAdjustType
@@ -71,6 +77,12 @@ public class WmsCartonDTO {
     @Data
     @NoArgsConstructor
     public static class AdjustSaveDTO{
+
+        /**
+         * 客户PO号
+         */
+        private String customerPO;
+
         /**
          * 箱子id
          */
@@ -154,6 +166,11 @@ public class WmsCartonDTO {
          * 是否过滤0数据 true:过滤 false:不过滤(默认false)
          */
         private Boolean isRemoveZero;
+
+        /**
+         * 客户PO号
+         */
+        private String customerPO;
     }
     /**
      * 装箱详情
@@ -169,6 +186,11 @@ public class WmsCartonDTO {
          * 装箱任务编码
          */
         private String taskCode;
+
+        /**
+         * 客户PO号
+         */
+        private String customerPO;
         /**
          * 箱子id
          */
@@ -258,6 +280,11 @@ public class WmsCartonDTO {
          * fnSku
          */
         private String fnSku;
+
+        /**
+         * 客户PO号
+         */
+        private String customerPO;
         private String ean;
         //唯一值
         private String md5;
@@ -551,5 +578,13 @@ public class WmsCartonDTO {
          * 组合箱子sku明细 按照 sku*qty 组合
          */
         private String sku;
+    }
+    @Data
+    @NoArgsConstructor
+    public static class CountDTO {
+        private String sourceId;
+        private String packingStatus;
+        private String skuId;
+        private Integer packingQty;
     }
 }

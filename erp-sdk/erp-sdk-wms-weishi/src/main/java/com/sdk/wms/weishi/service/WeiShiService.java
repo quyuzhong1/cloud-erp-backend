@@ -375,6 +375,8 @@ public class WeiShiService {
         bodyMap.put("action", action);
         bodyMap.put("data", JSONUtil.toJsonStr(weiShiGetOutboundRequest));
         String bodyStr = OkHttpUtils.doPostJson(getPreUrl() + api, bodyMap, headerMap);
+        ThirdWarehouseContext.setRequestJson(JSONUtil.toJsonStr(bodyMap));
+        ThirdWarehouseContext.setResponseJson(bodyStr);
         return WeiShiUtils.parseToJiFengResp(bodyStr, new TypeReference<WeiShiBaseResp<WeiShiOutboundResp>>() {});
     }
 

@@ -81,6 +81,17 @@ public enum SettingEnum {
     //数据查询使用doris
     DORIS_QUERY_CFG_DMPOUTPUTTASKRECORD("dmpOutputTaskRecord",SettingEnum.DORIS_QUERY_CFG,"中台监控页面"),
     DORIS_QUERY_CFG_SOOUTSTOCK("soOutstock",SettingEnum.DORIS_QUERY_CFG,"销售出库单"),
+
+
+    // 中台任务配置
+    DMP_INPUT_TASK_ERROR_COUNT("dmpInputTaskErrorCount", SettingEnum.DMP_TASK_CFG, "中台拉取任务页面判断需人工处理次数"),
+    DMP_ETL_TASK_ERROR_COUNT("dmpEtlTaskErrorCount", SettingEnum.DMP_TASK_CFG, "中台清洗任务页面判断需人工处理次数"),
+    DMP_OUTPUT_TASK_ERROR_COUNT("dmpOutputTaskErrorCount", SettingEnum.DMP_TASK_CFG, "中台推送任务页面判断需人工处理次数"),
+
+
+    // ADS配置
+    ADS_ERP_INVENTORY_DIFF_WAREHOUSE_LIST("adsErpInventoryDiffWarehouseList", SettingEnum.ADS_CFG,"ADS平台库存差异仓库配置"),
+    ADS_ERP_INVENTORY_DIFF_PLATFORM_LIST("adsErpInventoryDiffPlatformList", SettingEnum.ADS_CFG,"ADS平台库存差异开启平台配置")
     ;
 
     @EnumValue
@@ -178,6 +189,16 @@ public enum SettingEnum {
      * 数据查询使用doris
      */
     public static final String DORIS_QUERY_CFG = "doris_query_cfg";
+
+    /**
+     * 中台任务配置
+     */
+    public static final String DMP_TASK_CFG = "dmp_task_cfg";
+
+    /**
+     * 数仓ADS配置
+     */
+    public static final String ADS_CFG = "ads_cfg";
 
     SettingEnum(String key, String type, String value) {
         this.key = key;

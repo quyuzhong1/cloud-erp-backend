@@ -295,7 +295,7 @@ public class MercadoOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandle
 
         //平台产品id
         detailDTO.setPlatformSpuNo(soDetailEntity.getPlatformSpuNo());
-
+        detailDTO.setPlatformSubSoCode(soDetailEntity.getPlatformSubSoCode());
         // 库存sku编号
         detailDTO.setWarehouseName("");
         // 仓库名称

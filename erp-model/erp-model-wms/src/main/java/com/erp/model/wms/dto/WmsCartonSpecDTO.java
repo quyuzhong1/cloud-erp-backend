@@ -1,6 +1,5 @@
 package com.erp.model.wms.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -53,6 +52,10 @@ public class WmsCartonSpecDTO implements Serializable {
         * 箱规编号
         */
         private Integer boxSpecNo;
+        /**
+         * 客户PO号
+         */
+        private String customerPO;
 
         /**
         * 预计毛重
@@ -152,6 +155,11 @@ public class WmsCartonSpecDTO implements Serializable {
          * 内容
          */
         private String content;
+
+        /**
+         * 客户PO号
+         */
+        private String customerPO;
         /**
          * 详情
          */
@@ -306,6 +314,10 @@ public class WmsCartonSpecDTO implements Serializable {
          */
         private String id;
 
+        /**
+         * 客户PO号
+         */
+        private String customerPO;
         /**
          * 箱数
          */
@@ -495,6 +507,8 @@ public class WmsCartonSpecDTO implements Serializable {
          * 箱规编号
          */
         private Integer boxSpecNo;
+
+        private String customerPO;
     }
 
     /**
@@ -599,6 +613,10 @@ public class WmsCartonSpecDTO implements Serializable {
          * 箱子id
          */
         private String cartonId;
+        /**
+         * 客户PO号
+         */
+        private String customerPO;
         /**
          * 产品id
          */

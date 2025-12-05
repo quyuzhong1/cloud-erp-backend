@@ -4,21 +4,15 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjUtil;
-import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.dto.ApproveDTO;
-import com.common.business.enums.ApprovePlatformEnum;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BatchResultDTO;
-import com.common.business.enums.ApproveStatusEnum;
-import com.common.business.enums.ApproveTypeEnum;
-import com.common.business.enums.SourceTypeEnum;
+import com.common.business.enums.*;
 import com.common.business.factory.ApproveEndHandlerFactory;
-import com.common.business.handler.AbstractApproveHandler;
-import com.common.business.enums.ThirdpartyPlatformEnum;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
@@ -47,8 +41,6 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -114,6 +106,9 @@ public class FsInstancesServiceImpl implements FsInstancesService {
                             .eq(ApproveTaskInfoEntity::getThirdInstanceId, jsonObject.getStr(FsRequestBodyAttributesEnum.INSTANCECODE.getCode()))
                             .orderByDesc(ApproveTaskInfoEntity::getCreateTime)
             );
+            if (ObjectUtil.isEmpty(one)) {
+                throw new ServiceException("未找到对应的三方审批生成任务信息");
+            }
             handleCallbackLogic(jsonObject, statusEnum, one);
         }
     }
@@ -316,13 +311,12 @@ public class FsInstancesServiceImpl implements FsInstancesService {
         if (null == sourceType) {
             throw new ServiceException(ApiError.ERROR_NOT_FOUND_APPROVE_BUSINESSKEY,"添加评论",businessKey);
         }
-        AbstractApproveHandler handler = approveEndHandlerFactory.getHandler(sourceType);
         ApproveDTO.AddCommentDTO addCommentDTO = new ApproveDTO.AddCommentDTO();
         addCommentDTO.setBusinessKey(businessKey);
         addCommentDTO.setId(entity.getBussinessId());
         addCommentDTO.setComments(comments);
         addCommentDTO.setApprovePlatformEnum(ApprovePlatformEnum.FEI_SHU);
-        handler.addComment(addCommentDTO);
+        processManagementService.addComment(addCommentDTO);
     }
 
     /**

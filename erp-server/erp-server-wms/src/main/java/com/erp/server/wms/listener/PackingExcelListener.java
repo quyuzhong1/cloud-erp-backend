@@ -20,6 +20,7 @@ import com.erp.model.wms.enums.PackingTaskStatusEnum;
 import com.erp.model.wms.enums.PackingWeightStatusEnum;
 import com.erp.model.wms.enums.WmsDeclareStatusEnum;
 import com.erp.server.wms.service.*;
+import io.seata.common.util.StringUtils;
 import lombok.Getter;
 import org.apache.commons.collections4.CollectionUtils;
 
@@ -62,6 +63,9 @@ public class PackingExcelListener extends AnalysisEventListener<PackingExcelDTO>
         }else{
             int currentRowNumber = context.readRowHolder().getRowIndex();
             data.setRowNum(currentRowNumber);
+            if(StringUtils.isBlank(data.getCustomerPO())){
+                data.setCustomerPO("");
+            }
             packingExcelDTOList.add(data);
         }
 
@@ -139,11 +143,13 @@ public class PackingExcelListener extends AnalysisEventListener<PackingExcelDTO>
         Map<String,Integer> skuRequisitionSummaryMap = requisitionApplicationDetailList.stream().collect(Collectors.toMap(v->v.getMainId()+v.getSkuNo(),RequisitionApplicationDetailEntity::getPickingQty, Integer::sum));
         //记录遍历时最大箱号
         Map<String,Integer> boxMap = new HashMap<>();
+        //记录箱号和PO号
+        Map<String,String> boxCustomerPOMap = new HashMap<>();
         while (it.hasNext()) {
             PackingExcelDTO packingExcelDTO = it.next();
             List<String> errFieldMsg = FieldValidUtil.fieldValid(packingExcelDTO);
             //检查字段空值
-            if(CollectionUtils.isNotEmpty(errFieldMsg)){
+            if (CollectionUtils.isNotEmpty(errFieldMsg)) {
                 packingExcelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errFieldMsg));
                 errorList.add(packingExcelDTO);
                 it.remove();
@@ -153,28 +159,28 @@ public class PackingExcelListener extends AnalysisEventListener<PackingExcelDTO>
             FirstMileDeliveryEntity firstMileDeliveryEntity = firstMileDeliveryServiceMap.get(packingExcelDTO.getCode());
             SoDeliveryNoticeEntity soDeliveryNoticeEntity = soDeliveryNoticeEntityMap.get(packingExcelDTO.getCode());
             RequisitionApplicationEntity requisitionApplicationEntity = requisitionApplicationMap.get(packingExcelDTO.getCode());
-            if(Objects.isNull(firstMileDeliveryEntity) && Objects.isNull(soDeliveryNoticeEntity) && Objects.isNull(requisitionApplicationEntity)){
+            if (Objects.isNull(firstMileDeliveryEntity) && Objects.isNull(soDeliveryNoticeEntity) && Objects.isNull(requisitionApplicationEntity)) {
                 packingExcelDTO.setErrorMsg("来源单号不存在");
                 errorList.add(packingExcelDTO);
                 it.remove();
                 continue;
             }
-            if(Objects.nonNull(requisitionApplicationEntity)){
-                PickingListsDTO.SourceView sourceView = pickingList.stream().filter(v->v.getSourceId().equals(requisitionApplicationEntity.getId())).findFirst().orElse(null);
-                if(Objects.isNull(sourceView)){
+            if (Objects.nonNull(requisitionApplicationEntity)) {
+                PickingListsDTO.SourceView sourceView = pickingList.stream().filter(v -> v.getSourceId().equals(requisitionApplicationEntity.getId())).findFirst().orElse(null);
+                if (Objects.isNull(sourceView)) {
                     packingExcelDTO.setErrorMsg("要货申请未生成拣货单，不能生成装箱任务");
                     errorList.add(packingExcelDTO);
                     it.remove();
                     continue;
                 }
             }
-            if(Objects.nonNull(firstMileDeliveryEntity) && (FmDeliveryLogisticsStatusEnum.FINISH.equals(firstMileDeliveryEntity.getLogisticsStatus()) || WmsDeclareStatusEnum.FINISH.equals(firstMileDeliveryEntity.getDeclareStatus()))){
+            if (Objects.nonNull(firstMileDeliveryEntity) && (FmDeliveryLogisticsStatusEnum.FINISH.equals(firstMileDeliveryEntity.getLogisticsStatus()) || WmsDeclareStatusEnum.FINISH.equals(firstMileDeliveryEntity.getDeclareStatus()))) {
                 packingExcelDTO.setErrorMsg("物流单/报关单已生成，不支持修改");
                 errorList.add(packingExcelDTO);
                 it.remove();
                 continue;
             }
-            if(Objects.nonNull(soDeliveryNoticeEntity) && soDeliveryNoticeEntity.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getCode())){
+            if (Objects.nonNull(soDeliveryNoticeEntity) && soDeliveryNoticeEntity.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getCode())) {
                 packingExcelDTO.setErrorMsg(" 发货通知已审核，无法更改装箱");
                 errorList.add(packingExcelDTO);
                 it.remove();
@@ -182,84 +188,95 @@ public class PackingExcelListener extends AnalysisEventListener<PackingExcelDTO>
             }
             // 装箱号不连续
             Integer currentMaxBoxNo = boxMap.get(packingExcelDTO.getCode());
-            if(Objects.isNull(currentMaxBoxNo)){
-                if(packingExcelDTO.getBoxNo() != 1){
+            if (Objects.isNull(currentMaxBoxNo)) {
+                if (packingExcelDTO.getBoxNo() != 1) {
                     packingExcelDTO.setErrorMsg("装箱号从1开始");
                     errorList.add(packingExcelDTO);
                     it.remove();
                     continue;
                 }
                 boxMap.put(packingExcelDTO.getCode(), packingExcelDTO.getBoxNo());
-            }else{
-                if(!currentMaxBoxNo.equals(packingExcelDTO.getBoxNo()) && !currentMaxBoxNo.equals(packingExcelDTO.getBoxNo() - 1)){
+            } else {
+                if (!currentMaxBoxNo.equals(packingExcelDTO.getBoxNo()) && !currentMaxBoxNo.equals(packingExcelDTO.getBoxNo() - 1)) {
                     packingExcelDTO.setErrorMsg("装箱号不连续");
                     errorList.add(packingExcelDTO);
                     it.remove();
                     continue;
-                }else{
+                } else {
                     boxMap.put(packingExcelDTO.getCode(), packingExcelDTO.getBoxNo());
                 }
             }
             //SKU是否存在
-            if (Objects.nonNull(firstMileDeliveryEntity)){
+            if (Objects.nonNull(firstMileDeliveryEntity)) {
                 List<FirstMileDeliveryDetailEntity> currentDetailList = firstMileDeliveryDetailEntityMap.get(firstMileDeliveryEntity.getId());
-                if(currentDetailList.stream().noneMatch(v->v.getSkuNo().equals(packingExcelDTO.getSku()))){
+                if (currentDetailList.stream().noneMatch(v -> v.getSkuNo().equals(packingExcelDTO.getSku()))) {
                     packingExcelDTO.setErrorMsg("SKU在发货单不存在");
                     errorList.add(packingExcelDTO);
                     it.remove();
                     continue;
                 }
                 // 发货单SKU装箱数量超过待装箱数量
-                FirstMileDeliveryDetailEntity firstMileDeliveryDetailEntity = currentDetailList.stream().filter(v->v.getSkuNo().equals(packingExcelDTO.getSku())).findFirst().orElse(new FirstMileDeliveryDetailEntity());
+                FirstMileDeliveryDetailEntity firstMileDeliveryDetailEntity = currentDetailList.stream().filter(v -> v.getSkuNo().equals(packingExcelDTO.getSku())).findFirst().orElse(new FirstMileDeliveryDetailEntity());
                 packingExcelDTO.setSkuId(firstMileDeliveryDetailEntity.getSkuId());
                 firstMileDeliveryDetailEntity.setDeliveryQty(firstMileDeliveryDetailEntity.getDeliveryQty() - packingExcelDTO.getSingleBoxQuantity());
-                Integer skuNum = skuFirstMileSummaryMap.get(firstMileDeliveryEntity.getId()+packingExcelDTO.getSku());
-                if(skuNum < packingExcelDTO.getSingleBoxQuantity()){
+                Integer skuNum = skuFirstMileSummaryMap.get(firstMileDeliveryEntity.getId() + packingExcelDTO.getSku());
+                if (skuNum < packingExcelDTO.getSingleBoxQuantity()) {
                     packingExcelDTO.setErrorMsg("发货单SKU装箱数量超过待装箱数量");
                     errorList.add(packingExcelDTO);
                     it.remove();
                 }
-                skuFirstMileSummaryMap.put(firstMileDeliveryEntity.getId()+packingExcelDTO.getSku(),skuNum-packingExcelDTO.getSingleBoxQuantity());
+                skuFirstMileSummaryMap.put(firstMileDeliveryEntity.getId() + packingExcelDTO.getSku(), skuNum - packingExcelDTO.getSingleBoxQuantity());
             }
-            if (Objects.nonNull(soDeliveryNoticeEntity)){
+            if (Objects.nonNull(soDeliveryNoticeEntity)) {
                 List<SoDeliveryNoticeDetailEntity> currentDetailList = soDeliveryDetailMap.get(soDeliveryNoticeEntity.getId());
-                if(currentDetailList.stream().noneMatch(v->v.getSkuNo().equals(packingExcelDTO.getSku()))){
+                if (currentDetailList.stream().noneMatch(v -> v.getSkuNo().equals(packingExcelDTO.getSku()))) {
                     packingExcelDTO.setErrorMsg("SKU在发货通知单不存在");
                     errorList.add(packingExcelDTO);
                     it.remove();
                     continue;
                 }
                 // 发货单SKU装箱数量超过待装箱数量
-                SoDeliveryNoticeDetailEntity soDeliveryNoticeDetailEntity = currentDetailList.stream().filter(v->v.getSkuNo().equals(packingExcelDTO.getSku())).findFirst().orElse(new SoDeliveryNoticeDetailEntity());
+                SoDeliveryNoticeDetailEntity soDeliveryNoticeDetailEntity = currentDetailList.stream().filter(v -> v.getSkuNo().equals(packingExcelDTO.getSku())).findFirst().orElse(new SoDeliveryNoticeDetailEntity());
                 packingExcelDTO.setSkuId(soDeliveryNoticeDetailEntity.getSkuId());
                 soDeliveryNoticeDetailEntity.setDeliveryQty(soDeliveryNoticeDetailEntity.getDeliveryQty() - packingExcelDTO.getSingleBoxQuantity());
-                Integer skuNum = skuDeliverySummaryMap.get(soDeliveryNoticeEntity.getId()+packingExcelDTO.getSku());
-                if(skuNum < packingExcelDTO.getSingleBoxQuantity()){
+                Integer skuNum = skuDeliverySummaryMap.get(soDeliveryNoticeEntity.getId() + packingExcelDTO.getSku());
+                if (skuNum < packingExcelDTO.getSingleBoxQuantity()) {
                     packingExcelDTO.setErrorMsg("发货通知单SKU装箱数量超过待装箱数量");
                     errorList.add(packingExcelDTO);
                     it.remove();
                 }
-                skuDeliverySummaryMap.put(soDeliveryNoticeEntity.getId()+packingExcelDTO.getSku(),skuNum-packingExcelDTO.getSingleBoxQuantity());
+                skuDeliverySummaryMap.put(soDeliveryNoticeEntity.getId() + packingExcelDTO.getSku(), skuNum - packingExcelDTO.getSingleBoxQuantity());
             }
-            if (Objects.nonNull(requisitionApplicationEntity)){
+            if (Objects.nonNull(requisitionApplicationEntity)) {
                 List<RequisitionApplicationDetailEntity> currentDetailList = requisitionApplicationDetailMap.get(requisitionApplicationEntity.getId());
-                if(currentDetailList.stream().noneMatch(v->v.getSkuNo().equals(packingExcelDTO.getSku()))){
+                if (currentDetailList.stream().noneMatch(v -> v.getSkuNo().equals(packingExcelDTO.getSku()))) {
                     packingExcelDTO.setErrorMsg("SKU在要货申请单不存在");
                     errorList.add(packingExcelDTO);
                     it.remove();
                     continue;
                 }
                 // 发货单SKU装箱数量超过待装箱数量
-                RequisitionApplicationDetailEntity requisitionApplicationDetailEntity = currentDetailList.stream().filter(v->v.getSkuNo().equals(packingExcelDTO.getSku())).findFirst().orElse(new RequisitionApplicationDetailEntity());
+                RequisitionApplicationDetailEntity requisitionApplicationDetailEntity = currentDetailList.stream().filter(v -> v.getSkuNo().equals(packingExcelDTO.getSku())).findFirst().orElse(new RequisitionApplicationDetailEntity());
                 packingExcelDTO.setSkuId(requisitionApplicationDetailEntity.getSkuId());
                 requisitionApplicationDetailEntity.setPickingQty(requisitionApplicationDetailEntity.getPickingQty() - packingExcelDTO.getSingleBoxQuantity());
-                Integer skuNum = skuRequisitionSummaryMap.get(requisitionApplicationEntity.getId()+packingExcelDTO.getSku());
-                if(skuNum < packingExcelDTO.getSingleBoxQuantity()){
+                Integer skuNum = skuRequisitionSummaryMap.get(requisitionApplicationEntity.getId() + packingExcelDTO.getSku());
+                if (skuNum < packingExcelDTO.getSingleBoxQuantity()) {
                     packingExcelDTO.setErrorMsg("发货单SKU装箱数量超过待装箱数量");
                     errorList.add(packingExcelDTO);
                     it.remove();
                 }
-                skuRequisitionSummaryMap.put(requisitionApplicationEntity.getId()+packingExcelDTO.getSku(),skuNum-packingExcelDTO.getSingleBoxQuantity());
+                skuRequisitionSummaryMap.put(requisitionApplicationEntity.getId() + packingExcelDTO.getSku(), skuNum - packingExcelDTO.getSingleBoxQuantity());
+            }
+            //校验箱子的客户PO号是否唯一
+            if (boxCustomerPOMap.containsKey(packingExcelDTO.getCode() + packingExcelDTO.getBoxNo())) {
+                if (!boxCustomerPOMap.get(packingExcelDTO.getCode() + packingExcelDTO.getBoxNo()).equals(packingExcelDTO.getCustomerPO())) {
+                    packingExcelDTO.setErrorMsg("同一箱号客户PO号不一致");
+                    errorList.add(packingExcelDTO);
+                    it.remove();
+                    continue;
+                }
+            } else {
+                boxCustomerPOMap.put(packingExcelDTO.getCode() + packingExcelDTO.getBoxNo(), packingExcelDTO.getCustomerPO());
             }
         }
     }

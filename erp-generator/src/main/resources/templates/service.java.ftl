@@ -7,11 +7,11 @@ import ${package.Entity}.${entity};
 import ${superServiceClassPackage};
 import com.common.business.dto.base.*;
 import ${package.Dto}.${table.dtoName};
-<#if fieldMap["approveStatus"]?? && fieldMap["code"]??>
+<#--<#if fieldMap["approveStatus"]?? && fieldMap["code"]??>-->
 import com.common.business.vo.PagingVO;
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
-</#if>
+<#--</#if>-->
 
 /**
  * <p>
@@ -44,7 +44,7 @@ public interface ${table.serviceName} extends ${superServiceClass}<${entity}> {
     */
     Boolean update(${table.dtoName}.UpdateDTO dto);
 
-    <#if fieldMap["approveStatus"]?? && fieldMap["code"]??>
+
     /**
     * 分页列表查询
     * @author ${author}
@@ -72,6 +72,7 @@ public interface ${table.serviceName} extends ${superServiceClass}<${entity}> {
     */
     ${table.dtoName}.ViewDTO view(String id);
 
+    <#if fieldMap["approveStatus"]?? && fieldMap["code"]??>
     /**
     * 新增并提交审核
     * @author ${author}
@@ -147,16 +148,6 @@ public interface ${table.serviceName} extends ${superServiceClass}<${entity}> {
     BatchResultDTO cancelProcess(String id);
 
     /**
-    * 导出Excel
-    * @author ${author}
-    * @date: ${date}
-    * @param dto
-    * @param response
-    * @return
-    */
-    void exportList(${table.dtoName}.ExportDTO dto, HttpServletResponse response);
-
-    /**
     * 审核通过回调方法
     * @param dto
     * @param entity
@@ -165,5 +156,14 @@ public interface ${table.serviceName} extends ${superServiceClass}<${entity}> {
     Boolean approveEnd(ApproveOneDTO dto, ${entity} entity);
     </#if>
 
+    /**
+    * 导出Excel
+    * @author ${author}
+    * @date: ${date}
+    * @param dto
+    * @param response
+    * @return
+    */
+    void exportList(${table.dtoName}.ExportDTO dto, HttpServletResponse response);
 }
 </#if>

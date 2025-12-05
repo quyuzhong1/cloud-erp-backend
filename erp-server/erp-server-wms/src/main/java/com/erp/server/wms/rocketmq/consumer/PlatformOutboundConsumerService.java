@@ -231,7 +231,7 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
             );
             soB2cFeign.addSoB2cError(addError);
             //异步取消海外仓订单
-            asyncService.asyncCancelThirdWarehouseOrder(mainEntity);
+            asyncService.asyncCancelThirdWarehouseOrder(mainEntity,dto.getAbnormalProblemReason());
         }
         if (SoB2cBillStatusEnum.ENUM_DISUSE.getCode().equals(dto.getOrderStatus())) {
             if(mainEntity.getBillStatus().equals(SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode())){

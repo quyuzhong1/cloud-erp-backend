@@ -2,6 +2,7 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.lang.Pair;
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -18,6 +19,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.WarehouseLocationDTO;
 import com.erp.model.wms.dto.WarehouseLocationMoveDTO;
 import com.erp.model.wms.dto.WarehouseLocationMoveDetailDTO;
@@ -73,6 +75,8 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
     private InventoryMapper inventoryMapper;
     @Resource
     private ProductDetailFeign productDetailFeign;
+    @Resource
+    private OperateLogService operateLogService;
     @Override
     public PagingVO<WarehouseLocationReplenishDTO.ViewDTO> paging(PagingDTO<WarehouseLocationReplenishDTO.SearchParamDTO> pagingDTO) {
         pagingDTO.getParams().setPermissionSql(pagingDTO.getPermissionSql());
@@ -242,7 +246,7 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
             );
             List<String> pickAreaIds = pickAreaList.stream().map(item -> item.getId()).collect(Collectors.toList());
             if(pickAreaIds.isEmpty()){
-                throw new ServiceException(ApiError.ERROR_NOT_FOUND_WAREHOUSE_AREA);
+                throw new ServiceException(ApiError.ERROR_NOT_FOUND_WAREHOUSE_AREA, dto.getSkuNo());
             }
 
             //推荐补货仓位
@@ -254,7 +258,7 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
             );
             List<String> pickLocationCodeList = pickLocationList.stream().map(item -> item.getCode()).filter(StringUtils::isNotBlank).collect(Collectors.toList());
             if(pickLocationCodeList.isEmpty()){
-                throw new ServiceException(ApiError.ERROR_NOT_FOUND_WAREHOUSE_LOCATION);
+                throw new ServiceException(ApiError.ERROR_NOT_FOUND_WAREHOUSE_LOCATION, dto.getSkuNo());
             }
             List<InventoryEntity> pickInventoryList = inventoryService.list(new QueryWrapper<InventoryEntity>()
                     .eq("warehouse_id", dto.getWarehouseId())
@@ -305,7 +309,7 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
                 */
                 inventoryEntity = this.findLastInventory(dto, pickLocationCodeList, pickInventoryList);
                 if(Objects.isNull(inventoryEntity)){
-                    throw new ServiceException(ApiError.ERROR_NOT_FOUND_WAREHOUSE_LOCATION);
+                    throw new ServiceException(ApiError.ERROR_NOT_FOUND_WAREHOUSE_LOCATION, dto.getSkuNo());
                 }
                 String toWarehouseLocation = inventoryEntity.getWarehouseLocation();
                 replenishItem.setToWarehouseLocation(toWarehouseLocation);
@@ -383,6 +387,9 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
             }
             entity.setSuggestQty(suggestQty);
             this.save(entity);
+            //记录日志
+            String msg = StrUtil.format("用户【{}】新增【{}】单据SKU为【{}】", UserContext.getDefaultLoginUser().getUserName(), "仓位库存预警" , entity.getSkuNo());
+            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.WAREHOUSE_LOCATION_REPLENISH.getCode(), entity.getId(), "新增操作");
         }
 
         return BatchResultDTO.success(entity.getId(), dto.getSkuNo(), OperationTypeEnum.ADD);

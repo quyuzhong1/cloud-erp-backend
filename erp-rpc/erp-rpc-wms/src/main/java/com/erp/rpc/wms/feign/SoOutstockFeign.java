@@ -175,4 +175,13 @@ public interface SoOutstockFeign {
 
     @GetMapping("/feign/soOutstock/listSoOutstockByExhibitionId")
     List<ExhibitionOrderDTO.DownstreamListDTO> listSoOutstockByExhibitionId(@RequestParam(value = "exhibitionId")String exhibitionId);
+
+    /**
+     * 自动反审核并删除出库单
+     *
+     * @param id
+     * @param deliveryId
+     */
+    @GetMapping("/feign/soOutstock/deleteSoOutstock")
+    void deleteSoOutstock(@RequestParam(value = "id") String id, @RequestParam(value = "deliveryId",required = false)String deliveryId);
 }

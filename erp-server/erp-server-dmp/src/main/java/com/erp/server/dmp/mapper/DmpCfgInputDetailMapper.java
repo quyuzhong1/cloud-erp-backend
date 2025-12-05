@@ -1,9 +1,17 @@
 package com.erp.server.dmp.mapper;
+
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.common.business.dto.DmpInputFeignDTO;
 import com.erp.model.dmp.dto.DmpInoutDTO;
 import com.erp.model.dmp.entity.DmpCfgInputDetailEntity;
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import org.apache.ibatis.annotations.Param;
+
+import com.erp.model.dmp.dto.DmpCfgInputDetailDTO;
+import com.common.business.dto.base.ApproveStatusQtyDTO;
 
 import java.util.List;
 
@@ -28,4 +36,43 @@ public interface DmpCfgInputDetailMapper extends BaseMapper<DmpCfgInputDetailEnt
      * @return 可执行的任务列表-明细维度
      */
     List<DmpInoutDTO.ListDTO> listBySystemCodeAndBillType(List<String> systemCodeList, List<String> billTypeList, List<String> nextLevelIdList);
+    /**
+     * 查询配置明细信息
+     * @author will
+     * @date 2025/11/7 16:52
+     * @param cfgOptionDTO
+     * @return DmpCfgInputDetailEntity
+     */
+    DmpCfgInputDetailEntity getDmpCfgInputDetailByOption(@Param("cfgOptionDTO") DmpInputFeignDTO.CfgOptionDTO cfgOptionDTO);
+
+    /**
+     * 分页查询
+     * @param query
+     * @param params
+     * @return
+     */
+    IPage<DmpCfgInputDetailDTO.ListDTO> paging(Page query, @Param("params") DmpCfgInputDetailDTO.PagingParamDTO params);
+
+    /**
+     * 状态数量
+     * @param params
+     * @return
+     */
+    List<ApproveStatusQtyDTO> listCount(@Param("params") DmpCfgInputDetailDTO.PagingParamDTO params);
+
+    /**
+     * 导出Excel查询
+     * @param params
+     * @return
+     */
+    List<DmpCfgInputDetailDTO.ListDTO> listExport(@Param("params") DmpCfgInputDetailDTO.ExportDTO params);
+
+
+    /**
+     * 获取状态统计
+     * @param searchParam
+     * @return
+     */
+    List<DmpCfgInputDetailDTO.TabListDTO> tabList(@Param("params") DmpCfgInputDetailDTO.PagingParamDTO searchParam);
+
 }

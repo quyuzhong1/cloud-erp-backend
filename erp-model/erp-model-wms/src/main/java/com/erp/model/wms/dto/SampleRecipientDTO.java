@@ -80,6 +80,9 @@ public class SampleRecipientDTO implements Serializable {
         */
         private Map<String,String> sqlMap;
 
+        private List<String> ids;
+
+        private String approveStatus;
      }
     /**
     * 分页列表
@@ -323,6 +326,15 @@ public class SampleRecipientDTO implements Serializable {
         private Boolean isLedgerRequired;
         private String isLedgerRequiredName;
 
+        /**
+         * 仓库负责人id
+         */
+        private String warehouseChargeId;
+        /**
+         * 仓库负责人名称
+         */
+        private String warehouseChargeName;
+
     }
 
     /**
@@ -331,10 +343,7 @@ public class SampleRecipientDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class ExportDTO extends PagingParamDTO {
-        /**
-        * 勾选的id集合
-        */
-        private List<String> ids;
+
     }
 
     /**
@@ -534,7 +543,14 @@ public class SampleRecipientDTO implements Serializable {
         private Boolean isLedgerRequired;
         private String isLedgerRequiredName;
 
-
+        /**
+         * 仓库负责人id
+         */
+        private String warehouseChargeId;
+        /**
+         * 仓库负责人名称
+         */
+        private String warehouseChargeName;
     }
 
     /**
@@ -805,6 +821,12 @@ public class SampleRecipientDTO implements Serializable {
          * 是否需要入台账：true =入账，false  =不入账
          */
         private Boolean isLedgerRequired = Boolean.TRUE;
+
+
+        /**
+         * 仓库负责人id
+         */
+        private String warehouseChargeId;
 
     }
     /**
@@ -1190,6 +1212,41 @@ public class SampleRecipientDTO implements Serializable {
          * 是否禁用
          */
         private Boolean disabled = false;
+    }
+
+    /**
+     * 领用人基础信息
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class BaseUserDTO {
+
+        /**
+         * 领用人ID
+         */
+        @NotBlank(message = "领用人ID不能为空")
+        private String userId;
+        /**
+         * 领用人姓名
+         */
+        private String userName;
+        /**
+         * 领用部门ID
+         */
+        private String deptId;
+        /**
+         * 领用部门名称
+         */
+        private String deptName;
+        /**
+         * 领料组织ID
+         */
+        private String pickOrgId;
+        /**
+         * 领料组织名称
+         */
+        private String pickOrgName;
     }
 
 }
