@@ -4,6 +4,7 @@ package com.erp.server.oms.controller.api;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import com.common.core.anno.LogAction;
@@ -219,8 +220,9 @@ public class KolSocialMediaController extends BaseController {
             tableField = "create_user_id",
             menuCode = "oms:kolSocialMedia:export",
             tableAlias = "ksm")
-    public ApiResult<Boolean> export(@RequestBody @Validated PagingDTO<KolSocialMediaDTO.ParamDTO> dto) {
-        return success(kolSocialMediaService.export(dto));
+    @WebAdvanceQuery
+    public ApiResult<Boolean> export(@RequestBody @Validated KolSocialMediaDTO.ParamDTO dto, HttpServletResponse response) {
+        return success(kolSocialMediaService.export(dto, response));
     }
 
 }

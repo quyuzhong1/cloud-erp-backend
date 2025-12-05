@@ -73,6 +73,11 @@ public class KolFeedbackDTO implements Serializable {
          * 权限SQL
          */
         private String permissionSql;
+        /**
+         * 勾选的id集合
+         */
+        private List<String> ids;
+
 
     }
 

@@ -67,9 +67,10 @@ public interface KolFeedbackCostService extends SuperService<KolFeedbackCostEnti
      * @author wuhaotian
      * @date: 2025-12-03
      * @param dto
+     * @param response
      * @return
      */
-    Boolean export(PagingDTO<KolFeedbackCostDTO.ParamDTO> dto);
+    Boolean export(KolFeedbackCostDTO.ParamDTO dto, HttpServletResponse response);
 
     /**
      * 异步导入

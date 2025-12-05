@@ -262,7 +262,7 @@ public class KolFeedbackCostServiceImpl extends SuperServiceImpl<KolFeedbackCost
     }
 
     @Override
-    public Boolean export(PagingDTO<KolFeedbackCostDTO.ParamDTO> dto) {
+    public Boolean export(KolFeedbackCostDTO.ParamDTO dto, HttpServletResponse response) {
         downloadTaskFeign.saveDownloadTask("KOL回片费用导出", EXPORT_OMS_KOL_FEEDBACK_COST.getCode(), dto);
         return true;
     }

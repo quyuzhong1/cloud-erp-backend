@@ -63,11 +63,13 @@ public class KolFeedbackExcelDTO implements Serializable {
     private String urlHash;
 
     /**
-     * 发布形式
+     * 发布形式名称
      */
     @ColumnWidth(20)
     @ExcelProperty(value = "发布形式", index = 4)
     @FieldValid(fieldName = "发布形式", maxLength = 50)
+    private String publishTypeName;
+    @ExcelIgnore
     private String publishType;
 
     /**

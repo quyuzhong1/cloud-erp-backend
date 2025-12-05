@@ -4,6 +4,7 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.KolSocialMediaDTO;
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -65,9 +66,10 @@ public interface KolSocialMediaService extends SuperService<KolSocialMediaEntity
      * @author wuhaotian
      * @date: 2025-12-04
      * @param dto
+     * @param response
      * @return
      */
-    Boolean export(PagingDTO<KolSocialMediaDTO.ParamDTO> dto);
+    Boolean export(KolSocialMediaDTO.ParamDTO dto, HttpServletResponse response);
 
     /**
      * 分页查询

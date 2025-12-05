@@ -222,8 +222,9 @@ public class KolFeedbackCostController extends BaseController {
             tableField = "create_user_id",
             menuCode = "oms:kolFeedbackCost:export",
             tableAlias = "kfc")
-    public ApiResult<Boolean> export(@RequestBody @Validated PagingDTO<KolFeedbackCostDTO.ParamDTO> dto) {
-        return success(kolFeedbackCostService.export(dto));
+    @WebAdvanceQuery
+    public ApiResult<Boolean> export(@RequestBody @Validated KolFeedbackCostDTO.ParamDTO dto, HttpServletResponse response) {
+        return success(kolFeedbackCostService.export(dto, response));
     }
 
     /**
@@ -246,7 +247,7 @@ public class KolFeedbackCostController extends BaseController {
      * @date:  2025-12-03
      * @param response
      */
-    @PostMapping("/downloadTemplate")
+    @GetMapping("/downloadTemplate")
     public ApiResult<Object> downloadTemplate(HttpServletResponse response) {
         kolFeedbackCostService.downloadTemplate(response);
         return success();

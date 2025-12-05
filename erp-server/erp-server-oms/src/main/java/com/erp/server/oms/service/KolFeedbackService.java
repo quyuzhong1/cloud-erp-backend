@@ -84,9 +84,10 @@ public interface KolFeedbackService extends SuperService<KolFeedbackEntity> {
      * @author wuhaotian
      * @date: 2025-12-01
      * @param dto
+     * @param response
      * @return
      */
-    Boolean export(PagingDTO<KolFeedbackDTO.ParamDTO> dto);
+    Boolean export(KolFeedbackDTO.ParamDTO dto, HttpServletResponse response);
 
     /**
      * 异步导入

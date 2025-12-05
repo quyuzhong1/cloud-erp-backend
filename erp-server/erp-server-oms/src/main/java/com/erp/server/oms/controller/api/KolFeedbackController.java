@@ -240,8 +240,9 @@ public class KolFeedbackController extends BaseController {
             tableField = "create_user_id",
             menuCode = "oms:kolFeedback:export",
             tableAlias = "kf")
-    public ApiResult<Boolean> export(@RequestBody @Validated PagingDTO<KolFeedbackDTO.ParamDTO> dto) {
-        return success(kolFeedbackService.export(dto));
+    @WebAdvanceQuery(handler = KolFeedbackQueryHandler.class)
+    public ApiResult<Boolean> export(@RequestBody @Validated KolFeedbackDTO.ParamDTO dto, HttpServletResponse response) {
+        return success(kolFeedbackService.export(dto, response));
     }
 
     /**
@@ -264,7 +265,7 @@ public class KolFeedbackController extends BaseController {
      * @date:  2025-12-01
      * @param response
      */
-    @PostMapping("/downloadTemplate")
+    @GetMapping("/downloadTemplate")
     public ApiResult<Object> downloadTemplate(HttpServletResponse response) {
         kolFeedbackService.downloadTemplate(response);
         return success();

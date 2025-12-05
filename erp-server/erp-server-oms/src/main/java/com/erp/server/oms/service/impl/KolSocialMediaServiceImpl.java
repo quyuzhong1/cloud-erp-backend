@@ -255,7 +255,7 @@ public class KolSocialMediaServiceImpl extends SuperServiceImpl<KolSocialMediaMa
      * @return
      */
     @Override
-    public Boolean export(PagingDTO<KolSocialMediaDTO.ParamDTO> dto) {
+    public Boolean export(KolSocialMediaDTO.ParamDTO dto, HttpServletResponse response) {
         downloadTaskFeign.saveDownloadTask("达人社媒数据表导出", EXPORT_OMS_KOL_SOCIAL_MEDIA.getCode(), dto);
         return true;
     }

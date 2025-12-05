@@ -247,7 +247,7 @@ public class KolFeedbackServiceImpl extends SuperServiceImpl<KolFeedbackMapper, 
     }
 
     @Override
-    public Boolean export(PagingDTO<KolFeedbackDTO.ParamDTO> dto) {
+    public Boolean export(KolFeedbackDTO.ParamDTO dto, HttpServletResponse response) {
         downloadTaskFeign.saveDownloadTask("KOL回片列表导出", EXPORT_OMS_KOL_FEEDBACK.getCode(), dto);
         return true;
     }
@@ -376,6 +376,15 @@ public class KolFeedbackServiceImpl extends SuperServiceImpl<KolFeedbackMapper, 
                     ));
         }
 
+        // 查询发布形式字典数据
+        List<com.erp.model.oms.dto.DictBasicDTO.ViewDTO> publishTypeDictList = dictBasicService.getByKey("publishType");
+        Map<String, String> publishTypeNameToValueMap = publishTypeDictList.stream()
+                .collect(Collectors.toMap(
+                        com.erp.model.oms.dto.DictBasicDTO.ViewDTO::getName,
+                        com.erp.model.oms.dto.DictBasicDTO.ViewDTO::getValue,
+                        (k1, k2) -> k1
+                ));
+
         // 遍历数据进行校验和保存
         for (KolFeedbackExcelDTO excelDTO : successList) {
             List<String> errorMsgList = new ArrayList<>();
@@ -419,6 +428,16 @@ public class KolFeedbackServiceImpl extends SuperServiceImpl<KolFeedbackMapper, 
                     errorMsgList.add("达人昵称【" + partnerNickname + "】不存在");
                 } else {
                     excelDTO.setPartnerId(partnerId);
+                }
+
+                // 验证发布形式（非必填）
+                if (StrUtil.isNotBlank(excelDTO.getPublishTypeName())) {
+                    String publishType = publishTypeNameToValueMap.get(excelDTO.getPublishTypeName());
+                    if (StrUtil.isBlank(publishType)) {
+                        errorMsgList.add("发布形式【" + excelDTO.getPublishTypeName() + "】不存在");
+                    } else {
+                        excelDTO.setPublishType(publishType);
+                    }
                 }
 
                 // URL哈希值计算
