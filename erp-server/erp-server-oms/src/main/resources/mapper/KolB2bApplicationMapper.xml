@@ -52,6 +52,7 @@
     <!-- 分页查询 -->
     <select id="paging" resultType="com.erp.model.oms.dto.KolB2bApplicationDTO$ListDTO">
         select
+            kba.id,
             kba.code,
             kba.date,
             kba.approve_status,
@@ -65,6 +66,7 @@
             kba.apply_dept_id,
             kba.create_time,
             kba.create_user_name,
+            kbad.id as detailId,
             kbad.sku_id,
             kbad.sku_no,
             kbad.qty,
