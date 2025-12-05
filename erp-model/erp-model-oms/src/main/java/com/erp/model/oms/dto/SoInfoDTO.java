@@ -1017,7 +1017,7 @@ public class SoInfoDTO implements Serializable {
          * 交货方式 oms/common/enumDropDown?type=DeliveryMode
          * 描述：deliverGoods（发货）selfExtraction（自提）
          */
-        @StateEnumValue(strValues = {"channelOrder", "truckOrder","selfExtraction","truckSelfOrder"}, message = "交货方式有误", groups = {AddGroup.class})
+        @StateEnumValue(strValues = {"EXPRESS", "TRUCK","SELF","TRUCK_SELF"}, message = "交货方式有误", groups = {AddGroup.class})
         private String deliveryMode;
 
 
@@ -1844,7 +1844,7 @@ public class SoInfoDTO implements Serializable {
          * 交货方式 oms/common/enumDropDown?type=DeliveryMode
          * 描述：deliverGoods（发货）selfExtraction（自提）
          */
-        @StateEnumValue(strValues = {"channelOrder", "truckOrder","selfExtraction","truckSelfOrder"}, message = "交货方式有误", groups = {AddGroup.class})
+        @StateEnumValue(strValues = {"EXPRESS", "TRUCK","SELF","TRUCK_SELF"}, message = "交货方式有误", groups = {AddGroup.class})
         private String deliveryMode;
 
 
