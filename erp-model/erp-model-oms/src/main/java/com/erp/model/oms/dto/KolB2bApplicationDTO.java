@@ -593,7 +593,7 @@ public class KolB2bApplicationDTO implements Serializable {
         private String soOrgId;
         /**
          * 仓库Id,/api/wms/warehouse/list
-         * http://172.16.100.11:3002/project/92/interface/api/42235
+         * http://172.16.100.11:3002/project/92/interface/api/42243
          */
         private String warehouseId;
     }
