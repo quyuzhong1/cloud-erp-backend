@@ -4652,11 +4652,11 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         //推送数帝云
         syncKingdeeSoOutstockService.syncDataToSdy(soOutstockEntity, detailEntityList, SyncOperateEnum.OPERATE_DELETE.getCode());
         //删除三方仓发货单
-        if(SourceTypeEnum.PLATFORM_SO_OUT_STOCK.getCode().equals(soOutstockEntity.getSourceType())){
+        if(SourceTypeEnum.PLATFORM_SO_OUT_STOCK.getCode().equals(soOutstockEntity.getSourceType()) || SourceTypeEnum.THIRD_WAREHOUSE_CREATE_OUTBOUND_BILL.getCode().equals(soOutstockEntity.getSourceType())){
             thirdWarehouseDeliveryService.deleteByIds(Collections.singletonList(soOutstockEntity.getSourceId()));
         }
         if (StringUtils.isNotBlank(deliveryId)){
-            soB2cDeliveryService.deleteSoB2cDelivery(id);
+            soB2cDeliveryService.deleteSoB2cDelivery(deliveryId);
         }
     }
 
