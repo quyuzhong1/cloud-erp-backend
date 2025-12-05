@@ -1358,6 +1358,7 @@ public enum ApiError implements Serializable {
     ERROR_THIRD_DELIVERY_MANUAL_DELIVERY(92248,"只有未开启B2B发货的允许手动发货"),
     ERROR_THIRD_DELIVERY_WAIT_SHIPPED_DELIVERY(92248,"只有待发货状态的允许发货"),
     ERROR_THIRD_DELIVERY_GENERATE_OUTSTOCK(92248,"只有已发货状态的允许生成销售出库单"),
+    ERROR_THIRD_DELIVERY_DELETE_STATUS(92248,"只有创建失败、取消发货允许删除"),
 
 
 

@@ -4081,8 +4081,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     }
 
     @Override
-    public B2bThirdDeliveryDTO.ViewDTO getB2bThirdDeliveryView(String soId) {
-        SoInfoEntity soInfoEntity = this.getById(soId);
+    public B2bThirdDeliveryDTO.ViewDTO getB2bThirdDeliveryView(B2bThirdDeliveryDTO.ViewQueryDTO dto) {
+        SoInfoEntity soInfoEntity = this.getById(dto.getId());
         if (ObjectUtil.isEmpty(soInfoEntity)) {
             throw new ServiceException(ApiError.ERROR_92016);
         }
@@ -4091,10 +4091,10 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         if (CollUtil.isEmpty(updateDTOList) || !WarehouseManageTypeEnum.THIRD_PARTY.getCode().equals(updateDTOList.get(0).getWarehouseManageType())){
             throw new ServiceException("只允许三方仓类型仓库下推b2b三方发货单");
         }
-        List<SoDetailEntity> soDetailEntityList = soDetailService.listBaseByMainId(soId);
-        soDetailEntityList = soDetailEntityList.stream().filter(e -> (e.getQty() - e.getDeliveryQty()) > 0).collect(Collectors.toList());
+        List<SoDetailEntity> soDetailEntityList = soDetailService.listBaseByMainId(dto.getId());
+        soDetailEntityList = soDetailEntityList.stream().filter(e -> (e.getQty() - e.getDeliveryQty()) > 0 && dto.getSoDetailIds().contains(e.getId())).collect(Collectors.toList());
         if (CollUtil.isEmpty(soDetailEntityList)){
-            throw new ServiceException("订单发货数量已全部下推,不允许再生成三方发货单");
+            throw new ServiceException("订单明细中发货数量已全部下推,不允许再生成三方发货单");
         }
         List<String> skuIds = soDetailEntityList.stream().map(SoDetailEntity::getSkuId).distinct().collect(Collectors.toList());
         List<SkuVO> skuVOS = plmTaskFeign.listSkuProductByIds(skuIds);

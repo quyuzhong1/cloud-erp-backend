@@ -107,7 +107,8 @@ public class FsInstancesServiceImpl implements FsInstancesService {
                             .orderByDesc(ApproveTaskInfoEntity::getCreateTime)
             );
             if (ObjectUtil.isEmpty(one)) {
-                throw new ServiceException("未找到对应的三方审批生成任务信息");
+                log.warn("未找到对应的三方审批生成任务信息，无需消费,thirdInstanceId = {}", jsonObject.getStr(FsRequestBodyAttributesEnum.INSTANCECODE.getCode()));
+                return;
             }
             handleCallbackLogic(jsonObject, statusEnum, one);
         }

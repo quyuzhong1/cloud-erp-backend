@@ -1,21 +1,16 @@
 package com.erp.server.wms.convert;
 
-import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
-import com.erp.model.wms.dto.B2bThirdDeliveryDTO;
-import com.erp.model.wms.dto.B2bThirdDeliveryDetailDTO;
-import com.erp.model.wms.dto.FbaShipmentPackingDTO;
+import com.erp.model.oms.entity.SoDetailEntity;
+import com.erp.model.oms.entity.SoInfoEntity;
+import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.third.ThirdWarehouseCreateFbaOutboundReq;
 import com.erp.model.wms.dto.third.ThirdWarehouseQueryFbaOutboundResponse;
 import com.erp.model.wms.entity.B2bThirdDeliveryDetailEntity;
 import com.erp.model.wms.entity.B2bThirdDeliveryEntity;
-import com.erp.model.wms.entity.FbaShipmentEntity;
-import com.erp.model.wms.entity.FbaShipmentPackingEntity;
 import com.erp.server.wms.convert.tool.TypeConversionWorker;
 import com.sdk.wms.damai.dto.response.DaMaiGetFbaOrderResp;
-import org.codehaus.janino.Java;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
-import org.mapstruct.Mappings;
 import org.mapstruct.factory.Mappers;
 import org.springframework.stereotype.Component;
 
@@ -76,4 +71,45 @@ public interface B2bThirdDeliveryConverter {
     @Mapping(target = "deliveryTimeStr", source = "confirmTime")
     @Mapping(target = "code", source = "custRefNo")
     ThirdWarehouseQueryFbaOutboundResponse toB2bThirdDeliveryQueryDTO(DaMaiGetFbaOrderResp data);
+
+    @Mapping(target = "warehouseKeeperId", ignore = true)
+    @Mapping(target = "warehouseId", source = "entity.deliveryWarehouseId")
+    @Mapping(target = "tradeLabel", ignore = true)
+    @Mapping(target = "sourceType", expression = "java(com.erp.model.scm.enums.ModuleTypeEnum.B2B_THIRD_DELIVERY.getCode())")
+    @Mapping(target = "sourceId", source = "entity.id")
+    @Mapping(target = "sourceCode", source = "entity.code")
+    @Mapping(target = "sellerId", source = "soInfoEntity.sellerId")
+    @Mapping(target = "planDeliveryDate", source = "entity.deliveryTime")
+    @Mapping(target = "packDate", source = "entity.deliveryTime")
+    @Mapping(target = "detailList", ignore = true)
+    @Mapping(target = "customerOrderNo", source = "soInfoEntity.customerOrderNo")
+    @Mapping(target = "customerId", source = "soInfoEntity.customerId")
+    @Mapping(target = "carrierId", ignore = true)
+    @Mapping(target = "billDate", source = "entity.deliveryTime")
+    @Mapping(target = "batchNo", ignore = true)
+    @Mapping(target = "actualDeliveryDate", source = "entity.deliveryTime")
+    @Mapping(target = "remark", constant = "三方仓发货自动生成出销售出库单")
+    SoOutstockDTO.AddDTO toSoOutstockAddDTO(B2bThirdDeliveryEntity entity, SoInfoEntity soInfoEntity);
+
+    @Mapping(target = "platformSubSoCode", ignore = true)
+    @Mapping(target = "warehouseName", source = "entity.deliveryWarehouseName")
+    @Mapping(target = "warehouseId", source = "entity.deliveryWarehouseId")
+    @Mapping(target = "virtualWarehouseId", source = "entity.virtualWarehouseId")
+    @Mapping(target = "platformSoDetailId", ignore = true)
+    @Mapping(target = "platformCode", source = "entity.platformOrderCode")
+    @Mapping(target = "planQty", source = "deliveryDetail.boxQty")
+    @Mapping(target = "historySkuMappingList", ignore = true)
+    @Mapping(target = "attachUrlList", ignore = true)
+    @Mapping(target = "attachNameList", ignore = true)
+    @Mapping(target = "actualQty", source = "deliveryDetail.boxQty")
+    @Mapping(target = "skuId", source = "deliveryDetail.deliverySkuId")
+    @Mapping(target = "skuNo", source = "deliveryDetail.deliverySkuNo")
+    @Mapping(target = "remark", source = "soDetailEntity.remark")
+    @Mapping(target = "sourceDetailId", source = "deliveryDetail.id")
+    @Mapping(target = "soDetailId", source = "soDetailEntity.id")
+    @Mapping(target = "exchangeRate", source = "soDetailEntity.exchangeRate")
+    @Mapping(target = "currency", source = "soDetailEntity.currency")
+    @Mapping(target = "price", expression = "java(com.common.core.utils.MathUtil.multiplyWithFour(soDetailEntity.getPrice(),new java.math.BigDecimal(soDetailEntity.getPerBoxQty())))")
+    @Mapping(target = "amount", source = "soDetailEntity.taxRate")
+    SoOutstockDetailDTO.AddDTO toSoOutstockAddDetailDTO(B2bThirdDeliveryEntity entity, B2bThirdDeliveryDetailEntity deliveryDetail, SoDetailEntity soDetailEntity);
 }

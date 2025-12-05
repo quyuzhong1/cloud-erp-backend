@@ -554,8 +554,8 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
 
     /**
      * 获取B2B三方发货单详情
-     * @param soId
+     * @param dto
      * @return
      */
-    B2bThirdDeliveryDTO.ViewDTO getB2bThirdDeliveryView(String soId);
+    B2bThirdDeliveryDTO.ViewDTO getB2bThirdDeliveryView(B2bThirdDeliveryDTO.ViewQueryDTO dto);
 }

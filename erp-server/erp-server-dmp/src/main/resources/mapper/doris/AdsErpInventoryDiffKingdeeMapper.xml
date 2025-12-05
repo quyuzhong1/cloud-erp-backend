@@ -140,9 +140,9 @@
 
     <select id="statistics" resultType="com.erp.model.dmp.dto.AdsErpInventoryDiffKingdeeDTO$StatisticsDTO">
         SELECT
-            sum(closing_qty) AS closingQty,
-            sum(kingdee_closing_qty) AS kingdeeClosingQty,
-            sum(diff_closing_qty) AS diffClosingQty
+            sum(abs(closing_qty)) AS closingQty,
+            sum(abs(kingdee_closing_qty)) AS kingdeeClosingQty,
+            sum(abs(diff_closing_qty)) AS diffClosingQty
         FROM ads_erp_inventory_diff_kingdee aeidk
         WHERE ${params.sqlMap.default}
         and aeidk.is_deleted = FALSE

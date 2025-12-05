@@ -623,5 +623,9 @@ public class B2bThirdDeliveryDTO implements Serializable {
          * 销售订单id
          */
         private String soId;
+        /**
+         * 销售订单明细id
+         */
+        private List<String> soDetailIds;
     }
 }

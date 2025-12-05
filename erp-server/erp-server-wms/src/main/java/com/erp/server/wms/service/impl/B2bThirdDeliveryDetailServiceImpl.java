@@ -74,6 +74,13 @@ public class B2bThirdDeliveryDetailServiceImpl extends SuperServiceImpl<B2bThird
         return detailEntityList;
     }
 
+    @Override
+    public void deleteByMainIds(List<String> mainIds) {
+        if (CollUtil.isNotEmpty(mainIds)){
+            this.lambdaUpdate().in(B2bThirdDeliveryDetailEntity::getMainId,mainIds).remove();
+        }
+    }
+
     private void deleteByMainId(String id) {
         if (CharSequenceUtil.isNotBlank(id)){
             this.lambdaUpdate().eq(B2bThirdDeliveryDetailEntity::getMainId,id).remove();

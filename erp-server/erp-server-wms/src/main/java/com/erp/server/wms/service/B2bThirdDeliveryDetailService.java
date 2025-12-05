@@ -21,4 +21,10 @@ public interface B2bThirdDeliveryDetailService extends SuperService<B2bThirdDeli
     List<B2bThirdDeliveryDetailEntity> listByMainIds(List<String> ids);
 
     List<B2bThirdDeliveryDetailEntity> batchAdd(String id, List<B2bThirdDeliveryDetailDTO.AddDTO> detailList);
+
+    /**
+     *
+     * @param mainIds
+     */
+    void deleteByMainIds(List<String> mainIds);
 }
