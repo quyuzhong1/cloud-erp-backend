@@ -529,7 +529,6 @@ public class KolB2bApplicationDTO implements Serializable {
         /**
         * 收货国家编码
         */
-        @NotBlank(message = "收货国家编码不能为空")
         @Size(max = 32,message = "收货国家编码最大长度不能超过32位")
         private String countryId;
 

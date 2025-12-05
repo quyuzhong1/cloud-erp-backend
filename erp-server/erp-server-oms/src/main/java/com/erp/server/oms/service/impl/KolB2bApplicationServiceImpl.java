@@ -7,6 +7,7 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
+import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.annotation.DistributeLocker;
@@ -147,7 +148,12 @@ public class KolB2bApplicationServiceImpl extends SuperServiceImpl<KolB2bApplica
 
         //添加明细
         kolB2bApplicationDetailService.add(addDTO.getDetailList(), kolB2bApplicationEntity.getId());
-
+        //保存附件
+        Class<KolB2bApplicationEntity> entityClass = KolB2bApplicationEntity.class;
+        TableName tableName = entityClass.getDeclaredAnnotation(TableName.class);
+        //获取到表名
+        String type = tableName.value();
+        omsAttachmentService.batchSaveOrUpdate(addDTO.getAttachUrlList(), addDTO.getAttachNameList(), type, kolB2bApplicationEntity.getId());
         return new BaseResultDTO.AddDTO(kolB2bApplicationEntity.getId(), code);
     }
 
