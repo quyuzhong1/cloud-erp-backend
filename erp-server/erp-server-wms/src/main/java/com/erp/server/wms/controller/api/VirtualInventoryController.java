@@ -17,10 +17,7 @@ import com.erp.server.wms.service.VirtualInventoryService;
 import com.erp.server.wms.service.VirtualTransFlowService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.util.List;
@@ -123,4 +120,16 @@ public class VirtualInventoryController extends BaseController {
     }
 
 
+    /**
+     * 查询实体仓、虚拟仓可用库存
+     * @author will
+     * @date 2025/12/5 09:34
+     * @param dto
+     * @return ApiResult<List<AllInventoryDTO>>
+     */
+    @GetMapping("/getAllUseInventory")
+    public ApiResult<VirtualInventoryDTO.AllInventoryDTO> getAllUseInventory(@RequestBody @Validated VirtualInventoryDTO.AllInventoryParamDTO dto){
+        VirtualInventoryDTO.AllInventoryDTO resultDTO = virtualInventoryService.getAllUseInventory(dto);
+        return success(resultDTO);
+    }
 }
