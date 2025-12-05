@@ -40,6 +40,7 @@
         <!-- 嵌套 Compare 列表 -->
         <collection property="channelDTOList" ofType="com.erp.model.tms.dto.LogisticsChannelDTO$WarehouseChannelDTO$ChannelDTO">
             <result property="platformLogisticsChannelId" column="id"/>
+            <result property="platformLogisticsChannelCode" column="code"/>
             <result property="platformLogisticsChannelName" column="name"/>
         </collection>
     </resultMap>
@@ -338,7 +339,7 @@
 
     <select id="listWarehouseChannel"
             resultMap="warehouseChannelMap">
-        SELECT   lcw.overseas_warehouse_id,lc.id,lc.name
+        SELECT   lcw.overseas_warehouse_id,lc.id,lc.name,lc.code
         from logistics_channel lc
                  inner join logistics_supplier ls on ls.id = lc.main_id
                  inner join logistics_warehouse lcw on ls.id = lcw.main_id
