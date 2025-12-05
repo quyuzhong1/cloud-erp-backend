@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
@@ -635,7 +636,27 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
 
     @Override
     public VirtualInventoryDTO.AllInventoryDTO getAllUseInventory(VirtualInventoryDTO.AllInventoryParamDTO dto) {
-        return new VirtualInventoryDTO.AllInventoryDTO();
+        VirtualInventoryDTO.AllInventoryDTO allInventoryDTO = new VirtualInventoryDTO.AllInventoryDTO();
+        BeanUtil.copyProperties(dto,allInventoryDTO);
+        //实体仓库存
+        Integer usableInventoryTotal = inventoryService.getUsableInventoryTotal(dto.getWarehouseId(), dto.getSkuId());
+        allInventoryDTO.setUsableQty(usableInventoryTotal);
+        //虚拟仓id
+        String virtualWarehouseId = handleVirtualWarehouse(dto.getCustomerId(), dto.getWarehouseId());
+        VirtualWarehouseEntity virtualWarehouseEntity = virtualWarehouseService.getById(virtualWarehouseId);
+        if (ObjectUtil.isEmpty(virtualWarehouseEntity)) {
+            return allInventoryDTO;
+        }
+        allInventoryDTO.setVirtualWarehouseId(virtualWarehouseId);
+        VirtualInventoryDTO.ParamDTO params = new VirtualInventoryDTO.ParamDTO();
+        params.setSkuIdList(Collections.singletonList(allInventoryDTO.getSkuId()));
+        params.setWarehouseIdList(Collections.singletonList(allInventoryDTO.getWarehouseId()));
+        params.setVirtualWarehouseIdList(Collections.singletonList(allInventoryDTO.getVirtualWarehouseId()));
+        List<VirtualInventoryDTO.ViewQtyDTO> usableQtyList = baseMapper.getUsableQty(params);
+        if (CollUtil.isNotEmpty(usableQtyList)) {
+            allInventoryDTO.setVirtualUsableQty(usableQtyList.get(0).getToVirtualWarehouseUsableQty());
+        }
+        return allInventoryDTO;
     }
     /**
      * 查询虚拟仓库
