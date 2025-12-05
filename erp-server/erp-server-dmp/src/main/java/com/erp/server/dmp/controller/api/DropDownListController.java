@@ -40,7 +40,7 @@ public class DropDownListController extends BaseController {
     public ApiResult<List<BaseDropDownDTO.CommonDTO>> list(@RequestParam("key") String key) {
         List<DictBasicDTO.ViewDTO> list = dictBasicService.getByKey(key);
         List<BaseDropDownDTO.CommonDTO> result = list.stream()
-                .map(x -> new BaseDropDownDTO.CommonDTO(x.getValue(), x.getName()))
+                .map(x -> new BaseDropDownDTO.CommonDTO(x.getValue(), x.getName() , x.getRemark()))
                 .collect(Collectors.toList());
         return success(result);
     }

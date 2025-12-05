@@ -54,6 +54,7 @@ public class DmpInputAmzFulFillOrderDmpHandler extends DmpInputDbConvertDmpHandl
                         FulfillmentShipmentPackageList fulfillmentShipmentPackage = fulfillmentShipment.getFulfillmentShipmentPackage();
                         if (CollUtil.isNotEmpty(fulfillmentShipmentPackage)){
                             dmpDataMap.put("trackNo", fulfillmentShipmentPackage.get(0).getTrackingNumber());
+                            dmpDataMap.put("channelCode", fulfillmentShipmentPackage.get(0).getCarrierCode());
                         }
                     }
                 }

@@ -986,17 +986,6 @@ public class FullyManagedOrderController extends BaseController {
     }
 
 
-    /**
-     * 不出库发货
-     * @param dto
-     * @return
-     */
-    @PostMapping("/deliveryWithNotOutbound")
-    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "不出库发货")
-    public ApiResult<List<BatchResultDTO>> deliveryWithNotOutbound(@RequestBody @Validated List<SoB2cDTO.DeliveryWithNotOutboundDTO> dto) {
-        List<BatchResultDTO> resultDTOS = soB2cService.deliveryWithNotOutbound(dto);
-        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
-    }
 
     /**
      * 捆绑拆分信息

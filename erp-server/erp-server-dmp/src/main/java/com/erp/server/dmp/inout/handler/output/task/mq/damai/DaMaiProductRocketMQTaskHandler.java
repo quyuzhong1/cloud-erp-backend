@@ -111,7 +111,7 @@ public class DaMaiProductRocketMQTaskHandler extends DmpOutputRocketMQTaskHandle
     	product.setMatchResult(false);
     	product.setPlatform(sourcePlatform);
     	product.setAuthId(dmpProductInfoEntity.getAuthId());
-    	product.setPlatformProductBarcode(dmpSkuInfoEntity.getSkuId());
+    	product.setPlatformProductBarcode(dmpProductInfoEntity.getSpuNo());
 
         return product;
     }

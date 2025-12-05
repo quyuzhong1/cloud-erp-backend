@@ -567,4 +567,12 @@ public class ThirdWarehouseDeliveryServiceImpl extends SuperServiceImpl<ThirdWar
         detailService.removeByMainIds(Collections.singletonList(id));
     }
 
+    @Override
+    public List<ThirdWarehouseDeliveryEntity> listBySourceId(List<String> sourceIds) {
+        if(CollectionUtils.isEmpty(sourceIds)){
+            return new ArrayList<>();
+        }
+        return this.lambdaQuery().in(ThirdWarehouseDeliveryEntity::getSoId, sourceIds).list();
+    }
+
 }

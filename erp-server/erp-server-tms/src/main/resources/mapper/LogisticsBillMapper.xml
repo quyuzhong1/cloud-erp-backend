@@ -79,13 +79,12 @@
         FROM  logistics_bill lb
         LEFT JOIN  logistics_bill_detail lbd ON lbd.main_id=lb.id and (lbd.is_deleted=false or lbd.is_deleted is null)
         LEFT JOIN  logistics_channel lc ON lc.id=lb.channel_id and lc.is_deleted=false
-        <where>
+        where
             ${params.sqlMap.default}
             and lb.is_deleted=false and lb.order_type in ('B2B','B2C','AfterSale')
             <if test="params.permissionSql!=null and params.permissionSql!=''">
                 ${params.permissionSql}
             </if>
-        </where>
         ORDER BY
         <if test="params.sortList != null and params.sortList.size > 0">
             <foreach collection="params.sortList" item="item" separator="," close=",">

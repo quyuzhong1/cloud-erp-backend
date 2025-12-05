@@ -227,7 +227,9 @@ public class WeiShiHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     protected ApiResult<String> queryOutboundBill(@Valid ThirdWarehouseQueryOutboundReq queryOutboundReq){
         WeiShiGetOutboundRequest weiShiGetOutboundRequest = new WeiShiGetOutboundRequest();
         weiShiGetOutboundRequest.setReferNo(queryOutboundReq.getErpOrderCode());
+        log.warn(getPlatForm().getName()+"查询出库单请求:{}", JSONUtil.toJsonStr(weiShiGetOutboundRequest));
         WeiShiBaseResp<WeiShiOutboundResp> resp = weiShiService.getOutbound(weiShiGetOutboundRequest, ThirdWarehouseContext.getAuthMap());
+        log.warn(getPlatForm().getName()+"查询出库单结果:{}", JSONUtil.toJsonStr(resp));
         if (null == resp || resp.getData() == null) {
             throw new ServiceException("纬狮获取出库单数据失败: 响应结果为空");
         }

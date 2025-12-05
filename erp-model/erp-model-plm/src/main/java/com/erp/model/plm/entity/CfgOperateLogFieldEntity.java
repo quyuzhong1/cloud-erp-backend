@@ -47,4 +47,7 @@ public class CfgOperateLogFieldEntity extends BaseEntity<CfgOperateLogFieldEntit
      * 枚举类
      */
     private String enumClass;
+
+    @TableField("value")
+    private String value;
 }

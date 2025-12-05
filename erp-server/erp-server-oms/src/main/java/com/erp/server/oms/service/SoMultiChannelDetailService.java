@@ -46,4 +46,6 @@ public interface SoMultiChannelDetailService extends SuperService<SoMultiChannel
     List<SoMultiChannelDetailEntity> listByMainIds(List<String> ids);
 
     void removeByMainId(String id);
+
+    void updateDetail(SoMultiChannelEntity soMultiChannelEntity, List<SoMultiChannelDetailDTO.UpdateDTO> detailList);
 }

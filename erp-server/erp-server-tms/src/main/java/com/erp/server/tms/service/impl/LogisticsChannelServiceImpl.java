@@ -5,6 +5,7 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -692,20 +693,6 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
             }
         }
         String code = logisticsChannelEntity.getCode();
-        if (StringUtils.isNotBlank(code)) {
-            LogisticsAuthEntity auth = logisticsAuthService.getByMainId("", mainId);
-            String platform = Objects.nonNull(auth) ? auth.getLogisticsPlatform() : "";
-            //根据销售平台和渠道code 获取到原生的渠道
-            LogisticsSaleChannelEntity saleChannel = logisticsSaleChannelService.getByPlatform(platform, code);
-            if (Objects.isNull(saleChannel) && !LogisticsPlatformEnum.MERCADOLIBRE.getCode().equals(platform)
-                    && !LogisticsPlatformEnum.MERCADOLIBRE_LOCAL.getCode().equals(platform)
-                    && !LogisticsPlatformEnum.TIK_TOK_FULLY.getCode().equals(platform)
-                    && !LogisticsPlatformEnum.CAINIAO.getCode().equals(platform)
-                    && !LogisticsPlatformEnum.WILDBERRIES.getCode().equals(platform)
-                    && !LogisticsPlatformEnum.AMZ_MULTI_CHANNEL.getCode().equals(platform)) {
-                throw new ServiceException(ApiError.ERROR_SALES_CHANNEL_NOT_EXIST, logisticsChannelEntity.getName());
-            }
-        }
         //设置默认值
         String trackQueryType = logisticsChannelEntity.getTrackQueryType();
         if (StringUtils.isBlank(trackQueryType) && StringUtils.isBlank(logisticsChannelEntity.getId())){
@@ -942,6 +929,14 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
     }
 
     @Override
+    public List<LogisticsChannelEntity> getChannelByCode(String channelCode) {
+        if (StringUtils.isBlank(channelCode)){
+            return Collections.emptyList();
+        }
+        return baseMapper.selectList(new LambdaQueryWrapper<LogisticsChannelEntity>().eq(LogisticsChannelEntity::getCode,channelCode));
+    }
+
+    @Override
     public List<DictBasicDTO.DropDownDTO> getByPlatformWarehouseAndType(LogisticsChannelDTO.PlatformWarehouseDTO dto) {
         return baseMapper.getByPlatformWarehouseAndType(dto);
     }
@@ -955,6 +950,14 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
                 .eq(LogisticsSaleChannelEntity::getOverseasWarehouseId,transferWarehouseId)
                 .last(SqlConstants.LIMIT_1)
                 .one();
+    }
+
+    @Override
+    public LogisticsChannelDTO.BaseDTO getChannelByCodeAndPlatform(String channelCode, String logisticsPlatform) {
+        if (CharSequenceUtil.isEmpty(channelCode) || CharSequenceUtil.isEmpty(logisticsPlatform)){
+            throw new ServiceException("渠道编码和物流类型不能为空");
+        }
+        return baseMapper.getChannelByCodeAndPlatform(channelCode,logisticsPlatform);
     }
 
     @Override

@@ -1,5 +1,6 @@
 package com.erp.model.oms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.core.anno.RegularValid;
 import com.common.core.anno.StateEnumValue;
 import com.common.core.enums.FieldFormatPatternTypeEnum;
@@ -89,7 +90,11 @@ public class CustomerAddressDTO implements Serializable {
         @Size(max = 200, message = "联系地址备注最大200字符")
         private String remark;
 
-
+        /**
+         * 国家id
+         */
+        @NotBlank(message = "国家不能为空")
+        private String countryId;
     }
 
     /**
@@ -154,6 +159,13 @@ public class CustomerAddressDTO implements Serializable {
          * 备注
          */
         private String remark;
-
+        /**
+         * 国家id
+         */
+        private String countryId;
+        /**
+         * 国家名称
+         */
+        private String countryName;
     }
 }

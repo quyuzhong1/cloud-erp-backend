@@ -4,6 +4,7 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
@@ -1462,6 +1463,9 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
             save(entity);
             entities.forEach(v -> v.setActualQty(v.getQty()));
             pickingDetailService.saveBatch(entities);
+            //记录日志
+            String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "拣货单" , entity.getCode());
+            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.PICKING_LISTS.getCode(), soB2cDeliveryEntity.getId(), "新增操作");
         }
         return new ArrayList<>(resultData.getSecond().keySet());
     }

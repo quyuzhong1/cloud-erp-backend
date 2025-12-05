@@ -226,6 +226,7 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
                     detail.setSkuId(item.getSkuId());
                     detail.setSourceDetailId(item.getSourceDetailId());
                     detail.setSkuNo(item.getSkuNo());
+                    detail.setUnitName(item.getUnitName());
                     Integer planQty = item.getPlanQty();
                     String sourceDetailId = item.getSourceDetailId();
                     Integer outQty = outDetailList.stream().filter(o -> o.getId().equals(sourceDetailId)).findFirst().
