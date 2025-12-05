@@ -29,6 +29,14 @@ import java.util.Map;
 @NoArgsConstructor
 public class PackingTaskDTO implements Serializable {
 
+    /**
+     * 详情
+     */
+    @Data
+    @NoArgsConstructor
+    public static class CustomerPoDTO {
+        private List<String> customerPoList;
+    }
 
 
 
@@ -286,6 +294,10 @@ public class PackingTaskDTO implements Serializable {
          * 关联单号
          */
         private String sourceCode;
+        /**
+         * 动态数据源
+         */
+        private String dynamicDataSource;
     }
 
     /**
@@ -390,6 +402,9 @@ public class PackingTaskDTO implements Serializable {
         private String skuId;
         private String skuNo;
         private String fnSku;
+
+
+        private String customerPO;
         /**
          * 发货数量
          */

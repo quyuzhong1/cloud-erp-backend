@@ -134,6 +134,7 @@ public class SoDetailExcelListener extends AnalysisEventListener<SoDetailImportE
         addDTO.setSkuId(sku.getSkuId());
         addDTO.setProductName(sku.getSkuName());
         addDTO.setUnit(sku.getUnitName());
+        addDTO.setUnitName(sku.getUnitName());
         //销售数量
         String qty = soDetailImportExcelDTO.getQty();
         addDTO.setQty(Integer.valueOf(qty));

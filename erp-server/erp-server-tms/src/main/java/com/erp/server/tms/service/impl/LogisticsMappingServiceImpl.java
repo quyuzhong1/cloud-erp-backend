@@ -7,6 +7,7 @@ import com.common.core.constant.SqlConstants;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.tms.dto.LogisticsMappingDTO;
+import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.tms.entity.LogisticsMappingEntity;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.tms.enums.LogisticsMappingTypeEnum;
@@ -81,6 +82,11 @@ public class LogisticsMappingServiceImpl extends SuperServiceImpl<LogisticsMappi
     public List<LogisticsMappingDTO.ViewDTO> listByChannelIdAndType(String channelId, String type) {
         List<LogisticsMappingEntity> dbList = this.listDbByChannelIdAndType(channelId, type);
         return BeanMapperUtils.copyList(LogisticsMappingDTO.ViewDTO.class, dbList);
+    }
+    @Override
+    public List<LogisticsMappingDTO.ViewDTO> listByChannelIdsAndType(List<String> channelIdList, String type) {
+        List<LogisticsMappingEntity> list = this.lambdaQuery().in(LogisticsMappingEntity::getLogisticsChannelId, channelIdList).eq(LogisticsMappingEntity::getType,type).list();
+        return BeanMapperUtils.copyList(LogisticsMappingDTO.ViewDTO.class, list);
     }
 
     @Override

@@ -214,4 +214,12 @@ public class SoB2cDeliveryFeignController extends BaseController {
     public Map<String,String> getDeliveryCodeBySourceId(@RequestParam("sourceIds") List<String> sourceIds){
         return soB2cDeliveryService.getDeliveryCodeBySourceId(sourceIds);
     }
+    /**
+     * 自动反审核并删除发货单
+     * @param id
+     */
+    @GetMapping("/deleteSoB2cDelivery")
+    public void deleteSoB2cDelivery(@RequestParam(value = "id") String id){
+        soB2cDeliveryService.deleteSoB2cDelivery(id);
+    }
 }

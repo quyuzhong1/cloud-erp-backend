@@ -8,6 +8,7 @@ import java.io.Serializable;
 import com.erp.model.dmp.enums.SettingEnum;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
 
 
@@ -23,6 +24,7 @@ import lombok.experimental.Accessors;
 @EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
 @TableName("cfg_setting")
+@NoArgsConstructor
 public class CfgSettingEntity extends BaseEntity<CfgSettingEntity> {
 
 

@@ -1,5 +1,6 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
@@ -21,18 +22,23 @@ import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
+import com.erp.model.oms.entity.SoB2cLogisticsEntity;
+import com.erp.model.oms.entity.SoMultiChannelEntity;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.oms.enums.TransferStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.LogisticsBillDTO;
+import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.tms.entity.TransferDeclareDetailEntity;
 import com.erp.model.tms.enums.TransferDeclareUploadStatusEnum;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 import com.erp.model.wms.enums.ShipmentMarkTypeEnum;
 import com.erp.model.wms.enums.SoB2cDeliveryStatusEnum;
 import com.erp.rpc.oms.feign.SoB2cFeign;
+import com.erp.rpc.oms.feign.SoMultiChannelFeign;
 import com.erp.rpc.tms.feign.LogisticsBillFeign;
+import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.rpc.tms.feign.TransferDeclareFeign;
 import com.erp.server.wms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -48,6 +54,7 @@ import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -65,6 +72,8 @@ public class AsyncServiceImpl implements AsyncService {
 
     @Resource
     private LogisticsBillFeign logisticsBillFeign;
+    @Resource
+    private LogisticsFeign logisticsFeign;
 
     @Resource
     private TransferDeclareFeign transferDeclareFeign;
@@ -83,6 +92,8 @@ public class AsyncServiceImpl implements AsyncService {
     @Resource
     @Lazy
     private AsyncService asyncService;
+    @Resource
+    private SoMultiChannelFeign soMultiChannelFeign;
 
     @Async("wmsErpExecutor")
     @Override
@@ -152,6 +163,8 @@ public class AsyncServiceImpl implements AsyncService {
             log.warn("【{}】销售单【{}】 本单已标记发货忽略 >>>提交平台唯一key:{}", dictPlatform, soId, submitPlatformUniqueKey);
             return detailEntityList.stream().map(BaseEntity::getId).collect(Collectors.toList());
         }
+        //判断是否多渠道订单 是则更新多渠道订单物流信息
+        checkSoMultiChannel(soId);
         PlatformShipOrderDTO platformShipOrderDTO = new PlatformShipOrderDTO();
         platformShipOrderDTO.setSoB2cId(soId);
         platformShipOrderDTO.setDictPlatform(dictPlatform);
@@ -162,6 +175,37 @@ public class AsyncServiceImpl implements AsyncService {
         //更新销售明细标识
         soB2cFeign.updateSignShippedByDetailId(detailIds);
         return detailIds;
+    }
+
+    /**
+     * 如果未配置，订单标发时记录标记发货异常-未配置亚马逊物流渠道，重试时需要根据多渠道订单的编码重新匹配渠道更新订单渠道并标发
+     * @param soId
+     */
+    private void checkSoMultiChannel(String soId) {
+        SoMultiChannelEntity soMultiChannelEntity = soMultiChannelFeign.getBySoId(soId);
+        if (ObjectUtil.isEmpty(soMultiChannelEntity)){
+            return;
+        }
+        if (CharSequenceUtil.isNotBlank(soMultiChannelEntity.getPlatformChannelCode())){
+            List<LogisticsChannelEntity> channeList = logisticsFeign.getChannelByCode(soMultiChannelEntity.getPlatformChannelCode());
+            if (CollectionUtils.isEmpty(channeList)){
+                throw new ServiceException("未配置亚马逊物流渠道【{}】",soMultiChannelEntity.getPlatformChannelCode());
+            }else {
+                LogisticsChannelEntity logisticsChannelEntity = channeList.get(0);
+                if (!Objects.equals(logisticsChannelEntity.getId(),soMultiChannelEntity.getLogisticsChannelId())){
+                    soMultiChannelEntity.setLogisticsChannelId(logisticsChannelEntity.getId());
+                    soMultiChannelEntity.setLogisticsChannelName(logisticsChannelEntity.getName());
+                    soMultiChannelFeign.updateSoMultiChannelById(soMultiChannelEntity);
+                }
+                List<SoB2cLogisticsEntity> soB2cLogisticsEntityList = soB2cFeign.listSoB2cLogisticsByMainIdList(Collections.singletonList(soId));
+                if (CollUtil.isNotEmpty(soB2cLogisticsEntityList) && !soB2cLogisticsEntityList.get(0).getLogisticsChannelId().equals(logisticsChannelEntity.getId())){
+                    SoB2cLogisticsEntity soB2cLogisticsEntity = soB2cLogisticsEntityList.get(0);
+                    soB2cLogisticsEntity.setLogisticsChannelId(logisticsChannelEntity.getId());
+                    soB2cLogisticsEntity.setLogisticsChannelName(logisticsChannelEntity.getName());
+                    soB2cFeign.batchUpdateLogistics(Collections.singletonList(soB2cLogisticsEntity));
+                }
+            }
+        }
     }
 
     /**

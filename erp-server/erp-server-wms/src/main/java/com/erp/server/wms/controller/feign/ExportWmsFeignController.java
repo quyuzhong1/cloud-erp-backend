@@ -566,7 +566,7 @@ public class ExportWmsFeignController {
 
     @WebAdvanceQuery(handler = PackingTaskQueryHandler.class)
     public PagingVO<PackingTaskDTO.PagingViewDTO> exportPackingTask(@RequestBody PagingDTO<PackingTaskDTO.PagingParamDTO> dto) {
-        return packingTaskService.exportPackingTask(dto);
+        return packingTaskService.paging(dto);
     }
 
     @PostMapping("/pickingLists")

@@ -24,8 +24,8 @@ public class DaMaiServiceTest {
 
     private final Map<String,Object> authMap = new HashMap<>();
     {
-        authMap.put("appToken","5cdf2a88fc91cbc2c7befa959a6f0c0a");
-        authMap.put("appKey","68cb7beaeaf5f3caac5bba16a632ca13");
+        authMap.put("appToken","38e59081a77c4f5738f6c1677a92b5d2");
+        authMap.put("appKey","155f24d37dfc1988cbab0f52e6294e57");
     }
 
     @Resource
@@ -178,7 +178,7 @@ public class DaMaiServiceTest {
     @Test
     public void getOrderList() {
         DaMaiGetOrderRequest daMaiCancelOrderRequest = new DaMaiGetOrderRequest();
-        daMaiCancelOrderRequest.setCustRefNoList(Arrays.asList("XTT54"));
+        daMaiCancelOrderRequest.setCustRefNoList(Arrays.asList("WFHD25102507039"));
         DaMaiBaseResp<List<DaMaiGetOrderResp>>  resp = daMaiService.getOrderList(authMap,daMaiCancelOrderRequest);
         System.out.println(JSONUtil.toJsonStr(resp));
     }
