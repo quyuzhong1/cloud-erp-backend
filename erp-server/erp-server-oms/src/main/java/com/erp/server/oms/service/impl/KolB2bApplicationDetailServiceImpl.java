@@ -137,7 +137,7 @@ public class KolB2bApplicationDetailServiceImpl extends SuperServiceImpl<KolB2bA
         for (KolB2bApplicationDetailEntity entity : list ) {
             //赋值sku编码
             entity.setSkuNo(skuMap.get(entity.getSkuId()));
-
+            entity.setMainId(mainId);
             //操作日志
             if (CharSequenceUtil.isNotBlank(entity.getId())) {
                 KolB2bApplicationDetailEntity old = this.getById(entity.getId());

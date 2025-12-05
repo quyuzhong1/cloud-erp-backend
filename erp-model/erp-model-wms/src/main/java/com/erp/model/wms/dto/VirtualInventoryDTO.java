@@ -700,4 +700,54 @@ public class VirtualInventoryDTO implements Serializable {
          */
         private Integer qty;
     }
+
+    @Data
+    @NoArgsConstructor
+    public static class AllInventoryParamDTO {
+        /**
+         * skuId
+         */
+        @NotBlank(message = "SKU不能为空")
+        private String skuId;
+        /**
+         * 仓库id
+         */
+        @NotBlank(message = "仓库不能为空")
+        private String warehouseId;
+        /**
+         * 客户Id
+         */
+        @NotBlank(message = "客户不能为空")
+        private String customerId;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class AllInventoryDTO {
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
+        /**
+         * 客户id
+         */
+        private String customerId;
+        /**
+         * 实体仓可用
+         */
+        private Integer usableQty;
+        /**
+         * 虚拟仓id
+         */
+        private String virtualWarehouseId;
+        /**
+         * 虚拟仓可用
+         */
+        private Integer virtualUsableQty;
+
+    }
 }

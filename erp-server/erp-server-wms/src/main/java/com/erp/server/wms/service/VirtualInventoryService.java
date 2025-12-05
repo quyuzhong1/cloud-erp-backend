@@ -9,7 +9,6 @@ import com.erp.model.scm.entity.SupplierRefWarehouseEntity;
 import com.erp.model.wms.dto.SupplierInventoryDTO;
 import com.erp.model.wms.dto.VirtualInventoryDTO;
 import com.erp.model.wms.entity.VirtualInventoryEntity;
-import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 
@@ -167,4 +166,12 @@ public interface VirtualInventoryService extends SuperService<VirtualInventoryEn
      * @return IPage<ListDTO>
      */
     IPage<SupplierInventoryDTO.ListDTO> supplierInventoryPaging(Page query, SupplierInventoryDTO.PagingParamDTO params, List<SupplierRefWarehouseEntity> supplierRefWarehouseList);
+    /**
+     * 查询实体仓、虚拟仓可用库存
+     * @author will
+     * @date 2025/12/5 09:34
+     * @param dto
+     * @return List<AllInventoryDTO>
+     */
+    VirtualInventoryDTO.AllInventoryDTO getAllUseInventory(VirtualInventoryDTO.AllInventoryParamDTO dto);
 }
