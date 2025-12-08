@@ -218,6 +218,7 @@ public class B2bThirdDeliveryDTO implements Serializable {
         /**
          * 附件
          */
+        @Size(max = 1,message = "附件最大数量不能超过1个")
         private List<AttachDTO> attachList;
     }
 
