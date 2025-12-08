@@ -886,7 +886,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         //有效发货通知单
         List<String> sodIdList = list.stream().map(SoInfoDTO.PagingViewDTO::getDetailId).collect(Collectors.toList());
         List<SoDeliveryNoticeDetailEntity> soDeliveryNoticeDetailList = soDeliveryNoticeFeign.listDetailBySourceDetailIds(sodIdList);
-        List<String> skuIdList = list.stream().map(SoInfoDTO.PagingViewDTO::getSkuId).distinct().collect(Collectors.toList());
+        List<String> skuIdList = list.stream().map(SoInfoDTO.PagingViewDTO::getDeliverySkuId).distinct().collect(Collectors.toList());
         List<String> warehouseIdList = list.stream().map(SoInfoDTO.PagingViewDTO::getWarehouseId).collect(Collectors.toList());
 
         //根据SKU查询BOM判断是否是组合SKU
@@ -1017,6 +1017,9 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 //虚拟仓缺货按bom处理
                 SoInfoDTO.VirtuaParamScarceDTO virtuaParamScarceDTO = new SoInfoDTO.VirtuaParamScarceDTO();
                 BeanMapperUtils.copy(item,virtuaParamScarceDTO);
+                virtuaParamScarceDTO.setSkuId(item.getDeliverySkuId());
+                virtuaParamScarceDTO.setSkuNo(item.getDeliverySkuNo());
+                virtuaParamScarceDTO.setQty(item.getBoxQty());
                 handleVirtualBomScarce(bomChildrenList, virtualInventoryList, virtuaParamScarceDTO,approveNoticeQty);
                 item.setVirtualUsableQty(virtuaParamScarceDTO.getVirtualUsableQty());
                 item.setChildScarceList(virtuaParamScarceDTO.getChildScarceList());
@@ -1034,9 +1037,9 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             String customerName = customerList.stream().filter(c -> c.getId().equals(item.getCustomerId())).findFirst().
                     flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
             item.setCustomerName(customerName);
-            String skuId = item.getSkuId();
+            String skuId = item.getDeliverySkuId();
             //销售数量
-            Integer qty = item.getQty();
+            Integer qty = item.getBoxQty();
 
             //即时库存
             Integer curInventoryQty = skuInventoryTotalList.stream().filter(
@@ -1077,10 +1080,11 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             //发货通知数量
             if (CollectionUtils.isNotEmpty(soDeliveryNoticeDetailList)) {
                 Integer effectiveNoticeQty = soDeliveryNoticeDetailList.stream().filter(obj -> obj.getSourceDetailId().equals(item.getDetailId())).map(SoDeliveryNoticeDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
+                effectiveNoticeQty = effectiveNoticeQty * item.getPerBoxQty();
                 item.setEffectiveNoticeQty(effectiveNoticeQty);
 
                 //剩余发货通知数量 = 销售数量 - 发货通知数量
-                Integer remainingNoticeQty = qty - effectiveNoticeQty;
+                Integer remainingNoticeQty = item.getQty() - effectiveNoticeQty;
                 item.setRemainingNoticeQty(remainingNoticeQty > 0 ? remainingNoticeQty : 0);
             }
 
@@ -1094,13 +1098,13 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
              * 总共已发货数量同步
              *
              */
-            Integer deliveryQty = item.getDeliveryQty();
+            Integer deliveryQty = item.getDeliveryQty() * item.getPerBoxQty();
 
             /**
              * 剩余数量
              * 销售数量-已出库数量
              */
-            Integer waitQty = qty > deliveryQty ? qty - deliveryQty : 0;
+            Integer waitQty = item.getQty() > deliveryQty  ? item.getQty() - deliveryQty : 0;
             //sku若关闭则等于0
             if(Boolean.TRUE.equals(item.getIsClose())){
                 waitQty = 0;
@@ -1162,7 +1166,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             }
 
             if (ignoreInventorySkuIds.contains(skuId)) {
-                log.warn("sku id: {}，sku编号：{}产品属性是费用或服务，不参与库存出入库，不做库存验证", skuId, item.getSkuNo());
+                log.warn("sku id: {}，sku编号：{}产品属性是费用或服务，不参与库存出入库，不做库存验证", skuId, item.getDeliverySkuNo());
                 item.setIsScarce(Boolean.FALSE);
                 item.setScarceQty(0);
             }
@@ -4787,7 +4791,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             //产品名称
             String productName = productDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), soDetailEntity.getDeliverySkuId())).map(ProductDetailEntity::getName).findFirst().orElse("");
             batchLockDTO.setProductName(productName);
-            batchLockDTO.setQty(soDetailEntity.getDeliveryQty());
+            batchLockDTO.setQty(soDetailEntity.getBoxQty());
             batchLockDTO.setFrozenQty(soDetailEntity.getFrozenQty());
             //销售通知单
             Integer totalNoticeQty = soDeliveryNoticeDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSourceDetailId(), soDetailEntity.getId())
@@ -4806,7 +4810,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             BeanMapperUtils.copy(soDetailEntity,paramScarceDTO);
             paramScarceDTO.setSkuId(soDetailEntity.getDeliverySkuId());
             paramScarceDTO.setSkuNo(soDetailEntity.getDeliverySkuNo());
-            paramScarceDTO.setQty(soDetailEntity.getDeliveryQty());
+            paramScarceDTO.setQty(soDetailEntity.getBoxQty());
             paramScarceDTO.setWarehouseId(soInfoEntity.getWarehouseId());
             paramScarceDTO.setVirtualWarehouseId(soInfoEntity.getVirtualWarehouseId());
             //虚拟仓bom库存
@@ -4816,7 +4820,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             batchLockDTO.setIsCombination(paramScarceDTO.getIsCombination());
 
             //Min 【（销售数量 - 发货通知单数量 - 当前锁定数量），虚拟仓可用库存】
-            Integer unFrozenQty = soDetailEntity.getQty() - totalNoticeQty - soDetailEntity.getFrozenQty();
+            Integer unFrozenQty = soDetailEntity.getBoxQty() - totalNoticeQty - soDetailEntity.getFrozenQty();
             Integer toFrozenQty = batchLockDTO.getVirtualUsableQty() > unFrozenQty ? unFrozenQty : batchLockDTO.getVirtualUsableQty();
             batchLockDTO.setToFrozenQty(toFrozenQty + soDetailEntity.getFrozenQty());
             batchLockDTO.setVirtualScarceQty(ObjectUtil.isEmpty(paramScarceDTO.getVirtualScarceQty()) ? MathUtil.ZERO : paramScarceDTO.getVirtualScarceQty());
