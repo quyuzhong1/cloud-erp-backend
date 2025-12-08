@@ -54,6 +54,7 @@ import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.tms.listener.FirstMileCostChangeExcelListener;
 import com.erp.server.tms.mapper.FirstMileCostAllocationMapper;
 import com.erp.server.tms.service.*;
+import com.xxl.job.core.context.XxlJobHelper;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -407,16 +408,36 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
         reconciliationDetailEntityList.forEach(e -> {
             List<LogisticsBillCostDTO.CostDetailDTO> collect = costDetailDTOS.stream().filter(f -> e.getSourceId().equals(f.getLogisticsBillId()) && e.getMainId().equals(f.getReconciliationId())).collect(Collectors.toList());
             e.setShippingCostCurrency(CurrencyEnum.CNY.getCurrencyCode());
-            e.setShippingCost(collect.stream().filter(f -> f.getDictCostCategory().equals(AllocationFeeTypeEnum.SHIPPING_COST.getCode()) && f.getIsAllocate()).map(f -> MathUtil.multiplyWithFour(f.getCostValue(),f.getExchangeRate())).reduce(BigDecimal.ZERO,BigDecimal::add));
+            e.setShippingCost(collect.stream().filter(f -> f.getDictCostCategory().equals(AllocationFeeTypeEnum.SHIPPING_COST.getCode()) && f.getIsAllocate()).map(f -> MathUtil.multiplyWithFour(f.getCostValue(),getExchangeRate(e.getReconciliationMonth(), f.getCurrency()))).reduce(BigDecimal.ZERO,BigDecimal::add));
             e.setDeclareCostCurrency(CurrencyEnum.CNY.getCurrencyCode());
-            e.setDeclareCost(collect.stream().filter(f -> f.getDictCostCategory().equals(AllocationFeeTypeEnum.DECLARE_COST.getCode()) && f.getIsAllocate()).map(f -> MathUtil.multiplyWithFour(f.getCostValue(),f.getExchangeRate())).reduce(BigDecimal.ZERO,BigDecimal::add));
+            e.setDeclareCost(collect.stream().filter(f -> f.getDictCostCategory().equals(AllocationFeeTypeEnum.DECLARE_COST.getCode()) && f.getIsAllocate()).map(f -> MathUtil.multiplyWithFour(f.getCostValue(),getExchangeRate(e.getReconciliationMonth(), f.getCurrency()))).reduce(BigDecimal.ZERO,BigDecimal::add));
             e.setOtherCostCurrency(CurrencyEnum.CNY.getCurrencyCode());
-            e.setOtherCost(collect.stream().filter(f -> f.getDictCostCategory().equals(AllocationFeeTypeEnum.OTHER_COST.getCode()) && f.getIsAllocate()).map(f -> MathUtil.multiplyWithFour(f.getCostValue(),f.getExchangeRate())).reduce(BigDecimal.ZERO,BigDecimal::add));
+            e.setOtherCost(collect.stream().filter(f -> f.getDictCostCategory().equals(AllocationFeeTypeEnum.OTHER_COST.getCode()) && f.getIsAllocate()).map(f -> MathUtil.multiplyWithFour(f.getCostValue(),getExchangeRate(e.getReconciliationMonth(), f.getCurrency()))).reduce(BigDecimal.ZERO,BigDecimal::add));
             e.setOtherTaxCurrency(CurrencyEnum.CNY.getCurrencyCode());
-            e.setOtherTaxCost(collect.stream().filter(f -> f.getDictCostCategory().equals(AllocationFeeTypeEnum.OTHER_TAX_FEE.getCode()) && f.getIsAllocate()).map(f -> MathUtil.multiplyWithFour(f.getCostValue(),f.getExchangeRate())).reduce(BigDecimal.ZERO,BigDecimal::add));
+            e.setOtherTaxCost(collect.stream().filter(f -> f.getDictCostCategory().equals(AllocationFeeTypeEnum.OTHER_TAX_FEE.getCode()) && f.getIsAllocate()).map(f -> MathUtil.multiplyWithFour(f.getCostValue(),getExchangeRate(e.getReconciliationMonth(), f.getCurrency()))).reduce(BigDecimal.ZERO,BigDecimal::add));
         });
 
     }
+
+    /**
+     * 根据对账单月份获取对应汇率
+     * @param reconciliationMonth
+     * @param currency
+     * @return
+     */
+    private BigDecimal getExchangeRate(LocalDate reconciliationMonth, String currency) {
+        BigDecimal exchangeRate = BigDecimal.ONE;
+        if(StringUtils.isNotBlank(currency) && !"CNY".equals(currency)) {
+            LocalDate reconciliationMonth1 = reconciliationMonth.withDayOfMonth(reconciliationMonth.lengthOfMonth());
+            exchangeRate = dmpTaskFeign.getRate(reconciliationMonth1.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), currency);
+            if(ObjectUtil.isEmpty(exchangeRate)){
+                log.error("币别【{}】,汇率为空，请维护汇率后再提交",currency);
+                throw new ServiceException(reconciliationMonth.format(DateTimeFormatter.ofPattern("yyyy-MM"))+ currency + "汇率为空，请维护汇率后再提交");
+            }
+        }
+        return exchangeRate;
+    }
+
 
     /**
      * 构建sku分摊记录
@@ -1401,7 +1422,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
 
     @Override
     public void autoGenerateFirstMileCostAllocation(LocalDate reportPeriodMonth, String sourceId) {
-        log.info("autoGenerateFirstMileCostAllocation ----start");
+        XxlJobHelper.log("autoGenerateFirstMileCostAllocation ----start");
         if (null == reportPeriodMonth) {
             throw new ServiceException("核算期间时间为空");
         }
@@ -1413,34 +1434,38 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
             list = firstMileWeightAllocationService.listBySourceIds(Collections.singletonList(sourceId), null);
         }
         if (CollectionUtils.isEmpty(list)) {
-            log.error("重量分摊记录不存在 sourceId:{}", sourceId);
+            XxlJobHelper.log("重量分摊记录不存在 sourceId:{}", sourceId);
             return;
         }
         List<String> deliveryIds = list.stream().map(FirstMileWeightAllocationEntity::getSourceId).distinct().collect(Collectors.toList());
         if (CollectionUtils.isEmpty(deliveryIds)) {
-            log.error("发货单关联记录为空 sourceId:{}", sourceId);
+            XxlJobHelper.log("发货单关联记录为空 sourceId:{}", sourceId);
             return;
         }
+        XxlJobHelper.log("发货单数量：{}",deliveryIds.size());
         List<FirstMileDeliveryEntity> firstMileDeliveryEntityList = wmsFirstMileDeliveryFeign.listByIds(deliveryIds);
         if (CollectionUtils.isEmpty(firstMileDeliveryEntityList)) {
-            log.error("发货单记录不存在 sourceId:{}", sourceId);
+            XxlJobHelper.log("发货单记录不存在 sourceId:{}", sourceId);
             return;
         }
         List<FirstMileDeliveryDetailEntity> deliveryDetailEntityList = wmsFirstMileDeliveryFeign.listDetailByMainIds(deliveryIds);
         if (CollectionUtils.isEmpty(deliveryDetailEntityList)) {
-            log.error("发货单明细记录不存在 sourceId:{}", sourceId);
+            XxlJobHelper.log("发货单明细记录不存在 sourceId:{}", sourceId);
             return;
         }
+        int count = 1;
         //按照发货单进行费用分摊
         for (String id : deliveryIds) {
+            XxlJobHelper.log("第【{}】发货单【{}】",count, id);
+            count += 1;
             FirstMileDeliveryEntity deliveryEntity = firstMileDeliveryEntityList.stream().filter(e -> Objects.nonNull(e) && e.getId().equals(id)).findFirst().orElse(null);
             if (Objects.isNull(deliveryEntity)) {
-                log.error("发货单记录不存在 id:{}", id);
+                XxlJobHelper.log("发货单记录不存在 id:{}", id);
                 continue;
             }
             List<FirstMileDeliveryDetailEntity> deliveryDetailEntityList1 = deliveryDetailEntityList.stream().filter(e -> Objects.nonNull(e) && e.getMainId().equals(id)).collect(Collectors.toList());
             if (CollectionUtils.isEmpty(deliveryDetailEntityList1)) {
-                log.error("发货单明细记录不存在 id:{}", id);
+                XxlJobHelper.log("发货单明细记录不存在 id:{}", id);
                 continue;
             }
             //构造数据
@@ -1449,16 +1474,16 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
             try {
                 BatchResultDTO resultDTO = service.calcAllocatedCost(entity, deliveryEntity, deliveryDetailEntityList1);
                 if (Boolean.TRUE.equals(resultDTO.getSuccess())) {
-                    log.info("自动计算费用分摊成功：{}", resultDTO.getMsg());
+                    XxlJobHelper.log("自动计算费用分摊成功：{}", resultDTO.getMsg());
                 } else {
-                    log.error("自动计算费用分摊失败：{}", resultDTO.getMsg());
+                    XxlJobHelper.log("自动计算费用分摊失败：{}", resultDTO.getMsg());
                 }
             }catch (Exception e){
-                log.error("自动计算费用分摊异常：{}", e.getMessage());
+                XxlJobHelper.log("自动计算费用分摊异常：{}", e.getMessage());
             }
 
         }
-        log.info("autoGenerateFirstMileCostAllocation ----end");
+        XxlJobHelper.log("autoGenerateFirstMileCostAllocation ----end");
     }
 
     /**
