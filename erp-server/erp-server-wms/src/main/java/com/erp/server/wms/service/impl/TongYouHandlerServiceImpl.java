@@ -207,7 +207,19 @@ public class TongYouHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     }
     @Override
     protected ApiResult<String> queryOutboundBill(@Valid ThirdWarehouseQueryOutboundReq queryOutboundReq){
-        return ApiResult.error("查询通邮出库单失败");
+        Map<String, Object> authJson = new HashMap<>();
+        //密钥
+        Object object = ThirdWarehouseContext.getAuthMap().get("appToken");
+        authJson.put("token",ObjectUtil.isEmpty(object) ? "" : object.toString());
+        authJson.put("deliver_no",queryOutboundReq.getErpOrderCode());
+
+        log.warn(getPlatForm().getName()+"查询出库单请求:{}", JSONUtil.toJsonStr(authJson));
+        TongYouBaseResp<String> tongYouBaseResp = tongYouService.getOutboundBill(authJson);
+        log.warn(getPlatForm().getName()+"查询出库单结果:{}", JSONUtil.toJsonStr(tongYouBaseResp));
+        if(!isSuccess(tongYouBaseResp.getError())){
+            return failure(tongYouBaseResp.getContent());
+        }
+        return success(tongYouBaseResp.getData());
     }
     @Override
     protected Boolean warehouseAuthorize(OverseasProviderDTO.AuthorizeParamDTO dto) {
