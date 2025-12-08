@@ -18,6 +18,7 @@ import com.erp.model.oms.enums.CfgKolOptionTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.DictCountryDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
+import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.file.feign.FileFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -96,6 +97,33 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(KolPartnerInfoDTO.AddDTO addDTO) {
+        FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(addDTO.getChargeId());
+        if(ObjectUtil.isNull(findUserDTO)){
+            throw new ServiceException(ApiError.ERROR_SYS_TYPE_NOTFOUND, "负责人");
+        }else {
+            addDTO.setChargeName(findUserDTO.getUserName());
+        }
+
+        List<SysDepartmentEntity> depts = sysUserFeign.getDeptByIds(Arrays.asList(addDTO.getDeptId()));
+        if (CollUtil.isEmpty(depts)) {
+            throw new ServiceException(ApiError.ERROR_SYS_TYPE_NOTFOUND, "负责部门");
+        } else {
+            addDTO.setDeptName(depts.get(0).getName());
+        }
+
+        //国家
+        List<DictCountryDTO.ListDTO> dictCountryList = sysUserFeign.countryList();
+        DictCountryDTO.ListDTO listDTO = dictCountryList.stream().filter(e -> e.getId().equals(addDTO.getCountryId())).findFirst().orElse(null);
+        if(Objects.isNull(listDTO)){
+            throw new ServiceException(ApiError.ERROR_SYS_TYPE_NOTFOUND, "国家");
+        }
+        addDTO.setCountryName(listDTO.getNameCn());
+
+        KolPartnerInfoEntity one = lambdaQuery().eq(KolPartnerInfoEntity::getNickname, addDTO.getNickname()).one();
+        if(Objects.nonNull(one)){
+            throw new ServiceException("达人昵称已存在");
+        }
+
         KolPartnerInfoEntity kolPartnerInfoEntity = new KolPartnerInfoEntity();
         BeanMapperUtils.copy(addDTO, kolPartnerInfoEntity);
 
@@ -150,18 +178,44 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
         KolPartnerInfoEntity old = super.getById(addOrUpdateDTO.getId());
         old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "企业达人库"));
 
-        KolPartnerInfoEntity kolPartnerInfoEntity =  BeanMapperUtils.map(KolPartnerInfoEntity.class, addOrUpdateDTO);
+        // 数据处理
+        FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(addOrUpdateDTO.getChargeId());
+        if(ObjectUtil.isNull(findUserDTO)){
+            throw new ServiceException(ApiError.ERROR_SYS_TYPE_NOTFOUND, "负责人");
+        }else {
+            addOrUpdateDTO.setChargeName(findUserDTO.getUserName());
+        }
 
-        // 数据处理
-        // 数据处理
+        List<SysDepartmentEntity> depts = sysUserFeign.getDeptByIds(Arrays.asList(addOrUpdateDTO.getDeptId()));
+        if (CollUtil.isEmpty(depts)) {
+            throw new ServiceException(ApiError.ERROR_SYS_TYPE_NOTFOUND, "负责部门");
+        } else {
+            addOrUpdateDTO.setDeptName(depts.get(0).getName());
+        }
+
+        //国家
+        List<DictCountryDTO.ListDTO> dictCountryList = sysUserFeign.countryList();
+        DictCountryDTO.ListDTO listDTO = dictCountryList.stream().filter(e -> e.getId().equals(addOrUpdateDTO.getCountryId())).findFirst().orElse(null);
+        if(Objects.isNull(listDTO)){
+            throw new ServiceException(ApiError.ERROR_SYS_TYPE_NOTFOUND, "国家");
+        }
+        addOrUpdateDTO.setCountryName(listDTO.getNameCn());
+
         if(CollUtil.isNotEmpty(addOrUpdateDTO.getTypeList())){
             String type = String.join(",", addOrUpdateDTO.getTypeList());
-            kolPartnerInfoEntity.setType(type);
+            addOrUpdateDTO.setType(type);
         }
         if(CollUtil.isNotEmpty(addOrUpdateDTO.getCooperationTypeList())){
             String cooperationType = String.join(",", addOrUpdateDTO.getCooperationTypeList());
-            kolPartnerInfoEntity.setCooperationType(cooperationType);
+            addOrUpdateDTO.setCooperationType(cooperationType);
         }
+
+        KolPartnerInfoEntity one = lambdaQuery().eq(KolPartnerInfoEntity::getNickname, addOrUpdateDTO.getNickname()).ne(KolPartnerInfoEntity::getId, addOrUpdateDTO.getId()).one();
+        if(Objects.nonNull(one)){
+            throw new ServiceException("达人昵称已存在");
+        }
+
+        KolPartnerInfoEntity kolPartnerInfoEntity =  BeanMapperUtils.map(KolPartnerInfoEntity.class, addOrUpdateDTO);
 
         log.info("编辑 开始修改企业达人库数据，单号：【{}】", old.getCode());
         boolean save = super.updateById(kolPartnerInfoEntity);
@@ -337,17 +391,17 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
 
         if(CollUtil.isNotEmpty(successList)){
             // 获取数据字典
-            List<CfgKolOptionEntity> cfgKolOptionEntities = cfgKolOptionService.lambdaQuery().in(CfgKolOptionEntity::getId, Arrays.asList(CfgKolOptionTypeEnum.COOPERATION_TYPE.getCode(), CfgKolOptionTypeEnum.PARTNER_TYPE.getCode())).list();
-            Map<String, String> map = cfgKolOptionEntities.stream().collect(Collectors.toMap(CfgKolOptionEntity::getId, CfgKolOptionEntity::getName));
+            List<CfgKolOptionEntity> cfgKolOptionEntities = cfgKolOptionService.lambdaQuery().in(CfgKolOptionEntity::getType, Arrays.asList(CfgKolOptionTypeEnum.COOPERATION_TYPE.getCode(), CfgKolOptionTypeEnum.PARTNER_TYPE.getCode())).list();
+            Map<String, String> map = cfgKolOptionEntities.stream().collect(Collectors.toMap(CfgKolOptionEntity::getName, CfgKolOptionEntity::getId));
             // 获取语言字典
             List<DictLanguageEntity> dictLanguageEntities = dictLanguageService.list();
             Map<String, String> languageMap = dictLanguageEntities.stream().collect(Collectors.toMap(DictLanguageEntity::getId, DictLanguageEntity::getNameZh));
             //部门
             List<SysDepartmentDTO> deptList = sysUserFeign.getDeptList();
-            Map<String, String> deptMap = deptList.stream().collect(Collectors.toMap(SysDepartmentDTO::getName, SysDepartmentDTO::getId));
+            Map<String, String> deptMap = deptList.stream().collect(Collectors.toMap(SysDepartmentDTO::getName, SysDepartmentDTO::getId,(o1,o2)->o1));
             //用户
             List<FindUserDTO> userList = sysUserFeign.getUserList();
-            Map<String, String> userMap = userList.stream().collect(Collectors.toMap(FindUserDTO::getUserName, FindUserDTO::getUserId));
+            Map<String, String> userMap = userList.stream().collect(Collectors.toMap(FindUserDTO::getUserName, FindUserDTO::getUserId,(o1,o2)->o1));
             //国家
             List<DictCountryDTO.ListDTO> dictCountryList = sysUserFeign.countryList();
             Map<String, String> dictCountryMap = dictCountryList.stream().collect(Collectors.toMap(DictCountryDTO.ListDTO::getNameCn, DictCountryDTO.ListDTO::getId));
@@ -422,8 +476,6 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
                 String language = languageMap.getOrDefault(mainInfo.getLanguageName(), "");
                 if(StringUtils.isNotBlank(language)){
                     mainInfo.setLanguage(language);
-                }else {
-                    errorMsgList.add("语言不存在");
                 }
                 //负责人
                 String chargeId = userMap.getOrDefault(mainInfo.getChargeName(), "");

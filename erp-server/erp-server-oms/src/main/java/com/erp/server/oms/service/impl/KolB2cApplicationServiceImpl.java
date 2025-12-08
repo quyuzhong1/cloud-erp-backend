@@ -212,7 +212,7 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
                     if (CollUtil.isEmpty(depts)) {
                         throw new ServiceException(ApiError.ERROR_SYS_TYPE_NOTFOUND, "申请部门");
                     } else {
-                        addDTO.setLogisticsChannelName(depts.get(0).getName());
+                        addDTO.setApplyDeptName(depts.get(0).getName());
                     }
                 }
             }

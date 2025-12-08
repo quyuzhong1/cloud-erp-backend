@@ -11,6 +11,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.oms.dto.CfgKolOptionDTO;
 import com.erp.model.oms.entity.CfgKolOptionEntity;
+import com.erp.model.oms.entity.KolPartnerInfoEntity;
 import com.erp.server.oms.mapper.CfgKolOptionMapper;
 import com.erp.server.oms.service.CfgKolOptionService;
 import com.erp.server.oms.service.OperateLogService;
@@ -22,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * <p>
@@ -41,8 +43,17 @@ public class CfgKolOptionServiceImpl extends SuperServiceImpl<CfgKolOptionMapper
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(CfgKolOptionDTO.AddDTO addDTO) {
+
         CfgKolOptionEntity cfgKolOptionEntity = new CfgKolOptionEntity();
         BeanMapperUtils.copy(addDTO, cfgKolOptionEntity);
+
+        CfgKolOptionEntity one = lambdaQuery()
+                .eq(CfgKolOptionEntity::getName, addDTO.getName())
+                .eq(CfgKolOptionEntity::getType, addDTO.getType())
+                .one();
+        if(Objects.nonNull(one)){
+            throw new ServiceException(StrUtil.format("【{}】已存在",addDTO.getName()));
+        }
 
         // 数据处理
         handleData(cfgKolOptionEntity);
