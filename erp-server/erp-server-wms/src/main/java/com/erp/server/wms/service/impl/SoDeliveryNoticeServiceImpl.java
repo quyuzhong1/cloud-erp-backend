@@ -716,7 +716,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
             detailView.setUnitName(productDetailEntity.getUnitName());
             //销售单信息
             SoDetailEntity soDetailEntity = soDetailEntities.stream().filter(detail -> detail.getId().equals(deliveryNoticeDetailEntity.getSourceDetailId())).findFirst().orElse(new SoDetailEntity());
-            detailView.setSalesQty(soDetailEntity.getQty());
+            detailView.setSalesQty(soDetailEntity.getBoxQty());
 
             List<WmsAttachmentDTO.UpdateDTO> currentAttachmentList = attachmentList.stream().
                     filter(attachment -> attachment.getBusinessId().equals(deliveryNoticeDetailEntity.getId())).
