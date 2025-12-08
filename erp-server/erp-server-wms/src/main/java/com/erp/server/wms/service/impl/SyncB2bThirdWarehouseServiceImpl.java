@@ -83,7 +83,7 @@ public class SyncB2bThirdWarehouseServiceImpl implements SyncB2bThirdWarehouseSe
             DmpPushTaskFeignDTO taskFeignDTO = new DmpPushTaskFeignDTO();
             taskFeignDTO.setSourceId(entity.getId());
             taskFeignDTO.setSourceCode(entity.getCode());
-            taskFeignDTO.setSourceType(SourceTypeEnum.THIRD_WAREHOUSE_DELIVERY.getCode());
+            taskFeignDTO.setSourceType(SourceTypeEnum.B2B_THIRD_DELIVERY_CANCEL.getCode());
             taskFeignDTO.setMqTopic(RocketMqTopic.SYNC_B2B_THIRD_DELIVERY_CANCEL_ERP_TOPIC);
             taskFeignDTO.setMqTag(RocketMqTagEnum.ERP_THIRD_WAREHOUSE_TAG.getName());
             taskFeignDTO.setMqData(JSONUtil.toJsonStr(resultMap));
@@ -96,7 +96,7 @@ public class SyncB2bThirdWarehouseServiceImpl implements SyncB2bThirdWarehouseSe
         WmsPushMsgEntity wmsPushMsgEntity = new WmsPushMsgEntity();
         wmsPushMsgEntity.setSourceId(entity.getId());
         wmsPushMsgEntity.setSourceCode(entity.getCode());
-        wmsPushMsgEntity.setSourceType(SourceTypeEnum.B2B_THIRD_DELIVERY.getCode());
+        wmsPushMsgEntity.setSourceType(SourceTypeEnum.B2B_THIRD_DELIVERY_CANCEL.getCode());
         wmsPushMsgEntity.setPushData(JSON.toJSONString(resultMap));
         wmsPushMsgEntity.setTargetPlatform(thirdWarehouseProvideCode);
         wmsPushMsgEntity.setSyncOperate(operate);
@@ -140,7 +140,7 @@ public class SyncB2bThirdWarehouseServiceImpl implements SyncB2bThirdWarehouseSe
             DmpPushTaskFeignDTO taskFeignDTO = new DmpPushTaskFeignDTO();
             taskFeignDTO.setSourceId(entity.getId());
             taskFeignDTO.setSourceCode(entity.getCode());
-            taskFeignDTO.setSourceType(SourceTypeEnum.THIRD_WAREHOUSE_DELIVERY.getCode());
+            taskFeignDTO.setSourceType(SourceTypeEnum.B2B_THIRD_DELIVERY_CREATE.getCode());
             taskFeignDTO.setMqTopic(RocketMqTopic.SYNC_B2B_THIRD_DELIVERY_CREATE_ERP_TOPIC);
             taskFeignDTO.setMqTag(RocketMqTagEnum.ERP_THIRD_WAREHOUSE_TAG.getName());
             taskFeignDTO.setMqData(JSONUtil.toJsonStr(resultMap));
@@ -153,7 +153,7 @@ public class SyncB2bThirdWarehouseServiceImpl implements SyncB2bThirdWarehouseSe
         WmsPushMsgEntity wmsPushMsgEntity = new WmsPushMsgEntity();
         wmsPushMsgEntity.setSourceId(entity.getId());
         wmsPushMsgEntity.setSourceCode(entity.getCode());
-        wmsPushMsgEntity.setSourceType(SourceTypeEnum.B2B_THIRD_DELIVERY.getCode());
+        wmsPushMsgEntity.setSourceType(SourceTypeEnum.B2B_THIRD_DELIVERY_CREATE.getCode());
         wmsPushMsgEntity.setPushData(JSON.toJSONString(resultMap));
         wmsPushMsgEntity.setTargetPlatform(thirdWarehouseProvideCode);
         wmsPushMsgEntity.setSyncOperate(operate);
