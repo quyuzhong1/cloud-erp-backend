@@ -168,6 +168,7 @@ public class WarehouseLocationMoveDetailServiceImpl extends SuperServiceImpl<War
             if(Objects.isNull(inLocationEntity)){
                 throw new ServiceException("上架仓位{}不存在",detailEntity.getInWarehouseLocation());
             }
+            detailEntity.setInWarehouseLocation(inLocationEntity.getCode());
             WarehouseLocationEntity outLocationEntity = warehouseLocationEntityList.stream()
                     .filter(req -> req.getWarehouseId().equals(warehouseId)
                             && (req.getCode().equals(detailEntity.getOutWarehouseLocation()) || req.getName().equals(detailEntity.getOutWarehouseLocation()) ))
@@ -175,6 +176,7 @@ public class WarehouseLocationMoveDetailServiceImpl extends SuperServiceImpl<War
             if(Objects.isNull(outLocationEntity)){
                 throw new ServiceException("取货仓位{}不存在",detailEntity.getInWarehouseLocation());
             }
+            detailEntity.setOutWarehouseLocation(outLocationEntity.getCode());
             detailEntity.setInInventoryStatus(Optional.ofNullable(detailEntity.getInInventoryStatus()).orElse(InventoryStatusEnum.USABLE.getCode()));
             detailEntity.setOutInventoryStatus(Optional.ofNullable(detailEntity.getOutInventoryStatus()).orElse(InventoryStatusEnum.USABLE.getCode()));
             detailEntity.setMainId(warehouseLocationMoveEntity.getId());
