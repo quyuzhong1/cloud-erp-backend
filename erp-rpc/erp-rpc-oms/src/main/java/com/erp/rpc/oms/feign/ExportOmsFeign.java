@@ -123,4 +123,10 @@ public interface ExportOmsFeign {
      */
     @PostMapping("/feign/export/exportKolSocialMedia")
     PagingVO<KolSocialMediaDTO.ListDTO> exportKolSocialMedia(@RequestBody PagingDTO<KolSocialMediaDTO.ParamDTO> dto);
+
+    /**
+     * KOL寄样费用导出
+     */
+    @PostMapping("/feign/export/exportKolSampleCost")
+    PagingVO<KolSampleCostDTO.ListDTO> exportKolSampleCost(PagingDTO<KolSampleCostDTO.PagingParamDTO> dto);
 }

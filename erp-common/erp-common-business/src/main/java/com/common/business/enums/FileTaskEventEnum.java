@@ -123,7 +123,7 @@ public enum FileTaskEventEnum implements EnumMessage {
     IMPORT_OMS_KOL_PARTNER_INFO("IMPORT_OMS_KOL_PARTNER_INFO","企业达人库导入","com.erp.rpc.oms.feign.ImportOmsFeign","importKolPartnerInfo",""),
     EXPORT_OMS_KOL_SOCIAL_MEDIA("EXPORT_OMS_KOL_SOCIAL_MEDIA", "达人社媒数据表导出","","",""),
     EXPORT_OMS_KOL_B2B_APPLICATION_REPORT("IMPORT_OMS_KOL_B2B_APPLICATION_REPORT","B2B寄样申请导出","","",""),
-    IMPORT_OMS_KOL_B2B_APPLICATION("IMPORT_OMS_KOL_B2B_APPLICATION","B2B寄样申请导入","com.erp.rpc.wms.feign.ImportWmsFeign","importKolB2bApplication",""),
+    EXPORT_OMS_KOL_SAMPLE_COST_REPORT("EXPORT_OMS_KOL_SAMPLE_COST_REPORT","寄样费用导出","","",""),
     //scm
     EXPORT_SCM_SUPPLIER_USER("EXPORT_SCM_SUPPLIER_USER","供应商协同用户列表","","",""),
     EXPORT_SCM_PURCHASE_PRICE_CHANGE("EXPORT_SCM_PURCHASE_PRICE_CHANGE","采购调价数据","","",""),

@@ -1,26 +1,36 @@
 package com.erp.server.oms.service.impl;
 
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
-import io.seata.spring.annotation.GlobalTransactional;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.dto.base.BaseResultDTO;
-import com.erp.model.oms.entity.KolSampleCostEntity;
-import com.erp.server.oms.mapper.KolSampleCostMapper;
-import com.erp.server.oms.service.KolSampleCostService;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.FileTaskEventEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
-import com.erp.server.oms.service.OperateLogService;
-import com.erp.server.oms.service.CommonService;
-import com.common.core.exception.ServiceException;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
-import lombok.extern.slf4j.Slf4j;
-import com.erp.model.oms.dto.KolSampleCostDTO;
-import java.util.*;
-import com.common.core.utils.*;
+import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.oms.dto.KolSampleCostDTO;
+import com.erp.model.oms.entity.KolSampleCostEntity;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.server.oms.mapper.KolSampleCostMapper;
+import com.erp.server.oms.service.KolSampleCostService;
+import com.erp.server.oms.service.OperateLogService;
+import io.seata.spring.annotation.GlobalTransactional;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+
+import javax.servlet.http.HttpServletResponse;
+import java.util.List;
+import java.util.Optional;
 /**
  * <p>
  * 寄样费用表 服务实现类
@@ -34,6 +44,11 @@ import com.common.core.enums.ApiError;
 public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapper, KolSampleCostEntity> implements KolSampleCostService {
     @Autowired
     private OperateLogService operateLogService;
+
+    @Autowired
+    private DownloadTaskFeign downloadTaskFeign;
+
+
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -88,6 +103,42 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
         return Boolean.TRUE;
     }
 
+    @Override
+    public PagingVO<KolSampleCostDTO.ListDTO> paging(PagingDTO<KolSampleCostDTO.PagingParamDTO> pagingParamDTO) {
+        pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
+        Page<Object> query = new Page<>(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
+        IPage<KolSampleCostDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingParamDTO.getParams());
+        if(CollUtil.isEmpty(pageData.getRecords())) {
+            return new PagingVO<>(pageData);
+        }
+        // 数据处理
+        fillList(pageData.getRecords());
+        return new PagingVO<>(pageData);
+    }
+
+    @Override
+    public void updateCost(KolSampleCostDTO.UpdateCostDTO dto) {
+
+    }
+
+    @Override
+    public void exportList(KolSampleCostDTO.ExportDTO param, HttpServletResponse response) {
+        downloadTaskFeign.saveDownloadTask("寄样费用导出", FileTaskEventEnum.EXPORT_OMS_KOL_SAMPLE_COST_REPORT.getCode(), param);
+    }
+
+    @Override
+    public Boolean importFile(MultipartFile excelFile, HttpServletResponse response) {
+        return null;
+    }
+
+    /**
+     * 分页查询、导出 数据处理
+     */
+    private void fillList(List<KolSampleCostDTO.ListDTO> list) {
+        if (CollUtil.isEmpty(list)) {
+            return;
+        }
+    }
 
     /**
     * 新增修改处理数据

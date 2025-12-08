@@ -1,16 +1,20 @@
 package com.erp.model.oms.dto;
 
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import com.common.business.dto.AdvanceQueryDTO;
+import com.common.business.dto.base.SortDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
-import java.io.Serializable;
-import java.time.LocalDateTime;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
+
 import javax.validation.constraints.Digits;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
+import java.io.Serializable;
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -25,6 +29,193 @@ import javax.validation.constraints.Digits;
 public class KolSampleCostDTO implements Serializable {
 
 
+    /**
+     * 分页列表查询参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PagingParamDTO extends SortDTO {
+
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String,String> sqlMap;
+
+    }
+    /**
+     * 详情
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ListDTO {
+
+        /**
+         * 主键id
+         */
+        private String  id;
+
+        /**
+         * 来源id
+         */
+        private String sourceId;
+
+        /**
+         * 来源编码（B2B/B2C-KOL寄样申请单号）
+         */
+        private String sourceCode;
+
+        /**
+         * 来源类型
+         */
+        private String sourceType;
+
+        /**
+         * 寄样类型
+         */
+        private String type;
+
+        /**
+         * 达人表id
+         */
+        private String partnerId;
+
+        /**
+         * 达人昵称
+         */
+        private String partnerNickname;
+
+        /**
+         * 回片链接
+         */
+        private String feedbackUrl;
+
+        /**
+         * 销售单号
+         */
+        private String soCode;
+
+        /**
+         * 销售id
+         */
+        private String soId;
+
+        /**
+         * 销售组织id
+         */
+        private String soOrgId;
+
+        /**
+         * 销售组织名称
+         */
+        private String soOrgName;
+
+        /**
+         * 销售出库单id
+         */
+        private String soOutstockId;
+
+        /**
+         * 销售出库单编码
+         */
+        private String soOutstockCode;
+
+        /**
+         * 销售出库时间
+         */
+        private LocalDateTime soOutstockTime;
+
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
+
+        /**
+         * 仓库名称
+         */
+        private String warehouseName;
+
+        /**
+         * 军区id
+         */
+        private String partitionId;
+
+        /**
+         * 军区名称
+         */
+        private String partitionName;
+
+        /**
+         * skuId
+         */
+        private String skuId;
+
+        /**
+         * sku编码
+         */
+        private String skuNo;
+
+        /**
+         * 实发数量
+         */
+        private Integer qty;
+
+        /**
+         * 币别
+         */
+        private String currency;
+
+        /**
+         * 币别符号
+         */
+        private String currencySymbol;
+
+        /**
+         * 汇率
+         */
+        private BigDecimal exchangeRate;
+
+        /**
+         * 总费用
+         */
+        private BigDecimal totalCost;
+
+        /**
+         * 材料成本
+         */
+        private BigDecimal productCost;
+
+        /**
+         * 头程费用
+         */
+        private BigDecimal firstMileShippingCost;
+
+        /**
+         * 清关税费
+         */
+        private BigDecimal clearanceCustomsTax;
+
+        /**
+         * 运费
+         */
+        private BigDecimal shippingCost;
+
+        /**
+         * 关税
+         */
+        private BigDecimal customsTax;
+
+        /**
+         * 其他费用
+         */
+        private BigDecimal otherCost;
+
+
+    }
 
 
     /**
@@ -435,5 +626,25 @@ public class KolSampleCostDTO implements Serializable {
 
     }
 
+    /**
+     * 导出Excel
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ExportDTO extends KolSampleCostDTO.PagingParamDTO {
+        /**
+         * 勾选的id集合
+         */
+        private List<String> ids;
+    }
 
+    @Data
+    @NoArgsConstructor
+    public static class UpdateCostDTO {
+        /**
+         * 日期
+         */
+        @NotNull(message = "日期不能为空")
+        private LocalDate date;
+    }
 }

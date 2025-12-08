@@ -59,5 +59,10 @@
         source_id, source_code, source_type, type, partner_id, partner_nickname, feedback_url, so_code, so_id, so_org_id, so_org_name, so_outstock_id, so_outstock_code, so_outstock_time, warehouse_id, warehouse_name, partition_id, partition_name, sku_id, sku_no, qty, currency, currency_symbol, exchange_rate, total_cost, product_cost, first_mile_shipping_cost, clearance_customs_tax, shipping_cost, customs_tax, other_cost
     </sql>
 
+    <!-- 分页查询 -->
+    <select id="paging" resultType="com.erp.model.oms.dto.KolSampleCostDTO$ListDTO">
+
+    </select>
+
 
 </mapper>
