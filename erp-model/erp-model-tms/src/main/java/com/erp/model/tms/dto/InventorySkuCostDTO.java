@@ -76,6 +76,15 @@ public class InventorySkuCostDTO implements Serializable {
         private String allocatedMonthStr;
 
         /**
+         * 核算月份
+         */
+        private LocalDate accountingMonth;
+        /**
+         * 核算月份【导出使用】
+         */
+        private String accountingMonthStr;
+
+        /**
         * 币种
         */
         private String currency;
@@ -197,7 +206,11 @@ public class InventorySkuCostDTO implements Serializable {
         @Size(max = 100,message = "核算公司名称最大长度不能超过100位")
         private String companyName;
 
-
+        /**
+         * 核算月份
+         */
+        @NotNull(message = "核算月份不能为空")
+        private LocalDate accountingMonth;
     }
 
 
@@ -252,6 +265,14 @@ public class InventorySkuCostDTO implements Serializable {
          * 分摊月份【导出使用】 yyyy-MM
          */
         private String allocatedMonthStr;
+        /**
+         * 核算月份【可排序】
+         */
+        private LocalDate accountingMonth;
+        /**
+         * 核算月份【导出使用】 yyyy-MM
+         */
+        private String accountingMonthStr;
         /**
          *币种
          */

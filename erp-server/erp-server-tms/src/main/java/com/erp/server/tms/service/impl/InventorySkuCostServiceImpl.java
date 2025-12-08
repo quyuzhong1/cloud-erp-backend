@@ -3,6 +3,7 @@ package com.erp.server.tms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.ObjUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -114,6 +115,9 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
         BeanMapperUtils.copy(addDTO, inventorySkuCostEntity);
         // 数据处理
         handleData(inventorySkuCostEntity);
+        //校验唯一
+        checkUnique(inventorySkuCostEntity);
+
         log.info("开始新增SKU成本");
         boolean save = super.save(inventorySkuCostEntity);
         if (!save) {
@@ -131,6 +135,7 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
         return new BaseResultDTO.AddDTO(inventorySkuCostEntity.getId(), inventorySkuCostEntity.getCode());
     }
 
+
     /**
      * 修改
      */
@@ -143,6 +148,8 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
 
         // 数据处理
         handleData(inventorySkuCostEntity);
+        //校验唯一
+        checkUnique(inventorySkuCostEntity);
         log.info("编辑 开始修改SKU成本数据，单号：【{}】", old.getCode());
         boolean save = super.updateById(inventorySkuCostEntity);
         if (!save) {
@@ -374,6 +381,7 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
         if (Objects.nonNull(viewDTO.getAllocatedMonth())){
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM");
             viewDTO.setAllocatedMonthStr(viewDTO.getAllocatedMonth().format(formatter));
+            viewDTO.setAccountingMonthStr(viewDTO.getAccountingMonth().format(formatter));
         }
         List<InventorySkuCostDetailEntity> detailEntityList = inventorySkuCostDetailService.listByMainIds(Collections.singletonList(id));
         if (!CollectionUtils.isEmpty(detailEntityList)) {
@@ -679,5 +687,22 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
         );
 
         return result != null ? result : Collections.emptyList();
+    }
+
+    /**
+     * 核算月-分摊月-组织 唯一性校验
+     * @author will
+     * @date 2025/12/8 09:41
+     * @param entity
+     * @return InventorySkuCostEntity
+     */
+    private void checkUnique (InventorySkuCostEntity entity) {
+        InventorySkuCostEntity one = lambdaQuery().eq(InventorySkuCostEntity::getAllocatedMonth, entity.getAllocatedMonth())
+                .eq(InventorySkuCostEntity::getAccountingMonth, entity.getAccountingMonth())
+                .eq(InventorySkuCostEntity::getCompanyId, entity.getCompanyId())
+                .one();
+        if (ObjUtil.isNotEmpty(one) && !one.getId().equals(entity.getId())) {
+            throw new ServiceException("该核算月-分摊月-组织已存在SKU成本记录，请勿重复新增");
+        }
     }
 }
