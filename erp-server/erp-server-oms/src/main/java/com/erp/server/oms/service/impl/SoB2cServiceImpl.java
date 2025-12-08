@@ -3144,7 +3144,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             //生成在线url
             if(PlatformDictEnum.JIFENG.getCode().equalsIgnoreCase(overseasProviderWarehouse.getProviderCode())
              ||PlatformDictEnum.CAINIAO.getCode().equalsIgnoreCase(overseasProviderWarehouse.getProviderCode())
-                    ||PlatformDictEnum.IML.getCode().equalsIgnoreCase(overseasProviderWarehouse.getProviderCode())) {
+                    ||PlatformDictEnum.IML.getCode().equalsIgnoreCase(overseasProviderWarehouse.getProviderCode())
+                    || PlatformDictEnum.TONG_YOU_WAREHOUSE.getCode().equals(overseasProviderWarehouse.getProviderCode())) {
                 String path = FastDFSClientUtil.uploadFile(Base64.getDecoder().decode(logisticsLabelBase64.replace("data:application/pdf;base64,","")),entity.getCode()+".pdf",new HashMap<>());
                 String domain = dictBasicService.getByTypeAndValue("fastDfsDomain",BusinessCommonConstants.getEnvironment()+"-fastDfsDomain").getName();
                 createOutboundReq.setLabelUrl(domain+path);
@@ -3178,6 +3179,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 && (
                 PlatformDictEnum.GOOD_CANG.getCode().equals(overseasProviderWarehouse.getProviderCode())
                 || PlatformDictEnum.IML.getCode().equals(overseasProviderWarehouse.getProviderCode())
+                || PlatformDictEnum.TONG_YOU_WAREHOUSE.getCode().equals(overseasProviderWarehouse.getProviderCode())
         )){
             SoB2cLogisticsEntity soB2cLogisticsEntity = soB2cLogisticsService.getByMainId(entity.getId());
             ThirdWarehouseUploadOrderLabelReq uploadOrderLabelReq = new ThirdWarehouseUploadOrderLabelReq();
@@ -3193,7 +3195,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             }
         }
         if(StringUtils.isNotBlank(channelEntity.getHandoverDocType())&& LogisticsHandoverDocTypeEnum.HANDOVER_PACKAGE.getCode().equals(channelEntity.getHandoverDocType())
-                && PlatformDictEnum.IML.getCode().equals(overseasProviderWarehouse.getProviderCode())){
+                && PlatformDictEnum.IML.getCode().equals(overseasProviderWarehouse.getProviderCode())
+                && PlatformDictEnum.TONG_YOU_WAREHOUSE.getCode().equals(overseasProviderWarehouse.getProviderCode())){
             ThirdWarehouseUploadHandoverFileReq uploadHandoverFileReq = new ThirdWarehouseUploadHandoverFileReq();
             uploadHandoverFileReq.setOrderCode(shippingOrderNo);
             uploadHandoverFileReq.setDictPlatform(entity.getDictPlatform());
