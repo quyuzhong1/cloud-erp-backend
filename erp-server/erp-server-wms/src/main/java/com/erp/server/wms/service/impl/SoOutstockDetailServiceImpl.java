@@ -293,7 +293,7 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
             List<SoDetailEntity> soDetails = soInfoFeign.listSoDetailByMainIds(Collections.singletonList(soId));
             for (SoOutstockDetailDTO.UpdateDTO dto : detailList) {
                 int sellQty = soDetails.stream()
-                        .filter(v -> v.getSkuNo().equals(dto.getSkuNo()))
+                        .filter(v -> v.getDeliverySkuNo().equals(dto.getSkuNo()))
                         .mapToInt(SoDetailEntity::getBoxQty).sum();
                 if (sellQty == 0) {
                     throw new ServiceException(ApiError.ERROR_99107, dto.getSkuNo());
