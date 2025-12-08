@@ -1,17 +1,13 @@
 package com.erp.server.oms.b2c;
 
 import cn.hutool.json.JSONUtil;
-
-import com.erp.model.oms.dto.ListingInfoParamDTO;
-import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.dto.SplitSkuDTO;
-import com.erp.model.oms.dto.TransferDeclareProductDTO;
-import com.erp.model.wms.dto.SoB2cDeliveryDTO;
-import com.erp.model.wms.enums.WarehouseDeliveryTypeEnum;
-import com.erp.model.wms.enums.WarehouseManageTypeEnum;
+import com.erp.model.oms.entity.CfgOperateLogFieldEntity;
+import com.erp.model.oms.entity.KolB2bApplicationEntity;
 import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
 import com.erp.sdk.third.kingdee.utils.KingdeePushModuleEnum;
 import com.erp.server.oms.ErpServerOmsApplication;
+import com.erp.server.oms.service.CfgOperateLogFieldService;
 import com.erp.server.oms.service.SkuMappingService;
 import com.erp.server.oms.service.SoB2cService;
 import lombok.extern.slf4j.Slf4j;
@@ -44,7 +40,8 @@ public class B2CSoInfoTest {
 
     @Resource
     private SkuMappingService skuMappingService;
-
+    @Resource
+    private CfgOperateLogFieldService logFieldService;
 
     //@Test
     public void splitSoInfo(){
@@ -63,5 +60,28 @@ public class B2CSoInfoTest {
 
 
 
+    }
+
+
+    @Test
+    public void addLogField() {
+        //用于手动添加字段对应信息，后续可添加界面添加,classPath为比较DTO路径
+        String classPath = String.valueOf(KolB2bApplicationEntity.class);
+        List<CfgOperateLogFieldEntity> logFields = Arrays.asList(
+                new CfgOperateLogFieldEntity().setField("date").setFieldName("申请日期").setClassPath(classPath).setType(0).setEnumClass("")
+                ,new CfgOperateLogFieldEntity().setField("type").setFieldName("寄样类型").setClassPath(classPath).setType(0).setEnumClass("")
+                ,new CfgOperateLogFieldEntity().setField("customerId").setFieldName("客户").setClassPath(classPath).setType(8).setEnumClass("")
+                ,new CfgOperateLogFieldEntity().setField("applyRemark").setFieldName("申请说明").setClassPath(classPath).setType(0).setEnumClass("")
+                ,new CfgOperateLogFieldEntity().setField("applyUserId").setFieldName("申请人").setClassPath(classPath).setType(4).setEnumClass("")
+                ,new CfgOperateLogFieldEntity().setField("applyDeptId").setFieldName("申请部门").setClassPath(classPath).setType(5).setEnumClass("")
+                ,new CfgOperateLogFieldEntity().setField("receiverName").setFieldName("收货人").setClassPath(classPath).setType(0).setEnumClass("")
+                ,new CfgOperateLogFieldEntity().setField("telNumber").setFieldName("联系电话").setClassPath(classPath).setType(0).setEnumClass("")
+                ,new CfgOperateLogFieldEntity().setField("receiveAddress").setFieldName("收货地址").setClassPath(classPath).setType(0).setEnumClass("")
+                ,new CfgOperateLogFieldEntity().setField("addressType").setFieldName("地址类型").setClassPath(classPath).setType(2).setEnumClass("com.erp.model.oms.enums.CustomerAddressType")
+                ,new CfgOperateLogFieldEntity().setField("remark").setFieldName("备注").setClassPath(classPath).setType(0).setEnumClass("")
+
+        );
+        logFieldService.saveBatch(logFields);
+        System.out.println("sss");
     }
 }

@@ -68,7 +68,6 @@ public class KolB2bApplicationDetailServiceImpl extends SuperServiceImpl<KolB2bA
     /**
     * 修改
     */
-    @DistributeLocker(keyName = "addOrUpdateDTO.getId()")
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean update(List<KolB2bApplicationDetailDTO.UpdateDTO> detailList,String mainId) {
