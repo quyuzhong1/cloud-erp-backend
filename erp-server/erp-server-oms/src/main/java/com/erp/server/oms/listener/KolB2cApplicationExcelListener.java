@@ -7,6 +7,8 @@ import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseDTO;
 import com.common.business.enums.FileTaskStatusEnum;
 import com.common.core.utils.FieldValidUtil;
+import com.erp.model.oms.dto.excel.KolB2cApplicationAddressImportExcelDTO;
+import com.erp.model.oms.dto.excel.KolB2cApplicationDetailImportExcelDTO;
 import com.erp.model.oms.dto.excel.KolB2cApplicationImportExcelDTO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
@@ -43,15 +45,18 @@ public class KolB2cApplicationExcelListener extends AnalysisEventListener<KolB2c
     @Getter
     private Integer count = 0;
 
+    private Map<String, String> cfgKolOptionMap;
+    private Map<String, String> shopMap;
+    private Map<String, FindUserDTO> userMap;
+    private Map<String, String> deptMap;
+    private Map<String, String> warehouserMap;
+    private Map<String, String> logisticsMap;
+    private Map<String, String> currencyMap;
+    private List<KolB2cApplicationDetailImportExcelDTO> detailSuccessList ;
+    private List<KolB2cApplicationDetailImportExcelDTO> detailErrorList;
+    private List<KolB2cApplicationAddressImportExcelDTO> addressSuccessList;
+    private List<KolB2cApplicationAddressImportExcelDTO> addressErrorList ;
 
-    //sku信息
-    private Map<String,SkuVO> skuMap ;
-    //用户
-    private List<FindUserDTO> userList ;
-    //部门
-    private List<SysDepartmentDTO> deptList ;
-
-    private final KolB2cApplicationService kolB2cApplicationService = SpringUtil.getBean(KolB2cApplicationService.class);
 
     private final DownloadTaskFeign downloadTaskFeign = SpringUtil.getBean(DownloadTaskFeign.class);
 
@@ -64,20 +69,25 @@ public class KolB2cApplicationExcelListener extends AnalysisEventListener<KolB2c
     @Getter
     private List<KolB2cApplicationImportExcelDTO> successList = new ArrayList<>(BATCH_COUNT);
 
-    public KolB2cApplicationExcelListener(String taskId,
-                                          String importType,
-                                          Integer importCount
-//            ,
-//                                          List<SysDepartmentDTO> deptList,
-//                                          Map<String,SkuVO> skuMap,
-//                                          List<FindUserDTO> userList
+    public KolB2cApplicationExcelListener(String taskId, String importType, Integer importCount, Map<String, String> cfgKolOptionMap, Map<String, String> shopMap, Map<String, FindUserDTO> userMap,
+                                          Map<String, String> deptMap, Map<String, String> warehouserMap, Map<String, String> logisticsMap,Map<String, String> currencyMap
+//            ,List<KolB2cApplicationDetailImportExcelDTO> detailSuccessList,List<KolB2cApplicationDetailImportExcelDTO> detailErrorList,
+//                                          List<KolB2cApplicationAddressImportExcelDTO> addressSuccessList,List<KolB2cApplicationAddressImportExcelDTO> addressErrorList
     ) {
         this.taskId = taskId;
         this.importType = importType;
         this.importCount = importCount;
-//        this.skuMap = skuMap;
-//        this.deptList = deptList;
-//        this.userList = userList;
+        this.cfgKolOptionMap = cfgKolOptionMap;
+        this.shopMap = shopMap;
+        this.userMap = userMap;
+        this.deptMap = deptMap;
+        this.warehouserMap = warehouserMap;
+        this.logisticsMap = logisticsMap;
+        this.currencyMap = currencyMap;
+//        this.detailSuccessList = detailSuccessList;
+//        this.detailErrorList = detailErrorList;
+//        this.addressSuccessList = addressSuccessList;
+//        this.addressErrorList = addressErrorList;
     }
 
     private final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
@@ -108,6 +118,100 @@ public class KolB2cApplicationExcelListener extends AnalysisEventListener<KolB2c
             errorMsgList.addAll(msgList);
         }
 
+        //申请日期
+        String applyDateStr = excelDTO.getApplyDateStr();
+        if(StringUtils.isNotBlank(applyDateStr)){
+            LocalDate applyDate = null;
+            try {
+                applyDate = LocalDate.parse(applyDateStr, dateTimeFormatter);
+            } catch (Exception e1) {
+                try {
+                    applyDate = LocalDate.parse(applyDateStr, dateTimeFormatter2);
+                } catch (Exception e2) {
+                    try {
+                        applyDate = LocalDate.parse(applyDateStr, dateTimeFormatter3);
+                    } catch (Exception e3) {
+                        errorMsgList.add("申请时间格式错误，请使用 yyyy-MM-dd、yyyy/M/d 或 yyyy/MM/dd 格式");
+                    }
+                }
+            }
+            excelDTO.setApplyDate(applyDate);
+        }
+
+        String sampleTypeName = excelDTO.getSampleTypeName();
+        if(StringUtils.isNotBlank(sampleTypeName)){
+            if(cfgKolOptionMap.containsKey(sampleTypeName)){
+                excelDTO.setSampleType(cfgKolOptionMap.get(sampleTypeName));
+            }else {
+                errorMsgList.add("寄样类型【"+sampleTypeName+"】不存在");
+            }
+        }
+
+        //店铺
+        String shopName = excelDTO.getShopName();
+        if(StringUtils.isNotBlank(shopName)){
+            if(shopMap.containsKey(shopName)){
+                excelDTO.setShopId(shopMap.get(shopName));
+            }else {
+                errorMsgList.add("店铺【"+shopName+"】不存在");
+            }
+        }
+        //币别
+        String currencyName = excelDTO.getCurrencyName();
+        if(StringUtils.isNotBlank(currencyName)){
+            if(currencyMap.containsKey(currencyName)){
+                excelDTO.setCurrency(currencyMap.get(currencyName));
+            } else {
+                errorMsgList.add("币别【"+currencyName+"】不存在");
+            }
+        }
+
+        //业务类型
+        String isInternationalName = excelDTO.getIsInternationalName();
+        if(StringUtils.isNotBlank(isInternationalName)){
+            if(cfgKolOptionMap.containsKey(isInternationalName)){
+                excelDTO.setIsInternational(getIsInternational(isInternationalName));
+            } else {
+                errorMsgList.add("业务类型【"+isInternationalName+"】不存在");
+            }
+        }
+        //发货仓库
+        String deliveryWarehouse = excelDTO.getWarehouseName();
+        if(StringUtils.isNotBlank(deliveryWarehouse)){
+            if(warehouserMap.containsKey(deliveryWarehouse)){
+                excelDTO.setWarehouseId(warehouserMap.get(deliveryWarehouse));
+            } else {
+                errorMsgList.add("发货仓库【"+deliveryWarehouse+"】不存在");
+            }
+        }
+        //物流渠道
+        String logisticsChannelName = excelDTO.getLogisticsChannelName();
+        if(StringUtils.isNotBlank(logisticsChannelName)){
+            if(logisticsMap.containsKey(logisticsChannelName)){
+                excelDTO.setLogisticsChannelId(logisticsMap.get(logisticsChannelName));
+            } else {
+                errorMsgList.add("物流渠道【"+logisticsChannelName+"】不存在");
+            }
+        }
+        //申请人
+        String applicantName = excelDTO.getApplyUserName();
+        if(StringUtils.isNotBlank(applicantName)){
+            if(userMap.containsKey(applicantName)){
+                excelDTO.setApplyUserId(userMap.get(applicantName).getUserId());
+            } else {
+                errorMsgList.add("申请人【"+applicantName+"】不存在");
+            }
+        }
+        //申请部门
+        String applyDeptName = excelDTO.getApplyDeptName();
+        if(StringUtils.isNotBlank(applyDeptName)){
+            if(deptMap.containsKey(applyDeptName)){
+                excelDTO.setApplyDeptId(deptMap.get(applyDeptName));
+            } else {
+                errorMsgList.add("申请部门【"+applyDeptName+"】不存在");
+            }
+        }
+
         //存在错误数据则直接返回
         if (errorMsgList.size() > 0) {
             excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
@@ -115,6 +219,10 @@ public class KolB2cApplicationExcelListener extends AnalysisEventListener<KolB2c
             return;
         }
         successList.add(excelDTO);
+    }
+
+    private Boolean getIsInternational(String isInternational) {
+        return "国外".equals(isInternational) ? true : false;
     }
 
 
@@ -125,16 +233,16 @@ public class KolB2cApplicationExcelListener extends AnalysisEventListener<KolB2c
     @Transactional(rollbackFor = Exception.class)
     public void doAfterAllAnalysed(AnalysisContext analysisContext) {
         if (!successList.isEmpty()){
-            try {
-                List<String> errorNoList = errorList.stream().map(KolB2cApplicationImportExcelDTO::getNo).distinct().collect(Collectors.toList());
-                List<KolB2cApplicationImportExcelDTO> errorList2 = new ArrayList<>();
-                kolB2cApplicationService.handleImportSuccessList(successList,errorNoList, errorList2,importType);
-                errorList.addAll(errorList2);
-            }catch (Exception e){
-                successList.forEach(excelDTO1 -> excelDTO1.setErrorMsg(e.getMessage().length() > 50 ? e.getMessage().substring(0, 50) : e.getMessage()));
-                errorList.addAll(successList);
-            }
-            successList.clear();
+//            try {
+//                List<String> errorNoList = errorList.stream().map(KolB2cApplicationImportExcelDTO::getNo).distinct().collect(Collectors.toList());
+//                List<KolB2cApplicationImportExcelDTO> errorList2 = new ArrayList<>();
+//                kolB2cApplicationService.handleImportSuccessList(successList,errorNoList, errorList2,importType);
+//                errorList.addAll(errorList2);
+//            }catch (Exception e){
+//                successList.forEach(excelDTO1 -> excelDTO1.setErrorMsg(e.getMessage().length() > 50 ? e.getMessage().substring(0, 50) : e.getMessage()));
+//                errorList.addAll(successList);
+//            }
+//            successList.clear();
             updateTask(count);
         }
     }
