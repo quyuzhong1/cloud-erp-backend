@@ -14,6 +14,7 @@ import com.erp.model.oms.dto.KolAddressInfoDTO;
 import com.erp.model.oms.dto.KolCooperationPlatformDTO;
 import com.erp.model.oms.dto.excel.KolPartnerInfoImportExcelDTO;
 import com.erp.model.oms.entity.*;
+import com.erp.model.oms.enums.CfgKolOptionTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.DictCountryDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
@@ -184,6 +185,7 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
             }
         }else{
             List<KolCooperationPlatformEntity> kolCooperationPlatformEntities = BeanMapperUtils.copyList(KolCooperationPlatformEntity.class, kolCooperationPlatformDTOList);
+            kolCooperationPlatformEntities.forEach(e -> e.setMainId(kolPartnerInfoEntity.getId()));
             commonService.updateDetail(kolPartnerInfoEntity.getId(),ModuleTypeEnum.KOL_PARTNER_INFO.getCode(),kolCooperationPlatformService,  kolCooperationPlatformEntities, oldKolCooperationPlatformEntities,"platformName");
         }
 
@@ -199,6 +201,7 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
             }
         }else {
             List<KolAddressInfoEntity> kolAddressInfoEntities = BeanMapperUtils.copyList(KolAddressInfoEntity.class, kolAddressInfoDTOList);
+            kolAddressInfoEntities.forEach(e -> e.setMainId(kolPartnerInfoEntity.getId()));
             commonService.updateDetail(kolPartnerInfoEntity.getId(), ModuleTypeEnum.KOL_PARTNER_INFO.getCode(), kolAddressInfoService, kolAddressInfoEntities, oldKolAddressInfoEntities, "contactPerson");
         }
         return Boolean.TRUE;
@@ -276,7 +279,7 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
     }
 
     @Override
-    public void importExhibitionOrder(BaseDTO.ImportDTO dto) {
+    public void importKolPartnerInfo(BaseDTO.ImportDTO dto) {
         //设置操作人
         if(StringUtils.isNotBlank(dto.getUserId())){
             FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(dto.getUserId());
@@ -334,7 +337,7 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
 
         if(CollUtil.isNotEmpty(successList)){
             // 获取数据字典
-            List<CfgKolOptionEntity> cfgKolOptionEntities = cfgKolOptionService.lambdaQuery().in(CfgKolOptionEntity::getId, Arrays.asList("cooperationType", "partnerType")).list();
+            List<CfgKolOptionEntity> cfgKolOptionEntities = cfgKolOptionService.lambdaQuery().in(CfgKolOptionEntity::getId, Arrays.asList(CfgKolOptionTypeEnum.COOPERATION_TYPE.getCode(), CfgKolOptionTypeEnum.PARTNER_TYPE.getCode())).list();
             Map<String, String> map = cfgKolOptionEntities.stream().collect(Collectors.toMap(CfgKolOptionEntity::getId, CfgKolOptionEntity::getName));
             // 获取语言字典
             List<DictLanguageEntity> dictLanguageEntities = dictLanguageService.list();
@@ -543,7 +546,7 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
             return;
         }
 
-        List<CfgKolOptionEntity> cfgKolOptionEntities = cfgKolOptionService.lambdaQuery().in(CfgKolOptionEntity::getId, Arrays.asList("cooperationType", "partnerType")).list();
+        List<CfgKolOptionEntity> cfgKolOptionEntities = cfgKolOptionService.lambdaQuery().in(CfgKolOptionEntity::getId, Arrays.asList(CfgKolOptionTypeEnum.COOPERATION_TYPE.getCode(), CfgKolOptionTypeEnum.PARTNER_TYPE.getCode())).list();
         Map<String, String> map = cfgKolOptionEntities.stream().collect(Collectors.toMap(CfgKolOptionEntity::getId, CfgKolOptionEntity::getName));
 
         List<DictLanguageEntity> dictLanguageEntities = dictLanguageService.list();
@@ -579,7 +582,7 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
            return;
         }
 
-        List<CfgKolOptionEntity> cfgKolOptionEntities = cfgKolOptionService.lambdaQuery().in(CfgKolOptionEntity::getId, Arrays.asList("cooperationType", "partnerType")).list();
+        List<CfgKolOptionEntity> cfgKolOptionEntities = cfgKolOptionService.lambdaQuery().in(CfgKolOptionEntity::getId, Arrays.asList(CfgKolOptionTypeEnum.COOPERATION_TYPE.getCode(), CfgKolOptionTypeEnum.PARTNER_TYPE.getCode())).list();
         Map<String, String> map = cfgKolOptionEntities.stream().collect(Collectors.toMap(CfgKolOptionEntity::getId, CfgKolOptionEntity::getName));
 
         List<DictLanguageEntity> dictLanguageEntities = dictLanguageService.list();
@@ -625,6 +628,11 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
         queryWrapper.orderByDesc(KolPartnerInfoEntity::getDisabled);
         List<KolPartnerInfoEntity> list = this.list(queryWrapper);
         return BeanMapperUtils.copyList(KolPartnerInfoDTO.DropDownDTO.class, list);
+    }
+
+    @Override
+    public List<KolPartnerInfoDTO.PartnerAddressDTO> partnerAddressList(KolPartnerInfoDTO.AddressSelectDTO dto) {
+        return this.baseMapper.partnerAddressList(dto);
     }
 
 }

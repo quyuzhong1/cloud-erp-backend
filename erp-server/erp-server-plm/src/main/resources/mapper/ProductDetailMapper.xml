@@ -1953,6 +1953,7 @@
         pi.materials,
         pi.function_desc,
         pi.grade AS productGrade,
+        pi.brand_id AS brandId,
         pi.brand_name as brandName,
         pi.rdt_team_name as rdtTeamName,
         pi.category_id as categoryId,

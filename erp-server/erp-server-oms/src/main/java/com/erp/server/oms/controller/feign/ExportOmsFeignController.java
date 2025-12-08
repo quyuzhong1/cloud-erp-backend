@@ -92,6 +92,9 @@ public class ExportOmsFeignController {
     @Resource
     private KolSampleCostService kolSampleCostService;
 
+    @Resource
+    private KolB2cApplicationService kolB2cApplicationService;
+
     @PostMapping("/customerB2BSellerChange")
     @WebAdvanceQuery(handler = CustomerInfoQueryHandler.class)
     public PagingVO<CustomerB2bSellerExcelDTO> exportCustomerB2BSellerChange(@RequestBody PagingDTO<CustomerB2bSellerChangeDTO.ParamDTO> dto) {
@@ -436,5 +439,18 @@ public class ExportOmsFeignController {
     @WebAdvanceQuery(handler = KolB2bApplicationQueryHandler.class)
     public PagingVO<KolSampleCostDTO.ListDTO> exportKolSampleCost(@RequestBody PagingDTO<KolSampleCostDTO.PagingParamDTO> dto) {
         return kolSampleCostService.paging(dto);
+    }
+
+    /**
+     * B2C寄样申请导出
+     * @author jack
+     * @date: 2025-12-03
+     * @param dto
+     * @return PagingVO<KolB2cApplicationDTO.ListDTO>
+     */
+    @PostMapping("/exportOmsKolB2cApplication")
+    @WebAdvanceQuery(handler = KolPartnerInfoQueryHandler.class)
+    public PagingVO<KolB2cApplicationDTO.ListDTO> exportOmsKolB2cApplication(@RequestBody PagingDTO<KolB2cApplicationDTO.PagingParamDTO> dto) {
+        return kolB2cApplicationService.paging(dto);
     }
 }

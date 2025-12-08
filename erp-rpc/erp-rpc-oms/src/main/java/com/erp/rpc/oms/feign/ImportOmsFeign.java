@@ -30,4 +30,7 @@ public interface ImportOmsFeign {
     @PostMapping("/feign/import/importKolPartnerInfo")
     void importKolPartnerInfo(@RequestBody BaseDTO.ImportDTO dto);
 
+    @PostMapping("/feign/import/importKolB2cApplication")
+    void importKolB2cApplication(@RequestBody BaseDTO.ImportDTO dto);
+
 }

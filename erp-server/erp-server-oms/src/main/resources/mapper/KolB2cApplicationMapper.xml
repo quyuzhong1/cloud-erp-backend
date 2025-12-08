@@ -1,0 +1,216 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.oms.mapper.KolB2cApplicationMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.oms.entity.KolB2cApplicationEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="invalid_status" property="invalidStatus" />
+       <result column="invalid_remark" property="invalidRemark" />
+       <result column="remark" property="remark" />
+       <result column="approve_status" property="approveStatus" />
+       <result column="approve_time" property="approveTime" />
+       <result column="approve_user_id" property="approveUserId" />
+       <result column="approve_user_name" property="approveUserName" />
+       <result column="code" property="code" />
+       <result column="apply_date" property="applyDate" />
+       <result column="sample_type" property="sampleType" />
+       <result column="is_international" property="isInternational" />
+       <result column="shop_id" property="shopId" />
+       <result column="shop_name" property="shopName" />
+       <result column="currency" property="currency" />
+       <result column="warehouse_id" property="warehouseId" />
+       <result column="warehouse_name" property="warehouseName" />
+       <result column="logistics_channel_id" property="logisticsChannelId" />
+       <result column="logistics_channel_name" property="logisticsChannelName" />
+       <result column="apply_user_id" property="applyUserId" />
+       <result column="apply_user_name" property="applyUserName" />
+       <result column="apply_dept_id" property="applyDeptId" />
+       <result column="apply_dept_name" property="applyDeptName" />
+       <result column="apply_remark" property="applyRemark" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        kba.id AS id,
+kba.create_user_id AS createUserId,
+kba.create_user_name AS createUserName,
+kba.create_time AS createTime,
+kba.update_user_id AS updateUserId,
+kba.update_user_name AS updateUserName,
+kba.update_time AS updateTime,
+kba.version AS version,
+kba.is_deleted AS isDeleted,
+kba.invalid_status AS invalidStatus,
+kba.invalid_remark AS invalidRemark,
+kba.remark AS remark,
+kba.approve_status AS approveStatus,
+kba.approve_time AS approveTime,
+kba.approve_user_id AS approveUserId,
+kba.approve_user_name AS approveUserName,
+kba.code AS code,
+kba.apply_date AS applyDate,
+kba.sample_type AS sampleType,
+kba.is_international AS isInternational,
+kba.shop_id AS shopId,
+kba.shop_name AS shopName,
+kba.currency AS currency,
+kba.warehouse_id AS warehouseId,
+kba.warehouse_name AS warehouseName,
+kba.logistics_channel_id AS logisticsChannelId,
+kba.logistics_channel_name AS logisticsChannelName,
+kba.apply_user_id AS applyUserId,
+kba.apply_user_name AS applyUserName,
+kba.apply_dept_id AS applyDeptId,
+kba.apply_dept_name AS applyDeptName,
+kba.apply_remark AS applyRemark
+    </sql>
+
+    <sql id="Kbad_Column_List">
+        kbad.id AS detailId,
+kbad.sku_id AS skuId,
+kbad.sku_no AS skuNo,
+kbad.brand_id AS brandId,
+kbad.brand_name AS brandName,
+kbad.partner_id AS partnerId,
+kbad.nickname AS nickname,
+kbad.apply_qty AS applyQty,
+kbad.plan_feedback_date AS planFeedbackDate,
+kbad.remark AS detailRemark,
+kbad.project_tag AS projectTag
+    </sql>
+
+    <sql id="Bsba_Column_List">
+        ksba.id AS subId,
+ksba.code AS subCode,
+ksba.platform_so_code AS platformSoCode,
+ksba.dict_platform AS dictPlatform,
+ksba.partner_id AS partnerId,
+ksba.nickname AS nickname,
+ksba.delivery_status AS deliveryStatus,
+ksba.order_status AS orderStatus,
+ksba.track_no AS trackNo,
+ksba.platform_order_id AS platformOrderId,
+ksba.platform_order_code AS platformOrderCode
+    </sql>
+
+    <select id="paging" resultType="com.erp.model.oms.dto.KolB2cApplicationDTO$ListDTO">
+        SELECT
+        <include refid="Base_Column_List"></include>
+            ,
+        <include refid="Kbad_Column_List"></include>
+            ,
+        <include refid="Bsba_Column_List"></include>
+            ,
+        kfc.feedbackQty,
+        kfc.checkFeedbackQty
+        FROM
+        kol_b2c_application kba
+        left join kol_b2c_application_detail kbad on kba.id = kbad.main_id and kbad.is_deleted = false
+        left join kol_sub_b2c_application ksba on kbad.partner_id = ksba.partner_id and kba.id = ksba.source_id and ksba.is_deleted = false
+        left join (
+            SELECT
+                kf.source_id,
+                kf.partner_id,
+                COUNT ( kf.id ) AS feedbackQty ,
+                COUNT ( ksm.id ) as checkFeedbackQty
+            FROM
+                kol_feedback kf
+            LEFT JOIN kol_social_media ksm on kf.url_hash = ksm.url_hash and ksm.is_deleted = false
+            WHERE
+            kf.is_deleted = FALSE
+            AND source_id != ''
+            GROUP BY
+                kf.source_id,
+                kf.partner_id
+        ) as kfc on kfc.partner_id = ksba.partner_id and kba.id = kfc.source_id
+        WHERE
+        ${params.sqlMap.default}
+        AND kba.is_deleted = FALSE
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        kba.create_time desc
+    </select>
+
+    <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
+        select approve_status, count(id) from kol_b2c_application where is_deleted = false group by approve_status
+    </select>
+
+
+    <select id="tabList" resultType="com.erp.model.oms.dto.KolB2cApplicationDTO$TabListDTO">
+        SELECT
+        'waitSubmit' AS tabFlag,
+        '待提交' AS tabFlagName,
+        count(1)  AS count
+        FROM  kol_b2c_application kba
+        WHERE kba.is_deleted=FALSE
+        AND kba.approve_status = 'waitSubmit'
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        UNION ALL
+        SELECT
+        'approveIng' AS tabFlag,
+        '待我审核' AS tabFlagName,
+        COUNT ( 1 ) AS COUNT
+        FROM  kol_b2c_application kba
+        WHERE kba.is_deleted=FALSE
+        AND kba.approve_status = 'approveIng'
+        <if test="params.ids != null and params.ids.size > 0">
+            and kba.id in
+            <foreach collection="params.ids" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        UNION ALL
+        SELECT
+        'waitShipped' AS tabFlag,
+        '待发货' AS tabFlagName,
+        count(1)  AS count
+        FROM  kol_b2c_application kba
+        inner join kol_sub_b2c_application ksba on kba.id = ksba.source_id and ksba.is_deleted = false
+        WHERE kba.is_deleted=FALSE
+        AND kba.approve_status = 'approve'
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        UNION ALL
+        SELECT
+        'shipped' AS tabFlag,
+        '已发货' AS tabFlagName,
+        count(1)  AS count
+        FROM  kol_b2c_application kba
+        inner join kol_sub_b2c_application ksba on kba.id = ksba.source_id and ksba.is_deleted = false
+        WHERE kba.is_deleted=FALSE
+        AND kba.approve_status = 'approve'
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        UNION ALL
+        SELECT
+        'reject' AS tabFlag,
+        '不通过' AS tabFlagName,
+        count(1)  AS count
+        FROM  kol_b2c_application kba
+        WHERE kba.is_deleted=FALSE
+        AND kba.approve_status = 'reject'
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+    </select>
+
+</mapper>
