@@ -83,13 +83,11 @@ public class KolB2bApplicationQueryHandler extends AbstractQueryHandler {
         }
         //待发货
         if(KolB2bApplicationTableEnum.WAIT_SHIPPED.getCode().equals(value)){
-            super.buildDefaultDTO("kba.approve_status", Collections.singletonList(ApproveStatusEnum.APPROVE.getCode()));
-            return "not exists (select * from so_detail sd where sd.is_deleted = false and sd.source_detail_id = kbad.id and sd.delivery_status in ('partialShipment','completeShipment'))";
+            return " kba.approve_status = 'approve' and not exists (select * from so_detail sd where sd.is_deleted = false and sd.source_detail_id = kbad.id and sd.delivery_status in ('partialShipment','completeShipment'))";
         }
         //已发货
         if(KolB2bApplicationTableEnum.SHIPPED.getCode().equals(value)){
-            super.buildDefaultDTO("kba.approve_status", Collections.singletonList(ApproveStatusEnum.APPROVE.getCode()));
-            return "exists (select * from so_detail sd where sd.is_deleted = false and sd.source_detail_id = kbad.id and sd.delivery_status = 'completeShipment')";
+            return " kba.approve_status = 'approve' exists (select * from so_detail sd where sd.is_deleted = false and sd.source_detail_id = kbad.id and sd.delivery_status = 'completeShipment')";
         }
         return super.getSplicingSQL();
     }
