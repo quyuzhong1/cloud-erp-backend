@@ -338,9 +338,9 @@ public class KolB2bApplicationDTO implements Serializable {
         private String telNumber;
 
         /**
-        * 收货地址
-        */
-        private String receiveAddress;
+         * 收货地址id
+         */
+        private String receiveAddressId;
 
         /**
         * 地址类型，CustomerAddressTypeEnum枚举
@@ -550,7 +550,7 @@ public class KolB2bApplicationDTO implements Serializable {
         */
         @NotBlank(message = "收货地址不能为空")
         @Size(max = 255,message = "收货地址最大长度不能超过255位")
-        private String receiveAddress;
+        private String receiveAddressId;
 
         /**
         * 地址类型，/api/oms/common/enumDropDown?type=CustomerAddressType

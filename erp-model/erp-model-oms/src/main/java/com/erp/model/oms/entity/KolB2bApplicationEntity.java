@@ -118,11 +118,6 @@ public class KolB2bApplicationEntity extends BaseEntity<KolB2bApplicationEntity>
     @TableField("tel_number")
     private String telNumber;
     /**
-    * 收货地址
-    */
-    @TableField("receive_address")
-    private String receiveAddress;
-    /**
      * 收货人id地址
      * 来源 http://172.16.100.11:3002/project/110/interface/api/13561
      * <p>

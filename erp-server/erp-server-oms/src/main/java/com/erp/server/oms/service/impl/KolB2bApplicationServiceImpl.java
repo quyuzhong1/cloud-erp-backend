@@ -798,6 +798,8 @@ public class KolB2bApplicationServiceImpl extends SuperServiceImpl<KolB2bApplica
     public KolB2bApplicationDTO.ViewDTO view(String id) {
         KolB2bApplicationEntity kolB2bApplicationEntity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到B2B寄样申请主单数据"));
         KolB2bApplicationDTO.ViewDTO data = BeanMapperUtils.map(KolB2bApplicationDTO.ViewDTO.class, kolB2bApplicationEntity);
+        data.setApproveStatus(kolB2bApplicationEntity.getApproveStatus().getStatus());
+        data.setApproveStatusName(kolB2bApplicationEntity.getApproveStatus().getName());
         // 数据填充处理
         fillOne(data);
         return data;
@@ -835,8 +837,6 @@ public class KolB2bApplicationServiceImpl extends SuperServiceImpl<KolB2bApplica
         if (ObjectUtil.isEmpty(data)) {
             return;
         }
-        //状态名称
-        data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
 
         //客户名称
         CustomerInfoEntity customerInfo = customerInfoService.getById(data.getCustomerId());
