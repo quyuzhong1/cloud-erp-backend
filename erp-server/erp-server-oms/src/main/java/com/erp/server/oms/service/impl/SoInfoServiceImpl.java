@@ -4724,7 +4724,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         List<VirtualWarehouseEntity> virtualWarehouseList = FeignQuery.getByIds(VirtualWarehouseEntity.class, virtualWarehouseIdList);
 
         //SKu
-        List<String> skuIdList = soDetailList.stream().map(SoDetailEntity::getSkuId).distinct().collect(Collectors.toList());
+        List<String> skuIdList = soDetailList.stream().map(SoDetailEntity::getDeliverySkuId).distinct().collect(Collectors.toList());
 
 
         //根据SKU查询BOM判断是否是组合SKU
@@ -4780,20 +4780,20 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             //虚拟仓库信息
             String virtualWarehouseName = virtualWarehouseList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), soInfoEntity.getVirtualWarehouseId())).map(VirtualWarehouseEntity::getName).findFirst().orElse("");
             batchLockDTO.setVirtualWarehouseName(virtualWarehouseName);
-            batchLockDTO.setSkuNo(soDetailEntity.getSkuNo());
+            batchLockDTO.setSkuNo(soDetailEntity.getDeliverySkuNo());
             //产品名称
-            String productName = productDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), soDetailEntity.getSkuId())).map(ProductDetailEntity::getName).findFirst().orElse("");
+            String productName = productDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), soDetailEntity.getDeliverySkuId())).map(ProductDetailEntity::getName).findFirst().orElse("");
             batchLockDTO.setProductName(productName);
-            batchLockDTO.setQty(soDetailEntity.getQty());
+            batchLockDTO.setQty(soDetailEntity.getDeliveryQty());
             batchLockDTO.setFrozenQty(soDetailEntity.getFrozenQty());
             //销售通知单
             Integer totalNoticeQty = soDeliveryNoticeDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSourceDetailId(), soDetailEntity.getId())
-                    && CharSequenceUtil.equals(obj.getSkuId(),soDetailEntity.getSkuId()))
+                    && CharSequenceUtil.equals(obj.getSkuId(),soDetailEntity.getDeliverySkuId()))
                     .map(SoDeliveryNoticeDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
             batchLockDTO.setTotalNoticeQty(totalNoticeQty);
 
             Integer effectiveNoticeQty = soDeliveryNoticeDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSourceDetailId(), soDetailEntity.getId())
-                    && CharSequenceUtil.equals(obj.getSkuId(),soDetailEntity.getSkuId())
+                    && CharSequenceUtil.equals(obj.getSkuId(),soDetailEntity.getDeliverySkuId())
                     && CharSequenceUtil.equals(obj.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus())
             ).map(SoDeliveryNoticeDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
             batchLockDTO.setEffectiveNoticeQty(effectiveNoticeQty);
@@ -4801,6 +4801,9 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             //入参
             SoInfoDTO.VirtuaParamScarceDTO paramScarceDTO = new SoInfoDTO.VirtuaParamScarceDTO();
             BeanMapperUtils.copy(soDetailEntity,paramScarceDTO);
+            paramScarceDTO.setSkuId(soDetailEntity.getDeliverySkuId());
+            paramScarceDTO.setSkuNo(soDetailEntity.getDeliverySkuNo());
+            paramScarceDTO.setQty(soDetailEntity.getDeliveryQty());
             paramScarceDTO.setWarehouseId(soInfoEntity.getWarehouseId());
             paramScarceDTO.setVirtualWarehouseId(soInfoEntity.getVirtualWarehouseId());
             //虚拟仓bom库存
@@ -4920,6 +4923,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             //入参
             SoInfoDTO.VirtuaParamScarceDTO paramScarceDTO = new SoInfoDTO.VirtuaParamScarceDTO();
             BeanMapperUtils.copy(detailDTO,paramScarceDTO);
+            paramScarceDTO.setSkuId(soDetailEntity.getDeliverySkuId());
+            paramScarceDTO.setSkuNo(soDetailEntity.getDeliverySkuNo());
             paramScarceDTO.setQty(soDetailEntity.getBoxQty());
             paramScarceDTO.setWarehouseId(soInfoEntity.getWarehouseId());
             paramScarceDTO.setVirtualWarehouseId(soInfoEntity.getVirtualWarehouseId());

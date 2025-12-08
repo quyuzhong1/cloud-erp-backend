@@ -1913,8 +1913,8 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
      */
     private List<VirtualInventoryStockDTO.OutInStockDTO> unLockVirtualInventory (SoInfoEntity soInfoEntity, SoDetailEntity soDetailEntity) {
         VirtualInventoryStockDTO.OutInStockDTO outInStockDTO = new VirtualInventoryStockDTO.OutInStockDTO();
-        outInStockDTO.setSkuId(soDetailEntity.getSkuId());
-        outInStockDTO.setSkuNo(soDetailEntity.getSkuNo());
+        outInStockDTO.setSkuId(soDetailEntity.getDeliverySkuId());
+        outInStockDTO.setSkuNo(soDetailEntity.getDeliverySkuNo());
         outInStockDTO.setWarehouseId(soInfoEntity.getWarehouseId());
         outInStockDTO.setVirtualWarehouseId(soInfoEntity.getVirtualWarehouseId());
         outInStockDTO.setBillDate(LocalDate.now());
