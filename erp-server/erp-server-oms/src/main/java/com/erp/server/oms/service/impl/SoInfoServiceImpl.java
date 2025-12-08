@@ -4086,6 +4086,9 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         if (ObjectUtil.isEmpty(soInfoEntity)) {
             throw new ServiceException(ApiError.ERROR_92016);
         }
+        if (!BillApproveStatusEnum.APPROVE.equals(soInfoEntity.getApproveStatus())){
+            throw new ServiceException("订单未审核,不允许下推三方发货单");
+        }
         String warehouseId = soInfoEntity.getWarehouseId();
         List<WarehouseDTO.UpdateDTO> updateDTOList = wmsTaskFeign.listWarehouseByIds(Collections.singletonList(warehouseId));
         if (CollUtil.isEmpty(updateDTOList) || !WarehouseManageTypeEnum.THIRD_PARTY.getCode().equals(updateDTOList.get(0).getWarehouseManageType())){

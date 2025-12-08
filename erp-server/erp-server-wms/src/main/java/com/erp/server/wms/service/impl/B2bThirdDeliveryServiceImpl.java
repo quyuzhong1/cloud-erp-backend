@@ -13,6 +13,7 @@ import com.common.business.dto.base.*;
 import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.DynamicDataSourceTypeEnum;
+import com.common.business.enums.SyncOperateEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.DynamicDataSourceThreadLocal;
 import com.common.business.threadlocal.UserContext;
@@ -21,6 +22,7 @@ import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.SoDetailEntity;
@@ -43,6 +45,7 @@ import com.erp.model.wms.enums.ThirdDeliveryStatusEnum;
 import com.erp.model.wms.enums.WarehouseOperationTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.model.wms.enums.inventory.VirtualInventoryBusinessTypeEnum;
+import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.CustomerFeign;
 import com.erp.rpc.oms.feign.SoInfoFeign;
@@ -56,6 +59,8 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronizationAdapter;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import javax.annotation.Resource;
 import java.time.LocalDate;
@@ -99,6 +104,8 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
     private SoOutstockService soOutstockService;
     @Resource
     private CustomerFeign customerFeign;
+    @Resource
+    private DmpMqFeign dmpMqFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -126,11 +133,31 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
         List<B2bThirdDeliveryDetailEntity> detailEntityList = b2bThirdDeliveryDetailService.batchAdd(b2bThirdDeliveryEntity.getId(), addDTO.getDetailList());
         //新增附件
         wmsAttachmentService.batchSave(addDTO.getAttachList(), ModuleTypeEnum.B2B_THIRD_DELIVERY.getCode(),b2bThirdDeliveryEntity.getId());
-        //推送本地消息表
-        syncB2bThirdWarehouseService.syncB2bThirdWarehouseCreate(b2bThirdDeliveryEntity, detailEntityList,ThirdDeliveryStatusEnum.CREATING.getCode());
+        // 发送B2b三方仓推送任务
+        sendB2bThirdWarehousePushTask(b2bThirdDeliveryEntity, detailEntityList, SyncOperateEnum.OPERATE_ADD.getCode());
         //冻结库存
         freezeVirtualInventory(b2bThirdDeliveryEntity, detailEntityList);
         return new BaseResultDTO.AddDTO(b2bThirdDeliveryEntity.getId(), code);
+    }
+
+    /**
+     *  发送B2b三方仓推送任务
+     * @param entity
+     * @param detailEntityList
+     */
+    private void sendB2bThirdWarehousePushTask(B2bThirdDeliveryEntity entity, List<B2bThirdDeliveryDetailEntity> detailEntityList, String operate) {
+        if (Objects.isNull(entity.getIsApiDelivery()) || !entity.getIsApiDelivery()){
+            return;
+        }
+        //推送本地消息表
+        DmpPushTaskEntity pushTaskEntity = syncB2bThirdWarehouseService.syncB2bThirdWarehouse(entity, detailEntityList, operate);
+        //推送中台
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+            @Override
+            public void afterCommit() {
+                dmpMqFeign.sendTask(Collections.singletonList(pushTaskEntity));
+            }
+        });
     }
 
     private void rollbackFreezeVirtualInventory(String id) {
@@ -208,7 +235,7 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
         //新增附件
         wmsAttachmentService.batchSave(addOrUpdateDTO.getAttachList(), ModuleTypeEnum.B2B_THIRD_DELIVERY.getCode(),b2bThirdDeliveryEntity.getId());
         //推送本地消息表
-        syncB2bThirdWarehouseService.syncB2bThirdWarehouseCreate(b2bThirdDeliveryEntity, detailEntityList,ThirdDeliveryStatusEnum.CREATING.getCode());
+        sendB2bThirdWarehousePushTask(b2bThirdDeliveryEntity, detailEntityList, SyncOperateEnum.OPERATE_ADD.getCode());
         //冻结库存
         freezeVirtualInventory(b2bThirdDeliveryEntity, detailEntityList);
         return Boolean.TRUE;
@@ -388,7 +415,7 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
         }
         if (entity.getIsApiDelivery()){
             //调三方仓
-            syncB2bThirdWarehouseService.syncB2bThirdWarehouseCancel(entity,ThirdDeliveryStatusEnum.CANCEL_DELIVERY.getCode());
+            sendB2bThirdWarehousePushTask(entity, null, SyncOperateEnum.OPERATE_INVALID.getCode());
             updateStatus(id, ThirdDeliveryStatusEnum.INTERCEPTING.getCode(), "", "",remark, "");
         }else {
             //直接拦截成功
