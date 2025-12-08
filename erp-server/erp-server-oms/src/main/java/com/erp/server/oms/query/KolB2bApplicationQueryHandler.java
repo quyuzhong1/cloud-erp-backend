@@ -1,10 +1,8 @@
 package com.erp.server.oms.query;
 
 import com.common.business.enums.ApproveStatusEnum;
-import com.common.business.enums.QueryConditionEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.query.AbstractQueryHandler;
-import com.common.business.threadlocal.AdvanceQueryContext;
 import com.erp.model.oms.enums.KolB2bApplicationTableEnum;
 import com.erp.model.oms.enums.KolB2bRefStatusEnum;
 import com.erp.server.oms.service.CommonService;

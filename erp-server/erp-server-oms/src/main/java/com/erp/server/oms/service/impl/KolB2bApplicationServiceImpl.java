@@ -35,7 +35,10 @@ import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.dto.excel.KolB2bApplicationImportExcelDTO;
 import com.erp.model.oms.entity.*;
-import com.erp.model.oms.enums.*;
+import com.erp.model.oms.enums.BillTypeEnum;
+import com.erp.model.oms.enums.CustomerAddressTypeEnum;
+import com.erp.model.oms.enums.KolB2bApplicationTableEnum;
+import com.erp.model.oms.enums.KolB2bRefStatusEnum;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.InvalidStatusEnum;
@@ -60,7 +63,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -71,9 +73,6 @@ import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
 /**
@@ -117,10 +116,6 @@ public class KolB2bApplicationServiceImpl extends SuperServiceImpl<KolB2bApplica
     private SoInfoService soInfoService;
     @Resource
     private KolB2bApplicationQueryHandler kolB2bApplicationQueryHandler;
-
-    @Resource
-    @Qualifier("soB2cTabExecutorPool")
-    private ExecutorService soB2cTabExecutorPool;
 
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
@@ -208,45 +203,25 @@ public class KolB2bApplicationServiceImpl extends SuperServiceImpl<KolB2bApplica
         KolB2bApplicationDTO.PagingParamDTO searchParam = new KolB2bApplicationDTO.PagingParamDTO();
         searchParam.setPermissionSql(param.getPermissionSql());
         KolB2bApplicationTableEnum[] values = KolB2bApplicationTableEnum.values();
-        List<Future<KolB2bApplicationDTO.TabListDTO>> futureList = new ArrayList<>();
         List<KolB2bApplicationDTO.TabListDTO> list = new ArrayList<>();
-        for (KolB2bApplicationTableEnum item : values) {
-            Future<KolB2bApplicationDTO.TabListDTO> submit = soB2cTabExecutorPool.submit(() -> {
-                searchParam.setPermissionSql(param.getPermissionSql());
-                KolB2bApplicationDTO.TabListDTO resultDTO = new KolB2bApplicationDTO.TabListDTO();
-                String tabSql = kolB2bApplicationQueryHandler.getTabSql(item.getCode());
-                HashMap<String,String> map = new HashMap<>();
-                map.put("default",tabSql);
-                searchParam.setSqlMap(map);
-                Integer count = this.baseMapper.tabList(searchParam);
-                resultDTO.setCount(ObjectUtil.isEmpty(count) ? MathUtil.ZERO : count);
-                resultDTO.setTabFlag(item.getCode());
-                resultDTO.setTabFlagName(item.getName());
-                return resultDTO;
-            });
-            futureList.add(submit);
-        }
-        for(Future<KolB2bApplicationDTO.TabListDTO> f : futureList) {
-            try {
-                list.add(f.get());
-            } catch (InterruptedException e) {
-                // 恢复线程的中断状态，确保中断标志不会被忽略
-                Thread.currentThread().interrupt();
-                log.error("线程被中断", e);
-                throw new ServiceException("线程被中断", e);
-            } catch (ExecutionException e) {
-                log.error("线程任务执行异常", e);
-                throw new ServiceException("线程任务执行异常", e.getCause());
-            } catch (ThreadDeath td) {
-                log.error("捕获到 ThreadDeath，线程终止", td);
-                throw td; // 重新抛出以允许线程正常终止
-            }
-        }
+        Arrays.stream(values).parallel().forEach(item -> {
+            searchParam.setPermissionSql(param.getPermissionSql());
+            KolB2bApplicationDTO.TabListDTO resultDTO = new KolB2bApplicationDTO.TabListDTO();
+            String tabSql = kolB2bApplicationQueryHandler.getTabSql(item.getCode());
+            HashMap<String,String> map = new HashMap<>();
+            map.put("default",tabSql);
+            searchParam.setSqlMap(map);
+            Integer count = this.baseMapper.tabList(searchParam);
+            resultDTO.setCount(ObjectUtil.isEmpty(count) ? MathUtil.ZERO : count);
+            resultDTO.setTabFlag(item.getCode());
+            resultDTO.setTabFlagName(item.getName());
+            list.add(resultDTO);
+        });
         return list;
     }
 
     @Override
-    public void exportList(KolB2bApplicationDTO.ExportDTO param, HttpServletResponse response) {
+    public void exportList(KolB2bApplicationDTO.PagingParamDTO param, HttpServletResponse response) {
         downloadTaskFeign.saveDownloadTask("B2B寄样申请导出", FileTaskEventEnum.EXPORT_OMS_KOL_B2B_APPLICATION_REPORT.getCode(), param);
     }
 
@@ -983,7 +958,8 @@ public class KolB2bApplicationServiceImpl extends SuperServiceImpl<KolB2bApplica
             data.setApplyUserName(userMap.get(data.getApplyUserId()));
             //申请部门名称
             data.setApplyDeptName(deptMap.get(data.getApplyDeptId()));
-
+            //发货状态名称 默认未发货，下面赋值
+            data.setDeliveryStatusName(DeliveryStatusEnum.UN_SHIPPED.getName());
             //销售订单
             String b2bRefStatusName = KolB2bRefStatusEnum.WAIT_GENERATE.getName();
             SoDetailEntity soDetailEntity = soDetailMap.get(data.getDetailId());

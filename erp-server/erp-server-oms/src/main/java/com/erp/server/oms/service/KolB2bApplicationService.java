@@ -147,7 +147,7 @@ public interface KolB2bApplicationService extends SuperService<KolB2bApplication
     * @param response
     * @return
     */
-    void exportList(KolB2bApplicationDTO.ExportDTO dto, HttpServletResponse response);
+    void exportList(KolB2bApplicationDTO.PagingParamDTO dto, HttpServletResponse response);
 
     /**
     * 审核通过回调方法

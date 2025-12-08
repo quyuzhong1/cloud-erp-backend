@@ -412,11 +412,11 @@ public class KolB2bApplicationController extends BaseController {
     @PostMapping("/export")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
-            menuCode = "oms:kolB2bApplication:export",
+            menuCode = "oms:kolB2bApplication:paging",
             tableAlias = "kba"
     )
     @LogAction(value = LogActionEnum.EXPORT, desc = "B2B寄样申请主表导出Excel数据")
-    public void exportList(@RequestBody @Validated KolB2bApplicationDTO.ExportDTO dto, HttpServletResponse response) {
+    public void exportList(@RequestBody @Validated KolB2bApplicationDTO.PagingParamDTO dto, HttpServletResponse response) {
         kolB2bApplicationService.exportList(dto, response);
     }
 
