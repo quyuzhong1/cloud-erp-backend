@@ -294,7 +294,7 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
             for (SoOutstockDetailDTO.UpdateDTO dto : detailList) {
                 int sellQty = soDetails.stream()
                         .filter(v -> v.getSkuNo().equals(dto.getSkuNo()))
-                        .mapToInt(SoDetailEntity::getQty).sum();
+                        .mapToInt(SoDetailEntity::getBoxQty).sum();
                 if (sellQty == 0) {
                     throw new ServiceException(ApiError.ERROR_99107, dto.getSkuNo());
                 }
@@ -335,7 +335,7 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
                     String sourceDetailId = item.getSourceDetailId();
                     //这个是销售数量
                     Integer soQty = soDetailList.stream().filter(s -> s.getId().equals(sourceDetailId)).findFirst().
-                            flatMap(obj -> Optional.ofNullable(obj.getQty())).orElse(0);
+                            flatMap(obj -> Optional.ofNullable(obj.getBoxQty())).orElse(0);
 
                     //这个是已出的数量 这个对应的就是销售订单的详情id
                     Integer outStockQty = soOutstockDetailList.stream().filter(s ->
@@ -875,7 +875,7 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
              *  最后一笔价税合计(本位币)=总价税合计(本位币)-价税合计SKU累计(本位币)
              */
             List<SoOutstockDetailEntity> soOutStockDetailList = soOutstockDetailList.stream().filter(obj -> obj.getSoDetailId().equals(soDetailEntity.getId())).collect(Collectors.toList());
-            BigDecimal allAmountLocalCurrency = MathUtil.multiplyWithTwo(soDetailEntity.getAllAmountLocalCurrency(), MathUtil.divide(new BigDecimal(detailEntity.getActualQty()), new BigDecimal(soDetailEntity.getQty())));
+            BigDecimal allAmountLocalCurrency = MathUtil.multiplyWithTwo(soDetailEntity.getAllAmountLocalCurrency(), MathUtil.divide(new BigDecimal(detailEntity.getActualQty()), new BigDecimal(soDetailEntity.getBoxQty())));
             if (CollectionUtils.isNotEmpty(soOutStockDetailList)) {
                 Integer totalActualQty = soOutStockDetailList.stream().map(SoOutstockDetailEntity::getActualQty).reduce(MathUtil.ZERO, Integer::sum);
                 if (MathUtil.compareTo(totalActualQty + detailEntity.getActualQty(), soDetailEntity.getAllAmountLocalCurrency()) == MathUtil.ZERO) {
