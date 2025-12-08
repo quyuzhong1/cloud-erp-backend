@@ -1080,10 +1080,11 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             //发货通知数量
             if (CollectionUtils.isNotEmpty(soDeliveryNoticeDetailList)) {
                 Integer effectiveNoticeQty = soDeliveryNoticeDetailList.stream().filter(obj -> obj.getSourceDetailId().equals(item.getDetailId())).map(SoDeliveryNoticeDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
+                effectiveNoticeQty = effectiveNoticeQty * item.getPerBoxQty();
                 item.setEffectiveNoticeQty(effectiveNoticeQty);
 
                 //剩余发货通知数量 = 销售数量 - 发货通知数量
-                Integer remainingNoticeQty = qty - effectiveNoticeQty;
+                Integer remainingNoticeQty = item.getQty() - effectiveNoticeQty;
                 item.setRemainingNoticeQty(remainingNoticeQty > 0 ? remainingNoticeQty : 0);
             }
 
@@ -1097,13 +1098,13 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
              * 总共已发货数量同步
              *
              */
-            Integer deliveryQty = item.getDeliveryQty();
+            Integer deliveryQty = item.getDeliveryQty() * item.getPerBoxQty();
 
             /**
              * 剩余数量
              * 销售数量-已出库数量
              */
-            Integer waitQty = qty > deliveryQty ? qty - deliveryQty : 0;
+            Integer waitQty = item.getQty() > deliveryQty  ? item.getQty() - deliveryQty : 0;
             //sku若关闭则等于0
             if(Boolean.TRUE.equals(item.getIsClose())){
                 waitQty = 0;
