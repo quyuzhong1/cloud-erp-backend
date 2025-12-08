@@ -408,16 +408,36 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
         reconciliationDetailEntityList.forEach(e -> {
             List<LogisticsBillCostDTO.CostDetailDTO> collect = costDetailDTOS.stream().filter(f -> e.getSourceId().equals(f.getLogisticsBillId()) && e.getMainId().equals(f.getReconciliationId())).collect(Collectors.toList());
             e.setShippingCostCurrency(CurrencyEnum.CNY.getCurrencyCode());
-            e.setShippingCost(collect.stream().filter(f -> f.getDictCostCategory().equals(AllocationFeeTypeEnum.SHIPPING_COST.getCode()) && f.getIsAllocate()).map(f -> MathUtil.multiplyWithFour(f.getCostValue(),f.getExchangeRate())).reduce(BigDecimal.ZERO,BigDecimal::add));
+            e.setShippingCost(collect.stream().filter(f -> f.getDictCostCategory().equals(AllocationFeeTypeEnum.SHIPPING_COST.getCode()) && f.getIsAllocate()).map(f -> MathUtil.multiplyWithFour(f.getCostValue(),getExchangeRate(e.getReconciliationMonth(), f.getCurrency()))).reduce(BigDecimal.ZERO,BigDecimal::add));
             e.setDeclareCostCurrency(CurrencyEnum.CNY.getCurrencyCode());
-            e.setDeclareCost(collect.stream().filter(f -> f.getDictCostCategory().equals(AllocationFeeTypeEnum.DECLARE_COST.getCode()) && f.getIsAllocate()).map(f -> MathUtil.multiplyWithFour(f.getCostValue(),f.getExchangeRate())).reduce(BigDecimal.ZERO,BigDecimal::add));
+            e.setDeclareCost(collect.stream().filter(f -> f.getDictCostCategory().equals(AllocationFeeTypeEnum.DECLARE_COST.getCode()) && f.getIsAllocate()).map(f -> MathUtil.multiplyWithFour(f.getCostValue(),getExchangeRate(e.getReconciliationMonth(), f.getCurrency()))).reduce(BigDecimal.ZERO,BigDecimal::add));
             e.setOtherCostCurrency(CurrencyEnum.CNY.getCurrencyCode());
-            e.setOtherCost(collect.stream().filter(f -> f.getDictCostCategory().equals(AllocationFeeTypeEnum.OTHER_COST.getCode()) && f.getIsAllocate()).map(f -> MathUtil.multiplyWithFour(f.getCostValue(),f.getExchangeRate())).reduce(BigDecimal.ZERO,BigDecimal::add));
+            e.setOtherCost(collect.stream().filter(f -> f.getDictCostCategory().equals(AllocationFeeTypeEnum.OTHER_COST.getCode()) && f.getIsAllocate()).map(f -> MathUtil.multiplyWithFour(f.getCostValue(),getExchangeRate(e.getReconciliationMonth(), f.getCurrency()))).reduce(BigDecimal.ZERO,BigDecimal::add));
             e.setOtherTaxCurrency(CurrencyEnum.CNY.getCurrencyCode());
-            e.setOtherTaxCost(collect.stream().filter(f -> f.getDictCostCategory().equals(AllocationFeeTypeEnum.OTHER_TAX_FEE.getCode()) && f.getIsAllocate()).map(f -> MathUtil.multiplyWithFour(f.getCostValue(),f.getExchangeRate())).reduce(BigDecimal.ZERO,BigDecimal::add));
+            e.setOtherTaxCost(collect.stream().filter(f -> f.getDictCostCategory().equals(AllocationFeeTypeEnum.OTHER_TAX_FEE.getCode()) && f.getIsAllocate()).map(f -> MathUtil.multiplyWithFour(f.getCostValue(),getExchangeRate(e.getReconciliationMonth(), f.getCurrency()))).reduce(BigDecimal.ZERO,BigDecimal::add));
         });
 
     }
+
+    /**
+     * 根据对账单月份获取对应汇率
+     * @param reconciliationMonth
+     * @param currency
+     * @return
+     */
+    private BigDecimal getExchangeRate(LocalDate reconciliationMonth, String currency) {
+        BigDecimal exchangeRate = BigDecimal.ONE;
+        if(StringUtils.isNotBlank(currency) && !"CNY".equals(currency)) {
+            LocalDate reconciliationMonth1 = reconciliationMonth.withDayOfMonth(reconciliationMonth.lengthOfMonth());
+            exchangeRate = dmpTaskFeign.getRate(reconciliationMonth1.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), currency);
+            if(ObjectUtil.isEmpty(exchangeRate)){
+                log.error("币别【{}】,汇率为空，请维护汇率后再提交",currency);
+                throw new ServiceException(reconciliationMonth.format(DateTimeFormatter.ofPattern("yyyy-MM"))+ currency + "汇率为空，请维护汇率后再提交");
+            }
+        }
+        return exchangeRate;
+    }
+
 
     /**
      * 构建sku分摊记录
