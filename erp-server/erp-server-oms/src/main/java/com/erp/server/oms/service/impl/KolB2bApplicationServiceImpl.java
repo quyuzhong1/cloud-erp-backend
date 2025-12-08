@@ -204,7 +204,7 @@ public class KolB2bApplicationServiceImpl extends SuperServiceImpl<KolB2bApplica
         searchParam.setPermissionSql(param.getPermissionSql());
         KolB2bApplicationTableEnum[] values = KolB2bApplicationTableEnum.values();
         List<KolB2bApplicationDTO.TabListDTO> list = new ArrayList<>();
-        Arrays.stream(values).parallel().forEach(item -> {
+        Arrays.stream(values).forEach(item -> {
             searchParam.setPermissionSql(param.getPermissionSql());
             KolB2bApplicationDTO.TabListDTO resultDTO = new KolB2bApplicationDTO.TabListDTO();
             String tabSql = kolB2bApplicationQueryHandler.getTabSql(item.getCode());

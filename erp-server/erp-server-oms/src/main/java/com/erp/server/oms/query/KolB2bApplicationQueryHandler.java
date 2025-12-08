@@ -5,6 +5,7 @@ import com.common.business.enums.SourceTypeEnum;
 import com.common.business.query.AbstractQueryHandler;
 import com.erp.model.oms.enums.KolB2bApplicationTableEnum;
 import com.erp.model.oms.enums.KolB2bRefStatusEnum;
+import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.server.oms.service.CommonService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Component;
@@ -73,18 +74,21 @@ public class KolB2bApplicationQueryHandler extends AbstractQueryHandler {
         }
         //审核通过
         if(KolB2bApplicationTableEnum.APPROVE.getCode().equals(value)){
-            super.buildDefaultDTO("kba.approve_status", ApproveStatusEnum.APPROVE.getCode());
+            super.buildDefaultDTO("kba.approve_status", Collections.singletonList(ApproveStatusEnum.APPROVE.getCode()));
         }
         //审核不通过
         if(KolB2bApplicationTableEnum.REJECT.getCode().equals(value)){
-            super.buildDefaultDTO("kba.approve_status", ApproveStatusEnum.REJECT.getCode());
+            super.buildDefaultDTO("kba.invalid_status", Collections.singletonList(InvalidStatusEnum.NOT_VOIDED.getStatus()));
+            super.buildDefaultDTO("kba.approve_status", Collections.singletonList(ApproveStatusEnum.REJECT.getCode()));
         }
         //待发货
         if(KolB2bApplicationTableEnum.WAIT_SHIPPED.getCode().equals(value)){
+            super.buildDefaultDTO("kba.approve_status", Collections.singletonList(ApproveStatusEnum.APPROVE.getCode()));
             return "not exists (select * from so_detail sd where sd.is_deleted = false and sd.source_detail_id = kbad.id and sd.delivery_status in ('partialShipment','completeShipment'))";
         }
         //已发货
         if(KolB2bApplicationTableEnum.SHIPPED.getCode().equals(value)){
+            super.buildDefaultDTO("kba.approve_status", Collections.singletonList(ApproveStatusEnum.APPROVE.getCode()));
             return "exists (select * from so_detail sd where sd.is_deleted = false and sd.source_detail_id = kbad.id and sd.delivery_status = 'completeShipment')";
         }
         return super.getSplicingSQL();
