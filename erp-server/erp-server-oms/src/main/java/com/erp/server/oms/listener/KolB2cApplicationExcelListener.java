@@ -66,16 +66,18 @@ public class KolB2cApplicationExcelListener extends AnalysisEventListener<KolB2c
 
     public KolB2cApplicationExcelListener(String taskId,
                                           String importType,
-                                          Integer importCount,
-                                          List<SysDepartmentDTO> deptList,
-                                          Map<String,SkuVO> skuMap,
-                                          List<FindUserDTO> userList) {
+                                          Integer importCount
+//            ,
+//                                          List<SysDepartmentDTO> deptList,
+//                                          Map<String,SkuVO> skuMap,
+//                                          List<FindUserDTO> userList
+    ) {
         this.taskId = taskId;
         this.importType = importType;
         this.importCount = importCount;
-        this.skuMap = skuMap;
-        this.deptList = deptList;
-        this.userList = userList;
+//        this.skuMap = skuMap;
+//        this.deptList = deptList;
+//        this.userList = userList;
     }
 
     private final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
@@ -104,105 +106,6 @@ public class KolB2cApplicationExcelListener extends AnalysisEventListener<KolB2c
         List<String> msgList = FieldValidUtil.fieldValid(excelDTO);
         if (CollectionUtils.isNotEmpty(msgList)) {
             errorMsgList.addAll(msgList);
-        }
-        //借入人
-        String borrowUserName = excelDTO.getBorrowUserName();
-        if(StringUtils.isNotBlank(borrowUserName)){
-            FindUserDTO findUserDTO = userList.stream().filter(e -> borrowUserName.equals(e.getUserName())).findFirst().orElse(null);
-            if(Objects.isNull(findUserDTO)){
-                errorMsgList.add("借入人不存在");
-            }else {
-                excelDTO.setBorrowUserId(findUserDTO.getUserId());
-                excelDTO.setBorrowUserName(findUserDTO.getUserName());
-            }
-        }
-
-        //借出人
-        String lendUserName = excelDTO.getLendUserName();
-        if(StringUtils.isNotBlank(lendUserName)){
-            FindUserDTO lendUser = userList.stream().filter(e -> lendUserName.equals(e.getUserName())).findFirst().orElse(null);
-            if(Objects.isNull(lendUser)){
-                errorMsgList.add("借出人不存在");
-            }else {
-                excelDTO.setLendUserId(lendUser.getUserId());
-                excelDTO.setLendUserName(lendUser.getUserName());
-            }
-        }
-
-        //借入日期
-        String borrowDateStr = excelDTO.getBorrowDateStr();
-        if(StringUtils.isNotBlank(borrowDateStr)){
-            LocalDate borrowDate = null;
-            try {
-                borrowDate = LocalDate.parse(borrowDateStr, dateTimeFormatter);
-            } catch (Exception e1) {
-                try {
-                    borrowDate = LocalDate.parse(borrowDateStr, dateTimeFormatter2);
-                } catch (Exception e2) {
-                    try {
-                        borrowDate = LocalDate.parse(borrowDateStr, dateTimeFormatter3);
-                    } catch (Exception e3) {
-                        errorMsgList.add("借入时间格式错误，请使用 yyyy-MM-dd、yyyy/M/d 或 yyyy/MM/dd 格式");
-                    }
-                }
-            }
-            excelDTO.setBorrowDate(borrowDate);
-        }
-        //预计退回日期
-        String estimatedReturnDateStr = excelDTO.getEstimatedReturnDateStr();
-        if(StringUtils.isNotBlank(estimatedReturnDateStr)){
-            LocalDate estimatedReturnDate = null;
-            try {
-                estimatedReturnDate = LocalDate.parse(estimatedReturnDateStr, dateTimeFormatter);
-            } catch (Exception e1) {
-                try {
-                    estimatedReturnDate = LocalDate.parse(estimatedReturnDateStr, dateTimeFormatter2);
-                } catch (Exception e2) {
-                    try {
-                        estimatedReturnDate = LocalDate.parse(estimatedReturnDateStr, dateTimeFormatter3);
-                    } catch (Exception e3) {
-                        errorMsgList.add("预计退回日期格式错误，请使用 yyyy-MM-dd、yyyy/M/d 或 yyyy/MM/dd 格式");
-                    }
-                }
-            }
-            excelDTO.setEstimatedReturnDate(estimatedReturnDate);
-        }
-
-        //借入部门
-        String borrowDeptName = excelDTO.getBorrowDeptName();
-        if(StringUtils.isNotBlank(borrowDeptName)){
-            SysDepartmentDTO sysDepartmentDTO = deptList.stream().filter(e -> borrowDeptName.equals(e.getName())).findFirst().orElse(null);
-            if(Objects.isNull(sysDepartmentDTO)){
-                errorMsgList.add("借入部门不存在");
-            }else {
-                excelDTO.setBorrowDeptId(sysDepartmentDTO.getId());
-                excelDTO.setBorrowDeptName(sysDepartmentDTO.getName());
-            }
-        }
-
-        //借出部门
-        String lendDeptName = excelDTO.getLendDeptName();
-        if(StringUtils.isNotBlank(lendDeptName)){
-            SysDepartmentDTO lendDept = deptList.stream().filter(e -> lendDeptName.equals(e.getName())).findFirst().orElse(null);
-            if(Objects.isNull(lendDept)){
-                errorMsgList.add("借出部门不存在");
-            }else {
-                excelDTO.setLendDeptId(lendDept.getId());
-                excelDTO.setLendDeptName(lendDept.getName());
-            }
-        }
-
-        //sku
-        String skuNo = excelDTO.getSkuNo();
-        if(StringUtils.isNotBlank(skuNo)){
-            SkuVO skuVO = skuMap.getOrDefault(skuNo, null);
-            if(Objects.isNull(skuVO)){
-                errorMsgList.add("SKU不存在");
-            }else {
-                excelDTO.setSkuId(skuVO.getSkuId());
-                excelDTO.setSkuNo(skuVO.getSkuNo());
-                excelDTO.setProductName(skuVO.getSkuName());
-            }
         }
 
         //存在错误数据则直接返回

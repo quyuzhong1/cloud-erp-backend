@@ -933,4 +933,9 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         importResultDTO.setStatus(FileTaskStatusEnum.FINISH.getCode());
         downloadTaskFeign.updateTask(importResultDTO);
     }
+
+    @Override
+    public void handleImportSuccessList(List<KolB2cApplicationImportExcelDTO> successList, List<String> errorNoList, List<KolB2cApplicationImportExcelDTO> errorList2, String importType) {
+
+    }
 }
