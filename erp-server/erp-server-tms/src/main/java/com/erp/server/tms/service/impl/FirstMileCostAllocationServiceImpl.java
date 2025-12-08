@@ -428,7 +428,8 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
     private BigDecimal getExchangeRate(LocalDate reconciliationMonth, String currency) {
         BigDecimal exchangeRate = BigDecimal.ONE;
         if(StringUtils.isNotBlank(currency) && !"CNY".equals(currency)) {
-            exchangeRate = dmpTaskFeign.getMonthRate(reconciliationMonth.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), currency);
+            LocalDate reconciliationMonth1 = reconciliationMonth.withDayOfMonth(reconciliationMonth.lengthOfMonth());
+            exchangeRate = dmpTaskFeign.getRate(reconciliationMonth1.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), currency);
             if(ObjectUtil.isEmpty(exchangeRate)){
                 log.error("币别【{}】,汇率为空，请维护汇率后再提交",currency);
                 throw new ServiceException(reconciliationMonth.format(DateTimeFormatter.ofPattern("yyyy-MM"))+ currency + "汇率为空，请维护汇率后再提交");
