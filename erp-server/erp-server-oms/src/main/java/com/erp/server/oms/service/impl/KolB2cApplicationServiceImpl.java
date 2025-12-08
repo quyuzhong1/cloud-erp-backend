@@ -1,6 +1,7 @@
 package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.extra.spring.SpringUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
 import com.common.business.dto.FindUserDTO;
@@ -10,6 +11,8 @@ import com.common.business.vo.LoginUser;
 import cn.hutool.core.util.StrUtil;
 import com.erp.model.oms.dto.KolB2cApplicationAddressDTO;
 import com.erp.model.oms.dto.KolB2cApplicationDetailDTO;
+import com.erp.model.oms.dto.excel.KolB2cApplicationAddressImportExcelDTO;
+import com.erp.model.oms.dto.excel.KolB2cApplicationDetailImportExcelDTO;
 import com.erp.model.oms.dto.excel.KolB2cApplicationImportExcelDTO;
 import com.erp.model.oms.dto.excel.KolPartnerInfoImportExcelDTO;
 import com.erp.model.oms.entity.*;
@@ -19,6 +22,7 @@ import com.erp.model.oms.enums.KolSubB2cApplicationOrderStatusEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.DictCountryDTO;
+import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.entity.DictCurrencyEntity;
 import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
@@ -33,6 +37,8 @@ import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.rpc.workflow.feign.CfgQueryOptionFeign;
+import com.erp.server.oms.listener.KolB2cApplicationAddressExcelListener;
+import com.erp.server.oms.listener.KolB2cApplicationDetailExcelListener;
 import com.erp.server.oms.listener.KolB2cApplicationExcelListener;
 import com.erp.server.oms.listener.KolPartnerInfoExcelListener;
 import com.erp.server.oms.service.*;
@@ -50,6 +56,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.oms.dto.KolB2cApplicationDTO;
@@ -68,6 +75,7 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.time.LocalDateTime;
 import javax.annotation.Resource;
+import javax.validation.Valid;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.*;
@@ -228,7 +236,7 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         List<KolPartnerInfoEntity> partnerList = kolPartnerInfoService.lambdaQuery().in(KolPartnerInfoEntity::getId, partnerIds).eq(KolPartnerInfoEntity::getDisabled, false).list();
         Map<String, String> partnerMap = partnerList.stream().collect(Collectors.toMap(KolPartnerInfoEntity::getId, KolPartnerInfoEntity::getNickname));
 
-        List<CfgKolOptionEntity> cfgKolOptionEntities = cfgKolOptionService.lambdaQuery().in(CfgKolOptionEntity::getId, Arrays.asList(CfgKolOptionTypeEnum.KOL_SAMPLE_TYPE.getCode(), CfgKolOptionTypeEnum.PROJECT_TAG.getCode())).list();
+        List<CfgKolOptionEntity> cfgKolOptionEntities = cfgKolOptionService.lambdaQuery().in(CfgKolOptionEntity::getType, Arrays.asList(CfgKolOptionTypeEnum.KOL_SAMPLE_TYPE.getCode(), CfgKolOptionTypeEnum.PROJECT_TAG.getCode())).list();
         Map<String, String> map = cfgKolOptionEntities.stream().collect(Collectors.toMap(CfgKolOptionEntity::getId, CfgKolOptionEntity::getName));
 
         int index = 1;
@@ -380,7 +388,7 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         List<KolPartnerInfoEntity> partnerList = kolPartnerInfoService.lambdaQuery().in(KolPartnerInfoEntity::getId, partnerIds).eq(KolPartnerInfoEntity::getDisabled, false).list();
         Map<String, String> partnerMap = partnerList.stream().collect(Collectors.toMap(KolPartnerInfoEntity::getId, KolPartnerInfoEntity::getNickname));
 
-        List<CfgKolOptionEntity> cfgKolOptionEntities = cfgKolOptionService.lambdaQuery().in(CfgKolOptionEntity::getId, Arrays.asList(CfgKolOptionTypeEnum.KOL_SAMPLE_TYPE.getCode(), CfgKolOptionTypeEnum.PROJECT_TAG.getCode())).list();
+        List<CfgKolOptionEntity> cfgKolOptionEntities = cfgKolOptionService.lambdaQuery().in(CfgKolOptionEntity::getType, Arrays.asList(CfgKolOptionTypeEnum.KOL_SAMPLE_TYPE.getCode(), CfgKolOptionTypeEnum.PROJECT_TAG.getCode())).list();
         Map<String, String> map = cfgKolOptionEntities.stream().collect(Collectors.toMap(CfgKolOptionEntity::getId, CfgKolOptionEntity::getName));
 
         int index = 1;
@@ -750,7 +758,7 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         if (ObjectUtil.isEmpty(data)) {
             return;
         }
-        List<CfgKolOptionEntity> cfgKolOptionEntities = cfgKolOptionService.lambdaQuery().in(CfgKolOptionEntity::getId, Arrays.asList(CfgKolOptionTypeEnum.KOL_SAMPLE_TYPE.getCode(), CfgKolOptionTypeEnum.PROJECT_TAG.getCode())).list();
+        List<CfgKolOptionEntity> cfgKolOptionEntities = cfgKolOptionService.lambdaQuery().in(CfgKolOptionEntity::getType, Arrays.asList(CfgKolOptionTypeEnum.KOL_SAMPLE_TYPE.getCode(), CfgKolOptionTypeEnum.PROJECT_TAG.getCode())).list();
         Map<String, String> map = cfgKolOptionEntities.stream().collect(Collectors.toMap(CfgKolOptionEntity::getId, CfgKolOptionEntity::getName));
 
         List<DictCurrencyEntity> dictCurrencyEntities = sysUserFeign.currencyList();
@@ -829,7 +837,7 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
            return;
         }
 
-        List<CfgKolOptionEntity> cfgKolOptionEntities = cfgKolOptionService.lambdaQuery().in(CfgKolOptionEntity::getId, Arrays.asList(CfgKolOptionTypeEnum.KOL_SAMPLE_TYPE.getCode(), CfgKolOptionTypeEnum.PROJECT_TAG.getCode())).list();
+        List<CfgKolOptionEntity> cfgKolOptionEntities = cfgKolOptionService.lambdaQuery().in(CfgKolOptionEntity::getType, Arrays.asList(CfgKolOptionTypeEnum.KOL_SAMPLE_TYPE.getCode(), CfgKolOptionTypeEnum.PROJECT_TAG.getCode())).list();
         Map<String, String> map = cfgKolOptionEntities.stream().collect(Collectors.toMap(CfgKolOptionEntity::getId, CfgKolOptionEntity::getName));
 
         List<DictCurrencyEntity> dictCurrencyEntities = sysUserFeign.currencyList();
@@ -857,8 +865,7 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         }
     }
 
-    @NotNull
-    private static String getIsInternationalName(Boolean isInternational) {
+    private String getIsInternationalName(Boolean isInternational) {
         return Boolean.TRUE.equals(isInternational) ? "国外" : "国内";
     }
 
@@ -906,11 +913,88 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
                 UserContext.setLoginUser(user);
             }
         }
+        //店铺
+        List<ShopInfoEntity> shopInfoEntities = shopInfoService.listAuth(null);
+        Map<String, String> shopMap = shopInfoEntities.stream().collect(Collectors.toMap(ShopInfoEntity::getName, ShopInfoEntity::getId));
+        //用户
+        List<FindUserDTO> userList = sysUserFeign.getUserList();
+        Map<String, FindUserDTO> userMap = userList.stream().collect(Collectors.toMap(FindUserDTO::getUserName, Function.identity()));
+        //部门
+        List<SysDepartmentDTO> deptList = sysUserFeign.getDeptList();
+        Map<String, String> deptMap = deptList.stream().collect(Collectors.toMap(SysDepartmentDTO::getName, SysDepartmentDTO::getId));
+        //仓库
+        List<WarehouseDTO.UpdateDTO> warehouserList = wmsTaskFeign.listApproveWarehouse();
+        Map<String, String> warehouserMap = warehouserList.stream().collect(Collectors.toMap(WarehouseDTO.UpdateDTO::getName, WarehouseDTO.UpdateDTO::getId));
+        //物流渠道
+        List<BaseDropDownDTO.DisabledDTO> logisticsList = logisticsFeign.listAll();
+        Map<String, String> logisticsMap = logisticsList.stream().filter(e -> e.getDisabled().equals(Boolean.FALSE)).collect(Collectors.toMap(BaseDropDownDTO.DisabledDTO::getValue, BaseDropDownDTO.DisabledDTO::getCode));
+        //sku
+        List<SkuVO> skuList = plmTaskFeign.listApproveSku();
+        Map<String, SkuVO> skuMap = skuList.stream().collect(Collectors.toMap(SkuVO::getSkuNo, Function.identity()));
+        //达人
+        List<KolPartnerInfoEntity> partnerList = kolPartnerInfoService.lambdaQuery().eq(KolPartnerInfoEntity::getDisabled, false).list();
+        Map<String, String> partnerMap = partnerList.stream().collect(Collectors.toMap(KolPartnerInfoEntity::getNickname, KolPartnerInfoEntity::getId));
+        //字典
+        List<CfgKolOptionEntity> cfgKolOptionEntities = cfgKolOptionService.lambdaQuery().in(CfgKolOptionEntity::getType, Arrays.asList(CfgKolOptionTypeEnum.KOL_SAMPLE_TYPE.getCode(), CfgKolOptionTypeEnum.PROJECT_TAG.getCode())).list();
+        Map<String, String> cfgKolOptionMap = cfgKolOptionEntities.stream().collect(Collectors.toMap(CfgKolOptionEntity::getName, CfgKolOptionEntity::getId));
+        //国家
+        List<DictCountryDTO.ListDTO> dictCountryList = sysUserFeign.countryList();
+        Map<String, String> dictCountryMap = dictCountryList.stream().collect(Collectors.toMap(DictCountryDTO.ListDTO::getNameCn, DictCountryDTO.ListDTO::getId));
+        //币种
+        List<DictCurrencyEntity> dictCurrencyEntities = sysUserFeign.currencyList();
+        Map<String, String> currencyMap = dictCurrencyEntities.stream().collect(Collectors.toMap(DictCurrencyEntity::getName, DictCurrencyEntity::getId));
 
-        KolB2cApplicationExcelListener excelListenerUtil = new KolB2cApplicationExcelListener(dto.getTaskId(),dto.getImportType(),dto.getImportCount());
+        KolB2cApplicationExcelListener excelListenerUtil = new KolB2cApplicationExcelListener(dto.getTaskId(),
+                dto.getImportType(),
+                dto.getImportCount(),
+                cfgKolOptionMap,
+                shopMap,
+                userMap,
+                deptMap,
+                warehouserMap,
+                logisticsMap,
+                currencyMap
+        );
+
+        KolB2cApplicationDetailExcelListener detailExcelListenerUtil = new KolB2cApplicationDetailExcelListener(dto.getTaskId(),dto.getImportType(),dto.getImportCount(), skuMap,partnerMap,cfgKolOptionMap);
+
+        KolB2cApplicationAddressExcelListener addressListenerUtil = new KolB2cApplicationAddressExcelListener(dto.getTaskId(),dto.getImportType(),dto.getImportCount(),partnerMap,dictCountryMap);
+
         try {
             byte[] bytes = fileFeign.downloadFile(dto.getFileUrl());
+
             EasyExcel.read(new ByteArrayInputStream(bytes), KolB2cApplicationImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+            EasyExcel.read(new ByteArrayInputStream(bytes), KolB2cApplicationDetailImportExcelDTO.class, detailExcelListenerUtil).sheet(1).doRead();
+            EasyExcel.read(new ByteArrayInputStream(bytes), KolB2cApplicationAddressImportExcelDTO.class, addressListenerUtil).sheet(2).doRead();
+
+            List<KolB2cApplicationDetailImportExcelDTO> detailSuccessList = detailExcelListenerUtil.getSuccessList();
+            List<KolB2cApplicationDetailImportExcelDTO> detailErrorList = detailExcelListenerUtil.getErrorList();
+
+            List<KolB2cApplicationAddressImportExcelDTO> addressSuccessList = addressListenerUtil.getSuccessList();
+            List<KolB2cApplicationAddressImportExcelDTO> addressErrorList = addressListenerUtil.getErrorList();
+
+            List<KolB2cApplicationImportExcelDTO> successList = excelListenerUtil.getSuccessList();
+            List<KolB2cApplicationImportExcelDTO> errorList = excelListenerUtil.getErrorList();
+
+            List<String> errorNoList = errorList.stream().map(KolB2cApplicationImportExcelDTO::getNo).distinct().collect(Collectors.toList());
+
+            List<KolB2cApplicationDetailImportExcelDTO> error1 = detailSuccessList.stream().filter(e -> errorNoList.contains(e.getNo())).collect(Collectors.toList());
+            if(CollUtil.isNotEmpty(error1)){
+                detailErrorList.addAll(error1);
+
+                detailSuccessList = detailSuccessList.stream().filter(e -> !errorNoList.contains(e.getNo())).collect(Collectors.toList());
+            }
+
+            List<KolB2cApplicationAddressImportExcelDTO> error2 = addressSuccessList.stream().filter(e -> errorNoList.contains(e.getNo())).collect(Collectors.toList());
+            if(CollUtil.isNotEmpty(error2)){
+                addressErrorList.addAll(error2);
+
+                addressSuccessList = addressSuccessList.stream().filter(e -> !errorNoList.contains(e.getNo())).collect(Collectors.toList());
+            }
+
+            KolB2cApplicationService kolB2cApplicationService = SpringUtil.getBean(KolB2cApplicationService.class);
+            kolB2cApplicationService.handleImportSuccessList(successList, errorList, detailSuccessList, addressSuccessList,dto.getImportType());
+
         } catch (ExcelCommonException e) {
             log.error("导入格式错误！", e);
             throw new ServiceException(ApiError.ERROR_1016);
@@ -934,8 +1018,52 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         downloadTaskFeign.updateTask(importResultDTO);
     }
 
+    @Transactional(rollbackFor = Exception.class, propagation = Propagation.NESTED)
     @Override
-    public void handleImportSuccessList(List<KolB2cApplicationImportExcelDTO> successList, List<String> errorNoList, List<KolB2cApplicationImportExcelDTO> errorList2, String importType) {
+    public List<KolB2cApplicationImportExcelDTO> handleImportSuccessList(List<KolB2cApplicationImportExcelDTO> successList,
+                                        List<KolB2cApplicationImportExcelDTO> errorList,
+                                        List<KolB2cApplicationDetailImportExcelDTO> detailSuccessList,
+                                        List<KolB2cApplicationAddressImportExcelDTO> addressSuccessList ,
+                                        String importType) {
 
+        if(CollUtil.isNotEmpty(successList)){
+
+            KolB2cApplicationService kolB2cApplicationService = SpringUtil.getBean(KolB2cApplicationService.class);
+
+            Map<String, List<KolB2cApplicationDetailImportExcelDTO>> detailGroup = detailSuccessList.stream().collect(Collectors.groupingBy(KolB2cApplicationDetailImportExcelDTO::getNo));
+
+            Map<String, List<KolB2cApplicationAddressImportExcelDTO>> addressGroup = addressSuccessList.stream().collect(Collectors.groupingBy(KolB2cApplicationAddressImportExcelDTO::getNo));
+
+            for (KolB2cApplicationImportExcelDTO kolB2cApplicationImportExcelDTO : successList) {
+                String no = kolB2cApplicationImportExcelDTO.getNo();
+
+                List<KolB2cApplicationDetailImportExcelDTO> kolB2cApplicationDetailImportExcelDTOS = detailGroup.get(no);
+                if(CollUtil.isEmpty(kolB2cApplicationDetailImportExcelDTOS)){
+                    kolB2cApplicationImportExcelDTO.setErrorMsg("1、产品明细异常；");
+                    errorList.add(kolB2cApplicationImportExcelDTO);
+                    continue;
+                }
+
+                List<KolB2cApplicationAddressImportExcelDTO> kolB2cApplicationAddressImportExcelDTOS = addressGroup.get(no);
+                if(CollUtil.isEmpty(kolB2cApplicationAddressImportExcelDTOS)){
+                    kolB2cApplicationImportExcelDTO.setErrorMsg("1、地址明细异常；");
+                    errorList.add(kolB2cApplicationImportExcelDTO);
+                    continue;
+                }
+
+                KolB2cApplicationDTO.AddDTO addDTO = new KolB2cApplicationDTO.AddDTO();
+                BeanMapper.copy(kolB2cApplicationImportExcelDTO,addDTO);
+
+                List<KolB2cApplicationDetailDTO.AddDTO> detailList = BeanMapper.copyList(kolB2cApplicationDetailImportExcelDTOS, KolB2cApplicationDetailDTO.AddDTO.class);
+                addDTO.setDetailList(detailList);
+
+                List<KolB2cApplicationAddressDTO.AddDTO> addressList = BeanMapper.copyList(kolB2cApplicationAddressImportExcelDTOS, KolB2cApplicationAddressDTO.AddDTO.class);
+                addDTO.setAddressList(addressList);
+
+                kolB2cApplicationService.add(addDTO);
+            }
+        }
+
+        return errorList;
     }
 }
