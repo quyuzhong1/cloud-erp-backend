@@ -54,8 +54,8 @@ public class KolFeedbackCostExcelDTO implements Serializable {
      * 金额（原币）
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "金额(原币)", index = 3)
-    @FieldValid(fieldName = "金额(原币)", isNotBlank = true, formatPattern = FieldFormatPatternTypeEnum.DECIMAL)
+    @ExcelProperty(value = "*金额(原币)", index = 3)
+    @FieldValid(fieldName = "*金额(原币)", isNotBlank = true, formatPattern = FieldFormatPatternTypeEnum.DECIMAL)
     private String originalAmountStr;
     @ExcelIgnore
     private BigDecimal originalAmount;

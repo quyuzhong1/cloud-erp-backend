@@ -48,6 +48,7 @@ import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.FastDFSClientUtil;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import java.text.DecimalFormat;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
@@ -110,7 +111,7 @@ public class KolFeedbackCostServiceImpl extends SuperServiceImpl<KolFeedbackCost
         checkUnique(kolFeedbackCostEntity, null);
 
         log.info("开始新增KOL回片费用单");
-        boolean save = super.save(kolFeedbackCostEntity);
+        boolean save = this.save(kolFeedbackCostEntity);
         if(!save) {
             throw new ServiceException("KOL回片费用单保存失败");
         }
@@ -483,6 +484,9 @@ public class KolFeedbackCostServiceImpl extends SuperServiceImpl<KolFeedbackCost
                 .map(DictCurrencyEntity::getSymbol)
                 .orElse("¥");
         
+        // 创建金额格式化器（千分位，保留6位小数）
+        DecimalFormat amountFormat = new DecimalFormat("#,##0.000000");
+        
         // 遍历列表进行数据填充
         for (KolFeedbackCostDTO.ListDTO data : list) {
             // 设置币别名称
@@ -491,17 +495,19 @@ public class KolFeedbackCostServiceImpl extends SuperServiceImpl<KolFeedbackCost
                 if (currency != null) {
                     data.setCurrencyName(currency.getName());
                     
-                    // 拼接原币金额显示：symbol + 金额
+                    // 拼接原币金额显示：symbol + 金额（千分位格式化）
                     if (data.getOriginalAmount() != null) {
                         String symbol = StringUtils.isNotBlank(currency.getSymbol()) ? currency.getSymbol() : "";
-                        data.setOriginalAmountDisplay(symbol + " " + data.getOriginalAmount());
+                        String formattedAmount = amountFormat.format(data.getOriginalAmount());
+                        data.setOriginalAmountDisplay(symbol + " " + formattedAmount);
                     }
                 }
             }
             
-            // 拼接本位币金额显示：CNY symbol + 金额
+            // 拼接本位币金额显示：CNY symbol + 金额（千分位格式化）
             if (data.getBaseAmount() != null) {
-                data.setBaseAmountDisplay(cnySymbol + " " + data.getBaseAmount());
+                String formattedAmount = amountFormat.format(data.getBaseAmount());
+                data.setBaseAmountDisplay(cnySymbol + " " + formattedAmount);
             }
         }
     }

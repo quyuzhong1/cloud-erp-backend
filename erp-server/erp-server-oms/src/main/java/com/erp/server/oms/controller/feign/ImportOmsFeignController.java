@@ -81,7 +81,7 @@ public class ImportOmsFeignController {
         }
     }
 
-    @PostMapping("/kolFeedbackCost")
+    @PostMapping("/importKolFeedbackCost")
     public void importKolFeedbackCost(@RequestBody BaseDTO.ImportDTO dto) {
         try {
             kolFeedbackCostService.importKolFeedbackCost(dto);
