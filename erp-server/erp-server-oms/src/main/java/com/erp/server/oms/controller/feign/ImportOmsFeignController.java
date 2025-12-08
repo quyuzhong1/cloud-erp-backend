@@ -3,11 +3,7 @@ package com.erp.server.oms.controller.feign;
 import com.common.business.dto.base.BaseDTO;
 import com.common.business.enums.FileTaskStatusEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
-import com.erp.server.oms.service.ExhibitionOrderService;
-import com.erp.server.oms.service.KolB2bApplicationService;
-import com.erp.server.oms.service.KolFeedbackService;
-import com.erp.server.oms.service.KolFeedbackCostService;
-import com.erp.server.oms.service.KolPartnerInfoService;
+import com.erp.server.oms.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -37,6 +33,10 @@ public class ImportOmsFeignController {
 
     @Resource
     private KolB2bApplicationService kolB2bApplicationService;
+
+    @Resource
+    private KolB2cApplicationService kolB2cApplicationService;
+
 
     @PostMapping("/exhibitionOrder")
     public void importExhibitionOrder(@RequestBody BaseDTO.ImportDTO dto) {
@@ -70,7 +70,7 @@ public class ImportOmsFeignController {
     @PostMapping("/importKolPartnerInfo")
     public void importKolPartnerInfo(@RequestBody BaseDTO.ImportDTO dto) {
         try {
-            kolPartnerInfoService.importExhibitionOrder(dto);
+            kolPartnerInfoService.importKolPartnerInfo(dto);
         } catch (Exception e) {
             log.error("导入企业达人库失败", e);
             BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
@@ -87,6 +87,20 @@ public class ImportOmsFeignController {
             kolFeedbackCostService.importKolFeedbackCost(dto);
         } catch (Exception e) {
             log.error("导入KOL回片费用失败", e);
+            BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
+            importResultDTO.setTaskId(dto.getTaskId());
+            importResultDTO.setStatus(FileTaskStatusEnum.FAIL.getCode());
+            importResultDTO.setRemark(e.getMessage().length() > 490 ? e.getMessage().substring(0, 490) : e.getMessage());
+            downloadTaskFeign.updateTask(importResultDTO);
+        }
+    }
+
+    @PostMapping("/importKolB2cApplication")
+    public void importKolB2cApplication(@RequestBody BaseDTO.ImportDTO dto) {
+        try {
+            kolB2cApplicationService.importKolB2cApplication(dto);
+        } catch (Exception e) {
+            log.error("导入B2C寄样申请失败", e);
             BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
             importResultDTO.setTaskId(dto.getTaskId());
             importResultDTO.setStatus(FileTaskStatusEnum.FAIL.getCode());

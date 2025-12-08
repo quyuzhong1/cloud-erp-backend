@@ -9,6 +9,9 @@ public enum CfgKolOptionTypeEnum implements EnumMessage {
 
     KOL_SAMPLE_TYPE("kolSampleType", "寄样类型"),
     COST_TYPE("costType", "费用名称"),
+    COOPERATION_TYPE("cooperationType", "合作类型"),
+    PARTNER_TYPE("partnerType", "达人类型"),
+    PROJECT_TAG("projectTag", "项目标签"),
     ;
     /**
      * 类型

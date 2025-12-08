@@ -113,4 +113,39 @@ kcp.remark AS platformRemark
             ${params.permissionSql}
         </if>
     </select>
+
+    <select id="partnerAddressList" resultType="com.erp.model.oms.dto.KolPartnerInfoDTO$PartnerAddressDTO">
+        SELECT
+            kpi.ID,
+            kai.ID AS addressId,
+            kai.country_id AS countryId,
+            kai.country_name AS countryName,
+            kai.province AS province,
+            kai.city AS city,
+            kai.district AS district,
+            kai.detail_address AS detailAddress,
+            kai.contact_person AS contactPerson,
+            kai.email AS email,
+            kai.phone AS phone,
+            kai.zip_code AS zipCode,
+            kai.is_default AS isDefault,
+            kai.remark AS remark
+        FROM
+            kol_partner_info AS kpi
+                INNER JOIN kol_address_info AS kai ON kpi.ID = kai.main_id
+                AND kai.is_deleted = FALSE
+                AND kai.disabled = FALSE
+        WHERE
+        <if test="params != null and params.id != null and params.id != ''">
+            kpi.id = #{params.id}
+        </if>
+        <if test="params != null and params.searchKeyword != null and params.searchKeyword != ''">
+           ( kai.country_name LIKE CONCAT('%', #{params.searchKeyword}, '%')  or kai.province LIKE CONCAT('%', #{params.searchKeyword}, '%') or kai.city LIKE CONCAT('%', #{params.searchKeyword}, '%') )
+        </if>
+        AND kpi.is_deleted = FALSE
+        ORDER BY
+            kai.is_default desc,
+            kai.create_time desc
+    </select>
+
 </mapper>

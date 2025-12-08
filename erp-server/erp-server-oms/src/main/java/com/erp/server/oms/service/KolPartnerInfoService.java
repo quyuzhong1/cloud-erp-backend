@@ -6,7 +6,6 @@ import com.common.business.dto.base.*;
 import com.erp.model.oms.dto.KolPartnerInfoDTO;
 import com.common.business.vo.PagingVO;
 import javax.servlet.http.HttpServletResponse;
-import javax.validation.constraints.NotNull;
 import java.util.List;
 
 /**
@@ -91,7 +90,9 @@ public interface KolPartnerInfoService extends SuperService<KolPartnerInfoEntity
 
     Boolean importFile(BaseDTO.ImportDTO dto);
 
-    void importExhibitionOrder(BaseDTO.ImportDTO dto);
+    void importKolPartnerInfo(BaseDTO.ImportDTO dto);
 
     void handleImportSuccessList(List<KolPartnerInfoImportExcelDTO> successList, List<String> errorNoList, List<KolPartnerInfoImportExcelDTO> errorList2, String importType);
+
+    List<KolPartnerInfoDTO.PartnerAddressDTO> partnerAddressList(KolPartnerInfoDTO.AddressSelectDTO dto);
 }

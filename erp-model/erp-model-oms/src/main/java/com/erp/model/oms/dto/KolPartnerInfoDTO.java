@@ -445,6 +445,89 @@ public class KolPartnerInfoDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
+    public static class PartnerAddressDTO {
+
+        /**
+         * 主键id
+         */
+        private String  id;
+        /**
+         * 地址id
+         */
+        private String  addressId;
+
+        /**
+         * 是否启用
+         */
+        private Boolean disabled;
+
+        /**
+         * 国家id
+         */
+        private String countryId;
+
+        /**
+         * 国家
+         */
+        private String countryName;
+
+        /**
+         * 省/州id
+         */
+        private String province;
+
+        /**
+         * 城市
+         */
+        private String city;
+
+
+        /**
+         * 区域
+         */
+        private String district;
+
+        /**
+         * 详细地址
+         */
+        private String detailAddress;
+
+        /**
+         * 联系人
+         */
+        private String contactPerson;
+
+        /**
+         * 邮箱
+         */
+        private String email;
+
+        /**
+         * 联系电话
+         */
+        private String phone;
+
+        /**
+         * 邮编
+         */
+        private String zipCode;
+
+        /**
+         * 是否默认地址
+         */
+        private Boolean isDefault;
+        private String isDefaultName;
+
+        /**
+         * 地址备注
+         */
+        private String remark;
+
+    }
+
+
+    @Data
+    @NoArgsConstructor
     public static class DropDownDTO {
 
         /**
@@ -488,7 +571,6 @@ public class KolPartnerInfoDTO implements Serializable {
          * 国家名称
          */
         private String countryName;
-
     }
 
     @Data
@@ -498,6 +580,16 @@ public class KolPartnerInfoDTO implements Serializable {
          * 关键词
          */
         private String searchKeyword;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class AddressSelectDTO  extends  SelectDTO{
+        /**
+         * 达人id
+         */
+        @NotBlank(message = "达人id不能为空")
+        private String id;
     }
 
     @Data

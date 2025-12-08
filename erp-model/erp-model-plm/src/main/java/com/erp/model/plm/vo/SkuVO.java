@@ -122,6 +122,10 @@ public class SkuVO implements Serializable {
     private String productGrade;
 
     /**
+     * 产品品牌ID
+     */
+    private String brandId;
+    /**
      * 产品品牌
      */
     private String brandName;

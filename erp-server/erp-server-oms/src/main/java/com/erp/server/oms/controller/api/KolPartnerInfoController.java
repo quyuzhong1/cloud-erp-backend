@@ -274,5 +274,17 @@ public class KolPartnerInfoController extends BaseController {
         return success(kolPartnerInfoService.dropDown(dto));
     }
 
+    /**
+     * 达人地址模糊查询
+     * @author jack
+     * @date:  2025-12-02
+     * @param dto
+     * @return
+     */
+    @PostMapping("/partnerAddressList")
+    public ApiResult<List<KolPartnerInfoDTO.PartnerAddressDTO>> partnerAddressList(@RequestBody @Validated KolPartnerInfoDTO.AddressSelectDTO dto) {
+        return success(kolPartnerInfoService.partnerAddressList(dto));
+    }
+
 
 }

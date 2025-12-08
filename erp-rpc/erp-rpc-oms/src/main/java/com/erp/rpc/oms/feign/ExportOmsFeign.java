@@ -129,4 +129,11 @@ public interface ExportOmsFeign {
      */
     @PostMapping("/feign/export/exportKolSampleCost")
     PagingVO<KolSampleCostDTO.ListDTO> exportKolSampleCost(PagingDTO<KolSampleCostDTO.PagingParamDTO> dto);
+    /**
+     * B2C寄样申请导出
+     * @date 2025-12-03
+     * @author jack
+     */
+    @PostMapping("/feign/export/exportOmsKolB2cApplication")
+    PagingVO<KolB2cApplicationDTO.ListDTO> exportOmsKolB2cApplication(@RequestBody PagingDTO<KolB2cApplicationDTO.PagingParamDTO> dto);
 }

@@ -102,6 +102,7 @@ public enum SourceTypeEnum {
     SAMPLE_ADJUSTMENT_INFO("sampleAdjustmentInfo","样品调整单","sample_adjustment_info"),
     WAREHOUSE_LOCATION_MOVE_INFO("warehouseLocationMoveInfo","仓位移动","warehouse_location_move"),
     KOL_B2B_APPLICATION("kolB2bApplication","B2B寄样申请","kol_b2b_application"),
+    KOL_B2C_APPLICATION("kolB2cApplication","B2C寄样申请","kol_b2c_application"),
 
 
     //OMS
@@ -137,7 +138,6 @@ public enum SourceTypeEnum {
 
     //KOL
     KOL_FEEDBACK("kolFeedback", "回片列表","kol_feedback"),
-
 
     //SRM
     DELIVERY_ORDER( "deliveryOrder", "送货单","delivery_order"),
