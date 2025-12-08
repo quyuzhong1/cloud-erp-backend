@@ -158,12 +158,12 @@ public class MoldRefSkuServiceImpl extends SuperServiceImpl<MoldRefSkuMapper, Mo
     public BatchResultDTO approve(ApproveOneDTO dto) {
         ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(dto.getType());
         if(Objects.equals(approveType, ApproveTypeEnum.REJECT) && StrUtils.isEmpty(dto.getComment())) {
-            throw new ServiceException(ApiError.REJECT_COMMENT_NOT_EMPTY);
+            throw new ServiceException(ApiError.ERROR_PLM_REJECT_COMMENT_REQUIRED);
         }
         MoldRefSkuEntity entity = getById(dto.getId());
         // 审核中的数据允许审核
         if(!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())) {
-            throw new ServiceException(ApiError.ERROR_98006);
+            throw new ServiceException(ApiError.ERROR_APPROVE_ALLOWED_STATUS_ONLY);
         }
         // 调用流程审核
         approveProcess(entity, dto);
@@ -191,7 +191,7 @@ public class MoldRefSkuServiceImpl extends SuperServiceImpl<MoldRefSkuMapper, Mo
         ApiResult<ProcessManagementDTO.ApproveResultDTO> approveResult = workflowFeign.approve(approveDTO);
         Integer code = approveResult.getCode();
         if (200 != code) {
-            throw new ServiceException(ApiError.ERROR_94006);
+            throw new ServiceException(ApiError.ERROR_WF_APPROVAL_FAILED);
         }
         ProcessManagementDTO.ApproveResultDTO data = approveResult.getData();
         if (ObjectUtil.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()) {
@@ -226,7 +226,7 @@ public class MoldRefSkuServiceImpl extends SuperServiceImpl<MoldRefSkuMapper, Mo
     private Boolean validateDisApprove(MoldRefSkuEntity entity) {
         // 已审核支持反审核
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus())) {
-            throw new ServiceException(ApiError.ERROR_98014);
+            throw new ServiceException(ApiError.ERROR_REVERSE_APPROVAL_ALLOWED_APPROVED_ONLY);
         }
         return true;
     }
@@ -237,7 +237,7 @@ public class MoldRefSkuServiceImpl extends SuperServiceImpl<MoldRefSkuMapper, Mo
         MoldRefSkuEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到模具关联sku数据"));
         // 只有待提交或审核不通过数据支持删除
         if (!(Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.WAIT_SUBMIT.getStatus()) || Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.REJECT.getStatus()))) {
-            throw new ServiceException(ApiError.ERROR_DELETE);
+            throw new ServiceException(ApiError.ERROR_SCM_DELETE_ALLOWED_STATUS_ONLY);
         }
 
         // 删除主单数据
@@ -260,7 +260,7 @@ public class MoldRefSkuServiceImpl extends SuperServiceImpl<MoldRefSkuMapper, Mo
         MoldRefSkuEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到模具关联sku数据"));
         // 只有审核中的单据允许撤销
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())) {
-            throw new ServiceException(ApiError.ERROR_98007);
+            throw new ServiceException(ApiError.ERROR_REVOKE_PROCESS_ALLOWED_STATUS_ONLY);
         }
         // TODO 撤销流程
         log.info("撤销 开始撤销流程，id：【{}】",id);
@@ -377,7 +377,7 @@ public class MoldRefSkuServiceImpl extends SuperServiceImpl<MoldRefSkuMapper, Mo
             listApiResult = workflowFeign.curApprover(dtoList);
             Integer code = listApiResult.getCode();
             if (200 != code) {
-                throw new ServiceException(new ApiResult(ApiError.DEFAULT.code, listApiResult.getMsg()));
+                throw new ServiceException(new ApiResult(ApiError.DEFAULT.getCode(), listApiResult.getMsg()));
             }
         }
         // 属性赋值
@@ -399,7 +399,7 @@ public class MoldRefSkuServiceImpl extends SuperServiceImpl<MoldRefSkuMapper, Mo
     private void validateSubmit(MoldRefSkuEntity entity) {
         // 待提交或审核不通过并且未作废允许提交
         if(!ApproveStatusEnum.allowUpdateStatus(entity.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_98010);
+            throw new ServiceException(ApiError.ERROR_SUBMIT_ALLOWED_STATUS_ONLY);
         }
         return;
     }
@@ -512,7 +512,7 @@ public class MoldRefSkuServiceImpl extends SuperServiceImpl<MoldRefSkuMapper, Mo
             EasyExcel.read(new ByteArrayInputStream(bytes), MoldRefSkuImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (ExcelCommonException e) {
             log.error("导入格式错误！", e);
-            throw new ServiceException(ApiError.ERROR_1016);
+            throw new ServiceException(ApiError.ERROR_FILE_IMPORT_FORMAT_INVALID_XLSX);
         }
 
         BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();

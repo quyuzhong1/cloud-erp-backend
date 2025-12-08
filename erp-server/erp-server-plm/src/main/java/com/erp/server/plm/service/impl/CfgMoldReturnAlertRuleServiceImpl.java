@@ -281,7 +281,7 @@ public class CfgMoldReturnAlertRuleServiceImpl extends SuperServiceImpl<CfgMoldR
         }
         //结束日期不能小于开始日期
         if (Objects.nonNull(entity.getEndDate()) && Objects.nonNull(entity.getStartDate()) && entity.getEndDate().isBefore(entity.getStartDate())) {
-            throw new ServiceException(ApiError.ERROR_92008);
+            throw new ServiceException(ApiError.ERROR_DATE_RANGE_INVALID);
         }
         entity.setMoldCode(moldInfoEntity.getCode());
         entity.setMoldName(moldInfoEntity.getName());
@@ -417,7 +417,7 @@ public class CfgMoldReturnAlertRuleServiceImpl extends SuperServiceImpl<CfgMoldR
         CfgMoldReturnAlertRuleEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到模具返还策略数据"));
         // 未作废允许作废
         if(!InvalidStatusEnum.NOT_VOIDED.getStatus().equals(entity.getInvalidStatus())){
-            throw new ServiceException(ApiError.ERROR_98012);
+            throw new ServiceException(ApiError.ERROR_ALREADY_VOID_CANNOT_VOID_AGAIN);
         }
         log.info("作废 开始修改模具返还策略状态数据，id：【{}】", id);
         lambdaUpdate().eq(CfgMoldReturnAlertRuleEntity::getId, id)
@@ -492,7 +492,7 @@ public class CfgMoldReturnAlertRuleServiceImpl extends SuperServiceImpl<CfgMoldR
             EasyExcel.read(new ByteArrayInputStream(bytes), CfgMoldReturnImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (ExcelCommonException e) {
             log.error("导入格式错误！", e);
-            throw new ServiceException(ApiError.ERROR_1016);
+            throw new ServiceException(ApiError.ERROR_FILE_IMPORT_FORMAT_INVALID_XLSX);
         }
 
         BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();

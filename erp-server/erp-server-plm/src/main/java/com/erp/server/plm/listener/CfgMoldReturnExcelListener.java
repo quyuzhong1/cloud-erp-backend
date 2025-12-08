@@ -169,7 +169,7 @@ public class CfgMoldReturnExcelListener extends AnalysisEventListener<CfgMoldRet
 
         //结束日期不能小于开始日期
         if (Objects.nonNull(excelDTO.getEndDate()) && Objects.nonNull(excelDTO.getStartDate()) && excelDTO.getEndDate().isBefore(excelDTO.getStartDate())) {
-            errorMsgList.add(ApiError.ERROR_92008.msg);
+            errorMsgList.add(ApiError.ERROR_DATE_RANGE_INVALID.getMsg());
         }
 
         //存在错误数据则直接返回

@@ -55,7 +55,7 @@ public class SampleAdjustmentInfoQueryHandler extends AbstractQueryHandler {
             ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = workflowFeign.batchCurApproverByApprove(dtoList);
             Integer code = listApiResult.getCode();
             if (200 != code) {
-                throw new ServiceException(new ApiResult(ApiError.DEFAULT.code, listApiResult.getMsg()));
+                throw new ServiceException(new ApiResult(ApiError.DEFAULT.getCode(), listApiResult.getMsg()));
             }
 
             QueryConditionEnum compareCode = AdvanceQueryContext.getCompareCode();

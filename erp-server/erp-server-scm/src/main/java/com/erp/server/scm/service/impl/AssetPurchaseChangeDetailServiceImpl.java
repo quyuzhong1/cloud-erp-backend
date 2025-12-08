@@ -97,7 +97,7 @@ public class AssetPurchaseChangeDetailServiceImpl extends SuperServiceImpl<Asset
         for (AssetPurchaseChangeDetailDTO.UpdateDTO dto : updateDTO) {
 
             if (dto.getPurchaseQty() == null || dto.getPurchaseQty().compareTo(BigDecimal.ZERO) <= 0) {
-                throw new ServiceException(ApiError.ERROR_PRICE_ZERO_SKUNO);
+                throw new ServiceException(ApiError.ERROR_PRICE_ZERO_SKUNO,dto.getPurchaseQty());
             }
 
             if (dto.getTaxPrice() == null || dto.getTaxPrice().compareTo(BigDecimal.ZERO) <= 0) {

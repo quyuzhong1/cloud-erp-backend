@@ -199,7 +199,7 @@ public class DmpCfgOutputDetailServiceImpl extends SuperServiceImpl<DmpCfgOutput
         DmpCfgOutputDetailEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到推送配置信息数据"));
         // 只有待提交数据允许删除
 //        if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT, entity.getApproveStatus())) {
-//            throw new ServiceException(ApiError.ERROR_98032);
+//            throw new ServiceException(ApiError.ERROR_SCM_SUBMIT_ALLOWED_STATUS_ONLY);
 //        }
         // TODO 删除明细数据（如果有明细数据的话）
 

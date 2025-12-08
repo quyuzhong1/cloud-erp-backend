@@ -131,7 +131,7 @@ public class AdsErpFirstMileInTransitDiffServiceImpl extends SuperServiceImpl<Ad
     public Boolean adjustTransitQty(AdsErpFirstMileInTransitDiffDTO.AdjustDTO adjustDTO) {
         AdsErpFirstMileInTransitDiffEntity entity = this.getById(adjustDTO.getId());
         if (Objects.isNull(entity)) {
-            throw new ServiceException(ApiError.NOT_EXIST, "平台在途报告记录");
+            throw new ServiceException(ApiError.ERROR_NOT_EXIST, "平台在途报告记录");
         }
         //存在下期在途记录不能调整
         LocalDateTime reportMonth = LocalDateTimeUtil.parse(entity.getCheckMonthQuery(), "yyyy-MM-dd HH:mm:ss");
@@ -209,17 +209,17 @@ public class AdsErpFirstMileInTransitDiffServiceImpl extends SuperServiceImpl<Ad
             EasyExcel.read(excelFile.getInputStream(), FirstMileInTransitInitExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (IOException e) {
             log.error("导入错误！", e);
-            throw new ServiceException(ApiError.ERROR_95124);
+            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_FAILED);
         } catch (ExcelCommonException e) {
             log.error("导入格式错误！", e);
-            throw new ServiceException(ApiError.ERROR_1016);
+            throw new ServiceException(ApiError.ERROR_FILE_IMPORT_FORMAT_INVALID_XLSX);
         } catch (Exception e) {
             log.error("导入数据错误！", e);
-            throw new ServiceException(ApiError.ERROR_1012);
+            throw new ServiceException(ApiError.ERROR_FILE_EXCEL_PARSE);
         }
         List<FirstMileInTransitInitExcelDTO> excelDateList = excelListenerUtil.getExcelDateList();
         if (CollectionUtils.isEmpty(excelDateList)) {
-            throw new ServiceException(ApiError.ERROR_95123);
+            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_REQUIRED);
         } else if (excelDateList.size() > 5000) {
             throw new ServiceException(ApiError.ERROR_EXCEL_IMPORT_SIZE);
         }
@@ -255,17 +255,17 @@ public class AdsErpFirstMileInTransitDiffServiceImpl extends SuperServiceImpl<Ad
             EasyExcel.read(excelFile.getInputStream(), FirstMileInTransitAdjustExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (IOException e) {
             log.error("导入错误！", e);
-            throw new ServiceException(ApiError.ERROR_95124);
+            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_FAILED);
         } catch (ExcelCommonException e) {
             log.error("导入格式错误！", e);
-            throw new ServiceException(ApiError.ERROR_1016);
+            throw new ServiceException(ApiError.ERROR_FILE_IMPORT_FORMAT_INVALID_XLSX);
         } catch (Exception e) {
             log.error("导入数据错误！", e);
-            throw new ServiceException(ApiError.ERROR_1012);
+            throw new ServiceException(ApiError.ERROR_FILE_EXCEL_PARSE);
         }
         List<FirstMileInTransitAdjustExcelDTO> excelDateList = excelListenerUtil.getExcelDateList();
         if (CollectionUtils.isEmpty(excelDateList)) {
-            throw new ServiceException(ApiError.ERROR_95123);
+            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_REQUIRED);
         } else if (excelDateList.size() > 5000) {
             throw new ServiceException(ApiError.ERROR_EXCEL_IMPORT_SIZE);
         }

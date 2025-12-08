@@ -490,7 +490,7 @@ public class SyncKingdeePurchaseOrderServiceImpl implements SyncKingdeePurchaseO
         //采购明细
         List<AssetPurchaseOrderDetailEntity> details = assetPurchaseOrderDetailService.lambdaQuery().eq(AssetPurchaseOrderDetailEntity::getMainId, entity.getId()).list();
         if (CollectionUtils.isEmpty(details)) {
-            throw new ServiceException(ApiError.ERROR_98026);
+            throw new ServiceException(ApiError.ERROR_SCM_PO_DETAIL_NOT_FOUND);
         }
         //组织机构编码
         List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(entity.getPurchaseOrgId(),entity.getPurchaseOrgId()));

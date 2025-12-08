@@ -110,7 +110,7 @@ public class CfgApproveSyncCallbackHandler {
                 }else if(StringUtils.isNotBlank(taskId)){//来自审批中心审批
                     processTaskManagementEntity = processTaskManagementService.getById(taskId);
                     if (Objects.isNull(processTaskManagementEntity)) {
-                        throw new ServiceException(ApiError.ERROR_94000);
+                        throw new ServiceException(ApiError.ERROR_WF_NOT_FOUND_OR_ENDED);
                     }
                 }else {
                     throw new ServiceException("messageId和taskId不能为空");

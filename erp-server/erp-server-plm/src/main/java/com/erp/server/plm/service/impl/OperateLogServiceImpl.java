@@ -385,7 +385,7 @@ public class OperateLogServiceImpl extends ServiceImpl<OperateLogMapper, Operate
      */
     private Pair<String,String> setEnumValue (CfgOperateLogFieldEntity fieldEntity, Pair<String, String> valuePair) {
         if (StringUtils.isBlank(fieldEntity.getEnumClass())) {
-            throw new ServiceException(ApiError.ERROR_9028);
+            throw new ServiceException(ApiError.ERROR_ENUM_CONVERT_FAILED);
         }
         String  oldValue = "";
         String  newValue = "";
@@ -393,11 +393,11 @@ public class OperateLogServiceImpl extends ServiceImpl<OperateLogMapper, Operate
         try {
             aClass = Class.forName(fieldEntity.getEnumClass());
         } catch (ClassNotFoundException e) {
-            throw new ServiceException(ApiError.ERROR_9028);
+            throw new ServiceException(ApiError.ERROR_ENUM_CONVERT_FAILED);
         }
         boolean anEnum = aClass.isEnum();
         if (!anEnum) {
-            throw new ServiceException(ApiError.ERROR_9028);
+            throw new ServiceException(ApiError.ERROR_ENUM_CONVERT_FAILED);
         }
         if (StringUtils.isNotBlank(valuePair.getKey())) {
             EnumMessage enumObject = EnumsUtil.getEnumObject(valuePair.getKey(), aClass);

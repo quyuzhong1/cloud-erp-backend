@@ -192,7 +192,7 @@ public class AssetPurchaseOrderDetailServiceImpl extends SuperServiceImpl<AssetP
 
         List<PurchasePriceDTO.PriceDTO> priceDTOS = purchasePriceService.batchGetPurchasePrice(priceDTOList);
         if (priceDTOS.isEmpty()) {
-            throw new ServiceException(ApiError.ERROR_98024);
+            throw new ServiceException(ApiError.ERROR_SCM_PURCHASE_PRICE_LIST_NOT_FOUND);
         }
 
         List<AssetPurchaseOrderDetailEntity> detailEntityList = new ArrayList<>();
@@ -336,7 +336,7 @@ public class AssetPurchaseOrderDetailServiceImpl extends SuperServiceImpl<AssetP
 
         List<PurchasePriceDTO.PriceDTO> priceDTOS = purchasePriceService.batchGetPurchasePrice(priceDTOList);
         if (priceDTOS.isEmpty()) {
-            throw new ServiceException(ApiError.ERROR_98024);
+            throw new ServiceException(ApiError.ERROR_SCM_PURCHASE_PRICE_LIST_NOT_FOUND);
         }
         return priceDTOS;
     }

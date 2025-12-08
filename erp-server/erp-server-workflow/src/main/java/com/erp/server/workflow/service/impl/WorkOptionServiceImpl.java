@@ -756,7 +756,7 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
                 resultDTOList = fmsTaskFeign.assetDisposalApprove(baseApproveParamDTO);
                 break;
             default:
-                throw new ServiceException(ApiError.ERROR_94006);
+                throw new ServiceException(ApiError.ERROR_WF_APPROVAL_FAILED);
         }
         BatchResultDTO resultDTO = resultDTOList.stream().filter(req -> !req.getSuccess()).findFirst().orElse(null);
         if (resultDTO != null) {

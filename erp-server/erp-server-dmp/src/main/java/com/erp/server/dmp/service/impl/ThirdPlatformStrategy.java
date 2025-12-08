@@ -273,7 +273,7 @@ public class ThirdPlatformStrategy implements ThirdMappingStrategy {
     private void handleData(ThirdMappingEntity thirdMappingEntity) {
         //校验系统平台是否存在
         DmpBasicSystemEntity systemEntity = Optional.ofNullable(dmpBasicSystemService.getById(thirdMappingEntity.getSysId()))
-                .orElseThrow(() -> new ServiceException(ApiError.ERROR_92058));
+                .orElseThrow(() -> new ServiceException(ApiError.ERROR_SHOP_NOT_EXIST_NO_PERMISSION));
 
         String sysName = thirdMappingEntity.getThirdName();
 //        String thirdName = thirdShopEntity.getName();

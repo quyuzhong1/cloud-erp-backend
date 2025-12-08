@@ -70,7 +70,7 @@ public class ProductRDTTeamServiceImpl extends ServiceImpl<ProductRDTTeamMapper,
     public Boolean delete(String id){
         ProductRDTTeamEntity entity = this.getById(id);
         if (entity.getOccupyStatus()) {
-            throw new ServiceException(ApiError.ERROR_95168);
+            throw new ServiceException(ApiError.ERROR_PLM_VARIANT_VALUES_REF_DELETE_FORBIDDEN);
         }
         LambdaQueryWrapper<ProductRDTTeamEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(ProductRDTTeamEntity::getId, id);
