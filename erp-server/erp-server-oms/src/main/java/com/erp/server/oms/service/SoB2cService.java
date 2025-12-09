@@ -1136,4 +1136,12 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
     List<PackagePlanDTO.SoB2cDTO> packagePlanPreview(List<String> soIds);
 
     BatchResultDTO retryPackagePlan(String soId);
+    /**
+     * 1,创建订单
+     * 2,匹配订单规则
+     * 3.匹配物流仓储规则
+     * 4.创建物流运单
+     * 5.创建发货单
+     */
+    String processOrderCreation(SoB2cDTO.AddDTO dto);
 }

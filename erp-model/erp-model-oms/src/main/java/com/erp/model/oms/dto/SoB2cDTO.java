@@ -1344,6 +1344,10 @@ public class SoB2cDTO implements Serializable {
          */
         private String sourceCode;
         /**
+         * 来源ID
+         */
+        private String sourceId;
+        /**
          * 扩展字段
          */
         private String extendData;
