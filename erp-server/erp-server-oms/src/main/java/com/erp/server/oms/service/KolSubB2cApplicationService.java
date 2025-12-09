@@ -1,8 +1,12 @@
 package com.erp.server.oms.service;
+import com.erp.model.oms.entity.KolB2cApplicationDetailEntity;
+import com.erp.model.oms.entity.KolB2cApplicationEntity;
 import com.erp.model.oms.entity.KolSubB2cApplicationEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.oms.dto.KolSubB2cApplicationDTO;
+
+import java.util.List;
 
 /**
  * <p>
@@ -15,22 +19,18 @@ import com.erp.model.oms.dto.KolSubB2cApplicationDTO;
 public interface KolSubB2cApplicationService extends SuperService<KolSubB2cApplicationEntity> {
 
     /**
-    * 新增
+    * 根据B2C寄样申请生成拆分单
     * @author jack
-    * @date: 2025-12-04
-    * @param dto
+    * @date: 2025-12-09
     * @return
     */
-    BaseResultDTO.AddDTO add(KolSubB2cApplicationDTO.AddDTO dto);
-
+    void generateSplitOrder(KolB2cApplicationEntity entity, List<KolB2cApplicationDetailEntity> list);
     /**
-    * 修改
-    * @author jack
-    * @date: 2025-12-04
-    * @param dto
-    * @return
-    */
-    Boolean update(KolSubB2cApplicationDTO.UpdateDTO dto);
-
-
+     * 根据来源id查询关联单据
+     * @author jack
+     * @date:  2025-12-09
+     * @param sourceId
+     * @return ApiResult<KolSubB2cApplicationDTO.ListDTO>>
+     */
+    List<KolSubB2cApplicationDTO.ListDTO> listSubBySourceId(String sourceId);
 }

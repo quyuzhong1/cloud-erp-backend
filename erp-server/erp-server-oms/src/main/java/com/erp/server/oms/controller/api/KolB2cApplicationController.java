@@ -438,9 +438,6 @@ public class KolB2cApplicationController extends BaseController {
         ExcelUtil.downloadTemplate(standardPath, standardExcelName, response);
         return success();
     }
-
-
-
     /**
      * 回片登记下推查询
      * @author jack

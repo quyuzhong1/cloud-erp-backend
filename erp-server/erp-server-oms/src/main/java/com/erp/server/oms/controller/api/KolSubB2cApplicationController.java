@@ -1,6 +1,8 @@
 package com.erp.server.oms.controller.api;
 
 
+import com.erp.model.oms.dto.KolB2cApplicationDTO;
+import com.erp.server.oms.service.KolB2cApplicationService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import javax.annotation.Resource;
@@ -20,6 +22,8 @@ import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.oms.dto.KolSubB2cApplicationDTO;
 
+import java.util.List;
+
 /**
  * B2C寄样申请单拆分单
  *
@@ -36,37 +40,16 @@ public class KolSubB2cApplicationController extends BaseController {
     private KolSubB2cApplicationService kolSubB2cApplicationService;
 
     /**
-    * 新增
-    * @author jack
-    * @date:  2025-12-04
-    * @param dto
-    * @return ApiResult<String>
-    */
-    @PostMapping("/add")
-    @LogAction(value = LogActionEnum.INSERT, desc = "B2C寄样申请单拆分单新增")
-    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated KolSubB2cApplicationDTO.AddDTO dto) {
-        return success(kolSubB2cApplicationService.add(dto));
+     * 根据来源id查询关联单据
+     * @author jack
+     * @date:  2025-12-09
+     * @param sourceId
+     * @return ApiResult<KolSubB2cApplicationDTO.ListDTO>>
+     */
+    @GetMapping("/listDetail")
+    @LogViewService
+    public ApiResult<List<KolSubB2cApplicationDTO.ListDTO>> listDetail(@RequestParam("sourceId") String sourceId) {
+        return success(kolSubB2cApplicationService.listSubBySourceId(sourceId));
     }
-
-    /**
-    * 修改
-    * @author jack
-    * @date:  2025-12-04
-    * @param dto
-    * @return ApiResult
-    */
-    @PostMapping("/update")
-    @LogAction(value = LogActionEnum.UPDATE, desc = "B2C寄样申请单拆分单修改")
-        @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-        tableField = "create_user_id",
-        menuCode = "oms:kolSubB2cApplication:update",
-        serviceClass = KolSubB2cApplicationService.class,
-        keyIdName = "id")
-    public ApiResult<?> update(@RequestBody @Validated KolSubB2cApplicationDTO.UpdateDTO dto) {
-        kolSubB2cApplicationService.update(dto);
-        return success();
-    }
-
-
 
 }
