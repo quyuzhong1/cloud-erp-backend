@@ -2,6 +2,7 @@ package com.erp.model.oms.dto;
 
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -648,6 +649,7 @@ public class KolSampleCostDTO implements Serializable {
          * 日期
          */
         @NotNull(message = "日期不能为空")
+        @JsonFormat(pattern = "yyyy-MM")
         private LocalDate date;
     }
 }
