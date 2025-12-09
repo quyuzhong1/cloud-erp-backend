@@ -9,7 +9,6 @@ import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.config.DocNoGenHelper;
@@ -606,7 +605,7 @@ public class KolB2bApplicationServiceImpl extends SuperServiceImpl<KolB2bApplica
 
             SoInfoDTO.AddDTO addDTO = new SoInfoDTO.AddDTO();
             BeanUtil.copyProperties(mainEntity,addDTO);
-            addDTO.setId(IdWorker.getIdStr());
+            addDTO.setId(null);
             addDTO.setOrderType(BillTypeEnum.B2B.getCode());
             addDTO.setBillDate(LocalDate.now());
             addDTO.setRequireDate(mainEntity.getDate());
@@ -626,7 +625,7 @@ public class KolB2bApplicationServiceImpl extends SuperServiceImpl<KolB2bApplica
                 }
                 SoDetailDTO.AddDTO soDetailAddDTO = new SoDetailDTO.AddDTO();
                 BeanUtil.copyProperties(detailEntity,soDetailAddDTO);
-                soDetailAddDTO.setId(IdWorker.getIdStr());
+                soDetailAddDTO.setId(null);
                 soDetailList.add(soDetailAddDTO);
             }
             addDTO.setDetailList(soDetailList);
