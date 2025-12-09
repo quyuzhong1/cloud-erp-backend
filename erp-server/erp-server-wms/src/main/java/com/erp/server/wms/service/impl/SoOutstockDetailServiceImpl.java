@@ -287,7 +287,7 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
         }
 
         //发货通知到
-        if (soDeliveryNotice.equals(sourceType)) {
+        if (SourceTypeEnum.SO_DELIVERY_NOTICE.getCode().equals(sourceType) || SourceTypeEnum.B2B_THIRD_DELIVERY.getCode().equals(sourceType)) {
             List<SoOutstockDetailEntity> detailEntities = listDetailBySoIds(Collections.singletonList(soId));
             //添加校验
             List<SoDetailEntity> soDetails = soInfoFeign.listSoDetailByMainIds(Collections.singletonList(soId));

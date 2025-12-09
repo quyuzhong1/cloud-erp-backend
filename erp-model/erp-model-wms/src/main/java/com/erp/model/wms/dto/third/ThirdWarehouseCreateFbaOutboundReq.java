@@ -39,7 +39,7 @@ public class ThirdWarehouseCreateFbaOutboundReq extends ThirdWarehouseAuth {
      * TRUCK:卡车订单
      * TRUCK_SELF:卡车自提
      */
-    private String deliveryType;
+    private String deliveryMethod;
     /**
      * 产品代码(派送方式为【渠道订单】时必填)
      * 取发货通知下推时选择的物流渠道编码
@@ -114,7 +114,7 @@ public class ThirdWarehouseCreateFbaOutboundReq extends ThirdWarehouseAuth {
     /**
      * 收件人邮编，取发货通知的邮编
      */
-    private String postalCode;
+    private String postCode;
     /**
      * 收件人门牌号
      */

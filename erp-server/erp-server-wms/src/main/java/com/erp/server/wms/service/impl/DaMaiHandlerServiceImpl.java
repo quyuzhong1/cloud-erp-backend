@@ -248,9 +248,12 @@ public class DaMaiHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     }
 
     private DaMaiCreateFbaOrderRequest buildFbaOrderDto(ThirdWarehouseCreateFbaOutboundReq createOutboundReq) {
-        return DaMaiCreateFbaOrderRequest.builder()
-                .custRefNo(createOutboundReq.getReferenceNo())
-                .build();
+        DaMaiCreateFbaOrderRequest request = B2bThirdDeliveryConverter.INSTANCE.toDaMaiFbaOrderRequest(createOutboundReq);
+        DaMaiCreateFbaOrderRequest.CommandDTO commandDTO = new DaMaiCreateFbaOrderRequest.CommandDTO();
+        commandDTO.setCommandDesc(createOutboundReq.getOperationDesc());
+        commandDTO.setCommandType(createOutboundReq.getWarehouseOperationType());
+        request.setCommandList(Collections.singletonList(commandDTO));
+        return request;
     }
 
 

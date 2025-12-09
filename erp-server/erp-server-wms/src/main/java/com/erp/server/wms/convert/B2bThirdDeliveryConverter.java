@@ -8,6 +8,7 @@ import com.erp.model.wms.dto.third.ThirdWarehouseQueryFbaOutboundResponse;
 import com.erp.model.wms.entity.B2bThirdDeliveryDetailEntity;
 import com.erp.model.wms.entity.B2bThirdDeliveryEntity;
 import com.erp.server.wms.convert.tool.TypeConversionWorker;
+import com.sdk.wms.damai.dto.request.DaMaiCreateFbaOrderRequest;
 import com.sdk.wms.damai.dto.response.DaMaiGetFbaOrderResp;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -55,7 +56,7 @@ public interface B2bThirdDeliveryConverter {
     @Mapping(target = "fileUrl", ignore = true)
     @Mapping(target = "fbaAddressFlag", constant = "0")
     @Mapping(target = "email", ignore = true)
-    @Mapping(target = "deliveryType", source = "entity.deliveryMethod")
+    @Mapping(target = "deliveryMethod", source = "entity.deliveryMethod")
     @Mapping(target = "channelCode", source = "entity.logisticsChannelCode")
     @Mapping(target = "address3", ignore = true)
     @Mapping(target = "address2", ignore = true)
@@ -75,7 +76,7 @@ public interface B2bThirdDeliveryConverter {
     @Mapping(target = "warehouseKeeperId", ignore = true)
     @Mapping(target = "warehouseId", source = "entity.deliveryWarehouseId")
     @Mapping(target = "tradeLabel", ignore = true)
-    @Mapping(target = "sourceType", expression = "java(com.erp.model.scm.enums.ModuleTypeEnum.B2B_THIRD_DELIVERY.getCode())")
+    @Mapping(target = "sourceType", expression = "java(com.common.business.enums.SourceTypeEnum.B2B_THIRD_DELIVERY.getCode())")
     @Mapping(target = "sourceId", source = "entity.id")
     @Mapping(target = "sourceCode", source = "entity.code")
     @Mapping(target = "sellerId", source = "soInfoEntity.sellerId")
@@ -112,4 +113,34 @@ public interface B2bThirdDeliveryConverter {
     @Mapping(target = "price", expression = "java(com.common.core.utils.MathUtil.multiplyWithFour(soDetailEntity.getPrice(),new java.math.BigDecimal(soDetailEntity.getPerBoxQty())))")
     @Mapping(target = "amount", source = "soDetailEntity.taxRate")
     SoOutstockDetailDTO.AddDTO toSoOutstockAddDetailDTO(B2bThirdDeliveryEntity entity, B2bThirdDeliveryDetailEntity deliveryDetail, SoDetailEntity soDetailEntity);
+
+    @Mapping(target = "whCode", source = "thirdWarehouseCode")
+    @Mapping(target = "skuList", source = "items")
+    @Mapping(target = "shopRemark", ignore = true)
+    @Mapping(target = "shopName", ignore = true)
+    @Mapping(target = "deliverType", source = "deliveryMethod")
+    @Mapping(target = "custRefNo", source = "referenceNo")
+    @Mapping(target = "consigneeTelExt", source = "telNumberExt")
+    @Mapping(target = "consigneeTel", source = "telNumber")
+    @Mapping(target = "consigneeProvince", source = "province")
+    @Mapping(target = "consigneePostalCode", source = "postCode")
+    @Mapping(target = "consigneeName", source = "receiverName")
+    @Mapping(target = "consigneeHouseNumber", source = "houseNumber")
+    @Mapping(target = "consigneeEmail", source = "email")
+    @Mapping(target = "consigneeCountryCode", source = "receiverCountryCode")
+    @Mapping(target = "consigneeCity", source = "city")
+    @Mapping(target = "consigneeAddress3", source = "address3")
+    @Mapping(target = "consigneeAddress2", source = "address2")
+    @Mapping(target = "consigneeAddress1", source = "address1")
+    @Mapping(target = "commandList", ignore = true)
+    @Mapping(target = "carriersCode", source = "channelCode")
+    DaMaiCreateFbaOrderRequest toDaMaiFbaOrderRequest(ThirdWarehouseCreateFbaOutboundReq createOutboundReq);
+
+    @Mapping(target = "sn", ignore = true)
+    @Mapping(target = "skuQty", constant = "1")
+    @Mapping(target = "packQty", source = "boxQty")
+    @Mapping(target = "custSkuCode", source = "warehousePlatformSku")
+    @Mapping(target = "custPackageNo", source = "boxSpecNo")
+    @Mapping(target = "custLotNo", ignore = true)
+    DaMaiCreateFbaOrderRequest.SkuListDTO toDaMaiFbaOrderSkuListDTO(ThirdWarehouseCreateFbaOutboundReq.Item item);
 }

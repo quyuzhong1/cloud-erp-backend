@@ -27,8 +27,10 @@ import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
+import com.erp.model.oms.enums.DeliveryModeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.entity.DictCountryEntity;
+import com.erp.model.tms.dto.LogisticsChannelDTO;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.wms.dto.B2bThirdDeliveryDTO;
 import com.erp.model.wms.dto.OverseasProviderWarehouseDTO;
@@ -50,6 +52,7 @@ import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.CustomerFeign;
 import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.server.wms.convert.B2bThirdDeliveryConverter;
 import com.erp.server.wms.mapper.B2bThirdDeliveryMapper;
 import com.erp.server.wms.service.*;
@@ -106,6 +109,10 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
     private CustomerFeign customerFeign;
     @Resource
     private DmpMqFeign dmpMqFeign;
+    @Resource
+    private LogisticsFeign logisticsFeign;
+
+
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -280,7 +287,7 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
         records.forEach(e -> {
             e.setStatusName(ThirdDeliveryStatusEnum.getName(e.getStatus()));
             e.setWarehouseOperationTypeName(WarehouseOperationTypeEnum.getName(e.getWarehouseOperationType()));
-            e.setDeliveryMethodName(ThirdDeliveryStatusEnum.getName(e.getDeliveryMethod()));
+            e.setDeliveryMethodName(DeliveryModeEnum.getName(e.getDeliveryMethod()));
             e.setPushTypeName(B2BDeliveryPushTypeEnum.getName(e.getPushType()));
         });
     }
@@ -369,7 +376,13 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
             throw new ServiceException(ApiError.NOT_EXIST,"销售订单");
         }
         SoOutstockDTO.AddDTO addDTO = B2bThirdDeliveryConverter.INSTANCE.toSoOutstockAddDTO(entity,soInfoEntity);
-
+        //承运商
+        if (CharSequenceUtil.isNotBlank(entity.getLogisticsChannelId())){
+            LogisticsChannelDTO.BaseDTO channelInfo = logisticsFeign.getChannelInfoById(entity.getLogisticsChannelId());
+            if (Objects.nonNull(channelInfo)){
+                addDTO.setCarrierId(channelInfo.getLogisticsSupplierId());
+            }
+        }
         List<B2bThirdDeliveryDetailEntity> detailEntityList = b2bThirdDeliveryDetailService.listByMainIds(Collections.singletonList(id));
         List<String> soDetailIds = detailEntityList.stream().map(B2bThirdDeliveryDetailEntity::getSoDetailId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
         List<SoDetailEntity> soDetailList = CollUtil.isNotEmpty(soDetailIds) ? soInfoFeign.listSoDetailByIds(soDetailIds) : new ArrayList<>();
@@ -385,20 +398,30 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
             detailList.add(detailDTO);
         });
         addDTO.setDetailList(detailList);
-        //构建销售出库单数据
-        String outstockId = soOutstockService.add(addDTO);
-        if (CharSequenceUtil.isBlank(id)) {
-            throw new ServiceException(ApiError.ERROR_1019);
+        //自动生成功能系统标识
+        Boolean originalValue = UserContext.getIsUserSystem();
+        UserContext.setIsUserSystem(Boolean.TRUE);
+        try {
+            //构建销售出库单数据
+            String outstockId = soOutstockService.add(addDTO);
+            if (CharSequenceUtil.isBlank(id)) {
+                throw new ServiceException(ApiError.ERROR_1019);
+            }
+            SoOutstockEntity soOutstockEntity = soOutstockService.getById(outstockId);
+            if (ObjectUtil.isEmpty(soOutstockEntity)) {
+                throw new ServiceException(ApiError.NOT_EXIST_BILL,"销售出库单");
+            }
+            BatchResultDTO submit = soOutstockService.submit(soOutstockEntity, Boolean.FALSE);
+            if (!submit.getSuccess()){
+                throw new ServiceException(ApiError.ERROR_1042,submit.getMsg());
+            }
+            soOutstockService.approve(new ApproveOneDTO(outstockId, ApproveTypeEnum.PASS.getStatus(),"三方仓出库完成出库单自动审核通过",Boolean.FALSE));
+        }catch (Exception e){
+            throw new ServiceException(ApiError.ERROR_1042,e.getMessage());
+        }finally {
+            //恢复系统标识
+            UserContext.setIsUserSystem(originalValue);
         }
-        SoOutstockEntity soOutstockEntity = soOutstockService.getById(outstockId);
-        if (ObjectUtil.isEmpty(soOutstockEntity)) {
-            throw new ServiceException(ApiError.NOT_EXIST_BILL,"销售出库单");
-        }
-        BatchResultDTO submit = soOutstockService.submit(soOutstockEntity, Boolean.TRUE);
-        if (!submit.getSuccess()){
-            throw new ServiceException(ApiError.ERROR_1042,submit.getMsg());
-        }
-        soOutstockService.approve(new ApproveOneDTO(outstockId, ApproveTypeEnum.PASS.getStatus(),"三方仓出库完成出库单自动审核通过"));
         return BatchResultDTO.success(id, entity.getCode(), "生成销售出库单成功");
     }
 
@@ -495,6 +518,7 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
         }else {
             b2bThirdDeliveryEntity.setStatus(ThirdDeliveryStatusEnum.CREATING.getCode());
             b2bThirdDeliveryEntity.setPushType(B2BDeliveryPushTypeEnum.API.getCode());
+            b2bThirdDeliveryEntity.setErrorMessage(CharSequenceUtil.EMPTY);
         }
         //客户名称
         if (CharSequenceUtil.isNotBlank(b2bThirdDeliveryEntity.getCustomerId()) && CharSequenceUtil.isBlank(b2bThirdDeliveryEntity.getCustomerName())){

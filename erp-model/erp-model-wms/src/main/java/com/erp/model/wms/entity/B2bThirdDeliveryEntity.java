@@ -161,8 +161,8 @@ public class B2bThirdDeliveryEntity extends BaseEntity<B2bThirdDeliveryEntity> {
     /**
     * 邮编
     */
-    @TableField("postal_code")
-    private String postalCode;
+    @TableField("post_code")
+    private String postCode;
     /**
      *
      * 详细地址（取值销售订单下推receiveAddressId查询）

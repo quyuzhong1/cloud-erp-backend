@@ -184,7 +184,7 @@ public class B2bThirdDeliveryDTO implements Serializable {
         /**
         * 邮编
         */
-        private String postalCode;
+        private String postCode;
         /**
          * 详细地址
          */
@@ -395,7 +395,7 @@ public class B2bThirdDeliveryDTO implements Serializable {
         /**
         * 邮编
         */
-        private String postalCode;
+        private String postCode;
         /**
          * 详细地址
          */
