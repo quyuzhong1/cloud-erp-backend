@@ -1167,15 +1167,17 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         List<PackingTaskDetailEntity> taskDetailEntityList = packingTaskDetailService.listByMainIds(Collections.singletonList(packingTaskEntity.getId()));
         //装箱进度
         List<WmsCartonEntity> cartonEntityList = wmsCartonService.listByTaskIds(Collections.singletonList(packingTaskEntity.getId()));
+        List<String> allCartonIds = cartonEntityList.stream().map(WmsCartonEntity::getId).distinct().collect(Collectors.toList());
         cartonEntityList = cartonEntityList.stream().filter(v->v.getCustomerPO().equals(searchDTO.getCustomerPO())).collect(Collectors.toList());
         List<String> cartonIds = cartonEntityList.stream().map(WmsCartonEntity::getId).distinct().collect(Collectors.toList());
-        List<WmsCartonDetailEntity> detailEntityList = wmsCartonDetailService.listByMainIds(cartonIds);
+        List<WmsCartonDetailEntity> detailEntityList = wmsCartonDetailService.listByMainIds(allCartonIds);
         view.setSourceId(packingTaskEntity.getSourceId());
         view.setSourceCode(packingTaskEntity.getSourceCode());
         view.setTaskId(packingTaskEntity.getId());
         //已装箱数量
         Integer packTotalQty = detailEntityList.stream().map(WmsCartonDetailEntity::getPackQty).reduce(MathUtil.ZERO, Integer::sum);
         view.setPackTotalQty(packTotalQty);
+        detailEntityList = detailEntityList.stream().filter(v->cartonIds.contains(v.getMainId())).collect(Collectors.toList());
         //预计总重
         BigDecimal grossTotalWeight = detailEntityList.stream().map(WmsCartonDetailEntity::getGrossWeight).reduce(BigDecimal.ZERO, BigDecimal::add);
         view.setGrossTotalWeight(grossTotalWeight);
