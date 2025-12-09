@@ -70,4 +70,11 @@ public interface KolSampleCostService extends SuperService<KolSampleCostEntity> 
      * @return Boolean
      */
     Boolean importFile(MultipartFile excelFile, HttpServletResponse response);
+    /**
+     * 寄样费用定时更新任务
+     * @author will
+     * @date 2025/12/9 14:37
+     * @return void
+     */
+    void updateKolSampleCostJob();
 }

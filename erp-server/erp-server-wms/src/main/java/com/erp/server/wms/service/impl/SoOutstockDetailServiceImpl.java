@@ -1175,4 +1175,9 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
         }
         return lastBillDateDTOS.stream().collect(Collectors.toMap(SoOutstockDTO.LastBillDateDTO::getSkuId, SoOutstockDTO.LastBillDateDTO::getBillDate));
     }
+
+    @Override
+    public List<SoOutstockDTO.KolSoOutstockDTO> listSoOutstockByTime(SoOutstockDTO.KolSoOutstockDateDTO dto) {
+        return baseMapper.listSoOutstockByTime(dto);
+    }
 }

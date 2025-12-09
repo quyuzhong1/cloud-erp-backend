@@ -624,6 +624,7 @@ public class KolB2bApplicationServiceImpl extends SuperServiceImpl<KolB2bApplica
                 }
                 SoDetailDTO.AddDTO soDetailAddDTO = new SoDetailDTO.AddDTO();
                 BeanUtil.copyProperties(detailEntity,soDetailAddDTO);
+                soDetailList.add(soDetailAddDTO);
             }
             addDTO.setDetailList(soDetailList);
             soInfoService.add(addDTO);

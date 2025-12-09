@@ -1,15 +1,15 @@
 package com.erp.model.oms.entity;
 
-import java.math.BigDecimal;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import java.time.LocalDateTime;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
+
+import java.io.Serializable;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 
 /**
@@ -71,6 +71,12 @@ public class KolSampleCostEntity extends BaseEntity<KolSampleCostEntity> {
     */
     @TableField("so_id")
     private String soId;
+
+    /**
+     * 销售明细id
+     */
+    @TableField("so_detail_id")
+    private String soDetailId;
     /**
     * 销售组织id
     */
@@ -87,15 +93,20 @@ public class KolSampleCostEntity extends BaseEntity<KolSampleCostEntity> {
     @TableField("so_outstock_id")
     private String soOutstockId;
     /**
+     * 销售出库单明细id
+     */
+    @TableField("so_outstock_detail_id")
+    private String soOutstockDetailId;
+    /**
     * 销售出库单编码
     */
     @TableField("so_outstock_code")
     private String soOutstockCode;
     /**
-    * 销售出库时间
+    * 销售出库日期
     */
-    @TableField("so_outstock_time")
-    private LocalDateTime soOutstockTime;
+    @TableField("so_outstock_date")
+    private LocalDateTime soOutstockDate;
     /**
     * 仓库id
     */

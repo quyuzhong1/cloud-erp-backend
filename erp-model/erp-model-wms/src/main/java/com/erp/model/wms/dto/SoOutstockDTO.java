@@ -1884,4 +1884,90 @@ public class SoOutstockDTO implements Serializable {
 
         private LocalDate billDate;
     }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class KolSoOutstockDateDTO {
+        /**
+         * 开始时间
+         */
+        private LocalDateTime startDate;
+        /**
+         * 结束时间
+         */
+        private LocalDateTime endDate;
+    }
+
+    /**
+     * kol寄样费用查询出库DTO
+     */
+    @Data
+    @NoArgsConstructor
+    public static class KolSoOutstockDTO {
+        /**
+         * 销售订单id
+         */
+        private String soId;
+        /**
+         * 销售订单编码
+         */
+        private String soCode;
+        /**
+         * 销售订单明细id
+         */
+        private String soDetailId;
+        /**
+         * 来源类型
+         */
+        private String sourceType;
+        /**
+         * 销售出库单id
+         */
+        private String soOutstockId;
+        /**
+         * 销售出库单编码
+         */
+        private String soOutstockCode;
+
+        /**
+         * 销售组织id
+         */
+        private String salesOrgId;
+
+        /**
+         * 销售组织名
+         */
+        private String salesOrgName;
+        /**
+         * 销售出库日期
+         */
+        private String soOutstockDate;
+        /**
+         * 销售出库单明细id
+         */
+        private String soOutstockDetailId;
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * skuNo
+         */
+        private String skuNo;
+
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
+
+        /**
+         * 仓库名称
+         */
+        private String warehouseName;
+        /**
+         * 实发数量
+         */
+        private String actualQty;
+    }
 }

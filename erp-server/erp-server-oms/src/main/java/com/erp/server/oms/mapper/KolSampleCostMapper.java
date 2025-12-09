@@ -8,6 +8,9 @@ import com.erp.model.oms.entity.KolSampleCostEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.time.LocalDateTime;
+import java.util.List;
+
 
 /**
  * <p>
@@ -28,4 +31,21 @@ public interface KolSampleCostMapper extends BaseMapper<KolSampleCostEntity> {
      * @return IPage<ListDTO>
      */
     IPage<KolSampleCostDTO.ListDTO> paging(Page<Object> query,@Param("params") KolSampleCostDTO.PagingParamDTO params);
+    /**
+     * 查询月份内存在的寄样费用
+     * @author will
+     * @date 2025/12/9 14:54
+     * @param startTime
+     * @param endTIme
+     * @return List<KolSampleCostEntity>
+     */
+    List<KolSampleCostEntity> listByTime(@Param("startTime") LocalDateTime startTime,@Param("endTIme") LocalDateTime endTIme);
+    /**
+     * 根据销售订单明细id集合查询寄样费用
+     * @author will
+     * @date 2025/12/9 16:06
+     * @param soDetailIdList
+     * @return List<KolSampleCostEntity>
+     */
+    List<KolSampleCostEntity> listKolSampleCostBySoDetailIdList(@Param("soDetailIdList") List<String> soDetailIdList);
 }

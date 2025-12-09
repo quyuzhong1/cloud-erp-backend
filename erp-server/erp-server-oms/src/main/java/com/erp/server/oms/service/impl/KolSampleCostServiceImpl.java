@@ -20,25 +20,35 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
+import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.oms.dto.KolSampleCostDTO;
 import com.erp.model.oms.dto.excel.KolSampleCostImportExcelDTO;
 import com.erp.model.oms.entity.KolSampleCostEntity;
+import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.wms.feign.SoOutstockFeign;
 import com.erp.server.oms.listener.KolSampleCostExcelListener;
 import com.erp.server.oms.mapper.KolSampleCostMapper;
 import com.erp.server.oms.service.KolSampleCostService;
 import com.erp.server.oms.service.OperateLogService;
+import com.google.common.collect.Lists;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.math3.util.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -59,6 +69,9 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
 
     @Autowired
     private DownloadTaskFeign downloadTaskFeign;
+
+    @Resource
+    private SoOutstockFeign soOutstockFeign;
 
 
 
@@ -117,6 +130,7 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
 
     @Override
     public void updateCost(KolSampleCostDTO.UpdateCostDTO dto) {
+        String date = dto.getDate();
 
     }
 
@@ -166,6 +180,49 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
         return Boolean.FALSE;
     }
 
+    @Override
+    public void updateKolSampleCostJob() {
+        LocalDateTime endTIme = LocalDateUtil.getThisMonthStart(LocalDate.now());
+        LocalDateTime startTime = LocalDateUtil.getThisMonthStart(LocalDate.now()).minusMonths(1L);
+
+    }
+
+    private void updateKolSampleCostByDate(LocalDateTime startTime,LocalDateTime endTIme) {
+        //查询月份内存在的寄样费用
+        List<KolSampleCostEntity> oldList = this.baseMapper.listByTime(startTime,endTIme);
+
+        //查询是时间区间内已出库的销售出库单
+        List<SoOutstockDTO.KolSoOutstockDTO> soOutstockDTOList = soOutstockFeign.listSoOutstockByTime(new SoOutstockDTO.KolSoOutstockDateDTO(startTime,endTIme));
+        if (CollUtil.isEmpty(soOutstockDTOList)) {
+            //区间内没有出库单，如果存在oldList则直接删除
+            deleteOldKolSampleCost(oldList);
+            return;
+        }
+        List<String> soDetailIdList = soOutstockDTOList.stream().map(SoOutstockDTO.KolSoOutstockDTO::getSoDetailId).distinct().collect(Collectors.toList());
+
+        List<KolSampleCostEntity> thisMonthList = new ArrayList<>();
+        List<List<String>> partition = Lists.partition(soDetailIdList, 5000);
+        for(List<String> partitionIdLIst : partition) {
+            List<KolSampleCostEntity> kolSampleCostEntityList = baseMapper.listKolSampleCostBySoDetailIdList(partitionIdLIst);
+        }
+
+
+    }
+
+    /**
+     * 删除旧的寄样费用数据
+     * @author will
+     * @date 2025/12/9 16:00
+     * @param oldList
+     * @return void
+     */
+    private void deleteOldKolSampleCost(List<KolSampleCostEntity> oldList) {
+        if (CollUtil.isEmpty(oldList)) {
+            return;
+        }
+        List<String> idList = oldList.stream().map(KolSampleCostEntity::getId).collect(Collectors.toList());
+        super.removeByIds(idList);
+    }
 
     /**
      * 处理导入数据
@@ -211,6 +268,10 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
                     }
                 }
                 super.updateBatchById(costList);
+
+                //操作日志
+            List<Pair<String, String>> pairList = costList.stream().map(obj -> new Pair<>(obj.getId(), obj.getSoCode())).collect(Collectors.toList());
+            operateLogService.batchAddModuleOperateLog(CharSequenceUtil.format("费用项【{}】，原币金额【{}】，汇率【{}】",importExcelDTO.getFeeType(),importExcelDTO.getAmountStr(),importExcelDTO.getExchangeRateStr()), ModuleTypeEnum.KOL_KOL_SAMPLE_COST.getCode(),pairList ,"尾程费用导入");
         }
     }
 

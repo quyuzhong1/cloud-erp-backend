@@ -81,5 +81,36 @@
         </where>
     </select>
 
+    <!-- 按时间范围查询列表 -->
+    <select id="listByTime" resultType="com.erp.model.oms.entity.KolSampleCostEntity">
+        select
+            <include refid="Base_Column_List" />
+        from kol_sample_cost ksc
+        <where>
+            ksc.is_deleted = false
+            <if test="startTime != null">
+                and ksc.so_outstock_date &gt;= #{startTime}
+            </if>
+            <if test="endTime != null">
+                and ksc.so_outstock_date &lt; #{endTime}
+            </if>
+        </where>
+    </select>
+
+    <!-- 根据出库单明细ID列表查询样品费用列表 -->
+    <select id="listKolSampleCostBySoDetailIdList" resultType="com.erp.model.oms.entity.KolSampleCostEntity">
+
+
+        select
+            kba.code as source_code,
+            kba.id as source_id,
+            'kolB2bApplication' as sourceType,
+            sd.id as so_detail_id
+        from kol_b2b_application kba
+         inner join kol_b2b_application_detail kbad on kba.id = kbad.main_id and kbad.is_deleted = false
+         inner join so_detail sd on sd.source_detail_id = kbad.id and sd.is_deleted = false
+        where kba.is_deleted = false
+    </select>
+
 
 </mapper>

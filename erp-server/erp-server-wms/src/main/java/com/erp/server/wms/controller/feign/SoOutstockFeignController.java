@@ -273,6 +273,18 @@ public class SoOutstockFeignController {
     public List<ExhibitionOrderDTO.DownstreamListDTO> listSoOutstockByExhibitionId(@RequestParam(value = "exhibitionId") String exhibitionId) {
         return soOutstockService.listSoOutstockByExhibitionId(exhibitionId);
     }
+
+    /**
+     * kol寄样费用查询出库信息
+     * @author will 
+     * @date 2025/12/9 15:37
+     * @param dto 
+     * @return List<KolSoOutstockDTO>
+     */
+    @PostMapping("/listSoOutstockByTime")
+    public List<SoOutstockDTO.KolSoOutstockDTO> listSoOutstockByTime(@RequestBody SoOutstockDTO.KolSoOutstockDateDTO dto){
+        return soOutstockDetailService.listSoOutstockByTime(dto);
+    }
 }
 
 
