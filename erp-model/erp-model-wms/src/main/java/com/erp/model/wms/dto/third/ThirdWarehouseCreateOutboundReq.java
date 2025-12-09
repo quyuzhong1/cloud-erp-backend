@@ -152,6 +152,10 @@ public class ThirdWarehouseCreateOutboundReq extends ThirdWarehouseAuth {
         private String countryCode;
 
         /**
+         * 收件人国家名称
+         */
+        private String countryName;
+        /**
          * 省
          */
         private String province;
