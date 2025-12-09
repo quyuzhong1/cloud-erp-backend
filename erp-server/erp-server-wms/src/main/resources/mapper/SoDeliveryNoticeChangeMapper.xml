@@ -128,7 +128,7 @@
                sdncd.new_qty AS newNoticeQty,
                sdncd.bom_version AS bomVersion,
                sdncd.platform_sku_no AS platformSkuNo,
-               sd.qty AS saleQty,
+               sd.box_qty AS saleQty,
                COALESCE(na.all_notice_qty, 0) AS allNoticeQty,
                COALESCE(sdnd.delivery_qty, 0) AS currentNoticeQty,
                COALESCE(pa.picked_qty, 0) AS pickedQty,
