@@ -137,7 +137,7 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
     @Resource
     private SoB2cService soB2cService;
     @Resource
-    private SkuMappingService skuMappingService;
+    private SoB2cDetailService soB2cDetailService;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -589,11 +589,32 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         KolB2cApplicationEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到B2C寄样申请单单数据"));
         // 反审核条件判断
         validateDisApprove(entity);
-        // TODO 检查是否有下推单据（如果支持下推的话）明细数据
+        // 检查是否有下推单据
+        List<KolSubB2cApplicationDTO.ListDTO> subList = kolSubB2cApplicationService.listSubBySourceId(id);
+        if(CollUtil.isNotEmpty(subList)){
+            //已发货或者已审核
+            long count = subList.stream().filter(e -> e.getDeliveryStatus().equals(KolSubB2cApplicationDeliveryStatusEnum.SHIPPED.getCode())).count();
+            if(count > 0){
+                throw new ServiceException(ApiError.ERROR_KOL_B2C_HAS_DOWN_BILL);
+            }
+
+            List<String> sourceIds = subList.stream().map(KolSubB2cApplicationDTO.ListDTO::getId).collect(Collectors.toList());
+            List<SoB2cEntity> soB2cList = soB2cService.lambdaQuery().in(SoB2cEntity::getSourceId, sourceIds).eq(SoB2cEntity::getInvalidStatus,false).list();
+            if(CollUtil.isNotEmpty(soB2cList)){
+                throw new ServiceException(ApiError.ERROR_KOL_B2C_HAS_DOWN_BILL);
+            }
+
+            //删除下游单据
+            List<String> subIds = subList.stream().map(KolSubB2cApplicationDTO.ListDTO::getId).distinct().collect(Collectors.toList());
+            kolSubB2cApplicationService.removeByIds(subIds);
+            List<String> subDetailIds = subList.stream().map(KolSubB2cApplicationDTO.ListDTO::getDetailId).collect(Collectors.toList());
+            kolSubB2cApplicationDetailService.removeByIds(subDetailIds);
+
+        }
 
         // 更新审核信息
         updateForDisApprove(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
-
+        
         // 操作日志
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据反审核操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "B2C寄样申请单");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.KOL_B2C_APPLICATION.getCode(), entity.getId(), "反审核操作");

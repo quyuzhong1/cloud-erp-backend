@@ -1683,6 +1683,7 @@ public enum ApiError implements Serializable {
     ERROR_PUSH_DETAIL_ID_WAREHOUSE_DIFF(92199,"B2B寄样申请单【{}】明细下推发货仓库不一致"),
     ERROR_PUSH_DETAIL_ID_ORG_DIFF(92200,"B2B寄样申请单【{}】明细下推销售组织不一致"),
     ERROR_92201(92201,"请选择B2C寄样申请审核通过的数据"),
+    ERROR_KOL_B2C_HAS_DOWN_BILL(92202,"B2C寄样申请已生成销售订单，无法反审核"),
 
 
 
