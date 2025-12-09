@@ -98,14 +98,14 @@ public class PDDAuthorize implements IShopAuthorizeService<T> {
         // 进行 Base64 编码
         String state = Base64.getUrlEncoder().withoutPadding().encodeToString(randomBytes);
         // 缓存state
-        String key =  CharSequenceUtil.format(RedisCacheConstants.AUTH_PDD_STATE,  state);
+        String key =  CharSequenceUtil.format(RedisCacheConstants.AUTH_PDD_STATE,  PlatformDictEnum.PDD.getCode() + state);
 
         redisUtil.set(key, shopInfo.getId(), RedisCacheConstants.THIRD_PARTY_AUTH_EXPIRATION);
 
         //拼接授权地址
         String shopAuthorizeUrl = "";
         if (ObjectUtil.isNotEmpty(cfgAppClient)) {
-            shopAuthorizeUrl = String.format(cfgAppClient.getUrl(),cfgAppClient.getClientId(),cfgAppClient.getRedirectUrl(), state);
+            shopAuthorizeUrl = String.format(cfgAppClient.getUrl(),cfgAppClient.getClientId(),cfgAppClient.getRedirectUrl(),  PlatformDictEnum.PDD.getCode() + state);
         }
         return shopAuthorizeUrl;
     }
