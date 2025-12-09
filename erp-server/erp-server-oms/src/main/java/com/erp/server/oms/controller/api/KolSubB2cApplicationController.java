@@ -46,14 +46,9 @@ public class KolSubB2cApplicationController extends BaseController {
      * @param sourceId
      * @return ApiResult<KolSubB2cApplicationDTO.ListDTO>>
      */
-    @GetMapping("/view")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "oms:kolB2cApplication:view",
-            serviceClass = KolB2cApplicationService.class,
-            keyIdName = "id")
+    @GetMapping("/listDetail")
     @LogViewService
-    public ApiResult<List<KolSubB2cApplicationDTO.ListDTO>> listSubBySourceId(@RequestParam("sourceId") String sourceId) {
+    public ApiResult<List<KolSubB2cApplicationDTO.ListDTO>> listDetail(@RequestParam("sourceId") String sourceId) {
         return success(kolSubB2cApplicationService.listSubBySourceId(sourceId));
     }
 
