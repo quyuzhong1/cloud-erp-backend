@@ -332,40 +332,42 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
                 .eq(SampleRecipientDetailEntity::getMainId, addOrUpdateDTO.getId())
                 .list();
 
-            // 构建已存在明细的Map，key为skuId，value为明细实体
-            // 如果存在重复的skuId，保留第一个
+            // 构建已存在明细的Map，key为明细ID，value为明细实体
             Map<String, SampleRecipientDetailEntity> existingDetailMap = existingDetails.stream()
-                .collect(Collectors.toMap(SampleRecipientDetailEntity::getSkuId, item -> item, (existing, replacement) -> existing));
+                .collect(Collectors.toMap(SampleRecipientDetailEntity::getId, Function.identity()));
 
             // 处理明细数据：新增、更新、删除
             List<SampleRecipientDetailEntity> toSave = new ArrayList<>();
             List<String> toDelete = new ArrayList<>();
-            Set<String> processedSkuIds = new HashSet<>();
+            Set<String> processedIds = new HashSet<>();
 
             for (SampleRecipientDTO.ProductDTO productDTO : addOrUpdateDTO.getDetailList()) {
-                String skuId = productDTO.getSkuId();
-                processedSkuIds.add(skuId);
-
-                SampleRecipientDetailEntity existingDetail = existingDetailMap.get(skuId);
-
-                if (existingDetail != null) {
-                    // 更新已存在的明细
-                    existingDetail.setProductName(productDTO.getProductName());
-                    existingDetail.setRecipientQty(productDTO.getQuantity());
-                    existingDetail.setRemark(productDTO.getRemark());
-                    existingDetail.setSkuNo(productDTO.getSkuNo());
-                    existingDetail.setSkuId(productDTO.getSkuId());
-                    if(!sampleRecipientEntity.getIsOutstockRequired()){
-                        existingDetail.setExecStatus(SampleRecipientExecStatusEnum.NO_OUTSTOCK.getExecStatus()); //若选择了无需出库则初始状态为无需出库
+                String detailId = productDTO.getId();
+                
+                // 如果ID不为空，说明是已存在的明细，需要更新
+                if (StringUtils.isNotBlank(detailId)) {
+                    processedIds.add(detailId);
+                    SampleRecipientDetailEntity existingDetail = existingDetailMap.get(detailId);
+                    
+                    if (existingDetail != null) {
+                        // 更新已存在的明细
+                        existingDetail.setProductName(productDTO.getProductName());
+                        existingDetail.setRecipientQty(productDTO.getQuantity());
+                        existingDetail.setRemark(productDTO.getRemark());
+                        existingDetail.setSkuNo(productDTO.getSkuNo());
+                        existingDetail.setSkuId(productDTO.getSkuId());
+                        if(!sampleRecipientEntity.getIsOutstockRequired()){
+                            existingDetail.setExecStatus(SampleRecipientExecStatusEnum.NO_OUTSTOCK.getExecStatus()); //若选择了无需出库则初始状态为无需出库
+                        }
+                        // 注意：不重置已出库数量和执行状态，保持业务连续性
+                        toSave.add(existingDetail);
                     }
-                    // 注意：不重置已出库数量和执行状态，保持业务连续性
-                    toSave.add(existingDetail);
                 } else {
-                    // 新增明细
+                    // ID为空，说明是新增的明细
                     SampleRecipientDetailEntity newDetail = new SampleRecipientDetailEntity();
                     newDetail.setMainId(addOrUpdateDTO.getId());
                     newDetail.setSkuNo(productDTO.getSkuNo());
-                    newDetail.setSkuId(skuId);
+                    newDetail.setSkuId(productDTO.getSkuId());
                     newDetail.setProductName(productDTO.getProductName());
                     newDetail.setRecipientQty(productDTO.getQuantity());
                     newDetail.setDeliveryQty(0); // 新明细初始已出库数量为0
@@ -381,7 +383,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
 
             // 找出需要删除的明细（在新列表中不存在的）
             for (SampleRecipientDetailEntity existingDetail : existingDetails) {
-                if (!processedSkuIds.contains(existingDetail.getSkuId())) {
+                if (!processedIds.contains(existingDetail.getId())) {
                     toDelete.add(existingDetail.getId());
                 }
             }
