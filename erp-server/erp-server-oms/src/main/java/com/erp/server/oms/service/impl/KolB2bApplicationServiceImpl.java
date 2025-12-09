@@ -607,8 +607,9 @@ public class KolB2bApplicationServiceImpl extends SuperServiceImpl<KolB2bApplica
             BeanUtil.copyProperties(mainEntity,addDTO);
             addDTO.setId(null);
             addDTO.setOrderType(BillTypeEnum.B2B.getCode());
-            addDTO.setBillDate(LocalDate.now());
-            addDTO.setRequireDate(mainEntity.getDate());
+            LocalDate now = LocalDate.now();
+            addDTO.setBillDate(now);
+            addDTO.setRequireDate(now);
             addDTO.setSourceId(mainEntity.getId());
             addDTO.setSourceType(SourceTypeEnum.KOL_B2B_APPLICATION.getCode());
             addDTO.setSellerId(mainEntity.getApplyUserId());
