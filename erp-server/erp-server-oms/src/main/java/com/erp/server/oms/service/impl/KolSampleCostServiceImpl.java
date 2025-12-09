@@ -183,6 +183,12 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
         List<KolSampleCostEntity> kolSampleCostList = listBySoCodeList(soCodeList);
 
         for (KolSampleCostImportExcelDTO importExcelDTO : successList) {
+                long count = successList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSoCode(), importExcelDTO.getSoCode())).count();
+                if (count > 1) {
+                    importExcelDTO.setErrorMsg("销售订单号【" + importExcelDTO.getSoCode() + "】在导入数据中存在重复");
+                    errorList.add(importExcelDTO);
+                    continue;
+                }
                 List<KolSampleCostEntity> costList = kolSampleCostList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSoCode(), importExcelDTO.getSoCode())).collect(Collectors.toList());
                 if (CollUtil.isEmpty(costList)) {
                     importExcelDTO.setErrorMsg("未找到对应的销售订单号：" + importExcelDTO.getSoCode());
@@ -191,8 +197,6 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
                 }
                  //计算总数量
                 Integer totalQty = costList.stream().map(KolSampleCostEntity::getQty).reduce(Integer.SIZE, Integer::sum);
-
-
                 for (KolSampleCostEntity entity : costList) {
                     BigDecimal cost = MathUtil.divide(MathUtil.valueOf(entity.getQty()), MathUtil.valueOf(totalQty))
                             .multiply(MathUtil.valueOf(importExcelDTO.getAmountStr()))
@@ -203,9 +207,10 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
                     }
                     if (CharSequenceUtil.equals(importExcelDTO.getFeeType(),"订单费用")) {
                         //“尾程-其他费用”=当前行SKU实发数量/同一销售单号所有SKU实发数量*原币金额*汇率
-
+                        entity.setOtherCost(cost);
                     }
                 }
+                super.updateBatchById(costList);
         }
     }
 
