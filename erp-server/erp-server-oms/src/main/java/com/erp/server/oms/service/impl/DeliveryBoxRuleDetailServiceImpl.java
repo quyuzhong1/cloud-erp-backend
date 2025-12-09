@@ -155,7 +155,7 @@ public class DeliveryBoxRuleDetailServiceImpl extends SuperServiceImpl<DeliveryB
                     .map(newEntity -> new Pair<>(
                             deliveryBoxRuleId,
                             String.format(
-                                    "修改发货SKU从【%s】为【%s】，单箱数量从【%s】为【%s】，状态从【%s】为【%s",
+                                    "【%s】为【%s】，单箱数量从【%s】为【%s】，状态从【%s】为【%s】",
                                     oldEntity.getDeliverySkuNo(),
                                     newEntity.getDeliverySkuNo(),
                                     oldEntity.getPerBoxQty(),
@@ -168,7 +168,7 @@ public class DeliveryBoxRuleDetailServiceImpl extends SuperServiceImpl<DeliveryB
 
             if (!updatePairs.isEmpty()) {
                 operateLogService.batchAddModuleOperateLog(
-                        "修改发货SKU从【%s】",
+                        "修改发货SKU从%s",
                         ModuleTypeEnum.DELIVERY_BOX_RULE.getCode(),
                         updatePairs,
                         "编辑操作"
@@ -179,11 +179,11 @@ public class DeliveryBoxRuleDetailServiceImpl extends SuperServiceImpl<DeliveryB
         // 记录新增日志
         List<Pair<String, String>> addPairs = addList.stream()
                 .map(obj -> new Pair<>(deliveryBoxRuleId,
-                        obj.getDeliverySkuNo() + ",单箱数量【" + obj.getPerBoxQty() + "】"
+                        "【" + obj.getDeliverySkuNo() + "】,单箱数量【" + obj.getPerBoxQty() + "】"
                         ))
                 .collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog(
-                "新增了发货SKU【%s",
+                "新增了发货SKU %s",
                 ModuleTypeEnum.DELIVERY_BOX_RULE.getCode(),
                 addPairs,
                 "新增操作"
