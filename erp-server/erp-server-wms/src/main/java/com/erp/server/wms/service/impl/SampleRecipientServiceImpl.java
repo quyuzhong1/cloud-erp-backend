@@ -332,39 +332,42 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
                 .eq(SampleRecipientDetailEntity::getMainId, addOrUpdateDTO.getId())
                 .list();
 
-            // 构建已存在明细的Map，key为skuId，value为明细实体
+            // 构建已存在明细的Map，key为明细ID，value为明细实体
             Map<String, SampleRecipientDetailEntity> existingDetailMap = existingDetails.stream()
-                .collect(Collectors.toMap(SampleRecipientDetailEntity::getSkuId, item -> item));
+                .collect(Collectors.toMap(SampleRecipientDetailEntity::getId, Function.identity()));
 
             // 处理明细数据：新增、更新、删除
             List<SampleRecipientDetailEntity> toSave = new ArrayList<>();
             List<String> toDelete = new ArrayList<>();
-            Set<String> processedSkuIds = new HashSet<>();
+            Set<String> processedIds = new HashSet<>();
 
             for (SampleRecipientDTO.ProductDTO productDTO : addOrUpdateDTO.getDetailList()) {
-                String skuId = productDTO.getSkuId();
-                processedSkuIds.add(skuId);
-
-                SampleRecipientDetailEntity existingDetail = existingDetailMap.get(skuId);
-
-                if (existingDetail != null) {
-                    // 更新已存在的明细
-                    existingDetail.setProductName(productDTO.getProductName());
-                    existingDetail.setRecipientQty(productDTO.getQuantity());
-                    existingDetail.setRemark(productDTO.getRemark());
-                    existingDetail.setSkuNo(productDTO.getSkuNo());
-                    existingDetail.setSkuId(productDTO.getSkuId());
-                    if(!sampleRecipientEntity.getIsOutstockRequired()){
-                        existingDetail.setExecStatus(SampleRecipientExecStatusEnum.NO_OUTSTOCK.getExecStatus()); //若选择了无需出库则初始状态为无需出库
+                String detailId = productDTO.getId();
+                
+                // 如果ID不为空，说明是已存在的明细，需要更新
+                if (StringUtils.isNotBlank(detailId)) {
+                    processedIds.add(detailId);
+                    SampleRecipientDetailEntity existingDetail = existingDetailMap.get(detailId);
+                    
+                    if (existingDetail != null) {
+                        // 更新已存在的明细
+                        existingDetail.setProductName(productDTO.getProductName());
+                        existingDetail.setRecipientQty(productDTO.getQuantity());
+                        existingDetail.setRemark(productDTO.getRemark());
+                        existingDetail.setSkuNo(productDTO.getSkuNo());
+                        existingDetail.setSkuId(productDTO.getSkuId());
+                        if(!sampleRecipientEntity.getIsOutstockRequired()){
+                            existingDetail.setExecStatus(SampleRecipientExecStatusEnum.NO_OUTSTOCK.getExecStatus()); //若选择了无需出库则初始状态为无需出库
+                        }
+                        // 注意：不重置已出库数量和执行状态，保持业务连续性
+                        toSave.add(existingDetail);
                     }
-                    // 注意：不重置已出库数量和执行状态，保持业务连续性
-                    toSave.add(existingDetail);
                 } else {
-                    // 新增明细
+                    // ID为空，说明是新增的明细
                     SampleRecipientDetailEntity newDetail = new SampleRecipientDetailEntity();
                     newDetail.setMainId(addOrUpdateDTO.getId());
                     newDetail.setSkuNo(productDTO.getSkuNo());
-                    newDetail.setSkuId(skuId);
+                    newDetail.setSkuId(productDTO.getSkuId());
                     newDetail.setProductName(productDTO.getProductName());
                     newDetail.setRecipientQty(productDTO.getQuantity());
                     newDetail.setDeliveryQty(0); // 新明细初始已出库数量为0
@@ -380,7 +383,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
 
             // 找出需要删除的明细（在新列表中不存在的）
             for (SampleRecipientDetailEntity existingDetail : existingDetails) {
-                if (!processedSkuIds.contains(existingDetail.getSkuId())) {
+                if (!processedIds.contains(existingDetail.getId())) {
                     toDelete.add(existingDetail.getId());
                 }
             }
@@ -1340,8 +1343,9 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
             }
         });
         List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(new ArrayList<>(userIdSet));
+        // 如果存在重复的用户ID，保留第一个
         Map<String, String> userNameMap = userList.stream()
-                .collect(Collectors.toMap(FindUserDTO::getUserId,FindUserDTO::getUserName));
+                .collect(Collectors.toMap(FindUserDTO::getUserId, FindUserDTO::getUserName, (existing, replacement) -> existing));
         
         // 查询样品用途字典并转换为Map
         List<DictBasicDTO.ListDTO> usageDictList = dictBasicService.getByKey(DictBasicEnum.SAMPLE_USAGE.getKey());
@@ -1426,8 +1430,9 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
                 // 优先查询内部用户信息
                 List<SysDepartmentUserNumberDTO> userList = sysUserFeign.listDeptUserByUserIdList(userIds);
                 if (CollUtil.isNotEmpty(userList)) {
+                    // 如果存在重复的用户ID，保留第一个
                     userNameMap = userList.stream()
-                            .collect(Collectors.toMap(SysDepartmentUserNumberDTO::getUserId, SysDepartmentUserNumberDTO::getUserName));
+                            .collect(Collectors.toMap(SysDepartmentUserNumberDTO::getUserId, SysDepartmentUserNumberDTO::getUserName, (existing, replacement) -> existing));
                 }
 
                 // 对于未找到的用户，尝试查询外部使用人字典
@@ -1868,8 +1873,9 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
                     List<String> inventoryStatusList = Collections.singletonList(InventoryStatusEnum.USABLE.getCode()); // 只查询可用库存
                     List<InventoryDTO.RealQtyDTO> inventoryList = sampleRecipientEntity.getRealQty(skuIds, warehouseIds, inventoryStatusList);
                     if (CollUtil.isNotEmpty(inventoryList)) {
+                        // 如果存在重复的skuId，保留第一个
                         inventoryMap = inventoryList.stream()
-                                .collect(Collectors.toMap(InventoryDTO.RealQtyDTO::getSkuId, Function.identity()));
+                                .collect(Collectors.toMap(InventoryDTO.RealQtyDTO::getSkuId, Function.identity(), (existing, replacement) -> existing));
                     }
                 } catch (Exception e) {
                     log.warn("查询库存信息失败，错误：{}", e.getMessage());
@@ -2040,8 +2046,9 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
         // 用户
         List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(mainList.stream().map(SampleRecipientEntity::getUserId).collect(Collectors.toList()));
 
+        // 如果存在重复的用户ID，保留第一个
         Map<String, String> userNameMap = userList.stream()
-                .collect(Collectors.toMap(FindUserDTO::getUserId,FindUserDTO::getUserName));
+                .collect(Collectors.toMap(FindUserDTO::getUserId, FindUserDTO::getUserName, (existing, replacement) -> existing));
 
         // 组装返回数据
         for (SampleRecipientDetailEntity detail : detailList) {
