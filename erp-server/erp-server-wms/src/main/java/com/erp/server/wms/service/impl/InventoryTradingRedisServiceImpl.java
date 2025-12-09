@@ -84,8 +84,6 @@ public class InventoryTradingRedisServiceImpl implements InventoryTradingService
 
     @Override
     public void doTransactionList(List<InventoryTransactionDTO> transactionList, String approveType) {
-        // 2-移除忽略的sku 先移除避免只存在忽略的sku的单据导致错误
-        transactionList.removeIf(InventoryTransactionDTO::isIgnoreTransaction);
 
         if(CollectionUtils.isEmpty(transactionList)) {
             log.warn("库存交易列表为空！");
@@ -98,12 +96,16 @@ public class InventoryTradingRedisServiceImpl implements InventoryTradingService
             if(approveType.equals(InventoryTradingService.APPROVE)) {
                 this.checkHasApproved(transactionList.get(0));
             }
-            // 2-移除忽略的sku
-//            transactionList.removeIf(InventoryTransactionDTO::isIgnoreTransaction);
+            // 2-检查业务是否允许交易
+            this.checkAllowTransactionList(transactionList);
+            // 3-移除忽略的sku 先移除避免只存在忽略的sku的单据导致错误
+            transactionList.removeIf(InventoryTransactionDTO::isIgnoreTransaction);
+            if(CollectionUtils.isEmpty(transactionList)) {
+                log.warn("列表不存在非服务类产品，实际库存交易列表为空！");
+                return;
+            }
             // 排序
             transactionList = this.sortInventoryTransactionList(transactionList);
-            // 3-检查业务是否允许交易
-            this.checkAllowTransactionList(transactionList);
             //校验虚拟仓库存
             this.checkVirtualInventoryList(transactionList);
             // 4-检查每日库存是否充足
