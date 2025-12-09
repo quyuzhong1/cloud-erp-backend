@@ -2,6 +2,7 @@ package com.sdk.oms.pdd.service;
 
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.TypeReference;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.OkHttpUtils;
@@ -30,7 +31,37 @@ public class PddService {
 
     @Resource
     private ShopInfoFeign shopInfoFeign;
-
+//    public static void main(String[] args) throws NoSuchAlgorithmException {
+//        PddService pddService = new PddService();
+//        ShopDTO.RefreshTokenDTO refreshTokenDTO = new ShopDTO.RefreshTokenDTO();
+//        refreshTokenDTO.setRefreshToken("cc22864e9b3b4a45898c23812bd6c521c8bfde79");
+//        refreshTokenDTO.setClientId("3becefd1b37748e2ae24065f272c6c66");
+//        refreshTokenDTO.setBaseUrl("https://gw-api.pinduoduo.com/api/router");
+//        refreshTokenDTO.setClientSecret("f9965a90a6decabedf5af229aa50f4129d71738d");
+//        pddService.refreshToken(refreshTokenDTO);
+//    }
+    public static void main(String[] args) throws NoSuchAlgorithmException {
+        long timestamp = System.currentTimeMillis()/1000;
+        long queryTimeStart = timestamp - 7*24*60*60;
+        long queryTimeEnd = timestamp - 7*24*60*60 + 60*60;
+        Map<String,Object> params = new HashMap<>();
+        params.put("type","pdd.erp.oub.list.get");
+        params.put("client_id","3becefd1b37748e2ae24065f272c6c66");
+        params.put("access_token","08090b4534ab4ceb8777d418c168449fa9f2a23b");
+        params.put("timestamp",timestamp);
+        params.put("target_client_id", "e6c4b8a127c14831b2ff860735cf8680");
+        params.put("page",1);
+        params.put("page_size",100);
+        params.put("sid","wjkj03");
+        params.put("query_time_type",2);
+        params.put("query_time_start",queryTimeStart);
+        params.put("query_time_end",queryTimeEnd);
+        String sign = EncryptionUtils.generateSign(params, "f9965a90a6decabedf5af229aa50f4129d71738d");
+        params.put("sign",sign);
+        System.out.println(JSONObject.toJSONString(params));
+        String response = OkHttpUtils.doPostJson("https://ark-api.pinduoduo.com/ark/router", params, new HashMap<>());
+        System.out.println(response);
+    }
 
     public AuthTokenCreateResponse.PopAuthTokenCreateResponse createToken(Map<String, String> paramMap)  {
 

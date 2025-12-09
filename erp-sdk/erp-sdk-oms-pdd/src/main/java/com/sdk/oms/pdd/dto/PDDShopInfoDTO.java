@@ -21,11 +21,15 @@ public class PDDShopInfoDTO {
      */
     private String id;
 
+    private String sid;
+
+
     /**
      * 访问token
      */
     private String accessToken;
 
+    private String refreshToken;
     /**
      * 店铺名称
      */

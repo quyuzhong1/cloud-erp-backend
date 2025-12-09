@@ -181,6 +181,8 @@ public class PDDAuthorize implements IShopAuthorizeService<T> {
         shopInfoDTO.setName(shopInfo.getName());
         shopInfoDTO.setAccessToken(tokenDTO.getAccessToken());
         shopInfoDTO.setTokenExpireTime(tokenExpireTime);
+        shopInfoDTO.setRefreshToken(tokenDTO.getRefreshToken());
+        shopInfoDTO.setSid("wjkj03");
 
         String tokenKey =  CharSequenceUtil.format(RedisCacheConstants.REDIS_PLATFORM_TOKEN, PlatformDictEnum.PDD.getCode(), shopId);
         redisUtil.set(tokenKey, shopInfoDTO, 3600L*24L);
@@ -281,6 +283,8 @@ public class PDDAuthorize implements IShopAuthorizeService<T> {
         shopInfoDTO.setName(shopInfoEntity.getName());
         shopInfoDTO.setAccessToken(tokenDTO.getAccessToken());
         shopInfoDTO.setTokenExpireTime(tokenExpireTime);
+        shopInfoDTO.setRefreshToken(refreshToken);
+        shopInfoDTO.setSid("wjkj03");
 
         redisUtil.set(tokenKey, shopInfoDTO, 3600L*24L);
 
