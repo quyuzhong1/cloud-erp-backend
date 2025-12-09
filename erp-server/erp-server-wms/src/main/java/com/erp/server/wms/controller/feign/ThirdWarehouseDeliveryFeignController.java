@@ -55,6 +55,11 @@ public class ThirdWarehouseDeliveryFeignController extends BaseController {
     public void deleteById(@RequestBody String id){
         thirdWarehouseDeliveryService.deleteById(id);
     }
+
+    @PostMapping("/deleteByCode")
+    public void deleteByCode(@RequestBody String code){
+        thirdWarehouseDeliveryService.deleteByCode(code);
+    }
     @PostMapping("/update")
     public boolean update(@RequestBody ThirdWarehouseDeliveryEntity entity) {
         operateLogService.addModuleOperateLog(StrUtil.format("状态变更为{}", SoB2cWarehouseDeliveryStatusEnum.getName(entity.getStatus())), ModuleTypeEnum.THIRD_WAREHOUSE_DELIVERY.getCode(),entity.getId(), "状态变更");

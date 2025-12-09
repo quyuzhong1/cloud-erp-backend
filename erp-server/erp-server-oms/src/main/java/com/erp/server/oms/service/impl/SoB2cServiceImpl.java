@@ -3297,7 +3297,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 //生成异常订单信息
                 soB2cErrorService.generateErrorOrder(entity.getId(), type, message, JSONObject.toJSONString(createOutboundReq), JSONObject.toJSONString(apiResult),apiResult.getCode().toString());
                 //标记三方仓发货单为删除
-                thirdWarehouseDeliveryFeign.deleteById(thirdWarehouseDeliveryEntity.getId());
+                thirdWarehouseDeliveryFeign.deleteByCode(createOutboundReq.getReferenceNo());
             }
             return apiResult;
         }catch (Exception e){
@@ -3315,7 +3315,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     //生成异常订单信息
                     soB2cErrorService.generateErrorOrder(entity.getId(), type, message, JSONObject.toJSONString(createOutboundReq), JSONObject.toJSONString(apiResult),apiResult.getCode().toString());
                     //标记三方仓发货单为删除
-                    thirdWarehouseDeliveryFeign.deleteById(thirdWarehouseDeliveryEntity.getId());
+                    thirdWarehouseDeliveryFeign.deleteByCode(createOutboundReq.getReferenceNo());
                     return ApiResult.error( -1, e.getMessage());
                 }
             }else {
@@ -3324,7 +3324,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 //生成异常订单信息
                 soB2cErrorService.generateErrorOrder(entity.getId(), type, message, JSONObject.toJSONString(createOutboundReq), JSONObject.toJSONString(apiResult),apiResult.getCode().toString());
                 //标记三方仓发货单为删除
-                thirdWarehouseDeliveryFeign.deleteById(thirdWarehouseDeliveryEntity.getId());
+                thirdWarehouseDeliveryFeign.deleteByCode(createOutboundReq.getReferenceNo());
                 return ApiResult.error( -1, e.getMessage());
             }
         }
