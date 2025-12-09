@@ -333,9 +333,8 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
                 .list();
 
             // 构建已存在明细的Map，key为skuId，value为明细实体
-            // 如果存在重复的skuId，保留第一个
             Map<String, SampleRecipientDetailEntity> existingDetailMap = existingDetails.stream()
-                .collect(Collectors.toMap(SampleRecipientDetailEntity::getSkuId, item -> item, (existing, replacement) -> existing));
+                .collect(Collectors.toMap(SampleRecipientDetailEntity::getSkuId, item -> item));
 
             // 处理明细数据：新增、更新、删除
             List<SampleRecipientDetailEntity> toSave = new ArrayList<>();
@@ -1341,9 +1340,8 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
             }
         });
         List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(new ArrayList<>(userIdSet));
-        // 如果存在重复的用户ID，保留第一个
         Map<String, String> userNameMap = userList.stream()
-                .collect(Collectors.toMap(FindUserDTO::getUserId, FindUserDTO::getUserName, (existing, replacement) -> existing));
+                .collect(Collectors.toMap(FindUserDTO::getUserId,FindUserDTO::getUserName));
         
         // 查询样品用途字典并转换为Map
         List<DictBasicDTO.ListDTO> usageDictList = dictBasicService.getByKey(DictBasicEnum.SAMPLE_USAGE.getKey());
@@ -1428,9 +1426,8 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
                 // 优先查询内部用户信息
                 List<SysDepartmentUserNumberDTO> userList = sysUserFeign.listDeptUserByUserIdList(userIds);
                 if (CollUtil.isNotEmpty(userList)) {
-                    // 如果存在重复的用户ID，保留第一个
                     userNameMap = userList.stream()
-                            .collect(Collectors.toMap(SysDepartmentUserNumberDTO::getUserId, SysDepartmentUserNumberDTO::getUserName, (existing, replacement) -> existing));
+                            .collect(Collectors.toMap(SysDepartmentUserNumberDTO::getUserId, SysDepartmentUserNumberDTO::getUserName));
                 }
 
                 // 对于未找到的用户，尝试查询外部使用人字典
@@ -1871,9 +1868,8 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
                     List<String> inventoryStatusList = Collections.singletonList(InventoryStatusEnum.USABLE.getCode()); // 只查询可用库存
                     List<InventoryDTO.RealQtyDTO> inventoryList = sampleRecipientEntity.getRealQty(skuIds, warehouseIds, inventoryStatusList);
                     if (CollUtil.isNotEmpty(inventoryList)) {
-                        // 如果存在重复的skuId，保留第一个
                         inventoryMap = inventoryList.stream()
-                                .collect(Collectors.toMap(InventoryDTO.RealQtyDTO::getSkuId, Function.identity(), (existing, replacement) -> existing));
+                                .collect(Collectors.toMap(InventoryDTO.RealQtyDTO::getSkuId, Function.identity()));
                     }
                 } catch (Exception e) {
                     log.warn("查询库存信息失败，错误：{}", e.getMessage());
@@ -2044,9 +2040,8 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
         // 用户
         List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(mainList.stream().map(SampleRecipientEntity::getUserId).collect(Collectors.toList()));
 
-        // 如果存在重复的用户ID，保留第一个
         Map<String, String> userNameMap = userList.stream()
-                .collect(Collectors.toMap(FindUserDTO::getUserId, FindUserDTO::getUserName, (existing, replacement) -> existing));
+                .collect(Collectors.toMap(FindUserDTO::getUserId,FindUserDTO::getUserName));
 
         // 组装返回数据
         for (SampleRecipientDetailEntity detail : detailList) {
