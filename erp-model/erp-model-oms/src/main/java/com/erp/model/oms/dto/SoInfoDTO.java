@@ -1157,7 +1157,7 @@ public class SoInfoDTO implements Serializable {
         /**
          * 邮编
          */
-        private String postalCode;
+        private String postCode;
 
         /**
          * 收款单信息
@@ -1534,7 +1534,7 @@ public class SoInfoDTO implements Serializable {
         /**
          * 邮编
          */
-        private String postalCode;
+        private String postCode;
 
         /**
          * 订单产品详情
@@ -1944,7 +1944,7 @@ public class SoInfoDTO implements Serializable {
         /**
          * 邮编
          */
-        private String postalCode;
+        private String postCode;
 
         /**
          * 收款单信息

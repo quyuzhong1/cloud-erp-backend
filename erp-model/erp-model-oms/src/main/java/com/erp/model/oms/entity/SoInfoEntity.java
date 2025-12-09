@@ -414,8 +414,8 @@ public class SoInfoEntity extends BaseEntity<SoInfoEntity> {
     /**
      * 邮编
      */
-    @TableField("postal_code")
-    private String postalCode;
+    @TableField("post_code")
+    private String postCode;
 
     public static final String CODE = "code";
 
