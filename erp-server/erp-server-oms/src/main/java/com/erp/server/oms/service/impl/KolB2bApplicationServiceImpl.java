@@ -232,6 +232,10 @@ public class KolB2bApplicationServiceImpl extends SuperServiceImpl<KolB2bApplica
         if (ObjectUtil.isEmpty(entity)) {
             throw new ServiceException("未找到B2B寄样申请主单数据");
         }
+        if (entity.getInvalidStatus()) {
+            throw new ServiceException("已作废的B2B-KOL寄样申请单不支持提交操作");
+        }
+
         validateSubmit(entity);
         // 更新单据审核状态
         log.info("提交 开始修改B2B寄样申请主单状态数据，id：【{}】", id);

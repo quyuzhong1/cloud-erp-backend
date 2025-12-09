@@ -2,6 +2,7 @@ package com.erp.server.oms.service.impl;
 
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
@@ -38,6 +39,8 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
+
 /**
  * <p>
  * 寄样费用表 服务实现类
@@ -174,21 +177,54 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
         if (CollectionUtils.isEmpty(successList)) {
             return;
         }
+        List<String> soCodeList = successList.stream().map(KolSampleCostImportExcelDTO::getSoCode).distinct().collect(Collectors.toList());
+        List<KolSampleCostEntity> kolSampleCostList = listBySoCodeList(soCodeList);
+
         for (KolSampleCostImportExcelDTO importExcelDTO : successList) {
-            try {
-                KolSampleCostEntity kolSampleCostEntity = BeanMapperUtils.map(KolSampleCostEntity.class, importExcelDTO);
-                // 数据处理
-                handleData(kolSampleCostEntity);
-                boolean save = super.save(kolSampleCostEntity);
-                if(!save) {
-                    throw new ServiceException("寄样费用单保存失败");
+                List<KolSampleCostEntity> costList = kolSampleCostList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSoCode(), importExcelDTO.getSoCode())).collect(Collectors.toList());
+                if (CollUtil.isEmpty(costList)) {
+                    importExcelDTO.setErrorMsg("未找到对应的销售订单号：" + importExcelDTO.getSoCode());
+                    errorList.add(importExcelDTO);
+                    continue;
                 }
-            } catch (Exception e) {
-                log.error("寄样费用单导入失败，原因：{}", e.getMessage(), e);
-                importExcelDTO.setErrorMsg("寄样费用单导入失败，原因：" + e.getMessage());
-                errorList.add(importExcelDTO);
-            }
+                 //计算总数量
+                Integer totalQty = costList.stream().map(KolSampleCostEntity::getQty).reduce(Integer.SIZE, Integer::sum);
+
+
+                for (KolSampleCostEntity entity : costList) {
+                    if (CharSequenceUtil.equals(importExcelDTO.getFeeType(),"物流费")) {
+
+                    }
+
+                }
+
+
+                if (CharSequenceUtil.equals(importExcelDTO.getFeeType(),"订单费用")) {
+
+                }
+                if (CharSequenceUtil.equals(importExcelDTO.getFeeType(),"订单费用")) {
+
+                }
+                for (KolSampleCostEntity entity : costList) {
+
+
+                }
+
         }
+    }
+
+    /**
+     * 根据销售订单号列表查询寄样费用数据
+     * @author will
+     * @date 2025/12/9 09:19
+     * @param soCodeList
+     * @return List<KolSampleCostEntity>
+     */
+    private List<KolSampleCostEntity> listBySoCodeList(List<String> soCodeList) {
+        if (CollectionUtils.isEmpty(soCodeList)) {
+            return CollUtil.newArrayList();
+        }
+        return lambdaQuery().eq(KolSampleCostEntity::getSoCode, soCodeList).list();
     }
 
     /**

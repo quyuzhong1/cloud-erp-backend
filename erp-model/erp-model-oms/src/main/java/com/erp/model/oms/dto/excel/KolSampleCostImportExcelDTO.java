@@ -3,6 +3,7 @@ package com.erp.model.oms.dto.excel;
 import com.alibaba.excel.annotation.ExcelProperty;
 import com.alibaba.excel.annotation.write.style.ColumnWidth;
 import com.common.core.anno.FieldValid;
+import com.common.core.enums.FieldFormatPatternTypeEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -41,7 +42,7 @@ public class KolSampleCostImportExcelDTO implements Serializable {
      */
     @ColumnWidth(30)
     @ExcelProperty(value = "*原币金额", index = 3)
-    @FieldValid(fieldName = "原币金额",isNotBlank = true)
+    @FieldValid(fieldName = "原币金额",isNotBlank = true, formatPattern = FieldFormatPatternTypeEnum.NUMBER)
     private String amountStr;
 
     /**
@@ -49,7 +50,7 @@ public class KolSampleCostImportExcelDTO implements Serializable {
      */
     @ColumnWidth(20)
     @ExcelProperty(value = "*汇率", index = 4)
-    @FieldValid(fieldName = "*汇率",isNotBlank = true)
+    @FieldValid(fieldName = "*汇率",isNotBlank = true, formatPattern = FieldFormatPatternTypeEnum.NUMBER)
     private String exchangeRateStr;
 
     /**
