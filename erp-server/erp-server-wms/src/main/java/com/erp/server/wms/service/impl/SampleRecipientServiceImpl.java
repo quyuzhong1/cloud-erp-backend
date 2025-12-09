@@ -1143,7 +1143,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
 
             List<InventoryDTO.InventoryViewQtyDTO> inventoryList = this.sampleRecipientEntity.getInventoryQty(inventoryParams);
             Map<String, InventoryDTO.InventoryViewQtyDTO> inventoryMap = inventoryList.stream()
-                    .collect(Collectors.toMap(InventoryDTO.InventoryViewQtyDTO::getSkuId, item -> item));
+                    .collect(Collectors.toMap(InventoryDTO.InventoryViewQtyDTO::getSkuId, item -> item, (existing, replacement) -> existing));
             for (SampleRecipientDetailEntity detail : detailList) {
                 SampleRecipientDTO.ProductDTO productDTO = new SampleRecipientDTO.ProductDTO();
                 productDTO.setId(detail.getId());
