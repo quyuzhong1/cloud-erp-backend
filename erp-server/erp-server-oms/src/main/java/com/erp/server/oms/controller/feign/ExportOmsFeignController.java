@@ -436,7 +436,7 @@ public class ExportOmsFeignController {
      * @return PagingVO<ListDTO>
      */
     @PostMapping("/exportKolSampleCost")
-    @WebAdvanceQuery(handler = KolB2bApplicationQueryHandler.class)
+    @WebAdvanceQuery
     public PagingVO<KolSampleCostDTO.ListDTO> exportKolSampleCost(@RequestBody PagingDTO<KolSampleCostDTO.PagingParamDTO> dto) {
         return kolSampleCostService.paging(dto);
     }

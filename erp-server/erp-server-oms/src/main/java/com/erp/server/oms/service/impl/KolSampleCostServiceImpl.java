@@ -18,6 +18,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.dto.KolSampleCostDTO;
 import com.erp.model.oms.dto.excel.KolSampleCostImportExcelDTO;
@@ -37,6 +38,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -192,24 +194,18 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
 
 
                 for (KolSampleCostEntity entity : costList) {
+                    BigDecimal cost = MathUtil.divide(MathUtil.valueOf(entity.getQty()), MathUtil.valueOf(totalQty))
+                            .multiply(MathUtil.valueOf(importExcelDTO.getAmountStr()))
+                            .multiply(MathUtil.valueOf(importExcelDTO.getExchangeRateStr()));
                     if (CharSequenceUtil.equals(importExcelDTO.getFeeType(),"物流费")) {
+                        //“尾程-运费”=当前行SKU实发数量/同一销售单号所有SKU实发数量*原币金额*汇率
+                        entity.setShippingCost(cost);
+                    }
+                    if (CharSequenceUtil.equals(importExcelDTO.getFeeType(),"订单费用")) {
+                        //“尾程-其他费用”=当前行SKU实发数量/同一销售单号所有SKU实发数量*原币金额*汇率
 
                     }
-
                 }
-
-
-                if (CharSequenceUtil.equals(importExcelDTO.getFeeType(),"订单费用")) {
-
-                }
-                if (CharSequenceUtil.equals(importExcelDTO.getFeeType(),"订单费用")) {
-
-                }
-                for (KolSampleCostEntity entity : costList) {
-
-
-                }
-
         }
     }
 

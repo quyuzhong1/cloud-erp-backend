@@ -11,7 +11,6 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.common.core.utils.ExcelUtil;
 import com.erp.model.oms.dto.KolSampleCostDTO;
-import com.erp.server.oms.query.KolB2bApplicationQueryHandler;
 import com.erp.server.oms.service.KolSampleCostService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
@@ -44,7 +43,7 @@ public class KolSampleCostController extends BaseController {
      * @return ApiResult<PagingVO<ListDTO>>
      */
     @PostMapping("/paging")
-    @WebAdvanceQuery(handler = KolB2bApplicationQueryHandler.class)
+    @WebAdvanceQuery
     public ApiResult<PagingVO<KolSampleCostDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<KolSampleCostDTO.PagingParamDTO> dto) {
         return success(kolSampleCostService.paging(dto));
     }
