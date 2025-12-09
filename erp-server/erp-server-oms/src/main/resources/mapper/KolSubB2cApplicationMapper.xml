@@ -58,7 +58,7 @@ ksbad.platform_detail_id AS platformDetailId,
 ksbad.sku_id AS skuId,
 ksbad.sku_no AS skuNo,
 ksbad.apply_qty AS applyQty,
-ksbad.remark AS remark,
+ksbad.remark AS detailRemark,
 ksbad.project_tag AS projectTag
     </sql>
 
