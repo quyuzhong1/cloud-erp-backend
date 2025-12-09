@@ -158,7 +158,10 @@ public class KolSampleCostDTO implements Serializable {
          * sku编码
          */
         private String skuNo;
-
+        /**
+         * 产品名称
+         */
+        private String productName;
         /**
          * 实发数量
          */

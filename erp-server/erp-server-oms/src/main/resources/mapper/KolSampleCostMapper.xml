@@ -61,7 +61,24 @@
 
     <!-- 分页查询 -->
     <select id="paging" resultType="com.erp.model.oms.dto.KolSampleCostDTO$ListDTO">
-
+        select
+            <include refid="Base_Column_List" />
+        from kol_sample_cost ksc
+        <where>
+            ${params.sqlMap.default}
+            and ksc.is_deleted = false
+            <!--权限-->
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
+            </if>
+            ORDER BY
+            <if test="params.sortList != null and params.sortList.size > 0">
+                <foreach collection="params.sortList" item="item" separator="," close=",">
+                    ${item.field} ${item.sort}
+                </foreach>
+            </if>
+            ksc.id desc
+        </where>
     </select>
 
 

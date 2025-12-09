@@ -3,6 +3,8 @@ package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
+import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.annotation.DistributeLocker;
@@ -10,25 +12,30 @@ import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.FileTaskEventEnum;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
+import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.dto.KolSampleCostDTO;
+import com.erp.model.oms.dto.excel.KolSampleCostImportExcelDTO;
 import com.erp.model.oms.entity.KolSampleCostEntity;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.server.oms.listener.KolSampleCostExcelListener;
 import com.erp.server.oms.mapper.KolSampleCostMapper;
 import com.erp.server.oms.service.KolSampleCostService;
 import com.erp.server.oms.service.OperateLogService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 /**
@@ -66,12 +73,6 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
             throw new ServiceException("寄样费用单保存失败");
         }
 
-        // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "寄样费用单" , kolSampleCostEntity.getId());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, kolSampleCostEntity.getId(), "新增操作");
-        // TODO 新增明细（如果有明细的话）
-
         return new BaseResultDTO.AddDTO(kolSampleCostEntity.getId(), kolSampleCostEntity.getId());
     }
 
@@ -93,13 +94,6 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
         if(!save) {
             throw new ServiceException("寄样费用单保存失败");
         }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
-
-        // 记录主单操作日志
-            log.info("编辑 开始记录寄样费用单日志数据，id：【{}】", kolSampleCostEntity.getId());
-            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), kolSampleCostEntity.getId(), "寄样费用单");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLogByObj(old, kolSampleCostEntity, null, kolSampleCostEntity.getId(), msg);
         return Boolean.TRUE;
     }
 
@@ -128,7 +122,73 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
 
     @Override
     public Boolean importFile(MultipartFile excelFile, HttpServletResponse response) {
-        return null;
+        KolSampleCostExcelListener excelListenerUtil = new KolSampleCostExcelListener();
+
+        try {
+            EasyExcel.read(excelFile.getInputStream(), KolSampleCostImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+        } catch (IOException e) {
+            log.error("导入错误！", e);
+            throw new ServiceException(ApiError.ERROR_95124);
+        } catch (ExcelCommonException e) {
+            log.error("导入格式错误！", e);
+            throw new ServiceException(ApiError.ERROR_1016);
+        }
+        //验证导入数据是否为空
+        List<KolSampleCostImportExcelDTO> excelDateList = excelListenerUtil.getAllList();
+        if (CollectionUtils.isEmpty(excelDateList)) {
+            throw new ServiceException(ApiError.ERROR_95123);
+        }
+        //导入数据处理
+        List<KolSampleCostImportExcelDTO> successList = excelListenerUtil.getSuccessList();
+        //导出错误数据
+        List<KolSampleCostImportExcelDTO> errorList = excelListenerUtil.getErrorList();
+        //处理校验导入成功数据
+        handleImportSuccessList(successList, errorList);
+
+        if (errorList.isEmpty()) {
+            return Boolean.TRUE;
+        }
+        String excelPath = "excel/kolSampleCostError.xlsx";
+        String name = "kolSampleCostError";
+        try {
+            new ExcelPrintUtils().patchExport(errorList,
+                    response,
+                    StrUtil.builder().append(DateUtil.nowExcelFileFormat()).append(name).toString(),
+                    excelPath);
+        } catch (IOException e) {
+            throw new ServiceException(ApiError.ERROR_95125);
+        }
+        return Boolean.FALSE;
+    }
+
+
+    /**
+     * 处理导入数据
+     * @author will
+     * @date 2025/12/8 19:03
+     * @param successList
+     * @param errorList
+     * @return void
+     */
+    private void handleImportSuccessList(List<KolSampleCostImportExcelDTO> successList, List<KolSampleCostImportExcelDTO> errorList) {
+        if (CollectionUtils.isEmpty(successList)) {
+            return;
+        }
+        for (KolSampleCostImportExcelDTO importExcelDTO : successList) {
+            try {
+                KolSampleCostEntity kolSampleCostEntity = BeanMapperUtils.map(KolSampleCostEntity.class, importExcelDTO);
+                // 数据处理
+                handleData(kolSampleCostEntity);
+                boolean save = super.save(kolSampleCostEntity);
+                if(!save) {
+                    throw new ServiceException("寄样费用单保存失败");
+                }
+            } catch (Exception e) {
+                log.error("寄样费用单导入失败，原因：{}", e.getMessage(), e);
+                importExcelDTO.setErrorMsg("寄样费用单导入失败，原因：" + e.getMessage());
+                errorList.add(importExcelDTO);
+            }
+        }
     }
 
     /**
