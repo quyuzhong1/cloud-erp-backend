@@ -129,7 +129,9 @@
 
 	<select id="total" resultType="com.erp.model.dmp.dto.AdsErpInventoryDiffFlowDTO$TotalDTO">
         select 
-        sum(t.closing_qty) totalClosingQty, sum(t.estimate_closing_qty) totalRealQty, sum(abs(t.diff_qty)) totalDiffQty
+         IFNULL(sum(t.closing_qty),0) totalClosingQty,
+         IFNULL(sum(t.estimate_closing_qty),0) totalRealQty,
+         IFNULL(sum(abs(t.diff_qty)),0) totalDiffQty
         from
         ads_erp_inventory_diff_flow t
         WHERE ${params.sqlMap.default}

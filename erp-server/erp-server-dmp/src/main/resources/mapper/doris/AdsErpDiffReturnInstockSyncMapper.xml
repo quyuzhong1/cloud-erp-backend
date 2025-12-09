@@ -160,9 +160,10 @@
     </select>
 
 	<select id="total" resultType="com.erp.model.dmp.dto.AdsErpDiffReturnInstockSyncDTO$TotalDTO">
-        select sum(case when platform_bill_name is not null and platform_bill_name != '' then 1 else 0 end) totalPlatformQty,
-        sum(case when bill_name is not null and bill_name != '' then 1 else 0 end) totalErpQty,
-        sum(abs(diff_qty)) totalDiffQty 
+        select
+        IFNULL(sum( CASE WHEN platform_bill_name IS NOT NULL AND platform_bill_name != '' THEN 1 ELSE 0 END ), 0) AS totalPlatformQty,
+        IFNULL(sum( CASE WHEN bill_name IS NOT NULL AND bill_name != '' THEN 1 ELSE 0 END ),0) AS totalErpQty,
+        IFNULL(sum( abs( diff_qty ) ),0) AS totalDiffQty
         from ads_erp_diff_return_instock_sync t
         WHERE ${params.sqlMap.default}
         AND t.is_deleted = false
