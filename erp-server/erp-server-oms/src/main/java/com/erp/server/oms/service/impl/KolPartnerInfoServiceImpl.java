@@ -1,5 +1,6 @@
 package com.erp.server.oms.service.impl;
 
+import cn.hutool.extra.spring.SpringUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -575,8 +576,9 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
                 }
 
                 if(CollUtil.isNotEmpty(addList)){
+                    KolPartnerInfoService kolPartnerInfoService = SpringUtil.getBean(KolPartnerInfoService.class);
                     for (KolPartnerInfoDTO.AddDTO dto : addList) {
-                        this.add(dto);
+                        kolPartnerInfoService.add(dto);
                     }
                 }
             }
