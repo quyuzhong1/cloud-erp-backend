@@ -90,7 +90,7 @@ public class TongYouHandlerServiceImpl extends AbstractThirdWarehouseHandler {
             addDTO.setJhfs("693");
             addDTO.setOrder_types("718");
         } else if (CharSequenceUtil.equals(createInboundReq.getReceivingType(), OverseasInstockTypeEnum.TRANSFER_AGENT.getCode())) {
-            addDTO.setJhfs("731");
+            addDTO.setJhfs("692");
             addDTO.setOrder_types("717");
             addDTO.setTcck(createInboundReq.getTransitWarehouseCode());
             addDTO.setChqd(createInboundReq.getLogisticsChannel());
