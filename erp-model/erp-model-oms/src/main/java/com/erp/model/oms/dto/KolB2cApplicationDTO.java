@@ -464,6 +464,10 @@ public class KolB2cApplicationDTO implements Serializable {
          */
         @NotBlank(message = "主键id不能为空")
         private String  id;
+        /**
+         * 审核装填
+         */
+        private String  approveStatus;
 
         /**
          * 明细id
@@ -504,7 +508,6 @@ public class KolB2cApplicationDTO implements Serializable {
          */
         private Integer applyQty;
 
-
         /**
          * 回片链接（完整链接）
          */
@@ -522,6 +525,7 @@ public class KolB2cApplicationDTO implements Serializable {
         /**
          * 备注
          */
+        @Size(max = 200,message = "备注最大长度不能超过200位")
         private String remark;
     }
 

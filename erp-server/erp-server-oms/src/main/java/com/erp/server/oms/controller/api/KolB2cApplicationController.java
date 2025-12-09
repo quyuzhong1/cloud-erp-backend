@@ -455,7 +455,7 @@ public class KolB2cApplicationController extends BaseController {
             serviceClass = KolB2cApplicationService.class,
             keyIdName = "id")
     @LogViewService
-    public ApiResult<KolB2cApplicationDTO.DetailViewDTO> detailView(@RequestBody @Validated BaseIdsDTO.DetailIdListDTO dto) {
+    public ApiResult<List<KolB2cApplicationDTO.DetailViewDTO>> detailView(@RequestBody @Validated BaseIdsDTO.DetailIdListDTO dto) {
         return success(kolB2cApplicationService.detailView(dto.getDetailIdList()));
     }
 

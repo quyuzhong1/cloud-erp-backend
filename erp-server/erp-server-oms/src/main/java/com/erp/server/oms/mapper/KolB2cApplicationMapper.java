@@ -44,4 +44,6 @@ public interface KolB2cApplicationMapper extends BaseMapper<KolB2cApplicationEnt
     * @return
     */
     List<KolB2cApplicationDTO.TabListDTO> tabList(@Param("params") KolB2cApplicationDTO.PagingParamDTO searchParam);
+
+    List<KolB2cApplicationDTO.DetailViewDTO> detailView(@Param("detailIdList") List<String> detailIdList);
 }

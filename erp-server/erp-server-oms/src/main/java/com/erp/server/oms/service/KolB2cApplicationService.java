@@ -1,5 +1,6 @@
 package com.erp.server.oms.service;
 import com.common.business.validator.ValidList;
+import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.excel.KolB2cApplicationAddressImportExcelDTO;
 import com.erp.model.oms.dto.excel.KolB2cApplicationDetailImportExcelDTO;
 import com.erp.model.oms.dto.excel.KolB2cApplicationImportExcelDTO;
@@ -160,7 +161,7 @@ public interface KolB2cApplicationService extends SuperService<KolB2cApplication
 
     Boolean importFile(BaseDTO.ImportDTO dto);
 
-    KolB2cApplicationDTO.DetailViewDTO detailView(List<String> detailIdList);
+    List<KolB2cApplicationDTO.DetailViewDTO> detailView(List<String> detailIdList);
 
     Boolean generateReturnPiece(List<KolB2cApplicationDTO.DetailViewDTO> list);
 

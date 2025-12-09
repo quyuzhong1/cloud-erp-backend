@@ -213,4 +213,31 @@ ksba.platform_order_code AS platformOrderCode
         </if>
     </select>
 
+    <select id="detailView" resultType="com.erp.model.oms.dto.KolB2cApplicationDTO$DetailViewDTO">
+        select
+            kba.id,
+            kba.approve_status,
+            kbad.id as detailId,
+            kba.code ,
+            kbad.sku_id,
+            kbad.sku_no,
+            kbad.partner_id,
+            kbad.nickname,
+            kbad.apply_qty
+        from
+            kol_b2c_application kba
+            inner join kol_b2c_application_detail kbad on kba.id = kbad.main_id and kbad.is_deleted = false
+        where
+            kba.is_deleted = false
+          and kba.invalid_status = false
+        <if test="detailIdList != null and detailIdList.size > 0">
+            kbad.id in
+            <foreach  collection="detailIdList" item="item" open="(" separator="," close=")" >
+                #{item}
+            </foreach>
+        </if>
+
+
+    </select>
+
 </mapper>

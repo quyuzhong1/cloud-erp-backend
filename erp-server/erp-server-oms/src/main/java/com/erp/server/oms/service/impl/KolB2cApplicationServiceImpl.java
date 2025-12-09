@@ -11,6 +11,7 @@ import com.common.business.vo.LoginUser;
 import cn.hutool.core.util.StrUtil;
 import com.erp.model.oms.dto.KolB2cApplicationAddressDTO;
 import com.erp.model.oms.dto.KolB2cApplicationDetailDTO;
+import com.erp.model.oms.dto.KolFeedbackDTO;
 import com.erp.model.oms.dto.excel.KolB2cApplicationAddressImportExcelDTO;
 import com.erp.model.oms.dto.excel.KolB2cApplicationDetailImportExcelDTO;
 import com.erp.model.oms.dto.excel.KolB2cApplicationImportExcelDTO;
@@ -19,6 +20,7 @@ import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.CfgKolOptionTypeEnum;
 import com.erp.model.oms.enums.KolSubB2cApplicationDeliveryStatusEnum;
 import com.erp.model.oms.enums.KolSubB2cApplicationOrderStatusEnum;
+import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.DictCountryDTO;
@@ -131,6 +133,8 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
     private KolPartnerInfoService kolPartnerInfoService;
     @Resource
     private CfgQueryOptionFeign cfgQueryOptionFeign;
+    @Resource
+    private KolFeedbackService kolFeedbackService;
 
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
@@ -665,7 +669,6 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
             throw new ServiceException(ApiError.ERROR_98007);
         }
-        // TODO 撤销流程
         log.info("撤销 开始撤销流程，id：【{}】",id);
 
         log.info("撤销 开始修改B2C寄样申请单状态，id：【{}】", id);
@@ -691,7 +694,16 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         }
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
         updateForApprove(entity.getId(), approveStatus.getStatus());
+        // 只有审核通过才下推
+        ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(dto.getType());
+        if (ApproveTypeEnum.PASS.equals(approveType)) {
+            //按达人维度生成拆分单和拆分单明细
 
+            //根据业务类型生成 国外=B2C订单  国内=旺店通销售订单
+
+
+
+        }
         return Boolean.TRUE;
     }
 
@@ -880,13 +892,40 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         return;
     }
     @Override
-    public KolB2cApplicationDTO.DetailViewDTO detailView(List<String> detailIdList) {
-        return null;
+    public List<KolB2cApplicationDTO.DetailViewDTO> detailView(List<String> detailIdList) {
+        if(CollUtil.isEmpty(detailIdList)){
+            return Collections.emptyList();
+        }
+        List<KolB2cApplicationDTO.DetailViewDTO> list = this.baseMapper.detailView(detailIdList);
+        int count = list.stream().filter(e -> !e.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getCode())).collect(Collectors.toList()).size();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_92201);
+        }
+        List<String> skuIds = list.stream().map(KolB2cApplicationDTO.DetailViewDTO::getSkuId).distinct().collect(Collectors.toList());
+        List<ProductDetailEntity> productDetailEntities = plmTaskFeign.listByIds(skuIds);
+        Map<String, String> map = productDetailEntities.stream().collect(Collectors.toMap(ProductDetailEntity::getId, ProductDetailEntity::getName));
+        list.forEach(e -> e.setProductName(map.get(e.getSkuId())));
+        return list;
     }
 
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
+    @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean generateReturnPiece(List<KolB2cApplicationDTO.DetailViewDTO> list) {
-        return null;
+        if(CollUtil.isEmpty(list)){
+            throw new ServiceException(ApiError.ERROR_1041,"回片登记下推");
+        }
+        for (KolB2cApplicationDTO.DetailViewDTO detailViewDTO : list) {
+            KolFeedbackDTO.AddDTO addDTO = new KolFeedbackDTO.AddDTO();
+            BeanMapper.copy(detailViewDTO, addDTO);
+            addDTO.setSourceId(detailViewDTO.getId());
+            addDTO.setSourceDetailId(detailViewDTO.getDetailId());
+            addDTO.setSourceCode(detailViewDTO.getCode());
+            addDTO.setSourceType(SourceTypeEnum.KOL_B2C_APPLICATION.getCode());
+            addDTO.setQty(detailViewDTO.getApplyQty());
+            kolFeedbackService.add(addDTO);
+        }
+        return true;
     }
 
 
