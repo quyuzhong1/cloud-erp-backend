@@ -163,8 +163,8 @@ public class KolPartnerInfoImportExcelDTO implements Serializable {
      * 主页链接
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "主页链接", index = 15)
-    @FieldValid(fieldName = "主页链接")
+    @ExcelProperty(value = "*主页链接", index = 15)
+    @FieldValid(fieldName = "*主页链接",isNotBlank = true,maxLength = 200)
     private String homepageUrl;
 
     /**
