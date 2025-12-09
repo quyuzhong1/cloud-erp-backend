@@ -1269,6 +1269,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         boolean isCleanError = CharSequenceUtil.isNotBlank(soB2cLogisticsEntity.getCode());
         if (isCleanError) {
             //清除异常订单的类型和异常订单表数据
+            log.warn("提交 开始清除B2C销售订单表异常数据，id：【{}】,entity:【{}】", id,JSONUtil.toJsonStr(entity));
             soB2cErrorService.deleteByMainIds(Collections.singletonList(id));
         }
 
