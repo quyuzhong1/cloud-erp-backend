@@ -1652,7 +1652,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             listApiResult = workflowFeign.curApprover(dtoList);
             Integer code = listApiResult.getCode();
             if (200 != code) {
-                throw new ServiceException(ApiError.ERROR_SYS_UNKNOWN);
+                throw new ServiceException(ApiError.DEFAULT);
             }
         }
         List<String> credentialIdList = list.stream().map(SupplierDTO.PagingExportDTO::getCredentialId).distinct().collect(Collectors.toList());

@@ -35,10 +35,9 @@ public enum ApiError implements Serializable {
     /**
      * 服务调用异常
      */
-    DEFAULT(9999, "系统异常，请联系【实施人员】协调开发人员排查"),
+    DEFAULT(500, "系统未知异常，请联系【实施人员】协调开发人员排查 {0}"),
     WARNING(8888, "系统警告..."),
 
-    ERROR_URL_FORBIDDEN(5000, "存在越权访问URL"),
     ERROR_UNAUTHORIZED_ACCESS(5001, "未授权访问!"),
 
     ERROR_FORBIDDEN(403, "您未登录,请登录后操作"),
@@ -61,7 +60,6 @@ public enum ApiError implements Serializable {
      */
     ERROR_HTTP_NOT_FOUND(404, "访问资源不存在"),
     ERROR_HTTP_METHOD_NOT_ALLOWED(405, "方法不被允许"),
-    ERROR_SYS_UNKNOWN(500, "系统未知异常，请联系【实施人员】协调开发人员排查 {0}"),
     ERROR_PARAM_INVALID(400, "参数格式错误、缺失必填参数"),
     ERROR_DUPLICATION_NAME(501,"名称不能重复"),
     ERROR_COPY_ERROR(505,"对象复制时类型错误"),
@@ -115,8 +113,8 @@ public enum ApiError implements Serializable {
     ERROR_EXCHANGE_RATE_NOT_EXIST(1046, "日期【{0}】币别【{1}】下未找到汇率"),
     GLOBAL_EXCEPTION_HANDLER_METHOD_ERROR(1047, "全局异常解析失败：【{0}】"),
     ERROR_IMPORT_TIMEOUT(1049, "导入超时,请减少数据导入"),
-    GLOBAL_EXCEPTION_ID_IN_PROCESS(1049, "记录【{}】操作中"),
-    ERROR_IMPORT_DATA_NOT_NULL(1050,"导入{}数据不能为空"),
+    GLOBAL_EXCEPTION_ID_IN_PROCESS(1049, "记录【{0}】操作中"),
+    ERROR_IMPORT_DATA_NOT_NULL(1050,"导入{0}数据不能为空"),
     ERROR_FILE_DELETE(1051,"文件删除失败"),
     ERROR_FILE_NOT_DELETE_ALL(1051,"文件不能全部删除"),
     ERROR_FILE_TEMPLATE_NOT_EXIST(1052,"文件模板不存在"),

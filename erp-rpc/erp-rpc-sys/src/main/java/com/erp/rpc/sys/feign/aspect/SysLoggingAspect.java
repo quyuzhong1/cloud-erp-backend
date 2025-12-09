@@ -995,8 +995,8 @@ public class SysLoggingAspect {
         }
         // 找不到globalExceptionHandler异常, 默认提示未知异常
         ApiResult<?> result = new ApiResult<>();
-        result.setCode(ApiError.ERROR_SYS_UNKNOWN.getCode());
-        result.setMsg(MessageUtils.getMessage(ApiError.ERROR_SYS_UNKNOWN, JSONUtil.toJsonStr(obj)));
+        result.setCode(ApiError.DEFAULT.getCode());
+        result.setMsg(MessageUtils.getMessage(ApiError.DEFAULT, JSONUtil.toJsonStr(obj)));
         return result;
     }
 

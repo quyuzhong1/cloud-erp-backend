@@ -283,12 +283,12 @@ public class SignatureVerificationFilter implements GlobalFilter {
                 })
                 .onErrorResume(e -> {
                     log.error("处理请求体异常", e);
-                    return unauthorizedResponse(exchange, localeUtils.getMessage(ApiError.ERROR_SYS_UNKNOWN, exchange.getRequest()), ApiError.ERROR_SYS_UNKNOWN.getCode());
+                    return unauthorizedResponse(exchange, localeUtils.getMessage(ApiError.DEFAULT, exchange.getRequest()), ApiError.DEFAULT.getCode());
                 });
 
         } catch (Exception e) {
             log.error("签名验证异常", e);
-            return unauthorizedResponse(exchange, localeUtils.getMessage(ApiError.ERROR_SYS_UNKNOWN, exchange.getRequest()), ApiError.ERROR_SYS_UNKNOWN.getCode());
+            return unauthorizedResponse(exchange, localeUtils.getMessage(ApiError.DEFAULT, exchange.getRequest()), ApiError.DEFAULT.getCode());
         }
     }
     
@@ -318,7 +318,7 @@ public class SignatureVerificationFilter implements GlobalFilter {
             return chain.filter(exchange.mutate().request(finalRequest).build());
         } catch (Exception e) {
             log.error("添加请求头失败", e);
-            return unauthorizedResponse(exchange, localeUtils.getMessage(ApiError.ERROR_SYS_UNKNOWN, exchange.getRequest()), ApiError.ERROR_SYS_UNKNOWN.getCode());
+            return unauthorizedResponse(exchange, localeUtils.getMessage(ApiError.DEFAULT, exchange.getRequest()), ApiError.DEFAULT.getCode());
         }
     }
 

@@ -1897,13 +1897,13 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
             
             if (userInfo == null || userInfo.isEmpty()) {
                 log.warn("获取飞书用户信息失败，appId: {}", appId);
-                throw new ServiceException(ApiError.ERROR_SYS_UNKNOWN.getCode(), "获取飞书用户信息失败");
+                throw new ServiceException(ApiError.DEFAULT.getCode(), "获取飞书用户信息失败");
             }
             
             // 提取unionId
             Object unionIdObj = userInfo.get("union_id");
             if (unionIdObj == null) {
-                throw new ServiceException(ApiError.ERROR_SYS_UNKNOWN.getCode(), "未获取到用户UnionId");
+                throw new ServiceException(ApiError.DEFAULT.getCode(), "未获取到用户UnionId");
             }
             
             String unionId = unionIdObj.toString();
@@ -1916,7 +1916,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
             throw e;
         } catch (Exception e) {
             log.error("通过App-Id获取飞书用户UnionId异常，appId: {}", appId, e);
-            throw new ServiceException(ApiError.ERROR_SYS_UNKNOWN.getCode(), "获取飞书用户UnionId失败：" + e.getMessage());
+            throw new ServiceException(ApiError.DEFAULT.getCode(), "获取飞书用户UnionId失败：" + e.getMessage());
         }
     }
 }
