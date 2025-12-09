@@ -87,7 +87,7 @@ public class KolB2bApplicationQueryHandler extends AbstractQueryHandler {
         }
         //已发货
         if(KolB2bApplicationTableEnum.SHIPPED.getCode().equals(value)){
-            return " kba.approve_status = 'approve' exists (select * from so_detail sd where sd.is_deleted = false and sd.source_detail_id = kbad.id and sd.delivery_status = 'completeShipment')";
+            return " kba.approve_status = 'approve' and exists (select * from so_detail sd where sd.is_deleted = false and sd.source_detail_id = kbad.id and sd.delivery_status = 'completeShipment')";
         }
         return super.getSplicingSQL();
     }
