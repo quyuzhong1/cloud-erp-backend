@@ -25,11 +25,11 @@ public class KolSubB2cApplicationDTO implements Serializable {
 
 
     /**
-    * 详情
+    *
     */
     @Data
     @NoArgsConstructor
-    public static class ViewDTO {
+    public static class ListDTO {
 
         /**
         * 主键id
@@ -60,6 +60,7 @@ public class KolSubB2cApplicationDTO implements Serializable {
         * 平台id
         */
         private String dictPlatform;
+        private String dictPlatformName;
 
         /**
         * 达人id
@@ -75,11 +76,13 @@ public class KolSubB2cApplicationDTO implements Serializable {
         * 发货状态：waitShipped=待发货,shipped=已发货,partialShipped=部分发货
         */
         private String deliveryStatus;
+        private String deliveryStatusName;
 
         /**
         * 订单状态：not=未生成,notApprove=未审核,approve=已审核
         */
         private String orderStatus;
+        private String orderStatusName;
 
         /**
         * 跟踪号
@@ -96,32 +99,50 @@ public class KolSubB2cApplicationDTO implements Serializable {
         */
         private String platformOrderCode;
 
-
-    }
-
-    /**
-    * 新增
-    */
-    @Data
-    @NoArgsConstructor
-    public static class AddDTO extends CommonDTO {
-
-
-    }
-
-    /**
-    * 修改
-    */
-    @Data
-    @NoArgsConstructor
-    public static class UpdateDTO extends CommonDTO {
+        /**
+         * 主键id
+         */
+        private String detailId;
 
         /**
-        * 主键id
-        */
-        @NotBlank(message = "主键id不能为空")
-        private String id;
+         * 来源明细id
+         */
+        private String sourceDetailId;
 
+        /**
+         * 平台明细id
+         */
+        private String platformDetailId;
+
+        /**
+         * SKU ID
+         */
+        private String skuId;
+
+        /**
+         * SKU编码
+         */
+        private String skuNo;
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 申请数量
+         */
+        private Integer applyQty;
+
+        /**
+         * 明细备注
+         */
+        private String detailRemark;
+
+        /**
+         * 项目名称
+         */
+        private String projectTag;
+        private String projectTagName;
     }
 
     @Data

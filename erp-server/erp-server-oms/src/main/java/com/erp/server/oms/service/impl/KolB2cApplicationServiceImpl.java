@@ -698,11 +698,9 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(dto.getType());
         if (ApproveTypeEnum.PASS.equals(approveType)) {
             //按达人维度生成拆分单和拆分单明细
-
             //根据业务类型生成 国外=B2C订单  国内=旺店通销售订单
-
-
-
+            List<KolB2cApplicationDetailEntity> list = kolB2cApplicationDetailService.lambdaQuery().eq(KolB2cApplicationDetailEntity::getMainId, entity.getId()).list();
+            kolSubB2cApplicationService.generateSplitOrder(entity,list);
         }
         return Boolean.TRUE;
     }
@@ -792,7 +790,7 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
             detailData.setProductName(skuMap.get(detailData.getSkuId()));
 
             if(StringUtils.isNotBlank(detailData.getProjectTag())){
-                String projectTagName = Arrays.stream(detailData.getProjectTag().split(",")).map(skuMap::get).collect(Collectors.joining(","));
+                String projectTagName = Arrays.stream(detailData.getProjectTag().split(",")).map(map::get).collect(Collectors.joining(","));
                 detailData.setProjectTagName(projectTagName);
 
                 detailData.setProjectTagList(Arrays.asList(detailData.getProjectTag().split(",")));
@@ -871,7 +869,7 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
             data.setProductName(skuMap.get(data.getSkuId()));
 
             if(StringUtils.isNotBlank(data.getProjectTag())){
-                String projectTagName = Arrays.stream(data.getProjectTag().split(",")).map(skuMap::get).collect(Collectors.joining(","));
+                String projectTagName = Arrays.stream(data.getProjectTag().split(",")).map(map::get).collect(Collectors.joining(","));
                 data.setProjectTagName(projectTagName);
             }
         }

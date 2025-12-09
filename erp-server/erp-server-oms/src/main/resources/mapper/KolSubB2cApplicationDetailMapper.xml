@@ -24,16 +24,23 @@
 
     <!-- 通用查询结果列 -->
     <sql id="Base_Column_List">
-        id,
-        create_user_id,
-        create_user_name,
-        create_time,
-        update_user_id,
-        update_user_name,
-        update_time,
-        version,
-        is_deleted,
-        main_id, source_detail_id, platform_detail_id, sku_id, sku_no, apply_qty, remark, project_tag
+        ksbad.id AS id,
+ksbad.create_user_id AS createUserId,
+ksbad.create_user_name AS createUserName,
+ksbad.create_time AS createTime,
+ksbad.update_user_id AS updateUserId,
+ksbad.update_user_name AS updateUserName,
+ksbad.update_time AS updateTime,
+ksbad.version AS version,
+ksbad.is_deleted AS isDeleted,
+ksbad.main_id AS mainId,
+ksbad.source_detail_id AS sourceDetailId,
+ksbad.platform_detail_id AS platformDetailId,
+ksbad.sku_id AS skuId,
+ksbad.sku_no AS skuNo,
+ksbad.apply_qty AS applyQty,
+ksbad.remark AS remark,
+ksbad.project_tag AS projectTag
     </sql>
 
 

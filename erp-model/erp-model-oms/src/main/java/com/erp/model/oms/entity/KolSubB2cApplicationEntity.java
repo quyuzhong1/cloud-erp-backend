@@ -45,7 +45,7 @@ public class KolSubB2cApplicationEntity extends BaseEntity<KolSubB2cApplicationE
     @TableField("platform_so_code")
     private String platformSoCode;
     /**
-    * 平台id
+    * 平台id  DmpBasicSystemCodeEnum
     */
     @TableField("dict_platform")
     private String dictPlatform;
