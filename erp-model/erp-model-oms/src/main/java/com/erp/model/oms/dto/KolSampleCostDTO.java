@@ -6,10 +6,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.validation.constraints.Digits;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
+import javax.validation.constraints.*;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -648,8 +645,8 @@ public class KolSampleCostDTO implements Serializable {
         /**
          * 日期
          */
-        @NotNull(message = "日期不能为空")
-        @JsonFormat(pattern = "yyyy-MM")
-        private LocalDate date;
+        @NotBlank(message = "日期不能为空")
+        @Pattern(regexp = "\\d{4}-\\d{2}", message = "日期格式必须为 YYYY-MM")
+        private String date;
     }
 }
