@@ -3591,6 +3591,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             soB2cEntity.setApproveStatus(ApproveStatusEnum.REJECT);
             soB2cEntity.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
             soB2cEntity.setAbnormalType(SoB2cAbnormalTypeEnum.INTERCEPT_SUCCESS_REJECT.getCode());
+            soB2cEntity.setShippingOrderNo("");
             if(soB2cEntity.getIsCancel()){
                 soB2cEntity.setInvalidStatus(Boolean.TRUE);
                 soB2cEntity.setInvalidRemark("平台订单取消,拦截成功自动作废");
