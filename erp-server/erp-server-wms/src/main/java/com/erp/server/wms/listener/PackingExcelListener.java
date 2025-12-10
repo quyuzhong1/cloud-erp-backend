@@ -15,10 +15,7 @@ import com.common.core.utils.FieldValidUtil;
 import com.erp.model.wms.dto.excel.PackingExcelDTO;
 import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
 import com.erp.model.wms.entity.*;
-import com.erp.model.wms.enums.FmDeliveryLogisticsStatusEnum;
-import com.erp.model.wms.enums.PackingTaskStatusEnum;
-import com.erp.model.wms.enums.PackingWeightStatusEnum;
-import com.erp.model.wms.enums.WmsDeclareStatusEnum;
+import com.erp.model.wms.enums.*;
 import com.erp.server.wms.service.*;
 import lombok.Getter;
 import org.apache.commons.collections4.CollectionUtils;
@@ -159,7 +156,7 @@ public class PackingExcelListener extends AnalysisEventListener<PackingExcelDTO>
                 it.remove();
                 continue;
             }
-            if(Objects.nonNull(requisitionApplicationEntity)){
+            if(Objects.nonNull(requisitionApplicationEntity) && !requisitionApplicationEntity.getDeliveryType().equals(ThirdDeliveryTypeEnum.THIRD_TO_THIRD.getCode())){
                 PickingListsDTO.SourceView sourceView = pickingList.stream().filter(v->v.getSourceId().equals(requisitionApplicationEntity.getId())).findFirst().orElse(null);
                 if(Objects.isNull(sourceView)){
                     packingExcelDTO.setErrorMsg("要货申请未生成拣货单，不能生成装箱任务");
