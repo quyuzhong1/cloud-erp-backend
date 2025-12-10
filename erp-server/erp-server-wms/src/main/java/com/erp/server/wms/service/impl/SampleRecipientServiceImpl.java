@@ -2312,6 +2312,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
             addDTO.setOtherOutstockCustomer(customerDTO);
             
             // 构建明细信息 - 包含所有明细项
+            // 直接在创建明细时设置 sourceDetailId，避免后续匹配的复杂性和不确定性
             List<OtherOutstockDetailDTO.AddDTO> detailList = new ArrayList<>();
             for (SampleRecipientDTO.ViewGenerateOutboundOrderDTO item : items) {
                 // 查询样品领用单明细信息
@@ -2327,6 +2328,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
                 detailDTO.setActualQty(item.getOutQty() != null ? item.getOutQty() : item.getReservedQty()); // 实发数量：出库数量或待出库数量
                 detailDTO.setWarehouseLocation(item.getWarehouseLocation()); // 仓位
                 detailDTO.setRemark(StringUtils.isNotBlank(item.getRemark()) ? item.getRemark() : ""); // 出库备注
+                detailDTO.setSourceDetailId(item.getSourceDetailId()); // 直接设置来源明细ID，这是最根本的解决方案
                 detailList.add(detailDTO);
             }
             
@@ -2351,34 +2353,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
                     outboundOrder.setSourceCode(firstItem.getSourceCode());
                     otherOutstockService.updateById(outboundOrder);
                 }
-                // 获取其他出库单明细列表
-                List<OtherOutstockDetailEntity> otherOutstockDetailEntities = otherOutstockDetailService.listByMainId(outboundOrderId);
-                
-                // 构建 skuId 到 sourceDetailId 的映射关系
-                Map<String, String> skuIdToSourceDetailIdMap = new HashMap<>();
-                for (SampleRecipientDTO.ViewGenerateOutboundOrderDTO item : items) {
-                    // 查询样品领用单明细信息
-                    SampleRecipientDetailEntity detail = sampleRecipientDetailService.getById(item.getSourceDetailId());
-                    if (detail != null) {
-                        skuIdToSourceDetailIdMap.put(detail.getSkuId(), item.getSourceDetailId());
-                    }
-                }
-                
-                // 批量更新其他出库单明细的 sourceDetailId 字段
-                List<OtherOutstockDetailEntity> toUpdateDetails = new ArrayList<>();
-                for (OtherOutstockDetailEntity otherOutstockDetailEntity : otherOutstockDetailEntities) {
-                    String sourceDetailId = skuIdToSourceDetailIdMap.get(otherOutstockDetailEntity.getSkuId());
-                    if (sourceDetailId != null) {
-                        otherOutstockDetailEntity.setSourceDetailId(sourceDetailId);
-                        toUpdateDetails.add(otherOutstockDetailEntity);
-                    }
-                }
-                
-                // 批量更新明细
-                if (!toUpdateDetails.isEmpty()) {
-                    otherOutstockDetailService.updateBatchById(toUpdateDetails);
-                    log.info("成功更新其他出库单明细的 sourceDetailId 字段，共更新{}条明细", toUpdateDetails.size());
-                }
+                // 注意：sourceDetailId 已经在创建明细时直接设置，无需后续匹配更新
                 // 提交
                 Boolean originalValue = UserContext.getIsUserSystem();
                 UserContext.setIsUserSystem(Boolean.TRUE);
@@ -2406,6 +2381,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
             throw e;
         }
     }
+
     /**
      * 根据已出库数量和领用数量计算执行状态
      * 根据表格规则：
