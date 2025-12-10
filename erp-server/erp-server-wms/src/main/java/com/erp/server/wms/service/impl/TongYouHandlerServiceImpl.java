@@ -179,6 +179,11 @@ public class TongYouHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     private TongYouCreateOutboundReq buildOutboundDto(ThirdWarehouseCreateOutboundReq createOutboundReq) {
         //主表信息
         TongYouCreateOutboundReq addDTO = TongYouCreateOutboundConverter.INSTANCE.outboundToThird(createOutboundReq,createOutboundReq.getReceiverInfo());
+        if (CharSequenceUtil.equals(createOutboundReq.getIsApiSignName(),"是")) {
+            addDTO.setQmfw("AdultSignature");
+        } else {
+            addDTO.setQmfw("NoSignature");
+        }
         addDTO.setZip(createOutboundReq.getReceiverInfo().getZipCode());
         //收货人电话
         String phone = createOutboundReq.getReceiverInfo().getPhone();
