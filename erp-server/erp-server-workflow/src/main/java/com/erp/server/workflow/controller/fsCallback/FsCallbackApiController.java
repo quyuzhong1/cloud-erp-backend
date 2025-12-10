@@ -12,10 +12,7 @@ import com.lark.oapi.sdk.servlet.ext.ServletAdapter;
 import com.lark.oapi.ws.Client;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
@@ -63,9 +60,10 @@ public class FsCallbackApiController {
     /**
      * 创建路由处理器 Create route handler
      */
-    @PostMapping("/webhook/event")
+    @GetMapping("/webhook/event")
     public void event(HttpServletRequest request, HttpServletResponse response)
             throws Throwable {
+        log.warn("[ Event access ], url: %s, method: %s\n", request.getRequestURL(), request.getMethod());
         // 回调扩展包提供的事件回调处理器 Callback handler provided by the extension package
         servletAdapter.handleEvent(request, response, EVENT_HANDLER);
     }
