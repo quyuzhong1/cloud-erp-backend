@@ -238,7 +238,7 @@ public class DaMaiHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     @Override
     protected ApiResult<String> createFbaOutboundBill(ThirdWarehouseCreateFbaOutboundReq createOutboundReq) {
         DaMaiCreateFbaOrderRequest daMaiCreateFbaOrderRequest = this.buildFbaOrderDto(createOutboundReq);
-        log.warn(getPlatForm().getName()+"创建FBA出库单请求:{}", JSONUtil.toJsonStr(createOutboundReq));
+        log.warn(getPlatForm().getName()+"创建FBA出库单请求:{}", JSONUtil.toJsonStr(daMaiCreateFbaOrderRequest));
         DaMaiBaseResp<DaMaiCreateFbaOrderResp> resp = daMaiService.createFbaOrder(ThirdWarehouseContext.getAuthMap(), daMaiCreateFbaOrderRequest);
         log.warn(getPlatForm().getName()+"创建FBA出库单结果:{}", JSONUtil.toJsonStr(resp));
         if(!isSuccess(resp)){

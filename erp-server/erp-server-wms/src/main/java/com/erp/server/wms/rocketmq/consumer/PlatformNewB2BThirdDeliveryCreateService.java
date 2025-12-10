@@ -24,6 +24,8 @@ import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -60,19 +62,22 @@ public class PlatformNewB2BThirdDeliveryCreateService extends AbstractNewPlatfor
         String sourceId = req.getSourceId();
         B2bThirdDeliveryEntity entity = b2bThirdDeliveryService.getById(sourceId);
         if (Objects.isNull(entity)) {
-            b2bThirdDeliveryService.updateStatus(sourceId, ThirdDeliveryStatusEnum.FAILED.getCode(), CharSequenceUtil.format(ApiError.NOT_EXIST.msg, req.getSourceCode()), "", "", "");
+            b2bThirdDeliveryService.updateStatus(sourceId, ThirdDeliveryStatusEnum.FAILED.getCode(), CharSequenceUtil.format(ApiError.NOT_EXIST.msg, req.getSourceCode()), "", "", "", null);
             return;
         }
-
+        if (!ThirdDeliveryStatusEnum.CREATING.getCode().equals(entity.getStatus())){
+            log.error("B2BThirdDelivery创建订单失败，状态不是CREATING，当前状态：{}", entity.getStatus());
+            return;
+        }
         ThirdWarehouseService service = thirdWarehouseRegistry.getHandler(req.getThirdWarehouseProvideCode());
         if (Objects.isNull(service)) {
-            b2bThirdDeliveryService.updateStatus(sourceId, ThirdDeliveryStatusEnum.FAILED.getCode(), CharSequenceUtil.format(ApiError.OVERSEAS_PROVIDE_NOT_SERVICE.msg, req.getThirdWarehouseProvideCode()), "", "", "");
+            b2bThirdDeliveryService.updateStatus(sourceId, ThirdDeliveryStatusEnum.FAILED.getCode(), CharSequenceUtil.format(ApiError.OVERSEAS_PROVIDE_NOT_SERVICE.msg, req.getThirdWarehouseProvideCode()), "", "", "", null);
             return;
         }
         ApiResult<String> fbaOutboundBill = createFbaOutboundBill(service, req, 0);
         if (fbaOutboundBill.isSuccess()) {
             // 创建成功
-            b2bThirdDeliveryService.updateStatus(sourceId, ThirdDeliveryStatusEnum.WAIT_SHIPPED.getCode(), "", fbaOutboundBill.getData(), "", "");
+            b2bThirdDeliveryService.updateStatus(sourceId, ThirdDeliveryStatusEnum.WAIT_SHIPPED.getCode(), "", fbaOutboundBill.getData(), "", "", null);
             return;
         }
         // 创建失败，尝试查询是否实际已创建成功
@@ -85,15 +90,23 @@ public class PlatformNewB2BThirdDeliveryCreateService extends AbstractNewPlatfor
 
         String platformOrderCode = getPlatformOrderCode(queryResult);
         String trackNo = getTrackNo(queryResult);
+        LocalDateTime deliveryTime = getDeliveryTime(queryResult);
 
         if (CharSequenceUtil.isNotBlank(platformOrderCode)) {
             // 查询发现订单实际已创建成功
-            b2bThirdDeliveryService.updateStatus(sourceId, ThirdDeliveryStatusEnum.WAIT_SHIPPED.getCode(), "", platformOrderCode, "", trackNo);
+            b2bThirdDeliveryService.updateStatus(sourceId, ThirdDeliveryStatusEnum.WAIT_SHIPPED.getCode(), "", platformOrderCode, "", trackNo, deliveryTime);
         } else {
             // 确认创建失败
             String errorMsg = CharSequenceUtil.format(ApiError.FBA_OUTBOUND_BILL_CREATE_FAILED.msg, fbaOutboundBill.getMsg());
-            b2bThirdDeliveryService.updateStatus(sourceId, ThirdDeliveryStatusEnum.FAILED.getCode(), errorMsg, "", "", trackNo);
+            b2bThirdDeliveryService.updateStatus(sourceId, ThirdDeliveryStatusEnum.FAILED.getCode(), errorMsg, "", "", trackNo, deliveryTime);
         }
+    }
+
+    private LocalDateTime getDeliveryTime(ApiResult<List<ThirdWarehouseQueryFbaOutboundResponse>> queryResult) {
+        if (queryResult.isSuccess() && CollUtil.isNotEmpty(queryResult.getData())) {
+            return LocalDateTime.parse(queryResult.getData().get(0).getDeliveryTimeStr(), DateTimeFormatter.ISO_DATE_TIME);
+        }
+        return null;
     }
 
     // 提取平台订单号的辅助方法

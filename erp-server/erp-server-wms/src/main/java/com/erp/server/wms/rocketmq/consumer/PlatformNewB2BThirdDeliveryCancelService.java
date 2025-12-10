@@ -2,6 +2,7 @@ package com.erp.server.wms.rocketmq.consumer;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.common.core.controller.vo.ApiResult;
@@ -24,6 +25,8 @@ import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -60,55 +63,22 @@ public class PlatformNewB2BThirdDeliveryCancelService extends AbstractNewPlatfor
         String sourceId = req.getSourceId();
         B2bThirdDeliveryEntity entity = b2bThirdDeliveryService.getById(sourceId);
         if (Objects.isNull(entity)) {
-            b2bThirdDeliveryService.updateStatus(sourceId, ThirdDeliveryStatusEnum.FAILED.getCode(), CharSequenceUtil.format(ApiError.NOT_EXIST.msg, req.getSourceCode()), "", "", "");
+            b2bThirdDeliveryService.updateStatus(sourceId, ThirdDeliveryStatusEnum.FAILED.getCode(), CharSequenceUtil.format(ApiError.NOT_EXIST.msg, req.getSourceCode()), "", "", "", null);
             return;
         }
 
         ThirdWarehouseService service = thirdWarehouseRegistry.getHandler(req.getThirdWarehouseProvideCode());
         if (Objects.isNull(service)) {
-            b2bThirdDeliveryService.updateStatus(sourceId, ThirdDeliveryStatusEnum.FAILED.getCode(), CharSequenceUtil.format(ApiError.OVERSEAS_PROVIDE_NOT_SERVICE.msg, req.getThirdWarehouseProvideCode()), "", "", "");
+            b2bThirdDeliveryService.updateStatus(sourceId, ThirdDeliveryStatusEnum.FAILED.getCode(), CharSequenceUtil.format(ApiError.OVERSEAS_PROVIDE_NOT_SERVICE.msg, req.getThirdWarehouseProvideCode()), "", "", "", null);
             return;
-        }
-        ThirdWarehouseQueryFbaOutboundReq queryOutboundReq = new ThirdWarehouseQueryFbaOutboundReq();
-        queryOutboundReq.setErpOrderCodeList(Collections.singletonList(req.getErpOrderCode()));
-        queryOutboundReq.setAuthId(req.getAuthId());
-        queryOutboundReq.setThirdWarehouseProvideCode(req.getThirdWarehouseProvideCode());
-        ApiResult<List<ThirdWarehouseQueryFbaOutboundResponse>> listApiResult = service.queryFbaOutboundBill(queryOutboundReq, req.getAuthId());
-        if (listApiResult.isSuccess()){
-            if (CollUtil.isNotEmpty(listApiResult.getData())){
-                //订单已取消直接返回
-                /**
-                 * 以下状态自动变更为取消发货，有拦截标识时清空拦截标识，记录拦截成功
-                 * EXCEPTION：出库异常
-                 * DISCARD：已作废
-                 * PROBLEM：问题件
-                 */
-                ThirdWarehouseQueryFbaOutboundResponse response = listApiResult.getData().get(0);
-                if (response.getStatus().equals(B2BThirdDeliveryCancelResultEnum.EXCEPTION.getCode()) ||
-                        response.getStatus().equals(B2BThirdDeliveryCancelResultEnum.DISCARD.getCode()) ||
-                        response.getStatus().equals(B2BThirdDeliveryCancelResultEnum.PROBLEM.getCode())){
-                    //拦截成功，更新B2B三方发货单状态 取消发货
-                    b2bThirdDeliveryService.updateStatus(req.getSourceId(), ThirdDeliveryStatusEnum.CANCEL_DELIVERY.getCode(), "", response.getPlatformOrderCode(), "", response.getTrackNo());
-                    return;
-                }else if (response.getStatus().equals(B2BThirdDeliveryCancelResultEnum.SUCCESS.getCode())){
-                    //已发货，更新B2B三方发货单状态 生成销售出库单
-                    b2bThirdDeliveryService.updateStatus(req.getSourceId(), ThirdDeliveryStatusEnum.SHIPPED.getCode(), "", response.getPlatformOrderCode(), "", response.getTrackNo());
-                    return;
-                }else if (response.getStatus().equals(B2BThirdDeliveryCancelResultEnum.BLOCK.getCode()) ||
-                        response.getStatus().equals(B2BThirdDeliveryCancelResultEnum.DISCARD_PROCESSED.getCode())){
-                    //拦截中 记录拦截标识
-                    b2bThirdDeliveryService.updateStatus(req.getSourceId(), ThirdDeliveryStatusEnum.INTERCEPTING.getCode(), "", response.getPlatformOrderCode(), "", response.getTrackNo());
-                    return;
-                }
-            }
         }
         ApiResult<String> fbaOutboundBill = cancelFbaOutboundBill(service, req, 0);
         if (fbaOutboundBill.isSuccess()) {
             // 创建成功
-            b2bThirdDeliveryService.updateStatus(sourceId, ThirdDeliveryStatusEnum.CANCEL_DELIVERY.getCode(), "", "", "", "");
+            b2bThirdDeliveryService.updateStatus(sourceId, ThirdDeliveryStatusEnum.INTERCEPTING.getCode(), "", "", "", "", null);
         }else {
             // 创建失败
-            b2bThirdDeliveryService.updateStatus(sourceId, ThirdDeliveryStatusEnum.WAIT_SHIPPED.getCode(), "", "", "", "");
+            b2bThirdDeliveryService.updateStatus(sourceId, ThirdDeliveryStatusEnum.WAIT_SHIPPED.getCode(), "", "", "", "", null);
         }
     }
     private ApiResult<String> cancelFbaOutboundBill(ThirdWarehouseService service, ThirdWarehouseCancelFbaOutboundReq req, final int retryCount) {

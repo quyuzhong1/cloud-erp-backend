@@ -42,6 +42,7 @@ public class ThirdWarehouseQueryFbaOutboundResponse extends ThirdWarehouseAuth{
     private String errorType;
     /**
      * 发货时间
+     * 2023-05-29 16:48:07
      */
     private String deliveryTimeStr;
     /**

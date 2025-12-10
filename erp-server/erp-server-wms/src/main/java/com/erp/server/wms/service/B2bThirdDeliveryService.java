@@ -1,11 +1,12 @@
 package com.erp.server.wms.service;
 import com.common.business.vo.PagingVO;
+import com.erp.model.wms.dto.third.ThirdWarehouseQueryFbaOutboundResponse;
 import com.erp.model.wms.entity.B2bThirdDeliveryEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.wms.dto.B2bThirdDeliveryDTO;
-import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -54,8 +55,9 @@ public interface B2bThirdDeliveryService extends SuperService<B2bThirdDeliveryEn
      * @param platformOrderCode 三方仓订单号
      * @param remark
      * @param trackNo
+     * @param deliveryTime 发货时间
      */
-    void updateStatus(String id, String status, String errorMsg, String platformOrderCode, String remark, String trackNo);
+    void updateStatus(String id, String status, String errorMsg, String platformOrderCode, String remark, String trackNo, LocalDateTime deliveryTime);
 
     /**
      * 生成三方发货单 销售出库单
@@ -84,4 +86,23 @@ public interface B2bThirdDeliveryService extends SuperService<B2bThirdDeliveryEn
      * @return
      */
     BatchResultDTO delete(B2bThirdDeliveryEntity entity);
+
+    /**
+     * 根据状态查询B2B三方仓发货单
+     * @param isApiDelivery
+     * @param statusList
+     * @return
+     */
+    List<B2bThirdDeliveryEntity> queryDeliveryStatus(Boolean isApiDelivery, List<String> statusList);
+
+    /**
+     * 更新查询结果
+     *
+     * @param responses
+     * @param providerCode
+     * @param codeList
+     */
+    void updateQueryResult(List<ThirdWarehouseQueryFbaOutboundResponse> responses, String providerCode, List<String> codeList);
+
+    void handleResultData(String id, ThirdWarehouseQueryFbaOutboundResponse response);
 }

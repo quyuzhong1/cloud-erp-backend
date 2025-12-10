@@ -81,7 +81,7 @@ public class B2bThirdDeliveryDetailServiceImpl extends SuperServiceImpl<B2bThird
             Integer deliveryQty = soDetailEntity.getDeliveryQty();
             Integer unDeliveryQty = deliveryDetail.getDeliveryQty();
             if (qty < (deliveryQty+unDeliveryQty)){
-                throw new ServiceException("SKU【{}】销售数量【{}】已发数量【{}】下发数量【{}】超过了可发数量【】",soDetailEntity.getSkuNo(),qty,deliveryQty,unDeliveryQty,qty-deliveryQty);
+                throw new ServiceException("SKU【{}】销售数量【{}】已发数量【{}】下发数量【{}】超过了可发数量【{}】",soDetailEntity.getSkuNo(),qty,deliveryQty,unDeliveryQty,qty-deliveryQty);
             }
         });
     }
