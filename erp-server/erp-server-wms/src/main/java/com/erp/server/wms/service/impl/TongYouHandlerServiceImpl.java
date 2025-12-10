@@ -12,6 +12,7 @@ import com.common.core.exception.ServiceException;
 import com.erp.model.wms.dto.OverseasProviderDTO;
 import com.erp.model.wms.dto.third.*;
 import com.erp.model.wms.enums.OverseasInstockTypeEnum;
+import com.erp.model.wms.enums.ThirdWarehouseCancelResultEnum;
 import com.erp.server.wms.convert.TongYouCreateInboundConverter;
 import com.erp.server.wms.convert.TongYouCreateOutboundConverter;
 import com.erp.server.wms.handler.AbstractThirdWarehouseHandler;
@@ -205,7 +206,7 @@ public class TongYouHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         if(!isSuccess(tongYouBaseResp.getError())){
             return failure(tongYouBaseResp.getContent());
         }
-        return success(tongYouBaseResp.getData());
+        return success(ThirdWarehouseCancelResultEnum.INTERCEPTION_SUCCESSFUL.getCode());
 
     }
     @Override
