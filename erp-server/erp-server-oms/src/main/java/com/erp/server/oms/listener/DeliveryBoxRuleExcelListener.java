@@ -249,6 +249,13 @@ public class DeliveryBoxRuleExcelListener extends AnalysisEventListener<Delivery
     @Transactional(rollbackFor = Exception.class)
     public void doAfterAllAnalysed(AnalysisContext analysisContext) {
         successList.addAll(excelDTOMap.values());
+        Iterator<DeliveryBoxRuleDTO.ImportDTO> iterator = successList.iterator();
+        while (iterator.hasNext()) {
+            DeliveryBoxRuleDTO.ImportDTO dto = iterator.next();
+            if (dto.getDetailImportDTOList() == null || dto.getDetailImportDTOList().isEmpty()) {
+                iterator.remove();
+            }
+        }
         if (!successList.isEmpty()){
             try {
                 deliveryBoxRuleService.handleImportSuccessList(successList);
