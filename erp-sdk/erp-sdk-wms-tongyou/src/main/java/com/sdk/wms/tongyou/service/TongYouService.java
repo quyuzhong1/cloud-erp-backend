@@ -151,7 +151,7 @@ public class TongYouService {
         //密钥
         Object object = ThirdWarehouseContext.getAuthMap().get("appToken");
         bodyMap.put("token",ObjectUtil.isEmpty(object) ? "" : object.toString());
-        bodyMap.put("deliver_list", Collections.singletonList(TongYouCancelOutboundReq.getOrderNo()));
+        bodyMap.put("deliver_list", Collections.singletonList(TongYouCancelOutboundReq.getErpOrderCode()));
 
         log.warn("通邮 cancelOutboundBill request:{}",JSONObject.toJSONString(bodyMap));
 

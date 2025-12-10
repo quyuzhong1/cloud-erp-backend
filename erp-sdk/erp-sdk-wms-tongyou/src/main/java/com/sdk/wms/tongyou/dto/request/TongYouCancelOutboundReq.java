@@ -11,15 +11,9 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Builder
 public class TongYouCancelOutboundReq {
-
-    @JSONField(name = "platformOrderNo")
-    private String platformOrderNo;
-    @JSONField(name = "ecPlatformOrderNo")
-    private String ecPlatformOrderNo;
-    @JSONField(name = "orderNo")
-    private String orderNo;
-    @JSONField(name = "trackNumber")
-    private String trackNumber;
-    @JSONField(name = "cause")
-    private String cause;
+    /**
+     * 三方仓发货单号
+     */
+    @JSONField(name = "erpOrderCode")
+    private String erpOrderCode;
 }
