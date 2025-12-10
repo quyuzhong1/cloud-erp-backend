@@ -9,7 +9,7 @@ import lombok.experimental.Accessors;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 
 /**
@@ -106,7 +106,7 @@ public class KolSampleCostEntity extends BaseEntity<KolSampleCostEntity> {
     * 销售出库日期
     */
     @TableField("so_outstock_date")
-    private LocalDateTime soOutstockDate;
+    private LocalDate soOutstockDate;
     /**
     * 仓库id
     */

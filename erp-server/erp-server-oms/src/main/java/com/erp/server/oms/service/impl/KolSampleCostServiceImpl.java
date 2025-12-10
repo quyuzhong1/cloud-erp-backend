@@ -2,7 +2,9 @@ package com.erp.server.oms.service.impl;
 
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
@@ -48,6 +50,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -131,13 +134,18 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
     @Override
     public void updateCost(KolSampleCostDTO.UpdateCostDTO dto) {
         String date = dto.getDate();
-
+        LocalDate localDate = LocalDateTimeUtil.parseDate(date, DateTimeFormatter.ofPattern("yyyy-MM"));
+        LocalDateTime endTIme = LocalDateUtil.getThisMonthStart(localDate);
+        LocalDateTime startTime = LocalDateUtil.getThisMonthStart(localDate);
+        updateKolSampleCostByDate(startTime,endTIme);
     }
 
     @Override
     public void exportList(KolSampleCostDTO.ExportDTO param, HttpServletResponse response) {
         downloadTaskFeign.saveDownloadTask("寄样费用导出", FileTaskEventEnum.EXPORT_OMS_KOL_SAMPLE_COST_REPORT.getCode(), param);
     }
+
+
 
     @Override
     public Boolean importFile(MultipartFile excelFile, HttpServletResponse response) {
@@ -181,12 +189,22 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void updateKolSampleCostJob() {
         LocalDateTime endTIme = LocalDateUtil.getThisMonthStart(LocalDate.now());
         LocalDateTime startTime = LocalDateUtil.getThisMonthStart(LocalDate.now()).minusMonths(1L);
-
+        updateKolSampleCostByDate(startTime,endTIme);
     }
 
+
+    /**
+     * 根据时间区间更新寄样费用
+     * @author will
+     * @date 2025/12/9 15:00
+     * @param startTime
+     * @param endTIme
+     * @return void
+     */
     private void updateKolSampleCostByDate(LocalDateTime startTime,LocalDateTime endTIme) {
         //查询月份内存在的寄样费用
         List<KolSampleCostEntity> oldList = this.baseMapper.listByTime(startTime,endTIme);
@@ -204,8 +222,37 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
         List<List<String>> partition = Lists.partition(soDetailIdList, 5000);
         for(List<String> partitionIdLIst : partition) {
             List<KolSampleCostEntity> kolSampleCostEntityList = baseMapper.listKolSampleCostBySoDetailIdList(partitionIdLIst);
-        }
+            if (CollUtil.isEmpty(kolSampleCostEntityList)) {
+                continue;
+            }
+            for (KolSampleCostEntity sampleCostEntity : kolSampleCostEntityList) {
+                List<SoOutstockDTO.KolSoOutstockDTO> kolSoOutstockDTOList = soOutstockDTOList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSoDetailId(), sampleCostEntity.getSoDetailId())).collect(Collectors.toList());
+                if (CollUtil.isEmpty(kolSoOutstockDTOList)) {
+                    continue;
+                }
+                for (SoOutstockDTO.KolSoOutstockDTO kolSoOutstockDTO : kolSoOutstockDTOList) {
+                    KolSampleCostEntity  costEntity = new KolSampleCostEntity();
+                    BeanMapperUtils.copy(kolSoOutstockDTO, costEntity);
 
+                    KolSampleCostEntity oldEntity = oldList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSoOutstockDetailId(), kolSoOutstockDTO.getSoOutstockDetailId())).findFirst().orElse(null);
+                    if (ObjUtil.isNotEmpty(oldEntity)) {
+                        costEntity.setId(oldEntity.getId());
+                    }
+                    costEntity.setSourceCode(sampleCostEntity.getSourceCode());
+                    costEntity.setSourceId(sampleCostEntity.getSourceId());
+                    costEntity.setSourceType(sampleCostEntity.getSourceType());
+                    costEntity.setPartitionId(sampleCostEntity.getPartitionId());
+                    costEntity.setPartnerId(sampleCostEntity.getPartnerId());
+                    costEntity.setPartnerNickname(sampleCostEntity.getPartnerNickname());
+                    costEntity.setFeedbackUrl(sampleCostEntity.getFeedbackUrl());
+                    thisMonthList.add(costEntity);
+                }
+            }
+        }
+        if (CollUtil.isEmpty(thisMonthList)) {
+            return;
+        }
+        super.saveOrUpdateBatch(thisMonthList);
 
     }
 

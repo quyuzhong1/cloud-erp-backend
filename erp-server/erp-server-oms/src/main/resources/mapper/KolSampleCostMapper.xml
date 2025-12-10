@@ -99,17 +99,53 @@
 
     <!-- 根据出库单明细ID列表查询样品费用列表 -->
     <select id="listKolSampleCostBySoDetailIdList" resultType="com.erp.model.oms.entity.KolSampleCostEntity">
-
-
+        WITH kolFeedback as (
+            select
+                array_to_string(array_agg(DISTINCT partner_id),',') as partner_id,
+                array_to_string(array_agg(DISTINCT partner_nickname),',') as partner_nickname,
+                array_to_string(array_agg(DISTINCT url),',') as url,
+                source_detail_id
+            from kol_feedback
+            where is_deleted = false group by source_detail_id
+        )
         select
-            kba.code as source_code,
-            kba.id as source_id,
-            'kolB2bApplication' as sourceType,
-            sd.id as so_detail_id
-        from kol_b2b_application kba
-         inner join kol_b2b_application_detail kbad on kba.id = kbad.main_id and kbad.is_deleted = false
-         inner join so_detail sd on sd.source_detail_id = kbad.id and sd.is_deleted = false
-        where kba.is_deleted = false
+            sba.source_code,
+            sba.source_id,
+            sba.source_type,
+            sba.so_detail_id,
+            sba.partition_id,
+            kfb.partner_id,
+            kfb.partner_nickname,
+            kfb.url as feedback_url
+        from (select
+                  kba.code as source_code,
+                  kba.id as source_id,
+                  'kolB2bApplication' as source_type,
+                  sd.id as so_detail_id,
+                  si.partition_id,
+                  kbad.id as detailId
+              from kol_b2b_application kba
+                       inner join kol_b2b_application_detail kbad on kba.id = kbad.main_id and kbad.is_deleted = false
+                       inner join so_info si on si.source_id = kba.id and si.is_deleted = false
+                       inner join so_detail sd on sd.source_detail_id = kbad.id and sd.is_deleted = false
+              where kba.is_deleted = false
+
+              union
+
+              select
+                  kba.code as source_code,
+                  kba.id as source_id,
+                  'kolB2cApplication' as source_type,
+                  sbd.id as so_detail_id,
+                  sbr.partition_id,
+                  kbad.id as detailId
+              from kol_b2c_application kba
+                       inner join kol_b2c_application_detail kbad on kba.id = kbad.main_id and kbad.is_deleted = false
+                       inner join so_b2c_detail sbd on sbd.source_detail_id = kbad.id and sbd.is_deleted = false
+                       inner join so_b2c_receiver sbr on sbd.main_id = sbr.main_id and sbr.is_deleted = false
+              where kba.is_deleted = false
+             ) sba
+                 left join kolFeedback kfb on sba.detailId = kfb.source_detail_id
     </select>
 
 

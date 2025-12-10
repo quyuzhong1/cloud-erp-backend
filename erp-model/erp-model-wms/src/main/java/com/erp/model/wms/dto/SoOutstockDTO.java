@@ -1942,7 +1942,7 @@ public class SoOutstockDTO implements Serializable {
         /**
          * 销售出库日期
          */
-        private String soOutstockDate;
+        private LocalDate soOutstockDate;
         /**
          * 销售出库单明细id
          */
@@ -1968,6 +1968,6 @@ public class SoOutstockDTO implements Serializable {
         /**
          * 实发数量
          */
-        private String actualQty;
+        private Integer actualQty;
     }
 }
