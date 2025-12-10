@@ -126,7 +126,7 @@ ksba.platform_order_code AS platformOrderCode
             LEFT JOIN kol_social_media ksm on kf.url_hash = ksm.url_hash and ksm.is_deleted = false
             WHERE
             kf.is_deleted = FALSE
-            AND source_id != ''
+            AND kf.source_id != ''
             GROUP BY
                 kf.source_id,
                 kf.partner_id
