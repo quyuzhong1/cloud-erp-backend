@@ -113,7 +113,7 @@ public class DeliveryBoxRuleServiceImpl extends SuperServiceImpl<DeliveryBoxRule
         // 操作日志
         for (DeliveryBoxRuleDetailDTO.AddDTO dto : addDTO.getDeliveryBoxRuleDetailDTOList()) {
             String msg = StrUtil.format("用户【{}】新增SKU【{}】,单箱数量【{}】", UserContext.getDefaultLoginUser().getUserName(), deliveryBoxRuleEntity.getSkuId() , dto.getPerBoxQty());
-            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DELIVERY_BOX_RULE.getCode(), deliveryBoxRuleEntity.getId(), "新增操作");
+            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DELIVERY_BOX_RULE.getCode(), deliveryBoxRuleEntity.getSkuNo(), "新增操作");
         }
 
         return new BaseResultDTO.AddDTO(deliveryBoxRuleEntity.getId(), deliveryBoxRuleEntity.getId());
