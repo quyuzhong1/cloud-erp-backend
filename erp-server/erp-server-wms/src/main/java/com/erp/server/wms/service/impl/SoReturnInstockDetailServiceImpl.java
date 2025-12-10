@@ -814,13 +814,14 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
                 }
                 detailEntity.setMainId(dto.getId());
                 detailEntity.setSkuId(detailDto.getSkuId());
-
                 detailEntity.setSkuNo(skuVO.getSkuNo());
                 detailEntity.setRealQty(detailDto.getRealQty());
                 detailEntity.setReceiveQty(detailDto.getReceiveQty());
                 detailEntity.setWarehouseLocation(detailDto.getWarehouseLocation());
                 detailEntity.setRemark(detailDto.getRemark());
                 detailEntity.setSourceDetailId(detailDto.getSourceDetailId());
+                detailEntity.setReturnTypeDict(detailDto.getReturnTypeDict());
+
                 //封装仓库，如果没有明细仓库，取主记录的仓库
                 if(CharSequenceUtil.isBlank(detailDto.getWarehouseId())){
                     if(CharSequenceUtil.isNotBlank(dto.getWarehouseId())){
