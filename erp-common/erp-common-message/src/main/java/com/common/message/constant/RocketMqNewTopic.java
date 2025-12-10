@@ -244,4 +244,9 @@ public class RocketMqNewTopic {
      */
     public static final String RESTCLOUD_PLATFORM_RETURN_INSTOCK_TO_WMS_TOPIC = "${spring.cloud.nacos.discovery.namespace}-restcloud_platform_return_instock_to_wms_topic";
 
+    /**
+     * restcloud云听社媒数据
+     */
+    public static final String RESTCLOUD_YUNTING_SOCIAL_MEDIA_TO_OMS_TOPIC = "${spring.cloud.nacos.discovery.namespace}-restcloud_yunting_social_media_to_oms_topic";
+
 }

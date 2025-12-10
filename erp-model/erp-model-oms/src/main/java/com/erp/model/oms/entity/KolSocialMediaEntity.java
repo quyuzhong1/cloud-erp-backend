@@ -115,6 +115,11 @@ public class KolSocialMediaEntity extends BaseEntity<KolSocialMediaEntity> {
     */
     @TableField("unique_key")
     private String uniqueKey;
+    /**
+    * 来源ID（对应第三方sourceId）
+    */
+    @TableField("source_id")
+    private String sourceId;
 
 
     public static final String TYPE = "type";
@@ -152,6 +157,8 @@ public class KolSocialMediaEntity extends BaseEntity<KolSocialMediaEntity> {
     public static final String REPOST_COUNT = "repost_count";
 
     public static final String UNIQUE_KEY = "unique_key";
+
+    public static final String SOURCE_ID = "source_id";
 
     @Override
     public Serializable pkVal() {

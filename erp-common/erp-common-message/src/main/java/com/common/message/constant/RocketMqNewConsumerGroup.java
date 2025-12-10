@@ -235,4 +235,9 @@ public class RocketMqNewConsumerGroup {
      */
     public static final String RESTCLOUD_PLATFORM_RETURN_INSTOCK_TO_WMS_GROUP = "${spring.cloud.nacos.discovery.namespace}-restcloud_platform_return_instock_to_wms_group";
 
+    /**
+     * restcloud云听社媒数据
+     */
+    public static final String RESTCLOUD_YUNTING_SOCIAL_MEDIA_TO_OMS_GROUP = "${spring.cloud.nacos.discovery.namespace}-restcloud_yunting_social_media_to_oms_group";
+
 }

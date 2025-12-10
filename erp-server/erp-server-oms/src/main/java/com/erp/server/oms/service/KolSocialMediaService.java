@@ -80,4 +80,13 @@ public interface KolSocialMediaService extends SuperService<KolSocialMediaEntity
      */
     PagingVO<KolSocialMediaDTO.ListDTO> paging(PagingDTO<KolSocialMediaDTO.ParamDTO> dto);
 
+    /**
+     * 处理云听社媒数据消费
+     * @author wuhaotian
+     * @date: 2025-12-10
+     * @param dto
+     * @return
+     */
+    void handleYuntingConsumer(com.common.business.dto.YuntingSocialMediaDTO dto);
+
 }
