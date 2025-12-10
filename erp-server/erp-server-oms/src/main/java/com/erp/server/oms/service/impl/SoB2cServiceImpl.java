@@ -1269,6 +1269,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         boolean isCleanError = CharSequenceUtil.isNotBlank(soB2cLogisticsEntity.getCode());
         if (isCleanError) {
             //清除异常订单的类型和异常订单表数据
+            log.warn("提交 开始清除B2C销售订单表异常数据，id：【{}】,entity:【{}】", id,JSONUtil.toJsonStr(entity));
             soB2cErrorService.deleteByMainIds(Collections.singletonList(id));
         }
 
@@ -3298,7 +3299,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 //生成异常订单信息
                 soB2cErrorService.generateErrorOrder(entity.getId(), type, message, JSONObject.toJSONString(createOutboundReq), JSONObject.toJSONString(apiResult),apiResult.getCode().toString());
                 //标记三方仓发货单为删除
-                thirdWarehouseDeliveryFeign.deleteById(thirdWarehouseDeliveryEntity.getId());
+                thirdWarehouseDeliveryFeign.deleteByCode(createOutboundReq.getReferenceNo());
             }
             return apiResult;
         }catch (Exception e){
@@ -3316,7 +3317,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     //生成异常订单信息
                     soB2cErrorService.generateErrorOrder(entity.getId(), type, message, JSONObject.toJSONString(createOutboundReq), JSONObject.toJSONString(apiResult),apiResult.getCode().toString());
                     //标记三方仓发货单为删除
-                    thirdWarehouseDeliveryFeign.deleteById(thirdWarehouseDeliveryEntity.getId());
+                    thirdWarehouseDeliveryFeign.deleteByCode(createOutboundReq.getReferenceNo());
                     return ApiResult.error( -1, e.getMessage());
                 }
             }else {
@@ -3325,7 +3326,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 //生成异常订单信息
                 soB2cErrorService.generateErrorOrder(entity.getId(), type, message, JSONObject.toJSONString(createOutboundReq), JSONObject.toJSONString(apiResult),apiResult.getCode().toString());
                 //标记三方仓发货单为删除
-                thirdWarehouseDeliveryFeign.deleteById(thirdWarehouseDeliveryEntity.getId());
+                thirdWarehouseDeliveryFeign.deleteByCode(createOutboundReq.getReferenceNo());
                 return ApiResult.error( -1, e.getMessage());
             }
         }
@@ -8526,6 +8527,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 .set(SoB2cEntity::getApproveStatus, soB2cEntity.getApproveStatus())
                 .set(SoB2cEntity::getIsIntercept, soB2cEntity.getIsIntercept())
                 .set(SoB2cEntity::getIsFrozen, soB2cEntity.getIsFrozen())
+                .set(SoB2cEntity::getShippingOrderNo, soB2cEntity.getShippingOrderNo())
                 .set(SoB2cEntity::getInvalidStatus, soB2cEntity.getInvalidStatus())
                 .set(StringUtils.isNotBlank(soB2cEntity.getRemark()),SoB2cEntity::getRemark, soB2cEntity.getRemark())
                 .set(StringUtils.isNotBlank(soB2cEntity.getInvalidRemark()),SoB2cEntity::getInvalidRemark, soB2cEntity.getInvalidRemark())

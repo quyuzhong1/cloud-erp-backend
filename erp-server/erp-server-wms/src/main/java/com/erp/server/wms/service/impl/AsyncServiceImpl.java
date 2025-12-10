@@ -339,6 +339,7 @@ public class AsyncServiceImpl implements AsyncService {
                 mainEntity.setApproveStatus(ApproveStatusEnum.APPROVE);
                 mainEntity.setBillStatus(SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode());
                 mainEntity.setIsIntercept(false);
+                mainEntity.setShippingOrderNo("");
                 soB2cFeign.updateStatus(mainEntity);
                 operateLogDTO.setContent("三方仓出库异常，三方仓出库单已自动取消,异常信息："+ abnormalProblemReason);
             }else{
