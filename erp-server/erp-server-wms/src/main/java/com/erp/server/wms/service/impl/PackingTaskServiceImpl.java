@@ -1167,6 +1167,8 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         List<PackingTaskDetailEntity> taskDetailEntityList = packingTaskDetailService.listByMainIds(Collections.singletonList(packingTaskEntity.getId()));
         //装箱进度
         List<WmsCartonEntity> cartonEntityList = wmsCartonService.listByTaskIds(Collections.singletonList(packingTaskEntity.getId()));
+        //总箱数
+        view.setBoxNum(cartonEntityList.size());
         List<String> allCartonIds = cartonEntityList.stream().map(WmsCartonEntity::getId).distinct().collect(Collectors.toList());
         cartonEntityList = cartonEntityList.stream().filter(v->v.getCustomerPO().equals(searchDTO.getCustomerPO())).collect(Collectors.toList());
         List<String> cartonIds = cartonEntityList.stream().map(WmsCartonEntity::getId).distinct().collect(Collectors.toList());
@@ -1190,8 +1192,6 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         //发货数量
         Integer deliveryQty = taskDetailEntityList.stream().map(PackingTaskDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
         view.setDeliveryQty(deliveryQty);
-        //总箱数
-        view.setBoxNum(cartonEntityList.size());
         //(输入SKU/FNSKU/EAN码/产品条码)
         String searchKey = searchDTO.getSearchKey();
         String searchMode = searchDTO.getSearchMode();
