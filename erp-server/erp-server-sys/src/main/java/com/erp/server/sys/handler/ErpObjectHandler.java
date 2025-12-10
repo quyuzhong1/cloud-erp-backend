@@ -2,9 +2,11 @@ package com.erp.server.sys.handler;
 
 import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.core.handlers.MetaObjectHandler;
+import com.common.business.constant.UserStateConstants;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.core.utils.MathUtil;
+import com.common.core.utils.MetaUtil;
 import org.apache.ibatis.reflection.MetaObject;
 import org.springframework.stereotype.Component;
 
@@ -27,6 +29,12 @@ public class ErpObjectHandler implements MetaObjectHandler {
         LoginUser loginUser = UserContext.getNonLoginUser();
         String userId = loginUser.getUid();
         String userName = loginUser.getUserName();
+        Boolean isUserSystem = MetaUtil.getIsUserSystem(metaObject);
+        if (Boolean.TRUE.equals(isUserSystem)) {
+            // 使用系统用户
+            userId = UserStateConstants.USER_SYSTEM_ID;
+            userName = UserStateConstants.USER_SYSTEM;
+        }
         if(!BeanUtil.beanToMap(metaObject.getOriginalObject()).keySet().contains("isDeleted")){
             this.setFieldValByName("createTime", now, metaObject);
             this.setFieldValByName("updateTime", now, metaObject);
@@ -49,6 +57,12 @@ public class ErpObjectHandler implements MetaObjectHandler {
         LoginUser loginUser = UserContext.getNonLoginUser();
         String userId = loginUser.getUid();
         String userName = loginUser.getUserName();
+        Boolean isUserSystem = MetaUtil.getIsUserSystem(metaObject);
+        if (Boolean.TRUE.equals(isUserSystem)) {
+            // 使用系统用户
+            userId = UserStateConstants.USER_SYSTEM_ID;
+            userName = UserStateConstants.USER_SYSTEM;
+        }
         if(!BeanUtil.beanToMap(metaObject.getOriginalObject()).keySet().contains("isDeleted")){
             this.setFieldValByName("updateTime", new Date(), metaObject);
         }else {

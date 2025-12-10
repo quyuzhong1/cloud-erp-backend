@@ -73,6 +73,7 @@ public interface OverseasWarehouseInboundConverter {
             @Mapping(target = "updateTime", ignore = true),
             @Mapping(target = "updateUserId", ignore = true),
             @Mapping(target = "updateUserName", ignore = true),
+            @Mapping(target = "isUserSystem", ignore = true),
             @Mapping(target = "platformProductName",  source = "platformProductName"),
             @Mapping(target = "platformSkuNo",  source = "detailEntity.platformSkuNo"),
             @Mapping(target = "productName",  source = "detailEntity.productName"),

@@ -1,8 +1,10 @@
 package com.erp.server.plm.handler;
 
 import com.baomidou.mybatisplus.core.handlers.MetaObjectHandler;
+import com.common.business.constant.UserStateConstants;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
+import com.common.core.utils.MetaUtil;
 import org.apache.ibatis.reflection.MetaObject;
 import org.springframework.stereotype.Component;
 
@@ -24,6 +26,12 @@ public class ErpObjectHandler implements MetaObjectHandler {
         LoginUser loginUser = UserContext.getNonLoginUser();
         String userId = loginUser.getUid();
         String userName = loginUser.getUserName();
+        Boolean isUserSystem = MetaUtil.getIsUserSystem(metaObject);
+        if (Boolean.TRUE.equals(isUserSystem)) {
+            // 使用系统用户
+            userId = UserStateConstants.USER_SYSTEM_ID;
+            userName = UserStateConstants.USER_SYSTEM;
+        }
         this.setFieldValByName("createUserId", userId, metaObject);
         this.setFieldValByName("createUserName", userName, metaObject);
         this.setFieldValByName("updateUserId", userId, metaObject);
@@ -39,6 +47,12 @@ public class ErpObjectHandler implements MetaObjectHandler {
         LoginUser loginUser = UserContext.getNonLoginUser();
         String userId = loginUser.getUid();
         String userName = loginUser.getUserName();
+        Boolean isUserSystem = MetaUtil.getIsUserSystem(metaObject);
+        if (Boolean.TRUE.equals(isUserSystem)) {
+            // 使用系统用户
+            userId = UserStateConstants.USER_SYSTEM_ID;
+            userName = UserStateConstants.USER_SYSTEM;
+        }
         this.setFieldValByName("updateUserId", userId, metaObject);
         this.setFieldValByName("updateUserName", userName, metaObject);
         this.setFieldValByName("updateTime", LocalDateTime.now(), metaObject);
