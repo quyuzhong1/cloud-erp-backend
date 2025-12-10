@@ -590,4 +590,77 @@ public class InventorySkuCostDTO implements Serializable {
          */
         private LocalDate allocatedMonth;
     }
+
+    /**
+     * 成本查询参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class SkuCostParamDTO {
+        /**
+         * skuId集合
+         */
+        private List<String> skuIdList;
+        /**
+         *  仓库id集合
+         */
+        private List<String> warehouseIdList;
+        /**
+         * 销售组织列表
+         */
+        private List<String> orgIdList;
+        /**
+         * 核算月份
+         */
+        private LocalDateTime  startAccountingMonth;
+
+        /**
+         * 核算月份
+         */
+        private LocalDateTime  endAccountingMonth;
+    }
+
+    /**
+     * 成本查询
+     */
+    @Data
+    @NoArgsConstructor
+    public static class InvSkuCostDTO {
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
+        /**
+         *组织id
+         */
+        private String orgId;
+
+        /**
+         * 币种
+         */
+        private String currency;
+
+        /**
+         * 汇率（兑换人民币汇率）
+         */
+        private BigDecimal exchangeRate;
+
+        /**
+         * 材料成本（6位小数）
+         */
+        private BigDecimal productCost;
+
+        /**
+         * 头程运费（6位小数）
+         */
+        private BigDecimal firstMileShippingCost;
+        /**
+         * 清关税费（6位小数）
+         */
+        private BigDecimal clearanceCustomsTax;
+    }
 }

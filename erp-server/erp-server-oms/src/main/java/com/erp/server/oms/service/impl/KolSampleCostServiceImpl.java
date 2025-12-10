@@ -17,6 +17,7 @@ import com.common.business.enums.FileTaskEventEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
+import com.common.core.enums.CurrencyEnum;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
@@ -27,8 +28,13 @@ import com.erp.model.oms.dto.KolSampleCostDTO;
 import com.erp.model.oms.dto.excel.KolSampleCostImportExcelDTO;
 import com.erp.model.oms.entity.KolSampleCostEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.tms.dto.InventorySkuCostDTO;
+import com.erp.model.tms.dto.SmallBagCostAllocationDTO;
+import com.erp.model.tms.enums.AllocationFeeTypeEnum;
+import com.erp.model.tms.enums.CostAllocationEnum;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.tms.feign.TmsFirstMileLogisticFeign;
 import com.erp.rpc.wms.feign.SoOutstockFeign;
 import com.erp.server.oms.listener.KolSampleCostExcelListener;
 import com.erp.server.oms.mapper.KolSampleCostMapper;
@@ -76,6 +82,8 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
     @Resource
     private SoOutstockFeign soOutstockFeign;
 
+    @Resource
+    private TmsFirstMileLogisticFeign tmsFirstMileLogisticFeign;
 
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
@@ -251,6 +259,62 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
         }
         if (CollUtil.isEmpty(thisMonthList)) {
             return;
+        }
+        List<String> skuIdList = thisMonthList.stream().map(KolSampleCostEntity::getSkuId).distinct().collect(Collectors.toList());
+        List<String> warehouseIdList = thisMonthList.stream().map(KolSampleCostEntity::getWarehouseId).distinct().collect(Collectors.toList());
+        List<String> soOrgIdList = thisMonthList.stream().map(KolSampleCostEntity::getSoOrgId).distinct().collect(Collectors.toList());
+        //SKU成本
+        InventorySkuCostDTO.SkuCostParamDTO paramDTO = new InventorySkuCostDTO.SkuCostParamDTO();
+        paramDTO.setSkuIdList(skuIdList);
+        paramDTO.setOrgIdList(soOrgIdList);
+        paramDTO.setWarehouseIdList(warehouseIdList);
+        paramDTO.setStartAccountingMonth(startTime);
+        paramDTO.setEndAccountingMonth(endTIme);
+        List<InventorySkuCostDTO.InvSkuCostDTO> invSkuCostDTOS = tmsFirstMileLogisticFeign.listInventorySkuCost(paramDTO);
+        //小包费用分摊
+        SmallBagCostAllocationDTO.SmallBagCostParamDTO bagCostParamDTO = new SmallBagCostAllocationDTO.SmallBagCostParamDTO();
+        bagCostParamDTO.setSkuIdList(skuIdList);
+        List<String> soOutstockDetailIdList = thisMonthList.stream().map(KolSampleCostEntity::getSoOutstockDetailId).distinct().collect(Collectors.toList());
+        bagCostParamDTO.setSoOutstockDetailIdList(soOutstockDetailIdList);
+        List<SmallBagCostAllocationDTO.SmallBagCostDTO> smallBagCostDTOS = tmsFirstMileLogisticFeign.listSmallBagCost(bagCostParamDTO);
+
+        for ( KolSampleCostEntity kolSampleCostEntity : thisMonthList) {
+            kolSampleCostEntity.setCurrency(CurrencyEnum.CNY.getCurrencyCode());
+            kolSampleCostEntity.setCurrencySymbol(CurrencyEnum.CNY.getCurrencySymbol());
+            //设置SKU成本
+            InventorySkuCostDTO.InvSkuCostDTO invSkuCostDTO = invSkuCostDTOS.stream().filter(obj -> CharSequenceUtil.equals(obj.getSkuId(), kolSampleCostEntity.getSkuId())
+                    && CharSequenceUtil.equals(obj.getOrgId(), kolSampleCostEntity.getSoOrgId())
+                    && CharSequenceUtil.equals(obj.getWarehouseId(), kolSampleCostEntity.getWarehouseId()))
+                    .findFirst().orElse(null);
+            if (ObjUtil.isNotEmpty(invSkuCostDTO)) {
+                kolSampleCostEntity.setProductCost(MathUtil.multiplyWithFour(invSkuCostDTO.getProductCost(),invSkuCostDTO.getExchangeRate()));
+                kolSampleCostEntity.setFirstMileShippingCost(MathUtil.multiplyWithFour(invSkuCostDTO.getFirstMileShippingCost(),invSkuCostDTO.getExchangeRate()));
+                kolSampleCostEntity.setClearanceCustomsTax(MathUtil.multiplyWithFour(invSkuCostDTO.getClearanceCustomsTax(),invSkuCostDTO.getExchangeRate()));
+            }
+            //设置小包费用
+            smallBagCostDTOS.stream().filter(obj ->CharSequenceUtil.equals(obj.getFeeAllocationType(), CostAllocationEnum.COST_ALLOCATION.getCode()) &&  CharSequenceUtil.equals(obj.getSoOutstockDetailId(), kolSampleCostEntity.getSoOutstockDetailId()))
+                    .forEach(obj -> {
+                        BigDecimal cost = MathUtil.multiplyWithFour(obj.getAllocatedAmount(), obj.getAllocatedAmountExchange());
+
+                        if (CharSequenceUtil.equals(AllocationFeeTypeEnum.SHIPPING_COST.getCode(),obj.getFeeType())) {
+                           kolSampleCostEntity.setShippingCost(cost);
+                           return;
+                        }
+                        if (CharSequenceUtil.equals(AllocationFeeTypeEnum.DECLARE_COST.getCode(),obj.getFeeType())) {
+                            kolSampleCostEntity.setCustomsTax(cost);
+                            return;
+                        }
+                        if (CharSequenceUtil.equals(AllocationFeeTypeEnum.OTHER_COST.getCode(),obj.getFeeType())) {
+                            kolSampleCostEntity.setOtherCost(cost);
+                        }
+                    });
+                BigDecimal totalCost = kolSampleCostEntity.getProductCost()
+                    .add(kolSampleCostEntity.getFirstMileShippingCost())
+                    .add(kolSampleCostEntity.getClearanceCustomsTax())
+                    .add(kolSampleCostEntity.getShippingCost())
+                    .add(kolSampleCostEntity.getCustomsTax())
+                    .add(kolSampleCostEntity.getOtherCost());
+                kolSampleCostEntity.setTotalCost(totalCost);
         }
         super.saveOrUpdateBatch(thisMonthList);
 

@@ -689,6 +689,11 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
         return result != null ? result : Collections.emptyList();
     }
 
+    @Override
+    public List<InventorySkuCostDTO.InvSkuCostDTO> listInventorySkuCost(InventorySkuCostDTO.SkuCostParamDTO paramDTO) {
+        return baseMapper.listInventorySkuCost(paramDTO);
+    }
+
     /**
      * 核算月-分摊月-组织 唯一性校验
      * @author will

@@ -166,32 +166,32 @@ public class KolSampleCostEntity extends BaseEntity<KolSampleCostEntity> {
     * 材料成本
     */
     @TableField("product_cost")
-    private BigDecimal productCost;
+    private BigDecimal productCost = BigDecimal.ZERO;
     /**
     * 头程费用
     */
     @TableField("first_mile_shipping_cost")
-    private BigDecimal firstMileShippingCost;
+    private BigDecimal firstMileShippingCost = BigDecimal.ZERO;
     /**
     * 清关税费
     */
     @TableField("clearance_customs_tax")
-    private BigDecimal clearanceCustomsTax;
+    private BigDecimal clearanceCustomsTax = BigDecimal.ZERO;
     /**
     * 运费
     */
     @TableField("shipping_cost")
-    private BigDecimal shippingCost;
+    private BigDecimal shippingCost = BigDecimal.ZERO;
     /**
     * 关税
     */
     @TableField("customs_tax")
-    private BigDecimal customsTax;
+    private BigDecimal customsTax = BigDecimal.ZERO;
     /**
     * 其他费用
     */
     @TableField("other_cost")
-    private BigDecimal otherCost;
+    private BigDecimal otherCost = BigDecimal.ZERO;
 
 
     public static final String SOURCE_ID = "source_id";
