@@ -6,7 +6,7 @@ import com.alibaba.fastjson.TypeReference;
 import com.common.business.constant.BusinessCommonConstants;
 import com.common.business.threadlocal.ThirdWarehouseContext;
 import com.common.core.utils.OkHttpUtils;
-import com.sdk.wms.tongyou.dto.request.TongYouCancelOutboundReq;
+import com.erp.model.wms.dto.third.ThirdWarehouseCancelOutboundReq;
 import com.sdk.wms.tongyou.dto.request.TongYouCreateInboundReq;
 import com.sdk.wms.tongyou.dto.request.TongYouCreateOutboundReq;
 import com.sdk.wms.tongyou.dto.response.TongYouBaseResp;
@@ -144,7 +144,7 @@ public class TongYouService {
     /**
      * 取消出库单
      */
-    public TongYouBaseResp<String> cancelOutboundBill(@Valid TongYouCancelOutboundReq TongYouCancelOutboundReq){
+    public TongYouBaseResp<String> cancelOutboundBill(@Valid ThirdWarehouseCancelOutboundReq TongYouCancelOutboundReq){
         String path = "hwc_api/hwc_deliver_del.php";
         Map<String, String> headerMap = new HashMap<>();
         Map<String,Object> bodyMap = new HashMap<>();

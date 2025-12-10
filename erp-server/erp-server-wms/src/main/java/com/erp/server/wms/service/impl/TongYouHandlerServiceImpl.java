@@ -15,7 +15,6 @@ import com.erp.model.wms.enums.OverseasInstockTypeEnum;
 import com.erp.server.wms.convert.TongYouCreateInboundConverter;
 import com.erp.server.wms.convert.TongYouCreateOutboundConverter;
 import com.erp.server.wms.handler.AbstractThirdWarehouseHandler;
-import com.sdk.wms.tongyou.dto.request.TongYouCancelOutboundReq;
 import com.sdk.wms.tongyou.dto.request.TongYouCreateInboundReq;
 import com.sdk.wms.tongyou.dto.request.TongYouCreateOutboundReq;
 import com.sdk.wms.tongyou.dto.response.TongYouBaseResp;
@@ -200,9 +199,8 @@ public class TongYouHandlerServiceImpl extends AbstractThirdWarehouseHandler {
 
     @Override
     public ApiResult<String> cancelOutboundBill(@Valid ThirdWarehouseCancelOutboundReq cancelOutboundReq) {
-        TongYouCancelOutboundReq tongyouCancelOutboundReq = TongYouCancelOutboundReq.builder().build();
         log.warn(getPlatForm().getName()+"取消出库单请求:{}", JSONUtil.toJsonStr(cancelOutboundReq));
-        TongYouBaseResp<String> tongYouBaseResp = tongYouService.cancelOutboundBill(tongyouCancelOutboundReq);
+        TongYouBaseResp<String> tongYouBaseResp = tongYouService.cancelOutboundBill(cancelOutboundReq);
         log.warn(getPlatForm().getName()+"取消出库单结果:{}", JSONUtil.toJsonStr(tongYouBaseResp));
         if(!isSuccess(tongYouBaseResp.getError())){
             return failure(tongYouBaseResp.getContent());
