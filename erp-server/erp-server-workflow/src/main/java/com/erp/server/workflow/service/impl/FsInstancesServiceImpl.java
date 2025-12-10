@@ -188,6 +188,7 @@ public class FsInstancesServiceImpl implements FsInstancesService {
         taskInfo.setBussinessCode(batchResultDTO.getCode());
         taskInfo.setBussinessId(batchResultDTO.getId());
         taskInfo.setHappenTime(LocalDateTime.now());
+        taskInfo.setBussinessApproveStatus(ApproveStatusEnum.APPROVE.getCode());
         taskInfo.setStatus(taskStatus);
         taskInfo.setReason(reason);
         approveTaskInfoService.add(taskInfo);

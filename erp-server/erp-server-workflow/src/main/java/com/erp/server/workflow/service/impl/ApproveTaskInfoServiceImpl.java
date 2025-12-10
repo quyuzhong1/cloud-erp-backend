@@ -15,6 +15,7 @@ import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.ApprovePlatformEnum;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -334,6 +335,8 @@ public class ApproveTaskInfoServiceImpl extends SuperServiceImpl<ApproveTaskInfo
             listDTO.setStatusName(ApproveTaskStatusEnum.getName(listDTO.getStatus()));
             //数大臣单据名称
             listDTO.setBussinessKeyName(SourceTypeEnum.getName(listDTO.getBussinessKey()));
+            //树大臣审核状态
+            listDTO.setBussinessApproveStatusName(ApproveStatusEnum.getName(listDTO.getBussinessApproveStatus()));
         }
     }
 

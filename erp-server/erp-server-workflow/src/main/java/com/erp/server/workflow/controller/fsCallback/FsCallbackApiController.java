@@ -63,7 +63,7 @@ public class FsCallbackApiController {
     /**
      * 创建路由处理器 Create route handler
      */
-    @RequestMapping("/webhook/event")
+    @PostMapping("/webhook/event")
     public void event(HttpServletRequest request, HttpServletResponse response)
             throws Throwable {
         // 回调扩展包提供的事件回调处理器 Callback handler provided by the extension package
