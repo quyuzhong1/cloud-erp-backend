@@ -192,7 +192,7 @@ public class MQSyncFsHandler {
             cfgApproveSyncSendHandler.updateNotice(dto,processTaskManagementEntities,syncRecordEntity);
 
             //消息推送
-            cfgApproveSyncSendHandler.sendNotice(dto, fieldMapEntities,remoteValues, processManagementEntity, cfgApproveSyncEntity, createUserId, approveIds, ccIds, thirdUnionMap, processTaskManagementEntities,syncRecordEntity);
+            cfgApproveSyncSendHandler.sendNotice(dto, fieldMapEntities,remoteValues, processManagementEntity, cfgApproveSyncEntity, createUserId,dto.getOperator(), approveIds, ccIds, thirdUnionMap, processTaskManagementEntities,syncRecordEntity);
 
 //            //校验三方审批实例
 //            CheckExternalInstanceReq checkExternalInstanceReq = cfgApproveSyncBuildHandler.buildExternalInstanceReq(processManagementEntity, processTaskManagementEntities);
