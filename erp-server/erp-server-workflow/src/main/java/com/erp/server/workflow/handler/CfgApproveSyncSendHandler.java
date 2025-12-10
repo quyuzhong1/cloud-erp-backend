@@ -123,30 +123,30 @@ public class CfgApproveSyncSendHandler {
 
                 //发送抄送通知
                 syncRecordEntity.setNoticeNode(CfgApproveNoticeNoticeTypeEnum.CC.getCode());
-                commonSendNotice(NoticeTemplateEnum.CC, cfgApproveSyncEntity, createUserId, approveIds, ccIds, thirdUnionMap, summaries, pcLinkByEnv,syncRecordEntity);
+                commonSendNotice(NoticeTemplateEnum.CC, cfgApproveSyncEntity, createUserId,operator, approveIds, ccIds, thirdUnionMap, summaries, pcLinkByEnv,syncRecordEntity);
             }
         }
 
         if (Objects.equals(approveType, ApproveTypeEnum.PASS.getStatus())//审核通过并且流程已经完成
                 && Objects.equals(processManagementEntity.getProcessStatus(), ProcessStatusEnum.FINISH)) {
             //发送审批结果通知
-            commonSendNotice(NoticeTemplateEnum.APPROVE_RESULT_PASS,cfgApproveSyncEntity, operator, approveIds, ccIds, thirdUnionMap, summaries, pcLinkByEnv,syncRecordEntity);
+            commonSendNotice(NoticeTemplateEnum.APPROVE_RESULT_PASS,cfgApproveSyncEntity,createUserId, operator, approveIds, ccIds, thirdUnionMap, summaries, pcLinkByEnv,syncRecordEntity);
         } else if (Objects.equals(approveType, ApproveTypeEnum.REJECT.getStatus())
                 && Objects.equals(processManagementEntity.getProcessStatus(), ProcessStatusEnum.FINISH)) {//审核不通过并且流程已经完成
             //发送审批结果通知
-            commonSendNotice(NoticeTemplateEnum.APPROVE_RESULT_REJECT,cfgApproveSyncEntity, operator, approveIds, ccIds, thirdUnionMap, summaries, pcLinkByEnv,syncRecordEntity);
+            commonSendNotice(NoticeTemplateEnum.APPROVE_RESULT_REJECT,cfgApproveSyncEntity,createUserId, operator, approveIds, ccIds, thirdUnionMap, summaries, pcLinkByEnv,syncRecordEntity);
         } else if (Objects.equals(approveType, ApproveTypeEnum.CANCEL.getStatus())) {//撤销
             //发送撤销通知
-            commonSendNotice(NoticeTemplateEnum.RECALL,cfgApproveSyncEntity, operator, approveIds, ccIds, thirdUnionMap, summaries, pcLinkByEnv,syncRecordEntity);
+            commonSendNotice(NoticeTemplateEnum.RECALL,cfgApproveSyncEntity,createUserId, operator, approveIds, ccIds, thirdUnionMap, summaries, pcLinkByEnv,syncRecordEntity);
         } else if (Objects.equals(approveType, FsActionStatusEnum.FORWARDED.getCode())) {//转办
             //默认发送审核人
-            sendApproveNotice(NoticeTemplateEnum.APPROVE,summaries,operator, processTaskManagementEntities, thirdUnionMap, cfgApproveSyncEntity, pcLinkByEnv,syncRecordEntity);
+            sendApproveNotice(NoticeTemplateEnum.APPROVE,summaries,createUserId, processTaskManagementEntities, thirdUnionMap, cfgApproveSyncEntity, pcLinkByEnv,syncRecordEntity);
         } else if(Objects.equals(approveType, FsActionStatusEnum.PROCESSED.getCode())){//强制通过
             //发送审批结果通知
-            commonSendNotice(NoticeTemplateEnum.APPROVE_RESULT_PASS,cfgApproveSyncEntity, operator, approveIds, ccIds, thirdUnionMap, summaries, pcLinkByEnv,syncRecordEntity);
+            commonSendNotice(NoticeTemplateEnum.APPROVE_RESULT_PASS,cfgApproveSyncEntity,createUserId, operator, approveIds, ccIds, thirdUnionMap, summaries, pcLinkByEnv,syncRecordEntity);
         } else if(Objects.equals(approveType, FsActionStatusEnum.ROLLBACK.getCode())){//强制驳回
             //发送审批结果通知
-            commonSendNotice(NoticeTemplateEnum.APPROVE_RESULT_REJECT,cfgApproveSyncEntity, operator, approveIds, ccIds, thirdUnionMap, summaries, pcLinkByEnv,syncRecordEntity);
+            commonSendNotice(NoticeTemplateEnum.APPROVE_RESULT_REJECT,cfgApproveSyncEntity,createUserId, operator, approveIds, ccIds, thirdUnionMap, summaries, pcLinkByEnv,syncRecordEntity);
         } else if(Objects.equals(approveType, FsActionStatusEnum.RESTORE.getCode())){    //恢复
             //默认发送审核人
             sendApproveNotice(NoticeTemplateEnum.APPROVE,summaries,createUserId, processTaskManagementEntities, thirdUnionMap, cfgApproveSyncEntity, pcLinkByEnv,syncRecordEntity);
@@ -157,6 +157,7 @@ public class CfgApproveSyncSendHandler {
     private void commonSendNotice(NoticeTemplateEnum noticeTemplateEnum ,
                                   CfgApproveSyncEntity cfgApproveSyncEntity,
                                   String createUserId,
+                                  String operator,
                                   List<String> approveIds,
                                   List<String> ccIds,
                                   Map<String, ThirdUnionDTO> thirdUnionMap,
@@ -165,7 +166,7 @@ public class CfgApproveSyncSendHandler {
                                   ApproveSyncRecordEntity syncRecordEntity) {
         CfgApproveNoticeEntity cfgApproveNoticeEntity = cfgApproveNoticeService.getByNoticeTypeAndMainId(cfgApproveSyncEntity.getId(), noticeTemplateEnum.getCode(), Boolean.TRUE);
         if (Objects.nonNull(cfgApproveNoticeEntity)) {
-            List<String> sendUserIds = getSendUserIds(cfgApproveNoticeEntity, createUserId, approveIds, ccIds);
+            List<String> sendUserIds = getSendUserIds(cfgApproveNoticeEntity, createUserId,operator, approveIds, ccIds);
             sendNotice(noticeTemplateEnum.getName(), summaries, createUserId, sendUserIds, thirdUnionMap, cfgApproveSyncEntity, pcLinkByEnv,syncRecordEntity);
         }
     }
@@ -212,7 +213,7 @@ public class CfgApproveSyncSendHandler {
 
 
     //获取需要发送信息的人员集合（去重）
-    private static List<String> getSendUserIds(CfgApproveNoticeEntity cfgApproveNoticeEntity, String createUserId, List<String> approveIds, List<String> ccIds) {
+    private static List<String> getSendUserIds(CfgApproveNoticeEntity cfgApproveNoticeEntity, String createUserId,String operator, List<String> approveIds, List<String> ccIds) {
         List<String> sendUserIds = new ArrayList<>();
         //具体人员
         String specificPerson = cfgApproveNoticeEntity.getSpecificPerson();
