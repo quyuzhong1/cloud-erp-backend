@@ -133,9 +133,9 @@ public class TongYouService {
         //密钥
         Object object = ThirdWarehouseContext.getAuthMap().get("appToken");
         tongYouCreateOutboundReq.setToken(ObjectUtil.isEmpty(object) ? "" : object.toString());
-
-        log.warn("通邮 createOutboundBill request:{}",JSONObject.toJSONString(tongYouCreateOutboundReq));
-        String bodyStr = OkHttpUtils.doPostJson(getPreUrl()+path,JSONObject.toJSONString(Collections.singletonList(tongYouCreateOutboundReq)), headerMap);
+        String jsonString = JSONObject.toJSONString(Collections.singletonList(tongYouCreateOutboundReq));
+        log.warn("通邮 createOutboundBill request:{}",jsonString);
+        String bodyStr = OkHttpUtils.doPostJson(getPreUrl()+path,jsonString, headerMap);
         TongYouBaseResp<TongYouOutboundResp> respDto = TongYouUtils.parseToTongYouResp(bodyStr, TongYouOutboundResp.class);
         ThirdWarehouseContext.setResponseJson(bodyStr);
         return respDto;
