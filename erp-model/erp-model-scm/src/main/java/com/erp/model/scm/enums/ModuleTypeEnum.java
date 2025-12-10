@@ -198,8 +198,14 @@ public enum ModuleTypeEnum {
     DMP_CFG_OUTPUT("1006", "推送配置"),
     DMP_CFG_OUTPUT_DETAIL("1007", "推送调度"),
     DMP_OUTPUT_TASK("1008", "推送任务"),
-    ;
 
+    CFG_DIFF_STRATEGY("150", "差异策略配置"),
+
+    // doris
+    ADS_ERP_INVENTORY_DIFF("2000", "平台库存差异"),
+    ADS_ERP_INVENTORY_DIFF_KINGDEE("2001", "金蝶库存差异"),
+    ADS_ERP_FIRST_MILE_IN_TRANSIT_DIFF("2002", "在途库存报告"),
+    ;
 
 
     private String code;

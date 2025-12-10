@@ -15,7 +15,7 @@ import java.util.Map;
  */
 @Data
 @NoArgsConstructor
-public class PermissionsDTO  implements Serializable {
+public class PermissionsDTO extends SuperDTO  implements Serializable {
 
     /**
      * 数据权限

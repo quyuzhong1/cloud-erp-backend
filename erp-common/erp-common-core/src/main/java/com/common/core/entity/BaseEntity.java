@@ -77,6 +77,9 @@ public class BaseEntity<T extends BaseEntity<T>> extends Model<T> {
     @TableLogic
     private Boolean isDeleted;
 
+    @TableField(exist = false)
+    private Boolean isUserSystem = false;
+
     public static final String FIELD_ID = "id";
 
     public static final String CREATE_TIME = "create_time";

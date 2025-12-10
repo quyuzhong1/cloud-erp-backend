@@ -100,5 +100,8 @@ public class ThirdWarehouseDeliveryFeignController extends BaseController {
     public List<ThirdWarehouseDeliveryEntity> listWaitShipByWarehouseIds(@RequestBody List<String> warehouseIds){
         return thirdWarehouseDeliveryDetailService.listWaitShipByWarehouseIds(warehouseIds);
     }
-
+    @PostMapping("/listBySourceId")
+    public List<ThirdWarehouseDeliveryEntity> listBySourceId(@RequestBody List<String> sourceIds){
+        return thirdWarehouseDeliveryService.listBySourceId(sourceIds);
+    }
 }

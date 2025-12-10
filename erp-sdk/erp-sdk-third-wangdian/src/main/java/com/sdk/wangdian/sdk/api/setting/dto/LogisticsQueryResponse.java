@@ -47,7 +47,17 @@ public class LogisticsQueryResponse
 		@SerializedName("contact") private String contact;
 		@SerializedName("modified") private String modified;
 		@SerializedName("logistics_type") private Integer logisticsType;
+
+		public Boolean getDisabled() {
+			return disabled;
+		}
+
+		public void setDisabled(Boolean disabled) {
+			this.disabled = disabled;
+		}
+
 		@SerializedName("is_support_cod") private Boolean supportCode;
+		@SerializedName("is_disabled") private Boolean disabled;
 
 		public String getLogisticsName()
 		{

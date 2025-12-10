@@ -64,6 +64,14 @@ public class SoB2cDeliveryDetailServiceImpl extends SuperServiceImpl<SoB2cDelive
         return this.lambdaQuery().in(SoB2cDeliveryDetailEntity::getSourceDetailId, soDetailIdList).list();
     }
 
+    @Override
+    public void removeByMainIds(List<String> ids) {
+        if (CollectionUtils.isEmpty(ids)) {
+            return;
+        }
+        this.lambdaUpdate().in(SoB2cDeliveryDetailEntity::getMainId, ids).remove();
+    }
+
     /**
     * 新增修改处理数据
     */
@@ -88,7 +96,7 @@ public class SoB2cDeliveryDetailServiceImpl extends SuperServiceImpl<SoB2cDelive
                 if (CharSequenceUtil.isBlank(entity.getWarehouseLocation())){
                     entity.setWarehouseLocation(soB2cDetailEntity.getWarehouseLocation());
                 }
-                if (CharSequenceUtil.isBlank(entity.getVirtualWarehouseId())){
+                if (CharSequenceUtil.isBlank(entity.getVirtualWarehouseId()) && (Objects.isNull(entity.getIsSetVirtualWarehouseId()) || !entity.getIsSetVirtualWarehouseId())){
                     //虚拟仓库
                     entity.setVirtualWarehouseId(soB2cDetailEntity.getVirtualWarehouseId());
                 }

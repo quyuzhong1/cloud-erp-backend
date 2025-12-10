@@ -79,6 +79,8 @@ import com.erp.server.oms.listener.SkuMappingExcelListener;
 import com.erp.server.oms.listener.SkuMappingWarehouseExcelListener;
 import com.erp.server.oms.mapper.SkuMappingMapper;
 import com.erp.server.oms.service.*;
+import io.seata.spring.annotation.GlobalTransactional;
+import io.seata.tm.api.transaction.Propagation;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -736,6 +738,11 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             // listing 更新匹配关系
             listingInfo.setMatchResult(ListingMatchResultEnum.TRUE.getCode());
             listingInfo.setRemark("");
+            if(!listingInfo.getThirdBarcode().equals(thirdBarcode)){
+                //记录日志
+                String logMsg = CharSequenceUtil.format("用户【{}】更新仓库sku【{}】的第三方条码由【{}】变更为【{}】", UserContext.getDefaultLoginUser().getUserName(), warehouseSkuNo, listingInfo.getThirdBarcode(), thirdBarcode);
+                operateLogService.addModuleOperateLog(logMsg, ModuleTypeEnum.LISTING_INFO.getCode(), listingInfo.getId(), "编辑仓库sku第三方条码");
+            }
             listingInfo.setThirdBarcode(thirdBarcode);
             if(StringUtils.isNotBlank(dto.getAuthId())){
                 listingInfo.setAuthId(dto.getAuthId());
@@ -1860,6 +1867,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
     }
 
     @Override
+    @GlobalTransactional(propagation = Propagation.NOT_SUPPORTED)
     public List<SkuMappingDTO.SkuMappingViewDTO> listSkuMappingByParams(ListingInfoDTO.QueryDTO queryDTO) {
         if (Objects.isNull(queryDTO)){
             return Collections.emptyList();

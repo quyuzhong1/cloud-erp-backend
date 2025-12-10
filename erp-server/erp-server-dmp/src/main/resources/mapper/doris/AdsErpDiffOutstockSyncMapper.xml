@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.dmp.mapper.doris.AdsErpDiffOutstockSyncMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.dmp.entity.doris.AdsErpDiffOutstockSyncEntity">
+       <result column="id" property="id" />
+       <result column="create_time" property="createTime" />
+       <result column="update_time" property="updateTime" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="unique_code" property="uniqueCode" />
+       <result column="data_encrypt" property="dataEncrypt" />
+       <result column="source_system" property="sourceSystem" />
+       <result column="source_platform" property="sourcePlatform" />
+       <result column="account_code" property="accountCode" />
+       <result column="next_level_id" property="nextLevelId" />
+       <result column="bill_topic" property="billTopic" />
+       <result column="flow_id" property="flowId" />
+       <result column="node_id" property="nodeId" />
+       <result column="instance_id" property="instanceId" />
+       <result column="task_id" property="taskId" />
+       <result column="source_id" property="sourceId" />
+       <result column="etl_status" property="etlStatus" />
+       <result column="check_key" property="checkKey" />
+       <result column="check_month" property="checkMonth" />
+       <result column="check_month_query" property="checkMonthQuery" />
+       <result column="source_system_name" property="sourceSystemName" />
+       <result column="platform_bill_status_name" property="platformBillStatusName" />
+       <result column="platform_shop_name" property="platformShopName" />
+       <result column="platform_sales_platform_name" property="platformSalesPlatformName" />
+       <result column="platform_order_code" property="platformOrderCode" />
+       <result column="platform_so_code" property="platformSoCode" />
+       <result column="platform_outstock_code" property="platformOutstockCode" />
+       <result column="stock_sku" property="stockSku" />
+       <result column="stock_qty" property="stockQty" />
+       <result column="platform_sku_no" property="platformSkuNo" />
+       <result column="platform_qty" property="platformQty" />
+       <result column="platform_warehouse_name" property="platformWarehouseName" />
+       <result column="warehouse_name" property="warehouseName" />
+       <result column="platform_bill_date" property="platformBillDate" />
+       <result column="bill_name" property="billName" />
+       <result column="bill_status_name" property="billStatusName" />
+       <result column="shop_name" property="shopName" />
+       <result column="sales_platform_name" property="salesPlatformName" />
+       <result column="order_code" property="orderCode" />
+       <result column="so_code" property="soCode" />
+       <result column="outstock_code" property="outstockCode" />
+       <result column="sku_no" property="skuNo" />
+       <result column="qty" property="qty" />
+       <result column="erp_warehouse_name" property="erpWarehouseName" />
+       <result column="bill_date" property="billDate" />
+       <result column="diff_qty" property="diffQty" />
+       <result column="diff_tag" property="diffTag" />
+       <result column="diff_tag_name" property="diffTagName" />
+       <result column="diff_desc" property="diffDesc" />
+       <result column="suggest_type" property="suggestType" />
+       <result column="remark" property="remark" />
+       <result column="exec_status" property="execStatus" />
+       <result column="exec_status_name" property="execStatusName" />
+       <result column="finish_time" property="finishTime" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_time,
+        update_time,
+        create_user_name,
+        create_user_id,
+        update_user_name,
+        update_user_id,
+        version,
+        is_deleted,
+        unique_code, data_encrypt, source_system, source_platform, account_code, next_level_id, bill_topic, flow_id, node_id, instance_id, task_id, source_id, etl_status, check_key, check_month, check_month_query, source_system_name, platform_bill_status_name, platform_shop_name, platform_sales_platform_name, platform_order_code, platform_so_code, platform_outstock_code, stock_sku, stock_qty, platform_sku_no, platform_qty, platform_warehouse_name, warehouse_name, platform_bill_date, bill_name, bill_status_name, shop_name, sales_platform_name, order_code, so_code, outstock_code, sku_no, qty, erp_warehouse_name, bill_date, diff_qty, diff_tag, diff_tag_name, diff_desc, suggest_type, remark, exec_status, exec_status_name, finish_time
+    </sql>
+
+    <select id="paging" resultType="com.erp.model.dmp.dto.AdsErpDiffOutstockSyncDTO$ListDTO">
+		select 
+        t.id,
+        t.check_month checkMonth, 
+        t.source_system_name sourceSystemName, 
+        t.platform_bill_name platformBillName,
+        t.platform_bill_status_name platformBillStatusName,
+        t.platform_shop_name platformShopName,
+        t.platform_sales_platform_name platformSalesPlatformName,
+        t.platform_order_code platformOrderCode,
+        t.platform_so_code platformSoCode,
+        t.platform_outstock_code platformOutstockCode,
+        t.stock_sku stockSku,
+        t.stock_qty stockQty,
+        t.stock_sku_qty stockSkuQty,
+        t.platform_sku_no platformSkuNo,
+        t.platform_qty platformQty,
+        t.platform_sku_qty platformSkuQty,
+        t.platform_warehouse_name platformWarehouseName,
+        t.warehouse_name warehouseName,
+        t.platform_bill_date platformBillDate,
+        t.bill_name billName,
+        t.bill_status_name billStatusName,
+        t.shop_name shopName,
+        t.sales_platform_name salesPlatformName,
+        t.order_code orderCode,
+        t.so_code soCode,
+        t.outstock_code outstockCode,
+        t.sku_no skuNo,
+        t.qty,
+        t.sku_qty skuQty,
+        t.erp_warehouse_name erpWarehouseName,
+        t.bill_date billDate,
+        t.diff_qty diffQty, 
+        t.diff_tag_name diffTagName, 
+        t.diff_desc diffDesc,
+        t.suggest_type suggestType,
+        t.remark,
+        t.exec_status_name execStatusName,
+        t.finish_time finishTime,
+        t.create_time createTime
+        from
+        ads_erp_diff_outstock_sync t
+        WHERE ${params.sqlMap.default}
+        AND t.is_deleted = false
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+	    <if test="params.sortList != null and params.sortList.size > 0">
+	       <foreach collection="params.sortList" item="item" separator="," close=",">
+	           ${item.field} ${item.sort}
+	       </foreach>
+	    </if>
+	    t.check_month_query desc
+    </select>
+
+    <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
+        select approve_status, count(id) from ads_erp_diff_outstock_sync where is_deleted = false group by approve_status
+    </select>
+
+    <select id="listExport" resultType="com.erp.model.dmp.dto.AdsErpDiffOutstockSyncDTO$ListDTO">
+
+    </select>
+    <select id="tabList" resultType="com.erp.model.dmp.dto.AdsErpDiffOutstockSyncDTO$TabListDTO">
+        SELECT
+        diff_tag AS tabFlag,
+        count(*)  AS count
+        FROM  ads_erp_diff_outstock_sync
+        WHERE is_deleted=FALSE
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        GROUP BY diff_tag
+    </select>
+
+	<select id="total" resultType="com.erp.model.dmp.dto.AdsErpDiffOutstockSyncDTO$TotalDTO">
+        select
+        IFNULL(sum( CASE WHEN platform_bill_name IS NOT NULL AND platform_bill_name != '' THEN 1 ELSE 0 END ), 0) AS totalPlatformQty,
+        IFNULL(sum( CASE WHEN bill_name IS NOT NULL AND bill_name != '' THEN 1 ELSE 0 END ),0) AS totalErpQty,
+        IFNULL(sum( abs( diff_qty ) ),0) AS totalDiffQty
+        from ads_erp_diff_outstock_sync t
+        WHERE ${params.sqlMap.default}
+        AND t.is_deleted = false
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+    </select>
+    
+    <update id="updateDws" parameterType="java.util.List">
+    	update dmp_dws.dws_check_so_outstock_platform_f set update_time = now() where 
+    	is_deleted = false
+        and source_system in
+        <foreach collection="params" item="item" open="(" separator="," close=")">
+            #{item.sourceSystem}
+        </foreach>
+        and account_code in 
+        <foreach collection="params" item="item" open="(" separator="," close=")">
+            #{item.accountCode}
+        </foreach>
+        and check_month in 
+        <foreach collection="params" item="item" open="(" separator="," close=")">
+            #{item.checkMonth}
+        </foreach>
+    </update>
+</mapper>

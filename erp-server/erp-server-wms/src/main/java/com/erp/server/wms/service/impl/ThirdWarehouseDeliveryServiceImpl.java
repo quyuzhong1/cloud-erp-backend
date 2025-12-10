@@ -565,6 +565,14 @@ public class ThirdWarehouseDeliveryServiceImpl extends SuperServiceImpl<ThirdWar
     }
 
     @Override
+    public List<ThirdWarehouseDeliveryEntity> listBySourceId(List<String> sourceIds) {
+        if(CollectionUtils.isEmpty(sourceIds)){
+            return new ArrayList<>();
+        }
+        return this.lambdaQuery().in(ThirdWarehouseDeliveryEntity::getSoId, sourceIds).list();
+    }
+
+    @Override
     public void deleteByCode(String code) {
         if(CharSequenceUtil.isEmpty(code)){
             return;

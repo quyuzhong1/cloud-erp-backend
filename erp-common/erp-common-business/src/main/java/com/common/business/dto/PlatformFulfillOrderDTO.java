@@ -1,5 +1,6 @@
 package com.common.business.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -56,6 +57,10 @@ public class PlatformFulfillOrderDTO extends UniqueDto {
      */
     private String orderType = "";
     private String orderStatus = "";
+    /**
+     * 渠道编码
+     */
+    private String channelCode;
 
     /**
      * 货件id

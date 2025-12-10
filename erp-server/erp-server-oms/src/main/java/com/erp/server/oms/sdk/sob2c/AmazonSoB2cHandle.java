@@ -47,8 +47,6 @@ public class AmazonSoB2cHandle extends AbstractSoB2cHandle  {
     @Resource
     private PlatformOrderConsumerHandleService platformOrderConsumerHandleService;
     @Resource
-    private DmpMongoDbFeign dmpMongoDbFeign;
-    @Resource
     private ShopInfoService shopInfoService;
     @Resource
     private DmpInoutTaskFeign dmpInoutTaskFeign;
@@ -74,7 +72,7 @@ public class AmazonSoB2cHandle extends AbstractSoB2cHandle  {
         // 新的亚马逊FBA订单检查历史配送记录
         if (resultDTO.isNewInsertOrder() && Boolean.TRUE.equals(mainEntity.hasPlatformWarehouseOrder())) {
             try {
-                Boolean result = dmpMongoDbFeign.checkSoOutStock(new DmpPullSoOutStockDTO(mainEntity.getShopId(), mainEntity.getPlatformCode(), mainEntity.getId()));
+                Boolean result = checkSoOutStock(mainEntity);
                 if (Boolean.FALSE.equals(result)){
                     log.warn("处理检查历史销售出库记录失败:platformOrderId={}", dto.getPlatformCode());
                 }
@@ -161,5 +159,9 @@ public class AmazonSoB2cHandle extends AbstractSoB2cHandle  {
         );
         dto.setDetailExtendJson(JSON.toJSONString(map));
         return dto;
+    }
+
+    private Boolean checkSoOutStock(SoB2cEntity mainEntity) {
+        return true;
     }
 }

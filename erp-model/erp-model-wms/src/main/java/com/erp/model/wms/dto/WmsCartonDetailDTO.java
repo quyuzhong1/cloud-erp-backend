@@ -85,6 +85,10 @@ public class WmsCartonDetailDTO implements Serializable {
          * 重量单位（kg） 页面展示kg，数据库存储kg
          */
         private String weightUnit;
+        /**
+         * 客户PO号
+         */
+        private String customerPO;
     }
 
     /**
@@ -302,6 +306,7 @@ public class WmsCartonDetailDTO implements Serializable {
 
         private BigDecimal height;
 
+        private String customerPO;
         /**
          * 箱子尺寸单位
          */
@@ -353,6 +358,7 @@ public class WmsCartonDetailDTO implements Serializable {
          */
         private Integer totalQty = 0;
         private BigDecimal volumeWeight;
+
     }
 
     /**

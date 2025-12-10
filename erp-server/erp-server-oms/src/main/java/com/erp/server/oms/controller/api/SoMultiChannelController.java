@@ -25,6 +25,7 @@ import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoMultiChannelDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
+import com.erp.model.oms.entity.SoB2cReceiverEntity;
 import com.erp.model.oms.entity.SoMultiChannelEntity;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
@@ -38,10 +39,7 @@ import com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound.*;
 import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiInitUtils;
 import com.erp.server.oms.kingdee.SyncAmazonSoMultiChannelService;
 import com.erp.server.oms.query.SoMultiChannelQueryHandler;
-import com.erp.server.oms.service.ShopInfoService;
-import com.erp.server.oms.service.SoB2cDetailService;
-import com.erp.server.oms.service.SoB2cService;
-import com.erp.server.oms.service.SoMultiChannelService;
+import com.erp.server.oms.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.springframework.validation.annotation.Validated;
@@ -76,38 +74,44 @@ public class SoMultiChannelController extends BaseController {
     private DmpAmazonFeign dmpAmazonFeign;
     @Resource
     private SyncAmazonSoMultiChannelService syncAmazonSoMultiChannelService;
-//    /**
-//    * 新增
-//    * @author zdy
-//    * @date:  2025-08-20
-//    * @param dto
-//    * @return ApiResult<String>
-//    */
-//    @PostMapping("/add")
-//    @LogAction(value = LogActionEnum.INSERT, desc = "多渠道订单主表新增")
-//    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated SoMultiChannelDTO.AddDTO dto) {
-//        return success(soMultiChannelService.add(dto));
-//    }
+    @Resource
+    private SoB2cReceiverService soB2cReceiverService;
+    /**
+    * 修改
+    * @author zdy
+    * @date:  2025-08-20
+    * @param dto
+    * @return ApiResult
+    */
+    @PostMapping("/update")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "多渠道订单主表修改")
+        @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+        tableField = "create_user_id",
+        menuCode = "oms:soMultiChannel:update",
+        serviceClass = SoMultiChannelService.class,
+        keyIdName = "id")
+    public ApiResult<?> update(@RequestBody @Validated SoMultiChannelDTO.UpdateDTO dto) {
+        soMultiChannelService.update(dto);
+        return success();
+    }
 
-//    /**
-//    * 修改
-//    * @author zdy
-//    * @date:  2025-08-20
-//    * @param dto
-//    * @return ApiResult
-//    */
-//    @PostMapping("/update")
-//    @LogAction(value = LogActionEnum.UPDATE, desc = "多渠道订单主表修改")
-//        @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-//        tableField = "create_user_id",
-//        menuCode = "oms:soMultiChannel:update",
-//        serviceClass = SoMultiChannelService.class,
-//        keyIdName = "id")
-//    public ApiResult<?> update(@RequestBody @Validated SoMultiChannelDTO.UpdateDTO dto) {
-//        soMultiChannelService.update(dto);
-//        return success();
-//    }
-
+    /**
+    * 修改并提交审核
+    * @author zdy
+    * @date:  2025-08-20
+    * @param dto
+    * @return ApiResult<Void>
+    */
+    @PostMapping("/updateAndSubmit")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "oms:soMultiChannel:updateAndSubmit",
+            serviceClass = SoMultiChannelService.class,
+            keyIdName = "id")
+    public ApiResult<Void> updateAndSubmit(@RequestBody @Validated SoMultiChannelDTO.UpdateDTO dto) {
+        soMultiChannelService.updateAndSubmit(dto);
+        return success();
+    }
     /**
      * 获取状态统计
      *
@@ -143,37 +147,6 @@ public class SoMultiChannelController extends BaseController {
     public ApiResult<PagingVO<SoMultiChannelDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<SoMultiChannelDTO.PagingParamDTO> dto) {
         return success(soMultiChannelService.paging(dto));
     }
-
-//    /**
-//    * 新增并提交审核
-//    * @author zdy
-//    * @date:  2025-08-20
-//    * @param dto
-//    * @return ApiResult<Void>
-//    */
-//    @PostMapping("/addAndSubmit")
-//    public ApiResult<BaseResultDTO.AddDTO> addAndSubmit(@RequestBody @Validated SoMultiChannelDTO.AddDTO dto) {
-//        BaseResultDTO.AddDTO result = soMultiChannelService.addAndSubmit(dto);
-//        return success(result);
-//    }
-
-//    /**
-//    * 修改并提交审核
-//    * @author zdy
-//    * @date:  2025-08-20
-//    * @param dto
-//    * @return ApiResult<Void>
-//    */
-//    @PostMapping("/updateAndSubmit")
-//    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-//            tableField = "create_user_id",
-//            menuCode = "oms:soMultiChannel:updateAndSubmit",
-//            serviceClass = SoMultiChannelService.class,
-//            keyIdName = "id")
-//    public ApiResult<Void> updateAndSubmit(@RequestBody @Validated SoMultiChannelDTO.UpdateDTO dto) {
-//        soMultiChannelService.updateAndSubmit(dto);
-//        return success();
-//    }
 
     /**
      * 提交审核
@@ -465,6 +438,7 @@ public class SoMultiChannelController extends BaseController {
         List<BatchResultDTO> resultDTOS = new ArrayList<>();
         List<String> soIds = dto.getDetailList().stream().map(SoMultiChannelDTO.SoViewDTO::getSoId).distinct().collect(Collectors.toList());
         List<SoB2cEntity> soB2cEntityList = soB2cService.listByIds(soIds);
+        List<SoB2cReceiverEntity> receiverEntityList = soB2cReceiverService.listByMainIds(soIds);
         ShopInfoEntity shopInfoEntity = shopInfoService.getById(dto.getShopId());
         LogisticsChannelEntity channelEntity = FeignQuery.getById(LogisticsChannelEntity.class, dto.getLogisticsChannelId());
         for (String id : soIds) {
@@ -472,6 +446,12 @@ public class SoMultiChannelController extends BaseController {
             SoB2cEntity soB2cEntity = soB2cEntityList.stream().filter(e -> e.getId().equals(id)).findFirst().orElse(null);
             if (Objects.isNull(soB2cEntity)) {
                 submit = BatchResultDTO.fail(id, id, "订单不存在, 提交失败");
+                resultDTOS.add(submit);
+                continue;
+            }
+            SoB2cReceiverEntity receiverEntity = receiverEntityList.stream().filter(e -> e.getMainId().equals(id)).findFirst().orElse(null);
+            if (Objects.isNull(receiverEntity)) {
+                submit = BatchResultDTO.fail(id, id, "收货人不存在, 提交失败");
                 resultDTOS.add(submit);
                 continue;
             }
@@ -495,7 +475,7 @@ public class SoMultiChannelController extends BaseController {
                 if (PlatformDictEnum.LING_XING.getCode().equals(soB2cEntity.getThirdSystem())){
                     soB2cService.updateLingXingOrder(soB2cEntity,soB2cDetailService.listByMainId(id));
                 }
-                SoMultiChannelDTO.AddDTO addDTO = soMultiChannelService.buildAddDTO(dto, id, shopInfoEntity, soB2cEntity, channelEntity);
+                SoMultiChannelDTO.AddDTO addDTO = soMultiChannelService.buildAddDTO(dto, id, shopInfoEntity, soB2cEntity, channelEntity, receiverEntity);
                 BaseResultDTO.AddDTO add = soMultiChannelService.add(addDTO);
                 //自动提审
                 soMultiChannelService.submit(add.getId());

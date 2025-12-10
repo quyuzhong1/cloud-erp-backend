@@ -481,7 +481,12 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
         updateForApprove(entity.getId(), approveStatus.getStatus());
         if (ApproveStatusEnum.APPROVE.equals(approveStatus) && ThirdDeliveryTypeEnum.THIRD_TO_THIRD.getCode().equals(entity.getDeliveryType())) {
             // 审核通过 生成要货申请
-            requisitionApplicationService.generateRequisition(entity.getId());
+            try {
+                UserContext.setIsUserSystem(true);
+                requisitionApplicationService.generateRequisition(entity.getId());
+            }finally {
+                UserContext.clearIsUserSystem();
+            }
         }
         return Boolean.TRUE;
     }
