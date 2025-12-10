@@ -480,29 +480,33 @@ public class DeliveryBoxRuleServiceImpl extends SuperServiceImpl<DeliveryBoxRule
                         "新增操作"
                 );
 
-                //新增
-                for (DeliveryBoxRuleDetailEntity deliveryBoxRuleDetailEntity : addList) {
-                    deliveryBoxRuleDetailEntity.setMainId(deliveryBoxRuleId);
-                    deliveryBoxRuleDetailEntity.setInvalidStatus(InvalidStatusEnum.NOT_VOIDED.getStatus());
+                if (!addList.isEmpty()) {
+                    //新增
+                    for (DeliveryBoxRuleDetailEntity deliveryBoxRuleDetailEntity : addList) {
+                        deliveryBoxRuleDetailEntity.setMainId(deliveryBoxRuleId);
+                        deliveryBoxRuleDetailEntity.setInvalidStatus(InvalidStatusEnum.NOT_VOIDED.getStatus());
+                    }
+
+                    boolean addSuccess = deliveryBoxRuleDetailService.saveBatch(addList);
+
+                    if (!addSuccess) {
+                        throw new ServiceException(ApiError.ERROR_BATCH_UPDATE_BOX_RULE);
+                    }
                 }
 
-                boolean addSuccess = deliveryBoxRuleDetailService.saveBatch(addList);
+                if (!updateList.isEmpty()) {
+                    //更新
+                    for (DeliveryBoxRuleDetailEntity deliveryBoxRuleDetailEntity : updateList) {
+                        deliveryBoxRuleDetailEntity.setMainId(deliveryBoxRuleId);
+                        boolean updateSuccess = deliveryBoxRuleDetailService.lambdaUpdate()
+                                .set(DeliveryBoxRuleDetailEntity::getDeliverySkuNo,deliveryBoxRuleDetailEntity.getDeliverySkuNo())
+                                .eq(DeliveryBoxRuleDetailEntity::getMainId,deliveryBoxRuleId)
+                                .eq(DeliveryBoxRuleDetailEntity::getInvalidStatus,InvalidStatusEnum.NOT_VOIDED.getStatus())
+                                .update();
 
-                if (!addSuccess) {
-                    throw new ServiceException(ApiError.ERROR_BATCH_UPDATE_BOX_RULE);
-                }
-
-                //更新
-                for (DeliveryBoxRuleDetailEntity deliveryBoxRuleDetailEntity : updateList) {
-                    deliveryBoxRuleDetailEntity.setMainId(deliveryBoxRuleId);
-                    boolean updateSuccess = deliveryBoxRuleDetailService.lambdaUpdate()
-                            .set(DeliveryBoxRuleDetailEntity::getDeliverySkuNo,deliveryBoxRuleDetailEntity.getDeliverySkuNo())
-                            .eq(DeliveryBoxRuleDetailEntity::getMainId,deliveryBoxRuleId)
-                            .eq(DeliveryBoxRuleDetailEntity::getInvalidStatus,InvalidStatusEnum.NOT_VOIDED.getStatus())
-                            .update();
-
-                    if (!updateSuccess) {
-                        throw new ServiceException(ApiError.ERROR_BATCH_ADD_BOX_RULE);
+                        if (!updateSuccess) {
+                            throw new ServiceException(ApiError.ERROR_BATCH_ADD_BOX_RULE);
+                        }
                     }
                 }
 

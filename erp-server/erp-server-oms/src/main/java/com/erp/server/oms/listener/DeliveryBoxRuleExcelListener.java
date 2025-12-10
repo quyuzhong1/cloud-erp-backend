@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.dto.base.BaseDTO;
 import com.common.business.enums.FileTaskStatusEnum;
+import com.common.business.utils.StringUtil;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.FieldValidUtil;
@@ -129,7 +130,7 @@ public class DeliveryBoxRuleExcelListener extends AnalysisEventListener<Delivery
                             .findFirst()
                             .orElse(null);
                     if (ObjectUtils.isEmpty(skuVO)) {
-                        errorMsgList.add("请录入启用的sku信息");
+                        errorMsgList.add("请录入已审核的sku信息");
                     } else {
                         excelDTO.setSkuId(skuVO.getSkuId());
                         excelDTO.setSkuNo(skuVO.getSkuNo());
@@ -157,22 +158,24 @@ public class DeliveryBoxRuleExcelListener extends AnalysisEventListener<Delivery
                     .orElse(null);
 
             if (ObjectUtils.isEmpty(deliverySkuVO)) {
-                errorMsgList.add("请录入启用的发货 SKU 信息");
+                errorMsgList.add("请录入已审核的发货 SKU 信息");
             } else {
                 // 校验 SKU 和发货 SKU 是否相同
                 if (skuNo.equals(deliverySkuNo)) {
                     errorMsgList.add("主 SKU 和发货 SKU 不能相同");
                 }
 
-                // 校验 SKU + 发货 SKU 是否重复
-                String pairKey = excelDTO.getSkuId() + "_" + deliverySkuVO.getSkuId();
-                if (skuDeliverySkuPairSet.contains(pairKey)) {
-                    errorMsgList.add("SKU [" + skuNo + "] ,发货 SKU [" + deliverySkuNo + "]在文件中重复，请勿重复录入");
-                } else {
-                    skuDeliverySkuPairSet.add(pairKey);
-                    detail.setDeliverySkuId(deliverySkuVO.getSkuId());
-                    detail.setDeliverySkuNo(deliverySkuVO.getSkuNo());
-                    detail.setDeliveryProductName(deliverySkuVO.getSkuName());
+                if (StringUtils.isNotBlank(excelDTO.getSkuNo()) && StringUtils.isNotBlank(deliverySkuVO.getSkuNo())) {
+                    // 校验 SKU + 发货 SKU 是否重复
+                    String pairKey = excelDTO.getSkuNo() + "_" + deliverySkuVO.getSkuNo();
+                    if (skuDeliverySkuPairSet.contains(pairKey)) {
+                        errorMsgList.add("SKU [" + skuNo + "] ,发货 SKU [" + deliverySkuNo + "]在文件中重复，请勿重复录入");
+                    } else {
+                        skuDeliverySkuPairSet.add(pairKey);
+                        detail.setDeliverySkuId(deliverySkuVO.getSkuId());
+                        detail.setDeliverySkuNo(deliverySkuVO.getSkuNo());
+                        detail.setDeliveryProductName(deliverySkuVO.getSkuName());
+                    }
                 }
             }
         }
