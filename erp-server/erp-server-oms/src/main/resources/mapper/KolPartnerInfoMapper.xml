@@ -161,7 +161,7 @@ kcp.remark AS platformRemark
         kai.email AS email,
         kai.phone AS phone,
         kai.zip_code AS zipCode,
-        kai.is_default AS isDefault,
+        kai.is_default AS isDefault
         FROM
         kol_partner_info kpi
         LEFT JOIN kol_address_info AS kai ON kpi.ID = kai.main_id
