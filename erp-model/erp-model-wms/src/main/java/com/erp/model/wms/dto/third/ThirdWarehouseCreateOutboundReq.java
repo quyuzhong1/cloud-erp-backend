@@ -258,6 +258,11 @@ public class ThirdWarehouseCreateOutboundReq extends ThirdWarehouseAuth {
         private String productSkuId;
 
         /**
+         * 产品条码（三方仓商品条码）
+         */
+        private String thirdBarcode;
+
+        /**
          * 数量
          */
         private Integer quantity;
@@ -278,6 +283,14 @@ public class ThirdWarehouseCreateOutboundReq extends ThirdWarehouseAuth {
         private String hsCode;
 
         public Item(String productSku, Integer quantity,String hsCode,String productSkuId) {
+            this.productSku = productSku;
+            this.productSkuId = productSkuId;
+            this.quantity = quantity;
+            this.hsCode = hsCode;
+        }
+
+        public Item(String thirdBarcode,String productSku, Integer quantity,String hsCode,String productSkuId) {
+            this.thirdBarcode = thirdBarcode;
             this.productSku = productSku;
             this.productSkuId = productSkuId;
             this.quantity = quantity;

@@ -166,7 +166,7 @@ public class TongYouHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         if(!isSuccess(tongYouBaseResp.getError())){
             return failure(tongYouBaseResp.getContent());
         }
-        return success(tongYouBaseResp.getData().getOrderCode());
+        return success(tongYouBaseResp.getContent());
     }
 
     /**

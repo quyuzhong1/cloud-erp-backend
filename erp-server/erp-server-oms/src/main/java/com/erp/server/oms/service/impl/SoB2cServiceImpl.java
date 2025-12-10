@@ -3063,6 +3063,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
              */
             String platformSkuId = platformSkuList.stream().filter(s -> s.getSkuId().equals(deliverySkuDTO.getSkuId())).
                     map(SkuMappingDTO.ListSkuResultDTO::getPlatformSkuId).findFirst().orElseThrow(() -> new ServiceException(CharSequenceUtil.format("{}未配置海外仓sku", deliverySkuDTO.getSkuNo())));
+            /**
+             * 三方条码
+             */
+            String thirdBarcode = platformSkuList.stream().filter(s -> s.getSkuId().equals(deliverySkuDTO.getSkuId())).
+                    map(SkuMappingDTO.ListSkuResultDTO::getThirdBarcode).findFirst().orElseThrow(() -> new ServiceException(CharSequenceUtil.format("{}未配置海外仓sku", deliverySkuDTO.getSkuNo())));
 
             ThirdWarehouseCreateOutboundReq.Item outboundReqItem = new ThirdWarehouseCreateOutboundReq.Item();
             outboundReqItem.setQuantity(baseQty);
@@ -3074,6 +3079,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             outboundReqItem.setPlatformDetailId(deliverySkuDTO.getPlatformDetailId());
             outboundReqItem.setDetailId(deliverySkuDTO.getDetailId());
             outboundReqItem.setProductSkuId(platformSkuId);
+            outboundReqItem.setThirdBarcode(thirdBarcode);
             SoB2cDeclareProductEntity soB2cDeclareProductEntity = soB2cDeclareProductEntityList.stream().filter(s -> s.getSkuId().equals(deliverySkuDTO.getSkuId())).findFirst().orElse(null);
             if(Objects.nonNull(soB2cDeclareProductEntity)){
                 outboundReqItem.setHsCode(soB2cDeclareProductEntity.getToCustomsCode());

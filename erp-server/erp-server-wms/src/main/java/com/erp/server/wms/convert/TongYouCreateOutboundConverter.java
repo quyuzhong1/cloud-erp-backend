@@ -48,7 +48,7 @@ public interface TongYouCreateOutboundConverter {
 
 
     @Mappings({
-            @Mapping(target = "sku", source = "productSku"),
+            @Mapping(target = "sku", source = "thirdBarcode"),
             @Mapping(target = "nums", source = "quantity"),
     })
     TongYouCreateOutboundReq.AddDetailDTO outboundDetailToThird(ThirdWarehouseCreateOutboundReq.Item req);
