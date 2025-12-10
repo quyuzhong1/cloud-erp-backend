@@ -342,15 +342,16 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
             Set<String> processedIds = new HashSet<>();
 
             for (SampleRecipientDTO.ProductDTO productDTO : addOrUpdateDTO.getDetailList()) {
-                String detailId = productDTO.getId();
+                // 使用recordId来判断是否为更新，recordId是数据库真实ID，不会被前端污染
+                String recordId = productDTO.getRecordId();
                 
-                // 如果ID不为空，说明是已存在的明细，需要更新
-                if (StringUtils.isNotBlank(detailId)) {
-                    processedIds.add(detailId);
-                    SampleRecipientDetailEntity existingDetail = existingDetailMap.get(detailId);
+                // 如果recordId不为空，说明是已存在的明细，需要更新
+                if (StringUtils.isNotBlank(recordId)) {
+                    SampleRecipientDetailEntity existingDetail = existingDetailMap.get(recordId);
                     
                     if (existingDetail != null) {
                         // 更新已存在的明细
+                        processedIds.add(recordId);
                         existingDetail.setProductName(productDTO.getProductName());
                         existingDetail.setRecipientQty(productDTO.getQuantity());
                         existingDetail.setRemark(productDTO.getRemark());
@@ -361,9 +362,29 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
                         }
                         // 注意：不重置已出库数量和执行状态，保持业务连续性
                         toSave.add(existingDetail);
+                    } else {
+                        // recordId不为空但在数据库中不存在，可能是数据已被删除或传入了无效ID
+                        // 当作新增处理，避免数据丢失，并记录警告日志
+                        log.warn("样品领用单明细recordId【{}】在数据库中不存在，将被当作新增处理，SKU：{}，单据ID：{}", 
+                            recordId, productDTO.getSkuNo(), addOrUpdateDTO.getId());
+                        // 当作新增处理
+                        SampleRecipientDetailEntity newDetail = new SampleRecipientDetailEntity();
+                        newDetail.setMainId(addOrUpdateDTO.getId());
+                        newDetail.setSkuNo(productDTO.getSkuNo());
+                        newDetail.setSkuId(productDTO.getSkuId());
+                        newDetail.setProductName(productDTO.getProductName());
+                        newDetail.setRecipientQty(productDTO.getQuantity());
+                        newDetail.setDeliveryQty(0); // 新明细初始已出库数量为0
+                        if(!sampleRecipientEntity.getIsOutstockRequired()){
+                            newDetail.setExecStatus(SampleRecipientExecStatusEnum.NO_OUTSTOCK.getExecStatus()); //若选择了无需出库则初始状态为无需出库
+                        }else {
+                            newDetail.setExecStatus(SampleRecipientExecStatusEnum.WAIT_OUTSTOCK.getExecStatus()); // 初始状态为待出库
+                        }
+                        newDetail.setRemark(productDTO.getRemark());
+                        toSave.add(newDetail);
                     }
                 } else {
-                    // ID为空，说明是新增的明细
+                    // recordId为空，说明是新增的明细
                     SampleRecipientDetailEntity newDetail = new SampleRecipientDetailEntity();
                     newDetail.setMainId(addOrUpdateDTO.getId());
                     newDetail.setSkuNo(productDTO.getSkuNo());
@@ -1149,7 +1170,8 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
                     .collect(Collectors.toMap(InventoryDTO.InventoryViewQtyDTO::getSkuId, item -> item, (existing, replacement) -> existing));
             for (SampleRecipientDetailEntity detail : detailList) {
                 SampleRecipientDTO.ProductDTO productDTO = new SampleRecipientDTO.ProductDTO();
-                productDTO.setId(detail.getId());
+                productDTO.setId(detail.getId()); // 保持兼容性，前端可以继续使用
+                productDTO.setRecordId(detail.getId()); // 数据库记录ID，用于区分更新和新增
                 productDTO.setSkuNo(detail.getSkuNo());
                 productDTO.setSkuId(detail.getSkuId());
                 productDTO.setProductName(detail.getProductName());
