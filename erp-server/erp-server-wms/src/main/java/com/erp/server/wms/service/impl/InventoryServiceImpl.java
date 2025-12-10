@@ -52,7 +52,6 @@ import com.erp.server.wms.service.WarehouseLocationService;
 import com.erp.server.wms.service.WarehouseService;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.IOUtils;
@@ -62,7 +61,6 @@ import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
@@ -1231,7 +1229,7 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
         if(CharSequenceUtil.isBlank(params.getWarehouseLocation())){
             throw new ServiceException("仓位不存在");
         }
-        WarehouseLocationEntity entity = warehouseLocationService.findByWarehouseCode(params.getWarehouseLocation());
+        WarehouseLocationEntity entity = warehouseLocationService.findByWarehouseCodeOrName(params.getWarehouseLocation());
         if (Objects.nonNull(entity) && CharSequenceUtil.isNotBlank(entity.getCode())){
             paramDTO.setWarehouseLocation(entity.getCode());
         }else {
