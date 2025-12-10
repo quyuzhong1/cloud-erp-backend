@@ -446,11 +446,6 @@ public class KolPartnerInfoDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class PartnerAddressDTO {
-
-        /**
-         * 主键id
-         */
-        private String  id;
         /**
          * 地址id
          */
@@ -571,6 +566,66 @@ public class KolPartnerInfoDTO implements Serializable {
          * 国家名称
          */
         private String countryName;
+        /**
+         * 地址id
+         */
+        private String  addressId;
+
+        /**
+         * 地址信息--国家id
+         */
+        private String addressCountryId;
+
+        /**
+         * 地址信息--国家
+         */
+        private String addressCountryName;
+
+        /**
+         * 省/州id
+         */
+        private String province;
+
+        /**
+         * 城市
+         */
+        private String city;
+
+
+        /**
+         * 区域
+         */
+        private String district;
+
+        /**
+         * 详细地址
+         */
+        private String detailAddress;
+
+        /**
+         * 联系人
+         */
+        private String contactPerson;
+
+        /**
+         * 邮箱
+         */
+        private String email;
+
+        /**
+         * 联系电话
+         */
+        private String phone;
+
+        /**
+         * 邮编
+         */
+        private String zipCode;
+
+        /**
+         * 是否默认地址
+         */
+        private Boolean isDefault;
     }
 
     @Data

@@ -669,19 +669,7 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
 
     @Override
     public List<KolPartnerInfoDTO.DropDownDTO> dropDown(KolPartnerInfoDTO.SelectDTO dto) {
-        if(Objects.isNull(dto)){
-            return Collections.emptyList();
-        }
-        //构建查询条件：根据搜索关键字模糊查询code字段，并过滤掉无效、已删除和未审批通过的数据
-        LambdaQueryWrapper<KolPartnerInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
-        if(StringUtils.isNotBlank(dto.getSearchKeyword())){
-            queryWrapper.like(KolPartnerInfoEntity::getNickname, dto.getSearchKeyword());
-        }
-        queryWrapper.eq(KolPartnerInfoEntity::getIsDeleted, false);
-        queryWrapper.orderByDesc(KolPartnerInfoEntity::getCreateTime);
-        queryWrapper.orderByDesc(KolPartnerInfoEntity::getDisabled);
-        List<KolPartnerInfoEntity> list = this.list(queryWrapper);
-        return BeanMapperUtils.copyList(KolPartnerInfoDTO.DropDownDTO.class, list);
+        return this.baseMapper.dropDown(dto);
     }
 
     @Override
