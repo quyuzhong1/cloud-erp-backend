@@ -255,7 +255,6 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
     @Resource
     private SysPartitionFeign sysPartitionFeign;
-    private OmsPushMsgService omsPushMsgService;
 
     @Resource
     private CfgSettingFeign fgSettingFeign;
@@ -264,6 +263,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
     @Resource
     private SyncDhtService syncDhtService;
+    @Resource
+    private B2bThirdDeliveryFeign b2bThirdDeliveryFeign;
 
     /**
      * 添加销售订单
@@ -4098,8 +4099,22 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         if (CollUtil.isEmpty(updateDTOList) || !WarehouseManageTypeEnum.THIRD_PARTY.getCode().equals(updateDTOList.get(0).getWarehouseManageType())){
             throw new ServiceException("只允许三方仓类型仓库下推b2b三方发货单");
         }
-        List<SoDetailEntity> soDetailEntityList = soDetailService.listBaseByMainId(dto.getSoId());
-        soDetailEntityList = soDetailEntityList.stream().filter(e -> (e.getQty() - e.getDeliveryQty()) > 0 && dto.getSoDetailIds().contains(e.getId())).collect(Collectors.toList());
+        List<SoDetailEntity> soDetailEntityList = soDetailService.listByIds(dto.getSoDetailIds());
+        //根据销售订单查询三方仓发货明细
+        List<B2bThirdDeliveryDetailEntity> b2bThirdDeliveryDetailEntityList = b2bThirdDeliveryFeign.listBySoDetailIds(dto.getSoDetailIds());
+        Map<String, Integer> detailIdMap = b2bThirdDeliveryDetailEntityList.stream()
+                .filter(f -> !ThirdDeliveryStatusEnum.CANCEL_DELIVERY.getCode().equals(f.getStatus()))
+                .collect(Collectors.groupingBy(
+                        B2bThirdDeliveryDetailEntity::getSoDetailId,
+                        Collectors.mapping(B2bThirdDeliveryDetailEntity::getDeliveryQty, Collectors.summingInt(Integer::intValue))
+                ));
+        soDetailEntityList = soDetailEntityList.stream().filter(e -> {
+            if (!dto.getSoId().contains(e.getMainId())){
+                return false;
+            }
+            //已发货数量
+            return e.getQty() > detailIdMap.getOrDefault(e.getId(),0);
+        }).collect(Collectors.toList());
         if (CollUtil.isEmpty(soDetailEntityList)){
             throw new ServiceException("订单明细中发货数量已全部下推,不允许再生成三方发货单");
         }
@@ -4124,6 +4139,9 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             skuVOS.stream().filter(f -> f.getSkuId().equals(e.getSkuId())).findFirst().ifPresent(p ->{
                 e.setProductName(p.getSkuName());
             });
+            //重置发货数量
+            Integer deliveryQty = detailIdMap.getOrDefault(e.getId(),0);
+            e.setDeliveryQty(e.getSaleQty() - deliveryQty);
             if (e.getDeliveryQty() > 0 && e.getPerBoxQty() > 0){
                 e.setBoxQty(e.getDeliveryQty() / e.getPerBoxQty());//这里一定是整数倍
             }else {

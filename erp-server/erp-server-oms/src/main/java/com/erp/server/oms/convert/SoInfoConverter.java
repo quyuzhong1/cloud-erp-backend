@@ -158,7 +158,7 @@ public interface SoInfoConverter {
     @Mapping(target = "warehousePlatformSku", ignore = true)
     @Mapping(target = "sort", ignore = true)
     @Mapping(target = "saleQty", source = "qty")
-    @Mapping(target = "deliveryQty", expression = "java(soDetailEntity.getQty() - soDetailEntity.getDeliveryQty())")
+    @Mapping(target = "deliveryQty", constant = "0")
     @Mapping(target = "boxSpecNo", ignore = true)
     B2bThirdDeliveryDetailDTO.ViewDTO toB2bThirdDeliveryDetailViewDTO(SoDetailEntity soDetailEntity);
 }

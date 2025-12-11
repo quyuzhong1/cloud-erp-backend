@@ -39,6 +39,15 @@
         is_deleted,
         main_id, sku_id, sku_no, sale_qty, delivery_qty, per_box_qty, delivery_sku_no, delivery_sku_id, warehouse_platform_sku, box_qty, box_spec_no, sort
     </sql>
+    <select id="listBySoDetailIds" resultType="com.erp.model.wms.entity.B2bThirdDeliveryDetailEntity">
+        select b2b_third_delivery_detail.* ,b2b_third_delivery.status
+        from b2b_third_delivery_detail
+        inner join b2b_third_delivery on b2b_third_delivery_detail.main_id = b2b_third_delivery.id
+        where so_detail_id in
+        <foreach collection="soDetailIds" item="item" open="(" close=")" separator=",">
+            #{item}
+        </foreach>
+    </select>
 
 
 </mapper>

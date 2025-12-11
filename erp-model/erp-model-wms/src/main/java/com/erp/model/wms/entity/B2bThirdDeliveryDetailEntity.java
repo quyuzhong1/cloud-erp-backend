@@ -94,6 +94,12 @@ public class B2bThirdDeliveryDetailEntity extends BaseEntity<B2bThirdDeliveryDet
     */
     @TableField("sort")
     private Integer sort;
+    /**
+     * 状态(主单)
+     */
+    @TableField(exist = false)
+    private String status;
+
 
 
     public static final String MAIN_ID = "main_id";

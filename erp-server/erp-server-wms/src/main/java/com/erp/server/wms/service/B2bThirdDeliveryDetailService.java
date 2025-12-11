@@ -1,8 +1,8 @@
 package com.erp.server.wms.service;
-import com.erp.model.wms.entity.B2bThirdDeliveryDetailEntity;
+
 import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
 import com.erp.model.wms.dto.B2bThirdDeliveryDetailDTO;
+import com.erp.model.wms.entity.B2bThirdDeliveryDetailEntity;
 
 import java.util.List;
 
@@ -21,6 +21,8 @@ public interface B2bThirdDeliveryDetailService extends SuperService<B2bThirdDeli
     List<B2bThirdDeliveryDetailEntity> listByMainIds(List<String> ids);
 
     List<B2bThirdDeliveryDetailEntity> batchAdd(String id, List<B2bThirdDeliveryDetailDTO.AddDTO> detailList);
+
+    List<B2bThirdDeliveryDetailEntity> listBySoDetailIds(List<String> soDetailIds);
 
     /**
      *
