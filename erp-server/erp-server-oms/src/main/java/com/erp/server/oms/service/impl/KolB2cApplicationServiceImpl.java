@@ -140,6 +140,8 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
     private SoB2cService soB2cService;
     @Resource
     private SyncWangDianSoB2cService syncWangDianSoB2cService;
+    @Resource
+    private OrderCategoryService orderCategoryService;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -785,6 +787,14 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         //明细按达人分组
         Map<String, List<KolB2cApplicationDetailEntity>> partnerGroup = list.stream().collect(Collectors.groupingBy(KolB2cApplicationDetailEntity::getPartnerId));
 
+
+        String orderCategoryId ="";
+        List<OrderCategoryEntity> orderCategoryEntityList = orderCategoryService.lambdaQuery().eq(OrderCategoryEntity::getGroupName, "网红财务审核").list();
+        if(CollUtil.isNotEmpty(orderCategoryEntityList)){
+            orderCategoryId = orderCategoryEntityList.get(0).getId();
+        }
+
+
         int index = 1;
         for (Map.Entry<String, List<KolB2cApplicationDetailEntity>> entry : partnerGroup.entrySet()) {
             //------------按达人维度生成拆分单和拆分单明细------------
@@ -799,7 +809,7 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
             kolSubB2cApplicationEntity.setNickname(entry.getValue().get(0).getNickname());
 
 
-            //------------根据拆分单生成B2C------------
+            //------------根据拆分单生成B2C------------oms/orderCategory/list
             //B2C
             SoB2cDTO.AddDTO b2cDto = new SoB2cDTO.AddDTO();
             //销售平台 -- 其他平台
@@ -810,6 +820,12 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
             b2cDto.setAmount(BigDecimal.ZERO);
             //币别
             b2cDto.setCurrency(entity.getCurrency());
+            //订单付款时间
+            b2cDto.setPayTime(LocalDateTime.now());
+            //订单分类
+            if(StringUtils.isNotBlank(orderCategoryId)){
+                b2cDto.setCategoryIdList(Arrays.asList(orderCategoryId));
+            }
             //单据子类型 -- 红人样品
             b2cDto.setTransactionSubType(OrderSubTypeEnum.INFLUENCER_SAMPLE.getCode());
             //物流信息
