@@ -222,6 +222,7 @@ public enum ApiError implements Serializable {
     ERROR_SDY_NOT_FOUND_CUSTOMER(80016,"店铺未绑定客户信息，店铺id【{}】"),
     ERROR_THIRD_LOGISTICS_NOTFOUND(80017,"第三方渠道不存在"),
     ERROR_CFG_SETTING_NOTFOUND(80018,"未找到推送配置项【{}】"),
+    ERROR_WDT_SALES_RAW_TRADE_PUSHSELF2(80019,"ERP原始订单推送旺店通结果：状态码:【{}】，新增订单的数量:【{}】，更新订单的数量:【{}】，错误信息:【{}】"),
 
     /**
      * 工作流错误 workflow
@@ -1684,6 +1685,7 @@ public enum ApiError implements Serializable {
     ERROR_PUSH_DETAIL_ID_ORG_DIFF(92200,"B2B寄样申请单【{}】明细下推销售组织不一致"),
     ERROR_92201(92201,"请选择B2C寄样申请审核通过的数据"),
     ERROR_KOL_B2C_HAS_DOWN_BILL(92202,"B2C寄样申请已生成销售订单，无法反审核"),
+    ERROR_KOL_PARTNER_MULTIPLE_DEFAULT_ADDRESSES(92203,"企业达人地址不允许多个默认"),
 
 
 

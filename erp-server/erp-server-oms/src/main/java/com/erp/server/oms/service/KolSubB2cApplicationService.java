@@ -24,7 +24,7 @@ public interface KolSubB2cApplicationService extends SuperService<KolSubB2cAppli
     * @date: 2025-12-09
     * @return
     */
-    void generateSplitOrder(KolB2cApplicationEntity entity, List<KolB2cApplicationDetailEntity> list);
+    List<KolSubB2cApplicationDTO.PushDTO> generateSplitOrder(KolB2cApplicationEntity entity, List<KolB2cApplicationDetailEntity> list);
     /**
      * 根据来源id查询关联单据
      * @author jack

@@ -129,6 +129,7 @@ kcp.remark AS platformRemark
             kai.phone AS phone,
             kai.zip_code AS zipCode,
             kai.is_default AS isDefault,
+            kai.disabled AS disabled,
             kai.remark AS remark
         FROM
             kol_partner_info AS kpi
@@ -149,7 +150,22 @@ kcp.remark AS platformRemark
     </select>
     <select id="dropDown" resultType="com.erp.model.oms.dto.KolPartnerInfoDTO$DropDownDTO">
         SELECT
-        <include refid="Base_Column_List"></include>,
+        kpi.id AS id,
+        kpi.remark AS remark,
+        kpi.code AS code,
+        kpi.nickname AS nickname,
+        kpi.type AS type,
+        kpi.cooperation_type AS cooperationType,
+        kpi.cooperation_date AS cooperationDate,
+        kpi.country_id AS countryId,
+        kpi.country_name AS countryName,
+        kpi.language AS language,
+        kpi.email AS email,
+        kpi.phone AS phone,
+        kpi.charge_id AS chargeId,
+        kpi.charge_name AS chargeName,
+        kpi.dept_id AS deptId,
+        kpi.dept_name AS deptName,
         kai.ID AS addressId,
         kai.country_id AS addressCountryId,
         kai.country_name AS addressCountryName,
@@ -161,6 +177,7 @@ kcp.remark AS platformRemark
         kai.email AS email,
         kai.phone AS phone,
         kai.zip_code AS zipCode,
+        kai.disabled AS disabled,
         kai.is_default AS isDefault
         FROM
         kol_partner_info kpi

@@ -41,6 +41,7 @@ import com.erp.server.oms.listener.KolB2cApplicationAddressExcelListener;
 import com.erp.server.oms.listener.KolB2cApplicationDetailExcelListener;
 import com.erp.server.oms.listener.KolB2cApplicationExcelListener;
 import com.erp.server.oms.listener.KolPartnerInfoExcelListener;
+import com.erp.server.oms.rocketmq.sync.wangdian.SyncWangDianSoB2cService;
 import com.erp.server.oms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import com.common.business.annotation.DistributeLocker;
@@ -137,7 +138,7 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
     @Resource
     private SoB2cService soB2cService;
     @Resource
-    private SoB2cDetailService soB2cDetailService;
+    private SyncWangDianSoB2cService syncWangDianSoB2cService;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -258,7 +259,7 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
             if(StringUtils.isBlank(nickName)){
                 throw new ServiceException(ApiError.ERROR_SYS_TYPE_NOTFOUND, "第"+index+"行达人");
             }
-
+            detail.setNickname(nickName);
             SkuVO skuVO = skuMap.get(detail.getSkuId());
             if(Objects.isNull(skuVO)){
                 throw new ServiceException(ApiError.ERROR_SYS_TYPE_NOTFOUND, "第"+index+"行SKU");
@@ -287,7 +288,8 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         Map<String, String> dictCountryMap = dictCountryList.stream().collect(Collectors.toMap(DictCountryDTO.ListDTO::getNameCn, DictCountryDTO.ListDTO::getId));
 
         for (KolB2cApplicationAddressDTO.AddDTO address : addressList) {
-            address.setCountryName(dictCountryMap.get(address.getCountryName()));
+            address.setNickname(partnerMap.get(address.getPartnerId()));
+            address.setCountryName(dictCountryMap.get(address.getCountryId()));
         }
     }
 
@@ -417,7 +419,7 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
             if(StringUtils.isBlank(nickName)){
                 throw new ServiceException(ApiError.ERROR_SYS_TYPE_NOTFOUND, "第"+index+"行达人");
             }
-
+            detail.setNickname(nickName);
             SkuVO skuVO = skuMap.get(detail.getSkuId());
             if(Objects.isNull(skuVO)){
                 throw new ServiceException(ApiError.ERROR_SYS_TYPE_NOTFOUND, "第"+index+"行SKU");
@@ -446,7 +448,8 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         Map<String, String> dictCountryMap = dictCountryList.stream().collect(Collectors.toMap(DictCountryDTO.ListDTO::getNameCn, DictCountryDTO.ListDTO::getId));
 
         for (KolB2cApplicationAddressDTO.UpdateDTO address : addressList) {
-            address.setCountryName(dictCountryMap.get(address.getCountryName()));
+            address.setNickname(partnerMap.get(address.getPartnerId()));
+            address.setCountryName(dictCountryMap.get(address.getCountryId()));
         }
     }
 
@@ -482,7 +485,7 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
             searchParam.setIds(Arrays.asList("-1"));
         }
         List<KolB2cApplicationDTO.TabListDTO> list = baseMapper.tabList(searchParam);
-        list.add(new KolB2cApplicationDTO.TabListDTO("all","全部",0));
+        list.add(0,new KolB2cApplicationDTO.TabListDTO("all","全部",0));
         return list;
     }
 
@@ -755,6 +758,21 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
                 }
             }else {
                 //旺店通
+                List<KolSubB2cApplicationDTO.PushDTO> pushDTOS = kolSubB2cApplicationService.generateSplitOrder(entity, list);
+
+                // 获取所有推送订单的所有明细 SKU ID 列表
+                List<String> skuNos = pushDTOS.stream()
+                        .flatMap(e -> e.getDetailList().stream())
+                        .map(KolSubB2cApplicationDetailEntity::getSkuNo)
+                        .distinct()
+                        .collect(Collectors.toList());
+
+                List<SkuVO> skuVOS = plmTaskFeign.listBySkuNoList(skuNos);
+                Map<String, SkuVO> skuMap = skuVOS.stream().collect(Collectors.toMap(SkuVO::getSkuId, Function.identity()));
+
+                for (KolSubB2cApplicationDTO.PushDTO pushDTO : pushDTOS) {
+                    syncWangDianSoB2cService.syncDataToWangDian(pushDTO,skuMap);
+                }
 
             }
         }

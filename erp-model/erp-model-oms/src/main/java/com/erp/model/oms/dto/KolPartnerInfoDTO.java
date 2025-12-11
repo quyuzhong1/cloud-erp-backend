@@ -531,7 +531,7 @@ public class KolPartnerInfoDTO implements Serializable {
         private String  id;
 
         /**
-         * 是否启用
+         * 地址是否启用
          */
         private Boolean disabled;
 

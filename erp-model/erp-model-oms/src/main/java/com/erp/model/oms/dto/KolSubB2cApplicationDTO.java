@@ -1,10 +1,13 @@
 package com.erp.model.oms.dto;
 
+import com.erp.model.oms.entity.KolSubB2cApplicationDetailEntity;
+import com.erp.model.oms.entity.KolSubB2cApplicationEntity;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.List;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
@@ -227,6 +230,19 @@ public class KolSubB2cApplicationDTO implements Serializable {
         private String platformOrderCode;
 
 
+    }
+
+
+    /**
+     *
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PushDTO {
+
+       private KolSubB2cApplicationEntity entity;
+
+       private List<KolSubB2cApplicationDetailEntity> detailList;
     }
 
 

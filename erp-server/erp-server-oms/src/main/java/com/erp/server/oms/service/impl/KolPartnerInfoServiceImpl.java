@@ -105,12 +105,15 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
             addDTO.setChargeName(findUserDTO.getUserName());
         }
 
-        List<SysDepartmentEntity> depts = sysUserFeign.getDeptByIds(Arrays.asList(addDTO.getDeptId()));
-        if (CollUtil.isEmpty(depts)) {
-            throw new ServiceException(ApiError.ERROR_SYS_TYPE_NOTFOUND, "负责部门");
-        } else {
-            addDTO.setDeptName(depts.get(0).getName());
+        if(StringUtils.isNotBlank(addDTO.getDeptId())){
+            List<SysDepartmentEntity> depts = sysUserFeign.getDeptByIds(Arrays.asList(addDTO.getDeptId()));
+            if (CollUtil.isEmpty(depts)) {
+                throw new ServiceException(ApiError.ERROR_SYS_TYPE_NOTFOUND, "负责部门");
+            } else {
+                addDTO.setDeptName(depts.get(0).getName());
+            }
         }
+
 
         //国家
         List<DictCountryDTO.ListDTO> dictCountryList = sysUserFeign.countryList();
@@ -155,6 +158,11 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
 
         List<KolAddressInfoDTO.AddDTO> kolAddressInfoDTOList = addDTO.getKolAddressInfoDTOList();
         if(CollUtil.isNotEmpty(kolAddressInfoDTOList)){
+            long count = kolAddressInfoDTOList.stream().filter(e -> e.getIsDefault().equals(true)).count();
+            if(count > 1){
+                throw new ServiceException(ApiError.ERROR_KOL_PARTNER_MULTIPLE_DEFAULT_ADDRESSES);
+            }
+
             List<KolAddressInfoEntity> list = BeanMapperUtils.copyList(KolAddressInfoEntity.class, kolAddressInfoDTOList);
             list.forEach(e -> e.setMainId(id));
             kolAddressInfoService.saveBatch(list);
@@ -187,11 +195,13 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
             addOrUpdateDTO.setChargeName(findUserDTO.getUserName());
         }
 
-        List<SysDepartmentEntity> depts = sysUserFeign.getDeptByIds(Arrays.asList(addOrUpdateDTO.getDeptId()));
-        if (CollUtil.isEmpty(depts)) {
-            throw new ServiceException(ApiError.ERROR_SYS_TYPE_NOTFOUND, "负责部门");
-        } else {
-            addOrUpdateDTO.setDeptName(depts.get(0).getName());
+        if(StringUtils.isNotBlank(addOrUpdateDTO.getDeptId())){
+            List<SysDepartmentEntity> depts = sysUserFeign.getDeptByIds(Arrays.asList(addOrUpdateDTO.getDeptId()));
+            if (CollUtil.isEmpty(depts)) {
+                throw new ServiceException(ApiError.ERROR_SYS_TYPE_NOTFOUND, "负责部门");
+            } else {
+                addOrUpdateDTO.setDeptName(depts.get(0).getName());
+            }
         }
 
         //国家
@@ -255,6 +265,11 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
                 operateLogService.addModuleOperateLog(detailMsg, ModuleTypeEnum.KOL_PARTNER_INFO.getCode(), kolPartnerInfoEntity.getId(), "编辑信息");
             }
         }else {
+            long count = kolAddressInfoDTOList.stream().filter(e -> e.getIsDefault().equals(true)).count();
+            if(count > 1){
+                throw new ServiceException(ApiError.ERROR_KOL_PARTNER_MULTIPLE_DEFAULT_ADDRESSES);
+            }
+
             List<KolAddressInfoEntity> kolAddressInfoEntities = BeanMapperUtils.copyList(KolAddressInfoEntity.class, kolAddressInfoDTOList);
             kolAddressInfoEntities.forEach(e -> e.setMainId(kolPartnerInfoEntity.getId()));
             commonService.updateDetail(kolPartnerInfoEntity.getId(), ModuleTypeEnum.KOL_PARTNER_INFO.getCode(), kolAddressInfoService, kolAddressInfoEntities, oldKolAddressInfoEntities, "contactPerson");
@@ -510,8 +525,8 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
                     List<KolAddressInfoDTO.AddDTO> kolAddressInfoDTOList = new ArrayList<>();
                     List<KolCooperationPlatformDTO.AddDTO> kolCooperationPlatformDTOList = new ArrayList<>();
 
-                    Boolean isDefault = false;
                     Boolean isAdd = true;
+                    Boolean isFirstAddress = true;
                     for (KolPartnerInfoImportExcelDTO item : list) {
                         List<String> msgList = new ArrayList<>();
 
@@ -521,9 +536,8 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
                         kolCooperationPlatformDTO.setRemark(item.getPlatformRemark());
                         kolCooperationPlatformDTOList.add(kolCooperationPlatformDTO);
 
-                        if(!isDefault && StringUtils.isNotBlank(item.getAddressCountryName())){
-                            isDefault = true;
-
+                        if(isFirstAddress && StringUtils.isNotBlank(item.getAddressCountryName())){
+                            isFirstAddress = false;
                             //地址信息
                             KolAddressInfoDTO.AddDTO kolAddressInfoDTO = new KolAddressInfoDTO.AddDTO();
 

@@ -2,6 +2,7 @@ package com.erp.server.oms.service.impl;
 
 
 import cn.hutool.core.collection.CollUtil;
+import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.oms.dto.KolB2cApplicationDTO;
 import com.erp.model.oms.dto.KolSubB2cApplicationDTO;
@@ -96,33 +97,38 @@ public class KolSubB2cApplicationServiceImpl extends SuperServiceImpl<KolSubB2cA
      */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public void generateSplitOrder(KolB2cApplicationEntity entity, List<KolB2cApplicationDetailEntity> list) {
-        KolSubB2cApplicationEntity kolSubB2cApplicationEntity = new KolSubB2cApplicationEntity();
-        kolSubB2cApplicationEntity.setSourceId(entity.getId());
-        kolSubB2cApplicationEntity.setDictPlatform(getDictPlatform(entity.getIsInternational()));
-        kolSubB2cApplicationEntity.setDeliveryStatus(KolSubB2cApplicationDeliveryStatusEnum.WAITSHIPPED.getCode());
-        kolSubB2cApplicationEntity.setOrderStatus(KolSubB2cApplicationOrderStatusEnum.NOTAPPROVE.getCode());
-        kolSubB2cApplicationEntity.setRemark(entity.getRemark());
+    public List<KolSubB2cApplicationDTO.PushDTO> generateSplitOrder(KolB2cApplicationEntity entity, List<KolB2cApplicationDetailEntity> list) {
+        List<KolSubB2cApplicationDTO.PushDTO> result = new ArrayList<>();
+        //明细按达人分组
         Map<String, List<KolB2cApplicationDetailEntity>> partnerGroup = list.stream().collect(Collectors.groupingBy(KolB2cApplicationDetailEntity::getPartnerId));
 
         int index = 1;
         for (Map.Entry<String, List<KolB2cApplicationDetailEntity>> entry : partnerGroup.entrySet()) {
-            List<KolB2cApplicationDetailEntity> value = entry.getValue();
-            KolB2cApplicationDetailEntity kolB2cApplicationDetailEntity = value.get(0);
+            KolSubB2cApplicationDTO.PushDTO pushDTO = new KolSubB2cApplicationDTO.PushDTO();
 
+            //------------按达人维度生成拆分单和拆分单明细------------
+            KolSubB2cApplicationEntity kolSubB2cApplicationEntity = new KolSubB2cApplicationEntity();
+            kolSubB2cApplicationEntity.setSourceId(entity.getId());
+            kolSubB2cApplicationEntity.setDictPlatform(getDictPlatform(entity.getIsInternational()));
+            kolSubB2cApplicationEntity.setDeliveryStatus(KolSubB2cApplicationDeliveryStatusEnum.WAITSHIPPED.getCode());
+            kolSubB2cApplicationEntity.setOrderStatus(KolSubB2cApplicationOrderStatusEnum.NOTAPPROVE.getCode());
+            kolSubB2cApplicationEntity.setRemark(entity.getRemark());
             kolSubB2cApplicationEntity.setCode(entity.getCode()+"_"+index);
             kolSubB2cApplicationEntity.setPartnerId(entry.getKey());
-            kolSubB2cApplicationEntity.setNickname(kolB2cApplicationDetailEntity.getNickname());
+            kolSubB2cApplicationEntity.setNickname(entry.getValue().get(0).getNickname());
+
             boolean save = super.save(kolSubB2cApplicationEntity);
             if(!save) {
                 throw new ServiceException("B2C寄样申请单拆分单保存失败");
             }
-
             String id = kolSubB2cApplicationEntity.getId();
+            //------------根据生成拆分单明细，以及生成B2C明细------------
+            List<KolB2cApplicationDetailEntity> value = entry.getValue();
             List<KolSubB2cApplicationDetailEntity> detailList = new ArrayList<>();
             for (KolB2cApplicationDetailEntity b2cApplicationDetailEntity : value) {
                 KolSubB2cApplicationDetailEntity subB2cApplicationDetailEntity = new KolSubB2cApplicationDetailEntity();
-
+                String idStr = IdWorker.getIdStr();
+                subB2cApplicationDetailEntity.setId(idStr);
                 subB2cApplicationDetailEntity.setSourceDetailId(b2cApplicationDetailEntity.getId());
                 subB2cApplicationDetailEntity.setSkuId(b2cApplicationDetailEntity.getSkuId());
                 subB2cApplicationDetailEntity.setSkuNo(b2cApplicationDetailEntity.getSkuNo());
@@ -132,11 +138,17 @@ public class KolSubB2cApplicationServiceImpl extends SuperServiceImpl<KolSubB2cA
                 subB2cApplicationDetailEntity.setMainId(id);
                 detailList.add(subB2cApplicationDetailEntity);
             }
-
+            //保存明细
             kolSubB2cApplicationDetailService.saveBatch(detailList);
+
+            pushDTO.setEntity(kolSubB2cApplicationEntity);
+            pushDTO.setDetailList(detailList);
+            result.add(pushDTO);
             //序号+1
             index+=1;
         }
+
+        return result;
     }
 
     /**

@@ -10,7 +10,5 @@ import java.util.List;
 @Setter
 public class Result {
     @SerializedName("error_list")
-    private
-
-    List<ErrorList> errorList;
+    private List<ErrorList> errorList;
 }
