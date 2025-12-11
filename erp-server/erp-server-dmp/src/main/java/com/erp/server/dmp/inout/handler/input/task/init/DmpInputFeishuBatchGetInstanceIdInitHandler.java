@@ -53,7 +53,7 @@ public class DmpInputFeishuBatchGetInstanceIdInitHandler extends DmpInputInitHan
         }
         //优先取扩展json中的实例id
         List<String> instancdIdList = new ArrayList<>();
-        String extendJson = dmpResponse.getDmpCfgInputDetailEntity().getExtendJson();
+        String extendJson = dmpInputTaskEntity.getExtendJson();
         if (CharSequenceUtil.isNotBlank(extendJson)) {
             JSONObject jsonObject = JSON.parseObject(extendJson);
             String instanceId = jsonObject.getString("instanceId");
