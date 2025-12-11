@@ -8,6 +8,7 @@ import com.erp.model.wms.dto.inventory.*;
  * @date 2024/6/5 17:45
  */
 public interface VirtualInventoryTransCoreService {
+    String BUSINESS_TYPE = "WMS_VIRTUAL_INVENTORY_SKU";
 
     /**
      * 入库/出库 审核，按业务类型 自动匹配库存规则

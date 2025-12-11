@@ -30,7 +30,6 @@ import com.erp.model.wms.enums.VirtualFlowRefactorEnum;
 import com.erp.model.wms.enums.VirtualWarehouseAllocationTypeEnum;
 import com.erp.model.wms.enums.inventory.*;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
-import com.erp.server.wms.config.VirtualInventoryHelper;
 import com.erp.server.wms.service.*;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.Lists;
@@ -84,9 +83,6 @@ public class VirtualFlowRefactorServiceImpl implements VirtualFlowRefactorServic
 
     @Resource
     private DictBasicService dictBasicService;
-
-    @Resource
-    private VirtualInventoryHelper virtualInventoryHelper;
 
     @Resource
     private VirtualWarehouseAllocationService virtualWarehouseAllocationService;
