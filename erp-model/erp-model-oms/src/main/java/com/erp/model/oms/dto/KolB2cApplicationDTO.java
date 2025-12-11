@@ -291,11 +291,11 @@ public class KolB2cApplicationDTO implements Serializable {
         /**
          * 登记回片数
          */
-        private Integer feedbackQty;
+        private Integer feedbackQty = 0;
         /**
          * 抓取回片数
          */
-        private Integer checkFeedbackQty;
+        private Integer checkFeedbackQty = 0;
         /**
          * 预计回片日期
          */
