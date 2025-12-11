@@ -1,5 +1,8 @@
 package com.erp.model.workflow.enums;
 
+import com.common.business.enums.ApproveStatusEnum;
+import com.common.core.exception.ServiceException;
+
 public enum FSApprovalStatusEnum {
     PENDING("PENDING", "审批中"),
     APPROVED("APPROVED", "审批流程结束，结果为同意"),
@@ -34,5 +37,21 @@ public enum FSApprovalStatusEnum {
             }
         }
         return null;
+    }
+
+    public static ApproveStatusEnum getErpApproveStatusByCode(String code) {
+        if (PENDING.getCode().equals(code)) {
+            return ApproveStatusEnum.APPROVE_ING;
+        }
+        if (APPROVED.getCode().equals(code)) {
+            return ApproveStatusEnum.APPROVE;
+        }
+        if (REJECTED.getCode().equals(code)) {
+            return ApproveStatusEnum.REJECT;
+        }
+        if (CANCELED.getCode().equals(code)) {
+            return ApproveStatusEnum.WAIT_SUBMIT;
+        }
+        throw new ServiceException("不支持的审批状态转换：" + code);
     }
 }

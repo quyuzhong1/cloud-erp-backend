@@ -979,10 +979,10 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
                 String submitMsg = CharSequenceUtil.format("订单拆分子单自动提交" );
                 operateLogService.addModuleOperateLog(submitMsg, ModuleTypeEnum.SO_B2C.getCode(), add.getId(), "提交操作");
                 String msg = CharSequenceUtil.format("订单拆分子单自动审核通过" );
-                operateLogService.addModuleOperateLogBySystem(msg, ModuleTypeEnum.SO_B2C.getCode(), add.getId(), "审核操作");
+                operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), add.getId(), "审核操作",true);
                 ApproveOneDTO approveOneDTO = new ApproveOneDTO();
                 approveOneDTO.setType(ApproveTypeEnum.PASS.getStatus());
-                approveOneDTO.setIsSubmitAutoApprove(true);
+                approveOneDTO.setIsUserSystem(true);
                 soB2cService.approveEnd(approveOneDTO,add,true);
                 needRuleList.add(add);
             }else{

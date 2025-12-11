@@ -126,6 +126,7 @@ public interface FbaShipmentConverter {
             @Mapping(target = "deliveryFromAddress", source = "entity.deliveryFromAddress"),
             @Mapping(target = "deliveryToAddress", source = "entity.deliveryToAddress"),
             @Mapping(target = "isPackingDownload", source = "oldEntity.isPackingDownload"),
+            @Mapping(target = "isUserSystem" ,ignore = true),
     })
     FbaShipmentEntity oldToNew(FbaShipmentEntity entity, FbaShipmentEntity oldEntity);
 
@@ -197,5 +198,6 @@ public interface FbaShipmentConverter {
     @Mapping(target = "sourcePlatform", constant = "erp")
     @Mapping(target = "sourceType", constant = "change")
     @Mapping(target = "receiveUTCDate", ignore = true)
+    @Mapping(target = "isUserSystem" ,ignore = true)
     FbaShipmentReceiveEntity receivedDTOToEntity(FbaShipmentDTO.ReceivedDTO dto, FbaShipmentEntity mainEntity, FbaShipmentDetailEntity detailEntity);
 }
