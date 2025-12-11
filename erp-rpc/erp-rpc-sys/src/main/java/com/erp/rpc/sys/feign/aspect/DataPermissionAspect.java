@@ -166,7 +166,7 @@ public class DataPermissionAspect {
         String tableFields = dataPermission.tableField();
         StringBuilder sqlString = new StringBuilder();
         DynamicDataSourceTypeEnum dynamicDataSourceTypeEnum = DynamicDataSourceThreadLocal.get();
-        boolean isDoris = (dynamicDataSourceTypeEnum != null && dynamicDataSourceTypeEnum == DynamicDataSourceTypeEnum.DORIS);
+        boolean isDoris = DynamicDataSourceTypeEnum.isDoris(dynamicDataSourceTypeEnum);
         if (CharSequenceUtil.isNotBlank(tableFields)) {
             //字段名称
             List<String> tableFieldList = Arrays.asList(tableFields.split(","));
