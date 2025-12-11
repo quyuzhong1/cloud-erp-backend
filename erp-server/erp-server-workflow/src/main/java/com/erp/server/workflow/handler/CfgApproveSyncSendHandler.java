@@ -166,8 +166,8 @@ public class CfgApproveSyncSendHandler {
                                   ApproveSyncRecordEntity syncRecordEntity) {
         CfgApproveNoticeEntity cfgApproveNoticeEntity = cfgApproveNoticeService.getByNoticeTypeAndMainId(cfgApproveSyncEntity.getId(), noticeTemplateEnum.getCode(), Boolean.TRUE);
         if (Objects.nonNull(cfgApproveNoticeEntity)) {
-            List<String> sendUserIds = getSendUserIds(cfgApproveNoticeEntity, createUserId,operator, approveIds, ccIds);
-            sendNotice(noticeTemplateEnum.getName(), summaries, createUserId, sendUserIds, thirdUnionMap, cfgApproveSyncEntity, pcLinkByEnv,syncRecordEntity);
+            List<String> sendUserIds = getSendUserIds(cfgApproveNoticeEntity, createUserId, approveIds, ccIds);
+            sendNotice(noticeTemplateEnum.getName(), summaries, operator, sendUserIds, thirdUnionMap, cfgApproveSyncEntity, pcLinkByEnv,syncRecordEntity);
         }
     }
 
@@ -213,7 +213,7 @@ public class CfgApproveSyncSendHandler {
 
 
     //获取需要发送信息的人员集合（去重）
-    private static List<String> getSendUserIds(CfgApproveNoticeEntity cfgApproveNoticeEntity, String createUserId,String operator, List<String> approveIds, List<String> ccIds) {
+    private static List<String> getSendUserIds(CfgApproveNoticeEntity cfgApproveNoticeEntity, String createUserId, List<String> approveIds, List<String> ccIds) {
         List<String> sendUserIds = new ArrayList<>();
         //具体人员
         String specificPerson = cfgApproveNoticeEntity.getSpecificPerson();
@@ -322,7 +322,7 @@ public class CfgApproveSyncSendHandler {
      */
     public void sendApproveNotice(NoticeTemplateEnum noticeTemplateEnum,
                                   List<String> summaries,
-                                  String createUserId,
+                                  String titleUserId,
                                   List<ProcessTaskManagementEntity> processTaskManagementEntities,
                                   Map<String, ThirdUnionDTO> thirdUnionMap,
                                   CfgApproveSyncEntity cfgApproveSyncEntity,
@@ -339,7 +339,7 @@ public class CfgApproveSyncSendHandler {
                 FsBotParamsDTO.SendParamsDTO params = new FsBotParamsDTO.SendParamsDTO();
                 params.setTemplateId(noticeTemplateEnum.getName());
                 params.setUserId(e.getCurApproveId());
-                params.setTitleUserId(createUserId);
+                params.setTitleUserId(titleUserId);
                 params.setUuid(e.getId());
                 params.setApprovalName(cfgApproveSyncEntity.getTitle());
                 params.setTitleUserIdType(UserIdTypeEnum.USERID.getCode());
