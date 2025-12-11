@@ -4,7 +4,6 @@ import com.alibaba.fastjson.JSON;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.workflow.dto.FsCallbackApiReqDTO;
 import com.erp.model.workflow.dto.FsCallbackApiRespDTO;
-import com.erp.sdk.fs.service.FsService;
 import com.erp.server.workflow.handler.CfgApproveSyncCallbackHandler;
 import com.erp.server.workflow.handler.FsCallbackEventHandler;
 import com.lark.oapi.sdk.servlet.ext.ServletAdapter;
@@ -66,6 +65,6 @@ public class FsCallbackApiController {
             throws Throwable {
         log.warn("飞书事件触发器:url:{},method;{}", request.getRequestURL(), request.getMethod());
         // 回调扩展包提供的事件回调处理器
-        servletAdapter.handleEvent(request, response, fsCallbackEventHandler.EVENT_HANDLER);
+        servletAdapter.handleEvent(request, response, fsCallbackEventHandler.getEventHandler());
     }
 }

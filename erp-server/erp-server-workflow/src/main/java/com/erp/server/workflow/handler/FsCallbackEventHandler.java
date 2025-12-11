@@ -16,6 +16,7 @@ import com.lark.oapi.event.EventDispatcher;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -37,19 +38,24 @@ public class FsCallbackEventHandler {
     @Resource
     private DmpInoutTaskFeign dmpInoutTaskFeign;
 
-    /**
-     * 注册事件 Register event
-     */
-    public EventDispatcher EVENT_HANDLER = EventDispatcher.newBuilder(fsProperties.getVerificationToken(), null)
-            .onCustomizedEvent("approval_instance", new CustomEventHandler() {
-                @Override
-                public void handle(EventReq event) throws Exception {
-                    log.warn("收到飞书审批实例自定义事件: {}", Jsons.DEFAULT.toJson(event));
-                    // 处理审批实例事件的逻辑
+    private EventDispatcher eventDispatcher;
 
-                }
-            })
-            .build();
+    @PostConstruct
+    public void init() {
+        /**
+         * 注册事件 Register event
+         */
+        this.eventDispatcher = EventDispatcher.newBuilder(fsProperties.getAppSecret(), null)
+                .onCustomizedEvent("approval_instance", new CustomEventHandler() {
+                    @Override
+                    public void handle(EventReq event) throws Exception {
+                        log.warn("收到飞书审批实例自定义事件: {}", Jsons.DEFAULT.toJson(event));
+                        // 处理审批实例事件的逻辑
+
+                    }
+                })
+                .build();
+    }
 
     /**
      * dmp生成即时推送任务
@@ -77,5 +83,9 @@ public class FsCallbackEventHandler {
         if (CollUtil.isEmpty(requestList)) {
             throw new ServiceException("所选数据未找到同步信息");
         }
+    }
+
+    public EventDispatcher getEventHandler() {
+        return eventDispatcher;
     }
 }
