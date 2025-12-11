@@ -660,6 +660,9 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         }
         //装箱进度
         List<WmsCartonEntity> cartonEntityList = wmsCartonService.listByTaskIds(Collections.singletonList(packedDetailDTO.getTaskId()));
+        if(CollectionUtils.isNotEmpty(packedDetailDTO.getCartonIds())){
+            cartonEntityList = cartonEntityList.stream().filter(e -> packedDetailDTO.getCartonIds().contains(e.getId())).collect(Collectors.toList());
+        }
         //获取总箱数
         //总箱数
         listPackingDTO.setBoxQty(cartonEntityList.size());
