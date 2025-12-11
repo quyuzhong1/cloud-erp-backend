@@ -574,7 +574,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
     }
 
     @Override
-    @DistributeLocker(keyName = "entity.sourceCode",waiteTime = 60)
+    @DistributeLocker(keyName = "dto.sourceCode",waiteTime = 60)
     public void syncPddSoOutStock(PddSoOutStockDTO dto) {
         SoOutstockEntity soOutstockEntity = soOutstockService.getOne(Wrappers.<SoOutstockEntity>lambdaQuery()
                 .eq(SoOutstockEntity::getSourceCode, dto.getSourceCode()));
@@ -610,7 +610,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         ThirdMappingDTO.ViewParamDTO viewParamDTO = new ThirdMappingDTO.ViewParamDTO();
         viewParamDTO.setType(ThirdSysTypeEnum.WAREHOUSE.getCode());
         viewParamDTO.setSysType(PlatformDictEnum.WDT.getCode());
-        viewParamDTO.setThirdCode(dto.getThirdCode());
+        viewParamDTO.setThirdCode(dto.getPlatformWarehouse());
         List<ThirdMappingEntity> thirdMappingEntities = thirdMappingFeign.getByThirdId(viewParamDTO);
         if(CollectionUtils.isEmpty(thirdMappingEntities)){
             throw new ServiceException("未找到拼多多平台仓库编码对应的ERP仓库映射关系，平台仓库编码：{}",dto.getThirdCode());
@@ -625,8 +625,10 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
 
         SoOutstockEntity soOutstock  = buildPddOutEntity(dto, shopInfo, customerInfo, warehouse, company, skuVOList, virtualWarehouseId);
 
-        soOutstockService.save(soOutstock);
-
+        boolean result = service.save(soOutstock);
+        if(!result){
+            throw new ServiceException("同步拼多多销售出库单失败，销售出库单保存失败，来源单号：{}", dto.getSourceCode());
+        }
         try {
             soOutstockService.submitAndApprove(soOutstock.getId());
         }catch (Exception e){
@@ -635,12 +637,14 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
     }
 
     @Transactional(rollbackFor = Exception.class)
-    public SoOutstockEntity save(SoOutstockEntity soOutstockEntity){
-        soOutstockService.save(soOutstockEntity);
+    public boolean save(SoOutstockEntity soOutstockEntity){
+        boolean mainResult = soOutstockService.save(soOutstockEntity);
+        if(!mainResult){
+            return false;
+        }
         List<SoOutstockDetailEntity> soOutstockDetailEntityList = soOutstockEntity.getDetailList();
         soOutstockDetailEntityList.forEach(v->v.setMainId(soOutstockEntity.getId()));
-        soOutstockDetailService.saveBatch(soOutstockDetailEntityList);
-        return soOutstockEntity;
+        return soOutstockDetailService.saveBatch(soOutstockDetailEntityList);
     }
 
     private SoOutstockEntity buildPddOutEntity(PddSoOutStockDTO dto, ShopInfoEntity shopInfo, CustomerInfoEntity customerInfo, WarehouseEntity warehouse, SysAccountingCompanyEntity company, List<SkuVO> skuVOList, String virtualWarehouseId) {
