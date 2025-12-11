@@ -25,6 +25,7 @@ import com.erp.model.wms.dto.VirtualInventoryDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.inventory.InventoryDTO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
+import com.erp.model.wms.dto.inventory.VirtualInventoryStockDTO;
 import com.erp.model.wms.entity.VirtualInventoryEntity;
 import com.erp.model.wms.entity.VirtualWarehouseEntity;
 import com.erp.model.wms.enums.VirtualWarehouseAllocationTypeEnum;
@@ -627,6 +628,29 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
     @Override
     public IPage<SupplierInventoryDTO.ListDTO> supplierInventoryPaging(Page query, SupplierInventoryDTO.PagingParamDTO params, List<SupplierRefWarehouseEntity> supplierRefWarehouseList) {
         return this.baseMapper.supplierInventoryPaging(query, params, supplierRefWarehouseList);
+    }
+
+    @Override
+    public VirtualInventoryEntity getByTransaction(VirtualInventoryStockDTO.InventoryTransactionDTO transactionDTO) {
+        VirtualInventoryEntity entity = baseMapper.getByTransaction(transactionDTO);
+        if (ObjectUtil.isNotEmpty(entity)) {
+            return entity;
+        }
+        //不存在则新增
+        VirtualInventoryEntity found = new VirtualInventoryEntity();
+        found.setVirtualWarehouseId(transactionDTO.getVirtualWarehouseId());
+        found.setWarehouseId(transactionDTO.getWarehouseId());
+        found.setSkuId(transactionDTO.getSkuId());
+        found.setSkuNo(transactionDTO.getSkuNo());
+        found.setDictInventoryStatus(transactionDTO.getInventoryStatus());
+        found.setQty(transactionDTO.getQty());
+        found.setAfterQty(transactionDTO.getQty());
+        boolean save = super.save(found);
+        log.warn("库存数据不存在，初始化库存数据：{}  save：{}", found, save);
+        if (!save) {
+            throw new ServiceException("虚拟库存新增失败");
+        }
+        return found;
     }
 
 

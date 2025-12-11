@@ -73,9 +73,6 @@ public class DaMaiOutboundRocketMQTaskHandler extends DmpOutputRocketMQTaskHandl
     	}
     	String orderStatus = dmpThirdOutboundEntity.getOrderStatus();
 		String erpOrderStatus = DaMaiEnums.OrderStatusEnum.getErpOrderStatus(orderStatus);
-		if(StringUtils.isBlank(erpOrderStatus)) {
-			return null;
-		}
 
     	PlatformOutboundDTO platformOutboundDTO = BeanUtil.copyProperties(dmpThirdOutboundEntity, PlatformOutboundDTO.class);
     	String sourcePlatform = dmpThirdOutboundEntity.getSourcePlatform();

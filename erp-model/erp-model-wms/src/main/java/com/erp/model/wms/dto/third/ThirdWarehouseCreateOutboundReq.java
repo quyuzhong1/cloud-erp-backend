@@ -113,6 +113,10 @@ public class ThirdWarehouseCreateOutboundReq extends ThirdWarehouseAuth {
      * EORI税号
      */
     private String eoriTaxNo;
+    /**
+     * 是否签名同步，是,否
+     */
+    private String isApiSignName;
 
     @Data
     @AllArgsConstructor
@@ -147,6 +151,10 @@ public class ThirdWarehouseCreateOutboundReq extends ThirdWarehouseAuth {
          */
         private String countryCode;
 
+        /**
+         * 收件人国家名称
+         */
+        private String countryName;
         /**
          * 省
          */
@@ -250,6 +258,11 @@ public class ThirdWarehouseCreateOutboundReq extends ThirdWarehouseAuth {
         private String productSkuId;
 
         /**
+         * 产品条码（三方仓商品条码）
+         */
+        private String thirdBarcode;
+
+        /**
          * 数量
          */
         private Integer quantity;
@@ -270,6 +283,14 @@ public class ThirdWarehouseCreateOutboundReq extends ThirdWarehouseAuth {
         private String hsCode;
 
         public Item(String productSku, Integer quantity,String hsCode,String productSkuId) {
+            this.productSku = productSku;
+            this.productSkuId = productSkuId;
+            this.quantity = quantity;
+            this.hsCode = hsCode;
+        }
+
+        public Item(String thirdBarcode,String productSku, Integer quantity,String hsCode,String productSkuId) {
+            this.thirdBarcode = thirdBarcode;
             this.productSku = productSku;
             this.productSkuId = productSkuId;
             this.quantity = quantity;

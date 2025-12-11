@@ -98,6 +98,18 @@ public class WmsVirtualDetailMsgServiceImpl extends SuperServiceImpl<WmsVirtualD
                 .update();
     }
 
+    @Override
+    public void updateStatusByBusinessIds(List<String> pageIdList, String status) {
+        List<WmsVirtualDetailMsgEntity> list = lambdaQuery().in(WmsVirtualDetailMsgEntity::getBusinessId, pageIdList).list();
+        if (CollUtil.isEmpty(list)) {
+            return;
+        }
+        list.forEach(entity -> {
+            entity.setStatus(status);
+        });
+        super.updateBatchById(list);
+    }
+
     /**
      * 根据业务id查询
      * @author will

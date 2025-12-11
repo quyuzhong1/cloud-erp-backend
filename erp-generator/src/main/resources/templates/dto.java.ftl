@@ -22,6 +22,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
+import com.common.business.dto.base.SuperDTO;
 import java.time.LocalDateTime;
 </#if>
 <#if dtoValidate>
@@ -217,7 +218,7 @@ public class ${table.dtoName} implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class CommonDTO {
+    public static class CommonDTO extends SuperDTO {
 
     <#-- ----------  BEGIN 字段循环遍历  ---------->
     <#list table.fields as field>

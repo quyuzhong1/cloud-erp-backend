@@ -53,6 +53,7 @@
         <module>erp-sdk-wms-damai</module>
         <module>erp-sdk-oms-dht</module>
         <module>erp-sdk-oms-wildberries</module>
+        <module>erp-sdk-wms-tongyou</module>
     </modules>
 
     <dependencies>
