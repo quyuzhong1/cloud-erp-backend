@@ -7,11 +7,11 @@ import cn.hutool.core.util.ObjUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.constant.DmpPullConstant;
-import com.common.business.enums.ApprovePlatformEnum;
 import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.dto.DmpInoutDTO;
 import com.erp.model.dmp.enums.DmpInputTaskTaskTypeEnum;
 import com.erp.model.workflow.dto.FsCallbackEventDTO;
+import com.erp.model.workflow.enums.CfgApproveSyncSyncPlatformEnum;
 import com.erp.rpc.dmp.feign.DmpInoutTaskFeign;
 import com.erp.sdk.fs.config.FsProperties;
 import com.lark.oapi.core.request.EventReq;
@@ -56,7 +56,7 @@ public class FsCallbackEventHandler {
                 .onCustomizedEvent(APPROVAL_INSTANCE_EVENT, new CustomEventHandler() {
                     @Override
                     public void handle(EventReq event) throws Exception {
-                        log.warn("收到飞书审批实例自定义事件: {}", Jsons.DEFAULT.toJson(event));
+                        log.warn("收到飞书审批实例自定义事件:event= {},fsProperties = {}", Jsons.DEFAULT.toJson(event),fsProperties);
                         // 处理审批实例事件的逻辑
                         approvalInstanceHandle(event);
                     }
@@ -70,7 +70,7 @@ public class FsCallbackEventHandler {
      * @date 2025/12/11 11:47
      * @return void
      */
-    private void approvalInstanceHandle (EventReq event) {
+    public void approvalInstanceHandle (EventReq event) {
         String plain = event.getPlain();
         JSONObject jsonObject = JSON.parseObject(plain);
         JSONObject thisEvent = jsonObject.getJSONObject("event");
@@ -88,7 +88,7 @@ public class FsCallbackEventHandler {
         }
         //根据审批定义和审批实例id生成中台即时拉取任务
         DmpInoutDTO.CreateInputDTO dto = new DmpInoutDTO.CreateInputDTO();
-        dto.setSystemCode(ApprovePlatformEnum.FEI_SHU.getCode());
+        dto.setSystemCode(CfgApproveSyncSyncPlatformEnum.FEISHU.getCode());
         dto.setBillType(DmpPullConstant.INSTANCE_IDS);
         dto.setNextLevelId(bean.getApprovalCode());
         dto.setTaskType(DmpInputTaskTaskTypeEnum.HOTFIX.getCode());
