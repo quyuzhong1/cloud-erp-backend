@@ -1,6 +1,5 @@
 package com.erp.model.tms.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.UnitEnum;
@@ -1163,10 +1162,25 @@ public class LogisticsChannelDTO implements Serializable {
              */
             private String platformLogisticsChannelId;
             /**
+             * 渠道编码
+             */
+            private String platformLogisticsChannelCode;
+            /**
              * 渠道名称
              */
             private String platformLogisticsChannelName;
         }
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class WarehouseChannelParamDTO {
+
+        /**
+         * "仓库Id
+         */
+        @NotBlank(message = "仓库Id不能为空")
+        private String warehouseId;
     }
 
     @Data

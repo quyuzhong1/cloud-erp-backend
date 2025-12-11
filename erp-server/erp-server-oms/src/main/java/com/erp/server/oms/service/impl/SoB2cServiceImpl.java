@@ -3077,6 +3077,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
              */
             String platformSkuId = platformSkuList.stream().filter(s -> s.getSkuId().equals(deliverySkuDTO.getSkuId())).
                     map(SkuMappingDTO.ListSkuResultDTO::getPlatformSkuId).findFirst().orElseThrow(() -> new ServiceException(CharSequenceUtil.format("{}未配置海外仓sku", deliverySkuDTO.getSkuNo())));
+            /**
+             * 三方条码
+             */
+            String thirdBarcode = platformSkuList.stream().filter(s -> s.getSkuId().equals(deliverySkuDTO.getSkuId())).
+                    map(SkuMappingDTO.ListSkuResultDTO::getThirdBarcode).findFirst().orElseThrow(() -> new ServiceException(CharSequenceUtil.format("{}未配置海外仓sku", deliverySkuDTO.getSkuNo())));
 
             ThirdWarehouseCreateOutboundReq.Item outboundReqItem = new ThirdWarehouseCreateOutboundReq.Item();
             outboundReqItem.setQuantity(baseQty);
@@ -3088,6 +3093,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             outboundReqItem.setPlatformDetailId(deliverySkuDTO.getPlatformDetailId());
             outboundReqItem.setDetailId(deliverySkuDTO.getDetailId());
             outboundReqItem.setProductSkuId(platformSkuId);
+            outboundReqItem.setThirdBarcode(thirdBarcode);
             SoB2cDeclareProductEntity soB2cDeclareProductEntity = soB2cDeclareProductEntityList.stream().filter(s -> s.getSkuId().equals(deliverySkuDTO.getSkuId())).findFirst().orElse(null);
             if(Objects.nonNull(soB2cDeclareProductEntity)){
                 outboundReqItem.setHsCode(soB2cDeclareProductEntity.getToCustomsCode());
@@ -3114,6 +3120,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         createOutboundReq.setShippingMethodName(Objects.isNull(saleChannelEntity) ? "" : saleChannelEntity.getCnName());
         createOutboundReq.setShippingMethodId(Objects.isNull(saleChannelEntity) ? "" : saleChannelEntity.getPlatformChannelId());
         createOutboundReq.setLastMileCarrier(channelEntity.getLastMileCarrier());
+        createOutboundReq.setIsApiSignName(Objects.isNull(channelEntity) ? "否" : channelEntity.getIsApiSign() ? "是" : "否");
         createOutboundReq.setItems(itemList);
         createOutboundReq.setTrackingNo(logisticsEntity.getCode());
         //通过订单处理规则处理参数
@@ -3157,7 +3164,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             //生成在线url
             if(PlatformDictEnum.JIFENG.getCode().equalsIgnoreCase(overseasProviderWarehouse.getProviderCode())
              ||PlatformDictEnum.CAINIAO.getCode().equalsIgnoreCase(overseasProviderWarehouse.getProviderCode())
-                    ||PlatformDictEnum.IML.getCode().equalsIgnoreCase(overseasProviderWarehouse.getProviderCode())) {
+                    ||PlatformDictEnum.IML.getCode().equalsIgnoreCase(overseasProviderWarehouse.getProviderCode())
+                    || PlatformDictEnum.TONG_YOU_WAREHOUSE.getCode().equals(overseasProviderWarehouse.getProviderCode())) {
                 String path = FastDFSClientUtil.uploadFile(Base64.getDecoder().decode(logisticsLabelBase64.replace("data:application/pdf;base64,","")),entity.getCode()+".pdf",new HashMap<>());
                 String domain = dictBasicService.getByTypeAndValue("fastDfsDomain",BusinessCommonConstants.getEnvironment()+"-fastDfsDomain").getName();
                 createOutboundReq.setLabelUrl(domain+path);
@@ -3195,6 +3203,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 && (
                 PlatformDictEnum.GOOD_CANG.getCode().equals(overseasProviderWarehouse.getProviderCode())
                 || PlatformDictEnum.IML.getCode().equals(overseasProviderWarehouse.getProviderCode())
+                || PlatformDictEnum.TONG_YOU_WAREHOUSE.getCode().equals(overseasProviderWarehouse.getProviderCode())
         )){
             SoB2cLogisticsEntity soB2cLogisticsEntity = soB2cLogisticsService.getByMainId(entity.getId());
             ThirdWarehouseUploadOrderLabelReq uploadOrderLabelReq = new ThirdWarehouseUploadOrderLabelReq();
@@ -3210,7 +3219,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             }
         }
         if(StringUtils.isNotBlank(channelEntity.getHandoverDocType())&& LogisticsHandoverDocTypeEnum.HANDOVER_PACKAGE.getCode().equals(channelEntity.getHandoverDocType())
-                && PlatformDictEnum.IML.getCode().equals(overseasProviderWarehouse.getProviderCode())){
+                && PlatformDictEnum.IML.getCode().equals(overseasProviderWarehouse.getProviderCode())
+                && PlatformDictEnum.TONG_YOU_WAREHOUSE.getCode().equals(overseasProviderWarehouse.getProviderCode())){
             ThirdWarehouseUploadHandoverFileReq uploadHandoverFileReq = new ThirdWarehouseUploadHandoverFileReq();
             uploadHandoverFileReq.setOrderCode(shippingOrderNo);
             uploadHandoverFileReq.setDictPlatform(entity.getDictPlatform());

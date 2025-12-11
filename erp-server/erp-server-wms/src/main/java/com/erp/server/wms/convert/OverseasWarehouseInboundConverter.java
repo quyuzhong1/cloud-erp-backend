@@ -16,13 +16,14 @@ import com.sdk.wms.goodcang.dto.request.GoodCangCreateInboundReq;
 import com.sdk.wms.goodcang.dto.request.GoodCangCreateOutboundReq;
 import com.sdk.wms.iml.dto.request.ImlCreateInboundReq;
 import com.sdk.wms.iml.dto.request.ImlCreateOutboundReq;
+import com.sdk.wms.tongyou.dto.request.TongYouCreateInboundReq;
+import com.sdk.wms.tongyou.dto.request.TongYouCreateOutboundReq;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Mappings;
 import org.mapstruct.factory.Mappers;
 import org.springframework.stereotype.Component;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 /**
