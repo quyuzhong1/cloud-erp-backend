@@ -1781,6 +1781,7 @@ public enum ApiError implements Serializable {
     CONTENT_96018(96018,"系统配置管理"),
     ERROR_PO_RECONCILIATION_CANCAL_RECEIVE(96007,"仅【已收单据】支持取消单据签收"),
     ERROR_PO_RECONCILIATION_NOT_NEED_RECONCILIATION(96008,"单据单号【{}】无需对账不支持生成对账单"),
+    ERROR_PO_RECONCILIATION_REMARK_NOT_BLANK(96009,"对账单备注不能为空"),
 
 
 
