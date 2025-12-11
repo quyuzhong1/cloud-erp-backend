@@ -369,8 +369,8 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
                 detailEntity.setSkuNo(skuVO.getSkuNo());
                 detailEntity.setRealQty(detailDto.getRealQty());
                 detailEntity.setReceiveQty(detailDto.getReceiveQty());
-                detailEntity.setReturnTypeDict(soReturnReceiveDetailEntity.getReturnTypeDict());
-                detailEntity.setReturnReasonDict(soReturnReceiveDetailEntity.getReturnReasonDict());
+                detailEntity.setReturnTypeDict(detailDto.getReturnTypeDict());
+                detailEntity.setReturnReasonDict(detailDto.getReturnReasonDict());
                 detailEntity.setWarehouseLocation(detailDto.getWarehouseLocation());
                 detailEntity.setRemark(detailDto.getRemark());
                 detailEntity.setSourceDetailId(detailDto.getSourceDetailId());
