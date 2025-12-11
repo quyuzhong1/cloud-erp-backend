@@ -356,14 +356,11 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
                 .set(CharSequenceUtil.isNotBlank(trackNo), B2bThirdDeliveryEntity::getTrackNo, trackNo)
                 .set(Objects.nonNull(deliveryTime), B2bThirdDeliveryEntity::getDeliveryTime, deliveryTime)
                 .eq(B2bThirdDeliveryEntity::getId, id).update();
-        String msg = CharSequenceUtil.format("用户【{}】更新了B2B三方发货单【{}】的状态由【{}】改为【{}】", UserContext.getDefaultLoginUser().getUserName(), old.getCode(), ThirdDeliveryStatusEnum.getName(old.getStatus()), ThirdDeliveryStatusEnum.getName(status));
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.B2B_THIRD_DELIVERY.getCode(), old.getId(), "更新操作");
-
+        B2bThirdDeliveryEntity newEntity = this.getById(id);
+        operateLogService.addModuleOperateLogByObj(old, newEntity, ModuleTypeEnum.B2B_THIRD_DELIVERY.getCode(), id,"更新操作");
         if (ThirdDeliveryStatusEnum.FAILED.getCode().equals(status) || ThirdDeliveryStatusEnum.CANCEL_DELIVERY.getCode().equals(status)){
-
-            List<B2bThirdDeliveryDetailEntity> detailEntityList = b2bThirdDeliveryDetailService.listByMainIds(Collections.singletonList(id));
             //冻结库存释放
-            rollbackFreezeVirtualInventory(old.getId());
+            this.rollbackFreezeVirtualInventory(old.getId());
         }else if (ThirdDeliveryStatusEnum.SHIPPED.getCode().equals(status)){
             //生成销售出库单
             this.generateB2bThirdDelivery(id);
