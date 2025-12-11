@@ -48,7 +48,7 @@ public class FsCallbackApiController {
     /**
      * 注册事件 Register event
      */
-    private static final EventDispatcher EVENT_HANDLER = EventDispatcher.newBuilder("verificationToken", "encryptKey")
+    private static final EventDispatcher EVENT_HANDLER = EventDispatcher.newBuilder("FEV0psky9tlBP4CyQrUy2c44FsTMDOlA", null)
             .onCustomizedEvent("approval_instance", new CustomEventHandler() {
                 @Override
                 public void handle(EventReq event) throws Exception {
@@ -60,20 +60,11 @@ public class FsCallbackApiController {
     /**
      * 创建路由处理器 Create route handler
      */
-    @GetMapping("/webhook/event")
+    @PostMapping("/webhook/event")
     public void event(HttpServletRequest request, HttpServletResponse response)
             throws Throwable {
         log.warn("[ Event access ], url: %s, method: %s\n", request.getRequestURL(), request.getMethod());
         // 回调扩展包提供的事件回调处理器 Callback handler provided by the extension package
         servletAdapter.handleEvent(request, response, EVENT_HANDLER);
-    }
-
-    public static void main(String[] args) {
-        // 构建 client Build client
-        Client client = new Client.Builder("cli_a85cce7e7078901c", "3qrQgoTcDYmYmnoH2mNDUjdMAbjj4hwF")
-                .eventHandler(EVENT_HANDLER)
-                .build();
-        // 建立长连接 Establish persistent connection
-        client.start();
     }
 }
