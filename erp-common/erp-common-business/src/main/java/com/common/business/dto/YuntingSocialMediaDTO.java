@@ -163,11 +163,6 @@ public class YuntingSocialMediaDTO extends UniqueDto {
     private String dataLevel;
 
     /**
-     * 平台（固定为yunting）
-     */
-    private String platform;
-
-    /**
      * 下载时间
      */
     private LocalDateTime downloadTime;
