@@ -7,6 +7,7 @@ import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.enums.*;
+import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 
 import cn.hutool.core.util.StrUtil;
@@ -1032,6 +1033,20 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
            return;
         }
 
+        //最新审核人
+        ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = new ValidList<>();
+        list.forEach(obj -> {
+            dtoList.add(new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.KOL_B2C_APPLICATION.getCode(), obj.getId()));
+        });
+        ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = null;
+        if (CollectionUtils.isNotEmpty(dtoList)) {
+            listApiResult = workflowFeign.curApprover(dtoList);
+            Integer code = listApiResult.getCode();
+            if (200 != code) {
+                throw new ServiceException(new ApiResult(ApiError.DEFAULT.code, listApiResult.getMsg()));
+            }
+        }
+
         List<CfgKolOptionEntity> cfgKolOptionEntities = cfgKolOptionService.lambdaQuery().in(CfgKolOptionEntity::getType, Arrays.asList(CfgKolOptionTypeEnum.KOL_SAMPLE_TYPE.getCode(), CfgKolOptionTypeEnum.PROJECT_TAG.getCode())).list();
         Map<String, String> map = cfgKolOptionEntities.stream().collect(Collectors.toMap(CfgKolOptionEntity::getId, CfgKolOptionEntity::getName));
 
@@ -1050,12 +1065,27 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
             data.setIsInternationalName(getIsInternationalName(data.getIsInternational()));
             data.setCurrencyName(currencyMap.get(data.getCurrency()));
             data.setOrderStatusName(KolSubB2cApplicationOrderStatusEnum.getName(data.getOrderStatus()));
-            data.setDeliveryStatus(KolSubB2cApplicationDeliveryStatusEnum.getName(data.getDeliveryStatus()));
+            data.setDeliveryStatusName(KolSubB2cApplicationDeliveryStatusEnum.getName(data.getDeliveryStatus()));
             data.setProductName(skuMap.get(data.getSkuId()));
 
             if(StringUtils.isNotBlank(data.getProjectTag())){
                 String projectTagName = Arrays.stream(data.getProjectTag().split(",")).map(map::get).collect(Collectors.joining(","));
                 data.setProjectTagName(projectTagName);
+            }
+
+            //最新审核人：先判断流程中的审核人是否存在，如果存在则使用流程中的，否则保持数据库原值
+            if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
+                List<ProcessManagementDTO.CurApproveInfoDTO> curApproveList = listApiResult.getData().stream()
+                        .filter(e -> e.getBusinessId().equals(data.getId()) && StringUtils.isNotBlank(e.getCurApproveName()))
+                        .collect(Collectors.toList());
+                if (CollectionUtils.isNotEmpty(curApproveList)) {
+                    String curApproveName = curApproveList.stream()
+                            .map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName)
+                            .collect(Collectors.joining(","));
+                    if (StringUtils.isNotBlank(curApproveName)) {
+                        data.setApproveUserName(curApproveName);
+                    }
+                }
             }
         }
     }

@@ -95,7 +95,10 @@ ksba.dict_platform AS dictPlatform,
 ksba.partner_id AS partnerId,
 ksba.nickname AS nickname,
 ksba.delivery_status AS deliveryStatus,
-ksba.order_status AS orderStatus,
+CASE
+		WHEN ksba.order_status != '' THEN
+		ksba.order_status ELSE'not'
+        END AS orderStatus,
 ksba.track_no AS trackNo,
 ksba.platform_order_id AS platformOrderId,
 ksba.platform_order_code AS platformOrderCode
@@ -109,8 +112,14 @@ ksba.platform_order_code AS platformOrderCode
             ,
         <include refid="Bsba_Column_List"></include>
             ,
-        kfc.feedbackQty,
-        kfc.checkFeedbackQty
+        CASE
+        WHEN kfc.feedbackQty > 0 THEN
+        kfc.feedbackQty ELSE 0
+        END AS feedbackQty,
+        CASE
+        WHEN kfc.checkFeedbackQty > 0 THEN
+        kfc.checkFeedbackQty ELSE 0
+        END AS checkFeedbackQty
         FROM
         kol_b2c_application kba
         left join kol_b2c_application_detail kbad on kba.id = kbad.main_id and kbad.is_deleted = false

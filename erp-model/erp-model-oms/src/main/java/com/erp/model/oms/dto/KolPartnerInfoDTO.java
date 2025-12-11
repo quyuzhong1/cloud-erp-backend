@@ -316,6 +316,12 @@ public class KolPartnerInfoDTO implements Serializable {
 
         private List<KolCooperationPlatformEntity> kolCooperationPlatformDTOList;
 
+        /**
+         * 附件集合
+         */
+        private List<String> attachmentNameList;
+        private List<String> attachmentUrlList;
+
 
     }
 
@@ -330,6 +336,7 @@ public class KolPartnerInfoDTO implements Serializable {
         private List<KolAddressInfoDTO.@Valid AddDTO> kolAddressInfoDTOList;
 
         private List<KolCooperationPlatformDTO. @Valid AddDTO> kolCooperationPlatformDTOList;
+
     }
 
     /**
@@ -441,6 +448,11 @@ public class KolPartnerInfoDTO implements Serializable {
         private String deptName;
 
 
+        /**
+         * 附件集合
+         */
+        private List<String> attachmentNameList;
+        private List<String> attachmentUrlList;
     }
 
     @Data

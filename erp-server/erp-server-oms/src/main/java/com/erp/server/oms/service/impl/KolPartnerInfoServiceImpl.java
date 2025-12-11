@@ -3,6 +3,7 @@ package com.erp.server.oms.service.impl;
 import cn.hutool.extra.spring.SpringUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
+import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
@@ -10,12 +11,11 @@ import com.common.business.enums.FileTaskStatusEnum;
 import com.common.business.enums.OperationTypeEnum;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.vo.LoginUser;
-import com.erp.model.oms.dto.ExhibitionOrderImportExcelDTO;
-import com.erp.model.oms.dto.KolAddressInfoDTO;
-import com.erp.model.oms.dto.KolCooperationPlatformDTO;
+import com.erp.model.oms.dto.*;
 import com.erp.model.oms.dto.excel.KolPartnerInfoImportExcelDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.CfgKolOptionTypeEnum;
+import com.erp.model.scm.dto.AttachmentDTO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.DictCountryDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
@@ -40,7 +40,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.oms.dto.KolPartnerInfoDTO;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import cn.hutool.core.collection.CollUtil;
@@ -93,6 +92,8 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
     private SysUserFeign sysUserFeign;
     @Resource
     private FileFeign fileFeign;
+    @Resource
+    private OmsAttachmentService omsAttachmentService;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -174,6 +175,12 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
             list.forEach(e -> e.setMainId(id));
             kolCooperationPlatformService.saveBatch(list);
         }
+
+        //附件
+        // 保存附件
+        TableName tableName = KolPartnerInfoEntity.class.getDeclaredAnnotation(TableName.class);
+        omsAttachmentService.batchSaveOrUpdate(addDTO.getAttachmentUrlList(), addDTO.getAttachmentNameList(), tableName.value(), id);
+
         return new BaseResultDTO.AddDTO(kolPartnerInfoEntity.getId(), code);
     }
 
@@ -274,6 +281,11 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
             kolAddressInfoEntities.forEach(e -> e.setMainId(kolPartnerInfoEntity.getId()));
             commonService.updateDetail(kolPartnerInfoEntity.getId(), ModuleTypeEnum.KOL_PARTNER_INFO.getCode(), kolAddressInfoService, kolAddressInfoEntities, oldKolAddressInfoEntities, "contactPerson");
         }
+
+        // 保存附件
+        TableName tableName = KolPartnerInfoEntity.class.getDeclaredAnnotation(TableName.class);
+        omsAttachmentService.batchSaveOrUpdate(addOrUpdateDTO.getAttachmentUrlList(), addOrUpdateDTO.getAttachmentNameList(), tableName.value(), kolPartnerInfoEntity.getId());
+
         return Boolean.TRUE;
     }
 
@@ -640,6 +652,12 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
         List<KolAddressInfoEntity> kolAddressInfoEntities = kolAddressInfoService.lambdaQuery().eq(KolAddressInfoEntity::getMainId, data.getId()).orderByDesc(KolAddressInfoEntity::getCreateTime).list();
         data.setKolAddressInfoDTOList(kolAddressInfoEntities);
 
+        //附件
+        List<AttachmentDTO.UpdateDTO> attachmentList = omsAttachmentService.getByBusinessId(data.getId());
+        List<String> attachmentUrlList = attachmentList.stream().map(AttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.toList());
+        List<String> attachmentNameList = attachmentList.stream().map(AttachmentDTO.UpdateDTO::getAttachName).collect(Collectors.toList());
+        data.setAttachmentUrlList(attachmentUrlList);
+        data.setAttachmentNameList(attachmentNameList);
     }
 
     /**
