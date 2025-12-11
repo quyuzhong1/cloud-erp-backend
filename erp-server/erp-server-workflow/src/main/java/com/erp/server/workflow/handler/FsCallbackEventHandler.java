@@ -79,7 +79,7 @@ public class FsCallbackEventHandler {
         }
         FsCallbackEventDTO.ApprovalInstanceEventDTO bean = BeanUtil.toBean(thisEvent, FsCallbackEventDTO.ApprovalInstanceEventDTO.class);
         if (!CharSequenceUtil.equals(fsProperties.getClientId(), bean.getAppId())) {
-            log.warn("飞书审批实例自定义事件，应用ID未匹配，跳过处理，appId={}", bean.getAppId());
+            log.warn("飞书审批实例自定义事件，应用ID未匹配，跳过处理,clientId={}，appId={}",fsProperties.getClientId(), bean.getAppId());
             return;
         }
         if (!CharSequenceUtil.equals(APPROVAL_INSTANCE_EVENT,bean.getType())) {
