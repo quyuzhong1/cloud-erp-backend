@@ -307,7 +307,7 @@ public class KolSocialMediaServiceImpl extends SuperServiceImpl<KolSocialMediaMa
 
             // 来源平台字典转换
             if (StrUtil.isNotBlank(data.getMediaPlatform())) {
-                String mediaPlatformName = mediaPlatformNameMap.getOrDefault(data.getMediaPlatform(), "");
+                String mediaPlatformName = mediaPlatformNameMap.getOrDefault(data.getMediaPlatform(), data.getMediaPlatform());
                 data.setMediaPlatformName(mediaPlatformName);
             }
         }
