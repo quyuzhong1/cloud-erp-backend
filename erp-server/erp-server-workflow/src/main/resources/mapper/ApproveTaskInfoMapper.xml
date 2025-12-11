@@ -39,6 +39,7 @@
         ati.third_approval_code as thirdApprovalCode,
         ati.bussiness_key as bussinessKey,
         ati.bussiness_code as bussinessCode,
+        ati.bussiness_approve_status as bussinessApproveStatus,
         ati.happen_time as happenTime,
         ati.status,
         ati.reason
