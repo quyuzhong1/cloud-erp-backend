@@ -389,7 +389,7 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
         //检查是否已生成销售出库单
         SoOutstockEntity outstockEntity = soOutstockService.getBySourceCode(entity.getCode());
         if (Objects.nonNull(outstockEntity)){
-            return BatchResultDTO.success(id, entity.getCode(), "销售出库单已生成");
+            return BatchResultDTO.fail(id, entity.getCode(), "销售出库单已存在");
         }
         SoInfoEntity soInfoEntity = soInfoFeign.getSoInfoById(entity.getSoId());
         if (Objects.isNull(soInfoEntity)){
