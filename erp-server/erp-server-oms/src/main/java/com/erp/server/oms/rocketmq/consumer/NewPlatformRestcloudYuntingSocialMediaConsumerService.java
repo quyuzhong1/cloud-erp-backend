@@ -40,8 +40,8 @@ public class NewPlatformRestcloudYuntingSocialMediaConsumerService extends Abstr
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void handle(String data) {
-        log.info("云听社媒数据消费开始，data={}", data);
-        
+//        log.debug("云听社媒数据消费开始，unique={}", data);
+
         YuntingSocialMediaDTO dto = JSONUtil.toBean(data, YuntingSocialMediaDTO.class);
         if (Objects.isNull(dto)) {
             log.error("云听社媒数据消费失败，参数为空");
