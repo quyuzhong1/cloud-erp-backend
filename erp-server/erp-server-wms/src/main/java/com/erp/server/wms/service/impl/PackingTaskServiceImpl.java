@@ -658,10 +658,11 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
                 listPackingDTO.setCode(firstMileDelivery.getCode());
             }
         }
+        //装箱进度
+        List<WmsCartonEntity> cartonEntityList = wmsCartonService.listByTaskIds(Collections.singletonList(packedDetailDTO.getTaskId()));
         //获取总箱数
-        List<WmsCartonSpecEntity> cartonSpecEntityList = wmsCartonSpecService.listByMainIds(Collections.singletonList(packedDetailDTO.getTaskId()));
-        int boxQty = cartonSpecEntityList.stream().mapToInt(WmsCartonSpecEntity::getBoxQty).sum();
-        listPackingDTO.setBoxQty(boxQty);
+        //总箱数
+        listPackingDTO.setBoxQty(cartonEntityList.size());
 
         //箱子明细信息
         List<WmsCartonDetailDTO.ListPackingDetailDTO> detailList = baseMapper.listPackingDetail(packedDetailDTO);
