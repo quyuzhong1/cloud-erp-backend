@@ -115,8 +115,8 @@ public class MoldInfoImportExcelDTO implements Serializable {
      * 模具长(mm)
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "*模具长(mm)", index = 9)
-    @FieldValid(fieldName = "*模具长(mm)",isNotBlank = true,formatPattern = FieldFormatPatternTypeEnum.AMOUNT2)
+    @ExcelProperty(value = "模具长(mm)", index = 9)
+    @FieldValid(fieldName = "模具长(mm)",formatPattern = FieldFormatPatternTypeEnum.AMOUNT2)
     private BigDecimal productLength;
 
 
@@ -124,8 +124,8 @@ public class MoldInfoImportExcelDTO implements Serializable {
      * 模具宽(mm)
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "*模具宽(mm)", index = 10)
-    @FieldValid(fieldName = "*模具宽(mm)",isNotBlank = true,formatPattern = FieldFormatPatternTypeEnum.AMOUNT2)
+    @ExcelProperty(value = "模具宽(mm)", index = 10)
+    @FieldValid(fieldName = "模具宽(mm)",formatPattern = FieldFormatPatternTypeEnum.AMOUNT2)
     private BigDecimal productWidth;
 
 
@@ -133,8 +133,8 @@ public class MoldInfoImportExcelDTO implements Serializable {
      * 模具高(mm)
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "*模具高(mm)", index = 11)
-    @FieldValid(fieldName = "*模具高(mm)",isNotBlank = true,formatPattern = FieldFormatPatternTypeEnum.AMOUNT2)
+    @ExcelProperty(value = "模具高(mm)", index = 11)
+    @FieldValid(fieldName = "模具高(mm)",formatPattern = FieldFormatPatternTypeEnum.AMOUNT2)
     private BigDecimal productHeight;
 
 
