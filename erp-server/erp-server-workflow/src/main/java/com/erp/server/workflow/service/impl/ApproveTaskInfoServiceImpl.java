@@ -297,7 +297,7 @@ public class ApproveTaskInfoServiceImpl extends SuperServiceImpl<ApproveTaskInfo
         dto.setSystemCode(CfgApproveSyncSyncPlatformEnum.FEISHU.getCode());
         dto.setBillType(DmpPullConstant.INSTANCE_IDS);
         dto.setNextLevelId(entity.getThirdApprovalCode());
-        dto.setTaskType(DmpInputTaskTaskTypeEnum.HOTFIX.getCode());
+        dto.setTaskType(DmpInputTaskTaskTypeEnum.NORMAL.getCode());
         // 手动指定创建审批实例id
         Map<String, Object> map = Collections.singletonMap("instanceId",entity.getThirdInstanceId());
         dto.setDetailExtendJson(JSON.toJSONString(map));

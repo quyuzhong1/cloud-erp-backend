@@ -91,7 +91,7 @@ public class FsCallbackEventHandler {
         dto.setSystemCode(CfgApproveSyncSyncPlatformEnum.FEISHU.getCode());
         dto.setBillType(DmpPullConstant.INSTANCE_IDS);
         dto.setNextLevelId(bean.getApprovalCode());
-        dto.setTaskType(DmpInputTaskTaskTypeEnum.HOTFIX.getCode());
+        dto.setTaskType(DmpInputTaskTaskTypeEnum.NORMAL.getCode());
         // 手动指定创建审批实例id
         Map<String, Object> map = Collections.singletonMap("instanceId",bean.getInstanceCode());
         dto.setDetailExtendJson(JSON.toJSONString(map));
