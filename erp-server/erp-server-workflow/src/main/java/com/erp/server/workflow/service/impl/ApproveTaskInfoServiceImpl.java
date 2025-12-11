@@ -14,7 +14,6 @@ import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
-import com.common.business.enums.ApprovePlatformEnum;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
@@ -295,7 +294,7 @@ public class ApproveTaskInfoServiceImpl extends SuperServiceImpl<ApproveTaskInfo
         }
         //根据审批定义和审批实例id生成中台即时拉取任务
         DmpInoutDTO.CreateInputDTO dto = new DmpInoutDTO.CreateInputDTO();
-        dto.setSystemCode(ApprovePlatformEnum.FEI_SHU.getCode());
+        dto.setSystemCode(CfgApproveSyncSyncPlatformEnum.FEISHU.getCode());
         dto.setBillType(DmpPullConstant.INSTANCE_IDS);
         dto.setNextLevelId(entity.getThirdApprovalCode());
         dto.setTaskType(DmpInputTaskTaskTypeEnum.HOTFIX.getCode());
