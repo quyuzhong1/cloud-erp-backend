@@ -133,6 +133,11 @@ public class KolFeedbackCostDTO implements Serializable {
          */
         private LocalDateTime createTime;
 
+        /**
+         * 创建人
+         */
+        private String createUserName;
+
     }
 
     /**
