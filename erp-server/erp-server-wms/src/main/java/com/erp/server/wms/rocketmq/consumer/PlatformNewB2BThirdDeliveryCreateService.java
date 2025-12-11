@@ -97,8 +97,7 @@ public class PlatformNewB2BThirdDeliveryCreateService extends AbstractNewPlatfor
             b2bThirdDeliveryService.updateStatus(sourceId, ThirdDeliveryStatusEnum.WAIT_SHIPPED.getCode(), "", platformOrderCode, "", trackNo, deliveryTime);
         } else {
             // 确认创建失败
-            String errorMsg = CharSequenceUtil.format(ApiError.FBA_OUTBOUND_BILL_CREATE_FAILED.msg, fbaOutboundBill.getMsg());
-            b2bThirdDeliveryService.updateStatus(sourceId, ThirdDeliveryStatusEnum.FAILED.getCode(), errorMsg, "", "", trackNo, deliveryTime);
+            b2bThirdDeliveryService.updateStatus(sourceId, ThirdDeliveryStatusEnum.FAILED.getCode(), fbaOutboundBill.getMsg(), "", "", trackNo, deliveryTime);
         }
     }
 
