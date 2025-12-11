@@ -70,7 +70,7 @@ public class SyncB2bThirdWarehouseServiceImpl implements SyncB2bThirdWarehouseSe
     private DmpPushTaskEntity saveCancelTask(B2bThirdDeliveryEntity entity, String operate, Map<String, Object> resultMap) {
         SettingEnum settingEnum = SettingEnum.NEW_DMP_PUSH_SWTICH_LIST;
         List<CfgSettingEntity> list = FeignQuery.create(CfgSettingEntity.class)
-                .eq(CfgSettingEntity::getKey, SourceTypeEnum.B2B_THIRD_DELIVERY.getCode())
+                .eq(CfgSettingEntity::getKey, SourceTypeEnum.B2B_THIRD_DELIVERY_CANCEL.getCode())
                 .eq(CfgSettingEntity::getType, settingEnum.getType())
                 .eq(CfgSettingEntity::getValue, "1")
                 .list();
@@ -127,7 +127,7 @@ public class SyncB2bThirdWarehouseServiceImpl implements SyncB2bThirdWarehouseSe
     private DmpPushTaskEntity saveCreateTask(B2bThirdDeliveryEntity entity, String operate, Map<String, Object> resultMap) {
         SettingEnum settingEnum = SettingEnum.NEW_DMP_PUSH_SWTICH_LIST;
         List<CfgSettingEntity> list = FeignQuery.create(CfgSettingEntity.class)
-                .eq(CfgSettingEntity::getKey, SourceTypeEnum.B2B_THIRD_DELIVERY.getCode())
+                .eq(CfgSettingEntity::getKey, SourceTypeEnum.B2B_THIRD_DELIVERY_CREATE.getCode())
                 .eq(CfgSettingEntity::getType, settingEnum.getType())
                 .eq(CfgSettingEntity::getValue, "1")
                 .list();

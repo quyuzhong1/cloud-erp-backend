@@ -50,7 +50,7 @@ public enum B2BDeliveryPushTypeEnum implements EnumMessage {
         if (StringUtils.isBlank(code)) {
             return "";
         }
-        for (WarehouseOperationTypeEnum billTypeEnum : WarehouseOperationTypeEnum.values()) {
+        for (B2BDeliveryPushTypeEnum billTypeEnum : B2BDeliveryPushTypeEnum.values()) {
             if (code.equals(billTypeEnum.getCode())) {
                 return billTypeEnum.getName();
             }
