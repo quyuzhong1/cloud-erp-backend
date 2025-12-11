@@ -27,7 +27,7 @@ import java.util.Objects;
         selectorExpression = RocketMqNewTag.RESTCLOUD_YUNTING_SOCIAL_MEDIA_TO_OMS_TAG,
         consumerGroup = RocketMqNewConsumerGroup.RESTCLOUD_YUNTING_SOCIAL_MEDIA_TO_OMS_GROUP,
         consumeMode = ConsumeMode.ORDERLY)
-public class RestcloudYuntingSocialMediaConsumerService extends AbstractRestCloudPlatformConsumerHandler {
+public class NewPlatformRestcloudYuntingSocialMediaConsumerService extends AbstractRestCloudPlatformConsumerHandler {
 
     @Resource
     private KolSocialMediaService kolSocialMediaService;
