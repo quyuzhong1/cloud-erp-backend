@@ -6,11 +6,13 @@ import com.sdk.wangdian.sdk.api.Result;
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 
 import java.util.List;
 
 @Getter
 @Setter
+@ToString
 public class PushSelf2Response {
 
 	@SerializedName("status")
@@ -26,7 +28,9 @@ public class PushSelf2Response {
 	 *
 	 *
 	 * */
-	@Data
+	@Getter
+	@Setter
+	@ToString
 	public static class ErrorData{
 		@SerializedName("chg_count")
 		private Integer chgCount;
@@ -41,7 +45,9 @@ public class PushSelf2Response {
 	 *
 	 *
 	 * */
-	@Data
+	@Getter
+	@Setter
+	@ToString
 	public static class Error{
 		@SerializedName("error")
 		private String error;

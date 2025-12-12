@@ -2,16 +2,15 @@ package com.sdk.wangdian.sdk.api.sales.dto;
 
 import com.google.gson.annotations.SerializedName;
 import lombok.Data;
+import lombok.ToString;
 
 import java.math.BigDecimal;
 import java.util.List;
 
 @Data
+@ToString
 public class PushSelf2Request
 {
-	@SerializedName("business_code")
-	private String businessCode;
-
 	@SerializedName("shop_no")
 	private String shopNo;
 
@@ -28,6 +27,7 @@ public class PushSelf2Request
 	 *
 	 * */
 	@Data
+	@ToString
 	public static class RawTrade{
 		/**
 		 * 必填
@@ -536,6 +536,7 @@ public class PushSelf2Request
 	 *
 	 * */
 	@Data
+	@ToString
 	public static class RawTradeOrder {
 
 		/**

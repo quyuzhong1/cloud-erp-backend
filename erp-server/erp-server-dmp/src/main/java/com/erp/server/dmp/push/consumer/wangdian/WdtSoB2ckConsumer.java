@@ -100,7 +100,7 @@ public class WdtSoB2ckConsumer<T extends DmpSyncTaskIdDTO> extends AbstractPlatf
         //request转json并且打印出来
         log.info("request: {}", request);
         try {
-            RLock lock = redissonClient.getLock(LOCK + request.getBusinessCode());
+            RLock lock = redissonClient.getLock(LOCK + request.getRawTradeList().get(0).getTid());
             try {
                 boolean locked = lock.tryLock(10, TimeUnit.SECONDS);
                 if (locked) {

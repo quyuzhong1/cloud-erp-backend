@@ -71,21 +71,21 @@ public class SyncWangDianSoB2cServiceImpl implements SyncWangDianSoB2cService {
                 .eq(KolB2cApplicationAddressEntity::getPartnerId, entity.getPartnerId())
                 .one();
 
-        //wdt仓库映射
-        String warehouseCode = "";
-        String warehouseId = kolB2cApplicationEntity.getWarehouseId();
-        if(StringUtils.isNotBlank(warehouseId)){
-            List<ThirdMappingEntity> warehouses = FeignQuery.create(ThirdMappingEntity.class)
-                    .eq(ThirdMappingEntity::getType, "warehouse")
-                    .eq(ThirdMappingEntity::getThirdSysType, "wdt")
-                    .eq(ThirdMappingEntity::getDisabled, false)
-                    .eq(ThirdMappingEntity::getSysId, warehouseId)
-                    .list();
-            if(CollUtil.isEmpty(warehouses)){
-                throw new ServiceException(ApiError.ERROR_WDT_NOT_FOUND_WAREHOUSE_MAPPING,kolB2cApplicationEntity.getWarehouseName());
-            }
-            warehouseCode = warehouses.get(0).getThirdCode();
-        }
+//        //wdt仓库映射
+//        String warehouseCode = "";
+//        String warehouseId = kolB2cApplicationEntity.getWarehouseId();
+//        if(StringUtils.isNotBlank(warehouseId)){
+//            List<ThirdMappingEntity> warehouses = FeignQuery.create(ThirdMappingEntity.class)
+//                    .eq(ThirdMappingEntity::getType, "warehouse")
+//                    .eq(ThirdMappingEntity::getThirdSysType, "wdt")
+//                    .eq(ThirdMappingEntity::getDisabled, false)
+//                    .eq(ThirdMappingEntity::getSysId, warehouseId)
+//                    .list();
+//            if(CollUtil.isEmpty(warehouses)){
+//                throw new ServiceException(ApiError.ERROR_WDT_NOT_FOUND_WAREHOUSE_MAPPING,kolB2cApplicationEntity.getWarehouseName());
+//            }
+//            warehouseCode = warehouses.get(0).getThirdCode();
+//        }
 
 
         //wdt物流渠道映射
@@ -117,7 +117,6 @@ public class SyncWangDianSoB2cServiceImpl implements SyncWangDianSoB2cService {
         }
         String shopNo = shops.get(0).getThirdCode();
         request.setShopNo(shopNo);
-        request.setBusinessCode(entity.getCode());
 
         PushSelf2Request.RawTrade rawTrade = new PushSelf2Request.RawTrade();
         rawTrade.setTid(entity.getCode());
@@ -153,16 +152,10 @@ public class SyncWangDianSoB2cServiceImpl implements SyncWangDianSoB2cService {
         rawTrade.setInvoiceType(PushSelf2Request.RawTrade.INVOICE_TYPE_NO);
         rawTrade.setDeliveryTerm(PushSelf2Request.RawTrade.DELIVERY_TERM_PAY_FIRST);
         if(StringUtils.isNotBlank(logisticsCode)){
-            rawTrade.setLogisticsType(-1);
             rawTrade.setCustData(logisticsCode);
         }
-        if(StringUtils.isNotBlank(warehouseCode)){
-            rawTrade.setIsAutoWms(Boolean.TRUE);
-            rawTrade.setWarehouseNo(warehouseCode);
-        }else {
-            rawTrade.setIsAutoWms(Boolean.FALSE);
-            rawTrade.setWarehouseNo("");
-        }
+        rawTrade.setIsAutoWms(Boolean.FALSE);
+        rawTrade.setWarehouseNo("");
         rawTrade.setIsSealed(PushSelf2Request.RawTrade.IS_SEALED_NOT_ALLOW);
         rawTrade.setIdCardType(PushSelf2Request.RawTrade.ID_CARD_TYPE_NONE);
         rawTrade.setIdCard("");
