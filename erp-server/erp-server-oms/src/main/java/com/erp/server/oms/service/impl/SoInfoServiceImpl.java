@@ -1428,6 +1428,31 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 if(count > 0) {
                     throw new ServiceException("下游发货单通知单已审核通过，不允许修改");
                 }
+                //已下推发货通知单的明细，不能修改发货sku，发货箱数也不能少于该已下推的发货通知单数量
+                List<SoDetailEntity> soDetailEntities = soDetailService.listSoDetailByMainId(id);
+                List<String> idList = soDeliveryNoticeEntities.stream().map(e -> e.getId()).collect(Collectors.toList());
+                List<SoDeliveryNoticeDetailEntity> soDeliveryNoticeDetailList = soDeliveryNoticeFeign.getNoticeDetailByIdList(idList);
+                Map<String, Integer> deliveryQtyMap = soDeliveryNoticeDetailList.stream()
+                        .collect(Collectors.groupingBy(
+                                SoDeliveryNoticeDetailEntity::getSourceDetailId,
+                                Collectors.summingInt(SoDeliveryNoticeDetailEntity::getDeliveryQty)
+                        ));
+                for (SoDetailEntity soDetailEntity : soDetailEntities) {
+                    for (SoDetailDTO.UpdateDTO updateDTO : dto.getDetailList()) {
+                        if (soDetailEntity.getId().equals(updateDTO.getId())) {
+                            if (!soDetailEntity.getDeliverySkuNo().equals(updateDTO.getDeliverySkuNo())) {
+                                throw new ServiceException(ApiError.ERROR_DELIVERY_SKU_FORBID_UPDATE);
+                            }
+
+                            Integer deliveryQty = deliveryQtyMap.get(soDetailEntity.getId());
+                            if (soDetailEntity.getBoxQty() < deliveryQty) {
+                                throw new ServiceException(ApiError.ERROR_BOX_QTY_LESS_NOTICE_QTY);
+                            }
+                        }
+                    }
+
+                }
+
                 needUpdateDeliveryNotice = true;
             }
         }

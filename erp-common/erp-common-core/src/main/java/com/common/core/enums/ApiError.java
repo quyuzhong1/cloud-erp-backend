@@ -1694,6 +1694,8 @@ public enum ApiError implements Serializable {
     ERROR_SO_CHANGE_QTY_MUST_INTEGER_MULTIPLE_BOX_RULE(92199,"变更数量必须是发货箱规的整数倍"),
     ERROR_DUPLICATE_SKU(92200,"箱规SKU【{}】重复"),
     ERROR_DUPLICATE_QTY(92201,"箱规单箱数量【{}】重复"),
+    ERROR_DELIVERY_SKU_FORBID_UPDATE(92202,"已下推发货通知单的明细，不能修改发货sku"),
+    ERROR_BOX_QTY_LESS_NOTICE_QTY(92203,"发货箱数不能少于已下推的发货通知单数量"),
     /**
      * TMS 错误
      * 从94000 开始
