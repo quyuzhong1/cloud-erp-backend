@@ -15,6 +15,7 @@
        <result column="main_id" property="mainId" />
        <result column="source_detail_id" property="sourceDetailId" />
        <result column="platform_detail_id" property="platformDetailId" />
+       <result column="third_detail_id" property="thirdDetailId" />
        <result column="sku_id" property="skuId" />
        <result column="sku_no" property="skuNo" />
        <result column="apply_qty" property="applyQty" />
@@ -36,6 +37,7 @@ ksbad.is_deleted AS isDeleted,
 ksbad.main_id AS mainId,
 ksbad.source_detail_id AS sourceDetailId,
 ksbad.platform_detail_id AS platformDetailId,
+ksbad.third_detail_id AS thirdDetailId,
 ksbad.sku_id AS skuId,
 ksbad.sku_no AS skuNo,
 ksbad.apply_qty AS applyQty,

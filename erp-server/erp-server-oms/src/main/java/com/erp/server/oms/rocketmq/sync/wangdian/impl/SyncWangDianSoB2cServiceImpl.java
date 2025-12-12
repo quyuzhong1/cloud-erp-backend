@@ -4,23 +4,15 @@ package com.erp.server.oms.rocketmq.sync.wangdian.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
-import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
-import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.StrUtils;
-import com.common.message.constant.RocketMqTopic;
-import com.common.message.enums.RocketMqTagEnum;
-import com.erp.model.dmp.entity.CfgSettingEntity;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.entity.ThirdMappingEntity;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
-import com.erp.model.dmp.enums.PlatformEnum;
-import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.oms.dto.KolSubB2cApplicationDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.plm.vo.SkuVO;
@@ -28,11 +20,11 @@ import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.server.oms.rocketmq.sync.wangdian.SyncWangDianSoB2cService;
 import com.erp.server.oms.service.*;
 import com.sdk.wangdian.sdk.api.sales.dto.PushSelf2Request;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronizationAdapter;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
-
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.time.format.DateTimeFormatter;
@@ -79,18 +71,51 @@ public class SyncWangDianSoB2cServiceImpl implements SyncWangDianSoB2cService {
                 .eq(KolB2cApplicationAddressEntity::getPartnerId, entity.getPartnerId())
                 .one();
 
+        //wdt仓库映射
+        String warehouseCode = "";
+        String warehouseId = kolB2cApplicationEntity.getWarehouseId();
+        if(StringUtils.isNotBlank(warehouseId)){
+            List<ThirdMappingEntity> warehouses = FeignQuery.create(ThirdMappingEntity.class)
+                    .eq(ThirdMappingEntity::getType, "warehouse")
+                    .eq(ThirdMappingEntity::getThirdSysType, "wdt")
+                    .eq(ThirdMappingEntity::getDisabled, false)
+                    .eq(ThirdMappingEntity::getSysId, warehouseId)
+                    .list();
+            if(CollUtil.isEmpty(warehouses)){
+                throw new ServiceException(ApiError.ERROR_WDT_NOT_FOUND_WAREHOUSE_MAPPING,kolB2cApplicationEntity.getWarehouseName());
+            }
+            warehouseCode = warehouses.get(0).getThirdCode();
+        }
+
+
+        //wdt物流渠道映射
+        String logisticsCode = "";
+                String logisticsChannelId = kolB2cApplicationEntity.getLogisticsChannelId();
+        if(StringUtils.isNotBlank(logisticsChannelId)){
+            List<ThirdMappingEntity> logisticsChannels = FeignQuery.create(ThirdMappingEntity.class)
+                    .eq(ThirdMappingEntity::getType, "logistics")
+                    .eq(ThirdMappingEntity::getThirdSysType, "wdt")
+                    .eq(ThirdMappingEntity::getDisabled, false)
+                    .eq(ThirdMappingEntity::getSysId, logisticsChannelId)
+                    .list();
+            if(CollUtil.isEmpty(logisticsChannels)){
+                throw new ServiceException(ApiError.ERROR_WDT_NOT_FOUND_LOGISTICSCHANNEL_MAPPING,kolB2cApplicationEntity.getLogisticsChannelName());
+            }
+            logisticsCode = logisticsChannels.get(0).getThirdCode();
+        }
+
         //wdt店铺映射
         String shopId = kolB2cApplicationEntity.getShopId();
-        List<ThirdMappingEntity> thirdMappingEntities = FeignQuery.create(ThirdMappingEntity.class)
+        List<ThirdMappingEntity> shops = FeignQuery.create(ThirdMappingEntity.class)
                 .eq(ThirdMappingEntity::getType, "shop")
                 .eq(ThirdMappingEntity::getThirdSysType, "wdt")
                 .eq(ThirdMappingEntity::getDisabled, false)
                 .eq(ThirdMappingEntity::getSysId, shopId)
                 .list();
-        if(CollUtil.isEmpty(thirdMappingEntities)){
+        if(CollUtil.isEmpty(shops)){
             throw new ServiceException(ApiError.ERROR_WDT_NOT_FOUND_SHOP_MAPPING,kolB2cApplicationEntity.getShopName());
         }
-        String shopNo = thirdMappingEntities.get(0).getThirdCode();
+        String shopNo = shops.get(0).getThirdCode();
         request.setShopNo(shopNo);
         request.setBusinessCode(entity.getCode());
 
@@ -127,8 +152,17 @@ public class SyncWangDianSoB2cServiceImpl implements SyncWangDianSoB2cService {
         rawTrade.setPlatformCost(BigDecimal.ZERO);
         rawTrade.setInvoiceType(PushSelf2Request.RawTrade.INVOICE_TYPE_NO);
         rawTrade.setDeliveryTerm(PushSelf2Request.RawTrade.DELIVERY_TERM_PAY_FIRST);
-        rawTrade.setIsAutoWms(Boolean.FALSE);
-        rawTrade.setWarehouseNo("");
+        if(StringUtils.isNotBlank(logisticsCode)){
+            rawTrade.setLogisticsType(-1);
+            rawTrade.setCustData(logisticsCode);
+        }
+        if(StringUtils.isNotBlank(warehouseCode)){
+            rawTrade.setIsAutoWms(Boolean.TRUE);
+            rawTrade.setWarehouseNo(warehouseCode);
+        }else {
+            rawTrade.setIsAutoWms(Boolean.FALSE);
+            rawTrade.setWarehouseNo("");
+        }
         rawTrade.setIsSealed(PushSelf2Request.RawTrade.IS_SEALED_NOT_ALLOW);
         rawTrade.setIdCardType(PushSelf2Request.RawTrade.ID_CARD_TYPE_NONE);
         rawTrade.setIdCard("");

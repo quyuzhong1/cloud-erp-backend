@@ -75,11 +75,6 @@ public class KolSubB2cApplicationEntity extends BaseEntity<KolSubB2cApplicationE
     @TableField("track_no")
     private String trackNo;
     /**
-    * 平台订单id
-    */
-    @TableField("platform_order_id")
-    private String platformOrderId;
-    /**
     * 平台订单编码
     */
     @TableField("platform_order_code")

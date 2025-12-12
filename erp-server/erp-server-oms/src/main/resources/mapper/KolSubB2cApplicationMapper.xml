@@ -22,7 +22,6 @@
        <result column="delivery_status" property="deliveryStatus" />
        <result column="order_status" property="orderStatus" />
        <result column="track_no" property="trackNo" />
-       <result column="platform_order_id" property="platformOrderId" />
        <result column="platform_order_code" property="platformOrderCode" />
     </resultMap>
 
@@ -47,7 +46,6 @@ ksba.nickname AS nickname,
 ksba.delivery_status AS deliveryStatus,
 ksba.order_status AS orderStatus,
 ksba.track_no AS trackNo,
-ksba.platform_order_id AS platformOrderId,
 ksba.platform_order_code AS platformOrderCode
     </sql>
 
@@ -55,6 +53,7 @@ ksba.platform_order_code AS platformOrderCode
         ksbad.id AS detailId,
 ksbad.source_detail_id AS sourceDetailId,
 ksbad.platform_detail_id AS platformDetailId,
+ksbad.third_detail_id AS thirdDetailId,
 ksbad.sku_id AS skuId,
 ksbad.sku_no AS skuNo,
 ksbad.apply_qty AS applyQty,

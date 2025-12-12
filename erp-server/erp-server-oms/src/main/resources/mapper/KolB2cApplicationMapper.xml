@@ -100,7 +100,6 @@ CASE
 		ksba.order_status ELSE'not'
         END AS orderStatus,
 ksba.track_no AS trackNo,
-ksba.platform_order_id AS platformOrderId,
 ksba.platform_order_code AS platformOrderCode
     </sql>
 

@@ -35,8 +35,13 @@ public class KolSubB2cApplicationDetailEntity extends BaseEntity<KolSubB2cApplic
     @TableField("source_detail_id")
     private String sourceDetailId;
     /**
-    * 平台明细id
-    */
+     * 来源详情id
+     */
+    @TableField("third_detail_id")
+    private String thirdDetailId;
+    /**
+     * 平台原始详情id
+     */
     @TableField("platform_detail_id")
     private String platformDetailId;
     /**

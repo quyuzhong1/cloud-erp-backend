@@ -15,7 +15,6 @@ import org.apache.commons.lang3.StringUtils;
 public enum KolSubB2cApplicationDeliveryStatusEnum implements EnumMessage {
 	WAITSHIPPED("waitShipped", "待发货"),
 	SHIPPED("shipped", "已发货"),
-	PARTIALSHIPPED("partialShipped", "部分发货"),
     ;
     /**
      * 类型

@@ -1603,6 +1603,7 @@ public enum ApiError implements Serializable {
     ERROR_WDT_NOT_FOUND_WAREHOUSE_MAPPING(92083,"同步旺店通B2C单据未找到对应的仓库映射【{}】"),
     ERROR_WAREHOUSE_NOT_FOUND(92083,"未找到对应的仓库【{}】"),
     ERROR_WDT_NOT_FOUND_SHOP_MAPPING(92084,"同步旺店通B2C单据未找到对应的店铺映射【{}】"),
+    ERROR_WDT_NOT_FOUND_LOGISTICSCHANNEL_MAPPING(92084,"同步旺店通B2C单据未找到对应的物流渠道映射【{}】"),
     ERROR_WDT_NOT_FOUND_SKU(92085,"同步旺店通单据未找到对应的SKU【{}】"),
 
     ERROR_SHOP_UNDISABLED(92142,"只有禁用的店铺允许删除"),

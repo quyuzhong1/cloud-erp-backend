@@ -249,4 +249,9 @@ public class RocketMqNewTopic {
      */
     public static final String RESTCLOUD_YUNTING_SOCIAL_MEDIA_TO_OMS_TOPIC = "${spring.cloud.nacos.discovery.namespace}-restcloud_yunting_social_media_to_oms_topic";
 
+    /**
+     * WDT KOL B2C申请
+     */
+    public static final String DMP_WDT_KOL_B2C_APPLICATION_TO_OMS_TOPIC = "${spring.cloud.nacos.discovery.namespace}-dmp_wdt_kol_b2c_application_to_oms_topic";
+
 }
