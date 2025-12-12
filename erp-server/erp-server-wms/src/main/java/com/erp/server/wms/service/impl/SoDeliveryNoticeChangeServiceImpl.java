@@ -724,7 +724,7 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
             data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
             SoDetailEntity soDetailEntity = soDetailEntityList.stream().filter(v->v.getId().equals(data.getSoDetailId())).findFirst().orElse(new SoDetailEntity());
-            data.setSaleQty(soDetailEntity.getQty());
+            data.setSaleQty(soDetailEntity.getDeliveryQty());
             List<SoDeliveryNoticeDetailEntity> currentNoticeDetailList = soDeliveryNoticeDetailEntityList.stream().filter(v->v.getSourceDetailId().equals(data.getSoDetailId())).collect(Collectors.toList());
             data.setAllNoticeQty(currentNoticeDetailList.stream().map(SoDeliveryNoticeDetailEntity::getDeliveryQty).reduce(0, Integer::sum));
             data.setChangeTypeName(SoDeliveryNoticeChangeTypeEnum.getName(data.getChangeType()));
