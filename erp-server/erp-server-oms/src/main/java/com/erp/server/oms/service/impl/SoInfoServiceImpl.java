@@ -887,7 +887,12 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         //有效发货通知单
         List<String> sodIdList = list.stream().map(SoInfoDTO.PagingViewDTO::getDetailId).collect(Collectors.toList());
         List<SoDeliveryNoticeDetailEntity> soDeliveryNoticeDetailList = soDeliveryNoticeFeign.listDetailBySourceDetailIds(sodIdList);
-        List<String> skuIdList = list.stream().map(SoInfoDTO.PagingViewDTO::getDeliverySkuId).distinct().collect(Collectors.toList());
+//        List<String> skuIdList = list.stream().map(SoInfoDTO.PagingViewDTO::getDeliverySkuId).distinct().collect(Collectors.toList());
+        List<String> skuIdList = list.stream()
+                .flatMap(dto -> Stream.of(dto.getSkuId(), dto.getDeliverySkuId()))
+                .filter(Objects::nonNull)
+                .distinct()
+                .collect(Collectors.toList());
         List<String> warehouseIdList = list.stream().map(SoInfoDTO.PagingViewDTO::getWarehouseId).collect(Collectors.toList());
 
         //根据SKU查询BOM判断是否是组合SKU
@@ -1038,13 +1043,16 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             String customerName = customerList.stream().filter(c -> c.getId().equals(item.getCustomerId())).findFirst().
                     flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
             item.setCustomerName(customerName);
-            String skuId = item.getDeliverySkuId();
+            //sku
+            String skuId = item.getSkuId();
+            //发货sku
+            String deliverySkuId = item.getDeliverySkuId();
             //销售数量
             Integer qty = item.getBoxQty();
 
             //即时库存
             Integer curInventoryQty = skuInventoryTotalList.stream().filter(
-                    s -> s.getSkuId().equals(skuId) &&
+                    s -> s.getSkuId().equals(deliverySkuId) &&
                             s.getWarehouseId().equals(warehouseId)
             ).mapToInt(InventoryQtyDTO.SkuInventoryTotalDTO::getInventoryTotal).sum();
             /**
@@ -1127,7 +1135,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             if (waitQty == 0) {
                 deliveryStatus = DeliveryStatusEnum.COMPLETE_SHIPMENT.getCode();
             } else {
-                if (!qty.equals(waitQty)) {
+                if (!item.getQty().equals(waitQty)) {
                     deliveryStatus = DeliveryStatusEnum.PARTIAL_SHIPMENT.getCode();
                 }
             }
@@ -1166,8 +1174,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 }
             }
 
-            if (ignoreInventorySkuIds.contains(skuId)) {
-                log.warn("sku id: {}，sku编号：{}产品属性是费用或服务，不参与库存出入库，不做库存验证", skuId, item.getDeliverySkuNo());
+            if (ignoreInventorySkuIds.contains(deliverySkuId)) {
+                log.warn("sku id: {}，sku编号：{}产品属性是费用或服务，不参与库存出入库，不做库存验证", deliverySkuId, item.getDeliverySkuNo());
                 item.setIsScarce(Boolean.FALSE);
                 item.setScarceQty(0);
             }
