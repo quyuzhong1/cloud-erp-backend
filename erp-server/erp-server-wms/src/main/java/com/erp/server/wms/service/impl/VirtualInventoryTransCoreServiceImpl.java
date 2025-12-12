@@ -337,6 +337,10 @@ public class VirtualInventoryTransCoreServiceImpl implements VirtualInventoryTra
                 transactionDTO.setVirtualWarehouseId(outInStockDTO.getVirtualWarehouseId());
                 transactionDTO.setInventoryStatus(rule.getInventoryStatus().getCode());
 
+                // 库存基础信息
+                VirtualInventoryEntity virtualInventoryEntity = virtualInventoryService.getByTransaction(transactionDTO);
+                transactionDTO.setVirtualInventoryId(ObjectUtil.isEmpty(virtualInventoryEntity) ? null : virtualInventoryEntity.getId());
+
                 // 设置冗余信息部分
                 transactionDTO.setOrgName(getOrgName(orgList,orgId));
                 transactionDTO.setWarehouseName(getWarehouseInfo(warehouseEntityList,outInStockDTO.getWarehouseId()).getName());
@@ -359,9 +363,6 @@ public class VirtualInventoryTransCoreServiceImpl implements VirtualInventoryTra
                 transactionDTO.setUserId(userInfo.getUid());
                 transactionDTO.setUserName(userInfo.getUserName());
 
-                // 库存基础信息
-                VirtualInventoryEntity virtualInventoryEntity = virtualInventoryService.getByTransaction(transactionDTO);
-                transactionDTO.setVirtualInventoryId(ObjectUtil.isEmpty(virtualInventoryEntity) ? null : virtualInventoryEntity.getId());
                 // 是否允许负库存
                 transactionDTO.setAllowNegativeInventory(Boolean.FALSE);
 
