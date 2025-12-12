@@ -1,10 +1,14 @@
 package com.erp.server.dmp.inout.job;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import javax.annotation.Resource;
 
+import cn.hutool.core.util.StrUtil;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
@@ -94,11 +98,16 @@ public class DmpOutputCreateJob {
 	
 	@XxlJob("createOutputTaskByAppId")
 	public ReturnT createEtlTaskByAppId(){
-		String appId = XxlJobHelper.getJobParam();
+		String appIdListStr = XxlJobHelper.getJobParam();
+        List<String> appIdList = new ArrayList<>();
+        if (StrUtil.isNotBlank(appIdListStr)) {
+            appIdList = Arrays.stream(appIdListStr.split(",")).collect(Collectors.toList());
+        }
+
 		List<DmpCfgOutputEntity> list = dmpCfgOutputService.lambdaQuery()
 				.eq(DmpCfgOutputEntity::getDisabled, false)
 				.eq(DmpCfgOutputEntity::getExecSystem, DmpCfgInputExecSystemEnum.REST_CLOUD.getCode())
-				.eq(DmpCfgOutputEntity::getAppId, appId)
+				.in(CollUtil.isNotEmpty(appIdList), DmpCfgOutputEntity::getAppId, appIdList)
 				.list();
 		if(CollUtil.isNotEmpty(list)) {
 			for(DmpCfgOutputEntity l : list) {
