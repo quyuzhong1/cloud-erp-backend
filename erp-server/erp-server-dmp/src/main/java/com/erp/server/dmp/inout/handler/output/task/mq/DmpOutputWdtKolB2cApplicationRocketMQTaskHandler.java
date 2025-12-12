@@ -123,51 +123,57 @@ public class DmpOutputWdtKolB2cApplicationRocketMQTaskHandler extends DmpOutputR
 			return null;
 		}
 
-		WdtKolB2cApplicationDTO wdtKolB2cApplicationDTO = new WdtKolB2cApplicationDTO();
-		wdtKolB2cApplicationDTO.setCode(dmpSoInfoEntity.getPlatformCode());
-		wdtKolB2cApplicationDTO.setPlatformSoCode(dmpSoInfoEntity.getThirdCode());
-		wdtKolB2cApplicationDTO.setPlatformOrderCode(dmpSoInfoEntity.getPlatformCode());
+		if(dmpSoInfoEntity.getPlatformCode().contains("KOLC") || dmpSoInfoEntity.getThirdCode().contains("KOLC")){
+			WdtKolB2cApplicationDTO wdtKolB2cApplicationDTO = new WdtKolB2cApplicationDTO();
+			wdtKolB2cApplicationDTO.setCode(dmpSoInfoEntity.getPlatformCode());
+			wdtKolB2cApplicationDTO.setPlatformSoCode(dmpSoInfoEntity.getThirdCode());
+			wdtKolB2cApplicationDTO.setPlatformOrderCode(dmpSoInfoEntity.getPlatformCode());
 
-		String orderStatus = dmpSoInfoEntity.getOrderStatus();
-		//销售订单关联状态
-		if(Objects.equals(orderStatus,"55")){ //已审核
-			wdtKolB2cApplicationDTO.setOrderStatus(KolSubB2cApplicationOrderStatusEnum.APPROVE.getCode());
-		}else if(Objects.equals(orderStatus,"5")){ //已取消
-			wdtKolB2cApplicationDTO.setOrderStatus(KolSubB2cApplicationOrderStatusEnum.NOT.getCode());
-		}else if(Objects.equals(orderStatus,"4") || Objects.equals(orderStatus,"6") || Objects.equals(orderStatus,"7")
-				|| Objects.equals(orderStatus,"10") || Objects.equals(orderStatus,"12") || Objects.equals(orderStatus,"15")
-				|| Objects.equals(orderStatus,"16") || Objects.equals(orderStatus,"19") || Objects.equals(orderStatus,"20")
-				|| Objects.equals(orderStatus,"21") || Objects.equals(orderStatus,"23") || Objects.equals(orderStatus,"24")
-				|| Objects.equals(orderStatus,"25") || Objects.equals(orderStatus,"27") || Objects.equals(orderStatus,"30")
-				|| Objects.equals(orderStatus,"35") || Objects.equals(orderStatus,"40")){
-			//其余状态:4 线下退款6 待转预订单(待审核)7 待转已完成10未付款12待尾款15等未付16延时审核19预订单前处理20 审核前处理21自流转待发货23 异常订单24 换货预订单25 待处理预订单27待分配预订单 30待客审35待财审40审核中
-			wdtKolB2cApplicationDTO.setOrderStatus(KolSubB2cApplicationOrderStatusEnum.NOTAPPROVE.getCode());
+			String orderStatus = dmpSoInfoEntity.getOrderStatus();
+			//销售订单关联状态
+			if(Objects.equals(orderStatus,"55")){ //已审核
+				wdtKolB2cApplicationDTO.setOrderStatus(KolSubB2cApplicationOrderStatusEnum.APPROVE.getCode());
+			}else if(Objects.equals(orderStatus,"5")){ //已取消
+				wdtKolB2cApplicationDTO.setOrderStatus(KolSubB2cApplicationOrderStatusEnum.NOT.getCode());
+			}else if(Objects.equals(orderStatus,"4") || Objects.equals(orderStatus,"6") || Objects.equals(orderStatus,"7")
+					|| Objects.equals(orderStatus,"10") || Objects.equals(orderStatus,"12") || Objects.equals(orderStatus,"15")
+					|| Objects.equals(orderStatus,"16") || Objects.equals(orderStatus,"19") || Objects.equals(orderStatus,"20")
+					|| Objects.equals(orderStatus,"21") || Objects.equals(orderStatus,"23") || Objects.equals(orderStatus,"24")
+					|| Objects.equals(orderStatus,"25") || Objects.equals(orderStatus,"27") || Objects.equals(orderStatus,"30")
+					|| Objects.equals(orderStatus,"35") || Objects.equals(orderStatus,"40")){
+				//其余状态:4 线下退款6 待转预订单(待审核)7 待转已完成10未付款12待尾款15等未付16延时审核19预订单前处理20 审核前处理21自流转待发货23 异常订单24 换货预订单25 待处理预订单27待分配预订单 30待客审35待财审40审核中
+				wdtKolB2cApplicationDTO.setOrderStatus(KolSubB2cApplicationOrderStatusEnum.NOTAPPROVE.getCode());
+			}
+
+			//发货状态
+			if(Objects.equals(orderStatus,"95") || Objects.equals(orderStatus,"96") || Objects.equals(orderStatus,"101") || Objects.equals(orderStatus,"110")){
+				//95已发货、96成本确认（待录入计划成本，订单结算时有货品无计划成本）、101已过账、110已完成
+				wdtKolB2cApplicationDTO.setDeliveryStatus(KolSubB2cApplicationDeliveryStatusEnum.SHIPPED.getCode());
+			} else {
+				wdtKolB2cApplicationDTO.setDeliveryStatus(KolSubB2cApplicationDeliveryStatusEnum.WAITSHIPPED.getCode());
+			}
+			//物流单号
+			wdtKolB2cApplicationDTO.setTrackNo(dmpSoInfoEntity.getLogisticsCode());
+
+			List<WdtKolB2cApplicationDTO.WdtKolB2cApplicationDetailDTO> details = new ArrayList<>();
+
+			//订单详情
+			for (int i = 0; i < dmpSoDetailEntityList.size(); i++) {
+				DmpSoDetailEntity dmpSoDetailEntity = dmpSoDetailEntityList.get(i);
+				WdtKolB2cApplicationDTO.WdtKolB2cApplicationDetailDTO detailDTO = new WdtKolB2cApplicationDTO.WdtKolB2cApplicationDetailDTO();
+				detailDTO.setPlatformDetailId(dmpSoDetailEntity.getPlatformDetailId());
+				detailDTO.setThirdDetailId(dmpSoDetailEntity.getThirdDetailId());
+				detailDTO.setSkuNo(dmpSoDetailEntity.getSkuNo());
+				detailDTO.setApplyQty(dmpSoDetailEntity.getQty());
+				details.add(detailDTO);
+			}
+			wdtKolB2cApplicationDTO.setDetails(details);
+			return wdtKolB2cApplicationDTO;
+		}else {
+			return null;
 		}
 
-		//发货状态
-		if(Objects.equals(orderStatus,"95") || Objects.equals(orderStatus,"96") || Objects.equals(orderStatus,"101") || Objects.equals(orderStatus,"110")){
-			//95已发货、96成本确认（待录入计划成本，订单结算时有货品无计划成本）、101已过账、110已完成
-			wdtKolB2cApplicationDTO.setDeliveryStatus(KolSubB2cApplicationDeliveryStatusEnum.SHIPPED.getCode());
-		} else {
-			wdtKolB2cApplicationDTO.setDeliveryStatus(KolSubB2cApplicationDeliveryStatusEnum.WAITSHIPPED.getCode());
-		}
-		//物流单号
-		wdtKolB2cApplicationDTO.setTrackNo(dmpSoInfoEntity.getLogisticsCode());
 
-		List<WdtKolB2cApplicationDTO.WdtKolB2cApplicationDetailDTO> details = new ArrayList<>();
-
-		//订单详情
-		for (int i = 0; i < dmpSoDetailEntityList.size(); i++) {
-			DmpSoDetailEntity dmpSoDetailEntity = dmpSoDetailEntityList.get(i);
-			WdtKolB2cApplicationDTO.WdtKolB2cApplicationDetailDTO detailDTO = new WdtKolB2cApplicationDTO.WdtKolB2cApplicationDetailDTO();
-			detailDTO.setPlatformDetailId(dmpSoDetailEntity.getPlatformDetailId());
-			detailDTO.setThirdDetailId(dmpSoDetailEntity.getThirdDetailId());
-			detailDTO.setSkuNo(dmpSoDetailEntity.getSkuNo());
-			detailDTO.setApplyQty(dmpSoDetailEntity.getQty());
-			details.add(detailDTO);
-		}
-		wdtKolB2cApplicationDTO.setDetails(details);
-		return wdtKolB2cApplicationDTO;
 	}
 
 	@Override

@@ -83,6 +83,9 @@ public class PlatformWdtB2cOrderConsumerService<T extends DmpSyncTaskIdDTO> exte
     @Override
     @Transactional(rollbackFor = Exception.class)
     public ApiResult<?> handle(Object ext) {
+        if(Objects.isNull(ext)){
+            return ApiResult.error("[KolSubB2c] 消费:来源数据异常 ext为null");
+        }
         log.info("[KolSubB2c] 消费: dto={}", JSONUtil.toJsonStr(ext));
         WdtKolB2cApplicationDTO dto = JSONUtil.toBean(ext.toString(), WdtKolB2cApplicationDTO.class);
             // ALiExpress,Shopify来源卖家sku可能为空
