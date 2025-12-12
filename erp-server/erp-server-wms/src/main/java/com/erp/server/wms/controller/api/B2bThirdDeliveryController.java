@@ -140,7 +140,7 @@ public class B2bThirdDeliveryController extends BaseController {
         for (String id : dto.getIds()) {
             BatchResultDTO result;
             B2bThirdDeliveryEntity entity = entities.stream().filter(item -> item.getId().equals(id)).findFirst().orElse(null);
-            if (ObjectUtil.isEmpty(entity)) {
+            if (Objects.isNull(entity)) {
                 result = BatchResultDTO.fail(id, id, "B2B三方发货单不存在, 发货拦截失败");
                 resultDTOS.add(result);
                 continue;

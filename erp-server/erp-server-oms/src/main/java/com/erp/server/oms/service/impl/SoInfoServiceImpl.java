@@ -268,6 +268,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
     @Resource
     private OverseasProviderFeign overseasProviderFeign;
+    @Resource
+    private WmsOverseasWarehouseFeign wmsOverseasWarehouseFeign;
 
     /**
      * 添加销售订单
@@ -4126,6 +4128,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         if (CollUtil.isEmpty(updateDTOList) || !WarehouseManageTypeEnum.THIRD_PARTY.getCode().equals(updateDTOList.get(0).getWarehouseManageType())){
             throw new ServiceException("只允许三方仓类型仓库下推b2b三方发货单");
         }
+        List<OverseasProviderWarehouseDTO.ViewDTO> viewDTOS = wmsOverseasWarehouseFeign.listByWarehouseIdList(Collections.singletonList(warehouseId));
+        String  providerCode = CollUtil.isNotEmpty(viewDTOS) ? viewDTOS.get(0).getProviderCode() : "";
         List<SoDetailEntity> soDetailEntityList = soDetailService.listByIds(dto.getSoDetailIds());
         //根据销售订单查询三方仓发货明细
         List<B2bThirdDeliveryDetailEntity> b2bThirdDeliveryDetailEntityList = b2bThirdDeliveryFeign.listBySoDetailIds(dto.getSoDetailIds());
@@ -4150,9 +4154,14 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         List<String> deliverySkuIds = soDetailEntityList.stream().map(SoDetailEntity::getDeliverySkuId).distinct().collect(Collectors.toList());
         //库存sku映射查询
         ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
-        paramDTO.setWarehouseIdList(Collections.singletonList(warehouseId));
+        if (CharSequenceUtil.isNotBlank(providerCode)){
+            paramDTO.setPlatform(providerCode);
+        }else if (CharSequenceUtil.isNotBlank(warehouseId)){
+            paramDTO.setWarehouseIdList(Collections.singletonList(warehouseId));
+        }
         paramDTO.setType(RuleTypeEnum.WAREHOUSE.getCode());
         paramDTO.setSkuIdList(deliverySkuIds);
+        paramDTO.setIsExpire(Boolean.FALSE);
         List<ListingInfoWithSkuMappingDTO> listDto = skuMappingService.findListDto(paramDTO);
         B2bThirdDeliveryDTO.ViewDTO viewDTO = SoInfoConverter.INSTANCE.toB2bThirdDeliveryViewDTO(soInfoEntity,soDetailEntityList);
         if (CharSequenceUtil.isBlank(viewDTO.getDeliveryWarehouseName())){
@@ -4161,6 +4170,10 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         if (CharSequenceUtil.isNotBlank(viewDTO.getCustomerId())){
             CustomerInfoEntity customerInfo = customerInfoService.getById(viewDTO.getCustomerId());
             viewDTO.setCustomerName(Objects.nonNull(customerInfo) ? customerInfo.getName() : "");
+        }
+        if (CharSequenceUtil.isNotBlank(soInfoEntity.getReceiveAddressId()) && CharSequenceUtil.isBlank(viewDTO.getReceiveAddress())){
+            CustomerAddressEntity customerAddressEntity = customerAddressService.getById(soInfoEntity.getReceiveAddressId());
+            viewDTO.setReceiveAddress(Objects.nonNull(customerAddressEntity) ? customerAddressEntity.getAddress() : "");
         }
         viewDTO.getDetailList().forEach(e -> {
             skuVOS.stream().filter(f -> f.getSkuId().equals(e.getSkuId())).findFirst().ifPresent(p ->{
