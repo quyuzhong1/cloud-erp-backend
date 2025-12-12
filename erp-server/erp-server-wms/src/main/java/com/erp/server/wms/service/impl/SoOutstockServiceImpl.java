@@ -360,21 +360,34 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         //出库金额
         BigDecimal outStockAmount = BigDecimal.ZERO;
         for (SoOutstockDetailDTO.AddDTO item : detailList) {
-
-            //实发数量
+            // 实发数量
             Integer actualQty = item.getActualQty();
             String soDetailId = item.getSoDetailId();
 
-            BigDecimal price = soDetailList.stream().filter(s -> s.getId().equals(soDetailId)).
-                    findFirst().map(SoDetailEntity::getPrice).orElse(BigDecimal.ZERO);
-            //税率
-            BigDecimal taxRate = soDetailList.stream().filter(s -> s.getId().equals(soDetailId)).
-                    findFirst().map(SoDetailEntity::getTaxRate).orElse(BigDecimal.ZERO);
+            // 获取对应的销售明细
+            SoDetailEntity soDetail = soDetailList.stream()
+                    .filter(s -> s.getId().equals(soDetailId))
+                    .findFirst()
+                    .orElse(null);
 
+            if (soDetail == null) {
+                continue;
+            }
+
+            // 计算价格
+            BigDecimal price;
+            if (sourceType.equals(SourceTypeEnum.SO_DELIVERY_NOTICE.getCode())) {
+                price = soDetail.getPrice().multiply(new BigDecimal(soDetail.getPerBoxQty()));
+            } else {
+                price = soDetail.getPrice();
+            }
+
+            // 计算税率
+            BigDecimal taxRate = soDetail.getTaxRate();
             BigDecimal flagTaxRate = MathUtil.divide(taxRate, MathUtil.BigDecimal_100);
-
             BigDecimal taxPrice = MathUtil.getTaxValue(price, flagTaxRate, 4);
 
+            // 累加出库金额
             outStockAmount = outStockAmount.add(MathUtil.multiplyWithTwo(taxPrice, actualQty));
         }
 
