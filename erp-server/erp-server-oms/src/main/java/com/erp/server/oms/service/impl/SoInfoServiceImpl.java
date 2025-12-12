@@ -4009,6 +4009,10 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 if (CollectionUtils.isNotEmpty(collect)) {
                     soDetailEntity.setSkuId(collect.get(0).getProductSkuId());
                     soDetailEntity.setSkuNo(collect.get(0).getProductSkuNo());
+                    soDetailEntity.setDeliverySkuId(collect.get(0).getProductSkuId());
+                    soDetailEntity.setDeliverySkuNo(collect.get(0).getProductSkuNo());
+                    soDetailEntity.setBoxQty(soDetailEntity.getQty());
+                    soDetailEntity.setPerBoxQty(1);
                 }else{
                     return BatchResultDTO.success(id, entity.getCode(), "平台SKU【"+soDetailEntity.getPlatformSkuNo()+"】未找到映射关系，请先维护映射关系");
                 }
