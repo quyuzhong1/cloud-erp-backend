@@ -587,6 +587,11 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
         if (!PoReconciliationEnum.PoReconciliationStatusEnum.TO_BE_PURCHASE_CONFIRM.getCode().equals(entity.getStatus())) {
             throw new ServiceException(ApiError.ERROR_PO_RECONCILIATION_CANCEL_CONFIRM);
         }
+        //备注不能为空
+        if (CharSequenceUtil.isBlank(entity.getRemark())) {
+            throw new ServiceException(ApiError.ERROR_PO_RECONCILIATION_REMARK_NOT_BLANK);
+        }
+
         log.info("开始采购方确认，id = {}",id);
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         lambdaUpdate().eq(PoReconciliationEntity::getId, id)
