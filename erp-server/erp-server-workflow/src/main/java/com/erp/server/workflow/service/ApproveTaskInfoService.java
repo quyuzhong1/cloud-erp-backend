@@ -98,4 +98,12 @@ public interface ApproveTaskInfoService extends SuperService<ApproveTaskInfoEnti
      * @return Boolean
      */
     Boolean deleteByThird( String type, String thirdInstanceId, String thirdApprovalCode);
+    /**
+     * 状态获取
+     * @author will
+     * @date 2025/12/10 15:34
+     * @param id
+     * @return BatchResultDTO
+     */
+    BatchResultDTO updateThirdStatus(String id);
 }

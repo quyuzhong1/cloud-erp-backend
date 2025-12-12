@@ -16,7 +16,13 @@ public class DmpPullConstant {
 
 
     /**
-     *  dmp_cfg_input中的code,审批定义标识
+     *  dmp_cfg_input中的code,审批实例id
      */
     public static final String  INSTANCE_IDS = "instanceIds";
+
+
+    /**
+     *  dmp_cfg_input中的code,审批实例详情
+     */
+    public static final String  INSTANCE = "instance";
 }
