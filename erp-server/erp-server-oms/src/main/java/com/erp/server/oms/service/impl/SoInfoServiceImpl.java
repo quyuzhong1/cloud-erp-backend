@@ -765,6 +765,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             for (OverseasProviderDTO.ListWithWarehouseDTO listWithWarehouseDTO : overseasProviderList) {
                 if (view.getWarehouseId().equals(listWithWarehouseDTO.getWarehouseId())) {
                     view.setIsB2BApiDelivery(listWithWarehouseDTO.getIsB2BApiDelivery());
+                } else {
+                    view.setIsB2BApiDelivery(Boolean.FALSE);
                 }
             }
 
