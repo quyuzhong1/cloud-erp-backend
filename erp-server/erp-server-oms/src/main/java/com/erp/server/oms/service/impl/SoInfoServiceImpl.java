@@ -4615,6 +4615,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                         addDetail.setSkuId(skuMappingViewDTO.getProductSkuId());
                         addDetail.setSkuNo(skuMappingViewDTO.getProductSkuNo());
                         addDetail.setCustomerSkuNo(skuMappingViewDTO.getPlatformSkuNo());
+                        addDetail.setDeliverySkuId(skuMappingViewDTO.getProductSkuId());
+                        addDetail.setDeliverySkuNo(skuMappingViewDTO.getProductSkuNo());
                     }
                 }else if (CharSequenceUtil.isNotBlank(skuNo)){
                     SkuVO skuVO = skuList.stream().filter(s -> s.getSkuNo().equals(skuNo)).findFirst().orElse(null);
@@ -4623,6 +4625,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                     } else {
                         addDetail.setSkuId(skuVO.getSkuId());
                         addDetail.setSkuNo(skuVO.getSkuNo());
+                        addDetail.setDeliverySkuId(skuVO.getSkuId());
+                        addDetail.setDeliverySkuNo(skuVO.getSkuNo());
                         SkuMappingDTO.SkuMappingViewDTO skuMappingViewDTO = skuMappingViewDTOS.stream().filter(e -> skuNo.equals(e.getProductSkuNo()) && customerId.equals(e.getCustomerId())).findFirst().orElse(null);
                         addDetail.setCustomerSkuNo(Objects.nonNull(skuMappingViewDTO) ? skuMappingViewDTO.getPlatformSkuNo() : CharSequenceUtil.EMPTY);
                     }
@@ -4633,6 +4637,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                     }else {
                         addDetail.setSkuId(skuMappingViewDTO.getProductSkuId());
                         addDetail.setSkuNo(skuMappingViewDTO.getProductSkuNo());
+                        addDetail.setDeliverySkuId(skuMappingViewDTO.getProductSkuId());
+                        addDetail.setDeliverySkuNo(skuMappingViewDTO.getProductSkuNo());
                         addDetail.setCustomerSkuNo(skuMappingViewDTO.getPlatformSkuNo());
                     }
                 }
@@ -4642,6 +4648,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 String qtyStr = item.getQty();
                 Integer qty = StringUtils.isNotBlank(qtyStr) ? Integer.valueOf(qtyStr) : 0;
                 addDetail.setQty(qty);
+                addDetail.setBoxQty(qty);
+                addDetail.setPerBoxQty(1);
                 //销售单价
                 String priceStr = item.getPrice();
                 BigDecimal price = MathUtil.getBigDecimalByStr(priceStr);
