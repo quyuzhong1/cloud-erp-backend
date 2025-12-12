@@ -258,11 +258,13 @@ public class VirtualInventoryTransCoreServiceImpl implements VirtualInventoryTra
                 // 交易明细信息
                 transactionDTO.setSkuId(stockBaseDTO.getSkuId());
                 transactionDTO.setSkuNo(stockBaseDTO.getSkuNo());
-                transactionDTO.setOrgId(stockBaseDTO.getOrgId());
+                String orgId = getOrgIdFromWarehouse(warehouseEntityList, stockBaseDTO.getWarehouseId());
+                transactionDTO.setOrgId(orgId);
                 transactionDTO.setWarehouseId(stockBaseDTO.getWarehouseId());
+                transactionDTO.setVirtualWarehouseId(stockBaseDTO.getVirtualWarehouseId());
                 transactionDTO.setInventoryStatus(rule.getInventoryStatus().getCode());
                 // 设置冗余信息部分
-                transactionDTO.setOrgName(getOrgName(orgList,stockBaseDTO.getOrgId()));
+                transactionDTO.setOrgName(getOrgName(orgList,orgId));
                 transactionDTO.setWarehouseName(getWarehouseInfo(warehouseEntityList,stockBaseDTO.getWarehouseId()).getName());
                 transactionDTO.setInventoryStatusName(rule.getInventoryStatus().getName());
 

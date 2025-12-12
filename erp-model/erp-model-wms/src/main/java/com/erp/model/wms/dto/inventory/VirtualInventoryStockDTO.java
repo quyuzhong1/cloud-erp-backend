@@ -186,6 +186,7 @@ public class VirtualInventoryStockDTO implements Serializable {
                 inventoryTransactionDTO.setSkuNo(stockBaseDTO.getSkuNo());
                 inventoryTransactionDTO.setOrgId(stockBaseDTO.getOrgId());
                 inventoryTransactionDTO.setWarehouseId(stockBaseDTO.getWarehouseId());
+                inventoryTransactionDTO.setVirtualWarehouseId(stockBaseDTO.getVirtualWarehouseId());
                 inventoryTransactionDTO.setInventoryStatus(stockBaseDTO.getInventoryStatus().getCode());
                 return inventoryTransactionDTO;
             }
