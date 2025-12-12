@@ -1,6 +1,7 @@
 package com.erp.model.oms.dto;
 
 import com.common.business.validator.AddGroup;
+import jnr.ffi.annotations.In;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -726,7 +727,7 @@ public class SoDetailDTO implements Serializable {
         /**
          * 单箱数量
          */
-        private String perBoxQty;
+        private Integer perBoxQty;
 
         /**
          * 发货skuId
@@ -741,7 +742,7 @@ public class SoDetailDTO implements Serializable {
         /**
          * 发货箱数
          */
-        private String boxQty;
+        private Integer boxQty;
     }
 
 
