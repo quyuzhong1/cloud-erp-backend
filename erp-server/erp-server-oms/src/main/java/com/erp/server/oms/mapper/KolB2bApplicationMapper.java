@@ -33,4 +33,11 @@ public interface KolB2bApplicationMapper extends BaseMapper<KolB2bApplicationEnt
     * @return
     */
     Integer tabList(@Param("params") KolB2bApplicationDTO.PagingParamDTO searchParam);
+
+    /**
+     * 获取状态统计
+     * @param searchParam
+     * @return
+     */
+    Integer tabDetailList(@Param("params") KolB2bApplicationDTO.PagingParamDTO searchParam);
 }

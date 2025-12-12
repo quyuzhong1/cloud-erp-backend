@@ -97,7 +97,21 @@
     <!-- 列表查询统计 -->
     <select id="tabList" resultType="java.lang.Integer">
         SELECT
-        count(kba.id)
+        count(distinct kba.id)
+        FROM  kol_b2b_application kba
+        inner join kol_b2b_application_detail kbad on kba.id = kbad.main_id and kbad.is_deleted = false
+        WHERE
+        ${params.sqlMap.default}
+        and kba.is_deleted = FALSE
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+    </select>
+
+    <!-- 列表查询统计 -->
+    <select id="tabDetailList" resultType="java.lang.Integer">
+        SELECT
+            count(kbad.id)
         FROM  kol_b2b_application kba
         inner join kol_b2b_application_detail kbad on kba.id = kbad.main_id and kbad.is_deleted = false
         WHERE

@@ -211,7 +211,12 @@ public class KolB2bApplicationServiceImpl extends SuperServiceImpl<KolB2bApplica
             HashMap<String,String> map = new HashMap<>();
             map.put("default",tabSql);
             searchParam.setSqlMap(map);
-            Integer count = this.baseMapper.tabList(searchParam);
+            Integer count;
+            if (KolB2bApplicationTableEnum.WAIT_SHIPPED.equals(item) || KolB2bApplicationTableEnum.SHIPPED.equals(item)) {
+                count = this.baseMapper.tabDetailList(searchParam);
+            } else {
+                count = this.baseMapper.tabList(searchParam);
+            }
             resultDTO.setCount(ObjectUtil.isEmpty(count) ? MathUtil.ZERO : count);
             resultDTO.setTabFlag(item.getCode());
             resultDTO.setTabFlagName(item.getName());
