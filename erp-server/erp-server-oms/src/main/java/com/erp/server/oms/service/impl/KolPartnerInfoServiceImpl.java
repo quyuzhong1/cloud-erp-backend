@@ -4,7 +4,6 @@ import cn.hutool.extra.spring.SpringUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.annotation.TableName;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.FileTaskStatusEnum;
@@ -23,7 +22,6 @@ import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.file.feign.FileFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.server.oms.listener.ExhibitionOrderExcelListener;
 import com.erp.server.oms.listener.KolPartnerInfoExcelListener;
 import com.erp.server.oms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -48,7 +46,6 @@ import com.common.business.dto.base.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
-import javax.validation.Valid;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.time.LocalDateTime;
@@ -179,7 +176,7 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
         //附件
         // 保存附件
         TableName tableName = KolPartnerInfoEntity.class.getDeclaredAnnotation(TableName.class);
-        omsAttachmentService.batchSaveOrUpdate(addDTO.getAttachmentUrlList(), addDTO.getAttachmentNameList(), tableName.value(), id);
+        omsAttachmentService.batchSaveOrUpdate(addDTO.getAttachUrlList(), addDTO.getAttachNameList(), tableName.value(), id);
 
         return new BaseResultDTO.AddDTO(kolPartnerInfoEntity.getId(), code);
     }
@@ -284,7 +281,7 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
 
         // 保存附件
         TableName tableName = KolPartnerInfoEntity.class.getDeclaredAnnotation(TableName.class);
-        omsAttachmentService.batchSaveOrUpdate(addOrUpdateDTO.getAttachmentUrlList(), addOrUpdateDTO.getAttachmentNameList(), tableName.value(), kolPartnerInfoEntity.getId());
+        omsAttachmentService.batchSaveOrUpdate(addOrUpdateDTO.getAttachUrlList(), addOrUpdateDTO.getAttachNameList(), tableName.value(), kolPartnerInfoEntity.getId());
 
         return Boolean.TRUE;
     }
@@ -656,8 +653,8 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
         List<AttachmentDTO.UpdateDTO> attachmentList = omsAttachmentService.getByBusinessId(data.getId());
         List<String> attachmentUrlList = attachmentList.stream().map(AttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.toList());
         List<String> attachmentNameList = attachmentList.stream().map(AttachmentDTO.UpdateDTO::getAttachName).collect(Collectors.toList());
-        data.setAttachmentUrlList(attachmentUrlList);
-        data.setAttachmentNameList(attachmentNameList);
+        data.setAttachUrlList(attachmentUrlList);
+        data.setAttachNameList(attachmentNameList);
     }
 
     /**

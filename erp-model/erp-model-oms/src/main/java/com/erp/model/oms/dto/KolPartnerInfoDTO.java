@@ -3,7 +3,6 @@ package com.erp.model.oms.dto;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
-import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.SortDTO;
 import java.util.List;
 
@@ -13,7 +12,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
-import java.time.LocalDateTime;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
@@ -319,8 +317,8 @@ public class KolPartnerInfoDTO implements Serializable {
         /**
          * 附件集合
          */
-        private List<String> attachmentNameList;
-        private List<String> attachmentUrlList;
+        private List<String> attachNameList;
+        private List<String> attachUrlList;
 
 
     }
@@ -451,8 +449,9 @@ public class KolPartnerInfoDTO implements Serializable {
         /**
          * 附件集合
          */
-        private List<String> attachmentNameList;
-        private List<String> attachmentUrlList;
+        private List<String> attachNameList;
+
+        private List<String> attachUrlList;
     }
 
     @Data
