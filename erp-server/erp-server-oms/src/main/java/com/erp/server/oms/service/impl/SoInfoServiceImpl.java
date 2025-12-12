@@ -761,12 +761,11 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
         //从三方仓管理查询是否b2b发货
         List<OverseasProviderDTO.ListWithWarehouseDTO> overseasProviderList = overseasProviderFeign.listAllMatch();
+        view.setIsB2BApiDelivery(Boolean.FALSE);
         if (!overseasProviderList.isEmpty()) {
             for (OverseasProviderDTO.ListWithWarehouseDTO listWithWarehouseDTO : overseasProviderList) {
                 if (view.getWarehouseId().equals(listWithWarehouseDTO.getWarehouseId())) {
                     view.setIsB2BApiDelivery(listWithWarehouseDTO.getIsB2BApiDelivery());
-                } else {
-                    view.setIsB2BApiDelivery(Boolean.FALSE);
                 }
             }
 
