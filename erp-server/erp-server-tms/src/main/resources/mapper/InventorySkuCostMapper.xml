@@ -39,6 +39,7 @@
     <sql id="pagingSql">
         SELECT
         c.id,c.code as code, c.status,c.allocated_month as allocatedMonth,c.accounting_month as accountingMonth, to_char(C.allocated_month, 'YYYY-MM') AS allocatedMonthStr,
+        to_char(c.accounting_month, 'YYYY-MM') AS accountingMonthStr,
         c.currency, c.currency_symbol,c.exchange_rate, c.company_id, c.company_name as companyName,cd.id as detailId,cd.sku_no as skuNo, cd.sku_id,
         cd.product_name, cd.unit, cast(cd.product_cost AS NUMERIC(16, 6)) as productCost,cd.warehouse_id as warehouseId,cd.warehouse_name as warehouseName,
         cast(cd.first_mile_shipping_cost AS NUMERIC(16, 6)) as firstMileShippingCost,cast(cd.clearance_customs_tax AS NUMERIC(16, 6)) as clearanceCustomsTax,
