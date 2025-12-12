@@ -1269,7 +1269,7 @@ public class ExportWmsFeignController {
      */
     @PostMapping("/exportB2bThirdDelivery")
     @WebAdvanceQuery(handler = B2bThirdWarehouseDeliveryQueryHandler.class)
-    public PagingVO<B2bThirdDeliveryDTO.PagingViewDTO> exportB2bThirdDelivery(PagingDTO<B2bThirdDeliveryDTO.PagingParamDTO> dto){
+    public PagingVO<B2bThirdDeliveryDTO.PagingViewDTO> exportB2bThirdDelivery(@RequestBody PagingDTO<B2bThirdDeliveryDTO.PagingParamDTO> dto){
         return b2bThirdDeliveryService.paging(dto);
     }
 }
