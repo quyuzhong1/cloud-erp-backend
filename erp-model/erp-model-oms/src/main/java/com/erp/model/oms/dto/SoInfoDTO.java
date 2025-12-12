@@ -1537,6 +1537,11 @@ public class SoInfoDTO implements Serializable {
         private String postCode;
 
         /**
+         * 是否b2b发货
+         */
+        private Boolean isB2BApiDelivery;
+
+        /**
          * 订单产品详情
          */
         private List<SoDetailDTO.ViewDTO> detailList;

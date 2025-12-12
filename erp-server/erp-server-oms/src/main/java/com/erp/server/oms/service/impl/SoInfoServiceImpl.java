@@ -266,6 +266,9 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     @Resource
     private B2bThirdDeliveryFeign b2bThirdDeliveryFeign;
 
+    @Resource
+    private OverseasProviderFeign overseasProviderFeign;
+
     /**
      * 添加销售订单
      *
@@ -755,6 +758,17 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             }
         }
         view.setCurrencySymbol(StringUtils.isNotBlank(soInfo.getCurrencySymbol())? soInfo.getCurrencySymbol() : CurrencyEnum.getSymbolByCode(view.getCurrency()));
+
+        //从三方仓管理查询是否b2b发货
+        List<OverseasProviderDTO.ListWithWarehouseDTO> overseasProviderList = overseasProviderFeign.listAllMatch();
+        if (!overseasProviderList.isEmpty()) {
+            for (OverseasProviderDTO.ListWithWarehouseDTO listWithWarehouseDTO : overseasProviderList) {
+                if (view.getWarehouseId().equals(listWithWarehouseDTO.getWarehouseId())) {
+                    view.setIsB2BApiDelivery(listWithWarehouseDTO.getIsB2BApiDelivery());
+                }
+            }
+
+        }
 
         List<SoDetailDTO.ViewDTO> detailList = soDetailService.listByMainId(id, warehouseId);
         List<String> skuIds = detailList.stream().map(SoDetailDTO.ViewDTO::getSkuId).collect(Collectors.toList());

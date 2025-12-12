@@ -130,7 +130,8 @@
         opw.warehouse_id,
         opw.warehouse_name,
         opw.warehouse_code,
-        opw.disabled
+        opw.disabled,
+        opw.is_b2b_api_delivery as isB2BApiDelivery
         FROM overseas_provider_warehouse as opw
         LEFT JOIN overseas_provider as op
         ON opw.main_id = op.id
