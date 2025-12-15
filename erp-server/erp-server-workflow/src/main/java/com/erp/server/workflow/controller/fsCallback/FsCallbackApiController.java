@@ -8,6 +8,7 @@ import com.erp.server.workflow.handler.CfgApproveSyncCallbackHandler;
 import com.erp.server.workflow.handler.FsCallbackEventHandler;
 import com.lark.oapi.sdk.servlet.ext.ServletAdapter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.IOUtils;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -63,7 +64,7 @@ public class FsCallbackApiController {
     @PostMapping("/webhook/event")
     public void event(HttpServletRequest request, HttpServletResponse response)
             throws Throwable {
-        log.warn("飞书事件触发器:url:{},method;{}", request.getRequestURL(), request.getMethod());
+        log.warn("飞书事件触发器:url:{},method:{}，body:{}", request.getRequestURL(), request.getMethod(), IOUtils.toString(request.getInputStream(), request.getCharacterEncoding()));
         // 回调扩展包提供的事件回调处理器
         servletAdapter.handleEvent(request, response, fsCallbackEventHandler.getEventHandler());
     }
