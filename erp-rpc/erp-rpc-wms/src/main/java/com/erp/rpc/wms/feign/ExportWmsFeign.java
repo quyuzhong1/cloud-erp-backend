@@ -402,5 +402,5 @@ public interface ExportWmsFeign {
      * 导出B2B三方发货单
      */
     @PostMapping("/feign/export/exportB2bThirdDelivery")
-    PagingVO<B2bThirdDeliveryDTO.PagingViewDTO> exportB2bThirdDelivery(PagingDTO<B2bThirdDeliveryDTO.PagingParamDTO> dto);
+    PagingVO<B2bThirdDeliveryDTO.PagingViewDTO> exportB2bThirdDelivery(@RequestBody PagingDTO<B2bThirdDeliveryDTO.PagingParamDTO> dto);
 }

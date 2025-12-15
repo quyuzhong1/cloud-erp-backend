@@ -148,8 +148,8 @@ public interface SoInfoConverter {
     @Mapping(target = "customerName", ignore = true)
     @Mapping(target = "customerId", source = "soInfoEntity.customerId")
     @Mapping(target = "deliveryTime", ignore = true)
-    @Mapping(target = "deliveryMethod", expression = "java(com.erp.model.oms.enums.DeliveryModeEnum.TRUCK_SELF.getCode())")
-    @Mapping(target = "deliveryMethodName", expression = "java(com.erp.model.oms.enums.DeliveryModeEnum.TRUCK_SELF.getName())")
+    @Mapping(target = "deliveryMethod", source = "soInfoEntity.deliveryMode")
+    @Mapping(target = "deliveryMethodName", expression = "java(com.erp.model.oms.enums.DeliveryModeEnum.getName(soInfoEntity.getDeliveryMode()))")
     B2bThirdDeliveryDTO.ViewDTO toB2bThirdDeliveryViewDTO(SoInfoEntity soInfoEntity, List<SoDetailEntity> soDetailEntityList);
 
     @Mapping(target = "id", ignore = true)

@@ -108,7 +108,7 @@ public class B2bThirdDeliveryDetailServiceImpl extends SuperServiceImpl<B2bThird
         //ZXGG0001
         String prefix = "ZXGG";
         String formatStr;
-
+        number = number + 1;
         if (number < 10) {
             formatStr = "000" + number;  // 个位数：000X
         } else if (number < 100) {

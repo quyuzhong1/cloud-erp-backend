@@ -335,6 +335,15 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
                 List<CustomerInfoEntity> customerInfoEntities = customerFeign.listCustomerByIds(Collections.singletonList(viewDTO.getCustomerId()));
                 viewDTO.setCustomerName(CollUtil.isNotEmpty(customerInfoEntities) ? customerInfoEntities.get(0).getName() : "");
             }
+            //同步销售数量
+            List<String> soDetailIds = detailEntityList.stream().map(B2bThirdDeliveryDetailEntity::getSoDetailId).distinct().collect(Collectors.toList());
+            if (CollUtil.isNotEmpty(soDetailIds)){
+                List<SoDetailEntity> soDetailEntities = soInfoFeign.listSoDetailByIds(soDetailIds);
+                Map<String, Integer> soDetailMap = soDetailEntities.stream().collect(Collectors.toMap(SoDetailEntity::getId, SoDetailEntity::getQty));
+                viewDTO.getDetailList().forEach(item -> {
+                    item.setSaleQty(soDetailMap.getOrDefault(item.getSoDetailId(), 0));
+                });
+            }
             return viewDTO;
         }
     }
