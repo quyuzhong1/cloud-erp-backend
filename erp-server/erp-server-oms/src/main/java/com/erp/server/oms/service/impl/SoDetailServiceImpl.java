@@ -582,6 +582,14 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             String skuNo = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().
                     flatMap(obj -> Optional.ofNullable(obj.getSkuNo())).orElse("");
             item.setSkuNo(skuNo);
+
+            if (StringUtils.isBlank(item.getDeliverySkuId())) {
+                item.setDeliverySkuId(item.getSkuId());
+                item.setDeliverySkuNo(item.getSkuNo());
+                item.setPerBoxQty(1);
+                item.setBoxQty(item.getQty());
+            }
+
             //查询sku是否存在子SKU
             List<BomChildrenSkuDTO> sonSkuList = bomChildrenSkuDTOS.stream().filter(req -> req.getParentSkuId().equals(item.getDeliverySkuId())).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(sonSkuList)) {
@@ -1340,6 +1348,14 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             String skuNo = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().
                     flatMap(obj -> Optional.ofNullable(obj.getSkuNo())).orElse("");
             item.setSkuNo(skuNo);
+
+            if (StringUtils.isBlank(item.getDeliverySkuId())) {
+                item.setDeliverySkuId(item.getSkuId());
+                item.setDeliverySkuNo(item.getSkuNo());
+                item.setPerBoxQty(1);
+                item.setBoxQty(item.getQty());
+            }
+
             //查询sku是否存在子SKU
             List<BomChildrenSkuDTO> sonSkuList = bomChildrenSkuDTOS.stream().filter(req -> req.getParentSkuId().equals(item.getDeliverySkuId())).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(sonSkuList)) {
