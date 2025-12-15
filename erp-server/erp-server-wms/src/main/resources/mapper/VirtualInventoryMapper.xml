@@ -797,4 +797,18 @@
         inv.warehouse_id,pd.id
     </select>
 
+    <!-- 根据库存交易对象查询虚拟库存信息 -->
+    <select id="getByTransaction" resultType="com.erp.model.wms.entity.VirtualInventoryEntity">
+        select
+            <include refid="Base_Column_List" />
+        from virtual_inventory vi
+        <where>
+            vi.is_deleted = false
+            and vi.sku_id = #{params.skuId}
+            and vi.warehouse_id = #{params.warehouseId}
+            and vi.virtual_warehouse_id = #{params.virtualWarehouseId}
+            and vi.dict_inventory_status = #{params.inventoryStatus}
+        </where>
+    </select>
+
 </mapper>

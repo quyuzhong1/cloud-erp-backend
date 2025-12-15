@@ -10,6 +10,7 @@ import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 
 /**
  * @Description 产品销售信息表请求参数
@@ -28,7 +29,20 @@ public class ProductSaleDTO implements Serializable {
      * sku表id
      */
     private String skuId;
+    /**
+     * 产品属性
+     */
+    private String productProperty;
 
+    /**
+     * 产品属性id
+     */
+    private String productPropertyId;
+    /**
+     * 保险属性
+     */
+    private String insuranceProperty;
+    private List<String> insurancePropertyList;
     /**
      * 年目标销售量
      */
@@ -108,6 +122,61 @@ public class ProductSaleDTO implements Serializable {
      */
     private Integer isMarketable;
 
+    /**
+     * 输入电压
+     */
+    private BigDecimal inputVoltage;
+    /**
+     * 输出电压
+     */
+    private BigDecimal outputVoltage;
+
+    /**
+     * 电压单位  dict type=voltageUnit
+     */
+    private String voltageUnit;
+
+    /**
+     * 输入电流
+     */
+    private BigDecimal inputElectric;
+    /**
+     * 输出电流
+     */
+    private BigDecimal outputElectric;
+
+    /**
+     * 电流单位 dict type=electricUnit
+     */
+    private String electricUnit;
+
+    /**
+     * 输入功率
+     */
+    private BigDecimal inputPower;
+    /**
+     * 输出功率
+     */
+    private BigDecimal outputPower;
+
+    /**
+     * 功率单位 dict type=powerUnit
+     */
+    private String powerUnit;
+
+    /**
+     * 输入电池容量
+     */
+    private BigDecimal inputBatteryCapacity;
+    /**
+     * 输出电池容量
+     */
+    private BigDecimal outputBatteryCapacity;
+
+    /**
+     * 电池容量单位 dict type=batteryCapacityUnit
+     */
+    private String batteryCapacityUnit;
 
     private static final long serialVersionUID = 1L;
 }

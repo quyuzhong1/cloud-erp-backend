@@ -32,6 +32,8 @@ public enum DaMaiEnums {
         DISCARD_PROCESSED("DISCARD_PROCESSED","取消中",null),
         DISCARD("DISCARD","已取消", SoB2cBillStatusEnum.ENUM_DISUSE),
         PROBLEM("PROBLEM","问题件", SoB2cBillStatusEnum.ENUM_EXCEPTION),
+        EXCEPTION ("EXCEPTION","出库异常", SoB2cBillStatusEnum.ENUM_EXCEPTION),
+        BLOCK ("BLOCK","拦截中",null),
         ;
         private final String code;
         private final String name;

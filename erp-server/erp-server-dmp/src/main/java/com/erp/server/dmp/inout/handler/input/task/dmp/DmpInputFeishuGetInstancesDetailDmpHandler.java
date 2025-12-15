@@ -41,7 +41,11 @@ public class DmpInputFeishuGetInstancesDetailDmpHandler extends DmpInputDoChildD
     protected List<Map<String, Object>> getDmpInputMongoChildEntityList(List<Map<String, Object>> dmpInputMongoEntityList, String childMongoStorageName) {
         List<ParamData> paramDataList = new ArrayList<>();
         List<DmpInputTaskEntity> list = dmpInputTaskService.lambdaQuery().eq(DmpInputTaskEntity::getParentTaskId, inputTaskId).list();
-        paramDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, PannoEnum.EQ, list.get(0).getId()));
+        if (CollUtil.isEmpty(list)) {
+            return Collections.emptyList();
+        }
+        List<String> taskIds = list.stream().map(BaseEntity::getId).collect(Collectors.toList());
+        paramDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, PannoEnum.IN, taskIds));
         return mongoService.findMongoData(paramDataList, childMongoStorageName);
     }
 

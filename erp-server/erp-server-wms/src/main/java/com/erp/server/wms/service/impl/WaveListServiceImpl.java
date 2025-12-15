@@ -4,6 +4,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -107,7 +108,9 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
             detailEntity.setSoCode(soB2cDeliveryEntity.getSoCode());
             detailEntity.setPickingStatus(PickingStatusEnum.NOT_START.getCode());
             detailEntity.setLogisticsChannelName(soB2cDeliveryEntity.getLogisticsChannelName());
-
+            //记录日志
+            String msg = StrUtil.format("用户【{}】新增【{}】单据编码为【{}】", UserContext.getDefaultLoginUser().getUserName(), "波次" , entity.getCode());
+            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.WAVE_LIST.getCode(), deliveryId, "新增操作");
             detailList.add(detailEntity);
         }
         deliveryService.updateStatus(deliveryIdList, SoB2cDeliveryStatusEnum.GENERATE_WAVE.getCode());

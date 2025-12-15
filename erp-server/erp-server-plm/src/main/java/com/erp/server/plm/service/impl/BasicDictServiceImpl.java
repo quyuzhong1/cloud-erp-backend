@@ -25,7 +25,18 @@ import com.erp.model.plm.dto.DictControllerDTO;
 import com.erp.model.plm.entity.BasicDictEntity;
 import com.erp.server.plm.mapper.BasicDictMapper;
 import com.erp.server.plm.service.BasicDictService;
+import io.seata.common.util.StringUtils;
+import org.apache.commons.collections4.CollectionUtils;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+import static cn.hutool.core.text.CharSequenceUtil.isNotBlank;
 import cn.hutool.core.collection.CollUtil;
 
 /**
@@ -49,13 +60,13 @@ public class BasicDictServiceImpl extends ServiceImpl<BasicDictMapper, BasicDict
     	entity.setUpdateTime(now);
         entity.setUpdateUserId(userId);
         entity.setUpdateUserName(userName);
-        
+
         entity.setCreateTime(now);
 		entity.setCreateUserId(userId);
 		entity.setCreateUserName(userName);
 		return super.save(entity);
 	}
-	
+
 	@Override
 	public boolean updateJsonObject(List<JSONObject> jsonObjects) {
 		List<BasicDictEntity> entityList = new ArrayList<>();
@@ -174,4 +185,17 @@ public class BasicDictServiceImpl extends ServiceImpl<BasicDictMapper, BasicDict
                 .collect(Collectors.toList());
         return result;
     }
+
+    @Override
+    public BasicDictEntity getByTypeAndValue(String type, String value) {
+        if(StringUtils.isBlank(type) || StringUtils.isBlank(value)){
+            return null;
+        }
+        LambdaQueryWrapper<BasicDictEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(BasicDictEntity::getType, type);
+        queryWrapper.eq(BasicDictEntity::getValue, value);
+        queryWrapper.last("LIMIT 1");
+        return this.getOne(queryWrapper);
+    }
+
 }

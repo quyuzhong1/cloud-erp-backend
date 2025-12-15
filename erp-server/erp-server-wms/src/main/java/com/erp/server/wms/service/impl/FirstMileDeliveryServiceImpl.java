@@ -1059,7 +1059,8 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                             && !OmsPlatformEnum.JIFENG.getCode().equals(providerEntity.getCode())
                             && !OmsPlatformEnum.WEI_SHI.getCode().equals(providerEntity.getCode())
                             && !OmsPlatformEnum.DA_MAI.getCode().equals(providerEntity.getCode())
-                            && !OmsPlatformEnum.OMS_IML.getCode().equals(providerEntity.getCode())) {
+                            && !OmsPlatformEnum.OMS_IML.getCode().equals(providerEntity.getCode())
+                            && !OmsPlatformEnum.TONG_YOU.getCode().equals(providerEntity.getCode())) {
                         // 推送第三方发货单审核通过
                         ApiResult<String> resultInfo = overseasWarehouseInboundService.pullThirdOverseasPlatform(providerEntity, inboundEntity, detailEntityList, OverseasVerifyEnum.PASS.getCode());
                         if (200 != resultInfo.getCode()) {
@@ -1756,6 +1757,10 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                 addDTO.setSourceId(view.getMainId());
                 addDTO.setSourceCode(view.getCode());
                 addDTO.setWarehouseId(view.getWarehouseId());
+                if(Objects.nonNull(view.getBillDate())){
+                    addDTO.setBillDate(view.getBillDate());
+                }
+                addDTO.setBillDate(view.getBillDate());
                 MachineDetailDTO.AddDTO addDetailDTO = new MachineDetailDTO.AddDTO();
                 SkuVO skuVO = skuVOList.stream().filter(obj -> obj.getSkuNo().equals(view.getSkuNo())).findFirst().orElse(null);
                 if (ObjectUtils.isEmpty(skuVO)) {

@@ -686,9 +686,14 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         if (StringUtils.isNotBlank(customerId)) {
             CustomerInfoEntity customerInfo = customerInfoService.getById(customerId);
             customerName = customerInfo.getName();
+        }
+        view.setCustomerName(customerName);
+        String addressId = soInfo.getReceiveAddressId();
+        if (StringUtils.isNotBlank(customerId)) {
 
-            //国家
-            String countryId = customerInfo.getCountryId();
+            CustomerAddressEntity customerAddressEntity = customerAddressService.getById(addressId);
+
+            String countryId = customerAddressEntity.getCountryId();
             view.setCountryId(countryId);
             // 国家
             List<DictCountryDTO.ListDTO> countryList = sysUserFeign.countryList();
@@ -714,7 +719,6 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         if (CollectionUtils.isNotEmpty(collect)) {
             view.setApproveTime(collect.get(MathUtil.ZERO).getApproveTime());
         }
-        view.setCustomerName(customerName);
         String warehouseId = view.getWarehouseId();
         BillApproveStatusEnum approveStatus = view.getApproveStatus();
         view.setApproveStatusName(approveStatus.getName());
@@ -764,6 +768,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             SkuVO skuVO = skuList.stream().filter(obj -> obj.getSkuId().equals(viewDTO.getSkuId())).findFirst().orElse(null);
             if (ObjectUtils.isNotEmpty(skuVO)) {
                 viewDTO.setWarehouseLocation(skuVO.getWarehouseLocationLarge());
+                viewDTO.setUnitName(skuVO.getUnitName());
             }
             ListingInfoWithSkuMappingDTO listingInfoWithSkuMappingDTO = listingWithSkuMappingDTOList.stream().filter(v->v.getProductSkuId().equals(viewDTO.getSkuId())).findFirst().orElse(new ListingInfoWithSkuMappingDTO());
             viewDTO.setThirdWarehouseSku(listingInfoWithSkuMappingDTO.getPlatformSkuNo());

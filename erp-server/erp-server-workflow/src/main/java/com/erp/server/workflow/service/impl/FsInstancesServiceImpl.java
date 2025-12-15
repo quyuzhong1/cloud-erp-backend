@@ -106,6 +106,19 @@ public class FsInstancesServiceImpl implements FsInstancesService {
                             .eq(ApproveTaskInfoEntity::getThirdInstanceId, jsonObject.getStr(FsRequestBodyAttributesEnum.INSTANCECODE.getCode()))
                             .orderByDesc(ApproveTaskInfoEntity::getCreateTime)
             );
+            if (ObjectUtil.isEmpty(one)) {
+                log.warn("未找到对应的三方审批生成任务信息，无需消费,thirdInstanceId = {}", jsonObject.getStr(FsRequestBodyAttributesEnum.INSTANCECODE.getCode()));
+                return;
+            }
+            String erpSpproveStatus = FSApprovalStatusEnum.getErpApproveStatusByCode(statusEnum.getCode()).getCode();
+            if (CharSequenceUtil.equals(one.getBussinessApproveStatus(), erpSpproveStatus)) {
+                log.warn("三方审批生成任务信息状态未变化，无需重复消费,thirdInstanceId = {},status = {}", jsonObject.getStr(FsRequestBodyAttributesEnum.INSTANCECODE.getCode()), erpSpproveStatus);
+                return;
+            }
+            one.setBussinessApproveStatus(erpSpproveStatus);
+            approveTaskInfoService.updateById(one);
+
+
             handleCallbackLogic(jsonObject, statusEnum, one);
         }
     }
@@ -184,6 +197,7 @@ public class FsInstancesServiceImpl implements FsInstancesService {
         taskInfo.setBussinessCode(batchResultDTO.getCode());
         taskInfo.setBussinessId(batchResultDTO.getId());
         taskInfo.setHappenTime(LocalDateTime.now());
+        taskInfo.setBussinessApproveStatus(ApproveStatusEnum.APPROVE.getCode());
         taskInfo.setStatus(taskStatus);
         taskInfo.setReason(reason);
         approveTaskInfoService.add(taskInfo);

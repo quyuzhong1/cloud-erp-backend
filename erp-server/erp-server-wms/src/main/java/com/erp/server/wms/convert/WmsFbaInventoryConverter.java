@@ -25,6 +25,7 @@ public interface WmsFbaInventoryConverter {
 
     @Mappings({
             @Mapping(target = "id", source = "oldEntity.id"),
+            @Mapping(target = "isUserSystem" ,ignore = true),
             @Mapping(target = "createTime", source = "oldEntity.createTime"),
             @Mapping(target = "createUserId", source = "oldEntity.createUserId"),
             @Mapping(target = "createUserName", source = "oldEntity.createUserName"),

@@ -2,8 +2,6 @@ package com.common.business.dto;
 
 import com.common.business.enums.OmsPlatformEnum;
 import com.common.business.enums.WarehousePlatformTypeEnum;
-import com.common.core.anno.Panno;
-import com.common.core.enums.PannoEnum;
 import lombok.*;
 
 import java.time.LocalDateTime;
@@ -54,6 +52,10 @@ public class PlatformInboundDTO extends UniqueDto {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class Item {
+        /**
+         * 产品条码
+         */
+        private String thirdBarcode;
 
         //SKU
         private String productSku;

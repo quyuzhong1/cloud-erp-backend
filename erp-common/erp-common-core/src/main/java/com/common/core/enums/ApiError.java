@@ -1290,6 +1290,7 @@ public enum ApiError implements Serializable {
     ERROR_VMALLOCATION_DETAIL_ADD(92206 , "分货单明细保存失败"),
     ERROR_INVENTORY_INSUFFICIENT(92207,"实体仓库存不足，SKU:【{}】,实物仓:【{}】,实物仓可分配库存:【{}】"),
     ERROR_SKU_NOTFOUND(92208,"SKU不存在【{}】"),
+    ERROR_CHANNEL_NOTFOUND(92208,"渠道编码在平台【{}】不存在【{}】"),
     ERROR_FROM_TO_VM_BOTHEMPTY(92209,"调入虚拟仓和调出虚拟仓不能同时为空"),
     ERROR_FROM_TO_VM_SAME(92209,"调入虚拟仓和调出虚拟仓需不同"),
     ERROR_TOVM_NOTFOUND(92210,"调入虚拟仓不存在"),
@@ -1336,8 +1337,8 @@ public enum ApiError implements Serializable {
     ERROR_EXISTS_TRANSFER_INFO(92236, "存在未删除或未作废的直接调拨单"),
     ERROR_GENERATE_TRANSFER(92237, "可用库存不足，生成直接调拨单失败"),
 
-    ERROR_NOT_FOUND_WAREHOUSE_AREA(92238, "新增补货单时没有找到有效的库区"),
-    ERROR_NOT_FOUND_WAREHOUSE_LOCATION(92239, "新增补货单时没有找到有效的仓位"),
+    ERROR_NOT_FOUND_WAREHOUSE_AREA(92238, "新增补货单时SKU【{}】没有找到有效的库区"),
+    ERROR_NOT_FOUND_WAREHOUSE_LOCATION(92239, "新增补货单时SKU【{}】没有找到有效的仓位"),
 
     ERROR_DETAIL_IS_ZERO(92240, "【{}】的明细条数为0"),
     ERROR_92241(92241, "已进行费用分摊，不能进行反审核"),
@@ -1781,6 +1782,7 @@ public enum ApiError implements Serializable {
     CONTENT_96018(96018,"系统配置管理"),
     ERROR_PO_RECONCILIATION_CANCAL_RECEIVE(96007,"仅【已收单据】支持取消单据签收"),
     ERROR_PO_RECONCILIATION_NOT_NEED_RECONCILIATION(96008,"单据单号【{}】无需对账不支持生成对账单"),
+    ERROR_PO_RECONCILIATION_REMARK_NOT_BLANK(96009,"对账单备注不能为空"),
 
 
 

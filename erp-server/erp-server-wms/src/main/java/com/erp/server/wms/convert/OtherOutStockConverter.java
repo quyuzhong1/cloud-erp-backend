@@ -81,6 +81,7 @@ public interface OtherOutStockConverter {
             @Mapping(target = "customerEntity", ignore = true),
             @Mapping(target = "detailEntityList", ignore = true),
             @Mapping(target = "invalidRemark", ignore = true),
+            @Mapping(target = "isUserSystem", ignore = true),
             @Mapping(target = "invalidStatus", ignore = true)
     })
     OtherOutstockEntity combineAddEntity(OtherOutStockImportExcelDTO importExcelDTO,

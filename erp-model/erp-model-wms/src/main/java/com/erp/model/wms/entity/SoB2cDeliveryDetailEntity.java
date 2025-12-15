@@ -50,6 +50,11 @@ public class SoB2cDeliveryDetailEntity extends BaseEntity<SoB2cDeliveryDetailEnt
     @TableField("virtual_warehouse_id")
     private String virtualWarehouseId;
     /**
+     * 是否设置虚拟仓id
+     */
+    @TableField(exist = false)
+    private Boolean isSetVirtualWarehouseId;
+    /**
     * 仓库id
     */
     @TableField("warehouse_id")

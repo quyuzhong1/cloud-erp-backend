@@ -371,6 +371,10 @@ public class TransferApplicationDTO implements Serializable {
          * SKU
          */
         private String skuNo;
+        /**
+         * 单位名称
+         */
+        private String unitName;
 
         /**
          * 产品名称
