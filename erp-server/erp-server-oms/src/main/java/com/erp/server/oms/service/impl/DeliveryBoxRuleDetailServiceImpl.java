@@ -123,7 +123,7 @@ public class DeliveryBoxRuleDetailServiceImpl extends SuperServiceImpl<DeliveryB
                 .list();
 
         // 检查sku、单箱数量、优先级否重复
-        checkUpdateDuplicate(deliveryBoxRuleDetailDTOList,oldList);
+        checkUpdateDuplicate(deliveryBoxRuleDetailDTOList);
 
         Map<String, DeliveryBoxRuleDetailEntity> oldMap = oldList.stream()
                 .collect(Collectors.toMap(DeliveryBoxRuleDetailEntity::getId, Function.identity()));
@@ -258,231 +258,57 @@ public class DeliveryBoxRuleDetailServiceImpl extends SuperServiceImpl<DeliveryB
         }
     }
 
-    private void checkUpdateDuplicate(List<DeliveryBoxRuleDetailDTO.UpdateDTO> dtoList, List<DeliveryBoxRuleDetailEntity> oldList) {
-        // 区分新增和更新记录
-        List<DeliveryBoxRuleDetailDTO.UpdateDTO> newRecords = dtoList.stream()
-                .filter(dto -> dto.getId() == null)
+    private void checkUpdateDuplicate(List<DeliveryBoxRuleDetailDTO.UpdateDTO> dtoList) {
+        // 检查发货sku重复
+        Map<String, Long> deliveryCountMap = dtoList.stream()
+                .collect(Collectors.groupingBy(
+                        DeliveryBoxRuleDetailDTO.UpdateDTO::getDeliverySkuNo,
+                        Collectors.counting()
+                ));
+        List<String> duplicateDeliveries = deliveryCountMap.entrySet().stream()
+                .filter(entry -> entry.getValue() > 1)
+                .map(Map.Entry::getKey)
                 .collect(Collectors.toList());
 
-        List<DeliveryBoxRuleDetailDTO.UpdateDTO> updateRecords = dtoList.stream()
-                .filter(dto -> dto.getId() != null)
+        // 检查单箱数量重复
+        Map<Integer, Long> perBoxQtyCountMap = dtoList.stream()
+                .collect(Collectors.groupingBy(
+                        DeliveryBoxRuleDetailDTO.UpdateDTO::getPerBoxQty,
+                        Collectors.counting()
+                ));
+        List<Integer> duplicatePerBoxQtys = perBoxQtyCountMap.entrySet().stream()
+                .filter(entry -> entry.getValue() > 1)
+                .map(Map.Entry::getKey)
                 .collect(Collectors.toList());
 
-        // 提取旧记录的字段值用于交叉检查
-        Set<String> oldSkus = oldList.stream()
-                .map(DeliveryBoxRuleDetailEntity::getDeliverySkuNo)
-                .collect(Collectors.toSet());
+        // 检查优先级重复
+        Map<Integer, Long> sortCountMap = dtoList.stream()
+                .collect(Collectors.groupingBy(
+                        DeliveryBoxRuleDetailDTO.UpdateDTO::getSort,
+                        Collectors.counting()
+                ));
+        List<Integer> duplicateSorts = sortCountMap.entrySet().stream()
+                .filter(entry -> entry.getValue() > 1)
+                .map(Map.Entry::getKey)
+                .collect(Collectors.toList());
 
-        Set<Integer> oldQtys = oldList.stream()
-                .map(DeliveryBoxRuleDetailEntity::getPerBoxQty)
-                .collect(Collectors.toSet());
-
-        Set<Integer> oldSorts = oldList.stream()
-                .map(DeliveryBoxRuleDetailEntity::getSort)
-                .collect(Collectors.toSet());
-
-        // 检查新增记录内部的重复性和与旧记录的交叉重复性
-        if (!newRecords.isEmpty()) {
-            // 检查 deliverySkuNo 重复
-            Map<String, Long> newSkuCountMap = newRecords.stream()
-                    .collect(Collectors.groupingBy(
-                            DeliveryBoxRuleDetailDTO.UpdateDTO::getDeliverySkuNo,
-                            Collectors.counting()
-                    ));
-
-            List<String> duplicateNewSkus = newSkuCountMap.entrySet().stream()
-                    .filter(entry -> entry.getValue() > 1)
-                    .map(Map.Entry::getKey)
-                    .collect(Collectors.toList());
-
-            // 检查新增记录与旧记录的 deliverySkuNo 重复
-            List<String> crossDuplicateNewSkus = newRecords.stream()
-                    .map(DeliveryBoxRuleDetailDTO.UpdateDTO::getDeliverySkuNo)
-                    .filter(oldSkus::contains)
-                    .distinct()
-                    .collect(Collectors.toList());
-
-            duplicateNewSkus.addAll(crossDuplicateNewSkus);
-
-            if (!duplicateNewSkus.isEmpty()) {
-                throw new ServiceException(
-                        ApiError.ERROR_DUPLICATE_SKU,
-                        String.join("】, 【", duplicateNewSkus)
-                );
-            }
-
-            // 检查 perBoxQty 重复
-            Map<Integer, Long> newQtyCountMap = newRecords.stream()
-                    .collect(Collectors.groupingBy(
-                            DeliveryBoxRuleDetailDTO.UpdateDTO::getPerBoxQty,
-                            Collectors.counting()
-                    ));
-
-            List<Integer> duplicateNewQtys = newQtyCountMap.entrySet().stream()
-                    .filter(entry -> entry.getValue() > 1)
-                    .map(Map.Entry::getKey)
-                    .collect(Collectors.toList());
-
-            // 检查新增记录与旧记录的 perBoxQty 重复
-            List<Integer> crossDuplicateNewQtys = newRecords.stream()
-                    .map(DeliveryBoxRuleDetailDTO.UpdateDTO::getPerBoxQty)
-                    .filter(oldQtys::contains)
-                    .distinct()
-                    .collect(Collectors.toList());
-
-            duplicateNewQtys.addAll(crossDuplicateNewQtys);
-
-            if (!duplicateNewQtys.isEmpty()) {
-                throw new ServiceException(
-                        ApiError.ERROR_DUPLICATE_QTY,
-                        String.join("】, 【", duplicateNewQtys.stream().map(Object::toString).collect(Collectors.toList()))
-                );
-            }
-
-            // 检查 sort 重复
-            Map<Integer, Long> newSortCountMap = newRecords.stream()
-                    .collect(Collectors.groupingBy(
-                            DeliveryBoxRuleDetailDTO.UpdateDTO::getSort,
-                            Collectors.counting()
-                    ));
-
-            List<Integer> duplicateNewSorts = newSortCountMap.entrySet().stream()
-                    .filter(entry -> entry.getValue() > 1)
-                    .map(Map.Entry::getKey)
-                    .collect(Collectors.toList());
-
-            // 检查新增记录与旧记录的 sort 重复
-            List<Integer> crossDuplicateNewSorts = newRecords.stream()
-                    .map(DeliveryBoxRuleDetailDTO.UpdateDTO::getSort)
-                    .filter(oldSorts::contains)
-                    .distinct()
-                    .collect(Collectors.toList());
-
-            duplicateNewSorts.addAll(crossDuplicateNewSorts);
-
-            if (!duplicateNewSorts.isEmpty()) {
-                throw new ServiceException(
-                        ApiError.ERROR_DUPLICATE_SORT,
-                        String.join("】, 【", duplicateNewSorts.stream().map(Object::toString).collect(Collectors.toList()))
-                );
-            }
+        if (!duplicateDeliveries.isEmpty()) {
+            throw new ServiceException(
+                    ApiError.ERROR_DUPLICATE_SKU,
+                    String.join("】, 【", duplicateDeliveries.toString())
+            );
         }
-
-        // 检查更新记录内部的重复性（不需要检查与旧记录的重复，因为是在更新已有记录）
-        if (!updateRecords.isEmpty()) {
-            // 检查 deliverySkuNo 重复
-            Map<String, Long> updateSkuCountMap = updateRecords.stream()
-                    .collect(Collectors.groupingBy(
-                            DeliveryBoxRuleDetailDTO.UpdateDTO::getDeliverySkuNo,
-                            Collectors.counting()
-                    ));
-
-            List<String> duplicateUpdateSkus = updateSkuCountMap.entrySet().stream()
-                    .filter(entry -> entry.getValue() > 1)
-                    .map(Map.Entry::getKey)
-                    .collect(Collectors.toList());
-
-            if (!duplicateUpdateSkus.isEmpty()) {
-                throw new ServiceException(
-                        ApiError.ERROR_DUPLICATE_SKU,
-                        String.join("】, 【", duplicateUpdateSkus)
-                );
-            }
-
-            // 检查 perBoxQty 重复
-            Map<Integer, Long> updateQtyCountMap = updateRecords.stream()
-                    .collect(Collectors.groupingBy(
-                            DeliveryBoxRuleDetailDTO.UpdateDTO::getPerBoxQty,
-                            Collectors.counting()
-                    ));
-
-            List<Integer> duplicateUpdateQtys = updateQtyCountMap.entrySet().stream()
-                    .filter(entry -> entry.getValue() > 1)
-                    .map(Map.Entry::getKey)
-                    .collect(Collectors.toList());
-
-            if (!duplicateUpdateQtys.isEmpty()) {
-                throw new ServiceException(
-                        ApiError.ERROR_DUPLICATE_QTY,
-                        String.join("】, 【", duplicateUpdateQtys.stream().map(Object::toString).collect(Collectors.toList()))
-                );
-            }
-
-            // 检查 sort 重复
-            Map<Integer, Long> updateSortCountMap = updateRecords.stream()
-                    .collect(Collectors.groupingBy(
-                            DeliveryBoxRuleDetailDTO.UpdateDTO::getSort,
-                            Collectors.counting()
-                    ));
-
-            List<Integer> duplicateUpdateSorts = updateSortCountMap.entrySet().stream()
-                    .filter(entry -> entry.getValue() > 1)
-                    .map(Map.Entry::getKey)
-                    .collect(Collectors.toList());
-
-            if (!duplicateUpdateSorts.isEmpty()) {
-                throw new ServiceException(
-                        ApiError.ERROR_DUPLICATE_SORT,
-                        String.join("】, 【", duplicateUpdateSorts.stream().map(Object::toString).collect(Collectors.toList()))
-                );
-            }
+        if (!duplicatePerBoxQtys.isEmpty()) {
+            throw new ServiceException(
+                    ApiError.ERROR_DUPLICATE_QTY,
+                    String.join("】, 【", duplicatePerBoxQtys.toString())
+            );
         }
-
-        // 最后检查新增记录和更新记录之间是否有重复
-        if (!newRecords.isEmpty() && !updateRecords.isEmpty()) {
-            // 检查 deliverySkuNo
-            Set<String> updateSkus = updateRecords.stream()
-                    .map(DeliveryBoxRuleDetailDTO.UpdateDTO::getDeliverySkuNo)
-                    .collect(Collectors.toSet());
-
-            List<String> crossNewUpdateSkus = newRecords.stream()
-                    .map(DeliveryBoxRuleDetailDTO.UpdateDTO::getDeliverySkuNo)
-                    .filter(updateSkus::contains)
-                    .distinct()
-                    .collect(Collectors.toList());
-
-            if (!crossNewUpdateSkus.isEmpty()) {
-                throw new ServiceException(
-                        ApiError.ERROR_DUPLICATE_SKU,
-                        String.join("】, 【", crossNewUpdateSkus)
-                );
-            }
-
-            // 检查 perBoxQty
-            Set<Integer> updateQtys = updateRecords.stream()
-                    .map(DeliveryBoxRuleDetailDTO.UpdateDTO::getPerBoxQty)
-                    .collect(Collectors.toSet());
-
-            List<Integer> crossNewUpdateQtys = newRecords.stream()
-                    .map(DeliveryBoxRuleDetailDTO.UpdateDTO::getPerBoxQty)
-                    .filter(updateQtys::contains)
-                    .distinct()
-                    .collect(Collectors.toList());
-
-            if (!crossNewUpdateQtys.isEmpty()) {
-                throw new ServiceException(
-                        ApiError.ERROR_DUPLICATE_QTY,
-                        String.join("】, 【", crossNewUpdateQtys.stream().map(Object::toString).collect(Collectors.toList()))
-                );
-            }
-
-            // 检查 sort
-            Set<Integer> updateSorts = updateRecords.stream()
-                    .map(DeliveryBoxRuleDetailDTO.UpdateDTO::getSort)
-                    .collect(Collectors.toSet());
-
-            List<Integer> crossNewUpdateSorts = newRecords.stream()
-                    .map(DeliveryBoxRuleDetailDTO.UpdateDTO::getSort)
-                    .filter(updateSorts::contains)
-                    .distinct()
-                    .collect(Collectors.toList());
-
-            if (!crossNewUpdateSorts.isEmpty()) {
-                throw new ServiceException(
-                        ApiError.ERROR_DUPLICATE_SORT,
-                        String.join("】, 【", crossNewUpdateSorts.stream().map(Object::toString).collect(Collectors.toList()))
-                );
-            }
+        if (!duplicateSorts.isEmpty()) {
+            throw new ServiceException(
+                    ApiError.ERROR_DUPLICATE_SORT,
+                    String.join("】, 【", duplicateSorts.toString())
+            );
         }
     }
 

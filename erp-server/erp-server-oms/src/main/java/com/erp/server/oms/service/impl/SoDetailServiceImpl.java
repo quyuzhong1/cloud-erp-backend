@@ -350,7 +350,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         List<SoDeliveryNoticeDetailDTO.ListDTO> soDeliveryNoticeList = soDeliveryNoticeFeign.listBySourceIdList(Arrays.asList(mainId));
         for (SoDetailDTO.ViewDTO item : resultList) {
             String skuId = item.getDeliverySkuId();
-            String skuName = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().
+            String skuName = skuList.stream().filter(s -> s.getSkuId().equals(item.getSkuId())).findFirst().
                     flatMap(obj -> Optional.ofNullable(obj.getSkuName())).orElse("");
             item.setProductName(skuName);
 
