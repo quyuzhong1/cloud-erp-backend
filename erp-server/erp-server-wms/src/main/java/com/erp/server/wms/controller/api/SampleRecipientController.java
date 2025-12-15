@@ -445,6 +445,25 @@ public class SampleRecipientController extends BaseController {
     }
 
     /**
+    * 修改审核数量（只有审核中的才能修改）
+    * @author wuhaotian
+    * @date:  2025-08-21
+    * @param dto
+    * @return ApiResult<Boolean>
+    */
+    @PostMapping("/updateAuditQty")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:sampleRecipient:updateAuditQty",
+            serviceClass = SampleRecipientService.class,
+            keyIdName = "id")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "样品领用单修改审核数量")
+    public ApiResult<Boolean> updateAuditQty(@RequestBody @Validated SampleRecipientDTO.UpdateAuditQtyDTO dto) {
+        Boolean result = sampleRecipientService.updateAuditQty(dto);
+        return success(result);
+    }
+
+    /**
     * 获取SKU可领用库存
     * @author wuhaotian
     * @date:  2025-08-21

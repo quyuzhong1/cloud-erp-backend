@@ -1619,6 +1619,94 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
 
 
         /**
+     * 修改审核数量（只有审核中的才能修改）
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean updateAuditQty(SampleRecipientDTO.UpdateAuditQtyDTO dto) {
+        try {
+            log.info("开始修改审核数量，参数：{}", JSONUtil.toJsonStr(dto));
+
+            // 参数校验
+            if (CollUtil.isEmpty(dto.getDetailList())) {
+                throw new ServiceException(ApiError.ERROR_99250);
+            }
+
+            // 1. 查询样品领用单主表
+            SampleRecipientEntity entity = this.getById(dto.getId());
+            if (entity == null) {
+                throw new ServiceException(ApiError.ERROR_99251);
+            }
+
+            // 2. 校验单据状态：只有审核中的才能修改
+            if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
+                throw new ServiceException(ApiError.ERROR_99252);
+            }
+
+            // 检查单据是否已作废
+            if (InvalidStatusEnum.VOIDED.getStatus().equals(entity.getInvalidStatus())) {
+                throw new ServiceException(ApiError.ERROR_99253);
+            }
+
+            // 3. 查询所有明细
+            List<String> detailIds = dto.getDetailList().stream()
+                    .map(SampleRecipientDTO.UpdateAuditQtyDetailDTO::getDetailId)
+                    .collect(Collectors.toList());
+            
+            List<SampleRecipientDetailEntity> detailList = sampleRecipientDetailService.lambdaQuery()
+                    .in(SampleRecipientDetailEntity::getId, detailIds)
+                    .eq(SampleRecipientDetailEntity::getMainId, dto.getId())
+                    .list();
+
+            if (detailList.size() != detailIds.size()) {
+                throw new ServiceException(ApiError.ERROR_99254);
+            }
+
+            // 4. 构建明细ID到审核数量的映射
+            Map<String, Integer> auditQtyMap = dto.getDetailList().stream()
+                    .collect(Collectors.toMap(
+                            SampleRecipientDTO.UpdateAuditQtyDetailDTO::getDetailId,
+                            SampleRecipientDTO.UpdateAuditQtyDetailDTO::getAuditQty
+                    ));
+
+            // 5. 更新明细的审核数量
+            for (SampleRecipientDetailEntity detail : detailList) {
+                Integer auditQty = auditQtyMap.get(detail.getId());
+                if (auditQty == null) {
+                    continue;
+                }
+                
+                // 校验审核数量不能大于领用数量
+                if (auditQty > ObjectUtil.defaultIfNull(detail.getRecipientQty(), 0)) {
+                    throw new ServiceException(ApiError.ERROR_99255, detail.getSkuNo(), auditQty, detail.getRecipientQty());
+                }
+                
+                detail.setAuditQty(auditQty);
+            }
+
+            // 6. 批量更新明细
+            boolean updateResult = sampleRecipientDetailService.updateBatchById(detailList);
+            if (!updateResult) {
+                throw new ServiceException(ApiError.ERROR_99256);
+            }
+
+            // 7. 记录操作日志
+            String msg = StrUtil.format("用户【{}】修改样品领用单【{}】的审核数量", 
+                    UserContext.getDefaultLoginUser().getUserName(), entity.getCode());
+            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SAMPLE_RECIPIENT.getCode(), entity.getId(), "修改审核数量");
+
+            log.info("修改审核数量成功，单据编号：{}，修改明细数量：{}", entity.getCode(), detailList.size());
+            return true;
+
+        } catch (ServiceException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("修改审核数量失败，参数：{}，错误：{}", JSONUtil.toJsonStr(dto), e.getMessage(), e);
+            throw new ServiceException(ApiError.ERROR_99256, e.getMessage());
+        }
+    }
+
+    /**
      * 查询SKU成本
      */
         @Override

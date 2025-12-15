@@ -1166,6 +1166,45 @@ public class SampleRecipientDTO implements Serializable {
     }
 
     /**
+     * 修改审核数量请求参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class UpdateAuditQtyDTO {
+        /**
+         * 样品领用单ID
+         */
+        @NotBlank(message = "样品领用单ID不能为空")
+        private String id;
+
+        /**
+         * 审核数量修改明细列表
+         */
+        @NotEmpty(message = "审核数量修改明细列表不能为空")
+        private List<UpdateAuditQtyDetailDTO> detailList;
+    }
+    
+    /**
+     * 修改审核数量明细
+     */
+    @Data
+    @NoArgsConstructor
+    public static class UpdateAuditQtyDetailDTO {
+        /**
+         * 明细ID
+         */
+        @NotBlank(message = "明细ID不能为空")
+        private String detailId;
+
+        /**
+         * 审核数量
+         */
+        @NotNull(message = "审核数量不能为空")
+        @Min(value = 0, message = "审核数量不能小于0")
+        private Integer auditQty;
+    }
+
+    /**
      * 结束领用DTO
      */
     @EqualsAndHashCode(callSuper = true)
