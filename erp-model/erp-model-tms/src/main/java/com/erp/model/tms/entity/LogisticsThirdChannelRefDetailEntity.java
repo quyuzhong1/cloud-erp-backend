@@ -50,6 +50,11 @@ public class LogisticsThirdChannelRefDetailEntity extends BaseEntity<LogisticsTh
     @TableField("shop_name")
     private String shopName;
     /**
+     * 客户id
+     */
+    @TableField("customer_id")
+    private String customerId;
+    /**
     * 平台
     */
     @TableField("dict_platform")

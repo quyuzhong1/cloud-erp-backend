@@ -103,6 +103,7 @@
             ltcrd.id as detailId,
             ltcrd.shop_id as shopId,
             ltcrd.shop_name as shopName,
+            ltcrd.customer_id as customerId,
             ltcrd.dict_platform as dictPlatform,
             ltcrd.mobile as mobile
         from
