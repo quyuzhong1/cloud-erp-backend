@@ -485,7 +485,10 @@ public class SyncKingdeePurchaseChangeServiceImpl implements SyncKingdeePurchase
                 log.error("未找到资产采购订单明细，assetPurchaseDetailIdList = {}",detailEntity.getSourceDetailId());
                 throw new ServiceException(ApiError.ERROR_98026);
             }
-
+            //标识
+            jsonObject.set("tag",assetPurchaseOrderDetailEntity.getTag());
+            //验收状态
+            jsonObject.set("endReceive",assetPurchaseOrderDetailEntity.getEndReceive());
             //税率
             jsonObject.set("taxRate", MathUtil.multiplyWithTwo(assetPurchaseOrderDetailEntity.getTaxRate(),MathUtil.BigDecimal_100));
             //源单分录内码
