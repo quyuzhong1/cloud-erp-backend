@@ -4081,6 +4081,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             logisticsDTO.setDeclareOrgName(Objects.nonNull(company)?company.getCompanyName():"");
             logisticsDTO.setUsciCode(Objects.nonNull(company)?company.getUsciCode():"");
         }
+        logisticsDTO.setPlatformDeliveryWarehouse(soB2cEntity.getPlatformDeliveryWarehouse());
 //        logisticsDTO.setActualShippingCost(logisticsBillCostFeign.getActualLogisticCost(soB2cEntity.getId()));
         data.setLogisticsDTO(logisticsDTO);
         if (isFullyManagedOrder(soB2cEntity.getDictPlatform())){
@@ -5580,6 +5581,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         String payTimeStr = Objects.nonNull(payTime) ? LocalDateUtil.formatTime(payTime, DateUtil.fmt) : "";
         map.put("payTime", payTimeStr);
 
+        map.put("platformDeliveryWarehouse", soB2cEntity.getPlatformDeliveryWarehouse());
         //产品信息尺寸
         map.put("packageWeight", logisticsEntity.getWeight());
         map.put("packageLength", logisticsEntity.getLength());
@@ -5651,6 +5653,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             detailMap.put("skuNo", detailEntity.getSkuNo());
             detailMap.put("dictPayMethod", soB2cEntity.getDictPayMethod());
             detailMap.put("goodsTotalQty", goodsTotalQty);
+            detailMap.put("platformDeliveryWarehouse", soB2cEntity.getPlatformDeliveryWarehouse());
             detailMap.put("payTime", payTimeStr);
             detailMap.put("packageWeight", logisticsEntity.getWeight());
             detailMap.put("packageLength", logisticsEntity.getLength());
