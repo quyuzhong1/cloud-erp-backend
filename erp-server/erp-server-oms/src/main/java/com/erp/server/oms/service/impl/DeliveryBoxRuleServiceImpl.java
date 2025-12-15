@@ -420,19 +420,21 @@ public class DeliveryBoxRuleServiceImpl extends SuperServiceImpl<DeliveryBoxRule
                 Map<String, DeliveryBoxRuleDetailEntity> oldMap = oldList.stream()
                         .collect(Collectors.toMap(DeliveryBoxRuleDetailEntity::getId, Function.identity()));
 
-                // 新增（id为空）、修改（id存在且数据有变化）
                 List<DeliveryBoxRuleDetailEntity> addList = new ArrayList<>();
                 List<DeliveryBoxRuleDetailEntity> updateList = new ArrayList<>();
                 for (DeliveryBoxRuleDetailEntity deliveryBoxRuleDetailEntity : deliveryBoxRuleDetailEntityList) {
-                    if (StringUtils.isBlank(deliveryBoxRuleDetailEntity.getId())) {
-                        // 新增
-                        addList.add(deliveryBoxRuleDetailEntity);
-                    } else {
-                        // 修改
-                        DeliveryBoxRuleDetailEntity oldEntity = oldMap.get(deliveryBoxRuleDetailEntity.getId());
-                        if (oldEntity != null && isDataChanged(oldEntity, deliveryBoxRuleDetailEntity)) {
-                            updateList.add(deliveryBoxRuleDetailEntity);
+                    if (!oldList.isEmpty()) {
+                        for (DeliveryBoxRuleDetailEntity boxRuleDetailEntity : oldList) {
+                            if (isDataChanged(boxRuleDetailEntity, deliveryBoxRuleDetailEntity)) {
+                                // 修改
+                                updateList.add(deliveryBoxRuleDetailEntity);
+                            } else {
+                                // 新增
+                                addList.add(deliveryBoxRuleDetailEntity);
+                            }
                         }
+                    } else {
+                        addList.add(deliveryBoxRuleDetailEntity);
                     }
                 }
 
@@ -442,24 +444,22 @@ public class DeliveryBoxRuleServiceImpl extends SuperServiceImpl<DeliveryBoxRule
                     DeliveryBoxRuleDetailEntity oldEntity = mapEntity.getValue();
 
                     List<Pair<String, String>> updatePairs = updateList.stream()
-                            .filter(newEntity -> newEntity.getId().equals(oldEntity.getId()))
+                            .filter(newEntity -> newEntity.getDeliverySkuId().equals(oldEntity.getDeliverySkuId()))
                             .map(newEntity -> new Pair<>(
                                     deliveryBoxRuleId,
                                     String.format(
-                                            "修改发货SKU从【%s】为【%s】，单箱数量从【%s】为【%s】，状态从【%s】为【%s",
+                                            "修改发货SKU从【%s】为【%s】，单箱数量从【%s】为【%s】",
                                             oldEntity.getDeliverySkuNo(),
                                             newEntity.getDeliverySkuNo(),
                                             oldEntity.getPerBoxQty(),
-                                            newEntity.getPerBoxQty(),
-                                            InvalidStatusEnum.getName(oldEntity.getInvalidStatus()),
-                                            InvalidStatusEnum.getName(newEntity.getInvalidStatus())
+                                            newEntity.getPerBoxQty()
                                     )
                             ))
                             .collect(Collectors.toList());
 
                     if (!updatePairs.isEmpty()) {
                         operateLogService.batchAddModuleOperateLog(
-                                "修改发货SKU从【%s】",
+                                "%s",
                                 ModuleTypeEnum.DELIVERY_BOX_RULE.getCode(),
                                 updatePairs,
                                 "编辑操作"
@@ -470,7 +470,7 @@ public class DeliveryBoxRuleServiceImpl extends SuperServiceImpl<DeliveryBoxRule
                 // 记录新增日志
                 List<Pair<String, String>> addPairs = addList.stream()
                         .map(obj -> new Pair<>(deliveryBoxRuleId,
-                                obj.getDeliverySkuNo() + ",单箱数量【" + obj.getPerBoxQty() + "】"
+                                obj.getDeliverySkuNo() + "】" + ",单箱数量【" + obj.getPerBoxQty() + "】"
                         ))
                         .collect(Collectors.toList());
                 operateLogService.batchAddModuleOperateLog(
