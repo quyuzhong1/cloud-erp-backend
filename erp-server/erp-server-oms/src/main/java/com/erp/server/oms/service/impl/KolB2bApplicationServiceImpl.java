@@ -528,7 +528,9 @@ public class KolB2bApplicationServiceImpl extends SuperServiceImpl<KolB2bApplica
 
         for (KolB2bApplicationDTO.B2bSoInfoDTO b2bSoInfoDTO :b2bSoInfoDTOList) {
             //发货状态名称
-            b2bSoInfoDTO.setDeliveryStatusName(DeliveryStatusEnum.getName(b2bSoInfoDTO.getSoCode()));
+            b2bSoInfoDTO.setDeliveryStatusName(DeliveryStatusEnum.getName(b2bSoInfoDTO.getDeliveryStatus()));
+            //审核状态名称
+            b2bSoInfoDTO.setApproveStatusName(ApproveStatusEnum.getName(b2bSoInfoDTO.getApproveStatus()));
             //产品名称
             b2bSoInfoDTO.setProductName(skuMap.get(b2bSoInfoDTO.getSkuId()));
             //仓库名称
