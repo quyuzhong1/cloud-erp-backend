@@ -863,10 +863,11 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
             detailEntity.setVirtualWarehouseId(soInfoEntity.getVirtualWarehouseId());
 
             //单价信息
-            detailEntity.setPrice(soDetailEntity.getPrice());
+            BigDecimal price = MathUtil.multiplyWithTwo(soDetailEntity.getPrice(),soDetailEntity.getPerBoxQty());
+            detailEntity.setPrice(price);
             detailEntity.setTaxRate(soDetailEntity.getTaxRate());
             detailEntity.setExchangeRate(soDetailEntity.getExchangeRate());
-            detailEntity.setAmount(MathUtil.multiplyWithTwo(soDetailEntity.getPrice(), detailEntity.getActualQty()));
+            detailEntity.setAmount(MathUtil.multiplyWithTwo(price, detailEntity.getActualQty()));
             detailEntity.setCurrency(soDetailEntity.getCurrency());
             detailEntity.setCurrencySymbol(soDetailEntity.getCurrencySymbol());
             //销售订单明细已下推的销售出库单
