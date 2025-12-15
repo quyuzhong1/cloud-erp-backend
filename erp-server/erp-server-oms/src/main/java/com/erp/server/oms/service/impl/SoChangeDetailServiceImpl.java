@@ -575,7 +575,6 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
                 soDetail.setRemark(item.getRemark());
                 soDetail.setMainId(soId);
                 soDetail.setPlatformSkuNo(item.getPlatformSkuNo());
-
                 //添加的话id 为null
                 if (addType.equals(changeType)) {
                     soDetail.setId(null);
@@ -594,6 +593,7 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
                     SoDetailEntity soDetailEntity = soDetailService.getById(soDetailId);
                     //新的发货箱数
                     soDetail.setBoxQty(item.getQty() / soDetailEntity.getPerBoxQty());
+                    soDetail.setPerBoxQty(soDetailEntity.getPerBoxQty());
                 }
 
                 saveOrUpdateList.add(soDetail);
