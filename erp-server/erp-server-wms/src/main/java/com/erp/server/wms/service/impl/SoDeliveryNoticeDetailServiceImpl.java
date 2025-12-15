@@ -378,8 +378,8 @@ public class SoDeliveryNoticeDetailServiceImpl extends SuperServiceImpl<SoDelive
         outInStockDTO.setSourceCode(soInfoEntity.getCode());
         outInStockDTO.setSourceDetailId(soDetailEntity.getId());
         outInStockDTO.setBillDate(LocalDate.now());
-        outInStockDTO.setSkuId(soDetailEntity.getSkuId());
-        outInStockDTO.setSkuNo(soDetailEntity.getSkuNo());
+        outInStockDTO.setSkuId(soDetailEntity.getDeliverySkuId());
+        outInStockDTO.setSkuNo(soDetailEntity.getDeliverySkuNo());
         outInStockDTO.setQty(qty);
         outInStockDTO.setWarehouseId(soInfoEntity.getWarehouseId());
         outInStockDTO.setVirtualWarehouseId(soInfoEntity.getVirtualWarehouseId());
