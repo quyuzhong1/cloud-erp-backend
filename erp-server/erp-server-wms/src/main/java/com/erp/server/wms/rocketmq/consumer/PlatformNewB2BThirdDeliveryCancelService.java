@@ -39,7 +39,7 @@ import java.util.Objects;
 @Service
 @Slf4j
 @RocketMQMessageListener(topic = RocketMqTopic.SYNC_B2B_THIRD_DELIVERY_CANCEL_ERP_TOPIC,
-        selectorExpression = "${spring.cloud.nacos.discovery.namespace}-erp_b2b_third_delivery_tag",
+        selectorExpression = "${spring.cloud.nacos.discovery.namespace}-erp_b2b_third_delivery_cancel_tag",
         consumerGroup = "${spring.cloud.nacos.discovery.namespace}-erp_dmp_group",
         consumeMode = ConsumeMode.ORDERLY)
 public class PlatformNewB2BThirdDeliveryCancelService extends AbstractNewPlatformConsumerHandler {

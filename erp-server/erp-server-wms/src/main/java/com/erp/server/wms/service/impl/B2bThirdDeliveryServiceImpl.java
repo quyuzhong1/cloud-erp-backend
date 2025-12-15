@@ -580,7 +580,7 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
             List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Collections.singletonList(b2bThirdDeliveryEntity.getWarehouseOrgId()));
             b2bThirdDeliveryEntity.setWarehouseOrgName(CollUtil.isNotEmpty(accountingCompanyList) ? accountingCompanyList.get(0).getName() : "");
         }
-        if (CharSequenceUtil.isBlank(b2bThirdDeliveryEntity.getLogisticsChannelName()) && CharSequenceUtil.isNotBlank(b2bThirdDeliveryEntity.getLogisticsChannelId())){
+        if ((CharSequenceUtil.isBlank(b2bThirdDeliveryEntity.getLogisticsChannelName()) || CharSequenceUtil.isBlank(b2bThirdDeliveryEntity.getLogisticsChannelCode())) && CharSequenceUtil.isNotBlank(b2bThirdDeliveryEntity.getLogisticsChannelId())){
             LogisticsChannelEntity channelEntity = FeignQuery.getById(LogisticsChannelEntity.class, b2bThirdDeliveryEntity.getLogisticsChannelId());
             b2bThirdDeliveryEntity.setLogisticsChannelName(Objects.nonNull(channelEntity) ? channelEntity.getName() : "");
             b2bThirdDeliveryEntity.setLogisticsChannelCode(Objects.nonNull(channelEntity) ? channelEntity.getCode() : "");

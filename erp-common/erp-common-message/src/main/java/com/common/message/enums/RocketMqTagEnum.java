@@ -360,6 +360,12 @@ public enum RocketMqTagEnum {
      * 第三方仓库存业务处理实现
      */
     ERP_THIRD_WAREHOUSE_TAG(1038, RocketMqTagEnum.SYNC_THIRD_WAREHOUSE,"erp_third_warehouse_tag"),
+
+    ERP_B2B_THIRD_WAREHOUSE_CREATE_TAG(1039, RocketMqTagEnum.SYNC_B2B_THIRD_WAREHOUSE_CREATE,"erp_b2b_third_warehouse_create_tag"),
+    /**
+     * 第三方仓库存取消业务处理实现
+     */
+    ERP_B2B_THIRD_WAREHOUSE_CANCEL_TAG(1040, RocketMqTagEnum.SYNC_B2B_THIRD_WAREHOUSE_CANCEL,"erp_b2b_third_delivery_cancel_tag"),
     //-----------------------------dmp数据更新编码从2001开始---------------------------------------------------------------
 
     /**
@@ -647,6 +653,9 @@ public enum RocketMqTagEnum {
 
     public static final String SYNC_KINGDEE = "sync_kingdee";
     public static final String SYNC_THIRD_WAREHOUSE = "sync_third_warehouse";
+
+    public static final String SYNC_B2B_THIRD_WAREHOUSE_CREATE = "sync_tb2b_hird_warehouse_create";
+    public static final String SYNC_B2B_THIRD_WAREHOUSE_CANCEL = "sync_b2b_third_warehouse_cancel";
     public static final String SYNC_AMAZON = "sync_amazon";
 
     public static final String STOCK = "stock";
