@@ -166,7 +166,7 @@ public class SyncWangDianSoB2cServiceImpl implements SyncWangDianSoB2cService {
 
             PushSelf2Request.RawTradeOrder rawTradeOrder = new PushSelf2Request.RawTradeOrder();
             rawTradeOrder.setTid(entity.getCode());
-            rawTradeOrder.setOid(detailEntity.getSkuId());
+            rawTradeOrder.setOid(detailEntity.getId());
             rawTradeOrder.setStatus(PushSelf2Request.RawTradeOrder.STATUS_WAIT_DELIVERY);
             rawTradeOrder.setRefundStatus(PushSelf2Request.RawTradeOrder.REFUND_STATUS_NO);
             rawTradeOrder.setGoodsId(skuVO.getSpuNo());

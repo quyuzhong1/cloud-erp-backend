@@ -8,7 +8,6 @@ import java.math.BigDecimal;
 import java.util.List;
 
 @Data
-@ToString
 public class PushSelf2Request
 {
 	@SerializedName("shop_no")
@@ -27,7 +26,6 @@ public class PushSelf2Request
 	 *
 	 * */
 	@Data
-	@ToString
 	public static class RawTrade{
 		/**
 		 * 必填
@@ -536,7 +534,6 @@ public class PushSelf2Request
 	 *
 	 * */
 	@Data
-	@ToString
 	public static class RawTradeOrder {
 
 		/**

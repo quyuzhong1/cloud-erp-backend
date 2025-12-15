@@ -20,6 +20,7 @@ import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
 import com.erp.server.dmp.service.DmpPushTaskService;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import com.sdk.wangdian.sdk.api.Result;
 import com.sdk.wangdian.sdk.api.sales.RawTradeAPI;
 import com.sdk.wangdian.sdk.api.sales.dto.PushSelf2Request;
 import com.sdk.wangdian.sdk.api.sales.dto.PushSelf2Response;
@@ -114,23 +115,23 @@ public class WdtSoB2ckConsumer<T extends DmpSyncTaskIdDTO> extends AbstractPlatf
                         Map<String, Object> rawTradeOrderMap = gson.fromJson(gson.toJson(order), new TypeToken<Map<String, Object>>(){}.getType());
                         rawTradeOrderMapList.add(rawTradeOrderMap);
                     }
-
-                    PushSelf2Response result = api.pushSelf2(request.getShopNo() , Collections.singletonList(rawTradeMap), rawTradeOrderMapList );
-                    Integer status = result.getStatus();
-                    PushSelf2Response.ErrorData data = result.getData();
-                    if(Objects.nonNull(data)){
-                        Integer chgCount = data.getChgCount();
-                        Integer newCount = data.getNewCount();
-                        List<PushSelf2Response.Error> errorList = data.getErrorList();
+                    PushSelf2Response result =  api.pushSelf2(request.getShopNo() , Collections.singletonList(rawTradeMap), rawTradeOrderMapList );
+                    if(Objects.nonNull(result)){
+                        Integer chgCount = result.getChgCount();
+                        Integer newCount = result.getNewCount();
+                        List<PushSelf2Response.Error> errorList = result.getErrorList();
                         String errorMsg ="";
                         if(CollUtil.isNotEmpty(errorList)){
                             errorMsg = Optional.ofNullable(errorList).orElse(new ArrayList<>()).stream()
                                     .map(error -> String.format("【拆分单号:%s，错误原因：%s】", error.getNo(), error.getError()))
                                     .collect(Collectors.joining(","));
+                            return ApiResult.error(StrUtil.format(ApiError.ERROR_WDT_SALES_RAW_TRADE_PUSHSELF2.msg,newCount,chgCount,errorMsg));
+                        }else {
+                            return ApiResult.success(StrUtil.format(ApiError.ERROR_WDT_SALES_RAW_TRADE_PUSHSELF2.msg,newCount,chgCount,errorMsg));
                         }
-                        throw new ServiceException(ApiError.ERROR_WDT_SALES_RAW_TRADE_PUSHSELF2,status,newCount,chgCount,errorMsg);
+                    }else {
+                        return ApiResult.error("返回结果为空");
                     }
-
 
 //                    String msg = Optional.ofNullable(result.getErrorList()).orElse(new ArrayList<>()).stream()
 //                            .map(errorList -> String.format("【拆分单号:%s，错误原因：%s】", errorList.getNo(), errorList.getError()))

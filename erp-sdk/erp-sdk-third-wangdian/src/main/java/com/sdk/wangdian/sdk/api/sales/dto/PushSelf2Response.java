@@ -12,33 +12,14 @@ import java.util.List;
 
 @Getter
 @Setter
-@ToString
 public class PushSelf2Response {
 
-	@SerializedName("status")
-	private Integer status;
-	@SerializedName("message")
-	private String message;
-	@SerializedName("data")
-	private ErrorData data;
-
-
-	/**
-	 *
-	 *
-	 *
-	 * */
-	@Getter
-	@Setter
-	@ToString
-	public static class ErrorData{
-		@SerializedName("chg_count")
-		private Integer chgCount;
-		@SerializedName("new_count")
-		private Integer newCount;
-		@SerializedName("error_list")
-		private List<Error> errorList;
-	}
+	@SerializedName("chg_count")
+	private Integer chgCount;
+	@SerializedName("new_count")
+	private Integer newCount;
+	@SerializedName("error_list")
+	private List<Error> errorList;
 
 	/**
 	 *
@@ -47,7 +28,6 @@ public class PushSelf2Response {
 	 * */
 	@Getter
 	@Setter
-	@ToString
 	public static class Error{
 		@SerializedName("error")
 		private String error;

@@ -222,7 +222,7 @@ public enum ApiError implements Serializable {
     ERROR_SDY_NOT_FOUND_CUSTOMER(80016,"店铺未绑定客户信息，店铺id【{}】"),
     ERROR_THIRD_LOGISTICS_NOTFOUND(80017,"第三方渠道不存在"),
     ERROR_CFG_SETTING_NOTFOUND(80018,"未找到推送配置项【{}】"),
-    ERROR_WDT_SALES_RAW_TRADE_PUSHSELF2(80019,"ERP原始订单推送旺店通结果：状态码:【{}】，新增订单的数量:【{}】，更新订单的数量:【{}】，错误信息:【{}】"),
+    ERROR_WDT_SALES_RAW_TRADE_PUSHSELF2(80019,"ERP原始订单推送旺店通结果：新增订单的数量:【{}】，更新订单的数量:【{}】，错误信息:【{}】"),
 
     /**
      * 工作流错误 workflow

@@ -45,7 +45,7 @@ public class KolB2cApplicationEntity extends BaseEntity<KolB2cApplicationEntity>
     * 审批状态
     */
     @TableField("approve_status")
-    private ApproveStatusEnum approveStatus;
+    private String approveStatus;
     /**
     * 审批时间
     */
