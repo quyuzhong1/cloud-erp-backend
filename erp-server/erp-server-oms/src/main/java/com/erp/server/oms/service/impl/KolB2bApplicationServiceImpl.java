@@ -708,8 +708,7 @@ public class KolB2bApplicationServiceImpl extends SuperServiceImpl<KolB2bApplica
         }
         //部门
         List<SysDepartmentDTO> deptList = sysUserFeign.getDeptList();
-        Map<String, String> deptMap = CollUtil.isEmpty(deptList) ? new HashMap<>() :
-                deptList.stream().collect(Collectors.toMap(SysDepartmentDTO::getName, SysDepartmentDTO::getId));
+
         //用户
         List<FindUserDTO> userList = sysUserFeign.getUserList();
         Map<String, String> userMap = CollUtil.isEmpty(userList) ? new HashMap<>() :
@@ -744,8 +743,8 @@ public class KolB2bApplicationServiceImpl extends SuperServiceImpl<KolB2bApplica
                 errorMsgList.add(StrUtil.format("申请人名称【{}】不存在", mainInfo.getApplyUserName()));
             }
             //申请部门信息
-            String applyDeptId = deptMap.get(mainInfo.getApplyDeptName());
-            if (CharSequenceUtil.isBlank(applyDeptId)) {
+            String applyDeptId = deptList.stream().filter(obj -> CharSequenceUtil.equals(obj.getName(),mainInfo.getApplyDeptName())).map(SysDepartmentDTO::getId).findFirst().orElse("");
+            if (CharSequenceUtil.isBlank(applyDeptId) && CharSequenceUtil.isNotBlank(mainInfo.getApplyDeptName())) {
                 errorMsgList.add(StrUtil.format("申请部门名称【{}】不存在", mainInfo.getApplyDeptName()));
             }
             //产品信息
