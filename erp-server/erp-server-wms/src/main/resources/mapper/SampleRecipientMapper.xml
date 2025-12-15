@@ -22,6 +22,7 @@
        <result column="code" property="code" />
        <result column="recipient_date" property="recipientDate" />
        <result column="usage" property="usage" />
+       <result column="usage_desc" property="usageDesc" />
        <result column="warehouse_id" property="warehouseId" />
        <result column="user_id" property="userId" />
        <result column="user_name" property="userName" />
@@ -57,7 +58,7 @@
         update_time,
         version,
         is_deleted,
-        approve_status, approve_user_id, approve_user_name, approve_time, invalid_status, invalid_remark, invalid_time, code, recipient_date, usage, warehouse_id, user_id, user_name, dept_id, pick_org_id, pick_org_name, usage_scope, use_user_id, use_user_name, remark, is_delivery, receive_address, receiver_name, receive_phone, source_id, source_code, source_type, sku_total_cost
+        approve_status, approve_user_id, approve_user_name, approve_time, invalid_status, invalid_remark, invalid_time, code, recipient_date, usage, usage_desc, warehouse_id, user_id, user_name, dept_id, pick_org_id, pick_org_name, usage_scope, use_user_id, use_user_name, remark, is_delivery, receive_address, receiver_name, receive_phone, source_id, source_code, source_type, sku_total_cost
           ,is_outstock_required,no_outstock_reason,isLedgerRequired,warehouse_charge_id
     </sql>
 
@@ -74,6 +75,7 @@
             sr.invalid_time AS invalidTime,
             sr.recipient_date AS recipientDate,
             sr.usage,
+            sr.usage_desc AS usageDesc,
             sr.warehouse_id AS warehouseId,
             wi.name AS warehouseName,
             sr.user_id AS userId,
@@ -213,6 +215,7 @@
             sr.invalid_time AS invalidTime,
             sr.recipient_date AS recipientDate,
             sr.usage,
+            sr.usage_desc AS usageDesc,
             sr.warehouse_id AS warehouseId,
             wi.name AS warehouseName,
             sr.user_id AS userId,
@@ -293,6 +296,7 @@
             sr.invalid_time AS invalidTime,
             sr.recipient_date AS recipientDate,
             sr.usage,
+            sr.usage_desc AS usageDesc,
             sr.warehouse_id AS warehouseId,
             wi.name AS warehouseName,
             sr.user_id AS userId,

@@ -145,6 +145,10 @@ public class SampleRecipientDTO implements Serializable {
         * 用途 /wms/dict/drop/down?type=sampleUsage
         */
         private String usage;
+        /**
+         * 用途说明
+         */
+        private String usageDesc;
 
         /**
         * 发货仓库ID
@@ -426,6 +430,10 @@ public class SampleRecipientDTO implements Serializable {
         * 用途  /wms/dict/drop/down?type=sampleUsage
         */
         private String usage;
+        /**
+         * 用途说明
+         */
+        private String usageDesc;
 
         /**
         * 发货仓库ID 接口：warehouse/list
@@ -696,6 +704,12 @@ public class SampleRecipientDTO implements Serializable {
          */
         @NotBlank(message = "用途 不能为空")
         private String usage;
+        /**
+         * 用途说明
+         */
+        @NotBlank(message = "用途说明不能为空")
+        @Size(max = 200, message = "用途说明最大长度不能超过200位")
+        private String usageDesc;
 
         /**
          * 发货仓库ID  接口： warehouse/list
