@@ -340,10 +340,6 @@ public class LogisticsThirdChannelRefDTO implements Serializable {
          */
         private String shopId;
         /**
-         * 客户id
-         */
-        private String customerId;
-        /**
          * 店铺名称[可排序]
          */
         private String shopName;

@@ -371,8 +371,7 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
                 record.setTelNumber(pagingVO.getMobile());
                 record.setThirdRefId(pagingVO.getId());
             }else if (LogisticsThirdChannelRefPushTypeEnum.SHOP_SENDER.getCode().equals(pushType)){
-                //销售出库单把客户id传递到了物流单店铺id上
-                collect.stream().filter(e -> e.getCustomerId().equals(record.getShopId())).findFirst().ifPresent(e -> {
+                collect.stream().filter(e -> e.getShopId().equals(record.getShopId())).findFirst().ifPresent(e -> {
                     record.setTelNumber(e.getMobile());
                     record.setThirdRefId(pagingVO.getId());
                 });
