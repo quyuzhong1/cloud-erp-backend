@@ -169,7 +169,7 @@ public class KolB2cApplicationExcelListener extends AnalysisEventListener<KolB2c
         //业务类型
         String isInternationalName = excelDTO.getIsInternationalName();
         if(StringUtils.isNotBlank(isInternationalName)){
-            if(cfgKolOptionMap.containsKey(isInternationalName)){
+            if("国外".equals(isInternationalName) || "国内".equals(isInternationalName)){
                 excelDTO.setIsInternational(getIsInternational(isInternationalName));
             } else {
                 errorMsgList.add("业务类型【"+isInternationalName+"】不存在");

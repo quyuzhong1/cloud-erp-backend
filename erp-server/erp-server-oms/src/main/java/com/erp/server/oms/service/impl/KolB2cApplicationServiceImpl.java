@@ -11,6 +11,7 @@ import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 
 import cn.hutool.core.util.StrUtil;
+import com.common.core.dto.MultiErrorExcelData;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.dto.excel.KolB2cApplicationAddressImportExcelDTO;
@@ -1192,34 +1193,35 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         }
         //店铺
         List<ShopInfoEntity> shopInfoEntities = shopInfoService.listAuth(null);
-        Map<String, String> shopMap = shopInfoEntities.stream().collect(Collectors.toMap(ShopInfoEntity::getName, ShopInfoEntity::getId));
+        Map<String, String> shopMap = shopInfoEntities.stream().collect(Collectors.toMap(ShopInfoEntity::getName, ShopInfoEntity::getId, (o1, o2) -> o1));
         //用户
         List<FindUserDTO> userList = sysUserFeign.getUserList();
-        Map<String, FindUserDTO> userMap = userList.stream().collect(Collectors.toMap(FindUserDTO::getUserName, Function.identity()));
+        Map<String, FindUserDTO> userMap = userList.stream().collect(Collectors.toMap(FindUserDTO::getUserName, Function.identity(), (o1, o2) -> o1));
         //部门
         List<SysDepartmentDTO> deptList = sysUserFeign.getDeptList();
-        Map<String, String> deptMap = deptList.stream().collect(Collectors.toMap(SysDepartmentDTO::getName, SysDepartmentDTO::getId));
+        Map<String, String> deptMap = deptList.stream().collect(Collectors.toMap(SysDepartmentDTO::getName, SysDepartmentDTO::getId, (o1, o2) -> o1));
         //仓库
         List<WarehouseDTO.UpdateDTO> warehouserList = wmsTaskFeign.listApproveWarehouse();
-        Map<String, String> warehouserMap = warehouserList.stream().collect(Collectors.toMap(WarehouseDTO.UpdateDTO::getName, WarehouseDTO.UpdateDTO::getId));
+        Map<String, String> warehouserMap = warehouserList.stream().collect(Collectors.toMap(WarehouseDTO.UpdateDTO::getName, WarehouseDTO.UpdateDTO::getId, (o1, o2) -> o1));
         //物流渠道
         List<BaseDropDownDTO.DisabledDTO> logisticsList = logisticsFeign.listAll();
-        Map<String, String> logisticsMap = logisticsList.stream().filter(e -> e.getDisabled().equals(Boolean.FALSE)).collect(Collectors.toMap(BaseDropDownDTO.DisabledDTO::getValue, BaseDropDownDTO.DisabledDTO::getCode));
+        Map<String, String> logisticsMap = logisticsList.stream().filter(e -> e.getDisabled().equals(Boolean.FALSE))
+                .collect(Collectors.toMap(BaseDropDownDTO.DisabledDTO::getValue, BaseDropDownDTO.DisabledDTO::getCode, (o1, o2) -> o1));
         //sku
         List<SkuVO> skuList = plmTaskFeign.listApproveSku();
-        Map<String, SkuVO> skuMap = skuList.stream().collect(Collectors.toMap(SkuVO::getSkuNo, Function.identity()));
+        Map<String, SkuVO> skuMap = skuList.stream().collect(Collectors.toMap(SkuVO::getSkuNo, Function.identity(), (o1, o2) -> o1));
         //达人
         List<KolPartnerInfoEntity> partnerList = kolPartnerInfoService.lambdaQuery().eq(KolPartnerInfoEntity::getDisabled, false).list();
-        Map<String, String> partnerMap = partnerList.stream().collect(Collectors.toMap(KolPartnerInfoEntity::getNickname, KolPartnerInfoEntity::getId));
+        Map<String, String> partnerMap = partnerList.stream().collect(Collectors.toMap(KolPartnerInfoEntity::getNickname, KolPartnerInfoEntity::getId, (o1, o2) -> o1));
         //字典
         List<CfgKolOptionEntity> cfgKolOptionEntities = cfgKolOptionService.lambdaQuery().in(CfgKolOptionEntity::getType, Arrays.asList(CfgKolOptionTypeEnum.KOL_SAMPLE_TYPE.getCode(), CfgKolOptionTypeEnum.PROJECT_TAG.getCode())).list();
-        Map<String, String> cfgKolOptionMap = cfgKolOptionEntities.stream().collect(Collectors.toMap(CfgKolOptionEntity::getName, CfgKolOptionEntity::getId));
+        Map<String, String> cfgKolOptionMap = cfgKolOptionEntities.stream().collect(Collectors.toMap(CfgKolOptionEntity::getName, CfgKolOptionEntity::getId, (o1, o2) -> o1));
         //国家
         List<DictCountryDTO.ListDTO> dictCountryList = sysUserFeign.countryList();
-        Map<String, String> dictCountryMap = dictCountryList.stream().collect(Collectors.toMap(DictCountryDTO.ListDTO::getNameCn, DictCountryDTO.ListDTO::getId));
+        Map<String, String> dictCountryMap = dictCountryList.stream().collect(Collectors.toMap(DictCountryDTO.ListDTO::getNameCn, DictCountryDTO.ListDTO::getId, (o1, o2) -> o1));
         //币种
         List<DictCurrencyEntity> dictCurrencyEntities = sysUserFeign.currencyList();
-        Map<String, String> currencyMap = dictCurrencyEntities.stream().collect(Collectors.toMap(DictCurrencyEntity::getName, DictCurrencyEntity::getId));
+        Map<String, String> currencyMap = dictCurrencyEntities.stream().collect(Collectors.toMap(DictCurrencyEntity::getName, DictCurrencyEntity::getId, (o1, o2) -> o1));
 
         KolB2cApplicationExcelListener excelListenerUtil = new KolB2cApplicationExcelListener(dto.getTaskId(),
                 dto.getImportType(),
@@ -1237,6 +1239,7 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
 
         KolB2cApplicationAddressExcelListener addressListenerUtil = new KolB2cApplicationAddressExcelListener(dto.getTaskId(),dto.getImportType(),dto.getImportCount(),partnerMap,dictCountryMap);
 
+        List<MultiErrorExcelData> errList = new ArrayList<>();
         try {
             byte[] bytes = fileFeign.downloadFile(dto.getFileUrl());
 
@@ -1272,6 +1275,27 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
             KolB2cApplicationService kolB2cApplicationService = SpringUtil.getBean(KolB2cApplicationService.class);
             kolB2cApplicationService.handleImportSuccessList(successList, errorList, detailSuccessList, addressSuccessList,dto.getImportType());
 
+
+
+            MultiErrorExcelData sheet2 = new MultiErrorExcelData();
+            MultiErrorExcelData sheet3 = new MultiErrorExcelData();
+
+
+
+            sheet2.setSheetName("sheet2");
+            sheet2.setSheetNo(1);
+            sheet2.setClazz(KolB2cApplicationDetailImportExcelDTO.class);
+            sheet2.setDataResult(detailErrorList);
+
+            sheet3.setSheetName("sheet3");
+            sheet3.setSheetNo(2);
+            sheet3.setClazz(KolB2cApplicationAddressImportExcelDTO.class);
+            sheet3.setDataResult(addressErrorList);
+
+
+            errList.add(sheet2);
+            errList.add(sheet3);
+
         } catch (ExcelCommonException e) {
             log.error("导入格式错误！", e);
             throw new ServiceException(ApiError.ERROR_1016);
@@ -1280,10 +1304,17 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         importResultDTO.setTaskId(dto.getTaskId());
         importResultDTO.setCount(excelListenerUtil.getCount());
         List<KolB2cApplicationImportExcelDTO> errorList = excelListenerUtil.getErrorList();
+        MultiErrorExcelData sheet1 = new MultiErrorExcelData();
+        sheet1.setSheetName("sheet1");
+        sheet1.setSheetNo(0);
+        sheet1.setClazz(KolB2cApplicationImportExcelDTO.class);
+        sheet1.setDataResult(errorList);
+        errList.add(0,sheet1);
         String url = "";
         if (CollectionUtils.isNotEmpty(errorList)) {
             String fileName = "B2C寄样申请错误信息.xlsx";
-            File file = ExcelUtil.exportFile(fileName, "error", errorList, KolB2cApplicationImportExcelDTO.class);
+//            File file = ExcelUtil.exportFile(fileName, "error", errorList, KolB2cApplicationImportExcelDTO.class);
+            File file = ExcelUtil.generateTemplateFile(fileName,errList);
             if (!file.isDirectory()) {
                 url = FastDFSClientUtil.uploadFile(file, fileName);
             }
