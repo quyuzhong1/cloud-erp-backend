@@ -1119,7 +1119,7 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
             if (ObjectUtils.isEmpty(soDetailEntity)) {
                 continue;
             }
-            BigDecimal price=soDetailEntity.getPrice();
+            BigDecimal price=MathUtil.multiplyWithTwo(soDetailEntity.getPrice(),soDetailEntity.getBoxQty());
             //单价信息
             detailEntity.setPrice(price);
             BigDecimal exchangeRate=soDetailEntity.getExchangeRate();
