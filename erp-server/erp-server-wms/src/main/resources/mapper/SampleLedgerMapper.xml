@@ -45,11 +45,11 @@
         sl.user_name AS userName,
         sl.dept_id AS deptId,
         sl.dept_name AS deptName,
+        sl.use_user_id AS useUserId,
+        sl.use_user_name AS useUserName,
         sl.sku_id AS skuId,
         sl.sku_no AS skuNo,
         sl.product_name AS productName,
-        sl.use_user_id AS useUserId,
-        sl.use_user_name AS useUserName,
         COALESCE(sl.qty, 0) as ledgerQty ,
         <choose>
             <when test="params.type != null and params.type != 'exhibition'">
@@ -139,19 +139,22 @@
                 #{item}
             </foreach>
         </if>
-        <if test="params.skuNos != null and params.skuNos.size() > 1">
+        <if test="params.useUserId != null and params.useUserId != ''">
+            and sl.use_user_id = #{params.useUserId}
+        </if>
+        <if test="params.useUserName != null and params.useUserName != ''">
+            and sl.use_user_name ILIKE concat('%',#{params.useUserName}::text,'%')
+        </if>
+        <if test="params.skuNos != null and params.skuNos.size() > 0">
             and sl.sku_no in
             <foreach collection="params.skuNos" open="(" separator="," close=")" item="item">
                 #{item}
             </foreach>
         </if>
-        <if test="params.useUserId != null and params.useUserId != ''">
-            and sl.use_user_id = #{params.useUserId}
-        </if>
         <if test="params.skuNo != null and params.skuNo != ''">
             and sl.sku_no ILIKE concat('%',#{params.skuNo}::text,'%')
         </if>
-        ORDER BY sl.sku_no
+        ORDER BY sl.use_user_name, sl.sku_no
     </sql>
 
     <select id="listSkuAvailableQtyByUserId" resultType="com.erp.model.wms.dto.SampleLedgerDTO$SkuAvailableQtyDTO">
