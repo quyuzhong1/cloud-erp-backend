@@ -85,7 +85,7 @@ public class SyncB2bThirdWarehouseServiceImpl implements SyncB2bThirdWarehouseSe
             taskFeignDTO.setSourceCode(entity.getCode());
             taskFeignDTO.setSourceType(SourceTypeEnum.B2B_THIRD_DELIVERY_CANCEL.getCode());
             taskFeignDTO.setMqTopic(RocketMqTopic.SYNC_B2B_THIRD_DELIVERY_CANCEL_ERP_TOPIC);
-            taskFeignDTO.setMqTag(RocketMqTagEnum.ERP_THIRD_WAREHOUSE_TAG.getName());
+            taskFeignDTO.setMqTag(RocketMqTagEnum.ERP_B2B_THIRD_WAREHOUSE_CANCEL_TAG.getName());
             taskFeignDTO.setMqData(JSONUtil.toJsonStr(resultMap));
             taskFeignDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
             taskFeignDTO.setTargetPlatformName(PlatformDictEnum.getNameByCode(thirdWarehouseProvideCode));
@@ -142,7 +142,7 @@ public class SyncB2bThirdWarehouseServiceImpl implements SyncB2bThirdWarehouseSe
             taskFeignDTO.setSourceCode(entity.getCode());
             taskFeignDTO.setSourceType(SourceTypeEnum.B2B_THIRD_DELIVERY_CREATE.getCode());
             taskFeignDTO.setMqTopic(RocketMqTopic.SYNC_B2B_THIRD_DELIVERY_CREATE_ERP_TOPIC);
-            taskFeignDTO.setMqTag(RocketMqTagEnum.ERP_THIRD_WAREHOUSE_TAG.getName());
+            taskFeignDTO.setMqTag(RocketMqTagEnum.ERP_B2B_THIRD_WAREHOUSE_CREATE_TAG.getName());
             taskFeignDTO.setMqData(JSONUtil.toJsonStr(resultMap));
             taskFeignDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
             taskFeignDTO.setTargetPlatformName(PlatformDictEnum.getNameByCode(thirdWarehouseProvideCode));
