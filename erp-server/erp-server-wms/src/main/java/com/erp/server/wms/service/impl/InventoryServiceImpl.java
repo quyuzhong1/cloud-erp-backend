@@ -212,6 +212,44 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
     }
 
     @Override
+    public Integer getRecipientAvailableQty(String warehouseId, String skuId) {
+        WarehouseEntity warehouseEntity = warehouseService.getById(warehouseId);
+        if (Objects.isNull(warehouseEntity)) {
+            throw new ServiceException(ApiError.NOT_EXIST, "仓库信息");
+        }
+        String orgId = warehouseEntity.getOrgId();
+
+        // 实体仓：可用 + 冻结
+        int entityUsable = 0;
+        int entityFrozen = 0;
+        if (Boolean.FALSE.equals(warehouseEntity.getIsVirtual())) {
+            entityUsable = ObjectUtil.defaultIfNull(
+                    this.getInventoryTotal(orgId, warehouseId, skuId, null, InventoryStatusEnum.USABLE.getCode()), 0);
+            entityFrozen = ObjectUtil.defaultIfNull(
+                    this.getInventoryTotal(orgId, warehouseId, skuId, null, InventoryStatusEnum.FROZEN.getCode()), 0);
+        }
+
+        // 虚拟仓：可用 + 冻结（同组织下的虚拟仓）
+        int virtualUsable = 0;
+        int virtualFrozen = 0;
+        List<WarehouseEntity> virtualWarehouses = warehouseService.lambdaQuery()
+                .eq(WarehouseEntity::getOrgId, orgId)
+                .eq(WarehouseEntity::getIsVirtual, Boolean.TRUE)
+                .list();
+        if (CollUtil.isNotEmpty(virtualWarehouses)) {
+            for (WarehouseEntity virtualWarehouse : virtualWarehouses) {
+                String vId = virtualWarehouse.getId();
+                virtualUsable += ObjectUtil.defaultIfNull(
+                        this.getInventoryTotal(orgId, vId, skuId, null, InventoryStatusEnum.USABLE.getCode()), 0);
+                virtualFrozen += ObjectUtil.defaultIfNull(
+                        this.getInventoryTotal(orgId, vId, skuId, null, InventoryStatusEnum.FROZEN.getCode()), 0);
+            }
+        }
+
+        return entityUsable + entityFrozen - virtualUsable - virtualFrozen;
+    }
+
+    @Override
     public Integer getRealInventoryTotal(String warehouseId, String skuId) {
         // 查询仓库组织
         WarehouseEntity warehouseEntity = warehouseService.getById(warehouseId);

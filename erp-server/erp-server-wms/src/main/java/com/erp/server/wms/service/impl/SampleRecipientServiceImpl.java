@@ -1857,8 +1857,8 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
                 stockDTO.setSkuId(skuId);
                 stockDTO.setWarehouseId(warehouseId);
                 // 查询可用库存
-                Integer availableQty = sampleRecipientEntity.getUsableInventoryTotal(warehouseId, skuId);
-                stockDTO.setAvailableQty(availableQty != null ? availableQty : 0);
+            Integer availableQty = sampleRecipientEntity.getRecipientAvailableQty(warehouseId, skuId);
+            stockDTO.setAvailableQty(availableQty != null ? availableQty : 0);
                 result.add(stockDTO);
             }
             
@@ -2128,7 +2128,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
 
             // 设置即时可用库存
             String inventoryKey = detail.getSkuId() + "_" + main.getWarehouseId();
-            Integer inventoryQty = inventoryMap.getOrDefault(inventoryKey, 0);
+            Integer inventoryQty = sampleRecipientEntity.getRecipientAvailableQty(main.getWarehouseId(), detail.getSkuId());
             dto.setCurInventoryQty(inventoryQty);
 
             // 设置其他字段

@@ -92,6 +92,15 @@ public interface InventoryService extends SuperService<InventoryEntity> {
     Integer getUsableInventoryTotal(String warehouseId, String skuId);
 
     /**
+     * 可领用库存 = 实体仓可用 + 实体仓冻结 - 虚拟仓可用 - 虚拟仓冻结
+     *
+     * @param warehouseId 仓库ID（实体仓或虚拟仓）
+     * @param skuId       SKU ID
+     * @return 计算后的可领用库存
+     */
+    Integer getRecipientAvailableQty(String warehouseId, String skuId);
+
+    /**
      * 查实际库存
      * @author will
      * @date 2024/8/6 20:02
