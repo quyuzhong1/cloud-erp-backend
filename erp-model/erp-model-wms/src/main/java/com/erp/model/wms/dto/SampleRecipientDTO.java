@@ -260,6 +260,10 @@ public class SampleRecipientDTO implements Serializable {
          */
         @NotNull(message = "领用数量不能为空")
         private Integer recipientQty;
+        /**
+         * 审核数量
+         */
+        private Integer auditQty;
 
         /**
          * 已出库数量
@@ -614,6 +618,11 @@ public class SampleRecipientDTO implements Serializable {
         @NotNull(message = "领用数量不能为空")
         @Min(value = 1, message = "领用数量必须大于0")
         private Integer quantity;
+
+        /**
+         * 审核数量
+         */
+        private Integer auditQty;
 
         /**
          * 可领用库存

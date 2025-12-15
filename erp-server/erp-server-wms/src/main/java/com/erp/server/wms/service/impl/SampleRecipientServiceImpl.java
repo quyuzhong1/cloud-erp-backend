@@ -219,6 +219,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
                 detailEntity.setSkuId(productDTO.getSkuId());
                 detailEntity.setProductName(productDTO.getProductName());
                 detailEntity.setRecipientQty(productDTO.getQuantity());
+                detailEntity.setAuditQty(0); // 新增默认审核数量为0
                 detailEntity.setDeliveryQty(0); // 初始已出库数量为0
                 if(!sampleRecipientEntity.getIsOutstockRequired()){
                     detailEntity.setExecStatus(SampleRecipientExecStatusEnum.NO_OUTSTOCK.getExecStatus()); //若选择了无需出库则初始状态为无需出库
@@ -354,6 +355,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
                         processedIds.add(recordId);
                         existingDetail.setProductName(productDTO.getProductName());
                         existingDetail.setRecipientQty(productDTO.getQuantity());
+                        existingDetail.setAuditQty(ObjectUtil.defaultIfNull(existingDetail.getAuditQty(), 0));
                         existingDetail.setRemark(productDTO.getRemark());
                         existingDetail.setSkuNo(productDTO.getSkuNo());
                         existingDetail.setSkuId(productDTO.getSkuId());
@@ -374,6 +376,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
                         newDetail.setSkuId(productDTO.getSkuId());
                         newDetail.setProductName(productDTO.getProductName());
                         newDetail.setRecipientQty(productDTO.getQuantity());
+                        newDetail.setAuditQty(0); // 新增默认审核数量为0
                         newDetail.setDeliveryQty(0); // 新明细初始已出库数量为0
                         if(!sampleRecipientEntity.getIsOutstockRequired()){
                             newDetail.setExecStatus(SampleRecipientExecStatusEnum.NO_OUTSTOCK.getExecStatus()); //若选择了无需出库则初始状态为无需出库
@@ -391,6 +394,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
                     newDetail.setSkuId(productDTO.getSkuId());
                     newDetail.setProductName(productDTO.getProductName());
                     newDetail.setRecipientQty(productDTO.getQuantity());
+                    newDetail.setAuditQty(0); // 新增默认审核数量为0
                     newDetail.setDeliveryQty(0); // 新明细初始已出库数量为0
                     if(!sampleRecipientEntity.getIsOutstockRequired()){
                         newDetail.setExecStatus(SampleRecipientExecStatusEnum.NO_OUTSTOCK.getExecStatus()); //若选择了无需出库则初始状态为无需出库
@@ -617,6 +621,8 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
         }
 
         validateSubmit(entity);
+        // 提交前同步审核数量 = 领用数量
+        syncAuditQtyWithRecipientQty(entity.getId());
         // 更新单据审核状态
         log.info("提交 开始修改样品领用单状态数据，id：【{}】", id);
         this.updateApproveStatus(id, ApproveStatusEnum.APPROVE_ING.getStatus());
@@ -642,6 +648,20 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
         dto.setVariablesMap(BeanUtil.beanToMap(entity));
         Map<String, Object> map = cfgQueryOptionFeign.getVariablesMapByBusinessKey(dto);
         return map;
+    }
+
+    /**
+     * 提交流程前，将审核数量同步为当前的领用数量
+     */
+    private void syncAuditQtyWithRecipientQty(String mainId) {
+        List<SampleRecipientDetailEntity> detailList = sampleRecipientDetailService.lambdaQuery()
+                .eq(SampleRecipientDetailEntity::getMainId, mainId)
+                .list();
+        if (CollUtil.isEmpty(detailList)) {
+            return;
+        }
+        detailList.forEach(detail -> detail.setAuditQty(ObjectUtil.defaultIfNull(detail.getRecipientQty(), 0)));
+        sampleRecipientDetailService.updateBatchById(detailList);
     }
 
     @Override
@@ -1176,12 +1196,13 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
                 productDTO.setSkuId(detail.getSkuId());
                 productDTO.setProductName(detail.getProductName());
                 productDTO.setQuantity(detail.getRecipientQty());
+                productDTO.setAuditQty(detail.getAuditQty());
                 productDTO.setRemark(detail.getRemark());
                 productDTO.setUsableQty(inventoryMap.get(detail.getSkuId())!=null?inventoryMap.get(detail.getSkuId()).getUsableQty():0);
                 
                 // 移动端商品详情字段填充
-                // 待出库数量：如果执行状态为completeOutstock（结束出库），则为0；否则为领用数量-已出库数量
-                Integer reservedQty = "completeOutstock".equals(detail.getExecStatus()) ? 0 : (detail.getRecipientQty() - detail.getDeliveryQty());
+                // 待出库数量：如果执行状态为completeOutstock（结束出库），则为0；否则为审核数量-已出库数量
+                Integer reservedQty = "completeOutstock".equals(detail.getExecStatus()) ? 0 : (ObjectUtil.defaultIfNull(detail.getAuditQty(), 0) - ObjectUtil.defaultIfNull(detail.getDeliveryQty(), 0));
                 productDTO.setReservedQty(reservedQty);
                 productDTO.setDeliveryQty(detail.getDeliveryQty());
                 productDTO.setExecStatus(detail.getExecStatus());
@@ -2005,9 +2026,9 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
         // 3. 过滤出待出库数量大于0的明细数据
         detailList = detailList.stream()
                 .filter(detail -> {
-                    Integer recipientQty = detail.getRecipientQty() != null ? detail.getRecipientQty() : 0;
+                    Integer auditQty = ObjectUtil.defaultIfNull(detail.getAuditQty(), 0);
                     Integer deliveryQty = detail.getDeliveryQty() != null ? detail.getDeliveryQty() : 0;
-                    return (recipientQty - deliveryQty) > 0; // 待出库数量大于0
+                    return (auditQty - deliveryQty) > 0; // 待出库数量大于0
                 })
                 .collect(Collectors.toList());
 
@@ -2100,9 +2121,9 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
             dto.setUserId(main.getUserId());
 
             // 设置数量信息
-            Integer recipientQty = detail.getRecipientQty() != null ? detail.getRecipientQty() : 0;
+            Integer auditQty = ObjectUtil.defaultIfNull(detail.getAuditQty(), 0);
             Integer deliveryQty = detail.getDeliveryQty() != null ? detail.getDeliveryQty() : 0;
-            dto.setReservedQty(recipientQty - deliveryQty); // 待出库数量 = 领用数量 - 已出库数量
+            dto.setReservedQty(auditQty - deliveryQty); // 待出库数量 = 审核数量 - 已出库数量
             dto.setDeliveryQty(deliveryQty);
 
             // 设置即时可用库存
@@ -2223,7 +2244,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
                     skuNoOutQtySumMap.merge(skuNo, outQty, Integer::sum);
                 }
 
-                // 统计整张单据内各 skuNo 的待出库数量（recipientQty - deliveryQty）
+                // 统计整张单据内各 skuNo 的待出库数量（auditQty - deliveryQty）
                 List<SampleRecipientDetailEntity> allDetailsOfDoc = sampleRecipientDetailService.lambdaQuery()
                         .eq(SampleRecipientDetailEntity::getMainId, sourceId)
                         .list();
@@ -2231,7 +2252,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
                 if (CollUtil.isNotEmpty(allDetailsOfDoc)) {
                     for (SampleRecipientDetailEntity d : allDetailsOfDoc) {
                         String skuNo = d.getSkuNo();
-                        int reserved = Math.max(ObjectUtil.defaultIfNull(d.getRecipientQty(), 0) - ObjectUtil.defaultIfNull(d.getDeliveryQty(), 0), 0);
+                        int reserved = Math.max(ObjectUtil.defaultIfNull(d.getAuditQty(), 0) - ObjectUtil.defaultIfNull(d.getDeliveryQty(), 0), 0);
                         skuNoReservedQtyMap.merge(skuNo, reserved, Integer::sum);
                     }
                 }
@@ -2383,20 +2404,22 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
     }
 
     /**
-     * 根据已出库数量和领用数量计算执行状态
+     * 根据已出库数量和审核数量计算执行状态
      * 根据表格规则：
      * - 已出库数量=0：待出库
-     * - 0 < 已出库数量 < 借用数量：部分出库
+     * - 0 < 已出库数量 < 审核数量：部分出库
      * - 待出库数量=0：已出库
      *
      * @param deliveryQty 已出库数量
-     * @param recipientQty 领用数量
+     * @param auditQty 审核数量
      * @return 执行状态
      */
-    private String calculateExecStatus(Integer deliveryQty, Integer recipientQty) {
-        if (deliveryQty == null || deliveryQty == 0) {
+    private String calculateExecStatus(Integer deliveryQty, Integer auditQty) {
+        int delivery = ObjectUtil.defaultIfNull(deliveryQty, 0);
+        int audit = ObjectUtil.defaultIfNull(auditQty, 0);
+        if (delivery == 0) {
             return SampleRecipientExecStatusEnum.WAIT_OUTSTOCK.getExecStatus(); // 待出库
-        } else if (deliveryQty < recipientQty) {
+        } else if (delivery < audit) {
             return SampleRecipientExecStatusEnum.PART_OUTSTOCK.getExecStatus(); // 部分出库
         } else {
             return SampleRecipientExecStatusEnum.COMPLETE_OUTSTOCK.getExecStatus(); // 已出库
@@ -2572,7 +2595,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
             detail.setDeliveryQty(newDeliveryQty);
             
             // 根据已出库数量和领用数量的关系，更新执行状态
-            String newExecStatus = calculateExecStatus(newDeliveryQty, detail.getRecipientQty());
+            String newExecStatus = calculateExecStatus(newDeliveryQty, detail.getAuditQty());
             detail.setExecStatus(newExecStatus);
             
             // 更新样品领用单明细
@@ -2619,7 +2642,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
             detail.setDeliveryQty(newDeliveryQty);
             
             // 根据已出库数量和领用数量的关系，更新执行状态
-            String newExecStatus = calculateExecStatus(newDeliveryQty, detail.getRecipientQty());
+            String newExecStatus = calculateExecStatus(newDeliveryQty, detail.getAuditQty());
             detail.setExecStatus(newExecStatus);
             
             // 更新样品领用单明细
@@ -2671,7 +2694,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
             List<SampleLedgerFlowDTO.AddFlowDTO.FlowDetailDTO> flowDetails = new ArrayList<>();
             for (SampleRecipientDetailEntity detail : detailList) {
                 // 计算数量：审核为+X，反审核为-X
-                Integer qty = calculateQty(detail.getRecipientQty(), approveType);
+                Integer qty = calculateQty(ObjectUtil.defaultIfNull(detail.getAuditQty(), 0), approveType);
                 
                 SampleLedgerFlowDTO.AddFlowDTO.FlowDetailDTO flowDetail = new SampleLedgerFlowDTO.AddFlowDTO.FlowDetailDTO();
                 flowDetail.setSourceDetailId(detail.getId());
@@ -2951,7 +2974,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
             String ledgerId = skuIdToLedgerIdMap.get(detail.getSkuId());
             if (StrUtil.isNotBlank(ledgerId)) {
                 sampleLedgerIds.add(ledgerId);
-                qtys.add(-detail.getRecipientQty()); // 反审核时扣减库存
+                qtys.add(-ObjectUtil.defaultIfNull(detail.getAuditQty(), 0)); // 反审核时扣减库存
                 skuNos.add(detail.getSkuNo());
             } else {
                 log.warn("未找到台账，SKU：{}，领用人：{}，单据编号：{}", 

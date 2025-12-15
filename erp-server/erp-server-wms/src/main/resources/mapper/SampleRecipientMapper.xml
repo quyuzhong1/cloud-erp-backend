@@ -99,10 +99,11 @@
             srd.sku_id AS skuId,
             srd.product_name AS productName,
             srd.recipient_qty AS recipientQty,
+            srd.audit_qty AS auditQty,
             srd.delivery_qty AS deliveryQty,
             CASE 
                 WHEN srd.exec_status = 'completeOutstock' THEN 0
-                ELSE (srd.recipient_qty - srd.delivery_qty)
+                ELSE (COALESCE(srd.audit_qty, 0) - srd.delivery_qty)
             END AS reservedQty,
             srd.exec_status AS execStatus,
             srd.remark AS detailRemark,
@@ -237,10 +238,11 @@
             srd.sku_id AS skuId,
             srd.product_name AS productName,
             srd.recipient_qty AS recipientQty,
+            srd.audit_qty AS auditQty,
             srd.delivery_qty AS deliveryQty,
             CASE 
                 WHEN srd.exec_status = 'completeOutstock' THEN 0
-                ELSE (srd.recipient_qty - srd.delivery_qty)
+                ELSE (COALESCE(srd.audit_qty, 0) - srd.delivery_qty)
             END AS reservedQty,
             srd.exec_status AS execStatus,
             srd.remark AS detailRemark,
@@ -316,10 +318,11 @@
             srd.sku_id AS skuId,
             srd.product_name AS productName,
             srd.recipient_qty AS recipientQty,
+            srd.audit_qty AS auditQty,
             srd.delivery_qty AS deliveryQty,
             CASE 
                 WHEN srd.exec_status = 'completeOutstock' THEN 0
-                ELSE (srd.recipient_qty - srd.delivery_qty)
+                ELSE (COALESCE(srd.audit_qty, 0) - srd.delivery_qty)
             END AS reservedQty,
             srd.exec_status AS execStatus,
             srd.remark AS detailRemark,
