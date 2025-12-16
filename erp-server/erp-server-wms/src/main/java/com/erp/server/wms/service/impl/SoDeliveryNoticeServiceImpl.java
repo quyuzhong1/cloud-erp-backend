@@ -577,6 +577,13 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         ruleDTO.setType(StockOutTransferTypeEnum.B2B.getCode());
         ruleDTO.setReceiveCountry(customerDTO.getCountryId());
         ruleDTO.setFromWarehouse(soDeliveryNoticeEntity.getWarehouseId());
+        if(StringUtils.isNotBlank(soDeliveryNoticeEntity.getWarehouseId())){
+            WarehouseEntity deliveryWarehouse = warehouseService.getById(soDeliveryNoticeEntity.getWarehouseId());
+            if(Objects.nonNull(deliveryWarehouse)){
+                ruleDTO.setFromWarehouseOrg(deliveryWarehouse.getOrgId());
+                ruleDTO.setFromWarehouseCountry(deliveryWarehouse.getCountry());
+            }
+        }
         ruleDTO.setSalesOrgId(soInfoEntity.getSalesOrgId());
         ruleDTO.setDictPlatform("");
         CfgRuleOutDTO.MatchTransferResultDTO matchTransferResultDTO = cfgRuleOutService.matchTransferRule(ruleDTO);

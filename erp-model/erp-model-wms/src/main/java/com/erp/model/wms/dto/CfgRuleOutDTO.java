@@ -545,6 +545,27 @@ public class CfgRuleOutDTO implements Serializable {
          * 销售组织id
          */
         private String salesOrgId;
+
+        /**
+         * 发货仓库国家
+         */
+        private String fromWarehouseCountry;
+
+        /**
+         * 目的仓库国家
+         */
+        private String destWarehouseCountry;
+
+        /**
+         * 发货仓库组织
+         */
+        private String fromWarehouseOrg;
+
+        /**
+         * 目的仓库组织
+         */
+        private String destWarehouseOrg;
+
     }
 
     @Data

@@ -2298,6 +2298,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         ruleDTO.setReceiveCountry(receiverEntity.getCountry());
         String deliveryWarehouseId = detailList.stream().map(SoB2cDetailEntity::getWarehouseId).filter(CharSequenceUtil::isNotBlank).findFirst().orElse("");
         ruleDTO.setFromWarehouse(deliveryWarehouseId);
+        if(StringUtils.isNotBlank(deliveryWarehouseId)){
+            WarehouseEntity deliveryWarehouse = FeignQuery.getById(WarehouseEntity.class, deliveryWarehouseId);
+            if(Objects.nonNull(deliveryWarehouse)){
+                ruleDTO.setFromWarehouseOrg(deliveryWarehouse.getOrgId());
+                ruleDTO.setFromWarehouseCountry(deliveryWarehouse.getCountry());
+            }
+        }
         ruleDTO.setSalesOrgId(entity.getOrgId());
         ruleDTO.setDictPlatform(entity.getDictPlatform());
         CfgRuleOutDTO.MatchTransferResultDTO resultDTO = cfgRuleOutFeign.matchTransferRule(ruleDTO);
@@ -7406,6 +7413,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 ruleDTO.setReceiveCountry(soB2cReceiver.getCountry());
                 String deliveryWarehouseId = StrUtil.isBlank(warehouseId) ? detailList.get(0).getWarehouseId() : warehouseId;
                 ruleDTO.setFromWarehouse(deliveryWarehouseId);
+                if(StringUtils.isNotBlank(deliveryWarehouseId)){
+                    WarehouseEntity deliveryWarehouse = FeignQuery.getById(WarehouseEntity.class, deliveryWarehouseId);
+                    if(Objects.nonNull(deliveryWarehouse)){
+                        ruleDTO.setFromWarehouseOrg(deliveryWarehouse.getOrgId());
+                        ruleDTO.setFromWarehouseCountry(deliveryWarehouse.getCountry());
+                    }
+                }
                 ruleDTO.setSalesOrgId(entity.getOrgId());
                 ruleDTO.setDictPlatform(entity.getDictPlatform());
                 CfgRuleOutDTO.MatchTransferResultDTO resultDTO = cfgRuleOutFeign.matchTransferRule(ruleDTO);

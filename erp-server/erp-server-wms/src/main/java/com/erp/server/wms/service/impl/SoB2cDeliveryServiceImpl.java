@@ -276,7 +276,15 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         CfgRuleOutDTO.MatchTransferRuleDTO dto = new CfgRuleOutDTO.MatchTransferRuleDTO();
         dto.setType(StockOutTransferTypeEnum.B2C.getCode());
         dto.setReceiveCountry(receiverList.get(0).getCountry());
-        dto.setFromWarehouse(soB2cDeliveryDetailList.get(0).getWarehouseId());
+        String fromWarehouse = soB2cDeliveryDetailList.get(0).getWarehouseId();
+        dto.setFromWarehouse(fromWarehouse);
+        if(StringUtils.isNotBlank(fromWarehouse)){
+            WarehouseEntity deliveryWarehouse = warehouseService.getById(fromWarehouse);
+            if(Objects.nonNull(deliveryWarehouse)){
+                dto.setFromWarehouseOrg(deliveryWarehouse.getOrgId());
+                dto.setFromWarehouseCountry(deliveryWarehouse.getCountry());
+            }
+        }
         dto.setSalesOrgId(soB2cEntity.getOrgId());
         dto.setDictPlatform(soB2cEntity.getDictPlatform());
         CfgRuleOutDTO.MatchTransferResultDTO matchTransferResultDTO = cfgRuleOutService.matchTransferRule(dto);
