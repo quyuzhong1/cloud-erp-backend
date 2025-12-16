@@ -887,6 +887,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                             && StrUtil.isNotEmpty(e.getParentSkuNo()) && e.getParentSkuId().equals(soB2cDetailEntity.getSkuId()))
                     .findFirst().orElse(null);
             LogisticsProductDTO.ProductDTO productDTO = skuMap.get(soB2cDetailEntity.getSkuId());
+            if ("费用".equalsIgnoreCase(productDTO.getProperty()) || "服务".equalsIgnoreCase(productDTO.getProperty())){
+                return;
+            }
 
             Boolean isCombination = Boolean.FALSE;
             //检查sku是否是组合产品
@@ -918,6 +921,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                             BigDecimal price = Objects.nonNull(soB2cDetailEntity.getPrice()) ? soB2cDetailEntity.getPrice() : BigDecimal.ZERO;
                             price1 = MathUtil.divide(MathUtil.multiplyWithTwo(actualTaxCost,quantity), totalPrice).multiply(price);
                         }
+                        if ("费用".equalsIgnoreCase(bomProduct.getProperty()) || "服务".equalsIgnoreCase(bomProduct.getProperty())){
+                            return;
+                        }
+
                         splitSkuDTOS.add(SplitSkuDTO.builder()
                                 .soId(soB2cDetailEntity.getMainId())
                                 .soCode(orderMap.get(soB2cDetailEntity.getMainId()))

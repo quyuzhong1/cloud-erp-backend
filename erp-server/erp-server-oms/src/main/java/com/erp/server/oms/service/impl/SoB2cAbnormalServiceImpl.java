@@ -12,14 +12,12 @@ import com.common.core.exception.ServiceException;
 import com.erp.model.oms.dto.OperateLogDTO;
 import com.erp.model.oms.dto.SoB2cAbnormalDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
+import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.rpc.wms.feign.SoB2cDeliveryFeign;
 import com.erp.rpc.wms.feign.SoOutstockFeign;
-import com.erp.server.oms.service.OperateLogService;
-import com.erp.server.oms.service.SoB2cAbnormalService;
-import com.erp.server.oms.service.SoB2cErrorService;
-import com.erp.server.oms.service.SoB2cService;
+import com.erp.server.oms.service.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,7 +39,8 @@ public class SoB2cAbnormalServiceImpl implements SoB2cAbnormalService {
     private static final Logger log = LoggerFactory.getLogger(SoB2cAbnormalServiceImpl.class);
     @Resource
     private SoB2cService soB2cService;
-
+    @Resource
+    private SoB2cLogisticsService soB2cLogisticsService;
     @Resource
     private SoOutstockFeign soOutstockFeign;
 
@@ -119,6 +118,11 @@ public class SoB2cAbnormalServiceImpl implements SoB2cAbnormalService {
             case ORDER_FETCH:
                 List<BatchResultDTO> resultDTOS = soB2cService.fetchOrder(Collections.singletonList(id));
                 resultDTOList.addAll(resultDTOS);
+                break;
+            case GET_LOGISTICS_LABEL:
+                SoB2cLogisticsEntity soB2cLogisticsEntity = soB2cLogisticsService.getByMainId(id);
+                BatchResultDTO resultDTO1 = soB2cService.getLogisticsLabel(soB2cEntity,soB2cLogisticsEntity);
+                resultDTOList.add(resultDTO1);
                 break;
             default:
                 break;
