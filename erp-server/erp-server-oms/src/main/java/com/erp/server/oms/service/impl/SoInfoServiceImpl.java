@@ -1851,6 +1851,10 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         if (CollectionUtils.isNotEmpty(machineRefSoList)) {
             throw new ServiceException(ApiError.ERROR_92040);
         }
+        List<B2bThirdDeliveryEntity> entityList = b2bThirdDeliveryFeign.listBySoIds(soIds);
+        if (CollectionUtils.isNotEmpty(entityList)) {
+            throw new ServiceException(ApiError.ERROR_92040);
+        }
     }
 
     private void checkRemove(List<String> soIds) {
@@ -4174,6 +4178,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         if (CharSequenceUtil.isNotBlank(soInfoEntity.getReceiveAddressId()) && CharSequenceUtil.isBlank(viewDTO.getReceiveAddress())){
             CustomerAddressEntity customerAddressEntity = customerAddressService.getById(soInfoEntity.getReceiveAddressId());
             viewDTO.setReceiveAddress(Objects.nonNull(customerAddressEntity) ? customerAddressEntity.getAddress() : "");
+            viewDTO.setCountryId(Objects.nonNull(customerAddressEntity) ? customerAddressEntity.getCountryId() : "");
+            viewDTO.setCountryName(Objects.nonNull(customerAddressEntity) ? customerAddressEntity.getCountryName() : "");
         }
         viewDTO.getDetailList().forEach(e -> {
             skuVOS.stream().filter(f -> f.getSkuId().equals(e.getSkuId())).findFirst().ifPresent(p ->{

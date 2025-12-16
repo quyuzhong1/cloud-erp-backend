@@ -83,6 +83,8 @@
             btd.error_message as errorMessage,
             btd.push_type as pushType,
             btd.is_api_delivery as isApiDelivery,
+            btd.customer_id as customerId,
+            btd.customerName as customerName,
             btdd.id as detailId,
             btdd.sku_id as skuId,
             btdd.sku_no,

@@ -105,4 +105,6 @@ public interface B2bThirdDeliveryService extends SuperService<B2bThirdDeliveryEn
     void updateQueryResult(List<ThirdWarehouseQueryFbaOutboundResponse> responses, String providerCode, List<String> codeList);
 
     void handleResultData(String id, ThirdWarehouseQueryFbaOutboundResponse response);
+
+    List<B2bThirdDeliveryEntity> listBySoIds(List<String> soIds);
 }

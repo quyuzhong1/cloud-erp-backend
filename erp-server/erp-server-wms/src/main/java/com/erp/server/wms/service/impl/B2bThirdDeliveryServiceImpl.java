@@ -563,6 +563,14 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
         }
     }
 
+    @Override
+    public List<B2bThirdDeliveryEntity> listBySoIds(List<String> soIds) {
+        if (CollUtil.isEmpty(soIds)){
+            return Collections.emptyList();
+        }
+        return lambdaQuery().in(B2bThirdDeliveryEntity::getSoId, soIds).ne(B2bThirdDeliveryEntity::getStatus, ThirdDeliveryStatusEnum.CANCEL_DELIVERY.getCode()).list();
+    }
+
 
     /**
     * 新增修改处理数据

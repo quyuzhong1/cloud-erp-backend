@@ -471,9 +471,17 @@ public class B2bThirdDeliveryDTO implements Serializable {
          */
         private String soCode;
         /**
-         * 客户
+         * 收货人
          */
         private String receiverName;
+        /**
+         * 客户id
+         */
+        private String customerId;
+        /**
+         * 客户名称
+         */
+        private String customerName;
 
         /**
          * 发货时间

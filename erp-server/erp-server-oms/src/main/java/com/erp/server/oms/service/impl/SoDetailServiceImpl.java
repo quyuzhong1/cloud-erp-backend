@@ -1138,11 +1138,12 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         for (SoDetailEntity item : soDetailList) {
             String id = item.getId();
             Integer qty = item.getQty();
+            Integer perBoxQty = Objects.nonNull(item.getPerBoxQty()) ? item.getPerBoxQty() : 1;
             //已发货数据
             Integer alreadyDeliverQty = item.getDeliveryQty();
             //本次发货数量
             Integer deliveryQty = paramList.stream().filter(p -> p.getId().equals(id)).findFirst().
-                    flatMap(obj -> Optional.ofNullable(obj.getDeliveryQty())).orElse(0);
+                    flatMap(obj -> Optional.ofNullable(obj.getDeliveryQty())).orElse(0) * perBoxQty;
             //最终的
             Integer finalDeliverQty = alreadyDeliverQty + deliveryQty;
             if (finalDeliverQty >= qty) {
