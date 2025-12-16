@@ -671,9 +671,12 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
             BigDecimal flagTaxRate = MathUtil.divide(soDetailEntity.getTaxRate(), MathUtil.BigDecimal_100);
             BigDecimal multiplyTax = MathUtil.add(flagTaxRate, MathUtil.BigDecimal_1);
             BigDecimal taxPrice = MathUtil.multiplyWithTwo(soDetailEntity.getPrice(), multiplyTax);
+            BigDecimal boxPrice = MathUtil.multiplyWithTwo(taxPrice, soDetailEntity.getPerBoxQty());
+            BigDecimal boxAmount = MathUtil.multiplyWithTwo(soDetailEntity.getAmount(), soDetailEntity.getPerBoxQty());
+
             //含税单价
-            map.put("taxPrice", taxPrice);
-            map.put("amount", soDetailEntity.getAmount());
+            map.put("taxPrice", boxPrice);
+            map.put("amount", boxAmount);
             map.put("isGift", soDetailEntity.getIsGift());
             if (CollectionUtils.isNotEmpty(accountingCompanyList)) {
                 String warehouseOrgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(soInfoById.getWarehouseOrgId())).map(BaseIdDTO.CodeDTO::getCode).findFirst().orElse(null);
