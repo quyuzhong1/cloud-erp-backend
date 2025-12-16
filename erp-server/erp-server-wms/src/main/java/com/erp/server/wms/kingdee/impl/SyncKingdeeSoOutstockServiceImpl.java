@@ -669,17 +669,19 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
             SoDetailEntity soDetailEntity = soDetailEntitieList.stream().filter(req -> req.getId().equals(deliveryQtyDTO.getSoDetailId())).findFirst().orElse(new SoDetailEntity());
             map.put("salesQty", soDetailEntity.getQty());
             map.put("planQty", detailEntity.getPlanQty());
-            map.put("price", soDetailEntity.getPrice());
+
 
             //含税单价
             BigDecimal flagTaxRate = MathUtil.divide(soDetailEntity.getTaxRate(), MathUtil.BigDecimal_100);
             BigDecimal multiplyTax = MathUtil.add(flagTaxRate, MathUtil.BigDecimal_1);
             BigDecimal taxPrice = MathUtil.multiplyWithTwo(soDetailEntity.getPrice(), multiplyTax);
-            BigDecimal boxPrice = MathUtil.multiplyWithTwo(taxPrice, soDetailEntity.getPerBoxQty());
+            BigDecimal boxPrice = MathUtil.multiplyWithTwo(soDetailEntity.getPrice(), soDetailEntity.getPerBoxQty());
+            BigDecimal boxTaxPrice = MathUtil.multiplyWithTwo(taxPrice, soDetailEntity.getPerBoxQty());
             BigDecimal boxAmount = MathUtil.multiplyWithTwo(soDetailEntity.getAmount(), soDetailEntity.getPerBoxQty());
 
             //含税单价
-            map.put("taxPrice", boxPrice);
+            map.put("price", boxPrice);
+            map.put("taxPrice", boxTaxPrice);
             map.put("amount", boxAmount);
             map.put("isGift", soDetailEntity.getIsGift());
             if (CollectionUtils.isNotEmpty(accountingCompanyList)) {
