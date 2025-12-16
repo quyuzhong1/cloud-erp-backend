@@ -277,7 +277,10 @@ public class DaMaiHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     protected ApiResult<String> cancelFbaOutboundBill(ThirdWarehouseCancelFbaOutboundReq req) {
         DaMaiCancelFbaOrderRequest request = new DaMaiCancelFbaOrderRequest();
         request.setCustRefNo(req.getErpOrderCode());
+        request.setFbaSoNo(req.getOrderCode());
+        log.warn(getPlatForm().getName()+"取消FBA出库单请求:{}", JSONUtil.toJsonStr(request));
         DaMaiBaseResp<DaMaiCancelFbaOrderResp> resp = daMaiService.cancelFbaOrder(ThirdWarehouseContext.getAuthMap(), request);
+        log.warn(getPlatForm().getName()+"取消FBA出库单结果:{}", JSONUtil.toJsonStr(resp));
         if(!isSuccess(resp)){
             return failure(resp.getMsg());
         }
