@@ -6,6 +6,7 @@ import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.annotation.DistributeLocker;
@@ -55,6 +56,7 @@ import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.server.wms.convert.B2bThirdDeliveryConverter;
 import com.erp.server.wms.mapper.B2bThirdDeliveryMapper;
 import com.erp.server.wms.service.*;
+import com.xxl.job.core.context.XxlJobHelper;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -523,19 +525,20 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
                     try {
                         service.handleResultData(entity.getId(), response);
                     }catch (Exception e){
-                        log.error("更新B2B三方发货单状态失败,id={},code={},error={}",entity.getId(),entity.getCode(),e.getMessage(),e);
+                        XxlJobHelper.log("更新B2B三方发货单状态失败,id={},code={},error={}",entity.getId(),entity.getCode(),e.getMessage(),e);
                     }
 
                 }
             }
         }else {
-            log.error("不支持的三方渠道,providerCode={}",providerCode);
+            XxlJobHelper.log("不支持的三方渠道,providerCode={}",providerCode);
         }
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class, propagation = Propagation.REQUIRES_NEW)
     public void handleResultData(String id, ThirdWarehouseQueryFbaOutboundResponse response) {
+        XxlJobHelper.log("处理订单状态,id={},response={},",id, JSONUtil.toJsonStr(response));
         //订单已取消直接返回
         /**
          * 以下状态自动变更为取消发货，有拦截标识时清空拦截标识，记录拦截成功
@@ -546,7 +549,7 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
         String deliveryTimeStr = response.getDeliveryTimeStr();
         LocalDateTime deliveryTime = null;
         if (StrUtil.isNotBlank(deliveryTimeStr)){
-            deliveryTime = LocalDateTime.parse(deliveryTimeStr, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+            deliveryTime = LocalDateTime.parse(deliveryTimeStr, DateTimeFormatter.ISO_LOCAL_DATE_TIME);
         }
         if (response.getStatus().equals(B2BThirdDeliveryCancelResultEnum.EXCEPTION.getCode()) ||
                 response.getStatus().equals(B2BThirdDeliveryCancelResultEnum.DISCARD.getCode()) ||
@@ -560,6 +563,8 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
                 response.getStatus().equals(B2BThirdDeliveryCancelResultEnum.DISCARD_PROCESSED.getCode())){
             //拦截中 记录拦截标识
             this.updateStatus(id, ThirdDeliveryStatusEnum.INTERCEPTING.getCode(), "", response.getPlatformOrderCode(), "", response.getTrackNo(),deliveryTime);
+        } else {
+            XxlJobHelper.log("不操作的状态,id={},code={},status={}",id,response.getCode(),response.getStatus());
         }
     }
 
