@@ -310,6 +310,8 @@ public class B2bThirdDeliveryDTO implements Serializable {
         @Size(max = 255,message = "发货仓库名称最大长度不能超过255位")
         private String deliveryWarehouseName;
 
+        private String virtualWarehouseId;
+
         /**
         * 仓库操作类型
         */
