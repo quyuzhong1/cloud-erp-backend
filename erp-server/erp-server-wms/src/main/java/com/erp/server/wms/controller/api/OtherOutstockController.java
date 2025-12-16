@@ -16,9 +16,11 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.wms.dto.OtherOutstockDTO;
+import com.erp.model.wms.dto.OtherOutstockTrackNoDTO;
 import com.erp.model.wms.entity.OtherOutstockEntity;
 import com.erp.server.wms.query.OtherOutstockQueryHandler;
 import com.erp.server.wms.service.OtherOutstockService;
+import com.erp.server.wms.service.OtherOutstockTrackNoService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -46,6 +48,9 @@ public class OtherOutstockController extends BaseController {
 
     @Resource
     private OtherOutstockService otherOutstockService;
+    
+    @Resource
+    private OtherOutstockTrackNoService otherOutstockTrackNoService;
     
     /**
      * 列表查询
@@ -407,5 +412,42 @@ public class OtherOutstockController extends BaseController {
     public ApiResult<List<OtherOutstockDTO.ListDTO>> viewAssociatedDocuments(@RequestBody @Validated BaseIdDTO dto) {
         List<OtherOutstockDTO.ListDTO> resultDTO = otherOutstockService.viewAssociatedDocuments(dto);
         return success(resultDTO);
+    }
+
+    /**
+     * 批量更新跟踪号
+     * @author system
+     * @date: 2025/12/16
+     * @param dto
+     * @return ApiResult
+     */
+    @LogAction(value = LogActionEnum.UPDATE, desc = "更新其他出库单跟踪号")
+    @PostMapping("/updateTrackNo")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "warehouse_keeper_id,create_user_id",
+            menuCode = "wms:otherOutstock:update",
+            serviceClass = OtherOutstockService.class,
+            keyIdName = "trackNoList[0].otherOutstockId")
+    public ApiResult updateTrackNo(@RequestBody @Validated OtherOutstockTrackNoDTO.BatchUpdateDTO dto) {
+        Boolean flag = otherOutstockTrackNoService.batchUpdateTrackNo(dto);
+        return flag == true ? success() : failure();
+    }
+
+    /**
+     * 根据出库单ID查看跟踪号
+     * @author system
+     * @date: 2025/12/16
+     * @param otherOutstockId
+     * @return ApiResult
+     */
+    @GetMapping("/getTrackNo")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "warehouse_keeper_id,create_user_id",
+            menuCode = "wms:otherOutstock:view",
+            serviceClass = OtherOutstockService.class,
+            keyIdName = "otherOutstockId")
+    public ApiResult<OtherOutstockTrackNoDTO.ViewDTO> getTrackNo(@RequestParam("otherOutstockId") String otherOutstockId) {
+        OtherOutstockTrackNoDTO.ViewDTO viewDTO = otherOutstockTrackNoService.getTrackNoByOutstockId(otherOutstockId);
+        return success(viewDTO);
     }
 }
