@@ -638,11 +638,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
             resultMap.put("salesOrgCode", salesOrgCode);
         }
         if (soInfoById.getDiscountAmount() != null) {
-            BigDecimal totalDiscountAmount = entity.getTotalDiscountAmount();
-            for (SoDetailEntity soDetailEntity : soDetailEntitieList) {
-                MathUtil.multiplyWithTwo(totalDiscountAmount,soDetailEntity.getPerBoxQty());
-            }
-            resultMap.put("FAllDisCount", totalDiscountAmount);
+            resultMap.put("FAllDisCount", entity.getTotalDiscountAmount());
         }
 
         List<String> soDetailIds = soDetailEntitieList.stream().map(SoDetailEntity::getId).collect(Collectors.toList());

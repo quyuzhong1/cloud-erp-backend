@@ -1335,9 +1335,10 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             this.removeByIds(deleteIdList);
         }
         List<String> skuIdList = detailList.stream().map(SoDetailDTO.AddDTO::getSkuId).collect(Collectors.toList());
+        List<String> deliverySkuIdList = detailList.stream().map(SoDetailDTO.AddDTO::getDeliverySkuId).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.listSkuCostByIds(skuIdList);
         resetSkuVo(skuIdList,skuList,soInfoEntity);
-        List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuIds(skuIdList);
+        List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuIds(deliverySkuIdList);
         //币种列表
         List<String> currencyList = detailList.stream().map(SoDetailDTO.AddDTO::getCurrency).collect(Collectors.toList());
         List<CurrencyDTO.ViewDTO> currencyViewList = sysUserFeign.listByCurrency(currencyList);
