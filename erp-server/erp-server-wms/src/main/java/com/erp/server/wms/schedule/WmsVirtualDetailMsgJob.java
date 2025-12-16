@@ -1,6 +1,8 @@
 package com.erp.server.wms.schedule;
 
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
 import com.erp.server.wms.service.VirtualInventoryAgeService;
 import com.erp.server.wms.service.VirtualInventoryDetailHisService;
 import com.erp.server.wms.service.WmsVirtualDetailMsgService;
@@ -13,6 +15,7 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 /**
@@ -62,7 +65,14 @@ public class WmsVirtualDetailMsgJob {
         XxlJobHelper.log("=====自动执行生成虚拟仓流水结余 开始任务=====");
         long start = System.currentTimeMillis();
         String jobParam = XxlJobHelper.getJobParam();
-        virtualInventoryDetailHisService.hisVirtualInventoryJob(jobParam);
+        String virtualInventoryId = "";
+        LocalDateTime date = null;
+        if (CharSequenceUtil.isNotBlank(jobParam)) {
+            JSONObject jsonParam = JSONUtil.parseObj(jobParam);
+            virtualInventoryId = jsonParam.getStr("virtualInventoryId");
+            date = jsonParam.getLocalDateTime("date",LocalDateTime.now());
+        }
+        virtualInventoryDetailHisService.hisVirtualInventoryJob(virtualInventoryId,date.toLocalDate());
         long end = System.currentTimeMillis();
         XxlJobHelper.log("主线程花费时间：{}", (end - start));
         XxlJobHelper.log("=====自动执行生成虚拟仓流水结余 结束任务=====");
