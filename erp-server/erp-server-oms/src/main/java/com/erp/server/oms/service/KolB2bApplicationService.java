@@ -7,7 +7,6 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.KolB2bApplicationDTO;
 import com.erp.model.oms.dto.excel.KolB2bApplicationImportExcelDTO;
 import com.erp.model.oms.entity.KolB2bApplicationEntity;
-import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -160,10 +159,10 @@ public interface KolB2bApplicationService extends SuperService<KolB2bApplication
      * 导入excel
      * @author will
      * @date 2025/12/1 16:25
-     * @param excelFile
+     * @param dto
      * @return Boolean
      */
-    Boolean importFile(MultipartFile excelFile, HttpServletResponse response);
+    Boolean importFile(BaseDTO.ImportDTO dto, HttpServletResponse response);
     /**
      * 查询关联单据
      * @author will

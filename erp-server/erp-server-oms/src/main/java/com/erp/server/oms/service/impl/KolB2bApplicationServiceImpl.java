@@ -50,6 +50,7 @@ import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.enums.DeliveryStatusEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.file.feign.FileFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.SoOutstockFeign;
@@ -65,10 +66,10 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -116,7 +117,8 @@ public class KolB2bApplicationServiceImpl extends SuperServiceImpl<KolB2bApplica
     private SoInfoService soInfoService;
     @Resource
     private KolB2bApplicationQueryHandler kolB2bApplicationQueryHandler;
-
+    @Resource
+    private FileFeign fileFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -456,14 +458,12 @@ public class KolB2bApplicationServiceImpl extends SuperServiceImpl<KolB2bApplica
     }
 
     @Override
-    public Boolean importFile(MultipartFile excelFile, HttpServletResponse response) {
-        KolB2bApplicationExcelListener excelListenerUtil = new KolB2bApplicationExcelListener();
+    public Boolean importFile(BaseDTO.ImportDTO dto, HttpServletResponse response) {
 
+        KolB2bApplicationExcelListener excelListenerUtil = new KolB2bApplicationExcelListener();
         try {
-            EasyExcel.read(excelFile.getInputStream(), KolB2bApplicationImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
-        } catch (IOException e) {
-            log.error("导入错误！", e);
-            throw new ServiceException(ApiError.ERROR_95124);
+            byte[] bytes = fileFeign.downloadFile(dto.getFileUrl());
+            EasyExcel.read(new ByteArrayInputStream(bytes), KolB2bApplicationImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (ExcelCommonException e) {
             log.error("导入格式错误！", e);
             throw new ServiceException(ApiError.ERROR_1016);
