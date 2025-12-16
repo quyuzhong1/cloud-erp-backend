@@ -497,10 +497,10 @@ public class DeliveryBoxRuleServiceImpl extends SuperServiceImpl<DeliveryBoxRule
                 if (!updateList.isEmpty()) {
                     //更新
                     for (DeliveryBoxRuleDetailEntity deliveryBoxRuleDetailEntity : updateList) {
-                        deliveryBoxRuleDetailEntity.setMainId(deliveryBoxRuleId);
                         boolean updateSuccess = deliveryBoxRuleDetailService.lambdaUpdate()
-                                .set(DeliveryBoxRuleDetailEntity::getDeliverySkuNo,deliveryBoxRuleDetailEntity.getDeliverySkuNo())
-                                .eq(DeliveryBoxRuleDetailEntity::getMainId,deliveryBoxRuleId)
+                                .set(DeliveryBoxRuleDetailEntity::getPerBoxQty,deliveryBoxRuleDetailEntity.getPerBoxQty())
+                                .set(DeliveryBoxRuleDetailEntity::getSort,deliveryBoxRuleDetailEntity.getSort())
+                                .eq(DeliveryBoxRuleDetailEntity::getDeliverySkuNo,deliveryBoxRuleDetailEntity.getDeliverySkuNo())
                                 .eq(DeliveryBoxRuleDetailEntity::getInvalidStatus,InvalidStatusEnum.NOT_VOIDED.getStatus())
                                 .update();
 
