@@ -172,7 +172,7 @@
         ON fmd.source_id = ra.id AND fmd.is_deleted = false AND fmd.invalid_status = false
         LEFT JOIN first_mile_delivery_detail fmdd
         ON  fmdd.is_deleted = false and fmdd.source_detail_id = rad.id and fmd.id = fmdd.main_id
-        WHERE (ra.type = 'thirdWarehouse' or (ra.type = 'fba' and '2024-09-24 18:00:00' > fmd.create_time ))
+        WHERE (ra.type in ('thirdWarehouse','AliExpress') or (ra.type = 'fba' and '2024-09-24 18:00:00' > fmd.create_time ))
         AND ra.is_deleted = false
         AND ra.invalid_status = 'false'
         AND rad.from_virtual_warehouse_id != ''
