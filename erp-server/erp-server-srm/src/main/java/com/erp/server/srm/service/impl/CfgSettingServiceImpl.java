@@ -99,7 +99,7 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
 
                 CfgSettingEntity old = super.getById(cfgSettingEntity.getId());
                 if(null == old){
-                    throw  new ServiceException(ApiError.NOT_EXIST_BILL, ApiError.ERROR_SYSTEM_CONFIG_MANAGEMENT.getMsg());
+                    throw  new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, ApiError.ERROR_SYSTEM_CONFIG_MANAGEMENT.getMsg());
                 }
                 log.info("编辑 开始修改系统配置管理数据，id：【{}】", old.getId());
                 boolean save = super.updateById(cfgSettingEntity);
@@ -216,7 +216,7 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
                     viewDTO.setSetDTO(addSettingDTO);
                     break;
                 default:
-                    throw new ServiceException(ApiError.ERROR_CFG_SETTING_KEY,key);
+                    throw new ServiceException(ApiError.COMMON_CFG_SETTING_KEY,key);
             }
             configList.add(viewDTO);
         }

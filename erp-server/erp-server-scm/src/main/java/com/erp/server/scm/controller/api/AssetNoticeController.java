@@ -4,8 +4,6 @@ package com.erp.server.scm.controller.api;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.erp.model.scm.dto.AssetNoticeDetailDTO;
-import com.erp.model.scm.dto.ExcelImportDTO;
 import com.erp.server.scm.query.AssetNoticeQueryHandler;
 import com.erp.server.scm.service.AssetNoticeService;
 import lombok.extern.slf4j.Slf4j;
@@ -464,7 +462,7 @@ public class AssetNoticeController extends BaseController {
             wb.write(output);
             wb.close();
         } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_IMPORT_TEMPLATE_DOWNLOAD_FAILED);
+            throw new ServiceException(ApiError.FILE_IMPORT_TEMPLATE_DOWNLOAD_FAILED);
         }
         return success();
     }

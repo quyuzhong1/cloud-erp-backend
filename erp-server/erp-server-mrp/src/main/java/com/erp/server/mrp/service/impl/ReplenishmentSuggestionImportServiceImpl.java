@@ -209,11 +209,11 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
         try {
             EasyExcelFactory.read(excelFile.getInputStream(), StockUpImportExcelDTO.class, excelListenerUtil).headRowNumber(2).sheet(0).doRead();
         } catch (IOException e) {
-            log.error(ApiError.ERROR_IMPORT_DATA_FAILED.getMsg(), e);
-            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_FAILED);
+            log.error(ApiError.FILE_DATA_IMPORT_FAILED.getMsg(), e);
+            throw new ServiceException(ApiError.FILE_DATA_IMPORT_FAILED);
         } catch (ExcelCommonException e) {
-            log.error(ApiError.ERROR_FILE_IMPORT_FORMAT_INVALID_XLSX.getMsg(), e);
-            throw new ServiceException(ApiError.ERROR_FILE_IMPORT_FORMAT_INVALID_XLSX);
+            log.error(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX.getMsg(), e);
+            throw new ServiceException(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX);
         }
         //验证导入数据是否为空
         List<StockUpImportExcelDTO> excelDateList = excelListenerUtil.getAllList();
@@ -462,11 +462,11 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
         try {
             EasyExcelFactory.read(excelFile.getInputStream(), StockingRatioImportExcelDTO.class, excelListenerUtil).sheet(1).doRead();
         } catch (IOException e) {
-            log.error(ApiError.ERROR_IMPORT_DATA_FAILED.getMsg(), e);
-            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_FAILED);
+            log.error(ApiError.FILE_DATA_IMPORT_FAILED.getMsg(), e);
+            throw new ServiceException(ApiError.FILE_DATA_IMPORT_FAILED);
         } catch (ExcelCommonException e) {
-            log.error(ApiError.ERROR_FILE_IMPORT_FORMAT_INVALID_XLSX.getMsg(), e);
-            throw new ServiceException(ApiError.ERROR_FILE_IMPORT_FORMAT_INVALID_XLSX);
+            log.error(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX.getMsg(), e);
+            throw new ServiceException(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX);
         }
         //验证导入数据是否为空
         List<StockingRatioImportExcelDTO> excelDateList = excelListenerUtil.getAllList();
@@ -606,11 +606,11 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
         try {
             EasyExcelFactory.read(excelFile.getInputStream(), DefaultSalesQtyImportExcelDTO.class, excelListenerUtil).headRowNumber(2).sheet(2).doRead();
         } catch (IOException e) {
-            log.error(ApiError.ERROR_IMPORT_DATA_FAILED.getMsg(), e);
-            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_FAILED);
+            log.error(ApiError.FILE_DATA_IMPORT_FAILED.getMsg(), e);
+            throw new ServiceException(ApiError.FILE_DATA_IMPORT_FAILED);
         } catch (ExcelCommonException e) {
-            log.error(ApiError.ERROR_FILE_IMPORT_FORMAT_INVALID_XLSX.getMsg(), e);
-            throw new ServiceException(ApiError.ERROR_FILE_IMPORT_FORMAT_INVALID_XLSX);
+            log.error(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX.getMsg(), e);
+            throw new ServiceException(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX);
         }
         //验证导入数据是否为空
         List<DefaultSalesQtyImportExcelDTO> excelDateList = excelListenerUtil.getAllList();
@@ -785,11 +785,11 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
         try {
             EasyExcelFactory.read(excelFile.getInputStream(), DynamicSalesQtyImportExcelDTO.class, excelListenerUtil).headRowNumber(2).sheet(3).doRead();
         } catch (IOException e) {
-            log.error(ApiError.ERROR_IMPORT_DATA_FAILED.getMsg(), e);
-            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_FAILED);
+            log.error(ApiError.FILE_DATA_IMPORT_FAILED.getMsg(), e);
+            throw new ServiceException(ApiError.FILE_DATA_IMPORT_FAILED);
         } catch (ExcelCommonException e) {
-            log.error(ApiError.ERROR_FILE_IMPORT_FORMAT_INVALID_XLSX.getMsg(), e);
-            throw new ServiceException(ApiError.ERROR_FILE_IMPORT_FORMAT_INVALID_XLSX);
+            log.error(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX.getMsg(), e);
+            throw new ServiceException(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX);
         }
         //验证导入数据是否为空
         List<DynamicSalesQtyImportExcelDTO> excelDateList = excelListenerUtil.getAllList();
@@ -914,11 +914,11 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
         try {
             EasyExcelFactory.read(excelFile.getInputStream(), FixedSalesQtyImportExcelDTO.class, excelListenerUtil).sheet(4).doRead();
         } catch (IOException e) {
-            log.error(ApiError.ERROR_IMPORT_DATA_FAILED.getMsg(), e);
-            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_FAILED);
+            log.error(ApiError.FILE_DATA_IMPORT_FAILED.getMsg(), e);
+            throw new ServiceException(ApiError.FILE_DATA_IMPORT_FAILED);
         } catch (ExcelCommonException e) {
-            log.error(ApiError.ERROR_FILE_IMPORT_FORMAT_INVALID_XLSX.getMsg(), e);
-            throw new ServiceException(ApiError.ERROR_FILE_IMPORT_FORMAT_INVALID_XLSX);
+            log.error(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX.getMsg(), e);
+            throw new ServiceException(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX);
         }
         //验证导入数据是否为空
         List<FixedSalesQtyImportExcelDTO> excelDateList = excelListenerUtil.getAllList();
@@ -1044,11 +1044,11 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
         try {
             EasyExcelFactory.read(excelFile.getInputStream(), SalesDenoisingImportExcelDTO.class, excelListenerUtil).sheet(5).doRead();
         } catch (IOException e) {
-            log.error(ApiError.ERROR_IMPORT_DATA_FAILED.getMsg(), e);
-            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_FAILED);
+            log.error(ApiError.FILE_DATA_IMPORT_FAILED.getMsg(), e);
+            throw new ServiceException(ApiError.FILE_DATA_IMPORT_FAILED);
         } catch (ExcelCommonException e) {
-            log.error(ApiError.ERROR_FILE_IMPORT_FORMAT_INVALID_XLSX.getMsg(), e);
-            throw new ServiceException(ApiError.ERROR_FILE_IMPORT_FORMAT_INVALID_XLSX);
+            log.error(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX.getMsg(), e);
+            throw new ServiceException(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX);
         }
         //验证导入数据是否为空
         List<SalesDenoisingImportExcelDTO> excelDateList = excelListenerUtil.getAllList();
@@ -1229,16 +1229,16 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
         try {
             EasyExcelFactory.read(excelFile.getInputStream(), excelListenerUtil).sheet(0).doRead();
         } catch (IOException e) {
-            log.error(ApiError.ERROR_IMPORT_DATA_FAILED.getMsg(), e);
-            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_FAILED);
+            log.error(ApiError.FILE_DATA_IMPORT_FAILED.getMsg(), e);
+            throw new ServiceException(ApiError.FILE_DATA_IMPORT_FAILED);
         } catch (ExcelCommonException e) {
-            log.error(ApiError.ERROR_FILE_IMPORT_FORMAT_INVALID_XLSX.getMsg(), e);
-            throw new ServiceException(ApiError.ERROR_FILE_IMPORT_FORMAT_INVALID_XLSX);
+            log.error(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX.getMsg(), e);
+            throw new ServiceException(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX);
         }
         //验证导入数据是否为空
         List<JSONObject> excelDateList = excelListenerUtil.getAllList();
         if (CollectionUtils.isEmpty(excelDateList)) {
-            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_REQUIRED);
+            throw new ServiceException(ApiError.FILE_DATA_REQUIRED);
         }
         //导入数据处理
         List<JSONObject> successList = excelListenerUtil.getSuccessList();

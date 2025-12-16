@@ -105,7 +105,7 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
     public Boolean update(SoB2cLogisticsDTO.UpdateDTO logisticsDTO, String mainId) {
         SoB2cLogisticsEntity old = super.getById(logisticsDTO.getId());
         if(null == old){
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "B2C销售订单物流信息表");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "B2C销售订单物流信息表");
         }
         if(StringUtils.isNotBlank(old.getCode()) && old.getSourceSystem().equals(SoB2cLogisticSourceSystemEnum.THIRD.getCode())){
             if(!old.getLogisticsChannelId().equals(logisticsDTO.getLogisticsChannelId()) || !old.getCode().equals(logisticsDTO.getCode())){

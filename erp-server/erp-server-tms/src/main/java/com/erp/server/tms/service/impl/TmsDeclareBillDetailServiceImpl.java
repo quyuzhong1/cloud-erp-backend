@@ -52,7 +52,7 @@ public class TmsDeclareBillDetailServiceImpl extends SuperServiceImpl<TmsDeclare
     @Override
     public Boolean update(TmsDeclareBillDetailDTO.UpdateDTO updateDTO) {
         TmsDeclareBillDetailEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "报关单明细"));
+        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "报关单明细"));
         TmsDeclareBillDetailEntity tmsDeclareBillDetailEntity =  BeanMapperUtils.map(TmsDeclareBillDetailEntity.class, updateDTO);
 
         // 数据处理

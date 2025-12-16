@@ -160,7 +160,7 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
     @Override
     public Boolean update(VirtualWarehouseAllocationDTO.UpdateDTO updateDTO) {
         VirtualWarehouseAllocationEntity old = Optional.ofNullable(super.getById(updateDTO.getId())).orElseThrow(() ->
-                new ServiceException(ApiError.NOT_EXIST_BILL, "分货单"));
+                new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "分货单"));
         VirtualWarehouseAllocationEntity virtualWarehouseAllocationEntity = BeanMapperUtils.map(VirtualWarehouseAllocationEntity.class, updateDTO);
         // 数据处理
         handleData(virtualWarehouseAllocationEntity, updateDTO.getDetailList());
@@ -357,7 +357,7 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
     @Override
     public VirtualWarehouseAllocationDTO.DetailViewDto importFile(String type, MultipartFile excelFile, HttpServletResponse response) {
         if (CharSequenceUtil.isBlank(type) || Objects.isNull(VirtualWarehouseAllocationTypeEnum.getEnum(type))) {
-            throw new ServiceException(ApiError.ERROR_PARAM_INVALID);
+            throw new ServiceException(ApiError.HTTP_BAD_REQUEST);
         }
         VirtualWarehouseAllocationDTO.DetailViewDto importDTO = new VirtualWarehouseAllocationDTO.DetailViewDto();
         switch (VirtualWarehouseAllocationTypeEnum.getEnum(type)) {
@@ -371,7 +371,7 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
                 getCancelImport(excelFile, importDTO);
                 break;
             default:
-                throw new ServiceException(ApiError.ERROR_PARAM_INVALID);
+                throw new ServiceException(ApiError.HTTP_BAD_REQUEST);
         }
         return importDTO;
     }
@@ -383,15 +383,15 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
             EasyExcel.read(excelFile.getInputStream(), VwAllocationAllocationExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (IOException e) {
             log.error("导入错误！", e);
-            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_FAILED);
+            throw new ServiceException(ApiError.FILE_DATA_IMPORT_FAILED);
         } catch (ExcelCommonException e) {
             log.error("导入格式错误！", e);
-            throw new ServiceException(ApiError.ERROR_FILE_IMPORT_FORMAT_INVALID_XLSX);
+            throw new ServiceException(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX);
         }
         //验证导入数据是否为空
         List<VwAllocationAllocationExcelDTO> allList = excelListenerUtil.getAllList();
         if (CollectionUtils.isEmpty(allList)) {
-            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_REQUIRED);
+            throw new ServiceException(ApiError.FILE_DATA_REQUIRED);
         }
         List<VirtualWarehouseAllocationDTO.DetailDto> successList = excelListenerUtil.getSuccessList();
         if (successList.size() > size) {
@@ -418,15 +418,15 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
             EasyExcel.read(excelFile.getInputStream(), VwAllocationAllocationTransferExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (IOException e) {
             log.error("导入错误！", e);
-            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_FAILED);
+            throw new ServiceException(ApiError.FILE_DATA_IMPORT_FAILED);
         } catch (ExcelCommonException e) {
             log.error("导入格式错误！", e);
-            throw new ServiceException(ApiError.ERROR_FILE_IMPORT_FORMAT_INVALID_XLSX);
+            throw new ServiceException(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX);
         }
         //验证导入数据是否为空
         List<VwAllocationAllocationTransferExcelDTO> allList = excelListenerUtil.getAllList();
         if (CollectionUtils.isEmpty(allList)) {
-            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_REQUIRED);
+            throw new ServiceException(ApiError.FILE_DATA_REQUIRED);
         }
         List<VirtualWarehouseAllocationDTO.DetailDto> successList = excelListenerUtil.getSuccessList();
         if (successList.size() > size) {
@@ -453,15 +453,15 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
             EasyExcel.read(excelFile.getInputStream(), VwAllocationAllocationCancelExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (IOException e) {
             log.error("导入错误！", e);
-            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_FAILED);
+            throw new ServiceException(ApiError.FILE_DATA_IMPORT_FAILED);
         } catch (ExcelCommonException e) {
             log.error("导入格式错误！", e);
-            throw new ServiceException(ApiError.ERROR_FILE_IMPORT_FORMAT_INVALID_XLSX);
+            throw new ServiceException(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX);
         }
         //验证导入数据是否为空
         List<VwAllocationAllocationCancelExcelDTO> allList = excelListenerUtil.getAllList();
         if (CollectionUtils.isEmpty(allList)) {
-            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_REQUIRED);
+            throw new ServiceException(ApiError.FILE_DATA_REQUIRED);
         }
         List<VirtualWarehouseAllocationDTO.DetailDto> successList = excelListenerUtil.getSuccessList();
         if (successList.size() > size) {
@@ -600,7 +600,7 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
      */
     private void handleData(VirtualWarehouseAllocationEntity virtualWarehouseAllocationEntity, List<VirtualWarehouseAllocationDTO.DetailDto> detailList) {
         if (CollectionUtils.isEmpty(detailList)) {
-            throw new ServiceException(ApiError.ERROR_PARAM_INVALID);
+            throw new ServiceException(ApiError.HTTP_BAD_REQUEST);
         }
         //获取调转方向：调拨方向-1
         if (VirtualWarehouseAllocationTypeEnum.TRANSFER.getCode().equals(virtualWarehouseAllocationEntity.getType())) {
@@ -965,7 +965,7 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
     @Override
     public void updateIsStatistics(VirtualWarehouseAllocationDTO.UpdateIsStatisticsDTO dto) {
         VirtualWarehouseAllocationEntity old = Optional.ofNullable(super.getById(dto.getId())).orElseThrow(() ->
-                new ServiceException(ApiError.NOT_EXIST_BILL, "分货单"));
+                new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "分货单"));
         VirtualWarehouseAllocationEntity virtualWarehouseAllocationEntity = BeanMapperUtils.map(VirtualWarehouseAllocationEntity.class, dto);
         //字段值一致无需修改
         if (dto.getIsStatistics().equals(old.getIsStatistics())) {

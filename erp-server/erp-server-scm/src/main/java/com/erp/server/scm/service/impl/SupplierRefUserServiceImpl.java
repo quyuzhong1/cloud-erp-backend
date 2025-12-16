@@ -72,7 +72,7 @@ public class SupplierRefUserServiceImpl extends SuperServiceImpl<SupplierRefUser
     @Override
     public Boolean update(SupplierRefUserDTO.UpdateDTO updateDTO) {
         SupplierRefUserEntity old = super.getById(updateDTO.getId());
-        SupplierRefUserEntity oldEntity = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, ""));
+        SupplierRefUserEntity oldEntity = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, ""));
         SupplierRefUserEntity supplierRefUserEntity = BeanMapperUtils.map(SupplierRefUserEntity.class, updateDTO);
 
         // 数据处理

@@ -35,7 +35,6 @@ import com.erp.server.dmp.service.AdsErpOutstockDiffFlowService;
 import com.erp.server.dmp.service.OperateLogService;
 import com.erp.server.dmp.utils.RestCloudApiUtil;
 
-import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.StrUtil;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -89,7 +88,7 @@ public class AdsErpOutstockDiffFlowServiceImpl extends SuperServiceImpl<AdsErpOu
     @Override
     public Boolean update(AdsErpOutstockDiffFlowDTO.UpdateDTO addOrUpdateDTO) {
         AdsErpOutstockDiffFlowEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "第三方仓出库单据差异单"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "第三方仓出库单据差异单"));
         AdsErpOutstockDiffFlowEntity adsErpOutstockDiffFlowEntity =  BeanMapperUtils.map(AdsErpOutstockDiffFlowEntity.class, addOrUpdateDTO);
 
         // 数据处理

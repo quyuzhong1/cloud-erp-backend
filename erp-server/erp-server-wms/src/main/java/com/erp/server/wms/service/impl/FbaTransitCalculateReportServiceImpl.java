@@ -407,7 +407,7 @@ public class FbaTransitCalculateReportServiceImpl extends SuperServiceImpl<FbaTr
             wb.write(output);
             wb.close();
         } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_IMPORT_TEMPLATE_DOWNLOAD_FAILED);
+            throw new ServiceException(ApiError.FILE_IMPORT_TEMPLATE_DOWNLOAD_FAILED);
         }
     }
 
@@ -418,19 +418,19 @@ public class FbaTransitCalculateReportServiceImpl extends SuperServiceImpl<FbaTr
             EasyExcel.read(excelFile.getInputStream(), FbaTransitExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (IOException e) {
             log.error("导入错误！", e);
-            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_FAILED);
+            throw new ServiceException(ApiError.FILE_DATA_IMPORT_FAILED);
         } catch (ExcelCommonException e) {
             log.error("导入格式错误！", e);
-            throw new ServiceException(ApiError.ERROR_FILE_IMPORT_FORMAT_INVALID_XLSX);
+            throw new ServiceException(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX);
         }catch (Exception e){
             log.error("导入数据错误！", e);
-            throw new ServiceException(ApiError.ERROR_FILE_EXCEL_PARSE);
+            throw new ServiceException(ApiError.FILE_EXCEL_PARSE);
         }
         List<FbaTransitExcelDTO> excelDateList = excelListenerUtil.getExcelDateList();
         if (CollectionUtils.isEmpty(excelDateList)) {
-            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_REQUIRED);
+            throw new ServiceException(ApiError.FILE_DATA_REQUIRED);
         } else if (excelDateList.size() > 5000) {
-            throw new ServiceException(ApiError.ERROR_EXCEL_IMPORT_SIZE);
+            throw new ServiceException(ApiError.FILE_EXCEL_IMPORT_SIZE);
         }
         List<FbaTransitExcelDTO> errorList = excelListenerUtil.getErrorList();
         List<FbaTransitExcelDTO> successList = excelListenerUtil.getSuccessList();
@@ -578,11 +578,11 @@ public class FbaTransitCalculateReportServiceImpl extends SuperServiceImpl<FbaTr
     public Boolean adjustTransitQty(FbaTransitCalculateReportDTO.AdjustDTO adjustDTO) {
         FbaTransitCalculateReportEntity entity = this.getById(adjustDTO.getId());
         if (Objects.isNull(entity)){
-            throw new ServiceException(ApiError.ERROR_NOT_EXIST,"FBA在途核对记录");
+            throw new ServiceException(ApiError.COMMON_NOT_EXIST,"FBA在途核对记录");
         }
         FbaTransitCalculateDetailReportEntity detailReportEntity = fbaTransitCalculateDetailReportService.getById(adjustDTO.getDetailId());
         if (Objects.isNull(detailReportEntity)){
-            throw new ServiceException(ApiError.ERROR_NOT_EXIST,"FBA在途核对明细记录");
+            throw new ServiceException(ApiError.COMMON_NOT_EXIST,"FBA在途核对明细记录");
         }
         //存在下期在途记录不能调整
         LocalDate reportMonth = entity.getReportMonth();

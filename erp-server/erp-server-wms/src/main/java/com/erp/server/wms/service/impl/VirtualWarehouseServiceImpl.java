@@ -214,7 +214,7 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean update(VirtualWarehouseDTO.UpdateDTO updateDTO) {
-        VirtualWarehouseEntity old = Optional.ofNullable(super.getById(updateDTO.getId())).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "虚拟仓"));
+        VirtualWarehouseEntity old = Optional.ofNullable(super.getById(updateDTO.getId())).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "虚拟仓"));
         VirtualWarehouseEntity virtualWarehouseEntity = BeanMapperUtils.map(VirtualWarehouseEntity.class, updateDTO);
 
         // 数据处理

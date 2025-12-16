@@ -270,7 +270,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
     private void checkWarehouseExist(Boolean isHaveWarehouse, String warehouseId) {
         if (Objects.nonNull(isHaveWarehouse) && isHaveWarehouse) {
             if (StringUtils.isBlank(warehouseId)) {
-                throw new ServiceException(ApiError.ERROR_WMS_WAREHOUSE_REQUIRED);
+                throw new ServiceException(ApiError.WH_REQUIRED);
             }
         }
     }
@@ -847,7 +847,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
                 eq(ShopInfoEntity::getType, ShopTypeEnum.INTERNAL.getCode()).
                 list();
         if (CollectionUtils.isNotEmpty(shopInfoList)) {
-            throw new ServiceException(ApiError.ERROR_DMP_SHOP_NAME_EXISTS);
+            throw new ServiceException(ApiError.SHOP_NAME_EXISTS);
         }
     }
 

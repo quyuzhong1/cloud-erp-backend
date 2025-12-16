@@ -4,7 +4,6 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.enums.ApproveStatusEnum;
-import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
@@ -100,7 +99,7 @@ public class InstockForcastServiceImpl extends SuperServiceImpl<InstockForcastMa
         // 仓库信息
         WarehouseDTO.UpdateDTO warehouseDetail = warehouseService.detailWithCache(dto.getWarehouseId());
         if(Objects.isNull(warehouseDetail) || CharSequenceUtil.isEmpty(warehouseDetail.getId())) {
-            throw new ServiceException(ApiError.ERROR_WMS_WAREHOUSE_NOT_FOUND);
+            throw new ServiceException(ApiError.WH_NOT_FOUND);
         }
 
         // 仓库组织

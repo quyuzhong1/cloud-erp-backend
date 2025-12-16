@@ -113,7 +113,7 @@ public class TmsCfgSailingServiceImpl extends SuperServiceImpl<TmsCfgSailingMapp
     @Override
     public Boolean update(TmsCfgSailingDTO.UpdateDTO updateDTO) {
         TmsCfgSailingEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "截单开船配置"));
+        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "截单开船配置"));
         TmsCfgSailingEntity tmsCfgSailingEntity =  BeanMapperUtils.map(TmsCfgSailingEntity.class, updateDTO);
 
         log.info("编辑 开始修改截单开船配置数据，id：【{}】", old.getId());
@@ -364,7 +364,7 @@ public class TmsCfgSailingServiceImpl extends SuperServiceImpl<TmsCfgSailingMapp
                         StrUtil.builder().append(DateUtil.nowExcelFileFormat()).append(name).toString(),
                         excelPath);
             } catch (IOException e) {
-                throw new ServiceException(ApiError.ERROR_EXPORT_ERROR_DATA_FAILED);
+                throw new ServiceException(ApiError.FILE_EXPORT_ERROR_DATA_FAILED);
             }
         }
 
@@ -413,7 +413,7 @@ public class TmsCfgSailingServiceImpl extends SuperServiceImpl<TmsCfgSailingMapp
             wb.close();
         } catch (Exception e) {
             log.error("warehouse downloadTemplate  出错了 e==", e);
-            throw new ServiceException(ApiError.ERROR_IMPORT_TEMPLATE_DOWNLOAD_FAILED);
+            throw new ServiceException(ApiError.FILE_IMPORT_TEMPLATE_DOWNLOAD_FAILED);
         }
     }
 

@@ -143,7 +143,7 @@ public class RequisitionApplicationChangeController extends BaseController {
             return failure(e.getMessage(),new BaseResultDTO.AddAndSubmmitDTO("","",Boolean.FALSE));
         } catch (Exception e) {
             log.error("新增失败，dto: {}", dto, e);
-            return failure(ApiError.ERROR_CREATE_FAILED.getMsg(),new BaseResultDTO.AddAndSubmmitDTO("","",Boolean.FALSE));
+            return failure(ApiError.BILL_SAVE_FAILED.getMsg(),new BaseResultDTO.AddAndSubmmitDTO("","",Boolean.FALSE));
         }
         //提审
         try {
@@ -153,7 +153,7 @@ public class RequisitionApplicationChangeController extends BaseController {
             return failure(e.getMessage(),new BaseResultDTO.AddAndSubmmitDTO(resultAdd.getId(),resultAdd.getCode(),Boolean.TRUE));
         } catch (Exception e) {
             log.error("提交审批失败，ID: {}", resultAdd.getId(), e);
-            return failure(ApiError.RETRY_SUBMIT_ERROR.getMsg(),new BaseResultDTO.AddAndSubmmitDTO(resultAdd.getId(),resultAdd.getCode(),Boolean.TRUE));
+            return failure(ApiError.BILL_APPROVE_SUBMIT_RETRY.getMsg(),new BaseResultDTO.AddAndSubmmitDTO(resultAdd.getId(),resultAdd.getCode(),Boolean.TRUE));
         }
 
         return success(new BaseResultDTO.AddAndSubmmitDTO(resultAdd.getId(), resultAdd.getCode(),Boolean.TRUE));
@@ -181,7 +181,7 @@ public class RequisitionApplicationChangeController extends BaseController {
             return failure(e.getMessage(), new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.FALSE));
         } catch (Exception e) {
             log.error("更新失败，dto: {}", dto, e);
-            return failure(ApiError.ERROR_UPDATE_FAILED.getMsg(),new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.FALSE));
+            return failure(ApiError.BILL_UPDATE_FAILED.getMsg(),new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.FALSE));
         }
         //提审
         try {
@@ -191,7 +191,7 @@ public class RequisitionApplicationChangeController extends BaseController {
             return failure( e.getMessage(),new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.TRUE));
         } catch (Exception e) {
             log.error("提交审批失败，ID: {}", dto.getId(), e);
-            return failure(ApiError.RETRY_SUBMIT_ERROR.getMsg(),new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.TRUE));
+            return failure(ApiError.BILL_APPROVE_SUBMIT_RETRY.getMsg(),new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.TRUE));
         }
         return success(new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.TRUE));
     }

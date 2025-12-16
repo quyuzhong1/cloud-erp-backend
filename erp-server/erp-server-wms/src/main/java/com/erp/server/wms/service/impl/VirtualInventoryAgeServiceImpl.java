@@ -117,7 +117,7 @@ public class VirtualInventoryAgeServiceImpl extends SuperServiceImpl<VirtualInve
         //产品信息
         ProductDetailEntity productDetailEntity = FeignQuery.getById(ProductDetailEntity.class, dto.getSkuId());
         if (ObjUtil.isEmpty(productDetailEntity)) {
-            throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_INFO_NOT_FOUND);
+            throw new ServiceException(ApiError.PRODUCT_INFO_NOT_FOUND);
         }
         viewDTO.setSkuNo(productDetailEntity.getSkuNo());
         viewDTO.setProductName(productDetailEntity.getName());
@@ -125,7 +125,7 @@ public class VirtualInventoryAgeServiceImpl extends SuperServiceImpl<VirtualInve
         //仓库信息
         WarehouseEntity warehouseEntity = warehouseService.getById(dto.getWarehouseId());
         if (ObjUtil.isEmpty(warehouseEntity)) {
-            throw new ServiceException(ApiError.ERROR_WMS_WAREHOUSE_NOT_FOUND);
+            throw new ServiceException(ApiError.WH_NOT_FOUND);
         }
         viewDTO.setWarehouseName(warehouseEntity.getName());
         //虚拟仓库

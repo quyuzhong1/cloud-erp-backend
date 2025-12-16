@@ -119,7 +119,7 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
     public Boolean add(SoB2cDTO.AddDTO addDTO, String mainId) {
         List<SoB2cDetailDTO.AddDTO> detailList = addDTO.getDetailList();
         if (CollectionUtils.isEmpty(detailList)) {
-           throw new ServiceException(ApiError.ERROR_DOC_DETAIL_NOT_FOUND, SourceTypeEnum.SO_B2C.getName());
+           throw new ServiceException(ApiError.BILL_DETAIL_NOT_FOUND, SourceTypeEnum.SO_B2C.getName());
         }
         List<SoB2cDetailEntity> list = BeanMapperUtils.copyList(SoB2cDetailEntity.class, detailList);
 
@@ -140,7 +140,7 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
     @Override
     public Boolean update(List<SoB2cDetailDTO.UpdateDTO> detailList, String mainId) {
         if (CollectionUtils.isEmpty(detailList)) {
-            throw new ServiceException(ApiError.ERROR_DOC_DETAIL_NOT_FOUND, SourceTypeEnum.SO_B2C.getName());
+            throw new ServiceException(ApiError.BILL_DETAIL_NOT_FOUND, SourceTypeEnum.SO_B2C.getName());
         }
         //原明细数据
         List<SoB2cDetailEntity> oldList = this.listByMainIds(Arrays.asList(mainId));
@@ -195,13 +195,13 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
         //仓库信息
         List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Arrays.asList(warehouseId));
         if (CollectionUtils.isEmpty(warehouseList)) {
-            throw new ServiceException(ApiError.ERROR_WMS_WAREHOUSE_NOT_FOUND);
+            throw new ServiceException(ApiError.WH_NOT_FOUND);
         }
         WarehouseDTO.UpdateDTO updateDTO = warehouseList.get(0);
         //组织信息
         List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(updateDTO.getOrgId()));
         if (CollectionUtils.isEmpty(accountingCompanyList)) {
-            throw new ServiceException(ApiError.ERROR_WAREHOUSE_NOT_EXIST_ORG,updateDTO.getName());
+            throw new ServiceException(ApiError.WH_NOT_EXIST_ORG,updateDTO.getName());
         }
         //SKU对照表信息
         List<SkuMappingDTO.ListSkuParamDTO> listParamList = detailList.stream().map(obj -> new SkuMappingDTO.ListSkuParamDTO(obj.getSkuNo(), warehouseId,null)).collect(Collectors.toList());
@@ -289,12 +289,12 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
                     .map(SoB2cDTO.SaveSoB2cDistributionDetailDTO::getWarehouseId).findFirst().orElse("");
             WarehouseDTO.UpdateDTO updateDTO = warehouseList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), warehouseId)).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(updateDTO)) {
-                throw new ServiceException(ApiError.ERROR_WMS_WAREHOUSE_NOT_FOUND);
+                throw new ServiceException(ApiError.WH_NOT_FOUND);
             }
             //组织
             BaseIdDTO.CodeDTO companyDTO = accountingCompanyList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), updateDTO.getOrgId())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(companyDTO)) {
-                throw new ServiceException(ApiError.ERROR_WAREHOUSE_NOT_EXIST_ORG,updateDTO.getName());
+                throw new ServiceException(ApiError.WH_NOT_EXIST_ORG,updateDTO.getName());
             }
 
             detailEntity.setWarehouseId(updateDTO.getId());
@@ -390,13 +390,13 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
         //仓库信息
         List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(warehouseIdList);
         if (CollectionUtils.isEmpty(warehouseList)) {
-            throw new ServiceException(ApiError.ERROR_WMS_WAREHOUSE_NOT_FOUND);
+            throw new ServiceException(ApiError.WH_NOT_FOUND);
         }
         List<String> orgIdList = warehouseList.stream().map(WarehouseDTO.UpdateDTO::getOrgId).collect(Collectors.toList());
         //组织信息
         List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(orgIdList);
         if (CollectionUtils.isEmpty(accountingCompanyList)) {
-            throw new ServiceException(ApiError.ERROR_WAREHOUSE_NOT_EXIST_ORG,warehouseList.stream().map(WarehouseDTO.UpdateDTO::getName).collect(Collectors.joining(",")));
+            throw new ServiceException(ApiError.WH_NOT_EXIST_ORG,warehouseList.stream().map(WarehouseDTO.UpdateDTO::getName).collect(Collectors.joining(",")));
         }
         //SKU对照表信息
         List<SkuMappingDTO.ListSkuParamDTO> listParamList = detailList.stream().map(obj -> new SkuMappingDTO.ListSkuParamDTO(obj.getSkuNo(), obj.getWarehouseId(),soB2cList.stream().filter(e -> e.getId().equals(obj.getMainId())).findFirst().flatMap(e ->Optional.ofNullable(e.getDictPlatform())).orElse(""))).collect(Collectors.toList());
@@ -407,7 +407,7 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
         for (SoB2cDetailEntity entity : detailList) {
             WarehouseDTO.UpdateDTO warehouseDTO = warehouseList.stream().filter(obj -> obj.getId().equals(entity.getWarehouseId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(warehouseDTO)) {
-                throw new ServiceException(ApiError.ERROR_WMS_WAREHOUSE_NOT_FOUND);
+                throw new ServiceException(ApiError.WH_NOT_FOUND);
             }
             entity.setWarehouseName(warehouseDTO.getName());
             entity.setWarehouseOrgId(warehouseDTO.getOrgId());
@@ -887,13 +887,13 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
         //仓库信息
         List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(warehouseIdList);
         if (CollectionUtils.isEmpty(warehouseList)) {
-            throw new ServiceException(ApiError.ERROR_WMS_WAREHOUSE_NOT_FOUND);
+            throw new ServiceException(ApiError.WH_NOT_FOUND);
         }
         List<String> orgIdList = warehouseList.stream().map(WarehouseDTO.UpdateDTO::getOrgId).collect(Collectors.toList());
         //组织信息
         List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(orgIdList);
         if (CollectionUtils.isEmpty(accountingCompanyList)) {
-            throw new ServiceException(ApiError.ERROR_WAREHOUSE_NOT_EXIST_ORG,warehouseList.stream().map(WarehouseDTO.UpdateDTO::getName).collect(Collectors.joining(",")));
+            throw new ServiceException(ApiError.WH_NOT_EXIST_ORG,warehouseList.stream().map(WarehouseDTO.UpdateDTO::getName).collect(Collectors.joining(",")));
         }
         //SKU对照表信息
         List<SkuMappingDTO.ListSkuParamDTO> skuParamList = updateWarehouseList.stream().map(obj -> new SkuMappingDTO.ListSkuParamDTO(obj.getKey().getSkuNo(), obj.getValue(), entity.getDictPlatform())).collect(Collectors.toList());
@@ -916,7 +916,7 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
 
             WarehouseDTO.UpdateDTO warehouseDTO = warehouseList.stream().filter(obj -> obj.getId().equals(warehouseId)).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(warehouseDTO)) {
-                throw new ServiceException(ApiError.ERROR_WMS_WAREHOUSE_NOT_FOUND);
+                throw new ServiceException(ApiError.WH_NOT_FOUND);
             }
             String warehouseName = warehouseDTO.getName();
             String warehouseOrgId = warehouseDTO.getOrgId();
@@ -1004,7 +1004,7 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
         List<SkuVO> skuList = plmTaskFeign.listSkuCostByIds(skuIds);
         if (CollectionUtils.isEmpty(skuList)) {
             log.error("未找到SKU，warehouseIds = {}",skuList);
-            throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_INFO_NOT_FOUND);
+            throw new ServiceException(ApiError.PRODUCT_INFO_NOT_FOUND);
         }
         //重置sku含税成本
         resetSkuVo(skuList,list,soB2cEntity);
@@ -1017,7 +1017,7 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
         List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(orgIdList);
         if (CollectionUtils.isEmpty(accountingCompanyList)) {
             log.error("未找到核算公司，orgIdList = {}",orgIdList);
-            throw new ServiceException(ApiError.ERROR_COMPANY_NOT_FOUND);
+            throw new ServiceException(ApiError.COMMON_COMPANY_NOT_FOUND);
         }
         //虚拟仓库查询
         VirtualWarehouseChannelDTO.PlatformDTO platformDTO = new VirtualWarehouseChannelDTO.PlatformDTO();
@@ -1032,7 +1032,7 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
             SkuVO skuVO = skuList.stream().filter(obj -> obj.getSkuId().equals(detailEntity.getSkuId())).findFirst()
                     .orElse(null);
             if (ObjectUtils.isEmpty(skuVO)) {
-                throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_INFO_NOT_FOUND);
+                throw new ServiceException(ApiError.PRODUCT_INFO_NOT_FOUND);
             }
             detailEntity.setMainId(soB2cEntity.getId());
             detailEntity.setSkuNo(skuVO.getSkuNo());
@@ -1081,7 +1081,7 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
             if (StringUtils.isNotBlank(detailEntity.getId())) {
                 SoB2cDetailEntity old = this.getById(detailEntity.getId());
                 if (ObjectUtils.isEmpty(old)) {
-                    throw new ServiceException(ApiError.ERROR_SCM_PO_DETAIL_NOT_FOUND);
+                    throw new ServiceException(ApiError.PO_DETAIL_NOT_FOUND);
                 }
                 operateLogService.addModuleOperateLogByObj(old,detailEntity, ModuleTypeEnum.SO_B2C.getCode(),old.getMainId(),"",String.format("【%s】",old.getSkuNo()));
             }

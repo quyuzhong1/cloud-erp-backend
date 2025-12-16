@@ -119,10 +119,10 @@ public class PayableInfoServiceImpl extends SuperServiceImpl<PayableInfoMapper, 
     @Override
     public Boolean update(PayableInfoDTO.UpdateDTO addOrUpdateDTO) {
         PayableInfoEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, ""));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, ""));
         // 待提交和审核不通过允许修改
         if (!ApproveStatusEnum.allowUpdateStatus(old.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_UPDATE_STATUS_NOT_ALLOWED);
+            throw new ServiceException(ApiError.BILL_UPDATE_STATUS_NOT_ALLOWED);
         }
         PayableInfoEntity payableInfoEntity =  BeanMapperUtils.map(PayableInfoEntity.class, addOrUpdateDTO);
 
@@ -224,12 +224,12 @@ public class PayableInfoServiceImpl extends SuperServiceImpl<PayableInfoMapper, 
     public BatchResultDTO approve(ApproveOneDTO dto) {
         ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(dto.getType());
         if(Objects.equals(approveType, ApproveTypeEnum.REJECT) && StrUtils.isEmpty(dto.getComment())) {
-            throw new ServiceException(ApiError.ERROR_PLM_REJECT_COMMENT_REQUIRED);
+            throw new ServiceException(ApiError.WF_REJECT_COMMENT_REQUIRED);
         }
         PayableInfoEntity entity = getById(dto.getId());
         // 审核中的数据允许审核
         if(!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
-            throw new ServiceException(ApiError.ERROR_APPROVE_ALLOWED_STATUS_ONLY);
+            throw new ServiceException(ApiError.WF_APPROVE_ALLOWED_STATUS_ONLY);
         }
         // 调用流程审核
         approveProcess(entity, dto);
@@ -257,7 +257,7 @@ public class PayableInfoServiceImpl extends SuperServiceImpl<PayableInfoMapper, 
         ApiResult<ProcessManagementDTO.ApproveResultDTO> approveResult = workflowFeign.approve(approveDTO);
         Integer code = approveResult.getCode();
         if (200 != code) {
-            throw new ServiceException(ApiError.ERROR_WF_APPROVAL_FAILED);
+            throw new ServiceException(ApiError.WF_APPROVE_FAILED);
         }
         ProcessManagementDTO.ApproveResultDTO data = approveResult.getData();
         if (ObjectUtil.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()) {
@@ -292,7 +292,7 @@ public class PayableInfoServiceImpl extends SuperServiceImpl<PayableInfoMapper, 
     private Boolean validateDisApprove(PayableInfoEntity entity) {
         // 已审核支持反审核
         if (!Objects.equals(entity.getApproveStatus().getStatus(), ApproveStatusEnum.APPROVE.getStatus())) {
-            throw new ServiceException(ApiError.ERROR_REVERSE_APPROVAL_ALLOWED_APPROVED_ONLY);
+            throw new ServiceException(ApiError.BILL_REVERSE_APPROVAL_ALLOWED_APPROVED_ONLY);
         }
         return true;
     }
@@ -303,20 +303,20 @@ public class PayableInfoServiceImpl extends SuperServiceImpl<PayableInfoMapper, 
         PayableInfoEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到数据"));
         // 只有待提交数据允许删除
         if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT, entity.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_SCM_SUBMIT_ALLOWED_STATUS_ONLY);
+            throw new ServiceException(ApiError.BILL_SUBMIT_ALLOWED_STATUS_ONLY);
         }
 
         // 删除主单数据
         log.info("删除 开始删除主单数据，id：【{}】", id);
         boolean remove = super.removeById(id);
         if (!remove) {
-            throw new ServiceException(ApiError.ERROR_DATA_DELETE);
+            throw new ServiceException(ApiError.BILL_DELETE_FAILED);
         }
 
         //删除明细信息
         Boolean detailRemove = payableDetailService.removeByMainId(id);
         if (!detailRemove) {
-            throw new ServiceException(ApiError.ERROR_DATA_DELETE);
+            throw new ServiceException(ApiError.BILL_DELETE_FAILED);
         }
         // 删除日志数据
         log.info("删除 开始删除日志数据，id：【{}】", id);
@@ -335,7 +335,7 @@ public class PayableInfoServiceImpl extends SuperServiceImpl<PayableInfoMapper, 
         PayableInfoEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到数据"));
         // 只有审核中的单据允许撤销
         if (!Objects.equals(entity.getApproveStatus().getStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())) {
-            throw new ServiceException(ApiError.ERROR_REVOKE_PROCESS_ALLOWED_STATUS_ONLY);
+            throw new ServiceException(ApiError.WF_REVOKE_PROCESS_ALLOWED_STATUS_ONLY);
         }
         log.info("撤销 开始撤销流程，id：【{}】",id);
 
@@ -439,11 +439,11 @@ public class PayableInfoServiceImpl extends SuperServiceImpl<PayableInfoMapper, 
         for (String id : payableIdList) {
             BatchResultDTO disApproveResult = self.disApprove(id);
             if (!disApproveResult.getSuccess()) {
-                throw new ServiceException(ApiError.ERROR_DATA_DISAPPROVE);
+                throw new ServiceException(ApiError.BILL_DISAPPROVE_FAILED);
             }
             BatchResultDTO deleteResult = self.delete(id);
             if (!deleteResult.getSuccess()) {
-                throw new ServiceException(ApiError.ERROR_DATA_DELETE);
+                throw new ServiceException(ApiError.BILL_DELETE_FAILED);
             }
         }
     }
@@ -565,7 +565,7 @@ public class PayableInfoServiceImpl extends SuperServiceImpl<PayableInfoMapper, 
     private void validateSubmit(PayableInfoEntity entity) {
         // 待提交或审核不通过并且未作废允许提交
         if(!ApproveStatusEnum.allowUpdateStatus(entity.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_SUBMIT_ALLOWED_STATUS_ONLY);
+            throw new ServiceException(ApiError.BILL_SUBMIT_ALLOWED_STATUS_ONLY);
         }
         return;
     }

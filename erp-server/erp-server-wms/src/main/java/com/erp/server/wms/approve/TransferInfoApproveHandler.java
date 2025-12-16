@@ -52,7 +52,7 @@ public class TransferInfoApproveHandler extends AbstractApproveHandler {
     public Boolean disApprove(ApproveDTO.DisApproveDTO dto) {
         TransferInfoEntity entity = transferInfoService.getById(dto.getId());
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_WMS_TRANSFER_DIRECT_NOT_FOUND);
+            throw new ServiceException(ApiError.WH_TRANSFER_DIRECT_NOT_FOUND);
         }
         BatchResultDTO resultDTO = transferInfoService.disApprove(entity,Boolean.TRUE,Boolean.TRUE);
         return resultDTO.getSuccess();
@@ -64,11 +64,11 @@ public class TransferInfoApproveHandler extends AbstractApproveHandler {
         //直接调拨单
         TransferInfoEntity entity = transferInfoService.getById(dto.getBusinessId());
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_WMS_TRANSFER_DIRECT_NOT_FOUND);
+            throw new ServiceException(ApiError.WH_TRANSFER_DIRECT_NOT_FOUND);
         }
         Boolean approve = transferInfoService.approveEnd(entity, dto.getApproveStatus().getStatus(), dto.getComment(), Boolean.TRUE);
         if (Boolean.FALSE.equals(approve)) {
-            throw new ServiceException(ApiError.ERROR_BILL_APPROVE, SourceTypeEnum.getName(dto.getBusinessKey()));
+            throw new ServiceException(ApiError.BILL_APPROVE_FAILED, SourceTypeEnum.getName(dto.getBusinessKey()));
         }
         //非erp审核添加日志
         if (ApprovePlatformEnum.ERP.equals(dto.getApprovePlatformEnum())) {

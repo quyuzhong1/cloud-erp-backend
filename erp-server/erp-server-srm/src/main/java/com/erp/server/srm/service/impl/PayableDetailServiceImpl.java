@@ -40,7 +40,7 @@ public class PayableDetailServiceImpl extends SuperServiceImpl<PayableDetailMapp
     @Override
     public BaseResultDTO.AddDTO batchAdd(List<PayableDetailDTO.AddDTO> detailList,String mainId) {
         if (CollUtil.isEmpty(detailList)) {
-            throw new ServiceException(ApiError.NOT_EXIST_BILL,"应付单明细");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE,"应付单明细");
         }
         List<PayableDetailEntity> list = BeanUtil.copyToList(detailList, PayableDetailEntity.class);
         list.forEach(obj->obj.setMainId(mainId));

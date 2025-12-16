@@ -370,7 +370,7 @@ public class BiTargetSkuSettingServiceImpl extends SuperServiceImpl<BiTargetSkuS
     public Boolean update(BiTargetSkuSettingDTO.UpdateDTO updateDTO) {
         String id = updateDTO.getId();
         BiTargetYearEntity oldTargetYear = biTargetYearService.getById(id);
-        Optional.ofNullable(oldTargetYear).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "sku目标设置单"));
+        Optional.ofNullable(oldTargetYear).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "sku目标设置单"));
         BiTargetYearEntity targetYear = BeanMapperUtils.map(BiTargetYearEntity.class, updateDTO);
         List<String> metricsList = updateDTO.getMetricsList();
         targetYear.setMetrics(metricsList.stream().collect(Collectors.joining(",")));
@@ -408,7 +408,7 @@ public class BiTargetSkuSettingServiceImpl extends SuperServiceImpl<BiTargetSkuS
         BiTargetSkuSettingDTO.ViewDTO view = new BiTargetSkuSettingDTO.ViewDTO();
         BiTargetYearEntity targetYear = biTargetYearService.getById(id);
         if (Objects.isNull(targetYear)) {
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "单品目标设置");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "单品目标设置");
         }
         BeanMapperUtils.copy(targetYear, view);
         String metrics = targetYear.getMetrics();
@@ -552,7 +552,7 @@ public class BiTargetSkuSettingServiceImpl extends SuperServiceImpl<BiTargetSkuS
             wb.close();
         } catch (Exception e) {
             log.error(" downloadTemplate  出错了 e=={}", e);
-            throw new ServiceException(ApiError.ERROR_IMPORT_TEMPLATE_DOWNLOAD_FAILED);
+            throw new ServiceException(ApiError.FILE_IMPORT_TEMPLATE_DOWNLOAD_FAILED);
         }
 
     }
@@ -747,7 +747,7 @@ public class BiTargetSkuSettingServiceImpl extends SuperServiceImpl<BiTargetSkuS
         }
         if (CollectionUtils.isNotEmpty(existSku)) {
             String existSkuName = existSku.stream().distinct().collect(Collectors.joining(","));
-            throw new ServiceException(ApiError.YEAR_METRICS_EXIST, existSkuName);
+            throw new ServiceException(ApiError.COMMON_SETTING_EXIST, existSkuName);
         }
 
 

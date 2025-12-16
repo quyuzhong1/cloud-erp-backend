@@ -186,7 +186,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
         String nodeId = dto.getNodeId();
         NoticeNodeEntity nodeEntity = noticeNodeService.getById(nodeId);
         if (Objects.isNull(nodeEntity)) {
-            throw new ServiceException(ApiError.ERROR_PLM_NOTICE_NODE_NOT_FOUND);
+            throw new ServiceException(ApiError.PROJECT_NOTICE_NODE_NOT_FOUND);
         }
         //检查节点是否存在
         if(!nodeEntity.getNodeFlag().equals(NoticeEnum.PRODUCT_DETAIL_CHANGE.getFlag())){
@@ -203,13 +203,13 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
             messageEntity.setOtherPeople(String.join(",", otherPeopleList));
         }
         if (CollectionUtils.isEmpty(otherPeopleList) && CollectionUtils.isEmpty(itemPeopleList)) {
-            throw new ServiceException(ApiError.ERROR_PLM_PROJECT_OR_OTHER_MEMBER_REQUIRED);
+            throw new ServiceException(ApiError.PROJECT_MEMBER_OR_OTHER_REQUIRED);
         }
         if(Objects.nonNull(dto.getProductDetailChangeDTO())
                 && (CollUtil.isNotEmpty(dto.getProductDetailChangeDTO().getProductBasicList()) || CollUtil.isNotEmpty(dto.getProductDetailChangeDTO().getProductPackList()))){
             messageEntity.setDataJson(JSONUtil.toJsonStr(dto.getProductDetailChangeDTO()));
         }else{
-            throw new ServiceException(ApiError.ERROR_PLM_CHANGE_CONTENT_REQUIRED_FOR_PRODUCT_INFO_CHANGE);
+            throw new ServiceException(ApiError.PRODUCT_INFO_CHANGE_CONTENT_REQUIRED);
         }
         boolean flag = this.save(messageEntity);
         if (flag) {
@@ -234,7 +234,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
         String nodeId = dto.getNodeId();
         NoticeNodeEntity nodeEntity = noticeNodeService.getById(nodeId);
         if (Objects.isNull(nodeEntity)) {
-            throw new ServiceException(ApiError.ERROR_PLM_NOTICE_NODE_NOT_FOUND);
+            throw new ServiceException(ApiError.PROJECT_NOTICE_NODE_NOT_FOUND);
         }
         //检查节点是否存在
         //检查节点是否存在
@@ -256,13 +256,13 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
             messageEntity.setOtherPeople("");
         }
         if (CollectionUtils.isEmpty(otherPeopleList) && CollectionUtils.isEmpty(itemPeopleList)) {
-            throw new ServiceException(ApiError.ERROR_PLM_PROJECT_OR_OTHER_MEMBER_REQUIRED);
+            throw new ServiceException(ApiError.PROJECT_MEMBER_OR_OTHER_REQUIRED);
         }
         if(Objects.nonNull(dto.getProductDetailChangeDTO())
                 && (CollUtil.isNotEmpty(dto.getProductDetailChangeDTO().getProductBasicList()) || CollUtil.isNotEmpty(dto.getProductDetailChangeDTO().getProductPackList()))){
             messageEntity.setDataJson(JSONUtil.toJsonStr(dto.getProductDetailChangeDTO()));
         }else{
-            throw new ServiceException(ApiError.ERROR_PLM_CHANGE_CONTENT_REQUIRED_FOR_PRODUCT_INFO_CHANGE);
+            throw new ServiceException(ApiError.PRODUCT_INFO_CHANGE_CONTENT_REQUIRED);
         }
         messageEntity.setId(dto.getId());
         return this.updateById(messageEntity);
@@ -836,7 +836,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
                 //查询当前需要审核的人员
                 List<AuditorHandleDTO> approveRecordShowList = workflowFeign.getHistoryTaskByProcessId(task.getProcessId());
                 if (CollectionUtils.isEmpty(approveRecordShowList)) {
-                    throw new ServiceException(ApiError.ERROR_PLM_TASK_APPROVER_REQUIRED);
+                    throw new ServiceException(ApiError.WF_APPROVER_REQUIRED);
                 }
                 List<String> allNoticeUserIds = approveRecordShowList.stream().filter(obj -> BaseStatusEnum.WAIT_AUDIT.getName().equals(obj.getHandContent())).map(AuditorHandleDTO::getHandleUserId).collect(Collectors.toList());
                 //排除关闭通知的人员 并去重
@@ -898,7 +898,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
         //任务信息
         List<ProjectTaskEntity> projectTaskList = projectTaskService.listByIds(taskIds);
         if (CollectionUtils.isEmpty(projectTaskList)) {
-            throw new ServiceException(ApiError.ERROR_PLM_TASK_NOT_FOUND);
+            throw new ServiceException(ApiError.PROJECT_TASK_NOT_FOUND);
         }
         //消息记录
         List<NoticeMessageRecordEntity> messageRecordList = new ArrayList<>();
@@ -915,7 +915,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
             //产品信息
             ProductInfoEntity productInfoEntity = productInfoService.getById(productId);
             if (ObjectUtils.isEmpty(productInfoEntity)) {
-                throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_NOT_FOUND);
+                throw new ServiceException(ApiError.PRODUCT_NOT_FOUND);
             }
             //获取飞书的unionid 与用户关系
             List<ThirdUnionDTO> unionIdList = sysUserFeign.getThirdUnionId(ThirdConstants.FS_PLATFORM);
@@ -1349,7 +1349,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
     @Override
     public NoticeMessageEntity view(String id) {
         NoticeMessageEntity entity = this.getById(id);
-        NoticeMessageEntity oldEntity = Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "未找到通知详情id=" + id));
+        NoticeMessageEntity oldEntity = Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "未找到通知详情id=" + id));
         return oldEntity;
     }
 
@@ -2421,7 +2421,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
             for (ProjectTaskEntity task : beAlmostExpireTaskList) {
                 ProductShowDTO product = productList.stream().filter(p -> p.getProductId().equals(task.getProductId())).findFirst().orElse(null);
                 if(org.springframework.util.ObjectUtils.isEmpty(product)) {
-                    throw new ServiceException(ApiError.NOT_EXIST_BILL,"产品信息");
+                    throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE,"产品信息");
                 }
 
                 List<String> noticeUserIds = getSetNotice(notice, product, new ArrayList<>());
@@ -2681,7 +2681,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
         queryWrapper.last("LIMIT 1");
         int count = this.count(queryWrapper);
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_PLM_NOTICE_NODE_IN_USE);
+            throw new ServiceException(ApiError.PROJECT_NOTICE_NODE_IN_USE);
         }
     }
 

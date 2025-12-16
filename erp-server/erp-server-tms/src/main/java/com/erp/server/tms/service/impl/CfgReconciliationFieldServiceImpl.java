@@ -86,7 +86,7 @@ public class CfgReconciliationFieldServiceImpl extends SuperServiceImpl<CfgRecon
     @Override
     public Boolean update(CfgReconciliationFieldDTO.UpdateDTO updateDTO) {
         CfgReconciliationFieldEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "对账字段配置单"));
+        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "对账字段配置单"));
         CfgReconciliationFieldEntity cfgReconciliationFieldEntity = BeanMapperUtils.map(CfgReconciliationFieldEntity.class, updateDTO);
 
         // 数据处理
@@ -120,7 +120,7 @@ public class CfgReconciliationFieldServiceImpl extends SuperServiceImpl<CfgRecon
     public BatchResultDTO delete(String id) {
         CfgReconciliationFieldEntity entity = this.getById(id);
         if (null == entity) {
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "对账字段配置");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "对账字段配置");
         }
 
 
@@ -169,15 +169,15 @@ public class CfgReconciliationFieldServiceImpl extends SuperServiceImpl<CfgRecon
             EasyExcelFactory.read(excelFile.getInputStream(), CfgReconciliationFieldImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (IOException e) {
             log.error("导入错误！", e);
-            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_FAILED);
+            throw new ServiceException(ApiError.FILE_DATA_IMPORT_FAILED);
         } catch (ExcelCommonException e) {
             log.error("导入格式错误！", e);
-            throw new ServiceException(ApiError.ERROR_FILE_IMPORT_FORMAT_INVALID_XLSX);
+            throw new ServiceException(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX);
         }
         //验证导入数据是否为空
         List<CfgReconciliationFieldImportExcelDTO> excelDateList = excelListenerUtil.getAllList();
         if (CollectionUtils.isEmpty(excelDateList)) {
-            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_REQUIRED);
+            throw new ServiceException(ApiError.FILE_DATA_REQUIRED);
         }
         //导入数据处理
         List<CfgReconciliationFieldImportExcelDTO> successList = excelListenerUtil.getSuccessList();
@@ -197,7 +197,7 @@ public class CfgReconciliationFieldServiceImpl extends SuperServiceImpl<CfgRecon
                     StrUtil.builder().append(DateUtil.nowExcelFileFormat()).append(name).toString(),
                     excelPath);
         } catch (IOException e) {
-            throw new ServiceException(ApiError.ERROR_EXPORT_ERROR_DATA_FAILED);
+            throw new ServiceException(ApiError.FILE_EXPORT_ERROR_DATA_FAILED);
         }
         return Boolean.FALSE;
     }

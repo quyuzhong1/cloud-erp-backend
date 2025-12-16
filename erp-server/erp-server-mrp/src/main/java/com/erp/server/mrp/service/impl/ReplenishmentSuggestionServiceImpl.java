@@ -638,7 +638,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
         }
         ReplenishmentSuggestionEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException(ApiError.ERROR_REPLENISHMENT_NOT_EXIST));
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "补货建议");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "补货建议");
         }
 
         //更新备货信息
@@ -1792,7 +1792,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
                 .collect(Collectors.toMap(SalesEstimateEntity::getDate, SalesEstimateEntity::getSalesQty, (o1, o2) -> o1));
         CfgRulePlatformTypeEnum platformType = CfgRulePlatformTypeEnum.getEnum(suggestion.getPlatformType());
         if (ObjectUtils.isEmpty(platformType)) {
-            throw new ServiceException(ApiError.ERROR_ENUM_CONVERT_FAILED);
+            throw new ServiceException(ApiError.COMMON_ENUM_CONVERT_FAILED);
         }
 
         switch (platformType) {
@@ -2071,7 +2071,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
                 .collect(Collectors.toMap(SalesEstimateEntity::getDate, SalesEstimateEntity::getSalesQty, (o1, o2) -> o1));
         CfgRulePlatformTypeEnum platformType = CfgRulePlatformTypeEnum.getEnum(suggestion.getPlatformType());
         if (ObjectUtils.isEmpty(platformType)) {
-            throw new ServiceException(ApiError.ERROR_ENUM_CONVERT_FAILED);
+            throw new ServiceException(ApiError.COMMON_ENUM_CONVERT_FAILED);
         }
         long days = ChronoUnit.DAYS.between(LocalDate.now(), dto.getDate()) + 1;
         switch (platformType) {

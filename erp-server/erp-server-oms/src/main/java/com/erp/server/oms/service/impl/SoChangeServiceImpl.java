@@ -268,7 +268,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
     public Boolean updateAndSubmit(SoChangeDTO.UpdateDTO dto) {
         String id = this.updateSoChange(dto);
         if (StringUtils.isBlank(id)) {
-            throw new ServiceException(ApiError.ERROR_UPDATE_FAILED);
+            throw new ServiceException(ApiError.BILL_UPDATE_FAILED);
         }
         return this.submit(Arrays.asList(id));
     }
@@ -338,7 +338,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
         List<SoChangeEntity> list = this.listByIds(ids);
         long invalidCount = list.stream().filter(s -> s.getInvalidStatus()).count();
         if (invalidCount > 0) {
-            throw new ServiceException(ApiError.ERROR_VOIDED_CANNOT_SUBMIT);
+            throw new ServiceException(ApiError.BILL_VOIDED_CANNOT_SUBMIT);
         }
         //待审核
         String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
@@ -351,7 +351,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
         statusList.add(waitSubmitStatus);
         long count = list.stream().filter(s -> !statusList.contains(s.getApproveStatus().getStatus())).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_WAIT_SUBMIT_TO_APPROVE_ING);
+            throw new ServiceException(ApiError.BILL_WAIT_SUBMIT_TO_APPROVE_ING);
         }
 
         //提交流程
@@ -391,7 +391,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
     public Boolean addAndSubmit(SoChangeDTO.AddDTO dto) {
         String id = this.add(dto);
         if (StringUtils.isBlank(id)) {
-            throw new ServiceException(ApiError.ERROR_CREATE_FAILED);
+            throw new ServiceException(ApiError.BILL_SAVE_FAILED);
         }
         Boolean result = this.submit(Arrays.asList(id));
         return result;
@@ -459,7 +459,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
         ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = ids.stream().map(obj -> new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.SO_CHANGE.getCode(), obj)).collect(Collectors.toCollection(ValidList::new));
         ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = workflowFeign.curApprover(dtoList);
         if (200 != listApiResult.getCode()) {
-            throw new ServiceException(new ApiResult(ApiError.DEFAULT.getCode(),listApiResult.getMsg()));
+            throw new ServiceException(new ApiResult(ApiError.HTTP_UNKNOWN.getCode(),listApiResult.getMsg()));
         }
 
         //客户id
@@ -788,7 +788,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
         ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = workflowFeign.curApprover(dtoList);
         Integer code = listApiResult.getCode();
         if (200 != code) {
-            throw new ServiceException(new ApiResult<>(ApiError.DEFAULT.getCode(),listApiResult.getMsg()));
+            throw new ServiceException(new ApiResult<>(ApiError.HTTP_UNKNOWN.getCode(),listApiResult.getMsg()));
         }
         for (SoChangeDTO.PagingViewDTO item : page.getRecords()) {
             BillTypeEnum orderType = item.getOrderType();
@@ -853,7 +853,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
         String ingStatus = ApproveStatusEnum.APPROVE_ING.getStatus();
         long count = list.stream().filter(s -> !ingStatus.equals(s.getApproveStatus().getStatus())).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_APPROVE_ALLOWED_STATUS_ONLY);
+            throw new ServiceException(ApiError.WF_APPROVE_ALLOWED_STATUS_ONLY);
         }
 
         //调用审核流程
@@ -884,7 +884,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
         Boolean result = this.updateApproveInfo(list, approveStatus, user.getUid(), user.getUserName());
         if (!result) {
-            throw new ServiceException(ApiError.ERROR_WF_APPROVAL_FAILED);
+            throw new ServiceException(ApiError.WF_APPROVE_FAILED);
         }
 
         List<DmpPushTaskEntity> pushTaskList = new ArrayList<>();
@@ -949,7 +949,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
         }
         long count = list.stream().filter(obj -> !ApproveStatusEnum.APPROVE_ING.getStatus().equals(obj.getApproveStatus().getStatus())).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_REVOKE_PROCESS_ALLOWED_STATUS_ONLY);
+            throw new ServiceException(ApiError.WF_REVOKE_PROCESS_ALLOWED_STATUS_ONLY);
         }
 
         //撤销现有流程
@@ -987,11 +987,11 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
         String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
         long count = list.stream().filter(s -> !s.getApproveStatus().getStatus().equals(waitSubmitStatus)).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_DELETE_ALLOWED_STATUS_ONLY);
+            throw new ServiceException(ApiError.BILL_DELETE_ALLOWED_STATUS_ONLY);
         }
         long invalidCount = list.stream().filter(s -> s.getInvalidStatus()).count();
         if (invalidCount > 0) {
-            throw new ServiceException(ApiError.ERROR_DELETE_ALLOWED_STATUS_ONLY);
+            throw new ServiceException(ApiError.BILL_DELETE_ALLOWED_STATUS_ONLY);
         }
         Boolean result = this.removeByIds(ids);
         if (result) {
@@ -1020,7 +1020,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
         for (SoChangeEntity entity : list) {
             if (!entity.getApproveStatus().getStatus().equals(waitSubmitStatus)
                     ||entity.getInvalidStatus()){
-                resultDTOList.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_DELETE_ALLOWED_STATUS_ONLY.getMsg()));
+                resultDTOList.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.BILL_DELETE_ALLOWED_STATUS_ONLY.getMsg()));
                 continue;
             }
             removeList.add(entity);
@@ -1040,7 +1040,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
             soChangeDetailService.removeByMainIdList(removeIdList);
 
         }else {
-            throw new ServiceException(ApiError.ERROR_DATA_DELETE_ERROR);
+            throw new ServiceException(ApiError.BILL_DELETE_FAILED);
         }
         // 返回成功结果
         return resultDTOList;
@@ -1070,11 +1070,11 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
         statusList.add(rejectStatus);
         long invalidCount = list.stream().filter(d -> !d.getInvalidStatus()).count();
         if (invalidCount != list.size()) {
-            throw new ServiceException(ApiError.ERROR_SCM_INCONSISTENT_VOID_STATUS);
+            throw new ServiceException(ApiError.BILL_INCONSISTENT_VOID_STATUS);
         }
         long count = list.stream().filter(s -> !statusList.contains(s.getApproveStatus().getStatus())).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_VOID_ALLOWED_STATUS_ONLY);
+            throw new ServiceException(ApiError.BILL_VOID_ALLOWED_STATUS_ONLY);
         }
         lambdaUpdate().in(SoChangeEntity::getId, ids).
                 set(SoChangeEntity::getInvalidStatus, Boolean.TRUE).
@@ -1145,7 +1145,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
         ApiResult<List<ProcessManagementDTO.ApproveResultDTO>> listApiResult = workflowFeign.batchApproveProcess(resultList);
         Integer code = listApiResult.getCode();
         if (200 != code) {
-            throw new ServiceException(ApiError.ERROR_WF_APPROVAL_FAILED);
+            throw new ServiceException(ApiError.WF_APPROVE_FAILED);
         }
         List<ProcessManagementDTO.ApproveResultDTO> data = listApiResult.getData();
         List<String> updateIdList = data.stream()

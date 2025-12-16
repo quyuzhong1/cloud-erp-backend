@@ -84,12 +84,12 @@ public class WorkflowServiceImpl implements WorkflowService {
         //获取流程状态
         int state = checkProcessInstanceState(procId);
         if (ProcessInstanceStateEnum.PROCESS_ING.getCode() != state) {
-            throw new ServiceException(ApiError.ERROR_WF_NOT_FOUND_OR_ENDED);
+            throw new ServiceException(ApiError.WF_PROCESS_NOT_FOUND_OR_ENDED);
         }
         //判断是否有任务
         List<Task> taskList = taskService.createTaskQuery().processInstanceId(procId).list();
         if (CollectionUtils.isEmpty(taskList)) {
-            throw new ServiceException(ApiError.ERROR_WF_NOT_STARTED);
+            throw new ServiceException(ApiError.WF_PROCESS_NOT_STARTED);
         }
 
         Task task = taskList.get(0);
@@ -99,7 +99,7 @@ public class WorkflowServiceImpl implements WorkflowService {
                 .finished().orderByHistoricActivityInstanceEndTime()
                 .asc().list();
         if (CollectionUtils.isEmpty(historicActivityInstanceList)) {
-            throw new ServiceException(ApiError.ERROR_WF_CURRENT_NODE_NULL);
+            throw new ServiceException(ApiError.WF_CURRENT_NODE_NULL);
         }
         ActivityInstance activityInstance = runtimeService.getActivityInstance(task.getProcessInstanceId());
         String toActId = historicActivityInstanceList.get(0).getActivityId();
@@ -135,19 +135,19 @@ public class WorkflowServiceImpl implements WorkflowService {
         //获取流程状态
         int state = checkProcessInstanceState(procId);
         if (ProcessInstanceStateEnum.PROCESS_ING.getCode() != state) {
-            throw new ServiceException(ApiError.ERROR_WF_NOT_FOUND_OR_ENDED);
+            throw new ServiceException(ApiError.WF_PROCESS_NOT_FOUND_OR_ENDED);
         }
 
         //判断是否有任务
         List<Task> taskList = taskService.createTaskQuery().processInstanceId(procId).list();
         if (CollectionUtils.isEmpty(taskList)) {
-            throw new ServiceException(ApiError.ERROR_WF_NOT_STARTED);
+            throw new ServiceException(ApiError.WF_PROCESS_NOT_STARTED);
         }
 
         //获取到流程的节点
         ActivityInstance activityInstance = runtimeService.getActivityInstance(procId);
         if (ObjectUtils.isNull(activityInstance) || ObjectUtils.isEmpty(activityInstance.getChildActivityInstances())) {
-            throw new ServiceException(ApiError.ERROR_WF_CURRENT_NODE_NULL);
+            throw new ServiceException(ApiError.WF_CURRENT_NODE_NULL);
         }
 
         // 判断是否处于第一个用户任务节点
@@ -158,7 +158,7 @@ public class WorkflowServiceImpl implements WorkflowService {
                 .asc().list();
         if (CollectionUtils.isEmpty(historicActivityInstanceList) ||
                 historicActivityInstanceList.get(0).getActivityId().equals(activityInstance.getChildActivityInstances()[0].getActivityId())) {
-            throw new ServiceException(ApiError.ERROR_WF_RECALL_NOT_FIRST_USER_TASK);
+            throw new ServiceException(ApiError.WF_RECALL_NOT_FIRST_TASK);
         }
         String toActId = historicActivityInstanceList.get(0).getActivityId();
         String assignee = historicActivityInstanceList.get(0).getAssignee();
@@ -233,7 +233,7 @@ public class WorkflowServiceImpl implements WorkflowService {
                 .asc()
                 .list();
         if (CollectionUtils.isEmpty(historicActivityInstances)) {
-            throw new ServiceException(ApiError.ERROR_WF_NOT_STARTED);
+            throw new ServiceException(ApiError.WF_PROCESS_NOT_STARTED);
         }
         //获取最后一个活动节点
         ActivityImpl lastActivity = processDefinitionEntity.findActivity(historicActivityInstances.get(0).getActivityId());
@@ -303,7 +303,7 @@ public class WorkflowServiceImpl implements WorkflowService {
             Map<String, Object> parameterMap = dto.getParameterMap();
             ProcessInstance processInstance = runtimeService.startProcessInstanceByKey(dto.getProcessDefinitionKey(), dto.getBusinessKey(), parameterMap);
             if (Objects.isNull(processInstance)) {
-                throw new ServiceException(ApiError.ERROR_WF_START_FAILED);
+                throw new ServiceException(ApiError.WF_START_FAILED);
             }
             //流程 id
             processId = processInstance.getProcessInstanceId();
@@ -319,7 +319,7 @@ public class WorkflowServiceImpl implements WorkflowService {
 
         } catch (Exception e) {
             log.error("启动流程出错", e);
-            throw new ServiceException(ApiError.ERROR_WF_START_FAILED);
+            throw new ServiceException(ApiError.WF_START_FAILED);
         }
         processNodeDTO.setCurrentNodeId(currentNodeId);
         processNodeDTO.setProcessId(processId);

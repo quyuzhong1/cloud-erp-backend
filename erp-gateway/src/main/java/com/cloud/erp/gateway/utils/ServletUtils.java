@@ -207,7 +207,7 @@ public class ServletUtils {
      * @return Mono<Void>
      */
     public static Mono<Void> webFluxResponseWriter(ServerHttpResponse response, Object value) {
-        return webFluxResponseWriter(response, HttpStatus.OK, value, ApiError.DEFAULT.getCode());
+        return webFluxResponseWriter(response, HttpStatus.OK, value, ApiError.HTTP_UNKNOWN.getCode());
     }
 
     /**

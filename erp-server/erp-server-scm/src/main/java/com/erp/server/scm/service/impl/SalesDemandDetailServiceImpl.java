@@ -144,7 +144,7 @@ public class SalesDemandDetailServiceImpl extends SuperServiceImpl<SalesDemandDe
                 refQty = salesDemandDetailList.stream().filter(obj -> obj.getSourceDetailId().equals(sourceDetailId) && !obj.getId().equals(entity.getId())).map(SalesDemandDetailEntity::getPlanStockQty).reduce(MathUtil.ZERO, Integer::sum);
             }
             if (entity.getPlanStockQty().intValue() > qty.intValue() - refQty.intValue()) {
-                throw new ServiceException(ApiError.ERROR_SCM_STOCK_APPLY_SKU_QTY_EXCEEDS.getCode(),String.format(ApiError.ERROR_SCM_STOCK_APPLY_SKU_QTY_EXCEEDS.getMsg(),entity.getSkuNo(),qty.intValue() - refQty.intValue()));
+                throw new ServiceException(ApiError.SALES_DEMAND_SKU_QTY_EXCEEDS.getCode(),String.format(ApiError.SALES_DEMAND_SKU_QTY_EXCEEDS.getMsg(),entity.getSkuNo(),qty.intValue() - refQty.intValue()));
             }
         }
     }
@@ -196,7 +196,7 @@ public class SalesDemandDetailServiceImpl extends SuperServiceImpl<SalesDemandDe
         List<String> skuIds = newList.stream().map(SalesDemandDetailEntity::getSkuId).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIds);
         if (CollectionUtils.isEmpty(skuList)) {
-            throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_INFO_NOT_FOUND);
+            throw new ServiceException(ApiError.PRODUCT_INFO_NOT_FOUND);
         }
 
         //添加操作日志
@@ -216,7 +216,7 @@ public class SalesDemandDetailServiceImpl extends SuperServiceImpl<SalesDemandDe
             //产品信息
             SkuVO skuVO = skuList.stream().filter(obj -> obj.getSkuId().equals(entity.getSkuId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(skuVO)) {
-                throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_INFO_NOT_FOUND);
+                throw new ServiceException(ApiError.PRODUCT_INFO_NOT_FOUND);
             }
             entity.setProductName(skuVO.getSkuName());
             entity.setUnitQty(skuVO.getUnitQty());
@@ -226,7 +226,7 @@ public class SalesDemandDetailServiceImpl extends SuperServiceImpl<SalesDemandDe
             if (StringUtils.isNotBlank(entity.getId())) {
                 SalesDemandDetailEntity old = this.getById(entity.getId());
                 if (ObjectUtils.isEmpty(old)) {
-                    throw new ServiceException(ApiError.ERROR_SCM_STOCK_APPLY_DETAIL_NOT_FOUND);
+                    throw new ServiceException(ApiError.SALES_DEMAND_DETAIL_NOT_FOUND);
                 }
                 moduleOperateLogService.addModuleOperateLogByObj(old,entity, ModuleTypeEnum.SALES_DEMAND.getCode(),salesDemandId,"",String.format("【%s】",old.getSkuNo()));
             }

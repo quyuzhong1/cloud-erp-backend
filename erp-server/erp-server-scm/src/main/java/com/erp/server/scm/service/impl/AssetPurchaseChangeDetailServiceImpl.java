@@ -70,7 +70,7 @@ public class AssetPurchaseChangeDetailServiceImpl extends SuperServiceImpl<Asset
     @Override
     public Boolean update(AssetPurchaseChangeDetailDTO.UpdateDTO addOrUpdateDTO) {
         AssetPurchaseChangeDetailEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, ""));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, ""));
         AssetPurchaseChangeDetailEntity assetPurchaseChangeDetailEntity =  BeanMapperUtils.map(AssetPurchaseChangeDetailEntity.class, addOrUpdateDTO);
 
         // 数据处理
@@ -97,7 +97,7 @@ public class AssetPurchaseChangeDetailServiceImpl extends SuperServiceImpl<Asset
         for (AssetPurchaseChangeDetailDTO.UpdateDTO dto : updateDTO) {
 
             if (dto.getPurchaseQty() == null || dto.getPurchaseQty().compareTo(BigDecimal.ZERO) <= 0) {
-                throw new ServiceException(ApiError.ERROR_PRICE_ZERO_SKUNO,dto.getPurchaseQty());
+                throw new ServiceException(ApiError.PURCHASE_PRICE_SKU_PRICE_ZERO,dto.getPurchaseQty());
             }
 
             if (dto.getTaxPrice() == null || dto.getTaxPrice().compareTo(BigDecimal.ZERO) <= 0) {

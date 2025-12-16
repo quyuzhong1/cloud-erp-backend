@@ -155,7 +155,7 @@ public class ProductBomHistoryServiceImpl extends ServiceImpl<ProductBomHistoryM
     public List<ProductBomHistoryDTO.VersionDTO> listHistoryVersion(ProductBomHistoryDTO.ParamDTO dto) {
         List<BomChildrenSkuDTO> bomChildrenSkuList = bomSkuService.listBomChildBySkuIds(Arrays.asList(dto.getSkuId()));
         if (CollectionUtils.isEmpty(bomChildrenSkuList)) {
-            throw new ServiceException(ApiError.ERROR_PLM_BOM_NOT_FOUND);
+            throw new ServiceException(ApiError.BOM_NOT_FOUND);
         }
         List<ProductBomHistoryEntity> list = lambdaQuery().eq(ProductBomHistoryEntity::getBomId, bomChildrenSkuList.get(0).getBomId())
                 .select(ProductBomHistoryEntity::getBomVersion)

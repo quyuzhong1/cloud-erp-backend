@@ -54,7 +54,7 @@ public class WeiShiLogisticsHandlerImpl extends AbstractLogisticsHandler {
                         chanelQueryVO.getTransportMode(), BusinessTypeEnum.GET_CHANEL_LIST.getCode(), LogisticsPlatformEnum.WEI_SHI.getCode(),
                         RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(chanelQueryVO), JSONUtil.toJsonStr(weiShiResponse));
 
-                return ApiResult.error(ApiError.CALL_THIRD_LOGISTICS_PLATFORM_ERROR.getCode(),weiShiResponse.getError().getErrMessage());
+                return ApiResult.error(ApiError.LOGISTICS_CALL_THIRD_PLATFORM_ERROR.getCode(),weiShiResponse.getError().getErrMessage());
             }
             List<LogisticsSaleChannelEntity> response = LogisticsChannelConverter.INSTANCE.channelConvertByWeiShi(weiShiResponse.getData());
             logisticsOperateService.pullOperateLog(chanelQueryVO.getOrderId(),
@@ -81,7 +81,7 @@ public class WeiShiLogisticsHandlerImpl extends AbstractLogisticsHandler {
                 logisticsOperateService.pushOperateLog(logisticsOrderVO.getSourceId(),
                         logisticsOrderVO.getDeliveryNo(), BusinessTypeEnum.CREATE_ORDER.getCode(), LogisticsPlatformEnum.WEI_SHI.getCode(),
                         RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsOrderVO), JSONUtil.toJsonStr(weiShiResponse), false);
-                return ApiResult.error(ApiError.CALL_THIRD_LOGISTICS_PLATFORM_ERROR.getCode(),weiShiResponse.getError().getErrMessage());
+                return ApiResult.error(ApiError.LOGISTICS_CALL_THIRD_PLATFORM_ERROR.getCode(),weiShiResponse.getError().getErrMessage());
             }
             logisticsOperateService.pushOperateLog(logisticsOrderVO.getSourceId(),
                     logisticsOrderVO.getDeliveryNo(), BusinessTypeEnum.CREATE_ORDER.getCode(), LogisticsPlatformEnum.WEI_SHI.getCode(),
@@ -158,7 +158,7 @@ public class WeiShiLogisticsHandlerImpl extends AbstractLogisticsHandler {
                 logisticsOperateService.pullOperateLog(logisticsQueryVOList.get(0).getOrderId(),
                         null, BusinessTypeEnum.QUERY_ORDER.getCode(), LogisticsPlatformEnum.WEI_SHI.getCode(),
                         RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsQueryVOList), JSONUtil.toJsonStr(weiShiresponse));
-                return ApiResult.error(ApiError.CALL_THIRD_LOGISTICS_PLATFORM_ERROR.getCode(),weiShiresponse.getError().getErrMessage());
+                return ApiResult.error(ApiError.LOGISTICS_CALL_THIRD_PLATFORM_ERROR.getCode(),weiShiresponse.getError().getErrMessage());
             }
             List<LogisticsOrderResponseVO> response = LogisticsOrderConverter.INSTANCE.trackInfoConvertByWeiShi(weiShiresponse.getData());
             logisticsOperateService.pullOperateLog(logisticsQueryVOList.get(0).getOrderId(),
@@ -300,7 +300,7 @@ public class WeiShiLogisticsHandlerImpl extends AbstractLogisticsHandler {
                 logisticsOperateService.pushOperateLog(logisticsUpdateWeightVO.getOrderId(),
                         logisticsUpdateWeightVO.getDeliveryNo(), BusinessTypeEnum.UPDATE_WEIGHT.getCode(), LogisticsPlatformEnum.WEI_SHI.getCode(),
                         RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsUpdateWeightVO), JSONUtil.toJsonStr(response),false);
-                return ApiResult.error(ApiError.CALL_THIRD_LOGISTICS_PLATFORM_ERROR.getCode(),response.getMessage());
+                return ApiResult.error(ApiError.LOGISTICS_CALL_THIRD_PLATFORM_ERROR.getCode(),response.getMessage());
             }
             logisticsOperateService.pushOperateLog(logisticsUpdateWeightVO.getOrderId(),
                     logisticsUpdateWeightVO.getDeliveryNo(), BusinessTypeEnum.UPDATE_WEIGHT.getCode(), LogisticsPlatformEnum.WEI_SHI.getCode(),

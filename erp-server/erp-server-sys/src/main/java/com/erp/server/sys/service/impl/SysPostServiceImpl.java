@@ -55,7 +55,7 @@ public class SysPostServiceImpl extends ServiceImpl<SysPostMapper, SysPostEntity
         String postName = dto.getPostName();
         SysPostEntity postEntity=getPostEntityByName(postName);
         if(!Objects.isNull(postEntity)){
-            throw new ServiceException(ApiError.ERROR_DEPT_NAME_EXISTS);
+            throw new ServiceException(ApiError.COMMON_DEPT_NAME_EXISTS);
         }
         SysPostEntity entity = new SysPostEntity();
         BeanMapperUtils.copy(dto, entity);

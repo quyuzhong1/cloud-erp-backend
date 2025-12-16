@@ -56,7 +56,7 @@ public class CfgRuleWaveRecordServiceImpl extends SuperServiceImpl<CfgRuleWaveRe
     public Boolean update(CfgRuleWaveRecordDTO.UpdateDTO updateDTO) {
         CfgRuleWaveRecordEntity old = super.getById(updateDTO.getId());
         if (Objects.isNull(old)){
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "波次规则执行记录单");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "波次规则执行记录单");
         }
         CfgRuleWaveRecordEntity cfgRuleWaveRecordEntity =  BeanMapperUtils.map(CfgRuleWaveRecordEntity.class, updateDTO);
         log.info("编辑 开始修改波次规则执行记录单数据，id：【{}】", old.getId());

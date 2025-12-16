@@ -62,7 +62,7 @@ public class ThirdLogisticsStrategy implements ThirdMappingStrategy {
         //校验系统物流渠道是否存在
         LogisticsChannelDTO.BaseDTO baseDTO = logisticsFeign.getChannelInfoById(addDTO.getSysId());
         if (Objects.isNull(baseDTO)) {
-            throw new ServiceException(ApiError.ERROR_SYS_TYPE_NOTFOUND, ThirdSysTypeEnum.getNameByCode(addDTO.getType()));
+            throw new ServiceException(ApiError.COMMON_NOT_FOUND, ThirdSysTypeEnum.getNameByCode(addDTO.getType()));
         }
         List<ThirdAddDTO> thirdList = addDTO.getThirdList();
         //同一个第三方平台只能绑定一个仓库
@@ -270,14 +270,14 @@ public class ThirdLogisticsStrategy implements ThirdMappingStrategy {
         ThirdMappingEntity existSysMapping = thirdMappingService.getByTypeAndSysIdAndSysType(thirdMappingEntity);
         if (Objects.nonNull(existSysMapping)) {
             if (!Objects.equals(thirdMappingEntity.getSysId(), existSysMapping.getSysId())) {
-                throw new ServiceException(ApiError.ERROR_THIRD_BINDED, ThirdSysTypeEnum.getNameByCode(thirdMappingEntity.getType()), thirdName, existSysMapping.getSysName());
+                throw new ServiceException(ApiError.DMP_THIRD_ALREADY_BINDED, ThirdSysTypeEnum.getNameByCode(thirdMappingEntity.getType()), thirdName, existSysMapping.getSysName());
             } else {
                 thirdMappingEntity.setId(existSysMapping.getId());
             }
         }
         ThirdMappingEntity existThirdMapping = thirdMappingService.getByTypeAndThirdId(thirdMappingEntity);
         if (Objects.nonNull(existThirdMapping) && ((Objects.nonNull(existSysMapping) && !Objects.equals(thirdMappingEntity.getSysId(), existThirdMapping.getSysId())) || Objects.isNull(existSysMapping))) {
-            throw new ServiceException(ApiError.ERROR_THIRD_BINDED, ThirdSysTypeEnum.getNameByCode(thirdMappingEntity.getType()), thirdName, existThirdMapping.getSysName());
+            throw new ServiceException(ApiError.DMP_THIRD_ALREADY_BINDED, ThirdSysTypeEnum.getNameByCode(thirdMappingEntity.getType()), thirdName, existThirdMapping.getSysName());
         }
     }
 
@@ -292,7 +292,7 @@ public class ThirdLogisticsStrategy implements ThirdMappingStrategy {
         Map<String, List<ThirdAddDTO>> result = thirdList.stream().collect(groupingBy(ThirdAddDTO::getSysType,
                 collectingAndThen(Collectors.toList(), list -> {
                             if (list.size() > 1) {
-                                throw new ServiceException(ApiError.ERROR_THIRD_SYS_TYPE_BINDING, ThirdSysTypeEnum.getNameByCode(type));
+                                throw new ServiceException(ApiError.DMP_THIRD_SYS_TYPE_SINGLE_BINDING, ThirdSysTypeEnum.getNameByCode(type));
                             }
                             return list;
                         }

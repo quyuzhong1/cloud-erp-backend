@@ -130,7 +130,7 @@ public class PurchasePriceExcelListener extends AnalysisEventListener<ImportPurc
 
         Map<String, Object> supplierMap  = supplierList.stream().filter(r->Objects.equals(supplierName, StrUtils.null2EmptyWithTrim(r.get("name")))).findFirst().orElse(null);
         if(Objects.isNull(supplierMap)) {
-            errorMsgList.add(ApiError.ERROR_SUPPLIER_ABSENCE.getMsg());
+            errorMsgList.add(ApiError.SUPPLIER_NOT_FOUND.getMsg());
         } else {
             addDTO.setSupplierId(StrUtils.null2EmptyWithTrim(supplierMap.get("id")));
         }

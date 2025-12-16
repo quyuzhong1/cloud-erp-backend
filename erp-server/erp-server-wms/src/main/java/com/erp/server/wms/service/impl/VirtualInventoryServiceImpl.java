@@ -125,7 +125,7 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
             // 更新实时库存表数量
             boolean updateFlag = this.updateQtyById(found.getId(), qty);
             if (!updateFlag) {
-                throw new ServiceException(ApiError.ERROR_DATA_CONFLICT);
+                throw new ServiceException(ApiError.BILL_DATA_CONFLICT);
             }
         }
         return found;
@@ -140,7 +140,7 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
                 .eq(VirtualInventoryEntity::getId, id)
                 .update(new VirtualInventoryEntity());
         if (!flag) {
-            throw new ServiceException(ApiError.ERROR_DATA_CONFLICT);
+            throw new ServiceException(ApiError.BILL_DATA_CONFLICT);
         }
         return flag;
     }
@@ -538,7 +538,7 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
 
         for (VirtualInventoryDTO.ListDTO listDTO : list) {
             //产品信息
-            ProductDetailEntity productDetailEntity = productDetailEntityList.stream().filter(obj -> obj.getId().equals(listDTO.getSkuId())).findFirst().orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "产品信息"));
+            ProductDetailEntity productDetailEntity = productDetailEntityList.stream().filter(obj -> obj.getId().equals(listDTO.getSkuId())).findFirst().orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "产品信息"));
             listDTO.setSkuNo(productDetailEntity.getSkuNo());
             listDTO.setProductName(productDetailEntity.getName());
 

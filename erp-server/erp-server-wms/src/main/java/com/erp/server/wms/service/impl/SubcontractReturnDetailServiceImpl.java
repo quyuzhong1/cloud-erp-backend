@@ -62,7 +62,7 @@ public class SubcontractReturnDetailServiceImpl extends SuperServiceImpl<Subcont
     @Override
     public void add(List<SubcontractReturnDetailDTO.AddDTO> details, String mainId) {
         if (CollUtil.isEmpty(details)) {
-            throw new ServiceException(ApiError.ERROR_DOC_DETAIL_REQUIRED, SourceTypeEnum.SUBCONTRACT_RETURN.getName());
+            throw new ServiceException(ApiError.BILL_DETAIL_REQUIRED, SourceTypeEnum.SUBCONTRACT_RETURN.getName());
         }
         List<SubcontractReturnDetailEntity> list = BeanMapperUtils.copyList(SubcontractReturnDetailEntity.class, details);
 
@@ -91,7 +91,7 @@ public class SubcontractReturnDetailServiceImpl extends SuperServiceImpl<Subcont
     @Override
     public Boolean update(List<SubcontractReturnDetailDTO.UpdateDTO> details, String mainId) {
         if (CollUtil.isEmpty(details)) {
-            throw new ServiceException(ApiError.ERROR_DOC_DETAIL_REQUIRED, SourceTypeEnum.SUBCONTRACT_RETURN.getName());
+            throw new ServiceException(ApiError.BILL_DETAIL_REQUIRED, SourceTypeEnum.SUBCONTRACT_RETURN.getName());
         }
         List<SubcontractReturnDetailEntity> list = BeanMapperUtils.copyList(SubcontractReturnDetailEntity.class, details);
 
@@ -164,19 +164,19 @@ public class SubcontractReturnDetailServiceImpl extends SuperServiceImpl<Subcont
             SubcontractOrderDetailEntity  childDetailEntity = childDetailList.stream().filter(obj -> obj.getId().equals(detailEntity.getSubcontractOrderDetailId()))
                     .findFirst().orElse(null);
             if (ObjectUtils.isEmpty(childDetailEntity)) {
-                throw new ServiceException(ApiError.ERROR_SCM_OUTSOURCING_DETAIL_CHILD_SKU_NOT_FOUND);
+                throw new ServiceException(ApiError.PO_SUBCONTRACT_DETAIL_CHILD_SKU_NOT_FOUND);
             }
             //委外父级SKU明细信息
             SubcontractOrderDetailEntity parentDetailEntity = parentDetailList.stream().filter(obj -> obj.getId().equals(childDetailEntity.getParentId()))
                     .findFirst().orElse(null);
             if (ObjectUtils.isEmpty(parentDetailEntity)) {
-                throw new ServiceException(ApiError.ERROR_SCM_OUTSOURCING_DETAIL_PARENT_SKU_NOT_FOUND);
+                throw new ServiceException(ApiError.PO_SUBCONTRACT_DETAIL_PARENT_SKU_NOT_FOUND);
             }
             //bom信息
             BomChildrenSkuDTO bomChildrenSkuDTO = bomChildrenSkuList.stream().filter(obj -> obj.getParentSkuId().equals(parentDetailEntity.getSkuId()) && obj.getSkuId().equals(childDetailEntity.getSkuId()))
                     .findFirst().orElse(null);
             if (ObjectUtils.isEmpty(bomChildrenSkuDTO)) {
-                throw new ServiceException(ApiError.ERROR_PLM_BOM_NOT_FOUND);
+                throw new ServiceException(ApiError.BOM_NOT_FOUND);
             }
             detailEntity.setParentSkuId(parentDetailEntity.getSkuId());
             detailEntity.setParentSkuNo(parentDetailEntity.getSkuNo());
@@ -199,7 +199,7 @@ public class SubcontractReturnDetailServiceImpl extends SuperServiceImpl<Subcont
             if (CharSequenceUtil.isNotBlank(detailEntity.getId())) {
                 SubcontractReturnDetailEntity old = this.getById(detailEntity.getId());
                 if (ObjectUtils.isEmpty(old)) {
-                    throw new ServiceException(ApiError.ERROR_SCM_PO_DETAIL_NOT_FOUND);
+                    throw new ServiceException(ApiError.PO_DETAIL_NOT_FOUND);
                 }
                 operateLogService.addModuleOperateLogByObj(old,detailEntity, ModuleTypeEnum.SUBCONTRACT_RETURN.getCode(),subcontractReturnEntity.getId(),"",String.format("【%s】",old.getSkuNo()));
             }
@@ -274,7 +274,7 @@ public class SubcontractReturnDetailServiceImpl extends SuperServiceImpl<Subcont
         for (SubcontractReturnDetailEntity entity : list) {
             SubcontractOrderDetailEntity detailEntity = subcontractOrderDetailList.stream().filter(obj -> obj.getId().equals(entity.getSubcontractOrderDetailId())).findFirst().orElse(null);
             if (Objects.isNull(detailEntity)) {
-                throw new ServiceException(ApiError.ERROR_SCM_OUTSOURCING_DETAIL_CHILD_SKU_NOT_FOUND);
+                throw new ServiceException(ApiError.PO_SUBCONTRACT_DETAIL_CHILD_SKU_NOT_FOUND);
             }
             //已下推退料数量
             Integer totalReturnQty = subcontractReturnDetailList.stream().filter(obj -> obj.getSubcontractOrderDetailId().equals(entity.getSubcontractOrderDetailId())

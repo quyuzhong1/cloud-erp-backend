@@ -91,7 +91,7 @@ public class DmpCfgEtlServiceImpl extends SuperServiceImpl<DmpCfgEtlMapper, DmpC
     @Override
     public Boolean update(DmpCfgEtlDTO.UpdateDTO addOrUpdateDTO) {
         DmpCfgEtlEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "etl配置信息"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "etl配置信息"));
         DmpCfgEtlEntity dmpCfgEtlEntity =  BeanMapperUtils.map(DmpCfgEtlEntity.class, addOrUpdateDTO);
 
         // 数据处理

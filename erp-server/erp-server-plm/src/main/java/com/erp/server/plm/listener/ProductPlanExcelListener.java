@@ -146,12 +146,12 @@ public class ProductPlanExcelListener extends AnalysisEventListener<ProductPlanE
                 //一级品类
                 BasicCategoryEntity bestEntity = categoryList.stream().filter(obj -> "0".equals(obj.getPid())).findFirst().orElse(null);
                 if (ObjectUtils.isEmpty(bestEntity) || StringUtils.isBlank(bestEntity.getCode())) {
-                    errorMsgList.add(MessageUtils.getMessage(ApiError.ERROR_PLM_CATEGORY_CODE_NOT_FOUND));
+                    errorMsgList.add(MessageUtils.getMessage(ApiError.PRODUCT_CATEGORY_CODE_NOT_FOUND));
                 }
                 //二级品类
                 BasicCategoryEntity secondEntity = categoryList.stream().filter(obj -> bestEntity.getId().equals(obj.getPid())).findFirst().orElse(null);
                 if (ObjectUtils.isEmpty(secondEntity) || StringUtils.isBlank(secondEntity.getCode())) {
-                    errorMsgList.add(MessageUtils.getMessage(ApiError.ERROR_PLM_CATEGORY_CODE_NOT_FOUND));
+                    errorMsgList.add(MessageUtils.getMessage(ApiError.PRODUCT_CATEGORY_CODE_NOT_FOUND));
                 }
                 productPlanEntity.setCategoryId(basicCategoryEntity.getId());
             }

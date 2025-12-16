@@ -231,7 +231,7 @@ public class BaTongLogisticsHandlerImpl extends AbstractLogisticsHandler {
                 logisticsOperateService.pushOperateLog(logisticsUpdateWeightVO.getOrderId(),
                         logisticsUpdateWeightVO.getDeliveryNo(), BusinessTypeEnum.UPDATE_WEIGHT.getCode(), LogisticsPlatformEnum.BaTong.getCode(),
                         RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsUpdateWeightVO), JSONUtil.toJsonStr(response),false);
-                return ApiResult.error(ApiError.CALL_THIRD_LOGISTICS_PLATFORM_ERROR.getCode(),response.getCnMessage());
+                return ApiResult.error(ApiError.LOGISTICS_CALL_THIRD_PLATFORM_ERROR.getCode(),response.getCnMessage());
             }
             logisticsOperateService.pushOperateLog(logisticsUpdateWeightVO.getOrderId(),
                     logisticsUpdateWeightVO.getDeliveryNo(), BusinessTypeEnum.UPDATE_WEIGHT.getCode(), LogisticsPlatformEnum.BaTong.getCode(),

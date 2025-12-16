@@ -308,7 +308,7 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
     public Boolean update(WmsDataCompareTaskDTO.UpdateDTO updateDTO) {
         WmsDataCompareTaskEntity old = super.getById(updateDTO.getId());
 		if (Objects.isNull(old)){
-			throw new ServiceException(ApiError.NOT_EXIST_BILL, "数据对比任务");
+			throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "数据对比任务");
 		}
         WmsDataCompareTaskEntity wmsDataCompareTaskEntity =  BeanMapperUtils.map(WmsDataCompareTaskEntity.class, updateDTO);
 

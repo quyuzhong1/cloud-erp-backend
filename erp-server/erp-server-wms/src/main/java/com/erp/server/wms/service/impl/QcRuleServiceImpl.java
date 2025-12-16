@@ -79,7 +79,7 @@ public class QcRuleServiceImpl extends SuperServiceImpl<QcRuleMapper, QcRuleEnti
         //如果有 报告不能为空
         if (existReport) {
             if (CollectionUtils.isEmpty(reportList)) {
-                throw new ServiceException(ApiError.ERROR_QC_REPORT_NOT_FOUND);
+                throw new ServiceException(ApiError.PO_QC_REPORT_NOT_FOUND);
             }
         }
         QcRuleEntity rule = new QcRuleEntity();
@@ -127,7 +127,7 @@ public class QcRuleServiceImpl extends SuperServiceImpl<QcRuleMapper, QcRuleEnti
         queryWrapper.eq(QcRuleEntity::getQcType, qcType);
         long count = this.count(queryWrapper);
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_QC_TYPE_EXISTS);
+            throw new ServiceException(ApiError.PO_QC_TYPE_EXISTS);
         }
     }
 
@@ -144,7 +144,7 @@ public class QcRuleServiceImpl extends SuperServiceImpl<QcRuleMapper, QcRuleEnti
     public QcRuleDTO.ViewDTO view(String id) {
         QcRuleEntity rule = this.getById(id);
         if (Objects.isNull(rule)) {
-            throw new ServiceException(ApiError.ERROR_QC_RULE_NOT_FOUND);
+            throw new ServiceException(ApiError.PO_QC_RULE_NOT_FOUND);
         }
         QcRuleDTO.ViewDTO view = new QcRuleDTO.ViewDTO();
         BeanMapper.copy(rule, view);
@@ -186,7 +186,7 @@ public class QcRuleServiceImpl extends SuperServiceImpl<QcRuleMapper, QcRuleEnti
     public Boolean addAndSubmit(QcRuleDTO.AddDTO dto) {
         String id = this.add(dto);
         if (CharSequenceUtil.isBlank(id)) {
-            throw new ServiceException(ApiError.ERROR_CREATE_FAILED);
+            throw new ServiceException(ApiError.BILL_SAVE_FAILED);
         }
         Boolean result = this.submit(Collections.singletonList(id));
         return result;
@@ -219,7 +219,7 @@ public class QcRuleServiceImpl extends SuperServiceImpl<QcRuleMapper, QcRuleEnti
         statusList.add(waitSubmitStatus);
         long count = list.stream().filter(s -> !statusList.contains(s.getApproveStatus())).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_WAIT_SUBMIT_TO_APPROVE_ING);
+            throw new ServiceException(ApiError.BILL_WAIT_SUBMIT_TO_APPROVE_ING);
         }
         Boolean result = this.updateApproveStatus(list, ingStatus);
         return result;
@@ -241,7 +241,7 @@ public class QcRuleServiceImpl extends SuperServiceImpl<QcRuleMapper, QcRuleEnti
         String qcRuleId = dto.getId();
         QcRuleEntity qcRule = this.getById(qcRuleId);
         if (Objects.isNull(qcRule)) {
-            throw new ServiceException(ApiError.ERROR_QC_RULE_NOT_FOUND);
+            throw new ServiceException(ApiError.PO_QC_RULE_NOT_FOUND);
         }
         checkQcType(qcRuleId, dto.getQcType());
         String code = qcRule.getCode();
@@ -284,7 +284,7 @@ public class QcRuleServiceImpl extends SuperServiceImpl<QcRuleMapper, QcRuleEnti
     public Boolean updateAndSubmit(QcRuleDTO.UpdateDTO dto) {
         String id = this.updateQcRule(dto);
         if (CharSequenceUtil.isBlank(id)) {
-            throw new ServiceException(ApiError.ERROR_UPDATE_FAILED);
+            throw new ServiceException(ApiError.BILL_UPDATE_FAILED);
         }
         return this.submit(Collections.singletonList(id));
     }
@@ -303,19 +303,19 @@ public class QcRuleServiceImpl extends SuperServiceImpl<QcRuleMapper, QcRuleEnti
         List<String> qcRuleIdList = dto.getIds();
         List<QcRuleEntity> list = this.listByIds(qcRuleIdList);
         if (CollectionUtils.isEmpty(list)) {
-            throw new ServiceException(ApiError.ERROR_QC_RULE_NOT_FOUND);
+            throw new ServiceException(ApiError.PO_QC_RULE_NOT_FOUND);
         }
         for (QcRuleEntity entity : list) {
             //当前登陆人,启用流程后可删除
             LoginUser userInfo = UserContext.getDefaultLoginUser();
             if (CharSequenceUtil.equals(entity.getCreateUserId(),userInfo.getUid()) && !CharSequenceUtil.equals(entity.getCreateUserId(), UserStateConstants.USER_SYSTEM_ID)) {
-                throw new ServiceException(ApiError.WORKFLOW_APPROVE_CREATE_APPROVE_DIFF,userInfo.getUserName());
+                throw new ServiceException(ApiError.WF_CREATOR_APPROVER_NOT_SAME,userInfo.getUserName());
             }
         }
         String ingStatus = ApproveStatusEnum.APPROVE_ING.getStatus();
         long count = list.stream().filter(s -> !ingStatus.equals(s.getApproveStatus())).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_APPROVE_ALLOWED_STATUS_ONLY);
+            throw new ServiceException(ApiError.WF_APPROVE_ALLOWED_STATUS_ONLY);
         }
         if (dto.getType().equals(WmsConstant.PASS)) {
             //审核通过
@@ -343,7 +343,7 @@ public class QcRuleServiceImpl extends SuperServiceImpl<QcRuleMapper, QcRuleEnti
     public Boolean disApprove(List<String> ids) {
         List<QcRuleEntity> list = this.listByIds(ids);
         if (CollectionUtils.isEmpty(list)) {
-            throw new ServiceException(ApiError.ERROR_QC_RULE_NOT_FOUND);
+            throw new ServiceException(ApiError.PO_QC_RULE_NOT_FOUND);
         }
         //审核通过
         String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
@@ -353,7 +353,7 @@ public class QcRuleServiceImpl extends SuperServiceImpl<QcRuleMapper, QcRuleEnti
         statusList.add(approveStatus);
         long count = list.stream().filter(s -> !statusList.contains(s.getApproveStatus())).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_WMS_REVERSE_APPROVAL_ALLOWED_APPROVED_ONLY);
+            throw new ServiceException(ApiError.BILL_REVERSE_APPROVAL_ALLOWED_APPROVED_ONLY);
         }
         Boolean result = this.updateApproveStatus(list, waitSubmitStatus);
         return result;
@@ -373,7 +373,7 @@ public class QcRuleServiceImpl extends SuperServiceImpl<QcRuleMapper, QcRuleEnti
         List<QcRuleEntity> list = this.listByIds(ids);
         long count = list.stream().filter(obj -> !ApproveStatusEnum.APPROVE_ING.getStatus().equals(obj.getApproveStatus())).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_REVOKE_PROCESS_ALLOWED_STATUS_ONLY);
+            throw new ServiceException(ApiError.WF_REVOKE_PROCESS_ALLOWED_STATUS_ONLY);
         }
         //待提交
         String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
@@ -404,7 +404,7 @@ public class QcRuleServiceImpl extends SuperServiceImpl<QcRuleMapper, QcRuleEnti
         List<BatchResultDTO> resultDTOList=new ArrayList<>();
         for (QcRuleEntity entity : list) {
             if (!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(entity.getApproveStatus())){
-                resultDTOList.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_DELETE_ALLOWED_STATUS_ONLY.getMsg()));
+                resultDTOList.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.BILL_DELETE_ALLOWED_STATUS_ONLY.getMsg()));
                 continue;
             }
             removeList.add(entity);
@@ -464,7 +464,7 @@ public class QcRuleServiceImpl extends SuperServiceImpl<QcRuleMapper, QcRuleEnti
         String id = dto.getId();
         QcRuleEntity rule = this.getById(id);
         if (Objects.isNull(rule)) {
-            throw new ServiceException(ApiError.ERROR_QC_RULE_NOT_FOUND);
+            throw new ServiceException(ApiError.PO_QC_RULE_NOT_FOUND);
         }
         rule.setDisabled(dto.getState());
         return this.updateById(rule);

@@ -288,7 +288,7 @@ public class PurchaseOrderFeignController {
     public String addPurchaseOrder(@RequestBody PurchaseOrderDTO.AddDTO addDTO) {
         PurchaseOrderEntity purchaseOrderEntity = purchaseOrderService.add(addDTO);
         if (ObjectUtils.isEmpty(purchaseOrderEntity)) {
-            throw new ServiceException(ApiError.ERROR_CREATE_FAILED);
+            throw new ServiceException(ApiError.BILL_SAVE_FAILED);
         }
         return purchaseOrderEntity.getCode();
     }

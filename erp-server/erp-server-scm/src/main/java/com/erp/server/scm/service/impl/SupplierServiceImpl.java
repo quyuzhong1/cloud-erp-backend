@@ -241,7 +241,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         String categoryName = dictBasicList.stream().filter(d -> d.getId().equals(categoryId)).findFirst().
                 flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
         if (CharSequenceUtil.isBlank(categoryName)) {
-            throw new ServiceException(ApiError.ERROR_NOT_FOUND,CharSequenceUtil.format("供应商分类{}", categoryId));
+            throw new ServiceException(ApiError.COMMON_NOT_FOUND,CharSequenceUtil.format("供应商分类{}", categoryId));
         }
 
         //获取供应商等级
@@ -250,7 +250,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         String gradeName = supplierGradeList.stream().filter(d -> d.getId().equals(gradeId)).findFirst().
                 flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
         if (CharSequenceUtil.isBlank(gradeName)) {
-            throw new ServiceException(ApiError.ERROR_NOT_FOUND,CharSequenceUtil.format("供应商等级{}", gradeId));
+            throw new ServiceException(ApiError.COMMON_NOT_FOUND,CharSequenceUtil.format("供应商等级{}", gradeId));
         }
         addEntity.setGradeName(gradeName);
 
@@ -293,7 +293,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         Boolean result = this.save(addEntity);
         //保存成功
         if (!result) {
-            throw new ServiceException(ApiError.ERROR_CREATE_FAILED);
+            throw new ServiceException(ApiError.BILL_SAVE_FAILED);
         }
         //供应商账号信息
         List<SupplierAccountDTO.AddDTO> bankAccountList = dto.getBankAccountList();
@@ -351,7 +351,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
     public Boolean addAndSubmit(SupplierDTO.AddDTO dto) {
         SupplierEntity entity = this.addSupplier(dto);
         if (Objects.isNull(entity)) {
-            throw new ServiceException(ApiError.ERROR_CREATE_FAILED);
+            throw new ServiceException(ApiError.BILL_SAVE_FAILED);
         }
         BatchResultDTO submit = this.submit(entity);
         return submit.getSuccess();
@@ -370,7 +370,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
     public SupplierDTO.SupplierViewDTO view(String supplierId,Boolean isViewTel) {
         SupplierEntity supplier = this.getById(supplierId);
         if (Objects.isNull(supplier)) {
-            throw new ServiceException(ApiError.ERROR_SUPPLIER_ABSENCE);
+            throw new ServiceException(ApiError.SUPPLIER_NOT_FOUND);
         }
         SupplierDTO.SupplierViewDTO result = BeanUtil.toBean(supplier, SupplierDTO.SupplierViewDTO.class);
         result.setApproveStatus(supplier.getApproveStatus().getStatus());
@@ -447,7 +447,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         String supplierId = dto.getId();
         SupplierEntity supplier = this.getById(supplierId);
         if (Objects.isNull(supplier)) {
-            throw new ServiceException(ApiError.ERROR_SUPPLIER_ABSENCE);
+            throw new ServiceException(ApiError.SUPPLIER_NOT_FOUND);
         }
         String paymentConditionCode = dto.getPaymentCondition();
         //验证付款条件是否正确
@@ -474,7 +474,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
                 //禁用
                 Integer count = srmPoReconciliationFeign.countSupplierUnConfirmOrderDetail(supplierId);
                 if (Objects.nonNull(count) && count > 0){
-                    throw new ServiceException(ApiError.ERROR_SUPPLIER_EXIST_PO_RECONCILIATION_DETAIL);
+                    throw new ServiceException(ApiError.SUPPLIER_EXIST_PO_RECONCILIATION_DETAIL);
                 }
             }else {
                 //启用时 检查当前周期确认订单是否存在，存在则下月生效
@@ -494,7 +494,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         statusList.add(rejectStatus);
         statusList.add(waitSubmitStatus);
         if (!statusList.contains(supplier.getApproveStatus().getStatus())) {
-            throw new ServiceException(ApiError.ERROR_EDIT_ALLOWED_STATUS_ONLY);
+            throw new ServiceException(ApiError.);
         }
         //资质信息
         List<SupplierCredentialDTO.UpdateDTO> credentialList = dto.getCredentialList();
@@ -507,7 +507,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         List<SupplierContactDTO.UpdateDTO> contactList = dto.getContactList();
         long count = contactList.stream().filter(c -> c.getIsDefault() != null && c.getIsDefault()).count();
         if (count > 1) {
-            throw new ServiceException(ApiError.ERROR_SCM_SUPPLIER_DEFAULT_CONTACT_EXCEEDS_ONE);
+            throw new ServiceException(ApiError.SUPPLIER_DEFAULT_CONTACT_EXCEEDS_ONE);
         }
         BeanUtil.copyProperties(dto, supplier);
 
@@ -546,7 +546,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         Boolean result = this.updateById(supplier);
         //修改成功
         if (!result) {
-            throw new ServiceException(ApiError.ERROR_PERSIST_SAVE_FAILED);
+            throw new ServiceException(ApiError.BILL_SAVE_FAILED);
         }
         /**
          * 添加修改日志
@@ -628,7 +628,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             listApiResult = workflowFeign.curApprover(dtoList);
             Integer code = listApiResult.getCode();
             if (200 != code) {
-                throw new ServiceException(new ApiResult(ApiError.DEFAULT.getCode(), listApiResult.getMsg()));
+                throw new ServiceException(new ApiResult(ApiError.HTTP_UNKNOWN.getCode(), listApiResult.getMsg()));
             }
         }
         //TODO 获取srm 供应商订单规则
@@ -767,7 +767,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public List<BatchResultDTO> deleteByIds(List<String> ids) {
         if (CollectionUtils.isEmpty(ids)) {
-            throw new ServiceException(ApiError.ERROR_EMPTY_LIST);
+            throw new ServiceException(ApiError.COMMON_REQUEST_EMPTY);
         }
         List<SupplierEntity> supplierList = this.listByIds(ids);
 //        String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
@@ -779,7 +779,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         List<BatchResultDTO> resultDTOList=new ArrayList<>();
         for (SupplierEntity entity : supplierList) {
             if (!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(entity.getApproveStatus().getStatus())){
-                resultDTOList.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_DELETE_ALLOWED_STATUS_ONLY.getMsg()));
+                resultDTOList.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.BILL_DELETE_ALLOWED_STATUS_ONLY.getMsg()));
                 continue;
             }
             removeList.add(entity);
@@ -845,7 +845,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         statusList.add(rejectStatus);
         statusList.add(waitSubmitStatus);
         if (!statusList.contains(entity.getApproveStatus().getStatus())) {
-            throw new ServiceException(ApiError.ERROR_WAIT_SUBMIT_TO_APPROVE_ING);
+            throw new ServiceException(ApiError.BILL_WAIT_SUBMIT_TO_APPROVE_ING);
         }
         //提交流程
         startProcess(entity);
@@ -875,7 +875,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public BatchResultDTO approve(SupplierEntity entity, String type, String comment, Boolean isNeedProcess) {
         if (!ApproveStatusEnum.APPROVE_ING.getStatus().equals(entity.getApproveStatus().getStatus())) {
-            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_APPROVE_ALLOWED_STATUS_ONLY.getMsg());
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.WF_APPROVE_ALLOWED_STATUS_ONLY.getMsg());
         }
         //调用审核流程
         LoginUser userInfo = UserContext.getDefaultLoginUser();
@@ -889,7 +889,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         ApiResult<ProcessManagementDTO.ApproveResultDTO> result = workflowFeign.approve(approveDTO);
         Integer code = result.getCode();
         if (200 != code) {
-            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_WF_APPROVAL_FAILED.getMsg());
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.WF_APPROVE_FAILED.getMsg());
         }
         ProcessManagementDTO.ApproveResultDTO data = result.getData();
         if (Objects.nonNull(data) && ObjectUtils.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()) {
@@ -919,7 +919,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(type);
         Boolean result = this.updateApproveStatus(Collections.singletonList(entity), approveStatus);
         if (!result) {
-            throw new ServiceException(ApiError.ERROR_WF_APPROVAL_FAILED);
+            throw new ServiceException(ApiError.WF_APPROVE_FAILED);
         }
         if (ApproveType.PASS.equals(type)) {
             //发送金蝶
@@ -944,7 +944,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         String supplierId = dto.getId();
         SupplierEntity supplier = this.getById(supplierId);
         if (Objects.isNull(supplier)) {
-            throw new ServiceException(ApiError.ERROR_SUPPLIER_ABSENCE);
+            throw new ServiceException(ApiError.SUPPLIER_NOT_FOUND);
         }
         Boolean state = dto.getState();
         //表示禁用
@@ -992,14 +992,14 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         SupplierEntity supplier = this.getById(supplierId);
         String msg = "操作成功";
         if (Objects.isNull(supplier)) {
-            throw new ServiceException(ApiError.ERROR_SUPPLIER_ABSENCE);
+            throw new ServiceException(ApiError.SUPPLIER_NOT_FOUND);
         }
         supplier.setSrmDisabledDate(LocalDate.now());
         //当启用后 禁用时 校验是否存在未确认采购对账单明细
         if (!supplier.getSrmDisabled() && dto.getState()){
             Integer count = srmPoReconciliationFeign.countSupplierUnConfirmOrderDetail(supplierId);
             if (Objects.nonNull(count) && count > 0){
-                throw new ServiceException(ApiError.ERROR_SUPPLIER_EXIST_PO_RECONCILIATION_DETAIL);
+                throw new ServiceException(ApiError.SUPPLIER_EXIST_PO_RECONCILIATION_DETAIL);
             }
         }
         //禁用后启用 校验当前周期是否存在收货单【按确认日期】，若有则提示【SRM协同开启后，下月生效】，若无关联单据则直接启用
@@ -1065,7 +1065,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         //待提交
         String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
         if (!approveStatus.equals(entity.getApproveStatus().getStatus())) {
-            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_REVERSE_APPROVAL_ALLOWED_APPROVED_ONLY.getMsg());
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.BILL_REVERSE_APPROVAL_ALLOWED_APPROVED_ONLY.getMsg());
         }
         Boolean result = this.updateApproveStatus(Collections.singletonList(entity), ApproveStatusEnum.getByStatus(waitSubmitStatus));
         //反审核
@@ -1107,7 +1107,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             wb.write(output);
             wb.close();
         } catch (Exception e) {
-            throw new ServiceException(ApiError.DEFAULT);
+            throw new ServiceException(ApiError.HTTP_UNKNOWN);
         }
 
     }
@@ -1125,11 +1125,11 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
     public Boolean updateAndSubmit(SupplierDTO.UpdateDTO dto) {
         String supplierId = this.updateSupplier(dto);
         if (StringUtils.isBlank(supplierId)) {
-            throw new ServiceException(ApiError.ERROR_UPDATE_FAILED);
+            throw new ServiceException(ApiError.BILL_UPDATE_FAILED);
         }
         SupplierEntity entity = this.getById(supplierId);
         if (ObjUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_SCM_SUPPLIER_INFO_REQUIRED);
+            throw new ServiceException(ApiError.SUPPLIER_INFO_REQUIRED);
         }
         BatchResultDTO submit = this.submit(entity);
         return submit.getSuccess();
@@ -1171,15 +1171,15 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             EasyExcel.read(excelFile.getInputStream(), SupplierImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (IOException e) {
             log.error("导入错误！", e);
-            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_FAILED);
+            throw new ServiceException(ApiError.FILE_DATA_IMPORT_FAILED);
         } catch (ExcelCommonException e) {
             log.error("导入格式错误！", e);
-            throw new ServiceException(ApiError.ERROR_FILE_IMPORT_FORMAT_INVALID_XLSX);
+            throw new ServiceException(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX);
         }
         //验证导入数据是否为空
         List<SupplierImportExcelDTO> excelDateList = excelListenerUtil.getAllList();
         if (CollectionUtils.isEmpty(excelDateList)) {
-            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_REQUIRED);
+            throw new ServiceException(ApiError.FILE_DATA_REQUIRED);
         }
         //导入数据处理
         List<SupplierImportExcelDTO> successList = excelListenerUtil.getSuccessList();
@@ -1212,7 +1212,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
     public SupplierDTO.ViewDTO getBySupplierId(String supplierId) {
         SupplierEntity entity = this.getById(supplierId);
         if (Objects.isNull(entity)) {
-            throw new ServiceException(ApiError.ERROR_SUPPLIER_ABSENCE);
+            throw new ServiceException(ApiError.SUPPLIER_NOT_FOUND);
         }
         SupplierDTO.ViewDTO view = new SupplierDTO.ViewDTO();
         List<SupplierContactEntity> contactList = supplierContactService.getDefaultBySupplierIdList(Arrays.asList(supplierId));
@@ -1339,7 +1339,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             String supplierId = item.getSupplierId();
             SupplierEntity supplier = supplierList.stream().filter(s -> s.getId().equals(supplierId)).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(supplier)) {
-                throw new ServiceException(ApiError.ERROR_SUPPLIER_ABSENCE);
+                throw new ServiceException(ApiError.SUPPLIER_NOT_FOUND);
             }
             if (CharSequenceUtil.equals(item.getTargetGradeId(),supplier.getGradeId()) &&
                     CharSequenceUtil.equals(item.getTargetPhase(),supplier.getPhase().getPhase())) {
@@ -1498,12 +1498,12 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         //根据ids查询
         List<SupplierEntity> list = this.listByIds(ids);
         if (CollectionUtils.isEmpty(list)) {
-            throw new ServiceException(ApiError.ERROR_SUPPLIER_ABSENCE);
+            throw new ServiceException(ApiError.SUPPLIER_NOT_FOUND);
         }
 
         long count = list.stream().filter(obj -> !ApproveStatusEnum.APPROVE_ING.equals(obj.getApproveStatus())).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_REVOKE_PROCESS_ALLOWED_STATUS_ONLY);
+            throw new ServiceException(ApiError.WF_REVOKE_PROCESS_ALLOWED_STATUS_ONLY);
         }
         log.info("供应商撤销流程，ids=【{}】", ids);
 
@@ -1531,15 +1531,15 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
     public BatchResultDTO updateField(String id,SupplierDTO.BatchUpdateFieldDTO dto) {
         SupplierEntity entity = this.getById(id);
         if(ObjectUtil.isEmpty(entity)){
-            throw new ServiceException(ApiError.ERROR_SUPPLIER_ABSENCE);
+            throw new ServiceException(ApiError.SUPPLIER_NOT_FOUND);
         }
         //审核中不支持更新
         if (ApproveStatusEnum.APPROVE_ING.equals(entity.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_SUPPLIER_UPDATE_FIELD_APPROVEING);
+            throw new ServiceException(ApiError.BILL_UPDATE_FIELD_APPROVEING);
         }
         //选填值不能全部为空
         if (CharSequenceUtil.isBlank(dto.getCategoryId()) && CharSequenceUtil.isBlank(dto.getPoFollowerId())) {
-            throw new ServiceException(ApiError.TIME_NOT_NULL,"字段内容");
+            throw new ServiceException(ApiError.COMMON_PARAM_TIME_REQUIRED,"字段内容");
         }
         //日志内容
         String content = "";
@@ -1557,7 +1557,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         if (CharSequenceUtil.isNotBlank(dto.getPoFollowerId())) {
             FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(dto.getPoFollowerId());
             if (ObjectUtil.isEmpty(findUserDTO)) {
-                throw new ServiceException(ApiError.ERROR_USER_NOT_FOUND, dto.getPoFollowerId());
+                throw new ServiceException(ApiError.AUTH_USER_NOT_FOUND, dto.getPoFollowerId());
             }
             entity.setPoFollowerId(dto.getPoFollowerId());
             content = CharSequenceUtil.format("采购跟单员更新为【{}】",  findUserDTO.getUserName());
@@ -1652,7 +1652,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             listApiResult = workflowFeign.curApprover(dtoList);
             Integer code = listApiResult.getCode();
             if (200 != code) {
-                throw new ServiceException(ApiError.DEFAULT);
+                throw new ServiceException(ApiError.HTTP_UNKNOWN);
             }
         }
         List<String> credentialIdList = list.stream().map(SupplierDTO.PagingExportDTO::getCredentialId).distinct().collect(Collectors.toList());
@@ -1817,7 +1817,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
     public SupplierEntity add(SupplierDTO.InsertDTO addDTO) {
         SupplierEntity supplierEntity = addSupplier(addDTO);
         if(Objects.isNull(supplierEntity)){
-            throw new ServiceException(ApiError.ERROR_CREATE_FAILED);
+            throw new ServiceException(ApiError.BILL_SAVE_FAILED);
         }
         SupplierEntity oldEntity = this.getById(supplierEntity.getId());
         //直接审核通过
@@ -1840,7 +1840,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             }
             FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(userByThird.getUserId());
             if (ObjUtil.isEmpty(findUserDTO)) {
-                throw new ServiceException(ApiError.ERROR_USER_NOT_FOUND, userByThird.getUserId());
+                throw new ServiceException(ApiError.AUTH_USER_NOT_FOUND, userByThird.getUserId());
             }
             supplierEntity.setApproveUserId(findUserDTO.getUserId());
             supplierEntity.setApproveUserName(findUserDTO.getUserName());
@@ -1932,7 +1932,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
 
         List<SupplierEntity> supplierList = this.listByIds(supplierIdList);
         if (CollectionUtils.isEmpty(supplierList)) {
-            throw new ServiceException(ApiError.ERROR_SUPPLIER_ABSENCE);
+            throw new ServiceException(ApiError.SUPPLIER_NOT_FOUND);
         }
         //联系人
         List<SupplierContactEntity> supplierContractList = supplierContactService.getDefaultBySupplierIdList(supplierIdList);
@@ -2075,7 +2075,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         queryWrapper.last("LIMIT 1");
         int count = this.count(queryWrapper);
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_SCM_SUPPLIER_NAME_EXISTS);
+            throw new ServiceException(ApiError.SUPPLIER_NAME_EXISTS);
         }
     }
 

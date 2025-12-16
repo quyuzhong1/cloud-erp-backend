@@ -35,7 +35,6 @@ import com.erp.server.workflow.mapper.ApproveSyncRecordMapper;
 import com.erp.server.workflow.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.google.gson.Gson;
-import jodd.util.StringUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import lombok.extern.slf4j.Slf4j;
@@ -212,7 +211,7 @@ public class ApproveSyncRecordServiceImpl extends SuperServiceImpl<ApproveSyncRe
         }
         Map<String, ThirdUnionDTO> thirdUnionMap = cfgApproveSyncBuildHandler.getThirdUnionDTOMap(allUserIds);
         if(CollUtil.isEmpty(thirdUnionMap)) {
-            return BatchResultDTO.fail(entity.getId(), entity.getId(), ApiError.FS_USER_NOT_BIND.getMsg());
+            return BatchResultDTO.fail(entity.getId(), entity.getId(), ApiError.AUTH_FS_USER_NOT_BIND.getMsg());
         }
 
         if(thirdUnionMap.containsKey(titleUserId) && Objects.nonNull(thirdUnionMap.get(titleUserId))){
@@ -244,7 +243,7 @@ public class ApproveSyncRecordServiceImpl extends SuperServiceImpl<ApproveSyncRe
                 return BatchResultDTO.fail(entity.getId(), entity.getId(), "重推失败");
             }
         }else {
-            return BatchResultDTO.fail(entity.getId(), entity.getId(), ApiError.FS_USER_NOT_BIND.getMsg());
+            return BatchResultDTO.fail(entity.getId(), entity.getId(), ApiError.AUTH_FS_USER_NOT_BIND.getMsg());
         }
         return null;
     }

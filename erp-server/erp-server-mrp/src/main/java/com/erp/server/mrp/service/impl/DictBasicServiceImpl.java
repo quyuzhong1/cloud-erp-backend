@@ -90,7 +90,7 @@ public class DictBasicServiceImpl extends SuperServiceImpl<DictBasicMapper, Dict
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean update(DictBasicDTO.UpdateDTO updateDTO) {
-        DictBasicEntity old = Optional.ofNullable(super.getById(updateDTO.getId())).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "字典单"));
+        DictBasicEntity old = Optional.ofNullable(super.getById(updateDTO.getId())).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "字典单"));
         DictBasicEntity dictBasicEntity =  BeanMapperUtils.map(DictBasicEntity.class, updateDTO);
 
         // 数据处理

@@ -116,7 +116,7 @@ public class CfgVatInvoiceServiceImpl extends SuperServiceImpl<CfgVatInvoiceMapp
     @Override
     public Boolean update(CfgVatInvoiceDTO.UpdateDTO addOrUpdateDTO) {
         CfgVatInvoiceEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "VAT发票设置"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "VAT发票设置"));
         CfgVatInvoiceEntity cfgVatInvoiceEntity =  BeanMapperUtils.map(CfgVatInvoiceEntity.class, addOrUpdateDTO);
         //编辑时不修改字段重新赋值
         cfgVatInvoiceEntity.setShopId(old.getShopId());

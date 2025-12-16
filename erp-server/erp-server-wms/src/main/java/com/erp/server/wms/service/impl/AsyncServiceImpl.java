@@ -221,7 +221,7 @@ public class AsyncServiceImpl implements AsyncService {
 
         if (SoB2cDeliveryStatusEnum.EXCEPTION_ORDER.getCode().equals(entity.getStatus())
                 || SoB2cDeliveryStatusEnum.WAIT_HANDLE.getCode().equals(entity.getStatus())){
-            throw new ServiceException(ApiError.ERROR_WMS_ABNORMAL_ORDER_AUTO_DELIVERY_FORBIDDEN);
+            throw new ServiceException(ApiError.SO_ABNORMAL_ORDER_AUTO_DELIVERY_FORBIDDEN);
         }
 
         TransferDeclareDetailEntity declareDetailEntity = transferDeclareFeign.getBySoId(soB2cEntity.getId());

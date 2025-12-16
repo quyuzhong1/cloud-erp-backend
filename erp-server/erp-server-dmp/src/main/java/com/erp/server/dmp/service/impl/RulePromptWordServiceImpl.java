@@ -102,7 +102,7 @@ public class RulePromptWordServiceImpl extends SuperServiceImpl<RulePromptWordMa
     public void checkNameUnique(String name, String id) {
         RulePromptWordEntity rulePromptWordEntity = this.lambdaQuery().eq(RulePromptWordEntity::getName, name).ne(StringUtils.isNotBlank(id),RulePromptWordEntity::getId,id).last("limit 1").one();
         if (rulePromptWordEntity != null) {
-            throw new ServiceException(ApiError.ERROR_NAME_EXIST,name);
+            throw new ServiceException(ApiError.COMMON_NAME_EXIST,name);
         }
     }
     /**
@@ -112,7 +112,7 @@ public class RulePromptWordServiceImpl extends SuperServiceImpl<RulePromptWordMa
     @Override
     public Boolean update(RulePromptWordDTO.UpdateDTO addOrUpdateDTO) {
         RulePromptWordEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "汉化管理规则单"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "汉化管理规则单"));
         this.checkNameUnique(addOrUpdateDTO.getName(), addOrUpdateDTO.getId());
         List<RuleConditionDTO.UpdateDTO> conditionList = addOrUpdateDTO.getConditionList();
         List<ConditionElement> conditionElementList = conditionList.stream().
@@ -154,7 +154,7 @@ public class RulePromptWordServiceImpl extends SuperServiceImpl<RulePromptWordMa
     public RulePromptWordDTO.ViewDTO view(String id) {
         RulePromptWordEntity rulePromptWordEntity = this.getById(id);
         if(null == rulePromptWordEntity){
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "汉化管理单");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "汉化管理单");
         }
         RulePromptWordDTO.ViewDTO viewDTO = BeanMapperUtils.map(RulePromptWordDTO.ViewDTO.class, rulePromptWordEntity);
         String type = DictBasicTypeEnum.FIELD.getType();
@@ -168,7 +168,7 @@ public class RulePromptWordServiceImpl extends SuperServiceImpl<RulePromptWordMa
     public void batchUpdateStatus(RulePromptWordDTO.UpdateStatusDTO dto) {
         List<RulePromptWordEntity> rulePromptWordEntityList = this.listByIds(dto.getIds());
         if(CollectionUtils.isEmpty(rulePromptWordEntityList)){
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "汉化管理单");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "汉化管理单");
         }
         rulePromptWordEntityList = rulePromptWordEntityList.stream().filter(v->!v.getDisabled().equals(dto.getDisabled())).collect(Collectors.toList());
         rulePromptWordEntityList.forEach(v->{

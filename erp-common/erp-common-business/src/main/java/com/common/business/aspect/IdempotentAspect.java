@@ -92,7 +92,7 @@ public class IdempotentAspect {
             }
             return result;
         } else {
-            throw new ServiceException(ApiError.ERROR_BIZ_DUPLICATE_OPERATION);
+            throw new ServiceException(ApiError.COMMON_DUPLICATE_OPERATION);
         }
     }
 

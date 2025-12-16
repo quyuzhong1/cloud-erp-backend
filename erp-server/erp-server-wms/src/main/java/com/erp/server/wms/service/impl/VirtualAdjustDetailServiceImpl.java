@@ -68,7 +68,7 @@ public class VirtualAdjustDetailServiceImpl extends SuperServiceImpl<VirtualAdju
     @Override
     public Boolean update(VirtualAdjustDetailDTO.UpdateDTO addOrUpdateDTO) {
         VirtualAdjustDetailEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "虚拟仓调整单明细单"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "虚拟仓调整单明细单"));
         VirtualAdjustDetailEntity virtualAdjustDetailEntity =  BeanMapperUtils.map(VirtualAdjustDetailEntity.class, addOrUpdateDTO);
 
         // 数据处理

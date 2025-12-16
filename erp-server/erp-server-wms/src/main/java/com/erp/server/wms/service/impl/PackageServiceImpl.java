@@ -285,7 +285,7 @@ public class PackageServiceImpl implements PackageService {
                     .map(SoB2cDeliveryEntity::getSoCode)
                     .collect(Collectors.joining(","));
             if (StringUtils.isNotEmpty(notShipmentSoCodes)) {
-                throw new ServiceException(ApiError.ERROR_WMS_SO_ABNORMAL_ORDER_AUTO_DELIVERY_FORBIDDEN, notShipmentSoCodes);
+                throw new ServiceException(ApiError.SO_ABNORMAL_ORDER_AUTO_DELIVERY_FORBIDDEN_FOR_SO, notShipmentSoCodes);
             }
         }
         for (PackageForecastDTO.AddDTO item : addList) {

@@ -7,7 +7,6 @@ import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.constant.ApproveType;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.enums.ApproveStatusEnum;
-import com.common.business.enums.BusinessTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -107,18 +106,18 @@ public class SyncExchangeRateServiceImpl implements SyncExchangeRateService {
         //币种
         List<CurrencyDTO.ViewDTO> viewList = sysUserFeign.listCurrencyByKingdeeCodeList(Arrays.asList(dto.getSourceCurrencyCode(), dto.getTargetCurrencyCode()));
         if (CollectionUtils.isEmpty(viewList)) {
-            throw new ServiceException(ApiError.ERROR_CURRENCY_NOT_EXIST, JSONUtil.toJsonStr(Arrays.asList(dto.getSourceCurrencyCode(), dto.getTargetCurrencyCode())));
+            throw new ServiceException(ApiError.COMMON_CURRENCY_NOT_EXIST, JSONUtil.toJsonStr(Arrays.asList(dto.getSourceCurrencyCode(), dto.getTargetCurrencyCode())));
         }
         //原币别
         String sourceCurrency = viewList.stream().filter(obj -> obj.getKingdeeCode().equals(dto.getSourceCurrencyCode())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getId())).orElse("");
         if (StringUtils.isBlank(sourceCurrency)) {
-            throw new ServiceException(ApiError.ERROR_CURRENCY_NOT_EXIST,dto.getSourceCurrencyCode());
+            throw new ServiceException(ApiError.COMMON_CURRENCY_NOT_EXIST,dto.getSourceCurrencyCode());
         }
         newExchangeRate.setSourceCurrencyCode(sourceCurrency);
         //目标币别
         String targetCurrency = viewList.stream().filter(obj -> obj.getKingdeeCode().equals(dto.getTargetCurrencyCode())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getId())).orElse("");
         if (StringUtils.isBlank(targetCurrency)) {
-            throw new ServiceException(ApiError.ERROR_CURRENCY_NOT_EXIST,dto.getTargetCurrencyCode());
+            throw new ServiceException(ApiError.COMMON_CURRENCY_NOT_EXIST,dto.getTargetCurrencyCode());
         }
         newExchangeRate.setTargetCurrencyCode(targetCurrency);
         newExchangeRate.setKingdeeId(dto.getSourceId());
@@ -140,7 +139,7 @@ public class SyncExchangeRateServiceImpl implements SyncExchangeRateService {
             paramDTO.setType(ApproveType.PASS);
             biSettlementExchangeRateService.approve(paramDTO);
         } else {
-            throw new ServiceException(ApiError.ERROR_DOC_SUBMIT_FAILED, SourceTypeEnum.TRANSFER_INFO.getName());
+            throw new ServiceException(ApiError.BILL_SUBMIT_FAILED, SourceTypeEnum.TRANSFER_INFO.getName());
         }
     }
 

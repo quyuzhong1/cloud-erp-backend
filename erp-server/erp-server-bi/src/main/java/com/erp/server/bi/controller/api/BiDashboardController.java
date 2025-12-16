@@ -65,7 +65,7 @@ public class BiDashboardController extends BaseController {
     public ApiResult<SubjectLayoutDetailsDTO> info() {
         SubjectLayoutDetailsDTO details = subjectService.dashboardInfo();
         if (Objects.isNull(details)) {
-            throw new ServiceException(ApiError.ERROR_DMP_NO_DASHBOARD_FOUND);
+            throw new ServiceException(ApiError.BI_DASHBOARD_NOT_FOUND);
         }
         return success(details);
     }

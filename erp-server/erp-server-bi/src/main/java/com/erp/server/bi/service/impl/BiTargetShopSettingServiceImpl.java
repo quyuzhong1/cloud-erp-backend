@@ -225,7 +225,7 @@ public class BiTargetShopSettingServiceImpl extends SuperServiceImpl<BiTargetSho
     public Boolean update(BiTargetShopSettingDTO.UpdateDTO updateDTO) {
         String id = updateDTO.getId();
         BiTargetYearEntity oldTargetYear = biTargetYearService.getById(id);
-        Optional.ofNullable(oldTargetYear).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "店铺目标设置单"));
+        Optional.ofNullable(oldTargetYear).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "店铺目标设置单"));
         BiTargetYearEntity targetYear = BeanMapperUtils.map(BiTargetYearEntity.class, updateDTO);
         List<String> metricsList = updateDTO.getMetricsList();
         targetYear.setMetrics(metricsList.stream().collect(Collectors.joining(",")));
@@ -265,7 +265,7 @@ public class BiTargetShopSettingServiceImpl extends SuperServiceImpl<BiTargetSho
         BiTargetShopSettingDTO.ViewDTO view = new BiTargetShopSettingDTO.ViewDTO();
         BiTargetYearEntity targetYear = biTargetYearService.getById(id);
         if (Objects.isNull(targetYear)) {
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "店铺目标设置");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "店铺目标设置");
         }
         BeanMapperUtils.copy(targetYear, view);
         String metrics = targetYear.getMetrics();
@@ -487,7 +487,7 @@ public class BiTargetShopSettingServiceImpl extends SuperServiceImpl<BiTargetSho
         }
         if (CollectionUtils.isNotEmpty(existShop)) {
             String existShopName = existShop.stream().distinct().collect(Collectors.joining(","));
-            throw new ServiceException(ApiError.YEAR_METRICS_EXIST, existShopName);
+            throw new ServiceException(ApiError.COMMON_SETTING_EXIST, existShopName);
         }
 
         //部门id
@@ -548,7 +548,7 @@ public class BiTargetShopSettingServiceImpl extends SuperServiceImpl<BiTargetSho
             wb.close();
         } catch (Exception e) {
             log.error(" downloadTemplate  出错了 e=={}", e);
-            throw new ServiceException(ApiError.ERROR_IMPORT_TEMPLATE_DOWNLOAD_FAILED);
+            throw new ServiceException(ApiError.FILE_IMPORT_TEMPLATE_DOWNLOAD_FAILED);
         }
     }
 

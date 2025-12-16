@@ -126,7 +126,7 @@ public class CfgMouldSettingServiceImpl extends SuperServiceImpl<CfgMouldSetting
                     .filter(v -> mouldInfoIdList.contains(v.getId()))
                     .map(CfgMouldSettingEntity::getName)
                     .collect(Collectors.joining(","));
-            throw new ServiceException(ApiError.ERROR_PLM_ATTR_IN_USE_DELETE_FORBIDDEN, errorMsg);
+            throw new ServiceException(ApiError.PRODUCT_ATTR_IN_USE_DELETE_FORBIDDEN, errorMsg);
         }
         removeByIds(mouldIdList);
     }
@@ -172,7 +172,7 @@ public class CfgMouldSettingServiceImpl extends SuperServiceImpl<CfgMouldSetting
                     .filter(v -> docInfoIdList.contains(v.getId()))
                     .map(CfgMouldSettingEntity::getName)
                     .collect(Collectors.joining(","));
-            throw new ServiceException(ApiError.ERROR_PLM_ATTR_IN_USE_DELETE_FORBIDDEN, errorMsg);
+            throw new ServiceException(ApiError.PRODUCT_ATTR_IN_USE_DELETE_FORBIDDEN, errorMsg);
         }
         removeByIds(docIdList);
     }

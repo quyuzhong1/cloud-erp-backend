@@ -123,7 +123,7 @@ public class MachineSubComponentsServiceImpl extends SuperServiceImpl<MachineSub
     public void removeByMainIds(List<String> mainIds) {
         List<MachineDetailEntity> machineDetailList = machineDetailService.listByMainIds(mainIds);
         if (CollectionUtils.isEmpty(machineDetailList)) {
-            throw new ServiceException(ApiError.ERROR_WMS_PROCESS_ORDER_DETAIL_NOT_FOUND);
+            throw new ServiceException(ApiError.WH_SUBCONTRACT_PROCESS_ORDER_DETAIL_NOT_FOUND);
         }
         List<String> detailIds = machineDetailList.stream().map(MachineDetailEntity::getId).collect(Collectors.toList());
         //删除
@@ -156,7 +156,7 @@ public class MachineSubComponentsServiceImpl extends SuperServiceImpl<MachineSub
         List<String> skuIds = newList.stream().map(MachineSubComponentsEntity::getSkuId).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIds);
         if (CollectionUtils.isEmpty(skuList)) {
-            throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_INFO_NOT_FOUND);
+            throw new ServiceException(ApiError.PRODUCT_INFO_NOT_FOUND);
         }
         //需要修改的数据
         List<String> ids = newList.stream().filter(obj -> CharSequenceUtil.isNotBlank(obj.getId())).map(MachineSubComponentsEntity::getId).collect(Collectors.toList());
@@ -169,12 +169,12 @@ public class MachineSubComponentsServiceImpl extends SuperServiceImpl<MachineSub
         List<String> warehouseIds = newList.stream().map(MachineSubComponentsEntity::getWarehouseId).collect(Collectors.toList());
         List<WarehouseEntity> warehouseList = warehouseService.listByIds(warehouseIds);
         if  (CollectionUtils.isEmpty(warehouseList)) {
-            throw new ServiceException(ApiError.ERROR_WMS_WAREHOUSE_NOT_FOUND);
+            throw new ServiceException(ApiError.WH_NOT_FOUND);
         }
 
         MachineInfoEntity machineInfoEntity = machineInfoService.getById(mainId);
         if (ObjectUtils.isEmpty(machineInfoEntity)) {
-            throw new ServiceException(ApiError.ERROR_WMS_PROCESS_ORDER_NOT_FOUND);
+            throw new ServiceException(ApiError.WH_SUBCONTRACT_PROCESS_ORDER_NOT_FOUND);
         }
 
         //仓位必填验证
@@ -187,11 +187,11 @@ public class MachineSubComponentsServiceImpl extends SuperServiceImpl<MachineSub
             //仓库名称
             WarehouseEntity warehouseEntity = warehouseList.stream().filter(obj -> obj.getId().equals(detail.getWarehouseId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(warehouseEntity)) {
-                throw new ServiceException(ApiError.ERROR_WMS_WAREHOUSE_NOT_FOUND);
+                throw new ServiceException(ApiError.WH_NOT_FOUND);
             }
             //验证组织是否一致
             if (!StringUtils.equals(machineInfoEntity.getInventoryOrgId(),warehouseEntity.getOrgId())) {
-                throw new ServiceException(ApiError.ERROR_MACHINE_WAREHOUSE_ORG_DIFF,detail.getSkuNo(),warehouseEntity.getName(),machineInfoEntity.getInventoryOrgName());
+                throw new ServiceException(ApiError.WH_SUBCONTRACT_MACHINE_WAREHOUSE_ORG_DIFF,detail.getSkuNo(),warehouseEntity.getName(),machineInfoEntity.getInventoryOrgName());
             }
             detail.setWarehouseName(warehouseEntity.getName());
 
@@ -200,11 +200,11 @@ public class MachineSubComponentsServiceImpl extends SuperServiceImpl<MachineSub
             //修改操作日志
             if (CharSequenceUtil.isNotBlank(detail.getId())) {
                 if (CollectionUtils.isEmpty(list)) {
-                    throw new ServiceException(ApiError.ERROR_WMS_PROCESS_ORDER_CHILD_DETAIL_NOT_FOUND);
+                    throw new ServiceException(ApiError.WH_SUBCONTRACT_PROCESS_ORDER_CHILD_DETAIL_NOT_FOUND);
                 }
                 MachineSubComponentsEntity old = list.stream().filter(obj -> obj.getId().equals(detail.getId())).findFirst().orElse(null);
                 if (ObjectUtils.isEmpty(old)) {
-                    throw new ServiceException(ApiError.ERROR_WMS_PROCESS_ORDER_CHILD_DETAIL_NOT_FOUND);
+                    throw new ServiceException(ApiError.WH_SUBCONTRACT_PROCESS_ORDER_CHILD_DETAIL_NOT_FOUND);
                 }
                 operateLogService.addModuleOperateLogByObj(old,detail, ModuleTypeEnum.MACHINE_INFO.getCode(),mainId,"",String.format("子件【%s】",old.getSkuNo()));
             }
@@ -234,7 +234,7 @@ public class MachineSubComponentsServiceImpl extends SuperServiceImpl<MachineSub
             //仓库
             WarehouseEntity inWarehouse = warehouseList.stream().filter(obj -> obj.getId().equals(entity.getWarehouseId())).findFirst().orElse(new WarehouseEntity());
             if (warehouseIdList.contains(inWarehouse.getId()) && CharSequenceUtil.isBlank(entity.getWarehouseLocation())) {
-                throw new ServiceException(ApiError.ERROR_WAREHOUSE_LOCATION_NOT_NULL,inWarehouse.getName());
+                throw new ServiceException(ApiError.WH_LOCATION_REQUIRED,inWarehouse.getName());
             }
         }
     }

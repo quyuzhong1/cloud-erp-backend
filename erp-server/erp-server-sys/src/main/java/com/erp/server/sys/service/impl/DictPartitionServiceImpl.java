@@ -68,7 +68,7 @@ public class DictPartitionServiceImpl extends SuperServiceImpl<DictPartitionMapp
     @Override
     public Boolean update(DictPartitionDTO.UpdateDTO updateDTO) {
         DictPartitionEntity old = super.getById(updateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "分区单"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "分区单"));
         DictPartitionEntity dictPartitionEntity =  BeanMapperUtils.map(DictPartitionEntity.class, updateDTO);
 
         // 数据处理

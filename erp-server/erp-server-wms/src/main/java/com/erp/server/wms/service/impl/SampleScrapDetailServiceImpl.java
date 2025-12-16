@@ -64,7 +64,7 @@ public class SampleScrapDetailServiceImpl extends SuperServiceImpl<SampleScrapDe
             EasyExcel.read(excelFile.getInputStream(), SampleScrapDetailImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (Exception e) {
             log.error("导入样品报废单错误！", e);
-            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_FAILED);
+            throw new ServiceException(ApiError.FILE_DATA_IMPORT_FAILED);
         }
 
         List<SampleScrapDetailImportExcelDTO> errorList = excelListenerUtil.getErrorList();

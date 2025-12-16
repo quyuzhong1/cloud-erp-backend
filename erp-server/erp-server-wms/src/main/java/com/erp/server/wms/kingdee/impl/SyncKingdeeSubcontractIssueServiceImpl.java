@@ -169,7 +169,7 @@ public class SyncKingdeeSubcontractIssueServiceImpl implements SyncKingdeeSubcon
         //委外订单
         List<SubcontractOrderEntity> subcontractOrderList = scmTaskFeign.listSubcontractOrderByIds(Collections.singletonList(entity.getSubcontractOrderId()));
         if (CollectionUtils.isEmpty(subcontractOrderList)) {
-            throw new ServiceException(ApiError.ERROR_SCM_OUTSOURCING_ORDER_NOT_FOUND);
+            throw new ServiceException(ApiError.PO_SUBCONTRACT_ORDER_NOT_FOUND);
         }
         //委外订单明细
         List<SubcontractOrderDetailEntity> subcontractOrderDetailList = scmTaskFeign.listSubcontractDetailByMainIds(Collections.singletonList(entity.getSourceId()));
@@ -177,7 +177,7 @@ public class SyncKingdeeSubcontractIssueServiceImpl implements SyncKingdeeSubcon
         //委外组织
         List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Collections.singletonList(subcontractOrderList.get(0).getSubcontractOrgId()));
         if (CollectionUtils.isEmpty(accountingCompanyList)) {
-           throw new ServiceException(ApiError.ERROR_RECEIVE_ORG_NOT_FOUND);
+           throw new ServiceException(ApiError.PO_RECEIVE_ORG_NOT_FOUND);
         }
         resultMap.put("orgCode", accountingCompanyList.get(0).getCode());
         //仓库

@@ -121,20 +121,20 @@ public class SupplierController extends BaseController {
         try {
             entity = supplierService.addSupplier(dto);
             if (Objects.isNull(entity)) {
-                return  failure(ApiError.ERROR_CREATE_FAILED.getMsg(), new BaseResultDTO.AddAndSubmmitDTO("","",Boolean.FALSE));
+                return  failure(ApiError.BILL_SAVE_FAILED.getMsg(), new BaseResultDTO.AddAndSubmmitDTO("","",Boolean.FALSE));
             }
         } catch (ServiceException e) {
             log.error("新增失败，dto: {}", dto, e);
             return failure(e.getMessage(),new BaseResultDTO.AddAndSubmmitDTO("","",Boolean.FALSE));
         } catch (Exception e) {
             log.error("新增失败，dto: {}", dto, e);
-            return  failure(ApiError.ERROR_CREATE_FAILED.getMsg(), new BaseResultDTO.AddAndSubmmitDTO("","",Boolean.FALSE));
+            return  failure(ApiError.BILL_SAVE_FAILED.getMsg(), new BaseResultDTO.AddAndSubmmitDTO("","",Boolean.FALSE));
         }
 
         try {
             entity = supplierService.getById(entity.getId());
             if (ObjectUtil.isEmpty(entity)) {
-                throw new ServiceException(ApiError.NOT_EXIST_BILL,"供应商");
+                throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE,"供应商");
             }
             supplierService.submit(entity);
         } catch (ServiceException e) {
@@ -142,7 +142,7 @@ public class SupplierController extends BaseController {
             return failure(e.getMessage(),new BaseResultDTO.AddAndSubmmitDTO(entity.getId(),entity.getCode(),Boolean.TRUE));
         } catch (Exception e) {
             log.error("提交审批失败，ID: {}", entity.getId(), e);
-            return failure(ApiError.RETRY_SUBMIT_ERROR.getMsg(),new BaseResultDTO.AddAndSubmmitDTO(entity.getId(),entity.getCode(),Boolean.TRUE));
+            return failure(ApiError.BILL_APPROVE_SUBMIT_RETRY.getMsg(),new BaseResultDTO.AddAndSubmmitDTO(entity.getId(),entity.getCode(),Boolean.TRUE));
         }
 
         return success(new BaseResultDTO.AddAndSubmmitDTO(entity.getId(), entity.getCode(),Boolean.TRUE));
@@ -186,7 +186,7 @@ public class SupplierController extends BaseController {
         //增加校验
         SupplierEntity supplier = supplierService.getById(dto.getId());
         if (Objects.isNull(supplier)) {
-            throw new ServiceException(ApiError.ERROR_SUPPLIER_ABSENCE);
+            throw new ServiceException(ApiError.SUPPLIER_NOT_FOUND);
         }
         String msg = "请求成功！";
         if (Objects.nonNull(dto.getSrmDisabled()) && !supplier.getSrmDisabled().equals(dto.getSrmDisabled()) && !dto.getSrmDisabled()){
@@ -218,7 +218,7 @@ public class SupplierController extends BaseController {
         //增加校验
         SupplierEntity supplier = supplierService.getById(dto.getId());
         if (Objects.isNull(supplier)) {
-            throw new ServiceException(ApiError.ERROR_SUPPLIER_ABSENCE);
+            throw new ServiceException(ApiError.SUPPLIER_NOT_FOUND);
         }
         String msg = "请求成功！";
         if (Objects.nonNull(dto.getSrmDisabled()) && !supplier.getSrmDisabled().equals(dto.getSrmDisabled()) && !dto.getSrmDisabled()){
@@ -233,20 +233,20 @@ public class SupplierController extends BaseController {
         try {
             supplierId = supplierService.updateSupplier(dto);
             if (StringUtils.isBlank(supplierId)) {
-                return failure(ApiError.ERROR_UPDATE_FAILED.getMsg(),new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.FALSE));
+                return failure(ApiError.BILL_UPDATE_FAILED.getMsg(),new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.FALSE));
             }
         } catch (ServiceException e) {
             log.error("更新失败，dto: {}", dto, e);
             return failure(e.getMessage(), new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.FALSE));
         } catch (Exception e) {
             log.error("更新失败，dto: {}", dto, e);
-            return failure(ApiError.ERROR_UPDATE_FAILED.getMsg(),new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.FALSE));
+            return failure(ApiError.BILL_UPDATE_FAILED.getMsg(),new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.FALSE));
         }
         //提审
         try {
             SupplierEntity entity = supplierService.getById(supplierId);
             if (ObjUtil.isEmpty(entity)) {
-                throw new ServiceException(ApiError.ERROR_SCM_SUPPLIER_INFO_REQUIRED);
+                throw new ServiceException(ApiError.SUPPLIER_INFO_REQUIRED);
             }
             supplierService.submit(entity);
         } catch (ServiceException e) {
@@ -254,7 +254,7 @@ public class SupplierController extends BaseController {
             return failure( e.getMessage(),new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.TRUE));
         } catch (Exception e) {
             log.error("提交审批失败，ID: {}", dto.getId(), e);
-            return failure(ApiError.RETRY_SUBMIT_ERROR.getMsg(),new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.TRUE));
+            return failure(ApiError.BILL_APPROVE_SUBMIT_RETRY.getMsg(),new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.TRUE));
         }
         return success(new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.TRUE));
     }

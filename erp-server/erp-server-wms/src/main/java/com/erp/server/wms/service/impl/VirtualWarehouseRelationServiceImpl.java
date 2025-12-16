@@ -87,7 +87,7 @@ public class VirtualWarehouseRelationServiceImpl extends SuperServiceImpl<Virtua
     public Boolean update(VirtualWarehouseRelationDTO.UpdateDTO updateDTO) {
         VirtualWarehouseRelationEntity old = super.getById(updateDTO.getId());
         if (Objects.isNull(old)){
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "虚拟仓实体仓关联关系");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "虚拟仓实体仓关联关系");
         }
         VirtualWarehouseRelationEntity virtualWarehouseRelationEntity = BeanMapperUtils.map(VirtualWarehouseRelationEntity.class, updateDTO);
 

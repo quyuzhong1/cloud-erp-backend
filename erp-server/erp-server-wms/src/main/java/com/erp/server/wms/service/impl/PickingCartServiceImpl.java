@@ -87,7 +87,7 @@ public class PickingCartServiceImpl extends SuperServiceImpl<PickingCartMapper, 
     public Boolean update(PickingCartDTO.UpdateDTO updateDTO) {
         PickingCartEntity old = super.getById(updateDTO.getId());
         if (Objects.isNull(old)){
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "拣货车管理");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "拣货车管理");
         }
         PickingCartEntity pickingCartEntity =  BeanMapperUtils.map(PickingCartEntity.class, updateDTO);
 

@@ -90,7 +90,7 @@ public class WarehouseLocationSafetyInventoryServiceImpl extends SuperServiceImp
         try {
             EasyExcel.read(file.getInputStream(), WarehouseLocationSafetyInventoryDTO.importExcelDTO.class, listener).sheet(0).doRead();
         } catch (IOException e) {
-            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_FAILED);
+            throw new ServiceException(ApiError.FILE_DATA_IMPORT_FAILED);
         }
 
         //校验失败的数据
@@ -188,7 +188,7 @@ public class WarehouseLocationSafetyInventoryServiceImpl extends SuperServiceImp
             wb.close();
         } catch (Exception e) {
             e.printStackTrace();
-            throw new ServiceException(ApiError.ERROR_IMPORT_TEMPLATE_DOWNLOAD_FAILED);
+            throw new ServiceException(ApiError.FILE_IMPORT_TEMPLATE_DOWNLOAD_FAILED);
         }
     }
 

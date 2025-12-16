@@ -284,7 +284,7 @@ public class ProjectTaskViewServiceImpl implements ProjectTaskViewService {
 
         //导出时类型必填
         if (ObjectUtils.isNull(dto.getParams().getType())) {
-            throw new ServiceException(ApiError.ERROR_PLM_TASK_VIEW_EXPORT_TYPE_REQUIRED);
+            throw new ServiceException(ApiError.PROJECT_TASK_VIEW_EXPORT_TYPE_REQUIRED);
         }
         switch (dto.getParams().getType()) {
             case 1 :

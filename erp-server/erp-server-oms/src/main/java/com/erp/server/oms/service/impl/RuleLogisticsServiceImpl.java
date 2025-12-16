@@ -147,7 +147,7 @@ public class RuleLogisticsServiceImpl extends SuperServiceImpl<RuleLogisticsMapp
 
     private static void isExist(RuleLogisticsEntity old) {
         if(null == old){
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "物流规则单");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "物流规则单");
         }
     }
 
@@ -206,7 +206,7 @@ public class RuleLogisticsServiceImpl extends SuperServiceImpl<RuleLogisticsMapp
         isExist(ruleLogistics);
         Boolean disabled = ruleLogistics.getDisabled();
         if (disabled.equals(dto.getState())) {
-            throw new ServiceException(ApiError.ERROR_SCM_INCONSISTENT_DISABLE_STATUS);
+            throw new ServiceException(ApiError.COMMON_INCONSISTENT_DISABLE_STATUS);
         }
         String content = String.format("启用状态[%s]变更为[%s]", Boolean.TRUE.equals(disabled) ? "停用" : "启用", Boolean.TRUE.equals(disabled) ? "启用" : "停用");
         ruleLogistics.setDisabled(dto.getState());

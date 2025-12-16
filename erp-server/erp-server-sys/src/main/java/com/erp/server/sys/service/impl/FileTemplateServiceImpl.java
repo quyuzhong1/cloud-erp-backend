@@ -62,7 +62,7 @@ public class FileTemplateServiceImpl extends SuperServiceImpl<FileTemplateMapper
     @Override
     public Boolean update(FileTemplateDTO.UpdateDTO updateDTO) {
         FileTemplateEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "文件url单"));
+        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "文件url单"));
         FileTemplateEntity fileTemplateEntity =  BeanMapperUtils.map(FileTemplateEntity.class, updateDTO);
 
         // 数据处理
@@ -89,7 +89,7 @@ public class FileTemplateServiceImpl extends SuperServiceImpl<FileTemplateMapper
         try {
              url = fileFeign.uploadFile(fastdfsAddDTO.getFile());
         } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_PLM_FILE_UPLOAD_FAILED);
+            throw new ServiceException(ApiError.FILE_UPLOAD_FAILED);
         }
         fileTemplateEntity.setUrl(url);
         this.saveOrUpdate(fileTemplateEntity);
@@ -98,7 +98,7 @@ public class FileTemplateServiceImpl extends SuperServiceImpl<FileTemplateMapper
             try {
                 fileFeign.deleteFile(entity.getUrl());
             } catch (Exception e) {
-                throw new ServiceException(ApiError.ERROR_FILE_DELETE);
+                throw new ServiceException(ApiError.FILE_DELETE);
             }
         }
     }
@@ -107,12 +107,12 @@ public class FileTemplateServiceImpl extends SuperServiceImpl<FileTemplateMapper
     public void downLoadFdfsFileTemplate(String id) {
         FileTemplateEntity fileTemplateEntity = this.getById(id);
         if (ObjectUtil.isEmpty(fileTemplateEntity) || StrUtil.isBlank(fileTemplateEntity.getUrl())) {
-            throw new ServiceException(ApiError.ERROR_FILE_TEMPLATE_NOT_EXIST);
+            throw new ServiceException(ApiError.FILE_TEMPLATE_NOT_EXIST);
         }
         try {
             FastDFSClientUtil.downloadByte(fileTemplateEntity.getUrl(),fileTemplateEntity.getName(),"application/x-msdownload",Boolean.FALSE);
         } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_FILE_TEMPLATE_DOWNLOAD);
+            throw new ServiceException(ApiError.FILE_TEMPLATE_DOWNLOAD);
         }
     }
 

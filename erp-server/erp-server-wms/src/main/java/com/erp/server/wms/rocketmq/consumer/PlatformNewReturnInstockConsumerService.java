@@ -150,7 +150,7 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 
 		OverseasProviderWarehouseEntity overseasProviderWarehouseEntity = overseasProviderWarehouseService.getByPlatform(dto.getAuthId(),dto.getWarehouseCode());
 		if(Objects.isNull(overseasProviderWarehouseEntity) || CharSequenceUtil.isBlank(overseasProviderWarehouseEntity.getWarehouseId())){
-			throw new ServiceException(ApiError.ERROR_NOT_EXIST,"仓库信息");
+			throw new ServiceException(ApiError.COMMON_NOT_EXIST,"仓库信息");
 		}
 		SoB2cEntity soB2cEntity = null;
 		SoOutstockEntity soOutstock = null;

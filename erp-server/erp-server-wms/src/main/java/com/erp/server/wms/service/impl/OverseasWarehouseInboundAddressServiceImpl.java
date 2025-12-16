@@ -89,7 +89,7 @@ public class OverseasWarehouseInboundAddressServiceImpl extends SuperServiceImpl
     public void update(OverseasWarehouseInboundAddressDTO.UpdateDTO dto) {
         OverseasWarehouseInboundAddressEntity entity = this.getById(dto.getId());
         if (Objects.isNull(entity)) {
-            throw new ServiceException(ApiError.ERROR_PLM_PROJECT_TASK_RECORD_NOT_FOUND);
+            throw new ServiceException(ApiError.PROJECT_TASK_RECORD_NOT_FOUND);
         }
         sysDictService.mapAndCheckDictCityIds(
                 dto.getDictProvinceId(),

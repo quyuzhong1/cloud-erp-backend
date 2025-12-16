@@ -152,7 +152,7 @@ public class BiShopInfoServiceImpl extends ServiceImpl<BiShopInfoMapper, BiShopI
         biShopInfoEntity.setChargeId(dto.getChargeId());
         FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(dto.getChargeId());
         if (ObjectUtils.isEmpty(findUserDTO)) {
-            throw new ServiceException(ApiError.ERROR_AUTH_CREDENTIALS_INVALID);
+            throw new ServiceException(ApiError.AUTH_CREDENTIALS_INVALID);
         }
         biShopInfoEntity.setChargeName(findUserDTO.getUserName());
         biShopInfoEntity.setEnableTime(dto.getEnableTime());
@@ -175,7 +175,7 @@ public class BiShopInfoServiceImpl extends ServiceImpl<BiShopInfoMapper, BiShopI
     public Boolean changeDept(DmpShopInfoDeptChangeDTO dto) {
         SysDepartmentDTO sysDepartmentDTO = sysUserFeign.getUserDeptById(dto.getDeptId());
         if (ObjectUtils.isEmpty(sysDepartmentDTO)) {
-            throw new ServiceException(ApiError.ERROR_DEPT_NOT_FOUND);
+            throw new ServiceException(ApiError.COMMON_DEPT_NOT_FOUND);
         }
         //更新启动时间后的订单负责人部门
         List<BiOrderInfoEntity> list = biOrderInfoService.lambdaQuery()
@@ -384,7 +384,7 @@ public class BiShopInfoServiceImpl extends ServiceImpl<BiShopInfoMapper, BiShopI
         BiShopInfoEntity biShopInfoEntity = this.getOne(queryWrapper);
         if ((ObjectUtils.isEmpty(dto.getId()) && ObjectUtils.isNotEmpty(biShopInfoEntity))
                 || (ObjectUtils.isNotEmpty(dto.getId()) && ObjectUtils.isNotEmpty(biShopInfoEntity) && !biShopInfoEntity.getId().equals(dto.getId()))) {
-            throw new ServiceException(ApiError.ERROR_DMP_SHOP_NAME_EXISTS);
+            throw new ServiceException(ApiError.SHOP_NAME_EXISTS);
         }
     }
     @Override

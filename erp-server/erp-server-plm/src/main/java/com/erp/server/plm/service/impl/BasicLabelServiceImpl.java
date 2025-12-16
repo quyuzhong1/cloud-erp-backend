@@ -89,7 +89,7 @@ public class BasicLabelServiceImpl extends SuperServiceImpl<BasicLabelMapper, Ba
         log.info("开始新增基础标签单");
         boolean save = super.save(basicLabelEntity);
         if (!save) {
-            throw new ServiceException(ApiError.ERROR_SAVE_BASIC_LABEL);
+            throw new ServiceException(ApiError.PRODUCT_BASIC_LABEL_SAVE_FAILED);
         }
         return basicLabelEntity.getId();
     }
@@ -98,26 +98,26 @@ public class BasicLabelServiceImpl extends SuperServiceImpl<BasicLabelMapper, Ba
     @Transactional(rollbackFor = Exception.class)
     public Boolean batchAdd(List<BasicLabelDTO.AddDTO> list) {
         if (CollectionUtils.isEmpty(list)) {
-            throw new ServiceException(ApiError.ERROR_EMPTY_LIST);
+            throw new ServiceException(ApiError.COMMON_REQUEST_EMPTY);
         }
         //当前登录人
         LoginUser loginUser = UserContext.getLoginUser();
         if (ObjectUtils.isEmpty(loginUser)) {
-            throw new ServiceException(ApiError.ERROR_FORBIDDEN);
+            throw new ServiceException(ApiError.HTTP_FORBIDDEN);
         }
         List<BasicLabelEntity> basicLabelEntities = BeanMapperUtils.copyList(BasicLabelEntity.class, list);
         //校验数据是否存在重复
         Set<String> stringSet = basicLabelEntities.stream().collect(Collectors.groupingBy(BasicLabelEntity::getName, Collectors.counting()))
                 .entrySet().stream().filter(entry -> entry.getValue() > 1).map(Map.Entry::getKey).collect(Collectors.toSet());
         if (CollectionUtils.isNotEmpty(stringSet)) {
-            throw new ServiceException(ApiError.ERROR_EXIST_BASIC_LABEL_NAME, stringSet);
+            throw new ServiceException(ApiError.PRODUCT_BASIC_LABEL_NAME_EXISTS, stringSet);
         }
         //校验标签是否数据库已存在
         Set<String> names = basicLabelEntities.stream().filter(v -> StringUtils.isBlank(v.getId())).map(BasicLabelEntity::getName).collect(Collectors.toSet());
         if (CollectionUtils.isNotEmpty(names)) {
             List<Object> nameObjs = getByNames(names);
             if (CollectionUtils.isNotEmpty(nameObjs))
-                throw new ServiceException(ApiError.ERROR_EXIST_BASIC_LABEL, nameObjs.toArray());
+                throw new ServiceException(ApiError.PRODUCT_BASIC_LABEL_EXISTS, nameObjs.toArray());
         }
 
         //补充默认颜色 校验使用范围
@@ -127,7 +127,7 @@ public class BasicLabelServiceImpl extends SuperServiceImpl<BasicLabelMapper, Ba
         }).map(BasicLabelDTO.AddDTO::getLevel).filter(level -> StringUtils.isBlank(LabelLevelEnum.getName(level))).collect(Collectors.toSet());
         if (CollectionUtils.isNotEmpty(labelNames)) {
             //存在不在定义范围内的等级
-            throw new ServiceException(ApiError.NOT_EXIST_BASIC_LABEL_LEVEL, labelNames);
+            throw new ServiceException(ApiError.PRODUCT_BASIC_LABEL_LEVEL_NOT_FOUND, labelNames);
         }
         //index reset
         int i = 1;
@@ -145,7 +145,7 @@ public class BasicLabelServiceImpl extends SuperServiceImpl<BasicLabelMapper, Ba
     @Transactional(rollbackFor = Exception.class)
     public Boolean update(BasicLabelDTO.UpdateDTO updateDTO) {
         BasicLabelEntity old = super.getById(updateDTO.getId());
-        BasicLabelEntity oldEntity = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.ERROR_NOT_EXIST, "基础标签单"));
+        BasicLabelEntity oldEntity = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.COMMON_NOT_EXIST, "基础标签单"));
         BasicLabelEntity basicLabelEntity = BeanMapperUtils.map(BasicLabelEntity.class, updateDTO);
 
         // 数据处理
@@ -161,9 +161,9 @@ public class BasicLabelServiceImpl extends SuperServiceImpl<BasicLabelMapper, Ba
     @Override
     public void removeBasicLabelById(String id) {
         BasicLabelEntity basicLabelEntity = this.getById(id);
-        BasicLabelEntity oldBasicLabelEntity = Optional.ofNullable(basicLabelEntity).orElseThrow(() -> new ServiceException(ApiError.ERROR_NOT_EXIST, "基础标签单"));
+        BasicLabelEntity oldBasicLabelEntity = Optional.ofNullable(basicLabelEntity).orElseThrow(() -> new ServiceException(ApiError.COMMON_NOT_EXIST, "基础标签单"));
         LoginUser user = UserContext.getDefaultLoginUser();
-        LoginUser loginUser = Optional.ofNullable(user).orElseThrow(() -> new ServiceException(ApiError.ERROR_NOT_EXIST, "当前登录用户"));
+        LoginUser loginUser = Optional.ofNullable(user).orElseThrow(() -> new ServiceException(ApiError.COMMON_NOT_EXIST, "当前登录用户"));
         if (!StringUtils.equalsIgnoreCase(oldBasicLabelEntity.getCreateUserId(), loginUser.getUid())){
             throw new ServiceException("只能删除自己创建的标签");
         }
@@ -199,10 +199,10 @@ public class BasicLabelServiceImpl extends SuperServiceImpl<BasicLabelMapper, Ba
     private void handleData(BasicLabelEntity basicLabelEntity) {
         //当前登录人
         LoginUser loginUser = UserContext.getLoginUser();
-        ValidatorUtil.isNotNull(loginUser, ApiError.ERROR_FORBIDDEN);
-        ValidatorUtil.isNotBlank(LabelLevelEnum.getName(basicLabelEntity.getLevel()), ApiError.NOT_EXIST_BASIC_LABEL_LEVEL, basicLabelEntity.getLevel());
+        ValidatorUtil.isNotNull(loginUser, ApiError.HTTP_FORBIDDEN);
+        ValidatorUtil.isNotBlank(LabelLevelEnum.getName(basicLabelEntity.getLevel()), ApiError.PRODUCT_BASIC_LABEL_LEVEL_NOT_FOUND, basicLabelEntity.getLevel());
         int count = countByLabelName(basicLabelEntity.getName(), basicLabelEntity.getId());
-        if (0 != count) throw new ServiceException(ApiError.ERROR_EXIST_BASIC_LABEL, basicLabelEntity.getName());
+        if (0 != count) throw new ServiceException(ApiError.PRODUCT_BASIC_LABEL_EXISTS, basicLabelEntity.getName());
         //颜色无值时，默认灰色
         if (StringUtils.isBlank(basicLabelEntity.getColor())) {
             basicLabelEntity.setColor(LabelColorEnum.GREY.getCode());

@@ -224,7 +224,7 @@ public class WmsDeliveryPlanDetailServiceImpl extends SuperServiceImpl<WmsDelive
             if (CharSequenceUtil.isNotBlank(detailEntity.getId())) {
                 WmsDeliveryPlanDetailEntity old = list.stream().filter(obj -> obj.getId().equals(detailEntity.getId())).findFirst().orElse(null);
                 if (ObjectUtils.isEmpty(old)) {
-                    throw new ServiceException(ApiError.ERROR_NOT_OVERSEAS_DELIVERY_PLAN);
+                    throw new ServiceException(ApiError.FIRST_MILE_SHIPMENT_PLAN_NOT_EXIST);
                 }
                 operateLogService.addModuleOperateLogByObj(old, detailEntity, ModuleTypeEnum.DELIVERY_PLAN.getCode(), detailEntity.getId(),"", String.format("【%s】", old.getSkuNo()));
             }

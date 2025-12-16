@@ -106,7 +106,7 @@ public class ImageProcessServiceImpl implements ImageProcessService {
         // 下载ZIP文件字节数据
         byte[] zipBytes = fileFeign.downloadFile(zipUrl);
         if (Objects.isNull(zipBytes) || zipBytes.length == 0) {
-            throw new ServiceException(ApiError.ERROR_NOT_FOUND,zipUrl);
+            throw new ServiceException(ApiError.COMMON_NOT_FOUND,zipUrl);
         }
         List<MultipartFile> result = new ArrayList<>();
 

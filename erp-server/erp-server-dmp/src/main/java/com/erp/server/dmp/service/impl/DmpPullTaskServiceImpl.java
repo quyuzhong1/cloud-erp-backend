@@ -281,7 +281,7 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
     public Boolean batchSync(List<String> ids) {
         List<DmpPullTaskEntity> list = this.listByIds(ids);
         if (CollectionUtils.isEmpty(list)) {
-            throw new ServiceException(ApiError.ERROR_NOT_EXIST_DMP_PUSH_TASK);
+            throw new ServiceException(ApiError.DMP_PUSH_TASK_NOT_FOUND);
         }
         for (DmpPullTaskEntity dmpPullTaskEntity : list) {
             // 发送推送同步任务消息
@@ -297,12 +297,12 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
     @Override
     public Boolean batchNoNeedSync(List<String> ids) {
         if (CollectionUtils.isEmpty(ids)) {
-            throw new ServiceException(ApiError.ERROR_SELECTION_REQUIRED);
+            throw new ServiceException(ApiError.BILL_SELECTION_REQUIRED);
         }
         //获取数据
         List<DmpPullTaskEntity> list = this.listByIds(ids);
         if (CollectionUtils.isEmpty(list)) {
-            throw new ServiceException(ApiError.ERROR_NOT_EXIST_KINGDEE_DATA);
+            throw new ServiceException(ApiError.DMP_KINGDEE_DATA_NOT_FOUND);
         }
         List<DmpPullTaskEntity> noNeedSyncIds = list.stream().filter(obj ->
                 (!SyncStatusEnum.IN_SYNC.getCode().equals(obj.getStatus()) && !SyncStatusEnum.NO_NEED_SYNC.getCode().equals(obj.getStatus())))

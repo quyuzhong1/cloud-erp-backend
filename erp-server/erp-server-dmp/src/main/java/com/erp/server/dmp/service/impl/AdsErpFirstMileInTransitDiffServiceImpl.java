@@ -1,8 +1,6 @@
 package com.erp.server.dmp.service.impl;
 
-import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
-import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
@@ -30,7 +28,6 @@ import com.erp.server.dmp.service.OperateLogService;
 import com.common.core.exception.ServiceException;
 import cn.hutool.core.util.ObjectUtil;
 import com.erp.server.dmp.utils.RestCloudApiUtil;
-import io.seata.common.util.StringUtils;
 import org.springframework.stereotype.Service;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.dmp.dto.AdsErpFirstMileInTransitDiffDTO;
@@ -131,7 +128,7 @@ public class AdsErpFirstMileInTransitDiffServiceImpl extends SuperServiceImpl<Ad
     public Boolean adjustTransitQty(AdsErpFirstMileInTransitDiffDTO.AdjustDTO adjustDTO) {
         AdsErpFirstMileInTransitDiffEntity entity = this.getById(adjustDTO.getId());
         if (Objects.isNull(entity)) {
-            throw new ServiceException(ApiError.ERROR_NOT_EXIST, "平台在途报告记录");
+            throw new ServiceException(ApiError.COMMON_NOT_EXIST, "平台在途报告记录");
         }
         //存在下期在途记录不能调整
         LocalDateTime reportMonth = LocalDateTimeUtil.parse(entity.getCheckMonthQuery(), "yyyy-MM-dd HH:mm:ss");
@@ -209,19 +206,19 @@ public class AdsErpFirstMileInTransitDiffServiceImpl extends SuperServiceImpl<Ad
             EasyExcel.read(excelFile.getInputStream(), FirstMileInTransitInitExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (IOException e) {
             log.error("导入错误！", e);
-            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_FAILED);
+            throw new ServiceException(ApiError.FILE_DATA_IMPORT_FAILED);
         } catch (ExcelCommonException e) {
             log.error("导入格式错误！", e);
-            throw new ServiceException(ApiError.ERROR_FILE_IMPORT_FORMAT_INVALID_XLSX);
+            throw new ServiceException(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX);
         } catch (Exception e) {
             log.error("导入数据错误！", e);
-            throw new ServiceException(ApiError.ERROR_FILE_EXCEL_PARSE);
+            throw new ServiceException(ApiError.FILE_EXCEL_PARSE);
         }
         List<FirstMileInTransitInitExcelDTO> excelDateList = excelListenerUtil.getExcelDateList();
         if (CollectionUtils.isEmpty(excelDateList)) {
-            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_REQUIRED);
+            throw new ServiceException(ApiError.FILE_DATA_REQUIRED);
         } else if (excelDateList.size() > 5000) {
-            throw new ServiceException(ApiError.ERROR_EXCEL_IMPORT_SIZE);
+            throw new ServiceException(ApiError.FILE_EXCEL_IMPORT_SIZE);
         }
         List<FirstMileInTransitInitExcelDTO> errorList = excelListenerUtil.getErrorList();
         List<FirstMileInTransitInitExcelDTO> successList = excelListenerUtil.getSuccessList();
@@ -255,19 +252,19 @@ public class AdsErpFirstMileInTransitDiffServiceImpl extends SuperServiceImpl<Ad
             EasyExcel.read(excelFile.getInputStream(), FirstMileInTransitAdjustExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (IOException e) {
             log.error("导入错误！", e);
-            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_FAILED);
+            throw new ServiceException(ApiError.FILE_DATA_IMPORT_FAILED);
         } catch (ExcelCommonException e) {
             log.error("导入格式错误！", e);
-            throw new ServiceException(ApiError.ERROR_FILE_IMPORT_FORMAT_INVALID_XLSX);
+            throw new ServiceException(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX);
         } catch (Exception e) {
             log.error("导入数据错误！", e);
-            throw new ServiceException(ApiError.ERROR_FILE_EXCEL_PARSE);
+            throw new ServiceException(ApiError.FILE_EXCEL_PARSE);
         }
         List<FirstMileInTransitAdjustExcelDTO> excelDateList = excelListenerUtil.getExcelDateList();
         if (CollectionUtils.isEmpty(excelDateList)) {
-            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_REQUIRED);
+            throw new ServiceException(ApiError.FILE_DATA_REQUIRED);
         } else if (excelDateList.size() > 5000) {
-            throw new ServiceException(ApiError.ERROR_EXCEL_IMPORT_SIZE);
+            throw new ServiceException(ApiError.FILE_EXCEL_IMPORT_SIZE);
         }
         List<FirstMileInTransitAdjustExcelDTO> errorList = excelListenerUtil.getErrorList();
         List<FirstMileInTransitAdjustExcelDTO> successList = excelListenerUtil.getSuccessList();

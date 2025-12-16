@@ -28,4 +28,14 @@ public class MessageUtils {
             return apiError.getMsg();
         }
     }
+
+    public static String getMessage(String key, Object... args) {
+        Locale locale = LocaleContextHolder.getLocale();
+        try {
+            return messageSource.getMessage(key, args, locale);
+        } catch (NoSuchMessageException e) {
+            return key;
+        }
+    }
+
 }

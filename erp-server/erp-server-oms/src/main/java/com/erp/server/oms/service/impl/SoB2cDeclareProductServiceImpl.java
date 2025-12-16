@@ -106,7 +106,7 @@ public class SoB2cDeclareProductServiceImpl extends SuperServiceImpl<SoB2cDeclar
     public BatchResultDTO update(SoB2cDeclareProductDTO.UpdateDTO updateDTO) {
         SoB2cDeclareProductEntity old = super.getById(updateDTO.getId());
         if(null == old){
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "B2C销售订单申报产品信息单");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "B2C销售订单申报产品信息单");
         }
         SoB2cDeclareProductEntity soB2cDeclareProductEntity = B2cOrderConverter.INSTANCE.convertDeclareProductByDto(updateDTO);
         //销售订单

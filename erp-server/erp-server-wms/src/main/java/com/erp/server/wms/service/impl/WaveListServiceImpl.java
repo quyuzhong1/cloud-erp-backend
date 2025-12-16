@@ -312,7 +312,7 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
         boolean allFullyManaged = waveListEntities.stream().allMatch(WaveListEntity::getIsFullyManaged);
         if (!allFullyManaged){
             //存在非全托管订单不能打印sku条码
-            throw new ServiceException(ApiError.ERROR_NOT_IS_FULLY_MANAGED_ORDER);
+            throw new ServiceException(ApiError.SO_CONTAIN_NON_FULLY_MANAGED_ORDER_NOT_PRINT_BARCODE);
         }
         List<WaveListDetailEntity> detailList = waveListDetailService.listByMainIds(ids);
         List<String> deliveryIds = detailList.stream().map(item -> item.getDeliveryId()).distinct().collect(Collectors.toList());
@@ -323,13 +323,13 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
     public ApiResult<?> printFinishSkuBarcode(BaseIdsDTO.IdsDTO idsDTO) {
         List<WaveListEntity> waveListEntities = this.listByIds(idsDTO.getIds());
         if (CollUtil.isEmpty(waveListEntities)) {
-            throw new ServiceException(ApiError.ERROR_SOURCE_DOC_NOT_FOUND);
+            throw new ServiceException(ApiError.BILL_SOURCE_NOT_FOUND);
         }
         //全部都是全托管订单才能打印
         boolean allFullyManaged = waveListEntities.stream().allMatch(WaveListEntity::getIsFullyManaged);
         if (!allFullyManaged){
             //存在非全托管订单不能打印sku条码
-            throw new ServiceException(ApiError.ERROR_NOT_IS_FULLY_MANAGED_ORDER);
+            throw new ServiceException(ApiError.SO_CONTAIN_NON_FULLY_MANAGED_ORDER_NOT_PRINT_BARCODE);
         }
         LoginUser loginUser = UserContext.getDefaultLoginUser();
         //修改物流单打印状态为已打印
@@ -380,7 +380,7 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
 
         List<WaveListDetailEntity> list = waveListDetailService.listByMainIds(idsDTO.getIds());
         if (CollUtil.isEmpty(list)) {
-            throw new ServiceException(ApiError.ERROR_SOURCE_DOC_DETAIL_NOT_FOUND);
+            throw new ServiceException(ApiError.BILL_SOURCE_DETAIL_NOT_FOUND);
         }
         List<String> deliveryIds = list.stream().map(WaveListDetailEntity::getDeliveryId).distinct().collect(Collectors.toList());
         List<SoB2cDeliveryEntity> soB2cDeliveryEntities = deliveryService.listByIds(deliveryIds);

@@ -87,13 +87,13 @@ public class AuthGatewayFilter implements GlobalFilter, Order {
             //判断是否有feign
             if (uri.contains(FEIGN_URL)) {
                 //文件头使用JSON格式
-                return unauthorizedResponse(exchange, localeUtils.getMessage(ApiError.ERROR_UNAUTHORIZED_ACCESS, exchange.getRequest()), ApiError.ERROR_UNAUTHORIZED_ACCESS.getCode());
+                return unauthorizedResponse(exchange, localeUtils.getMessage(ApiError.HTTP_FORBIDDEN, exchange.getRequest()), ApiError.HTTP_FORBIDDEN.getCode());
             }
             if (uri.contains(SSO_URL)||uri.contains(KEY_REGISTER_URL)){
                 String clientIp = getClientIp(request);
                 if (!ipRateLimitUtil.isOpenApiAllowed(clientIp)) {
                     log.warn("开放接口访问频率过高，IP: {}, URI: {}", clientIp, uri);
-                    return unauthorizedResponse(exchange, localeUtils.getMessage(ApiError.ERROR_RATE_LIMIT, exchange.getRequest()), ApiError.ERROR_RATE_LIMIT.getCode());
+                    return unauthorizedResponse(exchange, localeUtils.getMessage(ApiError.HTTP_TOO_MANY_REQUESTS, exchange.getRequest()), ApiError.HTTP_TOO_MANY_REQUESTS.getCode());
                 }
                 return chain.filter(exchange);
             }
@@ -132,13 +132,13 @@ public class AuthGatewayFilter implements GlobalFilter, Order {
                 String token = headers.getFirst(TokenConstants.AUTHENTICATION);
                 if (StringUtils.isBlank(token)) {
                     // 响应中放入返回的状态吗, 没有权限访问
-                    Mono<Void> mono = unauthorizedResponse(exchange, localeUtils.getMessage(ApiError.ERROR_FORBIDDEN, exchange.getRequest()), ApiError.ERROR_FORBIDDEN.getCode());
+                    Mono<Void> mono = unauthorizedResponse(exchange, localeUtils.getMessage(ApiError.HTTP_FORBIDDEN, exchange.getRequest()), ApiError.HTTP_FORBIDDEN.getCode());
                     return mono;
                 }
                 //解析token
                 LoginUser loginUser = tokenService.getLoginUser(token);
                 if (Objects.isNull(loginUser)) {
-                    return unauthorizedResponse(exchange, localeUtils.getMessage(ApiError.ERROR_FORBIDDEN, exchange.getRequest()), ApiError.ERROR_FORBIDDEN.getCode());
+                    return unauthorizedResponse(exchange, localeUtils.getMessage(ApiError.HTTP_FORBIDDEN, exchange.getRequest()), ApiError.HTTP_FORBIDDEN.getCode());
                 }
 
                 // 检查JWT Token是否包含pathList权限
@@ -148,7 +148,7 @@ public class AuthGatewayFilter implements GlobalFilter, Order {
                     boolean hasPermission = checkPathPermission(uri, jwtPathList);
                     if (!hasPermission) {
                         log.warn("接口无权限，URI: {}, 用户权限: {}", uri, Arrays.toString(jwtPathList));
-                        return unauthorizedResponse(exchange, "接口无权限", ApiError.ERROR_FORBIDDEN.getCode());
+                        return unauthorizedResponse(exchange, "接口无权限", ApiError.HTTP_FORBIDDEN.getCode());
                     }
                 }
 

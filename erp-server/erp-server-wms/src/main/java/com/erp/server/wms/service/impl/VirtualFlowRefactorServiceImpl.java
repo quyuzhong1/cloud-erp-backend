@@ -203,7 +203,7 @@ public class VirtualFlowRefactorServiceImpl implements VirtualFlowRefactorServic
                     getSelfBean().approve(cancelDto,ignoreSkuIds,bomChildrenSkuList);
                     break;
                 default:
-                    throw new ServiceException(ApiError.ERROR_PARAM_INVALID);
+                    throw new ServiceException(ApiError.HTTP_BAD_REQUEST);
             }
         }
     }
@@ -541,7 +541,7 @@ public class VirtualFlowRefactorServiceImpl implements VirtualFlowRefactorServic
             // 参数传输了要改的状态
             log.info("参数已传库存状态：【{}】，业务类型：【{}】，单据类型：【{}】，单据id：【{}】，单据日期：【{}】,SKU编号：【{}】", param.getInventoryStatus().getName(), businessType.getName(), param.getSourceType().getName(), param.getSourceId(), param.getBillDate(), param.getSkuNo());
             InventoryModeEnum inventoryModeEnum = param.getInventoryMode();
-            ValidatorUtil.isTrue(Objects.nonNull(inventoryModeEnum),()->new ServiceException(ApiError.ERROR_PARAM_INVALID.getCode(), "交易类型不能为空"));
+            ValidatorUtil.isTrue(Objects.nonNull(inventoryModeEnum),()->new ServiceException(ApiError.HTTP_BAD_REQUEST.getCode(), "交易类型不能为空"));
             // 转换成出入库参数
             VirtualInventoryStockDTO.StockCoreDTO inOutStockCoreDTO = BeanMapperUtils.map(VirtualInventoryStockDTO.StockCoreDTO.class, param);
             inOutStockCoreDTO.setOperationMode(InventoryOperationModeEnum.APPROVE);
@@ -555,24 +555,24 @@ public class VirtualFlowRefactorServiceImpl implements VirtualFlowRefactorServic
             }
         } else {
             if(CollUtil.isEmpty(transactionRuleParams)) {
-                throw new ServiceException(ApiError.ERROR_WMS_STOCK_RULE_BIZ_TYPE_ERROR.getCode(), CharSequenceUtil.format(ApiError.ERROR_WMS_STOCK_RULE_BIZ_TYPE_ERROR.getMsg(), businessType.getName()));
+                throw new ServiceException(ApiError.WH_STOCK_RULE_BIZ_TYPE_ERROR.getCode(), CharSequenceUtil.format(ApiError.WH_STOCK_RULE_BIZ_TYPE_ERROR.getMsg(), businessType.getName()));
             }
             log.info("参数未传库存状态，从配置读取，业务类型：【{}】，单据类型：【{}】，单据id：【{}】，单据日期：【{}】,SKU编号：【{}】,交易配置信息：【{}】", businessType.getName(), param.getSourceType().getName(), param.getSourceId(), param.getBillDate(), param.getSkuNo(), JSONObject.toJSONString(transactionRuleParams));
             // 判断当前仓是入库还是出库
             transactionRuleParams = transactionRuleParams.stream().filter(r->Objects.equals(r.getWarehouseOption(), param.getWarehouseOptionEnum())).collect(Collectors.toList());
             if(CollUtil.isEmpty(transactionRuleParams)) {
-                throw new ServiceException(ApiError.ERROR_WMS_STOCK_RULE_BIZ_TYPE_ERROR.getCode(), CharSequenceUtil.format(ApiError.ERROR_WMS_STOCK_RULE_BIZ_TYPE_ERROR.getMsg(), businessType.getName()));
+                throw new ServiceException(ApiError.WH_STOCK_RULE_BIZ_TYPE_ERROR.getCode(), CharSequenceUtil.format(ApiError.WH_STOCK_RULE_BIZ_TYPE_ERROR.getMsg(), businessType.getName()));
             }
             transactionRuleParams = transactionRuleParams.stream()
                     .sorted(Comparator.comparing(inventoryStatus -> inventoryStatus.getInventoryStatus().getCode()))
                     .collect(Collectors.toList());
             for(VirtualTransRuleDTO.StockParamDTO transactionRule : transactionRuleParams) {
                 InventoryWarehouseOptionEnum inventoryWarehouseOptionEnum = transactionRule.getWarehouseOption();
-                ValidatorUtil.isTrue(Objects.nonNull(inventoryWarehouseOptionEnum), () -> new ServiceException(ApiError.ERROR_WMS_STOCK_RULE_WAREHOUSE_CONFIG_ERROR));
+                ValidatorUtil.isTrue(Objects.nonNull(inventoryWarehouseOptionEnum), () -> new ServiceException(ApiError.WH_STOCK_RULE_WAREHOUSE_CONFIG_ERROR));
                 InventoryStatusEnum inventoryStatusEnum = transactionRule.getInventoryStatus();
-                ValidatorUtil.isTrue(Objects.nonNull(inventoryStatusEnum), () -> new ServiceException(ApiError.ERROR_WMS_STOCK_RULE_STATUS_CONFIG_ERROR));
+                ValidatorUtil.isTrue(Objects.nonNull(inventoryStatusEnum), () -> new ServiceException(ApiError.WH_STOCK_RULE_STATUS_CONFIG_ERROR));
                 InventoryModeEnum inventoryModeEnum = transactionRule.getTransactionMode();
-                ValidatorUtil.isTrue(Objects.nonNull(inventoryModeEnum), () -> new ServiceException(ApiError.ERROR_WMS_STOCK_RULE_TX_TYPE_ERROR));
+                ValidatorUtil.isTrue(Objects.nonNull(inventoryModeEnum), () -> new ServiceException(ApiError.WH_STOCK_RULE_TX_TYPE_ERROR));
                 // 可能某个业务类型在同一个仓库即需要做入也需要做出，分别调用逻辑
                 VirtualInventoryStockDTO.StockCoreDTO inOutStockCoreDTO = BeanMapperUtils.map(VirtualInventoryStockDTO.StockCoreDTO.class, param);
                 inOutStockCoreDTO.setOperationMode(InventoryOperationModeEnum.APPROVE);
@@ -751,7 +751,7 @@ public class VirtualFlowRefactorServiceImpl implements VirtualFlowRefactorServic
 
     public <T extends VirtualInventoryStockDTO.StockBaseDTO> void singleHandler( VirtualInventoryStockDTO.OutInStockDTO param, VirtualInventoryBusinessTypeEnum businessType, List<VirtualTransRuleDTO.StockParamDTO> transactionRuleParams, String transactionNo) {
         if(CollUtil.isEmpty(transactionRuleParams)) {
-            throw new ServiceException(ApiError.ERROR_WMS_STOCK_RULE_BIZ_TYPE_ERROR.getCode(), CharSequenceUtil.format(ApiError.ERROR_WMS_STOCK_RULE_BIZ_TYPE_ERROR.getMsg(), businessType.getName()));
+            throw new ServiceException(ApiError.WH_STOCK_RULE_BIZ_TYPE_ERROR.getCode(), CharSequenceUtil.format(ApiError.WH_STOCK_RULE_BIZ_TYPE_ERROR.getMsg(), businessType.getName()));
         }
         log.warn("从配置读取库存交易规则，业务类型：【{}】，单据类型：【{}】，单据id：【{}】，单据日期：【{}】,SKU编号：【{}】,交易配置信息：【{}】", businessType.getName(), param.getSourceType().getName(), param.getSourceId(), param.getBillDate(), param.getSkuNo(), JSONObject.toJSONString(transactionRuleParams));
         // 交易规则按照状态排序
@@ -783,7 +783,7 @@ public class VirtualFlowRefactorServiceImpl implements VirtualFlowRefactorServic
         // 实物仓库信息
         WarehouseDTO.UpdateDTO warehouseInfo = warehouseService.detailWithCache(param.getWarehouseId());
         if(Objects.isNull(warehouseInfo) || CharSequenceUtil.isEmpty(warehouseInfo.getId())) {
-            throw new ServiceException(ApiError.ERROR_WMS_WAREHOUSE_NOT_FOUND);
+            throw new ServiceException(ApiError.WH_NOT_FOUND);
         }
         VirtualInventoryEntity found = virtualInventoryService.findVirtualInventoryStock(param.getVirtualWarehouseId(),param.getWarehouseId(),param.getSkuId(), inventoryStatusEnum.getCode());
         // 登记交易流水
@@ -804,7 +804,7 @@ public class VirtualFlowRefactorServiceImpl implements VirtualFlowRefactorServic
         //实体仓库信息
         WarehouseDTO.UpdateDTO warehouseInfo = warehouseService.detailWithCache(param.getWarehouseId());
         if(Objects.isNull(warehouseInfo) || CharSequenceUtil.isEmpty(warehouseInfo.getId())) {
-            throw new ServiceException(ApiError.ERROR_WMS_WAREHOUSE_NOT_FOUND);
+            throw new ServiceException(ApiError.WH_NOT_FOUND);
         }
         // 待出库数量
         log.info("交易业务：【{}】，来源单据：{}，单据id：【{}】，SKU编号：【{}】，库存状态：【{}】，开始走出库逻辑", businessType.getName(), param.getSourceType().getName(), param.getSourceId(), inventoryStatusEnum.getName(), param.getSkuNo());
@@ -825,15 +825,15 @@ public class VirtualFlowRefactorServiceImpl implements VirtualFlowRefactorServic
     private  void checkTransRule(VirtualTransRuleDTO.StockParamDTO stockParamDTO) {
         // 交易规则-选项错误
         InventoryWarehouseOptionEnum inventoryWarehouseOptionEnum = stockParamDTO.getWarehouseOption();
-        ValidatorUtil.isTrue(Objects.nonNull(inventoryWarehouseOptionEnum), () -> new ServiceException(ApiError.ERROR_WMS_STOCK_RULE_WAREHOUSE_CONFIG_ERROR));
+        ValidatorUtil.isTrue(Objects.nonNull(inventoryWarehouseOptionEnum), () -> new ServiceException(ApiError.WH_STOCK_RULE_WAREHOUSE_CONFIG_ERROR));
 
         // 交易规则-库存状态错误
         InventoryStatusEnum inventoryStatusEnum = stockParamDTO.getInventoryStatus();
-        ValidatorUtil.isTrue(Objects.nonNull(inventoryStatusEnum), () -> new ServiceException(ApiError.ERROR_WMS_STOCK_RULE_STATUS_CONFIG_ERROR));
+        ValidatorUtil.isTrue(Objects.nonNull(inventoryStatusEnum), () -> new ServiceException(ApiError.WH_STOCK_RULE_STATUS_CONFIG_ERROR));
 
         // 交易规则-交易类型错误
         InventoryModeEnum inventoryModeEnum = stockParamDTO.getTransactionMode();
-        ValidatorUtil.isTrue(Objects.nonNull(inventoryModeEnum), () -> new ServiceException(ApiError.ERROR_WMS_STOCK_RULE_TX_TYPE_ERROR));
+        ValidatorUtil.isTrue(Objects.nonNull(inventoryModeEnum), () -> new ServiceException(ApiError.WH_STOCK_RULE_TX_TYPE_ERROR));
     }
 
     /**

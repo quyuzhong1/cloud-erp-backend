@@ -89,7 +89,7 @@ public class ThridUserInfoServiceImpl extends SuperServiceImpl<ThridUserInfoMapp
     @Override
     public Boolean update(ThridUserInfoDTO.UpdateDTO addOrUpdateDTO) {
         ThridUserInfoEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "用户单"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "用户单"));
         ThridUserInfoEntity thridUserInfoEntity =  BeanMapperUtils.map(ThridUserInfoEntity.class, addOrUpdateDTO);
 
         // 数据处理

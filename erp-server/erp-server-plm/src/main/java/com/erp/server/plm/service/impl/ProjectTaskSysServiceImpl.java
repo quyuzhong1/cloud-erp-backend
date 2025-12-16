@@ -145,7 +145,7 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
                 //根据分配类型查询模板中的数据
                 for (TaskChargeDistributionEntity taskChargeDistributionEntity : taskChargeDistributionList) {
                     if (StringUtils.isBlank(taskChargeDistributionEntity.getCharges())) {
-                        throw new ServiceException(ApiError.ERROR_PLM_TASK_OWNER_REQUIRED);
+                        throw new ServiceException(ApiError.PROJECT_PARAM_TASK_OWNER_REQUIRED);
                     }
                     if (DistributionTypeEnum.DISTRIBUTION_USER.getCode().equals(taskChargeDistributionEntity.getDistributionType())) {
                         taskChargeDistributionEntity.setChargeIds(taskChargeDistributionEntity.getCharges());
@@ -201,7 +201,7 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
         }
         int count = this.count(queryWrapper);
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_PLM_TASK_NAME_EXISTS);
+            throw new ServiceException(ApiError.PROJECT_TASK_EXISTS);
         }
     }
 
@@ -326,7 +326,7 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
     public SysTaskVO taskDetails(String taskId) {
         ProjectTaskSysEntity sysEntity = this.getById(taskId);
         if (Objects.isNull(sysEntity)) {
-            throw new ServiceException(ApiError.ERROR_PLM_TASK_NOT_FOUND);
+            throw new ServiceException(ApiError.PROJECT_TASK_NOT_FOUND);
         }
         SysTaskVO sysTaskVO = new SysTaskVO();
         BeanMapper.copy(sysEntity, sysTaskVO);
@@ -409,7 +409,7 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
         queryWrapper.eq(ProjectTaskSysEntity::getPhaseId, phaseId);
         int count = this.count(queryWrapper);
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_PLM_STAGE_HAS_TASKS_DELETE_FORBIDDEN);
+            throw new ServiceException(ApiError.PROJECT_STAGE_HAS_TASKS_DELETE_FORBIDDEN);
         }
     }
 }

@@ -90,7 +90,7 @@ public class SampleRecipientDetailServiceImpl extends SuperServiceImpl<SampleRec
     @Override
     public Boolean update(SampleRecipientDetailDTO.UpdateDTO addOrUpdateDTO) {
         SampleRecipientDetailEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "样品领用单明细"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "样品领用单明细"));
         SampleRecipientDetailEntity sampleRecipientDetailEntity =  BeanMapperUtils.map(SampleRecipientDetailEntity.class, addOrUpdateDTO);
 
         // 数据处理
@@ -125,7 +125,7 @@ public class SampleRecipientDetailServiceImpl extends SuperServiceImpl<SampleRec
             EasyExcel.read(excelFile.getInputStream(), SampleRecipientDetailImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (Exception e) {
             log.error("导入样品领用单明细错误！", e);
-            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_FAILED);
+            throw new ServiceException(ApiError.FILE_DATA_IMPORT_FAILED);
         }
 
         List<SampleRecipientDetailImportExcelDTO> errorList = excelListenerUtil.getErrorList();

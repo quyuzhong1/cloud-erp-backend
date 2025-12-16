@@ -195,7 +195,7 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
     @Override
     public Boolean update(InvoiceInfoDTO.UpdateDTO addOrUpdateDTO) {
         InvoiceInfoEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "上传记录"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "上传记录"));
         InvoiceInfoEntity invoiceInfoEntity =  BeanMapperUtils.map(InvoiceInfoEntity.class, addOrUpdateDTO);
 
         // 数据处理
@@ -230,7 +230,7 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
     public String downloadInvoice(String id) {
         InvoiceInfoEntity entity = super.getById(id);
         if (Objects.isNull(entity)){
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "上传记录");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "上传记录");
         }
         return entity.getFileUrl();
     }
@@ -240,7 +240,7 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
     public BatchResultDTO batchGenerateNfeInvoice(String id,Boolean isAsync) {
         SoB2cEntity soB2cEntity = soB2cService.getById(id);
         if(ObjUtil.isEmpty(soB2cEntity)){
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "b2c订单");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "b2c订单");
         }
         if (SoB2cNfeStatusEnum.INVOICING.getCode().equals(soB2cEntity.getNfeInvoiceStatus())) {
             throw new ServiceException(ApiError.ERROR_INVOICE_NFE_CREATE_INVOICING);
@@ -248,7 +248,7 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
 
         List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cDetailService.listByMainIds(Collections.singletonList(id));
         if (CollUtil.isEmpty(soB2cDetailEntityList)) {
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "b2c订单明细");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "b2c订单明细");
         }
 
         List<String> skuIdList = soB2cDetailEntityList.stream().map(SoB2cDetailEntity::getSkuId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
@@ -362,7 +362,7 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
         List<BatchResultDTO> resultDTOList = new ArrayList<>();
         List<SoB2cEntity> soB2cEntityList = soB2cService.listByIds(ids);
         if(CollectionUtils.isEmpty(soB2cEntityList)){
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "b2c订单");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "b2c订单");
         }
         List<String> shopIds = soB2cEntityList.stream().map(SoB2cEntity::getShopId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
         List<CfgVatInvoiceEntity> cfgVatInvoiceEntities = cfgVatInvoiceService.listCfgByShopIds(shopIds);
@@ -388,8 +388,8 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
             return new ArrayList<>();
         }
         for (SoB2cEntity entity : soB2cEntityList) {
-            CfgVatInvoiceEntity cfgVatInvoiceEntity = cfgVatInvoiceEntities.stream().filter(e -> CharSequenceUtil.isNotBlank(entity.getShopId()) && !e.getDisabled() && entity.getShopId().equals(e.getShopId())).findFirst().orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "发票配置"));
-            SoB2cEntity soB2cEntity = soB2cEntityList.stream().filter(e -> CharSequenceUtil.isNotBlank(entity.getId()) && entity.getId().equals(e.getId())).findFirst().orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "b2c订单"));
+            CfgVatInvoiceEntity cfgVatInvoiceEntity = cfgVatInvoiceEntities.stream().filter(e -> CharSequenceUtil.isNotBlank(entity.getShopId()) && !e.getDisabled() && entity.getShopId().equals(e.getShopId())).findFirst().orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "发票配置"));
+            SoB2cEntity soB2cEntity = soB2cEntityList.stream().filter(e -> CharSequenceUtil.isNotBlank(entity.getId()) && entity.getId().equals(e.getId())).findFirst().orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "b2c订单"));
             if (!PlatformDictEnum.AMAZON.getCode().equalsIgnoreCase(soB2cEntity.getDictPlatform()) || !soB2cEntity.hasPlatformWarehouseOrder()) {
                 resultDTOList.add(BatchResultDTO.fail(soB2cEntity.getId(),soB2cEntity.getCode(),"只有亚马逊FBA订单允许生成发票"));
                 continue;
@@ -436,9 +436,9 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
         });
         //开票成功并且配置为自动上传的，上传发票
         addList.stream().filter(v->v.getStatus().equals(InvoiceInfoStatusEnum.INVOICE_SUCCESS.getCode())).filter(v->{
-            CfgVatInvoiceEntity cfgVatInvoiceEntity = cfgVatInvoiceEntities.stream().filter(e ->  !e.getDisabled() && v.getShopId().equals(e.getShopId())).findFirst().orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "发票配置"));
+            CfgVatInvoiceEntity cfgVatInvoiceEntity = cfgVatInvoiceEntities.stream().filter(e ->  !e.getDisabled() && v.getShopId().equals(e.getShopId())).findFirst().orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "发票配置"));
             return cfgVatInvoiceEntity.getIsAutoUpload();}).forEach(invoiceInfoEntity -> {
-            SoB2cEntity soB2cEntity = soB2cEntityList.stream().filter(e -> CharSequenceUtil.isNotBlank(invoiceInfoEntity.getSoId()) && invoiceInfoEntity.getSoId().equals(e.getId())).findFirst().orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "b2c订单"));
+            SoB2cEntity soB2cEntity = soB2cEntityList.stream().filter(e -> CharSequenceUtil.isNotBlank(invoiceInfoEntity.getSoId()) && invoiceInfoEntity.getSoId().equals(e.getId())).findFirst().orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "b2c订单"));
             try {
                 String feedId = amazonUploadInvoiceService.uploadInvoice(soB2cEntity,invoiceInfoEntity.getFileUrl(),invoiceInfoEntity.getCode());
                 invoiceInfoEntity.setUploadTime(LocalDateTime.now());
@@ -458,8 +458,8 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
     }
 
     private void generateInvoicePdf(InvoiceInfoEntity invoiceInfoEntity, List<CfgVatInvoiceEntity> cfgVatInvoiceEntities, List<SoB2cEntity> soB2cEntityList, List<SoB2cDetailEntity> allSoB2cDetailEntityList, List<DmpSoBillDetailEntity> allDmpSoBillDetailEntityList, List<ListingInfoEntity> listingInfoEntityList) {
-        CfgVatInvoiceEntity cfgVatInvoiceEntity = cfgVatInvoiceEntities.stream().filter(e ->  !e.getDisabled() && invoiceInfoEntity.getShopId().equals(e.getShopId())).findFirst().orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "发票配置"));
-        SoB2cEntity soB2cEntity = soB2cEntityList.stream().filter(e -> invoiceInfoEntity.getSoId().equals(e.getId())).findFirst().orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "b2c订单"));
+        CfgVatInvoiceEntity cfgVatInvoiceEntity = cfgVatInvoiceEntities.stream().filter(e ->  !e.getDisabled() && invoiceInfoEntity.getShopId().equals(e.getShopId())).findFirst().orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "发票配置"));
+        SoB2cEntity soB2cEntity = soB2cEntityList.stream().filter(e -> invoiceInfoEntity.getSoId().equals(e.getId())).findFirst().orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "b2c订单"));
         //增加发票模板对接校验
         if (!CfgVatInvoiceTemplateTypeEnum.ERP.getCode().equals(cfgVatInvoiceEntity.getTemplateType())){
             invoiceInfoEntity.setStatus(InvoiceInfoStatusEnum.INVOICE_FAILED.getCode());
@@ -707,7 +707,7 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
         List<SoB2cEntity> updateSoB2cList = new ArrayList<>();
         List<InvoiceInfoEntity> updateList = new ArrayList<>();
         for (InvoiceInfoEntity invoiceInfoEntity : invoiceInfoEntityList) {
-            SoB2cEntity soB2cEntity = soB2cEntityList.stream().filter(e -> CharSequenceUtil.isNotBlank(invoiceInfoEntity.getSoId()) && invoiceInfoEntity.getSoId().equals(e.getId())).findFirst().orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "b2c订单"));
+            SoB2cEntity soB2cEntity = soB2cEntityList.stream().filter(e -> CharSequenceUtil.isNotBlank(invoiceInfoEntity.getSoId()) && invoiceInfoEntity.getSoId().equals(e.getId())).findFirst().orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "b2c订单"));
             try {
                 ApiResult<Object> result = amazonUploadInvoiceService.getInvoiceResult(invoiceInfoEntity.getQueryId(),invoiceInfoEntity.getShopId());
                 if(result.isSuccess()){
@@ -755,7 +755,7 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
     public BatchResultDTO cancelInvoice(String id,String remark) {
         InvoiceInfoEntity invoiceInfoEntity = this.getById(id);
         if (ObjUtil.isEmpty(invoiceInfoEntity)) {
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "开票清单");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "开票清单");
         }
         //仅nf-e发票支持操作
         if (!CharSequenceUtil.equals(InvoiceInfoInvoiceTypeEnum.NFE.getCode(), invoiceInfoEntity.getInvoiceType())) {
@@ -780,7 +780,7 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
     public BatchResultDTO returnInvoice(String id,String remark,String returnTaxCode) {
         InvoiceInfoEntity invoiceInfoEntity = this.getById(id);
         if (ObjUtil.isEmpty(invoiceInfoEntity)) {
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "开票清单");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "开票清单");
         }
         //仅nf-e发票支持操作
         if (!CharSequenceUtil.equals(InvoiceInfoInvoiceTypeEnum.NFE.getCode(), invoiceInfoEntity.getInvoiceType())) {
@@ -810,7 +810,7 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
     public BatchResultDTO notNeedInvoice(String soId, String remark,String invoiceType) {
         SoB2cEntity soB2cEntity = soB2cService.getById(soId);
         if (ObjUtil.isEmpty(soB2cEntity)) {
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "销售订单");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "销售订单");
         }
         if(invoiceType.equals(InvoiceInfoInvoiceTypeEnum.NFE.getCode())) {
             //无需开票
@@ -1049,7 +1049,7 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
     public BatchResultDTO updateCce(InvoiceInfoDTO.UpdateCceDTO dto) {
         InvoiceInfoEntity invoiceInfoEntity = this.getById(dto.getId());
         if (ObjUtil.isEmpty(invoiceInfoEntity)) {
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "开票清单");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "开票清单");
         }
         //仅nf-e发票支持操作
         if (!CharSequenceUtil.equals(InvoiceInfoInvoiceTypeEnum.NFE.getCode(), invoiceInfoEntity.getInvoiceType())) {
@@ -1082,7 +1082,7 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
         InvoiceInfoDTO.ViewCceDTO viewCceDTO = new InvoiceInfoDTO.ViewCceDTO();
         InvoiceInfoEntity invoiceInfoEntity = this.getById(id);
         if (ObjUtil.isEmpty(invoiceInfoEntity)) {
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "开票清单");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "开票清单");
         }
         //仅nf-e发票支持操作
         if (!CharSequenceUtil.equals(InvoiceInfoInvoiceTypeEnum.NFE.getCode(), invoiceInfoEntity.getInvoiceType())) {
@@ -1135,7 +1135,7 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
     @Override
     public List<InvoiceTaxDTO.CheckGenerateInvoiceDTO> checkGenerateInvoice(List<String> soIdList, Boolean isCheckInvoiceTax) {
         if (CollUtil.isEmpty(soIdList)) {
-            throw new ServiceException(ApiError.ERROR_SELECTION_REQUIRED);
+            throw new ServiceException(ApiError.BILL_SELECTION_REQUIRED);
         }
         //销售订单
         List<SoB2cEntity> soB2cEntityList = soB2cService.listByIds(soIdList);
@@ -1254,7 +1254,7 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
         }).collect(Collectors.toList());
         //上传发票
         for (InvoiceInfoEntity invoiceInfoEntity : uploadInvoiceList) {
-            SoB2cEntity soB2cEntity = soB2cEntityList.stream().filter(e -> CharSequenceUtil.isNotBlank(invoiceInfoEntity.getSoId()) && invoiceInfoEntity.getSoId().equals(e.getId())).findFirst().orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "b2c订单"));
+            SoB2cEntity soB2cEntity = soB2cEntityList.stream().filter(e -> CharSequenceUtil.isNotBlank(invoiceInfoEntity.getSoId()) && invoiceInfoEntity.getSoId().equals(e.getId())).findFirst().orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "b2c订单"));
             try {
                 String feedId = amazonUploadInvoiceService.uploadInvoice(soB2cEntity,invoiceInfoEntity.getFileUrl(),invoiceInfoEntity.getCode());
                 soB2cEntity.setVatInvoiceStatus(SoB2cVatStatusEnum.UPLOAD_SUCCESS.getCode());

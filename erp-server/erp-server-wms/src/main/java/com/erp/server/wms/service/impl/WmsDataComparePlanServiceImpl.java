@@ -76,7 +76,7 @@ public class WmsDataComparePlanServiceImpl extends SuperServiceImpl<WmsDataCompa
     public Boolean update(WmsDataComparePlanDTO.UpdateDTO updateDTO) {
         WmsDataComparePlanEntity old = super.getById(updateDTO.getId());
         if (Objects.isNull(old)){
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "数据对比映射方案");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "数据对比映射方案");
         }
         WmsDataComparePlanEntity wmsDataComparePlanEntity =  BeanMapperUtils.map(WmsDataComparePlanEntity.class, updateDTO);
 

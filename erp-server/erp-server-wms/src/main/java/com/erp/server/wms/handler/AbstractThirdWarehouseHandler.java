@@ -53,10 +53,10 @@ public abstract class AbstractThirdWarehouseHandler extends BaseController imple
     public void handleAuthInfo(String id) {
         OverseasProviderEntity authEntity = getAuthEntity(id);
         if(Objects.isNull(authEntity)){
-            throw new ServiceException(ApiError.NOT_FOUND_OVERSEAS_PROVIDE);
+            throw new ServiceException(ApiError.WH_OVERSEAS_PROVIDER_NOT_FOUND);
         }
         if(!authEntity.getAuthStatus().equals(AuthStatusEnum.ALREADY.getCode())){
-            throw new ServiceException(ApiError.OVERSEAS_PROVIDE_NOT_AUTH);
+            throw new ServiceException(ApiError.WH_OVERSEAS_PROVIDER_NOT_AUTH);
         }
         ThirdWarehouseContext.setAuthMap(authEntity.getAuthJson());
     }
@@ -183,10 +183,10 @@ public abstract class AbstractThirdWarehouseHandler extends BaseController imple
             pushOperateLog(businessType,result.getCode(),erpBusinessCode, false);
             return result;
         } catch (Exception e){
-            log.error(ApiError.THIRD_WAREHOUSE_INTERFACE_EXCEPTION.getMsg(),e);
+            log.error(ApiError.WH_OVERSEAS_INTERFACE_EXCEPTION.getMsg(),e);
             ThirdWarehouseContext.setMsg(ExceptionUtil.stacktraceToString(e,2000));
             pushOperateLog(businessType,2000,erpBusinessCode, false);
-            return ApiResult.error(ApiError.THIRD_WAREHOUSE_INTERFACE_EXCEPTION.getCode(),e.getMessage());
+            return ApiResult.error(ApiError.WH_OVERSEAS_INTERFACE_EXCEPTION.getCode(),e.getMessage());
         } finally {
             // remove thread-local
             ThirdWarehouseContext.remove();

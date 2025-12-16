@@ -70,7 +70,7 @@ public class ThirdLogisticsServiceImpl extends SuperServiceImpl<ThirdLogisticsMa
     @Override
     public Boolean update(ThirdLogisticsDTO.UpdateDTO updateDTO) {
         ThirdLogisticsEntity old = super.getById(updateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "三方渠道单"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "三方渠道单"));
         ThirdLogisticsEntity thirdLogisticsEntity =  BeanMapperUtils.map(ThirdLogisticsEntity.class, updateDTO);
 
         // 数据处理

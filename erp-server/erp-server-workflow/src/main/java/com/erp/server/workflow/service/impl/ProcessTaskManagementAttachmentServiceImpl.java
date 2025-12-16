@@ -55,7 +55,7 @@ public class ProcessTaskManagementAttachmentServiceImpl extends SuperServiceImpl
     @Override
     public Boolean update(ProcessTaskManagementAttachmentDTO.UpdateDTO updateDTO) {
         ProcessTaskManagementAttachmentEntity old = super.getById(updateDTO.getId());
-        old= Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "审核附件表（保存用户审核时提交的附件）"));
+        old= Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "审核附件表（保存用户审核时提交的附件）"));
         ProcessTaskManagementAttachmentEntity processTaskManagementAttachmentEntity =  BeanMapperUtils.map(ProcessTaskManagementAttachmentEntity.class, updateDTO);
 
         // 数据处理

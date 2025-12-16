@@ -73,7 +73,7 @@ public class SoOutstockPackingExcelListener extends AnalysisEventListener<SoOuts
             ExcelDataConvertException convertException = (ExcelDataConvertException) exception;
             int row = convertException.getRowIndex();
             int column = convertException.getColumnIndex()+1;
-            throw new ServiceException(ApiError.EXCEL_ILLEGAL_FIELDS,row,column);
+            throw new ServiceException(ApiError.FILE_EXCEL_ILLEGAL_FIELDS,row,column);
         }
         throw exception;
     }
@@ -118,7 +118,7 @@ public class SoOutstockPackingExcelListener extends AnalysisEventListener<SoOuts
                 continue;
             }
             if (!ApproveStatusEnum.APPROVE_ING.equals(soOutstockEntity.getApproveStatus())) {
-                packingExcelDTO.setErrorMsg(ApiError.APPROVE_ING_IS_PACKING.getMsg());
+                packingExcelDTO.setErrorMsg(ApiError.SO_APPROVE_ONLY_CAN_UPLOAD_PACKING.getMsg());
                 errorList.add(packingExcelDTO);
                 it.remove();
                 continue;

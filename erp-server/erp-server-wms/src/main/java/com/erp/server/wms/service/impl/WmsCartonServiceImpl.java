@@ -78,7 +78,7 @@ public class WmsCartonServiceImpl extends SuperServiceImpl<WmsCartonMapper, WmsC
     public Boolean update(CartonDTO.UpdateDTO updateDTO) {
         WmsCartonEntity old = super.getById(updateDTO.getId());
         if (Objects.isNull(old)){
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "单箱信息单");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "单箱信息单");
         }
         WmsCartonEntity entity =  BeanMapperUtils.map(WmsCartonEntity.class, updateDTO);
 

@@ -111,7 +111,7 @@ public class SupplierUserController extends BaseController {
     public ApiResult update(@RequestBody @Validated SysUserInfoDTO sysUserInfoDTO) {
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         if (Objects.isNull(userInfo) || Objects.isNull(userInfo.getIsSupper()) || !userInfo.getIsSupper()){
-            throw new ServiceException(ApiError.ERROR_PERM_DENIED);
+            throw new ServiceException(ApiError.HTTP_FORBIDDEN);
         }
         sysUserInfoDTO.setRealName(sysUserInfoDTO.getUserName());
         supplierUserFeign.updateSrm(sysUserInfoDTO);
@@ -146,7 +146,7 @@ public class SupplierUserController extends BaseController {
     public ApiResult remove(@RequestParam("uid") String uid) {
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         if (Objects.isNull(userInfo) || Objects.isNull(userInfo.getIsSupper()) || !userInfo.getIsSupper()){
-            throw new ServiceException(ApiError.ERROR_PERM_DENIED);
+            throw new ServiceException(ApiError.HTTP_FORBIDDEN);
         }
         return supplierUserFeign.remove(uid);
     }
@@ -161,7 +161,7 @@ public class SupplierUserController extends BaseController {
     public ApiResult updateState(@RequestBody @Validated UpdateUserStateDTO stateDTO) {
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         if (Objects.isNull(userInfo) || Objects.isNull(userInfo.getIsSupper()) || !userInfo.getIsSupper()){
-            throw new ServiceException(ApiError.ERROR_PERM_DENIED);
+            throw new ServiceException(ApiError.HTTP_FORBIDDEN);
         }
         return supplierUserFeign.updateState(stateDTO);
     }
@@ -177,7 +177,7 @@ public class SupplierUserController extends BaseController {
     public ApiResult changePassword(@RequestParam("uid") String uid,@RequestParam("pwd") String pwd) {
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         if (Objects.isNull(userInfo) || Objects.isNull(userInfo.getIsSupper()) || !userInfo.getIsSupper()){
-            throw new ServiceException(ApiError.ERROR_PERM_DENIED);
+            throw new ServiceException(ApiError.HTTP_FORBIDDEN);
         }
         return supplierUserFeign.changePassword(uid,pwd);
     }

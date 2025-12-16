@@ -70,7 +70,7 @@ public class ProjectTaskProgressServiceImpl implements ProjectTaskProgressServic
         //查询产品信息，创建初始里程碑
         ProductInfoEntity productInfoEntity = productInfoService.getById(productId);
         if (ObjectUtils.isEmpty(productInfoEntity)) {
-            throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_NOT_FOUND);
+            throw new ServiceException(ApiError.PRODUCT_NOT_FOUND);
         }
         AtomicReference<Integer> seq = new AtomicReference<>(0);
         ProductMilepostDTO startDto = new ProductMilepostDTO();
@@ -192,7 +192,7 @@ public class ProjectTaskProgressServiceImpl implements ProjectTaskProgressServic
         //查询产品信息
         ProductInfoEntity productInfoEntity = productInfoService.getById(productId);
         if (ObjectUtils.isEmpty(productInfoEntity)) {
-            throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_NOT_FOUND);
+            throw new ServiceException(ApiError.PRODUCT_NOT_FOUND);
         }
         //查询所有阶段
         List<TaskPhaseDTO> phaseEntityList = projectPhaseService.findList(new BasicProductIdDTO().setProductId(productId));

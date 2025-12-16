@@ -168,11 +168,11 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
     public Boolean skuMapping(FbaShipmentDTO.SkuMappingParamDTO dto) {
         FbaShipmentDetailEntity detailEntity = fbaShipmentDetailService.getById(dto.getDetailId());
         if (ObjectUtil.isEmpty(detailEntity)) {
-            throw new ServiceException(ApiError.FBA_SHIPMENT_DETAIL_NOT_EXIST);
+            throw new ServiceException(ApiError.FIRST_MILE_SHIPMENT_DETAIL_NOT_EXIST);
         }
         FbaShipmentEntity entity = this.getById(detailEntity.getMainId());
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.FBA_SHIPMENT_NOT_EXIST);
+            throw new ServiceException(ApiError.FIRST_MILE_SHIPMENT_NOT_EXIST);
         }
         //根据平台sku查询映射信息
         ListingInfoParamDTO listingInfoParamDTO = new ListingInfoParamDTO();
@@ -185,7 +185,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
                         && CharSequenceUtil.isNotBlank(req.getProductSkuNo()))
                 .collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(collect)) {
-            throw new ServiceException(ApiError.EXIST_SKU_MAPPING);
+            throw new ServiceException(ApiError.MAPPING_SKU_MAPPING_EXIST);
         }
         if (ObjectUtil.isEmpty(skuDTOS)) {
             throw new ServiceException(ApiError.ERROR_M_SKU_NOT_EXIST);
@@ -234,13 +234,13 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
 
 
         if (ObjectUtil.isEmpty(fbaShipmentDetailEntities)) {
-            throw new ServiceException(ApiError.FBA_SHIPMENT_DETAIL_NOT_EXIST);
+            throw new ServiceException(ApiError.FIRST_MILE_SHIPMENT_DETAIL_NOT_EXIST);
         }
 
         //有发货单不允许修改映射关系
         List<FirstMileDeliveryEntity> deliveryEntities = firstMileDeliveryService.listBySourceIds(Collections.singletonList(id));
         if (CollectionUtils.isNotEmpty(deliveryEntities)) {
-            throw new ServiceException(ApiError.IS_DELIVERY_NOT_UPDATE_MAPPING);
+            throw new ServiceException(ApiError.SO_DELIVERY_ALREADY_PUSHED_NOT_UPDATE_MAPPING);
         }
 
 
@@ -276,7 +276,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
                 }
 
                 if (ObjectUtils.isEmpty(old)) {
-                    throw new ServiceException(ApiError.FBA_SHIPMENT_NOT_EXIST);
+                    throw new ServiceException(ApiError.FIRST_MILE_SHIPMENT_NOT_EXIST);
                 }
                 operateLogService.addModuleOperateLogByObj(old, detailEntity, ModuleTypeEnum.FBA_SHIPMENT.getCode(),detailEntity.getMainId(),"",String.format("【%s】",old.getSkuNo()));
 
@@ -379,7 +379,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
     @Transactional(rollbackFor = Exception.class)
     public Boolean finishShipment(List<String> ids) {
         if (CollectionUtils.isEmpty(ids)) {
-            throw new ServiceException(ApiError.ERROR_SELECTION_REQUIRED);
+            throw new ServiceException(ApiError.BILL_SELECTION_REQUIRED);
         }
         List<FbaShipmentEntity> fbaShipmentEntities = super.listByIds(ids);
         List<FbaShipmentEntity> list = fbaShipmentEntities.stream()
@@ -388,7 +388,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
                 .collect(Collectors.toList());
         // 只有已发货或自动完结的单据才能完结
         if (list.size() > 0) {
-            throw new ServiceException(ApiError.IS_DELIVERY_FINISH);
+            throw new ServiceException(ApiError.FIRST_MILE_SHIPMENT_STATUS_FINISH_ONLY);
         }
 
         // 查询店铺信息
@@ -486,7 +486,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         //平台SKU没有映射关系，货件没有匹配到SKU的货件不允许下推发货单
         list.forEach(req -> {
             if (CharSequenceUtil.isBlank(req.getSkuNo())) {
-                throw new ServiceException(ApiError.NOT_MAPPER_SKU, req.getMsku());
+                throw new ServiceException(ApiError.FIRST_MILE_SHIPMENT_SKU_NOT_MAPPED, req.getMsku());
             }
         });
 
@@ -494,7 +494,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         List<String> shipmentIds = list.stream().map(FbaShipmentDTO.GenerateDeliverView::getMainId).distinct().collect(Collectors.toList());
         List<FbaShipmentEntity> fbaShipmentEntities = this.listByIds(shipmentIds);
         if (CollectionUtils.isEmpty(fbaShipmentEntities)) {
-            throw new ServiceException(ApiError.SHIPMENT_NOT_EXIST);
+            throw new ServiceException(ApiError.FBA_SHIPMENT_NOT_EXIST_BILL);
         }
 
         //Delete和Cancel状态的货件不允许下推发货单
@@ -503,7 +503,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
                         || ShipmentStatus.CANCELLED.getValue().equals(req.getPlatformShipmentStatus()))
                 .collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(collect)) {
-            throw new ServiceException(ApiError.SHIPMENT_STATUS_CHECK_NOT_DELETE);
+            throw new ServiceException(ApiError.FIRST_MILE_SHIPMENT_STATUS_CHECK_NOT_DELETE);
         }
 
         //根据sku获取产品信息
@@ -543,14 +543,14 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         //校验货件单据是否存在
         List<FbaShipmentEntity> fbaShipmentEntities = this.listByIds(Collections.singletonList(id));
         if (CollectionUtils.isEmpty(fbaShipmentEntities)) {
-            throw new ServiceException(ApiError.SHIPMENT_NOT_EXIST);
+            throw new ServiceException(ApiError.FBA_SHIPMENT_NOT_EXIST_BILL);
         }
 
         List<FbaShipmentDetailEntity> list = fbaShipmentDetailService.listByMainIds(Collections.singletonList(id));
         //平台SKU没有映射关系，货件没有匹配到SKU的货件不允许下推发货单
         list.forEach(req -> {
             if (CharSequenceUtil.isBlank(req.getSkuNo())) {
-                throw new ServiceException(ApiError.NOT_MAPPER_SKU, req.getMsku());
+                throw new ServiceException(ApiError.FIRST_MILE_SHIPMENT_SKU_NOT_MAPPED, req.getMsku());
             }
         });
 
@@ -570,7 +570,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
                         || ShipmentStatus.CANCELLED.getValue().equals(req.getPlatformShipmentStatus()))
                 .collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(collect)) {
-            throw new ServiceException(ApiError.SHIPMENT_STATUS_CHECK_NOT_DELETE);
+            throw new ServiceException(ApiError.FIRST_MILE_SHIPMENT_STATUS_CHECK_NOT_DELETE);
         }
 
         FbaShipmentEntity entity = this.getById(id);
@@ -593,7 +593,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         List<FbaShipmentDetailEntity> fbaShipmentDetailEntities = fbaShipmentDetailService.listByMainIds(Collections.singletonList(id));
         List<String> mskuList = fbaShipmentDetailEntities.stream().filter(req -> CharSequenceUtil.isBlank(req.getSkuNo())).map(req -> req.getMsku()).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(mskuList)) {
-            throw new ServiceException(ApiError.NOT_MAPPER_SKU, CharSequenceUtil.join(",", mskuList));
+            throw new ServiceException(ApiError.FIRST_MILE_SHIPMENT_SKU_NOT_MAPPED, CharSequenceUtil.join(",", mskuList));
         }
 
         //查询产品信息
@@ -703,7 +703,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
                         .sum();
                 //发货数量大于申报数量
                 if (useDeliveryQty > generateDeliverView.getDeclareQty()) {
-                    throw new ServiceException(ApiError.DELIVERY_QTY_EXCEED_DECLAREQTY, generateDeliverView.getSkuNo());
+                    throw new ServiceException(ApiError.FIRST_MILE_SHIPMENT_QTY_EXCEED_DECLARE_QTY, generateDeliverView.getSkuNo());
                 }
 
                 //映射字段
@@ -1304,7 +1304,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         FbaShipmentEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到FBA货件单数据"));
         // 只有未发货数据允许删除
         if (!Objects.equals(FbaDeliveryStatusEnum.UN_SHIPPED.getCode(), entity.getDeliveryStatus())) {
-            throw new ServiceException(ApiError.IS_DELIVERY_DELETE);
+            throw new ServiceException(ApiError.FIRST_MILE_SHIPMENT_DELETE_ALLOWED_PENDING_ONLY);
         }
         // 当前停止生成签收记录的时间
         LocalDate stopReceivedDate = this.getStopGenReceivedDate(entity);
@@ -1322,7 +1322,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
 
         List<FirstMileDeliveryEntity> deliveryEntities = firstMileDeliveryService.listBySourceIds(Collections.singletonList(id));
         if (CollectionUtils.isNotEmpty(deliveryEntities)) {
-            throw new ServiceException(ApiError.EXIST_FBA_DELIVERY_NOT_DELETE);
+            throw new ServiceException(ApiError.FIRST_MILE_SHIPMENT_ALREADY_PUSHED_NOT_DELETE);
         }
         // 如果存在非Erp系统的签收记录， 移除关联关系
         fbaShipmentReceiveService.checkAndRemoveDetailIds(Collections.singletonList(id), stopReceivedDate);
@@ -1346,7 +1346,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         //平台SKU没有映射关系，货件没有匹配到SKU的货件不允许下推发货单
         list.forEach(req -> {
             if (CharSequenceUtil.isBlank(req.getSkuNo())) {
-                throw new ServiceException(ApiError.NOT_MAPPER_SKU, req.getAsin());
+                throw new ServiceException(ApiError.FIRST_MILE_SHIPMENT_SKU_NOT_MAPPED, req.getAsin());
             }
         });
 
@@ -1640,7 +1640,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
             if (CharSequenceUtil.isBlank(warehouseEntity.getOnwayWarehouseId())) {
                 List<WarehouseEntity> warehouseEntities = warehouseService.listByKingdeeCodeList(Collections.singletonList("xgwj-fba"));
                 if (CollectionUtils.isEmpty(warehouseEntities)) {
-                    throw new ServiceException(ApiError.WAREHOUSE_CODE_XGWJ_FBA_NOT_EXIST);
+                    throw new ServiceException(ApiError.WH_CODE_XGWJ_FBA_NOT_EXIST);
                 }
                 warehouseEntity.setOnwayWarehouseId(warehouseEntities.get(0).getId());
                 warehouseEntity.setOnwayWarehouseName(warehouseEntities.get(0).getName());
@@ -1649,7 +1649,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
 
         //如果目的仓没有配置在途归属仓，需要提示：目的仓没有配置在途归属仓库，请在【仓库列表】配置后再审核
         if (CharSequenceUtil.isBlank(warehouseEntity.getOnwayWarehouseId())) {
-            throw new ServiceException(ApiError.ONWAY_WAREHOUSE_NOT_EXIST);
+            throw new ServiceException(ApiError.WH_ONWAY_NOT_CONFIGURED);
         }
     }
 
@@ -1675,7 +1675,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
             }
             TransferInfoEntity submitEntity = transferInfoService.getById(transferOutId);
             if (ObjUtil.isEmpty(submitEntity)) {
-                throw new ServiceException(ApiError.ERROR_WMS_TRANSFER_DIRECT_NOT_FOUND);
+                throw new ServiceException(ApiError.WH_TRANSFER_DIRECT_NOT_FOUND);
             }
             //提交
             transferInfoService.submit(submitEntity, Boolean.FALSE);
@@ -1683,7 +1683,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
             //审核
             TransferInfoEntity approveEntity = transferInfoService.getById(transferOutId);
             if (ObjUtil.isEmpty(approveEntity)) {
-                throw new ServiceException(ApiError.ERROR_WMS_TRANSFER_DIRECT_NOT_FOUND);
+                throw new ServiceException(ApiError.WH_TRANSFER_DIRECT_NOT_FOUND);
             }
             transferInfoService.approve(approveEntity,ApproveType.PASS,"", null , Boolean.TRUE, Boolean.FALSE);
         } else {
@@ -1966,12 +1966,12 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
                     .findFirst()
                     .orElse(null);
             if (Objects.isNull(detailEntity)){
-                throw new ServiceException(ApiError.FBA_SHIPMENT_DETAIL_NOT_EXIST);
+                throw new ServiceException(ApiError.FIRST_MILE_SHIPMENT_DETAIL_NOT_EXIST);
             }
             // 校验
             FbaShipmentEntity entity = entityList.stream().filter(v->v.getId().equals(detailEntity.getMainId())).findFirst().orElse(null);
             if (Objects.isNull(entity)){
-                throw new ServiceException(ApiError.FBA_SHIPMENT_NOT_EXIST);
+                throw new ServiceException(ApiError.FIRST_MILE_SHIPMENT_NOT_EXIST);
             }
             if ((detailEntity.getDeliveryQty() > 0 && detailEntity.getDeliveryQty() < (detailEntity.getReceiveQty() + dto.getReceivedQty())) || (detailEntity.getDeliveryQty() == 0 && detailEntity.getDeclareQty() < (detailEntity.getReceiveQty() + dto.getReceivedQty()))){
                 throw new ServiceException("当前签收数量大于剩余签收数量");

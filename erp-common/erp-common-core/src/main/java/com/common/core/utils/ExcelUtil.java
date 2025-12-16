@@ -38,7 +38,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.*;
 
-import static com.common.core.enums.ApiError.EXCEL_PARSING_FIELD_EXCEPTION;
+import static com.common.core.enums.ApiError.FILE_EXCEL_PARSING_FIELD_EXCEPTION;
 
 /**
  * @Classname ExcelUtil
@@ -255,7 +255,7 @@ public class ExcelUtil {
                     //自定义注解
                     .doWrite(list2);
         } catch (Exception e) {
-          throw new ServiceException(ApiError.DEFAULT);
+          throw new ServiceException(ApiError.HTTP_UNKNOWN);
         }
     }
 
@@ -303,7 +303,7 @@ public class ExcelUtil {
                     //自定义注解
                     .doWrite(list2);
         } catch (Exception e) {
-            throw new ServiceException(ApiError.DEFAULT);
+            throw new ServiceException(ApiError.HTTP_UNKNOWN);
         }
     }
 
@@ -342,7 +342,7 @@ public class ExcelUtil {
                     .doWrite(list2);
 
         } catch (Exception e) {
-            throw new ServiceException(ApiError.DEFAULT);
+            throw new ServiceException(ApiError.HTTP_UNKNOWN);
         }
     }
 
@@ -374,7 +374,7 @@ public class ExcelUtil {
                     .doWrite(list2);
             return outputStream.toByteArray();
         } catch (Exception e) {
-            throw new ServiceException(ApiError.DEFAULT);
+            throw new ServiceException(ApiError.HTTP_UNKNOWN);
         }
     }
 
@@ -458,7 +458,7 @@ public class ExcelUtil {
             excelWriter.finish(); // 必须调用 finish 确保写入完成
             return outputFile;
         } catch (IOException e) {
-            throw new ServiceException(ApiError.ERROR_EXPORT_ERROR_DATA_FAILED);
+            throw new ServiceException(ApiError.FILE_EXPORT_ERROR_DATA_FAILED);
         } finally {
             // 关闭模板流（重要！）
             if (templateStream != null) {
@@ -617,7 +617,7 @@ public class ExcelUtil {
                         field.set(object, filedValue);
                         break;
                     } catch (IllegalAccessException e) {
-                        throw new ServiceException(EXCEL_PARSING_FIELD_EXCEPTION);
+                        throw new ServiceException(FILE_EXCEL_PARSING_FIELD_EXCEPTION);
                     }
                 }
             }
@@ -646,7 +646,7 @@ public class ExcelUtil {
                         filedValue = field.get(object);
                         break;
                     } catch (IllegalAccessException e) {
-                        throw new ServiceException(EXCEL_PARSING_FIELD_EXCEPTION);
+                        throw new ServiceException(FILE_EXCEL_PARSING_FIELD_EXCEPTION);
                     }
                 }
             }
@@ -674,7 +674,7 @@ public class ExcelUtil {
             wb.write(output);
         } catch (Exception e) {
             log.error("ExcelUtil.downloadTemplate 下载失败 e={}", ExceptionUtil.stacktraceToString(e));
-            throw new ServiceException(ApiError.ERROR_IMPORT_TEMPLATE_DOWNLOAD_FAILED);
+            throw new ServiceException(ApiError.FILE_IMPORT_TEMPLATE_DOWNLOAD_FAILED);
         }
     }
 
@@ -707,7 +707,7 @@ public class ExcelUtil {
             response.setContentType("application/msexcel");
             wb.write(output);
         } catch (Exception e) {
-            log.error(" downloadTemplate 下载失败 e={}", e.getMessage());throw new ServiceException(ApiError.ERROR_IMPORT_TEMPLATE_DOWNLOAD_FAILED);
+            log.error(" downloadTemplate 下载失败 e={}", e.getMessage());throw new ServiceException(ApiError.FILE_IMPORT_TEMPLATE_DOWNLOAD_FAILED);
         }
     }
     public static File customExportUtil(String fileName, List<JSONObject> list, List<String> heads) {
@@ -755,7 +755,7 @@ public class ExcelUtil {
 
             return tempFile;
         } catch (Exception e) {
-            throw new ServiceException(ApiError.DEFAULT);
+            throw new ServiceException(ApiError.HTTP_UNKNOWN);
         }
     }
 

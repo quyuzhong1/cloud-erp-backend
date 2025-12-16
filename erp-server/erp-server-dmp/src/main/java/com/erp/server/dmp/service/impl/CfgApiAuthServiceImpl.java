@@ -128,7 +128,7 @@ public class CfgApiAuthServiceImpl extends ServiceImpl<CfgApiAuthMapper, CfgApiA
     private void checkCfgApiAuth(CfgApiAuthDTO.ParamDTO dto) {
         CfgApiAuthEntity entity = getByKey(dto.getKey(), dto.getApiGroup(), dto.getApiPlatformId());
         if (ObjectUtils.isNotEmpty(entity) && !entity.getId().equals(dto.getId())) {
-            throw new ServiceException(ApiError.ERROR_DMP_EN_DESC_DUPLICATE_IN_PLATFORM);
+            throw new ServiceException(ApiError.MAPPING_EN_DESC_DUPLICATE);
         }
     };
 }

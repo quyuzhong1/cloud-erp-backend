@@ -115,7 +115,7 @@ public class VirtualWarehouseAllocationDetailServiceImpl extends SuperServiceImp
     public Boolean batchUpdate(VirtualWarehouseAllocationDetailDTO.UpdateDTO updateDTO) {
         VirtualWarehouseAllocationDetailEntity old = super.getById(updateDTO.getId());
         if (Objects.isNull(old)){
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "分货单明细");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "分货单明细");
         }
         VirtualWarehouseAllocationDetailEntity virtualWarehouseAllocationDetailEntity = BeanMapperUtils.map(VirtualWarehouseAllocationDetailEntity.class, updateDTO);
 
@@ -149,7 +149,7 @@ public class VirtualWarehouseAllocationDetailServiceImpl extends SuperServiceImp
     @Transactional(rollbackFor = Exception.class)
     public Boolean batchUpdate(VirtualWarehouseAllocationDTO.UpdateDTO updateDTO, String mainId) {
         if (CollectionUtils.isEmpty(updateDTO.getDetailList())) {
-            throw new ServiceException(ApiError.ERROR_DOC_DETAIL_NOT_FOUND, ModuleTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION.getName());
+            throw new ServiceException(ApiError.BILL_DETAIL_NOT_FOUND, ModuleTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION.getName());
         }
         List<VirtualWarehouseAllocationDetailEntity> oldList = this.list(new LambdaQueryWrapper<VirtualWarehouseAllocationDetailEntity>().eq(VirtualWarehouseAllocationDetailEntity::getMainId, mainId));
         List<String> deleteIds = getDeleteIds(updateDTO.getDetailList(), oldList);
@@ -232,7 +232,7 @@ public class VirtualWarehouseAllocationDetailServiceImpl extends SuperServiceImp
                     virtualInventoryTransCoreService.approve(cancelDto);
                     break;
                 default:
-                    throw new ServiceException(ApiError.ERROR_PARAM_INVALID);
+                    throw new ServiceException(ApiError.HTTP_BAD_REQUEST);
             }
         }
     }

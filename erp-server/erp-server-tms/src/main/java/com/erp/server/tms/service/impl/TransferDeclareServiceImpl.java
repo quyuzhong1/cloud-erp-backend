@@ -321,7 +321,7 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
     @Override
     public Boolean update(TransferDeclareDTO.UpdateDTO updateDTO) {
         TransferDeclareEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "中转报关单"));
+        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "中转报关单"));
         TransferDeclareEntity transferDeclareEntity =  BeanMapperUtils.map(TransferDeclareEntity.class, updateDTO);
 
         //包裹总重量
@@ -413,7 +413,7 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
     @Transactional(rollbackFor = Exception.class)
     public Boolean delete(List<String> ids) {
         if (CollectionUtil.isEmpty(ids)) {
-            throw new ServiceException(ApiError.ERROR_SELECTION_REQUIRED);
+            throw new ServiceException(ApiError.BILL_SELECTION_REQUIRED);
         }
 
         //上传成功不能删除

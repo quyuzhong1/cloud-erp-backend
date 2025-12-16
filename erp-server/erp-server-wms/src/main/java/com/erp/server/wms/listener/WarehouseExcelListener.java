@@ -2,10 +2,8 @@ package com.erp.server.wms.listener;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.DateUtil;
-import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.common.business.dto.FindUserDTO;
@@ -17,7 +15,6 @@ import com.common.core.enums.ApiError;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.FieldValidUtil;
 import com.erp.model.sys.dto.DictCountryDTO;
-import com.erp.model.wms.dto.DictBasicDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.excel.WarehouseExcelDTO;
 import com.erp.model.wms.entity.DictBasicEntity;
@@ -262,7 +259,7 @@ public class WarehouseExcelListener extends AnalysisEventListener<WarehouseExcel
         WarehouseEntity warehouse = new WarehouseEntity();
         BeanMapper.copy(addDTO, warehouse);
         if(warehouseService.checkOpenCloseTime(warehouse)) {
-        	errorMsgList.add(ApiError.OPEN_STATUS_OPEN_TIME_NOT_NULL.getMsg());
+        	errorMsgList.add(ApiError.WH_OPEN_STATUS_OPEN_TIME_REQUIRED.getMsg());
         }
         
         //存在错误数据则直接返回

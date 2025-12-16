@@ -82,7 +82,7 @@ public class DictKingdeeServiceImpl extends SuperServiceImpl<DictKingdeeMapper, 
     @Override
     public Boolean update(DictKingdeeDTO.UpdateDTO updateDTO) {
         DictKingdeeEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "金蝶字典单"));
+        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "金蝶字典单"));
         DictKingdeeEntity dictKingdeeEntity =  BeanMapperUtils.map(DictKingdeeEntity.class, updateDTO);
 
         // 数据处理

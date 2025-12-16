@@ -87,7 +87,7 @@ public class LarkMessageServiceImpl implements LarkMessageService {
         //是否存在
         String redisValue = redisService.getCacheObject(redisKey);
         if (StringUtils.isNotBlank(redisValue)) {
-            throw new ServiceException(ApiError.ERROR_PLM_PROJECT_REMIND_RATE_LIMIT);
+            throw new ServiceException(ApiError.COMMON_RATE_LIMIT);
         }
         List<LarkPressMessageDTO.SendUserInfo> pressUserList = new ArrayList<>(10);
         switch (businessType) {
@@ -95,7 +95,7 @@ public class LarkMessageServiceImpl implements LarkMessageService {
                 PilotApplicationDTO.ApprovePilotNoticeDTO entity = pilotApplicationService.getPilotApplicationNoticeData(dto.getBusinessId());
                 if(null != entity) {
                     if (!entity.getApproveStatus().getCode().equals(ApproveStatusEnum.APPROVE_ING.getCode())) {
-                        throw new ServiceException(ApiError.ERROR_PLM_URGE_ONLY_IN_APPROVING);
+                        throw new ServiceException(ApiError.BILL_URGE_ONLY_IN_APPROVING);
                     }
                     noticeFlag = NoticeEnum.AUDIT_PILOT_APPLICATION;
                     long timeInMillis = Calendar.getInstance().getTimeInMillis();
@@ -111,7 +111,7 @@ public class LarkMessageServiceImpl implements LarkMessageService {
                     //根据节点标示获取到通知消息实体
                     NoticeMessageEntity notice = noticeMessageService.getByNodeFlag(noticeFlag);
                     if (Objects.isNull(notice)) {
-                        throw new ServiceException(ApiError.ERROR_MSG_IS_NOT_NULL);
+                        throw new ServiceException(ApiError.COMMON_MSG_REQUIRED);
                     }
                     //根据单据id查询审核流程
                     List<ProcessTaskManagementEntity> processTaskManagementList = workflowFeign.listProcessByBusinessId(Collections.singletonList(dto.getBusinessId()));
@@ -145,11 +145,11 @@ public class LarkMessageServiceImpl implements LarkMessageService {
                 // 根据业务id查询流程id
                 ProjectTaskEntity task = projectTaskService.getById(dto.getBusinessId());
                 if (null == task || statusList.contains(task.getStatus())) {
-                    throw new ServiceException(ApiError.ERROR_TASK_AUDIT_STATUS);
+                    throw new ServiceException(ApiError.PROJECT_TASK_AUDIT_STATUS_INVALID);
                 }
                 ProductShowDTO productInfo = productInfoService.getProductInfo(task.getProductId());
                 if (null == productInfo) {
-                    throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_NOT_FOUND);
+                    throw new ServiceException(ApiError.PRODUCT_NOT_FOUND);
                 }
                 dto.setBusinessName(task.getName());
                 processId = task.getProcessId();
@@ -191,7 +191,7 @@ public class LarkMessageServiceImpl implements LarkMessageService {
                 }
                 break;
             default:
-                throw new ServiceException(ApiError.ERROR_BUSINESS_NOT_EXIT);
+                throw new ServiceException(ApiError.COMMON_BUSINESS_NOT_EXIST);
 
         }
         // 发送飞书加急消息
@@ -221,7 +221,7 @@ public class LarkMessageServiceImpl implements LarkMessageService {
             PilotApplicationDTO.ApprovePilotNoticeDTO entity = pilotApplicationService.getPilotApplicationNoticeData(dto.getBusinessId());
             if(null != entity) {
                 if (!entity.getApproveStatus().getCode().equals(ApproveStatusEnum.APPROVE_ING.getCode())) {
-                    result.add(msg + "【"+entity.getCode()+"】"+ApiError.ERROR_PLM_URGE_ONLY_IN_APPROVING.getMsg());
+                    result.add(msg + "【"+entity.getCode()+"】"+ApiError.BILL_URGE_ONLY_IN_APPROVING.getMsg());
                     continue;
                 }
                 //是否存在
@@ -233,7 +233,7 @@ public class LarkMessageServiceImpl implements LarkMessageService {
                     long nowTime = cal.getTimeInMillis();
                     long min = (nowTime - lastTime) / (60 * 1000);
                     redisValue = split[0] + " " + min + "分钟前";
-                    result.add(String.format(ApiError.ERROR_PLM_URGE_RATE_LIMITED.getMsg(), redisValue));
+                    result.add(String.format(ApiError.COMMON_URGE_RATE_LIMITED.getMsg(), redisValue));
                     continue;
                 }
 
@@ -251,7 +251,7 @@ public class LarkMessageServiceImpl implements LarkMessageService {
                 //根据节点标示获取到通知消息实体
                 NoticeMessageEntity notice = noticeMessageService.getByNodeFlag(noticeFlag);
                 if (Objects.isNull(notice)) {
-                    result.add(msg + "【"+entity.getCode()+"】"+ApiError.ERROR_MSG_IS_NOT_NULL.getMsg());
+                    result.add(msg + "【"+entity.getCode()+"】"+ApiError.COMMON_MSG_REQUIRED.getMsg());
                     continue;
                 }
                 //根据单据id查询审核流程
@@ -289,7 +289,7 @@ public class LarkMessageServiceImpl implements LarkMessageService {
         //根据节点标示获取到通知消息实体
         NoticeMessageEntity notice = noticeMessageService.getByNodeFlag(noticeFlag);
         if (Objects.isNull(notice)) {
-            throw new ServiceException(ApiError.ERROR_MSG_IS_NOT_NULL);
+            throw new ServiceException(ApiError.COMMON_MSG_REQUIRED);
         }
 
         //排除关闭通知的人员 并去重
@@ -390,7 +390,7 @@ public class LarkMessageServiceImpl implements LarkMessageService {
             }
         }else if (CollectionUtils.isNotEmpty(alreadyPress)) {
             String name = alreadyPress.stream().collect(Collectors.joining(","));
-            ApiError error = ApiError.ERROR_PLM_PROJECT_REMIND_RATE_LIMIT_WITH;
+            ApiError error = ApiError.COMMON_RATE_LIMIT_WITH_NAME;
             String message = error.getMsg();
             throw new ServiceException(error.getCode(), String.format(message, name));
         }

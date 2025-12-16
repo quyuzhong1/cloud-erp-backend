@@ -69,7 +69,7 @@ public class OverseasWarehouseInboundReceivedServiceImpl extends SuperServiceImp
     public Boolean update(OverseasWarehouseInboundReceivedDTO.UpdateDTO updateDTO) {
         OverseasWarehouseInboundReceivedEntity old = super.getById(updateDTO.getId());
         if (Objects.isNull(old)){
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "海外仓签收记录");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "海外仓签收记录");
         }
         OverseasWarehouseInboundReceivedEntity overseasWarehouseInboundReceivedEntity =  BeanMapperUtils.map(OverseasWarehouseInboundReceivedEntity.class, updateDTO);
 

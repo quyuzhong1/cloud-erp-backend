@@ -657,7 +657,7 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
         try {
             EasyExcel.read(file.getInputStream(), listener).sheet(0).doRead();
         } catch (IOException e) {
-            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_FAILED);
+            throw new ServiceException(ApiError.FILE_DATA_IMPORT_FAILED);
         }
 
         List<WarehouseLocationExcelDto> errorList = listener.getErrorList();

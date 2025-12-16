@@ -195,7 +195,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
     @Override
     public Boolean update(LogisticsBillDTO.UpdateDTO updateDTO) {
         LogisticsBillEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "物流单"));
+        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "物流单"));
         LogisticsBillEntity logisticsBillEntity = BeanMapperUtils.map(LogisticsBillEntity.class, updateDTO);
 
         // 数据处理
@@ -658,7 +658,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         if (StringUtils.isBlank(dto.getTransportNo())) {
             LogisticsBillDTO.BaseDTO billBase = this.getBaseByTrackNo(dto.getTrackNo());
             if (ObjectUtil.isEmpty(billBase) || Objects.isNull(billBase.getId())) {
-                throw new ServiceException(ApiError.NOT_EXIST_BILL, "物流单");
+                throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "物流单");
             }
             cancelOrderVO.setTransportNo(billBase.getTransportNo());
         }
@@ -712,7 +712,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         if (StringUtils.isBlank(dto.getTransportNo())) {
             LogisticsBillDTO.BaseDTO billBase = this.getBaseByTrackNo(dto.getTrackNo());
             if (Objects.isNull(billBase.getId())) {
-                throw new ServiceException(ApiError.NOT_EXIST_BILL, "物流单");
+                throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "物流单");
             }
             interceptOrderVO.setTransportNo(billBase.getTransportNo());
         }
@@ -1447,19 +1447,19 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                 try {
                     new ExcelPrintUtils().patchExport(errorList, response, sb.toString(), excelPath);
                 } catch (IOException e) {
-                    throw new ServiceException(ApiError.ERROR_EXPORT_ERROR_DATA_FAILED);
+                    throw new ServiceException(ApiError.FILE_EXPORT_ERROR_DATA_FAILED);
                 }
                 return Boolean.FALSE;
             }
         }catch (SocketTimeoutException e) {
             log.error("导入超时错误！>>>{}", e);
-            throw new ServiceException(ApiError.ERROR_IMPORT_TIMEOUT);
+            throw new ServiceException(ApiError.FILE_IMPORT_TIMEOUT);
         } catch (IOException e) {
             log.error("导入错误！>>>{}", e);
-            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_FAILED);
+            throw new ServiceException(ApiError.FILE_DATA_IMPORT_FAILED);
         } catch (ExcelCommonException e) {
             log.error("导入错误！>>>{}", e);
-            throw new ServiceException(ApiError.ERROR_FILE_IMPORT_FORMAT_INVALID_XLSX);
+            throw new ServiceException(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX);
         }
         return Boolean.TRUE;
     }

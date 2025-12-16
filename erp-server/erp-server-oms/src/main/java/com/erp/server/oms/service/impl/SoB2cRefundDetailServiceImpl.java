@@ -59,7 +59,7 @@ public class SoB2cRefundDetailServiceImpl extends SuperServiceImpl<SoB2cRefundDe
     public Boolean update(RefundOrderDetailDTO.UpdateDTO updateDTO) {
         SoB2cRefundDetailEntity old = super.getById(updateDTO.getId());
         if(null == old){
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, ApiError.ERROR_REFUND_ORDER_DETAIL.getMsg());
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, ApiError.ERROR_REFUND_ORDER_DETAIL.getMsg());
         }
         SoB2cRefundDetailEntity soB2cRefundDetailEntity =  BeanMapperUtils.map(SoB2cRefundDetailEntity.class, updateDTO);
         log.info("编辑 开始修改退款订单明细数据，id：【{}】", old.getId());

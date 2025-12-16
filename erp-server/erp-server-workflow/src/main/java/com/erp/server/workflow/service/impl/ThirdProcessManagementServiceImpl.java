@@ -93,7 +93,7 @@ public class ThirdProcessManagementServiceImpl extends SuperServiceImpl<ThirdPro
     @Override
     public Boolean update(ThirdProcessManagementDTO.UpdateDTO updateDTO) {
         ThirdProcessManagementEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, ""));
+        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, ""));
 
         ThirdProcessManagementEntity thirdProcessManagementEntity = BeanMapperUtils.map(ThirdProcessManagementEntity.class, updateDTO);
 

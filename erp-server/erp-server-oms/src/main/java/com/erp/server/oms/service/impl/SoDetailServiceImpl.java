@@ -3,10 +3,8 @@ package com.erp.server.oms.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
-import cn.hutool.json.JSON;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.excel.EasyExcel;
@@ -41,7 +39,6 @@ import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
-import com.erp.model.sys.dto.ThirdNoticePushRecordDTO;
 import com.erp.model.sys.enums.ThirdNoticePushRecordNoticeNodeEnum;
 import com.erp.model.tms.dto.InventorySkuCostDTO;
 import com.erp.model.wms.dto.*;
@@ -59,7 +56,6 @@ import com.erp.model.wms.enums.inventory.VirtualInventoryBusinessTypeEnum;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.rpc.sys.feign.ThirdNoticePushRecordFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.rpc.wms.feign.*;
 import com.erp.sdk.third.kingdee.utils.KingdeePushModuleEnum;
@@ -75,7 +71,6 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.apache.rocketmq.client.producer.SendResult;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
@@ -324,7 +319,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
     public List<SoDetailDTO.ViewDTO> listByMainId(String mainId, String warehouseId) {
         SoInfoEntity soInfoEntity = soInfoService.getById(mainId);
         if(null == soInfoEntity){
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "销售订单");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "销售订单");
         }
         List<SoDetailEntity> dbList = this.listBaseByMainId(mainId);
         List<SoDetailDTO.ViewDTO> resultList = BeanMapper.copyList(dbList, SoDetailDTO.ViewDTO.class);
@@ -718,7 +713,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             wb.close();
         } catch (Exception e) {
             log.error("下载模板出错了==={}", e);
-            throw new ServiceException(ApiError.DEFAULT);
+            throw new ServiceException(ApiError.HTTP_UNKNOWN);
         }
 
     }
@@ -745,7 +740,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             EasyExcel.read(excelFile.getInputStream(), SoDetailImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (Exception e) {
             log.error("导入错误=={}", e);
-            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_FAILED);
+            throw new ServiceException(ApiError.FILE_DATA_IMPORT_FAILED);
         }
         SoDetailDTO.ImportDTO result = new SoDetailDTO.ImportDTO();
         List<SoDetailDTO.SkuDTO> successList = excelListenerUtil.getSuccessList();
@@ -859,7 +854,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
     @Override
     public SoDetailDTO.SkuDTO getSkuInfoBySkuNo(String skuNo, String warehouseId) {
         if (StringUtils.isEmpty(warehouseId)) {
-            throw new ServiceException(ApiError.ERROR_WMS_WAREHOUSE_REQUIRED);
+            throw new ServiceException(ApiError.WH_REQUIRED);
         }
         SoDetailDTO.SkuDTO result = new SoDetailDTO.SkuDTO();
         List<String> skuIdList = new ArrayList<>(1);
@@ -868,7 +863,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         param.put("skuNo", skuNo);
         ProductDetailDTO sku = plmTaskFeign.getSkuByParam(param);
         if (Objects.isNull(sku)) {
-            throw new ServiceException(ApiError.ERROR_PLM_SKU_NOT_FOUND);
+            throw new ServiceException(ApiError.PRODUCT_SKU_NOT_FOUND);
         }
         String skuId = sku.getId();
         skuIdList.add(skuId);

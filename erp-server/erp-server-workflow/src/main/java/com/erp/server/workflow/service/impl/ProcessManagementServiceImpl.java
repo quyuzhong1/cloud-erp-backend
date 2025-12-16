@@ -225,7 +225,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
             log.warn("业务无规则对应的条件设置, businessKey={}", dto.getBusinessKey());
             //存在一条以上的规则都匹配数据的时候直接报错
             if (cfgProcessRuleList.size() > MathUtil.ONE) {
-                throw new ServiceException(ApiError.PROCESS_RULE_REPEAT_ERROR,SourceTypeEnum.getName(cfgProcessEntity.getBussinessKey()));
+                throw new ServiceException(ApiError.WF_RULE_CONFLICT,SourceTypeEnum.getName(cfgProcessEntity.getBussinessKey()));
             }
             return cfgProcessRuleList.get(0);
         }
@@ -261,7 +261,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         }
         //存在一条以上的规则都匹配数据的时候直接报错
         if (CollUtil.isNotEmpty(processRuleList) && processRuleList.size() > MathUtil.ONE) {
-            throw new ServiceException(ApiError.PROCESS_RULE_REPEAT_ERROR,SourceTypeEnum.getName(cfgProcessEntity.getBussinessKey()));
+            throw new ServiceException(ApiError.WF_RULE_CONFLICT,SourceTypeEnum.getName(cfgProcessEntity.getBussinessKey()));
         }
         return processRuleList.get(0);
     }
@@ -283,7 +283,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
                 .one();
         if (null != managementEntity) {
             // 业务已经发起流程
-            throw new ServiceException(ApiError.PROCESS_ALREADY_START);
+            throw new ServiceException(ApiError.WF_PROCESS_ALREADY_STARTED);
         }
         // 查询流程定义
         ProcessDefinitionEntity processDefinition = processDefinitionService.getIsDeployEntityById(processDefinitionId);
@@ -301,7 +301,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         variablesMap.put("creator", dto.getUserId());
         ProcessInstance processInstance = runtimeService.startProcessInstanceByKey(processDefinitionId, dto.getBusinessId(), variablesMap);
         if (Objects.isNull(processInstance)) {
-            throw new ServiceException(ApiError.ERROR_WF_START_FAILED);
+            throw new ServiceException(ApiError.WF_START_FAILED);
         }
         ActivityInstance activityInstance = runtimeService.getActivityInstance(processInstance.getId());
         ExecutionEntity executionEntity = ((ProcessInstanceWithVariablesImpl) processInstance).getExecutionEntity();
@@ -313,27 +313,27 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
             ActivityInstance[] childActivityInstances = activityInstance.getChildActivityInstances();
             if (ObjectUtil.isEmpty(childActivityInstances) || childActivityInstances.length == 0) {
                 log.error("流程实例[{}]没有多实例子节点", processInstance.getId());
-                throw new ServiceException(ApiError.ERROR_WF_START_FAILED);
+                throw new ServiceException(ApiError.WF_START_FAILED);
             }
             activityId = childActivityInstances[0].getActivityId();
             activityId = activityId.contains("#") ? activityId.substring(0, activityId.indexOf("#")) : activityId;
             List<ExecutionEntity> executions = executionEntity.getExecutions();
             if (CollectionUtils.isEmpty(executions)) {
                 log.error("流程实例[{}]没有多实例执行任务", processInstance.getId());
-                throw new ServiceException(ApiError.ERROR_WF_START_FAILED);
+                throw new ServiceException(ApiError.WF_START_FAILED);
             }
             List<TaskEntity> tasks = executions.get(0).getTasks();
             if (CollectionUtils.isEmpty(tasks)) {
                 List<ExecutionEntity> executionChild = executions.get(0).getExecutions();
                 if (CollectionUtils.isEmpty(executionChild)) {
                     log.error("流程实例[{}]没有多实例执行子任务", processInstance.getId());
-                    throw new ServiceException(ApiError.ERROR_WF_START_FAILED);
+                    throw new ServiceException(ApiError.WF_START_FAILED);
                 }
                 tasks = executionChild.get(0).getTasks();
             }
             if (CollectionUtils.isEmpty(tasks)) {
                 log.error("流程实例[{}]没有多实例执行任务列表为空", processInstance.getId());
-                throw new ServiceException(ApiError.ERROR_WF_START_FAILED);
+                throw new ServiceException(ApiError.WF_START_FAILED);
             }
             taskId = tasks.get(0).getId();
         } else {
@@ -345,7 +345,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         ProcessManagementEntity insertManagementEntity = new ProcessManagementEntity(processInstanceId, dto, activityId, processStartTime, processDefinition, processInstance.getProcessDefinitionId());
         if (!save(insertManagementEntity)) {
             // 保存流程数据失败
-            throw new ServiceException(ApiError.ERROR_WF_START_FAILED);
+            throw new ServiceException(ApiError.WF_START_FAILED);
         }
 
         Map<String, Object> variables = runtimeService.getVariables(processInstanceId);
@@ -378,7 +378,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
 
             if (null == cfgProcessRuleEntity){
                 // 流程定义不存在
-                throw new ServiceException(ApiError.PROCESS_DEFINITION_NOT_EXIST);
+                throw new ServiceException(ApiError.WF_PROCESS_DEFINITION_NOT_EXIST);
             }
             String ruleId = cfgProcessRuleEntity.getId();
             CfgProcessDTO.StartDTO startDTO = BeanUtil.copyProperties(dto, CfgProcessDTO.StartDTO.class);
@@ -459,7 +459,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         //当前登陆人
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         if (CharSequenceUtil.equals(createUserId,userInfo.getUid()) && !CharSequenceUtil.equals(createUserId, UserStateConstants.USER_SYSTEM_ID)) {
-            throw new ServiceException(ApiError.WORKFLOW_APPROVE_CREATE_APPROVE_DIFF,userInfo.getUserName());
+            throw new ServiceException(ApiError.WF_CREATOR_APPROVER_NOT_SAME,userInfo.getUserName());
         }
     }
 
@@ -469,7 +469,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         //判断是否走飞书流程
        Boolean isFsApprove = isFsApprovePass(dto.getBusinessId(),dto.getBusinessKey());
        if (isFsApprove) {
-           throw new ServiceException(ApiError.PROCESS_APPROVE_FS_PROCESS);
+           throw new ServiceException(ApiError.WF_FS_APPROVE_REQUIRED);
        }
 
         log.info("流程审批：{}", JSONUtil.toJsonStr(dto));
@@ -484,14 +484,14 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         // 查询流程数据 , dto.getUserId()
         ProcessManagementDTO.ManagementTaskDTO managementTask = getCurApproveTask(dto.getBusinessId(), dto.getBusinessKey(), dto.getUserId());
         if (!ProcessStatusEnum.RUNNING.equals(managementTask.getProcessStatus())) {
-            throw new ServiceException(ApiError.PROCESS_MANAGEMENT_PROCESS_STATUS_ERROR,managementTask.getProcessStatus().getName());
+            throw new ServiceException(ApiError.WF_PROCESS_STATUS_NOT_ALLOWED,managementTask.getProcessStatus().getName());
         }
 
         // 审核操作
         // 获取当前任务
         Task currentTask = taskService.createTaskQuery().taskId(managementTask.getTaskId()).singleResult();
         if(null == currentTask) {
-            throw new ServiceException(ApiError.PROCESS_DEFINITION_NODE_NOT_EXIST);
+            throw new ServiceException(ApiError.WF_DEFINITION_NODE_NOT_EXIST);
         }
         String processInstanceId = managementTask.getProcessInstanceId();
 
@@ -513,7 +513,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
                 taskService.complete(managementTask.getTaskId(), variablesMap);
             } catch (Exception e) {
                 log.error("审核失败，msg ={}",e.getMessage());
-                throw new ServiceException(ApiError.ERROR_TASK_COMPLETE_FAIL,e.getMessage());
+                throw new ServiceException(ApiError.WF_TASK_COMPLETE_FAILED,e.getMessage());
             }
         }
         if(ApproveTypeEnum.REJECT.equals(dto.getApproveType())) {
@@ -683,13 +683,13 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
     private ProcessManagementDTO.ManagementTaskDTO getCurApproveTask(String businessId, String businessKey, String userId) {
         List<ProcessManagementDTO.ManagementTaskDTO> managementTaskDTOS = listTaskByBusiness(businessId, businessKey);
         if (CollectionUtils.isEmpty(managementTaskDTOS)) {
-            throw new ServiceException(ApiError.PROCESS_ALREADY_END);
+            throw new ServiceException(ApiError.WF_PROCESS_ALREADY_ENDED);
         }
         // 审核人校验
         return managementTaskDTOS.stream()
                 .filter(managementTaskDTO -> managementTaskDTO.getCurApproveId().equals(userId))
                 .findFirst()
-                .orElseThrow(() -> new ServiceException(ApiError.ERROR_PLM_TASK_NOT_YOUR_APPROVAL));
+                .orElseThrow(() -> new ServiceException(ApiError.WF_NOT_YOUR_APPROVAL));
     }
 
     @Override
@@ -763,7 +763,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         if(CollectionUtils.isEmpty(candidateUsers)){
             log.warn("任务节点无审批人为空 startUserId={}", startUserId);
             // 无审批人终止流程
-            throw new ServiceException(ApiError.PROCESS_NOT_APPROVER);
+            throw new ServiceException(ApiError.WF_NEXT_NODE_NO_APPROVER);
         }
         return candidateUsers;
     }
@@ -786,7 +786,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         // 获取当前任务
         Task currentTask = taskService.createTaskQuery().taskId(managementTask.getTaskId()).singleResult();
         if(null == currentTask) {
-            throw new ServiceException(ApiError.PROCESS_DEFINITION_NODE_NOT_EXIST);
+            throw new ServiceException(ApiError.WF_DEFINITION_NODE_NOT_EXIST);
         }
         // 查询历史任务
         List<HistoricActivityInstance> historyActivityList = historyService
@@ -800,7 +800,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
                 .list();
         // 获取驳回节点
         if(CollectionUtils.isEmpty(historyActivityList)){
-            throw new ServiceException(ApiError.PROCESS_TASK_NOT_REJECT);
+            throw new ServiceException(ApiError.WF_TASK_REJECT_NOT_ALLOWED);
         }
         HistoricActivityInstance historicActivityInstance = historyActivityList.get(0);
         ActivityInstance activityInstance = runtimeService.getActivityInstance(processInstanceId);
@@ -865,13 +865,13 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         // 查询当前任务
         Task task = taskService.createTaskQuery().taskId(taskId).singleResult();
         if(null == task){
-            throw new ServiceException(ApiError.ERROR_TASK_AUDIT_STATUS);
+            throw new ServiceException(ApiError.PROJECT_TASK_AUDIT_STATUS_INVALID);
         }
         // 转发任务给目标人员
         identityService.setAuthenticatedUserId(dto.getSourceUserId());
         FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(dto.getTargetUserId());
         if(null == findUserDTO){
-            throw new ServiceException(ApiError.ERROR_AUTH_CREDENTIALS_INVALID);
+            throw new ServiceException(ApiError.AUTH_CREDENTIALS_INVALID);
         }
         taskService.delegateTask(task.getId(), dto.getTargetUserId());
         // 更新流程任务数据
@@ -908,7 +908,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         //判断是否走飞书流程
         Boolean isFsApprove = isFsApprovePass(dto.getBusinessId(),dto.getBusinessKey());
         if (isFsApprove && ProcessSourcePlatformEnum.ERP.getCode().equals(dto.getSourcePlatform())) {
-            throw new ServiceException(ApiError.PROCESS_APPROVE_FS_PROCESS);
+            throw new ServiceException(ApiError.WF_FS_APPROVE_REQUIRED);
         }
 
         // 查询业务数据和关联流程定义
@@ -920,12 +920,12 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         // 查询流程实例
         List<ProcessManagementDTO.ManagementTaskDTO> managementTaskDTOS = listTaskByBusiness(dto.getBusinessId(), dto.getBusinessKey());
         if (CollectionUtils.isEmpty(managementTaskDTOS)) {
-            throw new ServiceException(ApiError.PROCESS_ALREADY_END);
+            throw new ServiceException(ApiError.WF_PROCESS_ALREADY_ENDED);
         }
         ProcessManagementDTO.ManagementTaskDTO managementTask = managementTaskDTOS.get(0);
         String managementCreateUserId = managementTask.getManagementCreateUserId();
         if (!CharSequenceUtil.equals(managementCreateUserId, dto.getUserId())) {
-            throw new ServiceException(ApiError.PROCESS_NOT_START_USER);
+            throw new ServiceException(ApiError.WF_PROCESS_NOT_START_USER);
         }
 
         String processInstanceId = managementTask.getProcessInstanceId();
@@ -933,11 +933,11 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         // 查询当前实例
         ProcessInstance processInstance = runtimeService.createProcessInstanceQuery().processInstanceId(processInstanceId).singleResult();
         if(null == processInstance || processInstance.isEnded()){
-            throw new ServiceException(ApiError.ERROR_WF_NOT_FOUND_OR_ENDED);
+            throw new ServiceException(ApiError.WF_PROCESS_NOT_FOUND_OR_ENDED);
         }
         BpmnModelInstance modelInstance = repositoryService.getBpmnModelInstance(processInstance.getProcessDefinitionId());
         if (null == modelInstance) {
-            throw new ServiceException(ApiError.ERROR_WF_NOT_STARTED);
+            throw new ServiceException(ApiError.WF_PROCESS_NOT_STARTED);
         }
         String initialActivityId = null;
         Collection<FlowElement> flowElements = modelInstance.getModelElementsByType(FlowElement.class);
@@ -1022,7 +1022,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
             //查询三方生成查询记录
              taskInfo = approveTaskInfoService.getByBusinessIdAndKey(dto.getBusinessKey(),dto.getBusinessId());
         }catch (Exception e){
-            throw new ServiceException(ApiError.PROCESS_APPROVE_TASK_INFO_ERROR, e.getMessage());
+            throw new ServiceException(ApiError.WF_APPROVE_TASK_INFO_ERROR, e.getMessage());
         }
             //判断是否走飞书审批
             if (ObjectUtil.isNotEmpty(taskInfo)) {
@@ -1031,15 +1031,15 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
 
                 if (StrUtil.isNotEmpty(dto.getUserId()) && StrUtil.isNotEmpty(taskInfo.getCreateUserId())) {
                     if (!taskInfo.getCreateUserId().equals(dto.getUserId())) {
-                        throw new ServiceException(ApiError.PROCESS_NOT_START_USER);
+                        throw new ServiceException(ApiError.WF_PROCESS_NOT_START_USER);
                     }
                     //查询用户
                     List<ThirdUnionDTO> thirdUsers = sysUserFeign.getThirdByUserIds(ProcessSourcePlatformEnum.FS.getCode().toUpperCase(), Collections.singletonList(dto.getUserId()));
                     if (thirdUsers.size() > 1){
-                        throw new ServiceException(ApiError.PROCESS_QUERY_THIRD_SUER_MULTIPLE);
+                        throw new ServiceException(ApiError.WF_FS_QUERY_MULTIPLE_USERS);
                     }
                     if (thirdUsers.size() == 0 || StrUtil.isEmpty(thirdUsers.get(0).getThirdUserId())){
-                        throw new ServiceException(ApiError.PROCESS_QUERY_THIRD_SUER_NOT_EXIST);
+                        throw new ServiceException(ApiError.WF_FS_QUERY_USER_NOT_FOUND);
                     }
                     for (ThirdUnionDTO thirdUser : thirdUsers) {
                         //这里需要判断thirdUnionId;thirdUserId;thirdOpenId;是否为空，哪个不为空，用哪个
@@ -1187,13 +1187,13 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         // 查询流程设计审核人处理方式
         ProcessDefinitionEntity processDefinition = processDefinitionService.getIsDeployEntityById(processDefinitionId.split(":")[0]);
         if (processDefinition == null) {
-            throw new ServiceException(ApiError.PROCESS_DEFINITION_NOT_EXIST);
+            throw new ServiceException(ApiError.WF_PROCESS_DEFINITION_NOT_EXIST);
         }
 
         List<String> candidateUsers = getCandidateUsers(task, execution, propertiesDTO);
         List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(candidateUsers);
         if (CollectionUtils.isEmpty(userList)) {
-            throw new ServiceException(ApiError.ERROR_ACCOUNT_NOT_FOUND, JSONUtil.toJsonStr(candidateUsers));
+            throw new ServiceException(ApiError.AUTH_ACCOUNT_NOT_FOUND, JSONUtil.toJsonStr(candidateUsers));
         }
 
         Map<String, FindUserDTO> userMap = userList.stream().collect(Collectors.toMap(FindUserDTO::getUserId, e -> e));
@@ -1361,7 +1361,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         // 查询当前任务
         Task taskEntity = taskService.createTaskQuery().taskId(taskId).singleResult();
         if(null == taskEntity){
-            throw new ServiceException(ApiError.ERROR_TASK_AUDIT_STATUS);
+            throw new ServiceException(ApiError.PROJECT_TASK_AUDIT_STATUS_INVALID);
         }
         identityService.setAuthenticatedUserId(task.getCurApproveId());
         if(DictBasicEnum.TIMEOUT_HANDLING_ESCALATE.equals(task.getTimeoutHandleType())){
@@ -1406,20 +1406,20 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         // 查询当前执行任务
         List<ProcessManagementDTO.ManagementTaskDTO> managementTasks  = listTaskById(dto.getIds());
         if(CollectionUtils.isEmpty(managementTasks)){
-            throw new ServiceException(ApiError.TASK_NOT_EXIST);
+            throw new ServiceException(ApiError.WF_TASK_NOT_FOUND);
         }
         for (ProcessManagementDTO.ManagementTaskDTO managementTask : managementTasks) {
             String taskId = managementTask.getTaskId();
             // 查询当前任务
             Task task = taskService.createTaskQuery().taskId(taskId).singleResult();
             if(null == task){
-                throw new ServiceException(ApiError.ERROR_TASK_AUDIT_STATUS);
+                throw new ServiceException(ApiError.PROJECT_TASK_AUDIT_STATUS_INVALID);
             }
             // 转发任务给目标人员
             identityService.setAuthenticatedUserId(dto.getTargetUserId());
             FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(dto.getTargetUserId());
             if(null == findUserDTO){
-                throw new ServiceException(ApiError.ERROR_AUTH_CREDENTIALS_INVALID);
+                throw new ServiceException(ApiError.AUTH_CREDENTIALS_INVALID);
             }
             taskService.delegateTask(task.getId(), dto.getTargetUserId());
             // 更新流程任务数据
@@ -1463,7 +1463,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         // 根据流程实例id查询流程信息
         ProcessManagementEntity entity = lambdaQuery()
                 .eq(ProcessManagementEntity::getProcessInstanceId, processInstanceId)
-                .oneOpt().orElseThrow(() -> new ServiceException(ApiError.ERROR_PROCESS_NOT_EXIST));
+                .oneOpt().orElseThrow(() -> new ServiceException(ApiError.WF_PROCESS_INSTANCE_NOT_FOUND));
         Map<String, Object> variables = runtimeService.getVariables(processInstanceId);
         //创建人和审核人不能一致
         checkApproveUserSame(variables,"");
@@ -1530,7 +1530,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         WorkMenuEntity menuEntity = workMenuService.getByModuleCode(dto.getBusinessKey());
         String feignBeanName = menuEntity.getFeignBeanName();
         if (CharSequenceUtil.isBlank(feignBeanName)) {
-            throw new ServiceException(ApiError.ERROR_WORK_MENU_FEIGN);
+            throw new ServiceException(ApiError.WF_MENU_FEIGN_CLASS_NOT_FOUND);
         }
         BaseWorkflowService feignService = SpringUtil.getBean(feignBeanName);
         return feignService.approve(dto);
@@ -1550,7 +1550,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         WorkMenuEntity menuEntity = workMenuService.getByModuleCode(businessKey);
         String feignBeanName = menuEntity.getFeignBeanName();
         if (CharSequenceUtil.isBlank(feignBeanName)) {
-            throw new ServiceException(ApiError.ERROR_WORK_MENU_FEIGN);
+            throw new ServiceException(ApiError.WF_MENU_FEIGN_CLASS_NOT_FOUND);
         }
         BaseWorkflowService feignService = SpringUtil.getBean(feignBeanName);
         return feignService.approveEnd(dto);
@@ -1561,7 +1561,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         WorkMenuEntity menuEntity = workMenuService.getByModuleCode(dto.getBusinessKey());
         String feignBeanName = menuEntity.getFeignBeanName();
         if (CharSequenceUtil.isBlank(feignBeanName)) {
-            throw new ServiceException(ApiError.ERROR_WORK_MENU_FEIGN);
+            throw new ServiceException(ApiError.WF_MENU_FEIGN_CLASS_NOT_FOUND);
         }
         BaseWorkflowService feignService = SpringUtil.getBean(feignBeanName);
         return feignService.disApprove(dto);
@@ -1572,7 +1572,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         WorkMenuEntity menuEntity = workMenuService.getByModuleCode(dto.getBusinessKey());
         String feignBeanName = menuEntity.getFeignBeanName();
         if (CharSequenceUtil.isBlank(feignBeanName)) {
-            throw new ServiceException(ApiError.ERROR_WORK_MENU_FEIGN);
+            throw new ServiceException(ApiError.WF_MENU_FEIGN_CLASS_NOT_FOUND);
         }
         BaseWorkflowService feignService = SpringUtil.getBean(feignBeanName);
         return feignService.cancelProcess(dto);
@@ -1583,7 +1583,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         WorkMenuEntity menuEntity = workMenuService.getByModuleCode(dto.getBusinessKey());
         String feignBeanName = menuEntity.getFeignBeanName();
         if (CharSequenceUtil.isBlank(feignBeanName)) {
-            throw new ServiceException(ApiError.ERROR_WORK_MENU_FEIGN);
+            throw new ServiceException(ApiError.WF_MENU_FEIGN_CLASS_NOT_FOUND);
         }
         BaseWorkflowService feignService = SpringUtil.getBean(feignBeanName);
         feignService.addComment(dto);
@@ -1725,10 +1725,10 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
     public BatchResultDTO processPass(String id) {
         ProcessManagementEntity entity = this.getById(id);
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.PROCESS_MANAGEMENT_NOT_EXIST);
+            throw new ServiceException(ApiError.WF_PROCESS_MANAGEMENT_NOT_EXIST);
         }
         if (!ProcessStatusEnum.PAUSE.equals(entity.getProcessStatus()) && !ProcessStatusEnum.RUNNING.equals(entity.getProcessStatus())) {
-            throw new ServiceException(ApiError.PROCESS_MANAGEMENT_PASS_ERROR);
+            throw new ServiceException(ApiError.WF_MANAGEMENT_FORCE_PASS_NOT_ALLOWED);
         }
 
         Map<String, Object> variables = runtimeService.getVariables(entity.getProcessInstanceId());
@@ -1801,10 +1801,10 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
     public BatchResultDTO processReject(String id) {
         ProcessManagementEntity entity = this.getById(id);
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.PROCESS_MANAGEMENT_NOT_EXIST);
+            throw new ServiceException(ApiError.WF_PROCESS_MANAGEMENT_NOT_EXIST);
         }
         if (!ProcessStatusEnum.PAUSE.equals(entity.getProcessStatus()) && !ProcessStatusEnum.RUNNING.equals(entity.getProcessStatus())) {
-            throw new ServiceException(ApiError.PROCESS_MANAGEMENT_REJECT_ERROR);
+            throw new ServiceException(ApiError.WF_MANAGEMENT_FORCE_REJECT_NOT_ALLOWED);
         }
         Map<String, Object> variables = runtimeService.getVariables(entity.getProcessInstanceId());
 
@@ -1852,10 +1852,10 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
     public BatchResultDTO processRestore(String id) {
         ProcessManagementEntity entity = this.getById(id);
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.PROCESS_MANAGEMENT_NOT_EXIST);
+            throw new ServiceException(ApiError.WF_PROCESS_MANAGEMENT_NOT_EXIST);
         }
         if (!ProcessStatusEnum.PAUSE.equals(entity.getProcessStatus())) {
-            throw new ServiceException(ApiError.PROCESS_MANAGEMENT_RESTORE_ERROR);
+            throw new ServiceException(ApiError.WF_MANAGEMENT_RESTORE_NOT_ALLOWED);
         }
         Map<String, Object> variables = runtimeService.getVariables(entity.getProcessInstanceId());
 
@@ -1902,10 +1902,10 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
     public BatchResultDTO processSuspend(String id) {
         ProcessManagementEntity entity = this.getById(id);
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.PROCESS_MANAGEMENT_NOT_EXIST);
+            throw new ServiceException(ApiError.WF_PROCESS_MANAGEMENT_NOT_EXIST);
         }
         if (!ProcessStatusEnum.RUNNING.equals(entity.getProcessStatus())) {
-            throw new ServiceException(ApiError.PROCESS_MANAGEMENT_SUSPEND_ERROR);
+            throw new ServiceException(ApiError.WF_MANAGEMENT_SUSPEND_NOT_ALLOWED);
         }
         Map<String, Object> variables = runtimeService.getVariables(entity.getProcessInstanceId());
 

@@ -260,17 +260,17 @@ public class OperateLogServiceImpl extends SuperServiceImpl<OperateLogMapper, Op
      */
     private Pair<String, String> setEnumValue(CfgOperateLogFieldEntity fieldEntity, Pair<String, String> valuePair) {
         if (CharSequenceUtil.isBlank(fieldEntity.getEnumClass())) {
-            throw new ServiceException(ApiError.ERROR_ENUM_CONVERT_FAILED);
+            throw new ServiceException(ApiError.COMMON_ENUM_CONVERT_FAILED);
         }
         Class<?> aClass;
         try {
             aClass = Class.forName(fieldEntity.getEnumClass());
         } catch (ClassNotFoundException e) {
-            throw new ServiceException(ApiError.ERROR_ENUM_CONVERT_FAILED);
+            throw new ServiceException(ApiError.COMMON_ENUM_CONVERT_FAILED);
         }
         boolean anEnum = aClass.isEnum();
         if (!anEnum) {
-            throw new ServiceException(ApiError.ERROR_ENUM_CONVERT_FAILED);
+            throw new ServiceException(ApiError.COMMON_ENUM_CONVERT_FAILED);
         }
         String oldValue = handleEnumVale(valuePair.getKey(), aClass);
         String newValue = handleEnumVale(valuePair.getValue(), aClass);

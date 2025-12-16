@@ -206,12 +206,12 @@ public class SubcontractChangeDetailServiceImpl extends SuperServiceImpl<Subcont
         //BOM信息
         List<BomChildrenSkuDTO> bomChildrenList = plmTaskFeign.listBomChildBySkuIds(parentSkuIds);
         if (CollectionUtils.isEmpty(bomChildrenList)) {
-            throw new ServiceException(ApiError.ERROR_PLM_BOM_NOT_FOUND);
+            throw new ServiceException(ApiError.BOM_NOT_FOUND);
         }
         //产品信息
         List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(allSkuIds);
         if (CollectionUtils.isEmpty(skuList)) {
-            throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_INFO_NOT_FOUND);
+            throw new ServiceException(ApiError.PRODUCT_INFO_NOT_FOUND);
         }
         //供应商信息
         List<SupplierEntity> supplierList = null;
@@ -222,7 +222,7 @@ public class SubcontractChangeDetailServiceImpl extends SuperServiceImpl<Subcont
         //主表信息
         SubcontractChangeEntity changeEntity = subcontractChangeService.getById(mainId);
         if (ObjectUtils.isEmpty(changeEntity)) {
-            throw new ServiceException(ApiError.ERROR_SCM_OUTSOURCING_CHANGE_NOT_FOUND);
+            throw new ServiceException(ApiError.PO_SUBCONTRACT_CHANGE_NOT_FOUND);
         }
 
         //仓库信息
@@ -235,12 +235,12 @@ public class SubcontractChangeDetailServiceImpl extends SuperServiceImpl<Subcont
             //bom信息
             BomChildrenSkuDTO bomChildrenSkuDTO = bomChildrenList.stream().filter(obj -> obj.getParentSkuId().equals(detailEntity.getSkuId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(bomChildrenSkuDTO)) {
-                throw new ServiceException(ApiError.ERROR_PLM_BOM_NOT_FOUND);
+                throw new ServiceException(ApiError.BOM_NOT_FOUND);
             }
             //父级SKU信息
             SkuVO skuVO = skuList.stream().filter(obj -> obj.getSkuId().equals(detailEntity.getSkuId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(skuVO)) {
-                throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_INFO_NOT_FOUND);
+                throw new ServiceException(ApiError.PRODUCT_INFO_NOT_FOUND);
             }
             detailEntity.setIsAdd(Boolean.FALSE);
             //新增数据手动添加ID
@@ -282,7 +282,7 @@ public class SubcontractChangeDetailServiceImpl extends SuperServiceImpl<Subcont
                 //产品信息
                 SkuVO childSkuVO = skuList.stream().filter(obj -> obj.getSkuId().equals(childEntity.getSkuId())).findFirst().orElse(null);
                 if (ObjectUtils.isEmpty(childSkuVO)) {
-                    throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_INFO_NOT_FOUND);
+                    throw new ServiceException(ApiError.PRODUCT_INFO_NOT_FOUND);
                 }
                 //仓库名称
                 if (CollectionUtils.isNotEmpty(warehouseList)) {

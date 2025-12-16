@@ -58,7 +58,7 @@ public class DictCountryOrgServiceImpl extends SuperServiceImpl<DictCountryOrgMa
     @Override
     public Boolean update(DictCountryOrgDTO.UpdateDTO updateDTO) {
         DictCountryOrgEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "国家-组织（政治经济）关系单"));
+        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "国家-组织（政治经济）关系单"));
         DictCountryOrgEntity dictCountryOrgEntity =  BeanMapperUtils.map(DictCountryOrgEntity.class, updateDTO);
 
         // 数据处理

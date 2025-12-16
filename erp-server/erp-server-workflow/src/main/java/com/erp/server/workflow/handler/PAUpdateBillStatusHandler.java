@@ -198,7 +198,7 @@ public class PAUpdateBillStatusHandler implements CreateBillHandler {
         if (ObjectUtil.isNotEmpty(applyUserName)) {
             FindUserDTO findUserDTO = sysUserFeign.getUserByUserName(String.valueOf(applyUserName), UserTypeEnum.ERP.getCode());
             if (ObjectUtil.isEmpty(findUserDTO)) {
-                throw new ServiceException(ApiError.ERROR_USER_NOT_FOUND,applyUserName);
+                throw new ServiceException(ApiError.AUTH_USER_NOT_FOUND,applyUserName);
             }
             map.put("applyUserId", findUserDTO.getUserId());
             map.put("applyDeptId", findUserDTO.getDepartmentId());
@@ -240,7 +240,7 @@ public class PAUpdateBillStatusHandler implements CreateBillHandler {
             if (ObjectUtil.isNotEmpty(skuNo)) {
                 List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(Collections.singletonList(skuNo.toString()));
                 if (ObjectUtil.isEmpty(skuVOList)) {
-                    throw new ServiceException(ApiError.ERROR_NOT_FOUND_SKU, skuNo);
+                    throw new ServiceException(ApiError.PRODUCT_NOT_FOUND_SKU, skuNo);
                 }
                 detailMap.put("skuId", skuVOList.get(0).getSkuId());
                 detailMap.put("unitQty", skuVOList.get(0).getBoxQty());
@@ -268,7 +268,7 @@ public class PAUpdateBillStatusHandler implements CreateBillHandler {
         }
         PurchaseApplicationEntity applicationEntity = FeignQuery.getById(PurchaseApplicationEntity.class, taskInfo.getBussinessId());
         if (ObjectUtil.isNotEmpty(applicationEntity)) {
-            throw new ServiceException(ApiError.ERROR_EXIST_BILL, CharSequenceUtil.format("采购申请单{}",applicationEntity.getCode()));
+            throw new ServiceException(ApiError.BILL_ALREADY_EXIST, CharSequenceUtil.format("采购申请单{}",applicationEntity.getCode()));
         }
 
         if (DictBasicEnum.CREATEANDUPDATE.equals(dictBasicEnum)) {

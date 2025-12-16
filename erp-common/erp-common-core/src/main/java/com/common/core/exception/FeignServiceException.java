@@ -33,9 +33,9 @@ public class FeignServiceException extends Exception {
      * @param apiResult
      */
     public FeignServiceException(ApiResult apiResult) {
-        super(apiResult != null ? apiResult.getMsg() : ApiError.DEFAULT.getMsg());
-        this.code = apiResult != null ? apiResult.getCode() : ApiError.DEFAULT.getCode();
-        this.msg = apiResult != null ? apiResult.getMsg() : ApiError.DEFAULT.getMsg();
+        super(apiResult != null ? apiResult.getMsg() : ApiError.HTTP_UNKNOWN.getMsg());
+        this.code = apiResult != null ? apiResult.getCode() : ApiError.HTTP_UNKNOWN.getCode();
+        this.msg = apiResult != null ? apiResult.getMsg() : ApiError.HTTP_UNKNOWN.getMsg();
         log.warn("[FeignServiceException] code={}, msg={}", code, msg);
     }
 
@@ -44,7 +44,7 @@ public class FeignServiceException extends Exception {
      */
     public FeignServiceException(ApiError apiError, Object... args) {
         super(resolveMessage(apiError, args));
-        this.code = apiError != null ? apiError.getCode() : ApiError.DEFAULT.getCode();
+        this.code = apiError != null ? apiError.getCode() : ApiError.HTTP_UNKNOWN.getCode();
         this.msg = resolveMessage(apiError, args);
         log.warn("[FeignServiceException] code={}, msg={}", code, msg);
     }
@@ -52,7 +52,7 @@ public class FeignServiceException extends Exception {
     /** 国际化解析（带回退机制） */
     private static String resolveMessage(ApiError apiError, Object... args) {
         if (apiError == null) {
-            return ApiError.DEFAULT.getMsg();
+            return ApiError.HTTP_UNKNOWN.getMsg();
         }
         try {
             String message = MessageUtils.getMessage(apiError, args);

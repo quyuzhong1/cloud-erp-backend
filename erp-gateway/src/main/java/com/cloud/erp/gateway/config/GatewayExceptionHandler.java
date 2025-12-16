@@ -14,7 +14,6 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.reactive.function.server.*;
 import org.springframework.web.server.ResponseStatusException;
-import org.springframework.web.server.ServerWebExchange;
 
 import javax.annotation.Resource;
 import java.util.HashMap;
@@ -41,21 +40,21 @@ public class GatewayExceptionHandler extends DefaultErrorWebExceptionHandler {
 	 */
 	@Override
 	protected Map<String, Object> getErrorAttributes(ServerRequest request, ErrorAttributeOptions options) {
-		String code = StrUtils.null2EmptyWithTrim(ApiError.DEFAULT.getCode());
-		String errorMessage =localeUtils.getMessage(ApiError.DEFAULT, request.exchange().getRequest());
+		String code = StrUtils.null2EmptyWithTrim(ApiError.HTTP_UNKNOWN.getCode());
+		String errorMessage =localeUtils.getMessage(ApiError.HTTP_UNKNOWN, request.exchange().getRequest());
 		Map<String, Object> map = new HashMap<>(4);
 		Throwable error = super.getError(request);
 		log.error(CharSequenceUtil.format("网关异常，请求地址：{}",request.exchange().getRequest().getURI()),error);
 		// 1023服务暂时不可用
 		if (error instanceof org.springframework.cloud.gateway.support.NotFoundException) {
-			code = StrUtils.null2EmptyWithTrim(ApiError.ERROR_SERVICE_UNAVAILABLE.getCode());
-			errorMessage = localeUtils.getMessage(ApiError.ERROR_SERVICE_UNAVAILABLE, request.exchange().getRequest());
+			code = StrUtils.null2EmptyWithTrim(ApiError.HTTP_SERVICE_UNAVAILABLE.getCode());
+			errorMessage = localeUtils.getMessage(ApiError.HTTP_SERVICE_UNAVAILABLE, request.exchange().getRequest());
 		}
 		// 404接口路径不存在
 		if (error instanceof org.springframework.web.server.ResponseStatusException
 				&& HttpStatus.NOT_FOUND.equals(((ResponseStatusException) error).getStatus())){
-			code = String.valueOf(ApiError.ERROR_HTTP_NOT_FOUND.getCode());
-			errorMessage = localeUtils.getMessage(ApiError.ERROR_HTTP_NOT_FOUND, request.exchange().getRequest());
+			code = String.valueOf(ApiError.HTTP_NOT_FOUND.getCode());
+			errorMessage = localeUtils.getMessage(ApiError.HTTP_NOT_FOUND, request.exchange().getRequest());
 		}
 		map.put("code", code);
 		map.put("msg", errorMessage);

@@ -45,7 +45,7 @@ public class ServiceException extends RuntimeException {
 
     /** 仅传入消息，使用默认错误码 */
     public ServiceException(String msg, Object... args) {
-        this(ApiError.DEFAULT.getCode(), msg, args);
+        this(ApiError.HTTP_UNKNOWN.getCode(), msg, args);
     }
 
     /**
@@ -65,7 +65,7 @@ public class ServiceException extends RuntimeException {
     /** 直接构建（非国际化消息） */
     public ServiceException(Integer code, String msg, Object... args) {
         super(CharSequenceUtil.format(msg, args));
-        this.code = code != null ? code : ApiError.DEFAULT.getCode();
+        this.code = code != null ? code : ApiError.HTTP_UNKNOWN.getCode();
         this.msg = CharSequenceUtil.format(msg, args);
         this.data = null;
         log.error("[ServiceException] code={}, msg={}", code, this.msg);
@@ -117,7 +117,7 @@ public class ServiceException extends RuntimeException {
      */
     private static String resolveMessage(ApiError apiError, Object... args) {
         if (apiError == null) {
-            return ApiError.DEFAULT.getMsg();
+            return ApiError.HTTP_UNKNOWN.getMsg();
         }
         try {
             String msg = MessageUtils.getMessage(apiError, args);

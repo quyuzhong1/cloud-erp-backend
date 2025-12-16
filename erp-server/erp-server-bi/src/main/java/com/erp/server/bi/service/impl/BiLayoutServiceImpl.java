@@ -86,7 +86,7 @@ public class BiLayoutServiceImpl extends ServiceImpl<BiLayoutMapper, BiLayoutEnt
         }
         BiSubjectEntity subject = subjectService.getById(subjectId);
         if (Objects.isNull(subject)) {
-            throw new ServiceException(ApiError.ERROR_DMP_TOPIC_REQUIRED);
+            throw new ServiceException(ApiError.BI_TOPIC_REQUIRED);
         }
         //检查能否操作
         subjectService.checkCanHandle(subject, userId);
@@ -137,7 +137,7 @@ public class BiLayoutServiceImpl extends ServiceImpl<BiLayoutMapper, BiLayoutEnt
         BiSubjectEntity subject = subjectService.getById(subjectId);
         if (Objects.isNull(subject)) {
             log.info("subject result ={}", JSONUtil.toJsonStr(subject));
-            throw new ServiceException(ApiError.ERROR_DMP_TOPIC_REQUIRED);
+            throw new ServiceException(ApiError.BI_TOPIC_REQUIRED);
         }
         List<String> roleIdList = sysUserFeign.getRoleIdList(userId);
         subjectShareService.checkPermission(userId, subject, roleIdList);
@@ -182,7 +182,7 @@ public class BiLayoutServiceImpl extends ServiceImpl<BiLayoutMapper, BiLayoutEnt
         String name = dto.getName();
         BiSubjectEntity subject = subjectService.getById(subjectId);
         if (Objects.isNull(subject)) {
-            throw new ServiceException(ApiError.ERROR_DMP_TOPIC_REQUIRED);
+            throw new ServiceException(ApiError.BI_TOPIC_REQUIRED);
         }
         //检查是否是自己创建的专题
         subjectService.checkCanHandle(subject, userId);
@@ -190,7 +190,7 @@ public class BiLayoutServiceImpl extends ServiceImpl<BiLayoutMapper, BiLayoutEnt
         //布局表
         List<LayoutDetailsDTO> layoutDetailsList = dto.getLayoutDetailsList();
         if (CollectionUtils.isEmpty(layoutDetailsList)) {
-            throw new ServiceException(ApiError.ERROR_DMP_LAYOUT_AT_LEAST_ONE);
+            throw new ServiceException(ApiError.BI_AT_LEAST_ONE_LAYOUT);
         }
         int layoutModuleCount = 0;
         for (LayoutDetailsDTO item : layoutDetailsList) {
@@ -199,7 +199,7 @@ public class BiLayoutServiceImpl extends ServiceImpl<BiLayoutMapper, BiLayoutEnt
             }
         }
         if (layoutModuleCount == 0) {
-            throw new ServiceException(ApiError.ERROR_DMP_LAYOUT_AT_LEAST_ONE);
+            throw new ServiceException(ApiError.BI_AT_LEAST_ONE_LAYOUT);
         }
 
 
@@ -388,7 +388,7 @@ public class BiLayoutServiceImpl extends ServiceImpl<BiLayoutMapper, BiLayoutEnt
      */
     public void checkLayoutModuleExist(List<LayoutDTO> layoutList) {
         if (CollectionUtils.isEmpty(layoutList)) {
-            throw new ServiceException(ApiError.ERROR_DMP_LAYOUT_AT_LEAST_ONE);
+            throw new ServiceException(ApiError.BI_AT_LEAST_ONE_LAYOUT);
         }
         int layoutModuleCount = 0;
         for (LayoutDTO item : layoutList) {
@@ -397,7 +397,7 @@ public class BiLayoutServiceImpl extends ServiceImpl<BiLayoutMapper, BiLayoutEnt
             }
         }
         if (layoutModuleCount == 0) {
-            throw new ServiceException(ApiError.ERROR_DMP_LAYOUT_AT_LEAST_ONE);
+            throw new ServiceException(ApiError.BI_AT_LEAST_ONE_LAYOUT);
         }
     }
 

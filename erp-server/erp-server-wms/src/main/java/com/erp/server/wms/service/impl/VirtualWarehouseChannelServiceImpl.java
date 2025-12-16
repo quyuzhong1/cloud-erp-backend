@@ -72,7 +72,7 @@ public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<Virtual
     public BaseResultDTO.AddDTO batchUpdate(VirtualWarehouseChannelDTO.BatchUpdateDTO batchUpdateDTO) {
         String virtualWarehouseId = batchUpdateDTO.getVirtualWarehouseId();
         VirtualWarehouseEntity warehouseEntity = virtualWarehouseService.getById(virtualWarehouseId);
-        VirtualWarehouseEntity oldWarehouseEntity = Optional.ofNullable(warehouseEntity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "虚拟仓"));
+        VirtualWarehouseEntity oldWarehouseEntity = Optional.ofNullable(warehouseEntity).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "虚拟仓"));
         log.info("更新虚拟仓数据，id：【{}】", oldWarehouseEntity.getId());
         //渠道配置
         List<VirtualWarehouseChannelDTO.ChannelAddDTO> internalChannelList = CollUtil.isNotEmpty(batchUpdateDTO.getInternalChannelList())? batchUpdateDTO.getInternalChannelList() :Collections.emptyList();
@@ -431,7 +431,7 @@ public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<Virtual
     public VirtualWarehouseChannelDTO.ViewDTO view(String id) {
         VirtualWarehouseEntity warehouseEntity = virtualWarehouseService.getById(id);
         if (Objects.isNull(warehouseEntity)) {
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "虚拟仓");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "虚拟仓");
         }
         VirtualWarehouseChannelDTO.ViewDTO viewDTO = new VirtualWarehouseChannelDTO.ViewDTO();
         viewDTO.setVirtualWarehouseId(id);

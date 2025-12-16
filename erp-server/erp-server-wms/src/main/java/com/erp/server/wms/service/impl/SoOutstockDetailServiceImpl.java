@@ -296,7 +296,7 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
                         .filter(v -> v.getSkuNo().equals(dto.getSkuNo()))
                         .mapToInt(SoDetailEntity::getQty).sum();
                 if (sellQty == 0) {
-                    throw new ServiceException(ApiError.ERROR_WMS_PICK_LIST_NOT_FOUND_FOR_SO, dto.getSkuNo());
+                    throw new ServiceException(ApiError.SO_PICKLIST_DETAIL_NOT_FOUND_FOR_SO, dto.getSkuNo());
                 }
                 int actualQty = detailEntities.stream()
                         .filter(e -> Boolean.FALSE.equals(e.getInvalidStatus()))
@@ -304,7 +304,7 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
                         .mapToInt(SoOutstockDetailEntity::getActualQty)
                         .sum();
                 if (sellQty < actualQty + Optional.ofNullable(dto.getPlanQty()).orElse(0)) {
-                    throw new ServiceException(ApiError.ERROR_WMS_SO_OUTBOUND_QTY_EXCEEDS_ORDER, dto.getSkuNo());
+                    throw new ServiceException(ApiError.SO_OUTBOUND_QTY_EXCEEDS_ORDER, dto.getSkuNo());
                 }
             }
         } else {
@@ -564,7 +564,7 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
     @Override
     public void checkB2cOrderQty(String warehouseId, String soId, String sourceId, String sourceType, List<SoOutstockDetailDTO.UpdateDTO> checkList) {
         if(CharSequenceUtil.isBlank(warehouseId)){
-            throw new ServiceException(ApiError.ERROR_WMS_WAREHOUSE_NOT_FOUND);
+            throw new ServiceException(ApiError.WH_NOT_FOUND);
         }
         // 忽略库存计算SKU
         List<SkuVO> ignoreInventorySkuList = plmTaskFeign.getNoInventorySku();

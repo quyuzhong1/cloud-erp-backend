@@ -101,12 +101,12 @@ public class PurchaseChangeDetailServiceImpl extends SuperServiceImpl<PurchaseCh
         List<String> purchaseOrderDetailIds = list.stream().map(PurchaseChangeDetailEntity::getPurchaseOrderDetailId).collect(Collectors.toList());
         List<PurchaseOrderDetailEntity> purchaseOrderDetailList = purchaseOrderDetailService.listByIds(purchaseOrderDetailIds);
         if (CollectionUtils.isEmpty(purchaseOrderDetailList)) {
-            throw new ServiceException(ApiError.ERROR_SCM_PO_DETAIL_NOT_FOUND);
+            throw new ServiceException(ApiError.PO_DETAIL_NOT_FOUND);
         }
         //采购订单
         PurchaseOrderEntity entity = purchaseOrderService.getById(purchaseOrderDetailList.get(0).getPurchaseOrderId());
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_SCM_PO_NOT_FOUND);
+            throw new ServiceException(ApiError.PO_NOT_FOUND);
         }
         //订单明细数据校验
         String skuNos = purchaseOrderDetailList.stream().filter(obj -> !CharSequenceUtil.equals(ExecutionStatusEnum.CONFIRM.getCode(), obj.getExecutionStatus())
@@ -115,7 +115,7 @@ public class PurchaseChangeDetailServiceImpl extends SuperServiceImpl<PurchaseCh
                 )
                 .map(PurchaseOrderDetailEntity::getSkuNo).collect(Collectors.joining(","));
         if (isNotBlank(skuNos)) {
-            throw new ServiceException(ApiError.ERROR_PURCHASE_ORDER_PUSH_DOWN,entity.getCode(),skuNos);
+            throw new ServiceException(ApiError.PO_SKU_PUSH_DOWN_NOT_ALLOWED,entity.getCode(),skuNos);
         }
     }
 
@@ -183,7 +183,7 @@ public class PurchaseChangeDetailServiceImpl extends SuperServiceImpl<PurchaseCh
             if (StringUtils.isNotBlank(entity.getId())) {
                 PurchaseChangeDetailEntity old = oldList.stream().filter(obj -> obj.getId().equals(entity.getId())).findFirst().orElse(null);
                 if (org.springframework.util.ObjectUtils.isEmpty(old)) {
-                    throw new ServiceException(ApiError.ERROR_SCM_PURCHASE_CHANGE_DETAIL_NOT_FOUND);
+                    throw new ServiceException(ApiError.PO_CHANGE_DETAIL_NOT_FOUND);
                 }
                 moduleOperateLogService.addModuleOperateLogByObj(old,entity, ModuleTypeEnum.PURCHASE_CHANGE.getCode(),purchaseChangeId,"",String.format("【%s】",old.getSkuNo()));
             }
@@ -209,12 +209,12 @@ public class PurchaseChangeDetailServiceImpl extends SuperServiceImpl<PurchaseCh
         }
         PurchaseChangeEntity purchaseChangeEntity = purchaseChangeService.getById(purchaseChangeId);
         if (ObjectUtils.isEmpty(purchaseChangeEntity)) {
-            throw new ServiceException(ApiError.ERROR_SCM_PURCHASE_CHANGE_NOT_FOUND);
+            throw new ServiceException(ApiError.PO_CHANGE_NOT_FOUND);
         }
         List<String> purchaseOrderDetailIds = list.stream().map(PurchaseChangeDetailEntity::getPurchaseOrderDetailId).collect(Collectors.toList());
         List<PurchaseOrderDetailEntity> purchaseOrderDetailList = purchaseOrderDetailService.listByIds(purchaseOrderDetailIds);
         if (CollectionUtils.isEmpty(purchaseOrderDetailList)) {
-            throw new ServiceException(ApiError.ERROR_SCM_PO_DETAIL_NOT_FOUND);
+            throw new ServiceException(ApiError.PO_DETAIL_NOT_FOUND);
         }
         List<String> podIds = list.stream().map(PurchaseChangeDetailEntity::getPurchaseOrderDetailId).distinct().collect(Collectors.toList());
         PurchaseOrderEntity purchaseOrderEntity = purchaseOrderService.getById(purchaseOrderDetailList.get(0).getPurchaseOrderId());
@@ -294,23 +294,23 @@ public class PurchaseChangeDetailServiceImpl extends SuperServiceImpl<PurchaseCh
              */
             if (isNotBlank(receiveMsg) && isNotBlank(stockInMsg))  {
                 if (MathUtil.compareTo(receiveResultQty,stockInQty) > MathUtil.ZERO) {
-                    throw new ServiceException(ApiError.DEFAULT.getCode(),receiveMsg);
+                    throw new ServiceException(ApiError.HTTP_UNKNOWN.getCode(),receiveMsg);
                 } else {
-                    throw new ServiceException(ApiError.DEFAULT.getMsg(),stockInMsg);
+                    throw new ServiceException(ApiError.HTTP_UNKNOWN.getMsg(),stockInMsg);
                 }
             } else {
                 if (isNotBlank(receiveMsg)) {
-                    throw new ServiceException(MessageUtils.getMessage(ApiError.DEFAULT),receiveMsg);
+                    throw new ServiceException(MessageUtils.getMessage(ApiError.HTTP_UNKNOWN),receiveMsg);
                 }
                 if (isNotBlank(stockInMsg)) {
-                    throw new ServiceException(MessageUtils.getMessage(ApiError.DEFAULT),stockInMsg);
+                    throw new ServiceException(MessageUtils.getMessage(ApiError.HTTP_UNKNOWN),stockInMsg);
                 }
             }
 
             //采购订单明细
             PurchaseOrderDetailEntity detailEntity = purchaseOrderDetailList.stream().filter(obj -> obj.getId().equals(purchaseChangeDetailEntity.getPurchaseOrderDetailId())).findFirst().orElse(null);
             if (org.springframework.util.ObjectUtils.isEmpty(detailEntity)) {
-                throw new ServiceException(ApiError.ERROR_SCM_PO_DETAIL_NOT_FOUND);
+                throw new ServiceException(ApiError.PO_DETAIL_NOT_FOUND);
             }
 
 

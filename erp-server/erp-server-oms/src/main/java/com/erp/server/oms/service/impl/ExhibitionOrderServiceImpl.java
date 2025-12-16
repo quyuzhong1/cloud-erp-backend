@@ -212,7 +212,7 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
         //不允许重复添加
         long sampleLedgerIdCount = detailList.stream().map(ExhibitionOrderDetailDTO.AddDTO::getSampleLedgerId).distinct().count();
         if(sampleLedgerIdCount != detailList.size()){
-            throw new ServiceException(ApiError.ERROR_REPEAT_SKU);
+            throw new ServiceException(ApiError.PRODUCT_SKU_DUPLICATE);
         }
 
         List<String> skuIdList = detailList.stream().map(ExhibitionOrderDetailDTO.AddDTO::getSkuId).collect(Collectors.toList());
@@ -343,10 +343,10 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
     @Override
     public Boolean update(ExhibitionOrderDTO.UpdateDTO addOrUpdateDTO) {
         ExhibitionOrderEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "展会订单信息"));
+        old = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "展会订单信息"));
         // 待提交和审核不通过允许修改
         if (!ApproveStatusEnum.allowUpdateStatus(old.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_UPDATE_STATUS_NOT_ALLOWED);
+            throw new ServiceException(ApiError.BILL_UPDATE_STATUS_NOT_ALLOWED);
         }
         // 校验明细不能为空
         if (CollUtil.isEmpty(addOrUpdateDTO.getDetailList())) {
@@ -364,7 +364,7 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
         //不允许重复添加
         long sampleLedgerIdCount = detailList.stream().map(ExhibitionOrderDetailDTO.UpdateDTO::getSampleLedgerId).distinct().count();
         if(sampleLedgerIdCount != detailList.size()){
-            throw new ServiceException(ApiError.ERROR_REPEAT_SKU);
+            throw new ServiceException(ApiError.PRODUCT_SKU_DUPLICATE);
         }
         List<ExhibitionOrderDetailEntity> exhibitionOrderDetailEntities = BeanMapper.copyList(detailList, ExhibitionOrderDetailEntity.class);
         //旧明细
@@ -817,12 +817,12 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
     public BatchResultDTO approve(ApproveOneDTO dto) {
         ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(dto.getType());
         if (Objects.equals(approveType, ApproveTypeEnum.REJECT) && StrUtils.isEmpty(dto.getComment())) {
-            throw new ServiceException(ApiError.ERROR_PLM_REJECT_COMMENT_REQUIRED);
+            throw new ServiceException(ApiError.WF_REJECT_COMMENT_REQUIRED);
         }
         ExhibitionOrderEntity entity = getById(dto.getId());
         // 审核中的数据允许审核
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
-            throw new ServiceException(ApiError.ERROR_APPROVE_ALLOWED_STATUS_ONLY);
+            throw new ServiceException(ApiError.WF_APPROVE_ALLOWED_STATUS_ONLY);
         }
         //判断上一次的反审核的任务是否已经全部执行成功
         Integer count = workflowTaskRecordService.lambdaQuery().eq(WorkflowTaskRecordEntity::getSourceId, dto.getId())
@@ -868,7 +868,7 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
         ApiResult<ProcessManagementDTO.ApproveResultDTO> approveResult = workflowFeign.approve(approveDTO);
         Integer code = approveResult.getCode();
         if (200 != code) {
-            throw new ServiceException(ApiError.ERROR_WF_APPROVAL_FAILED);
+            throw new ServiceException(ApiError.WF_APPROVE_FAILED);
         }
         ProcessManagementDTO.ApproveResultDTO data = approveResult.getData();
         if (ObjectUtil.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()) {
@@ -936,7 +936,7 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
 
             List<WorkflowTaskRecordEntity> workflowTaskRecordEntities = workflowTaskRecordService.addTask(addTaskDTO);
             if(CollUtil.isEmpty(workflowTaskRecordEntities)){
-                throw new ServiceException(ApiError.ERROR_NOT_EXIST,DictBasicTypeEnum.WORKFLOW_TASK_NODE.getDesc());
+                throw new ServiceException(ApiError.COMMON_NOT_EXIST,DictBasicTypeEnum.WORKFLOW_TASK_NODE.getDesc());
             }
             SendResult result = mqProducerService.syncClassMsgWithDelayLevel(RocketMqTopic.OMS_WORKFLOW_TASK_RECORD_TOPIC, RocketMqTagEnum.OMS_WORKFLOW_TASK_RECORD_TAG.getName(), addTaskDTO, entity.getId(),2);
             if (!result.getSendStatus().equals(SendStatus.SEND_OK)) {
@@ -965,7 +965,7 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
     private Boolean validateDisApprove(ExhibitionOrderEntity entity) {
         // 已审核支持反审核
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE)) {
-            throw new ServiceException(ApiError.ERROR_REVERSE_APPROVAL_ALLOWED_APPROVED_ONLY);
+            throw new ServiceException(ApiError.BILL_REVERSE_APPROVAL_ALLOWED_APPROVED_ONLY);
         }
         return true;
     }
@@ -976,7 +976,7 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
         ExhibitionOrderEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到展会订单信息数据"));
         // 只有待提交数据允许删除
         if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT, entity.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_SCM_SUBMIT_ALLOWED_STATUS_ONLY);
+            throw new ServiceException(ApiError.BILL_SUBMIT_ALLOWED_STATUS_ONLY);
         }
         //删除明细
         exhibitionOrderDetailService.lambdaUpdate()
@@ -1000,11 +1000,11 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
         ExhibitionOrderEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到展会订单信息数据"));
         // 只有待提交、审核不通过数据允许作废
         if (!(Objects.equals(ApproveStatusEnum.WAIT_SUBMIT, entity.getApproveStatus()) || Objects.equals(ApproveStatusEnum.REJECT, entity.getApproveStatus()))) {
-            throw new ServiceException(ApiError.ERROR_VOID_ALLOWED_STATUS_ONLY);
+            throw new ServiceException(ApiError.BILL_VOID_ALLOWED_STATUS_ONLY);
         }
         //已作废不支持作废
         if (entity.getInvalidStatus()) {
-            throw new ServiceException(ApiError.ERROR_ALREADY_VOID_CANNOT_VOID_AGAIN);
+            throw new ServiceException(ApiError.BILL_ALREADY_VOID_CANNOT_VOID_AGAIN);
         }
 
         // 主单数据
@@ -1033,7 +1033,7 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
         ExhibitionOrderEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到展会订单信息数据"));
         // 只有审核中的单据允许撤销
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
-            throw new ServiceException(ApiError.ERROR_REVOKE_PROCESS_ALLOWED_STATUS_ONLY);
+            throw new ServiceException(ApiError.WF_REVOKE_PROCESS_ALLOWED_STATUS_ONLY);
         }
         // TODO 撤销流程
         log.info("撤销 开始撤销流程，id：【{}】", id);
@@ -1077,7 +1077,7 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
             addTaskDTO.setFirstNodeInputData(map);
             List<WorkflowTaskRecordEntity> workflowTaskRecordEntities = workflowTaskRecordService.addTask(addTaskDTO);
             if(CollUtil.isEmpty(workflowTaskRecordEntities)){
-                throw new ServiceException(ApiError.ERROR_NOT_EXIST,DictBasicTypeEnum.WORKFLOW_TASK_NODE.getDesc());
+                throw new ServiceException(ApiError.COMMON_NOT_EXIST,DictBasicTypeEnum.WORKFLOW_TASK_NODE.getDesc());
             }
             SendResult result = mqProducerService.syncClassMsgWithDelayLevel(RocketMqTopic.OMS_WORKFLOW_TASK_RECORD_TOPIC, RocketMqTagEnum.OMS_WORKFLOW_TASK_RECORD_TAG.getName(), addTaskDTO, entity.getId(),2);
             if (!result.getSendStatus().equals(SendStatus.SEND_OK)) {
@@ -1552,7 +1552,7 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
             listApiResult = workflowFeign.curApprover(dtoList);
             Integer code = listApiResult.getCode();
             if (200 != code) {
-                throw new ServiceException(new ApiResult(ApiError.DEFAULT.getCode(), listApiResult.getMsg()));
+                throw new ServiceException(new ApiResult(ApiError.HTTP_UNKNOWN.getCode(), listApiResult.getMsg()));
             }
         }
 
@@ -1636,7 +1636,7 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
     private void validateSubmit(ExhibitionOrderEntity entity) {
         // 待提交或审核不通过并且未作废允许提交
         if (!ApproveStatusEnum.allowUpdateStatus(entity.getApproveStatus()) || entity.getInvalidStatus()) {
-            throw new ServiceException(ApiError.ERROR_SUBMIT_ALLOWED_STATUS_ONLY);
+            throw new ServiceException(ApiError.BILL_SUBMIT_ALLOWED_STATUS_ONLY);
         }
 
         if(customerInfoService.isSyncDht(entity.getCustomerId())){
@@ -1815,7 +1815,7 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
             EasyExcel.read(new ByteArrayInputStream(bytes), ExhibitionOrderImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (ExcelCommonException e) {
             log.error("导入格式错误！", e);
-            throw new ServiceException(ApiError.ERROR_FILE_IMPORT_FORMAT_INVALID_XLSX);
+            throw new ServiceException(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX);
         }
 
         BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
@@ -2218,12 +2218,12 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
                                 .findFirst()
                                 .orElse(null);
                         if(Objects.isNull(skuAvailableQtyDTO)){
-                            msgList.add(ApiError.ERROR_SAMPLE_LEDGER_NOT_EXIST.getMsg());
+                            msgList.add(ApiError.SAMPLE_LEDGER_NOT_EXIST.getMsg());
                         }else {
                             addDetail.setSampleLedgerId(skuAvailableQtyDTO.getSampleLedgerId());
                         }
                     }else {
-                        msgList.add(ApiError.ERROR_SAMPLE_LEDGER_NOT_EXIST.getMsg());
+                        msgList.add(ApiError.SAMPLE_LEDGER_NOT_EXIST.getMsg());
                     }
 
                     //销售单价

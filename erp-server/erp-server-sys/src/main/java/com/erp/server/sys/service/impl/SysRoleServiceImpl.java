@@ -73,7 +73,7 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRoleEntity
     public void copyRole(String copyRoleId) {
         SysRoleEntity roleEntity = this.getById(copyRoleId);
         if (Objects.isNull(roleEntity)) {
-            throw new ServiceException(ApiError.ERROR_ROLE_NOT_FOUND);
+            throw new ServiceException(ApiError.COMMON_ROLE_NOT_FOUND);
         }
         SysRoleEntity addEntity = new SysRoleEntity();
         addEntity.setRoleName(roleEntity.getRoleName());
@@ -145,7 +145,7 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRoleEntity
         queryWrapper.last("LIMIT 1");
         int count = this.count(queryWrapper);
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_ROLE_NAME_EXISTS);
+            throw new ServiceException(ApiError.COMMON_ROLE_NAME_EXISTS);
         }
     }
 

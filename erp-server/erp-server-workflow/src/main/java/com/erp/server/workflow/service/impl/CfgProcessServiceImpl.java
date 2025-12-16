@@ -128,7 +128,7 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
     @Override
     public BaseResultDTO.AddDTO update(@RequestBody @Validated CfgProcessDTO.AddOrUpdateDTO dto) {
         if (dto.getId() == null) {
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "流程配置id不能为空");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "流程配置id不能为空");
         }
         CfgProcessEntity old = this.getById(dto.getId());
         CfgProcessEntity cfgProcessEntity = new CfgProcessEntity();
@@ -177,7 +177,7 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
     public CfgProcessDTO.ViewDTO view(String settingId) {
         CfgProcessDTO.ViewDTO viewDTO = baseMapper.getViewDTOById(settingId);
         if (viewDTO == null){
-            throw new ServiceException(ApiError.ERROR_BILL_NOT_EXIST);
+            throw new ServiceException(ApiError.BILL_NOT_EXIST);
         }
         for (CfgProcessRuleDTO.ViewDTO ruleDto : viewDTO.getProcessRuleDTOList()) {
             if (ObjectUtil.isEmpty(ruleDto.getProcessFieldMapDTOList())) {
@@ -223,7 +223,7 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
 
         CfgProcessEntity cfgProcessEntity = this.getById(entity.getCfgProcessId());
         if (ObjectUtil.isEmpty(cfgProcessEntity)) {
-            throw new ServiceException(ApiError.NOT_EXIST_BILL,"流程配置");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE,"流程配置");
         }
 
         boolean delete = cfgProcessRuleService.delete(Collections.singletonList(entity.getId()));
@@ -311,14 +311,14 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
         //查询userid
         List<ThirdUnionDTO> dtoList = sysUserFeign.getThirdByUserIds("FS", Collections.singletonList(dto.getUserId()));
         if (CollUtil.isEmpty(dtoList) || StrUtil.isEmpty(dtoList.get(0).getThirdUserId())) {
-            throw new ServiceException(ApiError.PROCESS_QUERY_THIRD_SUER_NOT_EXIST);
+            throw new ServiceException(ApiError.WF_FS_QUERY_USER_NOT_FOUND);
         }
         //
         String userId = dtoList.get(0).getThirdUserId();
         //查询字段映射表
         List<CfgProcessFieldMapEntity> fieldMapList = cfgProcessFieldMapService.list(new LambdaQueryWrapper<CfgProcessFieldMapEntity>().eq(CfgProcessFieldMapEntity::getCfgId, dto.getRuleId()).eq(CfgProcessFieldMapEntity::getIsDeleted, false));
         if (CollUtil.isEmpty(fieldMapList)) {
-            throw new ServiceException(ApiError.CFG_PROCESS_FIELD_MAP_NOT_EXIST);
+            throw new ServiceException(ApiError.WF_FIELD_MAP_NOT_FOUND);
         }
         List<String> fieldIds = fieldMapList.stream().map(CfgProcessFieldMapEntity::getId).collect(Collectors.toList());
         //查询值映射表
@@ -327,7 +327,7 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
         //组装form，1、实时获取 2、查询流程定义表
         ThirdProcessDefinitionEntity processDefinition = thirdProcessDefinitionService.getOne(new LambdaQueryWrapper<ThirdProcessDefinitionEntity>().eq(ThirdProcessDefinitionEntity::getStatus, ThirdProcessDefinitionStatusEnum.ACTIVE.getCode()).eq(ThirdProcessDefinitionEntity::getApprovalCode, code).eq(ThirdProcessDefinitionEntity::getIsDeleted, false));
         if (ObjectUtil.isEmpty(processDefinition)) {
-            throw new ServiceException(ApiError.FS_PROCESS_DEFINITION_NOT_EXIST);
+            throw new ServiceException(ApiError.WF_FS_PROCESS_NOT_EXIST);
         }
         JSONArray formArray = JSONUtil.parseArray(processDefinition.getFormJson());
         //组装Json

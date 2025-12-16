@@ -29,7 +29,6 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.dto.AdsErpDiffOutstockSyncDTO;
-import com.erp.model.dmp.dto.AdsErpDiffReturnInstockSyncDTO;
 import com.erp.model.dmp.dto.AdsErpDiffOutstockSyncDTO.ExpotParamDTO;
 import com.erp.model.dmp.dto.AdsErpDiffOutstockSyncDTO.PagingParamDTO;
 import com.erp.model.dmp.dto.AdsErpDiffOutstockSyncDTO.ReCreateDTO;
@@ -37,8 +36,6 @@ import com.erp.model.dmp.dto.AdsErpDiffOutstockSyncDTO.TotalDTO;
 import com.erp.model.dmp.dto.AdsErpDiffOutstockSyncDTO.UpdateErpDTO;
 import com.erp.model.dmp.dto.AdsErpDiffOutstockSyncDTO.UpdateRemarkDTO;
 import com.erp.model.dmp.entity.doris.AdsErpDiffOutstockSyncEntity;
-import com.erp.model.dmp.entity.doris.AdsErpDiffReturnInstockSyncEntity;
-import com.erp.model.dmp.entity.doris.AdsErpInventoryDiffFlowEntity;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.dmp.mapper.doris.AdsErpDiffOutstockSyncMapper;
 import com.erp.server.dmp.service.AdsErpDiffOutstockSyncService;
@@ -101,7 +98,7 @@ public class AdsErpDiffOutstockSyncServiceImpl extends SuperServiceImpl<AdsErpDi
     @Override
     public Boolean update(AdsErpDiffOutstockSyncDTO.UpdateDTO addOrUpdateDTO) {
         AdsErpDiffOutstockSyncEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "ERP出库单差异单"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "ERP出库单差异单"));
         AdsErpDiffOutstockSyncEntity adsErpDiffOutstockSyncEntity =  BeanMapperUtils.map(AdsErpDiffOutstockSyncEntity.class, addOrUpdateDTO);
 
         // 数据处理
@@ -187,7 +184,7 @@ public class AdsErpDiffOutstockSyncServiceImpl extends SuperServiceImpl<AdsErpDi
         try {
             new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
         } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_FILE_EXPORT_FAILED);
+            throw new ServiceException(ApiError.FILE_EXPORT_FAILED);
         }
     }
     /**

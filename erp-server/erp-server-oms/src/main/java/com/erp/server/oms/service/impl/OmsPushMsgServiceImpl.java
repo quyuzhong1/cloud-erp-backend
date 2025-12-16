@@ -61,7 +61,7 @@ public class OmsPushMsgServiceImpl extends SuperServiceImpl<OmsPushMsgMapper, Om
     public Boolean update(OmsPushMsgDTO.UpdateDTO updateDTO) {
         OmsPushMsgEntity old = super.getById(updateDTO.getId());
         if(null == old){
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, ApiError.ERROR_LOCAL_PUSH_MESSAGE.getMsg());
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, ApiError.ERROR_LOCAL_PUSH_MESSAGE.getMsg());
         }
         OmsPushMsgEntity omsPushMsgEntity =  BeanMapperUtils.map(OmsPushMsgEntity.class, updateDTO);
         log.info("编辑 开始修改本地推送消息单数据，id：【{}】", old.getId());

@@ -134,7 +134,7 @@ public class LogisticsPrintTypeServiceImpl extends SuperServiceImpl<LogisticsPri
         String labelType=entity.getLabelType();
         if(StringUtils.isNotBlank(printType)){
             if(StringUtils.isBlank(labelType)){
-              throw new ServiceException(ApiError.LABEL_TYPE_NOT_EMPTY);
+              throw new ServiceException(ApiError.LOGISTICS_LABEL_TYPE_REQUIRED);
             }
         }
     }

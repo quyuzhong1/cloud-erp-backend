@@ -79,7 +79,7 @@ public class PoReconciliationServiceImpl extends SuperServiceImpl<PoReconciliati
     public Boolean update(PoReconciliationDTO.UpdateDTO updateDTO) {
         PoReconciliationEntity old = super.getById(updateDTO.getId());
         if(null == old){
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "采购对账单");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "采购对账单");
         }
         //添加上传附件url
         addMultipartFileUrl(updateDTO);
@@ -156,7 +156,7 @@ public class PoReconciliationServiceImpl extends SuperServiceImpl<PoReconciliati
         try {
             new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
         } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_FILE_EXPORT_FAILED);
+            throw new ServiceException(ApiError.FILE_EXPORT_FAILED);
         }
     }
 

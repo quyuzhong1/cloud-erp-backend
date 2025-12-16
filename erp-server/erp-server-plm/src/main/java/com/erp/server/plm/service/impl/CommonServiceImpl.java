@@ -133,7 +133,7 @@ public class CommonServiceImpl implements CommonService {
         dtoList.add(approveActivityDTO);
         ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = workflowFeign.batchCurApproverByApprove(dtoList);
         if (200 != listApiResult.getCode()) {
-            throw new ServiceException(ApiError.ERROR_WF_APPROVAL_FAILED);
+            throw new ServiceException(ApiError.WF_APPROVE_FAILED);
         }
         List<String> businessIds = listApiResult.getData().stream().filter(obj -> StringUtils.isNotBlank(obj.getBusinessId())).map(ProcessManagementDTO.CurApproveInfoDTO::getBusinessId).collect(Collectors.toList());
         return  businessIds;
@@ -142,7 +142,7 @@ public class CommonServiceImpl implements CommonService {
     @Override
     public List<String> uploadImg(MultipartFile[] multipartFileList) {
         if (ObjectUtil.isNull(multipartFileList)) {
-            throw new ServiceException(ApiError.ERROR_PLM_FILE_NOT_FOUND);
+            throw new ServiceException(ApiError.FILE_NOT_FOUND);
         }
         Long size = 0L;
         //获取压缩图片大小的配置

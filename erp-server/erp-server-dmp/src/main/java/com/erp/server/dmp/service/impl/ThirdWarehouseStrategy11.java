@@ -71,7 +71,7 @@
 //        //获取仓库信息
 //        List<WarehouseDTO.ListDTO> listDTOS = wmsWarehouseFeign.listByIds(Collections.singletonList(addDTO.getSysId()));
 //        if (CollectionUtils.isEmpty(listDTOS)) {
-//            throw new ServiceException(ApiError.ERROR_SYS_TYPE_NOTFOUND, ThirdSysTypeEnum.getNameByCode(addDTO.getType()));
+//            throw new ServiceException(ApiError.COMMON_NOT_FOUND, ThirdSysTypeEnum.getNameByCode(addDTO.getType()));
 //        }
 //        warehouse = listDTOS.get(0);
 //        List<ThirdMappingDTO.ThirdAddDTO> thirdList = addDTO.getThirdList();

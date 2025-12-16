@@ -232,7 +232,7 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
                     Integer outQty = outDetailList.stream().filter(o -> o.getId().equals(sourceDetailId)).findFirst().
                             flatMap(obj -> Optional.ofNullable(obj.getQty())).orElse(0);
                     if (planQty > outQty) {
-                        throw new ServiceException(ApiError.ERROR_WMS_TRANSFER_IN_QTY_EXCEEDS_OUT_QTY);
+                        throw new ServiceException(ApiError.WH_TRANSFER_IN_QTY_EXCEEDS_OUT_QTY);
                     }
                     detail.setQty(planQty);
                     detail.setPlanQty(planQty);
@@ -281,7 +281,7 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
             listApiResult = workflowFeign.curApprover(dtoList);
             Integer code = listApiResult.getCode();
             if (200 != code) {
-                throw new ServiceException(new ApiResult(ApiError.DEFAULT.getCode(), listApiResult.getMsg()));
+                throw new ServiceException(new ApiResult(ApiError.HTTP_UNKNOWN.getCode(), listApiResult.getMsg()));
             }
         }
 
@@ -324,7 +324,7 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
         List<TransferInEntity> list = this.listByIds(ids);
         long invalidCount = list.stream().filter(s -> s.getInvalidStatus()).count();
         if (invalidCount > 0) {
-            throw new ServiceException(ApiError.ERROR_VOIDED_CANNOT_SUBMIT);
+            throw new ServiceException(ApiError.BILL_VOIDED_CANNOT_SUBMIT);
         }
         //待审核
         String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
@@ -335,7 +335,7 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
         statusList.add(waitSubmitStatus);
         long count = list.stream().filter(s -> !statusList.contains(s.getApproveStatus().getStatus())).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_WAIT_SUBMIT_TO_APPROVE_ING);
+            throw new ServiceException(ApiError.BILL_WAIT_SUBMIT_TO_APPROVE_ING);
         }
         List<Pair<String, String>> pairList = list.stream().filter(s -> s.getApproveStatus().getStatus().equals(waitSubmitStatus)).
                 map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
@@ -396,7 +396,7 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO approve(ApproveOneDTO dto, TransferInEntity entity) {
         if (!CharSequenceUtil.equals(ApproveStatusEnum.APPROVE_ING.getStatus(),entity.getApproveStatus().getCode())) {
-            throw new ServiceException(ApiError.ERROR_APPROVE_ALLOWED_STATUS_ONLY);
+            throw new ServiceException(ApiError.WF_APPROVE_ALLOWED_STATUS_ONLY);
         }
         ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(dto.getType());
         //调用审核流程
@@ -427,7 +427,7 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
         ApiResult<ProcessManagementDTO.ApproveResultDTO> approveResult = workflowFeign.approve(approveDTO);
         Integer code = approveResult.getCode();
         if (200 != code) {
-            throw new ServiceException(ApiError.ERROR_WF_APPROVAL_FAILED);
+            throw new ServiceException(ApiError.WF_APPROVE_FAILED);
         }
         ProcessManagementDTO.ApproveResultDTO data = approveResult.getData();
         if (ObjectUtil.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()) {
@@ -463,7 +463,7 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
         LoginUser user = UserContext.getDefaultLoginUser();
         Boolean result = this.updateApproveInfo(Arrays.asList(entity), approveStatus,user.getUserName());
         if (!result) {
-            throw new ServiceException(ApiError.ERROR_WF_APPROVAL_FAILED);
+            throw new ServiceException(ApiError.WF_APPROVE_FAILED);
         }
         if (dto.getType().equals(ApproveType.PASS)) {
             handleData(entity);
@@ -568,11 +568,11 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
     public Boolean cancelProcess(List<String> ids) {
         List<TransferInEntity> list = this.listByIds(ids);
         if (CollectionUtils.isEmpty(list)) {
-            throw new ServiceException(ApiError.ERROR_WMS_TRANSFER_INBOUND_NOT_FOUND);
+            throw new ServiceException(ApiError.WH_TRANSFER_INBOUND_NOT_FOUND);
         }
         long count = list.stream().filter(obj -> !ApproveStatusEnum.APPROVE_ING.getStatus().equals(obj.getApproveStatus().getStatus())).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_REVOKE_PROCESS_ALLOWED_STATUS_ONLY);
+            throw new ServiceException(ApiError.WF_REVOKE_PROCESS_ALLOWED_STATUS_ONLY);
         }
         //撤销现有流程
         LoginUser userInfo = UserContext.getDefaultLoginUser();
@@ -605,13 +605,13 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
     public List<BatchResultDTO> deleteByIds(List<String> ids, boolean returnDetails) {
         List<TransferInEntity> list = this.listByIds(ids);
         if (CollectionUtils.isEmpty(list)) {
-            throw new ServiceException(ApiError.ERROR_WMS_TRANSFER_INBOUND_NOT_FOUND);
+            throw new ServiceException(ApiError.WH_TRANSFER_INBOUND_NOT_FOUND);
         }
         List<TransferInEntity> removeList=new ArrayList<>();
         List<BatchResultDTO> resultDTOList=new ArrayList<>();
         for (TransferInEntity entity : list) {
             if (!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(entity.getApproveStatus().getStatus()) || entity.getInvalidStatus()){
-                resultDTOList.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_DELETE_ALLOWED_STATUS_ONLY.getMsg()));
+                resultDTOList.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.BILL_DELETE_ALLOWED_STATUS_ONLY.getMsg()));
                 continue;
             }
             removeList.add(entity);
@@ -632,7 +632,7 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
             //推送金蝶
             removeList.forEach(obj -> syncApproveInfoToKingdee(obj,SyncOperateEnum.OPERATE_DELETE));
         }else {
-            throw new ServiceException(ApiError.ERROR_DATA_DELETE_ERROR);
+            throw new ServiceException(ApiError.BILL_DELETE_FAILED);
         }
         
         // 返回成功结果
@@ -644,16 +644,16 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
     public Boolean deleteByIds(List<String> ids) {
         List<TransferInEntity> list = this.listByIds(ids);
         if (CollectionUtils.isEmpty(list)) {
-            throw new ServiceException(ApiError.ERROR_WMS_TRANSFER_INBOUND_NOT_FOUND);
+            throw new ServiceException(ApiError.WH_TRANSFER_INBOUND_NOT_FOUND);
         }
         String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
         long count = list.stream().filter(s -> !s.getApproveStatus().getStatus().equals(waitSubmitStatus)).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_DELETE_ALLOWED_STATUS_ONLY);
+            throw new ServiceException(ApiError.BILL_DELETE_ALLOWED_STATUS_ONLY);
         }
         long invalidCount = list.stream().filter(s -> s.getInvalidStatus()).count();
         if (invalidCount > 0) {
-            throw new ServiceException(ApiError.ERROR_DELETE_ALLOWED_STATUS_ONLY);
+            throw new ServiceException(ApiError.BILL_DELETE_ALLOWED_STATUS_ONLY);
         }
         Boolean result = this.removeByIds(ids);
         if (result) {
@@ -674,7 +674,7 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
     public BatchResultDTO deleteEntity(TransferInEntity entity) {
         String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
         if (!entity.getApproveStatus().getStatus().equals(waitSubmitStatus) || entity.getInvalidStatus()) {
-            throw new ServiceException(ApiError.ERROR_DELETE_ALLOWED_STATUS_ONLY);
+            throw new ServiceException(ApiError.BILL_DELETE_ALLOWED_STATUS_ONLY);
         }
         List<String> ids = Collections.singletonList(entity.getId());
         Boolean result = this.removeByIds(ids);
@@ -716,7 +716,7 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
         List<String> ids = Collections.singletonList(entity.getId());
         List<TransferInEntity> list = Collections.singletonList(entity);
         if (CollectionUtils.isEmpty(list)) {
-            throw new ServiceException(ApiError.ERROR_WMS_TRANSFER_INBOUND_NOT_FOUND);
+            throw new ServiceException(ApiError.WH_TRANSFER_INBOUND_NOT_FOUND);
         }
         //审核通过
         String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
@@ -726,7 +726,7 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
         statusList.add(approveStatus);
         long count = list.stream().filter(s -> !statusList.contains(s.getApproveStatus().getStatus())).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_REVERSE_APPROVAL_ALLOWED_APPROVED_ONLY);
+            throw new ServiceException(ApiError.BILL_REVERSE_APPROVAL_ALLOWED_APPROVED_ONLY);
         }
 
         List<Pair<String, String>> rejectPairList = list.stream().filter(s -> s.getApproveStatus().equals(ApproveStatusEnum.getByStatus(approveStatus))).
@@ -764,7 +764,7 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
     public Boolean invalid(List<String> ids, String remark) {
         List<TransferInEntity> list = this.listByIds(ids);
         if (CollectionUtils.isEmpty(list)) {
-            throw new ServiceException(ApiError.ERROR_WMS_TRANSFER_INBOUND_NOT_FOUND);
+            throw new ServiceException(ApiError.WH_TRANSFER_INBOUND_NOT_FOUND);
         }
         String waitSubmitStatus = BillApproveStatusEnum.WAIT_SUBMIT.getStatus();
         String draftStatus = BillApproveStatusEnum.DRAFT.getStatus();
@@ -775,11 +775,11 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
         statusList.add(rejectStatus);
         long invalidCount = list.stream().filter(d -> !d.getInvalidStatus()).count();
         if (invalidCount != list.size()) {
-            throw new ServiceException(ApiError.ERROR_ALREADY_VOID_CANNOT_VOID_AGAIN);
+            throw new ServiceException(ApiError.BILL_ALREADY_VOID_CANNOT_VOID_AGAIN);
         }
         long count = list.stream().filter(s -> !statusList.contains(s.getApproveStatus().getStatus())).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_VOID_ALLOWED_STATUS_ONLY);
+            throw new ServiceException(ApiError.BILL_VOID_ALLOWED_STATUS_ONLY);
         }
         lambdaUpdate().in(TransferInEntity::getId, ids).
                 set(TransferInEntity::getInvalidStatus, Boolean.TRUE).update();
@@ -820,7 +820,7 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
     public TransferInDTO.ViewDTO view(String id) {
         TransferInEntity transferIn = this.getById(id);
         if (Objects.isNull(transferIn)) {
-            throw new ServiceException(ApiError.ERROR_WMS_TRANSFER_INBOUND_NOT_FOUND);
+            throw new ServiceException(ApiError.WH_TRANSFER_INBOUND_NOT_FOUND);
         }
         TransferInDTO.ViewDTO viewDTO = new TransferInDTO.ViewDTO();
         BeanMapper.copy(transferIn, viewDTO);
@@ -889,11 +889,11 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
         String id = dto.getId();
         TransferInEntity transferIn = this.getById(id);
         if (Objects.isNull(transferIn)) {
-            throw new ServiceException(ApiError.ERROR_WMS_TRANSFER_INBOUND_NOT_FOUND);
+            throw new ServiceException(ApiError.WH_TRANSFER_INBOUND_NOT_FOUND);
         }
         String outWarehouseId = dto.getOutWarehouseId();
         if (!transferIn.getOutWarehouseId().equals(outWarehouseId)) {
-            throw new ServiceException(ApiError.ERROR_WMS_TRANSFER_OUT_WAREHOUSE_IMMUTABLE);
+            throw new ServiceException(ApiError.WH_TRANSFER_OUT_WAREHOUSE_IMMUTABLE);
         }
         String code = transferIn.getCode();
         //详情
@@ -938,7 +938,7 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
     public Boolean updateAndSubmit(TransferInDTO.UpdateDTO dto) {
         String id = this.updateTransferIn(dto);
         if (CharSequenceUtil.isBlank(id)) {
-            throw new ServiceException(ApiError.ERROR_UPDATE_FAILED);
+            throw new ServiceException(ApiError.BILL_UPDATE_FAILED);
         }
         return this.submit(Collections.singletonList(id));
     }
@@ -972,7 +972,7 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
             listApiResult = workflowFeign.curApprover(dtoList);
             Integer code = listApiResult.getCode();
             if (200 != code) {
-                throw new ServiceException(new ApiResult(ApiError.DEFAULT.getCode(), listApiResult.getMsg()));
+                throw new ServiceException(new ApiResult(ApiError.HTTP_UNKNOWN.getCode(), listApiResult.getMsg()));
             }
         }
 
@@ -1106,7 +1106,7 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
         //查询调拨单明细数据
         List<TransferInDetailDTO.ViewDTO> transferDetailList = transferInDetailService.listByMainId(entity.getId());
         if(transferDetailList.isEmpty()){
-            throw new ServiceException(ApiError.ERROR_PLM_SKU_NOT_FOUND);
+            throw new ServiceException(ApiError.PRODUCT_SKU_NOT_FOUND);
         }
         //查询三方仓库映射
         List<ThirdMappingDTO.WarehouseMappingDTO> mappingList = dmpThirdMappingFeign.listMappingBySysIds(Collections.singletonList(entity.getInWarehouseId()), "wdt");

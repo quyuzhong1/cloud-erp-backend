@@ -189,7 +189,7 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
     @Override
     public Boolean update(ShippingTemplateDTO.UpdateDTO updateDTO) {
         ShippingTemplateEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "运费模板"));
+        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "运费模板"));
         ShippingTemplateEntity shippingTemplateEntity =  BeanMapperUtils.map(ShippingTemplateEntity.class, updateDTO);
 
         // 数据处理
@@ -216,7 +216,7 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
     @Override
     public BigDecimal trialCalculation(ShippingTemplateDTO.TrialCalculationParamDTO dto) {
         ShippingTemplateEntity entity = super.getById(dto.getId());
-        Optional.ofNullable(entity).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "运费模板"));
+        Optional.ofNullable(entity).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "运费模板"));
         ShippingTemplateTypeEnum typeEnum = ShippingTemplateTypeEnum.getEnumByCode(entity.getType());
         switch (typeEnum) {
             case ENUM_COUNTRY:
@@ -236,7 +236,7 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
     @Override
     public ShippingTemplateDTO.ViewDTO view(String id) {
         ShippingTemplateEntity entity = super.getById(id);
-        Optional.ofNullable(entity).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "运费模板"));
+        Optional.ofNullable(entity).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "运费模板"));
         ShippingTemplateDTO.ViewDTO viewDTO = BeanMapperUtils.map(ShippingTemplateDTO.ViewDTO.class, entity);
 
         //运费规则
@@ -260,7 +260,7 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
     @Transactional(rollbackFor = Exception.class)
     public Boolean updateChannel(ShippingTemplateDTO.ChannelParamDTO dto) {
         ShippingTemplateEntity entity = super.getById(dto.getId());
-        Optional.ofNullable(entity).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "运费模板"));
+        Optional.ofNullable(entity).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "运费模板"));
         List<ShippingTemplateRefChannelDTO.AddDTO> addList = new ArrayList<>();
         for (String logisticsChannelId : dto.getLogisticsChannelIdList()) {
             ShippingTemplateRefChannelDTO.AddDTO addDTO = new ShippingTemplateRefChannelDTO.AddDTO();
@@ -287,7 +287,7 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO updateStatus(String id,Boolean disabled) {
         ShippingTemplateEntity entity = super.getById(id);
-        Optional.ofNullable(entity).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "运费模板"));
+        Optional.ofNullable(entity).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "运费模板"));
 
         List<ShippingTemplateRefChannelDTO.ViewDTO> refList = shippingTemplateRefChannelService.listByMainIds(Arrays.asList(id));
         if (CollectionUtils.isNotEmpty(refList)) {
@@ -309,7 +309,7 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO delete(String id) {
         ShippingTemplateEntity entity = super.getById(id);
-        Optional.ofNullable(entity).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "运费模板"));
+        Optional.ofNullable(entity).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "运费模板"));
 
         List<ShippingTemplateRefChannelDTO.ViewDTO> refList = shippingTemplateRefChannelService.listByMainIds(Arrays.asList(id));
         if (CollectionUtils.isNotEmpty(refList)) {
@@ -348,7 +348,7 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
             wb.write(output);
             wb.close();
         } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_IMPORT_TEMPLATE_DOWNLOAD_FAILED);
+            throw new ServiceException(ApiError.FILE_IMPORT_TEMPLATE_DOWNLOAD_FAILED);
         }
     }
 
@@ -367,14 +367,14 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
         if (ObjectUtil.isNotEmpty(cityExcelListenerUtil)) {
             List<ShippingTemplateCityExcelDTO> excelDateList = cityExcelListenerUtil.getExcelDateList();
             if (CollectionUtils.isEmpty(excelDateList)) {
-                throw new ServiceException(ApiError.ERROR_IMPORT_DATA_NOT_NULL,"分区城市");
+                throw new ServiceException(ApiError.FILE_IMPORT_DATA_NOT_NULL,"分区城市");
             }
             cityErrorList = cityExcelListenerUtil.getErrorList();
             citySuccessList = cityExcelListenerUtil.getSuccessList();
         }
         List<ShippingTemplateExcelDTO> excelDateList = excelListenerUtil.getExcelDateList();
         if (CollectionUtils.isEmpty(excelDateList)) {
-            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_REQUIRED,"基础数据");
+            throw new ServiceException(ApiError.FILE_DATA_REQUIRED,"基础数据");
         }
         List<ShippingTemplateExcelDTO > errorList = excelListenerUtil.getErrorList();
 
@@ -395,7 +395,7 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
             try {
                 new ExcelPrintUtils().patchExport(errorList, response, sb.toString(), excelPath);
             } catch (IOException e) {
-                throw new ServiceException(ApiError.ERROR_EXPORT_ERROR_DATA_FAILED);
+                throw new ServiceException(ApiError.FILE_EXPORT_ERROR_DATA_FAILED);
             }
             return Boolean.FALSE;
         }
@@ -719,10 +719,10 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
             EasyExcel.read(excelFile.getInputStream(), ShippingTemplateExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (IOException e) {
             log.error("导入错误！", e);
-            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_FAILED);
+            throw new ServiceException(ApiError.FILE_DATA_IMPORT_FAILED);
         } catch (ExcelCommonException e) {
             log.error("导入格式错误！", e);
-            throw new ServiceException(ApiError.ERROR_FILE_IMPORT_FORMAT_INVALID_XLSX);
+            throw new ServiceException(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX);
         }
         return excelListenerUtil;
     }
@@ -738,10 +738,10 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
             EasyExcel.read(excelFile.getInputStream(), ShippingTemplateCityExcelDTO.class, cityExcelListenerUtil).sheet(1).doRead();
         } catch (IOException e) {
             log.error("导入错误！", e);
-            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_FAILED);
+            throw new ServiceException(ApiError.FILE_DATA_IMPORT_FAILED);
         } catch (ExcelCommonException e) {
             log.error("导入格式错误！", e);
-            throw new ServiceException(ApiError.ERROR_FILE_IMPORT_FORMAT_INVALID_XLSX);
+            throw new ServiceException(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX);
         }
         return cityExcelListenerUtil;
     }
@@ -783,7 +783,7 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
                 return "excel/shippingTemplateError_warehouse2.xlsx";
             }
         }
-        throw new ServiceException(ApiError.ERROR_IMPORT_TEMPLATE_DOWNLOAD_FAILED);
+        throw new ServiceException(ApiError.FILE_IMPORT_TEMPLATE_DOWNLOAD_FAILED);
     }
 
     /**
@@ -820,7 +820,7 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
                 return "classpath:excel/shippingTemplate_warehouse2.xlsx";
             }
         }
-        throw new ServiceException(ApiError.ERROR_IMPORT_TEMPLATE_DOWNLOAD_FAILED);
+        throw new ServiceException(ApiError.FILE_IMPORT_TEMPLATE_DOWNLOAD_FAILED);
     }
 
     /**

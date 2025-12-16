@@ -86,7 +86,7 @@ public class LogisticsSaleChannelServiceImpl extends SuperServiceImpl<LogisticsS
     @Override
     public Boolean update(LogisticsSaleChannelDTO.UpdateDTO updateDTO) {
         LogisticsSaleChannelEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "销售平台物流渠道单"));
+        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "销售平台物流渠道单"));
         LogisticsSaleChannelEntity logisticsSaleChannelEntity =  BeanMapperUtils.map(LogisticsSaleChannelEntity.class, updateDTO);
 
         // 数据处理

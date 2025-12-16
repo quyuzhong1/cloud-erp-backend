@@ -62,7 +62,7 @@ public class CfgVirtualTransRulesServiceImpl extends SuperServiceImpl<CfgVirtual
     public Boolean update(CfgVirtualTransRulesDTO.UpdateDTO updateDTO) {
         CfgVirtualTransRulesEntity old = super.getById(updateDTO.getId());
         if (Objects.isNull(old)){
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "虚拟库存交易规则单");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "虚拟库存交易规则单");
         }
         CfgVirtualTransRulesEntity cfgVirtualTransRulesEntity =  BeanMapperUtils.map(CfgVirtualTransRulesEntity.class, updateDTO);
         log.info("编辑 开始修改虚拟库存交易规则单数据，id：【{}】", old.getId());

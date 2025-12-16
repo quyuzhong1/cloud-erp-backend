@@ -145,7 +145,7 @@ public class ExhibitionOrderDetailExcelListener extends AnalysisEventListener<Ex
                 .findFirst()
                 .orElse(null);
         if(Objects.isNull(skuAvailableQtyDTO)){
-            errorMsgList.add(ApiError.ERROR_SAMPLE_LEDGER_NOT_EXIST.getMsg());
+            errorMsgList.add(ApiError.SAMPLE_LEDGER_NOT_EXIST.getMsg());
         }else {
             Integer availableQty = Objects.isNull(skuAvailableQtyDTO.getAvailableQty()) ? 0 : skuAvailableQtyDTO.getAvailableQty() ;
 

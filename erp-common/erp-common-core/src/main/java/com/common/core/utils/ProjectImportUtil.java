@@ -39,7 +39,7 @@ public class ProjectImportUtil {
             String extension = FilenameUtils.getExtension(excelFile.getOriginalFilename());
             //非mpp结尾的文件返回报错
             if (!"mpp".equals(extension)) {
-                throw new ServiceException(ApiError.ERROR_FILE_IMPORT_FORMAT_INVALID_MMP);
+                throw new ServiceException(ApiError.FILE_IMPORT_FORMAT_INVALID_MMP);
             }
             //获取文件路径
             InputStream inputStream = excelFile.getInputStream();
@@ -52,10 +52,10 @@ public class ProjectImportUtil {
             return taskList;
         } catch (MPXJException e) {
             log.error("mpp文件读取失败",e);
-            throw new ServiceException(ApiError.ERROR_FILE_IMPORT_PARSE_FAILED);
+            throw new ServiceException(ApiError.FILE_IMPORT_PARSE_FAILED);
         } catch (Exception e) {
             log.error("mpp文件读取失败",e);
-            throw new ServiceException(ApiError.ERROR_FILE_IMPORT_PARSE_FAILED);
+            throw new ServiceException(ApiError.FILE_IMPORT_PARSE_FAILED);
         }
     }
 

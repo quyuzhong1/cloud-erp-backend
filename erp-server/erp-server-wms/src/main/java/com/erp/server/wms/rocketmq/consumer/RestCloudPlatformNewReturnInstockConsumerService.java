@@ -15,7 +15,6 @@ import com.common.core.exception.ServiceException;
 import com.common.message.constant.RocketMqNewConsumerGroup;
 import com.common.message.constant.RocketMqNewTag;
 import com.common.message.constant.RocketMqNewTopic;
-import com.common.message.handler.AbstractNewPlatformConsumerHandler;
 import com.common.message.handler.AbstractRestCloudPlatformConsumerHandler;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
@@ -183,7 +182,7 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 		}else{
 			OverseasProviderWarehouseEntity overseasProviderWarehouseEntity = overseasProviderWarehouseService.getByPlatform(dto.getAuthId(),dto.getWarehouseCode());
 			if(Objects.isNull(overseasProviderWarehouseEntity) || CharSequenceUtil.isBlank(overseasProviderWarehouseEntity.getWarehouseId())){
-				throw new ServiceException(ApiError.ERROR_NOT_EXIST,"仓库信息");
+				throw new ServiceException(ApiError.COMMON_NOT_EXIST,"仓库信息");
 			}
 			warehouseEntity = warehouseService.getById(overseasProviderWarehouseEntity.getWarehouseId());
 		}

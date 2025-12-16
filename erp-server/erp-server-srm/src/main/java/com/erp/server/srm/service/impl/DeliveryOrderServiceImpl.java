@@ -222,7 +222,7 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
 
     private static void isExist(DeliveryOrderEntity entity) {
         if(null == entity){
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "送货单");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "送货单");
         }
     }
 
@@ -385,7 +385,7 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
         List<PurchaseOrderEntity> purchaseOrderEntityList = purchaseOrderFeign.getPurchaseOrderByIds(orderIds);
         //订单数据为空直接返回
         if (CollectionUtils.isEmpty(purchaseOrderEntityList)){
-            dtos.add(BatchResultDTO.fail(String.join(",",orderIds),"",ApiError.ERROR_SCM_PO_NOT_FOUND.getMsg()));
+            dtos.add(BatchResultDTO.fail(String.join(",",orderIds),"",ApiError.PO_NOT_FOUND.getMsg()));
             return dtos;
         }
         List<String> detailIds = addDeliveryDTOS.stream().map(DeliveryOrderDTO.AddDeliveryDTO::getPurchaseDetailId).collect(Collectors.toList());
@@ -400,7 +400,7 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
         List<PoReturnDetailEntity> returnOrderDetailList = wmsTaskFeign.listReturnOrderDetailByPodIds(detailIds);
 
         if (CollectionUtils.isEmpty(purchaseOrderEntityList)){
-            dtos.add(BatchResultDTO.fail(String.join(",",orderIds),"",ApiError.ERROR_SCM_PO_DETAIL_NOT_FOUND.getMsg()));
+            dtos.add(BatchResultDTO.fail(String.join(",",orderIds),"",ApiError.PO_DETAIL_NOT_FOUND.getMsg()));
             return dtos;
         }
         for (Map.Entry<String, List<DeliveryOrderDTO.AddDeliveryDTO>> entry  :purchaseMap.entrySet()) {
@@ -409,7 +409,7 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
             List<DeliveryOrderDTO.AddDeliveryDTO> deliveryDTOS = entry.getValue();
             PurchaseOrderEntity purchaseOrderEntity = purchaseOrderEntityList.stream().filter(e -> e.getId().equalsIgnoreCase(orderId)).findFirst().orElse(null);
             if (Objects.isNull(purchaseOrderEntity)){
-                dtos.add(BatchResultDTO.fail(orderId,"",ApiError.ERROR_SCM_PO_NOT_FOUND.getMsg()));
+                dtos.add(BatchResultDTO.fail(orderId,"",ApiError.PO_NOT_FOUND.getMsg()));
                 continue;
             }
             try {
@@ -488,7 +488,7 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
                                           List<PoInstockDetailEntity> stockInDetailList, List<PoReturnDetailEntity> returnOrderDetailList) {
         //没有采购明细记录
         if (Objects.isNull(detailEntity)){
-            throw new ServiceException(ApiError.ERROR_SCM_PO_DETAIL_NOT_FOUND);
+            throw new ServiceException(ApiError.PO_DETAIL_NOT_FOUND);
         }
         //已送货数量
         Integer deliveryQty = MathUtil.ZERO;
@@ -535,7 +535,7 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
         //剩余送货量/可下推量=采购订单-送货单数量-无送货单收货数量-无收货单的入库数量+[收发差异]+退货补货数量[库存退货/质检退货]
         int waitDeliveryQty = orderQty - deliveryQty - unDeliveryReceiveQty - unReceiveInstockQty + diffSendAndReceive + returnQty;
         if (addDeliveryDTO.getPlanDeliveryQty() > waitDeliveryQty){
-            throw new ServiceException(ApiError.ERROR_PURCHASE_DETAIL_ORDER_MORE_THEN_DELIVERY_QTY, addDeliveryDTO.getPurchaseDetailId());
+            throw new ServiceException(ApiError.PO_DETAIL_DELIVERY_QTY_EXCEEDS, addDeliveryDTO.getPurchaseDetailId());
         }
     }
 

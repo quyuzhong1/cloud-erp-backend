@@ -782,7 +782,7 @@ public class ExcelPrintUtils {
 			excelWriter.finish();
 			return out.toByteArray();
 		} catch (Exception e) {
-			throw new ServiceException(ApiError.ERROR_FILE_EXPORT_FAILED);
+			throw new ServiceException(ApiError.FILE_EXPORT_FAILED);
 		}
 	}
 

@@ -90,7 +90,7 @@ public class NoticeInfoServiceImpl extends SuperServiceImpl<NoticeInfoMapper, No
         String id = dto.getId();
         NoticeInfoEntity notice = this.getById(id);
         if (Objects.isNull(notice)) {
-            throw new ServiceException(ApiError.ERROR_NOTICE_NOT_FOUND);
+            throw new ServiceException(ApiError.COMMON_NOTICE_NOT_FOUND);
         }
         notice.setNodeKey(dto.getNodeKey());
         notice.setSystem(dto.getSystem());
@@ -107,7 +107,7 @@ public class NoticeInfoServiceImpl extends SuperServiceImpl<NoticeInfoMapper, No
     public NoticeDTO.ViewDTO view(String id) {
         NoticeInfoEntity notice = this.getById(id);
         if (Objects.isNull(notice)) {
-            throw new ServiceException(ApiError.ERROR_NOTICE_NOT_FOUND);
+            throw new ServiceException(ApiError.COMMON_NOTICE_NOT_FOUND);
         }
         NoticeDTO.ViewDTO view = new NoticeDTO.ViewDTO();
         BeanMapper.copy(notice, view);
@@ -163,7 +163,7 @@ public class NoticeInfoServiceImpl extends SuperServiceImpl<NoticeInfoMapper, No
         String id = dto.getId();
         NoticeInfoEntity notice = this.getById(id);
         if (Objects.isNull(notice)) {
-            throw new ServiceException(ApiError.ERROR_NOTICE_NOT_FOUND);
+            throw new ServiceException(ApiError.COMMON_NOTICE_NOT_FOUND);
         }
         notice.setDisabled(dto.getState());
         return this.updateById(notice);

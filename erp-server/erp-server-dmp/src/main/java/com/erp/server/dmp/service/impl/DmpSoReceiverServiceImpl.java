@@ -63,7 +63,7 @@ public class DmpSoReceiverServiceImpl extends SuperServiceImpl<DmpSoReceiverMapp
     @Override
     public Boolean update(DmpSoReceiverDTO.UpdateDTO updateDTO) {
         DmpSoReceiverEntity old = super.getById(updateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "中台销售订单收货人单"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "中台销售订单收货人单"));
         DmpSoReceiverEntity dmpSoReceiverEntity =  BeanMapperUtils.map(DmpSoReceiverEntity.class, updateDTO);
 
         // 数据处理

@@ -900,7 +900,7 @@ public class ProductDetailController extends BaseController {
             path = "classpath:excel/productUpdateApproveTemplate.xlsx";
         }
         if(StringUtils.isEmpty(path)){
-            throw new ServiceException(ApiError.ERROR_PARAM_INVALID);
+            throw new ServiceException(ApiError.HTTP_BAD_REQUEST);
         }
 
         ResourceLoader resourceLoader = new DefaultResourceLoader();
@@ -1372,11 +1372,11 @@ public class ProductDetailController extends BaseController {
         try {
             EasyExcel.read(excelFile.getInputStream(), ProductWarehouseLocationExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (IOException e) {
-            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_FAILED);
+            throw new ServiceException(ApiError.FILE_DATA_IMPORT_FAILED);
         }
         List<ProductWarehouseLocationExcelDTO> excelDateList = excelListenerUtil.getExcelDateList();
         if (CollectionUtils.isEmpty(excelDateList)) {
-            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_REQUIRED);
+            throw new ServiceException(ApiError.FILE_DATA_REQUIRED);
         }
         List<ProductWarehouseLocationExcelDTO> list = excelListenerUtil.getDateList();
         if (list.size() > 0) {
@@ -1389,7 +1389,7 @@ public class ProductDetailController extends BaseController {
             try {
                 new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
             } catch (IOException e) {
-                throw new ServiceException(ApiError.ERROR_EXPORT_ERROR_DATA_FAILED);
+                throw new ServiceException(ApiError.FILE_EXPORT_ERROR_DATA_FAILED);
             }
 
             return failure();

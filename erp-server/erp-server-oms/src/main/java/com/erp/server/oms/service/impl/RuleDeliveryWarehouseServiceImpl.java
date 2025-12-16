@@ -131,7 +131,7 @@ public class RuleDeliveryWarehouseServiceImpl extends SuperServiceImpl<RuleDeliv
         String id = updateDTO.getId();
         RuleDeliveryWarehouseEntity old = super.getById(id);
         if(null == old){
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "发货仓库规则单");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "发货仓库规则单");
         }
         List<RuleConditionDTO.UpdateDTO> conditionList = updateDTO.getConditionList();
         List<ConditionElement> conditionElementList = conditionList.stream().
@@ -189,7 +189,7 @@ public class RuleDeliveryWarehouseServiceImpl extends SuperServiceImpl<RuleDeliv
     public RuleDeliveryWarehouseDTO.ViewDTO view(String id) {
         RuleDeliveryWarehouseEntity ruleDeliveryWarehouse = this.getById(id);
         if(null == ruleDeliveryWarehouse){
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "发货仓库规则单");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "发货仓库规则单");
         }
         RuleDeliveryWarehouseDTO.ViewDTO view = new RuleDeliveryWarehouseDTO.ViewDTO();
         BeanMapper.copy(ruleDeliveryWarehouse, view);
@@ -212,11 +212,11 @@ public class RuleDeliveryWarehouseServiceImpl extends SuperServiceImpl<RuleDeliv
         String id = dto.getId();
         RuleDeliveryWarehouseEntity ruleDeliveryWarehouse = this.getById(id);
         if(null == ruleDeliveryWarehouse){
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "发货仓库规则单");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "发货仓库规则单");
         }
         Boolean disabled = ruleDeliveryWarehouse.getDisabled();
         if (disabled.equals(dto.getState())) {
-            throw new ServiceException(ApiError.ERROR_SCM_INCONSISTENT_DISABLE_STATUS);
+            throw new ServiceException(ApiError.COMMON_INCONSISTENT_DISABLE_STATUS);
         }
         String content = String.format("启用状态[%s]变更为[%s]", disabled ? "停用" : "启用", disabled ? "启用" : "停用");
         ruleDeliveryWarehouse.setDisabled(dto.getState());
@@ -414,11 +414,11 @@ public class RuleDeliveryWarehouseServiceImpl extends SuperServiceImpl<RuleDeliv
         // TODO 验证数据 & 数据赋值
         String warehouseId = ruleDeliveryWarehouseEntity.getWarehouseId();
         if (StringUtils.isBlank(warehouseId)) {
-            throw new ServiceException(ApiError.ERROR_WMS_WAREHOUSE_NOT_FOUND);
+            throw new ServiceException(ApiError.WH_NOT_FOUND);
         }
         List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Arrays.asList(warehouseId));
         if (CollectionUtils.isEmpty(warehouseList)) {
-            throw new ServiceException(ApiError.ERROR_WMS_WAREHOUSE_NOT_FOUND);
+            throw new ServiceException(ApiError.WH_NOT_FOUND);
         }
         ruleDeliveryWarehouseEntity.setWarehouseName(warehouseList.get(0).getName());
 

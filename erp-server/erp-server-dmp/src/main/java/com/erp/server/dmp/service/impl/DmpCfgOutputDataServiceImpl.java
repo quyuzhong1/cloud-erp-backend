@@ -65,7 +65,7 @@ public class DmpCfgOutputDataServiceImpl extends SuperServiceImpl<DmpCfgOutputDa
     @Override
     public Boolean update(DmpCfgOutputDataDTO.UpdateDTO addOrUpdateDTO) {
         DmpCfgOutputDataEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "输出数据获取配置"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "输出数据获取配置"));
         DmpCfgOutputDataEntity dmpCfgOutputDataEntity =  BeanMapperUtils.map(DmpCfgOutputDataEntity.class, addOrUpdateDTO);
 
         // 数据处理

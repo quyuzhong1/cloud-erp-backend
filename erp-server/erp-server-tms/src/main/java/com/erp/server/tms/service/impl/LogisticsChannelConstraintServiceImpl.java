@@ -178,7 +178,7 @@ public class LogisticsChannelConstraintServiceImpl extends SuperServiceImpl<Logi
             wb.close();
         } catch (Exception e) {
             log.error(" LogisticsChannelConstraint downloadTemplate  出错了 e>>>>>>>{}", e);
-            throw new ServiceException(ApiError.ERROR_IMPORT_TEMPLATE_DOWNLOAD_FAILED);
+            throw new ServiceException(ApiError.FILE_IMPORT_TEMPLATE_DOWNLOAD_FAILED);
         }
     }
 
@@ -189,10 +189,10 @@ public class LogisticsChannelConstraintServiceImpl extends SuperServiceImpl<Logi
             EasyExcel.read(excelFile.getInputStream(), LogisticsChannelConstraintExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (IOException e) {
             log.error("导入物流国家设置错误！", e);
-            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_FAILED);
+            throw new ServiceException(ApiError.FILE_DATA_IMPORT_FAILED);
         } catch (ExcelCommonException e) {
             log.error("导入格式错误！", e);
-            throw new ServiceException(ApiError.ERROR_FILE_IMPORT_FORMAT_INVALID_XLSX);
+            throw new ServiceException(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX);
         }
         List<LogisticsChannelConstraintDTO.AddOrUpdateDTO> addOrUpdateDTOList = excelListenerUtil.getAddOrUpdateDTOList();
         List<LogisticsChannelConstraintExcelDTO> errorList = excelListenerUtil.getErrorList();

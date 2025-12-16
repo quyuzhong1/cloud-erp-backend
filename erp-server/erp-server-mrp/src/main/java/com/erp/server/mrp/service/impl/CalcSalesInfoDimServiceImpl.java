@@ -481,7 +481,7 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
 
     @Override
     public void downloadHistorySales(String calcSalesInfoDimId, HttpServletResponse response) {
-        CalcSalesInfoDimEntity entity = Optional.ofNullable(getById(calcSalesInfoDimId)).orElseThrow(() -> new ServiceException(ApiError.ERROR_NOT_EXIST, "销量试算"));
+        CalcSalesInfoDimEntity entity = Optional.ofNullable(getById(calcSalesInfoDimId)).orElseThrow(() -> new ServiceException(ApiError.COMMON_NOT_EXIST, "销量试算"));
         List<CalcSalesInfoHisEsEntity> calcSalesInfoHisList = calcSalesInfoHisEsService.findByCfgRuleCalcIdAndShopIdAndSkuId(entity.getCfgRuleCalcId(), entity.getShopId(), entity.getSkuId());
         List<CfgRuleCalcDTO.HistorySaleDTO> list = new ArrayList<>();
         if (!ObjectUtil.isEmpty(calcSalesInfoHisList)) {
@@ -503,7 +503,7 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
         try {
             new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
         } catch (IOException e) {
-            throw new ServiceException(ApiError.ERROR_EXPORT_ERROR_DATA_FAILED);
+            throw new ServiceException(ApiError.FILE_EXPORT_ERROR_DATA_FAILED);
         }
     }
 
@@ -627,7 +627,7 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
         try {
             new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
         } catch (IOException e) {
-            throw new ServiceException(ApiError.ERROR_EXPORT_ERROR_DATA_FAILED);
+            throw new ServiceException(ApiError.FILE_EXPORT_ERROR_DATA_FAILED);
         }
     }
 
@@ -939,7 +939,7 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
     private CalcSalesInfoDimEntity validateAndFetchEntity(String id) {
         CalcSalesInfoDimEntity entity = getById(id);
         if (ObjectUtils.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_SYS_TYPE_NOTFOUND, "试算数据");
+            throw new ServiceException(ApiError.COMMON_NOT_FOUND, "试算数据");
         }
         return entity;
     }
@@ -952,7 +952,7 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
     private CfgRuleCalcEntity fetchCfgRuleCalcEntity(String cfgRuleCalcId) {
         CfgRuleCalcEntity cfgRuleCalc = cfgRuleCalcService.getById(cfgRuleCalcId);
         if (ObjectUtils.isEmpty(cfgRuleCalc)) {
-            throw new ServiceException(ApiError.ERROR_SYS_TYPE_NOTFOUND, "试算配置");
+            throw new ServiceException(ApiError.COMMON_NOT_FOUND, "试算配置");
         }
         return cfgRuleCalc;
     }

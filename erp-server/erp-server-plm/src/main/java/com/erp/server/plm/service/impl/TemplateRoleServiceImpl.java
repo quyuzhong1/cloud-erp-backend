@@ -154,7 +154,7 @@ public class TemplateRoleServiceImpl extends ServiceImpl<TemplateRoleMapper, Tem
         BeanMapperUtils.copy(dto, entity);
         LoginUser loginUser = UserContext.getLoginUser();
         if (ObjectUtils.isEmpty(loginUser)) {
-            throw new ServiceException(ApiError.ERROR_AUTH_CREDENTIALS_INVALID);
+            throw new ServiceException(ApiError.AUTH_CREDENTIALS_INVALID);
         }
         String uid = loginUser.getUid();
         String userName = loginUser.getUserName();
@@ -213,7 +213,7 @@ public class TemplateRoleServiceImpl extends ServiceImpl<TemplateRoleMapper, Tem
         queryWrapper.eq(TemplateRoleEntity::getTemplateId, tempalteId);
         int count = this.count(queryWrapper);
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_PLM_TEMPLATE_ROLE_ALREADY_EXISTS);
+            throw new ServiceException(ApiError.PROJECT_TEMPLATE_ROLE_EXISTS);
         }
     }
 }

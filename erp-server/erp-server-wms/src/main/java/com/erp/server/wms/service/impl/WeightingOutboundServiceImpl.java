@@ -186,7 +186,7 @@ public class WeightingOutboundServiceImpl implements WeightingOutboundService {
 
             if (SoB2cDeliveryStatusEnum.EXCEPTION_ORDER.getCode().equals(entity.getStatus())
                     || SoB2cDeliveryStatusEnum.WAIT_HANDLE.getCode().equals(entity.getStatus())){
-                throw new ServiceException(ApiError.ERROR_WMS_ABNORMAL_ORDER_AUTO_DELIVERY_FORBIDDEN);
+                throw new ServiceException(ApiError.SO_ABNORMAL_ORDER_AUTO_DELIVERY_FORBIDDEN);
             }
             //如果是待上传或上传失败则直接返回
             if (CharSequenceUtil.equals(soB2cEntity.getTransferStatus(),TransferStatusEnum.WAIT.getCode()) || CharSequenceUtil.equals(declareDetailEntity.getOrderUploadStatus(),TransferDeclareUploadStatusEnum.WAIT_UPLOAD.getCode()) ||

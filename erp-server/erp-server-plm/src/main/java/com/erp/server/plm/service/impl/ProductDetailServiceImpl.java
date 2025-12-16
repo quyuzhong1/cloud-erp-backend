@@ -1269,11 +1269,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         productSpuBaseInfoDTO.setSpuNo(Optional.ofNullable(productSpuBaseInfoDTO.getSpuNo()).orElse(productSkuBaseInfoDTO.getSkuNo()));
         //检查spu编号是否重复
         if (this.checkSpuNo(productNoSpecDTO.getProductBaseInfoDTO().getProductSpuBaseInfoDTO().getSpuNo(), productNoSpecDTO.getProductBaseInfoDTO().getProductSpuBaseInfoDTO().getId())) {
-            throw new ServiceException(ApiError.ERROR_PLM_SPU_EXISTS);
+            throw new ServiceException(ApiError.PRODUCT_SPU_EXISTS);
         }
         //检查sku编号是否重复
         if (this.checkSkuNo(productNoSpecDTO.getProductBaseInfoDTO().getProductSkuBaseInfoDTO().getSkuNo(), productNoSpecDTO.getProductBaseInfoDTO().getProductSkuBaseInfoDTO().getId())) {
-            throw new ServiceException(ApiError.ERROR_PLM_SKU_EXISTS);
+            throw new ServiceException(ApiError.PRODUCT_SKU_EXISTS);
         }
         if(CollectionUtils.isNotEmpty(productSpuBaseInfoDTO.getApplicationCategoryIdList())){
             productSpuBaseInfoDTO.setApplicationCategoryId(String.join(",", productSpuBaseInfoDTO.getApplicationCategoryIdList()));
@@ -1622,7 +1622,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 }
                 ProductDetailEntity productDetailEntity = this.getById(obj.getSkuId());
                 if (ObjectUtils.isEmpty(productDetailEntity)) {
-                    throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_INFO_NOT_FOUND);
+                    throw new ServiceException(ApiError.PRODUCT_INFO_NOT_FOUND);
                 }
                 operateLogService.addSysLogByUpdate(oldDto, obj, SKUCLASSPATH, obj.getSkuId(), productId, String.format("SKU[%s]", productDetailEntity.getSkuNo()));
             }
@@ -1644,14 +1644,14 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
         //检查spu编号是否重复
         if (this.checkSpuNo(productManySpecDTO.getProductInfoDTO().getSpuNo(), productManySpecDTO.getProductInfoDTO().getId())) {
-            throw new ServiceException(ApiError.ERROR_PLM_SPU_EXISTS);
+            throw new ServiceException(ApiError.PRODUCT_SPU_EXISTS);
         }
 
         List<ProductDetailDTO> productDetailList = productManySpecDTO.getProductDetailList();
         //检查sku是否重复
         for (int i = 0; i < productDetailList.size(); i++) {
             if (this.checkSkuNo(productDetailList.get(i).getSkuNo(), productDetailList.get(i).getId())) {
-                throw new ServiceException(ApiError.ERROR_PLM_SKU_EXISTS.getCode(), ApiError.ERROR_PLM_SKU_EXISTS.getMsg() + " 第" + (i + 1) + "行");
+                throw new ServiceException(ApiError.PRODUCT_SKU_EXISTS.getCode(), ApiError.PRODUCT_SKU_EXISTS.getMsg() + " 第" + (i + 1) + "行");
             }
         }
 
@@ -1926,7 +1926,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             }
             ProductDetailEntity productDetailEntity = this.getById(obj.getParentSkuId());
             if (ObjectUtils.isEmpty(productDetailEntity)) {
-                throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_INFO_NOT_FOUND);
+                throw new ServiceException(ApiError.PRODUCT_INFO_NOT_FOUND);
             }
             operateLogService.addSysLogByUpdate(oldDto, obj, SKUCLASSPATH, obj.getParentSkuId(), productId, String.format("SKU[%s]", productDetailEntity.getSkuNo()));
         });
@@ -1944,7 +1944,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     public List<ProductDetailEntity> insertManySpecAuto(VariantAutoAddDTO variantAutoAddDTO) {
         //检查spu编号是否重复
         if (this.checkSpuNo(variantAutoAddDTO.getProductSpuBaseInfoDTO().getSpuNo(), variantAutoAddDTO.getProductSpuBaseInfoDTO().getId())) {
-            throw new ServiceException(ApiError.ERROR_PLM_SPU_EXISTS);
+            throw new ServiceException(ApiError.PRODUCT_SPU_EXISTS);
         }
 
         ProductInfoDTO productSpuBaseInfoDTO = variantAutoAddDTO.getProductSpuBaseInfoDTO();
@@ -2023,21 +2023,21 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             //查询变体信息
             List<ProductVariantDTO> productVariantDTOS = productVariantService.listVariantAndProperty();
             if (CollectionUtils.isEmpty(productVariantDTOS)) {
-                throw new ServiceException(ApiError.ERROR_PLM_VARIANT_INFO_EMPTY);
+                throw new ServiceException(ApiError.PRODUCT_VARIANT_INFO_EMPTY);
             }
             //变体颜色信息
             ProductVariantDTO productVariantDTO = productVariantDTOS.stream().filter(obj -> obj.getPropertyType().equals("颜色")).findAny().orElse(null);
             if (ObjectUtils.isEmpty(productVariantDTO)) {
-                throw new ServiceException(ApiError.ERROR_PLM_VARIANT_COLOR_EMPTY);
+                throw new ServiceException(ApiError.PRODUCT_VARIANT_COLOR_EMPTY);
             }
             //变体颜色属性值
             List<ProductVariantPropertyDTO> productVariantPropertyList = productVariantDTO.getProductVariantPropertyList();
             if (CollectionUtils.isEmpty(productVariantPropertyList)) {
-                throw new ServiceException(ApiError.ERROR_PLM_VARIANT_COLOR_ATTR_EMPTY);
+                throw new ServiceException(ApiError.PRODUCT_VARIANT_COLOR_ATTR_EMPTY);
             }
             ProductVariantPropertyDTO propertyDto = productVariantPropertyList.stream().filter(obj -> split.contains(obj.getPropertyValue())).findAny().orElse(null);
             if (ObjectUtils.isEmpty(propertyDto) || StringUtils.isBlank(propertyDto.getPropertyCode())) {
-                throw new ServiceException(ApiError.ERROR_PLM_SKU_VARIANT_COLOR_NOT_FOUND);
+                throw new ServiceException(ApiError.PRODUCT_VARIANT_COLOR_NOT_FOUND);
             }
             //生成sku编码
             String skuNo = sysCodeService.getSkuNo(id, propertyDto.getPropertyCode());
@@ -2099,12 +2099,12 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public Boolean delete(String skuId) {
         ProductDetailEntity detailEntity = this.getById(skuId);
-        ProductDetailEntity oldEntity = Optional.ofNullable(detailEntity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "产品sku"));
+        ProductDetailEntity oldEntity = Optional.ofNullable(detailEntity).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "产品sku"));
         if (oldEntity.getStatus().equals(1) || oldEntity.getStatus().equals(2)) {
-            throw new ServiceException(ApiError.ERROR_PLM_APPROVAL_DELETE_FORBIDDEN);
+            throw new ServiceException(ApiError.WF_APPROVAL_DELETE_FORBIDDEN);
         }
         if (oldEntity.getOccupyStatus()) {
-            throw new ServiceException(ApiError.ERROR_PLM_SKU_IN_USE_DELETE_FORBIDDEN);
+            throw new ServiceException(ApiError.PRODUCT_SKU_IN_USE_DELETE_FORBIDDEN);
         }
         List<String> idList = Arrays.asList(skuId);
         //1.删除证书信息
@@ -2171,11 +2171,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }
         long count = list.stream().filter(req -> !req.getStatus().equals(1) && !req.getStatus().equals(2)).count();
         if (list.size() != count) {
-            throw new ServiceException(ApiError.ERROR_PLM_APPROVAL_DELETE_FORBIDDEN);
+            throw new ServiceException(ApiError.WF_APPROVAL_DELETE_FORBIDDEN);
         }
         long sign = list.stream().filter(req -> !req.getOccupyStatus()).count();
         if (list.size() != sign) {
-            throw new ServiceException(ApiError.ERROR_PLM_SKU_IN_USE_DELETE_FORBIDDEN);
+            throw new ServiceException(ApiError.PRODUCT_SKU_IN_USE_DELETE_FORBIDDEN);
         }
 
         //发送金蝶
@@ -2369,7 +2369,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             if (ProductTypeEnum.ITERATIVE_PRODUCT.getCode().equals(byId.getType())) {
                 ProductDetailEntity productDetailEntity = productDetailService.getById(byId.getIterateRefSkuId());
                 if (ObjectUtils.isEmpty(productDetailEntity)) {
-                    throw new ServiceException(ApiError.ERROR_PRODUCT_ITERATE_REF_SKU_NOT_EXIST);
+                    throw new ServiceException(ApiError.PRODUCT_ITERATE_SKU_REQUIRED);
                 }
                 byId.setIterateRefSkuId(productDetailEntity.getId());
                 byId.setIterateRefSkuNo(productDetailEntity.getSkuNo());
@@ -2911,7 +2911,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     public List<ProductDetailEntity> changeSkuBySpu(ChangeSkuToSpuDTO changeSkuToSpuDTO) {
         //检查spu编号是否重复
         if (this.checkSpuNo(changeSkuToSpuDTO.getProductSpuBaseInfoDTO().getSpuNo(), changeSkuToSpuDTO.getProductSpuBaseInfoDTO().getId())) {
-            throw new ServiceException(ApiError.ERROR_PLM_SPU_EXISTS);
+            throw new ServiceException(ApiError.PRODUCT_SPU_EXISTS);
         }
 
         ProductInfoDTO productSpuBaseInfoDTO = changeSkuToSpuDTO.getProductSpuBaseInfoDTO();
@@ -2936,7 +2936,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             List<InventoryEntity> collect = inventoryEntities.stream().filter(e -> Objects.nonNull(e) && e.getQty() > 0 && (CharSequenceUtil.equals(e.getDictInventoryStatus(),InventoryStatusEnum.USABLE.getCode()) || CharSequenceUtil.equals(e.getDictInventoryStatus(),InventoryStatusEnum.FROZEN.getCode()) )).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(collect)){
                 List<String> skuNoList = collect.stream().map(InventoryEntity::getSkuNo).distinct().collect(Collectors.toList());
-                throw new ServiceException(ApiError.ERROR_WMS_SKU_STOCK_EXISTS_SPU_CHANGE_FORBIDDEN, String.join(",",skuNoList));
+                throw new ServiceException(ApiError.PRODUCT_SKU_STOCK_EXISTS_SPU_CHANGE_FORBIDDEN, String.join(",",skuNoList));
             }
             //调整sku关联spu
             List<ProductDetailEntity> oldProductDetailEntityList = baseMapper.selectBatchIds(skuIds);
@@ -2945,7 +2945,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             skuIds.forEach(skuId -> {
                 ProductDetailEntity oldDetailEntity = oldProductDetailEntityList.stream().filter(e -> Objects.nonNull(e) && e.getId().equals(skuId)).findFirst().orElse(null);
                 if (Objects.isNull(oldDetailEntity)){
-                    throw new ServiceException(ApiError.ERROR_PLM_SKU_RECORD_NOT_FOUND, skuId);
+                    throw new ServiceException(ApiError.PRODUCT_SKU_RECORD_NOT_FOUND, skuId);
                 }
             });
             //批量更新产品明细归属spu
@@ -3097,11 +3097,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     public Boolean applyChange(String id) {
         ProductDetailEntity entity = this.getById(id);
         if (ObjectUtils.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_INFO_NOT_FOUND);
+            throw new ServiceException(ApiError.PRODUCT_INFO_NOT_FOUND);
         }
         //验证sku是否审核
         if (!ProductDetailStatusEnum.APPROVAL_PASS.getCode().equals(entity.getStatus())) {
-            throw new ServiceException(ApiError.ERROR_PLM_SKU_NOT_APPROVED_REVOKE_APPROVAL_FORBIDDEN);
+            throw new ServiceException(ApiError.PRODUCT_SKU_NOT_APPROVED_REVOKE_APPROVAL_FORBIDDEN);
         }
         LoginUser loginUser = UserContext.getDefaultLoginUser();
         LambdaUpdateWrapper<ProductDetailEntity> updateWrapper = new LambdaUpdateWrapper<>();
@@ -3211,118 +3211,118 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         for (ProductDetailEntity entity : detailEntityList) {
             ProductInfoEntity productInfoEntity = productInfoService.getById(entity.getProductId());
             if (StringUtils.isBlank(productInfoEntity.getChargeId())) {
-                throw new ServiceException(ApiError.ERROR_PLM_PM_REQUIRED);
+                throw new ServiceException(ApiError.PRODUCT_PM_REQUIRED);
             }
             if (StringUtils.isBlank(productInfoEntity.getSaleMethod())) {
-                throw new ServiceException(ApiError.ERROR_PLM_SALES_METHOD_REQUIRED);
+                throw new ServiceException(ApiError.PRODUCT_SALES_METHOD_REQUIRED);
             }
             if (StringUtils.isBlank(productInfoEntity.getCategoryId())) {
-                throw new ServiceException(ApiError.ERROR_PLM_CATEGORY_REQUIRED);
+                throw new ServiceException(ApiError.PRODUCT_CATEGORY_REQUIRED);
             }
             if (StringUtils.isBlank(productInfoEntity.getBrandId())) {
-                throw new ServiceException(ApiError.ERROR_PLM_BRAND_REQUIRED);
+                throw new ServiceException(ApiError.PRODUCT_BRAND_REQUIRED);
             }
             if (StringUtils.isBlank(productInfoEntity.getGradeId())) {
-                throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_LEVEL_REQUIRED);
+                throw new ServiceException(ApiError.PRODUCT_LEVEL_REQUIRED);
             }
             if (StringUtils.isBlank(productInfoEntity.getName())) {
-                throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_STYLE_NAME_CN_REQUIRED);
+                throw new ServiceException(ApiError.PRODUCT_STYLE_NAME_CN_REQUIRED);
             }
             if (StringUtils.isBlank(productInfoEntity.getNameEn())) {
-                throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_STYLE_NAME_EN_REQUIRED);
+                throw new ServiceException(ApiError.PRODUCT_STYLE_NAME_EN_REQUIRED);
             }
             if (StringUtils.isBlank(productInfoEntity.getPropertyId())) {
-                throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_ATTR_REQUIRED);
+                throw new ServiceException(ApiError.PRODUCT_ATTR_REQUIRED);
             }
             if (StringUtils.isBlank(productInfoEntity.getSalesChannel())) {
-                throw new ServiceException(ApiError.ERROR_PLM_SALES_CHANNEL_REQUIRED);
+                throw new ServiceException(ApiError.PRODUCT_SALES_CHANNEL_REQUIRED);
             }
             if (productInfoEntity.getMoldCost() == null) {
-                throw new ServiceException(ApiError.ERROR_PLM_MOLD_COST_REQUIRED);
+                throw new ServiceException(ApiError.MOULD_COST_REQUIRED);
             }
             if (productInfoEntity.getEntrustedDevelopCost() == null) {
-                throw new ServiceException(ApiError.ERROR_PLM_COMMISSIONED_DEV_COST_REQUIRED);
+                throw new ServiceException(ApiError.PRODUCT_COMMISSIONED_DEV_COST_REQUIRED);
             }
 
             if (StringUtils.isBlank(entity.getSkuNo())) {
-                throw new ServiceException(ApiError.ERROR_PLM_SKU_CODE_REQUIRED);
+                throw new ServiceException(ApiError.PRODUCT_SKU_CODE_REQUIRED);
             }
             if (StringUtils.isBlank(entity.getName())) {
-                throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_NAME_CN_REQUIRED);
+                throw new ServiceException(ApiError.PRODUCT_NAME_CN_REQUIRED);
             }
             if (StringUtils.isBlank(entity.getNameEn())) {
-                throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_NAME_EN_REQUIRED);
+                throw new ServiceException(ApiError.PRODUCT_NAME_EN_REQUIRED);
             }
             if (StringUtils.isBlank(entity.getChargeId())) {
-                throw new ServiceException(ApiError.ERROR_PLM_SKU_PM_REQUIRED);
+                throw new ServiceException(ApiError.PRODUCT_SKU_PM_REQUIRED);
             }
             if (entity.getProductState() == null) {
-                throw new ServiceException(ApiError.ERROR_PLM_DEV_STATUS_REQUIRED);
+                throw new ServiceException(ApiError.PRODUCT_DEV_STATUS_REQUIRED);
             }
 
 
             ProductCostEntity costEntity = productCostService.getBySkuId(entity.getId());
             if (ObjectUtils.isEmpty(costEntity)) {
-                throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_COST_INFO_REQUIRED);
+                throw new ServiceException(ApiError.PRODUCT_COST_INFO_REQUIRED);
             }
             if (costEntity.getProjectApprovalCost() == null) {
-                throw new ServiceException(ApiError.ERROR_PLM_INITIATION_COST_REQUIRED);
+                throw new ServiceException(ApiError.PROJECT_INITIATION_COST_REQUIRED);
             }
             if (costEntity.getProjectCost() == null) {
-                throw new ServiceException(ApiError.ERROR_PLM_PROJECT_COST_REQUIRED);
+                throw new ServiceException(ApiError.PROJECT_COST_REQUIRED);
             }
             if (costEntity.getTargetTaxCost() == null) {
-                throw new ServiceException(ApiError.ERROR_PLM_TARGET_COST_REQUIRED);
+                throw new ServiceException(ApiError.PRODUCT_TARGET_COST_REQUIRED);
             }
             if (costEntity.getRetailPrice() == null) {
-                throw new ServiceException(ApiError.ERROR_PLM_RETAIL_PRICE_REQUIRED);
+                throw new ServiceException(ApiError.PRODUCT_RETAIL_PRICE_REQUIRED);
             }
             if (costEntity.getMassCost() == null) {
-                throw new ServiceException(ApiError.ERROR_PLM_MASS_PRODUCTION_COST_REQUIRED);
+                throw new ServiceException(ApiError.PRODUCT_MASS_PRODUCTION_COST_REQUIRED);
             }
             if (costEntity.getTaxRate() == null) {
-                throw new ServiceException(ApiError.ERROR_PLM_TAX_RATE_REQUIRED);
+                throw new ServiceException(ApiError.PRODUCT_TAX_RATE_REQUIRED);
             }
             if (costEntity.getTargetNoTaxCost() == null) {
-                throw new ServiceException(ApiError.ERROR_PLM_TARGET_COST_TAX_EXCLUDED_REQUIRED);
+                throw new ServiceException(ApiError.PRODUCT_TARGET_COST_EX_TAX_REQUIRED);
             }
 
             ProductSaleEntity saleEntity = productSaleService.getBySkuId(entity.getId());
             if (ObjectUtils.isEmpty(saleEntity)) {
-                throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_SALES_INFO_REQUIRED);
+                throw new ServiceException(ApiError.PRODUCT_SALES_INFO_REQUIRED);
             }
             if (saleEntity.getYearSaleQty() == null) {
-                throw new ServiceException(ApiError.ERROR_PLM_ANNUAL_SALES_TARGET_REQUIRED);
+                throw new ServiceException(ApiError.PRODUCT_ANNUAL_SALES_REQUIRED);
             }
             if (saleEntity.getMonthSaleQty() == null) {
-                throw new ServiceException(ApiError.ERROR_PLM_MONTHLY_SALES_TARGET_REQUIRED);
+                throw new ServiceException(ApiError.PRODUCT_MONTHLY_SALES_REQUIRED);
             }
             if (saleEntity.getTargetSalesQty() == null) {
-                throw new ServiceException(ApiError.ERROR_PLM_Q1_SALES_TARGET_REQUIRED);
+                throw new ServiceException(ApiError.PRODUCT_Q1_SALES_REQUIRED);
             }
             if (saleEntity.getIsFinishedImg() == null) {
-                throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_IMAGE_COMPLETE_FLAG_REQUIRED);
+                throw new ServiceException(ApiError.PRODUCT_IMAGE_COMPLETE_REQUIRED);
             }
             if (saleEntity.getSaleState() == null) {
-                throw new ServiceException(ApiError.ERROR_PLM_SALES_STATUS_REQUIRED);
+                throw new ServiceException(ApiError.PRODUCT_SALES_STATUS_REQUIRED);
             }
             if (saleEntity.getIsMarketable() == null) {
-                throw new ServiceException(ApiError.ERROR_PLM_SALEABLE_FLAG_REQUIRED);
+                throw new ServiceException(ApiError.PRODUCT_SALEABLE_FLAG_REQUIRED);
             }
             if (saleEntity.getYearSaleAmount() == null) {
-                throw new ServiceException(ApiError.ERROR_PLM_ANNUAL_SALES_AMOUNT_REQUIRED);
+                throw new ServiceException(ApiError.PRODUCT_ANNUAL_SALES_AMOUNT_REQUIRED);
             }
             if (saleEntity.getMonthSaleAmount() == null) {
-                throw new ServiceException(ApiError.ERROR_PLM_MONTHLY_SALES_AMOUNT_REQUIRED);
+                throw new ServiceException(ApiError.PRODUCT_MONTHLY_SALES_AMOUNT_REQUIRED);
             }
             if (StringUtils.isBlank(saleEntity.getSaleCountry())) {
-                throw new ServiceException(ApiError.ERROR_PLM_SALES_COUNTRY_REQUIRED);
+                throw new ServiceException(ApiError.PRODUCT_SALES_COUNTRY_REQUIRED);
             }
             if (saleEntity.getIsFinishedImg() == null) {
-                throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_VIDEO_COMPLETE_FLAG_REQUIRED);
+                throw new ServiceException(ApiError.PRODUCT_VIDEO_COMPLETE_REQUIRED);
             }
             if (StringUtils.isBlank(saleEntity.getSalesPlatform())) {
-                throw new ServiceException(ApiError.ERROR_PLM_SALES_PLATFORM_REQUIRED);
+                throw new ServiceException(ApiError.PRODUCT_SALES_PLATFORM_REQUIRED);
             }
         }
     }
@@ -3332,10 +3332,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     public Boolean sendKingDeeData(String id) {
         ProductDetailEntity productDetailEntity = this.getById(id);
         if (ObjectUtils.isEmpty(productDetailEntity)) {
-            throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_INFO_NOT_FOUND);
+            throw new ServiceException(ApiError.PRODUCT_INFO_NOT_FOUND);
         }
         if (!ProductDetailStatusEnum.APPROVAL_PASS.getCode().equals(productDetailEntity.getStatus())) {
-            throw new ServiceException(ApiError.ERROR_K3_SEND_STATUS_INVALID);
+            throw new ServiceException(ApiError.PROJECT_K3_SEND_REQUIRED);
         }
 
         //发送金蝶
@@ -3519,7 +3519,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         ProductSmallestUnitDTO result = new ProductSmallestUnitDTO();
         ProductDetailEntity productDetail = this.getById(skuId);
         if (Objects.isNull(productDetail)) {
-            throw new ServiceException(ApiError.ERROR_PLM_SKU_NOT_FOUND);
+            throw new ServiceException(ApiError.PRODUCT_SKU_NOT_FOUND);
         }
         //国家列表
         List<DictCountryDTO.ListDTO> countryList = sysUserFeign.countryList();
@@ -4003,7 +4003,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             }
             ProductDetailEntity productDetailEntity = this.getById(productCostDTO.getSkuId());
             if (ObjectUtils.isEmpty(productDetailEntity)) {
-                throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_INFO_NOT_FOUND);
+                throw new ServiceException(ApiError.PRODUCT_INFO_NOT_FOUND);
             }
             operateLogService.addSysLogByUpdate(oldDto, productCostDTO, SKUCLASSPATH, productCostDTO.getSkuId(), pid, String.format("SKU[%s]", productDetailEntity.getSkuNo()));
         }
@@ -4021,7 +4021,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             }
             ProductDetailEntity productDetailEntity = this.getById(productPurchaseDTO.getSkuId());
             if (ObjectUtils.isEmpty(productDetailEntity)) {
-                throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_INFO_NOT_FOUND);
+                throw new ServiceException(ApiError.PRODUCT_INFO_NOT_FOUND);
             }
             operateLogService.addSysLogByUpdate(oldDto, productPurchaseDTO, SKUCLASSPATH, productPurchaseDTO.getSkuId(), pid, String.format("SKU[%s]", productDetailEntity.getSkuNo()));
         }
@@ -4039,7 +4039,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             }
             ProductDetailEntity productDetailEntity = this.getById(productSaleDTO.getSkuId());
             if (ObjectUtils.isEmpty(productDetailEntity)) {
-                throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_INFO_NOT_FOUND);
+                throw new ServiceException(ApiError.PRODUCT_INFO_NOT_FOUND);
             }
             operateLogService.addSysLogByUpdate(oldDto, productSaleDTO, SKUCLASSPATH, productSaleDTO.getSkuId(), pid, String.format("SKU[%s]", productDetailEntity.getSkuNo()));
         }
@@ -4057,7 +4057,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             }
             ProductDetailEntity productDetailEntity = this.getById(productLogisticsDTO.getSkuId());
             if (ObjectUtils.isEmpty(productDetailEntity)) {
-                throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_INFO_NOT_FOUND);
+                throw new ServiceException(ApiError.PRODUCT_INFO_NOT_FOUND);
             }
             operateLogService.addSysLogByUpdate(oldDto, productLogisticsDTO, SKUCLASSPATH, productLogisticsDTO.getSkuId(), pid, String.format("SKU[%s]", productDetailEntity.getSkuNo()));
         }
@@ -4075,7 +4075,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             }
             ProductDetailEntity productDetailEntity = this.getById(productPackDTO.getSkuId());
             if (ObjectUtils.isEmpty(productDetailEntity)) {
-                throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_INFO_NOT_FOUND);
+                throw new ServiceException(ApiError.PRODUCT_INFO_NOT_FOUND);
             }
             operateLogService.addSysLogByUpdate(oldDto, productPackDTO, SKUCLASSPATH, productPackDTO.getSkuId(), pid, String.format("SKU[%s]", productDetailEntity.getSkuNo()));
         }
@@ -4133,10 +4133,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         checkRequiredField(Collections.singletonList(id), isStartProcess);
         ProductDetailEntity entity = this.getById(id);
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_INFO_NOT_FOUND);
+            throw new ServiceException(ApiError.PRODUCT_INFO_NOT_FOUND);
         }
         if (!ProductDetailStatusEnum.WAIT_COMMIT.getCode().equals(entity.getStatus()) && !ProductDetailStatusEnum.APPROVAL_NO_PASS.getCode().equals(entity.getStatus())) {
-            throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_SUBMIT_INVALID);
+            throw new ServiceException(ApiError.PROJECT_PRODUCT_SUBMIT_REQUIRED);
         }
         //验证必填信息
         String str = checkRequiredDataList(Collections.singletonList(entity));
@@ -4157,7 +4157,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                     List<ProjectTaskEntity> relatedTaskList = taskAllList.stream().filter(obj -> !RelatedSkuTypeEnum.NOT_RELATED.getCode().equals(obj.getRelatedSkuType()) && !TaskStateEnum.FINISH.getCode().equals(obj.getStatus()) && configTaskIds.contains(obj.getId())).collect(Collectors.toList());
                     if (relatedTaskList.size() > 0) {
                         String taskNames = relatedTaskList.stream().map(ProjectTaskEntity::getName).collect(Collectors.joining(","));
-                        throw new ServiceException(ApiError.ERROR_TASK_UNFINISHED, taskNames);
+                        throw new ServiceException(ApiError.WARNING_TASK_UNFINISHED, taskNames);
                     }
                 }
             }
@@ -4169,7 +4169,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         entity.setStatus(ProductDetailStatusEnum.APPROVAL_ING.getCode());
         Boolean result = this.updateById(entity);
         if (!result) {
-          throw new ServiceException(ApiError.ERROR_DOC_SUBMIT_FAILED, SourceTypeEnum.LISTING_INFO.getName());
+          throw new ServiceException(ApiError.BILL_SUBMIT_FAILED, SourceTypeEnum.LISTING_INFO.getName());
         }
         //操作日志
         String operateContent = String.format(BomOperateContent.STATE_CHANGE, ProductDetailStatusEnum.WAIT_COMMIT.getName(), ProductDetailStatusEnum.APPROVAL_ING.getName());
@@ -4203,7 +4203,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     public BatchResultDTO approve(ApproveOneDTO dto,Boolean isPushWdt) {
         ProductDetailEntity entity = this.getById(dto.getId());
         if (!entity.getStatus().equals(ProductDetailStatusEnum.APPROVAL_ING.getCode())) {
-            return BatchResultDTO.fail(entity.getId(),entity.getSkuNo(),ApiError.ERROR_PLM_TASK_APPROVAL_STATUS_INVALID.getMsg());
+            return BatchResultDTO.fail(entity.getId(),entity.getSkuNo(),ApiError.BILL_APPROVAL_STATUS_INVALID.getMsg());
         }
         // 调用流程审核
         entity.setIsPushWdt(isPushWdt);
@@ -4233,7 +4233,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         ApiResult<ProcessManagementDTO.ApproveResultDTO> approveResult = workflowFeign.approve(approveDTO);
         Integer code = approveResult.getCode();
         if (200 != code) {
-            throw new ServiceException(ApiError.ERROR_WF_APPROVAL_FAILED);
+            throw new ServiceException(ApiError.WF_APPROVE_FAILED);
         }
         ProcessManagementDTO.ApproveResultDTO data = approveResult.getData();
         if (ObjectUtil.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()) {
@@ -4256,7 +4256,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
         ProductInfoEntity productInfoEntity = productInfoService.getById(entity.getProductId());
         if (ObjectUtil.isEmpty(productInfoEntity)) {
-            throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_INFO_NOT_FOUND);
+            throw new ServiceException(ApiError.PRODUCT_INFO_NOT_FOUND);
         }
         Map<String, Object> productMap = BeanUtil.beanToMap(productInfoEntity);
         variablesMap.putAll(productMap);
@@ -4345,7 +4345,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     public BatchResultDTO disApprove(ProductDetailEntity entity) {
         //已审核支持反审核
         if (!ProductDetailStatusEnum.APPROVAL_PASS.getCode().equals(entity.getStatus())) {
-            return BatchResultDTO.fail(entity.getId(),entity.getSkuNo(),ApiError.ERROR_WMS_REVERSE_APPROVAL_ALLOWED_APPROVED_ONLY.getMsg());
+            return BatchResultDTO.fail(entity.getId(),entity.getSkuNo(),ApiError.BILL_REVERSE_APPROVAL_ALLOWED_APPROVED_ONLY.getMsg());
         }
         //新增操作日志
         operateLogService.addSysLogByOther(new OperateLogEntity().setClassPath(SKUCLASSPATH).setPid(entity.getProductId())
@@ -4366,11 +4366,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     public BatchResultDTO cancelProcess(String id) {
         ProductDetailEntity entity = this.getById(id);
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_SELECTION_REQUIRED);
+            throw new ServiceException(ApiError.BILL_SELECTION_REQUIRED);
         }
         // 只有审核中的单据允许撤销
         if (!Objects.equals(entity.getStatus(), ProductDetailStatusEnum.APPROVAL_ING.getCode())) {
-            throw new ServiceException(ApiError.ERROR_REVOKE_PROCESS_ALLOWED_STATUS_ONLY);
+            throw new ServiceException(ApiError.WF_REVOKE_PROCESS_ALLOWED_STATUS_ONLY);
         }
         updateApproveStatusForApprove(id, ProductDetailStatusEnum.WAIT_COMMIT.getCode());
         //操作日志
@@ -4393,11 +4393,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         List<ProductDetailEntity> entityListt = this.listByIds(ids);
         long count = entityListt.stream().filter(req -> !req.getStatus().equals(1) && !req.getStatus().equals(2)).count();
         if (entityListt.size() != count) {
-            throw new ServiceException(ApiError.ERROR_PLM_APPROVAL_DELETE_FORBIDDEN);
+            throw new ServiceException(ApiError.WF_APPROVAL_DELETE_FORBIDDEN);
         }
         long sign = entityListt.stream().filter(req -> !req.getOccupyStatus()).count();
         if (entityListt.size() != sign) {
-            throw new ServiceException(ApiError.ERROR_PLM_SKU_IN_USE_DELETE_FORBIDDEN);
+            throw new ServiceException(ApiError.PRODUCT_SKU_IN_USE_DELETE_FORBIDDEN);
         }
         //发送金蝶
         sendPushTask(entityListt,SyncOperateEnum.OPERATE_DELETE.getCode());
@@ -4421,7 +4421,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         queryWrapper.in(ProductDetailEntity::getId, ids);
         List<ProductDetailEntity> productDetailEntityList = this.listByIds(ids);
         if (CollectionUtils.isEmpty(productDetailEntityList)) {
-            throw new ServiceException(ApiError.ERROR_SELECTION_REQUIRED);
+            throw new ServiceException(ApiError.BILL_SELECTION_REQUIRED);
         }
         for (ProductDetailEntity productDetailEntity : productDetailEntityList) {
             ProductInfoEntity productInfoEntity = productInfoService.getById(productDetailEntity.getProductId());
@@ -4446,7 +4446,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         dto.setUpdateFiledCode(toUnderlineCase(dto.getUpdateFiledCode()));
         List<ProductDetailEntity> entityList = this.listByIds(dto.getIds());
         if (CollectionUtils.isEmpty(entityList)) {
-            throw new ServiceException(ApiError.ERROR_SELECTION_REQUIRED);
+            throw new ServiceException(ApiError.BILL_SELECTION_REQUIRED);
         }
         Boolean flag = Boolean.TRUE;
         //如果是产品经理需要查询name
@@ -4454,7 +4454,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 || ProductBatchFieldEnum.SALE_METHOD.getCode().equals(dto.getUpdateFiledCode())
                 || ProductBatchFieldEnum.MATERIALS.getCode().equals(dto.getUpdateFiledCode())) {
             if (ObjectUtils.isEmpty(dto.getValues())) {
-                throw new ServiceException(ApiError.ERROR_PM_REQUIRED);
+                throw new ServiceException(ApiError.PROJECT_PM_REQUIRED);
             }
             List<String> productIds = entityList.stream().map(ProductDetailEntity::getProductId).distinct().collect(Collectors.toList());
             if (ProductBatchFieldEnum.CHARGE_ID.getCode().equals(dto.getUpdateFiledCode())) {
@@ -4532,12 +4532,12 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             }
             ProductBatchFieldEnum enumByCode = ProductBatchFieldEnum.getEnumByCode(dto.getUpdateFiledCode());
             if (enumByCode == null) {
-                throw new ServiceException(ApiError.ERROR_FIELD_CODE_INVALID, dto.getUpdateFiledCode());
+                throw new ServiceException(ApiError.COMMON_FIELD_CODE_INVALID, dto.getUpdateFiledCode());
             }
             flag = baseMapper.updateFiledBatch(dto.getIds(), enumByCode.getTableName(), enumByCode.getCode() , dto.getValues(), enumByCode.getKeyName());
         }
         if (!flag) {
-            throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_REQUIRED_FIELDS_INCOMPLETE);
+            throw new ServiceException(ApiError.PRODUCT_REQUIRED_FIELDS_INCOMPLETE);
         }
         productSaleService.saveOrUpdateParentPropertyIdByChildSkuId(dto.getIds());
 
@@ -4638,7 +4638,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             }
         });
         if (CollectionUtils.isEmpty(skuVOS)) {
-            throw new ServiceException(ApiError.ERROR_PLM_SKU_NOT_FOUND);
+            throw new ServiceException(ApiError.PRODUCT_SKU_NOT_FOUND);
         }
         return skuVOS;
     }
@@ -4811,7 +4811,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             //SPU信息
             ProductInfoEntity productInfo = productInfoList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), detailEntity.getProductId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(productInfo)) {
-                throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_INFO_NOT_FOUND);
+                throw new ServiceException(ApiError.PRODUCT_INFO_NOT_FOUND);
             }
             if (ObjectUtil.isEmpty(productInfo.getSaleMethod() )|| (!productInfo.getSaleMethod().contains(SaleMethodEnum.GOODS.getName()) && !productInfo.getSaleMethod().contains(SaleMethodEnum.GIFT.getName()))) {
                 continue;
@@ -4907,14 +4907,14 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             read(excelFile.getInputStream(), ProductDetailImprotUpdateExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (IOException e) {
             log.error("导入错误！", e);
-            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_FAILED);
+            throw new ServiceException(ApiError.FILE_DATA_IMPORT_FAILED);
         } catch (ExcelCommonException e) {
             log.error("导入格式错误！", e);
-            throw new ServiceException(ApiError.ERROR_FILE_IMPORT_FORMAT_INVALID_XLSX);
+            throw new ServiceException(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX);
         }
         List<ProductDetailImprotUpdateExcelDTO> excelDateList = excelListenerUtil.getExcelDateList();
         if (CollectionUtils.isEmpty(excelDateList)) {
-            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_REQUIRED);
+            throw new ServiceException(ApiError.FILE_DATA_REQUIRED);
         }
         List<ProductDetailImprotUpdateExcelDTO> errorList = excelListenerUtil.getErrorList();
 
@@ -5211,12 +5211,12 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                     List<BasicCategoryEntity> categoryList = new ArrayList<>();
                     this.setParentEntity(basicCategoryEntity.getId(), categoryList, categoryEntityList);
                     if (com.baomidou.mybatisplus.core.toolkit.CollectionUtils.isEmpty(categoryList)) {
-                        errorMsgList.add(MessageUtils.getMessage(ApiError.ERROR_PLM_CATEGORY_CODE_NOT_FOUND));
+                        errorMsgList.add(MessageUtils.getMessage(ApiError.PRODUCT_CATEGORY_CODE_NOT_FOUND));
                     }
                     //一级品类
                     BasicCategoryEntity bestEntity = categoryList.stream().filter(obj -> "0".equals(obj.getPid())).findFirst().orElse(null);
                     if (ObjectUtils.isEmpty(bestEntity) || StringUtils.isBlank(bestEntity.getCode())) {
-                        errorMsgList.add(MessageUtils.getMessage(ApiError.ERROR_PLM_CATEGORY_CODE_NOT_FOUND));
+                        errorMsgList.add(MessageUtils.getMessage(ApiError.PRODUCT_CATEGORY_CODE_NOT_FOUND));
                     }
                     //二级品类
                     String secondaryCategory = dto.getSecondaryCategory();
@@ -5228,7 +5228,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                     } else {
                         BasicCategoryEntity secondEntity = categoryList.stream().filter(obj -> secondaryCategoryEntity.getPid().equals(obj.getId())).findFirst().orElse(null);
                         if (ObjectUtils.isEmpty(secondEntity) || StringUtils.isBlank(secondaryCategoryEntity.getCode())) {
-                            errorMsgList.add(StrUtil.format(ApiError.ERROR_PLM_CATEGORY_CODE_NOT_ALLOWED.getMsg(), "二"));
+                            errorMsgList.add(StrUtil.format(ApiError.PRODUCT_CATEGORY_CODE_NOT_ALLOWED.getMsg(), "二"));
                         }
                         if (!bestEntity.getId().equals(secondaryCategoryEntity.getPid())) {
                             errorMsgList.add("产品分类一级类目和二级类目的关系不匹配");
@@ -5425,7 +5425,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             productInfoDTO.setSpuNo(Optional.ofNullable(dto.getSpuNo()).orElse(dto.getSkuNo()));
             //检查spu编号是否重复
             if (Boolean.TRUE.equals(this.checkSpuNo(productInfoDTO.getSpuNo(), productInfoDTO.getId()))) {
-                throw new ServiceException(ApiError.ERROR_PLM_SPU_EXISTS);
+                throw new ServiceException(ApiError.PRODUCT_SPU_EXISTS);
             }
             //sku信息
             BeanMapper.copyNonNull(dto, productSkuBaseInfoDTO);
@@ -5848,14 +5848,14 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             read(excelFile.getInputStream(), ProductDetailExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (IOException e) {
             log.error("导入错误！", e);
-            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_FAILED);
+            throw new ServiceException(ApiError.FILE_DATA_IMPORT_FAILED);
         } catch (ExcelCommonException e) {
             log.error("导入格式错误！", e);
-            throw new ServiceException(ApiError.ERROR_FILE_IMPORT_FORMAT_INVALID_XLSX);
+            throw new ServiceException(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX);
         }
         List<ProductDetailExcelDTO> excelDateList = excelListenerUtil.getExcelDateList();
         if (CollectionUtils.isEmpty(excelDateList)) {
-            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_REQUIRED);
+            throw new ServiceException(ApiError.FILE_DATA_REQUIRED);
         }
         List<ProductDetailExcelDTO> errorList = excelListenerUtil.getErrorList();
 
@@ -5926,7 +5926,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             // 判断是修改还是新增 1：新增 2：修改
             //sku重复
             if (ObjectUtil.isNotEmpty(productBy)) {
-                errorMsgList.add(ApiError.ERROR_PLM_SKU_EXISTS.getMsg());
+                errorMsgList.add(ApiError.PRODUCT_SKU_EXISTS.getMsg());
             }
             //spu名称，新增单规格名称给随机雪花编码
             productInfoDTO.setName(IdUtil.getSnowflake().nextIdStr());
@@ -6075,12 +6075,12 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 List<BasicCategoryEntity> categoryList = new ArrayList<>();
                 this.setParentEntity(basicCategoryEntity.getId(), categoryList, categoryEntityList);
                 if (com.baomidou.mybatisplus.core.toolkit.CollectionUtils.isEmpty(categoryList)) {
-                    errorMsgList.add(MessageUtils.getMessage(ApiError.ERROR_PLM_CATEGORY_CODE_NOT_FOUND));
+                    errorMsgList.add(MessageUtils.getMessage(ApiError.PRODUCT_CATEGORY_CODE_NOT_FOUND));
                 }
                 //一级品类
                 BasicCategoryEntity bestEntity = categoryList.stream().filter(obj -> "0".equals(obj.getPid())).findFirst().orElse(null);
                 if (ObjectUtils.isEmpty(bestEntity) || StringUtils.isBlank(bestEntity.getCode())) {
-                    errorMsgList.add(MessageUtils.getMessage(ApiError.ERROR_PLM_CATEGORY_CODE_NOT_FOUND));
+                    errorMsgList.add(MessageUtils.getMessage(ApiError.PRODUCT_CATEGORY_CODE_NOT_FOUND));
                 }
                 //二级品类
                 String secondaryCategory = dto.getSecondaryCategory();
@@ -6092,7 +6092,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 } else {
                     BasicCategoryEntity secondEntity = categoryList.stream().filter(obj -> secondaryCategoryEntity.getPid().equals(obj.getId())).findFirst().orElse(null);
                     if (ObjectUtils.isEmpty(secondEntity) || StringUtils.isBlank(secondaryCategoryEntity.getCode())) {
-                        errorMsgList.add(MessageUtils.getMessage(ApiError.ERROR_PLM_CATEGORY_CODE_NOT_FOUND));
+                        errorMsgList.add(MessageUtils.getMessage(ApiError.PRODUCT_CATEGORY_CODE_NOT_FOUND));
                     }
                     if (!bestEntity.getId().equals(secondaryCategoryEntity.getPid())) {
                         errorMsgList.add("产品分类一级类目和二级类目的关系不匹配");
@@ -6245,7 +6245,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             productInfoDTO.setSpuNo(Optional.ofNullable(dto.getSpuNo()).orElse(dto.getSkuNo()));
             //检查spu编号是否重复
             if (Boolean.TRUE.equals(this.checkSpuNo(productInfoDTO.getSpuNo(), productInfoDTO.getId()))) {
-                throw new ServiceException(ApiError.ERROR_PLM_SPU_EXISTS);
+                throw new ServiceException(ApiError.PRODUCT_SPU_EXISTS);
             }
             BeanUtil.copyProperties(dto, productSkuBaseInfoDTO);
             //sku信息
@@ -6946,12 +6946,12 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                         mergeSkuEan(dto, printEanDTO, document, writer, baseFont);
                         break;
                     default:
-                        throw new ServiceException(ApiError.ERROR_ENUM_CONVERT_FAILED);
+                        throw new ServiceException(ApiError.COMMON_ENUM_CONVERT_FAILED);
                 }
             }
             document.close();
         } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_FILE_EXPORT_FAILED, e.getMessage());
+            throw new ServiceException(ApiError.FILE_EXPORT_FAILED, e.getMessage());
         }
     }
 
@@ -6967,7 +6967,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO updateProductPack(ProductPackViewDTO viewDTO) {
         if (isBlank(viewDTO.getSkuId())) {
-            throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_INFO_NOT_FOUND);
+            throw new ServiceException(ApiError.PRODUCT_INFO_NOT_FOUND);
         }
         //校验 【箱规-长宽高】必须大于等于【包装尺寸-长宽高】【为空则忽略不校验】【长，宽，高分开校验】
         checkSizeAndWeight(viewDTO);
@@ -7022,27 +7022,27 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             StringBuilder errMsg = new StringBuilder();
             //包装尺寸
             if (MathUtil.compareTo(BigDecimal.ZERO, productPackDTO.getProductLength()) >= 0  || MathUtil.compareTo(BigDecimal.ZERO, productPackDTO.getProductWidth()) >= 0 || MathUtil.compareTo(BigDecimal.ZERO, productPackDTO.getProductHeight()) >= 0) {
-                errMsg.append(format(ApiError.ERROR_PRODUCT_SIZE_NOT_EXIST.getMsg(), productPackDTO.getSkuNo())).append(ProductConstant.HTML_BR);
+                errMsg.append(format(ApiError.PRODUCT_SIZE_REQUIRED.getMsg(), productPackDTO.getSkuNo())).append(ProductConstant.HTML_BR);
             }
             //箱规
             if (MathUtil.compareTo(BigDecimal.ZERO, productPackDTO.getBoxLength()) >= 0 ||MathUtil.compareTo(BigDecimal.ZERO, productPackDTO.getBoxWidth()) >= 0 || MathUtil.compareTo(BigDecimal.ZERO, productPackDTO.getBoxHeight()) >= 0) {
-                errMsg.append(format(ApiError.ERROR_BOX_SIZE_NOT_EXIST.getMsg(), productPackDTO.getSkuNo())).append(ProductConstant.HTML_BR);
+                errMsg.append(format(ApiError.PRODUCT_BOX_SIZE_REQUIRED.getMsg(), productPackDTO.getSkuNo())).append(ProductConstant.HTML_BR);
             }
             //毛重
             if (MathUtil.compareTo(productPackDTO.getGrossWeight(), MathUtil.ZERO) == MathUtil.ZERO) {
-                errMsg.append(format(ApiError.ERROR_GROSS_WEIGHT_NOT_EXIST.getMsg(), productPackDTO.getSkuNo())).append(ProductConstant.HTML_BR);
+                errMsg.append(format(ApiError.PRODUCT_GROSS_WEIGHT_REQUIRED.getMsg(), productPackDTO.getSkuNo())).append(ProductConstant.HTML_BR);
             }
             //单箱重量
             if (MathUtil.compareTo(productPackDTO.getBoxWeight(), MathUtil.ZERO) == MathUtil.ZERO) {
-                errMsg.append(format(ApiError.ERROR_BOX_WEIGHT_NOT_EXIST.getMsg(), productPackDTO.getSkuNo())).append(ProductConstant.HTML_BR);
+                errMsg.append(format(ApiError.PRODUCT_BOX_WEIGHT_REQUIRED.getMsg(), productPackDTO.getSkuNo())).append(ProductConstant.HTML_BR);
             }
             //净重
             if (MathUtil.compareTo(productPackDTO.getNetWeight(), MathUtil.ZERO) == MathUtil.ZERO) {
-                errMsg.append(format(ApiError.ERROR_NET_WEIGHT_NOT_EXIST.getMsg(), productPackDTO.getSkuNo())).append(ProductConstant.HTML_BR);
+                errMsg.append(format(ApiError.PRODUCT_NET_WEIGHT_REQUIRED.getMsg(), productPackDTO.getSkuNo())).append(ProductConstant.HTML_BR);
             }
             //单箱数量
             if (MathUtil.compareTo(productPackDTO.getBoxQty(), MathUtil.ZERO) == MathUtil.ZERO) {
-                errMsg.append(format(ApiError.ERROR_BOX_QTY_NOT_EXIST.getMsg(), productPackDTO.getSkuNo()));
+                errMsg.append(format(ApiError.PRODUCT_BOX_QTY_REQUIRED.getMsg(), productPackDTO.getSkuNo()));
             }
             if (isNotBlank(errMsg)) {
                 throw new ServiceException(errMsg.toString());
@@ -7092,10 +7092,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             read(excelFile.getInputStream(), ProductDetailUpdateExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (IOException e) {
             log.error("导入错误！", e);
-            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_FAILED);
+            throw new ServiceException(ApiError.FILE_DATA_IMPORT_FAILED);
         } catch (ExcelCommonException e) {
             log.error("导入格式错误！", e);
-            throw new ServiceException(ApiError.ERROR_FILE_IMPORT_FORMAT_INVALID_XLSX);
+            throw new ServiceException(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX);
         }
         List<ProductDetailUpdateExcelDTO> errorList = excelListenerUtil.getErrorList();
         List<ProductInfoDTO> successList = excelListenerUtil.getSuccessList();
@@ -7392,7 +7392,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             case DATE:
                 return LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy/MM/dd"));
             default:
-                throw new ServiceException(ApiError.ERROR_ENUM_CONVERT_FAILED);
+                throw new ServiceException(ApiError.COMMON_ENUM_CONVERT_FAILED);
         }
     }
 

@@ -252,7 +252,7 @@ public class LogisticsLargeController extends BaseController {
                             && CharSequenceUtil.isBlank(entity.getEstimatedBillId()))
                     .findFirst().orElse(null);
             if (logisticsLargeActualEntity != null) {
-                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getBusinessCode(), ApiError.ERROR_EXISTS_LOGISTICS_LARGE.getMsg()));
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getBusinessCode(), ApiError.LOGISTICS_LARGE_TABLE_EXISTS.getMsg()));
                 continue;
             }
             //预估账单只能推送一个
@@ -261,7 +261,7 @@ public class LogisticsLargeController extends BaseController {
                             && CharSequenceUtil.isNotBlank(entity.getEstimatedBillId()))
                     .findFirst().orElse(null);
             if (logisticsLargeEstimatedEntity != null) {
-                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getBusinessCode(), ApiError.ERROR_EXISTS_ESTIMATED_LOGISTICS_LARGE.getMsg()));
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getBusinessCode(), ApiError.LOGISTICS_LARGE_ESTIMATED_EXISTS.getMsg()));
                 continue;
             }
 
@@ -271,7 +271,7 @@ public class LogisticsLargeController extends BaseController {
                             && CharSequenceUtil.isBlank(entity.getEstimatedBillId()))
                     .findFirst().orElse(null);
             if (logisticsLargeEntity != null) {
-                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getBusinessCode(), ApiError.ERROR_EXISTS_ACTUAL_NOT_ESTIMATED.getMsg()));
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getBusinessCode(), ApiError.LOGISTICS_ACTUAL_EXISTS_CANNOT_PUSH.getMsg()));
                 continue;
             }
 

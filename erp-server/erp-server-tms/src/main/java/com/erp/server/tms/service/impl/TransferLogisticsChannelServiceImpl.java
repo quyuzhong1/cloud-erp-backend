@@ -89,7 +89,7 @@ public class TransferLogisticsChannelServiceImpl extends SuperServiceImpl<Transf
     @Override
     public Boolean update(TransferLogisticsChannelDTO.UpdateDTO updateDTO) {
         TransferLogisticsChannelEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, Name));
+        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, Name));
         TransferLogisticsChannelEntity logisticsChannelEntity = BeanMapperUtils.map(TransferLogisticsChannelEntity.class, updateDTO);
 
         boolean save = super.updateById(logisticsChannelEntity);
@@ -111,7 +111,7 @@ public class TransferLogisticsChannelServiceImpl extends SuperServiceImpl<Transf
     public TransferLogisticsChannelDTO.ViewDTO view(String id) {
         TransferLogisticsChannelEntity channelEntity = this.getById(id);
         if (Objects.isNull(channelEntity)) {
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "物流渠道");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "物流渠道");
         }
         TransferLogisticsChannelDTO.ViewDTO view = new TransferLogisticsChannelDTO.ViewDTO();
         BeanMapperUtils.copy(channelEntity, view);
@@ -123,7 +123,7 @@ public class TransferLogisticsChannelServiceImpl extends SuperServiceImpl<Transf
     public BatchResultDTO delete(String id) {
         TransferLogisticsChannelEntity entity = this.getById(id);
         if (Objects.isNull(entity)) {
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "物流渠道");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "物流渠道");
         }
 
         TransferDeclareEntity declareEntity = transferDeclareService.checkExistByChannelIds(Arrays.asList(id));
@@ -143,7 +143,7 @@ public class TransferLogisticsChannelServiceImpl extends SuperServiceImpl<Transf
     public BatchResultDTO updateStatus(String id, Boolean disabled) {
         TransferLogisticsChannelEntity entity = this.getById(id);
         if (Objects.isNull(entity)) {
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "物流渠道");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "物流渠道");
         }
         Boolean dbDisabled = entity.getDisabled();
         if (dbDisabled.equals(disabled)) {

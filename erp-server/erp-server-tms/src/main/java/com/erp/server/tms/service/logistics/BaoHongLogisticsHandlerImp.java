@@ -12,7 +12,6 @@ import com.erp.model.tms.enums.BusinessTypeEnum;
 import com.erp.model.tms.enums.RequestStatusEnums;
 import com.erp.model.tms.vo.request.*;
 import com.erp.model.tms.vo.response.*;
-import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.server.tms.convert.BaoHongConverter;
 import com.erp.server.tms.convert.BaoHongCreateOrderConverter;
 import com.erp.server.tms.handler.AbstractLogisticsHandler;
@@ -127,7 +126,7 @@ public class BaoHongLogisticsHandlerImp extends AbstractLogisticsHandler {
                     logisticsOperateService.pullOperateLog(logisticsGetLabelVO.getOrderId(),
                             logisticsGetLabelVO.getDeliveryNo(), BusinessTypeEnum.GET_LABEL.getCode(), LogisticsPlatformEnum.BAO_HONG.getCode(),
                             RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsGetLabelVO), JSONUtil.toJsonStr(response));
-                    return ApiResult.error(ApiError.CALL_THIRD_LOGISTICS_PLATFORM_ERROR.getCode(),response.getMessage());
+                    return ApiResult.error(ApiError.LOGISTICS_CALL_THIRD_PLATFORM_ERROR.getCode(),response.getMessage());
                 }
                 LogisticsPrintLabelResponse logisticsPrintLabelResponse = new LogisticsPrintLabelResponse();
                 logisticsPrintLabelResponse.setBase64(response.getData());

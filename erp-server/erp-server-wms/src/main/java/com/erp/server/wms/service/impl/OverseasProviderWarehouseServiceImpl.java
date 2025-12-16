@@ -238,7 +238,7 @@ public class OverseasProviderWarehouseServiceImpl extends SuperServiceImpl<Overs
             //如果启用，校验仓库是否绑定
             if (!detailEntity.getDisabled()) {
                 if (CharSequenceUtil.isBlank(detailEntity.getWarehouseId())) {
-                    throw new ServiceException(ApiError.ERROR_NOT_WAREHOUSE);
+                    throw new ServiceException(ApiError.WH_NOT_MATCHED);
                 }
 
                 //已绑定第三方供应商仓，一个仓库只能绑定一个第三方仓
@@ -257,7 +257,7 @@ public class OverseasProviderWarehouseServiceImpl extends SuperServiceImpl<Overs
                 long count = overseasProviderWarehouseEntities.stream().filter(req -> !req.getDisabled()
                         && req.getWarehouseId().equals(detailEntity.getWarehouseId()) && !Objects.equals(req.getMainId(), mainId)).count();
                 if (count > 1) {
-                    throw new ServiceException(ApiError.WAREHOUSE_REPEAT_BINDING, updateDTO.getName());
+                    throw new ServiceException(ApiError.WH_REPEAT_BINDING_THIRD_WAREHOUSE, updateDTO.getName());
                 }
             }
             detailEntity.setMainId(mainId);
@@ -268,7 +268,7 @@ public class OverseasProviderWarehouseServiceImpl extends SuperServiceImpl<Overs
             if (CharSequenceUtil.isNotBlank(detailEntity.getId())) {
                 OverseasProviderWarehouseEntity old = oldList.stream().filter(obj -> obj.getId().equals(detailEntity.getId())).findFirst().orElse(null);
                 if (ObjectUtils.isEmpty(old)) {
-                    throw new ServiceException(ApiError.ERROR_NOT_FBA_DELIVERY_DETAIL);
+                    throw new ServiceException(ApiError.FIRST_MILE_SHIPMENT_NOT_FOUND);
                 }
                 operateLogService.addModuleOperateLogByObj(old, detailEntity, ModuleTypeEnum.FIRST_MILE_DELIVERY.getCode(), mainId, "", String.format("【%s】", old.getPlatformWarehouseName()));
             }

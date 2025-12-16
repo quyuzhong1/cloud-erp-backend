@@ -68,7 +68,7 @@ public class AssetStocktakingDetailServiceImpl extends SuperServiceImpl<AssetSto
     @Override
     public Boolean update(AssetStocktakingDetailDTO.UpdateDTO addOrUpdateDTO) {
         AssetStocktakingDetailEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "资产盘点明细单"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "资产盘点明细单"));
         AssetStocktakingDetailEntity assetStocktakingDetailEntity =  BeanMapperUtils.map(AssetStocktakingDetailEntity.class, addOrUpdateDTO);
 
         // 数据处理

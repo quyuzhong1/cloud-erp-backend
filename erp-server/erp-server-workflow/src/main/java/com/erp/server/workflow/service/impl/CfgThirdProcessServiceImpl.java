@@ -77,7 +77,7 @@ public class CfgThirdProcessServiceImpl extends SuperServiceImpl<CfgThirdProcess
         List<CfgThirdProcessEntity> existList = this.list(new LambdaQueryWrapper<CfgThirdProcessEntity>().eq(CfgThirdProcessEntity::getBussinessKey, addDTO.getBussinessKey())
                 .eq(CfgThirdProcessEntity::getSourcePlatform, addDTO.getSourcePlatform()).eq(CfgThirdProcessEntity::getEnableStatus, true));
         if (CollUtil.isNotEmpty(existList)){
-            throw new ServiceException(ApiError.ERROR_DATA_DUPLICATE);
+            throw new ServiceException(ApiError.BILL_DATA_DUPLICATE);
         }
         CfgThirdProcessEntity cfgThirdProcessEntity = new CfgThirdProcessEntity();
         BeanMapperUtils.copy(addDTO, cfgThirdProcessEntity);
@@ -106,7 +106,7 @@ public class CfgThirdProcessServiceImpl extends SuperServiceImpl<CfgThirdProcess
     @Override
     public Boolean update(CfgThirdProcessDTO.UpdateDTO addOrUpdateDTO) {
         CfgThirdProcessEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "三方审批生成"));
+        old = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "三方审批生成"));
         CfgThirdProcessEntity cfgThirdProcessEntity = BeanMapperUtils.map(CfgThirdProcessEntity.class, addOrUpdateDTO);
 
         // 数据处理
@@ -207,7 +207,7 @@ public class CfgThirdProcessServiceImpl extends SuperServiceImpl<CfgThirdProcess
         //根据单据类型查询
         CfgThirdProcessEntity oldEntity = this.getByBussinessKey(cfgThirdProcessEntity.getBussinessKey());
         if (ObjectUtil.isNotEmpty(oldEntity) && !CharSequenceUtil.equals(cfgThirdProcessEntity.getId(),oldEntity.getId())) {
-            throw new ServiceException(ApiError.CFG_THIRD_PROCESS_BUSSINESSKEY_EXIST, SourceTypeEnum.getName(cfgThirdProcessEntity.getBussinessKey()));
+            throw new ServiceException(ApiError.WF_THIRD_CONFIG_EXIST, SourceTypeEnum.getName(cfgThirdProcessEntity.getBussinessKey()));
         }
     }
 

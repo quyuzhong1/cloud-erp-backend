@@ -42,7 +42,6 @@ import com.erp.rpc.oms.feign.OmsListingInfoFeign;
 import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
-import com.erp.server.wms.constant.WmsConstant;
 import com.erp.server.wms.convert.OverseasWarehouseInboundConverter;
 import com.erp.server.wms.handler.ThirdWarehouseRegistry;
 import com.erp.server.wms.mapper.OverseasWarehouseInboundMapper;
@@ -143,18 +142,18 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
 
         FirstMileDeliveryEntity deliveryEntity = firstMileDeliveryService.getById(addDTO.getSourceId());
         if (Objects.isNull(deliveryEntity)){
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "发货单");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "发货单");
         }
         List<PackingTaskEntity> packingTaskEntity = packingTaskService.listBySourceCodes(Arrays.asList(deliveryEntity.getCode(),deliveryEntity.getSourceCode()));
 
         if (CollectionUtils.isEmpty(packingTaskEntity) || !PackingTaskStatusEnum.PACKED.getCode().equals(packingTaskEntity.get(0).getPackingStatus())) {
-            throw new ServiceException(ApiError.NOT_PACKING_NOT_GENERATE_INBOUND);
+            throw new ServiceException(ApiError.FIRST_MILE_SHIPMENT_PACKING_NOT_COMPLETED_CANNOT_GENERATE_INBOUND);
         }
 
         // 发货单明细
         List<FirstMileDeliveryDetailEntity> deliveryDetailEntityList = firstMileDeliveryDetailService.listByMainIds(Collections.singletonList(deliveryEntity.getId()));
         if (CollectionUtils.isEmpty(deliveryDetailEntityList)) {
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "发货单明细");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "发货单明细");
         }
         // 查询发货目的仓平台授权
         OverseasProviderEntity providerEntity = overseasProviderWarehouseService.findPlatformByWarehouseId(deliveryEntity.getDestWarehouseId());
@@ -365,7 +364,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
     public Boolean update(OverseasWarehouseInboundDTO.UpdateDTO updateDTO) {
         OverseasWarehouseInboundEntity old = super.getById(updateDTO.getId());
         if (Objects.isNull(old)){
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "海外仓入库单");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "海外仓入库单");
         }
         OverseasWarehouseInboundEntity mainEntity = new OverseasWarehouseInboundEntity();
         BeanUtils.copyProperties(old, mainEntity);
@@ -384,7 +383,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
 
         FirstMileDeliveryEntity deliveryEntity = firstMileDeliveryService.getById(old.getSourceId());
         if (Objects.isNull(deliveryEntity)){
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "发货单");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "发货单");
         }
 
         // 查询发货目的仓平台授权
@@ -397,7 +396,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         // 发货单明细
         List<FirstMileDeliveryDetailEntity> deliveryDetailEntityList = firstMileDeliveryDetailService.listByMainIds(Collections.singletonList(deliveryEntity.getId()));
         if (CollectionUtils.isEmpty(deliveryDetailEntityList)) {
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "发货单明细");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "发货单明细");
         }
 
         // 数据处理
@@ -724,7 +723,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
     public BatchResultDTO manualFinish(OverseasWarehouseInboundDTO.FinishDTO dto) {
         // 根据入库单ID获取入库单实体
         OverseasWarehouseInboundEntity entity = Optional.ofNullable(this.getById(dto.getId()))
-                .orElseThrow(() -> new ServiceException(ApiError.OVERSEAS_WAREHOUSE_INBOUND_NOT_EXIST));
+                .orElseThrow(() -> new ServiceException(ApiError.WH_OVERSEAS_INBOUND_NOT_EXIST));
         List<OverseasWarehouseInboundDetailEntity> detailEntityList = overseasWarehouseInboundDetailService.getByMainId(entity.getId());
         List<OverseasWarehouseInboundDetailEntity> updateDetailEntityList = new ArrayList<>();
         if (overseasProviderWarehouseService.isApiWarehouse(entity.getToWarehouseId())){
@@ -770,7 +769,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
     public OverseasWarehouseInboundDTO.ViewDTO view(String id) {
         OverseasWarehouseInboundEntity entity = this.getById(id);
         if (Objects.isNull(entity)){
-            throw new ServiceException(ApiError.OVERSEAS_WAREHOUSE_INBOUND_NOT_EXIST);
+            throw new ServiceException(ApiError.WH_OVERSEAS_INBOUND_NOT_EXIST);
         }
 
         OverseasWarehouseInboundDTO.ViewDTO resultDTO = OverseasWarehouseInboundConverter.INSTANCE.entityToViewDTO(entity);
@@ -865,18 +864,18 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public BatchResultDTO cancel(String id) {
-        OverseasWarehouseInboundEntity mainEntity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException(ApiError.OVERSEAS_WAREHOUSE_INBOUND_NOT_EXIST));
+        OverseasWarehouseInboundEntity mainEntity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException(ApiError.WH_OVERSEAS_INBOUND_NOT_EXIST));
         boolean isApi = overseasProviderWarehouseService.isApiWarehouse(mainEntity.getToWarehouseId());
         if(isApi){
             // 只有待提交的单据允许撤销
             if (!OverseasInstockStatusEnum.TO_BE_SHIPPED.getCode().equalsIgnoreCase(mainEntity.getInstockStatus())) {
-                throw new ServiceException(ApiError.OVERSEAS_WAREHOUSE_INBOUND_NOT_CANCEL);
+                throw new ServiceException(ApiError.WH_OVERSEAS_INBOUND_NOT_CANCEL);
             }
         }else{
             // 无API对接的三方仓入库单，可以在“待签收”状态下，操作取消入库
             if (!OverseasInstockStatusEnum.TO_BE_SHIPPED.getCode().equalsIgnoreCase(mainEntity.getInstockStatus())
              && !OverseasInstockStatusEnum.TO_BE_SIGNED.getCode().equalsIgnoreCase(mainEntity.getInstockStatus())) {
-                throw new ServiceException(ApiError.OVERSEAS_WAREHOUSE_INBOUND_NOT_CANCEL);
+                throw new ServiceException(ApiError.WH_OVERSEAS_INBOUND_NOT_CANCEL);
             }
         }
         // 更新状态
@@ -887,7 +886,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
 
         FirstMileDeliveryEntity deliveryEntity = firstMileDeliveryService.getById(mainEntity.getSourceId());
         if (Objects.isNull(deliveryEntity)){
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "发货单");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "发货单");
         }
 
         // 查询发货目的仓平台授权
@@ -899,7 +898,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         // 发货单明细
         List<FirstMileDeliveryDetailEntity> deliveryDetailEntityList = firstMileDeliveryDetailService.listByMainIds(Collections.singletonList(deliveryEntity.getId()));
         if (CollectionUtils.isEmpty(deliveryDetailEntityList)) {
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "发货单明细");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "发货单明细");
         }
         // 操作日志
         String msg = CharSequenceUtil.format("用户【{}】取消了单据编号为【{}】的海外入库单", UserContext.getDefaultLoginUser().getUserName(), mainEntity.getCode());
@@ -936,10 +935,10 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public BatchResultDTO delete(String id) {
-        OverseasWarehouseInboundEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException(ApiError.OVERSEAS_WAREHOUSE_INBOUND_NOT_EXIST));
+        OverseasWarehouseInboundEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException(ApiError.WH_OVERSEAS_INBOUND_NOT_EXIST));
         // 只有取消的单据允许删除
         if (!OverseasInstockStatusEnum.CANCELED.getCode().equalsIgnoreCase(entity.getInstockStatus())) {
-            throw new ServiceException(ApiError.OVERSEAS_WAREHOUSE_INBOUND_NOT_DELETE);
+            throw new ServiceException(ApiError.WH_OVERSEAS_INBOUND_NOT_DELETE);
         }
         // 更新状态
         if (!this.removeById(id)) {
@@ -1031,7 +1030,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
             if (CharSequenceUtil.isBlank(destWarehouse.getOnwayWarehouseId())) {
                 List<WarehouseEntity> warehouseEntities = warehouseService.listByKingdeeCodeList(Collections.singletonList("xgwj-fba"));
                 if (CollectionUtils.isEmpty(warehouseEntities)) {
-                    throw new ServiceException(ApiError.WAREHOUSE_CODE_XGWJ_FBA_NOT_EXIST);
+                    throw new ServiceException(ApiError.WH_CODE_XGWJ_FBA_NOT_EXIST);
                 }
                 destWarehouse.setOnwayWarehouseId(warehouseEntities.get(0).getId());
                 destWarehouse.setOnwayWarehouseName(warehouseEntities.get(0).getName());

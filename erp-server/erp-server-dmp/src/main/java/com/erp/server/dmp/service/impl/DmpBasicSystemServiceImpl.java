@@ -12,18 +12,13 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
-import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
-import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.dto.DmpBasicSystemDTO;
-import com.erp.model.dmp.dto.DmpCfgInputDTO;
 import com.erp.model.dmp.entity.DmpBasicSystemEntity;
 import com.erp.model.dmp.entity.DmpCfgInputEntity;
 import com.erp.model.dmp.entity.DmpCfgOutputEntity;
 import com.erp.model.dmp.enums.DmpBasicSystemTypeEnum;
-import com.erp.model.plm.dto.DictControllerDTO;
-import com.erp.model.scm.entity.ContractInfoEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.dmp.mapper.DmpBasicSystemMapper;
@@ -103,7 +98,7 @@ public class DmpBasicSystemServiceImpl extends SuperServiceImpl<DmpBasicSystemMa
     @Override
     public Boolean update(DmpBasicSystemDTO.UpdateDTO updateDTO) {
         DmpBasicSystemEntity old = super.getById(updateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "平台管理"));
+        old = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "平台管理"));
         DmpBasicSystemEntity dmpBasicSystemEntity = BeanMapperUtils.map(DmpBasicSystemEntity.class, updateDTO);
 
         Integer count = lambdaQuery()

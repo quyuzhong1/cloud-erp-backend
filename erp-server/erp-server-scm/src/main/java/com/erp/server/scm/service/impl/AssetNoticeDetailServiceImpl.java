@@ -80,7 +80,7 @@ public class AssetNoticeDetailServiceImpl extends SuperServiceImpl<AssetNoticeDe
     @Override
     public Boolean update(AssetNoticeDetailDTO.UpdateDTO addOrUpdateDTO) {
         AssetNoticeDetailEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, ""));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, ""));
         AssetNoticeDetailEntity assetNoticeDetailEntity =  BeanMapperUtils.map(AssetNoticeDetailEntity.class, addOrUpdateDTO);
 
         // 数据处理
@@ -170,7 +170,7 @@ public class AssetNoticeDetailServiceImpl extends SuperServiceImpl<AssetNoticeDe
             plmTaskFeign.updateOccupyStatus(skuIds);
         } catch (Exception e) {
             log.warn("更新 SKU 占用状态失败，skuIds={}", skuIds, e);
-            throw new ServiceException(ApiError.ERROR_SKU_OCCUPY_STATE_UPDATE_FAIL,skuIds);
+            throw new ServiceException(ApiError.PRODUCT_SKU_OCCUPY_STATE_UPDATE_FAIL,skuIds);
         }
     }
 

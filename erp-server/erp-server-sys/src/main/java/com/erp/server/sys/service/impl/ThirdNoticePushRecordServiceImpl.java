@@ -766,7 +766,7 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
                         recordEntity.setDataJson(contentMap);
                         if(!unionMap.containsKey(userId) || StringUtils.isBlank(unionMap.get(userId).getThirdUnionId())){
                             recordEntity.setStatus(ThirdNoticePushRecordStatusEnum.FAILED.getCode());
-                            recordEntity.setErrorReason(ApiError.FS_USER_NOT_BIND.getMsg());
+                            recordEntity.setErrorReason(ApiError.AUTH_FS_USER_NOT_BIND.getMsg());
                             insertBatch(Arrays.asList(recordEntity));
                             continue;
                         }
@@ -1447,7 +1447,7 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
                         recordEntity.setStatus(ThirdNoticePushRecordStatusEnum.SENDING.getCode());
                         if(!(unionMap.containsKey(userId) &&  StringUtils.isNotBlank(unionMap.get(userId).getThirdUnionId()))){
                             recordEntity.setStatus(ThirdNoticePushRecordStatusEnum.FAILED.getCode());
-                            recordEntity.setErrorReason(ApiError.FS_USER_NOT_BIND.getMsg());
+                            recordEntity.setErrorReason(ApiError.AUTH_FS_USER_NOT_BIND.getMsg());
                         }
                         boolean save = save(recordEntity);
                         if(Boolean.TRUE.equals(save)){

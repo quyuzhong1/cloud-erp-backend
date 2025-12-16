@@ -189,7 +189,7 @@ public class TemplateMembersServiceImpl extends ServiceImpl<TemplateMembersMappe
     public Boolean saveTemplateMembers(TemplateMembersAddOrUpdateDTO dto) {
         List<TemplateMembersDTO> membersDtoList = dto.getMembersList();
         if (CollectionUtils.isEmpty(membersDtoList)) {
-            throw new ServiceException(ApiError.ERROR_PLM_TEMPLATE_MEMBER_REQUIRED);
+            throw new ServiceException(ApiError.PROJECT_TEMPLATE_MEMBER_REQUIRED);
         }
         //角色和成员关联表数据集合
         List<TemplateRoleRefMembersEntity> roleRefMembersList = new ArrayList<>();
@@ -203,13 +203,13 @@ public class TemplateMembersServiceImpl extends ServiceImpl<TemplateMembersMappe
             List<String> intersectionList = (List<String>) CollectionUtils.intersection(collect1, collect2);
             //表示有交集不能再次生成
             if (CollectionUtils.isNotEmpty(intersectionList)) {
-                throw new ServiceException(ApiError.ERROR_PLM_TEMPLATE_ROLE_MEMBER_ALREADY_EXISTS);
+                throw new ServiceException(ApiError.PROJECT_TEMPLATE_ROLE_MEMBER_EXISTS);
             }
         }
         //获取登录人信息
         LoginUser loginUser = UserContext.getLoginUser();
         if (ObjectUtils.isEmpty(loginUser)) {
-            throw new ServiceException(ApiError.ERROR_AUTH_CREDENTIALS_INVALID);
+            throw new ServiceException(ApiError.AUTH_CREDENTIALS_INVALID);
         }
         String uid = loginUser.getUid();
         String userName = loginUser.getUserName();
@@ -218,7 +218,7 @@ public class TemplateMembersServiceImpl extends ServiceImpl<TemplateMembersMappe
         //根据成员id集合查询
         List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(memberIdList);
         if (CollectionUtils.isEmpty(userList)) {
-            throw new ServiceException(ApiError.ERROR_AUTH_CREDENTIALS_INVALID);
+            throw new ServiceException(ApiError.AUTH_CREDENTIALS_INVALID);
         }
         membersEntityList.stream().forEach(obj -> {
             //成员数据处理
@@ -230,7 +230,7 @@ public class TemplateMembersServiceImpl extends ServiceImpl<TemplateMembersMappe
         });
         boolean flag = this.saveBatch(membersEntityList);
         if (!flag) {
-            throw new ServiceException(ApiError.DEFAULT);
+            throw new ServiceException(ApiError.HTTP_UNKNOWN);
         }
         membersEntityList.stream().forEach(obj -> {
             //关联表数据处理
@@ -252,7 +252,7 @@ public class TemplateMembersServiceImpl extends ServiceImpl<TemplateMembersMappe
     public Boolean updateTemplateMembers(TemplateMembersAddOrUpdateDTO dto) {
         List<TemplateMembersDTO> membersDtoList = dto.getMembersList();
         if (CollectionUtils.isEmpty(membersDtoList)) {
-            throw new ServiceException(ApiError.ERROR_PLM_TEMPLATE_MEMBER_REQUIRED);
+            throw new ServiceException(ApiError.PROJECT_TEMPLATE_MEMBER_REQUIRED);
         }
         //编辑时成员仅有一个
         TemplateMembersDTO templateMembersDTO = membersDtoList.stream().findFirst().orElse(null);
@@ -261,13 +261,13 @@ public class TemplateMembersServiceImpl extends ServiceImpl<TemplateMembersMappe
         if (CollectionUtils.isNotEmpty(membersList)) {
             long count = membersList.stream().filter(obj -> obj.getMemberId().equals(templateMembersDTO.getMemberId()) && !obj.getId().equals(templateMembersDTO.getId())).count();
             if (count > 0) {
-                throw new ServiceException(ApiError.ERROR_PLM_TEMPLATE_ROLE_MEMBER_ALREADY_EXISTS);
+                throw new ServiceException(ApiError.PROJECT_TEMPLATE_ROLE_MEMBER_EXISTS);
             }
         }
         //获取登录人信息
         LoginUser loginUser = UserContext.getLoginUser();
         if (ObjectUtils.isEmpty(loginUser)) {
-            throw new ServiceException(ApiError.ERROR_AUTH_CREDENTIALS_INVALID);
+            throw new ServiceException(ApiError.AUTH_CREDENTIALS_INVALID);
         }
         String uid = loginUser.getUid();
         String userName = loginUser.getUserName();
@@ -279,14 +279,14 @@ public class TemplateMembersServiceImpl extends ServiceImpl<TemplateMembersMappe
         //修改角色成员关联数据
         Boolean flag = templateRoleRefMembersService.updateByTemplateId(templateRoleRefMembersEntity);
         if (!flag) {
-            throw new ServiceException(ApiError.DEFAULT);
+            throw new ServiceException(ApiError.HTTP_UNKNOWN);
         }
         //根据id和模板id修改
         TemplateMembersEntity templateMembersEntity = new TemplateMembersEntity();
         BeanMapperUtils.copy(templateMembersDTO, templateMembersEntity);
         FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(templateMembersDTO.getMemberId());
         if (ObjectUtils.isEmpty(findUserDTO)) {
-            throw new ServiceException(ApiError.ERROR_AUTH_CREDENTIALS_INVALID);
+            throw new ServiceException(ApiError.AUTH_CREDENTIALS_INVALID);
         }
         templateMembersEntity.setMemberName(findUserDTO.getUserName());
         templateMembersEntity.setTemplateId(dto.getTemplateId());
@@ -301,18 +301,18 @@ public class TemplateMembersServiceImpl extends ServiceImpl<TemplateMembersMappe
 
         TemplateRoleRefMembersEntity roleRefMembers = templateRoleRefMembersService.getByIdAndTemplateId(dto.getRoleRefMembersId(), dto.getTemplateId());
         if (roleRefMembers == null) {
-            throw new ServiceException(ApiError.DEFAULT);
+            throw new ServiceException(ApiError.HTTP_UNKNOWN);
         }
 
         //删除成员表信息
         Boolean templateMembersRemove = templateMembersService.removeByIdAndTemplateId(roleRefMembers.getMembersId(), roleRefMembers.getTemplateId());
         if (!templateMembersRemove) {
-            throw new ServiceException(ApiError.DEFAULT);
+            throw new ServiceException(ApiError.HTTP_UNKNOWN);
         }
         //删除角色成员关联表信息
         Boolean roleRefMembersRemove = templateRoleRefMembersService.removeByIdAndTemplateId(dto.getRoleRefMembersId(), dto.getTemplateId());
         if (!roleRefMembersRemove) {
-            throw new ServiceException(ApiError.DEFAULT);
+            throw new ServiceException(ApiError.HTTP_UNKNOWN);
         }
         //如果角色表下面没有成员信息则删除角色
         List<TemplateRoleRefMembersEntity> list = templateRoleRefMembersService.getByRoleIdAndTemplateId(roleRefMembers.getRoleId(), roleRefMembers.getTemplateId());
@@ -321,13 +321,13 @@ public class TemplateMembersServiceImpl extends ServiceImpl<TemplateMembersMappe
             //判断成员是否被引用
             List<TemplateTaskEntity> templateTaskList = templateTaskService.listByRoleId(roleRefMembers.getRoleId());
             if (CollectionUtils.isNotEmpty(templateTaskList)) {
-                throw new ServiceException(ApiError.ERROR_PLM_ROLE_REF_DELETE_FORBIDDEN);
+                throw new ServiceException(ApiError.PROJECT_ROLE_REF_DELETE_FORBIDDEN);
             }
             TemplateRoleEntity templateRoleEntity = templateRoleService.getByTemplateIdAndRoleId(roleRefMembers.getTemplateId(), roleRefMembers.getRoleId());
             if (ObjectUtils.isNotEmpty(templateRoleEntity)) {
                 List<TaskChargeDistributionEntity> taskChargeDistributionList = taskChargeDistributionService.listBySourceAndRoleName(Arrays.asList(MathUtil.ONE, MathUtil.TWO), templateRoleEntity.getName());
                 if (CollectionUtils.isNotEmpty(taskChargeDistributionList)) {
-                    throw new ServiceException(ApiError.ERROR_PLM_ROLE_REF_DELETE_FORBIDDEN);
+                    throw new ServiceException(ApiError.PROJECT_ROLE_REF_DELETE_FORBIDDEN);
                 }
                 templateRoleService.removeByIdAndTemplateId(roleRefMembers.getRoleId(), roleRefMembers.getTemplateId());
 

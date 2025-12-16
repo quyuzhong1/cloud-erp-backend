@@ -98,7 +98,7 @@ public class PackingExcelListener extends AnalysisEventListener<PackingExcelDTO>
             ExcelDataConvertException convertException = (ExcelDataConvertException) exception;
             int row = convertException.getRowIndex();
             int column = convertException.getColumnIndex()+1;
-            throw new ServiceException(ApiError.EXCEL_ILLEGAL_FIELDS,row,column);
+            throw new ServiceException(ApiError.FILE_EXCEL_ILLEGAL_FIELDS,row,column);
         }
         throw exception;
     }

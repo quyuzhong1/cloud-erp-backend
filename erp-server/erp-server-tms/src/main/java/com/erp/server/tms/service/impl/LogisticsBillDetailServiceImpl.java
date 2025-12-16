@@ -157,7 +157,7 @@ public class LogisticsBillDetailServiceImpl extends SuperServiceImpl<LogisticsBi
     public BatchResultDTO updateStatus(String id, String trackStatus,LocalDateTime trackTime,String trackDesc) {
         LogisticsBillDetailEntity detailEntity = this.getById(id);
         if (Objects.isNull(detailEntity)) {
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "自发货物流单详情");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "自发货物流单详情");
         }
         String signCode = LogisticTrackStatusEnum.SIGN.getCode();
         String manualCompleteCode = LogisticTrackStatusEnum.MANUAL_COMPLETE.getCode();

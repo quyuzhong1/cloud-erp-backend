@@ -80,7 +80,7 @@ public class SoLabelServiceImpl extends SuperServiceImpl<SoLabelMapper, SoLabelE
     @Override
     public Boolean update(SoLabelDTO.UpdateDTO addOrUpdateDTO) {
         SoLabelEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "B2B订单面单表"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "B2B订单面单表"));
         SoLabelEntity soLabelEntity =  BeanMapperUtils.map(SoLabelEntity.class, addOrUpdateDTO);
 
         // 数据处理
@@ -150,7 +150,7 @@ public class SoLabelServiceImpl extends SuperServiceImpl<SoLabelMapper, SoLabelE
 
         } catch (Exception e) {
             e.printStackTrace();
-            throw new ServiceException(ApiError.ERROR_PDF_SO_MERGE);
+            throw new ServiceException(ApiError.LOGISTICS_PDF_SO_MERGE_ERROR);
         }
     }
 

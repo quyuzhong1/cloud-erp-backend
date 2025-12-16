@@ -395,7 +395,7 @@ public class SoPriceChangeDetailServiceImpl extends SuperServiceImpl<SoPriceChan
         }
         SoPriceChangeEntity soPriceChangeEntity = soPriceChangeService.getById(soPriceChangeId);
         if (ObjUtil.isEmpty(soPriceChangeEntity)) {
-            throw new ServiceException(ApiError.ERROR_SCM_PURCHASE_PRICE_CHANGE_NOT_FOUND);
+            throw new ServiceException(ApiError.PURCHASE_PRICE_CHANGE_NOT_FOUND);
         }
         //区间验证
         checkSoPriceChangeDetail(soPriceChangeEntity.getSoOrgId(),list);
@@ -486,7 +486,7 @@ public class SoPriceChangeDetailServiceImpl extends SuperServiceImpl<SoPriceChan
             //时间不能重叠
             boolean overlap = LocalDateUtil.isOverlap(entity.getEffectiveDate(), entity.getExpireDate(), detailEntity.getEffectiveDate(), detailEntity.getExpireDate());
             if (overlap) {
-                throw new ServiceException(ApiError.ERROR_PURCHASE_PRICE_DATE_OVERLAP,entity.getSkuNo());
+                throw new ServiceException(ApiError.PURCHASE_PRICE_DATE_OVERLAP,entity.getSkuNo());
             }
         }
         //时间重叠时
@@ -495,7 +495,7 @@ public class SoPriceChangeDetailServiceImpl extends SuperServiceImpl<SoPriceChan
             //区间不能重叠
             if (entity.getMinQty().compareTo(detailEntity.getMaxQty()) < MathUtil.ZERO
                     && detailEntity.getMinQty().compareTo(entity.getMaxQty()) < MathUtil.ZERO ) {
-                throw new ServiceException(ApiError.ERROR_INTERVAL_SUPPLIER_OVERLAP);
+                throw new ServiceException(ApiError.SUPPLIER_INTERVAL_OVERLAP);
             }
         }
     }
@@ -515,7 +515,7 @@ public class SoPriceChangeDetailServiceImpl extends SuperServiceImpl<SoPriceChan
             //时间不能重叠
             boolean overlap = LocalDateUtil.isOverlap(entity.getEffectiveDate(), entity.getExpireDate(), detailEntity.getEffectiveDate(), detailEntity.getExpireDate());
             if (overlap) {
-                throw new ServiceException(ApiError.ERROR_PURCHASE_PRICE_DATE_OVERLAP,entity.getSkuNo());
+                throw new ServiceException(ApiError.PURCHASE_PRICE_DATE_OVERLAP,entity.getSkuNo());
             }
         }
         //时间重叠时
@@ -524,7 +524,7 @@ public class SoPriceChangeDetailServiceImpl extends SuperServiceImpl<SoPriceChan
             //区间不能重叠
             if (entity.getMinQty().compareTo(detailEntity.getMaxQty()) < MathUtil.ZERO
                     && detailEntity.getMinQty().compareTo(entity.getMaxQty()) < MathUtil.ZERO ) {
-                throw new ServiceException(ApiError.ERROR_INTERVAL_SUPPLIER_OVERLAP);
+                throw new ServiceException(ApiError.SUPPLIER_INTERVAL_OVERLAP);
             }
         }
     }

@@ -95,7 +95,7 @@ public class StocktakingTaskDetailServiceImpl extends SuperServiceImpl<Stocktaki
     public Boolean importFile(String mainId, MultipartFile excelFile, HttpServletResponse response) {
         StocktakingTaskEntity task = stocktakingTaskService.getById(mainId);
         if (Objects.isNull(task)) {
-            throw new ServiceException(ApiError.ERROR_BILL_NOT_EXIST);
+            throw new ServiceException(ApiError.BILL_NOT_EXIST);
         }
         //状态
         StocktakingStatusEnum status = task.getStatus();
@@ -134,11 +134,11 @@ public class StocktakingTaskDetailServiceImpl extends SuperServiceImpl<Stocktaki
     @Transactional(rollbackFor = Exception.class)
     public Boolean updateBatchDetail(List<StocktakingTaskDetailDTO.UpdateDTO> list) {
         if (CollectionUtils.isEmpty(list)) {
-            throw new ServiceException(ApiError.NOT_EXIST_BILL,"");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE,"");
         }
         List<String> idList = list.stream().map(StocktakingTaskDetailDTO.UpdateDTO::getId).collect(Collectors.toList());
         if (CollectionUtils.isEmpty(idList)) {
-            throw new ServiceException(ApiError.NOT_EXIST_BILL,"");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE,"");
         }
         List<StocktakingTaskDetailEntity> taskDetailList = this.listByIds(idList);
         List<StocktakingTaskDetailEntity> updateTaskDetailList = new ArrayList<>(taskDetailList.size());
@@ -278,7 +278,7 @@ public class StocktakingTaskDetailServiceImpl extends SuperServiceImpl<Stocktaki
             wb.close();
         } catch (Exception e) {
             log.error("盘点任务明细 downloadTemplate  出错了 e==={}", e);
-            throw new ServiceException(ApiError.ERROR_IMPORT_TEMPLATE_DOWNLOAD_FAILED);
+            throw new ServiceException(ApiError.FILE_IMPORT_TEMPLATE_DOWNLOAD_FAILED);
         }
     }
 

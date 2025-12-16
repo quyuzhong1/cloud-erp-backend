@@ -157,12 +157,12 @@ public class TemplatePhaseServiceImpl extends ServiceImpl<TemplatePhaseMapper, T
     public Boolean removeTemplatePhase(String id, String templateId) {
         TemplatePhaseEntity phaseEntity = this.getByIdAndTemplateId(id, templateId);
         if (Objects.isNull(phaseEntity)) {
-            throw new ServiceException(ApiError.ERROR_PLM_STAGE_TASK_NOT_FOUND);
+            throw new ServiceException(ApiError.PROJECT_STAGE_TASK_NOT_FOUND);
         }
         String name = phaseEntity.getName();
         String flagName = TaskConstant.APPROVAL_TASK_PHASE;
         if (flagName.equals(name)) {
-            throw new ServiceException(ApiError.ERROR_PLM_STAGE_INITIATION_DELETE_FORBIDDEN);
+            throw new ServiceException(ApiError.PROJECT_STAGE_INITIATION_DELETE_FORBIDDEN);
         }
         checkPhaseTask(id, templateId);
         LambdaQueryWrapper<TemplatePhaseEntity> queryWrapper = new LambdaQueryWrapper<>();
@@ -242,7 +242,7 @@ public class TemplatePhaseServiceImpl extends ServiceImpl<TemplatePhaseMapper, T
         List<TemplatePhaseEntity> phaseList = getByTemplateId(templateId);
         int size = list.stream().map(TemplatePhaseDTO::getName).distinct().collect(Collectors.toList()).size();
         if (size != list.size()) {
-            throw new ServiceException(ApiError.ERROR_PLM_STAGE_TASK_NAME_EXISTS);
+            throw new ServiceException(ApiError.PROJECT_STAGE_TASK_EXISTS);
         }
         for (TemplatePhaseDTO phase : list) {
             String id = phase.getId();
@@ -254,7 +254,7 @@ public class TemplatePhaseServiceImpl extends ServiceImpl<TemplatePhaseMapper, T
                 phaseNames = phaseList.stream().map(TemplatePhaseEntity::getName).collect(Collectors.toList());
             }
             if (phaseNames.contains(name)) {
-                throw new ServiceException(ApiError.ERROR_PLM_STAGE_TASK_NAME_EXISTS);
+                throw new ServiceException(ApiError.PROJECT_STAGE_TASK_EXISTS);
             }
 
         }
@@ -273,7 +273,7 @@ public class TemplatePhaseServiceImpl extends ServiceImpl<TemplatePhaseMapper, T
         queryWrapper.eq(TemplateTaskEntity::getTemplateId, templateId);
         int count = templateTaskService.count(queryWrapper);
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_PLM_STAGE_HAS_TASKS_DELETE_FORBIDDEN);
+            throw new ServiceException(ApiError.PROJECT_STAGE_HAS_TASKS_DELETE_FORBIDDEN);
         }
     }
 

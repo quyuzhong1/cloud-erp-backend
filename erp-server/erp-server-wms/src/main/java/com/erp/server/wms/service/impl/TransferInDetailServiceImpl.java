@@ -226,7 +226,7 @@ public class TransferInDetailServiceImpl extends SuperServiceImpl<TransferInDeta
             //调入数量
             Integer qty = item.getQty();
             if (transitDamageQty + qty > planQty) {
-                throw new ServiceException(ApiError.ERROR_WMS_TRANSFER_IN_QTY_EXCEEDS_PLAN);
+                throw new ServiceException(ApiError.WH_TRANSFER_IN_QTY_EXCEEDS_PLAN);
             }
             //调出的数量
             int outQty = transferOutDetailList.stream().filter(o -> o.getId().equals(sourceDetailId)).
@@ -234,7 +234,7 @@ public class TransferInDetailServiceImpl extends SuperServiceImpl<TransferInDeta
             int alreadyInQty = transferInDetailList.stream().filter(i -> i.getSourceDetailId().equals(sourceDetailId) && !i.getId().equals(id)).
                     mapToInt(TransferInDetailDTO.QtyDTO::getPlanQty).sum();
             if (alreadyInQty + planQty > outQty) {
-                throw new ServiceException(ApiError.ERROR_WMS_TRANSFER_IN_QTY_EXCEEDS_OUT_QTY);
+                throw new ServiceException(ApiError.WH_TRANSFER_IN_QTY_EXCEEDS_OUT_QTY);
             }
 
         }

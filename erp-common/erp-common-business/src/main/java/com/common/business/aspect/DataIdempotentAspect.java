@@ -89,7 +89,7 @@ public class DataIdempotentAspect {
                 boolean locked = clientLock.tryLock(waitTime, TimeUnit.SECONDS);
                 if (!locked) {
                     log.error("{}上锁失败", submitKey);
-                    throw new ServiceException(ApiError.ERROR_DATA_LOCKED);
+                    throw new ServiceException(ApiError.BILL_DATA_LOCKED);
                 }
                 rLocks.add(clientLock);
                 log.info("分布式锁上锁成功，key：{}，lockTime：{}", submitKey, leaseTime);
@@ -103,7 +103,7 @@ public class DataIdempotentAspect {
                         }
                     });
                 }
-                throw new ServiceException(ApiError.ERROR_DATA_LOCKED);
+                throw new ServiceException(ApiError.BILL_DATA_LOCKED);
             }
         }
         Object proceed = null;

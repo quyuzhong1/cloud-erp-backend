@@ -416,7 +416,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
     @Override
     public Boolean update(TmsFirstMileLogisticDTO.UpdateDTO updateDTO) {
         LogisticsBillEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "头程物流单"));
+        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "头程物流单"));
         String oldCounterNo = old.getCounterNo();
         String oldOutstockId = old.getOutstockId();
         //更新物流单
@@ -454,7 +454,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         LogisticsBillDetailEntity billDetailEntity = CollectionUtils.isEmpty(detailEntityList)?new LogisticsBillDetailEntity():detailEntityList.get(0);
         //更新物流单费用及明细
         List<LogisticsBillCostEntity> logisticsBillCostEntityList = logisticsBillCostService.getByLogisticsBillIds(Collections.singletonList(old.getId()));
-        Optional.ofNullable(logisticsBillCostEntityList).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "头程物流费用单"));
+        Optional.ofNullable(logisticsBillCostEntityList).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "头程物流费用单"));
         LogisticsBillCostDTO.UpdateDTO updateCostDTO = this.packCostUpdateDTO(generateLogisticDTO,updateDTO,logisticsBillCostEntityList.get(0));
         updateCostDTO.setLogisticsBillDetailId(billDetailEntity.getId());
         updateCostDTO.setTrackNo(old.getCounterNo());
@@ -974,7 +974,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
     @Override
     public TmsFirstMileLogisticDTO.ViewDTO view(String id) {
         LogisticsBillEntity old = super.getById(id);
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "物流单"));
+        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "物流单"));
         TmsFirstMileLogisticDTO.ViewDTO dto = baseMapper.firstMileView(id);
         this.fillViewDb(dto);
         return dto;
@@ -1306,7 +1306,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
             // 校验物理商是否一致
             List<LogisticsBillEntity> entityList = this.listByIds(dto.getIds());
             if (CollectionUtils.isEmpty(entityList)){
-                throw new ServiceException(ApiError.NOT_EXIST_BILL, "头程物流单");
+                throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "头程物流单");
             }
             List<String> logisticsSupperIds = entityList.stream()
                     .map(LogisticsBillEntity::getLogisticsSupplierId)
@@ -1332,7 +1332,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
             // 校验物理商是否一致
             List<LogisticsBillEntity> entityList = this.listByIds(dto.getIds());
             if (CollectionUtils.isEmpty(entityList)){
-                throw new ServiceException(ApiError.NOT_EXIST_BILL, "头程物流单");
+                throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "头程物流单");
             }
             List<String> deliveryIds = entityList.stream().map(LogisticsBillEntity::getOutstockId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
             List<FirstMileDeliveryEntity> deliveryEntityList = wmsFirstMileDeliveryFeign.listByIds(deliveryIds);
@@ -1420,7 +1420,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         // 校验物理商是否一致
         List<TmsFirstMileReconciliationDetailDTO.ListDTO> sourceDetailList = this.listReconciliationByMainIds(Collections.singletonList(id), SupplierTypeEnum.LOGISTICS.getCode());
         if (CollectionUtils.isEmpty(sourceDetailList)){
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "物流单");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "物流单");
         }
         String currency = sourceDetailList.stream().map(TmsFirstMileReconciliationDetailDTO.ListDTO::getCurrency).filter(StrUtil::isNotBlank).findFirst().orElse("");
         if (CharSequenceUtil.isBlank(currency)){
@@ -1450,7 +1450,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
             if (null == reconciliationEntity){
                 reconciliationEntity = tmsFirstMileReconciliationService.getByCode(reconciliationId);
                 if (null == reconciliationEntity){
-                    throw new ServiceException(ApiError.NOT_EXIST_BILL, "对账单");
+                    throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "对账单");
                 }
             }
             if (!reconciliationEntity.getSupplierType().equals(supplierType)){
@@ -1523,7 +1523,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
             String currentDate = reconciliationEntity.getReconciliationMonth().withDayOfMonth(reconciliationEntity.getReconciliationMonth().lengthOfMonth()).format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
             BigDecimal rate = dmpTaskFeign.getRate(currentDate, currency);
             if (Objects.isNull(rate)){
-                throw new ServiceException(ApiError.ERROR_EXCHANGE_RATE_NOT_EXIST, currentDate, currency);
+                throw new ServiceException(ApiError.COMMON_EXCHANGE_RATE_NOT_EXIST, currentDate, currency);
             }
             reconciliationEntity.setExchangeRate(rate);
         }
@@ -2226,7 +2226,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
     public LogisticsTrackDTO.ViewDTO listTrack(String logisticsBillId) {
         LogisticsBillEntity logisticsBill = logisticsBillService.getById(logisticsBillId);
         if (ObjectUtil.isEmpty(logisticsBill)) {
-            throw new ServiceException(ApiError.NOT_EXIST_BILL,"物流单");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE,"物流单");
         }
         String transportNo = logisticsBill.getTransportNo();
         String counterNo = CharSequenceUtil.isNotBlank(logisticsBill.getCounterNo()) ? logisticsBill.getCounterNo() : transportNo;

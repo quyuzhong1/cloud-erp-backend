@@ -114,7 +114,7 @@ public class TransferLogisticsSupplierServiceImpl extends SuperServiceImpl<Trans
     @Override
     public Boolean update(TransferLogisticsSupplierDTO.UpdateDTO updateDTO) {
         TransferLogisticsSupplierEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "物流商单"));
+        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "物流商单"));
         TransferLogisticsSupplierEntity logisticsSupplierEntity = BeanMapperUtils.map(TransferLogisticsSupplierEntity.class, updateDTO);
 
         // 数据处理
@@ -166,7 +166,7 @@ public class TransferLogisticsSupplierServiceImpl extends SuperServiceImpl<Trans
     @Override
     public List<TransferLogisticsSupplierDTO.ChannelViewDTO> listChannelView(String id, String name) {
         TransferLogisticsSupplierEntity entity = super.getById(id);
-        Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "物流商"));
+        Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "物流商"));
         //查询渠道信息
         List<TransferLogisticsChannelEntity> channelEntityList = transferLogisticsChannelService.listByMainIds(Arrays.asList(id));
         List<TransferLogisticsChannelDTO.ViewDTO> allChannelList = BeanMapperUtils.copyList(TransferLogisticsChannelDTO.ViewDTO.class, channelEntityList);
@@ -183,7 +183,7 @@ public class TransferLogisticsSupplierServiceImpl extends SuperServiceImpl<Trans
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO delete(String id) {
         TransferLogisticsSupplierEntity entity = super.getById(id);
-        Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "物流商"));
+        Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "物流商"));
         // 检查订单是否引用
         Boolean flag = transferDeclareService.checkExistTransferLogisticsSupplier(id);
         if (flag) {
@@ -195,7 +195,7 @@ public class TransferLogisticsSupplierServiceImpl extends SuperServiceImpl<Trans
         //删除渠道根据来源id
         transferLogisticsChannelService.removeByMainIdList(Arrays.asList(id));
         if(Objects.isNull(entity)){
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "物流商");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "物流商");
         }
         return BatchResultDTO.success(entity.getId(), entity.getSupplierName(), OperationTypeEnum.DELETE);
 
@@ -207,7 +207,7 @@ public class TransferLogisticsSupplierServiceImpl extends SuperServiceImpl<Trans
     public BatchResultDTO sync(String id) {
         TransferLogisticsSupplierEntity logisticsSupplier = this.getById(id);
         if (Objects.isNull(logisticsSupplier)) {
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "物流商");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "物流商");
         }
         String authStatus = logisticsSupplier.getAuthStatus();
         String alreadyCode = LogisticsAuthStatusEnum.ALREADY.getCode();

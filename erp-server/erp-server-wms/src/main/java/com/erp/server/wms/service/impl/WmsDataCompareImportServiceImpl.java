@@ -68,7 +68,7 @@ public class WmsDataCompareImportServiceImpl extends SuperServiceImpl<WmsDataCom
     public Boolean update(WmsDataCompareImportDTO.UpdateDTO updateDTO) {
         WmsDataCompareImportEntity old = super.getById(updateDTO.getId());
         if (Objects.isNull(old)){
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "数据对比导入文件信息");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "数据对比导入文件信息");
         }
         WmsDataCompareImportEntity wmsDataCompareImportEntity =  BeanMapperUtils.map(WmsDataCompareImportEntity.class, updateDTO);
 

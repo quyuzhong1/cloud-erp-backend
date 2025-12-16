@@ -148,7 +148,7 @@ public class QcReportServiceImpl extends SuperServiceImpl<QcReportMapper, QcRepo
             ExcelUtil.export(fileName, "质检报告", resultList, ExportQcReportExcelDTO.class, response);
         } catch (Exception e) {
             log.error("导出质检报告出错  ==e",e);
-            throw new ServiceException(ApiError.ERROR_FILE_EXPORT_FAILED);
+            throw new ServiceException(ApiError.FILE_EXPORT_FAILED);
         }
 
     }

@@ -46,7 +46,7 @@ public class PurchaseOrderApproveHandler extends AbstractApproveHandler {
     public Boolean cancelProcess(ApproveDTO.CancelProcessDTO dto) {
         PurchaseOrderEntity entity = purchaseOrderService.getById(dto.getId());
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_SCM_PO_NOT_FOUND);
+            throw new ServiceException(ApiError.PO_NOT_FOUND);
         }
         BatchResultDTO resultDTO = purchaseOrderService.cancelProcess(entity);
         return resultDTO.getSuccess();
@@ -64,7 +64,7 @@ public class PurchaseOrderApproveHandler extends AbstractApproveHandler {
         //采购订单
         PurchaseOrderEntity entity = purchaseOrderService.getById(dto.getBusinessId());
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_SCM_PO_NOT_FOUND);
+            throw new ServiceException(ApiError.PO_NOT_FOUND);
         }
         ApproveOneDTO baseApproveParamDTO = new ApproveOneDTO();
         baseApproveParamDTO.setType(dto.getApproveStatus().getStatus());
@@ -72,7 +72,7 @@ public class PurchaseOrderApproveHandler extends AbstractApproveHandler {
         baseApproveParamDTO.setComment(dto.getComment());
         Boolean approve = purchaseOrderService.approveEnd(baseApproveParamDTO, entity);
         if (Boolean.FALSE.equals(approve)) {
-            throw new ServiceException(ApiError.ERROR_BILL_APPROVE, SourceTypeEnum.getName(dto.getBusinessKey()));
+            throw new ServiceException(ApiError.BILL_APPROVE_FAILED, SourceTypeEnum.getName(dto.getBusinessKey()));
         }
         //非erp审核添加日志
         if (ApprovePlatformEnum.ERP.equals(dto.getApprovePlatformEnum())) {

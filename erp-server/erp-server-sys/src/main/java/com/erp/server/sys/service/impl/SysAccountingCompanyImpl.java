@@ -78,7 +78,7 @@ public class SysAccountingCompanyImpl extends ServiceImpl<SysAccountingCompanyMa
         queryWrapper.last("LIMIT 1");
         int count = this.count(queryWrapper);
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_DUPLICATION_NAME);
+            throw new ServiceException(ApiError.COMMON_DUPLICATION_NAME);
         }
     }
 
@@ -95,7 +95,7 @@ public class SysAccountingCompanyImpl extends ServiceImpl<SysAccountingCompanyMa
     public boolean updateCompany(SysAccountingCompanyDTO dto) {
         SysAccountingCompanyEntity entity = this.getById(dto.getId());
         if (Objects.isNull(entity)) {
-            throw new ServiceException(ApiError.ERROR_COMPANY_NOT_FOUND);
+            throw new ServiceException(ApiError.COMMON_COMPANY_NOT_FOUND);
         }
         checkName(dto.getId(), dto.getCompanyName());
         entity.setCompanyAddress(dto.getCompanyAddress());
@@ -133,7 +133,7 @@ public class SysAccountingCompanyImpl extends ServiceImpl<SysAccountingCompanyMa
     public boolean updateCompanyState(UpdateStateDTO dto) {
         SysAccountingCompanyEntity entity = this.getById(dto.getId());
         if (Objects.isNull(entity)) {
-            throw new ServiceException(ApiError.ERROR_COMPANY_NOT_FOUND);
+            throw new ServiceException(ApiError.COMMON_COMPANY_NOT_FOUND);
         }
         entity.setDisabled(dto.getState());
         return this.updateById(entity);

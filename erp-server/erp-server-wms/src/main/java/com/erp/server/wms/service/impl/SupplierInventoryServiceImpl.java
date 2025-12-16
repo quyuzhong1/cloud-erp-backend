@@ -116,7 +116,7 @@ public class SupplierInventoryServiceImpl  implements SupplierInventoryService {
         try {
             new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
         } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_FILE_EXPORT_FAILED);
+            throw new ServiceException(ApiError.FILE_EXPORT_FAILED);
         }
         return Boolean.TRUE;
     }

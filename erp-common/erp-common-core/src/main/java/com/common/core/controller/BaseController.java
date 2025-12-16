@@ -3,6 +3,7 @@ package com.common.core.controller;
 
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
+import com.common.core.utils.MessageUtils;
 import lombok.NoArgsConstructor;
 
 
@@ -87,51 +88,12 @@ public class BaseController {
     }
 
     /**
-     * 请求成功，仅内容
-     *
-     * @param msg
-     * @param <T>
-     * @return
+     * 国际化成功（带 data）
      */
-    protected <T> ApiResult<T> successMsg(String msg) {
-        return message(CODE_SUCCESS, msg, null);
+    protected <T> ApiResult<T> success(String i18nKey, T data, Object... args) {
+        String msg = MessageUtils.getMessage(i18nKey, args);
+        return message(CODE_SUCCESS, msg, data);
     }
-
-    /**
-     * 部分成功空数据
-     *
-     * @param <T>
-     * @return
-     */
-    protected <T> ApiResult<T> partialSuccess() {
-        return message(CODE_PARTIAL_SUCCESS, MSG_PARTIAL_SUCCESS, null);
-    }
-
-
-    /**
-     * 部分成功，通用代码
-     *
-     * @param message
-     * @param data
-     * @param <T>
-     * @return
-     */
-    protected <T> ApiResult<T> partialSuccess(String message, T data) {
-        return message(CODE_PARTIAL_SUCCESS, message, data);
-    }
-
-
-    /**
-     * 部分成功，仅内容
-     *
-     * @param data
-     * @param <T>
-     * @return
-    */
-    protected <T> ApiResult<T> partialSuccess(T data) {
-        return message(CODE_PARTIAL_SUCCESS, MSG_PARTIAL_SUCCESS, data);
-    }
-
 
     /**
      * 请求失败，完整构造
@@ -201,15 +163,22 @@ public class BaseController {
         return message(error.getCode(), error.getMsg(), data);
     }
 
+    /**
+     * 国际化失败（从 ApiError 获取国际化提示）
+     */
+    protected <T> ApiResult<T> failure(ApiError error, Object... args) {
+        String msg = MessageUtils.getMessage(error, args);
+        return message(error.getCode(), msg, null);
+    }
+
 
     /**
-     * 请求失败，仅内容
-     *
-     * @param ex
-     * @param <T>
-     * @return
+     * 国际化失败（自定义 key + data）
      */
-//    protected <T> ApiResult<T> failure(ServiceException ex) {
-//        return message(ex.getCode(), ex.getMsg(), null);
-//    }
+    protected <T> ApiResult<T> failure(String i18nKey, T data, Object... args) {
+        String msg = MessageUtils.getMessage(i18nKey, args);
+        return message(CODE_FAILURE, msg, data);
+    }
+
+
 }

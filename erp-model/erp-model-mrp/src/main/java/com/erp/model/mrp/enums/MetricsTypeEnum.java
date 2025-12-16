@@ -20,6 +20,6 @@ public enum MetricsTypeEnum {
                 return typeEnum;
             }
         }
-        throw new ServiceException(ApiError.ERROR_ENUM_CONVERT_FAILED);
+        throw new ServiceException(ApiError.COMMON_ENUM_CONVERT_FAILED);
     }
 }

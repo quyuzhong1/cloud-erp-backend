@@ -91,7 +91,7 @@ public class TmsCfgCostServiceImpl extends SuperServiceImpl<TmsCfgCostMapper, Tm
     @Override
     public Boolean update(TmsCfgCostDTO.UpdateDTO updateDTO) {
         TmsCfgCostEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "费用管理配置单"));
+        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "费用管理配置单"));
         TmsCfgCostEntity tmsCfgCostEntity =  BeanMapperUtils.map(TmsCfgCostEntity.class, updateDTO);
         if (!old.getIsAllocate().equals(updateDTO.getIsAllocate())){
             throw new ServiceException("分摊状态不能修改");

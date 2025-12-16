@@ -75,7 +75,7 @@ public class AuthUserWarehouseServiceImpl extends SuperServiceImpl<AuthUserWareh
     @Override
     public Boolean update(AuthUserWarehouseDTO.UpdateDTO addOrUpdateDTO) {
         AuthUserWarehouseEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "用户-仓库权限"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "用户-仓库权限"));
         AuthUserWarehouseEntity authUserWarehouseEntity =  BeanMapperUtils.map(AuthUserWarehouseEntity.class, addOrUpdateDTO);
 
         // 数据处理

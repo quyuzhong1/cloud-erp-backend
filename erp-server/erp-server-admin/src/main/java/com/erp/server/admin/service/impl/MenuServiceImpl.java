@@ -105,7 +105,7 @@ public class MenuServiceImpl extends ServiceImpl<MenuMapper, MenuEntity> impleme
         int count = this.count(queryWrapper);
         //表示有父类的id
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_DELETE_PARENT_NODE_EXISTS);
+            throw new ServiceException(ApiError.COMMON_DELETE_PARENT_NODE_EXISTS);
         }
         boolean flag = this.removeByIds(menuIds);
         //删除成功就要去移除对应的角色权限

@@ -588,7 +588,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 for (TaskChargeDistributionEntity taskChargeDistributionEntity : taskChargeDistributionList) {
                     String charges = taskChargeDistributionEntity.getCharges();
                     if (StringUtils.isBlank(taskChargeDistributionEntity.getCharges())) {
-                        throw new ServiceException(ApiError.ERROR_PLM_TASK_OWNER_REQUIRED);
+                        throw new ServiceException(ApiError.PROJECT_PARAM_TASK_OWNER_REQUIRED);
                     }
                     if (ObjectUtils.isEmpty(taskChargeDistributionEntity.getDistributionType()) || DistributionTypeEnum.DISTRIBUTION_USER.getCode().equals(taskChargeDistributionEntity.getDistributionType())) {
                         taskChargeDistributionEntity.setChargeIds(charges);
@@ -705,7 +705,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     public List<BatchResultDTO> removeTask(String taskId) {
         ProjectTaskEntity entity = this.getById(taskId);
         if (Objects.isNull(entity)) {
-            throw new ServiceException(ApiError.ERROR_PLM_TASK_NOT_FOUND);
+            throw new ServiceException(ApiError.PROJECT_TASK_NOT_FOUND);
         }
         LoginUser loginUser = UserContext.getDefaultLoginUser();
 
@@ -838,7 +838,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     public ProjectTaskDetailsDTO getTaskDetails(String taskId) {
         ProjectTaskDetailsDTO detailsDTO = baseMapper.getTaskDetails(taskId);
         if (Objects.isNull(detailsDTO)) {
-            throw new ServiceException(ApiError.ERROR_PLM_TASK_NOT_FOUND);
+            throw new ServiceException(ApiError.PROJECT_TASK_NOT_FOUND);
         }
         ProjectTaskEntity taskEntity = getById(taskId);
         String businessProcessId = detailsDTO.getBusinessProcessId();
@@ -1040,7 +1040,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     public Boolean updateTask(ProjectTaskDTO dto) {
         ProjectTaskEntity taskEntity = this.getById(dto.getId());
         if (Objects.isNull(taskEntity)) {
-            throw new ServiceException(ApiError.ERROR_PLM_TASK_NOT_FOUND);
+            throw new ServiceException(ApiError.PROJECT_TASK_NOT_FOUND);
         }
         //如果是修改固定任务，需要数据权限
         getFixedUpdateOrRemovePermission(taskEntity.getIsFixed(),PLM_TASK_UPDATE_FIXED);
@@ -1064,7 +1064,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         if (MathUtil.ONE.equals(taskEntity.getIsFixed())) {
             //任务名称
             if (!taskEntity.getName().equals(dto.getName())) {
-                throw new ServiceException(ApiError.ERROR_PLM_TASK_FIXED_RENAME_FORBIDDEN);
+                throw new ServiceException(ApiError.PROJECT_TASK_FIXED_RENAME_FORBIDDEN);
             }
             //目标交付文档
             List<DeliveryDocsDTO> docsList = taskDeliveryService.getByTaskId(dto.getId());
@@ -1079,11 +1079,11 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             //比较交付文档
             boolean equalList = ListUtils.isEqualList(newDocs, oldDocs);
             if (!equalList) {
-                throw new ServiceException(ApiError.ERROR_PLM_TASK_FIXED_DOC_MODIFY_FORBIDDEN);
+                throw new ServiceException(ApiError.PROJECT_TASK_FIXED_DOC_FORBIDDEN);
             }
             //审核流程
             if (!StringUtils.equals(dto.getBusinessProcessId(), taskEntity.getBusinessProcessId())) {
-                throw new ServiceException(ApiError.ERROR_PLM_TASK_FIXED_APPROVAL_FLOW_MODIFY_FORBIDDEN);
+                throw new ServiceException(ApiError.PROJECT_TASK_FIXED_APPROVAL_FORBIDDEN);
             }
         }
 
@@ -1190,7 +1190,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             //获取固定任务按钮权限
             Boolean userDatePermissionByMenuCode = sysUserFeign.getUserDatePermissionByMenuCode(menuPermission);
             if (!userDatePermissionByMenuCode) {
-                throw new ServiceException(ApiError.ERROR_PERM_DENIED);
+                throw new ServiceException(ApiError.HTTP_FORBIDDEN);
             }
         }
     }
@@ -1242,7 +1242,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         Map<String, Object> updateMap = parseObject(updateJson, Map.class);
         ProjectTaskEntity taskEntity = this.getById(dto.getTaskId());
         if (Objects.isNull(taskEntity)) {
-            throw new ServiceException(ApiError.ERROR_PLM_TASK_NOT_FOUND);
+            throw new ServiceException(ApiError.PROJECT_TASK_NOT_FOUND);
         }
         ProjectTaskEntity oldEntity = new ProjectTaskEntity();
         BeanMapperUtils.copy(taskEntity, oldEntity);
@@ -1252,7 +1252,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         String name = dto.getName();
         //固定任务不能修改名称
         if (MathUtil.ONE.equals(taskEntity.getIsFixed()) && StringUtils.isNotBlank(name) && !taskEntity.getName().equals(name)) {
-                throw new ServiceException(ApiError.ERROR_PLM_TASK_FIXED_RENAME_FORBIDDEN);
+                throw new ServiceException(ApiError.PROJECT_TASK_FIXED_RENAME_FORBIDDEN);
         }
         if (updateMap.containsKey("planStartTime")) {
             String planStartTime = dto.getPlanStartTime();
@@ -1330,7 +1330,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     public ProjectTaskVO taskDetails(String taskId) {
         ProjectTaskEntity taskEntity = this.getById(taskId);
         if (Objects.isNull(taskEntity)) {
-            throw new ServiceException(ApiError.ERROR_PLM_TASK_NOT_FOUND);
+            throw new ServiceException(ApiError.PROJECT_TASK_NOT_FOUND);
         }
         ProjectTaskVO resultVO = new ProjectTaskVO();
         BeanMapper.copy(taskEntity, resultVO);
@@ -1541,7 +1541,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             getChilds(taskId, list, resultList);
             int count = countUndoneByTaskIds(excludeStatusList, resultList);
             if (count > 0) {
-                throw new ServiceException(ApiError.ERROR_PLM_TASK_CHILD_UNFINISHED);
+                throw new ServiceException(ApiError.PROJECT_TASK_CHILD_UNFINISHED);
             }
         }
     }
@@ -1567,7 +1567,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             getChilds(taskId, taskList, resultList);
             int count = countUndoneByTaskIds(excludeStatusList, resultList);
             if (count > 0) {
-                throw new ServiceException(ApiError.ERROR_PLM_TASK_CHILD_UNFINISHED);
+                throw new ServiceException(ApiError.PROJECT_TASK_CHILD_UNFINISHED);
             }
         }
     }
@@ -1582,7 +1582,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         List<String> parentTaskIds = list.stream().filter(t -> t.getPid().equals("0")).map(ProjectTaskEntity::getId).collect(Collectors.toList());
         int parentCount = countUndoneByTaskIds(excludeStatusList, parentTaskIds);
         if (parentCount > 0) {
-            throw new ServiceException(ApiError.ERROR_PLM_TASK_UNFINISHED_ACTION_FORBIDDEN);
+            throw new ServiceException(ApiError.PROJECT_TASK_UNFINISHED_FORBIDDEN);
         }
     }
 
@@ -2382,7 +2382,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             statusList.add(waitSubmitStatus);
             long count = taskEntityList.stream().filter(p -> !statusList.contains(p.getScheduleStatus())).count();
             if (count > 0) {
-                throw new ServiceException(ApiError.ERROR_PLM_PLAN_TIME_EDIT_INVALID);
+                throw new ServiceException(ApiError.PROJECT_PLAN_EDIT_REQUIRED);
             }
         }
 
@@ -2816,7 +2816,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     public List<Map<String, Object>> operateMoreList(String taskId) {
         ProjectTaskEntity taskEntity = this.getById(taskId);
         if (Objects.isNull(taskEntity)) {
-            throw new ServiceException(ApiError.ERROR_PLM_TASK_NOT_FOUND);
+            throw new ServiceException(ApiError.PROJECT_TASK_NOT_FOUND);
         }
         TaskRefSkuConfigEntity skuConfigEntity = taskRefSkuConfigService.getByTaskId(taskId);
         List<ProjectTaskRefSkuEntity> taskRefSkuList = projectTaskRefSkuService.getByTaskId(taskId);
@@ -3301,7 +3301,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         //只有待开始 和待审核 才能开始任务
         if (!TaskStateEnum.NOT_START.getCode().equals(state)
                 && !TaskStateEnum.CLOSE.getCode().equals(state)) {
-            throw new ServiceException(ApiError.ERROR_PLM_TASK_START_STATUS_INVALID);
+            throw new ServiceException(ApiError.PROJECT_TASK_START_REQUIRED);
         }
         //检查是否在变更中
         checkScheduleChangeStatus(list);
@@ -3348,7 +3348,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         List<ProjectTaskEntity> list = this.getByTaskIds(taskIds);
         long blankChargeIdCount = list.stream().filter(t -> StringUtils.isBlank(t.getChargeId())).count();
         if (blankChargeIdCount > 0) {
-            throw new ServiceException(ApiError.ERROR_PLM_TASK_OWNER_REQUIRED);
+            throw new ServiceException(ApiError.PROJECT_PARAM_TASK_OWNER_REQUIRED);
         }
 
         //检查任务状态
@@ -3360,7 +3360,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         //统计项目状态为  不是待发布的任务
         long releasedCount = list.stream().filter(t -> !releasedCode.equals(t.getStatus())).count();
         if (releasedCount > 0) {
-            throw new ServiceException(ApiError.ERROR_PLM_TASK_PUBLISH_STATUS_INVALID);
+            throw new ServiceException(ApiError.PROJECT_TASK_PUBLISH_REQUIRED);
         }
 
         //一般任务
@@ -3454,12 +3454,12 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
      */
     private void checkTaskChargeId(String chargeId) {
         if (StringUtils.isBlank(chargeId)) {
-            throw new ServiceException(ApiError.ERROR_APPROVE_NOT_START);
+            throw new ServiceException(ApiError.WF_APPROVE_START_FAILED);
         }
         List<String> list = Arrays.asList(chargeId.split(","));
         long count = list.stream().filter(s -> StringUtils.isBlank(s)).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_APPROVE_NOT_START);
+            throw new ServiceException(ApiError.WF_APPROVE_START_FAILED);
         }
     }
 
@@ -3474,7 +3474,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             if (list.size() > 1) {
                 List<Integer> stateList = list.stream().map(ProjectTaskEntity::getStatus).distinct().collect(Collectors.toList());
                 if (list.size() == stateList.size()) {
-                    throw new ServiceException(ApiError.ERROR_PLM_TASK_MULTI_STATUS_BATCH_FORBIDDEN);
+                    throw new ServiceException(ApiError.PROJECT_TASK_BATCH_STATUS_FORBIDDEN);
                 }
             }
             return list.get(0).getStatus();
@@ -3499,7 +3499,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             //这个是获取任务是不是有 审核人 大于0 就是没有
             long count = distributionList.stream().filter(d -> StringUtils.isBlank(d.getChargeIds())).count();
             if (count > 0) {
-                throw new ServiceException(ApiError.ERROR_PLM_TASK_APPROVER_MISSING);
+                throw new ServiceException(ApiError.PROJECT_TASK_APPROVER_MISSING);
             }
         }
     }
@@ -3528,7 +3528,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         //统计项目状态为  不是待发布的任务 和待审核的任务
         long releasedCount = list.stream().filter(t -> !notStartCode.equals(t.getStatus()) && !waitConfirmCode.equals(t.getStatus())).count();
         if (releasedCount > 0) {
-            throw new ServiceException(ApiError.ERROR_PLM_TASK_UNPUBLISH_STATUS_INVALID);
+            throw new ServiceException(ApiError.PROJECT_TASK_UNPUBLISH_STATUS_INVALID);
         }
         boolean flag = this.updateTaskState(taskIds, TaskStateEnum.TO_BE_RELEASED.getCode(), null, null);
         if (flag) {
@@ -3564,7 +3564,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 collect(Collectors.toList());
         //当不包含就要去除
         if (CollectionUtils.isNotEmpty(scheduleStatusList)) {
-            throw new ServiceException(ApiError.ERROR_PLM_SCHEDULE_UNDER_REVIEW_ACTION_FORBIDDEN);
+            throw new ServiceException(ApiError.PROJECT_SCHEDULE_UNDER_REVIEW_FORBIDDEN);
         }
     }
 
@@ -3589,7 +3589,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         //统计项目状态为  不是进行中的任务
         long releasedCount = list.stream().filter(t -> !ingCode.equals(t.getStatus())).count();
         if (releasedCount > 0) {
-            throw new ServiceException(ApiError.ERROR_PLM_TASK_CLOSE_STATUS_INVALID);
+            throw new ServiceException(ApiError.PROJECT_TASK_CLOSE_REQUIRED);
         }
         boolean flag = this.updateTaskState(taskIds, TaskStateEnum.CLOSE.getCode(), null, null);
         if (flag) {
@@ -3634,7 +3634,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         List<ProjectTaskEntity> reviewList = list.stream().filter(t -> reviewTaskCode.equals(t.getType())).collect(Collectors.toList());
         //表示有 评审任务 则要 踢出去
         if (CollectionUtils.isNotEmpty(reviewList) && reviewList.size() > 0) {
-            throw new ServiceException(ApiError.ERROR_PLM_TASK_REVIEW_COMPLETE_FORBIDDEN);
+            throw new ServiceException(ApiError.PROJECT_TASK_REVIEW_COMPLETE_FORBIDDEN);
         }
 
         List<String> allTaskIds = list.stream().map(ProjectTaskEntity::getId).collect(Collectors.toList());
@@ -3653,7 +3653,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         List<String> noSkuChangeTaskIds = list.stream().filter(l -> l.getIsSkuChange().equals(noSkuChange)).map(ProjectTaskEntity::getId).collect(Collectors.toList());
         //如果 包含没有改变的sku  就要提醒
         if (CollectionUtils.isNotEmpty(noSkuChangeTaskIds) && configTaskIds.containsAll(noSkuChangeTaskIds)) {
-            throw new ServiceException(ApiError.ERROR_PLM_TASK_COMPLETE_FAILED_PRODUCT_INCOMPLETE);
+            throw new ServiceException(ApiError.PROJECT_TASK_COMPLETE_FORBIDDEN_PRODUCT_INCOMPLETE);
         }
         //一般任务code
         Integer generalTaskCode = TaskTypeEnum.GENERAL_TASK.getCode();
@@ -3665,7 +3665,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             List<String> notFinishSkuList = projectTaskRefSkuService.checkTaskRefSkuFinish(taskIds);
             if (CollectionUtils.isNotEmpty(notFinishSkuList)) {
                 String skuNo = notFinishSkuList.stream().collect(Collectors.joining(","));
-                throw new ServiceException(ApiError.ERROR_SUBMIT_CONFIRM, skuNo);
+                throw new ServiceException(ApiError.WARNING_SUBMIT_CONFIRM, skuNo);
             }
 
         }
@@ -3687,7 +3687,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         //找出 没有流程中 不是进行中的任务 如果有表示 不能完成任务
         long noProcess = list.stream().filter(t -> !ingCode.equals(t.getStatus()) && !approvalNoPass.equals(t.getStatus()) && !TaskStateEnum.PORTION_FINISH.getCode().equals(t.getStatus())).count();
         if (noProcess > 0) {
-            throw new ServiceException(ApiError.ERROR_PLM_TASK_COMPLETE_STATUS_INVALID);
+            throw new ServiceException(ApiError.PROJECT_TASK_COMPLETE_REQUIRED);
         }
 
         //待审核
@@ -3740,12 +3740,12 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 //查询任务下审核人
                 List<TaskChargeDistributionEntity> taskChargeDistributionList = taskChargeDistributionService.listBySourceAndTaskId(MathUtil.THREE, processTask.getId());
                 if (CollectionUtils.isEmpty(taskChargeDistributionList)) {
-                    throw new ServiceException(ApiError.ERROR_PLM_TASK_APPROVER_REQUIRED);
+                    throw new ServiceException(ApiError.WF_APPROVER_REQUIRED);
                 }
                 List<List<String>> membersIds = new ArrayList<>();
                 for (TaskChargeDistributionEntity taskChargeDistributionEntity : taskChargeDistributionList) {
                     if (StringUtils.isBlank(taskChargeDistributionEntity.getChargeIds())) {
-                        throw new ServiceException(ApiError.ERROR_PLM_TASK_APPROVER_REQUIRED);
+                        throw new ServiceException(ApiError.WF_APPROVER_REQUIRED);
                     }
                     List<String> userIdList = Arrays.stream(taskChargeDistributionEntity.getChargeIds().split(",")).filter(obj -> isNotBlank(obj)).collect(Collectors.toList());
                     membersIds.add(userIdList);
@@ -3872,7 +3872,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         List<String> processIds = taskDataList.stream().map(TaskHandleDataDTO::getProcessId).collect(Collectors.toList());
         //传过来的流程id 和 当前用户的流程id 如果当前用户的流程id 不包含 就是不能审核
         if (!processInstanceIds.containsAll(processIds)) {
-            throw new ServiceException(ApiError.ERROR_PLM_TASK_NOT_YOUR_APPROVAL);
+            throw new ServiceException(ApiError.WF_NOT_YOUR_APPROVAL);
         }
 
         //检查任务状态是否一样
@@ -3887,7 +3887,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         if (!waitConfirmCode.equals(state) &&
                 !approvalIngCode.equals(state) &&
                 !portionFinishCode.equals(state)) {
-            throw new ServiceException(ApiError.ERROR_PLM_TASK_APPROVAL_STATUS_INVALID);
+            throw new ServiceException(ApiError.BILL_APPROVAL_STATUS_INVALID);
         }
 
         List<String> taskIdList = list.stream().map(ProjectTaskEntity::getId).collect(Collectors.toList());
@@ -3924,7 +3924,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         String keyFlag = userId + toJSONString(dto.getTaskDataList());
         boolean result = redisService.setNx(keyFlag, 1, 1, TimeUnit.MINUTES);
         if (!result) {
-            throw new ServiceException(ApiError.ERROR_BIZ_DUPLICATE_OPERATION);
+            throw new ServiceException(ApiError.COMMON_DUPLICATE_OPERATION);
         }
         //这里需要去 调用审核通过的工作流
         for (ProjectTaskEntity item : list) {
@@ -3971,7 +3971,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         List<String> processIds = taskDataList.stream().map(TaskHandleDataDTO::getProcessId).collect(Collectors.toList());
         //传过来的流程id 和 当前用户的流程id 如果当前用户的流程id 不包含 就是不能审核
         if (!processInstanceIds.containsAll(processIds)) {
-            throw new ServiceException(ApiError.ERROR_PLM_TASK_NOT_YOUR_APPROVAL);
+            throw new ServiceException(ApiError.WF_NOT_YOUR_APPROVAL);
         }
 
         List<ProjectTaskEntity> list = this.getByTaskIds(taskIds);
@@ -3983,7 +3983,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         Integer waitConfirmCode = TaskStateEnum.WAIT_CONFIRM.getCode();
         if (!approvalIngCode.equals(state) && !waitConfirmCode.equals(state)
         ) {
-            throw new ServiceException(ApiError.ERROR_PLM_TASK_REJECT_STATUS_INVALID);
+            throw new ServiceException(ApiError.BILL_REJECT_STATUS_INVALID);
         }
         List<TaskCommentDTO.AddDTO> taskCommentList = new ArrayList<>(taskIds.size());
 
@@ -4042,7 +4042,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         //根据任务id 获取所有的任务列表
         List<ProjectTaskEntity> taskList = this.getByTaskIds(taskIdList);
         if (CollectionUtils.isEmpty(taskList)) {
-            throw new ServiceException(ApiError.ERROR_PLM_TASK_NOT_FOUND);
+            throw new ServiceException(ApiError.PROJECT_TASK_NOT_FOUND);
         }
         String userName = UserContext.getDefaultLoginUser().getUserName();
         Integer waitConfirm = TaskStateEnum.WAIT_CONFIRM.getCode();
@@ -4052,7 +4052,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         statusList.add(approvalIng);
         long count = taskList.stream().filter(l -> !statusList.contains(l.getStatus())).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_PLM_PROJECT_REVOCATION_APPROVE_INVALID);
+            throw new ServiceException(ApiError.WF_REVOCATION_REQUIRED);
         }
         //操作日志
         List<OperateLogEntity> operateLogEntityList = new LinkedList<>();
@@ -4113,7 +4113,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     public List<ApproveNodeRecordVO> listTaskAudit(String taskId) {
         ProjectTaskEntity taskEntity = this.getById(taskId);
         if (Objects.isNull(taskEntity)) {
-            throw new ServiceException(ApiError.ERROR_PLM_TASK_NOT_FOUND);
+            throw new ServiceException(ApiError.PROJECT_TASK_NOT_FOUND);
         }
         Integer status = taskEntity.getStatus();
 
@@ -4244,7 +4244,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         //审核不通过
         Integer approvalNoPass = TaskStateEnum.APPROVAL_NO_PASS.getCode();
         if (!approvalNoPass.equals(state)) {
-            throw new ServiceException(ApiError.ERROR_PLM_TASK_RESTART_STATUS_INVALID);
+            throw new ServiceException(ApiError.PROJECT_TASK_RESTART_REQUIRED);
         }
         //一般任务有审核
         Integer generalApproval = TaskProcessTypeEnum.GENERAL_APPROVAL_TASK.getCode();
@@ -4276,7 +4276,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     public List<TaskProcessNodeDTO> findTaskProcess(String taskId) {
         ProjectTaskEntity taskEntity = this.getById(taskId);
         if (Objects.isNull(taskEntity)) {
-            throw new ServiceException(ApiError.ERROR_PLM_TASK_NOT_FOUND);
+            throw new ServiceException(ApiError.PROJECT_TASK_NOT_FOUND);
         }
         Integer taskType = taskEntity.getType();
         //一般任务code
@@ -4633,7 +4633,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                             LocalDateTime date = LocalDateTime.parse(auditorHandleDTO.getEndTime(), DateTimeFormatter.ofPattern(DateUtils.DATE_FORMAT_19));
                             taskProcessNodeDTO.setOperateTime(date);
                         } catch (Exception e) {
-                            throw new ServiceException(ApiError.DEFAULT);
+                            throw new ServiceException(ApiError.HTTP_UNKNOWN);
                         }
                     }
                     if (TaskStateEnum.APPROVAL_NO_PASS.getCode().equals(state) && operatorName.equals(userName) && !TaskStateEnum.APPROVAL_PASS.getName().equals(auditorHandleDTO.getHandContent())) {
@@ -4678,7 +4678,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         queryWrapper.eq(ProjectTaskEntity::getPid, taskId);
         Integer count = baseMapper.selectCount(queryWrapper);
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_PLM_TASK_HAS_CHILDREN_DELETE_FORBIDDEN);
+            throw new ServiceException(ApiError.PROJECT_TASK_HAS_CHILD);
         }
     }
 
@@ -4745,7 +4745,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     private void checkTaskName(String taskId, String productId, String name) {
         int nameLength = name.length();
         if (nameLength > 50) {
-            throw new ServiceException(ApiError.ERROR_PLM_TASK_NAME_TOO_LONG, String.valueOf(nameLength));
+            throw new ServiceException(ApiError.PROJECT_TASK_NAME_TOO_LONG, String.valueOf(nameLength));
         }
         //根据产品很任务id 获取任务名
         List<ProjectTaskEntity> taskList = getByProductId(productId);
@@ -4754,7 +4754,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         }
         List<String> taskNames = taskList.stream().map(ProjectTaskEntity::getName).collect(Collectors.toList());
         if (taskNames.contains(name)) {
-            throw new ServiceException(ApiError.ERROR_PLM_TASK_NAME_EXISTS);
+            throw new ServiceException(ApiError.PROJECT_TASK_EXISTS);
         }
     }
 
@@ -4900,7 +4900,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 //如果改了 流程就按人员
                 if (ifUpdateProcess) {
                     if (CollectionUtils.isEmpty(chargeList)) {
-                        throw new ServiceException(ApiError.ERROR_PLM_TASK_APPROVER_REQUIRED);
+                        throw new ServiceException(ApiError.WF_APPROVER_REQUIRED);
                     }
                     taskChargeDistributionDTO.setChargeIds(String.join(",", chargeList));
                     taskChargeDistributionDTO.setCharges(String.join(",", chargeList));
@@ -4944,7 +4944,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     public List<BatchResultDTO> removeBatch(List<String> ids) {
         List<ProjectTaskEntity> entity = this.getByTaskIds(ids);
         if (CollectionUtils.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_PLM_TASK_NOT_FOUND);
+            throw new ServiceException(ApiError.PROJECT_TASK_NOT_FOUND);
         }
         LoginUser loginUser = UserContext.getDefaultLoginUser();
         List<BatchResultDTO> resultDTOList = new ArrayList<>();

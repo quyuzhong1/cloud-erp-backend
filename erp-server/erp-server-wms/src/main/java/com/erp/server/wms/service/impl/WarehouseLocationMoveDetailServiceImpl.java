@@ -71,7 +71,7 @@ public class WarehouseLocationMoveDetailServiceImpl extends SuperServiceImpl<War
         log.info("开始新增仓位移动明细单");
         boolean save = super.saveBatch(warehouseLocationMoveDetailEntities);
         if(!save) {
-            throw new ServiceException(ApiError.LOCATION_MOVE_DETAIL_ADD);
+            throw new ServiceException(ApiError.WH_LOCATION_MOVE_DETAIL_SAVE_FAILED);
         }
     }
 
@@ -82,7 +82,7 @@ public class WarehouseLocationMoveDetailServiceImpl extends SuperServiceImpl<War
     @Override
     public Boolean update(WarehouseLocationMoveDTO.UpdateDTO dto, WarehouseLocationMoveEntity warehouseLocationMoveEntity) {
         if (CollectionUtils.isEmpty(dto.getDetailList())) {
-            throw new ServiceException(ApiError.ERROR_DOC_DETAIL_NOT_FOUND, SourceTypeEnum.SO_B2C.getName());
+            throw new ServiceException(ApiError.BILL_DETAIL_NOT_FOUND, SourceTypeEnum.SO_B2C.getName());
         }
 
         //原明细数据
@@ -145,17 +145,17 @@ public class WarehouseLocationMoveDetailServiceImpl extends SuperServiceImpl<War
 
             if (SourceTypeEnum.PICKING_LISTS_SUBTRACT.getCode().equals(warehouseLocationMoveEntity.getSourceType())) {
                 if (ObjectUtil.isEmpty(inventoryByParam) || detailEntity.getQty() > inventoryByParam.getFrozenQty()) {
-                    throw new ServiceException(ApiError.LOCATION_MOVE_FROZEN_QTY_ERROR, detailEntity.getSkuNo());
+                    throw new ServiceException(ApiError.WH_LOCATION_MOVE_FROZEN_QTY_EXCEEDS, detailEntity.getSkuNo());
                 }
             }else {
                 if (InventoryStatusEnum.USABLE.getCode().equals(detailEntity.getOutInventoryStatus())) {
                     if (ObjectUtil.isEmpty(inventoryByParam) || detailEntity.getQty() > inventoryByParam.getUsableQty()) {
-                        throw new ServiceException(ApiError.LOCATION_MOVE_QTY_ERROR, detailEntity.getSkuNo());
+                        throw new ServiceException(ApiError.WH_LOCATION_MOVE_QTY_EXCEEDS_AVAILABLE, detailEntity.getSkuNo());
                     }
                 }
                 if (InventoryStatusEnum.FROZEN.getCode().equals(detailEntity.getOutInventoryStatus())) {
                     if (ObjectUtil.isEmpty(inventoryByParam) || detailEntity.getQty() > inventoryByParam.getFrozenQty()) {
-                        throw new ServiceException(ApiError.LOCATION_MOVE_FROZEN_QTY_ERROR, detailEntity.getSkuNo());
+                        throw new ServiceException(ApiError.WH_LOCATION_MOVE_FROZEN_QTY_EXCEEDS, detailEntity.getSkuNo());
                     }
                 }
             }
@@ -218,17 +218,17 @@ public class WarehouseLocationMoveDetailServiceImpl extends SuperServiceImpl<War
                     && req.getSkuId().equals(detailEntity.getSkuId())).findFirst().orElse(null);
             if (SourceTypeEnum.PICKING_LISTS_SUBTRACT.getCode().equals(warehouseLocationMoveEntity.getSourceType())) {
                 if (ObjectUtil.isEmpty(inventoryByParam) || detailEntity.getQty() > inventoryByParam.getFrozenQty()) {
-                    throw new ServiceException(ApiError.LOCATION_MOVE_FROZEN_QTY_ERROR, detailEntity.getSkuNo());
+                    throw new ServiceException(ApiError.WH_LOCATION_MOVE_FROZEN_QTY_EXCEEDS, detailEntity.getSkuNo());
                 }
             }else {
                 if (InventoryStatusEnum.USABLE.getCode().equals(detailEntity.getOutInventoryStatus())) {
                     if (ObjectUtil.isEmpty(inventoryByParam) || detailEntity.getQty() > inventoryByParam.getUsableQty()) {
-                        throw new ServiceException(ApiError.LOCATION_MOVE_QTY_ERROR, detailEntity.getSkuNo());
+                        throw new ServiceException(ApiError.WH_LOCATION_MOVE_QTY_EXCEEDS_AVAILABLE, detailEntity.getSkuNo());
                     }
                 }
                 if (InventoryStatusEnum.FROZEN.getCode().equals(detailEntity.getOutInventoryStatus())) {
                     if (ObjectUtil.isEmpty(inventoryByParam) || detailEntity.getQty() > inventoryByParam.getFrozenQty()) {
-                        throw new ServiceException(ApiError.LOCATION_MOVE_FROZEN_QTY_ERROR, detailEntity.getSkuNo());
+                        throw new ServiceException(ApiError.WH_LOCATION_MOVE_FROZEN_QTY_EXCEEDS, detailEntity.getSkuNo());
                     }
                 }
             }

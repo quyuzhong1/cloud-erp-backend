@@ -187,7 +187,7 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
             listApiResult = workflowFeign.curApprover(dtoList);
             Integer code = listApiResult.getCode();
             if (200 != code) {
-                throw new ServiceException(new ApiResult<Object>(ApiError.DEFAULT.getCode(), listApiResult.getMsg()));
+                throw new ServiceException(new ApiResult<Object>(ApiError.HTTP_UNKNOWN.getCode(), listApiResult.getMsg()));
             }
         }
         for (CustomerB2bSellerChangeDTO.ListDTO re : listDTOList.getRecords()) {
@@ -406,7 +406,7 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
     @Override
     public BatchResultDTO approve(BaseApproveParamDTO baseApproveParamDTO,CustomerB2bSellerChangeEntity entity,CustomerInfoEntity customerInfo) {
         if(!entity.getApproveStatus().equals(ApproveStatusEnum.APPROVE_ING)){
-            return BatchResultDTO.fail(entity.getId(),customerInfo.getCode(),ApiError.ERROR_APPROVE_ALLOWED_STATUS_ONLY.getMsg());
+            return BatchResultDTO.fail(entity.getId(),customerInfo.getCode(),ApiError.WF_APPROVE_ALLOWED_STATUS_ONLY.getMsg());
         }
         BatchResultDTO batchResultDTO = new BatchResultDTO();
         batchResultDTO.setId(entity.getId());
@@ -550,7 +550,7 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
             listApiResult = workflowFeign.curApprover(dtoList);
             Integer code = listApiResult.getCode();
             if (200 != code) {
-                throw new ServiceException(new ApiResult<Object>(ApiError.DEFAULT.getCode(), listApiResult.getMsg()));
+                throw new ServiceException(new ApiResult<Object>(ApiError.HTTP_UNKNOWN.getCode(), listApiResult.getMsg()));
             }
         }
         for (CustomerB2bSellerExcelDTO customerB2bSellerExcelDTO : page.getRecords()) {
@@ -574,11 +574,11 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
     public Boolean update(CustomerB2bSellerChangeDTO.UpdateDTO updateDTO) {
         CustomerB2bSellerChangeEntity old = super.getById(updateDTO.getId());
         if(null == old){
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, ApiError.ERROR_B2B_SALESMAN_CHANGE.getMsg());
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, ApiError.ERROR_B2B_SALESMAN_CHANGE.getMsg());
         }
         // 待提交和审核不通过允许修改
         if (Boolean.FALSE.equals(ApproveStatusEnum.allowUpdateStatus(old.getApproveStatus()))) {
-            throw new ServiceException(ApiError.ERROR_UPDATE_STATUS_NOT_ALLOWED);
+            throw new ServiceException(ApiError.BILL_UPDATE_STATUS_NOT_ALLOWED);
         }
         if(StringUtils.isBlank(updateDTO.getChangeSellerId())){
             throw new ServiceException(ApiError.ERROR_SALESMAN_ID_REQUIRED.getMsg());

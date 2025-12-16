@@ -117,11 +117,11 @@ public class CfgRuleSalesEstimateFileServiceImpl extends SuperServiceImpl<CfgRul
         try {
             EasyExcelFactory.read(excelFile.getInputStream(), CfgRuleSalesEstimateFileDTO.ExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (IOException e) {
-            log.error(ApiError.ERROR_IMPORT_DATA_FAILED.getMsg(), e);
-            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_FAILED);
+            log.error(ApiError.FILE_DATA_IMPORT_FAILED.getMsg(), e);
+            throw new ServiceException(ApiError.FILE_DATA_IMPORT_FAILED);
         } catch (ExcelCommonException e) {
-            log.error(ApiError.ERROR_FILE_IMPORT_FORMAT_INVALID_XLSX.getMsg(), e);
-            throw new ServiceException(ApiError.ERROR_FILE_IMPORT_FORMAT_INVALID_XLSX);
+            log.error(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX.getMsg(), e);
+            throw new ServiceException(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX);
         }
         List<CfgRuleSalesEstimateFileDTO.ExcelDTO> errorList = excelListenerUtil.getErrorList();
         if (!CollectionUtils.isEmpty(errorList)) {
@@ -134,7 +134,7 @@ public class CfgRuleSalesEstimateFileServiceImpl extends SuperServiceImpl<CfgRul
             try {
                 new ExcelPrintUtils().patchExport(errorList, response, sb.toString(), excelPath);
             } catch (IOException e) {
-                throw new ServiceException(ApiError.ERROR_EXPORT_ERROR_DATA_FAILED);
+                throw new ServiceException(ApiError.FILE_EXPORT_ERROR_DATA_FAILED);
             }
         } else {
             customerSalesEstimateEsService.removeByPlatform(platform);

@@ -84,7 +84,7 @@ public class InventorySkuCostDetailServiceImpl extends SuperServiceImpl<Inventor
     @Override
     public Boolean update(InventorySkuCostDetailDTO.UpdateDTO updateDTO) {
         InventorySkuCostDetailEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "SKU成本明细"));
+        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "SKU成本明细"));
         InventorySkuCostDetailEntity inventorySkuCostDetailEntity = BeanMapperUtils.map(InventorySkuCostDetailEntity.class, updateDTO);
 
         // 数据处理

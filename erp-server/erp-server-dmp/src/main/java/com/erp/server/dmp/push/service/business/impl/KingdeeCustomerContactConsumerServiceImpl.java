@@ -126,9 +126,9 @@ public class KingdeeCustomerContactConsumerServiceImpl implements KingdeeCustome
 
         //未配置发送字段
         if (CollectionUtils.isEmpty(json)) {
-            log.error(ApiError.ERROR_DMP_FIELD_MAPPING_NOT_SET_PUSH_FORBIDDEN.getMsg());
+            log.error(ApiError.MAPPING_NOT_SET_PUSH_FORBIDDEN.getMsg());
             //错误日志
-            throw new ServiceException(ApiError.ERROR_NOT_EXIST_KINGDEE_FIELD);
+            throw new ServiceException(ApiError.DMP_KINGDEE_FIELD_NOT_FOUND);
         }
         //地址编号
         String addressCode = String.valueOf(map.get("addressCode"));
@@ -139,7 +139,7 @@ public class KingdeeCustomerContactConsumerServiceImpl implements KingdeeCustome
         //如果所有编码都没有无法同步，需要手动设置好编号
         if (StringUtils.isBlank(addressCode) || (StringUtils.isBlank(syncKingdeeId) && StringUtils.isBlank(code))) {
             //错误日志
-            throw new ServiceException(ApiError.ERROR_NOT_EXIST_ADDRESS_OR_CONTRACT);
+            throw new ServiceException(ApiError.DMP_ADDRESS_OR_CONTACT_REQUIRED);
         }
 
         //判断金蝶系统是否已存在该数据

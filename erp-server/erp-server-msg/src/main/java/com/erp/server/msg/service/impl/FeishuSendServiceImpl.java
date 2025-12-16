@@ -166,15 +166,15 @@ public class FeishuSendServiceImpl extends BaseMessageSendService {
         String tenantAccessToken = getFsTenantAccessToken(msgChannelAppCode);
         MsgResultVO<T> msgResult = new MsgResultVO<T>();
         if(Objects.isNull(tenantAccessToken)) {
-            msgResult.setCode(ApiError.ERROR_LARK_TOKEN_IS_NULL.getCode());
-            msgResult.setMsg(MessageUtils.getMessage(ApiError.ERROR_LARK_TOKEN_IS_NULL));
+            msgResult.setCode(ApiError.COMMON_LARK_TOKEN_IS_NULL.getCode());
+            msgResult.setMsg(MessageUtils.getMessage(ApiError.COMMON_LARK_TOKEN_IS_NULL));
             msgResult.setNeedReSend(false);
             return msgResult;
         }
         if (StringUtils.isBlank(tenantAccessToken)) {
             log.error("发送飞书消息失败 token为空");
-            msgResult.setCode(ApiError.ERROR_LARK_TOKEN_IS_NULL.getCode());
-            msgResult.setMsg(MessageUtils.getMessage(ApiError.ERROR_LARK_TOKEN_IS_NULL));
+            msgResult.setCode(ApiError.COMMON_LARK_TOKEN_IS_NULL.getCode());
+            msgResult.setMsg(MessageUtils.getMessage(ApiError.COMMON_LARK_TOKEN_IS_NULL));
             msgResult.setNeedReSend(true);
             return msgResult;
         }
@@ -186,8 +186,8 @@ public class FeishuSendServiceImpl extends BaseMessageSendService {
         }
         if(StrUtils.isEmpty(thirdUnionDTOs.get(0).getThirdUnionId())) {
             log.warn("用户【{}】未找到绑定的飞书信息",thirdUnionDTOs.get(0).getUserName());
-            msgResult.setCode(ApiError.ERROR_LARK_TOKEN_IS_NULL.getCode());
-            msgResult.setMsg(MessageUtils.getMessage(ApiError.ERROR_LARK_TOKEN_IS_NULL));
+            msgResult.setCode(ApiError.COMMON_LARK_TOKEN_IS_NULL.getCode());
+            msgResult.setMsg(MessageUtils.getMessage(ApiError.COMMON_LARK_TOKEN_IS_NULL));
             msgResult.setNeedReSend(false);
             return msgResult;
         }
@@ -214,8 +214,8 @@ public class FeishuSendServiceImpl extends BaseMessageSendService {
 
         if(null == result || 0 != result.getCode()){
             log.error("发送飞书消息失败，请求内容体参数=【{}】，响应内容=【{}】", JSONUtil.toJsonStr(bodyMap), JSONUtil.toJsonStr(result));
-            msgResult.setCode(ApiError.ERROR_LARK_SEND_MSG_FAIL.getCode());
-            msgResult.setMsg(MessageUtils.getMessage(ApiError.ERROR_LARK_SEND_MSG_FAIL));
+            msgResult.setCode(ApiError.COMMON_LARK_SEND_MSG_FAIL.getCode());
+            msgResult.setMsg(MessageUtils.getMessage(ApiError.COMMON_LARK_SEND_MSG_FAIL));
             msgResult.setNeedReSend(true);
 
             WarnMsgInfoDTO warnMsgInfoDTO = new WarnMsgInfoDTO();
@@ -254,15 +254,15 @@ public class FeishuSendServiceImpl extends BaseMessageSendService {
         String tenantAccessToken = getFsTenantAccessToken(msgChannelAppCode);
         MsgResultVO<T> msgResult = new MsgResultVO<T>();
         if(Objects.isNull(tenantAccessToken)) {
-            msgResult.setCode(ApiError.ERROR_LARK_TOKEN_IS_NULL.getCode());
-            msgResult.setMsg(MessageUtils.getMessage(ApiError.ERROR_LARK_TOKEN_IS_NULL));
+            msgResult.setCode(ApiError.COMMON_LARK_TOKEN_IS_NULL.getCode());
+            msgResult.setMsg(MessageUtils.getMessage(ApiError.COMMON_LARK_TOKEN_IS_NULL));
             msgResult.setNeedReSend(false);
             return msgResult;
         }
         if (StringUtils.isBlank(tenantAccessToken)) {
             log.error("发送飞书消息失败 token为空");
-            msgResult.setCode(ApiError.ERROR_LARK_TOKEN_IS_NULL.getCode());
-            msgResult.setMsg(MessageUtils.getMessage(ApiError.ERROR_LARK_TOKEN_IS_NULL));
+            msgResult.setCode(ApiError.COMMON_LARK_TOKEN_IS_NULL.getCode());
+            msgResult.setMsg(MessageUtils.getMessage(ApiError.COMMON_LARK_TOKEN_IS_NULL));
             msgResult.setNeedReSend(true);
             return msgResult;
         }
@@ -270,8 +270,8 @@ public class FeishuSendServiceImpl extends BaseMessageSendService {
         List<ThirdUnionDTO> thirdUnionDTOs = sysUserFeign.getThirdUnionIdsByUserIds(ThirdPlatformEnums.FS.code, noticeMsgWrapInfoDTO.getReceiverUserIds());
         if(CollUtil.isEmpty(thirdUnionDTOs)) {
             log.warn("批量发送消息用户【{}】未绑定飞书信息", JSON.toJSONString(thirdUnionDTOs));
-            msgResult.setCode(ApiError.ERROR_LARK_TOKEN_IS_NULL.getCode());
-            msgResult.setMsg(ApiError.ERROR_LARK_TOKEN_IS_NULL.getMsg());
+            msgResult.setCode(ApiError.COMMON_LARK_TOKEN_IS_NULL.getCode());
+            msgResult.setMsg(ApiError.COMMON_LARK_TOKEN_IS_NULL.getMsg());
             msgResult.setNeedReSend(false);
             return msgResult;
         }
@@ -299,8 +299,8 @@ public class FeishuSendServiceImpl extends BaseMessageSendService {
         LarkResultVO<T> result = JSON.parseObject(resultStr, LarkResultVO.class);
         if(null == result || 0 != result.getCode()){
             log.error("批量发送飞书消息失败，请求内容体参数=【{}】，响应内容=【{}】", JSONUtil.toJsonStr(bodyMap), JSONUtil.toJsonStr(result));
-            msgResult.setCode(ApiError.ERROR_LARK_SEND_MSG_FAIL.getCode());
-            msgResult.setMsg(ApiError.ERROR_LARK_SEND_MSG_FAIL.getMsg());
+            msgResult.setCode(ApiError.COMMON_LARK_SEND_MSG_FAIL.getCode());
+            msgResult.setMsg(ApiError.COMMON_LARK_SEND_MSG_FAIL.getMsg());
             msgResult.setNeedReSend(true);
 
             WarnMsgInfoDTO warnMsgInfoDTO = new WarnMsgInfoDTO();
@@ -328,14 +328,14 @@ public class FeishuSendServiceImpl extends BaseMessageSendService {
      */
     private LarkResultVO<T> pressMessage(String messageId, List<String> unionIds,String channelAppCode) {
         if(CharSequenceUtil.isBlank(messageId) || CollUtil.isEmpty(unionIds)){
-            throw new ServiceException(ApiError.ERROR_MSG_ID_OR_UNION_ID_IS_NULL);
+            throw new ServiceException(ApiError.COMMON_MSG_PARAM_REQUIRED);
         }
         //获取飞书的应用token
 
         String tenantAccessToken = getFsTenantAccessToken(channelAppCode);
         if (StringUtils.isBlank(tenantAccessToken)) {
             log.error("发送飞书加急消息失败 token");
-            throw new ServiceException(ApiError.ERROR_LARK_TOKEN_IS_NULL);
+            throw new ServiceException(ApiError.COMMON_LARK_TOKEN_IS_NULL);
         }
         String authorization = FeishuConstant.FS_AUTHORIZATION + tenantAccessToken;
         OkHttpClient client = new OkHttpClient().newBuilder()

@@ -111,7 +111,7 @@ public class SoB2cReceiverServiceImpl extends SuperServiceImpl<SoB2cReceiverMapp
     public Boolean update(SoB2cReceiverDTO.UpdateDTO receiverDTO, SoB2cEntity soB2cEntity) {
         SoB2cReceiverEntity old = super.getById(receiverDTO.getId());
         if(null == old){
-           throw new ServiceException(ApiError.NOT_EXIST_BILL, "B2C销售订单买家信息表");
+           throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "B2C销售订单买家信息表");
         }
         SoB2cReceiverEntity entity = new SoB2cReceiverEntity();
         BeanMapperUtils.copy(receiverDTO,entity);
@@ -303,7 +303,7 @@ public class SoB2cReceiverServiceImpl extends SuperServiceImpl<SoB2cReceiverMapp
             EasyExcel.read(excelFile.getInputStream(), B2CCustomerImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
             List<B2CCustomerImportExcelDTO> excelDateList = excelListenerUtil.getExcelDateList();
             if (CollectionUtils.isEmpty(excelDateList)) {
-                throw new ServiceException(ApiError.ERROR_IMPORT_DATA_REQUIRED);
+                throw new ServiceException(ApiError.FILE_DATA_REQUIRED);
             }
             //错误的
             List<B2CCustomerImportExcelDTO> errorList = excelListenerUtil.getErrorList();
@@ -321,18 +321,18 @@ public class SoB2cReceiverServiceImpl extends SuperServiceImpl<SoB2cReceiverMapp
                 try {
                     new ExcelPrintUtils().patchExport(errorList, response, sb.toString(), excelPath);
                 } catch (IOException e) {
-                    throw new ServiceException(ApiError.ERROR_EXPORT_ERROR_DATA_FAILED);
+                    throw new ServiceException(ApiError.FILE_EXPORT_ERROR_DATA_FAILED);
                 }
             }
         } catch (SocketTimeoutException e) {
             log.error("导入超时错误！>>>{}", e);
-            throw new ServiceException(ApiError.ERROR_IMPORT_TIMEOUT);
+            throw new ServiceException(ApiError.FILE_IMPORT_TIMEOUT);
         } catch (IOException e) {
             log.error("导入错误！>>>{}", e);
-            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_FAILED);
+            throw new ServiceException(ApiError.FILE_DATA_IMPORT_FAILED);
         } catch (ExcelCommonException e) {
             log.error("导入错误！>>>{}", e);
-            throw new ServiceException(ApiError.ERROR_FILE_IMPORT_FORMAT_INVALID_XLSX);
+            throw new ServiceException(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX);
         }
     }
 

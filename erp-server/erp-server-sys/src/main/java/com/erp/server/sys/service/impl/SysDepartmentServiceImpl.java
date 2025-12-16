@@ -98,7 +98,7 @@ public class SysDepartmentServiceImpl extends ServiceImpl<SysDepartmentMapper, S
             queryWrapper.eq(SysDepartmentEntity::getParentId, entity.getId());
             int count = this.count(queryWrapper);
             if (count>0){
-                resultDTOList.add(BatchResultDTO.fail(entity.getId(),entity.getName(),ApiError.ERROR_DELETE_PARENT_NODE_EXISTS.getMsg()));
+                resultDTOList.add(BatchResultDTO.fail(entity.getId(),entity.getName(),ApiError.COMMON_DELETE_PARENT_NODE_EXISTS.getMsg()));
             }
             removeList.add(entity);
             resultDTOList.add(BatchResultDTO.success(entity.getId(), entity.getCode(),"删除成功"));

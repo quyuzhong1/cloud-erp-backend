@@ -273,7 +273,7 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
     public Boolean batchSync(List<String> ids) {
         List<DmpPushTaskEntity> list = this.listByIds(ids);
         if (CollectionUtils.isEmpty(list)) {
-            throw new ServiceException(ApiError.ERROR_NOT_EXIST_DMP_PUSH_TASK);
+            throw new ServiceException(ApiError.DMP_PUSH_TASK_NOT_FOUND);
         }
         //需要修改备注信息
         List<DmpPushTaskEntity> updateList = new ArrayList<>();
@@ -303,7 +303,7 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
     public Boolean batchFindDataSync(List<String> ids) {
         List<DmpPushTaskEntity> list = this.listByIds(ids);
         if (CollectionUtils.isEmpty(list)) {
-            throw new ServiceException(ApiError.ERROR_NOT_EXIST_DMP_PUSH_TASK);
+            throw new ServiceException(ApiError.DMP_PUSH_TASK_NOT_FOUND);
         }
         long count = list.stream().filter(obj -> !PlatformEnum.ERP.getDesc().equals(obj.getSourcePlatformName())
                 || (!PlatformEnum.KINGDEE.getDesc().equals(obj.getTargetPlatformName())
@@ -351,12 +351,12 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
     @Override
     public Boolean batchNoNeedSync(List<String> ids) {
         if (CollectionUtils.isEmpty(ids)) {
-            throw new ServiceException(ApiError.ERROR_SELECTION_REQUIRED);
+            throw new ServiceException(ApiError.BILL_SELECTION_REQUIRED);
         }
         //获取数据
         List<DmpPushTaskEntity> list = this.listByIds(ids);
         if (CollectionUtils.isEmpty(list)) {
-            throw new ServiceException(ApiError.ERROR_NOT_EXIST_KINGDEE_DATA);
+            throw new ServiceException(ApiError.DMP_KINGDEE_DATA_NOT_FOUND);
         }
         List<DmpPushTaskEntity> noNeedSyncIds = list.stream().filter(obj ->
                         (!SyncStatusEnum.IN_SYNC.getCode().equals(obj.getStatus()) && !SyncStatusEnum.NO_NEED_SYNC.getCode().equals(obj.getStatus())))
@@ -370,14 +370,14 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
     @Override
     public Boolean batchNoNeedSyncBySourceId(List<String> sourceIds) {
         if (CollectionUtils.isEmpty(sourceIds)) {
-            throw new ServiceException(ApiError.ERROR_SELECTION_REQUIRED);
+            throw new ServiceException(ApiError.BILL_SELECTION_REQUIRED);
         }
         //获取数据
         List<DmpPushTaskEntity> list = this.list(new LambdaQueryWrapper<DmpPushTaskEntity>().in(DmpPushTaskEntity::getSourceId,sourceIds));
         if (CollectionUtils.isEmpty(list)) {
         	List<DmpPushMsgEntity> dmpPushMsgEntityList = dmpPushMsgService.lambdaQuery().in(DmpPushMsgEntity::getSourceId, sourceIds).list();
         	if(CollUtil.isEmpty(dmpPushMsgEntityList)) {
-        		throw new ServiceException(ApiError.ERROR_NOT_EXIST_KINGDEE_DATA);
+        		throw new ServiceException(ApiError.DMP_KINGDEE_DATA_NOT_FOUND);
         	}
         	return dmpOutputTaskRecordService.lambdaUpdate()
 	        	.in(DmpOutputTaskRecordEntity::getDataId, dmpPushMsgEntityList.stream().map(DmpPushMsgEntity::getId).collect(Collectors.toList()))
@@ -408,7 +408,7 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
     public Boolean batchSyncBySourceId(List<String> sourceIds) {
         List<DmpPushTaskEntity> list = this.list(new LambdaQueryWrapper<DmpPushTaskEntity>().in(DmpPushTaskEntity::getSourceId,sourceIds));
         if (CollectionUtils.isEmpty(list)) {
-            throw new ServiceException(ApiError.ERROR_NOT_EXIST_DMP_PUSH_TASK);
+            throw new ServiceException(ApiError.DMP_PUSH_TASK_NOT_FOUND);
         }
         //需要修改备注信息
         List<DmpPushTaskEntity> updateList = new ArrayList<>();

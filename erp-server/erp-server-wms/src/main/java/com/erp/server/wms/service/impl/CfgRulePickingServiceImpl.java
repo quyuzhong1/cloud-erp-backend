@@ -256,7 +256,7 @@ public class CfgRulePickingServiceImpl extends SuperServiceImpl<CfgRulePickingMa
         // 获取所有已启用规则
         List<CfgRulePickingEntity> cfgRulePickings = this.listOrderByPriority();
         if (CollectionUtils.isEmpty(cfgRulePickings)) {
-            throw new ServiceException(ApiError.ERROR_NOT_EXIST, "拣货规则");
+            throw new ServiceException(ApiError.COMMON_NOT_EXIST, "拣货规则");
         }
         List<String> cfgRuleIds = cfgRulePickings.stream().map(CfgRulePickingEntity::getId).collect(Collectors.toList());
         // 查询所有规则对应的规则条件

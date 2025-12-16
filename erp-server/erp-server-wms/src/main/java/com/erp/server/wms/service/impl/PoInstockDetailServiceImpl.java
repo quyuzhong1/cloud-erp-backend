@@ -164,12 +164,12 @@ public class PoInstockDetailServiceImpl extends SuperServiceImpl<PoInstockDetail
         List<String> podIds = newList.stream().map(PoInstockDetailEntity::getPurchaseOrderDetailId).collect(Collectors.toList());
         List<PurchaseOrderDetailEntity> purchaseOrderDetailList = scmTaskFeign.listPurchaseOrderDetailById(podIds);
         if (CollectionUtils.isEmpty(purchaseOrderDetailList)) {
-            throw new ServiceException(ApiError.ERROR_SCM_PO_DETAIL_NOT_FOUND);
+            throw new ServiceException(ApiError.PO_DETAIL_NOT_FOUND);
         }
         for (PoInstockDetailEntity entity : newList) {
             PurchaseOrderDetailEntity detailEntity = purchaseOrderDetailList.stream().filter(obj -> obj.getId().equals(entity.getPurchaseOrderDetailId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(detailEntity)) {
-                throw new ServiceException(ApiError.ERROR_SCM_PO_DETAIL_NOT_FOUND);
+                throw new ServiceException(ApiError.PO_DETAIL_NOT_FOUND);
             }
             entity.setSkuId(detailEntity.getSkuId());
             entity.setSkuNo(detailEntity.getSkuNo());
@@ -184,7 +184,7 @@ public class PoInstockDetailServiceImpl extends SuperServiceImpl<PoInstockDetail
             if (CharSequenceUtil.isNotBlank(entity.getId())) {
                 PoInstockDetailEntity old = this.getById(entity.getId());
                 if (ObjectUtils.isEmpty(old)) {
-                    throw new ServiceException(ApiError.ERROR_SCM_STOCK_APPLY_DETAIL_NOT_FOUND);
+                    throw new ServiceException(ApiError.SALES_DEMAND_DETAIL_NOT_FOUND);
                 }
                 operateLogService.addModuleOperateLogByObj(old,entity, ModuleTypeEnum.PO_INSTOCK.getCode(),mainId,"",String.format("【%s】",old.getSkuNo()));
             }
@@ -215,13 +215,13 @@ public class PoInstockDetailServiceImpl extends SuperServiceImpl<PoInstockDetail
 
         PoInstockEntity entity = poInstockService.getById(mainId);
         if (ObjectUtils.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_SCM_PURCHASE_INBOUND_NOT_FOUND);
+            throw new ServiceException(ApiError.PO_INSTOCK_NOT_FOUND);
         }
        
         //采购订单
         List<PurchaseOrderDetailEntity> details = scmTaskFeign.listPurchaseOrderDetailById(podIds);
         if (CollectionUtils.isEmpty(details)) {
-            throw new ServiceException(ApiError.ERROR_SCM_PO_DETAIL_NOT_FOUND);
+            throw new ServiceException(ApiError.PO_DETAIL_NOT_FOUND);
         }
 
         //下推单据明细id查询
@@ -230,7 +230,7 @@ public class PoInstockDetailServiceImpl extends SuperServiceImpl<PoInstockDetail
         //查收货单明细
         List<WarehouseReceiveDetailEntity> receiveDetails = warehouseReceiveDetailService.listByIds(ids);
         if (CollectionUtils.isEmpty(details)) {
-            throw new ServiceException(ApiError.ERROR_SCM_PO_DETAIL_NOT_FOUND);
+            throw new ServiceException(ApiError.PO_DETAIL_NOT_FOUND);
         }
         //查询退货明细
         List<PoReturnDetailEntity> returnOrderDetailList = poReturnDetailService.listReturnOrderDetailByPodIds(podIds);
@@ -238,7 +238,7 @@ public class PoInstockDetailServiceImpl extends SuperServiceImpl<PoInstockDetail
         //查询仓库
         WarehouseEntity warehouseEntity = warehouseService.getById(entity.getDeliveryWarehouseId());
         if (ObjectUtils.isEmpty(warehouseEntity)) {
-            throw new ServiceException(ApiError.ERROR_WMS_WAREHOUSE_NOT_FOUND);
+            throw new ServiceException(ApiError.WH_NOT_FOUND);
         }
         //仓位必填验证
         checkWarehouseLocation(warehouseEntity,list);
@@ -299,7 +299,7 @@ public class PoInstockDetailServiceImpl extends SuperServiceImpl<PoInstockDetail
         long count = list.stream().filter(obj -> CharSequenceUtil.isBlank(obj.getWarehouseLocation())).count();
         //判断仓位是否需要必填
         if (warehouseIdList.contains(warehouseEntity.getId()) && count > 0) {
-            throw new ServiceException(ApiError.ERROR_WAREHOUSE_LOCATION_NOT_NULL,warehouseEntity.getName());
+            throw new ServiceException(ApiError.WH_LOCATION_REQUIRED,warehouseEntity.getName());
         }
     }
 

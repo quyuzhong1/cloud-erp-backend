@@ -138,7 +138,7 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
     @Override
     public Boolean update(InventorySkuCostDTO.UpdateDTO updateDTO) {
         InventorySkuCostEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "SKU成本"));
+        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "SKU成本"));
         InventorySkuCostEntity inventorySkuCostEntity = BeanMapperUtils.map(InventorySkuCostEntity.class, updateDTO);
 
         // 数据处理
@@ -208,12 +208,12 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
     public BatchResultDTO approve(InventorySkuCostEntity entity, String type, String comment, Boolean isNeedProcess) {
         //审核中允许审核
         if (!ApproveStatusEnum.APPROVE_ING.getStatus().equals(entity.getStatus())) {
-            return BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_APPROVE_ALLOWED_STATUS_ONLY.getMsg());
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.WF_APPROVE_ALLOWED_STATUS_ONLY.getMsg());
         }
         //当前登陆人,启用流程后可删除
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         if (CharSequenceUtil.equals(entity.getCreateUserId(),userInfo.getUid()) && !CharSequenceUtil.equals(entity.getCreateUserId(), UserStateConstants.USER_SYSTEM_ID)) {
-            throw new ServiceException(ApiError.WORKFLOW_APPROVE_CREATE_APPROVE_DIFF,userInfo.getUserName());
+            throw new ServiceException(ApiError.WF_CREATOR_APPROVER_NOT_SAME,userInfo.getUserName());
         }
         log.info("SKU成本记录【{}】，code=【{}】", ApproveTypeEnum.getName(type), entity.getCode());
         //审核通过
@@ -236,7 +236,7 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
     public BatchResultDTO disApprove(InventorySkuCostEntity entity) {
         //已审核允许反审核
         if (!ApproveStatusEnum.APPROVE.getStatus().equals(entity.getStatus())) {
-            return BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_REVERSE_APPROVAL_ALLOWED_APPROVED_ONLY.getMsg());
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.BILL_REVERSE_APPROVAL_ALLOWED_APPROVED_ONLY.getMsg());
         }
         List<InventorySkuCostDetailEntity> detailEntityList = inventorySkuCostDetailService.listByMainIds(Collections.singletonList(entity.getId()));
         List<String> detailIds = detailEntityList.stream().map(InventorySkuCostDetailEntity::getId).distinct().collect(Collectors.toList());
@@ -257,7 +257,7 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
     public BatchResultDTO cancel(InventorySkuCostEntity entity) {
         //审核中允许撤销
         if (!ApproveStatusEnum.APPROVE_ING.getStatus().equals(entity.getStatus())) {
-            return BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_REVOKE_PROCESS_ALLOWED_STATUS_ONLY.getMsg());
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.WF_REVOKE_PROCESS_ALLOWED_STATUS_ONLY.getMsg());
         }
         return approve(entity, ApproveTypeEnum.CANCEL.getStatus(), "", Boolean.FALSE);
     }
@@ -266,7 +266,7 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
     public BatchResultDTO submit(InventorySkuCostEntity entity) {
         //只有待提交状态才能发起提交
         if (!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(entity.getStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(entity.getStatus())) {
-            return BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_SCM_SUBMIT_ALLOWED_STATUS_ONLY.getMsg());
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.BILL_SUBMIT_ALLOWED_STATUS_ONLY.getMsg());
         }
         log.info("SKU成本记录提交审核，code=【{}】", entity.getCode());
         //更新单据为审核中
@@ -322,7 +322,7 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
             wb.write(output);
             wb.close();
         } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_IMPORT_TEMPLATE_DOWNLOAD_FAILED);
+            throw new ServiceException(ApiError.FILE_IMPORT_TEMPLATE_DOWNLOAD_FAILED);
         }
     }
 
@@ -333,10 +333,10 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
             EasyExcel.read(excelFile.getInputStream(), InventorySkuCostDetailExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (IOException e) {
             log.error("导入错误！", e);
-            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_FAILED);
+            throw new ServiceException(ApiError.FILE_DATA_IMPORT_FAILED);
         } catch (ExcelCommonException e) {
             log.error("导入格式错误！", e);
-            throw new ServiceException(ApiError.ERROR_FILE_IMPORT_FORMAT_INVALID_XLSX);
+            throw new ServiceException(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX);
         }
 //        List<InventorySkuCostDetailExcelDTO> excelDateList = excelListenerUtil.getExcelDateList();
 //        if (CollectionUtils.isEmpty(excelDateList)) {

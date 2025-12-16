@@ -66,7 +66,7 @@ public class OtherOutstockDetailServiceImpl extends SuperServiceImpl<OtherOutsto
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public void add(List<OtherOutstockDetailDTO.AddDTO> detailList, String mainId) {
         if (CollectionUtils.isEmpty(detailList)) {
-            throw new ServiceException(ApiError.ERROR_DOC_DETAIL_REQUIRED,"其他入库明细");
+            throw new ServiceException(ApiError.BILL_DETAIL_REQUIRED,"其他入库明细");
         }
         List<OtherOutstockDetailEntity> list = BeanMapperUtils.copyList(OtherOutstockDetailEntity.class, detailList);
 
@@ -84,7 +84,7 @@ public class OtherOutstockDetailServiceImpl extends SuperServiceImpl<OtherOutsto
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public void update(List<OtherOutstockDetailDTO.UpdateDTO> detailList, String mainId) {
         if (CollectionUtils.isEmpty(detailList)) {
-            throw new ServiceException(ApiError.ERROR_DOC_DETAIL_REQUIRED,"其他入库明细");
+            throw new ServiceException(ApiError.BILL_DETAIL_REQUIRED,"其他入库明细");
         }
         //原明细数据
         List<OtherOutstockDetailEntity> oldList = this.listByMainId(mainId);
@@ -155,16 +155,16 @@ public class OtherOutstockDetailServiceImpl extends SuperServiceImpl<OtherOutsto
         List<String> skuIds = newList.stream().map(OtherOutstockDetailEntity::getSkuId).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIds);
         if (CollectionUtils.isEmpty(skuList)) {
-            throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_INFO_NOT_FOUND);
+            throw new ServiceException(ApiError.PRODUCT_INFO_NOT_FOUND);
         }
         //主表信息
         OtherOutstockEntity otherOutstockEntity = otherOutstockService.getById(mainId);
         if (ObjectUtils.isEmpty(otherOutstockEntity)) {
-            throw new ServiceException(ApiError.ERROR_WMS_OTHER_OUTBOUND_NOT_FOUND);
+            throw new ServiceException(ApiError.WH_OTHER_OUTBOUND_NOT_FOUND);
         }
         WarehouseEntity warehouseEntity = warehouseService.getById(otherOutstockEntity.getWarehouseId());
         if (ObjectUtils.isEmpty(warehouseEntity)) {
-            throw new ServiceException(ApiError.ERROR_WMS_WAREHOUSE_NOT_FOUND);
+            throw new ServiceException(ApiError.WH_NOT_FOUND);
         }
         //仓位必填验证
         checkWarehouseLocation(warehouseEntity,newList);
@@ -178,11 +178,11 @@ public class OtherOutstockDetailServiceImpl extends SuperServiceImpl<OtherOutsto
             //修改操作日志
             if (CharSequenceUtil.isNotBlank(detail.getId())) {
                 if (CollectionUtils.isEmpty(list)) {
-                    throw new ServiceException(ApiError.ERROR_WMS_TRANSFER_APPLY_DETAIL_NOT_FOUND);
+                    throw new ServiceException(ApiError.WH_TRANSFER_APPLY_DETAIL_NOT_FOUND);
                 }
                 OtherOutstockDetailEntity old = list.stream().filter(obj -> obj.getId().equals(detail.getId())).findFirst().orElse(null);
                 if (ObjectUtils.isEmpty(old)) {
-                    throw new ServiceException(ApiError.ERROR_WMS_TRANSFER_APPLY_DETAIL_NOT_FOUND);
+                    throw new ServiceException(ApiError.WH_TRANSFER_APPLY_DETAIL_NOT_FOUND);
                 }
                 operateLogService.addModuleOperateLogByObj(old,detail, ModuleTypeEnum.OTHER_OUTSTOCK.getCode(),mainId,"",String.format("【%s】",old.getSkuNo()));
             }
@@ -213,7 +213,7 @@ public class OtherOutstockDetailServiceImpl extends SuperServiceImpl<OtherOutsto
         long count = list.stream().filter(obj -> CharSequenceUtil.isBlank(obj.getWarehouseLocation())).count();
         //判断仓位是否需要必填
         if (warehouseIdList.contains(warehouseEntity.getId()) && count > 0) {
-            throw new ServiceException(ApiError.ERROR_WAREHOUSE_LOCATION_NOT_NULL,warehouseEntity.getName());
+            throw new ServiceException(ApiError.WH_LOCATION_REQUIRED,warehouseEntity.getName());
         }
     }
 }

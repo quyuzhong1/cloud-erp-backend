@@ -105,7 +105,7 @@ public class SysLogRecordFieldListDTO {
         } else if (2 == type) {
             return parseEnumValue(value);
         }
-        throw new ServiceException(ApiError.ERROR_PARAM_INVALID);
+        throw new ServiceException(ApiError.HTTP_BAD_REQUEST);
     }
 
     /**
@@ -113,22 +113,22 @@ public class SysLogRecordFieldListDTO {
      */
     private String parseEnumValue(Object value) {
         if (StringUtils.isBlank(this.getEnumClass()) || null == value) {
-            throw new ServiceException(ApiError.ERROR_ENUM_CONVERT_FAILED);
+            throw new ServiceException(ApiError.COMMON_ENUM_CONVERT_FAILED);
         }
         Class<?> aClass;
         try {
             aClass = Class.forName(this.getEnumClass());
         } catch (ClassNotFoundException e) {
-            throw new ServiceException(ApiError.ERROR_ENUM_CONVERT_FAILED);
+            throw new ServiceException(ApiError.COMMON_ENUM_CONVERT_FAILED);
         }
         boolean anEnum = aClass.isEnum();
         if (!anEnum) {
-            throw new ServiceException(ApiError.ERROR_ENUM_CONVERT_FAILED);
+            throw new ServiceException(ApiError.COMMON_ENUM_CONVERT_FAILED);
         }
 
         EnumMessage enumObject = EnumsUtil.getEnumObject(value, aClass);
         if (null == enumObject) {
-            throw new ServiceException(ApiError.ERROR_ENUM_CONVERT_FAILED);
+            throw new ServiceException(ApiError.COMMON_ENUM_CONVERT_FAILED);
         }
         return enumObject.getName();
     }

@@ -139,7 +139,7 @@ public class TransferApplicationDetailServiceImpl extends SuperServiceImpl<Trans
         List<String> skuIds = newList.stream().map(TransferApplicationDetailEntity::getSkuId).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIds);
         if (CollectionUtils.isEmpty(skuList)) {
-            throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_INFO_NOT_FOUND);
+            throw new ServiceException(ApiError.PRODUCT_INFO_NOT_FOUND);
         }
         for (TransferApplicationDetailEntity detail:newList) {
             //单位
@@ -149,11 +149,11 @@ public class TransferApplicationDetailServiceImpl extends SuperServiceImpl<Trans
             //修改操作日志
             if (CharSequenceUtil.isNotBlank(detail.getId())) {
                 if (CollectionUtils.isEmpty(list)) {
-                    throw new ServiceException(ApiError.ERROR_WMS_TRANSFER_APPLY_DETAIL_NOT_FOUND);
+                    throw new ServiceException(ApiError.WH_TRANSFER_APPLY_DETAIL_NOT_FOUND);
                 }
                 TransferApplicationDetailEntity old = list.stream().filter(obj -> obj.getId().equals(detail.getId())).findFirst().orElse(null);
                 if (ObjectUtils.isEmpty(old)) {
-                    throw new ServiceException(ApiError.ERROR_WMS_TRANSFER_APPLY_DETAIL_NOT_FOUND);
+                    throw new ServiceException(ApiError.WH_TRANSFER_APPLY_DETAIL_NOT_FOUND);
                 }
                 operateLogService.addModuleOperateLogByObj(old,detail, ModuleTypeEnum.TRANSFER_APPLICATION.getCode(),mainId,"",String.format("【%s】",old.getSkuNo()));
             }

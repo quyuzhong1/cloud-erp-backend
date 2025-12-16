@@ -63,7 +63,7 @@ public class SoB2cApproveHandler extends AbstractApproveHandler {
         approveOneDTO.setComment(dto.getComment());
         Boolean approve = soB2cService.approveEnd(approveOneDTO, entity, null);
         if (Boolean.FALSE.equals(approve)) {
-            throw new ServiceException(ApiError.ERROR_BILL_APPROVE, SourceTypeEnum.getName(dto.getBusinessKey()));
+            throw new ServiceException(ApiError.BILL_APPROVE_FAILED, SourceTypeEnum.getName(dto.getBusinessKey()));
         }
         //非erp审核添加日志
         if (ApprovePlatformEnum.ERP.equals(dto.getApprovePlatformEnum())) {

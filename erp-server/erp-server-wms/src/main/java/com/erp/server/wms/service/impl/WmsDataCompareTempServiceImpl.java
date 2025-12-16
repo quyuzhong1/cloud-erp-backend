@@ -72,7 +72,7 @@ public class WmsDataCompareTempServiceImpl extends SuperServiceImpl<WmsDataCompa
     public Boolean update(WmsDataCompareTempDTO.UpdateDTO updateDTO) {
         WmsDataCompareTempEntity old = super.getById(updateDTO.getId());
         if (Objects.isNull(old)){
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "数据对比对比加工临时单");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "数据对比对比加工临时单");
         }
         WmsDataCompareTempEntity wmsDataCompareTempEntity =  BeanMapperUtils.map(WmsDataCompareTempEntity.class, updateDTO);
 

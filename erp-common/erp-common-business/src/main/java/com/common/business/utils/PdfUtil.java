@@ -25,8 +25,6 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.*;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
@@ -206,7 +204,7 @@ public class PdfUtil {
 
         } catch (Exception e) {
             e.printStackTrace();
-            throw new ServiceException(ApiError.ERROR_PDF_MERGE);
+            throw new ServiceException(ApiError.LOGISTICS_PDF_MERGE_ERROR);
         }
     }
 

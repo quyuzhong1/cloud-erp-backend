@@ -348,7 +348,7 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
         }
         RepoResult save = apiUtils.saveKingDee(param);
         if (!save.getResponseStatus().isIsSuccess()) {
-            throw new ServiceException(ApiError.ERROR_ADD_KINGDEE_DATA);
+            throw new ServiceException(ApiError.DMP_KINGDEE_ADD_FAILED);
         }
         //数据id
         String id = save.getId();
@@ -666,15 +666,15 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
     public String addKingdeeRecord(String orderNo, KingdeeApiUtils apiUtils, Integer modelType, String platformCode, Map<String, Object> dataMap) {
         PlatformEntity platformEntity = platformService.getByName(platformCode);
         if (ObjectUtils.isEmpty(platformEntity)) {
-            throw new ServiceException(ApiError.DEFAULT);
+            throw new ServiceException(ApiError.HTTP_UNKNOWN);
         }
         CfgApiFieldMapDTO dto = new CfgApiFieldMapDTO(platformEntity.getId(), modelType);
         List<CfgApiFieldMapDTO> mapList = cfgApiFieldMapService.getByParams(dto);
         //未配置发送字段
         if (CollectionUtil.isEmpty(mapList)) {
-            log.error(ApiError.ERROR_DMP_FIELD_MAPPING_NOT_SET_PUSH_FORBIDDEN.getMsg());
+            log.error(ApiError.MAPPING_NOT_SET_PUSH_FORBIDDEN.getMsg());
             //错误日志
-            throw new ServiceException(ApiError.ERROR_DMP_FIELD_MAPPING_NOT_SET_PUSH_FORBIDDEN);
+            throw new ServiceException(ApiError.MAPPING_NOT_SET_PUSH_FORBIDDEN);
         }
         JSONObject json = kingdeeCommonService.makeApiFieldJson(dataMap, platformEntity.getId(), modelType);
         KingdeeParamDTO.SaveParamDTO param = new KingdeeParamDTO.SaveParamDTO(json);
@@ -688,7 +688,7 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
         boolean save = saveResult.getResponseStatus().isIsSuccess();
         if (!save) {
             log.error("KingdeeCommonServiceImpl>>>addKingdeeRecord>>>调用金蝶保存接口失败saveResult:{}", saveResult);
-            throw new ServiceException(ApiError.ERROR_K3_SAVE_FAILED);
+            throw new ServiceException(ApiError.COMMON_K3_SAVE_FAILED);
         }
         return saveResult.getId();
     }
@@ -735,7 +735,7 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
 
         RepoResult save = apiUtils.saveKingDee(param);
         if (!save.getResponseStatus().isIsSuccess()) {
-            throw new ServiceException(ApiError.ERROR_ADD_KINGDEE_DATA);
+            throw new ServiceException(ApiError.DMP_KINGDEE_ADD_FAILED);
         }
         //数据id
         String id = save.getId();
@@ -821,7 +821,7 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
                 return Boolean.FALSE;
             } else {
                 //操作失败
-                throw new ServiceException(ApiError.ERROR_NOT_EXIST_KINGDEE_DATA);
+                throw new ServiceException(ApiError.DMP_KINGDEE_DATA_NOT_FOUND);
             }
         }
         //判断状态是否一致

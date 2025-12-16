@@ -270,7 +270,7 @@ public class RequisitionApplicationDetailServiceImpl extends SuperServiceImpl<Re
             if (CharSequenceUtil.isNotBlank(requisitionApplicationDetailEntity.getId())) {
                 RequisitionApplicationDetailEntity old = oldList.stream().filter(obj -> obj.getId().equals(requisitionApplicationDetailEntity.getId())).findFirst().orElse(null);
                 if (ObjectUtils.isEmpty(old)) {
-                    throw new ServiceException(ApiError.ERROR_NOT_REQUISITION_APPLICATION);
+                    throw new ServiceException(ApiError.FIRST_MILE_SHIPMENT_REQ_NOT_FOUND);
                 }
                 operateLogService.addModuleOperateLogByObj(old, requisitionApplicationDetailEntity, ModuleTypeEnum.REQUISITION_APPLICATION.getCode(), mainId,"", String.format("【%s】", old.getSkuNo()));
             }

@@ -134,7 +134,7 @@ public class PilotApplicationController extends BaseController {
             return failure(e.getMessage(),new BaseResultDTO.AddAndSubmmitDTO("","",Boolean.FALSE));
         } catch (Exception e) {
             log.error("新增失败，dto: {}", dto, e);
-            return failure(ApiError.ERROR_CREATE_FAILED.getMsg(),new BaseResultDTO.AddAndSubmmitDTO("","",Boolean.FALSE));
+            return failure(ApiError.BILL_SAVE_FAILED.getMsg(),new BaseResultDTO.AddAndSubmmitDTO("","",Boolean.FALSE));
         }
 
         //提审
@@ -145,7 +145,7 @@ public class PilotApplicationController extends BaseController {
             return failure(e.getMessage(),new BaseResultDTO.AddAndSubmmitDTO(add.getId(),add.getCode(),Boolean.TRUE));
         } catch (Exception e) {
             log.error("提交审批失败，ID: {}", add.getId(), e);
-            return failure(ApiError.RETRY_SUBMIT_ERROR.getMsg(),new BaseResultDTO.AddAndSubmmitDTO(add.getId(),add.getCode(),Boolean.TRUE));
+            return failure(ApiError.BILL_APPROVE_SUBMIT_RETRY.getMsg(),new BaseResultDTO.AddAndSubmmitDTO(add.getId(),add.getCode(),Boolean.TRUE));
         }
         //发送消息
         try {
@@ -179,7 +179,7 @@ public class PilotApplicationController extends BaseController {
             return failure(e.getMessage(), new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.FALSE));
         } catch (Exception e) {
             log.error("更新失败，dto: {}", dto, e);
-            return failure(ApiError.ERROR_UPDATE_FAILED.getMsg(),new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.FALSE));
+            return failure(ApiError.BILL_UPDATE_FAILED.getMsg(),new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.FALSE));
         }
 
         //提审
@@ -190,7 +190,7 @@ public class PilotApplicationController extends BaseController {
             return failure( e.getMessage(),new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.TRUE));
         } catch (Exception e) {
             log.error("提交审批失败，ID: {}", dto.getId(), e);
-            return failure(ApiError.RETRY_SUBMIT_ERROR.getMsg(),new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.TRUE));
+            return failure(ApiError.BILL_APPROVE_SUBMIT_RETRY.getMsg(),new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.TRUE));
         }
         //发送消息
         try {

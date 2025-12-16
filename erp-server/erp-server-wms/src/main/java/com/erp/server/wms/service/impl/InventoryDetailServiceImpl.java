@@ -65,7 +65,7 @@ public class InventoryDetailServiceImpl extends SuperServiceImpl<InventoryDetail
                 .update(new InventoryDetailEntity());
 
         if(!flag) {
-            throw new ServiceException(ApiError.ERROR_DATA_CONFLICT);
+            throw new ServiceException(ApiError.BILL_DATA_CONFLICT);
         }
 
         return flag;
@@ -95,7 +95,7 @@ public class InventoryDetailServiceImpl extends SuperServiceImpl<InventoryDetail
             // 更新库存明细数量
             boolean updateFlag = this.updateQtyById(inventoryDetail.getId(), qty);
             if(!updateFlag) {
-                throw new ServiceException(ApiError.ERROR_DATA_CONFLICT);
+                throw new ServiceException(ApiError.BILL_DATA_CONFLICT);
             }
         }
         return inventoryDetail;

@@ -28,7 +28,7 @@ public class ProductPlanSaleServiceImpl extends ServiceImpl<ProductPlanSaleMappe
         //获取当前登录人
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         if (ObjectUtils.isEmpty(userInfo)) {
-            throw new ServiceException(ApiError.ERROR_AUTH_CREDENTIALS_INVALID);
+            throw new ServiceException(ApiError.AUTH_CREDENTIALS_INVALID);
         }
         LambdaUpdateWrapper<ProductPlanSaleEntity> updateWrapper = new LambdaUpdateWrapper<>();
         updateWrapper.eq(ProductPlanSaleEntity::getProductPlanId,productPlanId);

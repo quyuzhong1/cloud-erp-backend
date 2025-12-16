@@ -122,7 +122,7 @@ public class CfgRuleCalcServiceImpl extends SuperServiceImpl<CfgRuleCalcMapper, 
                 historySaleList = excelListener.getDataList();
             } catch (ExcelCommonException e) {
                 log.error("导入格式错误！", e);
-                throw new ServiceException(ApiError.ERROR_FILE_IMPORT_FORMAT_INVALID_XLSX);
+                throw new ServiceException(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX);
             }
         } else {
             List<CalcSalesInfoHisEsEntity> historySales = getSysHistorySalesQty(addDTO, entity.getId(), skuMap, shopMap);
@@ -139,7 +139,7 @@ public class CfgRuleCalcServiceImpl extends SuperServiceImpl<CfgRuleCalcMapper, 
                 historySaleList = mergeSales(historySales, customSales);
             } catch (ExcelCommonException e) {
                 log.error("导入格式错误！", e);
-                throw new ServiceException(ApiError.ERROR_FILE_IMPORT_FORMAT_INVALID_XLSX);
+                throw new ServiceException(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX);
             }
         }
         save(entity);
@@ -322,7 +322,7 @@ public class CfgRuleCalcServiceImpl extends SuperServiceImpl<CfgRuleCalcMapper, 
     public CfgRuleCalcDTO.ViewDTO view(String id) {
         CfgRuleCalcEntity cfgRuleCalc = getById(id);
         if (ObjectUtil.isEmpty(cfgRuleCalc)) {
-            throw new ServiceException(ApiError.ERROR_SYS_TYPE_NOTFOUND, "试算配置");
+            throw new ServiceException(ApiError.COMMON_NOT_FOUND, "试算配置");
         }
         CfgRuleCalcDTO.ViewDTO dto = BeanMapperUtils.map(CfgRuleCalcDTO.ViewDTO.class, cfgRuleCalc);
         dto.setSkuIds(cfgRuleCalc.getSkuJson().toList(String.class));

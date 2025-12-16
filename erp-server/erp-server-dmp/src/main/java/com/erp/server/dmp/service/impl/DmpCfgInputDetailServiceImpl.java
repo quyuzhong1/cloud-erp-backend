@@ -10,13 +10,11 @@ import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.enums.OperationTypeEnum;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson2.JSON;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.*;
 import com.common.business.enums.FileTaskEventEnum;
-import com.common.business.enums.OperationTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
@@ -25,14 +23,12 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.dmp.dto.DmpCfgInputDetailDTO;
 import com.erp.model.dmp.dto.DmpInoutDTO;
-import com.erp.model.dmp.dto.DmpInoutDTO;
 import com.erp.model.dmp.entity.DmpBasicSystemEntity;
 import com.erp.model.dmp.entity.DmpCfgInputDetailEntity;
 import com.erp.model.dmp.entity.DmpCfgOutputDetailEntity;
 import com.erp.model.dmp.enums.DmpInputTaskTaskTypeEnum;
 import com.erp.model.dmp.entity.DmpCfgInputEntity;
 import com.erp.model.dmp.enums.DmpCfgInputExecSystemEnum;
-import com.erp.model.dmp.enums.DmpInputTaskTaskTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.dmp.inout.dto.request.DmpInputHotfixCreateRequest;
@@ -53,10 +49,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.util.*;
 import java.util.function.Function;
@@ -119,10 +112,10 @@ public class DmpCfgInputDetailServiceImpl extends SuperServiceImpl<DmpCfgInputDe
     @Override
     public Boolean update(DmpCfgInputDetailDTO.UpdateDTO updateDTO) {
         DmpCfgInputDetailEntity old = super.getById(updateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "拉取调度"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "拉取调度"));
         DmpCfgInputDetailEntity dmpCfgInputDetailEntity =  BeanMapperUtils.map(DmpCfgInputDetailEntity.class, updateDTO);
 
-        DmpCfgInputEntity cfgInputEntity = dmpCfgInputService.getByIdOpt(old.getMainId()).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "拉取配置"));
+        DmpCfgInputEntity cfgInputEntity = dmpCfgInputService.getByIdOpt(old.getMainId()).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "拉取配置"));
 
         // 数据处理
         handleData(dmpCfgInputDetailEntity, updateDTO);
@@ -171,7 +164,7 @@ public class DmpCfgInputDetailServiceImpl extends SuperServiceImpl<DmpCfgInputDe
         //添加输出配置
         DmpCfgOutputDetailEntity outputDetailEntity = dmpCfgOutputDetailService.getDmpCfgOutputDetailByOption(detailEntity.getMainId(),detailEntity.getNextLevelId());
         if (ObjUtil.isEmpty(outputDetailEntity)) {
-            throw new ServiceException(ApiError.ERROR_NOT_EXIST, CharSequenceUtil.format("{}平台{}编码输出配置不存在,请检查", cfgOptionDTO.getSystem(), cfgOptionDTO.getCode()));
+            throw new ServiceException(ApiError.COMMON_NOT_EXIST, CharSequenceUtil.format("{}平台{}编码输出配置不存在,请检查", cfgOptionDTO.getSystem(), cfgOptionDTO.getCode()));
         }
         if (OperationTypeEnum.ADD.getStatus().equals(cfgOptionDTO.getOption()) || OperationTypeEnum.UPDATE.getStatus().equals(cfgOptionDTO.getOption())) {
             outputDetailEntity.setNextLevelId(cfgOptionDTO.getNextLevelId());
@@ -200,7 +193,7 @@ public class DmpCfgInputDetailServiceImpl extends SuperServiceImpl<DmpCfgInputDe
         //需要添加的输入配置不存在则新增，存在则修改
         DmpCfgInputDetailEntity detailEntity = baseMapper.getDmpCfgInputDetailByOption(cfgOptionDTO);
         if (ObjUtil.isEmpty(detailEntity)) {
-            throw new ServiceException(ApiError.ERROR_NOT_EXIST, CharSequenceUtil.format("{}平台{}编码输入配置不存在,请检查", cfgOptionDTO.getSystem(), cfgOptionDTO.getCode()));
+            throw new ServiceException(ApiError.COMMON_NOT_EXIST, CharSequenceUtil.format("{}平台{}编码输入配置不存在,请检查", cfgOptionDTO.getSystem(), cfgOptionDTO.getCode()));
         }
         if (CharSequenceUtil.isBlank(detailEntity.getId())) {
             LocalDateTime now = LocalDateTime.now();

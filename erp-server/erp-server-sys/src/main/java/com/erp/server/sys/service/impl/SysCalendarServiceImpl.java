@@ -91,13 +91,13 @@ public class SysCalendarServiceImpl extends SuperServiceImpl<SysCalendarMapper, 
         });
         if (CollectionUtil.isNotEmpty(insertList)){
             if (!saveBatch(insertList)) {
-                throw new ServiceException(ApiError.ERROR_CALENDAR_UPDATE_EXCEPTION);
+                throw new ServiceException(ApiError.COMMON_CALENDAR_UPDATE_EXCEPTION);
             }
 
         }
         if (CollectionUtil.isNotEmpty(updateList)){
             if(!updateBatchById(updateList)){
-                throw new ServiceException(ApiError.ERROR_CALENDAR_UPDATE_EXCEPTION);
+                throw new ServiceException(ApiError.COMMON_CALENDAR_UPDATE_EXCEPTION);
             }
         }
         return Boolean.TRUE;

@@ -107,7 +107,7 @@ public class SupplierUserServiceImpl implements SupplierUserService {
         //判断是否存在供应商
         if(StringUtils.isEmpty(sysUserInfoDTO.getSupplierId())) throw new ServiceException("供应商ID不能为空");
         SupplierEntity supplier = supplierService.getById(sysUserInfoDTO.getSupplierId());
-        if (Objects.isNull(supplier)) throw new ServiceException(ApiError.ERROR_SUPPLIER_ABSENCE);
+        if (Objects.isNull(supplier)) throw new ServiceException(ApiError.SUPPLIER_NOT_FOUND);
         if (StringUtils.isEmpty(sysUserInfoDTO.getUserType())) {
             sysUserInfoDTO.setUserType(UserTypeEnum.SRM.code);
         }
@@ -132,7 +132,7 @@ public class SupplierUserServiceImpl implements SupplierUserService {
         if(StringUtils.isEmpty(sysUserInfoDTO.getRefId())) throw new ServiceException("供应商用户关系ID不能为空");
         if(StringUtils.isEmpty(sysUserInfoDTO.getSupplierId())) throw new ServiceException("供应商ID不能为空");
         SupplierEntity supplier = supplierService.getById(sysUserInfoDTO.getSupplierId());
-        if (Objects.isNull(supplier)) throw new ServiceException(ApiError.ERROR_SUPPLIER_ABSENCE);
+        if (Objects.isNull(supplier)) throw new ServiceException(ApiError.SUPPLIER_NOT_FOUND);
         //1.更新用户基础信息
         userInfoFeign.updateSrmUser(sysUserInfoDTO);
         //2.更新供应商关系
@@ -212,7 +212,7 @@ public class SupplierUserServiceImpl implements SupplierUserService {
             wb.write(output);
             wb.close();
         } catch (Exception e) {
-            throw new ServiceException(ApiError.DEFAULT);
+            throw new ServiceException(ApiError.HTTP_UNKNOWN);
         }
     }
 
@@ -223,16 +223,16 @@ public class SupplierUserServiceImpl implements SupplierUserService {
             EasyExcel.read(excelFile.getInputStream(), SupplierUserImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (IOException e) {
             log.error("导入错误！", e);
-            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_FAILED);
+            throw new ServiceException(ApiError.FILE_DATA_IMPORT_FAILED);
         } catch (ExcelCommonException e) {
             log.error("导入格式错误！", e);
-            throw new ServiceException(ApiError.ERROR_FILE_IMPORT_FORMAT_INVALID_XLSX);
+            throw new ServiceException(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX);
         }
         List<SupplierUserImportExcelDTO> excelDateList = excelListenerUtil.getExcelDateList();
         if (CollectionUtils.isEmpty(excelDateList)) {
-            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_REQUIRED);
+            throw new ServiceException(ApiError.FILE_DATA_REQUIRED);
         }else if (excelDateList.size() > 5000){
-            throw new ServiceException(ApiError.ERROR_EXCEL_IMPORT_SIZE);
+            throw new ServiceException(ApiError.FILE_EXCEL_IMPORT_SIZE);
         }
         List<SupplierUserImportExcelDTO > errorList = excelListenerUtil.getErrorList();
 
@@ -250,7 +250,7 @@ public class SupplierUserServiceImpl implements SupplierUserService {
             try {
                 new ExcelPrintUtils().patchExport(errorList, response, sb.toString(), excelPath);
             } catch (IOException e) {
-                throw new ServiceException(ApiError.ERROR_EXPORT_ERROR_DATA_FAILED);
+                throw new ServiceException(ApiError.FILE_EXPORT_ERROR_DATA_FAILED);
             }
             return Boolean.FALSE;
         }
@@ -327,7 +327,7 @@ public class SupplierUserServiceImpl implements SupplierUserService {
     private List<String> checkImportData(SupplierUserImportExcelDTO excelDTO,SupplierRefUserEntity refUserEntity) {
         List<String> errorMsgList = new ArrayList<>();
         if (StringUtils.isEmpty(excelDTO.getSupplierName()) || StringUtils.isEmpty(excelDTO.getSupplierName().trim())){
-            errorMsgList.add(ApiError.ERROR_EMPTY_SUPPLIER.getMsg());
+            errorMsgList.add(ApiError.SUPPLIER_NAME_EMPTY.getMsg());
             return errorMsgList;
         }
         List<String> msgList = FieldValidUtil.fieldValid(excelDTO);
@@ -340,15 +340,15 @@ public class SupplierUserServiceImpl implements SupplierUserService {
             SupplierEntity supplierEntity = supplierEntityList.get(0);
             //供应商状态判断
             if(Objects.isNull(supplierEntity.getDisabled()) ||  supplierEntity.getDisabled()){
-                errorMsgList.add(ApiError.ERROR_SUPPLIER_DISABLE.getMsg());
+                errorMsgList.add(ApiError.SUPPLIER_DISABLE.getMsg());
                 return errorMsgList;
             }
             if(Objects.isNull(supplierEntity.getApproveStatus()) ||  !supplierEntity.getApproveStatus().getStatus().equals(ApproveStatusEnum.APPROVE.getStatus())){
-                errorMsgList.add(ApiError.ERROR_SUPPLIER_UN_APPROVE.getMsg());
+                errorMsgList.add(ApiError.SUPPLIER_UN_APPROVE.getMsg());
                 return errorMsgList;
             }
             if(Objects.isNull(supplierEntity.getSrmDisabled()) ||  supplierEntity.getSrmDisabled()){
-                errorMsgList.add(ApiError.ERROR_SUPPLIER_SRM_DISABLE.getMsg());
+                errorMsgList.add(ApiError.SUPPLIER_SRM_DISABLE.getMsg());
                 return errorMsgList;
             }
             supplierEntity.getApproveStatus();
@@ -357,13 +357,13 @@ public class SupplierUserServiceImpl implements SupplierUserService {
             refUserEntity.setDisabled(false);
             refUserEntity.setIsSuper(true);
         }else {
-            errorMsgList.add(ApiError.ERROR_SUPPLIER_ABSENCE.getMsg());
+            errorMsgList.add(ApiError.SUPPLIER_NOT_FOUND.getMsg());
             return errorMsgList;
         }
         //用户是否存在
         FindUserDTO user = sysUserFeign.getUserByMobile(excelDTO.getMobile(), UserTypeEnum.SRM.code);
         if (Objects.isNull(user)){
-            errorMsgList.add(ApiError.MOBILE_IS_EXIST.getMsg());
+            errorMsgList.add(ApiError.AUTH_MOBILE_IS_EXIST.getMsg());
             return errorMsgList;
         }
         return errorMsgList;

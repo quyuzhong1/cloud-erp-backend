@@ -87,7 +87,7 @@ public class LogisticsAuthServiceImpl extends SuperServiceImpl<LogisticsAuthMapp
     public BaseResultDTO.AddDTO add(LogisticsAuthDTO.AddDTO addDTO) {
         LogisticsSupplierEntity supplierEntity = logisticsSupplierService.getById(addDTO.getMainId());
         if (Objects.isNull(supplierEntity)) {
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "物流商");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "物流商");
         }
         LogisticsAuthEntity logisticsAuthEntity = new LogisticsAuthEntity();
         BeanMapperUtils.copy(addDTO, logisticsAuthEntity);
@@ -116,10 +116,10 @@ public class LogisticsAuthServiceImpl extends SuperServiceImpl<LogisticsAuthMapp
     @Override
     public BaseResultDTO.UpdateDTO update(LogisticsAuthDTO.UpdateDTO updateDTO) {
         LogisticsAuthEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "物流授权单"));
+        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "物流授权单"));
         LogisticsSupplierEntity supplierEntity = logisticsSupplierService.getById(updateDTO.getMainId());
         if (Objects.isNull(supplierEntity)) {
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "物流商");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "物流商");
         }
 
         LogisticsAuthEntity logisticsAuthEntity = BeanMapperUtils.map(LogisticsAuthEntity.class, updateDTO);
@@ -142,7 +142,7 @@ public class LogisticsAuthServiceImpl extends SuperServiceImpl<LogisticsAuthMapp
     public LogisticsAuthDTO.ViewDTO view(String mainId) {
         LogisticsAuthEntity authEntity = this.getByMainId("", mainId);
         if (Objects.isNull(authEntity)) {
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "物流授权");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "物流授权");
         }
         LogisticsAuthDTO.ViewDTO view = new LogisticsAuthDTO.ViewDTO();
         BeanMapperUtils.copy(authEntity, view);
@@ -195,7 +195,7 @@ public class LogisticsAuthServiceImpl extends SuperServiceImpl<LogisticsAuthMapp
     public void updateLogisticsAuthStatus(String mainId, String authStatus) {
         LogisticsSupplierEntity supplierEntity = logisticsSupplierService.getById(mainId);
         if (Objects.isNull(supplierEntity)) {
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "物流商");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "物流商");
         }
         supplierEntity.setAuthStatus(authStatus);
         logisticsSupplierService.updateById(supplierEntity);
@@ -334,11 +334,11 @@ public class LogisticsAuthServiceImpl extends SuperServiceImpl<LogisticsAuthMapp
     public BatchResultDTO cancel(String mainId) {
         LogisticsAuthEntity entity = this.getDbByMainId(mainId);
         if (Objects.isNull(entity)) {
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "物流授权");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "物流授权");
         }
         LogisticsSupplierEntity supplierEntity = logisticsSupplierService.getById(mainId);
         if (Objects.isNull(supplierEntity)) {
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "物流商");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "物流商");
         }
         String authStatus = supplierEntity.getAuthStatus();
         if (!LogisticsAuthStatusEnum.ALREADY.getCode().equals(authStatus)) {

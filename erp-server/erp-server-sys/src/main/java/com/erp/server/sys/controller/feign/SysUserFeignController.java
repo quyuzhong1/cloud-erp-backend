@@ -82,10 +82,10 @@ public class SysUserFeignController extends BaseController {
     public ApiResult<SysUserDTO> accountLogin(@RequestBody AccountLoginDTO dto) {
         SysUserDTO info = sysUserInfoService.accountLogin(dto);
         if (Objects.isNull(info)) {
-            return failure(ApiError.ERROR_AUTH_CREDENTIALS_INVALID, null);
+            return failure(ApiError.AUTH_CREDENTIALS_INVALID,info, dto.getAccount());
         }
         if (UserStateConstants.USER_DISABLE.equals(info.getUserState())) {
-            return failure(ApiError.ERROR_ACCOUNT_DISABLED, null);
+            return failure(ApiError.AUTH_ACCOUNT_DISABLED, info, info.getUserAccount());
         }
         return success(info);
     }
@@ -102,10 +102,10 @@ public class SysUserFeignController extends BaseController {
     public ApiResult<SysUserDTO> scanCodeLogin(@RequestBody SysUserThirdDTO dto) {
         SysUserDTO info = sysUserInfoService.scanCodeLogin(dto);
         if (Objects.isNull(info)) {
-            return failure(ApiError.ERROR_AUTH_CREDENTIALS_INVALID, null);
+            return failure(ApiError.AUTH_CREDENTIALS_INVALID, info, dto.getCode());
         }
         if (UserStateConstants.USER_DISABLE.equals(info.getUserState())) {
-            return failure(ApiError.ERROR_ACCOUNT_DISABLED, null);
+            return failure(ApiError.AUTH_ACCOUNT_DISABLED, info, info.getUserAccount());
         }
         return success(info);
     }
@@ -188,7 +188,7 @@ public class SysUserFeignController extends BaseController {
         // 1. 获取用户基本信息
         FindUserDTO userByUserId = sysUserInfoService.getUserByUserId(userId);
         if (userByUserId == null) {
-            return failure(ApiError.ERROR_USER_NOT_FOUND, null);
+            return failure(ApiError.AUTH_USER_NOT_FOUND, userByUserId, dto.getUserId());
         }
 
         SysUserDTO sysUserDTO = new SysUserDTO();

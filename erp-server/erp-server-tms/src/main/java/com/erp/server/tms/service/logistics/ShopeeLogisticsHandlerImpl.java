@@ -269,7 +269,7 @@ public class ShopeeLogisticsHandlerImpl extends AbstractLogisticsHandler {
                 logisticsOperateService.pullOperateLog(chanelQueryVO.getOrderId(),
                         chanelQueryVO.getTransportMode(), BusinessTypeEnum.GET_CHANEL_LIST.getCode(), LogisticsPlatformEnum.SHOPEE.getCode(),
                         RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(chanelQueryVO), JSONUtil.toJsonStr(baseResponse));
-                return ApiResult.error(ApiError.CALL_THIRD_LOGISTICS_PLATFORM_ERROR.getCode(), getPlatForm().getName() + ":" );
+                return ApiResult.error(ApiError.LOGISTICS_CALL_THIRD_PLATFORM_ERROR.getCode(), getPlatForm().getName() + ":" );
             }
             JSONObject response = baseResponse.getResponse();
             String error = response.getString("error");
@@ -278,7 +278,7 @@ public class ShopeeLogisticsHandlerImpl extends AbstractLogisticsHandler {
                         chanelQueryVO.getTransportMode(), BusinessTypeEnum.GET_CHANEL_LIST.getCode(), LogisticsPlatformEnum.SHOPEE.getCode(),
                         RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(chanelQueryVO), JSONUtil.toJsonStr(baseResponse));
                 log.error("获取渠道列表异常：{}", error);
-                return ApiResult.error(ApiError.CALL_THIRD_LOGISTICS_PLATFORM_ERROR.getCode(), getPlatForm().getName() + ":" +error);
+                return ApiResult.error(ApiError.LOGISTICS_CALL_THIRD_PLATFORM_ERROR.getCode(), getPlatForm().getName() + ":" +error);
             }
             JSONArray jsonArray = response.getJSONArray("logistics_channel_list");
             //渠道列表

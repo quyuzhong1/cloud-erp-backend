@@ -7,7 +7,6 @@ import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
@@ -298,7 +297,7 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
         //主表信息
         SubcontractOrderEntity entity = subcontractOrderService.getById(mainId);
         if (ObjectUtils.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_SCM_OUTSOURCING_ORDER_NOT_FOUND);
+            throw new ServiceException(ApiError.PO_SUBCONTRACT_ORDER_NOT_FOUND);
         }
 
         //采购申请单明细
@@ -312,7 +311,7 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
         List<String> skuIds = sourceDetailList.stream().map(SubcontractOrderDetailEntity::getSkuId).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIds);
         if (CollectionUtils.isEmpty(skuList)) {
-            throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_INFO_NOT_FOUND);
+            throw new ServiceException(ApiError.PRODUCT_INFO_NOT_FOUND);
         }
 
         //收集所有SKU校验错误信息
@@ -389,7 +388,7 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
         //委外订单
         SubcontractOrderEntity subcontractOrderEntity = subcontractOrderService.getById(mainId);
         if (ObjectUtils.isEmpty(subcontractOrderEntity)) {
-            throw new ServiceException(ApiError.ERROR_SCM_OUTSOURCING_ORDER_NOT_FOUND);
+            throw new ServiceException(ApiError.PO_SUBCONTRACT_ORDER_NOT_FOUND);
         }
         //获取采购单价
         String purchaseOrgId = subcontractOrderEntity.getPurchaseOrgId();
@@ -412,12 +411,12 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
         //BOM信息
         List<BomChildrenSkuDTO> bomChildrenList = plmTaskFeign.listHistoryBomChildBySkuIds(parentSkuIds);
         if (CollectionUtils.isEmpty(bomChildrenList)) {
-            throw new ServiceException(ApiError.ERROR_PLM_BOM_NOT_FOUND);
+            throw new ServiceException(ApiError.BOM_NOT_FOUND);
         }
         //产品信息
         List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(allSkuIds);
         if (CollectionUtils.isEmpty(skuList)) {
-            throw new ServiceException(ApiError.ERROR_PLM_PRODUCT_INFO_NOT_FOUND);
+            throw new ServiceException(ApiError.PRODUCT_INFO_NOT_FOUND);
         }
         List<SupplierEntity> supplierList = null;
         if (CollectionUtils.isNotEmpty(supplierIds)) {

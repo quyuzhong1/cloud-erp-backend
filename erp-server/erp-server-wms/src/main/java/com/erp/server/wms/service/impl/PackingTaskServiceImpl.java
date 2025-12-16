@@ -88,7 +88,6 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -259,7 +258,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
                 //已下推入库单，不允许修改装箱信息
                 OverseasWarehouseInboundEntity overseasWarehouseInbound = overseasWarehouseInboundService.getBySourceId(firstMileDeliveryEntity.getId(), OverseasInstockStatusEnum.CANCELED.getCode());
                 if (ObjectUtil.isNotEmpty(overseasWarehouseInbound) && !OverseasInstockStatusEnum.TO_BE_SHIPPED.getCode().equals(overseasWarehouseInbound.getInstockStatus())) {
-                    throw new ServiceException(ApiError.OVERSEAS_WAREHOUSE_INBOUND_EXIST, overseasWarehouseInbound.getCode());
+                    throw new ServiceException(ApiError.WH_INBOUND_EXIST_NOT_REPEAT, overseasWarehouseInbound.getCode());
                 }
             }
         }
@@ -645,14 +644,14 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
             if(packingTask.getSourceCode().contains(BusinessNoConstant.YHSQ)){
                 RequisitionApplicationEntity requisitionApplicationEntity = requisitionApplicationService.getById(packingTask.getSourceId());
                 if (Objects.isNull(requisitionApplicationEntity)){
-                    throw new ServiceException(ApiError.NOT_EXIST_BILL, "要货申请");
+                    throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "要货申请");
                 }
                 listPackingDTO.setId(requisitionApplicationEntity.getId());
                 listPackingDTO.setCode(requisitionApplicationEntity.getCode());
             }else{
                 FirstMileDeliveryEntity firstMileDelivery = firstMileDeliveryService.getById(packingTask.getSourceId());
                 if (Objects.isNull(firstMileDelivery)){
-                    throw new ServiceException(ApiError.NOT_EXIST_BILL, "发货单");
+                    throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "发货单");
                 }
                 listPackingDTO.setId(firstMileDelivery.getId());
                 listPackingDTO.setCode(firstMileDelivery.getCode());
@@ -689,7 +688,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
             wb.close();
         } catch (Exception e) {
             log.error("packing downloadTemplate  出错了 e==", e);
-            throw new ServiceException(ApiError.ERROR_IMPORT_TEMPLATE_DOWNLOAD_FAILED);
+            throw new ServiceException(ApiError.FILE_IMPORT_TEMPLATE_DOWNLOAD_FAILED);
         }
     }
 
@@ -703,7 +702,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
             throw new ServiceException(excelAnalysisException.getMessage());
         } catch (Exception e) {
             log.error("excel导入错误", e);
-            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_FAILED);
+            throw new ServiceException(ApiError.FILE_DATA_IMPORT_FAILED);
         }
         List<PackingExcelDTO> packingExcelDTOList = listener.getPackingExcelDTOList();
         List<PackingExcelDTO> errorList = listener.getErrorList();
@@ -2091,7 +2090,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
                 ).count();
         if (count > 0) {
             List<String> codes = overseasWarehouseInboundEntities.stream().map(OverseasWarehouseInboundEntity::getCode).distinct().collect(Collectors.toList());
-            throw new ServiceException(ApiError.OVERSEAS_WAREHOUSE_INBOUND_EXIST_NOT_UPDATE, String.join(",",codes));
+            throw new ServiceException(ApiError.WH_OVERSEAS_INBOUND_EXIST_NOT_UPDATE, String.join(",",codes));
         }
     }
 

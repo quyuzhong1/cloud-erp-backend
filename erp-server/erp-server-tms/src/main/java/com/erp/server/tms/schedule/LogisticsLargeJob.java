@@ -278,7 +278,7 @@ public class LogisticsLargeJob {
                             && CharSequenceUtil.isBlank(entity.getEstimatedBillId()))
                     .findFirst().orElse(null);
             if (logisticsLargeActualEntity != null) {
-                XxlJobHelper.log(ApiError.ERROR_EXISTS_LOGISTICS_LARGE.getMsg());
+                XxlJobHelper.log(ApiError.LOGISTICS_LARGE_TABLE_EXISTS.getMsg());
                 continue;
             }
             //预估账单只能推送一个
@@ -287,7 +287,7 @@ public class LogisticsLargeJob {
                             && CharSequenceUtil.isNotBlank(entity.getEstimatedBillId()))
                     .findFirst().orElse(null);
             if (logisticsLargeEstimatedEntity != null) {
-                XxlJobHelper.log(ApiError.ERROR_EXISTS_ESTIMATED_LOGISTICS_LARGE.getMsg());
+                XxlJobHelper.log(ApiError.LOGISTICS_LARGE_ESTIMATED_EXISTS.getMsg());
                 continue;
             }
 
@@ -297,7 +297,7 @@ public class LogisticsLargeJob {
                             && CharSequenceUtil.isBlank(entity.getEstimatedBillId()))
                     .findFirst().orElse(null);
             if (logisticsLargeEntity != null) {
-                XxlJobHelper.log(ApiError.ERROR_EXISTS_ACTUAL_NOT_ESTIMATED.getMsg());
+                XxlJobHelper.log(ApiError.LOGISTICS_ACTUAL_EXISTS_CANNOT_PUSH.getMsg());
                 continue;
             }
 

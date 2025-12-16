@@ -83,10 +83,10 @@ public class ProductVariantPropertyServiceImpl extends ServiceImpl<ProductVarian
     public Boolean deleteVariant(String variantId) {
         ProductVariantPropertyEntity entity = this.getById(variantId);
         if (ObjectUtils.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_PLM_VARIANT_VALUE_NOT_FOUND);
+            throw new ServiceException(ApiError.PRODUCT_VARIANT_VALUE_NOT_FOUND);
         }
         if (entity.getOccupyStatus()) {
-            throw new ServiceException(ApiError.ERROR_PLM_VARIANT_VALUES_REF_DELETE_FORBIDDEN);
+            throw new ServiceException(ApiError.PRODUCT_VARIANT_VALUES_REF_DELETE_FORBIDDEN);
         }
         LambdaQueryWrapper<ProductVariantPropertyEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(ProductVariantPropertyEntity::getId, variantId);

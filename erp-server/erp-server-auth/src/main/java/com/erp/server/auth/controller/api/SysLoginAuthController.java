@@ -2,7 +2,6 @@ package com.erp.server.auth.controller.api;
 
 
 import java.util.Date;
-import java.util.Objects;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
@@ -16,7 +15,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.common.business.constant.TokenConstants;
-import com.common.business.vo.LoginUser;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
@@ -124,7 +122,7 @@ public class SysLoginAuthController extends BaseController {
     public ApiResult<SysLoginUserVO> getByToken( HttpServletRequest request) {
         String token= request.getHeader(TokenConstants.AUTHENTICATION);
         if(StringUtils.isBlank(token)){
-            throw new ServiceException(ApiError.ERROR_FORBIDDEN);
+            throw new ServiceException(ApiError.HTTP_FORBIDDEN);
         }
         return success(loginAuthService.getByToken(token));
     }

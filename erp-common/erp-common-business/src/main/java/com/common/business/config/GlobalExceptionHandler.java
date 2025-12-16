@@ -87,9 +87,9 @@ public class GlobalExceptionHandler {
     public ApiResult<?> handleValidException(MethodArgumentNotValidException e) {
         String msg = e.getBindingResult().getFieldError() != null
                 ? e.getBindingResult().getFieldError().getDefaultMessage()
-                : MessageUtils.getMessage(ApiError.ERROR_PARAM_INVALID);
+                : MessageUtils.getMessage(ApiError.HTTP_BAD_REQUEST);
         log.warn("[MethodArgumentNotValidException] {}", msg);
-        return buildResult(ApiError.ERROR_PARAM_INVALID.getCode(), msg);
+        return buildResult(ApiError.HTTP_BAD_REQUEST.getCode(), msg);
     }
 
     @ExceptionHandler(BindException.class)
@@ -97,33 +97,33 @@ public class GlobalExceptionHandler {
         log.warn("[BindException] {}", e.getMessage());
         List<ObjectError> errors = e.getBindingResult().getAllErrors();
         ObjectError objectError = ValidatorUtil.getPermanentError(errors);
-        String msg = objectError != null ? objectError.getDefaultMessage() : MessageUtils.getMessage(ApiError.ERROR_PARAM_INVALID);
-        return buildResult(ApiError.ERROR_PARAM_INVALID.getCode(), msg);
+        String msg = objectError != null ? objectError.getDefaultMessage() : MessageUtils.getMessage(ApiError.HTTP_BAD_REQUEST);
+        return buildResult(ApiError.HTTP_BAD_REQUEST.getCode(), msg);
     }
 
     @ExceptionHandler(MissingServletRequestParameterException.class)
     public ApiResult<?> handleMissingParam(MissingServletRequestParameterException e) {
         log.warn("[MissingServletRequestParameterException] {}", e.getMessage());
-        return buildResult(ApiError.ERROR_PARAM_INVALID);
+        return buildResult(ApiError.HTTP_BAD_REQUEST);
     }
 
     @ExceptionHandler(MissingRequestHeaderException.class)
     public ApiResult<?> handleMissingHeader(MissingRequestHeaderException e) {
         log.warn("[MissingRequestHeaderException] {}", e.getMessage());
-        return buildResult(ApiError.ERROR_PARAM_INVALID);
+        return buildResult(ApiError.HTTP_BAD_REQUEST);
     }
 
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
     public ApiResult<?> handleMethodNotSupported(HttpRequestMethodNotSupportedException e) {
         log.warn("[HttpRequestMethodNotSupportedException] {}", e.getMessage());
-        return buildResult(ApiError.ERROR_HTTP_METHOD_NOT_ALLOWED);
+        return buildResult(ApiError.HTTP_METHOD_NOT_ALLOWED);
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ApiResult<?> handleHttpMessageNotReadable(HttpMessageNotReadableException e) {
         log.warn("[HttpMessageNotReadableException] {}", e.getMessage());
-        return buildResult(ApiError.ERROR_PARAM_INVALID.getCode(),
-                ApiError.ERROR_PARAM_INVALID.getMsg() + ":" + e.getMessage());
+        return buildResult(ApiError.HTTP_BAD_REQUEST.getCode(),
+                ApiError.HTTP_BAD_REQUEST.getMsg() + ":" + e.getMessage());
     }
 
     // ===================== 数据库与系统异常 ===================== //
@@ -134,69 +134,69 @@ public class GlobalExceptionHandler {
         String msg = e.getMessage();
         if (msg != null && msg.contains("Duplicate entry") && msg.contains("for key")) {
             String duplicateKey = msg.substring(msg.indexOf("Duplicate entry") + 15, msg.indexOf("for key")).trim();
-            return buildResult(ApiError.ERROR_DATA_DUPLICATE.getCode(),
+            return buildResult(ApiError.BILL_DATA_DUPLICATE.getCode(),
                     CharSequenceUtil.format("数据【{}】重复，请修改后再提交", duplicateKey));
         }
-        return buildResult(ApiError.ERROR_DATA_DUPLICATE);
+        return buildResult(ApiError.BILL_DATA_DUPLICATE);
     }
 
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ApiResult<?> handleDataIntegrity(DataIntegrityViolationException e) {
         log.error("[DataIntegrityViolationException]", e);
         if (e.getMessage() != null && e.getMessage().contains("value too long")) {
-            return buildResult(ApiError.ERROR_PARAM_CONTENT_TOO_LONG);
+            return buildResult(ApiError.COMMON_PARAM_CONTENT_TOO_LONG);
         }
-        return buildResult(ApiError.DEFAULT);
+        return buildResult(ApiError.HTTP_UNKNOWN);
     }
 
     @ExceptionHandler(MaxUploadSizeExceededException.class)
     public ApiResult<?> handleMaxUpload(MaxUploadSizeExceededException e) {
         log.error("[MaxUploadSizeExceededException]", e);
-        return buildResult(ApiError.ERROR_FILE_TOO_LARGE, e.getMaxUploadSize());
+        return buildResult(ApiError.FILE_TOO_LARGE, e.getMaxUploadSize());
     }
 
     @ExceptionHandler(IllegalStateException.class)
     public ApiResult<?> handleIllegalState(IllegalStateException e) {
         log.error("[IllegalStateException]", e);
         if (e.getMessage() != null && e.getMessage().contains("No instances available for")) {
-            return buildResult(ApiError.ERROR_SERVICE_UNAVAILABLE);
+            return buildResult(ApiError.HTTP_SERVICE_UNAVAILABLE);
         }
-        return buildResult(ApiError.DEFAULT);
+        return buildResult(ApiError.HTTP_UNKNOWN);
     }
 
     @ExceptionHandler(IllegalMonitorStateException.class)
     public ApiResult<?> handleIllegalMonitor(IllegalMonitorStateException e) {
         log.error("[IllegalMonitorStateException]", e);
         if (e.getMessage() != null && e.getMessage().contains("attempt to unlock lock")) {
-            return buildResult(ApiError.ERROR_DATA_LOCKED);
+            return buildResult(ApiError.BILL_DATA_LOCKED);
         }
-        return buildResult(ApiError.DEFAULT);
+        return buildResult(ApiError.HTTP_UNKNOWN);
     }
 
     @ExceptionHandler(MappingException.class)
     public ApiResult<?> handleMappingException(MappingException e) {
         log.error("[MappingException]", e);
-        return buildResult(ApiError.ERROR_COPY_ERROR);
+        return buildResult(ApiError.COMMON_COPY_ERROR);
     }
 
     @ExceptionHandler(ClientException.class)
     @ResponseStatus(HttpStatus.OK)
     public ApiResult<?> handleClientException(ClientException e) {
         log.error("[ClientException]", e);
-        return buildResult(ApiError.ERROR_SERVICE_UNAVAILABLE);
+        return buildResult(ApiError.HTTP_SERVICE_UNAVAILABLE);
     }
 
     @ExceptionHandler(NullPointerException.class)
     public ApiResult<?> handleNullPointer(NullPointerException e) {
         log.error("[NullPointerException]", e);
-        return buildResult(ApiError.DEFAULT);
+        return buildResult(ApiError.HTTP_UNKNOWN);
     }
 
     @ExceptionHandler(Exception.class)
     public ApiResult<?> handleGenericException(Exception e) {
         log.error("[UnknownException] {}", e.getMessage(), e);
-        return buildResult(ApiError.DEFAULT.getCode(),
-                MessageUtils.getMessage(ApiError.DEFAULT) + "：" + e.getMessage());
+        return buildResult(ApiError.HTTP_UNKNOWN.getCode(),
+                MessageUtils.getMessage(ApiError.HTTP_UNKNOWN) + "：" + e.getMessage());
     }
 
     /** 客户端主动断开连接 */
@@ -231,8 +231,8 @@ public class GlobalExceptionHandler {
 
     /** 设置 HTTP 状态（401 → UNAUTHORIZED, 默认200） */
     private void setHttpStatus(HttpServletResponse response, Integer code) {
-        if (Objects.equals(code, ApiError.ERROR_UNAUTHORIZED.getCode()) ||
-                Objects.equals(code, ApiError.ERROR_FORBIDDEN.getCode())) {
+        if (Objects.equals(code, ApiError.HTTP_UNAUTHORIZED.getCode()) ||
+                Objects.equals(code, ApiError.HTTP_FORBIDDEN.getCode())) {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         } else {
             response.setStatus(HttpServletResponse.SC_OK);

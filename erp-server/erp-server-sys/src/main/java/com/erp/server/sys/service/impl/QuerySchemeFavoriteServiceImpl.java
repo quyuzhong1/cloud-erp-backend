@@ -35,11 +35,11 @@ public class QuerySchemeFavoriteServiceImpl extends SuperServiceImpl<QueryScheme
     public Boolean updateById(QuerySchemeFavoriteDTO.UpdateDTO updateDTO) {
         Optional<QuerySchemeFavoriteEntity> entityOpt = this.getByIdOpt(updateDTO.getId());
         if (!entityOpt.isPresent()) {
-            throw new ServiceException(ApiError.SCHEME_NOT_EXIST);
+            throw new ServiceException(ApiError.COMMON_SCHEME_NOT_EXIST);
         }
         String userId = UserContext.getLoginUser().getUid();
         if (StrUtil.isBlank(userId)) {
-            throw new ServiceException(ApiError.ERROR_FORBIDDEN);
+            throw new ServiceException(ApiError.HTTP_FORBIDDEN);
         }
         return this.updateById(new QuerySchemeFavoriteEntity(updateDTO,userId));
     }
@@ -48,13 +48,13 @@ public class QuerySchemeFavoriteServiceImpl extends SuperServiceImpl<QueryScheme
     public Boolean add(QuerySchemeFavoriteDTO.AddDTO addDTO) {
         String userId = UserContext.getLoginUser().getUid();
         if (StrUtil.isBlank(userId)) {
-            throw new ServiceException(ApiError.ERROR_FORBIDDEN);
+            throw new ServiceException(ApiError.HTTP_FORBIDDEN);
         }
         lambdaQuery().eq(QuerySchemeFavoriteEntity::getName,addDTO.getName())
                 .eq(QuerySchemeFavoriteEntity::getUserId,userId)
                 .eq(QuerySchemeFavoriteEntity::getModulePath, addDTO.getModulePath())
                 .oneOpt().ifPresent(entity -> {
-            throw new ServiceException(ApiError.SCHEME_NAME_EXIST, entity.getName());
+            throw new ServiceException(ApiError.COMMON_SCHEME_NAME_EXIST, entity.getName());
         });
         return this.save(new QuerySchemeFavoriteEntity(addDTO,userId));
     }
@@ -65,7 +65,7 @@ public class QuerySchemeFavoriteServiceImpl extends SuperServiceImpl<QueryScheme
             userId = UserContext.getLoginUser().getUid();
         }
         if (StrUtil.isBlank(userId)) {
-            throw new ServiceException(ApiError.ERROR_FORBIDDEN);
+            throw new ServiceException(ApiError.HTTP_FORBIDDEN);
         }
         List<QuerySchemeFavoriteEntity> list = lambdaQuery()
                 .eq(QuerySchemeFavoriteEntity::getUserId, userId)

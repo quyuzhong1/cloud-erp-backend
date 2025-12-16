@@ -134,12 +134,12 @@ public class SoB2cCoreServiceImpl implements SoB2cCoreService {
             List<SoB2cDetailEntity> thisDetailList = detailMap.get(soB2cEntity.getId());
             if (CollUtil.isEmpty(thisDetailList)) {
                 log.error("未找到销售订单明细，订单号：{}", soB2cEntity.getCode());
-               throw new ServiceException(ApiError.ERROR_SYS_TYPE_NOTFOUND,CharSequenceUtil.format("订单{}明细信息",soB2cEntity.getCode()));
+               throw new ServiceException(ApiError.COMMON_NOT_FOUND,CharSequenceUtil.format("订单{}明细信息",soB2cEntity.getCode()));
             }
             SoB2cReceiverEntity receiverEntity = soB2cReceiverMap.get(soB2cEntity.getId());
             if (ObjectUtil.isEmpty(receiverEntity)) {
                 log.error("未找到销售订单买家信息，订单号：{}", soB2cEntity.getCode());
-                throw new ServiceException(ApiError.ERROR_SYS_TYPE_NOTFOUND,CharSequenceUtil.format("订单{}买家信息",soB2cEntity.getCode()));
+                throw new ServiceException(ApiError.COMMON_NOT_FOUND,CharSequenceUtil.format("订单{}买家信息",soB2cEntity.getCode()));
             }
 
             for (SoB2cDetailEntity soB2cDetailEntity : thisDetailList) {
@@ -233,7 +233,7 @@ public class SoB2cCoreServiceImpl implements SoB2cCoreService {
             List<SoB2cDetailEntity> thisDetailList = detailMap.get(soB2cEntity.getId());
             if (CollUtil.isEmpty(thisDetailList)) {
                 log.error("未找到销售订单明细，订单号：{}", soB2cEntity.getCode());
-                throw new ServiceException(ApiError.ERROR_SYS_TYPE_NOTFOUND,CharSequenceUtil.format("订单{}明细信息",soB2cEntity.getCode()));
+                throw new ServiceException(ApiError.COMMON_NOT_FOUND,CharSequenceUtil.format("订单{}明细信息",soB2cEntity.getCode()));
             }
         }
     }
@@ -242,7 +242,7 @@ public class SoB2cCoreServiceImpl implements SoB2cCoreService {
     @Transactional(rollbackFor = Exception.class)
     public Boolean retryOutstock(List<SoB2cCoreDTO.RetryOutstockDTO> list) {
         if (CollUtil.isEmpty(list)) {
-            throw new ServiceException(ApiError.ERROR_SELECTION_REQUIRED);
+            throw new ServiceException(ApiError.BILL_SELECTION_REQUIRED);
         }
         List<String> b2cSoIdList = list.stream().map(SoB2cCoreDTO.RetryOutstockDTO::getB2cSoId).distinct().collect(Collectors.toList());
         List<SoB2cEntity> soB2cList = soB2cService.listByIds(b2cSoIdList);

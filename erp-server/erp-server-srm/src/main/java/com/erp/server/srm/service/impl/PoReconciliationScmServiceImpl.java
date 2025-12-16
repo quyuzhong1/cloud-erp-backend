@@ -156,7 +156,7 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
     public Boolean update(PoReconciliationDTO.ScmUpdateDTO updateDTO) {
         PoReconciliationEntity old = super.getById(updateDTO.getId());
         if(null == old){
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "采购对账单");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "采购对账单");
         }
         //待供方确认/待采方确认
         if (!PoReconciliationEnum.PoReconciliationStatusEnum.TO_BE_SUPPLIER_CONFIRM.getCode().equals(old.getStatus())
@@ -218,15 +218,15 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
             EasyExcel.read(excelFile.getInputStream(), PoReconciliationDetailImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (IOException e) {
             log.error("导入错误！", e);
-            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_FAILED);
+            throw new ServiceException(ApiError.FILE_DATA_IMPORT_FAILED);
         } catch (ExcelCommonException e) {
             log.error("导入格式错误！", e);
-            throw new ServiceException(ApiError.ERROR_FILE_IMPORT_FORMAT_INVALID_XLSX);
+            throw new ServiceException(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX);
         }
         //验证导入数据是否为空
         List<PoReconciliationDetailImportExcelDTO> excelDateList = excelListenerUtil.getExcelDateList();
         if (CollectionUtils.isEmpty(excelDateList)) {
-            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_REQUIRED);
+            throw new ServiceException(ApiError.FILE_DATA_REQUIRED);
         }
         PoReconciliationDetailDTO.ImportDTO importDTO = new PoReconciliationDetailDTO.ImportDTO();
         //导入数据处理
@@ -356,7 +356,7 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
             wb.write(output);
             wb.close();
         } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_IMPORT_TEMPLATE_DOWNLOAD_FAILED);
+            throw new ServiceException(ApiError.FILE_IMPORT_TEMPLATE_DOWNLOAD_FAILED);
         }
     }
 
@@ -561,7 +561,7 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
             try {
                 new ExcelPrintUtils().patchExport(detailDTOList,exportDTO, response, sb.toString(), excelPath);
             } catch (Exception e) {
-                throw new ServiceException(ApiError.ERROR_FILE_EXPORT_FAILED);
+                throw new ServiceException(ApiError.FILE_EXPORT_FAILED);
             }
         }
     }
@@ -599,7 +599,7 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
         //明细
         List<PoReconciliationDetailEntity> poReconciliationDetailList = poReconciliationDetailScmService.listMainIdList(Collections.singletonList(id));
         if (CollUtil.isEmpty(poReconciliationDetailList)) {
-            throw new ServiceException(ApiError.NOT_EXIST_BILL,"对账单");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE,"对账单");
         }
 
         //打系统标识

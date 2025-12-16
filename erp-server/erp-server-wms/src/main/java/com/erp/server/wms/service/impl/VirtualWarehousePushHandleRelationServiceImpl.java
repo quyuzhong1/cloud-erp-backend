@@ -68,7 +68,7 @@ public class VirtualWarehousePushHandleRelationServiceImpl extends SuperServiceI
     public Boolean update(VirtualWarehousePushHandleRelationDTO.UpdateDTO updateDTO) {
         VirtualWarehousePushHandleRelationEntity old = super.getById(updateDTO.getId());
         if (Objects.isNull(old)){
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "分货单拆单关联关系单");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "分货单拆单关联关系单");
         }
         VirtualWarehousePushHandleRelationEntity virtualWarehousePushHandleRelationEntity =  BeanMapperUtils.map(VirtualWarehousePushHandleRelationEntity.class, updateDTO);
 

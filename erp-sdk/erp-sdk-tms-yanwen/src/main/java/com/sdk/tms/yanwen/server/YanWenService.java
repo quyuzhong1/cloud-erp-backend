@@ -3,10 +3,8 @@ package com.sdk.tms.yanwen.server;
 import cn.hutool.core.bean.BeanUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONException;
-import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.TypeReference;
 import com.common.core.enums.ApiError;
-import com.erp.model.tms.entity.LogisticsAuthEntity;
 import com.sdk.tms.yanwen.constants.YanWenConstants;
 import com.sdk.tms.yanwen.dto.request.YanWenCancelOrderRequest;
 import com.sdk.tms.yanwen.dto.request.YanWenCreateWayBillRequest;
@@ -40,7 +38,7 @@ public class YanWenService {
         try {
             yanWenResponseDTO = JSON.parseObject(response,new TypeReference<YanWenResponse<List<YanWenChannel>>>() {}.getType());
         }catch (JSONException e){
-            yanWenResponseDTO = YanWenResponse.error(ApiError.ERROR_PARAM_INVALID.getCode().toString(),response);
+            yanWenResponseDTO = YanWenResponse.error(ApiError.HTTP_BAD_REQUEST.getCode().toString(),response);
         }
 
         return yanWenResponseDTO;
@@ -60,7 +58,7 @@ public class YanWenService {
         try {
             yanWenResponseDTO = JSON.parseObject(response,new TypeReference<YanWenResponse<YanWenCreateWayBill>>() {}.getType());
         }catch (JSONException e){
-            yanWenResponseDTO = YanWenResponse.error(ApiError.ERROR_PARAM_INVALID.getCode().toString(),response);
+            yanWenResponseDTO = YanWenResponse.error(ApiError.HTTP_BAD_REQUEST.getCode().toString(),response);
         }
 
         return yanWenResponseDTO;
@@ -76,7 +74,7 @@ public class YanWenService {
         try {
             yanWenResponseDTO =  JSON.parseObject(response,new TypeReference<YanWenResponse<YanWenGetLabel>>() {}.getType());
         }catch (JSONException e){
-            yanWenResponseDTO = YanWenResponse.error(ApiError.ERROR_PARAM_INVALID.getCode().toString(),response);
+            yanWenResponseDTO = YanWenResponse.error(ApiError.HTTP_BAD_REQUEST.getCode().toString(),response);
         }
 
         return yanWenResponseDTO;
@@ -92,7 +90,7 @@ public class YanWenService {
         try {
             yanWenResponseDTO =  JSON.parseObject(response,new TypeReference<YanWenResponse<String>>() {}.getType());
         }catch (JSONException e){
-            yanWenResponseDTO = YanWenResponse.error(ApiError.ERROR_PARAM_INVALID.getCode().toString(),response);
+            yanWenResponseDTO = YanWenResponse.error(ApiError.HTTP_BAD_REQUEST.getCode().toString(),response);
         }
 
         return yanWenResponseDTO;
@@ -108,7 +106,7 @@ public class YanWenService {
         try {
             yanWenResponseDTO =  JSON.parseObject(response,new TypeReference<YanWenResponse<List<YanWenQueryOrder>>>() {}.getType());
         }catch (JSONException e){
-            yanWenResponseDTO = YanWenResponse.error(ApiError.ERROR_PARAM_INVALID.getCode().toString(),response);
+            yanWenResponseDTO = YanWenResponse.error(ApiError.HTTP_BAD_REQUEST.getCode().toString(),response);
         }
 
         return yanWenResponseDTO;

@@ -113,12 +113,12 @@ public class SupplierPhaseServiceImpl extends SuperServiceImpl<SupplierPhaseMapp
         String supplierId = dto.getSupplierId();
         SupplierEntity supplier = supplierService.getById(supplierId);
         if (Objects.isNull(supplier)) {
-            throw new ServiceException(ApiError.ERROR_SUPPLIER_ABSENCE);
+            throw new ServiceException(ApiError.SUPPLIER_NOT_FOUND);
         }
         //供应商的现阶段
         String phase = supplier.getPhase().getPhase();
         if (!phase.equals(dto.getCurrentPhase())) {
-            throw new ServiceException(ApiError.ERROR_SCM_SUPPLIER_STAGE_INVALID);
+            throw new ServiceException(ApiError.SUPPLIER_STAGE_INVALID);
         }
         BeanUtil.copyProperties(dto, entity, dto.getCurrentPhase(), dto.getTargetPhase());
         String id = IdWorker.getIdStr();
@@ -150,7 +150,7 @@ public class SupplierPhaseServiceImpl extends SuperServiceImpl<SupplierPhaseMapp
     public Boolean addAndSubmit(SupplierPhaseDTO.AddDTO dto) {
         String id = this.add(dto);
         if (StringUtils.isBlank(id)) {
-            throw new ServiceException(ApiError.ERROR_CREATE_FAILED);
+            throw new ServiceException(ApiError.BILL_SAVE_FAILED);
         }
         BatchResultDTO submit = this.submit(id);
         return submit.getSuccess();
@@ -171,11 +171,11 @@ public class SupplierPhaseServiceImpl extends SuperServiceImpl<SupplierPhaseMapp
         log.info("提交 开始启动试产申请流程，id=：【{}】", entity.getId());
 
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_WMS_OTHER_OUTBOUND_NOT_FOUND);
+            throw new ServiceException(ApiError.WH_OTHER_OUTBOUND_NOT_FOUND);
         }
         // 待提交或审核不通过并且未作废允许提交
         if ((!ApproveStatusEnum.WAIT_SUBMIT.getCode().equals(entity.getApproveStatus()) && !ApproveStatusEnum.REJECT.getCode().equals(entity.getApproveStatus()))) {
-            throw new ServiceException(ApiError.ERROR_SUBMIT_ALLOWED_STATUS_ONLY);
+            throw new ServiceException(ApiError.BILL_SUBMIT_ALLOWED_STATUS_ONLY);
         }
         log.info("提交 开始修改供应商阶段单状态数据，id：【{}】", id);
         //更新审核状态
@@ -198,7 +198,7 @@ public class SupplierPhaseServiceImpl extends SuperServiceImpl<SupplierPhaseMapp
         //查询供应商信息
         SupplierEntity supplierEntity = supplierService.getById(entity.getSupplierId());
         if (ObjectUtil.isEmpty(supplierEntity)) {
-            throw new ServiceException(ApiError.ERROR_SUPPLIER_ABSENCE);
+            throw new ServiceException(ApiError.SUPPLIER_NOT_FOUND);
         }
         ProcessManagementDTO.StartDTO startDTO = new ProcessManagementDTO.StartDTO();
         startDTO.setBusinessId(entity.getId());
@@ -225,7 +225,7 @@ public class SupplierPhaseServiceImpl extends SuperServiceImpl<SupplierPhaseMapp
     public SupplierPhaseDTO.UpdateDTO view(String supplierPhaseId) {
         SupplierPhaseEntity phase = this.getById(supplierPhaseId);
         if (Objects.isNull(phase)) {
-            throw new ServiceException(ApiError.ERROR_SCM_SUPPLIER_STAGE_NOT_FOUND);
+            throw new ServiceException(ApiError.SUPPLIER_STAGE_NOT_FOUND);
         }
         SupplierPhaseDTO.UpdateDTO dto = new SupplierPhaseDTO.UpdateDTO();
         BeanMapper.copy(phase, dto);
@@ -251,7 +251,7 @@ public class SupplierPhaseServiceImpl extends SuperServiceImpl<SupplierPhaseMapp
         String id = dto.getId();
         SupplierPhaseEntity phase = this.getById(id);
         if (Objects.isNull(phase)) {
-            throw new ServiceException(ApiError.ERROR_SCM_SUPPLIER_STAGE_NOT_FOUND);
+            throw new ServiceException(ApiError.SUPPLIER_STAGE_NOT_FOUND);
         }
 
         //待提交
@@ -263,7 +263,7 @@ public class SupplierPhaseServiceImpl extends SuperServiceImpl<SupplierPhaseMapp
         statusList.add(waitSubmitStatus);
         //只有待提交 和审核不通过 才能编辑
         if (!statusList.contains(phase.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_SCM_EDIT_ALLOWED_STATUS_ONLY);
+            throw new ServiceException(ApiError.BILL_EDIT_ALLOWED_STATUS_ONLY);
         }
 
         //目标阶段
@@ -296,7 +296,7 @@ public class SupplierPhaseServiceImpl extends SuperServiceImpl<SupplierPhaseMapp
     public BatchResultDTO approve(SupplierPhaseEntity entity,ApproveOneDTO dto) {
         //审核中允许审核
         if (!ApproveStatusEnum.APPROVE_ING.getStatus().equals(entity.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_APPROVE_ALLOWED_STATUS_ONLY);
+            throw new ServiceException(ApiError.WF_APPROVE_ALLOWED_STATUS_ONLY);
         }
         approveProcess(entity, dto);
         log.info("其他出库单【{}】，ids=【{}】", ApproveTypeEnum.getName(dto.getType()), JSONUtil.toJsonStr(dto.getId()));
@@ -320,7 +320,7 @@ public class SupplierPhaseServiceImpl extends SuperServiceImpl<SupplierPhaseMapp
         ApiResult<ProcessManagementDTO.ApproveResultDTO> approveResult = workflowFeign.approve(approveDTO);
         Integer code = approveResult.getCode();
         if (200 != code) {
-            throw new ServiceException(ApiError.ERROR_WF_APPROVAL_FAILED);
+            throw new ServiceException(ApiError.WF_APPROVE_FAILED);
         }
         ProcessManagementDTO.ApproveResultDTO data = approveResult.getData();
         if (ObjectUtil.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()) {
@@ -369,7 +369,7 @@ public class SupplierPhaseServiceImpl extends SuperServiceImpl<SupplierPhaseMapp
         for (SupplierPhaseEntity entity : list) {
             SupplierEntity supplierEntity = stringSupplierEntityMap.get(entity.getSupplierId());
             if (!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(entity.getApproveStatus())){
-                resultDTOList.add(BatchResultDTO.fail(entity.getId(), supplierEntity!=null?supplierEntity.getCode():entity.getSupplierId(), ApiError.ERROR_DELETE_ALLOWED_STATUS_ONLY.getMsg()));
+                resultDTOList.add(BatchResultDTO.fail(entity.getId(), supplierEntity!=null?supplierEntity.getCode():entity.getSupplierId(), ApiError.BILL_DELETE_ALLOWED_STATUS_ONLY.getMsg()));
                 continue;
             }
             removeList.add(entity);
@@ -398,7 +398,7 @@ public class SupplierPhaseServiceImpl extends SuperServiceImpl<SupplierPhaseMapp
         String approveIngStatus = ApproveStatusEnum.APPROVE_ING.getStatus();
         long count = list.stream().filter(s -> !s.getApproveStatus().equals(approveIngStatus)).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_REVOKE_PROCESS_ALLOWED_STATUS_ONLY);
+            throw new ServiceException(ApiError.WF_REVOKE_PROCESS_ALLOWED_STATUS_ONLY);
         }
         //撤销现有流程
         LoginUser userInfo = UserContext.getDefaultLoginUser();
@@ -448,7 +448,7 @@ public class SupplierPhaseServiceImpl extends SuperServiceImpl<SupplierPhaseMapp
             listApiResult = workflowFeign.curApprover(dtoList);
             Integer code = listApiResult.getCode();
             if (200 != code) {
-                throw new ServiceException(new ApiResult(ApiError.DEFAULT.getCode(), listApiResult.getMsg()));
+                throw new ServiceException(new ApiResult(ApiError.HTTP_UNKNOWN.getCode(), listApiResult.getMsg()));
             }
         }
 
@@ -493,7 +493,7 @@ public class SupplierPhaseServiceImpl extends SuperServiceImpl<SupplierPhaseMapp
     public Boolean updateAndSubmit(SupplierPhaseDTO.UpdateDTO dto) {
         String id = this.updateSupplierPhase(dto);
         if (StringUtils.isBlank(id)) {
-            throw new ServiceException(ApiError.ERROR_UPDATE_FAILED);
+            throw new ServiceException(ApiError.BILL_UPDATE_FAILED);
         }
         BatchResultDTO submit = this.submit(id);
         return submit.getSuccess();

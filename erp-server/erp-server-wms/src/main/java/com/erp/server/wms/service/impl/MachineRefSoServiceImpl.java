@@ -64,7 +64,7 @@ public class MachineRefSoServiceImpl extends SuperServiceImpl<MachineRefSoMapper
     public Boolean update(MachineRefSoDTO.UpdateDTO updateDTO) {
         MachineRefSoEntity old = super.getById(updateDTO.getId());
         if (Objects.isNull(old)){
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "加工单和销售订单关联单");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "加工单和销售订单关联单");
         }
         MachineRefSoEntity machineRefSoEntity =  BeanMapperUtils.map(MachineRefSoEntity.class, updateDTO);
 

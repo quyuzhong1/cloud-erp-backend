@@ -107,7 +107,7 @@ public class DmpOutputTaskRecordMergeServiceImpl extends SuperServiceImpl<DmpOut
     @Override
     public Boolean update(DmpOutputTaskRecordMergeDTO.UpdateDTO addOrUpdateDTO) {
         DmpOutputTaskRecordMergeEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "推送任务记录合并单"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "推送任务记录合并单"));
         DmpOutputTaskRecordMergeEntity dmpOutputTaskRecordMergeEntity =  BeanMapperUtils.map(DmpOutputTaskRecordMergeEntity.class, addOrUpdateDTO);
 
         // 数据处理

@@ -18,9 +18,6 @@ import com.common.core.constant.EnumMessage;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.EnumsUtil;
-import com.erp.model.oms.entity.BankAccountEntity;
-import com.erp.model.oms.entity.CustomerInfoEntity;
-import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.plm.dto.OperateLogShowDTO;
 import com.erp.model.plm.dto.OperateLogSelectDTO;
 import com.erp.model.plm.entity.BasicDictEntity;
@@ -228,7 +225,7 @@ public class OperateLogServiceImpl extends ServiceImpl<OperateLogMapper, Operate
         String content = entity.getContent();
         if (StringUtils.isBlank(content)) {
             if (StringUtils.isBlank(entity.getFieldName())) {
-                throw new ServiceException(ApiError.ERROR_PLM_SUBMIT_APPROVAL_STATUS_INVALID);
+                throw new ServiceException(ApiError.BILL_SUBMIT_APPROVAL_STATUS_INVALID);
             }
             if (StringUtils.isBlank(entity.getOldValue())) {
                 content = "编辑了[".concat(entity.getFieldName()).concat("]").concat("由空值变更为[").concat(entity.getNewValue()).concat("]");
@@ -385,7 +382,7 @@ public class OperateLogServiceImpl extends ServiceImpl<OperateLogMapper, Operate
      */
     private Pair<String,String> setEnumValue (CfgOperateLogFieldEntity fieldEntity, Pair<String, String> valuePair) {
         if (StringUtils.isBlank(fieldEntity.getEnumClass())) {
-            throw new ServiceException(ApiError.ERROR_ENUM_CONVERT_FAILED);
+            throw new ServiceException(ApiError.COMMON_ENUM_CONVERT_FAILED);
         }
         String  oldValue = "";
         String  newValue = "";
@@ -393,11 +390,11 @@ public class OperateLogServiceImpl extends ServiceImpl<OperateLogMapper, Operate
         try {
             aClass = Class.forName(fieldEntity.getEnumClass());
         } catch (ClassNotFoundException e) {
-            throw new ServiceException(ApiError.ERROR_ENUM_CONVERT_FAILED);
+            throw new ServiceException(ApiError.COMMON_ENUM_CONVERT_FAILED);
         }
         boolean anEnum = aClass.isEnum();
         if (!anEnum) {
-            throw new ServiceException(ApiError.ERROR_ENUM_CONVERT_FAILED);
+            throw new ServiceException(ApiError.COMMON_ENUM_CONVERT_FAILED);
         }
         if (StringUtils.isNotBlank(valuePair.getKey())) {
             EnumMessage enumObject = EnumsUtil.getEnumObject(valuePair.getKey(), aClass);

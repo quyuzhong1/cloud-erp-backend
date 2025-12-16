@@ -432,10 +432,10 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
     @Override
     public LinkedList<String> thirdFieldListName(TmsB2cDeclareReconciliationDetailDTO.ExcelDownloadTemplateDTO dto) {
         TmsB2cDeclareReconciliationEntity old = tmsB2cDeclareReconciliationService.getById(dto.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "b2c报关对账单"));
+        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "b2c报关对账单"));
 
         TransferLogisticsSupplierEntity transferLogisticsSupplierEntity = transferLogisticsSupplierService.getById(old.getLogisticsSupplierId());
-        Optional.ofNullable(transferLogisticsSupplierEntity).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "中转物流商"));
+        Optional.ofNullable(transferLogisticsSupplierEntity).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "中转物流商"));
 
         LinkedList<String> thirdFieldList = cfgReconciliationFieldService.thirdFieldListName(Arrays.asList(CfgReconciliationTypeEnum.B2C_DECLARE.getCode()), transferLogisticsSupplierEntity.getSupplierId(), Boolean.TRUE);
         return thirdFieldList;
@@ -478,15 +478,15 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
             EasyExcel.read(excelFile.getInputStream(), DeclareReconciliationStandardExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (IOException e) {
             log.error("导入错误！", e);
-            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_FAILED);
+            throw new ServiceException(ApiError.FILE_DATA_IMPORT_FAILED);
         } catch (ExcelCommonException e) {
             log.error("导入格式错误！", e);
-            throw new ServiceException(ApiError.ERROR_FILE_IMPORT_FORMAT_INVALID_XLSX);
+            throw new ServiceException(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX);
         }
         //验证导入数据是否为空
         List<DeclareReconciliationStandardExcelDTO> excelDateList = excelListenerUtil.getExcelDateList();
         if (CollectionUtils.isEmpty(excelDateList)) {
-            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_REQUIRED);
+            throw new ServiceException(ApiError.FILE_DATA_REQUIRED);
         }
         //导入数据处理
         List<DeclareReconciliationStandardExcelDTO> successList = excelListenerUtil.getSuccessList();
@@ -666,15 +666,15 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
             EasyExcel.read(excelFile.getInputStream(), excelListenerUtil).sheet(0).doRead();
         } catch (IOException e) {
             log.error("导入错误！", e);
-            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_FAILED);
+            throw new ServiceException(ApiError.FILE_DATA_IMPORT_FAILED);
         } catch (ExcelCommonException e) {
             log.error("导入格式错误！", e);
-            throw new ServiceException(ApiError.ERROR_FILE_IMPORT_FORMAT_INVALID_XLSX);
+            throw new ServiceException(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX);
         }
         //验证导入数据是否为空
         List<JSONObject> excelDateList = excelListenerUtil.getExcelDateList();
         if (CollectionUtils.isEmpty(excelDateList)) {
-            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_REQUIRED);
+            throw new ServiceException(ApiError.FILE_DATA_REQUIRED);
         }
         //导入数据处理
         List<JSONObject> successList = excelListenerUtil.getSuccessList();

@@ -62,7 +62,7 @@ public class CfgConditionServiceImpl extends SuperServiceImpl<CfgConditionMapper
     public Boolean update(CfgConditionDTO.UpdateDTO updateDTO) {
         CfgConditionEntity old = super.getById(updateDTO.getId());
         if(null == old){
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "条件配置单");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "条件配置单");
         }
         CfgConditionEntity cfConditionEntity = BeanMapperUtils.map(CfgConditionEntity.class, updateDTO);
 

@@ -246,7 +246,7 @@ public class SoDeliveryNoticeDetailServiceImpl extends SuperServiceImpl<SoDelive
         //发货通知单
         SoDeliveryNoticeEntity soDeliveryNoticeEntity = soDeliveryNoticeService.getById(id);
         if (ObjectUtil.isEmpty(soDeliveryNoticeEntity)) {
-            throw new ServiceException(ApiError.ERROR_NOT_EXIST,"发货通知单");
+            throw new ServiceException(ApiError.COMMON_NOT_EXIST,"发货通知单");
         }
 
         //销售明细

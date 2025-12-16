@@ -183,7 +183,7 @@ public class TemplateDeliveryDocsServiceImpl extends ServiceImpl<TemplateDeliver
         //获取登录人信息
         LoginUser loginUser = UserContext.getLoginUser();
         if (ObjectUtils.isEmpty(loginUser)) {
-            throw new ServiceException(ApiError.ERROR_AUTH_CREDENTIALS_INVALID);
+            throw new ServiceException(ApiError.AUTH_CREDENTIALS_INVALID);
         }
         String uid = loginUser.getUid();
         String userName = loginUser.getUserName();
@@ -231,7 +231,7 @@ public class TemplateDeliveryDocsServiceImpl extends ServiceImpl<TemplateDeliver
             //获取登录人信息
             LoginUser loginUser = UserContext.getLoginUser();
             if (ObjectUtils.isEmpty(loginUser)) {
-                throw new ServiceException(ApiError.ERROR_AUTH_CREDENTIALS_INVALID);
+                throw new ServiceException(ApiError.AUTH_CREDENTIALS_INVALID);
             }
             String uid = loginUser.getUid();
             String userName = loginUser.getUserName();
@@ -262,7 +262,7 @@ public class TemplateDeliveryDocsServiceImpl extends ServiceImpl<TemplateDeliver
     public Boolean updateStatus(TemplateDeliveryDocsUpdateStatusDTO dto) {
         TemplateTaskDocsNameEntity taskDocsNameEntity = templateTaskDocsNameService.getById(dto.getId());
         if (Objects.isNull(taskDocsNameEntity)) {
-            throw new ServiceException(ApiError.ERROR_PLM_DOC_NOT_FOUND);
+            throw new ServiceException(ApiError.FILE_DOC_NOT_FOUND);
         }
         //当是关闭的时候 要查询是否有引用 有就不能管
         if (!dto.getStatus()) {
@@ -270,7 +270,7 @@ public class TemplateDeliveryDocsServiceImpl extends ServiceImpl<TemplateDeliver
             Long count = deliveryDocsList.stream().filter(d -> d.getDocsNameId().equals(dto.getId())&& StringUtils.isNotBlank(d.getTaskId())).count();
             //表示有引用
             if (count > 0) {
-                throw new ServiceException(ApiError.ERROR_PLM_DOC_REF_CLOSE_FORBIDDEN);
+                throw new ServiceException(ApiError.FILE_REF_CLOSE_FORBIDDEN);
             }
         }
         taskDocsNameEntity.setStatus(dto.getStatus());

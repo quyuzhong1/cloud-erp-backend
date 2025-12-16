@@ -212,7 +212,7 @@ public class FsInstancesServiceImpl implements FsInstancesService {
         }
         FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(userByThird.getUserId());
         if (ObjUtil.isEmpty(findUserDTO)) {
-            throw new ServiceException(ApiError.ERROR_USER_NOT_FOUND, userByThird.getUserId());
+            throw new ServiceException(ApiError.AUTH_USER_NOT_FOUND, userByThird.getUserId());
         }
         addDTO.setCreateUserId(findUserDTO.getUserId());
         addDTO.setCreateUserName(findUserDTO.getUserName());
@@ -310,7 +310,7 @@ public class FsInstancesServiceImpl implements FsInstancesService {
         String businessKey = entity.getBussinessKey();
         SourceTypeEnum sourceType = SourceTypeEnum.getByCode(businessKey);
         if (null == sourceType) {
-            throw new ServiceException(ApiError.ERROR_NOT_FOUND_APPROVE_BUSINESSKEY,"添加评论",businessKey);
+            throw new ServiceException(ApiError.BILL_APPROVE_BUSINESS_KEY_NOT_FOUND,"添加评论",businessKey);
         }
         ApproveDTO.AddCommentDTO addCommentDTO = new ApproveDTO.AddCommentDTO();
         addCommentDTO.setBusinessKey(businessKey);

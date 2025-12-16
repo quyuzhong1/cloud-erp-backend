@@ -47,7 +47,7 @@ public class SubcontractOrderApproveHandler extends AbstractApproveHandler {
         //委外订单
         SubcontractOrderEntity entity = subcontractOrderService.getById(dto.getId());
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_SCM_OUTSOURCING_ORDER_NOT_FOUND);
+            throw new ServiceException(ApiError.PO_SUBCONTRACT_ORDER_NOT_FOUND);
         }
         BatchResultDTO resultDTO = subcontractOrderService.cancelProcess(entity);
         return resultDTO.getSuccess();
@@ -70,7 +70,7 @@ public class SubcontractOrderApproveHandler extends AbstractApproveHandler {
         approveOneDTO.setComment(dto.getComment());
         Boolean approve = subcontractOrderService.approveEnd(approveOneDTO, entity);
         if (Boolean.FALSE.equals(approve)) {
-            throw new ServiceException(ApiError.ERROR_BILL_APPROVE, SourceTypeEnum.getName(dto.getBusinessKey()));
+            throw new ServiceException(ApiError.BILL_APPROVE_FAILED, SourceTypeEnum.getName(dto.getBusinessKey()));
         }
         //非erp审核添加日志
         if (ApprovePlatformEnum.ERP.equals(dto.getApprovePlatformEnum())) {

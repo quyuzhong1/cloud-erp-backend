@@ -158,7 +158,7 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
     public Boolean update(CfgRuleWaveDTO.UpdateDTO updateDTO) {
         CfgRuleWaveEntity old = super.getById(updateDTO.getId());
         if (Objects.isNull(old)){
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "波次规则");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "波次规则");
         }
         CfgRuleWaveEntity cfgRuleWaveEntity = BeanMapperUtils.map(CfgRuleWaveEntity.class, updateDTO);
 
@@ -706,7 +706,7 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
         //波次名称重复验证
         CfgRuleWaveEntity ruleWaveEntity = getByWaveName(cfgRuleWaveEntity.getName());
         if (ObjectUtil.isNotEmpty(ruleWaveEntity) && !CharSequenceUtil.equals(cfgRuleWaveEntity.getId(), ruleWaveEntity.getId())) {
-            throw new ServiceException(ApiError.ERROR_DUPLICATION_NAME);
+            throw new ServiceException(ApiError.COMMON_DUPLICATION_NAME);
         }
         //拣货车类型
         cfgRuleWaveEntity.setPickingCartTypeJson(JSONUtil.toJsonStr(pickingCartTypeIdList));

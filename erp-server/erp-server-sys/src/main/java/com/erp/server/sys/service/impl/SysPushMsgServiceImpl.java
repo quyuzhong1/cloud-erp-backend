@@ -60,7 +60,7 @@ public class SysPushMsgServiceImpl extends SuperServiceImpl<SysPushMsgMapper, Sy
     @Override
     public Boolean update(SysPushMsgDTO.UpdateDTO updateDTO) {
         SysPushMsgEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "本地推送消息单"));
+        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "本地推送消息单"));
         SysPushMsgEntity sysPushMsgEntity =  BeanMapperUtils.map(SysPushMsgEntity.class, updateDTO);
 
         // 数据处理

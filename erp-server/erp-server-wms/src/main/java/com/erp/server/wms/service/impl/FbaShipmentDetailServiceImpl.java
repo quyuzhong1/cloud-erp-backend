@@ -66,7 +66,7 @@ public class FbaShipmentDetailServiceImpl extends SuperServiceImpl<FbaShipmentDe
     public Boolean update(FbaShipmentDetailDTO.UpdateDTO updateDTO) {
         FbaShipmentDetailEntity old = super.getById(updateDTO.getId());
         if (Objects.isNull(old)){
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "FBA拣货明细单");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "FBA拣货明细单");
         }
         FbaShipmentDetailEntity fbaShipmentDetailEntity =  BeanMapperUtils.map(FbaShipmentDetailEntity.class, updateDTO);
 

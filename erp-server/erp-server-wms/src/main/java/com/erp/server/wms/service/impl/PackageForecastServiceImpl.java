@@ -208,7 +208,7 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
     public Boolean update(PackageForecastDTO.UpdateDTO updateDTO) {
         PackageForecastEntity entity = super.getById(updateDTO.getId());
         if (Objects.isNull(entity)){
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "组包预报单");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "组包预报单");
         }
         entity.setBillDate(updateDTO.getBillDate());
         packageForecastDetailService.update(entity, updateDTO.getDetailIdList());
@@ -357,7 +357,7 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
         PackageForecastDTO.ViewDTO viewDTO = new PackageForecastDTO.ViewDTO();
         PackageForecastEntity packageForecast = this.getById(id);
         if (Objects.isNull(packageForecast)) {
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "组包预报单");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "组包预报单");
         }
         BeanMapperUtils.copy(packageForecast, viewDTO);
         String uploadStatus = packageForecast.getUploadStatus();
@@ -390,7 +390,7 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
     public BatchResultDTO delete(String id) {
         PackageForecastEntity entity = this.getById(id);
         if (Objects.isNull(entity)) {
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "组包预报单");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "组包预报单");
         }
         String successCode = PackageUploadStatusEnum.UPLOAD_SUCCESS.getCode();
         if (successCode.equals(entity.getUploadStatus())) {
@@ -415,7 +415,7 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
     public BatchResultDTO cancel(String id) {
         PackageForecastEntity entity = this.getById(id);
         if (Objects.isNull(entity)) {
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "组包预报单");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "组包预报单");
         }
         String successCode = PackageUploadStatusEnum.UPLOAD_SUCCESS.getCode();
         if(PackageUploadStatusEnum.CANCEL.getCode().equals(entity.getUploadStatus())){
@@ -666,7 +666,7 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
     public BatchResultDTO upload(String id, String collectMode, String collectAddressId) {
         PackageForecastEntity entity = this.getById(id);
         if (Objects.isNull(entity)) {
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "组包预报单");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "组包预报单");
         }
         //待上传
         String wait = PackageUploadStatusEnum.WAIT.getCode();
@@ -767,7 +767,7 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
     public String print(String id) {
         PackageForecastEntity entity = this.getById(id);
         if (Objects.isNull(entity)) {
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "组包预报单");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "组包预报单");
         }
         //上传成功
         String uploadSuccess = PackageUploadStatusEnum.UPLOAD_SUCCESS.getCode();
@@ -957,7 +957,7 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
     public BatchResultDTO forecast(String id, String transferLogisticsSupplierId, String transferLogisticsChannelId) {
         PackageForecastEntity entity = this.getById(id);
         if (Objects.isNull(entity)) {
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "组包预报单");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "组包预报单");
         }
         List<String> uploadStatusList = new ArrayList<>(2);
         uploadStatusList.add(PackageUploadStatusEnum.NOT.getCode());
@@ -1189,11 +1189,11 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
     public List<LogisticsAddressDTO.ListDTO> listAddressByForecastIds(List<String> ids) {
         List<PackageForecastEntity> packageForecastEntityList = this.getBaseMapper().selectBatchIds(ids);
         if (CollectionUtils.isEmpty(packageForecastEntityList)) {
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "组包预报单");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "组包预报单");
         }
         List<PackageForecastDetailEntity> forecastDetailEntityList = packageForecastDetailService.listDbByMainIds(ids);
         if (CollectionUtils.isEmpty(forecastDetailEntityList)){
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "组包预报单明细");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "组包预报单明细");
         }
         List<String> soIds = forecastDetailEntityList.stream().map(PackageForecastDetailEntity::getSoId).distinct().collect(Collectors.toList());
         List<SoB2cEntity> soB2cEntityList = soB2cFeign.listByIds(soIds);
@@ -1239,7 +1239,7 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
         for (PackageForecastDTO.UploadFileDTO fileDTO : uploadFileDTOList) {
             PackageForecastEntity entity = packageForecastEntityList.stream().filter(v -> v.getId().equals(fileDTO.getId())).findFirst().orElse(null);
             if (Objects.isNull(entity)) {
-                throw new ServiceException(ApiError.NOT_EXIST_BILL, "组包预报单");
+                throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "组包预报单");
             }
             //物流商
             LogisticsSupplierDTO.AuthDTO authDTO = authDTOList.stream().filter(v -> v.getMainId().equals(entity.getLogisticsSupplierId())).findFirst().orElse(null);

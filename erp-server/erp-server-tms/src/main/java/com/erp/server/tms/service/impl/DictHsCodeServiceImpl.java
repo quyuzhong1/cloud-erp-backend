@@ -74,7 +74,7 @@ public class DictHsCodeServiceImpl extends SuperServiceImpl<DictHsCodeMapper, Di
                 .eq(DictHsCodeEntity::getCountry, "CN")
                 .count();
         if(count > 0 ){
-            throw new ServiceException(ApiError.ERROR_CUSTOMS_CN_HS_CODE_EXISTS,dictHsCodeEntity.getHsCode());
+            throw new ServiceException(ApiError.COMMON_CUSTOMS_CN_HS_CODE_EXISTS,dictHsCodeEntity.getHsCode());
         }
 
         if(StringUtil.isBlank(addDTO.getCountry())){
@@ -99,7 +99,7 @@ public class DictHsCodeServiceImpl extends SuperServiceImpl<DictHsCodeMapper, Di
     @Override
     public Boolean update(DictHsCodeDTO.UpdateDTO addOrUpdateDTO) {
         DictHsCodeEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "出口申报要素单"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "出口申报要素单"));
         DictHsCodeEntity dictHsCodeEntity =  BeanMapperUtils.map(DictHsCodeEntity.class, addOrUpdateDTO);
 
         Integer count = lambdaQuery()
@@ -108,7 +108,7 @@ public class DictHsCodeServiceImpl extends SuperServiceImpl<DictHsCodeMapper, Di
                 .ne(DictHsCodeEntity::getId, dictHsCodeEntity.getId())
                 .count();
         if(count > 0 ){
-            throw new ServiceException(ApiError.ERROR_CUSTOMS_CN_HS_CODE_EXISTS,dictHsCodeEntity.getHsCode());
+            throw new ServiceException(ApiError.COMMON_CUSTOMS_CN_HS_CODE_EXISTS,dictHsCodeEntity.getHsCode());
         }
 
         //不相等时
@@ -248,7 +248,7 @@ public class DictHsCodeServiceImpl extends SuperServiceImpl<DictHsCodeMapper, Di
             wb.close();
         } catch (Exception e) {
             log.error("warehouse downloadTemplate  出错了 e==", e);
-            throw new ServiceException(ApiError.ERROR_IMPORT_TEMPLATE_DOWNLOAD_FAILED);
+            throw new ServiceException(ApiError.FILE_IMPORT_TEMPLATE_DOWNLOAD_FAILED);
         }
     }
 

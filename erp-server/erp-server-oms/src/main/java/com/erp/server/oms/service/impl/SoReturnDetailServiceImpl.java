@@ -230,7 +230,7 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
             if (StringUtils.isNotBlank(soReturnDetailEntity.getId())) {
                 SoReturnDetailEntity old = this.getById(soReturnDetailEntity.getId());
                 if (ObjectUtils.isEmpty(old)) {
-                    throw new ServiceException(ApiError.ERROR_SCM_STOCK_APPLY_DETAIL_NOT_FOUND);
+                    throw new ServiceException(ApiError.SALES_DEMAND_DETAIL_NOT_FOUND);
                 }
                 operateLogService.addModuleOperateLogByObj(old,soReturnDetailEntity, ModuleTypeEnum.SO_RETURN.getCode(),dto.getId(),"",String.format("【%s】",old.getSkuNo()));
             }
@@ -286,7 +286,7 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
             if (StringUtils.isNotBlank(soReturnDetailEntity.getId())) {
                 SoReturnDetailEntity old = this.getById(soReturnDetailEntity.getId());
                 if (ObjectUtils.isEmpty(old)) {
-                    throw new ServiceException(ApiError.ERROR_SCM_STOCK_APPLY_DETAIL_NOT_FOUND);
+                    throw new ServiceException(ApiError.SALES_DEMAND_DETAIL_NOT_FOUND);
                 }
                 operateLogService.addModuleOperateLogByObj(old,soReturnDetailEntity, ModuleTypeEnum.SO_RETURN.getCode(),dto.getId(),"",String.format("【%s】",old.getSkuNo()));
             }

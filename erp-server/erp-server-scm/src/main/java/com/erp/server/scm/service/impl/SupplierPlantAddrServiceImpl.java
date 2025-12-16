@@ -76,7 +76,7 @@ public class SupplierPlantAddrServiceImpl extends SuperServiceImpl<SupplierPlant
     @Override
     public Boolean update(SupplierPlantAddrDTO.UpdateDTO addOrUpdateDTO) {
         SupplierPlantAddrEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "供应商工厂地信息"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "供应商工厂地信息"));
         SupplierPlantAddrEntity supplierPlantAddrEntity =  BeanMapperUtils.map(SupplierPlantAddrEntity.class, addOrUpdateDTO);
 
         // 数据处理
