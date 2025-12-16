@@ -64,17 +64,24 @@ public class VirtualInventoryTradingServiceImpl implements VirtualInventoryTradi
         try {
             // 2、排序
             transactionList = this.sortVirtualInventoryTransactionList(transactionList);
+            log.warn("stopwatch1 ={}",stopwatch.elapsed(TimeUnit.MILLISECONDS));
+
             // 检查库存是否充足
             this.checkVirtualInventoryList(transactionList);
+            log.warn("stopwatch2 ={}",stopwatch.elapsed(TimeUnit.MILLISECONDS));
+
             // 3-处理库存更新逻辑
             for (VirtualInventoryStockDTO.InventoryTransactionDTO transactionDTO : transactionList) {
                 this.doTransaction(transactionDTO,approveType.equals(InventoryTradingService.APPROVE));
             }
+            log.warn("stopwatch3 ={}",stopwatch.elapsed(TimeUnit.MILLISECONDS));
+
             // 4-反审核时，批量删除交易记录
             if(approveType.equals(InventoryTradingService.UNAPPROVE)){
                 List<String> ids = this.getTransactionFlowIds(transactionList);
                 this.deleteTransactionFlowList(ids);
             }
+            log.warn("stopwatch4 ={}",stopwatch.elapsed(TimeUnit.MILLISECONDS));
         }catch (Exception e) {
             throw new RuntimeException(e);
         } finally {
@@ -84,6 +91,16 @@ public class VirtualInventoryTradingServiceImpl implements VirtualInventoryTradi
                 log.warn("单据编号：{}，虚拟仓库存交易耗时：{} ms", transactionList.get(0).getSourceCode(),stopwatch.elapsed(TimeUnit.MILLISECONDS));
             }
         }
+    }
+
+    public static void main(String[] args) {
+        // 计时器-开始
+        Stopwatch stopwatch = Stopwatch.createStarted();
+        System.out.println("start...stopwatch1 =" + stopwatch.elapsed(TimeUnit.SECONDS));
+        System.out.println("23123123");
+        System.out.println("start...stopwatch1 =" + stopwatch.elapsed(TimeUnit.SECONDS));
+        System.out.println("23123123333");
+        System.out.println("start...stopwatch1 =" + stopwatch.elapsed(TimeUnit.SECONDS));
     }
 
     /**
