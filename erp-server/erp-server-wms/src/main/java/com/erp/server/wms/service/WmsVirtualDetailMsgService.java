@@ -4,6 +4,8 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.wms.dto.WmsVirtualDetailMsgDTO;
 
+import java.util.List;
+
 /**
  * <p>
  * wms虚拟仓明细同步表 服务类
@@ -36,4 +38,12 @@ public interface WmsVirtualDetailMsgService extends SuperService<WmsVirtualDetai
      * @param entity
      */
     void updateStatus(WmsVirtualDetailMsgEntity entity);
+    /**
+     * 根据业务ids变更状态
+     * @author will
+     * @date 2025/11/26 17:22
+     * @param pageIdList
+     * @return void
+     */
+    void updateStatusByBusinessIds(List<String> pageIdList,String status);
 }

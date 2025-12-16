@@ -738,6 +738,11 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             // listing 更新匹配关系
             listingInfo.setMatchResult(ListingMatchResultEnum.TRUE.getCode());
             listingInfo.setRemark("");
+            if(!listingInfo.getThirdBarcode().equals(thirdBarcode)){
+                //记录日志
+                String logMsg = CharSequenceUtil.format("用户【{}】更新仓库sku【{}】的第三方条码由【{}】变更为【{}】", UserContext.getDefaultLoginUser().getUserName(), warehouseSkuNo, listingInfo.getThirdBarcode(), thirdBarcode);
+                operateLogService.addModuleOperateLog(logMsg, ModuleTypeEnum.LISTING_INFO.getCode(), listingInfo.getId(), "编辑仓库sku第三方条码");
+            }
             listingInfo.setThirdBarcode(thirdBarcode);
             if(StringUtils.isNotBlank(dto.getAuthId())){
                 listingInfo.setAuthId(dto.getAuthId());
@@ -1423,6 +1428,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
                 resultDTO.setPlatformSpuName(listingEntity.getPlatformSpuName());
                 resultDTO.setDictPlatform(dictPlatform);
                 resultDTO.setPlatformSkuId(listingEntity.getPlatformSkuId());
+                resultDTO.setThirdBarcode(listingEntity.getThirdBarcode());
                 resultList.add(resultDTO);
             }
         }

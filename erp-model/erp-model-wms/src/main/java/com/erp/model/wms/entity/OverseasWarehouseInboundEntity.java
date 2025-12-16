@@ -105,6 +105,11 @@ public class OverseasWarehouseInboundEntity extends BaseEntity<OverseasWarehouse
     @TableField("to_warehouse_id")
     private String toWarehouseId;
     /**
+     * 目的仓国家
+     */
+    @TableField(exist = false)
+    private String countryName;
+    /**
      * 物流方式
      */
     @TableField("logistics_method")

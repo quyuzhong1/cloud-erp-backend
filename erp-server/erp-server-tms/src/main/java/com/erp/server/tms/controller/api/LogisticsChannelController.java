@@ -283,6 +283,19 @@ public class LogisticsChannelController extends BaseController {
     }
 
     /**
+     * 三方仓仓库渠道关联(根据仓库查询)
+     * @author will
+     * @date 2025/12/4 14:18
+     * @param dto
+     * @return ApiResult<List<WarehouseChannelDTO>>
+     */
+    @PostMapping("/listThirdWarehouseChannel")
+    public ApiResult<List<LogisticsChannelDTO.WarehouseChannelDTO>> listThirdWarehouseChannel(@RequestBody @Validated LogisticsChannelDTO.WarehouseChannelParamDTO dto) {
+        List<LogisticsChannelDTO.WarehouseChannelDTO> pagingVO = logisticsChannelService.listThirdWarehouseChannel(dto);
+        return success(pagingVO);
+    }
+
+    /**
      * 根据仓库和物流类型查询
      *
      */

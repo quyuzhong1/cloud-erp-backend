@@ -1,5 +1,6 @@
 package com.erp.server.wms.rocketmq.consumer;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.constant.BusinessNoConstant;
@@ -15,7 +16,6 @@ import com.common.core.exception.ServiceException;
 import com.common.message.constant.RocketMqNewConsumerGroup;
 import com.common.message.constant.RocketMqNewTag;
 import com.common.message.constant.RocketMqNewTopic;
-import com.common.message.handler.AbstractNewPlatformConsumerHandler;
 import com.common.message.handler.AbstractRestCloudPlatformConsumerHandler;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
@@ -120,6 +120,8 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 		if(Objects.isNull(dto) || CharSequenceUtil.isBlank(dto.getAuthId())){
 			return;
 		}
+		//根据产品条码查询sku
+		handleThirdBarcode(dto);
 
 		if (PlatformDictEnum.GOOD_CANG.getCode().equalsIgnoreCase(dto.getPlatform())){
 			if (CollectionUtils.isEmpty(dto.getProductDetailList())){
@@ -169,7 +171,7 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 		}
 		WarehouseEntity warehouseEntity = new WarehouseEntity();
 		//艾姆勒没有仓库，拿订单的仓库
-		if(PlatformDictEnum.IML.getCode().equalsIgnoreCase(dto.getPlatform())){
+		if(PlatformDictEnum.IML.getCode().equalsIgnoreCase(dto.getPlatform()) || PlatformDictEnum.TONG_YOU_WAREHOUSE.getCode().equalsIgnoreCase(dto.getPlatform())){
 			if(Objects.nonNull(soB2cEntity)){
 				soOutstock = soOutstockService.getBySoId(soB2cEntity.getId());
 				List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cFeign.listDetailByMainIds(Collections.singletonList(soB2cEntity.getId()));
@@ -596,5 +598,32 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 				.filter(e->e.getShopId().equalsIgnoreCase(shopId))
 				.findFirst()
 				.orElse(mappingDTOList.get(0));
+	}
+
+	/**
+	 * 根据产品条码查询sku
+	 * @author will
+	 * @date 2025/12/4 11:50
+	 * @param dto
+	 * @return void
+	 */
+	private void handleThirdBarcode (PlatformReturnInstockDTO dto) {
+		List<String> thirdBarcodeList = dto.getProductDetailList().stream().map(PlatformReturnInstockDTO.Detail::getThirdBarcode).distinct().collect(Collectors.toList());
+		if (CollUtil.isEmpty(thirdBarcodeList) || !CharSequenceUtil.equals(dto.getPlatform(), PlatformDictEnum.TONG_YOU_WAREHOUSE.getCode())) {
+			return;
+		}
+		List<ListingInfoEntity> list = FeignQuery.create(ListingInfoEntity.class)
+				.eq(ListingInfoEntity::getPlatform, dto.getPlatform())
+				.eq(ListingInfoEntity::getAuthId, dto.getAuthId())
+				.in(ListingInfoEntity::getThirdBarcode, thirdBarcodeList)
+				.list();
+		if (CollUtil.isEmpty(list)) {
+			return;
+		}
+		for (PlatformReturnInstockDTO.Detail item : dto.getProductDetailList()) {
+			list.stream().filter(obj -> CharSequenceUtil.equals(dto.getAuthId(),obj.getAuthId()) && CharSequenceUtil.equals(dto.getPlatform(),obj.getPlatform()) && CharSequenceUtil.equals(item.getThirdBarcode(),obj.getThirdBarcode()))
+					.findFirst()
+					.ifPresent(obj -> item.setProductSku(obj.getPlatformSkuNo()));
+		}
 	}
 }
