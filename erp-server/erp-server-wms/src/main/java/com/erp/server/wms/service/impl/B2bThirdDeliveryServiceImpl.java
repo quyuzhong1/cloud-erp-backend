@@ -426,7 +426,7 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
                 log.warn("销售订单明细【{}】不存在", e.getSoDetailId());
                 throw new ServiceException(ApiError.NOT_EXIST,"销售订单明细不存在");
             }
-            SoOutstockDetailDTO.AddDTO detailDTO = B2bThirdDeliveryConverter.INSTANCE.toSoOutstockAddDetailDTO(entity,e,soDetailEntity);
+            SoOutstockDetailDTO.AddDTO detailDTO = B2bThirdDeliveryConverter.INSTANCE.toSoOutstockAddDetailDTO(entity,e,soDetailEntity,soInfoEntity);
             detailList.add(detailDTO);
         });
         addDTO.setDetailList(detailList);

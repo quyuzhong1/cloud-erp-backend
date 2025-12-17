@@ -97,7 +97,7 @@ public interface B2bThirdDeliveryConverter {
     @Mapping(target = "warehouseId", source = "entity.deliveryWarehouseId")
     @Mapping(target = "virtualWarehouseId", source = "entity.virtualWarehouseId")
     @Mapping(target = "platformSoDetailId", ignore = true)
-    @Mapping(target = "platformCode", source = "entity.platformOrderCode")
+    @Mapping(target = "platformCode", source = "soInfoEntity.platformOrderCode")
     @Mapping(target = "planQty", source = "deliveryDetail.boxQty")
     @Mapping(target = "historySkuMappingList", ignore = true)
     @Mapping(target = "attachUrlList", ignore = true)
@@ -112,7 +112,7 @@ public interface B2bThirdDeliveryConverter {
     @Mapping(target = "currency", source = "soDetailEntity.currency")
     @Mapping(target = "price", expression = "java(com.common.core.utils.MathUtil.multiplyWithFour(soDetailEntity.getPrice(),new java.math.BigDecimal(soDetailEntity.getPerBoxQty())))")
     @Mapping(target = "amount", source = "soDetailEntity.taxRate")
-    SoOutstockDetailDTO.AddDTO toSoOutstockAddDetailDTO(B2bThirdDeliveryEntity entity, B2bThirdDeliveryDetailEntity deliveryDetail, SoDetailEntity soDetailEntity);
+    SoOutstockDetailDTO.AddDTO toSoOutstockAddDetailDTO(B2bThirdDeliveryEntity entity, B2bThirdDeliveryDetailEntity deliveryDetail, SoDetailEntity soDetailEntity, SoInfoEntity soInfoEntity);
 
     @Mapping(target = "whCode", source = "thirdWarehouseCode")
     @Mapping(target = "skuList", source = "items")
