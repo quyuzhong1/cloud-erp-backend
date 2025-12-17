@@ -40,12 +40,18 @@ public class VirtualWarehouseEntity extends BaseEntity<VirtualWarehouseEntity> {
     @TableField("name")
     private String name;
 
+    /**
+     * 是否自动借调  true 是 false 否
+     */
+    @TableField("is_auto_transfer_enabled")
+    private Boolean  isAutoTransferEnabled;
 
-    
+    /**
+     *  借调仓id
+     */
+    @TableField("from_warehouse_id")
+    private String fromWarehouseId;
 
-    
-
-    
 
     @Override
     public Serializable pkVal() {
