@@ -248,4 +248,34 @@ public class B2bThirdDeliveryController extends BaseController {
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
+
+    /**
+     * 回退虚拟库存
+     * @param dto
+     * @return
+     */
+    @LogAction(value = LogActionEnum.INSERT, desc = "回退虚拟库存")
+    @PostMapping(value = "/rollbackFreezeVirtualInventory")
+    public ApiResult<List<BatchResultDTO>> rollbackFreezeVirtualInventory(@RequestBody BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<B2bThirdDeliveryEntity> entities = b2bThirdDeliveryService.listByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            BatchResultDTO resultDTO;
+            B2bThirdDeliveryEntity entity = entities.stream().filter(item -> item.getId().equals(id)).findFirst().orElse(null);
+            if (Objects.isNull(entity)) {
+                resultDTO = BatchResultDTO.fail(id, id, "B2B三方发货单不存在, 回退虚拟库存失败");
+                resultDTOS.add(resultDTO);
+                continue;
+            }
+            try {
+                b2bThirdDeliveryService.rollbackFreezeVirtualInventory(entity);
+                resultDTO = BatchResultDTO.success(entity.getId(), entity.getCode(), "回退虚拟库存成功");
+            } catch (Exception e) {
+                log.error("B2B三方发货单不存在, 回退虚拟库存失败", e);
+                resultDTO = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
 }

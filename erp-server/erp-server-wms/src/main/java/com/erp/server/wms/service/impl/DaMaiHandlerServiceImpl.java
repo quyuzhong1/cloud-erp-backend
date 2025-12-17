@@ -1,14 +1,12 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.json.JSONUtil;
-import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.enums.OmsPlatformEnum;
 import com.common.business.threadlocal.ThirdWarehouseContext;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
-import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.wms.dto.OverseasProviderDTO;
 import com.erp.model.wms.dto.third.*;
 import com.erp.model.wms.enums.B2bThirdWarehouseCancelResultEnum;
@@ -282,6 +280,9 @@ public class DaMaiHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         DaMaiBaseResp<DaMaiCancelFbaOrderResp> resp = daMaiService.cancelFbaOrder(ThirdWarehouseContext.getAuthMap(), request);
         log.warn(getPlatForm().getName()+"取消FBA出库单结果:{}", JSONUtil.toJsonStr(resp));
         if(!isSuccess(resp)){
+            return failure(resp.getMsg());
+        }
+        if (!Objects.equals(resp.getMsg(), "请求已受理") || !Objects.equals(resp.getMsg(), "订单单已取消")){
             return failure(resp.getMsg());
         }
         return success(B2bThirdWarehouseCancelResultEnum.INTERCEPTION_SUCCESSFUL.getCode());

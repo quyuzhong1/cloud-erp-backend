@@ -28,6 +28,8 @@ public interface B2bThirdDeliveryService extends SuperService<B2bThirdDeliveryEn
     */
     BaseResultDTO.AddDTO add(B2bThirdDeliveryDTO.AddDTO dto);
 
+    void rollbackFreezeVirtualInventory(B2bThirdDeliveryEntity entity);
+
     /**
     * 修改
     * @author zdy
