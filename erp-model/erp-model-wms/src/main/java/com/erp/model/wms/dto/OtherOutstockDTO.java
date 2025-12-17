@@ -164,6 +164,16 @@ public class OtherOutstockDTO implements Serializable {
         private LocalDateTime approveTime;
 
         /**
+         * 领料部门ID
+         */
+        private String deptId;
+
+        /**
+         * 领料部门名称
+         */
+        private String deptName;
+
+        /**
          * 创建人名称
          */
         private String createUserName;
