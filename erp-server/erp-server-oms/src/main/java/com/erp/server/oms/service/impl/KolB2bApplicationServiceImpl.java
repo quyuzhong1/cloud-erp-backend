@@ -576,6 +576,9 @@ public class KolB2bApplicationServiceImpl extends SuperServiceImpl<KolB2bApplica
         if (CharSequenceUtil.isNotBlank(codes)) {
             throw new ServiceException(ApiError.ERROR_KOL_B2B_APPLICATION_NOT_APPROVE,codes);
         }
+        //销售订单明细
+        List<SoDetailEntity> oldSoDetailList = soDetailService.listBySourceDetailIdList(detailIdList);
+
 
         Map<String, List<KolB2bApplicationDetailEntity>> detailMap = detailList.stream().collect(Collectors.groupingBy(KolB2bApplicationDetailEntity::getMainId));
         for (Map.Entry<String, List<KolB2bApplicationDetailEntity>> entry : detailMap.entrySet()) {
@@ -631,6 +634,12 @@ public class KolB2bApplicationServiceImpl extends SuperServiceImpl<KolB2bApplica
                 if (ObjectUtil.isEmpty(generateSoInfoDTO)) {
                     throw new ServiceException(ApiError.ERROR_PUSH_DETAIL_ID_NOT_EXIST,detailEntity.getId());
                 }
+                //查看对于明细的销售订单明细是否已存在
+                oldSoDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSourceDetailId(), detailEntity.getId()))
+                        .findFirst().ifPresent(obj -> {
+                    throw new ServiceException(ApiError.ERROR_PUSH_SO_DETAIL_ID_EXIST,mainEntity.getCode(),detailEntity.getSkuNo());
+                });
+
                 //主表赋值，取明细其一即可
                 addDTO.setSalesOrgId(generateSoInfoDTO.getSoOrgId());
                 addDTO.setWarehouseId(generateSoInfoDTO.getWarehouseId());

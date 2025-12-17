@@ -1687,6 +1687,7 @@ public enum ApiError implements Serializable {
     ERROR_92201(92201,"请选择B2C寄样申请审核通过的数据"),
     ERROR_KOL_B2C_HAS_DOWN_BILL(92202,"B2C寄样申请已生成销售订单，无法反审核"),
     ERROR_KOL_PARTNER_MULTIPLE_DEFAULT_ADDRESSES(92203,"企业达人地址不允许多个默认"),
+    ERROR_PUSH_SO_DETAIL_ID_EXIST(92204,"B2B寄样申请单【{}】SKU【{}】已下推销售订单，不允许重复下推"),
 
 
 
