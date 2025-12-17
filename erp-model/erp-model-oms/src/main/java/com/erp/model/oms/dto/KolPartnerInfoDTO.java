@@ -480,17 +480,20 @@ public class KolPartnerInfoDTO implements Serializable {
         /**
          * 省/州id
          */
+        private String provinceId;
         private String province;
 
         /**
          * 城市
          */
+        private String cityId;
         private String city;
 
 
         /**
          * 区域
          */
+        private String districtId;
         private String district;
 
         /**
@@ -595,17 +598,20 @@ public class KolPartnerInfoDTO implements Serializable {
         /**
          * 省/州id
          */
+        private String provinceId;
         private String province;
 
         /**
          * 城市
          */
+        private String cityId;
         private String city;
 
 
         /**
          * 区域
          */
+        private String districtId;
         private String district;
 
         /**

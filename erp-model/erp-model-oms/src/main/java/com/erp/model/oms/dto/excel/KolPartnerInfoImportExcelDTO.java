@@ -189,9 +189,11 @@ public class KolPartnerInfoImportExcelDTO implements Serializable {
      * 联系电话
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "省/州", index = 18)
-    @FieldValid(fieldName = "省/州")
+    @ExcelProperty(value = "*省/州", index = 18)
+    @FieldValid(fieldName = "*省/州",isNotBlank = true)
     private String province;
+    @ExcelIgnore
+    private String provinceId;
     /**
      * 城市
      */
@@ -199,6 +201,8 @@ public class KolPartnerInfoImportExcelDTO implements Serializable {
     @ExcelProperty(value = "*城市", index = 19)
     @FieldValid(fieldName = "*城市",isNotBlank = true)
     private String city;
+    @ExcelIgnore
+    private String cityId;
 
     /**
      * 区域
@@ -207,6 +211,8 @@ public class KolPartnerInfoImportExcelDTO implements Serializable {
     @ExcelProperty(value = "区域", index = 20)
     @FieldValid(fieldName = "区域")
     private String district;
+    @ExcelIgnore
+    private String districtId;
 
     /**
      * 详细地址

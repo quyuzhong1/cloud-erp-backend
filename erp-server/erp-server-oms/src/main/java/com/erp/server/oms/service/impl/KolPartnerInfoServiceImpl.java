@@ -10,6 +10,7 @@ import com.common.business.enums.FileTaskStatusEnum;
 import com.common.business.enums.OperationTypeEnum;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.vo.LoginUser;
+import com.common.core.enums.DictCityTypeEnum;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.dto.excel.KolPartnerInfoImportExcelDTO;
 import com.erp.model.oms.entity.*;
@@ -18,7 +19,9 @@ import com.erp.model.scm.dto.AttachmentDTO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.DictCountryDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
+import com.erp.model.sys.entity.DictCityEntity;
 import com.erp.model.sys.entity.SysDepartmentEntity;
+import com.erp.model.sys.enums.DictValueEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.file.feign.FileFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -160,9 +163,49 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
             if(count > 1){
                 throw new ServiceException(ApiError.ERROR_KOL_PARTNER_MULTIPLE_DEFAULT_ADDRESSES);
             }
+            //国家
+            Map<String, String> dictCountryMap = dictCountryList.stream().collect(Collectors.toMap(DictCountryDTO.ListDTO::getNameCn, DictCountryDTO.ListDTO::getId));
+            //省市区
+            List<DictCityEntity> dictCityEntities = sysUserFeign.listByCountryCode(DictValueEnum.CN.getCode());
+            Map<String, List<DictCityEntity>> dictCityGroup = dictCityEntities.stream().filter(e -> e.getDisabled().equals(Boolean.FALSE)).collect(Collectors.groupingBy(DictCityEntity::getType));
+            Map<String,String> provinceMap = dictCityGroup.get(DictCityTypeEnum.PROVINCE.getCode()).stream().collect(Collectors.toMap(DictCityEntity::getId,DictCityEntity::getName,(o1,o2)->o1));
+            Map<String,String> cityMap = dictCityGroup.get(DictCityTypeEnum.CITY.getCode()).stream().collect(Collectors.toMap(DictCityEntity::getId,DictCityEntity::getName,(o1,o2)->o1));
+            Map<String,String> districtMap = dictCityGroup.get(DictCityTypeEnum.DISTRICT.getCode()).stream().collect(Collectors.toMap(DictCityEntity::getId,DictCityEntity::getName,(o1,o2)->o1));
 
             List<KolAddressInfoEntity> list = BeanMapperUtils.copyList(KolAddressInfoEntity.class, kolAddressInfoDTOList);
-            list.forEach(e -> e.setMainId(id));
+            for (KolAddressInfoEntity kolAddressInfoEntity : list) {
+                kolAddressInfoEntity.setMainId(id);
+                //国家
+                String countryName = dictCountryMap.getOrDefault(kolAddressInfoEntity.getCountryId(), "");
+                if(StringUtils.isNotBlank(countryName)){
+                    kolAddressInfoEntity.setCountryName(countryName);
+                }else {
+                    throw new ServiceException("国家名称不存在");
+                }
+                //省
+                String province = provinceMap.getOrDefault(kolAddressInfoEntity.getProvinceId(), "");
+                if(StringUtils.isNotBlank(province)){
+                    kolAddressInfoEntity.setProvince(province);
+                }else {
+                    throw new ServiceException("省不存在");
+                }
+                //市
+                String city = cityMap.getOrDefault(kolAddressInfoEntity.getCityId(), "");
+                if(StringUtils.isNotBlank(city)){
+                    kolAddressInfoEntity.setCity(city);
+                }else {
+                    throw new ServiceException("市不存在");
+                }
+                //区域
+                String district = districtMap.getOrDefault(kolAddressInfoEntity.getDistrictId(), "");
+                if(StringUtils.isNotBlank(district)){
+                    kolAddressInfoEntity.setDistrict(district);
+                }else {
+                    if(kolAddressInfoEntity.getCountryId().equals(DictValueEnum.CN.getCode())){
+                        throw new ServiceException("区域不存在");
+                    }
+                }
+            }
             kolAddressInfoService.saveBatch(list);
         }
 
@@ -273,10 +316,50 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
             if(count > 1){
                 throw new ServiceException(ApiError.ERROR_KOL_PARTNER_MULTIPLE_DEFAULT_ADDRESSES);
             }
+            //国家
+            Map<String, String> dictCountryMap = dictCountryList.stream().collect(Collectors.toMap(DictCountryDTO.ListDTO::getNameCn, DictCountryDTO.ListDTO::getId));
+            //省市区
+            List<DictCityEntity> dictCityEntities = sysUserFeign.listByCountryCode(DictValueEnum.CN.getCode());
+            Map<String, List<DictCityEntity>> dictCityGroup = dictCityEntities.stream().filter(e -> e.getDisabled().equals(Boolean.FALSE)).collect(Collectors.groupingBy(DictCityEntity::getType));
+            Map<String,String> provinceMap = dictCityGroup.get(DictCityTypeEnum.PROVINCE.getCode()).stream().collect(Collectors.toMap(DictCityEntity::getId,DictCityEntity::getName,(o1,o2)->o1));
+            Map<String,String> cityMap = dictCityGroup.get(DictCityTypeEnum.CITY.getCode()).stream().collect(Collectors.toMap(DictCityEntity::getId,DictCityEntity::getName,(o1,o2)->o1));
+            Map<String,String> districtMap = dictCityGroup.get(DictCityTypeEnum.DISTRICT.getCode()).stream().collect(Collectors.toMap(DictCityEntity::getId,DictCityEntity::getName,(o1,o2)->o1));
 
-            List<KolAddressInfoEntity> kolAddressInfoEntities = BeanMapperUtils.copyList(KolAddressInfoEntity.class, kolAddressInfoDTOList);
-            kolAddressInfoEntities.forEach(e -> e.setMainId(kolPartnerInfoEntity.getId()));
-            commonService.updateDetail(kolPartnerInfoEntity.getId(), ModuleTypeEnum.KOL_PARTNER_INFO.getCode(), kolAddressInfoService, kolAddressInfoEntities, oldKolAddressInfoEntities, "contactPerson");
+            List<KolAddressInfoEntity> list = BeanMapperUtils.copyList(KolAddressInfoEntity.class, kolAddressInfoDTOList);
+            for (KolAddressInfoEntity kolAddressInfoEntity : list) {
+                kolAddressInfoEntity.setMainId(kolPartnerInfoEntity.getId());
+                //国家
+                String countryName = dictCountryMap.getOrDefault(kolAddressInfoEntity.getCountryId(), "");
+                if(StringUtils.isNotBlank(countryName)){
+                    kolAddressInfoEntity.setCountryName(countryName);
+                }else {
+                    throw new ServiceException("国家名称不存在");
+                }
+                //省
+                String province = provinceMap.getOrDefault(kolAddressInfoEntity.getProvinceId(), "");
+                if(StringUtils.isNotBlank(province)){
+                    kolAddressInfoEntity.setProvince(province);
+                }else {
+                    throw new ServiceException("省不存在");
+                }
+                //市
+                String city = cityMap.getOrDefault(kolAddressInfoEntity.getCityId(), "");
+                if(StringUtils.isNotBlank(city)){
+                    kolAddressInfoEntity.setCity(city);
+                }else {
+                    throw new ServiceException("市不存在");
+                }
+                //区域
+                String district = districtMap.getOrDefault(kolAddressInfoEntity.getDistrictId(), "");
+                if(StringUtils.isNotBlank(district)){
+                    kolAddressInfoEntity.setDistrict(district);
+                }else {
+                    if(kolAddressInfoEntity.getCountryId().equals(DictValueEnum.CN.getCode())){
+                        throw new ServiceException("区域不存在");
+                    }
+                }
+            }
+            commonService.updateDetail(kolPartnerInfoEntity.getId(), ModuleTypeEnum.KOL_PARTNER_INFO.getCode(), kolAddressInfoService, list, oldKolAddressInfoEntities, "contactPerson");
         }
 
         // 保存附件
@@ -430,9 +513,15 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
             //国家
             List<DictCountryDTO.ListDTO> dictCountryList = sysUserFeign.countryList();
             Map<String, String> dictCountryMap = dictCountryList.stream().collect(Collectors.toMap(DictCountryDTO.ListDTO::getNameCn, DictCountryDTO.ListDTO::getId));
+            //省市区
+            List<DictCityEntity> dictCityEntities = sysUserFeign.listByCountryCode(DictValueEnum.CN.getCode());
+            Map<String, List<DictCityEntity>> dictCityGroup = dictCityEntities.stream().filter(e -> e.getDisabled().equals(Boolean.FALSE)).collect(Collectors.groupingBy(DictCityEntity::getType));
+            Map<String,String> provinceMap = dictCityGroup.get(DictCityTypeEnum.PROVINCE.getCode()).stream().collect(Collectors.toMap(DictCityEntity::getName,DictCityEntity::getId,(o1,o2)->o1));
+            Map<String,String> cityMap = dictCityGroup.get(DictCityTypeEnum.CITY.getCode()).stream().collect(Collectors.toMap(DictCityEntity::getName,DictCityEntity::getId,(o1,o2)->o1));
+            Map<String,String> districtMap = dictCityGroup.get(DictCityTypeEnum.DISTRICT.getCode()).stream().collect(Collectors.toMap(DictCityEntity::getName,DictCityEntity::getId,(o1,o2)->o1));
 
             List<String> nicknameList = successList.stream().map(KolPartnerInfoImportExcelDTO::getNickname).distinct().collect(Collectors.toList());
-            //企业达人库旧数
+            //企业达人库旧数据
             List<KolPartnerInfoEntity> oldList = lambdaQuery().in(KolPartnerInfoEntity::getNickname, nicknameList).list();
             Map<String, String> oldMap = oldList.stream().collect(Collectors.toMap(KolPartnerInfoEntity::getNickname, KolPartnerInfoEntity::getId, (o1, o2) -> o1));
 
@@ -497,6 +586,30 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
                 }else {
                     errorMsgList.add("国家名称不存在");
                 }
+                //省
+                String provinceId = provinceMap.getOrDefault(mainInfo.getProvince(), "");
+                if(StringUtils.isNotBlank(provinceId)){
+                    mainInfo.setProvinceId(provinceId);
+                }else {
+                    errorMsgList.add("省不存在");
+                }
+                //市
+                String cityId = cityMap.getOrDefault(mainInfo.getCity(), "");
+                if(StringUtils.isNotBlank(cityId)){
+                    mainInfo.setCityId(cityId);
+                }else {
+                    errorMsgList.add("市不存在");
+                }
+                //区域
+                String districtId = districtMap.getOrDefault(mainInfo.getDistrict(), "");
+                if(StringUtils.isNotBlank(districtId)){
+                    mainInfo.setDistrictId(districtId);
+                }else {
+                    if(countryId.equals(DictValueEnum.CN.getCode())){
+                        errorMsgList.add("区域不存在");
+                    }
+                }
+
                 //语言
                 String language = languageMap.getOrDefault(mainInfo.getLanguageName(), "");
                 if(StringUtils.isNotBlank(language)){
