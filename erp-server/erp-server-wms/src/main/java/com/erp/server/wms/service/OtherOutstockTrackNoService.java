@@ -34,6 +34,13 @@ public interface OtherOutstockTrackNoService extends SuperService<OtherOutstockT
     /**
      * 批量查询出库单的跟踪号
      * @param otherOutstockIds 出库单ID列表
+     * @return 跟踪号DTO列表
+     */
+    List<OtherOutstockTrackNoDTO.ViewDTO> batchGetTrackNo(List<String> otherOutstockIds);
+
+    /**
+     * 批量查询出库单的跟踪号（返回Map）
+     * @param otherOutstockIds 出库单ID列表
      * @return 出库单ID和跟踪号的映射
      */
     Map<String, List<String>> getTrackNoMapByOutstockIds(List<String> otherOutstockIds);

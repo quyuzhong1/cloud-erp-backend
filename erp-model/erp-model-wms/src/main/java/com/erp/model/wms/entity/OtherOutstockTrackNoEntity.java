@@ -41,11 +41,19 @@ public class OtherOutstockTrackNoEntity extends BaseEntity<OtherOutstockTrackNoE
     @TableField("track_no")
     private String trackNo;
 
+    /**
+     * 其他出库单来源单号（从other_outstock表查询获取）
+     */
+    @TableField("other_outstock_source_code")
+    private String otherOutstockSourceCode;
+
     public static final String OTHER_OUTSTOCK_ID = "other_outstock_id";
 
     public static final String OTHER_OUTSTOCK_CODE = "other_outstock_code";
 
     public static final String TRACK_NO = "track_no";
+
+    public static final String OTHER_OUTSTOCK_SOURCE_CODE = "other_outstock_source_code";
 
     @Override
     public Serializable pkVal() {

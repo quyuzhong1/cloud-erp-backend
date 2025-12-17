@@ -6,13 +6,16 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.wms.dto.OtherOutstockTrackNoDTO;
+import com.erp.model.wms.entity.OtherOutstockEntity;
 import com.erp.model.wms.entity.OtherOutstockTrackNoEntity;
+import com.erp.server.wms.mapper.OtherOutstockMapper;
 import com.erp.server.wms.mapper.OtherOutstockTrackNoMapper;
 import com.erp.server.wms.service.OtherOutstockTrackNoService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -28,6 +31,9 @@ import java.util.stream.Collectors;
 @Service
 public class OtherOutstockTrackNoServiceImpl extends SuperServiceImpl<OtherOutstockTrackNoMapper, OtherOutstockTrackNoEntity> implements OtherOutstockTrackNoService {
 
+    @Resource
+    private OtherOutstockMapper otherOutstockMapper;
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean batchUpdateTrackNo(OtherOutstockTrackNoDTO.BatchUpdateDTO dto) {
@@ -39,6 +45,10 @@ public class OtherOutstockTrackNoServiceImpl extends SuperServiceImpl<OtherOutst
             if (CharSequenceUtil.isBlank(updateDTO.getOtherOutstockId())) {
                 continue;
             }
+
+            // 通过 other_outstock_id 查询获取 sourceCode
+            OtherOutstockEntity otherOutstock = otherOutstockMapper.selectById(updateDTO.getOtherOutstockId());
+            String otherOutstockSourceCode = otherOutstock != null ? otherOutstock.getSourceCode() : null;
 
             // 先删除该出库单的所有跟踪号
             lambdaUpdate()
@@ -54,6 +64,7 @@ public class OtherOutstockTrackNoServiceImpl extends SuperServiceImpl<OtherOutst
                         entity.setId(IdUtil.getSnowflakeNextIdStr());
                         entity.setOtherOutstockId(updateDTO.getOtherOutstockId());
                         entity.setOtherOutstockCode(updateDTO.getOtherOutstockCode());
+                        entity.setOtherOutstockSourceCode(otherOutstockSourceCode);
                         entity.setTrackNo(trackNo.trim());
                         entities.add(entity);
                     }
@@ -81,11 +92,47 @@ public class OtherOutstockTrackNoServiceImpl extends SuperServiceImpl<OtherOutst
         OtherOutstockTrackNoDTO.ViewDTO viewDTO = new OtherOutstockTrackNoDTO.ViewDTO();
         viewDTO.setOtherOutstockId(otherOutstockId);
         viewDTO.setOtherOutstockCode(entities.get(0).getOtherOutstockCode());
+        viewDTO.setOtherOutstockSourceCode(entities.get(0).getOtherOutstockSourceCode());
         viewDTO.setTrackNoList(entities.stream()
                 .map(OtherOutstockTrackNoEntity::getTrackNo)
                 .collect(Collectors.toList()));
         
         return viewDTO;
+    }
+
+    @Override
+    public List<OtherOutstockTrackNoDTO.ViewDTO> batchGetTrackNo(List<String> otherOutstockIds) {
+        if (otherOutstockIds == null || otherOutstockIds.isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        List<OtherOutstockTrackNoEntity> entities = baseMapper.listByOutstockIds(otherOutstockIds);
+        if (entities == null || entities.isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        // 按 otherOutstockId 分组
+        Map<String, List<OtherOutstockTrackNoEntity>> groupedMap = entities.stream()
+                .collect(Collectors.groupingBy(OtherOutstockTrackNoEntity::getOtherOutstockId));
+
+        // 转换为 ViewDTO 列表
+        List<OtherOutstockTrackNoDTO.ViewDTO> result = new ArrayList<>();
+        for (Map.Entry<String, List<OtherOutstockTrackNoEntity>> entry : groupedMap.entrySet()) {
+            List<OtherOutstockTrackNoEntity> trackNoList = entry.getValue();
+            if (!trackNoList.isEmpty()) {
+                OtherOutstockTrackNoDTO.ViewDTO viewDTO = new OtherOutstockTrackNoDTO.ViewDTO();
+                OtherOutstockTrackNoEntity firstEntity = trackNoList.get(0);
+                viewDTO.setOtherOutstockId(firstEntity.getOtherOutstockId());
+                viewDTO.setOtherOutstockCode(firstEntity.getOtherOutstockCode());
+                viewDTO.setOtherOutstockSourceCode(firstEntity.getOtherOutstockSourceCode());
+                viewDTO.setTrackNoList(trackNoList.stream()
+                        .map(OtherOutstockTrackNoEntity::getTrackNo)
+                        .collect(Collectors.toList()));
+                result.add(viewDTO);
+            }
+        }
+        
+        return result;
     }
 
     @Override

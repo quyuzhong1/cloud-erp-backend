@@ -49,10 +49,28 @@ public class OtherOutstockTrackNoDTO implements Serializable {
         private String otherOutstockCode;
 
         /**
+         * 其他出库单来源单号（从other_outstock表查询获取）
+         */
+        private String otherOutstockSourceCode;
+
+        /**
          * 跟踪号列表
          */
         @NotEmpty(message = "跟踪号不能为空")
         private List<String> trackNoList;
+    }
+
+    /**
+     * 批量查询跟踪号DTO
+     */
+    @Data
+    @NoArgsConstructor
+    public static class BatchQueryDTO {
+        /**
+         * 其他出库单ID列表
+         */
+        @NotEmpty(message = "出库单ID列表不能为空")
+        private List<String> otherOutstockIds;
     }
 
     /**
@@ -70,6 +88,11 @@ public class OtherOutstockTrackNoDTO implements Serializable {
          * 其他出库单编号
          */
         private String otherOutstockCode;
+
+        /**
+         * 其他出库单来源单号（从other_outstock表查询获取）
+         */
+        private String otherOutstockSourceCode;
 
         /**
          * 跟踪号列表

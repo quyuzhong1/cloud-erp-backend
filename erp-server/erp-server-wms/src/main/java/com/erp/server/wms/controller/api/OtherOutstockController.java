@@ -423,31 +423,31 @@ public class OtherOutstockController extends BaseController {
      */
     @LogAction(value = LogActionEnum.UPDATE, desc = "更新其他出库单跟踪号")
     @PostMapping("/updateTrackNo")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "warehouse_keeper_id,create_user_id",
-            menuCode = "wms:otherOutstock:update",
-            serviceClass = OtherOutstockService.class,
-            keyIdName = "trackNoList[0].otherOutstockId")
+//    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+//            tableField = "warehouse_keeper_id,create_user_id",
+//            menuCode = "wms:otherOutstock:update",
+//            serviceClass = OtherOutstockService.class,
+//            keyIdName = "trackNoList[0].otherOutstockId")
     public ApiResult updateTrackNo(@RequestBody @Validated OtherOutstockTrackNoDTO.BatchUpdateDTO dto) {
         Boolean flag = otherOutstockTrackNoService.batchUpdateTrackNo(dto);
         return flag == true ? success() : failure();
     }
 
     /**
-     * 根据出库单ID查看跟踪号
+     * 批量查询出库单跟踪号
      * @author system
      * @date: 2025/12/16
-     * @param otherOutstockId
+     * @param dto 批量查询DTO
      * @return ApiResult
      */
-    @GetMapping("/getTrackNo")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "warehouse_keeper_id,create_user_id",
-            menuCode = "wms:otherOutstock:view",
-            serviceClass = OtherOutstockService.class,
-            keyIdName = "otherOutstockId")
-    public ApiResult<OtherOutstockTrackNoDTO.ViewDTO> getTrackNo(@RequestParam("otherOutstockId") String otherOutstockId) {
-        OtherOutstockTrackNoDTO.ViewDTO viewDTO = otherOutstockTrackNoService.getTrackNoByOutstockId(otherOutstockId);
-        return success(viewDTO);
+    @PostMapping("/getTrackNo")
+//    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+//            tableField = "warehouse_keeper_id,create_user_id",
+//            menuCode = "wms:otherOutstock:view",
+//            serviceClass = OtherOutstockService.class,
+//            keyIdName = "otherOutstockIds[0]")
+    public ApiResult<List<OtherOutstockTrackNoDTO.ViewDTO>> getTrackNo(@RequestBody @Validated OtherOutstockTrackNoDTO.BatchQueryDTO dto) {
+        List<OtherOutstockTrackNoDTO.ViewDTO> result = otherOutstockTrackNoService.batchGetTrackNo(dto.getOtherOutstockIds());
+        return success(result);
     }
 }
