@@ -1134,7 +1134,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
              * 总共已发货数量同步
              *
              */
-            Integer deliveryQty = item.getDeliveryQty() * item.getPerBoxQty();
+            Integer deliveryQty = item.getDeliveryQty();
 
             /**
              * 剩余数量
