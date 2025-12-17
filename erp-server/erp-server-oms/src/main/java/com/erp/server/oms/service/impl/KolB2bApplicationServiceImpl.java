@@ -624,7 +624,6 @@ public class KolB2bApplicationServiceImpl extends SuperServiceImpl<KolB2bApplica
             addDTO.setCustomerId(mainEntity.getCustomerId());
             addDTO.setCurrency(customerInfoEntity.getCurrency());
             addDTO.setIsTax(Boolean.FALSE);
-            addDTO.setDeliveryMode(customerInfoEntity.getTransactionalMode());
             List<SoDetailDTO.AddDTO> soDetailList = new ArrayList<>();
             for (KolB2bApplicationDetailEntity detailEntity : value) {
                 KolB2bApplicationDTO.GenerateSoInfoDTO generateSoInfoDTO = paramMap.get(detailEntity.getId());
