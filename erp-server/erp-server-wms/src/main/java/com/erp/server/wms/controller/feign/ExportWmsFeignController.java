@@ -610,6 +610,12 @@ public class ExportWmsFeignController {
         return poReturnService.exportPurchaseReturnOrder(dto);
     }
 
+    @PostMapping("/supplierPoReturn")
+    @WebAdvanceQuery(handler = SupplierPoReturnQueryHandler.class)
+    public PagingVO<PurchaseReturnOrderDTO.SupplierPagingViewDTO> exportSupplierPoReturn(@RequestBody PagingDTO<PurchaseReturnOrderDTO.SupplierPagingParamDTO> dto) {
+        return poReturnService.exportSupplierPoReturn(dto);
+    }
+
     @PostMapping("/qcBill")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "qc_user_id",

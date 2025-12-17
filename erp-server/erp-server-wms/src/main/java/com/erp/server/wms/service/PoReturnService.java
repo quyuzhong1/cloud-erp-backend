@@ -432,4 +432,17 @@ public interface PoReturnService extends SuperService<PoReturnEntity> {
      */
 
     BatchResultDTO deleteEntity(PoReturnEntity entity);
+
+    /**
+     * SRM供应商退货单导出（异步）
+     * @param dto
+     */
+    void supplierExportList(PurchaseReturnOrderDTO.SupplierPagingParamDTO dto);
+
+    /**
+     * SRM供应商退货单导出（Feign调用）
+     * @param dto
+     * @return PagingVO<PurchaseReturnOrderDTO.SupplierPagingViewDTO>
+     */
+    PagingVO<PurchaseReturnOrderDTO.SupplierPagingViewDTO> exportSupplierPoReturn(PagingDTO<PurchaseReturnOrderDTO.SupplierPagingParamDTO> dto);
 }

@@ -95,6 +95,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_PURCHASE_RETURN_ORDER;
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_SUPPLIER_PO_RETURN;
 
 /**
  * <p>
@@ -3003,6 +3004,60 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
             fillList(page.getRecords());
         }
         return new PagingVO<>(page);
+    }
+
+    @Override
+    public void supplierExportList(PurchaseReturnOrderDTO.SupplierPagingParamDTO dto) {
+        downloadTaskFeign.saveDownloadTask("SRM供应商退货单导出", EXPORT_WMS_SUPPLIER_PO_RETURN.getCode(), dto);
+    }
+
+    @Override
+    public PagingVO<PurchaseReturnOrderDTO.SupplierPagingViewDTO> exportSupplierPoReturn(PagingDTO<PurchaseReturnOrderDTO.SupplierPagingParamDTO> dto) {
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
+        
+        //查询登录信息
+        LoginUser loginUser = UserContext.getDefaultLoginUser();
+        if(Objects.isNull(loginUser)){
+            throw new ServiceException(ApiError.ERROR_403);
+        }
+
+        PurchaseReturnOrderDTO.SupplierPagingParamDTO params = dto.getParams();
+        //查询供应商信息
+        SupplierEntity supplier = supplierFeign.getSupplierByUid(loginUser.getUid());
+        if (ObjectUtils.isNotEmpty(supplier)) {
+            params.setSupplierId(supplier.getId());
+        }
+
+        //分页查询
+        IPage<PurchaseReturnOrderDTO.SupplierPagingViewDTO> pageData = this.baseMapper.supplierPaging(new Page<>(dto.getCurrPage(), dto.getPageSize()), params);
+        //明细数据
+        List<PurchaseReturnOrderDTO.SupplierPagingViewDTO> records = pageData.getRecords();
+        if (CollUtil.isEmpty(records)) {
+            return new PagingVO<>(pageData);
+        }
+        
+        //根据ids查询sku信息
+        List<String> skuIdList = records.stream().map(PurchaseReturnOrderDTO.SupplierPagingViewDTO::getSkuId).collect(Collectors.toList());
+        List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIdList);
+        for (PurchaseReturnOrderDTO.SupplierPagingViewDTO record : records) {
+            //退货来源名称
+            ReturnOrderSourceEnum returnOrderSourceEnum = Objects.equals(record.getSourceType(), SourceTypeEnum.QC_INFO.getCode()) ?
+                    ReturnOrderSourceEnum.QC : ReturnOrderSourceEnum.OTHER;
+            record.setReturnOrderSource(returnOrderSourceEnum.getCode());
+            record.setReturnOrderSourceName(returnOrderSourceEnum.getName());
+
+            //订单确认状态名称
+            record.setConfirmStatusName(PoReturnConfirmStatusEnum.getName(record.getConfirmStatus()));
+
+            //异常分类名称
+            record.setUnusualTypeName(PoReturnUnusualTypeEnum.getName(record.getUnusualType()));
+            //退货方式名称
+            record.setReturnModeName(ReturnModeEnum.getName(record.getReturnMode()));
+            //产品信息
+            ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(entityClass -> entityClass.getId().equals(record.getSkuId())).findFirst().orElse(new ProductDetailEntity());
+            record.setProductName(productDetailEntity.getName());
+        }
+        return new PagingVO<>(pageData);
     }
 
     @Override
