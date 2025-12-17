@@ -46,7 +46,7 @@ public interface CustomerB2bSellerChangeService extends SuperService<CustomerB2b
 
     BatchResultDTO addAndSubmit(CustomerB2bSellerChangeDTO.AddDTO addDTO);
 
-    List<CustomerB2bSellerChangeEntity> listByMainId(String mainId);
+    List<CustomerB2bSellerChangeEntity> listByMainIds(List<String> mainIds);
 
     PagingVO<CustomerB2bSellerChangeDTO.ListDTO> paging(PagingDTO<CustomerB2bSellerChangeDTO.ParamDTO> dto);
 

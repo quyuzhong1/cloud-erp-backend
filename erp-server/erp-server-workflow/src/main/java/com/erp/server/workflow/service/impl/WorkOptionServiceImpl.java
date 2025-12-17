@@ -102,6 +102,9 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
     private CustomerFeign customerFeign;
 
     @Resource
+    private CustomerB2bChangeSellerFeign customerB2bChangeSellerFeign;
+
+    @Resource
     private SupplierFeign supplierFeign;
 
     @Resource
@@ -788,6 +791,10 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
             case CUSTOMER_INFO:
                 ApiResult<List<BatchResultDTO>> apiResult = customerFeign.approve(baseApproveParamDTO);
                 resultDTOList = apiResult.getData();
+                break;
+            case CUSTOMER_B2B_CHANGE_SELLER:
+                ApiResult<List<BatchResultDTO>> result = customerB2bChangeSellerFeign.approve(baseApproveParamDTO);
+                resultDTOList = result.getData();
                 break;
             case SO_PRICE:
                 ApiResult<List<BatchResultDTO>>  soPriceResult  = soPriceFeign.approve(baseApproveParamDTO);
