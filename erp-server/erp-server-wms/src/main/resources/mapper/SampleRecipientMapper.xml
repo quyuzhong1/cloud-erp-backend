@@ -73,6 +73,9 @@
             sr.invalid_status AS invalidStatus,
             sr.invalid_remark AS invalidRemark,
             sr.invalid_time AS invalidTime,
+            (SELECT STRING_AGG(track_no, ',' ORDER BY id) 
+             FROM other_outstock_track_no 
+             WHERE other_outstock_source_code = sr.code AND is_deleted = false) AS trackNo,
             sr.recipient_date AS recipientDate,
             sr.usage,
             sr.usage_desc AS usageDesc,
@@ -213,6 +216,9 @@
             sr.invalid_status AS invalidStatus,
             sr.invalid_remark AS invalidRemark,
             sr.invalid_time AS invalidTime,
+            (SELECT STRING_AGG(track_no, ',' ORDER BY id) 
+             FROM other_outstock_track_no 
+             WHERE other_outstock_source_code = sr.code AND is_deleted = false) AS trackNo,
             sr.recipient_date AS recipientDate,
             sr.usage,
             sr.usage_desc AS usageDesc,
@@ -294,6 +300,9 @@
             sr.invalid_status AS invalidStatus,
             sr.invalid_remark AS invalidRemark,
             sr.invalid_time AS invalidTime,
+            (SELECT STRING_AGG(track_no, ',' ORDER BY id) 
+             FROM other_outstock_track_no 
+             WHERE other_outstock_source_code = sr.code AND is_deleted = false) AS trackNo,
             sr.recipient_date AS recipientDate,
             sr.usage,
             sr.usage_desc AS usageDesc,

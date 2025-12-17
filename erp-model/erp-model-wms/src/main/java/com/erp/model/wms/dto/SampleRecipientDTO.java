@@ -132,6 +132,11 @@ public class SampleRecipientDTO implements Serializable {
         private LocalDateTime invalidTime;
 
         /**
+        * 跟踪号（关联其他出库单的跟踪号，多个用逗号分隔）
+        */
+        private String trackNo;
+
+        /**
         * 样品领用单号
         */
         private String code;
