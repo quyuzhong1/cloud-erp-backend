@@ -3,6 +3,7 @@ package com.erp.server.tms.controller.api;
 
 import lombok.extern.slf4j.Slf4j;
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 
 import org.springframework.util.StopWatch;
 import org.springframework.validation.annotation.Validated;
@@ -20,6 +21,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.tms.dto.LogisticsTrackDTO;
+import org.springframework.web.multipart.MultipartFile;
 
 /**
  * 物流轨迹表
@@ -77,5 +79,18 @@ public class LogisticsTrackController extends BaseController {
     public ApiResult<Object>webhookByTrack123(@RequestBody LogisticsTrackDTO.TrackWebHookDTO dto){
         logisticsTrackService.webhookByTrack123(dto);
         return success();
+    }
+
+    /**
+     *  异步导入
+     * @author zdy
+     * @date: 2025/07/18 16:19
+     * @param dto
+     * @return ApiResult
+     */
+    @PostMapping(value = "/importExcel")
+    public ApiResult<Object> importExcel(@RequestBody BaseDTO.ImportDTO dto) {
+        Boolean flag = logisticsTrackService.importExcel(dto);
+        return flag == true ? success() : failure();
     }
 }

@@ -9,7 +9,9 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.constant.UserStateConstants;
 import com.common.business.dto.FindUserDTO;
+import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -20,6 +22,7 @@ import com.common.business.enums.SyncOperateEnum;
 import com.common.business.service.impl.RedisService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
+import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
@@ -32,21 +35,15 @@ import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.sys.dto.AuthUserWarehouseDTO;
+import com.erp.model.sys.dto.DictCountryDTO;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.WarehouseDTO.WarehouseUpdateStateDTO;
 import com.erp.model.wms.dto.excel.WarehouseExcelDTO;
 import com.erp.model.wms.dto.excel.WarehouseExportExcelDTO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.dto.pickingstrategy.WarehouseAreaDTO;
-import com.erp.model.wms.entity.DictBasicEntity;
-import com.erp.model.wms.entity.WarehouseEntity;
-import com.erp.model.wms.entity.WarehouseLocationEntity;
-import com.erp.model.wms.entity.WarehouseMappingEntity;
-import com.erp.model.wms.enums.*;
 import com.erp.model.wms.entity.*;
-import com.erp.model.wms.enums.DictBasicEnum;
-import com.erp.model.wms.enums.WarehouseManageTypeEnum;
-import com.erp.model.wms.enums.WmsRedisKeyEnum;
+import com.erp.model.wms.enums.*;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
@@ -103,7 +100,6 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
 
     @Resource
     private DictBasicService dictBasicService;
-
 
     @Resource
     private SysUserFeign sysUserFeign;
@@ -483,7 +479,8 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
             orgIdList.addAll(page.getRecords().stream().map(WarehouseDTO.PagingViewDTO::getShippingOrganization).collect(Collectors.toList()));
             orgIdList.addAll(page.getRecords().stream().map(WarehouseDTO.PagingViewDTO::getFinancialOrganization).collect(Collectors.toList()));
             List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(orgIdList);
-            
+
+            List<DictCountryDTO.ListDTO> dictCountryEntityList = sysUserFeign.countryList();
             List<com.erp.model.oms.entity.DictBasicEntity> channelAffiliationList = FeignQuery.create(com.erp.model.oms.entity.DictBasicEntity.class)
             		.in(com.erp.model.oms.entity.DictBasicEntity::getValue, page.getRecords().stream().map(WarehouseDTO.PagingViewDTO::getChannelAffiliation).collect(Collectors.toList()))
             		.in(com.erp.model.oms.entity.DictBasicEntity::getType, "salesPlatform")
@@ -535,6 +532,9 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
                         map(DictBasicEntity::getName).findFirst().orElse("");
                 excelDTO.setGeographyLocationName(geographyLocationName);
 
+                //国家
+                DictCountryDTO.ListDTO countryDto = dictCountryEntityList.stream().filter(v->v.getId().equals(item.getCountry())).findFirst().orElse(new DictCountryDTO.ListDTO());
+                excelDTO.setCountryName(countryDto.getNameCn());
                 
                 excelDTO.setChannelAffiliationName(channelAffiliationList.stream().filter(o -> o.getValue().equals(item.getChannelAffiliation())).findFirst().
                         flatMap(obj -> Optional.ofNullable(obj.getName())).orElse(""));
@@ -618,7 +618,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
      * @date 2023-03-22 10:17
      */
     @Override
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     public String add(WarehouseDTO.AddDTO dto) {
         //检查名称
@@ -735,6 +735,9 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         if(dto.getChannelAffiliation() == null) {
         	warehouse.setChannelAffiliation("");
         }
+        if(StringUtils.isBlank(dto.getCountry())) {
+        	warehouse.setCountry("");
+        }
         Boolean result = this.updateById(warehouse);
         if (result) {
             //如果设置了第三方仓绑定
@@ -772,7 +775,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
      * @date 2023-03-22 11:16
      */
     @Override
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     public Boolean addAndSubmit(WarehouseDTO.AddDTO dto) {
         String warehouseId = this.add(dto);
@@ -832,7 +835,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public Boolean updateStatus(WarehouseUpdateStateDTO dto) {
         // 删除缓存
         removeCache(Collections.singletonList(dto.getId()));
@@ -879,12 +882,17 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public BatchResultDTO approve(WarehouseEntity entity, String type, String comment, Boolean isNeedProcess) {
         // 删除缓存
         removeCache(Collections.singletonList(entity.getId()));
         if (!ApproveStatusEnum.APPROVE_ING.getStatus().equals(entity.getApproveStatus().getStatus())) {
             return BatchResultDTO.fail(entity.getId(),entity.getName(),ApiError.ERROR_98006.msg);
+        }
+        //当前登陆人,启用流程后可删除
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
+        if (CharSequenceUtil.equals(entity.getCreateUserId(),userInfo.getUid()) && !CharSequenceUtil.equals(entity.getCreateUserId(), UserStateConstants.USER_SYSTEM_ID)) {
+            throw new ServiceException(ApiError.WORKFLOW_APPROVE_CREATE_APPROVE_DIFF,userInfo.getUserName());
         }
         if (WmsConstant.PASS.equals(type)) {
             //审核通过
@@ -909,7 +917,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public BatchResultDTO disApprove(WarehouseEntity entity) {
         // 删除缓存
         removeCache(Collections.singletonList(entity.getId()));
@@ -921,7 +929,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         List<ShopInfoEntity> shopInfoEntities = shopInfoFeign.listShopInfoByWarehouseIds(Collections.singletonList(entity.getId()));
         ShopInfoEntity shopInfoEntity = shopInfoEntities.stream().filter(req -> req.getWarehouseId().equals(entity.getId())).distinct().findFirst().orElse(null);
         if (ObjectUtil.isNotEmpty(shopInfoEntity)) {
-            return BatchResultDTO.fail(entity.getId(),entity.getName(),String.format(ApiError.SHOP_INFO_EXIST_WAREHOUSE_NOT_DISAPPROVE.msg, shopInfoEntity.getName()));
+            return BatchResultDTO.fail(entity.getId(),entity.getName(),CharSequenceUtil.format(ApiError.SHOP_INFO_EXIST_WAREHOUSE_NOT_DISAPPROVE.msg, shopInfoEntity.getName()));
         }
         this.updateApproveStatus(Collections.singletonList(entity), ApproveStatusEnum.WAIT_SUBMIT);
         //仓库下绑定第三方店铺不能进行反审核
@@ -956,22 +964,37 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
-    public Boolean deleteByIds(List<String> ids) {
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
+    public List<BatchResultDTO> deleteByIds(List<String> ids) {
         // 删除缓存
         removeCache(ids);
 
         List<WarehouseEntity> list = this.listByIds(ids);
         //待提交
-        String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
-        long count = list.stream().filter(s -> !waitSubmitStatus.equals(s.getApproveStatus().getStatus())).count();
-        if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_98009);
+//        String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
+//        long count = list.stream().filter(s -> !waitSubmitStatus.equals(s.getApproveStatus().getStatus())).count();
+//        if (count > 0) {
+//            throw new ServiceException(ApiError.ERROR_98009);
+//        }
+        List<WarehouseEntity> removeList=new ArrayList<>();
+        List<BatchResultDTO> resultDTOList=new ArrayList<>();
+        for (WarehouseEntity entity : list) {
+            if (!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(entity.getApproveStatus().getStatus())){
+                resultDTOList.add(BatchResultDTO.fail(entity.getId(), entity.getKingdeeWarehouseCode(), ApiError.ERROR_98009.msg));
+                continue;
+            }
+            removeList.add(entity);
+            resultDTOList.add(BatchResultDTO.success(entity.getId(), entity.getKingdeeWarehouseCode(),"删除成功"));
+        }
+        List<String> removeIdList = removeList.stream().map(WarehouseEntity::getId).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(removeIdList)){
+            return resultDTOList;
         }
 
         //删除发送金蝶
-        sendPushTask(list,SyncOperateEnum.OPERATE_DELETE.getCode());
-        return this.removeByIds(ids);
+        sendPushTask(removeList,SyncOperateEnum.OPERATE_DELETE.getCode());
+        this.removeByIds(removeList);
+        return resultDTOList;
     }
 
 
@@ -1031,7 +1054,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(userIdList);
         List<String> orgIdList = list.stream().map(WarehouseDTO.PagingViewDTO::getOrgId).collect(Collectors.toList());
         List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(orgIdList);
-
+        List<DictCountryDTO.ListDTO> dictCountryEntityList = sysUserFeign.countryList();
         for (WarehouseDTO.PagingViewDTO item : list) {
             //类型id
             String typeId = item.getTypeId();
@@ -1063,6 +1086,10 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
             String geographyLocationName = dictBasicList.stream().filter(d -> geographyLocation.equals(d.getValue())).
                     map(DictBasicEntity::getName).findFirst().orElse("");
             item.setGeographyLocationName(geographyLocationName);
+
+            //国家
+            DictCountryDTO.ListDTO countryDto = dictCountryEntityList.stream().filter(v->v.getId().equals(item.getCountry())).findFirst().orElse(new DictCountryDTO.ListDTO());
+            item.setCountryName(countryDto.getNameCn());
         }
         return new PagingVO<>(pageData);
     }
@@ -1092,7 +1119,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
      */
     @Override
     public void downloadTemplate(HttpServletResponse response) {
-        String path = "classpath:excel/warehouse.xlsx";
+        String path = "excel/warehouse.xlsx";
         String excelName = "template.xlsx";
         ResourceLoader resourceLoader = new DefaultResourceLoader();
         try {
@@ -1124,7 +1151,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
      * @date 2023-03-22 17:17
      */
     @Override
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     public Boolean importFile(MultipartFile excelFile, HttpServletResponse response) {
         //获取到字典数据类型
@@ -1135,10 +1162,10 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         List<DictBasicEntity> dictBasicList = dictBasicService.getByKeyList(dictTypeList);
         List<FindUserDTO> userList = sysUserFeign.getUserList();
         List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(new ArrayList<>());
-
+        List<DictCountryDTO.ListDTO> countryList = sysUserFeign.countryList();
 
         List<WarehouseEntity> warehouseList = this.list();
-        WarehouseExcelListener excelListenerUtil = new WarehouseExcelListener(this, dictBasicList, userList, orgList, warehouseList, warehouseMappingService);
+        WarehouseExcelListener excelListenerUtil = new WarehouseExcelListener(this, dictBasicList, userList, orgList, warehouseList, warehouseMappingService,countryList);
         try {
             EasyExcel.read(excelFile.getInputStream(), WarehouseExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (Exception e) {
@@ -1465,4 +1492,5 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
 			throw new ServiceException(ApiError.OPEN_STATUS_OPEN_TIME_NOT_NULL);
 		}
 	}
+
 }

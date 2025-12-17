@@ -1,6 +1,8 @@
 package com.erp.rpc.wms.feign;
 
+import com.common.business.config.FeignErrorDecoder;
 import com.common.business.dto.AdvanceQueryContainer;
+import com.erp.model.oms.dto.ExhibitionOrderDTO;
 import com.erp.model.oms.dto.PlatformGenerateSoOutstockDTO;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
@@ -11,13 +13,16 @@ import com.erp.model.wms.dto.SoOutstockDetailDTO;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.wms.entity.SoOutstockEntity;
 import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
-@FeignClient(name = "erp-wms", contextId = "soOutstock")
+@FeignClient(name = "erp-wms", contextId = "soOutstock" ,configuration = {FeignErrorDecoder.class})
 public interface SoOutstockFeign {
 
     /**
@@ -157,4 +162,26 @@ public interface SoOutstockFeign {
      */
     @PostMapping("feign/soOutstock/getPushDownBySoDetailIds")
     List<SoDeliveryNoticeDetailDTO.PushDownDTO> getPushDownBySoDetailIds(@RequestBody List<String> soDetailIds);
+
+
+    /**
+     * 根据skuId查询Doris最新出库时间
+     * @author Jim
+     * @date 2025-08-13
+     * @return
+     */
+    @PostMapping("feign/soOutstock/mapLastOutstockDateBySkuIds")
+    Map<String, LocalDate> mapLastOutstockDateBySkuIds(@RequestBody List<String> skuIds);
+
+    @GetMapping("/feign/soOutstock/listSoOutstockByExhibitionId")
+    List<ExhibitionOrderDTO.DownstreamListDTO> listSoOutstockByExhibitionId(@RequestParam(value = "exhibitionId")String exhibitionId);
+
+    /**
+     * 自动反审核并删除出库单
+     *
+     * @param id
+     * @param deliveryId
+     */
+    @GetMapping("/feign/soOutstock/deleteSoOutstock")
+    void deleteSoOutstock(@RequestParam(value = "id") String id, @RequestParam(value = "deliveryId",required = false)String deliveryId);
 }

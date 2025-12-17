@@ -3,6 +3,8 @@ package com.erp.server.wms.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.base.BaseIdDTO;
+import com.erp.model.oms.dto.ExhibitionOrderDTO;
 import com.erp.model.wms.dto.OtherInstockDTO;
 import com.erp.model.wms.entity.OtherInstockEntity;
 import org.apache.ibatis.annotations.Mapper;
@@ -59,4 +61,14 @@ public interface OtherInstockMapper extends BaseMapper<OtherInstockEntity> {
      **/
     IPage<OtherInstockDTO.PdaListDTO> pdaPaging(Page query, @Param("params") OtherInstockDTO.PdaSearchParamDTO params);
 
+    /**
+     * 查看关联其他入库单据
+     * @author Will
+     * @date: 2024/12/19 10:16
+     * @param dto
+     * @return List<ListDTO>
+     */
+    List<OtherInstockDTO.ListDTO> viewAssociatedDocuments(@Param("params") BaseIdDTO dto);
+
+    List<ExhibitionOrderDTO.DownstreamListDTO> listOtherInstockInByExhibitionId(@Param("exhibitionId") String exhibitionId);
 }

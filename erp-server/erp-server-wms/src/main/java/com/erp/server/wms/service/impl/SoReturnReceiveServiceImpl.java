@@ -6,20 +6,19 @@ import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
+import com.common.business.constant.ThirdConstants;
 import com.common.business.dto.FindUserDTO;
-import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.dto.base.BatchResultDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
+import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
+import com.common.core.controller.vo.ApiResult;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -41,7 +40,7 @@ import com.erp.model.wms.dto.*;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.QcTypeEnum;
 import com.erp.model.wms.enums.ReturnReasonEnum;
-import com.erp.model.wms.enums.ReturnTypeEnum;
+import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.CustomerFeign;
 import com.erp.rpc.oms.feign.SoInfoFeign;
@@ -62,6 +61,7 @@ import javax.annotation.Resource;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_SO_RETURN_RECEIVE;
@@ -155,6 +155,16 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
         //获取销售单详情信息
         List<SoDetailEntity> soDetailEntities = soInfoFeign.listSoDetailByIds(detailIds);
         List<CustomerInfoEntity> customerInfoEntities = customerFeign.listCustomer();
+
+        //查询审核流程
+        List<String> ids = records.stream().map(SoReturnReceiveDTO.PagingView::getId).distinct().collect(Collectors.toList());
+        ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = ids.stream().map(obj -> new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.SO_RETURN_RECEIVE.getCode(), obj)).collect(Collectors.toCollection(ValidList::new));
+        ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = workflowFeign.curApprover(dtoList);
+        if (200 != listApiResult.getCode()) {
+            throw new ServiceException(new ApiResult(ApiError.DEFAULT.code,listApiResult.getMsg()));
+        }
+
+
         if (CollectionUtils.isNotEmpty(records)) {
             records.forEach(obj -> {
                 obj.setApproveStatusName(ApproveStatusEnum.getName(obj.getApproveStatus()));
@@ -173,6 +183,11 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
                     obj.setSalesQty(soDetailEntity.getQty());
                     obj.setReturnTypeDictName(ReturnTypeEnum.getName(obj.getReturnTypeDict()));
                 }
+                //最新审核人
+                if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
+                    String curApprove = listApiResult.getData().stream().filter(e -> e.getBusinessId().equals(obj.getId()) && CharSequenceUtil.isNotBlank(e.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
+                   obj.setApproveUserName(CharSequenceUtil.blankToDefault(curApprove,obj.getApproveUserName()));
+                }
             });
         }
         return new PagingVO(pageData);
@@ -181,9 +196,9 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
         //构造店铺权限
         String shopPermissionSql = authDataFeign.getShopPermissionSql("sb.shop_id");
         if (CharSequenceUtil.isAllNotBlank(permissionSql,shopPermissionSql)){
-            permissionSql = permissionSql + " AND ((srr.type = 'B2C' " + shopPermissionSql + ") OR (srr.type = 'B2B'))";
+            permissionSql = permissionSql + " AND ((srr.type = 'B2C' " + shopPermissionSql + ") OR (srr.type = 'B2B') OR (srr.type = 'AfterSale'))";
         }else if (CharSequenceUtil.isNotBlank(shopPermissionSql)){
-            permissionSql = " AND ((srr.type = 'B2C' " + shopPermissionSql + ") OR (srr.type = 'B2B'))";
+            permissionSql = " AND ((srr.type = 'B2C' " + shopPermissionSql + ") OR (srr.type = 'B2B') OR (srr.type = 'AfterSale'))";
         }
         return permissionSql;
     }
@@ -414,34 +429,73 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
     }
 
     @Override
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
-    public Boolean submit(List<String> ids) {
-        List<SoReturnReceiveEntity> entityList = this.listByIds(ids);
-        if (CollectionUtils.isEmpty(entityList)) {
+    public BatchResultDTO submit(SoReturnReceiveEntity entity,Boolean isNeedProcess) {
+        if (ObjectUtil.isEmpty(entity)) {
             throw new ServiceException(ApiError.ERROR_98004);
         }
-
         //未作废、待提交、审核不通过才可以提交
-        long count = entityList.stream().filter(entity -> entity.getInvalidStatus() == false
-                && (entity.getApproveStatus().equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus())
-                || entity.getApproveStatus().equals(ApproveStatusEnum.REJECT.getStatus()))
-        ).count();
-
-        if (count != entityList.size()) {
+        if (Boolean.TRUE.equals(entity.getInvalidStatus()) || (!entity.getApproveStatus().equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus())
+                && !entity.getApproveStatus().equals(ApproveStatusEnum.REJECT.getStatus()))) {
             throw new ServiceException(ApiError.ERROR_98010);
         }
+        //提交流程
+        if(isNeedProcess){
+            startProcess(entity);
+        }
 
-        //TODO 待加审核流程
         //操作日志
-        List<Pair<String, String>> pairList = entityList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
-        operateLogService.batchAddModuleOperateLog("提交了一个销售退货通知单【%s】", ModuleTypeEnum.SO_RETURN_RECEIVE.getCode(), pairList, "提交操作");
+        operateLogService.addModuleOperateLog(String.format("提交了一个销售退货通知单【%s】",entity.getCode()), ModuleTypeEnum.SO_RETURN_RECEIVE.getCode(), entity.getId(), "提交操作");
 
         //更新审核状态
         lambdaUpdate().set(SoReturnReceiveEntity::getApproveStatus, ApproveStatusEnum.APPROVE_ING.getStatus())
-                .in(SoReturnReceiveEntity::getId, ids)
+                .set(SoReturnReceiveEntity::getApproveUserId,"")
+                .set(SoReturnReceiveEntity::getApproveUserName,"")
+                .set(SoReturnReceiveEntity::getApproveTime,null)
+                .eq(SoReturnReceiveEntity::getId, entity.getId())
                 .update();
-        return Boolean.TRUE;
+        return BatchResultDTO.success(entity.getId(),entity.getCode(),"操作成功");
+    }
+
+    /**
+     * 启动流程
+     *
+     * @param entity
+     * @return void
+     * @Author will
+     * @Date 2025/10/22 12:07
+     **/
+
+    public void startProcess(SoReturnReceiveEntity entity) {
+        ProcessManagementDTO.StartDTO startDTO = new ProcessManagementDTO.StartDTO();
+        startDTO.setBusinessId(entity.getId());
+        startDTO.setBusinessCode(entity.getCode());
+        startDTO.setBusinessKey(SourceTypeEnum.SO_RETURN_RECEIVE.getCode());
+        startDTO.setBusinessName(entity.getCode());
+        startDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
+        startDTO.setVariablesMap(getVariablesMap(entity));
+        ApiResult<ProcessManagementDTO.StartResultDTO> listApiResult = workflowFeign.start(startDTO);
+        if (!listApiResult.isSuccess()) {
+            throw new ServiceException(listApiResult.getMsg());
+        }
+    }
+
+    /**
+     * variablesMap值赋值
+     * @author will
+     * @date 2025/10/22 10:51
+     * @param entity
+     * @return Map<String,Object>
+     */
+    private Map<String,Object> getVariablesMap(SoReturnReceiveEntity entity) {
+        Map<String, Object> variablesMap = BeanUtil.beanToMap(entity);
+        List<SoReturnReceiveDetailEntity> detailList = soReturnReceiveDetailService.lambdaQuery().eq(SoReturnReceiveDetailEntity::getMainId,entity.getId()).list();
+        if (CollUtil.isEmpty(detailList)) {
+            throw new ServiceException(ApiError.ERROR_92173);
+        }
+        variablesMap.put(ThirdConstants.DETAIL_LIST, BeanUtil.copyToList(detailList,Map.class));
+        return variablesMap;
     }
 
     @Override
@@ -450,7 +504,12 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
         if (CharSequenceUtil.isBlank(id)) {
             throw new ServiceException(ApiError.ERROR_1019);
         }
-        return this.submit(Collections.singletonList(id));
+        SoReturnReceiveEntity entity = this.getById(id);
+        if (ObjectUtil.isEmpty(entity)) {
+            throw new ServiceException(ApiError.ERROR_92173);
+        }
+        BatchResultDTO submit = this.submit(entity, Boolean.TRUE);
+        return submit.getSuccess();
     }
 
     @Override
@@ -459,20 +518,66 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
         if (!update) {
             throw new ServiceException(ApiError.ERROR_1020);
         }
-        return this.submit(Collections.singletonList(dto.getId()));
+        SoReturnReceiveEntity entity = this.getById(dto.getId());
+        if (ObjectUtil.isEmpty(entity)) {
+            throw new ServiceException(ApiError.ERROR_92173);
+        }
+        BatchResultDTO submit = this.submit(entity, Boolean.TRUE);
+        return submit.getSuccess();
     }
 
     @Override
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO approve(SoReturnReceiveEntity entity, String type, String comment, Boolean isNeedProcess) {
         //判断是否是审核中的状态
         if (!entity.getApproveStatus().equals(ApproveStatusEnum.APPROVE_ING.getStatus())) {
             throw new ServiceException(ApiError.ERROR_98006);
         }
-        //TODO 待加审核流程
-        if (ApproveTypeEnum.PASS.getStatus().equals(type)) {
-            LoginUser userInfo = UserContext.getDefaultLoginUser();
+        //调用审核流程
+        approveProcess(entity, new ApproveOneDTO(entity.getId(), type, comment));
+        //操作日志
+        operateLogService.addModuleOperateLog(String.format("审核【%s】了一个销售退货通知单【%s】", ApproveTypeEnum.getName(type),entity.getCode()).concat(CharSequenceUtil.isNotBlank(comment) ? String.format(",意见：%s", comment) : ""), ModuleTypeEnum.SO_RETURN_RECEIVE.getCode(), entity.getId(), "审核操作");
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), "操作成功");
+    }
+
+    /**
+     * 审核流程调用
+     * @author will
+     * @date 2025/10/22 16:23
+     * @param entity
+     * @param dto
+     * @return void
+     */
+    private void approveProcess(SoReturnReceiveEntity entity, ApproveOneDTO dto) {
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
+        ProcessManagementDTO.ApproveDTO approveDTO = new ProcessManagementDTO.ApproveDTO();
+        approveDTO.setBusinessId(entity.getId());
+        approveDTO.setBusinessKey(SourceTypeEnum.SO_RETURN_RECEIVE.getCode());
+        approveDTO.setApproveType(ApproveTypeEnum.getByCode(dto.getType()));
+        approveDTO.setComment(dto.getComment());
+        approveDTO.setUserId(userInfo.getUid());
+        approveDTO.setVariablesMap(getVariablesMap(entity));
+        ApiResult<ProcessManagementDTO.ApproveResultDTO> listApiResult = workflowFeign.approve(approveDTO);
+        Integer code = listApiResult.getCode();
+        if (200 != code) {
+            throw new ServiceException(ApiError.ERROR_94006);
+        }
+        ProcessManagementDTO.ApproveResultDTO data = listApiResult.getData();
+        if (ObjectUtil.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()) {
+            // 无需走流程的数据则直接更新状态
+            approveEnd(dto, entity);
+        }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 180000)
+    public Boolean approveEnd(ApproveOneDTO dto, SoReturnReceiveEntity entity) {
+
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
+        //意见
+        if (ApproveTypeEnum.PASS.getStatus().equals(dto.getType())) {
             //审核通过
             lambdaUpdate().set(SoReturnReceiveEntity::getApproveStatus, ApproveStatusEnum.APPROVE.getStatus())
                     .set(SoReturnReceiveEntity::getApproveUserId, userInfo.getUid())
@@ -486,12 +591,13 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
         } else {
             //审核不通过
             lambdaUpdate().set(SoReturnReceiveEntity::getApproveStatus, ApproveStatusEnum.REJECT.getStatus())
+                    .set(SoReturnReceiveEntity::getApproveUserId, userInfo.getUid())
+                    .set(SoReturnReceiveEntity::getApproveUserName, userInfo.getUserName())
+                    .set(SoReturnReceiveEntity::getApproveTime, LocalDateTime.now())
                     .eq(SoReturnReceiveEntity::getId, entity.getId())
                     .update();
         }
-        //操作日志
-        operateLogService.addModuleOperateLog(String.format("审核【%s】了一个销售退货通知单【%s】", ApproveTypeEnum.getName(type),entity.getCode()).concat(CharSequenceUtil.isNotBlank(comment) ? String.format(",意见：%s", comment) : ""), ModuleTypeEnum.SO_RETURN_RECEIVE.getCode(), entity.getId(), "审核操作");
-        return BatchResultDTO.success(entity.getId(), entity.getCode(), "操作成功");
+        return Boolean.TRUE;
     }
 
     /**
@@ -584,11 +690,16 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
                 }
             }
         }
+        //自动生成功能系统标识
+        Boolean originalValue = UserContext.getIsUserSystem();
+        UserContext.setIsUserSystem(Boolean.TRUE);
         qcInfoService.autoSoReturnReceiveToQcDTO(addList);
+        //恢复系统标识
+        UserContext.setIsUserSystem(originalValue);
     }
 
     @Override
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO disApprove(SoReturnReceiveEntity entity) {
         //已审核支持反审核
@@ -609,6 +720,9 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
         }
         //修改状态为待提交
         lambdaUpdate().set(SoReturnReceiveEntity::getApproveStatus, ApproveStatusEnum.WAIT_SUBMIT.getStatus())
+                .set(SoReturnReceiveEntity::getApproveUserId,"")
+                .set(SoReturnReceiveEntity::getApproveUserName,"")
+                .set(SoReturnReceiveEntity::getApproveTime,null)
                 .eq(SoReturnReceiveEntity::getId, entity.getId())
                 .update();
         //操作日志
@@ -617,7 +731,7 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
     }
 
     @Override
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     public Boolean cancelProcess(List<String> ids) {
         List<SoReturnReceiveEntity> entityList = this.listByIds(ids);
@@ -632,9 +746,20 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
             throw new ServiceException(ApiError.ERROR_98007);
         }
         //撤销现有流程
-        workflowFeign.cancelProcess(ids);
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
+        ids.forEach(obj -> {
+            ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
+            revokeDTO.setBusinessId(obj);
+            revokeDTO.setBusinessKey(SourceTypeEnum.SO_RETURN_RECEIVE.getCode());
+            revokeDTO.setUserId(userInfo.getUid());
+            workflowFeign.revokeProcess(revokeDTO);
+        });
+
         //修改状态为待提交
         lambdaUpdate().set(SoReturnReceiveEntity::getApproveStatus, ApproveStatusEnum.WAIT_SUBMIT.getStatus())
+                .set(SoReturnReceiveEntity::getApproveUserId,"")
+                .set(SoReturnReceiveEntity::getApproveUserName,"")
+                .set(SoReturnReceiveEntity::getApproveTime,null)
                 .in(SoReturnReceiveEntity::getId, ids)
                 .update();
         //操作日志
@@ -645,7 +770,7 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
     }
 
     @Override
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     public Boolean invalid(List<String> ids, String remark) {
         List<SoReturnReceiveEntity> entityList = this.listByIds(ids);
@@ -693,13 +818,79 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    public List<BatchResultDTO> deleteByIds(List<String> ids, boolean returnDetails) {
+        if (CollectionUtils.isEmpty(ids)) {
+            throw new ServiceException(ApiError.ERROR_98004);
+        }
+        List<SoReturnReceiveEntity> entityList = this.listByIds(ids);
+
+//        //待提交支持删除
+//        long count = entityList.stream().filter(entity -> entity.getInvalidStatus() == false
+//                && entity.getApproveStatus().equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus())
+//        ).count();
+//        if (count != entityList.size()) {
+//            throw new ServiceException(ApiError.ERROR_98009);
+//        }
+        List<SoReturnReceiveEntity> removeList=new ArrayList<>();
+        List<BatchResultDTO> resultDTOList=new ArrayList<>();
+        for (SoReturnReceiveEntity entity : entityList) {
+            if (!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(entity.getApproveStatus()) || entity.getInvalidStatus()){
+                resultDTOList.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_98009.msg));
+                continue;
+            }
+            removeList.add(entity);
+            resultDTOList.add(BatchResultDTO.success(entity.getId(), entity.getCode(),"删除成功"));
+        }
+        List<String> removeIdList = removeList.stream().map(SoReturnReceiveEntity::getId).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(removeIdList)){
+            return resultDTOList;
+        }
+        //删除详情表
+        soReturnReceiveDetailService.delete(removeIdList);
+        boolean result = this.removeByIds(removeIdList);
+        if (!result) {
+            throw new ServiceException(ApiError.ERROR_DATA_DELETE_ERROR);
+        }
+
+        // 添加批量操作日志
+        String msg = CharSequenceUtil.format("用户【{}】批量删除了单据编号为【{}】销售退货签收单", UserContext.getDefaultLoginUser().getUserName(),removeList.stream().map(SoReturnReceiveEntity::getCode).collect(Collectors.joining(",")));
+        List<Pair<String, String>> pairList = removeList.stream()
+                .map(entity -> new Pair<>(entity.getId(), entity.getCode()))
+                .collect(Collectors.toList());
+        operateLogService.batchAddModuleOperateLog(msg, ModuleTypeEnum.SO_RETURN_RECEIVE.getCode(), pairList, "删除操作");
+
+        // 返回成功结果
+        return resultDTOList;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public BatchResultDTO deleteEntity(SoReturnReceiveEntity entity) {
+        //待提交支持删除
+        if (entity.getInvalidStatus() || !ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(entity.getApproveStatus())) {
+            throw new ServiceException(ApiError.ERROR_98009);
+        }
+        List<String> ids = Collections.singletonList(entity.getId());
+        //删除详情表
+        soReturnReceiveDetailService.delete(ids);
+        //删除主表
+        boolean result = this.removeByIds(ids);
+        if (result) {
+            return BatchResultDTO.success(entity.getId(), entity.getCode(), "删除成功");
+        } else {
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), "删除失败");
+        }
+    }
+
+    @Override
     public Boolean exportExcel(SoReturnReceiveDTO.PagingParam dto) {
         downloadTaskFeign.saveDownloadTask("销售退货签收单", EXPORT_WMS_SO_RETURN_RECEIVE.getCode(), dto);
         return true;
     }
 
     @Override
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     public Boolean generateSoReturnReceiveSave(List<SoReturnNoticeDTO.GenerateSoReturnReceiveView> list) {
         Boolean flag = Boolean.TRUE;
@@ -857,7 +1048,7 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
 
 
     @Override
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     public Boolean pdaDisApprove(List<String> ids) {
         List<SoReturnReceiveEntity> entityList = this.listByIds(ids);
@@ -916,6 +1107,14 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
         //获取销售单详情信息
         List<SoDetailEntity> soDetailEntities = soInfoFeign.listSoDetailByIds(detailIds);
 
+        //查询审核流程
+        List<String> ids = pagingViews.getRecords().stream().map(SoReturnReceiveDTO.PagingView::getId).distinct().collect(Collectors.toList());
+        ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = ids.stream().map(obj -> new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.SO_RETURN_RECEIVE.getCode(), obj)).collect(Collectors.toCollection(ValidList::new));
+        ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = workflowFeign.curApprover(dtoList);
+        if (200 != listApiResult.getCode()) {
+            throw new ServiceException(new ApiResult(ApiError.DEFAULT.code,listApiResult.getMsg()));
+        }
+
         List<CustomerInfoEntity> customerInfoEntities = customerFeign.listCustomer();
         for (SoReturnReceiveDTO.PagingView pagingView : pagingViews.getRecords()) {
             pagingView.setApproveStatusName(ApproveStatusEnum.getName(pagingView.getApproveStatus()));
@@ -928,6 +1127,12 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
             pagingView.setSalesQty(soDetailEntity.getQty());
             CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(pagingView.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
             pagingView.setCustomerName(customerInfoEntity.getName());
+
+            //最新审核人
+            if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
+                String curApprove = listApiResult.getData().stream().filter(e -> e.getBusinessId().equals(pagingView.getId()) && CharSequenceUtil.isNotBlank(e.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
+                pagingView.setApproveUserName(CharSequenceUtil.blankToDefault(curApprove,pagingView.getApproveUserName()));
+            }
         }
         return new PagingVO<>(pagingViews);
     }
@@ -1040,5 +1245,14 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
         soReceiveList.sort(Comparator.comparing(SoReturnReceiveDTO.PdaSoReceive::getCode).reversed());
         soReceiveList.forEach(req -> req.setApproveStatusName(ApproveStatusEnum.getName(req.getApproveStatus())));
         return soReceiveList;
+    }
+
+    @Override
+    public Map<String, SoReturnReceiveEntity> mapByIds(List<String> ids) {
+        if (CollectionUtils.isEmpty(ids)) {
+            return Collections.emptyMap();
+        }
+        List<SoReturnReceiveEntity> list = this.listByIds(ids);
+        return list.stream().collect(Collectors.toMap(SoReturnReceiveEntity::getId, Function.identity()));
     }
 }

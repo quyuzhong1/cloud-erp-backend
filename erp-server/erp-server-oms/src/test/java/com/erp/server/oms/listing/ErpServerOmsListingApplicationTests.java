@@ -12,7 +12,6 @@ import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.server.oms.ErpServerOmsApplication;
 import com.erp.server.oms.service.*;
 import lombok.extern.slf4j.Slf4j;
-import org.checkerframework.checker.units.qual.A;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -81,7 +80,7 @@ public class ErpServerOmsListingApplicationTests {
     public void skuList(){
         ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
         paramDTO.setPlatform(PlatformDictEnum.AMAZON.getCode());
-        paramDTO.setType(RuleTypeEnum.PLATFORM.getCode());
+        paramDTO.setType(RuleTypeEnum.B2C_PLATFORM.getCode());
         paramDTO.setPlatformSkuNoList(Collections.singletonList("EU11-B012GBB1"));
         paramDTO.setShopIdList(Collections.singletonList("1734476072977698818"));
 //        paramDTO.setIsExpire(false);

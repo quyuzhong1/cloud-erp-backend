@@ -69,7 +69,7 @@ public class BusinessServiceImpl {
      * @param data            业务数据
      * @param platformApiEnum
      */
-//    @GlobalTransactional(rollbackFor = Exception.class)
+//    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     public <T extends CleanBaseDTO,R extends UniqueDto> void pullProcessBusiness(String category, String platform, String business, JobTaskDTO data, PlatformApiEnum platformApiEnum) {
         IBusinessHandler<T,R> handler = (IBusinessHandler<T,R>) registry.getHandler(category, platform, business);
@@ -99,7 +99,7 @@ public class BusinessServiceImpl {
      * @param data            业务数据
      * @param platformApiEnum
      */
-//    @GlobalTransactional(rollbackFor = Exception.class)
+//    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
 //    @Transactional(rollbackFor = Exception.class)
     public <T extends CleanBaseDTO,R extends UniqueDto> void batchPullProcessBusiness(String category, String platform, String business, JobTaskDTO data, PlatformApiEnum platformApiEnum, Integer batchSendMqSize) {
         IBusinessHandler<T,R> handler = (IBusinessHandler<T,R>) registry.getHandler(category, platform, business);
@@ -129,7 +129,7 @@ public class BusinessServiceImpl {
      * @param platformApiEnum          任务类型
      * @param clearCheckDownloadStatus
      */
-//    @GlobalTransactional(rollbackFor = Exception.class)
+//    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     public <T extends CleanBaseDTO,R extends UniqueDto> void cleanProcessBusiness(String category, String platform, String business, PlatformApiEnum platformApiEnum, Boolean clearCheckDownloadStatus) {
         IBusinessHandler<T,R> handler = (IBusinessHandler<T,R>) registry.getHandler(category, platform, business);
@@ -391,7 +391,7 @@ public class BusinessServiceImpl {
      * @param data            业务数据
      * @param platformApiEnum
      */
-//    @GlobalTransactional(rollbackFor = Exception.class)
+//    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
 //    @Transactional(rollbackFor = Exception.class)
     public <T extends CleanBaseDTO,R extends UniqueDto> void batchCheckAndInsert(String category, String platform, String business, JobTaskDTO data, PlatformApiEnum platformApiEnum, Integer batchSendMqSize) {
         IBusinessHandler<T,R> handler = (IBusinessHandler<T,R>) registry.getHandler(category, platform, business);

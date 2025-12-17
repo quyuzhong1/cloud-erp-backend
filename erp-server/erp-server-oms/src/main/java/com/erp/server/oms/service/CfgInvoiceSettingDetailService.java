@@ -41,6 +41,7 @@ public interface CfgInvoiceSettingDetailService extends SuperService<CfgInvoiceS
      * @return CfgInvoiceSettingDetailEntity
      */
     CfgInvoiceSettingDetailEntity getInvoiceSettingDetail(String dictPlatform, String shopId);
+    List<CfgInvoiceSettingDetailEntity> listInvoiceSettingDetail(String dictPlatform, String shopId);
 
     List<CfgInvoiceSettingDetailDTO.ViewDictPlatformDTO> listDictSelect(CfgInvoiceSettingDetailDTO.ParamsDictPlatformDTO dto);
 

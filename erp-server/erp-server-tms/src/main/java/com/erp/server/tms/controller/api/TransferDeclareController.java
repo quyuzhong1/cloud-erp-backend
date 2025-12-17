@@ -242,6 +242,7 @@ public class TransferDeclareController extends BaseController {
             menuCode = "tms:transferDeclare:delete",
             serviceClass = TransferDeclareService.class,
             keyIdName = "ids")
+    @LogAction(value = LogActionEnum.DELETE, desc = "删除中转报关数据")
     public ApiResult<Object>delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         Boolean flag = transferDeclareService.delete(dto.getIds());
         return flag ? success() : failure();

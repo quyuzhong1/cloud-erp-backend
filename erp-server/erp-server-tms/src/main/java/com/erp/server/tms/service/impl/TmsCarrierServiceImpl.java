@@ -1,9 +1,15 @@
 package com.erp.server.tms.service.impl;
 
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseDropDownDTO;
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.vo.PagingVO;
 import com.common.core.constant.SqlConstants;
+import com.erp.model.tms.dto.LogisticsAddressDTO;
+import com.erp.model.tms.dto.LogisticsSaleChannelDTO;
 import com.erp.model.tms.entity.TmsCarrierEntity;
 import com.erp.server.tms.mapper.TmsCarrierMapper;
 import com.erp.server.tms.service.TmsCarrierService;
@@ -64,5 +70,13 @@ public class TmsCarrierServiceImpl extends SuperServiceImpl<TmsCarrierMapper, Tm
             saveOrUpdate.add(newEntity);
         }
         this.saveOrUpdateBatch(saveOrUpdate);
+    }
+
+    @Override
+    public PagingVO<BaseDropDownDTO.CommonDTO> pagingSelect(PagingDTO<LogisticsSaleChannelDTO.SelectDTO> dto) {
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        LogisticsSaleChannelDTO.SelectDTO params = dto.getParams();
+        IPage<BaseDropDownDTO.CommonDTO> pagResult = baseMapper.pagingSelect(query, params);
+        return new PagingVO<>(pagResult);
     }
 }

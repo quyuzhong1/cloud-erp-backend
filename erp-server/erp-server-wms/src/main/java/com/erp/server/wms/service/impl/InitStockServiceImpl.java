@@ -2,13 +2,12 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
-import com.common.business.dto.base.BaseApproveParamDTO;
+import com.common.business.constant.UserStateConstants;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveStatusEnum;
@@ -29,7 +28,6 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.WarehouseLocationDTO;
-import com.erp.model.wms.dto.excel.ExportInitStockExcelDTO;
 import com.erp.model.wms.dto.excel.ImportInitStockExcelDTO;
 import com.erp.model.wms.dto.inventory.*;
 import com.erp.model.wms.entity.InitStockDetailEntity;
@@ -53,7 +51,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.math3.util.Pair;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
@@ -291,7 +288,7 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
         operateLogService.batchAddModuleOperateLog("提交了一个期初库存【%s】", ModuleTypeEnum.INIT_STOCK.getCode(), pairList, "提交操作");
     }
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void addAndSubmit(InitStockDTO.AddDTO dto) {
@@ -301,7 +298,7 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
         this.submit(Lists.newArrayList(id));
     }
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void updateAndSubmit(InitStockDTO.UpdateDTO dto) {
@@ -311,13 +308,18 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
         this.submit(Lists.newArrayList(dto.getId()));
     }
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BatchResultDTO approve(InitStockEntity entity, String type, String comment, Boolean isNeedProcess) {
         //只有审核中的数据允许审核
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())){
             return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_98006.msg);
+        }
+        //当前登陆人,启用流程后可删除
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
+        if (CharSequenceUtil.equals(entity.getCreateUserId(),userInfo.getUid()) && !CharSequenceUtil.equals(entity.getCreateUserId(), UserStateConstants.USER_SYSTEM_ID)) {
+            throw new ServiceException(ApiError.WORKFLOW_APPROVE_CREATE_APPROVE_DIFF,userInfo.getUserName());
         }
         ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(type);
         ApproveStatusEnum approveStatus = null;
@@ -340,31 +342,46 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public void delete(List<String> ids) {
+    public List<BatchResultDTO> delete(List<String> ids) {
         List<InitStockEntity> list = super.listByIds(ids);
-        Map<String, InitStockEntity> initStockEntityMap = list.stream().collect(Collectors.toMap(InitStockEntity::getId, Function.identity()));
+//        Map<String, InitStockEntity> initStockEntityMap = list.stream().collect(Collectors.toMap(InitStockEntity::getId, Function.identity()));
         //只有待提交的数据允许删除
-        ids.stream().forEach(id->{
-            InitStockEntity initStockEntity = initStockEntityMap.get(id);
-            ValidatorUtil.isTrue(Objects.nonNull(initStockEntity),()->new ServiceException("期初库存数据不存在"));
-            ValidatorUtil.isTrue(Objects.equals(initStockEntity.getApproveStatus(), ApproveStatusEnum.WAIT_SUBMIT.getStatus()) && Objects.equals(initStockEntity.getInvalidStatus(), Boolean.FALSE),()->new ServiceException("只有待提交并且未作废数据支持删除"));
-        });
+//        ids.stream().forEach(id->{
+//            InitStockEntity initStockEntity = initStockEntityMap.get(id);
+//            ValidatorUtil.isTrue(Objects.nonNull(initStockEntity),()->new ServiceException("期初库存数据不存在"));
+//            ValidatorUtil.isTrue(Objects.equals(initStockEntity.getApproveStatus(), ApproveStatusEnum.WAIT_SUBMIT.getStatus()) && Objects.equals(initStockEntity.getInvalidStatus(), Boolean.FALSE),()->new ServiceException("只有待提交并且未作废数据支持删除"));
+//        });
+        List<InitStockEntity> removeList=new ArrayList<>();
+        List<BatchResultDTO> resultDTOList=new ArrayList<>();
+        for (InitStockEntity entity : list) {
+            if (!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(entity.getApproveStatus()) || entity.getInvalidStatus()){
+                resultDTOList.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_98009.msg));
+                continue;
+            }
+            removeList.add(entity);
+            resultDTOList.add(BatchResultDTO.success(entity.getId(), entity.getCode(),"删除成功"));
+        }
+        List<String> removeIdList = removeList.stream().map(InitStockEntity::getId).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(removeIdList)){
+            return resultDTOList;
+        }
         // 删除期初库存日志数据
-        log.info("删除 开始删除期初库存日志数据，id集合：【{}】", JSONObject.toJSONString(ids));
-        String msg = CharSequenceUtil.format("用户【{}】删除了单据编号为【{}】的期初库存", UserContext.getDefaultLoginUser().getUserName(), list.stream().map(InitStockEntity::getCode).collect(Collectors.joining(",")));
-        List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+        log.info("删除 开始删除期初库存日志数据，id集合：【{}】", JSONObject.toJSONString(removeIdList));
+        String msg = CharSequenceUtil.format("用户【{}】删除了单据编号为【{}】的期初库存", UserContext.getDefaultLoginUser().getUserName(), removeList.stream().map(InitStockEntity::getCode).collect(Collectors.joining(",")));
+        List<Pair<String, String>> pairList = removeList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog(msg, ModuleTypeEnum.INIT_STOCK.getCode(), pairList, "删除操作");
 
         // 删除期初库存明细数据
-        log.info("删除 开始删除期初库存明细数据，id集合：【{}】", JSONObject.toJSONString(ids));
-        initStockDetailService.removeByMainIds(ids);
+        log.info("删除 开始删除期初库存明细数据，id集合：【{}】", JSONObject.toJSONString(removeIdList));
+        initStockDetailService.removeByMainIds(removeIdList);
 
         // 删除期初库存主单数据
-        log.info("删除 开始删除期初库存主单数据，id集合：【{}】", JSONObject.toJSONString(ids));
-        super.removeByIds(ids);
+        log.info("删除 开始删除期初库存主单数据，id集合：【{}】", JSONObject.toJSONString(removeIdList));
+        super.removeByIds(removeIdList);
+        return resultDTOList;
     }
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BatchResultDTO disApprove(InitStockEntity entity) {

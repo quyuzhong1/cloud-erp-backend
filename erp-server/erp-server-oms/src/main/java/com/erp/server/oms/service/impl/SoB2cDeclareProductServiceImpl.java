@@ -44,7 +44,6 @@ import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_OMS_SO_B2C_DECLARE;
 
@@ -74,7 +73,7 @@ public class SoB2cDeclareProductServiceImpl extends SuperServiceImpl<SoB2cDeclar
     private DownloadTaskFeign downloadTaskFeign;
 
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(SoB2cDeclareProductDTO.AddDTO addDTO) {
@@ -208,7 +207,9 @@ public class SoB2cDeclareProductServiceImpl extends SuperServiceImpl<SoB2cDeclar
                 .skuIds(Collections.singletonList(soB2cDeclareProductEntity.getSkuId())).country(country).build());
 
         ProductCustomsEntity customs = soB2cService.getCustomsByCountry(country,soB2cDeclareProductEntity.getSkuId(),productCustomsList);
-
+        if (Objects.isNull(customs)){
+            throw new ServiceException(ApiError.ERROR_SO_B2C_ORDER_DECLARE_CUSTOMS_NOT_EXIST, soB2cDeclareProductEntity.getSkuNo());
+        }
         //申报标签
         BigDecimal toDeclarePrice = customs.getToDeclarePrice();
         int compare = MathUtil.compareTo(soB2cDeclareProductEntity.getToDeclarePrice(), toDeclarePrice );

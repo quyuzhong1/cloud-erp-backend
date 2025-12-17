@@ -14,7 +14,6 @@ import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
-import com.common.business.constant.ThirdConstants;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BatchResultDTO;
@@ -156,6 +155,9 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
     @Resource
     private CfgQueryOptionFeign cfgQueryOptionFeign;
 
+    @Resource
+    private PurchaseOrderDetailService purchaseOrderDetailService;
+
     /**
      * 添加采购价目变更
      *
@@ -165,7 +167,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
      * @date 2023-03-28 11:49
      */
     @Override
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     public PurchasePriceChangeEntity add(PurchasePriceChangeDTO.AddDTO dto) {
 
@@ -270,7 +272,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public PurchasePriceChangeEntity addAndSubmit(PurchasePriceChangeDTO.AddDTO dto) {
         PurchasePriceChangeEntity entity = this.add(dto);
         if (null == entity) {
@@ -451,7 +453,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public Boolean submitApprove(List<String> ids, Boolean isStartProcess) {
         if (CollectionUtils.isEmpty(ids)) {
             return false;
@@ -626,7 +628,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public BatchResultDTO approve(PurchasePriceChangeEntity entity, String type, String comment, Boolean isNeedProcess) {
         if (!ApproveStatusEnum.APPROVE_ING.getStatus().equals(entity.getApproveStatus().getStatus())) {
             return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_98006.msg);
@@ -651,7 +653,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public BatchResultDTO approveEnd(PurchasePriceChangeEntity entity, String type, String comment, Boolean isNeedProcess) {
         if (ObjectUtils.isEmpty(entity)) {
             return BatchResultDTO.success();
@@ -688,7 +690,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public Boolean cancelProcess(List<String> ids) {
         List<PurchasePriceChangeEntity> list = this.listByIds(ids);
         String approveIngStatus = ApproveStatusEnum.APPROVE_ING.getStatus();
@@ -766,6 +768,10 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
             List<String> supplierIdList = list.stream().map(req -> req.getSupplierId()).distinct().collect(Collectors.toList());
             List<SupplierEntity> supplierEntities = supplierService.listByIds(supplierIdList);
 
+            //根据供应商、sku、数量区间查询
+            List<PurchasePriceChangeDTO.PurchaseOrderAdjustParamDTO> adjustParamList = list.stream().map(obj -> new PurchasePriceChangeDTO.PurchaseOrderAdjustParamDTO(obj.getSupplierId(), obj.getSkuId(), obj.getMinQty(), obj.getMaxQty())).collect(Collectors.toList());
+            List<PurchasePriceChangeDTO.PurchaseOrderAdjustResultDTO> purchaseOrderAdjustList = purchaseOrderDetailService.listAdjustPurchaseOrder(adjustParamList);
+
             for (PurchasePriceChangeDTO.PagingViewDTO item : list) {
                 SkuVO skuVO = skuNoList.stream().filter(req -> req.getSkuId().equals(item.getSkuId())).findFirst().orElse(new SkuVO());
                 item.setProductName(skuVO.getSkuName());
@@ -781,7 +787,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
                 //最新审核人
                 if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
                     String curApprove = listApiResult.getData().stream().filter(e -> e.getBusinessId().equals(item.getId()) && StringUtils.isNotBlank(e.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
-                    item.setApproveUserName(curApprove);
+                    item.setApproveUserName(CharSequenceUtil.blankToDefault(curApprove,item.getApproveUserName()));
                 }
 
                 //供应商
@@ -802,6 +808,24 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
                     BigDecimal offsetRate = MathUtil.divide(MathUtil.subtract(item.getTaxPrice(), viewDTO.getTaxPrice()), viewDTO.getTaxPrice()).multiply(MathUtil.BigDecimal_100);
                     item.setOffsetRate(StrUtil.format("{}%",offsetRate.stripTrailingZeros().toPlainString()));
                 }
+
+                //查询全部调整数量
+                long totalAdjustedCount = purchaseOrderAdjustList.stream().filter(obj ->
+                        CharSequenceUtil.equals(obj.getSupplierId(), item.getSupplierId())
+                                && CharSequenceUtil.equals(obj.getSkuId(), item.getSkuId())
+                                && MathUtil.compareTo(obj.getPurchaseQty(), item.getMinQty()) >= 0
+                                && MathUtil.compareTo(item.getMaxQty(), obj.getPurchaseQty()) > 0
+                ).map(PurchasePriceChangeDTO.PurchaseOrderAdjustResultDTO::getPurchaseOrderId).distinct().count();
+                item.setTotalAdjustedCount(Integer.valueOf(String.valueOf(totalAdjustedCount)));
+                //查询已调整数量
+                long adjustedCount = purchaseOrderAdjustList.stream().filter(obj ->
+                        CharSequenceUtil.equals(obj.getSupplierId(), item.getSupplierId())
+                                && CharSequenceUtil.equals(obj.getSkuId(), item.getSkuId())
+                                && MathUtil.compareTo(obj.getPurchaseQty(), item.getMinQty()) >= MathUtil.ZERO
+                                && MathUtil.compareTo(item.getMaxQty(), obj.getPurchaseQty()) > MathUtil.ZERO
+                                && MathUtil.compareTo(item.getTaxPrice(), obj.getTaxPrice()) == MathUtil.ZERO
+                ).map(PurchasePriceChangeDTO.PurchaseOrderAdjustResultDTO::getPurchaseOrderId).distinct().count();
+                item.setAdjustedCount(Integer.valueOf(String.valueOf(adjustedCount)));
             }
         }
 
@@ -819,7 +843,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public Boolean updateAndSubmit(PurchasePriceChangeDTO.UpdateDTO dto) {
         String id = this.updatePurchasePriceChange(dto);
         if (StringUtils.isBlank(id)) {
@@ -1145,7 +1169,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
             //最新审核人
             if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
                 String curApprove = listApiResult.getData().stream().filter(e -> e.getBusinessId().equals(item.getId()) && StringUtils.isNotBlank(e.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
-                excelDTO.setApproveUserName(curApprove);
+                excelDTO.setApproveUserName(CharSequenceUtil.blankToDefault(curApprove,excelDTO.getApproveUserName()));
             }
             excelDTO.setApproveTime(item.getApproveTime());
             resultList.add(excelDTO);
@@ -1160,7 +1184,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public void updateApproveStatus(PurchasePriceChangeDTO.UpdateApprovalStatusDTO  updateApprovalStatusDTO) {
         PurchasePriceChangeEntity entity = updateApprovalStatusDTO.getPurchasePricechangeEntity();
         ApproveStatusEnum approveStatus = updateApprovalStatusDTO.getApproveStatus();

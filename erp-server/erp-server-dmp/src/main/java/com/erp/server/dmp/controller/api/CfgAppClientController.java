@@ -1,6 +1,9 @@
 package com.erp.server.dmp.controller.api;
 
 
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
+import com.common.core.enums.LogActionEnum;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
@@ -23,6 +26,7 @@ import com.erp.model.dmp.dto.CfgAppClientDTO;
 @Slf4j
 @RestController
 @RequestMapping("/cfgAppClient")
+@LogSystemModule("第三方应用程序信息表")
 public class CfgAppClientController extends BaseController {
 
     @Autowired
@@ -36,6 +40,7 @@ public class CfgAppClientController extends BaseController {
     * @return ApiResult<String>
     */
     @PostMapping("/add")
+    @LogAction(value = LogActionEnum.INSERT, desc = "新增")
     public ApiResult<String> add(@RequestBody @Validated CfgAppClientDTO.AddDTO dto) {
         return success(cfgAppClientService.add(dto));
     }
@@ -48,6 +53,7 @@ public class CfgAppClientController extends BaseController {
     * @return ApiResult
     */
     @PostMapping("/update")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "修改")
     public ApiResult update(@RequestBody @Validated CfgAppClientDTO.UpdateDTO dto) {
         cfgAppClientService.update(dto);
         return success();

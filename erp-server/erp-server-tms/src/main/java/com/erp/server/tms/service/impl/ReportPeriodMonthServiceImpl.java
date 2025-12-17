@@ -61,7 +61,7 @@ public class ReportPeriodMonthServiceImpl extends SuperServiceImpl<ReportPeriodM
     @Lazy
     private FirstMileCostAllocationService firstMileCostAllocationService;
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(ReportPeriodMonthDTO.AddDTO addDTO) {
@@ -170,7 +170,7 @@ public class ReportPeriodMonthServiceImpl extends SuperServiceImpl<ReportPeriodM
         }
         List<ReportPeriodMonthDTO.SelectDTO> selectDTOS = baseMapper.queryList(orgIds);
         //已生成的费用分摊记录
-        List<FirstMileCostAllocationEntity> firstMileCostAllocationEntityList = firstMileCostAllocationService.listBySourceIds(deliveryIds, null);
+        List<FirstMileCostAllocationEntity> firstMileCostAllocationEntityList = firstMileCostAllocationService.listBySourceIds(deliveryIds, null, null, null);
         if (!CollectionUtils.isEmpty(firstMileCostAllocationEntityList)){
             FirstMileCostAllocationEntity entity = firstMileCostAllocationEntityList.stream().filter(e -> Objects.nonNull(e) && ConfirmStatusEnum.CONFIRM.getCode().equals(e.getStatus())).max(Comparator.comparing(FirstMileCostAllocationEntity::getReportPeriodMonth)).orElse(null);
             if (Objects.nonNull(entity)){

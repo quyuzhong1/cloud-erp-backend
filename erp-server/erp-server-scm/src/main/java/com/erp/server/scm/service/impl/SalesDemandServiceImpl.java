@@ -1,5 +1,6 @@
 package com.erp.server.scm.service.impl;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
@@ -8,6 +9,7 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
+import com.common.business.constant.UserStateConstants;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -126,7 +128,7 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
     }
 
     @Override
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     public String add(SalesDemandDTO.AddDTO dto) {
         SalesDemandEntity entity = new SalesDemandEntity();
@@ -230,6 +232,11 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
         if (!ApproveStatusEnum.APPROVE_ING.getStatus().equals(entity.getApproveStatus())) {
             return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_98006.msg);
         }
+        //当前登陆人,启用流程后可删除
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
+        if (CharSequenceUtil.equals(entity.getCreateUserId(),userInfo.getUid()) && !CharSequenceUtil.equals(entity.getCreateUserId(), UserStateConstants.USER_SYSTEM_ID)) {
+            throw new ServiceException(ApiError.WORKFLOW_APPROVE_CREATE_APPROVE_DIFF,userInfo.getUserName());
+        }
         log.info("备货申请单【{}】，id=【{}】", ApproveTypeEnum.getName(type), entity.getId());
         //审核通过
         if (ApproveTypeEnum.PASS.getStatus().equals(type)) {
@@ -297,21 +304,36 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean delete(List<String> ids) {
+    public List<BatchResultDTO> delete(List<String> ids) {
         //根据ids查询
         List<SalesDemandEntity> list = getList(ids);
         //待提交允许删除
-        long count = list.stream().filter(obj -> !ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus())).count();
-        if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_98009);
+//        long count = list.stream().filter(obj -> !ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus())).count();
+//        if (count > 0) {
+//            throw new ServiceException(ApiError.ERROR_98009);
+//        }
+        List<SalesDemandEntity> removeList=new ArrayList<>();
+        List<BatchResultDTO> resultDTOList=new ArrayList<>();
+        for (SalesDemandEntity entity : list) {
+            if (!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(entity.getApproveStatus())){
+                resultDTOList.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_98009.msg));
+                continue;
+            }
+            removeList.add(entity);
+            resultDTOList.add(BatchResultDTO.success(entity.getId(), entity.getCode(),"删除成功"));
         }
-        log.info("备货申请单删除，ids=【{}】", JSONUtil.toJsonStr(ids));
+        List<String> removeIdList = removeList.stream().map(SalesDemandEntity::getId).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(removeIdList)){
+            return resultDTOList;
+        }
+        log.info("备货申请单删除，ids=【{}】", JSONUtil.toJsonStr(removeIdList));
         //删除明细数据
-        salesDemandDetailService.removeBySalesDemandIds(ids);
+        salesDemandDetailService.removeBySalesDemandIds(removeIdList);
         //删除操作日志
-        moduleOperateLogService.removeByBusinessIds(ids);
+        moduleOperateLogService.removeByBusinessIds(removeIdList);
         //删除主表数据
-        return this.removeByIds(ids);
+        this.removeByIds(removeIdList);
+        return resultDTOList;
     }
 
     @Override

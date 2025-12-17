@@ -81,7 +81,6 @@ import java.io.OutputStream;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.nio.charset.StandardCharsets;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -162,7 +161,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public PurchasePriceEntity add(PurchasePriceDTO.AddDTO dto) {
         //供应商id
         String supplierId = dto.getSupplierId();
@@ -350,7 +349,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public PurchasePriceEntity addAndSubmit(PurchasePriceDTO.AddDTO dto) {
         PurchasePriceEntity entity = this.add(dto);
         if (null == entity) {
@@ -372,7 +371,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public PurchasePriceEntity updateAndSubmit(PurchasePriceDTO.UpdateDTO dto) {
         PurchasePriceEntity entity = this.updatePurchasePrice(dto);
         if (null == entity) {
@@ -393,7 +392,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public BatchResultDTO deleteEntity(PurchasePriceEntity entity) {
         String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
         long count = Stream.of(entity).filter(p -> !p.getApproveStatus().getStatus().equals(waitSubmitStatus)).count();
@@ -429,7 +428,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public BatchResultDTO submitEntity(PurchasePriceEntity entity) {
         List<PurchasePriceEntity> list = Collections.singletonList(entity);
 
@@ -487,7 +486,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public BatchResultDTO approve(PurchasePriceEntity entity, String type, String comment, Boolean isNeedProcess) {
         if (!ApproveStatusEnum.APPROVE_ING.getStatus().equals(entity.getApproveStatus().getStatus())) {
             return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_98006.msg);
@@ -509,7 +508,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public Boolean approveEnd(PurchasePriceEntity entity, String type, String comment) {
         if (ObjectUtils.isEmpty(entity)) {
             return Boolean.TRUE;
@@ -538,7 +537,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public BatchResultDTO cancelProcessEntity(PurchasePriceEntity entity) {
         String approveIngStatus = ApproveStatusEnum.APPROVE_ING.getStatus();
         long count = Stream.of(entity).filter(s -> !s.getApproveStatus().getStatus().equals(approveIngStatus)).count();
@@ -623,7 +622,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
                 //最新审核人
                 if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
                     String curApprove = listApiResult.getData().stream().filter(e -> e.getBusinessId().equals(item.getId()) && StringUtils.isNotBlank(e.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
-                    item.setApproveUserName(curApprove);
+                    item.setApproveUserName(CharSequenceUtil.blankToDefault(curApprove,item.getApproveUserName()));
                 }
             }
         }
@@ -810,10 +809,6 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
             List<PurchasePriceDetailEntity> updateItemList = Lists.newArrayList();
             // 此处需要过滤掉修改的明细
             for(PurchasePriceDetailDTO.ImportSaveDTO detailItem : detailList) {
-                LocalDate expireDate = null;
-                if(Objects.nonNull(detailItem.getEffectiveDate())) {
-                    expireDate = detailItem.getEffectiveDate().plusDays(100);
-                }
                 BigDecimal taxRate = null;
                 if(Objects.nonNull(detailItem.getTaxRate())) {
                     BigDecimal rate = detailItem.getTaxRate().divide(new BigDecimal("100"), 4, BigDecimal.ROUND_HALF_UP);
@@ -823,7 +818,6 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
                     for(String detailId : detailItem.getIds()) {
                         PurchasePriceDetailEntity savePurchasePriceDetailEntity = new PurchasePriceDetailEntity();
                         BeanMapper.copy(detailItem, savePurchasePriceDetailEntity);
-                        savePurchasePriceDetailEntity.setExpireDate(expireDate);
                         savePurchasePriceDetailEntity.setTaxRate(taxRate);
                         savePurchasePriceDetailEntity.setId(detailId);
                         if (StringUtils.isBlank(savePurchasePriceDetailEntity.getCurrency())){
@@ -834,7 +828,6 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
                 } else {
                     PurchasePriceDetailEntity savePurchasePriceDetailEntity = new PurchasePriceDetailEntity();
                     BeanMapper.copy(detailItem, savePurchasePriceDetailEntity);
-                    savePurchasePriceDetailEntity.setExpireDate(expireDate);
                     savePurchasePriceDetailEntity.setTaxRate(taxRate);
                     savePurchasePriceDetailEntity.setCurrency(item.getCurrency());
                     addItemList.add(savePurchasePriceDetailEntity);
@@ -902,7 +895,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public BatchResultDTO disApprove(PurchasePriceEntity entity,List<PurchasePriceDetailEntity> purchasePriceDetailEntities,List<PurchasePriceChangeDetailEntity> changeDetailEntityList) {
         if (!Objects.equals(ApproveStatusEnum.APPROVE, entity.getApproveStatus())) {
             return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_98014.msg);
@@ -1001,7 +994,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
                 //最新审核人
                 if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
                     String curApprove = listApiResult.getData().stream().filter(e -> e.getBusinessId().equals(item.getId()) && StringUtils.isNotBlank(e.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
-                    excelDTO.setApproveUserName(curApprove);
+                    excelDTO.setApproveUserName(CharSequenceUtil.blankToDefault(curApprove,excelDTO.getApproveUserName()));
                 }
                 excelDTO.setApproveTime(item.getApproveTime());
 
@@ -1099,11 +1092,16 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public void updateApproveStatus(PurchasePriceDTO.UpdateApprovalStatusDTO updateApprovalStatusDTO) {
         ApproveStatusEnum approveStatus = updateApprovalStatusDTO.getApproveStatus();
         PurchasePriceEntity purchasePriceEntity = updateApprovalStatusDTO.getPurchasePriceEntity();
         updateApproveStatus(Collections.singletonList(purchasePriceEntity), approveStatus);
+    }
+
+    @Override
+    public List<PurchasePriceDTO.SupplierSkuPrice> listSkuPrice() {
+        return baseMapper.listSkuPrice();
     }
 
     /**

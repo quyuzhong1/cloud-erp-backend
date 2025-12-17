@@ -1,5 +1,6 @@
 package com.erp.server.oms.service;
 
+import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.service.SuperService;
 import com.erp.model.oms.dto.InvoiceTaxDTO;
@@ -59,4 +60,11 @@ public interface InvoiceTaxService extends SuperService<InvoiceTaxEntity> {
      * @return void
      */
     void importUpdate(List<InvoiceTaxDTO.UpdateDTO> invoiceTaxList);
+
+    /**
+     * 预览
+     * @param dto
+     * @return
+     */
+    List<InvoiceTaxDTO.UpdateDTO> invoiceAddressView(BaseIdsDTO.IdsDTO dto);
 }

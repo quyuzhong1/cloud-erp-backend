@@ -1,5 +1,6 @@
 package com.erp.rpc.wms.feign;
 
+import com.common.business.config.FeignErrorDecoder;
 import com.erp.model.wms.dto.inventory.InstockForcastDTO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.entity.InventoryEntity;
@@ -17,7 +18,7 @@ import java.util.List;
  * @CreateTime: 2023-05-05  15:25
  * @Author: zhangchunlin
  */
-@FeignClient(name = "erp-wms", contextId = "inventory")
+@FeignClient(name = "erp-wms", contextId = "inventory" ,configuration = {FeignErrorDecoder.class})
 public interface InventoryFeign {
 
     /**

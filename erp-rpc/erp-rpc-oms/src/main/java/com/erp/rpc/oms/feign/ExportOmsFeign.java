@@ -7,6 +7,7 @@ import com.erp.model.oms.dto.*;
 import com.erp.model.oms.dto.excel.CustomerB2bSellerExcelDTO;
 import com.erp.model.oms.dto.excel.SoPriceChangeExportExcelDTO;
 import com.erp.model.oms.dto.excel.SoPriceExportExcelDTO;
+import com.erp.model.wms.dto.SampleBorrowInfoDTO;
 import feign.Request;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -63,11 +64,33 @@ public interface ExportOmsFeign {
 
     @PostMapping("/feign/export/exportInvoiceInvalid")
     PagingVO<CfgInvoiceInvalidDTO.PagingViewDTO> exportInvoiceInvalid(@RequestBody PagingDTO<CfgInvoiceInvalidDTO.PagingParamDTO> dto);
-    //销售调价导出
+    //收款单导出
+    @PostMapping("/feign/export/exportSoReceipt")
+    PagingVO<SoReceiptDTO.ListDTO> exportSoReceipt(@RequestBody PagingDTO<SoReceiptDTO.PagingParamDTO> dto);
+
     @PostMapping("/feign/export/soPriceChange")
     PagingVO<SoPriceChangeExportExcelDTO> exportSoPriceChange(@RequestBody PagingDTO<SoPriceChangeDTO.PagingParamDTO> dto);
     //销售价目导出
     @PostMapping("/feign/export/soPrice")
     PagingVO<SoPriceExportExcelDTO> exportSoPrice(@RequestBody PagingDTO<SoPriceDTO.PagingParamDTO> dto);
+    /**
+     * 导出展会订单
+     */
+    @PostMapping("/feign/export/exportExhibitionOrder")
+    PagingVO<ExhibitionOrderDTO.ListDTO> exportExhibitionOrder(@RequestBody PagingDTO<ExhibitionOrderDTO.PagingParamDTO> dto);
 
+    @PostMapping("/feign/export/soMultiChannel")
+    PagingVO<SoMultiChannelDTO.ListDTO> exportSoMultiChannel(@RequestBody PagingDTO<SoMultiChannelDTO.PagingParamDTO> dto);
+    @PostMapping("/feign/export/packagePlan")
+    PagingVO<PackagePlanDTO.ExportDTO> exportPackagePlan(@RequestBody PagingDTO<PackagePlanDTO.PagingParamDTO> dto);
+
+    /**
+     * b2b平台sku对照表信息导出
+     * @author will
+     * @date 2025/8/27 16:35
+     * @param dto
+     * @return PagingVO<PagingViewDTO>
+     */
+    @PostMapping("/feign/export/b2bPlatformSku")
+    PagingVO<SkuMappingDTO.PagingViewDTO> exportB2bPlatformSku(PagingDTO<SkuMappingDTO.PagingParamDTO> dto);
 }

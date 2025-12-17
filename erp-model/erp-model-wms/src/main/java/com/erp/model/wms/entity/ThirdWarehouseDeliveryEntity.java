@@ -71,6 +71,8 @@ public class ThirdWarehouseDeliveryEntity extends BaseEntity<ThirdWarehouseDeliv
     @TableField(exist = false)
     private List<ThirdWarehouseDeliveryDetailEntity> detailEntityList;
 
+    @TableField(exist = false)
+    private String actualDeliveryCode;
     
 
     public static final String SO_CODE = "so_code";

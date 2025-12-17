@@ -27,19 +27,19 @@ public class AmazonSpApiInitUtils {
         AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoDTO.getDictCountryCode());
         AmazonEndpointsEnum endpointsEnum = marketplaceEnum.getEndpointsEnum();
 
-        AWSAuthenticationCredentials awsAuthenticationCredentials = new AWSAuthenticationCredentials(shopInfoDTO.getAccessKeyId(), shopInfoDTO.getSecretKey(), endpointsEnum.getRegion());
+        // AWSAuthenticationCredentials awsAuthenticationCredentials = new AWSAuthenticationCredentials(shopInfoDTO.getAccessKeyId(), shopInfoDTO.getSecretKey(), endpointsEnum.getRegion());
 
         LWAAuthorizationCredentials lwaAuthorizationCredentials = new LWAAuthorizationCredentials(shopInfoDTO.getClientId(), shopInfoDTO.getClientSecret(), shopInfoDTO.getRefreshToken(), shopInfoDTO.getAuthUrl(), null);
 
-        AWSAuthenticationCredentialsProvider awsAuthenticationCredentialsProvider = new AWSAuthenticationCredentialsProvider(shopInfoDTO.getRoleStr(), UUID.randomUUID().toString());
+        // AWSAuthenticationCredentialsProvider awsAuthenticationCredentialsProvider = new AWSAuthenticationCredentialsProvider(shopInfoDTO.getRoleStr(), UUID.randomUUID().toString());
 
-        AWSSigV4Signer awsSigV4Signer = new AWSSigV4Signer(awsAuthenticationCredentials, awsAuthenticationCredentialsProvider);
+//        AWSSigV4Signer awsSigV4Signer = new AWSSigV4Signer(awsAuthenticationCredentials, awsAuthenticationCredentialsProvider);
 
         LWAAuthorizationSigner lwaAuthorizationSigner = new LWAAuthorizationSigner(lwaAuthorizationCredentials);
 
         // 创建客户端
         ApiClient apiClient = new ApiClient()
-                .setAWSSigV4Signer(awsSigV4Signer)
+//                .setAWSSigV4Signer(awsSigV4Signer)
                 .setLWAAuthorizationSigner(lwaAuthorizationSigner)
                 .setBasePath(isSandbox ? endpointsEnum.getSandboxEndpoints() : endpointsEnum.getEndpoints());
         try {

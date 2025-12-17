@@ -137,7 +137,7 @@ public class RemotePostcodeController extends BaseController {
                     resultDTOS.add(deleteResult);
                     continue;
                 }
-                deleteResult = BatchResultDTO.fail(entity.getId(), entity.getId(), e.getMessage());
+                deleteResult = BatchResultDTO.fail(entity.getId(), entity.getName(), e.getMessage());
             }
             resultDTOS.add(deleteResult);
         }

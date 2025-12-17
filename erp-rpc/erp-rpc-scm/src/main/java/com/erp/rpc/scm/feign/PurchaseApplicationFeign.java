@@ -19,7 +19,6 @@ import java.util.List;
  * @author tanmujin
  */
 @FeignClient(name = "erp-scm", contextId = "purchaseApplication",configuration = {FeignErrorDecoder.class})
-@RequestMapping("/feign/purchaseApplication")
 public interface PurchaseApplicationFeign {
 
     /**
@@ -29,7 +28,7 @@ public interface PurchaseApplicationFeign {
      * @date: 2024-08-28
      * @author: tanmujin
      */
-    @PostMapping("/add")
+    @PostMapping("/feign/purchaseApplication/add")
     BatchResultDTO add(@RequestBody @Validated PurchaseApplicationDTO.AddDTO dto);
 
     /**
@@ -39,7 +38,7 @@ public interface PurchaseApplicationFeign {
      * @param addDTO
      * @return BatchResultDTO
      */
-    @PostMapping("/addAndApprove")
+    @PostMapping("/feign/purchaseApplication/addAndApprove")
     BatchResultDTO addAndApprove(PurchaseApplicationDTO.InsertDTO addDTO);
 
 
@@ -50,34 +49,34 @@ public interface PurchaseApplicationFeign {
      * @date: 2024-08-29
      * @author: tanmujin
      */
-    @PostMapping("/listBySourceIds")
+    @PostMapping("/feign/purchaseApplication/listBySourceIds")
     List<PurchaseApplicationEntity> listBySourceIds(List<String> sourceIds);
 
     /**
      * 创建并提交
      */
-    @PostMapping("/addAndSubmit")
+    @PostMapping("/feign/purchaseApplication/addAndSubmit")
     BatchResultDTO addAndSubmit(@RequestBody @Validated PurchaseApplicationDTO.AddDTO dto);
 
     /**
      * 查询已下推的SKU及其数量
      */
-    @PostMapping("/listSkuAndQty")
+    @PostMapping("/feign/purchaseApplication/listSkuAndQty")
     List<PurchaseApplicationDetailDTO.PurchaseSkuQtyDTO> listSkuAndQty(List<String> skuIds);
 
     /**
      * 查询入库数量
      */
-    @PostMapping("/listStockInQty")
+    @PostMapping("/feign/purchaseApplication/listStockInQty")
     List<PurchaseApplicationDTO.ListDTO> listStockInQty(@RequestBody List<PurchaseApplicationDTO.ListDTO> purchaseList);
 
-    @PostMapping("/listByCodes")
+    @PostMapping("/feign/purchaseApplication/listByCodes")
     List<PurchaseApplicationEntity> listByCodes(@RequestBody List<String> list);
 
 //    @PostMapping("/updateApproveStatus")
 //    void updateApproveStatus(@RequestBody PurchaseApplicationEntity one, String approveStatus);
 
-    @PostMapping ("/updatePA")
+    @PostMapping ("/feign/purchaseApplication/updatePA")
     void updatePA(@RequestBody PurchaseApplicationDTO.updatePADTO updateDTO);
 
 }

@@ -1,28 +1,10 @@
 package com.erp.server.tms.controller.api;
 
 
-import java.util.ArrayList;
-import java.util.List;
-
-import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
-
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.multipart.MultipartFile;
-
+import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
-import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.dto.base.BaseIdsDTO;
-import com.common.business.dto.base.BatchResultDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
@@ -40,9 +22,14 @@ import com.erp.model.tms.enums.DictCostAttributionEnum;
 import com.erp.server.tms.query.LogisticsLastMileCostQueryHandler;
 import com.erp.server.tms.service.LogisticsBillCostService;
 import com.erp.server.tms.service.LogisticsLastMileCostService;
-
-import cn.hutool.core.util.ObjectUtil;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
+
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 尾程费用
@@ -100,6 +87,26 @@ public class LogisticsLastMileCostController extends BaseController {
     public ApiResult<PagingVO<LogisticsBillCostDTO.ListDTO>> queryByPage(@RequestBody @Validated PagingDTO<LogisticsBillCostDTO.PagingParamDTO> dto) {
         PagingVO<LogisticsBillCostDTO.ListDTO> pagingVO = logisticsBillCostService.paging(dto);
         return success(pagingVO);
+    }
+
+    /**
+     * 根据高级查询查出符合条件的主表id集合
+     * @author will
+     * @date 2025/8/21 16:20
+     * @param dto
+     * @return ApiResult<List<String>>
+     */
+    @PostMapping("/listLogisticsBillCostId")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            shopTableField = "lb.shop_id",
+            menuCode = "tms:logisticsLastMileCost:paging",
+            tableAlias = "lbc"
+    )
+    @WebAdvanceQuery(handler = LogisticsLastMileCostQueryHandler.class)
+    public ApiResult<List<String>> listLogisticsBillCostId(@RequestBody @Validated LogisticsBillCostDTO.ListParamDTO dto) {
+        List<String> idList = logisticsBillCostService.listLogisticsBillCostId(dto);
+        return success(idList);
     }
 
     /**
@@ -219,18 +226,17 @@ public class LogisticsLastMileCostController extends BaseController {
     }
 
     /**
-     * 导入
-     * @author Will
-     * @date: 2023/11/13 15:14
-     * @param excelFile
-     * @param response
+     *  异步导入
+     * @author zdy
+     * @date: 2025/07/18 16:19
+     * @param dto
      * @return ApiResult
      */
     @LogAction(value = LogActionEnum.IMPORT, desc = "导入尾程费用模板")
-    @PostMapping("/import")
-    public ApiResult<Object>importFile(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
-        Boolean result = logisticsLastMileCostService.importFile(excelFile, response);
-        return result ? success() : failure();
+    @PostMapping(value = "/importExcel")
+    public ApiResult<Object> importExcel(@RequestBody BaseDTO.ImportDTO dto) {
+        Boolean flag = logisticsLastMileCostService.importExcel(dto);
+        return flag ? success() : failure();
     }
 
     /**
@@ -302,7 +308,7 @@ public class LogisticsLastMileCostController extends BaseController {
       * 编辑付款/退款 保存
       * @author Will
       * @date:  2023-11-06
-      * @param dto
+      * @param dtoList
       * @return ApiResult
       */
      @PostMapping("/edit")
@@ -359,7 +365,7 @@ public class LogisticsLastMileCostController extends BaseController {
       * @param dto
       * @return ApiResult<List<BatchResultDTO>>
       */
-     @LogAction(value = LogActionEnum.DELETE, desc = "状态变更:idList={idList}")
+     @LogAction(value = LogActionEnum.DELETE, desc = "删除:ids={ids}")
      @PostMapping("/delete")
      @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
      tableField = "create_user_id",

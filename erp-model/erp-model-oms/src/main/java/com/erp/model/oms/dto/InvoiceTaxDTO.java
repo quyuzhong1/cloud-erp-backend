@@ -4,8 +4,10 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
+import java.util.List;
 
 /**
  * <p>
@@ -38,6 +40,10 @@ public class InvoiceTaxDTO implements Serializable {
          * 店铺id
          */
         private String  shopId;
+        /**
+         * 销售订单id
+         */
+        private String  soId;
         /**
          * 店铺名称
          */
@@ -95,6 +101,10 @@ public class InvoiceTaxDTO implements Serializable {
          * 类型，（invoiceType字典）
          */
         private String type;
+        /**
+         * 发票地址
+         */
+        private String invoiceAddress;
     }
 
 
@@ -190,6 +200,14 @@ public class InvoiceTaxDTO implements Serializable {
         * 主键id
         */
         private String id;
+        /**
+         * 销售订单id
+         */
+        private String soId;
+        /**
+         * 发票地址
+         */
+        private String invoiceAddress;
 
     }
 
@@ -267,5 +285,20 @@ public class InvoiceTaxDTO implements Serializable {
 
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class IdsDTO {
+        /**
+         * 表 ids
+         */
+        @NotEmpty(message = "ids不能为空")
+        private List<String> ids;
 
+        /**
+         * 是否跳过已生成发票税务信息
+         * true 跳过  用于b2c销售订单
+         * false 不跳过 用于发票清单列表接口
+         */
+        private Boolean isCheckInvoiceTax;
+    }
 }

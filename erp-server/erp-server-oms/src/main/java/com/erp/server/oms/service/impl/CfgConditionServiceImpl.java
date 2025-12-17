@@ -1,6 +1,7 @@
 package com.erp.server.oms.service.impl;
 
 
+import cn.hutool.core.collection.CollUtil;
 import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.enums.ApiError;
@@ -39,7 +40,7 @@ public class CfgConditionServiceImpl extends SuperServiceImpl<CfgConditionMapper
     @Resource
     private DictRuleConditionService dictRuleConditionService;
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public String add(CfgConditionDTO.AddDTO addDTO) {
@@ -123,6 +124,14 @@ public class CfgConditionServiceImpl extends SuperServiceImpl<CfgConditionMapper
     @Override
     public List<CfgConditionDTO.ListDTO> listInvoiceHandleCondition() {
         List<String> typeList = Arrays.asList("dictPlatform", "shop", "destCountry", "nfeInvoiceStatus");
+        return baseMapper.listConditionByType(typeList, null);
+    }
+
+    @Override
+    public List<CfgConditionDTO.ListDTO> listHandleConditionByType(List<String> typeList) {
+        if (CollUtil.isEmpty(typeList)){
+            return Collections.emptyList();
+        }
         return baseMapper.listConditionByType(typeList, null);
     }
 

@@ -52,7 +52,7 @@ public class PurchaseSkuOrgRefServiceImpl extends SuperServiceImpl<PurchaseSkuOr
     @Resource
     private DictBasicService dictBasicService;
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(PurchaseSkuOrgRefDTO.AddDTO addDTO) {

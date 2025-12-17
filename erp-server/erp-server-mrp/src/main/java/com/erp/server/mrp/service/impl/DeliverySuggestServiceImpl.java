@@ -134,7 +134,7 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
     @Resource
     private SkuMappingFeign skuMappingFeign;
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(DeliverySuggestDTO.AddDTO addDTO) {
@@ -511,7 +511,7 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
 
         ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
         paramDTO.setShopIdList(shopIdList);
-        paramDTO.setType(RuleTypeEnum.PLATFORM.getCode());
+        paramDTO.setType(RuleTypeEnum.B2C_PLATFORM.getCode());
         paramDTO.setSkuIdList(skuIdList);
         paramDTO.setIsExpire(false);
         // 所有包含历史映射关系
@@ -699,7 +699,7 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public Boolean pushDeliveryPlan(DeliverySuggestDTO.AddPushDeliveryPlanDTO deliveryPlanDTO) {
         WmsDeliveryPlanDTO.AddDTO addDTO = new WmsDeliveryPlanDTO.AddDTO();
         addDTO.setShopId(deliveryPlanDTO.getShopId());

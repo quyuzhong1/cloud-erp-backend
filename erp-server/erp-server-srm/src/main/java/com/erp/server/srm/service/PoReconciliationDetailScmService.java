@@ -87,7 +87,7 @@ public interface PoReconciliationDetailScmService extends SuperService<PoReconci
      * @param list
 
      */
-    void fillList(List<PoReconciliationDetailDTO.ListDTO> list);
+    void fillList(List<PoReconciliationDetailDTO.ListDTO> list,Boolean isSrm);
     /**
      * @description: 根据来源明细id集合查询
      * @author Will

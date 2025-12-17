@@ -7,8 +7,8 @@ import lombok.Getter;
 @AllArgsConstructor
 @Getter
 public enum FileTaskTypeEnum implements EnumMessage {
-    AUTO("auto","自动"),
-    MANUAL("manual","手动");
+    ASYNC_IMPORT("asyncImport","异步导入"),
+    ASYNC_EXPORT("asyncExport","异步导出");
 
     private final String code;
     private final String name;

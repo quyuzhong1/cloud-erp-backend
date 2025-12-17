@@ -1,14 +1,18 @@
 package com.erp.server.scm.service;
 
+import com.common.business.dto.DynamicExcelDTO;
 import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.scm.dto.SupplierDTO;
+import com.erp.model.scm.dto.SupplierPlantAddrDTO;
 import com.erp.model.scm.dto.SupplierTabCountDTO;
 import com.erp.model.scm.dto.excel.SupplierExportExcelDTO;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.entity.SupplierPhaseEntity;
+import com.erp.model.sys.entity.DictCityEntity;
+import com.erp.model.sys.entity.DictCountryEntity;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
@@ -55,7 +59,7 @@ public interface SupplierService extends SuperService<SupplierEntity> {
      * @author yl
      * @date 2023-03-20 10:00
      */
-    SupplierDTO.SupplierViewDTO view(String supplierId);
+    SupplierDTO.SupplierViewDTO view(String supplierId,Boolean isViewTel);
 
 
     /**
@@ -88,7 +92,7 @@ public interface SupplierService extends SuperService<SupplierEntity> {
      * @author yl
      * @date 2023-03-20 18:38
      */
-    Boolean deleteByIds(List<String> ids);
+    List<BatchResultDTO> deleteByIds(List<String> ids);
 
 
     /**
@@ -204,7 +208,7 @@ public interface SupplierService extends SuperService<SupplierEntity> {
      * @author yl
      * @date 2023-03-30 9:44
      */
-    Boolean importFile(MultipartFile excelFile, HttpServletResponse response);
+    Boolean importFile(MultipartFile excelFile,String type, HttpServletResponse response);
 
     /**
      * 获取供应商的一些信息
@@ -220,12 +224,12 @@ public interface SupplierService extends SuperService<SupplierEntity> {
     /**
      * 批量保存 导入的供应商
      *
-     * @param addList
+     * @param addDTO
      * @return void
      * @author yl
      * @date 2023-03-30 20:01
      */
-    void batchImportSupplier(List<SupplierDTO.ImportAddDTO> addList);
+    void batchImportSupplier(SupplierDTO.ImportAddDTO addDTO,String type);
 
     /**
      * 查询是否 有供应商占用 要删除的id 如果有就不能删除
@@ -332,7 +336,7 @@ public interface SupplierService extends SuperService<SupplierEntity> {
      */
     List<SupplierDTO.SupplierDefaultDTO> listDefaultBySupplierIdList(List<String> supplierIdList);
 
-    void updateCategory(SupplierDTO.BatchUpdateCategoryDTO dto);
+    BatchResultDTO updateField(String id,SupplierDTO.BatchUpdateFieldDTO dto);
 
     PagingVO<BaseDropDownDTO.RemarkDTO> pagingSelect(PagingDTO<BaseDropDownDTO.SelectDTO> dto);
 
@@ -343,4 +347,24 @@ public interface SupplierService extends SuperService<SupplierEntity> {
     SupplierEntity add(SupplierDTO.InsertDTO addDTO);
 
     void updateApproveStatus(SupplierDTO.UpdateApproveStatusDTO updateApproveStatusDTO);
+    /**
+     * 动态导出供应商
+     * @author will
+     * @date 2025/7/28 09:26
+     * @param dto
+     * @return PagingVO<DynamicExcelDTO>
+     */
+    PagingVO<DynamicExcelDTO> exportDynamicSupplier(PagingDTO<SupplierDTO.PagingParamDTO> dto);
+    /**
+     * 获取并且校验工厂地址
+     * @author will
+     * @date 2025/9/2 12:26
+     * @param countylist
+     * @param cityList
+     * @param plantAddr
+     * @param errorMsgList
+     * @param isUpdatePart
+     * @return List<AddDTO>
+     */
+    List<SupplierPlantAddrDTO.AddDTO> checkImportPlantAddr(List<DictCountryEntity> countylist, List<DictCityEntity> cityList, String plantAddr, List<String> errorMsgList, boolean isUpdatePart);
 }

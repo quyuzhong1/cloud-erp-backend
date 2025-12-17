@@ -22,6 +22,7 @@ import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
+import com.common.business.utils.ApplicationContextUtils;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
@@ -88,10 +89,10 @@ import org.apache.rocketmq.client.producer.SendStatus;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronizationAdapter;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import javax.annotation.Resource;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
@@ -198,7 +199,6 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     @Resource
     private CfgQueryOptionFeign cfgQueryOptionFeign;
 
-    @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(FirstMileDeliveryDTO.AddDTO addDTO) {
@@ -214,6 +214,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         // 生成单号
         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_FHD);
         firstMileDeliveryEntity.setCode(code);
+        firstMileDeliveryEntity.setDeclareStatus(WmsDeclareStatusEnum.WAIT);
         boolean save = super.save(firstMileDeliveryEntity);
         if(!save) {
             throw new ServiceException("发货单保存失败");
@@ -233,7 +234,63 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         firstMileDeliveryDetailService.add(addDTO, firstMileDeliveryEntity.getId());
         //新增装箱任务
 //        packingTaskService.addPackingByFirstMileDelivery(firstMileDeliveryEntity);
+
+        //根据装箱状态自动生成报关单
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+            @Override
+            public void afterCommit() {
+                try {
+                    Thread.sleep(2000);
+                } catch (InterruptedException e) {
+                    log.error("自动生成报关单睡眠异常: {}", e.getMessage());
+                }
+                FirstMileDeliveryServiceImpl bean = ApplicationContextUtils.getBean(FirstMileDeliveryServiceImpl.class);
+                bean.autoGenerateByPacked(firstMileDeliveryEntity,BillGenerateTimingEnum.AFTER_PACKING);
+            }
+        });
         return new BaseResultDTO.AddDTO(firstMileDeliveryEntity.getId(), code);
+    }
+
+    @Override
+    public void autoGenerateByPacked( FirstMileDeliveryEntity entity, BillGenerateTimingEnum billGenerateTimingEnum) {
+        List<PackingTaskEntity> taskEntityList = packingTaskService.getPackingStatusByFirstMileDelivery(entity);
+        //已装箱才能生成报关单逻辑
+        if (CollectionUtils.isNotEmpty(taskEntityList)) {
+            boolean packed = taskEntityList.stream().allMatch(taskEntity -> taskEntity.getPackingStatus().equals(PackingTaskStatusEnum.PACKED.getCode()));
+            if(packed){
+                //走TMS生成报关单单逻辑
+                AutoGenerateBillDTO autoGenerateBillDTO = AutoGenerateBillDTO.builder()
+                        .id(entity.getId())
+                        .billGenerateTimingEnum(billGenerateTimingEnum)
+                        .sourceTypeEnum(SourceTypeEnum.FIRST_MILE_DELIVERY)
+                        .firstMileDeliveryEntity(entity)
+                        .checkCfg(Boolean.TRUE) // 检查配置
+                        .build();
+                try {
+                    if(WmsDeclareStatusEnum.WAIT.equals(entity.getDeclareStatus())){
+                        Boolean autoGenerateResult;
+                        //自动生成功能系统标识
+                        Boolean originalValue = UserContext.getIsUserSystem();
+                        UserContext.setIsUserSystem(Boolean.TRUE);
+                        try {
+                            autoGenerateResult = tmsDeclareBillFeign.autoGenerateFirstMileDeclare(autoGenerateBillDTO);
+                        } finally {
+                            //恢复系统标识
+                            UserContext.setIsUserSystem(originalValue);
+                        }
+                        if(autoGenerateResult){
+                            FirstMileDeliveryDTO.UpdateStatusDTO updateStatusDTO = new FirstMileDeliveryDTO.UpdateStatusDTO();
+                            updateStatusDTO.setIds(Collections.singletonList(entity.getId()));
+                            updateStatusDTO.setDeclareStatus(WmsDeclareStatusEnum.FINISH.getCode());
+                            this.updateStatus(updateStatusDTO);
+                        }
+                    }
+                }catch (Exception e){
+                    log.error("头程发货单{} 自动生成报关单失败>>>>>>{}", entity.getCode(), e.getMessage());
+                    throw new ServiceException(CharSequenceUtil.format("头程发货单{} 自动生成报关单失败>>>>>>{}", entity.getCode(), e.getMessage()));
+                }
+            }
+        }
     }
 
     private void matchTransferRule(FirstMileDeliveryEntity entity) {
@@ -459,7 +516,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         }
     }
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO addAndSubmit(FirstMileDeliveryDTO.AddDTO dto) {
@@ -470,7 +527,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         return resultAdd;
     }
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void updateAndSubmit(FirstMileDeliveryDTO.UpdateDTO dto) {
@@ -480,7 +537,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         this.submit(dto.getId());
     }
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BatchResultDTO approve(ApproveOneDTO dto) {
@@ -746,7 +803,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         return variablesMap;
     }
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BatchResultDTO disApprove(String id) {
@@ -864,6 +921,16 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         if (CollUtil.isNotEmpty(inboundEntityList)){
             throw new ServiceException("存在下游海外入库单【{}】，禁止删除", inboundEntityList.stream().map(OverseasWarehouseInboundEntity::getCode).filter(CharSequenceUtil::isNotBlank).collect(Collectors.joining(",")));
         }
+
+        //校验下游单据是否生成【包含报关单，物流单】状态为已生成 不可反审核【提示：报关单/物流单[单号]已生成，不可反审核】
+        List<LogisticsBillEntity> tmsFirstMileLogisticEntities = tmsFirstMileLogisticFeign.listByOutstockIds(Collections.singletonList(entity.getId()));
+        if (CollUtil.isNotEmpty(tmsFirstMileLogisticEntities)) {
+            throw new ServiceException(ApiError.TMS_FIRST_MILE_LOGISTIC_EXISTS_NOT_DEL, tmsFirstMileLogisticEntities.get(0).getTransportNo());
+        }
+        List<TmsDeclareBillEntity> tmsDeclareBillEntities = tmsDeclareBillFeign.listBySourceIds(Collections.singletonList(entity.getId()));
+        if (CollUtil.isNotEmpty(tmsDeclareBillEntities)) {
+            throw new ServiceException(ApiError.TMS_DECLARE_BILL_EXISTS_NOT_DEL, tmsDeclareBillEntities.get(0).getCode());
+        }
         //删除装箱信息
         if(Objects.nonNull(packingTask)){
             packingTaskService.delete(packingTask);
@@ -913,7 +980,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     /**
     * 撤销
     */
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BatchResultDTO cancelProcess(String id) {
@@ -954,112 +1021,131 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
 
 
         //审核通过
-        if (ApproveType.PASS.equals(dto.getType())) {
-            //查询发货详情
-            List<FirstMileDeliveryDetailEntity> detailEntityList = firstMileDeliveryDetailService.listByMainIds(Collections.singletonList(entity.getId()));
-            RequisitionApplicationEntity application = requisitionApplicationService.getById(entity.getSourceId());
-            if (ObjectUtil.isNotEmpty(application)) {
-                //如果是FBA货件来源，审核通过修改货件发货状态为已发货
-                if (RequisitionApplicationTypeEnum.FBA.getCode().equals(application.getType())) {
-                    fbaShipmentService.deliveryStatus(entity);
-                } else {
-                    //如果是发货计划来源
-                    //审核通过修改发货状态为已发货
-                    wmsDeliveryPlanService.updateDeliveryStatus(Collections.singletonList(application.getSourceId()), FbaDeliveryStatusEnum.SHIPPED.getCode());
-                }
-            }
-
-            //如果是备货海外仓
-            if (FbaDemandTypeEnum.DEMAND_OVERSEAS_WAREHOUSE.getCode().equals(entity.getDemandType())) {
-                //查询是否下推了入库单
-                OverseasWarehouseInboundEntity inboundEntity = overseasWarehouseInboundService.getBySourceId(entity.getId(), OverseasInstockStatusEnum.CANCELED.getCode());
-                if (ObjectUtil.isEmpty(inboundEntity)) {
-                    throw new ServiceException(ApiError.NOT_EXISTS_OVERSEAS_WAREHOUSE_INBOUND_NOT_APPROVE);
-                }
-
-                //用目的仓查询是否绑定第三方仓
-                List<OverseasProviderWarehouseEntity> overseasProviderWarehouseEntities = overseasProviderWarehouseService.listByWarehouseIds(Collections.singletonList(entity.getDestWarehouseId()));
-                // 查询发货目的仓平台
-                OverseasProviderEntity providerEntity = overseasProviderWarehouseService.findPlatformByWarehouseId(entity.getDestWarehouseId());
-                if(Objects.nonNull(providerEntity) && providerEntity.getCode().equals(OmsPlatformEnum.CAI_NIAO.getCode())){
-                    providerEntity = null;
-                }
-                //有对接海外仓API：调用入库单的提交审核，获取审核结果，审核通过后入库单状态为待签收；审核不通过为异常，操作日志记录失败原因，并显示在备注栏
-                if (CollectionUtils.isNotEmpty(overseasProviderWarehouseEntities) && Objects.nonNull(providerEntity)
-                        && !OmsPlatformEnum.JIFENG.getCode().equals(providerEntity.getCode())) {
-                    // 推送第三方发货单审核通过
-                    ApiResult<String> resultInfo = overseasWarehouseInboundService.pullThirdOverseasPlatform(providerEntity, inboundEntity, detailEntityList, OverseasVerifyEnum.PASS.getCode());
-                    if (200 != resultInfo.getCode()) {
-                        log.error("推送第三方仓库【发货单审核】失败:msg={}", JSONUtil.toJsonStr(resultInfo));
-                        throw new ServiceException("推送第三方仓库【发货单审核】失败:" + resultInfo.getMsg());
+        try {
+            UserContext.setIsUserSystem(true);
+            if (ApproveType.PASS.equals(dto.getType())) {
+                //查询发货详情
+                List<FirstMileDeliveryDetailEntity> detailEntityList = firstMileDeliveryDetailService.listByMainIds(Collections.singletonList(entity.getId()));
+                RequisitionApplicationEntity application = requisitionApplicationService.getById(entity.getSourceId());
+                if (ObjectUtil.isNotEmpty(application)) {
+                    //如果是FBA货件来源，审核通过修改货件发货状态为已发货
+                    if (RequisitionApplicationTypeEnum.FBA.getCode().equals(application.getType())) {
+                        fbaShipmentService.deliveryStatus(entity);
+                    } else {
+                        //如果是发货计划来源
+                        //审核通过修改发货状态为已发货
+                        wmsDeliveryPlanService.updateDeliveryStatus(Collections.singletonList(application.getSourceId()), FbaDeliveryStatusEnum.SHIPPED.getCode());
                     }
-                    log.info("推送第三方仓库【发货单审核】结果: ={}", JSONUtil.toJsonStr(resultInfo));
-
-                    String msg = CharSequenceUtil.format("用户【{}】单号为【{}】的【{}】单据推送第三方仓库发货审核操作 平台返回结果：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "发货单", JSONUtil.toJsonStr(resultInfo));
-                    operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.FIRST_MILE_DELIVERY.getCode(), entity.getId(), "发货单审核");
-
-
                 }
 
-                //入库单状态修改为待签收
-                overseasWarehouseInboundService.updateInstockStatus(Collections.singletonList(inboundEntity.getId()), OverseasInstockStatusEnum.TO_BE_SIGNED.getCode());
-            }
-            //匹配到规则则进行中转调拨，否则直接生成调拨单
-            if (CharSequenceUtil.isNotBlank(entity.getTransferWarehouseIds())){
-                String batchNo = IdUtil.getSnowflake().nextIdStr();
-                List<String> split = StrUtil.split(entity.getTransferWarehouseIds(), ",");
-                //中转循环调拨
-                generateTransferByRule(split,entity, detailEntityList,batchNo);
-            }else {
-                generateTransferOut(entity, detailEntityList);
-            }
+                //如果是备货海外仓
+                if (FbaDemandTypeEnum.DEMAND_OVERSEAS_WAREHOUSE.getCode().equals(entity.getDemandType())
+                        || FbaDemandTypeEnum.DEMAND_ALIEXPRESS.getCode().equals(entity.getDemandType())) {
+                    //查询是否下推了入库单
+                    OverseasWarehouseInboundEntity inboundEntity = overseasWarehouseInboundService.getBySourceId(entity.getId(), OverseasInstockStatusEnum.CANCELED.getCode());
+                    if (ObjectUtil.isEmpty(inboundEntity)) {
+                        throw new ServiceException(ApiError.NOT_EXISTS_OVERSEAS_WAREHOUSE_INBOUND_NOT_APPROVE);
+                    }
 
-            List<PackingTaskEntity> taskEntityList = packingTaskService.getPackingStatusByFirstMileDelivery(entity);
-            //已装箱才能自动生成物流单逻辑
-            if (CollectionUtils.isNotEmpty(taskEntityList)) {
-                boolean packed = taskEntityList.stream().allMatch(taskEntity -> taskEntity.getPackingStatus().equals(PackingTaskStatusEnum.PACKED.getCode()));
-                if(packed){
-                    //走TMS自动生成物流单逻辑
-                    AutoGenerateBillDTO autoGenerateBillDTO = AutoGenerateBillDTO.builder()
-                            .id(entity.getId())
-                            .billGenerateTimingEnum(BillGenerateTimingEnum.AFTER_APPROVE)
-                            .sourceTypeEnum(SourceTypeEnum.FIRST_MILE_DELIVERY)
-                            .firstMileDeliveryEntity(entity)
-                            .build();
-                    try {
-                        if(FmDeliveryLogisticsStatusEnum.WAIT.equals(entity.getLogisticsStatus())){
-                            BatchResultDTO autoGenerateResult = tmsFirstMileLogisticFeign.autoGenerateFirstMileLogistic(autoGenerateBillDTO);
-                            if(autoGenerateResult.getSuccess()){
-                                FirstMileDeliveryDTO.UpdateStatusDTO updateStatusDTO = new FirstMileDeliveryDTO.UpdateStatusDTO();
-                                updateStatusDTO.setIds(Collections.singletonList(entity.getId()));
-                                updateStatusDTO.setLogisticsStatus(FmDeliveryLogisticsStatusEnum.FINISH.getCode());
-                                this.updateStatus(updateStatusDTO);
-                            }
+                    //用目的仓查询是否绑定第三方仓
+                    List<OverseasProviderWarehouseEntity> overseasProviderWarehouseEntities = overseasProviderWarehouseService.listByWarehouseIds(Collections.singletonList(entity.getDestWarehouseId()));
+                    // 查询发货目的仓平台
+                    OverseasProviderEntity providerEntity = overseasProviderWarehouseService.findPlatformByWarehouseId(entity.getDestWarehouseId());
+                    if(Objects.nonNull(providerEntity) && providerEntity.getCode().equals(OmsPlatformEnum.CAI_NIAO.getCode())){
+                        providerEntity = null;
+                    }
+                    //有对接海外仓API：调用入库单的提交审核，获取审核结果，审核通过后入库单状态为待签收；审核不通过为异常，操作日志记录失败原因，并显示在备注栏
+                    if (CollectionUtils.isNotEmpty(overseasProviderWarehouseEntities) && Objects.nonNull(providerEntity)
+                            && !OmsPlatformEnum.JIFENG.getCode().equals(providerEntity.getCode())
+                            && !OmsPlatformEnum.WEI_SHI.getCode().equals(providerEntity.getCode())
+                            && !OmsPlatformEnum.DA_MAI.getCode().equals(providerEntity.getCode())
+                            && !OmsPlatformEnum.OMS_IML.getCode().equals(providerEntity.getCode())
+                            && !OmsPlatformEnum.TONG_YOU.getCode().equals(providerEntity.getCode())) {
+                        // 推送第三方发货单审核通过
+                        ApiResult<String> resultInfo = overseasWarehouseInboundService.pullThirdOverseasPlatform(providerEntity, inboundEntity, detailEntityList, OverseasVerifyEnum.PASS.getCode());
+                        if (200 != resultInfo.getCode()) {
+                            log.error("推送第三方仓库【发货单审核】失败:msg={}", JSONUtil.toJsonStr(resultInfo));
+                            throw new ServiceException("推送第三方仓库【发货单审核】失败:" + resultInfo.getMsg());
                         }
-                    }catch (Exception e){
-                        log.error("头程发货单{} 审核后自动生成物流单失败>>>>>>{}", entity.getCode(), e.getMessage());
-                        throw new ServiceException(CharSequenceUtil.format("头程发货单{} 审核后自动生成物流单失败>>>>>>{}", entity.getCode(), e.getMessage()));
+                        log.info("推送第三方仓库【发货单审核】结果: ={}", JSONUtil.toJsonStr(resultInfo));
+
+                        String msg = CharSequenceUtil.format("用户【{}】单号为【{}】的【{}】单据推送第三方仓库发货审核操作 平台返回结果：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "发货单", JSONUtil.toJsonStr(resultInfo));
+                        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.FIRST_MILE_DELIVERY.getCode(), entity.getId(), "发货单审核");
+
+
                     }
 
-                    try {
-                        if(WmsDeclareStatusEnum.WAIT.equals(entity.getDeclareStatus())){
-                            Boolean autoGenerateResult = tmsDeclareBillFeign.autoGenerateFirstMileDeclare(autoGenerateBillDTO);
-                            if(autoGenerateResult){
-                                FirstMileDeliveryDTO.UpdateStatusDTO updateStatusDTO = new FirstMileDeliveryDTO.UpdateStatusDTO();
-                                updateStatusDTO.setIds(Collections.singletonList(entity.getId()));
-                                updateStatusDTO.setDeclareStatus(WmsDeclareStatusEnum.FINISH.getCode());
-                                this.updateStatus(updateStatusDTO);
+                    //入库单状态修改为待签收
+                    overseasWarehouseInboundService.updateInstockStatus(Collections.singletonList(inboundEntity.getId()), OverseasInstockStatusEnum.TO_BE_SIGNED.getCode());
+                }
+                //匹配到规则则进行中转调拨，否则直接生成调拨单
+                if (CharSequenceUtil.isNotBlank(entity.getTransferWarehouseIds())){
+                    String batchNo = IdUtil.getSnowflake().nextIdStr();
+                    List<String> split = StrUtil.split(entity.getTransferWarehouseIds(), ",");
+                    //中转循环调拨
+                    generateTransferByRule(split,entity, detailEntityList,batchNo);
+                }else {
+                    generateTransferOut(entity, detailEntityList);
+                }
+
+                List<PackingTaskEntity> taskEntityList = packingTaskService.getPackingStatusByFirstMileDelivery(entity);
+                //已装箱才能自动生成物流单逻辑
+                if (CollectionUtils.isNotEmpty(taskEntityList)) {
+                    boolean packed = taskEntityList.stream().allMatch(taskEntity -> taskEntity.getPackingStatus().equals(PackingTaskStatusEnum.PACKED.getCode()));
+                    if(packed){
+                        //走TMS自动生成物流单逻辑
+                        AutoGenerateBillDTO autoGenerateBillDTO = AutoGenerateBillDTO.builder()
+                                .id(entity.getId())
+                                .billGenerateTimingEnum(BillGenerateTimingEnum.AFTER_APPROVE)
+                                .sourceTypeEnum(SourceTypeEnum.FIRST_MILE_DELIVERY)
+                                .firstMileDeliveryEntity(entity)
+                                .checkCfg(Boolean.TRUE) // 检查配置
+                                .build();
+                        try {
+                            if(FmDeliveryLogisticsStatusEnum.WAIT.equals(entity.getLogisticsStatus())){
+                                BatchResultDTO autoGenerateResult;
+                                //自动生成功能系统标识
+                                Boolean originalValue = UserContext.getIsUserSystem();
+                                autoGenerateResult = tmsFirstMileLogisticFeign.autoGenerateFirstMileLogistic(autoGenerateBillDTO);
+                                if(autoGenerateResult.getSuccess()){
+                                    FirstMileDeliveryDTO.UpdateStatusDTO updateStatusDTO = new FirstMileDeliveryDTO.UpdateStatusDTO();
+                                    updateStatusDTO.setIds(Collections.singletonList(entity.getId()));
+                                    updateStatusDTO.setLogisticsStatus(FmDeliveryLogisticsStatusEnum.FINISH.getCode());
+                                    this.updateStatus(updateStatusDTO);
+                                }
                             }
+                        }catch (Exception e){
+                            log.error("头程发货单{} 审核后自动生成物流单失败>>>>>>{}", entity.getCode(), e.getMessage());
+                            throw new ServiceException(CharSequenceUtil.format("头程发货单{} 审核后自动生成物流单失败>>>>>>{}", entity.getCode(), e.getMessage()));
                         }
-                    }catch (Exception e){
-                        log.error("头程发货单{} 审核后自动生成报关单失败>>>>>>{}", entity.getCode(), e.getMessage());
-                        throw new ServiceException(CharSequenceUtil.format("头程发货单{} 审核后自动生成报关单失败>>>>>>{}", entity.getCode(), e.getMessage()));
+
+                        try {
+                            if(WmsDeclareStatusEnum.WAIT.equals(entity.getDeclareStatus())){
+                                Boolean autoGenerateResult;
+                                //自动生成功能系统标识
+                                Boolean originalValue = UserContext.getIsUserSystem();
+                                autoGenerateResult = tmsDeclareBillFeign.autoGenerateFirstMileDeclare(autoGenerateBillDTO);
+                                if(autoGenerateResult){
+                                    FirstMileDeliveryDTO.UpdateStatusDTO updateStatusDTO = new FirstMileDeliveryDTO.UpdateStatusDTO();
+                                    updateStatusDTO.setIds(Collections.singletonList(entity.getId()));
+                                    updateStatusDTO.setDeclareStatus(WmsDeclareStatusEnum.FINISH.getCode());
+                                    this.updateStatus(updateStatusDTO);
+                                }
+                            }
+                        }catch (Exception e){
+                            log.error("头程发货单{} 审核后自动生成报关单失败>>>>>>{}", entity.getCode(), e.getMessage());
+                            throw new ServiceException(CharSequenceUtil.format("头程发货单{} 审核后自动生成报关单失败>>>>>>{}", entity.getCode(), e.getMessage()));
+                        }
                     }
                 }
             }
+        }finally {
+            UserContext.clearIsUserSystem();
         }
         return Boolean.TRUE;
     }
+
+
 
     private void generateTransferByRule(List<String> transferWarehouseIdList, FirstMileDeliveryEntity entity, List<FirstMileDeliveryDetailEntity> detailEntityList,String batchNo) {
         if (CollUtil.isEmpty(transferWarehouseIdList)){
@@ -1462,7 +1548,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             .set(FirstMileDeliveryEntity::getApproveUserName, userInfo.getUserName())
             .set(FirstMileDeliveryEntity::getApproveStatus, approveStatus)
             .set(FirstMileDeliveryEntity::getApproveTime, LocalDateTime.now())
-            .set(Objects.equals(ApproveStatusEnum.APPROVE.getStatus(), approveStatus), FirstMileDeliveryEntity::getDeliveryDate, Objects.nonNull(deliveryDate) ? deliveryDate : LocalDate.now())
+            .set(Objects.equals(ApproveStatusEnum.APPROVE.getStatus(), approveStatus), FirstMileDeliveryEntity::getDeliveryDate, deliveryDate)
             .set(FirstMileDeliveryEntity::getDeliveryStatus, DeliveryStatusEnum.COMPLETE_SHIPMENT.getCode())
             .update(new FirstMileDeliveryEntity());
      }
@@ -1623,10 +1709,13 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                 continue;
             }
             try {
+                UserContext.setIsUserSystem(true);
                 resultDTOS.add(machineInfoService.approve(entity,ApproveType.PASS,"",null));
             }catch (Exception e){
                 log.error("加工单审核失败",e);
                 resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }finally {
+                UserContext.clearIsUserSystem();
             }
         }
         return resultDTOS;
@@ -1668,6 +1757,10 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                 addDTO.setSourceId(view.getMainId());
                 addDTO.setSourceCode(view.getCode());
                 addDTO.setWarehouseId(view.getWarehouseId());
+                if(Objects.nonNull(view.getBillDate())){
+                    addDTO.setBillDate(view.getBillDate());
+                }
+                addDTO.setBillDate(view.getBillDate());
                 MachineDetailDTO.AddDTO addDetailDTO = new MachineDetailDTO.AddDTO();
                 SkuVO skuVO = skuVOList.stream().filter(obj -> obj.getSkuNo().equals(view.getSkuNo())).findFirst().orElse(null);
                 if (ObjectUtils.isEmpty(skuVO)) {
@@ -1987,7 +2080,8 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         }
 
         //只有备货类型等于备货海外仓时，才可以下推入库单，否则提示：只有备货海外仓的发货单允许下推入库单
-        if (!FbaDemandTypeEnum.DEMAND_OVERSEAS_WAREHOUSE.getCode().equals(entity.getDemandType())) {
+        if (!FbaDemandTypeEnum.DEMAND_OVERSEAS_WAREHOUSE.getCode().equals(entity.getDemandType())
+        && !FbaDemandTypeEnum.DEMAND_ALIEXPRESS.getCode().equals(entity.getDemandType())) {
             throw new ServiceException(ApiError.IS_DEMAND_OVERSEAS_WAREHOUSE_PUSH_DOWN);
         }
 
@@ -2022,12 +2116,14 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         }
         String dictPlatform = null == providerEntity ? "" : providerEntity.getCode();
 
+
         //物流信息
         OverseasWarehouseInboundDTO.ViewDTO viewDTO = FirstMileDeliveryConverter.INSTANCE.fmdToOverseasWarehouseInboundView(entity);
         viewDTO.setSourceType(SourceTypeEnum.FIRST_MILE_DELIVERY.getCode());
         viewDTO.setInstockStatus(OverseasInstockStatusEnum.TO_BE_SHIPPED.getCode());
         viewDTO.setInstockStatusName(OverseasInstockStatusEnum.TO_BE_SHIPPED.getName());
 
+        viewDTO.setDemandTypeName(FbaDemandTypeEnum.getName(viewDTO.getDemandType()));
         //查询头程物流单
         List<LogisticsBillEntity> tmsFirstMileLogisticEntities = tmsFirstMileLogisticFeign.listByOutstockIds(Collections.singletonList(id));
         if (CollectionUtils.isNotEmpty(tmsFirstMileLogisticEntities)) {
@@ -2035,7 +2131,10 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             viewDTO.setLogisticsMethod(tmsFirstMileLogisticEntity.getShippingMethod());
             viewDTO.setTrackingNo(tmsFirstMileLogisticEntity.getTransportNo());
         }
-
+        List<OverseasProviderWarehouseEntity> entityList = overseasProviderWarehouseService.listByWarehouseIds(Collections.singletonList(destWarehouseId));
+        if(CollectionUtils.isNotEmpty(entityList)){
+            viewDTO.setOverseasWarehouseId(entityList.get(0).getId());
+        }
         // 平台信息
         viewDTO.setDictPlatform(dictPlatform);
         OmsPlatformEnum platformEnum = OmsPlatformEnum.getByCode(dictPlatform);
@@ -2353,7 +2452,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         return result;
     }
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean updateStatus(FirstMileDeliveryDTO.UpdateStatusDTO dto) {
@@ -2494,7 +2593,6 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     private Boolean validateExistsTransferInfo(String deliveryId) {
         List<TransferInfoEntity> list = transferInfoService.list(new LambdaQueryWrapper<TransferInfoEntity>()
                 .eq(TransferInfoEntity::getSourceId, deliveryId)
-                .eq(TransferInfoEntity::getSourceType, SourceTypeEnum.FIRST_MILE_DELIVERY.getCode())
                 .eq(TransferInfoEntity::getInvalidStatus, false));
         return !list.isEmpty();
     }
@@ -2575,6 +2673,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                 pagingViewDTO.setLength(null);
                 pagingViewDTO.setWidth(null);
                 pagingViewDTO.setHeight(null);
+                pagingViewDTO.setPackageWeight(null);
                 pagingViewDTO.setPackageWeightStr("");
                 pagingViewDTO.setWeightingStatusName("");
                 pagingViewDTO.setPackingUserName("");
@@ -2616,6 +2715,104 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             resultList.addAll(generateLogisticDTO);
         }
         return resultList;
+    }
+
+    @Override
+    public List<OverseasProviderWarehouseDTO.ProviderDTO> listOverseasProvider(List<String> deliveryIds) {
+        if (CollUtil.isEmpty(deliveryIds)){
+            return Collections.emptyList();
+        }
+        return baseMapper.listOverseasProvider(deliveryIds);
+    }
+
+    @Override
+    public BatchResultDTO generateFirstMileDeclare(String id) {
+        FirstMileDeliveryEntity entity = getById(id);
+        if (Objects.isNull(entity)) {
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_NOT_FBA_DELIVERY_DETAIL.msg);
+        }
+        //限制B2B类型,未作废,审核状态为未审核 才可下推报关单
+        if(Objects.equals(entity.getInvalidStatus(), Boolean.TRUE) || Objects.equals(ApproveStatusEnum.APPROVE, entity.getApproveStatus())){
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_92284.msg );
+        }
+        //根据装箱状态生成报关单
+        generateByPacked(entity,BillGenerateTimingEnum.AFTER_PACKING);
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), "操作成功");
+    }
+
+    /**
+     * 根据装箱状态自动生成物流单和报关单
+     *
+     * 该方法会检查头程发货单关联的所有装箱任务是否都已装箱(PACKED状态)，
+     * 如果全部已装箱则自动调用TMS服务生成物流单和报关单，并更新发货单状态。
+     *
+     * @param entity 头程发货单实体对象，包含发货单基本信息及状态
+     * @throws ServiceException 当自动生成物流单或报关单失败时抛出异常
+     */
+    private void generateByPacked(FirstMileDeliveryEntity entity, BillGenerateTimingEnum billGenerateTiming) {
+        List<PackingTaskEntity> taskEntityList = packingTaskService.getPackingStatusByFirstMileDelivery(entity);
+        if (CollectionUtils.isEmpty(taskEntityList)) {
+            throw new ServiceException(ApiError.ERROR_92285);
+        } else {
+            boolean packed = taskEntityList.stream().allMatch(taskEntity -> taskEntity.getPackingStatus().equals(PackingTaskStatusEnum.PACKED.getCode()));
+            if (Boolean.FALSE.equals(packed) && billGenerateTiming.equals(BillGenerateTimingEnum.AFTER_PACKING)) {
+                throw new ServiceException(ApiError.ERROR_92285);
+            } else {
+                if (!WmsDeclareStatusEnum.WAIT.equals(entity.getDeclareStatus())) {
+                    throw new ServiceException("报关单状态不为待生成，不能下推生成报关单");
+                } else {
+                    AutoGenerateBillDTO autoGenerateBillDTO = AutoGenerateBillDTO.builder()
+                            .id(entity.getId())
+                            .billGenerateTimingEnum(billGenerateTiming)
+                            .sourceTypeEnum(SourceTypeEnum.FIRST_MILE_DELIVERY)
+                            .firstMileDeliveryEntity(entity)
+                            .checkCfg(Boolean.FALSE) // 不检查配置
+                            .build();
+                    try {
+                        Boolean autoGenerateResult = tmsDeclareBillFeign.autoGenerateFirstMileDeclare(autoGenerateBillDTO);
+                        if (autoGenerateResult) {
+                            FirstMileDeliveryDTO.UpdateStatusDTO updateStatusDTO = new FirstMileDeliveryDTO.UpdateStatusDTO();
+                            updateStatusDTO.setIds(Collections.singletonList(entity.getId()));
+                            updateStatusDTO.setDeclareStatus(WmsDeclareStatusEnum.FINISH.getCode());
+                            this.updateStatus(updateStatusDTO);
+                        }else {
+                            throw new ServiceException("下推生成报关单失败");
+                        }
+                    } catch (Exception e) {
+                        log.error("头程发货单{} 下推生成报关单失败>>>>>>{}", entity.getCode(), e.getMessage());
+                        throw new ServiceException(CharSequenceUtil.format("头程发货单{} 下推生成报关单失败>>>>>>{}", entity.getCode(), e.getMessage()));
+                    }
+                }
+            }
+        }
+    }
+
+    @Override
+    public BatchResultDTO retryOutstock(String id) {
+        FirstMileDeliveryEntity entity = super.getById(id);
+        if (ObjectUtil.isEmpty(entity)) {
+            throw new ServiceException(ApiError.NOT_EXIST_BILL,"发货单不存在");
+        }
+        if (validateExistsTransferInfo(entity.getId())) {
+            throw new ServiceException(ApiError.ERROR_TRANSFER_NOT_RETRY_OUTSTOCK);
+        }
+        //查询发货详情
+        List<FirstMileDeliveryDetailEntity> detailEntityList = firstMileDeliveryDetailService.listByMainIds(Collections.singletonList(entity.getId()));
+        if (CollectionUtils.isEmpty(detailEntityList)) {
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "发货单明细不存在");
+        }
+        //匹配到规则则进行中转调拨，否则直接生成调拨单
+        if (CharSequenceUtil.isNotBlank(entity.getTransferWarehouseIds())){
+            String batchNo = IdUtil.getSnowflake().nextIdStr();
+            List<String> split = CharSequenceUtil.split(entity.getTransferWarehouseIds(), ",");
+            //中转循环调拨
+            generateTransferByRule(split,entity, detailEntityList,batchNo);
+        }else {
+            generateTransferOut(entity, detailEntityList);
+        }
+        //日志
+        operateLogService.addModuleOperateLog(CharSequenceUtil.format("【{}】重新出库", UserContext.getLoginUser().getUserName()), ModuleTypeEnum.FIRST_MILE_DELIVERY.getCode(), entity.getId(), "重新出库");
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.GENERATE);
     }
 }
 

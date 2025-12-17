@@ -62,6 +62,7 @@
                api_type,
                select_label,
                select_value,
+               select_disabled,
                search_key_field,
                select_value,
                field_type,
@@ -96,8 +97,8 @@
                select_value as remoteLabel,
                value_type as valueType
         FROM cfg_query_option
-        WHERE is_deleted = FALSE AND bussiness_key = #{bussinessKey} and use_type = #{useType}
-            AND field_belongs_type = 'main'
-        ORDER BY create_time
+        WHERE is_deleted = FALSE
+        AND bussiness_key = #{bussinessKey} and field_belongs_type = 'main' and use_type =  #{useType}
+        ORDER BY id
     </select>
 </mapper>

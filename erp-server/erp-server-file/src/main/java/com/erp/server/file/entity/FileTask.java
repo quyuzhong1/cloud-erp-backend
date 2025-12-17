@@ -2,7 +2,7 @@ package com.erp.server.file.entity;
 
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.business.enums.FileTaskEventEnum;
-import com.erp.server.file.enums.FileTaskStatusEnum;
+import com.common.business.enums.FileTaskStatusEnum;
 import com.common.core.entity.BaseEntity;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.EqualsAndHashCode;
@@ -32,6 +32,7 @@ public class FileTask extends BaseEntity<FileTask> {
     private String fileUrl;
     /**
      * 任务状态
+     * FileTaskStatusEnum
      */
     private String status;
     /**

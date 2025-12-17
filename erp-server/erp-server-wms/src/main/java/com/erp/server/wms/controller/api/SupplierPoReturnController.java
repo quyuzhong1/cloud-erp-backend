@@ -9,9 +9,11 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import com.erp.model.wms.entity.PoReturnEntity;
 import com.erp.server.wms.query.SupplierPoReturnQueryHandler;
@@ -73,6 +75,7 @@ public class SupplierPoReturnController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult
      **/
     @PostMapping("/returnConfirm")
+    @LogAction(value = LogActionEnum.CONFIRM, desc = "退货确认")
     public ApiResult<List<BatchResultDTO>> returnConfirm(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {

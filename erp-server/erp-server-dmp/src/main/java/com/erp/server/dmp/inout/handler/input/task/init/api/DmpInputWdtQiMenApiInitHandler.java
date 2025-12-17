@@ -29,6 +29,7 @@ import com.taobao.api.ApiException;
 import com.taobao.api.TaobaoRequest;
 import com.taobao.api.TaobaoResponse;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.exceptions.ExceptionUtil;
 
 /**
@@ -82,13 +83,17 @@ public class DmpInputWdtQiMenApiInitHandler implements DmpInputApiInitHandler{
 			Class<?> paramsClass = Class.forName(className + "$Params");
 			Object params = paramsClass.newInstance();
 			for(Map.Entry<String , Object> parse: parseObject.entrySet()) {
+				String key = parse.getKey();
+				if(key.startsWith("dmp")) {
+					continue;
+				}
 				Object value = parse.getValue();
 				Method paramsMethod = null;
 				try {
-					paramsMethod = paramsClass.getMethod("set" + StringUtils.capitalize(parse.getKey()), value.getClass());
+					paramsMethod = paramsClass.getMethod("set" + StringUtils.capitalize(key), value.getClass());
 				} catch (NoSuchMethodException e) {
 					if(value instanceof Integer) {
-						paramsMethod = paramsClass.getMethod("set" + StringUtils.capitalize(parse.getKey()), Long.class);
+						paramsMethod = paramsClass.getMethod("set" + StringUtils.capitalize(key), Long.class);
 						value = Long.valueOf((Integer) value);
 					}else {
 						throw e;
@@ -150,7 +155,9 @@ public class DmpInputWdtQiMenApiInitHandler implements DmpInputApiInitHandler{
 				if(order == null) {
 					order = data.getJSONArray("details");
 				}
-				
+				if(CollUtil.isEmpty(order)) {
+					break;
+				}
 				currTotal = currTotal + order.size();
 				DmpInputTaskInitDTO dmpInputTaskInitDTO = new DmpInputTaskInitDTO();
 				dmpInputTaskInitDTO.setMsg(order.toJSONString());

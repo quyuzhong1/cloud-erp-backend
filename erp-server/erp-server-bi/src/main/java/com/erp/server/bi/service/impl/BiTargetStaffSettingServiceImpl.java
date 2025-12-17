@@ -69,7 +69,7 @@ public class BiTargetStaffSettingServiceImpl extends SuperServiceImpl<BiTargetSt
     @Autowired
     private SysUserFeign sysUserFeign;
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public String add(BiTargetStaffSettingDTO.AddDTO addDTO) {

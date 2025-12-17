@@ -42,7 +42,11 @@ public class DmpInputAmzReportFbaReturnInstockDmpHandler extends DmpInputDoNextD
 		Map<String, String> dmpReturnIdMap = new HashMap<>();
 		if(CollectionUtils.isNotEmpty(listMaps)) {
 			for(Map<String, Object> listMap : listMaps) {
-				String key = CharSequenceUtil.format("{}_{}", listMap.get("platform_code").toString(), listMap.get("source_id").toString());
+				String key = CharSequenceUtil.format("{}_{}_{}",
+                        listMap.get("platform_code").toString(),
+                        listMap.get("source_id").toString(),
+                        listMap.get("batch_no").toString()
+                );
 				dmpReturnIdMap.put(key, listMap.get(BaseEntity.FIELD_ID).toString());
 			}
 		}
@@ -56,9 +60,10 @@ public class DmpInputAmzReportFbaReturnInstockDmpHandler extends DmpInputDoNextD
 				if (StringUtils.isBlank(platformShopCode)){
 					platformShopCode = detailMap.getOrDefault("authId", "").toString();
 				}
-				String returnOrderId = CharSequenceUtil.format("{}_{}", orderId, platformShopCode);
+                String batchNo = detailMap.getOrDefault("batchNo","").toString();
+				String returnOrderId = CharSequenceUtil.format("{}_{}_{}", orderId, platformShopCode, batchNo);
 				String dmpId = dmpReturnIdMap.get(returnOrderId);
-				detailMap.put("source_id", dmpId);
+				detailMap.put("sourceId", dmpId);
 			}
 		}
 		log.debug("DmpInputAmzReportFbaReturnInstockDmpHandler afterConvertData：");

@@ -9,6 +9,7 @@ import com.erp.model.tms.dto.*;
 import com.erp.model.tms.entity.LogisticsAddressEntity;
 import com.erp.model.tms.entity.LogisticsChannelBlacklistEntity;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
+import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.tms.vo.request.LogisticsQueryBaseVO;
 import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
 import com.erp.server.tms.service.*;
@@ -100,6 +101,18 @@ public class LogisticsFeignController {
         return logisticsChannelService.getById(channelId);
     }
     /**
+     * 根据渠道编码 获取渠道信息
+     * @param channelCode
+     * @param logisticsPlatform
+     * @return
+     */
+    @GetMapping("/getChannelByCodeAndPlatform")
+    public LogisticsChannelDTO.BaseDTO getChannelByCodeAndPlatform(@RequestParam("channelCode") String channelCode,
+                                                   @RequestParam("logisticsPlatform") String logisticsPlatform){
+        return logisticsChannelService.getChannelByCodeAndPlatform(channelCode,logisticsPlatform);
+    }
+
+    /**
      * 获取渠道 根据渠道名称
      * @param channelName
      * @return
@@ -107,6 +120,15 @@ public class LogisticsFeignController {
     @PostMapping("/getChannelByName")
     public List<LogisticsChannelEntity> getChannelByName(@RequestBody String channelName){
         return logisticsChannelService.getChannelByName(channelName);
+    }
+    /**
+     * 根据渠道编码 获取渠道信息
+     * @param channelCode
+     * @return
+     */
+    @PostMapping("/getChannelByCode")
+    public List<LogisticsChannelEntity> getChannelByCode(@RequestBody String channelCode){
+        return logisticsChannelService.getChannelByCode(channelCode);
     }
     /**
      * 获取渠道 根据渠道名称
@@ -161,6 +183,16 @@ public class LogisticsFeignController {
                                                                          @RequestParam("dictPlatform") String dictPlatform
     ) {
         return logisticsChannelService.getScaleChannelByChannelById(logisticsChannelId, dictPlatform);
+    }
+
+    @GetMapping("/getScaleChannelByChannelByIds")
+    private List<LogisticsChannelDTO.SignShipDTO> getScaleChannelByChannelByIds(@RequestParam("logisticsChannelIdList") List<String> logisticsChannelIdList, @RequestParam("dictPlatform") String dictPlatform){
+        return logisticsChannelService.getScaleChannelByChannelByIds(logisticsChannelIdList, dictPlatform);
+    }
+
+    @GetMapping("/getChannelByCodeAndOverseasWarehouseId")
+    private LogisticsSaleChannelEntity getChannelByCodeAndOverseasWarehouseId(@RequestParam("logisticsProductCode")String logisticsProductCode, @RequestParam("transferWarehouseId") String transferWarehouseId) {
+        return logisticsChannelService.getChannelByCodeAndOverseasWarehouseId(logisticsProductCode, transferWarehouseId);
     }
     /**
      * 根据地址类型获取地址列表
@@ -261,5 +293,15 @@ public class LogisticsFeignController {
     @PostMapping("listChannelBlacklist")
     public List<LogisticsChannelBlacklistEntity> listChannelBlacklist(@RequestBody List<String> channelIdList){
         return logisticsChannelBlacklistService.listChannelBlacklist(channelIdList);
+    }
+
+    /**
+     * 根据skuId和仓库Id、orgId查询最新已审核单据的SKU成本（人民币）
+     * @param queryDTO
+     * @return
+     */
+    @PostMapping("/getSkuCostInCNY")
+    public List<InventorySkuCostDTO.SkuCostCNYDTO> getSkuCostInCNY(@RequestBody InventorySkuCostDTO.SkuCostCNYQueryDTO queryDTO) {
+        return inventorySkuCostService.getSkuCostInCNY(queryDTO);
     }
 }

@@ -211,7 +211,7 @@
                r.type                           AS rule_type,
                r.cfg_process_id                 AS cfg_process_id,
                r.process_definition_id          AS r_process_definition_id,
-               pd.process_version               AS process_definition_version,
+               COALESCE(pd.process_version,0)               AS process_definition_version,
                r.is_default                     AS is_default,
                r.disabled                       AS disabled,
 

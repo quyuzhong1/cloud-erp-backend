@@ -1,7 +1,7 @@
 package com.erp.server.oms.b2c;
 
 import cn.hutool.json.JSONUtil;
-import com.erp.model.dmp.enums.KingdeePushModuleEnum;
+
 import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.dto.SplitSkuDTO;
@@ -10,6 +10,7 @@ import com.erp.model.wms.dto.SoB2cDeliveryDTO;
 import com.erp.model.wms.enums.WarehouseDeliveryTypeEnum;
 import com.erp.model.wms.enums.WarehouseManageTypeEnum;
 import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
+import com.erp.sdk.third.kingdee.utils.KingdeePushModuleEnum;
 import com.erp.server.oms.ErpServerOmsApplication;
 import com.erp.server.oms.service.SkuMappingService;
 import com.erp.server.oms.service.SoB2cService;

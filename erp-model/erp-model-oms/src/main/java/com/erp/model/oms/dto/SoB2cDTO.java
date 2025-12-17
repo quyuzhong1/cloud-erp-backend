@@ -35,6 +35,19 @@ import java.util.Map;
 @Data
 @NoArgsConstructor
 public class SoB2cDTO implements Serializable {
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class UpdateIsDeclareDTO {
+
+        @NotEmpty(message = "ids不能为空")
+        private List<String> ids;
+
+        @NotNull(message = "是否报关不能为空")
+        private Boolean isDeclare;
+    }
+
 
     @Data
     @NoArgsConstructor
@@ -150,21 +163,40 @@ public class SoB2cDTO implements Serializable {
     public static class DeliveryWithNotOutboundDTO {
 
         /**
-         * 表 ids
+         * 表 id
          */
-        @NotEmpty(message = "ids不能为空")
-        private List<String> ids;
+        private String id;
         /**
          * 实际发货仓库
          */
         @NotEmpty(message = "实际发货仓库不能为空")
         private String warehouseId;
-
+        /**
+         * 物流渠道
+         */
+        @NotEmpty(message = "物流渠道不能为空")
+        private String logisticsChannelId;
+        /**
+         * 实际发货时间
+         */
+        @NotNull(message = "实际发货时间不能为空")
+        private LocalDateTime deliveryTime;
+        /**
+         * 物流跟踪号
+         */
+        @NotEmpty(message = "物流跟踪号不能为空")
+        private String trackNo;
+        /**
+         * 实际发货单号
+         */
+        private String actualDeliveryCode;
         /**
          * 平台是否标发
          */
         @NotNull(message = "平台是否标发标识不能为空")
         private Boolean platformShipFlag;
+
+        private String logisticsChannelCode;
     }
     @Data
     @NoArgsConstructor
@@ -271,6 +303,11 @@ public class SoB2cDTO implements Serializable {
          * 动态数据源
          */
         private String dynamicDataSource;
+        
+        /**
+         * dynamicDataSource为doris时，1为只查询id，其他查询列表字段
+         */
+        private Integer onlyQueryId;
     }
 
     @Data
@@ -314,6 +351,15 @@ public class SoB2cDTO implements Serializable {
          * 全托管平台订单状态
          */
         private String platformOrderStatusName;
+        /**
+         * 多渠道类型
+         * SoB2cMultiChannelTypeEnum
+         */
+        private String multiChannelType;
+        /**
+         * 多渠道类型名称
+         */
+        private String multiChannelTypeName;
         /**
          * 创建时间
          */
@@ -378,6 +424,10 @@ public class SoB2cDTO implements Serializable {
          * 审核状态
          */
         private String approveStatus;
+        /**
+         * 审核人名称
+         */
+        private String approveUserName;
 
         /**
          * 付款状态
@@ -695,6 +745,10 @@ public class SoB2cDTO implements Serializable {
          */
         private String fromWarehouseId;
         /**
+         * 发货仓库名称
+         */
+        private String fromWarehouseName;
+        /**
          * 审核时间
          */
         private LocalDateTime approveTime;
@@ -702,10 +756,6 @@ public class SoB2cDTO implements Serializable {
          * 审核人id
          */
         private String approveUserId;
-        /**
-         * 审核人名称
-         */
-        private String approveUserName;
         /**
          * 是否匹配仓库规则
          */
@@ -771,7 +821,7 @@ public class SoB2cDTO implements Serializable {
 
         private String extendId;
         /**
-         * 要求发货时间
+         * 最晚发货时间/要求发货时间
          */
         private LocalDateTime requiredDeliveryTime;
         /**
@@ -820,6 +870,20 @@ public class SoB2cDTO implements Serializable {
          * 退货数量
          */
         private Integer returnQty;
+
+        /**
+         * 发货单号
+         */
+        private String deliveryCode;
+
+
+
+
+
+        /**
+         * 创建人名称
+         */
+        private String createUserName;
     }
 
     @Data
@@ -1491,7 +1555,7 @@ public class SoB2cDTO implements Serializable {
         /**
          * 付款方式
          */
-        @Size(max = 32, message = "付款方式最大长度不能超过32位")
+//        @Size(max = 32, message = "付款方式最大长度不能超过32位")
         private String dictPayMethod;
 
         /**
@@ -2571,6 +2635,7 @@ public class SoB2cDTO implements Serializable {
          * 渠道id
          */
         private String logisticsChannelId;
+        private String logisticsChannelName;
 
         /**
          * 运输单号
@@ -2670,6 +2735,10 @@ public class SoB2cDTO implements Serializable {
          * 是否冻结
          */
         private Boolean isFrozen;
+        /**
+         * 是否作废
+         */
+        private Boolean invalidStatus;
 
         /**
          * 审核状态
@@ -2798,6 +2867,15 @@ public class SoB2cDTO implements Serializable {
          * 订单创建时间
          */
         private LocalDateTime createTime;
+        /**
+         * 创建人名称
+         */
+        private String createUserName;
+        /**
+         * 审批人名称
+         */
+        private String approveUserName;
+
         /**
          * 销售订单明细id
          */
@@ -3301,6 +3379,10 @@ public class SoB2cDTO implements Serializable {
          * 收件人税号
          */
         private String receiverTaxNo;
+        /**
+         * IE号
+         */
+        private String ieNo;
 
         /**
          * 销售出库时间
@@ -3399,6 +3481,12 @@ public class SoB2cDTO implements Serializable {
          * 退货数量
          */
         private Integer returnQty;
+        /**
+         * 发货单号
+         */
+        private String deliveryCode;
+
+
         //get方法
         private String getLengthStr () {
             return this.length.stripTrailingZeros().toPlainString();

@@ -167,6 +167,17 @@ public class OtherOutstockDTO implements Serializable {
          * 创建时间
          */
         private LocalDateTime createTime;
+        /**
+         * 来源单号
+         */
+        private String sourceCode;
+
+        /**
+         * 明细备注
+         */
+        private String detailRemark;
+
+        
 
     }
 
@@ -290,6 +301,12 @@ public class OtherOutstockDTO implements Serializable {
          * 备注(同步金蝶)
          */
         private String remark;
+
+        private String sourceCode;
+
+        private String sourceType;
+
+        private String sourceId;
     }
 
     @Data

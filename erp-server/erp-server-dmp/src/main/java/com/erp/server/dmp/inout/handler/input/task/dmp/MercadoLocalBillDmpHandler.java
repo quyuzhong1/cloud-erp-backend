@@ -43,7 +43,7 @@ public class MercadoLocalBillDmpHandler extends DmpInputDoNextDmpHandler {
 
         List<ParamData> paramDataList = new ArrayList<>();
         paramDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, PannoEnum.EQ, dmpInputTaskEntity.getId()));
-        List<Map<String, Object>> dmpInputMongoChildList = mongoService.findMongoData(paramDataList, "mercadolibre_local_bill_data");
+        List<Map<String, Object>> dmpInputMongoChildList = mongoService.findMongoData(paramDataList, "mercadolibreLocal_bill_data");
 
         List<Map<String, Object>> detailList = super.getDetailList(dmpInputMongoEntity);
         if (CollUtil.isNotEmpty(detailList)) {

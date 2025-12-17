@@ -16,6 +16,7 @@ import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -187,6 +188,13 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
                 if (StrUtil.isBlank(fieldMapDto.getThirdFieldType())) {
                     continue;
                 }
+                //唯一值
+                if (CharSequenceUtil.isBlank(fieldMapDto.getSysParentId()) || CharSequenceUtil.equals(fieldMapDto.getSysField(),"default") || CharSequenceUtil.equals(fieldMapDto.getSysField(),"nullValue")) {
+                    fieldMapDto.setUniqueCode(fieldMapDto.getSysField());
+                } else {
+                    String uniqueCode = CharSequenceUtil.format("{}-{}",  fieldMapDto.getSysParentId(), fieldMapDto.getSysField());
+                    fieldMapDto.setUniqueCode(uniqueCode);
+                }
                 try {
                     // 转换为大写以匹配枚举名称的约定 (通常枚举常量是大写的)
                     fieldMapDto.setThirdFieldTypeName(CfgQueryOptionFieldTypeEnum.valueOf(fieldMapDto.getThirdFieldType().toUpperCase()).getName());
@@ -294,7 +302,7 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public void startThirdProcess(CfgProcessDTO.StartDTO dto) {
         log.info("开始创建飞书审批实例,启动参数为:{}", dto);
         //查询approvalCode
@@ -316,9 +324,7 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
         List<String> fieldIds = fieldMapList.stream().map(CfgProcessFieldMapEntity::getId).collect(Collectors.toList());
         //查询值映射表
         List<CfgProcessValueMapEntity> valueMapList = cfgProcessValueMapService.list(new LambdaQueryWrapper<CfgProcessValueMapEntity>().in(CfgProcessValueMapEntity::getFieldMapId, fieldIds).eq(CfgProcessValueMapEntity::getIsDeleted, false));
-        if (CollUtil.isEmpty(valueMapList)) {
-            throw new ServiceException(ApiError.CFG_PROCESS_FIELD_MAP_NOT_EXIST);
-        }
+
         //组装form，1、实时获取 2、查询流程定义表
         ThirdProcessDefinitionEntity processDefinition = thirdProcessDefinitionService.getOne(new LambdaQueryWrapper<ThirdProcessDefinitionEntity>().eq(ThirdProcessDefinitionEntity::getStatus, ThirdProcessDefinitionStatusEnum.ACTIVE.getCode()).eq(ThirdProcessDefinitionEntity::getApprovalCode, code).eq(ThirdProcessDefinitionEntity::getIsDeleted, false));
         if (ObjectUtil.isEmpty(processDefinition)) {
@@ -372,10 +378,13 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
             for (ApproveTaskDetailDTO.AddDTO addDTO : addDTOS) {
                 if (addDTO.getEntityCode()!=null){
                     Map<String, String> codeMap = (Map<String, String>) optionMap.get(addDTO.getEntityCode());
-                    addDTO.setSysFieldName(codeMap.get(addDTO.getSysField()));
+                    if (ObjectUtil.isNotEmpty(codeMap)) {
+                        addDTO.setSysFieldName(codeMap.get(addDTO.getSysField()));
+                    }
                     continue;
                 }
-                addDTO.setSysFieldName(optionMap.get(addDTO.getSysField()).toString());
+                Object object = optionMap.get(addDTO.getSysField());
+                addDTO.setSysFieldName(ObjectUtil.isEmpty(object) ? "" : object.toString());
             }
             //验证addDTOS
             log.info("三方查询生成明细：", JSONUtil.toJsonStr(addDTOS));
@@ -425,6 +434,7 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
         addDTO.setBussinessCode(dto.getBusinessCode());
         addDTO.setBussinessId(dto.getBusinessId());
         addDTO.setHappenTime(LocalDateTime.now());
+        addDTO.setBussinessApproveStatus(ApproveStatusEnum.APPROVE_ING.getCode());
         addDTO.setStatus(ApproveTaskStatusEnum.SUCCESS.getCode());
         return addDTO;
     }

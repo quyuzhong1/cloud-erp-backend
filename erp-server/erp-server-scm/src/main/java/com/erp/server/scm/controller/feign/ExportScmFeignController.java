@@ -2,6 +2,7 @@ package com.erp.server.scm.controller.feign;
 
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.DynamicExcelDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
@@ -12,6 +13,7 @@ import com.erp.model.sys.dto.UserPagingSearchDTO;
 import com.erp.model.sys.vo.SupplierUserVO;
 import com.erp.server.scm.query.*;
 import com.erp.server.scm.service.*;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -52,7 +54,14 @@ public class ExportScmFeignController {
     private SupplierRefWarehouseService supplierRefWarehouseService;
     @Resource
     private ContractInfoService contractInfoService;
-
+    @Resource
+    private SupplierPhaseService supplierPhaseService;
+    @Resource
+    private AssetPurchaseOrderService assetPurchaseOrderService;
+    @Resource
+    private AssetNoticeService assetNoticeService;
+    @Resource
+    private AssetPurchaseChangeService assetPurchaseChangeService;
 
     @PostMapping("/purchaseApplication")
     @DataPermission(operationType = DataAttributeEnum.LIST,
@@ -200,5 +209,93 @@ public class ExportScmFeignController {
         return contractInfoService.paging(dto);
     }
 
+    /**
+     * 导出动态供应商
+     * @author will
+     * @date 2025/7/28 11:34
+     * @param dto
+     * @return PagingVO<DynamicExcelDTO>
+     */
+    @PostMapping("/exportDynamicSupplier")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "purchase_user_id",
+            menuCode = "scm:supplier:paging",
+            tableAlias = "supplier"
+    )
+    @WebAdvanceQuery(handler = SupplierQueryHandler.class)
+    public PagingVO<DynamicExcelDTO> exportDynamicSupplier(@RequestBody PagingDTO<SupplierDTO.PagingParamDTO> dto) {
+        return supplierService.exportDynamicSupplier(dto);
+    }
 
+    /**
+     * 导出供应商阶段
+     * @author will
+     * @date 2025/7/28 11:10
+     * @param dto
+     * @return PagingVO<SupplierPhaseExportExcelDTO>
+     */
+    @PostMapping("/exportSupplierPhase")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "scm:supplier:phase:paging",
+            tableAlias = "sp"
+    )
+    @WebAdvanceQuery(handler = SupplierPhaseQueryHandler.class)
+    public PagingVO<SupplierPhaseExportExcelDTO> exportSupplierPhase(@RequestBody PagingDTO<SupplierPhaseDTO.PagingParamDTO> dto) {
+        return supplierPhaseService.exportSupplierPhase(dto);
+    }
+
+    /**
+     * 动态导出供应商阶段
+     * @author will
+     * @date 2025/7/28 11:10
+     * @param dto
+     * @return PagingVO<DynamicExcelDTO>
+     */
+    @PostMapping("/exportDynamicSupplierPhase")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "scm:supplier:phase:paging",
+            tableAlias = "sp"
+    )
+    @WebAdvanceQuery(handler = SupplierPhaseQueryHandler.class)
+    public PagingVO<DynamicExcelDTO> exportDynamicSupplierPhase(@RequestBody PagingDTO<SupplierPhaseDTO.PagingParamDTO> dto) {
+        return supplierPhaseService.exportDynamicSupplierPhase(dto);
+    }
+
+    /**
+     * 导出采购订单调整（历史未完结订单）
+     * @author will 
+     * @date 2025/7/29 19:18
+     * @param dto 
+     * @return PagingVO<AdjustListDTO>
+     */
+    @PostMapping("/exportPurchaseOrderAdjust")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "purchase_user_id",
+            warehouseTableField = "po.delivery_warehouse_id",
+            menuCode = "scm:purchaseOrder:paging",
+            tableAlias = "po")
+    @WebAdvanceQuery
+    public PagingVO<PurchaseOrderDTO.AdjustListDTO> exportPurchaseOrderAdjust(@RequestBody PagingDTO<PurchaseOrderDTO.SearchAdjustParamDTO> dto) {
+        return purchaseOrderService.adjustPaging(dto);
+    }
+
+    @PostMapping("/exportAssetNotice")
+    @WebAdvanceQuery(handler = AssetNoticeQueryHandler.class)
+    public PagingVO<AssetNoticeDTO.ListDTO> exportAssetNotice(@RequestBody @Validated PagingDTO<AssetNoticeDTO.PagingParamDTO> dto) {
+        return assetNoticeService.paging(dto);
+    }
+
+    @PostMapping("/exportAssetPurchaseOrder")
+    @WebAdvanceQuery(handler = AssetPurchaseOrderQueryHandler.class)
+    public PagingVO<AssetPurchaseOrderDTO.ListDTO> exportAssetPurchaseOrder(@RequestBody @Validated PagingDTO<AssetPurchaseOrderDTO.PagingParamDTO> dto){
+        return assetPurchaseOrderService.paging(dto);
+    }
+
+    @PostMapping("/exportAssetPurchaseChange")
+    @WebAdvanceQuery(handler = AssetPurchaseChangeQueryHandler.class)
+    public PagingVO<AssetPurchaseChangeDTO.ListDTO> exportAssetPurchaseChange(@RequestBody @Validated PagingDTO<AssetPurchaseChangeDTO.PagingParamDTO> dto){
+        return assetPurchaseChangeService.paging(dto);
+    }
 }

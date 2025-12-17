@@ -302,9 +302,10 @@ public class AliexpressDeliveryServiceImpl extends SuperServiceImpl<AliexpressDe
         BigDecimal lastAfterTaxAmount = resultList.get(0).getAfterTaxAmount();
 
         // 所有已发货明细实付金额
-        BigDecimal allDeliveryPayAmount = addDTO.getAllSourceDeliveryList().stream().map(PlatformDeliveryDTO::getDetailDTOList)
+        BigDecimal allDeliveryPayAmount = addDTO.getAllSourceDeliveryList().stream()
+                .map(PlatformDeliveryDTO::getDetailDTOList)
                 .flatMap(List::stream)
-                .map(PlatformDeliveryDetailDTO::getPayAmount)
+                .map(dto -> dto.getPayAmount() != null ? dto.getPayAmount() : BigDecimal.ZERO)
                 .reduce(BigDecimal::add)
                 .orElse(BigDecimal.ZERO);
         // 订单整单已发货完毕

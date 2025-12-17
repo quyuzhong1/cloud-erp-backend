@@ -50,7 +50,7 @@ public class B2CSoImportExcelDTO {
     
     @ColumnWidth(30)
     @ExcelProperty(value = "*店铺")
-    @FieldValid(fieldName = "店铺", isNotBlank = true,maxLength = 30)
+    @FieldValid(fieldName = "店铺", isNotBlank = true,maxLength = 100)
     private String shopName;
 
     /**
@@ -128,12 +128,12 @@ public class B2CSoImportExcelDTO {
     private String logisticsChannelName;
 
     /**
-     * 跟踪号
+     * 运单号
      */
     
     @ColumnWidth(30)
-    @ExcelProperty(value = "跟踪号")
-    @FieldValid(fieldName = "跟踪号",maxLength = 30)
+    @ExcelProperty(value = "运单号")
+    @FieldValid(fieldName = "运单号",maxLength = 30)
     private String trackNo;
 
 
@@ -267,6 +267,15 @@ public class B2CSoImportExcelDTO {
     private String receiverTaxNo;
 
     /**
+     * IE号
+     */
+
+    @ColumnWidth(30)
+    @ExcelProperty(value = "IE号")
+    @FieldValid(fieldName = "IE号",maxLength = 30)
+    private String ieNo;
+
+    /**
      * 收件人地址1
      */
     
@@ -299,7 +308,7 @@ public class B2CSoImportExcelDTO {
     
     @ColumnWidth(30)
     @ExcelProperty(value = "*SKU")
-    @FieldValid(fieldName = "SKU",isNotBlank = true,maxLength = 30)
+    @FieldValid(fieldName = "SKU",isNotBlank = true,maxLength = 64)
     private String skuNo;
 
 

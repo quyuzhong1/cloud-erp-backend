@@ -9,6 +9,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
+import com.common.business.constant.UserStateConstants;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -19,6 +20,7 @@ import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.TabApproveStatusEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
+import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -31,6 +33,7 @@ import com.erp.model.tms.dto.InitFirstMileAllocationDTO;
 import com.erp.model.tms.dto.InitFirstMileAllocationDetailDTO;
 import com.erp.model.tms.dto.excel.InitFirstMileAllocationDetailExcelDTO;
 import com.erp.model.tms.entity.*;
+import com.erp.model.tms.enums.SupplierTypeEnum;
 import com.erp.model.tms.enums.ReconciliationTypeEnum;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
@@ -90,6 +93,8 @@ public class InitFirstMileAllocationServiceImpl extends SuperServiceImpl<InitFir
     private FirstMileSkuCostAllocationService firstMileSkuCostAllocationService;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+    @Resource
+    private LogisticsSupplierService logisticsSupplierService;
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(InitFirstMileAllocationDTO.AddDTO addDTO) {
@@ -187,6 +192,11 @@ public class InitFirstMileAllocationServiceImpl extends SuperServiceImpl<InitFir
         //审核中允许审核
         if (!ApproveStatusEnum.APPROVE_ING.getStatus().equals(entity.getStatus())) {
             return BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_98006.msg);
+        }
+        //当前登陆人,启用流程后可删除
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
+        if (CharSequenceUtil.equals(entity.getCreateUserId(),userInfo.getUid()) && !CharSequenceUtil.equals(entity.getCreateUserId(), UserStateConstants.USER_SYSTEM_ID)) {
+            throw new ServiceException(ApiError.WORKFLOW_APPROVE_CREATE_APPROVE_DIFF,userInfo.getUserName());
         }
         log.info("期初头程分摊记录【{}】，code=【{}】", ApproveTypeEnum.getName(type), entity.getCode());
         //审核通过
@@ -361,7 +371,7 @@ public class InitFirstMileAllocationServiceImpl extends SuperServiceImpl<InitFir
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public void updateAndSubmit(InitFirstMileAllocationDTO.UpdateDTO dto) {
         this.update(dto);
         this.submit(this.getById(dto.getId()));
@@ -406,6 +416,10 @@ public class InitFirstMileAllocationServiceImpl extends SuperServiceImpl<InitFir
         }
         
         Map<String, List<LogisticsBillEntity>> supplierIdMaps = logisticsBillEntityList.stream().collect(Collectors.groupingBy(LogisticsBillEntity::getLogisticsSupplierId));
+        Set<String> supplierIds = supplierIdMaps.keySet();
+        List<LogisticsSupplierEntity> logisticsSupplierEntityList = logisticsSupplierService.listByIds(supplierIds);
+        Map<String, String> supplierNameMap = logisticsSupplierEntityList.stream().collect(Collectors.toMap(LogisticsSupplierEntity::getSupplierId, LogisticsSupplierEntity::getSupplierName));
+
         for(Map.Entry<String, List<LogisticsBillEntity>> supplierIdMap : supplierIdMaps.entrySet()) {
         	// 当前添加的主账单记录
             Map<String, TmsFirstMileReconciliationEntity> currentMainEntityMap = new HashMap<>();
@@ -413,7 +427,7 @@ public class InitFirstMileAllocationServiceImpl extends SuperServiceImpl<InitFir
                 BatchResultDTO updateResult;
                 String id = logisticsBillEntity.getId();
                 try {
-                    updateResult = tmsFirstMileLogisticService.singleGenerateReconciliation(id, dto.getReconciliationId(), dto.getDateList(), currentMainEntityMap, ReconciliationTypeEnum.INIT_PERIOD.getCode());
+                    updateResult = tmsFirstMileLogisticService.singleGenerateReconciliation(id, dto.getReconciliationId(), dto.getDateList(), currentMainEntityMap, ReconciliationTypeEnum.INIT_PERIOD.getCode(), SupplierTypeEnum.LOGISTICS.getCode(), logisticsBillEntity.getLogisticsSupplierId(), supplierNameMap.getOrDefault(logisticsBillEntity.getLogisticsSupplierId(), ""));
 
                 } catch (Exception e) {
                     log.error("头程对账生成失败", e);

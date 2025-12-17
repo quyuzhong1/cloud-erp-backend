@@ -1,8 +1,12 @@
 package com.erp.server.wms.service.impl;
 
 
+import cn.hutool.core.collection.CollUtil;
+import com.alibaba.excel.util.CollectionUtils;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.erp.model.scm.entity.SubcontractOrderDetailEntity;
 import com.erp.model.wms.entity.ThirdWarehouseDeliveryDetailEntity;
+import com.erp.model.wms.entity.ThirdWarehouseDeliveryEntity;
 import com.erp.server.wms.mapper.ThirdWarehouseDeliveryDetailMapper;
 import com.erp.server.wms.service.ThirdWarehouseDeliveryDetailService;
 import io.seata.common.util.StringUtils;
@@ -31,5 +35,28 @@ public class ThirdWarehouseDeliveryDetailServiceImpl extends SuperServiceImpl<Th
             return new ArrayList<>();
         }
         return lambdaQuery().eq(ThirdWarehouseDeliveryDetailEntity::getMainId,mainId).list();
+    }
+
+    @Override
+    public List<ThirdWarehouseDeliveryDetailEntity> listByMainIds(List<String> mainIds) {
+        if(CollectionUtils.isEmpty(mainIds)){
+            return new ArrayList<>();
+        }
+        return lambdaQuery().in(ThirdWarehouseDeliveryDetailEntity::getMainId,mainIds).list();
+    }
+
+    @Override
+    public void removeByMainIds(List<String> mainIds) {
+        lambdaUpdate()
+                .in(ThirdWarehouseDeliveryDetailEntity::getMainId,mainIds)
+                .remove();
+    }
+
+    @Override
+    public List<ThirdWarehouseDeliveryEntity> listWaitShipByWarehouseIds(List<String> warehouseIds) {
+        if (CollUtil.isEmpty(warehouseIds)){
+            return Collections.emptyList();
+        }
+        return baseMapper.listWaitShipByWarehouseIds(warehouseIds);
     }
 }

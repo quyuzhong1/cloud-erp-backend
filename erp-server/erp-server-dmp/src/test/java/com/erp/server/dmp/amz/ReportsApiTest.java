@@ -47,9 +47,11 @@ import org.apache.rocketmq.client.exception.MQClientException;
 import org.apache.rocketmq.common.message.MessageExt;
 import org.apache.rocketmq.remoting.exception.RemotingException;
 import org.apache.rocketmq.spring.core.RocketMQTemplate;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
 import com.erp.server.dmp.ErpServerDmpApplication;
+import org.springframework.cloud.client.discovery.DiscoveryClient;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -82,6 +84,16 @@ public class ReportsApiTest {
     private AmzReportScheduleService amzReportScheduleService;
     @Resource
     private CfgAmzReportTypeService cfgAmzReportTypeService;
+    @Resource
+    private DiscoveryClient discoveryClient;
+
+    @BeforeEach
+    void waitNacos() throws InterruptedException {
+        while (discoveryClient.getInstances("erp-oms").isEmpty()) {
+            System.out.println("等待 Nacos 注册实例");
+            Thread.sleep(100);
+        }
+    }
 
 
     /**
@@ -153,7 +165,7 @@ public class ReportsApiTest {
 //        body.setReportType("GET_AMAZON_FULFILLED_SHIPMENTS_DATA_GENERAL");
         // 亚马逊退货报告_根据退货时间
         body.setReportType("GET_AMAZON_FULFILLED_SHIPMENTS_DATA_INVOICING");
-        String shopId = "1735553314990329858";
+        String shopId = "1925396781138022402";
         // 获取店铺授权信息
         AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(shopId);
         if (null == shopInfoDTO) {
@@ -162,8 +174,8 @@ public class ReportsApiTest {
         AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoDTO.getDictCountryCode());
 //        body.setMarketplaceIds(Arrays.asList(marketplaceEnum.getMarketplaceId()));
         body.setMarketplaceIds(new ArrayList<>(shopInfoDTO.getMarketplaceShopIdMap().keySet()));
-        body.setDataStartTime("2024-10-18T00:00Z");
-        body.setDataEndTime("2024-11-18T00:00Z");
+        body.setDataStartTime("2025-07-18T00:00Z");
+        body.setDataEndTime("2025-07-31T00:00Z");
         ReportsApi api = ReportsApi.initApi(marketplaceEnum.getEndpointsEnum(), shopInfoDTO, false, null);
         CreateReportResponse response = api.createReport(body);
         System.out.println("创建报告");
@@ -385,7 +397,8 @@ public class ReportsApiTest {
 //        List<String> reportTypes = Arrays.asList("GET_FBA_MYI_UNSUPPRESSED_INVENTORY_DATA");
 //        List<String> reportTypes = Arrays.asList("GET_FBA_FULFILLMENT_CUSTOMER_RETURNS_DATA");
 //        List<String> reportTypes = Arrays.asList("GET_AMAZON_FULFILLED_SHIPMENTS_DATA_INVOICING");
-        List<String> reportTypes = Arrays.asList("GET_AMAZON_FULFILLED_SHIPMENTS_DATA_INVOICING");
+//        List<String> reportTypes = Arrays.asList("GET_AMAZON_FULFILLED_SHIPMENTS_DATA_INVOICING");
+        List<String> reportTypes = Arrays.asList("GET_LEDGER_DETAIL_VIEW_DATA");
 //        List<String> reportTypes = Arrays.asList("GET_RESERVED_INVENTORY_DATA");
 //        List<String> reportTypes = Arrays.asList(AmazonReportRecordTypeEnum.GET_RESERVED_INVENTORY_DATA.getRecordType());
 //        List<String> reportTypes = Arrays.asList(AmazonReportRecordTypeEnum.GET_RESERVED_INVENTORY_DATA.getRecordType());
@@ -409,7 +422,7 @@ public class ReportsApiTest {
 //        String shopId = "1739563826220634113";
 //        String shopId = "1736695621504471042";
 //        String shopId = "1735515751097307138";
-        String shopId = "1735553314990329858";
+        String shopId = "1925396781138022402";
         // 获取店铺授权信息
         AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(shopId);
         if (null == shopInfoDTO) {

@@ -16,10 +16,12 @@ import com.common.business.vo.PagingVO;
 import com.common.core.utils.MathUtil;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.enums.BomTypeEnum;
+import com.erp.model.wms.dto.ReportProcessingDTO;
 import com.erp.model.wms.dto.SoB2bProcessingDTO;
 import com.erp.model.wms.dto.SoB2cProcessingDTO;
 import com.erp.model.wms.entity.SoB2cProcessingEntity;
 import com.erp.model.wms.entity.VirtualTransFlowEntity;
+import com.erp.model.wms.enums.CfgSettingOrderTypeEnum;
 import com.erp.model.wms.enums.OrderProcessingLableEnum;
 import com.erp.model.wms.enums.SoB2cDeliveryStatusEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
@@ -40,6 +42,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_B2C_TOTAL_PROCESSING_EXPORT;
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_SO_B2C_PROCESSING;
 
 /**
@@ -169,6 +172,26 @@ public class SoB2cProcessingServiceImpl extends SuperServiceImpl<SoB2cProcessing
         ApplicationContextUtils.getBean(SoB2cProcessingServiceImpl.class).addOrUpdate(addList,startDate);
         log.warn("数据更新成功!");
     }
+
+    @Override
+    public PagingVO<ReportProcessingDTO.ListDTO> b2cTotalPaging(PagingDTO<ReportProcessingDTO.PagingParamDTO> dto) {
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
+        IPage<ReportProcessingDTO.ListDTO> pageData = this.baseMapper.b2cTotalPaging(dto.page(), dto.getParams());
+        // 填充名称
+        if (CollUtil.isNotEmpty(pageData.getRecords())) {
+            pageData.getRecords().forEach(item -> {
+                item.setTypeName(CfgSettingOrderTypeEnum.getName(item.getType()));
+            });
+        }
+        return new PagingVO<>(pageData);
+    }
+
+    @Override
+    public Boolean b2cTotalExportExcel(ReportProcessingDTO.PagingParamDTO dto) {
+        downloadTaskFeign.saveDownloadTask("导出b2c汇总数据", EXPORT_WMS_B2C_TOTAL_PROCESSING_EXPORT.getCode(), dto);
+        return  Boolean.TRUE;
+    }
+
     /**
      * 添加bom数据
      * @author will

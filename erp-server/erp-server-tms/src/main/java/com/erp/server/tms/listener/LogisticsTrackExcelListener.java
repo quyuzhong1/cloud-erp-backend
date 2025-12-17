@@ -16,6 +16,7 @@ import com.common.core.utils.FieldValidUtil;
 import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.scm.dto.SupplierDTO;
 import com.erp.model.tms.dto.FirstMileEstimatedBillDTO;
+import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.dto.excel.LogisticsTrackExcelDTO;
 import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.DetailReconciliationTypeEnum;
@@ -85,35 +86,45 @@ public class LogisticsTrackExcelListener extends AnalysisEventListener<Logistics
         if(CollectionUtils.isEmpty(dataList)){
             return;
         }
-        List<String> outstockCodeList = dataList.stream().map(LogisticsTrackExcelDTO::getOutstockCode).filter(CharSequenceUtil::isNotBlank).collect(Collectors.toList());
-        List<LogisticsBillEntity> logisticsBillEntityList = logisticsBillService.listByOutstockCodeList(outstockCodeList);
-        List<String> billIds = logisticsBillEntityList.stream().map(LogisticsBillEntity::getId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        List<String> trackNoList = dataList.stream().map(LogisticsTrackExcelDTO::getTrackNo).filter(CharSequenceUtil::isNotBlank).collect(Collectors.toList());
+        List<LogisticsBillDTO.LogisticsBillVo> logisticsBillVos = logisticsBillService.listLogisticsBillVoByTrackNo(trackNoList);
+        List<String> billIds = logisticsBillVos.stream().map(LogisticsBillDTO.LogisticsBillVo::getId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
         List<LogisticsBillDetailEntity> logisticsBillDetailEntityList = logisticsBillDetailService.listByMainIds(billIds);
         List<LogisticsBillDetailEntity> updateDetailList = new ArrayList<>();
         List<LogisticsTrackEntity> addTrackList = new ArrayList<>();
         for (LogisticsTrackExcelDTO excelDTO : dataList) {
             //校验数据
-            List<LogisticsBillEntity> entityList = logisticsBillEntityList.stream().filter(v -> excelDTO.getCode().equals(v.getSourceCode()) && excelDTO.getOutstockCode().equals(v.getOutstockCode())).collect(Collectors.toList());
+            List<LogisticsBillDTO.LogisticsBillVo> entityList = logisticsBillVos.stream().filter(v -> {
+                if (CharSequenceUtil.isNotBlank(excelDTO.getCode()) && excelDTO.getCode().equals(v.getSourceCode())
+                        && CharSequenceUtil.isNotBlank(excelDTO.getOutstockCode()) && excelDTO.getOutstockCode().equals(v.getOutstockCode())
+                        && excelDTO.getTrackNo().equals(v.getTrackNo())){
+                    return true;
+                }else if (CharSequenceUtil.isNotBlank(excelDTO.getCode()) && excelDTO.getCode().equals(v.getSourceCode())
+                        && excelDTO.getTrackNo().equals(v.getTrackNo())){
+                    return true;
+                }else if (CharSequenceUtil.isNotBlank(excelDTO.getOutstockCode()) && excelDTO.getOutstockCode().equals(v.getOutstockCode())
+                        && excelDTO.getTrackNo().equals(v.getTrackNo())){
+                    return true;
+                }else return excelDTO.getTrackNo().equals(v.getTrackNo());
+            }).collect(Collectors.toList());
             if (CollUtil.isEmpty(entityList)) {
-                excelDTO.setErrorMsg(CharSequenceUtil.format("订单号【{}】出库单号【{}】未匹配到物流单", excelDTO.getCode(), excelDTO.getOutstockCode()));
+                excelDTO.setErrorMsg(CharSequenceUtil.format("订单号【{}】跟踪单号单号【{}】未匹配到物流单", excelDTO.getCode(), excelDTO.getTrackNo()));
                 errorList.add(excelDTO);
                 continue;
             }else if (entityList.size() > 1) {
-                StringBuilder msg = new StringBuilder();
-                msg.append("订单号【").append(excelDTO.getCode()).append("】出库单号【").append(excelDTO.getOutstockCode()).append("】匹配到多条物流单");
-                excelDTO.setErrorMsg(msg.toString());
+                excelDTO.setErrorMsg(CharSequenceUtil.format("订单号【{}】出库单号【{}】跟踪单号【{}】匹配到多条物流单", excelDTO.getCode(), excelDTO.getOutstockCode(), excelDTO.getTrackNo()));
                 errorList.add(excelDTO);
                 continue;
             }
-            LogisticsBillEntity entity = entityList.get(0);
-            LogisticsBillDetailEntity detailEntity = logisticsBillDetailEntityList.stream().filter(v->v.getMainId().equals(entity.getId())).findFirst().orElse(null);
+            LogisticsBillDTO.LogisticsBillVo logisticsBillVo = entityList.get(0);
+            LogisticsBillDetailEntity detailEntity = logisticsBillDetailEntityList.stream().filter(v->v.getMainId().equals(logisticsBillVo.getId())).findFirst().orElse(null);
             if(Objects.isNull(detailEntity)){
                 excelDTO.setErrorMsg("物流单明细不存在");
                 errorList.add(excelDTO);
                 continue;
             }
-            if (CharSequenceUtil.isBlank(entity.getTransportNo())){
-                excelDTO.setErrorMsg(CharSequenceUtil.format("订单号【{}】出库单号【{}】关联的物流单运单号不能为空", excelDTO.getCode(), excelDTO.getOutstockCode()));
+            if (CharSequenceUtil.isBlank(logisticsBillVo.getTransportNo())){
+                excelDTO.setErrorMsg(CharSequenceUtil.format("订单号【{}】出库单号【{}】跟踪单号【{}】关联的物流单运单号不能为空", excelDTO.getCode(), excelDTO.getOutstockCode(), excelDTO.getTrackNo()));
                 errorList.add(excelDTO);
                 continue;
             }
@@ -121,10 +132,10 @@ public class LogisticsTrackExcelListener extends AnalysisEventListener<Logistics
             if(StringUtils.isNotBlank(excelDTO.getTrackStatusName())){
                 //校验物流状态
                 FmLogisticTrackStatusEnum statusEnum = EnumMessage.getByName(FmLogisticTrackStatusEnum.class,(excelDTO.getTrackStatusName()));
-                if(statusEnum == FmLogisticTrackStatusEnum.ORDERED && StringUtils.isBlank(entity.getChannelId())){
+                if(statusEnum == FmLogisticTrackStatusEnum.ORDERED && StringUtils.isBlank(logisticsBillVo.getChannelId())){
                     errorMsgList.add("已下单但尚未填写渠道信息，请填写后更新");
                 }
-                if(statusEnum == FmLogisticTrackStatusEnum.SIGN && StringUtils.isBlank(entity.getTransportNo())){
+                if(statusEnum == FmLogisticTrackStatusEnum.SIGN && StringUtils.isBlank(logisticsBillVo.getTransportNo())){
                     errorMsgList.add("已签收但无运单号，请填写后更新");
                 }
                 FmLogisticTrackStatusEnum nowStatusEnum = EnumMessage.getByCode(FmLogisticTrackStatusEnum.class,(detailEntity.getTrackStatus()));
@@ -152,13 +163,13 @@ public class LogisticsTrackExcelListener extends AnalysisEventListener<Logistics
                 if(CharSequenceUtil.isNotBlank(trackStatus)){
                     //待下单不用封装轨迹，其他状态需要
                     if(LogisticTrackStatusEnum.WAIT_ORDER.getCode().equals(trackStatus)){
-                        entity.setOrderTime(null);
+                        logisticsBillVo.setOrderTime(null);
                     }else if (LogisticTrackStatusEnum.ORDERED.getCode().equals(trackStatus)){
 
-                        entity.setOrderTime(Objects.isNull(excelDTO.getStatusTime())? LocalDateTime.now():excelDTO.getStatusTime());
+                        logisticsBillVo.setOrderTime(Objects.isNull(excelDTO.getStatusTime())? LocalDateTime.now():excelDTO.getStatusTime());
 
                         LogisticsTrackEntity trackEntity = new LogisticsTrackEntity();
-                        trackEntity.setTrackNo(entity.getTransportNo());
+                        trackEntity.setTrackNo(logisticsBillVo.getTransportNo());
                         trackEntity.setTrackTime(Objects.isNull(excelDTO.getStatusTime())? LocalDateTime.now():excelDTO.getStatusTime());
                         trackEntity.setStatus(trackStatus);
                         trackEntity.setContent(StringUtils.isBlank(excelDTO.getTrackDesc())?"已下单":excelDTO.getTrackDesc());
@@ -166,7 +177,7 @@ public class LogisticsTrackExcelListener extends AnalysisEventListener<Logistics
                         addTrackList.add(trackEntity);
                     }else{
                         LogisticsTrackEntity trackEntity = new LogisticsTrackEntity();
-                        trackEntity.setTrackNo(entity.getTransportNo());
+                        trackEntity.setTrackNo(logisticsBillVo.getTransportNo());
                         trackEntity.setTrackTime(Objects.isNull(excelDTO.getStatusTime())? LocalDateTime.now():excelDTO.getStatusTime());
                         trackEntity.setStatus(trackStatus);
                         trackEntity.setContent(CharSequenceUtil.isNotBlank(excelDTO.getTrackDesc()) ? excelDTO.getTrackDesc() : "");

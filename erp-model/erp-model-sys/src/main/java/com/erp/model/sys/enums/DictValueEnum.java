@@ -8,8 +8,8 @@ package com.erp.model.sys.enums;
  */
 public enum DictValueEnum {
 
-    ALL("ALL","全球");
-
+    ALL("ALL","全球"),
+    CN("CN","中国大陆");
 
     private String code;
 

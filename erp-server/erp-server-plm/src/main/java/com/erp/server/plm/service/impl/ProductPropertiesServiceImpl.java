@@ -28,7 +28,7 @@ import java.util.Optional;
 @Service
 public class ProductPropertiesServiceImpl extends SuperServiceImpl<ProductPropertiesMapper, ProductPropertiesEntity> implements ProductPropertiesService {
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(ProductPropertiesDTO.AddDTO addDTO) {

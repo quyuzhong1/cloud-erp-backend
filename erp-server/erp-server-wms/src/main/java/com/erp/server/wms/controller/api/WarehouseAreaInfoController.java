@@ -4,6 +4,7 @@ package com.erp.server.wms.controller.api;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BaseIdsDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.enums.DataAttributeEnum;
@@ -97,9 +98,9 @@ public class WarehouseAreaInfoController extends BaseController {
      **/
     @LogAction(value = LogActionEnum.DELETE, desc = "批量删除库区")
     @PostMapping("/delete")
-    public ApiResult<String> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO idsDTO) {
-        warehouseLocationService.deleteArea(idsDTO.getIds());
-        return success();
+    public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO idsDTO) {
+        List<BatchResultDTO> resultDTOList =warehouseLocationService.deleteArea(idsDTO.getIds());
+        return resultDTOList.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOList) : failure(resultDTOList);
     }
 
     /**

@@ -1,17 +1,31 @@
 package com.erp.server.scm.service.impl;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.common.core.utils.BeanMapper;
-import com.erp.model.scm.dto.DictBasicDTO;
-import com.erp.model.scm.entity.DictBasicEntity;
-import com.erp.server.scm.mapper.DictBasicMapper;
-import com.erp.server.scm.service.DictBasicService;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.util.ObjectUtils;
 
-import java.util.ArrayList;
-import java.util.List;
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.common.business.dto.base.BaseDropDownDTO;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
+import com.common.business.vo.LoginUser;
+import com.common.core.utils.BeanMapper;
+import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.scm.dto.DictBasicDTO;
+import com.erp.model.scm.entity.DictBasicEntity;
+import com.erp.model.scm.enums.DictBasicEnum;
+import com.erp.server.scm.mapper.DictBasicMapper;
+import com.erp.server.scm.service.DictBasicService;
+
+import cn.hutool.core.collection.CollUtil;
 
 /**
  * <p>
@@ -24,6 +38,39 @@ import java.util.List;
 @Service
 public class DictBasicServiceImpl extends SuperServiceImpl<DictBasicMapper, DictBasicEntity> implements DictBasicService {
 
+	@Override
+	public boolean saveJsonObject(JSONObject jsonObject) {
+		DictBasicEntity entity = JSON.parseObject(jsonObject.toJSONString(), DictBasicEntity.class);
+		LocalDateTime now = LocalDateTime.now();
+		LoginUser loginUser = UserContext.getNonLoginUser();
+		String userId = loginUser.getUid();
+        String userName = loginUser.getUserName();
+    	entity.setUpdateTime(now);
+        entity.setUpdateUserId(userId);
+        entity.setUpdateUserName(userName);
+        
+        entity.setCreateTime(now);
+		entity.setCreateUserId(userId);
+		entity.setCreateUserName(userName);
+		return super.save(entity);
+	}
+	
+	@Override
+	public boolean updateJsonObject(List<JSONObject> jsonObjects) {
+		List<DictBasicEntity> entityList = new ArrayList<>();
+		for(JSONObject jsonObject : jsonObjects) {
+			DictBasicEntity entity = JSON.parseObject(jsonObject.toJSONString(), DictBasicEntity.class);
+			LocalDateTime now = LocalDateTime.now();
+			LoginUser loginUser = UserContext.getNonLoginUser();
+			String userId = loginUser.getUid();
+	        String userName = loginUser.getUserName();
+	    	entity.setUpdateTime(now);
+	        entity.setUpdateUserId(userId);
+	        entity.setUpdateUserName(userName);
+	        entityList.add(entity);
+		}
+        return super.updateBatchById(entityList);
+	}
 
     /**
      * 保存或者修改字典信息
@@ -77,10 +124,55 @@ public class DictBasicServiceImpl extends SuperServiceImpl<DictBasicMapper, Dict
         return this.list(queryWrapper);
     }
 
+    @Override
+    public List<DictBasicEntity> listByNameList(List<String> nameList, DictBasicEnum dictBasicEnum) {
+        if (CollUtil.isEmpty(nameList) || dictBasicEnum == null) {
+            return Collections.emptyList();
+        }
+        return lambdaQuery().in(DictBasicEntity::getName,nameList).eq(DictBasicEntity::getType,dictBasicEnum.getType()).list();
+    }
+
+    @Override
+    public List<DictBasicDTO> tree(String key) {
+        List<DictBasicEntity> list = listByKey(key);
+        return buildTree(BeanMapperUtils.copyList(DictBasicDTO.class, list));
+    }
+
+    /**
+     * @return 构建好的树形结构列表
+     */
+    public List<DictBasicDTO> buildTree(List<DictBasicDTO> treeList) {
+        // 获取所有的根节点（没有父级的节点，通常 parentId 为 null 或空）
+        List<DictBasicDTO> rootNodes = treeList.stream()
+                .filter(item -> ObjectUtils.isEmpty(item.getRemark()))
+                .collect(Collectors.toList());
+        // 递归设置子节点
+        rootNodes.forEach(root -> setChildren(root, treeList));
+        return rootNodes;
+    }
+
+    /**
+     * 递归设置子节点
+     *
+     * @param parentNode 父节点
+     * @param allNodes   所有的节点数据
+     */
+    private void setChildren(DictBasicDTO parentNode, List<DictBasicDTO> allNodes) {
+        // 找到所有 parentId 等于父节点 id 的节点，作为其子节点
+        List<DictBasicDTO> children = allNodes.stream()
+                .filter(item -> parentNode.getId().equals(item.getRemark()))
+                .collect(Collectors.toList());
+        // 设置子节点
+        parentNode.setChildList(children);
+        // 对每个子节点递归查找其子节点
+        children.forEach(child -> setChildren(child, allNodes));
+    }
+
 
     private List<DictBasicEntity> listByKey(String key) {
         LambdaQueryWrapper<DictBasicEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(DictBasicEntity::getType, key);
         return this.list(queryWrapper);
     }
+
 }

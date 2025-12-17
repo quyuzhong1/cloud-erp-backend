@@ -884,7 +884,7 @@ public class AmzReportTaskServiceImpl extends SuperServiceImpl<AmzReportTaskMapp
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public boolean checkStopByUnAuthorized(Exception exception, AmzReportTaskEntity entity) {
         boolean unAuthorized = AmazonSpApiExceptionUtils.isUnauthorized(exception);
         if (unAuthorized) {

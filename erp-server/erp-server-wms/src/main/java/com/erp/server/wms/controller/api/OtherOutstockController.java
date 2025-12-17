@@ -6,6 +6,7 @@ import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
+import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
@@ -55,7 +56,7 @@ public class OtherOutstockController extends BaseController {
      */
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "warehouse_keeper_id",
+            tableField = "warehouse_keeper_id,create_user_id",
             warehouseTableField = "oo.warehouse_id",
             menuCode = "wms:otherOutstock:paging",
             tableAlias = "oo"
@@ -75,7 +76,7 @@ public class OtherOutstockController extends BaseController {
      */
     @PostMapping("/listCount")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "warehouse_keeper_id",
+            tableField = "warehouse_keeper_id,create_user_id",
             warehouseTableField = "oo.warehouse_id",
             menuCode = "wms:otherOutstock:paging",
             tableAlias = "oo"
@@ -95,7 +96,7 @@ public class OtherOutstockController extends BaseController {
     @LogAction(value = LogActionEnum.INSERT, desc = "新增其他出库单")
     @PostMapping("/add")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "warehouse_keeper_id",
+            tableField = "warehouse_keeper_id,create_user_id",
             menuCode = "wms:otherOutstock:add",
             serviceClass = OtherOutstockService.class,
             keyIdName = "id")
@@ -114,7 +115,7 @@ public class OtherOutstockController extends BaseController {
     @LogAction(value = LogActionEnum.ADD_AND_SUBMIT, desc = "新增并提交其他出库单")
     @PostMapping("/addAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "warehouse_keeper_id",
+            tableField = "warehouse_keeper_id,create_user_id",
             menuCode = "wms:otherOutstock:add",
             serviceClass = OtherOutstockService.class,
             keyIdName = "id")
@@ -133,7 +134,7 @@ public class OtherOutstockController extends BaseController {
     @LogAction(value = LogActionEnum.UPDATE, desc = "修改其他出库单")
     @PostMapping("/update")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "warehouse_keeper_id",
+            tableField = "warehouse_keeper_id,create_user_id",
             menuCode = "wms:otherOutstock:update",
             serviceClass = OtherOutstockService.class,
             keyIdName = "id")
@@ -152,7 +153,7 @@ public class OtherOutstockController extends BaseController {
     @LogAction(value = LogActionEnum.UPDATE_AND_SUBMIT, desc = "修改并提交其他出库单")
     @PostMapping("/updateAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "warehouse_keeper_id",
+            tableField = "warehouse_keeper_id,create_user_id",
             menuCode = "wms:otherOutstock:update",
             serviceClass = OtherOutstockService.class,
             keyIdName = "id")
@@ -171,7 +172,7 @@ public class OtherOutstockController extends BaseController {
     @LogAction(value = LogActionEnum.SUBMIT, desc = "提交其他出库单")
     @PostMapping("/submit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "warehouse_keeper_id",
+            tableField = "warehouse_keeper_id,create_user_id",
             menuCode = "wms:otherOutstock:submit",
             serviceClass = OtherOutstockService.class,
             keyIdName = "ids")
@@ -206,7 +207,7 @@ public class OtherOutstockController extends BaseController {
     @LogViewService
     @GetMapping("/view")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "warehouse_keeper_id",
+            tableField = "warehouse_keeper_id,create_user_id",
             menuCode = "wms:otherOutstock:view",
             serviceClass = OtherOutstockService.class,
             keyIdName = "id")
@@ -226,13 +227,18 @@ public class OtherOutstockController extends BaseController {
     @LogAction(value = LogActionEnum.DELETE, desc = "删除其他出库单")
     @PostMapping("/delete")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "warehouse_keeper_id",
+            tableField = "warehouse_keeper_id,create_user_id",
             menuCode = "wms:otherOutstock:delete",
             serviceClass = OtherOutstockService.class,
             keyIdName = "ids")
-    public ApiResult delete(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
-        Boolean flag = otherOutstockService.delete(dto.getIds());
-        return flag == true ? success() : failure();
+    public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
+        try {
+            List<BatchResultDTO> resultDTOS = otherOutstockService.deleteByIds(dto.getIds(), true);
+            return success(resultDTOS);
+        } catch (Exception e) {
+            log.error("批量删除其他出库单失败", e);
+            return failure(e.getMessage());
+        }
     }
 
     /**
@@ -245,7 +251,7 @@ public class OtherOutstockController extends BaseController {
     @LogAction(value = LogActionEnum.INVALID, desc = "作废其他出库单")
     @PostMapping("/invalid")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "warehouse_keeper_id",
+            tableField = "warehouse_keeper_id,create_user_id",
             menuCode = "wms:otherOutstock:invalid",
             serviceClass = OtherOutstockService.class,
             keyIdName = "ids")
@@ -264,7 +270,7 @@ public class OtherOutstockController extends BaseController {
     @LogAction(value = LogActionEnum.APPROVE, desc = "审核其他出库单")
     @PostMapping("/approve")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "warehouse_keeper_id",
+            tableField = "warehouse_keeper_id,create_user_id",
             menuCode = "wms:otherOutstock:approve",
             serviceClass = OtherOutstockService.class,
             keyIdName = "ids")
@@ -301,7 +307,7 @@ public class OtherOutstockController extends BaseController {
     @LogAction(value = LogActionEnum.DISAPPROVE, desc = "反审核其他出库单")
     @PostMapping("/disApprove")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "warehouse_keeper_id",
+            tableField = "warehouse_keeper_id,create_user_id",
             menuCode = "wms:otherOutstock:disApprove",
             serviceClass = OtherOutstockService.class,
             keyIdName = "ids")
@@ -338,7 +344,7 @@ public class OtherOutstockController extends BaseController {
     @LogAction(value = LogActionEnum.CANCEL, desc = "撤销其他出库单")
     @PostMapping("/cancelProcess")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "warehouse_keeper_id",
+            tableField = "warehouse_keeper_id,create_user_id",
             menuCode = "wms:otherOutstock:cancelProcess",
             serviceClass = OtherOutstockService.class,
             keyIdName = "ids")
@@ -357,7 +363,7 @@ public class OtherOutstockController extends BaseController {
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出其他出库单")
     @PostMapping(value = "/exportExcel")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "warehouse_keeper_id",
+            tableField = "warehouse_keeper_id,create_user_id",
             menuCode = "wms:otherOutstock:paging",
             tableAlias = "oo"
     )
@@ -388,5 +394,18 @@ public class OtherOutstockController extends BaseController {
     public ApiResult exportWarehouse(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
         Boolean result = otherOutstockService.importFile(excelFile, response);
         return result ? success() : failure();
+    }
+
+    /**
+     * 样品领用单-关联出库单
+     * @author wuhaotian
+     * @date: 2025/8/25 10:16
+     * @param dto
+     * @return ApiResult<List<ListDTO>>
+     */
+    @PostMapping("/viewAssociatedDocuments")
+    public ApiResult<List<OtherOutstockDTO.ListDTO>> viewAssociatedDocuments(@RequestBody @Validated BaseIdDTO dto) {
+        List<OtherOutstockDTO.ListDTO> resultDTO = otherOutstockService.viewAssociatedDocuments(dto);
+        return success(resultDTO);
     }
 }

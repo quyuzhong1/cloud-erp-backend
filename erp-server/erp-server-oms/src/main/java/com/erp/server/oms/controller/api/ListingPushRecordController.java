@@ -5,9 +5,11 @@ package com.erp.server.oms.controller.api;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.oms.dto.ListingPushRecordDTO;
 import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.server.oms.service.ListingPushRecordService;
@@ -59,6 +61,7 @@ public class ListingPushRecordController extends BaseController {
      */
     @PostMapping("/export")
     @WebAdvanceQuery
+    @LogAction(value = LogActionEnum.EXPORT, desc = " 导出库存sku对照表")
     public ApiResult export(@RequestBody @Valid ListingPushRecordDTO.PagingParamDTO dto) {
         Boolean result = listingPushRecordService.export(dto);
         return result ? success() : failure();

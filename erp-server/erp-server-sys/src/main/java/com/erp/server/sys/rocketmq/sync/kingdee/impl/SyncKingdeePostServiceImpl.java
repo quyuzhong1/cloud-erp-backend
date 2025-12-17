@@ -65,7 +65,7 @@ public class SyncKingdeePostServiceImpl implements SyncKingdeePostService {
     private KingdeeDepartmentService kingdeeDepartmentService;
     
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Override
     public DmpPushTaskEntity syncDataToKingdee(KingdeePostEntity entity, String operate) {
     	//生成任务

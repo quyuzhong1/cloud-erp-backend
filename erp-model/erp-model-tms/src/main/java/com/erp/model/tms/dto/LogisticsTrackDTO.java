@@ -1,6 +1,5 @@
 package com.erp.model.tms.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -154,9 +153,21 @@ public class LogisticsTrackDTO implements Serializable {
          */
         private String channelId;
         /**
+         * 渠道名称
+         */
+        private String channelName;
+        /**
          * 平台订单号
          */
         private String platformOrderNo;
+        /**
+         * 销售平台
+         */
+        private String salesPlatform;
+        /**
+         * 店铺id
+         */
+        private String shopId;
         /**
          * 船司/航司
          */
@@ -177,6 +188,10 @@ public class LogisticsTrackDTO implements Serializable {
          * 第三方物流商编码
          */
         private String thirdSupplierCode;
+        /**
+         * 第三方配置关系id
+         */
+        private String thirdRefId;
     }
 
     @Data

@@ -88,6 +88,17 @@ public class PilotApplicationEntity extends BaseEntity<PilotApplicationEntity> {
     @TableField("invalid_user_name")
     private String invalidUserName;
 
+    /**
+     * DQE负责人用户ID
+     */
+    @TableField("dqe_owner_id")
+    private String dqeOwnerId;
+    /**
+     * DQE负责人用户名
+     */
+    @TableField("dqe_owner_name")
+    private String dqeOwnerName;
+
     public static final String FIELD_CODE = "code";
 
     public static final String APPROVE_STATUS = "approve_status";

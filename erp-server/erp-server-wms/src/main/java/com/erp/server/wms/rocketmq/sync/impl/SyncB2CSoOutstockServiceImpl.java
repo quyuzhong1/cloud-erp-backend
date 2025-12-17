@@ -4,6 +4,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Pair;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
@@ -16,6 +17,7 @@ import com.common.business.dto.WdtSoOutStockDetailDTO;
 import com.common.business.dto.WdtSoOutStockDetailDTO.PositionDetailsList;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.*;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -30,9 +32,13 @@ import com.erp.model.dmp.kingdee.item.KingdeeDeliveryDetailItemEntity;
 import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
+import com.erp.model.plm.dto.SkuStdCostDTO;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.sys.enums.DictValueEnum;
+import com.erp.model.tms.dto.LogisticsChannelDTO;
+import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.wms.dto.SyncKingdeeDTO;
 import com.erp.model.wms.dto.VirtualWarehouseChannelDTO;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
@@ -50,6 +56,7 @@ import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysPartitionFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.wms.kingdee.SyncKingdeeSoOutstockService;
 import com.erp.server.wms.rocketmq.sync.SyncB2CSoOutstockService;
@@ -71,6 +78,8 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static cn.hutool.core.text.CharSequenceUtil.format;
 
 /**
  * @author Lambda
@@ -125,6 +134,10 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
     private SysPartitionFeign sysPartitionFeign;
     @Resource
     private DictBasicService dictBasicService;
+    @Resource
+    private OperateLogService operateLogService;
+    @Resource
+    private LogisticsFeign logisticsFeign;
 
     private static final List<String> WDT_NULL_LOCATION = new ArrayList<>();
 
@@ -269,7 +282,16 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         if (ObjectUtil.isNotEmpty(company)) {
             soOutstock.setWarehouseOrgName(company.getCompanyName());
         }
-
+        //wdt渠道映射erp
+        String logisticsCode = entity.getLogisticsCompanyCode();
+        LogisticsChannelDTO.BaseDTO channel = logisticsFeign.getChannelByCodeAndPlatform(logisticsCode, LogisticsPlatformEnum.WDT.getCode());
+        if (Objects.isNull(channel)){
+            throw new ServiceException(ApiError.ERROR_CHANNEL_NOTFOUND, LogisticsPlatformEnum.WDT.getName(), logisticsCode);
+        }
+        soOutstock.setLogisticsChannelId(channel.getId());
+        soOutstock.setLogisticsChannelCode(channel.getCode());
+        soOutstock.setLogisticsChannelName(channel.getName());
+        soOutstock.setCarrierId(channel.getSupplierId());
         //仓库
         soOutstock.setWarehouseId(warehouse.getId());
         soOutstock.setWarehouseName(warehouse.getName());
@@ -285,6 +307,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
             soOutstock.setSalesDeptId(customerInfo.getSalesDeptId());
             soOutstock.setSalesOrgId(customerInfo.getUseOrgId());
             soOutstock.setSalesOrgName(customerInfo.getUseOrgName());
+            soOutstock.setDictPlatform(customerInfo.getPlatformType());
         }
         //销售组织
         soOutstock.setSalesOrgId(shopInfo.getSalesOrgId());
@@ -370,8 +393,14 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         //订单标签
         soOutstock.setTradeLabel(entity.getTradeLabel());
         log.info("旺店通同步订单标签到erp："+ JSONUtil.toJsonStr(soOutstock));
+        // 记录最新出库日期
+        List<String> skuIds = detailList.stream().map(SoOutstockDetailEntity::getSkuId).distinct().collect(Collectors.toList());
+        plmTaskFeign.updateSkuStdCost(new SkuStdCostDTO.UpdateDTO(skuIds, entity.getBillDate()));
+
         //保存销售出库单
         soOutstockService.save(soOutstock);
+        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "销售出库单", soOutstock.getCode());
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_OUT_STOCK.getCode(), soOutstock.getId(), "新增销售出库单");
         //保存销售出库单详情
         soOutstockDetailService.saveBatch(detailList);
         //根据销售出库单创建物流单和自发货费用
@@ -392,7 +421,6 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
             }
             inventoryTransCoreService.approveByRule(inventoryInOutStockDTO);
         }
-
 
         //推送金蝶
         sendPushTask(soOutstock);
@@ -451,7 +479,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         soB2cEntityList = soB2cEntityList.stream().filter(SoB2cEntity::hasPlatformWarehouseOrder).collect(Collectors.toList());
         if(CollectionUtils.isEmpty(soB2cEntityList)){
             log.warn("同步temu销售出库单失败，未查询到对应的销售订单，平台订单号：{}", entity.getPlatformOrderCode());
-            return;
+            throw new ServiceException("同步temu销售出库单失败，未查询到对应的销售订单，平台订单号：{}", entity.getPlatformOrderCode());
         }
         //查询仓库映射
         List<ThirdMappingDTO.WarehouseMappingDTO> warehouseMappingDTOS = dmpThirdMappingFeign.listMappingBySysIds(new ArrayList<>(),PlatformDictEnum.TE_MU.getCode());
@@ -630,6 +658,8 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
             soOutstock.setSalesDeptId(customerInfo.getSalesDeptId());
             soOutstock.setSalesOrgId(customerInfo.getUseOrgId());
             soOutstock.setSalesOrgName(customerInfo.getUseOrgName());
+            soOutstock.setCustomerRemark(customerInfo.getRemark());
+            soOutstock.setDictPlatform(customerInfo.getPlatformType());
         }
         soOutstock.setCustomerName(customerName);
         //单据编号
@@ -682,6 +712,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
             Integer actualQty = Integer.parseInt(realQty.split("\\.")[0]);
             detailEntity.setActualQty(actualQty);
             detailEntity.setPlanQty(actualQty);
+            detailEntity.setRemark(detail.getFEntryNote());
             String note = detail.getFNote();
             if (CharSequenceUtil.isNotBlank(note)) {
                 detailEntity.setPlatformCode(note.trim());

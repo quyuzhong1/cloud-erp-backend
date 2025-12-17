@@ -274,7 +274,36 @@ public class DmpSoDetailEntity extends BaseEntity<DmpSoDetailEntity> {
      */
     @TableField("platform_sku_id")
     private String platformSkuId;
+    
+    /**
+     * 组合装编码
+     */
+    @TableField("suite_no")
+    private String suiteNo;
+    
+    /**
+     * 组合装名称
+     */
+    @TableField("suite_name")
+    private String suiteName;
 
+    /**
+     * 组合装数量
+     */
+    @TableField("suite_qty")
+    private Integer suiteQty;
+    
+    /**
+     * 原始单号
+     */
+    @TableField("src_tid")
+    private String srcTid;
+
+    /**
+     * 平台子单号
+     */
+    @TableField("platform_sub_so_code")
+    private String platformSubSoCode;
 
     public static final String MAIN_ID = "main_id";
 

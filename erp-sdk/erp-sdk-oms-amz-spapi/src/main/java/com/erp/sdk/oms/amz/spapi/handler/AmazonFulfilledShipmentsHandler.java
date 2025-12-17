@@ -62,7 +62,8 @@ public class AmazonFulfilledShipmentsHandler extends AbstractSoOutStockHandler<P
                         e.getShopId(),
                         StrUtil.format("{}_{}_{}", e.getAmazonOrderId(), e.convertShipmentDate(), e.getShopId()),
                         AmazonHandleStatusEnum.NONE.getCode(),
-                        CleanStatusEnum.UNCLEAN.getCode()
+                        CleanStatusEnum.UNCLEAN.getCode(),
+                        e.getSalesChannel()
                 ))
                 .collect(Collectors.toList());
     }
@@ -81,7 +82,8 @@ public class AmazonFulfilledShipmentsHandler extends AbstractSoOutStockHandler<P
                         Collections.singletonList(e),
                         e.getWarehouseId(),
                         e.getWarehouseName(),
-                        e.getFulfillmentCenterId()
+                        e.getFulfillmentCenterId(),
+                        e.getSalesChannel()
                 )).collect(Collectors.toList());
 
         // 亚马逊物流销售报告转为发送mq数据

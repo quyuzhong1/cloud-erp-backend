@@ -2,6 +2,7 @@ package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.annotation.TableName;
@@ -115,7 +116,7 @@ public class SoPriceChangeServiceImpl extends SuperServiceImpl<SoPriceChangeMapp
      * @date 2025-03-28 11:49
      */
     @Override
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     public SoPriceChangeEntity add(SoPriceChangeDTO.AddDTO dto) {
         SoPriceChangeEntity changeEntity = new SoPriceChangeEntity();
@@ -144,7 +145,7 @@ public class SoPriceChangeServiceImpl extends SuperServiceImpl<SoPriceChangeMapp
         //获取到表名
         String type = tableName.value();
         //保存附件
-        attachmentService.batchSave(dto.getAttachmentUrlList(), dto.getAttachmentNameList(), type, changeEntity.getId());
+        attachmentService.batchSaveOrUpdate(dto.getAttachmentUrlList(), dto.getAttachmentNameList(), type, changeEntity.getId());
 
         //添加价格变更明细
         soPriceChangeDetailService.addPriceChangeDetail(changeEntity.getId(), dto.getSoPriceChangeDetailList());
@@ -164,7 +165,7 @@ public class SoPriceChangeServiceImpl extends SuperServiceImpl<SoPriceChangeMapp
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public SoPriceChangeEntity addAndSubmit(SoPriceChangeDTO.AddDTO dto) {
         SoPriceChangeEntity entity = this.add(dto);
         if (null == entity) {
@@ -283,7 +284,7 @@ public class SoPriceChangeServiceImpl extends SuperServiceImpl<SoPriceChangeMapp
         //获取到表名
         String type = tableName.value();
         //保存附件
-        attachmentService.batchSave(dto.getAttachmentUrlList(), dto.getAttachmentNameList(), type, id);
+        attachmentService.batchSaveOrUpdate(dto.getAttachmentUrlList(), dto.getAttachmentNameList(), type, id);
         //修改明细
         soPriceChangeDetailService.updatePriceChangeDetail(id, dto.getSoPriceChangeDetailList());
         return id;
@@ -300,7 +301,7 @@ public class SoPriceChangeServiceImpl extends SuperServiceImpl<SoPriceChangeMapp
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public Boolean submit(List<String> ids, Boolean isStartProcess) {
         if (CollectionUtils.isEmpty(ids)) {
             return false;
@@ -359,7 +360,7 @@ public class SoPriceChangeServiceImpl extends SuperServiceImpl<SoPriceChangeMapp
     */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public BatchResultDTO approve(SoPriceChangeEntity entity, ApproveOneDTO dto) {
         if (!ApproveStatusEnum.APPROVE_ING.getStatus().equals(entity.getApproveStatus().getStatus())) {
             return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_98006.msg);
@@ -381,7 +382,7 @@ public class SoPriceChangeServiceImpl extends SuperServiceImpl<SoPriceChangeMapp
     */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public Boolean approveEnd(ApproveOneDTO dto, SoPriceChangeEntity entity) {
         if (ObjectUtil.isEmpty(entity)) {
             return Boolean.TRUE;
@@ -408,7 +409,7 @@ public class SoPriceChangeServiceImpl extends SuperServiceImpl<SoPriceChangeMapp
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public Boolean cancelProcess(List<String> ids) {
         List<SoPriceChangeEntity> list = this.listByIds(ids);
         String approveIngStatus = ApproveStatusEnum.APPROVE_ING.getStatus();
@@ -465,7 +466,7 @@ public class SoPriceChangeServiceImpl extends SuperServiceImpl<SoPriceChangeMapp
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public Boolean updateAndSubmit(SoPriceChangeDTO.UpdateDTO dto) {
         String id = this.updateSoPriceChange(dto);
         if (StringUtils.isBlank(id)) {
@@ -760,7 +761,7 @@ public class SoPriceChangeServiceImpl extends SuperServiceImpl<SoPriceChangeMapp
             //最新审核人
             if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
                 String curApprove = listApiResult.getData().stream().filter(e -> e.getBusinessId().equals(item.getId()) && StringUtils.isNotBlank(e.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
-                item.setApproveUserName(curApprove);
+                item.setApproveUserName(CharSequenceUtil.blankToDefault(curApprove,item.getApproveUserName()));
             }
 
             //客户

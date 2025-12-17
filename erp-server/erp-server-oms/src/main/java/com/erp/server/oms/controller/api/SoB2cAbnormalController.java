@@ -8,6 +8,7 @@ import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
@@ -89,27 +90,32 @@ public class SoB2cAbnormalController extends BaseController {
     @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "批量重试", keyIdName = "ids")
     @PostMapping(value = "/batchRetry")
     public ApiResult<List<BatchResultDTO>> batchRetry(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        List<BatchResultDTO> resultDTOS = new ArrayList<>();
-        //id去重
-        List<String> ids = dto.getIds().stream().distinct().collect(Collectors.toList());
-        for (String id : ids) {
-            try {
-                List<BatchResultDTO>  resultList = soB2cAbnormalService.batchRetry(id);
-                resultDTOS.addAll(resultList);
-            }catch (Exception e){
-                log.error("b2c销售订单 批量重试失败",e);
-                BatchResultDTO batchResultDTO;
-                SoB2cEntity entity = soB2cService.getById(id);
-                if (ObjectUtil.isEmpty(entity)) {
-                    batchResultDTO = BatchResultDTO.fail(id, id, "b2c销售订单不存在, 批量重试失败");
+        try {
+            UserContext.setIsUserSystem(true);
+            List<BatchResultDTO> resultDTOS = new ArrayList<>();
+            //id去重
+            List<String> ids = dto.getIds().stream().distinct().collect(Collectors.toList());
+            for (String id : ids) {
+                try {
+                    List<BatchResultDTO>  resultList = soB2cAbnormalService.batchRetry(id);
+                    resultDTOS.addAll(resultList);
+                }catch (Exception e){
+                    log.error("b2c销售订单 批量重试失败",e);
+                    BatchResultDTO batchResultDTO;
+                    SoB2cEntity entity = soB2cService.getById(id);
+                    if (ObjectUtil.isEmpty(entity)) {
+                        batchResultDTO = BatchResultDTO.fail(id, id, "b2c销售订单不存在, 批量重试失败");
+                        resultDTOS.add(batchResultDTO);
+                        continue;
+                    }
+                    batchResultDTO = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
                     resultDTOS.add(batchResultDTO);
-                    continue;
                 }
-                batchResultDTO = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
-                resultDTOS.add(batchResultDTO);
             }
+            return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+        }finally {
+            UserContext.clearIsUserSystem();
         }
-        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
 

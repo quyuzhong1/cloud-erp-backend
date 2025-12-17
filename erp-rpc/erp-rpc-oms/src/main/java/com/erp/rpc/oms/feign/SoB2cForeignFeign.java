@@ -1,5 +1,6 @@
 package com.erp.rpc.oms.feign;
 
+import com.common.business.config.FeignErrorDecoder;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.ShopifyServerSoB2cDTO;
@@ -11,7 +12,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import javax.validation.Valid;
 import java.util.List;
 
-@FeignClient(name = "erp-oms", contextId = "soB2cForeign")
+@FeignClient(name = "erp-oms", contextId = "soB2cForeignFeign",configuration = {FeignErrorDecoder.class})
 public interface SoB2cForeignFeign {
 
     /**

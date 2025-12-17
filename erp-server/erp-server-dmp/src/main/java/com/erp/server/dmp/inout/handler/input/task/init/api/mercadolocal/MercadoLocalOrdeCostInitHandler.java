@@ -73,6 +73,11 @@ public class MercadoLocalOrdeCostInitHandler extends DmpInputInitHandler {
 		for (Map<String, Object> findMongoDatum : findMongoData) {
 			Map<String, Object> shipping = (Map<String, Object>)findMongoDatum.get("shipping");
 
+			Object id = shipping.get("id");
+			if(Objects.isNull(id)|| id.toString().equals("0")){
+				continue;
+			}
+
 			String path = dmpCfgApiEntity.getApiType().replace("{shippingId}", shipping.get("id").toString());
 
 			//入参

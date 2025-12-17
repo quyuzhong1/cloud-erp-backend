@@ -2,9 +2,11 @@ package com.erp.server.tms.controller.api;
 
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.tms.dto.ShippingCalculationDTO;
 import com.erp.server.tms.service.ShippingCalculationService;
 import lombok.extern.slf4j.Slf4j;
@@ -55,6 +57,7 @@ public class ShippingCalculationController extends BaseController {
      * @date: 2023/11/10 17:36
      */
     @PostMapping(value = "/exportExcel")
+    @LogAction(value = LogActionEnum.EXPORT, desc = "运费计算列表导出")
     public ApiResult<Object>exportExcel(@RequestBody ShippingCalculationDTO.PagingParamDTO dto) {
         Boolean flag = shippingCalculationService.exportExcel(dto);
         return flag == true ? success() : failure();

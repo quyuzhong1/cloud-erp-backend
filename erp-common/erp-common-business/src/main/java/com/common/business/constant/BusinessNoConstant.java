@@ -20,6 +20,12 @@ public interface BusinessNoConstant {
 
     String GYS = "GYS";
 
+    String GYSDM = "A";
+
+    String SKD = "SKD";
+
+    String KHSX = "KHSX";
+
     String CGJM = "CGJM";
 
     String CGTJ = "CGTJ";
@@ -195,5 +201,53 @@ public interface BusinessNoConstant {
     //合同管理
     String GYSHT = "GYSHT";
     String MB = "MB";
+    //样品作废单
+    String YPBF = "YPBF";
+    //样品借用单
+    String YPJY = "YPJY";
+    String YPGH = "YPGH";
+    String ZHXS = "ZHXS";
 
+    //样品领用
+    String YPLY="YPLY";
+    //样品退回
+    String YPTH="YPTH";
+    //期初台账
+    String QCTZ="QCTZ";
+    //组包计划
+    String ZBJH="ZBJH";
+    //样品转移单
+    String YPZY="YPZY";
+    //样品调整单
+    String YPTZ="YPTZ";
+    //资质字典
+    String DC="DC";
+
+    //资产位置
+    String ZCWZ="ZCWZ";
+    //资产验收单
+    String YSD="YSD";
+    //资产卡片
+    String ZCKP="ZCKP";
+    //盘点方案
+    String PDFA="PDFA";
+    //资产盘点表
+    String ZCPDB="ZCPDB";
+    //盘盈盘亏单
+    String PYPKD="PYPKD";
+    //资产处置单
+    String PRODIS="PRODIS";
+    //模具关联SKU
+    String MRS="MRS";
+    //资产通知单
+    String MPL="MPL";
+    //资产采购单
+    String MPO="MPO";
+    //资产采购变更单
+    String MPOCC="MPOCC";
+    //资产编码
+    String ZC="ZC";
+
+    //差异策略配置
+    String CYCL="CYCL";
 }

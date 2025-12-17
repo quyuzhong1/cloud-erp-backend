@@ -29,6 +29,8 @@ public interface ProductPurchaseMapper extends BaseMapper<ProductPurchaseEntity>
     List<ProductPurchaseShowDTO> listBySkuId(@Param("skuId") String skuId);
 
     ProductDetailDTO.ServiceToWavePickingDTO listWavePickingDTOBySkuIds(@Param("skuId") String skuId);
+
+    List<ProductDetailDTO.SkuDTO> listSkuInfoByEanOrSkuNo(@Param("params") ProductDetailDTO.SearchDTO params);
 }
 
 

@@ -102,7 +102,7 @@ public class SupplierUserServiceImpl implements SupplierUserService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public void add(SysUserInfoDTO sysUserInfoDTO) {
         //判断是否存在供应商
         if(StringUtils.isEmpty(sysUserInfoDTO.getSupplierId())) throw new ServiceException("供应商ID不能为空");
@@ -126,7 +126,7 @@ public class SupplierUserServiceImpl implements SupplierUserService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public void update(SysUserInfoDTO sysUserInfoDTO) {
         //判断是否存在供应商
         if(StringUtils.isEmpty(sysUserInfoDTO.getRefId())) throw new ServiceException("供应商用户关系ID不能为空");
@@ -176,7 +176,7 @@ public class SupplierUserServiceImpl implements SupplierUserService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public ApiResult deleteById(String uid) {
         userInfoFeign.deleteSrmUser(Collections.singletonList(uid));
         //删除用户和供应商绑定记录

@@ -1,10 +1,12 @@
 package com.erp.server.mrp.controller.api;
 
 
+import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.mrp.dto.CfgRuleExpireTimeDTO;
 import com.erp.server.mrp.service.CfgRuleExpireTimeService;
 import org.springframework.validation.annotation.Validated;
@@ -31,6 +33,7 @@ public class CfgRuleExpireTimeController extends BaseController {
      * 修改
      */
     @PostMapping("/update")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "规则修改")
     public ApiResult<String> update(@RequestBody @Validated CfgRuleExpireTimeDTO.UpdateDTO dto) {
         cfgRuleExpireTimeService.update(dto);
         return success();

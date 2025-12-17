@@ -52,6 +52,11 @@ public class WorkMenuEntity extends BaseEntity<WorkMenuEntity> {
      */
     @TableField("feign_bean_name")
     private String feignBeanName;
+    /**
+     * 是否多标签
+     */
+    @TableField("is_multi_tab")
+    private Boolean isMultiTab;
 
 
     public static final String SYS_CLASSIFY = "sys_classify";

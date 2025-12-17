@@ -109,6 +109,7 @@ public class PackageForecastController extends BaseController {
             menuCode = "wms:packageForecast:update",
             serviceClass = PackageForecastService.class,
             keyIdName = "id")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "组包预报单修改")
     public ApiResult update(@RequestBody @Validated PackageForecastDTO.UpdateDTO dto) {
         Boolean result = packageForecastService.update(dto);
         return result ? success() : failure();
@@ -127,6 +128,7 @@ public class PackageForecastController extends BaseController {
             menuCode = "wms:packageForecast:delete",
             serviceClass = PackageForecastService.class,
             keyIdName = "id")
+    @LogAction(value = LogActionEnum.DELETE, desc = "组包预报单删除")
     public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
@@ -181,6 +183,7 @@ public class PackageForecastController extends BaseController {
      * @return
      */
     @PostMapping("/cancel")
+    @LogAction(value = LogActionEnum.CANCEL, desc = "组包预报单取消")
     public ApiResult<List<BatchResultDTO>> cancel(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
@@ -221,6 +224,7 @@ public class PackageForecastController extends BaseController {
      * @return
      */
     @PostMapping("/upload")
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "上传组包预报")
     public ApiResult<List<BatchResultDTO>> upload(@RequestBody @Valid PackageForecastDTO.UploadDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         if(dto.getDeliveryPlatform().equals(PlatformDictEnum.TIK_TOK_FULLY.getCode())){

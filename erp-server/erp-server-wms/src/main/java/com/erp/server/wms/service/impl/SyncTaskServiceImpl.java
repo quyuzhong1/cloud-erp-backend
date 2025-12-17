@@ -200,7 +200,7 @@ public class SyncTaskServiceImpl implements SyncTaskService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public void findDataSendSyncTask(DmpSyncMqDTO.SyncParamDTO syncParamDTO) {
         List<DmpSyncMqDTO.SyncParamDetailDTO> sourceDetailList = syncParamDTO.getSourceDetailList();
         SourceTypeEnum sourceType = syncParamDTO.getSourceType();

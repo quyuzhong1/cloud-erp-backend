@@ -7,6 +7,8 @@ import com.common.business.dto.base.SortDTO;
 import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ServiceCodeNameEnum;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -174,7 +176,11 @@ public class WarehouseDTO implements Serializable {
          * 启用日期
          */
         private LocalDateTime openTime;
-        
+
+        /**
+         * 国家
+         */
+        private String country;
     }
 
 
@@ -290,6 +296,10 @@ public class WarehouseDTO implements Serializable {
          * 平台名称
          */
         private String platformName;
+        /**
+         * 仓库负责人id
+         */
+        private String chargeId;
     }
 
     @Data
@@ -373,6 +383,8 @@ public class WarehouseDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
+    @Builder
+    @AllArgsConstructor
     public static class ListParamDTO {
 
         /**
@@ -436,6 +448,15 @@ public class WarehouseDTO implements Serializable {
          */
         private String id;
 
+        /**
+         * 国家
+         */
+        private String country;
+
+        /**
+         * 国家名称
+         */
+        private String countryName;
         /**
          * 金蝶仓库编号
          */

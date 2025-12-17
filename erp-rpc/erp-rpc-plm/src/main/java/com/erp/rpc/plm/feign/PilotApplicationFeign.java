@@ -1,5 +1,6 @@
 package com.erp.rpc.plm.feign;
 
+import com.common.business.config.FeignErrorDecoder;
 import com.common.business.feign.BaseDataFeign;
 import com.erp.model.plm.dto.PilotApplicationDTO;
 import com.erp.model.plm.entity.PilotApplicationEntity;
@@ -11,7 +12,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import java.util.List;
 import java.util.Map;
 
-@FeignClient(name = "erp-plm" , contextId = "pilotApplicationFeign")
+@FeignClient(name = "erp-plm" , contextId = "pilotApplicationFeign",configuration = {FeignErrorDecoder.class})
 public interface PilotApplicationFeign{
 
     @PostMapping("/feign/pilotApplication/updateDetailByPilotApplicationDetailIds")

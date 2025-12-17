@@ -1,14 +1,13 @@
 package com.erp.server.oms.service.impl;
 
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
-import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.CfgInvoiceSettingDTO;
 import com.erp.model.oms.dto.CustomerDTO;
 import com.erp.model.oms.entity.CfgInvoiceInvalidEntity;
@@ -16,13 +15,15 @@ import com.erp.model.oms.entity.CfgInvoiceSettingEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.oms.mapper.CfgInvoiceInvalidMapper;
+import com.erp.server.oms.sdk.invoice.NfeInvoiceService;
 import com.erp.server.oms.service.CfgInvoiceInvalidService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.erp.server.oms.service.CfgInvoiceSettingService;
 import com.erp.server.oms.service.OperateLogService;
-import com.erp.server.oms.service.CommonService;
 import com.common.core.exception.ServiceException;
+import com.sdk.third.tf.dto.NfeInvoiceDTO;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,12 +32,10 @@ import lombok.extern.slf4j.Slf4j;
 import com.erp.model.oms.dto.CfgInvoiceInvalidDTO;
 import java.util.*;
 import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
 
 import javax.annotation.Resource;
 import javax.validation.Valid;
 
-import static com.common.business.enums.FileTaskEventEnum.EXPORT_INVOICE_INFO;
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_INVOICE_INVALID;
 
 /**
@@ -58,13 +57,30 @@ public class CfgInvoiceInvalidServiceImpl extends SuperServiceImpl<CfgInvoiceInv
 
     @Resource
     private CfgInvoiceSettingService cfgInvoiceSettingService;
+    @Resource
+    @Lazy
+    private NfeInvoiceService nfeInvoiceService;
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(CfgInvoiceInvalidDTO.AddDTO addDTO) {
+        CfgInvoiceSettingEntity settingEntity = cfgInvoiceSettingService.getById(addDTO.getCfgInvoiceSettingId());
+        if(Objects.isNull(settingEntity) || CharSequenceUtil.isBlank(settingEntity.getToken())) {
+            throw new ServiceException("发票授权信息不存在");
+        }
+        NfeInvoiceDTO.NfeVoidedDTO nfeVoidedDTO = new NfeInvoiceDTO.NfeVoidedDTO();
+        nfeVoidedDTO.setTokenEmpresa(settingEntity.getToken());
+        nfeVoidedDTO.setJustificativa(addDTO.getReason());
+        nfeVoidedDTO.setNumeroFinal(addDTO.getEndInvoiceNo());
+        nfeVoidedDTO.setNumeroInicial(addDTO.getStartInvoiceNo());
+        nfeVoidedDTO.setSerie(addDTO.getNo());
+        //调用第三方接口
+        nfeInvoiceService.voidedInvoice(nfeVoidedDTO);
+
         CfgInvoiceInvalidEntity cfgInvoiceInvalidEntity = new CfgInvoiceInvalidEntity();
         BeanMapperUtils.copy(addDTO, cfgInvoiceInvalidEntity);
+        cfgInvoiceInvalidEntity.setDeactivateInvoiceNo(addDTO.getStartInvoiceNo() + "-" + addDTO.getEndInvoiceNo());
 
         log.info("开始新增作废发票号");
         boolean save = super.save(cfgInvoiceInvalidEntity);

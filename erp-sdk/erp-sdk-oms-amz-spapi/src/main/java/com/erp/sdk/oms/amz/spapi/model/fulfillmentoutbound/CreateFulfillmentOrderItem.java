@@ -10,19 +10,24 @@
  * Do not edit the class manually.
  */
 
-
 package com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound;
 
-import com.google.gson.annotations.SerializedName;
-
-
 import java.util.Objects;
+import java.util.Arrays;
+import com.google.gson.TypeAdapter;
+import com.google.gson.annotations.JsonAdapter;
+import com.google.gson.annotations.SerializedName;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonWriter;
+import com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound.Money;
 
+import java.io.IOException;
 /**
  * Item information for creating a fulfillment order.
  */
 
-@javax.annotation.Generated(value = "io.swagger.codegen.languages.JavaClientCodegen", date = "2020-12-15T20:44:18.412+08:00")
+@javax.annotation.Generated(value = "io.swagger.codegen.v3.generators.java.JavaClientCodegen", date = "2025-08-18T09:55:11.594451100+08:00[Asia/Shanghai]")
+
 public class CreateFulfillmentOrderItem {
   @SerializedName("sellerSku")
   private String sellerSku = null;
@@ -60,7 +65,7 @@ public class CreateFulfillmentOrderItem {
    * The seller SKU of the item.
    * @return sellerSku
   **/
-
+  
   public String getSellerSku() {
     return sellerSku;
   }
@@ -75,10 +80,10 @@ public class CreateFulfillmentOrderItem {
   }
 
    /**
-   * A fulfillment order item identifier that the seller creates to track fulfillment order items. Used to disambiguate multiple fulfillment items that have the same SellerSKU. For example, the seller might assign different SellerFulfillmentOrderItemId values to two items in a fulfillment order that share the same SellerSKU but have different GiftMessage values.
+   * A fulfillment order item identifier that the seller creates to track fulfillment order items. Used to disambiguate multiple fulfillment items that have the same &#x60;SellerSKU&#x60;. For example, the seller might assign different &#x60;SellerFulfillmentOrderItemId&#x60; values to two items in a fulfillment order that share the same &#x60;SellerSKU&#x60; but have different &#x60;GiftMessage&#x60; values.
    * @return sellerFulfillmentOrderItemId
   **/
-
+  
   public String getSellerFulfillmentOrderItemId() {
     return sellerFulfillmentOrderItemId;
   }
@@ -96,7 +101,7 @@ public class CreateFulfillmentOrderItem {
    * Get quantity
    * @return quantity
   **/
-
+  
   public Integer getQuantity() {
     return quantity;
   }
@@ -114,7 +119,7 @@ public class CreateFulfillmentOrderItem {
    * A message to the gift recipient, if applicable.
    * @return giftMessage
   **/
-
+  
   public String getGiftMessage() {
     return giftMessage;
   }
@@ -132,7 +137,7 @@ public class CreateFulfillmentOrderItem {
    * Item-specific text that displays in recipient-facing materials such as the outbound shipment packing slip.
    * @return displayableComment
   **/
-
+  
   public String getDisplayableComment() {
     return displayableComment;
   }
@@ -147,10 +152,10 @@ public class CreateFulfillmentOrderItem {
   }
 
    /**
-   * Amazon&#39;s fulfillment network SKU of the item.
+   * Amazon&#x27;s fulfillment network SKU of the item.
    * @return fulfillmentNetworkSku
   **/
-
+  
   public String getFulfillmentNetworkSku() {
     return fulfillmentNetworkSku;
   }
@@ -165,10 +170,10 @@ public class CreateFulfillmentOrderItem {
   }
 
    /**
-   * The monetary value assigned by the seller to this item.
+   * Get perUnitDeclaredValue
    * @return perUnitDeclaredValue
   **/
-
+  
   public Money getPerUnitDeclaredValue() {
     return perUnitDeclaredValue;
   }
@@ -183,10 +188,10 @@ public class CreateFulfillmentOrderItem {
   }
 
    /**
-   * The amount to be collected from the recipient for this item in a COD (Cash On Delivery) order.
+   * Get perUnitPrice
    * @return perUnitPrice
   **/
-
+  
   public Money getPerUnitPrice() {
     return perUnitPrice;
   }
@@ -201,10 +206,10 @@ public class CreateFulfillmentOrderItem {
   }
 
    /**
-   * The tax on the amount to be collected from the recipient for this item in a COD (Cash On Delivery) order.
+   * Get perUnitTax
    * @return perUnitTax
   **/
-
+  
   public Money getPerUnitTax() {
     return perUnitTax;
   }
@@ -215,7 +220,7 @@ public class CreateFulfillmentOrderItem {
 
 
   @Override
-  public boolean equals(Object o) {
+  public boolean equals(java.lang.Object o) {
     if (this == o) {
       return true;
     }
@@ -262,7 +267,7 @@ public class CreateFulfillmentOrderItem {
    * Convert the given object to string with each line indented by 4 spaces
    * (except the first line).
    */
-  private String toIndentedString(Object o) {
+  private String toIndentedString(java.lang.Object o) {
     if (o == null) {
       return "null";
     }
@@ -270,4 +275,3 @@ public class CreateFulfillmentOrderItem {
   }
 
 }
-

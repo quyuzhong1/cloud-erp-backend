@@ -131,7 +131,7 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
     private ScmTaskFeign scmTaskFeign;
 
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     @DistributeLocker(businessType = RedisKeyConstant.PURCHASE_SUGGEST_MERGE,keyName = "addOrUpdateDTO.platformType,addOrUpdateDTO.platform,addOrUpdateDTO.skuId",waiteTime = 60)

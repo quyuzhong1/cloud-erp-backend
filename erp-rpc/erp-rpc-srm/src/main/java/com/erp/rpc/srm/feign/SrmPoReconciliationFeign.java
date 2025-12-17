@@ -20,7 +20,7 @@ import java.util.List;
  * @author Will
  * @date: 2024/1/25 9:58
  */
-@FeignClient(name = "erp-srm", contextId = "poReconciliation",configuration = {FeignErrorDecoder.class})
+@FeignClient(name = "erp-srm", contextId = "srmPoReconciliationFeign",configuration = {FeignErrorDecoder.class})
 public interface SrmPoReconciliationFeign {
 
     /**

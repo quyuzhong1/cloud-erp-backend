@@ -20,7 +20,6 @@ import com.erp.model.wms.dto.inventory.InventoryReportDTO;
 import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
 import com.erp.model.wms.vo.WarehouseLocationExportVo;
 import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
@@ -80,6 +79,9 @@ public interface ExportWmsFeign {
 
     @PostMapping("/feign/export/inventoryDaily")
     PagingVO<InventoryReportDTO.ListDailyInventoryDTO> exportInventoryDaily(@RequestBody PagingDTO<InventoryReportDTO.DailyInventoryParamDTO> dto);
+
+    @PostMapping("/feign/export/exportDailyInventoryByLocation")
+    PagingVO<InventoryReportDTO.ListDailyInventoryDTO> exportDailyInventoryByLocation(@RequestBody PagingDTO<InventoryReportDTO.DailyInventoryParamDTO> dto);
 
     @PostMapping("/feign/export/inventoryInOutStock")
     PagingVO<InventoryDTO.InOutStockTransFlowPagingViewDTO> exportInventoryInOutStock(@RequestBody PagingDTO<InventoryDTO.ExportInOutStockTransFlowSearchParamDTO> dto);
@@ -312,4 +314,87 @@ public interface ExportWmsFeign {
      */
     @PostMapping("/feign/export/supplierInventory")
     PagingVO<SupplierInventoryDTO.ListDTO> exportSupplierInventory(PagingDTO<SupplierInventoryDTO.PagingParamDTO> dto);
+
+    /**
+     * 导出三方仓发货单
+     */
+    @PostMapping("/feign/export/exportThirdWarehouseDelivery")
+    PagingVO<ThirdWarehouseDeliveryDTO.PagingViewDTO> exportThirdWarehouseDelivery(@RequestBody PagingDTO<ThirdWarehouseDeliveryDTO.PagingParamDTO> dto);
+
+    /**
+     * 导出b2b销售订单冻结汇总
+     */
+    @PostMapping("/feign/export/exportTotalB2bProcessing")
+    PagingVO<ReportProcessingDTO.ListDTO> exportTotalB2bProcessing(@RequestBody PagingDTO<ReportProcessingDTO.PagingParamDTO> dto);
+
+    /**
+     * 导出b2c销售订单冻结汇总
+     */
+    @PostMapping("/feign/export/exportTotalB2cProcessing")
+    PagingVO<ReportProcessingDTO.ListDTO> exportTotalB2cProcessing(@RequestBody PagingDTO<ReportProcessingDTO.PagingParamDTO> dto);
+
+    /**
+     * 导出头程订单冻结汇总
+     */
+    @PostMapping("/feign/export/exportTotalFirstMileProcessing")
+    PagingVO<ReportProcessingDTO.ListDTO> exportTotalFirstMileProcessing(@RequestBody PagingDTO<ReportProcessingDTO.PagingParamDTO> dto);
+
+    /**
+     * 导出样品报废单
+     */
+    @PostMapping("/feign/export/exportSampleScrapInfo")
+    PagingVO<SampleScrapInfoDTO.ListDTO> exportSampleScrapInfo(@RequestBody PagingDTO<SampleScrapInfoDTO.PagingParamDTO> dto);
+
+    /**
+     * 导出样品领用单
+     */
+    @PostMapping("/feign/export/getSampleRecipientPageData")
+    PagingVO<SampleRecipientDTO.ListDTO> getSampleRecipientPageData(@RequestBody PagingDTO<SampleRecipientDTO.ExportDTO> dto);
+
+    /**
+     * 导出样品台账统计
+     */
+    @PostMapping("/feign/export/exportSampleLedger")
+    PagingVO<SampleLedgerDTO.ListDTO> exportSampleLedger(@RequestBody PagingDTO<SampleLedgerDTO.ExportDTO> dto);
+
+    /**
+     * 导出样品台账流水
+     */
+    @PostMapping("/feign/export/exportSampleLedgerFlow")
+    PagingVO<SampleLedgerFlowDTO.ListDTO> exportSampleLedgerFlow(@RequestBody PagingDTO<SampleLedgerFlowDTO.ExportDTO> dto);
+
+    /**
+     * 导出样品借出单
+     */
+    @PostMapping("/feign/export/exportSampleBorrowInfo")
+    PagingVO<SampleBorrowInfoDTO.ListDTO> exportSampleBorrowInfo(@RequestBody PagingDTO<SampleBorrowInfoDTO.PagingParamDTO> dto);
+    /**
+     * 导出样品归还单
+     */
+    @PostMapping("/feign/export/exportSampleReturnInfo")
+    PagingVO<SampleReturnInfoDTO.ListDTO> exportSampleReturnInfo(PagingDTO<SampleReturnInfoDTO.PagingParamDTO> dto);
+
+    /**
+     * 导出样品退回单
+     */
+    @PostMapping("/feign/export/getSampleBackInfoPageData")
+    PagingVO<SampleBackInfoDTO.ListDTO> getSampleBackInfoPageData(@RequestBody PagingDTO<SampleBackInfoDTO.ExportDTO> dto);
+
+    /**
+     * 导出样品期初台账
+     */
+    @PostMapping("/feign/export/getSampleInitialLedgerPageData")
+    PagingVO<SampleInitialLedgerDTO.ListDTO> getSampleInitialLedgerPageData(@RequestBody PagingDTO<SampleInitialLedgerDTO.ExportDTO> dto);
+
+    /**
+     * 导出样品转移单
+     */
+    @PostMapping("/feign/export/getSampleTransferInfoPageData")
+    PagingVO<SampleTransferInfoDTO.ListDTO> getSampleTransferInfoPageData(@RequestBody PagingDTO<SampleTransferInfoDTO.ExportDTO> dto);
+
+    /**
+     * 导出样品调整单
+     */
+    @PostMapping("/feign/export/exportSampleAdjustmentInfo")
+    PagingVO<SampleAdjustmentInfoDTO.ListDTO> exportSampleAdjustmentInfo(@RequestBody PagingDTO<SampleAdjustmentInfoDTO.PagingParamDTO> dto);
 }

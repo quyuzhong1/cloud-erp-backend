@@ -1,5 +1,6 @@
 package com.common.business.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.*;
 import lombok.experimental.Accessors;
 
@@ -34,6 +35,14 @@ public class PlatformReturnOrderDTO extends UniqueDto {
      * 平台
      */
     private String dictPlatform;
+    /**
+     * 店铺ID(非海外仓有值)
+     */
+    private String shopId;
+    /**
+     * 批次号
+     */
+    private String batchNo;
     /**
      * 明细
      */

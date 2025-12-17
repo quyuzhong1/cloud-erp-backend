@@ -88,6 +88,9 @@ public class ConnectionProxyXA extends AbstractConnectionProxyXA implements Hold
                 transactionTimeout = DefaultValues.DEFAULT_GLOBAL_TRANSACTION_TIMEOUT;
             }
             timeout = Math.max(BRANCH_EXECUTION_TIMEOUT, transactionTimeout);
+            if(timeout < 120000) {
+            	timeout = 120000;
+            }
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
@@ -121,6 +124,7 @@ public class ConnectionProxyXA extends AbstractConnectionProxyXA implements Hold
     public synchronized void xaCommit(String xid, long branchId, String applicationData) throws XAException {
         XAXid xaXid = XAXidBuilder.build(xid, branchId);
         xaResource.commit(xaXid, false);
+        InventoryXAUtil.xaCommit(xaXid);
         releaseIfNecessary();
     }
 
@@ -147,6 +151,7 @@ public class ConnectionProxyXA extends AbstractConnectionProxyXA implements Hold
      */
     public void xaRollback(XAXid xaXid) throws XAException {
         xaResource.rollback(xaXid);
+        InventoryXAUtil.xaRollback(xaXid);
         releaseIfNecessary();
     }
 

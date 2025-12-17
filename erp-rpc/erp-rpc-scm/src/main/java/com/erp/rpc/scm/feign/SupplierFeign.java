@@ -3,7 +3,9 @@ package com.erp.rpc.scm.feign;
 import com.common.business.config.FeignErrorDecoder;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BatchResultDTO;
+import com.common.core.controller.vo.ApiResult;
 import com.erp.model.scm.dto.SupplierDTO;
+import com.erp.model.scm.dto.SupplierPlantAddrDTO;
 import com.erp.model.scm.entity.PurchaseOrderSupplierEntity;
 import com.erp.model.scm.entity.SupplierEntity;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -21,7 +23,7 @@ import java.util.Map;
  * @CreateTime: 2023-06-19  19:22
  * @Author: zhangchunlin
  */
-@FeignClient(name = "erp-scm", contextId = "supplier",configuration = {FeignErrorDecoder.class})
+@FeignClient(name = "erp-scm", contextId = "supplierFeign",configuration = {FeignErrorDecoder.class})
 public interface SupplierFeign {
 
 
@@ -97,4 +99,23 @@ public interface SupplierFeign {
 
     @PostMapping("/feign/supplier/updateApproveStatus")
     void updateApproveStatus(SupplierDTO.UpdateApproveStatusDTO updateApproveStatusDTO);
+
+    /**
+     * 获取工厂所在地
+     * @author will
+     * @date 2025/9/2 14:21
+     * @param addPlantAddrDTO
+     * @return List<AddDTO>
+     */
+    @PostMapping("/feign/supplier/checkImportPlantAddr")
+    List<SupplierPlantAddrDTO.AddDTO> checkImportPlantAddr(@RequestBody SupplierDTO.AddPlantAddrDTO addPlantAddrDTO);
+
+    /**
+     * 根据供应商类型 获取到已审核的对应供应商
+     * 未审核通过的会置为禁用
+     *
+     * @return
+     */
+    @GetMapping("/feign/supplier/listApproveSupplierByCategoryType")
+    List<SupplierDTO.SupplierSimpleDTO> listApproveSupplierByCategoryType(@RequestParam("categoryType") String categoryType);
 }

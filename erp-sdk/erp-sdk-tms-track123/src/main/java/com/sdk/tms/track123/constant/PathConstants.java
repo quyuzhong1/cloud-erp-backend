@@ -15,6 +15,7 @@ public interface PathConstants {
     String GET_COURIER_URL = "/gateway/open-api/tk/v2/courier/list";
     String GET_TRACK_URL = "/gateway/open-api/tk/v2/track/query";
     String REGISTER_LOGISTICS_NUMBER = "/gateway/open-api/tk/v2/track/import";
+    String UPDATE_LOGISTICS_NUMBER = "/gateway/open-api/tk/v2.1/track/update";
 
 
     //获取海运物流商列表

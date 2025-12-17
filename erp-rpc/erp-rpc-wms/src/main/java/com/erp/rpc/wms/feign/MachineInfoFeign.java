@@ -1,5 +1,6 @@
 package com.erp.rpc.wms.feign;
 
+import com.common.business.config.FeignErrorDecoder;
 import com.erp.model.wms.dto.MachineInfoDTO;
 import com.erp.model.wms.entity.MachineRefSoEntity;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -8,7 +9,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.List;
 
-@FeignClient(name = "erp-wms", contextId = "machineInfo")
+@FeignClient(name = "erp-wms", contextId = "machineInfo" ,configuration = {FeignErrorDecoder.class})
 public interface MachineInfoFeign {
 
 

@@ -263,4 +263,9 @@ public interface PurchasePriceDetailService extends SuperService<PurchasePriceDe
      * @return
      */
     List<PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO> batchGetTaxPrice(List<String> skuIdList, List<String> supplierIdList, List<Integer> purchaseQtyList, List<String> purchaseOrgIdList);
+    /**
+     * 批量获取采购单价
+     * @return
+     */
+    List<PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO> listTaxPrice(List<PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO> list,Boolean catchError);
 }

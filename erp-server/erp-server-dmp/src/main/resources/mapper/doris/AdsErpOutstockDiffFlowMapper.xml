@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.dmp.mapper.doris.AdsErpOutstockDiffFlowMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.dmp.entity.doris.AdsErpOutstockDiffFlowEntity">
+       <result column="id" property="id" />
+       <result column="create_time" property="createTime" />
+       <result column="update_time" property="updateTime" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="unique_code" property="uniqueCode" />
+       <result column="data_encrypt" property="dataEncrypt" />
+       <result column="source_system" property="sourceSystem" />
+       <result column="source_platform" property="sourcePlatform" />
+       <result column="account_code" property="accountCode" />
+       <result column="next_level_id" property="nextLevelId" />
+       <result column="bill_topic" property="billTopic" />
+       <result column="flow_id" property="flowId" />
+       <result column="node_id" property="nodeId" />
+       <result column="instance_id" property="instanceId" />
+       <result column="task_id" property="taskId" />
+       <result column="source_id" property="sourceId" />
+       <result column="etl_status" property="etlStatus" />
+       <result column="check_month" property="checkMonth" />
+       <result column="source_system_name" property="sourceSystemName" />
+       <result column="outstock_code" property="outstockCode" />
+       <result column="so_delivery_code" property="soDeliveryCode" />
+       <result column="so_code" property="soCode" />
+       <result column="platform_order_code" property="platformOrderCode" />
+       <result column="platform_warehouse" property="platformWarehouse" />
+       <result column="platform_bill_date" property="platformBillDate" />
+       <result column="platform_bill_status" property="platformBillStatus" />
+       <result column="stock_sku" property="stockSku" />
+       <result column="sku_id" property="skuId" />
+       <result column="sku_no" property="skuNo" />
+       <result column="outstock_qty" property="outstockQty" />
+       <result column="flow_deduct_qty" property="flowDeductQty" />
+       <result column="diff_qty" property="diffQty" />
+       <result column="remark" property="remark" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_time,
+        update_time,
+        create_user_name,
+        create_user_id,
+        update_user_name,
+        update_user_id,
+        version,
+        is_deleted,
+        unique_code, data_encrypt, source_system, source_platform, account_code, next_level_id, bill_topic, flow_id, node_id, instance_id, task_id, source_id, etl_status, check_month, source_system_name, outstock_code, so_delivery_code, so_code, platform_order_code, platform_warehouse, platform_bill_date, platform_bill_status, stock_sku, sku_id, sku_no, outstock_qty, flow_deduct_qty, diff_qty, remark
+    </sql>
+
+<select id="paging" resultType="com.erp.model.dmp.dto.AdsErpOutstockDiffFlowDTO$PagingDTO">
+        select 
+        t.id,
+        t.check_month checkMonth, 
+        t.source_system_name sourceSystemName, 
+        t.outstock_code outstockCode, 
+        t.so_delivery_code soDeliveryCode, 
+        t.so_code soCode, 
+        t.platform_order_code platformOrderCode, 
+        t.platform_warehouse platformWarehouse, 
+        t.platform_bill_date platformBillDate, 
+        t.platform_bill_status platformBillStatus, 
+        t.stock_sku stockSku, 
+        t.sku_id skuId, 
+        t.sku_no skuNo, 
+        t.outstock_qty outstockQty, 
+        t.flow_deduct_qty flowDeductQty, 
+        t.diff_qty diffQty, 
+        t.remark,
+        t.exec_status_name execStatusName,
+        t.finish_time finishTime,
+        t.create_time createTime
+        from
+        ads_erp_outstock_diff_flow t
+        WHERE ${params.sqlMap.default}
+        AND t.is_deleted = false
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+	    <if test="params.sortList != null and params.sortList.size > 0">
+	       <foreach collection="params.sortList" item="item" separator="," close=",">
+	           ${item.field} ${item.sort}
+	       </foreach>
+	    </if>
+        t.check_month_query desc
+    </select>
+    
+    <select id="total" resultType="com.erp.model.dmp.dto.AdsErpOutstockDiffFlowDTO$TotalDTO">
+        select 
+        IFNULL(sum(t.outstock_qty),0) totalOutstockQty,
+        IFNULL(sum(t.flow_deduct_qty),0) totalFlowDeductQty,
+        IFNULL(sum(abs(t.diff_qty)),0) totalDiffQty
+        from
+        ads_erp_outstock_diff_flow t
+        WHERE ${params.sqlMap.default}
+        AND t.is_deleted = false
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+    </select>
+</mapper>

@@ -197,7 +197,7 @@ public class SoInfoController extends BaseController {
                 continue;
             }
             try {
-                resultDTOS.add(soInfoService.submit(entity));
+                resultDTOS.add(soInfoService.submit(entity,Boolean.TRUE, false));
             }catch (Exception e){
                 log.error("销售订单提交失败",e);
                 resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
@@ -478,8 +478,9 @@ public class SoInfoController extends BaseController {
             serviceClass = SoInfoService.class,
             keyIdName = "ids")
     public ApiResult delete(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
-        Boolean result = soInfoService.deleteByIds(dto.getIds());
-        return result ? success() : failure();
+
+        List<BatchResultDTO> resultDTOList =soInfoService.deleteByIds(dto.getIds());
+        return resultDTOList.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOList) : failure(resultDTOList);
     }
 
     /**
@@ -928,4 +929,35 @@ public class SoInfoController extends BaseController {
         List<SoB2cDTO.ViewPushPurchaseApplicationDTO> list = soInfoService.viewPushPurchaseApplication(dto.getIds());
         return success(list);
     }
+
+    @PostMapping("/skuMappingBatch")
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "批量更新sku映射：ids={ids}")
+    public ApiResult<List<BatchResultDTO>> skuMappingBatch(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO deleteResult;
+            try {
+                deleteResult = soInfoService.skuMappingBatch(id);
+            } catch (Exception e) {
+                log.error("B2B批量更新sku映射失败",e);
+                SoInfoEntity entity = soInfoService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    deleteResult = BatchResultDTO.fail(id, id, "B2B批量更新, 更新sku映射失败");
+                    resultDTOS.add(deleteResult);
+                    continue;
+                }
+                deleteResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(deleteResult);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+
+    @PostMapping("/updateIsDeclare")
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "更新是否报关")
+    public ApiResult<Boolean> updateIsDeclare(@RequestBody @Validated SoB2cDTO.UpdateIsDeclareDTO dto) {
+        return success(soInfoService.updateIsDeclare(dto));
+    }
+
 }

@@ -67,16 +67,6 @@ public class PurchaseReturnOrderFeignController extends BaseController {
         return purchaseReturnOrderDetailEntities;
     }
 
-    @PostMapping("/addReturnOrder")
-    public Boolean addReturnOrder(@RequestBody List<PurchaseReturnOrderDTO.AddDTO> list) {
-        if (CollectionUtils.isEmpty(list)) {
-            return Boolean.FALSE;
-        }
-        Boolean flag = poReturnService.batchAdd(list);
-        return flag ;
-
-    }
-
     /**
      * 根据供应商id集合、单据日期等条件 查询退货数量信息
      * @param params

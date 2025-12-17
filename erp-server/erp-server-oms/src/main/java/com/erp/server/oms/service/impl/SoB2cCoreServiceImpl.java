@@ -6,6 +6,7 @@ import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONUtil;
+import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.PlatformOrderDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.enums.PlatformDictEnum;
@@ -15,19 +16,18 @@ import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.entity.DmpOutputTaskRecordEntity;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.*;
+import com.erp.model.oms.entity.CfgSettingEntity;
 import com.erp.model.oms.enums.*;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.entity.DictCountryEntity;
+import com.erp.model.wms.dto.OverseasProviderWarehouseDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.dto.SoOutstockDetailDTO;
 import com.erp.model.wms.dto.VirtualWarehouseChannelDTO;
-import com.erp.model.wms.entity.SoOutstockEntity;
-import com.erp.model.wms.entity.VirtualWarehouseRelationEntity;
-import com.erp.model.wms.entity.WarehouseEntity;
-import com.erp.model.wms.entity.WarehouseLocationEntity;
+import com.erp.model.wms.entity.*;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
-import com.erp.rpc.wms.feign.WmsVirtualWarehouseFeign;
+import com.erp.rpc.wms.feign.*;
 import com.erp.server.oms.convert.SoB2cCoreConverter;
 import com.erp.server.oms.service.*;
 import lombok.extern.slf4j.Slf4j;
@@ -36,6 +36,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
@@ -77,6 +78,21 @@ public class SoB2cCoreServiceImpl implements SoB2cCoreService {
 
     @Resource
     private CfgSettingService cfgSettingService;
+
+    @Resource
+    private ThirdWarehouseDeliveryFeign thirdWarehouseDeliveryFeign;
+
+    @Resource
+    private SoOutstockFeign soOutstockFeign;
+
+    @Resource
+    private SoB2cDeliveryFeign soB2cDeliveryFeign;
+
+    @Resource
+    private DocNoGenHelper docNoGenHelper;
+
+    @Resource
+    private WmsOverseasWarehouseFeign wmsOverseasWarehouseFeign;
 
     @Override
     public List<SoB2cCoreDTO.ListRetryOutstockDTO> listRetryOutstock(BaseIdsDTO.IdsDTO dto) {
@@ -190,12 +206,10 @@ public class SoB2cCoreServiceImpl implements SoB2cCoreService {
         ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
         paramDTO.setShopIdList(shopIdList);
         paramDTO.setPlatformList(platformList);
-        paramDTO.setType(RuleTypeEnum.PLATFORM.getCode());
+        paramDTO.setType(RuleTypeEnum.B2C_PLATFORM.getCode());
         paramDTO.setPlatformSkuNoList(platformSkuNoList);
         paramDTO.setPlatformSpuNoList(platformSpuNoList);
         // 所有包含历史映射关系
-        List<ListingInfoWithSkuMappingDTO> listingInfoEntityList = skuMappingService.findListDto(paramDTO);
-        Map<String, List<ListingInfoWithSkuMappingDTO>> listingMap = listingInfoEntityList.stream().distinct().collect(Collectors.groupingBy(obj -> CharSequenceUtil.format("{}-{}-{}",obj.getPlatform(),obj.getPlatformSkuNo(),obj.getShopId())));
 
         //物流信息
         List<SoB2cLogisticsEntity> soB2cLogisticsList = soB2cLogisticsService.listByMainIds(soIdList);
@@ -220,12 +234,6 @@ public class SoB2cCoreServiceImpl implements SoB2cCoreService {
             if (CollUtil.isEmpty(thisDetailList)) {
                 log.error("未找到销售订单明细，订单号：{}", soB2cEntity.getCode());
                 throw new ServiceException(ApiError.ERROR_SYS_TYPE_NOTFOUND,CharSequenceUtil.format("订单{}明细信息",soB2cEntity.getCode()));
-            }
-            for (SoB2cDetailEntity soB2cDetailEntity : thisDetailList) {
-                List<ListingInfoWithSkuMappingDTO> listingInfoWithSkuMappingList = listingMap.get(CharSequenceUtil.format("{}-{}-{}", soB2cEntity.getDictPlatform(), soB2cDetailEntity.getPlatformSkuNo(), soB2cEntity.getShopId()));
-                if (CollUtil.isEmpty(listingInfoWithSkuMappingList)) {
-                    throw new ServiceException(ApiError.ERROR_SYS_TYPE_NOTFOUND,CharSequenceUtil.format("订单{}平台SKU{}映射关系",soB2cEntity.getCode(),soB2cDetailEntity.getPlatformSkuNo()));
-                }
             }
         }
     }
@@ -416,5 +424,70 @@ public class SoB2cCoreServiceImpl implements SoB2cCoreService {
         if ((ObjectUtil.isEmpty(entity.getPayStatus()) || SoB2cPayStatusEnum.ENUM_PAYMENT.getCode().equals(entity.getPayStatus())) && !isFlag) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_PAYMENT_NOT_OPERATE, entity.getCode());
         }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void generateDeliveryAndOutStock(SoB2cEntity entity, List<SoB2cDetailEntity> detailEntityList, SoB2cDTO.DeliveryWithNotOutboundDTO dto,SoB2cLogisticsEntity soB2cLogisticsEntity,SoB2cReceiverEntity soB2cReceiverEntity) {
+        //判断是三方仓还是自发货生成不同的发货单
+        //检测是否是API 对接的仓库
+//        try {
+            List<OverseasProviderWarehouseDTO.ViewDTO> overseasWarehouseList = wmsOverseasWarehouseFeign.listByWarehouseIdList(Collections.singletonList(dto.getWarehouseId()));
+            Boolean isThirdWarehouse = CollectionUtils.isNotEmpty(overseasWarehouseList);
+            if(isThirdWarehouse){
+                GenerateDeliveryAndOutStockDTO generateDeliveryAndOutStockDTO = new GenerateDeliveryAndOutStockDTO(entity,detailEntityList,dto,overseasWarehouseList.get(0),soB2cLogisticsEntity);
+                thirdWarehouseDeliveryFeign.generateDeliveryAndOutStock(generateDeliveryAndOutStockDTO);
+            }else{
+                GenerateDeliveryAndOutStockDTO generateDeliveryAndOutStockDTO = new GenerateDeliveryAndOutStockDTO(entity,detailEntityList,dto,new OverseasProviderWarehouseDTO.ViewDTO(),soB2cLogisticsEntity);
+                soB2cDeliveryFeign.generateDeliveryAndOutStock(generateDeliveryAndOutStockDTO);
+            }
+//        }catch (Exception e){
+//            log.error("订单{}不出库发货生成发货单或出库单失败，异常信息：{}", entity.getCode(), e.getMessage());
+//            entity.setSignOrderError(SoB2cErrorTypeEnum.GENERATE_OUTSTOCK.getCode());
+//            entity.setBillStatus(SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode());
+//            entity.setIsNotOutbound(false);
+//            soB2cService.updateById(entity);
+//            throw new ServiceException(e.getMessage());
+//        }
+    }
+
+    @Override
+    public Boolean handleSoOutStock(String soId) {
+        SoB2cEntity soB2cEntity = soB2cService.getById(soId);
+        if (ObjectUtil.isEmpty(soB2cEntity)) {
+            throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST, soId);
+        }
+        //明细
+        List<SoB2cDetailEntity> thisDetailList = soB2cDetailService.listByMainId(soId);
+        //出库
+        String outPutClass =  "";
+        String sourceCode = "";
+        if (PlatformDictEnum.MERCADOLIBRE.getCode().equals(soB2cEntity.getDictPlatform())) {
+            outPutClass = "MercadoOrderRocketMQTaskHandler";
+            sourceCode = soB2cEntity.getPlatformCode();
+        }  else if (PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode().equals(soB2cEntity.getDictPlatform())) {
+            outPutClass = "MercadoLocalOrderRocketMQTaskHandler";
+            sourceCode = soB2cEntity.getPlatformCode();
+        } else if (PlatformDictEnum.SHOPEE.getCode().equals(soB2cEntity.getDictPlatform())) {
+            outPutClass = "DmpOutputShopeeOrderRocketMQTaskHandler";
+            sourceCode = soB2cEntity.getPlatformCode();
+        }else if (PlatformDictEnum.LING_XING.getCode().equals(soB2cEntity.getThirdSystem())) {
+            outPutClass = "DmpOutputLxOrderRocketMQTaskHandler";
+            sourceCode = soB2cEntity.getThirdCode();
+        }else if (PlatformDictEnum.ALI_EXPRESS.getCode().equals(soB2cEntity.getDictPlatform())) {
+            outPutClass = "DmpOutputAliExpressOrderRocketMQTaskHandler";
+            sourceCode = soB2cEntity.getThirdCode();
+        }
+        List<DmpOutputTaskRecordEntity> dmpOutputTaskRecordEntityList = dmpTaskFeign.getOutputTaskRecord(sourceCode,outPutClass);
+        PlatformOrderDTO dto = null;
+        if (CollectionUtils.isNotEmpty(dmpOutputTaskRecordEntityList)) {
+            DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity = dmpOutputTaskRecordEntityList.get(0);
+            dto = JSONUtil.toBean(dmpOutputTaskRecordEntity.getRequestData(), PlatformOrderDTO.class);
+            dto.setBillDate(LocalDate.now());
+        }
+        soB2cEntity.setSoOutstockDate(LocalDate.now());
+        soB2cEntity.setDetailEntityList(thisDetailList);
+        soB2cEntity.setCoverOutDate(true);
+        return SoB2cHandler.handleSoOutStock(dto, null, soB2cEntity);
     }
 }

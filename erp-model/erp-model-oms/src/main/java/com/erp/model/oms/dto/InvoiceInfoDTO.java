@@ -1,7 +1,10 @@
 package com.erp.model.oms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
+import com.erp.model.oms.entity.CfgInvoiceSettingDetailEntity;
+import com.erp.model.oms.entity.CfgInvoiceSettingEntity;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
@@ -10,6 +13,7 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -367,6 +371,14 @@ public class InvoiceInfoDTO implements Serializable {
 
         private String shopName;
         /**
+         * 公司名称
+         */
+        private String companyName;
+        /**
+         * 卖家税号
+         */
+        private String sellerTaxNo;
+        /**
          * 销售订单id
          */
         private String soId;
@@ -523,5 +535,31 @@ public class InvoiceInfoDTO implements Serializable {
          * 文件名称
          */
         private String attachName;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ProductAmountRuleResultDTO {
+        /**
+         * 是否匹配
+         */
+        private Boolean isMatch;
+        /**
+         * 描述
+         */
+        private String msg;
+
+        private CfgInvoiceSettingDetailEntity invoiceSettingDetail;
+        private CfgInvoiceSettingEntity invoiceSetting;
+
+        /**
+         * 发票规则（Amount：全额，Custom：自定义，扣佣金：Deduct）
+         * InvoiceRuleEnum
+         */
+        private String dictInvoiceRule;
+        /**
+         * 比例（x100）
+         */
+        private BigDecimal ratio;
     }
 }

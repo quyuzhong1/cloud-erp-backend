@@ -1,5 +1,6 @@
 package com.erp.server.dmp.inout.handler.input.task.finish;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
@@ -18,6 +19,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
 import com.erp.model.dmp.entity.DmpInputTaskEntity;
 import com.erp.model.dmp.enums.DmpInputTaskStatusEnum;
+import com.erp.model.dmp.enums.DmpInputTaskTaskTypeEnum;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputFinishRequest;
 import com.erp.server.dmp.inout.dto.request.DmpInputTaskRequest;
@@ -87,6 +89,11 @@ public class DmpInputDbNextPageFinishHandler extends DmpInputBaseFinishHandler{
 							taksJsonObject.put("where", " " + orderBy + " >= '" + lastId + "' ");
 							nextDmpInputTaskEntity.setExtendJson(taksJsonObject.toJSONString());
 							nextDmpInputTaskEntity.setStatus(DmpInputTaskStatusEnum.INIT.getCode());
+							nextDmpInputTaskEntity.setTaskType(DmpInputTaskTaskTypeEnum.NORMAL.getCode());
+							nextDmpInputTaskEntity.setCreateTime(LocalDateTime.now());
+							nextDmpInputTaskEntity.setUpdateTime(LocalDateTime.now());
+							nextDmpInputTaskEntity.setErrorMessage("");
+							nextDmpInputTaskEntity.setErrorCount(0);
 							dmpInputTaskService.save(nextDmpInputTaskEntity);
 							TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
 							    @Override

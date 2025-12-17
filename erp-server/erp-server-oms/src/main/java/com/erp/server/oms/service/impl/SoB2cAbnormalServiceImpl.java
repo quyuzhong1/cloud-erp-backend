@@ -89,6 +89,9 @@ public class SoB2cAbnormalServiceImpl implements SoB2cAbnormalService {
             case GET_LOGISTICS_CODE:
                 resultDTOList.add(soB2cService.getLogisticsCode(id, Boolean.TRUE));
                 break;
+            case PACKAGE_PLAN_GENERATE:
+                resultDTOList.add(soB2cService.retryPackagePlan(id));
+                break;
             case GENERATE_OUTSTOCK:
                 Boolean flag = soOutstockFeign.afreshGenerateB2cOutstock(Arrays.asList(id));
                 BatchResultDTO outStockResultDTO = flag ? BatchResultDTO.success(id, soB2cEntity.getCode(), "重试成功") : BatchResultDTO.fail(id, soB2cEntity.getCode(), "重试失败");
@@ -135,9 +138,6 @@ public class SoB2cAbnormalServiceImpl implements SoB2cAbnormalService {
         List<OperateLogDTO.AddModuleOperateLogDTO> operateLogList = new ArrayList<>();
         soB2cEntityList.forEach(v->{
             v.setSignOrderError("");
-            //清除异常 -- 暂时只针对拉取失败的类型
-            soB2cErrorService.removeErrorOrder(v.getId(), SoB2cErrorTypeEnum.ORDER_FETCH.getCode());
-
             OperateLogDTO.AddModuleOperateLogDTO addModuleOperateLogDTO = OperateLogDTO.AddModuleOperateLogDTO.builder()
                     .content(msg)
                     .businessId(v.getId())
@@ -147,7 +147,8 @@ public class SoB2cAbnormalServiceImpl implements SoB2cAbnormalService {
             operateLogList.add(addModuleOperateLogDTO);
         });
         soB2cService.updateBatchById(soB2cEntityList);
-
+        //清除异常
+        soB2cErrorService.deleteByMainIds(dto.getIds());
 
         operateLogService.batchAddModuleOperateLog(operateLogList);
 

@@ -9,8 +9,8 @@ import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 import org.springframework.cloud.openfeign.EnableFeignClients;
 
 @Slf4j
-@SpringBootApplication(exclude = {DataSourceAutoConfiguration.class, SeataAutoConfiguration.class}, scanBasePackages = {"com.erp.*","com.common.*"})
-@EnableFeignClients(basePackages = {"com.erp.rpc.*"})
+@SpringBootApplication(exclude = {DataSourceAutoConfiguration.class, SeataAutoConfiguration.class}, scanBasePackages = {"com.erp","com.common"})
+@EnableFeignClients(basePackages = {"com.erp.rpc"})
 @EnableDiscoveryClient
 public class ErpServerAuthApplication {
 

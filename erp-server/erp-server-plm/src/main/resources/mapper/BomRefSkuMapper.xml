@@ -226,6 +226,7 @@
             UNION
             SELECT st.sku_id,st.sku_no,st.parent_sku_id,st.parent_sku_no,st.quantity
             FROM product_bom_sku st JOIN T ON st.sku_id = T.parent_sku_id and st.is_deleted = false
+            inner join product_bom_info pbi on st.bom_id = pbi.id and pbi.is_deleted = false and pbi.state = 4
         )
         SELECT sku_id,sku_no,parent_sku_id, parent_sku_no,quantity FROM T;
     </select>
@@ -270,6 +271,7 @@
         UNION
         SELECT st.sku_id,st.sku_no,st.parent_sku_id,st.parent_sku_no,st.quantity
         FROM product_bom_sku st JOIN T ON st.parent_sku_id = T.sku_id and st.is_deleted = false
+        inner join product_bom_info pbi on st.bom_id = pbi.id and pbi.is_deleted = false and pbi.state = 4
         )
         SELECT sku_id,sku_no,parent_sku_id, parent_sku_no,quantity FROM T;
     </select>

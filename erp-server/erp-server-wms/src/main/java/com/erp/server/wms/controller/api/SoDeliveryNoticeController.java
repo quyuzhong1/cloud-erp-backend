@@ -15,7 +15,7 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.oms.dto.SoInfoDTO;
-import com.erp.model.wms.dto.RequisitionApplicationDTO;
+import com.erp.model.oms.dto.WorkflowTaskRecordDTO;
 import com.erp.model.wms.dto.SoDeliveryNoticeDTO;
 import com.erp.model.wms.dto.WarehouseLocationMoveDTO;
 import com.erp.model.wms.entity.PackingTaskEntity;
@@ -32,6 +32,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 /**
@@ -66,7 +67,7 @@ public class SoDeliveryNoticeController extends BaseController {
             tableAlias = "sdn"
     )
     @WebAdvanceQuery(handler = SoDeliveryNoticeQueryHandler.class)
-    public ApiResult<PagingVO<SoDeliveryNoticeDTO.PagingView>> paging(@RequestBody @Validated PagingDTO<SoDeliveryNoticeDTO.PagingParam> dto) {
+    public ApiResult<PagingVO<SoDeliveryNoticeDTO.PagingView>> paging(@RequestBody @Validated PagingDTO<SoDeliveryNoticeDTO.PagingParam> dto) throws ExecutionException, InterruptedException {
         PagingVO<SoDeliveryNoticeDTO.PagingView> pagingVO = soDeliveryNoticeService.paging(dto);
         return success(pagingVO);
     }
@@ -161,9 +162,23 @@ public class SoDeliveryNoticeController extends BaseController {
             menuCode = "wms:soDeliveryNotice:submit",
             serviceClass = SoDeliveryNoticeService.class,
             keyIdName = "ids")
-    public ApiResult submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean flag = soDeliveryNoticeService.submit(dto.getIds());
-        return flag == true ? success() : failure();
+    public  ApiResult<List<BatchResultDTO>> submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<SoDeliveryNoticeEntity> entityList = soDeliveryNoticeService.listByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            SoDeliveryNoticeEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"发货通知单记录不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(soDeliveryNoticeService.submit(entity,Boolean.TRUE));
+            }catch (Exception e){
+                log.error("发货通知单审核失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**
@@ -322,11 +337,11 @@ public class SoDeliveryNoticeController extends BaseController {
      * @Author Luo_WG
      * @Date 2023/4/6 19:29
      **/
-    @LogAction(value = LogActionEnum.DELETE, desc = "删除发货通知单")
+    @LogAction(value = LogActionEnum.DELETE, desc = "批量删除记录")
     @PostMapping("/delete")
-    public ApiResult delete(@RequestBody @Validated BaseIdsDTO.IdsDTO idsDTO) {
-        Boolean flag = soDeliveryNoticeService.delete(idsDTO.getIds());
-        return flag == true ? success() : failure();
+    public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO idsDTO) {
+        List<BatchResultDTO> resultDTOList = soDeliveryNoticeService.deleteByIds(idsDTO.getIds(), true);
+        return resultDTOList.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOList) : failure(resultDTOList);
     }
 
     /**
@@ -543,6 +558,61 @@ public class SoDeliveryNoticeController extends BaseController {
     @PostMapping(value = "/printSkuLabelConfirm")
     public void printSkuLabelConfirm(@RequestBody @Validated SoDeliveryNoticeDTO.PrintSkuLabelConfirmDTO dto , HttpServletResponse response) {
         soDeliveryNoticeService.printSkuLabelConfirm(dto, response);
+    }
+
+
+    /**
+     * @author jack
+     * @date:  2025-9-16
+     * 根据B2B销售订单ID生成发货通知单并审批通过
+     * @param dto 用于查询相关数据并生成发货通知单
+     * @return MqRequestDTO 包含处理结果的对象，包含ID和错误信息（如果有）
+     */
+    @PostMapping("/generateDeliveryApprove")
+    public WorkflowTaskRecordDTO.MqResponseDTO generateDeliveryApprove(@RequestBody WorkflowTaskRecordDTO.MqRequestDTO dto) {
+        return soDeliveryNoticeService.generateDeliveryApprove(dto);
+    }
+
+    @PostMapping("/autoDeliveryDisApprove")
+    public WorkflowTaskRecordDTO.MqResponseDTO autoDeliveryDisApprove(@RequestBody WorkflowTaskRecordDTO.MqRequestDTO dto) {
+        return soDeliveryNoticeService.autoDeliveryDisApprove(dto);
+    }
+
+    /**
+     * 允许出库
+     * @author will
+     * @date 2025/8/29 17:39
+     * @param list
+     * @return ApiResult
+     */
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "允许出库")
+    @PostMapping(value = "/batchUpdateIsAllowOutstock")
+    public ApiResult<List<BatchResultDTO>> batchUpdateIsAllowOutstock(@RequestBody @Validated ValidList<SoDeliveryNoticeDTO.PermitOutstockDTO> list) {
+        List<String> ids = list.stream().map(SoDeliveryNoticeDTO.PermitOutstockDTO::getId).distinct().collect(Collectors.toList());
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+        List<SoDeliveryNoticeEntity> entityList = soDeliveryNoticeService.listByIds(ids);
+        for (SoDeliveryNoticeDTO.PermitOutstockDTO dto : list) {
+            String id = dto.getId();
+            BatchResultDTO resultDTO;
+            SoDeliveryNoticeEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"发货通知单记录不存在"));
+                continue;
+            }
+            try {
+                resultDTO = soDeliveryNoticeService.updateIsAllowOutstock(entity,dto);
+            }catch (Exception e){
+                log.error("发货通知单修改中转仓库失败",e);
+                if (ObjectUtil.isEmpty(entity)) {
+                    resultDTO = BatchResultDTO.fail(id, id, "发货通知单不存在, 修改中转仓库失败");
+                    resultDTOS.add(resultDTO);
+                    continue;
+                }
+                resultDTO = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(resultDTO);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 }
 

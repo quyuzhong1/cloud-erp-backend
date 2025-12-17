@@ -3,10 +3,12 @@ package com.erp.server.mrp.controller.api;
 
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.mrp.dto.CfgRuleSalesEstimateFileDTO;
 import com.erp.model.mrp.dto.CfgRuleSalesQtyDTO;
 import com.erp.server.mrp.service.CfgRuleSalesEstimateFileService;
@@ -44,6 +46,7 @@ public class CfgRuleSalesQtyController extends BaseController {
     * @return ApiResult
     */
     @PostMapping("/batchUpdate")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "销量规则批量修改")
     public ApiResult<String> batchUpdate(@RequestBody @Validated CfgRuleSalesQtyDTO.UpdateDTO updateDTO) {
         cfgRuleSalesQtyService.batchUpdate(updateDTO);
         return success();
@@ -101,6 +104,7 @@ public class CfgRuleSalesQtyController extends BaseController {
      * 导入
      */
     @PostMapping("/importFile")
+    @LogAction(value = LogActionEnum.IMPORT, desc = "预估日销量导入")
     public ApiResult<String> importFile(@RequestParam(value = "excelFile") MultipartFile excelFile, @RequestParam(value = "platform") String platform, HttpServletResponse response) {
         cfgRuleSalesEstimateFileService.importFile(excelFile, platform, response);
         return success("上传成功");

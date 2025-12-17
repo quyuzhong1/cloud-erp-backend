@@ -1,5 +1,6 @@
 package com.erp.server.dmp.inout.handler.input.task.init;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.TypeReference;
@@ -41,9 +42,9 @@ public abstract class DmpInputGoodCangTransFlowInitHandler extends DmpInputInitH
         for (List<String> partReturnOrderIds : partitionedList) {
             requestDTO.setReference_no_list(partReturnOrderIds);
             requestDTO.setPage(1);
-            log.debug("请求谷仓库存流水请求:{}", JSON.toJSONString(requestDTO));
+            log.warn("请求谷仓库存流水请求:{}", JSON.toJSONString(requestDTO));
             String response = GoodCangUtils.sendPost(apiType, JSON.toJSONString(requestDTO));
-            log.debug("请求谷仓库存流水响应:{}", response);
+            log.warn("请求谷仓库存流水响应:{}", CharSequenceUtil.sub(response, 0, 1000));
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException e) {

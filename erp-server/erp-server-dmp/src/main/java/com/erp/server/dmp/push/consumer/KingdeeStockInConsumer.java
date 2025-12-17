@@ -11,7 +11,7 @@ import com.common.message.constant.RocketMqConsumerGroup;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.ApiModuleTypeEnum;
 import com.common.message.handler.AbstractPlatformConsumerHandler;
-import com.erp.model.dmp.enums.KingdeePushModuleEnum;
+import com.erp.sdk.third.kingdee.utils.KingdeePushModuleEnum;
 import com.erp.server.dmp.push.service.business.KingdeeStockInConsumerService;
 import com.erp.server.dmp.service.DmpPushTaskService;
 import com.kingdee.bos.webapi.entity.SaveParam;

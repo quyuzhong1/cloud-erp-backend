@@ -132,6 +132,7 @@ public class RequisitionApplicationChangeController extends BaseController {
     * @return ApiResult<Void>
     */
     @PostMapping("/addAndSubmit")
+    @LogAction(value = LogActionEnum.ADD_AND_SUBMIT, desc = "要货申请变更单新增并提交审核")
     public ApiResult<BaseResultDTO.AddAndSubmmitDTO> addAndSubmit(@RequestBody @Validated RequisitionApplicationChangeDTO.ViewDTO dto) {
         // 新增
         BaseResultDTO.AddDTO resultAdd;
@@ -171,6 +172,7 @@ public class RequisitionApplicationChangeController extends BaseController {
             menuCode = "wms:requisitionApplicationChange:updateAndSubmit",
             serviceClass = RequisitionApplicationChangeService.class,
             keyIdName = "id")
+    @LogAction(value = LogActionEnum.UPDATE_AND_SUBMIT, desc = "要货申请变更单修改并提交审核")
     public ApiResult<BaseResultDTO.AddAndSubmmitDTO> updateAndSubmit(@RequestBody @Validated RequisitionApplicationChangeDTO.ViewDTO dto) {
         try {
             requisitionApplicationChangeService.update(dto);

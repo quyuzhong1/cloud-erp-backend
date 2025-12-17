@@ -1,5 +1,6 @@
 package com.erp.rpc.sys.feign;
 
+import com.common.business.config.FeignErrorDecoder;
 import com.erp.model.sys.dto.FileTemplateDTO;
 import com.erp.model.sys.entity.FileTemplateEntity;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -12,7 +13,7 @@ import org.springframework.web.bind.annotation.RequestBody;
  * @author Will
  * @date: 2023/12/25 14:39
  */
-@FeignClient(name = "erp-sys", contextId = "fileTemplate")
+@FeignClient(name = "erp-sys", contextId = "fileTemplateFeign",configuration = {FeignErrorDecoder.class})
 public interface FileTemplateFeign {
 
     /**

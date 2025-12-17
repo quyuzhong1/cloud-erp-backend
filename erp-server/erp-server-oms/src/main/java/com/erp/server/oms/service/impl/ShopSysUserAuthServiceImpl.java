@@ -56,7 +56,7 @@ public class ShopSysUserAuthServiceImpl extends SuperServiceImpl<ShopSysUserAuth
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public Boolean batchAuth(ShopSysUserAuthDTO.BatchAuthDTO dto) {
         String authType = dto.getAuthType();
         List<String> userIdList = dto.getUserIdList();

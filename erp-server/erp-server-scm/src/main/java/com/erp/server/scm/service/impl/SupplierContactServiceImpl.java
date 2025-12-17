@@ -1,5 +1,7 @@
 package com.erp.server.scm.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.enums.ApiError;
@@ -210,6 +212,27 @@ public class SupplierContactServiceImpl extends SuperServiceImpl<SupplierContact
             addList.add(contact);
         }
         return addList;
+    }
+
+    @Override
+    public String getTelNumber(String contactId) {
+        SupplierContactEntity entity = lambdaQuery().eq(SupplierContactEntity::getId,contactId).select(SupplierContactEntity::getTelNumber).last("limit 1").one();
+        if (ObjectUtil.isEmpty(entity)) {
+            return "";
+        }
+        return entity.getTelNumber();
+    }
+
+    @Override
+    public List<SupplierContactEntity> listByNameList(List<String> contactNames,List<String> supplierIdList) {
+        if (CollUtil.isEmpty(contactNames) && CollUtil.isEmpty(supplierIdList)) {
+            return Collections.emptyList();
+        }
+        return lambdaQuery()
+                .in(CollUtil.isNotEmpty(contactNames),SupplierContactEntity::getPerson,contactNames)
+                .in(CollUtil.isNotEmpty(supplierIdList),SupplierContactEntity::getSupplierId,supplierIdList)
+                .eq(SupplierContactEntity::getDisabled,Boolean.FALSE)
+                .list();
     }
 
 

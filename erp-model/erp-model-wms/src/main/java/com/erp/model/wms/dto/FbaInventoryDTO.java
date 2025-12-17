@@ -576,4 +576,62 @@ public class FbaInventoryDTO implements Serializable {
          */
         private List<FbaInventoryReservedEntity> fbaInventoryReservedEntityList;
     }
+
+    @Data
+    @NoArgsConstructor
+    public static class QueryDTO{
+        /**
+         * 仓库id列表
+         */
+        private List<String> warehouseIds;
+        /**
+         * 店铺ids
+         */
+        private List<String> shopIds;
+        /**
+         * sku列表
+         */
+        private List<String> skuNos;
+    }
+    @Data
+    @NoArgsConstructor
+    public static class InventoryDTO {
+        /**
+         * 主键id
+         */
+        private String id;
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
+        /**
+         * sku
+         */
+        private String skuNo;
+        /**
+         * 平台sku
+         */
+        private String asin;
+        /**
+         * 卖家sku
+         */
+        private String msku;
+        /**
+         * FNSKU
+         */
+        private String fnSku;
+        /**
+         * 产品名称
+         */
+        private String platformProductName;
+        /**
+         * FBM可售
+         */
+        private Integer fbmFulfillableQty;
+        /**
+         * FBA可售
+         */
+        private Integer fulfillableQty;
+
+    }
 }

@@ -34,7 +34,7 @@ import com.common.core.enums.ApiError;
 @Service
 public class SoB2cDeliveryInterceptDetailServiceImpl extends SuperServiceImpl<SoB2cDeliveryInterceptDetailMapper, SoB2cDeliveryInterceptDetailEntity> implements SoB2cDeliveryInterceptDetailService {
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void add(SoB2cDeliveryInterceptDTO.AddDTO addDTO, String mainId) {

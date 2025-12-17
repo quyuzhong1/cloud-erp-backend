@@ -10,18 +10,29 @@
  * Do not edit the class manually.
  */
 
-
 package com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound;
 
-import com.google.gson.annotations.SerializedName;
-
-
 import java.util.Objects;
+import java.util.Arrays;
+import com.google.gson.TypeAdapter;
+import com.google.gson.annotations.JsonAdapter;
+import com.google.gson.annotations.SerializedName;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonWriter;
+import com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound.FulfillmentOrder;
+import com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound.FulfillmentOrderItemList;
+import com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound.FulfillmentShipmentList;
+import com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound.PaymentInformationList;
+import com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound.ReturnAuthorizationList;
+import com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound.ReturnItemList;
 
+import java.io.IOException;
 /**
- * GetFulfillmentOrderResult
+ * The request for the getFulfillmentOrder operation.
  */
-@javax.annotation.Generated(value = "io.swagger.codegen.languages.JavaClientCodegen", date = "2020-12-15T20:44:18.412+08:00")
+
+@javax.annotation.Generated(value = "io.swagger.codegen.v3.generators.java.JavaClientCodegen", date = "2025-08-18T09:55:11.594451100+08:00[Asia/Shanghai]")
+
 public class GetFulfillmentOrderResult {
   @SerializedName("fulfillmentOrder")
   private FulfillmentOrder fulfillmentOrder = null;
@@ -38,6 +49,9 @@ public class GetFulfillmentOrderResult {
   @SerializedName("returnAuthorizations")
   private ReturnAuthorizationList returnAuthorizations = null;
 
+  @SerializedName("paymentInformation")
+  private PaymentInformationList paymentInformation = null;
+
   public GetFulfillmentOrderResult fulfillmentOrder(FulfillmentOrder fulfillmentOrder) {
     this.fulfillmentOrder = fulfillmentOrder;
     return this;
@@ -47,7 +61,7 @@ public class GetFulfillmentOrderResult {
    * Get fulfillmentOrder
    * @return fulfillmentOrder
   **/
-
+  
   public FulfillmentOrder getFulfillmentOrder() {
     return fulfillmentOrder;
   }
@@ -65,7 +79,7 @@ public class GetFulfillmentOrderResult {
    * Get fulfillmentOrderItems
    * @return fulfillmentOrderItems
   **/
-
+  
   public FulfillmentOrderItemList getFulfillmentOrderItems() {
     return fulfillmentOrderItems;
   }
@@ -83,7 +97,7 @@ public class GetFulfillmentOrderResult {
    * Get fulfillmentShipments
    * @return fulfillmentShipments
   **/
-
+  
   public FulfillmentShipmentList getFulfillmentShipments() {
     return fulfillmentShipments;
   }
@@ -101,7 +115,7 @@ public class GetFulfillmentOrderResult {
    * Get returnItems
    * @return returnItems
   **/
-
+  
   public ReturnItemList getReturnItems() {
     return returnItems;
   }
@@ -119,7 +133,7 @@ public class GetFulfillmentOrderResult {
    * Get returnAuthorizations
    * @return returnAuthorizations
   **/
-
+  
   public ReturnAuthorizationList getReturnAuthorizations() {
     return returnAuthorizations;
   }
@@ -128,9 +142,27 @@ public class GetFulfillmentOrderResult {
     this.returnAuthorizations = returnAuthorizations;
   }
 
+  public GetFulfillmentOrderResult paymentInformation(PaymentInformationList paymentInformation) {
+    this.paymentInformation = paymentInformation;
+    return this;
+  }
+
+   /**
+   * Get paymentInformation
+   * @return paymentInformation
+  **/
+  
+  public PaymentInformationList getPaymentInformation() {
+    return paymentInformation;
+  }
+
+  public void setPaymentInformation(PaymentInformationList paymentInformation) {
+    this.paymentInformation = paymentInformation;
+  }
+
 
   @Override
-  public boolean equals(Object o) {
+  public boolean equals(java.lang.Object o) {
     if (this == o) {
       return true;
     }
@@ -142,12 +174,13 @@ public class GetFulfillmentOrderResult {
         Objects.equals(this.fulfillmentOrderItems, getFulfillmentOrderResult.fulfillmentOrderItems) &&
         Objects.equals(this.fulfillmentShipments, getFulfillmentOrderResult.fulfillmentShipments) &&
         Objects.equals(this.returnItems, getFulfillmentOrderResult.returnItems) &&
-        Objects.equals(this.returnAuthorizations, getFulfillmentOrderResult.returnAuthorizations);
+        Objects.equals(this.returnAuthorizations, getFulfillmentOrderResult.returnAuthorizations) &&
+        Objects.equals(this.paymentInformation, getFulfillmentOrderResult.paymentInformation);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(fulfillmentOrder, fulfillmentOrderItems, fulfillmentShipments, returnItems, returnAuthorizations);
+    return Objects.hash(fulfillmentOrder, fulfillmentOrderItems, fulfillmentShipments, returnItems, returnAuthorizations, paymentInformation);
   }
 
 
@@ -161,6 +194,7 @@ public class GetFulfillmentOrderResult {
     sb.append("    fulfillmentShipments: ").append(toIndentedString(fulfillmentShipments)).append("\n");
     sb.append("    returnItems: ").append(toIndentedString(returnItems)).append("\n");
     sb.append("    returnAuthorizations: ").append(toIndentedString(returnAuthorizations)).append("\n");
+    sb.append("    paymentInformation: ").append(toIndentedString(paymentInformation)).append("\n");
     sb.append("}");
     return sb.toString();
   }
@@ -169,7 +203,7 @@ public class GetFulfillmentOrderResult {
    * Convert the given object to string with each line indented by 4 spaces
    * (except the first line).
    */
-  private String toIndentedString(Object o) {
+  private String toIndentedString(java.lang.Object o) {
     if (o == null) {
       return "null";
     }
@@ -177,4 +211,3 @@ public class GetFulfillmentOrderResult {
   }
 
 }
-

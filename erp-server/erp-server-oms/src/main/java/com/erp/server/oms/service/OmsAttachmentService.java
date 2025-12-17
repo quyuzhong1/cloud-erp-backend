@@ -1,5 +1,8 @@
 package com.erp.server.oms.service;
 
+import com.common.business.dto.AttachDTO;
+import com.common.business.dto.base.BaseDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.service.SuperService;
 import com.erp.model.oms.dto.OmsAttachmentDTO;
 import com.erp.model.oms.entity.OmsAttachmentEntity;
@@ -29,7 +32,14 @@ public interface OmsAttachmentService extends SuperService<OmsAttachmentEntity> 
      * @param businessId
      * @return void
      */
-    void batchSave(List<String> attachmentUrlList, List<String> attachmentNameList, String type, String businessId);
+    void batchSaveOrUpdate(List<String> attachmentUrlList, List<String> attachmentNameList, String type, String businessId);
+
+    /**
+     * 批量保存附件信息
+     * @return void
+     */
+    void batchSaveOrUpdate(List<AttachDTO> attachDTOS, String type);
+
     /**
      * 批量更新或修改
      * @author will
@@ -77,4 +87,13 @@ public interface OmsAttachmentService extends SuperService<OmsAttachmentEntity> 
      * @return com.erp.model.scm.dto.AttachmentDTO.UpdateDTO
      */
     List<AttachmentDTO.UpdateDTO> getByBusinessId(String businessId);
+
+    List<OmsAttachmentEntity> listByBusinessIdsAndType(List<String> businessIds,String type);
+
+    /**
+     * 新增附件
+     * @param addAttachmentDTO
+     * @return
+     */
+    BatchResultDTO addAttachment(BaseDTO.AddAttachmentDTO addAttachmentDTO);
 }

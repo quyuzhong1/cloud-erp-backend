@@ -69,7 +69,7 @@ public class RemotePostcodeDetailServiceImpl extends SuperServiceImpl<RemotePost
     @Resource
     private SysUserFeign sysUserFeign;
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean add(RemotePostcodeDTO.AddDTO addDTO, String mainId) {

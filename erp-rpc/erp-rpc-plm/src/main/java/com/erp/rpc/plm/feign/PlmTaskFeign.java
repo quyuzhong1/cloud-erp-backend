@@ -1,15 +1,23 @@
 package com.erp.rpc.plm.feign;
 
+import com.common.business.config.FeignErrorDecoder;
 import com.common.business.dto.AdvanceQueryContainer;
 import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.base.ApproveOneDTO;
 import com.common.business.dto.base.BaseIdsDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.vo.PagingVO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
-import com.erp.model.plm.vo.*;
+import com.erp.model.plm.vo.ProductRefLabelVO;
+import com.erp.model.plm.vo.ProductVO;
+import com.erp.model.plm.vo.SkuInfoSimpleVO;
+import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.scm.dto.AssetNoticeDetailDTO;
 import com.erp.model.sys.dto.SysUserInfoDTO;
 import com.erp.model.sys.openapi.DimensionalWeightDTO;
 import com.erp.model.sys.openapi.UploadSkuDTO;
+import com.erp.model.workflow.dto.ProcessPassDTO;
 import com.erp.model.workflow.dto.WorkOptionDTO;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -31,7 +39,7 @@ import java.util.Set;
  * @Date 2022-10-21 9:06
  * @Created by yl
  */
-@FeignClient(name = "erp-plm")
+@FeignClient(name = "erp-plm", contextId = "plmTaskFeign",configuration = {FeignErrorDecoder.class})
 public interface PlmTaskFeign {
 
     /**
@@ -96,6 +104,12 @@ public interface PlmTaskFeign {
      */
     @PostMapping("feign/product/listBySkuNos")
     List<SkuVO> listBySkuNoList(@RequestBody List<String> skuNoList);
+    
+    /**
+     * 获取SKU列表（支持分页和高级查询）
+     */
+    @PostMapping("feign/product/listSku")
+    PagingVO<ProductDetailDTO.SkuDTO> listSku(@RequestBody PagingDTO<ProductSkuDTO> pagingDTO);
 
     @PostMapping("feign/product/listBySkuNoList")
     List<ProductDetailEntity> listBySkuNos(@RequestBody List<String> skuNoList);
@@ -108,6 +122,15 @@ public interface PlmTaskFeign {
      */
     @GetMapping("feign/product/listApproveSku")
     List<SkuVO> listApproveSku();
+
+    /**
+     * @return List<SkuVO>
+     * @description: 获取所有sku（不限制审核状态）
+     * @author System
+     * @date: 2025/01/XX
+     */
+    @GetMapping("feign/product/listAllSku")
+    List<SkuVO> listAllSku();
 
     /**
      * 根据id查询sku信息
@@ -562,7 +585,18 @@ public interface PlmTaskFeign {
     @PostMapping("feign/product/listSkuPurchaseByIds")
     List<SkuVO> listSkuPurchaseByIds(@RequestBody List<String> skuIds);
 
-    @GetMapping("feign/product/listSkuPurchaseByIds")
+    /**
+     * 根据skuid 集合获取到sku包装信息 （基础信息+产品信息+包装信息+采购信息）
+     *
+     * @param skuIds
+     * @return java.util.List<com.erp.model.plm.vo.SkuVO>
+     * @author will
+     * @date 2025-28-21 12:06
+     */
+    @PostMapping("feign/product/listSkuPackAndPurchaseByIds")
+    List<SkuVO> listSkuPackAndPurchaseByIds(@RequestBody List<String> skuIds);
+
+    @GetMapping("feign/product/getBySkuNoOrEan")
     ProductDetailEntity getBySkuNoOrEan(@RequestParam("skuCode") String skuCode);
 
     @PostMapping("feign/product/dimensionalWeightMeasure")
@@ -624,4 +658,65 @@ public interface PlmTaskFeign {
      */
     @PostMapping("feign/product/listAllStatusSkuBySkuNos")
     List<SkuVO> listAllStatusSkuBySkuNos(@RequestBody List<String> skuNoList);
+
+
+    @PostMapping("feign/skuStdCost/updateSkuStdCost")
+    void updateSkuStdCost(@RequestBody SkuStdCostDTO.UpdateDTO dto);
+
+    /**
+     * 项目任务-任务审批通过
+     */
+    @PostMapping("feign/projectTask/approvalTaskPass")
+    void approvalTaskPass(@RequestBody String processId);
+
+    /**
+     * 审核通过回调
+     * @author will
+     * @date 2025/9/25 17:12
+     * @param dto
+     * @return void
+     */
+    @PostMapping("feign/projectTask/approvalTaskSchedulePass")
+    void approvalTaskSchedulePass(@RequestBody ProcessPassDTO dto);
+
+    /**
+     * 获取模具信息
+     * @param dto
+     */
+    @PostMapping("feign/moldInfo/getMoldInfo")
+    MoldInfoEntity getMoldInfoByCode(@RequestBody String moldCode);
+
+    /**
+     * 获取模具信息
+     * @param dto
+     */
+    @PostMapping("feign/productDetail/listByIds")
+    List<ProductDetailEntity> listByIds(@RequestBody List<String> ids);
+
+
+    @PostMapping("feign/product/listAssetProduct" )
+    List<SkuVO> listAssetProduct();
+
+    @PostMapping("feign/moldInfo/searchMoldRefSkuByAssetId")
+    List<AssetNoticeDetailDTO.AssetDetailRefSkuDTO> searchMoldRefSkuByAssetId(@RequestBody String assetId);
+
+
+
+    /**
+     * 模具档案审核
+     *
+     * @param
+     * @return 新增结果
+     */
+    @PostMapping("feign/plmWorkOption/moldInfoApprove")
+    void moldInfoApprove(@RequestBody @Validated ApproveOneDTO dto);
+
+    /**
+     * 模具关联SKU审核
+     *
+     * @param
+     * @return 新增结果
+     */
+    @PostMapping("feign/plmWorkOption/moldRefSkuApprove")
+    void moldRefSkuApprove(@RequestBody @Validated ApproveOneDTO dto);
 }

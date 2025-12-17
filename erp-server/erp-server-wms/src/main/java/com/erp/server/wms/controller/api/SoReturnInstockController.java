@@ -14,7 +14,6 @@ import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
-import com.common.message.service.mq.MQProducerService;
 import com.erp.model.oms.dto.SoB2cReturnDTO;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
@@ -23,10 +22,8 @@ import com.erp.model.oms.entity.SoB2cReturnEntity;
 import com.erp.model.wms.dto.SoReturnInstockDTO;
 import com.erp.model.wms.dto.SoReturnReceiveDTO;
 import com.erp.model.wms.entity.SoReturnInstockEntity;
-import com.erp.rpc.oms.feign.OmsTaskFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.oms.feign.SoB2cReturnFeign;
-import com.erp.server.wms.kingdee.SyncKingdeeSoReturnService;
 import com.erp.server.wms.query.SoReturnInstockQueryHandler;
 import com.erp.server.wms.service.SoReturnInstockService;
 import lombok.extern.slf4j.Slf4j;
@@ -68,7 +65,7 @@ public class SoReturnInstockController extends BaseController {
      **/
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
+            tableField = "create_user_id,warehouse_keeper_id",
             warehouseTableField = "srid.warehouse_id",
             menuCode = "wms:soReturnInstock:paging",
             tableAlias = "sri"
@@ -88,7 +85,7 @@ public class SoReturnInstockController extends BaseController {
      **/
     @PostMapping("/listCount")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
+            tableField = "create_user_id,warehouse_keeper_id",
             warehouseTableField = "srid.warehouse_id",
             menuCode = "wms:soReturnInstock:paging",
             tableAlias = "sri"
@@ -122,7 +119,7 @@ public class SoReturnInstockController extends BaseController {
     @LogAction(value = LogActionEnum.UPDATE, desc = "修改销售退货入库单")
     @PostMapping("/update")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
+            tableField = "create_user_id,warehouse_keeper_id",
             menuCode = "wms:soReturnInstock:update",
             serviceClass = SoReturnInstockService.class,
             keyIdName = "id")
@@ -141,7 +138,7 @@ public class SoReturnInstockController extends BaseController {
     @LogViewService
     @GetMapping("/view")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
+            tableField = "create_user_id,warehouse_keeper_id",
             menuCode = "wms:soReturnInstock:view",
             serviceClass = SoReturnInstockService.class,
             keyIdName = "id")
@@ -160,13 +157,27 @@ public class SoReturnInstockController extends BaseController {
     @LogAction(value = LogActionEnum.SUBMIT, desc = "提交销售退货入库单")
     @PostMapping("/submit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
+            tableField = "create_user_id,warehouse_keeper_id",
             menuCode = "wms:soReturnInstock:submit",
             serviceClass = SoReturnInstockService.class,
             keyIdName = "ids")
-    public ApiResult submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean flag = soReturnInstockService.submit(dto.getIds());
-        return flag == true ? success() : failure();
+    public ApiResult<List<BatchResultDTO>> submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<SoReturnInstockEntity> entityList = soReturnInstockService.listByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            SoReturnInstockEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"退货入库单记录不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(soReturnInstockService.submit(entity,Boolean.TRUE));
+            }catch (Exception e){
+                log.error("退货入库知单审核失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**
@@ -179,7 +190,7 @@ public class SoReturnInstockController extends BaseController {
     @LogAction(value = LogActionEnum.ADD_AND_SUBMIT, desc = "新增并提交销售退货入库单")
     @PostMapping("/addAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
+            tableField = "create_user_id,warehouse_keeper_id",
             menuCode = "wms:soReturnInstock:add",
             serviceClass = SoReturnInstockService.class,
             keyIdName = "id")
@@ -198,7 +209,7 @@ public class SoReturnInstockController extends BaseController {
     @LogAction(value = LogActionEnum.UPDATE_AND_SUBMIT, desc = "修改并提交销售退货入库单")
     @PostMapping("/updateAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
+            tableField = "create_user_id,warehouse_keeper_id",
             menuCode = "wms:soReturnInstock:update",
             serviceClass = SoReturnInstockService.class,
             keyIdName = "id")
@@ -217,7 +228,7 @@ public class SoReturnInstockController extends BaseController {
     @LogAction(value = LogActionEnum.APPROVE, desc = "审核销售退货入库单")
     @PostMapping("/approve")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
+            tableField = "create_user_id,warehouse_keeper_id",
             menuCode = "wms:soReturnInstock:approve",
             serviceClass = SoReturnInstockService.class,
             keyIdName = "ids")
@@ -250,7 +261,7 @@ public class SoReturnInstockController extends BaseController {
     @LogAction(value = LogActionEnum.DISAPPROVE, desc = "反审核销售退货入库单")
     @PostMapping("/disApprove")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
+            tableField = "create_user_id,warehouse_keeper_id",
             menuCode = "wms:soReturnInstock:disApprove",
             serviceClass = SoReturnInstockService.class,
             keyIdName = "ids")
@@ -283,7 +294,7 @@ public class SoReturnInstockController extends BaseController {
     @LogAction(value = LogActionEnum.CANCEL, desc = "撤销销售退货入库单")
     @PostMapping("/cancelProcess")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
+            tableField = "create_user_id,warehouse_keeper_id",
             menuCode = "wms:soReturnInstock:cancelProcess",
             serviceClass = SoReturnInstockService.class,
             keyIdName = "ids")
@@ -302,7 +313,7 @@ public class SoReturnInstockController extends BaseController {
     @LogAction(value = LogActionEnum.INVALID, desc = "作废销售退货入库单")
     @PostMapping("/invalid")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
+            tableField = "create_user_id,warehouse_keeper_id",
             menuCode = "wms:soReturnInstock:invalid",
             serviceClass = SoReturnInstockService.class,
             keyIdName = "ids")
@@ -318,16 +329,16 @@ public class SoReturnInstockController extends BaseController {
      * @param idsDTO idsDTO
      * @return com.common.core.controller.vo.ApiResult
      **/
-    @LogAction(value = LogActionEnum.DELETE, desc = "删除销售退货入库单")
+    @LogAction(value = LogActionEnum.DELETE, desc = "批量删除记录")
     @PostMapping("/delete")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
+            tableField = "create_user_id,warehouse_keeper_id",
             menuCode = "wms:soReturnInstock:delete",
             serviceClass = SoReturnInstockService.class,
             keyIdName = "ids")
-    public ApiResult delete(@RequestBody @Validated BaseIdsDTO.IdsDTO idsDTO) {
-        Boolean flag = soReturnInstockService.delete(idsDTO.getIds());
-        return flag == true ? success() : failure();
+    public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO idsDTO) {
+        List<BatchResultDTO> resultDTOList = soReturnInstockService.deleteByIds(idsDTO.getIds(), true);
+        return resultDTOList.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOList) : failure(resultDTOList);
     }
 
     /**
@@ -380,7 +391,7 @@ public class SoReturnInstockController extends BaseController {
      * @return ApiResult<List<viewGenerateMachineInfoDTO>>
      */
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
+            tableField = "create_user_id,warehouse_keeper_id",
             menuCode = "wms:soReturnInstock:viewGenerateMachineInfo",
             serviceClass = SoReturnInstockService.class,
             keyIdName = "ids")

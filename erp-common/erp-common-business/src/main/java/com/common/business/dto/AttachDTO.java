@@ -16,4 +16,9 @@ public class AttachDTO {
      * 地址
      */
     private String attachUrl;
+
+    /**
+     * 业务id
+     */
+    private String businessId;
 }

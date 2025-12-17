@@ -11,6 +11,7 @@ import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.message.constant.RedisKeyConstant;
+import com.erp.model.oms.dto.GenerateDeliveryAndOutStockDTO;
 import com.erp.model.sys.openapi.DimensionalWeightDTO;
 import com.erp.model.wms.dto.SoB2cDeliveryDTO;
 import com.erp.model.wms.entity.SoB2cDeliveryDetailEntity;
@@ -25,6 +26,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.util.List;
+import java.util.Map;
 
 /**
  * b2c发货单
@@ -65,8 +67,8 @@ public class SoB2cDeliveryFeignController extends BaseController {
     @PostMapping("/add")
     @DataIdempotent(keyIdName = "dto.soCode",businessType = RedisKeyConstant.SO_B2C_DELIVERY_KEY)
     public Boolean add(@RequestBody SoB2cDeliveryDTO.AddDTO dto) {
-        Boolean addResult = soB2cDeliveryService.add(dto);
-        return addResult;
+        soB2cDeliveryService.add(dto);
+        return true;
     }
 
     /**
@@ -117,7 +119,7 @@ public class SoB2cDeliveryFeignController extends BaseController {
      * @return java.lang.Boolean
      **/
     @PostMapping("/falseDeliveryBatch")
-    public Boolean falseDeliveryBatch(@RequestBody List<String> ids) {
+    public Boolean falseDeliveryBatch(@RequestBody(required = false) List<String> ids) {
         if (CollectionUtils.isEmpty(ids)){
             return Boolean.FALSE;
         }
@@ -171,7 +173,7 @@ public class SoB2cDeliveryFeignController extends BaseController {
      * @param code 类型
      */
     @PostMapping("/updateShipmentMark")
-    void updateShipmentMark(@RequestParam("ids")List<String> ids, @RequestParam("code")String code) {
+    void updateShipmentMark(@RequestParam(value = "ids",required = false)List<String> ids, @RequestParam("code")String code) {
         soB2cDeliveryService.updateShipmentMark(ids, code);
     }
 
@@ -196,5 +198,28 @@ public class SoB2cDeliveryFeignController extends BaseController {
     @PostMapping("/afreshOutFreezeVirtualInventory")
     public Boolean afreshOutFreezeVirtualInventory(@RequestBody String soId) {
         return soB2cDeliveryService.afreshOutFreezeVirtualInventory(soId);
+    }
+
+    /**
+     * 生成发货单和出库单
+     * @param generateDeliveryAndOutStockDTO
+     */
+    @PostMapping("/generateDeliveryAndOutStock")
+    @DistributeLocker(keyName = "generateDeliveryAndOutStockDTO.entity.id")
+    public  void generateDeliveryAndOutStock(@RequestBody GenerateDeliveryAndOutStockDTO generateDeliveryAndOutStockDTO) {
+        soB2cDeliveryService.generateDeliveryAndOutStock(generateDeliveryAndOutStockDTO);
+    }
+
+    @PostMapping("/getDeliveryCodeBySourceId")
+    public Map<String,String> getDeliveryCodeBySourceId(@RequestParam("sourceIds") List<String> sourceIds){
+        return soB2cDeliveryService.getDeliveryCodeBySourceId(sourceIds);
+    }
+    /**
+     * 自动反审核并删除发货单
+     * @param id
+     */
+    @GetMapping("/deleteSoB2cDelivery")
+    public void deleteSoB2cDelivery(@RequestParam(value = "id") String id){
+        soB2cDeliveryService.deleteSoB2cDelivery(id);
     }
 }

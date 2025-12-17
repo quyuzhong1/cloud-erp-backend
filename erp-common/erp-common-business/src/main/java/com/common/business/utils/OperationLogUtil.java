@@ -1,12 +1,14 @@
 package com.common.business.utils;
 
 import cn.hutool.core.date.LocalDateTimeUtil;
+import cn.hutool.core.util.ReflectUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapUtil;
 import com.common.core.utils.TransitionUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.time.DateFormatUtils;
 import org.apache.commons.math3.util.Pair;
 
@@ -22,6 +24,7 @@ import java.util.*;
  * @description: 操作日志util
  * @date 2022/12/1 21:14
  */
+@Slf4j
 public class OperationLogUtil {
 
 
@@ -98,6 +101,7 @@ public class OperationLogUtil {
                 typeName = typeName.replace("java.util.List<", "");
                 typeName = typeName.replace(">","");
             } catch (Exception e) {
+                log.error("获取字段{}类型失败",newKey,e);
                 throw new ServiceException(ApiError.DEFAULT);
             }
             List<Object> list = TransitionUtil.transitionType(value, List.class);

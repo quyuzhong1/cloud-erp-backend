@@ -1,5 +1,6 @@
 package com.erp.server.wms.service;
 
+import com.common.business.dto.base.ApproveOneDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 退货通知单
@@ -74,10 +76,10 @@ public interface SoReturnNoticeService extends SuperService<SoReturnNoticeEntity
      * 提交
      * @Author Luo_WG
      * @Date 2023/4/14 10:04
-     * @param ids ids
+     * @param entity entity
      * @return java.lang.Boolean
      **/
-    Boolean submit(List<String> ids);
+    BatchResultDTO submit(SoReturnNoticeEntity entity,Boolean isNeedProcess);
 
     /**
      * 新增提交
@@ -108,6 +110,15 @@ public interface SoReturnNoticeService extends SuperService<SoReturnNoticeEntity
      * @return java.lang.Boolean
      **/
     BatchResultDTO approve(SoReturnNoticeEntity entity, String type, String comment, Boolean isNeedProcess);
+    /**
+     * 审核完成
+     * @author will
+     * @date 2025/10/22 17:58
+     * @param dto
+     * @param entity
+     * @return Boolean
+     */
+    Boolean approveEnd(ApproveOneDTO dto, SoReturnNoticeEntity entity);
 
     /**
      * 批量反审核
@@ -145,6 +156,25 @@ public interface SoReturnNoticeService extends SuperService<SoReturnNoticeEntity
      * @return java.lang.Boolean
      **/
     Boolean delete(List<String> ids);
+
+    /**
+     * @description: 原子批量删除销售退货通知单
+     * @author Will
+     * @date: 2023/5/17 15:15
+     * @param ids
+     * @param returnDetails
+     * @return List<BatchResultDTO>
+     */
+    List<BatchResultDTO> deleteByIds(List<String> ids, boolean returnDetails);
+
+    /**
+     * 删除单个实体
+     * @Author Luo_WG
+     * @Date 2023/4/6 19:29
+     * @param entity
+     * @return BatchResultDTO
+     **/
+    BatchResultDTO deleteEntity(SoReturnNoticeEntity entity);
 
     /**
      * 导出
@@ -191,4 +221,11 @@ public interface SoReturnNoticeService extends SuperService<SoReturnNoticeEntity
     BigDecimal calLocalCurrency(BigDecimal exchangeRate, BigDecimal returnAmount);
 
     BigDecimal calReturnAmount(BigDecimal amount, Integer qty, Integer returnQty);
+
+    /**
+     * 根据ID列表获取实体Map
+     * @param ids
+     * @return Map<String, SoReturnNoticeEntity>
+     */
+    Map<String, SoReturnNoticeEntity> mapByIds(List<String> ids);
 }

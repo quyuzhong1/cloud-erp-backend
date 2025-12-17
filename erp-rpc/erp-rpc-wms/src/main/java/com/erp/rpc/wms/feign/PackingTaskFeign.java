@@ -1,5 +1,6 @@
 package com.erp.rpc.wms.feign;
 
+import com.common.business.config.FeignErrorDecoder;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.sys.openapi.DimensionalWeightDTO;
 import com.erp.model.wms.dto.WmsCartonDTO;
@@ -17,7 +18,7 @@ import java.util.List;
 /**
  * 装箱任务相关fegin
  */
-@FeignClient(name = "erp-wms", contextId = "packingTaskFeign")
+@FeignClient(name = "erp-wms", contextId = "packingTaskFeign" ,configuration = {FeignErrorDecoder.class})
 public interface PackingTaskFeign {
 
     /**

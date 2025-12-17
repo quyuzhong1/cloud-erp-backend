@@ -1,5 +1,6 @@
 package com.erp.rpc.scm.feign;
 
+import com.common.business.config.FeignErrorDecoder;
 import com.erp.model.scm.dto.PurchasePriceDTO;
 import com.erp.model.scm.dto.SubcontractOrderDTO;
 import com.erp.model.scm.entity.PurchasePriceEntity;
@@ -14,7 +15,7 @@ import java.util.List;
  * @date 2024-09-06
  * @author tanmujin
  */
-@FeignClient(name = "erp-scm", contextId = "subcontractOrder")
+@FeignClient(name = "erp-scm", contextId = "subcontractOrderFeign",configuration = {FeignErrorDecoder.class})
 public interface SubcontractOrderFeign {
 
     @PostMapping ("/feign/subcontractOrder/listByCodes")

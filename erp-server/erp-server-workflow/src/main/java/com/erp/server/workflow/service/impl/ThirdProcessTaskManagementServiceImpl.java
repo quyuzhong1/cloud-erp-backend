@@ -37,7 +37,7 @@ import com.common.core.enums.ApiError;
 @Service
 public class ThirdProcessTaskManagementServiceImpl extends SuperServiceImpl<ThirdProcessTaskManagementMapper, ThirdProcessTaskManagementEntity> implements ThirdProcessTaskManagementService {
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(List<ThirdProcessTaskManagementDTO.AddDTO> addDTO) {

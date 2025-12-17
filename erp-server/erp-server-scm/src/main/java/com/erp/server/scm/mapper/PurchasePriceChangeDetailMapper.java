@@ -57,4 +57,13 @@ public interface PurchasePriceChangeDetailMapper extends BaseMapper<PurchasePric
      * @return List<PurchasePriceChangeDetailEntity>
      */
     List<PurchasePriceChangeDetailEntity> listCheckPurchasePriceChangeDetail(@Param("supplierIdList") List<String> supplierIdList,@Param("statusList") List<String> statusList,@Param("purchaseOrgId") String purchaseOrgId,@Param("skuIdList") List<String> skuIdList);
+    /**
+     * 获取最新的采购价变更明细
+     * @author will
+     * @date 2025/8/5 17:58
+     * @param purchasePriceDetailId
+     * @param id
+     * @return PurchasePriceChangeDetailEntity
+     */
+    PurchasePriceChangeDetailEntity getLatest(@Param("purchasePriceDetailId")String purchasePriceDetailId,@Param("id") String id);
 }

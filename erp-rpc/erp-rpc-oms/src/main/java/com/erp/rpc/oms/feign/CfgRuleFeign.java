@@ -1,5 +1,6 @@
 package com.erp.rpc.oms.feign;
 
+import com.common.business.config.FeignErrorDecoder;
 import com.erp.model.oms.dto.CfgRuleOrderHandleDTO;
 import com.erp.model.tms.vo.request.LogisticsOrderRuleVO;
 import com.erp.model.tms.vo.request.LogisticsOrderVO;
@@ -9,7 +10,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.Map;
 
-@FeignClient(name = "erp-oms", contextId = "cfgRule")
+@FeignClient(name = "erp-oms", contextId = "cfgRuleFeign",configuration = {FeignErrorDecoder.class})
 public interface CfgRuleFeign {
 
     /**

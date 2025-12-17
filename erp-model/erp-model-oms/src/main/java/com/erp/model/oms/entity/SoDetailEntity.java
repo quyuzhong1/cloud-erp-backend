@@ -44,10 +44,10 @@ public class SoDetailEntity extends BaseEntity<SoDetailEntity> {
     private String skuNo;
 
     /**
-     * 平台sku no
+     * 客户sku
      */
-    @TableField("platform_sku_no")
-    private String platformSkuNo;
+    @TableField("customer_sku_no")
+    private String customerSkuNo;
 
     /**
      * 销售数量
@@ -134,6 +134,11 @@ public class SoDetailEntity extends BaseEntity<SoDetailEntity> {
      */
     @TableField("remark")
     private String remark;
+    /**
+     * 拣货备注
+     */
+    @TableField("pick_remark")
+    private String pickRemark;
 
     /**
      * 对应金蝶详情id
@@ -247,6 +252,47 @@ public class SoDetailEntity extends BaseEntity<SoDetailEntity> {
 
     @TableField(exist = false)
     private Integer index;
+
+    /**
+     * 产品名称
+     */
+    @TableField(exist = false)
+    private String productName;
+    /**
+     * 销售单价-本位币
+     */
+    @TableField(exist = false)
+    private BigDecimal basePrice;
+    /**
+     * 含税单价-本位币
+     */
+    @TableField(exist = false)
+    private BigDecimal baseTaxPrice;
+
+    /**
+     * 价税合计
+     */
+    @TableField(exist = false)
+    private BigDecimal originalTaxPrice;
+
+    /**
+     * 来源明细id
+     */
+    @TableField("source_detail_id")
+    private String sourceDetailId;
+
+    /**
+     * 平台明细Id
+     */
+    @TableField("platform_detail_id")
+    private String platformDetailId;
+
+    /**
+     * 平台sku
+     */
+    @TableField("platform_sku_no")
+    private String platformSkuNo;
+
 
     public static final String MAIN_ID = "main_id";
 

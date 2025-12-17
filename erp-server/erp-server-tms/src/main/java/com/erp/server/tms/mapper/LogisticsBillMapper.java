@@ -12,7 +12,6 @@ import com.erp.model.tms.entity.LogisticsBillEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -120,7 +119,9 @@ public interface LogisticsBillMapper extends BaseMapper<LogisticsBillEntity> {
                                                                              @Param("mainIds") List<String> mainIds,
                                                                              @Param("transportNoList") List<String> transportNoList,
                                                                              @Param("logisticsSupplierIdList") List<String> logisticsSupplierIdList,
-                                                                              LocalDate startDate, LocalDate endDate);
+                                                                             LocalDate startDate, LocalDate endDate,
+                                                                             @Param("reconciliationIds") List<String> reconciliationIds,
+                                                                             @Param("supplierType") String supplierType);
     /**
      * 根据物流跟踪单号或运单号查询物流单详情
      * @author will

@@ -61,7 +61,7 @@ public class ThirdShopStrategy implements ThirdMappingStrategy {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public BaseResultDTO.AddDTO add(ThirdMappingDTO.AddDTO addDTO) {
         //校验系统店铺是否存在
         ShopInfoEntity shopInfo = shopInfoFeign.getShopInfoById(addDTO.getSysId());
@@ -163,7 +163,7 @@ public class ThirdShopStrategy implements ThirdMappingStrategy {
 //     */
 //    @Override
 //    @Transactional(rollbackFor = Exception.class)
-//    @GlobalTransactional(rollbackFor = Exception.class)
+//    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
 //    public void saveAddDto(ThirdMappingDTO.AddDTO addDTO, List<ThirdMappingDTO.ThirdAddDTO> thirdList, List<ThirdMappingDTO.ThirdAddDTO> resultUpdatedList) {
 //        thirdList.forEach(thirdAddDTO -> {
 //            if (CollectionUtils.isNotEmpty(resultUpdatedList)) {
@@ -187,7 +187,7 @@ public class ThirdShopStrategy implements ThirdMappingStrategy {
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public void checkSysBinding(ThirdMappingDTO.AddDTO addDTO, List<ThirdMappingEntity> existMappingList, List<ThirdMappingDTO.ThirdAddDTO> thirdList,
                                 WarehouseDTO.ListDTO warehouse,
                                  List<ThirdMappingDTO.ThirdAddDTO> resultUpdatedList) {
@@ -228,7 +228,7 @@ public class ThirdShopStrategy implements ThirdMappingStrategy {
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public void deleteBinded(List<ThirdMappingEntity> existMappingList) {
         existMappingList.forEach(existMapping -> {
             // 操作日志
@@ -241,7 +241,7 @@ public class ThirdShopStrategy implements ThirdMappingStrategy {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public void makeThirdMappingDto(ThirdMappingDTO.AddDTO addDTO, ThirdMappingDTO.ThirdAddDTO thirdAddDTO, WarehouseDTO.ListDTO warehouse) {
         ThirdMappingEntity thirdMappingEntity = new ThirdMappingEntity();
         BeanMapperUtils.copy(addDTO, thirdMappingEntity);

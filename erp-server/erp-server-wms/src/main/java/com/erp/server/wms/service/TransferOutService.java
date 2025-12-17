@@ -11,6 +11,7 @@ import com.erp.model.wms.dto.TransferOutDTO;
 import com.erp.model.wms.entity.TransferOutEntity;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -103,6 +104,28 @@ public interface TransferOutService extends SuperService<TransferOutEntity> {
     void delete(List<String> ids);
 
     /**
+     * 原子批量删除分布式调出单
+     * @param ids
+     * @param returnDetails
+     * @return List<BatchResultDTO>
+     */
+    List<BatchResultDTO> deleteByIds(List<String> ids, boolean returnDetails);
+
+    /**
+     * 删除单个分布式调出单
+     * @param entity
+     * @return com.common.business.dto.base.BatchResultDTO
+     */
+    BatchResultDTO deleteEntity(TransferOutEntity entity);
+
+    /**
+     * 根据ID列表获取实体Map
+     * @param ids
+     * @return java.util.Map<java.lang.String, com.erp.model.wms.entity.TransferOutEntity>
+     */
+    Map<String, TransferOutEntity> mapByIds(List<String> ids);
+
+    /**
      * 作废
      * @param ids
      * @param remark
@@ -123,10 +146,10 @@ public interface TransferOutService extends SuperService<TransferOutEntity> {
 
     /**
      * 分步式调出单下推分布式调入单
-     * @param ids
+     * @param detailIdList
      * @return
      */
-    List<TransferOutDTO.ViewGenerateTransferInDTO> viewGenerateTransferIn(List<String> ids);
+    List<TransferOutDTO.ViewGenerateTransferInDTO> viewGenerateTransferIn(List<String> detailIdList);
 
     /**
      * 下推分布式调入单保存

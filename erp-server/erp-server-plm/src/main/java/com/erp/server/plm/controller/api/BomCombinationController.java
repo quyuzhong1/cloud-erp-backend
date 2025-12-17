@@ -4,8 +4,11 @@ import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.plm.dto.BomCombinationDTO;
 import com.erp.server.plm.service.BomCombinationService;
 import org.springframework.validation.annotation.Validated;
@@ -23,6 +26,7 @@ import javax.servlet.http.HttpServletResponse;
  */
 @RestController
 @RequestMapping("bomCombination")
+@LogSystemModule("组合产品")
 public class BomCombinationController extends BaseController {
     @Resource
     private BomCombinationService bomCombinationService;
@@ -49,6 +53,7 @@ public class BomCombinationController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/add")
+    @LogAction(value = LogActionEnum.INSERT, desc = "新增")
     public ApiResult<Object> add(@RequestBody @Validated BomCombinationDTO.AddDTO dto) {
         Boolean flag = this.bomCombinationService.add(dto);
         return flag == true ? success() : failure();
@@ -62,6 +67,7 @@ public class BomCombinationController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/update")
+    @LogAction(value = LogActionEnum.INSERT, desc = "修改")
     public ApiResult<Object> update(@RequestBody @Validated BomCombinationDTO.UpdateDTO dto) {
         Boolean flag = this.bomCombinationService.update(dto);
         return flag == true ? success() : failure();
@@ -104,6 +110,7 @@ public class BomCombinationController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/importFile")
+    @LogAction(value = LogActionEnum.IMPORT, desc = "导入")
     public ApiResult<Object> importFile(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
         Boolean flag = bomCombinationService.importFile(excelFile,response);
         return flag == true ? success() : failure();

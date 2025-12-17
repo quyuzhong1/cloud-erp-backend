@@ -10,33 +10,39 @@
  * Do not edit the class manually.
  */
 
-
 package com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound;
 
+import java.util.Objects;
+import java.util.Arrays;
+import com.google.gson.TypeAdapter;
+import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.annotations.SerializedName;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonWriter;
+import com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound.FulfillmentPreviewItemList;
 
-
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
-
+import java.time.OffsetDateTime;
 /**
  * Delivery and item information for a shipment in a fulfillment order preview.
  */
 
-@javax.annotation.Generated(value = "io.swagger.codegen.languages.JavaClientCodegen", date = "2020-12-15T20:44:18.412+08:00")
+@javax.annotation.Generated(value = "io.swagger.codegen.v3.generators.java.JavaClientCodegen", date = "2025-08-18T09:55:11.594451100+08:00[Asia/Shanghai]")
+
 public class FulfillmentPreviewShipment {
   @SerializedName("earliestShipDate")
-  private String earliestShipDate = null;
+  private OffsetDateTime earliestShipDate = null;
 
   @SerializedName("latestShipDate")
-  private String latestShipDate = null;
+  private OffsetDateTime latestShipDate = null;
 
   @SerializedName("earliestArrivalDate")
-  private String earliestArrivalDate = null;
+  private OffsetDateTime earliestArrivalDate = null;
 
   @SerializedName("latestArrivalDate")
-  private String latestArrivalDate = null;
+  private OffsetDateTime latestArrivalDate = null;
 
   @SerializedName("shippingNotes")
   private List<String> shippingNotes = null;
@@ -44,75 +50,75 @@ public class FulfillmentPreviewShipment {
   @SerializedName("fulfillmentPreviewItems")
   private FulfillmentPreviewItemList fulfillmentPreviewItems = null;
 
-  public FulfillmentPreviewShipment earliestShipDate(String earliestShipDate) {
+  public FulfillmentPreviewShipment earliestShipDate(OffsetDateTime earliestShipDate) {
     this.earliestShipDate = earliestShipDate;
     return this;
   }
 
    /**
-   * The earliest date that the shipment is expected to be sent from the fulfillment center, in ISO 8601 date time format.
+   * Get earliestShipDate
    * @return earliestShipDate
   **/
-
-  public String getEarliestShipDate() {
+  
+  public OffsetDateTime getEarliestShipDate() {
     return earliestShipDate;
   }
 
-  public void setEarliestShipDate(String earliestShipDate) {
+  public void setEarliestShipDate(OffsetDateTime earliestShipDate) {
     this.earliestShipDate = earliestShipDate;
   }
 
-  public FulfillmentPreviewShipment latestShipDate(String latestShipDate) {
+  public FulfillmentPreviewShipment latestShipDate(OffsetDateTime latestShipDate) {
     this.latestShipDate = latestShipDate;
     return this;
   }
 
    /**
-   * The latest date that the shipment is expected to be sent from the fulfillment center, in ISO 8601 date time format.
+   * Get latestShipDate
    * @return latestShipDate
   **/
-
-  public String getLatestShipDate() {
+  
+  public OffsetDateTime getLatestShipDate() {
     return latestShipDate;
   }
 
-  public void setLatestShipDate(String latestShipDate) {
+  public void setLatestShipDate(OffsetDateTime latestShipDate) {
     this.latestShipDate = latestShipDate;
   }
 
-  public FulfillmentPreviewShipment earliestArrivalDate(String earliestArrivalDate) {
+  public FulfillmentPreviewShipment earliestArrivalDate(OffsetDateTime earliestArrivalDate) {
     this.earliestArrivalDate = earliestArrivalDate;
     return this;
   }
 
    /**
-   * The earliest date that the shipment is expected to arrive at its destination.
+   * Get earliestArrivalDate
    * @return earliestArrivalDate
   **/
-
-  public String getEarliestArrivalDate() {
+  
+  public OffsetDateTime getEarliestArrivalDate() {
     return earliestArrivalDate;
   }
 
-  public void setEarliestArrivalDate(String earliestArrivalDate) {
+  public void setEarliestArrivalDate(OffsetDateTime earliestArrivalDate) {
     this.earliestArrivalDate = earliestArrivalDate;
   }
 
-  public FulfillmentPreviewShipment latestArrivalDate(String latestArrivalDate) {
+  public FulfillmentPreviewShipment latestArrivalDate(OffsetDateTime latestArrivalDate) {
     this.latestArrivalDate = latestArrivalDate;
     return this;
   }
 
    /**
-   * The latest date that the shipment is expected to arrive at its destination, in ISO 8601 date time format.
+   * Get latestArrivalDate
    * @return latestArrivalDate
   **/
-
-  public String getLatestArrivalDate() {
+  
+  public OffsetDateTime getLatestArrivalDate() {
     return latestArrivalDate;
   }
 
-  public void setLatestArrivalDate(String latestArrivalDate) {
+  public void setLatestArrivalDate(OffsetDateTime latestArrivalDate) {
     this.latestArrivalDate = latestArrivalDate;
   }
 
@@ -133,7 +139,7 @@ public class FulfillmentPreviewShipment {
    * Provides additional insight into the shipment timeline when exact delivery dates are not able to be precomputed.
    * @return shippingNotes
   **/
-
+  
   public List<String> getShippingNotes() {
     return shippingNotes;
   }
@@ -148,10 +154,10 @@ public class FulfillmentPreviewShipment {
   }
 
    /**
-   * Information about the items in the shipment.
+   * Get fulfillmentPreviewItems
    * @return fulfillmentPreviewItems
   **/
-
+  
   public FulfillmentPreviewItemList getFulfillmentPreviewItems() {
     return fulfillmentPreviewItems;
   }
@@ -162,7 +168,7 @@ public class FulfillmentPreviewShipment {
 
 
   @Override
-  public boolean equals(Object o) {
+  public boolean equals(java.lang.Object o) {
     if (this == o) {
       return true;
     }
@@ -203,7 +209,7 @@ public class FulfillmentPreviewShipment {
    * Convert the given object to string with each line indented by 4 spaces
    * (except the first line).
    */
-  private String toIndentedString(Object o) {
+  private String toIndentedString(java.lang.Object o) {
     if (o == null) {
       return "null";
     }
@@ -211,4 +217,3 @@ public class FulfillmentPreviewShipment {
   }
 
 }
-

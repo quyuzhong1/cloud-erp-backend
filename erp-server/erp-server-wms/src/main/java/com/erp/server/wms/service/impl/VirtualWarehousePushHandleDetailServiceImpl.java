@@ -72,7 +72,7 @@ public class VirtualWarehousePushHandleDetailServiceImpl extends SuperServiceImp
     private DmpMqFeign dmpMqFeign;
     private String splitStr = "_&_";
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(VirtualWarehousePushHandleDetailDTO.AddDTO addDTO) {
@@ -138,7 +138,7 @@ public class VirtualWarehousePushHandleDetailServiceImpl extends SuperServiceImp
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-//    @GlobalTransactional(rollbackFor = Exception.class)
+//    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public void handleDetail(VirtualWarehouseAllocationEntity allocationEntity, VirtualWarehousePushHandleEntity pushHandleEntity) {
         //获取所有明细
         List<VirtualWarehouseAllocationDetailEntity> vmAllocationDetailList = virtualWarehouseAllocationDetailService.list(new LambdaQueryWrapper<VirtualWarehouseAllocationDetailEntity>()

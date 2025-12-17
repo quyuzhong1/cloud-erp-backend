@@ -54,7 +54,7 @@ public class TeMuAuthorize implements IShopAuthorizeService<T> {
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public String getShopAuthorizeUrl(ShopAuthorizeUrlDTO dto) {
         throw new ServiceException("授权功能未开通");
     }

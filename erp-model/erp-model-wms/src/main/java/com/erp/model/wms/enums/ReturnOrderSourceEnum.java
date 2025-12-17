@@ -1,7 +1,10 @@
 package com.erp.model.wms.enums;
 
 import com.baomidou.mybatisplus.annotation.EnumValue;
+import com.common.business.enums.SourceTypeEnum;
 import com.fasterxml.jackson.annotation.JsonValue;
+
+import java.util.Objects;
 
 public enum ReturnOrderSourceEnum {
 
@@ -48,5 +51,15 @@ public enum ReturnOrderSourceEnum {
             }
         }
         return "";
+    }
+
+    /**
+     * 退货来源（页面）
+     * @param sourceType 数据库sourceType
+     * @return ReturnOrderSourceEnum
+     */
+    public static ReturnOrderSourceEnum checkLastReturnOrderSource(String sourceType) {
+        return Objects.equals(sourceType, SourceTypeEnum.QC_INFO.getCode()) ?
+                ReturnOrderSourceEnum.QC : ReturnOrderSourceEnum.OTHER;
     }
 }

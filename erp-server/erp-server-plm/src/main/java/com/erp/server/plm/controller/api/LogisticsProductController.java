@@ -300,6 +300,46 @@ public class LogisticsProductController extends BaseController {
         return success();
     }
 
+
+    /**
+     * 更新出口申报价
+     * @return
+     */
+    @LogAction(value = LogActionEnum.IMPORT, desc = "更新出口申报价")
+    @PostMapping("/importUpdateDeclarePrice")
+    public ApiResult<Object> importUpdateDeclarePrice(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
+        Boolean result = logisticsProductService.importUpdateDeclarePrice(excelFile, response);
+        return result ? success() : failure();
+    }
+
+
+    /**
+     * 下载更新出口申报价模板
+     */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "下载模板更新出口申报价")
+    @GetMapping("/exportDeclarePriceTemplate")
+    public ApiResult<Object> exportDeclarePriceTemplate(HttpServletRequest request, HttpServletResponse response) {
+        String path = "classpath:excel/declarePriceTemplate.xlsx";
+        String excelName = "template.xlsx";
+        ResourceLoader resourceLoader = new DefaultResourceLoader();
+        try {
+            InputStream inputStream = resourceLoader.getResource(path).getInputStream();
+            XSSFWorkbook wb = new XSSFWorkbook(inputStream);
+            // 输出Excel文件
+            OutputStream output = response.getOutputStream();
+            response.reset();
+            // 设置文件头
+            response.setHeader("Content-Disposition",
+                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), StandardCharsets.ISO_8859_1));
+            response.setContentType("application/msexcel");
+            wb.write(output);
+            wb.close();
+        } catch (Exception e) {
+            throw new ServiceException(ApiError.ERROR_95131);
+        }
+        return success();
+    }
+
     /**
      * 已审核备案SKU下拉
      * @author Will

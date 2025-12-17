@@ -59,7 +59,7 @@ public class NewProductListingTimeCustomer implements RocketMQListener<String> {
 				}
 			}else {
 				List<ListingInfoEntity> listingInfoEntityList = FeignQuery.create(ListingInfoEntity.class)
-						.eq(ListingInfoEntity::getType, RuleTypeEnum.PLATFORM.getCode())
+						.eq(ListingInfoEntity::getType, RuleTypeEnum.B2C_PLATFORM.getCode())
 						.eq(ListingInfoEntity::getPlatformSkuNo, platformSkuNo)
 						.last(" and LOWER(platform) = LOWER('"+ sourcePlatform +"') ")
 						.list();
@@ -68,7 +68,7 @@ public class NewProductListingTimeCustomer implements RocketMQListener<String> {
 					}
 					ListingInfoEntity listingInfoEntity = listingInfoEntityList.get(0);
 					List<SkuMappingEntity> skuMappingEntityList = FeignQuery.create(SkuMappingEntity.class)
-						.eq(SkuMappingEntity::getType, RuleTypeEnum.PLATFORM.getCode())
+						.eq(SkuMappingEntity::getType, RuleTypeEnum.B2C_PLATFORM.getCode())
 						.eq(SkuMappingEntity::getIsExpire, false)
 						.eq(SkuMappingEntity::getDictPlatform, listingInfoEntity.getPlatform())
 						.in(SkuMappingEntity::getListingId, listingInfoEntityList.stream().map(ListingInfoEntity::getId).collect(Collectors.toList()))

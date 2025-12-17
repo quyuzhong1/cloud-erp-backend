@@ -63,7 +63,7 @@ public class SysLogRecordServiceImpl extends SuperServiceImpl<LogRecordMapper, S
         });
     }
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void consumerAndAdd(SysLogMqDTO mqDTO) {

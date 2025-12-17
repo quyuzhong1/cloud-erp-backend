@@ -38,7 +38,7 @@ import org.thymeleaf.util.StringUtils;
 @Service
 public class DmpSoDetailServiceImpl extends SuperServiceImpl<DmpSoDetailMapper, DmpSoDetailEntity> implements DmpSoDetailService {
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(DmpSoDetailDTO.AddDTO addDTO) {

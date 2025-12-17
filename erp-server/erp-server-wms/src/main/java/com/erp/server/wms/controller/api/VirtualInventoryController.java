@@ -6,9 +6,11 @@ import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.wms.dto.VirtualInventoryDTO;
 import com.erp.model.wms.dto.VirtualTransFlowDTO;
 import com.erp.server.wms.service.VirtualInventoryService;
@@ -78,6 +80,7 @@ public class VirtualInventoryController extends BaseController {
      */
     @PostMapping("/exportExcel")
     @WebAdvanceQuery
+    @LogAction(value = LogActionEnum.EXPORT, desc = "虚拟仓库导出")
     public ApiResult exportExcel(@RequestBody VirtualInventoryDTO.SearchParamDTO dto) {
         Boolean flag = virtualInventoryService.exportExcel(dto);
         return flag == true ? success() : failure();

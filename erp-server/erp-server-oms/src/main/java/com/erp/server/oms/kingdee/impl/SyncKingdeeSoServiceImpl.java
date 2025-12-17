@@ -130,6 +130,9 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
     @Resource
     private PlmTaskFeign plmTaskFeign;
 
+    @Resource
+    private SoReceiptService soReceiptService;
+
     /**
      * 销售订单同步金碟
      *
@@ -504,13 +507,41 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
             resultMap.put("receiveAmount", entity.getReceiveAmount());
         }
         // 收款账号
-        String receiveAccount = entity.getReceiveAccount();
-        if (StrUtils.isNotEmpty(receiveAccount)) {
-            BankAccountEntity bankAccount = bankAccountService.getById(receiveAccount);
-            if (Objects.nonNull(bankAccount)) {
-                resultMap.put("receiveAccount", bankAccount.getBankAccountNo());
+        List<SoReceiptEntity> soReceiptEntityList = soReceiptService.listBySoId(entity.getId());
+        //过滤已审核并且有收款账号按照创建时间排序
+        if (CollectionUtils.isNotEmpty(soReceiptEntityList)) {
+            List<SoReceiptEntity> filteredList = soReceiptEntityList.stream()
+                    .filter(soReceiptEntity -> ApproveStatusEnum.APPROVE.equals(soReceiptEntity.getApproveStatus())
+                            && StrUtils.isNotEmpty(soReceiptEntity.getReceiptAccount()))
+                    .sorted(Comparator.comparing(SoReceiptEntity::getCreateTime))
+                    .collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(filteredList)) {
+                resultMap.put("receiveDate", LocalDateTimeUtil.format(filteredList.get(0).getReceiptDate(), DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+                DictBasicEntity dictBasicEntity = receiveMethodList.stream().filter(obj -> Objects.equals(obj.getValue(), filteredList.get(0).getDictReceiptMethod())).findFirst().orElse(null);
+                if (Objects.nonNull(dictBasicEntity)) {
+                    resultMap.put("receiveMethod", dictBasicEntity.getRemark());
+                }
+                BankAccountEntity bankAccount = bankAccountService.getById(filteredList.get(0).getReceiptAccount());
+                if (Objects.nonNull(bankAccount)) {
+                    resultMap.put("receiveAccount", bankAccount.getBankAccountNo());
+                }
+            }else if (StringUtils.isNotBlank(entity.getReceiveAccount())) {
+                //如果没有已审核的收款单，则使用订单上的收款账号
+                BankAccountEntity bankAccount = bankAccountService.getById(entity.getReceiveAccount());
+                if (Objects.nonNull(bankAccount)) {
+                    resultMap.put("receiveAccount", bankAccount.getBankAccountNo());
+                }
+            }
+        }else{
+            if (StringUtils.isNotBlank(entity.getReceiveAccount())) {
+                //如果没有已审核的收款单，则使用订单上的收款账号
+                BankAccountEntity bankAccount = bankAccountService.getById(entity.getReceiveAccount());
+                if (Objects.nonNull(bankAccount)) {
+                    resultMap.put("receiveAccount", bankAccount.getBankAccountNo());
+                }
             }
         }
+
 
         //报关费 贸易条件
         BigDecimal customsFee = entity.getCustomsFee();
@@ -529,6 +560,8 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
         BigDecimal exchangeRate = Objects.isNull(details.get(0).getExchangeRate()) || details.get(0).getExchangeRate().compareTo(BigDecimal.ZERO) == 0 ? MathUtil.BigDecimal_1 : details.get(0).getExchangeRate();
         //汇率
         resultMap.put("exchangeRate", exchangeRate);
+        //备注
+        resultMap.put("remark", entity.getRemark());
         //要货日期
         LocalDate requireDate = entity.getRequireDate();
         List<JSONObject> list = new ArrayList<>(details.size());
@@ -547,15 +580,15 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
             BigDecimal discountAmount = Objects.nonNull(item.getDiscountAmount()) ? item.getDiscountAmount() : BigDecimal.ZERO;
             jsonObject.set("amount", item.getAmount().add(discountAmount).setScale(4, BigDecimal.ROUND_HALF_UP));
             //单位
-            String unit = item.getUnit();
+            String unit = item.getUnitName();
             jsonObject.set("unit", StringUtils.isNotBlank(unit) ? unit : "Pcs");
             jsonObject.set("warehouseOrgCode", warehouseOrgCode);
             jsonObject.set("curInventoryQty", item.getQty());
             jsonObject.set("stockBaseQty", item.getQty());
             jsonObject.set("kingdeeWarehouseCode", kingdeeWarehouseCode);
-            jsonObject.set("remark", item.getRemark());
             jsonObject.set("detailDiscountAmount", discountAmount);
             jsonObject.set("customerPO", item.getCustomerPO());
+            jsonObject.set("detailRemark", item.getRemark());
             list.add(jsonObject);
         }
 
@@ -837,11 +870,11 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
                 // 国家名称
                 countryName = dictCountryEntity.getShortNameCn();
                 // 区域编码
-                regionCode = dictCountryEntity.getSubregionCode();
+                regionCode = dictCountryEntity.getRegionCode();
                 // 区域名称
                 DictGlobalAreaEntity dictGlobalAreaEntity = dictGlobalEntityList.stream().filter(e -> e.getId().equalsIgnoreCase(dictCountryEntity.getSubregionCode())).findFirst().orElse(null);
                 if (null != dictGlobalAreaEntity){
-                    regionName = dictGlobalAreaEntity.getSubregionName();
+                    regionName = dictGlobalAreaEntity.getRegionName();
                 }
             }
         }

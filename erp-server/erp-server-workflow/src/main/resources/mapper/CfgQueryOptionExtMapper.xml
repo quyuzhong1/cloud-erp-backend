@@ -31,6 +31,12 @@
         is_deleted,
         cfg_query_option_id, type, class_path, data_json
     </sql>
+    <insert id="insertSave">
+        insert into cfg_query_option_ext(id, create_user_id, create_user_name, create_time, update_user_id, update_user_name, update_time, version, is_deleted, cfg_query_option_id, type, class_path, data_json) values (#{id}, #{createUserId}, #{createUserName}, #{createTime}, #{updateUserId}, #{updateUserName}, #{updateTime}, #{version}, #{isDeleted}, #{cfgQueryOptionId}, #{type}, #{classPath},   CAST(
+                #{dataJson, typeHandler=com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler}
+            AS jsonb
+                                                                                                                                                                                                                                                                                                                                                                                                               ))
+    </insert>
 
 
 </mapper>

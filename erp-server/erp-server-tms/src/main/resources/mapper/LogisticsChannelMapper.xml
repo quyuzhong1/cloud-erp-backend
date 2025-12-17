@@ -40,6 +40,7 @@
         <!-- 嵌套 Compare 列表 -->
         <collection property="channelDTOList" ofType="com.erp.model.tms.dto.LogisticsChannelDTO$WarehouseChannelDTO$ChannelDTO">
             <result property="platformLogisticsChannelId" column="id"/>
+            <result property="platformLogisticsChannelCode" column="code"/>
             <result property="platformLogisticsChannelName" column="name"/>
         </collection>
     </resultMap>
@@ -188,14 +189,21 @@
         ls.short_name as logisticsSupplierName
         from logistics_channel lc
         left join logistics_supplier ls on ls.id = lc.main_id and ls.is_deleted = false
+        left join logistics_auth la on ls.id = la.main_id and la.is_deleted = false
         where
         lc.is_deleted = false
           and ls.id is not null
         <if test="params.searchKeyword != null and params.searchKeyword != ''">
             and ((lc.code = #{params.searchKeyword}) or (lc.id = #{params.searchKeyword})  or lc.name ilike concat('%', #{params.searchKeyword}::text ,'%'))
         </if>
+        <if test="params.supplierId != null and params.supplierId != ''">
+            and ls.id = #{params.supplierId}
+        </if>
         <if test="params.disabled != null">
             and lc.disabled=#{params.disabled}
+        </if>
+        <if test="params.logisticsPlatform != null and params.logisticsPlatform != ''">
+            and la.logistics_platform = #{params.logisticsPlatform}
         </if>
         order by lc.disabled asc,
         <if test="params.searchKeyword != null and params.searchKeyword != ''">
@@ -331,7 +339,7 @@
 
     <select id="listWarehouseChannel"
             resultMap="warehouseChannelMap">
-        SELECT   lcw.overseas_warehouse_id,lc.id,lc.name
+        SELECT   lcw.overseas_warehouse_id,lc.id,lc.name,lc.code
         from logistics_channel lc
                  inner join logistics_supplier ls on ls.id = lc.main_id
                  inner join logistics_warehouse lcw on ls.id = lcw.main_id
@@ -355,6 +363,27 @@
         <foreach collection="platformCodeList" separator="," open="(" close=")" item="item">
             #{item}
         </foreach>
+    </select>
+    <select id="getByPlatformWarehouseAndType" resultType="com.erp.model.wms.dto.DictBasicDTO$DropDownDTO">
+        select  lc.code,lc.cn_name as name,true as status from logistics_sale_channel lc
+        where lc.is_deleted = false and lc.overseas_warehouse_id = #{dto.platformWarehouseId}
+        <if test="dto.channelType != null and dto.channelType != ''">
+            and lc.channel_type = #{dto.channelType}
+        </if>
+    </select>
+     <select id="getChannelByCodeAndPlatform" resultType="com.erp.model.tms.dto.LogisticsChannelDTO$BaseDTO">
+        SELECT
+            lc.id,
+            lc.code,
+            lc."name",
+            lc.main_id as mainId,
+            ls.supplier_id as supplierId
+        FROM logistics_channel lc
+                 LEFT JOIN logistics_auth la ON la.main_id = lc.main_id and la.is_deleted=false
+                 LEFT JOIN logistics_supplier ls ON ls.id = lc.main_id and ls.is_deleted=false
+        where lc.is_deleted= false
+          and lc.code = #{channelCode}
+          and la.logistics_platform = #{logisticsPlatform}
     </select>
 
 

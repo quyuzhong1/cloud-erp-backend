@@ -85,6 +85,14 @@ public class PlatformSoOutStockDetailDTO implements Serializable {
      * 仓储中心(亚马逊专用)
      */
     private String fulfillmentCenterId;
+    /**
+     * 卖家订单id
+     */
+    private String merchantOrderId;
+    /**
+     * 卖家订单明细id
+     */
+    private String merchantOrderItemId;
 
     public LocalDate convertPlatformDeliveryDateTime() {
         LocalDateTime localDateTime = DateUtil.parseLocalDateTimeWithOffset(this.getPlatformDeliveryTime());

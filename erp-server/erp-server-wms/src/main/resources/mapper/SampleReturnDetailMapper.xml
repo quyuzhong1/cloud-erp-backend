@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.wms.mapper.SampleReturnDetailMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.wms.entity.SampleReturnDetailEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="main_id" property="mainId" />
+       <result column="source_detail_id" property="sourceDetailId" />
+       <result column="sku_id" property="skuId" />
+       <result column="sku_no" property="skuNo" />
+       <result column="product_name" property="productName" />
+       <result column="return_qty" property="returnQty" />
+       <result column="remark" property="remark" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        srd.id as id,
+srd.create_user_id as createUserId,
+srd.create_user_name as createUserName,
+srd.create_time as createTime,
+srd.update_user_id as updateUserId,
+srd.update_user_name as updateUserName,
+srd.update_time as updateTime,
+srd.version as version,
+srd.is_deleted as isDeleted,
+srd.main_id as mainId,
+srd.source_detail_id as sourceDetailId,
+srd.sku_id as skuId,
+srd.sku_no as skuNo,
+srd.product_name as productName,
+srd.return_qty as returnQty,
+srd.remark as remark
+    </sql>
+
+
+</mapper>

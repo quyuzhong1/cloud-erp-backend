@@ -121,6 +121,7 @@ public class SubcontractReturnController extends BaseController {
     * @return ApiResult<Void>
     */
     @PostMapping("/addAndSubmit")
+    @LogAction(value = LogActionEnum.ADD_AND_SUBMIT, desc = "新增并提交审核")
     public ApiResult<BaseResultDTO.AddDTO> addAndSubmit(@RequestBody @Validated SubcontractReturnDTO.AddDTO dto) {
         BaseResultDTO.AddDTO result = subcontractReturnService.addAndSubmit(dto);
         return success(result);
@@ -139,6 +140,7 @@ public class SubcontractReturnController extends BaseController {
             menuCode = "wms:subcontractReturn:updateAndSubmit",
             serviceClass = SubcontractReturnService.class,
             keyIdName = "id")
+    @LogAction(value = LogActionEnum.UPDATE_AND_SUBMIT, desc = "修改并提交审核")
     public ApiResult<Void> updateAndSubmit(@RequestBody @Validated SubcontractReturnDTO.UpdateDTO dto) {
         subcontractReturnService.updateAndSubmit(dto);
         return success();

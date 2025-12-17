@@ -59,7 +59,7 @@ public class PoReturnController extends BaseController {
      **/
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "return_user_id",
+            tableField = "return_user_id,create_user_id",
             warehouseTableField = "pro.return_warehouse_id",
             menuCode = "wms:purchaseReturnOrder:paging",
             tableAlias = "pro"
@@ -79,7 +79,7 @@ public class PoReturnController extends BaseController {
      **/
     @PostMapping("/listCount")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "return_user_id",
+            tableField = "return_user_id,create_user_id",
             warehouseTableField = "pro.return_warehouse_id",
             menuCode = "wms:purchaseReturnOrder:paging",
             tableAlias = "pro")
@@ -112,7 +112,7 @@ public class PoReturnController extends BaseController {
     @LogAction(value = LogActionEnum.UPDATE, desc = "修改采购退货单")
     @PostMapping("/update")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "purchase_user_id,return_user_id",
+            tableField = "purchase_user_id,return_user_id,create_user_id",
             menuCode = "wms:purchaseReturnOrder:update",
             serviceClass = PoReturnService.class,
             keyIdName = "id")
@@ -131,7 +131,7 @@ public class PoReturnController extends BaseController {
     @LogViewService
     @GetMapping("/view")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "return_user_id",
+            tableField = "return_user_id,create_user_id",
             menuCode = "wms:purchaseReturnOrder:view",
             serviceClass = PoReturnService.class,
             keyIdName = "id")
@@ -150,7 +150,7 @@ public class PoReturnController extends BaseController {
     @LogAction(value = LogActionEnum.SUBMIT, desc = "提交采购退货单")
     @PostMapping("/submit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "purchase_user_id,return_user_id",
+            tableField = "purchase_user_id,return_user_id,create_user_id",
             menuCode = "wms:purchaseReturnOrder:submit",
             serviceClass = PoReturnService.class,
             keyIdName = "ids")
@@ -183,7 +183,7 @@ public class PoReturnController extends BaseController {
     @LogAction(value = LogActionEnum.ADD_AND_SUBMIT, desc = "新增并提交采购退货单")
     @PostMapping("/addAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "purchase_user_id,return_user_id",
+            tableField = "purchase_user_id,return_user_id,create_user_id",
             menuCode = "wms:purchaseReturnOrder:add",
             serviceClass = PoReturnService.class,
             keyIdName = "id")
@@ -202,7 +202,7 @@ public class PoReturnController extends BaseController {
     @LogAction(value = LogActionEnum.UPDATE_AND_SUBMIT, desc = "修改并提交采购退货单")
     @PostMapping("/updateAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "purchase_user_id,return_user_id",
+            tableField = "purchase_user_id,return_user_id,create_user_id",
             menuCode = "wms:purchaseReturnOrder:update",
             serviceClass = PoReturnService.class,
             keyIdName = "id")
@@ -221,7 +221,7 @@ public class PoReturnController extends BaseController {
     @LogAction(value = LogActionEnum.APPROVE, desc = "审核采购退货单")
     @PostMapping("/approve")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "purchase_user_id,return_user_id",
+            tableField = "purchase_user_id,return_user_id,create_user_id",
             menuCode = "wms:purchaseReturnOrder:approve",
             serviceClass = PoReturnService.class,
             keyIdName = "ids")
@@ -257,7 +257,7 @@ public class PoReturnController extends BaseController {
     @LogAction(value = LogActionEnum.DISAPPROVE, desc = "反审核采购退货单")
     @PostMapping("/disApprove")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "purchase_user_id,return_user_id",
+            tableField = "purchase_user_id,return_user_id,create_user_id",
             menuCode = "wms:purchaseReturnOrder:disApprove",
             serviceClass = PoReturnService.class,
             keyIdName = "ids")
@@ -292,7 +292,7 @@ public class PoReturnController extends BaseController {
     @LogAction(value = LogActionEnum.CANCEL, desc = "撤销采购退货单")
     @PostMapping("/cancelProcess")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "purchase_user_id,return_user_id",
+            tableField = "purchase_user_id,return_user_id,create_user_id",
             menuCode = "wms:purchaseReturnOrder:cancelProcess",
             serviceClass = PoReturnService.class,
             keyIdName = "ids")
@@ -325,7 +325,7 @@ public class PoReturnController extends BaseController {
     @LogAction(value = LogActionEnum.INVALID, desc = "作废采购退货单")
     @PostMapping("/invalid")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "purchase_user_id,return_user_id",
+            tableField = "purchase_user_id,return_user_id,create_user_id",
             menuCode = "wms:purchaseReturnOrder:invalid",
             serviceClass = PoReturnService.class,
             keyIdName = "ids")
@@ -359,7 +359,7 @@ public class PoReturnController extends BaseController {
     @LogAction(value = LogActionEnum.DELETE, desc = "删除采购退货单")
     @PostMapping("/delete")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "purchase_user_id,return_user_id",
+            tableField = "purchase_user_id,return_user_id,create_user_id",
             menuCode = "wms:purchaseReturnOrder:delete",
             serviceClass = PoReturnService.class,
             keyIdName = "ids")

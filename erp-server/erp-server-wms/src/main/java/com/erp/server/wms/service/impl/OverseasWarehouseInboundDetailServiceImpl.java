@@ -66,7 +66,7 @@ public class OverseasWarehouseInboundDetailServiceImpl extends SuperServiceImpl<
     @Resource
     private FirstMileChangeRecordFeign firstMileChangeRecordFeign;
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(OverseasWarehouseInboundDetailDTO.AddDTO addDTO) {
@@ -168,7 +168,7 @@ public class OverseasWarehouseInboundDetailServiceImpl extends SuperServiceImpl<
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public List<BatchResultDTO> allManualReceived(List<OverseasWarehouseInboundDTO.ReceivedDTO> dtoList) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dtoList.size());
 
@@ -268,28 +268,36 @@ public class OverseasWarehouseInboundDetailServiceImpl extends SuperServiceImpl<
             OverseasWarehouseInboundEntity mainEntity = mainResultMap.get(entry.getKey());
 
             // 生成直接调拨单
-            String transferOutId = overseasWarehouseInboundService.generateTransferOut(mainEntity, entry.getValue(), receiverdMap);
-            if (CharSequenceUtil.isNotBlank(transferOutId)) {
-                TransferInfoEntity entity = transferInfoService.getById(transferOutId);
-                if (ObjUtil.isEmpty(entity)) {
-                    throw new ServiceException(ApiError.ERROR_99047);
+            try {
+                UserContext.setIsUserSystem(true);
+                String transferOutId = overseasWarehouseInboundService.generateTransferOut(mainEntity, entry.getValue(), receiverdMap);
+                if("".equals(transferOutId)){
+                    continue;
                 }
-                //提交
-                transferInfoService.submit(entity, Boolean.FALSE);
-                //审核
-                if (Objects.nonNull(entity)){
-                    try {
-                        TransferInfoEntity approveEntity = transferInfoService.getById(transferOutId);
-                        if (ObjUtil.isEmpty(approveEntity)) {
-                            throw new ServiceException(ApiError.ERROR_99047);
-                        }
-                        transferInfoService.approve(approveEntity,ApproveType.PASS,"", null , Boolean.TRUE, Boolean.FALSE);
-                    }catch (Exception e){
-                        throw new ServiceException(e.getMessage());
+                if (CharSequenceUtil.isNotBlank(transferOutId)) {
+                    TransferInfoEntity entity = transferInfoService.getById(transferOutId);
+                    if (ObjUtil.isEmpty(entity)) {
+                        throw new ServiceException(ApiError.ERROR_99047);
                     }
+                    //提交
+                    transferInfoService.submit(entity, Boolean.FALSE);
+                    //审核
+                    if (Objects.nonNull(entity)){
+                        try {
+                            TransferInfoEntity approveEntity = transferInfoService.getById(transferOutId);
+                            if (ObjUtil.isEmpty(approveEntity)) {
+                                throw new ServiceException(ApiError.ERROR_99047);
+                            }
+                            transferInfoService.approve(approveEntity,ApproveType.PASS,"", null , Boolean.TRUE, Boolean.FALSE);
+                        }catch (Exception e){
+                            throw new ServiceException(e.getMessage());
+                        }
+                    }
+                } else {
+                    throw new ServiceException(ApiError.ERROR_GENERATE_TRANSFER_OUT);
                 }
-            } else {
-                throw new ServiceException(ApiError.ERROR_GENERATE_TRANSFER_OUT);
+            }finally {
+                UserContext.clearIsUserSystem();
             }
         }
         List<OverseasWarehouseInboundDetailEntity> allDetailEntityList = this.getByMainIds(mainIdList);

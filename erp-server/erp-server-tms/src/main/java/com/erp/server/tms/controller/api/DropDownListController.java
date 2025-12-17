@@ -46,6 +46,7 @@ public class DropDownListController extends BaseController {
      * diffOption 差异
      * logisticTrackStatus 物流运输状态
      * changeRange 修改范围
+     * firstSupplierType 头程对账单类型
      *
      * @return
      */

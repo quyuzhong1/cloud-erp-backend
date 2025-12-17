@@ -28,7 +28,7 @@ import java.util.Optional;
 public class PdaUserSkipVersionServiceImpl extends SuperServiceImpl<PdaUserSkipVersionMapper, PdaUserSkipVersionEntity> implements PdaUserSkipVersionService {
 
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public String add(PdaUserSkipVersionDTO.AddDTO addDTO) {

@@ -4,6 +4,7 @@ package com.erp.server.sys.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.common.business.dto.base.BasePagingSearchDTO;
 import com.common.business.dto.base.BaseSearchDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.sys.dto.SysPostDTO;
@@ -25,7 +26,7 @@ public interface SysPostService extends IService<SysPostEntity> {
 
     PagingVO paging(PagingDTO<BasePagingSearchDTO> dto);
 
-    boolean removePostByIds(List<String> ids);
+    List<BatchResultDTO>  removePostByIds(List<String> ids);
 
     List<SysPostEntity> findPost(BaseSearchDTO dto);
 

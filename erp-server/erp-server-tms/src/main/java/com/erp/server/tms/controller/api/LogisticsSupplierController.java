@@ -12,6 +12,7 @@ import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
+import com.erp.model.tms.dto.LogisticsChannelDTO;
 import com.erp.model.tms.dto.LogisticsSupplierDTO;
 import com.erp.model.tms.entity.LogisticsSupplierEntity;
 import com.erp.server.tms.query.LogisticsSupplierQueryHandler;
@@ -115,6 +116,7 @@ public class LogisticsSupplierController extends BaseController {
         menuCode = "tms:logisticsSupplier:update",
         serviceClass = LogisticsSupplierService.class,
         keyIdName = "id")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "修改物流商单数据")
     public ApiResult<Object>update(@RequestBody @Validated LogisticsSupplierDTO.UpdateDTO dto) {
         logisticsSupplierService.update(dto);
         return success();
@@ -239,5 +241,15 @@ public class LogisticsSupplierController extends BaseController {
     public ApiResult<List<LogisticsSupplierDTO.LogisticsSupplierListDTO>> listLogisticsChannel(@RequestBody BaseIdsDTO.IdsDTO dto) {
         List<LogisticsSupplierDTO.LogisticsSupplierListDTO> list = logisticsSupplierService.listLogisticsChannel(dto.getIds());
         return success(list);
+    }
+
+
+    /**
+     * 物流商下拉远程搜索
+     * @return
+     */
+    @PostMapping("pagingSelect")
+    public ApiResult<PagingVO<LogisticsSupplierDTO.PagingSelectDTO>> pagingSelect(@RequestBody @Validated PagingDTO<LogisticsSupplierDTO.SelectDTO> dto){
+        return success(logisticsSupplierService.pagingSelect(dto));
     }
 }

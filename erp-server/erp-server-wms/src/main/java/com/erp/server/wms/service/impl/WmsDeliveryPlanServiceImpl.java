@@ -134,7 +134,7 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
     @Resource
     private AuthDataFeign authDataFeign;
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(WmsDeliveryPlanDTO.AddDTO addDTO) {
@@ -225,7 +225,7 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
         // 仓库权限
         String warehousePermissionSql = authDataFeign.getWarehousePermissionSql("odp.to_warehouse_id");
         warehousePermissionSql = CharSequenceUtil.isBlank(warehousePermissionSql)? " AND 1=1 " : warehousePermissionSql;
-        return CharSequenceUtil.format("{} and ((odp.type = 'fba' {}) or (odp.type = 'thirdWarehouse' {}))", permissionSql, shopPermissionSql, warehousePermissionSql);
+        return CharSequenceUtil.format("{} and ((odp.type = 'fba' {}) or (odp.type = 'thirdWarehouse' {}) or (odp.type = 'AliExpress' {}))", permissionSql, shopPermissionSql, warehousePermissionSql,shopPermissionSql);
     }
 
     @Override
@@ -273,7 +273,7 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.SUBMIT);
     }
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO addAndSubmit(WmsDeliveryPlanDTO.AddDTO dto) {
@@ -284,7 +284,7 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
         return result;
     }
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void updateAndSubmit(WmsDeliveryPlanDTO.UpdateDTO dto) {
@@ -294,7 +294,7 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
         this.submit(dto.getId());
     }
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BatchResultDTO approve(ApproveOneDTO dto) {
@@ -358,7 +358,7 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
         return variablesMap;
     }
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BatchResultDTO disApprove(String id) {
@@ -444,7 +444,7 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
     /**
     * 撤销
     */
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BatchResultDTO cancelProcess(String id) {
@@ -481,7 +481,12 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
         updateForApprove(entity.getId(), approveStatus.getStatus());
         if (ApproveStatusEnum.APPROVE.equals(approveStatus) && ThirdDeliveryTypeEnum.THIRD_TO_THIRD.getCode().equals(entity.getDeliveryType())) {
             // 审核通过 生成要货申请
-            requisitionApplicationService.generateRequisition(entity.getId());
+            try {
+                UserContext.setIsUserSystem(true);
+                requisitionApplicationService.generateRequisition(entity.getId());
+            }finally {
+                UserContext.clearIsUserSystem();
+            }
         }
         return Boolean.TRUE;
     }
@@ -636,17 +641,16 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
         List<WmsDeliveryPlanDetailEntity> wmsDeliveryPlanDetailEntities = wmsDeliveryPlanDetailService.lambdaQuery().select(WmsDeliveryPlanDetailEntity::getMainId).in(WmsDeliveryPlanDetailEntity::getId,detailIds).list();
         List<String> ids = wmsDeliveryPlanDetailEntities.stream().map(WmsDeliveryPlanDetailEntity::getMainId).distinct().collect(Collectors.toList());
         List<WmsDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO> list = baseMapper.generateRequisitionApplicationView(ids);
-
         //审核通过才能下推
         long count = list.stream().filter(req -> !ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus())).count();
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_98063);
         }
         //已下推的要货申请， 已审核的要货申请，sku数量超过或等于未下推计划数量就不展示
-        List<RequisitionApplicationDetailEntity> requisitionApplicationDetailEntities = requisitionApplicationDetailService.listBySourceDetailIds(detailIds);
-        list = list.stream().filter(e -> hasQtyCanPush(e,requisitionApplicationDetailEntities)).collect(Collectors.toList());
+//        List<RequisitionApplicationDetailEntity> requisitionApplicationDetailEntities = requisitionApplicationDetailService.listBySourceDetailIds(detailIds);
+//        list = list.stream().filter(e -> hasQtyCanPush(e,requisitionApplicationDetailEntities)).collect(Collectors.toList());
         //根据skuId查询拥有的子sku
-        List<String> skuIds = list.stream().map(req -> req.getSkuId()).distinct().collect(Collectors.toList());
+        List<String> skuIds = list.stream().map(WmsDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO::getSkuId).distinct().collect(Collectors.toList());
         List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuIds(skuIds);
 
         //查询skuId产品信息
@@ -658,9 +662,14 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
                 viewDTO.setTypeName(RequisitionApplicationTypeEnum.FBA.getName());
                 viewDTO.setChannelId(viewDTO.getShopId());
                 viewDTO.setChannelName(viewDTO.getShopName());
-            }else{
+            }else if(DeliveryPlanTypeEnum.THIRD_WAREHOUSE.getCode().equals(viewDTO.getDeliveryPlanType())){
                 viewDTO.setType(RequisitionApplicationTypeEnum.THIRD_WAREHOUSE.getCode());
                 viewDTO.setTypeName(RequisitionApplicationTypeEnum.THIRD_WAREHOUSE.getName());
+            }else if(DeliveryPlanTypeEnum.ALIEXPRESS.getCode().equals(viewDTO.getDeliveryPlanType())){
+                viewDTO.setType(RequisitionApplicationTypeEnum.ALIEXPRESS.getCode());
+                viewDTO.setTypeName(RequisitionApplicationTypeEnum.ALIEXPRESS.getName());
+                viewDTO.setChannelId(viewDTO.getShopId());
+                viewDTO.setChannelName(viewDTO.getShopName());
             }
 
             //来源类型
@@ -1265,10 +1274,19 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
         if (CharSequenceUtil.isNotBlank(fromWarehouseName)){
             wmsDeliveryPlanEntity.setFromWarehouseName(fromWarehouseName);
         }
-        if(DeliveryPlanTypeEnum.FBA.getCode().equals(wmsDeliveryPlanEntity.getType())){
+        if(DeliveryPlanTypeEnum.FBA.getCode().equals(wmsDeliveryPlanEntity.getType())
+                ||DeliveryPlanTypeEnum.ALIEXPRESS.getCode().equals(wmsDeliveryPlanEntity.getType())){
             if(CharSequenceUtil.isBlank(wmsDeliveryPlanEntity.getShopId())){
                 throw new ServiceException("店铺不能为空");
             }
+            //明细中的fnsku不能为空
+            if(DeliveryPlanTypeEnum.FBA.getCode().equals(wmsDeliveryPlanEntity.getType())){
+                long count = detailList.stream().filter(obj -> CharSequenceUtil.isBlank(obj.getFnSku())).count();
+                if (count > 0) {
+                    throw new ServiceException(ApiError.ERROR_FBA_FNSKU_NOT_BLANK);
+                }
+            }
+
             ShopInfoEntity shopInfoEntity = shopInfoFeign.getShopInfoById(wmsDeliveryPlanEntity.getShopId());
             wmsDeliveryPlanEntity.setShopName(shopInfoEntity.getName());
             wmsDeliveryPlanEntity.setCountry(shopInfoEntity.getDictCountryCode());

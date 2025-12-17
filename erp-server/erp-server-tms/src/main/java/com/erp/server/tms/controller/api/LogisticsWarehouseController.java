@@ -28,7 +28,7 @@ import javax.annotation.Resource;
  */
 @Slf4j
 @RestController
-@LogSystemModule("海外仓物流商 仓库表")
+@LogSystemModule("海外仓物流商仓库表")
 @RequestMapping("/logisticsWarehouse")
 public class LogisticsWarehouseController extends BaseController {
 
@@ -61,6 +61,7 @@ public class LogisticsWarehouseController extends BaseController {
         menuCode = "tms:logisticsWarehouse:update",
         serviceClass = LogisticsWarehouseService.class,
         keyIdName = "id")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "修改海外仓物流商 仓库单数据")
     public ApiResult<Object>update(@RequestBody @Validated LogisticsWarehouseDTO.UpdateDTO dto) {
         logisticsWarehouseService.update(dto);
         return success();

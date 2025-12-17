@@ -148,6 +148,10 @@ public class KingdeeOperatorRefPostDTO implements Serializable {
          * 金蝶部门code
          */
         private String deptCode;
+        /**
+         * erp部门id
+         */
+        private String erpDeptId;
 
         /**
          * 用户名

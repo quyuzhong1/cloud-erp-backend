@@ -5,8 +5,11 @@ import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.oms.dto.ReportDTO;
 import com.erp.server.oms.service.ReportManagerService;
 import com.erp.server.oms.service.SoB2cService;
@@ -29,6 +32,7 @@ import javax.annotation.Resource;
 @Slf4j
 @RestController
 @RequestMapping("/reportManager")
+@LogSystemModule("报表管理")
 public class ReportManagerController extends BaseController {
 
     @Resource
@@ -56,6 +60,7 @@ public class ReportManagerController extends BaseController {
      * @return
      */
     @PostMapping("/productSalesExport")
+    @LogAction(value = LogActionEnum.EXPORT, desc = "产品销售分页导出")
     public ApiResult<Object> productSalesExport(@RequestBody @Validated ReportDTO.ProductSalesPagingParamDTO dto) {
         Boolean result = reportManagerService.productSalesExport(dto);
         return Boolean.TRUE.equals(result) ? success() : failure();

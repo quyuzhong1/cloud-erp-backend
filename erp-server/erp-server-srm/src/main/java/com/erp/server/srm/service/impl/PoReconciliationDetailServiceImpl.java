@@ -100,6 +100,7 @@ public class PoReconciliationDetailServiceImpl extends SuperServiceImpl<PoReconc
         //默认查询当前登录人的绑定的供应商数据
         SupplierEntity supplierEntity = commonService.getSupplierEntity();
         pagingParamDTO.getParams().setSupplierId(supplierEntity.getId());
+        pagingParamDTO.getParams().setIsSrm(Boolean.TRUE);
         return poReconciliationDetailScmService.paging(pagingParamDTO);
     }
 
@@ -114,7 +115,7 @@ public class PoReconciliationDetailServiceImpl extends SuperServiceImpl<PoReconc
             return;
         }
         // 数据处理
-        poReconciliationDetailScmService.fillList(list);
+        poReconciliationDetailScmService.fillList(list,Boolean.TRUE);
         // 导出数据
         StringBuffer sb = new StringBuffer();
         String excelPath = "excel/poReconciliationDetail.xlsx";

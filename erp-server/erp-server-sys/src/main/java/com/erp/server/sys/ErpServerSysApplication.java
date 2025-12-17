@@ -1,7 +1,6 @@
 package com.erp.server.sys;
 
 import lombok.extern.slf4j.Slf4j;
-import org.apache.rocketmq.spring.autoconfigure.RocketMQAutoConfiguration;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cache.annotation.EnableCaching;
@@ -11,8 +10,8 @@ import org.springframework.cloud.openfeign.EnableFeignClients;
 
 @Slf4j
 @EnableCaching
-@SpringBootApplication(scanBasePackages = {"com.erp.*","com.common.*"})
-@EnableFeignClients(basePackages = {"com.erp.rpc.*"})
+@SpringBootApplication(scanBasePackages = {"com.erp","com.common"})
+@EnableFeignClients(basePackages = {"com.erp.rpc"})
 @EnableDiscoveryClient
 public class ErpServerSysApplication {
 

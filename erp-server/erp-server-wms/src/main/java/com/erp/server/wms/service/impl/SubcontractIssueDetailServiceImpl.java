@@ -65,7 +65,7 @@ public class SubcontractIssueDetailServiceImpl extends SuperServiceImpl<Subcontr
     private SubcontractReturnDetailService subcontractReturnDetailService;
 
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void add(List<SubcontractIssueDetailDTO.AddDTO> details, String mainId) {

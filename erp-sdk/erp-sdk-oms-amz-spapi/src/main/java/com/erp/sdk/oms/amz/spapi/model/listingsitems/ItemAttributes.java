@@ -1,6 +1,6 @@
 /*
  * Selling Partner API for Listings Items
- * The Selling Partner API for Listings Items (Listings Items API) provides programmatic access to selling partner listings on Amazon. Use this API in collaboration with the Selling Partner API for Product Type Definitions, which you use to retrieve the information about Amazon product types needed to use the Listings Items API.  For more information, see the [Listings Items API Use Case Guide](doc:listings-items-api-v2021-08-01-use-case-guide).
+ * The Selling Partner API for Listings Items (Listings Items API) provides programmatic access to selling partner listings on Amazon. Use this API in collaboration with the Selling Partner API for Product Type Definitions, which you use to retrieve the information about Amazon product types needed to use the Listings Items API.  For more information, see the [Listings Items API Use Case Guide](https://developer-docs.amazon.com/sp-api/docs/listings-items-api-v2021-08-01-use-case-guide).
  *
  * OpenAPI spec version: 2021-08-01
  * 
@@ -10,19 +10,20 @@
  * Do not edit the class manually.
  */
 
-
 package com.erp.sdk.oms.amz.spapi.model.listingsitems;
 
-
-
 import java.util.Objects;
+import java.util.Arrays;
 
+import java.util.HashMap;
+import java.util.Map;
 /**
- * JSON object containing structured listings item attribute data keyed by attribute name.
+ * A JSON object containing structured listings item attribute data keyed by attribute name.
  */
 
-@javax.annotation.Generated(value = "io.swagger.codegen.languages.JavaClientCodegen", date = "2022-07-24T13:44:38.380+08:00")
-public class ItemAttributes {
+@javax.annotation.Generated(value = "io.swagger.codegen.v3.generators.java.JavaClientCodegen", date = "2025-08-07T17:52:05.725887800+08:00[Asia/Shanghai]")
+
+public class ItemAttributes extends HashMap<String, Object> {
 
   @Override
   public boolean equals(Object o) {
@@ -32,12 +33,12 @@ public class ItemAttributes {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    return true;
+    return super.equals(o);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash();
+    return Objects.hash(super.hashCode());
   }
 
 
@@ -45,7 +46,7 @@ public class ItemAttributes {
   public String toString() {
     StringBuilder sb = new StringBuilder();
     sb.append("class ItemAttributes {\n");
-    
+    sb.append("    ").append(toIndentedString(super.toString())).append("\n");
     sb.append("}");
     return sb.toString();
   }
@@ -62,4 +63,3 @@ public class ItemAttributes {
   }
 
 }
-

@@ -28,25 +28,10 @@
             <scope>compile</scope>
         </dependency>
         <dependency>
-            <groupId>org.postgresql</groupId>
-            <artifactId>postgresql</artifactId>
-            <version>42.2.16</version>
-        </dependency>
-        <dependency>
-            <groupId>com.cloud.erp</groupId>
-            <artifactId>erp-common-core</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
-        </dependency>
-        <dependency>
             <groupId>com.cloud.erp</groupId>
             <artifactId>erp-common-message</artifactId>
             <version>0.0.1-SNAPSHOT</version>
             <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.cloud.erp</groupId>
-            <artifactId>erp-common-core</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>com.cloud.erp</groupId>
@@ -66,10 +51,6 @@
             <artifactId>erp-rpc-file</artifactId>
             <version>0.0.1-SNAPSHOT</version>
             <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
         </dependency>
         <dependency>
             <groupId>org.mapstruct</groupId>
@@ -109,6 +90,12 @@
             <groupId>com.cloud.erp</groupId>
             <artifactId>erp-common-business</artifactId>
             <version>0.0.1-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>com.cloud.erp</groupId>
+            <artifactId>erp-rpc-workflow</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+            <scope>compile</scope>
         </dependency>
     </dependencies>
 

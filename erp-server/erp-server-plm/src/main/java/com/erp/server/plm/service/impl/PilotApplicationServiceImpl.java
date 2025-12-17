@@ -27,15 +27,8 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.BeanMapper;
-import com.common.core.utils.BeanMapperUtils;
-import com.common.core.utils.MathUtil;
-import com.common.core.utils.StrUtils;
+import com.common.core.utils.*;
 import com.common.core.utils.date.DateUtil;
-import com.erp.model.oms.entity.SoB2cDetailEntity;
-import com.erp.model.oms.entity.SoB2cEntity;
-import com.erp.model.oms.entity.SoB2cLogisticsEntity;
-import com.erp.model.oms.entity.SoB2cReceiverEntity;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.*;
@@ -44,16 +37,17 @@ import com.erp.model.scm.dto.*;
 import com.erp.model.scm.entity.PurchaseApplicationDetailEntity;
 import com.erp.model.scm.entity.PurchaseApplicationEntity;
 import com.erp.model.scm.entity.PurchaseSkuOrgRefEntity;
+import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.InvalidStatusEnum;
+import com.erp.model.sys.dto.SysUserDTO;
 import com.erp.model.tms.enums.PilotApplicationTabEnum;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.workflow.dto.CfgQueryOptionDTO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.model.workflow.dto.ProcessTaskManagementDTO;
-import com.erp.model.workflow.entity.CfgQueryOptionEntity;
 import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
 import com.erp.model.workflow.enums.CfgQueryOptionBussinessKeyEnum;
-import com.erp.model.workflow.enums.CfgQueryOptionFieldBelongsTypeEnum;
+import com.erp.model.workflow.enums.DictBasicEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.scm.feign.*;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -81,6 +75,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_PLM_PILOT_APPLICATION;
 
@@ -116,7 +111,7 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
     @Resource
     private WmsTaskFeign warehouseFeign;
     @Resource
-    private SysLogService sysLogService;
+    private OperateLogService operateLogService;
     @Resource
     private ProductDetailMapper productDetailMapper;
     @Autowired
@@ -147,12 +142,15 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
     private ScmTaskFeign scmTaskFeign;
     private static final String SKUCLASSPATH = String.valueOf(PilotApplicationEntity.class);
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(PilotApplicationDTO.AddDTO addDTO) {
         PilotApplicationEntity pilotApplicationEntity = new PilotApplicationEntity();
 
+        // 获取用户信息
+        fillUserInfo(addDTO);
+        
         // 数据处理
         handleData(addDTO, pilotApplicationEntity);
 
@@ -175,7 +173,7 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
             plmAttachmentService.save(entity);
         }
         String format = String.format("用户【%s】新增【试产量产单】单据编号为【%s】", UserContext.getNonLoginUser().getUserName(), code);
-        sysLogService.addSysLogBySave(format, "", pilotApplicationEntity.getId(), "");
+        operateLogService.addSysLogBySave(format, "", pilotApplicationEntity.getId(), "");
 
         //保存产品明细
         saveProductDetail(addDTO, pilotApplicationEntity);
@@ -191,6 +189,31 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         }
 
         return new BaseResultDTO.AddDTO(pilotApplicationEntity.getId(), code);
+    }
+
+    /**
+     * 填充用户信息
+     * @param addDTO 试产申请DTO
+     */
+    private void fillUserInfo(PilotApplicationDTO.AddDTO addDTO) {
+        if (addDTO.getDqeOwnerId() == null) {
+            log.warn("DQE负责人ID为空，跳过用户信息填充");
+            return;
+        }
+        
+        try {
+            SysUserDTO sysUserDTO = sysUserFeign.getSysUserById(addDTO.getDqeOwnerId());
+            if (sysUserDTO != null && StringUtils.isNotBlank(sysUserDTO.getUserName())) {
+                addDTO.setDqeOwnerName(sysUserDTO.getUserName());
+                log.debug("成功获取用户信息，用户ID: {}, 用户名: {}", addDTO.getDqeOwnerId(), sysUserDTO.getUserName());
+            } else {
+                log.warn("未找到用户信息，用户ID: {}", addDTO.getDqeOwnerId());
+                addDTO.setDqeOwnerName("未知用户");
+            }
+        } catch (Exception e) {
+            log.error("获取用户信息失败，用户ID: {}, 错误信息: {}", addDTO.getDqeOwnerId(), e.getMessage(), e);
+            addDTO.setDqeOwnerName("获取失败");
+        }
     }
 
     /**
@@ -247,6 +270,12 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         PilotApplicationEntity pilotApplicationEntity = new PilotApplicationEntity();
         pilotApplicationEntity.setId(updateDTO.getId());
         pilotApplicationEntity.setRemark(updateDTO.getRemark());
+        if (StringUtils.isNotBlank(updateDTO.getDqeOwnerId())){
+            pilotApplicationEntity.setDqeOwnerId(updateDTO.getDqeOwnerId());
+        }
+        if (StringUtils.isNotBlank(updateDTO.getDqeOwnerName())){
+            pilotApplicationEntity.setDqeOwnerName(updateDTO.getDqeOwnerName());
+        }
 
         log.info("编辑 开始修改试产申请数据，单号：【{}】", oldEntity.getCode());
         boolean save = super.updateById(pilotApplicationEntity);
@@ -363,7 +392,7 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.SUBMIT);
     }
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO addAndSubmit(PilotApplicationDTO.AddDTO dto) {
@@ -374,7 +403,7 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         return result;
     }
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void updateAndSubmit(PilotApplicationDTO.UpdateDTO dto) {
@@ -384,7 +413,7 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         this.submit(dto.getId());
     }
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BatchResultDTO approve(ApproveOneDTO dto, PilotApplicationDTO.ApproveDTO approveDTO) {
@@ -512,10 +541,102 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         CfgQueryOptionDTO.VariablesParamsDTO dto = new CfgQueryOptionDTO.VariablesParamsDTO();
         dto.setBusinessKey(CfgQueryOptionBussinessKeyEnum.PILOTAPPLICATION.getCode());
         dto.setVariablesMap(BeanUtil.beanToMap(entity));
-        return cfgQueryOptionFeign.getVariablesMapByBusinessKey(dto);
+        Map<String, Object> map = cfgQueryOptionFeign.getVariablesMapByBusinessKey(dto);
+
+        //附件
+        List<PlmAttachmentEntity> attachmentList = plmAttachmentService.listByBusinessIds(Collections.singletonList(entity.getId()));
+        if (ObjectUtil.isNotEmpty(attachmentList)) {
+            HashMap<String,Object> attachmentMap = new HashMap<>();
+            for (PlmAttachmentEntity obj : attachmentList) {
+                attachmentMap.put(obj.getAttachName(),  obj.getAttachUrl());
+            }
+            map.put("attachmentMap", attachmentMap);
+        }
+
+        List<PilotApplicationDetailDTO.ViewDTO> detailList = new ArrayList<>();
+        Object rawList = map.get("productDetailList");
+
+        if (rawList instanceof List) {
+            for (Object item : (List<?>) rawList) {
+                if (item instanceof PilotApplicationDetailDTO.ViewDTO) {
+                    detailList.add((PilotApplicationDetailDTO.ViewDTO) item);
+                } else if (item instanceof Map) {
+                    // Map转Bean
+                    PilotApplicationDetailDTO.ViewDTO viewDTO = BeanUtil.toBean(
+                            (Map<?, ?>) item,
+                            PilotApplicationDetailDTO.ViewDTO.class
+                    );
+                    detailList.add(viewDTO);
+                } else {
+                    log.warn("无法转换的类型: {} 值: {}",
+                            item.getClass().getName(), item);
+                }
+            }
+        }
+        if (ObjectUtil.isEmpty(detailList)) {
+            return map;
+        }
+        //产品费用
+        List<String> skuIds = detailList.stream().map(PilotApplicationDetailDTO.ViewDTO::getSkuId).distinct().collect(Collectors.toList());
+        List<ProductCostEntity> productCostEntityList = productCostService.lambdaQuery().in(ProductCostEntity::getSkuId, skuIds).list();
+
+        //产品信息
+        List<ProductDetailEntity> productDetailList = productDetailService.listByIds(skuIds);
+
+        //通过Java8取一级供应商和二级供应商
+        List<String> supplierIds = detailList.stream()
+                .flatMap(detail -> Stream.of(detail.getMainSupplierId(), detail.getSecondSupplierId()))
+                .filter(Objects::nonNull)
+                .distinct()
+                .collect(Collectors.toList());
+        List<SupplierEntity> supplierList = FeignQuery.getByIds(SupplierEntity.class,supplierIds);
+
+        for (PilotApplicationDetailDTO.ViewDTO detailEntity : detailList) {
+            //目标成本
+            Optional<ProductCostEntity> productCostEntityOptional = productCostEntityList.stream().filter(item -> item.getSkuId().equals(detailEntity.getSkuId())).findFirst();
+            if (productCostEntityOptional.isPresent()) {
+                ProductCostEntity productCostEntity = productCostEntityOptional.get();
+                detailEntity.setTargetTaxCost(productCostEntity.getTargetTaxCost());
+                detailEntity.setTargetNoTaxCost(productCostEntity.getTargetNoTaxCost());
+            }
+            //实际成本
+            fillActualCost(detailEntity);
+
+            //一级供应商名称
+            String mainSupplierName = supplierList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), detailEntity.getMainSupplierId())).map(SupplierEntity::getName).findFirst().orElse("");
+            detailEntity.setMainSupplierName(mainSupplierName);
+            //二级供应商名称
+            String secondSupplierName = supplierList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), detailEntity.getSecondSupplierId())).map(SupplierEntity::getName).findFirst().orElse("");
+            detailEntity.setSecondSupplierName(secondSupplierName);
+            //产品名称
+            String productName = productDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), detailEntity.getSkuId())).map(ProductDetailEntity::getName).findFirst().orElse("");
+            detailEntity.setProductName(productName);
+        }
+        map.put("productDetailList", detailList);
+
+        // 从 productDetailList 中提取 chargeId 并生成逗号分隔的字符串
+        if (CollUtil.isNotEmpty(productDetailList)) {
+            List<String> chargeIdList = productDetailList.stream()
+                    .filter(x -> StringUtils.isNotBlank(x.getChargeId()))
+                    .map(ProductDetailEntity::getChargeId)
+                    .distinct() // 去重
+                    .collect(Collectors.toList());
+
+            if (CollUtil.isNotEmpty(chargeIdList)) {
+                // 使用 PRODUCT_MANAGER 的 code 作为 key，逗号分隔的字符串作为 value
+                String chargeIdString = String.join(",", chargeIdList);
+                map.put(DictBasicEnum.PRODUCT_MANAGER.getCode(), chargeIdString);
+                log.debug("提取到 {} 个 chargeId: {}", chargeIdList.size(), chargeIdString);
+            } else {
+                log.debug("未找到有效的 chargeId");
+            }
+        } else {
+            log.debug("productDetailList 为空");
+        }
+        return map;
     }
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BatchResultDTO disApprove(String id) {
@@ -536,14 +657,14 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
     }
 
     private void addLog(String id, String operation, String content, String field, String oldValue, String newValue) {
-        SysLogEntity logEntity = new SysLogEntity();
+        OperateLogEntity logEntity = new OperateLogEntity();
         logEntity.setBusinessId(id);
         logEntity.setOperation(operation);
         logEntity.setContent(content);
         logEntity.setFieldName(field);
         logEntity.setOldValue(oldValue);
         logEntity.setNewValue(newValue);
-        sysLogService.addSysLogByOther(logEntity);
+        operateLogService.addSysLogByOther(logEntity);
     }
 
     private Boolean validateDisApprove(PilotApplicationEntity entity) {
@@ -579,7 +700,7 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
     /**
      * 撤销
      */
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BatchResultDTO cancelProcess(String id) {
@@ -677,6 +798,20 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         List<ProductDetailEntity> skuList = productDetailService.lambdaQuery().in(ProductDetailEntity::getId, skuIds).list();
         //附件
         List<PlmAttachmentEntity> attachmentList = plmAttachmentService.listByBusinessIds(Collections.singletonList(pilotApplicationEntity.getId()));
+
+        //批量查询采购价目表
+        List<PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO> taxPriceSearchList = new ArrayList<>(detailViewList.size());
+        for (PilotApplicationDetailDTO.ViewDTO detailDTO : detailViewList){
+            PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO searchDTO = new PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO();
+            searchDTO.setPurchaseQty(detailDTO.getApplyQty());
+            searchDTO.setSupplierId(detailDTO.getMainSupplierId());
+            searchDTO.setSkuId(detailDTO.getSkuId());
+            searchDTO.setSkuNo(detailDTO.getSkuNo());
+            taxPriceSearchList.add(searchDTO);
+        }
+        List<PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO> taxPriceResultList = purchasePriceDetailFeign.listTaxPrice(taxPriceSearchList);
+        Map<String, PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO> taxPriceResultMap = taxPriceResultList.stream().collect(Collectors.toMap(PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO::getSkuId, e -> e, (o1, o2) -> o1));
+
         //处理产品明细
         for (PilotApplicationDetailDTO.ViewDTO detailDTO : detailViewList) {
             //一级供应商名称
@@ -690,14 +825,23 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
                 detailDTO.setTargetTaxCost(productCostEntity.getTargetTaxCost());
                 detailDTO.setTargetNoTaxCost(productCostEntity.getTargetNoTaxCost());
             }
-            //实际成本
-            fillActualCost(detailDTO);
+            //实际含税单价
+            PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO priceViewDTO = taxPriceResultMap.getOrDefault(detailDTO.getSkuId(), null);
+            if(Objects.isNull(priceViewDTO)){
+                log.error("没有找到价目表：{} {}", detailDTO.getSkuNo(), detailDTO.getMainSupplierName());
+            }else {
+                detailDTO.setActualTaxCost(priceViewDTO.getTaxPrice());
+                BigDecimal divide = priceViewDTO.getTaxRate().divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+                BigDecimal add = divide.add(BigDecimal.ONE);
+                detailDTO.setActualNoTaxCost(priceViewDTO.getTaxPrice().divide(add, 4, RoundingMode.HALF_UP));
+            }
             //产品名称
             Optional<ProductDetailEntity> skuOptional = skuList.stream().filter(item -> item.getId().equals(detailDTO.getSkuId())).findFirst();
             skuOptional.ifPresent(sku -> {
                 detailDTO.setProductName(sku.getName());
                 detailDTO.setStatus(sku.getStatus());
                 detailDTO.setStatusName(ProductDetailStatusEnum.getName(sku.getStatus()));
+                detailDTO.setVariantProperty(sku.getVariantProperty());
             });
             //类型 试产trial  量产batch
             if(detailDTO.getType().equals(PilotApplicationTypeEnum.TRIAL.getCode())){
@@ -734,6 +878,8 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         view.setProductDetailList(detailViewList);
         view.setTaskList(taskViewList);
         view.setAttachmentList(attachmentList);
+        view.setDqeOwnerId(pilotApplicationEntity.getDqeOwnerId());
+        view.setDqeOwnerName(pilotApplicationEntity.getDqeOwnerName());
         //审核记录
         List<PilotApplicationDTO.AuditorHandleDTO> approveList = this.getApproveProcessList(pilotApplicationEntity);
         view.setApproveFlowList(approveList);
@@ -890,6 +1036,20 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
             purchaseList.add(obj);
         }
         purchaseList = purchaseApplicationFeign.listStockInQty(purchaseList);
+
+        //批量查询采购价目表
+        List<PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO> taxPriceSearchList = new ArrayList<>(list.size());
+        for (PilotApplicationDTO.ListDTO detailDTO : list){
+            PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO searchDTO = new PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO();
+            searchDTO.setPurchaseQty(detailDTO.getApplyQty());
+            searchDTO.setSupplierId(detailDTO.getMainSupplierId());
+            searchDTO.setSkuId(detailDTO.getSkuId());
+            searchDTO.setSkuNo(detailDTO.getSkuNo());
+            taxPriceSearchList.add(searchDTO);
+        }
+        List<PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO> taxPriceResultList = purchasePriceDetailFeign.listTaxPrice(taxPriceSearchList);
+        Map<String, PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO> taxPriceResultMap = taxPriceResultList.stream().collect(Collectors.toMap(PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO::getSkuId, e -> e, (o1, o2) -> o1));
+
         for (PilotApplicationDTO.ListDTO item : list) {
             item.setInvalidStatusName(Objects.nonNull(item.getInvalidStatus()) && item.getInvalidStatus() ? "已作废" : "未作废");
             item.setApproveStatusName(ApproveStatusEnum.getName(item.getApproveStatus()));
@@ -907,24 +1067,15 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
                 item.setTargetTaxCost(productCostEntity.getTargetTaxCost() != null ? productCostEntity.getTargetTaxCost().toPlainString() : "");
             }
             //实际含税单价
-            PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO searchDTO = new PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO();
-            searchDTO.setPurchaseQty(item.getApplyQty());
-            searchDTO.setSupplierId(item.getMainSupplierId());
-            searchDTO.setSkuId(item.getSkuId());
-            searchDTO.setSkuNo(item.getSkuNo());
             try {
-                List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO> taxPriceList = purchasePriceDetailFeign.getTaxPrice(searchDTO);
-                for (PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO priceViewDTO : taxPriceList) {
-                    if (item.getApplyQty() >= priceViewDTO.getMinQty() && item.getApplyQty() <= priceViewDTO.getMaxQty()) {
-                        item.setActualTaxCost(priceViewDTO.getTaxPrice().toPlainString());
-                        break;
-                    }
-                }
-                if (StringUtils.isBlank(item.getActualTaxCost())) {
+                PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO priceViewDTO = taxPriceResultMap.getOrDefault(item.getSkuId(), null);
+                if(Objects.isNull(priceViewDTO)){
                     item.setActualTaxCost("无价目表");
+                }else {
+                    item.setActualTaxCost(priceViewDTO.getTaxPrice().toPlainString());
                 }
-            } catch (Exception e) {
-                item.setActualTaxCost("无价目表");
+            }catch (Exception e) {
+                item.setTargetTaxCost("无价目表");
             }
             //采购申请量
             int applyQty = 0;
@@ -1109,6 +1260,8 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         entity.setBillDate(addDTO.getBillDate());
         entity.setRemark(addDTO.getRemark());
         entity.setApproveStatus(addDTO.getApproveStatus());
+        entity.setDqeOwnerId(addDTO.getDqeOwnerId());
+        entity.setDqeOwnerName(addDTO.getDqeOwnerName());
     }
 
     @Override
@@ -1449,7 +1602,7 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         // 操作日志
         String msg = StrUtil.format("用户{}，作废了{}，作废原因{}",userInfo.getUserName(), old.getCode(), old.getInvalidRemark());
         //新增操作日志
-        sysLogService.addSysLogByOther(new SysLogEntity().setClassPath(SKUCLASSPATH).setPid(id)
+        operateLogService.addSysLogByOther(new OperateLogEntity().setClassPath(SKUCLASSPATH).setPid(id)
                 .setBusinessId(id).setOperation("作废").setContent(msg));
         return BatchResultDTO.success(old.getId(), old.getCode(), OperationTypeEnum.INVALID);
     }
@@ -1473,7 +1626,7 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         // 操作日志
         String msg = StrUtil.format("用户{}，取消作废了{}",UserContext.getDefaultLoginUser().getUserName(), old.getCode());
         //新增操作日志
-        sysLogService.addSysLogByOther(new SysLogEntity().setClassPath(SKUCLASSPATH).setPid(id)
+        operateLogService.addSysLogByOther(new OperateLogEntity().setClassPath(SKUCLASSPATH).setPid(id)
                 .setBusinessId(id).setOperation("取消作废").setContent(msg));
         return BatchResultDTO.success(old.getId(), old.getCode(), OperationTypeEnum.UN_INVALID);
     }

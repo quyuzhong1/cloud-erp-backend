@@ -1,5 +1,6 @@
 package com.erp.server.scm.listener;
 
+import cn.hutool.core.util.ObjUtil;
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
@@ -101,13 +102,22 @@ public class PurchasePriceDetailExcelListener extends AnalysisEventListener<Purc
                 addDTO.setDeliveryDay(purchasePriceDetailImportExcelDTO.getDeliveryDay());
                 String effectiveDateStr = purchasePriceDetailImportExcelDTO.getEffectiveDateStr();
                 addDTO.setEffectiveDate(StringUtils.isBlank(effectiveDateStr) ? null : getDate(effectiveDateStr));
-                addDTO.setMinQty(purchasePriceDetailImportExcelDTO.getMinQty());
-                addDTO.setMaxQty(purchasePriceDetailImportExcelDTO.getMaxQty());
+                String expireDateStr = purchasePriceDetailImportExcelDTO.getExpireDateStr();
+                addDTO.setExpireDate(StringUtils.isBlank(expireDateStr) ? LocalDate.of(9999,12,31) : getDate(expireDateStr));
                 addDTO.setTaxPrice(purchasePriceDetailImportExcelDTO.getTaxPrice());
                 addDTO.setTaxRate(purchasePriceDetailImportExcelDTO.getTaxRate());
                 addDTO.setSkuId(skuEntity.getSkuId());
                 addDTO.setSkuNo(skuEntity.getSkuNo());
                 addDTO.setProductName(skuEntity.getSkuName());
+                //区间为空的时候给默认0-9999999
+                if (ObjUtil.isEmpty(purchasePriceDetailImportExcelDTO.getMinQty()) &&
+                        ObjUtil.isEmpty(purchasePriceDetailImportExcelDTO.getMaxQty())) {
+                    addDTO.setMinQty(0);
+                    addDTO.setMaxQty(9999999);
+                } else {
+                    addDTO.setMinQty(purchasePriceDetailImportExcelDTO.getMinQty());
+                    addDTO.setMaxQty(purchasePriceDetailImportExcelDTO.getMaxQty());
+                }
                 successList.add(addDTO);
             }
         }

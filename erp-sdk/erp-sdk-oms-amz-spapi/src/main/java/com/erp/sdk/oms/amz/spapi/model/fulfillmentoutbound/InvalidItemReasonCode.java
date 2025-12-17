@@ -10,28 +10,30 @@
  * Do not edit the class manually.
  */
 
-
 package com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound;
 
+import java.util.Objects;
+import java.util.Arrays;
+
+import com.google.gson.annotations.SerializedName;
+import java.io.IOException;
 import com.google.gson.TypeAdapter;
 import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
-
-import java.io.IOException;
 
 /**
  * A code for why the item is invalid for return.
  */
 @JsonAdapter(InvalidItemReasonCode.Adapter.class)
 public enum InvalidItemReasonCode {
-  
+  @SerializedName("InvalidValues")
   INVALIDVALUES("InvalidValues"),
-  
+  @SerializedName("DuplicateRequest")
   DUPLICATEREQUEST("DuplicateRequest"),
-  
+  @SerializedName("NoCompletedShipItems")
   NOCOMPLETEDSHIPITEMS("NoCompletedShipItems"),
-  
+  @SerializedName("NoReturnableQuantity")
   NORETURNABLEQUANTITY("NoReturnableQuantity");
 
   private String value;
@@ -49,9 +51,9 @@ public enum InvalidItemReasonCode {
     return String.valueOf(value);
   }
 
-  public static InvalidItemReasonCode fromValue(String text) {
+  public static InvalidItemReasonCode fromValue(String input) {
     for (InvalidItemReasonCode b : InvalidItemReasonCode.values()) {
-      if (String.valueOf(b.value).equals(text)) {
+      if (b.value.equals(input)) {
         return b;
       }
     }
@@ -61,14 +63,13 @@ public enum InvalidItemReasonCode {
   public static class Adapter extends TypeAdapter<InvalidItemReasonCode> {
     @Override
     public void write(final JsonWriter jsonWriter, final InvalidItemReasonCode enumeration) throws IOException {
-      jsonWriter.value(enumeration.getValue());
+      jsonWriter.value(String.valueOf(enumeration.getValue()));
     }
 
     @Override
     public InvalidItemReasonCode read(final JsonReader jsonReader) throws IOException {
-      String value = jsonReader.nextString();
-      return InvalidItemReasonCode.fromValue(String.valueOf(value));
+      Object value = jsonReader.nextString();
+      return InvalidItemReasonCode.fromValue((String)(value));
     }
   }
 }
-

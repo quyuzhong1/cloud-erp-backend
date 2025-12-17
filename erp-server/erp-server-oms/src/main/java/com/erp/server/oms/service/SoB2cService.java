@@ -2,10 +2,7 @@ package com.erp.server.oms.service;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.dto.PlatformOrderDTO;
-import com.common.business.dto.PlatformSoOutStockDTO;
-import com.common.business.dto.PrintWayBillPdfDTO;
-import com.common.business.dto.WalmartShipDTO;
+import com.common.business.dto.*;
 import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
@@ -15,15 +12,15 @@ import com.erp.model.oms.enums.SoB2cCategoryTypeEnum;
 import com.erp.model.oms.enums.SoB2cInvalidTypeEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductCustomsEntity;
-import com.erp.model.tms.dto.SettingForecastDTO;
-import com.erp.model.tms.dto.TransferDeclareDTO;
-import com.erp.model.tms.dto.TransferDeclareDetailDTO;
-import com.erp.model.tms.dto.TransferDeclareGenerationSettingDTO;
+import com.erp.model.tms.dto.*;
 import com.erp.model.wms.dto.ReportOrderDataDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.WmsDataCompareTaskDTO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
+import com.erp.model.wms.entity.SoB2cDeliveryEntity;
+import com.erp.model.wms.entity.SoOutstockEntity;
+import com.erp.model.wms.entity.ThirdWarehouseDeliveryEntity;
 import org.apache.poi.ss.formula.functions.T;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -101,7 +98,7 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
       * @author Will
       * @date: 2023-08-18
       */
-    BatchResultDTO submit(SoB2cEntity entity, SoB2cErrorEntity error,SoB2cLogisticsEntity soB2cLogisticsEntity, Boolean isProcess);
+    ApproveResultDTO submit(SoB2cEntity entity, SoB2cErrorEntity error,SoB2cLogisticsEntity soB2cLogisticsEntity, Boolean isProcess);
 
     /**
     * 审核
@@ -318,6 +315,8 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @return
      */
     Boolean matchSku(SoB2cDTO.MatchSkuDTO dto);
+
+    void updateLingXingOrder(SoB2cEntity entity, List<SoB2cDetailEntity> detailEntityList);
 
     /**
      * 获取销售出库单需要的数据
@@ -559,12 +558,12 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
     /**
      * 撤销流程
      * @description
-     * @param id
+     * @param dto
      * @author Lambda
      * @return
      * @create 2024-01-09 12:06
      */
-    BatchResultDTO cancelProcess(String id);
+    BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto);
 
     /**
      * 反审核
@@ -851,8 +850,6 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
 
     Boolean autoCancelOrderForecast(SoB2cEntity mainEntity);
 
-    List<BatchResultDTO> deliveryWithNotOutbound(SoB2cDTO.DeliveryWithNotOutboundDTO ids);
-
     /**
      * 申报信息规则信息整理
      *
@@ -1122,4 +1119,33 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
     void updateAmount(String id, BigDecimal amount);
 
     void clearOutDateBySoIds(List<String> clearOutDateSoIds);
+
+    /**
+     * 更新销售订单渠道信息
+     * @param soMultiChannelEntity
+     */
+    void updateSoB2cDistribution(SoMultiChannelEntity soMultiChannelEntity);
+
+    /**
+     * 撤销未出仓发货
+     *
+     * @param id
+     * @param soB2cEntity
+     * @param soOutstockEntity
+     * @param deliveryEntity
+     * @param thirdWarehouseDeliveryEntity
+     * @return
+     */
+    BatchResultDTO cancelDeliveryWithNotOutbound(String id, SoB2cEntity soB2cEntity, SoOutstockEntity soOutstockEntity, SoB2cDeliveryEntity deliveryEntity, ThirdWarehouseDeliveryEntity thirdWarehouseDeliveryEntity);
+
+    /**
+     * 生成组包计划预览
+     * @param soIds
+     * @return
+     */
+    List<PackagePlanDTO.SoB2cDTO> packagePlanPreview(List<String> soIds);
+
+    BatchResultDTO retryPackagePlan(String soId);
+
+    BatchResultDTO deliveryWithNotOutbound(SoB2cDTO.DeliveryWithNotOutboundDTO dto, SoB2cEntity soB2cEntity, SoB2cLogisticsEntity soB2cLogisticsEntity, List<SoB2cDetailEntity> detailEntityList, SoB2cReceiverEntity soB2cReceiverEntity, LogisticsChannelDTO.BaseDTO baseDTO, List<String> noInventorySkuIdList);
 }

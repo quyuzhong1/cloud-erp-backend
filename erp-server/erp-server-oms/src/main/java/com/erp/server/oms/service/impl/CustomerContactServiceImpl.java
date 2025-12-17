@@ -135,7 +135,7 @@ public class CustomerContactServiceImpl extends SuperServiceImpl<CustomerContact
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public List<DmpPushTaskEntity> updateBatchContact(String mainId, List<CustomerContactDTO.ViewDTO> contactList) {
         List<DmpPushTaskEntity> pushTaskList = new ArrayList<>();
 

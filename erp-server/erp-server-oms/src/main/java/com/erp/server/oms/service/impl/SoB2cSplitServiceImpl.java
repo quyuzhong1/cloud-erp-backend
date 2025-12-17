@@ -541,6 +541,7 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
                     .build();
         }
         List<SoB2cEntity> soB2cEntityList = listByIds(mainIds);
+        soB2cEntityList = soB2cEntityList.stream().filter(v->!v.getInvalidStatus()).collect(Collectors.toList());
         return SoB2cDTO.CombinationDTO.builder()
                 .soB2cEntityList(soB2cEntityList)
                 .soB2cDetailEntityList(soB2cDetailEntityList)
@@ -763,6 +764,10 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
         if (ObjectUtils.isEmpty(entity)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
         }
+        //wildberries不支持拆分合并
+        if (PlatformDictEnum.WILDBERRIES.getCode().equals(entity.getDictPlatform())){
+            throw new ServiceException(ApiError.ERROR_SO_B2C_WILDBERRIES_NOT_ALLOWED, entity.getCode());
+        }
         //已拆分数据不能再次拆分
         List<SoB2cRefEntity> soB2cRefList = soB2cRefService.listBySourceIdOrTargetId(Arrays.asList(dto.getId()));
         //拆分后的销售订单集合
@@ -971,11 +976,20 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
             //迭代1.27.4 拆分的子订单的审核状态默认等于原订单审核状态 订单状态：如果子件不是审核通过，则默认待配货；如果子单是审核通过，则子件走仓库和物流规则，按实际规则执行结果确认订单状态
             add.setApproveStatus(entity.getApproveStatus());
             if(ApproveStatusEnum.APPROVE.equals(entity.getApproveStatus())){
+                String submitMsg = CharSequenceUtil.format("订单拆分子单自动提交" );
+                operateLogService.addModuleOperateLog(submitMsg, ModuleTypeEnum.SO_B2C.getCode(), add.getId(), "提交操作");
+                String msg = CharSequenceUtil.format("订单拆分子单自动审核通过" );
+                operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), add.getId(), "审核操作",true);
                 ApproveOneDTO approveOneDTO = new ApproveOneDTO();
                 approveOneDTO.setType(ApproveTypeEnum.PASS.getStatus());
+                approveOneDTO.setIsUserSystem(true);
                 soB2cService.approveEnd(approveOneDTO,add,true);
                 needRuleList.add(add);
             }else{
+                if(ApproveStatusEnum.APPROVE_ING.equals(entity.getApproveStatus())){
+                    String submitMsg = CharSequenceUtil.format("订单拆分子单自动提交" );
+                    operateLogService.addModuleOperateLog(submitMsg, ModuleTypeEnum.SO_B2C.getCode(), add.getId(), "提交操作");
+                }
                 add.setApproveStatus(entity.getApproveStatus());
                 this.updateById(add);
             }

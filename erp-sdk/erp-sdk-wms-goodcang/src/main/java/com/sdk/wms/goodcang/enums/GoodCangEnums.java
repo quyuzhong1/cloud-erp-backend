@@ -440,7 +440,7 @@ public enum GoodCangEnums {
         SHIPPED("D","已发货",SoB2cBillStatusEnum.ENUM_SHIPPED),
         ABNORMAL("N","异常订单",SoB2cBillStatusEnum.ENUM_EXCEPTION),
         PROBLEM("P","问题件", null),
-        REMOVED("X","已删除",null),
+        REMOVED("X","已删除",SoB2cBillStatusEnum.ENUM_DISUSE),
         ;
         private final String code;
         private final String name;

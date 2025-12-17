@@ -180,6 +180,7 @@ public class DeliveryOrderController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/confirmPrint")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "确认打印送货单")
     public ApiResult<Object> confirmPrint(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         return success(deliveryOrderService.confirmPrint(dto.getIds()));
     }
@@ -192,6 +193,7 @@ public class DeliveryOrderController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/cancelPrint")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "取消打印送货单")
     public ApiResult<List<BatchResultDTO>> cancelPrint(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> batchResultDTOList = deliveryOrderService.cancelPrint(dto.getIds());
         return batchResultDTOList.stream().allMatch(BatchResultDTO::getSuccess)?success(batchResultDTOList):failure(batchResultDTOList);

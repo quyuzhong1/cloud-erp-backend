@@ -72,6 +72,12 @@ public class PurchaseOrderSupplierDTO implements Serializable {
          * 付款条件
          */
         private String paymentConditionName;
+
+        /**
+         * 供应商账户id
+         * http://172.16.100.11:3002/project/83/interface/api/36188
+         */
+        private String supplierAccountId;
     }
 
     @Data

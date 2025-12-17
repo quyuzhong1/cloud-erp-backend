@@ -1,6 +1,7 @@
 package com.erp.server.sys.controller.api;
 
 import com.common.business.dto.base.BaseDropDownDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
@@ -101,8 +102,8 @@ public class SysDepartmentController extends BaseController {
     @LogAction(value = LogActionEnum.DELETE, desc = "删除部门信息")
     @RequestMapping("/delete")
     public ApiResult delete(@RequestBody List<String> ids) {
-        sysDepartmentService.removeByIdList(ids);
-        return success();
+        List<BatchResultDTO> resultDTOList = sysDepartmentService.removeByIdList(ids);
+        return resultDTOList.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOList) : failure(resultDTOList);
     }
 
     /**

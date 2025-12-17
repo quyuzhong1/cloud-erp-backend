@@ -1,6 +1,9 @@
 package com.erp.rpc.workflow.handle;
 
+import com.common.business.config.FeignErrorDecoder;
+import com.common.business.config.FeignTimeoutConfig;
 import com.common.business.dto.ApproveDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.erp.model.workflow.dto.EndProcessDTO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -10,9 +13,15 @@ import org.springframework.web.bind.annotation.PostMapping;
  * @author Will
  * @date: 2023/7/3 15:27
  */
-@FeignClient(value = "erp-oms", contextId = "workflow-oms")
+@FeignClient(value = "erp-oms", contextId = "workflow-oms",configuration = {FeignErrorDecoder.class, FeignTimeoutConfig.class})
 public interface OmsWorkflowFeign extends BaseWorkflowService{
-
+    /**
+     * 审核
+     * @param dto
+     * @return
+     */
+    @PostMapping("/feign/wmsWorkflow/approve")
+    BatchResultDTO approve(ApproveDTO.ApproveOneDTO dto);
     /**
      * 结束审核
      * @param dto
@@ -42,5 +51,15 @@ public interface OmsWorkflowFeign extends BaseWorkflowService{
     @PostMapping("/feign/omsWorkflow/cancelProcess")
     Boolean cancelProcess(ApproveDTO.CancelProcessDTO dto);
 
+
+    /**
+     * 添加评论
+     * @author will
+     * @date 2025/6/18 10:40
+     * @param dto
+     * @return Boolean
+     */
+    @PostMapping("/feign/omsWorkflow/addComment")
+    Boolean addComment(ApproveDTO.AddCommentDTO dto);
 }
 

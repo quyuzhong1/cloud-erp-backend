@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.wms.dto.FirstMileProcessingDTO;
+import com.erp.model.wms.dto.ReportProcessingDTO;
 import com.erp.model.wms.entity.FirstMileProcessingEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -63,4 +64,13 @@ public interface FirstMileProcessingMapper extends BaseMapper<FirstMileProcessin
      * @return java.lang.Boolean
      */
     Boolean deleteFirstMileProcessing(@Param("params") FirstMileProcessingDTO.DeleteDTO params);
+    /**
+     * 头程数据分页合计
+     * @author will
+     * @date 2025/8/20 16:06
+     * @param page
+     * @param params
+     * @return IPage<ListDTO>
+     */
+    IPage<ReportProcessingDTO.ListDTO> firstMileTotalPaging(Page<ReportProcessingDTO.PagingParamDTO> page, @Param("params") ReportProcessingDTO.PagingParamDTO params);
 }

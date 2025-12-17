@@ -71,6 +71,12 @@ public class ThirdWarehouseDeliveryDetailEntity extends BaseEntity<ThirdWarehous
     @TableField("source_sku_no")
     private String sourceSkuNo;
 
+    /**
+     * 销售订单明细id
+     */
+    @TableField("so_detail_id")
+    private String soDetailId;
+
     public static final String MAIN_ID = "main_id";
 
     public static final String SKU_ID = "sku_id";

@@ -20,6 +20,7 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * dmp处理金蝶明细子类任务handler，因有成员变量，最终实现类由spring管理需要是多例@Scope("prototype")
@@ -37,6 +38,8 @@ public class DmpInputAmzProductDmpHandler extends DmpInputDoChildDmpHandler {
 
     public static final String AMAZON_LISTING_DETAIL_DATA = "amazon_listingDetail_data";
 
+    public static final String AMAZON_LISTING_DATA = "amazon_listing_data";
+
     @Override
     protected List<Map<String, Object>> getDmpInputMongoChildEntityList(List<Map<String, Object>> dmpInputMongoEntityList, String childMongoStorageName) {
         List<ParamData> paramDataList = new ArrayList<>();
@@ -44,9 +47,10 @@ public class DmpInputAmzProductDmpHandler extends DmpInputDoChildDmpHandler {
         if (StringUtils.isBlank(childId)) {
             throw new ServiceException("未查询到DmpInputAmzProductDmpHandler子类id");
         }
-        List<DmpInputTaskEntity> list = dmpInputTaskService.lambdaQuery().eq(DmpInputTaskEntity::getParentTaskId, inputTaskId).eq(DmpInputTaskEntity::getCfgInputId, childId).list();
-        paramDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, PannoEnum.EQ, list.get(0).getId()));
-        List<Map<String, Object>> dmpInputMongoChildList = mongoService.findMongoData(paramDataList, childMongoStorageName);
+
+        List<ParamData> detailParamDataList = new ArrayList<>();
+        detailParamDataList.add(new ParamData("nextLevelId", "nextLevelId", PannoEnum.EQ, nextLevelId));
+        List<Map<String, Object>> dmpInputMongoChildList = mongoService.findMongoData(detailParamDataList, AMAZON_LISTING_DATA);
 
         // 按产品ID维度去重
         List<Map<String, Object>> dmpInputMongoLastList = new LinkedList<>();
@@ -63,8 +67,6 @@ public class DmpInputAmzProductDmpHandler extends DmpInputDoChildDmpHandler {
         // 查询和替换ASIN
         // 查询明细
         // 当前sku子任务明细所有结果
-        List<ParamData> detailParamDataList = new ArrayList<>();
-        detailParamDataList.add(new ParamData("nextLevelId", "nextLevelId", PannoEnum.EQ, nextLevelId));
         List<Map<String, Object>> listingDetailMongoData = mongoService.findMongoData(detailParamDataList, AMAZON_LISTING_DETAIL_DATA);
 
         for (Map<String, Object> listingMongoDataItem : dmpInputMongoLastList) {
@@ -108,11 +110,20 @@ public class DmpInputAmzProductDmpHandler extends DmpInputDoChildDmpHandler {
 
     @Override
     protected void putDmpId(List<Map<String, Object>> dmpInputMongoChildEntityList) {
+        if (CollectionUtils.isEmpty(dmpInputMongoChildEntityList)) {
+            return;
+        }
+        List<String> reportIds = dmpInputMongoChildEntityList.stream()
+                .map(e -> e.getOrDefault("reportId", "").toString())
+                .distinct()
+                .collect(Collectors.toList());
+
         DmpCfgInputConvertEntity mainConvertId = this.getMainConvertId();
         String parentStorageName = mainConvertId.getStorageName();
         ServiceImpl parentServiceImpl = this.getServiceImpl(parentStorageName);
         QueryWrapper<?> wrapper = new QueryWrapper<>();
-        wrapper.eq(INPUT_TASK_ID, inputTaskId);
+        wrapper.eq("next_level_id", nextLevelId);
+        wrapper.in("report_id", reportIds);
         List<Map<String, Object>> listMaps = parentServiceImpl.listMaps(wrapper);
         Map<String, String> billNoIdMap = new HashMap<>();
         if (CollUtil.isNotEmpty(listMaps)) {

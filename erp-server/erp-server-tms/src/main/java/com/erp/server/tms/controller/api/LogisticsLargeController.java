@@ -142,6 +142,7 @@ public class LogisticsLargeController extends BaseController {
      * @return
      */
     @PostMapping("/delete")
+    @LogAction(value = LogActionEnum.DELETE, desc = "删除物流信息")
     public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         List<LogisticsLargeEntity> largeEntityList = logisticsLargeService.listByIds(dto.getIds());

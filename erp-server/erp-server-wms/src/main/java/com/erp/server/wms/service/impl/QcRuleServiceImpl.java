@@ -6,18 +6,20 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
-import com.common.business.constant.BusinessNoConstant;
+import com.common.business.constant.UserStateConstants;
 import com.common.business.dto.base.BaseApproveParamDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
+import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
-import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.wms.dto.QcReportDTO;
 import com.erp.model.wms.dto.QcRuleDTO;
 import com.erp.model.wms.entity.QcRuleEntity;
@@ -28,7 +30,6 @@ import com.erp.server.wms.mapper.QcRuleMapper;
 import com.erp.server.wms.service.QcReportService;
 import com.erp.server.wms.service.QcRuleService;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -304,6 +305,13 @@ public class QcRuleServiceImpl extends SuperServiceImpl<QcRuleMapper, QcRuleEnti
         if (CollectionUtils.isEmpty(list)) {
             throw new ServiceException(ApiError.ERROR_NO_EXIST_RULE);
         }
+        for (QcRuleEntity entity : list) {
+            //当前登陆人,启用流程后可删除
+            LoginUser userInfo = UserContext.getDefaultLoginUser();
+            if (CharSequenceUtil.equals(entity.getCreateUserId(),userInfo.getUid()) && !CharSequenceUtil.equals(entity.getCreateUserId(), UserStateConstants.USER_SYSTEM_ID)) {
+                throw new ServiceException(ApiError.WORKFLOW_APPROVE_CREATE_APPROVE_DIFF,userInfo.getUserName());
+            }
+        }
         String ingStatus = ApproveStatusEnum.APPROVE_ING.getStatus();
         long count = list.stream().filter(s -> !ingStatus.equals(s.getApproveStatus())).count();
         if (count > 0) {
@@ -384,20 +392,34 @@ public class QcRuleServiceImpl extends SuperServiceImpl<QcRuleMapper, QcRuleEnti
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean deleteByIds(List<String> ids) {
+    public List<BatchResultDTO>  deleteByIds(List<String> ids) {
         List<QcRuleEntity> list = this.listByIds(ids);
         //待提交
-        String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
-        long count = list.stream().filter(s -> !waitSubmitStatus.equals(s.getApproveStatus())).count();
-        if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_98009);
+//        String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
+//        long count = list.stream().filter(s -> !waitSubmitStatus.equals(s.getApproveStatus())).count();
+//        if (count > 0) {
+//            throw new ServiceException(ApiError.ERROR_98009);
+//        }
+        List<QcRuleEntity> removeList=new ArrayList<>();
+        List<BatchResultDTO> resultDTOList=new ArrayList<>();
+        for (QcRuleEntity entity : list) {
+            if (!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(entity.getApproveStatus())){
+                resultDTOList.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_98009.msg));
+                continue;
+            }
+            removeList.add(entity);
+            resultDTOList.add(BatchResultDTO.success(entity.getId(), entity.getCode(),"删除成功"));
         }
-        Boolean result = this.removeByIds(ids);
+        List<String> removeIdList = removeList.stream().map(QcRuleEntity::getId).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(removeIdList)){
+            return resultDTOList;
+        }
+        Boolean result = this.removeByIds(removeIdList);
         if (result) {
             //删除质检报告
-            qcReportService.removeByRuleIds(ids);
+            qcReportService.removeByRuleIds(removeIdList);
         }
-        return result;
+        return resultDTOList;
     }
 
 

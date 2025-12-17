@@ -4,10 +4,11 @@ import cn.hutool.json.JSONUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.erp.model.dmp.dto.GoodcangDTO;
 import com.erp.model.dmp.enums.ApiSendStatusEnum;
-import com.erp.model.dmp.enums.KingdeePushModuleEnum;
 import com.erp.server.dmp.entity.DmpWarehouseInboundRecordEntity;
 import com.erp.server.dmp.service.DmpWarehouseInboundRecordService;
 import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
+import com.erp.sdk.third.kingdee.utils.KingdeePushModuleEnum;
+
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.apache.rocketmq.spring.core.RocketMQListener;

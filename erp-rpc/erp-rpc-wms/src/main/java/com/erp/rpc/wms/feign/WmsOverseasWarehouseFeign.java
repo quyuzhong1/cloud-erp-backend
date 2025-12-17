@@ -1,5 +1,6 @@
 package com.erp.rpc.wms.feign;
 
+import com.common.business.config.FeignErrorDecoder;
 import com.common.business.dto.AdvanceQueryContainer;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -16,14 +17,14 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 
-@FeignClient(name = "erp-wms", contextId = "overseasWarehouseFeign")
+@FeignClient(name = "erp-wms", contextId = "overseasWarehouseFeign",configuration = {FeignErrorDecoder.class})
 public interface WmsOverseasWarehouseFeign {
 
     /**
      * 根据入库状态查询入库单号
      **/
     @PostMapping("/feign/overseasWarehouse/getReceiptNumbersForStatus")
-    List<String> getReceiptNumbersForStatus(@RequestParam(value = "statusList") List<String> statusList,@RequestParam(value = "platform") String platform);
+    List<String> getReceiptNumbersForStatus(@RequestParam(value = "statusList") List<String> statusList,@RequestParam(value = "authId") String authId);
 
     /**
      * 根据仓库code查询仓库信息

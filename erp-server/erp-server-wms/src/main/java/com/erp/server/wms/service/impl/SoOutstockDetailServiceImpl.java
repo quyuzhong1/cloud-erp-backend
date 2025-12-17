@@ -16,8 +16,11 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.MathUtil;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
+import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
+import com.erp.model.plm.dto.BomChildrenSkuDTO;
+import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
@@ -34,6 +37,7 @@ import com.erp.server.wms.mapper.SoOutstockDetailMapper;
 import com.erp.server.wms.service.*;
 import com.google.common.collect.Lists;
 import io.seata.spring.annotation.GlobalTransactional;
+import io.seata.tm.api.transaction.Propagation;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -44,6 +48,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.math.RoundingMode;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
@@ -118,9 +124,9 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void add(String mainId, List<SoOutstockDetailDTO.AddDTO> detailList, String orderType, SoOutstockEntity entity) {
+    public List<SoOutstockDetailEntity> add(String mainId, List<SoOutstockDetailDTO.AddDTO> detailList, String orderType, SoOutstockEntity entity) {
         if (CollectionUtils.isEmpty(detailList)) {
-            return;
+            return new ArrayList<>();
         }
         List<String> skuIdList = detailList.stream().map(SoOutstockDetailDTO.AddDTO::getSkuId).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIdList);
@@ -164,7 +170,7 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
             handleDetailData(addList);
         } else {
             //处理明细数据
-            handleB2cDetailData(addList);
+            handleB2cDetailData(addList,entity);
         }
         //赋值仓库名称
         if(Objects.nonNull(entity)){
@@ -173,6 +179,7 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
 
         super.saveBatch(addList);
         wmsAttachmentService.saveBatch(batchAttachmentList);
+        return addList;
     }
 
 
@@ -344,7 +351,7 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
                         Integer inventory = skuInventoryList.stream().filter(s -> s.getSkuId().equals(skuId) && s.getWarehouseLocationId().
                                 equals(warehouseLocation)).findFirst().flatMap(obj -> Optional.ofNullable(obj.getInventoryTotal())).orElse(0);
                         if (planQty > inventory) {
-                            throw new ServiceException(ApiError.ERROR_92030);
+//                            throw new ServiceException(ApiError.ERROR_92030);
                         }
                     }
                 }
@@ -619,7 +626,7 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
                     Integer inventory = skuInventoryList.stream().filter(s -> s.getSkuId().equals(skuId) && s.getWarehouseLocationId().
                             equals(warehouseLocation)).findFirst().flatMap(obj -> Optional.ofNullable(obj.getInventoryTotal())).orElse(0);
                     if (actualQty > inventory) {
-                        throw new ServiceException(ApiError.ERROR_92030);
+//                        throw new ServiceException(ApiError.ERROR_92030);
                     }
 
                 }
@@ -877,6 +884,8 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
                 }
             }
             detailEntity.setAllAmountLocalCurrency(allAmountLocalCurrency);
+            detailEntity.setRemark(soDetailEntity.getRemark());
+            detailEntity.setCustomerPO(soDetailEntity.getCustomerPO());
         }
     }
 
@@ -886,26 +895,155 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
      *
      * @param detailList
      */
-    private void handleB2cDetailData(List<SoOutstockDetailEntity> detailList) {
+    @Override
+    public void handleB2cDetailData(List<SoOutstockDetailEntity> detailList,SoOutstockEntity entity) {
         if (CollectionUtils.isEmpty(detailList)) {
             return;
         }
-        List<String> soDetailIdList = detailList.stream().map(SoOutstockDetailEntity::getSoDetailId).collect(Collectors.toList());
-        List<SoB2cDetailEntity> soDetailList = soB2cFeign.listDetailByIds(soDetailIdList);
+        if(StringUtils.isBlank(entity.getSoId())){
+            return;
+        }
+        List<String> outSkuIds = detailList.stream().map(SoOutstockDetailEntity::getSkuId).collect(Collectors.toList());
+        SoB2cEntity soB2cEntity = soB2cFeign.getById(entity.getSoId());
+        if(Objects.isNull(soB2cEntity)){
+            return;
+        }
+        List<SoB2cDetailEntity> soDetailList = soB2cFeign.listDetailByMainIds(Collections.singletonList(entity.getSoId()));
+        if(CollectionUtils.isEmpty(soDetailList)){
+            return;
+        }
         List<String> currencyIdList = soDetailList.stream().map(SoB2cDetailEntity::getCurrency).collect(Collectors.toList());
         List<CurrencyDTO.ViewDTO> currencyList = CollectionUtils.isNotEmpty(currencyIdList) ? sysUserFeign.listByCurrency(currencyIdList) : Collections.emptyList();
+        List<String> skuIds = soDetailList.stream().map(SoB2cDetailEntity::getSkuId).collect(Collectors.toList());
+        //子sku列表
+        List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuIds(skuIds);
+        bomChildrenSkuDTOS = bomChildrenSkuDTOS.stream().filter(v-> BomTypeEnum.COMBINATION.getType().equals(v.getType())).collect(Collectors.toList());
+        List<String> childSkuList = bomChildrenSkuDTOS.stream().map(BomChildrenSkuDTO::getSkuId).collect(Collectors.toList());
+        List<SkuVO> skuVOList = plmTaskFeign.listSkuCostByIds(childSkuList);
+
+        //子件含税成本Map ,key : 父sku val: 含税总成本
+        Map<String,BigDecimal> costMap = new HashMap<>();
+        // 子件数量Map, key: 父sku val: 总数量
+        Map<String, BigDecimal> quantityMap = new HashMap<>();
+        //已更新的BOM
+        Set<String> addedKeys = new HashSet<>();
         for (SoOutstockDetailEntity detailEntity : detailList) {
+            SoB2cDetailEntity soDetailEntity = soDetailList.stream().filter(obj -> obj.getId().equals(detailEntity.getSoDetailId())).findFirst().orElse(null);
+            if(Objects.nonNull(soDetailEntity) && soDetailEntity.getSkuId().equals(detailEntity.getSkuId())){
+                continue;
+            }
+            BomChildrenSkuDTO bomChildrenSkuDTO = bomChildrenSkuDTOS.stream().filter(obj -> obj.getSkuId().equals(detailEntity.getSkuId())).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(bomChildrenSkuDTO)) {
+                continue;
+            }
+            String key = bomChildrenSkuDTO.getId() + "-" + bomChildrenSkuDTO.getSkuId();
+            if (addedKeys.contains(key)) {
+                continue;
+            }
+            addedKeys.add(key);
+            SkuVO skuVO = skuVOList.stream().filter(v -> v.getSkuId().equals(bomChildrenSkuDTO.getSkuId())).findFirst().orElse(null);
+
+            // 计算数量（用于成本分摊）
+            BigDecimal quantity = new BigDecimal(bomChildrenSkuDTO.getQuantity());
+
+            // 更新数量Map
+            quantityMap.merge(bomChildrenSkuDTO.getParentSkuId(), quantity, BigDecimal::add);
+
+            if (Objects.isNull(skuVO) || Objects.isNull(skuVO.getActualTaxCost()) || skuVO.getActualTaxCost().compareTo(BigDecimal.ZERO) == 0) {
+                continue;
+            }
+            costMap.merge(bomChildrenSkuDTO.getParentSkuId(), skuVO.getActualTaxCost().multiply(new BigDecimal(bomChildrenSkuDTO.getQuantity())), BigDecimal::add);
+
+        }
+
+        for (SoOutstockDetailEntity detailEntity : detailList) {
+            String symbol = currencyList.stream().filter(c -> c.getId().equals(detailEntity.getCurrency())).findFirst().map(CurrencyDTO.ViewDTO::getSymbol).orElse("");
+            detailEntity.setCurrencySymbol(symbol);
+            if(StringUtils.isBlank(detailEntity.getPlatformCode()) && Objects.nonNull(soB2cEntity)){
+                detailEntity.setPlatformCode(soB2cEntity.getPlatformCode());
+            }
             //销售订单明细
             SoB2cDetailEntity soDetailEntity = soDetailList.stream().filter(obj -> obj.getId().equals(detailEntity.getSoDetailId())).findFirst().orElse(null);
+            BigDecimal price = BigDecimal.ZERO;
             if (ObjectUtils.isEmpty(soDetailEntity)) {
-                continue;
+                //平台仓订单没有明细通过sku关联
+                soDetailEntity = soDetailList.stream().filter(obj -> obj.getSkuId().equals(detailEntity.getSkuId())).findFirst().orElse(null);
+                if (ObjectUtils.isEmpty(soDetailEntity)){
+                    //还关联不到看明细是否有组合品，有的话通过子件关联
+                    BomChildrenSkuDTO bomChildrenSkuDTO = bomChildrenSkuDTOS.stream().filter(obj -> obj.getSkuId().equals(detailEntity.getSkuId())).findFirst().orElse(null);
+                    if(ObjectUtils.isEmpty(bomChildrenSkuDTO)){
+                        continue;
+                    }
+                    soDetailEntity = soDetailList.stream()
+                            .filter(obj -> obj.getSkuId().equals(bomChildrenSkuDTO.getParentSkuId()))
+                            .findFirst().orElse(new SoB2cDetailEntity());
+                    //查询出库单明细是否有其他子件
+                    List<BomChildrenSkuDTO> sameBomChildrenSkuDTOList = bomChildrenSkuDTOS.stream().filter(v->v.getParentSkuId().equals(bomChildrenSkuDTO.getParentSkuId()) && outSkuIds.contains(v.getSkuId())).collect(Collectors.toList());
+                    if (sameBomChildrenSkuDTOList.size() > 1) {
+                        // 有其他子件 将单价分摊
+                        BigDecimal totalCost = costMap.get(bomChildrenSkuDTO.getParentSkuId());
+                        BigDecimal totalQuantity = quantityMap.get(bomChildrenSkuDTO.getParentSkuId());
+
+                        // 判断是否有成本价，如果没有则按数量比例分摊
+                        if (totalCost != null && totalCost.compareTo(BigDecimal.ZERO) != 0) {
+                            //有其他子件 将单价分摊
+                            SkuVO skuVO = skuVOList.stream().filter(v -> v.getSkuId().equals(bomChildrenSkuDTO.getSkuId())).findFirst().orElse(new SkuVO());
+                            if(Objects.isNull(skuVO.getActualTaxCost()) ||skuVO.getActualTaxCost().compareTo(BigDecimal.ZERO)==0){
+                                price = BigDecimal.ZERO;
+                            }else{
+                                BigDecimal currentCost = skuVO.getActualTaxCost().multiply(new BigDecimal(bomChildrenSkuDTO.getQuantity()));
+                                price = soDetailEntity.getPrice().multiply(currentCost.divide(totalCost, 4, RoundingMode.HALF_UP)).divide(new BigDecimal(bomChildrenSkuDTO.getQuantity()), 4, RoundingMode.HALF_UP);
+                            }
+                        } else if (totalQuantity != null && totalQuantity.compareTo(BigDecimal.ZERO) != 0) {
+                            // 按数量比例分摊
+                            BigDecimal currentQuantity = new BigDecimal(bomChildrenSkuDTO.getQuantity());
+                            price = soDetailEntity.getPrice().multiply(currentQuantity.divide(totalQuantity, 4, RoundingMode.HALF_UP)).divide(new BigDecimal(bomChildrenSkuDTO.getQuantity()), 4, RoundingMode.HALF_UP);
+                        }
+                    }
+                }else{
+                    price = soDetailEntity.getPrice();
+                }
+            }else{
+                price = soDetailEntity.getPrice();
+                if(!detailEntity.getSkuId().equals(soDetailEntity.getSkuId())){
+                    //不是组合品直接取单价
+                    String soSkuId = soDetailEntity.getSkuId();
+                    //判断是否是订单是组合品，出库单是子件的情况，如果是的话，通过子件分摊成本计算单价
+                    BomChildrenSkuDTO bomChildrenSkuDTO = bomChildrenSkuDTOS.stream().filter(obj -> obj.getSkuId().equals(detailEntity.getSkuId()) && obj.getParentSkuId().equals(soSkuId)).findFirst().orElse(null);
+                    if(ObjectUtils.isNotEmpty(bomChildrenSkuDTO)){
+                        //查询出库单明细是否有其他子件
+                        List<BomChildrenSkuDTO> sameBomChildrenSkuDTOList = bomChildrenSkuDTOS.stream().filter(v->v.getParentSkuId().equals(bomChildrenSkuDTO.getParentSkuId()) && outSkuIds.contains(v.getSkuId())).collect(Collectors.toList());
+                        if (sameBomChildrenSkuDTOList.size() > 1) {
+                            // 有其他子件 将单价分摊
+                            BigDecimal totalCost = costMap.get(bomChildrenSkuDTO.getParentSkuId());
+                            BigDecimal totalQuantity = quantityMap.get(bomChildrenSkuDTO.getParentSkuId());
+
+                            // 判断是否有成本价，如果没有则按数量比例分摊
+                            if (totalCost != null && totalCost.compareTo(BigDecimal.ZERO) != 0) {
+                                //有其他子件 将单价分摊
+                                SkuVO skuVO = skuVOList.stream().filter(v -> v.getSkuId().equals(bomChildrenSkuDTO.getSkuId())).findFirst().orElse(new SkuVO());
+                                if(Objects.isNull(skuVO.getActualTaxCost()) ||skuVO.getActualTaxCost().compareTo(BigDecimal.ZERO)==0){
+                                    price = BigDecimal.ZERO;
+                                }else{
+                                    BigDecimal currentCost = skuVO.getActualTaxCost().multiply(new BigDecimal(bomChildrenSkuDTO.getQuantity()));
+                                    price = soDetailEntity.getPrice().multiply(currentCost.divide(totalCost, 4, RoundingMode.HALF_UP)).divide(new BigDecimal(bomChildrenSkuDTO.getQuantity()), 4, RoundingMode.HALF_UP);
+                                }
+                            } else if (totalQuantity != null && totalQuantity.compareTo(BigDecimal.ZERO) != 0) {
+                                // 按数量比例分摊
+                                BigDecimal currentQuantity = new BigDecimal(bomChildrenSkuDTO.getQuantity()).multiply(new BigDecimal(detailEntity.getActualQty()));
+                                price = soDetailEntity.getPrice().multiply(currentQuantity.divide(totalQuantity, 4, RoundingMode.HALF_UP)).divide(new BigDecimal(bomChildrenSkuDTO.getQuantity()), 4, RoundingMode.HALF_UP);
+                            }
+                        }
+                    }
+                }
             }
             //虚拟仓库
             if(StringUtils.isBlank(detailEntity.getVirtualWarehouseId())){
                 detailEntity.setVirtualWarehouseId(soDetailEntity.getVirtualWarehouseId());
             }
-
-            BigDecimal price=soDetailEntity.getPrice();
+            if(StringUtils.isBlank(detailEntity.getSoDetailId())){
+                detailEntity.setSoDetailId(soDetailEntity.getId());
+            }
             //单价信息
             detailEntity.setPrice(price);
             BigDecimal exchangeRate=soDetailEntity.getExchangeRate();
@@ -914,7 +1052,7 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
             detailEntity.setAmount(amount);
             String currency = soDetailEntity.getCurrency();
             detailEntity.setCurrency(currency);
-            String symbol = currencyList.stream().filter(c -> c.getId().equals(currency)).findFirst().map(CurrencyDTO.ViewDTO::getSymbol).orElse("");
+            symbol = currencyList.stream().filter(c -> c.getId().equals(currency)).findFirst().map(CurrencyDTO.ViewDTO::getSymbol).orElse("");
             detailEntity.setCurrencySymbol(symbol);
             BigDecimal amountLocalCurrency=amount;
             if(BigDecimal.ZERO.compareTo(exchangeRate)!=0){
@@ -964,7 +1102,7 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
 //    }
 
     @Override
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     public Boolean updateSoOutPrice(List<SoDetailEntity> soDetailEntityList) {
         soDetailEntityList = soDetailEntityList.stream().filter(v->CharSequenceUtil.isNotBlank(v.getId())).collect(Collectors.toList());
@@ -1022,5 +1160,19 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
             }
         }
         return result;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    @GlobalTransactional(propagation = Propagation.NOT_SUPPORTED)
+    public Map<String, LocalDate> mapLastOutstockDateBySkuIds(List<String> skuIds) {
+        if (CollectionUtils.isEmpty(skuIds)) {
+            return Collections.emptyMap();
+        }
+        List<SoOutstockDTO.LastBillDateDTO> lastBillDateDTOS = baseMapper.mapLastOutstockDateBySkuIds(skuIds);
+        if (CollectionUtils.isEmpty(lastBillDateDTOS)) {
+            return Collections.emptyMap();
+        }
+        return lastBillDateDTOS.stream().collect(Collectors.toMap(SoOutstockDTO.LastBillDateDTO::getSkuId, SoOutstockDTO.LastBillDateDTO::getBillDate));
     }
 }

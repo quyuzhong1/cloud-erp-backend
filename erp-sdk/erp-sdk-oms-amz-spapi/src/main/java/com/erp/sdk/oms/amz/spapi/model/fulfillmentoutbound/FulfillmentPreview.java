@@ -10,21 +10,33 @@
  * Do not edit the class manually.
  */
 
-
 package com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound;
 
+import java.util.Objects;
+import java.util.Arrays;
+import com.google.gson.TypeAdapter;
+import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.annotations.SerializedName;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonWriter;
+import com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound.FeatureSettings;
+import com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound.FeeList;
+import com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound.FulfillmentPreviewShipmentList;
+import com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound.ScheduledDeliveryInfo;
+import com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound.ShippingSpeedCategory;
+import com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound.StringList;
+import com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound.UnfulfillablePreviewItemList;
+import com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound.Weight;
 
-
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
-
 /**
  * Information about a fulfillment order preview, including delivery and fee information based on shipping method.
  */
 
-@javax.annotation.Generated(value = "io.swagger.codegen.languages.JavaClientCodegen", date = "2020-12-15T20:44:18.412+08:00")
+@javax.annotation.Generated(value = "io.swagger.codegen.v3.generators.java.JavaClientCodegen", date = "2025-08-18T09:55:11.594451100+08:00[Asia/Shanghai]")
+
 public class FulfillmentPreview {
   @SerializedName("shippingSpeedCategory")
   private ShippingSpeedCategory shippingSpeedCategory = null;
@@ -68,7 +80,7 @@ public class FulfillmentPreview {
    * Get shippingSpeedCategory
    * @return shippingSpeedCategory
   **/
-
+  
   public ShippingSpeedCategory getShippingSpeedCategory() {
     return shippingSpeedCategory;
   }
@@ -86,7 +98,7 @@ public class FulfillmentPreview {
    * Get scheduledDeliveryInfo
    * @return scheduledDeliveryInfo
   **/
-
+  
   public ScheduledDeliveryInfo getScheduledDeliveryInfo() {
     return scheduledDeliveryInfo;
   }
@@ -104,7 +116,7 @@ public class FulfillmentPreview {
    * When true, this fulfillment order preview is fulfillable.
    * @return isFulfillable
   **/
-
+  
   public Boolean isIsFulfillable() {
     return isFulfillable;
   }
@@ -122,7 +134,7 @@ public class FulfillmentPreview {
    * When true, this fulfillment order preview is for COD (Cash On Delivery).
    * @return isCODCapable
   **/
-
+  
   public Boolean isIsCODCapable() {
     return isCODCapable;
   }
@@ -137,10 +149,10 @@ public class FulfillmentPreview {
   }
 
    /**
-   * Estimated shipping weight for this fulfillment order preview.
+   * Get estimatedShippingWeight
    * @return estimatedShippingWeight
   **/
-
+  
   public Weight getEstimatedShippingWeight() {
     return estimatedShippingWeight;
   }
@@ -155,10 +167,10 @@ public class FulfillmentPreview {
   }
 
    /**
-   * The estimated fulfillment fees for this fulfillment order preview, if applicable.
+   * Get estimatedFees
    * @return estimatedFees
   **/
-
+  
   public FeeList getEstimatedFees() {
     return estimatedFees;
   }
@@ -176,7 +188,7 @@ public class FulfillmentPreview {
    * Get fulfillmentPreviewShipments
    * @return fulfillmentPreviewShipments
   **/
-
+  
   public FulfillmentPreviewShipmentList getFulfillmentPreviewShipments() {
     return fulfillmentPreviewShipments;
   }
@@ -194,7 +206,7 @@ public class FulfillmentPreview {
    * Get unfulfillablePreviewItems
    * @return unfulfillablePreviewItems
   **/
-
+  
   public UnfulfillablePreviewItemList getUnfulfillablePreviewItems() {
     return unfulfillablePreviewItems;
   }
@@ -209,10 +221,10 @@ public class FulfillmentPreview {
   }
 
    /**
-   * Error codes associated with the fulfillment order preview that indicate why the order is not fulfillable.  Error code examples:  DeliverySLAUnavailable InvalidDestinationAddress
+   * Get orderUnfulfillableReasons
    * @return orderUnfulfillableReasons
   **/
-
+  
   public StringList getOrderUnfulfillableReasons() {
     return orderUnfulfillableReasons;
   }
@@ -230,7 +242,7 @@ public class FulfillmentPreview {
    * The marketplace the fulfillment order is placed against.
    * @return marketplaceId
   **/
-
+  
   public String getMarketplaceId() {
     return marketplaceId;
   }
@@ -256,7 +268,7 @@ public class FulfillmentPreview {
    * A list of features and their fulfillment policies to apply to the order.
    * @return featureConstraints
   **/
-
+  
   public List<FeatureSettings> getFeatureConstraints() {
     return featureConstraints;
   }
@@ -267,7 +279,7 @@ public class FulfillmentPreview {
 
 
   @Override
-  public boolean equals(Object o) {
+  public boolean equals(java.lang.Object o) {
     if (this == o) {
       return true;
     }
@@ -318,7 +330,7 @@ public class FulfillmentPreview {
    * Convert the given object to string with each line indented by 4 spaces
    * (except the first line).
    */
-  private String toIndentedString(Object o) {
+  private String toIndentedString(java.lang.Object o) {
     if (o == null) {
       return "null";
     }
@@ -326,4 +338,3 @@ public class FulfillmentPreview {
   }
 
 }
-

@@ -1,9 +1,6 @@
 package com.erp.server.tms.service;
 
-import com.common.business.dto.base.BaseResultDTO;
-import com.common.business.dto.base.BatchResultDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.tms.dto.LogisticsBillCostDTO;
@@ -16,11 +13,8 @@ import com.erp.model.tms.entity.TmsFirstMileReconciliationEntity;
 import com.erp.model.tms.enums.DictCostAttributionEnum;
 import com.erp.model.wms.entity.SoReturnInstockEntity;
 
-import org.springframework.web.multipart.MultipartFile;
-
 import javax.servlet.http.HttpServletResponse;
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -99,15 +93,6 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
      */
     void downloadTemplate(HttpServletResponse response);
     /**
-     * @description: 导入
-     * @author Will
-     * @date: 2023/11/13 15:37
-     * @param excelFile
-     * @param response
-     * @return Boolean
-     */
-    Boolean importFile(MultipartFile excelFile, HttpServletResponse response);
-    /**
      * @param dto
      * @return Boolean
      * @description: 导出
@@ -172,13 +157,14 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
      */
     List<LogisticsBillCostDTO.ListDTO> listLogisticsLastMileCostExport(LogisticsBillCostDTO.PagingParamDTO dto);
     /**
+     * @param successList
+     * @param errorList
+     * @param importType
      * @description: 导入数据处理
      * @author Will
      * @date: 2024/5/9 20:16
-     * @param successList
-     * @param errorList
      */
-    void handleImportSuccessList (List<LogisticsBillCostExcelDTO> successList, List<LogisticsBillCostExcelDTO > errorList,String dictCostAttribution );
+    void handleImportSuccessList (List<LogisticsBillCostExcelDTO> successList, List<LogisticsBillCostExcelDTO > errorList, String dictCostAttribution, String importType);
     /**
      * @description: 更新店铺
      * @author Will
@@ -235,4 +221,18 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
      * 删除没有物流单的物流费用
      */
     void deleteLogisticsBillCostNoBill();
+
+    Boolean importExcel(BaseDTO.ImportDTO dto);
+
+    void importLogisticsBillCost(BaseDTO.ImportDTO dto);
+
+    List<LogisticsBillCostDTO.CostDetailDTO> listCostDetailByBillAndReconciliationIds(List<String> billIds, List<String> mainIds, String type);
+    /**
+     * 根据高级查询查出符合条件的主表id集合
+     * @author will
+     * @date 2025/8/21 16:22
+     * @param dto
+     * @return List<String>
+     */
+    List<String> listLogisticsBillCostId(LogisticsBillCostDTO.ListParamDTO dto);
 }

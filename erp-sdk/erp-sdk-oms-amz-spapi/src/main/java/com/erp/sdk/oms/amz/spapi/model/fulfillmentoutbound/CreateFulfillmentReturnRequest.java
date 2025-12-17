@@ -10,19 +10,24 @@
  * Do not edit the class manually.
  */
 
-
 package com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound;
 
-import com.google.gson.annotations.SerializedName;
-
-
 import java.util.Objects;
+import java.util.Arrays;
+import com.google.gson.TypeAdapter;
+import com.google.gson.annotations.JsonAdapter;
+import com.google.gson.annotations.SerializedName;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonWriter;
+import com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound.CreateReturnItemList;
 
+import java.io.IOException;
 /**
- * The createFulfillmentReturn operation creates a fulfillment return for items that were fulfilled using the createFulfillmentOrder operation. For calls to createFulfillmentReturn, you must include ReturnReasonCode values returned by a previous call to the listReturnReasonCodes operation.
+ * The &#x60;createFulfillmentReturn&#x60; operation creates a fulfillment return for items that were fulfilled using the &#x60;createFulfillmentOrder&#x60; operation. For calls to &#x60;createFulfillmentReturn&#x60;, you must include &#x60;ReturnReasonCode&#x60; values returned by a previous call to the &#x60;listReturnReasonCodes&#x60; operation.
  */
 
-@javax.annotation.Generated(value = "io.swagger.codegen.languages.JavaClientCodegen", date = "2020-12-15T20:44:18.412+08:00")
+@javax.annotation.Generated(value = "io.swagger.codegen.v3.generators.java.JavaClientCodegen", date = "2025-08-18T09:55:11.594451100+08:00[Asia/Shanghai]")
+
 public class CreateFulfillmentReturnRequest {
   @SerializedName("items")
   private CreateReturnItemList items = null;
@@ -36,7 +41,7 @@ public class CreateFulfillmentReturnRequest {
    * Get items
    * @return items
   **/
-
+  
   public CreateReturnItemList getItems() {
     return items;
   }
@@ -47,7 +52,7 @@ public class CreateFulfillmentReturnRequest {
 
 
   @Override
-  public boolean equals(Object o) {
+  public boolean equals(java.lang.Object o) {
     if (this == o) {
       return true;
     }
@@ -78,7 +83,7 @@ public class CreateFulfillmentReturnRequest {
    * Convert the given object to string with each line indented by 4 spaces
    * (except the first line).
    */
-  private String toIndentedString(Object o) {
+  private String toIndentedString(java.lang.Object o) {
     if (o == null) {
       return "null";
     }
@@ -86,4 +91,3 @@ public class CreateFulfillmentReturnRequest {
   }
 
 }
-

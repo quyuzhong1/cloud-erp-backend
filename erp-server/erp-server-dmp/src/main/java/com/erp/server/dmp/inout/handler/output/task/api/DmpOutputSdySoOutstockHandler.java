@@ -10,17 +10,32 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
+import cn.hutool.core.date.DateUtil;
+import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.text.CharSequenceUtil;
+
+import com.common.business.enums.PlatformDictEnum;
+import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.json.JSONUtil;
 import com.common.business.enums.SourceTypeEnum;
 import com.erp.model.dmp.dto.DictBasicDTO;
 import com.erp.model.dmp.entity.*;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
+import com.erp.model.oms.entity.CustomerInfoEntity;
+import com.erp.model.sys.entity.*;
 import com.erp.server.dmp.service.CfgTimezoneService;
 import com.erp.server.dmp.service.DictBasicService;
 import com.erp.server.dmp.service.DmpAmzSoOutstockDetailService;
+import com.erp.server.dmp.service.DmpSoDetailService;
+import com.erp.server.dmp.service.DmpSoInfoService;
+import com.erp.server.dmp.service.DmpSoOutstockDetailService;
+import com.erp.server.dmp.service.DmpSoOutstockService;
+
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
@@ -30,19 +45,20 @@ import com.alibaba.fastjson.JSON;
 import com.common.business.dto.ShudiyunB2cOrderDTO;
 import com.common.business.dto.base.BaseIdDTO.CodeDTO;
 import com.common.business.wrapper.FeignQuery;
+import com.common.business.wrapper.QueryParam;
+import com.common.business.wrapper.QueryTypeEnum;
 import com.common.core.entity.BaseEntity;
 import com.common.core.utils.Tools;
 import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO.ViewDTO;
-import com.erp.model.sys.entity.DictCountryEntity;
-import com.erp.model.sys.entity.DictGlobalAreaEntity;
-import com.erp.model.sys.entity.DictPartitionEntity;
-import com.erp.model.sys.entity.SysDepartmentEntity;
+import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.server.dmp.inout.dto.request.DmpOutputHotfixCreateRequest;
 import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
+import com.erp.server.dmp.inout.handler.factory.DmpOutputCreateFactory;
 
 import cn.hutool.core.collection.CollUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -66,8 +82,17 @@ public class DmpOutputSdySoOutstockHandler extends DmpOutputSdyBaseTaskHandler {
 	private CfgTimezoneService cfgTimezoneService;
 	@Resource
 	private DictBasicService dictBasicService;
+	@Resource
+    private DmpOutputCreateFactory dmpOutputCreateFactory;
+	@Resource
+	private DmpSoInfoService dmpSoInfoService;
+	@Resource
+	private DmpSoDetailService dmpSoDetailService;
+	@Resource
+	private DmpSoOutstockService dmpSoOutstockService;
+	@Resource
+	private DmpSoOutstockDetailService dmpSoOutstockDetailService;
 
-	
     @Override
     public Map<String, String> getPushJsonDataMap(DmpOutputTaskRequest dmpRequest, DmpOutputTaskResponse dmpResponse) {
         Map<DmpCfgInputConvertEntity, List<BaseEntity>> convertInputDmpBaseEntityListMaps = dmpRequest.getConvertInputDmpBaseEntityListMaps();
@@ -152,14 +177,14 @@ public class DmpOutputSdySoOutstockHandler extends DmpOutputSdyBaseTaskHandler {
         	List<SysDepartmentEntity> deptEntityList = sysUserFeign.getDeptEntityList();
         	Map<String, String> departmentMap = new HashMap<>();
         	if(CollUtil.isNotEmpty(deptEntityList)) {
-        		departmentMap = deptEntityList.stream().collect(Collectors.toMap(SysDepartmentEntity::getCode, SysDepartmentEntity::getName , (s1 , s2) -> s1));
+        		departmentMap = deptEntityList.stream().collect(Collectors.toMap(SysDepartmentEntity::getCode, JSONUtil::toJsonStr, (s1 , s2) -> s1));
         	}
         	cfgMaps.put("department", departmentMap);
-        	
+
         	List<String> currencyList = new ArrayList<>();
         	currencyList.addAll(changeDmpSoOutstockDetailEntity.stream().map(DmpSoOutstockDetailEntity::getPayCurrency).filter(StringUtils::isNotBlank).collect(Collectors.toList()));
         	currencyList.addAll(changeDmpSoOutstockDetailEntity.stream().map(DmpSoOutstockDetailEntity::getCurrency).filter(StringUtils::isNotBlank).collect(Collectors.toList()));
-        	List<ViewDTO> listByCurrency = sysUserFeign.listByCurrency(currencyList);
+        	List<ViewDTO> listByCurrency = sysUserFeign.listByCurrency(currencyList.stream().filter(Objects::nonNull).distinct().collect(Collectors.toList()));
         	Map<String, String> currencyMap = new HashMap<>();
         	if(CollUtil.isNotEmpty(listByCurrency)) {
         		currencyMap = listByCurrency.stream().collect(Collectors.toMap(ViewDTO::getId, ViewDTO::getName));
@@ -191,9 +216,48 @@ public class DmpOutputSdySoOutstockHandler extends DmpOutputSdyBaseTaskHandler {
 						.collect(Collectors.toMap(e -> CharSequenceUtil.format("{}_{}",e.getName(), e.getValue()), DictBasicDTO.ViewDTO::getValue));
 				cfgMaps.put("wdtSdyPlatformDeliveryType", deliveryTypeMap);
 			}
-			
 			cfgMaps.put("warehouse", FeignQuery.list(WarehouseEntity.class).stream().collect(Collectors.toMap(WarehouseEntity::getId, WarehouseEntity::getKingdeeWarehouseCode)));
+			// 部门信息
+			List<KingdeeDepartmentEntity> kingdeeDeptList = FeignQuery.create(KingdeeDepartmentEntity.class).list();
+			Map<String, String> kingdeeDeptListMap = kingdeeDeptList.stream()
+					.collect(Collectors.toMap(
+							k -> k.getErpDeptId() + "_" + k.getUseOrgId(),
+                            JSONUtil::toJsonStr,
+							(v1, v2) -> v1 // 遇到重复 key 时取第一个
+					));
+			cfgMaps.put("kingdeeDeptList", kingdeeDeptListMap);
+			
+			Map<String, String> wdtPlatformCodeMap = new HashMap<>();
+			Map<DmpSoOutstockDetailEntity, DmpSoOutstockEntity> thirdPlatformCodeMaps = new HashMap<>();
+			for(DmpSoOutstockDetailEntity dmpSoOutstockDetailEntity : changeDmpSoOutstockDetailEntity) {
+				DmpSoOutstockEntity dmpSoOutstockEntity = dmpSoOutstockEntityMap.get(dmpSoOutstockDetailEntity.getMainId());
+				String thirdBillNo = dmpSoOutstockEntity.getThirdBillNo();
+				if(thirdBillNo.startsWith("CK") && dmpSoOutstockDetailEntity.getThirdOrderCode().contains(",")) {
+					thirdPlatformCodeMaps.put(dmpSoOutstockDetailEntity , dmpSoOutstockEntity);
+				}
+			}
+			if(!thirdPlatformCodeMaps.isEmpty()) {
+				List<String> erpDetailIds = thirdPlatformCodeMaps.keySet().stream().map(DmpSoOutstockDetailEntity::getThirdDetailId)
+						.filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+				Map<String, String> detailSourceDetailIdMap = FeignQuery.getByIds(SoOutstockDetailEntity.class, erpDetailIds).stream()
+						.collect(Collectors.toMap(SoOutstockDetailEntity::getId, SoOutstockDetailEntity::getSourceDetailId));
+				Map<String , String> thirdCodeIdMap = dmpSoOutstockService.lambdaQuery()
+						.in(DmpSoOutstockEntity::getThirdCode, thirdPlatformCodeMaps.values().stream().map(DmpSoOutstockEntity::getThirdBillNo).distinct().collect(Collectors.toList()))
+						.list().stream().collect(Collectors.toMap(DmpSoOutstockEntity::getThirdCode, DmpSoOutstockEntity::getId , (c1 , c2) -> c1));
+				Map<String, String> srcPlatformMap = dmpSoOutstockDetailService.lambdaQuery()
+						.in(DmpSoOutstockDetailEntity::getMainId, thirdCodeIdMap.values()).in(DmpSoOutstockDetailEntity::getSrcOrderDetailId, detailSourceDetailIdMap.values())
+				.list().stream().collect(Collectors.toMap(DmpSoOutstockDetailEntity::getSrcOrderDetailId, DmpSoOutstockDetailEntity::getPlatformOrderCode , (c1 , c2) -> c1));
+				for(Map.Entry<DmpSoOutstockDetailEntity, DmpSoOutstockEntity> thirdPlatformCodeMap : thirdPlatformCodeMaps.entrySet()) {
+					DmpSoOutstockDetailEntity key = thirdPlatformCodeMap.getKey();
+					String thirdDetailId = key.getThirdDetailId();
+					String sourceDetailId = detailSourceDetailIdMap.get(thirdDetailId);
+					wdtPlatformCodeMap.put(thirdDetailId, srcPlatformMap.get(sourceDetailId));
+				}
+			}
+			cfgMaps.put("wdtPlatformCodeMap", wdtPlatformCodeMap);
 		}
+
+
         for (String changId : changeIds) {
         	Map<String, ShudiyunB2cOrderDTO> result = this.convert(dmpSoOutstockEntityMap.get(changId), dmpSoOutstockDetailEntityMap.get(changId) , cfgOutputId , cfgMaps);
         	if(!result.isEmpty()) {
@@ -268,15 +332,21 @@ public class DmpOutputSdySoOutstockHandler extends DmpOutputSdyBaseTaskHandler {
     				}
 					shudiyunB2cOrderDTO.setMilitary_region_name(military_region_name);
     			}
-    			String saleDeptName = dmpSoOutstockDetailEntity.getSaleDeptName();
-				shudiyunB2cOrderDTO.setDepartment_code(saleDeptName);
-				if(saleDeptName != null) {
-					String department_name = cfgMaps.get("department").get(saleDeptName);
-					if(department_name == null) {
-						department_name = "";
+    			String saleDeptCode = dmpSoOutstockDetailEntity.getSaleDeptName();
+				String kingdeeDeptCode = "";
+				String kingdeeDeptName = "";
+				if(saleDeptCode != null) {
+					CustomerInfoEntity customerInfo = queryAndCacheDictCustomerEntity(cfgMaps, dmpSoOutstockEntity.getShopId());
+					if (null != customerInfo) {
+						KingdeeDepartmentEntity kingdeeDepartmentEntity = getKingdeeDept(cfgMaps, saleDeptCode, customerInfo.getUseOrgId());
+						if (null != kingdeeDepartmentEntity){
+							kingdeeDeptCode = kingdeeDepartmentEntity.getKingdeeDeptCode();
+							kingdeeDeptName = kingdeeDepartmentEntity.getKingdeeDeptName();
+						}
 					}
-					shudiyunB2cOrderDTO.setDepartment_name(department_name);
 				}
+				shudiyunB2cOrderDTO.setDepartment_code(kingdeeDeptCode);
+				shudiyunB2cOrderDTO.setDepartment_name(kingdeeDeptName);
     			
     	        shudiyunB2cOrderDTO.setBiz_uni_key(thirdCode + dmpSoOutstockDetailEntity.getThirdDetailId());
     	        shudiyunB2cOrderDTO.setBiz_no(thirdBillNo);
@@ -335,10 +405,15 @@ public class DmpOutputSdySoOutstockHandler extends DmpOutputSdyBaseTaskHandler {
 					if (StringUtils.isNotBlank(platformDetailId) && DmpBasicSystemCodeEnum.AMAZON.getCode().equalsIgnoreCase(platformType)) {
 						String signTime = cfgMaps.get("amzPlatformSignTimeInfo").get(platformDetailId);
 						if (StringUtils.isNotBlank(signTime)) {
-							shudiyunB2cOrderDTO.setPlatform_signing_time(signTime);
+							shudiyunB2cOrderDTO.setEstimate_investment_time(signTime);
 						}
 					}
 				}
+	            
+	            LocalDateTime estimateInvestmentTime = dmpSoOutstockDetailEntity.getEstimateInvestmentTime();
+	            if(StringUtils.isBlank(shudiyunB2cOrderDTO.getEstimate_investment_time()) && estimateInvestmentTime != null) {
+	            	shudiyunB2cOrderDTO.setEstimate_investment_time(estimateInvestmentTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+	            }
 
 				// 添加发货类型
 				boolean isPlatformDelivery = checkPlatformDelivery(dmpSoOutstockEntity, dmpSoOutstockDetailEntity, cfgMaps.get("wdtSdyPlatformDeliveryType"));
@@ -395,11 +470,62 @@ public class DmpOutputSdySoOutstockHandler extends DmpOutputSdyBaseTaskHandler {
     	        shudiyunB2cOrderDTO.setRoot_node_no_initial(dmpSoOutstockDetailEntity.getThirdOrderCode());
     	        shudiyunB2cOrderDTO.setParent_node_no(platformCode);
     			
+    	        if(StringUtils.isBlank(shudiyunB2cOrderDTO.getDepartment_code()) && StringUtils.isNotBlank(shudiyunB2cOrderDTO.getShop_no())) {
+                	List<CustomerInfoEntity> deptCustomerInfoList = FeignQuery.create(CustomerInfoEntity.class).eq(CustomerInfoEntity::getCode, 
+                			shudiyunB2cOrderDTO.getShop_no()).list();
+                	if(CollUtil.isNotEmpty(deptCustomerInfoList)) {
+                		CustomerInfoEntity deptCustomerInfoEntity = deptCustomerInfoList.get(0);
+                		List<KingdeeDepartmentEntity> deptKingdeeDepartmentEntityList = FeignQuery.create(KingdeeDepartmentEntity.class).eq(KingdeeDepartmentEntity::getErpDeptId, deptCustomerInfoEntity.getSalesDeptId())
+                			.eq(KingdeeDepartmentEntity::getUseOrgId, deptCustomerInfoEntity.getUseOrgId()).list();
+                		if(CollUtil.isNotEmpty(deptKingdeeDepartmentEntityList)) {
+                			shudiyunB2cOrderDTO.setDepartment_code(deptKingdeeDepartmentEntityList.get(0).getKingdeeDeptCode());
+                			shudiyunB2cOrderDTO.setDepartment_name(deptKingdeeDepartmentEntityList.get(0).getKingdeeDeptName());
+                		}
+                	}
+                }
+    	        
+    	        Map<String, String> wdtPlatformCodeMap = cfgMaps.get("wdtPlatformCodeMap");
+    	        if(wdtPlatformCodeMap != null) {
+    	        	if(thirdBillNo.startsWith("CK") && dmpSoOutstockDetailEntity.getThirdOrderCode().contains(",")) {
+    	        		String rootNodeNo = wdtPlatformCodeMap.get(dmpSoOutstockDetailEntity.getThirdDetailId());
+    	        		if(StringUtils.isNotBlank(rootNodeNo)) {
+    	        			shudiyunB2cOrderDTO.setRoot_node_no(rootNodeNo);
+        	        		shudiyunB2cOrderDTO.setRoot_node_no_initial(rootNodeNo);
+    	        		}
+    				}
+    	        }
+    	        
+    	        shudiyunB2cOrderDTO.setDefaultValue();
     			result.put(detailId, shudiyunB2cOrderDTO);
     		}
     	}
     	return result;
     }
+
+	private KingdeeDepartmentEntity getKingdeeDept(Map<String, Map<String, String>> cfgMaps, String saleDeptCode, String saleOrgId) {
+		Map<String, String> departmentMap = cfgMaps.get("department");
+		if (departmentMap == null) {
+			log.warn("未找到部门信息，部门名称：{}，部门编码：{}", saleDeptCode, saleDeptCode);
+			return null;
+		}
+		String json = departmentMap.get(saleDeptCode);
+		if (StringUtils.isBlank(json)) {
+			log.warn("未找到部门信息，部门名称：{}，部门编码：{}", saleDeptCode, saleDeptCode);
+			return null;
+		}
+		SysDepartmentEntity sysDepartmentEntity = JSONUtil.toBean(json, SysDepartmentEntity.class);
+		Map<String, String> kingdeeDeptListMap = cfgMaps.get("kingdeeDeptList");
+		if (kingdeeDeptListMap == null) {
+			log.warn("未找到部门信息，部门名称：{}，部门编码：{}", saleDeptCode, saleDeptCode);
+			return null;
+		}
+		String kingdeeJson = kingdeeDeptListMap.get(sysDepartmentEntity.getId() + "_" + saleOrgId);
+		if (StringUtils.isBlank(kingdeeJson)) {
+			log.warn("未找到部门信息，部门名称：{}，部门ID：{}，组织ID：{}", saleDeptCode, sysDepartmentEntity.getId(), saleOrgId);
+			return null;
+		}
+		return JSONUtil.toBean(kingdeeJson, KingdeeDepartmentEntity.class);
+	}
 
 
 	/**
@@ -407,7 +533,7 @@ public class DmpOutputSdySoOutstockHandler extends DmpOutputSdyBaseTaskHandler {
 	 */
 	private Map<String, String> queryAndConvertArrivalDate(List<DmpSoOutstockDetailEntity> changeDmpSoOutstockDetailEntity) {
 		List<String> amzPlatformDetailIdList = changeDmpSoOutstockDetailEntity.stream()
-				.filter(e -> e.getPlatformType().equalsIgnoreCase(DmpBasicSystemCodeEnum.AMAZON.getCode()) && StringUtils.isNotBlank(e.getPlatformDetailId()))
+				.filter(e -> DmpBasicSystemCodeEnum.AMAZON.getCode().equalsIgnoreCase(e.getPlatformType()) && StringUtils.isNotBlank(e.getPlatformDetailId()))
 				.map(DmpSoOutstockDetailEntity::getPlatformDetailId)
 				.collect(Collectors.toList());
 		if (CollUtil.isEmpty(amzPlatformDetailIdList)) {
@@ -433,7 +559,7 @@ public class DmpOutputSdySoOutstockHandler extends DmpOutputSdyBaseTaskHandler {
 				// 设置所有本地时区
 				if (StringUtils.isNotBlank(dmpAmzSoOutstockDetailEntity.getEstimatedArrivalDate())){
 					OffsetDateTime parseDate = OffsetDateTime.parse(dmpAmzSoOutstockDetailEntity.getEstimatedArrivalDate());
-					String lastTime = parseDate.atZoneSameInstant(ZoneId.of(timeZoneEntity.getTimeZone())).toLocalDateTime().toString();
+					String lastTime = parseDate.atZoneSameInstant(ZoneId.of(timeZoneEntity.getTimeZone())).toLocalDateTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
 					resultMap.put(dmpAmzSoOutstockDetailEntity.getShipmentItemId(), lastTime);
 				}
 			}
@@ -460,9 +586,75 @@ public class DmpOutputSdySoOutstockHandler extends DmpOutputSdyBaseTaskHandler {
 		}
 	}
     
+	@Override
+    protected void afterPushData(DmpCfgOutputEntity dmpCfgOutputEntity,
+    		DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity) {
+    	if(isRetryPush) {
+    		return;
+    	}
+    	//创建旺店通配货单任务
+        List<ShudiyunB2cOrderDTO> shudiyunB2cOrderDTOList = new ArrayList<>();
+        String requestData = dmpOutputTaskRecordEntity.getRequestData();
+        if(requestData.trim().startsWith("{")) {
+            ShudiyunB2cOrderDTO dto = JSON.parseObject(requestData, ShudiyunB2cOrderDTO.class);
+            shudiyunB2cOrderDTOList.add(dto);
+        }else {
+            shudiyunB2cOrderDTOList = JSON.parseArray(requestData, ShudiyunB2cOrderDTO.class);
+        }
+
+        List<String> thirdCodeList = shudiyunB2cOrderDTOList.stream().filter(s -> "销售出库单".equals(s.getTransaction_type()) 
+        		&& StringUtils.isNotBlank(s.getBiz_no()) && s.getBiz_no().startsWith("CK") 
+        		&& StringUtils.isNotBlank(s.getParent_node_no()))
+        	.map(ShudiyunB2cOrderDTO::getParent_node_no).collect(Collectors.toList());
+
+        
+        if(CollUtil.isNotEmpty(thirdCodeList)) {
+        	List<String> mainIds = dmpSoInfoService.lambdaQuery()
+        			.eq(DmpSoInfoEntity::getSourceSystem, PlatformDictEnum.WDT.getCode())
+        			.in(DmpSoInfoEntity::getThirdCode, thirdCodeList)
+        			.select(DmpSoInfoEntity::getId)
+        			.list().stream().map(DmpSoInfoEntity::getId).collect(Collectors.toList());
+        	if(CollUtil.isNotEmpty(mainIds)) {
+        		List<String> filterMainIds = dmpSoDetailService.lambdaQuery().in(DmpSoDetailEntity::getMainId, mainIds)
+	        		.in(DmpSoDetailEntity::getPlatformStatus, Arrays.asList("80" , "90"))
+	        		.select(DmpSoDetailEntity::getMainId)
+	        		.list()
+	        		.stream().map(DmpSoDetailEntity::getMainId).collect(Collectors.toList());
+        		if(CollUtil.isNotEmpty(filterMainIds)) {
+        			Stream.of("1859427581292469023" , "1859427581292469024").forEach(s -> {
+                		DmpOutputHotfixCreateRequest request = new DmpOutputHotfixCreateRequest();
+                        request.setCfgOutputId(s);
+                        List<QueryParam> queryParams = new ArrayList<>();
+                        queryParams.add(new QueryParam(QueryTypeEnum.IN, "id", filterMainIds));
+                        request.setQueryParams(queryParams);
+//                        dmpOutputCreateFactory.doHotfixOutputTask(request);
+                	});
+        		}
+        	}
+        }
+    }
+	
     @Override
     protected List<String> getSourceCodeKeys() {
     	return Arrays.asList("biz_no" , "sku_code");
     }
 
+	private static CustomerInfoEntity queryAndCacheDictCustomerEntity(Map<String, Map<String, String>> cacheMap, String customerCode) {
+		Map<String, String> customerInfoMap = cacheMap.get("customerInfo");
+		if (null == customerInfoMap) {
+			customerInfoMap = new HashMap<>();
+			List<CustomerInfoEntity> customerEntityList = FeignQuery.create(CustomerInfoEntity.class).list();
+			if (CollUtil.isNotEmpty(customerEntityList)) {
+				Map<String, String> allCustomer = customerEntityList.stream()
+						.collect(Collectors.toMap(CustomerInfoEntity::getCode, JSONUtil::toJsonStr, (k1, k2) -> k1));
+				customerInfoMap.putAll(allCustomer);
+			}
+			cacheMap.put("customerInfo", customerInfoMap);
+		}
+		String json = customerInfoMap.get(customerCode);
+		if (StringUtils.isNotBlank(json)) {
+			return JSONUtil.toBean(json, CustomerInfoEntity.class);
+		}
+		return null;
+	}
 }

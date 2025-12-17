@@ -538,6 +538,11 @@ public class PurchasePriceDetailDTO implements Serializable {
          */
         private LocalDate effectiveDate;
 
+        /**
+         * 失效时间
+         */
+        private LocalDate expireDate;
+
 
         /**
          * 含税单价

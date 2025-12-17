@@ -97,7 +97,7 @@ public class ContractInfoServiceImpl extends SuperServiceImpl<ContractInfoMapper
     @Qualifier("contractInfoExecutorPool")
     private ExecutorService contractInfoExecutorPool;
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(ContractInfoDTO.AddDTO addDTO) {
@@ -534,7 +534,7 @@ public class ContractInfoServiceImpl extends SuperServiceImpl<ContractInfoMapper
         return;
     }
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BatchResultDTO approve(ApproveOneDTO dto) {
@@ -615,7 +615,7 @@ public class ContractInfoServiceImpl extends SuperServiceImpl<ContractInfoMapper
         }
     }
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BatchResultDTO disApprove(String id) {
@@ -650,7 +650,7 @@ public class ContractInfoServiceImpl extends SuperServiceImpl<ContractInfoMapper
     /**
     * 撤销
     */
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BatchResultDTO cancelProcess(String id) {

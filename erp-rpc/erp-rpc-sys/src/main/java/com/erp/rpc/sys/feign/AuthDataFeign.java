@@ -18,7 +18,7 @@ import java.util.List;
  * @date 2025年03月04日
  * @version: 1.0
  */
-@FeignClient(name = "erp-sys", contextId = "auth",configuration = {FeignErrorDecoder.class})
+@FeignClient(name = "erp-sys", contextId = "authDataFeign",configuration = {FeignErrorDecoder.class})
 public interface AuthDataFeign {
     /**
      * 获取店铺的用户

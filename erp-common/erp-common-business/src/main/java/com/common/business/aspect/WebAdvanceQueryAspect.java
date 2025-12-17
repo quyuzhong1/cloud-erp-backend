@@ -146,12 +146,14 @@ public class WebAdvanceQueryAspect {
             }
             if(QueryConditionEnum.STARTS_WITH.equals(condEnum) || QueryConditionEnum.ENDS_WITH.equals(condEnum) || QueryConditionEnum.CONTAINS.equals(condEnum)) {
             	String[] likeSplit = contentSql.split("like LOWER");
-            	String[] blankSplit = likeSplit[0].split(" ");
-            	String likeQuery = blankSplit[blankSplit.length - 1];
-            	if(!likeQuery.toUpperCase().contains("LOWER")) {
-            		if(contentSql.split(likeQuery).length == 2) {
-            			contentSql = contentSql.replace(likeQuery, " LOWER(" + likeQuery + ") ");
-            		}
+            	if(likeSplit.length == 2) {
+            		String[] blankSplit = likeSplit[0].split(" ");
+                	String likeQuery = blankSplit[blankSplit.length - 1];
+                	if(!likeQuery.toUpperCase().contains("LOWER")) {
+                		if(contentSql.split(likeQuery).length == 2) {
+                			contentSql = contentSql.replace(likeQuery, " LOWER(" + likeQuery + ") ");
+                		}
+                	}
             	}
             }
         }else{
@@ -162,6 +164,8 @@ public class WebAdvanceQueryAspect {
             } else if (QueryConditionEnum.NOT_NULL.equals(condEnum)) {
                 sql.append( dto.getField() +" != ''").append(" ");
             } else if (QueryConditionEnum.STARTS_WITH.equals(condEnum) || QueryConditionEnum.ENDS_WITH.equals(condEnum) || QueryConditionEnum.CONTAINS.equals(condEnum)) {
+                sql.append("LOWER(").append(dto.getField()).append(")").append(" ");
+            } else if (QueryConditionEnum.NOT_CONTAINS.equals(condEnum)) {
                 sql.append("LOWER(").append(dto.getField()).append(")").append(" ");
             } else{
                 sql.append(dto.getField()).append(" ");

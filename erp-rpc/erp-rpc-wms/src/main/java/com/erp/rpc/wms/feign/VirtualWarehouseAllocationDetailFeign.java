@@ -1,5 +1,6 @@
 package com.erp.rpc.wms.feign;
 
+import com.common.business.config.FeignErrorDecoder;
 import com.erp.model.wms.dto.VirtualWarehouseAllocationDTO;
 import com.erp.model.wms.entity.VirtualWarehouseAllocationDetailEntity;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -16,7 +17,7 @@ import java.util.List;
  *
  * @author hyj
  */
-@FeignClient(name = "erp-wms", contextId = "virtualWarehouseAllocationDetail", path = "/feign/virtualWarehouseAllocationDetail")
+@FeignClient(name = "erp-wms", contextId = "virtualWarehouseAllocationDetail", path = "/feign/virtualWarehouseAllocationDetail",configuration = {FeignErrorDecoder.class})
 public interface VirtualWarehouseAllocationDetailFeign {
 
     /**

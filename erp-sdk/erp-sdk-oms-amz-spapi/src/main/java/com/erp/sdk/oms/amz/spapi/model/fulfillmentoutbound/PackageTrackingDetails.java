@@ -10,18 +10,29 @@
  * Do not edit the class manually.
  */
 
-
 package com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound;
 
-import com.google.gson.annotations.SerializedName;
-
-
 import java.util.Objects;
+import java.util.Arrays;
+import com.google.gson.TypeAdapter;
+import com.google.gson.annotations.JsonAdapter;
+import com.google.gson.annotations.SerializedName;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonWriter;
+import com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound.AdditionalLocationInfo;
+import com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound.CurrentStatus;
+import com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound.DateRange;
+import com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound.TrackingAddress;
+import com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound.TrackingEventList;
 
+import java.io.IOException;
+import java.time.OffsetDateTime;
 /**
- * PackageTrackingDetails
+ * Tracking details of package
  */
-@javax.annotation.Generated(value = "io.swagger.codegen.languages.JavaClientCodegen", date = "2020-12-15T20:44:18.412+08:00")
+
+@javax.annotation.Generated(value = "io.swagger.codegen.v3.generators.java.JavaClientCodegen", date = "2025-08-18T09:55:11.594451100+08:00[Asia/Shanghai]")
+
 public class PackageTrackingDetails {
   @SerializedName("packageNumber")
   private Integer packageNumber = null;
@@ -42,10 +53,10 @@ public class PackageTrackingDetails {
   private String carrierURL = null;
 
   @SerializedName("shipDate")
-  private String shipDate = null;
+  private OffsetDateTime shipDate = null;
 
   @SerializedName("estimatedArrivalDate")
-  private String estimatedArrivalDate = null;
+  private OffsetDateTime estimatedArrivalDate = null;
 
   @SerializedName("shipToAddress")
   private TrackingAddress shipToAddress = null;
@@ -55,6 +66,9 @@ public class PackageTrackingDetails {
 
   @SerializedName("currentStatusDescription")
   private String currentStatusDescription = null;
+
+  @SerializedName("deliveryWindow")
+  private DateRange deliveryWindow = null;
 
   @SerializedName("signedForBy")
   private String signedForBy = null;
@@ -74,7 +88,7 @@ public class PackageTrackingDetails {
    * The package identifier.
    * @return packageNumber
   **/
-
+  
   public Integer getPackageNumber() {
     return packageNumber;
   }
@@ -92,7 +106,7 @@ public class PackageTrackingDetails {
    * The tracking number for the package.
    * @return trackingNumber
   **/
-
+  
   public String getTrackingNumber() {
     return trackingNumber;
   }
@@ -110,7 +124,7 @@ public class PackageTrackingDetails {
    * Link on swiship.com that allows customers to track the package.
    * @return customerTrackingLink
   **/
-
+  
   public String getCustomerTrackingLink() {
     return customerTrackingLink;
   }
@@ -128,7 +142,7 @@ public class PackageTrackingDetails {
    * The name of the carrier.
    * @return carrierCode
   **/
-
+  
   public String getCarrierCode() {
     return carrierCode;
   }
@@ -146,7 +160,7 @@ public class PackageTrackingDetails {
    * The phone number of the carrier.
    * @return carrierPhoneNumber
   **/
-
+  
   public String getCarrierPhoneNumber() {
     return carrierPhoneNumber;
   }
@@ -161,10 +175,10 @@ public class PackageTrackingDetails {
   }
 
    /**
-   * The URL of the carrier’s website.
+   * The URL of the carrier&#x27;s website.
    * @return carrierURL
   **/
-
+  
   public String getCarrierURL() {
     return carrierURL;
   }
@@ -173,39 +187,39 @@ public class PackageTrackingDetails {
     this.carrierURL = carrierURL;
   }
 
-  public PackageTrackingDetails shipDate(String shipDate) {
+  public PackageTrackingDetails shipDate(OffsetDateTime shipDate) {
     this.shipDate = shipDate;
     return this;
   }
 
    /**
-   * The shipping date for the package.
+   * Get shipDate
    * @return shipDate
   **/
-
-  public String getShipDate() {
+  
+  public OffsetDateTime getShipDate() {
     return shipDate;
   }
 
-  public void setShipDate(String shipDate) {
+  public void setShipDate(OffsetDateTime shipDate) {
     this.shipDate = shipDate;
   }
 
-  public PackageTrackingDetails estimatedArrivalDate(String estimatedArrivalDate) {
+  public PackageTrackingDetails estimatedArrivalDate(OffsetDateTime estimatedArrivalDate) {
     this.estimatedArrivalDate = estimatedArrivalDate;
     return this;
   }
 
    /**
-   * The estimated arrival date.
+   * Get estimatedArrivalDate
    * @return estimatedArrivalDate
   **/
-
-  public String getEstimatedArrivalDate() {
+  
+  public OffsetDateTime getEstimatedArrivalDate() {
     return estimatedArrivalDate;
   }
 
-  public void setEstimatedArrivalDate(String estimatedArrivalDate) {
+  public void setEstimatedArrivalDate(OffsetDateTime estimatedArrivalDate) {
     this.estimatedArrivalDate = estimatedArrivalDate;
   }
 
@@ -215,10 +229,10 @@ public class PackageTrackingDetails {
   }
 
    /**
-   * The destination city for the package.
+   * Get shipToAddress
    * @return shipToAddress
   **/
-
+  
   public TrackingAddress getShipToAddress() {
     return shipToAddress;
   }
@@ -236,7 +250,7 @@ public class PackageTrackingDetails {
    * Get currentStatus
    * @return currentStatus
   **/
-
+  
   public CurrentStatus getCurrentStatus() {
     return currentStatus;
   }
@@ -254,13 +268,31 @@ public class PackageTrackingDetails {
    * Description corresponding to the CurrentStatus value.
    * @return currentStatusDescription
   **/
-
+  
   public String getCurrentStatusDescription() {
     return currentStatusDescription;
   }
 
   public void setCurrentStatusDescription(String currentStatusDescription) {
     this.currentStatusDescription = currentStatusDescription;
+  }
+
+  public PackageTrackingDetails deliveryWindow(DateRange deliveryWindow) {
+    this.deliveryWindow = deliveryWindow;
+    return this;
+  }
+
+   /**
+   * Get deliveryWindow
+   * @return deliveryWindow
+  **/
+  
+  public DateRange getDeliveryWindow() {
+    return deliveryWindow;
+  }
+
+  public void setDeliveryWindow(DateRange deliveryWindow) {
+    this.deliveryWindow = deliveryWindow;
   }
 
   public PackageTrackingDetails signedForBy(String signedForBy) {
@@ -272,7 +304,7 @@ public class PackageTrackingDetails {
    * The name of the person who signed for the package.
    * @return signedForBy
   **/
-
+  
   public String getSignedForBy() {
     return signedForBy;
   }
@@ -290,7 +322,7 @@ public class PackageTrackingDetails {
    * Get additionalLocationInfo
    * @return additionalLocationInfo
   **/
-
+  
   public AdditionalLocationInfo getAdditionalLocationInfo() {
     return additionalLocationInfo;
   }
@@ -308,7 +340,7 @@ public class PackageTrackingDetails {
    * Get trackingEvents
    * @return trackingEvents
   **/
-
+  
   public TrackingEventList getTrackingEvents() {
     return trackingEvents;
   }
@@ -319,7 +351,7 @@ public class PackageTrackingDetails {
 
 
   @Override
-  public boolean equals(Object o) {
+  public boolean equals(java.lang.Object o) {
     if (this == o) {
       return true;
     }
@@ -338,6 +370,7 @@ public class PackageTrackingDetails {
         Objects.equals(this.shipToAddress, packageTrackingDetails.shipToAddress) &&
         Objects.equals(this.currentStatus, packageTrackingDetails.currentStatus) &&
         Objects.equals(this.currentStatusDescription, packageTrackingDetails.currentStatusDescription) &&
+        Objects.equals(this.deliveryWindow, packageTrackingDetails.deliveryWindow) &&
         Objects.equals(this.signedForBy, packageTrackingDetails.signedForBy) &&
         Objects.equals(this.additionalLocationInfo, packageTrackingDetails.additionalLocationInfo) &&
         Objects.equals(this.trackingEvents, packageTrackingDetails.trackingEvents);
@@ -345,7 +378,7 @@ public class PackageTrackingDetails {
 
   @Override
   public int hashCode() {
-    return Objects.hash(packageNumber, trackingNumber, customerTrackingLink, carrierCode, carrierPhoneNumber, carrierURL, shipDate, estimatedArrivalDate, shipToAddress, currentStatus, currentStatusDescription, signedForBy, additionalLocationInfo, trackingEvents);
+    return Objects.hash(packageNumber, trackingNumber, customerTrackingLink, carrierCode, carrierPhoneNumber, carrierURL, shipDate, estimatedArrivalDate, shipToAddress, currentStatus, currentStatusDescription, deliveryWindow, signedForBy, additionalLocationInfo, trackingEvents);
   }
 
 
@@ -365,6 +398,7 @@ public class PackageTrackingDetails {
     sb.append("    shipToAddress: ").append(toIndentedString(shipToAddress)).append("\n");
     sb.append("    currentStatus: ").append(toIndentedString(currentStatus)).append("\n");
     sb.append("    currentStatusDescription: ").append(toIndentedString(currentStatusDescription)).append("\n");
+    sb.append("    deliveryWindow: ").append(toIndentedString(deliveryWindow)).append("\n");
     sb.append("    signedForBy: ").append(toIndentedString(signedForBy)).append("\n");
     sb.append("    additionalLocationInfo: ").append(toIndentedString(additionalLocationInfo)).append("\n");
     sb.append("    trackingEvents: ").append(toIndentedString(trackingEvents)).append("\n");
@@ -376,7 +410,7 @@ public class PackageTrackingDetails {
    * Convert the given object to string with each line indented by 4 spaces
    * (except the first line).
    */
-  private String toIndentedString(Object o) {
+  private String toIndentedString(java.lang.Object o) {
     if (o == null) {
       return "null";
     }
@@ -384,4 +418,3 @@ public class PackageTrackingDetails {
   }
 
 }
-

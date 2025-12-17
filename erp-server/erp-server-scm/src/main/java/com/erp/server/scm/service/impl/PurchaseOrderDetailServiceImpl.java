@@ -27,6 +27,7 @@ import com.common.message.service.mq.MQProducerService;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.PurchaseOrderDetailDTO;
+import com.erp.model.scm.dto.PurchasePriceChangeDTO;
 import com.erp.model.scm.dto.PurchasePriceDTO;
 import com.erp.model.scm.entity.*;
 import com.erp.model.scm.enums.ConfirmTypeEnum;
@@ -379,7 +380,7 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
                 throw new ServiceException(StrUtil.format("采购退货单【{}】明细记录不存在", poReturnEntity.getCode()));
             }
         }
-
+        List<String> errorList = new ArrayList<>();
         List<PurchasePriceDTO.PriceDTO> viewDTOList = purchasePriceService.batchGetPurchasePrice(priceList);
         for (PurchaseOrderDetailDTO.AddDTO addDTO : details) {
             //子件
@@ -413,6 +414,9 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
                     addDTO.setTaxPrice(viewDTO.getTaxPrice());
                     addDTO.setTaxRate(viewDTO.getTaxRate());
                     addDTO.setPurchaseAmount(MathUtil.multiplyWithTwo(viewDTO.getTaxPrice(),addDTO.getPurchaseQty()));
+                } else {
+                    String purchasePriceError = CharSequenceUtil.format(ApiError.ERROR_PURCHASE_PRICE_SKU.msg, addDTO.getSkuNo(), addDTO.getPurchaseQty());
+                    errorList.add(purchasePriceError);
                 }
             }else if (PurchaseOrderTypeEnum.ENUM_RETURN.getCode().equals(entity.getType())){
                 if(!addDTO.getIsRevalueTaxRate()){
@@ -433,34 +437,10 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
                     }
                 }
             }
-//
-//
-//            //采购单价赋值
-//            PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO viewDTO = viewDTOList.stream().filter(obj ->
-//                            obj.getSkuId().equals(addDTO.getSkuId())
-//                            && obj.getSupplierId().equals(supplierEntity.getSupplierId())
-//                            && StrUtil.equals(obj.getPurchaseOrgId(),entity.getPurchaseOrgId())
-//                            && (addDTO.getPurchaseQty() == obj.getPurchaseQty()))
-//                    .findFirst().orElse(null);
-//            if (ObjectUtils.isEmpty(viewDTO)) {
-//                continue;
-//            }
-//            //汇率
-//            BigDecimal taxRate = viewDTO.getTaxRate();
-//            //单价
-//            BigDecimal taxPrice = viewDTO.getTaxPrice();
-//            if (ObjectUtils.isEmpty(addDTO)) {
-//                String error = String.format("SKU【%s】未找到数量【%s】的供应商报价信息", addDTO.getSkuNo(), addDTO.getPurchaseQty());
-//                throw new ServiceException(new ApiResult(1,error));
-//            }
-//            if (MathUtil.compareTo(taxPrice,addDTO.getTaxPrice()) != MathUtil.ZERO && PurchaseOrderTypeEnum.ENUM_PURCHASE.getCode().equals(entity.getType())) {
-//                String error = String.format("SKU【%s】,数量【%s】录入单价与报价单价不匹配", addDTO.getSkuNo(), addDTO.getPurchaseQty());
-//                throw new ServiceException(new ApiResult(1,error));
-//            }
-//            if (PurchaseOrderTypeEnum.ENUM_RETURN.getCode().equals(entity.getType())) {
-//                addDTO.setTaxPrice(taxPrice);
-//            }
-//            addDTO.setTaxRate(taxRate);
+        }
+        if (CollUtil.isNotEmpty(errorList)) {
+            String error = String.join(",", errorList);
+            throw new ServiceException(ApiError.ERROR_PURCHASE_PRICE_SKU.code,error);
         }
     }
 
@@ -545,9 +525,16 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
             viewProductDTO.setReceiveQty(receiveQty);
             //未收货数量
             viewProductDTO.setUnReceiveQty(viewProductDTO.getPurchaseQty() + returnQty - receiveQty);
-
+            SkuVO skuVO = skuList.stream().filter(obj -> obj.getSkuId().equals(viewProductDTO.getSkuId())).findFirst().orElse(null);
+            String supplierId;
+            if (Objects.nonNull(skuVO)) {
+                viewProductDTO.setUnitName(skuVO.getUnitName());
+                viewProductDTO.setEan(skuVO.getEan());
+                supplierId = skuVO.getSupplierId();
+            } else {
+                supplierId = "";
+            }
             //参考供应商
-            String supplierId = skuList.stream().filter(obj -> obj.getSkuId().equals(viewProductDTO.getSkuId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getSupplierId())).orElse("");
             if (CollectionUtils.isNotEmpty(supplierIdList)) {
                 String supplierName = supplierList.stream().filter(obj -> obj.getId().equals(supplierId)).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
                 viewProductDTO.setMainSupplierId(supplierId);
@@ -583,6 +570,9 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
             //仓位名称填充
             WarehouseLocationEntity warehouseLocationEntity = warehouseLocationEntityList.stream().filter(e -> e.getWarehouseId().equals(viewProductDTO.getDeliveryWarehouseId()) && e.getCode().equals(viewProductDTO.getWarehouseLocation())).findFirst().orElse(new WarehouseLocationEntity());
             viewProductDTO.setWarehouseLocationName(warehouseLocationEntity.getName());
+
+            //新品首批名称填充
+            viewProductDTO.setFirstMassProductName(com.erp.model.plm.enums.FirstMassProductTypeEnum.getName(viewProductDTO.getFirstMassProduct()));
         }
         return list;
     }
@@ -618,7 +608,7 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
        return baseMapper.listBySourceDetailIds(sourceDetailIds);
     }
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void updateArrivalStatusByIds(String executionStatus, List<String> ids, List<PurchaseOrderDetailEntity> purchaseOrderDetailList, String remark) {
@@ -740,7 +730,7 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
     }
 
     @Override
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     public Boolean finishDelivery(List<String> ids, String remark,Boolean isValid) {
         //ids为采购订单明细id集合
@@ -774,6 +764,14 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
         List<Pair<String, String>> pairList = purchaseOrderDetailList.stream().map(obj -> new Pair<>(obj.getPurchaseOrderId(), obj.getSkuNo())).collect(Collectors.toList());
         moduleOperateLogService.batchAddModuleOperateLog("SKU【%s】结束交货，结束原因：".concat(StrUtils.null2EmptyWithTrim(remark)), ModuleTypeEnum.PURCHASE_ORDER.getCode(), pairList, "结束交货操作");
         return Boolean.TRUE;
+    }
+
+    @Override
+    public List<PurchasePriceChangeDTO.PurchaseOrderAdjustResultDTO> listAdjustPurchaseOrder(List<PurchasePriceChangeDTO.PurchaseOrderAdjustParamDTO> adjustParamList) {
+        if (CollUtil.isEmpty(adjustParamList)) {
+            return Collections.emptyList();
+        }
+        return baseMapper.listAdjustPurchaseOrder(adjustParamList);
     }
 
     /**

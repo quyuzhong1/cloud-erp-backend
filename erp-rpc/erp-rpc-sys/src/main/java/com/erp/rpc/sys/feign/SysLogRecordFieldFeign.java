@@ -1,5 +1,6 @@
 package com.erp.rpc.sys.feign;
 
+import com.common.business.config.FeignErrorDecoder;
 import com.erp.model.sys.dto.SysLogRecordFieldDTO;
 import com.erp.model.sys.dto.SysLogRecordFieldListDTO;
 import com.erp.model.sys.entity.SysLogRecordFieldEntity;
@@ -15,7 +16,7 @@ import java.util.List;
  * @author Jim
  * @since 2023-08-29
  **/
-@FeignClient(name = "erp-sys", contextId = "logRecordField")
+@FeignClient(name = "erp-sys", contextId = "logRecordField",configuration = {FeignErrorDecoder.class})
 public interface SysLogRecordFieldFeign {
 
     /**

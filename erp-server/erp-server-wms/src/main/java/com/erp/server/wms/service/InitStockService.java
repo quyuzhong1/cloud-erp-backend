@@ -99,7 +99,7 @@ public interface InitStockService extends SuperService<InitStockEntity> {
      * 删除
      * @param ids
      */
-    void delete(List<String> ids);
+    List<BatchResultDTO> delete(List<String> ids);
 
     /**
      * 反审核

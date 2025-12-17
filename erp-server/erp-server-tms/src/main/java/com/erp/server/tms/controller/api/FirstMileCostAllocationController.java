@@ -120,6 +120,7 @@ public class FirstMileCostAllocationController extends BaseController {
             serviceClass = FirstMileCostAllocationService.class,
             keyIdName = "ids"
     )
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "批量更新状态")
     public ApiResult<List<BatchResultDTO>> updateStatus(@RequestBody FirstMileCostAllocationDTO.UpdateStatusDTO dto) {
         List<FirstMileCostAllocationEntity> entityList = null;
         if (CharSequenceUtil.isNotBlank(dto.getReportPeriodStr())){
@@ -151,6 +152,7 @@ public class FirstMileCostAllocationController extends BaseController {
             serviceClass = FirstMileCostAllocationService.class,
             keyIdName = "ids"
     )
+    @LogAction(value = LogActionEnum.DELETE, desc = "批量删除记录")
     public ApiResult<List<BatchResultDTO>> delete(@RequestBody FirstMileCostAllocationDTO.ResetIdsDTO dto) {
         List<FirstMileCostAllocationEntity> entityList = null;
         if (CharSequenceUtil.isNotBlank(dto.getReportPeriodStr())){
@@ -180,6 +182,7 @@ public class FirstMileCostAllocationController extends BaseController {
      * @date 2024-8-15 10:54
      */
     @PostMapping("/exportExcel")
+    @LogAction(value = LogActionEnum.EXPORT, desc = "费用分摊明细导出")
     public ApiResult<Boolean> exportExcel(@RequestBody @Valid FirstMileCostAllocationDTO.PagingParamDTO dto) {
         firstMileCostAllocationService.exportList(dto);
         return success(Boolean.TRUE);
@@ -248,7 +251,7 @@ public class FirstMileCostAllocationController extends BaseController {
      * 下推费用分摊
      */
     @PostMapping("/pushAllocatedCost")
-    @LogAction(value = LogActionEnum.UPDATE, desc = "重新分摊")
+    @LogAction(value = LogActionEnum.SUBMIT, desc = "重新分摊")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
             menuCode = "tms:firstMileCostAllocation:calcAllocatedCost",
@@ -259,7 +262,7 @@ public class FirstMileCostAllocationController extends BaseController {
         List<FirstMileWeightAllocationEntity> firstMileWeightAllocationEntities = firstMileWeightAllocationService.listByIds(dto.getIds());
         List<String> sourceIds = firstMileWeightAllocationEntities.stream().filter(Objects::nonNull).map(FirstMileWeightAllocationEntity::getSourceId).distinct().collect(Collectors.toList());
         List<BatchResultDTO> resultDTOS = new ArrayList<>(sourceIds.size());
-        List<FirstMileCostAllocationEntity> entityList = firstMileCostAllocationService.listBySourceIds(sourceIds, null);
+        List<FirstMileCostAllocationEntity> entityList = firstMileCostAllocationService.listBySourceIds(sourceIds, null, null, null);
         List<FirstMileDeliveryEntity> firstMileDeliveryEntityList = wmsFirstMileDeliveryFeign.listByIds(sourceIds);
         List<FirstMileDeliveryDetailEntity> deliveryDetailEntityList = wmsFirstMileDeliveryFeign.listDetailByMainIds(sourceIds);
         ReportPeriodMonthEntity reportPeriodMonth = reportPeriodMonthService.getById(dto.getReportPeriodId());
@@ -288,9 +291,11 @@ public class FirstMileCostAllocationController extends BaseController {
                     continue;
                 }
             }
-            FirstMileCostAllocationEntity entity = entityList.stream().filter(v->v.getSourceId().equals(sourceId) && dto.getReportPeriodId().equals(v.getReportPeriodId())).findFirst().orElse(new FirstMileCostAllocationEntity());
-            entity.setSourceId(sourceId);
-            entity.setReportPeriodId(dto.getReportPeriodId());
+            FirstMileCostAllocationEntity entity = new FirstMileCostAllocationEntity()
+                    .setSourceId(firstMileDeliveryEntity.getId()).setSourceCode(firstMileDeliveryEntity.getCode()).setReportPeriodMonth(reportPeriodMonth.getMonth()).setReportPeriodId(dto.getReportPeriodId());
+//            FirstMileCostAllocationEntity entity = entityList.stream().filter(v->v.getSourceId().equals(sourceId) && dto.getReportPeriodId().equals(v.getReportPeriodId())).findFirst().orElse(new FirstMileCostAllocationEntity());
+//            entity.setSourceId(sourceId);
+//            entity.setReportPeriodId(dto.getReportPeriodId());
             try {
                 resultDTOS.add(firstMileCostAllocationService.calcAllocatedCost(entity,firstMileDeliveryEntity, firstMileDeliveryDetailEntityList));
             }catch (Exception e){

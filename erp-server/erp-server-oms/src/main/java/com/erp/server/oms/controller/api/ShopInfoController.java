@@ -114,9 +114,6 @@ public class ShopInfoController extends BaseController {
     @PostMapping("/add")
     public ApiResult<?> add(@RequestBody @Validated ShopDTO.AddDTO dto) {
         List<ShopInfoEntity> list = shopInfoService.add(dto);
-        for (ShopInfoEntity shop : list) {
-            shopInfoService.saveCustom(shop);
-        }
         return !CollectionUtils.isEmpty(list) ? success() : failure();
     }
 
@@ -248,6 +245,7 @@ public class ShopInfoController extends BaseController {
      * @date 2023-08-22 14:37
      */
     @PostMapping("/updateStatus")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "启用或者禁用店铺 ids={ids},状态值={disabled}(true=禁用,false=启用)")
     public ApiResult updateStatus(@RequestBody @Validated ShopBatchUpdateDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         List<String> ids = dto.getIds();
@@ -297,6 +295,7 @@ public class ShopInfoController extends BaseController {
      * @return
      */
     @PostMapping("/batchSetCost")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "店铺批量费用设置")
     public ApiResult batchSetCost(@RequestBody @Validated ShopDTO.BatchSetCostDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         List<String> ids = dto.getIds();
@@ -327,6 +326,7 @@ public class ShopInfoController extends BaseController {
      * @return
      */
     @PostMapping("/setCost")
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "单个店铺费用设置")
     public ApiResult setCost(@RequestBody @Validated ShopDTO.SetCostDTO dto) {
         Boolean result = shopCostService.setCost(dto);
         return result ? success() : failure();
@@ -373,6 +373,7 @@ public class ShopInfoController extends BaseController {
      * @return
      */
     @PostMapping("/shopAuthorize")
+    @LogAction(value = LogActionEnum.GRANT, desc = "店铺授权")
     public ApiResult shopAuthorize(@RequestBody @Validated ShopAuthorizeDTO dto, HttpServletResponse response) {
         Boolean result = shopInfoService.shopAuthorize(dto, response);
         return result ? success() : failure();
@@ -396,6 +397,7 @@ public class ShopInfoController extends BaseController {
      * @return
      */
     @PostMapping("/cancelAuthorize")
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "取消店铺授权")
     public ApiResult cancelAuthorize(@RequestBody @Validated CancelAuthorizeDTO dto) {
         Boolean result = shopInfoService.cancelAuthorize(dto);
         return result ? success() : failure();
@@ -589,10 +591,10 @@ public class ShopInfoController extends BaseController {
      * @author zdy
      */
     @PostMapping("/pagingSelect")
-    public PagingVO<ShopDTO.ListDTO> pagingSelect(@RequestBody @Validated PagingDTO<ShopDTO.SelectDTO> dto) {
+    public ApiResult<PagingVO<ShopDTO.ListDTO>> pagingSelect(@RequestBody @Validated PagingDTO<ShopDTO.SelectDTO> dto) {
         if (Objects.isNull(dto.getParams().getShowByAuth())){
             dto.getParams().setShowByAuth(Boolean.TRUE);//默认查询已授权的店铺
         }
-        return shopInfoService.pagingSelect(dto);
+        return success(shopInfoService.pagingSelect(dto));
     }
 }

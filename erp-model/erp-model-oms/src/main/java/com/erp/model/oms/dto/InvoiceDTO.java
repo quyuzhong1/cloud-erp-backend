@@ -45,12 +45,14 @@ public class InvoiceDTO implements Serializable {
         /**
          * 开户银行
          */
+        @NotBlank(message = "开户银行不能为空")
         @Size(max = 50, message = "开户银行最大50字符")
         private String bankName;
 
         /**
          * 银行账号
          */
+        @NotBlank(message = "银行账号不能为空")
         @Size(max = 50, message = "银行账号最大50字符")
         private String bankAccount;
 
@@ -118,22 +120,29 @@ public class InvoiceDTO implements Serializable {
         /**
          * 发票抬头
          */
+        @NotBlank(message = "发票抬头不能为空")
+        @Size(max = 50, message = "发票抬头最大50字符")
         private String head;
 
         /**
          * 类型
          */
+        @StateEnumValue(strValues = {"valueAddedTax","invoice"},message = "发票类型有误")
         private String type;
         private String typeName;
 
         /**
          * 银行名称
          */
+        @NotBlank(message = "开户银行不能为空")
+        @Size(max = 50, message = "开户银行最大50字符")
         private String bankName;
 
         /**
          * 银行账号
          */
+        @NotBlank(message = "银行账号不能为空")
+        @Size(max = 50, message = "银行账号最大50字符")
         private String bankAccount;
 
 
@@ -150,21 +159,25 @@ public class InvoiceDTO implements Serializable {
         /**
          *备注
          */
+        @Size(max = 200, message = "发票备注最大200字符")
         private String remark;
 
         /**
          * 纳税登记号
          */
+        @Size(max = 100, message = "纳税登记号最大100字符")
         private String taxRegisterCode;
 
         /**
          * 开票联系电话
          */
+        @Size(max = 100, message = "开票联系电话100字符")
         private String invoiceTel;
 
         /**
          * 开票通讯地址
          */
+        @Size(max = 500, message = "开票通讯地址最大500字符")
         private String invoiceAddress;
 
     }

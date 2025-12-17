@@ -56,6 +56,24 @@ public class DmpSoOriginalDetailEntity extends BaseEntity<DmpSoOriginalDetailEnt
     */
     @TableField("status")
     private String status;
+    
+    /**
+     * 平台规格名称
+     */
+    @TableField("spec_name")
+    private String specName;
+     /**
+     * 平台规格编号
+     */
+    @TableField("spec_no")
+    private String specNo;
+    
+    /**
+     * 平台规格id
+     */
+    @TableField("spec_id")
+    private String specId;
+    
     /**
     * 平台货品名称
     */
@@ -66,6 +84,12 @@ public class DmpSoOriginalDetailEntity extends BaseEntity<DmpSoOriginalDetailEnt
     */
     @TableField("goods_no")
     private String goodsNo;
+    
+    /**
+     * 平台货品id
+     */
+    @TableField("goods_id")
+    private String goodsId;
     /**
     * 数量
     */
@@ -116,7 +140,7 @@ public class DmpSoOriginalDetailEntity extends BaseEntity<DmpSoOriginalDetailEnt
     */
     @TableField("next_level_id")
     private String nextLevelId;
-
+    
 
     public static final String PLATFORM_CREATE_TIME = "platform_create_time";
 

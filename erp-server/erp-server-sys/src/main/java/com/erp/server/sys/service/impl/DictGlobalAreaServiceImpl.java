@@ -14,7 +14,6 @@ import com.common.business.vo.PagingVO;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
-import com.erp.model.dmp.enums.KingdeePushModuleEnum;
 import com.erp.model.sys.dto.DictGlobalAreaDTO;
 import com.erp.model.sys.dto.KingdeeDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
@@ -24,6 +23,7 @@ import com.erp.model.sys.enums.KingdeeAssistDataTypeEnum;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
+import com.erp.sdk.third.kingdee.utils.KingdeePushModuleEnum;
 import com.erp.server.sys.mapper.DictGlobalAreaMapper;
 import com.erp.server.sys.rocketmq.sync.kingdee.SyncKingdeeGlobalAreaService;
 import com.erp.server.sys.service.DictCountryService;
@@ -188,7 +188,7 @@ public class DictGlobalAreaServiceImpl extends SuperServiceImpl<DictGlobalAreaMa
         List<DictGlobalAreaEntity> dbList = this.list();
         List<String> idList = dbList.stream().map(DictGlobalAreaEntity::getId).collect(Collectors.toList());
 
-        List<ThirdpartyRefBusinessEntity> thirdpartyDbList = thirdpartyRefBusinessService.listByBusinessIds(idList);
+        List<ThirdpartyRefBusinessEntity> thirdpartyDbList = thirdpartyRefBusinessService.listByBusinessIds(idList , businessType);
         for (KingdeeDTO.AssistDTO item : areaList) {
             String kingdeeId = item.getKingdeeId();
             String kingdeeCode = item.getKingdeeCode();
@@ -291,8 +291,12 @@ public class DictGlobalAreaServiceImpl extends SuperServiceImpl<DictGlobalAreaMa
                 dmpMqFeign.sendTask(Arrays.asList(pushTaskEntity));
             }
         });
-        thirdpartyRefBusinessService.removeByBusinessId(id);
-        return BatchResultDTO.success(entity.getId(), entity.getId(), OperationTypeEnum.DELETE);
+        Class<DictGlobalAreaEntity> AreaClass = DictGlobalAreaEntity.class;
+        TableName tableName = AreaClass.getDeclaredAnnotation(TableName.class);
+        //获取到表名
+        String businessType = tableName.value();
+        thirdpartyRefBusinessService.removeByBusinessId(id , businessType);
+        return BatchResultDTO.success(entity.getId(), entity.getRegionName(), OperationTypeEnum.DELETE);
 
     }
 
@@ -351,12 +355,12 @@ public class DictGlobalAreaServiceImpl extends SuperServiceImpl<DictGlobalAreaMa
                     .update();
         }
 
-        ThirdpartyRefBusinessEntity refBusinessEntity = thirdpartyRefBusinessService.getByBusinessId(id);
+        Class<DictGlobalAreaEntity> areaClass = DictGlobalAreaEntity.class;
+        TableName tableName = areaClass.getDeclaredAnnotation(TableName.class);
+        //获取到表名
+        String businessType = tableName.value();
+        ThirdpartyRefBusinessEntity refBusinessEntity = thirdpartyRefBusinessService.getByBusinessId(id , businessType);
         if (Objects.isNull(refBusinessEntity)) {
-            Class<DictGlobalAreaEntity> areaClass = DictGlobalAreaEntity.class;
-            TableName tableName = areaClass.getDeclaredAnnotation(TableName.class);
-            //获取到表名
-            String businessType = tableName.value();
             ThirdpartyRefBusinessEntity refEntity = new ThirdpartyRefBusinessEntity();
             refEntity.setBusinessType(businessType);
             refEntity.setBusinessId(id);

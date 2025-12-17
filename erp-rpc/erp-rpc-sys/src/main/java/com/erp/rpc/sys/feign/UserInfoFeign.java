@@ -25,7 +25,7 @@ import java.util.Map;
  * @Date 2023-06-19 19:52
  * @Created by yl
  */
-@FeignClient(name = "erp-sys", contextId = "user",configuration = {FeignErrorDecoder.class})
+@FeignClient(name = "erp-sys", contextId = "userInfoFeign",configuration = {FeignErrorDecoder.class})
 public interface UserInfoFeign {
 
     /**

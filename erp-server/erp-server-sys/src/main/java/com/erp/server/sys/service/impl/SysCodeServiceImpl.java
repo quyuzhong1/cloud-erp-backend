@@ -54,9 +54,7 @@ public class SysCodeServiceImpl extends ServiceImpl<SysCodeMapper, SysCodeEntity
             BeanMapperUtils.copy(dto,sysCodeDto);
             //生成单号
             getOrSaveSysCode(sysCodeDto);
-            if (MathUtil.compareTo(MathUtil.NUMBER_1000,sysCodeDto.getNum()) == MathUtil.ZERO) {
-                throw new ServiceException(ApiError.ERROR_SERIAL_NUMBER_EXCEED);
-            }
+
             StringBuffer sysCode = new StringBuffer();
             sysCode.append(sysCodeDto.getCategory())
                     .append(String.format("%03d",sysCodeDto.getNum()));
@@ -152,7 +150,7 @@ public class SysCodeServiceImpl extends ServiceImpl<SysCodeMapper, SysCodeEntity
 //    @Deprecated
 //    @Override
 //    @Transactional(rollbackFor = Exception.class)
-//    @GlobalTransactional(rollbackFor = Exception.class)
+//    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
 //    public String getBusinessNo(SysCodeDTO dto) {
 //        //加锁
 //        RLock lock = redisson.getLock(DistributedLockEnum.SYS_GEN_DOCNO.getCode() + ":" + dto.getType());

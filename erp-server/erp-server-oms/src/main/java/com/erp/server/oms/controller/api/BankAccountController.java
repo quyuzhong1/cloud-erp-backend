@@ -3,8 +3,11 @@ package com.erp.server.oms.controller.api;
 import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.oms.dto.BankAccountDTO;
 import com.erp.model.oms.entity.BankAccountEntity;
 import com.erp.server.oms.service.BankAccountService;
@@ -24,6 +27,7 @@ import java.util.stream.Collectors;
  */
 @RestController
 @RequestMapping(value = "/bankAccount")
+@LogSystemModule("银行账号")
 public class BankAccountController extends BaseController {
 
     @Resource
@@ -70,6 +74,7 @@ public class BankAccountController extends BaseController {
      * @return
      */
     @PostMapping("/add")
+    @LogAction(value = LogActionEnum.INSERT, desc = "账号添加")
     public ApiResult<Object> add(@RequestBody @Validated BankAccountDTO.AddDTO dto){
         Boolean result = bankAccountService.add(dto);
         return Boolean.TRUE.equals(result) ? success() : failure();

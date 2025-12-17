@@ -2,6 +2,7 @@ package com.erp.server.wms.service;
 
 
 import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
@@ -129,7 +130,7 @@ public interface WarehouseService extends SuperService<WarehouseEntity> {
      * @param ids
      * @return java.lang.Boolean
      */
-    Boolean deleteByIds(List<String> ids);
+    List<BatchResultDTO> deleteByIds(List<String> ids);
 
     /**
      * 获取仓库详情

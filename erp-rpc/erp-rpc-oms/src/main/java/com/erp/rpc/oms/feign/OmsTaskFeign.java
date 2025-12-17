@@ -1,6 +1,8 @@
 package com.erp.rpc.oms.feign;
 
+import com.common.business.config.FeignErrorDecoder;
 import com.common.business.dto.DmpSyncMqDTO;
+import com.erp.model.oms.dto.SoMultiChannelDTO;
 import com.erp.model.workflow.dto.WorkOptionDTO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -9,7 +11,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import java.util.List;
 import java.util.Map;
 
-@FeignClient(name = "erp-oms")
+@FeignClient(name = "erp-oms", contextId = "omsTaskFeign",configuration = {FeignErrorDecoder.class})
 public interface OmsTaskFeign {
     /**
      * 更新业务单据状态
@@ -32,5 +34,5 @@ public interface OmsTaskFeign {
      * @param syncParamDTO
      */
     @PostMapping("/feign/omsSyncTask/findDataSendSyncTask")
-    void findDataSendSyncTask(DmpSyncMqDTO.SyncParamDTO syncParamDTO);
+    void findDataSendSyncTask(@RequestBody DmpSyncMqDTO.SyncParamDTO syncParamDTO);
 }

@@ -262,6 +262,18 @@ public class SoB2cDetailEntity extends BaseEntity<SoB2cDetailEntity> {
     @TableField("platform_sku_id")
     private String platformSkuId;
 
+    /**
+     * 平台子单号
+     */
+    @TableField("platform_sub_so_code")
+    private String platformSubSoCode;
+
+    /**
+     * 产品名称
+     */
+    @TableField(exist = false)
+    private String productName;
+
     public static final String MAIN_ID = "main_id";
 
     public static final String IMAGE_URL = "image_url";

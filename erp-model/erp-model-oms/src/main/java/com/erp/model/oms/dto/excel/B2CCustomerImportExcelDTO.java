@@ -131,6 +131,15 @@ public class B2CCustomerImportExcelDTO {
     private String receiverTaxNo;
 
     /**
+     * IE号
+     */
+
+    @ColumnWidth(30)
+    @ExcelProperty(value = "IE号")
+    @FieldValid(fieldName = "IE号",maxLength = 64)
+    private String ieNo;
+
+    /**
      * 收件人地址1
      */
     

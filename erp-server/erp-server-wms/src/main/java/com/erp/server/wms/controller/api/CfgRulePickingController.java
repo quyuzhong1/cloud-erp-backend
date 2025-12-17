@@ -3,6 +3,7 @@ package com.erp.server.wms.controller.api;
 
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BaseIdsDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.vo.PagingVO;
@@ -17,6 +18,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import java.util.List;
 
 /**
  * <p>
@@ -52,6 +54,7 @@ public class CfgRulePickingController extends BaseController {
      * @param dto 新增参数
      */
     @PostMapping("/add")
+    @LogAction(value = LogActionEnum.INSERT, desc = "新增参数")
     public ApiResult<Void> add(@RequestBody @Validated CfgRulePickingDTO.Add dto) {
         cfgRulePickingService.add(dto);
         return success();
@@ -63,6 +66,7 @@ public class CfgRulePickingController extends BaseController {
      * @param dto 编辑参数
      **/
     @PostMapping("/update")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "编辑参数")
     public ApiResult<String> update(@RequestBody @Validated CfgRulePickingDTO.Update dto) {
         cfgRulePickingService.update(dto);
         return success();
@@ -86,9 +90,9 @@ public class CfgRulePickingController extends BaseController {
      **/
     @LogAction(value = LogActionEnum.DELETE, desc = "批量删除拣货规则")
     @PostMapping("/delete")
-    public ApiResult<String> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO idsDTO) {
-        cfgRulePickingService.delete(idsDTO.getIds());
-        return success();
+    public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO idsDTO) {
+        List<BatchResultDTO> resultDTOList = cfgRulePickingService.delete(idsDTO.getIds());
+        return resultDTOList.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOList) : failure(resultDTOList);
     }
 
     /**
@@ -97,6 +101,7 @@ public class CfgRulePickingController extends BaseController {
      * @param dto dto
      */
     @PostMapping("/updateStatus")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "批量启用/禁用 ids={ids},状态值={disabled}(true=禁用,false=启用)")
     public ApiResult<String> updateStatus(@RequestBody @Validated UpdateStateDTO.BatchUpdateDTO dto) {
         cfgRulePickingService.updateStatus(dto);
         return success();

@@ -887,9 +887,9 @@ public class FeedsApi {
 
 
         public FeedsApi build() {
-            if (awsAuthenticationCredentials == null) {
-                throw new RuntimeException("AWSAuthenticationCredentials not set");
-            }
+//            if (awsAuthenticationCredentials == null) {
+//                throw new RuntimeException("AWSAuthenticationCredentials not set");
+//            }
 
             if (lwaAuthorizationCredentials == null) {
                 throw new RuntimeException("LWAAuthorizationCredentials not set");
@@ -899,12 +899,12 @@ public class FeedsApi {
                 throw new RuntimeException("Endpoint not set");
             }
 
-            AWSSigV4Signer awsSigV4Signer;
-            if (awsAuthenticationCredentialsProvider == null) {
-                awsSigV4Signer = new AWSSigV4Signer(awsAuthenticationCredentials);
-            } else {
-                awsSigV4Signer = new AWSSigV4Signer(awsAuthenticationCredentials, awsAuthenticationCredentialsProvider);
-            }
+//            AWSSigV4Signer awsSigV4Signer;
+//            if (awsAuthenticationCredentialsProvider == null) {
+//                awsSigV4Signer = new AWSSigV4Signer(awsAuthenticationCredentials);
+//            } else {
+//                awsSigV4Signer = new AWSSigV4Signer(awsAuthenticationCredentials, awsAuthenticationCredentialsProvider);
+//            }
 
             LWAAuthorizationSigner lwaAuthorizationSigner = null;
             if (disableAccessTokenCache) {
@@ -917,7 +917,7 @@ public class FeedsApi {
             }
 
             return new FeedsApi(new ApiClient()
-                    .setAWSSigV4Signer(awsSigV4Signer)
+                    // .setAWSSigV4Signer(awsSigV4Signer)
                     .setLWAAuthorizationSigner(lwaAuthorizationSigner)
                     .setBasePath(endpoint)
                     .setRateLimiter(rateLimitConfiguration));
@@ -928,13 +928,13 @@ public class FeedsApi {
      * 初始化Api
      */
     public static FeedsApi initApi(AmazonEndpointsEnum endpointsEnum, AmazonShopInfoDTO shopInfoDTO) {
-        AWSAuthenticationCredentials awsAuthenticationCredentials = new AWSAuthenticationCredentials(shopInfoDTO.getAccessKeyId(), shopInfoDTO.getSecretKey(), endpointsEnum.getRegion());
+        // AWSAuthenticationCredentials awsAuthenticationCredentials = new AWSAuthenticationCredentials(shopInfoDTO.getAccessKeyId(), shopInfoDTO.getSecretKey(), endpointsEnum.getRegion());
         LWAAuthorizationCredentials lwaAuthorizationCredentials = new LWAAuthorizationCredentials(shopInfoDTO.getClientId(), shopInfoDTO.getClientSecret(), shopInfoDTO.getRefreshToken(), shopInfoDTO.getAuthUrl(), null);
         AWSAuthenticationCredentialsProvider awsAuthenticationCredentialsProvider = new AWSAuthenticationCredentialsProvider(shopInfoDTO.getRoleStr(), com.common.core.utils.UUID.randomUUID().toString());
         FeedsApi feedsApi = new FeedsApi.Builder()
-                .awsAuthenticationCredentials(awsAuthenticationCredentials)
+                // .awsAuthenticationCredentials(awsAuthenticationCredentials)
                 .lwaAuthorizationCredentials(lwaAuthorizationCredentials)
-                .awsAuthenticationCredentialsProvider(awsAuthenticationCredentialsProvider)
+                // .awsAuthenticationCredentialsProvider(awsAuthenticationCredentialsProvider)
                 //注意，这里的endpoint分北美，欧洲，远东三个地域，每个区域的链接是不一样的
                 //北美，https://sellingpartnerapi-na.amazon.com
                 //欧洲，https://sellingpartnerapi-eu.amazon.com

@@ -10,14 +10,12 @@ import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
-import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.ThirdpartyPlatformEnum;
 import com.common.business.vo.PagingVO;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.sys.entity.SysRefererConfigEntity;
 import com.erp.model.sys.vo.ThirdUnionDTO;
 import com.erp.model.workflow.dto.CfgApproveNoticeDTO;
 import com.erp.model.workflow.dto.CfgApproveSyncFieldMapDTO;
@@ -45,7 +43,6 @@ import com.erp.model.workflow.dto.CfgApproveSyncDTO;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import com.common.core.utils.*;
@@ -106,7 +103,7 @@ public class CfgApproveSyncServiceImpl extends SuperServiceImpl<CfgApproveSyncMa
     @Resource
     private ProcessManagementService processManagementService;
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(CfgApproveSyncDTO.AddDTO addDTO) {
@@ -749,9 +746,6 @@ public class CfgApproveSyncServiceImpl extends SuperServiceImpl<CfgApproveSyncMa
             del( cfgApproveSyncEntity,ids);
 
         }
-
-
-
     }
 
     public void del(CfgApproveSyncEntity cfgApproveSyncEntity,List<String> ids){
@@ -786,7 +780,7 @@ public class CfgApproveSyncServiceImpl extends SuperServiceImpl<CfgApproveSyncMa
                     .endTime(endTimeMillis) //审批实例结束时间。未结束的审批为 0，Unix 毫秒时间戳。
                     .updateTime(updateTimeMillis)//审批实例最近更新时间
                     .displayMethod("BROWSER")//列表页打开审批实例的方式。 BROWSER：跳转系统默认浏览器打开, SIDEBAR：飞书中侧边抽屉打开, NORMAL：飞书内嵌页面打开
-                    .updateMode("REPLACE")//更新方式。 REPLACE：全量替换, UPDATE：增量更新
+                    .updateMode("UPDATE")//更新方式。 REPLACE：全量替换, UPDATE：增量更新
                     .build();
 
             //国际化文案数组

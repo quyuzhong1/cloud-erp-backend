@@ -94,6 +94,12 @@ public class ProductDetailExcelDTO {
     private String brandName;
 
     /**
+     * 研发团队
+     */
+    @FieldValid(fieldName = "研发团队", maxLength = 50)
+    private String rdtTeamName;
+
+    /**
      * 产品开发状态
      */
     @FieldValid(fieldName = "产品开发状态",enumClass = ProductDetailStateEnum.class)
@@ -158,6 +164,7 @@ public class ProductDetailExcelDTO {
     /**
      * 单位
      */
+    @FieldValid(fieldName = "单位", isNotBlank = true)
     private String unitName;
 
     /**

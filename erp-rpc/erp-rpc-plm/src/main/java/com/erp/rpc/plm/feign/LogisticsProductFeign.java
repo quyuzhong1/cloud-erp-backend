@@ -1,5 +1,6 @@
 package com.erp.rpc.plm.feign;
 
+import com.common.business.config.FeignErrorDecoder;
 import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.erp.model.dmp.entity.DmpSkuCostEntity;
@@ -30,7 +31,7 @@ import java.util.Set;
  * @Date 2022-10-21 9:06
  *
  */
-@FeignClient(name = "erp-plm",contextId = "logisticsProductFeign")
+@FeignClient(name = "erp-plm",contextId = "logisticsProductFeign",configuration = {FeignErrorDecoder.class})
 public interface LogisticsProductFeign {
 
     @PostMapping("feign/logistics/product/listLogisticsProduct")

@@ -6,6 +6,7 @@ import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
+import com.erp.model.oms.dto.GenerateDeliveryAndOutStockDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.sys.openapi.DimensionalWeightDTO;
 import com.erp.model.wms.dto.SoB2cDeliveryDTO;
@@ -20,6 +21,7 @@ import com.erp.model.wms.enums.ShipmentMarkTypeEnum;
 import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -39,7 +41,7 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
      * @author Luo_WG
      * @date: 2023-12-13
      */
-    Boolean add(SoB2cDeliveryDTO.AddDTO dto);
+    SoB2cDeliveryEntity add(SoB2cDeliveryDTO.AddDTO dto);
 
     /**
      * 获取状态统计
@@ -469,4 +471,19 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
      * @return
      */
     List<PickingListsDTO.CombinationPrintDetailView> getDeliveryDetail(List<String> ids);
+
+    void generateDeliveryAndOutStock(GenerateDeliveryAndOutStockDTO generateDeliveryAndOutStockDTO);
+
+    /**
+     * 根据源ID列表获取deliveryCode映射
+     * @param sourceIds 源ID列表
+     * @return 源ID到deliveryCod的映射关系，key为源ID，value为对应的配送码（多个码以逗号分隔）
+     */
+    Map<String, String> getDeliveryCodeBySourceId(List<String> sourceIds);
+
+    /**
+     * 自动反审核并删除发货单
+     * @param id
+     */
+    void deleteSoB2cDelivery(String id);
 }

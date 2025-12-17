@@ -62,6 +62,7 @@ public class MachineRefSoController extends BaseController {
         menuCode = "wms:machineRefSo:update",
         serviceClass = MachineRefSoService.class,
         keyIdName = "id")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "加工单和销售订单关联表修改")
     public ApiResult update(@RequestBody @Validated MachineRefSoDTO.UpdateDTO dto) {
         machineRefSoService.update(dto);
         return success();

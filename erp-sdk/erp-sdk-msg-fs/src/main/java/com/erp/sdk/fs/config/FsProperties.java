@@ -27,4 +27,6 @@ public class FsProperties {
 
     private String appSecret;
 
+    private String verificationToken;
+
 }

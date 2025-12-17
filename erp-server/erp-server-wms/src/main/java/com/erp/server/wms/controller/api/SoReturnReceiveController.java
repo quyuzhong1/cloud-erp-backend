@@ -15,19 +15,15 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.wms.dto.SoReturnNoticeDTO;
 import com.erp.model.wms.dto.SoReturnReceiveDTO;
-import com.erp.model.wms.entity.SoReturnInstockEntity;
 import com.erp.model.wms.entity.SoReturnReceiveEntity;
 import com.erp.server.wms.query.SoReturnReceiveQueryHandler;
 import com.erp.server.wms.service.SoReturnReceiveService;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
@@ -54,7 +50,7 @@ public class SoReturnReceiveController extends BaseController {
      **/
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
+            tableField = "create_user_id,warehouse_keeper_id",
             warehouseTableField = "srr.warehouse_id",
             menuCode = "wms:soReturnReceive:paging",
             tableAlias = "srr"
@@ -74,7 +70,7 @@ public class SoReturnReceiveController extends BaseController {
      **/
     @PostMapping("/listCount")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
+            tableField = "create_user_id,warehouse_keeper_id",
             warehouseTableField = "srr.warehouse_id",
             menuCode = "wms:soReturnReceive:paging",
             tableAlias = "srr"
@@ -108,7 +104,7 @@ public class SoReturnReceiveController extends BaseController {
     @LogAction(value = LogActionEnum.UPDATE, desc = "修改销售退货签收单")
     @PostMapping("/update")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
+            tableField = "create_user_id,warehouse_keeper_id",
             menuCode = "wms:soReturnReceive:update",
             serviceClass = SoReturnReceiveService.class,
             keyIdName = "id")
@@ -127,7 +123,7 @@ public class SoReturnReceiveController extends BaseController {
     @LogViewService
     @GetMapping("/view")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
+            tableField = "create_user_id,warehouse_keeper_id",
             menuCode = "wms:soReturnReceive:view",
             serviceClass = SoReturnReceiveService.class,
             keyIdName = "id")
@@ -146,13 +142,27 @@ public class SoReturnReceiveController extends BaseController {
     @LogAction(value = LogActionEnum.SUBMIT, desc = "提交销售退货签收单")
     @PostMapping("/submit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
+            tableField = "create_user_id,warehouse_keeper_id",
             menuCode = "wms:soReturnReceive:submit",
             serviceClass = SoReturnReceiveService.class,
             keyIdName = "ids")
-    public ApiResult submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean flag = soReturnReceiveService.submit(dto.getIds());
-        return flag == true ? success() : failure();
+    public ApiResult<List<BatchResultDTO>> submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<SoReturnReceiveEntity> entityList = soReturnReceiveService.listByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            SoReturnReceiveEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"退货签收单不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(soReturnReceiveService.submit(entity,Boolean.TRUE));
+            }catch (Exception e){
+                log.error("退货签收单审核失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**
@@ -165,7 +175,7 @@ public class SoReturnReceiveController extends BaseController {
     @LogAction(value = LogActionEnum.ADD_AND_SUBMIT, desc = "新增并提交销售退货签收单")
     @PostMapping("/addAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
+            tableField = "create_user_id,warehouse_keeper_id",
             menuCode = "wms:soReturnReceive:add",
             serviceClass = SoReturnReceiveService.class,
             keyIdName = "id")
@@ -184,7 +194,7 @@ public class SoReturnReceiveController extends BaseController {
     @LogAction(value = LogActionEnum.UPDATE_AND_SUBMIT, desc = "修改并提交销售退货签收单")
     @PostMapping("/updateAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
+            tableField = "create_user_id,warehouse_keeper_id",
             menuCode = "wms:soReturnReceive:update",
             serviceClass = SoReturnReceiveService.class,
             keyIdName = "id")
@@ -203,7 +213,7 @@ public class SoReturnReceiveController extends BaseController {
     @LogAction(value = LogActionEnum.APPROVE, desc = "审核销售退货签收单")
     @PostMapping("/approve")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
+            tableField = "create_user_id,warehouse_keeper_id",
             menuCode = "wms:soReturnReceive:approve",
             serviceClass = SoReturnReceiveService.class,
             keyIdName = "ids")
@@ -236,7 +246,7 @@ public class SoReturnReceiveController extends BaseController {
     @LogAction(value = LogActionEnum.DISAPPROVE, desc = "反审核销售退货签收单")
     @PostMapping("/disApprove")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
+            tableField = "create_user_id,warehouse_keeper_id",
             menuCode = "wms:soReturnReceive:disApprove",
             serviceClass = SoReturnReceiveService.class,
             keyIdName = "ids")
@@ -274,7 +284,7 @@ public class SoReturnReceiveController extends BaseController {
     @LogAction(value = LogActionEnum.CANCEL, desc = "撤销销售退货签收单")
     @PostMapping("/cancelProcess")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
+            tableField = "create_user_id,warehouse_keeper_id",
             menuCode = "wms:soReturnReceive:cancelProcess",
             serviceClass = SoReturnReceiveService.class,
             keyIdName = "ids")
@@ -293,7 +303,7 @@ public class SoReturnReceiveController extends BaseController {
     @LogAction(value = LogActionEnum.INVALID, desc = "作废销售退货签收单")
     @PostMapping("/invalid")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
+            tableField = "create_user_id,warehouse_keeper_id",
             menuCode = "wms:soReturnReceive:invalid",
             serviceClass = SoReturnReceiveService.class,
             keyIdName = "ids")
@@ -309,16 +319,16 @@ public class SoReturnReceiveController extends BaseController {
      * @param idsDTO idsDTO
      * @return com.common.core.controller.vo.ApiResult
      **/
-    @LogAction(value = LogActionEnum.DELETE, desc = "删除销售退货签收单")
+    @LogAction(value = LogActionEnum.DELETE, desc = "删除销售退货签收单 id为:{ids}")
     @PostMapping("/delete")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
+            tableField = "create_user_id,warehouse_keeper_id",
             menuCode = "wms:soReturnReceive:delete",
             serviceClass = SoReturnReceiveService.class,
             keyIdName = "ids")
-    public ApiResult delete(@RequestBody @Validated BaseIdsDTO.IdsDTO idsDTO) {
-        Boolean flag = soReturnReceiveService.delete(idsDTO.getIds());
-        return flag == true ? success() : failure();
+    public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO idsDTO) {
+        List<BatchResultDTO> resultDTOList = soReturnReceiveService.deleteByIds(idsDTO.getIds(), true);
+        return resultDTOList.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOList) : failure(resultDTOList);
     }
 
     /**

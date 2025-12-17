@@ -1,7 +1,9 @@
 package com.erp.server.wms.mapper;
+
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.erp.model.wms.dto.ReportProcessingDTO;
 import com.erp.model.wms.dto.SoB2cProcessingDTO;
 import com.erp.model.wms.entity.SoB2cProcessingEntity;
 import org.apache.ibatis.annotations.Mapper;
@@ -45,4 +47,13 @@ public interface SoB2cProcessingMapper extends BaseMapper<SoB2cProcessingEntity>
      * @Date 2025/2/6 16:12
      */
     void deleteB2cOrder(@Param("startDate") LocalDate startDate);
+    /**
+     * 汇总分页查询
+     * @author will
+     * @date 2025/8/20 11:42
+     * @param page
+     * @param params
+     * @return IPage<ListDTO>
+     */
+    IPage<ReportProcessingDTO.ListDTO> b2cTotalPaging(Page<ReportProcessingDTO.PagingParamDTO> page, @Param(("params")) ReportProcessingDTO.PagingParamDTO params);
 }

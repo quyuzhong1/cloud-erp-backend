@@ -1,11 +1,16 @@
 package com.common.business.config;
 
+import com.alibaba.fastjson.JSON;
+import com.common.business.constant.UserStateConstants;
+import com.common.business.threadlocal.UserContext;
+import com.common.business.vo.LoginUser;
 import com.common.core.utils.StrUtils;
 import com.google.common.collect.Lists;
 import feign.RequestInterceptor;
 import feign.RequestTemplate;
 import io.seata.core.context.RootContext;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.RequestContextHolder;
@@ -53,6 +58,18 @@ public class FeignInterceptor implements RequestInterceptor {
             return;
         }
         HttpServletRequest request = ((ServletRequestAttributes) requestAttributes).getRequest();
+        //用户修改为system
+        if(Objects.nonNull(UserContext.getIsUserSystem()) && UserContext.getIsUserSystem()){
+            LoginUser loginUser = new LoginUser();
+            loginUser.setUid(UserStateConstants.USER_SYSTEM_ID);
+            loginUser.setUserName(UserStateConstants.USER_SYSTEM);
+            loginUser.setUserAccount("");
+            String userJson = JSON.toJSONString(loginUser);
+            requestTemplate.header("tokenuserinfo", userJson);
+        }else if(StringUtils.isNotBlank((String)request.getAttribute("isQuickApproveCallback"))){
+            requestTemplate.header("tokenuserinfo", (String)request.getAttribute("tokenUserInfo"));
+        }
+
         Enumeration<String> headerNames = request.getHeaderNames();
         List<String> headNameList = Lists.newArrayList();
         if (headerNames != null) {

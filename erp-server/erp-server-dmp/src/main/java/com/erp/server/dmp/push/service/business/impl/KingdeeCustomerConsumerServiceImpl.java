@@ -13,9 +13,10 @@ import com.common.core.utils.FastJsonUtil;
 import com.common.message.enums.ApiModuleTypeEnum;
 import com.erp.model.dmp.entity.PlatformEntity;
 import com.erp.model.dmp.enums.KingdeeDocStatusEnum;
-import com.erp.model.dmp.enums.KingdeePushModuleEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
+import com.erp.sdk.third.kingdee.utils.KingdeeApi;
 import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
+import com.erp.sdk.third.kingdee.utils.KingdeePushModuleEnum;
 import com.erp.server.dmp.push.service.business.KingdeeCustomerConsumerService;
 import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
 import lombok.extern.slf4j.Slf4j;
@@ -44,6 +45,7 @@ public class KingdeeCustomerConsumerServiceImpl implements KingdeeCustomerConsum
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @KingdeeApi
     public void executeCustomerContactConsumer(Map<String, Object> map) {
         //模块类型
         Integer type = ApiModuleTypeEnum.CUSTOMER_INFO.getCode();
@@ -148,7 +150,7 @@ public class KingdeeCustomerConsumerServiceImpl implements KingdeeCustomerConsum
         } catch (Exception e) {
 
             //更新数据
-            Boolean saveOrUpdateResult = kingdeeCommonService.saveOrUpdate(platformEntity, map, apiUtils, json, param, type);
+            Boolean saveOrUpdateResult = kingdeeCommonService.saveAndAutoApprove(platformEntity, map, apiUtils, json, param, type);
             if (saveOrUpdateResult && erpForbidStatus) {
                 //启用、禁用
                 excuteOperation(apiUtils, map);
@@ -183,7 +185,7 @@ public class KingdeeCustomerConsumerServiceImpl implements KingdeeCustomerConsum
             ArrayList<String> apiFieldList = (ArrayList) Arrays.stream(allKey.toString().split(",")).collect(Collectors.toList());
             param.setNeedUpDateFields(apiFieldList);
             //更新数据
-            kingdeeCommonService.saveOrUpdate(platformEntity,map,apiUtils,json,param,type);
+            kingdeeCommonService.saveAndAutoApprove(platformEntity,map,apiUtils,json,param,type);
             if (!erpForbidStatus.equals(kingdeeForbidStatus)) {
                 //启用、禁用
                 excuteOperation(apiUtils,map);
@@ -212,7 +214,7 @@ public class KingdeeCustomerConsumerServiceImpl implements KingdeeCustomerConsum
             map.put("syncKingdeeId", String.valueOf(model.get("Id")));
         } catch (Exception e) {
             //更新数据
-            Boolean saveOrUpdateResult = kingdeeCommonService.saveOrUpdate(platformEntity, map, apiUtils, json, param, type);
+            Boolean saveOrUpdateResult = kingdeeCommonService.saveAndAutoApprove(platformEntity, map, apiUtils, json, param, type);
             if (saveOrUpdateResult && erpForbidStatus) {
                 //启用、禁用
                 excuteOperation(apiUtils, map);
@@ -266,7 +268,7 @@ public class KingdeeCustomerConsumerServiceImpl implements KingdeeCustomerConsum
             map.put("syncKingdeeId", String.valueOf(model.get("Id")));
         } catch (Exception e) {
             //更新数据
-            Boolean saveOrUpdateResult = kingdeeCommonService.saveOrUpdate(platformEntity, map, apiUtils, json, param, type);
+            Boolean saveOrUpdateResult = kingdeeCommonService.saveAndAutoApprove(platformEntity, map, apiUtils, json, param, type);
             if (saveOrUpdateResult && erpForbidStatus) {
                 //启用、禁用
                 excuteOperation(apiUtils, map);

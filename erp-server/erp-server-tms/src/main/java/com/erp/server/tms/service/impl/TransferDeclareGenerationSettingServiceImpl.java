@@ -48,7 +48,7 @@ public class TransferDeclareGenerationSettingServiceImpl extends SuperServiceImp
     @Resource
     private MultipleOptionService multipleOptionService;
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void save(List<TransferDeclareGenerationSettingDTO.AddDTO> addDTOList) {

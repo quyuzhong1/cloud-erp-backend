@@ -1,5 +1,6 @@
 package com.erp.rpc.oms.feign;
 
+import com.common.business.config.FeignErrorDecoder;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.ListingInfoDTO;
@@ -17,9 +18,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 
-@FeignClient(name = "erp-oms", contextId = "listingInfo")
+@FeignClient(name = "erp-oms", contextId = "omsListingInfoFeign",configuration = {FeignErrorDecoder.class})
 public interface OmsListingInfoFeign {
-
 
     /**
      * 根据产品sku查询库存sku
@@ -72,7 +72,7 @@ public interface OmsListingInfoFeign {
      * @return java.util.List<com.erp.model.oms.dto.SkuMappingDTO.SkuMappingViewDTO>
      **/
     @PostMapping("feign/listing/listInfoByPlatformSkuNo")
-    public List<ListingInfoEntity> listInfoByPlatformSkuNo(@RequestBody ListingInfoDTO.QueryDTO queryDTO);
+    List<ListingInfoEntity> listInfoByPlatformSkuNo(@RequestBody ListingInfoDTO.QueryDTO queryDTO);
 
     @PostMapping("feign/listing/updatePlatformSkuId")
     boolean updatePlatformSkuId(@RequestParam(value = "listingId") String listingId, @RequestParam(value = "platformSkuId") String platformSkuId);

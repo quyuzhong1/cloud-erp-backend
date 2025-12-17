@@ -3,7 +3,9 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.json.JSONUtil;
 import com.common.business.enums.OmsPlatformEnum;
+import com.common.business.threadlocal.ThirdWarehouseContext;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
@@ -13,6 +15,9 @@ import com.erp.model.wms.enums.ThirdWarehouseCancelResultEnum;
 import com.erp.server.wms.convert.OverseasWarehouseInboundConverter;
 import com.erp.server.wms.convert.ThirdWarehouseConverter;
 import com.erp.server.wms.handler.AbstractThirdWarehouseHandler;
+import com.sdk.wms.damai.dto.request.DaMaiGetOrderRequest;
+import com.sdk.wms.damai.dto.response.DaMaiBaseResp;
+import com.sdk.wms.damai.dto.response.DaMaiGetOrderResp;
 import com.sdk.wms.goodcang.dto.request.*;
 import com.sdk.wms.goodcang.dto.response.*;
 import com.sdk.wms.goodcang.service.GoodCangService;
@@ -41,6 +46,11 @@ public class GoodCangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     @Override
     public OmsPlatformEnum getPlatForm() {
         return OmsPlatformEnum.OMS_GOOD_CANG;
+    }
+
+    @Override
+    protected ApiResult<ThirdWarehouseUploadHandoverFileResponse> uploadHandoverFile(ThirdWarehouseUploadHandoverFileReq uploadHandoverFileReq) {
+        return null;
     }
 
     @Override
@@ -147,7 +157,9 @@ public class GoodCangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         if(StringUtils.isNotBlank(createOutboundReq.getCarrierType())){
             cangCreateOutboundReq.setDistributorType(Integer.valueOf(createOutboundReq.getCarrierType()));
         }
+        log.warn(getPlatForm().getName()+"创建出库单请求:{}", JSONUtil.toJsonStr(cangCreateOutboundReq));
         GoodCangResponse<String> response = goodCangService.createOutboundBill(cangCreateOutboundReq);
+        log.warn(getPlatForm().getName()+"创建出库单结果:{}", JSONUtil.toJsonStr(response));
         if(response.getMessage().contains("参考号重复")){
             GoodCangResponse<String> orderCode = goodCangService.getOutboundCode(createOutboundReq.getReferenceNo());
             return success(orderCode.getData());
@@ -173,6 +185,9 @@ public class GoodCangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         GoodCangResponse<GoodCangUploadOrderLabelResp> response = goodCangService.uploadOrderLabel(goodCangUploadFileReq);
         GoodCangUploadOrderLabelResp resp = response.getData();
         ThirdWarehouseUploadOrderLabelResponse uploadOrderLabelResponse = ThirdWarehouseConverter.INSTANCE.googCangResToThirdWarehouseUploadOrderLabelResponse(resp);
+        if(response.getMessage().contains("订单状态已确认")){
+            return success(new ThirdWarehouseUploadOrderLabelResponse(uploadFileReq.getOrderCode()));
+        }
         return isSuccess(response.getAsk(), response.getMessage()) ? success(uploadOrderLabelResponse) : failure(response.getMessage());
 
     }
@@ -188,7 +203,11 @@ public class GoodCangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         }
         return success(ThirdWarehouseCancelResultEnum.INTERCEPTION_SUCCESSFUL.getCode());
     }
-
+    @Override
+    protected ApiResult<String> queryOutboundBill(@Valid ThirdWarehouseQueryOutboundReq queryOutboundReq){
+        GoodCangResponse<String> response = goodCangService.getOutboundCode(queryOutboundReq.getErpOrderCode());
+        return CharSequenceUtil.isNotBlank(response.getData()) ? success(response.getData()) : failure(response.getMessage());
+    }
     @Override
     protected Boolean warehouseAuthorize(OverseasProviderDTO.AuthorizeParamDTO dto) {
         GoodCangResponse<List<GoodCangWarehouseResp>> response = goodCangService.getWarehouse();

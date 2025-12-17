@@ -80,6 +80,7 @@ public class KingdeeOperatorTypeController extends BaseController {
     * @return ApiResult
     */
     @PostMapping("/update")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "修改")
     public ApiResult update(@RequestBody @Validated KingdeeOperatorTypeDTO.UpdateDTO dto) {
         kingdeeOperatorTypeService.update(dto);
         return success();

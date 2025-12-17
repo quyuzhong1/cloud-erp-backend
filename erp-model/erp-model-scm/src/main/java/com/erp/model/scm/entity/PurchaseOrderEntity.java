@@ -175,11 +175,11 @@ public class PurchaseOrderEntity extends BaseEntity<PurchaseOrderEntity> {
      */
     @TableField("subcontract_type")
     private String subcontractType;
-    /**
-     * 供应商账户id
-     */
-    @TableField("supplier_account_id")
-    private String supplierAccountId;
+//    /**
+//     * 供应商账户id
+//     */
+//    @TableField("supplier_account_id")
+//    private String supplierAccountId;
 
     /**
      * 合同盖章状态 ContractStampStatusEnum

@@ -8,7 +8,6 @@ import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.wrapper.FeignQuery;
-import com.common.core.controller.vo.ApiResult;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.enums.CurrencyEnum;
@@ -39,7 +38,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.spring.annotation.ConsumeMode;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -138,6 +136,11 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 			if (count > 0) {
 				return;
 			}
+		}else if (PlatformDictEnum.DA_MAI.getCode().equalsIgnoreCase(dto.getPlatform())){
+			SoReturnInstockEntity exist = soReturnInstockService.getBySourceId(dto.getSourceId());
+			if(Objects.nonNull(exist)){
+				return;
+			}
 		} else {
 			SoReturnInstockEntity existEntity = soReturnInstockService.getByThirdCode(dto.getPlatformReturnOrderNo());
 			if(Objects.nonNull(existEntity)){
@@ -171,7 +174,12 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 		SoReturnInstockEntity soReturnInstockEntity = this.buildSoReturnInstockEntity(dto,warehouseEntity,soB2cEntity,soOutstock);
 		List<SoReturnInstockDetailEntity> detailEntityList = this.buildSoReturnInstockDetail(dto,soReturnInstockEntity,warehouseEntity);
 		if(CollectionUtils.isEmpty(detailEntityList)){
-			throw new ServiceException("没有映射");
+			//因为极风可能查到别的客户的单，所以没有映射的情况就忽略
+			if (PlatformDictEnum.JIFENG.getCode().equalsIgnoreCase(dto.getPlatform())){
+				return;
+			}else{
+				throw new ServiceException("没有映射");
+			}
 		}
 		//关联销售退货单
 		this.matchSoReturn(soReturnInstockEntity,detailEntityList,dto,soB2cEntity);
@@ -251,6 +259,7 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 			soReturnInstockDetailEntity.setReturnTypeDict(dto.getReturnType());
 			soReturnInstockDetailEntity.setSourceDetailId(detail.getThirdId());
 			soReturnInstockDetailEntity.setCreateUserId(dto.getAuthId());
+			soReturnInstockDetailEntity.setPlatformSkuNo(detail.getProductSku());
 			detailEntityList.add(soReturnInstockDetailEntity);
 		}
 		return detailEntityList;
@@ -263,6 +272,7 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 		soReturnInstockEntity.setBillDate(dto.getPutawayTime().toLocalDate());
 		soReturnInstockEntity.setInventoryOrgId(warehouseEntity.getOrgId());
 		soReturnInstockEntity.setReturnLogisticCode(dto.getReturnLogisticCode());
+		soReturnInstockEntity.setSourceId(dto.getSourceId());
 		//组织信息
 		SysAccountingCompanyEntity company = sysUserFeign.getCompanyById(warehouseEntity.getOrgId());
 		soReturnInstockEntity.setInventoryOrgName(company.getCompanyName());
@@ -529,7 +539,7 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 		paramDTO.setPlatform(PlatformDictEnum.AMAZON.getCode());
 		paramDTO.setPlatformSkuNoList(platformSkuList);
 		paramDTO.setShopIdList(shopIds);
-		paramDTO.setType(RuleTypeEnum.PLATFORM.getCode());
+		paramDTO.setType(RuleTypeEnum.B2C_PLATFORM.getCode());
 		paramDTO.setMatchResult(ListingMatchResultEnum.TRUE.getCode());
 		paramDTO.setIsExpire(false);
 		// 查询ListingInfo和skuMapping的关系

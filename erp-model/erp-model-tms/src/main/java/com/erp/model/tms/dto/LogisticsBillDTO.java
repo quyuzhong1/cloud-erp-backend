@@ -201,7 +201,14 @@ public class LogisticsBillDTO implements Serializable {
          * 物流渠道名
          */
         private String channelName;
-
+        /**
+         * 物流商id
+         */
+        private String logisticsSupplierId;
+        /**
+         * 物流商名
+         */
+        private String logisticsSupplierName;
 
         /**
          * 跟踪号[可排序]
@@ -436,6 +443,7 @@ public class LogisticsBillDTO implements Serializable {
          * 渠道id
          */
         private String channelId;
+        private String channelName;
 
 
         /**
@@ -623,6 +631,14 @@ public class LogisticsBillDTO implements Serializable {
          */
         private String transportNo;
         /**
+         * 渠道id
+         */
+        private String channelId;
+        /**
+         * 下单时间
+         */
+        private LocalDateTime orderTime;
+        /**
          * 运输状态
          */
         private String trackStatus;
@@ -680,6 +696,11 @@ public class LogisticsBillDTO implements Serializable {
         private String voecTaxNo;
 
         /**
+         * EORI税号
+         */
+        private String eoriTaxNo;
+
+        /**
          * 币别
          */
         private String currency;
@@ -725,6 +746,12 @@ public class LogisticsBillDTO implements Serializable {
          */
         private String logisticType;
 
+        //获取申报组织id
+        private String declareOrgId = "";
+        private String declareOrgName = "";
+        //获取申报组织统一社会信用代码
+        private String usciCode = "";
+
         /**
          * 收货人
          */
@@ -758,9 +785,17 @@ public class LogisticsBillDTO implements Serializable {
          */
         private String trackNo;
         /**
+         * 推送平台单号（记录物流下单时单号）
+         */
+        private String pushPlatformCode;
+        /**
          * ioss税号
          */
         private String iossTaxNo;
+        /**
+         * 申报组织id
+         */
+        private String declareOrgId;
         /**
          * 是否修改平台已标发货状态
          */
@@ -1059,6 +1094,10 @@ public class LogisticsBillDTO implements Serializable {
          */
         @NotBlank(message = "发货单号不能为空")
         private String deliveryNo;
+        /**
+         * 推送平台单号（记录物流下单时单号）
+         */
+        private String pushPlatformCode;
 
         /**
          * 店铺id
@@ -1070,6 +1109,10 @@ public class LogisticsBillDTO implements Serializable {
          */
         private String logisticType;
 
+        /**
+         * 是否来自mq消费
+         */
+        private Boolean isFromMq = false;
     }
 
 

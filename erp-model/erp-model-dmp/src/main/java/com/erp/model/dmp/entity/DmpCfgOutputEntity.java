@@ -63,8 +63,34 @@ public class DmpCfgOutputEntity extends BaseEntity<DmpCfgOutputEntity> {
     /**
      * 输出处理类
      */
-     @TableField("output_class")
-     private String outputClass;
+    @TableField("output_class")
+    private String outputClass;
+     
+    /**
+     * 应用id
+     */
+    @TableField("app_id")
+    private String appId;
+     /**
+     * 流程编号
+     */
+    @TableField("flow_code")
+    private String flowCode;
+     /**
+     * 流程名称
+     */
+    @TableField("flow_name")
+    private String flowName;   
+    /**
+     * 执行系统：DmpCfgInputExecSystemEnum 枚举
+     */
+    @TableField("exec_system")
+    private String execSystem;
+    /**
+     * restcloud执行流程api路径
+     */
+    @TableField("exec_url")
+    private String execUrl;
 
     public static final String SYSTEM_ID = "system_id";
 

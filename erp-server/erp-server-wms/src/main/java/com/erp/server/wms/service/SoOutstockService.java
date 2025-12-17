@@ -1,10 +1,14 @@
 package com.erp.server.wms.service;
 
-import com.common.business.dto.*;
+import com.common.business.dto.AdvanceQueryContainer;
+import com.common.business.dto.PlatformOutboundDTO;
+import com.common.business.dto.PlatformSoOutStockDTO;
+import com.common.business.dto.PlatformSoOutStockDetailDTO;
 import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
+import com.erp.model.oms.dto.ExhibitionOrderDTO;
 import com.erp.model.oms.dto.PlatformGenerateSoOutstockDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
@@ -16,6 +20,7 @@ import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.wms.entity.SoOutstockEntity;
 import org.springframework.web.bind.annotation.RequestBody;
 
+import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Collection;
@@ -72,10 +77,10 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      * 批量提交
      * @author yl
      * @date 2023-05-19 10:34
-     * @param ids
+     * @param entity
      * @return java.lang.Boolean
      */
-    Boolean submit(List<String> ids);
+    BatchResultDTO submit(SoOutstockEntity entity,Boolean isNeedProcess);
 
     /**
      * 新增并提交
@@ -143,6 +148,25 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      * @return java.lang.Boolean
      */
     Boolean delete(List<String> ids);
+
+    /**
+     * @description: 原子批量删除销售出库单
+     * @author Will
+     * @date: 2023/5/17 15:15
+     * @param ids
+     * @param returnDetails
+     * @return List<BatchResultDTO>
+     */
+    List<BatchResultDTO> deleteByIds(List<String> ids, boolean returnDetails);
+
+    /**
+     * 删除单个实体
+     * @author yl
+     * @date 2023-05-19 12:16
+     * @param entity
+     * @return BatchResultDTO
+     */
+    BatchResultDTO deleteEntity(SoOutstockEntity entity);
 
 
     /**
@@ -559,4 +583,43 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
     BatchResultDTO handleWdtData(String id);
 
     List<SoOutstockDTO.AmountDTO> listAmountBySkuIds(SoOutstockDTO.ListAmountParamDTO params);
+
+    /**
+     * 根据ID列表获取实体Map
+     * @param ids
+     * @return Map<String, SoOutstockEntity>
+     */
+    Map<String, SoOutstockEntity> mapByIds(List<String> ids);
+    /**
+     * 下推B2B报关单
+     * @author jack
+     * @date: 2025-07-18
+     * @param dto
+     * @return ApiResult<List<BatchResultDTO>>
+     */
+    BatchResultDTO generateB2bDeclar(String id);
+
+    /**
+     * 根据来源单号查询销售出库单
+     * @param sourceCode 来源单号
+     * @return
+     */
+    SoOutstockEntity getBySourceCode(String sourceCode);
+
+    /**
+     * @param entity
+     */
+    void updateSkuStdCostOutstock(SoOutstockEntity entity);
+
+    List<ExhibitionOrderDTO.DownstreamListDTO> listSoOutstockByExhibitionId(String exhibitionId);
+
+    void exportLogisticsHandover(BaseIdsDTO.IdsDTO idsDTO, HttpServletResponse response);
+
+    /**
+     * 自动反审核并删除出库单
+     *
+     * @param id
+     * @param deliveryId
+     */
+    void deleteSoOutstock(String id, String deliveryId);
 }

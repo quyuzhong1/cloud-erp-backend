@@ -10,7 +10,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
+import java.io.InputStream;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author zdy
@@ -49,8 +51,18 @@ public class FastDFSDownloadImpl implements FileService {
     }
 
     @Override
+    public String uploadFile(byte[] buff, String fileName, Map<String, String> metaList) {
+        return FastDFSClientUtil.uploadFile(buff, fileName, metaList);
+    }
+
+    @Override
     public byte[] downloadFile(String fileId) {
         return FastDFSClientUtil.getFileByte(fileId);
+    }
+
+    @Override
+    public InputStream getInputStream(String fileId) {
+        return FastDFSClientUtil.getInputStream(fileId);
     }
 
     @Override

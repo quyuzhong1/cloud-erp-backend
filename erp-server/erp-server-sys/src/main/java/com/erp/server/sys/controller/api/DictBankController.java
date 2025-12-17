@@ -64,8 +64,8 @@ public class DictBankController extends BaseController {
      * @date 2023-03-21 16:29
      */
     @GetMapping("/list")
-    public ApiResult<List<BaseIdDTO>> list() {
-        List<BaseIdDTO> list = bankService.getList();
+    public ApiResult<List<BankDTO.ViewDTO>> list() {
+        List<BankDTO.ViewDTO> list = bankService.getList();
         return success(list);
     }
 

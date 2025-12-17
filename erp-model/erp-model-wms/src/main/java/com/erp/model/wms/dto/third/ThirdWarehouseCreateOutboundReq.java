@@ -32,9 +32,19 @@ public class ThirdWarehouseCreateOutboundReq extends ThirdWarehouseAuth {
     private String platformCode;
 
     /**
+     * erp销售订单号
+     */
+    private String soCode;
+
+    /**
      * 店铺id
      */
     private String shopId;
+
+    /**
+     * 尾程服务商
+     */
+    private String lastMileCarrier;
 
     /**
      * 店铺名称
@@ -74,9 +84,20 @@ public class ThirdWarehouseCreateOutboundReq extends ThirdWarehouseAuth {
     private boolean onlineFlag;
 
     /**
+     * 面单base64数据
+     */
+    private String labelData;
+
+    /**
+     * 发票base64数据
+     */
+    private String invoiceData;
+
+    /**
      * 线上订单物流单号
      */
     private String trackingNo;
+
     /**
      * 线上面单url
      */
@@ -88,6 +109,15 @@ public class ThirdWarehouseCreateOutboundReq extends ThirdWarehouseAuth {
     //收件人信息
     private ReceiverInfo receiverInfo;
 
+    /**
+     * EORI税号
+     */
+    private String eoriTaxNo;
+    /**
+     * 是否签名同步，是,否
+     */
+    private String isApiSignName;
+
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
@@ -97,6 +127,10 @@ public class ThirdWarehouseCreateOutboundReq extends ThirdWarehouseAuth {
          * 买家姓名
          */
         private String buyerName;
+        /**
+         * 买家电话
+         */
+        private String buyerNumber;
         /**
          * 收件人姓名
          */
@@ -117,6 +151,10 @@ public class ThirdWarehouseCreateOutboundReq extends ThirdWarehouseAuth {
          */
         private String countryCode;
 
+        /**
+         * 收件人国家名称
+         */
+        private String countryName;
         /**
          * 省
          */
@@ -220,6 +258,11 @@ public class ThirdWarehouseCreateOutboundReq extends ThirdWarehouseAuth {
         private String productSkuId;
 
         /**
+         * 产品条码（三方仓商品条码）
+         */
+        private String thirdBarcode;
+
+        /**
          * 数量
          */
         private Integer quantity;
@@ -233,12 +276,21 @@ public class ThirdWarehouseCreateOutboundReq extends ThirdWarehouseAuth {
         private String sourceSkuId;
 
         private String platformDetailId;
+        private String detailId;
         /**
          * 海关编码
          */
         private String hsCode;
 
         public Item(String productSku, Integer quantity,String hsCode,String productSkuId) {
+            this.productSku = productSku;
+            this.productSkuId = productSkuId;
+            this.quantity = quantity;
+            this.hsCode = hsCode;
+        }
+
+        public Item(String thirdBarcode,String productSku, Integer quantity,String hsCode,String productSkuId) {
+            this.thirdBarcode = thirdBarcode;
             this.productSku = productSku;
             this.productSkuId = productSkuId;
             this.quantity = quantity;

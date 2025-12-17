@@ -2,13 +2,13 @@ package com.erp.server.oms.schedule;
 
 import cn.hutool.core.bean.BeanUtil;
 import com.common.business.dto.base.BaseIdDTO;
-import com.erp.model.dmp.enums.KingdeePushModuleEnum;
 import com.erp.model.oms.dto.BankAccountDTO;
 import com.erp.model.oms.dto.KingdeeReceiptConditionDTO;
 import com.erp.model.oms.entity.BankAccountEntity;
 import com.erp.model.oms.entity.KingdeeReceiptConditionEntity;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
+import com.erp.sdk.third.kingdee.utils.KingdeePushModuleEnum;
 import com.erp.server.oms.service.BankAccountService;
 import com.erp.server.oms.service.KingdeeReceiptConditionService;
 import com.xxl.job.core.handler.annotation.XxlJob;

@@ -1,5 +1,6 @@
 package com.erp.rpc.oms.feign;
 
+import com.common.business.config.FeignErrorDecoder;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.core.controller.vo.ApiResult;
@@ -16,7 +17,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 
-@FeignClient(name = "erp-oms", contextId = "customer")
+@FeignClient(name = "erp-oms", contextId = "customerFeign",configuration = {FeignErrorDecoder.class})
 public interface CustomerFeign {
     /**
      * 获取客户信息
@@ -183,4 +184,14 @@ public interface CustomerFeign {
      */
     @PostMapping("feign/customer/updateApproveStatus")
     void updateApproveStatus(CustomerInfoEntity entity);
+
+    /**
+     * 释放同步订货通
+     * @author will
+     * @date 2025/9/23 10:08
+     * @param customerId
+     * @return boolean
+     */
+    @PostMapping("feign/customer/isSyncDht")
+    Boolean isSyncDht(@RequestBody String customerId);
 }

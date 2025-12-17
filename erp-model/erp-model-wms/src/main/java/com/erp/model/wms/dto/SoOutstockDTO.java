@@ -8,6 +8,7 @@ import com.common.business.enums.SourceTypeEnum;
 import com.erp.model.wms.entity.SoDeliveryNoticeEntity;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -56,6 +57,7 @@ public class SoOutstockDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
+    @AllArgsConstructor
     public static class PagingTotalDTO {
 
         /**
@@ -71,7 +73,7 @@ public class SoOutstockDTO implements Serializable {
         /**
          * 价税合计（CNY）
          */
-        private BigDecimal totalTaxAmount;
+        private String totalTaxAmount;
     }
 
     /**
@@ -96,6 +98,10 @@ public class SoOutstockDTO implements Serializable {
          */
         private String code;
 
+        /**
+         * 平台订单号
+         */
+        private String platformCode;
         /**
          * 第三方单据编号
          */
@@ -404,6 +410,36 @@ public class SoOutstockDTO implements Serializable {
          * 虚拟仓名称
          */
         private String virtualWarehouseName;
+        /**
+         * 订单备注
+         */
+        private String remark;
+        /**
+         * 明细备注
+         */
+        private String detailRemark;
+        /**
+         * 客户备注
+         */
+        private String customerRemark;
+        /**
+         * 客户采购订单号
+         */
+        private String customerPO;
+        /**
+         * 分区ID
+         */
+        private String partitionId;
+
+        /**
+         * 军区编码
+         */
+        private String partitionCode;
+
+        /**
+         * 军区名称
+         */
+        private String partitionName;
     }
 
     /**·
@@ -429,6 +465,10 @@ public class SoOutstockDTO implements Serializable {
 
         private List<LocalDate> billDateList;
         
+        /**
+         * 动态数据源
+         */
+        private String dynamicDataSource;
     }
 
     /**
@@ -962,6 +1002,29 @@ public class SoOutstockDTO implements Serializable {
          * 订单标签
          */
         private String tradeLabel;
+        /**
+         * 订单备注
+         */
+        private String remark;
+        /**
+         * 客户备注
+         */
+        private String customerRemark;
+
+        /**
+         * 军区id
+         */
+        private String partitionId;
+
+        /**
+         * 军区编码
+         */
+        private String partitionCode;
+
+        /**
+         * 军区名称
+         */
+        private String partitionName;
 
         private List<SoOutstockDetailDTO.ViewDTO> detailList;
 
@@ -1112,6 +1175,102 @@ public class SoOutstockDTO implements Serializable {
          * 跟踪号
          */
         private List<String> trackNoList;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ExportLogisticsHandoverSummaryDTO {
+
+        private String salesOrgName;
+
+        private String customerName;
+
+        private LocalDate billDate;
+
+        private String deliveryModeName;
+
+        private String receiveAddress;
+
+        private String carrierName;
+
+        private String approveUserName;
+
+        private String deliveryUserName;
+
+        private List<ExportLogisticsHandoverSummaryDetailDTO> detailDTOList;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ExportLogisticsHandoverSummaryDetailDTO {
+
+        private Integer rowNum;
+
+        private String soCode;
+
+        private String code;
+
+        private Integer boxQty;
+
+        private String boxUnit = "箱";
+
+        private String warehouseName;
+
+        private String trackNo;
+
+        private String remark;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class ExportLogisticsHandoverListDetailDTO {
+
+        private String rowNum;
+
+        private String skuNo;
+        private String productName;
+        private Integer actualQty;
+        private String skuUnit;
+        private String detailRemark;
+    }
+    @Data
+    @NoArgsConstructor
+    public static class ExportLogisticsHandoverListDTO {
+
+        private String id;
+
+        private String detailId;
+        private String salesOrgName;
+        private String customerName;
+        private LocalDate billDate;
+        private String soId;
+        private String deliveryMode;
+        private String deliveryModeName;
+        private String receiveAddressId;
+        private String receiveAddress;
+        private String carrierId;
+        private String carrierName;
+        private String approveUserName;
+        private String deliveryUserName;
+        private String soCode;
+        private String code;
+        private String warehouseName;
+        private String trackNo;
+        private String detailRemark;
+        private String sellerName;
+        private String skuNo;
+        private String skuId;
+        private String productName;
+
+        private String skuUnit;
+
+        private Integer actualQty;
+        private Integer boxQty;
+        private String boxUnit = "箱";
+        private String remark;
+        private Integer rowNum;
     }
 
     @Data
@@ -1643,6 +1802,11 @@ public class SoOutstockDTO implements Serializable {
          * 是否检查sku历史映射
          */
         private boolean checkSkuHistory = true;
+        /**
+         * 是否标记不出库发货（默认false）
+         */
+        private Boolean isNotOutbound;
+
 
     }
 
@@ -1808,5 +1972,18 @@ public class SoOutstockDTO implements Serializable {
          *币种符号
          */
         private String currencySymbol;
+    }
+
+    /**
+     * sku最后一次出库日期
+     */
+    @Data
+    @NoArgsConstructor
+    public static class LastBillDateDTO {
+
+        private String skuId;
+
+
+        private LocalDate billDate;
     }
 }

@@ -127,6 +127,7 @@ public class QcNoticeController extends BaseController {
     * @return ApiResult<Void>
     */
     @PostMapping("/addAndSubmit")
+    @LogAction(value = LogActionEnum.ADD_AND_SUBMIT, desc = "质检通知单新增并提交审核")
     public ApiResult<BaseResultDTO.AddDTO> addAndSubmit(@RequestBody @Validated QcNoticeDTO.AddDTO dto) {
         BaseResultDTO.AddDTO result = qcNoticeService.addAndSubmit(dto);
         return success(result);
@@ -145,6 +146,7 @@ public class QcNoticeController extends BaseController {
             menuCode = "wms:qcNotice:updateAndSubmit",
             serviceClass = QcNoticeService.class,
             keyIdName = "id")
+    @LogAction(value = LogActionEnum.UPDATE_AND_SUBMIT, desc = "质检通知单修改并提交审核")
     public ApiResult<Void> updateAndSubmit(@RequestBody @Validated QcNoticeDTO.UpdateDTO dto) {
         qcNoticeService.updateAndSubmit(dto);
         return success();
@@ -342,6 +344,46 @@ public class QcNoticeController extends BaseController {
     }
 
     /**
+    * 作废
+    * @author jack  
+    * @date:  2025-11-10
+    * @param dto
+    * @return ApiResult<List<BatchResultDTO>>
+    */
+    @PostMapping("/invalid")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:qcNotice:invalid",
+            serviceClass = QcNoticeService.class,
+            keyIdName = "ids")
+    @LogAction(value = LogActionEnum.INVALID, desc = "质检通知单作废")
+    public ApiResult<List<BatchResultDTO>> invalid(@RequestBody @Validated BaseIdsDTO.RemarkDTO  dto) {
+        List<String> ids = dto.getIds();
+        String remark = dto.getRemark();
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+        List<QcNoticeEntity> list = qcNoticeService.lambdaQuery().in(QcNoticeEntity::getId, ids).list();
+        Map<String, QcNoticeEntity> idEntityMap = list.stream().collect(Collectors.toMap(QcNoticeEntity::getId, w -> w));
+        
+        for (String id : ids) {
+            BatchResultDTO invalidResult;
+            try {
+                invalidResult = qcNoticeService.invalid(id, remark);
+            }catch (Exception e){
+                log.error("质检通知单作废失败",e);
+                QcNoticeEntity entity = idEntityMap.get(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    invalidResult = BatchResultDTO.fail(id, id, "质检通知单不存在, 作废失败");
+                    resultDTOS.add(invalidResult);
+                    continue;
+                }
+                invalidResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(invalidResult);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+    /**
     * 详情
     * @author jack
     * @date:  2025-04-21
@@ -408,6 +450,7 @@ public class QcNoticeController extends BaseController {
             menuCode = "wms:qcNotice:cancelQcInfoFinish",
             serviceClass = QcNoticeService.class,
             keyIdName = "ids")
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "撤销质检")
     public ApiResult<List<BatchResultDTO>> cancelQcInfoFinish(@RequestBody @Validated BaseIdsDTO.DetailIdListDTO dto) {
         List<BatchResultDTO> resultDTOS = qcNoticeService.cancelQcInfoFinish(dto.getDetailIdList());
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
@@ -467,6 +510,7 @@ public class QcNoticeController extends BaseController {
      * @date:  2025-04-21
      */
     @PostMapping("/importFile")
+    @LogAction(value = LogActionEnum.EXPORT, desc = "质检通知单明细导入")
     public ApiResult<QcNoticeDTO.ImportDTO> importFile(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
         return success(qcNoticeService.importFile(excelFile, response));
     }

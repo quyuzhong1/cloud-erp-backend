@@ -47,6 +47,12 @@
             AND (p.id IN (SELECT pt.product_id FROM project_task pt WHERE 1 = 1 ${params.permissionSql})
             )
         </if>
+        <if test="categoryIdList!=null and categoryIdList.size >0 ">
+            AND p.category_id IN
+            <foreach collection="categoryIdList" item="categoryId" open="(" separator="," close=")">
+                #{categoryId}
+            </foreach>
+        </if>
         ORDER BY p.create_time DESC
     </select>
 
@@ -100,6 +106,12 @@
             AND (p.id IN (SELECT pt.product_id FROM project_task pt WHERE 1 = 1 ${params.permissionSql})
             )
         </if>
+        <if test="categoryIdList!=null and categoryIdList.size >0 ">
+            AND p.category_id IN
+            <foreach collection="categoryIdList" item="categoryId" open="(" separator="," close=")">
+                #{categoryId}
+            </foreach>
+        </if>
         ORDER BY p.create_time DESC
     </select>
     <select id="collect" resultType="com.erp.model.plm.dto.ProductShowDTO">
@@ -144,6 +156,12 @@
         <if test="params.permissionSql!=null  and params.permissionSql!=''">
             AND (p.id IN (SELECT pt.product_id FROM project_task pt WHERE 1 = 1 ${params.permissionSql})
             )
+        </if>
+        <if test="categoryIdList!=null and categoryIdList.size >0 ">
+            AND p.category_id IN
+            <foreach collection="categoryIdList" item="categoryId" open="(" separator="," close=")">
+                #{categoryId}
+            </foreach>
         </if>
         ORDER BY p.create_time DESC
     </select>

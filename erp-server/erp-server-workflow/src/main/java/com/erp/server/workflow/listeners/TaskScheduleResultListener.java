@@ -1,7 +1,9 @@
 package com.erp.server.workflow.listeners;
 
 import com.common.core.utils.OkHttpUtils;
+import com.erp.model.workflow.dto.ProcessPassDTO;
 import com.erp.model.workflow.entity.WorkflowBusinessProcessEntity;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.workflow.service.WorkflowBusinessProcessService;
 import org.camunda.bpm.engine.delegate.DelegateExecution;
 import org.camunda.bpm.engine.delegate.ExecutionListener;
@@ -30,17 +32,19 @@ public class TaskScheduleResultListener implements ExecutionListener {
     @Value("${taskScheduleProcessPassUrl}")
     private String taskScheduleProcessPassUrl;
 
+    @Resource
+    private PlmTaskFeign plmTaskFeign;
+
     @Override
     public void notify(DelegateExecution delegateExecution) throws Exception {
         String processId = delegateExecution.getParentActivityInstanceId();
         //业务流程表
         WorkflowBusinessProcessEntity businessProcess = workflowBusinessProcessService.getByProcessId(processId);
         if (businessProcess != null) {
-            Map<String, Object> params = new HashMap<>();
-            params.put("processId", processId);
-            params.put("businessTableId", businessProcess.getBusinessTableId());
-            OkHttpUtils.doPostJson(taskScheduleProcessPassUrl, params, null);
-
+            ProcessPassDTO dto = new ProcessPassDTO();
+            dto.setProcessId(processId);
+            dto.setBusinessTableId(businessProcess.getBusinessTableId());
+            plmTaskFeign.approvalTaskSchedulePass(dto);
         }
     }
 }

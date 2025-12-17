@@ -10,38 +10,40 @@
  * Do not edit the class manually.
  */
 
-
 package com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound;
 
+import java.util.Objects;
+import java.util.Arrays;
+
+import com.google.gson.annotations.SerializedName;
+import java.io.IOException;
 import com.google.gson.TypeAdapter;
 import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
-
-import java.io.IOException;
 
 /**
  * The current status of the fulfillment order.
  */
 @JsonAdapter(FulfillmentOrderStatus.Adapter.class)
 public enum FulfillmentOrderStatus {
-  
+  @SerializedName("New")
   NEW("New"),
-  
+  @SerializedName("Received")
   RECEIVED("Received"),
-  
+  @SerializedName("Planning")
   PLANNING("Planning"),
-  
+  @SerializedName("Processing")
   PROCESSING("Processing"),
-  
+  @SerializedName("Cancelled")
   CANCELLED("Cancelled"),
-  
+  @SerializedName("Complete")
   COMPLETE("Complete"),
-  
+  @SerializedName("CompletePartialled")
   COMPLETEPARTIALLED("CompletePartialled"),
-  
+  @SerializedName("Unfulfillable")
   UNFULFILLABLE("Unfulfillable"),
-  
+  @SerializedName("Invalid")
   INVALID("Invalid");
 
   private String value;
@@ -59,9 +61,9 @@ public enum FulfillmentOrderStatus {
     return String.valueOf(value);
   }
 
-  public static FulfillmentOrderStatus fromValue(String text) {
+  public static FulfillmentOrderStatus fromValue(String input) {
     for (FulfillmentOrderStatus b : FulfillmentOrderStatus.values()) {
-      if (String.valueOf(b.value).equals(text)) {
+      if (b.value.equals(input)) {
         return b;
       }
     }
@@ -71,14 +73,13 @@ public enum FulfillmentOrderStatus {
   public static class Adapter extends TypeAdapter<FulfillmentOrderStatus> {
     @Override
     public void write(final JsonWriter jsonWriter, final FulfillmentOrderStatus enumeration) throws IOException {
-      jsonWriter.value(enumeration.getValue());
+      jsonWriter.value(String.valueOf(enumeration.getValue()));
     }
 
     @Override
     public FulfillmentOrderStatus read(final JsonReader jsonReader) throws IOException {
-      String value = jsonReader.nextString();
-      return FulfillmentOrderStatus.fromValue(String.valueOf(value));
+      Object value = jsonReader.nextString();
+      return FulfillmentOrderStatus.fromValue((String)(value));
     }
   }
 }
-

@@ -35,4 +35,22 @@ public enum BooleanEnum implements EnumMessage {
     public String getName() {
         return name;
     }
+
+    public static String getByCode(Boolean code) {
+        for (BooleanEnum value : BooleanEnum.values()) {
+            if (value.getCode().equals(code)) {
+                return value.getName();
+            }
+        }
+        return "";
+    }
+
+    public static Boolean getByName(String name) {
+        for (BooleanEnum value : BooleanEnum.values()) {
+            if (value.getName().equals(name)) {
+                return value.getCode();
+            }
+        }
+        return null;
+    }
 }

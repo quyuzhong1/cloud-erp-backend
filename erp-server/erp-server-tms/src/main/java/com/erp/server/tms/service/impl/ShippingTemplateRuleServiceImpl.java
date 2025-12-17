@@ -62,7 +62,7 @@ public class ShippingTemplateRuleServiceImpl extends SuperServiceImpl<ShippingTe
     @Resource
     private ShippingRegionCityService shippingRegionCityService;
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean add(List<ShippingTemplateRuleDTO.AddDTO> detailList, String mainId) {

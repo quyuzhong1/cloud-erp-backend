@@ -50,4 +50,18 @@ public interface ExportPlmFeign {
     PagingVO<TaskExportDTO.ProductTaskExcelDTO> exportProjectTask(@RequestBody @Validated PagingDTO<ProductSearchDTO.ExportDTO> dto);
     @PostMapping("/feign/export/exportProductDetail")
     PagingVO<ProductDetailExcelExportDTO> exportProductDetail(@RequestBody @Validated PagingDTO<ProductSkuExcelDTO> dto);
+    @PostMapping("/feign/export/exportProductCustoms")
+    PagingVO<ProductCustomsDTO.ListDTO> exportProductCustoms(@RequestBody @Validated PagingDTO<ProductCustomsDTO.PagingParamDTO> dto);
+    @PostMapping("/feign/export/exportSkuStdCostDetail")
+    PagingVO<SkuStdCostDetailDTO.ListDTO> exportSkuStdCostDetail(@RequestBody @Validated PagingDTO<SkuStdCostDetailDTO.ExportDTO> dto);
+    @PostMapping("/feign/export/exportMoldInfo")
+    PagingVO<MoldInfoDTO.ListDTO> exportMoldInfo(@RequestBody @Validated PagingDTO<MoldInfoDTO.PagingParamDTO> dto);
+    @PostMapping("/feign/export/exportMoldRefSku")
+    PagingVO<MoldRefSkuDTO.ListDTO> exportMoldRefSku(@RequestBody @Validated PagingDTO<MoldRefSkuDTO.PagingParamDTO> dto);
+    @PostMapping("/feign/export/exportCfgMoldReturn")
+    PagingVO<CfgMoldReturnAlertRuleDTO.ListDTO> exportCfgMoldReturn(@RequestBody @Validated PagingDTO<CfgMoldReturnAlertRuleDTO.PagingParamDTO> dto);
+    @PostMapping("/feign/export/exportCfgMoldAlert")
+    PagingVO<CfgMoldAlertRuleDTO.ListDTO> exportCfgMoldAlert(@RequestBody @Validated PagingDTO<CfgMoldAlertRuleDTO.PagingParamDTO> dto);
+    @PostMapping("/feign/export/exportMoldMonitor")
+    PagingVO<MoldMonitorDTO.ListDTO> exportMoldMonitor(@RequestBody @Validated PagingDTO<MoldMonitorDTO.PagingParamDTO> dto);
 }

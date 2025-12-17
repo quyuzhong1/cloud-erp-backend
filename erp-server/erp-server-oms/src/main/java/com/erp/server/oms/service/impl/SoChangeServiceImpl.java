@@ -2,6 +2,7 @@ package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -44,6 +45,7 @@ import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
+import com.erp.server.oms.dht.SyncDhtService;
 import com.erp.server.oms.kingdee.SyncKingdeeSoChangeService;
 import com.erp.server.oms.mapper.SoChangeMapper;
 import com.erp.server.oms.query.SoChangeQueryHandler;
@@ -62,6 +64,7 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_OMS_SO_CHANGE;
@@ -123,6 +126,8 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
 
+    @Resource
+    private SyncDhtService syncDhtService;
 
     /**
      * 添加销售订单
@@ -178,7 +183,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
                 v.setCurrency(soInfo.getCurrency());
                 v.setCurrencySymbol(soInfo.getCurrencySymbol());
             });
-            soChangeDetailService.addDetailList(id, dto.getDetailList());
+            soChangeDetailService.addDetailList(soChange, dto.getDetailList());
             String content = String.format("新增了一个{%s}-销售变更单-{%s}", ApproveStatusEnum.WAIT_SUBMIT.getName(), code);
             addModuleOperateLog(content, ModuleTypeEnum.SO_CHANGE.getCode(), id, "新增操作");
             return id;
@@ -243,7 +248,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
                 v.setCurrencySymbol(soInfo.getCurrencySymbol());
             });
             operateLogService.addModuleOperateLogByObj(old, soChange, ModuleTypeEnum.SO_CHANGE.getCode(), id, "", "");
-            soChangeDetailService.updateDetailList(id, dto.getDetailList());
+            soChangeDetailService.updateDetailList(soChange, dto.getDetailList());
             return id;
         }
         return "";
@@ -325,7 +330,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public Boolean submit(List<String> ids) {
         if (CollectionUtils.isEmpty(ids)) {
             return false;
@@ -382,7 +387,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public Boolean addAndSubmit(SoChangeDTO.AddDTO dto) {
         String id = this.add(dto);
         if (StringUtils.isBlank(id)) {
@@ -449,13 +454,11 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
         List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIdList);
 
         List<String> ids = list.stream().map(SoChangeDTO.PagingViewDTO::getId).collect(Collectors.toList());
-        ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = new ValidList<>();
-        ids.forEach(obj -> {
-            dtoList.add(new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.SO_CHANGE.getCode(), obj));
-        });
+
+        //查询审核流程
+        ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = ids.stream().map(obj -> new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.SO_CHANGE.getCode(), obj)).collect(Collectors.toCollection(ValidList::new));
         ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = workflowFeign.curApprover(dtoList);
-        Integer code = listApiResult.getCode();
-        if (200 != code) {
+        if (200 != listApiResult.getCode()) {
             throw new ServiceException(new ApiResult(ApiError.DEFAULT.code,listApiResult.getMsg()));
         }
 
@@ -476,7 +479,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
             //最新审核人
             if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
                 String curApprove = listApiResult.getData().stream().filter(obj -> obj.getBusinessId().equals(item.getId()) && StringUtils.isNotBlank(obj.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
-                item.setApproveUserName(curApprove);
+                item.setApproveUserName(CharSequenceUtil.blankToDefault(curApprove,item.getApproveUserName()));
             }
             //作废状态
             Boolean invalidStatus = item.getInvalidStatus();
@@ -505,7 +508,6 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
         }
         return new PagingVO<>(pageData);
     }
-
 
     /**
      * 导出数据
@@ -809,7 +811,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
             //最新审核人
             if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
                 String curApprove = listApiResult.getData().stream().filter(obj -> obj.getBusinessId().equals(item.getId()) && StringUtils.isNotBlank(obj.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
-                item.setApproveUserName(curApprove);
+                item.setApproveUserName(CharSequenceUtil.blankToDefault(curApprove,item.getApproveUserName()));
             }
             BigDecimal amount = item.getAmount();
             String currencySymbol = item.getCurrencySymbol();
@@ -845,7 +847,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public BatchResultDTO approve(BaseApproveParamDTO dto, SoChangeEntity entity) {
         List<SoChangeEntity> list = Arrays.asList(entity);
         String ingStatus = ApproveStatusEnum.APPROVE_ING.getStatus();
@@ -873,7 +875,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public Boolean approveEnd(BaseApproveParamDTO dto, List<SoChangeEntity> list) {
         if (CollectionUtils.isEmpty(list)) {
             return Boolean.TRUE;
@@ -898,6 +900,12 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
 
             //更新销售表数据
             soChangeDetailService.handleDb(list);
+
+            //获取销售订单信息
+            List<String> soIdList = list.stream().map(SoChangeEntity::getSoId).distinct().collect(Collectors.toList());
+            List<SoInfoEntity> soInfoList = soInfoService.listByIds(soIdList);
+            Map<String, SoInfoEntity> soInfoMap = CollUtil.isEmpty(soInfoList) ? new HashMap<>() : soInfoList.stream().collect(Collectors.toMap(SoInfoEntity::getId, Function.identity()));
+
             //审核通过发送金蝶
             list.forEach(obj -> {
                 DmpPushTaskEntity pushTaskEntity = syncKingdeeSoChangeService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode());
@@ -905,6 +913,11 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
 
 
                 soInfoService.sdyFieldOrderHandler(obj.getSoId(), SyncOperateEnum.OPERATE_APPROVE.getCode());
+                //订货通同步
+                SoInfoEntity soInfoEntity = soInfoMap.get(obj.getSoId());
+                if((customerInfoService.isSyncDht(soInfoEntity.getCustomerId()) || CharSequenceUtil.equals(soInfoEntity.getDictPlatform() ,PlatformDictEnum.DHT.getCode()))){
+                    syncDhtService.createSyncSoInfoTaskToDht(soInfoEntity,SyncOperateEnum.OPERATE_APPROVE.getCode());
+                }
             });
         }
 
@@ -991,6 +1004,46 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
 
         }
         return result;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
+    public List<BatchResultDTO> deleteByIds(List<String> ids, boolean returnDetails) {
+        List<SoChangeEntity> list = this.listByIds(ids);
+        if (CollectionUtils.isEmpty(list)) {
+            throw new ServiceException(ApiError.ERROR_92034);
+        }
+        String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
+        List<SoChangeEntity> removeList=new ArrayList<>();
+        List<BatchResultDTO> resultDTOList=new ArrayList<>();
+        for (SoChangeEntity entity : list) {
+            if (!entity.getApproveStatus().getStatus().equals(waitSubmitStatus)
+                    ||entity.getInvalidStatus()){
+                resultDTOList.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_98009.msg));
+                continue;
+            }
+            removeList.add(entity);
+            resultDTOList.add(BatchResultDTO.success(entity.getId(), entity.getCode(),"删除成功"));
+        }
+        List<String> removeIdList = removeList.stream().map(SoChangeEntity::getId).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(removeIdList)){
+            return resultDTOList;
+        }
+        Boolean result = this.removeByIds(removeIdList);
+        if (result) {
+            //添加日志
+            String content = "删除销售变更单[%s]";
+            List<Pair<String, String>> pairList = removeList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+            operateLogService.batchAddModuleOperateLog(content, ModuleTypeEnum.SO_CHANGE.getCode(), pairList, "删除");
+            //删除明细
+            soChangeDetailService.removeByMainIdList(removeIdList);
+
+        }else {
+            throw new ServiceException(ApiError.ERROR_DATA_DELETE_ERROR);
+        }
+        // 返回成功结果
+        return resultDTOList;
     }
 
 

@@ -3,6 +3,7 @@ package com.erp.server.sys.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.common.business.dto.base.BaseDropDownDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.erp.model.sys.dto.DepartmentDTO;
 import com.erp.model.sys.dto.DeptUserDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
@@ -36,7 +37,7 @@ public interface SysDepartmentService extends IService<SysDepartmentEntity> {
      *
      * @param ids
      */
-    void removeByIdList(List<String> ids);
+    List<BatchResultDTO> removeByIdList(List<String> ids);
 
 
     /**

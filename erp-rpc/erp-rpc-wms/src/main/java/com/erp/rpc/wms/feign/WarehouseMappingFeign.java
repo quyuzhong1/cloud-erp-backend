@@ -1,5 +1,6 @@
 package com.erp.rpc.wms.feign;
 
+import com.common.business.config.FeignErrorDecoder;
 import com.erp.model.wms.dto.WarehouseMappingDTO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -10,7 +11,7 @@ import java.util.List;
 /**
  * 仓库映射表
  */
-@FeignClient(name = "erp-wms", contextId = "warehouseMapping")
+@FeignClient(name = "erp-wms", contextId = "warehouseMapping",configuration = {FeignErrorDecoder.class})
 public interface WarehouseMappingFeign {
 
     /**

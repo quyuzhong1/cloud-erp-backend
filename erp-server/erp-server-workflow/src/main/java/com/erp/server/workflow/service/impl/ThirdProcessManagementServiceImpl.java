@@ -178,6 +178,8 @@ public class ThirdProcessManagementServiceImpl extends SuperServiceImpl<ThirdPro
                         .orderByDesc(ApproveTaskInfoEntity::getCreateTime)
         );
 
+
+
         // 映射任务列表明细
         JSONArray taskListJson = jsonObject.getJSONArray(FsRequestBodyAttributesEnum.TASKLIST.getCode());
         List<ThirdProcessTaskManagementDTO.AddDTO> taskManagementDTOList = new ArrayList<>();
@@ -195,9 +197,11 @@ public class ThirdProcessManagementServiceImpl extends SuperServiceImpl<ThirdPro
         processManagementDTO.setProcessDefinitionId(jsonObject.getStr(FsRequestBodyAttributesEnum.APPROVALCODE.getCode()));
         processManagementDTO.setSysUserId(thirdIdToSysIdMap.get(jsonObject.getStr(FsRequestBodyAttributesEnum.USERID.getCode())));
         processManagementDTO.setThirdUserId(jsonObject.getStr(FsRequestBodyAttributesEnum.USERID.getCode()));
-        processManagementDTO.setBusinessId(one.getBussinessId());
-        processManagementDTO.setBusinessCode(one.getBussinessCode());
-        processManagementDTO.setBusinessKey(one.getBussinessKey());
+        if (ObjectUtil.isNotEmpty(one)) {
+            processManagementDTO.setBusinessId(one.getBussinessId());
+            processManagementDTO.setBusinessCode(one.getBussinessCode());
+            processManagementDTO.setBusinessKey(one.getBussinessKey());
+        }
 
         //主表状态
         FsApproveStatusEnum fsApproveStatusEnum = FsApproveStatusEnum.getByCode(jsonObject.getStr(FsRequestBodyAttributesEnum.STATUS.getCode()));

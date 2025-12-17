@@ -102,6 +102,7 @@ public class CalcSalesInfoDimController extends BaseController {
      * 导出
      */
     @PostMapping("/exportSalesInfo")
+    @LogAction(value = LogActionEnum.EXPORT, desc = "销量试算导出")
     public ApiResult<String> exportSalesInfo(@RequestBody CalcSalesInfoDimDTO.ExportSalesInfoDTO dto) {
         calcSalesInfoDimService.exportSalesInfo(dto);
        return success();
@@ -112,6 +113,7 @@ public class CalcSalesInfoDimController extends BaseController {
      * 试算跟踪列表导出
      */
     @PostMapping("/exportSalesInfoList")
+    @LogAction(value = LogActionEnum.EXPORT, desc = "销量试算任务列表导出")
     public ApiResult<String> exportSalesInfoList(@RequestBody CalcSalesInfoDimDTO.ParamDTO dto) {
         calcSalesInfoDimService.exportSalesInfoList(dto);
         return success();
@@ -121,6 +123,7 @@ public class CalcSalesInfoDimController extends BaseController {
      * 试算跟踪模板列表导出
      */
     @PostMapping("/exportSalesInfoTemplateList")
+    @LogAction(value = LogActionEnum.EXPORT, desc = "销量试算模板列表导出")
     public ApiResult<String> exportSalesInfoTemplateList(@RequestBody CalcSalesInfoDimDTO.ParamDTO dto) {
         calcSalesInfoDimService.exportSalesInfoTemplateList(dto);
         return success();
@@ -189,6 +192,7 @@ public class CalcSalesInfoDimController extends BaseController {
      * @param calcSalesInfoDimId 参数
      */
     @GetMapping("/downloadHistorySales")
+    @LogAction(value = LogActionEnum.DOWNLOAD, desc = "下载系统历史销量")
     public void downloadHistorySales(@RequestParam String calcSalesInfoDimId, HttpServletResponse response) {
         calcSalesInfoDimService.downloadHistorySales(calcSalesInfoDimId, response);
     }
@@ -198,6 +202,7 @@ public class CalcSalesInfoDimController extends BaseController {
      * @param cfgRuleCalcId 参数
      */
     @GetMapping("/downloadTemplateHistorySales")
+    @LogAction(value = LogActionEnum.DOWNLOAD, desc = "下载系统模板历史销量")
     public void downloadTemplateHistorySales(@RequestParam String cfgRuleCalcId, HttpServletResponse response) {
         calcSalesInfoDimService.downloadTemplateHistorySales(cfgRuleCalcId, response);
     }

@@ -1,5 +1,7 @@
 package com.erp.rpc.wms.feign;
 
+import com.common.business.config.FeignErrorDecoder;
+import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.wms.dto.SoDeliveryNoticeDetailDTO;
 import com.erp.model.wms.entity.SoDeliveryNoticeDetailEntity;
 import com.erp.model.wms.entity.SoDeliveryNoticeEntity;
@@ -11,7 +13,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import java.util.List;
 import java.util.Map;
 
-@FeignClient(name = "erp-wms", contextId = "soDeliveryNotice")
+@FeignClient(name = "erp-wms", contextId = "soDeliveryNotice" ,configuration = {FeignErrorDecoder.class})
 public interface SoDeliveryNoticeFeign {
 
     @PostMapping("feign/soDeliveryNotice/listDetailBySourceDetailId")
@@ -38,7 +40,13 @@ public interface SoDeliveryNoticeFeign {
      */
     @PostMapping("feign/soDeliveryNotice/getPushDownDeliveryNoticeCnt")
     Map<String,Long> getPushDownDeliveryNoticeCnt(@RequestBody List<String> soIds);
-
+    /**
+     * 根据销售订单查询发货通知单
+     * @param soIds
+     * @return
+     */
+    @PostMapping("feign/soDeliveryNotice/listDeliveryNoticeBySoIds")
+    List<SoDeliveryNoticeEntity> listDeliveryNoticeBySoIds(@RequestBody List<String> soIds);
     /**
      * 通过源id获取通知记录
      *
@@ -55,4 +63,11 @@ public interface SoDeliveryNoticeFeign {
      */
     @PostMapping("feign/soDeliveryNotice/getNoticeDetailById")
     SoDeliveryNoticeDetailEntity getNoticeDetailById(@RequestParam(value = "id") String id);
+
+    /**
+     * 更新销售信息
+     * @param soInfoEntity
+     */
+    @PostMapping("feign/soDeliveryNotice/updateSalesInfo")
+    void updateSalesInfo(@RequestBody SoInfoEntity soInfoEntity);
 }

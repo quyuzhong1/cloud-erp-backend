@@ -55,7 +55,7 @@ public class SoUtils {
         BigDecimal saleProfit = saleAmount.subtract(saleCost).setScale(4, BigDecimal.ROUND_HALF_UP);
         skuCostProfitResult.setSaleProfit(saleProfit);
         // 销售毛利率
-        if (costParam.getSaleAmount().compareTo(BigDecimal.ZERO) > 0) {
+        if (costParam.getSaleAmount().compareTo(BigDecimal.ZERO) > 0 && costParam.getAmountLocalCurrency().compareTo(BigDecimal.ZERO) > 0) {
             skuCostProfitResult.setSaleProfitRate(skuCostProfitResult.getSaleProfit().divide(costParam.getAmountLocalCurrency(), 4, BigDecimal.ROUND_HALF_UP).multiply(new BigDecimal("100")));
         }
         return skuCostProfitResult;

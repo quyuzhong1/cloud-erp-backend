@@ -145,6 +145,11 @@ public class DmpSoPrestockInfoDTO implements Serializable {
      @NoArgsConstructor
      public static class PrestockDTO {
 
+        /**
+         * dmp_so_prestock_info主键id
+         */
+        private String id;
+
          /**
          * 平台创建时间
          */

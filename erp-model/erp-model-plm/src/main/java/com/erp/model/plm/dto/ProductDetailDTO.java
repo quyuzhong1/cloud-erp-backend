@@ -2,6 +2,8 @@ package com.erp.model.plm.dto;
 
 import lombok.*;
 
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.math.BigDecimal;
@@ -140,8 +142,26 @@ public class ProductDetailDTO implements Serializable {
 
         /**
          * 状态
+         * 任务状态 0待审核，1审核中，2审核通过，3审核不通过，4待提交
          */
         private  Integer status;
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class SearchSkuDTO {
+
+        /**
+         * 搜索关键字
+         */
+        @NotBlank(message = "搜索关键字不能为空")
+        private String searchKeyword;
+
+        /**
+         * 客户id
+         */
+        private String customerId;
 
     }
 
@@ -376,6 +396,10 @@ public class ProductDetailDTO implements Serializable {
          */
         private String spuNo;
         /**
+         * ean码
+         */
+        private String eanNo;
+        /**
          * 产品名称
          */
         private String productName;
@@ -383,8 +407,57 @@ public class ProductDetailDTO implements Serializable {
          * 标准零售价
          */
         private BigDecimal retailPrice;
-    }
+        /**
+         * 状态
+         */
+        private  Integer status;
+        /**
+         * 变体属性
+         */
+        private String variantProperty;
 
+        /**
+         * 模具id
+         */
+        private String moldId;
+        /**
+         * 模具编码
+         */
+        private String moldCode;
+        /**
+         * 模具名称
+         */
+        private String moldName;
+        /**
+         * 模具标识
+         */
+        private String tag;
+        /**
+         * 模具标识名称
+         */
+        private String tagName;
+    }
+    @Data
+    @NoArgsConstructor
+    public static class SkuSearchDTO {
+        private String skuId;
+        /**
+         * sku编号
+         */
+        private String skuNo;
+        /**
+         * ean码
+         */
+        private String ean;
+        /**
+         * 客户sku
+         */
+        private String platformSkuNo;
+        /**
+         * sku类型
+         */
+        private String skuType;
+    }
     @Data
     public static class ServiceToWavePickingDTO {
         /**
@@ -467,5 +540,48 @@ public class ProductDetailDTO implements Serializable {
         private List<ProductDetailDTO.SkuChangeInfoDTO> productPackChangeField;
     }
 
+    /**
+     * @Description sku图片信息请求参数
+     * @Author jack
+     * @Date 2025-07-25
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ProductImagesDTO {
+        /**
+         * 产品sku明细表id
+         */
+        @NotBlank(message = "SKU不能为空")
+        private String skuId;
+
+        /**
+         * 图片地址
+         */
+        private List<String> imagesUrls;
+    }
+
+    /**
+     * @Description sku图片信息请求参数
+     * @Author jack
+     * @Date 2025-07-25
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ProductImagesZipDTO {
+        /**
+         * 文件URL
+         */
+        @NotBlank(message = "zip压缩文件不能为空")
+        private String fileUrl;
+
+        /**
+         * 导入类型
+         */
+        @NotBlank(message = "导入类型不能为空")
+        private String importType;
+
+        //ProductDetailImprotTypeEnum
+        private String taskId;
+    }
 
 }

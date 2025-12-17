@@ -1,5 +1,7 @@
 package com.erp.server.tms.mapper;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.tms.dto.LogisticsSaleChannelDTO;
 import com.erp.model.tms.dto.SaleChannelDTO;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
@@ -38,4 +40,6 @@ public interface LogisticsSaleChannelMapper extends BaseMapper<LogisticsSaleChan
      *@date 2023-11-27
      */
     List<LogisticsSaleChannelEntity> listByLogisticsPlatform(@Param("logisticsPlatform") String logisticsPlatform,@Param("servicePlatform")String servicePlatform);
+
+    IPage<SaleChannelDTO> pagingSelect(@Param("query") Page query, @Param("params") LogisticsSaleChannelDTO.QueryDTO params);
 }

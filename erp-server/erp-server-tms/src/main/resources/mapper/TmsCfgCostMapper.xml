@@ -31,7 +31,8 @@
         dict_cost_attribution as dictCostAttribution,
         dict_cost_category as dictCostCategory ,
         cost_name as costName,
-        is_default as isDefault
+        is_default as isDefault,
+        is_allocate as isAllocate
     </sql>
 
     <!-- 分页查询 -->

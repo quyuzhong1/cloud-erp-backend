@@ -1,6 +1,7 @@
 package com.erp.rpc.dmp.feign;
 
 
+import com.common.business.config.FeignErrorDecoder;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.dmp.dto.DwsDbErpDmpSkuSalesReportFDTO;
 import com.erp.model.dmp.dto.ThridUserInfoDTO;
@@ -18,7 +19,7 @@ import java.util.List;
  * @author Jim
  * @since 2025-06-23
  */
-@FeignClient(value = "erp-dmp", path = "feign/dmp/dmpSkuSales", contextId = "DmpSkuSaleReportFeign")
+@FeignClient(value = "erp-dmp", path = "feign/dmp/dmpSkuSales", contextId = "DmpSkuSaleReportFeign",configuration = {FeignErrorDecoder.class})
 public interface DmpSkuSaleReportFeign {
 
     /**

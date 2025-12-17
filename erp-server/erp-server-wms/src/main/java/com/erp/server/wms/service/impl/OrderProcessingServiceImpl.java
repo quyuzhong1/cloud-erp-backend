@@ -29,14 +29,14 @@ public class OrderProcessingServiceImpl implements OrderProcessingService {
         //查询最新的关账时间
        LocalDate minClosedDate = inventoryClosedRecordService.getMinClosedDate();
        if (ObjectUtil.isNull(startDate)) {
-           startDate = minClosedDate.minusMonths(10L);
+           startDate = minClosedDate.minusMonths(12L);
        }
-        //b2b销售订单更新订单跟踪
-        soB2bProcessingService.autoUpdateSoB2bProcessing(startDate);
-        log.warn("b2b销售订单更新订单跟踪更新成功");
         //b2c销售订单更新订单跟踪
         sob2cProcessingService.autoUpdateSoB2cProcessing(startDate);
         log.warn("b2c销售订单更新订单跟踪更新成功");
+        //b2b销售订单更新订单跟踪
+        soB2bProcessingService.autoUpdateSoB2bProcessing(startDate);
+        log.warn("b2b销售订单更新订单跟踪更新成功");
         //头程订单更新订单跟踪
         firstMileProcessingService.autoUpdateFirstMileProcessing(startDate);
         log.warn("头程订单更新订单跟踪更新成功");

@@ -24,4 +24,7 @@ public interface CustomerAddressMapper extends BaseMapper<CustomerAddressEntity>
      * @return
      */
     List<CustomerAddressEntity> listByCustomerName(@Param("customerName") String customerName);
+
+
+    List<CustomerAddressEntity> listAllByMainIds(@Param("mainIds") List<String> mainIds);
 }

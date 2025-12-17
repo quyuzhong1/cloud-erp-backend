@@ -52,7 +52,7 @@ public class AfterSaleFeignController extends BaseController {
      * @return ApiResult<String>
      */
     @PostMapping("/add")
-    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated AfterSaleDTO.AddDTO dto) {
+    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody AfterSaleDTO.AddDTO dto) {
         return success(afterSaleService.addAndSubmit(dto));
     }
 

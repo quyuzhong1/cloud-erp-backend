@@ -161,7 +161,7 @@ public class TbTaskTypeService {
      * @Date 2022/11/9 14:49
      * @return void
      **/
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     public void addTask(ShopInfoEntity shopInfo) {
         // 查询需要当前平台需要增加的任务
@@ -366,6 +366,7 @@ public class TbTaskTypeService {
         addDTO.setMaxRetryCount(3);
         addDTO.setExecTimeout(1200);
         addDTO.setDealyTime(60);
+        addDTO.setExtendJson(dmpCfgInputEntity.getExtendJson());
         addDTO.setTaskType(DmpInputTaskTaskTypeEnum.NORMAL.getCode());
         dmpCfgInputDetailService.add(addDTO);
         if(!isCaiNiaoOutbound){
@@ -378,10 +379,11 @@ public class TbTaskTypeService {
             addHistoryDTO.setIntervalTime(21600);
             addHistoryDTO.setOverrideTime(0);
             addHistoryDTO.setMaxRetryCount(3);
+            addHistoryDTO.setExtendJson(dmpCfgInputEntity.getExtendJson());
             addHistoryDTO.setExecTimeout(1200);
             addHistoryDTO.setDealyTime(86400);
             addHistoryDTO.setTaskType(DmpInputTaskTaskTypeEnum.HISTORY.getCode());
-            dmpCfgInputDetailService.add(addDTO);
+            dmpCfgInputDetailService.add(addHistoryDTO);
         }
     }
 

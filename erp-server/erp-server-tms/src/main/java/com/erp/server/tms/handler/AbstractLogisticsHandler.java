@@ -221,6 +221,15 @@ public abstract class AbstractLogisticsHandler extends BaseController implements
     }
 
     /**
+     * 更新物流注册信息
+     * @param registerTrackVO
+     * @return
+     */
+    public ApiResult<List<RegisterResponseVO>> updateTrack(RegisterTrackVO registerTrackVO) {
+        return ApiResult.error(-1, MSG);
+    }
+
+    /**
      * 物流单海运注册
      *
      * @param list

@@ -102,4 +102,14 @@ public interface PurchasePriceChangeDetailService extends SuperService<PurchaseP
      * @return java.util.List<com.erp.model.scm.entity.PurchasePriceChangeDetailEntity>
      */
     List<PurchasePriceChangeDetailEntity> listByMainIdList(List<String> mainIdList);
+
+    /**
+     * 获取最新的变更明细
+     * @author will
+     * @date 2025/8/5 17:57
+     * @param purchasePriceDetailId
+     * @param id
+     * @return PurchasePriceChangeDetailEntity
+     */
+    PurchasePriceChangeDetailEntity getLatest(String purchasePriceDetailId, String id);
 }

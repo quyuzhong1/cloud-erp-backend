@@ -29,6 +29,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
+import com.erp.model.oms.entity.SoReturnEntity;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.ProductSaleEntity;
@@ -69,6 +70,7 @@ import javax.annotation.Resource;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_TRANSFER_APPLICATION;
@@ -176,7 +178,7 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
 
 
     @Override
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     public String add(TransferApplicationDTO.AddDTO dto) {
         TransferApplicationEntity entity = new TransferApplicationEntity();
@@ -206,7 +208,7 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
     }
 
     @Override
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     public String addAndSubmit(TransferApplicationDTO.AddDTO dto) {
         //新增
@@ -354,6 +356,50 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    public List<BatchResultDTO> deleteByIds(List<String> ids, boolean returnDetails) {
+
+        //根据ids查询
+        List<TransferApplicationEntity> list = getList(ids);
+        //待提交并且未作废允许删除
+//        long count = list.stream().filter(obj -> !ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus()) || obj.getInvalidStatus() ).count();
+//        if (count > 0) {
+//            throw new ServiceException(ApiError.ERROR_98009);
+//        }
+        List<TransferApplicationEntity> removeList=new ArrayList<>();
+        List<BatchResultDTO> resultDTOList=new ArrayList<>();
+        String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
+        for (TransferApplicationEntity entity : list) {
+            if (!entity.getApproveStatus().equals(waitSubmitStatus)
+                    ||entity.getInvalidStatus()){
+                resultDTOList.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_98009.msg));
+                continue;
+            }
+            removeList.add(entity);
+            resultDTOList.add(BatchResultDTO.success(entity.getId(), entity.getCode(),"删除成功"));
+        }
+        List<String> removeIdList = removeList.stream().map(TransferApplicationEntity::getId).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(removeIdList)){
+            return resultDTOList;
+        }
+        log.info("调拨申请删除，ids=【{}】", JSONUtil.toJsonStr(removeIdList));
+        //删除明细数据
+        transferApplicationDetailService.removeByMainIds(removeIdList);
+        //删除操作日志
+        String msg = CharSequenceUtil.format("用户【{}】删除了单据编号为【{}】的调拨申请单", UserContext.getDefaultLoginUser().getUserName(), removeList.stream().map(TransferApplicationEntity::getCode).collect(Collectors.joining(",")));
+        List<Pair<String, String>> pairList = removeList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+        operateLogService.batchAddModuleOperateLog(msg, ModuleTypeEnum.QC_ORDER.getCode(), pairList, "删除操作");
+        //删除主表数据
+        boolean result = this.removeByIds(removeIdList);
+        if (!result){
+            throw new ServiceException(ApiError.ERROR_DATA_DELETE_ERROR);
+        }
+
+        // 返回成功结果
+        return resultDTOList;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean delete(List<String> ids) {
         //根据ids查询
         List<TransferApplicationEntity> list = getList(ids);
@@ -371,6 +417,39 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
         operateLogService.batchAddModuleOperateLog(msg, ModuleTypeEnum.QC_ORDER.getCode(), pairList, "删除操作");
         //删除主表数据
         return this.removeByIds(ids);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public BatchResultDTO deleteEntity(TransferApplicationEntity entity) {
+        //待提交并且未作废允许删除
+        if (!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(entity.getApproveStatus()) || entity.getInvalidStatus()) {
+            throw new ServiceException(ApiError.ERROR_98009);
+        }
+        log.info("调拨申请删除，id=【{}】", entity.getId());
+        List<String> ids = Collections.singletonList(entity.getId());
+        //删除明细数据
+        transferApplicationDetailService.removeByMainIds(ids);
+        //删除操作日志
+        String msg = CharSequenceUtil.format("用户【{}】删除了单据编号为【{}】的调拨申请单", UserContext.getDefaultLoginUser().getUserName(), entity.getCode());
+        List<Pair<String, String>> pairList = Collections.singletonList(new Pair<>(entity.getId(), entity.getCode()));
+        operateLogService.batchAddModuleOperateLog(msg, ModuleTypeEnum.QC_ORDER.getCode(), pairList, "删除操作");
+        //删除主表数据
+        boolean result = this.removeByIds(ids);
+        if (result) {
+            return BatchResultDTO.success(entity.getId(), entity.getCode(), "删除成功");
+        } else {
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), "删除失败");
+        }
+    }
+
+    @Override
+    public Map<String, TransferApplicationEntity> mapByIds(List<String> ids) {
+        if (CollectionUtils.isEmpty(ids)) {
+            return Collections.emptyMap();
+        }
+        List<TransferApplicationEntity> list = this.listByIds(ids);
+        return list.stream().collect(Collectors.toMap(TransferApplicationEntity::getId, Function.identity()));
     }
 
     @Override
@@ -419,7 +498,7 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public Boolean approveEnd(TransferApplicationEntity entity, String type, String comment, Boolean isNeedProcess) {
         if (Objects.isNull(entity)) {
             return Boolean.TRUE;
@@ -567,19 +646,19 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
     }
 
     @Override
-    public List<TransferApplicationDTO.ViewGenerateTransferInfoDTO> viewGenerateTransferInfo(List<String> ids) {
-        List<TransferApplicationDTO.ViewGenerateTransferInfoDTO> list = viewGenerateData(ids);
+    public List<TransferApplicationDTO.ViewGenerateTransferInfoDTO> viewGenerateTransferInfo(List<String> detailIdList) {
+        List<TransferApplicationDTO.ViewGenerateTransferInfoDTO> list = viewGenerateData(detailIdList);
         return list;
     }
 
     @Override
-    public List<TransferApplicationDTO.ViewGenerateTransferInfoDTO> viewGenerateTransferOut(List<String> ids) {
-        List<TransferApplicationDTO.ViewGenerateTransferInfoDTO> list = viewGenerateData(ids);
+    public List<TransferApplicationDTO.ViewGenerateTransferInfoDTO> viewGenerateTransferOut(List<String> detailIdList) {
+        List<TransferApplicationDTO.ViewGenerateTransferInfoDTO> list = viewGenerateData(detailIdList);
         return list;
     }
 
     @Override
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     public Boolean generateTransferInfo(ValidList<TransferApplicationDTO.GenerateTransferInfoDTO> validList) {
         List<TransferApplicationDTO.GenerateTransferInfoDTO> list = validList.getList();
@@ -593,7 +672,7 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
     }
 
     @Override
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     public Boolean generateTransferOut(ValidList<TransferApplicationDTO.GenerateTransferInfoDTO> validList) {
         List<TransferApplicationDTO.GenerateTransferInfoDTO> list = validList.getList();
@@ -892,11 +971,11 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
      * @description: 下推数据查询
      * @author Will
      * @date: 2023/5/12 9:12
-     * @param ids
+     * @param detailIdList
      * @return List<ViewGenerateTransferInfoDTO>
      */
-    private List<TransferApplicationDTO.ViewGenerateTransferInfoDTO>  viewGenerateData(List<String> ids) {
-        List<TransferApplicationDTO.ViewGenerateTransferInfoDTO> list = baseMapper.viewGenerateTransferInfo(ids);
+    private List<TransferApplicationDTO.ViewGenerateTransferInfoDTO>  viewGenerateData(List<String> detailIdList) {
+        List<TransferApplicationDTO.ViewGenerateTransferInfoDTO> list = baseMapper.viewGenerateTransferInfo(detailIdList);
         if (CollectionUtils.isEmpty(list)) {
             return list;
         }
@@ -943,6 +1022,8 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
             if (CollectionUtils.isNotEmpty(productDetailList)) {
                 String productName = productDetailList.stream().filter(e -> e.getId().equals(dto.getSkuId())).map(ProductDetailEntity::getName).findFirst().orElse(null);
                 dto.setProductName(productName);
+                //单位名称
+                dto.setUnitName(productDetailList.stream().filter(e -> e.getId().equals(dto.getSkuId())).map(ProductDetailEntity::getUnitName).findFirst().orElse(null));
             }
             //调拨方向名称
             if (CollectionUtils.isNotEmpty(transferDirectionList)) {
@@ -1116,7 +1197,7 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
             //最新审核人
             if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
                 String curApprove = listApiResult.getData().stream().filter(e -> e.getBusinessId().equals(obj.getId()) && CharSequenceUtil.isNotBlank(e.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
-                obj.setApproveUserName(curApprove);
+               obj.setApproveUserName(CharSequenceUtil.blankToDefault(curApprove,obj.getApproveUserName()));
             }
         }
     }

@@ -22,10 +22,11 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * <p>
@@ -116,11 +117,15 @@ public class SoB2cRefServiceImpl extends SuperServiceImpl<SoB2cRefMapper, SoB2cR
         if (CollectionUtils.isEmpty(ids)) {
             return Collections.EMPTY_LIST;
         }
-        return lambdaQuery()
-                .in(SoB2cRefEntity::getSourceId,ids)
-                .or()
-                .in(SoB2cRefEntity::getTargetId,ids)
+        List<SoB2cRefEntity> list1 = lambdaQuery()
+                .select(SoB2cRefEntity::getId, SoB2cRefEntity::getSourceDetailId, SoB2cRefEntity::getSourceId, SoB2cRefEntity::getTargetDetailId, SoB2cRefEntity::getTargetId, SoB2cRefEntity::getType)
+                .in(SoB2cRefEntity::getSourceId, ids)
                 .list();
+        List<SoB2cRefEntity> list2 = lambdaQuery()
+                .select(SoB2cRefEntity::getId, SoB2cRefEntity::getSourceDetailId, SoB2cRefEntity::getSourceId, SoB2cRefEntity::getTargetDetailId, SoB2cRefEntity::getTargetId, SoB2cRefEntity::getType)
+                .in(SoB2cRefEntity::getTargetId, ids)
+                .list();
+        return Stream.concat(list1.stream(),list2.stream()).distinct().collect(Collectors.toList());
     }
 
     @Override

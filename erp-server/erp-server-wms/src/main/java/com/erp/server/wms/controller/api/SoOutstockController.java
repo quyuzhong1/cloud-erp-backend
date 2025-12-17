@@ -8,6 +8,8 @@ import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.DataAttributeEnum;
+import com.common.business.enums.SourceTypeEnum;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
@@ -15,6 +17,8 @@ import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
+import com.erp.model.tms.dto.TmsDeclareBillDTO;
+import com.erp.model.tms.entity.TmsCfgSailingEntity;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.entity.SoOutstockEntity;
 import com.erp.server.wms.query.SoOutstockQueryHandler;
@@ -24,10 +28,10 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.io.IOException;
+import java.util.*;
 
 /**
  * 销售出库-销售出库单
@@ -95,6 +99,8 @@ public class SoOutstockController extends BaseController {
     @PostMapping("/getTotalByQuery")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id,seller_id",
+            warehouseTableField = "so.warehouse_id",
+            shopTableField = "so.shop_id",
             menuCode = "wms:so:outstock:paging",
             tableAlias = "so"
     )
@@ -132,9 +138,23 @@ public class SoOutstockController extends BaseController {
             serviceClass = SoOutstockService.class,
             keyIdName = "ids"
     )
-    public ApiResult submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean result = soOutstockService.submit(dto.getIds());
-        return result ? success() : failure();
+    public ApiResult<List<BatchResultDTO>> submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<SoOutstockEntity> entityList = soOutstockService.listByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            SoOutstockEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"发货通知单记录不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(soOutstockService.submit(entity,Boolean.TRUE));
+            }catch (Exception e){
+                log.error("销售出库单审核失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
 
@@ -281,8 +301,13 @@ public class SoOutstockController extends BaseController {
      */
     @PostMapping("afreshGenerateB2cOutstock")
     public ApiResult<String> afreshGenerateB2cOutstock(@RequestBody BaseIdsDTO.IdsDTO dto) {
-        Boolean result =  soOutstockService.afreshGenerateB2cOutstock(dto.getIds());
-        return result?success():failure("重新生成销售出库单失败");
+        try {
+            UserContext.setIsUserSystem(true);
+            Boolean result =  soOutstockService.afreshGenerateB2cOutstock(dto.getIds());
+            return result?success():failure("重新生成销售出库单失败");
+        }finally {
+            UserContext.clearIsUserSystem();
+        }
     }
 
     /**
@@ -340,20 +365,16 @@ public class SoOutstockController extends BaseController {
      * @param dto
      * @return
      */
-    @LogAction(value = LogActionEnum.DELETE, desc = "删除销售出库单")
+    @LogAction(value = LogActionEnum.DELETE, desc = "批量删除记录")
     @PostMapping("/delete")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id,seller_id",
             menuCode = "wms:so:outstock:delete",
             serviceClass = SoOutstockService.class,
             keyIdName = "ids")
-    public ApiResult delete(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
-        try {
-            Boolean result = soOutstockService.delete(dto.getIds());
-            return result ? success() : failure();
-        }catch (Exception e){
-            return failure(e.getMessage());
-        }
+    public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOList = soOutstockService.deleteByIds(dto.getIds(), true);
+        return  resultDTOList.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOList) : failure(resultDTOList);
     }
 
     /**
@@ -501,6 +522,45 @@ public class SoOutstockController extends BaseController {
             resultDTOS.add(resultDTO);
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+    /**
+     * 下推B2B报关单(不校验系统配置)
+     * @author jack
+     * @date: 2025-07-18
+     * @param dto
+     * @return ApiResult<List<BatchResultDTO>>
+     */
+    @PostMapping("/generateB2bDeclar")
+    public ApiResult<List<BatchResultDTO>> generateB2bDeclar(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO result;
+            try {
+                result = soOutstockService.generateB2bDeclar(id);
+            }catch (Exception e){
+                log.error("下推B2B报关单失败",e);
+                SoOutstockEntity entity = soOutstockService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    result = BatchResultDTO.fail(id, id, "下推B2B报关单失败");
+                    resultDTOS.add(result);
+                    continue;
+                }
+                result = BatchResultDTO.fail(entity.getId(), entity.getId(), e.getMessage());
+            }
+            resultDTOS.add(result);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+    /**
+     * 导出物流交接单
+     */
+    @PostMapping("/exportLogisticsHandover")
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出物流交接单")
+    public ApiResult<Object> exportLogisticsHandover(@RequestBody @Valid BaseIdsDTO.IdsDTO idsDTO, HttpServletResponse response) throws IOException {
+        soOutstockService.exportLogisticsHandover(idsDTO,response);
+        return success();
     }
 
 }

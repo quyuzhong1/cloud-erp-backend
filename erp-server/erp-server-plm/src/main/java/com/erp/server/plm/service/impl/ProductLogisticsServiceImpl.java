@@ -1,9 +1,12 @@
 package com.erp.server.plm.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.core.enums.CurrencyEnum;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.plm.dto.*;
@@ -13,13 +16,11 @@ import com.erp.model.plm.entity.BomSkuEntity;
 import com.erp.model.plm.entity.ProductLogisticsEntity;
 import com.erp.model.plm.enums.BasicDictTypeEnum;
 import com.erp.model.plm.enums.BomTypeEnum;
+import com.erp.model.plm.enums.SysLogClassPathEnum;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.server.plm.mapper.ProductLogisticsMapper;
-import com.erp.server.plm.service.BasicDictService;
-import com.erp.server.plm.service.BomInfoService;
-import com.erp.server.plm.service.BomSkuService;
-import com.erp.server.plm.service.ProductLogisticsService;
+import com.erp.server.plm.service.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -53,6 +54,9 @@ public class ProductLogisticsServiceImpl extends ServiceImpl<ProductLogisticsMap
 
     @Resource
     private ProductLogisticsService service;
+
+    @Resource
+    private OperateLogService operateLogService;
 
     /**
      * @param productId:产品信息表id
@@ -147,6 +151,13 @@ public class ProductLogisticsServiceImpl extends ServiceImpl<ProductLogisticsMap
     public Boolean saveOrUpdate(ProductLogisticsDTO productLogisticsDTO) {
         ProductLogisticsEntity logisticsEntity = new ProductLogisticsEntity();
         BeanMapper.copy(productLogisticsDTO, logisticsEntity);
+        //物流属性
+        if (StrUtil.isNotBlank(productLogisticsDTO.getProductPropertyId())) {
+            List<BasicDictEntity> propertytList = basicDictService.listByType(BasicDictTypeEnum.DECLARE_PROPERTY.getCode());
+            List<String> propertyIdList = Arrays.stream(productLogisticsDTO.getProductPropertyId().split(",")).collect(Collectors.toList());
+            String propertyNames = propertytList.stream().filter(obj -> propertyIdList.contains(obj.getId())).map(BasicDictEntity::getName).collect(Collectors.joining(","));
+            logisticsEntity.setProductProperty(propertyNames);
+        }
         //根据sku获取物流产品信息记录
         if (StringUtils.isNotBlank(productLogisticsDTO.getSkuId())){
             List<ProductLogisticsEntity> list = this.lambdaQuery().eq(ProductLogisticsEntity::getSkuId, productLogisticsDTO.getSkuId()).list();
@@ -154,7 +165,13 @@ public class ProductLogisticsServiceImpl extends ServiceImpl<ProductLogisticsMap
                 logisticsEntity.setId(list.get(0).getId());
             }
         }
+        String id = logisticsEntity.getId();
         boolean result = service.saveOrUpdate(logisticsEntity);
+        if(StringUtils.isBlank(id)){
+            //日志
+            String msg = CharSequenceUtil.format("用户【{}】新增物流产品信息", UserContext.getDefaultLoginUser().getUserName());
+            operateLogService.addSysLogBySave(msg, SysLogClassPathEnum.PRODUCTLOGISTICSENTITY.getDesc(), logisticsEntity.getId(), "");
+        }
         this.saveOrUpdateParentPropertyIdByChildSkuId(Arrays.asList(logisticsEntity.getSkuId()));
         return result;
     }
@@ -172,14 +189,20 @@ public class ProductLogisticsServiceImpl extends ServiceImpl<ProductLogisticsMap
     public Boolean saveOrUpdateBatch(List<ProductLogisticsDTO> productLogisticsList) {
         List<ProductLogisticsEntity> list = BeanMapper.copyList(productLogisticsList, ProductLogisticsEntity.class);
         List<String> skuIdList = list.stream().map(ProductLogisticsEntity::getSkuId).collect(Collectors.toList());
-        //根据sku获取产品物流信息记录
-        if (CollectionUtils.isNotEmpty(skuIdList)){
-            List<ProductLogisticsEntity> oldList = this.lambdaQuery().in(ProductLogisticsEntity::getSkuId, skuIdList).list();
-            if (CollectionUtils.isNotEmpty(oldList)){
-                list.forEach(productLogisticsEntity -> {
-                    ProductLogisticsEntity logisticsEntity = oldList.stream().filter(e -> Objects.nonNull(e) && e.getSkuId().equals(productLogisticsEntity.getSkuId())).findFirst().orElse(new ProductLogisticsEntity());
-                    productLogisticsEntity.setId(logisticsEntity.getId());
-                });
+        List<ProductLogisticsEntity> oldList = this.lambdaQuery().in(ProductLogisticsEntity::getSkuId, skuIdList).list();
+        //物流属性
+        List<BasicDictEntity> propertytList = basicDictService.listByType(BasicDictTypeEnum.DECLARE_PROPERTY.getCode());
+        for (ProductLogisticsEntity productLogisticsEntity : list) {
+            //物流属性名称
+            if (StrUtil.isNotBlank(productLogisticsEntity.getProductPropertyId())) {
+                List<String> propertyIdList = Arrays.stream(productLogisticsEntity.getProductPropertyId().split(",")).collect(Collectors.toList());
+                String propertyNames = propertytList.stream().filter(obj -> propertyIdList.contains(obj.getId())).map(BasicDictEntity::getName).collect(Collectors.joining(","));
+                productLogisticsEntity.setProductProperty(propertyNames);
+            }
+            //根据sku获取产品物流信息记录
+            if (CollectionUtils.isNotEmpty(skuIdList) && CollectionUtils.isNotEmpty(oldList)){
+                ProductLogisticsEntity logisticsEntity = oldList.stream().filter(e -> Objects.nonNull(e) && e.getSkuId().equals(productLogisticsEntity.getSkuId())).findFirst().orElse(new ProductLogisticsEntity());
+                productLogisticsEntity.setId(logisticsEntity.getId());
             }
         }
         boolean result = service.saveOrUpdateBatch(list);
@@ -301,6 +324,10 @@ public class ProductLogisticsServiceImpl extends ServiceImpl<ProductLogisticsMap
         List<ProductLogisticsEntity> productLogisticsList = this.listBySkuIdList(parentSkuIds);
         List<String> childrenSkuIds = bomSkuEntityList.stream().map(BomSkuEntity::getSkuId).distinct().collect(Collectors.toList());
         List<ProductLogisticsEntity> allChildProductLogisticsEntityList = this.listBySkuIdList(childrenSkuIds);
+
+        //物流属性
+        List<BasicDictEntity> propertytList = basicDictService.listByType(BasicDictTypeEnum.DECLARE_PROPERTY.getCode());
+
         List<ProductLogisticsEntity> updateList = new ArrayList<>();
         for (BomInfoEntity bomInfoEntity : bomInfoEntityList) {
             if(!BomTypeEnum.COMBINATION.getType().equals(bomInfoEntity.getType())){
@@ -324,6 +351,9 @@ public class ProductLogisticsServiceImpl extends ServiceImpl<ProductLogisticsMap
                     .distinct()
                     .collect(Collectors.joining(","));
             if(StringUtils.isNotBlank(propertyIds)){
+                String productProperty = propertytList.stream().filter(obj -> childrenLPropertyIds.contains(obj.getId())).map(BasicDictEntity::getName).collect(Collectors.joining(","));
+                productLogisticsEntity.setProductProperty(productProperty);
+                //物流属性名称
                 productLogisticsEntity.setProductPropertyId(propertyIds);
                 updateList.add(productLogisticsEntity);
             }

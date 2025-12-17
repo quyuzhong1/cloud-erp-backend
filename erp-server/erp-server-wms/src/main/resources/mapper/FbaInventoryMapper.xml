@@ -254,5 +254,32 @@
             ${params.permissionSql}
         </if>
     </select>
+    <select id="listFbaInventory" resultType="com.erp.model.wms.dto.FbaInventoryDTO$InventoryDTO">
+        SELECT
+            id,
+            warehouse_id,
+            sku_no,
+            asin,
+            msku,
+            fn_sku as fnsku,
+            product_name AS platformProductName,
+            fulfillable_qty as fulfillableQty,
+            fbm_fulfillable_qty as fbmFulfillableQty
+        FROM fba_inventory
+        WHERE is_deleted= false
+        <if test="params.warehouseIds != null and params.warehouseIds.size > 0">
+            AND warehouse_id in
+            <foreach collection="params.warehouseIds" item="warehouseId" open="(" close=")" separator=",">
+                #{warehouseId}
+            </foreach>
+        </if>
+        <if test="params.skuNos != null and params.skuNos.size > 0">
+            AND sku_no in
+            <foreach collection="params.skuNos" item="skuNo" open="(" close=")" separator=",">
+                #{skuNo}
+            </foreach>
+        </if>
+        order by sku_no,fulfillable_qty desc
+    </select>
 
 </mapper>

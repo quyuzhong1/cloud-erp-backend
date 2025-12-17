@@ -3,10 +3,7 @@ package com.erp.server.plm.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.common.business.dto.AdvanceQueryContainer;
 import com.common.business.dto.ExcelImportFsDTO;
-import com.common.business.dto.base.ApproveOneDTO;
-import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.dto.base.BatchResultDTO;
-import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.*;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.erp.model.plm.dto.*;
@@ -834,4 +831,20 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @return SkuVO
      */
     List<SkuVO> listAllStatusSkuBySkuNos(List<String> skuNoList);
+    /**
+     * 根据skuid 集合获取到sku分类信息（基础信息+产品信息+包装信息+采购信息）
+     * @author will
+     * @date 2025/8/21 11:35
+     * @param skuIds
+     * @return List<SkuVO>
+     */
+    List<SkuVO> listSkuPackAndPurchaseByIds(List<String> skuIds);
+    /**
+     * 根据skuid 获取产品属性为资产并且已审核通过的 的sku信息
+     * @author jack
+     * @date 2025-10-13
+     * @param skuNos
+     * @return List<SkuVO>
+     */
+    List<SkuVO> listByApprovePropertyNotAsset(List<String> skuNos);
 }

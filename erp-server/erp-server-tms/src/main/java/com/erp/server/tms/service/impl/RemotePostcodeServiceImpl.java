@@ -61,7 +61,7 @@ public class RemotePostcodeServiceImpl extends SuperServiceImpl<RemotePostcodeMa
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(RemotePostcodeDTO.AddDTO addDTO) {
@@ -187,7 +187,7 @@ public class RemotePostcodeServiceImpl extends SuperServiceImpl<RemotePostcodeMa
         remotePostcodeDetailService.removeByMainIds(Collections.singletonList(id));
         String msg = StrUtil.format("删除偏远地区邮编组【{}】成功", entity.getName());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.REMOTE_POSTCODE.getCode(), entity.getId(), "删除操作");
-        return BatchResultDTO.success(entity.getId(), entity.getId(), OperationTypeEnum.DELETE);
+        return BatchResultDTO.success(entity.getId(), entity.getName(), OperationTypeEnum.DELETE);
     }
 
     @Override

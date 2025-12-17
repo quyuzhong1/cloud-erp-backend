@@ -1,8 +1,10 @@
 package com.erp.rpc.wms.feign;
 
+import com.common.business.config.FeignErrorDecoder;
 import com.common.business.dto.AdvanceQueryContainer;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
+import com.erp.model.wms.dto.OverseasProviderWarehouseDTO;
 import com.erp.model.wms.entity.CfgAmzFulfillmentCenterEntity;
 import com.erp.model.wms.entity.FirstMileDeliveryDetailEntity;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
@@ -13,7 +15,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.List;
 
-@FeignClient(name = "erp-wms", contextId = "firstMileDeliveryFeign")
+@FeignClient(name = "erp-wms", contextId = "firstMileDeliveryFeign",configuration = {FeignErrorDecoder.class})
 public interface WmsFirstMileDeliveryFeign {
 
 
@@ -108,4 +110,12 @@ public interface WmsFirstMileDeliveryFeign {
 
     @PostMapping("/feign/firstMileDelivery/listGenerateLogisticDTO")
     List<FirstMileDeliveryDTO.GenerateLogisticDTO> listGenerateLogisticDTO(@RequestBody List<String> deliveryCodes);
+
+    /**
+     * 根据发货单中的目的仓查询三方仓关联的服务商
+     * @param deliveryIds
+     * @return
+     */
+    @PostMapping("/feign/firstMileDelivery/listOverseasProvider")
+    List<OverseasProviderWarehouseDTO.ProviderDTO> listOverseasProvider(@RequestBody List<String> deliveryIds);
 }

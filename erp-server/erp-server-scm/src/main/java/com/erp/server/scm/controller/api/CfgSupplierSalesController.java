@@ -146,7 +146,7 @@ public class CfgSupplierSalesController extends BaseController {
                     resultDTOS.add(deleteResult);
                     continue;
                 }
-                deleteResult = BatchResultDTO.fail(entity.getId(), entity.getId(), e.getMessage());
+                deleteResult = BatchResultDTO.fail(entity.getId(), entity.getSupplierName(), e.getMessage());
             }
             resultDTOS.add(deleteResult);
         }

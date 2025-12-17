@@ -38,7 +38,7 @@ public class VirtualInventoryHisServiceImpl extends SuperServiceImpl<VirtualInve
     @Autowired
     private OperateLogService operateLogService;
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO addOrUpdate(VirtualInventoryHisDTO.AddDTO addDTO) {
@@ -63,8 +63,8 @@ public class VirtualInventoryHisServiceImpl extends SuperServiceImpl<VirtualInve
     }
 
     @Override
-    public void addVirtualInventoryHis(LocalDate localDate) {
-        List<VirtualInventoryHisDTO.AddDTO> list = baseMapper.listVirtualInventoryHis(localDate);
+    public void addVirtualInventoryHis(String virtualInventoryId,LocalDate localDate) {
+        List<VirtualInventoryHisDTO.AddDTO> list = baseMapper.listVirtualInventoryHis(virtualInventoryId,localDate);
         if (CollUtil.isEmpty(list)) {
             return;
         }
@@ -72,12 +72,12 @@ public class VirtualInventoryHisServiceImpl extends SuperServiceImpl<VirtualInve
         List<String> virtualInventoryIdList = list.stream().map(VirtualInventoryHisDTO.AddDTO::getVirtualInventoryId).distinct().collect(Collectors.toList());
         List<List<String>> partitionIdList = Lists.partition(virtualInventoryIdList, 50000);
         for(List<String> idList : partitionIdList) {
-            List<VirtualInventoryHisEntity> hisList =  baseMapper.listByVirtualInventoryIdList(idList,localDate.minusDays(1L));
+            List<VirtualInventoryHisEntity> hisList =  baseMapper.listByVirtualInventoryIdList(idList,localDate);
             oldList.addAll(hisList);
         }
         for (VirtualInventoryHisDTO.AddDTO addDTO : list) {
             //传入时间减1
-            addDTO.setDate(localDate.minusDays(1L));
+            addDTO.setDate(localDate);
             //查询是否已存在
             VirtualInventoryHisEntity hisEntity = oldList.stream().distinct().filter(obj ->
                             CharSequenceUtil.equals(obj.getVirtualInventoryId(), addDTO.getVirtualInventoryId()) && obj.getDate().isEqual(addDTO.getDate()))

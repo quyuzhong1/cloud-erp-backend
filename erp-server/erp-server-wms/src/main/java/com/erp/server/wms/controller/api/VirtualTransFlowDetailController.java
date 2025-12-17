@@ -6,9 +6,11 @@ import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.wms.dto.VirtualTransFlowDetailDTO;
 import com.erp.server.wms.service.VirtualTransFlowDetailService;
 import lombok.extern.slf4j.Slf4j;
@@ -62,6 +64,7 @@ public class VirtualTransFlowDetailController extends BaseController {
      */
     @PostMapping("/exportExcel")
     @WebAdvanceQuery
+    @LogAction(value = LogActionEnum.EXPORT, desc = "库龄流水导出")
     public ApiResult exportExcel(@RequestBody VirtualTransFlowDetailDTO.SearchParamDTO dto) {
         Boolean flag = virtualTransFlowDetailService.exportExcel(dto);
         return flag == true ? success() : failure();

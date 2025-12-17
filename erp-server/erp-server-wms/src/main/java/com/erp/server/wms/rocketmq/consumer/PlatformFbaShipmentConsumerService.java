@@ -2,7 +2,6 @@ package com.erp.server.wms.rocketmq.consumer;
 
 import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.DmpSyncTaskIdDTO;
@@ -13,7 +12,6 @@ import com.common.business.enums.PlatformCategoryEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
-import com.common.message.constant.RocketMqTopic;
 import com.common.message.handler.AbstractPlatformConsumerHandler;
 import com.erp.model.dmp.dto.MongoDBUpdateDTO;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
@@ -35,8 +33,6 @@ import com.erp.server.wms.convert.FbaShipmentConsumerConverter;
 import com.erp.server.wms.service.CfgAmzFulfillmentCenterService;
 import com.erp.server.wms.service.FbaShipmentService;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.rocketmq.spring.annotation.ConsumeMode;
-import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
@@ -152,7 +148,7 @@ public class PlatformFbaShipmentConsumerService<T extends DmpSyncTaskIdDTO> exte
             paramDTO.setPlatform(PlatformDictEnum.AMAZON.getCode());
             paramDTO.setPlatformSkuNoList(sellerSkuList);
             paramDTO.setShopIdList(Collections.singletonList(entity.getShopId()));
-            paramDTO.setType(RuleTypeEnum.PLATFORM.getCode());
+            paramDTO.setType(RuleTypeEnum.B2C_PLATFORM.getCode());
             paramDTO.setMatchResult(ListingMatchResultEnum.TRUE.getCode());
             paramDTO.setIsExpire(false);
             // 查询ListingInfo和skuMapping的关系

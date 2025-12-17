@@ -1,4 +1,5 @@
 package com.erp.server.tms.service;
+import com.common.business.vo.PagingVO;
 import com.erp.model.tms.dto.SaleChannelDTO;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.common.business.service.SuperService;
@@ -69,4 +70,6 @@ public interface LogisticsSaleChannelService extends SuperService<LogisticsSaleC
      *@date 2023-12-07
      */
     LogisticsSaleChannelEntity getByPlatform(String platform, String code);
+
+    PagingVO<SaleChannelDTO> pagingSelect(PagingDTO<LogisticsSaleChannelDTO.QueryDTO> dto);
 }

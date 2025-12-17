@@ -12,6 +12,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.math.BigDecimal;
@@ -296,6 +297,18 @@ public class TmsFirstMileLogisticDTO implements Serializable {
          */
         @NotNull(message = "周期不能为空")
         private List<LocalDate> dateList;
+
+        /**
+         * 对账单类型（logistics 物流对账单，warehouse仓储对账单，custom自定义物流商）
+         * SupplierTypeEnum
+         */
+        @NotBlank(message = "对账类不能为空")
+        private String supplierType;
+        /**
+         * 物流商id
+         *
+         */
+        private String logisticsSupplierId;
     }
 
     /**
@@ -1681,5 +1694,25 @@ public class TmsFirstMileLogisticDTO implements Serializable {
         private BigDecimal volumeWeightLogistics;
         private String weightUnit;
         private String currency;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class WaitDTO {
+        /**
+         * 物流单id
+         */
+        @NotEmpty(message = "物流单id集合不能为空")
+        private List<String> ids;
+        /**
+         * 供应商id
+         */
+        private String supplierId;
+        /**
+         * 对账类型
+         */
+        @NotBlank(message = "对账类型不能为空")
+        private String supplierType;
     }
 }

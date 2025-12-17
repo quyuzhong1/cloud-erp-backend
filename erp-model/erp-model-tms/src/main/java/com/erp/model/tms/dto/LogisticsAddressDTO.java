@@ -392,4 +392,17 @@ public class LogisticsAddressDTO implements Serializable {
         @NotNull(message = "店铺id不能为空")
         private List<String> shopIds;
     }
+
+    @Data
+    @NoArgsConstructor
+    public static class SelectDTO {
+        /**
+         * 类型
+         */
+        private String type;
+        /**
+         * 模糊搜索
+         */
+        private String searchKeyword;
+    }
 }

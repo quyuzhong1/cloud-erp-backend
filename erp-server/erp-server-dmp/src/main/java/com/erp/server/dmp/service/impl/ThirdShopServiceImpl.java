@@ -50,7 +50,7 @@ public class ThirdShopServiceImpl extends SuperServiceImpl<ThirdShopMapper, Thir
     @Resource
     private DocNoGenHelper docNoGenHelper;
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(ThirdShopDTO.AddDTO addDTO) {

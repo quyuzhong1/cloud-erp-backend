@@ -55,6 +55,7 @@ import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.plm.constant.BomConstant;
 import com.erp.server.plm.constant.BomOperateContent;
+import com.erp.server.plm.constant.ProductConstant;
 import com.erp.server.plm.listener.BomInfoExcelListener;
 import com.erp.server.plm.mapper.BomInfoMapper;
 import com.erp.server.plm.rocketmq.sync.kingdee.SyncKingdeeBomInfoService;
@@ -136,6 +137,9 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
     private ProductLogisticsService productLogisticsService;
 
     @Resource
+    private ProductSaleService productSaleService;
+
+    @Resource
     private DownloadTaskFeign downloadTaskFeign;
     @Autowired
     private SysUserFeign sysUserFeign;
@@ -178,7 +182,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         bomOperateLogService.saveOperate(bomId, BomOperationTypeEnum.ADD.getType(), operateContent);
         //更新父sku物流属性
         List<String> parentSkuIds = bomSkuList.stream().map(BomSkuDTO::getSkuId).distinct().collect(Collectors.toList());
-        productLogisticsService.saveOrUpdateParentPropertyId(parentSkuIds);
+        productSaleService.saveOrUpdateParentPropertyId(parentSkuIds);
         //提交
         String submitAudit = BomConstant.SUBMIT_AUDIT;
         boolean isSubmitAudit = submitAudit.equals(dto.getSubmitType());
@@ -353,7 +357,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public BatchResultDTO approve(ApproveOneDTO dto) {
         ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(dto.getType());
         if(Objects.equals(approveType, ApproveTypeEnum.REJECT) && StrUtils.isEmpty(dto.getComment())) {
@@ -602,7 +606,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
             }
             //更新父sku物流属性
             List<String> parentSkuIds = bomSkuList.stream().map(BomSkuDTO::getSkuId).distinct().collect(Collectors.toList());
-            productLogisticsService.saveOrUpdateParentPropertyId(parentSkuIds);
+            productSaleService.saveOrUpdateParentPropertyId(parentSkuIds);
         }
         return result;
     }
@@ -693,7 +697,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public Boolean deleteById(String bomId) {
         BomInfoEntity bomInfoEntity = this.getById(bomId);
         if (ObjectUtils.isEmpty(bomInfoEntity)) {
@@ -731,7 +735,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public BatchResultDTO submitAudit(String bomId,Boolean isStartProcess) {
         BomInfoEntity bom = this.getById(bomId);
         if (Objects.isNull(bom)) {
@@ -907,7 +911,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public Boolean removeArchive(String bomId) {
         BomInfoEntity bom = this.getById(bomId);
         if (Objects.isNull(bom)) {
@@ -1045,7 +1049,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public void changeBom(BomDTO bom) {
         String bomId = bom.getId();
         BomInfoEntity bomEntity = this.getById(bomId);
@@ -1166,6 +1170,15 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
                 throw new ServiceException(ApiError.ERROR_BOM_PARENT_SKU_REPEAT, bomSkuDTO.getSkuNo());
             }
 
+        }
+        //校验是否子件产品属性是否相同
+        List<SkuVO> skuVOList = productDetailService.getSkuBySkuIds(childrenSkuIdList);
+        SkuVO skuVO = skuVOList.stream().filter(e -> e.getPropertyName().equals(ProductConstant.PRODUCT_PROPERTY_ASSET)).findFirst().orElse(null);
+        if(Objects.nonNull(skuVO)){
+            long count = skuVOList.stream().map(SkuVO::getPropertyId).distinct().count();
+            if(count > 1){
+                throw new ServiceException("只允许添加相同产品属性组合成组合品");
+            }
         }
     }
 

@@ -17,6 +17,7 @@ import com.erp.model.oms.dto.*;
 import com.erp.model.oms.dto.excel.SkuMappingImportExcelDTO;
 import com.erp.model.oms.entity.ListingInfoEntity;
 import com.erp.model.oms.entity.SkuMappingEntity;
+import com.erp.model.oms.enums.ListingInfoPlatformStatusEnum;
 import com.erp.model.oms.enums.ListingMatchResultEnum;
 import com.erp.model.oms.enums.ListingSourceTypeEnum;
 import com.erp.model.oms.enums.RuleTypeEnum;
@@ -25,6 +26,7 @@ import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.server.oms.service.*;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -222,7 +224,7 @@ public class SkuMappingExcelListener extends AnalysisEventListener<SkuMappingImp
         ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
         paramDTO.setPlatform(platform.getValue());
         paramDTO.setShopIdList(Collections.singletonList(shop.getId()));
-        paramDTO.setType(RuleTypeEnum.PLATFORM.getCode());
+        paramDTO.setType(RuleTypeEnum.B2C_PLATFORM.getCode());
         paramDTO.setPlatformSkuNoList(Collections.singletonList(skuMappingImportExcelDTO.getPlatformSkuNo()));
         paramDTO.setPlatformSpuNoList(CharSequenceUtil.isNotBlank(skuMappingImportExcelDTO.getPlatformProductId()) ? Collections.singletonList(skuMappingImportExcelDTO.getPlatformProductId()) : null);
 //        paramDTO.setIsExpire(false);
@@ -276,7 +278,7 @@ public class SkuMappingExcelListener extends AnalysisEventListener<SkuMappingImp
         }
         //平台标识
         String dictPlatform = platform.getValue();
-        RuleTypeEnum platformType = RuleTypeEnum.PLATFORM;
+        RuleTypeEnum platformType = RuleTypeEnum.B2C_PLATFORM;
 
         //平台sku no
         String platformSkuNo = skuMappingImportExcelDTO.getPlatformSkuNo();
@@ -310,7 +312,7 @@ public class SkuMappingExcelListener extends AnalysisEventListener<SkuMappingImp
 
                 SkuMappingEntity addSkuMapping = new SkuMappingEntity();
                 addSkuMapping.setShopId(skuMappingEntity.getShopId());
-                addSkuMapping.setType(RuleTypeEnum.PLATFORM);
+                addSkuMapping.setType(RuleTypeEnum.B2C_PLATFORM);
                 addSkuMapping.setProductSkuId(sku.getSkuId());
                 addSkuMapping.setProductSkuNo(sku.getSkuNo());
                 addSkuMapping.setListingId(listingId);
@@ -329,6 +331,11 @@ public class SkuMappingExcelListener extends AnalysisEventListener<SkuMappingImp
                 }
                 if (Objects.nonNull(listingInfoEntity)){
                     listingInfoEntity.setMatchResult(ListingMatchResultEnum.TRUE.getCode());
+                    if(StringUtils.isNotBlank(skuMappingImportExcelDTO.getPlatformStatusName())){
+                        String platformStatus = ListingInfoPlatformStatusEnum.getCodeByName(skuMappingImportExcelDTO.getPlatformStatusName());
+                        listingInfoEntity.setPlatformStatus(platformStatus);
+                    }
+
                     updateListingInfoList.add(listingInfoEntity);
                     //税务信息
                     InvoiceTaxDTO.UpdateDTO invoiceTaxUpdateDTO = BeanUtil.toBean(skuMappingImportExcelDTO, InvoiceTaxDTO.UpdateDTO.class);
@@ -362,7 +369,7 @@ public class SkuMappingExcelListener extends AnalysisEventListener<SkuMappingImp
             listingId = IdWorker.getIdStr();
             ListingInfoEntity addListingInfoEntity = new ListingInfoEntity();
             addListingInfoEntity.setId(listingId);
-            addListingInfoEntity.setType(RuleTypeEnum.PLATFORM.getCode());
+            addListingInfoEntity.setType(RuleTypeEnum.B2C_PLATFORM.getCode());
             addListingInfoEntity.setPlatformSkuNo(platformSkuNo);
             addListingInfoEntity.setPlatformSpuNo(platformProductId);
             addListingInfoEntity.setPlatformSkuName(platformProductName);

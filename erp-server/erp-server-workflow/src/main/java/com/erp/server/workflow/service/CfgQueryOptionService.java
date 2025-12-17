@@ -25,7 +25,7 @@ public interface CfgQueryOptionService extends SuperService<CfgQueryOptionEntity
 
     List<CfgQueryOptionDTO.TreeDTO> tree(String bussinessKey,String useType);
 
-    void genBySql(List<CfgQueryOptionDTO.GenListDTO>list);
+    void genBySql(CfgQueryOptionDTO.GenDTO genDTO);
 
     List<CfgQueryOptionDTO.ViewDTO> getSystemfield(String bussinessKey,String useType);
 
@@ -44,4 +44,5 @@ public interface CfgQueryOptionService extends SuperService<CfgQueryOptionEntity
     Map<String, Object> getVariablesMapByBusinessKey(CfgQueryOptionDTO.VariablesParamsDTO dto);
 
     List<CfgQueryOptionDTO.ListDTO> proDropDownByMain(String bussinessKey,String useType);
+
 }

@@ -1,5 +1,6 @@
 package com.erp.rpc.oms.feign;
 
+import com.common.business.config.FeignErrorDecoder;
 import com.erp.model.oms.dto.ShopSysUserAuthDTO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -7,7 +8,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.List;
 
-@FeignClient(name = "erp-oms", contextId = "shopSysUserAuth")
+@FeignClient(name = "erp-oms", contextId = "shopSysUserAuthFeign",configuration = {FeignErrorDecoder.class})
 public interface ShopSysUserAuthFeign {
     /**
      * 根据用户id查询店铺权限信息

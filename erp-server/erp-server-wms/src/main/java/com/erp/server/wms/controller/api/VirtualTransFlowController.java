@@ -6,9 +6,11 @@ import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.wms.dto.VirtualTransFlowDTO;
 import com.erp.model.wms.dto.VirtualTransFlowDetailDTO;
 import com.erp.model.wms.dto.inventory.InventoryUnApproveDTO;
@@ -74,6 +76,7 @@ public class VirtualTransFlowController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/exportExcel")
+    @LogAction(value = LogActionEnum.EXPORT, desc = "虚拟库存交易流水导出")
     public ApiResult exportExcel(@RequestBody VirtualTransFlowDTO.SearchParamDTO dto) {
         Boolean flag = virtualTransFlowService.exportExcel(dto);
         return flag == true ? success() : failure();

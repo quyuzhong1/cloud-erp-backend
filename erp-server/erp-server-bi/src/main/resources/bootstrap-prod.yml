@@ -14,18 +14,6 @@ spring:
     date-format: yyyy-MM-dd HH:mm:ss
     time-zone: GMT+8
 
-fdfs:
-  connect-timeout: 600
-  so-timeout: 1500
-  tracker-list:
-    - 172.16.100.10:22122
-
-sfs:
-  nacos:
-    application: seata-server
-    server-addr: 172.16.100.10:8848
-    namespace: seata-server
-    group: SEATA_GROUP
 
 
 

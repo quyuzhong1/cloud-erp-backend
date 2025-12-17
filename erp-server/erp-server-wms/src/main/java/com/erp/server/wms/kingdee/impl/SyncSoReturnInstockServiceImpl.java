@@ -311,11 +311,11 @@ public class SyncSoReturnInstockServiceImpl implements SyncSoReturnInstockServic
         if (null != dictCountryEntity){
             countryName = dictCountryEntity.getShortNameCn();
             // 区域编码
-            regionCode = dictCountryEntity.getSubregionCode();
+            regionCode = dictCountryEntity.getRegionCode();
             // 区域名称
             DictGlobalAreaEntity dictGlobalAreaEntity = dictGlobalEntityList.stream().filter(e -> e.getId().equalsIgnoreCase(dictCountryEntity.getSubregionCode())).findFirst().orElse(null);
             if (null != dictGlobalAreaEntity){
-                regionName = dictGlobalAreaEntity.getSubregionName();
+                regionName = dictGlobalAreaEntity.getRegionName();
             }
         }
 
@@ -532,7 +532,7 @@ public class SyncSoReturnInstockServiceImpl implements SyncSoReturnInstockServic
         detailViewDto.setUnit(skuVO.getUnitName());
         detailViewDto.setListPrice(skuVO.getRetailPrice());
 
-        CurrencyDTO.ViewDTO viewDTO = currencyList.stream().filter(req -> req.getId().equals(detailEntity.getCurrency())).findFirst().orElse(null);
+        CurrencyDTO.ViewDTO viewDTO = currencyList.stream().filter(req -> req.getId().equals(entity.getCurrency())).findFirst().orElse(null);
         if (ObjectUtil.isNotEmpty(viewDTO)) {
         	detailViewDto.setCurrencyName(viewDTO.getName());
             detailViewDto.setCurrencyCode(viewDTO.getId());
@@ -583,7 +583,7 @@ public class SyncSoReturnInstockServiceImpl implements SyncSoReturnInstockServic
         if (null != dictCountryEntity){
             countryName = dictCountryEntity.getShortNameCn();
             // 区域编码
-            regionCode = dictCountryEntity.getSubregionCode();
+            regionCode = dictCountryEntity.getRegionCode();
             // 区域名称
             DictGlobalAreaEntity dictGlobalAreaEntity = dictGlobalEntityList.stream().filter(e -> e.getId().equalsIgnoreCase(dictCountryEntity.getSubregionCode())).findFirst().orElse(null);
             if (null != dictGlobalAreaEntity){
@@ -707,6 +707,7 @@ public class SyncSoReturnInstockServiceImpl implements SyncSoReturnInstockServic
         List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuIds(skuIds);
 
         List<String> currencyCodeList = detailEntityList.stream().map(req -> req.getCurrency()).distinct().collect(Collectors.toList());
+        currencyCodeList.addAll(list.stream().map(req -> req.getCurrency()).distinct().collect(Collectors.toList()));
         List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(currencyCodeList);
         //父类产品
         List<String> parentSkuId = bomChildrenSkuDTOS.stream().map(BomChildrenSkuDTO::getParentSkuId).distinct().collect(Collectors.toList());

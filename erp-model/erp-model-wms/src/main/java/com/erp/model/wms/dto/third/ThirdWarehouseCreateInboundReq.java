@@ -1,5 +1,6 @@
 package com.erp.model.wms.dto.third;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -40,6 +41,15 @@ public class ThirdWarehouseCreateInboundReq {
     private String referenceNo;
 
     /**
+     * file base64
+     */
+    private String fileBase64;
+
+    /**
+     * file
+     */
+    private String fileName;
+    /**
      * 交货方式 （自送，揽收）
      * {@link com.erp.model.wms.enums.OverseasDeliveryModeEnum}
      */
@@ -61,6 +71,10 @@ public class ThirdWarehouseCreateInboundReq {
      * 目的仓库
      */
     private String warehouseCode;
+    /**
+     * 目的仓库国家编码
+     */
+    private String countryName;
 
     /**
      * 备注
@@ -76,7 +90,10 @@ public class ThirdWarehouseCreateInboundReq {
      * 物流产品代码
      */
     private String smCode;
-
+    /**
+     * 柜型
+     */
+    private String containerType;
     /**
      * 物流方式
      * {@link com.erp.model.wms.enums.LogisticsMethodEnum}
@@ -92,6 +109,17 @@ public class ThirdWarehouseCreateInboundReq {
      */
     private LocalDateTime etaDate;
 
+    /**
+     * 揽收时间起
+     */
+    @TableField(value = "collect_start_time")
+    private LocalDateTime collectStartTime;
+
+    /**
+     * 揽收时间止
+     */
+    @TableField(value = "collect_end_time")
+    private LocalDateTime collectEndTime;
     /**
      * 入库单创建时取0，发货单审核通过更新为1
      * {@link com.common.business.enums.OverseasVerifyEnum}
@@ -127,6 +155,10 @@ public class ThirdWarehouseCreateInboundReq {
 
     //发货信息
     private ShiperInfo shiperInfo;
+    /**
+     * 物流渠道
+     */
+    private String logisticsChannel;
 
     @Data
     @AllArgsConstructor
@@ -251,10 +283,15 @@ public class ThirdWarehouseCreateInboundReq {
     @Builder
     public static class Item {
 
+        private String batchNo;
         /**
          * 海外仓产品SKU
          */
         private String productSku;
+        /**
+         * 产品条码（三方仓商品条码）
+         */
+        private String thirdBarcode;
 
         /**
          * 海外仓产品SKUId

@@ -3,21 +3,21 @@ package com.erp.server.oms.controller.api;
 
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
-import com.common.business.dto.base.BaseDropDownDTO;
-import com.common.business.dto.base.BaseIdsDTO;
-import com.common.business.dto.base.BatchResultDTO;
-import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.oms.dto.SoB2cReturnDTO;
 import com.erp.model.oms.entity.SoB2cReturnEntity;
 import com.erp.model.oms.enums.SoB2cReturnReasonEnum;
 import com.erp.model.wms.enums.ReturnTypeEnum;
 import com.erp.server.oms.query.SoB2cReturnQueryHandler;
+import com.erp.server.oms.service.SoB2cRefundService;
 import com.erp.server.oms.service.SoB2cReturnService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
@@ -69,6 +69,7 @@ public class SoB2cReturnController extends BaseController {
      */
     @PostMapping("/export")
     @WebAdvanceQuery(handler = SoB2cReturnQueryHandler.class)
+    @LogAction(value = LogActionEnum.EXPORT, desc = "退款订单导出")
     public ApiResult export(@RequestBody @Validated SoB2cReturnDTO.PagingParamDTO dto) {
         soB2cReturnService.exportExcel(dto);
         return success();
@@ -135,6 +136,7 @@ public class SoB2cReturnController extends BaseController {
      * @return
      */
     @PostMapping("/delete")
+    @LogAction(value = LogActionEnum.DELETE, desc = "删除")
     public ApiResult<Boolean> delete(@RequestBody @Valid BaseIdsDTO.IdsDTO idsDTO) {
         return success(soB2cReturnService.delete(idsDTO.getIds()));
     }
@@ -177,6 +179,7 @@ public class SoB2cReturnController extends BaseController {
      * @return
      */
     @PostMapping("/updateLogisticsCode")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "更新物流单号保存")
     public ApiResult<List<BatchResultDTO>> updateLogisticsCode(@RequestBody @Valid ValidList<SoB2cReturnDTO.ReturnLogisticsDTO> dtos) {
         if (dtos.isEmpty()) {
             return success();
@@ -207,5 +210,124 @@ public class SoB2cReturnController extends BaseController {
     @PostMapping("/returnInstockPreview")
     public ApiResult<List<SoB2cReturnDTO.ReturnInstockDTO>> returnInstockPreview(@RequestBody @Valid BaseIdsDTO.IdsDTO idsDTO) {
         return success(soB2cReturnService.returnInstockPreview(idsDTO.getIds()));
+    }
+
+
+    /**
+     * 提交
+     * @author will
+     * @date 2025/10/24 11:51
+     * @param dto
+     * @return ApiResult<List<BatchResultDTO>>
+     */
+    @LogAction(value = LogActionEnum.SUBMIT, desc = "提交售后订单")
+    @PostMapping("/submit")
+    public  ApiResult<List<BatchResultDTO>> submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<SoB2cReturnEntity> entityList = soB2cReturnService.listByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            SoB2cReturnEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"售后订单记录不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(soB2cReturnService.submit(entity,Boolean.TRUE));
+            }catch (Exception e){
+                log.error("售后订单提交失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+    /**
+     * 撤销售后单
+     * @author will
+     * @date 2025/10/24 11:57
+     * @param dto
+     * @return ApiResult<List<BatchResultDTO>>
+     */
+    @LogAction(value = LogActionEnum.CANCEL, desc = "撤销售后单")
+    @PostMapping("/cancelProcess")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:refundOrder:cancelProcess",
+            serviceClass = SoB2cRefundService.class,
+            keyIdName = "ids")
+    public ApiResult<List<BatchResultDTO>> cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<SoB2cReturnEntity> entityList = soB2cReturnService.listByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            SoB2cReturnEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"售后订单记录不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(soB2cReturnService.cancelProcess(entity));
+            }catch (Exception e){
+                log.error("售后订单取消流程失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+
+    /**
+     * 审核
+     * @author will
+     * @date 2025/10/24 11:54
+     * @param dto
+     * @return ApiResult<List<BatchResultDTO>>
+     */
+    @LogAction(value = LogActionEnum.APPROVE, desc = "审核售后订单")
+    @PostMapping("/approve")
+    public ApiResult<List<BatchResultDTO>> approve(@RequestBody @Validated BaseApproveParamDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<SoB2cReturnEntity> entityList = soB2cReturnService.listByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            SoB2cReturnEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"售后订单记录不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(soB2cReturnService.approve(entity,new ApproveOneDTO(id,dto.getType(),dto.getComment())));
+            }catch (Exception e){
+                log.error("售后订单审核失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+    /**
+     * 售后订单反审核
+     * @author will
+     * @date 2025/10/24 11:55
+     * @param dto
+     * @return ApiResult<List<BatchResultDTO>>
+     */
+    @LogAction(value = LogActionEnum.DISAPPROVE, desc = "反审核售后订单")
+    @PostMapping("/disApprove")
+    public ApiResult<List<BatchResultDTO>> disApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<SoB2cReturnEntity> entityList = soB2cReturnService.listByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            SoB2cReturnEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"售后订单记录不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(soB2cReturnService.disApprove(entity));
+            }catch (Exception e){
+                log.error("售后订单反审核失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 }

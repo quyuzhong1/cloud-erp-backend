@@ -10,19 +10,23 @@
  * Do not edit the class manually.
  */
 
-
 package com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound;
 
-import com.google.gson.annotations.SerializedName;
-
-
 import java.util.Objects;
+import java.util.Arrays;
+import com.google.gson.TypeAdapter;
+import com.google.gson.annotations.JsonAdapter;
+import com.google.gson.annotations.SerializedName;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonWriter;
 
+import java.io.IOException;
 /**
  * An amount of money, including units in the form of currency.
  */
 
-@javax.annotation.Generated(value = "io.swagger.codegen.languages.JavaClientCodegen", date = "2020-12-15T20:44:18.412+08:00")
+@javax.annotation.Generated(value = "io.swagger.codegen.v3.generators.java.JavaClientCodegen", date = "2025-08-18T09:55:11.594451100+08:00[Asia/Shanghai]")
+
 public class Money {
   @SerializedName("currencyCode")
   private String currencyCode = null;
@@ -39,7 +43,7 @@ public class Money {
    * Three digit currency code in ISO 4217 format.
    * @return currencyCode
   **/
-
+  
   public String getCurrencyCode() {
     return currencyCode;
   }
@@ -57,7 +61,7 @@ public class Money {
    * Get value
    * @return value
   **/
-
+  
   public String getValue() {
     return value;
   }
@@ -68,7 +72,7 @@ public class Money {
 
 
   @Override
-  public boolean equals(Object o) {
+  public boolean equals(java.lang.Object o) {
     if (this == o) {
       return true;
     }
@@ -101,7 +105,7 @@ public class Money {
    * Convert the given object to string with each line indented by 4 spaces
    * (except the first line).
    */
-  private String toIndentedString(Object o) {
+  private String toIndentedString(java.lang.Object o) {
     if (o == null) {
       return "null";
     }
@@ -109,4 +113,3 @@ public class Money {
   }
 
 }
-

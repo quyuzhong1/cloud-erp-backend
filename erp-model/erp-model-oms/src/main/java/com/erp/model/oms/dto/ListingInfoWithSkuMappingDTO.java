@@ -1,6 +1,7 @@
 package com.erp.model.oms.dto;
 
 import cn.hutool.core.date.LocalDateTimeUtil;
+import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
@@ -152,6 +153,16 @@ public class ListingInfoWithSkuMappingDTO {
      * 平台最后修改时间
      */
     private LocalDateTime platformUpdateTime;
+
+    /**
+     * 平台状态
+     */
+    private String platformStatus;
+
+    /**
+     * ture:父产品
+     */
+    private Boolean isParent;
 
     /**
      * 仓库发货配置map

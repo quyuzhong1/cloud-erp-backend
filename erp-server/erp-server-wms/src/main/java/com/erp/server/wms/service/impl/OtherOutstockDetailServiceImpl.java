@@ -65,7 +65,7 @@ public class OtherOutstockDetailServiceImpl extends SuperServiceImpl<OtherOutsto
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public void add(List<OtherOutstockDetailDTO.AddDTO> detailList, String mainId) {
         if (CollectionUtils.isEmpty(detailList)) {
             throw new ServiceException(ApiError.ERROR_1041,"其他入库明细");
@@ -83,7 +83,7 @@ public class OtherOutstockDetailServiceImpl extends SuperServiceImpl<OtherOutsto
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public void update(List<OtherOutstockDetailDTO.UpdateDTO> detailList, String mainId) {
         if (CollectionUtils.isEmpty(detailList)) {
             throw new ServiceException(ApiError.ERROR_1041,"其他入库明细");

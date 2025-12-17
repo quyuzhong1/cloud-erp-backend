@@ -106,7 +106,7 @@ public class DmpOutputAmzReturnInstockRocketMQTaskHandler extends DmpOutputRocke
         dto.setPutawayTime(dmpMainEntity.getPutAwayTime());
         // 固定退货退款
         dto.setReturnType(ReturnTypeEnum.DEDUCTION.getCode());
-        dto.setUniqueId(CharSequenceUtil.format("{}_{}", dmpMainEntity.getPlatformOrderNo(), dmpMainEntity.getAuthId()));
+        dto.setUniqueId(CharSequenceUtil.format("return_instock_{}_{}_{}", dmpMainEntity.getPlatformOrderNo(), dmpMainEntity.getAuthId(), dmpMainEntity.getBatchNo()));
         // 明细
         List<PlatformReturnInstockDTO.Detail> detailList = dmpDetailList.stream().map(this::convertDetail).collect(Collectors.toList());
         dto.setProductDetailList(detailList);
@@ -128,30 +128,6 @@ public class DmpOutputAmzReturnInstockRocketMQTaskHandler extends DmpOutputRocke
     @Override
     public void getRetryPushSourceData(List<DmpCfgInputConvertEntity> dmpCfgInputConvertEntityList,
                                        DmpOutputTaskRequest dmpOutputTaskRequest) {
-        DmpCfgInputConvertEntity dmpCfgInputConvertEntity = dmpCfgInputConvertEntityList.get(0);
-        List<String> mainIds = dmpOutputTaskRequest.getConvertInputDmpBaseEntityListMaps().get(dmpCfgInputConvertEntity).stream().map(BaseEntity::getId).collect(Collectors.toList());
-        List<String> returnInboundIds = null;
-        for(int i = 1; i < dmpCfgInputConvertEntityList.size(); i++) {
-            DmpCfgInputConvertEntity childDmpCfgInputConvertEntity = dmpCfgInputConvertEntityList.get(i);
-            String storageName = childDmpCfgInputConvertEntity.getStorageName();
-            ServiceImpl serviceImpl = ApplicationContextUtils.getBean(StrUtils.underlineToCamel(storageName, true) + "ServiceImpl" , ServiceImpl.class);
-            QueryWrapper<?> wrapper = new QueryWrapper<>();
-            if("dmp_third_return_inbound".equals(storageName)) {
-                wrapper.in("source_id", mainIds);
-            }else if("dmp_third_return_inbound_detail".equals(storageName)){
-                if(CollectionUtils.isEmpty(returnInboundIds)) {
-                    continue;
-                }
-                wrapper.in("main_id", returnInboundIds);
-            } else {
-                wrapper.in("main_id", mainIds);
-            }
-            List<BaseEntity> childEntityList = serviceImpl.list(wrapper);
-            if("dmp_third_return_inbound".equals(storageName)) {
-                returnInboundIds = childEntityList.stream().map(BaseEntity::getId).collect(Collectors.toList());
-            }
-            dmpOutputTaskRequest.getConvertInputDmpBaseEntityListMaps().put(childDmpCfgInputConvertEntity, childEntityList);
-            dmpOutputTaskRequest.getChangeConvertInputDmpBaseEntityListMaps().put(childDmpCfgInputConvertEntity, childEntityList);
-        }
+        super.getRetryPushSourceData(dmpCfgInputConvertEntityList, dmpOutputTaskRequest);
     }
 }

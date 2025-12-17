@@ -1,6 +1,7 @@
 package com.erp.server.scm.controller.api;
 
 
+import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
@@ -13,11 +14,10 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.scm.dto.SupplierPhaseDTO;
-import com.erp.model.tms.dto.LogisticsBillCostDTO;
-import com.erp.model.tms.enums.DictCostAttributionEnum;
-import com.erp.server.scm.query.PurchaseApplicationQueryHandler;
+import com.erp.model.scm.entity.SupplierPhaseEntity;
 import com.erp.server.scm.query.SupplierPhaseQueryHandler;
 import com.erp.server.scm.service.SupplierPhaseService;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -27,7 +27,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
 import javax.validation.Valid;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * 供应商阶段管理
@@ -35,6 +37,7 @@ import java.util.List;
  * @author admin
  * @since 2023-03-15
  */
+@Slf4j
 @RestController
 @LogSystemModule("供应商阶段审核")
 @RequestMapping("/supplier/phase")
@@ -87,20 +90,6 @@ public class SupplierPhaseController extends BaseController {
     public ApiResult add(@RequestBody @Validated SupplierPhaseDTO.AddDTO dto) {
         String id = supplierPhaseService.add(dto);
         return StringUtils.isNotBlank(id) ? success() : failure();
-    }
-
-    /**
-     * 变更阶段的时候 获取对应的阶段列表
-     *
-     * @param
-     * @return com.common.core.controller.vo.ApiResult<java.util.List < com.common.business.dto.base.BaseDropDownDTO.CommonDTO>>
-     * @author yl
-     * @date 2023-03-31 14:20
-     */
-    @PostMapping("/listByChange")
-    public ApiResult<List<BaseDropDownDTO.CommonDTO>> listByChange(@RequestBody @Validated SupplierPhaseDTO.ListDTO dto) {
-        List<BaseDropDownDTO.CommonDTO> list = supplierPhaseService.listByChange(dto);
-        return success(list);
     }
 
     /**
@@ -163,8 +152,24 @@ public class SupplierPhaseController extends BaseController {
             keyIdName = "ids"
     )
     public ApiResult submit(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
-        Boolean result = supplierPhaseService.submit(dto.getIds());
-        return result == true ? success() : failure();
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO submit;
+            try {
+                submit = supplierPhaseService.submit(id);
+            }catch (Exception e){
+                log.error("供应商阶段 提交审核失败",e);
+                SupplierPhaseEntity entity = supplierPhaseService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    submit = BatchResultDTO.fail(id, id, "供应商阶段不存在, 提交失败");
+                    resultDTOS.add(submit);
+                    continue;
+                }
+                submit = BatchResultDTO.fail(entity.getId(), entity.getTargetPhase(), e.getMessage());
+            }
+            resultDTOS.add(submit);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**
@@ -196,8 +201,26 @@ public class SupplierPhaseController extends BaseController {
             keyIdName = "ids"
     )
     public ApiResult approve(@RequestBody @Validated BaseApproveParamDTO dto) {
-        Boolean result = supplierPhaseService.approve(dto);
-        return result == true ? success() : failure();
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<String> ids = dto.getIds();
+        for (String id : ids) {
+            BatchResultDTO resultDTO;
+            String flagCode = id;
+            try {
+                SupplierPhaseEntity entity = supplierPhaseService.getById(id);
+                if (Objects.isNull(entity)) {
+                    resultDTO = BatchResultDTO.fail(id,flagCode, "供应商阶段不存在");
+                } else {
+                    flagCode = entity.getTargetPhase();
+                    resultDTO = supplierPhaseService.approve(entity,new ApproveOneDTO(id, dto.getType(), dto.getComment()));
+                }
+            } catch (Exception e) {
+                log.error("供应商阶段审核失败>>>>{}", e);
+                resultDTO = BatchResultDTO.fail(id,flagCode, e.getMessage());
+            }
+            resultDTOS.add(resultDTO);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
 
@@ -235,9 +258,28 @@ public class SupplierPhaseController extends BaseController {
             menuCode = "scm:supplier:phase:delete",
             serviceClass = SupplierPhaseService.class,
             keyIdName = "ids")
-    public ApiResult delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean result = supplierPhaseService.deleteByIds(dto.getIds());
-        return result == true ? success() : failure();
+    public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOList = supplierPhaseService.deleteByIds(dto.getIds());
+        return resultDTOList.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOList) : failure(resultDTOList);
     }
 
+    /**
+     * 导出供应商阶段审核
+     * @author will
+     * @date 2025/7/28 10:30
+     * @param dto
+     * @return ApiResult
+     */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出供应商阶段审核")
+    @PostMapping("/export")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "scm:supplier:phase:paging",
+            tableAlias = "sp"
+    )
+    @WebAdvanceQuery(handler = SupplierPhaseQueryHandler.class)
+    public ApiResult export(@RequestBody @Valid SupplierPhaseDTO.PagingParamDTO dto) {
+        supplierPhaseService.export(dto);
+        return success();
+    }
 }

@@ -84,7 +84,6 @@ public enum ModuleTypeEnum {
     CFG_RULE_ORDER_HANDLE("73", "订单处理规则"),
     SO_B2C_DECLARE("74", "B2C销售订单申报信息"),
 
-    SO_MULTI_CHANNEL("75", "多渠道订单"),
     DMP_THIRD_WAREHOUSE("76", "第三方仓库"),
     DMP_THIRD_SHOP("77", "第三方店铺"),
     DMP_THIRD_MAPPING("78", "第三方映射"),
@@ -152,11 +151,62 @@ public enum ModuleTypeEnum {
     CONTRACT_INFO("128", "合同管理"),
     SUPPLIER_REF_WAREHOUSE("129", "仓库绑定"),
     TEMPLATE_MANAGEMENT("132", "模板管理"),
+    LOGISTICS_THIRD_CHANNEL_REF("130", "物流第三方渠道关系"),
+    CFG_RULE_INVOICE_PRODUCT_AMOUNT("130", "发票产品总价计算规则"),
+    DICT_HS_CODE("133", "出口申报要素"),
+    SKU_STD_COST_DETAIL("140", "SKU标准成本"),
+
+    THIRD_WAREHOUSE_DELIVERY("131", "三方仓发货单"),
+    SO_MULTI_CHANNEL("134", "多渠道订单"),
+
+    SO_RECEIPT("132", "收款单"),
+    SAMPLE_RETURN_INFO("141", "样品归还单"),
+    SAMPLE_BORROW_INFO("142", "样品借用单"),
+    SAMPLE_SCRAP_INFO("143", "样品报废单"),
+    EXHIBITION_ORDER("144", "展会订单"),
+
+    CUSTOMER_CREDIT_APPLY("134", "客户授信"),
+    SAMPLE_RECIPIENT("138", "样品领用单"),
+    SAMPLE_BACK_INFO("135", "样品退回单"),
+    SAMPLE_LEDGER("136", "样品台账"),
+    SAMPLE_LEDGER_INIT("137", "样品期初台账"),
+    PACKAGE_PLAN("138", "组包计划"),
+    SAMPLE_TRANSFER_INFO("146", "样品转移单"),
+    SAMPLE_ADJUSTMENT_INFO("160", "样品调整单"),
+    PAYABLE_INFO("145", "应付单"),
+    SO_B2C_REFUND("146", "售后订单"),
 
 
+    // ==================== 资产相关模块 ====================
+    ASSET_LOCATION("146", "资产位置"),
+    ASSET_ACCEPTANCE("147", "资产验收单"),
+    ASSET_CARD("148", "资产卡片"),
+    ASSET_STOCKTAKING_PLAN("149", "盘点方案"),
+    ASSET_STOCKTAKING("150", "资产盘点表"),
+    ASSET_PROFIT_LOSS("151", "盘盈盘亏单"),
+    ASSET_DISPOSAL("152", "资产处置单"),
+    ASSET_NOTICE("153","资产通知单"),
+    ASSET_PURCHASE_ORDER("154","资产采购单"),
+    ASSET_PURCHASE_CHANGE("155","资产采购变更单"),
+    DICT_BASIC("150", "字典数据"),
+    // DMP配置
+    DMP_BASIC_SYSTEM("1000", "平台管理"),
+    DMP_CFG_INPUT("1001", "拉取配置"),
+    DMP_CFG_INPUT_DETAIL("1002", "拉取调度"),
+    DMP_INPUT_TASK("1003", "拉取任务"),
+    DMP_CFG_ETL("1004", "清洗调度"),
+    DMP_ETL_TASK("1005", "清洗任务"),
+    DMP_CFG_OUTPUT("1006", "推送配置"),
+    DMP_CFG_OUTPUT_DETAIL("1007", "推送调度"),
+    DMP_OUTPUT_TASK("1008", "推送任务"),
 
+    CFG_DIFF_STRATEGY("150", "差异策略配置"),
+
+    // doris
+    ADS_ERP_INVENTORY_DIFF("2000", "平台库存差异"),
+    ADS_ERP_INVENTORY_DIFF_KINGDEE("2001", "金蝶库存差异"),
+    ADS_ERP_FIRST_MILE_IN_TRANSIT_DIFF("2002", "在途库存报告"),
     ;
-
 
 
     private String code;

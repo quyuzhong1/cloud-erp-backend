@@ -2,71 +2,61 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.erp.server.wms.mapper.SoDeliveryNoticeMapper">
     <select id="paging" resultType="com.erp.model.wms.dto.SoDeliveryNoticeDTO$PagingView">
-        WITH so_delivery_notice_details AS (
         SELECT
-        sdn.id AS notice_id,
-        sdnd.id AS detail_id,
-        COUNT(pd.id) OVER (PARTITION BY sdn.id) AS picked_count,
-        COUNT(sdnd.id) OVER (PARTITION BY sdn.id) AS total_count
-        FROM so_delivery_notice sdn
-        JOIN so_delivery_notice_detail sdnd ON sdn.id = sdnd.main_id AND sdn.is_deleted = FALSE
-        LEFT JOIN picking_detail pd ON pd.source_detail_id = sdnd.id AND pd.is_deleted = FALSE
-        WHERE sdnd.is_deleted = FALSE
-        ),
-        generation_status AS (
-        SELECT
-        notice_id,
-        CASE
-        WHEN total_count = picked_count THEN '已生成'
-        WHEN picked_count > 0 THEN '部分生成'
-        ELSE '未生成'
-        END AS generationPickStatus
-        FROM so_delivery_notice_details
-        GROUP BY notice_id, picked_count, total_count
-        )
-        SELECT
-            sdn.id,
-            sdnd.id as detailId,
-            sdn.source_id AS sourceId,
-            sdn.source_type AS sourceType,
-            sdnd.source_detail_id AS sourceDetailId,
-            sdn.code,
-            sdn.source_code AS sourceCode,
-            sdn.customer_id AS customerId,
-            sdn.customer_name AS customerName,
-            sdn.approve_status AS approveStatus,
-            sdn.invalid_status AS invalidStatus,
-            sdn.delivery_status AS deliveryStatus,
-            sdn.warehouse_id AS warehouseId,
-            sdn.warehouse_name AS warehouseName,
-            sdn.warehouse_org_id AS warehouseOrgId,
-            sdn.warehouse_org_name AS warehouseOrgName,
-            sdnd.sku_id AS skuId,
-            sdnd.sku_no AS skuNo,
-            sdnd.delivery_qty AS deliveryQty,
-            sdnd.customer_po AS customerPO,
-            sdnd.to_country AS toCountry,
-            sdn.seller_name AS sellerName,
-            sdn.require_date AS requireDate,
-            sdn.plan_delivery_date AS planDeliveryDate,
-            sdn.actual_delivery_date AS actualDeliveryDate,
-            sdn.pack_date AS packDate,
-            sdn.approve_user_name AS approveUserName,
-            sdn.create_user_name AS createUserName,
-        COALESCE((select sum(wcd.pack_qty) from wms_carton_detail wcd inner join wms_carton wc on wcd.main_id = wc.id and wc.is_deleted = false
-        where wc.packing_task_id = pt.id  and wcd.is_deleted = false and wcd.sku_id = sdnd.sku_id),0) as packingQty,
-        pt.packing_status as packingStatus,
-            sdn.create_time AS createTime,
-        sdnd.picking_qty as pickedQty,
-        g.generationPickStatus,
-        sdn.transfer_warehouse_ids
-        FROM so_delivery_notice sdn
-        INNER JOIN so_delivery_notice_detail sdnd ON sdn.id = sdnd.main_id AND sdn.is_deleted = FALSE
-        LEFT JOIN packing_task pt on pt.source_id = sdn.id and pt.is_deleted = false
-        LEFT JOIN  generation_status g ON sdn.id = g.notice_id
+        sdn.ID,
+        sdn.source_id AS sourceId,
+        sdn.source_type AS sourceType,
+        sdn.code,
+        sdn.source_code AS sourceCode,
+        sdn.customer_id AS customerId,
+        sdn.customer_name AS customerName,
+        sdn.approve_status AS approveStatus,
+        sdn.invalid_status AS invalidStatus,
+        sdn.delivery_status AS deliveryStatus,
+        sdn.warehouse_id AS warehouseId,
+        sdn.warehouse_name AS warehouseName,
+        sdn.warehouse_org_id AS warehouseOrgId,
+        sdn.warehouse_org_name AS warehouseOrgName,
+        sdn.is_allow_outstock AS isAllowOutstock,
+        sdn.remark,
+        sdn.seller_name AS sellerName,
+        sdn.require_date AS requireDate,
+        sdn.plan_delivery_date AS planDeliveryDate,
+        sdn.actual_delivery_date AS actualDeliveryDate,
+        sdn.pack_date AS packDate,
+        sdn.approve_user_name AS approveUserName,
+        sdn.create_user_name AS createUserName,
+        sdn.create_time AS createTime,
+        sdn.transfer_warehouse_ids,
+        sdnd.ID AS detailId,
+        sdnd.source_detail_id AS sourceDetailId,
+        sdnd.sku_id AS skuId,
+        sdnd.sku_no AS skuNo,
+        sdnd.delivery_qty AS deliveryQty,
+        sdnd.customer_po AS customerPO,
+        sdnd.to_country AS toCountry,
+        sdnd.picking_qty AS pickedQty,
+        sd.qty as salesQty,
+        pd.name as productName,
+        pd.unit_name as unit,
+        CASE WHEN total.total_delivery_qty = total.total_picked_qty THEN '已生成' WHEN total.total_picked_qty > 0 THEN '部分生成' ELSE '未生成' END AS generationPickStatus
+        FROM
+        so_delivery_notice sdn
+        LEFT JOIN so_delivery_notice_detail sdnd ON sdn.ID = sdnd.main_id and sdnd.is_deleted=false
+        INNER JOIN (SELECT main_id,SUM(delivery_qty) AS total_delivery_qty,SUM(picking_qty) AS total_picked_qty
+        FROM so_delivery_notice_detail WHERE is_deleted = false GROUP BY main_id
+        ) total ON sdn.ID = total.main_id
+        <if test="params.dynamicDataSource != null and params.dynamicDataSource == 'doris'">
+            LEFT JOIN erp_oms.so_detail sd on sd.id = sdnd.source_detail_id and sd.is_deleted= false
+            LEFT JOIN erp_plm.product_detail pd on sdnd.sku_id= pd.id and pd.is_deleted=false
+        </if>
+        <if test="params.dynamicDataSource == null or params.dynamicDataSource != 'doris'">
+            LEFT JOIN so_detail sd on sd.id = sdnd.source_detail_id and sd.is_deleted= false
+            LEFT JOIN product_detail pd on sdnd.sku_id= pd.id and pd.is_deleted=false
+        </if>
         WHERE
         ${params.sqlMap.default}
-        and    sdnd.is_deleted = FALSE
+        and    sdn.is_deleted = FALSE
         <if test="params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
         </if>
@@ -94,6 +84,10 @@
         <if test="params.deliveryStatus != null">
             and sdn.delivery_status = #{params.deliveryStatus}
         </if>
+        <if test="params.isAllowOutstock != null">
+            and sdn.is_allow_outstock = #{params.isAllowOutstock}
+        </if>
+
         <if test="params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
         </if>
@@ -113,6 +107,7 @@
         sdn.delivery_status AS deliveryStatus,
         sdn.warehouse_org_id AS warehouseOrgId,
         sdn.warehouse_org_name AS warehouseOrgName,
+        sdn.is_allow_outstock as isAllowOutstock,
         sdnd.sku_id AS skuId,
         sdnd.sku_no AS skuNo,
         sdnd.delivery_qty AS deliveryQty,

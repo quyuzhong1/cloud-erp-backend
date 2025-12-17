@@ -23,7 +23,12 @@ public interface SupplierPhaseMapper extends BaseMapper<SupplierPhaseEntity> {
 
     IPage<SupplierPhaseDTO.PagingViewDTO> paging(Page query, @Param("params") SupplierPhaseDTO.PagingParamDTO params,@Param("statusList") List<String> statusList);
 
-
-    List<SupplierPhaseDTO.ApproveCountDTO> listApproveCount(@Param("permissionSql") String permissionSql);
-
+    /**
+     * 查询数量
+     * @author will
+     * @date 2025/7/25 14:30
+     * @param params
+     * @return Integer
+     */
+    Integer tabList(@Param("params")SupplierPhaseDTO.PagingParamDTO params);
 }

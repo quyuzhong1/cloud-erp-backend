@@ -32,4 +32,6 @@ public class AutoGenerateBillDTO {
 
     private SoOutstockEntity soOutstockEntity;
 
+    private Boolean checkCfg;
+
 }

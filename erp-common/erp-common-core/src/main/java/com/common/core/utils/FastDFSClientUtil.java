@@ -1,5 +1,6 @@
 package com.common.core.utils;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.json.JSONUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -86,7 +87,8 @@ public class FastDFSClientUtil {
 	 * @return
 	 */
 	public synchronized static String uploadFile(MultipartFile multipartFile) {
-		String fileName = multipartFile.getOriginalFilename().toLowerCase();
+		String originalFilename = multipartFile.getOriginalFilename().toLowerCase();
+		String fileName = CharSequenceUtil.isBlank(originalFilename) ? multipartFile.getName() : originalFilename;
 		File file = FileUtil.multiToFile(multipartFile);
 		return uploadFile(file, fileName, null);
 	}

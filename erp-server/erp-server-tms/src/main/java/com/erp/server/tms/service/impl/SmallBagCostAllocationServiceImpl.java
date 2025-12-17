@@ -19,7 +19,6 @@ import org.springframework.transaction.annotation.Transactional;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.annotation.DataIdempotent;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -34,7 +33,6 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.erp.model.plm.entity.ProductDetailEntity;
-import com.erp.model.sys.entity.DictCurrencyEntity;
 import com.erp.model.tms.dto.LogisticsBillCostDTO;
 import com.erp.model.tms.dto.SmallBagCostAllocationDTO;
 import com.erp.model.tms.dto.SmallBagCostAllocationDTO.ListDTO;
@@ -100,7 +98,7 @@ public class SmallBagCostAllocationServiceImpl extends SuperServiceImpl<SmallBag
     @Resource
     private DmpTaskFeign dmpTaskFeign;
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(SmallBagCostAllocationDTO.AddDTO addDTO) {

@@ -2,7 +2,6 @@ package com.erp.server.srm.service.impl;
 
 
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.ObjectUtil;
 import com.alibaba.excel.EasyExcelFactory;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -16,13 +15,11 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.OperationTypeEnum;
-import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.utils.ApplicationContextUtils;
 import com.common.business.vo.PagingVO;
 import com.common.core.constant.EnumMessage;
-import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
@@ -35,9 +32,9 @@ import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.scm.entity.PurchaseOrderEntity;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.scm.enums.PurchaseOrderTypeEnum;
 import com.erp.model.srm.dto.DeliveryOrderDTO;
 import com.erp.model.srm.dto.DeliveryOrderDetailDTO;
-import com.erp.model.srm.dto.PoReconciliationDetailDTO;
 import com.erp.model.srm.dto.excel.DeliveryOrderExportExcelDTO;
 import com.erp.model.srm.dto.excel.DeliveryOrderImportExcelDTO;
 import com.erp.model.srm.entity.DeliveryOrderDetailEntity;
@@ -51,7 +48,6 @@ import com.erp.model.wms.entity.PoReturnDetailEntity;
 import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
 import com.erp.model.wms.entity.WarehouseReceiveEntity;
 import com.erp.model.wms.enums.PoReceiveSourceTypeEnum;
-import com.erp.model.wms.enums.PoReturnConfirmStatusEnum;
 import com.erp.model.wms.enums.ReturnModeEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.scm.feign.PurchaseOrderFeign;
@@ -61,7 +57,10 @@ import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.srm.convert.DeliveryOrderConverter;
 import com.erp.server.srm.listener.DeliveryExcelListener;
 import com.erp.server.srm.mapper.DeliveryOrderMapper;
-import com.erp.server.srm.service.*;
+import com.erp.server.srm.service.DeliveryOrderDetailService;
+import com.erp.server.srm.service.DeliveryOrderService;
+import com.erp.server.srm.service.OperateLogService;
+import com.erp.server.srm.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -161,6 +160,7 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
             }
             WarehouseReceiveEntity warehouseReceiveEntity = warehouseReceiveEntityList.stream().filter(t->t.getSourceId().equals(v.getId())).findFirst().orElse(new WarehouseReceiveEntity());
             v.setReceiveUserName(warehouseReceiveEntity.getReceiveUserName());
+            v.setTypeName(PurchaseOrderTypeEnum.getNameByCode(v.getType()));
         });
     }
 

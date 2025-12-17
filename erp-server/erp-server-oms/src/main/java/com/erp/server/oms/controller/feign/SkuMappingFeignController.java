@@ -65,8 +65,8 @@ public class SkuMappingFeignController extends BaseController {
      * @author Jim
      * @date 2023/11/2
      */
-    @PostMapping("/list")
-    public List<ListingInfoWithSkuMappingDTO> listDTOByType(@RequestBody ListingInfoParamDTO dto) {
+    @PostMapping("/listingInfoWithSkuMappingList")
+    public List<ListingInfoWithSkuMappingDTO> listingInfoWithSkuMappingList(@RequestBody ListingInfoParamDTO dto) {
         return skuMappingService.findListDto(dto);
     }
 

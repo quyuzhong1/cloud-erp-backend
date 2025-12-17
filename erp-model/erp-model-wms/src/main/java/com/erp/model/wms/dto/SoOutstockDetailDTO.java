@@ -1,5 +1,6 @@
 package com.erp.model.wms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.fasterxml.jackson.annotation.JsonFormat;
@@ -11,6 +12,7 @@ import javax.validation.constraints.DecimalMin;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.LinkedList;
@@ -354,15 +356,32 @@ public class SoOutstockDetailDTO implements Serializable {
         private String platformCode;
 
         /**
+         * 平台子单号
+         */
+        private String platformSubSoCode;
+
+        /**
          * 平台销售出库单明细ID
          */
         private String platformDetailId;
+
+        private String platformSoDetailId;
 
         private String warehouseId;
 
         private String warehouseName;
         private String virtualWarehouseId;
-
+        private BigDecimal price;
+        private BigDecimal amount;
+        private BigDecimal taxRate;
+        /**
+         * 汇率
+         */
+        private BigDecimal exchangeRate;
+        /**
+         * 币别（原币）
+         */
+        private String currency;
         public AddDTO(ListingInfoWithSkuMappingGenDTO currentSkuMappingDTO, AddDTO addDTO, Integer currentQty) {
             this.skuId = currentSkuMappingDTO.getProductSkuId();
             this.skuNo = currentSkuMappingDTO.getPlatformSkuNo();
@@ -379,6 +398,7 @@ public class SoOutstockDetailDTO implements Serializable {
             this.platformCode = addDTO.getPlatformCode();
             this.platformDetailId = addDTO.getPlatformDetailId();
             this.virtualWarehouseId = addDTO.getVirtualWarehouseId();
+            this.platformSubSoCode = addDTO.getPlatformSubSoCode();
         }
     }
 
@@ -533,6 +553,10 @@ public class SoOutstockDetailDTO implements Serializable {
          * 销售明细id
          */
         private String soDetailId;
+        /**
+         * 客户PO号
+         */
+        private String customerPO;
     }
 
 

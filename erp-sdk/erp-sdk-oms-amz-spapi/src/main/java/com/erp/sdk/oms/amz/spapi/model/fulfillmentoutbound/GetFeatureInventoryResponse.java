@@ -10,20 +10,25 @@
  * Do not edit the class manually.
  */
 
-
 package com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound;
 
-import com.erp.sdk.oms.amz.spapi.model.ErrorList;
-import com.google.gson.annotations.SerializedName;
-
-
 import java.util.Objects;
+import java.util.Arrays;
+import com.google.gson.TypeAdapter;
+import com.google.gson.annotations.JsonAdapter;
+import com.google.gson.annotations.SerializedName;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonWriter;
+import com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound.ErrorList;
+import com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound.GetFeatureInventoryResult;
 
+import java.io.IOException;
 /**
  * The breakdown of eligibility inventory by feature.
  */
 
-@javax.annotation.Generated(value = "io.swagger.codegen.languages.JavaClientCodegen", date = "2020-12-15T20:44:18.412+08:00")
+@javax.annotation.Generated(value = "io.swagger.codegen.v3.generators.java.JavaClientCodegen", date = "2025-08-18T09:55:11.594451100+08:00[Asia/Shanghai]")
+
 public class GetFeatureInventoryResponse {
   @SerializedName("payload")
   private GetFeatureInventoryResult payload = null;
@@ -40,7 +45,7 @@ public class GetFeatureInventoryResponse {
    * Get payload
    * @return payload
   **/
-
+  
   public GetFeatureInventoryResult getPayload() {
     return payload;
   }
@@ -55,10 +60,10 @@ public class GetFeatureInventoryResponse {
   }
 
    /**
-   * One or more unexpected errors occurred during the getFeatureInventory operation.
+   * Get errors
    * @return errors
   **/
-
+  
   public ErrorList getErrors() {
     return errors;
   }
@@ -69,7 +74,7 @@ public class GetFeatureInventoryResponse {
 
 
   @Override
-  public boolean equals(Object o) {
+  public boolean equals(java.lang.Object o) {
     if (this == o) {
       return true;
     }
@@ -102,7 +107,7 @@ public class GetFeatureInventoryResponse {
    * Convert the given object to string with each line indented by 4 spaces
    * (except the first line).
    */
-  private String toIndentedString(Object o) {
+  private String toIndentedString(java.lang.Object o) {
     if (o == null) {
       return "null";
     }
@@ -110,4 +115,3 @@ public class GetFeatureInventoryResponse {
   }
 
 }
-

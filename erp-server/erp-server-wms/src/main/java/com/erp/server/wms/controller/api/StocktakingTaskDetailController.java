@@ -69,7 +69,7 @@ public class StocktakingTaskDetailController extends BaseController {
     /**
      * 修改盘点数量
      */
-    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "修改盘点数量:id={id}")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "修改盘点数量:id={id} 盘点数量:qty={qty}")
     @PostMapping("/update")
     public ApiResult exportWarehouse(@RequestBody @Validated ValidList<StocktakingTaskDetailDTO.UpdateDTO> dto) {
         Boolean result = stocktakingTaskDetailService.updateBatchDetail(dto);

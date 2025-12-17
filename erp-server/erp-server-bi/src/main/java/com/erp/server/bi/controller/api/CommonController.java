@@ -7,6 +7,7 @@ import com.common.core.utils.EnumCacheUtils;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.rpc.file.feign.FileFeign;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -43,7 +44,7 @@ public class CommonController extends BaseController {
      * @Date 2022/10/9 17:35
      **/
     @LogAction(value = LogActionEnum.UPLOAD, desc = "上传图片:文件名={name}")
-    @PostMapping("/upload")
+    @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ApiResult<List<String>> upload(@RequestParam("multipartFile") MultipartFile[] multipartFile, HttpServletRequest request) {
         List<String> list = new ArrayList<>();
         for (MultipartFile file : multipartFile) {

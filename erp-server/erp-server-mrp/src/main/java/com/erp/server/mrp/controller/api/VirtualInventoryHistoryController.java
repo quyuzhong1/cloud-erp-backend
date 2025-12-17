@@ -4,7 +4,9 @@ package com.erp.server.mrp.controller.api;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogAction;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.mrp.dto.VirtualInventoryHistoryDTO;
 import com.erp.server.mrp.handler.VirtualInventoryHistoryHandler;
 import com.erp.server.mrp.service.VirtualInventoryHistoryService;
@@ -49,6 +51,7 @@ public class VirtualInventoryHistoryController extends BaseController {
      * @param dto 入参
      */
     @PostMapping("/export")
+    @LogAction(value = LogActionEnum.EXPORT, desc = "虚拟仓库历史库存信息导出")
     public ApiResult<Boolean> exportList(@RequestBody @Validated VirtualInventoryHistoryDTO.SearchParamDTO dto) {
         virtualInventoryHistoryService.exportList(dto);
         return success(true);

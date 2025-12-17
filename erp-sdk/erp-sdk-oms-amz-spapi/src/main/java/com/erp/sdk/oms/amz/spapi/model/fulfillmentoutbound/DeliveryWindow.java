@@ -10,65 +10,70 @@
  * Do not edit the class manually.
  */
 
-
 package com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound;
 
-import com.google.gson.annotations.SerializedName;
-
-
 import java.util.Objects;
+import java.util.Arrays;
+import com.google.gson.TypeAdapter;
+import com.google.gson.annotations.JsonAdapter;
+import com.google.gson.annotations.SerializedName;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonWriter;
 
+import java.io.IOException;
+import java.time.OffsetDateTime;
 /**
- * The time range within which a Scheduled Delivery fulfillment order should be delivered.
+ * The time range within which a Scheduled Delivery fulfillment order should be delivered. This is only available in the JP marketplace.
  */
 
-@javax.annotation.Generated(value = "io.swagger.codegen.languages.JavaClientCodegen", date = "2020-12-15T20:44:18.412+08:00")
+@javax.annotation.Generated(value = "io.swagger.codegen.v3.generators.java.JavaClientCodegen", date = "2025-08-18T09:55:11.594451100+08:00[Asia/Shanghai]")
+
 public class DeliveryWindow {
   @SerializedName("startDate")
-  private String startDate = null;
+  private OffsetDateTime startDate = null;
 
   @SerializedName("endDate")
-  private String endDate = null;
+  private OffsetDateTime endDate = null;
 
-  public DeliveryWindow startDate(String startDate) {
+  public DeliveryWindow startDate(OffsetDateTime startDate) {
     this.startDate = startDate;
     return this;
   }
 
    /**
-   * The date and time of the start of the Scheduled Delivery window, in ISO 8601 date time format.
+   * Get startDate
    * @return startDate
   **/
-
-  public String getStartDate() {
+  
+  public OffsetDateTime getStartDate() {
     return startDate;
   }
 
-  public void setStartDate(String startDate) {
+  public void setStartDate(OffsetDateTime startDate) {
     this.startDate = startDate;
   }
 
-  public DeliveryWindow endDate(String endDate) {
+  public DeliveryWindow endDate(OffsetDateTime endDate) {
     this.endDate = endDate;
     return this;
   }
 
    /**
-   * The date and time of the end of the Scheduled Delivery window, in ISO 8601 date time format.
+   * Get endDate
    * @return endDate
   **/
-
-  public String getEndDate() {
+  
+  public OffsetDateTime getEndDate() {
     return endDate;
   }
 
-  public void setEndDate(String endDate) {
+  public void setEndDate(OffsetDateTime endDate) {
     this.endDate = endDate;
   }
 
 
   @Override
-  public boolean equals(Object o) {
+  public boolean equals(java.lang.Object o) {
     if (this == o) {
       return true;
     }
@@ -101,7 +106,7 @@ public class DeliveryWindow {
    * Convert the given object to string with each line indented by 4 spaces
    * (except the first line).
    */
-  private String toIndentedString(Object o) {
+  private String toIndentedString(java.lang.Object o) {
     if (o == null) {
       return "null";
     }
@@ -109,4 +114,3 @@ public class DeliveryWindow {
   }
 
 }
-

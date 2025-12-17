@@ -70,7 +70,9 @@ public class LogisticsAuthController extends BaseController {
                 ||LogisticsPlatformEnum.TIK_TOK.getCode().equals(logisticsPlatform)
                 ||LogisticsPlatformEnum.TIK_TOK_FULLY.getCode().equals(logisticsPlatform)
                 ||LogisticsPlatformEnum.MERCADOLIBRE_LOCAL.getCode().equals(logisticsPlatform)
-                ||LogisticsPlatformEnum.MERCADOLIBRE.getCode().equals(logisticsPlatform)){
+                ||LogisticsPlatformEnum.MERCADOLIBRE.getCode().equals(logisticsPlatform)
+                ||LogisticsPlatformEnum.WILDBERRIES.getCode().equals(logisticsPlatform)
+                ||LogisticsPlatformEnum.AMZ_MULTI_CHANNEL.getCode().equals(logisticsPlatform)){
             authMap = logisticsAuthService.addShopAuth(authMap, logisticsPlatform);
         }
         BaseResultDTO.AddDTO result = logisticsAuthService.add(dto);
@@ -132,6 +134,7 @@ public class LogisticsAuthController extends BaseController {
                 authMap = logisticsAuthService.addShopAuth(authMap, logisticsPlatform);
             }
             //先进行授权是否成功鉴权
+            authMap.put("id",id);
             ApiResult apiResult = logisticsAuthService.authLogistics(logisticsPlatform,authMap);
             if (apiResult.isSuccess()) {
                 logisticsAuthService.syncUpdateSaleChannel(logisticsPlatform,authMap);

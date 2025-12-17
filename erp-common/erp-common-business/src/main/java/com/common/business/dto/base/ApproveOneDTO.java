@@ -70,6 +70,8 @@ public class ApproveOneDTO extends PermissionsDTO {
         this.comment = comment;
 
     }
+
+
     public ApproveOneDTO (String id,String type,String comment,LocalDate deliveryDate) {
         this.id = id;
         this.type = type;

@@ -59,6 +59,7 @@
         tfmr.total_cost AS totalCost,
         tfmr.reason AS reason,
         tfmr.reconciliation_month AS reconciliationMonth,
+        tfmr.supplier_type AS supplierType,
         COALESCE(tfmrd.actualBillingWeight, 0) AS actualBillingWeight,
         COALESCE(tfmrd.actualWeightUnit, 'kg') AS actualWeightUnit,
         COALESCE(tfmrd.actualBillingWeightUnit, 'kg') AS actualBillingWeightUnit,

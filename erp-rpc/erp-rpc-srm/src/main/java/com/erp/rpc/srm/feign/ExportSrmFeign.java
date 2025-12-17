@@ -11,7 +11,7 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
-@FeignClient(name = "erp-srm", contextId = "exportsrmFeign", configuration = ExportFeignConfig.class)
+@FeignClient(name = "erp-srm", contextId = "exportSrmFeign", configuration = ExportFeignConfig.class)
 public interface ExportSrmFeign {
 
 
@@ -29,4 +29,7 @@ public interface ExportSrmFeign {
     StatementDTO<PoReconciliationDTO.ExportDTO, PoReconciliationDetailDTO.ListDTO> exportPoReconciliationScm(@RequestBody PoReconciliationDTO.PagingParamDTO dto);
     @PostMapping("/feign/export/salesSharing")
     PagingVO<SalesSharingDTO.ListDTO> exportSalesSharing(PagingDTO<SalesSharingDTO.PagingParamDTO> dto);
+
+    @PostMapping("/feign/export/exportAllPoReconciliationDetail")
+    PagingVO<PoReconciliationDTO.ExportDetailDTO> exportAllPoReconciliationDetail(@RequestBody PagingDTO<PoReconciliationDTO.PagingParamDTO> dto);
 }

@@ -6,6 +6,7 @@ import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.common.business.annotation.DistributeLocker;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.enums.ApiError;
@@ -113,7 +114,7 @@ public class SoDeliveryNoticeDetailServiceImpl extends SuperServiceImpl<SoDelive
             soDeliveryNoticeDetailEntity.setSkuId(soDetailEntity.getSkuId());
             soDeliveryNoticeDetailEntity.setSkuNo(soDetailEntity.getSkuNo());
             soDeliveryNoticeDetailEntity.setBomVersion(soDetailEntity.getBomVersion());
-            soDeliveryNoticeDetailEntity.setPlatformSkuNo(soDetailEntity.getPlatformSkuNo());
+            soDeliveryNoticeDetailEntity.setPlatformSkuNo(soDetailEntity.getCustomerSkuNo());
             soDeliveryNoticeDetailEntity.setCustomerPO(soDetailEntity.getCustomerPO());
             soDeliveryNoticeDetailEntity.setToCountry(soDetailEntity.getToCountry());
             soDeliveryNoticeDetailEntity.setDeliveryQty(detailDto.getDeliveryQty());
@@ -199,7 +200,7 @@ public class SoDeliveryNoticeDetailServiceImpl extends SuperServiceImpl<SoDelive
             soDeliveryNoticeDetailEntity.setSkuId(soDetailEntity.getSkuId());
             soDeliveryNoticeDetailEntity.setSkuNo(soDetailEntity.getSkuNo());
             soDeliveryNoticeDetailEntity.setBomVersion(soDetailEntity.getBomVersion());
-            soDeliveryNoticeDetailEntity.setPlatformSkuNo(soDetailEntity.getPlatformSkuNo());
+            soDeliveryNoticeDetailEntity.setPlatformSkuNo(soDetailEntity.getCustomerSkuNo());
             detailDto.setSkuNo(soDetailEntity.getSkuNo());
             soDeliveryNoticeDetailEntity.setDeliveryQty(detailDto.getDeliveryQty());
             soDeliveryNoticeDetailEntity.setIsClose(detailDto.getIsClose());
@@ -240,6 +241,7 @@ public class SoDeliveryNoticeDetailServiceImpl extends SuperServiceImpl<SoDelive
      * @param detailList
      */
     @Override
+    @DistributeLocker(keyName = "detailList.id")
     public void handleVirtualInventory (String id,List<SoDeliveryNoticeDetailEntity> detailList) {
         //发货通知单
         SoDeliveryNoticeEntity soDeliveryNoticeEntity = soDeliveryNoticeService.getById(id);
@@ -491,7 +493,7 @@ public class SoDeliveryNoticeDetailServiceImpl extends SuperServiceImpl<SoDelive
      * @date 2023-05-25 19:25
      */
     @Override
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     public void closeBySoDetailIds(List<String> soDetailIds) {
         if (CollectionUtils.isNotEmpty(soDetailIds)) {

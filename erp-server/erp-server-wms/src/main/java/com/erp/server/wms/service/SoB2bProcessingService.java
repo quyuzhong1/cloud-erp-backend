@@ -3,6 +3,7 @@ package com.erp.server.wms.service;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
+import com.erp.model.wms.dto.ReportProcessingDTO;
 import com.erp.model.wms.dto.SoB2bProcessingDTO;
 import com.erp.model.wms.entity.SoB2bProcessingEntity;
 
@@ -60,4 +61,20 @@ public interface SoB2bProcessingService extends SuperService<SoB2bProcessingEnti
      * @return java.lang.Boolean
      */
     Boolean deleteB2bProcessing(SoB2bProcessingDTO.DeleteDTO dto);
+    /**
+     * b2b合计分页查询
+     * @author will
+     * @date 2025/8/20 14:09
+     * @param dto
+     * @return PagingVO<ListDTO>
+     */
+    PagingVO<ReportProcessingDTO.ListDTO> b2bTotalPaging(PagingDTO<ReportProcessingDTO.PagingParamDTO> dto);
+    /**
+     * b2c汇总导出
+     * @author will
+     * @date 2025/8/21 14:24
+     * @param dto
+     * @return Boolean
+     */
+    Boolean b2bTotalExportExcel(ReportProcessingDTO.PagingParamDTO dto);
 }

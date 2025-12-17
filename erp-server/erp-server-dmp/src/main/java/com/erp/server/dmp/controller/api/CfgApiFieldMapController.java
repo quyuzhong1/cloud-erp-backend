@@ -3,8 +3,11 @@ package com.erp.server.dmp.controller.api;
 import com.common.business.dto.base.BaseSearchDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.dmp.dto.CfgApiFieldMapDTO;
 import com.erp.model.dmp.dto.CfgApiFieldMapValueDTO;
 import com.erp.model.dmp.vo.CfgApiFieldMapVO;
@@ -24,6 +27,7 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("cfgApiFieldMap")
+@LogSystemModule("API授权信息")
 public class CfgApiFieldMapController extends BaseController {
 
     @Resource
@@ -51,6 +55,7 @@ public class CfgApiFieldMapController extends BaseController {
     * @return ApiResult
     */
     @PostMapping("/add")
+    @LogAction(value = LogActionEnum.INSERT, desc = "新增")
     public ApiResult add(@RequestBody @Validated CfgApiFieldMapDTO dto) {
         Boolean flag = this.cfgApiFieldMapService.insert(dto);
         return flag == true ? success() : failure();
@@ -65,6 +70,7 @@ public class CfgApiFieldMapController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/batchAdd")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_INSERT, desc = "批量新增")
     public ApiResult batchAdd(@RequestBody @Validated List<CfgApiFieldMapDTO> list) {
         Boolean flag = this.cfgApiFieldMapService.batchAdd(list);
         return flag == true ? success() : failure();
@@ -79,6 +85,7 @@ public class CfgApiFieldMapController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/update")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "编辑")
     public ApiResult update(@RequestBody @Validated CfgApiFieldMapDTO dto) {
         this.cfgApiFieldMapService.update(dto);
         return success();
@@ -92,6 +99,7 @@ public class CfgApiFieldMapController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/batchDelete")
+    @LogAction(value = LogActionEnum.DELETE, desc = "批量删除")
     public ApiResult batchDelete(@RequestBody @Validated List<String> ids){
         this.cfgApiFieldMapService.batchDelete(ids);
         return success();

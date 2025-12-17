@@ -6,6 +6,7 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.generator.AutoGenerator;
 import com.baomidou.mybatisplus.generator.config.*;
+import com.baomidou.mybatisplus.generator.config.converts.MySqlTypeConvert;
 import com.baomidou.mybatisplus.generator.config.converts.PostgreSqlTypeConvert;
 import com.baomidou.mybatisplus.generator.config.rules.NamingStrategy;
 import com.baomidou.mybatisplus.generator.engine.FreemarkerTemplateEngine;
@@ -17,6 +18,10 @@ import org.apache.commons.io.LineIterator;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.lang.reflect.Field;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.Statement;
 import java.util.*;
 
 /**
@@ -25,6 +30,32 @@ import java.util.*;
  * @since 2023-05-28
  */
 public class Generator {
+
+    public static void main(String[] args) throws Exception{
+        // 需要生成的表名（特别注意：请确保生成多个表时在同一个数据库，如果一次性生成多个，中间有异常不会中断后续生成）
+        // 现设置的是文件不覆盖，即生成时如果已经存在该文件则不会生成导致覆盖，设置成true覆盖，如果需要覆盖请将全局配置fileOverride设置成true
+        PROJECT_PATH = ClassLoader.getSystemResource("").getPath().split("erp-generator")[0];
+        MODEL = scanner("模块名:pg示例:wms,doris示例:ads");
+        AUTHOR = scanner("作者");
+        String tableName = scanner("表名，多个英文逗号分割");
+//        String[] tableNames = {"logistics_channel_constraint"};
+
+        String[] tableNames = tableName.split(",");
+        if(tableNames.length == 1) {
+            tableNames = tableName.split("，");
+        }
+        // 根据不同数据库类型转换参数
+        String dbType = convertDbTypeParams(MODEL);
+
+        generateByTables(tableNames);
+
+        System.out.println("==========================准备处理枚举...================================");
+//        dealEnum(tableNames);
+        if ("postgresql".equalsIgnoreCase(dbType)) {
+            dealDictEnum();
+        }
+        System.out.println("\u001B[32m" + "==========================枚举生成完成！！！==========================" + "\u001B[0m");
+    }
 
     /**
        模块名（需要更改）新加控制台输入，无需改动代码
@@ -38,6 +69,10 @@ public class Generator {
      * 项目路径
      */
     private static String PROJECT_PATH;
+    /**
+     * 数据库类型：默认:postgresql(doris/mysql/postgresql/sqlserver/oracle/db2)（需要更改）新加控制台输入，无需改动代码
+     */
+    private static String DB_TYPE = "postgresql";
     /**
      * 当前环境是否Windows
      */
@@ -75,11 +110,23 @@ public class Generator {
     /**
      * 数据库用户名
      */
-    private static final String DB_USER_NAME = "postgres";
+    private static String DB_USER_NAME = "postgres";
     /**
      * 数据库密码
      */
-    private static final String DB_PASSWORD = "admin@viji";
+    private static String DB_PASSWORD = "admin@viji";
+    /**
+     * 驱动名称:默认postgresql驱动
+     */
+    private static String DB_DRIVER_NAME = "org.postgresql.Driver";
+    /**
+     * 数据库类型转换器:默认postgresql
+     */
+    private static ITypeConvert typeConvert = new PostgreSqlTypeConvert();
+    /**
+     * 子模块路径(如有需要请更改)
+     */
+    private static String subModelPath = "";
 
     public static String scanner(String tip) throws Exception {
         Scanner scanner = new Scanner(System.in);
@@ -94,32 +141,60 @@ public class Generator {
         }
         throw new Exception("请输入正确的" + tip + "！");
     }
-    
-    public static void main(String[] args) throws Exception{
-        // 需要生成的表名（特别注意：请确保生成多个表时在同一个数据库，如果一次性生成多个，中间有异常不会中断后续生成）
-        // 现设置的是文件不覆盖，即生成时如果已经存在该文件则不会生成导致覆盖，设置成true覆盖，如果需要覆盖请将全局配置fileOverride设置成true
-    	PROJECT_PATH = ClassLoader.getSystemResource("").getPath().split("erp-generator")[0];
-    	MODEL = scanner("模块名");
-        AUTHOR = scanner("作者");
-        String tableName = scanner("表名，多个英文逗号分割");
-//        String[] tableNames = {"logistics_channel_constraint"};
 
-        String[] tableNames = tableName.split(",");
-        if(tableNames.length == 1) {
-        	tableNames = tableName.split("，");
+    /**
+     * 根据不同数据库类型转换参数
+     */
+    private static String convertDbTypeParams(String model) {
+        String dbType = "postgresql";
+        String dbName = "";
+        // 兼容doris数据源
+        if ("ods".equalsIgnoreCase(model)
+                || "ads".equalsIgnoreCase(model)
+                || "dws".equalsIgnoreCase(model)
+                || "std".equalsIgnoreCase(model)
+                || "dwd".equalsIgnoreCase(model)
+        ) {
+            MODEL = "dmp";
+            dbType = "doris";
+            subModelPath = "doris";
+            dbName = StrUtil.format( "dmp_{}", model);
+        } else {
+            // 默认pg
+            MODEL = model;
+            dbName = StrUtil.format( "erp-{}", model);
         }
-
-        BASE_PACKAGE_NAME = StrUtil.format("com.erp.server.{}", MODEL);
         BASE_PACKAGE_MODEL_NAME = StrUtil.format("com.erp.model.{}", MODEL);
+        BASE_PACKAGE_NAME = StrUtil.format("com.erp.server.{}", MODEL);
         MODULE_NAME = StrUtil.format("erp-model-{}", MODEL);
         SERVER_NAME = StrUtil.format("erp-server-{}", MODEL);
-        DB_URL = "jdbc:postgresql://172.16.100.60:32590/" + StrUtil.format( "erp-{}", MODEL) + "?useUnicode=true&characterEncoding=utf8&autoReconnect=true&useSSL=false";
+        // 重新赋值路径
 
-        generateByTables(tableNames);
-        
-        System.out.println("==========================准备处理枚举...================================");
-        dealEnum(tableNames);
-        System.out.println("\u001B[32m" + "==========================枚举生成完成！！！==========================" + "\u001B[0m");
+        switch (dbType.toLowerCase()) {
+            case "doris":
+                DB_URL = "jdbc:mysql://172.16.100.12:9030/" + dbName + "?useSSL=false&useUnicode=true&characterEncoding=UTF8";
+                DB_USER_NAME =  "root";
+                DB_PASSWORD = "123456";
+                DB_DRIVER_NAME = "com.mysql.cj.jdbc.Driver";
+                typeConvert = new MySqlTypeConvert();
+                break;
+            case "postgresql":
+                DB_URL = "jdbc:postgresql://172.16.100.60:32590/" + dbName + "?useUnicode=true&characterEncoding=utf8&autoReconnect=true&useSSL=false";
+                DB_USER_NAME =  "postgres";
+                DB_PASSWORD = "admin@viji";
+                DB_DRIVER_NAME = "org.postgresql.Driver";
+                typeConvert = new PostgreSqlTypeConvert();
+                break;
+//            case "sqlserver":
+//                break;
+//            case "mysql":
+//                break;
+//            case "oracle":
+//                break;
+            default:
+                throw new RuntimeException("不支持的数据库类型: " + dbType);
+        }
+        return dbType;
     }
 
     /**
@@ -166,12 +241,21 @@ public class Generator {
 
     @SneakyThrows
     private static PackageConfig packageConfig() {
-        String xmlPath = PROJECT_PATH + "/"  + "erp-server" + "/" + SERVER_NAME + "/src/main/resources/mapper/";
-        String entityPath = PROJECT_PATH.replace("erp-server", "erp-model") + "/" +  BASE_MODEl_PROJECT_NAME + "/" + MODULE_NAME + "/src/main/java/com/erp/model/" + MODEL+"/entity";
+        String xmlPath;
+        String mapperPath;
+        String entityPath;
+        if (StringUtils.isNotEmpty(subModelPath)){
+            xmlPath = PROJECT_PATH + "/"  + "erp-server" + "/" + SERVER_NAME + "/src/main/resources/mapper/" + subModelPath  + "/";
+            mapperPath = PROJECT_PATH + "/"  + "erp-server" + "/" + SERVER_NAME + "/src/main/java/com/erp/server/" + MODEL + "/" + "mapper" + "/" + subModelPath;
+            entityPath = PROJECT_PATH.replace("erp-server", "erp-model") + "/" +  BASE_MODEl_PROJECT_NAME + "/" + MODULE_NAME + "/src/main/java/com/erp/model/" + MODEL + "/entity" + "/"+ subModelPath;
+        } else {
+            xmlPath = PROJECT_PATH + "/"  + "erp-server" + "/" + SERVER_NAME + "/src/main/resources/mapper/";
+            mapperPath = PROJECT_PATH + "/"  + "erp-server" + "/" + SERVER_NAME + "/src/main/java/com/erp/server/" + MODEL + "/" + "mapper";
+            entityPath = PROJECT_PATH.replace("erp-server", "erp-model") + "/" +  BASE_MODEl_PROJECT_NAME + "/" + MODULE_NAME + "/src/main/java/com/erp/model/" + MODEL+"/entity";
+        }
         String controllerPath = PROJECT_PATH + "/"  + "erp-server" + "/" + SERVER_NAME + "/src/main/java/com/erp/server/" + MODEL + "/" + "controller/api";
         String servicePath = PROJECT_PATH + "/"  + "erp-server" + "/" + SERVER_NAME + "/src/main/java/com/erp/server/" + MODEL + "/" + "service";
         String serviceImplPath = PROJECT_PATH + "/"  + "erp-server" + "/" + SERVER_NAME + "/src/main/java/com/erp/server/" + MODEL + "/" + "service" + "/" + "impl";
-        String mapperPath = PROJECT_PATH + "/"  + "erp-server" + "/" + SERVER_NAME + "/src/main/java/com/erp/server/" + MODEL + "/" + "mapper";
         String dtoPath = PROJECT_PATH.replace("erp-server", "erp-model") + "/" +  BASE_MODEl_PROJECT_NAME + "/" + MODULE_NAME + "/src/main/java/com/erp/model/" + MODEL+"/dto";
         if (IS_WINDOWS) {
             xmlPath = xmlPath.replaceAll("/+|\\\\+", "\\\\");
@@ -208,7 +292,13 @@ public class Generator {
         Map<String, String> newPackageInfo = new HashMap<>();
         newPackageInfo.putAll(packageInfo);
         // 替换实体包名
-        newPackageInfo.put(ConstVal.ENTITY, BASE_PACKAGE_MODEL_NAME + "." + "entity" );
+        if (StringUtils.isNotEmpty(subModelPath)){
+            newPackageInfo.put(ConstVal.ENTITY, BASE_PACKAGE_MODEL_NAME + "." + "entity" + "." + subModelPath);
+            newPackageInfo.put(ConstVal.MAPPER, BASE_PACKAGE_NAME + "." + "mapper" + "." + subModelPath);
+        } else {
+            newPackageInfo.put(ConstVal.ENTITY, BASE_PACKAGE_MODEL_NAME + "." + "entity");
+            newPackageInfo.put(ConstVal.MAPPER, BASE_PACKAGE_NAME + "." + "mapper");
+        }
         // 替换控制器包名
         String controllerPackage = packageInfo.get(ConstVal.CONTROLLER);
         newPackageInfo.put(ConstVal.CONTROLLER, controllerPackage + ".api");
@@ -226,9 +316,12 @@ public class Generator {
         dataSourceConfig.setUrl(DB_URL)
                 .setUsername(DB_USER_NAME)
                 .setPassword(DB_PASSWORD)
-                .setDriverName("org.postgresql.Driver")
+                .setDriverName(DB_DRIVER_NAME)
+                .setTypeConvert(typeConvert);
+//                .setDriverName("org.postgresql.Driver")
                 // 类型转换
-                .setTypeConvert(new PostgreSqlTypeConvert());
+                // 类型转换
+//                .setTypeConvert(new PostgreSqlTypeConvert());
         return dataSourceConfig;
 
     }
@@ -424,6 +517,91 @@ public class Generator {
         return name.substring(0, 1).toUpperCase() + name.substring(1, name.length());
     }
     
+    private static void dealDictEnum() throws Exception{
+    	Connection dmpConnection = DriverManager.getConnection("jdbc:postgresql://172.16.100.60:32590/erp-dmp?useUnicode=true&characterEncoding=utf8&autoReconnect=true&useSSL=false", DB_USER_NAME, DB_PASSWORD);
+    	Statement dmpStatement = dmpConnection.createStatement();
+		ResultSet dmpExecuteQuery = dmpStatement.executeQuery("select id,value,remark from cfg_setting where type = 'dict_auto_gen_enum_class' and key = '" + MODEL + "';");
+		String cfgId = "";
+		String dictTableName = "";
+		String lastGenTime = "";
+		if(dmpExecuteQuery.next()) {
+			cfgId = dmpExecuteQuery.getString("id");
+			dictTableName = dmpExecuteQuery.getString("value");
+			lastGenTime = dmpExecuteQuery.getString("remark");
+		}else {
+			System.out.println("========================枚举信息未配置...================================");
+			return;
+		}
+		String now = DateUtil.now();
+		Connection connection = DriverManager.getConnection(DB_URL, DB_USER_NAME, DB_PASSWORD);
+    	Statement statement = connection.createStatement();
+    	ResultSet executeQuery = statement.executeQuery("select type from " + dictTableName + " where update_time > '" + lastGenTime + "' and update_time <= '" + now + "' group by type ;");
+		List<String> typeList = new ArrayList<>();
+    	while(executeQuery.next()) {
+    		typeList.add(executeQuery.getString("type"));
+		}
+    	if(CollUtil.isEmpty(typeList)) {
+    		System.out.println("========================没有需要处理的枚举...================================");
+    		return;
+    	}
+    	for(String type : typeList) {
+    		executeQuery = statement.executeQuery("select value,name,type_name from " + dictTableName + " where type = '" + type + "' and is_deleted = false order by sort;");
+    		EnumDto e = new EnumDto();
+    		e.setClassName(upperCaseFirst(MODEL) + upperCaseFirst(type) + "Enum");
+    		String description = type;
+    		Map<String, String> enumNameMap = new LinkedHashMap<>();
+    		while(executeQuery.next()) {
+    			String type_name = executeQuery.getString("type_name");
+    			if(StringUtils.isNotEmpty(type_name)) {
+    				description = type_name;
+    			}
+    			enumNameMap.put(executeQuery.getString("value"), executeQuery.getString("name"));
+    		}
+    		e.setDescription(description);
+    		e.setEnumNameMap(enumNameMap);
+    		createDictEnum(e);
+    	}
+		dmpStatement.executeUpdate("update cfg_setting set remark = '" + now + "' where id = '" + cfgId + "';");
+    }
+    
+    
+    private static void createDictEnum(EnumDto e) throws Exception{
+    	Map<String, String> enumNameMaps = e.getEnumNameMap();
+    	if(CollUtil.isEmpty(enumNameMaps)) {
+    		return;
+    	}
+		String date = DateUtil.now();
+    	String path = PROJECT_PATH.replace("erp-server", "erp-model") + "/" +  BASE_MODEl_PROJECT_NAME + "/" + MODULE_NAME + "/src/main/java/com/erp/model/" + MODEL+"/";
+		
+		FileOutputStream fs = null;
+
+		File dirFile = new File(path + "enums/");
+		if(!dirFile.exists()) {
+			dirFile.mkdir();
+		}
+		String className = e.getClassName();
+		fs = new FileOutputStream(new File(path + "enums/"+ className + ".java"));
+		LineIterator lineIterator = FileUtils.lineIterator(new File(PROJECT_PATH + "/erp-generator/src/main/resources/templates/Enum.ftl"));
+		fs.write("package com.erp.model.".getBytes());
+		fs.write(MODEL.getBytes());
+		fs.write(".enums".getBytes());
+		fs.write(";".getBytes());
+		String next = "";
+		while (lineIterator.hasNext()) {
+			next = lineIterator.next();
+			fs.write(replaceKeyWord(next , className , e.getDescription(), date).getBytes());
+			fs.write("\n".getBytes());
+			if(next.contains("public enum ${name} implements EnumMessage {")) {
+				for(Map.Entry<String, String> enumNameMap : enumNameMaps.entrySet()) {
+					fs.write(("	" + enumNameMap.getKey().toUpperCase() + "(\"" + enumNameMap.getKey() +"\", \"" + enumNameMap.getValue() +"\"),").getBytes());
+					fs.write("\n".getBytes());
+				}
+			}
+		}
+		fs.close();
+		lineIterator.close();
+    }
+    
     @Data
     static class EnumDto{
     	private String filed;
@@ -431,6 +609,7 @@ public class Generator {
     	private Map<String, String> enumNameMap;
     	private String className;
     	private String filedCode;
+    	private String description;
     	
     	public static EnumDto getEnumDto(String line) {
     		if(org.apache.commons.lang.StringUtils.isBlank(line)) {

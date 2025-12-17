@@ -11,6 +11,7 @@ import com.erp.model.sys.dto.SysCommonDTO;
 import com.erp.rpc.file.feign.FileFeign;
 import com.google.common.collect.Maps;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -44,7 +45,7 @@ public class CommonController extends BaseController {
      * @Date 2022/10/9 17:35
      **/
     @LogAction(value = LogActionEnum.UPLOAD, desc = "上传图片:文件名={name}")
-    @PostMapping("/upload")
+    @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ApiResult upload(@RequestParam("multipartFile") MultipartFile[] multipartFile, HttpServletRequest request) {
         List<String> list = new ArrayList<>();
         for (MultipartFile file : multipartFile) {
@@ -108,7 +109,7 @@ public class CommonController extends BaseController {
      * @author: tanmujin
      */
     @LogAction(value = LogActionEnum.UPLOAD, desc = "上传图片:文件名={name}")
-    @PostMapping("/uploadBatch")
+    @PostMapping(value = "/uploadBatch", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ApiResult<List<SysCommonDTO.AttachmentDTO>> uploadBatch(@RequestParam("multipartFile") MultipartFile[] multipartFile, HttpServletRequest request) {
         List<SysCommonDTO.AttachmentDTO> list = new ArrayList<>();
         for (MultipartFile file : multipartFile) {

@@ -21,6 +21,10 @@ import java.util.List;
 @NoArgsConstructor
 @ToString
 public class PlatformInventoryDTO extends UniqueDto {
+    /**
+     * 授权id
+     */
+    private String authId;
 
     /**
      * 仓库平台类型
@@ -38,6 +42,10 @@ public class PlatformInventoryDTO extends UniqueDto {
      * 第三方仓对应erp表主键id
      */
     private String providerErpId;
+
+
+    //三方条码
+    private String thirdBarcode;
 
     //SKU
     private String productSku;
@@ -119,6 +127,11 @@ public class PlatformInventoryDTO extends UniqueDto {
          * 拉取日期
          */
         private LocalDate pullDate;
+
+        /**
+         * 库龄
+         */
+        private Integer inventoryAge;
     }
 
 }

@@ -50,4 +50,6 @@ public interface FbaInventoryMapper extends BaseMapper<FbaInventoryEntity> {
      * @return com.erp.model.wms.dto.FbaInventoryDTO.SummaryNumber
      **/
     FbaInventoryDTO.SummaryNumber summaryNumber(@Param("params") FbaInventoryDTO.PagingParamDTO params);
+
+    List<FbaInventoryDTO.InventoryDTO> listFbaInventory(@Param("params") FbaInventoryDTO.QueryDTO queryDTO);
 }

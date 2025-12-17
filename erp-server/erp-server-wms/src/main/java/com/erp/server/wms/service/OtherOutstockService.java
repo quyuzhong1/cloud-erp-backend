@@ -12,6 +12,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
+import com.common.business.dto.base.BaseIdDTO;
 
 /**
  * <p>
@@ -102,6 +103,16 @@ public interface OtherOutstockService extends SuperService<OtherOutstockEntity> 
      * @return Boolean
      */
     Boolean delete(List<String> ids);
+
+    /**
+     * @description: 原子批量删除其他出库单
+     * @author Will
+     * @date: 2023/5/17 15:15
+     * @param ids
+     * @param returnDetails
+     * @return List<BatchResultDTO>
+     */
+    List<BatchResultDTO> deleteByIds(List<String> ids, boolean returnDetails);
     /**
      * @description: 作废
      * @author Will
@@ -234,4 +245,13 @@ public interface OtherOutstockService extends SuperService<OtherOutstockEntity> 
     List<OtherOutstockEntity> listByCodes(List<String> list);
 
     void updateApproveStatus(OtherOutstockDTO.UpdateApprovalStatusDTO updateApprovalStatusDTO);
+
+    /**
+     * 查看关联出库单
+     * @author Will
+     * @date: 2024/12/19 10:16
+     * @param dto
+     * @return List<ListDTO>
+     */
+    List<OtherOutstockDTO.ListDTO> viewAssociatedDocuments(BaseIdDTO dto);
 }

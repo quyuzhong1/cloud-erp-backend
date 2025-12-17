@@ -12,7 +12,7 @@ import com.erp.model.plm.dto.ProductPackShowDTO;
 import com.erp.model.plm.entity.BasicDictEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.ProductPackEntity;
-import com.erp.model.plm.entity.SysLogEntity;
+import com.erp.model.plm.entity.OperateLogEntity;
 import com.erp.model.plm.enums.BasicDictTypeEnum;
 import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.vo.ProductVO;
@@ -47,7 +47,7 @@ public class ProductPackServiceImpl extends ServiceImpl<ProductPackMapper, Produ
     private BasicDictService basicDictService;
 
     @Resource
-    private SysLogService sysLogService;
+    private OperateLogService operateLogService;
 
     @Resource
     private BomSkuService bomSkuService;
@@ -307,7 +307,7 @@ public class ProductPackServiceImpl extends ServiceImpl<ProductPackMapper, Produ
 
         String logContent = logContentBuilder.toString();
 
-        sysLogService.addSysLogByOther(new SysLogEntity().setClassPath(String.valueOf(ProductDetailEntity.class))
+        operateLogService.addSysLogByOther(new OperateLogEntity().setClassPath(String.valueOf(ProductDetailEntity.class))
                 .setBusinessId(productPackDTO.getSkuId()).setOperation("QC质检").setContent(logContent));
     }
 

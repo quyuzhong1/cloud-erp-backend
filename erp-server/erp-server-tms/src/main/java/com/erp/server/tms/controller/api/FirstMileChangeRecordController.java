@@ -99,6 +99,7 @@ public class FirstMileChangeRecordController extends BaseController {
      * @date 2024-8-15 10:54
      */
     @PostMapping("/exportExcel")
+    @LogAction(value = LogActionEnum.EXPORT, desc = "头程调整记录导出")
     @WebAdvanceQuery(handler = FirstMileCostAllocationQueryHandler.class)
     public ApiResult<Boolean> exportExcel(@RequestBody @Valid FirstMileChangeRecordDTO.PagingParamDTO dto) {
         firstMileChangeRecordService.exportList(dto);

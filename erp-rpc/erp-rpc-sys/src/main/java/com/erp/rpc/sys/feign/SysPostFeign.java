@@ -1,5 +1,6 @@
 package com.erp.rpc.sys.feign;
 
+import com.common.business.config.FeignErrorDecoder;
 import com.erp.model.sys.entity.SysPostEntity;
 import com.erp.model.sys.entity.SysPostUserEntity;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -10,7 +11,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 
-@FeignClient(name = "erp-sys", contextId = "post")
+@FeignClient(name = "erp-sys", contextId = "sysPostFeign",configuration = {FeignErrorDecoder.class})
 public interface SysPostFeign {
 
     /**

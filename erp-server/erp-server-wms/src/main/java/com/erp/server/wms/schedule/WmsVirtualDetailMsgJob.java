@@ -1,5 +1,9 @@
 package com.erp.server.wms.schedule;
 
+import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
+import com.erp.server.wms.service.VirtualInventoryAgeService;
 import com.erp.server.wms.service.VirtualInventoryDetailHisService;
 import com.erp.server.wms.service.WmsVirtualDetailMsgService;
 import com.xxl.job.core.biz.model.ReturnT;
@@ -10,6 +14,9 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 /**
  * 虚拟仓任务
@@ -25,6 +32,11 @@ public class WmsVirtualDetailMsgJob {
 
     @Resource
     private VirtualInventoryDetailHisService virtualInventoryDetailHisService;
+
+
+    @Resource
+    private VirtualInventoryAgeService virtualInventoryAgeService;
+
     /**
      * 虚拟仓明细任务
      * @author will
@@ -53,10 +65,39 @@ public class WmsVirtualDetailMsgJob {
         XxlJobHelper.log("=====自动执行生成虚拟仓流水结余 开始任务=====");
         long start = System.currentTimeMillis();
         String jobParam = XxlJobHelper.getJobParam();
-        virtualInventoryDetailHisService.hisVirtualInventoryJob(jobParam);
+        String virtualInventoryId = "";
+        LocalDateTime date = null;
+        if (CharSequenceUtil.isNotBlank(jobParam)) {
+            JSONObject jsonParam = JSONUtil.parseObj(jobParam);
+            virtualInventoryId = jsonParam.getStr("virtualInventoryId");
+            date = jsonParam.getLocalDateTime("date",LocalDateTime.now());
+        }
+        virtualInventoryDetailHisService.hisVirtualInventoryJob(virtualInventoryId,date.toLocalDate());
         long end = System.currentTimeMillis();
         XxlJobHelper.log("主线程花费时间：{}", (end - start));
         XxlJobHelper.log("=====自动执行生成虚拟仓流水结余 结束任务=====");
+        return ReturnT.SUCCESS;
+    }
+
+    /**
+     * 生成虚拟仓分析数据
+     * @author will
+     * @date 2025/8/19 16:22
+     * @return ReturnT<String>
+     */
+    @XxlJob("virtualInventoryAgeJob")
+    public ReturnT<String> virtualInventoryAgeJob() {
+        XxlJobHelper.log("=====自动执行生成虚拟仓库龄分析数据 开始任务=====");
+        long start = System.currentTimeMillis();
+        String jobParam = XxlJobHelper.getJobParam();
+        LocalDate date = LocalDate.now().minusDays(1L);
+        if (CharSequenceUtil.isNotBlank(jobParam)) {
+            date = LocalDate.parse(jobParam, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+        }
+        virtualInventoryAgeService.generateVirtualInventoryAge(date);
+        long end = System.currentTimeMillis();
+        XxlJobHelper.log("主线程花费时间：{}", (end - start));
+        XxlJobHelper.log("=====自动执行生成虚拟仓库龄分析数据 结束任务=====");
         return ReturnT.SUCCESS;
     }
 }

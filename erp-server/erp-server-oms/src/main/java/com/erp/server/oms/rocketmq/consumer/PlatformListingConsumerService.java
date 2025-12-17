@@ -7,9 +7,9 @@ import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.DmpSyncTaskIdDTO;
 import com.common.business.dto.PlatformProductDTO;
 import com.common.business.enums.*;
-import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapper;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.handler.AbstractPlatformConsumerHandler;
 import com.common.message.service.mq.MQProducerService;
@@ -20,15 +20,12 @@ import com.erp.model.msg.enums.WarnMsgTypeEnum;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.entity.ListingInfoEntity;
-import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SkuMappingEntity;
-import com.erp.model.oms.entity.SoMultiChannelDetailEntity;
 import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.wms.entity.FbaInventoryEntity;
 import com.erp.rpc.dmp.feign.DmpMongoDbFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
-import com.erp.rpc.wms.feign.WmsFbaInventoryFeign;
+import com.erp.rpc.file.feign.FileFeign;
 import com.erp.server.oms.convert.OmsListingConverter;
 import com.erp.server.oms.service.ListingInfoService;
 import com.erp.server.oms.service.OperateLogService;
@@ -77,7 +74,8 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
 
     @Resource
     private ShopInfoService shopInfoService;
-
+    @Resource
+    private FileFeign fileFeign;
 
     @Override
     public void updateSyncTaskStatus(DmpSyncMqDTO.ParamDTO paramDTO) {
@@ -107,13 +105,13 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
                 dto.setPlatformSkuNo("");
             }
             ListingInfoEntity oldEntity = null;
-            if (OmsPlatformEnum.getByCode(dto.getPlatform()) != null) {
-                oldEntity = listingInfoService.getByPlatformSkuNo(dto.getPlatform(), dto.getPlatformSkuNo(), dto.getAuthId());
+            if (OmsPlatformEnum.getByCode(dto.getPlatform()) != null || PlatformDictEnum.DHT.getCode().equals(dto.getPlatform())) {
+                oldEntity = listingInfoService.getByPlatformSkuNo(dto.getPlatform(), dto.getPlatformSkuNo(), StrUtil.blankToDefault(dto.getAuthId(),""));
             } else {
                 ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
                 paramDTO.setPlatform(dto.getPlatform());
                 paramDTO.setShopIdList(Collections.singletonList(dto.getShopId()));
-                paramDTO.setType(RuleTypeEnum.PLATFORM.getCode());
+                paramDTO.setType(RuleTypeEnum.B2C_PLATFORM.getCode());
                 paramDTO.setPlatformSkuNoList(Collections.singletonList(dto.getPlatformSkuNo()));
                 // 速卖通同店铺存在相同SkuNo需要配合平台产ID/SPU查询
                 if (PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(dto.getPlatform()) ||
@@ -121,7 +119,8 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
                         PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode().equalsIgnoreCase(dto.getPlatform()) ||
                         PlatformDictEnum.SHOPIFY.getCode().equalsIgnoreCase(dto.getPlatform()) ||
                         PlatformDictEnum.TE_MU.getCode().equalsIgnoreCase(dto.getPlatform()) ||
-                        PlatformDictEnum.TIK_TOK.getCode().equalsIgnoreCase(dto.getPlatform())
+                        PlatformDictEnum.TIK_TOK.getCode().equalsIgnoreCase(dto.getPlatform())||
+                        PlatformDictEnum.WILDBERRIES.getCode().equalsIgnoreCase(dto.getPlatform())
                 ){
                     paramDTO.setPlatformSpuNoList(Collections.singletonList(dto.getPlatformProductNo()));
                     paramDTO.setPlatformSkuIdList(StringUtils.isNotBlank(dto.getPlatformSkuId()) ? Collections.singletonList(dto.getPlatformSkuId()) : null);
@@ -140,6 +139,11 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
             }
             ListingInfoEntity entity = OmsListingConverter.INSTANCE.listingDtoToEntity(dto);
 
+            //上传图片到文件服务器
+            if (PlatformDictEnum.DHT.getCode().equals(dto.getPlatform()) && StringUtils.isNotBlank(entity.getProductImageUrl())) {
+                entity.setProductImageUrl(entity.getProductImageUrl());
+            }
+
             if (null == oldEntity) {
                 if (!listingInfoService.save(entity)) {
                     throw new ServiceException("【listing消费】Listing 产品保存失败");
@@ -149,11 +153,18 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
                 if (OmsPlatformEnum.getByCode(dto.getPlatform()) != null) {
                     skuMappingEntity.setHasMappingAll(true);
                 }
+                //订货通设置b2b平台
+                if (PlatformDictEnum.DHT.getCode().equals(dto.getPlatform())) {
+                    skuMappingEntity.setType(RuleTypeEnum.B2B_PLATFORM);
+                }
                 if (!skuMappingService.save(skuMappingEntity)) {
                     throw new ServiceException("【listing消费】SkuMapping保存失败");
                 }
                 String msg =  CharSequenceUtil.format("拉取第三方产品新增【{}】，平台sku为【{}】", "平台sku表",entity.getPlatformSkuNo());
                 operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LISTING_INFO.getCode(), entity.getId(), "新增操作");
+
+                //若父平台skuid 不为空则更新对应的父平台sku的标识为true
+                updatePlateformParentSku(entity.getPlatformParentSpuNo());
             } else {
                 // 是否修改
                 if (!oldEntity.toString().equals(entity.toString())) {
@@ -185,6 +196,12 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
                     if (StringUtils.isNotBlank(entity.getThirdBarcode())) {
                         oldEntity.setThirdBarcode(entity.getThirdBarcode());
                     }
+                    if (StringUtils.isNotBlank(entity.getPlatformParentSpuNo())) {
+                        oldEntity.setPlatformParentSpuNo(entity.getPlatformParentSpuNo());
+                    }
+                    if (StringUtils.isNotBlank(entity.getPlatformStatus())) {
+                        oldEntity.setPlatformStatus(entity.getPlatformStatus());
+                    }
                     oldEntity.setPlatformUpdateTime(entity.getPlatformUpdateTime());
                     listingInfoService.updateById(oldEntity);
 //                    if (!listingInfoService.updateById(oldEntity)) {
@@ -193,11 +210,37 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
                     //记录更新日志
                     String msg =  CharSequenceUtil.format("拉取第三方产品更新【{}】 ", "平台sku表");
                     operateLogService.addModuleOperateLogByObj(oldLogInfo, oldEntity, ModuleTypeEnum.LISTING_INFO.getCode(), oldEntity.getId(), msg);
+                    //若父平台skuid 不为空则更新对应的父平台sku的标识为true
+                    updatePlateformParentSku(entity.getPlatformParentSpuNo());
                 }
-
             }
         return ApiResult.success();
     }
+
+    //若父平台skuid 不为空则更新对应的父平台sku的标识为true
+    private void updatePlateformParentSku(String platformParentSpuNo) {
+        if(StringUtils.isNotBlank(platformParentSpuNo)){
+            ListingInfoEntity parentListingInfoEntity = listingInfoService.lambdaQuery()
+                    .eq(ListingInfoEntity::getPlatformSpuNo, platformParentSpuNo)
+                    .eq(ListingInfoEntity::getIsParent, Boolean.FALSE)
+                    .last("limit 1")
+                    .one();
+            if(Objects.nonNull(parentListingInfoEntity)){
+                listingInfoService.lambdaUpdate()
+                        .eq(ListingInfoEntity::getId, parentListingInfoEntity.getId())
+                        .set(ListingInfoEntity::getIsParent, Boolean.TRUE)
+                        .update();
+
+                ListingInfoEntity newPlatformParentSku =new ListingInfoEntity();
+                BeanMapper.copy(parentListingInfoEntity, newPlatformParentSku);
+                newPlatformParentSku.setIsParent(Boolean.TRUE);
+                //记录更新日志
+                String msg =  CharSequenceUtil.format("拉取第三方产品更新【{}】 ", "平台sku表");
+                operateLogService.addModuleOperateLogByObj(parentListingInfoEntity, newPlatformParentSku, ModuleTypeEnum.LISTING_INFO.getCode(), parentListingInfoEntity.getId(), msg);
+            }
+        }
+    }
+
     @Override
     public void updateMongodbData(String platform,String uniqueId, Integer isClean){
         if (StringUtils.isEmpty(uniqueId) || StringUtils.isEmpty(platform) || Objects.isNull(isClean)){

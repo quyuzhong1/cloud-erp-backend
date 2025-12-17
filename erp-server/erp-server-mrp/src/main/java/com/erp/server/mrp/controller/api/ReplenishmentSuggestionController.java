@@ -771,6 +771,7 @@ public class ReplenishmentSuggestionController extends BaseController {
      * @param exportSalesDTO 导出
      */
     @PostMapping("/exportSales")
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出销量预测")
     public void exportSales(@RequestBody ReplenishmentSuggestionDTO.ExportSalesDTO exportSalesDTO, HttpServletResponse response) {
         replenishmentSuggestionService.exportSales(exportSalesDTO, response);
     }

@@ -1,14 +1,18 @@
 package com.erp.server.oms.controller.api;
 
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.validator.ValidList;
 import com.common.core.anno.LogAction;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
+import com.erp.model.oms.dto.SoB2cReceiverDTO;
 import com.erp.server.oms.service.SoB2cReceiverService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -18,6 +22,8 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 
 
 /**
@@ -77,4 +83,23 @@ public class SoB2cReceiverController extends BaseController {
         }
     }
 
+    /**
+     * 批量更新发票地址
+     * @param addressDTOList
+     * @return
+     */
+    @PostMapping("/updateInvoiceAddress")
+    public ApiResult<List<BatchResultDTO>>  updateInvoiceAddress(@RequestBody @Validated ValidList<SoB2cReceiverDTO.AddressDTO> addressDTOList){
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(addressDTOList.size());
+        for (SoB2cReceiverDTO.AddressDTO addressDTO : addressDTOList){
+            try {
+                soB2cReceiverService.updateInvoiceAddress(addressDTO.getSoId(), addressDTO.getInvoiceAddress());
+                resultDTOS.add(BatchResultDTO.success(addressDTO.getSoId(), addressDTO.getSoCode(), "修改发票地址成功"));
+            }catch (Exception e){
+                log.error("修改发票地址异:"+ e);
+                resultDTOS.add(BatchResultDTO.fail(addressDTO.getSoId(), addressDTO.getSoCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
 }

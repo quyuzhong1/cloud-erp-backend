@@ -57,7 +57,7 @@ public class TransferInfoController extends BaseController {
      */
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "warehouse_keeper_id",
+            tableField = "warehouse_keeper_id,create_user_id",
             warehouseTableField = "tid.in_warehouse_id,tid.out_warehouse_id",
             menuCode = "wms:transferInfo:paging",
             tableAlias = "ti"
@@ -77,7 +77,7 @@ public class TransferInfoController extends BaseController {
      */
     @PostMapping("/listCount")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "warehouse_keeper_id",
+            tableField = "warehouse_keeper_id,create_user_id",
             warehouseTableField = "tid.in_warehouse_id,tid.out_warehouse_id",
             menuCode = "wms:transferInfo:paging",
             tableAlias = "ti"
@@ -97,7 +97,7 @@ public class TransferInfoController extends BaseController {
     @LogAction(value = LogActionEnum.INSERT, desc = "新增直接调拨单")
     @PostMapping("/add")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "warehouse_keeper_id",
+            tableField = "warehouse_keeper_id,create_user_id",
             menuCode = "wms:transferInfo:add",
             serviceClass = TransferInfoService.class,
             keyIdName = "id")
@@ -116,7 +116,7 @@ public class TransferInfoController extends BaseController {
     @LogAction(value = LogActionEnum.ADD_AND_SUBMIT, desc = "新增并提交直接调拨单")
     @PostMapping("/addAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "warehouse_keeper_id",
+            tableField = "warehouse_keeper_id,create_user_id",
             menuCode = "wms:transferInfo:add",
             serviceClass = TransferInfoService.class,
             keyIdName = "id")
@@ -161,7 +161,7 @@ public class TransferInfoController extends BaseController {
     @LogAction(value = LogActionEnum.UPDATE, desc = "修改直接调拨单")
     @PostMapping("/update")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "warehouse_keeper_id",
+            tableField = "warehouse_keeper_id,create_user_id",
             menuCode = "wms:transferInfo:update",
             serviceClass = TransferInfoService.class,
             keyIdName = "id")
@@ -180,7 +180,7 @@ public class TransferInfoController extends BaseController {
     @LogAction(value = LogActionEnum.UPDATE_AND_SUBMIT, desc = "修改并提交直接调拨单")
     @PostMapping("/updateAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "warehouse_keeper_id",
+            tableField = "warehouse_keeper_id,create_user_id",
             menuCode = "wms:transferInfo:update",
             serviceClass = TransferInfoService.class,
             keyIdName = "id")
@@ -222,7 +222,7 @@ public class TransferInfoController extends BaseController {
     @LogAction(value = LogActionEnum.SUBMIT, desc = "提交直接调拨单")
     @PostMapping("/submit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "warehouse_keeper_id",
+            tableField = "warehouse_keeper_id,create_user_id",
             menuCode = "wms:transferInfo:submit",
             serviceClass = TransferInfoService.class,
             keyIdName = "ids")
@@ -255,7 +255,7 @@ public class TransferInfoController extends BaseController {
     @LogViewService
     @GetMapping("/view")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "warehouse_keeper_id",
+            tableField = "warehouse_keeper_id,create_user_id",
             menuCode = "wms:transferInfo:view",
             serviceClass = TransferInfoService.class,
             keyIdName = "id")
@@ -272,16 +272,16 @@ public class TransferInfoController extends BaseController {
      * @param dto
      * @return ApiResult
      */
-    @LogAction(value = LogActionEnum.DELETE, desc = "删除直接调拨单")
+    @LogAction(value = LogActionEnum.DELETE, desc = "批量删除记录")
     @PostMapping("/delete")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "warehouse_keeper_id",
+            tableField = "warehouse_keeper_id,create_user_id",
             menuCode = "wms:transferInfo:delete",
             serviceClass = TransferInfoService.class,
             keyIdName = "ids")
-    public ApiResult delete(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
-        Boolean flag = transferInfoService.delete(dto.getIds());
-        return flag == true ? success() : failure();
+    public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
+            List<BatchResultDTO> resultDTOList = transferInfoService.delete(dto.getIds(), true);
+            return resultDTOList.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOList) : failure(resultDTOList);
     }
 
     /**
@@ -294,7 +294,7 @@ public class TransferInfoController extends BaseController {
     @LogAction(value = LogActionEnum.INVALID, desc = "作废直接调拨单")
     @PostMapping("/invalid")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "warehouse_keeper_id",
+            tableField = "warehouse_keeper_id,create_user_id",
             menuCode = "wms:transferInfo:invalid",
             serviceClass = TransferInfoService.class,
             keyIdName = "ids")
@@ -313,7 +313,7 @@ public class TransferInfoController extends BaseController {
     @LogAction(value = LogActionEnum.APPROVE, desc = "审核直接调拨单")
     @PostMapping("/approve")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "warehouse_keeper_id",
+            tableField = "warehouse_keeper_id,create_user_id",
             menuCode = "wms:transferInfo:approve",
             serviceClass = TransferInfoService.class,
             keyIdName = "ids")
@@ -346,7 +346,7 @@ public class TransferInfoController extends BaseController {
     @LogAction(value = LogActionEnum.DISAPPROVE, desc = "反审核直接调拨单")
     @PostMapping("/disApprove")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "warehouse_keeper_id",
+            tableField = "warehouse_keeper_id,create_user_id",
             menuCode = "wms:transferInfo:disApprove",
             serviceClass = TransferInfoService.class,
             keyIdName = "ids")
@@ -379,7 +379,7 @@ public class TransferInfoController extends BaseController {
     @LogAction(value = LogActionEnum.CANCEL, desc = "撤销直接调拨单")
     @PostMapping("/cancelProcess")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "warehouse_keeper_id",
+            tableField = "warehouse_keeper_id,create_user_id",
             menuCode = "wms:transferInfo:cancelProcess",
             serviceClass = TransferInfoService.class,
             keyIdName = "ids")

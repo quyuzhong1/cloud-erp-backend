@@ -30,7 +30,7 @@ import java.util.Optional;
 @Service
 public class PilotApplicationDetailServiceImpl extends SuperServiceImpl<PilotApplicationDetailMapper, PilotApplicationDetailEntity> implements PilotApplicationDetailService {
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(PilotApplicationDetailDTO.AddDTO addDTO) {

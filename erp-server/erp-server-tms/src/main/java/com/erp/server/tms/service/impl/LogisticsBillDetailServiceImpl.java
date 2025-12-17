@@ -84,8 +84,16 @@ public class LogisticsBillDetailServiceImpl extends SuperServiceImpl<LogisticsBi
         //批量新增
         this.saveBatch(list);
         if (isGenerateCost) {
-            //新增物流费用单
-            logisticsBillService.addLogisticsBillCost(billEntity, list);
+            //自动生成功能系统标识
+            Boolean originalValue = UserContext.getIsUserSystem();
+            UserContext.setIsUserSystem(Boolean.TRUE);
+            try {
+                //新增物流费用单
+                logisticsBillService.addLogisticsBillCost(billEntity, list);
+            }finally {
+                //恢复系统标识
+                UserContext.setIsUserSystem(originalValue);
+            }
         }
         return Boolean.TRUE;
     }
@@ -214,8 +222,15 @@ public class LogisticsBillDetailServiceImpl extends SuperServiceImpl<LogisticsBi
             this.saveBatch(billDetailList);
             for (LogisticsBillDetailEntity entity : billDetailList) {
                 LogisticsBillEntity logisticsBillEntity = billList.stream().filter(obj -> CharSequenceUtil.equals(entity.getMainId(), obj.getId())).findFirst().orElse(null);
-                //新增物流费用单
-                logisticsBillService.addLogisticsBillCost(logisticsBillEntity,Arrays.asList(entity));
+                Boolean originalValue = UserContext.getIsUserSystem();
+                UserContext.setIsUserSystem(Boolean.TRUE);
+                try {
+                    //新增物流费用单
+                    logisticsBillService.addLogisticsBillCost(logisticsBillEntity,Arrays.asList(entity));
+                }finally {
+                    //恢复系统标识
+                    UserContext.setIsUserSystem(originalValue);
+                }
             }
         }
         return Boolean.FALSE;
@@ -368,5 +383,22 @@ public class LogisticsBillDetailServiceImpl extends SuperServiceImpl<LogisticsBi
         }
         this.lambdaUpdate().set(LogisticsBillDetailEntity::getTrackEnable, Boolean.FALSE)
                .in(LogisticsBillDetailEntity::getId, detailIds).update();
+    }
+
+    @Override
+    public void updateRegisterParams(List<LogisticsTrackDTO.UpdateTrackDTO> refList) {
+        if (CollUtil.isEmpty(refList)){
+            return;
+        }
+        refList.forEach(e -> this.lambdaUpdate()
+                .set(LogisticsBillDetailEntity::getRegisterMobile, CharSequenceUtil.isNotBlank(e.getTelNumber()) ? e.getTelNumber() : "")
+                .set(LogisticsBillDetailEntity::getThirdRefId, CharSequenceUtil.isNotBlank(e.getThirdRefId()) ? e.getThirdRefId() : "")
+                .set(LogisticsBillDetailEntity::getUpdateTime, LocalDateTime.now())
+                .eq(LogisticsBillDetailEntity::getId, e.getId()).update());
+    }
+
+    @Override
+    public Integer countByThirdRefId(String id) {
+        return this.lambdaQuery().eq(LogisticsBillDetailEntity::getThirdRefId, id).count();
     }
 }

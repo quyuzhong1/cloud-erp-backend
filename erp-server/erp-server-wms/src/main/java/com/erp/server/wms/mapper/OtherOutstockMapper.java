@@ -9,6 +9,7 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
+import com.common.business.dto.base.BaseIdDTO;
 
 /**
  * <p>
@@ -57,6 +58,14 @@ public interface OtherOutstockMapper extends BaseMapper<OtherOutstockEntity> {
      * @param params
      * @return com.baomidou.mybatisplus.core.metadata.IPage<com.erp.model.wms.dto.OtherOutstockDTO.PdaListDTO>
      **/
-    IPage<OtherOutstockDTO.PdaListDTO> pdaPaging(Page query, @Param("params") OtherOutstockDTO.PdaSearchParamDTO params);
+    IPage<OtherOutstockDTO.PdaListDTO> pdaPaging(Page query,@Param("params") OtherOutstockDTO.PdaSearchParamDTO params);
 
+    /**
+     * 查看关联出库单
+     * @author Will
+     * @date: 2024/12/19 10:16
+     * @param dto
+     * @return List<ListDTO>
+     */
+    List<OtherOutstockDTO.ListDTO> viewAssociatedDocuments(@Param("params") BaseIdDTO dto);
 }

@@ -39,6 +39,8 @@
         cis.company_name as cfgInvoiceSettingCompanyName,
         cis.id as cfgInvoiceSettingId,
         cii.no,
+        cii.start_invoice_no,
+        cii.end_invoice_no,
         cii.deactivate_invoice_no,
         cii.reason,
         cii.update_time AS updateTime,

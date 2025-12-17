@@ -1,5 +1,6 @@
 package com.erp.rpc.scm.feign;
 
+import com.common.business.config.FeignErrorDecoder;
 import com.erp.model.scm.dto.PurchaseApplicationDetailDTO;
 import com.erp.model.scm.entity.PurchaseApplicationDetailEntity;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -13,7 +14,7 @@ import java.util.List;
  * @date 2024-09-10
  * @author tanmujin
  */
-@FeignClient(name = "erp-scm", contextId = "purchaseApplicationDetailFeign")
+@FeignClient(name = "erp-scm", contextId = "purchaseApplicationDetailFeign",configuration = {FeignErrorDecoder.class})
 public interface PurchaseApplicationDetailFeign {
 
     /**

@@ -143,7 +143,7 @@ public class BiModuleController extends BaseController {
      * @param dtoList
      * @return ApiResult<List<BatchResultDTO>>
      */
-    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "模板批量设置权限:id={id}, 分享标示={shareFlag},分享的身份id列表={shareFlagIdList}")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "模板批量设置权限:id={id}, 分享标示={shareFlag},分享的身份id列表={shareFlagIdList}")
     @PostMapping("/batchShare")
     public ApiResult<List<BatchResultDTO>> batchShare(@RequestBody @Validated List<BiBatchShareDTO> dtoList) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dtoList.size());

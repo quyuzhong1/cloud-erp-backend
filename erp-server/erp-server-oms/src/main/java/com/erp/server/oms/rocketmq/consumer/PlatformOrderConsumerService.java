@@ -24,6 +24,7 @@ import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -44,8 +45,6 @@ public class PlatformOrderConsumerService<T extends DmpSyncTaskIdDTO> extends Ab
     private DmpMongoDbFeign dmpMongoDbFeign;
     @Resource
     private PlatformOrderConsumerHandleService platformOrderConsumerHandleService;
-    @Resource
-    private PlatformSoMultiChannelConsumerService platformSoMultiChannelConsumerService;
 
 
     @Override
@@ -66,11 +65,6 @@ public class PlatformOrderConsumerService<T extends DmpSyncTaskIdDTO> extends Ab
     public ApiResult<?> handle(Object ext) {
         log.info("[B2C订单消费] 消费:dto={}", JSONUtil.toJsonStr(ext));
         PlatformOrderDTO dto = JSONUtil.toBean(ext.toString(), PlatformOrderDTO.class);
-        // 多渠道订单处理(兼容清洗)
-        if (SourceTypeEnum.SO_MULTI_CHANNEL.getCode().equalsIgnoreCase(dto.getSourceType())){
-            platformSoMultiChannelConsumerService.handle(ext);
-            return ApiResult.success();
-        }
         //TIKTOK判断是否拆单或取消拆单，需要作废原单并且根据包裹号重新生成订单
         if(PlatformDictEnum.TIK_TOK.getCode().equalsIgnoreCase(dto.getDictPlatform())){
             Boolean continueFlag = platformOrderConsumerHandleService.tiktokSplit(dto);
@@ -78,6 +72,12 @@ public class PlatformOrderConsumerService<T extends DmpSyncTaskIdDTO> extends Ab
             platformOrderConsumerHandleService.updateTikTokDetail(dto);
             if(continueFlag){
                 platformOrderConsumerHandleService.handleAll(dto);
+            }
+        }//之前美客多是子单号当成平台订单号，一个子单号对应一张订单，现在调整为母单号当做平台订单号一个订单对应多个子单号，判断，如果ERP已存在之前清洗的子单号的订单，则按照子单号更新
+        else if(PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode().equalsIgnoreCase(dto.getDictPlatform())){
+            List<PlatformOrderDTO> dtoList = platformOrderConsumerHandleService.handleMercadolibre(dto);
+            for (PlatformOrderDTO orderDTO : dtoList) {
+                platformOrderConsumerHandleService.handleAll(orderDTO);
             }
         }else{
             platformOrderConsumerHandleService.handleAll(dto);

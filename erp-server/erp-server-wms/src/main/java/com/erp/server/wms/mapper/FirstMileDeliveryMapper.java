@@ -127,4 +127,6 @@ public interface FirstMileDeliveryMapper extends BaseMapper<FirstMileDeliveryEnt
     List<FirstMileDeliveryDTO.BusinessDTO> getDeliveryCodeByBusinessCodes(@Param("businessCodes")List<String> businessCodes);
 
     List<FbaTransitCalculateReportDTO.DeliveryDTO> listDeliveryByReportMonth(@Param("approveStatus") String approveStatus, @Param("sourceType") String sourceType, @Param("reportMonth") LocalDate reportMonth, @Param("shipmentCode") String shipmentCode, @Param("asin") String asin, @Param("msku") String msku);
+
+    List<OverseasProviderWarehouseDTO.ProviderDTO> listOverseasProvider(@Param("deliveryIds") List<String> deliveryIds);
 }

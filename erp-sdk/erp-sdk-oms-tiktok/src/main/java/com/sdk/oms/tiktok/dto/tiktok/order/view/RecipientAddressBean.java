@@ -40,6 +40,14 @@ public class RecipientAddressBean {
     private String fullAddress;
     @JsonProperty("name")
     private String name;
+    @JsonProperty("first_name")
+    private String firstName;
+    @JsonProperty("last_name")
+    private String lastName;
+    @JsonProperty("first_name_local_script")
+    private String firstNameLocalScript;
+    @JsonProperty("last_name_local_script")
+    private String lastNameLocalScript;
     @JsonProperty("phone_number")
     private String phoneNumber;
     @JsonProperty("postal_code")

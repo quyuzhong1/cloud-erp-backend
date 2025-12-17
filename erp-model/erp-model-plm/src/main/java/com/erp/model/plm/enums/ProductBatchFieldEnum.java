@@ -28,6 +28,8 @@ public enum ProductBatchFieldEnum implements EnumMessage  {
     WAREHOUSE_LOCATION("warehouse_location","仓位", "product_detail", "id"),
     MAIN_SUPPLIER("main_supplier","一级供应商", "product_purchase", "sku_id"),
     SECOND_SUPPLIER("second_supplier","二级供应商", "product_purchase", "sku_id"),
+    INSURANCE_PROPERTY("insurance_property","保险属性", "product_logistics", "sku_id"),
+    MATERIALS("materials","主要材质", "product_info", "id"),
 
     ;
     /**

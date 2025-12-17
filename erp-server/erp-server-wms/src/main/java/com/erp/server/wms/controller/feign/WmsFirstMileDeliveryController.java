@@ -6,6 +6,7 @@ import com.common.business.dto.AdvanceQueryContainer;
 import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
+import com.erp.model.wms.dto.OverseasProviderWarehouseDTO;
 import com.erp.model.wms.entity.CfgAmzFulfillmentCenterEntity;
 import com.erp.model.wms.entity.FirstMileDeliveryDetailEntity;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
@@ -176,5 +177,15 @@ public class WmsFirstMileDeliveryController {
     @PostMapping("/listGenerateLogisticDTO")
     public List<FirstMileDeliveryDTO.GenerateLogisticDTO> listGenerateLogisticDTO(@RequestBody List<String> deliveryCodes) {
         return firstMileDeliveryService.listGenerateLogisticDTO(deliveryCodes);
+    }
+
+    /**
+     * 根据发货单中的目的仓查询三方仓关联的服务商
+     * @param deliveryIds
+     * @return
+     */
+    @PostMapping("/listOverseasProvider")
+    public List<OverseasProviderWarehouseDTO.ProviderDTO> listOverseasProvider(@RequestBody List<String> deliveryIds){
+        return firstMileDeliveryService.listOverseasProvider(deliveryIds);
     }
 }

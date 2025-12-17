@@ -20,6 +20,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.server.rule.SpElServer;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.message.constant.RedisKeyConstant;
 import com.erp.model.dmp.entity.CfgConditionEntity;
 import com.erp.model.dmp.entity.RuleConditionEntity;
 import com.erp.model.dmp.entity.RulePromptWordEntity;
@@ -45,6 +46,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
@@ -83,8 +85,9 @@ public class SoB2cErrorServiceImpl extends ServiceImpl<SoB2cErrorMapper, SoB2cEr
     private SpElServer spElServer;
 
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Override
+    @DistributeLocker(businessType = RedisKeyConstant.SO_B2C_DELIVERY_KEY,keyName = "addDTO.mainId",waiteTime = 20)
     public Boolean add(SoB2cErrorDTO.AddDTO addDTO) {
         //记录是否已存在
         SoB2cErrorEntity soB2cErrorEntity = this.getByMainIdAndType(addDTO.getMainId(),addDTO.getType());
@@ -138,7 +141,11 @@ public class SoB2cErrorServiceImpl extends ServiceImpl<SoB2cErrorMapper, SoB2cEr
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class , propagation = Propagation.REQUIRES_NEW)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000, propagation = io.seata.tm.api.transaction.Propagation.REQUIRES_NEW)
     public String generateErrorOrder(String mainId, String type, String message, String paramJson, String returnJson,String code) {
+        //先删除所有同类型异常再添加
+        this.removeErrorOrder(mainId, type);
         SoB2cErrorEntity soB2cErrorEntity = new SoB2cErrorEntity();
         soB2cErrorEntity.setMainId(mainId);
         soB2cErrorEntity.setType(type);
@@ -372,7 +379,9 @@ public class SoB2cErrorServiceImpl extends ServiceImpl<SoB2cErrorMapper, SoB2cEr
         if (CollUtil.isEmpty(list)){
             return Boolean.TRUE;
         }
-        List<String> errorIds = list.stream().filter(e -> dto.getDetailIdList().contains(e.getDetailId()) && Objects.equals(e.getDetailId(), CharSequenceUtil.EMPTY)).map(SoB2cErrorEntity::getId).distinct().collect(Collectors.toList());
+        List<String> errorIds = list.stream()
+                .filter(e -> dto.getDetailIdList().contains(e.getDetailId()) && !Objects.equals(e.getDetailId(), CharSequenceUtil.EMPTY))
+                .map(SoB2cErrorEntity::getId).distinct().collect(Collectors.toList());
         boolean result = this.removeByIds(errorIds);
         if (result && errorIds.size() == list.size()){
             soB2cService.removeSignError(dto.getMainId(),dto.getType());
@@ -505,6 +514,18 @@ public class SoB2cErrorServiceImpl extends ServiceImpl<SoB2cErrorMapper, SoB2cEr
         });
 
         return new PagingVO<>(page);
+    }
+
+    @Override
+    public List<SoB2cErrorEntity> listSoB2cErrorByMainIds(List<String> errorSoIds) {
+        if (CollectionUtils.isEmpty(errorSoIds)) {
+            return Collections.emptyList();
+        }
+        List<SoB2cErrorEntity> soB2cErrorEntities = this.lambdaQuery()
+                .in(SoB2cErrorEntity::getMainId, errorSoIds)
+                .orderByDesc(SoB2cErrorEntity::getCreateTime)
+                .list();
+        return soB2cErrorEntities;
     }
 
     /**

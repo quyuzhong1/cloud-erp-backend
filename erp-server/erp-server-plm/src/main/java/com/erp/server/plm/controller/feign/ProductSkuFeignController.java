@@ -5,6 +5,9 @@ import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.AdvanceQueryContainer;
 import com.common.business.dto.base.BaseIdsDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.vo.PagingVO;
+import com.common.core.controller.vo.ApiResult;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
 import com.erp.model.plm.vo.ProductRefLabelVO;
@@ -14,9 +17,11 @@ import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.sys.openapi.DimensionalWeightDTO;
 import com.erp.model.sys.openapi.UploadSkuDTO;
 import com.erp.model.workflow.dto.WorkOptionDTO;
+import com.erp.server.plm.mapper.ProductDetailMapper;
 import com.erp.server.plm.rocketmq.sync.kingdee.SyncKingdeeService;
 import com.erp.server.plm.service.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.util.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -67,6 +72,9 @@ public class ProductSkuFeignController {
 
     @Autowired
     private ProductPurchaseService productPurchaseService;
+
+    @Autowired
+    private ProductDetailMapper productDetailMapper;
 
     /**
      * 根据sku查询sku表信息
@@ -205,6 +213,21 @@ public class ProductSkuFeignController {
     @GetMapping("/listApproveSku")
     public List<SkuVO> listApproveSku() {
         List<SkuVO> skuList = productDetailService.searchSku(null);
+        return skuList;
+    }
+
+    /**
+     * @return List<SkuVO>
+     * @description: 获取所有sku（不限制审核状态）
+     * @author System
+     * @date: 2025/01/XX
+     */
+    @GetMapping("/listAllSku")
+    public List<SkuVO> listAllSku() {
+        ProductDetailDTO.SearchDTO dto = new ProductDetailDTO.SearchDTO();
+        dto.setSearchKeyword(null);
+        dto.setStatus(null);
+        List<SkuVO> skuList = productDetailService.searchSkuInfo(dto);
         return skuList;
     }
 
@@ -551,9 +574,22 @@ public class ProductSkuFeignController {
     }
 
     /**
+     * 根据skuid 集合获取到sku分类信息（基础信息+产品信息+包装信息+采购信息）
+     * @author will
+     * @date 2025/8/21 11:35
+     * @param skuIds
+     * @return List<SkuVO>
+     */
+    @PostMapping("/listSkuPackAndPurchaseByIds")
+    public List<SkuVO> listSkuPackAndPurchaseByIds(@RequestBody List<String> skuIds){
+        List<SkuVO> skuList = productDetailService.listSkuPackAndPurchaseByIds(skuIds);
+        return skuList;
+    }
+
+    /**
      * 根据sku查询sku信息
      */
-    @GetMapping("/listSkuPurchaseByIds")
+    @GetMapping("/getBySkuNoOrEan")
     ProductDetailEntity getBySkuNoOrEan(String skuCode){
         return productDetailService.getBySkuNoOrEan(skuCode);
     }
@@ -594,5 +630,19 @@ public class ProductSkuFeignController {
     @PostMapping("/listAllStatusSkuBySkuNos")
     public List<SkuVO> listAllStatusSkuBySkuNos(@RequestBody List<String> skuNoList) {
         return productDetailService.listAllStatusSkuBySkuNos(skuNoList);
+    }
+    /**
+     * 根据sku进行模糊搜索
+     * @param pagingDTO
+     * @return
+     */
+    @PostMapping("/listSku" )
+    public PagingVO<ProductDetailDTO.SkuDTO> listSku(@RequestBody PagingDTO<ProductSkuDTO> pagingDTO){
+        return productDetailService.listSku(pagingDTO);
+    }
+
+    @PostMapping("/listAssetProduct" )
+    public List<SkuVO> listAssetProduct(){
+        return productDetailMapper.listAssetProduct();
     }
 }

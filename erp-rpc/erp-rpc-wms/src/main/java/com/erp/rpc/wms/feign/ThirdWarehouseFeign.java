@@ -33,6 +33,13 @@ public interface ThirdWarehouseFeign {
     ApiResult<String> cancelOutboundOrder(@RequestBody ThirdWarehouseCancelOutboundReq cancelOutboundReq);
 
     /**
+     * 查询海外仓出库单
+     * @param queryOutboundReq
+     * @return
+     */
+    @PostMapping("feign/thirdWarehouse/queryOutboundOrder")
+    ApiResult<String> queryOutboundOrder(@RequestBody ThirdWarehouseQueryOutboundReq queryOutboundReq);
+    /**
      * 运费试算
      * @param params
      * @return
@@ -55,4 +62,11 @@ public interface ThirdWarehouseFeign {
      */
     @PostMapping("feign/thirdWarehouse/uploadOrderLabel")
     ApiResult<ThirdWarehouseUploadOrderLabelResponse> uploadOrderLabel(@RequestBody ThirdWarehouseUploadOrderLabelReq uploadOrderLabelReq);
+
+    /**
+     * 上传交接文件
+     * @return
+     */
+    @PostMapping("feign/thirdWarehouse/uploadHandoverFile")
+    ApiResult<ThirdWarehouseUploadHandoverFileResponse> uploadHandoverFile(@RequestBody ThirdWarehouseUploadHandoverFileReq uploadHandoverFileReq) ;
 }

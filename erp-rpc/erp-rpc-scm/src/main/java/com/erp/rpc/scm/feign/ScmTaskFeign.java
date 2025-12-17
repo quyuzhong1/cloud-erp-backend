@@ -23,7 +23,7 @@ import java.util.Map;
  * @Author Luo_WG
  * @Date 2023/4/13 11:41
  **/
-@FeignClient(name = "erp-scm",configuration = {FeignErrorDecoder.class})
+@FeignClient(name = "erp-scm",contextId = "scmTaskFeign",configuration = {FeignErrorDecoder.class})
 public interface ScmTaskFeign {
 
     /**
@@ -479,4 +479,52 @@ public interface ScmTaskFeign {
      */
     @PostMapping("feign/purchaseOrder/listSkuBySupplierIds")
     List<PurchaseOrderDTO.SupplierSkuDTO> listSkuBySupplierIds(@RequestBody List<String> supplierIds);
+
+    /**
+     * 获取所有供应商
+     * @param
+     * @return
+     */
+    @PostMapping("feign/purchaseOrder/listSupplier")
+    List<SupplierEntity> listSupplier();
+
+    /**
+     * 获取所有供应商联系人
+     * @param
+     * @return
+     */
+    @PostMapping("feign/purchaseOrder/listSupplierContact")
+    List<SupplierContactEntity> listSupplierContact();
+
+    /**
+     * 获取所有供应商账户信息
+     * @param
+     * @return
+     */
+    @PostMapping("feign/purchaseOrder/listSupplierAccount")
+    List<SupplierAccountEntity> listSupplierAccount();
+
+    /**
+     * 开模通知单审核
+     * @param dto
+     * @return
+     */
+    @PostMapping("feign/scmWorkOption/assetNoticeApprove")
+    List<BatchResultDTO> assetNoticeApprove(@RequestBody @Validated BaseApproveParamDTO  dto);
+
+    /**
+     * 模具采购单审核
+     * @param dto
+     * @return
+     */
+    @PostMapping("feign/scmWorkOption/assetPurchaseOrderApprove")
+    List<BatchResultDTO> assetPurchaseOrderApprove(@RequestBody @Validated BaseApproveParamDTO dto);
+
+    /**
+     * 模具采购变更单审核
+     * @param dto
+     * @return
+     */
+    @PostMapping("feign/scmWorkOption/assetPurchaseChangeApprove")
+    List<BatchResultDTO> assetPurchaseChangeApprove(@RequestBody @Validated BaseApproveParamDTO dto);
 }

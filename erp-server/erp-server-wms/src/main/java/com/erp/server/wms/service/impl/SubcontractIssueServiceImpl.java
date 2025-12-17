@@ -2,13 +2,10 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
@@ -59,7 +56,6 @@ import com.erp.server.wms.query.SubcontractIssueQueryHandler;
 import com.erp.server.wms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -121,7 +117,7 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(SubcontractIssueDTO.AddDTO addDTO) {
@@ -264,7 +260,7 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
     }
 
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BatchResultDTO approve(ApproveOneDTO dto) {
@@ -312,7 +308,7 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
         }
     }
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BatchResultDTO disApprove(String id) {
@@ -332,7 +328,7 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
 
 
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Override
     public BatchResultDTO delete(String id) {
         SubcontractIssueEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到委外发料单数据"));
@@ -357,7 +353,7 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
     * 作废
     */
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Override
     public BatchResultDTO invalid(String id, String remark) {
         SubcontractIssueEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到委外发料单数据"));
@@ -380,7 +376,7 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
     /**
     * 撤销
     */
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BatchResultDTO cancelProcess(String id) {
@@ -547,11 +543,17 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
     @Override
     @Transactional(rollbackFor = Exception.class)
     public BaseResultDTO.AddDTO autoAdd(SubcontractIssueDTO.AutoAddDTO dto) {
+        //自动生成功能系统标识
+        Boolean originalValue = UserContext.getIsUserSystem();
+        UserContext.setIsUserSystem(Boolean.TRUE);
+
         SubcontractIssueDTO.AddDTO addDTO = dto.getAddDTO();
         //新增
         BaseResultDTO.AddDTO add = this.add(addDTO);
         //无需审核
         if (!dto.getIsApprove()) {
+            //恢复系统标识
+            UserContext.setIsUserSystem(originalValue);
             return add;
         }
         //提交
@@ -568,6 +570,8 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
         if (!approve.getSuccess()) {
             throw new ServiceException(ApiError.ERROR_BILL_APPROVE,"委外发料");
         }
+        //恢复系统标识
+        UserContext.setIsUserSystem(originalValue);
         return add;
     }
 

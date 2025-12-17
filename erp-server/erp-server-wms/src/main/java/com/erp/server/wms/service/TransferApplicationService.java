@@ -12,6 +12,7 @@ import com.erp.model.wms.dto.TransferApplicationDTO;
 import com.erp.model.wms.entity.TransferApplicationEntity;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -94,6 +95,35 @@ public interface TransferApplicationService extends SuperService<TransferApplica
      * @return Boolean 
      */
     Boolean delete(List<String> ids);
+
+    /**
+     * @description: 原子批量删除调拨申请单
+     * @author Will
+     * @date: 2023/5/10 18:56
+     * @param ids
+     * @param returnDetails
+     * @return List<BatchResultDTO>
+     */
+    List<BatchResultDTO> deleteByIds(List<String> ids, boolean returnDetails);
+
+    /**
+     * @description: 删除单个调拨申请单
+     * @author Will
+     * @date: 2023/5/10 18:56
+     * @param entity
+     * @return com.common.business.dto.base.BatchResultDTO
+     */
+    BatchResultDTO deleteEntity(TransferApplicationEntity entity);
+
+    /**
+     * @description: 根据ID列表获取实体Map
+     * @author Will
+     * @date: 2023/5/10 18:56
+     * @param ids
+     * @return java.util.Map<java.lang.String, com.erp.model.wms.entity.TransferApplicationEntity>
+     */
+    Map<String, TransferApplicationEntity> mapByIds(List<String> ids);
+
     /**
      * @description: 作废
      * @author Will
@@ -160,18 +190,18 @@ public interface TransferApplicationService extends SuperService<TransferApplica
      * @description: 下推直接调拨单
      * @author Will
      * @date: 2023/5/10 18:57
-     * @param ids
+     * @param detailIdList
      * @return List<ViewGenerateTransferInfoDTO>
      */
-    List<TransferApplicationDTO.ViewGenerateTransferInfoDTO> viewGenerateTransferInfo(List<String> ids);
+    List<TransferApplicationDTO.ViewGenerateTransferInfoDTO> viewGenerateTransferInfo(List<String> detailIdList);
     /**
      * @description: 下推分布式调出
      * @author Will
      * @date: 2023/5/10 18:57
-     * @param ids
+     * @param detailIdList
      * @return List<ViewGenerateTransferInfoDTO>
      */
-    List<TransferApplicationDTO.ViewGenerateTransferInfoDTO> viewGenerateTransferOut(List<String> ids);
+    List<TransferApplicationDTO.ViewGenerateTransferInfoDTO> viewGenerateTransferOut(List<String> detailIdList);
     /**
      * @description: 下推直接调拨单保存
      * @author Will

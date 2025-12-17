@@ -101,6 +101,11 @@ public class InvoiceInfoEntity extends BaseEntity<InvoiceInfoEntity> {
      */
     @TableField("query_id")
     private String queryId;
+    /**
+     * 查询key，用来查询发票结果的Key
+     */
+    @TableField("query_key")
+    private String queryKey;
 
     /**
      * 查询结果，当第三方失败时有值
@@ -149,6 +154,23 @@ public class InvoiceInfoEntity extends BaseEntity<InvoiceInfoEntity> {
      */
     @TableField("start_code")
     private String startCode;
+    /**
+     * 公司名称
+     */
+    @TableField("company_name")
+    private String companyName;
+    /**
+     *
+     * 卖家税号
+     */
+    @TableField("seller_tax_no")
+    private String sellerTaxNo;
+
+    /**
+     * 发票地址
+     */
+    @TableField(exist = false)
+    private String invoiceAddress;
 
     public static final String CODE = "code";
 

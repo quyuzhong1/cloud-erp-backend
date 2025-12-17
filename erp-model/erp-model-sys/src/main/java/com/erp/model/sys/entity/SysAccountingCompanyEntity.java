@@ -4,7 +4,9 @@ import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * @author Administrator
@@ -65,6 +67,41 @@ public class SysAccountingCompanyEntity implements Serializable {
      */
     @TableField("kingdee_code")
     private String kingdeeCode;
+    
+    /**
+     * 统一社会信用代码
+     */
+    @TableField("usci_code")
+    private String usciCode;
+    
+    /**
+     * 组织职能
+     */
+    @TableField("org_functions")
+    private String orgFunctions;
+
+    /**
+     * 纳税人性质
+     */
+    @TableField("taxpayer_type")
+    private String taxpayerType;
+
+    /**
+     * 增值税税率
+     */
+    @TableField("vat_rate")
+    private BigDecimal vatRate;
+    /**
+     * 组织职能名称
+     */
+    @TableField(exist = false)
+    private String orgFunctionNames;
+    
+    /**
+     * 组织职能列表
+     */
+    @TableField(exist = false)
+    private List<String> orgFunctionList;
 
     /**
      * 是否禁用

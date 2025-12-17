@@ -155,4 +155,11 @@ public interface LogisticsService {
      * @return
      */
     ApiResult<String> updateWeight(LogisticsUpdateWeightVO logisticsUpdateWeightVO);
+
+    /**
+     * 更新物流注册信息
+     * @param registerTrackVO
+     * @return
+     */
+    ApiResult<List<RegisterResponseVO>> updateTrack(RegisterTrackVO registerTrackVO);
 }

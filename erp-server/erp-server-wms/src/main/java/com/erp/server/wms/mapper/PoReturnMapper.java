@@ -97,4 +97,12 @@ public interface PoReturnMapper extends BaseMapper<PoReturnEntity> {
     List<PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO> batchGetTaxPrice(@Param("params") PurchasePriceDetailDTO.PurchaseTaxPriceBatchSearchDTO params);
 
     List<PurchasePriceDTO.PushDownPurchaseView> pushDownPurchaseView(@Param("detailIds")List<String> detailIds);
+
+    /**
+     * 查询供应商+SKU下已审核入库的SKU ID列表
+     * @param supplierId 供应商ID
+     * @param skuIdList SKU ID列表
+     * @return 已入库的SKU ID列表
+     */
+    List<String> listInstockedSkuIds(@Param("supplierId") String supplierId, @Param("skuIdList") List<String> skuIdList);
 }

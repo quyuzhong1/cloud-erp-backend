@@ -21,7 +21,7 @@ public enum DmpBasicSystemCodeEnum implements EnumMessage {
 	ALI_EXPRESS("AliExpress", "速卖通"),
 	SHOPIFY("Shopify", "Shopify"),
     MERCADOLIBRE("mercadolibre", "美客多"),
-    MERCADOLIBRE_LOCAL("mercadolibre_local", "美客多本土"),
+    MERCADOLIBRE_LOCAL("mercadolibreLocal", "美客多本土"),
     GOODCANG("goodcang", "谷仓"),
     IML("iml", "艾姆勒"),
     ERP("erp", "数大臣"),
@@ -32,6 +32,9 @@ public enum DmpBasicSystemCodeEnum implements EnumMessage {
     LING_XING("lingxing", "领星"),
     JIFENG("jifeng", "极风"),
     CAINIAO("cainiao", "菜鸟仓"),
+    WEI_SHI("weishi", "纬狮"),
+    DA_MAI("damai", "大卖仓"),
+    DHT("dht", "订货通"),
     ;
     /**
      * 类型

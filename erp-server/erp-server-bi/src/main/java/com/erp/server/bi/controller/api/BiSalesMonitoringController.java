@@ -53,7 +53,7 @@ public class BiSalesMonitoringController extends BaseController {
      * @param list
      * @return ApiResult
      */
-    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "批量修改销售监控：监控维度={type}")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "批量修改销售监控：监控维度={type}")
     @PostMapping("/batchUpdate")
     public ApiResult<Void> batchUpdate (@RequestBody @Validated List<BiSalesMonitoringDTO> list) {
         biSalesMonitoringService.batchUpdate(list);

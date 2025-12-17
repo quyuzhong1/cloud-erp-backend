@@ -1,9 +1,11 @@
 package com.erp.server.plm.controller.api;
 
 
+import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.plm.dto.CfgMouldSettingDTO;
 import com.erp.model.plm.entity.CfgMouldSettingEntity;
 import com.erp.server.plm.service.CfgMouldSettingService;
@@ -40,6 +42,7 @@ public class CfgMouldSettingController extends BaseController {
     * @return ApiResult<String>
     */
     @PostMapping("/add")
+    @LogAction(value = LogActionEnum.INSERT, desc = "新增")
     public ApiResult<String> add(@RequestBody @Validated CfgMouldSettingDTO.AddDTO dto) {
         cfgMouldSettingService.add(dto);
         return success();

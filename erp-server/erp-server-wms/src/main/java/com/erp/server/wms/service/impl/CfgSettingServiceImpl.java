@@ -47,7 +47,7 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
     private DictBasicService dictBasicService;
 
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(CfgSettingDTO.AddDTO addDTO) {
@@ -130,7 +130,7 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
         if(CollectionUtils.isEmpty(cfgPrintDetails)){
             return "";
         }
-        return cfgPrintDetails.stream().filter(v->v.getPaperSize().equals(paperSize)).findFirst().map(CfgSettingValueDTO.CfgPrintDetail::getPrinterName).orElse("");
+        return cfgPrintDetails.stream().filter(v->Objects.nonNull(v.getPaperSize()) && v.getPaperSize().equals(paperSize)).findFirst().map(CfgSettingValueDTO.CfgPrintDetail::getPrinterName).orElse("");
     }
 
     /**

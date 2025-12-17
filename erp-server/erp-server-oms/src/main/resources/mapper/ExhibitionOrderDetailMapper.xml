@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.oms.mapper.ExhibitionOrderDetailMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.oms.entity.ExhibitionOrderDetailEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="main_id" property="mainId" />
+       <result column="sku_id" property="skuId" />
+       <result column="sku_no" property="skuNo" />
+       <result column="qty" property="qty" />
+       <result column="price" property="price" />
+       <result column="tax_rate" property="taxRate" />
+       <result column="amount" property="amount" />
+       <result column="currency" property="currency" />
+       <result column="currency_symbol" property="currencySymbol" />
+       <result column="is_gift" property="isGift" />
+       <result column="remark" property="remark" />
+       <result column="purchase_price" property="purchasePrice" />
+       <result column="sale_cost" property="saleCost" />
+       <result column="sale_profit" property="saleProfit" />
+       <result column="sale_profit_rate" property="saleProfitRate" />
+       <result column="tax_amount" property="taxAmount" />
+       <result column="amount_local_currency" property="amountLocalCurrency" />
+       <result column="all_amount_local_currency" property="allAmountLocalCurrency" />
+       <result column="discount_amount" property="discountAmount" />
+       <result column="tax_amount_before" property="taxAmountBefore" />
+       <result column="exchange_rate" property="exchangeRate" />
+       <result column="tax" property="tax" />
+       <result column="bom_version" property="bomVersion" />
+       <result column="cost_source" property="costSource" />
+       <result column="tax_price" property="taxPrice" />
+       <result column="sample_ledger_id" property="sampleLedgerId" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        eod.id as id,
+eod.create_user_id as createUserId,
+eod.create_user_name as createUserName,
+eod.create_time as createTime,
+eod.update_user_id as updateUserId,
+eod.update_user_name as updateUserName,
+eod.update_time as updateTime,
+eod.version as version,
+eod.is_deleted as isDeleted,
+eod.main_id as mainId,
+eod.sku_id as skuId,
+eod.sku_no as skuNo,
+eod.product_name as productName,
+eod.qty as qty,
+eod.price as price,
+eod.tax_rate as taxRate,
+eod.amount as amount,
+eod.currency as currency,
+eod.currency_symbol as currencySymbol,
+eod.is_gift as isGift,
+eod.remark as remark,
+eod.purchase_price as purchasePrice,
+eod.sale_cost as saleCost,
+eod.sale_profit as saleProfit,
+eod.sale_profit_rate as saleProfitRate,
+eod.tax_amount as taxAmount,
+eod.amount_local_currency as amountLocalCurrency,
+eod.all_amount_local_currency as allAmountLocalCurrency,
+eod.discount_amount as discountAmount,
+eod.tax_amount_before as taxAmountBefore,
+eod.exchange_rate as exchangeRate,
+eod.tax as tax,
+eod.bom_version as bomVersion,
+eod.cost_source as costSource,
+eod.tax_price as taxPrice,
+eod.sample_ledger_id as sampleLedgerId
+    </sql>
+    <select id="listBySourceDetailIds"  resultType="com.erp.model.oms.dto.ExhibitionOrderDetailDTO$SkuQtyDetailDTO">
+       SELECT
+          eo.ID,
+          eod.ID AS detailId,
+          eod.sample_ledger_id AS sampleLedgerId,
+          eod.sku_id,
+          eod.sku_no,
+          eod.qty,
+          eo.approve_status
+       FROM
+          exhibition_order AS eo
+             LEFT JOIN exhibition_order_detail AS eod ON eo.ID = eod.main_id
+             AND eod.is_deleted = FALSE
+       where
+          eo.is_deleted = false
+         and eo.invalid_status = false
+       <if test="sourceDetailIdList != null and sourceDetailIdList.size > 0">
+          AND eod.sample_ledger_id IN
+          <foreach item="item" index="index" collection="sourceDetailIdList" open="(" separator="," close=")">
+             #{item}
+          </foreach>
+       </if>
+    </select>
+</mapper>

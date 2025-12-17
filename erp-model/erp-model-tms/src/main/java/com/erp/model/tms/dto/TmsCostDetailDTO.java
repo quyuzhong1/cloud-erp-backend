@@ -288,6 +288,10 @@ public class TmsCostDetailDTO implements Serializable {
          * 费用ID
          */
         private String cfgCostId;
+        /**
+         * 是否分摊
+         */
+        private Boolean isAllocate;
 
         /**
          * 费用值

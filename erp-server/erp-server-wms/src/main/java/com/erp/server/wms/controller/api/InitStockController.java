@@ -275,8 +275,8 @@ public class InitStockController extends BaseController {
             serviceClass = InitStockService.class,
             keyIdName = "ids")
     public ApiResult delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        initStockService.delete(dto.getIds());
-        return success();
+        List<BatchResultDTO> resultDTOList =initStockService.delete(dto.getIds());
+        return resultDTOList.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOList) : failure(resultDTOList);
     }
 
     /**
@@ -309,7 +309,7 @@ public class InitStockController extends BaseController {
      * @param response
      * @return
      */
-    @LogAction(value = LogActionEnum.EXPORT, desc = "导入初期库存")
+    @LogAction(value = LogActionEnum.IMPORT, desc = "导入初期库存")
     @PostMapping("/importFile")
     public ApiResult<InitStockDetailDTO.ImportDTO> importFile(@RequestParam("excelFile") MultipartFile file, HttpServletResponse response) {
         return success(initStockService.importFile(file, response));

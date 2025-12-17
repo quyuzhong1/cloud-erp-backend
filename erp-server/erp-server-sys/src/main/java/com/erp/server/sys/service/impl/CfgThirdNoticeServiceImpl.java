@@ -7,7 +7,6 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
-import com.baomidou.mybatisplus.extension.conditions.query.LambdaQueryChainWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseResultDTO;
@@ -15,12 +14,10 @@ import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.OperationTypeEnum;
-import com.common.business.enums.SourceTypeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
-import com.erp.model.dmp.entity.BiDeliveryDetailItemEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.*;
 import com.erp.model.sys.entity.*;
@@ -86,7 +83,7 @@ public class CfgThirdNoticeServiceImpl extends SuperServiceImpl<CfgThirdNoticeMa
     @Resource
     private DictNoticeRoleOptionService dictNoticeRoleOptionService;
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(CfgThirdNoticeDTO.AddDTO addDTO) {
@@ -591,11 +588,13 @@ public class CfgThirdNoticeServiceImpl extends SuperServiceImpl<CfgThirdNoticeMa
                 .set(CfgApproveSyncFieldMapEntity::getIsDeleted, Boolean.TRUE)
                 .eq(CfgApproveSyncFieldMapEntity::getMainId, id)
                 .update();
-
+        //单据类型
+        List<DictBasicDTO.ViewDTO> thirdNoticeBusinessType = dictBasicService.listByType("thirdNoticeBusinessType");
+        Map<String, String> businessTypeMap = thirdNoticeBusinessType.stream().collect(Collectors.toMap(DictBasicDTO.ViewDTO::getValue, DictBasicDTO.ViewDTO::getName,(o1,o2) -> o1));
         // 删除日志数据
         String msg = StrUtil.format("用户【{}】操作【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), "三方通知配置");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.CFG_THIRD_NOTICE.getCode(), entity.getId(), "删除三方通知配置数据");
-        return BatchResultDTO.success(entity.getId(), entity.getId(), OperationTypeEnum.DELETE);
+        return BatchResultDTO.success(entity.getId(),businessTypeMap.getOrDefault(entity.getBusinessType(),""), OperationTypeEnum.DELETE);
     }
 
     @Override

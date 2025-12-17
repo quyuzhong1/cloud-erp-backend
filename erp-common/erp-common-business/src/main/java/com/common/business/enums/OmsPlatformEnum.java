@@ -22,6 +22,9 @@ public enum OmsPlatformEnum {
     OMS_ECCANG("eccang","易仓"),
     JIFENG("jifeng","极风"),
     CAI_NIAO("cainiao","菜鸟仓"),
+    WEI_SHI("weishi","纬狮"),
+    DA_MAI("damai","大卖仓"),
+    TONG_YOU("tongyou","通邮"),
     ;
 
     @EnumValue

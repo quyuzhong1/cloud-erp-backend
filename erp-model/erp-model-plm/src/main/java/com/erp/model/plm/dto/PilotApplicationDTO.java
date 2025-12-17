@@ -1,5 +1,6 @@
 package com.erp.model.plm.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.SortDTO;
@@ -246,6 +247,16 @@ public class PilotApplicationDTO implements Serializable {
          * 产品明细ID
          */
         private String detailId;
+
+        /**
+         * DQE负责人ID
+         */
+        private String dqeOwnerId;
+
+        /**
+         * DQE负责人名称
+         */
+        private String dqeOwnerName;
     }
 
     /**
@@ -316,6 +327,17 @@ public class PilotApplicationDTO implements Serializable {
          * 附件
          */
         private List<PlmAttachmentEntity> attachmentList;
+
+        /**
+         * DQE负责人ID
+         */
+        private String dqeOwnerId;
+
+        /**
+         * DQE负责人名称
+         */
+        private String dqeOwnerName;
+
     }
 
     /**
@@ -393,6 +415,18 @@ public class PilotApplicationDTO implements Serializable {
          */
         @NotEmpty(message = "请上传试产/量产报告")
         private List<AttachmentDTO> attachmentList;
+
+        /**
+         * DQE负责人ID
+         */
+        @NotBlank(message = "DQE负责人ID不能为空")
+        private String dqeOwnerId;
+
+        /**
+         * DQE负责人名称
+         */
+        private String dqeOwnerName;
+
     }
 
     /**
@@ -421,6 +455,16 @@ public class PilotApplicationDTO implements Serializable {
          * 附件
          */
         private List<AttachmentDTO> attachmentList;
+
+        /**
+         * DQE负责人ID
+         */
+        private String dqeOwnerId;
+
+        /**
+         * DQE负责人名称
+         */
+        private String dqeOwnerName;
     }
 
     @Data

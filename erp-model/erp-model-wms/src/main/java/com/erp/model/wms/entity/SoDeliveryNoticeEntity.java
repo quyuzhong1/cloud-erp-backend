@@ -248,10 +248,29 @@ public class SoDeliveryNoticeEntity extends BaseEntity<SoDeliveryNoticeEntity> {
     private String packingStatus;
 
     /**
+     * 是否允许出库  true:允许 false:不允许
+     */
+    @TableField("is_allow_outstock")
+    private Boolean isAllowOutstock;
+
+    /**
+     * 备注
+     */
+    @TableField("remark")
+    private String remark;
+
+    /**
      * 中转仓库 以,分割记录
      */
     @TableField("transfer_warehouse_ids")
     private String transferWarehouseIds;
+
+    /**
+     * 是否展会订单
+     */
+    @TableField(exist = false)
+    private String soInfoSourceType;
+
 
     public static final String APPROVE_STATUS = "approve_status";
 

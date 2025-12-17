@@ -10,22 +10,26 @@
  * Do not edit the class manually.
  */
 
-
 package com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound;
 
+import java.util.Objects;
+import java.util.Arrays;
+import com.google.gson.TypeAdapter;
+import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.annotations.SerializedName;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonWriter;
 
-
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
-
 /**
  * Information about an SKU, including the count available, identifiers, and a list of overlapping SKUs that share the same inventory pool.
  */
 
-@javax.annotation.Generated(value = "io.swagger.codegen.languages.JavaClientCodegen", date = "2020-12-15T20:44:18.412+08:00")
+@javax.annotation.Generated(value = "io.swagger.codegen.v3.generators.java.JavaClientCodegen", date = "2025-08-18T09:55:11.594451100+08:00[Asia/Shanghai]")
+
 public class FeatureSku {
   @SerializedName("sellerSku")
   private String sellerSku = null;
@@ -48,10 +52,10 @@ public class FeatureSku {
   }
 
    /**
-   * Used to identify an item in the given marketplace. SellerSKU is qualified by the seller&#39;s SellerId, which is included with every operation that you submit.
+   * Used to identify an item in the given marketplace. &#x60;SellerSKU&#x60; is qualified by the seller&#x27;s SellerId, which is included with every operation that you submit.
    * @return sellerSku
   **/
-
+  
   public String getSellerSku() {
     return sellerSku;
   }
@@ -66,10 +70,10 @@ public class FeatureSku {
   }
 
    /**
-   * The unique SKU used by Amazon&#39;s fulfillment network.
+   * The unique SKU used by Amazon&#x27;s fulfillment network.
    * @return fnSku
   **/
-
+  
   public String getFnSku() {
     return fnSku;
   }
@@ -87,7 +91,7 @@ public class FeatureSku {
    * The Amazon Standard Identification Number (ASIN) of the item.
    * @return asin
   **/
-
+  
   public String getAsin() {
     return asin;
   }
@@ -105,7 +109,7 @@ public class FeatureSku {
    * The number of SKUs available for this service.
    * @return skuCount
   **/
-
+  
   public BigDecimal getSkuCount() {
     return skuCount;
   }
@@ -131,7 +135,7 @@ public class FeatureSku {
    * Other seller SKUs that are shared across the same inventory.
    * @return overlappingSkus
   **/
-
+  
   public List<String> getOverlappingSkus() {
     return overlappingSkus;
   }
@@ -142,7 +146,7 @@ public class FeatureSku {
 
 
   @Override
-  public boolean equals(Object o) {
+  public boolean equals(java.lang.Object o) {
     if (this == o) {
       return true;
     }
@@ -181,7 +185,7 @@ public class FeatureSku {
    * Convert the given object to string with each line indented by 4 spaces
    * (except the first line).
    */
-  private String toIndentedString(Object o) {
+  private String toIndentedString(java.lang.Object o) {
     if (o == null) {
       return "null";
     }
@@ -189,4 +193,3 @@ public class FeatureSku {
   }
 
 }
-

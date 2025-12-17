@@ -1,18 +1,22 @@
 package com.erp.rpc.wms.feign;
 
+import com.common.business.config.FeignErrorDecoder;
 import com.common.business.dto.PlatformShipOrderDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.core.controller.vo.ApiResult;
+import com.erp.model.oms.dto.GenerateDeliveryAndOutStockDTO;
 import com.erp.model.sys.openapi.DimensionalWeightDTO;
 import com.erp.model.wms.dto.SoB2cDeliveryDTO;
 import com.erp.model.wms.entity.SoB2cDeliveryDetailEntity;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Lambda
@@ -21,7 +25,7 @@ import java.util.List;
  * @Date 2023-12-18 11:37
  * @Created by yl
  */
-@FeignClient(name = "erp-wms", contextId = "soB2cDeliveryFeign")
+@FeignClient(name = "erp-wms", contextId = "soB2cDeliveryFeign" ,configuration = {FeignErrorDecoder.class})
 public interface SoB2cDeliveryFeign {
 
     /** 
@@ -68,7 +72,7 @@ public interface SoB2cDeliveryFeign {
      * @return java.lang.Boolean
      **/
     @PostMapping("feign/soB2cDelivery/falseDeliveryBatch")
-    Boolean falseDeliveryBatch(@RequestBody List<String> ids);
+    Boolean falseDeliveryBatch(@RequestBody(required = false) List<String> ids);
 
     /**
      * 根据来源id查询发货单
@@ -143,4 +147,16 @@ public interface SoB2cDeliveryFeign {
      **/
     @PostMapping("feign/soB2cDelivery/falseDeliveryBySoId")
     BatchResultDTO falseDeliveryBySoId(@RequestBody String id);
+
+    @PostMapping("feign/soB2cDelivery/generateDeliveryAndOutStock")
+    void generateDeliveryAndOutStock(@RequestBody GenerateDeliveryAndOutStockDTO generateDeliveryAndOutStockDTO);
+
+    @PostMapping("/feign/soB2cDelivery/getDeliveryCodeBySourceId")
+    Map<String,String> getDeliveryCodeBySourceId(@RequestParam("sourceIds") List<String> sourceIds);
+    /**
+     * 自动反审核并删除发货单
+     * @param id
+     */
+    @GetMapping("/feign/soB2cDelivery/deleteSoB2cDelivery")
+    void deleteSoB2cDelivery(@RequestParam(value = "id") String id);
 }

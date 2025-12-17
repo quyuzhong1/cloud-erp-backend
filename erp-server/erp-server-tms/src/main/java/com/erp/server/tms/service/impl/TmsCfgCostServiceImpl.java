@@ -62,7 +62,7 @@ public class TmsCfgCostServiceImpl extends SuperServiceImpl<TmsCfgCostMapper, Tm
     @Resource
     private TmsCostDetailService tmsCostDetailService;
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(TmsCfgCostDTO.AddDTO addDTO) {
@@ -94,6 +94,9 @@ public class TmsCfgCostServiceImpl extends SuperServiceImpl<TmsCfgCostMapper, Tm
         TmsCfgCostEntity old = super.getById(updateDTO.getId());
         Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "费用管理配置单"));
         TmsCfgCostEntity tmsCfgCostEntity =  BeanMapperUtils.map(TmsCfgCostEntity.class, updateDTO);
+        if (!old.getIsAllocate().equals(updateDTO.getIsAllocate())){
+            throw new ServiceException("分摊状态不能修改");
+        }
         //数据校验
         checkData(tmsCfgCostEntity);
         // 数据处理

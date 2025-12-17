@@ -42,5 +42,5 @@ public interface VirtualInventoryHisService extends SuperService<VirtualInventor
      * @author will
      * @date 2024/12/11 10:09
      */
-    void addVirtualInventoryHis(LocalDate localDate);
+    void addVirtualInventoryHis(String virtualInventoryId,LocalDate localDate);
 }

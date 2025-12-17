@@ -41,7 +41,7 @@
     </select>
 
     <select id="listMyWorkOption" resultType="com.erp.model.workflow.dto.WorkOptionDTO$MyWorkOptionDTO">
-        SELECT
+        SELECT DISTINCT
             wo.id,
             wmrs.id AS moduleStatusId,
             wm.id AS menu_id,
@@ -59,7 +59,7 @@
         FROM work_option wo
         LEFT JOIN work_menu_ref_status wmrs ON wo.work_menu_id = wmrs.id
         LEFT JOIN work_menu wm ON wm.id = wmrs.menu_id
-        LEFT JOIN dict_basic db ON wmrs.module_status = db."value"
+        LEFT JOIN dict_basic db ON wmrs.module_status = db."value" and db.type = 'moduleStatus'
         WHERE wo.is_deleted = FALSE AND wo.type = '1' AND wm.module_code NOT IN ('qcInfo')
             <if test="optionUserId != null and optionUserId != ''">
                 AND wo.option_user_id = #{optionUserId}
@@ -97,10 +97,14 @@
             pm.business_id as businessId,
             pm.business_key as businessKey,
             pm.create_user_id as createUserId,
-            COALESCE(EXTRACT(EPOCH FROM (pm.end_time - pm.start_time)),0) AS approveDuration,
+        CASE
+        WHEN pm.approve_status = 'approveIng'
+        THEN COALESCE(EXTRACT(EPOCH FROM (CURRENT_TIMESTAMP - pm.start_time)), 0)
+        ELSE COALESCE(EXTRACT(EPOCH FROM (pm.end_time - pm.start_time)), 0)
+        END AS approveDuration,
             pm.create_time as createTime,
             pm.approve_status as approveStatus,
-            concat(wm.detail_url,pm.business_id) as detailUrl,
+            case when wm.is_multi_tab = true then replace(concat(wm.detail_url,pm.business_id), '?', concat('/',pm.business_id,'?')) else concat(wm.detail_url,pm.business_id)  end as detailUrl,
             wmrs.cancel_process_url as cancelProcessUrl,
             wmrs.cancel_process_param as cancelProcessParam
         FROM process_management pm

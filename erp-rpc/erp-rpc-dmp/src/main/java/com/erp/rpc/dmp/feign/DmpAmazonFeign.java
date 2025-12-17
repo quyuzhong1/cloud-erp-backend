@@ -1,6 +1,7 @@
 package com.erp.rpc.dmp.feign;
 
 
+import com.common.business.config.FeignErrorDecoder;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -15,7 +16,7 @@ import com.erp.model.dmp.dto.DmpPullSoOutStockDTO;
  * @author Jim
  * @since 2023-11-08
  */
-@FeignClient(value = "erp-dmp", path = "feign/dmp", contextId = "DmpAmazonFeign")
+@FeignClient(value = "erp-dmp", path = "feign/dmp", contextId = "DmpAmazonFeign",configuration = {FeignErrorDecoder.class})
 public interface DmpAmazonFeign {
 
     /**
@@ -36,13 +37,4 @@ public interface DmpAmazonFeign {
      **/
     @PostMapping("/amazon/shop")
     AmazonShopInfoDTO getShopAuth(@RequestBody String shopId);
-
-    /**
-     * 重推销售出库单
-     *
-     * @Author Jim
-     * @since 2024-03-12
-     **/
-    @PostMapping("/amazon/checkAndSendSoOutStock")
-    Boolean checkAndSendSoOutStock(@RequestBody DmpPullSoOutStockDTO dto);
 }

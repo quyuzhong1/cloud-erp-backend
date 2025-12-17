@@ -1,5 +1,6 @@
 package com.erp.rpc.wms.feign;
 
+import com.common.business.config.FeignErrorDecoder;
 import com.erp.model.oms.dto.SoB2cReturnDTO;
 import com.erp.model.wms.entity.SoReturnNoticeDetailEntity;
 import com.erp.model.wms.entity.SoReturnNoticeEntity;
@@ -8,7 +9,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import java.util.List;
 
-@FeignClient(name = "erp-wms", contextId = "soReturnNotice")
+@FeignClient(name = "erp-wms", contextId = "soReturnNotice",configuration = {FeignErrorDecoder.class})
 public interface SoReturnNoticeFeign {
     /**
      * 根据来源id查询销售退货通知单主表

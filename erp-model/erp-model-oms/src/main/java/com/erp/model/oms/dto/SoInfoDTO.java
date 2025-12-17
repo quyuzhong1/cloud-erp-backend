@@ -1,5 +1,6 @@
 package com.erp.model.oms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.annotation.Dict;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
@@ -7,8 +8,8 @@ import com.common.business.enums.BillApproveStatusEnum;
 import com.common.business.validator.AddGroup;
 import com.common.core.anno.StateEnumValue;
 import com.erp.model.oms.entity.SoInfoEntity;
-import com.erp.model.oms.enums.OrderSubTypeEnum;
 import com.erp.model.oms.enums.BillTypeEnum;
+import com.erp.model.oms.enums.OrderSubTypeEnum;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -20,6 +21,7 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -93,6 +95,43 @@ public class SoInfoDTO implements Serializable {
          * code
          */
         private String code;
+
+        /**
+         * 平台订单编号
+         */
+        private String platformOrderCode;
+
+        /**
+         * 平台
+         */
+        private String dictPlatform;
+        /**
+         * 平台更新时间
+         */
+        private LocalDateTime platformUpdateTime;
+
+        /**
+         * 平台创建时间
+         */
+        private LocalDateTime platformCreateTime;
+
+        /**
+         * 账户抵扣金额
+         */
+        private BigDecimal accountDeductAmount;
+        /**
+         * 返利抵扣金额
+         */
+        private BigDecimal rebateDeductAmount;
+        /**
+         * 授信抵扣金额
+         */
+        private BigDecimal creditDeductAmount;
+
+        /**
+         * 订单金额
+         */
+        private BigDecimal orderAmount;
 
         /**
          * 军区id
@@ -239,6 +278,21 @@ public class SoInfoDTO implements Serializable {
         private String skuNo;
 
         /**
+         * SPU ID
+         */
+        private String spuId;
+
+        /**
+         * SPU编号
+         */
+        private String spuNo;
+
+        /**
+         * SPU名称
+         */
+        private String spuName;
+
+        /**
          * 币种
          */
         private String currency;
@@ -294,6 +348,11 @@ public class SoInfoDTO implements Serializable {
          * 有效发货通知数量
          */
         private Integer effectiveNoticeQty;
+
+        /**
+         * 剩余发货通知数量
+         */
+        private Integer remainingNoticeQty;
 
         /**
          * 是否缺货
@@ -413,6 +472,10 @@ public class SoInfoDTO implements Serializable {
          * 明细备注
          */
         private String detailRemark;
+        /**
+         * 拣货备注
+         */
+        private String pickRemark;
 
         /**
          * 汇率
@@ -459,6 +522,10 @@ public class SoInfoDTO implements Serializable {
          */
         private BigDecimal receiveAmount;
 
+        /**
+         * 剩余收款金额
+         */
+        private BigDecimal remainReceiveAmount;
         /**
          * 贸易条款
          */
@@ -588,6 +655,11 @@ public class SoInfoDTO implements Serializable {
 
         /**
          * 客户SKU
+         */
+        private String customerSkuNo;
+
+        /**
+         * 平台sku
          */
         private String platformSkuNo;
 
@@ -801,6 +873,15 @@ public class SoInfoDTO implements Serializable {
          */
         private String id;
 
+        /**
+         * 平台
+         */
+        private String dictPlatform;
+
+        /**
+         * 订单金额
+         */
+        private BigDecimal orderAmount;
 
         /**
          * 类型 来源
@@ -939,25 +1020,17 @@ public class SoInfoDTO implements Serializable {
         /**
          * 收款账号 接口地址：/oms/bankAccount/select
          */
-        @NotBlank(message = "收款账号不能为空", groups = {AddGroup.class})
         private String receiveAccount;
 
         /**
          * 收款方式  http://172.16.100.11:3002/project/110/interface/api/13435?key=receiveMethod
          */
-        @NotBlank(message = "收款方式不能为空", groups = {AddGroup.class})
         private String receiveMethod;
 
         /**
          * 收款日期
          */
         private LocalDate receiveDate;
-
-        /**
-         * 收款金额
-         */
-        @Digits(integer = 16, fraction = 4, message = "收款金额整数位最大12位，小数位不能大于4位", groups = {AddGroup.class})
-        private BigDecimal receiveAmount;
 
         /**
          * 收款条件 http://172.16.100.11:3002/project/110/interface/api/cat_2732
@@ -1002,9 +1075,54 @@ public class SoInfoDTO implements Serializable {
         private String customerOrderNo;
 
         /**
+         * 平台订单编号
+         */
+        private String platformOrderCode;
+        /**
+         * 平台订单Id
+         */
+        private String platformOrderId;
+        /**
          * 单据子类型
          */
         private String transactionSubType;
+
+        /**
+         * 来源单据ID
+         */
+        private String sourceId;
+        /**
+         * 来源类型
+         */
+        private String sourceType;
+
+        /**
+         * 平台更新时间
+         */
+        private LocalDateTime platformUpdateTime;
+
+        /**
+         * 平台创建时间
+         */
+        private LocalDateTime platformCreateTime;
+
+        /**
+         * 账户抵扣金额
+         */
+        private BigDecimal accountDeductAmount;
+        /**
+         * 返利抵扣金额
+         */
+        private BigDecimal rebateDeductAmount;
+        /**
+         * 授信抵扣金额
+         */
+        private BigDecimal creditDeductAmount;
+
+        /**
+         * 收款单信息
+         */
+        private List<SoReceiptDTO.SoViewDTO> soReceiptDTOList;
     }
 
 
@@ -1025,6 +1143,15 @@ public class SoInfoDTO implements Serializable {
          * code
          */
         private String code;
+
+        /**
+         * 平台
+         */
+        private String dictPlatform;
+        /**
+         * 平台订单编号
+         */
+        private String platformOrderCode;
         /**
          * 虚拟仓id
          */
@@ -1033,6 +1160,12 @@ public class SoInfoDTO implements Serializable {
          * 虚拟仓名称
          */
         private String virtualWarehouseName;
+
+        /**
+         * 订单金额
+         */
+        private BigDecimal orderAmount;
+
         /**
          * 审核状态code
          */
@@ -1170,6 +1303,11 @@ public class SoInfoDTO implements Serializable {
          */
         private String currency;
 
+
+        /**
+         * 币种符号
+         */
+        private String currencySymbol;
 
         /**
          * 是否含税
@@ -1310,6 +1448,38 @@ public class SoInfoDTO implements Serializable {
          */
         private Integer version;
 
+        /**
+         * 收款单信息
+         */
+        private List<SoReceiptDTO.SoViewDTO> soReceiptDTOList;
+
+        /**
+         * 平台订单Id
+         */
+        private String platformOrderId;
+
+        /**
+         * 平台更新时间
+         */
+        private LocalDateTime platformUpdateTime;
+
+        /**
+         * 平台创建时间
+         */
+        private LocalDateTime platformCreateTime;
+
+        /**
+         * 账户抵扣金额
+         */
+        private BigDecimal accountDeductAmount;
+        /**
+         * 返利抵扣金额
+         */
+        private BigDecimal rebateDeductAmount;
+        /**
+         * 授信抵扣金额
+         */
+        private BigDecimal creditDeductAmount;
 
         /**
          * 订单产品详情
@@ -1472,7 +1642,14 @@ public class SoInfoDTO implements Serializable {
         @NotBlank(message = "id不能为空")
         private String id;
 
+        private Boolean isUpdateSoReceipt = true;
 
+        /**
+         * 平台
+         */
+        private String dictPlatform;
+
+        private String platformOrderId;
         /**
          * 类型 来源
          * http://172.16.100.11:3002/project/110/interface/api/13480
@@ -1482,6 +1659,10 @@ public class SoInfoDTO implements Serializable {
         @StateEnumValue(clazz = BillTypeEnum.class, message = "单据类型有误", groups = {AddGroup.class})
         private String orderType;
 
+        /**
+         * 订单金额
+         */
+        private BigDecimal orderAmount;
         /**
          * 要货日期
          */
@@ -1504,6 +1685,11 @@ public class SoInfoDTO implements Serializable {
          * 销售部门id
          */
         private String salesDeptId;
+
+        /**
+         * 平台订单编号
+         */
+        private String platformOrderCode;
 
         /**
          * 销售员id
@@ -1568,6 +1754,28 @@ public class SoInfoDTO implements Serializable {
         @Size(max = 50, message = "联系电话最大50字符")
         private String telNumber;
 
+        /**
+         * 平台更新时间
+         */
+        private LocalDateTime platformUpdateTime;
+
+        /**
+         * 平台创建时间
+         */
+        private LocalDateTime platformCreateTime;
+
+        /**
+         * 账户抵扣金额
+         */
+        private BigDecimal accountDeductAmount;
+        /**
+         * 返利抵扣金额
+         */
+        private BigDecimal rebateDeductAmount;
+        /**
+         * 授信抵扣金额
+         */
+        private BigDecimal creditDeductAmount;
 
         /**
          * 收货人id地址
@@ -1609,13 +1817,11 @@ public class SoInfoDTO implements Serializable {
         /**
          * 收款账号 接口地址：/oms/bankAccount/select
          */
-        @NotBlank(message = "收款账号不能为空", groups = {AddGroup.class})
         private String receiveAccount;
 
         /**
          * 收款方式  http://172.16.100.11:3002/project/110/interface/api/13435?key=receiveMethod
          */
-        @NotBlank(message = "收款方式不能为空", groups = {AddGroup.class})
         private String receiveMethod;
 
         /**
@@ -1624,15 +1830,8 @@ public class SoInfoDTO implements Serializable {
         private LocalDate receiveDate;
 
         /**
-         * 收款金额
-         */
-        @Digits(integer = 16, fraction = 4, message = "收款金额整数位最大12位，小数位不能大于4位", groups = {AddGroup.class})
-        private BigDecimal receiveAmount;
-
-        /**
          * 收款条件 http://172.16.100.11:3002/project/110/interface/api/13435?key=collectionTerms
          */
-        @NotBlank(message = "收款条件不能为空", groups = {AddGroup.class})
         private String receiveCondition;
 
         /**
@@ -1676,6 +1875,11 @@ public class SoInfoDTO implements Serializable {
          */
         @Dict(enumClass = OrderSubTypeEnum.class)
         private String transactionSubType;
+
+        /**
+         * 收款单信息
+         */
+        private List<SoReceiptDTO.SoViewDTO> soReceiptDTOList = new ArrayList<>();
     }
 
     @Data
@@ -1858,6 +2062,14 @@ public class SoInfoDTO implements Serializable {
          * 销售备注
          */
         private String soRemark;
+        /**
+         * 客户备注
+         */
+        private String customerRemark;
+        /**
+         * 销售平台
+         */
+        private String dictPlatform;
 
         private String syncKingdeeId;
 
@@ -2965,5 +3177,28 @@ public class SoInfoDTO implements Serializable {
     public static class UpdateApprovalStatusDTO {
         private SoInfoEntity soInfoEntity;
         private BillApproveStatusEnum  billApproveStatusEnum;
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    public static class UpdatePlatformOrderIdDTO {
+        /**
+         * 销售订单编码
+         */
+        @NotBlank(message = "销售订单编码")
+        private String soCode;
+
+        /**
+         * 平台订单Id
+         */
+        @NotBlank(message = "平台订单Id不能为空")
+        private String platformOrderId;
+
+        /**
+         * 平台订单明细ID
+         */
+        @NotEmpty(message = "平台订单明细Id不能为空")
+        private List<String> platformDetailIdList;
     }
 }

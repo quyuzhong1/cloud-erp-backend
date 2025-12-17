@@ -3,7 +3,6 @@ package com.erp.server.tms.mapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.tms.dto.FirstMileCostAllocationDTO;
-import com.erp.model.tms.dto.InitFirstMileAllocationDTO;
 import com.erp.model.tms.entity.FirstMileCostAllocationEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
@@ -69,7 +68,7 @@ public interface FirstMileCostAllocationMapper extends BaseMapper<FirstMileCostA
      */
     List<FirstMileCostAllocationDTO.LastedAllocMonthDTO> listLastedAllocationMonth(@Param("logisticsBillIds") List<String> logisticsBillIds);
 
-    List<FirstMileCostAllocationEntity> listBySourceIdsAndReportPeriodId(@Param("sourceIds") List<String> sourceIds,@Param("reportPeriodId")  String reportPeriodId);
+    List<FirstMileCostAllocationEntity> listBySourceIdsAndReportPeriodId(@Param("sourceIds") List<String> sourceIds, @Param("reportPeriodId")  String reportPeriodId, @Param("supplierId") String supplierId, @Param("supplierType") String supplierType);
     /**
      * 根据业务信息查询分摊记录
      * @param sourceId

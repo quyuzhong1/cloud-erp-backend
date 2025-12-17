@@ -13,7 +13,6 @@
     <packaging>pom</packaging>
 
     <properties>
-        <hutool.version>5.8.12</hutool.version>
         <rocketmq.verion>2.2.2</rocketmq.verion>
     </properties>
 

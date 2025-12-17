@@ -2,6 +2,7 @@ package com.erp.rpc.dmp.feign;
 
 import java.util.List;
 
+import com.common.business.config.FeignErrorDecoder;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -13,7 +14,7 @@ import com.erp.model.dmp.dto.DmpPushWdtDTO;
  * @date 2024-07-25
  * @author tanmujin
  */
-@FeignClient(value = "erp-dmp", path = "/feign/dmpPushWdt", contextId = "dmpPushWdt")
+@FeignClient(value = "erp-dmp", path = "/feign/dmpPushWdt", contextId = "dmpPushWdt",configuration = {FeignErrorDecoder.class})
 public interface DmpPushWdtFeign {
 
     /**

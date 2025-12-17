@@ -64,6 +64,7 @@ public class RedisKeyConstant {
     public static String SETTLEMENT_EXCHANGE_RATE = "SETTLEMENT_EXCHANGE_RATE:{}_{}";
 
     public static final String SO_B2C_ORDER_KEY = "SO_B2C_ORDER_KEY";
+    public static final String SO_B2C_THIRD_DELIVERY_ORDER_KEY = "SO_B2C_THIRD_DELIVERY_ORDER_KEY";
     public static final String SO_B2C_DELIVERY_KEY = "SO_B2C_DELIVERY_KEY";
     public static final String SO_B2C_DELIVERY_INTERCEPT_KEY = "SO_B2C_DELIVERY_INTERCEPT_KEY";
     public static final String WMS_VIRTUAL_DETAIL_MSG_KEY = "WMS_VIRTUAL_DETAIL_MSG_KEY";

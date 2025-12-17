@@ -33,7 +33,7 @@ public class DmpThirdRegionServiceImpl extends SuperServiceImpl<DmpThirdRegionMa
     @Autowired
     private OperateLogService operateLogService;
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(DmpThirdRegionDTO.AddDTO addDTO) {

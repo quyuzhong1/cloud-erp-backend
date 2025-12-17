@@ -107,7 +107,7 @@ public class PAUpdateBillStatusHandler implements CreateBillHandler {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public void createBill(JSONObject jsonObject, CfgThirdProcessEntity thirdProcessEntity, List<CfgProcessFieldMapEntity> fieldMapList, List<CfgProcessValueMapEntity> valueMapList) {
         DictBasicEnum dictBasicEnum = DictBasicEnum.getByCode(thirdProcessEntity.getOperateType());
         ProcessFormHandler constructBillHandler = processFormFactory.getConstructBillHandler(thirdProcessEntity.getSourcePlatform());
@@ -129,7 +129,7 @@ public class PAUpdateBillStatusHandler implements CreateBillHandler {
             LocalDateTime approveTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(endTime), ZoneId.systemDefault());
 
             //解析数据
-            Map<String, Object> map = constructBillHandler.constructBill(jsonObject.getJSONArray(FsRequestBodyAttributesEnum.FORM.getCode()), fieldMapList, valueMapList);
+            Map<String, Object> map = constructBillHandler.constructBill(jsonObject.getJSONArray(FsRequestBodyAttributesEnum.FORM.getCode()), fieldMapList, valueMapList,CfgQueryOptionBussinessKeyEnum.PURCHASEAPPLICATION.getCode());
             //处理数据
             handleMapData(map,Boolean.TRUE);
 
@@ -173,6 +173,7 @@ public class PAUpdateBillStatusHandler implements CreateBillHandler {
             //更新三方生成查询
             taskInfo.setBussinessKey(thirdProcessEntity.getBussinessKey());
             taskInfo.setHappenTime(LocalDateTime.now());
+            taskInfo.setBussinessApproveStatus(FSApprovalStatusEnum.getErpApproveStatusByCode(status).getCode());
             taskInfo.setStatus(taskStatus);
             taskInfo.setReason(reason);
             //保存三方生成查询

@@ -1,19 +1,22 @@
 package com.erp.rpc.plm.feign;
 
+import com.common.business.config.FeignErrorDecoder;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
+import com.erp.model.plm.dto.BomDTO;
 import com.erp.model.plm.dto.ProductBomInfoDTO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * BomSku Feign
  * @date 2024-08-31
  * @author tanmujin
  */
-@FeignClient(name = "erp-plm", path = "/feign/bom", contextId = "bomSkuFeign")
+@FeignClient(name = "erp-plm", path = "/feign/bom", contextId = "bomSkuFeign",configuration = {FeignErrorDecoder.class})
 public interface BomSkuFeign {
 
     /**
@@ -30,4 +33,14 @@ public interface BomSkuFeign {
      */
     @PostMapping("/checkExistAndListCombinationSku")
     List<BomChildrenSkuDTO> checkExistAndListCombinationSku(@RequestBody List<String> skuNos);
+
+    /**
+     * @description: 查询单品bom
+     * @return Map<String, List<BomDTO.BomSku>>
+     */
+    @PostMapping("/getSingleBomInfo")
+    Map<String, List<BomDTO.BomSku>> getSingleBomInfo(@RequestBody List<String> skuIds);
+
+
+
 }

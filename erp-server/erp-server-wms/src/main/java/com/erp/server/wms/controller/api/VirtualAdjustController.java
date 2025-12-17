@@ -115,6 +115,7 @@ public class VirtualAdjustController extends BaseController {
     * @return ApiResult<Void>
     */
     @PostMapping("/addAndSubmit")
+    @LogAction(value = LogActionEnum.ADD_AND_SUBMIT, desc = "新增并提交审核")
     public ApiResult<BaseResultDTO.AddDTO> addAndSubmit(@RequestBody @Validated VirtualAdjustDTO.AddDTO dto) {
         BaseResultDTO.AddDTO result = virtualAdjustService.addAndSubmit(dto);
         return success(result);
@@ -133,6 +134,7 @@ public class VirtualAdjustController extends BaseController {
             menuCode = "wms:virtualAdjust:updateAndSubmit",
             serviceClass = VirtualAdjustService.class,
             keyIdName = "id")
+    @LogAction(value = LogActionEnum.UPDATE_AND_SUBMIT, desc = "修改并提交审核")
     public ApiResult<Void> updateAndSubmit(@RequestBody @Validated VirtualAdjustDTO.UpdateDTO dto) {
         virtualAdjustService.updateAndSubmit(dto);
         return success();

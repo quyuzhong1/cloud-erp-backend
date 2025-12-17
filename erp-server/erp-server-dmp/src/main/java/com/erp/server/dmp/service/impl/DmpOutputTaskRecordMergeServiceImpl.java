@@ -79,7 +79,7 @@ public class DmpOutputTaskRecordMergeServiceImpl extends SuperServiceImpl<DmpOut
 	@Qualifier("dmpSdyOutputExecutorPool")
 	private ExecutorService dmpSdyOutputExecutorPool;
     
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(DmpOutputTaskRecordMergeDTO.AddDTO addDTO) {
@@ -220,10 +220,10 @@ public class DmpOutputTaskRecordMergeServiceImpl extends SuperServiceImpl<DmpOut
 							.eq(DmpOutputTaskRecordEntity::getId, dmpOutputTaskRecordEntity.getId())
 							.ne(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
 							.update();
-						return false;
+//						return false;
 					}else {
 						if(validateMerge(leDataIdList.stream().map(DmpOutputTaskRecordEntity::getId).collect(Collectors.toList()), dmpOutputTaskRecordEntity)) {
-							return false;
+//							return false;
 						}
 					}
 				}
@@ -232,7 +232,7 @@ public class DmpOutputTaskRecordMergeServiceImpl extends SuperServiceImpl<DmpOut
 				if("DmpOutputErpPushTaskHandler".equals(outputClass)) {
 					DmpOutputErpPushTaskHandler dmpOutputErpPushTaskHandler = ApplicationContextUtils.getBean(DmpHandlerUtils.dealBeanClass(outputClass) , DmpOutputErpPushTaskHandler.class);
 					if(dmpOutputErpPushTaskHandler.validateSourceId(dmpCfgOutputEntity, dmpOutputTaskRecordEntity , true)) {
-						return false;
+//						return false;
 					}
 				}
 				

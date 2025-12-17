@@ -897,6 +897,7 @@ public class PurchaseOrderController extends BaseController {
             menuCode = "scm:purchaseOrder:updateContractStampStatus",
             serviceClass = PurchaseOrderService.class,
             keyIdName = "ids")
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "合同状态更新")
     public ApiResult<?> updateContractStampStatus(@RequestBody @Validated PurchaseOrderDTO.ContractStampStatusParamsDTO dto) {
         purchaseOrderService.updateContractStampStatus(dto);
         return success();
@@ -913,4 +914,103 @@ public class PurchaseOrderController extends BaseController {
         return success();
     }
 
+    /**
+     * 历史未完结订单分页查询（待调整列表）
+     * @author will
+     * @date 2025/7/29 15:15
+     * @param dto
+     * @return ApiResult<PagingVO<AdjustListDTO>>
+     */
+    @PostMapping("/adjustPaging")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "purchase_user_id",
+            warehouseTableField = "po.delivery_warehouse_id",
+            menuCode = "scm:purchaseOrder:paging",
+            tableAlias = "po")
+    @WebAdvanceQuery
+    public ApiResult<PagingVO<PurchaseOrderDTO.AdjustListDTO>> adjustPaging(@RequestBody @Validated PagingDTO<PurchaseOrderDTO.SearchAdjustParamDTO> dto) {
+        PagingVO<PurchaseOrderDTO.AdjustListDTO> pagingVO = purchaseOrderService.adjustPaging(dto);
+        return success(pagingVO);
+    }
+
+    /**
+     * 导出历史未完结订单
+     * @author will
+     * @date 2025/7/29 19:09
+     * @param dto
+     * @return ApiResult<?>
+     */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出历史未完结订单")
+    @PostMapping(value = "/exportAdjustExcel")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "purchase_user_id",
+            warehouseTableField = "po.delivery_warehouse_id",
+            menuCode = "scm:purchaseOrder:paging",
+            tableAlias = "po")
+    @WebAdvanceQuery
+    public ApiResult<?> exportAdjustExcel(@RequestBody @Validated PurchaseOrderDTO.SearchAdjustParamDTO dto) {
+        Boolean flag = purchaseOrderService.exportAdjustExcel(dto);
+        return flag ? success() : failure();
+    }
+
+    /**
+     * 批量调价
+     * @author will
+     * @date 2025/7/30 09:22
+     * @param dto
+     * @return ApiResult<?>
+     */
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "批量调价")
+    @PostMapping(value = "/batchAdjustPrice")
+    public ApiResult<?> batchAdjustPrice(@RequestBody @Validated PurchaseOrderDTO.AdjustPriceDTO dto) {
+        Boolean flag = purchaseOrderService.batchAdjustPrice(dto);
+        return flag ? success() : failure();
+    }
+
+
+    /**
+     * 导入采购订单主表
+     * @author will
+     * @date 2025/7/30 17:50
+     * @param excelFile
+     * @param response
+     * @return ApiResult<ImportDTO>
+     */
+    @LogAction(value = LogActionEnum.IMPORT, desc = "导入采购订单主表")
+    @PostMapping("/importMainFile")
+    public ApiResult importMainFile(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
+        Boolean flag = purchaseOrderService.importMainFile(excelFile, response);
+        return flag ? success() : failure();
+    }
+
+    /**
+     * 下载采购订单主表模板
+     * @author Will
+     * @date 2025/7/30 17:50
+     * @param request
+     * @param response
+     */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "下载采购订单主表模板")
+    @GetMapping("/exportMainTemplate")
+    public ApiResult<Object> exportMainTemplate(HttpServletRequest request, HttpServletResponse response) {
+        String path = "classpath:excel/purchaseOrderMainTemplate.xlsx";
+        String excelName = "template.xlsx";
+        ResourceLoader resourceLoader = new DefaultResourceLoader();
+        try {
+            InputStream inputStream = resourceLoader.getResource(path).getInputStream();
+            XSSFWorkbook wb = new XSSFWorkbook(inputStream);
+            // 输出Excel文件
+            OutputStream output = response.getOutputStream();
+            response.reset();
+            // 设置文件头
+            response.setHeader("Content-Disposition",
+                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), StandardCharsets.ISO_8859_1));
+            response.setContentType("application/msexcel");
+            wb.write(output);
+            wb.close();
+        } catch (Exception e) {
+            throw new ServiceException(ApiError.ERROR_95131);
+        }
+        return success();
+    }
 }

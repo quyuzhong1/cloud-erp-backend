@@ -1,10 +1,12 @@
 package com.erp.server.mrp.controller.api;
 
 
+import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.mrp.dto.CfgRuleWarehouseDTO;
 import com.erp.model.mrp.dto.CfgRuleWarehouseDetailDTO;
 import com.erp.server.mrp.service.CfgRuleWarehouseService;
@@ -50,6 +52,7 @@ public class CfgRuleWarehouseController extends BaseController {
     * @return ApiResult
     */
     @PostMapping("/update")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "仓库规则修改")
     public ApiResult<String> update(@RequestBody @Validated CfgRuleWarehouseDTO.UpdateDTO dto) {
         cfgRuleWarehouseService.update(dto);
         return success();
@@ -74,6 +77,7 @@ public class CfgRuleWarehouseController extends BaseController {
      * @return ApiResult<ViewDTO>
      */
     @PostMapping("/refreshVirtual")
+    @LogAction(value = LogActionEnum.UPDATE_WITHOUT_PARAMS, desc = "更新虚拟仓数据")
     public ApiResult<String> refreshVirtual() {
         cfgRuleWarehouseService.refreshVirtual();
         return success();

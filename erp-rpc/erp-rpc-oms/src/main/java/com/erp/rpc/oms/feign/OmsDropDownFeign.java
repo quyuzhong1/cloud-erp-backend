@@ -1,5 +1,6 @@
 package com.erp.rpc.oms.feign;
 
+import com.common.business.config.FeignErrorDecoder;
 import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.entity.DictBasicEntity;
@@ -9,7 +10,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 
-@FeignClient(name = "erp-oms", contextId = "dropDown")
+@FeignClient(name = "erp-oms", contextId = "omsDropDownFeign",configuration = {FeignErrorDecoder.class})
 public interface OmsDropDownFeign {
 
     /**

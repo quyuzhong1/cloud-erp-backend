@@ -3,6 +3,7 @@ package com.erp.server.wms.handler;
 import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.json.JSONUtil;
 import com.common.business.enums.ErpServerModuleEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncStatusEnum;
@@ -12,7 +13,6 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.message.service.mq.MQProducerService;
-import com.erp.model.dmp.dto.ThirdWarehouseTaskDTO;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.msg.dto.WarnMsgInfoDTO;
@@ -99,13 +99,14 @@ public abstract class AbstractThirdWarehouseHandler extends BaseController imple
 
     @Override
     public ApiResult<String> createOutboundBill(ThirdWarehouseCreateOutboundReq createOutboundReq, String authId) {
+        log.error("createOutboundBill authId:{} request:{}", authId, JSONUtil.toJsonStr(createOutboundReq));
         //相同sku合并数量
         if(CollectionUtils.isNotEmpty(createOutboundReq.getItems())){
             Map<String,Integer> mergeSkuMap = createOutboundReq.getItems().stream().collect(Collectors.toMap(ThirdWarehouseCreateOutboundReq.Item::getProductSku, ThirdWarehouseCreateOutboundReq.Item::getQuantity, Integer::sum));
             //将map转成List<Item>
             createOutboundReq.setItems(mergeSkuMap.entrySet().stream().map(v->{
                     ThirdWarehouseCreateOutboundReq.Item item = createOutboundReq.getItems().stream().filter(i->i.getProductSku().equals(v.getKey())).findFirst().orElse(new ThirdWarehouseCreateOutboundReq.Item());
-               return new ThirdWarehouseCreateOutboundReq.Item(v.getKey(),v.getValue(),item.getHsCode(),item.getProductSkuId());
+               return new ThirdWarehouseCreateOutboundReq.Item(item.getThirdBarcode(),v.getKey(),v.getValue(),item.getHsCode(),item.getProductSkuId());
             }).collect(Collectors.toList()));
         }
         return handleAndRemoveContext(() -> createOutboundBill(createOutboundReq), authId,SourceTypeEnum.THIRD_WAREHOUSE_CREATE_OUTBOUND_BILL,createOutboundReq.getReferenceNo());
@@ -114,6 +115,11 @@ public abstract class AbstractThirdWarehouseHandler extends BaseController imple
     @Override
     public ApiResult<String> cancelOutboundBill(ThirdWarehouseCancelOutboundReq cancelOutboundReq, String authId) {
         return handleAndRemoveContext(() -> cancelOutboundBill(cancelOutboundReq), authId,SourceTypeEnum.THIRD_WAREHOUSE_CANCEL_OUTBOUND_BILL,cancelOutboundReq.getOrderCode());
+    }
+
+    @Override
+    public ApiResult<String> queryOutboundBill(ThirdWarehouseQueryOutboundReq queryOutboundReq, String authId) {
+        return handleAndRemoveContext(() -> queryOutboundBill(queryOutboundReq), authId,SourceTypeEnum.THIRD_WAREHOUSE_QUERY_OUTBOUND_BILL,queryOutboundReq.getErpOrderCode());
     }
 
     @Override
@@ -132,6 +138,12 @@ public abstract class AbstractThirdWarehouseHandler extends BaseController imple
     }
 
     @Override
+    public ApiResult<ThirdWarehouseUploadHandoverFileResponse> uploadHandoverFile(ThirdWarehouseUploadHandoverFileReq uploadHandoverFileReq, String authId) {
+        return handleAndRemoveContext(() -> uploadHandoverFile(uploadHandoverFileReq), authId,SourceTypeEnum.THIRD_WAREHOUSE_UPLOAD_HANDOVER_FILE,uploadHandoverFileReq.getOrderCode());
+    }
+
+
+    @Override
     public ApiResult<String> refreshToken(String authId,Map<String,Object> map) {
         return handleAndRemoveContext(() ->  refreshToken(map), authId,SourceTypeEnum.THIRD_WAREHOUSE_REFRESH_TOKEN,authId);
     }
@@ -146,6 +158,8 @@ public abstract class AbstractThirdWarehouseHandler extends BaseController imple
     protected abstract ApiResult<List<ThirdWarehouseCalculateFeeResponse>> getCalculateFeeBatch(@Valid ThirdWarehouseCalculateFeeReq calculateFeeReq);
     protected abstract ApiResult<ThirdWarehouseUploadFileResponse> uploadFile(@Valid ThirdWarehouseUploadFileReq uploadFileReq);
     protected abstract ApiResult<ThirdWarehouseUploadOrderLabelResponse> uploadOrderLabel(@Valid ThirdWarehouseUploadOrderLabelReq uploadFileReq);
+    protected abstract ApiResult<ThirdWarehouseUploadHandoverFileResponse> uploadHandoverFile(@Valid ThirdWarehouseUploadHandoverFileReq uploadHandoverFileReq);
+
     protected abstract ApiResult<String> createOutboundBill(ThirdWarehouseCreateOutboundReq createOutboundReq);
 
     protected  ApiResult<String> refreshToken(Map<String,Object> map){
@@ -154,6 +168,7 @@ public abstract class AbstractThirdWarehouseHandler extends BaseController imple
 
 
     protected abstract ApiResult<String> cancelOutboundBill(@Valid ThirdWarehouseCancelOutboundReq cancelOutboundReq);
+    protected abstract ApiResult<String> queryOutboundBill(@Valid ThirdWarehouseQueryOutboundReq queryOutboundReq);
 
     protected abstract Boolean warehouseAuthorize(OverseasProviderDTO.AuthorizeParamDTO dto);
 
@@ -189,14 +204,14 @@ public abstract class AbstractThirdWarehouseHandler extends BaseController imple
         }
         DmpPushTaskEntity dmpPushTaskEntity = buildDmpPushTaskEntity(businessType, status, erpBusinessCode);
         try {
-            String id = dmpTaskFeign.saveOrUpdateDmpPushTask(dmpPushTaskEntity);
+            String id = dmpTaskFeign.saveDmpPushTask(dmpPushTaskEntity);
             //增加异常预警
             if (!ApiResult.success().getCode().equals(status) && sendMsg) {
                 dmpPushTaskEntity.setId(id);
                 sendPushWarnMsg(dmpPushTaskEntity);
             }
         } catch (Exception e) {
-            log.error("saveOrUpdateDmpPushTask:记录操作日志失败",e);
+            log.error("saveDmpPushTask:记录操作日志失败",e);
         }
     }
 

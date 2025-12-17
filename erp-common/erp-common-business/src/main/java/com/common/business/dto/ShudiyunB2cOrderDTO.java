@@ -2,9 +2,13 @@ package com.common.business.dto;
 
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.SyncOperateEnum;
+import com.common.business.wrapper.FeignQuery;
+
 import lombok.*;
 
 import java.math.BigDecimal;
+
+import org.apache.commons.lang3.StringUtils;
 
 @Getter
 @Setter
@@ -268,9 +272,17 @@ public class ShudiyunB2cOrderDTO {
      */
     private BigDecimal goods_transaction_amount = BigDecimal.ZERO;
     /**
+     * 商品优惠金额
+     */
+    private BigDecimal goods_discount_deduction_amount = BigDecimal.ZERO;
+    /**
      * 商品的分摊运费
      */
-    private BigDecimal freight;
+    private BigDecimal freight = BigDecimal.ZERO;
+    /**
+     * 商品分摊税费
+     */
+    private BigDecimal goods_taxation = BigDecimal.ZERO;
     /**
      * 商品基准售价
      */
@@ -603,7 +615,7 @@ public class ShudiyunB2cOrderDTO {
     private String department_name;
 
     /**
-     * 发货类型
+     * 发货类型：按照0/1推送【(0:平台配送1:自发货)】
      */
     private String fulfillment_type;
 
@@ -627,5 +639,9 @@ public class ShudiyunB2cOrderDTO {
                 return "已创建";
             }
         }
+    }
+    
+    public void setDefaultValue() {
+    	
     }
 }

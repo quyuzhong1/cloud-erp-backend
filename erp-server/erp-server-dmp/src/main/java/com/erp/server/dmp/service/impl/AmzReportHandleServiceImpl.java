@@ -127,7 +127,7 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public Boolean pullShipment(DmpPullShipmentDTO dto) {
         if (CollectionUtils.isEmpty(dto.getShipmentCodeList())){
             return true;
@@ -383,7 +383,7 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public void handlerNotifications(cn.hutool.json.JSONObject textMessageObj) throws Exception {
         log.warn("处理亚马逊报告通知：{}", JSONUtil.toJsonStr(textMessageObj));
 //        if (BusinessCommonConstants.hasProfile("test")) {
@@ -549,7 +549,7 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public void checkAndUpdateShop(List<ShopInfoEntity> shopList) throws Exception {
         if (CollectionUtils.isEmpty(shopList)) {
             return;

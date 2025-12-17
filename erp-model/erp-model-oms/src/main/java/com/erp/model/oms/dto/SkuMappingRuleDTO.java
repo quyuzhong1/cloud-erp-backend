@@ -315,6 +315,9 @@ public class SkuMappingRuleDTO implements Serializable {
          * 扩展规则DTO{@link com.erp.model.oms.enums.SkuMappingRuleEnum.SkuMappingExtendRuleEnum}
          */
         private ExtendRuleDTO extendRuleDTO;
+
+
+
     }
 
 
@@ -326,6 +329,11 @@ public class SkuMappingRuleDTO implements Serializable {
          * 规则详情
          */
         List<RuleConditionsDTO> ruleContentList;
+
+        /**
+         * 无需匹配勾选项集合 平台父产品parent 停售 inactive  删除  delete 草稿incomplete
+         */
+        private List<String> noMatchList;
     }
     /**
      * 扩展规则条件

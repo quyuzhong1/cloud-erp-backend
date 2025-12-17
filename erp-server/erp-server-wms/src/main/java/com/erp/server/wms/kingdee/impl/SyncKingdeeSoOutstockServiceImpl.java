@@ -145,7 +145,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
      **/
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public DmpPushTaskEntity syncDataToKingdee(SoOutstockEntity entity, String operate) {
         //生成任务
     	if(!SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
@@ -167,7 +167,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public DmpPushTaskEntity syncB2cDataToKingdee(SoOutstockEntity entity, String operate) {
     	if(!SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
     		return saveTask(entity, operate, DmpOutputConstant.getQuerySyncMap());
@@ -188,7 +188,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public DmpPushTaskEntity syncWdtDataToKingdee(SoOutstockEntity entity, String operate) {
         //生成任务
     	if(!SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
@@ -260,7 +260,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
     @Async("wmsErpExecutor")
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public void syncOrderToDmp(SoOutstockEntity entity, String syncOperate) {
         //判断是否需要推送记录
         if (!dmpTaskFeign.needPushMQ(LocalDateTime.now())) {
@@ -626,6 +626,8 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         resultMap.put("logisticsChannelName", entity.getLogisticsChannelName());
         //订单标签
         resultMap.put("tradeLabel", entity.getTradeLabel());
+        //来源单号
+        resultMap.put("F_Ulz_ConsignNum", entity.getSourceCode());
         //————————————————————财务信息SubHeadEntity——————————————————————
         //结算币别
         CurrencyDTO.ViewDTO viewDTO = currencyList.stream().filter(req -> req.getId().equals(soInfoById.getCurrency())).findFirst().orElse(new CurrencyDTO.ViewDTO());
@@ -655,6 +657,8 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         resultMap.put("soKingdeeDetailIds", String.join(",", soKingdeeDetailIdList));
         for (SoOutstockDetailEntity detailEntity : soOutstockDetailEntityList) {
             Map<String, Object> map = new HashMap<>();
+            map.put("customerPO", detailEntity.getCustomerPO());
+            map.put("platformSubSoCode", detailEntity.getPlatformSubSoCode());
             map.put("skuNo", detailEntity.getSkuNo());
             map.put("actualQty", detailEntity.getActualQty());
             SoOutstockDetailDTO.DeliveryQtyDTO deliveryQtyDTO = deliveryQtyDTOS.stream().filter(req -> req.getId().equals(detailEntity.getId())).findFirst().orElse(new SoOutstockDetailDTO.DeliveryQtyDTO());
@@ -851,6 +855,8 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         resultMap.put("logisticsChannelName", entity.getLogisticsChannelName());
         //订单标签
         resultMap.put("tradeLabel", entity.getTradeLabel());
+        //来源单号
+        resultMap.put("F_Ulz_ConsignNum", entity.getSourceCode());
         //————————————————————财务信息SubHeadEntity——————————————————————
         //结算币别
         CurrencyDTO.ViewDTO viewDTO = currencyList.stream().filter(req -> req.getId().equals(currency)).findFirst().orElse(new CurrencyDTO.ViewDTO());
@@ -1062,6 +1068,8 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         resultMap.put("logisticsChannelName", entity.getLogisticsChannelName());
         //订单标签
         resultMap.put("tradeLabel", entity.getTradeLabel());
+        //来源单号
+        resultMap.put("F_Ulz_ConsignNum", entity.getSourceCode());
         //————————————————————财务信息SubHeadEntity——————————————————————
         //结算币别
         CurrencyDTO.ViewDTO viewDTO = currencyList.stream().filter(req -> req.getId().equals(currency)).findFirst().orElse(new CurrencyDTO.ViewDTO());
@@ -1082,6 +1090,8 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         for (SoOutstockDetailEntity detailEntity : soOutstockDetailEntityList) {
             SoB2cDetailEntity soB2cDetailEntity = soB2cDetailList.stream().filter(s -> s.getId().equals(detailEntity.getSoDetailId())).findFirst().orElse(null);
             Map<String, Object> map = new HashMap<>();
+            map.put("customerPO", detailEntity.getCustomerPO());
+            map.put("platformSubSoCode", detailEntity.getPlatformSubSoCode());
             map.put("skuNo", detailEntity.getSkuNo());
             map.put("actualQty", detailEntity.getActualQty());
             map.put("salesQty", Objects.nonNull(soB2cDetailEntity) ? soB2cDetailEntity.getQty() : detailEntity.getActualQty());
@@ -1219,11 +1229,11 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
             // 国家名称
             shudiyunB2cOrderDTO.setCountry(dictCountryEntity.getShortNameCn());
             // 区域编码
-            shudiyunB2cOrderDTO.setRegion_code(dictCountryEntity.getSubregionCode());
+            shudiyunB2cOrderDTO.setRegion_code(dictCountryEntity.getRegionCode());
             // 区域名称
             DictGlobalAreaEntity dictGlobalAreaEntity = dictGlobalEntityList.stream().filter(e -> e.getId().equalsIgnoreCase(dictCountryEntity.getSubregionCode())).findFirst().orElse(null);
             if (null != dictGlobalAreaEntity){
-                shudiyunB2cOrderDTO.setRegion_name(dictGlobalAreaEntity.getSubregionName());
+                shudiyunB2cOrderDTO.setRegion_name(dictGlobalAreaEntity.getRegionName());
             }
         }
 
@@ -1469,7 +1479,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
     	DictCountryEntity dictCountryEntity = countryEntityList.stream().filter(e -> e.getId().equalsIgnoreCase(finalCountry)).findFirst().orElse(null);
     	if (null != dictCountryEntity){
     		// 区域编码
-    		viewDto.setProvince(dictCountryEntity.getSubregionCode());
+    		viewDto.setProvince(dictCountryEntity.getRegionCode());
     	}
     	
     	String finalPartitionId = partitionId;

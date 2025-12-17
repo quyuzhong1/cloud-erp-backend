@@ -460,4 +460,47 @@ public class LogisticsSupplierDTO implements Serializable {
         private List<ListChildTreeDTO> children;
 
     }
+
+    @Data
+    @NoArgsConstructor
+    public static class PagingSelectDTO {
+        /**
+         * 物流商id
+         */
+        private String id;
+        /**
+         * 启用/禁用
+         */
+        private Boolean disabled;
+        /**
+         * 授权状态
+         * 授权状态 already 已授权 not未授权 cancel 取消授权
+         */
+        private String authStatus;
+        /**
+         * 供应商名称
+         */
+        private String supplierName;
+        /**
+         * 物流商简称
+         */
+        private String shortName;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class SelectDTO {
+        /**
+         * 关键词
+         */
+        private String searchKeyword;
+        /**
+         * 禁用状态
+         */
+        private Boolean disabled;
+        /**
+         * 授权状态
+         */
+        private String authStatus;
+    }
 }

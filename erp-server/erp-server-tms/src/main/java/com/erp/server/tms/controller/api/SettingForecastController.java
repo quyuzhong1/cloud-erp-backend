@@ -4,8 +4,10 @@ package com.erp.server.tms.controller.api;
 import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.validator.ValidList;
+import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.tms.dto.SettingForecastDTO;
 import com.erp.server.tms.service.SettingForecastService;
 import lombok.extern.slf4j.Slf4j;
@@ -53,6 +55,7 @@ public class SettingForecastController extends BaseController {
      * @return
      */
     @PostMapping("/add")
+    @LogAction(value = LogActionEnum.INSERT, desc = "添加预报设置")
     public ApiResult<Object>batchAdd(@RequestBody @Validated ValidList<SettingForecastDTO.SaveOrUpdateDTO> list) {
         Boolean result = settingForecastService.addOrUpdate(list);
         return result ? success() : failure();
@@ -77,6 +80,7 @@ public class SettingForecastController extends BaseController {
      * @return
      */
     @PostMapping("/delete")
+    @LogAction(value = LogActionEnum.DELETE, desc = "删除")
     public ApiResult<Object>delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> idList = dto.getIds();
         Boolean result = settingForecastService.delete(idList);

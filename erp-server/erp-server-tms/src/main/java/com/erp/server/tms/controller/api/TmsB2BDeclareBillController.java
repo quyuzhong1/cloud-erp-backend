@@ -31,7 +31,6 @@ import java.io.IOException;
 import java.util.List;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_TMS_TMS_B2B_DECLARE_BILL;
-import static com.common.business.enums.FileTaskEventEnum.EXPORT_TMS_TMS_B2B_DECLARE_DECLARE_BILL;
 
 /**
  * B2B报关单
@@ -238,7 +237,7 @@ public class TmsB2BDeclareBillController extends BaseController {
      * @return ApiResult<String>
      */
     @PostMapping("/delete")
-    @LogAction(value = LogActionEnum.UPDATE, desc = "B2B报关单删除")
+    @LogAction(value = LogActionEnum.DELETE, desc = "批量删除记录")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
             menuCode = "tms:tmsB2BDeclareBill:delete",

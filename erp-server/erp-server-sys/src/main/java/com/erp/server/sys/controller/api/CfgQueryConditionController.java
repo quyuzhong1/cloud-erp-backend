@@ -5,9 +5,11 @@ import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.sys.dto.CfgQueryConditionDTO;
 import com.erp.server.sys.service.CfgQueryConditionService;
 import lombok.extern.slf4j.Slf4j;
@@ -52,6 +54,7 @@ public class CfgQueryConditionController extends BaseController {
      * 新增
      */
     @PostMapping("/add")
+    @LogAction(value = LogActionEnum.INSERT, desc = "新增")
     public ApiResult<Boolean> add(@RequestBody @Validated CfgQueryConditionDTO.AddDTO addDTO) {
         return success(cfgQueryConditionService.add(addDTO));
     }
@@ -60,6 +63,7 @@ public class CfgQueryConditionController extends BaseController {
      * 更新
      */
     @PostMapping("/update")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "更新")
     public ApiResult<Boolean> update(@RequestBody @Validated CfgQueryConditionDTO.UpdateDTO updateDTO) {
         return success(cfgQueryConditionService.update(updateDTO));
     }
@@ -68,6 +72,7 @@ public class CfgQueryConditionController extends BaseController {
      * 删除
      */
     @PostMapping("/delete")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "删除")
     public ApiResult<Boolean> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         return success(cfgQueryConditionService.delete(dto));
     }

@@ -14,11 +14,11 @@ import java.util.List;
 
 /**
  * <p>
- * 多渠道订单 Mapper 接口
+ * 多渠道订单主表 Mapper 接口
  * </p>
  *
- * @author Jim
- * @since 2024-05-30
+ * @author zdy
+ * @since 2025-08-20
  */
 @Mapper
 public interface SoMultiChannelMapper extends BaseMapper<SoMultiChannelEntity> {
@@ -30,13 +30,6 @@ public interface SoMultiChannelMapper extends BaseMapper<SoMultiChannelEntity> {
     * @return
     */
     IPage<SoMultiChannelDTO.ListDTO> paging(Page query, @Param("params") SoMultiChannelDTO.PagingParamDTO params);
-
-    /**
-    * 状态数量
-    * @param params
-    * @return
-    */
-    List<ApproveStatusQtyDTO> listCount(@Param("params") SoMultiChannelDTO.PagingParamDTO params);
 
     /**
     * 导出Excel查询
@@ -52,4 +45,15 @@ public interface SoMultiChannelMapper extends BaseMapper<SoMultiChannelEntity> {
     * @return
     */
     List<SoMultiChannelDTO.TabListDTO> tabList(@Param("params") SoMultiChannelDTO.PagingParamDTO searchParam);
+
+    /**
+     * 根据订单ID查询多渠道订单
+     * @param ids
+     * @return
+     */
+    List<SoMultiChannelDTO.SoViewDTO> listSoMultiChannelBySoId(@Param("ids") List<String> ids);
+
+    SoMultiChannelEntity getBySoId(@Param("soId") String soId);
+
+    List<SoMultiChannelEntity> queryMultiChannelDeliveryStatus();
 }

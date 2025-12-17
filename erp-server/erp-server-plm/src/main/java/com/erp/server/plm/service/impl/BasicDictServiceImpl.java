@@ -1,14 +1,31 @@
 package com.erp.server.plm.service.impl;
 
-import cn.hutool.core.collection.CollUtil;
+import static cn.hutool.core.text.CharSequenceUtil.isNotBlank;
+
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+import org.apache.commons.collections4.CollectionUtils;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.stereotype.Service;
+
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.business.threadlocal.UserContext;
+import com.common.business.vo.LoginUser;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.plm.dto.BasicDictDTO;
 import com.erp.model.plm.dto.DictControllerDTO;
 import com.erp.model.plm.entity.BasicDictEntity;
 import com.erp.server.plm.mapper.BasicDictMapper;
 import com.erp.server.plm.service.BasicDictService;
+import io.seata.common.util.StringUtils;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
@@ -19,7 +36,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static cn.hutool.core.util.StrUtil.isNotBlank;
+import static cn.hutool.core.text.CharSequenceUtil.isNotBlank;
+import cn.hutool.core.collection.CollUtil;
 
 /**
  * <p>
@@ -32,6 +50,39 @@ import static cn.hutool.core.util.StrUtil.isNotBlank;
 @Service
 public class BasicDictServiceImpl extends ServiceImpl<BasicDictMapper, BasicDictEntity> implements BasicDictService {
 
+	@Override
+	public boolean saveJsonObject(JSONObject jsonObject) {
+		BasicDictEntity entity = JSON.parseObject(jsonObject.toJSONString(), BasicDictEntity.class);
+		LocalDateTime now = LocalDateTime.now();
+		LoginUser loginUser = UserContext.getNonLoginUser();
+		String userId = loginUser.getUid();
+        String userName = loginUser.getUserName();
+    	entity.setUpdateTime(now);
+        entity.setUpdateUserId(userId);
+        entity.setUpdateUserName(userName);
+
+        entity.setCreateTime(now);
+		entity.setCreateUserId(userId);
+		entity.setCreateUserName(userName);
+		return super.save(entity);
+	}
+
+	@Override
+	public boolean updateJsonObject(List<JSONObject> jsonObjects) {
+		List<BasicDictEntity> entityList = new ArrayList<>();
+		for(JSONObject jsonObject : jsonObjects) {
+			BasicDictEntity entity = JSON.parseObject(jsonObject.toJSONString(), BasicDictEntity.class);
+			LocalDateTime now = LocalDateTime.now();
+			LoginUser loginUser = UserContext.getNonLoginUser();
+			String userId = loginUser.getUid();
+	        String userName = loginUser.getUserName();
+	    	entity.setUpdateTime(now);
+	        entity.setUpdateUserId(userId);
+	        entity.setUpdateUserName(userName);
+	        entityList.add(entity);
+		}
+        return super.updateBatchById(entityList);
+	}
     /**
      * 保存或者修改plm 字典表
      *
@@ -134,4 +185,17 @@ public class BasicDictServiceImpl extends ServiceImpl<BasicDictMapper, BasicDict
                 .collect(Collectors.toList());
         return result;
     }
+
+    @Override
+    public BasicDictEntity getByTypeAndValue(String type, String value) {
+        if(StringUtils.isBlank(type) || StringUtils.isBlank(value)){
+            return null;
+        }
+        LambdaQueryWrapper<BasicDictEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(BasicDictEntity::getType, type);
+        queryWrapper.eq(BasicDictEntity::getValue, value);
+        queryWrapper.last("LIMIT 1");
+        return this.getOne(queryWrapper);
+    }
+
 }

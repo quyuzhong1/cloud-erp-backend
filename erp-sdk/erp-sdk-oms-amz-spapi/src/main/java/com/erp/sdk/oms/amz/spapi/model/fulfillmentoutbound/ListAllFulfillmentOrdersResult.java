@@ -10,20 +10,26 @@
  * Do not edit the class manually.
  */
 
-
 package com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound;
 
+import java.util.Objects;
+import java.util.Arrays;
+import com.google.gson.TypeAdapter;
+import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.annotations.SerializedName;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonWriter;
+import com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound.FulfillmentOrder;
 
-
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
-
 /**
- * ListAllFulfillmentOrdersResult
+ * The request for the listAllFulfillmentOrders operation.
  */
-@javax.annotation.Generated(value = "io.swagger.codegen.languages.JavaClientCodegen", date = "2020-12-15T20:44:18.412+08:00")
+
+@javax.annotation.Generated(value = "io.swagger.codegen.v3.generators.java.JavaClientCodegen", date = "2025-08-18T09:55:11.594451100+08:00[Asia/Shanghai]")
+
 public class ListAllFulfillmentOrdersResult {
   @SerializedName("nextToken")
   private String nextToken = null;
@@ -40,7 +46,7 @@ public class ListAllFulfillmentOrdersResult {
    * When present and not empty, pass this string token in the next request to return the next response page.
    * @return nextToken
   **/
-
+  
   public String getNextToken() {
     return nextToken;
   }
@@ -66,7 +72,7 @@ public class ListAllFulfillmentOrdersResult {
    * An array of fulfillment order information.
    * @return fulfillmentOrders
   **/
-
+  
   public List<FulfillmentOrder> getFulfillmentOrders() {
     return fulfillmentOrders;
   }
@@ -77,7 +83,7 @@ public class ListAllFulfillmentOrdersResult {
 
 
   @Override
-  public boolean equals(Object o) {
+  public boolean equals(java.lang.Object o) {
     if (this == o) {
       return true;
     }
@@ -110,7 +116,7 @@ public class ListAllFulfillmentOrdersResult {
    * Convert the given object to string with each line indented by 4 spaces
    * (except the first line).
    */
-  private String toIndentedString(Object o) {
+  private String toIndentedString(java.lang.Object o) {
     if (o == null) {
       return "null";
     }
@@ -118,4 +124,3 @@ public class ListAllFulfillmentOrdersResult {
   }
 
 }
-

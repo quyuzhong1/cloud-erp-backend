@@ -34,7 +34,7 @@ import java.util.Map;
  * @Date 2022-07-08 16:52
  * @Created by yl
  */
-@FeignClient(name = "erp-sys", configuration = {FeignErrorDecoder.class})
+@FeignClient(name = "erp-sys", contextId = "sysUserFeign",configuration = {FeignErrorDecoder.class})
 public interface SysUserFeign {
 
     /**
@@ -110,6 +110,15 @@ public interface SysUserFeign {
     List<String> getRoleIdList(@RequestBody String userId);
 
     /**
+     * 根据用户ID获取用户完整登录信息（包含权限和菜单）
+     * @param userId 用户ID
+     * @param userType 用户类型
+     * @return 用户信息（包含permissionList和leftMenuList）
+     */
+    @PostMapping("feign/user/getUserLoginInfo")
+    ApiResult<SysUserDTO> getUserLoginInfo(@RequestBody SysFeignDTO.UserLoginInfoDTO dto);
+
+    /**
      * 根据第三方平台 以及union id 获取用户id
      */
     @PostMapping("feign/user/getUserIdByThird")
@@ -160,6 +169,12 @@ public interface SysUserFeign {
      */
     @PostMapping("feign/code/getSkuNo")
     String getSkuNo(@RequestBody SysCodeSkuDTO dto);
+
+    /**
+     * 根据名称列表批量查询示例用户
+     */
+    @PostMapping("feign/sampleUseUser/getListByNameList")
+    ApiResult<List<SampleUseUserDTO.ViewDTO>> getSampleUseUserListByNameList(@RequestBody List<String> nameList);
 
     /**
      * 查询spu编码
@@ -215,7 +230,11 @@ public interface SysUserFeign {
      */
     @PostMapping("feign/user/listSuperiorByUserIds")
     List<UserSuperiorDTO> listSuperiorByUserIds(@RequestBody List<String> userIds);
-
+    /**
+     * 根据用户id查询所有上级部门
+     */
+    @PostMapping("feign/user/listDeptByUserIds")
+    List<UserSuperiorDTO> listDeptByUserIds(@RequestBody List<String> userIds);
     /**
      * 根据角色id查用户名称
      */
@@ -301,6 +320,24 @@ public interface SysUserFeign {
      **/
     @PostMapping("feign/accountingCompany/getCompanyById")
     SysAccountingCompanyEntity getCompanyById(@RequestBody String id);
+
+    /**
+     * 根据金蝶id查询组织信息
+     *
+     **/
+    @PostMapping("feign/accountingCompany/getCompanyByKindgeeId")
+    SysAccountingCompanyEntity getCompanyByKindgeeId(@RequestBody String KindgeeId);
+
+    /**
+     * 根据公司名称查询公司信息
+     *
+     * @param orgName 公司名称
+     * @return SysAccountingCompanyEntity
+     * @Author Luo_WG
+     * @Date 2023/4/13 12:19
+     **/
+    @PostMapping("feign/accountingCompany/getCompanyByName")
+    SysAccountingCompanyEntity getCompanyByName(@RequestBody String orgName);
 
     /**
      * 根据主键id查询组织信息
@@ -614,4 +651,23 @@ public interface SysUserFeign {
      */
     @PostMapping("feign/user/getUserByThirdIdList")
     List<SysUserThirdEntity>  getUserByThirdIdList(@RequestParam(value = "platform") String platform, @RequestParam(value = "thirdIds") ArrayList<String> thirdIds);
+
+    /**
+     * 通过App-Id获取飞书用户UnionId
+     * 通过App-Id从sys_referer_config表获取配置信息，然后调用FsService获取用户unionId
+     *
+     * @param appId 应用ID
+     * @param dto   查找第三方用户DTO
+     * @return 用户UnionId
+     */
+    @PostMapping("feign/user/getFsUserUnionIdByAppId")
+    ApiResult<String> getFsUserUnionIdByAppId(@RequestParam("appId") String appId, @RequestBody FindThirdUserDTO dto);
+
+    /**
+     * 根据币种三字码获取币种符号
+     * @param num
+     * @return
+     */
+    @GetMapping("feign/currency/getCurrencyByNum")
+    DictCurrencyEntity getCurrencyByNum(@RequestParam(value = "num") String num);
 }

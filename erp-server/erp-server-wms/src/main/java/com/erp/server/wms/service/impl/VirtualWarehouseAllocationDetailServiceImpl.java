@@ -84,7 +84,7 @@ public class VirtualWarehouseAllocationDetailServiceImpl extends SuperServiceImp
     private DmpInoutTaskFeign dmpInoutTaskFeign;
 
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO batchAdd(VirtualWarehouseAllocationDetailDTO.AddDTO addDTO) {
@@ -179,7 +179,7 @@ public class VirtualWarehouseAllocationDetailServiceImpl extends SuperServiceImp
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public BatchResultDTO manualFinish(VirtualWarehouseAllocationDetailEntity vwAllocationDetailEntity, VirtualWarehouseAllocationEntity vwAllocationEntity,
                                        VirtualWarehouseAllocationDTO.ManualFinishDto dto) {
         String existStatus = vwAllocationDetailEntity.getSyncStatus();
@@ -324,7 +324,7 @@ public class VirtualWarehouseAllocationDetailServiceImpl extends SuperServiceImp
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public BatchResultDTO sync(VirtualWarehouseAllocationDetailEntity vwAllocationDetailEntity, VirtualWarehouseAllocationEntity vwAllocationEntity) {
         //获取合单表明细id
         VirtualWarehousePushHandleRelationEntity handleRelation = virtualWarehousePushHandleRelationService.getOne(new LambdaQueryWrapper<VirtualWarehousePushHandleRelationEntity>()

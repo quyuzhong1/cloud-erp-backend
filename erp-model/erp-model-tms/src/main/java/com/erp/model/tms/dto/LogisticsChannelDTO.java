@@ -1,6 +1,5 @@
 package com.erp.model.tms.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.UnitEnum;
@@ -32,6 +31,22 @@ import java.util.Map;
 @Data
 @NoArgsConstructor
 public class LogisticsChannelDTO implements Serializable {
+
+    @Data
+    @NoArgsConstructor
+    public static class PlatformWarehouseDTO extends SortDTO {
+
+        /**
+         * 平台仓
+         */
+        @NotBlank(message = "平台仓不能为空")
+        private String platformWarehouseId;
+
+        /**
+         * 渠道类型
+         */
+        private String channelType;
+    }
 
     @Data
     @NoArgsConstructor
@@ -379,6 +394,11 @@ public class LogisticsChannelDTO implements Serializable {
         private String mainId;
 
         /**
+         * 尾程服务商
+         */
+        private String lastMileCarrier;
+
+        /**
          * 时效
          */
         private String effectiveTime;
@@ -411,6 +431,10 @@ public class LogisticsChannelDTO implements Serializable {
          * 是否推送海外仓面单
          */
         private Boolean isPushLabel;
+        /**
+         * 推送交接文件类型
+         */
+        private String handoverDocType;
         /**
          * 分拣码
          */
@@ -726,7 +750,6 @@ public class LogisticsChannelDTO implements Serializable {
         @NotBlank(message = "纸张大小不能为空")
         private String paperSize;
 
-
         /**
          * 分拣码
          */
@@ -734,10 +757,18 @@ public class LogisticsChannelDTO implements Serializable {
         private String sortingCode;
 
         /**
+         * 推送交接文件类型
+         */
+        private String handoverDocType;
+
+        /**
          * 是否推送海外仓面单
          */
         private Boolean isPushLabel;
-
+        /**
+         * 尾程服务商
+         */
+        private String lastMileCarrier;
 
         /**
          * 运费模板id
@@ -975,6 +1006,15 @@ public class LogisticsChannelDTO implements Serializable {
          */
         private String searchKeyword;
         /**
+         * 物流商id
+         */
+        private String supplierId;
+        /**
+         * 物流平台类型
+         * AmazonMultiChannel 亚马逊多渠道物流
+         */
+        private String logisticsPlatform;
+        /**
          * 禁用状态
          */
         private Boolean disabled;
@@ -1122,10 +1162,25 @@ public class LogisticsChannelDTO implements Serializable {
              */
             private String platformLogisticsChannelId;
             /**
+             * 渠道编码
+             */
+            private String platformLogisticsChannelCode;
+            /**
              * 渠道名称
              */
             private String platformLogisticsChannelName;
         }
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class WarehouseChannelParamDTO {
+
+        /**
+         * "仓库Id
+         */
+        @NotBlank(message = "仓库Id不能为空")
+        private String warehouseId;
     }
 
     @Data

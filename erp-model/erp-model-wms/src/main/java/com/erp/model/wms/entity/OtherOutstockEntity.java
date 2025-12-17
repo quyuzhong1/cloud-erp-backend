@@ -185,6 +185,24 @@ public class OtherOutstockEntity extends BaseEntity<OtherOutstockEntity> {
     @TableField("remark")
     private String remark;
 
+    /**
+     * 来源类型
+     */
+    @TableField("source_type")
+    private String sourceType;
+
+    /**
+     * 来源ID
+     */
+    @TableField("source_id")
+    private String sourceId;
+
+    /**
+     * 来源编号
+     */
+    @TableField("source_code")
+    private String sourceCode;
+
     @TableField(exist = false)
     private List<OtherOutstockDetailEntity> detailEntityList;
 
@@ -225,6 +243,12 @@ public class OtherOutstockEntity extends BaseEntity<OtherOutstockEntity> {
     public static final String INVALID_REMARK = "invalid_remark";
 
     public static final String APPROVE_TIME = "approve_time";
+
+    public static final String SOURCE_TYPE = "source_type";
+
+    public static final String SOURCE_ID = "source_id";
+
+    public static final String SOURCE_CODE = "source_code";
 
     public static final String APPROVE_USER_NAME = "approve_user_name";
 

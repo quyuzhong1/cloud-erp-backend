@@ -49,6 +49,16 @@ public class ThirdWarehouseFeignController extends BaseController {
         }
     }
 
+    @PostMapping("/queryOutboundOrder")
+    public ApiResult<String> queryOutboundOrder(@RequestBody ThirdWarehouseQueryOutboundReq queryOutboundReq) {
+        try {
+            ThirdWarehouseService service = thirdWarehouseRegistry.getHandler(queryOutboundReq.getThirdWarehouseProvideCode());
+            return service.queryOutboundBill(queryOutboundReq, queryOutboundReq.getAuthId());
+        } catch (ServiceException serviceException) {
+            return failure(serviceException.getMsg());
+        }
+    }
+
     /**
      * 运费试算
      * @param params
@@ -83,6 +93,20 @@ public class ThirdWarehouseFeignController extends BaseController {
         try {
             ThirdWarehouseService service = thirdWarehouseRegistry.getHandler(uploadOrderLabelReq.getThirdWarehouseProvideCode());
             return service.uploadOrderLabel(uploadOrderLabelReq, uploadOrderLabelReq.getAuthId());
+        } catch (ServiceException serviceException) {
+            return failure(serviceException.getMsg());
+        }
+    }
+
+    /**
+     * 上传面单
+     * @return
+     */
+    @PostMapping("/uploadHandoverFile")
+    public ApiResult<ThirdWarehouseUploadHandoverFileResponse> uploadHandoverFile(@RequestBody ThirdWarehouseUploadHandoverFileReq uploadHandoverFileReq) {
+        try {
+            ThirdWarehouseService service = thirdWarehouseRegistry.getHandler(uploadHandoverFileReq.getThirdWarehouseProvideCode());
+            return service.uploadHandoverFile(uploadHandoverFileReq, uploadHandoverFileReq.getAuthId());
         } catch (ServiceException serviceException) {
             return failure(serviceException.getMsg());
         }

@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.srm.mapper.PayableInfoMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.srm.entity.PayableInfoEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="code" property="code" />
+       <result column="supplier_id" property="supplierId" />
+       <result column="date" property="date" />
+       <result column="org_id" property="orgId" />
+       <result column="approve_time" property="approveTime" />
+       <result column="approve_user_name" property="approveUserName" />
+       <result column="approve_user_id" property="approveUserId" />
+       <result column="source_type" property="sourceType" />
+       <result column="source_id" property="sourceId" />
+       <result column="source_code" property="sourceCode" />
+       <result column="remark" property="remark" />
+       <result column="type" property="type" />
+       <result column="third_payable_id" property="thirdPayableId" />
+       <result column="third_payable_code" property="thirdPayableCode" />
+       <result column="approve_status" property="approveStatus" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_user_id,
+        create_user_name,
+        create_time,
+        update_user_id,
+        update_user_name,
+        update_time,
+        version,
+        is_deleted,
+        code, supplier_id, date, org_id, approve_time, approve_user_name, approve_user_id, source_type, source_id, source_code, remark, type, third_payable_id, third_payable_code, approve_status
+    </sql>
+
+    <select id="paging" resultType="com.erp.model.srm.dto.PayableInfoDTO$ListDTO">
+
+    </select>
+
+    <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
+        select approve_status, count(id) from payable_info where is_deleted = false group by approve_status
+    </select>
+
+    <select id="listExport" resultType="com.erp.model.srm.dto.PayableInfoDTO$ListDTO">
+
+    </select>
+    <select id="tabList" resultType="com.erp.model.srm.dto.PayableInfoDTO$TabListDTO">
+        SELECT
+        approve_status AS tabFlag,
+        count(*)  AS count
+        FROM  payable_info
+        WHERE is_deleted=FALSE
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        GROUP BY approve_status
+    </select>
+
+</mapper>

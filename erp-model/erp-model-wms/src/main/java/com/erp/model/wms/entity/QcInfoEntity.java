@@ -122,6 +122,18 @@ public class QcInfoEntity extends BaseEntity<QcInfoEntity> {
     @TableField("source_code")
     private String sourceCode;
 
+    /**
+     * 是否作废
+     */
+    @TableField("invalid_status")
+    private Boolean invalidStatus;
+
+    /**
+     * 作废原因
+     */
+    @TableField("invalid_remark")
+    private String invalidRemark;
+
 
     public static final String QC_DEPT_ID = "qc_dept_id";
 

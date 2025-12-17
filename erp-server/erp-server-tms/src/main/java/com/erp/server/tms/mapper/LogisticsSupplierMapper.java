@@ -42,7 +42,6 @@ public interface LogisticsSupplierMapper extends BaseMapper<LogisticsSupplierEnt
      * @param dto
      * @return
      */
-    List<LogisticsSupplierDTO.PagingViewDTO> listExport(@Param("params") LogisticsSupplierDTO.ExportDTO dto);
     Page<LogisticsSupplierDTO.PagingViewDTO> listExport(@Param("page") Page<LogisticsSupplierDTO.PagingViewDTO> page, @Param("params") LogisticsSupplierDTO.ExportDTO dto);
 
     /**
@@ -68,4 +67,6 @@ public interface LogisticsSupplierMapper extends BaseMapper<LogisticsSupplierEnt
      * @return {@link LogisticsSupplierDTO.ViewDTO}
      */
     LogisticsSupplierDTO.ViewDTO detail(String id);
+
+    IPage<LogisticsSupplierDTO.PagingSelectDTO> pagingSelect(@Param("query") Page query, @Param("params") LogisticsSupplierDTO.SelectDTO params);
 }

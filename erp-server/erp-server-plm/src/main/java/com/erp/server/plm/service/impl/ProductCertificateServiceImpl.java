@@ -7,6 +7,7 @@ import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
@@ -41,7 +42,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
-import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
@@ -49,6 +49,7 @@ import java.net.URLDecoder;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static cn.hutool.core.text.CharSequenceUtil.format;
@@ -70,7 +71,7 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
     private ProductDetailService productDetailService;
 
     @Resource
-    private SysLogService sysLogService;
+    private OperateLogService operateLogService;
 
     @Resource
     private BasicDictService basicDictService;
@@ -114,16 +115,16 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
         //上传附件
         uploadFile (resultList);
         //操作日志
-        List<SysLogEntity> sysLogEntityList = new LinkedList<>();
+        List<OperateLogEntity> operateLogEntityList = new LinkedList<>();
         resultList.forEach(obj -> {
-            sysLogEntityList.add(
-                    new SysLogEntity().setContent("新增了一个【产品证书】")
+            operateLogEntityList.add(
+                    new OperateLogEntity().setContent("新增了一个【产品证书】")
                             .setBusinessId(obj.getSkuId())
                             .setPid(obj.getId())
                             .setOperation("新增操作")
             );
         });
-        sysLogService.addSysLogByBatchSave(sysLogEntityList);
+        operateLogService.addSysLogByBatchSave(operateLogEntityList);
     }
 
 
@@ -149,7 +150,7 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
         // 记录产品认证操作日志
         log.info("编辑 开始记录产品认证日志数据，id：【{}】", entity.getId());
         String msg = format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), entity.getId(), "产品认证");
-        sysLogService.addSysLogByUpdate(old, entity, String.valueOf(ProductCertificateEntity.class),oldEntity.getSkuId(),entity.getId(), msg);
+        operateLogService.addSysLogByUpdate(old, entity, String.valueOf(ProductCertificateEntity.class),oldEntity.getSkuId(),entity.getId(), msg);
         return Boolean.TRUE;
     }
 
@@ -184,17 +185,17 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
         productCertificateList.forEach(obj -> deleteFile(obj.getRemoveFileIdList(),obj.getId()));
 
         //操作日志
-        List<SysLogEntity> sysLogEntityList = new LinkedList<>();
+        List<OperateLogEntity> operateLogEntityList = new LinkedList<>();
         resultList.forEach(obj -> {
-            sysLogEntityList.add(
-                    new SysLogEntity().setContent("新增了一个【产品证书】")
+            operateLogEntityList.add(
+                    new OperateLogEntity().setContent("新增了一个【产品证书】")
                             .setBusinessId(obj.getSkuId())
                             .setClassPath(String.valueOf(ProductCertificateEntity.class))
                             .setPid(obj.getId())
                             .setOperation("编辑操作")
             );
         });
-        sysLogService.addSysLogByBatchSave(sysLogEntityList);
+        operateLogService.addSysLogByBatchSave(operateLogEntityList);
     }
 
     /**
@@ -262,17 +263,17 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
             fileFeign.deleteFile(entity.getAttachUrl());
         }
         //操作日志
-        List<SysLogEntity> sysLogEntityList = new LinkedList<>();
+        List<OperateLogEntity> operateLogEntityList = new LinkedList<>();
         removeFileList.forEach(obj -> {
-            sysLogEntityList.add(
-                    new SysLogEntity().setContent(format("删除了一个产品证书【{}】",obj.getAttachName()))
+            operateLogEntityList.add(
+                    new OperateLogEntity().setContent(format("删除了一个产品证书【{}】",obj.getAttachName()))
                             .setBusinessId(productCertificateEntity.getSkuId())
                             .setClassPath(String.valueOf(ProductCertificateEntity.class))
                             .setPid(businessId)
                             .setOperation("删除附件")
             );
         });
-        sysLogService.addSysLogByBatchSave(sysLogEntityList);
+        operateLogService.addSysLogByBatchSave(operateLogEntityList);
     }
 
     @Override
@@ -321,15 +322,16 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean delete(List<String> ids) {
+    public List<BatchResultDTO> delete(List<String> ids) {
         log.info("编辑 开始更新产品认证,ids={}", ids);
+        List<ProductCertificateEntity> entityList = this.listByIds(ids);
         //删除认证信息
        this.removeByIds(ids);
 
         //删除附件
         List<PlmAttachmentEntity> attachmentList = plmAttachmentService.listByBusinessIds(ids);
         if (CollectionUtils.isEmpty(attachmentList)) {
-            return Boolean.FALSE;
+            throw new ServiceException("附件信息为空");
         }
         //删除附件表数据
         List<String> attachmentIdList = attachmentList.stream().map(PlmAttachmentEntity::getId).collect(Collectors.toList());
@@ -338,7 +340,11 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
             //fastdfs删除附件
             fileFeign.deleteFile(entity.getAttachUrl());
         }
-        return Boolean.TRUE;
+        Map<String, ProductDetailEntity> stringProductDetailEntityMap = productDetailService.getByIdList(entityList.stream().map(ProductCertificateEntity::getSkuId).collect(Collectors.toList())).stream().collect(Collectors.toMap(ProductDetailEntity::getId, Function.identity(),(v1,v2)->v1));
+        return entityList.stream()
+                .map(
+                entity->BatchResultDTO.success(entity.getId(),stringProductDetailEntityMap.get(entity.getSkuId())!=null?stringProductDetailEntityMap.get(entity.getSkuId()).getSkuNo():entity.getSkuId()))
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -846,19 +852,19 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
         plmAttachmentService.saveBatch(attachmentList);
 
         //操作日志
-        List<SysLogEntity> sysLogEntityList = new LinkedList<>();
+        List<OperateLogEntity> operateLogEntityList = new LinkedList<>();
         attachmentList.forEach(obj -> {
             //skuId
             ProductCertificateEntity entity = resultList.stream().filter(e -> CharSequenceUtil.equals(e.getId(), obj.getBusinessId())).findFirst().orElse(new ProductCertificateEntity());
-            sysLogEntityList.add(
-                    new SysLogEntity().setContent(format("新增了一个产品证书附件【{}】",obj.getAttachName()))
+            operateLogEntityList.add(
+                    new OperateLogEntity().setContent(format("新增了一个产品证书附件【{}】",obj.getAttachName()))
                             .setBusinessId(entity.getSkuId())
                             .setClassPath(String.valueOf(ProductCertificateEntity.class))
                             .setPid(obj.getBusinessId())
                             .setOperation("新增附件")
             );
         });
-        sysLogService.addSysLogByBatchSave(sysLogEntityList);
+        operateLogService.addSysLogByBatchSave(operateLogEntityList);
 
     }
 

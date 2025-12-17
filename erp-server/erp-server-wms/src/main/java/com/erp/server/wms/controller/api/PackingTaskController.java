@@ -6,10 +6,7 @@ import cn.hutool.core.collection.CollectionUtil;
 import com.common.business.annotation.DataIdempotent;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
-import com.common.business.dto.base.BaseIdsDTO;
-import com.common.business.dto.base.BatchResultDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
@@ -288,8 +285,17 @@ public class PackingTaskController extends BaseController {
      * @return
      */
     @PostMapping("/processThirdBarcode")
-    public ApiResult processThirdBarcode(){
-        packingTaskService.processThirdBarcode();
+    public ApiResult processThirdBarcode(@RequestBody(required = false) List<String> sourceCodeList){
+        packingTaskService.processThirdBarcode(sourceCodeList);
         return success();
+    }
+
+    /**
+     * 通过任务id获取客户PO号
+     * @return
+     */
+    @PostMapping("/listCustomerPoByTaskId")
+    public ApiResult<PackingTaskDTO.CustomerPoDTO> listCustomerPoByTaskId(@RequestBody @Validated BaseIdDTO baseIdDTO){
+        return success(packingTaskService.listCustomerPoByTaskId(baseIdDTO.getId()));
     }
 }

@@ -4,6 +4,7 @@ package com.erp.server.scm.controller.api;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogSystemModule;
 import com.common.core.exception.ServiceException;
 import com.erp.model.scm.dto.DictBasicDTO;
 import com.erp.model.scm.dto.SupplierCredentialDTO;
@@ -44,6 +45,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @RestController
 @RequestMapping("/SupplierCredential")
+@LogSystemModule("供应商证照")
 public class SupplierCredentialController extends BaseController {
 
     @Resource
@@ -233,18 +235,5 @@ public class SupplierCredentialController extends BaseController {
         supplierCredentialService.exportList(dto, response);
         return success();
     }
-
-
-    /**
-     * 保存拜访管理字典
-     * @param dto
-     * @return DictBasicDTO
-     */
-    @PostMapping("/addDictCredential")
-    public ApiResult<DictBasicDTO> addDictCredential(@RequestBody @Validated SupplierCredentialDTO.DictCredentialDTO dto) {
-        DictBasicDTO dictBasicDTO = supplierCredentialService.addDictCredential(dto.getCredentialName());
-        return Objects.nonNull(dictBasicDTO) ? success(dictBasicDTO) : failure();
-    }
-
 
 }

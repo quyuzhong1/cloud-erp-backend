@@ -93,7 +93,7 @@ public class MouldDetailServiceImpl extends SuperServiceImpl<MouldDetailMapper, 
             }
             MouldPurchasePriceEntity price = BeanMapperUtils.map(MouldPurchasePriceEntity.class, dto);
             price.setMouldDetailId(mouldDetail.getId());
-            price.setCurrency(CurrencyEnum.RMB.getCurrencyCode());
+            price.setCurrency(CurrencyEnum.CNY.getCurrencyCode());
             price.setExchangeRate(BigDecimal.ONE);
             price.setId(null);
             purchasePriceList.add(price);

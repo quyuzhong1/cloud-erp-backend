@@ -41,7 +41,7 @@ public class VirtualWarehousePushHandleServiceImpl extends SuperServiceImpl<Virt
     @Resource
     private VirtualWarehousePushHandleDetailService vmAllocationHandleDetailService;
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(VirtualWarehousePushHandleDTO.AddDTO addDTO) {
@@ -97,7 +97,7 @@ public class VirtualWarehousePushHandleServiceImpl extends SuperServiceImpl<Virt
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public void handleData(VirtualWarehouseAllocationEntity allocationEntity) {
         //保存合单主表
         VirtualWarehousePushHandleEntity pushHandleEntity = new VirtualWarehousePushHandleEntity(allocationEntity.getId(),

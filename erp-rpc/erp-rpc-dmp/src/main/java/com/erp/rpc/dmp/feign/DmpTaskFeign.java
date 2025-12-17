@@ -2,6 +2,8 @@ package com.erp.rpc.dmp.feign;
 
 
 import cn.hutool.json.JSONObject;
+import com.common.business.config.FeignErrorDecoder;
+import com.common.business.dto.DmpInputFeignDTO;
 import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
@@ -26,7 +28,7 @@ import java.util.Map;
  * @description: DMP远程调用接口
  * @date: 2023/1/12 16:54
  */
-@FeignClient("erp-dmp")
+@FeignClient(value = "erp-dmp", contextId = "DmpTaskFeign",configuration = {FeignErrorDecoder.class})
 public interface DmpTaskFeign {
 
     /**
@@ -184,6 +186,16 @@ public interface DmpTaskFeign {
     @PostMapping("feign/saveOrUpdate/push/task")
     String saveOrUpdateDmpPushTask(@RequestBody DmpPushTaskEntity dmpPushTaskEntity);
 
+
+    /**
+     * 记录推送数据记录
+     *
+     * @param dmpPushTaskEntity 查询过滤条件
+     * @return
+     */
+    @PostMapping("feign/save/push/task")
+    String saveDmpPushTask(@RequestBody DmpPushTaskEntity dmpPushTaskEntity);
+
     /**
      * 创建第三方仓任务
      * @return
@@ -310,5 +322,39 @@ public interface DmpTaskFeign {
      */
     @PostMapping("feign/pagingOutLatest")
     PagingVO<DmpOutputTaskRecordDTO.PagingViewDTO> pagingOutLatest(@RequestBody PagingDTO<DmpOutputTaskRecordDTO.PagingParamDTO> dto);
+
+    /**
+     * 创建推送任务
+     * @param msgList
+     */
+    @PostMapping("feign/batchCreateDmpPushMsg")
+    void batchCreateDmpPushMsg(@RequestBody List<DmpPushMsgEntity> msgList);
+    /**
+     * 金蝶是否已审核
+     * @author will
+     * @date 2025/10/13 16:33
+     * @param kingdeeDTO
+     * @return String
+     */
+    @PostMapping("feign/checkKingdeeSyncApprove")
+    String checkKingdeeSyncApprove(@RequestBody KingdeeDTO kingdeeDTO);
+
+    /**
+     * 获取最新推送记录
+     */
+    @GetMapping("feign/outputTaskRecord/getLastOutputTaskRecordList")
+    List<DmpOutputTaskRecordEntity> getLastOutputTaskRecordList(@RequestParam(value = "sourceCodeList",required = false) List<String> sourceCodeList,
+                                                                @RequestParam(value = "outputClass",required = false) String outputClass
+    );
+
+    /**
+     * 操作dmp拉取dmp_cfg_input_detail表配置
+     * @author will
+     * @date 2025/11/7 16:13
+     * @param cfgOptionDTO
+     * @return void
+     */
+    @PostMapping("feign/input/optionDmpCfgInputDetail")
+    void optionDmpCfgInputDetail(DmpInputFeignDTO.CfgOptionDTO cfgOptionDTO);
 
 }

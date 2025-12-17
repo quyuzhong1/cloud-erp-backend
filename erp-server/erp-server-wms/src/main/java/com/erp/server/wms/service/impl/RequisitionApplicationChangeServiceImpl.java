@@ -12,7 +12,6 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
-import com.common.business.constant.ThirdConstants;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -20,7 +19,6 @@ import com.common.business.threadlocal.UserContext;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
-import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
@@ -29,7 +27,6 @@ import com.common.core.utils.MathUtil;
 import com.erp.model.oms.dto.ListingInfoDTO;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.dto.ProductBomInfoDTO;
-import com.erp.model.plm.entity.PilotApplicationEntity;
 import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.InvalidStatusEnum;
@@ -46,9 +43,7 @@ import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.model.wms.enums.inventory.VirtualInventoryBusinessTypeEnum;
 import com.erp.model.workflow.dto.CfgQueryOptionDTO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
-import com.erp.model.workflow.entity.CfgQueryOptionEntity;
 import com.erp.model.workflow.enums.CfgQueryOptionBussinessKeyEnum;
-import com.erp.model.workflow.enums.CfgQueryOptionFieldBelongsTypeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.OmsListingInfoFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -194,7 +189,7 @@ public class RequisitionApplicationChangeServiceImpl extends SuperServiceImpl<Re
         // 仓库权限
         String warehousePermissionSql = authDataFeign.getWarehousePermissionSql("ra.channel_id");
         warehousePermissionSql = CharSequenceUtil.isBlank(warehousePermissionSql)? " AND 1=1 " : warehousePermissionSql;
-        return CharSequenceUtil.format(" and ((ra.type = 'fba' {}) or (ra.type = 'thirdWarehouse' {}) or (ra.channel_id = ''))" , shopPermissionSql, warehousePermissionSql);
+        return CharSequenceUtil.format(" and ((ra.type = 'fba' {}) or (ra.type = 'thirdWarehouse' {}) or (ra.channel_id = '') or (ra.type = 'AliExpress' {}))" , shopPermissionSql, warehousePermissionSql,shopPermissionSql);
     }
     @Override
     public List<RequisitionApplicationChangeDTO.TabListDTO> tabList(PermissionsDTO param) {
@@ -1072,7 +1067,7 @@ public class RequisitionApplicationChangeServiceImpl extends SuperServiceImpl<Re
             if (listApiResult != null && CollectionUtils.isNotEmpty(listApiResult.getData())) {
                 String curApprove = listApiResult.getData().stream().filter(obj -> obj.getBusinessId().equals(data.getId()) && StringUtils.isNotBlank(obj.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
                 if(StringUtils.isNotBlank(curApprove)){
-                    data.setApproveUserName(curApprove);
+                    data.setApproveUserName(CharSequenceUtil.blankToDefault(curApprove,data.getApproveUserName()));
                 }
             }
             SkuVO skuVO = skuVOList.stream().filter(v->v.getSkuId().equals(data.getSkuId())).findFirst().orElse(new SkuVO());

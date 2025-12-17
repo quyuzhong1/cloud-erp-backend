@@ -169,7 +169,7 @@ public enum AntuEnums {
         IN_TRANSIT("H","暂存", null),
         RECEIVING_DESTINATION_WAREHOUSE("N","异常订单", SoB2cBillStatusEnum.ENUM_EXCEPTION),
         COMPLETION_RECEIVING_DESTINATION_WAREHOUSE("P","问题件", null),
-        ABANDONMENT("X","废弃", SoB2cBillStatusEnum.ENUM_EXCEPTION)
+        ABANDONMENT("X","废弃", SoB2cBillStatusEnum.ENUM_DISUSE)
         ;
         private final String code;
         private final String name;

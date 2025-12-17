@@ -438,11 +438,17 @@ public class DataPermissionAspect {
         List<?> objects = service.listByIds(inputIdList);
         for (Object object : objects) {
             JSONObject jsonObject = JSONObject.parseObject(JSONObject.toJSONString(object));
-            Object o = jsonObject.get(StrUtils.underlineToCamel(dataPermission.tableField(), true));
-            if (o == null) {
+            if (StringUtils.isBlank(dataPermission.tableField())) {
                 return;
             }
-            users.addAll(Arrays.asList(o.toString().split(",")));
+            List<String> tableFieldList = Arrays.asList(dataPermission.tableField().split(","));
+            for (String field : tableFieldList) {
+                Object o = jsonObject.get(StrUtils.underlineToCamel(field, true));
+                if (o == null) {
+                    continue;
+                }
+                users.addAll(Arrays.asList(o.toString().split(",")));
+            }
         }
         if (DATA_SCOPE_ALL.equals(userRequestPermissions.getDataScope())) {
             return;

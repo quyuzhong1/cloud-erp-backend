@@ -12,10 +12,11 @@ import com.common.core.utils.FastJsonUtil;
 import com.common.message.enums.ApiModuleTypeEnum;
 import com.erp.model.dmp.entity.PlatformEntity;
 import com.erp.model.dmp.enums.KingdeeDocStatusEnum;
-import com.erp.model.dmp.enums.KingdeePushModuleEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.dmp.enums.SettingEnum;
+import com.erp.sdk.third.kingdee.utils.KingdeeApi;
 import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
+import com.erp.sdk.third.kingdee.utils.KingdeePushModuleEnum;
 import com.erp.sdk.third.kingdee.utils.KingdeeUtils;
 import com.erp.server.dmp.push.service.business.KingdeeProductDetailConsumerService;
 import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
@@ -49,6 +50,7 @@ public class KingdeeProductDetailConsumerServiceImpl implements KingdeeProductDe
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @KingdeeApi
     public void executeConsumer(Map<String, Object> map) {
 
         //同步模块类型
@@ -128,7 +130,7 @@ public class KingdeeProductDetailConsumerServiceImpl implements KingdeeProductDe
             ArrayList<String> apiFieldList = (ArrayList)Arrays.stream(allKey.toString().split(",")).collect(Collectors.toList());
             param.setNeedUpDateFields(apiFieldList);
             //更新数据
-            kingdeeCommonService.saveOrUpdate(platformEntity,map,apiUtils,json,param,type);
+            kingdeeCommonService.saveAndAutoApprove(platformEntity,map,apiUtils,json,param,type);
             return;
         }
         //查找到数据后，判断其审核状态
@@ -167,7 +169,7 @@ public class KingdeeProductDetailConsumerServiceImpl implements KingdeeProductDe
             ArrayList<String> apiFieldList = (ArrayList) Arrays.stream(allKey.toString().split(",")).collect(Collectors.toList());
             param.setNeedUpDateFields(apiFieldList);
             //更新数据
-            kingdeeCommonService.saveOrUpdate(platformEntity,map,apiUtils,json,param,type);
+            kingdeeCommonService.saveAndAutoApprove(platformEntity,map,apiUtils,json,param,type);
         }
     }
 

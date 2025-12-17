@@ -126,7 +126,7 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
      * @param addDTO
      * @return
      */
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(VirtualWarehouseAllocationDTO.AddDTO addDTO) {
@@ -303,7 +303,7 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public BatchResultDTO submit(VirtualWarehouseAllocationEntity allocationEntity) {
         String existStatus = allocationEntity.getStatus();
         String code = VirtualWarehouseAllocationStatusEnum.HANDLE.getCode();
@@ -579,7 +579,7 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public BatchResultDTO invalid(VirtualWarehouseAllocationEntity allocationEntity, String status, String invalidDescription) {
         String existStatus = allocationEntity.getStatus();
         if (existStatus.equals(status)) {

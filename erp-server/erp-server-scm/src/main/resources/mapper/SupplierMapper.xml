@@ -1,63 +1,133 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.erp.server.scm.mapper.SupplierMapper">
+    <!-- 根据实体对象生成resultType -->
+    <resultMap id="BaseResultMap" type="com.erp.model.scm.entity.SupplierEntity">
+        <id column="id" property="id" />
+        <result column="code" property="code" />
+        <result column="voucher_no" property="voucherNo" />
+        <result column="create_user_id" property="createUserId" />
+        <result column="create_user_name" property="createUserName" />
+        <result column="create_time" property="createTime" />
+        <result column="name" property="name" />
+        <result column="approve_status" property="approveStatus" />
+        <result column="phase" property="phase" />
+        <result column="grade_id" property="gradeId" />
+        <result column="category_id" property="categoryId"/>
+        <result column="disabled" property="disabled"/>
+        <result column="srm_disabled" property="srmDisabled"/>
+        <result column="pay_method_id" property="payMethodId"/>
+        <result column="payment_condition" property="paymentCondition"/>
+        <result column="purchase_user_id" property="purchaseUserId"/>
+        <result column="purchase_user_name" property="purchaseUserName"/>
+        <result column="approve_time" property="approveTime"/>
+        <result column="identification_code" property="identificationCode"/>
+        <result column="registered_capital" property="registeredCapital"/>
+        <result column="property_json" property="propertyJson" typeHandler="com.erp.server.scm.handler.ObjectJsonArrayHandler"/>
+        <result column="product_category_json" property="productCategoryJson" typeHandler="com.erp.server.scm.handler.ObjectJsonArrayHandler"/>
+        <result column="application_category_json" property="applicationCategoryJson" typeHandler="com.erp.server.scm.handler.ObjectJsonArrayHandler"/>
+        <result column="certificate_json" property="certificateJson" typeHandler="com.erp.server.scm.handler.ObjectJsonArrayHandler"/>
+    </resultMap>
+
 
 
     <select id="paging" resultType="com.erp.model.scm.dto.SupplierDTO$PagingViewDTO">
         SELECT
-        id,
-        code,
-        voucher_no as voucherNo,
-        create_user_id AS createUserId,
-        create_user_name AS createUserName,
-        create_time AS createTime,
-        name,
-        approve_status AS approveStatus,
-        phase,
-        grade_id AS gradeId,
-        category_id AS categoryId ,
-        disabled AS disabled,
-        srm_disabled AS srmDisabled,
-        pay_method_id AS payMethodId,
-        payment_condition as paymentCondition,
-        purchase_user_id AS purchaseUserId,
-        purchase_user_name AS purchaseUserName,
-        approve_time as approveTime
-        FROM supplier
+        sup.id,
+        sup.code,
+        sup.voucher_no as voucherNo,
+        sup.create_user_id AS createUserId,
+        sup.create_user_name AS createUserName,
+        sup.create_time AS createTime,
+        sup.name,
+        sup.approve_status AS approveStatus,
+        sup.phase,
+        sup.grade_id AS gradeId,
+        sup.category_id AS categoryId ,
+        sup.disabled AS disabled,
+        sup.srm_disabled AS srmDisabled,
+        sup.pay_method_id AS payMethodId,
+        sup.payment_condition as paymentCondition,
+        sup.purchase_user_id AS purchaseUserId,
+        sup.purchase_user_name AS purchaseUserName,
+        sup.po_follower_id as poFollowerId,
+        sup.approve_time as approveTime,
+        sup.identification_code as identificationCode,
+        sup.registered_capital as registeredCapital,
+        sup.property_json as propertyJson,
+        sup.product_category_json as productCategoryJson,
+        sup.application_category_json as applicationCategoryJson,
+        sup.certificate_json as certificateJson
+        FROM supplier sup
         WHERE
         ${params.sqlMap.default}
-         AND is_deleted=FALSE
+         AND sup.is_deleted=FALSE
         ORDER BY
         <if test="params.sortList != null and params.sortList.size > 0">
             <foreach collection="params.sortList" item="item" separator="," close=",">
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        create_time DESC
+        sup.create_time DESC
     </select>
 
-    <select id="getExportSupplier" resultType="com.erp.model.scm.dto.SupplierDTO$PagingViewDTO">
-     SELECT
-        id,
-        code,
-        voucher_no as voucherNo,
-        create_user_id AS createUserId,
-        create_user_name AS createUserName,
-        create_time AS createTime,
-        name,
-        approve_status AS approveStatus,
-        phase,
-        grade_id AS gradeId,
-        category_id AS categoryId ,
-        disabled AS disabled,
-        srm_disabled AS srmDisabled,
-        pay_method_id AS payMethodId,
-        payment_condition as paymentCondition,
-        purchase_user_id AS purchaseUserId,
-        purchase_user_name AS purchaseUserName,
-        approve_time as approveTime
-        FROM supplier
-        WHERE ${params.sqlMap.default} AND is_deleted=FALSE
+    <!-- 列表导入数据导出 -->
+    <select id="getExportSupplier" resultType="com.erp.model.scm.dto.SupplierDTO$PagingExportDTO">
+        SELECT
+        sup.id,
+        sup.code,
+        sup.voucher_no as voucherNo,
+        sup.create_user_id AS createUserId,
+        sup.create_user_name AS createUserName,
+        sup.create_time AS createTime,
+        sup.name,
+        sup.approve_status AS approveStatus,
+        sup.phase,
+        sup.tax_rate as taxRate,
+        sup.grade_id AS gradeId,
+        sup.category_id AS categoryId ,
+        sup.disabled AS disabled,
+        sup.srm_disabled AS srmDisabled,
+        sup.pay_method_id AS payMethodId,
+        sup.payment_company_name as paymentCompanyName,
+        sup.pay_currency as payCurrency,
+        sup.payment_condition as paymentCondition,
+        sup.purchase_user_id AS purchaseUserId,
+        sup.purchase_user_name AS purchaseUserName,
+        sup.po_follower_id as poFollowerId,
+        sup.approve_time as approveTime,
+        sc.person as person,
+        sc.position as position,
+        sc.tel_number as telNumber,
+        sc.email as email,
+        sc.is_default as contactIsDefault,
+        sc.disabled as contactDisabled,
+        sc.remark as contactRemark,
+        sa.payee as payee,
+        sa.bank_name as bankName,
+        sa.bank_account as bankAccount,
+        sa.bank_subbranch as bankSubbranch,
+        sa.pay_method_id as payMethodId,
+        sa.is_default as accountDefault,
+        sa.remark as accountRemark,
+        scr.id as credentialId,
+        scr.name as credentialName,
+        scr.effective_date  as effectiveDate,
+        scr.expire_date as expireDate,
+        scr.remark as credentialRemark,
+        sup.identification_code as identificationCode,
+        sup.registered_capital as registeredCapital,
+        sup.property_json as propertyJson,
+        sup.product_category_json as productCategoryJson,
+        sup.certificate_json as certificateJson,
+        sup.application_category_json as applicationCategoryJson,
+        sup.company_address as companyAddress,
+        sup.company_website as companyWebsite
+        FROM supplier sup
+        left join supplier_contact sc on sup.id = sc.supplier_id and sc.is_deleted = false
+        left join supplier_account sa on sup.id = sa.supplier_id  and sa.is_deleted = false
+        left join supplier_credential scr on sup.id = scr.supplier_id and scr.is_deleted = false
+        WHERE ${params.sqlMap.default} AND  sup.is_deleted=FALSE
         <!--权限-->
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${params.permissionSql}
@@ -68,8 +138,9 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        create_time DESC
+        sup.create_time DESC
     </select>
+
     <select id="listSupplierByCategoryType" resultType="com.erp.model.scm.dto.SupplierDTO$SupplierSimpleDTO">
         SELECT
           id,code,name,disabled,approve_status
@@ -78,7 +149,12 @@
             and approve_status = #{approveStatus}
         </if>
         AND category_id IN
-        (SELECT id FROM dict_basic WHERE is_deleted= FALSE AND type=#{type} AND value=#{value} )
+        (SELECT id FROM dict_basic WHERE is_deleted= FALSE AND type=#{type}
+        AND value in
+        <foreach collection="categoryTypeList" item="item" open="(" close=")" separator=",">
+            #{item}
+        </foreach>
+        )
         ORDER BY  create_time DESC
     </select>
     <select id="pagingSelect" resultType="com.common.business.dto.base.BaseDropDownDTO$RemarkDTO">

@@ -1,6 +1,6 @@
 /*
  * Selling Partner API for Listings Items
- * The Selling Partner API for Listings Items (Listings Items API) provides programmatic access to selling partner listings on Amazon. Use this API in collaboration with the Selling Partner API for Product Type Definitions, which you use to retrieve the information about Amazon product types needed to use the Listings Items API.  For more information, see the [Listings Items API Use Case Guide](doc:listings-items-api-v2021-08-01-use-case-guide).
+ * The Selling Partner API for Listings Items (Listings Items API) provides programmatic access to selling partner listings on Amazon. Use this API in collaboration with the Selling Partner API for Product Type Definitions, which you use to retrieve the information about Amazon product types needed to use the Listings Items API.  For more information, see the [Listings Items API Use Case Guide](https://developer-docs.amazon.com/sp-api/docs/listings-items-api-v2021-08-01-use-case-guide).
  *
  * OpenAPI spec version: 2021-08-01
  * 
@@ -10,19 +10,23 @@
  * Do not edit the class manually.
  */
 
-
 package com.erp.sdk.oms.amz.spapi.model.listingsitems;
 
-import com.google.gson.annotations.SerializedName;
-
-
 import java.util.Objects;
+import java.util.Arrays;
+import com.google.gson.TypeAdapter;
+import com.google.gson.annotations.JsonAdapter;
+import com.google.gson.annotations.SerializedName;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonWriter;
 
+import java.io.IOException;
 /**
- * Image for the listings item.
+ * The image for the listings item.
  */
 
-@javax.annotation.Generated(value = "io.swagger.codegen.languages.JavaClientCodegen", date = "2022-07-24T13:44:38.380+08:00")
+@javax.annotation.Generated(value = "io.swagger.codegen.v3.generators.java.JavaClientCodegen", date = "2025-08-07T17:52:05.725887800+08:00[Asia/Shanghai]")
+
 public class ItemImage {
   @SerializedName("link")
   private String link = null;
@@ -39,10 +43,10 @@ public class ItemImage {
   }
 
    /**
-   * Link, or URL, for the image.
+   * The link, or URL, to the image.
    * @return link
   **/
-
+  
   public String getLink() {
     return link;
   }
@@ -57,10 +61,10 @@ public class ItemImage {
   }
 
    /**
-   * Height of the image in pixels.
+   * The height of the image in pixels.
    * @return height
   **/
-
+  
   public Integer getHeight() {
     return height;
   }
@@ -75,10 +79,10 @@ public class ItemImage {
   }
 
    /**
-   * Width of the image in pixels.
+   * The width of the image in pixels.
    * @return width
   **/
-
+  
   public Integer getWidth() {
     return width;
   }
@@ -132,4 +136,3 @@ public class ItemImage {
   }
 
 }
-

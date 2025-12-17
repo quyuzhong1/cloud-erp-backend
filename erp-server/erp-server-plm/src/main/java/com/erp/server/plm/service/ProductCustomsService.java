@@ -1,8 +1,15 @@
 package com.erp.server.plm.service;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.vo.PagingVO;
+import com.erp.model.plm.dto.ProductCustomsDTO;
 import com.erp.model.plm.dto.ProductCustomsSkuDTO;
 import com.erp.model.plm.entity.ProductCustomsEntity;
 import com.common.business.service.SuperService;
+import org.springframework.web.multipart.MultipartFile;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 
@@ -68,4 +75,60 @@ public interface ProductCustomsService extends SuperService<ProductCustomsEntity
     List<ProductCustomsEntity> listBySkuIds(List<String> skuIds, String country);
 
     ProductCustomsEntity getBySkuIdAndCountry(String skuId, String country);
+
+    /**
+     * 分页查询
+     *
+     * @return
+     */
+    PagingVO<ProductCustomsDTO.ListDTO> paging(PagingDTO<ProductCustomsDTO.PagingParamDTO> dto);
+    /**
+     * 新增
+     *
+     * @param dto
+     * @return
+     */
+    Boolean add(ProductCustomsDTO.AddListDTO dto);
+    /**
+     * 编辑
+     *
+     * @param dto
+     * @return
+     */
+    Boolean update(ProductCustomsDTO.AddListDTO dto);
+    /**
+     * 详情
+     * @author jack
+     * @date:  2025-06-21
+     */
+    ProductCustomsDTO.ViewDTO view(String skuId);
+    /**
+     * 导出Excel数据
+     * @author jack
+     * @date:  2025-06-21
+     * @param dto
+     * @param response
+     * @return
+     */
+    void exportList(ProductCustomsDTO.PagingParamDTO dto, HttpServletResponse response);
+
+    /**
+     * 导入
+     */
+    Boolean importFile(MultipartFile excelFile, HttpServletResponse response);
+    /**
+     * 下载模板
+     *
+     * @return
+     */
+    void downloadTemplate(HttpServletResponse response);
+    /**
+     * 删除
+     * @author jack
+     * @date:  2025-06-21
+     * @return ApiResult<List<BatchResultDTO>>
+     */
+    BatchResultDTO delete(String id);
+
+    List<ProductCustomsEntity> listByIds(List<String> ids);
 }

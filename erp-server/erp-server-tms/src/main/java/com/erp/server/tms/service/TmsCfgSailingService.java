@@ -7,7 +7,9 @@ import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.tms.dto.TmsCfgSailingDTO;
 import com.erp.model.tms.entity.TmsCfgSailingEntity;
+import org.springframework.web.multipart.MultipartFile;
 
+import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -78,4 +80,27 @@ public interface TmsCfgSailingService extends SuperService<TmsCfgSailingEntity> 
      * 通过渠道id和下单时间计算出开船时间
      */
     LocalDateTime calculateShipTime(String logisticsChannelId, LocalDateTime orderTime);
+    /**
+     * 导出Excel数据
+     * @author jack
+     * @date:  2025-07-17
+     * @param dto
+     * @param response
+     * @return
+     */
+    void exportList(TmsCfgSailingDTO.PagingParamDTO dto, HttpServletResponse response);
+    /**
+     * 导入
+     * @author jack
+     * @date:  2025-07-17
+     * @return
+     */
+    Boolean importFile(MultipartFile excelFile, HttpServletResponse response);
+    /**
+     * 下载模板
+     * @author jack
+     * @date:  2025-07-17
+     * @return
+     */
+    void downloadTemplate(HttpServletResponse response);
 }

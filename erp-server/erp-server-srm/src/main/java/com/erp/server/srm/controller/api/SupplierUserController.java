@@ -142,6 +142,7 @@ public class SupplierUserController extends BaseController {
      * 删除
      */
     @PostMapping("/remove")
+    @LogAction(value = LogActionEnum.DELETE, desc = "删除供应商协同用户")
     public ApiResult remove(@RequestParam("uid") String uid) {
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         if (Objects.isNull(userInfo) || Objects.isNull(userInfo.getIsSupper()) || !userInfo.getIsSupper()){
@@ -156,6 +157,7 @@ public class SupplierUserController extends BaseController {
      * @return
      */
     @PostMapping("/updateState")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "批量启用/禁用 ids={ids},状态值={state}((1=启用,0=禁用))")
     public ApiResult updateState(@RequestBody @Validated UpdateUserStateDTO stateDTO) {
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         if (Objects.isNull(userInfo) || Objects.isNull(userInfo.getIsSupper()) || !userInfo.getIsSupper()){
@@ -171,6 +173,7 @@ public class SupplierUserController extends BaseController {
      * @return
      */
     @GetMapping("/changePassword")
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "重置供应商协同用户密码")
     public ApiResult changePassword(@RequestParam("uid") String uid,@RequestParam("pwd") String pwd) {
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         if (Objects.isNull(userInfo) || Objects.isNull(userInfo.getIsSupper()) || !userInfo.getIsSupper()){

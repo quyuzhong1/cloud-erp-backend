@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -43,7 +44,8 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRoleEntity
      */
     @Override
     @Transactional
-    public void removeRoleById(List<String> ids) {
+    public List<BatchResultDTO> removeRoleById(List<String> ids) {
+        List<SysRoleEntity> sysRoleEntities = this.listByIds(ids);
         boolean flag = this.removeByIds(ids);
         //表示删除成功 则清掉用户
         if (flag) {
@@ -51,7 +53,9 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRoleEntity
             sysRoleUserService.removeRefByRoleId(ids);
             //删除角色与菜单的关系
             sysRoleMenuService.removeRefByRoleIds(ids);
-
+            return sysRoleEntities.stream().map(entity->BatchResultDTO.success(entity.getId(),entity.getRoleName(),"删除成功")).collect(Collectors.toList());
+        }else {
+            return sysRoleEntities.stream().map(entity->BatchResultDTO.fail(entity.getId(),entity.getRoleName(),"删除失败")).collect(Collectors.toList());
         }
     }
 

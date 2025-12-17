@@ -61,7 +61,7 @@ public class WmsDeliveryPlanDetailServiceImpl extends SuperServiceImpl<WmsDelive
     @Resource
     private SkuMappingFeign skuMappingFeign;
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void add(WmsDeliveryPlanDTO.AddDTO addDTO, String mainId) {
@@ -85,7 +85,8 @@ public class WmsDeliveryPlanDetailServiceImpl extends SuperServiceImpl<WmsDelive
                     throw new ServiceException("FBA 类型的 MSKU+FNSKU+SKU 必须唯一 ,重复的组合:" + duplicateSkus);
                 }
             }
-        } else if (DeliveryPlanTypeEnum.THIRD_WAREHOUSE.getCode().equals(type)) {
+        } else if (DeliveryPlanTypeEnum.THIRD_WAREHOUSE.getCode().equals(type)
+        ||DeliveryPlanTypeEnum.ALIEXPRESS.getCode().equals(type)) {
             Map<String, List<WmsDeliveryPlanDetailEntity>> thirdPartyGroup = list.stream()
                     .collect(Collectors.groupingBy(detail -> detail.getPlatformSku() + detail.getSkuNo()));
 
@@ -150,7 +151,8 @@ public class WmsDeliveryPlanDetailServiceImpl extends SuperServiceImpl<WmsDelive
                     throw new ServiceException("FBA 类型的 MSKU+FNSKU+SKU 必须唯一 ,重复的组合:" + duplicateSkus);
                 }
             }
-        } else if (DeliveryPlanTypeEnum.THIRD_WAREHOUSE.getCode().equals(type)) {
+        } else if (DeliveryPlanTypeEnum.THIRD_WAREHOUSE.getCode().equals(type)
+        ||DeliveryPlanTypeEnum.ALIEXPRESS.getCode().equals(type)) {
             Map<String, List<WmsDeliveryPlanDetailEntity>> thirdPartyGroup = list.stream()
                     .collect(Collectors.groupingBy(detail -> detail.getPlatformSku() + detail.getSkuNo()));
 

@@ -100,7 +100,7 @@ public class SyncKingdeeProductDetailServiceImpl implements SyncKingdeeProductDe
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public DmpPushTaskEntity syncDataToKingdee(ProductDetailEntity entity, String operate) {
     	if(!SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
     	    return saveTask(entity,operate,DmpOutputConstant.getQuerySyncMap());
@@ -252,8 +252,25 @@ public class SyncKingdeeProductDetailServiceImpl implements SyncKingdeeProductDe
             //报关申报价
             resultMap.put("declarePrice", productLogisticsEntity.getDeclarePrice());
             //产品属性
-            if (StringUtils.isNotBlank(productLogisticsEntity.getProductPropertyId())) {
-                List<String> list = Arrays.stream(productLogisticsEntity.getProductPropertyId().split(",")).collect(Collectors.toList());
+//            if (StringUtils.isNotBlank(productLogisticsEntity.getProductPropertyId())) {
+//                List<String> list = Arrays.stream(productLogisticsEntity.getProductPropertyId().split(",")).collect(Collectors.toList());
+//                for (String id : list) {
+//                    BasicDictEntity declareProperty = basicDictService.getById(id);
+//                    if (ObjectUtils.isNotEmpty(declareProperty)) {
+//                        String remark = declareProperty.getRemark();
+//                        //产品属性（是否带电）
+//                        if (StringUtils.isNotEmpty(remark) && "isElectric".equals(remark)) {
+//                            resultMap.put("productProperty_electric", true);
+//                        }
+//                        //产品属性（是否带磁）
+//                        if (StringUtils.isNotEmpty(remark) && "isMagnetism".equals(remark)) {
+//                            resultMap.put("productProperty_magnetism", true);
+//                        }
+//                    }
+//                }
+//            }
+            if (StringUtils.isNotBlank(productSaleEntity.getProductPropertyId())) {
+                List<String> list = Arrays.stream(productSaleEntity.getProductPropertyId().split(",")).collect(Collectors.toList());
                 for (String id : list) {
                     BasicDictEntity declareProperty = basicDictService.getById(id);
                     if (ObjectUtils.isNotEmpty(declareProperty)) {

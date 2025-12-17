@@ -33,10 +33,13 @@ public interface TmsFirstMileReconciliationDetailMapper extends BaseMapper<TmsFi
 
     /**
      * 根据明细id获取对账记录
+     *
      * @param sourceIds
+     * @param supplierType
+     * @param logisticsSupplierId
      * @return
      */
-    List<TmsFirstMileReconciliationDetailEntity> listBySourceIds(@Param("sourceIds") List<String> sourceIds, @Param("type")String type);
+    List<TmsFirstMileReconciliationDetailEntity> listBySourceIds(@Param("sourceIds") List<String> sourceIds, @Param("type")String type, @Param("supplierType") String supplierType, @Param("logisticsSupplierId") String logisticsSupplierId);
 
     /**
      * 根据业务单号获取对账明细

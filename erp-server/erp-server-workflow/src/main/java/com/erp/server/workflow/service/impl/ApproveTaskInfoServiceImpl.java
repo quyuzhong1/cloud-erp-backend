@@ -5,13 +5,16 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
+import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.constant.DmpPullConstant;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -20,6 +23,8 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
+import com.erp.model.dmp.dto.DmpInoutDTO;
+import com.erp.model.dmp.enums.DmpInputTaskTaskTypeEnum;
 import com.erp.model.workflow.dto.ApproveTaskDetailDTO;
 import com.erp.model.workflow.dto.ApproveTaskInfoDTO;
 import com.erp.model.workflow.dto.ProcessDelegateDTO;
@@ -28,6 +33,7 @@ import com.erp.model.workflow.entity.ApproveTaskInfoEntity;
 import com.erp.model.workflow.entity.CfgQueryOptionEntity;
 import com.erp.model.workflow.entity.CfgThirdProcessEntity;
 import com.erp.model.workflow.enums.*;
+import com.erp.rpc.dmp.feign.DmpInoutTaskFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.workflow.context.CreateBillFactory;
 import com.erp.server.workflow.handler.CreateBillHandler;
@@ -75,12 +81,20 @@ public class ApproveTaskInfoServiceImpl extends SuperServiceImpl<ApproveTaskInfo
     @Resource
     private CfgThirdProcessService cfgThirdProcessService;
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @Resource
+    private DmpInoutTaskFeign dmpInoutTaskFeign;
+
+
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(ApproveTaskInfoDTO.AddDTO addDTO) {
         ApproveTaskInfoEntity approveTaskInfoEntity = new ApproveTaskInfoEntity();
         BeanMapperUtils.copy(addDTO, approveTaskInfoEntity);
+
+        //根据erp业务编号查询如果已存在则删除已存在的数据
+        deleteByBussiness(addDTO.getBussinessKey(),addDTO.getBussinessId());
+
         // 数据处理
         handleData(approveTaskInfoEntity);
 
@@ -95,6 +109,8 @@ public class ApproveTaskInfoServiceImpl extends SuperServiceImpl<ApproveTaskInfo
 
         return new BaseResultDTO.AddDTO(approveTaskInfoEntity.getId(), approveTaskInfoEntity.getId());
     }
+
+
 
     /**
     * 修改
@@ -176,6 +192,12 @@ public class ApproveTaskInfoServiceImpl extends SuperServiceImpl<ApproveTaskInfo
         Map<String, List<CfgQueryOptionEntity>> cfgQueryOptionMap = CollUtil.isEmpty(cfgQueryOptionList) ? new HashMap<>() : cfgQueryOptionList.stream().collect(Collectors.groupingBy(obj -> CharSequenceUtil.format("{}-{}",obj.getFieldBelongsType(),obj.getConditionField())));
 
         for (ApproveTaskDetailDTO.ViewDTO detailDTO : viewDetailList) {
+            detailDTO.setSysParentId(detailDTO.getEntityCode());
+            //唯一编码
+            if (CharSequenceUtil.isNotBlank(detailDTO.getSysField())) {
+                detailDTO.setUniqueCode(CharSequenceUtil.format("{}-{}",CharSequenceUtil.isBlank(detailDTO.getEntityCode()) ?
+                        CfgQueryOptionFieldBelongsTypeEnum.MAIN.getCode() : detailDTO.getEntityCode() ,detailDTO.getSysField()));
+            }
             //第三方类型名称
             detailDTO.setThirdFieldTypeName(CfgQueryOptionFieldTypeEnum.getName(detailDTO.getThirdFieldType()));
             //数大臣类型名称
@@ -183,7 +205,8 @@ public class ApproveTaskInfoServiceImpl extends SuperServiceImpl<ApproveTaskInfo
             //数大臣单据字段信息
             List<CfgQueryOptionEntity> fieldList = cfgQueryOptionMap.get(CharSequenceUtil.format("{}-{}",CharSequenceUtil.isBlank(detailDTO.getEntityCode()) ? CfgQueryOptionFieldBelongsTypeEnum.MAIN.getCode() : detailDTO.getEntityCode() ,detailDTO.getSysField()));
             if (CollUtil.isEmpty(fieldList)) {
-                throw new ServiceException("数大臣单据字段配置不存在");
+                log.error("未查询到数大臣单据字段信息，业务类型：{}，字段归属类型：{}，字段：{}", entity.getBussinessKey(), CharSequenceUtil.isBlank(detailDTO.getEntityCode()) ? CfgQueryOptionFieldBelongsTypeEnum.MAIN.getCode() : detailDTO.getEntityCode(), detailDTO.getSysField());
+                continue;
             }
             detailDTO.setCfgQueryOptionEntity(fieldList.get(0));
         }
@@ -213,11 +236,9 @@ public class ApproveTaskInfoServiceImpl extends SuperServiceImpl<ApproveTaskInfo
             Map<String, List<ApproveTaskDetailEntity>> groupMap = list.stream()
                     .collect(Collectors.groupingBy(e -> ObjectUtil.isEmpty(e.getEntityCode()) ? "" : e.getEntityCode()));
             for (Map.Entry<String, List<ApproveTaskDetailEntity>> entry : groupMap.entrySet()) {
-                if ("".equals(entry.getKey())) {
-                    // entityCode为空，直接以sysField为key，sysFieldValue为value
-                    for (ApproveTaskDetailEntity e : entry.getValue()) {
-                        detailMap.put(e.getSysField(), e.getSysFieldValue());
-                    }
+                if ("".equals(entry.getKey()) || "main".equals(entry.getKey())) {
+                    //根据erp字段分组，存在重复的就给list
+                    groupMapValue(entry.getValue(),detailMap);
                 } else {
                     // entityCode不为空，value为List<Map<sysField, sysFieldValue>>
                     List<Map<String, Object>> fieldList = entry.getValue().stream()
@@ -225,9 +246,8 @@ public class ApproveTaskInfoServiceImpl extends SuperServiceImpl<ApproveTaskInfo
                             .values().stream()
                             .map(group -> {
                                 Map<String, Object> map = new HashMap<>();
-                                for (ApproveTaskDetailEntity detail : group) {
-                                    map.put(detail.getSysField(), detail.getSysFieldValue());
-                                }
+                                //根据erp字段分组，存在重复的就给list
+                                groupMapValue(group,map);
                                 return map;
                             }).collect(Collectors.toList());
                     detailMap.put(entry.getKey(), fieldList);
@@ -244,6 +264,8 @@ public class ApproveTaskInfoServiceImpl extends SuperServiceImpl<ApproveTaskInfo
         }
         return BatchResultDTO.success(entity.getId(), entity.getBussinessCode(), OperationTypeEnum.REGENERATE);
     }
+
+
 
     @Override
     public ApproveTaskInfoEntity getByBusinessIdAndKey(String businessId, String businessKey) {
@@ -262,6 +284,34 @@ public class ApproveTaskInfoServiceImpl extends SuperServiceImpl<ApproveTaskInfo
             super.removeById(approveTaskInfoEntity.getId());
         });
         return Boolean.TRUE;
+    }
+
+    @Override
+    public BatchResultDTO updateThirdStatus(String id) {
+        ApproveTaskInfoEntity entity = getById(id);
+        if (ObjectUtil.isEmpty(entity)) {
+            throw new ServiceException(ApiError.PROCESS_APPROVE_TASK_NOT_EXIST);
+        }
+        //根据审批定义和审批实例id生成中台即时拉取任务
+        DmpInoutDTO.CreateInputDTO dto = new DmpInoutDTO.CreateInputDTO();
+        dto.setSystemCode(CfgApproveSyncSyncPlatformEnum.FEISHU.getCode());
+        dto.setBillType(DmpPullConstant.INSTANCE_IDS);
+        dto.setNextLevelId(entity.getThirdApprovalCode());
+        dto.setTaskType(DmpInputTaskTaskTypeEnum.NORMAL.getCode());
+        // 手动指定创建审批实例id
+        Map<String, Object> map = Collections.singletonMap("instanceId",entity.getThirdInstanceId());
+        dto.setDetailExtendJson(JSON.toJSONString(map));
+
+        List<String> requestList = new ArrayList<>();
+        try {
+            requestList = dmpInoutTaskFeign.doHotfixReturnInputTask(Collections.singletonList(dto));
+        }catch (Exception e){
+            throw new ServiceException(e.getMessage());
+        }
+        if (CollUtil.isEmpty(requestList)) {
+            throw new ServiceException("所选数据未找到同步信息");
+        }
+        return BatchResultDTO.success(entity.getId(), entity.getBussinessCode(), OperationTypeEnum.MANUAL_GENERATE);
     }
 
     /**
@@ -284,7 +334,42 @@ public class ApproveTaskInfoServiceImpl extends SuperServiceImpl<ApproveTaskInfo
             listDTO.setStatusName(ApproveTaskStatusEnum.getName(listDTO.getStatus()));
             //数大臣单据名称
             listDTO.setBussinessKeyName(SourceTypeEnum.getName(listDTO.getBussinessKey()));
+            //树大臣审核状态
+            listDTO.setBussinessApproveStatusName(ApproveStatusEnum.getName(listDTO.getBussinessApproveStatus()));
         }
+    }
+
+    /**
+     * 分组mp值处理
+     * @author will
+     * @date 2025/9/18 11:45
+     * @param group
+     * @param map
+     * @return void
+     */
+    private void groupMapValue (List<ApproveTaskDetailEntity> group, Map<String, Object> map) {
+        Map<String, List<ApproveTaskDetailEntity>> detailGroupMap = group.stream().collect(Collectors.groupingBy(ApproveTaskDetailEntity::getSysField));
+        for (Map.Entry<String, List<ApproveTaskDetailEntity>> entryEntity : detailGroupMap.entrySet()) {
+            List<ApproveTaskDetailEntity> value = entryEntity.getValue();
+            if (value.size() > 1) {
+                List<String> valueList = value.stream().map(ApproveTaskDetailEntity::getSysFieldValue).collect(Collectors.toList());
+                map.put(entryEntity.getKey(), valueList);
+            } else {
+                map.put(entryEntity.getKey(), value.get(0).getSysFieldValue());
+            }
+        }
+    }
+
+    /**
+     * 根据业务id和业务编码删除数据
+     * @author will
+     * @date 2025/12/4 11:22
+     * @param bussinessKey
+     * @param bussinessId
+     * @return Boolean
+     */
+    private Boolean deleteByBussiness (String bussinessKey,String bussinessId) {
+        return lambdaUpdate().eq(ApproveTaskInfoEntity::getBussinessKey,bussinessKey).eq(ApproveTaskInfoEntity::getBussinessId,bussinessId).remove();
     }
 
     /**

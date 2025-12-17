@@ -7,6 +7,7 @@ import cn.hutool.core.util.ObjectUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
@@ -144,7 +145,7 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
                 .list();
     }
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public String add(TransferOutDTO.AddDTO addDTO) {
@@ -275,12 +276,41 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
         // 更新单据审核状态
         log.info("提交 开始修改分步式调出状态数据，id集合：【{}】", JSONObject.toJSONString(ids));
         this.updateApproveStatus(ids, ApproveStatusEnum.APPROVE_ING.getStatus());
-        // TODO 启动流程
+
+        //启动流程
+        startProcess(list);
 
         // 记录操作日志
         log.info("提交 开始记录分步式调出日志数据，id集合：【{}】", JSONObject.toJSONString(ids));
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog("提交了一个分步式调出单【%s】", ModuleTypeEnum.TRANSFER_OUT.getCode(), pairList, "提交操作");
+    }
+
+
+    /**
+     * 启动流程
+     * @author will
+     * @date 2025/11/14 11:19
+     * @param list
+     * @return void
+     */
+    private void startProcess (List<TransferOutEntity> list) {
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
+        ValidList<ProcessManagementDTO.StartDTO> resultList = new ValidList<>();
+        list.forEach(obj -> {
+            ProcessManagementDTO.StartDTO startDTO = new ProcessManagementDTO.StartDTO();
+            startDTO.setBusinessId(obj.getId());
+            startDTO.setBusinessCode(obj.getCode());
+            startDTO.setBusinessKey(SourceTypeEnum.TRANSFER_OUT.getCode());
+            startDTO.setBusinessName(obj.getCode());
+            startDTO.setUserId(userInfo.getUid());
+            startDTO.setVariablesMap(getVariablesMap(obj));
+            resultList.add(startDTO);
+        });
+        ApiResult<List<ProcessManagementDTO.StartResultDTO>> listApiResult = workflowFeign.batchStartProcess(resultList);
+        if (!listApiResult.isSuccess()) {
+            throw new ServiceException(listApiResult.getMsg());
+        }
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -324,7 +354,7 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         ProcessManagementDTO.ApproveDTO approveDTO = new ProcessManagementDTO.ApproveDTO();
         approveDTO.setBusinessId(entity.getId());
-        approveDTO.setBusinessKey(SourceTypeEnum.TRANSFER_IN.getCode());
+        approveDTO.setBusinessKey(SourceTypeEnum.TRANSFER_OUT.getCode());
         approveDTO.setApproveType(ApproveTypeEnum.getByCode(dto.getType()));
         approveDTO.setComment(dto.getComment());
         approveDTO.setUserId(userInfo.getUid());
@@ -359,7 +389,7 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public Boolean approveEnd(ApproveOneDTO dto, TransferOutEntity entity) {
         if (ObjectUtil.isEmpty(entity)) {
             return Boolean.FALSE;
@@ -379,6 +409,55 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
         return Boolean.TRUE;
     }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public List<BatchResultDTO> deleteByIds(List<String> ids, boolean returnDetails) {
+        List<TransferOutEntity> list = super.listByIds(ids);
+//        Map<String, TransferOutEntity> transferOutEntityMap = list.stream().collect(Collectors.toMap(TransferOutEntity::getId, Function.identity()));
+        //只有待提交的数据允许删除
+//        ids.stream().forEach(id->{
+//            ValidatorUtil.isTrue(transferOutEntityMap.containsKey(id),()->new ServiceException("分步式调出单数据不存在"));
+//            TransferOutEntity transferOutEntity = transferOutEntityMap.get(id);
+//            ValidatorUtil.isTrue(Objects.equals(transferOutEntity.getApproveStatus(), ApproveStatusEnum.WAIT_SUBMIT.getStatus()) && Objects.equals(transferOutEntity.getInvalidStatus(), Boolean.FALSE),()->new ServiceException("只有待提交并且未作废数据支持删除"));
+//        });
+        List<TransferOutEntity> removeList=new ArrayList<>();
+        List<BatchResultDTO> resultDTOList=new ArrayList<>();
+        for (TransferOutEntity entity : list) {
+            if (!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(entity.getApproveStatus()) || entity.getInvalidStatus()){
+                resultDTOList.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_98009.msg));
+                continue;
+            }
+            removeList.add(entity);
+            resultDTOList.add(BatchResultDTO.success(entity.getId(), entity.getCode(),"删除成功"));
+        }
+        List<String> removeIdList = removeList.stream().map(TransferOutEntity::getId).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(removeIdList)){
+            return resultDTOList;
+        }
+        // 删除日志数据
+        log.info("删除 开始删除分步式调出单日志数据，id集合：【{}】", JSONObject.toJSONString(removeIdList));
+        String msg = CharSequenceUtil.format("用户【{}】删除了单据编号为【{}】的分步式调出单", UserContext.getDefaultLoginUser().getUserName(), removeList.stream().map(TransferOutEntity::getCode).collect(Collectors.joining(",")));
+        List<Pair<String, String>> pairList = removeList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+        operateLogService.batchAddModuleOperateLog(msg, ModuleTypeEnum.TRANSFER_OUT.getCode(), pairList, "删除操作");
+        // 删除明细数据
+        log.info("删除 开始删除分步式调出单明细数据，id集合：【{}】", JSONObject.toJSONString(removeIdList));
+        transferOutDetailService.removeByMainIds(removeIdList);
+
+        // 删除主单数据
+        log.info("删除 开始删除分步式调出单主单数据，id集合：【{}】", JSONObject.toJSONString(removeIdList));
+        //删除主表数据
+        boolean result =  super.removeByIds(removeIdList);
+        if (!result){
+            throw new ServiceException(ApiError.ERROR_DATA_DELETE_ERROR);
+        }
+
+        //推送金蝶
+        removeList.forEach(obj -> syncApproveInfoToKingdee(obj,SyncOperateEnum.OPERATE_DELETE));
+        
+        // 返回成功结果
+        return resultDTOList;
+    }
+
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void delete(List<String> ids) {
@@ -388,7 +467,7 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
         ids.stream().forEach(id->{
             ValidatorUtil.isTrue(transferOutEntityMap.containsKey(id),()->new ServiceException("分步式调出单数据不存在"));
             TransferOutEntity transferOutEntity = transferOutEntityMap.get(id);
-            ValidatorUtil.isTrue(Objects.equals(transferOutEntity.getApproveStatus(), ApproveStatusEnum.WAIT_SUBMIT.getStatus()) && Objects.equals(transferOutEntity.getInvalidStatus(), Boolean.FALSE),()->new ServiceException("只有待提交并且未作废数据支持删除"));
+            ValidatorUtil.isTrue( !ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(transferOutEntity.getApproveStatus()) || transferOutEntity.getInvalidStatus(),()->new ServiceException("只有待提交并且未作废数据支持删除"));
         });
         // 删除日志数据
         log.info("删除 开始删除分步式调出单日志数据，id集合：【{}】", JSONObject.toJSONString(ids));
@@ -405,6 +484,46 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
 
         //推送金蝶
         list.forEach(obj -> syncApproveInfoToKingdee(obj,SyncOperateEnum.OPERATE_DELETE));
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public BatchResultDTO deleteEntity(TransferOutEntity entity) {
+        //只有待提交的数据允许删除
+        if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.WAIT_SUBMIT.getStatus()) || !Objects.equals(entity.getInvalidStatus(), Boolean.FALSE)) {
+            throw new ServiceException("只有待提交并且未作废数据支持删除");
+        }
+        List<String> ids = Collections.singletonList(entity.getId());
+        // 删除日志数据
+        log.info("删除 开始删除分步式调出单日志数据，id：【{}】", entity.getId());
+        String msg = CharSequenceUtil.format("用户【{}】删除了单据编号为【{}】的分步式调出单", UserContext.getDefaultLoginUser().getUserName(), entity.getCode());
+        List<Pair<String, String>> pairList = Collections.singletonList(new Pair<>(entity.getId(), entity.getCode()));
+        operateLogService.batchAddModuleOperateLog(msg, ModuleTypeEnum.TRANSFER_OUT.getCode(), pairList, "删除操作");
+        // 删除明细数据
+        log.info("删除 开始删除分步式调出单明细数据，id：【{}】", entity.getId());
+        transferOutDetailService.removeByMainIds(ids);
+
+        // 删除主单数据
+        log.info("删除 开始删除分步式调出单主单数据，id：【{}】", entity.getId());
+        boolean result = super.removeByIds(ids);
+
+        //推送金蝶
+        syncApproveInfoToKingdee(entity, SyncOperateEnum.OPERATE_DELETE);
+
+        if (result) {
+            return BatchResultDTO.success(entity.getId(), entity.getCode(), "删除成功");
+        } else {
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), "删除失败");
+        }
+    }
+
+    @Override
+    public Map<String, TransferOutEntity> mapByIds(List<String> ids) {
+        if (CollectionUtils.isEmpty(ids)) {
+            return Collections.emptyMap();
+        }
+        List<TransferOutEntity> list = this.listByIds(ids);
+        return list.stream().collect(Collectors.toMap(TransferOutEntity::getId, Function.identity()));
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -494,8 +613,8 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
     }
 
     @Override
-    public List<TransferOutDTO.ViewGenerateTransferInDTO> viewGenerateTransferIn(List<String> ids) {
-        List<TransferOutDTO.ViewGenerateTransferInDTO> dataList = this.baseMapper.viewGenerateTransfer(ids);
+    public List<TransferOutDTO.ViewGenerateTransferInDTO> viewGenerateTransferIn(List<String> detailIdList) {
+        List<TransferOutDTO.ViewGenerateTransferInDTO> dataList = this.baseMapper.viewGenerateTransfer(detailIdList);
         if(CollUtil.isEmpty(dataList)) {
             return null;
         }
@@ -519,8 +638,9 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
 
         dataList.stream().forEach(data->{
             // 产品名称
-            String productName = skuMap.getOrDefault(data.getSkuId(),new ProductDetailEntity()).getName();
-            data.setProductName(productName);
+            ProductDetailEntity productDetail = skuMap.getOrDefault(data.getSkuId(), null);
+            data.setProductName(Objects.nonNull(productDetail) ? productDetail.getName() : null);
+            data.setUnitName(Objects.nonNull(productDetail) ? productDetail.getUnitName() : null);
 
             // 调拨方向名称
             String transferDirectionName = transferDirectionList.stream().filter(e -> Objects.equals(e.getValue(), data.getTransferDirection())).map(DictBasicDTO.ListDTO::getName).findFirst().orElse("");
@@ -757,6 +877,21 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
         if (CollectionUtils.isEmpty(productDetailList)) {
             throw new ServiceException(ApiError.ERROR_95084);
         }
+
+        //最新审核人
+        ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = new ValidList<>();
+        list.forEach(obj -> {
+            dtoList.add(new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.TRANSFER_OUT.getCode(), obj.getId()));
+        });
+        ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = null;
+        if (CollectionUtils.isNotEmpty(dtoList)) {
+            listApiResult = workflowFeign.curApprover(dtoList);
+            Integer code = listApiResult.getCode();
+            if (200 != code) {
+                throw new ServiceException(new ApiResult(ApiError.DEFAULT.code, listApiResult.getMsg()));
+            }
+        }
+
         //调拨方向
         List<DictBasicDTO.ListDTO> transferDirectionList = dictBasicService.getByKey(DictBasicEnum.TRANSFER_DIRECTION.getKey());
         for (TransferOutDTO.PagingViewDTO data : list) {
@@ -770,6 +905,12 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
 
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
             data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
+
+            //最新审核人
+            if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
+                String curApprove = listApiResult.getData().stream().filter(e -> e.getBusinessId().equals(data.getId()) && StringUtils.isNotBlank(e.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
+                data.setApproveUserName(CharSequenceUtil.blankToDefault(curApprove,data.getApproveUserName()));
+            }
         }
     }
 
@@ -809,6 +950,7 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
                 SkuVO skuVO = skuMap.get(member.getSkuId()).get(0);
                 member.setProductName(skuVO.getSkuName());
                 member.setVariantProperty(skuVO.getVariantProperty());
+                member.setUnitName(skuVO.getUnitName());
             }
             //根据组织、仓库、仓位、sku查询可用库存
             Integer curInventoryQty = inventoryService.getUsableInventoryTotal(data.getOutWarehouseId(), member.getSkuId(), member.getOutWarehouseLocation());
@@ -881,6 +1023,7 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
         transferInDTO.setInWarehouseLocation(pushData.getInWarehouseLocation());
         transferInDTO.setSkuId(pushData.getSkuId());
         transferInDTO.setSkuNo(pushData.getSkuNo());
+        transferInDTO.setUnitName(pushData.getUnitName());
         transferInDTO.setOutQty(transferOutDetailEntity.getQty());
         transferInDTO.setPlanQty(pushData.getPlanQty());
         transferInDTO.setRemark(pushData.getRemark());

@@ -7,6 +7,7 @@ import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.ExcelImportFsDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
@@ -20,6 +21,8 @@ import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.dto.excel.ProductWarehouseLocationExcelDTO;
 import com.erp.model.plm.entity.*;
+import com.erp.server.plm.service.ProductBrandService;
+import com.erp.server.plm.service.ProductRDTTeamService;
 import com.erp.model.plm.enums.ProductDetailStatusEnum;
 import com.erp.model.plm.vo.SkuSimpleVO;
 import com.erp.model.plm.vo.SkuVO;
@@ -98,10 +101,18 @@ public class ProductDetailController extends BaseController {
     private ProductUnitService productUnitService;
 
     @Resource
+    private ProductBrandService productBrandService;
+
+    @Resource
+    private ProductRDTTeamService productRDTTeamService;
+
+    @Resource
     private ProductDetailApproverService productDetailApproverService;
 
     @Resource
     private ProductCustomsService productCustomsService;
+    @Resource
+    private ProductDetailImagesService productDetailImagesService;
 
     /**
      * 临时接口-添加产品国外海关编码
@@ -700,6 +711,120 @@ public class ProductDetailController extends BaseController {
     }
 
     /**
+     * 产品信息-品牌管理-新增|修改
+     *
+     * @param productBrandList productBrandList
+     * @return com.common.core.vo.ApiResult
+     * @Author Auto
+     * @Date 2025/01/20
+     **/
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "产品信息-品牌管理-新增|修改：品牌名称={name}", keyIdName = "name")
+    @PostMapping("/saveOrUpdateProductBrand")
+    //@RequestPermissions("plm:product:detail:saveOrUpdateProductBrand")
+    public ApiResult<?> saveOrUpdateProductBrand(@RequestBody @Validated List<ProductBrandDTO> productBrandList) {
+        List<BatchResultDTO> resultDTOS = new LinkedList<>();
+        for (ProductBrandDTO dto : productBrandList) {
+            try {
+                Boolean flag = productBrandService.saveOrUpdateBatch(Collections.singletonList(dto));
+                if (flag){
+                    resultDTOS.add(BatchResultDTO.success(dto.getId(), dto.getName(),"品牌管理-新增|修改成功"));
+                } else {
+                    resultDTOS.add(BatchResultDTO.fail(dto.getId(),dto.getName(),"品牌管理-新增|修改失败"));
+                }
+            }catch (Exception e){
+                log.error("品牌管理-新增|修改失败",e);
+                resultDTOS.add(BatchResultDTO.fail(dto.getId(), dto.getName(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+    /**
+     * 产品信息-品牌管理-查询
+     *
+     * @return com.common.core.vo.ApiResult<java.util.List < com.erp.model.plm.entity.ProductBrandEntity>>
+     * @Author Auto
+     * @Date 2025/01/20
+     **/
+    @GetMapping("/listProductBrand")
+    public ApiResult<List<ProductBrandEntity>> listProductBrand() {
+        List<ProductBrandEntity> list = productBrandService.listProductBrand();
+        return this.success(list);
+    }
+
+    /**
+     * 产品信息-品牌管理-删除
+     *
+     * @param id 品牌列表id
+     * @return com.common.core.vo.ApiResult
+     * @Author Auto
+     * @Date 2025/01/20
+     **/
+    @LogAction(value = LogActionEnum.DELETE, desc = "产品信息-品牌管理-删除")
+    @PostMapping("/deleteProductBrand")
+    //@RequestPermissions("plm:product:detail:deleteProductBrand")
+    public ApiResult deleteProductBrand(String id) {
+        Boolean flag = productBrandService.delete(id);
+        return flag == true ? this.success() : this.failure();
+    }
+
+    /**
+     * 产品信息-研发团队管理-新增|修改
+     *
+     * @param productRDTTeamList productRDTTeamList
+     * @return com.common.core.vo.ApiResult
+     * @Author Auto
+     * @Date 2025/01/20
+     **/
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "产品信息-研发团队管理-新增|修改：研发团队名称={name}", keyIdName = "name")
+    @PostMapping("/saveOrUpdateProductRDTTeam")
+    //@RequestPermissions("plm:product:detail:saveOrUpdateProductRDTTeam")
+    public ApiResult<?> saveOrUpdateProductRDTTeam(@RequestBody @Validated List<ProductRDTTeamDTO> productRDTTeamList) {
+        List<BatchResultDTO> resultDTOS = new LinkedList<>();
+        for (ProductRDTTeamDTO dto : productRDTTeamList) {
+            try {
+                Boolean flag = productRDTTeamService.saveOrUpdateBatch(Collections.singletonList(dto));
+                if (flag){
+                    resultDTOS.add(BatchResultDTO.success(dto.getId(), dto.getName(),"研发团队管理-新增|修改成功"));
+                } else {
+                    resultDTOS.add(BatchResultDTO.fail(dto.getId(),dto.getName(),"研发团队管理-新增|修改失败"));
+                }
+            }catch (Exception e){
+                log.error("研发团队管理-新增|修改失败",e);
+                resultDTOS.add(BatchResultDTO.fail(dto.getId(), dto.getName(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+    /**
+     * 产品信息-研发团队管理-查询
+     *
+     * @return com.common.core.vo.ApiResult<java.util.List < com.erp.model.plm.entity.ProductRDTTeamEntity>>
+     * @Author Auto
+     * @Date 2025/01/20
+     **/
+    @GetMapping("/listProductRDTTeam")
+    public ApiResult<List<ProductRDTTeamEntity>> listProductRDTTeam() {
+        List<ProductRDTTeamEntity> list = productRDTTeamService.listProductRDTTeam();
+        return this.success(list);
+    }
+
+    /**
+     * 产品信息-研发团队管理-删除
+     *
+     * @param id 研发团队列表id
+     * @return com.common.core.vo.ApiResult
+     * @Author Auto
+     * @Date 2025/01/20
+     **/
+    @LogAction(value = LogActionEnum.DELETE, desc = "产品信息-研发团队管理-删除")
+    @PostMapping("/deleteProductRDTTeam")
+    //@RequestPermissions("plm:product:detail:deleteProductRDTTeam")
+    public ApiResult deleteProductRDTTeam(String id) {
+        Boolean flag = productRDTTeamService.delete(id);
+        return flag == true ? this.success() : this.failure();
+    }
+
+    /**
      * excel导入产品信息
      *
      * @param excelFile  文件流
@@ -922,6 +1047,22 @@ public class ProductDetailController extends BaseController {
      */
     @PostMapping("/search/skuInfo")
     public ApiResult<List<SkuVO>> skuInfo(@RequestBody ProductDetailDTO.SearchDTO dto) {
+        List<SkuVO> skuList = productDetailService.searchSkuInfo(dto);
+        return success(skuList);
+    }
+
+    /**
+     * 搜索sku
+     *
+     * @return com.common.core.vo.ApiResult
+     * @author jack
+     * @date 2025-07-11
+     */
+    @PostMapping("/search/checkParams/skuInfo")
+    public ApiResult<List<SkuVO>> searchCheckParamsSkuInfo(@RequestBody ProductDetailDTO.SearchDTO dto) {
+        if (Objects.isNull(dto) || StringUtils.isEmpty(dto.getSearchKeyword())){
+            return success();
+        }
         List<SkuVO> skuList = productDetailService.searchSkuInfo(dto);
         return success(skuList);
     }
@@ -1360,6 +1501,7 @@ public class ProductDetailController extends BaseController {
      * @param dto 参数
      */
     @PostMapping("/batchUpdateProductPack")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "修改产品包装尺寸")
     public ApiResult<List<BatchResultDTO>> batchUpdateProductPack(@RequestBody @Validated BatchParamsDTO<ProductPackViewDTO> dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>();
         for (ProductPackViewDTO viewDTO : dto.getParams()) {
@@ -1372,4 +1514,40 @@ public class ProductDetailController extends BaseController {
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
+
+    /**
+     *  上传SKU图片（主页）
+     * @Author jack
+     * @Date 2025-07-25
+     **/
+    @PostMapping("/uploadProductImage")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "charge_id",
+            menuCode = "plm:product:detail:uploadProductImage",
+            serviceClass = ProductDetailService.class,
+            keyIdName = "skuId"
+    )
+    public ApiResult uploadProductImage(@RequestBody @Validated ProductDetailDTO.ProductImagesDTO dto) {
+        Boolean flag = productDetailImagesService.uploadProductImage(dto);
+        return flag == true ? this.success() : this.failure();
+    }
+
+    /**
+     *  上传zip包 图片
+     * @Author jack
+     * @Date 2025-07-25
+     **/
+    @PostMapping(value = "/importZip")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "charge_id",
+            menuCode = "plm:product:detail:importZip",
+            serviceClass = ProductDetailService.class,
+            keyIdName = "id"
+    )
+    public ApiResult<Object> importZip(@RequestBody BaseDTO.ImportDTO dto) {
+        dto.setUserId(UserContext.getLoginUser().getUid());
+        Boolean flag = productDetailImagesService.importZip(dto);
+        return flag == true ? success() : failure();
+    }
+
 }

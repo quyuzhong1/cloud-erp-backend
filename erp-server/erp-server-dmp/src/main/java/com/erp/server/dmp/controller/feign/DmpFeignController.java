@@ -4,6 +4,7 @@ import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.common.business.dto.DmpInputFeignDTO;
 import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
@@ -19,6 +20,7 @@ import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
 import com.erp.server.dmp.service.*;
 import com.erp.server.dmp.service.impl.TbTaskTypeService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -26,10 +28,7 @@ import javax.annotation.Resource;
 import javax.validation.Valid;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author Will
@@ -50,6 +49,8 @@ public class DmpFeignController extends BaseController {
     @Resource
     private DmpPullTaskService dmpPullTaskService;
 
+    @Resource
+    private DmpPushMsgService dmpPushMsgService;
 
     @Resource
     private BiOrderInfoService biOrderInfoService;
@@ -81,6 +82,9 @@ public class DmpFeignController extends BaseController {
 
     @Resource
     private TbTaskTypeService tbTaskTypeService;
+
+    @Resource
+    private DmpCfgInputDetailService dmpCfgInputDetailService;
 
     @PostMapping("/getShopById")
     public BiShopInfoDTO getShopById(@RequestBody String shopId) {
@@ -243,6 +247,17 @@ public class DmpFeignController extends BaseController {
         return dmpPushTaskService.saveOrUpdateDmpSyncTask(dmpPushTaskEntity);
     }
 
+    /**
+     * 记录推送数据记录
+     *
+     * @param dmpPushTaskEntity 查询过滤条件
+     * @return
+     */
+    @PostMapping("/save/push/task")
+    public String saveDmpPushTask(@RequestBody DmpPushTaskEntity dmpPushTaskEntity) {
+        return dmpPushTaskService.saveDmpPushTask(dmpPushTaskEntity);
+    }
+
 
     /**
      * @description: 拉取数据预警
@@ -350,4 +365,55 @@ public class DmpFeignController extends BaseController {
     public PagingVO<DmpOutputTaskRecordDTO.PagingViewDTO> pagingOutLatest(@RequestBody PagingDTO<DmpOutputTaskRecordDTO.PagingParamDTO> dto){
        return dmpOutputTaskRecordService.pagingOutLatest(dto);
     }
+
+    /**
+     * 查询最新推送记录
+     */
+    @PostMapping("/batchCreateDmpPushMsg")
+    public void batchCreateDmpPushMsg(@RequestBody List<DmpPushMsgEntity> msgList){
+        if (CollectionUtils.isEmpty(msgList)){
+            return;
+        }
+        dmpPushMsgService.saveBatch(msgList);
+    }
+
+    /**
+     * 金蝶是否已审核
+     * @author will
+     * @date 2025/10/13 16:33
+     * @param kingdeeDTO
+     * @return String
+     */
+    @PostMapping("/checkKingdeeSyncApprove")
+    public String checkKingdeeSyncApprove(@RequestBody KingdeeDTO kingdeeDTO){
+        return kingdeeCommonService.checkKingdeeSyncApprove(kingdeeDTO);
+    }
+
+    /**
+     * 获取最新推送记录
+     */
+    @GetMapping("/outputTaskRecord/getLastOutputTaskRecordList")
+    List<DmpOutputTaskRecordEntity> getLastOutputTaskRecordList(@RequestParam(value = "sourceCodeList",required = false) List<String> sourceCodeList,
+                                                                @RequestParam(value = "outputClass",required = false) String outputClass){
+        if (CollectionUtils.isEmpty(sourceCodeList) || CharSequenceUtil.isBlank(outputClass)){
+            return Collections.emptyList();
+        }
+        if (sourceCodeList.stream().anyMatch(StringUtils::isBlank)){
+            ServiceException.runError("来源编码列表不能包含空值");
+        }
+        return dmpOutputTaskRecordService.getLastOutputTaskRecordList(sourceCodeList, outputClass);
+    }
+
+    /**
+     * 操作dmp拉取dmp_cfg_input_detail表配置
+     * @author will
+     * @date 2025/11/7 16:17
+     * @param cfgOptionDTO
+     * @return String
+     */
+    @PostMapping("/input/optionDmpCfgInputDetail")
+    public void optionDmpCfgInputDetail(@RequestBody @Valid DmpInputFeignDTO.CfgOptionDTO cfgOptionDTO){
+         dmpCfgInputDetailService.optionDmpCfgInputDetail(cfgOptionDTO);
+    }
+
 }

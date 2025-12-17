@@ -68,6 +68,7 @@ public class BiTargetShopSettingController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "按照店铺导出目标")
     @PostMapping("/export")
     public Boolean export(@RequestBody @Validated PagingDTO<BiTargetYearDTO.PagingParamDTO> dto, HttpServletResponse response) {
         dto.setPageSize(1000);

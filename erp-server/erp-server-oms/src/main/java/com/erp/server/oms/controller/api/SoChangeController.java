@@ -283,7 +283,7 @@ public class SoChangeController extends BaseController {
      * @param dto
      * @return
      */
-    @LogAction(value = LogActionEnum.DELETE, desc = "删除销售变更单")
+    @LogAction(value = LogActionEnum.DELETE, desc = "批量删除记录")
     @PostMapping("/delete")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
@@ -291,9 +291,9 @@ public class SoChangeController extends BaseController {
             serviceClass = SoChangeService.class,
             keyIdName = "ids"
     )
-    public ApiResult delete(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
-        Boolean result = soChangeService.deleteByIds(dto.getIds());
-        return result ? success() : failure();
+    public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOList = soChangeService.deleteByIds(dto.getIds(), true);
+        return resultDTOList.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOList) : failure(resultDTOList);
     }
 
     /**

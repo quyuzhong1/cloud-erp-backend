@@ -16,7 +16,6 @@ import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
-import com.common.business.enums.BillApproveStatusEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
@@ -33,10 +32,7 @@ import com.erp.model.oms.dto.excel.CustomerB2bSellerExcelDTO;
 import com.erp.model.oms.entity.CustomerB2bSellerChangeEntity;
 import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.CustomerSellerEntity;
-import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.sys.dto.KingdeeBusinessOperatorDTO;
-import com.erp.model.sys.dto.KingdeeOperatorRefPostDTO;
 import com.erp.model.sys.enums.KingdeeBusinessOperatorTypeEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
@@ -98,7 +94,7 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
     @Resource
     private SysUserFeign sysUserFeign;
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BatchResultDTO add(CustomerB2bSellerChangeDTO.AddDTO addDTO) {
@@ -148,7 +144,7 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public BatchResultDTO addAndSubmit(CustomerB2bSellerChangeDTO.AddDTO addDTO) {
         BatchResultDTO batchResultDTO = service.add(addDTO);
         if(Boolean.FALSE.equals(batchResultDTO.getSuccess())){
@@ -200,7 +196,7 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
             if (listApiResult != null && org.apache.commons.collections4.CollectionUtils.isNotEmpty(listApiResult.getData())) {
                 String curApprove = listApiResult.getData().stream().filter(obj -> obj.getBusinessId().equals(re.getCustomerId()) && StringUtils.isNotBlank(obj.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
                 if(StringUtils.isNotBlank(curApprove)){
-                    re.setApproveUserName(curApprove);
+                    re.setApproveUserName(CharSequenceUtil.blankToDefault(curApprove,re.getApproveUserName()));
                 }
             }
         }
@@ -563,7 +559,7 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
             if (listApiResult != null && org.apache.commons.collections4.CollectionUtils.isNotEmpty(listApiResult.getData())) {
                 String curApprove = listApiResult.getData().stream().filter(obj -> obj.getBusinessId().equals(customerB2bSellerExcelDTO.getMainId()) && StringUtils.isNotBlank(obj.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
                 if(StringUtils.isNotBlank(curApprove)){
-                    customerB2bSellerExcelDTO.setApproveUserName(curApprove);
+                    customerB2bSellerExcelDTO.setApproveUserName(CharSequenceUtil.blankToDefault(curApprove,customerB2bSellerExcelDTO.getApproveUserName()));
                 }
             }
         }

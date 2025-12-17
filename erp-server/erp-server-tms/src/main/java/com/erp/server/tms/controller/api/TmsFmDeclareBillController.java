@@ -226,7 +226,7 @@ public class TmsFmDeclareBillController extends BaseController {
      * @return ApiResult<String>
      */
     @PostMapping("/delete")
-    @LogAction(value = LogActionEnum.UPDATE, desc = "头程报关单删除")
+    @LogAction(value = LogActionEnum.DELETE, desc = "批量删除记录")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
             menuCode = "tms:tmsFmDeclareBill:delete",

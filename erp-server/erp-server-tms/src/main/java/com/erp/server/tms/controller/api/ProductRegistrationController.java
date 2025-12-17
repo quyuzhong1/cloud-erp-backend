@@ -128,7 +128,7 @@ public class ProductRegistrationController extends BaseController {
      * @return ApiResult<String>
      */
     @PostMapping("/delete")
-    @LogAction(value = LogActionEnum.INSERT, desc = "产品备案表删除备案")
+    @LogAction(value = LogActionEnum.DELETE, desc = "产品备案表删除备案")
     public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = productRegistrationService.delete(dto.getIds());
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
@@ -143,6 +143,7 @@ public class ProductRegistrationController extends BaseController {
      * @return ApiResult<String>
      */
     @PostMapping("/export")
+    @LogAction(value = LogActionEnum.EXPORT, desc = "备案列表导出")
     public ApiResult<Boolean> export(@RequestBody @Validated ProductRegistrationDTO.PagingParamDTO dto) {
         productRegistrationService.export(dto);
         return success(true);

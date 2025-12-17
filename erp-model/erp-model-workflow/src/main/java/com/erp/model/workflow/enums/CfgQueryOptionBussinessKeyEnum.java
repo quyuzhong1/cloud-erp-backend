@@ -48,6 +48,23 @@ public enum CfgQueryOptionBussinessKeyEnum implements EnumMessage {
 	SOPRICECHANGE("soPriceChange", "销售调价表"),
 	TRANSFERIN("transferIn", "分步式调入单"),
 	TRANSFEROUT("transferOut", "分步式调出单"),
+	SO_MULTI_CHANNEL("soMultiChannel", "多渠道订单"),
+	SAMPLE_RETURN_INFO("sampleReturnInfo", "样品归还单"),
+	SAMPLE_BORROW_INFO("sampleBorrowInfo", "样品借用单"),
+	SAMPLE_SCRAP_INFO("sampleScrapInfo", "样品报废单"),
+	EXHIBITION_ORDER("exhibitionOrder", "展会订单"),
+	SAMPLE_RECIPIENT("sampleRecipient","样品领用单"),
+	SAMPLE_BACK_INFO("sampleBackInfo","样品退回单"),
+	SAMPLE_LEDGER_INIT("sampleLedgerInit","样品期初台账"),
+	MOLD_INFO("moldInfo", "模具档案"),
+	MOLD_REF_SKU("moldRefSku", "模具关联SKU"),
+	ASSET_CARD("assetCard", "资产卡片"),
+	ASSET_ACCEPTANCE("assetAcceptance", "资产验收单"),
+	ASSET_DISPOSAL("assetDisposal", "资产处置单"),
+	ASSET_PROFIT_LOSS("assetProfitLoss", "盘盈盘亏单"),
+	ASSET_STOCKTAKING("assetStocktaking", "资产盘点表"),
+	ASSET_STOCKTAKING_PLAN("assetStocktakingPlan", "盘点方案"),
+	ASSET_LOCATION("assetLocation", "资产位置"),
     ;
     /**
      * 类型

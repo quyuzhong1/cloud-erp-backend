@@ -1,5 +1,6 @@
 package com.erp.rpc.tms.feign;
 
+import com.common.business.config.FeignErrorDecoder;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.validator.ValidList;
 import com.erp.model.tms.dto.FirstMileChangeRecordDTO;
@@ -10,7 +11,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.List;
 
-@FeignClient(name = "erp-tms", contextId = "firstMileChangeRecord")
+@FeignClient(name = "erp-tms", contextId = "firstMileChangeRecord" ,configuration = {FeignErrorDecoder.class})
 public interface FirstMileChangeRecordFeign {
     /**
      * 新增

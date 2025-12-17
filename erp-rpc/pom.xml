@@ -20,6 +20,7 @@
         <module>erp-rpc-plm</module>
         <module>erp-rpc-dmp</module>
         <module>erp-rpc-wms</module>
+        <module>erp-rpc-fms</module>
         <module>erp-rpc-scm</module>
         <module>erp-rpc-oms</module>
         <module>erp-rpc-tms</module>

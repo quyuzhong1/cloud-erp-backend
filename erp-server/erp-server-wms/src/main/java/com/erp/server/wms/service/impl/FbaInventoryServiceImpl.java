@@ -3,8 +3,6 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.StrUtil;
-import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PagingDTO;
@@ -25,7 +23,6 @@ import com.erp.model.wms.dto.FbaInventoryDTO;
 import com.erp.model.wms.dto.RequisitionApplicationDTO;
 import com.erp.model.wms.dto.RequisitionApplicationDetailDTO;
 import com.erp.model.wms.entity.FbaInventoryEntity;
-import com.erp.model.wms.entity.OverseasInventoryEntity;
 import com.erp.model.wms.enums.DeliveryChannelsEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.OmsListingInfoFeign;
@@ -38,7 +35,6 @@ import com.erp.server.wms.service.OperateLogService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
@@ -68,6 +64,8 @@ public class FbaInventoryServiceImpl extends SuperServiceImpl<FbaInventoryMapper
     private DownloadTaskFeign downloadTaskFeign;
     @Resource
     private OmsListingInfoFeign omsListingInfoFeign;
+    @Resource
+    private SkuMappingFeign skuMappingFeign;
 
 
     @Override
@@ -91,7 +89,7 @@ public class FbaInventoryServiceImpl extends SuperServiceImpl<FbaInventoryMapper
         return summaryNumber;
     }
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public String add(FbaInventoryDTO.AddDTO addDTO) {
@@ -270,7 +268,7 @@ public class FbaInventoryServiceImpl extends SuperServiceImpl<FbaInventoryMapper
         paramDTO.setPlatform(PlatformDictEnum.AMAZON.getCode());
         paramDTO.setPlatformSkuNoList(platformSkuNoList);
         paramDTO.setShopIdList(Collections.singletonList(shopId));
-        paramDTO.setType(RuleTypeEnum.PLATFORM.getCode());
+        paramDTO.setType(RuleTypeEnum.B2C_PLATFORM.getCode());
         paramDTO.setMatchResult(ListingMatchResultEnum.TRUE.getCode());
 
         return omsListingInfoFeign.checkAndUpdateFnsku(paramDTO);
@@ -284,6 +282,61 @@ public class FbaInventoryServiceImpl extends SuperServiceImpl<FbaInventoryMapper
     @Override
     public void checkAndUpdateFnsku(RequisitionApplicationDTO.UpdateDTO dto) {
         checkAndUpdateFnskuCommon(dto.getDetailList(), dto.getChannelId());
+    }
+
+    @Override
+    public List<FbaInventoryDTO.InventoryDTO> listFbaInventory(FbaInventoryDTO.QueryDTO queryDTO) {
+        if (CollUtil.isNotEmpty(queryDTO.getSkuNos()) && CollUtil.isEmpty(queryDTO.getWarehouseIds())){
+            return baseMapper.listFbaInventory(queryDTO);
+        }
+        if (CollUtil.isEmpty(queryDTO.getShopIds()) || CollUtil.isEmpty(queryDTO.getWarehouseIds())){
+            return Collections.emptyList();
+        }
+        ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
+        paramDTO.setPlatform(PlatformDictEnum.AMAZON.getCode());
+        paramDTO.setShopIdList(queryDTO.getShopIds());
+        paramDTO.setType(RuleTypeEnum.B2C_PLATFORM.code);
+        paramDTO.setMatchResult(ListingMatchResultEnum.TRUE.getCode());
+        paramDTO.setIsExpire(false);
+        List<ListingInfoWithSkuMappingDTO> listingInfoWithSkuMappingDTOS = skuMappingFeign.listingInfoWithSkuMappingList(paramDTO);
+        if (CollectionUtils.isEmpty(listingInfoWithSkuMappingDTOS)){
+            return Collections.emptyList();
+        }
+        List<String> skuNoList = listingInfoWithSkuMappingDTOS.stream().map(ListingInfoWithSkuMappingDTO::getProductSkuNo).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        queryDTO.setSkuNos(skuNoList);
+        List<FbaInventoryDTO.InventoryDTO> inventoryDTOS = baseMapper.listFbaInventory(queryDTO);
+        //转换下拉列表
+        List<FbaInventoryDTO.InventoryDTO> list = new ArrayList<>();
+        listingInfoWithSkuMappingDTOS.forEach(e -> {
+            FbaInventoryDTO.InventoryDTO inventoryDTO = new FbaInventoryDTO.InventoryDTO();
+            inventoryDTO.setId(e.getTableId());
+            inventoryDTO.setSkuNo(e.getProductSkuNo());
+            inventoryDTO.setPlatformProductName(e.getPlatformSkuName());
+            inventoryDTO.setAsin(e.getPlatformSpuNo());
+            inventoryDTO.setFnSku(e.getPlatformFnSku());
+            inventoryDTO.setMsku(e.getPlatformSkuNo());
+            FbaInventoryDTO.InventoryDTO inventoryDTO1 = inventoryDTOS.stream()
+                    .filter(d -> d.getSkuNo().equals(e.getProductSkuNo()) && d.getFnSku().equals(e.getPlatformFnSku())  && d.getAsin().equals(e.getPlatformSpuNo()))
+                    .max(Comparator.comparing(FbaInventoryDTO.InventoryDTO::getFulfillableQty)).orElse(null);
+            inventoryDTO.setFbmFulfillableQty(Objects.nonNull(inventoryDTO1) ? inventoryDTO1.getFbmFulfillableQty() : 0);
+            inventoryDTO.setFulfillableQty(Objects.nonNull(inventoryDTO1) ? inventoryDTO1.getFulfillableQty() : 0);
+            inventoryDTO.setWarehouseId(Objects.nonNull(inventoryDTO1) ? inventoryDTO1.getWarehouseId() : "");
+            list.add(inventoryDTO);
+        });
+        return list;
+    }
+
+    @Override
+    public HashMap<String, List<FbaInventoryDTO.InventoryDTO>> fbaInventoryTree(FbaInventoryDTO.QueryDTO queryDTO) {
+        if (CollUtil.isEmpty(queryDTO.getSkuNos()) || CollUtil.isEmpty(queryDTO.getWarehouseIds())){
+            return new HashMap<>();
+        }
+        List<FbaInventoryDTO.InventoryDTO> list = baseMapper.listFbaInventory(queryDTO);
+        HashMap<String, List<FbaInventoryDTO.InventoryDTO>> map = new HashMap<>();
+        for (FbaInventoryDTO.InventoryDTO inventoryDTO : list) {
+            map.computeIfAbsent(inventoryDTO.getSkuNo(), k -> new ArrayList<>()).add(inventoryDTO);
+        }
+        return map;
     }
 
     private <T extends RequisitionApplicationDetailDTO.CommonDTO> void checkAndUpdateFnskuCommon(List<T> detailList, String channelId) {
@@ -306,7 +359,6 @@ public class FbaInventoryServiceImpl extends SuperServiceImpl<FbaInventoryMapper
             updateFnSkulist.stream()
                     .filter(e -> e.getShopId().equalsIgnoreCase(channelId) && e.getPlatformSkuNo().equals(addDTO.getPlatformSku()))
                     .findFirst().ifPresent(mappingDTO -> addDTO.setPlatformFnSku(mappingDTO.getPlatformFnSku()));
-
         }
     }
 

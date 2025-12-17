@@ -103,7 +103,7 @@ public interface OverseasProviderService extends SuperService<OverseasProviderEn
 
     void updateThirdWarehouse(OverseasProviderDTO.UpdateThirdWarehouseDTO dto);
 
-    void delete(String id);
+    List<BatchResultDTO> delete(String id);
 
     List<String> getShortName(String platformCode);
 
@@ -123,4 +123,8 @@ public interface OverseasProviderService extends SuperService<OverseasProviderEn
     List<OverseasProviderDTO.ListDTO> listAuthorizedThirdWarehouse();
 
     OverseasProviderEntity getByPlatformCodeAndShortName(String sysType, String thirdShortName);
+
+    List<OverseasProviderEntity> listByAuthStatus(String code);
+
+    OverseasProviderEntity refreshToken(OverseasProviderEntity entity);
 }

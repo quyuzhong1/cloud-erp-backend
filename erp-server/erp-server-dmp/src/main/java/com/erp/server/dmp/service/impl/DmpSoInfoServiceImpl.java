@@ -72,7 +72,7 @@ public class DmpSoInfoServiceImpl extends SuperServiceImpl<DmpSoInfoMapper, DmpS
     @Resource
     private MongoService mongoService;
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(DmpSoInfoDTO.AddDTO addDTO) {

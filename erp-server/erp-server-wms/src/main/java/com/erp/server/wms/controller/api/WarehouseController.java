@@ -302,8 +302,8 @@ public class WarehouseController extends BaseController {
             serviceClass = WarehouseService.class,
             keyIdName = "id")
     public ApiResult delete(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
-        Boolean result = warehouseService.deleteByIds(dto.getIds());
-        return result == true ? success() : failure();
+        List<BatchResultDTO> resultDTOList = warehouseService.deleteByIds(dto.getIds());
+        return resultDTOList.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOList) : failure(resultDTOList);
     }
 
 

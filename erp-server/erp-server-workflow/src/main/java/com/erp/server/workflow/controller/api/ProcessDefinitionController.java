@@ -167,6 +167,7 @@ public class ProcessDefinitionController extends BaseController {
      * @return ApiResult<List<BatchResultDTO>>
      */
     @PostMapping("/updateDisabled")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "更新启禁用状态")
     public ApiResult<List<BatchResultDTO>> updateDisabled(@RequestBody @Validated List<ProcessDefinitionDTO.DisableDTO> list) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(list.size());
         for (ProcessDefinitionDTO.DisableDTO disableDTO : list) {

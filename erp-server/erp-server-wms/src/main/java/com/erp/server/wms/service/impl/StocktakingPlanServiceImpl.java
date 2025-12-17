@@ -270,7 +270,7 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
         }
     }
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void addAndSubmit(StocktakingPlanDTO.AddDTO dto) {
@@ -280,7 +280,7 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
         this.submit(id);
     }
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void updateAndSubmit(StocktakingPlanDTO.UpdateDTO dto) {
@@ -354,7 +354,7 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
         return variablesMap;
     }
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BatchResultDTO disApprove(String id) {

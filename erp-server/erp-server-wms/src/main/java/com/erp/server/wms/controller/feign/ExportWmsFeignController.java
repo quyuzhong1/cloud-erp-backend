@@ -7,7 +7,6 @@ import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
-import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.scm.dto.PurchaseBusinessGatherTableDTO;
 import com.erp.model.srm.dto.DeliveryOrderDTO;
 import com.erp.model.srm.dto.excel.DeliveryOrderExportExcelDTO;
@@ -25,7 +24,6 @@ import com.erp.rpc.dmp.feign.DmpInoutTaskFeign;
 import com.erp.server.wms.handler.InventoryQueryHandler;
 import com.erp.server.wms.query.*;
 import com.erp.server.wms.service.*;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -178,7 +176,40 @@ public class ExportWmsFeignController {
     private DmpInoutTaskFeign dmpInoutTaskFeign;
 
     @Resource
+    private ThirdWarehouseDeliveryService thirdWarehouseDeliveryService;
+
+    @Resource
     private SupplierInventoryService supplierInventoryService;
+
+    @Resource
+    private VirtualInventoryAgeService virtualInventoryAgeService;
+
+
+    @Resource
+    private SampleScrapInfoService sampleScrapInfoService;
+
+    @Resource
+    private SampleRecipientService sampleRecipientService;
+
+    @Resource
+    private SampleLedgerService sampleLedgerService;
+
+    @Resource
+    private SampleLedgerFlowService sampleLedgerFlowService;
+
+    @Resource
+    private SampleBorrowInfoService sampleBorrowInfoService;
+    @Resource
+    private SampleReturnInfoService sampleReturnInfoService;
+    @Resource
+    private SampleAdjustmentInfoService sampleAdjustmentInfoService;
+
+    @Resource
+    private SampleBackInfoService sampleBackInfoService;
+    @Resource
+    private SampleInitialLedgerService sampleInitialLedgerService;
+    @Resource
+    private SampleTransferInfoService sampleTransferInfoService;
 
     @PostMapping("/b2cDelivery")
     @DataPermission(operationType = DataAttributeEnum.LIST,
@@ -307,6 +338,26 @@ public class ExportWmsFeignController {
         return inventoryService.getInventoryPageData(dto);
     }
 
+    @PostMapping("/getSampleRecipientPageData")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "wms:sampleRecipient:export"
+    )
+    @WebAdvanceQuery(handler = SampleRecipientQueryHandler.class)
+    public PagingVO<SampleRecipientDTO.ListDTO> getSampleRecipientPageData(@RequestBody PagingDTO<SampleRecipientDTO.ExportDTO> dto) {
+        return sampleRecipientService.getSampleRecipientPageData(dto);
+    }
+
+    @PostMapping("/getSampleBackInfoPageData")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "wms:sampleBackInfo:export"
+    )
+    @WebAdvanceQuery(handler = SampleBackInfoQueryHandler.class)
+    public PagingVO<SampleBackInfoDTO.ListDTO> getSampleBackInfoPageData(@RequestBody PagingDTO<SampleBackInfoDTO.ExportDTO> dto) {
+        return sampleBackInfoService.getSampleBackInfoPageData(dto);
+    }
+
     @PostMapping("/dailyQcBill")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "qc_user_id",
@@ -368,6 +419,12 @@ public class ExportWmsFeignController {
         return transactionFlowService.exportInventoryDaily(dto);
     }
 
+    @PostMapping("/exportDailyInventoryByLocation")
+    @WebAdvanceQuery(handler = InventoryQueryHandler.class)
+    public PagingVO<InventoryReportDTO.ListDailyInventoryDTO> exportDailyInventoryByLocation(@RequestBody PagingDTO<InventoryReportDTO.DailyInventoryParamDTO> dto) {
+        return transactionFlowService.dailyInventoryPagingByLocation(dto);
+    }
+
     @PostMapping("/inventoryInOutStock")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             warehouseTableField = "t.warehouse_id",
@@ -417,7 +474,7 @@ public class ExportWmsFeignController {
 
     @PostMapping("/otherInStock")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "warehouse_keeper_id",
+            tableField = "warehouse_keeper_id,create_user_id",
             warehouseTableField = "oi.warehouse_id",
             menuCode = "wms:otherInstock:paging",
             tableAlias = "oi"
@@ -429,9 +486,9 @@ public class ExportWmsFeignController {
 
     @PostMapping("/otherOutStock")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "warehouse_keeper_id",
+            tableField = "warehouse_keeper_id,create_user_id",
             warehouseTableField = "oo.warehouse_id",
-            menuCode = "wms:pdaOtherOutstock:paging",
+            menuCode = "wms:otherOutstock:paging",
             tableAlias = "oo"
     )
     @WebAdvanceQuery(handler = OtherOutstockQueryHandler.class)
@@ -509,7 +566,7 @@ public class ExportWmsFeignController {
 
     @WebAdvanceQuery(handler = PackingTaskQueryHandler.class)
     public PagingVO<PackingTaskDTO.PagingViewDTO> exportPackingTask(@RequestBody PagingDTO<PackingTaskDTO.PagingParamDTO> dto) {
-        return packingTaskService.exportPackingTask(dto);
+        return packingTaskService.paging(dto);
     }
 
     @PostMapping("/pickingLists")
@@ -526,7 +583,7 @@ public class ExportWmsFeignController {
 
     @PostMapping("/poInStock")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "purchase_user_id,stock_in_user_id",
+            tableField = "stock_in_user_id,create_user_id",
             warehouseTableField = "psi.delivery_warehouse_id",
             menuCode = "wms:poInStock:paging",
             tableAlias = "psi"
@@ -543,7 +600,7 @@ public class ExportWmsFeignController {
 
     @PostMapping("/purchaseReturnOrder")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "return_user_id",
+            tableField = "return_user_id,create_user_id",
             warehouseTableField = "pro.return_warehouse_id",
             menuCode = "wms:purchaseReturnOrder:paging",
             tableAlias = "pro"
@@ -629,7 +686,7 @@ public class ExportWmsFeignController {
 
     @PostMapping("/soReturnInStock")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
+            tableField = "create_user_id,warehouse_keeper_id",
             warehouseTableField = "srid.warehouse_id",
             menuCode = "wms:soReturnInstock:paging",
             tableAlias = "sri"
@@ -641,7 +698,7 @@ public class ExportWmsFeignController {
 
     @PostMapping("/soReturnNotice")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
+            tableField = "create_user_id,warehouse_keeper_id",
             warehouseTableField = "srn.warehouse_id",
             menuCode = "wms:soReturnNotice:paging",
             tableAlias = "srn"
@@ -653,7 +710,7 @@ public class ExportWmsFeignController {
 
     @PostMapping("/soReturnReceive")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
+            tableField = "create_user_id,warehouse_keeper_id",
             warehouseTableField = "srr.warehouse_id",
             menuCode = "wms:soReturnReceive:paging",
             tableAlias = "srr"
@@ -715,7 +772,7 @@ public class ExportWmsFeignController {
 
     @PostMapping("/transferApplication")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "apply_user_id",
+            tableField = "apply_user_id,create_user_id",
             warehouseTableField = "ta.in_warehouse_id,ta.out_warehouse_id",
             menuCode = "wms:transferApplication:paging",
             tableAlias = "ta"
@@ -727,7 +784,7 @@ public class ExportWmsFeignController {
 
     @PostMapping("/transferInfo")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "warehouse_keeper_id",
+            tableField = "warehouse_keeper_id,create_user_id",
             warehouseTableField = "tid.in_warehouse_id,tid.out_warehouse_id",
             menuCode = "wms:transferInfo:paging",
             tableAlias = "ti"
@@ -739,7 +796,7 @@ public class ExportWmsFeignController {
 
     @PostMapping("/transferIn")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
+            tableField = "create_user_id,warehouse_keeper_id",
             warehouseTableField = "ti.out_warehouse_id,ti.in_warehouse_id",
             menuCode = "wms:transfer:in:paging",
             tableAlias = "ti"
@@ -806,7 +863,7 @@ public class ExportWmsFeignController {
 
     @PostMapping("/warehouseReceive")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "receive_user_id",
+            tableField = "receive_user_id,create_user_id",
             warehouseTableField = "wr.delivery_warehouse_id",
             menuCode = "wms:warehouseReceive:paging",
             tableAlias = "wr"
@@ -911,7 +968,7 @@ public class ExportWmsFeignController {
     @PostMapping("/exportSoB2cProcessing")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             warehouseTableField = "sbp.warehouse_id",
-            shopTableField = "sb2c.shop_id",
+            shopTableField = "sbp.shop_id",
             menuCode = "wms:soB2cProcessing:paging"
     )
     @WebAdvanceQuery
@@ -942,7 +999,7 @@ public class ExportWmsFeignController {
     )
     @WebAdvanceQuery(handler = VirtualInventoryAgeQueryHandler.class)
     public PagingVO<DynamicExcelDTO> exportWmsVirtualInventoryAge(@RequestBody PagingDTO<VirtualInventoryAgeDTO.SearchParamDTO> dto){
-        return virtualInventoryDetailService.exportWmsVirtualInventoryAge(dto);
+        return virtualInventoryAgeService.exportWmsVirtualInventoryAge(dto);
     }
 
     /**
@@ -950,7 +1007,7 @@ public class ExportWmsFeignController {
      */
     @PostMapping("/hisInventoryAgePaging")
     public PagingVO<VirtualInventoryAgeDTO.HisInventoryAgeDTO> hisInventoryAgePaging(@RequestBody PagingDTO<VirtualInventoryAgeDTO.HisInventoryAgeParamDTO> dto){
-        return virtualInventoryDetailService.hisInventoryAgePaging(dto);
+        return virtualInventoryAgeService.hisInventoryAgePaging(dto);
     }
 
     /**
@@ -958,7 +1015,7 @@ public class ExportWmsFeignController {
      */
     @PostMapping("/hisInventoryAgeDetailPaging")
     public PagingVO<VirtualInventoryAgeDTO.HisInventoryAgeDetailDTO> hisInventoryAgeDetailPaging(@RequestBody PagingDTO<VirtualInventoryAgeDTO.HisInventoryAgeDetailParamDTO> dto){
-        return virtualInventoryDetailService.exportHisInventoryAgeDetailPaging(dto);
+        return virtualInventoryAgeService.exportHisInventoryAgeDetailPaging(dto);
     }
 
 
@@ -979,9 +1036,8 @@ public class ExportWmsFeignController {
      * 列表历史库龄明细数据导出
      */
     @PostMapping("/framePaging")
-    @WebAdvanceQuery
     public PagingVO<VirtualInventoryAgeDTO.HisInventoryAgeDetailDTO> framePaging(@RequestBody PagingDTO<VirtualInventoryAgeDTO.FrameParamDTO> dto){
-        return virtualInventoryDetailService.framePaging(dto);
+        return virtualInventoryAgeService.framePaging(dto);
     }
 
 
@@ -1046,4 +1102,164 @@ public class ExportWmsFeignController {
     public PagingVO<SupplierInventoryDTO.ListDTO> exportSupplierInventory(@RequestBody PagingDTO<SupplierInventoryDTO.PagingParamDTO> dto) {
         return supplierInventoryService.paging(dto);
     }
+
+    @PostMapping("/exportThirdWarehouseDelivery")
+    @WebAdvanceQuery
+    public PagingVO<ThirdWarehouseDeliveryDTO.PagingViewDTO> exportThirdWarehouseDelivery(@RequestBody PagingDTO<ThirdWarehouseDeliveryDTO.PagingParamDTO> dto) {
+        return thirdWarehouseDeliveryService.paging(dto);
+    }
+
+    /**
+     * b2b销售订单冻结汇总导出
+     * @author will
+     * @date 2025/8/21 14:43
+     * @param dto
+     * @return PagingVO<ListDTO>
+     */
+    @PostMapping("/exportTotalB2bProcessing")
+    @WebAdvanceQuery
+    public PagingVO<ReportProcessingDTO.ListDTO> exportTotalB2bProcessing(@RequestBody PagingDTO<ReportProcessingDTO.PagingParamDTO> dto) {
+        return soB2bProcessingService.b2bTotalPaging(dto);
+    }
+
+    /**
+     * b2c销售订单冻结汇总导出
+     * @author will
+     * @date 2025/8/21 14:43
+     * @param dto
+     * @return PagingVO<ListDTO>
+     */
+    @PostMapping("/exportTotalB2cProcessing")
+    @WebAdvanceQuery
+    public PagingVO<ReportProcessingDTO.ListDTO> exportTotalB2cProcessing(@RequestBody PagingDTO<ReportProcessingDTO.PagingParamDTO> dto) {
+        return soB2cProcessingService.b2cTotalPaging(dto);
+    }
+    /**
+     * 导出Excel数据
+     * @author jack
+     * @date:  2025-08-21
+     * @param dto
+     * @return
+     */
+    @PostMapping("/exportSampleScrapInfo")
+    @WebAdvanceQuery(handler = SampleScrapInfoQueryHandler.class)
+    public PagingVO<SampleScrapInfoDTO.ListDTO> exportSampleScrapInfo(@RequestBody PagingDTO<SampleScrapInfoDTO.PagingParamDTO> dto) {
+        return sampleScrapInfoService.paging(dto);
+    }
+
+    /**
+     * 导出样品台账统计Excel数据
+     * @author wuhaotian
+     * @date: 2025-08-21
+     * @param dto
+     * @return
+     */
+    @PostMapping("/exportSampleLedger")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "wms:sampleLedger:export",
+            tableAlias = "sl"
+    )
+    @WebAdvanceQuery(handler = SampleLedgerQueryHandler.class)
+    public PagingVO<SampleLedgerDTO.ListDTO> exportSampleLedger(@RequestBody PagingDTO<SampleLedgerDTO.ExportDTO> dto) {
+        return sampleLedgerService.getSampleLedgerPageData(dto);
+    }
+
+    /**
+     * 导出样品台账流水Excel数据
+     * @author wuhaotian
+     * @date: 2025-08-21
+     * @param dto
+     * @return
+     */
+    @PostMapping("/exportSampleLedgerFlow")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "wms:sampleLedgerFlow:export",
+            tableAlias = "slf"
+    )
+    @WebAdvanceQuery(handler = SampleLedgerFlowQueryHandler.class)
+    public PagingVO<SampleLedgerFlowDTO.ListDTO> exportSampleLedgerFlow(@RequestBody PagingDTO<SampleLedgerFlowDTO.ExportDTO> dto) {
+        return sampleLedgerFlowService.getSampleLedgerFlowPageData(dto);
+    }
+
+    /**
+     * 导出Excel数据
+     * @author jack
+     * @date:  2025-08-21
+     * @param dto
+     * @return
+     */
+    @PostMapping("/exportSampleBorrowInfo")
+    @WebAdvanceQuery(handler = SampleBorrowInfoQueryHandler.class)
+    public PagingVO<SampleBorrowInfoDTO.ListDTO> exportSampleBorrowInfo(@RequestBody PagingDTO<SampleBorrowInfoDTO.PagingParamDTO> dto) {
+        return sampleBorrowInfoService.paging(dto);
+    }
+    /**
+     * 导出Excel数据
+     * @author jack
+     * @date:  2025-08-21
+     * @param dto
+     * @return
+     */
+    @PostMapping("/exportSampleReturnInfo")
+    @WebAdvanceQuery(handler = SampleReturnInfoQueryHandler.class)
+    public PagingVO<SampleReturnInfoDTO.ListDTO> exportSampleReturnInfo(@RequestBody PagingDTO<SampleReturnInfoDTO.PagingParamDTO> dto) {
+        return sampleReturnInfoService.paging(dto);
+    }
+
+    /**
+     * 导出样品期初台账Excel数据
+     * @author wuhaotian
+     * @date: 2025-08-25
+     * @param dto
+     * @return
+     */
+    @PostMapping("/getSampleInitialLedgerPageData")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "wms:sampleInitialLedger:export",
+            tableAlias = "sil"
+    )
+    @WebAdvanceQuery(handler = SampleInitialLedgerQueryHandler.class)
+    public PagingVO<SampleInitialLedgerDTO.ListDTO> getSampleInitialLedgerPageData(@RequestBody PagingDTO<SampleInitialLedgerDTO.PagingParamDTO> dto) {
+        return sampleInitialLedgerService.paging(dto);
+    }
+
+    /**
+     * 导出样品转移单Excel数据
+     * @author wuhaotian
+     * @date: 2025-10-28
+     * @param dto
+     * @return
+     */
+    @PostMapping("/getSampleTransferInfoPageData")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "wms:sampleTransferInfo:export",
+            tableAlias = "sti"
+    )
+    @WebAdvanceQuery(handler = SampleTransferInfoQueryHandler.class)
+    public PagingVO<SampleTransferInfoDTO.ListDTO> getSampleTransferInfoPageData(@RequestBody PagingDTO<SampleTransferInfoDTO.ExportDTO> dto) {
+        return sampleTransferInfoService.getSampleTransferInfoPageData(dto);
+    }
+
+    /**
+     * 导出样品调整单Excel数据
+     * @author wuhaotian
+     * @date: 2025-11-14
+     * @param dto
+     * @return
+     */
+    @PostMapping("/exportSampleAdjustmentInfo")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "wms:sampleAdjustmentInfo:export",
+            tableAlias = "sai"
+    )
+    @WebAdvanceQuery(handler = SampleAdjustmentInfoQueryHandler.class)
+    public PagingVO<SampleAdjustmentInfoDTO.ListDTO> exportSampleAdjustmentInfo(@RequestBody PagingDTO<SampleAdjustmentInfoDTO.PagingParamDTO> dto) {
+        return sampleAdjustmentInfoService.paging(dto);
+    }
+
 }

@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 
-@FeignClient(name = "erp-srm", contextId = "deliveryOrderFeign",configuration = {FeignErrorDecoder.class})
+@FeignClient(name = "erp-srm", contextId = "srmDeliveryOrderFeign",configuration = {FeignErrorDecoder.class})
 public interface SrmDeliveryOrderFeign {
 
     @PostMapping("/feign/deliveryOrder/tabList")

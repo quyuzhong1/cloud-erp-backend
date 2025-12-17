@@ -88,7 +88,7 @@
             <include refid="Base_Column_List" />
         from process_delegate pd
         inner join processBusiness pb on pb.business_key = pd.business_key
-        where pd.is_deleted = false  and pd.status in ('pending','running') and now() >= pd.effective_time and pd.expire_time > now() limit 1
+        where pd.is_deleted = false  and pd.status in ('pending','running') and now() >= pd.effective_time and pd.expire_time > now()
     </select>
 
 

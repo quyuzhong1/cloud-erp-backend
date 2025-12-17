@@ -1,5 +1,6 @@
 package com.erp.model.tms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.annotation.Dict;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
@@ -184,6 +185,14 @@ public class TmsFirstMileReconciliationDTO implements Serializable {
          * 物流商名称【可排序】
          */
         private String logisticsSupplierName;
+        /**
+         * 对账类型
+         */
+        private String supplierType;
+        /**
+         * 对账类型名称
+         */
+        private String supplierTypeName;
 
         /**
          * 币别【可排序】
@@ -432,6 +441,15 @@ public class TmsFirstMileReconciliationDTO implements Serializable {
          * 明细数量
          */
         private Integer detailCount;
+        /**
+         * 供应商类型（logistics 物流对账单，warehouse仓储对账单，custom自定义物流商）
+         * SupplierTypeEnum
+         */
+        private String supplierType;
+        /**
+         * 供应商名称
+         */
+        private String supplierTypeName;
 
         /**
          * 明细列表

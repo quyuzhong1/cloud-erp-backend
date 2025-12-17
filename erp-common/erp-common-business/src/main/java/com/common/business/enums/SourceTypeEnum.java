@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 @NoArgsConstructor
 public enum SourceTypeEnum {
@@ -27,6 +28,7 @@ public enum SourceTypeEnum {
     SUPPLIER("supplier", "供应商列表","supplier"),
     CFG_SUPPLIER_SALES("cfgSupplierSales", "销量设置","cfg_supplier_sales"),
     CONTRACT_INFO("contractInfo", "合同管理","contract_info"),
+    SUPPLIER_PHASE("supplierPhase", "供应商阶段审核列表","supplier_phase"),
 
 
 
@@ -56,6 +58,7 @@ public enum SourceTypeEnum {
     WAREHOUSE("warehouse", "仓库","warehouse"),
     SDY_WAREHOUSE("sdy_warehouse", "仓库","warehouse"),
     SO_B2C_DELIVERY("soB2cDelivery", "B2C发货单","so_b2c_delivery"),
+    SO_B2C_DELIVERY_NOT_OUTBOUND("soB2cDeliveryNotOutbound", "B2C发货单-不出库发货","so_b2c_delivery"),
     SO_B2C_DELIVERY_INTERCEPT("soB2cDeliveryIntercept", "B2C发货单拦截","so_b2c_delivery_intercept"),
     PLATFORM_SO_OUT_STOCK("platformSoOutStock", "平台销售出库单",""),
     PACKING_TASK("packingTask", "装箱任务",""),
@@ -90,6 +93,16 @@ public enum SourceTypeEnum {
     QC_NOTICE("qcNotice", "质检通知单","qc_notice"),
     WAREHOUSE_LOCATION_REPLENISH("warehouseLocationReplenish", "仓位补货","warehouse_location_replenish"),
     VIRTUAL_ADJUST("virtualAdjust", "虚拟库存调整","virtual_adjust"),
+    SAMPLE_RETURN_INFO("sampleReturnInfo", "样品归还单","sample_return_info"),
+    SAMPLE_BORROW_INFO("sampleBorrowInfo", "样品借用单","sample_borrow_info"),
+    SAMPLE_SCRAP_INFO("sampleScrapInfo", "样品报废单","sample_scrap_info"),
+    SAMPLE_RECIPIENT("sampleRecipient","样品领用单","sample_recipient"),
+    SAMPLE_BACK_INFO("sampleBackInfo","样品退回单","sample_back_info"),
+    SAMPLE_LEDGER_INIT("sampleLedgerInit","样品期初台账","sample_ledger_init"),
+    SAMPLE_TRANSFER_INFO("sampleTransferInfo","样品转移单","sample_transfer_info"),
+    SAMPLE_ADJUSTMENT_INFO("sampleAdjustmentInfo","样品调整单","sample_adjustment_info"),
+    WAREHOUSE_LOCATION_MOVE_INFO("warehouseLocationMoveInfo","仓位移动","warehouse_location_move"),
+
 
     //OMS
     SO_RETURN("soReturn", "销售退货订单","so_return"),
@@ -98,11 +111,14 @@ public enum SourceTypeEnum {
     SO_INFO_TRANSFER_INFP("soInfoTransferInfo", "B2B销售订单(中转调拨)","so_info"),
     SO_CHANGE("soChange", "销售变更单","so_change"),
     CUSTOMER_INFO( "customerInfo", "客户表","customer_info"),
-    SDY_CUSTOMER_INFO( "sdy_customerInfo", "客户表","customer_info"),
+    CUSTOMER_ADDRESS( "customerAddress", "客户地址表","customer_address"),
+    SDY_CUSTOMER_INFO( "sdy_customerInfo", "数帝云客户表","customer_info"),
     CUSTOMER_B2B_CHANGE_SELLER( "customerB2bChangeSeller", "B2B客户表变更销售员","customer_b2b_seller_change"),
     SO_B2C( "soB2c", "B2C销售订单","so_b2c"),
     SO_MULTI_CHANNEL( "soMultiChannel", "多渠道订单","so_multi_channel"),
+    TIK_TOK_FULLY( "TikTokFully", "TikTok全托管","so_b2c"),
     CUSTOMER_B2C( "customerB2c", "B2C客户表","customer_b2c"),
+    CUSTOMER_CREDIT_APPLY( "customerCreditApply", "客户授信","customer_credit_apply"),
     SHOP( "shop", "店铺","shop_info"),
     CUSTOMER_CONTACT( "customerContact", "客户联系人","customer_contact"),
     CUSTOMER_GROUP( "customerGroup", "客户分组","customer_group"),
@@ -114,11 +130,16 @@ public enum SourceTypeEnum {
 
     CAINIAO_LISTING( "cainiao_listing", "菜鸟仓listing","cainiao_listing"),
     CAINIAO_SO_RETURN_INSTOCK("cainiaoSoReturnInstock", "菜鸟仓退货入库单","so_return_instock"),
+    EXHIBITION_ORDER("exhibitionOrder", "展会订单","exhibition_order"),
+
+    SO_RECEIPT("soReceipt", "收款单","so_receipt"),
+    SO_B2C_REFUND("soB2cRefund", "售后订单","so_b2c_refund"),
+
 
     //SRM
     DELIVERY_ORDER( "deliveryOrder", "送货单","delivery_order"),
     PO_RECONCILIATION( "poReconciliation", "对账单","po_reconciliation"),
-
+    PAYABLE_INFO( "payableInfo", "应付单","payable_info"),
 
 
     //Kingdee
@@ -144,8 +165,13 @@ public enum SourceTypeEnum {
     PRODUCT_LOGISTICS("ProductLogistics", "物流产品","product_logistics"),
     MOULD_INFO("mouldInfo", "模具管理","mould_info"),
 
-    LX_PRODUCT_DETAIL("lx_productDetail", "产品管理","product_detail"),
-
+    LX_PRODUCT_DETAIL("lx_productDetail", "领星产品管理","product_detail"),
+    SKU_STD_COST_DETAIL( "skuStdCostDetail", "SKU标准成本明细","sku_std_cost_detail"),
+    MOLD_INFO("moldInfo", "模具档案","mold_info"),
+    MOLD_REF_SKU("moldRefSku", "模具关联SKU","mold_ref_sku"),
+    ASSET_NOTICE("assetNotice","资产通知","asset_notice"),
+    ASSET_PURCHASE_ORDER("assetPurchaseOrder","资产采购单","asset_purchase_order"),
+    ASSET_PURCHASE_CHANGE("assetPurchaseChange","资产采购变更单","asset_purchase_change"),
 
     //SYS
     SYS_DEPARTMENT("sysDepartment", "部门","sys_department"),
@@ -203,6 +229,7 @@ public enum SourceTypeEnum {
     LOGISTICS_CANCEL_ORDER("cancelOrder", "物流系统取消订单","dmp_push_task"),
 
     THIRD_WAREHOUSE("thirdWarehouse","第三方仓库",""),
+    THIRD_WAREHOUSE_DELIVERY("thirdWarehouseDelivery","第三方仓库发货","third_warehouse_delivery"),
     THIRD_WAREHOUSE_GET_SKU("thirdWarehouseGetSku", "第三方仓产品数据拉取","dmp_pull_task"),
     THIRD_WAREHOUSE_GET_WAREHOUSE("thirdWarehouseGetWarehouse", "第三方仓仓库数据拉取","dmp_pull_task"),
     THIRD_WAREHOUSE_GET_BASE_ADDRESS("thirdWarehouseGetBaseAddress", "第三方仓地址基础信息拉取","dmp_pull_task"),
@@ -215,9 +242,11 @@ public enum SourceTypeEnum {
     THIRD_WAREHOUSE_CANCEL_INBOUND_BILL("thirdWarehouseCancelInboundBill", "第三方仓取消入库单","dmp_push_task"),
     THIRD_WAREHOUSE_CREATE_OUTBOUND_BILL("thirdWarehouseCreateOutboundBill", "第三方仓创建出库单","dmp_push_task"),
     THIRD_WAREHOUSE_CANCEL_OUTBOUND_BILL("thirdWarehouseCancelOutboundBill", "第三方仓取消出库单","dmp_push_task"),
+    THIRD_WAREHOUSE_QUERY_OUTBOUND_BILL("thirdWarehouseQueryOutboundBill", "第三方仓查询出库单","dmp_push_task"),
     THIRD_WAREHOUSE_CALCULATE_FEE("thirdWarehouseCalculateFee", "第三方仓运费试算","dmp_push_task"),
     THIRD_WAREHOUSE_UPLOAD_FILE("thirdWarehouseUploadFile", "第三方仓上传附件","dmp_push_task"),
     THIRD_WAREHOUSE_UPLOAD_ORDER_LABEL("thirdWarehouseUploadOrderLabel", "第三方仓上传面单","dmp_push_task"),
+    THIRD_WAREHOUSE_UPLOAD_HANDOVER_FILE("thirdWarehouseUploadHandoverFile", "第三方仓上传交接文件","dmp_push_task"),
     THIRD_WAREHOUSE_REFRESH_TOKEN("thirdWarehouseRefreshToken", "第三方仓刷新token","dmp_pull_task"),
 
     TRANSFER_LOGISTICS_GET_SHIPPING("transferLogisticsGetShipping", "物流报关商获取物流产品数据","dmp_pull_task"),
@@ -244,6 +273,7 @@ public enum SourceTypeEnum {
     WDT_WAREHOUSE("wdt_warehouse", "旺店通仓库基础数据", "dmp_pull_task"),
     WDT_VIRTUAL_WAREHOUSE("wdt_virtual_warehouse", "旺店通虚拟仓基础数据", "dmp_pull_task"),
     WDT_SHOP("wdt_shop", "旺店通店铺基础数据", "dmp_pull_task"),
+    WDT_SO_PRESTOCK("wdt_so_prestock", "旺店通预入库", "dmp_so_prestock_info"),
 
     QIMEN_SO_OUT_STOCK("qimen_so_out_stock", "奇门销售出库单", "dmp_pull_task"),
     QIMEN_RETURN_ORDER("qimen_return_order", "奇门销售退货入库单", "dmp_pull_task"),
@@ -261,6 +291,19 @@ public enum SourceTypeEnum {
     SDY_LOGISTICS_BILL("sdyLogisticsBill", "速帝云运单","logistics_bill"),
     SDY_SELF_DELIVERY_ORDER("sdySelfDeliveryOrder", "速帝云自发货配货单","so_b2c_delivery"),
     SDY_ALIEXPRESS_DELIVERY_ORDER("sdyAliExpressDeliveryOrder", "速帝云速卖通配货单","aliexpress_delivery"),
+
+
+
+
+
+    //FMS
+    ASSET_LOCATION("assetLocation", "资产位置","asset_location"),
+    ASSET_ACCEPTANCE("assetAcceptance", "资产验收单","asset_accept"),
+    ASSET_CARD("assetCard", "资产卡片","asset_card"),
+    ASSET_STOCKTAKING_PLAN("assetStocktakingPlan", "盘点方案","asset_stocktaking_plan"),
+    ASSET_STOCKTAKING("assetStocktaking", "资产盘点表","asset_stocktaking"),
+    ASSET_PROFIT_LOSS("assetProfitLoss", "盘盈盘亏单","asset_profit_loss"),
+    ASSET_DISPOSAL("assetDisposal", "资产处置单","asset_disposal"),
 
 
     //售后申请
@@ -331,5 +374,19 @@ public enum SourceTypeEnum {
     }
     public static List<String> pickingLists() {
         return Arrays.asList(PICKING_LISTS_ADD.getCode(), PICKING_LISTS_SUBTRACT.getCode());
+    }
+
+    public static void main(String[] args) {
+        List<SourceTypeEnum> collect = Arrays.asList(SourceTypeEnum.values()).stream().collect(Collectors.toList());
+        for (SourceTypeEnum e : collect) {
+            String sql = String.format(
+                    "INSERT INTO \"public\".\"dict_basic\" " +
+                            "(\"id\", \"create_user_id\", \"create_user_name\", \"create_time\", \"update_user_id\", \"update_user_name\", \"update_time\", \"version\", \"is_deleted\", \"remark\", \"value\", \"type\", \"name\", \"status\", \"sort\", \"type_name\") " +
+                            "VALUES (snow_next_id(), '', '', NOW(), '', '', NOW(), 0, 'f', '%s(%s)', '%s', 'sourceType', '%s', 't', 0, '来源类型') " +
+                            "ON CONFLICT (\"value\", \"type\") DO NOTHING;",
+                    e.getName(), e.getCode(), e.getCode(), e.getName()
+            );
+            System.out.println(sql);
+        }
     }
 }

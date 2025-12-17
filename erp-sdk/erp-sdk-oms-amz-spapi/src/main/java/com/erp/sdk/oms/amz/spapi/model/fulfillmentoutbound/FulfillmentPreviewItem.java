@@ -10,24 +10,24 @@
  * Do not edit the class manually.
  */
 
-
 package com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound;
 
+import java.util.Objects;
+import java.util.Arrays;
 import com.google.gson.TypeAdapter;
 import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.annotations.SerializedName;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
-
+import com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound.Weight;
 
 import java.io.IOException;
-import java.util.Objects;
-
 /**
  * Item information for a shipment in a fulfillment order preview.
  */
 
-@javax.annotation.Generated(value = "io.swagger.codegen.languages.JavaClientCodegen", date = "2020-12-15T20:44:18.412+08:00")
+@javax.annotation.Generated(value = "io.swagger.codegen.v3.generators.java.JavaClientCodegen", date = "2025-08-18T09:55:11.594451100+08:00[Asia/Shanghai]")
+
 public class FulfillmentPreviewItem {
   @SerializedName("sellerSku")
   private String sellerSku = null;
@@ -46,8 +46,9 @@ public class FulfillmentPreviewItem {
    */
   @JsonAdapter(ShippingWeightCalculationMethodEnum.Adapter.class)
   public enum ShippingWeightCalculationMethodEnum {
+    @SerializedName("Package")
     PACKAGE("Package"),
-    
+    @SerializedName("Dimensional")
     DIMENSIONAL("Dimensional");
 
     private String value;
@@ -55,7 +56,6 @@ public class FulfillmentPreviewItem {
     ShippingWeightCalculationMethodEnum(String value) {
       this.value = value;
     }
-
     public String getValue() {
       return value;
     }
@@ -64,31 +64,27 @@ public class FulfillmentPreviewItem {
     public String toString() {
       return String.valueOf(value);
     }
-
-    public static ShippingWeightCalculationMethodEnum fromValue(String text) {
+    public static ShippingWeightCalculationMethodEnum fromValue(String input) {
       for (ShippingWeightCalculationMethodEnum b : ShippingWeightCalculationMethodEnum.values()) {
-        if (String.valueOf(b.value).equals(text)) {
+        if (b.value.equals(input)) {
           return b;
         }
       }
       return null;
     }
-
     public static class Adapter extends TypeAdapter<ShippingWeightCalculationMethodEnum> {
       @Override
       public void write(final JsonWriter jsonWriter, final ShippingWeightCalculationMethodEnum enumeration) throws IOException {
-        jsonWriter.value(enumeration.getValue());
+        jsonWriter.value(String.valueOf(enumeration.getValue()));
       }
 
       @Override
       public ShippingWeightCalculationMethodEnum read(final JsonReader jsonReader) throws IOException {
-        String value = jsonReader.nextString();
-        return ShippingWeightCalculationMethodEnum.fromValue(String.valueOf(value));
+        Object value = jsonReader.nextString();
+        return ShippingWeightCalculationMethodEnum.fromValue((String)(value));
       }
     }
-  }
-
-  @SerializedName("shippingWeightCalculationMethod")
+  }  @SerializedName("shippingWeightCalculationMethod")
   private ShippingWeightCalculationMethodEnum shippingWeightCalculationMethod = null;
 
   public FulfillmentPreviewItem sellerSku(String sellerSku) {
@@ -100,7 +96,7 @@ public class FulfillmentPreviewItem {
    * The seller SKU of the item.
    * @return sellerSku
   **/
-
+  
   public String getSellerSku() {
     return sellerSku;
   }
@@ -115,10 +111,10 @@ public class FulfillmentPreviewItem {
   }
 
    /**
-   * The item quantity.
+   * Get quantity
    * @return quantity
   **/
-
+  
   public Integer getQuantity() {
     return quantity;
   }
@@ -133,10 +129,10 @@ public class FulfillmentPreviewItem {
   }
 
    /**
-   * A fulfillment order item identifier that the seller created with a call to the createFulfillmentOrder operation.
+   * A fulfillment order item identifier that the seller created with a call to the &#x60;createFulfillmentOrder&#x60; operation.
    * @return sellerFulfillmentOrderItemId
   **/
-
+  
   public String getSellerFulfillmentOrderItemId() {
     return sellerFulfillmentOrderItemId;
   }
@@ -151,10 +147,10 @@ public class FulfillmentPreviewItem {
   }
 
    /**
-   * The estimated shipping weight of the item quantity for a single item, as identified by sellerSku, in a shipment.
+   * Get estimatedShippingWeight
    * @return estimatedShippingWeight
   **/
-
+  
   public Weight getEstimatedShippingWeight() {
     return estimatedShippingWeight;
   }
@@ -172,7 +168,7 @@ public class FulfillmentPreviewItem {
    * The method used to calculate the estimated shipping weight.
    * @return shippingWeightCalculationMethod
   **/
-
+  
   public ShippingWeightCalculationMethodEnum getShippingWeightCalculationMethod() {
     return shippingWeightCalculationMethod;
   }
@@ -183,7 +179,7 @@ public class FulfillmentPreviewItem {
 
 
   @Override
-  public boolean equals(Object o) {
+  public boolean equals(java.lang.Object o) {
     if (this == o) {
       return true;
     }
@@ -222,7 +218,7 @@ public class FulfillmentPreviewItem {
    * Convert the given object to string with each line indented by 4 spaces
    * (except the first line).
    */
-  private String toIndentedString(Object o) {
+  private String toIndentedString(java.lang.Object o) {
     if (o == null) {
       return "null";
     }
@@ -230,4 +226,3 @@ public class FulfillmentPreviewItem {
   }
 
 }
-

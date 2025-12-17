@@ -188,7 +188,8 @@ public class AmzReportFulfilledShipmentsHandler extends DmpMongoHandler {
                         e.getShopId(),
                         StrUtil.format("{}_{}_{}", e.getAmazonOrderId(), e.convertShipmentDate(), e.getShopId()),
                         handleStatusEnum.getCode(),
-                        downloadStatusEnum.getCode()
+                        downloadStatusEnum.getCode(),
+                        e.getSalesChannel()
                 ))
                 .collect(Collectors.toList());
         businessService.handleSaveOrUpdateMongo(sourceList, MongoTableNameContant.THIRD_SYSTEM_AMAZON_SO_OUT_STOCK, PlatformAmazonFulfilledShipmentsDTO.class, new ArrayList<>());

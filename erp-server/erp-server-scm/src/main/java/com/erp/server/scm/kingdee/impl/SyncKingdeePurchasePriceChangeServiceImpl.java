@@ -80,7 +80,7 @@ public class SyncKingdeePurchasePriceChangeServiceImpl implements SyncKingdeePur
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public DmpPushTaskEntity syncDataToKingdee(PurchasePriceChangeEntity entity, String operate) {
         Map<String, Object> resultMap = this.newSyncDataToKingdee(entity, operate);
     	String purchasePriceIdStr = "";

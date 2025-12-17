@@ -2,6 +2,7 @@ package com.erp.server.file.controller.api;
 
 
 import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
@@ -18,13 +19,16 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * 文件中心
  */
 @RestController
 @RequestMapping("/file")
+@LogSystemModule("文件中心")
 public class FileController extends BaseController {
     @Resource
     private FileRegistry fileRegistry;
@@ -49,6 +53,7 @@ public class FileController extends BaseController {
      * @return
      */
     @PostMapping("/deleteFile")
+    @LogAction(value = LogActionEnum.DELETE, desc = "删除文件 路径={url}")
     public ApiResult<Integer> deleteFile(@RequestParam("url") String url){
         FileService fileService = fileRegistry.getHandler();
         return success(fileService.deleteFile(url));
@@ -59,6 +64,7 @@ public class FileController extends BaseController {
      * @param urlList
      */
     @PostMapping("/deleteBatchFile")
+    @LogAction(value = LogActionEnum.DELETE, desc = "批量删除文件")
     public ApiResult deleteBatchFile(@RequestParam("urlList") List<String> urlList){
         FileService fileService = fileRegistry.getHandler();
         fileService.deleteBatchFile(urlList);

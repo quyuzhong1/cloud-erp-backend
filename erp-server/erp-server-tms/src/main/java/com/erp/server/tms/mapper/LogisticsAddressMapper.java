@@ -35,4 +35,6 @@ public interface LogisticsAddressMapper extends BaseMapper<LogisticsAddressEntit
 
 
     List<LogisticsAddressEntity> listByChannelId(@Param("channelId") String channelId);
+
+    IPage<LogisticsAddressDTO.ListDTO> pagingSelect(@Param("query") Page query, @Param("params") LogisticsAddressDTO.SelectDTO params);
 }

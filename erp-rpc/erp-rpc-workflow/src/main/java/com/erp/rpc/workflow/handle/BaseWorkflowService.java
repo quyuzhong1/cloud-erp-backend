@@ -1,6 +1,8 @@
 package com.erp.rpc.workflow.handle;
 
 import com.common.business.dto.ApproveDTO;
+import com.common.business.dto.base.ApproveOneDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.erp.model.workflow.dto.EndProcessDTO;
 
 /**
@@ -11,6 +13,13 @@ import com.erp.model.workflow.dto.EndProcessDTO;
  * @Date 2023/6/27 18:27
  **/
 public interface BaseWorkflowService {
+
+    /**
+     * 审核
+     * @author jack
+     * @date 2025-11-19
+     */
+    BatchResultDTO approve(ApproveDTO.ApproveOneDTO dto);
 
     /**
      * 流程结束监听
@@ -34,4 +43,12 @@ public interface BaseWorkflowService {
      * @return Boolean
      */
     Boolean cancelProcess(ApproveDTO.CancelProcessDTO dto);
+    /**
+     * 添加评论
+     * @author will
+     * @date 2025/11/27 14:59
+     * @param dto
+     * @return void
+     */
+    Boolean addComment(ApproveDTO.AddCommentDTO dto);
 }

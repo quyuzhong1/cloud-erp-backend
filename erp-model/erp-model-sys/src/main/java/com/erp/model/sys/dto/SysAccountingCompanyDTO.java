@@ -4,7 +4,11 @@ import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
+import java.util.List;
+
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 
 /**
@@ -20,6 +24,16 @@ public class SysAccountingCompanyDTO {
 
 
     private String id;
+
+    /**
+     * 纳税人性质
+     */
+    private String taxpayerType;
+
+    /**
+     * 增值税税率
+     */
+    private BigDecimal vatRate;
 
     /**
      * 金蝶id
@@ -66,6 +80,18 @@ public class SysAccountingCompanyDTO {
      * 金蝶code
      */
     private String kingdeeCode;
+    
+    /**
+     * 统一社会信用代码
+     */
+    @NotBlank(message = "统一社会信用代码不能为空")
+    private String usciCode;
+    
+    /**
+     * 组织职能（下拉项接口：http://172.16.100.11:3002/project/36/interface/api/10672	type传orgFuntion）
+     */
+    @NotNull(message = "组织职能不能为空")
+    private List<@NotBlank(message = "组织职能为空")String> orgFunctionList;
 
     /**
      * 列表展示

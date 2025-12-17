@@ -60,6 +60,12 @@ public class DictBasicEntity extends BaseEntity<DictBasicEntity> {
      */
     @TableField("sort")
     private Integer sort;
+    
+    /**
+     * 类型名称
+     */
+     @TableField("type_name")
+     private String typeName;
 
 
     public static final String FIELD_REMARK = "remark";

@@ -111,11 +111,11 @@
         tfo.in_warehouse_name as in_warehouse_name,
         tod.out_warehouse_location as out_warehouse_location,
         tod.remark
-        from transfer_out tfo
-        inner join transfer_out_detail tod on tfo.id = tod.main_id and tod.is_deleted = false
+        from  transfer_out_detail tod
+        inner join transfer_out tfo  on tfo.id = tod.main_id and tod.is_deleted = false
         <where>
-            tfo.is_deleted = false and tfo.id in
-            <foreach collection="ids" item="item" open="(" close=")" separator=",">
+            tfo.is_deleted = false and tod.id in
+            <foreach collection="detailIdList" item="item" open="(" close=")" separator=",">
                 #{item}
             </foreach>
         </where>

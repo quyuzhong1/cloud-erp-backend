@@ -1,6 +1,7 @@
 package com.erp.server.sys.controller.api;
 
 
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
@@ -52,8 +53,8 @@ public class SysPostController extends BaseController {
     @LogAction(value = LogActionEnum.DELETE, desc = "删除岗位")
     @RequestMapping("/remove")
     public ApiResult remove(@RequestBody List<String> ids) {
-        boolean flag = sysPostService.removePostByIds(ids);
-        return flag == true ? success() : failure();
+        List<BatchResultDTO> resultDTOList = sysPostService.removePostByIds(ids);
+        return resultDTOList.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOList) : failure(resultDTOList);
     }
 
     @RequestMapping("/list")

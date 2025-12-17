@@ -311,6 +311,18 @@ public class DmpSoInfoEntity extends BaseEntity<DmpSoInfoEntity> {
      */
     @TableField("order_type")
     private String orderType;
+    
+    /**
+     * (旺店通)仓库id
+     */
+    @TableField("warehouse_id")
+    private String warehouseId;
+
+    /**
+     * 买家自选物流
+     */
+    @TableField("buyer_selected_logistics")
+    private String buyerSelectedLogistics;
 
 
     public static final String PLATFORM_CREATE_TIME = "platform_create_time";

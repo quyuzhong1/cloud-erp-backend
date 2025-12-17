@@ -1,5 +1,8 @@
 package com.common.core.constant;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * @Classname Constants
 
@@ -25,5 +28,9 @@ public class CommonConstants {
      */
     public static final String DEFAULT = "default";
 
-
+    /**
+     * 热部署map传值使用
+     */
+    public static Map<Object, Object> HOT_DEPLOYMENT_MAP = new HashMap<>();
+    
 }

@@ -1,5 +1,6 @@
 package com.erp.rpc.wms.feign;
 
+import com.common.business.config.FeignErrorDecoder;
 import com.erp.model.wms.dto.inventory.InventoryClosedRecordDTO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -14,7 +15,7 @@ import java.util.Map;
  * @author Will
  * @date: 2024/2/28 17:52
  */
-@FeignClient(name = "erp-wms", contextId = "inventoryClosedRecord")
+@FeignClient(name = "erp-wms", contextId = "inventoryClosedRecord" ,configuration = {FeignErrorDecoder.class})
 public interface InventoryCloseRecordFeign {
 
    /**

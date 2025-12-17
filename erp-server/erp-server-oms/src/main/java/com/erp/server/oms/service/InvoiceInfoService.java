@@ -79,7 +79,7 @@ public interface InvoiceInfoService extends SuperService<InvoiceInfoEntity> {
 
     List<InvoiceInfoEntity> listBySoIds(List<String> soIds);
 
-    void retryInvoice();
+    void retryInvoice(String jobParam);
 
     void queryUploadingInvoice() throws Exception;
     /**
@@ -141,12 +141,14 @@ public interface InvoiceInfoService extends SuperService<InvoiceInfoEntity> {
     InvoiceInfoDTO.ExportResultDTO exportPdf(InvoiceInfoDTO.PagingParamDTO dto);
     /**
      * 生成发票校验
+     *
+     * @param ids
+     * @param isCheckInvoiceTax
+     * @return List<CheckGenerateInvoiceDTO>
      * @author will
      * @date 2025/4/8 14:22
-     * @param ids
-     * @return List<CheckGenerateInvoiceDTO>
      */
-    List<InvoiceTaxDTO.CheckGenerateInvoiceDTO> checkGenerateInvoice(List<String> ids);
+    List<InvoiceTaxDTO.CheckGenerateInvoiceDTO> checkGenerateInvoice(List<String> ids, Boolean isCheckInvoiceTax);
 
     /**
      * 压缩zip
@@ -190,4 +192,17 @@ public interface InvoiceInfoService extends SuperService<InvoiceInfoEntity> {
      * @return InvoiceInfoDTO.AttachDTO
      */
     InvoiceInfoDTO.AttachDTO getNewInvoicedAttachBySoId(String soId,String invoiceType,String attachmentType);
+
+    void initNfeInvoiceKey();
+
+    InvoiceInfoDTO.ProductAmountRuleResultDTO productAmountRule(SoB2cEntity soB2cEntity);
+
+    /**
+     * 根据soId查询最新的开票记录
+     * @author zdy
+     * @date 2025/4/15 10:32
+     * @param soId
+     * @return InvoiceInfoEntity
+     */
+    InvoiceInfoEntity findLatestInvoice(String soId);
 }

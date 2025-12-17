@@ -18,6 +18,8 @@ import com.erp.model.oms.entity.SoB2cErrorEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
+import com.erp.model.scm.enums.InvalidStatusEnum;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.server.oms.service.*;
 import com.xxl.job.core.biz.model.ReturnT;
 import com.xxl.job.core.context.XxlJobHelper;
@@ -31,10 +33,7 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -58,6 +57,8 @@ public class SoB2cRetryJob {
     private RuleLogisticsService ruleLogisticsService;
     @Resource
     private SoB2cLogisticsService soB2cLogisticsService;
+    @Resource
+    private OperateLogService operateLogService;
 
     @Value("${spring.cloud.nacos.discovery.namespace}")
     private String namespace;
@@ -123,6 +124,7 @@ public class SoB2cRetryJob {
                 // 按 updateTime 正序排列，并限制返回数量
                 queryWrapper.orderByAsc(SoB2cErrorEntity::getUpdateTime);
                 List<SoB2cErrorEntity> list = soB2cErrorService.list(queryWrapper.last(" LIMIT " + count));
+                XxlJobHelper.log("SoB2cRetryJob 任务数量：{}", list.size());
                 if (CollUtil.isEmpty(list)) {
                     XxlJobHelper.log("SoB2cRetryJob 需要执行任务列表为空");
                     return ReturnT.SUCCESS;
@@ -142,8 +144,15 @@ public class SoB2cRetryJob {
 
                 for (Map.Entry<String, SoB2cErrorEntity> entry : gourpErrorMap.entrySet()) {
                     SoB2cErrorEntity soB2cErrorEntity = entry.getValue();
+                    XxlJobHelper.log("===============SoB2cRetryJob 当前任务执行：异常记录Id={}, 订单Id={}=========", soB2cErrorEntity.getId(), soB2cErrorEntity.getMainId());
                     try {
-
+                        SoB2cEntity soB2cEntity = soMap.get(soB2cErrorEntity.getMainId());
+                        if (Objects.isNull(soB2cEntity) || InvalidStatusEnum.VOIDED.getStatus().equals(soB2cEntity.getInvalidStatus()) || CharSequenceUtil.isBlank(soB2cEntity.getSignOrderError())){
+                            soB2cErrorService.removeErrorOrder(soB2cErrorEntity.getMainId(),soB2cErrorEntity.getType());
+                            //记录清除异常动作
+                            operateLogService.addModuleOperateLog(CharSequenceUtil.format("【定时任务】清除销售订单异常标识【】记录",SoB2cErrorTypeEnum.getName(soB2cErrorEntity.getType())), ModuleTypeEnum.SO_B2C.getCode(), soB2cErrorEntity.getMainId(), "清除异常记录");
+                            continue;
+                        }
                         if (checkSignDelivery(soB2cErrorEntity, type, soMap, logisticsEntityMap,channelIdList)) {
                             XxlJobHelper.log("SoB2cRetryJob 当前任务执行处理：异常记录Id={}, 订单Id={}", soB2cErrorEntity.getId(), soB2cErrorEntity.getMainId());
                             soB2cErrorEntity.setRetryCount(soB2cErrorEntity.getRetryCount() + 1);

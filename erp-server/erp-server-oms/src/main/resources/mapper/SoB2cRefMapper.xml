@@ -58,5 +58,4 @@
         ) and type = 'split' and is_deleted =false
     </select>
 
-
 </mapper>

@@ -63,7 +63,7 @@ public class QcProductServiceImpl extends SuperServiceImpl<QcProductMapper, QcPr
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public void add(String billId, QcProductDTO.AddDTO qcProduct,String skuId) {
         if(CharSequenceUtil.isBlank(skuId)){
             throw new ServiceException(ApiError.ERROR_95107);

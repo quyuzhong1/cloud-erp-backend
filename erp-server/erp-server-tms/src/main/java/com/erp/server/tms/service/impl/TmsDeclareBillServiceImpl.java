@@ -402,6 +402,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             if(deliveryDTOList.size()>1){
                 deliveryDTOList = deliveryDTOList.stream().filter(v->v.getSourceCode().equals(entity.getSourceCode())).collect(Collectors.toList());
             }
+            allPackDTOList.forEach(v->v.setSku(v.getBoxDesc()));
             TmsDeclareBillDTO.DeliveryDTO deliveryDTO = deliveryDTOList.get(0);
             deliveryDTO.setPackingDTOList(allPackDTOList);
             BeanUtil.copyProperties(deliveryDTO,viewDTO, CopyOptions.create().setOverride(false));
@@ -419,6 +420,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             if(deliveryDTOList.size()>1){
                 deliveryDTOList = deliveryDTOList.stream().filter(v->v.getSourceCode().equals(entity.getSourceCode())).collect(Collectors.toList());
             }
+            allPackDTOList.forEach(v->v.setSku(v.getBoxDesc()));
             TmsDeclareBillDTO.SoOutDTO deliveryDTO = deliveryDTOList.get(0);
             deliveryDTO.setPackingDTOList(allPackDTOList);
             BeanUtil.copyProperties(deliveryDTO,viewDTO, CopyOptions.create().setOverride(false));
@@ -651,7 +653,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
 
 
     @Override
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public List<BatchResultDTO> delete(TmsDeclareBillDTO.DeleteDTO dto) {
         List<TmsDeclareBillEntity> entityList = this.listByIds(dto.getIds());
         List<BatchResultDTO> resultList = new ArrayList<>();
@@ -663,6 +665,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
                 resultList.add(BatchResultDTO.fail(entity.getId(),entity.getCode(),"只有待报关的单据才能删除"));
                 continue;
             }
+            resultList.add(BatchResultDTO.success(entity.getId(),entity.getCode(),"删除成功"));
             removeIds.add(entity.getId());
             List<String> mergeIds = Arrays.asList(entity.getMergeSourceId().split(","));
             if(CollectionUtils.isNotEmpty(mergeIds)){
@@ -815,7 +818,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     }
 
     @Override
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public Boolean addB2BDeclare(TmsDeclareBillDTO.AddDTO addDTO) {
         TmsDeclareBillDTO.QuerySourceDTO querySourceDTO = TmsDeclareBillDTO.QuerySourceDTO.builder()
 //                .packingStatus(PackingTaskStatusEnum.PACKED.getCode())
@@ -864,14 +867,17 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         if(StringUtils.isBlank(autoGenerateBillDTO.getId()) || Objects.isNull(autoGenerateBillDTO.getSourceTypeEnum()) || Objects.isNull(autoGenerateBillDTO.getBillGenerateTimingEnum())){
             return false;
         }
-        CfgSettingEntity cfgSettingEntity = cfgSettingService.getByKey(CfgSettingEnum.BILL_AUTO_ADD.getCode());
-        if(cfgSettingEntity.getDisabled()){
-            return false;
-        }
-        CfgSettingValueDTO.BillAutoAddDTO dto = BeanUtil.toBean(cfgSettingEntity.getDataJson(), CfgSettingValueDTO.BillAutoAddDTO.class);
-        if(Objects.isNull(dto) || Objects.isNull(dto.getIsAutoFirstMileDeclare()) || !dto.getIsAutoFirstMileDeclare() ||
-                StringUtils.isBlank(dto.getFirstMileDeclareGenerateTiming()) || !dto.getFirstMileDeclareGenerateTiming().equals(autoGenerateBillDTO.getBillGenerateTimingEnum().getCode())){
-            return false;
+        //自动下推需要校验配置
+        if(Boolean.TRUE.equals(autoGenerateBillDTO.getCheckCfg())){
+            CfgSettingEntity cfgSettingEntity = cfgSettingService.getByKey(CfgSettingEnum.BILL_AUTO_ADD.getCode());
+            if(cfgSettingEntity.getDisabled()){
+                return false;
+            }
+            CfgSettingValueDTO.BillAutoAddDTO dto = BeanUtil.toBean(cfgSettingEntity.getDataJson(), CfgSettingValueDTO.BillAutoAddDTO.class);
+            if(Objects.isNull(dto) || Objects.isNull(dto.getIsAutoFirstMileDeclare()) || !dto.getIsAutoFirstMileDeclare() ||
+                    StringUtils.isBlank(dto.getFirstMileDeclareGenerateTiming()) || !dto.getFirstMileDeclareGenerateTiming().equals(autoGenerateBillDTO.getBillGenerateTimingEnum().getCode())){
+                return false;
+            }
         }
         //生成报关单
         TmsDeclareBillDTO.AddDTO addDTO  = new TmsDeclareBillDTO.AddDTO();
@@ -901,21 +907,25 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     }
 
     @Override
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     public Boolean autoGenerateB2bDeclare(AutoGenerateBillDTO autoGenerateBillDTO) {
         if(StringUtils.isBlank(autoGenerateBillDTO.getId()) || Objects.isNull(autoGenerateBillDTO.getSourceTypeEnum()) || Objects.isNull(autoGenerateBillDTO.getBillGenerateTimingEnum())){
             return false;
         }
-        CfgSettingEntity cfgSettingEntity = cfgSettingService.getByKey(CfgSettingEnum.BILL_AUTO_ADD.getCode());
-        if(Objects.isNull(cfgSettingEntity) || cfgSettingEntity.getDisabled()){
-            return false;
+        //自动下推需要校验配置
+        if(Boolean.TRUE.equals(autoGenerateBillDTO.getCheckCfg())){
+            CfgSettingEntity cfgSettingEntity = cfgSettingService.getByKey(CfgSettingEnum.BILL_AUTO_ADD.getCode());
+            if(Objects.isNull(cfgSettingEntity) || cfgSettingEntity.getDisabled()){
+                return false;
+            }
+            CfgSettingValueDTO.BillAutoAddDTO dto = BeanUtil.toBean(cfgSettingEntity.getDataJson(), CfgSettingValueDTO.BillAutoAddDTO.class);
+            if(Objects.isNull(dto) || Objects.isNull(dto.getIsAutoB2BDeclare()) || !dto.getIsAutoB2BDeclare() ||
+                    StringUtils.isBlank(dto.getB2BDeclareGenerateTiming()) || !dto.getB2BDeclareGenerateTiming().equals(autoGenerateBillDTO.getBillGenerateTimingEnum().getCode())){
+                return false;
+            }
         }
-        CfgSettingValueDTO.BillAutoAddDTO dto = BeanUtil.toBean(cfgSettingEntity.getDataJson(), CfgSettingValueDTO.BillAutoAddDTO.class);
-        if(Objects.isNull(dto) || Objects.isNull(dto.getIsAutoB2BDeclare()) || !dto.getIsAutoB2BDeclare() ||
-                StringUtils.isBlank(dto.getB2BDeclareGenerateTiming()) || !dto.getB2BDeclareGenerateTiming().equals(autoGenerateBillDTO.getBillGenerateTimingEnum().getCode())){
-            return false;
-        }
+
         //生成报关单
         TmsDeclareBillDTO.AddDTO addDTO  = new TmsDeclareBillDTO.AddDTO();
         addDTO.setSourceId(autoGenerateBillDTO.getId());

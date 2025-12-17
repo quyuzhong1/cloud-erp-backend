@@ -155,6 +155,10 @@ public class SoB2cDeliveryDetailDTO implements Serializable {
          * 虚拟仓id
          */
         private String virtualWarehouseId;
+        /**
+         * 是否设置虚拟仓id
+         */
+        private Boolean isSetVirtualWarehouseId;
     }
 
 

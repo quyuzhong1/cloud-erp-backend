@@ -104,6 +104,10 @@ public class OverseasProviderWarehouseDTO implements Serializable {
          * 海外仓服务商code
          */
         private String  providerCode;
+        /**
+         * 海外仓服务商名称
+         */
+        private String  providerName;
 
 
     }
@@ -323,5 +327,15 @@ public class OverseasProviderWarehouseDTO implements Serializable {
          */
         private Integer shippedQty;
 
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ProviderDTO {
+        private String deliveryId;
+        private String refId;
+        private String providerId;
+        private String providerName;
+        private String authStatus;
     }
 }

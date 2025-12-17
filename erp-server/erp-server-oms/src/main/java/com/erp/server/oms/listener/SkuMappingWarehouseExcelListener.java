@@ -15,6 +15,7 @@ import com.erp.model.oms.dto.excel.SkuMappingWarehouseImportExcelDTO;
 import com.erp.model.oms.entity.ListingInfoEntity;
 import com.erp.model.oms.entity.SkuMappingEntity;
 import com.erp.model.oms.enums.AuthStatusEnum;
+import com.erp.model.oms.enums.ListingInfoPlatformStatusEnum;
 import com.erp.model.oms.enums.ListingMatchResultEnum;
 import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
@@ -229,7 +230,7 @@ public class SkuMappingWarehouseExcelListener extends AnalysisEventListener<SkuM
                     continue;
                 }
                 OverseasProviderEntity overseasProviderEntity = overseasProviderEntityList.get(0);
-                if(!overseasProviderEntity.getIsProductSync()){
+                if(!overseasProviderEntity.getIsProductSync() && overseasProviderEntity.getCode().equals(OmsPlatformEnum.CAI_NIAO.getCode())){
                     dto.setErrorMsg("服务商账号未开启产品同步");
                     errorList.add(dto);
                     continue;

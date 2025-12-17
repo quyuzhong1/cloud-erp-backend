@@ -23,6 +23,7 @@ import javax.annotation.Resource;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -70,35 +71,36 @@ public class LogisticsServiceSyncJob {
             findDTO.setBusinessType(appClientEnum.getBusinessType());
             findDTO.setDictPlatform(appClientEnum.getPlatform());
             findDTO.setPlatformType(appClientEnum.getPlatformType());
-            CfgAppClientEntity cfgAppClient = null;
-            try {
-                cfgAppClient = dmpTaskFeign.getCfgAppClient(findDTO);
-                Map<String, String> map = new HashMap<>();
-                map.put("id", cfgAppClient.getId());
-                map.put("logisticsPlatform", logisticsPlatform);
-                map.put("clientSecret", cfgAppClient.getClientSecret());
-                map.put("clientId", cfgAppClient.getClientId());
-                map.put("token", authList.get(0).getToken());
-                ApiResult<List<LogisticsServiceResponseVO>> apiResult = logisticsService.listLogisticsService(map);
-                if (apiResult.isSuccess()) {
-                    List<LogisticsServiceResponseVO> responseList = apiResult.getData();
-                    List<LogisticsSaleChannelEntity> dbList = logisticsSaleChannelService.listByLogisticsPlatform(logisticsPlatform,"oms");
-                    List<String> codeList = dbList.stream().map(LogisticsSaleChannelEntity::getCode).collect(Collectors.toList());
-                    List<LogisticsServiceResponseVO> needList = responseList.stream().
-                            filter(r -> !codeList.contains(r.getLogisticsType())).collect(Collectors.toList());
-                    List<LogisticsSaleChannelEntity> addList = LogisticsServiceConverter.INSTANCE.convertLogisticsService(needList);
-                    addList.forEach(obj->{
-                        obj.setServicePlatform("oms");
-                        obj.setLogisticsPlatform(logisticsPlatform);
-                    });
-                    logisticsSaleChannelService.saveBatch(addList);
-                }
-
-            } catch (Exception e) {
-                log.error("同步平台服务商失败>>>>>{}", e);
+            CfgAppClientEntity cfgAppClient = dmpTaskFeign.getCfgAppClient(findDTO);
+            if (Objects.isNull(cfgAppClient)) {
+                return;
             }
-
-
+            for (ShopAuthEntity authEntity : authList) {
+                try {
+                    Map<String, String> map = new HashMap<>();
+                    map.put("id", cfgAppClient.getId());
+                    map.put("logisticsPlatform", logisticsPlatform);
+                    map.put("clientSecret", cfgAppClient.getClientSecret());
+                    map.put("clientId", cfgAppClient.getClientId());
+                    map.put("token", authEntity.getToken());
+                    ApiResult<List<LogisticsServiceResponseVO>> apiResult = logisticsService.listLogisticsService(map);
+                    if (apiResult.isSuccess()) {
+                        List<LogisticsServiceResponseVO> responseList = apiResult.getData();
+                        List<LogisticsSaleChannelEntity> dbList = logisticsSaleChannelService.listByLogisticsPlatform(logisticsPlatform, "oms");
+                        List<String> codeList = dbList.stream().map(LogisticsSaleChannelEntity::getCode).collect(Collectors.toList());
+                        List<LogisticsServiceResponseVO> needList = responseList.stream().
+                                filter(r -> !codeList.contains(r.getLogisticsType())).collect(Collectors.toList());
+                        List<LogisticsSaleChannelEntity> addList = LogisticsServiceConverter.INSTANCE.convertLogisticsService(needList);
+                        addList.forEach(obj -> {
+                            obj.setServicePlatform("oms");
+                            obj.setLogisticsPlatform(logisticsPlatform);
+                        });
+                        logisticsSaleChannelService.saveBatch(addList);
+                    }
+                } catch (Exception e) {
+                    log.error("同步平台服务商失败>>>>>{}", e);
+                }
+            }
         }
 
     }

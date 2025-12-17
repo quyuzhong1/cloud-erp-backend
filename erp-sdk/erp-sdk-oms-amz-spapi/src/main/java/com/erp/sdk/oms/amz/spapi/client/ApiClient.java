@@ -803,6 +803,7 @@ public class ApiClient {
         try {
             log.debug("[SP-API] 请求url={}", call.request().url().toString());
             Response response = call.execute();
+            log.debug("[SP-API] 响应={}", JSONUtil.toJsonStr(response));
             T data = handleResponse(response, returnType);
             return new ApiResponse<T>(response.code(), response.headers().toMultimap(), data);
         } catch (IOException e) {
@@ -969,7 +970,7 @@ public class ApiClient {
         if (!defaultHeaderMap.containsKey("x-amz-access-token")) {
             request = lwaAuthorizationSigner.sign(request);
         }
-        request = awsSigV4Signer.sign(request);
+//        request = awsSigV4Signer.sign(request);
 
         return request;
     }

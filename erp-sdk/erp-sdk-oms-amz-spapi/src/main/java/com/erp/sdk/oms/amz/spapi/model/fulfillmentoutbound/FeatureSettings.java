@@ -10,24 +10,23 @@
  * Do not edit the class manually.
  */
 
-
 package com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound;
 
+import java.util.Objects;
+import java.util.Arrays;
 import com.google.gson.TypeAdapter;
 import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.annotations.SerializedName;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 
-
 import java.io.IOException;
-import java.util.Objects;
-
 /**
- * Settings to apply to an order that includes the specified fulfillment feature.
+ * &#x60;FeatureSettings&#x60; allows users to apply fulfillment features to an order. To block an order from being shipped using Amazon Logistics (AMZL) and an AMZL tracking number, use &#x60;featureName&#x60; as &#x60;BLOCK_AMZL&#x60; and &#x60;featureFulfillmentPolicy&#x60; as &#x60;Required&#x60;. Blocking AMZL will incur an additional fee surcharge on your MCF orders and increase the risk of some of your orders being unfulfilled or delivered late if there are no alternative carriers available. Using &#x60;BLOCK_AMZL&#x60; in an order request will take precedence over your Seller Central account setting. To ship in non-Amazon branded packaging (blank boxes), use featureName &#x60;BLANK_BOX&#x60;.
  */
 
-@javax.annotation.Generated(value = "io.swagger.codegen.languages.JavaClientCodegen", date = "2020-12-15T20:44:18.412+08:00")
+@javax.annotation.Generated(value = "io.swagger.codegen.v3.generators.java.JavaClientCodegen", date = "2025-08-18T09:55:11.594451100+08:00[Asia/Shanghai]")
+
 public class FeatureSettings {
   @SerializedName("featureName")
   private String featureName = null;
@@ -37,8 +36,9 @@ public class FeatureSettings {
    */
   @JsonAdapter(FeatureFulfillmentPolicyEnum.Adapter.class)
   public enum FeatureFulfillmentPolicyEnum {
+    @SerializedName("Required")
     REQUIRED("Required"),
-    
+    @SerializedName("NotRequired")
     NOTREQUIRED("NotRequired");
 
     private String value;
@@ -46,7 +46,6 @@ public class FeatureSettings {
     FeatureFulfillmentPolicyEnum(String value) {
       this.value = value;
     }
-
     public String getValue() {
       return value;
     }
@@ -55,31 +54,27 @@ public class FeatureSettings {
     public String toString() {
       return String.valueOf(value);
     }
-
-    public static FeatureFulfillmentPolicyEnum fromValue(String text) {
+    public static FeatureFulfillmentPolicyEnum fromValue(String input) {
       for (FeatureFulfillmentPolicyEnum b : FeatureFulfillmentPolicyEnum.values()) {
-        if (String.valueOf(b.value).equals(text)) {
+        if (b.value.equals(input)) {
           return b;
         }
       }
       return null;
     }
-
     public static class Adapter extends TypeAdapter<FeatureFulfillmentPolicyEnum> {
       @Override
       public void write(final JsonWriter jsonWriter, final FeatureFulfillmentPolicyEnum enumeration) throws IOException {
-        jsonWriter.value(enumeration.getValue());
+        jsonWriter.value(String.valueOf(enumeration.getValue()));
       }
 
       @Override
       public FeatureFulfillmentPolicyEnum read(final JsonReader jsonReader) throws IOException {
-        String value = jsonReader.nextString();
-        return FeatureFulfillmentPolicyEnum.fromValue(String.valueOf(value));
+        Object value = jsonReader.nextString();
+        return FeatureFulfillmentPolicyEnum.fromValue((String)(value));
       }
     }
-  }
-
-  @SerializedName("featureFulfillmentPolicy")
+  }  @SerializedName("featureFulfillmentPolicy")
   private FeatureFulfillmentPolicyEnum featureFulfillmentPolicy = null;
 
   public FeatureSettings featureName(String featureName) {
@@ -91,7 +86,7 @@ public class FeatureSettings {
    * The name of the feature.
    * @return featureName
   **/
-
+  
   public String getFeatureName() {
     return featureName;
   }
@@ -109,7 +104,7 @@ public class FeatureSettings {
    * Specifies the policy to use when fulfilling an order.
    * @return featureFulfillmentPolicy
   **/
-
+  
   public FeatureFulfillmentPolicyEnum getFeatureFulfillmentPolicy() {
     return featureFulfillmentPolicy;
   }
@@ -120,7 +115,7 @@ public class FeatureSettings {
 
 
   @Override
-  public boolean equals(Object o) {
+  public boolean equals(java.lang.Object o) {
     if (this == o) {
       return true;
     }
@@ -153,7 +148,7 @@ public class FeatureSettings {
    * Convert the given object to string with each line indented by 4 spaces
    * (except the first line).
    */
-  private String toIndentedString(Object o) {
+  private String toIndentedString(java.lang.Object o) {
     if (o == null) {
       return "null";
     }
@@ -161,4 +156,3 @@ public class FeatureSettings {
   }
 
 }
-

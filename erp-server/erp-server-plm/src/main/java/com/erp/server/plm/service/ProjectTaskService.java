@@ -1,6 +1,7 @@
 package com.erp.server.plm.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
@@ -51,7 +52,7 @@ public interface ProjectTaskService extends IService<ProjectTaskEntity> {
 
     List<Map<String, Object>> getTaskListByProductId(String productId );
 
-    Boolean removeTask(String id);
+    List<BatchResultDTO> removeTask(String id);
 
 
 
@@ -301,7 +302,7 @@ public interface ProjectTaskService extends IService<ProjectTaskEntity> {
      * @param ids ids
      * @return com.common.core.controller.vo.ApiResult
      **/
-    Boolean removeBatch(List<String> ids);
+    List<BatchResultDTO> removeBatch(List<String> ids);
 
     List<ProjectTaskEntity> listByTaskNames(String productId, List<String> taskNameList);
 

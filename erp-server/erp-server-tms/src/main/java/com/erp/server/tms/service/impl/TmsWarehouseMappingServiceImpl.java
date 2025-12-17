@@ -10,7 +10,6 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
-import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
@@ -67,7 +66,7 @@ public class TmsWarehouseMappingServiceImpl extends SuperServiceImpl<TmsWarehous
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(TmsWarehouseMappingDTO.AddDTO addDTO) {
@@ -132,7 +131,7 @@ public class TmsWarehouseMappingServiceImpl extends SuperServiceImpl<TmsWarehous
         // 删除主单数据
         log.info("删除 开始删除仓库匹配数据，id：【{}】", id);
         this.removeById(id);
-        return BatchResultDTO.success(entity.getId(), entity.getId(), OperationTypeEnum.DELETE);
+        return BatchResultDTO.success(entity.getId(), entity.getLogisticsWarehouseCode(), OperationTypeEnum.DELETE);
     }
 
     @Override

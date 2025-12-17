@@ -24,10 +24,16 @@ import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.ValidatorUtil;
+import com.erp.model.plm.entity.ApplicationCategoryEntity;
+import com.erp.model.plm.entity.BasicCategoryEntity;
 import com.erp.model.scm.dto.SupplierDTO;
+import com.erp.model.scm.dto.SupplierPlantAddrDTO;
 import com.erp.model.scm.entity.DictBasicEntity;
+import com.erp.model.scm.entity.DictCredentialEntity;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.sys.entity.DictBankEntity;
+import com.erp.model.sys.entity.DictCityEntity;
+import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.workflow.dto.ApproveTaskDetailDTO;
 import com.erp.model.workflow.dto.ApproveTaskInfoDTO;
 import com.erp.model.workflow.entity.*;
@@ -37,19 +43,18 @@ import com.erp.rpc.scm.feign.SupplierFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.workflow.context.ProcessFormFactory;
 import com.erp.server.workflow.service.*;
-import io.seata.spring.annotation.GlobalTransactional;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.temporal.TemporalAccessor;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  *@Author: hcg
@@ -88,6 +93,8 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
     @Resource
     private ScmTaskFeign scmTaskFeign;
 
+    @Resource
+    private FsInstancesService fsInstancesService;
 
     @Override
     public boolean isMatch(String event) {
@@ -100,8 +107,6 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
     public void createBill(JSONObject jsonObject, CfgThirdProcessEntity thirdProcessEntity, List<CfgProcessFieldMapEntity> fieldMapList, List<CfgProcessValueMapEntity> valueMapList) {
         DictBasicEnum dictBasicEnum = DictBasicEnum.getByCode(thirdProcessEntity.getOperateType());
         ProcessFormHandler constructBillHandler = processFormFactory.getConstructBillHandler(thirdProcessEntity.getSourcePlatform());
@@ -115,66 +120,65 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
             return;
         }
         if (DictBasicEnum.CREATEANDUPDATE.equals(dictBasicEnum)) {
-            JSONArray taskList = jsonObject.getJSONArray(FsRequestBodyAttributesEnum.TASKLIST.getCode());
-            JSONObject lastTask = taskList.getJSONObject(taskList.size() - 1);
-            String lastUserId = lastTask.getStr(FsRequestBodyAttributesEnum.USERID.getCode());
-            Long endTime = lastTask.getLong(FsRequestBodyAttributesEnum.ENDTIME.getCode());
-            LocalDateTime approveTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(endTime), ZoneId.systemDefault());
+
             //解析数据
-            Map<String, Object> map = constructBillHandler.constructBill(jsonObject.getJSONArray(FsRequestBodyAttributesEnum.FORM.getCode()), fieldMapList, valueMapList);
+            Map<String, Object> map = constructBillHandler.constructBill(jsonObject.getJSONArray(FsRequestBodyAttributesEnum.FORM.getCode()), fieldMapList, valueMapList,CfgQueryOptionBussinessKeyEnum.SUPPLIER.getCode());
+
             //处理附件信息
             handleSupplierData(map,Boolean.TRUE);
-
             log.warn("供应商数据转换完成，单据信息：{}", JSONUtil.toJsonStr(map));
 
             //生成三方生成查询明细
             List<ApproveTaskDetailDTO.AddDTO> addDTOS = constructBillHandler.generatePullDetailDTO(jsonObject.getJSONArray(FsRequestBodyAttributesEnum.FORM.getCode()), map, fieldMapList);
-            //值映射
-            SupplierDTO.InsertDTO addDTO = BeanUtil.toBean(map, SupplierDTO.InsertDTO.class);
-            //第一条账户设置成默认
-            if (CollUtil.isNotEmpty(addDTO.getBankAccountList())) {
-                addDTO.getBankAccountList().get(0).setIsDefault(Boolean.TRUE);
-            }
-            addDTO.setApprovalStatus(ApproveStatusEnum.APPROVE);
-            addDTO.setThirdApprovalUserId(lastUserId);
-            addDTO.setThirdApproveTime(approveTime);
 
-            //生成三方生成查询主表数据
-            ApproveTaskInfoDTO.AddDTO taskInfo = buildApproveTaskInfo(jsonObject, addDTOS,thirdProcessEntity.getBussinessKey());
-            //查询三方生成查询
-            ApproveTaskInfoEntity taskInfoEntity = approveTaskInfoService.getOne(new LambdaQueryWrapper<ApproveTaskInfoEntity>().eq(ApproveTaskInfoEntity::getThirdInstanceId, jsonObject.getStr(FsRequestBodyAttributesEnum.INSTANCECODE.getCode())).eq(ApproveTaskInfoEntity::getIsDeleted, false));
-            if (ObjectUtil.isNotEmpty(taskInfoEntity)) {
-                SupplierEntity supplierEntity = FeignQuery.getById(SupplierEntity.class, taskInfoEntity.getBussinessId());
-                if (ObjectUtil.isNotEmpty(supplierEntity)) {
-                    log.warn(CharSequenceUtil.format("供应商【{}】已存在，直接标记消费成功",supplierEntity.getCode()));
-                    return;
-                }
-                //判断是否存在三方生成查询数据，存在则删除
-                approveTaskInfoService.deleteByThird(taskInfo.getType(),taskInfo.getThirdInstanceId(),taskInfo.getThirdApprovalCode());
-            }
-            // 第二步：保存供应商信息
-            BatchResultDTO batchResultDTO = new BatchResultDTO();
-            String reason = "";
-            String taskStatus = ApproveTaskStatusEnum.SUCCESS.getCode();
-            try {
-                //添加供应商
-                ValidatorUtil.validateEntity(addDTO);
-                batchResultDTO = supplierFeign.add(addDTO);
-            } catch (Exception e) {
-                taskStatus = ApproveTaskStatusEnum.FAIL.getCode();
-                reason = e.getMessage();
-            }
-            taskInfo.setBussinessKey(thirdProcessEntity.getBussinessKey());
-            taskInfo.setBussinessCode(batchResultDTO.getCode());
-            taskInfo.setBussinessId(batchResultDTO.getId());
-            taskInfo.setHappenTime(LocalDateTime.now());
-            taskInfo.setStatus(taskStatus);
-            taskInfo.setReason(reason);
-            approveTaskInfoService.add(taskInfo);
-            //添加三方流程记录
-            if (ApproveTaskStatusEnum.SUCCESS.getCode().equals(taskStatus)) {
-                thirdProcessManagementService.addOrUpdate(jsonObject,thirdProcessEntity.getSourcePlatform());
-            }
+            //批量处理多选数据
+            handleSupplierMultipleData(map);
+            //新增供应商
+            fsInstancesService.addFreshGenerate(jsonObject,map,thirdProcessEntity, addDTOS);
+        }
+    }
+
+    /**
+     * 批量数据处理
+     * @author will
+     * @date 2025/10/23 15:49
+     * @param map
+     * @return void
+     */
+    private void handleSupplierMultipleData(Map<String, Object> map) {
+        //供应商属性
+        Object propertyJson = map.get("propertyJson");
+        if (ObjectUtil.isNotEmpty(propertyJson)) {
+            List<String> propertyJsonCode = Arrays.stream(propertyJson.toString().split(",")).collect(Collectors.toList());
+            map.put("propertyJson", propertyJsonCode);
+        } else {
+            map.put("propertyJson", new ArrayList<String>());
+        }
+        //供应商产品分类
+        Object productCategoryJson = map.get("productCategoryJson");
+        if (ObjectUtil.isNotEmpty(productCategoryJson)) {
+            List<String> productCategoryJsonId = Arrays.stream(productCategoryJson.toString().split(",")).collect(Collectors.toList());
+            map.put("productCategoryJson", productCategoryJsonId);
+        } else {
+            map.put("productCategoryJson", new ArrayList<String>());
+        }
+
+        //供应商应用分类
+        Object applicationCategoryJson = map.get("applicationCategoryJson");
+        if (ObjectUtil.isNotEmpty(applicationCategoryJson)) {
+            List<String> applicationCategoryJsonId = Arrays.stream(applicationCategoryJson.toString().split(",")).collect(Collectors.toList());
+            map.put("applicationCategoryJson", applicationCategoryJsonId);
+        } else {
+            map.put("applicationCategoryJson", new ArrayList<String>());
+        }
+
+        //体系认证
+        Object certificateJson = map.get("certificateJson");
+        if (ObjectUtil.isNotEmpty(certificateJson)) {
+            List<String> certificateJsonCode = Arrays.stream(certificateJson.toString().split(",")).collect(Collectors.toList());
+            map.put("certificateJson", certificateJsonCode);
+        } else {
+            map.put("certificateJson", new ArrayList<String>());
         }
     }
 
@@ -201,25 +205,76 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
         Object paymentCondition = map.get("paymentCondition");
         List<BaseDropDownDTO.DisabledDTO> paymentConditionList = scmTaskFeign.listPaymentCondition();
 
-        String paymentConditionCode;
-        //dmp新增根据名称匹配，重新生成根据code匹配
-        if (Boolean.TRUE.equals(isDmpAdd)) {
-             paymentConditionCode = paymentConditionList.stream().
-                    filter(req -> CharSequenceUtil.equals(String.valueOf(paymentCondition),req.getValue()))
-                    .map(BaseDropDownDTO.DisabledDTO::getCode)
-                    .findFirst().orElse("");
-        } else {
-             paymentConditionCode = paymentConditionList.stream().
-                     map(BaseDropDownDTO.DisabledDTO::getCode)
-                    .filter(code -> CharSequenceUtil.equals(String.valueOf(paymentCondition), code))
-                    .findFirst().orElse("");
-        }
+        //国家
+        List<DictCountryEntity> countylist = FeignQuery.create(DictCountryEntity.class).list();
+
+        //省市
+        List<DictCityEntity> cityList = FeignQuery.create(DictCityEntity.class).list();
+
+        //根据code匹配
+        String paymentConditionCode = paymentConditionList.stream().
+                map(BaseDropDownDTO.DisabledDTO::getCode)
+                .filter(code -> CharSequenceUtil.equals(String.valueOf(paymentCondition), code))
+                .findFirst().orElse("");
         // 如果付款条件不存在，抛出异常
         if (CharSequenceUtil.isBlank(paymentConditionCode)) {
             log.error("付款条件未找到，当前付款条件：{}", paymentCondition);
-            //throw new ServiceException(ApiError.ERROR_NOT_FOUND, CharSequenceUtil.format("付款条件【{}】", paymentCondition));
+            throw new ServiceException(ApiError.ERROR_NOT_FOUND, CharSequenceUtil.format("付款条件【{}】", paymentCondition));
         }
         map.put("paymentCondition", paymentConditionCode);
+
+        //scm字典数据
+        List<DictBasicEntity> basicList = FeignQuery.create(DictBasicEntity.class).in(DictBasicEntity::getType, Arrays.asList(com.erp.model.scm.enums.DictBasicEnum.SUPPLIER_CATEGORY.getType(), com.erp.model.scm.enums.DictBasicEnum.PROPERTY.getType(), com.erp.model.scm.enums.DictBasicEnum.CERTIFICATE.getType())).list();
+
+        //产品分类
+        List<BasicCategoryEntity> categoryList = FeignQuery.create(BasicCategoryEntity.class).list();
+
+        //应用分类
+        List<ApplicationCategoryEntity> applicationCategoryList = FeignQuery.create(ApplicationCategoryEntity.class).list();
+
+        //供应商属性
+        Object propertyJson = map.get("propertyJson");
+        if (ObjectUtil.isNotEmpty(propertyJson)) {
+            String propertyJsonCode = Arrays.stream(propertyJson.toString().split(","))
+                    .map(obj -> basicList.stream().filter(e -> CharSequenceUtil.equals(obj,e.getValue()) && CharSequenceUtil.equals(e.getType(),com.erp.model.scm.enums.DictBasicEnum.PROPERTY.getType())).map(DictBasicEntity::getValue).findFirst().orElse(""))
+                    .filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.joining(","));
+            map.put("propertyJson", propertyJsonCode);
+        }
+
+        //供应商产品分类
+        Object productCategoryJson = map.get("productCategoryJson");
+        if (ObjectUtil.isNotEmpty(productCategoryJson)) {
+            String productCategoryJsonId = Arrays.stream(productCategoryJson.toString().split(","))
+                    .map(obj -> categoryList.stream().map(BasicCategoryEntity::getId).filter(id -> CharSequenceUtil.equals(obj, id)).findFirst().orElse(""))
+                    .filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.joining(","));
+            map.put("productCategoryJson", productCategoryJsonId);
+        }
+
+        //供应商应用分类
+        Object applicationCategoryJson = map.get("applicationCategoryJson");
+        if (ObjectUtil.isNotEmpty(applicationCategoryJson)) {
+            String applicationCategoryJsonCode = Arrays.stream(applicationCategoryJson.toString().split(","))
+                    .map(obj -> applicationCategoryList.stream().map(ApplicationCategoryEntity::getCode).filter(code -> CharSequenceUtil.equals(obj, code)).findFirst().orElse(""))
+                    .filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.joining(","));
+            map.put("applicationCategoryJson", applicationCategoryJsonCode);
+        }
+
+        //体系认证
+        Object certificateJson = map.get("certificateJson");
+        if (ObjectUtil.isNotEmpty(certificateJson)) {
+            String certificateJsonCode = Arrays.stream(certificateJson.toString().split(","))
+                    .map(obj -> basicList.stream().filter(e -> CharSequenceUtil.equals(obj,e.getValue())&& CharSequenceUtil.equals(e.getType(),com.erp.model.scm.enums.DictBasicEnum.CERTIFICATE.getType())).map(DictBasicEntity::getValue).findFirst().orElse(""))
+                    .filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.joining(","));
+            map.put("certificateJson", certificateJsonCode);
+        }
+
+        //工厂所在地
+        Object plantAddr = map.get("plantAddr");
+        if (ObjectUtil.isNotEmpty(plantAddr)) {
+            List<String> errorMsgList = new ArrayList<>();
+            List<SupplierPlantAddrDTO.AddDTO> plantAddrList = supplierFeign.checkImportPlantAddr(new SupplierDTO.AddPlantAddrDTO(countylist, cityList, plantAddr.toString(), errorMsgList, Boolean.TRUE));
+            map.put("plantAddrList", plantAddrList);
+        }
 
         //账户信息
         List<Object> bankAccountList = (List<Object>) map.get("bankAccountList");
@@ -230,16 +285,14 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
                 // 将原始对象转为可修改的 Map
                 Map<String, Object> bankAccountMap = JSONUtil.parseObj(object).toBean(Map.class);
                 Object bankName = bankAccountMap.get("bankName");
-                if (ObjectUtil.isEmpty(bankName)) {
-                    log.error("银行名称不能为空");
-                    throw new ServiceException(ApiError.ERROR_NOT_FOUND, "银行名称");
+                if (ObjectUtil.isNotEmpty(bankName)) {
+                    List<DictBankEntity> bankList = FeignQuery.create(DictBankEntity.class).eq(DictBankEntity::getName, bankName).list();
+                    if (CollUtil.isEmpty(bankList)) {
+                        log.error("银行名称未找到，当前银行名称：{}", bankName);
+                        throw new ServiceException(ApiError.ERROR_NOT_FOUND, CharSequenceUtil.format("银行名称【{}】", bankName));
+                    }
+                    bankAccountMap.put("bankId", bankList.get(0).getId());
                 }
-                List<DictBankEntity> bankList = FeignQuery.create(DictBankEntity.class).eq(DictBankEntity::getName, bankName).list();
-                if (CollUtil.isEmpty(bankList)) {
-                    log.error("银行名称未找到，当前银行名称：{}", bankName);
-                    throw new ServiceException(ApiError.ERROR_NOT_FOUND, CharSequenceUtil.format("银行名称【{}】", bankName));
-                }
-                bankAccountMap.put("bankId", bankList.get(0).getId());
                 bankAccountMapList.add(bankAccountMap);
             }
             // 将处理后的列表更新回原始 map
@@ -251,56 +304,95 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
         if (CollUtil.isNotEmpty(credentialList)) {
             // 创建新列表存储处理后的凭证
             List<Map<String, Object>> credentialMapList = new ArrayList<>();
+            Object object =  credentialList.get(0);
+            // 将原始对象转为可修改的 Map
+            Map<String, Object> credentialMap = JSONUtil.parseObj(object).toBean(Map.class);
 
-            for (Object object : credentialList) {
-                // 将原始对象转为可修改的 Map
-                Map<String, Object> credentialMap = JSONUtil.parseObj(object).toBean(Map.class);
+            Object attachmentObject = credentialMap.get("attachment");
+            if (ObjectUtil.isEmpty(attachmentObject)) {
+                log.error("资质附件不能为空");
+                throw new ServiceException(ApiError.ERROR_NOT_FOUND, "资质附件");
+            }
+            //供应商按附件生成资质信息
+            Set<Map> attachList =  new HashSet<>();
+            if (attachmentObject instanceof Map) {
+                Map<String, Object> attachment = JSONUtil.parseObj(attachmentObject).toBean(Map.class);
+                attachList.add(attachment);
+            } else if (attachmentObject instanceof String) {
+                if (CharSequenceUtil.isNotBlank(attachmentObject.toString())) {
+                    ObjectMapper mapper = new ObjectMapper();
+                    JsonNode node = null;
+                    try {
+                        node = mapper.readTree(attachmentObject.toString());
+                    } catch (Exception e) {
+                        log.error("资质附件解析异常，当前值：{}", attachmentObject);
+                        throw new ServiceException("资质附件不是有效的JSON字符串格式");
+                    }
+                    if (node.isObject()) {
+                        Map<String, Object> attachment = JSONUtil.parseObj(attachmentObject).toBean(Map.class);
+                        attachList.add(attachment);
+                    } else if (node.isArray()) {
+                        JSONArray jsonArray = JSONUtil.parseArray(attachmentObject);
+                        for (Object element : jsonArray) {
+                            attachList.addAll(processJsonElement(element));
+                        }
+                    }
+                }
+            }  else {
+                JSONArray jsonArray = JSONUtil.parseArray(attachmentObject);
+                for (Object element : jsonArray) {
+                    attachList.addAll(processJsonElement(element));
+                }
+            }
+//            List<DictBasicEntity> disabledList = FeignQuery.create(DictBasicEntity.class).eq(DictBasicEntity::getType, com.erp.model.scm.enums.DictBasicEnum.CREDENTIAL_TYPE.getType()).list();
+            List<DictCredentialEntity> disabledList = FeignQuery.create(DictCredentialEntity.class).eq(DictCredentialEntity::getDisabled, false).list();
+            for (Map<String,Object> attachMap : attachList) {
+                Map<String, Object> detailAttachMap = new HashMap<>();
 
-                //名称
-                Object name = credentialMap.get("name");
-                List<DictBasicEntity> disabledList = FeignQuery.create(DictBasicEntity.class).eq(DictBasicEntity::getType, com.erp.model.scm.enums.DictBasicEnum.CREDENTIAL_TYPE.getType()).list();
+                String key = attachMap.keySet().stream().findFirst().orElse("");
+                String fieldName = Arrays.stream(key.split(",")).collect(Collectors.toList()).get(0);
                 String credentialCode = disabledList.stream().
-                        filter(req -> CharSequenceUtil.equals(String.valueOf(name),req.getName()))
-                        .map(DictBasicEntity::getValue)
+                        filter(req -> CharSequenceUtil.equals(fieldName,req.getName()))
+                        .map(DictCredentialEntity::getId)
                         .findFirst().orElse("");
                 // 如果凭证类型不存在，抛出异常
                 if (CharSequenceUtil.isBlank(credentialCode)) {
-                    log.error("凭证类型未找到，当前凭证类型：{}", name);
-                    throw new ServiceException(ApiError.ERROR_NOT_FOUND, CharSequenceUtil.format("凭证类型【{}】", name));
+                    log.error("凭证类型未找到，当前凭证类型：{}", fieldName);
+                    throw new ServiceException(ApiError.ERROR_NOT_FOUND, CharSequenceUtil.format("凭证类型【{}】", fieldName));
                 }
-                credentialMap.put("code", credentialCode);
+                detailAttachMap.put("attachment",attachmentObject);
+                detailAttachMap.put("code", credentialCode);
+                detailAttachMap.put("name",fieldName);
                 //dmp新增特殊处理
                 if (isDmpAdd) {
                     //有效期
                     Object effectiveDate = credentialMap.get("effectiveDate");
                     if (ObjectUtil.isNotEmpty(effectiveDate)) {
-                        credentialMap.put("effectiveDate", LocalDateTimeUtil.ofDate((TemporalAccessor) effectiveDate));
+                        detailAttachMap.put("effectiveDate", LocalDateTimeUtil.ofDate((TemporalAccessor) effectiveDate));
                     }
                     //失效期
                     Object expireDate = credentialMap.get("expireDate");
                     if (ObjectUtil.isNotEmpty(expireDate)) {
-                        credentialMap.put("expireDate", LocalDateTimeUtil.ofDate((TemporalAccessor) expireDate));
+                        detailAttachMap.put("expireDate", LocalDateTimeUtil.ofDate((TemporalAccessor) expireDate));
                     }
-                }
-                Object attachmentObject = credentialMap.get("attachment");
-                if (ObjectUtil.isEmpty(attachmentObject)) {
-                    credentialMapList.add(credentialMap);
-                    continue;
+                } else {
+                    detailAttachMap.put("effectiveDate", credentialMap.get("effectiveDate"));
+                    detailAttachMap.put("expireDate", credentialMap.get("expireDate"));
                 }
                 // 处理附件
-                Map<String, Object> attachment = JSONUtil.parseObj(attachmentObject).toBean(Map.class);
                 List<String> attachmentUrlList = new ArrayList<>();
                 List<String> attachmentNameList = new ArrayList<>();
 
-                attachment.forEach((key, value) -> {
-                    attachmentNameList.add(key);
-                    attachmentUrlList.add(String.valueOf(value));
+                attachMap.forEach((key1, value) -> {
+                    String uraName = Arrays.stream(key1.split(",")).collect(Collectors.toList()).get(1);
+                    attachmentNameList.add(uraName);
+                    attachmentUrlList.add(value.toString());
                 });
 
                 // 更新凭证对象
-                credentialMap.put("attachmentUrlList", attachmentUrlList);
-                credentialMap.put("attachmentNameList", attachmentNameList);
-                credentialMapList.add(credentialMap);
+                detailAttachMap.put("attachmentUrlList", attachmentUrlList);
+                detailAttachMap.put("attachmentNameList", attachmentNameList);
+                credentialMapList.add(detailAttachMap);
             }
 
             // 将处理后的列表更新回原始 map
@@ -330,6 +422,8 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
             throw new ServiceException(ApiError.ERROR_EXIST_BILL, CharSequenceUtil.format("供应商{}",supplierEntity.getCode()));
         }
         if (DictBasicEnum.CREATEANDUPDATE.equals(dictBasicEnum)) {
+            //创建人
+            String createUserId = instanceEntity.getThirdJson().getStr(FsRequestBodyAttributesEnum.USERID.getCode());
             //更新单据状态为审核通过
             JSONArray taskList = JSONUtil.parseArray(instanceEntity.getTaskList());
             JSONObject lastTask = taskList.getJSONObject(taskList.size() - 1);
@@ -339,7 +433,8 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
 
             //处理附件信息
             handleSupplierData(map,Boolean.FALSE);
-
+            //批量处理多选数据
+            handleSupplierMultipleData(map);
             log.warn("供应商数据转换完成，单据信息：{}", JSONUtil.toJsonStr(map));
 
             //值映射
@@ -357,6 +452,8 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
             String reason = "";
             String taskStatus = ApproveTaskStatusEnum.SUCCESS.getCode();
             try {
+                //查找创建人
+                fsInstancesService.addCreateUser(createUserId,addDTO);
                 // 第二步：保存供应商信息
                 ValidatorUtil.validateEntity(addDTO);
                 batchResultDTO = supplierFeign.add(addDTO);
@@ -379,6 +476,7 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
         }
     }
 
+
     @Override
     public ApproveTaskInfoDTO.AddDTO buildApproveTaskInfo(JSONObject jsonObject, List<ApproveTaskDetailDTO.AddDTO> addDTOS,String bussinessKey) {
         ThirdProcessDefinitionEntity thirdProcessDefinition = thirdProcessDefinitionService.getOne(new LambdaQueryWrapper<ThirdProcessDefinitionEntity>().eq(ThirdProcessDefinitionEntity::getApprovalCode, jsonObject.getStr(FsRequestBodyAttributesEnum.APPROVALCODE.getCode())).
@@ -392,5 +490,32 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
         addDTO.setSourcePlatform(thirdProcessDefinition.getSourcePlatform());
         addDTO.setBussinessKey(bussinessKey);
         return addDTO;
+    }
+
+    // 递归处理JSON元素的方法
+    private Set<Map> processJsonElement(Object element) {
+        Set<Map> result = new HashSet<>();
+
+        if (element instanceof Map) {
+            // 如果是Map，直接添加到结果集
+            result.add((Map) element);
+        } else if (element instanceof JSONArray) {
+            // 如果是JSONArray，递归处理每个元素
+            JSONArray array = (JSONArray) element;
+            for (Object item : array) {
+                result.addAll(processJsonElement(item));
+            }
+        }else if (element instanceof String) {
+            JSONArray jsonArray = JSONUtil.parseArray(element);
+            for (Object object : jsonArray) {
+                Map<String, Object> map = JSONUtil.parseObj(object).toBean(Map.class);
+                result.add(map);
+            }
+        }  else {
+            // 其他类型尝试解析为JSON对象再转换为Map
+            Map<String, Object> map = JSONUtil.parseObj(element).toBean(Map.class);
+            result.add(map);
+        }
+        return result;
     }
 }

@@ -1,5 +1,6 @@
 package com.erp.rpc.sys.feign;
 
+import com.common.business.config.FeignErrorDecoder;
 import com.erp.model.sys.entity.MessageUserReadEntity;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -12,7 +13,7 @@ import java.util.List;
  * @Author Luo_WG
  * @Date 2023/8/21 11:02
  **/
-@FeignClient(name = "erp-sys", contextId = "messageUserRead")
+@FeignClient(name = "erp-sys", contextId = "messageUserReadFeign",configuration = {FeignErrorDecoder.class})
 public interface MessageUserReadFeign {
 
     /**

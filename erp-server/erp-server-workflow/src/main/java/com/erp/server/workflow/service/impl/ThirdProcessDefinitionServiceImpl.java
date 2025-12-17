@@ -1,10 +1,14 @@
 package com.erp.server.workflow.service.impl;
 
 
+import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
+import com.common.business.constant.DmpPullConstant;
+import com.common.business.dto.DmpInputFeignDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -20,6 +24,7 @@ import com.erp.model.workflow.entity.ThirdProcessDefinitionEntity;
 import com.erp.model.workflow.enums.ProcessSourcePlatformEnum;
 import com.erp.model.workflow.enums.ThirdProcessDefinitionStatusEnum;
 import com.erp.model.workflow.enums.ThirdProcessDefinitionTypeEnum;
+import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.workflow.mapper.ThirdProcessDefinitionMapper;
 import com.erp.server.workflow.service.DictBasicService;
@@ -57,17 +62,14 @@ public class ThirdProcessDefinitionServiceImpl extends SuperServiceImpl<ThirdPro
     private DownloadTaskFeign downloadTaskFeign;
     @Autowired
     private DictBasicService dictBasicService;
+    @Resource
+    private DmpTaskFeign dmpTaskFeign;
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(ThirdProcessDefinitionDTO.AddDTO addDTO) {
-        Optional.ofNullable(this.getOne(new LambdaQueryWrapper<ThirdProcessDefinitionEntity>()
-                        .eq(ThirdProcessDefinitionEntity::getApprovalCode, addDTO.getApprovalCode())
-                        .eq(ThirdProcessDefinitionEntity::getIsDeleted, false)))
-                .ifPresent(exists -> {
-                    throw new ServiceException("审批定义code {} 已存在",addDTO.getApprovalCode());
-                });
+      
         ThirdProcessDefinitionEntity thirdProcessDefinitionEntity = new ThirdProcessDefinitionEntity();
         BeanMapperUtils.copy(addDTO, thirdProcessDefinitionEntity);
         thirdProcessDefinitionEntity.setSourcePlatform(ProcessSourcePlatformEnum.FS.getCode());
@@ -80,12 +82,16 @@ public class ThirdProcessDefinitionServiceImpl extends SuperServiceImpl<ThirdPro
             throw new ServiceException("三方审批定义保存失败");
         }
 
+        //给dmp服务自动添加飞书dmp_cfg_input_detail配置
+        dmpTaskFeign.optionDmpCfgInputDetail(new DmpInputFeignDTO.CfgOptionDTO(DmpPullConstant.FS,DmpPullConstant.FS_APPROVALS,thirdProcessDefinitionEntity.getApprovalCode(),OperationTypeEnum.ADD.getStatus()));
+        dmpTaskFeign.optionDmpCfgInputDetail(new DmpInputFeignDTO.CfgOptionDTO(DmpPullConstant.FS,DmpPullConstant.INSTANCE_IDS,thirdProcessDefinitionEntity.getApprovalCode(),OperationTypeEnum.ADD.getStatus()));
         return new BaseResultDTO.AddDTO(thirdProcessDefinitionEntity.getId(), thirdProcessDefinitionEntity.getId());
     }
 
     /**
     * 修改
     */
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean update(ThirdProcessDefinitionDTO.UpdateDTO addOrUpdateDTO) {
@@ -100,6 +106,9 @@ public class ThirdProcessDefinitionServiceImpl extends SuperServiceImpl<ThirdPro
         if(!save) {
             throw new ServiceException("三方审批定义保存失败");
         }
+        //给dmp服务自动添加飞书dmp_cfg_input_detail配置
+        dmpTaskFeign.optionDmpCfgInputDetail(new DmpInputFeignDTO.CfgOptionDTO(DmpPullConstant.FS,DmpPullConstant.FS_APPROVALS,thirdProcessDefinitionEntity.getApprovalCode(),OperationTypeEnum.UPDATE.getStatus()));
+        dmpTaskFeign.optionDmpCfgInputDetail(new DmpInputFeignDTO.CfgOptionDTO(DmpPullConstant.FS,DmpPullConstant.INSTANCE_IDS,thirdProcessDefinitionEntity.getApprovalCode(),OperationTypeEnum.UPDATE.getStatus()));
         return Boolean.TRUE;
     }
 
@@ -143,10 +152,14 @@ public class ThirdProcessDefinitionServiceImpl extends SuperServiceImpl<ThirdPro
     }
 
     @Override
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public BatchResultDTO delete(String id) {
         ThirdProcessDefinitionEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到三方审批定义"));
         super.removeById(id);
-        return BatchResultDTO.success(entity.getId(), entity.getId(), OperationTypeEnum.DELETE);
+        //给dmp服务自动添加飞书dmp_cfg_input_detail配置
+        dmpTaskFeign.optionDmpCfgInputDetail(new DmpInputFeignDTO.CfgOptionDTO(DmpPullConstant.FS,DmpPullConstant.FS_APPROVALS,entity.getApprovalCode(),OperationTypeEnum.DELETE.getStatus()));
+        dmpTaskFeign.optionDmpCfgInputDetail(new DmpInputFeignDTO.CfgOptionDTO(DmpPullConstant.FS,DmpPullConstant.INSTANCE_IDS,entity.getApprovalCode(),OperationTypeEnum.DELETE.getStatus()));
+        return BatchResultDTO.success(entity.getId(), entity.getApprovalCode(), OperationTypeEnum.DELETE);
     }
 
     @Override
@@ -165,11 +178,25 @@ public class ThirdProcessDefinitionServiceImpl extends SuperServiceImpl<ThirdPro
         downloadTaskFeign.saveDownloadTask("审批定义导出", EXPORT_THIRD_PROCESS_DEFINITION.getCode(), dto);
     }
 
-
     /**
     * 新增修改处理数据
     */
-    private void handleData(ThirdProcessDefinitionEntity thirdProcessDefinitionEntity) {
-    // TODO 验证数据 & 数据赋值
+    private void handleData(ThirdProcessDefinitionEntity entity) {
+        ThirdProcessDefinitionEntity old = getByApprovalCode(entity.getApprovalCode());
+        if (ObjectUtil.isNotEmpty(old) && !CharSequenceUtil.equals(entity.getId(), old.getId())) {
+            throw new ServiceException("审批定义编码【{}】已存在",entity.getApprovalCode());
+        }
+    }
+    
+    
+    /**
+     * 根据审批定义编码查询
+     * @author will 
+     * @date 2025/9/10 18:17
+     * @param approvalCode 
+     * @return ThirdProcessDefinitionEntity
+     */
+    private ThirdProcessDefinitionEntity getByApprovalCode(String approvalCode) {
+        return lambdaQuery().eq(ThirdProcessDefinitionEntity::getApprovalCode,approvalCode).last("limit 1").one();
     }
 }

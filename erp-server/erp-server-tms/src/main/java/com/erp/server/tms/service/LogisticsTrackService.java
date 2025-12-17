@@ -1,5 +1,6 @@
 package com.erp.server.tms.service;
 import com.erp.model.tms.dto.LogisticsBillDetailQueryDTO;
+import com.erp.model.tms.dto.excel.LogisticsTrackInfoExcelDTO;
 import com.erp.model.tms.entity.LogisticsTrackEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -71,4 +72,10 @@ public interface LogisticsTrackService extends SuperService<LogisticsTrackEntity
     void webhookByTrack123(LogisticsTrackDTO.TrackWebHookDTO dto);
 
     void saveIncrementTrackData(String trackNo, List<LogisticsTrackEntity> newList);
+
+    Boolean importExcel(BaseDTO.ImportDTO dto);
+
+    void importLogisticsTrackInfo(BaseDTO.ImportDTO dto);
+
+    void handleImportSuccessList(List<LogisticsTrackInfoExcelDTO> successList, List<LogisticsTrackInfoExcelDTO> errorList, String importType);
 }

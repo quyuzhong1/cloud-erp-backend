@@ -1,5 +1,6 @@
 package com.common.business.dto.base;
 
+import com.common.business.dto.AdvanceQueryDTO;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -7,6 +8,7 @@ import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -33,9 +35,6 @@ public class BaseDropDownDTO implements Serializable {
     }
 
 
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
     public static class CommonDTO {
         /**
          * 编码
@@ -45,6 +44,51 @@ public class BaseDropDownDTO implements Serializable {
          * 值
          */
         private String value;
+        
+        /**
+         * 备注
+         */
+        private String remark;
+
+		public String getCode() {
+			return code;
+		}
+
+		public void setCode(String code) {
+			this.code = code;
+		}
+
+		public String getValue() {
+			return value;
+		}
+
+		public void setValue(String value) {
+			this.value = value;
+		}
+
+		public String getRemark() {
+			return remark;
+		}
+
+		public void setRemark(String remark) {
+			this.remark = remark;
+		}
+		
+		public CommonDTO() {}
+
+		public CommonDTO(String code, String value) {
+			super();
+			this.code = code;
+			this.value = value;
+		}
+		
+		public CommonDTO(String code, String value, String remark) {
+			super();
+			this.code = code;
+			this.value = value;
+			this.remark = remark;
+		}
+        
     }
 
 
@@ -202,5 +246,25 @@ public class BaseDropDownDTO implements Serializable {
          * 审核状态
          */
         private List<String> approveStatusList;
+    }
+
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class DictDropDownDTO {
+        /**
+         * 主键id
+         */
+        private String code;
+
+        /**
+         * 名称
+         */
+        private String name;
+
+        /**
+         * 是否启用
+         */
+        private Boolean disabled;
     }
 }

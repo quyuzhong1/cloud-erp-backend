@@ -70,7 +70,7 @@ public class OverseasInventoryServiceImpl extends SuperServiceImpl<OverseasInven
     private WarehouseService warehouseService;
 
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(OverseasInventoryDTO.AddDTO addDTO) {
@@ -252,6 +252,9 @@ public class OverseasInventoryServiceImpl extends SuperServiceImpl<OverseasInven
                 .eq(OverseasInventoryEntity::getOverseasProviderId, entity.getOverseasProviderId())
                 .eq(OverseasInventoryEntity::getPlatformSku, entity.getPlatformSku());
         OverseasInventoryEntity existingEntity = this.getOne(queryWrapper);
+        if(Objects.nonNull(existingEntity)){
+            entity.setId(existingEntity.getId());
+        }
         if (existingEntity == null || entity.getDownloadTime().isAfter(existingEntity.getDownloadTime())) {
             boolean flag = this.saveOrUpdate(entity, queryWrapper);
             if(existingEntity != null){

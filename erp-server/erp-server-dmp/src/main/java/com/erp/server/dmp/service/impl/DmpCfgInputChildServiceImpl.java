@@ -32,7 +32,7 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 public class DmpCfgInputChildServiceImpl extends SuperServiceImpl<DmpCfgInputChildMapper, DmpCfgInputChildEntity> implements DmpCfgInputChildService {
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(DmpCfgInputChildDTO.AddDTO addDTO) {

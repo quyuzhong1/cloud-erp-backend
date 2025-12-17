@@ -243,5 +243,22 @@ public class LogisticsSaleChannelDTO implements Serializable {
          */
         @NotBlank(message = "服务系统不能为空")
         private String servicePlatform;
+        /**
+         * 模糊搜索
+         */
+        private String searchKeyword;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class SelectDTO {
+        /**
+         * 销售平台
+         */
+        private String salesPlatform = "AliExpress";
+        /**
+         * 模糊搜索
+         */
+        private String searchKeyword;
     }
 }

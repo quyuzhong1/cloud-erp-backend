@@ -8,6 +8,8 @@ import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.DictInvoiceHsDTO;
+import com.erp.model.tms.dto.DictHsCodeDTO;
+import com.erp.rpc.tms.feign.DictHsCodeFeign;
 import com.erp.server.oms.service.DictInvoiceHsService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
@@ -32,6 +34,8 @@ public class DictInvoiceHsController extends BaseController {
 
     @Resource
     private DictInvoiceHsService dictInvoiceHsService;
+    @Resource
+    private DictHsCodeFeign dictHsCodeFeign;
 
    /**
     * 分页查询
@@ -42,7 +46,7 @@ public class DictInvoiceHsController extends BaseController {
     */
     @PostMapping("/paging")
     @WebAdvanceQuery
-    public ApiResult<PagingVO<DictInvoiceHsDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<DictInvoiceHsDTO.PagingParamDTO> dto) {
-        return success(dictInvoiceHsService.paging(dto));
+    public ApiResult<PagingVO<DictHsCodeDTO.ListBRDTO>> paging(@RequestBody @Validated PagingDTO<DictHsCodeDTO.PagingParamDTO> dto) {
+        return success(dictHsCodeFeign.pagingByBR(dto));
     }
 }

@@ -56,7 +56,7 @@ public class WarehouseReceiveController extends BaseController {
      **/
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "receive_user_id",
+            tableField = "receive_user_id,create_user_id",
             warehouseTableField = "wr.delivery_warehouse_id",
             menuCode = "wms:warehouseReceive:paging",
             tableAlias = "wr"
@@ -72,7 +72,7 @@ public class WarehouseReceiveController extends BaseController {
      **/
     @PostMapping("/pagingTotal")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "receive_user_id",
+            tableField = "receive_user_id,create_user_id",
             warehouseTableField = "wr.delivery_warehouse_id",
             menuCode = "wms:warehouseReceive:paging",
             tableAlias = "wr"
@@ -90,7 +90,7 @@ public class WarehouseReceiveController extends BaseController {
      **/
     @PostMapping("/listCount")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "receive_user_id",
+            tableField = "receive_user_id,create_user_id",
             warehouseTableField = "wr.delivery_warehouse_id",
             menuCode = "wms:warehouseReceive:paging",
             tableAlias = "wr"
@@ -124,7 +124,7 @@ public class WarehouseReceiveController extends BaseController {
     @LogAction(value = LogActionEnum.UPDATE, desc = "修改采购收货单")
     @PostMapping("/update")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "purchase_user_id,receive_user_id",
+            tableField = "purchase_user_id,receive_user_id,create_user_id",
             menuCode = "wms:warehouseReceive:update",
             serviceClass = WarehouseReceiveService.class,
             keyIdName = "id")
@@ -143,7 +143,7 @@ public class WarehouseReceiveController extends BaseController {
     @LogViewService
     @GetMapping("/view")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "receive_user_id",
+            tableField = "receive_user_id,create_user_id",
             menuCode = "wms:warehouseReceive:view",
             serviceClass = WarehouseReceiveService.class,
             keyIdName = "id")
@@ -162,7 +162,7 @@ public class WarehouseReceiveController extends BaseController {
     @LogAction(value = LogActionEnum.SUBMIT, desc = "提交采购收货单")
     @PostMapping("/submit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "purchase_user_id,receive_user_id",
+            tableField = "purchase_user_id,receive_user_id,create_user_id",
             menuCode = "wms:warehouseReceive:submit",
             serviceClass = WarehouseReceiveService.class,
             keyIdName = "ids")
@@ -195,7 +195,7 @@ public class WarehouseReceiveController extends BaseController {
     @LogAction(value = LogActionEnum.ADD_AND_SUBMIT, desc = "新增并提交采购收货单")
     @PostMapping("/addAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "purchase_user_id,receive_user_id",
+            tableField = "purchase_user_id,receive_user_id,create_user_id",
             menuCode = "wms:warehouseReceive:add",
             serviceClass = WarehouseReceiveService.class,
             keyIdName = "id")
@@ -214,7 +214,7 @@ public class WarehouseReceiveController extends BaseController {
     @LogAction(value = LogActionEnum.UPDATE_AND_SUBMIT, desc = "修改并提交采购收货单")
     @PostMapping("/updateAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "purchase_user_id,receive_user_id",
+            tableField = "purchase_user_id,receive_user_id,create_user_id",
             menuCode = "wms:warehouseReceive:update",
             serviceClass = WarehouseReceiveService.class,
             keyIdName = "id")
@@ -233,7 +233,7 @@ public class WarehouseReceiveController extends BaseController {
     @LogAction(value = LogActionEnum.APPROVE, desc = "审核采购收货单")
     @PostMapping("/approve")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "purchase_user_id,receive_user_id",
+            tableField = "purchase_user_id,receive_user_id,create_user_id",
             menuCode = "wms:warehouseReceive:approve",
             serviceClass = WarehouseReceiveService.class,
             keyIdName = "ids")
@@ -268,7 +268,7 @@ public class WarehouseReceiveController extends BaseController {
     @LogAction(value = LogActionEnum.DISAPPROVE, desc = "反审核采购收货单")
     @PostMapping("/disApprove")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "purchase_user_id,receive_user_id",
+            tableField = "purchase_user_id,receive_user_id,create_user_id",
             menuCode = "wms:warehouseReceive:disApprove",
             serviceClass = WarehouseReceiveService.class,
             keyIdName = "ids")
@@ -303,7 +303,7 @@ public class WarehouseReceiveController extends BaseController {
     @LogAction(value = LogActionEnum.CANCEL, desc = "撤销采购收货单")
     @PostMapping("/cancelProcess")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "purchase_user_id,receive_user_id",
+            tableField = "purchase_user_id,receive_user_id,create_user_id",
             menuCode = "wms:warehouseReceive:cancelProcess",
             serviceClass = WarehouseReceiveService.class,
             keyIdName = "ids")
@@ -337,7 +337,7 @@ public class WarehouseReceiveController extends BaseController {
     @LogAction(value = LogActionEnum.INVALID, desc = "作废采购收货单")
     @PostMapping("/invalid")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "purchase_user_id,receive_user_id",
+            tableField = "purchase_user_id,receive_user_id,create_user_id",
             menuCode = "wms:warehouseReceive:invalid",
             serviceClass = WarehouseReceiveService.class,
             keyIdName = "ids")
@@ -370,7 +370,7 @@ public class WarehouseReceiveController extends BaseController {
     @LogAction(value = LogActionEnum.DELETE, desc = "删除采购收货单")
     @PostMapping("/delete")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "purchase_user_id,receive_user_id",
+            tableField = "purchase_user_id,receive_user_id,create_user_id",
             menuCode = "wms:warehouseReceive:delete",
             serviceClass = WarehouseReceiveService.class,
             keyIdName = "ids")
@@ -416,7 +416,7 @@ public class WarehouseReceiveController extends BaseController {
      **/
     @PostMapping(value = "/generateStockInView")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "purchase_user_id,receive_user_id",
+            tableField = "purchase_user_id,receive_user_id,create_user_id",
             menuCode = "wms:warehouseReceive:generateStockIn",
             serviceClass = WarehouseReceiveService.class,
             keyIdName = "ids")

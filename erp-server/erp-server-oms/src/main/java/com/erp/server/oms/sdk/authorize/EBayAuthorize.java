@@ -30,7 +30,7 @@ public class EBayAuthorize implements IShopAuthorizeService<T> {
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public String getShopAuthorizeUrl(ShopAuthorizeUrlDTO dto) {
         throw new ServiceException("授权功能未开通");
     }
@@ -40,7 +40,7 @@ public class EBayAuthorize implements IShopAuthorizeService<T> {
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public Boolean shopAuthorize(ShopAuthorizeDTO dto, HttpServletResponse response) {
 
         throw new ServiceException("授权功能未开通");
@@ -51,7 +51,7 @@ public class EBayAuthorize implements IShopAuthorizeService<T> {
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public Boolean cancelAuthorize(CancelAuthorizeDTO dto) {
         throw new ServiceException("授权功能未开通");
 

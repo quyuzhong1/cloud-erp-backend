@@ -35,6 +35,7 @@ import com.common.core.utils.MathUtil;
 import com.common.core.utils.StrUtils;
 import com.erp.model.dmp.dto.ThirdMappingDTO;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
+import com.erp.model.oms.entity.SoReturnEntity;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.enums.BomTypeEnum;
@@ -248,7 +249,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
     }
 
     @Override
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     public String add(TransferInfoDTO.AddDTO dto) {
         List<TransferInfoDetailDTO.AddDTO> detailList = dto.getDetailList();
@@ -274,6 +275,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         }
         //新增主表数据
         boolean save = this.save(entity);
+        log.warn("直接调拨单新增主表={}", JSONUtil.toJsonStr(entity));
         if (save) {
             //操作日志
             operateLogService.addModuleOperateLog(String.format("新增了一个直接调拨单【%s】", entity.getCode()), ModuleTypeEnum.TRANSFER_INFO.getCode(), entity.getId(), "新增操作");
@@ -284,7 +286,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
     }
 
     @Override
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     public String addAndSubmit(TransferInfoDTO.AddDTO dto) {
         //新增
@@ -301,7 +303,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         return id;
     }
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public String addAndApprove(TransferInfoDTO.AddDTO dto) {
@@ -450,6 +452,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
                 viewDetailDTO.setProductName(skuVO.getSkuName());
                 viewDetailDTO.setSpuNo(skuVO.getSpuNo());
                 viewDetailDTO.setVariantProperty(skuVO.getVariantProperty());
+                viewDetailDTO.setUnitName(skuVO.getUnitName());
             }
             //即时库存
             Integer curInventoryQty = skuInventoryList.stream().filter(r ->Objects.equals(r.getSkuId(), viewDetailDTO.getSkuId())
@@ -473,7 +476,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public Boolean delete(List<String> ids) {
         //根据ids查询
         List<TransferInfoEntity> list = getList(ids);
@@ -503,7 +506,61 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
+    public List<BatchResultDTO> delete(List<String> ids, boolean returnDetails) {
+        //根据ids查询
+        List<TransferInfoEntity> list = getList(ids);
+//        //待提交并且未作废允许删除
+//        long count = list.stream().filter(obj -> !ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus()) || obj.getInvalidStatus() ).count();
+//        if (count > 0) {
+//            throw new ServiceException(ApiError.ERROR_98009);
+//        }
+//        String codes = list.stream().filter(obj -> ThirdPartySystemEnum.ENUM_MB.getCode().equals(obj.getCode())).map(TransferInfoEntity::getCode).collect(Collectors.joining(","));
+//        //马帮直接调拨单不允许删除 TODO
+//        if (CharSequenceUtil.isNotBlank(codes)) {
+//            throw new ServiceException(ApiError.ERROR_TRANSFER_MB_UPDATE,codes);
+//        }
+
+        List<TransferInfoEntity> removeList=new ArrayList<>();
+        List<BatchResultDTO> resultDTOList=new ArrayList<>();
+        for (TransferInfoEntity entity : list) {
+            if (!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(entity.getApproveStatus()) || entity.getInvalidStatus()){
+                resultDTOList.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_98009.msg));
+                continue;
+            }
+            if (ThirdPartySystemEnum.ENUM_MB.getCode().equals(entity.getCode())){
+                resultDTOList.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_TRANSFER_MB_UPDATE.msg));
+                continue;
+            }
+            removeList.add(entity);
+            resultDTOList.add(BatchResultDTO.success(entity.getId(), entity.getCode(),"删除成功"));
+        }
+        List<String> removeIdList = removeList.stream().map(TransferInfoEntity::getId).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(removeIdList)){
+            return resultDTOList;
+        }
+        log.info("直接调拨单删除，ids=【{}】", JSONUtil.toJsonStr(removeIdList));
+        //删除明细数据
+        transferInfoDetailService.removeByMainIds(removeIdList);
+        //删除操作日志
+        String msg = CharSequenceUtil.format("用户【{}】删除了单据编号为【{}】的直接调拨单", UserContext.getDefaultLoginUser().getUserName(), removeList.stream().map(TransferInfoEntity::getCode).collect(Collectors.joining(",")));
+        List<Pair<String, String>> pairList = removeList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+        operateLogService.batchAddModuleOperateLog(msg, ModuleTypeEnum.TRANSFER_INFO.getCode(), pairList, "删除操作");
+        //删除发送金蝶
+        sendPushTask(removeList,SyncOperateEnum.OPERATE_DELETE.getCode());
+        //删除主表数据
+        boolean result = this.removeByIds(removeIdList);
+        if (!result){
+            throw new ServiceException(ApiError.ERROR_DATA_DELETE_ERROR);
+        }
+
+        // 返回成功结果
+        return resultDTOList;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public Boolean invalid(List<String> ids, String reason) {
         //根据ids查询
         List<TransferInfoEntity> list = getList(ids);
@@ -642,7 +699,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public Boolean approveEnd(TransferInfoEntity entity, String type, String comment, Boolean isSyncKingDee) {
         if (Objects.isNull(entity)) {
             return Boolean.TRUE;
@@ -733,6 +790,11 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         List<TransferInfoEntity> b2cDeliveryList = list.stream().filter(obj -> StrUtil.equals(SourceTypeEnum.SO_B2C_DELIVERY.getCode(), obj.getSourceType()))
                 .distinct().collect(Collectors.toList());
         updateB2cSoDeliveryInventory(b2cDeliveryList,detailList);
+        //不出库B2C发货单
+        List<TransferInfoEntity> outBoundb2cDeliveryList = list.stream().filter(obj -> StrUtil.equals(SourceTypeEnum.SO_B2C_DELIVERY_NOT_OUTBOUND.getCode(), obj.getSourceType()))
+                .distinct().collect(Collectors.toList());
+        updateOutBoundB2cSoDeliveryInventory(outBoundb2cDeliveryList,detailList);
+
     }
 
 
@@ -812,6 +874,70 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
     }
 
 
+    /**
+     * 不出库发货B2C发货来源直接调拨单处理
+     * @author will
+     * @date 2024/11/11 10:40
+     * @param transferInfoList
+     * @param detailList
+     */
+    private void updateOutBoundB2cSoDeliveryInventory (List<TransferInfoEntity> transferInfoList,List<TransferInfoDetailEntity> detailList) {
+        if (CollectionUtils.isEmpty(transferInfoList)) {
+            return;
+        }
+        List<String> idList = transferInfoList.stream().map(TransferInfoEntity::getId).distinct().collect(Collectors.toList());
+        List<TransferInfoDetailEntity> pushDetailList = detailList.stream().filter(obj -> idList.contains(obj.getMainId())).collect(Collectors.toList());
+        List<String> deliveryDetailIdList = pushDetailList.stream().map(TransferInfoDetailEntity::getSourceDetailId).distinct().collect(Collectors.toList());
+        //b2c发货单
+        List<SoB2cDeliveryDetailEntity> soB2cDeliveryDetailList = soB2cDeliveryDetailService.listByIds(deliveryDetailIdList);
+        //历史流水
+        List<VirtualTransFlowEntity> virtualTransFlowList = virtualTransFlowService.listHistoryFlow(deliveryDetailIdList, InventorySourceTypeEnum.SO_B2C_DELIVERY.getCode());
+        //出冻结库存
+        List<VirtualInventoryStockDTO.OutInStockDTO> outList = new ArrayList<>();
+        for (TransferInfoDetailEntity detailEntity : pushDetailList) {
+            //直接调拨单
+            TransferInfoEntity transferInfoEntity = transferInfoList.stream().filter(obj -> StrUtil.equals(obj.getId(), detailEntity.getMainId())).findFirst().orElse(null);
+            if (ObjectUtil.isEmpty(transferInfoEntity)) {
+                throw new ServiceException("直接调拨单未找到");
+            }
+            //发货单Id
+            String soB2cDeliveryDetailId = detailEntity.getSourceDetailId();
+
+            //b2c发货单
+            SoB2cDeliveryDetailEntity soB2cDeliveryDetail = soB2cDeliveryDetailList.stream().filter(obj -> StrUtil.equals(obj.getId(), soB2cDeliveryDetailId)).findFirst().orElse(null);
+            if (ObjectUtil.isEmpty(soB2cDeliveryDetail)
+                    || !CharSequenceUtil.equals(soB2cDeliveryDetail.getWarehouseId(),detailEntity.getOutWarehouseId())
+                    || CharSequenceUtil.isBlank(soB2cDeliveryDetail.getVirtualWarehouseId())) {
+                continue;
+            }
+            //如果存在出冻结流水则无需再次扣减
+            long count = virtualTransFlowList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSourceDetailId(), soB2cDeliveryDetailId)
+                    && CharSequenceUtil.equals(obj.getDictBizType(), VirtualInventoryBusinessTypeEnum.SO_OUT_STOCK.getCode())).count();
+            if (count > 0) {
+                return;
+            }
+            VirtualInventoryStockDTO.OutInStockDTO outInStockDTO = new VirtualInventoryStockDTO.OutInStockDTO();
+            outInStockDTO.setBillDate(LocalDate.now());
+            outInStockDTO.setSourceId(transferInfoEntity.getId());
+            outInStockDTO.setSourceCode(transferInfoEntity.getCode());
+            outInStockDTO.setSourceType(InventorySourceTypeEnum.TRANSFER_INFO);
+            outInStockDTO.setSourceDetailId(detailEntity.getId());
+            outInStockDTO.setBillDate(LocalDate.now());
+            outInStockDTO.setSkuId(detailEntity.getSkuId());
+            outInStockDTO.setSkuNo(detailEntity.getSkuNo());
+            outInStockDTO.setWarehouseId(detailEntity.getOutWarehouseId());
+            outInStockDTO.setVirtualWarehouseId(soB2cDeliveryDetail.getVirtualWarehouseId());
+            outInStockDTO.setQty(detailEntity.getQty());
+            outList.add(outInStockDTO);
+        }
+        if (CollectionUtils.isNotEmpty(outList)) {
+            VirtualInventoryStockDTO.StockParamDTO stockParamDTO = new VirtualInventoryStockDTO.StockParamDTO();
+            stockParamDTO.setBusinessType(VirtualInventoryBusinessTypeEnum.TRANSFER_INFO_APPROVE.getCode());
+            stockParamDTO.setParamList(outList);
+            log.warn("直接调拨单出冻结库存={}", JSONUtil.toJsonStr(stockParamDTO));
+            virtualInventoryTransCoreService.approve(stockParamDTO);
+        }
+    }
     private boolean hasSameWarehouseByFirstMile(TransferInfoEntity transferInfoEntity, List<TransferInfoDetailEntity> detailList, List<FirstMileDeliveryEntity> firstMileDeliveryEntityList) {
         if (Objects.equals(transferInfoEntity.getSourceType(), SourceTypeEnum.FIRST_MILE_DELIVERY.getCode())){
             return Boolean.TRUE;
@@ -1396,6 +1522,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         List<TransferDTO>  addTransferList = new ArrayList<>();
         List<TransferDTO>  pushTransferList = new ArrayList<>();
         List<TransferDTO>  deliveryTransferList = new ArrayList<>();
+        List<TransferDTO>  deliveryNotOutBoundTransferList = new ArrayList<>();
         List<TransferDTO>  deliveryNoticeTransferList = new ArrayList<>();
         List<TransferDTO>  soInfoTransferList = new ArrayList<>();
         List<TransferDTO>  soInfoTransferInfoList = new ArrayList<>();
@@ -1431,6 +1558,8 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
                 pushTransferList.add(transferDTO);
             } else if (SourceTypeEnum.SO_B2C_DELIVERY.getCode().equals(transferInfoEntity.getSourceType())){
                 deliveryTransferList.add(transferDTO);
+            }else if (SourceTypeEnum.SO_B2C_DELIVERY_NOT_OUTBOUND.getCode().equals(transferInfoEntity.getSourceType())){
+                deliveryNotOutBoundTransferList.add(transferDTO);
             } else if (SourceTypeEnum.SO_DELIVERY_NOTICE.getCode().equals(transferInfoEntity.getSourceType()) ){
                 deliveryNoticeTransferList.add(transferDTO);
             } else if (SourceTypeEnum.SO_INFO.getCode().equals(transferInfoEntity.getSourceType())){
@@ -1477,6 +1606,15 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             //更新库存
             inventoryTransCoreService.approveByType(inventoryTransferDTO);
         }
+        //B2C发货单（不出库）下推数据更新库存
+        if (CollectionUtils.isNotEmpty(deliveryNotOutBoundTransferList)) {
+            InventoryTransferDTO inventoryTransferDTO = new InventoryTransferDTO();
+            inventoryTransferDTO.setParamList(deliveryNotOutBoundTransferList);
+            inventoryTransferDTO.setBusinessType(InventoryBusinessTypeEnum.DELIVERY_PUSH_TRANSFER_NOT_OUTBOUND.getCode());
+            //更新库存
+            inventoryTransCoreService.approveByType(inventoryTransferDTO);
+        }
+
         //B2B发货通知单下推数据更新库存
         if (CollectionUtils.isNotEmpty(deliveryNoticeTransferList)) {
             InventoryTransferDTO inventoryTransferDTO = new InventoryTransferDTO();
@@ -1895,7 +2033,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
     }
 
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public Boolean requisitionApplicationDelete(List<String> ids) {
         //根据ids查询
         List<TransferInfoEntity> list = getList(ids);
@@ -2065,7 +2203,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public void updateApproveStatus(TransferInfoDTO.UpdateApprovalStatusDTO updateApprovalStatusDTO) {
         String approveStatus = updateApprovalStatusDTO.getApproveStatus();
         TransferInfoEntity transferInfoEntity = updateApprovalStatusDTO.getTransferInfoEntity();
@@ -2110,12 +2248,12 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             return;
         }
         //推送金蝶
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
-            @Override
-            public void afterCommit() {
-                dmpMqFeign.sendTask(resultList);
-            }
-        });
+//        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+//            @Override
+//            public void afterCommit() {
+//                dmpMqFeign.sendTask(resultList);
+//            }
+//        });
     }
 
     private void startProcess(TransferInfoEntity entity) {

@@ -249,10 +249,7 @@ public class ProcessTaskManagementServiceImpl extends SuperServiceImpl<ProcessTa
     @Override
     public List<ProcessTaskManagementEntity> listTask(String processInstanceId) {
         if(StringUtils.isNotBlank(processInstanceId)){
-            return lambdaQuery()
-                    .eq(ProcessTaskManagementEntity::getProcessInstanceId, processInstanceId)
-                    .orderByAsc(ProcessTaskManagementEntity::getStartTime)
-                    .list();
+            return baseMapper.listTaskByProcessInstanceId(processInstanceId);
         }
         return Collections.emptyList();
     }

@@ -49,6 +49,21 @@ public class ExportPlmFeignController {
     private ProductInfoService productInfoService;
     @Resource
     private ProductDetailService productDetailService;
+    @Resource
+    private ProductCustomsService productCustomsService;
+    @Resource
+    private SkuStdCostDetailService skuStdCostDetailService;
+    @Resource
+    private MoldInfoService moldInfoService;
+    @Resource
+    private MoldRefSkuService moldRefSkuService;
+    @Resource
+    private CfgMoldReturnAlertRuleService cfgMoldReturnAlertRuleService;
+    @Resource
+    private CfgMoldAlertRuleService cfgMoldAlertRuleService;
+    @Resource
+    private MoldMonitorService moldMonitorService;
+
     @PostMapping("/exportBom")
     @WebAdvanceQuery(handler = BomInfoHandler.class)
     public PagingVO<BomExportExcelVO> exportBom(@RequestBody PagingDTO<SearchPagingDTO> dto) {
@@ -133,5 +148,46 @@ public class ExportPlmFeignController {
     @PostMapping("/exportProductDetail")
     public PagingVO<ProductDetailExcelExportDTO> exportProductDetail(@RequestBody @Validated PagingDTO<ProductSkuExcelDTO> dto) {
         return productDetailService.exportProductDetail(dto);
+    }
+
+    @PostMapping("/exportProductCustoms")
+    @WebAdvanceQuery
+    public PagingVO<ProductCustomsDTO.ListDTO> exportProductCustoms(@RequestBody @Validated PagingDTO<ProductCustomsDTO.PagingParamDTO> dto) {
+        return productCustomsService.paging(dto);
+    }
+
+    @PostMapping("/exportSkuStdCostDetail")
+    @WebAdvanceQuery(handler = SkuStdCostDetailQueryHandler.class)
+    public PagingVO<SkuStdCostDetailDTO.ListDTO> exportSkuStdCostDetail(@RequestBody @Validated PagingDTO<SkuStdCostDetailDTO.ExportDTO> dto){
+        return skuStdCostDetailService.listExport(dto);
+    }
+
+    @PostMapping("/exportMoldInfo")
+    @WebAdvanceQuery(handler = MoldInfoQueryHandler.class)
+    public PagingVO<MoldInfoDTO.ListDTO> exportMoldInfo(@RequestBody @Validated PagingDTO<MoldInfoDTO.PagingParamDTO> dto){
+        return moldInfoService.paging(dto);
+    }
+    @PostMapping("/exportMoldRefSku")
+    @WebAdvanceQuery(handler = MoldRefSkuQueryHandler.class)
+    public PagingVO<MoldRefSkuDTO.ListDTO> exportMoldRefSku(@RequestBody @Validated PagingDTO<MoldRefSkuDTO.PagingParamDTO> dto){
+        return moldRefSkuService.paging(dto);
+    }
+
+    @PostMapping("/exportCfgMoldReturn")
+    @WebAdvanceQuery(handler = CfgMoldReturnAlertRuleQueryHandler.class)
+    public PagingVO<CfgMoldReturnAlertRuleDTO.ListDTO> exportCfgMoldReturn(@RequestBody @Validated PagingDTO<CfgMoldReturnAlertRuleDTO.PagingParamDTO> dto) {
+        return cfgMoldReturnAlertRuleService.paging(dto);
+    }
+
+    @PostMapping("/exportCfgMoldAlert")
+    @WebAdvanceQuery(handler = CfgMoldAlertRuleQueryHandler.class)
+    public PagingVO<CfgMoldAlertRuleDTO.ListDTO> exportCfgMoldAlert(@RequestBody @Validated PagingDTO<CfgMoldAlertRuleDTO.PagingParamDTO> dto) {
+        return cfgMoldAlertRuleService.paging(dto);
+    }
+
+    @PostMapping("/exportMoldMonitor")
+    @WebAdvanceQuery(handler = MoldMonitorQueryHandler.class)
+    public PagingVO<MoldMonitorDTO.ListDTO> exportMoldMonitor(@RequestBody @Validated PagingDTO<MoldMonitorDTO.PagingParamDTO> dto) {
+        return moldMonitorService.paging(dto);
     }
 }

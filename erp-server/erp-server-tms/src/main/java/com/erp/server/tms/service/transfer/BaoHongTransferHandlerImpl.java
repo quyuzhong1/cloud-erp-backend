@@ -71,7 +71,7 @@ public class BaoHongTransferHandlerImpl extends AbstractTransferLogisticsHandler
     @Override
     protected ApiResult<String> createProduct(TransferLogisticsCreateProductReq createProductReq) {
         if(CurrencyEnum.CNY.getCurrencyCode().equals(createProductReq.getCurrencyCode())){
-            createProductReq.setCurrencyCode(CurrencyEnum.RMB.getCurrencyCode());
+            createProductReq.setCurrencyCode("RMB");
         }
         RecordItemRequest recordItemRequest  = BaoHongConverter.INSTANCE.createProductConvert(createProductReq);
         BaoHongResponse<RecordItemResponse> result = baoHongService.filingProduct(recordItemRequest);

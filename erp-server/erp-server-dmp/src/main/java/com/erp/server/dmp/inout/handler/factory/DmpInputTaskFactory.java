@@ -6,6 +6,8 @@ import java.util.concurrent.TimeUnit;
 import javax.annotation.Resource;
 
 import cn.hutool.core.exceptions.ExceptionUtil;
+import com.common.core.exception.ServiceException;
+import com.erp.model.dmp.enums.DmpCfgInputExecSystemEnum;
 import com.erp.model.dmp.enums.DmpInputTaskTaskTypeEnum;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -63,6 +65,9 @@ public class DmpInputTaskFactory{
 			log.warn("输入任务不存在id={}" , inputTaskId);
 			return null;
 		}
+		if(!DmpCfgInputExecSystemEnum.DMP.getCode().equals(dbDmpInputTaskEntity.getExecSystem())) {
+			ServiceException.runError("输入任务非dmp执行，id={}, exec_system={}", inputTaskId , dbDmpInputTaskEntity.getExecSystem());
+		}
 		
 		List<DmpInputTaskStatusEnum> values = DmpInputTaskStatusEnum.getNextStatus(dbDmpInputTaskEntity.getStatus());
 		DmpInputFinishResponse dmpResponse = new DmpInputFinishResponse();
@@ -83,6 +88,7 @@ public class DmpInputTaskFactory{
 					}
 				}
 			}catch (Exception e) {
+				log.error("{}任务执行报错， 异常类型={}" , inputTaskId , ExceptionUtil.stacktraceToString(e) , e);
 				throw e;
 			}finally {
 				redisTemplate.delete(redisKey);

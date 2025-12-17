@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.alibaba.fastjson.JSON;
+import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
@@ -60,7 +61,7 @@ public class SyncKingdeeGlobalAreaServiceImpl implements SyncKingdeeGlobalAreaSe
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public DmpPushTaskEntity syncDataToKingdee(DictGlobalAreaEntity entity, String operate) {
     	//生成任务
     	if(!SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
@@ -116,7 +117,11 @@ public class SyncKingdeeGlobalAreaServiceImpl implements SyncKingdeeGlobalAreaSe
         resultMap.put("code",entity.getKingdeeCode());
         //名称
         resultMap.put("name",entity.getRegionName());
-        ThirdpartyRefBusinessEntity thirdpartyRef=  thirdpartyRefBusinessService.getByBusinessId(entity.getId());
+        Class<DictGlobalAreaEntity> areaClass = DictGlobalAreaEntity.class;
+        TableName tableName = areaClass.getDeclaredAnnotation(TableName.class);
+        //获取到表名
+        String businessType = tableName.value();
+        ThirdpartyRefBusinessEntity thirdpartyRef=  thirdpartyRefBusinessService.getByBusinessId(entity.getId() , businessType);
         String syncKingdeeId="";
         if (Objects.nonNull(thirdpartyRef)) {
             syncKingdeeId = thirdpartyRef.getThirdpartyId();

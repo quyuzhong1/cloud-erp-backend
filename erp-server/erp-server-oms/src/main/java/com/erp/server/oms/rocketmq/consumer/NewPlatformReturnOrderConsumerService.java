@@ -5,6 +5,7 @@ import com.common.business.dto.PlatformReturnOrderDTO;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.wrapper.FeignQuery;
+import com.common.core.exception.ServiceException;
 import com.common.message.constant.RocketMqNewConsumerGroup;
 import com.common.message.constant.RocketMqNewTag;
 import com.common.message.constant.RocketMqNewTopic;
@@ -71,7 +72,28 @@ public class NewPlatformReturnOrderConsumerService extends AbstractNewPlatformCo
 		if(Objects.isNull(dto)){
 			return;
 		}
-		SoB2cReturnEntity exist = soB2cReturnService.getByPlatformReturnCode(dto.getPlatformReturnNo());
+        SoB2cReturnEntity exist;
+        if (PlatformDictEnum.AMAZON.getCode().equalsIgnoreCase(dto.getDictPlatform())){
+            if (StringUtils.isBlank(dto.getPlatformOrderNo())
+                    || StringUtils.isBlank(dto.getBatchNo())
+                    || StringUtils.isBlank(dto.getShopId())
+            ){
+                ServiceException.runError("平台退货单消费:平台订单号/批次号/shopId不能为空");
+            }
+            // 亚马逊按平台订单号+批次号+店铺ID查询
+            // 这里的批次号是指亚马逊的批次号
+            // 目前亚马逊的批次号是唯一的
+            // 可能会有多个平台订单号对应同一个批次号
+            exist = soB2cReturnService.lambdaQuery()
+                    .eq(SoB2cReturnEntity::getPlatformOrderNo, dto.getPlatformOrderNo())
+                    .eq(SoB2cReturnEntity::getShopId, dto.getShopId())
+                    .eq(SoB2cReturnEntity::getBatchNo, dto.getBatchNo())
+                    .last("LIMIT 1")
+                    .one()
+                    ;
+        } else {
+            exist = soB2cReturnService.getByPlatformReturnCode(dto.getPlatformReturnNo());
+        }
 		if(Objects.nonNull(exist)){
 			return;
 		}
@@ -82,6 +104,9 @@ public class NewPlatformReturnOrderConsumerService extends AbstractNewPlatformCo
 		List<SoB2cDetailEntity> soB2cDetailEntityList = new ArrayList<>();
 		if(StringUtils.isNotBlank(dto.getPlatformOrderNo())){
 			List<SoB2cEntity> soB2cEntityList = soB2cService.getByPlatformCode(dto.getPlatformOrderNo());
+            if (PlatformDictEnum.AMAZON.getCode().equalsIgnoreCase(dto.getDictPlatform()) && CollectionUtils.isNotEmpty(soB2cEntityList)) {
+                soB2cEntityList = soB2cEntityList.stream().filter(e->e.getShopId().equals(dto.getShopId())).collect(Collectors.toList());
+            }
 			//过滤手工单
 			soB2cEntityList = soB2cEntityList.stream().filter(v-> !SourceTypeEnum.SELF_ADD.getCode().equals(v.getSourceType())).collect(Collectors.toList());
 			if(CollectionUtils.isNotEmpty(soB2cEntityList)){

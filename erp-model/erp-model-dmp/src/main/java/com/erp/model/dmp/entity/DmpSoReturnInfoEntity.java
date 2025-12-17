@@ -248,6 +248,12 @@ public class DmpSoReturnInfoEntity extends BaseEntity<DmpSoReturnInfoEntity> {
     @TableField("platform_order_code")
     private String platformOrderCode;
 
+    /**
+     * 批次号
+     */
+    @TableField("batch_no")
+    private String batchNo = "";
+
 
     public static final String PLATFORM_CREATE_TIME = "platform_create_time";
 

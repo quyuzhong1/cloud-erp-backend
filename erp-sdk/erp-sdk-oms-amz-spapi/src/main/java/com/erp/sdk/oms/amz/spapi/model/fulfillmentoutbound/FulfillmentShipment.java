@@ -10,26 +10,28 @@
  * Do not edit the class manually.
  */
 
-
 package com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound;
 
+import java.util.Objects;
+import java.util.Arrays;
 import com.google.gson.TypeAdapter;
 import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.annotations.SerializedName;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
-
+import com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound.FulfillmentShipmentItemList;
+import com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound.FulfillmentShipmentPackageList;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
-
+import java.time.OffsetDateTime;
 /**
  * Delivery and item information for a shipment in a fulfillment order.
  */
 
-@javax.annotation.Generated(value = "io.swagger.codegen.languages.JavaClientCodegen", date = "2020-12-15T20:44:18.412+08:00")
+@javax.annotation.Generated(value = "io.swagger.codegen.v3.generators.java.JavaClientCodegen", date = "2025-08-18T09:55:11.594451100+08:00[Asia/Shanghai]")
+
 public class FulfillmentShipment {
   @SerializedName("amazonShipmentId")
   private String amazonShipmentId = null;
@@ -42,12 +44,13 @@ public class FulfillmentShipment {
    */
   @JsonAdapter(FulfillmentShipmentStatusEnum.Adapter.class)
   public enum FulfillmentShipmentStatusEnum {
+    @SerializedName("PENDING")
     PENDING("PENDING"),
-    
+    @SerializedName("SHIPPED")
     SHIPPED("SHIPPED"),
-    
+    @SerializedName("CANCELLED_BY_FULFILLER")
     CANCELLED_BY_FULFILLER("CANCELLED_BY_FULFILLER"),
-    
+    @SerializedName("CANCELLED_BY_SELLER")
     CANCELLED_BY_SELLER("CANCELLED_BY_SELLER");
 
     private String value;
@@ -55,7 +58,6 @@ public class FulfillmentShipment {
     FulfillmentShipmentStatusEnum(String value) {
       this.value = value;
     }
-
     public String getValue() {
       return value;
     }
@@ -64,38 +66,34 @@ public class FulfillmentShipment {
     public String toString() {
       return String.valueOf(value);
     }
-
-    public static FulfillmentShipmentStatusEnum fromValue(String text) {
+    public static FulfillmentShipmentStatusEnum fromValue(String input) {
       for (FulfillmentShipmentStatusEnum b : FulfillmentShipmentStatusEnum.values()) {
-        if (String.valueOf(b.value).equals(text)) {
+        if (b.value.equals(input)) {
           return b;
         }
       }
       return null;
     }
-
     public static class Adapter extends TypeAdapter<FulfillmentShipmentStatusEnum> {
       @Override
       public void write(final JsonWriter jsonWriter, final FulfillmentShipmentStatusEnum enumeration) throws IOException {
-        jsonWriter.value(enumeration.getValue());
+        jsonWriter.value(String.valueOf(enumeration.getValue()));
       }
 
       @Override
       public FulfillmentShipmentStatusEnum read(final JsonReader jsonReader) throws IOException {
-        String value = jsonReader.nextString();
-        return FulfillmentShipmentStatusEnum.fromValue(String.valueOf(value));
+        Object value = jsonReader.nextString();
+        return FulfillmentShipmentStatusEnum.fromValue((String)(value));
       }
     }
-  }
-
-  @SerializedName("fulfillmentShipmentStatus")
+  }  @SerializedName("fulfillmentShipmentStatus")
   private FulfillmentShipmentStatusEnum fulfillmentShipmentStatus = null;
 
   @SerializedName("shippingDate")
-  private String shippingDate = null;
+  private OffsetDateTime shippingDate = null;
 
   @SerializedName("estimatedArrivalDate")
-  private String estimatedArrivalDate = null;
+  private OffsetDateTime estimatedArrivalDate = null;
 
   @SerializedName("shippingNotes")
   private List<String> shippingNotes = null;
@@ -115,7 +113,7 @@ public class FulfillmentShipment {
    * A shipment identifier assigned by Amazon.
    * @return amazonShipmentId
   **/
-
+  
   public String getAmazonShipmentId() {
     return amazonShipmentId;
   }
@@ -133,7 +131,7 @@ public class FulfillmentShipment {
    * An identifier for the fulfillment center that the shipment will be sent from.
    * @return fulfillmentCenterId
   **/
-
+  
   public String getFulfillmentCenterId() {
     return fulfillmentCenterId;
   }
@@ -151,7 +149,7 @@ public class FulfillmentShipment {
    * The current status of the shipment.
    * @return fulfillmentShipmentStatus
   **/
-
+  
   public FulfillmentShipmentStatusEnum getFulfillmentShipmentStatus() {
     return fulfillmentShipmentStatus;
   }
@@ -160,39 +158,39 @@ public class FulfillmentShipment {
     this.fulfillmentShipmentStatus = fulfillmentShipmentStatus;
   }
 
-  public FulfillmentShipment shippingDate(String shippingDate) {
+  public FulfillmentShipment shippingDate(OffsetDateTime shippingDate) {
     this.shippingDate = shippingDate;
     return this;
   }
 
    /**
-   * The meaning of the shippingDate value depends on the current status of the shipment. If the current value of FulfillmentShipmentStatus is:  * Pending - shippingDate represents the estimated time that the shipment will leave the Amazon fulfillment center.  * Shipped - shippingDate represents the date that the shipment left the Amazon fulfillment center. If a shipment includes more than one package, shippingDate applies to all of the packages in the shipment. If the value of FulfillmentShipmentStatus is CancelledByFulfiller or CancelledBySeller, shippingDate is not returned. The value must be in ISO 8601 date time format.
+   * Get shippingDate
    * @return shippingDate
   **/
-
-  public String getShippingDate() {
+  
+  public OffsetDateTime getShippingDate() {
     return shippingDate;
   }
 
-  public void setShippingDate(String shippingDate) {
+  public void setShippingDate(OffsetDateTime shippingDate) {
     this.shippingDate = shippingDate;
   }
 
-  public FulfillmentShipment estimatedArrivalDate(String estimatedArrivalDate) {
+  public FulfillmentShipment estimatedArrivalDate(OffsetDateTime estimatedArrivalDate) {
     this.estimatedArrivalDate = estimatedArrivalDate;
     return this;
   }
 
    /**
-   * The estimated arrival date and time of the shipment, in ISO 8601 date time format. Note that this value can change over time. If a shipment includes more than one package, estimatedArrivalDate applies to all of the packages in the shipment. If the shipment has been cancelled, estimatedArrivalDate is not returned.
+   * Get estimatedArrivalDate
    * @return estimatedArrivalDate
   **/
-
-  public String getEstimatedArrivalDate() {
+  
+  public OffsetDateTime getEstimatedArrivalDate() {
     return estimatedArrivalDate;
   }
 
-  public void setEstimatedArrivalDate(String estimatedArrivalDate) {
+  public void setEstimatedArrivalDate(OffsetDateTime estimatedArrivalDate) {
     this.estimatedArrivalDate = estimatedArrivalDate;
   }
 
@@ -210,10 +208,10 @@ public class FulfillmentShipment {
   }
 
    /**
-   * Provides additional insight into shipment timeline. Primairly used to communicate that actual delivery dates aren&#39;t available.
+   * Provides additional insight into shipment timeline. Primairly used to communicate that actual delivery dates aren&#x27;t available.
    * @return shippingNotes
   **/
-
+  
   public List<String> getShippingNotes() {
     return shippingNotes;
   }
@@ -231,7 +229,7 @@ public class FulfillmentShipment {
    * Get fulfillmentShipmentItem
    * @return fulfillmentShipmentItem
   **/
-
+  
   public FulfillmentShipmentItemList getFulfillmentShipmentItem() {
     return fulfillmentShipmentItem;
   }
@@ -249,7 +247,7 @@ public class FulfillmentShipment {
    * Get fulfillmentShipmentPackage
    * @return fulfillmentShipmentPackage
   **/
-
+  
   public FulfillmentShipmentPackageList getFulfillmentShipmentPackage() {
     return fulfillmentShipmentPackage;
   }
@@ -260,7 +258,7 @@ public class FulfillmentShipment {
 
 
   @Override
-  public boolean equals(Object o) {
+  public boolean equals(java.lang.Object o) {
     if (this == o) {
       return true;
     }
@@ -305,7 +303,7 @@ public class FulfillmentShipment {
    * Convert the given object to string with each line indented by 4 spaces
    * (except the first line).
    */
-  private String toIndentedString(Object o) {
+  private String toIndentedString(java.lang.Object o) {
     if (o == null) {
       return "null";
     }
@@ -313,4 +311,3 @@ public class FulfillmentShipment {
   }
 
 }
-

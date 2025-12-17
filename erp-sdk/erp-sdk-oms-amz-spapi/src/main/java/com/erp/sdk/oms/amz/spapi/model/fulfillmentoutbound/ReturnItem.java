@@ -10,19 +10,26 @@
  * Do not edit the class manually.
  */
 
-
 package com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound;
 
-import com.google.gson.annotations.SerializedName;
-
-
 import java.util.Objects;
+import java.util.Arrays;
+import com.google.gson.TypeAdapter;
+import com.google.gson.annotations.JsonAdapter;
+import com.google.gson.annotations.SerializedName;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonWriter;
+import com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound.FulfillmentReturnItemStatus;
+import com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound.ReturnItemDisposition;
 
+import java.io.IOException;
+import java.time.OffsetDateTime;
 /**
  * An item that Amazon accepted for return.
  */
 
-@javax.annotation.Generated(value = "io.swagger.codegen.languages.JavaClientCodegen", date = "2020-12-15T20:44:18.412+08:00")
+@javax.annotation.Generated(value = "io.swagger.codegen.v3.generators.java.JavaClientCodegen", date = "2025-08-18T09:55:11.594451100+08:00[Asia/Shanghai]")
+
 public class ReturnItem {
   @SerializedName("sellerReturnItemId")
   private String sellerReturnItemId = null;
@@ -46,7 +53,7 @@ public class ReturnItem {
   private FulfillmentReturnItemStatus status = null;
 
   @SerializedName("statusChangedDate")
-  private String statusChangedDate = null;
+  private OffsetDateTime statusChangedDate = null;
 
   @SerializedName("returnAuthorizationId")
   private String returnAuthorizationId = null;
@@ -66,7 +73,7 @@ public class ReturnItem {
    * An identifier assigned by the seller to the return item.
    * @return sellerReturnItemId
   **/
-
+  
   public String getSellerReturnItemId() {
     return sellerReturnItemId;
   }
@@ -84,7 +91,7 @@ public class ReturnItem {
    * The identifier assigned to the item by the seller when the fulfillment order was created.
    * @return sellerFulfillmentOrderItemId
   **/
-
+  
   public String getSellerFulfillmentOrderItemId() {
     return sellerFulfillmentOrderItemId;
   }
@@ -102,7 +109,7 @@ public class ReturnItem {
    * The identifier for the shipment that is associated with the return item.
    * @return amazonShipmentId
   **/
-
+  
   public String getAmazonShipmentId() {
     return amazonShipmentId;
   }
@@ -120,7 +127,7 @@ public class ReturnItem {
    * The return reason code assigned to the return item by the seller.
    * @return sellerReturnReasonCode
   **/
-
+  
   public String getSellerReturnReasonCode() {
     return sellerReturnReasonCode;
   }
@@ -138,7 +145,7 @@ public class ReturnItem {
    * An optional comment about the return item.
    * @return returnComment
   **/
-
+  
   public String getReturnComment() {
     return returnComment;
   }
@@ -156,7 +163,7 @@ public class ReturnItem {
    * The return reason code that the Amazon fulfillment center assigned to the return item.
    * @return amazonReturnReasonCode
   **/
-
+  
   public String getAmazonReturnReasonCode() {
     return amazonReturnReasonCode;
   }
@@ -171,10 +178,10 @@ public class ReturnItem {
   }
 
    /**
-   * Indicates if the return item has been processed by an Amazon fulfillment center.
+   * Get status
    * @return status
   **/
-
+  
   public FulfillmentReturnItemStatus getStatus() {
     return status;
   }
@@ -183,21 +190,21 @@ public class ReturnItem {
     this.status = status;
   }
 
-  public ReturnItem statusChangedDate(String statusChangedDate) {
+  public ReturnItem statusChangedDate(OffsetDateTime statusChangedDate) {
     this.statusChangedDate = statusChangedDate;
     return this;
   }
 
    /**
-   * Indicates when the status last changed.
+   * Get statusChangedDate
    * @return statusChangedDate
   **/
-
-  public String getStatusChangedDate() {
+  
+  public OffsetDateTime getStatusChangedDate() {
     return statusChangedDate;
   }
 
-  public void setStatusChangedDate(String statusChangedDate) {
+  public void setStatusChangedDate(OffsetDateTime statusChangedDate) {
     this.statusChangedDate = statusChangedDate;
   }
 
@@ -207,10 +214,10 @@ public class ReturnItem {
   }
 
    /**
-   * Identifies the return authorization used to return this item. See ReturnAuthorization.
+   * Identifies the return authorization used to return this item. Refer to &#x60;ReturnAuthorization&#x60;.
    * @return returnAuthorizationId
   **/
-
+  
   public String getReturnAuthorizationId() {
     return returnAuthorizationId;
   }
@@ -228,7 +235,7 @@ public class ReturnItem {
    * Get returnReceivedCondition
    * @return returnReceivedCondition
   **/
-
+  
   public ReturnItemDisposition getReturnReceivedCondition() {
     return returnReceivedCondition;
   }
@@ -246,7 +253,7 @@ public class ReturnItem {
    * The identifier for the Amazon fulfillment center that processed the return item.
    * @return fulfillmentCenterId
   **/
-
+  
   public String getFulfillmentCenterId() {
     return fulfillmentCenterId;
   }
@@ -257,7 +264,7 @@ public class ReturnItem {
 
 
   @Override
-  public boolean equals(Object o) {
+  public boolean equals(java.lang.Object o) {
     if (this == o) {
       return true;
     }
@@ -308,7 +315,7 @@ public class ReturnItem {
    * Convert the given object to string with each line indented by 4 spaces
    * (except the first line).
    */
-  private String toIndentedString(Object o) {
+  private String toIndentedString(java.lang.Object o) {
     if (o == null) {
       return "null";
     }
@@ -316,4 +323,3 @@ public class ReturnItem {
   }
 
 }
-

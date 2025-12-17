@@ -110,6 +110,7 @@ public class SupplierUserController extends BaseController {
      * @return
      */
     @PostMapping("/remove")
+    @LogAction(value = LogActionEnum.DELETE, desc = "删除用户")
     public ApiResult remove(@RequestBody DeleteUserDTO dto) {
         return supplierUserService.deleteById(dto.getUid());
     }
@@ -120,6 +121,7 @@ public class SupplierUserController extends BaseController {
      * @return
      */
     @PostMapping("/updateState")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "批量启用/禁用 ids={ids},模板状态={state}(1=启用,0=禁用)")
     public ApiResult updateState(@RequestBody @Validated UpdateUserStateDTO stateDTO) {
         supplierUserService.updateState(stateDTO);
         return success();

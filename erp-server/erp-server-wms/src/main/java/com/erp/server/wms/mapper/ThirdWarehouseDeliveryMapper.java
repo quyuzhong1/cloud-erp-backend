@@ -1,8 +1,14 @@
 package com.erp.server.wms.mapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.erp.model.wms.dto.ThirdWarehouseDeliveryDTO;
 import com.erp.model.wms.entity.ThirdWarehouseDeliveryEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
 
 
 /**
@@ -16,4 +22,7 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface ThirdWarehouseDeliveryMapper extends BaseMapper<ThirdWarehouseDeliveryEntity> {
 
+    IPage<ThirdWarehouseDeliveryDTO.PagingViewDTO> paging(Page query, @Param("params") ThirdWarehouseDeliveryDTO.PagingParamDTO params);
+
+    List<ThirdWarehouseDeliveryDTO.TabListDTO> listCount();
 }

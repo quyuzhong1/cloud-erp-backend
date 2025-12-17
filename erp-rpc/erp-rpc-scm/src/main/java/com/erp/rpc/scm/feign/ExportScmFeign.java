@@ -1,6 +1,7 @@
 package com.erp.rpc.scm.feign;
 
 import com.common.business.config.ExportFeignConfig;
+import com.common.business.dto.DynamicExcelDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.plm.vo.BomExportExcelVO;
@@ -9,6 +10,7 @@ import com.erp.model.scm.dto.excel.*;
 import com.erp.model.sys.dto.UserPagingSearchDTO;
 import com.erp.model.sys.vo.SupplierUserVO;
 import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
@@ -50,4 +52,35 @@ public interface ExportScmFeign {
     PagingVO<SupplierRefWarehouseDTO.ListDTO> exportSupplierRefWarehouse(PagingDTO<SupplierRefWarehouseDTO.PagingParamDTO> dto);
     @PostMapping("/feign/export/exportContractInfo")
     PagingVO<ContractInfoDTO.ListDTO> exportContractInfo(@RequestBody PagingDTO<ContractInfoDTO.PagingParamDTO> dto);
+    /**
+     * 动态导出供应商
+     */
+    @PostMapping("/feign/export/exportDynamicSupplier")
+    PagingVO<DynamicExcelDTO> exportDynamicSupplier(PagingDTO<SupplierDTO.PagingParamDTO> dto);
+    /**
+     * 全量导出供应商阶段审核
+     */
+    @PostMapping("/feign/export/exportSupplierPhase")
+    PagingVO<SupplierPhaseExportExcelDTO> exportSupplierPhase(PagingDTO<SupplierPhaseDTO.PagingParamDTO> dto);
+
+    /**
+     * 动态导出供应商阶段审核
+     */
+    @PostMapping("/feign/export/exportDynamicSupplierPhase")
+    PagingVO<DynamicExcelDTO> exportDynamicSupplierPhase(PagingDTO<SupplierPhaseDTO.PagingParamDTO> dto);
+
+    /**
+     * 导出采购订单调整（历史未完结订单）
+     */
+    @PostMapping("/feign/export/exportPurchaseOrderAdjust")
+    PagingVO<PurchaseOrderDTO.AdjustListDTO> exportPurchaseOrderAdjust(PagingDTO<PurchaseOrderDTO.SearchAdjustParamDTO> dto);
+
+    @PostMapping("/feign/export/exportAssetNotice")
+    PagingVO<AssetNoticeDTO.ListDTO> exportAssetNotice(@RequestBody @Validated PagingDTO<AssetNoticeDTO.PagingParamDTO> dto);
+
+    @PostMapping("/feign/export/exportAssetPurchaseOrder")
+    PagingVO<AssetPurchaseOrderDTO.ListDTO> exportAssetPurchaseOrder(@RequestBody @Validated PagingDTO<AssetPurchaseOrderDTO.PagingParamDTO> dto);
+
+    @PostMapping("/feign/export/exportAssetPurchaseChange")
+    PagingVO<AssetPurchaseChangeDTO.ListDTO> exportAssetPurchaseChange(@RequestBody @Validated PagingDTO<AssetPurchaseChangeDTO.PagingParamDTO> dto);
 }

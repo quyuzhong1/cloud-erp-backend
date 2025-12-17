@@ -18,6 +18,7 @@ import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.dto.SoReturnDTO;
 import com.erp.model.oms.dto.listAddDetailViewDTO;
 import com.erp.model.oms.entity.SoReturnEntity;
+import com.erp.model.wms.entity.SoReturnReceiveEntity;
 import com.erp.server.oms.query.SoReturnQueryHandler;
 import com.erp.server.oms.service.SoB2cReturnService;
 import com.erp.server.oms.service.SoReturnDetailService;
@@ -155,9 +156,23 @@ public class SoReturnController extends BaseController {
             menuCode = "oms:soReturn:submit",
             serviceClass = SoReturnService.class,
             keyIdName = "ids")
-    public ApiResult submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean flag = soReturnService.submit(dto.getIds());
-        return flag == true ? success() : failure();
+    public ApiResult<List<BatchResultDTO>> submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<SoReturnEntity> entityList = soReturnService.listByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            SoReturnEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"销售退货单不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(soReturnService.submit(entity,Boolean.TRUE));
+            }catch (Exception e){
+                log.error("销售退货单审核失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**
@@ -306,26 +321,6 @@ public class SoReturnController extends BaseController {
     }
 
     /**
-     * 批量删除
-     * @Author Luo_WG
-     * @Date 2023/4/6 19:29
-     * @param idsDTO idsDTO
-     * @return com.common.core.controller.vo.ApiResult
-     **/
-    @LogAction(value = LogActionEnum.DELETE, desc = "批量删除销售退货订单")
-    @PostMapping("/delete")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "oms:soReturn:delete",
-            serviceClass = SoReturnService.class,
-            keyIdName = "ids"
-    )
-    public ApiResult delete(@RequestBody @Validated BaseIdsDTO.IdsDTO idsDTO) {
-        Boolean flag = soReturnService.delete(idsDTO.getIds());
-        return flag == true ? success() : failure();
-    }
-
-    /**
      * 导出
      * @Author Luo_WG
      * @Date 2023/4/13 18:59
@@ -337,6 +332,26 @@ public class SoReturnController extends BaseController {
     public ApiResult exportExcel(@RequestBody SoReturnDTO.PagingParam dto) {
         Boolean flag = soReturnService.exportExcel(dto);
         return flag == true ? success() : failure();
+    }
+
+    /**
+     * 批量删除
+     * @Author Luo_WG
+     * @Date 2023/4/6 19:29
+     * @param idsDTO idsDTO
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @LogAction(value = LogActionEnum.DELETE, desc = "批量删除记录")
+    @PostMapping("/delete")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "oms:soReturn:delete",
+            serviceClass = SoReturnService.class,
+            keyIdName = "ids"
+    )
+    public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO idsDTO) {
+        List<BatchResultDTO> resultDTOList = soReturnService.delete(idsDTO.getIds(), true);
+        return resultDTOList.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOList) : failure(resultDTOList);
     }
 
     /**

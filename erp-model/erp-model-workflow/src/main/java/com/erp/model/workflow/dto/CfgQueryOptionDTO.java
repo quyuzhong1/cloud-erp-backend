@@ -101,6 +101,15 @@ public class CfgQueryOptionDTO implements Serializable {
          * 数据唯一值， fieldBelongsType +conditionField
          */
         private String uniqueCode;
+        /**
+         * 接口类型，el-input输入框，el-select下拉框，el-cascader级联
+         */
+        private String controls;
+
+        /**
+         * 级联添加
+         */
+        private String children = "childrenList";
     }
 
     /**
@@ -332,6 +341,8 @@ public class CfgQueryOptionDTO implements Serializable {
         private String remoteLabel;
 
         private String valueType;
+
+        private String children = "childrenList";
     }
 
     /**
@@ -348,7 +359,7 @@ public class CfgQueryOptionDTO implements Serializable {
         /**
          * 使用类型，CfgQueryOptionUseTypeEnum枚举
          */
-        private String useType = "allData";
+        private String useType = "cfgApproveSync";
     }
     /**
      *
@@ -371,8 +382,7 @@ public class CfgQueryOptionDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class GenListDTO  {
-
+    public static class GenDTO  {
         //系统分类
         private String model;
         //表名
@@ -384,7 +394,12 @@ public class CfgQueryOptionDTO implements Serializable {
         /**
          * 使用类型，CfgQueryOptionUseTypeEnum枚举
          */
-        private String useType = "allData";
+        private String useType = "";
+
+        private String sql;
+        private String url;
+        private String account;
+        private String password ;
     }
     /**
      *

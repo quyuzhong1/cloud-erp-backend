@@ -14,6 +14,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.tms.dto.LogisticsChannelDTO;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
+import com.erp.model.wms.dto.DictBasicDTO;
 import com.erp.server.tms.service.LogisticsChannelService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
@@ -101,6 +102,7 @@ public class LogisticsChannelController extends BaseController {
             menuCode = "tms:logisticsChannel:update",
             serviceClass = LogisticsChannelService.class,
             keyIdName = "id")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "物流渠道修改")
     public ApiResult<Object>update(@RequestBody @Validated LogisticsChannelDTO.UpdateDTO dto) {
         logisticsChannelService.update(dto);
         return success();
@@ -277,6 +279,29 @@ public class LogisticsChannelController extends BaseController {
     @PostMapping("/listWarehouseChannel")
     public ApiResult<List<LogisticsChannelDTO.WarehouseChannelDTO>> listWarehouseChannel() {
         List<LogisticsChannelDTO.WarehouseChannelDTO> pagingVO = logisticsChannelService.listWarehouseChannel();
+        return success(pagingVO);
+    }
+
+    /**
+     * 三方仓仓库渠道关联(根据仓库查询)
+     * @author will
+     * @date 2025/12/4 14:18
+     * @param dto
+     * @return ApiResult<List<WarehouseChannelDTO>>
+     */
+    @PostMapping("/listThirdWarehouseChannel")
+    public ApiResult<List<LogisticsChannelDTO.WarehouseChannelDTO>> listThirdWarehouseChannel(@RequestBody @Validated LogisticsChannelDTO.WarehouseChannelParamDTO dto) {
+        List<LogisticsChannelDTO.WarehouseChannelDTO> pagingVO = logisticsChannelService.listThirdWarehouseChannel(dto);
+        return success(pagingVO);
+    }
+
+    /**
+     * 根据仓库和物流类型查询
+     *
+     */
+    @PostMapping("/getByPlatformWarehouseAndType")
+    public ApiResult<List<DictBasicDTO.DropDownDTO>> getByPlatformWarehouseAndType(@RequestBody @Validated LogisticsChannelDTO.PlatformWarehouseDTO dto) {
+        List<DictBasicDTO.DropDownDTO> pagingVO = logisticsChannelService.getByPlatformWarehouseAndType(dto);
         return success(pagingVO);
     }
 }

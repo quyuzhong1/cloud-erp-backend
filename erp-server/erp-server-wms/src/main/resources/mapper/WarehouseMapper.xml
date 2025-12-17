@@ -9,6 +9,7 @@
          create_user_name AS createUserName,
          create_time AS createTime,
          name,
+        country,
          type_id AS typeId ,
          charge_id AS chargeId,
          contacts,
@@ -51,6 +52,7 @@
     <select id="getExport" resultType="com.erp.model.wms.dto.WarehouseDTO$PagingViewDTO">
         SELECT
         id,
+        country,
         create_user_name AS createUserName,
         create_time AS createTime,
         name,
@@ -335,14 +337,14 @@
         ) wls
     </select>
     <select id="listApproveWarehouse" resultType="com.erp.model.wms.dto.WarehouseDTO$ListDTO">
-        select id,name,type_id,org_id,disabled,approve_status,kingdee_warehouse_code
+        select id,name,type_id,org_id,disabled,approve_status,kingdee_warehouse_code,charge_id AS chargeId
         from warehouse where is_deleted = false
         <if test="permissionSql!=null and permissionSql!=''">
             ${permissionSql}
         </if>
     </select>
     <select id="listByParam" resultType="com.erp.model.wms.entity.WarehouseEntity">
-        select id,name,type_id,org_id,disabled,approve_status,kingdee_warehouse_code
+        select id,name,type_id,org_id,disabled,approve_status,kingdee_warehouse_code,charge_id AS chargeId
         from warehouse where is_deleted = false
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${params.permissionSql}

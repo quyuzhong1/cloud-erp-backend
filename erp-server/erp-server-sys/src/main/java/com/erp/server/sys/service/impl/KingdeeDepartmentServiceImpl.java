@@ -16,7 +16,6 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
-import com.erp.model.dmp.enums.KingdeePushModuleEnum;
 import com.erp.model.sys.dto.DeptKingdeeDTO;
 import com.erp.model.sys.dto.KingdeeDepartmentDTO;
 import com.erp.model.sys.entity.KingdeeDepartmentEntity;
@@ -25,6 +24,7 @@ import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
+import com.erp.sdk.third.kingdee.utils.KingdeePushModuleEnum;
 import com.erp.server.sys.mapper.KingdeeDepartmentMapper;
 import com.erp.server.sys.rocketmq.sync.kingdee.SyncKingdeeSysDeptService;
 import com.erp.server.sys.service.KingdeeDepartmentService;
@@ -293,7 +293,7 @@ public class KingdeeDepartmentServiceImpl extends SuperServiceImpl<KingdeeDepart
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public BatchResultDTO delete(String id) {
         KingdeeDepartmentEntity entity = super.getById(id);
         List<KingdeePostEntity> postList = kingdeePostService.listByKingDeptId(id);

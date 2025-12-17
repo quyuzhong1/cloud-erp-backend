@@ -2,6 +2,7 @@ package com.sdk.wms.jifeng.service;
 
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.TypeReference;
 import com.alibaba.fastjson.parser.Feature;
 import com.alibaba.fastjson.parser.ParserConfig;
@@ -31,19 +32,14 @@ public class JiFengService {
         JiFengService jiFengService = new JiFengService();
         Map<String,Object> authMap = new HashMap<>();
         authMap.put("domain","sureparcel");
-        authMap.put("accessToken","a8d18b3d86f14e7cafa2c00de500ed03");
+        authMap.put("accessToken","25b38a96170245aa982636dfe04fde63");
         authMap.put("appKey","a03b35bf7f0c4c4f8e23e0599b5be649");
         authMap.put("userId","7471");
         authMap.put("appToken","f9af8dc7afea488991a216485987746c");
-        JiFengCreateInboundRequest jiFengCreateInboundRequest = new JiFengCreateInboundRequest();
-        jiFengCreateInboundRequest.setErpNo("FHD123456");
-        jiFengCreateInboundRequest.setTrackingNo("test123456");
-        jiFengCreateInboundRequest.setExpectedTime("2025-06-19 00:00:10");
-        JiFengReturnOrderRequest request = new JiFengReturnOrderRequest();
-        request.setBeginTime("2025-05-23 05:00:10");
-        request.setEndTime("2025-05-23 10:00:10");
-        jiFengService.getReturnOrder(authMap,request);
-        System.out.println(123);
+        List<String> erpNo = new ArrayList<>();
+        erpNo.add("WFHD25101603694");
+        JiFengBaseResp<JiFengInboundResp> a = jiFengService.getInbound(authMap,"IN5200073");
+        System.out.println(JSONObject.toJSONString( a));
     }
 //    public static void main(String[] args) {
 //        String clientId = "a03b35bf7f0c4c4f8e23e0599b5be649";
@@ -206,7 +202,10 @@ public class JiFengService {
             Map<String, String> headerMap = buildHearderMap(authMap, path);
             String bodyStr = OkHttpUtils.doPostJson(url+path, bodyMap, headerMap);
             JiFengBaseResp<JiFengProductResp> response = JiFengUtils.parseToJiFengResp(bodyStr,JiFengProductResp.class);
-
+            if(Objects.isNull(response)){
+                log.error("极风获取产品列表失败，返回结果为空,返回值:{}",bodyStr);
+                return null;
+            }
             if (response.getCode() == 0) {
                 JiFengProductResp pageData = response.getData();
                 if (pageData != null && pageData.getPageNo() != null) {
@@ -258,7 +257,10 @@ public class JiFengService {
             Map<String, String> headerMap = buildHearderMap(authMap, path);
             String bodyStr = OkHttpUtils.doPostJson(url+path, bodyMap, headerMap);
             JiFengBaseResp<JiFengInventoryResp> response = JiFengUtils.parseToJiFengResp(bodyStr,JiFengInventoryResp.class);
-
+            if(Objects.isNull(response)){
+                log.error("极风获取库存列表失败，返回结果为空,返回值:{}",bodyStr);
+                return null;
+            }
             if (response.getCode() == 0) {
                 JiFengInventoryResp.PageDTO pageData = response.getData().getPage();
                 if (pageData != null && pageData.getPageNo() != null) {
@@ -321,6 +323,10 @@ public class JiFengService {
         String bodyStr = OkHttpUtils.doPostJson(url+path, paramMap, headerMap);
         ThirdWarehouseContext.setResponseJson(bodyStr);
         JiFengBaseResp<JiFengCreateInboundResp> response = JiFengUtils.parseToJiFengResp(bodyStr,JiFengCreateInboundResp.class);
+        if(Objects.isNull(response)){
+            log.error("极风取消入库单失败，返回结果为空,返回值:{}",bodyStr);
+            return JiFengBaseResp.error("极风取消入库单详情失败，返回结果为空");
+        }
         return response;
     }
     /**
@@ -336,6 +342,10 @@ public class JiFengService {
         paramMap.put("inboundNo",inboundNo);
         String bodyStr = OkHttpUtils.doPostJson(url+path, paramMap, headerMap);
         JiFengBaseResp<JiFengInboundResp> response = JiFengUtils.parseToJiFengResp(bodyStr,JiFengInboundResp.class);
+        if(Objects.isNull(response)){
+            log.error("极风获取入库单详情失败，返回结果为空,返回值:{}",bodyStr);
+            return JiFengBaseResp.error("极风获取入库单详情失败，返回结果为空");
+        }
         return response;
     }
 
@@ -357,6 +367,30 @@ public class JiFengService {
         JiFengBaseResp<String> response = JiFengUtils.parseToJiFengResp(bodyStr,String.class);
         return response;
     }
+
+    /**
+     * 查询出库单
+     * @param authMap
+     * @param erpNo
+     * @return
+     */
+    public JiFengBaseResp<JiFengOutboundResp> getOutBound(Map<String,Object> authMap, String erpNo){
+        String path = "/api/order/get";
+        String url = getUrl(authMap.get("domain").toString());
+        Map<String, String> headerMap = buildHearderMap(authMap, path);
+        Map<String,Object> paramMap = new HashMap<>();
+        paramMap.put("erpNo",erpNo);
+        String bodyStr = OkHttpUtils.doPostJson(url+path, paramMap, headerMap);
+        ThirdWarehouseContext.setRequestJson(JSONUtil.toJsonStr(paramMap));
+        ThirdWarehouseContext.setResponseJson(bodyStr);
+        JiFengBaseResp<JiFengOutboundResp> response = JiFengUtils.parseToJiFengResp(bodyStr,JiFengOutboundResp.class);
+        if(Objects.isNull(response)){
+            log.error("极风获取入库单详情失败，返回结果为空,返回值:{}",bodyStr);
+            return JiFengBaseResp.error("极风获取入库单详情失败，返回结果为空");
+        }
+        return response;
+    }
+
     /**
      * 取消出库单
      * @param authMap
@@ -414,6 +448,10 @@ public class JiFengService {
             String bodyStr = OkHttpUtils.doPostJson(url+path, bodyMap, headerMap);
             JiFengBaseResp<JiFengReturnOrderResp> response = JiFengUtils.parseToJiFengResp(bodyStr,JiFengReturnOrderResp.class);
 
+            if(Objects.isNull(response)){
+                log.error("极风获取退货订单列表失败，返回结果为空,返回值:{}",bodyStr);
+                return null;
+            }
             if (response.getCode() == 0) {
                 JiFengReturnOrderResp pageData = response.getData();
                 if (pageData != null && pageData.getPageNo() != null && CollectionUtils.isNotEmpty(pageData.getRows())) {

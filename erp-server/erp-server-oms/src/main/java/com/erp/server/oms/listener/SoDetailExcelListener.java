@@ -134,6 +134,7 @@ public class SoDetailExcelListener extends AnalysisEventListener<SoDetailImportE
         addDTO.setSkuId(sku.getSkuId());
         addDTO.setProductName(sku.getSkuName());
         addDTO.setUnit(sku.getUnitName());
+        addDTO.setUnitName(sku.getUnitName());
         //销售数量
         String qty = soDetailImportExcelDTO.getQty();
         addDTO.setQty(Integer.valueOf(qty));
@@ -162,7 +163,7 @@ public class SoDetailExcelListener extends AnalysisEventListener<SoDetailImportE
         addDTO.setRemark(soDetailImportExcelDTO.getRemark());
         addDTO.setCustomerPO(soDetailImportExcelDTO.getCustomerPO());
         addDTO.setToCountry(soDetailImportExcelDTO.getToCountry());
-        addDTO.setPlatformSkuNo(soDetailImportExcelDTO.getPlatformSkuNo());
+        addDTO.setCustomerSkuNo(soDetailImportExcelDTO.getPlatformSkuNo());
         successList.add(addDTO);
     }
 

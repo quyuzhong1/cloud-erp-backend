@@ -56,8 +56,4 @@ public class LogisticsRegisterVO implements Serializable {
      * 手机尾号
      */
     private String phoneSuffix;
-    /**
-     * 是否推送电话
-     */
-    private Boolean isPushMobile;
 }

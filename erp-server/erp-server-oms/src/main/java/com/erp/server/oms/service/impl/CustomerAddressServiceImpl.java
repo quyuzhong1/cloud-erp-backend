@@ -11,6 +11,8 @@ import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.oms.dto.CustomerAddressDTO;
 import com.erp.model.oms.entity.CustomerAddressEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.sys.entity.DictCountryEntity;
+import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.oms.mapper.CustomerAddressMapper;
 import com.erp.server.oms.service.CustomerAddressService;
@@ -25,6 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -54,6 +57,8 @@ public class CustomerAddressServiceImpl extends SuperServiceImpl<CustomerAddress
     private DocNoGenHelper docNoGenHelper;
     @Resource
     private CustomerAddressService customerAddressService;
+    @Resource
+    private SysDictFeign sysDictFeign;
 
     /**
      * 检查默认地址是否存在多个
@@ -84,7 +89,7 @@ public class CustomerAddressServiceImpl extends SuperServiceImpl<CustomerAddress
      * @date 2023-05-12 15:56
      */
     @Override
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     public void saveBatchAddress(String mainId, List<CustomerAddressDTO.AddDTO> addressList) {
         if (CollectionUtils.isEmpty(addressList)) {
@@ -115,6 +120,15 @@ public class CustomerAddressServiceImpl extends SuperServiceImpl<CustomerAddress
         if (CollectionUtils.isEmpty(dbList)) {
             return Collections.emptyList();
         }
+        List<String> countryId = dbList.stream().map(CustomerAddressEntity::getCountryId).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+        if( CollectionUtils.isNotEmpty(countryId)){
+            List<DictCountryEntity> countryList = sysDictFeign.listCountryByIds(countryId);
+            dbList.forEach(d->{
+                if(StringUtils.isNotBlank(d.getCountryId())){
+                    countryList.stream().filter(c -> c.getId().equals(d.getCountryId())).findFirst().ifPresent(country -> d.setCountryName(country.getNameCn()));
+                }
+            });
+        }
         return BeanMapper.copyList(dbList, CustomerAddressDTO.ViewDTO.class);
     }
 
@@ -131,6 +145,7 @@ public class CustomerAddressServiceImpl extends SuperServiceImpl<CustomerAddress
     @Override
     public void updateBatchAddress(String mainId, List<CustomerAddressDTO.ViewDTO> addressList) {
         List<CustomerAddressEntity> saveOrUpdateList = new ArrayList<>(addressList.size());
+
         //这是修改的
         List<CustomerAddressDTO.ViewDTO> updateList = addressList.stream().filter(c -> StringUtils.isNotBlank(c.getId())).collect(Collectors.toList());
 
@@ -187,6 +202,12 @@ public class CustomerAddressServiceImpl extends SuperServiceImpl<CustomerAddress
         if (ObjectUtils.isEmpty(entity)) {
             return new CustomerAddressDTO.ViewDTO();
         }
+        if(StringUtils.isNotBlank(entity.getCountryId())){
+            List<DictCountryEntity> countryList = sysDictFeign.listCountryByIds(Collections.singletonList(entity.getCountryId()));
+            if(CollectionUtils.isNotEmpty(countryList)){
+                entity.setCountryName(countryList.get(0).getNameCn());
+            }
+        }
         return BeanMapperUtils.map(CustomerAddressDTO.ViewDTO.class, entity);
     }
 
@@ -225,5 +246,11 @@ public class CustomerAddressServiceImpl extends SuperServiceImpl<CustomerAddress
 
     private List<CustomerAddressEntity> listBaseByMainId(String mainId) {
         return this.lambdaQuery().eq(CustomerAddressEntity::getMainId, mainId).list();
+    }
+
+
+    @Override
+    public List<CustomerAddressEntity> listAllByMainIds(List<String> ids) {
+        return baseMapper.listAllByMainIds(ids);
     }
 }

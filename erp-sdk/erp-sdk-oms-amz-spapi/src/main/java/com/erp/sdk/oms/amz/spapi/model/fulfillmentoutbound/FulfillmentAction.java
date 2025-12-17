@@ -10,24 +10,26 @@
  * Do not edit the class manually.
  */
 
-
 package com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound;
 
+import java.util.Objects;
+import java.util.Arrays;
+
+import com.google.gson.annotations.SerializedName;
+import java.io.IOException;
 import com.google.gson.TypeAdapter;
 import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
-
-import java.io.IOException;
 
 /**
  * Specifies whether the fulfillment order should ship now or have an order hold put on it.
  */
 @JsonAdapter(FulfillmentAction.Adapter.class)
 public enum FulfillmentAction {
-  
+  @SerializedName("Ship")
   SHIP("Ship"),
-  
+  @SerializedName("Hold")
   HOLD("Hold");
 
   private String value;
@@ -45,9 +47,9 @@ public enum FulfillmentAction {
     return String.valueOf(value);
   }
 
-  public static FulfillmentAction fromValue(String text) {
+  public static FulfillmentAction fromValue(String input) {
     for (FulfillmentAction b : FulfillmentAction.values()) {
-      if (String.valueOf(b.value).equals(text)) {
+      if (b.value.equals(input)) {
         return b;
       }
     }
@@ -57,14 +59,13 @@ public enum FulfillmentAction {
   public static class Adapter extends TypeAdapter<FulfillmentAction> {
     @Override
     public void write(final JsonWriter jsonWriter, final FulfillmentAction enumeration) throws IOException {
-      jsonWriter.value(enumeration.getValue());
+      jsonWriter.value(String.valueOf(enumeration.getValue()));
     }
 
     @Override
     public FulfillmentAction read(final JsonReader jsonReader) throws IOException {
-      String value = jsonReader.nextString();
-      return FulfillmentAction.fromValue(String.valueOf(value));
+      Object value = jsonReader.nextString();
+      return FulfillmentAction.fromValue((String)(value));
     }
   }
 }
-

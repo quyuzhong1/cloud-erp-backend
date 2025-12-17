@@ -166,7 +166,7 @@ public interface CustomerInfoService extends SuperService<CustomerInfoEntity> {
      * @author yl
      * @date 2023-05-15 14:30
      */
-    Boolean deleteByIds(List<String> ids);
+    List<BatchResultDTO>  deleteByIds(List<String> ids);
 
 
     /**
@@ -395,4 +395,15 @@ public interface CustomerInfoService extends SuperService<CustomerInfoEntity> {
     List<CustomerInfoEntity> listByCodes(List<String> list);
 
     void updateApproveStatus(CustomerInfoEntity entity);
+
+    CustomerDTO.ThirdCustomerAccountDTO getThirdCustomerAccount(BaseIdDTO dto);
+
+    Boolean isSyncDht(String customerId);
+
+    /**
+     * 启用的非2C客户列表
+     * @param permissionSql
+     * @return
+     */
+    List<CustomerDTO.InfoDTO> listEnable2cCustomer(String permissionSql);
 }

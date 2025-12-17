@@ -13,6 +13,7 @@ public enum BusinessTypeEnum implements EnumMessage {
     QUERY_ORDER("queryOrder", "查询订单"),
     GET_LABEL("getLabel", "获取标签"),
     GET_TRACK("getTrack", "轨迹查询"),
+    UPDATE_TRACK("updateTrack", "更新物流单"),
     REGISTER_TRACK("registerTrack", "注册物流单"),
     GET_LABEL_LIST("getLabelList", "批量获取标签"),
     GET_CHANEL_LIST("getChanelList", "批量渠道列表"),

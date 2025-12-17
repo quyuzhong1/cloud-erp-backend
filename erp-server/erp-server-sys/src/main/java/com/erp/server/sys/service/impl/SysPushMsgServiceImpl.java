@@ -31,7 +31,7 @@ import com.common.core.enums.ApiError;
 @Service
 public class SysPushMsgServiceImpl extends SuperServiceImpl<SysPushMsgMapper, SysPushMsgEntity> implements SysPushMsgService {
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(SysPushMsgDTO.AddDTO addDTO) {

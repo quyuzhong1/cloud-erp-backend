@@ -14,9 +14,11 @@ import com.erp.model.dmp.entity.CfgAppClientEntity;
 import com.erp.model.dmp.enums.AppClientEnum;
 import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.oms.dto.*;
+import com.erp.model.oms.entity.CfgSettingEntity;
 import com.erp.model.oms.entity.ShopAuthEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.AuthStatusEnum;
+import com.erp.model.oms.enums.CfgSettingEnum;
 import com.erp.rpc.dmp.feign.DmpReportFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.model.dmp.dto.AmazonShopInfoDTO;
@@ -24,6 +26,7 @@ import com.erp.sdk.oms.amz.spapi.dto.AmazonTokenDTO;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
 import com.erp.sdk.oms.amz.spapi.utils.AmazonAuthClientUtils;
 import com.common.business.annotation.PlatformAnnotate;
+import com.erp.server.oms.service.CfgSettingService;
 import com.erp.server.oms.service.IShopAuthorizeService;
 import com.erp.server.oms.service.ShopAuthService;
 import com.erp.server.oms.service.ShopInfoService;
@@ -63,13 +66,15 @@ public class AmazonAuthorize implements IShopAuthorizeService<T> {
     private RedisUtil redisUtil;
     @Resource
     private ShopAuthService shopAuthService;
+    @Resource
+    private CfgSettingService cfgSettingService;
 
     /**
      * 获取授权地址
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public String getShopAuthorizeUrl(ShopAuthorizeUrlDTO dto) {
         // 获取需要授权的店铺列表
         List<ShopInfoEntity> shopInfoEntityList = new ArrayList<>();
@@ -126,8 +131,14 @@ public class AmazonAuthorize implements IShopAuthorizeService<T> {
         return String.format(cfgAppClient.getUrl(), sellerCentralUrl, resultState);
     }
 
-    @NotNull
-    private static String randomGSAState() {
+
+    public String randomGSAState() {
+        // 亚马逊授权state前缀
+        CfgSettingEntity settingEntity = cfgSettingService.getSettingByKey(CfgSettingEnum.AMZ_AUTH_PRE_STATE.getCode());
+        if (null == settingEntity) {
+            ServiceException.runError("未找到亚马逊授权state前缀配置:{}", CfgSettingEnum.AMZ_AUTH_PRE_STATE.getCode());
+        }
+        String preState = settingEntity.getValue();
         SecureRandom secureRandom = new SecureRandom();
         // 生成 256 字节的随机数据
         byte[] randomBytes = new byte[256];
@@ -135,7 +146,7 @@ public class AmazonAuthorize implements IShopAuthorizeService<T> {
         // 进行 Base64 编码
         String state = Base64.getUrlEncoder().withoutPadding().encodeToString(randomBytes);
         // 账号要求
-        return "GSA_" + state.substring(4);
+        return preState + state.substring(4);
     }
 
     @NotNull
@@ -152,18 +163,12 @@ public class AmazonAuthorize implements IShopAuthorizeService<T> {
         return cfgAppClient;
     }
 
-    public static void main(String[] args) {
-        // 生成随机数据
-        String resultState = randomGSAState();
-        log.info(resultState);
-    }
-
     /**
      * 授权校验
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public Boolean shopAuthorize(ShopAuthorizeDTO dto, HttpServletResponse response) {
         if (StringUtils.isBlank(dto.getState())) {
             throw new ServiceException("信息state不存在");
@@ -224,7 +229,12 @@ public class AmazonAuthorize implements IShopAuthorizeService<T> {
             if(AuthStatusEnum.ALREADY.getCode().equalsIgnoreCase(shopInfo.getAuthStatus())){
                 throw new ServiceException(ApiError.ERROR_SHOP_ALREADY_AUTH);
             }
-
+            // 添加授权账号校验
+            if (StringUtils.isNotBlank(shopInfo.getPlatformShopCode())){
+                if (!shopInfo.getPlatformShopCode().equals(dto.getSelling_partner_id())){
+                    throw new ServiceException("当前授权账号与店铺账号不一致");
+                }
+            }
             shopInfo.setPlatformShopCode(dto.getSelling_partner_id());
             shopInfo.setAuthStatus(AuthStatusEnum.ALREADY.getCode());
             shopInfo.setAuthTime(LocalDateTime.now());
@@ -276,7 +286,7 @@ public class AmazonAuthorize implements IShopAuthorizeService<T> {
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public Boolean cancelAuthorize(CancelAuthorizeDTO dto) {
         ShopInfoEntity shopInfo = shopInfoService.getById(dto.getShopId());
         if (Objects.isNull(shopInfo)) {

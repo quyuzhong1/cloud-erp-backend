@@ -1,6 +1,5 @@
 package com.erp.model.wms.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import lombok.Data;
@@ -8,7 +7,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.Size;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -72,6 +73,11 @@ public class SoDeliveryNoticeDTO {
          * 作废状态
          */
         private Boolean invalidStatus;
+
+        /**
+         * 出库通知状态
+         */
+        private Boolean isAllowOutstock;
         /**
          * 要货日期
          */
@@ -88,6 +94,10 @@ public class SoDeliveryNoticeDTO {
          * 创建时间
          */
         private List<LocalDate> createTimeList;
+        /**
+         * 动态数据源
+         */
+        private String dynamicDataSource;
     }
 
     /**
@@ -280,6 +290,14 @@ public class SoDeliveryNoticeDTO {
          */
         private String toCountry;
 
+        /**
+         * 出库通知状态
+         */
+        private Boolean isAllowOutstock;
+        /**
+         * 出库通知状态名称
+         */
+        private String isAllowOutstockName;
     }
 
     /**
@@ -332,6 +350,8 @@ public class SoDeliveryNoticeDTO {
         /**
          * 明细信息
          */
+        @NotEmpty
+        @Valid
         private List<SoDeliveryNoticeDetailDTO.Add> detailList;
     }
 
@@ -387,6 +407,8 @@ public class SoDeliveryNoticeDTO {
         /**
          * 明细信息
          */
+        @NotEmpty(message = "明细信息不能为空")
+        @Valid
         private List<SoDeliveryNoticeDetailDTO.Update> detailList;
     }
 
@@ -550,6 +572,20 @@ public class SoDeliveryNoticeDTO {
          * 作废描述
          */
         private String invalidRemark;
+        /**
+         * 箱唛url
+         */
+        private String attachmentUrl;
+        /**
+         * 箱唛url名称
+         */
+        private String attachmentName;
+
+        /**
+         * 备注
+         */
+        private String remark;
+
         /**
          * 中转仓库集合
          */
@@ -745,5 +781,36 @@ public class SoDeliveryNoticeDTO {
          * 打印明细
          */
         private List<PrintSkuLabelDTO> detailList;
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    public static class PermitOutstockDTO {
+        /**
+         * 主键id
+         */
+        @NotBlank(message = "主键id不能为空")
+        private String id;
+
+        /**
+         * 附件url
+         */
+        private String attachmentUrl;
+        /**
+         * 附件名称
+         */
+        private String attachmentName;
+        /**
+         * 备注
+         */
+        private String remark;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class PickStatus{
+        private String noticeId;
+        private String generationPickStatus;
     }
 }

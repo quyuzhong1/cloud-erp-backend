@@ -166,4 +166,11 @@ public interface BomSkuService extends IService<BomSkuEntity> {
     List<BomChildrenSkuDTO> checkExistAndListCombinationSku( List<String> parentSkuNos);
 
     List<BomDTO.BomSku> getSingleBomInfo(List<String> skuIdList);
+
+    /**
+     * 根据SoB2cDetailEntity的ID查询BOM子件库存信息
+     * @param params 包含SoB2cDetailEntity的ID和SKU ID列表
+     * @return BOM子件列表，包含虚拟仓和实体仓可用库存
+     */
+    List<BomChildrenSkuDTO> listBomChildBySoB2cDetailId(ProductBomInfoDTO.SkuIdParams params);
 }

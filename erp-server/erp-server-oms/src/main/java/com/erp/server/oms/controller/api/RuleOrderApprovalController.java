@@ -7,8 +7,11 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.oms.dto.RuleOrderApprovalDTO;
 import com.erp.server.oms.service.RuleOrderApprovalService;
 import lombok.extern.slf4j.Slf4j;
@@ -27,6 +30,7 @@ import java.util.Map;
 @Slf4j
 @RestController
 @RequestMapping("/ruleOrderApproval")
+@LogSystemModule("订单审核规则")
 public class RuleOrderApprovalController extends BaseController {
 
     @Resource
@@ -62,6 +66,7 @@ public class RuleOrderApprovalController extends BaseController {
      * @date: 2023-08-28
      */
     @PostMapping("/add")
+    @LogAction(value = LogActionEnum.INSERT, desc = "订单审核规则新增")
     public ApiResult<String> add(@RequestBody @Validated RuleOrderApprovalDTO.AddDTO dto) {
         return success(ruleOrderApprovalService.add(dto));
     }
@@ -95,6 +100,7 @@ public class RuleOrderApprovalController extends BaseController {
      * @date: 2023-08-28
      */
     @PostMapping("/update")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "订单审核规则修改")
     public ApiResult update(@RequestBody @Validated RuleOrderApprovalDTO.UpdateDTO dto) {
         Boolean result = ruleOrderApprovalService.update(dto);
         return result ? success() : failure();
@@ -109,6 +115,7 @@ public class RuleOrderApprovalController extends BaseController {
      * @date 2023-08-30 14:13
      */
     @PostMapping("/updateStatus")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "订单审核规则更改启用禁用状态 ids={id},状态值={state}(true=禁用,false=启用)")
     public ApiResult updateStatus(@RequestBody @Validated UpdateStateDTO dto) {
         Boolean result = ruleOrderApprovalService.updateStatus(dto);
         return result ? success() : failure();

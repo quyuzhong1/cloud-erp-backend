@@ -204,7 +204,7 @@ public class BiSubjectController extends BaseController {
      * @param dtoList
      * @return ApiResult<List<BatchResultDTO>>
      */
-    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "专题批量设置权限:id={id}")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "专题批量设置权限:id={id}")
     @PostMapping("/batchShare")
     public ApiResult<List<BatchResultDTO>> batchShare(@RequestBody @Validated List<BiBatchShareDTO> dtoList) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dtoList.size());

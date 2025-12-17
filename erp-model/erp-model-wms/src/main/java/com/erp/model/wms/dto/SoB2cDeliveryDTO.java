@@ -1,5 +1,6 @@
 package com.erp.model.wms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.annotation.Dict;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
@@ -303,7 +304,15 @@ public class SoB2cDeliveryDTO implements Serializable {
          * 运输单号
          */
         private String  transportNo;
+        /**
+         * 状态 waitHandle:待处理  picking:拣货中 falseShipment:手动标发 shipped:已发货  cancelDelivery:取消发货
+         */
+        private String status;
 
+        /**
+         * 是否走中转规则
+         */
+        private Boolean isMatchTransferRule = true;
     }
 
     /**
@@ -738,6 +747,10 @@ public class SoB2cDeliveryDTO implements Serializable {
          * 推荐仓位
          */
         private String warehouseLocation;
+        /**
+         * 推荐仓位名称
+         */
+        private String warehouseLocationName;
         /**
          * 备注
          */

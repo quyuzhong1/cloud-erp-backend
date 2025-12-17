@@ -20,12 +20,14 @@ import lombok.Getter;
 public enum BusinessTypeEnum implements EnumMessage {
     // 销售订单
     ORDER("order","销售订单", SourceTypeEnum.SO_B2C),
-    SO_MULTI_CHANNEL("so_multi_channel","多渠道订单", SourceTypeEnum.SO_MULTI_CHANNEL),
     OTHER_OUT_STOCK("other_out_stock","其他出库单", SourceTypeEnum.OTHER_OUTSTOCK),
     // TODO 补充来源类型
     REFUND("refund","退款单", null),
     PRODUCT("product","商品", SourceTypeEnum.LISTING_INFO),
+    PRODUCT_LISTING("product_listing","商品列表", SourceTypeEnum.LISTING_INFO),
+
     GLOBAL_PRODUCT("global_product","全球商品", SourceTypeEnum.LISTING_INFO),
+    LISTING_INFO("listingInfo","获取出库单状态", SourceTypeEnum.LISTING_INFO),
     // TODO 补充来源类型
     RETURN("return","退货单", null),
     DELIVERY("delivery","发货单", SourceTypeEnum.SO_B2C_DELIVERY),
@@ -53,6 +55,8 @@ public enum BusinessTypeEnum implements EnumMessage {
     INBOUND("inbound","获取收货批次", SourceTypeEnum.THIRD_WAREHOUSE_GET_INBOUND_RECEIPT),
     OUTBOUND("outbound","获取出库单状态", SourceTypeEnum.THIRD_WAREHOUSE_GET_OUTBOUND_RECEIPT),
     INVENTORY("inventory","库存", SourceTypeEnum.THIRD_WAREHOUSE_GET_INVENTORY)
+
+
     ;
 
     @JsonValue

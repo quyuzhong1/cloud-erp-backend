@@ -74,7 +74,19 @@ public class DmpCfgInputEntity extends BaseEntity<DmpCfgInputEntity> {
      */
     @TableField("bill_type")
     private String billType;
-    
+
+    /**
+     * 执行系统:默认:dmp
+     */
+    @TableField("exec_system")
+    private String execSystem;
+
+    /**
+     * RestCloud执行路径
+     */
+    @TableField("exec_url")
+    private String execUrl;
+
     public static final String SYSTEM_ID = "system_id";
 
     public static final String CODE = "code";

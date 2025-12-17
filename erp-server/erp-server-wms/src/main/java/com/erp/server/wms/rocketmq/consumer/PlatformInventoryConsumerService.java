@@ -7,9 +7,9 @@ import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.DmpSyncTaskIdDTO;
 import com.common.business.dto.PlatformInventoryDTO;
 import com.common.business.enums.*;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.utils.BeanMapper;
-import com.common.message.constant.RocketMqTopic;
 import com.common.message.handler.AbstractPlatformConsumerHandler;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.dto.MongoDBUpdateDTO;
@@ -18,6 +18,7 @@ import com.erp.model.msg.dto.WarnMsgInfoDTO;
 import com.erp.model.msg.enums.WarnMsgTypeEnum;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
+import com.erp.model.oms.entity.ListingInfoEntity;
 import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.wms.dto.OverseasProviderDTO;
 import com.erp.model.wms.dto.WarehouseMappingDTO;
@@ -33,8 +34,6 @@ import com.erp.server.wms.service.OverseasProviderService;
 import com.erp.server.wms.service.WarehouseMappingService;
 import io.seata.common.util.CollectionUtils;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.rocketmq.spring.annotation.ConsumeMode;
-import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -120,6 +119,8 @@ public class PlatformInventoryConsumerService<T extends DmpSyncTaskIdDTO> extend
     @Transactional(rollbackFor = Exception.class)
     public ApiResult<Object> handle(Object ext) {
         PlatformInventoryDTO dto = JSONUtil.toBean(ext.toString(), PlatformInventoryDTO.class);
+        //根据产品条码查询sku
+        handleThirdBarcode(dto);
         List<String> warehouseIds = null;
         if(dto.getPlatform().equals(PlatformDictEnum.ALI_EXPRESS.getCode())){
             //仓库映射
@@ -195,14 +196,18 @@ public class PlatformInventoryConsumerService<T extends DmpSyncTaskIdDTO> extend
             if(CollUtil.isNotEmpty(dto.getAgeInfoList())){
                 List<OverseasInventoryAgeDetailEntity> addList = new ArrayList<>();
                 List<OverseasInventoryAgeDetailEntity> oldDetails = overseasInventoryAgeDetailService.lambdaQuery()
-                        .eq(OverseasInventoryAgeDetailEntity::getPullDate, LocalDate.now())
                         .eq(OverseasInventoryAgeDetailEntity::getMainId,entity.getId())
                         .list();
                 for (PlatformInventoryDTO.PlatformInventoryAgeDTO ageDTO : dto.getAgeInfoList()) {
                     // 计算日期差
-                    int daysBetween = (int) ChronoUnit.DAYS.between(ageDTO.getPutAwayDate(), LocalDate.now()) + 1 ;
+                    int daysBetween;
+                    if(Objects.nonNull(ageDTO.getInventoryAge())){
+                        daysBetween = ageDTO.getInventoryAge();
+                    }else{
+                        daysBetween = (int) ChronoUnit.DAYS.between(ageDTO.getPutAwayDate(), LocalDate.now()) + 1 ;
+                    }
 
-                    OverseasInventoryAgeDetailEntity oldDetail = oldDetails.stream().filter(v -> v.getPutAwayDate().equals(ageDTO.getPutAwayDate())).findFirst().orElse(null);
+                    OverseasInventoryAgeDetailEntity oldDetail = oldDetails.stream().filter(v -> v.getPutAwayDate().equals(ageDTO.getPutAwayDate()) && v.getInventoryAge().equals(daysBetween)).findFirst().orElse(null);
                     if(null == oldDetail){
                         OverseasInventoryAgeDetailEntity detailEntity = new OverseasInventoryAgeDetailEntity();
                         BeanMapper.copy(ageDTO, detailEntity);
@@ -233,5 +238,27 @@ public class PlatformInventoryConsumerService<T extends DmpSyncTaskIdDTO> extend
         warnMsgInfo.setKeyInfo(CharSequenceUtil.isBlank(msg)?"":msg);
         warnMsgInfo.setWarnMsgTypeEnum(WarnMsgTypeEnum.SYS_EXCEPTION);
         return warnMsgInfo;
+    }
+
+    /**
+     * 根据产品条码查询sku
+     * @author will
+     * @date 2025/12/4 11:50
+     * @param dto
+     * @return void
+     */
+    private void handleThirdBarcode (PlatformInventoryDTO dto) {
+        if (CharSequenceUtil.isBlank(dto.getAuthId()) || !CharSequenceUtil.equals(dto.getPlatform(), PlatformDictEnum.TONG_YOU_WAREHOUSE.getCode())) {
+            return;
+        }
+        List<ListingInfoEntity> list = FeignQuery.create(ListingInfoEntity.class)
+                .eq(ListingInfoEntity::getPlatform, dto.getPlatform())
+                .eq(ListingInfoEntity::getAuthId, dto.getAuthId())
+                .eq(ListingInfoEntity::getThirdBarcode, dto.getThirdBarcode())
+                .list();
+        if (CollUtil.isEmpty(list)) {
+            return;
+        }
+        dto.setProductSku(list.get(0).getPlatformSkuNo());
     }
 }

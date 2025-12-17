@@ -159,11 +159,17 @@ public class CfgProcessRuleServiceImpl extends SuperServiceImpl<CfgProcessRuleMa
                     ? dto.getProcessExpDTOList() : Collections.emptyList();
             if (!processExpDTOList.isEmpty()) {
                 cfgProcessExpService.addOrUpdate(cfgProcessId, ruleId, processExpDTOList);
+            } else {
+                // 如果没有审核条件，则删除该规则的所有审核条件
+                cfgProcessExpService.delete(Collections.singletonList(ruleId));
             }
             List<CfgProcessFieldMapDTO.AddOrUpdateDTO> processFieldMapDTOList = dto.getProcessFieldMapDTOList() != null
                     ? dto.getProcessFieldMapDTOList() : Collections.emptyList();
             if (!processFieldMapDTOList.isEmpty()) {
                 cfgProcessFieldMapService.addOrUpdate(bussinessKey, cfgProcessId, ruleId, processFieldMapDTOList,dto.getProcessDefinitionId(),dto.getType());
+            } else {
+                // 如果没有字段映射，则删除该规则的所有字段映射
+                cfgProcessFieldMapService.delete(Collections.singletonList(ruleId));
             }
         }
         // 操作日志，遍历entities，找出old中和entity id相同的

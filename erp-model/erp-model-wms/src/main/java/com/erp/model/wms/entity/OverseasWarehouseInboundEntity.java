@@ -105,6 +105,11 @@ public class OverseasWarehouseInboundEntity extends BaseEntity<OverseasWarehouse
     @TableField("to_warehouse_id")
     private String toWarehouseId;
     /**
+     * 目的仓国家
+     */
+    @TableField(exist = false)
+    private String countryName;
+    /**
      * 物流方式
      */
     @TableField("logistics_method")
@@ -268,6 +273,30 @@ public class OverseasWarehouseInboundEntity extends BaseEntity<OverseasWarehouse
      */
     @TableField(exist = false)
     private Integer count;
+
+    /**
+     * 揽收时间起
+     */
+    @TableField(value = "collect_start_time")
+    private LocalDateTime collectStartTime;
+
+    /**
+     * 揽收时间止
+     */
+    @TableField(value = "collect_end_time")
+    private LocalDateTime collectEndTime;
+
+    /**
+     * 柜型
+     */
+    @TableField(value = "container_type")
+    private String containerType;
+
+    @TableField(exist = false)
+    private String base64Str;
+
+    @TableField(exist = false)
+    private String fileName;
 
     public static final String DICT_PLATFORM = "dict_platform";
 

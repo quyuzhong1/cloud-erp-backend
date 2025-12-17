@@ -1,10 +1,12 @@
 package com.erp.server.mrp.controller.api;
 
 
+import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.mrp.dto.CfgRuleStockUpDTO;
 import com.erp.server.mrp.service.CfgRuleStockUpService;
 import lombok.extern.slf4j.Slf4j;
@@ -37,6 +39,7 @@ public class CfgRuleStockUpController extends BaseController {
     * @return ApiResult
     */
     @PostMapping("/update")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "备货规则修改")
     public ApiResult<String> update(@RequestBody @Validated CfgRuleStockUpDTO.UpdateDTO dto) {
         cfgRuleStockUpService.update(dto);
         return success();

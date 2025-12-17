@@ -1,9 +1,6 @@
 package com.erp.server.oms.service;
 
-import com.common.business.dto.base.BaseApproveParamDTO;
-import com.common.business.dto.base.BatchResultDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.SoInfoDTO;
@@ -74,10 +71,10 @@ public interface SoReturnService extends SuperService<SoReturnEntity> {
      * 提交
      * @Author Luo_WG
      * @Date 2023/5/10 16:45
-     * @param ids
+     * @param entity
      * @return java.lang.Boolean
      **/
-    Boolean submit(List<String> ids);
+    BatchResultDTO submit(SoReturnEntity entity,Boolean isNeedProcess);
 
     /**
      * 新增提交
@@ -106,6 +103,15 @@ public interface SoReturnService extends SuperService<SoReturnEntity> {
      **/
     BatchResultDTO approve(BaseApproveParamDTO baseApproveParamDTO,SoReturnEntity entity);
 
+    /**
+     * 审核完成
+     * @author will
+     * @date 2025/10/23 11:15
+     * @param dto
+     * @param entity
+     * @return Boolean
+     */
+    Boolean approveEnd(ApproveOneDTO dto, SoReturnEntity entity);
     /**
      * 批量反审核
      * @Author Luo_WG
@@ -142,6 +148,15 @@ public interface SoReturnService extends SuperService<SoReturnEntity> {
      * @return java.lang.Boolean
      **/
     Boolean delete(List<String> ids);
+
+    /**
+     * 删除销售退货订单（返回详细结果）
+     * @Author Luo_WG
+     * @Date 2023/5/10 16:47
+     * @param ids
+     * @return java.util.List<com.common.business.dto.base.BatchResultDTO>
+     **/
+    List<BatchResultDTO> delete(List<String> ids, boolean returnDetails);
 
     /**
      * 导出

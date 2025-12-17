@@ -52,7 +52,6 @@ import com.erp.server.wms.service.WarehouseLocationService;
 import com.erp.server.wms.service.WarehouseService;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.IOUtils;
@@ -62,7 +61,6 @@ import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
@@ -1146,12 +1144,23 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
         WarehouseLocationEntity entity = warehouseLocationService.getOne(Wrappers.<WarehouseLocationEntity>lambdaQuery()
                 .eq(WarehouseLocationEntity::getWarehouseId, param.getWarehouseId())
                 .eq(WarehouseLocationEntity::getCode, inventory.getWarehouseLocation())
+                .last("LIMIT 1")
         );
         InventoryDTO.LocationInventory locationInventory = new InventoryDTO.LocationInventory();
         locationInventory.setWarehouseLocation(inventory.getWarehouseLocation());
         locationInventory.setUsableQty(inventory.getQty());
         locationInventory.setWarehouseLocationName(entity.getName());
         return locationInventory;
+    }
+
+
+    @Override
+    public List<InventoryDTO.LocationInventory> recommendedLocations(InventoryDTO.RecommendedLocationParams params) {
+        List<InventoryDTO.LocationInventory> result = new ArrayList<>();
+        for (InventoryDTO.RecommendedLocationParam locationParam : params.getList()) {
+            result.add(recommendedLocation(locationParam)) ;
+        }
+        return result;
     }
 
 
@@ -1220,7 +1229,7 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
         if(CharSequenceUtil.isBlank(params.getWarehouseLocation())){
             throw new ServiceException("仓位不存在");
         }
-        WarehouseLocationEntity entity = warehouseLocationService.findByWarehouseCode(params.getWarehouseLocation());
+        WarehouseLocationEntity entity = warehouseLocationService.findByWarehouseCodeOrName(params.getWarehouseLocation());
         if (Objects.nonNull(entity) && CharSequenceUtil.isNotBlank(entity.getCode())){
             paramDTO.setWarehouseLocation(entity.getCode());
         }else {
@@ -1387,8 +1396,8 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
         return inventoryMapper.getQtyByLocation(warehouseId, warehouseLocation == null ? "" : warehouseLocation);
     }
     @Override
-    @Transactional(rollbackFor = Exception.class, propagation = Propagation.REQUIRES_NEW)
-    @GlobalTransactional(rollbackFor = Exception.class, propagation = io.seata.tm.api.transaction.Propagation.REQUIRES_NEW)
+//    @Transactional(rollbackFor = Exception.class, propagation = Propagation.REQUIRES_NEW)
+//    @GlobalTransactional(rollbackFor = Exception.class, propagation = io.seata.tm.api.transaction.Propagation.REQUIRES_NEW)
     public InventoryEntity getInventory(InventoryTransactionDTO transactionDTO) {
         LambdaQueryWrapper<InventoryEntity> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(InventoryEntity::getSkuId, transactionDTO.getSkuId())

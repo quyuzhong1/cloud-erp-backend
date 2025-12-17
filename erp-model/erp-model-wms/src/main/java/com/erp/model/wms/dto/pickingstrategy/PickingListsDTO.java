@@ -72,9 +72,25 @@ public class PickingListsDTO {
          */
         private String updateUserName;
         /**
+         * 打印人
+         */
+        private String printUserName;
+        /**
+         * 打印状态
+         */
+        private String printStatus;
+        /**
+         * 打印状态名称
+         */
+        private String printStatusName;
+        /**
          * 更新时间
          */
         private LocalDateTime updateTime;
+        /**
+         * 打印时间
+         */
+        private LocalDateTime printTime;
         /**
          * 创建时间
          */
@@ -154,6 +170,15 @@ public class PickingListsDTO {
          */
         private String stagingAreaName;
         /**
+         * 打印状态
+         * PackagePrintStatusEnum
+         */
+        private String printStatus;
+        /**
+         * 打印状态名称
+         */
+        private String printStatusName;
+        /**
          * 暂存库位
          */
         private String stagingLocation;
@@ -161,11 +186,13 @@ public class PickingListsDTO {
          * 更新人
          */
         private String updateUserName;
+        private String printUserName;
 
         /**
          * 更新时间
          */
         private LocalDateTime updateTime;
+        private LocalDateTime printTime;
     }
 
 
@@ -303,6 +330,10 @@ public class PickingListsDTO {
          */
         private String warehouseLocation;
         /**
+         * 推荐仓位名称
+         */
+        private String warehouseLocationName;
+        /**
          * 明细来源Id
          */
         private String sourceDetailId;
@@ -341,7 +372,11 @@ public class PickingListsDTO {
          * 分组字段
          */
         private String groupName;
-        public void getPrintView(PickingListsEntity entity, PickingDetailEntity detail, String productName, String customerPO, String toCountry) {
+        /**
+         * 拣货备注
+         */
+        private String pickRemark;
+        public void getPrintView(PickingListsEntity entity, PickingDetailEntity detail, String productName, String customerPO, String toCountry, String pickRemark) {
             this.parentSkuNo = detail.getSkuNo();
             this.productName = productName;
             this.sourceCode = entity.getSourceCode();
@@ -352,6 +387,7 @@ public class PickingListsDTO {
             this.sourceDetailId = detail.getSourceDetailId();
             this.customerPO = customerPO;
             this.toCountry = toCountry;
+            this.pickRemark = pickRemark;
         }
     }
 
@@ -390,7 +426,7 @@ public class PickingListsDTO {
         /**
          * 客户PO号
          */
-        private String customerPo;
+        private String customerPO;
 
     }
 

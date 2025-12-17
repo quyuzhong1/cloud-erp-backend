@@ -48,6 +48,12 @@ public class TmsCfgCostEntity extends BaseEntity<TmsCfgCostEntity> {
     @TableField("is_default")
     private Boolean isDefault;
 
+    /**
+     * 是否分摊（t是，f否）
+     */
+    @TableField("is_allocate")
+    private Boolean isAllocate;
+
 
     public static final String DICT_COST_ATTRIBUTION = "dict_cost_attribution";
 

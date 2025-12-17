@@ -1,6 +1,7 @@
 package com.erp.server.wms.controller.feign;
 
 import com.common.core.controller.BaseController;
+import com.erp.model.wms.dto.FbaInventoryDTO;
 import com.erp.model.wms.entity.FbaInventoryEntity;
 import com.erp.rpc.wms.feign.WmsFbaInventoryFeign;
 import com.erp.server.wms.service.FbaInventoryService;
@@ -36,6 +37,16 @@ public class FbaInventoryFeignController extends BaseController implements WmsFb
        return fbaInventoryService.allBatchSave(inventoryEntityList);
     }
 
+    /**
+     * 获取FBA库存信息
+     *
+     * @Author zdy
+     * @Date 2025-08-20
+     **/
+    @PostMapping("/listFbaInventory")
+    public List<FbaInventoryDTO.InventoryDTO> listFbaInventory(@RequestBody FbaInventoryDTO.QueryDTO queryDTO){
+        return fbaInventoryService.listFbaInventory(queryDTO);
+    }
     /**
      * 查询FBA库存信息和预留明细列表
      *

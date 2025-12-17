@@ -1,6 +1,7 @@
 package com.erp.server.oms.controller.api;
 
 import com.common.business.dto.base.BaseIdsDTO;
+import com.common.business.threadlocal.UserContext;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.SoB2cCoreDTO;
@@ -50,6 +51,11 @@ public class SoB2cCoreController extends BaseController {
      */
     @PostMapping("/retryOutstock")
     public ApiResult<Boolean> retryOutstock(@RequestBody @Validated List<SoB2cCoreDTO.RetryOutstockDTO> list)  {
-        return success(soB2cCoreService.retryOutstock(list));
+        try {
+            UserContext.setIsUserSystem(true);
+            return success(soB2cCoreService.retryOutstock(list));
+        }finally {
+            UserContext.clearIsUserSystem();
+        }
     }
 }

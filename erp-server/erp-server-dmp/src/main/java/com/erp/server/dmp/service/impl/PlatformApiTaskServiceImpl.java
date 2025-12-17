@@ -318,7 +318,7 @@ public class PlatformApiTaskServiceImpl extends SuperServiceImpl<PlatformApiTask
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public void checkAndClosedPlatformShop(ShopInfoEntity shopInfo) {
         if (shopInfo.getDisabled()){
             return;
@@ -339,7 +339,7 @@ public class PlatformApiTaskServiceImpl extends SuperServiceImpl<PlatformApiTask
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public void checkAndClosedPlatformShopByShopId(String shopId) {
         ShopInfoEntity shopInfoEntity = shopInfoFeign.getShopInfoById(shopId);
         if (null == shopInfoEntity){

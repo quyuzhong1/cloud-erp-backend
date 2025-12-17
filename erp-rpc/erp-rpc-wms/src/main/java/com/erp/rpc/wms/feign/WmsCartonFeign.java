@@ -1,5 +1,6 @@
 package com.erp.rpc.wms.feign;
 
+import com.common.business.config.FeignErrorDecoder;
 import com.erp.model.wms.dto.WmsCartonDTO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -12,7 +13,7 @@ import java.util.List;
  * @date 2024-08-31
  * @author tanmujin
  */
-@FeignClient(name = "erp-wms", path = "/feign/wmsCarton", contextId = "wmsCartonFeign")
+@FeignClient(name = "erp-wms", path = "/feign/wmsCarton", contextId = "wmsCartonFeign",configuration = {FeignErrorDecoder.class})
 public interface WmsCartonFeign {
 
     @GetMapping("/listByPackingTaskId")

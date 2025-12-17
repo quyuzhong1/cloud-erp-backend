@@ -9,6 +9,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
+import com.common.business.constant.UserStateConstants;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -19,6 +20,7 @@ import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.TabApproveStatusEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
+import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.enums.CurrencyEnum;
@@ -208,6 +210,11 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
         if (!ApproveStatusEnum.APPROVE_ING.getStatus().equals(entity.getStatus())) {
             return BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_98006.msg);
         }
+        //当前登陆人,启用流程后可删除
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
+        if (CharSequenceUtil.equals(entity.getCreateUserId(),userInfo.getUid()) && !CharSequenceUtil.equals(entity.getCreateUserId(), UserStateConstants.USER_SYSTEM_ID)) {
+            throw new ServiceException(ApiError.WORKFLOW_APPROVE_CREATE_APPROVE_DIFF,userInfo.getUserName());
+        }
         log.info("SKU成本记录【{}】，code=【{}】", ApproveTypeEnum.getName(type), entity.getCode());
         //审核通过
         if (ApproveTypeEnum.PASS.getStatus().equals(type)) {
@@ -271,7 +278,7 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public void updateAndSubmit(InventorySkuCostDTO.UpdateDTO dto) {
         this.update(dto);
         this.submit(this.getById(dto.getId()));
@@ -331,12 +338,12 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
             log.error("导入格式错误！", e);
             throw new ServiceException(ApiError.ERROR_1016);
         }
-        List<InventorySkuCostDetailExcelDTO> excelDateList = excelListenerUtil.getExcelDateList();
-        if (CollectionUtils.isEmpty(excelDateList)) {
-            throw new ServiceException(ApiError.ERROR_95123);
-        } else if (excelDateList.size() > 5000) {
-            throw new ServiceException(ApiError.ERROR_EXCEL_IMPORT_SIZE);
-        }
+//        List<InventorySkuCostDetailExcelDTO> excelDateList = excelListenerUtil.getExcelDateList();
+//        if (CollectionUtils.isEmpty(excelDateList)) {
+//            throw new ServiceException(ApiError.ERROR_95123);
+//        } else if (excelDateList.size() > 5000) {
+//            throw new ServiceException(ApiError.ERROR_EXCEL_IMPORT_SIZE);
+//        }
         List<InventorySkuCostDetailExcelDTO> errorList = excelListenerUtil.getErrorList();
 
         List<InventorySkuCostDetailDTO.AddDTO> successList = excelListenerUtil.getSuccessList();
@@ -614,7 +621,7 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
             inventorySkuCostEntity.setExchangeRate(BigDecimal.ONE);
         }else {
             //获取dmp汇率
-            String currentDate = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+            String currentDate = inventorySkuCostEntity.getAllocatedMonth().withDayOfMonth(inventorySkuCostEntity.getAllocatedMonth().lengthOfMonth()).format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
             BigDecimal rate = dmpTaskFeign.getRate(currentDate, inventorySkuCostEntity.getCurrency());
             if (Objects.nonNull(rate)){
                 inventorySkuCostEntity.setExchangeRate(rate);
@@ -654,5 +661,23 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
         } else {
             return MathUtil.ZERO;
         }
+    }
+
+    @Override
+    public List<InventorySkuCostDTO.SkuCostCNYDTO> getSkuCostInCNY(InventorySkuCostDTO.SkuCostCNYQueryDTO queryDTO) {
+        // 参数校验
+        if (CollUtil.isEmpty(queryDTO.getSkuIds()) || CollUtil.isEmpty(queryDTO.getWarehouseIds()) || 
+            CharSequenceUtil.isBlank(queryDTO.getOrgId())) {
+            return Collections.emptyList();
+        }
+
+        // 调用Mapper查询数据
+        List<InventorySkuCostDTO.SkuCostCNYDTO> result = baseMapper.getSkuCostInCNY(
+            queryDTO.getSkuIds(), 
+            queryDTO.getWarehouseIds(), 
+            queryDTO.getOrgId()
+        );
+
+        return result != null ? result : Collections.emptyList();
     }
 }

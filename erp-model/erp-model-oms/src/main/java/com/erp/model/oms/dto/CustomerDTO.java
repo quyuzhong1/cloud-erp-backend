@@ -19,6 +19,7 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -34,6 +35,33 @@ import java.util.Map;
 public class CustomerDTO implements Serializable {
 
 
+    /**
+     * 第三方客户账户信息
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ThirdCustomerAccountDTO{
+        /**
+         * 客户id
+         */
+        private String id;
+
+        /**
+         * 账户余额
+         */
+        private BigDecimal amount;
+
+        /**
+         * 返利账户余额
+         */
+        private BigDecimal rebateAmount;
+
+        /**
+         * 授信账户余额
+         */
+        private BigDecimal creditAmount;
+
+    }
     /**
      * 分页参数
      */
@@ -286,6 +314,14 @@ public class CustomerDTO implements Serializable {
          *
          */
         private Boolean disabled;
+        /**
+         * 币种
+         */
+        private String currency;
+        /**
+         * 使用组织
+         */
+        private String useOrgId;
     }
     /**
      * 远程搜索
@@ -516,6 +552,12 @@ public class CustomerDTO implements Serializable {
          */
         @NotBlank(message = "确收方式不能为空")
          private String checkType;
+        
+        /**
+         * 军区id
+         * 下拉接口：http://172.16.100.11:3002/project/36/interface/api/34966
+         */
+        private String partitionId;
     }
 
     /**
@@ -956,6 +998,7 @@ public class CustomerDTO implements Serializable {
         /**
          * 发票信息
          */
+        @Valid
         private List<InvoiceDTO.ViewDTO> invoiceList;
 
          /**
@@ -993,6 +1036,12 @@ public class CustomerDTO implements Serializable {
          */
         @NotBlank(message = "确收方式不能为空")
          private String checkType;
+        
+        /**
+         * 军区id
+         * 下拉接口：http://172.16.100.11:3002/project/36/interface/api/34966
+         */
+        private String partitionId;
     }
 
     @Data
@@ -1179,6 +1228,41 @@ public class CustomerDTO implements Serializable {
         private String countryName;
 
         private String receiveConditionName;
+
+        /**
+         * 军区id
+         */
+        private String partitionId;
+
+        /**
+         * 军区编码
+         */
+        private String partitionCode;
+
+        /**
+         * 军区名称
+         */
+        private String partitionName;
+
+        /**
+         * 平台归属
+         */
+        private String platformType;
+
+        /**
+         * 平台归属名称
+         */
+        private String platformTypeName;
+
+        /**
+         * 平台类型:CustomerInfoBusinessModeEnum
+         */
+        private String businessMode;
+
+        /**
+         * 平台类型名称:CustomerInfoBusinessModeEnum
+         */
+        private String businessModeName;
 
         //----销售组织信息----
         /**

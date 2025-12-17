@@ -17,10 +17,7 @@ import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.dmp.dto.DictBasicDTO;
 import com.erp.model.dmp.dto.ThirdMappingDTO;
 import com.erp.model.dmp.dto.ThirdMappingDTO.ThirdAddDTO;
-import com.erp.model.dmp.entity.ThirdLogisticsEntity;
-import com.erp.model.dmp.entity.ThirdMappingEntity;
-import com.erp.model.dmp.entity.ThirdShopEntity;
-import com.erp.model.dmp.entity.ThirdWarehouseEntity;
+import com.erp.model.dmp.entity.*;
 import com.erp.model.dmp.enums.ThirdSysTypeEnum;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -42,7 +39,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.lang.reflect.Array;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -75,16 +71,16 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
     private ThirdLogisticsService thirdLogisticsService;
 //    @Resource
 //    private ThirdMappingService thirdMappingService;
-
     @Resource
     private LogisticsFeign logisticsFeign;
-
     @Resource
     private OverseasProviderFeign overseasProviderFeign;
     @Resource
     private DictBasicService dictBasicService;
+    @Resource
+    private DmpBasicSystemService dmpBasicSystemService;
 
-//    @GlobalTransactional(rollbackFor = Exception.class)
+//    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
 //    @Transactional(rollbackFor = Exception.class)
 //    @Override
 //    public BaseResultDTO.AddDTO add(ThirdMappingDTO.AddDTO addDTO) {
@@ -140,7 +136,7 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
     @Resource
     private List<ThirdMappingStrategy> addStrategies;
 
-//    @GlobalTransactional(rollbackFor = Exception.class)
+//    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
 //    @Transactional(rollbackFor = Exception.class)
 //    @Override
 //    public BaseResultDTO.AddDTO add(ThirdMappingDTO.AddDTO addDTO) {
@@ -157,12 +153,24 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
         String kingDeeCode = checkData(addDTO, addDTO.getSaveList(), addDTO.getDeleteList(), addDTO.getUpdateList());
         //删除数据
         List<ThirdMappingEntity> deleteList = addDTO.getDeleteList();
+        // 平台系统信息
+        Map<String, String> thirdPlatformSysTypeMap =  dictBasicService.lambdaQuery()
+                    .eq(DictBasicEntity::getType, "thirdPlatformSysType")
+                    .list().stream().collect(Collectors.toMap(DictBasicEntity::getValue, DictBasicEntity::getName,  (v1, v2) -> v1));
+
         if (CollectionUtils.isNotEmpty(deleteList)) {
             deleteList.forEach(existMapping -> {
                 if("logistics".equals(existMapping.getType())){
                     // 操作日志
                     String msg = StrUtil.format("编辑了【{}】的渠道由【{}】到【{}】", EnumMessage.getNameByCode(PlatformDictEnum.class, existMapping.getThirdSysType()),
                             existMapping.getThirdName(), "");
+                    operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_THIRD_MAPPING.getCode(), existMapping.getSysId(), "编辑操作");
+                } else if ("platform".equals(existMapping.getType())){
+                    String msg = StrUtil.format("解除绑定的平台【{}】：三方平台代号【{}】，三方平台【{}】",
+                            thirdPlatformSysTypeMap.getOrDefault(existMapping.getThirdSysType(), ""),
+                            existMapping.getThirdCode(),
+                            existMapping.getThirdName()
+                    );
                     operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_THIRD_MAPPING.getCode(), existMapping.getSysId(), "编辑操作");
                 }else{
                     // 操作日志
@@ -191,6 +199,14 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
                     String msg = StrUtil.format("编辑了【{}】的渠道由【{}】到【{}】", EnumMessage.getNameByCode(PlatformDictEnum.class, existMapping.getThirdSysType()),
                             oldEntity.getThirdName(), existMapping.getThirdName());
                     operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_THIRD_MAPPING.getCode(), existMapping.getSysId(), "编辑操作");
+                } else if ("platform".equals(existMapping.getType())){
+                    // 操作日志
+                    String msg = StrUtil.format("编辑绑定的平台【{}】：三方平台代号【{}】，三方平台【{}】",
+                            thirdPlatformSysTypeMap.getOrDefault(existMapping.getThirdSysType(), ""),
+                            existMapping.getThirdCode(),
+                            existMapping.getThirdName()
+                    );
+                    operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_THIRD_MAPPING.getCode(), existMapping.getSysId(), "编辑操作");
                 }else{
                     // 操作日志
                     String msg = StrUtil.format("编辑了【{}】的仓库由【{}】到【{}】", EnumMessage.getNameByCode(PlatformDictEnum.class, existMapping.getThirdSysType()),
@@ -213,6 +229,14 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
                     // 操作日志
                     String msg = StrUtil.format("编辑了【{}】的渠道由【{}】到【{}】", EnumMessage.getNameByCode(PlatformDictEnum.class, newEntity.getThirdSysType()),
                             "", newEntity.getThirdName());
+                    operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_THIRD_MAPPING.getCode(), newEntity.getSysId(), "新增操作");
+                } else if ("platform".equals(newEntity.getType())){
+                    // 操作日志
+                    String msg = StrUtil.format("新增了绑定的平台【{}】：三方平台代号【{}】，三方平台【{}】",
+                            newEntity.getSysName(),
+                            newEntity.getThirdCode(),
+                            newEntity.getThirdName()
+                    );
                     operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_THIRD_MAPPING.getCode(), newEntity.getSysId(), "新增操作");
                 }else{
                     // 操作日志
@@ -304,7 +328,7 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
 //     */
 //    @Override
 //    @Transactional(rollbackFor = Exception.class)
-//    @GlobalTransactional(rollbackFor = Exception.class)
+//    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
 //    public void deleteBinded(List<ThirdMappingEntity> existMappingList) {
 //        existMappingList.forEach(existMapping -> {
 //            // 操作日志
@@ -434,11 +458,6 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
                         }
                 )
         ));
-        if (ThirdSysTypeEnum.WAREHOUSE.getCode().equals(type)) {
-            if(thirdList.size() > 1){
-                throw new ServiceException("系统仓库不允许映射多个第三方仓");
-            }
-        }
         log.debug("校验结果：{}" , result);
     }
     @Override
@@ -486,7 +505,7 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public BaseResultDTO.AddDTO batchAdd(ThirdMappingDTO.FeignMappingDTO feignMappingDTO) {
         //查询当前类型下所有的绑定数据
         List<ThirdMappingDTO.ThirdAddDTO> bindedList = baseMapper.getByThirdSysCode(feignMappingDTO.getThirdSysType(), feignMappingDTO.getType());
@@ -741,6 +760,13 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
                 }
                 sysName = logisticsChannelEntity.getName();
                 break;
+            case PLATFORM:
+                DmpBasicSystemEntity systemEntity = dmpBasicSystemService.getById(addDTO.getSysId());
+                if (Objects.isNull(systemEntity)) {
+                    throw new ServiceException("系统为空");
+                }
+                sysName =  systemEntity.getName();
+                break;
             default:
                 throw new ServiceException(ApiError.ERROR_400);
         }
@@ -813,7 +839,7 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
             String thirdName = null;
             switch (ThirdSysTypeEnum.getByCode(type)) {
                 case WAREHOUSE:
-                    if (PlatformDictEnum.WDT.getCode().equals(thirdAddDTO.getSysType()) || PlatformDictEnum.TE_MU.getCode().equals(thirdAddDTO.getSysType())) {
+                    if (PlatformDictEnum.WDT.getCode().equals(thirdAddDTO.getSysType()) || PlatformDictEnum.TE_MU.getCode().equals(thirdAddDTO.getSysType()) || PlatformDictEnum.DHT.getCode().equals(thirdAddDTO.getSysType())) {
                         //校验第三方仓库是否存在
                         ThirdWarehouseEntity thirdWarehouseEntity = Optional.ofNullable(thirdWarehouseService.getByWarehouseId(thirdAddDTO.getThirdId(), ThirdSysTypeEnum.WAREHOUSE.getCode()))
                                 .orElseThrow(() -> new ServiceException(ApiError.ERROR_THIRD_WAREHOUSE_NOTFOUND));
@@ -865,6 +891,11 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
                     thirdName = thirdLogisticsEntity.getChannelName();
                     thirdAddDTO.setThirdInfoId(thirdLogisticsEntity.getId());
                     thirdAddDTO.setThirdCode(thirdLogisticsEntity.getChannelName());
+                    break;
+                case PLATFORM:
+                    thirdAddDTO.setThirdId(thirdAddDTO.getThirdCode());
+                    thirdAddDTO.setThirdInfoId("");
+                    thirdName = thirdAddDTO.getThirdName();
                     break;
                 default:
                     throw new ServiceException(ApiError.ERROR_400);

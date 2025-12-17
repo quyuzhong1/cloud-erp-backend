@@ -3,12 +3,16 @@ package com.erp.server.oms.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.common.business.dto.PlatformB2bOrderDetailDTO;
+import com.common.business.enums.PlatformDictEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.StrUtils;
+import com.erp.model.oms.dto.ListingInfoParamDTO;
+import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.dto.SoChangeDetailDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.SoChangeTypeEnum;
@@ -93,21 +97,53 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
 
     @Resource
     private ScmTaskFeign scmTaskFeign;
+    @Resource
+    private SkuMappingService skuMappingService;
+
+    @Resource
+    private CustomerInfoService customerInfoService;
 
     /**
      * 添加变更详情信息
      *
-     * @param mainId
      * @param detailList
      * @return void
      * @author yl
      * @date 2023-05-24 14:12
      */
     @Override
-    public void addDetailList(String mainId, List<SoChangeDetailDTO.AddDTO> detailList) {
+    public void addDetailList(SoChangeEntity soChange, List<SoChangeDetailDTO.AddDTO> detailList) {
         if (CollectionUtils.isEmpty(detailList)) {
             return;
         }
+        String mainId = soChange.getId();
+        //如果是订货通平台，则明细的平台sku不能为空
+        SoInfoEntity soInfo = soInfoService.getById(soChange.getSoId());
+        if(soInfo.getDictPlatform().equals(PlatformDictEnum.DHT.getCode()) || customerInfoService.isSyncDht(soInfo.getCustomerId())){
+            for (SoChangeDetailDTO.AddDTO item : detailList) {
+                if(StringUtils.isBlank(item.getPlatformSkuNo())){
+                    throw new ServiceException("订货通平台的变更明细，平台sku不能为空");
+                }
+            }
+            //校验映射关系是否正确
+            ListingInfoParamDTO listingInfoParamDTO = new ListingInfoParamDTO();
+            List<String> platformSkuNoList = detailList.stream().map(SoChangeDetailDTO.AddDTO::getPlatformSkuNo).distinct().collect(Collectors.toList());
+            listingInfoParamDTO.setPlatformSkuNoList(platformSkuNoList);
+            listingInfoParamDTO.setPlatform(soInfo.getDictPlatform());
+            List<ListingInfoWithSkuMappingDTO> mappingDTOList = skuMappingService.findListDto(listingInfoParamDTO);
+            for (SoChangeDetailDTO.AddDTO addDTO : detailList) {
+                if(StringUtils.isNotBlank(addDTO.getPlatformSkuNo())) {
+                    List<ListingInfoWithSkuMappingDTO> collect = mappingDTOList.stream().filter(e -> e.getPlatformSkuNo().equals(addDTO.getPlatformSkuNo())).collect(Collectors.toList());
+                    if(CollUtil.isEmpty(collect)){
+                        throw new ServiceException("平台sku："+addDTO.getPlatformSkuNo()+"，未匹配到映射关系");
+                    }
+                    if(!collect.get(0).getProductSkuId().equals(addDTO.getSkuId())){
+                        throw new ServiceException("平台sku："+addDTO.getPlatformSkuNo()+"，映射的产品sku与变更明细的产品sku不一致");
+                    }
+                }
+            }
+        }
+
         List<SoChangeDetailEntity> addList = new ArrayList<>(detailList.size());
         //销售订单的详情id 集合
         List<String> soDetailIdList = detailList.stream().map(SoChangeDetailDTO.AddDTO::getSoDetailId).collect(Collectors.toList());
@@ -166,6 +202,7 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
             String skuNo = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().
                     flatMap(obj -> Optional.ofNullable(obj.getSkuNo())).orElse("");
             soChangeDetail.setSkuNo(skuNo);
+            soChangeDetail.setPlatformSkuNo(item.getPlatformSkuNo());
             addList.add(soChangeDetail);
         }
         this.saveBatch(addList);
@@ -203,6 +240,7 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
                 variantProperty = sku.getVariantProperty();
             }
             item.setUnit(unit);
+            item.setUnitName(unit);
             item.setProductName(productName);
             item.setVariantProperty(variantProperty);
             //税率
@@ -283,6 +321,7 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
                 String skuId = item.getSkuId();
                 view.setSkuId(skuId);
                 view.setSkuNo(item.getSkuNo());
+                view.setPlatformSkuNo(item.getPlatformSkuNo());
                 view.setSoDetailId(item.getId());
                 SkuVO sku = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().orElse(null);
                 String unit = "";
@@ -294,6 +333,7 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
                     variantProperty = sku.getVariantProperty();
                 }
                 view.setUnit(unit);
+                view.setUnitName(unit);
                 view.setProductName(productName);
                 view.setVariantProperty(variantProperty);
                 viewList.add(view);
@@ -366,6 +406,7 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
             String skuId = item.getSkuId();
             view.setSkuId(skuId);
             view.setSkuNo(item.getSkuNo());
+            view.setPlatformSkuNo(item.getPlatformSkuNo());
             view.setSoDetailId(item.getId());
 
             //即时库存
@@ -403,17 +444,10 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
             view.setDeliveryQty(deliveryQty);
             view.setWaitQty(waitQty);
             SkuVO sku = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().orElse(null);
-            String unit = "";
-            String productName = "";
-            String variantProperty = "";
-            if (sku != null) {
-                unit = sku.getUnitName();
-                productName = sku.getSkuName();
-                variantProperty = sku.getVariantProperty();
-            }
-            view.setUnit(unit);
-            view.setProductName(productName);
-            view.setVariantProperty(variantProperty);
+            view.setUnit(Objects.nonNull(sku) ? sku.getUnitName() : "");
+            view.setUnitName(Objects.nonNull(sku) ? sku.getUnitName() : "");
+            view.setProductName(Objects.nonNull(sku) ? sku.getSkuName() : "");
+            view.setVariantProperty(Objects.nonNull(sku) ? sku.getVariantProperty() : "");
             viewList.add(view);
         }
         return viewList;
@@ -456,7 +490,7 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
      * @date 2023-05-25 17:44
      */
     @Override
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     public void handleDb(List<SoChangeEntity> list) {
         if (CollectionUtils.isEmpty(list)) {
@@ -540,6 +574,7 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
                 soDetail.setIsReissue(item.getIsReissue());
                 soDetail.setRemark(item.getRemark());
                 soDetail.setMainId(soId);
+                soDetail.setPlatformSkuNo(item.getPlatformSkuNo());
                 //添加的话id 为null
                 if (addType.equals(changeType)) {
                     soDetail.setId(null);
@@ -795,9 +830,36 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void updateDetailList(String mainId, List<SoChangeDetailDTO.UpdateDTO> detailList) {
+    public void updateDetailList(SoChangeEntity soChange, List<SoChangeDetailDTO.UpdateDTO> detailList) {
         if (CollectionUtils.isEmpty(detailList)) {
             return;
+        }
+        String mainId = soChange.getId();
+        //如果是订货通平台，则明细的平台sku不能为空
+        SoInfoEntity soInfo = soInfoService.getById(soChange.getSoId());
+        if(soInfo.getDictPlatform().equals(PlatformDictEnum.DHT.getCode()) || customerInfoService.isSyncDht(soInfo.getCustomerId())){
+            for (SoChangeDetailDTO.AddDTO item : detailList) {
+                if(StringUtils.isBlank(item.getPlatformSkuNo())){
+                    throw new ServiceException("订货通平台的变更明细，平台sku不能为空");
+                }
+            }
+            //校验映射关系是否正确
+            ListingInfoParamDTO listingInfoParamDTO = new ListingInfoParamDTO();
+            List<String> platformSkuNoList = detailList.stream().map(SoChangeDetailDTO.AddDTO::getPlatformSkuNo).distinct().collect(Collectors.toList());
+            listingInfoParamDTO.setPlatformSkuNoList(platformSkuNoList);
+            listingInfoParamDTO.setPlatform(soInfo.getDictPlatform());
+            List<ListingInfoWithSkuMappingDTO> mappingDTOList = skuMappingService.findListDto(listingInfoParamDTO);
+            for (SoChangeDetailDTO.AddDTO addDTO : detailList) {
+                if(StringUtils.isNotBlank(addDTO.getPlatformSkuNo())) {
+                    List<ListingInfoWithSkuMappingDTO> collect = mappingDTOList.stream().filter(e -> e.getPlatformSkuNo().equals(addDTO.getPlatformSkuNo())).collect(Collectors.toList());
+                    if(CollUtil.isEmpty(collect)){
+                        throw new ServiceException("平台sku："+addDTO.getPlatformSkuNo()+"，未匹配到映射关系");
+                    }
+                    if(!collect.get(0).getProductSkuId().equals(addDTO.getSkuId())){
+                        throw new ServiceException("平台sku："+addDTO.getPlatformSkuNo()+"，映射的产品sku与变更明细的产品sku不一致");
+                    }
+                }
+            }
         }
         List<SoChangeDetailEntity> saveOrUpdateList = new ArrayList<>(detailList.size());
         //这是修改的

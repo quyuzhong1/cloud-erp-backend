@@ -22,6 +22,7 @@ import com.erp.server.plm.service.CommonService;
 import com.erp.server.plm.service.ProductOperateRecordService;
 import com.erp.server.plm.service.ProjectMembersService;
 import com.google.common.collect.Maps;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -129,7 +130,7 @@ public class CommonController extends BaseController {
      * @return ApiResult<List<String>>
      */
     @LogAction(value = LogActionEnum.UPLOAD, desc = "上传图片:文件名={name}")
-    @PostMapping("/uploadImg")
+    @PostMapping(value = "/uploadImg", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ApiResult<List<String>> uploadImg(@RequestParam("multipartFile") MultipartFile[] multipartFile, HttpServletRequest request) {
         List<String> list = commonService.uploadImg(multipartFile);
         return this.success(list);

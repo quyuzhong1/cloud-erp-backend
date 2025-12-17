@@ -1,10 +1,10 @@
 package com.erp.rpc.plm.feign;
 
+import com.common.business.config.FeignErrorDecoder;
 import com.erp.model.plm.entity.ProductPackEntity;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -15,13 +15,12 @@ import java.util.Map;
  * @date 2024-08-23
  * @author tanmujin
  */
-@FeignClient(name = "erp-plm", contextId = "productPack")
-@RequestMapping("/feign/productPack")
+@FeignClient(name = "erp-plm", contextId = "productPackFeign",configuration = {FeignErrorDecoder.class})
 public interface ProductPackFeign {
 
-    @PostMapping("/listBySkuIds")
+    @PostMapping("/feign/productPack/listBySkuIds")
     List<ProductPackEntity> listBySkuIds(@RequestBody List<String> skuIds);
 
-    @PostMapping("/listSingleBySkuIds")
+    @PostMapping("/feign/productPack/listSingleBySkuIds")
     Map<String, BigDecimal> listSingleBySkuIds(@RequestBody List<String> skuIds);
 }

@@ -25,4 +25,6 @@ public interface ExportSysFeign {
     PagingVO<ThirdNoticePushRecordDTO.ListDTO> exportCfgThirdNoticePushRecord(@RequestBody PagingDTO<ThirdNoticePushRecordDTO.PagingParamDTO> dto);
     @PostMapping("/feign/export/exportTemplateManagement")
     PagingVO<TemplateManagementDTO.ListDTO> exportTemplateManagement(@RequestBody PagingDTO<TemplateManagementDTO.PagingParamDTO> dto);
+    @PostMapping("/feign/export/exportDictBasicAll")
+    PagingVO<DictBasicAllDTO.ViewDTO> exportDictBasicAll(@RequestBody PagingDTO<DictBasicAllDTO.PagingParamDTO> dto);
 }

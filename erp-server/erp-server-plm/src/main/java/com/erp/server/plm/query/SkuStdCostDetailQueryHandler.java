@@ -1,0 +1,83 @@
+package com.erp.server.plm.query;
+
+import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.QueryConditionEnum;
+import com.common.business.enums.QueryDataTypeEnum;
+import com.common.business.enums.SourceTypeEnum;
+import com.common.business.query.AbstractQueryHandler;
+import com.common.business.threadlocal.AdvanceQueryContext;
+import com.common.business.utils.QueryUtils;
+import com.erp.model.plm.enums.SkuStdCostTabEnum;
+import com.erp.model.scm.enums.PurchasePriceTabFlagEnum;
+import com.erp.server.plm.service.CommonService;
+import org.apache.commons.collections4.CollectionUtils;
+import org.springframework.stereotype.Component;
+
+import javax.annotation.Resource;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+/**
+ *
+ */
+@Component
+public class SkuStdCostDetailQueryHandler extends AbstractQueryHandler {
+
+    @Resource
+    private CommonService commonService;
+
+    @Override
+    protected String handleSqlLogic(String field, Object value, String compareCodeSplicingValueSql) {
+        QueryConditionEnum queryConditionEnum = AdvanceQueryContext.getCompareCode();
+        //选项卡
+        if ("tab".equals(field)) {
+            return getTabSql(value);
+        }
+        if ("ps.sale_state".equals(field)){
+            if (QueryConditionEnum.IS_NULL.equals(queryConditionEnum)){
+                return "ps.sale_state is null";
+            }
+            if (QueryConditionEnum.NOT_NULL.equals(queryConditionEnum)){
+                return "ps.sale_state is not null";
+            }
+            return " ps.sale_state " + compareCodeSplicingValueSql;
+        }
+        return null;
+    }
+
+    /**
+     * 获取选项卡对应的SQL
+     */
+    public String getTabSql(Object value) {
+        // 全部(sku对应最新)
+        if (SkuStdCostTabEnum.ALL.getCode().equals(value)) {
+            super.buildSplicingSQLDTO("rn", QueryConditionEnum.EQ, 1, QueryDataTypeEnum.NUMBER);
+        }
+
+        //待我审核
+        if (SkuStdCostTabEnum.TO_BE_APPROVE.getCode().equals(value)) {
+            super.buildDefaultDTO("sscd.approve_status", Collections.singletonList(ApproveStatusEnum.APPROVE_ING.getStatus()));
+            //需要审核的业务ids
+            List<String> businessIds = commonService.listProcessCurBusinessIds(SourceTypeEnum.SKU_STD_COST_DETAIL.getCode());
+            if (CollectionUtils.isNotEmpty(businessIds)) {
+                super.buildDefaultDTO("sscd.id", businessIds);
+            } else {
+                //返回空结果
+                return this.getQueryEmptySql();
+            }
+        }
+        //已审核
+        if (SkuStdCostTabEnum.APPROVE.getCode().equals(value)) {
+            super.buildDefaultDTO("sscd.approve_status", Collections.singletonList(ApproveStatusEnum.APPROVE.getStatus()));
+        }
+        // 不通过
+        if (SkuStdCostTabEnum.REJECT.getCode().equals(value)) {
+            super.buildDefaultDTO("sscd.approve_status", Collections.singletonList(ApproveStatusEnum.REJECT.getStatus()));
+        }
+        // 历史(包含所有)
+        return super.getSplicingSQL();
+    }
+
+}
+

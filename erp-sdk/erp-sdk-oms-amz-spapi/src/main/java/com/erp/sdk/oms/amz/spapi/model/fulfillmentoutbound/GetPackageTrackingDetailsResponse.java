@@ -10,20 +10,25 @@
  * Do not edit the class manually.
  */
 
-
 package com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound;
 
-import com.erp.sdk.oms.amz.spapi.model.ErrorList;
-import com.google.gson.annotations.SerializedName;
-
-
 import java.util.Objects;
+import java.util.Arrays;
+import com.google.gson.TypeAdapter;
+import com.google.gson.annotations.JsonAdapter;
+import com.google.gson.annotations.SerializedName;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonWriter;
+import com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound.ErrorList;
+import com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound.PackageTrackingDetails;
 
+import java.io.IOException;
 /**
- * The response schema for the getPackageTrackingDetails operation.
+ * The response schema for the &#x60;getPackageTrackingDetails&#x60; operation.
  */
 
-@javax.annotation.Generated(value = "io.swagger.codegen.languages.JavaClientCodegen", date = "2020-12-15T20:44:18.412+08:00")
+@javax.annotation.Generated(value = "io.swagger.codegen.v3.generators.java.JavaClientCodegen", date = "2025-08-18T09:55:11.594451100+08:00[Asia/Shanghai]")
+
 public class GetPackageTrackingDetailsResponse {
   @SerializedName("payload")
   private PackageTrackingDetails payload = null;
@@ -37,10 +42,10 @@ public class GetPackageTrackingDetailsResponse {
   }
 
    /**
-   * The payload for the getPackageTrackingDetails operation.
+   * Get payload
    * @return payload
   **/
-
+  
   public PackageTrackingDetails getPayload() {
     return payload;
   }
@@ -55,10 +60,10 @@ public class GetPackageTrackingDetailsResponse {
   }
 
    /**
-   * One or more unexpected errors occurred during the getPackageTrackingDetails operation.
+   * Get errors
    * @return errors
   **/
-
+  
   public ErrorList getErrors() {
     return errors;
   }
@@ -69,7 +74,7 @@ public class GetPackageTrackingDetailsResponse {
 
 
   @Override
-  public boolean equals(Object o) {
+  public boolean equals(java.lang.Object o) {
     if (this == o) {
       return true;
     }
@@ -102,7 +107,7 @@ public class GetPackageTrackingDetailsResponse {
    * Convert the given object to string with each line indented by 4 spaces
    * (except the first line).
    */
-  private String toIndentedString(Object o) {
+  private String toIndentedString(java.lang.Object o) {
     if (o == null) {
       return "null";
     }
@@ -110,4 +115,3 @@ public class GetPackageTrackingDetailsResponse {
   }
 
 }
-

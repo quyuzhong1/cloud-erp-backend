@@ -65,6 +65,11 @@ public class FeignBuilder {
         queryParams.add(new QueryParam(QueryTypeEnum.IN, getColumn(function), values));
         return this;
     }
+
+    public <T extends BaseEntity<T>> FeignBuilder notIn(String name, Object... values) {
+        queryParams.add(new QueryParam(QueryTypeEnum.NOT_IN, name, values));
+        return this;
+    }
     
     public <T extends BaseEntity<T>> FeignBuilder notIn(SFunction<T, ?> function, Object... values) {
         queryParams.add(new QueryParam(QueryTypeEnum.NOT_IN, getColumn(function), values));
@@ -134,6 +139,10 @@ public class FeignBuilder {
         return this;
     }
 
+    public <T extends BaseEntity<T>> FeignBuilder ne(String name, Object value) {
+        queryParams.add(new QueryParam(QueryTypeEnum.NE, name, value));
+        return this;
+    }
     
     public <T extends BaseEntity<T>> FeignBuilder ne(SFunction<T, ?> function, Object value) {
         queryParams.add(new QueryParam(QueryTypeEnum.NE, getColumn(function), value));
@@ -148,6 +157,10 @@ public class FeignBuilder {
         return this;
     }
 
+    public <T extends BaseEntity<T>> FeignBuilder le(String name, Object value) {
+        queryParams.add(new QueryParam(QueryTypeEnum.LE, name, value));
+        return this;
+    }
     
     public <T extends BaseEntity<T>> FeignBuilder le(SFunction<T, ?> function, Object value) {
         queryParams.add(new QueryParam(QueryTypeEnum.LE, getColumn(function), value));
@@ -162,8 +175,11 @@ public class FeignBuilder {
         return this;
     }
 
+    public <T extends BaseEntity<T>> FeignBuilder ge(String name, Object value) {
+        queryParams.add(new QueryParam(QueryTypeEnum.GE, name, value));
+        return this;
+    }
 
-    
     public <T extends BaseEntity<T>> FeignBuilder ge(SFunction<T, ?> function, Object value) {
         queryParams.add(new QueryParam(QueryTypeEnum.GE, getColumn(function), value));
         return this;
@@ -177,7 +193,10 @@ public class FeignBuilder {
         return this;
     }
 
-
+    public <T extends BaseEntity<T>> FeignBuilder lt(String name, Object value) {
+        queryParams.add(new QueryParam(QueryTypeEnum.LT, name, value));
+        return this;
+    }
     
     public <T extends BaseEntity<T>> FeignBuilder lt(SFunction<T, ?> function, Object value) {
         queryParams.add(new QueryParam(QueryTypeEnum.LT, getColumn(function), value));
@@ -192,6 +211,10 @@ public class FeignBuilder {
         return this;
     }
 
+    public <T extends BaseEntity<T>> FeignBuilder like(String name, Object value) {
+        queryParams.add(new QueryParam(QueryTypeEnum.LIKE, name, value));
+        return this;
+    }
     
 	public <T extends BaseEntity<T>> FeignBuilder like(SFunction<T, ?> function, Object value) {
     	queryParams.add(new QueryParam(QueryTypeEnum.LIKE, getColumn(function), value));
@@ -206,13 +229,16 @@ public class FeignBuilder {
         return this;
 	}
 
-    
+    public <T extends BaseEntity<T>> FeignBuilder gt(String name, Object value) {
+        queryParams.add(new QueryParam(QueryTypeEnum.GT, name, value));
+        return this;
+    }
+
     public <T extends BaseEntity<T>> FeignBuilder gt(SFunction<T, ?> function, Object value) {
         queryParams.add(new QueryParam(QueryTypeEnum.GT, getColumn(function), value));
         return this;
     }
 
-    
     public <T extends BaseEntity<T>> FeignBuilder gt(boolean isTure, SFunction<T, ?> function, Object value) {
         if (isTure) {
             queryParams.add(new QueryParam(QueryTypeEnum.GT, getColumn(function), value));

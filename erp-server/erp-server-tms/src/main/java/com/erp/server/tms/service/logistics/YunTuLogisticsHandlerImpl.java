@@ -75,6 +75,10 @@ public class YunTuLogisticsHandlerImpl extends AbstractLogisticsHandler {
     public ApiResult<LogisticsOrderResponseVO> createOrder(LogisticsOrderVO logisticsOrderVO) {
         YunTuCreateOrderRequest request = LogisticsOrderConverter.INSTANCE.orderRequestByYunTu(logisticsOrderVO);
         request.setTaxNumber(getTaxNumberByCountry(logisticsOrderVO.getCountry(), logisticsOrderVO.getVoecTaxNo(), request.getTaxNumber()));
+        request.setPlatform(YunTuCreateOrderRequest.Platform.builder()
+                        .platformName(logisticsOrderVO.getDictPlatform())
+                        .platformCode(logisticsOrderVO.getDictPlatform())
+                .build());
         ValidatorUtil.validateEntity(request);
         String iossCode = request.getIossCode();
         if(!logisticsOrderVO.getLogisticsChannelEntity().getIsIossPrepay()){
@@ -205,9 +209,10 @@ public class YunTuLogisticsHandlerImpl extends AbstractLogisticsHandler {
      */
     @Override
     public ApiResult<List<LogisticsOrderResponseVO>> queryOrderList(List<LogisticsQueryBaseVO> logisticsQueryVOList) {
-        List<String> deliveryList = logisticsQueryVOList.stream().map(LogisticsQueryBaseVO :: getTransportNo).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+        List<String> deliveryList = logisticsQueryVOList.stream().map(LogisticsQueryBaseVO :: getDeliveryNo).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+        List<String> pushPlatformCodeList = logisticsQueryVOList.stream().map(LogisticsQueryBaseVO :: getPushPlatformCode).filter(StringUtils::isNotBlank).collect(Collectors.toList());
         YunTuGetTrackingNumRequest request = YunTuGetTrackingNumRequest.builder()
-                .customerOrderNumber(String.join(",", deliveryList))
+                .customerOrderNumber(String.join(",", pushPlatformCodeList))
                 .build();
         ValidatorUtil.validateEntity(request);
         List<LogisticsOrderResponseVO> responseList = new ArrayList<>();

@@ -11,9 +11,10 @@ import com.common.core.utils.FastJsonUtil;
 import com.common.message.enums.ApiModuleTypeEnum;
 import com.erp.model.dmp.entity.PlatformEntity;
 import com.erp.model.dmp.enums.KingdeeDocStatusEnum;
-import com.erp.model.dmp.enums.KingdeePushModuleEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
+import com.erp.sdk.third.kingdee.utils.KingdeeApi;
 import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
+import com.erp.sdk.third.kingdee.utils.KingdeePushModuleEnum;
 import com.erp.sdk.third.kingdee.utils.KingdeeUtils;
 import com.erp.server.dmp.push.service.business.KingdeeSysDeptConsumerService;
 import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
@@ -43,6 +44,7 @@ public class KingdeeSysDeptConsumerServiceImpl implements KingdeeSysDeptConsumer
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @KingdeeApi
     public void executeConsumer(Map<String, Object> map) {
         //模块类型
         Integer type = ApiModuleTypeEnum.SYS_DEPARTMENT.getCode();
@@ -111,7 +113,7 @@ public class KingdeeSysDeptConsumerServiceImpl implements KingdeeSysDeptConsumer
             //未查找到数据，新增数据
             JSONObject firstJson = json;
             //更新数据
-            kingdeeCommonService.saveOrUpdate(platformEntity,map,apiUtils,json,param,type);
+            kingdeeCommonService.saveAndAutoApprove(platformEntity,map,apiUtils,json,param,type);
             return;
         }
         //查找到数据后，判断其审核状态
@@ -130,7 +132,7 @@ public class KingdeeSysDeptConsumerServiceImpl implements KingdeeSysDeptConsumer
             ArrayList<String> apiFieldList = (ArrayList) Arrays.stream(allKey.toString().split(",")).collect(Collectors.toList());
             param.setNeedUpDateFields(apiFieldList);
             //更新数据
-            kingdeeCommonService.saveOrUpdate(platformEntity, map, apiUtils, json, param, type);
+            kingdeeCommonService.saveAndAutoApprove(platformEntity, map, apiUtils, json, param, type);
         }
     }
 

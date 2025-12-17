@@ -376,4 +376,27 @@ public class PoReconciliationScmController extends BaseController {
         PoReconciliationDetailDTO.ImportDTO result = poReconciliationScmService.importFile(excelFile,id, response);
         return success(result);
     }
+
+
+    /**
+     * 采购对账单-导出明细Excel
+     * @author will
+     * @date 2025/8/12 16:19
+     * @param dto
+     * @param response
+     * @return ApiResult<Boolean>
+     */
+    @PostMapping("/exportDetailList")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "srm:poReconciliation:scm:paging",
+            tableAlias = "pr"
+    )
+    @LogAction(value = LogActionEnum.EXPORT, desc = "采购对账单-导出明细Excel数据")
+    @WebAdvanceQuery(handler = PoReconciliationScmQueryHandler.class)
+    public ApiResult<Boolean> exportDetailList(@RequestBody @Validated PoReconciliationDTO.PagingParamDTO dto, HttpServletResponse response) {
+        return success(poReconciliationScmService.exportDetailList(dto,response));
+    }
+
+
 }

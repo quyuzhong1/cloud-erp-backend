@@ -140,7 +140,7 @@ public interface CustomerB2cService extends SuperService<CustomerB2cEntity> {
      * @param ids
      * @return java.lang.Boolean
      */
-    Boolean deleteByIds(List<String> ids);
+    List<BatchResultDTO> deleteByIds(List<String> ids);
 
     
     /**

@@ -11,11 +11,15 @@ import com.erp.model.dmp.dto.ThridUserInfoDTO;
 import com.erp.rpc.dmp.feign.AfterSaleFeign;
 import com.erp.rpc.oms.feign.OmsDropDownFeign;
 import com.erp.server.auth.config.OpenApi;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import javax.annotation.Resource;
+import javax.validation.ConstraintViolation;
 import javax.validation.Valid;
+import javax.validation.Validator;
 import java.util.List;
+import java.util.Set;
 
 /**
  * 售后申请表
@@ -30,6 +34,9 @@ public class AfterSaleOpenApi {
     private AfterSaleFeign afterSaleFeign;
     @Resource
     private OmsDropDownFeign omsDropDownFeign;
+
+    @Resource
+    private Validator validator;
 
 
     /**
@@ -84,6 +91,12 @@ public class AfterSaleOpenApi {
         dto.setType("wx");
         if(CollUtil.isEmpty(dto.getDetailList()) && CollUtil.isEmpty(dto.getAttachmentList())){
             return  ApiResult.error(500, "sku明细或图片附件至少填写一种");
+        }
+        // 手动校验参数
+        Set<ConstraintViolation<AfterSaleDTO.AddDTO>> violations = validator.validate(dto);
+        if (!violations.isEmpty()) {
+            ConstraintViolation<AfterSaleDTO.AddDTO> firstViolation = violations.iterator().next();
+            return ApiResult.error(500, firstViolation.getMessage());
         }
         return afterSaleFeign.add(dto);
     }

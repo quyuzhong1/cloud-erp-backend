@@ -18,6 +18,7 @@ import java.util.stream.Collectors;
 
 import javax.annotation.Resource;
 
+import com.erp.model.dmp.constant.DmpOutputConstant;
 import com.erp.model.dmp.entity.*;
 import com.erp.model.dmp.enums.*;
 import com.erp.server.dmp.service.DmpOutputTaskRecordMergeService;
@@ -185,6 +186,10 @@ public abstract class DmpOutputTaskHandler extends DmpOutputHandler{
 			String requestData = next.getRequestData();
 			if(StringUtils.isNotBlank(requestData)) {
 				JSONObject parseObject = JSON.parseObject(requestData);
+				Boolean isQuerySync = parseObject.getBoolean(DmpOutputConstant.IS_QUERY_SYNC);
+				if (isQuerySync != null && isQuerySync) {
+					continue;
+				}
 				if("1801574477567165866".equals(systemId)) {
 					String status = parseObject.getString("status");
 					if(isRetryPush && "已删除".equals(status)) {
@@ -230,7 +235,7 @@ public abstract class DmpOutputTaskHandler extends DmpOutputHandler{
     		return;
     	}
 		
-		pushDmpOutputTaskRecordEntityList.sort((d1 , d2) -> d1.getUpdateTime().compareTo(d2.getUpdateTime()));
+		pushDmpOutputTaskRecordEntityList.sort((d1 , d2) -> d1.getCreateTime().compareTo(d2.getCreateTime()));
 		dmpOutputExecutorPool.execute(() -> {
 			int i = 0;
 	    	Integer pushRate = dmpCfgOutputEntity.getPushRate();
@@ -317,23 +322,36 @@ public abstract class DmpOutputTaskHandler extends DmpOutputHandler{
 			if(CollUtil.isNotEmpty(dmpCfgOutputBlackEntityList)) {
 				JSONObject parseObject = JSON.parseObject(JSON.toJSONString(object));
 				for(DmpCfgOutputBlackEntity dmpCfgOutputBlackEntity : dmpCfgOutputBlackEntityList) {
-					String fieldName = dmpCfgOutputBlackEntity.getFieldName();
-					if(StringUtils.isBlank(fieldName)) {
-						return false;
-					}
-					String[] fieldNameArr = fieldName.split("\\.");
-					if(fieldNameArr.length > 1) {
-						String className = fieldNameArr[0];
-						if(!object.getClass().getSimpleName().equalsIgnoreCase(className)) {
-							return false;
+					String[] dataTypeList = dmpCfgOutputBlackEntity.getDataType().split("&&");
+					String[] compareSignList = dmpCfgOutputBlackEntity.getCompareSign().split("&&");
+					String[] fieldNameList = dmpCfgOutputBlackEntity.getFieldName().split("&&");
+					String[] fieldValueList = dmpCfgOutputBlackEntity.getFieldValue().split("&&");
+					boolean outputBlack = false;
+					for (int i = 0; i < dataTypeList.length; i++) {
+						String fieldName = fieldNameList[i];
+						if(StringUtils.isBlank(fieldName)) {
+							continue;
+						}
+						String[] fieldNameArr = fieldName.split("\\.");
+						if(fieldNameArr.length > 1) {
+							String className = fieldNameArr[0];
+							if(!object.getClass().getSimpleName().equalsIgnoreCase(className)) {
+								continue;
+							}
+						}
+						String key = fieldNameArr[fieldNameArr.length - 1];
+						if(StringUtils.isBlank(key)) {
+							continue;
+						}
+						Object value = parseObject.get(key);
+						if(this.validate(value, dataTypeList[i] , compareSignList[i] , fieldValueList[i])) {
+							outputBlack = true;
+						}else {
+							outputBlack = false;
+							break;
 						}
 					}
-					String key = fieldNameArr[fieldNameArr.length - 1];
-					if(StringUtils.isBlank(key)) {
-						return false;
-					}
-					Object value = parseObject.get(key);
-					if(this.validate(value, dmpCfgOutputBlackEntity)) {
+					if(outputBlack) {
 						return true;
 					}
 				}
@@ -342,12 +360,10 @@ public abstract class DmpOutputTaskHandler extends DmpOutputHandler{
 		return false;
 	}
 	
-	private boolean validate(Object value , DmpCfgOutputBlackEntity dmpCfgOutputBlackEntity) {
+	private boolean validate(Object value , String dataType , String compareSign ,  String fieldValue) {
 		if(isNotValidate) {
 			return false;
 		}
-		String compareSign = dmpCfgOutputBlackEntity.getCompareSign();
-		String dataType = dmpCfgOutputBlackEntity.getDataType();
 		if(StringUtils.isBlank(compareSign) || StringUtils.isBlank(dataType)) {
 			return true;
 		}
@@ -364,7 +380,6 @@ public abstract class DmpOutputTaskHandler extends DmpOutputHandler{
 				|| DmpCfgOutputBlackCompareSignEnum.BE.getCode().equals(compareSign)){
 			if(value != null) {
 				String valueString = value.toString();
-				String fieldValue = dmpCfgOutputBlackEntity.getFieldValue();
 				if(DmpCfgOutputBlackDataTypeEnum.STRING.getCode().equals(dataType)) {
 					if(DmpCfgOutputBlackCompareSignEnum.EQ.getCode().equals(compareSign)) {
 						return StringUtils.equals(valueString, fieldValue);

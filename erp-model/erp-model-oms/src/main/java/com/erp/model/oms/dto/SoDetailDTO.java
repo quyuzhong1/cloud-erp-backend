@@ -36,6 +36,11 @@ public class SoDetailDTO implements Serializable {
          */
         @NotBlank(message = "sku不能为空", groups = {AddGroup.class})
         private String skuId;
+        /**
+         * 单位
+         */
+        @NotBlank(message = "单位不能为空", groups = {AddGroup.class})
+        private String unitName;
 
         /**
          * 销售数量
@@ -84,15 +89,26 @@ public class SoDetailDTO implements Serializable {
 
 
         /**
-         * 平台sku no
+         * 客户sku
+         */
+        private String customerSkuNo;
+        /**
+         * 平台sku
          */
         private String platformSkuNo;
+
+        private String platformDetailId;
 
         /**
          * 备注
          */
         @Size(max = 200, message = "备注最大200字符")
         private String remark;
+        /**
+         * 拣货备注
+         */
+        @Size(max = 200, message = "拣货备注最大200字符")
+        private String pickRemark;
 
         /**
          * 采购单价
@@ -141,6 +157,11 @@ public class SoDetailDTO implements Serializable {
          * 目的地
          */
         private String toCountry;
+
+        /**
+         * 来源明细ID
+         */
+        private String sourceDetailId;
     }
 
 
@@ -182,10 +203,28 @@ public class SoDetailDTO implements Serializable {
         private String skuNo;
 
         /**
-         * 平台sku no
+         * SPU ID
+         */
+        private String spuId;
+
+        /**
+         * SPU编号
+         */
+        private String spuNo;
+
+        /**
+         * SPU名称
+         */
+        private String spuName;
+
+        /**
+         * 客户sku
+         */
+        private String customerSkuNo;
+        /**
+         * 平台sku
          */
         private String platformSkuNo;
-
         /**
          * 产品名称
          */
@@ -277,7 +316,12 @@ public class SoDetailDTO implements Serializable {
         /**
          * 单位
          */
+        @Deprecated
         private String unit;
+        /**
+         * 单位名称
+         */
+        private String unitName;
 
         /**
          * 销售金额
@@ -331,6 +375,10 @@ public class SoDetailDTO implements Serializable {
          * 备注
          */
         private String remark;
+        /**
+         * 拣货备注
+         */
+        private String pickRemark;
 
         /**
          * 采购单价
@@ -522,6 +570,7 @@ public class SoDetailDTO implements Serializable {
         private String id;
 
 
+        private String platformDetailId;
         /**
          * sku id
          */
@@ -573,7 +622,15 @@ public class SoDetailDTO implements Serializable {
          */
         private Boolean isClose;
 
+        /**
+         * 平台sku
+         */
         private String platformSkuNo;
+
+        /**
+         * 客户sku
+         */
+        private String customerSkuNo;
         /**
          * 采购单价
          */
@@ -609,6 +666,11 @@ public class SoDetailDTO implements Serializable {
          */
         @Size(max = 200, message = "备注最大200字符")
         private String remark;
+        /**
+         * 拣货备注
+         */
+        @Size(max = 200, message = "拣货备注最大200字符")
+        private String pickRemark;
         /**
          * 客户PO号
          */
@@ -796,7 +858,12 @@ public class SoDetailDTO implements Serializable {
         /**
          * 单位
          */
+        @Deprecated
         private String unit;
+        /**
+         * 单位名称
+         */
+        private String unitName;
 
         /**
          * 销售金额
@@ -861,8 +928,12 @@ public class SoDetailDTO implements Serializable {
         /**
          * 客户sku
          */
-        private String platformSkuNo;
+        private String customerSkuNo;
 
+        /**
+         * 平台sku
+         */
+        private String platformSkuNo;
     }
 
     /**
@@ -963,6 +1034,10 @@ public class SoDetailDTO implements Serializable {
          * skuNo
          */
         private String skuNo;
+        /**
+         * 单位名称
+         */
+        private String unitName;
         /**
          * 产品名称
          */
@@ -1067,7 +1142,12 @@ public class SoDetailDTO implements Serializable {
         /**
          * 平台sku
          */
+        private String customerSkuNo;
+        /**
+         * 平台sku
+         */
         private String platformSkuNo;
+
         /**
          * 平台sku名称
          */

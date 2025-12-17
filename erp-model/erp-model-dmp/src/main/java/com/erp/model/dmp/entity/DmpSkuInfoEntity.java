@@ -194,6 +194,13 @@ public class DmpSkuInfoEntity extends BaseEntity<DmpSkuInfoEntity> {
     @TableField("third_id")
     private String thirdId;
 
+    /**
+     * 父平台产品ID（父ASIN）
+     */
+    @TableField("platform_parent_spu_no")
+    private String platformParentSpuNo;
+
+
 
     public static final String PLATFORM_CREATE_TIME = "platform_create_time";
 

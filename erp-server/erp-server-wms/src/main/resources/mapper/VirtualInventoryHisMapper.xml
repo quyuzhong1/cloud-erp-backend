@@ -38,7 +38,13 @@
                    virtual_inventory_id,
                    sum(qty) as totalQty
             from virtual_trans_flow
-            where is_deleted = false and #{localDate} > trade_time
+            where is_deleted = false
+            <if test="virtualInventoryId != null and virtualInventoryId != ''">
+                and virtual_inventory_id = #{virtualInventoryId}
+            </if>
+            <if test="localDate != null">
+                and #{localDate} >= bill_date
+            </if>
             group by virtual_inventory_id
         )
         select

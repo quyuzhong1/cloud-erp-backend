@@ -10,19 +10,24 @@
  * Do not edit the class manually.
  */
 
-
 package com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound;
 
-import com.google.gson.annotations.SerializedName;
-
-
 import java.util.Objects;
+import java.util.Arrays;
+import com.google.gson.TypeAdapter;
+import com.google.gson.annotations.JsonAdapter;
+import com.google.gson.annotations.SerializedName;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonWriter;
+import com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound.FulfillmentPreviewList;
 
+import java.io.IOException;
 /**
  * A list of fulfillment order previews, including estimated shipping weights, estimated shipping fees, and estimated ship dates and arrival dates.
  */
 
-@javax.annotation.Generated(value = "io.swagger.codegen.languages.JavaClientCodegen", date = "2020-12-15T20:44:18.412+08:00")
+@javax.annotation.Generated(value = "io.swagger.codegen.v3.generators.java.JavaClientCodegen", date = "2025-08-18T09:55:11.594451100+08:00[Asia/Shanghai]")
+
 public class GetFulfillmentPreviewResult {
   @SerializedName("fulfillmentPreviews")
   private FulfillmentPreviewList fulfillmentPreviews = null;
@@ -36,7 +41,7 @@ public class GetFulfillmentPreviewResult {
    * Get fulfillmentPreviews
    * @return fulfillmentPreviews
   **/
-
+  
   public FulfillmentPreviewList getFulfillmentPreviews() {
     return fulfillmentPreviews;
   }
@@ -47,7 +52,7 @@ public class GetFulfillmentPreviewResult {
 
 
   @Override
-  public boolean equals(Object o) {
+  public boolean equals(java.lang.Object o) {
     if (this == o) {
       return true;
     }
@@ -78,7 +83,7 @@ public class GetFulfillmentPreviewResult {
    * Convert the given object to string with each line indented by 4 spaces
    * (except the first line).
    */
-  private String toIndentedString(Object o) {
+  private String toIndentedString(java.lang.Object o) {
     if (o == null) {
       return "null";
     }
@@ -86,4 +91,3 @@ public class GetFulfillmentPreviewResult {
   }
 
 }
-

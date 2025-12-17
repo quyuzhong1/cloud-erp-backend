@@ -9,26 +9,24 @@
         sp.create_user_name AS createUserName,
         sp.create_time AS createTime,
         sp.supplier_id AS supplierId,
-        sp.operate_type AS operateType,
         sp.current_phase AS currentPhase,
         sp.target_phase AS targetPhase,
+        sp.current_grade_id AS currentGradeId,
+        sp.target_grade_id AS targetGradeId,
         sp.approve_status AS approveStatus,
         sp.description ,
         su.name AS supplierName,
-        su.id AS supplierId,
         su.code AS supplierCode,
         su.category_id AS categoryId,
-        su.category_name AS categoryName
+        su.category_name AS categoryName,
+        sp.approve_user_id as approveUserId,
+        sp.approve_user_name as approveUserName,
+        sp.approve_time as approveTime
         FROM supplier_phase sp
-        INNER JOIN supplier su
-        ON su.id=sp.supplier_id
+        INNER JOIN supplier su ON su.id=sp.supplier_id and su.is_deleted = false
         WHERE
         ${params.sqlMap.default}
         and sp.is_deleted=false
-        <if test="params.operateType!=null and params.operateType!=''">
-            AND sp.operate_type=#{params.operateType}
-        </if>
-
         <if test="params.name!=null and params.name !=''">
             AND su.name ILIKE concat('%', #{params.name}::text ,'%')
         </if>
@@ -66,15 +64,16 @@
             sp.create_time DESC
     </select>
 
-    <select id="listApproveCount" resultType="com.erp.model.scm.dto.SupplierPhaseDTO$ApproveCountDTO">
+    <!-- 查看tab数量 -->
+    <select id="tabList" resultType="java.lang.Integer">
         SELECT
-        approve_status,
-        count(*)
+            count(distinct sp.id)
         FROM  supplier_phase sp
-        WHERE is_deleted=FALSE
-        <if test="permissionSql!=null and permissionSql!=''">
-            ${permissionSql}
+        WHERE
+        ${params.sqlMap.default}
+        and sp.is_deleted = FALSE
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
         </if>
-        GROUP BY approve_status
     </select>
 </mapper>

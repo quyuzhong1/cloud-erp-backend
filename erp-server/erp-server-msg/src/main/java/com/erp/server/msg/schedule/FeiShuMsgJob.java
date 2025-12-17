@@ -15,11 +15,14 @@ import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.msg.dto.WarnMsgInfoDTO;
 import com.erp.model.msg.enums.WarnMsgTypeEnum;
 import com.erp.model.oms.dto.SoB2cErrorDTO;
+import com.erp.model.oms.dto.WorkflowTaskRecordDTO;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
+import com.erp.model.oms.enums.WorkflowTaskRecordTypeEnum;
 import com.erp.model.tms.dto.LogisticsBillDetailQueryDTO;
 import com.erp.model.tms.dto.LogisticsChannelDTO;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
+import com.erp.rpc.oms.feign.WorkflowTaskRecordFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.server.msg.config.MsgContext;
 import com.xxl.job.core.biz.model.ReturnT;
@@ -42,8 +45,6 @@ import java.util.*;
 @EnableScheduling
 public class FeiShuMsgJob {
     @Resource
-    private MongoTemplate mongoTemplate;
-    @Resource
     private MsgContext msgContext;
     @Resource
     private DmpTaskFeign dmpTaskFeign;
@@ -51,6 +52,8 @@ public class FeiShuMsgJob {
     private LogisticsFeign logisticsFeign;
     @Resource
     private SoB2cFeign soB2cFeign;
+    @Resource
+    private WorkflowTaskRecordFeign workflowTaskRecordFeign;
 
     /**
      * 飞书预警消息汇总报告
@@ -68,10 +71,14 @@ public class FeiShuMsgJob {
             statusList.add(SyncStatusEnum.IN_SYNC.getCode());
             statusList.add(SyncStatusEnum.FAILED_SYNC.getCode());
         }
-
-
         //获取汇总消息
-        List<DmpTaskMsgDTO> warnTaskReport = dmpTaskFeign.getWarnTaskReport(statusList);
+        List<DmpTaskMsgDTO> warnTaskReport = null;
+        try {
+            warnTaskReport = dmpTaskFeign.getWarnTaskReport(statusList);
+        }catch (Exception e){
+            log.error("飞书预警消息汇总报告:error", e);
+            XxlJobHelper.log(e);
+        }
         if (CollUtil.isNotEmpty(warnTaskReport)){
             WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
             warnMsgInfo.setBizName("预警消息");
@@ -116,7 +123,13 @@ public class FeiShuMsgJob {
                 .transportType(LogisticsTransportTypeEnum.EXPRESS_DELIVERY.getCode())
                 .build();
         //获取汇总消息
-        List<LogisticsChannelDTO.WarnReportDTO> warnReportByChannel = logisticsFeign.getWarnReportByChannel(query);
+        List<LogisticsChannelDTO.WarnReportDTO> warnReportByChannel = null;
+        try {
+            warnReportByChannel = logisticsFeign.getWarnReportByChannel(query);
+        }catch (Exception e){
+            log.error("飞书预警消息渠道汇总报告:error", e);
+            XxlJobHelper.log(e);
+        }
         if (CollectionUtil.isNotEmpty(warnReportByChannel)){
             WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
             warnMsgInfo.setBizName("预警消息");
@@ -141,11 +154,26 @@ public class FeiShuMsgJob {
      */
     @XxlJob("sendFeiShuWarnMsgReportBySoB2C")
     public void sendFeiShuWarnMsgReportBySoB2C() {
+        //OMS B2C销售订单异常订单汇总提醒
+        sendB2CError();
+
+        //OMS workflow_task_record 任务节点记录表异常汇总提醒
+        sendWorkflowTaskRecordError();
+    }
+
+    //OMS B2C销售订单异常订单汇总提醒
+    private void sendB2CError() {
         XxlJobHelper.log("====B2C销售订单异常订单汇总提醒:start====");
         String jobParam = XxlJobHelper.getJobParam();
         XxlJobHelper.log("{}:请求参数：{}",LocalDateTime.now(), jobParam);
         List<String> typeList = CharSequenceUtil.isNotBlank(jobParam) ? Arrays.asList(jobParam.split(",")) : Collections.emptyList();
-        List<SoB2cErrorDTO.TypeCountDTO> list = soB2cFeign.getB2CErrorReport(typeList);
+        List<SoB2cErrorDTO.TypeCountDTO> list = null;
+        try {
+            list = soB2cFeign.getB2CErrorReport(typeList);
+        }catch (Exception e){
+            log.error("B2C销售订单异常订单汇总提醒:error", e);
+            XxlJobHelper.log(e);
+        }
         if (CollUtil.isNotEmpty(list)){
             WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
             warnMsgInfo.setBizName("预警消息");
@@ -165,4 +193,37 @@ public class FeiShuMsgJob {
         }
         XxlJobHelper.log("====B2C销售订单异常订单汇总提醒:end====");
     }
+
+    //OMS workflow_task_record 任务节点记录表异常汇总提醒
+    private void sendWorkflowTaskRecordError() {
+        XxlJobHelper.log("====workflowTaskRecord任务异常订单汇总提醒:start====");
+        String jobParam = XxlJobHelper.getJobParam();
+        XxlJobHelper.log("{}:请求参数：{}",LocalDateTime.now(), jobParam);
+        List<WorkflowTaskRecordDTO.TaskErrorReportDTO> taskErrorReport = new ArrayList<>();
+        try {
+            taskErrorReport = workflowTaskRecordFeign.getTaskErrorReport();
+        }catch (Exception e){
+            log.error("workflowTaskRecord任务异常订单汇总提醒:error", e);
+            XxlJobHelper.log(e);
+        }
+        if(CollUtil.isNotEmpty(taskErrorReport)){
+            WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
+            warnMsgInfo.setBizName("预警消息");
+            warnMsgInfo.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_OMS);
+            warnMsgInfo.setTitle("任务异常订单汇总");
+            warnMsgInfo.setTableName("workflow_task_record");
+            warnMsgInfo.setTableId("");
+            warnMsgInfo.setHappenTime(LocalDateTime.now());
+            warnMsgInfo.setWarnMsgTypeEnum(WarnMsgTypeEnum.SYS_EXCEPTION);
+            List<String> keyInfoList = new ArrayList<>(taskErrorReport.size());
+            taskErrorReport.forEach(typeCountDTO -> {
+                String format = StrUtil.format("异常单据类型【{}】任务节点【{}】存在数量:{}", WorkflowTaskRecordTypeEnum.getName(typeCountDTO.getSourceType()) , typeCountDTO.getDictBasicName() , typeCountDTO.getErrorCount());
+                keyInfoList.add(format);
+            });
+            warnMsgInfo.setKeyInfo(String.join("\n", keyInfoList));
+            msgContext.routeSendWarnMsg(warnMsgInfo);
+        }
+        XxlJobHelper.log("====workflowTaskRecord任务异常订单汇总提醒:end====");
+    }
+
 }

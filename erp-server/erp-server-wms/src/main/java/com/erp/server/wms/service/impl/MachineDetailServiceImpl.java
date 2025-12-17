@@ -74,7 +74,7 @@ public class MachineDetailServiceImpl extends SuperServiceImpl<MachineDetailMapp
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public void add(List<MachineDetailDTO.AddDTO> detailList, String mainId) {
         if (CollectionUtils.isEmpty(detailList)) {
             return;
@@ -115,7 +115,7 @@ public class MachineDetailServiceImpl extends SuperServiceImpl<MachineDetailMapp
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public void update(List<MachineDetailDTO.UpdateDTO> detailList, String mainId) {
         if (detailList == null) {
             detailList = new ArrayList<>();

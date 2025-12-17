@@ -111,6 +111,16 @@ public class PurchaseChangeDetailDTO implements Serializable {
          * 主键id
          */
         private String id;
+
+        /**
+         * 原税率
+         */
+        private BigDecimal oldTaxRate;
+
+        /**
+         * 新税率
+         */
+        private BigDecimal taxRate;
     }
 
 }

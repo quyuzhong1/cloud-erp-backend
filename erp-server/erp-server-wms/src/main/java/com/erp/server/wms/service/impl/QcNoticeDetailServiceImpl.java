@@ -46,7 +46,7 @@ public class QcNoticeDetailServiceImpl extends SuperServiceImpl<QcNoticeDetailMa
     @Resource
     private PlmTaskFeign plmTaskFeign;
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void add(QcNoticeDTO.AddDTO addDTO,String mainId) {

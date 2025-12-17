@@ -60,7 +60,7 @@ public class FirstMileDeliveryDetailServiceImpl extends SuperServiceImpl<FirstMi
     @Resource
     private SkuMappingFeign skuMappingFeign;
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void add(FirstMileDeliveryDTO.AddDTO addDTO, String mainId) {

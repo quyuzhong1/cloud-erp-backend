@@ -47,6 +47,7 @@ public interface B2cOrderConsumerConverter {
             @Mapping(target = "imageUrl", source = "imageUrl"),
             @Mapping(target = "platformSpuNo", source = "platformSpuNo"),
             @Mapping(target = "saleFee", source = "detailDTO.saleFee"),
+            @Mapping(target = "platformSubSoCode", source = "detailDTO.platformSubSoCode"),
             @Mapping(target = "variantProperty", source = "detailDTO.variantProperty"),
     })
     SoB2cDetailEntity convertNewDetail(PlatformOrderDetailDTO detailDTO, String mainId, String skuId, String skuNo, String imageUrl, String platformSpuNo);
@@ -159,6 +160,7 @@ public interface B2cOrderConsumerConverter {
             @Mapping(target = "imageUrl", source = "imageUrl"),
             @Mapping(target = "saleFee", source = "detailDTO.saleFee"),
             @Mapping(target = "platformSpuNo", source = "platformSpuNo"),
+            @Mapping(target = "platformSubSoCode", source = "detailDTO.platformSubSoCode"),
             @Mapping(target = "variantProperty", source = "detailDTO.variantProperty"),
 
     })
@@ -176,6 +178,12 @@ public interface B2cOrderConsumerConverter {
             @Mapping(target = "isDeleted", ignore = true),
             @Mapping(target = "version", ignore = true),
             @Mapping(target = "mainId", source = "mainId"),
+            @Mapping(target = "customerCountry", ignore = true),
+            @Mapping(target = "invoiceAddress", ignore = true),
+            @Mapping(target = "partitionCode", ignore = true),
+            @Mapping(target = "partitionId", ignore = true),
+            @Mapping(target = "partitionName", ignore = true),
+            @Mapping(target = "shopCountry", ignore = true)
     })
     SoB2cReceiverEntity convertNewReceiver(PlatformOrderReceiverDTO dto, String mainId);
 

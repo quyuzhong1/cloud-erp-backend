@@ -77,6 +77,11 @@ public class LogisticsBillEntity extends BaseEntity<LogisticsBillEntity> {
     @TableField("channel_id")
     private String channelId;
     /**
+     * 渠道名称
+     */
+    @TableField("channel_name")
+    private String channelName;
+    /**
     * 下单时间
     */
     @TableField(value = "order_time", updateStrategy = FieldStrategy.IGNORED)

@@ -121,4 +121,15 @@ public class SoB2cErrorFeignController extends BaseController {
     public List<SoB2cErrorDTO.TypeCountDTO> getB2CErrorReport(@RequestBody List<String> typeList){
         return soB2cErrorService.getB2CErrorReport(typeList);
     }
+
+    /**
+     * 获取异常信息
+     * @param
+     * @return
+     */
+    @PostMapping("/listSoB2cErrorByMainIds")
+    public List<SoB2cErrorEntity> listSoB2cErrorByMainIds(@RequestBody List<String> errorSoIds) {
+        return soB2cErrorService.listSoB2cErrorByMainIds(errorSoIds);
+    }
+
 }

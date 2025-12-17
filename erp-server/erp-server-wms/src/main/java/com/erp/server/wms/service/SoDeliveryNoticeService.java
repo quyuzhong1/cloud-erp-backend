@@ -1,11 +1,11 @@
 package com.erp.server.wms.service;
 
-import com.common.business.dto.base.BatchResultDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.SoInfoDTO;
+import com.erp.model.oms.entity.SoInfoEntity;
+import com.erp.model.oms.dto.WorkflowTaskRecordDTO;
 import com.erp.model.wms.dto.SoDeliveryNoticeDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.dto.WarehouseLocationMoveDTO;
@@ -18,6 +18,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 /**
  * <p>
@@ -36,7 +37,7 @@ public interface SoDeliveryNoticeService extends SuperService<SoDeliveryNoticeEn
      * @param pagingParamDTO pagingParamDTO
      * @return com.common.business.vo.PagingVO<com.erp.model.wms.dto.SoDeliveryNoticeDTO.PagingViewDTO>
      **/
-    PagingVO<SoDeliveryNoticeDTO.PagingView> paging(PagingDTO<SoDeliveryNoticeDTO.PagingParam> pagingParamDTO);
+    PagingVO<SoDeliveryNoticeDTO.PagingView> paging(PagingDTO<SoDeliveryNoticeDTO.PagingParam> pagingParamDTO) throws ExecutionException, InterruptedException;
 
     /**
      * 列表状态数量统计
@@ -78,10 +79,10 @@ public interface SoDeliveryNoticeService extends SuperService<SoDeliveryNoticeEn
      * 提交
      * @Author Luo_WG
      * @Date 2023/4/14 10:04
-     * @param ids ids
-     * @return java.lang.Boolean
+     * @param entity entity
+     * @return java.lang.BatchResultDTO
      **/
-    Boolean submit(List<String> ids);
+    BatchResultDTO submit(SoDeliveryNoticeEntity entity,Boolean isNeedProcess);
 
     /**
      * 新增提交
@@ -149,6 +150,25 @@ public interface SoDeliveryNoticeService extends SuperService<SoDeliveryNoticeEn
      * @return java.lang.Boolean
      **/
     Boolean delete(List<String> ids);
+
+    /**
+     * @description: 原子批量删除发货通知单
+     * @author Will
+     * @date: 2023/5/17 15:15
+     * @param ids
+     * @param returnDetails
+     * @return List<BatchResultDTO>
+     */
+    List<BatchResultDTO> deleteByIds(List<String> ids, boolean returnDetails);
+
+    /**
+     * 删除单个实体
+     * @Author Luo_WG
+     * @Date 2023/4/6 19:29
+     * @param entity
+     * @return BatchResultDTO
+     **/
+    BatchResultDTO deleteEntity(SoDeliveryNoticeEntity entity);
 
     /**
      * 导出
@@ -306,4 +326,37 @@ public interface SoDeliveryNoticeService extends SuperService<SoDeliveryNoticeEn
     List<SoDeliveryNoticeDTO.PrintSkuLabelDTO> printSkuLabelView(List<String> ids);
 
     void printSkuLabelConfirm(SoDeliveryNoticeDTO.PrintSkuLabelConfirmDTO dto, HttpServletResponse response);
+
+    /**
+     * 根据ID列表获取实体Map
+     * @param ids
+     * @return Map<String, SoDeliveryNoticeEntity>
+     */
+    Map<String, SoDeliveryNoticeEntity> mapByIds(List<String> ids);
+
+    List<SoDeliveryNoticeEntity> listDeliveryNoticeBySoIds(List<String> soIds);
+
+    void updateSalesInfo(SoInfoEntity soInfoEntity);
+
+    WorkflowTaskRecordDTO.MqResponseDTO generateDeliveryApprove(WorkflowTaskRecordDTO.MqRequestDTO dto);
+
+    WorkflowTaskRecordDTO.MqResponseDTO autoDeliveryDisApprove(WorkflowTaskRecordDTO.MqRequestDTO dto);
+    /**
+     * 更新发货通知单状态
+     * @author will
+     * @date 2025/8/29 17:43
+     * @param entity
+     * @return BatchResultDTO
+     */
+    BatchResultDTO updateIsAllowOutstock(SoDeliveryNoticeEntity entity, SoDeliveryNoticeDTO.PermitOutstockDTO dto);
+
+    /**
+     * 审核通过
+     * @author will
+     * @date 2025/10/22 15:53
+     * @param dto
+     * @param entity
+     * @return Boolean
+     */
+    Boolean approveEnd(ApproveOneDTO dto, SoDeliveryNoticeEntity entity);
 }

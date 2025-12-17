@@ -1,5 +1,6 @@
 package com.erp.rpc.plm.feign;
 
+import com.common.business.config.FeignErrorDecoder;
 import com.common.business.feign.BaseDataFeign;
 import com.erp.model.plm.dto.ProductDetailDTO;
 import com.erp.model.plm.dto.ProductPurchaseShowDTO;
@@ -17,7 +18,7 @@ import java.util.List;
  * @date 2024-07-03
  * @author tanmujin
  */
-@FeignClient(name = "erp-plm", contextId = "productDetail")
+@FeignClient(name = "erp-plm", contextId = "productDetailFeign",configuration = {FeignErrorDecoder.class})
 public interface ProductDetailFeign extends BaseDataFeign {
 
     @PostMapping("feign/productDetail/listByIds")

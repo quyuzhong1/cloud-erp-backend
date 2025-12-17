@@ -5,6 +5,7 @@ import cn.hutool.core.date.LocalDateTimeUtil;
 import com.erp.model.dmp.entity.DmpCfgOutputDetailEntity;
 import com.erp.model.dmp.entity.DmpCfgOutputEntity;
 import com.erp.model.dmp.entity.DmpOutputTaskEntity;
+import com.erp.model.dmp.enums.DmpInputTaskTaskTypeEnum;
 import com.erp.model.dmp.enums.DmpOutputTaskStatusEnum;
 import com.erp.model.dmp.enums.DmpOutputTaskTypeEnum;
 import com.erp.model.dmp.enums.DmpOutputTaskTypeEnum;
@@ -19,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -102,12 +104,15 @@ public abstract class DmpOutputDetailCreateHandler extends DmpOutputBaseCreateHa
 			dmpOutputTaskEntity.setStartTime(startTime);
 			
 			// 2024-06-19 18:00:00
-			LocalDateTime endTime = dmpCfgOutputDetailEntity.getNextTime();
+            // 检查最大允许拉取的时间获取
+            LocalDateTime endTime = checkAndGetMaxFetchTime(dmpCfgOutputDetailEntity.getNextTime(), dmpCfgOutputDetailEntity);
+
 			// 2024-06-19 12:00:00
 			dmpOutputTaskEntity.setEndTime(endTime);
 			dmpOutputTaskEntity.setStatus(DmpOutputTaskStatusEnum.INIT.getCode());
 			dmpOutputTaskEntity.setTaskType(taskType.getCode());
 			dmpOutputTaskEntity.setExecTimeout(dmpCfgOutputDetailEntity.getExecTimeout());
+			dmpOutputTaskEntity.setExecSystem(dmpCfgOutputEntity.getExecSystem());
 			
 			dmpOutputTaskEntityList.add(dmpOutputTaskEntity);
 			
@@ -124,7 +129,29 @@ public abstract class DmpOutputDetailCreateHandler extends DmpOutputBaseCreateHa
 		return dmpOutputTaskEntityList;
 	}
 
-	public abstract DmpOutputTaskTypeEnum getDmpOutputTaskTypeEnum();
+    private LocalDateTime checkAndGetMaxFetchTime(LocalDateTime curEndTime, DmpCfgOutputDetailEntity dmpCfgOutputDetailEntity) {
+        Integer maxIntervalTime = dmpCfgOutputDetailEntity.getMaxIntervalTime();
+        if (null == maxIntervalTime || 0 == maxIntervalTime || null == dmpCfgOutputDetailEntity.getLastTime()){
+            return curEndTime;
+        }
+        // 小于按当前时间获取
+        if (0 > maxIntervalTime){
+            // 全量拉取按当前时间-延迟时间
+            return LocalDateTime.now(ZoneId.systemDefault());
+        }
+
+        // 配置允许的最大时间
+        LocalDateTime cfgMaxDateTime = dmpCfgOutputDetailEntity.getLastTime().plusSeconds(dmpCfgOutputDetailEntity.getMaxIntervalTime());
+        // 当前时间-延时时间
+        LocalDateTime nowDelayTime = LocalDateTime.now(ZoneId.systemDefault());
+        // 和当前时间对比
+        LocalDateTime allowMaxDateTime = cfgMaxDateTime.isAfter(nowDelayTime) ? nowDelayTime : cfgMaxDateTime;
+
+        // 比较取最大时间
+        return allowMaxDateTime.isAfter(curEndTime) ? allowMaxDateTime : curEndTime;
+    }
+
+    public abstract DmpOutputTaskTypeEnum getDmpOutputTaskTypeEnum();
 	
 	protected Set<DmpOutputTaskTypeEnum> getIngTaskType(){
 		return Collections.singleton(getDmpOutputTaskTypeEnum());

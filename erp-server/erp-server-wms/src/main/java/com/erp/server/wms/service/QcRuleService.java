@@ -1,6 +1,7 @@
 package com.erp.server.wms.service;
 
 import com.common.business.dto.base.BaseApproveParamDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.service.SuperService;
@@ -110,7 +111,7 @@ public interface QcRuleService extends SuperService<QcRuleEntity> {
      * @param ids
      * @return java.lang.Boolean
      */
-    Boolean deleteByIds(List<String> ids);
+    List<BatchResultDTO>  deleteByIds(List<String> ids);
     
     /**
      * 分页信息
