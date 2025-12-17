@@ -654,6 +654,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         soOutstock.setCode(code);
         soOutstock.setShopId(shopInfo.getId());
         soOutstock.setCustomerId(customerInfo.getId());
+        soOutstock.setCustomerName(customerInfo.getName());
         soOutstock.setSellerId(customerInfo.getSellerId());
         soOutstock.setSellerName(customerInfo.getSellerName());
         soOutstock.setWarehouseId(warehouse.getId());
@@ -677,6 +678,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         for (PddSoOutStockDTO.PddSoOutStockDetailDTO pddSoOutStockDetailDTO : dto.getDetailList()) {
             SkuVO skuVO = skuVOList.stream().filter(s -> s.getSkuNo().equals(pddSoOutStockDetailDTO.getSkuNo())).findFirst().orElseThrow(() -> new ServiceException("同步拼多多销售出库单失败，SKU信息不存在，SKU编码：{}", pddSoOutStockDetailDTO.getSkuNo()));
             SoOutstockDetailEntity soOutstockDetailEntity = new SoOutstockDetailEntity();
+            soOutstockDetailEntity.setPlatformCode(pddSoOutStockDetailDTO.getPlatformCode());
             soOutstockDetailEntity.setSkuId(skuVO.getSkuId());
             soOutstockDetailEntity.setSkuNo(skuVO.getSkuNo());
             soOutstockDetailEntity.setPlanQty(pddSoOutStockDetailDTO.getActualQty());
