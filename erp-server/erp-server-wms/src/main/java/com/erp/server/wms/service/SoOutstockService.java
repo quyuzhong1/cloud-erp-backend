@@ -622,4 +622,6 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      * @param deliveryId
      */
     void deleteSoOutstock(String id, String deliveryId);
+
+    void updateRemarkById(String outstockId, String remark);
 }
