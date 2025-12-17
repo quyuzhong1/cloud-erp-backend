@@ -17,8 +17,11 @@
        <result column="nickname" property="nickname" />
        <result column="country_id" property="countryId" />
        <result column="country_name" property="countryName" />
+       <result column="province_id" property="provinceId" />
        <result column="province" property="province" />
+       <result column="city_id" property="cityId" />
        <result column="city" property="city" />
+       <result column="district_id" property="districtId" />
        <result column="district" property="district" />
        <result column="detail_address" property="detailAddress" />
        <result column="receiver_name" property="receiverName" />
@@ -37,7 +40,7 @@
         update_time,
         version,
         is_deleted,
-        main_id, partner_id, nickname, country_id, country_name, province, city, district, detail_address, receiver_name, receiver_phone, zip_code
+        main_id, partner_id, nickname, country_id, country_name, province_id, province, city_id, city, district_id, district, detail_address, receiver_name, receiver_phone, zip_code
     </sql>
 
 

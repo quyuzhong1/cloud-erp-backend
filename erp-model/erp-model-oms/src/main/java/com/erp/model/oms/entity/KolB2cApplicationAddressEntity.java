@@ -16,7 +16,7 @@ import com.common.business.enums.ApproveStatusEnum;
  * </p>
  *
  * @author jack
- * @since 2025-12-04
+ * @since 2025-12-17
 */
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -50,15 +50,30 @@ public class KolB2cApplicationAddressEntity extends BaseEntity<KolB2cApplication
     @TableField("country_name")
     private String countryName;
     /**
+    * 省/州id
+    */
+    @TableField("province_id")
+    private String provinceId;
+    /**
     * 省/州
     */
     @TableField("province")
     private String province;
     /**
+    * 城市id
+    */
+    @TableField("city_id")
+    private String cityId;
+    /**
     * 城市
     */
     @TableField("city")
     private String city;
+    /**
+    * 区域id
+    */
+    @TableField("district_id")
+    private String districtId;
     /**
     * 区域
     */
@@ -96,9 +111,15 @@ public class KolB2cApplicationAddressEntity extends BaseEntity<KolB2cApplication
 
     public static final String COUNTRY_NAME = "country_name";
 
+    public static final String PROVINCE_ID = "province_id";
+
     public static final String PROVINCE = "province";
 
+    public static final String CITY_ID = "city_id";
+
     public static final String CITY = "city";
+
+    public static final String DISTRICT_ID = "district_id";
 
     public static final String DISTRICT = "district";
 

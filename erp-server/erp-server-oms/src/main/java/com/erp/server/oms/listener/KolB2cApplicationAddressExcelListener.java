@@ -10,11 +10,13 @@ import com.common.core.utils.FieldValidUtil;
 import com.erp.model.oms.dto.excel.KolB2cApplicationAddressImportExcelDTO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
+import com.erp.model.sys.enums.DictValueEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.oms.service.KolB2cApplicationService;
 import jodd.util.StringUtil;
 import lombok.Getter;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.format.DateTimeFormatter;
@@ -44,6 +46,9 @@ public class KolB2cApplicationAddressExcelListener extends AnalysisEventListener
 
     private Map<String,String> partnerMap ;
     private Map<String,String> dictCountryMap ;
+    private Map<String,String> provinceMap;
+    private Map<String,String> cityMap;
+    private Map<String,String> districtMap ;
 
 
     private final KolB2cApplicationService kolB2cApplicationService = SpringUtil.getBean(KolB2cApplicationService.class);
@@ -59,12 +64,18 @@ public class KolB2cApplicationAddressExcelListener extends AnalysisEventListener
     @Getter
     private List<KolB2cApplicationAddressImportExcelDTO> successList = new ArrayList<>(BATCH_COUNT);
 
-    public KolB2cApplicationAddressExcelListener(String taskId, String importType, Integer importCount, Map<String, String> partnerMap, Map<String, String> dictCountryMap) {
+    public KolB2cApplicationAddressExcelListener(String taskId, String importType, Integer importCount, Map<String, String> partnerMap, Map<String, String> dictCountryMap,
+                                                 Map<String,String> provinceMap,
+                                                 Map<String,String> cityMap,
+                                                 Map<String,String> districtMap) {
         this.taskId = taskId;
         this.importType = importType;
         this.importCount = importCount;
         this.partnerMap = partnerMap;
         this.dictCountryMap = dictCountryMap;
+        this.provinceMap = provinceMap;
+        this.cityMap = cityMap;
+        this.districtMap = districtMap;
     }
 
     private final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
@@ -114,6 +125,29 @@ public class KolB2cApplicationAddressExcelListener extends AnalysisEventListener
                 errorMsgList.add("国家【"+countryName+"】不存在");
             }else {
                 excelDTO.setCountryId(dictCountryMap.get(countryName));
+            }
+        }
+        //省
+        String provinceId = provinceMap.getOrDefault(excelDTO.getProvince(), "");
+        if(StringUtils.isNotBlank(provinceId)){
+            excelDTO.setProvinceId(provinceId);
+        }else {
+            errorMsgList.add("省不存在");
+        }
+        //市
+        String cityId = cityMap.getOrDefault(excelDTO.getCity(), "");
+        if(StringUtils.isNotBlank(cityId)){
+            excelDTO.setCityId(cityId);
+        }else {
+            errorMsgList.add("市不存在");
+        }
+        //区域
+        String districtId = districtMap.getOrDefault(excelDTO.getDistrict(), "");
+        if(StringUtils.isNotBlank(districtId)){
+            excelDTO.setDistrictId(districtId);
+        }else {
+            if(excelDTO.equals(DictValueEnum.CN.getCode())){
+                errorMsgList.add("区域不存在");
             }
         }
         //存在错误数据则直接返回

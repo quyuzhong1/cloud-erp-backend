@@ -64,17 +64,20 @@ public class KolB2cApplicationAddressDTO implements Serializable {
         /**
         * 省/州
         */
+        private String provinceId;
         private String province;
 
         /**
         * 城市
         */
         private String city;
+        private String cityId;
 
         /**
         * 区域
         */
         private String district;
+        private String districtId;
 
         /**
         * 详细地址
@@ -160,20 +163,23 @@ public class KolB2cApplicationAddressDTO implements Serializable {
         * 省/州
         */
         @NotBlank(message = "省/州不能为空")
-        @Size(max = 100,message = "省/州最大长度不能超过100位")
+        @Size(max = 100,message = "省/州最大长度不能超过19位")
+        private String provinceId;
         private String province;
 
         /**
         * 城市
         */
         @NotBlank(message = "城市不能为空")
-        @Size(max = 100,message = "城市最大长度不能超过100位")
+        @Size(max = 100,message = "城市最大长度不能超过19位")
+        private String cityId;
         private String city;
 
         /**
         * 区域
         */
-        @Size(max = 100,message = "区域最大长度不能超过100位")
+        @Size(max = 100,message = "区域最大长度不能超过19位")
+        private String districtId;
         private String district;
 
         /**

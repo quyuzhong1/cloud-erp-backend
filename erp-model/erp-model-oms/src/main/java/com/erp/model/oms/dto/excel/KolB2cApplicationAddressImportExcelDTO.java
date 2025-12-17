@@ -53,6 +53,8 @@ public class KolB2cApplicationAddressImportExcelDTO implements Serializable {
     @ExcelProperty(value = "*省/州", index = 3)
     @FieldValid(fieldName = "*省/州", isNotBlank = true)
     private String province;
+    @ExcelIgnore
+    private String provinceId;
 
     /**
      * 城市
@@ -61,6 +63,8 @@ public class KolB2cApplicationAddressImportExcelDTO implements Serializable {
     @ExcelProperty(value = "*城市", index = 4)
     @FieldValid(fieldName = "*城市", isNotBlank = true)
     private String city;
+    @ExcelIgnore
+    private String cityId;
 
     /**
      * 区域
@@ -69,6 +73,8 @@ public class KolB2cApplicationAddressImportExcelDTO implements Serializable {
     @ExcelProperty(value = "区域", index = 5)
     @FieldValid(fieldName = "区域")
     private String district;
+    @ExcelIgnore
+    private String districtId;
 
     /**
      * 收货人

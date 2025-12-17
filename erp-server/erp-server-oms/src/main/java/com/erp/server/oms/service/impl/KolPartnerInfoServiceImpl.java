@@ -197,12 +197,14 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
                     throw new ServiceException("市不存在");
                 }
                 //区域
-                String district = districtMap.getOrDefault(kolAddressInfoEntity.getDistrictId(), "");
-                if(StringUtils.isNotBlank(district)){
-                    kolAddressInfoEntity.setDistrict(district);
-                }else {
-                    if(kolAddressInfoEntity.getCountryId().equals(DictValueEnum.CN.getCode())){
-                        throw new ServiceException("区域不存在");
+                if(StringUtils.isBlank(kolAddressInfoEntity.getDistrictId())){
+                    String district = districtMap.getOrDefault(kolAddressInfoEntity.getDistrictId(), "");
+                    if(StringUtils.isNotBlank(district)){
+                        kolAddressInfoEntity.setDistrict(district);
+                    }else {
+                        if(kolAddressInfoEntity.getCountryId().equals(DictValueEnum.CN.getCode())){
+                            throw new ServiceException("区域不存在");
+                        }
                     }
                 }
             }
@@ -350,12 +352,14 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
                     throw new ServiceException("市不存在");
                 }
                 //区域
-                String district = districtMap.getOrDefault(kolAddressInfoEntity.getDistrictId(), "");
-                if(StringUtils.isNotBlank(district)){
-                    kolAddressInfoEntity.setDistrict(district);
-                }else {
-                    if(kolAddressInfoEntity.getCountryId().equals(DictValueEnum.CN.getCode())){
-                        throw new ServiceException("区域不存在");
+                if(StringUtils.isBlank(kolAddressInfoEntity.getDistrictId())){
+                    String district = districtMap.getOrDefault(kolAddressInfoEntity.getDistrictId(), "");
+                    if(StringUtils.isNotBlank(district)){
+                        kolAddressInfoEntity.setDistrict(district);
+                    }else {
+                        if(kolAddressInfoEntity.getCountryId().equals(DictValueEnum.CN.getCode())){
+                            throw new ServiceException("区域不存在");
+                        }
                     }
                 }
             }

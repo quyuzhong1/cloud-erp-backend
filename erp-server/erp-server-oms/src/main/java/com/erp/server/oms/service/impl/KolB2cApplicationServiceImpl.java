@@ -12,6 +12,7 @@ import com.common.business.vo.LoginUser;
 
 import cn.hutool.core.util.StrUtil;
 import com.common.core.dto.MultiErrorExcelData;
+import com.common.core.enums.DictCityTypeEnum;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.dto.excel.KolB2cApplicationAddressImportExcelDTO;
@@ -25,8 +26,10 @@ import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.DictCountryDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
+import com.erp.model.sys.entity.DictCityEntity;
 import com.erp.model.sys.entity.DictCurrencyEntity;
 import com.erp.model.sys.entity.SysDepartmentEntity;
+import com.erp.model.sys.enums.DictValueEnum;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.workflow.dto.CfgQueryOptionDTO;
@@ -170,8 +173,52 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         kolB2cApplicationDetailEntities.forEach(e -> e.setMainId(id));
         kolB2cApplicationDetailService.saveBatch(kolB2cApplicationDetailEntities);
 
+        //国家
+        List<DictCountryDTO.ListDTO> dictCountryList = sysUserFeign.countryList();
+        Map<String, String> dictCountryMap = dictCountryList.stream().collect(Collectors.toMap(DictCountryDTO.ListDTO::getNameCn, DictCountryDTO.ListDTO::getId));
+        //省市区
+        List<DictCityEntity> dictCityEntities = sysUserFeign.listByCountryCode(DictValueEnum.CN.getCode());
+        Map<String, List<DictCityEntity>> dictCityGroup = dictCityEntities.stream().filter(e -> e.getDisabled().equals(Boolean.FALSE)).collect(Collectors.groupingBy(DictCityEntity::getType));
+        Map<String,String> provinceMap = dictCityGroup.get(DictCityTypeEnum.PROVINCE.getCode()).stream().collect(Collectors.toMap(DictCityEntity::getId,DictCityEntity::getName,(o1, o2)->o1));
+        Map<String,String> cityMap = dictCityGroup.get(DictCityTypeEnum.CITY.getCode()).stream().collect(Collectors.toMap(DictCityEntity::getId,DictCityEntity::getName,(o1,o2)->o1));
+        Map<String,String> districtMap = dictCityGroup.get(DictCityTypeEnum.DISTRICT.getCode()).stream().collect(Collectors.toMap(DictCityEntity::getId,DictCityEntity::getName,(o1,o2)->o1));
+
         List<KolB2cApplicationAddressEntity> kolB2cApplicationAddressEntities = BeanMapper.copyList(addDTO.getAddressList(), KolB2cApplicationAddressEntity.class);
-        kolB2cApplicationAddressEntities.forEach(e -> e.setMainId(id));
+        for (KolB2cApplicationAddressEntity entity : kolB2cApplicationAddressEntities) {
+            entity.setMainId(id);
+            //国家
+            String countryName = dictCountryMap.getOrDefault(entity.getCountryId(), "");
+            if(StringUtils.isNotBlank(countryName)){
+                entity.setCountryName(countryName);
+            }else {
+                throw new ServiceException("国家名称不存在");
+            }
+            //省
+            String province = provinceMap.getOrDefault(entity.getProvinceId(), "");
+            if(StringUtils.isNotBlank(province)){
+                entity.setProvince(province);
+            }else {
+                throw new ServiceException("省不存在");
+            }
+            //市
+            String city = cityMap.getOrDefault(entity.getCityId(), "");
+            if(StringUtils.isNotBlank(city)){
+                entity.setCity(city);
+            }else {
+                throw new ServiceException("市不存在");
+            }
+            //区域
+            if(StringUtils.isBlank(entity.getDistrictId())){
+                String district = districtMap.getOrDefault(entity.getDistrictId(), "");
+                if(StringUtils.isNotBlank(district)){
+                    entity.setDistrict(district);
+                }else {
+                    if(entity.getCountryId().equals(DictValueEnum.CN.getCode())){
+                        throw new ServiceException("区域不存在");
+                    }
+                }
+            }
+        }
         kolB2cApplicationAddressService.saveBatch(kolB2cApplicationAddressEntities);
 
         return new BaseResultDTO.AddDTO(kolB2cApplicationEntity.getId(), code);
@@ -330,8 +377,54 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         List<KolB2cApplicationDetailEntity> oldKolB2cApplicationDetailEntities = kolB2cApplicationDetailService.lambdaQuery().eq(KolB2cApplicationDetailEntity::getMainId, id).list();
         commonService.updateDetail(id,ModuleTypeEnum.KOL_B2C_APPLICATION.getCode(),kolB2cApplicationDetailService,  kolB2cApplicationDetailEntities, oldKolB2cApplicationDetailEntities,"skuNo");
 
+
+        //国家
+        List<DictCountryDTO.ListDTO> dictCountryList = sysUserFeign.countryList();
+        Map<String, String> dictCountryMap = dictCountryList.stream().collect(Collectors.toMap(DictCountryDTO.ListDTO::getNameCn, DictCountryDTO.ListDTO::getId));
+        //省市区
+        List<DictCityEntity> dictCityEntities = sysUserFeign.listByCountryCode(DictValueEnum.CN.getCode());
+        Map<String, List<DictCityEntity>> dictCityGroup = dictCityEntities.stream().filter(e -> e.getDisabled().equals(Boolean.FALSE)).collect(Collectors.groupingBy(DictCityEntity::getType));
+        Map<String,String> provinceMap = dictCityGroup.get(DictCityTypeEnum.PROVINCE.getCode()).stream().collect(Collectors.toMap(DictCityEntity::getId,DictCityEntity::getName,(o1, o2)->o1));
+        Map<String,String> cityMap = dictCityGroup.get(DictCityTypeEnum.CITY.getCode()).stream().collect(Collectors.toMap(DictCityEntity::getId,DictCityEntity::getName,(o1,o2)->o1));
+        Map<String,String> districtMap = dictCityGroup.get(DictCityTypeEnum.DISTRICT.getCode()).stream().collect(Collectors.toMap(DictCityEntity::getId,DictCityEntity::getName,(o1,o2)->o1));
+
         List<KolB2cApplicationAddressEntity> kolB2cApplicationAddressEntities = BeanMapper.copyList(addOrUpdateDTO.getAddressList(), KolB2cApplicationAddressEntity.class);
-        kolB2cApplicationAddressEntities.forEach(e -> e.setMainId(id));
+        for (KolB2cApplicationAddressEntity entity : kolB2cApplicationAddressEntities) {
+            entity.setMainId(id);
+            //国家
+            String countryName = dictCountryMap.getOrDefault(entity.getCountryId(), "");
+            if(StringUtils.isNotBlank(countryName)){
+                entity.setCountryName(countryName);
+            }else {
+                throw new ServiceException("国家名称不存在");
+            }
+            //省
+            String province = provinceMap.getOrDefault(entity.getProvinceId(), "");
+            if(StringUtils.isNotBlank(province)){
+                entity.setProvince(province);
+            }else {
+                throw new ServiceException("省不存在");
+            }
+            //市
+            String city = cityMap.getOrDefault(entity.getCityId(), "");
+            if(StringUtils.isNotBlank(city)){
+                entity.setCity(city);
+            }else {
+                throw new ServiceException("市不存在");
+            }
+            //区域
+            if(StringUtils.isBlank(entity.getDistrictId())){
+                String district = districtMap.getOrDefault(entity.getDistrictId(), "");
+                if(StringUtils.isNotBlank(district)){
+                    entity.setDistrict(district);
+                }else {
+                    if(entity.getCountryId().equals(DictValueEnum.CN.getCode())){
+                        throw new ServiceException("区域不存在");
+                    }
+                }
+            }
+
+        }
         List<KolB2cApplicationAddressEntity> oldKolB2cApplicationAddressEntities = kolB2cApplicationAddressService.lambdaQuery().eq(KolB2cApplicationAddressEntity::getMainId, id).list();
         commonService.updateDetail(id,ModuleTypeEnum.KOL_B2C_APPLICATION.getCode(),kolB2cApplicationAddressService,  kolB2cApplicationAddressEntities, oldKolB2cApplicationAddressEntities,"nickname");
         return Boolean.TRUE;
@@ -1219,6 +1312,13 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         //国家
         List<DictCountryDTO.ListDTO> dictCountryList = sysUserFeign.countryList();
         Map<String, String> dictCountryMap = dictCountryList.stream().collect(Collectors.toMap(DictCountryDTO.ListDTO::getNameCn, DictCountryDTO.ListDTO::getId, (o1, o2) -> o1));
+        //省市区
+        List<DictCityEntity> dictCityEntities = sysUserFeign.listByCountryCode(DictValueEnum.CN.getCode());
+        Map<String, List<DictCityEntity>> dictCityGroup = dictCityEntities.stream().filter(e -> e.getDisabled().equals(Boolean.FALSE)).collect(Collectors.groupingBy(DictCityEntity::getType));
+        Map<String,String> provinceMap = dictCityGroup.get(DictCityTypeEnum.PROVINCE.getCode()).stream().collect(Collectors.toMap(DictCityEntity::getName,DictCityEntity::getId,(o1,o2)->o1));
+        Map<String,String> cityMap = dictCityGroup.get(DictCityTypeEnum.CITY.getCode()).stream().collect(Collectors.toMap(DictCityEntity::getName,DictCityEntity::getId,(o1,o2)->o1));
+        Map<String,String> districtMap = dictCityGroup.get(DictCityTypeEnum.DISTRICT.getCode()).stream().collect(Collectors.toMap(DictCityEntity::getName,DictCityEntity::getId,(o1,o2)->o1));
+
         //币种
         List<DictCurrencyEntity> dictCurrencyEntities = sysUserFeign.currencyList();
         Map<String, String> currencyMap = dictCurrencyEntities.stream().collect(Collectors.toMap(DictCurrencyEntity::getName, DictCurrencyEntity::getId, (o1, o2) -> o1));
@@ -1237,7 +1337,7 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
 
         KolB2cApplicationDetailExcelListener detailExcelListenerUtil = new KolB2cApplicationDetailExcelListener(dto.getTaskId(),dto.getImportType(),dto.getImportCount(), skuMap,partnerMap,cfgKolOptionMap);
 
-        KolB2cApplicationAddressExcelListener addressListenerUtil = new KolB2cApplicationAddressExcelListener(dto.getTaskId(),dto.getImportType(),dto.getImportCount(),partnerMap,dictCountryMap);
+        KolB2cApplicationAddressExcelListener addressListenerUtil = new KolB2cApplicationAddressExcelListener(dto.getTaskId(),dto.getImportType(),dto.getImportCount(),partnerMap,dictCountryMap,provinceMap,cityMap,districtMap);
 
         List<MultiErrorExcelData> errList = new ArrayList<>();
         try {
@@ -1275,12 +1375,8 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
             KolB2cApplicationService kolB2cApplicationService = SpringUtil.getBean(KolB2cApplicationService.class);
             kolB2cApplicationService.handleImportSuccessList(successList, errorList, detailSuccessList, addressSuccessList,dto.getImportType());
 
-
-
             MultiErrorExcelData sheet2 = new MultiErrorExcelData();
             MultiErrorExcelData sheet3 = new MultiErrorExcelData();
-
-
 
             sheet2.setSheetName("sheet2");
             sheet2.setSheetNo(1);
