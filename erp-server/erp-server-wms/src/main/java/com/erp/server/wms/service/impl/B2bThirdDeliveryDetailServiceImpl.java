@@ -72,7 +72,7 @@ public class B2bThirdDeliveryDetailServiceImpl extends SuperServiceImpl<B2bThird
             //销售数量
             Integer qty = soDetailEntity.getQty();
             //已发货数量
-            Integer deliveryQty = oldDeliveryDetailList.stream().filter(e -> !ThirdDeliveryStatusEnum.CANCEL_DELIVERY.getCode().equals(e.getStatus())).map(B2bThirdDeliveryDetailEntity::getDeliveryQty).reduce(Integer::sum).orElse(0);
+            Integer deliveryQty = oldDeliveryDetailList.stream().filter(e -> !ThirdDeliveryStatusEnum.CANCEL_DELIVERY.getCode().equals(e.getStatus()) && CharSequenceUtil.equals(e.getSoDetailId(),soDetailEntity.getId())).map(B2bThirdDeliveryDetailEntity::getDeliveryQty).reduce(Integer::sum).orElse(0);
             //可发货数量
             int unDeliveryQty = qty - deliveryQty;
             //需要发货数量

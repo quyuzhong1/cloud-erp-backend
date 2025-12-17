@@ -175,9 +175,13 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
         });
     }
 
-    private void rollbackFreezeVirtualInventory(String id) {
+    private void rollbackFreezeVirtualInventory(B2bThirdDeliveryEntity entity) {
+        //无虚拟仓库不扣虚拟库存
+        if (Objects.isNull(entity) || CharSequenceUtil.isBlank(entity.getVirtualWarehouseId())){
+            return;
+        }
         InventoryUnApproveDTO dto = new InventoryUnApproveDTO();
-        dto.setBillId(id);
+        dto.setBillId(entity.getId());
         dto.setSourceType(InventorySourceTypeEnum.B2B_THIRD_DELIVERY);
         virtualInventoryTransCoreService.unApprove(dto);
     }
@@ -371,7 +375,7 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
         operateLogService.addModuleOperateLogByObj(old, newEntity, ModuleTypeEnum.B2B_THIRD_DELIVERY.getCode(), id,"更新操作");
         if (ThirdDeliveryStatusEnum.FAILED.getCode().equals(status) || ThirdDeliveryStatusEnum.CANCEL_DELIVERY.getCode().equals(status)){
             //冻结库存释放
-            this.rollbackFreezeVirtualInventory(old.getId());
+            this.rollbackFreezeVirtualInventory(old);
         }else if (ThirdDeliveryStatusEnum.SHIPPED.getCode().equals(status)){
             //生成销售出库单
             this.generateB2bThirdDelivery(id);

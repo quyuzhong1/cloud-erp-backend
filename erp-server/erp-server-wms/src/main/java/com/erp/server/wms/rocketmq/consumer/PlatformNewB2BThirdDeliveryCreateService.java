@@ -8,20 +8,20 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.handler.AbstractNewPlatformConsumerHandler;
-import com.erp.model.wms.dto.third.ThirdWarehouseCancelFbaOutboundReq;
 import com.erp.model.wms.dto.third.ThirdWarehouseCreateFbaOutboundReq;
 import com.erp.model.wms.dto.third.ThirdWarehouseQueryFbaOutboundReq;
 import com.erp.model.wms.dto.third.ThirdWarehouseQueryFbaOutboundResponse;
 import com.erp.model.wms.entity.B2bThirdDeliveryEntity;
-import com.erp.model.wms.enums.B2BThirdDeliveryCancelResultEnum;
 import com.erp.model.wms.enums.ThirdDeliveryStatusEnum;
 import com.erp.server.wms.handler.ThirdWarehouseRegistry;
 import com.erp.server.wms.service.B2bThirdDeliveryService;
 import com.erp.server.wms.service.ThirdWarehouseService;
+import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.spring.annotation.ConsumeMode;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
@@ -55,6 +55,8 @@ public class PlatformNewB2BThirdDeliveryCreateService extends AbstractNewPlatfor
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public void handle(String data) {
         log.warn("B2BThirdDelivery创建订单请求参数：{}", data);
         JSONObject jsonObject = JSONUtil.parseObj(data);
