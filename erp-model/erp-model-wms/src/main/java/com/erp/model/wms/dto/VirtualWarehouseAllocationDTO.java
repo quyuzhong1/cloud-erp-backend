@@ -601,6 +601,13 @@ public class VirtualWarehouseAllocationDTO implements Serializable {
          */
         private String warehouseId;
         private String warehouseName;
+
+        /**
+         * 调拨仓
+         */
+        private String fromWarehouseId;
+        private String fromWarehouseName;
+
         /**
          * 调出仓
          */
