@@ -25,6 +25,11 @@ public class ContractInfoApproveHandler extends AbstractApproveHandler {
     private ContractInfoService contractInfoService;
 
     @Override
+    public BatchResultDTO approve(ApproveOneDTO dto) {
+        return contractInfoService.approve(new ApproveOneDTO(dto.getId(), dto.getType(),dto.getComment()));
+    }
+
+    @Override
     public Boolean cancelProcess(ApproveDTO.CancelProcessDTO dto) {
         ContractInfoEntity entity = contractInfoService.getById(dto.getId());
         if (ObjectUtil.isEmpty(entity)) {
@@ -50,5 +55,10 @@ public class ContractInfoApproveHandler extends AbstractApproveHandler {
         baseApproveParamDTO.setType(dto.getApproveStatus().getStatus());
         baseApproveParamDTO.setId(dto.getBusinessId());
         return contractInfoService.approveEnd(baseApproveParamDTO, entity);
+    }
+
+    @Override
+    public void addComment(ApproveDTO.AddCommentDTO dto) {
+
     }
 }
