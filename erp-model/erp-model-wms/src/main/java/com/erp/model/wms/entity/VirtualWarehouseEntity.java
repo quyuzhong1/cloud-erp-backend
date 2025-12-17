@@ -40,12 +40,18 @@ public class VirtualWarehouseEntity extends BaseEntity<VirtualWarehouseEntity> {
     @TableField("name")
     private String name;
 
+    /**
+     * 是否自动调拨  true 是 false 否
+     */
+    @TableField("is_auto_secondment")
+    private Boolean  isAutoSecondment;
 
-    
+    /**
+     *  借调仓id
+     */
+    @TableField("secondment_warehouse_id")
+    private String secondment_warehouse_id;
 
-    
-
-    
 
     @Override
     public Serializable pkVal() {
