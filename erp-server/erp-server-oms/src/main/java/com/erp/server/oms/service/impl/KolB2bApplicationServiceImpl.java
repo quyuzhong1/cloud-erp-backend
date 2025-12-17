@@ -592,6 +592,7 @@ public class KolB2bApplicationServiceImpl extends SuperServiceImpl<KolB2bApplica
                 throw new ServiceException(ApiError.ERROR_KOL_B2B_APPLICATION_DETAIL_NOT_EXIST);
             }
 
+
             //客户信息
             CustomerInfoEntity customerInfoEntity = customerInfoMap.get(mainEntity.getCustomerId());
             if (ObjectUtil.isEmpty(customerInfoEntity)) {
@@ -630,6 +631,10 @@ public class KolB2bApplicationServiceImpl extends SuperServiceImpl<KolB2bApplica
                 if (ObjectUtil.isEmpty(generateSoInfoDTO)) {
                     throw new ServiceException(ApiError.ERROR_PUSH_DETAIL_ID_NOT_EXIST,detailEntity.getId());
                 }
+                //主表赋值，取明细其一即可
+                addDTO.setSalesOrgId(generateSoInfoDTO.getSoOrgId());
+                addDTO.setWarehouseId(generateSoInfoDTO.getWarehouseId());
+
                 SoDetailDTO.AddDTO soDetailAddDTO = new SoDetailDTO.AddDTO();
                 BeanUtil.copyProperties(detailEntity,soDetailAddDTO);
                 soDetailAddDTO.setId(null);
