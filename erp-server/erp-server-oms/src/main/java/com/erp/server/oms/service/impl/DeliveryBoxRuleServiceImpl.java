@@ -424,14 +424,11 @@ public class DeliveryBoxRuleServiceImpl extends SuperServiceImpl<DeliveryBoxRule
                 List<DeliveryBoxRuleDetailEntity> updateList = new ArrayList<>();
                 for (DeliveryBoxRuleDetailEntity deliveryBoxRuleDetailEntity : deliveryBoxRuleDetailEntityList) {
                     if (!oldList.isEmpty()) {
-                        for (DeliveryBoxRuleDetailEntity boxRuleDetailEntity : oldList) {
-                            if (isDataChanged(boxRuleDetailEntity, deliveryBoxRuleDetailEntity)) {
-                                // 修改
-                                updateList.add(deliveryBoxRuleDetailEntity);
-                            } else {
-                                // 新增
-                                addList.add(deliveryBoxRuleDetailEntity);
-                            }
+                        Set<String> deliverySkuNoSet = oldList.stream().map(item -> item.getDeliverySkuNo()).collect(Collectors.toSet());
+                        if (deliverySkuNoSet.contains(deliveryBoxRuleDetailEntity.getDeliverySkuNo())) {
+                            updateList.add(deliveryBoxRuleDetailEntity);
+                        } else {
+                            addList.add(deliveryBoxRuleDetailEntity);
                         }
                     } else {
                         addList.add(deliveryBoxRuleDetailEntity);
@@ -497,37 +494,15 @@ public class DeliveryBoxRuleServiceImpl extends SuperServiceImpl<DeliveryBoxRule
                 if (!updateList.isEmpty()) {
                     //更新
                     for (DeliveryBoxRuleDetailEntity deliveryBoxRuleDetailEntity : updateList) {
-                        List<DeliveryBoxRuleDetailEntity> list = deliveryBoxRuleDetailService.lambdaQuery()
-                                .eq(DeliveryBoxRuleDetailEntity::getMainId, deliveryBoxRuleId)
-                                .eq(DeliveryBoxRuleDetailEntity::getInvalidStatus, InvalidStatusEnum.NOT_VOIDED.getStatus())
-                                .list();
+                        boolean updateSuccess = deliveryBoxRuleDetailService.lambdaUpdate()
+                                .set(DeliveryBoxRuleDetailEntity::getPerBoxQty,deliveryBoxRuleDetailEntity.getPerBoxQty())
+                                .set(DeliveryBoxRuleDetailEntity::getSort,deliveryBoxRuleDetailEntity.getSort())
+                                .eq(DeliveryBoxRuleDetailEntity::getDeliverySkuNo,deliveryBoxRuleDetailEntity.getDeliverySkuNo())
+                                .eq(DeliveryBoxRuleDetailEntity::getInvalidStatus,InvalidStatusEnum.NOT_VOIDED.getStatus())
+                                .update();
 
-                        boolean shouldUpdate = true;
-                        for (DeliveryBoxRuleDetailEntity boxRuleDetailEntity : list) {
-                            // 检查是否匹配当前要更新的SKU
-                            if (boxRuleDetailEntity.getDeliverySkuNo().equals(deliveryBoxRuleDetailEntity.getDeliverySkuNo())) {
-                                if (boxRuleDetailEntity.getPerBoxQty().equals(deliveryBoxRuleDetailEntity.getPerBoxQty())) {
-                                    shouldUpdate = false;
-                                }
-
-                                if (boxRuleDetailEntity.getSort().equals(deliveryBoxRuleDetailEntity.getSort())) {
-                                    shouldUpdate = false;
-                                }
-                                break;
-                            }
-                        }
-
-                        if (shouldUpdate) {
-                            boolean updateSuccess = deliveryBoxRuleDetailService.lambdaUpdate()
-                                    .set(DeliveryBoxRuleDetailEntity::getPerBoxQty, deliveryBoxRuleDetailEntity.getPerBoxQty())
-                                    .set(DeliveryBoxRuleDetailEntity::getSort, deliveryBoxRuleDetailEntity.getSort())
-                                    .eq(DeliveryBoxRuleDetailEntity::getDeliverySkuNo, deliveryBoxRuleDetailEntity.getDeliverySkuNo())
-                                    .eq(DeliveryBoxRuleDetailEntity::getInvalidStatus, InvalidStatusEnum.NOT_VOIDED.getStatus())
-                                    .update();
-
-                            if (!updateSuccess) {
-                                throw new ServiceException(ApiError.ERROR_BATCH_ADD_BOX_RULE);
-                            }
+                        if (!updateSuccess) {
+                            throw new ServiceException(ApiError.ERROR_BATCH_ADD_BOX_RULE);
                         }
                     }
                 }
@@ -539,10 +514,9 @@ public class DeliveryBoxRuleServiceImpl extends SuperServiceImpl<DeliveryBoxRule
     }
 
     private boolean isDataChanged(DeliveryBoxRuleDetailEntity oldEntity, DeliveryBoxRuleDetailEntity newEntity) {
-        return !Objects.equals(oldEntity.getDeliverySkuNo(), newEntity.getDeliverySkuNo())
-                || !Objects.equals(oldEntity.getPerBoxQty(), newEntity.getPerBoxQty())
-                || !Objects.equals(oldEntity.getSort(), newEntity.getSort())
-                || !Objects.equals(oldEntity.getInvalidStatus(), newEntity.getInvalidStatus());
+        return Objects.equals(oldEntity.getDeliverySkuNo(), newEntity.getDeliverySkuNo())
+                && (!Objects.equals(oldEntity.getPerBoxQty(), newEntity.getPerBoxQty())
+                || !Objects.equals(oldEntity.getSort(), newEntity.getSort()));
     }
 
     /**

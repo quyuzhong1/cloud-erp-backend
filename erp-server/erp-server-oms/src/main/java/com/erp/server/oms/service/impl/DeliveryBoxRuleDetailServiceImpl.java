@@ -201,7 +201,7 @@ public class DeliveryBoxRuleDetailServiceImpl extends SuperServiceImpl<DeliveryB
     }
 
     private void checkAddDuplicate(List<DeliveryBoxRuleDetailDTO.AddDTO> dtoList){
-        long count = dtoList.stream().filter(item -> item.getPerBoxQty().equals("1")).count();
+        long count = dtoList.stream().filter(item -> item.getPerBoxQty().equals(1)).count();
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_BOX_QTY_PROHIBIT_ONE);
         }
@@ -264,7 +264,7 @@ public class DeliveryBoxRuleDetailServiceImpl extends SuperServiceImpl<DeliveryB
     }
 
     private void checkUpdateDuplicate(List<DeliveryBoxRuleDetailDTO.UpdateDTO> dtoList) {
-        long count = dtoList.stream().filter(item -> item.getPerBoxQty().equals("1")).count();
+        long count = dtoList.stream().filter(item -> item.getPerBoxQty().equals(1)).count();
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_BOX_QTY_PROHIBIT_ONE);
         }
