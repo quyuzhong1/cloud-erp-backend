@@ -123,4 +123,19 @@ public class SupplierPoReturnController extends BaseController {
         return success(result);
     }
 
+    /**
+     * 导出Excel数据
+     * @Author system
+     * @Date 2025/12/17
+     * @param dto
+     * @return ApiResult<Boolean>
+     **/
+    @PostMapping("/export")
+    @LogAction(value = LogActionEnum.EXPORT, desc = "SRM供应商退货单导出Excel数据")
+    @WebAdvanceQuery(handler = SupplierPoReturnQueryHandler.class)
+    public ApiResult<Boolean> exportList(@RequestBody @Validated PurchaseReturnOrderDTO.SupplierPagingParamDTO dto) {
+        poReturnService.supplierExportList(dto);
+        return success(true);
+    }
+
 }
