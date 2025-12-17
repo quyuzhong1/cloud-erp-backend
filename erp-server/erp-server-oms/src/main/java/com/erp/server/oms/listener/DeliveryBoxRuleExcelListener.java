@@ -14,8 +14,12 @@ import com.common.core.utils.FieldValidUtil;
 import com.erp.model.oms.dto.DeliveryBoxRuleDTO;
 import com.erp.model.oms.dto.DeliveryBoxRuleDetailDTO;
 import com.erp.model.oms.dto.excel.DeliveryBoxRuleImportExcelDTO;
+import com.erp.model.oms.entity.DeliveryBoxRuleDetailEntity;
+import com.erp.model.oms.entity.DeliveryBoxRuleEntity;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.server.oms.service.DeliveryBoxRuleDetailService;
 import com.erp.server.oms.service.DeliveryBoxRuleService;
 import lombok.Getter;
 import org.springframework.transaction.annotation.Transactional;
@@ -66,6 +70,8 @@ public class DeliveryBoxRuleExcelListener extends AnalysisEventListener<Delivery
 
     private final DeliveryBoxRuleService deliveryBoxRuleService = SpringUtil.getBean(DeliveryBoxRuleService.class);
 
+    private final DeliveryBoxRuleDetailService deliveryBoxRuleDetailService = SpringUtil.getBean(DeliveryBoxRuleDetailService.class);
+
     private final DownloadTaskFeign downloadTaskFeign = SpringUtil.getBean(DownloadTaskFeign.class);
 
     public DeliveryBoxRuleExcelListener(String taskId,
@@ -82,6 +88,9 @@ public class DeliveryBoxRuleExcelListener extends AnalysisEventListener<Delivery
 
     // 负责校验sku和发货sku是否重复
     Set<String> skuDeliverySkuPairSet = new HashSet<>();
+
+    // 负责校验相同sku下，skuPerBoxQtySet是否重复
+    Set<String> skuPerBoxQtySet = new HashSet<>();
 
     // 负责校验相同sku下，sort是否重复
     Set<String> skuSortSet = new HashSet<>();
@@ -180,13 +189,29 @@ public class DeliveryBoxRuleExcelListener extends AnalysisEventListener<Delivery
             }
         }
 
+        DeliveryBoxRuleEntity deliveryBoxRuleEntity = deliveryBoxRuleService.lambdaQuery()
+                .eq(DeliveryBoxRuleEntity::getSkuNo, importExcelDTO.getSkuNo())
+                .one();
+
         // 优先级
         if (isPositiveInteger(importExcelDTO.getSort())) {
             String pairKey = excelDTO.getSkuId() + "_" + importExcelDTO.getSort();
-            if (importExcelDTO.getSort().equals("1")) {
-                errorMsgList.add("SKU [" + skuNo + "] ,优先级不能为[1]");
+            if (Objects.nonNull(deliveryBoxRuleEntity)) {
+                List<DeliveryBoxRuleDetailEntity> detailEntityList = deliveryBoxRuleDetailService.lambdaQuery()
+                        .eq(DeliveryBoxRuleDetailEntity::getMainId, deliveryBoxRuleEntity.getId() )
+                        .eq(DeliveryBoxRuleDetailEntity::getInvalidStatus, InvalidStatusEnum.NOT_VOIDED.getStatus())
+                        .list();
+                for (DeliveryBoxRuleDetailEntity deliveryBoxRuleDetailEntity : detailEntityList) {
+                    // 优先级重复校验
+                    if (deliveryBoxRuleDetailEntity.getSort().equals(Integer.parseInt(importExcelDTO.getSort()))) {
+                        errorMsgList.add("SKU [" + skuNo + "] ," + "发货SKU [" + importExcelDTO.getDeliverySkuNo() + "] ,优先级[" + importExcelDTO.getSort() +"]重复");
+                    }
+                    // 单箱数量重复校验
+                    if (deliveryBoxRuleDetailEntity.getSort().equals(Integer.parseInt(importExcelDTO.getSort()))) {
+                        errorMsgList.add("SKU [" + skuNo + "] ," + "发货SKU [" + importExcelDTO.getDeliverySkuNo() + "] ,单箱数量[" + importExcelDTO.getPerBoxQty() +"]重复");
+                    }
+                }
             }
-
             if (skuSortSet.contains(pairKey)) {
                 errorMsgList.add("SKU [" + skuNo + "] ,优先级 [" + importExcelDTO.getSort() + "]在文件中重复，请勿重复录入");
             } else {
@@ -199,9 +224,20 @@ public class DeliveryBoxRuleExcelListener extends AnalysisEventListener<Delivery
 
         // 发货箱规
         if (isPositiveInteger(importExcelDTO.getPerBoxQty())) {
-            detail.setPerBoxQty(Integer.parseInt(importExcelDTO.getPerBoxQty()));
+            String pairKey = excelDTO.getSkuId() + "_" + importExcelDTO.getPerBoxQty();
+            if (skuPerBoxQtySet.contains(pairKey)) {
+                errorMsgList.add("SKU [" + skuNo + "] ,单箱数量 [" + importExcelDTO.getPerBoxQty() + "]在文件中重复，请勿重复录入");
+            } else {
+                skuPerBoxQtySet.add(pairKey);
+                detail.setPerBoxQty(Integer.parseInt(importExcelDTO.getPerBoxQty()));
+            }
+
         } else {
             errorMsgList.add("发货箱规需要是正整数");
+        }
+
+        if (importExcelDTO.getPerBoxQty().equals("1")) {
+            errorMsgList.add("SKU [" + skuNo + "] ,单箱数量不能为[1]");
         }
 
         // 存在错误数据则直接返回

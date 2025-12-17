@@ -328,12 +328,13 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         }
         List<SoDetailEntity> dbList = this.listBaseByMainId(mainId);
         List<SoDetailDTO.ViewDTO> resultList = BeanMapper.copyList(dbList, SoDetailDTO.ViewDTO.class);
-        List<String> skuIdList = resultList.stream().map(SoDetailDTO.ViewDTO::getDeliverySkuId).collect(Collectors.toList());
+        List<String> skuIdList = resultList.stream().map(SoDetailDTO.ViewDTO::getSkuId).collect(Collectors.toList());
+        List<String> deliverySkuIdList = resultList.stream().map(SoDetailDTO.ViewDTO::getDeliverySkuId).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIdList);
         //从wms 获取到sku 的即时库存信息
         List<InventoryQtyDTO.SkuInventoryTotalDTO> skuInventoryTotalList = new ArrayList<>();
-        if (StringUtils.isNotBlank(warehouseId) && CollectionUtils.isNotEmpty(skuIdList)) {
-            skuInventoryTotalList = listSkuInventoryTotalList(skuIdList, warehouseId);
+        if (StringUtils.isNotBlank(warehouseId) && CollectionUtils.isNotEmpty(deliverySkuIdList)) {
+            skuInventoryTotalList = listSkuInventoryTotalList(deliverySkuIdList, warehouseId);
         }
 
         List<String> detailIds = dbList.stream().map(SoDetailEntity::getId).collect(Collectors.toList());
@@ -344,7 +345,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         List<SoDetailDTO.SkuHistoryPriceDTO> skuPriceHistoryList = this.listSkuPriceHistory(skuIdList);
 
         //查询虚拟库存
-        List<VirtualInventoryDTO.VirtualInventoryQtyDTO> virtualInventoryQtyList = handleVirtualInventory(soInfoEntity, skuIdList);
+        List<VirtualInventoryDTO.VirtualInventoryQtyDTO> virtualInventoryQtyList = handleVirtualInventory(soInfoEntity, deliverySkuIdList);
 
         //发货通知单的
         List<SoDeliveryNoticeDetailDTO.ListDTO> soDeliveryNoticeList = soDeliveryNoticeFeign.listBySourceIdList(Arrays.asList(mainId));
@@ -354,7 +355,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
                     flatMap(obj -> Optional.ofNullable(obj.getSkuName())).orElse("");
             item.setProductName(skuName);
 
-            String unit = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().
+            String unit = skuList.stream().filter(s -> s.getSkuId().equals(item.getSkuId())).findFirst().
                     flatMap(obj -> Optional.ofNullable(obj.getUnitName())).orElse("");
             item.setProductName(skuName);
             item.setUnit(unit);
