@@ -2,6 +2,7 @@ package com.erp.server.oms.controller.api;
 
 
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.base.BaseDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
@@ -98,14 +99,14 @@ public class KolSampleCostController extends BaseController {
      * 导入Excel数据
      * @author will
      * @date 2025/12/1 16:25
-     * @param excelFile
+     * @param dto
      * @param response
      * @return ApiResult<Object>
      */
     @LogAction(value = LogActionEnum.IMPORT, desc = "导入寄样费用单")
     @PostMapping("/import")
-    public ApiResult<?> exportWarehouse(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
-        Boolean result = kolSampleCostService.importFile(excelFile, response);
+    public ApiResult<?> exportWarehouse(@RequestBody BaseDTO.ImportDTO dto, HttpServletResponse response) {
+        Boolean result = kolSampleCostService.importFile(dto, response);
         return result ? success() : failure();
     }
 
