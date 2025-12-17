@@ -4671,6 +4671,14 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         }
     }
 
+    @Override
+    public void updateRemarkById(String outstockId, String remark) {
+        if (CharSequenceUtil.isBlank(outstockId)){
+            return;
+        }
+        this.lambdaUpdate().set(SoOutstockEntity::getRemark, remark).eq(SoOutstockEntity::getId, outstockId).update();
+    }
+
     private void fillExportLogisticsHandoverListDTO(List<SoOutstockDTO.ExportLogisticsHandoverListDTO> list) {
         List<String> addressIds = list.stream().map(SoOutstockDTO.ExportLogisticsHandoverListDTO::getReceiveAddressId).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
         List<CustomerAddressEntity> customerAddressEntities = new ArrayList<>();
