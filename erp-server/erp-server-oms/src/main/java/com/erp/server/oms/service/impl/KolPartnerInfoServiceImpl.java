@@ -182,31 +182,7 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
                 }else {
                     throw new ServiceException("国家名称不存在");
                 }
-                //省
-                String province = provinceMap.getOrDefault(kolAddressInfoEntity.getProvinceId(), "");
-                if(StringUtils.isNotBlank(province)){
-                    kolAddressInfoEntity.setProvince(province);
-                }else {
-                    throw new ServiceException("省不存在");
-                }
-                //市
-                String city = cityMap.getOrDefault(kolAddressInfoEntity.getCityId(), "");
-                if(StringUtils.isNotBlank(city)){
-                    kolAddressInfoEntity.setCity(city);
-                }else {
-                    throw new ServiceException("市不存在");
-                }
-                //区域
-                if(StringUtils.isBlank(kolAddressInfoEntity.getDistrictId())){
-                    String district = districtMap.getOrDefault(kolAddressInfoEntity.getDistrictId(), "");
-                    if(StringUtils.isNotBlank(district)){
-                        kolAddressInfoEntity.setDistrict(district);
-                    }else {
-                        if(kolAddressInfoEntity.getCountryId().equals(DictValueEnum.CN.getCode())){
-                            throw new ServiceException("区域不存在");
-                        }
-                    }
-                }
+                checkAndSetProvinceCity(kolAddressInfoEntity, provinceMap, cityMap, districtMap);
             }
             kolAddressInfoService.saveBatch(list);
         }
@@ -224,6 +200,52 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
         omsAttachmentService.batchSaveOrUpdate(addDTO.getAttachUrlList(), addDTO.getAttachNameList(), tableName.value(), id);
 
         return new BaseResultDTO.AddDTO(kolPartnerInfoEntity.getId(), code);
+    }
+
+    //国内校验id 国外校验name
+    private static void checkAndSetProvinceCity(KolAddressInfoEntity kolAddressInfoEntity, Map<String, String> provinceMap, Map<String, String> cityMap, Map<String, String> districtMap) {
+        if(kolAddressInfoEntity.getCountryId().equals(DictValueEnum.CN.getCode())){
+            //省
+            if(StringUtils.isBlank(kolAddressInfoEntity.getProvinceId())){
+                throw new ServiceException("省不能为空");
+            }
+            String province = provinceMap.getOrDefault(kolAddressInfoEntity.getProvinceId(), "");
+            if(StringUtils.isNotBlank(province)){
+                kolAddressInfoEntity.setProvince(province);
+            }else {
+                throw new ServiceException("省不存在");
+            }
+            //市
+            if(StringUtils.isBlank(kolAddressInfoEntity.getCityId())){
+                throw new ServiceException("市不能为空");
+            }
+            String city = cityMap.getOrDefault(kolAddressInfoEntity.getCityId(), "");
+            if(StringUtils.isNotBlank(city)){
+                kolAddressInfoEntity.setCity(city);
+            }else {
+                throw new ServiceException("市不存在");
+            }
+            //区域
+            if(StringUtils.isBlank(kolAddressInfoEntity.getDistrictId())){
+                String district = districtMap.getOrDefault(kolAddressInfoEntity.getDistrictId(), "");
+                if(StringUtils.isNotBlank(district)){
+                    kolAddressInfoEntity.setDistrict(district);
+                }else {
+                    if(kolAddressInfoEntity.getCountryId().equals(DictValueEnum.CN.getCode())){
+                        throw new ServiceException("区域不存在");
+                    }
+                }
+            }
+        }else{
+            //省
+            if(StringUtils.isBlank(kolAddressInfoEntity.getProvince())){
+                throw new ServiceException("省不能为空");
+            }
+            //市
+            if(StringUtils.isBlank(kolAddressInfoEntity.getCity())){
+                throw new ServiceException("市不能为空");
+            }
+        }
     }
 
     /**
@@ -337,31 +359,7 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
                 }else {
                     throw new ServiceException("国家名称不存在");
                 }
-                //省
-                String province = provinceMap.getOrDefault(kolAddressInfoEntity.getProvinceId(), "");
-                if(StringUtils.isNotBlank(province)){
-                    kolAddressInfoEntity.setProvince(province);
-                }else {
-                    throw new ServiceException("省不存在");
-                }
-                //市
-                String city = cityMap.getOrDefault(kolAddressInfoEntity.getCityId(), "");
-                if(StringUtils.isNotBlank(city)){
-                    kolAddressInfoEntity.setCity(city);
-                }else {
-                    throw new ServiceException("市不存在");
-                }
-                //区域
-                if(StringUtils.isBlank(kolAddressInfoEntity.getDistrictId())){
-                    String district = districtMap.getOrDefault(kolAddressInfoEntity.getDistrictId(), "");
-                    if(StringUtils.isNotBlank(district)){
-                        kolAddressInfoEntity.setDistrict(district);
-                    }else {
-                        if(kolAddressInfoEntity.getCountryId().equals(DictValueEnum.CN.getCode())){
-                            throw new ServiceException("区域不存在");
-                        }
-                    }
-                }
+                checkAndSetProvinceCity(kolAddressInfoEntity, provinceMap, cityMap, districtMap);
             }
             commonService.updateDetail(kolPartnerInfoEntity.getId(), ModuleTypeEnum.KOL_PARTNER_INFO.getCode(), kolAddressInfoService, list, oldKolAddressInfoEntities, "contactPerson");
         }
