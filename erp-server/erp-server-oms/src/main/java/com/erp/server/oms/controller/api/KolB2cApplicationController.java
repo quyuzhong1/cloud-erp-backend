@@ -347,7 +347,6 @@ public class KolB2cApplicationController extends BaseController {
     public ApiResult<List<BatchResultDTO>> batchCancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
 		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-        // TODO 数据查询放入外层，处理结果统一更新或单条更新
         List<KolB2cApplicationEntity> list = kolB2cApplicationService.lambdaQuery().in(KolB2cApplicationEntity::getId, ids).list();
         Map<String, KolB2cApplicationEntity> idEntityMap = list.stream().collect(Collectors.toMap(KolB2cApplicationEntity::getId, w -> w));
         for (String id : dto.getIds()) {

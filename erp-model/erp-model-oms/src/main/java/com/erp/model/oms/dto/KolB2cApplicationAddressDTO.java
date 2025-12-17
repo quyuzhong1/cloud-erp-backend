@@ -159,6 +159,7 @@ public class KolB2cApplicationAddressDTO implements Serializable {
         /**
         * 省/州
         */
+        @NotBlank(message = "省/州不能为空")
         @Size(max = 100,message = "省/州最大长度不能超过100位")
         private String province;
 

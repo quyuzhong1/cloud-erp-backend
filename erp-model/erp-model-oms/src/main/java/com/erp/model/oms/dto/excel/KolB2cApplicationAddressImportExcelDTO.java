@@ -50,8 +50,8 @@ public class KolB2cApplicationAddressImportExcelDTO implements Serializable {
      * 省/州
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "省/州", index = 3)
-    @FieldValid(fieldName = "省/州")
+    @ExcelProperty(value = "*省/州", index = 3)
+    @FieldValid(fieldName = "*省/州", isNotBlank = true)
     private String province;
 
     /**
