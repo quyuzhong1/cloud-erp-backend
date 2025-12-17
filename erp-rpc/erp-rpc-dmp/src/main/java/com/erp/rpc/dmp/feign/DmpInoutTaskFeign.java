@@ -4,7 +4,9 @@ package com.erp.rpc.dmp.feign;
 import com.common.business.config.FeignErrorDecoder;
 import com.common.business.dto.DmpSyncTaskDTO;
 import com.common.business.dto.base.BaseIdsDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.core.controller.vo.ApiResult;
+import com.erp.model.dmp.dto.DmpCfgEtlDTO;
 import com.erp.model.dmp.dto.DmpInoutDTO;
 import com.erp.model.dmp.dto.DmpOutputTaskRecordDTO;
 import com.erp.model.dmp.dto.DmpPushTaskDTO;
@@ -76,4 +78,12 @@ public interface DmpInoutTaskFeign {
      */
     @PostMapping("feign/inout/getLastPullRecord")
     DmpPushTaskDTO.LastPullDTO getLastPullRecord(@RequestBody DmpPushTaskDTO.LastPullParamDTO paramDTO);
+    
+    /**
+     * 生成ETL清洗任务
+     * @param dto
+     * @return
+     */
+    @PostMapping("/feign/inout/doEtlTask")
+    ApiResult<List<BatchResultDTO>> doEtlTask(@RequestBody DmpCfgEtlDTO.DoTaskDTO dto);
 }

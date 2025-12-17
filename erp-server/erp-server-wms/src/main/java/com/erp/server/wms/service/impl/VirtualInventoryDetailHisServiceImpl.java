@@ -25,15 +25,19 @@ import com.google.common.collect.Lists;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
 
 /**
@@ -52,6 +56,10 @@ public class VirtualInventoryDetailHisServiceImpl extends SuperServiceImpl<Virtu
 
     @Autowired
     private VirtualInventoryHisService virtualInventoryHisService;
+
+    @Resource
+    @Qualifier("virtualInventoryHisPool")
+    private ExecutorService virtualInventoryHisPool;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -79,10 +87,7 @@ public class VirtualInventoryDetailHisServiceImpl extends SuperServiceImpl<Virtu
 
 
     @Override
-    public void hisVirtualInventoryJob(String jobParam) {
-        //时间
-        LocalDate startDate = CharSequenceUtil.isBlank(jobParam) ? LocalDate.now() : LocalDate.parse(jobParam, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-
+    public void hisVirtualInventoryJob(String virtualInventoryId, LocalDate startDate) {
         // 生成日期集合
         List<LocalDate> dateList = new ArrayList<>();
         // 获取天数差
@@ -91,16 +96,31 @@ public class VirtualInventoryDetailHisServiceImpl extends SuperServiceImpl<Virtu
             // 添加每一天的日期
             dateList.add(startDate.plusDays(i));
         }
-        for (LocalDate localDate : dateList) {
-            try {
-                //添加虚拟仓每日库存
-                virtualInventoryHisService.addVirtualInventoryHis(localDate);
-                //添加虚拟仓明细每日库存
-                this.addVirtualInventoryDetailHis(new VirtualTransFlowEntity().setBillDate(localDate));
-            } catch (Exception e) {
-                log.error("生成结余失败，date = {},msg = {}",localDate,e.getMessage());
-                sendWarnMsg(localDate);
-            }
+        // 使用自定义线程池处理订单类型
+        List<CompletableFuture<Void>> futures = dateList.stream()
+                .map(date -> CompletableFuture.runAsync(() -> processVirtualInventoryHis(virtualInventoryId,date), virtualInventoryHisPool))
+                .collect(Collectors.toList());
+
+        // 等待所有任务完成
+        CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+        log.info("VirtualInventoryHisServiceImpl rebuildInventoryHis end");
+    }
+    /**
+     *
+     * @author will
+     * @date 2025/12/16 16:27
+     * @param localDate
+     * @return void
+     */
+    private void processVirtualInventoryHis(String virtualInventoryId,LocalDate localDate) {
+        try {
+            //添加虚拟仓每日库存
+            virtualInventoryHisService.addVirtualInventoryHis(virtualInventoryId,localDate);
+            //添加虚拟仓明细每日库存
+            this.addVirtualInventoryDetailHis(new VirtualTransFlowEntity().setBillDate(localDate));
+        } catch (Exception e) {
+            log.error("生成结余失败，date = {},msg = {}",localDate,e.getMessage());
+            sendWarnMsg(localDate);
         }
     }
 

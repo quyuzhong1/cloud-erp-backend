@@ -7,6 +7,7 @@ import com.erp.model.wms.dto.VirtualInventoryDetailHisDTO;
 import com.erp.model.wms.entity.VirtualInventoryDetailHisEntity;
 import com.erp.model.wms.entity.VirtualTransFlowEntity;
 
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -42,7 +43,7 @@ public interface VirtualInventoryDetailHisService extends SuperService<VirtualIn
      * @author will
      * @date 2024/12/9 19:23
      */
-    void hisVirtualInventoryJob(String jobParam);
+    void hisVirtualInventoryJob(String virtualInventoryId, LocalDate date);
     /**
      * 详情历史库龄明细
      * @author will
