@@ -41,16 +41,16 @@ public class VirtualWarehouseEntity extends BaseEntity<VirtualWarehouseEntity> {
     private String name;
 
     /**
-     * 是否自动调拨  true 是 false 否
+     * 是否自动借调  true 是 false 否
      */
-    @TableField("is_auto_secondment")
-    private Boolean  isAutoSecondment;
+    @TableField("is_auto_transfer")
+    private Boolean  isAutoTransfer;
 
     /**
      *  借调仓id
      */
-    @TableField("secondment_warehouse_id")
-    private String secondment_warehouse_id;
+    @TableField("transfer_warehouse_id")
+    private String transferWarehouseId;
 
 
     @Override
