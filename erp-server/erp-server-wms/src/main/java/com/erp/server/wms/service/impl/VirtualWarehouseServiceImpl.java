@@ -270,6 +270,11 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
         if (virtualWarehouseEntity.getIsAutoTransferEnabled() && CharSequenceUtil.isBlank(virtualWarehouseEntity.getFromWarehouseId())) {
             throw new ServiceException(ApiError.ERROR_VIRTUAL_WAREHOUSE_FROM_WAREHOUSE_NOT_BLANK);
         }
+        //虚拟仓关联实体仓不能包含借调仓
+        if (CharSequenceUtil.isNotBlank(virtualWarehouseEntity.getFromWarehouseId()) && CollUtil.isNotEmpty(warehouseIdList) && warehouseIdList.contains(virtualWarehouseEntity.getFromWarehouseId())) {
+            throw new ServiceException(ApiError.ERROR_VIRTUAL_WAREHOUSE_NOT_CONTAINS_FROM_WAREHOUSE);
+        }
+
         //校验实体仓绑定是否变更
         if (CharSequenceUtil.isNotBlank(virtualWarehouseEntity.getId())) {
             //获取原始绑定关系
