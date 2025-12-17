@@ -927,9 +927,9 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         List<WarehouseEntity> list = Collections.singletonList(entity);
         //仓库已绑定店铺不允许反审核
         List<ShopInfoEntity> shopInfoEntities = shopInfoFeign.listShopInfoByWarehouseIds(Collections.singletonList(entity.getId()));
-        ShopInfoEntity shopInfoEntity = shopInfoEntities.stream().filter(req -> req.getWarehouseId().equals(entity.getId())).distinct().findFirst().orElse(null);
-        if (ObjectUtil.isNotEmpty(shopInfoEntity)) {
-            return BatchResultDTO.fail(entity.getId(),entity.getName(),CharSequenceUtil.format(ApiError.SHOP_INFO_EXIST_WAREHOUSE_NOT_DISAPPROVE.msg, shopInfoEntity.getName()));
+        if (CollectionUtils.isNotEmpty(shopInfoEntities)) {
+            List<String> shopNames = shopInfoEntities.stream().map(ShopInfoEntity::getName).collect(Collectors.toList());
+            return BatchResultDTO.fail(entity.getId(),entity.getName(),CharSequenceUtil.format(ApiError.SHOP_INFO_EXIST_WAREHOUSE_NOT_DISAPPROVE.msg, shopNames));
         }
         this.updateApproveStatus(Collections.singletonList(entity), ApproveStatusEnum.WAIT_SUBMIT);
         //仓库下绑定第三方店铺不能进行反审核
