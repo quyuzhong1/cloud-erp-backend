@@ -745,6 +745,10 @@ public class VirtualInventoryDTO implements Serializable {
          */
         private String virtualWarehouseId;
         /**
+         * 虚拟仓名称
+         */
+        private String virtualWarehouseName;
+        /**
          * 虚拟仓可用
          */
         private Integer virtualUsableQty;

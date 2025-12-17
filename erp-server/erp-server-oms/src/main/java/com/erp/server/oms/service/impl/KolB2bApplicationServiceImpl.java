@@ -181,7 +181,7 @@ public class KolB2bApplicationServiceImpl extends SuperServiceImpl<KolB2bApplica
 
         // 记录主单操作日志
         log.info("编辑 开始记录B2B寄样申请主单日志数据，单号：【{}】", kolB2bApplicationEntity.getCode());
-        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), kolB2bApplicationEntity.getCode(), "B2B寄样申请主单");
+        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), old.getCode(), "B2B寄样申请主单");
         operateLogService.addModuleOperateLogByObj(old, kolB2bApplicationEntity, ModuleTypeEnum.KOL_B2B_APPLICATION.getCode(), kolB2bApplicationEntity.getId(), msg);
         return Boolean.TRUE;
     }

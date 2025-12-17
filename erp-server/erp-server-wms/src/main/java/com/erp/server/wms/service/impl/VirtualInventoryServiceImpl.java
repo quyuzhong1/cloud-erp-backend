@@ -648,6 +648,7 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
             return allInventoryDTO;
         }
         allInventoryDTO.setVirtualWarehouseId(virtualWarehouseId);
+        allInventoryDTO.setVirtualWarehouseName(virtualWarehouseEntity.getName());
         VirtualInventoryDTO.ParamDTO params = new VirtualInventoryDTO.ParamDTO();
         params.setSkuIdList(Collections.singletonList(allInventoryDTO.getSkuId()));
         params.setWarehouseIdList(Collections.singletonList(allInventoryDTO.getWarehouseId()));
