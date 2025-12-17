@@ -201,6 +201,11 @@ public class DeliveryBoxRuleDetailServiceImpl extends SuperServiceImpl<DeliveryB
     }
 
     private void checkAddDuplicate(List<DeliveryBoxRuleDetailDTO.AddDTO> dtoList){
+        long count = dtoList.stream().filter(item -> item.getPerBoxQty().equals("1")).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_BOX_QTY_PROHIBIT_ONE);
+        }
+
         //发货sku是否有重复值
         Map<String, Long> skuCountMap = dtoList.stream()
                 .collect(Collectors.groupingBy(
@@ -259,6 +264,11 @@ public class DeliveryBoxRuleDetailServiceImpl extends SuperServiceImpl<DeliveryB
     }
 
     private void checkUpdateDuplicate(List<DeliveryBoxRuleDetailDTO.UpdateDTO> dtoList) {
+        long count = dtoList.stream().filter(item -> item.getPerBoxQty().equals("1")).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_BOX_QTY_PROHIBIT_ONE);
+        }
+
         // 检查发货sku重复
         Map<String, Long> deliveryCountMap = dtoList.stream()
                 .collect(Collectors.groupingBy(

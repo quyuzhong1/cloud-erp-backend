@@ -497,15 +497,37 @@ public class DeliveryBoxRuleServiceImpl extends SuperServiceImpl<DeliveryBoxRule
                 if (!updateList.isEmpty()) {
                     //更新
                     for (DeliveryBoxRuleDetailEntity deliveryBoxRuleDetailEntity : updateList) {
-                        boolean updateSuccess = deliveryBoxRuleDetailService.lambdaUpdate()
-                                .set(DeliveryBoxRuleDetailEntity::getPerBoxQty,deliveryBoxRuleDetailEntity.getPerBoxQty())
-                                .set(DeliveryBoxRuleDetailEntity::getSort,deliveryBoxRuleDetailEntity.getSort())
-                                .eq(DeliveryBoxRuleDetailEntity::getDeliverySkuNo,deliveryBoxRuleDetailEntity.getDeliverySkuNo())
-                                .eq(DeliveryBoxRuleDetailEntity::getInvalidStatus,InvalidStatusEnum.NOT_VOIDED.getStatus())
-                                .update();
+                        List<DeliveryBoxRuleDetailEntity> list = deliveryBoxRuleDetailService.lambdaQuery()
+                                .eq(DeliveryBoxRuleDetailEntity::getMainId, deliveryBoxRuleId)
+                                .eq(DeliveryBoxRuleDetailEntity::getInvalidStatus, InvalidStatusEnum.NOT_VOIDED.getStatus())
+                                .list();
 
-                        if (!updateSuccess) {
-                            throw new ServiceException(ApiError.ERROR_BATCH_ADD_BOX_RULE);
+                        boolean shouldUpdate = true;
+                        for (DeliveryBoxRuleDetailEntity boxRuleDetailEntity : list) {
+                            // 检查是否匹配当前要更新的SKU
+                            if (boxRuleDetailEntity.getDeliverySkuNo().equals(deliveryBoxRuleDetailEntity.getDeliverySkuNo())) {
+                                if (boxRuleDetailEntity.getPerBoxQty().equals(deliveryBoxRuleDetailEntity.getPerBoxQty())) {
+                                    shouldUpdate = false;
+                                }
+
+                                if (boxRuleDetailEntity.getSort().equals(deliveryBoxRuleDetailEntity.getSort())) {
+                                    shouldUpdate = false;
+                                }
+                                break;
+                            }
+                        }
+
+                        if (shouldUpdate) {
+                            boolean updateSuccess = deliveryBoxRuleDetailService.lambdaUpdate()
+                                    .set(DeliveryBoxRuleDetailEntity::getPerBoxQty, deliveryBoxRuleDetailEntity.getPerBoxQty())
+                                    .set(DeliveryBoxRuleDetailEntity::getSort, deliveryBoxRuleDetailEntity.getSort())
+                                    .eq(DeliveryBoxRuleDetailEntity::getDeliverySkuNo, deliveryBoxRuleDetailEntity.getDeliverySkuNo())
+                                    .eq(DeliveryBoxRuleDetailEntity::getInvalidStatus, InvalidStatusEnum.NOT_VOIDED.getStatus())
+                                    .update();
+
+                            if (!updateSuccess) {
+                                throw new ServiceException(ApiError.ERROR_BATCH_ADD_BOX_RULE);
+                            }
                         }
                     }
                 }

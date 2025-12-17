@@ -183,6 +183,10 @@ public class DeliveryBoxRuleExcelListener extends AnalysisEventListener<Delivery
         // 优先级
         if (isPositiveInteger(importExcelDTO.getSort())) {
             String pairKey = excelDTO.getSkuId() + "_" + importExcelDTO.getSort();
+            if (importExcelDTO.getSort().equals("1")) {
+                errorMsgList.add("SKU [" + skuNo + "] ,优先级不能为[1]");
+            }
+
             if (skuSortSet.contains(pairKey)) {
                 errorMsgList.add("SKU [" + skuNo + "] ,优先级 [" + importExcelDTO.getSort() + "]在文件中重复，请勿重复录入");
             } else {
