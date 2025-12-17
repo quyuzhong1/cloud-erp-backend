@@ -25,7 +25,7 @@
        <result column="so_org_name" property="soOrgName" />
        <result column="so_outstock_id" property="soOutstockId" />
        <result column="so_outstock_code" property="soOutstockCode" />
-       <result column="so_outstock_time" property="soOutstockTime" />
+       <result column="so_outstock_date" property="soOutstockDate" />
        <result column="warehouse_id" property="warehouseId" />
        <result column="warehouse_name" property="warehouseName" />
        <result column="partition_id" property="partitionId" />
@@ -56,7 +56,7 @@
         update_time,
         version,
         is_deleted,
-        source_id, source_code, source_type, type, partner_id, partner_nickname, feedback_url, so_code, so_id, so_org_id, so_org_name, so_outstock_id, so_outstock_code, so_outstock_time, warehouse_id, warehouse_name, partition_id, partition_name, sku_id, sku_no, qty, currency, currency_symbol, exchange_rate, total_cost, product_cost, first_mile_shipping_cost, clearance_customs_tax, shipping_cost, customs_tax, other_cost
+        source_id, source_code, source_type, type, partner_id, partner_nickname, feedback_url, so_code, so_id, so_org_id, so_org_name, so_outstock_id, so_outstock_code, so_outstock_date, warehouse_id, warehouse_name, partition_id, partition_name, sku_id, sku_no, qty, currency, currency_symbol, exchange_rate, total_cost, product_cost, first_mile_shipping_cost, clearance_customs_tax, shipping_cost, customs_tax, other_cost
     </sql>
 
     <!-- 分页查询 -->

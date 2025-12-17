@@ -2,7 +2,6 @@ package com.erp.model.oms.dto;
 
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
-import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -10,7 +9,6 @@ import javax.validation.constraints.*;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -123,9 +121,9 @@ public class KolSampleCostDTO implements Serializable {
         private String soOutstockCode;
 
         /**
-         * 销售出库时间
+         * 销售出库日期
          */
-        private LocalDateTime soOutstockTime;
+        private LocalDate soOutstockDate;
 
         /**
          * 仓库id
@@ -297,9 +295,9 @@ public class KolSampleCostDTO implements Serializable {
         private String soOutstockCode;
 
         /**
-        * 销售出库时间
+        * 销售出库日期
         */
-        private LocalDateTime soOutstockTime;
+        private LocalDate soOutstockDate;
 
         /**
         * 仓库id
@@ -509,9 +507,9 @@ public class KolSampleCostDTO implements Serializable {
         private String soOutstockCode;
 
         /**
-        * 销售出库时间
+        * 销售出库日期
         */
-        private LocalDateTime soOutstockTime;
+        private LocalDate soOutstockDate;
 
         /**
         * 仓库id

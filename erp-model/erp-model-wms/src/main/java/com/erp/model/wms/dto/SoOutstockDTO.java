@@ -1892,11 +1892,11 @@ public class SoOutstockDTO implements Serializable {
         /**
          * 开始时间
          */
-        private LocalDateTime startDate;
+        private LocalDateTime startTime;
         /**
          * 结束时间
          */
-        private LocalDateTime endDate;
+        private LocalDateTime endTime;
     }
 
     /**

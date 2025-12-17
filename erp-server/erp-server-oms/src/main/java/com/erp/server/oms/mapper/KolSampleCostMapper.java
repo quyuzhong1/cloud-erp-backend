@@ -36,10 +36,10 @@ public interface KolSampleCostMapper extends BaseMapper<KolSampleCostEntity> {
      * @author will
      * @date 2025/12/9 14:54
      * @param startTime
-     * @param endTIme
+     * @param endTime
      * @return List<KolSampleCostEntity>
      */
-    List<KolSampleCostEntity> listByTime(@Param("startTime") LocalDateTime startTime,@Param("endTIme") LocalDateTime endTIme);
+    List<KolSampleCostEntity> listByTime(@Param("startTime") LocalDateTime startTime,@Param("endTime") LocalDateTime endTime);
     /**
      * 根据销售订单明细id集合查询寄样费用
      * @author will
