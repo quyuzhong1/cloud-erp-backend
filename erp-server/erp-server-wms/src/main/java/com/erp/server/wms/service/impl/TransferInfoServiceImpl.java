@@ -389,12 +389,10 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         if (CollectionUtils.isEmpty(detailList)) {
             throw new ServiceException(ApiError.ERROR_99048);
         }
-        //验证调出入仓库是否相同
-        for (TransferInfoDetailEntity detailEntity : detailList) {
-            if (detailEntity.getInWarehouseId().equals(detailEntity.getOutWarehouseId())) {
-                throw new ServiceException(new ApiResult(ApiError.ERROR_98069.code,String.format(ApiError.ERROR_98069.msg,entity.getCode())));
-            }
-        }
+        
+        // 验证调拨明细
+        validateTransferDetail(entity, detailList);
+        
         log.info("直接调拨单提交，id=【{}】", entity.getId());
         //提交流程
         if (isStartProcess) {
@@ -405,6 +403,24 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         //操作日志
         operateLogService.addModuleOperateLog("提交了一个直接调拨单【%s】", ModuleTypeEnum.TRANSFER_INFO.getCode(), entity.getId(), "提交操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.SUBMIT);
+    }
+
+    /**
+     * 验证调拨明细
+     * @param entity 直接调拨单主表
+     * @param detailList 明细列表
+     */
+    private void validateTransferDetail(TransferInfoEntity entity, List<TransferInfoDetailEntity> detailList) {
+        // 验证调出仓库+调出仓位不能等于调入仓库+调入仓位
+        for (TransferInfoDetailEntity detailEntity : detailList) {
+            String outWarehouseLocation = StrUtils.null2EmptyWithTrim(detailEntity.getOutWarehouseLocation());
+            String inWarehouseLocation = StrUtils.null2EmptyWithTrim(detailEntity.getInWarehouseLocation());
+            if (detailEntity.getInWarehouseId().equals(detailEntity.getOutWarehouseId()) 
+                    && outWarehouseLocation.equals(inWarehouseLocation)) {
+                throw new ServiceException(new ApiResult(ApiError.ERROR_98088.code,
+                        String.format(ApiError.ERROR_98088.msg, entity.getCode())));
+            }
+        }
     }
 
     @Override
