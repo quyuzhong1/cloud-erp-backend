@@ -207,7 +207,7 @@ public class DeliveryBoxRuleExcelListener extends AnalysisEventListener<Delivery
                         errorMsgList.add("SKU [" + skuNo + "] ," + "发货SKU [" + importExcelDTO.getDeliverySkuNo() + "] ,优先级[" + importExcelDTO.getSort() +"]重复");
                     }
                     // 单箱数量重复校验
-                    if (deliveryBoxRuleDetailEntity.getSort().equals(Integer.parseInt(importExcelDTO.getSort()))) {
+                    if (deliveryBoxRuleDetailEntity.getPerBoxQty().equals(Integer.parseInt(importExcelDTO.getPerBoxQty()))) {
                         errorMsgList.add("SKU [" + skuNo + "] ," + "发货SKU [" + importExcelDTO.getDeliverySkuNo() + "] ,单箱数量[" + importExcelDTO.getPerBoxQty() +"]重复");
                     }
                 }
