@@ -50,7 +50,7 @@ public class VirtualInventoryTransactionJob {
 			}
         }
         List<VirtualInventoryTransactionEntity> list = virtualInventoryTransactionService.lambdaQuery().eq(VirtualInventoryTransactionEntity::getIsDeleted, false)
-        	.last(" group by virtual_inventory_id limit " + transactionSize)
+        	.last(" group by inventory_id limit " + transactionSize)
         	.select(VirtualInventoryTransactionEntity::getInventoryId)
         	.list();
         for(VirtualInventoryTransactionEntity l : list) {

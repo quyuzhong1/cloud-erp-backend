@@ -281,7 +281,7 @@ public class VirtualInventoryTransactionServiceImpl extends SuperServiceImpl<Vir
     	String logMsg = StringUtil.appendLogMsg("transactionIdToInventoryHis", transactionId);
     	log.info("{}开始" , logMsg);
     	List<VirtualInventoryTransactionEntity> list = lambdaQuery().eq(VirtualInventoryTransactionEntity::getTransactionId, transactionId)
-            	.last(" group by virtual_inventory_id ")
+            	.last(" group by inventory_id ")
             	.select(VirtualInventoryTransactionEntity::getInventoryId)
             	.list();
     	if(CollUtil.isNotEmpty(list)) {
