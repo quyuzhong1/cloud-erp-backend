@@ -118,7 +118,8 @@ ksba.platform_order_code AS platformOrderCode
         CASE
         WHEN kfc.checkFeedbackQty > 0 THEN
         kfc.checkFeedbackQty ELSE 0
-        END AS checkFeedbackQty
+        END AS checkFeedbackQty,
+        kfu.url
         FROM
         kol_b2c_application kba
         left join kol_b2c_application_detail kbad on kba.id = kbad.main_id and kbad.is_deleted = false
@@ -139,6 +140,20 @@ ksba.platform_order_code AS platformOrderCode
                 kf.source_id,
                 kf.partner_id
         ) as kfc on kfc.partner_id = ksba.partner_id and kba.id = kfc.source_id
+        left join (
+            SELECT
+            kf.id,
+            kf.source_id,
+            kf.partner_id,
+            kf.url
+            FROM kol_feedback kf
+            INNER JOIN (
+            SELECT source_id, MIN(id) AS min_id
+            FROM kol_feedback
+            WHERE is_deleted = false
+            GROUP BY source_id
+            ) AS earliest ON kf.source_id = earliest.source_id AND kf.id = earliest.min_id
+            WHERE kf.is_deleted = false) as kfu on kfu.partner_id = ksba.partner_id and kba.id = kfu.source_id
         WHERE
         ${params.sqlMap.default}
         AND kba.is_deleted = FALSE
