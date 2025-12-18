@@ -4012,7 +4012,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         List<SoDetailEntity> detailList = soDetailService.listBaseByMainId(id);
         detailList = detailList.stream().filter(v->StringUtils.isBlank(v.getSkuId())).collect(Collectors.toList());
         if (CollectionUtils.isEmpty(detailList)) {
-            return BatchResultDTO.success(id, entity.getCode(), "没有需要映射的SKU");
+            return BatchResultDTO.fail(id, entity.getCode(), "没有需要映射的SKU");
         }
         List<String> platformSkuNoList = detailList.stream().map(SoDetailEntity::getPlatformSkuNo).collect(Collectors.toList());
         ListingInfoParamDTO listingInfoParamDTO = new ListingInfoParamDTO();
@@ -4030,10 +4030,10 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                     soDetailEntity.setBoxQty(soDetailEntity.getQty());
                     soDetailEntity.setPerBoxQty(1);
                 }else{
-                    return BatchResultDTO.success(id, entity.getCode(), "平台SKU【"+soDetailEntity.getPlatformSkuNo()+"】未找到映射关系，请先维护映射关系");
+                    return BatchResultDTO.fail(id, entity.getCode(), "平台SKU【"+soDetailEntity.getPlatformSkuNo()+"】未找到映射关系，请先维护映射关系");
                 }
             }else{
-                return BatchResultDTO.success(id, entity.getCode(), "平台SKU不能为空");
+                return BatchResultDTO.fail(id, entity.getCode(), "平台SKU不能为空");
             }
         }
         //通过客户id 和产品sku查到客户sku
