@@ -20,7 +20,7 @@ public class RocketMqTopic {
     /**
      * 推送三方通知
      */
-    public static final String SEND_THIRD_NOTICE_SYS_TOPIC = "${spring.cloud.nacos.discovery.namespace}-send_third_notice_sys_topic";
+    public static final String SEND_THIRD_NOTICE_TOPIC = "${spring.cloud.nacos.discovery.namespace}-send_third_notice_topic";
 
     /**
      * dmp 拉取第三方ERP订单topic

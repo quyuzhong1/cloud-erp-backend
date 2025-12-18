@@ -2,19 +2,9 @@ package com.erp.server.sys.rocketmq.consumer;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.extra.spring.SpringUtil;
-import com.common.business.utils.RedisUtil;
-import com.common.business.wrapper.FeignQuery;
 import com.common.core.utils.JsonFieldDiffUtil;
 import com.common.message.constant.RocketMqConsumerGroup;
 import com.common.message.constant.RocketMqTopic;
-import com.common.message.enums.RocketMqTagEnum;
-import com.erp.model.sys.dto.MqConsumerRecordDTO;
-import com.erp.model.sys.entity.*;
-import com.erp.model.sys.enums.*;
-import com.erp.model.workflow.entity.CfgQueryOptionEntity;
-import com.erp.model.workflow.enums.CfgQueryOptionExtendTypeEnum;
-import com.erp.model.workflow.enums.CfgQueryOptionFieldBelongsTypeEnum;
 import com.erp.server.sys.service.*;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -22,12 +12,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.apache.rocketmq.spring.core.RocketMQListener;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
 import java.lang.reflect.Type;
 import java.util.*;
-import java.util.concurrent.Executor;
 import java.util.stream.Collectors;
 
 /**
@@ -39,8 +27,6 @@ import java.util.stream.Collectors;
         selectorExpression = "sys_receive_ddl_to_mq_tag",
         consumerGroup = RocketMqConsumerGroup.SYS_RECEIVE_DDL_TO_MQ_CONSUMER)
 public class MqRecordConsumerService implements RocketMQListener<String> {
-
-
 //    {
 //        "before": {
 //        "qc_date": "2024-04-11",
