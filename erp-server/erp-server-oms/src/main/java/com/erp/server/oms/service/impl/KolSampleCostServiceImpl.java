@@ -196,7 +196,7 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
         } catch (IOException e) {
             throw new ServiceException(ApiError.ERROR_95125);
         }
-        return Boolean.FALSE;
+        return Boolean.TRUE;
     }
 
     @Override
@@ -400,7 +400,7 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
         if (CollectionUtils.isEmpty(soCodeList)) {
             return CollUtil.newArrayList();
         }
-        return lambdaQuery().eq(KolSampleCostEntity::getSoCode, soCodeList).list();
+        return lambdaQuery().in(KolSampleCostEntity::getSoCode, soCodeList).list();
     }
 
     /**

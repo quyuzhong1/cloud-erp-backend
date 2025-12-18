@@ -1,5 +1,6 @@
 package com.erp.model.oms.dto;
 
+import cn.hutool.json.JSONArray;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -76,7 +77,7 @@ public class KolB2bApplicationDetailDTO implements Serializable {
         /**
         * 项目名称
         */
-        private String projectTag;
+        private JSONArray projectTag;
 
         /**
         * 备注
@@ -137,7 +138,7 @@ public class KolB2bApplicationDetailDTO implements Serializable {
         * 项目名称
         */
         @Size(max = 64,message = "项目名称最大长度不能超过64位")
-        private String projectTag;
+        private JSONArray projectTag;
 
         /**
         * 备注

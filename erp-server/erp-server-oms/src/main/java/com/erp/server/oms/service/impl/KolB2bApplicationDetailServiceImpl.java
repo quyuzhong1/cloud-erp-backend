@@ -4,7 +4,6 @@ package com.erp.server.oms.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-import com.common.business.annotation.DistributeLocker;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
@@ -90,7 +89,7 @@ public class KolB2bApplicationDetailServiceImpl extends SuperServiceImpl<KolB2bA
         // 数据处理
         handleData(list,mainId);
         log.info("编辑 开始修改B2B寄样申请明细单数据，mainId：【{}】", mainId);
-        boolean save = super.saveOrUpdateBatch(list);
+        boolean save = this.saveOrUpdateBatch(list);
         if(!save) {
             throw new ServiceException("B2B寄样申请明细单保存失败");
         }

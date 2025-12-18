@@ -80,26 +80,26 @@ public class KolB2bApplicationDTO implements Serializable {
     public static class ListDTO {
 
         /**
-        * 主键id
+        * 主键id【可排序】
         */
         private String  id;
         /**
-         * 明细主键id
+         * 明细主键id【可排序】
          */
         private String detailId;
 
         /**
-        * 申请单号
+        * 申请单号【可排序】
         */
         private String code;
 
         /**
-        * 申请日期
+        * 申请日期【可排序】
         */
         private LocalDate date;
 
         /**
-        * 审核状态
+        * 审核状态【可排序】
         */
         private String approveStatus;
         /**
@@ -109,7 +109,7 @@ public class KolB2bApplicationDTO implements Serializable {
 
 
         /**
-        * 作废状态
+        * 作废状态【可排序】
         */
         private Boolean invalidStatus;
 
@@ -119,12 +119,12 @@ public class KolB2bApplicationDTO implements Serializable {
         private String invalidStatusName;
 
         /**
-        * 寄样类型
+        * 寄样类型【可排序】
         */
         private String type;
 
         /**
-        * 客户id
+        * 客户id【可排序】
         */
         private String customerId;
 
@@ -134,12 +134,12 @@ public class KolB2bApplicationDTO implements Serializable {
         private String customerName;
 
         /**
-        * 申请说明
+        * 申请说明【可排序】
         */
         private String applyRemark;
 
         /**
-        * 申请人id
+        * 申请人id【可排序】
         */
         private String applyUserId;
         /**
@@ -148,7 +148,7 @@ public class KolB2bApplicationDTO implements Serializable {
         private String applyUserName;
 
         /**
-        * 申请部门id
+        * 申请部门id【可排序】
         */
         private String applyDeptId;
         /**
@@ -169,11 +169,11 @@ public class KolB2bApplicationDTO implements Serializable {
          */
         private String trackNo;
         /**
-         * skuId
+         * skuId【可排序】
          */
         private String skuId;
         /**
-         * sku编号
+         * sku编号【可排序】
          */
         private String skuNo;
         /**
@@ -181,7 +181,7 @@ public class KolB2bApplicationDTO implements Serializable {
          */
         private String productName;
         /**
-         *  申请数量
+         *  申请数量【可排序】
          */
         private Integer qty;
         /**
@@ -197,7 +197,7 @@ public class KolB2bApplicationDTO implements Serializable {
          */
         private Integer captureFeedbackQty;
         /**
-         * 预计回片日期
+         * 预计回片日期【可排序】
          */
         private LocalDate planFeedbackDate;
         /**
@@ -207,9 +207,11 @@ public class KolB2bApplicationDTO implements Serializable {
         /**
          * 项目名称
          */
-        private String projectTag;
+        private List<String> projectTag;
+        private String projectTags;
+
         /**
-         * 明细备注
+         * 明细备注【可排序】
          */
         private String detailRemark;
 
@@ -219,12 +221,12 @@ public class KolB2bApplicationDTO implements Serializable {
         private String approveUserName;
 
         /**
-         * 审核时间
+         * 审核时间【可排序】
          */
         private LocalDateTime approveTime;
 
         /**
-        * 创建时间
+        * 创建时间【可排序】
         */
         private LocalDateTime createTime;
 

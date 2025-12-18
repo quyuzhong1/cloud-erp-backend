@@ -17,7 +17,7 @@
        <result column="sku_no" property="skuNo" />
        <result column="qty" property="qty" />
        <result column="plan_feedback_date" property="planFeedbackDate" />
-       <result column="project_tag" property="projectTag" />
+       <result column="project_tag" property="projectTag" jdbcType="OTHER"  typeHandler="com.erp.server.oms.handler.ObjectJsonArrayHandler" />
        <result column="remark" property="remark" />
     </resultMap>
 

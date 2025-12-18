@@ -242,6 +242,7 @@
             sd.sku_no,
             sd.price,
             sd.exchange_rate,
+            sd.source_detail_id,
             sd.amount,
             sd.amount_local_currency,
             sd.qty,

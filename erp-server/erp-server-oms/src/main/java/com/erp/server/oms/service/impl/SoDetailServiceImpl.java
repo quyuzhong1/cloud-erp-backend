@@ -2016,6 +2016,11 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             if (count > 0) {
                 throw new ServiceException( CharSequenceUtil.format("SKU【{}】已下推发货通知单不支持删除",soDetailEntity.getSkuNo()));
             }
+
+            //数据为b2b寄样申请单，明细不允许单独删除
+            if (CharSequenceUtil.equals(soInfoEntity.getSourceType(), SourceTypeEnum.KOL_B2B_APPLICATION.getCode()) && CharSequenceUtil.isNotBlank(soDetailEntity.getSourceDetailId())) {
+                throw new ServiceException(ApiError.ERROR_PUSH_KOL_B2B_APPLICATION_SO_DETAIL_DELETE);
+            }
             
             //B2B销售订单明细行冻结库存检查 - 删除时不允许删除已冻结库存的明细行
             if (MathUtil.compareTo(soDetailEntity.getFrozenQty(),MathUtil.ZERO) > MathUtil.ZERO) {

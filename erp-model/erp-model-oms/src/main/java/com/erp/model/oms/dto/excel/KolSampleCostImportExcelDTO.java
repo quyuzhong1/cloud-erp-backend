@@ -24,7 +24,7 @@ public class KolSampleCostImportExcelDTO implements Serializable {
      * 销售单号
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "*销售单号", index = 1)
+    @ExcelProperty(value = "*销售单号", index = 0)
     @FieldValid(fieldName = "销售单号",isNotBlank = true)
     private String soCode;
 
@@ -32,7 +32,7 @@ public class KolSampleCostImportExcelDTO implements Serializable {
      * 费用项
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "*费用项", index = 2)
+    @ExcelProperty(value = "*费用项", index = 1)
     @FieldValid(fieldName = "费用项",isNotBlank = true)
     private String feeType;
 
@@ -41,7 +41,7 @@ public class KolSampleCostImportExcelDTO implements Serializable {
      * 原币金额
      */
     @ColumnWidth(30)
-    @ExcelProperty(value = "*原币金额", index = 3)
+    @ExcelProperty(value = "*原币金额", index = 2)
     @FieldValid(fieldName = "原币金额",isNotBlank = true, formatPattern = FieldFormatPatternTypeEnum.AMOUNT)
     private String amountStr;
 
@@ -49,14 +49,14 @@ public class KolSampleCostImportExcelDTO implements Serializable {
      * 汇率
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "*汇率", index = 4)
+    @ExcelProperty(value = "*汇率", index = 3)
     @FieldValid(fieldName = "*汇率",isNotBlank = true, formatPattern = FieldFormatPatternTypeEnum.AMOUNT)
     private String exchangeRateStr;
 
     /**
      * 错误数据
      */
-    @ExcelProperty(value = "错误数据", index = 5)
+    @ExcelProperty(value = "错误数据", index = 4)
     @ColumnWidth(50)
     private String  errorMsg = "";
 }

@@ -1,14 +1,17 @@
 package com.erp.model.oms.entity;
 
-import com.baomidou.mybatisplus.annotation.TableName;
-import com.common.core.entity.BaseEntity;
-import java.time.LocalDate;
+import cn.hutool.json.JSONArray;
 import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
+import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
+import com.common.core.entity.BaseEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
+import org.apache.ibatis.type.JdbcType;
+
+import java.io.Serializable;
+import java.time.LocalDate;
 
 
 /**
@@ -53,8 +56,8 @@ public class KolB2bApplicationDetailEntity extends BaseEntity<KolB2bApplicationD
     /**
     * 项目名称
     */
-    @TableField("project_tag")
-    private String projectTag;
+    @TableField(value = "project_tag", jdbcType = JdbcType.OTHER,typeHandler = JacksonTypeHandler.class)
+    private JSONArray projectTag;
     /**
     * 备注
     */

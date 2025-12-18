@@ -40,6 +40,9 @@ public class KolB2bApplicationQueryHandler extends AbstractQueryHandler {
                 return "not exists (SELECT sd.source_detail_id FROM so_info si inner join so_detail sd on si.id = sd.main_id and sd.is_deleted = false WHERE si.is_deleted= false and si.invalid_status = false and si.approve_status = 'approve' and kbad.id = sd.source_detail_id)" ;
             }
         }
+        if ("projectTag".equals(field)) {
+            return " exists (select 1 from jsonb_array_elements_text(kbad.project_tag) AS elem where elem "+ compareCodeSplicingValueSql +")" ;
+        }
         if ("deliveryStatusName".equals(field)) {
             return "kbad.id IN (SELECT sd.source_detail_id FROM so_info si inner join so_detail sd on si.id = sd.main_id and sd.is_deleted = false WHERE si.is_deleted= false and si.invalid_status = false and sd.delivery_status "+ compareCodeSplicingValueSql +
                     ")" ;

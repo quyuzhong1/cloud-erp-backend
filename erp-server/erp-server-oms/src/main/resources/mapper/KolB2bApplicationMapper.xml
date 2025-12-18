@@ -35,6 +35,34 @@
        <result column="remark" property="remark" />
     </resultMap>
 
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="PagingResultMap" type="com.erp.model.oms.dto.KolB2bApplicationDTO$ListDTO">
+        <result column="id" property="id" />
+        <result column="code" property="code" />
+        <result column="date" property="date" />
+        <result column="approveStatus" property="approveStatus" />
+        <result column="approveUserName" property="approveUserName" />
+        <result column="approveTime" property="approveTime" />
+        <result column="invalidStatus" property="invalidStatus" />
+        <result column="type" property="type" />
+        <result column="customerId" property="customerId" />
+        <result column="applyRemark" property="applyRemark" />
+        <result column="applyUserId" property="applyUserId" />
+        <result column="applyDeptId" property="applyDeptId" />
+        <result column="approve_time" property="approveTime" />
+        <result column="createTime" property="createTime" />
+        <result column="createUserName" property="createUserName" />
+        <result column="detailId" property="detailId" />
+        <result column="skuId" property="skuId" />
+        <result column="skuNo" property="skuNo" />
+        <result column="qty" property="qty" />
+        <result column="planFeedbackDate" property="planFeedbackDate" />
+        <result column="projectTag" property="projectTag" jdbcType="OTHER"  typeHandler="com.erp.server.oms.handler.ObjectJsonArrayHandler" />
+        <result column="detailRemark" property="detailRemark" />
+        <result column="customerName" property="customerName" />
+    </resultMap>
+
     <!-- 通用查询结果列 -->
     <sql id="Base_Column_List">
         id,
@@ -50,7 +78,7 @@
     </sql>
 
     <!-- 分页查询 -->
-    <select id="paging" resultType="com.erp.model.oms.dto.KolB2bApplicationDTO$ListDTO">
+    <select id="paging" resultMap="PagingResultMap">
         select
             kba.id,
             kba.code,
