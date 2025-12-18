@@ -1277,7 +1277,9 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         for (SoReturnDTO.GenerateSoReturnNoticeView generateSoReturnNoticeView : list) {
             SoDetailEntity soDetailEntity = soDetailEntities.stream().filter(detail -> detail.getId().equals(generateSoReturnNoticeView.getSourceDetailId())).findFirst().orElse(new SoDetailEntity());
             generateSoReturnNoticeView.setSalesQty(soDetailEntity.getQty());
-            Integer actualQty = soOutstockDetailEntities.stream().filter(detail -> soDetailEntity.getMainId().equals(detail.getSoId()) && detail.getSkuId().equals(generateSoReturnNoticeView.getSkuId()) && detail.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(SoOutstockDetailEntity::getActualQty).reduce(MathUtil.ZERO, Integer::sum);
+            Integer actualQty = soOutstockDetailEntities.stream()
+                    .filter(detail -> soDetailEntity.getMainId().equals(detail.getSoId()) && detail.getSkuId().equals(soDetailEntity.getDeliverySkuId()) && detail.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus()))
+                    .map(item -> item.getActualQty() * soDetailEntity.getPerBoxQty()).reduce(MathUtil.ZERO, Integer::sum);
             generateSoReturnNoticeView.setDeliveryQty(actualQty);
             Integer noticeReturnQty = returnNoticeDetailEntities.stream().filter(detail -> generateSoReturnNoticeView.getId().equals(detail.getSourceDetailId()) && detail.getSkuId().equals(generateSoReturnNoticeView.getSkuId())).map(SoReturnNoticeDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
             generateSoReturnNoticeView.setReturnQty(generateSoReturnNoticeView.getReturnQty() - noticeReturnQty);
