@@ -81,6 +81,12 @@ public class OverseasProviderWarehouseEntity extends BaseEntity<OverseasProvider
     @TableField("platform_warehouse_type")
     private String platformWarehouseType;
 
+    /**
+     * 开启b2b发货
+     */
+    @TableField("is_b2b_api_delivery")
+    private Boolean isB2BApiDelivery;
+
     public static final String MAIN_ID = "main_id";
 
     public static final String PLATFORM_WAREHOUSE_CODE = "platform_warehouse_code";

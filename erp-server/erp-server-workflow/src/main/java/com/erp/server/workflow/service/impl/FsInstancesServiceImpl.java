@@ -116,6 +116,7 @@ public class FsInstancesServiceImpl implements FsInstancesService {
                 return;
             }
             one.setBussinessApproveStatus(erpSpproveStatus);
+            one.setFinishTime(LocalDateTime.now());
             approveTaskInfoService.updateById(one);
 
 
@@ -196,7 +197,9 @@ public class FsInstancesServiceImpl implements FsInstancesService {
         taskInfo.setBussinessKey(thirdProcessEntity.getBussinessKey());
         taskInfo.setBussinessCode(batchResultDTO.getCode());
         taskInfo.setBussinessId(batchResultDTO.getId());
-        taskInfo.setHappenTime(LocalDateTime.now());
+        LocalDateTime now = LocalDateTime.now();
+        taskInfo.setHappenTime(now);
+        taskInfo.setFinishTime(now);
         taskInfo.setBussinessApproveStatus(ApproveStatusEnum.APPROVE.getCode());
         taskInfo.setStatus(taskStatus);
         taskInfo.setReason(reason);

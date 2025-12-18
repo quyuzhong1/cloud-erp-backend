@@ -124,6 +124,10 @@ public class VirtualInventoryTransCoreServiceImpl implements VirtualInventoryTra
     public void unApprove(InventoryUnApproveDTO dto) {
         ValidatorUtil.validateEntity(dto);
         List< VirtualTransFlowEntity> transactionFlowList = this.queryTransactionFlowList(dto.getSourceType(),dto.getBillId());
+        if (CollUtil.isEmpty(transactionFlowList)) {
+            // 无交易流水，无需反审核
+            return;
+        }
         List<VirtualInventoryStockDTO.InventoryTransactionDTO> transactionDtoList= this.parseTransactionForUnApprove(transactionFlowList);
         virtualInventoryTradingService.doTransactionList(transactionDtoList,InventoryTradingService.UNAPPROVE);
     }

@@ -103,6 +103,7 @@ public interface B2cOrderConsumerConverter {
             @Mapping(target = "cancelGoodsCurrency", source = "oldEntity.cancelGoodsCurrency"),
             @Mapping(target = "sellerOrderCode",ignore = true),
             @Mapping(target = "nfeInvoiceStatus", source = "dto.nfeInvoiceStatus"),
+            @Mapping(target = "platformDeliveryWarehouse", source = "dto.platformDeliveryWarehouse"),
     })
     SoB2cEntity convertUpdateMainOrder(SoB2cEntity oldEntity, PlatformOrderDTO dto);
 

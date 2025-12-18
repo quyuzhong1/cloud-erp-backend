@@ -63,4 +63,8 @@ public interface DmpThirdMappingFeign {
 
     @PostMapping("/view")
     ThirdMappingDTO.MappingViewDTO view(@RequestBody @Validated ThirdMappingDTO.ViewParamDTO viewParamDTO);
+
+    @GetMapping("/getShopByThirdCode")
+    ThirdMappingEntity getShopByThirdCode(@RequestParam String thirdCode, @RequestParam String sysType);
+
 }

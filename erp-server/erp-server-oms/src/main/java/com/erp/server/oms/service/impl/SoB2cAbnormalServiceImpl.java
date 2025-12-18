@@ -10,17 +10,21 @@ import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.oms.dto.OperateLogDTO;
+import com.erp.model.oms.dto.RuleLogisticsDTO;
 import com.erp.model.oms.dto.SoB2cAbnormalDTO;
+import com.erp.model.oms.dto.SoB2cErrorDTO;
+import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
+import com.erp.model.oms.entity.SoB2cLogisticsEntity;
+import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.rpc.wms.feign.SoB2cDeliveryFeign;
 import com.erp.rpc.wms.feign.SoOutstockFeign;
-import com.erp.server.oms.service.OperateLogService;
-import com.erp.server.oms.service.SoB2cAbnormalService;
-import com.erp.server.oms.service.SoB2cErrorService;
-import com.erp.server.oms.service.SoB2cService;
+import com.erp.server.oms.service.*;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -41,7 +45,10 @@ public class SoB2cAbnormalServiceImpl implements SoB2cAbnormalService {
     private static final Logger log = LoggerFactory.getLogger(SoB2cAbnormalServiceImpl.class);
     @Resource
     private SoB2cService soB2cService;
-
+    @Resource
+    private SoB2cDetailService soB2cDetailService;
+    @Resource
+    private SoB2cLogisticsService soB2cLogisticsService;
     @Resource
     private SoOutstockFeign soOutstockFeign;
 
@@ -53,6 +60,9 @@ public class SoB2cAbnormalServiceImpl implements SoB2cAbnormalService {
 
     @Resource
     private OperateLogService operateLogService;
+
+    @Resource
+    private RuleLogisticsService ruleLogisticsService;
 
 
     @Override
@@ -78,6 +88,7 @@ public class SoB2cAbnormalServiceImpl implements SoB2cAbnormalService {
         if(Objects.isNull(soB2cErrorTypeEnum)){
             return resultDTOList;
         }
+        Boolean autoSubmitDelivery;
         // 重试逻辑
         switch (soB2cErrorTypeEnum) {
             case SUBMIT_DELIVERY:
@@ -87,7 +98,8 @@ public class SoB2cAbnormalServiceImpl implements SoB2cAbnormalService {
                 resultDTOList.add(soB2cErrorService.retryFalseDelivery(id));
                 break;
             case GET_LOGISTICS_CODE:
-                resultDTOList.add(soB2cService.getLogisticsCode(id, Boolean.TRUE));
+                autoSubmitDelivery = getLogisticsRuleResult(id);
+                resultDTOList.add(soB2cService.getLogisticsCode(id, autoSubmitDelivery));
                 break;
             case PACKAGE_PLAN_GENERATE:
                 resultDTOList.add(soB2cService.retryPackagePlan(id));
@@ -120,10 +132,51 @@ public class SoB2cAbnormalServiceImpl implements SoB2cAbnormalService {
                 List<BatchResultDTO> resultDTOS = soB2cService.fetchOrder(Collections.singletonList(id));
                 resultDTOList.addAll(resultDTOS);
                 break;
+            case GET_LOGISTICS_LABEL:
+                SoB2cLogisticsEntity soB2cLogisticsEntity = soB2cLogisticsService.getByMainId(id);
+                soB2cEntity.setBillStatus(SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode());
+                BatchResultDTO resultDTO1 = soB2cService.getLogisticsLabel(soB2cEntity,soB2cLogisticsEntity);
+                if(resultDTO1.getSuccess()){
+                    autoSubmitDelivery = getLogisticsRuleResult(id);
+                    if(autoSubmitDelivery){
+                        try {
+                            //提交发货
+                            soB2cService.submitDelivery(id, "");
+                        }catch (Exception e){
+                            SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
+                            addError.setType(SoB2cErrorTypeEnum.SUBMIT_DELIVERY.getCode());
+                            addError.setParamJson("");
+                            addError.setReturnJson("");
+                            addError.setMainId(id);
+                            addError.setMessage(e.getMessage());
+                            soB2cErrorService.add(addError);
+                        }
+                    }
+                }
+                resultDTOList.add(resultDTO1);
+                break;
             default:
                 break;
         }
         return resultDTOList;
+    }
+
+    private Boolean getLogisticsRuleResult(String id) {
+        Map<String, Object> ruleMap = new HashMap<>();
+        List<SoB2cDetailEntity> detailList = soB2cDetailService.listByMainId(id);
+        ruleMap = soB2cService.handleMatchJson(id, detailList, ruleMap);
+        List<Map<String, Object>> mapList = (List<Map<String, Object>>) ruleMap.get("detailList");
+        //要匹配渠道id 是空的 如果有就 不用匹配了返回成功
+        String logisticsChannelIdKey="logisticsChannelId";
+        mapList.forEach(v->v.remove(logisticsChannelIdKey));
+        if(id.equals("2001631240814084098")){
+            System.out.println(123);
+        }
+        RuleLogisticsDTO.RuleMatchResultDTO matchResult = ruleLogisticsService.getRuleOrderMatchResult(ruleMap);
+        if(Objects.isNull(matchResult) || Objects.isNull(matchResult.getLogisticsSupplierId())){
+            return false;
+        }
+        return  matchResult.getAutoGetTrackNotOfRangeDelivery() || matchResult.getAutoGetTrackNo();
     }
 
     @Override

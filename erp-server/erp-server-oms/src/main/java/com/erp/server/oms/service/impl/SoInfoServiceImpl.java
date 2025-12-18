@@ -52,6 +52,8 @@ import com.erp.model.oms.dto.excel.B2BSoImportExcelDTO;
 import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.*;
+import com.erp.model.oms.enums.BillTypeEnum;
+import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.ProductSaleEntity;
@@ -69,10 +71,7 @@ import com.erp.model.tms.dto.InventorySkuCostDTO;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.entity.*;
-import com.erp.model.wms.enums.DeliveryStatusEnum;
-import com.erp.model.wms.enums.MachineTypeEnum;
-import com.erp.model.wms.enums.PickingBillTypeEnum;
-import com.erp.model.wms.enums.WorkTypeEnum;
+import com.erp.model.wms.enums.*;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
@@ -256,7 +255,6 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
     @Resource
     private SysPartitionFeign sysPartitionFeign;
-    private OmsPushMsgService omsPushMsgService;
 
     @Resource
     private CfgSettingFeign fgSettingFeign;
@@ -265,6 +263,13 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
     @Resource
     private SyncDhtService syncDhtService;
+    @Resource
+    private B2bThirdDeliveryFeign b2bThirdDeliveryFeign;
+
+    @Resource
+    private OverseasProviderFeign overseasProviderFeign;
+    @Resource
+    private WmsOverseasWarehouseFeign wmsOverseasWarehouseFeign;
 
     /**
      * 添加销售订单
@@ -756,6 +761,18 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         }
         view.setCurrencySymbol(StringUtils.isNotBlank(soInfo.getCurrencySymbol())? soInfo.getCurrencySymbol() : CurrencyEnum.getSymbolByCode(view.getCurrency()));
 
+        //从三方仓管理查询是否b2b发货
+        List<OverseasProviderDTO.ListWithWarehouseDTO> overseasProviderList = overseasProviderFeign.listAllMatch();
+        view.setIsB2BApiDelivery(Boolean.FALSE);
+        if (!overseasProviderList.isEmpty()) {
+            for (OverseasProviderDTO.ListWithWarehouseDTO listWithWarehouseDTO : overseasProviderList) {
+                if (view.getWarehouseId().equals(listWithWarehouseDTO.getWarehouseId())) {
+                    view.setIsB2BApiDelivery(listWithWarehouseDTO.getIsB2BApiDelivery());
+                }
+            }
+
+        }
+
         List<SoDetailDTO.ViewDTO> detailList = soDetailService.listByMainId(id, warehouseId);
         List<String> skuIds = detailList.stream().map(SoDetailDTO.ViewDTO::getSkuId).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIds);
@@ -887,7 +904,13 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         //有效发货通知单
         List<String> sodIdList = list.stream().map(SoInfoDTO.PagingViewDTO::getDetailId).collect(Collectors.toList());
         List<SoDeliveryNoticeDetailEntity> soDeliveryNoticeDetailList = soDeliveryNoticeFeign.listDetailBySourceDetailIds(sodIdList);
-        List<String> skuIdList = list.stream().map(SoInfoDTO.PagingViewDTO::getSkuId).distinct().collect(Collectors.toList());
+        List<B2bThirdDeliveryDetailEntity> b2bThirdDeliveryDetailList = b2bThirdDeliveryFeign.listBySoDetailIds(sodIdList);
+//        List<String> skuIdList = list.stream().map(SoInfoDTO.PagingViewDTO::getDeliverySkuId).distinct().collect(Collectors.toList());
+        List<String> skuIdList = list.stream()
+                .flatMap(dto -> Stream.of(dto.getSkuId(), dto.getDeliverySkuId()))
+                .filter(Objects::nonNull)
+                .distinct()
+                .collect(Collectors.toList());
         List<String> warehouseIdList = list.stream().map(SoInfoDTO.PagingViewDTO::getWarehouseId).collect(Collectors.toList());
 
         //根据SKU查询BOM判断是否是组合SKU
@@ -953,6 +976,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         //采购申请单信息
         List<PurchaseApplicationDetailEntity> purchaseApplicationDetailList = FeignQuery.create(PurchaseApplicationDetailEntity.class).in(PurchaseApplicationDetailEntity::getSourceDetailId, sodIdList).list();
 
+
+
         //销售出库单列表
         List<SoOutstockEntity> soOutstockList = soOutstockFeign.listBySoIds(soIdList);
         for (SoInfoDTO.PagingViewDTO item : list) {
@@ -995,15 +1020,21 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             item.setTrackNoStr(trackNoList.stream().collect(Collectors.joining(",")));
             //国家
             item.setCountryName(countryMap.get(item.getCountryId()));
-            //实体仓名称
-            String warehouseName = warehouseList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), item.getWarehouseId())).map(WarehouseEntity::getName).findFirst().orElse("");
-            item.setWarehouseName(warehouseName);
+            //实体仓名称&&经营类型
+            Optional<WarehouseEntity> matchedWarehouse = warehouseList.stream()
+                    .filter(obj -> CharSequenceUtil.equals(obj.getId(), item.getWarehouseId()))
+                    .findFirst();
+
+            item.setWarehouseName(matchedWarehouse.map(WarehouseEntity::getName).orElse(""));
+            item.setWarehouseManageType(matchedWarehouse.map(WarehouseEntity::getWarehouseManageType).orElse(""));
 
             //存在虚拟仓库则判断是否缺货
             if (StrUtil.isNotBlank(item.getVirtualWarehouseId())) {
 
-                Integer approveNoticeQty = soDeliveryNoticeDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSourceDetailId(), item.getDetailId())
+                Integer approveNoticeQty = soDeliveryNoticeDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSourceDetailId(), item.getDetailId()) && CharSequenceUtil.equals(obj.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus())
                 ).map(SoDeliveryNoticeDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
+                //b2b三方仓发货单 已发货数量
+                Integer b2bBoxQty = b2bThirdDeliveryDetailList.stream().filter(e -> !ThirdDeliveryStatusEnum.CANCEL_DELIVERY.getCode().equals(e.getStatus()) && CharSequenceUtil.equals(e.getSoDetailId(),item.getDetailId())).map(B2bThirdDeliveryDetailEntity::getBoxQty).reduce(Integer::sum).orElse(0);
 
                 //虚拟仓名称
                 String virtualWarehouseName = virtualWarehouseList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), item.getVirtualWarehouseId())).map(VirtualWarehouseEntity::getName).findFirst().orElse("");
@@ -1012,7 +1043,10 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 //虚拟仓缺货按bom处理
                 SoInfoDTO.VirtuaParamScarceDTO virtuaParamScarceDTO = new SoInfoDTO.VirtuaParamScarceDTO();
                 BeanMapperUtils.copy(item,virtuaParamScarceDTO);
-                handleVirtualBomScarce(bomChildrenList, virtualInventoryList, virtuaParamScarceDTO,approveNoticeQty);
+                virtuaParamScarceDTO.setSkuId(item.getDeliverySkuId());
+                virtuaParamScarceDTO.setSkuNo(item.getDeliverySkuNo());
+                virtuaParamScarceDTO.setQty(item.getBoxQty());
+                handleVirtualBomScarce(bomChildrenList, virtualInventoryList, virtuaParamScarceDTO,approveNoticeQty+b2bBoxQty);
                 item.setVirtualUsableQty(virtuaParamScarceDTO.getVirtualUsableQty());
                 item.setChildScarceList(virtuaParamScarceDTO.getChildScarceList());
                 item.setIsVirtualScarce(virtuaParamScarceDTO.getIsVirtualScarce());
@@ -1029,13 +1063,16 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             String customerName = customerList.stream().filter(c -> c.getId().equals(item.getCustomerId())).findFirst().
                     flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
             item.setCustomerName(customerName);
+            //sku
             String skuId = item.getSkuId();
+            //发货sku
+            String deliverySkuId = item.getDeliverySkuId();
             //销售数量
-            Integer qty = item.getQty();
+            Integer qty = item.getBoxQty();
 
             //即时库存
             Integer curInventoryQty = skuInventoryTotalList.stream().filter(
-                    s -> s.getSkuId().equals(skuId) &&
+                    s -> s.getSkuId().equals(deliverySkuId) &&
                             s.getWarehouseId().equals(warehouseId)
             ).mapToInt(InventoryQtyDTO.SkuInventoryTotalDTO::getInventoryTotal).sum();
             /**
@@ -1070,15 +1107,25 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             item.setAvailableQty(availableQty);
 
             //发货通知数量
-            if (CollectionUtils.isNotEmpty(soDeliveryNoticeDetailList)) {
+            List<SoDeliveryNoticeDetailEntity> soDeliveryNoticeDetailEntityList = soDeliveryNoticeDetailList.stream().filter(obj -> obj.getSourceDetailId().equals(item.getDetailId())).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(soDeliveryNoticeDetailEntityList)) {
                 Integer effectiveNoticeQty = soDeliveryNoticeDetailList.stream().filter(obj -> obj.getSourceDetailId().equals(item.getDetailId())).map(SoDeliveryNoticeDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
+                effectiveNoticeQty = effectiveNoticeQty * item.getPerBoxQty();
                 item.setEffectiveNoticeQty(effectiveNoticeQty);
 
                 //剩余发货通知数量 = 销售数量 - 发货通知数量
-                Integer remainingNoticeQty = qty - effectiveNoticeQty;
+                Integer remainingNoticeQty = item.getQty() - effectiveNoticeQty;
                 item.setRemainingNoticeQty(remainingNoticeQty > 0 ? remainingNoticeQty : 0);
             }
+            List<B2bThirdDeliveryDetailEntity> b2bThirdDeliveryDetailEntityList = b2bThirdDeliveryDetailList.stream().filter(obj -> obj.getSoDetailId().equals(item.getDetailId())).collect(Collectors.toList());
+            if (CollUtil.isNotEmpty(b2bThirdDeliveryDetailEntityList)){
+                Integer effectiveNoticeQty = b2bThirdDeliveryDetailList.stream().filter(obj -> obj.getSoDetailId().equals(item.getDetailId()) && !ThirdDeliveryStatusEnum.CANCEL_DELIVERY.getCode().equals(obj.getStatus())).map(B2bThirdDeliveryDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
+                item.setEffectiveNoticeQty(effectiveNoticeQty);
 
+                //剩余发货通知数量 = 销售数量 - 发货通知数量
+                Integer remainingNoticeQty = item.getQty() - effectiveNoticeQty;
+                item.setRemainingNoticeQty(remainingNoticeQty > 0 ? remainingNoticeQty : 0);
+            }
 
             //缺货标识
             item.setIsScarce(scarceQty > 0);
@@ -1095,7 +1142,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
              * 剩余数量
              * 销售数量-已出库数量
              */
-            Integer waitQty = qty > deliveryQty ? qty - deliveryQty : 0;
+            Integer waitQty = item.getQty() > deliveryQty  ? item.getQty() - deliveryQty : 0;
             //sku若关闭则等于0
             if(Boolean.TRUE.equals(item.getIsClose())){
                 waitQty = 0;
@@ -1117,12 +1164,12 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             if (waitQty == 0) {
                 deliveryStatus = DeliveryStatusEnum.COMPLETE_SHIPMENT.getCode();
             } else {
-                if (!qty.equals(waitQty)) {
+                if (!item.getQty().equals(waitQty)) {
                     deliveryStatus = DeliveryStatusEnum.PARTIAL_SHIPMENT.getCode();
                 }
             }
             item.setDeliveryStatus(deliveryStatus);
-            String deliveryStatusName = DeliveryStatusEnum.getName(deliveryStatus);
+            String deliveryStatusName = DeliveryStatusEnum.getName(item.getDeliveryStatus());
             item.setDeliveryStatusName(deliveryStatusName);
             //税率
             BigDecimal taxRate = item.getTaxRate();
@@ -1156,8 +1203,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 }
             }
 
-            if (ignoreInventorySkuIds.contains(skuId)) {
-                log.warn("sku id: {}，sku编号：{}产品属性是费用或服务，不参与库存出入库，不做库存验证", skuId, item.getSkuNo());
+            if (ignoreInventorySkuIds.contains(deliverySkuId)) {
+                log.warn("sku id: {}，sku编号：{}产品属性是费用或服务，不参与库存出入库，不做库存验证", deliverySkuId, item.getDeliverySkuNo());
                 item.setIsScarce(Boolean.FALSE);
                 item.setScarceQty(0);
             }
@@ -1814,6 +1861,10 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         }
         List<MachineRefSoEntity> machineRefSoList = machineInfoFeign.listBySoIdList(soIds);
         if (CollectionUtils.isNotEmpty(machineRefSoList)) {
+            throw new ServiceException(ApiError.ERROR_92040);
+        }
+        List<B2bThirdDeliveryEntity> entityList = b2bThirdDeliveryFeign.listBySoIds(soIds);
+        if (CollectionUtils.isNotEmpty(entityList)) {
             throw new ServiceException(ApiError.ERROR_92040);
         }
     }
@@ -2501,7 +2552,10 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(entityClass -> entityClass.getId().equals(view.getSkuId())).findFirst().orElse(new ProductDetailEntity());
             view.setProductName(productDetailEntity.getName());
             view.setReturnQty(view.getSalesQty());
-            Integer actualQty = soOutstockDetailEntities.stream().filter(detail -> view.getSoId().equals(detail.getSoId()) && detail.getSkuId().equals(view.getSkuId()) && detail.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(SoOutstockDetailEntity::getActualQty).reduce(MathUtil.ZERO, Integer::sum);
+            Integer actualQty = soOutstockDetailEntities.stream()
+                    .filter(detail -> view.getSoId().equals(detail.getSoId()) && detail.getSkuId().equals(view.getSkuId()) && detail.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus()))
+                    .map(detail -> detail.getActualQty() * view.getPerBoxQty())
+                    .reduce(MathUtil.ZERO, Integer::sum);
             view.setDeliveryQty(actualQty);
             CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(view.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
             view.setCustomerName(customerInfoEntity.getName());
@@ -3456,6 +3510,14 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     @Override
     public List<BatchResultDTO> generateSoOut(List<SoInfoDTO.GenerateSoOutView> generateSoOutViewList) {
         Map<String,List<SoInfoDTO.GenerateSoOutView>> groupMap = generateSoOutViewList.stream().collect(Collectors.groupingBy(SoInfoDTO.GenerateSoOutView::getCode));
+
+        List<String> collect = generateSoOutViewList.stream().map(item -> item.getDetailId()).collect(Collectors.toList());
+        List<SoDetailEntity> soDetailEntities = soDetailService.listByIds(collect);
+        long count = soDetailEntities.stream().filter(item -> item.getPerBoxQty() > 1).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_PROHIBIT_PER_BOX_ONE_GEN_SO_OUT_STOCK);
+        }
+
         List<BatchResultDTO> batchResultDTOList = new ArrayList<>();
         groupMap.forEach((key,val)->{
             List<SoOutstockDTO.GenerateSoOutstockViewDTO> generateSoOutstockViewDTOList = new ArrayList<>();
@@ -3764,7 +3826,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             updateDTO.setTransactionSubType(OrderSubTypeEnum.ONLINE_ORDER.code);
             updateDTO.setRemark(dto.getRemark());
             updateDTO.setIsTax(erpInfoDTO.getIsTax());
-            updateDTO.setDeliveryMode(DeliveryModeEnum.DELIVERGOODS.getCode());
+            updateDTO.setDeliveryMode(DeliveryModeEnum.EXPRESS.getCode());
             updateDTO.setAddressType(CustomerAddressTypeEnum.DELIVER.getCode());
             List<String> attachUrlList = dto.getAttachment().stream().map(AttachDTO::getAttachUrl).filter(StringUtils::isNotBlank).collect(Collectors.toList());
             List<String> attachNameList = dto.getAttachment().stream().map(AttachDTO::getAttachName).filter(StringUtils::isNotBlank).collect(Collectors.toList());
@@ -3847,7 +3909,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             addDTO.setRemark(dto.getRemark());
             addDTO.setIsTax(erpInfoDTO.getIsTax());
             addDTO.setAddressType(CustomerAddressTypeEnum.DELIVER.getCode());
-            addDTO.setDeliveryMode(DeliveryModeEnum.DELIVERGOODS.getCode());
+            addDTO.setDeliveryMode(DeliveryModeEnum.EXPRESS.getCode());
             List<String> attachUrlList = dto.getAttachment().stream().map(AttachDTO::getAttachUrl).filter(StringUtils::isNotBlank).collect(Collectors.toList());
             List<String> attachNameList = dto.getAttachment().stream().map(AttachDTO::getAttachName).filter(StringUtils::isNotBlank).collect(Collectors.toList());
             addDTO.setAttachUrlList(attachUrlList);
@@ -3963,7 +4025,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         List<SoDetailEntity> detailList = soDetailService.listBaseByMainId(id);
         detailList = detailList.stream().filter(v->StringUtils.isBlank(v.getSkuId())).collect(Collectors.toList());
         if (CollectionUtils.isEmpty(detailList)) {
-            return BatchResultDTO.success(id, entity.getCode(), "没有需要映射的SKU");
+            return BatchResultDTO.fail(id, entity.getCode(), "没有需要映射的SKU");
         }
         List<String> platformSkuNoList = detailList.stream().map(SoDetailEntity::getPlatformSkuNo).collect(Collectors.toList());
         ListingInfoParamDTO listingInfoParamDTO = new ListingInfoParamDTO();
@@ -3976,11 +4038,15 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 if (CollectionUtils.isNotEmpty(collect)) {
                     soDetailEntity.setSkuId(collect.get(0).getProductSkuId());
                     soDetailEntity.setSkuNo(collect.get(0).getProductSkuNo());
+                    soDetailEntity.setDeliverySkuId(collect.get(0).getProductSkuId());
+                    soDetailEntity.setDeliverySkuNo(collect.get(0).getProductSkuNo());
+                    soDetailEntity.setBoxQty(soDetailEntity.getQty());
+                    soDetailEntity.setPerBoxQty(1);
                 }else{
-                    return BatchResultDTO.success(id, entity.getCode(), "平台SKU【"+soDetailEntity.getPlatformSkuNo()+"】未找到映射关系，请先维护映射关系");
+                    return BatchResultDTO.fail(id, entity.getCode(), "平台SKU【"+soDetailEntity.getPlatformSkuNo()+"】未找到映射关系，请先维护映射关系");
                 }
             }else{
-                return BatchResultDTO.success(id, entity.getCode(), "平台SKU不能为空");
+                return BatchResultDTO.fail(id, entity.getCode(), "平台SKU不能为空");
             }
         }
         //通过客户id 和产品sku查到客户sku
@@ -4073,6 +4139,88 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             this.updateBatchById(updateList);
         }
         return true;
+    }
+
+    @Override
+    public B2bThirdDeliveryDTO.ViewDTO getB2bThirdDeliveryView(B2bThirdDeliveryDTO.ViewQueryDTO dto) {
+        SoInfoEntity soInfoEntity = this.getById(dto.getSoId());
+        if (ObjectUtil.isEmpty(soInfoEntity)) {
+            throw new ServiceException(ApiError.ERROR_92016);
+        }
+        if (!BillApproveStatusEnum.APPROVE.equals(soInfoEntity.getApproveStatus())){
+            throw new ServiceException("订单未审核,不允许下推三方发货单");
+        }
+        String warehouseId = soInfoEntity.getWarehouseId();
+        List<WarehouseDTO.UpdateDTO> updateDTOList = wmsTaskFeign.listWarehouseByIds(Collections.singletonList(warehouseId));
+        if (CollUtil.isEmpty(updateDTOList) || !WarehouseManageTypeEnum.THIRD_PARTY.getCode().equals(updateDTOList.get(0).getWarehouseManageType())){
+            throw new ServiceException("只允许三方仓类型仓库下推b2b三方发货单");
+        }
+        List<OverseasProviderWarehouseDTO.ViewDTO> viewDTOS = wmsOverseasWarehouseFeign.listByWarehouseIdList(Collections.singletonList(warehouseId));
+        String  providerCode = CollUtil.isNotEmpty(viewDTOS) ? viewDTOS.get(0).getProviderCode() : "";
+        List<SoDetailEntity> soDetailEntityList = soDetailService.listByIds(dto.getSoDetailIds());
+        //根据销售订单查询三方仓发货明细
+        List<B2bThirdDeliveryDetailEntity> b2bThirdDeliveryDetailEntityList = b2bThirdDeliveryFeign.listBySoDetailIds(dto.getSoDetailIds());
+        Map<String, Integer> detailIdMap = b2bThirdDeliveryDetailEntityList.stream()
+                .filter(f -> !ThirdDeliveryStatusEnum.CANCEL_DELIVERY.getCode().equals(f.getStatus()))
+                .collect(Collectors.groupingBy(
+                        B2bThirdDeliveryDetailEntity::getSoDetailId,
+                        Collectors.mapping(B2bThirdDeliveryDetailEntity::getDeliveryQty, Collectors.summingInt(Integer::intValue))
+                ));
+        soDetailEntityList = soDetailEntityList.stream().filter(e -> {
+            if (!dto.getSoId().contains(e.getMainId())){
+                return false;
+            }
+            //已发货数量
+            return e.getQty() > detailIdMap.getOrDefault(e.getId(),0);
+        }).collect(Collectors.toList());
+        if (CollUtil.isEmpty(soDetailEntityList)){
+            throw new ServiceException("订单明细中发货数量已全部下推,不允许再生成三方发货单");
+        }
+        List<String> skuIds = soDetailEntityList.stream().map(SoDetailEntity::getSkuId).distinct().collect(Collectors.toList());
+        List<SkuVO> skuVOS = plmTaskFeign.listSkuProductByIds(skuIds);
+        List<String> deliverySkuIds = soDetailEntityList.stream().map(SoDetailEntity::getDeliverySkuId).distinct().collect(Collectors.toList());
+        //库存sku映射查询
+        ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
+        if (CharSequenceUtil.isNotBlank(providerCode)){
+            paramDTO.setPlatform(providerCode);
+        }else if (CharSequenceUtil.isNotBlank(warehouseId)){
+            paramDTO.setWarehouseIdList(Collections.singletonList(warehouseId));
+        }
+        paramDTO.setType(RuleTypeEnum.WAREHOUSE.getCode());
+        paramDTO.setSkuIdList(deliverySkuIds);
+        paramDTO.setIsExpire(Boolean.FALSE);
+        List<ListingInfoWithSkuMappingDTO> listDto = skuMappingService.findListDto(paramDTO);
+        B2bThirdDeliveryDTO.ViewDTO viewDTO = SoInfoConverter.INSTANCE.toB2bThirdDeliveryViewDTO(soInfoEntity,soDetailEntityList);
+        if (CharSequenceUtil.isBlank(viewDTO.getDeliveryWarehouseName())){
+            viewDTO.setDeliveryWarehouseName(updateDTOList.get(0).getName());
+        }
+        if (CharSequenceUtil.isNotBlank(viewDTO.getCustomerId())){
+            CustomerInfoEntity customerInfo = customerInfoService.getById(viewDTO.getCustomerId());
+            viewDTO.setCustomerName(Objects.nonNull(customerInfo) ? customerInfo.getName() : "");
+        }
+        if (CharSequenceUtil.isNotBlank(soInfoEntity.getReceiveAddressId()) && CharSequenceUtil.isBlank(viewDTO.getReceiveAddress())){
+            CustomerAddressEntity customerAddressEntity = customerAddressService.getById(soInfoEntity.getReceiveAddressId());
+            viewDTO.setReceiveAddress(Objects.nonNull(customerAddressEntity) ? customerAddressEntity.getAddress() : "");
+            viewDTO.setCountryId(Objects.nonNull(customerAddressEntity) ? customerAddressEntity.getCountryId() : "");
+            viewDTO.setCountryName(Objects.nonNull(customerAddressEntity) ? customerAddressEntity.getCountryName() : "");
+        }
+        viewDTO.getDetailList().forEach(e -> {
+            skuVOS.stream().filter(f -> f.getSkuId().equals(e.getSkuId())).findFirst().ifPresent(p ->{
+                e.setProductName(p.getSkuName());
+            });
+            //重置发货数量
+            Integer deliveryQty = detailIdMap.getOrDefault(e.getId(),0);
+            e.setDeliveryQty(e.getSaleQty() - deliveryQty);
+            if (e.getDeliveryQty() > 0 && e.getPerBoxQty() > 0){
+                e.setBoxQty(e.getDeliveryQty() / e.getPerBoxQty());//这里一定是整数倍
+            }else {
+                e.setBoxQty(MathUtil.ZERO);
+            }
+            listDto.stream().filter(f -> f.getProductSkuId().equals(e.getDeliverySkuId())).findFirst().ifPresent(p ->{
+                e.setWarehousePlatformSku(p.getPlatformSkuNo());
+            });
+        });
+        return viewDTO;
     }
 
     /**
@@ -4512,6 +4660,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                         addDetail.setSkuId(skuMappingViewDTO.getProductSkuId());
                         addDetail.setSkuNo(skuMappingViewDTO.getProductSkuNo());
                         addDetail.setCustomerSkuNo(skuMappingViewDTO.getPlatformSkuNo());
+                        addDetail.setDeliverySkuId(skuMappingViewDTO.getProductSkuId());
+                        addDetail.setDeliverySkuNo(skuMappingViewDTO.getProductSkuNo());
                     }
                 }else if (CharSequenceUtil.isNotBlank(skuNo)){
                     SkuVO skuVO = skuList.stream().filter(s -> s.getSkuNo().equals(skuNo)).findFirst().orElse(null);
@@ -4520,6 +4670,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                     } else {
                         addDetail.setSkuId(skuVO.getSkuId());
                         addDetail.setSkuNo(skuVO.getSkuNo());
+                        addDetail.setDeliverySkuId(skuVO.getSkuId());
+                        addDetail.setDeliverySkuNo(skuVO.getSkuNo());
                         SkuMappingDTO.SkuMappingViewDTO skuMappingViewDTO = skuMappingViewDTOS.stream().filter(e -> skuNo.equals(e.getProductSkuNo()) && customerId.equals(e.getCustomerId())).findFirst().orElse(null);
                         addDetail.setCustomerSkuNo(Objects.nonNull(skuMappingViewDTO) ? skuMappingViewDTO.getPlatformSkuNo() : CharSequenceUtil.EMPTY);
                     }
@@ -4530,6 +4682,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                     }else {
                         addDetail.setSkuId(skuMappingViewDTO.getProductSkuId());
                         addDetail.setSkuNo(skuMappingViewDTO.getProductSkuNo());
+                        addDetail.setDeliverySkuId(skuMappingViewDTO.getProductSkuId());
+                        addDetail.setDeliverySkuNo(skuMappingViewDTO.getProductSkuNo());
                         addDetail.setCustomerSkuNo(skuMappingViewDTO.getPlatformSkuNo());
                     }
                 }
@@ -4539,6 +4693,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 String qtyStr = item.getQty();
                 Integer qty = StringUtils.isNotBlank(qtyStr) ? Integer.valueOf(qtyStr) : 0;
                 addDetail.setQty(qty);
+                addDetail.setBoxQty(qty);
+                addDetail.setPerBoxQty(1);
                 //销售单价
                 String priceStr = item.getPrice();
                 BigDecimal price = MathUtil.getBigDecimalByStr(priceStr);
@@ -4569,6 +4725,15 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                     List<String> itemErrorList = Stream.concat(errorMsgList.stream(),msgList.stream()).distinct().collect(Collectors.toList());
                     item.setErrorMsg(FieldValidUtil.getMsgSort(itemErrorList));
                     errorList.add(item);
+                }
+            }
+
+            for (SoDetailEntity soDetailEntity : soDetailList) {
+                List<String> skuIdList = soDetailList.stream().map(SoDetailEntity::getSkuId).collect(Collectors.toList());
+                List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuIds(skuIdList);
+                List<BomChildrenSkuDTO> sonSkuList = bomChildrenSkuDTOS.stream().filter(req -> req.getParentSkuId().equals(soDetailEntity.getDeliverySkuId())).collect(Collectors.toList());
+                if (CollectionUtils.isNotEmpty(sonSkuList)) {
+                    soDetailEntity.setBomVersion(sonSkuList.get(MathUtil.ZERO).getBomVersion());
                 }
             }
 
@@ -4670,7 +4835,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         List<VirtualWarehouseEntity> virtualWarehouseList = FeignQuery.getByIds(VirtualWarehouseEntity.class, virtualWarehouseIdList);
 
         //SKu
-        List<String> skuIdList = soDetailList.stream().map(SoDetailEntity::getSkuId).distinct().collect(Collectors.toList());
+        List<String> skuIdList = soDetailList.stream().map(SoDetailEntity::getDeliverySkuId).distinct().collect(Collectors.toList());
 
 
         //根据SKU查询BOM判断是否是组合SKU
@@ -4726,20 +4891,20 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             //虚拟仓库信息
             String virtualWarehouseName = virtualWarehouseList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), soInfoEntity.getVirtualWarehouseId())).map(VirtualWarehouseEntity::getName).findFirst().orElse("");
             batchLockDTO.setVirtualWarehouseName(virtualWarehouseName);
-            batchLockDTO.setSkuNo(soDetailEntity.getSkuNo());
+            batchLockDTO.setSkuNo(soDetailEntity.getDeliverySkuNo());
             //产品名称
-            String productName = productDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), soDetailEntity.getSkuId())).map(ProductDetailEntity::getName).findFirst().orElse("");
+            String productName = productDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), soDetailEntity.getDeliverySkuId())).map(ProductDetailEntity::getName).findFirst().orElse("");
             batchLockDTO.setProductName(productName);
-            batchLockDTO.setQty(soDetailEntity.getQty());
+            batchLockDTO.setQty(soDetailEntity.getBoxQty());
             batchLockDTO.setFrozenQty(soDetailEntity.getFrozenQty());
             //销售通知单
             Integer totalNoticeQty = soDeliveryNoticeDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSourceDetailId(), soDetailEntity.getId())
-                    && CharSequenceUtil.equals(obj.getSkuId(),soDetailEntity.getSkuId()))
+                    && CharSequenceUtil.equals(obj.getSkuId(),soDetailEntity.getDeliverySkuId()))
                     .map(SoDeliveryNoticeDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
             batchLockDTO.setTotalNoticeQty(totalNoticeQty);
 
             Integer effectiveNoticeQty = soDeliveryNoticeDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSourceDetailId(), soDetailEntity.getId())
-                    && CharSequenceUtil.equals(obj.getSkuId(),soDetailEntity.getSkuId())
+                    && CharSequenceUtil.equals(obj.getSkuId(),soDetailEntity.getDeliverySkuId())
                     && CharSequenceUtil.equals(obj.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus())
             ).map(SoDeliveryNoticeDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
             batchLockDTO.setEffectiveNoticeQty(effectiveNoticeQty);
@@ -4747,6 +4912,9 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             //入参
             SoInfoDTO.VirtuaParamScarceDTO paramScarceDTO = new SoInfoDTO.VirtuaParamScarceDTO();
             BeanMapperUtils.copy(soDetailEntity,paramScarceDTO);
+            paramScarceDTO.setSkuId(soDetailEntity.getDeliverySkuId());
+            paramScarceDTO.setSkuNo(soDetailEntity.getDeliverySkuNo());
+            paramScarceDTO.setQty(soDetailEntity.getBoxQty());
             paramScarceDTO.setWarehouseId(soInfoEntity.getWarehouseId());
             paramScarceDTO.setVirtualWarehouseId(soInfoEntity.getVirtualWarehouseId());
             //虚拟仓bom库存
@@ -4756,7 +4924,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             batchLockDTO.setIsCombination(paramScarceDTO.getIsCombination());
 
             //Min 【（销售数量 - 发货通知单数量 - 当前锁定数量），虚拟仓可用库存】
-            Integer unFrozenQty = soDetailEntity.getQty() - totalNoticeQty - soDetailEntity.getFrozenQty();
+            Integer unFrozenQty = soDetailEntity.getBoxQty() - totalNoticeQty - soDetailEntity.getFrozenQty();
             Integer toFrozenQty = batchLockDTO.getVirtualUsableQty() > unFrozenQty ? unFrozenQty : batchLockDTO.getVirtualUsableQty();
             batchLockDTO.setToFrozenQty(toFrozenQty + soDetailEntity.getFrozenQty());
             batchLockDTO.setVirtualScarceQty(ObjectUtil.isEmpty(paramScarceDTO.getVirtualScarceQty()) ? MathUtil.ZERO : paramScarceDTO.getVirtualScarceQty());
@@ -4814,7 +4982,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             throw new ServiceException(ApiError.ERROR_92015);
         }
         //产品信息
-        List<String> skuIdList = soDetailList.stream().map(SoDetailEntity::getSkuId).distinct().collect(Collectors.toList());
+        List<String> skuIdList = soDetailList.stream().map(SoDetailEntity::getDeliverySkuId).distinct().collect(Collectors.toList());
         List<ProductDetailEntity> productDetailList = FeignQuery.getByIds(ProductDetailEntity.class, skuIdList);
 
         //根据SKU查询BOM判断是否是组合SKU
@@ -4844,20 +5012,21 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             SoInfoDTO.LockVirtualInventoryDetailDTO detailDTO = BeanMapperUtils.map(SoInfoDTO.LockVirtualInventoryDetailDTO.class, soDetailEntity);
             //明细id
             detailDTO.setDetailId(soDetailEntity.getId());
-
-            String productName = productDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), soDetailEntity.getSkuId())).map(ProductDetailEntity::getName).findFirst().orElse("");
+            detailDTO.setSkuId(soDetailEntity.getDeliverySkuId());
+            detailDTO.setSkuNo(soDetailEntity.getDeliverySkuNo());
+            String productName = productDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), soDetailEntity.getDeliverySkuId())).map(ProductDetailEntity::getName).findFirst().orElse("");
             detailDTO.setProductName(productName);
 
             detailDTO.setFrozenQty(soDetailEntity.getFrozenQty());
 
             //销售通知单
             Integer totalNoticeQty = soDeliveryNoticeDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSourceDetailId(), soDetailEntity.getId())
-                    && CharSequenceUtil.equals(obj.getSkuId(),soDetailEntity.getSkuId()))
+                    && CharSequenceUtil.equals(obj.getSkuId(),soDetailEntity.getDeliverySkuId()))
                     .map(SoDeliveryNoticeDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
             detailDTO.setTotalNoticeQty(totalNoticeQty);
 
             Integer effectiveNoticeQty = soDeliveryNoticeDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSourceDetailId(), soDetailEntity.getId())
-                    && CharSequenceUtil.equals(obj.getSkuId(),soDetailEntity.getSkuId())
+                    && CharSequenceUtil.equals(obj.getSkuId(),soDetailEntity.getDeliverySkuId())
                     && CharSequenceUtil.equals(obj.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus())
             ).map(SoDeliveryNoticeDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
             detailDTO.setEffectiveNoticeQty(effectiveNoticeQty);
@@ -4865,8 +5034,13 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             //入参
             SoInfoDTO.VirtuaParamScarceDTO paramScarceDTO = new SoInfoDTO.VirtuaParamScarceDTO();
             BeanMapperUtils.copy(detailDTO,paramScarceDTO);
+            paramScarceDTO.setSkuId(soDetailEntity.getDeliverySkuId());
+            paramScarceDTO.setSkuNo(soDetailEntity.getDeliverySkuNo());
+            paramScarceDTO.setQty(soDetailEntity.getBoxQty());
             paramScarceDTO.setWarehouseId(soInfoEntity.getWarehouseId());
             paramScarceDTO.setVirtualWarehouseId(soInfoEntity.getVirtualWarehouseId());
+            //发货sku销售数量
+            detailDTO.setQty(soDetailEntity.getBoxQty());
             //虚拟仓bom库存
             handleVirtualBomScarce(bomChildrenList,virtualInventoryQtyList,paramScarceDTO,totalNoticeQty);
             detailDTO.setVirtualUsableQty(paramScarceDTO.getVirtualUsableQty());
@@ -4874,7 +5048,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             detailDTO.setIsCombination(paramScarceDTO.getIsCombination());
 
             //Min 【（销售数量 - 发货通知单数量 - 当前锁定数量），虚拟仓可用库存】
-            Integer unFrozenQty = soDetailEntity.getQty() - totalNoticeQty - soDetailEntity.getFrozenQty();
+            Integer unFrozenQty = soDetailEntity.getBoxQty() - totalNoticeQty - soDetailEntity.getFrozenQty();
             Integer toFrozenQty = detailDTO.getVirtualUsableQty() > unFrozenQty ? unFrozenQty : detailDTO.getVirtualUsableQty();
             detailDTO.setToFrozenQty(toFrozenQty + soDetailEntity.getFrozenQty());
             detailDTO.setVirtualScarceQty(ObjectUtil.isEmpty(paramScarceDTO.getVirtualScarceQty()) ? MathUtil.ZERO : paramScarceDTO.getVirtualScarceQty());

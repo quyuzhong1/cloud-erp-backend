@@ -41,6 +41,7 @@
         ati.bussiness_code as bussinessCode,
         ati.bussiness_approve_status as bussinessApproveStatus,
         ati.happen_time as happenTime,
+        ati.finish_time as finishTime,
         ati.status,
         ati.reason
     </sql>

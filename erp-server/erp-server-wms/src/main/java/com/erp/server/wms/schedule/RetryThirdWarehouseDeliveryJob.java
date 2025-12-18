@@ -1,11 +1,14 @@
 package com.erp.server.wms.schedule;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.ListUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.wrapper.FeignQuery;
+import com.common.core.controller.vo.ApiResult;
 import com.erp.model.dmp.dto.ThirdMappingDTO;
 import com.erp.model.dmp.entity.ThirdWarehouseEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
@@ -14,14 +17,16 @@ import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
-import com.erp.model.wms.entity.SoOutstockEntity;
-import com.erp.model.wms.entity.ThirdWarehouseDeliveryEntity;
-import com.erp.model.wms.entity.WarehouseEntity;
+import com.erp.model.wms.dto.OverseasProviderWarehouseDTO;
+import com.erp.model.wms.dto.third.ThirdWarehouseQueryFbaOutboundReq;
+import com.erp.model.wms.dto.third.ThirdWarehouseQueryFbaOutboundResponse;
+import com.erp.model.wms.entity.*;
+import com.erp.model.wms.enums.ThirdDeliveryStatusEnum;
 import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
-import com.erp.server.wms.service.SoOutstockService;
-import com.erp.server.wms.service.ThirdWarehouseDeliveryService;
+import com.erp.server.wms.handler.ThirdWarehouseRegistry;
+import com.erp.server.wms.service.*;
 import com.sdk.oms.temu.dto.TemuLogisticShipmentDTO;
 import com.sdk.oms.temu.dto.TemuOrderDTO;
 import com.sdk.oms.temu.dto.TemuOrderReq;
@@ -39,10 +44,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -69,6 +71,13 @@ public class RetryThirdWarehouseDeliveryJob {
 
     @Resource
     private ThirdWarehouseDeliveryService thirdWarehouseDeliveryService;
+    @Resource
+    private B2bThirdDeliveryService b2bThirdDeliveryService;
+    @Resource
+    private OverseasProviderWarehouseService overseasProviderWarehouseService;
+    @Resource
+    private ThirdWarehouseRegistry thirdWarehouseRegistry;
+
 
     @XxlJob("RetryThirdWarehouseDeliveryJob")
     public void RetryThirdWarehouseDeliveryJob() {
@@ -120,5 +129,55 @@ public class RetryThirdWarehouseDeliveryJob {
 
         }
 
+    }
+
+    /**
+     * 查询B2B三方仓发货单状态
+     */
+    @XxlJob("queryB2bThirdWarehouseDeliveryStatusJob")
+    public void queryB2bThirdWarehouseDeliveryStatusJob() {
+        XxlJobHelper.log("开始查询B2B三方仓发货单状态");
+        String jobParam = XxlJobHelper.getJobParam();
+        XxlJobHelper.log("任务参数={}", jobParam);
+
+        //获取需要查询的订单数据
+        List<String> statusList = Arrays.asList(ThirdDeliveryStatusEnum.INTERCEPTING.getCode(), ThirdDeliveryStatusEnum.WAIT_SHIPPED.getCode());
+        List<B2bThirdDeliveryEntity> entityList = b2bThirdDeliveryService.queryDeliveryStatus(Boolean.TRUE, statusList);
+        if(CollectionUtils.isEmpty(entityList)){
+            XxlJobHelper.log("没有找到需要查询的B2B三方仓发货单，日期={}", LocalDate.now());
+            return;
+        }
+        List<String> warehouseIds = entityList.stream().map(B2bThirdDeliveryEntity::getDeliveryWarehouseId).distinct().collect(Collectors.toList());
+        List<OverseasProviderWarehouseDTO.ViewDTO> warehouseList = overseasProviderWarehouseService.listByWarehouseIdList(warehouseIds);
+        Map<String, List<OverseasProviderWarehouseDTO.ViewDTO>> authMap = warehouseList.stream().collect(Collectors.groupingBy(OverseasProviderWarehouseDTO.ViewDTO::getMainId));
+        for (String mainId :authMap.keySet()){
+            List<OverseasProviderWarehouseDTO.ViewDTO> viewDTOS = authMap.get(mainId);
+            List<String> warehouseId1s = viewDTOS.stream().map(OverseasProviderWarehouseDTO.ViewDTO::getWarehouseId).collect(Collectors.toList());
+            List<String> erpOrderCodeList = entityList.stream()
+                    .filter(entity -> warehouseId1s.contains(entity.getDeliveryWarehouseId())).map(B2bThirdDeliveryEntity::getCode).distinct()
+                    .collect(Collectors.toList());
+            if (CollUtil.isEmpty(erpOrderCodeList)){
+                continue;
+            }
+            List<List<String>> partition = ListUtil.partition(erpOrderCodeList, 100);
+            for (List<String> subList : partition){
+                //相同授权统一处理
+                ThirdWarehouseQueryFbaOutboundReq queryOutboundReq = new ThirdWarehouseQueryFbaOutboundReq();
+                queryOutboundReq.setErpOrderCodeList(subList);
+                queryOutboundReq.setAuthId(mainId);
+                queryOutboundReq.setThirdWarehouseProvideCode(viewDTOS.get(0).getProviderCode());
+                ThirdWarehouseService service = thirdWarehouseRegistry.getHandler(viewDTOS.get(0).getProviderCode());
+                ApiResult<List<ThirdWarehouseQueryFbaOutboundResponse>> listApiResult = service.queryFbaOutboundBill(queryOutboundReq, mainId);
+                //处理返回结果
+                if (listApiResult.isSuccess()){
+                    List<ThirdWarehouseQueryFbaOutboundResponse> responses = listApiResult.getData();
+                    if (CollUtil.isNotEmpty(responses)){
+                        b2bThirdDeliveryService.updateQueryResult(responses, viewDTOS.get(0).getProviderCode(),subList);
+                    }
+                }
+            }
+
+        }
+        XxlJobHelper.log("结束查询B2B三方仓发货单状态");
     }
 }

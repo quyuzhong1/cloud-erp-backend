@@ -70,4 +70,13 @@ public interface SoDeliveryNoticeFeign {
      */
     @PostMapping("feign/soDeliveryNotice/updateSalesInfo")
     void updateSalesInfo(@RequestBody SoInfoEntity soInfoEntity);
+
+    /**
+     * 通过明细idList获取通知记录详情
+     *
+     * @param idList
+     * @return
+     */
+    @PostMapping("/getNoticeDetailByIdList")
+    public List<SoDeliveryNoticeDetailEntity> getNoticeDetailByIdList(@RequestParam(value = "id") List<String> idList);
 }
