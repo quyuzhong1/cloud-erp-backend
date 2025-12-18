@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.util.ContentCachingRequestWrapper;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
@@ -63,7 +64,14 @@ public class FsCallbackApiController {
     @PostMapping("/webhook/event")
     public void event(HttpServletRequest request, HttpServletResponse response)
             throws Throwable {
-        log.warn("飞书事件触发器:url:{},method;{}", request.getRequestURL(), request.getMethod());
+        // 包装请求，使其可以重复读取body
+        ContentCachingRequestWrapper wrappedRequest = new ContentCachingRequestWrapper(request);
+
+        // 第一次读取（用于日志）
+        byte[] requestBodyBytes = wrappedRequest.getContentAsByteArray();
+        String requestBody = new String(requestBodyBytes, wrappedRequest.getCharacterEncoding());
+
+        log.warn("飞书事件触发器:url:{},method:{}，body:{}", request.getRequestURL(), request.getMethod(), requestBody);
         // 回调扩展包提供的事件回调处理器
         servletAdapter.handleEvent(request, response, fsCallbackEventHandler.getEventHandler());
     }

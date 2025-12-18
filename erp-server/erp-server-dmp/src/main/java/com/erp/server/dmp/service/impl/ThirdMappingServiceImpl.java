@@ -499,7 +499,8 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
         List<ThirdMappingEntity> existMappingList = baseMapper.selectList(new LambdaQueryWrapper<ThirdMappingEntity>()
                 .eq(ThirdMappingEntity::getType, viewParamDTO.getType())
                 .eq(ThirdMappingEntity::getThirdSysType, viewParamDTO.getSysType())
-                .eq(ThirdMappingEntity::getThirdId, viewParamDTO.getThirdId())
+                .eq(StringUtils.isNotBlank(viewParamDTO.getThirdId()),ThirdMappingEntity::getThirdId, viewParamDTO.getThirdId())
+                .eq(StringUtils.isNotBlank(viewParamDTO.getThirdCode()),ThirdMappingEntity::getThirdCode, viewParamDTO.getThirdCode())
                 .eq(ThirdMappingEntity::getIsDeleted, false).eq(ThirdMappingEntity::getDisabled, false));
         return existMappingList;
     }
@@ -947,6 +948,11 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
                 .eq(ThirdMappingEntity::getType, type)
                 .last(" limit 1")
         );
+    }
+
+    @Override
+    public ThirdMappingEntity getShopByThirdCode(String thirdCode, String sysType) {
+        return this.baseMapper.getShopByThirdCode(thirdCode, sysType);
     }
 
 

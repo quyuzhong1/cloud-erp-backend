@@ -14,6 +14,7 @@ import com.erp.model.workflow.dto.FsCallbackEventDTO;
 import com.erp.model.workflow.enums.CfgApproveSyncSyncPlatformEnum;
 import com.erp.rpc.dmp.feign.DmpInoutTaskFeign;
 import com.erp.sdk.fs.config.FsProperties;
+import com.erp.server.workflow.constant.FsEventConstant;
 import com.lark.oapi.core.request.EventReq;
 import com.lark.oapi.core.utils.Jsons;
 import com.lark.oapi.event.CustomEventHandler;
@@ -45,7 +46,6 @@ public class FsCallbackEventHandler {
 
     private EventDispatcher eventDispatcher;
 
-    private final static String APPROVAL_INSTANCE_EVENT = "approval_instance";
 
     @PostConstruct
     public void init() {
@@ -53,12 +53,57 @@ public class FsCallbackEventHandler {
          * 注册事件 Register event
          */
         this.eventDispatcher = EventDispatcher.newBuilder(fsProperties.getVerificationToken(), null)
-                .onCustomizedEvent(APPROVAL_INSTANCE_EVENT, new CustomEventHandler() {
+                .onCustomizedEvent(FsEventConstant.APPROVAL_INSTANCE_EVENT, new CustomEventHandler() {
                     @Override
                     public void handle(EventReq event) throws Exception {
-                        log.warn("收到飞书审批实例自定义事件:event= {},fsProperties = {}", Jsons.DEFAULT.toJson(event),fsProperties);
+                        log.warn("收到飞书审批实例状态变更事件:event= {},fsProperties = {}", Jsons.DEFAULT.toJson(event),fsProperties);
                         // 处理审批实例事件的逻辑
                         approvalInstanceHandle(event);
+                    }
+                }).onCustomizedEvent(FsEventConstant.APPROVAL_TASK_EVENT, new CustomEventHandler() {  // 新增审批任务事件
+                    @Override
+                    public void handle(EventReq event) throws Exception {
+                        log.warn("收到飞书审批任务状态变更事件:event= {},fsProperties = {}", Jsons.DEFAULT.toJson(event),fsProperties);
+                    }
+                }).onCustomizedEvent(FsEventConstant.APPROVAL_EVENT, new CustomEventHandler() {  // 新增审批任务事件
+                    @Override
+                    public void handle(EventReq event) throws Exception {
+                        log.warn("收到飞书审批通过事件:event= {},fsProperties = {}", Jsons.DEFAULT.toJson(event),fsProperties);
+                    }
+                }).onCustomizedEvent(FsEventConstant.WORK_APPROVAL_EVENT, new CustomEventHandler() {  // 新增审批任务事件
+                    @Override
+                    public void handle(EventReq event) throws Exception {
+                        log.warn("收到飞书加班事件:event= {},fsProperties = {}", Jsons.DEFAULT.toJson(event),fsProperties);
+                    }
+                }).onCustomizedEvent(FsEventConstant.LEAVE_APPROVAL_EVENT, new CustomEventHandler() {  // 新增审批任务事件
+                    @Override
+                    public void handle(EventReq event) throws Exception {
+                        log.warn("收到飞书请假事件:event= {},fsProperties = {}", Jsons.DEFAULT.toJson(event),fsProperties);
+                    }
+                }).onCustomizedEvent(FsEventConstant.SHIFT_APPROVAL_EVENT, new CustomEventHandler() {  // 新增审批任务事件
+                    @Override
+                    public void handle(EventReq event) throws Exception {
+                        log.warn("收到飞书换班事件:event= {},fsProperties = {}", Jsons.DEFAULT.toJson(event),fsProperties);
+                    }
+                }).onCustomizedEvent(FsEventConstant.APPROVAL_CC_EVENT, new CustomEventHandler() {  // 新增审批任务事件
+                    @Override
+                    public void handle(EventReq event) throws Exception {
+                        log.warn("收到飞书审批抄送事件:event= {},fsProperties = {}", Jsons.DEFAULT.toJson(event),fsProperties);
+                    }
+                }).onCustomizedEvent(FsEventConstant.TRIP_APPROVAL_EVENT, new CustomEventHandler() {  // 新增审批任务事件
+                    @Override
+                    public void handle(EventReq event) throws Exception {
+                        log.warn("收到飞书出差事件:event= {},fsProperties = {}", Jsons.DEFAULT.toJson(event),fsProperties);
+                    }
+                }).onCustomizedEvent(FsEventConstant.OUT_APPROVAL_EVENT, new CustomEventHandler() {  // 新增审批任务事件
+                    @Override
+                    public void handle(EventReq event) throws Exception {
+                        log.warn("收到飞书外出事件:event= {},fsProperties = {}", Jsons.DEFAULT.toJson(event),fsProperties);
+                    }
+                }).onCustomizedEvent(FsEventConstant.REMEDY_APPROVAL_EVENT, new CustomEventHandler() {  // 新增审批任务事件
+                    @Override
+                    public void handle(EventReq event) throws Exception {
+                        log.warn("收到飞书补卡事件:event= {},fsProperties = {}", Jsons.DEFAULT.toJson(event),fsProperties);
                     }
                 })
                 .build();
@@ -82,7 +127,7 @@ public class FsCallbackEventHandler {
             log.warn("飞书审批实例自定义事件，应用ID未匹配，跳过处理,clientId={}，appId={}",fsProperties.getClientId(), bean.getAppId());
             return;
         }
-        if (!CharSequenceUtil.equals(APPROVAL_INSTANCE_EVENT,bean.getType())) {
+        if (!CharSequenceUtil.equals(FsEventConstant.APPROVAL_INSTANCE_EVENT,bean.getType())) {
             log.warn("飞书审批实例自定义事件，事件类型未匹配，跳过处理，type={}", bean.getType());
             return;
         }

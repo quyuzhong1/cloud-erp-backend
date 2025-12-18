@@ -200,6 +200,7 @@ public interface BusinessNoConstant {
 
     //合同管理
     String GYSHT = "GYSHT";
+    String MB = "MB";
     //样品作废单
     String YPBF = "YPBF";
     //样品借用单

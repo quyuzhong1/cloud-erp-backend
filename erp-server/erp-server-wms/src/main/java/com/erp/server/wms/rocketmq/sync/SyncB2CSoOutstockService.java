@@ -1,5 +1,6 @@
 package com.erp.server.wms.rocketmq.sync;
 
+import com.common.business.dto.PddSoOutStockDTO;
 import com.common.business.dto.TeMuSoOutStockDTO;
 import com.common.business.dto.WdtSoOutStockDTO;
 import com.erp.model.dmp.kingdee.KingdeeDeliveryDetailEntity;
@@ -28,4 +29,6 @@ public interface SyncB2CSoOutstockService {
     void syncWdtSoOutStock(WdtSoOutStockDTO entity);
 
     void syncTemuSoOutStock(TeMuSoOutStockDTO entity);
+
+    void syncPddSoOutStock(PddSoOutStockDTO entity);
 }
