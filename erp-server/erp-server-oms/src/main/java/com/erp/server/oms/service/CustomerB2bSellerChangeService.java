@@ -66,7 +66,7 @@ public interface CustomerB2bSellerChangeService extends SuperService<CustomerB2b
 
     void export(CustomerB2bSellerChangeDTO.ParamDTO dto);
 
-    CustomerB2bSellerChangeEntity getByMainId(String businessId);
+    CustomerB2bSellerChangeEntity getNotApprovedByMainId(String businessId);
 
     PagingVO<CustomerB2bSellerExcelDTO> exportCustomerB2BSellerChange(PagingDTO<CustomerB2bSellerChangeDTO.ParamDTO> dto);
 }
