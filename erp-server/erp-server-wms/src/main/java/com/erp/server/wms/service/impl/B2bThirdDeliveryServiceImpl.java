@@ -18,6 +18,7 @@ import com.common.business.threadlocal.DynamicDataSourceThreadLocal;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
+import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
@@ -36,6 +37,9 @@ import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.dto.SoOutstockDetailDTO;
 import com.erp.model.wms.dto.inventory.InventoryUnApproveDTO;
 import com.erp.model.wms.dto.inventory.VirtualInventoryStockDTO;
+import com.erp.model.wms.dto.third.ThirdWarehouseCancelFbaOutboundReq;
+import com.erp.model.wms.dto.third.ThirdWarehouseCreateFbaOutboundReq;
+import com.erp.model.wms.dto.third.ThirdWarehouseQueryFbaOutboundReq;
 import com.erp.model.wms.dto.third.ThirdWarehouseQueryFbaOutboundResponse;
 import com.erp.model.wms.entity.B2bThirdDeliveryDetailEntity;
 import com.erp.model.wms.entity.B2bThirdDeliveryEntity;
@@ -54,6 +58,7 @@ import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.server.wms.convert.B2bThirdDeliveryConverter;
+import com.erp.server.wms.handler.ThirdWarehouseRegistry;
 import com.erp.server.wms.mapper.B2bThirdDeliveryMapper;
 import com.erp.server.wms.service.*;
 import com.xxl.job.core.context.XxlJobHelper;
@@ -119,6 +124,12 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
     @Lazy
     @Resource
     private B2bThirdDeliveryService service;
+
+    @Resource
+    private ThirdWarehouseRegistry thirdWarehouseRegistry;
+    private static final int MAX_RETRY_COUNT = 3;
+    private static final long RETRY_DELAY_SECONDS = 10000;
+
 
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
@@ -605,6 +616,149 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
         soOutstockService.approve(new ApproveOneDTO(soOutstockEntity.getId(), ApproveTypeEnum.PASS.getStatus(),"三方仓出库完成出库单自动审核通过",Boolean.FALSE));
     }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public void createFbaOutbound(ThirdWarehouseCreateFbaOutboundReq req) {
+        String sourceId = req.getSourceId();
+        B2bThirdDeliveryEntity entity = this.getById(sourceId);
+        if (Objects.isNull(entity)) {
+            this.updateStatus(sourceId, ThirdDeliveryStatusEnum.FAILED.getCode(), CharSequenceUtil.format(ApiError.NOT_EXIST.msg, req.getSourceCode()), "", "", "", null);
+            return;
+        }
+        if (!ThirdDeliveryStatusEnum.CREATING.getCode().equals(entity.getStatus())){
+            log.error("B2BThirdDelivery创建订单失败，状态不是CREATING，当前状态：{}", entity.getStatus());
+            return;
+        }
+        ThirdWarehouseService service = thirdWarehouseRegistry.getHandler(req.getThirdWarehouseProvideCode());
+        if (Objects.isNull(service)) {
+            this.updateStatus(sourceId, ThirdDeliveryStatusEnum.FAILED.getCode(), CharSequenceUtil.format(ApiError.OVERSEAS_PROVIDE_NOT_SERVICE.msg, req.getThirdWarehouseProvideCode()), "", "", "", null);
+            return;
+        }
+        ApiResult<String> fbaOutboundBill = createFbaOutboundBill(service, req, 0);
+        if (fbaOutboundBill.isSuccess()) {
+            // 创建成功
+            this.updateStatus(sourceId, ThirdDeliveryStatusEnum.WAIT_SHIPPED.getCode(), "", fbaOutboundBill.getData(), "", "", null);
+            return;
+        }
+        // 创建失败，尝试查询是否实际已创建成功
+        ThirdWarehouseQueryFbaOutboundReq queryOutboundReq = new ThirdWarehouseQueryFbaOutboundReq();
+        queryOutboundReq.setErpOrderCodeList(Collections.singletonList(req.getReferenceNo()));
+        queryOutboundReq.setAuthId(req.getAuthId());
+        queryOutboundReq.setThirdWarehouseProvideCode(req.getThirdWarehouseProvideCode());
+
+        ApiResult<List<ThirdWarehouseQueryFbaOutboundResponse>> queryResult = service.queryFbaOutboundBill(queryOutboundReq, req.getAuthId());
+
+        String platformOrderCode = getPlatformOrderCode(queryResult);
+        String trackNo = getTrackNo(queryResult);
+        LocalDateTime deliveryTime = getDeliveryTime(queryResult);
+
+        if (CharSequenceUtil.isNotBlank(platformOrderCode)) {
+            // 查询发现订单实际已创建成功
+            this.updateStatus(sourceId, ThirdDeliveryStatusEnum.WAIT_SHIPPED.getCode(), "", platformOrderCode, "", trackNo, deliveryTime);
+        } else {
+            // 确认创建失败
+            this.updateStatus(sourceId, ThirdDeliveryStatusEnum.FAILED.getCode(), fbaOutboundBill.getMsg(), "", "", trackNo, deliveryTime);
+        }
+    }
+
+    private LocalDateTime getDeliveryTime(ApiResult<List<ThirdWarehouseQueryFbaOutboundResponse>> queryResult) {
+        if (queryResult.isSuccess() && CollUtil.isNotEmpty(queryResult.getData())) {
+            return LocalDateTime.parse(queryResult.getData().get(0).getDeliveryTimeStr(), DateTimeFormatter.ISO_DATE_TIME);
+        }
+        return null;
+    }
+
+    // 提取平台订单号的辅助方法
+    private String getPlatformOrderCode(ApiResult<List<ThirdWarehouseQueryFbaOutboundResponse>> result) {
+        if (result.isSuccess() && CollUtil.isNotEmpty(result.getData())) {
+            return result.getData().get(0).getPlatformOrderCode();
+        }
+        return null;
+    }
+    private String getTrackNo(ApiResult<List<ThirdWarehouseQueryFbaOutboundResponse>> result) {
+        if (result.isSuccess() && CollUtil.isNotEmpty(result.getData())) {
+            return result.getData().get(0).getTrackNo();
+        }
+        return null;
+    }
+    private ApiResult<String> createFbaOutboundBill(ThirdWarehouseService service, ThirdWarehouseCreateFbaOutboundReq req, final int retryCount) {
+        ThirdWarehouseQueryFbaOutboundReq queryOutboundReq = new ThirdWarehouseQueryFbaOutboundReq();
+        queryOutboundReq.setErpOrderCodeList(Collections.singletonList(req.getReferenceNo()));
+        queryOutboundReq.setAuthId(req.getAuthId());
+        queryOutboundReq.setThirdWarehouseProvideCode(req.getThirdWarehouseProvideCode());
+        ApiResult<List<ThirdWarehouseQueryFbaOutboundResponse>> listApiResult = service.queryFbaOutboundBill(queryOutboundReq, req.getAuthId());
+        String platformOrderCode = getPlatformOrderCode(listApiResult);
+        if (CharSequenceUtil.isNotBlank(platformOrderCode)){
+            return ApiResult.success(platformOrderCode);
+        }
+
+        try {
+            return service.createFbaOutboundBill(req, req.getAuthId());
+        } catch (Exception e) {
+            log.warn("第{}次执行失败: {}", retryCount + 1, e.getMessage());
+
+            if (retryCount + 1 < MAX_RETRY_COUNT) {
+                try {
+                    log.info("{}秒后进行第{}次重试", RETRY_DELAY_SECONDS / 1000, retryCount + 2);
+                    Thread.sleep(RETRY_DELAY_SECONDS);
+                    return createFbaOutboundBill(service, req, retryCount + 1);
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                    return ApiResult.error(-1, "重试被中断");
+                }
+            } else {
+                log.error("已达到最大重试次数{}次，停止重试", MAX_RETRY_COUNT);
+                return ApiResult.error(-1, e.getMessage());
+            }
+        }
+    }
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public void cancelFbaOutbound(ThirdWarehouseCancelFbaOutboundReq req) {
+        String sourceId = req.getSourceId();
+        B2bThirdDeliveryEntity entity = this.getById(sourceId);
+        if (Objects.isNull(entity)) {
+            this.updateStatus(sourceId, ThirdDeliveryStatusEnum.FAILED.getCode(), CharSequenceUtil.format(ApiError.NOT_EXIST.msg, req.getSourceCode()), "", "", "", null);
+            return;
+        }
+
+        ThirdWarehouseService service = thirdWarehouseRegistry.getHandler(req.getThirdWarehouseProvideCode());
+        if (Objects.isNull(service)) {
+            this.updateStatus(sourceId, ThirdDeliveryStatusEnum.FAILED.getCode(), CharSequenceUtil.format(ApiError.OVERSEAS_PROVIDE_NOT_SERVICE.msg, req.getThirdWarehouseProvideCode()), "", "", "", null);
+            return;
+        }
+        ApiResult<String> fbaOutboundBill = cancelFbaOutboundBill(service, req, 0);
+        if (fbaOutboundBill.isSuccess()) {
+            // 创建成功
+            this.updateStatus(sourceId, ThirdDeliveryStatusEnum.INTERCEPTING.getCode(), "", "", "", "", null);
+        }else {
+            // 创建失败
+            this.updateStatus(sourceId, ThirdDeliveryStatusEnum.WAIT_SHIPPED.getCode(), "", "", "", "", null);
+        }
+    }
+    private ApiResult<String> cancelFbaOutboundBill(ThirdWarehouseService service, ThirdWarehouseCancelFbaOutboundReq req, final int retryCount) {
+        try {
+            return service.cancelFbaOutboundBill(req, req.getAuthId());
+        } catch (Exception e) {
+            log.warn("第{}次执行失败: {}", retryCount + 1, e.getMessage());
+
+            if (retryCount + 1 < MAX_RETRY_COUNT) {
+                try {
+                    log.info("{}秒后进行第{}次重试", RETRY_DELAY_SECONDS / 1000, retryCount + 2);
+                    Thread.sleep(RETRY_DELAY_SECONDS);
+                    return cancelFbaOutboundBill(service, req, retryCount + 1);
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                    return ApiResult.error(-1, "重试被中断");
+                }
+            } else {
+                log.error("已达到最大重试次数{}次，停止重试", MAX_RETRY_COUNT);
+                return ApiResult.error(-1, e.getMessage());
+            }
+        }
+    }
 
     /**
     * 新增修改处理数据
