@@ -30,7 +30,7 @@
        <result column="country_name" property="countryName" />
        <result column="receiver_name" property="receiverName" />
        <result column="tel_number" property="telNumber" />
-       <result column="receive_address" property="receiveAddress" />
+       <result column="receive_address_id" property="receiveAddressId" />
        <result column="address_type" property="addressType" />
        <result column="remark" property="remark" />
     </resultMap>
@@ -55,25 +55,25 @@
             kba.id,
             kba.code,
             kba.date,
-            kba.approve_status,
-            kba.approve_user_name,
-            kba.approve_time,
-            kba.invalid_status,
+            kba.approve_status as approveStatus,
+            kba.approve_user_name as approveUserName,
+            kba.approve_time as approveTime,
+            kba.invalid_status as invalidStatus,
             kba.type,
-            kba.customer_id,
-            kba.apply_remark,
-            kba.apply_user_id,
-            kba.apply_dept_id,
-            kba.create_time,
-            kba.create_user_name,
+            kba.customer_id as customerId,
+            kba.apply_remark as applyRemark,
+            kba.apply_user_id as applyUserId,
+            kba.apply_dept_id as applyDeptId,
+            kba.create_time as createTime,
+            kba.create_user_name as createUserName,
             kbad.id as detailId,
-            kbad.sku_id,
-            kbad.sku_no,
+            kbad.sku_id as skuId,
+            kbad.sku_no as skuNo,
             kbad.qty,
-            kbad.plan_feedback_date,
-            kbad.project_tag,
-            kbad.remark as detail_remark,
-            ci.name as customer_name
+            kbad.plan_feedback_date as planFeedbackDate,
+            kbad.project_tag as projectTag,
+            kbad.remark as detailRemark,
+            ci.name as customerName
         from kol_b2b_application kba
         inner join kol_b2b_application_detail kbad on kba.id = kbad.main_id and kbad.is_deleted = false
         left join customer_info ci on kba.customer_id = ci.id and ci.is_deleted = false
