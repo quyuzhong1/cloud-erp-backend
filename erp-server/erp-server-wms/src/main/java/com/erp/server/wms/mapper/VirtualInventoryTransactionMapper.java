@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.apache.ibatis.annotations.Param;
 
 import com.erp.model.wms.dto.VirtualInventoryTransactionDTO;
+import com.erp.model.wms.dto.InventoryTransactionDTO.CheckInventoryDTO;
 import com.common.business.dto.base.ApproveStatusQtyDTO;
 import java.util.List;
 
@@ -22,33 +23,5 @@ import java.util.List;
 @Mapper
 public interface VirtualInventoryTransactionMapper extends BaseMapper<VirtualInventoryTransactionEntity> {
 
-    /**
-    * 分页查询
-    * @param query
-    * @param params
-    * @return
-    */
-    IPage<VirtualInventoryTransactionDTO.ListDTO> paging(Page query, @Param("params") VirtualInventoryTransactionDTO.PagingParamDTO params);
-
-    /**
-    * 状态数量
-    * @param params
-    * @return
-    */
-    List<ApproveStatusQtyDTO> listCount(@Param("params") VirtualInventoryTransactionDTO.PagingParamDTO params);
-
-    /**
-    * 导出Excel查询
-    * @param params
-    * @return
-    */
-    List<VirtualInventoryTransactionDTO.ListDTO> listExport(@Param("params") VirtualInventoryTransactionDTO.ExportDTO params);
-
-
-    /**
-    * 获取状态统计
-    * @param searchParam
-    * @return
-    */
-    List<VirtualInventoryTransactionDTO.TabListDTO> tabList(@Param("params") VirtualInventoryTransactionDTO.PagingParamDTO searchParam);
+	List<CheckInventoryDTO> queryDbInventoryCheckSame(@Param("ids")List<String> ids);
 }

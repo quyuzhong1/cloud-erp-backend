@@ -64,4 +64,24 @@
         GROUP BY approve_status
     </select>
 
+<select id="queryDbInventoryCheckSame" resultType="com.erp.model.wms.dto.InventoryTransactionDTO$CheckInventoryDTO">
+        select t.id inventoryId,t.a_qty inventoryQty,t.b_qty flowSumQty,t.c_qty hisQty,t.d_qty lastFlowQty from (
+select t.id,case when t.a_qty is null then 0 else t.a_qty end a_qty,case when t.b_qty is null then 0 else t.b_qty end b_qty,case when t.c_qty is null then 0 else t.c_qty end c_qty,case when g.cur_inventory_qty is null then 0 else g.cur_inventory_qty end d_qty from (
+select case when t.id is null then g.virtual_inventory_id else t.id end id,t.a_qty,t.b_qty,g.qty c_qty from (
+select case when t.id is null then g.virtual_inventory_id else t.id end id,t.qty a_qty,g.qty b_qty from (select * from virtual_inventory where is_deleted = false) t 
+full join (select virtual_inventory_id,sum(qty) qty from virtual_trans_flow where is_deleted = false group by virtual_inventory_id) g on t.id = g.virtual_inventory_id) t 
+full join (select * from virtual_inventory_his where is_deleted = false and (virtual_inventory_id , date) in (select virtual_inventory_id,max(date) from virtual_inventory_his where is_deleted = false group by virtual_inventory_id)) g on t.id = g.virtual_inventory_id) t
+full join (select * from virtual_trans_flow where id in (
+select max(id) from virtual_trans_flow where (virtual_inventory_id , bill_date , trade_time) in (
+select virtual_inventory_id , bill_date,max(trade_time) trade_time from virtual_trans_flow where (virtual_inventory_id , bill_date) in (
+select virtual_inventory_id,max(bill_date) bill_date from virtual_trans_flow where is_deleted = false group by virtual_inventory_id)
+group by virtual_inventory_id , bill_date) group by virtual_inventory_id , bill_date , trade_time)) g on t.id = g.virtual_inventory_id) t
+where (t.b_qty != t.a_qty or t.b_qty != t.c_qty or t.b_qty != t.d_qty) 
+        <if test="ids != null and ids.size > 0">
+            and t.id in
+            <foreach collection="ids" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+    </select>
 </mapper>

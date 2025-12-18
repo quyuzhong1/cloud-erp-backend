@@ -1,43 +1,66 @@
 package com.erp.server.wms.service.impl;
 
-import cn.hutool.core.bean.BeanUtil;
-import com.common.business.enums.OperationTypeEnum;
-import com.common.business.vo.LoginUser;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.stream.Collectors;
 
-import cn.hutool.core.util.StrUtil;
-import io.seata.spring.annotation.GlobalTransactional;
-import com.common.business.annotation.DistributeLocker;
-import com.common.business.dto.base.BaseResultDTO;
-import com.erp.model.wms.entity.VirtualInventoryTransactionEntity;
-import com.erp.server.wms.mapper.VirtualInventoryTransactionMapper;
-import com.erp.server.wms.service.VirtualInventoryTransactionService;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.threadlocal.UserContext;
-import com.erp.server.wms.service.OperateLogService;
-import com.common.core.exception.ServiceException;
-import cn.hutool.core.util.ObjectUtil;
+import javax.annotation.Resource;
+
+import org.apache.commons.lang3.StringUtils;
+import org.redisson.RedissonMultiLock;
+import org.slf4j.MDC;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import lombok.extern.slf4j.Slf4j;
-import com.erp.model.wms.dto.VirtualInventoryTransactionDTO;
-import javax.annotation.Resource;
-import java.util.stream.Collectors;
-import java.util.*;
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import com.common.business.enums.ErpServerModuleEnum;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.utils.ApplicationContextUtils;
+import com.common.business.utils.StringUtil;
+import com.common.core.exception.ServiceException;
+import com.common.message.service.mq.MQProducerService;
+import com.erp.model.msg.dto.WarnMsgInfoDTO;
+import com.erp.model.msg.enums.WarnMsgTypeEnum;
+import com.erp.model.wms.dto.InventoryTransactionDTO.CheckInventoryDTO;
+import com.erp.model.wms.dto.inventory.InventoryTransactionDTO;
+import com.erp.model.wms.entity.VirtualInventoryEntity;
+import com.erp.model.wms.entity.VirtualInventoryHisEntity;
+import com.erp.model.wms.entity.VirtualInventoryTransactionEntity;
+import com.erp.model.wms.entity.VirtualTransFlowEntity;
+import com.erp.model.wms.enums.inventory.InventoryRedisOpEnum;
+import com.erp.model.wms.enums.inventory.InventoryRedisOpKeyEnum;
+import com.erp.server.wms.config.VirtualInventoryTransactionSynchronizationAdapter;
+import com.erp.server.wms.mapper.VirtualInventoryTransactionMapper;
+import com.erp.server.wms.service.InventoryTradingService;
+import com.erp.server.wms.service.VirtualInventoryDetailHisService;
+import com.erp.server.wms.service.VirtualInventoryHisService;
+import com.erp.server.wms.service.VirtualInventoryService;
+import com.erp.server.wms.service.VirtualInventoryTransactionService;
+import com.erp.server.wms.service.VirtualTransFlowService;
+import com.erp.server.wms.utils.InventoryRedisUtil;
+import com.erp.server.wms.utils.VirtualInventoryRedisUtil;
+
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
-import com.google.common.collect.Sets;
-import com.alibaba.fastjson.JSONObject;
-import com.google.common.collect.Lists;
-import com.common.business.vo.LoginUser;
-import com.common.business.vo.PagingVO;
-import com.common.business.dto.base.*;
-import com.erp.model.sys.dto.SysCodeDTO;
-import com.common.core.excel.ExcelPrintUtils;
-import com.common.core.utils.date.DateUtil;
-import javax.servlet.http.HttpServletResponse;
+import cn.hutool.core.date.DateUtil;
+import cn.hutool.core.lang.Pair;
+import cn.hutool.core.text.CharSequenceUtil;
+import io.seata.core.context.RootContext;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * <p>
@@ -50,150 +73,668 @@ import javax.servlet.http.HttpServletResponse;
 @Slf4j
 @Service
 public class VirtualInventoryTransactionServiceImpl extends SuperServiceImpl<VirtualInventoryTransactionMapper, VirtualInventoryTransactionEntity> implements VirtualInventoryTransactionService {
+
+    @Autowired
+    private VirtualInventoryHisService virtualInventoryHisService;
+    @Autowired
+    private VirtualInventoryService virtualInventoryService;
+    @Autowired
+    private VirtualInventoryRedisUtil virtualInventoryRedisUtil;
+    @Autowired
+    private VirtualTransFlowService virtualTransFlowService;
     @Resource
-    private OperateLogService operateLogService;
+    private MQProducerService mqProducerService;
+    @Resource
+    @Qualifier("virtualTransactionIdToInventoryHisPool")
+    private ExecutorService virtualTransactionIdToInventoryHisPool;
+    @Resource
+    private VirtualInventoryDetailHisService virtualInventoryDetailHisService;
 
-    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
+    @Override
+	public Map<String , Boolean> overrideDbInventory(LocalDate startDate , List<String> inventoryIds){
+    	Map<String , Boolean> result = new HashMap<>();
+    	List<CheckInventoryDTO> checkInventoryList = this.checkDbInventorySame(inventoryIds);
+    	if(CollUtil.isNotEmpty(checkInventoryList)) {
+    		List<Future<Pair<String, Boolean>>> futureList = new ArrayList<>(checkInventoryList.size());
+    		for(CheckInventoryDTO dto : checkInventoryList) {
+    			String inventoryId = dto.getInventoryId();
+    			result.put(inventoryId, Boolean.FALSE);
+    			futureList.add(virtualTransactionIdToInventoryHisPool.submit(() -> {
+    				String logMsg = StringUtil.appendLogMsg("overrideDbInventory循环", inventoryId);
+    				log.info("{}开始" , logMsg);
+    				try {
+    					Pair<String, Boolean> overrideDb = ApplicationContextUtils.getBean(VirtualInventoryTransactionService.class).overrideDb(startDate , inventoryId);
+    					log.info("{}结束" , logMsg);
+						return overrideDb;
+					} catch (Exception e) {
+						log.error("{}失败" , logMsg , e);
+					}
+    				return Pair.of(inventoryId, Boolean.FALSE);
+    			}));
+    		}
+    		for(Future<Pair<String, Boolean>> future : futureList) {
+    			try {
+    				Pair<String, Boolean> pair = future.get();
+					result.put(pair.getKey(), pair.getValue());
+				} catch (Exception e) {
+					log.error("overrideDbInventory获取结果失败" , e);
+				}
+    		}
+    	}
+    	return result;
+	}
+    
+    @Transactional(rollbackFor = Exception.class)
+    public Pair<String, Boolean> overrideDb(LocalDate startDate , String inventoryId){
+    	virtualTransFlowService.overrideVirtualTransFlow(startDate, inventoryId);
+    	virtualInventoryDetailHisService.hisVirtualInventoryJob(inventoryId,startDate);
+		this.inventoryHisToInventory(inventoryId);
+		return Pair.of(inventoryId, Boolean.TRUE);
+    }
+
+	@Override
+	public Map<String , Boolean> overrideRedisInventory(List<String> inventoryIds , boolean isCheck) {
+		Map<String , Boolean> result = new HashMap<>();
+		List<CheckInventoryDTO> redisCheckInventoryList = null;
+		if(isCheck) {
+			redisCheckInventoryList = this.checkRedisInventorySame(inventoryIds);
+		}else {
+			List<VirtualInventoryEntity> list = virtualInventoryService.lambdaQuery().in(CollUtil.isNotEmpty(inventoryIds) , VirtualInventoryEntity::getId ,inventoryIds).eq(VirtualInventoryEntity::getIsDeleted, false).select(VirtualInventoryEntity::getId).list();
+			redisCheckInventoryList = list.stream().map(l -> {
+				CheckInventoryDTO dto = new CheckInventoryDTO();
+				dto.setInventoryId(l.getId());
+				return dto;
+			}).collect(Collectors.toList());
+		}
+		if(CollUtil.isNotEmpty(redisCheckInventoryList)) {
+			List<Future<Pair<String, Boolean>>> futureList = new ArrayList<>(redisCheckInventoryList.size());
+			for(CheckInventoryDTO dto : redisCheckInventoryList) {
+				String inventoryId = dto.getInventoryId();
+				futureList.add(virtualTransactionIdToInventoryHisPool.submit(() -> {
+					String logMsg = StringUtil.appendLogMsg("overrideRedisInventory循环", inventoryId);
+    				log.info("{}开始" , logMsg);
+    				try {
+    					return overrideRedis(inventoryId);
+					} catch (Exception e) {
+						log.error("{}失败" , logMsg , e);
+					}
+    				log.info("{}结束" , logMsg);
+    				return Pair.of(inventoryId, Boolean.FALSE);
+				}));
+			}
+			for(Future<Pair<String, Boolean>> future : futureList) {
+    			try {
+    				Pair<String, Boolean> pair = future.get();
+					result.put(pair.getKey(), pair.getValue());
+				} catch (Exception e) {
+					log.error("overrideRedisInventory获取结果失败" , e);
+				}
+    		}
+		}
+		return result;
+	}
+	
+	private Pair<String, Boolean> overrideRedis(String id){
+		Pair<String, Boolean> of = Pair.of(id, Boolean.TRUE);
+		 RedissonMultiLock tryLock = virtualInventoryRedisUtil.tryLock(InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.OVERRIDE, id));
+		 if(tryLock != null) {
+			 try {
+				 int i = 0;
+				 while(i < 3) {
+					 try {
+						 this.inventoryIdToInventoryHis(id , "");
+						 Integer qty = 0;
+						 QueryWrapper<VirtualTransFlowEntity> queryWrapper = new QueryWrapper<>();
+						 queryWrapper.eq("virtual_inventory_id", id);
+						 queryWrapper.groupBy("virtual_inventory_id");
+						 queryWrapper.select(" sum(qty) qty ");
+						 List<VirtualTransFlowEntity> transactionFlowEntityList = virtualTransFlowService.list(queryWrapper);
+						 if(CollUtil.isNotEmpty(transactionFlowEntityList)) {
+							 qty = transactionFlowEntityList.get(0).getQty();
+						 }
+						 virtualInventoryRedisUtil.execute(InventoryRedisOpEnum.OVERRIDE , InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.CURRENT, id) , qty.toString());
+						 break;
+					 } catch (Exception e) {
+						 log.error("{}库存重算第{}次失败" , id , i , e);
+						 of = Pair.of(id, Boolean.FALSE);
+					 }
+					 i = i + 1;
+				 }
+			 }catch (Exception e) {
+				 log.error("{}库存重算最终失败" , id , e);
+				 of = Pair.of(id, Boolean.FALSE);
+			 } finally{
+				 virtualInventoryRedisUtil.unLock(tryLock);
+			 }
+		 }else {
+			 log.error("{}库存重算获取锁失败" , id);
+			 of = Pair.of(id, Boolean.FALSE);
+		 }
+		return of;
+	}
+    
+    @Override
+    public void inventoryIdToInventoryHis(String inventoryId  , String transactionId) {
+    	String logMsg = StringUtil.appendLogMsg("inventoryIdToInventoryHis", inventoryId , transactionId);
+    	log.info("{}开始" , logMsg);
+    	String key = InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.HISTORY, inventoryId);
+    	RedissonMultiLock tryLock = virtualInventoryRedisUtil.tryLock(key , 5);
+    	if(tryLock != null) {
+    		try {
+    			ApplicationContextUtils.getBean(VirtualInventoryTransactionService.class).innerInventoryIdToInventoryHis(inventoryId , transactionId);
+    		} catch (Exception e) {
+    			log.error("{}失败" , logMsg , e);
+    			sendFeishuMsg("迁移redis历史库存失败" , inventoryId, e.getMessage());
+    			throw e;
+    		} finally{
+    			virtualInventoryRedisUtil.unLock(tryLock);
+    		}
+    	}else {
+    		log.error("{}正在迁移中" , logMsg);
+    		ServiceException.runError(logMsg + "正在迁移中");
+    	}
+    	log.info("{}结束" , logMsg);
+    }
+    
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BaseResultDTO.AddDTO add(VirtualInventoryTransactionDTO.AddDTO addDTO) {
-        VirtualInventoryTransactionEntity virtualInventoryTransactionEntity = new VirtualInventoryTransactionEntity();
-        BeanMapperUtils.copy(addDTO, virtualInventoryTransactionEntity);
-
-        // 数据处理
-        handleData(virtualInventoryTransactionEntity);
-
-        log.info("开始新增虚拟仓库存事务单");
-        boolean save = super.save(virtualInventoryTransactionEntity);
-        if(!save) {
-            throw new ServiceException("虚拟仓库存事务单保存失败");
-        }
-
-        // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "虚拟仓库存事务单" , virtualInventoryTransactionEntity.getId());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, virtualInventoryTransactionEntity.getId(), "新增操作");
-        // TODO 新增明细（如果有明细的话）
-
-        return new BaseResultDTO.AddDTO(virtualInventoryTransactionEntity.getId(), virtualInventoryTransactionEntity.getId());
+    public void innerInventoryIdToInventoryHis(String inventoryId , String transactionId) {
+		List<VirtualInventoryTransactionEntity> inventoryTransactionEntityList = lambdaQuery().eq(VirtualInventoryTransactionEntity::getInventoryId, inventoryId)
+				.orderByAsc(VirtualInventoryTransactionEntity::getCreateTime).list();
+		if(CollUtil.isNotEmpty(inventoryTransactionEntityList)) {
+			//1、补偿提交redis库存
+			Set<String> transactionIdSet = inventoryTransactionEntityList.stream()
+					.map(VirtualInventoryTransactionEntity::getTransactionId)
+					.filter(t -> !t.equals(transactionId))
+					.collect(Collectors.toSet());
+			transactionIdSet.forEach(t -> this.commitRedis(t , false));
+			
+			Integer allTotalQty = 0;
+			//合并单据日期统一处理
+			Map<LocalDate, List<VirtualInventoryTransactionEntity>> billDateEntityMaps = inventoryTransactionEntityList.stream().collect(Collectors.groupingBy(VirtualInventoryTransactionEntity::getBillDate));
+			for(Map.Entry<LocalDate, List<VirtualInventoryTransactionEntity>> billDateEntityMap : billDateEntityMaps.entrySet()) {
+				List<VirtualInventoryTransactionEntity> value = billDateEntityMap.getValue();
+				Integer totalQty = value.stream().map(VirtualInventoryTransactionEntity::getQty).reduce(Integer::sum).orElse(0);
+				allTotalQty = allTotalQty + totalQty;
+				LocalDate billDate = billDateEntityMap.getKey();
+				VirtualInventoryTransactionEntity v = value.get(0);
+				//2、更新历史库存
+				this.updateInventoryHis(inventoryId , billDate , totalQty , v.getUpdateUserId() , v.getUpdateUserName());
+				//3、更新单据日期之后流水的结余库存
+				this.updateInventoryTransaction(inventoryId, billDate , totalQty);
+				//4、重算当天流水结余库存
+				this.updateCurrInventoryTransaction(inventoryId, billDate);
+			}
+			if(allTotalQty != 0) {
+				//5、更新最新历史库存到即时库存
+				this.inventoryHisToInventory(inventoryId);
+			}
+			//6、删除库存交易
+			Set<String> transactionIds = inventoryTransactionEntityList.stream().map(VirtualInventoryTransactionEntity::getId).collect(Collectors.toSet());
+			transactionIds.forEach(t -> log.error("{}删除库存交易" , t));
+			removeByIds(transactionIds);
+		}
     }
-
-    /**
-    * 修改
-    */
-    @DistributeLocker(keyName = "addOrUpdateDTO.getId()")
+    
+    @Override
+    public void transactionIdToInventoryHis(String transactionId) {
+    	String logMsg = StringUtil.appendLogMsg("transactionIdToInventoryHis", transactionId);
+    	log.info("{}开始" , logMsg);
+    	List<VirtualInventoryTransactionEntity> list = lambdaQuery().eq(VirtualInventoryTransactionEntity::getTransactionId, transactionId)
+            	.last(" group by virtual_inventory_id ")
+            	.select(VirtualInventoryTransactionEntity::getInventoryId)
+            	.list();
+    	if(CollUtil.isNotEmpty(list)) {
+    		for(VirtualInventoryTransactionEntity l : list) {
+    			String inventoryId = l.getInventoryId();
+    			String forLogMsg = StringUtil.appendLogMsg("transactionIdToInventoryHis循环", transactionId , inventoryId);
+    			log.info("{}开始" , forLogMsg);
+    			try {
+					ApplicationContextUtils.getBean(VirtualInventoryTransactionService.class).inventoryIdToInventoryHis(inventoryId , transactionId);
+				} catch (Exception e) {
+					log.error("{}失败" , forLogMsg , e);
+				}
+    			log.info("{}结束" , forLogMsg);
+    		}
+    	}
+    	log.info("{}结束" , logMsg);
+    }
+    
+    private void sendFeishuMsg(String title , String tableId , String keyInfo) {
+    	WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
+        warnMsgInfo.setBizName("预警消息");
+        warnMsgInfo.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_WMS);
+        warnMsgInfo.setTitle(title);
+        warnMsgInfo.setTableName("virtual_inventory_transaction");
+        warnMsgInfo.setTableId(tableId);
+        warnMsgInfo.setKeyInfo(keyInfo);
+        warnMsgInfo.setWarnMsgTypeEnum(WarnMsgTypeEnum.SYS_EXCEPTION);
+        mqProducerService.sendWarnMsg(warnMsgInfo);
+    }
+    
     @Transactional(rollbackFor = Exception.class)
+	@Override
+	public void addInventoryTransaction(List<InventoryTransactionDTO> transactionList, String approveType) {
+    	if(CollUtil.isEmpty(transactionList)) {
+    		ServiceException.runError("库存流水不能为空");
+    	}
+    	String logMsg = StringUtil.appendLogMsg("addInventoryTransaction", transactionList.stream().map(InventoryTransactionDTO::getSourceCode)
+    			.filter(Objects::nonNull).collect(Collectors.joining("、")) , approveType);
+    	log.info("{}开始" , logMsg);
+    	if(transactionList.stream().anyMatch(t -> StringUtils.isBlank(t.getId()))) {
+    		ServiceException.runError("库存流水id不能为空");
+    	}
+    	if(transactionList.stream().anyMatch(t -> StringUtils.isBlank(t.getInventoryId()))) {
+    		ServiceException.runError("即时库存id不能为空");
+    	}
+    	Set<String> flowIds = transactionList.stream().map(InventoryTransactionDTO::getId).collect(Collectors.toSet());
+		List<VirtualTransFlowEntity> transactionFlowEntityList = virtualTransFlowService.listByIds(flowIds);
+		if(transactionFlowEntityList.size() != flowIds.size()) {
+			ServiceException.runError("库存流水缺少");
+		}
+		String transactionId = "";
+		String transactionType = "";
+		boolean inGlobalTransaction = RootContext.inGlobalTransaction();
+		if(inGlobalTransaction) {
+			transactionId = RootContext.getXID().replace(":", "_");
+			transactionType = "global";
+		}else {
+			transactionId = MDC.get("traceId");
+			if(StringUtils.isBlank(transactionId)) {
+				transactionId = transactionFlowEntityList.get(0).getId();
+				MDC.put("traceId", transactionId);
+			}
+			transactionType = "local";
+		}
+		
+		this.tryRedis(transactionId , transactionList);
+		
+		List<VirtualInventoryTransactionEntity> inventoryTransactionEntityList = new ArrayList<>();
+		for(VirtualTransFlowEntity transactionFlowEntity : transactionFlowEntityList) {
+			VirtualInventoryTransactionEntity inventoryTransactionEntity = BeanUtil.copyProperties(transactionFlowEntity, VirtualInventoryTransactionEntity.class);
+			inventoryTransactionEntity.setId(null);
+			LocalDateTime now = LocalDateTime.now();
+			inventoryTransactionEntity.setCreateTime(now);
+			inventoryTransactionEntity.setUpdateTime(now);
+			inventoryTransactionEntity.setCreateUserId(null);
+			inventoryTransactionEntity.setCreateUserName(null);
+			inventoryTransactionEntity.setUpdateUserId(null);
+			inventoryTransactionEntity.setUpdateUserName(null);
+			inventoryTransactionEntity.setVersion(null);
+			inventoryTransactionEntity.setIsDeleted(null);
+			inventoryTransactionEntity.setFlowId(transactionFlowEntity.getId());
+			inventoryTransactionEntity.setTransactionId(transactionId);
+			inventoryTransactionEntity.setTransactionType(transactionType);
+			inventoryTransactionEntity.setOperationMode(approveType);
+			if(!InventoryTradingService.APPROVE.equals(approveType)) {
+				inventoryTransactionEntity.setQty(inventoryTransactionEntity.getQty() * -1);
+			}
+			inventoryTransactionEntityList.add(inventoryTransactionEntity);
+		}
+		this.saveBatch(inventoryTransactionEntityList);
+		VirtualInventoryTransactionSynchronizationAdapter.register(transactionId);
+		log.info("{}结束" , logMsg);
+	}
+
     @Override
-    public Boolean update(VirtualInventoryTransactionDTO.UpdateDTO addOrUpdateDTO) {
-        VirtualInventoryTransactionEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "虚拟仓库存事务单"));
-        VirtualInventoryTransactionEntity virtualInventoryTransactionEntity =  BeanMapperUtils.map(VirtualInventoryTransactionEntity.class, addOrUpdateDTO);
-
-        // 数据处理
-        handleData(virtualInventoryTransactionEntity);
-        log.info("编辑 开始修改虚拟仓库存事务单数据，id：【{}】", old.getId());
-        boolean save = super.updateById(virtualInventoryTransactionEntity);
-        if(!save) {
-            throw new ServiceException("虚拟仓库存事务单保存失败");
-        }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
-
-        // 记录主单操作日志
-            log.info("编辑 开始记录虚拟仓库存事务单日志数据，id：【{}】", virtualInventoryTransactionEntity.getId());
-            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), virtualInventoryTransactionEntity.getId(), "虚拟仓库存事务单");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLogByObj(old, virtualInventoryTransactionEntity, null, virtualInventoryTransactionEntity.getId(), msg);
-        return Boolean.TRUE;
+    public void tryRedis(String transactionId , List<InventoryTransactionDTO> transactionList) {
+    	String logMsg = StringUtil.appendLogMsg("tryRedis", transactionId);
+    	log.info("{}开始" , logMsg);
+    	if(StringUtils.isBlank(transactionId)) {
+			log.error("冻结redis库存事务transactionId不能为空");
+			throw new ServiceException("冻结redis库存事务transactionId不能为空");
+		}
+    	Map<String, List<InventoryTransactionDTO>> inventoryIdMaps = transactionList.stream().collect(Collectors.groupingBy(InventoryTransactionDTO::getInventoryId));
+    	List<String> transactionRedisParam = new ArrayList<>();
+    	for(Map.Entry<String, List<InventoryTransactionDTO>> inventoryIdMap : inventoryIdMaps.entrySet()) {
+    		List<InventoryTransactionDTO> value = inventoryIdMap.getValue();
+    		Integer totalQty = value.stream().map(InventoryTransactionDTO::getQty).reduce(Integer::sum).orElse(0);
+    		if(totalQty != 0) {
+    			StringBuilder sb = new StringBuilder();
+    			InventoryTransactionDTO transactionDTO = value.get(0);
+    			sb.append(transactionDTO.getInventoryId());
+    			sb.append(InventoryRedisUtil.atSign);
+    			sb.append(totalQty);
+    			if(!transactionDTO.isAllowNegativeInventory()) {
+    				sb.append(InventoryRedisUtil.atSign);
+    				sb.append(CharSequenceUtil.format("库存不足：sku=[{}],仓库=[{}],仓位=[{}],库存状态=[{}],库存:{},交易数:{},缺少数：{}\n"
+                            , transactionDTO.getSkuNo()
+                            , transactionDTO.getWarehouseName()
+                            , transactionDTO.getWarehouseLocationName()
+                            , transactionDTO.getInventoryStatusName()
+                            , "ss1ss"
+                            , totalQty
+                            , "ss2ss"));
+    			}
+    			transactionRedisParam.add(sb.toString());
+    		}
+    	}
+    	if(CollUtil.isNotEmpty(transactionRedisParam)) {
+    		virtualInventoryRedisUtil.execute(InventoryRedisOpEnum.TRY , transactionId  , InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.OVERRIDE, ""),
+    				InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.CURRENT, ""),
+    				InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.TRANSACTION, ""),
+    				transactionRedisParam.stream().collect(Collectors.joining(InventoryRedisUtil.splitSign)));
+    	}
+    	log.info("{}结束" , logMsg);
     }
+    
+	@Override
+	public void commitRedis(String transactionId , boolean toDoHis) {
+		String logMsg = StringUtil.appendLogMsg("commitRedis", transactionId , toDoHis);
+    	log.info("{}开始" , logMsg);
+		if(StringUtils.isBlank(transactionId)) {
+			log.error("提交redis库存事务transactionId不能为空");
+			throw new ServiceException("提交redis库存事务transactionId不能为空");
+		}
+		Integer count = lambdaQuery().eq(VirtualInventoryTransactionEntity::getTransactionId, transactionId).count();
+		if(count == null || count == 0) {
+			return;
+		}
+		InventoryRedisOpEnum commit = InventoryRedisOpEnum.COMMIT;
+		virtualInventoryRedisUtil.execute(commit , commit.getCode() , transactionId , InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.TRANSACTION, transactionId) 
+				, InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.CURRENT, ""));
+		if(toDoHis) {
+			virtualTransactionIdToInventoryHisPool.execute(() -> ApplicationContextUtils.getBean(VirtualInventoryTransactionService.class).transactionIdToInventoryHis(transactionId));
+		}
+    	log.info("{}结束" , logMsg);
+	}
 
+	@Override
+	public void rollbackRedis(String transactionId) {
+		String logMsg = StringUtil.appendLogMsg("rollbackRedis", transactionId);
+    	log.info("{}开始" , logMsg);
+		if(StringUtils.isBlank(transactionId)) {
+			log.error("回滚redis库存事务transactionId不能为空");
+			throw new ServiceException("回滚redis库存事务transactionId不能为空");
+		}
+		Integer count = lambdaQuery().eq(VirtualInventoryTransactionEntity::getTransactionId, transactionId).count();
+		if(count != null && count > 0) {
+			throw new ServiceException("存在库存交易记录，不允许回滚redis库存transactionId={}" , transactionId);
+		}
+		InventoryRedisOpEnum rollback = InventoryRedisOpEnum.ROLLBACK;
+		virtualInventoryRedisUtil.execute(rollback , rollback.getCode() , transactionId , InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.TRANSACTION, transactionId) 
+				, InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.CURRENT, ""));
+		log.info("{}结束" , logMsg);
+	}
+	
+	/**
+     * 更新库存历史
+     * @param transactionDTO    库存交易信息
+     */
+    private void updateInventoryHis(String inventoryId, LocalDate billDate, Integer qty , String userId , String userName) {
+        // 查询当天历史库存
+        saveInventoryCurrentday(inventoryId , billDate , qty , userId , userName);
 
-    @Override
-    public PagingVO<VirtualInventoryTransactionDTO.ListDTO> paging(PagingDTO<VirtualInventoryTransactionDTO.PagingParamDTO> pagingParamDTO) {
-        pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
-        Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
-        IPage<VirtualInventoryTransactionDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingParamDTO.getParams());
-        if(CollUtil.isEmpty(pageData.getRecords())) {
-           return new PagingVO(pageData);
+        if(qty != 0) {
+        	// 更新当天之后的历史库存
+            LambdaUpdateWrapper< VirtualInventoryHisEntity> wrapper = new LambdaUpdateWrapper<>();
+            wrapper.setSql("qty = qty + " + qty)
+                    .set(VirtualInventoryHisEntity::getUpdateTime, LocalDateTime.now())
+                    .set(VirtualInventoryHisEntity::getUpdateUserId, userId)
+                    .set(VirtualInventoryHisEntity::getUpdateUserName, userName)
+                    //条件
+                    .eq(VirtualInventoryHisEntity::getVirtualInventoryId, inventoryId)
+                    .gt(VirtualInventoryHisEntity::getDate, billDate);
+
+            virtualInventoryHisService.update(wrapper);
         }
-        // 数据处理
-        fillList(pageData.getRecords());
-        return new PagingVO(pageData);
     }
+	
+	/**
+     * 保存当天历史库存
+     * @param transactionDTO    库存交易信息
+     */
+    private void saveInventoryCurrentday(String inventoryId, LocalDate billDate, Integer qty , String userId , String userName) {
+    	VirtualInventoryHisEntity inventoryHis = this.queryInventoryHisLast(inventoryId, billDate,true);
 
-    @Override
-    public List<VirtualInventoryTransactionDTO.TabListDTO> tabList(PermissionsDTO param) {
-        VirtualInventoryTransactionDTO.PagingParamDTO searchParam = new VirtualInventoryTransactionDTO.PagingParamDTO();
-        searchParam.setPermissionSql(param.getPermissionSql());
-        List<VirtualInventoryTransactionDTO.TabListDTO> list = baseMapper.tabList(searchParam);
-        // 获取状态列表
-        // TODO 替换当前表Tab状态字段
-        List<String> statusList = null;
-        // 不存在的状态赋值为0
-        List<String> existStatusList = list.stream().map(VirtualInventoryTransactionDTO.TabListDTO::getTabFlag).collect(Collectors.toList());
-        statusList.parallelStream().forEach(status -> {
-            if(!existStatusList.contains(status)) {
-            list.add(new VirtualInventoryTransactionDTO.TabListDTO(status, 0));
-        }
-        });
-        list.add(new VirtualInventoryTransactionDTO.TabListDTO("all", list.stream().mapToInt(VirtualInventoryTransactionDTO.TabListDTO::getCount).sum()));
-        // 计算合计数量
-        return list;
-    }
+        if(null == inventoryHis) {
+            // 查询当天以前的库存
+            inventoryHis = this.queryInventoryHisLast(inventoryId, billDate,false);
+            int inventoryQty = (null == inventoryHis) ? 0 : inventoryHis.getQty();
 
-    @Override
-    public void exportList(VirtualInventoryTransactionDTO.ExportDTO param, HttpServletResponse response) {
-        List<VirtualInventoryTransactionDTO.ListDTO> list = this.baseMapper.listExport(param);
-        if(CollUtil.isEmpty(list)) {
-           return;
-        }
-        // 数据处理
-        fillList(list);
+            inventoryHis = new VirtualInventoryHisEntity();
+            inventoryHis.setVirtualInventoryId(inventoryId);
+            inventoryHis.setDate(billDate);
+            inventoryHis.setQty(inventoryQty+ qty);
+            inventoryHis.setCreateUserId(userId);
+            inventoryHis.setCreateUserName(userName);
+            inventoryHis.setCreateTime(LocalDateTime.now());
+            inventoryHis.setUpdateUserId(userId);
+            inventoryHis.setUpdateUserName(userName);
+            inventoryHis.setUpdateTime(LocalDateTime.now());
 
-        // 导出数据
-        StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/virtualInventoryTransaction.xlsx";
-        String name = "虚拟仓库存事务单导出";
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date).append(name);
-        try {
-            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
-        } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_1015);
+            virtualInventoryHisService.save(inventoryHis);
+        }else {
+        	if(qty != 0) {
+        		// 更新当天历史库存
+                LambdaUpdateWrapper<VirtualInventoryHisEntity> wrapper = new LambdaUpdateWrapper<>();
+                wrapper.setSql("qty = qty + " + qty)
+                        .set(VirtualInventoryHisEntity::getUpdateTime, LocalDateTime.now())
+                        .set(VirtualInventoryHisEntity::getUpdateUserId, userId)
+                        .set(VirtualInventoryHisEntity::getUpdateUserName, userName)
+                        //条件
+                        .eq(VirtualInventoryHisEntity::getId, inventoryHis.getId());
+
+                virtualInventoryHisService.update(wrapper);
+        	}
         }
     }
+    
     /**
-    * 新增修改处理数据
-    */
-    private void handleData(VirtualInventoryTransactionEntity virtualInventoryTransactionEntity) {
-    // TODO 验证数据 & 数据赋值
-    }
+     * 查询库存历史
+     * @param inventoryId   库存id
+     * @param billDate      交易日期
+     * @param isOnlyCurrBillDate   是否只查询当天的历史
+     * @return  库存历史
+     */
+    private VirtualInventoryHisEntity queryInventoryHisLast(String inventoryId, LocalDate billDate, boolean isOnlyCurrBillDate) {
+        LambdaQueryWrapper<VirtualInventoryHisEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper
+                .eq(VirtualInventoryHisEntity::getVirtualInventoryId, inventoryId)
+                .orderByDesc(VirtualInventoryHisEntity::getDate)
+                .orderByDesc(VirtualInventoryHisEntity::getId)
+                .last("limit 1");
+        if(isOnlyCurrBillDate) {
+            queryWrapper.eq(VirtualInventoryHisEntity::getDate, billDate);
+        }else{
+            queryWrapper.lt(VirtualInventoryHisEntity::getDate, billDate);
+        }
+        return virtualInventoryHisService.getOne(queryWrapper);
 
-    @Override
-    public VirtualInventoryTransactionDTO.ViewDTO view(String id) {
-    VirtualInventoryTransactionEntity virtualInventoryTransactionEntity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到虚拟仓库存事务单数据"));
-    VirtualInventoryTransactionDTO.ViewDTO data = BeanMapperUtils.map(VirtualInventoryTransactionDTO.ViewDTO.class, virtualInventoryTransactionEntity);
-    // 数据填充处理
-    fillOne(data);
-    // TODO 查询明细数据（如果有的话）
-    return data;
     }
-
-    private void fillOne(VirtualInventoryTransactionDTO.ViewDTO data) {
-        if (ObjectUtil.isEmpty(data)) {
-          return;
+    
+    /**
+     * 最新历史库存同步即时库存
+     * @param inventoryId
+     */
+    private void inventoryHisToInventory(String inventoryId) {
+    	int qty = 0;
+    	List<VirtualInventoryHisEntity> hisList = virtualInventoryHisService.lambdaQuery()
+    			.eq(VirtualInventoryHisEntity::getVirtualInventoryId, inventoryId)
+    			.orderByDesc(VirtualInventoryHisEntity::getDate)
+    			.last("limit 1")
+    			.list();
+    	if(CollUtil.isNotEmpty(hisList)) {
+    		qty = hisList.get(0).getQty();
+    	}
+    	
+		virtualInventoryService.lambdaUpdate().set(VirtualInventoryEntity::getQty, qty).eq(VirtualInventoryEntity::getId, inventoryId).update();
+    }
+    
+    
+    /**
+     * 更新库存交易 的库存数量
+     * @param transactionDTO    库存交易信息
+     */
+    private void updateInventoryTransaction(String inventoryId , LocalDate billDate , Integer qty) {
+        if(qty != 0) {
+        	// 日期大于当前单据日期的流水更新
+            LambdaUpdateWrapper<VirtualTransFlowEntity> wrapper = new LambdaUpdateWrapper<>();
+            wrapper.setSql("cur_inventory_qty = cur_inventory_qty + " + qty)
+                    .set(VirtualTransFlowEntity::getUpdateTime, LocalDateTime.now())
+                    //条件
+                    .eq(VirtualTransFlowEntity::getVirtualInventoryId, inventoryId)
+                    .gt(VirtualTransFlowEntity::getBillDate, billDate);
+            virtualTransFlowService.update(wrapper);
+        }
+    }
+    
+    /**
+     * 重算今天结余库存
+     * @param transactionDTO    库存交易信息
+     */
+    private void updateCurrInventoryTransaction(String inventoryId , LocalDate billDate) {
+        // 当前单据日期需要进行流水重算
+        List<VirtualTransFlowEntity> toDayFlowList = virtualTransFlowService.lambdaQuery().eq(VirtualTransFlowEntity::getVirtualInventoryId, inventoryId)
+        		.eq(VirtualTransFlowEntity::getBillDate, billDate)
+        		.orderByAsc(VirtualTransFlowEntity::getId)
+        		.list();
+        if(CollUtil.isNotEmpty(toDayFlowList)) {
+        	VirtualInventoryHisEntity hisEntity = virtualInventoryHisService.findLastInventory(inventoryId, billDate.minusDays(1));
+            int beforeQty = 0;
+            if(hisEntity != null){
+            	beforeQty = hisEntity.getQty();
+            }
+            List<VirtualTransFlowEntity> updateToDayFlowList = new ArrayList<>(toDayFlowList.size());
+            for(VirtualTransFlowEntity toDayFlow : toDayFlowList) {
+            	VirtualTransFlowEntity transactionFlowEntity = new VirtualTransFlowEntity();
+            	transactionFlowEntity.setId(toDayFlow.getId());
+            	transactionFlowEntity.setCurInventoryQty(beforeQty + toDayFlow.getQty());
+            	beforeQty = transactionFlowEntity.getCurInventoryQty();
+            	updateToDayFlowList.add(transactionFlowEntity);
+            }
+            virtualTransFlowService.updateBatchById(updateToDayFlowList);
         }
     }
 
-   /**
-    * 分页查询、导出 数据处理
-   */
-   private void fillList(List<VirtualInventoryTransactionDTO.ListDTO> list) {
-        if(CollUtil.isEmpty(list)) {
-            return;
-        }
-        // 属性赋值
-        for(VirtualInventoryTransactionDTO.ListDTO data : list) {
-        // TODO 其他如需要显示名称的字段赋值
-        }
-   }
+    private static final Map<String, Date> rollbackTimeMap = new HashMap<>();
+    
+	@Override
+	public void inventoryCheckRollback(int timeout) {
+		Collection<String> keys = virtualInventoryRedisUtil.keys(InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.TRANSACTION, "*"));
+		if(CollUtil.isNotEmpty(keys)) {
+			Set<String> transactions = keys.stream().map(k -> {
+				String[] split = k.split(":");
+				return split[split.length - 1];
+			}).collect(Collectors.toSet());
+			Set<String> dbTransactions = lambdaQuery().in(VirtualInventoryTransactionEntity::getId, transactions)
+					.select(VirtualInventoryTransactionEntity::getId).list()
+					.stream().map(VirtualInventoryTransactionEntity::getId).collect(Collectors.toSet());
+			transactions.removeIf(dbTransactions::contains);
+			if(CollUtil.isNotEmpty(transactions)) {
+				transactions.forEach(t -> {
+					String logMsg = StringUtil.appendLogMsg("inventoryCheckRollback", t);
+			    	log.info("{}开始" , logMsg);
+					Date date = rollbackTimeMap.get(t);
+					if(date == null) {
+						rollbackTimeMap.put(t, new Date());
+					}else {
+						if(new Date().after(DateUtil.offsetSecond(date, timeout))) {
+							try {
+								log.error("{}自动回滚开始" , logMsg);
+								this.rollbackRedis(t);
+								log.error("{}自动回滚结束" , logMsg);
+							} catch (Exception e) {
+								log.error("检查redis自动回滚执行失败：{}" , t , e);
+							}
+						}
+					}
+					log.info("{}结束" , logMsg);
+				});
+			}
+		}
+	}
+
+	@Override
+	public void queryInventoryCheckSame(Integer warnSize) {
+		List<CheckInventoryDTO> checkInventoryList = this.checkDbInventorySame(null);
+		if(CollUtil.isNotEmpty(checkInventoryList)) {
+            sendFeishuMsg("数据库库存不一致", "", checkInventoryList.stream().map(CheckInventoryDTO::toString).collect(Collectors.joining("\n")));
+    	}
+    	List<CheckInventoryDTO> redisCheckInventoryList = this.checkRedisInventorySame(null);
+    	if(CollUtil.isNotEmpty(redisCheckInventoryList)) {
+    		int size = redisCheckInventoryList.size();
+    		String message = redisCheckInventoryList.stream().map(CheckInventoryDTO::redisToString).collect(Collectors.joining("\n"));
+    		log.error("redis和数据库库存不一致：{}" , message);
+    		if(size > warnSize) {
+    			message = "大量redis和数据库库存不一致，不一致数量：" + size + "大于告警数据：" + warnSize;
+        	}
+    		sendFeishuMsg("redis和数据库库存不一致", "", message);
+    	}
+	}
+	
+	private List<CheckInventoryDTO> checkDbInventorySame(List<String> inventoryIds) {
+		return this.checkInventorySame(inventoryIds, true);
+	}
+	
+	private List<CheckInventoryDTO> checkRedisInventorySame(List<String> inventoryIds) {
+		return this.checkInventorySame(inventoryIds, false);
+	}
+	
+	private List<CheckInventoryDTO> checkInventorySame(List<String> inventoryIds , boolean isDb) {
+		List<CheckInventoryDTO> checkInventoryList = new ArrayList<>();
+		if(CollUtil.isNotEmpty(inventoryIds)) {
+			for(String inventoryId : inventoryIds) {
+				CheckInventoryDTO checkInventoryDTO = new CheckInventoryDTO();
+				checkInventoryDTO.setInventoryId(inventoryId);
+				checkInventoryList.add(checkInventoryDTO);
+			}
+		}
+    	int i = 0;
+    	while(i < 5) {
+    		List<String> ids = checkInventoryList.stream().map(CheckInventoryDTO::getInventoryId).collect(Collectors.toList());
+    		if(isDb) {
+				checkInventoryList = baseMapper.queryDbInventoryCheckSame(ids);
+    		}else {
+    			checkInventoryList = this.inventoryCheckRedisSame(ids);
+    		}
+    		if(CollUtil.isEmpty(checkInventoryList)) {
+    			break;
+    		}else {
+    			checkInventoryList.forEach(dto -> ApplicationContextUtils.getBean(VirtualInventoryTransactionService.class).inventoryIdToInventoryHis(dto.getInventoryId(), ""));
+    		}
+    		i = i + 1;
+    	}
+    	return checkInventoryList;
+	}
+	
+	private List<CheckInventoryDTO> inventoryCheckRedisSame(List<String> inventoryIds){
+		Integer pageSize = 1000;
+		List<CheckInventoryDTO> redisCheckInventoryList = new ArrayList<>();
+    	String lastInventoryId = "0";
+    	while(true) {
+    		QueryWrapper<VirtualTransFlowEntity> queryWrapper = new QueryWrapper<>();
+    		queryWrapper.select(" virtual_inventory_id,sum(qty) qty ");
+    		if(CollUtil.isNotEmpty(inventoryIds)) {
+    			queryWrapper.in("virtual_inventory_id", inventoryIds);
+    		}
+    		queryWrapper.gt("virtual_inventory_id", lastInventoryId);
+			queryWrapper.groupBy("virtual_inventory_id");
+			queryWrapper.last(" order by virtual_inventory_id limit " + pageSize + " ");
+			List<VirtualTransFlowEntity> transactionFlowEntityList = virtualTransFlowService.list(queryWrapper);
+			if(CollUtil.isEmpty(transactionFlowEntityList)) {
+				break;
+			}
+			transactionFlowEntityList.forEach(t -> {
+				Integer redisQty = 0;
+				String inventoryId = t.getVirtualInventoryId();
+				Object redisQtyObj = virtualInventoryRedisUtil.get(InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.CURRENT, inventoryId));
+				if(redisQtyObj != null) {
+					redisQty = Integer.valueOf(redisQtyObj.toString().split(InventoryRedisUtil.splitSign)[0]);
+				}
+				Integer flowSumQty = t.getQty();
+				if(flowSumQty.compareTo(redisQty) != 0) {
+					CheckInventoryDTO dto = new CheckInventoryDTO();
+					dto.setInventoryId(inventoryId);
+					dto.setInventoryQty(redisQty);
+					dto.setFlowSumQty(flowSumQty);
+					redisCheckInventoryList.add(dto);
+				}
+			});
+			lastInventoryId = transactionFlowEntityList.get(transactionFlowEntityList.size() - 1).getVirtualInventoryId();
+    	}
+    	return redisCheckInventoryList;
+	}
+
+
 }

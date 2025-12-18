@@ -1,11 +1,13 @@
 package com.erp.server.wms.service;
-import com.erp.model.wms.entity.VirtualInventoryTransactionEntity;
-import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
-import com.erp.model.wms.dto.VirtualInventoryTransactionDTO;
-import com.common.business.vo.PagingVO;
-import javax.servlet.http.HttpServletResponse;
+import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
+
+import com.common.business.service.SuperService;
+import com.erp.model.wms.dto.inventory.InventoryTransactionDTO;
+import com.erp.model.wms.entity.VirtualInventoryTransactionEntity;
+
+import cn.hutool.core.lang.Pair;
 
 /**
  * <p>
@@ -17,60 +19,68 @@ import java.util.List;
  */
 public interface VirtualInventoryTransactionService extends SuperService<VirtualInventoryTransactionEntity> {
 
+Map<String , Boolean> overrideDbInventory(LocalDate startDate , List<String> inventoryIds);
+	
+	Pair<String, Boolean> overrideDb(LocalDate startDate , String inventoryId);
+	
+	Map<String , Boolean> overrideRedisInventory(List<String> inventoryIds , boolean isCheck);
+	
+	/**
+     * 库存id，库存交易同步历史库存，调用inventoryHisToInventory同步即时库存
+     * @param inventoryId
+     * @param size
+     */
+    void inventoryIdToInventoryHis(String inventoryId , String transactionId);
+    
     /**
-    * 新增
-    * @author shukai
-    * @date: 2025-12-18
-    * @param dto
-    * @return
-    */
-    BaseResultDTO.AddDTO add(VirtualInventoryTransactionDTO.AddDTO dto);
-
+     * 仅内部调用
+     * 仅内部调用
+     * 仅内部调用
+     * 库存id，库存交易同步历史库存，调用inventoryHisToInventory同步即时库存
+     * @param inventoryId
+     * @param size
+     */
+    void innerInventoryIdToInventoryHis(String inventoryId ,  String transactionId);
+    
     /**
-    * 修改
-    * @author shukai
-    * @date: 2025-12-18
-    * @param dto
-    * @return
-    */
-    Boolean update(VirtualInventoryTransactionDTO.UpdateDTO dto);
-
-
+     * 事务id，库存交易同步历史库存，调用inventoryHisToInventory同步即时库存
+     * @param inventoryId
+     */
+    void transactionIdToInventoryHis(String transactionId);
+    
     /**
-    * 分页列表查询
-    * @author shukai
-    * @date: 2025-12-18
-    * @param pagingParamDTO
-    * @return PagingVO<VirtualInventoryTransactionDTO.ListDTO>>
-    */
-    PagingVO<VirtualInventoryTransactionDTO.ListDTO> paging(PagingDTO<VirtualInventoryTransactionDTO.PagingParamDTO> pagingParamDTO);
-
+     * 新增库存交易
+     * @param transactionList
+     * @param approveType
+     */
+    void addInventoryTransaction(List<InventoryTransactionDTO> transactionList, String approveType);
+    
     /**
-    * 状态统计
-    * @author shukai
-    * @date: 2025-12-18
-    * @param dto
-    * @return List<VirtualInventoryTransactionDTO.TabListDTO>>
-    */
-    List<VirtualInventoryTransactionDTO.TabListDTO> tabList(PermissionsDTO dto);
-
+     * 冻结redis库存
+     * @param transactionId
+     * @param transactionList
+     */
+    void tryRedis(String transactionId , List<InventoryTransactionDTO> transactionList);
+    
     /**
-    * 详情
-    * @author shukai
-    * @date: 2025-12-18
-    * @param id
-    * @return
-    */
-    VirtualInventoryTransactionDTO.ViewDTO view(String id);
-
-
+     * 提交redis库存
+     * @param transactionId
+     */
+    void commitRedis(String transactionId , boolean toDoHis);
+    
     /**
-    * 导出Excel
-    * @author shukai
-    * @date: 2025-12-18
-    * @param dto
-    * @param response
-    * @return
-    */
-    void exportList(VirtualInventoryTransactionDTO.ExportDTO dto, HttpServletResponse response);
+     * 回滚redis库存
+     * @param transactionId
+     */
+    void rollbackRedis(String transactionId);
+    
+    /**
+     * 检查库存是否长时间未回滚
+     */
+    void inventoryCheckRollback(int timeout);
+    
+    /**
+     * 检查库存交易一致性
+     */
+    void queryInventoryCheckSame(Integer warnSize);
 }
