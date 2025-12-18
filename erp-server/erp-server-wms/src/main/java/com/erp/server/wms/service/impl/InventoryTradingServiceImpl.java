@@ -380,7 +380,7 @@ public class InventoryTradingServiceImpl implements InventoryTradingService {
             Integer qty = value.stream().map(InventoryTransactionDTO::getQty).reduce(MathUtil.ZERO, Integer::sum);
             log.info("仓库【{}】，SKU【{}】，已分配库存【{}】，实体参可用库存【{}】",value.get(0).getWarehouseName(),value.get(0).getSkuNo(),virtualQty,realInventoryTotal);
             if (Math.abs(qty) > realInventoryTotal - virtualQty) {
-                ServiceException.runError(ApiError.ERROR_CHECK_OUT_VIRTUAL_INVENTORY,value.get(0).getSkuNo(),value.get(0).getWarehouseName(),virtualQty,realInventoryTotal - virtualQty);
+                ServiceException.runError(ApiError.VM_CHECK_OUT_VIRTUAL_INVENTORY,value.get(0).getSkuNo(),value.get(0).getWarehouseName(),virtualQty,realInventoryTotal - virtualQty);
             }
         }
 
@@ -512,7 +512,7 @@ public class InventoryTradingServiceImpl implements InventoryTradingService {
         log.info("####InventoryTradingServiceImpl===>updateInventory====>inventoryEntity = {}  transactionDTO={}", JSON.toJSONString(inventoryEntity), JSON.toJSONString(transactionDTO));
         if(null == inventoryEntity || null == inventoryEntity.getId()) {
             log.warn("####InventoryTradingServiceImpl===>updateInventory====>inventoryEntity = {}  transactionDTO={}", JSON.toJSONString(inventoryEntity), JSON.toJSONString(transactionDTO));
-            throw new ServiceException(ApiError.ERROR_INVENTORY_NOT_EXIST, transactionDTO.getWarehouseName(), transactionDTO.getSkuNo(), transactionDTO.getInventoryStatusName());
+            throw new ServiceException(ApiError.WH_INV_NOT_EXIST, transactionDTO.getWarehouseName(), transactionDTO.getSkuNo(), transactionDTO.getInventoryStatusName());
         }
         LambdaUpdateWrapper<InventoryEntity> wrapper = new LambdaUpdateWrapper<>();
         wrapper.setSql("qty = qty + " +transactionDTO.getQty())

@@ -648,7 +648,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         //需要id顺序排序
         List<SoDetailEntity> soDetailList = listBaseByMainId(id);
         if (CollUtil.isEmpty(soDetailList)) {
-            throw new ServiceException(ApiError.ERROR_SO_DETAIL_NOT_EXIST);
+            throw new ServiceException(ApiError.SO_DETAIL_NOT_EXIST);
         }
         if (soDetailList.size() != platformDetailIdList.size()) {
             throw new ServiceException("平台订单明细数量和系统订单明细数量不一致");

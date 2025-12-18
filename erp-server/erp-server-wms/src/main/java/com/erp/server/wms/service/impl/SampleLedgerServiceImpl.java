@@ -316,7 +316,7 @@ public class SampleLedgerServiceImpl extends SuperServiceImpl<SampleLedgerMapper
     @Override
     public SampleLedgerDTO.SampleScrapView generateSampleScrapView(List<String> ids) {
         if(CollUtil.isEmpty(ids)){
-            throw new ServiceException(ApiError.ERROR_QC_DETAIL_REQUIRED);
+            throw new ServiceException(ApiError.PO_QC_DETAIL_REQUIRED);
         }
 
         List<SampleLedgerEntity> sampleLedgerEntities = lambdaQuery().in(SampleLedgerEntity::getId, ids).list();
@@ -358,7 +358,7 @@ public class SampleLedgerServiceImpl extends SuperServiceImpl<SampleLedgerMapper
     @Override
     public SampleLedgerDTO.ExhibitionOrderView generateExhibitionOrderView(List<String> ids) {
         if(CollUtil.isEmpty(ids)){
-            throw new ServiceException(ApiError.ERROR_QC_DETAIL_REQUIRED);
+            throw new ServiceException(ApiError.PO_QC_DETAIL_REQUIRED);
         }
 
         List<SampleLedgerEntity> sampleLedgerEntities = lambdaQuery().in(SampleLedgerEntity::getId, ids).list();
@@ -401,7 +401,7 @@ public class SampleLedgerServiceImpl extends SuperServiceImpl<SampleLedgerMapper
     @Override
     public SampleLedgerDTO.SampleBackView generateSampleBackInfo(List<String> ids) {
         if(CollUtil.isEmpty(ids)){
-            throw new ServiceException(ApiError.ERROR_QC_DETAIL_REQUIRED);
+            throw new ServiceException(ApiError.PO_QC_DETAIL_REQUIRED);
         }
 
         List<SampleLedgerEntity> sampleLedgerEntities = lambdaQuery().in(SampleLedgerEntity::getId, ids).list();

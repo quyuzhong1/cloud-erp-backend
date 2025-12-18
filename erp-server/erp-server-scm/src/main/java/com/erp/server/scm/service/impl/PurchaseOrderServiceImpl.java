@@ -777,7 +777,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         //仓库信息
         List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Arrays.asList(purchaseOrderEntity.getDeliveryWarehouseId()));
         if (CollectionUtils.isEmpty(warehouseList)) {
-            throw new ServiceException(ApiError.WH_NOT_FOUND);
+            throw new ServiceException(ApiError.WH_PARAM_NOT_FOUND);
         }
         WarehouseDTO.UpdateDTO warehouseDTO = warehouseList.get(0);
         exportPdfDTO.setDeliveryWarehouseAddress(warehouseDTO.getAddress());
@@ -2034,11 +2034,11 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         if (ObjectUtils.isNotEmpty(entity.getDeliveryWarehouseId())) {
             List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Arrays.asList(entity.getDeliveryWarehouseId()));
             if (CollectionUtils.isEmpty(warehouseList)) {
-                throw new ServiceException(ApiError.WH_NOT_FOUND);
+                throw new ServiceException(ApiError.WH_PARAM_NOT_FOUND);
             }
             WarehouseDTO.UpdateDTO updateDTO = warehouseList.stream().filter(obj -> obj.getId().equals(entity.getDeliveryWarehouseId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(updateDTO)) {
-                throw new ServiceException(ApiError.WH_NOT_FOUND);
+                throw new ServiceException(ApiError.WH_PARAM_NOT_FOUND);
             }
             entity.setDeliveryWarehouseName(updateDTO.getName());
             entity.setReceiveOrgId(updateDTO.getOrgId());

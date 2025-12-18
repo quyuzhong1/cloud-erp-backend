@@ -77,7 +77,7 @@ public class SubcontractIssueDetailServiceImpl extends SuperServiceImpl<Subcontr
         //委外发料主表信息
         SubcontractIssueEntity subcontractIssueEntity = subcontractIssueService.getById(mainId);
         if (ObjectUtil.isEmpty(subcontractIssueEntity)) {
-            throw new ServiceException(ApiError.ERROR_SUBCONTRACT_ISSUE_NOT_EXIST);
+            throw new ServiceException(ApiError.PO_SUBCONTRACT_ISSUE_NOT_EXIST);
         }
 
         // 数据处理
@@ -121,7 +121,7 @@ public class SubcontractIssueDetailServiceImpl extends SuperServiceImpl<Subcontr
         //委外发料主表信息
         SubcontractIssueEntity subcontractIssueEntity = subcontractIssueService.getById(mainId);
         if (ObjectUtil.isEmpty(subcontractIssueEntity)) {
-            throw new ServiceException(ApiError.ERROR_SUBCONTRACT_ISSUE_NOT_EXIST);
+            throw new ServiceException(ApiError.PO_SUBCONTRACT_ISSUE_NOT_EXIST);
         }
 
         // 数据处理
@@ -297,7 +297,7 @@ public class SubcontractIssueDetailServiceImpl extends SuperServiceImpl<Subcontr
                  * 发料数量 = 领料数量- 已发料数量 + 退料数量
                  */
                 if (entity.getIssueQty() > detailEntity.getDeliveryQty() - totalIssueQty + returnQty ) {
-                    throw new ServiceException(ApiError.ERROR_SUBCONTRACT_ISSUE_QTY_EXCEED,detailEntity.getSkuNo(),detailEntity.getDeliveryQty() - totalIssueQty + returnQty);
+                    throw new ServiceException(ApiError.PO_SUBCONTRACT_ISSUE_QTY_EXCEED,detailEntity.getSkuNo(),detailEntity.getDeliveryQty() - totalIssueQty + returnQty);
                 }
             }
         }

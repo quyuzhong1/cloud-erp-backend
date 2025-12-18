@@ -1776,11 +1776,11 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         }
         List<String> warehouseIds = list.stream().map(obj -> JSONUtil.toBean(obj.getHandleDetail(), MachineSubComponentsDTO.HandleDetailDTO.class).getChildWarehouseId()).collect(Collectors.toList());
         if (CollectionUtils.isEmpty(warehouseIds)) {
-            throw new ServiceException(ApiError.WH_NOT_FOUND);
+            throw new ServiceException(ApiError.WH_PARAM_NOT_FOUND);
         }
         List<WarehouseEntity> warehouseList = warehouseService.listByIds(warehouseIds);
         if (CollectionUtils.isEmpty(warehouseList)) {
-            throw new ServiceException(ApiError.WH_NOT_FOUND);
+            throw new ServiceException(ApiError.WH_PARAM_NOT_FOUND);
         }
         /**
          * 1、同一加工单下，相同调入、调出组织（仓库、库位可不同）数据生成同一个调拨单

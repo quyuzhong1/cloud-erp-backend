@@ -783,7 +783,7 @@ public class VirtualFlowRefactorServiceImpl implements VirtualFlowRefactorServic
         // 实物仓库信息
         WarehouseDTO.UpdateDTO warehouseInfo = warehouseService.detailWithCache(param.getWarehouseId());
         if(Objects.isNull(warehouseInfo) || CharSequenceUtil.isEmpty(warehouseInfo.getId())) {
-            throw new ServiceException(ApiError.WH_NOT_FOUND);
+            throw new ServiceException(ApiError.WH_PARAM_NOT_FOUND);
         }
         VirtualInventoryEntity found = virtualInventoryService.findVirtualInventoryStock(param.getVirtualWarehouseId(),param.getWarehouseId(),param.getSkuId(), inventoryStatusEnum.getCode());
         // 登记交易流水
@@ -799,12 +799,12 @@ public class VirtualFlowRefactorServiceImpl implements VirtualFlowRefactorServic
         //虚拟仓库信息
         VirtualWarehouseEntity virtualWarehouseEntity = virtualWarehouseService.getById(param.getVirtualWarehouseId());
         if (ObjectUtil.isEmpty(virtualWarehouseEntity)) {
-            throw new ServiceException(ApiError.ERROR_VIRTUAL_WAREHOUSE_NOT_EXIST);
+            throw new ServiceException(ApiError.VM_NOT_EXIST);
         }
         //实体仓库信息
         WarehouseDTO.UpdateDTO warehouseInfo = warehouseService.detailWithCache(param.getWarehouseId());
         if(Objects.isNull(warehouseInfo) || CharSequenceUtil.isEmpty(warehouseInfo.getId())) {
-            throw new ServiceException(ApiError.WH_NOT_FOUND);
+            throw new ServiceException(ApiError.WH_PARAM_NOT_FOUND);
         }
         // 待出库数量
         log.info("交易业务：【{}】，来源单据：{}，单据id：【{}】，SKU编号：【{}】，库存状态：【{}】，开始走出库逻辑", businessType.getName(), param.getSourceType().getName(), param.getSourceId(), inventoryStatusEnum.getName(), param.getSkuNo());

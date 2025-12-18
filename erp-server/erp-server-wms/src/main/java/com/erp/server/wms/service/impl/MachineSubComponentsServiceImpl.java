@@ -169,7 +169,7 @@ public class MachineSubComponentsServiceImpl extends SuperServiceImpl<MachineSub
         List<String> warehouseIds = newList.stream().map(MachineSubComponentsEntity::getWarehouseId).collect(Collectors.toList());
         List<WarehouseEntity> warehouseList = warehouseService.listByIds(warehouseIds);
         if  (CollectionUtils.isEmpty(warehouseList)) {
-            throw new ServiceException(ApiError.WH_NOT_FOUND);
+            throw new ServiceException(ApiError.WH_PARAM_NOT_FOUND);
         }
 
         MachineInfoEntity machineInfoEntity = machineInfoService.getById(mainId);
@@ -187,7 +187,7 @@ public class MachineSubComponentsServiceImpl extends SuperServiceImpl<MachineSub
             //仓库名称
             WarehouseEntity warehouseEntity = warehouseList.stream().filter(obj -> obj.getId().equals(detail.getWarehouseId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(warehouseEntity)) {
-                throw new ServiceException(ApiError.WH_NOT_FOUND);
+                throw new ServiceException(ApiError.WH_PARAM_NOT_FOUND);
             }
             //验证组织是否一致
             if (!StringUtils.equals(machineInfoEntity.getInventoryOrgId(),warehouseEntity.getOrgId())) {

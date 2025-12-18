@@ -1498,7 +1498,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
         //原销售订单明细
         List<SoDetailEntity> soDetailList = FeignQuery.getByIds(SoDetailEntity.class, soDetailIdList);
         if (CollUtil.isEmpty(soDetailIdList)) {
-            throw new ServiceException(ApiError.ERROR_SO_DETAIL_NOT_EXIST);
+            throw new ServiceException(ApiError.SO_DETAIL_NOT_EXIST);
         }
         Map<String, SoDetailEntity> soDetailMap = soDetailList.stream().collect(Collectors.toMap(SoDetailEntity::getId, Function.identity()));
 
@@ -1533,7 +1533,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
                 //销售订单数量
                 SoDetailEntity soDetailEntity = soDetailMap.get(detailDTO.getSoDetailId());
                 if (ObjectUtil.isEmpty(soDetailEntity)) {
-                    throw new ServiceException(ApiError.ERROR_SO_DETAIL_NOT_EXIST);
+                    throw new ServiceException(ApiError.SO_DETAIL_NOT_EXIST);
                 }
                 if (hasPushQty + detailDTO.getApplyQty() > soDetailEntity.getQty()) {
                     throw new ServiceException(CharSequenceUtil.format("销售订单【{}】SKU【{}】的申请数量【{}】和已下推数量【{}】之和不能大于销售订单数量【{}】",value.get(0).getSoCode(),soDetailEntity.getSkuNo(),detailDTO.getApplyQty(), hasPushQty, soDetailEntity.getQty()));

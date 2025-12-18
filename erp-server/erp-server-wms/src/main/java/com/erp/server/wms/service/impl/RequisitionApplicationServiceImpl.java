@@ -2028,7 +2028,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         //判断sku是否被他人生成了拣货单
         boolean checkUnpickedQty = details.stream().allMatch(detail -> (detail.getApproveQty() - detail.getPickingQty()) > 0);
         if (Boolean.FALSE.equals(checkUnpickedQty)) {
-            throw new ServiceException(ApiError.UNPICKED_QUANTITY_SHORTAGE);
+            throw new ServiceException(ApiError.SO_UNPICKED_QUANTITY_SHORTAGE);
         }
         details = details.stream().filter(v->v.getApproveQty()>0).collect(Collectors.toList());
         if(CollectionUtils.isEmpty(details)){
@@ -3054,7 +3054,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
 
         } catch (Exception e) {
             e.printStackTrace();
-            throw new ServiceException(ApiError.ERROR_FNSKU_LABEL_PRINT_FAILED);
+            throw new ServiceException(ApiError.LOGISTICS_FNSKU_LABEL_PRINT_FAILED);
         }
     }
 

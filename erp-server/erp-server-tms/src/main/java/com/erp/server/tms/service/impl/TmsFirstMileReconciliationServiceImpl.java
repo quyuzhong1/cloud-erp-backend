@@ -162,7 +162,7 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
                 List<TmsFirstMileReconciliationDetailEntity> detailEntityList1 = detailEntityList.stream().filter(e -> Objects.nonNull(e) && updateDTO.getReconciliationMonth().equals(e.getReconciliationMonth())).collect(Collectors.toList());
                 if (!CollectionUtils.isEmpty(detailEntityList1)) {
                     List<String> sourceCodes = detailEntityList1.stream().map(TmsFirstMileReconciliationDetailEntity::getSourceCode).distinct().collect(Collectors.toList());
-                    throw new ServiceException(ApiError.ERROR_FINANCE_RECONCILIATION_DUPLICATE, String.join(",", sourceCodes), updateDTO.getReconciliationMonth(), SupplierTypeEnum.getName(old.getSupplierType()),old.getLogisticsSupplierName());
+                    throw new ServiceException(ApiError.BILL_FINANCE_RECONCILIATION_DUPLICATE, String.join(",", sourceCodes), updateDTO.getReconciliationMonth(), SupplierTypeEnum.getName(old.getSupplierType()),old.getLogisticsSupplierName());
                 }
             }
 
@@ -353,14 +353,14 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
         //对账单明细已进行费用分摊 不能进行反审核
         List<FirstMileCostAllocationEntity> entityList = firstMileCostAllocationService.listByReconciliationIds(Collections.singletonList(entity.getId()));
         if (!CollectionUtils.isEmpty(entityList)) {
-            throw new ServiceException(ApiError.ERROR_FINANCE_COST_ALLOCATION_REVERSE_FORBIDDEN);
+            throw new ServiceException(ApiError.FIRST_MILE_SHIPMENT_FINANCE_COST_ALLOCATION_REVERSE_FORBIDDEN);
         }
         List<TmsFirstMileReconciliationDetailEntity> detailEntityList = tmsFirstMileReconciliationDetailService.listByMainIds(Collections.singletonList(entity.getId()));
         if (!CollectionUtils.isEmpty(detailEntityList)) {
             List<String> detailIds = detailEntityList.stream().map(TmsFirstMileReconciliationDetailEntity::getId).distinct().collect(Collectors.toList());
             List<FirstMileSkuCostAllocationEntity> detailList = firstMileSkuCostAllocationService.listByReconciliationDetailIds(detailIds);
             if (!CollectionUtils.isEmpty(detailList)) {
-                throw new ServiceException(ApiError.ERROR_FINANCE_COST_ALLOCATION_REVERSE_FORBIDDEN);
+                throw new ServiceException(ApiError.FIRST_MILE_SHIPMENT_FINANCE_COST_ALLOCATION_REVERSE_FORBIDDEN);
             }
         }
         // 下游盘点计划单反审核
@@ -811,7 +811,7 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
                         && updateDTO.getReconciliationMonth().equals(e.getReconciliationMonth())).collect(Collectors.toList());
                 if (!CollectionUtils.isEmpty(detailEntityList1)) {
                     List<String> sourceCodes = detailEntityList1.stream().map(TmsFirstMileReconciliationDetailEntity::getSourceCode).distinct().collect(Collectors.toList());
-                    throw new ServiceException(ApiError.ERROR_FINANCE_RECONCILIATION_DUPLICATE, String.join(",", sourceCodes), updateDTO.getReconciliationMonth(),SupplierTypeEnum.getName(old.getSupplierType()), old.getLogisticsSupplierName());
+                    throw new ServiceException(ApiError.BILL_FINANCE_RECONCILIATION_DUPLICATE, String.join(",", sourceCodes), updateDTO.getReconciliationMonth(),SupplierTypeEnum.getName(old.getSupplierType()), old.getLogisticsSupplierName());
                 }
             }
             this.lambdaUpdate().set(TmsFirstMileReconciliationEntity::getReconciliationMonth, updateDTO.getReconciliationMonth())

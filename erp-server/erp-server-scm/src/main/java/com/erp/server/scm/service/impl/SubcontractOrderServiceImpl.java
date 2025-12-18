@@ -949,7 +949,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         List<String> warehouseIdList = detailList.stream().map(SubcontractOrderDetailEntity::getWarehouseId).collect(Collectors.toList());
         List<WarehouseDTO.UpdateDTO> updateList = wmsTaskFeign.listWarehouseByIds(warehouseIdList);
         if (CollectionUtils.isEmpty(updateList)) {
-            throw new ServiceException(ApiError.WH_NOT_FOUND);
+            throw new ServiceException(ApiError.WH_PARAM_NOT_FOUND);
         }
 
         for (SubcontractOrderDTO.GeneratePoAddDTO generatePoDTO :  resultList) {
@@ -980,7 +980,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
 
             String orgId = updateList.stream().filter(obj -> obj.getId().equals(detailEntity.getWarehouseId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getOrgId())).orElse("");
             if (StringUtils.isBlank(orgId)) {
-                throw new ServiceException(ApiError.WH_NOT_FOUND);
+                throw new ServiceException(ApiError.WH_PARAM_NOT_FOUND);
             }
             //收料组织
             generatePoDTO.setReceiveOrgId(orgId);

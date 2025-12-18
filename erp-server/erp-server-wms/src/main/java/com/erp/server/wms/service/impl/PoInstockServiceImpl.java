@@ -970,7 +970,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         //判断是否已经生成委外发料单
         if (CollectionUtils.isNotEmpty(issueEntityList)) {
             String subcontractOrderCodes = issueEntityList.stream().map(SubcontractIssueEntity::getSubcontractOrderCode).collect(Collectors.joining(","));
-            return BatchResultDTO.fail(entity.getId(),entity.getCode(),String.format(ApiError.ERROR_PO_INSTOCK_PUSH_SUBCONTRACT_ISSUE.getMsg(), subcontractOrderCodes));
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),String.format(ApiError.PO_INSTOCK_PUSH_SUBCONTRACT_ISSUE_EXIST.getMsg(), subcontractOrderCodes));
         }
         //校验是否存在
         checkPoReconciliation(entity);
@@ -1011,7 +1011,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         }
         long count = list.stream().filter(obj -> CharSequenceUtil.isNotBlank(obj.getMainId())).count();
         if (count > 0) {
-          throw new ServiceException(ApiError.ERROR_PO_INSTOCK_PUSH_PO_RECONCILIATION);
+          throw new ServiceException(ApiError.PO_INSTOCK_PUSH_PO_RECONCILIATION_EXIST);
         }
         //对账单删除
         List<String> sourceDetailIdList = list.stream().map(PoReconciliationDetailEntity::getSourceDetailId).distinct().collect(Collectors.toList());
@@ -1364,7 +1364,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
             //仓库信息
             List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(Collections.singletonList(deliveryWarehouseId));
             if (CollectionUtils.isEmpty(warehouseList)) {
-                throw new ServiceException(ApiError.WH_NOT_FOUND);
+                throw new ServiceException(ApiError.WH_PARAM_NOT_FOUND);
             }
             String warehouseName = warehouseList.stream().filter(obj -> obj.getId().equals(entity.getDeliveryWarehouseId())).map(WarehouseDTO.UpdateDTO::getName).findFirst().orElse(null);
             entity.setDeliveryWarehouseName(warehouseName);

@@ -640,7 +640,7 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
         if(StrUtils.isNotEmpty(warehouseId)) {
             WarehouseDTO.UpdateDTO warehouseDetail = warehouseService.detailWithCache(warehouseId);
             if (Objects.isNull(warehouseDetail) || CharSequenceUtil.isBlank(warehouseDetail.getId())){
-                throw new ServiceException(ApiError.WH_NOT_FOUND);
+                throw new ServiceException(ApiError.WH_PARAM_NOT_FOUND);
             }
             initStockEntity.setWarehouseId(warehouseId);
             initStockEntity.setOrgId(warehouseDetail.getOrgId());

@@ -71,7 +71,7 @@ public class RequisitionApplicationDetailServiceImpl extends SuperServiceImpl<Re
             //明细中的fnsku不能为空
             long count = list.stream().filter(obj -> CharSequenceUtil.isBlank(obj.getPlatformFnSku())).count();
             if (count > 0) {
-                throw new ServiceException(ApiError.ERROR_FBA_FNSKU_NOT_BLANK);
+                throw new ServiceException(ApiError.WH_FBA_FNSKU_NOT_BLANK);
             }
             // 分组并检查 FBA 类型的唯一性
             Map<String, List<RequisitionApplicationDetailEntity>> fbaGroup = list.stream()
@@ -138,7 +138,7 @@ public class RequisitionApplicationDetailServiceImpl extends SuperServiceImpl<Re
             //明细中的fnsku不能为空
             long count = list.stream().filter(obj -> CharSequenceUtil.isBlank(obj.getPlatformFnSku())).count();
             if (count > 0) {
-                throw new ServiceException(ApiError.ERROR_FBA_FNSKU_NOT_BLANK);
+                throw new ServiceException(ApiError.WH_FBA_FNSKU_NOT_BLANK);
             }
             // 分组并检查 FBA 类型的唯一性
             Map<String, List<RequisitionApplicationDetailEntity>> fbaGroup = list.stream()

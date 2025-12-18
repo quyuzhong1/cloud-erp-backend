@@ -422,7 +422,7 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
                 .filter(req -> InstockForecastStatusEnum.UPLOAD_SUCCESS.getCode().equals(req.getInstockForecastStatus()))
                 .count();
         if (count > 0) {
-            throw new ServiceException(ApiError.UPLOAD_SUCCESS_NOT_DELETE);
+            throw new ServiceException(ApiError.LOGISTICS_UPLOAD_SUCCESS_NOT_DELETE);
         }
 
         //删除详情
@@ -524,7 +524,7 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
             }
         }
         if(CollectionUtils.isEmpty(receiveItemList)){
-            throw new ServiceException(ApiError.ERROR_TRANSFER_DECLARE_DETAIL_NOT_EXIST);
+            throw new ServiceException(ApiError.WH_TRANSFER_DECLARE_DETAIL_NOT_EXIST);
         }
         //查询授权信息
         TransferLogisticsAuthEntity authEntity = transferLogisticsAuthService.getByMainId("", transferDeclareEntity.getTransferLogisticsSupplierId());

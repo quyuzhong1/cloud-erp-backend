@@ -264,7 +264,7 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
         //校验名称全局唯一
         VirtualWarehouseEntity existVm = baseMapper.selectOne(new LambdaQueryWrapper<VirtualWarehouseEntity>().eq(VirtualWarehouseEntity::getName, virtualWarehouseEntity.getName()));
         if (Objects.nonNull(existVm) && !Objects.equals(existVm.getId(), virtualWarehouseEntity.getId())) {
-            throw new ServiceException(ApiError.ERROR_VMNAME_EXIST);
+            throw new ServiceException(ApiError.VM_NAME_EXIST);
         }
         //校验实体仓绑定是否变更
         if (CharSequenceUtil.isNotBlank(virtualWarehouseEntity.getId())) {
@@ -280,7 +280,7 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
                     Integer vwUsableQty = virtualInventoryService.findUsableQtyByQtyDto(virtualInventoryQtyDTO);
                     if (Objects.nonNull(vwUsableQty) && vwUsableQty > 0) {
                         WarehouseEntity warehouseEntity = warehouseService.getById(virtualWarehouseRelationEntity.getWarehouseId());
-                        throw new ServiceException(ApiError.ERROR_VWWSTOCK_NOTEMPRY, warehouseEntity.getName());
+                        throw new ServiceException(ApiError.VM_ENTITY_STOCK_NOT_EMPTY, warehouseEntity.getName());
                     }
                 }
             }
@@ -305,7 +305,7 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
         if (CollectionUtils.isNotEmpty(thirdList)) {
             long count = thirdList.stream().filter(item -> !Objects.equals(item.getSysId(), virtualWarehouseId)).count();
             if (count > 0) {
-                throw new ServiceException(ApiError.ERROR_THIRD_VIRTUAL_WAREHOUSE_BINDED, thirdList.get(0).getThirdName(), thirdList.stream().map(ThirdMappingEntity::getSysName).collect(Collectors.joining()));
+                throw new ServiceException(ApiError.VM_THIRD_VIRTUAL_WAREHOUSE_BINDED, thirdList.get(0).getThirdName(), thirdList.stream().map(ThirdMappingEntity::getSysName).collect(Collectors.joining()));
             }
         }
     }
@@ -316,12 +316,12 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean updateState(VirtualWarehouseDTO.UpdateStateDTO updateStateDTO) {
-        VirtualWarehouseEntity vwEntity = Optional.ofNullable(this.getById(updateStateDTO.getId())).orElseThrow(() -> new ServiceException(ApiError.ERROR_VIRTUAL_WAREHOUSE_NOT_EXIST));
+        VirtualWarehouseEntity vwEntity = Optional.ofNullable(this.getById(updateStateDTO.getId())).orElseThrow(() -> new ServiceException(ApiError.VM_NOT_EXIST));
 
         //获取原始状态
         Boolean dbDisabled = vwEntity.getDisabled();
         if (dbDisabled.equals(updateStateDTO.getDisabled())) {
-            throw new ServiceException(ApiError.ERROR_SAME_DISABLED);
+            throw new ServiceException(ApiError.COMMON_SAME_STATUS_DUPLICATE);
         }
         //如果原始启用状态变成禁用状态时需要校验虚拟仓库存
         if (Boolean.FALSE.equals(dbDisabled)) {
@@ -330,7 +330,7 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
             virtualInventoryQtyDTO.setVirtualWarehouseId(updateStateDTO.getId());
             Integer vmUsableQty = virtualInventoryService.findUsableQtyByQtyDto(virtualInventoryQtyDTO);
             if (Objects.nonNull(vmUsableQty) && vmUsableQty > 0) {
-                throw new ServiceException(ApiError.ERROR_VWSTOCK_NOTEMPRY);
+                throw new ServiceException(ApiError.VM_STOCK_NOT_EMPTY);
             }
             //禁用时如果绑定第三方仓，需要清除
             dmpThirdMappingFeign.add(bindThirdMapping(new ArrayList<>(), vwEntity));
@@ -358,7 +358,7 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
      */
     @Override
     public VirtualWarehouseDTO.ViewDTO view(String id) {
-        VirtualWarehouseEntity vmEntity = Optional.ofNullable(this.getById(id)).orElseThrow(() -> new ServiceException(ApiError.ERROR_VIRTUAL_WAREHOUSE_NOT_EXIST));
+        VirtualWarehouseEntity vmEntity = Optional.ofNullable(this.getById(id)).orElseThrow(() -> new ServiceException(ApiError.VM_NOT_EXIST));
         VirtualWarehouseDTO.ViewDTO viewDTO = new VirtualWarehouseDTO.ViewDTO();
         BeanUtils.copyProperties(vmEntity, viewDTO);
         //获取关联仓库

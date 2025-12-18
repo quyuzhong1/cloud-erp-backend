@@ -137,7 +137,7 @@ public class PurchaseApplicationDetailServiceImpl extends SuperServiceImpl<Purch
         List<String> destWarehouseIdList = newList.stream().map(PurchaseApplicationDetailEntity::getDestWarehouseId).distinct().collect(Collectors.toList());
         List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(destWarehouseIdList);
         if (CollectionUtils.isEmpty(warehouseList)) {
-            throw new ServiceException(ApiError.WH_NOT_FOUND);
+            throw new ServiceException(ApiError.WH_PARAM_NOT_FOUND);
         }
         List<String> orgIds = warehouseList.stream().map(WarehouseDTO.UpdateDTO::getOrgId).distinct().collect(Collectors.toList());
 
@@ -164,7 +164,7 @@ public class PurchaseApplicationDetailServiceImpl extends SuperServiceImpl<Purch
 
             WarehouseDTO.UpdateDTO warehouseDTO = warehouseList.stream().filter(obj -> obj.getId().equals(entity.getDestWarehouseId())).findFirst().orElse(null);
             if (org.springframework.util.ObjectUtils.isEmpty(warehouseDTO)) {
-                throw new ServiceException(ApiError.WH_NOT_FOUND);
+                throw new ServiceException(ApiError.WH_PARAM_NOT_FOUND);
             }
             entity.setDestWarehouseName(warehouseDTO.getName());
             entity.setReceiveOrgId(warehouseDTO.getOrgId());

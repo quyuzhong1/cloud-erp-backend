@@ -414,11 +414,11 @@ public class RuleDeliveryWarehouseServiceImpl extends SuperServiceImpl<RuleDeliv
         // TODO 验证数据 & 数据赋值
         String warehouseId = ruleDeliveryWarehouseEntity.getWarehouseId();
         if (StringUtils.isBlank(warehouseId)) {
-            throw new ServiceException(ApiError.WH_NOT_FOUND);
+            throw new ServiceException(ApiError.WH_PARAM_NOT_FOUND);
         }
         List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Arrays.asList(warehouseId));
         if (CollectionUtils.isEmpty(warehouseList)) {
-            throw new ServiceException(ApiError.WH_NOT_FOUND);
+            throw new ServiceException(ApiError.WH_PARAM_NOT_FOUND);
         }
         ruleDeliveryWarehouseEntity.setWarehouseName(warehouseList.get(0).getName());
 

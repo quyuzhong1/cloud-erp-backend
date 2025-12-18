@@ -269,7 +269,7 @@ public class FullyManagedImportExcelListener extends AnalysisEventListener<Fully
             if (CharSequenceUtil.isNotBlank(excelDTO.getDeliveryWarehouseName())){
                 WarehouseDTO.ListDTO warehouse = warehouseList.stream().filter(v -> v.getName().equals(excelDTO.getDeliveryWarehouseName())).findFirst().orElse(null);
                 if(Objects.isNull(warehouse)){
-                    errorMsgList.add(ApiError.WAREHOUSE_NOT_EXIST_NO_PERMISSION.getMsg());
+                    errorMsgList.add(ApiError.WH_NOT_EXIST_OR_NO_PERMISSION.getMsg());
                 }else {
                     excelDTO.setDeliveryWarehouseId(warehouse.getId());
                 }

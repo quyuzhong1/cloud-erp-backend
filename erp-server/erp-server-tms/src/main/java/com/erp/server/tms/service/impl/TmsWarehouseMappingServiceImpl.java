@@ -271,7 +271,7 @@ public class TmsWarehouseMappingServiceImpl extends SuperServiceImpl<TmsWarehous
     private void handleData(TmsWarehouseMappingEntity tmsWarehouseMappingEntity) {
         List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Arrays.asList(tmsWarehouseMappingEntity.getErpWarehouseId()));
         if (CollectionUtils.isEmpty(warehouseList)) {
-            throw new ServiceException(ApiError.WH_NOT_FOUND);
+            throw new ServiceException(ApiError.WH_PARAM_NOT_FOUND);
         }
         tmsWarehouseMappingEntity.setErpWarehouseName(warehouseList.get(0).getName());
     }

@@ -123,7 +123,7 @@ public class MoveInfoExcelListener extends AnalysisEventListener<MoveInfoExcelDT
 
         List<WarehouseDTO.ListDTO> warehouseList = warehouseService.listByNames(Collections.singletonList(moveInfoExcelDTO.getWarehouseName()));
         if (CollectionUtils.isEmpty(warehouseList)) {
-            errorMsgList.add(ApiError.WAREHOUSE_NOT_EXIST_NO_PERMISSION.getMsg());
+            errorMsgList.add(ApiError.WH_NOT_EXIST_OR_NO_PERMISSION.getMsg());
         }else {
             //根据仓库获取仓位
             List<WarehouseLocationDTO.LocationListDTO> warehouseLocationList = warehouseLocationService.select(warehouseList.get(0).getId());

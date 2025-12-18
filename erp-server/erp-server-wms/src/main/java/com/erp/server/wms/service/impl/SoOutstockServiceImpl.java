@@ -423,7 +423,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     private void handleSaveOrUpdateDbByB2b(SoOutstockEntity soOutstock, SoInfoDTO.CustomerDTO soCustomer ) {
         WarehouseEntity warehouse = warehouseService.getById(soOutstock.getWarehouseId());
         if (Objects.isNull(warehouse)) {
-            throw new ServiceException(ApiError.WH_NOT_FOUND);
+            throw new ServiceException(ApiError.WH_PARAM_NOT_FOUND);
         }
         soOutstock.setWarehouseName(warehouse.getName());
         soOutstock.setSoCode(soCustomer.getCode());
@@ -761,12 +761,12 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 //如果调拨单没有审核，需要提示，请先审核通过关联的中转调拨单后审核出库单
                 List<String> transferCodeList = transferInfoEntities.stream().filter(e -> !Objects.equals(ApproveStatusEnum.APPROVE.getStatus(), e.getApproveStatus())).map(TransferInfoEntity::getCode).distinct().collect(Collectors.toList());
                 if (CollectionUtils.isNotEmpty(transferCodeList)){
-                    throw new ServiceException(ApiError.ERROR_TRANSFER_ASSOCIATED_OUTBOUND_APPROVE_REQUIRED,String.join(",",transferCodeList));
+                    throw new ServiceException(ApiError.WH_TRANSFER_ASSOCIATED_OUTBOUND_APPROVE_REQUIRED,String.join(",",transferCodeList));
                 }
                 //需要限制出库日期不能早于最后一个（按日期排序）调拨单的调拨日期
                 TransferInfoEntity transferInfoEntity = transferInfoEntities.stream().max(Comparator.comparing(TransferInfoEntity::getBillDate)).orElse(null);
                 if (Objects.nonNull(transferInfoEntity) && entity.getBillDate().isBefore(transferInfoEntity.getBillDate())){
-                    throw new ServiceException(ApiError.ERROR_TRANSFER_OUTBOUND_DATE_INVALID, transferInfoEntity.getBillDate());
+                    throw new ServiceException(ApiError.WH_TRANSFER_OUTBOUND_DATE_INVALID, transferInfoEntity.getBillDate());
                 }
             }
         }
@@ -1367,7 +1367,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         //下游单据【报关单】生成后不可操作反审核：报关单[单号]已生成不可操作反审核
         List<TmsDeclareBillEntity> tmsDeclareBillEntities = tmsDeclareBillFeign.listBySourceIds(Collections.singletonList(entity.getSoId()));
         if (CollUtil.isNotEmpty(tmsDeclareBillEntities)) {
-            return BatchResultDTO.fail(entity.getId(),entity.getCode(), CharSequenceUtil.format(ApiError.TMS_DECLARE_BILL_EXISTS.getMsg(),tmsDeclareBillEntities.get(0).getCode()));
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(), CharSequenceUtil.format(ApiError.LOGISTICS_DECLARE_BILL_EXISTS_REVERSE_FORBIDDEN.getMsg(),tmsDeclareBillEntities.get(0).getCode()));
         }
 
         //审核通过
@@ -1378,7 +1378,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 .collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(outStockDTOList)){
             String code = outStockDTOList.stream().map(LogisticsBillCostDTO.OutStockDTO::getOutstockCode).distinct().collect(Collectors.joining(","));
-            throw new ServiceException(ApiError.ERROR_SO_OUTSTOCK_BILL_COST_NOT_DIS_APPROVE, code);
+            throw new ServiceException(ApiError.SO_OUTSTOCK_BILL_COST_NOT_DISAPPROVE, code);
         }
         //待提交
         if (!ApproveStatusEnum.APPROVE.equals(entity.getApproveStatus())){
@@ -2248,7 +2248,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         List<WarehouseEntity> warehouseEntityList = warehouseService.listByIds(Arrays.asList(fromWarehouseId, toWarehouseId));
         //获取仓库信息
         if (CollectionUtils.isEmpty(warehouseEntityList)) {
-            throw new ServiceException(ApiError.WH_NOT_FOUND);
+            throw new ServiceException(ApiError.WH_PARAM_NOT_FOUND);
         }
         //调出仓库
         WarehouseEntity fromWarehouseEntity = warehouseEntityList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), fromWarehouseId)).findFirst().orElse(null);
@@ -3650,7 +3650,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         }
         WarehouseEntity warehouse = warehouseService.getById(warehouseId);
         if (Objects.isNull(warehouse)) {
-            throw new ServiceException(ApiError.WH_NOT_FOUND);
+            throw new ServiceException(ApiError.WH_PARAM_NOT_FOUND);
         }
         soOutstock.setWarehouseName(warehouse.getName());
         String orgId = soOutstock.getWarehouseOrgId();
@@ -4361,7 +4361,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         //限制B2B类型,未作废,审核状态为未审核 才可下推报关单
         Boolean isB2B = OrderTypeEnum.B2B.getCode().equals(entity.getOrderType());
         if(!isB2B || Objects.equals(entity.getInvalidStatus(), Boolean.TRUE)){
-            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_SO_OUTBOUND_B2B_REQUIRED.getMsg() );
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.SO_OUTBOUND_B2B_REQUIRED.getMsg() );
         }
         //生成B2B报关单
         if (!"CN".equalsIgnoreCase(entity.getCountry()) && entity.getDeclareStatus().equals(WmsDeclareStatusEnum.WAIT.getCode()) && entity.getOrderType().equals(OrderTypeEnum.B2B.getCode())) {

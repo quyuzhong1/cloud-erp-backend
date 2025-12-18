@@ -982,7 +982,7 @@ public class MoldInfoServiceImpl extends SuperServiceImpl<MoldInfoMapper, MoldIn
         for (String skuNo : skuNos) {
             SkuVO skuVO = skuVOMap.getOrDefault(skuNo, null);
             if(Objects.isNull(skuVO)){
-                throw new ServiceException(ApiError.ERROR_SKU_NOTFOUND,skuNo);
+                throw new ServiceException(ApiError.PRODUCT_SKU_PARAM_NOT_FOUND,skuNo);
             }
 
             for (String id : ids) {

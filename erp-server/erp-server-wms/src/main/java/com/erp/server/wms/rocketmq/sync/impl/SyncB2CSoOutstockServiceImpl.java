@@ -38,7 +38,6 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.sys.enums.DictValueEnum;
 import com.erp.model.tms.dto.LogisticsChannelDTO;
-import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.wms.dto.SyncKingdeeDTO;
 import com.erp.model.wms.dto.VirtualWarehouseChannelDTO;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
@@ -284,7 +283,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         String logisticsCode = entity.getLogisticsCompanyCode();
         LogisticsChannelDTO.BaseDTO channel = logisticsFeign.getChannelByCodeAndPlatform(logisticsCode, LogisticsPlatformEnum.WDT.getCode());
         if (Objects.isNull(channel)){
-            throw new ServiceException(ApiError.ERROR_CHANNEL_NOTFOUND, LogisticsPlatformEnum.WDT.getName(), logisticsCode);
+            throw new ServiceException(ApiError.COMMON_PLATFORM_CHANNEL_NOT_FOUND, LogisticsPlatformEnum.WDT.getName(), logisticsCode);
         }
         soOutstock.setLogisticsChannelId(channel.getId());
         soOutstock.setLogisticsChannelCode(channel.getCode());
@@ -326,7 +325,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
                 String skuId = skuList.stream().filter(s -> s.getSkuNo().equals(detailEntity.getSkuNo())).
                         findFirst().map(SkuVO::getSkuId).orElse("");
                 if (CharSequenceUtil.isBlank(skuId)) {
-                    throw new ServiceException(ApiError.ERROR_SKU_NOTFOUND, detailEntity.getSkuNo());
+                    throw new ServiceException(ApiError.PRODUCT_SKU_PARAM_NOT_FOUND, detailEntity.getSkuNo());
                 }
                 String detailId = IdWorker.getIdStr();
                 detailEntity.setId(detailId);
@@ -362,7 +361,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
                     String skuId = skuList.stream().filter(s -> s.getSkuNo().equals(detailEntity.getSkuNo())).
                             findFirst().map(SkuVO::getSkuId).orElse("");
                     if (CharSequenceUtil.isBlank(skuId)) {
-                        throw new ServiceException(ApiError.ERROR_SKU_NOTFOUND, detailEntity.getSkuNo());
+                        throw new ServiceException(ApiError.PRODUCT_SKU_PARAM_NOT_FOUND, detailEntity.getSkuNo());
                     }
                     String detailId = IdWorker.getIdStr();
                     detailEntity.setId(detailId);
@@ -697,7 +696,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
             String skuId = skuList.stream().filter(s -> s.getSkuNo().equals(skuNo)).
                     findFirst().map(SkuVO::getSkuId).orElse("");
             if (CharSequenceUtil.isBlank(skuId)) {
-                throw new ServiceException(ApiError.ERROR_SKU_NOTFOUND, skuNo);
+                throw new ServiceException(ApiError.PRODUCT_SKU_PARAM_NOT_FOUND, skuNo);
             }
             SoOutstockDetailEntity detailEntity = new SoOutstockDetailEntity();
             String detailId = IdWorker.getIdStr();

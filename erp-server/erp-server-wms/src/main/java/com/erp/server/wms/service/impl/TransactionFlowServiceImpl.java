@@ -142,7 +142,7 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
         transactionFlowEntity.setOrgId(param.getOrgId());
         // 获取仓库名称
         WarehouseDTO.UpdateDTO warehouse = warehouseService.detailWithCache(param.getWarehouseId());
-        ValidatorUtil.isTrue(Objects.nonNull(warehouse) && StrUtils.isNotEmpty(warehouse.getId()),()->new ServiceException(ApiError.WH_NOT_FOUND));
+        ValidatorUtil.isTrue(Objects.nonNull(warehouse) && StrUtils.isNotEmpty(warehouse.getId()),()->new ServiceException(ApiError.WH_PARAM_NOT_FOUND));
 
         transactionFlowEntity.setWarehouseId(param.getWarehouseId());
         transactionFlowEntity.setWarehouseName(warehouse.getName());

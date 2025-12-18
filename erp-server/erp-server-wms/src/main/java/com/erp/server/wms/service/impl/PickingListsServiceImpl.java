@@ -423,7 +423,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
         LoginUser user = UserContext.getDefaultLoginUser();
         List<PickingListsEntity> pickingLists = listByIds(ids);
         if (CollectionUtils.isEmpty(pickingLists)) {
-            throw new ServiceException(ApiError.ERROR_PACKING_SKU_QTY_EXCEEDS_DELIVERY);
+            throw new ServiceException(ApiError.LOGISTICS_PACKING_SELECT_PICKLIST_REQUIRED);
         }
         List<PickingDetailEntity> detailList = pickingDetailService.list(Wrappers.<PickingDetailEntity>lambdaQuery().in(PickingDetailEntity::getMainId, ids));
         List<String> skuIds = detailList.stream().map(PickingDetailEntity::getSkuId).distinct().collect(Collectors.toList());
@@ -473,7 +473,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
             List<SoDeliveryNoticeDetailEntity> soDeliveryNoticeDetailEntityList = noticeDetailEntities.stream().filter(v -> noticeDetailIds.contains(v.getId())).collect(Collectors.toList());
             for (PickingDetailEntity detail : details) {
                 SoDeliveryNoticeDetailEntity soDeliveryNoticeDetailEntity = soDeliveryNoticeDetailEntityList.stream().filter(e -> e.getId().equals(detail.getSourceDetailId())).findFirst().orElseThrow(() -> new ServiceException(ApiError.FIRST_MILE_SHIPMENT_NOTICE_DETAIL_NOT_FOUND));
-                SoDetailEntity soDetailEntity = finalSoDetailEntityList.stream().filter(v -> v.getId().equals(soDeliveryNoticeDetailEntity.getSourceDetailId())).findFirst().orElseThrow(() -> new ServiceException(ApiError.ERROR_SO_DETAIL_NOT_EXIST));
+                SoDetailEntity soDetailEntity = finalSoDetailEntityList.stream().filter(v -> v.getId().equals(soDeliveryNoticeDetailEntity.getSourceDetailId())).findFirst().orElseThrow(() -> new ServiceException(ApiError.SO_DETAIL_NOT_EXIST));
                 String customerPO = soDetailEntity.getCustomerPO();
                 String toCountry = soDetailEntity.getToCountry();
                 String pickRemark = soDetailEntity.getPickRemark();
@@ -912,7 +912,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
         LoginUser user = UserContext.getDefaultLoginUser();
         List<PickingListsEntity> pickingLists = listByIds(ids);
         if (CollectionUtils.isEmpty(pickingLists)) {
-            throw new ServiceException(ApiError.ERROR_PACKING_SKU_QTY_EXCEEDS_DELIVERY);
+            throw new ServiceException(ApiError.LOGISTICS_PACKING_SELECT_PICKLIST_REQUIRED);
         }
         List<PickingDetailEntity> detailList = pickingDetailService.list(Wrappers.<PickingDetailEntity>lambdaQuery().in(PickingDetailEntity::getMainId, ids));
         List<String> skuIds = detailList.stream().map(PickingDetailEntity::getSkuId).distinct().collect(Collectors.toList());

@@ -871,7 +871,7 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
         //仓库信息
         WarehouseEntity warehouseEntity = warehouseService.getById(warehouseId);
         if  (ObjectUtils.isEmpty(warehouseEntity)) {
-            throw new ServiceException(ApiError.WH_NOT_FOUND);
+            throw new ServiceException(ApiError.WH_PARAM_NOT_FOUND);
         }
         entity.setWarehouseName(warehouseEntity.getName());
         //库存组织
@@ -1245,7 +1245,7 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
             // 发货仓库
             WarehouseDTO.ListDTO warehouseDTO = warehouseMap.get(importExcelDTO.getWarehouseName());
             if (null == warehouseDTO){
-                importExcelDTO.setErrorMsg(ApiError.WAREHOUSE_NOT_EXIST_NO_PERMISSION.getMsg());
+                importExcelDTO.setErrorMsg(ApiError.WH_NOT_EXIST_OR_NO_PERMISSION.getMsg());
                 errorList.add(importExcelDTO);
                 continue;
             }

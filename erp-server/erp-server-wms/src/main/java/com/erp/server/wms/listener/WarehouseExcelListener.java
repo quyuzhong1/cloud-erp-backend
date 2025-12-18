@@ -162,7 +162,7 @@ public class WarehouseExcelListener extends AnalysisEventListener<WarehouseExcel
 
         WarehouseMappingEntity checkThirdWarehouseNameExist = warehouseMappingService.checkThirdWarehouseNameExist(warehouseExcelDTO.getThirdWarehouseName(), PlatformDictEnum.ALI_EXPRESS.getCode());
         if (ObjectUtil.isNotEmpty(checkThirdWarehouseNameExist)) {
-            errorMsgList.add((CharSequenceUtil.format(ApiError.THIRD_WAREHOUSE_NAME_EXIST.getMsg(), PlatformDictEnum.ALI_EXPRESS.getCode(), warehouseExcelDTO.getThirdWarehouseName())));
+            errorMsgList.add((CharSequenceUtil.format(ApiError.WH_THIRD_WAREHOUSE_NAME_EXIST.getMsg(), PlatformDictEnum.ALI_EXPRESS.getCode(), warehouseExcelDTO.getThirdWarehouseName())));
         }
 
         addDTO.setKingdeeWarehouseCode(kingdeeWarehouseCode);

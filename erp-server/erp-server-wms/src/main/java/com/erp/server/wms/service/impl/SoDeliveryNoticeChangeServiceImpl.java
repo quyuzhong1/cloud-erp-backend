@@ -827,7 +827,7 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
             }
 
             if (ObjectUtil.isEmpty(detailEntity)) {
-                throw new ServiceException(ApiError.ERROR_SO_DELIVERY_NOTICE_DETAIL_NOT_EXIST);
+                throw new ServiceException(ApiError.SO_DELIVERY_NOTICE_DETAIL_NOT_EXIST);
             }
             //销售订单明细
             SoDeliveryNoticeDetailEntity finalDetailEntity = detailEntity;

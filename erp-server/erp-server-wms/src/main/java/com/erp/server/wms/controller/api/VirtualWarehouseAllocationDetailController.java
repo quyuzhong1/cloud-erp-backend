@@ -4,7 +4,6 @@ package com.erp.server.wms.controller.api;
 import cn.hutool.core.text.CharSequenceUtil;
 import com.common.core.enums.ApiError;
 import com.erp.model.dmp.dto.DmpPushTaskDTO;
-import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.wms.dto.VirtualWarehouseAllocationDTO;
 import com.erp.model.wms.entity.VirtualWarehouseAllocationDetailEntity;
 import com.erp.model.wms.entity.VirtualWarehouseAllocationEntity;
@@ -15,7 +14,6 @@ import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Resource;
 
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import com.common.core.anno.LogAction;
@@ -119,7 +117,7 @@ public class VirtualWarehouseAllocationDetailController extends BaseController {
                 } else {
                     //只有已处理状态且同步失败状态可以手动完结
                     if (!Objects.equals(handleStatus, vmAllocationEntity.getStatus()) || !Objects.equals(failedSyncStatus, vmAllocationDetailEntity.getSyncStatus())) {
-                        submit = BatchResultDTO.fail(id, vmAllocationEntity.getCode(), ApiError.ERROR_MANUAL_STATUS_ERROR.getMsg());
+                        submit = BatchResultDTO.fail(id, vmAllocationEntity.getCode(), ApiError.VM_MANUAL_STATUS_ERROR.getMsg());
                     } else {
                         flagCode = vmAllocationEntity.getCode();
                         submit = virtualWarehouseAllocationDetailService.manualFinish(vmAllocationDetailEntity, vmAllocationEntity, dto);
@@ -167,7 +165,7 @@ public class VirtualWarehouseAllocationDetailController extends BaseController {
                 } else {
                     //只有已处理状态且同步失败状态可以同步
                     if (!Objects.equals(handleStatus, vmAllocationEntity.getStatus()) || !Objects.equals(failedSyncStatus, vmAllocationDetailEntity.getSyncStatus())) {
-                        submit = BatchResultDTO.fail(id, vmAllocationEntity.getCode(), ApiError.ERROR_SYNC_ERROR.getMsg());
+                        submit = BatchResultDTO.fail(id, vmAllocationEntity.getCode(), ApiError.VM_SYNC_ERROR_STATUS_ONLY.getMsg());
                     } else {
                         String thirdCode = vmAllocationDetailEntity.getThirdCode();
                         if (CharSequenceUtil.isBlank(thirdCode)){

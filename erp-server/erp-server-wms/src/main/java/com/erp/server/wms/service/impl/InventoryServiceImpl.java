@@ -271,7 +271,7 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
         InventoryStatusEnum inventoryStatusEnum = InventoryStatusEnum.getByCode(status);
         ValidatorUtil.isTrue(Objects.nonNull(inventoryStatusEnum), () -> new ServiceException("库存状态错误"));
         WarehouseDTO.UpdateDTO warehouse = warehouseService.detailWithCache(warehouseId);
-        ValidatorUtil.isTrue(Objects.nonNull(warehouse) && StrUtils.isNotEmpty(warehouse.getId()), () -> new ServiceException(ApiError.WH_NOT_FOUND));
+        ValidatorUtil.isTrue(Objects.nonNull(warehouse) && StrUtils.isNotEmpty(warehouse.getId()), () -> new ServiceException(ApiError.WH_PARAM_NOT_FOUND));
         // sku id去重
         skuIds = skuIds.stream().distinct().collect(Collectors.toList());
         LambdaQueryWrapper<InventoryEntity> queryWrapper = new LambdaQueryWrapper<>();

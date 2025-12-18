@@ -230,7 +230,7 @@ public class TransferInfoDetailServiceImpl extends SuperServiceImpl<TransferInfo
         List<String> warehouseIdList = newList.stream().flatMap(obj -> Stream.of(obj.getInWarehouseId(), obj.getOutWarehouseId())).collect(Collectors.toList());
         List<WarehouseEntity> warehouseList = warehouseService.listByIds(warehouseIdList);
         if (CollectionUtils.isEmpty(warehouseList)) {
-            throw new ServiceException(ApiError.WH_NOT_FOUND);
+            throw new ServiceException(ApiError.WH_PARAM_NOT_FOUND);
         }
         //仓位必填验证
         checkWarehouseLocation(warehouseList,newList);
@@ -258,13 +258,13 @@ public class TransferInfoDetailServiceImpl extends SuperServiceImpl<TransferInfo
             //调入仓库
             WarehouseEntity inWarehouse = warehouseList.stream().filter(obj -> obj.getId().equals(detail.getInWarehouseId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(inWarehouse)) {
-                throw new ServiceException(ApiError.WH_NOT_FOUND);
+                throw new ServiceException(ApiError.WH_PARAM_NOT_FOUND);
             }
             detail.setInWarehouseName(inWarehouse.getName());
             //调出仓库
             WarehouseEntity outWarehouse = warehouseList.stream().filter(obj -> obj.getId().equals(detail.getOutWarehouseId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(outWarehouse)) {
-                throw new ServiceException(ApiError.WH_NOT_FOUND);
+                throw new ServiceException(ApiError.WH_PARAM_NOT_FOUND);
             }
             detail.setOutWarehouseName(outWarehouse.getName());
             //验证调入仓位

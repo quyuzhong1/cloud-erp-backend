@@ -290,18 +290,18 @@ public class ShippingCalculationServiceImpl implements ShippingCalculationServic
     private void checkThirdCalculationParam(ShippingCalculationDTO.PagingParamDTO params, OverseasProviderEntity overseasProviderEntity) {
         if (PlatformDictEnum.ANTU.getCode().equals(overseasProviderEntity.getCode())){
             if (CollUtil.isEmpty(params.getToCountryList())){
-                throw new ServiceException(ApiError.ERROR_DEST_COUNTRY_REQUIRED);
+                throw new ServiceException(ApiError.COMMON_DEST_COUNTRY_REQUIRED);
             }
             if (Objects.isNull(params.getWeight())){
-                throw new ServiceException(ApiError.ERROR_WEIGHT_REQUIRED);
+                throw new ServiceException(ApiError.COMMON_WEIGHT_REQUIRED);
             }
         }else if (PlatformDictEnum.GOOD_CANG.getCode().equals(overseasProviderEntity.getCode())){
             //邮政编码不能为空
             if (CharSequenceUtil.isBlank(params.getPostCode())){
-                throw new ServiceException(ApiError.ERROR_POSTCODE_REQUIRED);
+                throw new ServiceException(ApiError.COMMON_POSTCODE_REQUIRED);
             }
             if (CollUtil.isEmpty(params.getToCountryList())){
-                throw new ServiceException(ApiError.ERROR_DEST_COUNTRY_REQUIRED);
+                throw new ServiceException(ApiError.COMMON_DEST_COUNTRY_REQUIRED);
             }
         }
     }

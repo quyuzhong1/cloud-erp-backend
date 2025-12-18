@@ -269,7 +269,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         //获取供应商信息
         SupplierEntity supplier = scmTaskFeign.getSupplierById(orderSupplierByOrderId.getSupplierId());
         if(!supplier.getSrmDisabled() && !dto.getGenerateByDelivery()){
-            throw new ServiceException(ApiError.RECEIVE_SHOULD_GENERATE_BY_DELIVERY,supplier.getName());
+            throw new ServiceException(ApiError.PO_RECEIVE_SHOULD_GENERATE_BY_DELIVERY,supplier.getName());
         }
 
         //获取用户信息
@@ -1357,7 +1357,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             if(CollectionUtils.isNotEmpty(deliveryOrderDetailist)){
                 int deliveryQty = deliveryOrderDetailist.stream().mapToInt(DeliveryOrderDetailEntity::getDeliveryQty).sum();
                 if(addDTO.getReceiveQty() > deliveryQty){
-                    throw new ServiceException(ApiError.RECEIVE_QTY_ERROR);
+                    throw new ServiceException(ApiError.PO_RECEIVE_QTY_EXCEEDS_DELIVERY);
                 }
             }
 

@@ -554,7 +554,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         //是否存在下游关联的未作废或未删除的直接调拨单
         Boolean validate = validateExistsTransferInfo(dto.getId());
         if(validate){
-            throw new ServiceException(ApiError.ERROR_EXISTS_TRANSFER_INFO);
+            throw new ServiceException(ApiError.WH_EXISTS_TRANSFER_INFO_NOT_CLEAR);
         }
         //要货申请查询
         RequisitionApplicationEntity requisitionApplication = CharSequenceUtil.isNotBlank(entity.getSourceId()) ? requisitionApplicationService.getById(entity.getSourceId()) : null;
@@ -885,17 +885,17 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         //校验下游单据是否生成【包含报关单，物流单】状态为已生成 不可反审核【提示：报关单/物流单[单号]已生成，不可反审核】
         List<LogisticsBillEntity> tmsFirstMileLogisticEntities = tmsFirstMileLogisticFeign.listByOutstockIds(Collections.singletonList(entity.getId()));
         if (CollUtil.isNotEmpty(tmsFirstMileLogisticEntities)) {
-            throw new ServiceException(ApiError.TMS_FIRST_MILE_LOGISTIC_EXISTS, tmsFirstMileLogisticEntities.get(0).getTransportNo());
+            throw new ServiceException(ApiError.LOGISTICS_ORDER_EXISTS_REVERSE_FORBIDDEN, tmsFirstMileLogisticEntities.get(0).getTransportNo());
         }
         List<TmsDeclareBillEntity> tmsDeclareBillEntities = tmsDeclareBillFeign.listBySourceIds(Collections.singletonList(entity.getId()));
         if (CollUtil.isNotEmpty(tmsDeclareBillEntities)) {
-            throw new ServiceException(ApiError.TMS_DECLARE_BILL_EXISTS, tmsDeclareBillEntities.get(0).getCode());
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_BILL_EXISTS_REVERSE_FORBIDDEN, tmsDeclareBillEntities.get(0).getCode());
         }
 
         //是否存在下游关联的未作废或未删除的直接调拨单
         Boolean validate = validateExistsTransferInfo(entity.getId());
         if(validate){
-            throw new ServiceException(ApiError.ERROR_EXISTS_TRANSFER_INFO);
+            throw new ServiceException(ApiError.WH_EXISTS_TRANSFER_INFO_NOT_CLEAR);
         }
 
         return true;
@@ -925,11 +925,11 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         //校验下游单据是否生成【包含报关单，物流单】状态为已生成 不可反审核【提示：报关单/物流单[单号]已生成，不可反审核】
         List<LogisticsBillEntity> tmsFirstMileLogisticEntities = tmsFirstMileLogisticFeign.listByOutstockIds(Collections.singletonList(entity.getId()));
         if (CollUtil.isNotEmpty(tmsFirstMileLogisticEntities)) {
-            throw new ServiceException(ApiError.TMS_FIRST_MILE_LOGISTIC_EXISTS_NOT_DEL, tmsFirstMileLogisticEntities.get(0).getTransportNo());
+            throw new ServiceException(ApiError.LOGISTICS_FIRST_MILE_ORDER_EXISTS_NOT_DEL, tmsFirstMileLogisticEntities.get(0).getTransportNo());
         }
         List<TmsDeclareBillEntity> tmsDeclareBillEntities = tmsDeclareBillFeign.listBySourceIds(Collections.singletonList(entity.getId()));
         if (CollUtil.isNotEmpty(tmsDeclareBillEntities)) {
-            throw new ServiceException(ApiError.TMS_DECLARE_BILL_EXISTS_NOT_DEL, tmsDeclareBillEntities.get(0).getCode());
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_BILL_EXISTS_NOT_DEL, tmsDeclareBillEntities.get(0).getCode());
         }
         //删除装箱信息
         if(Objects.nonNull(packingTask)){
@@ -1148,10 +1148,10 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
 
     private void generateTransferByRule(List<String> transferWarehouseIdList, FirstMileDeliveryEntity entity, List<FirstMileDeliveryDetailEntity> detailEntityList,String batchNo) {
         if (CollUtil.isEmpty(transferWarehouseIdList)){
-            throw new ServiceException(ApiError.ERROR_TRANSFER_WAREHOUSE_REQUIRED);
+            throw new ServiceException(ApiError.WH_TRANSFER_WAREHOUSE_REQUIRED);
         }
         if (CharSequenceUtil.isBlank(entity.getDeliveryWarehouseId())){
-            throw new ServiceException(ApiError.ERROR_SO_FIRST_SHIPMENT_WAREHOUSE_REQUIRED, entity.getCode());
+            throw new ServiceException(ApiError.FIRST_MILE_SHIPMENT_WAREHOUSE_REQUIRED, entity.getCode());
         }
         //订单调出仓和第一个中转仓一致时从第二个中转仓开始
         boolean firstWarehouseSame = transferWarehouseIdList.get(0).equals(entity.getDeliveryWarehouseId());
@@ -2293,7 +2293,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             List<TransferInfoEntity> collect = transferInfoEntities.stream().filter(e -> Objects.nonNull(e) && ApproveStatusEnum.APPROVE.getStatus().equals(e.getApproveStatus())).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(collect)){
                 List<String> codeList = collect.stream().map(TransferInfoEntity::getCode).distinct().collect(Collectors.toList());
-                throw new ServiceException(ApiError.ERROR_TRANSFER_ALREADY_APPROVED_MODIFY_FORBIDDEN, String.join(",", codeList));
+                throw new ServiceException(ApiError.WH_TRANSFER_ALREADY_APPROVED_MODIFY_FORBIDDEN, String.join(",", codeList));
             }
         }
         String transferWarehouseIdList = "";
@@ -2370,7 +2370,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             if (FmDeliveryBillTypeEnum.DECLARE.getCode().equals(billType)) {
                 List<FirstMileDeliveryEntity> deliveryEntityList = deliveryEntities.stream().filter(req -> WmsDeclareStatusEnum.FINISH.getCode().equals(req.getDeclareStatus().getCode())).collect(Collectors.toList());
                 if (CollUtil.isNotEmpty(deliveryEntityList)) {
-                    throw new ServiceException(ApiError.BILL_IS_GENERATE_DECLARE, deliveryEntityList.get(0).getCode());
+                    throw new ServiceException(ApiError.BILL_DECLARE_STATUS_GENERATED_NOT_CHANGE_TO_NO_DECLARE, deliveryEntityList.get(0).getCode());
                 }
                 lambdaUpdate()
                         .set(FmDeliveryBillTypeEnum.DECLARE.getCode().equals(billType), FirstMileDeliveryEntity::getDeclareStatus, WmsDeclareStatusEnum.NONE.getCode())
@@ -2380,7 +2380,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
 
             if (FmDeliveryBillTypeEnum.LOGISTICS.getCode().equals(billType)) {
                 if (CollUtil.isNotEmpty(deliveryEntityLogisticsStatusList)) {
-                    throw new ServiceException(ApiError.BILL_IS_GENERATE_LOGISTICS, deliveryEntityLogisticsStatusList.get(0).getCode());
+                    throw new ServiceException(ApiError.BILL_LOGISTICS_STATUS_GENERATED_NOT_CHANGE_TO_NO_LOGISTICS, deliveryEntityLogisticsStatusList.get(0).getCode());
                 }
                 lambdaUpdate()
                         .set(FmDeliveryBillTypeEnum.LOGISTICS.getCode().equals(billType), FirstMileDeliveryEntity::getLogisticsStatus, FmDeliveryLogisticsStatusEnum.NONE.getCode())
@@ -2732,7 +2732,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         }
         //限制B2B类型,未作废,审核状态为未审核 才可下推报关单
         if(Objects.equals(entity.getInvalidStatus(), Boolean.TRUE) || Objects.equals(ApproveStatusEnum.APPROVE, entity.getApproveStatus())){
-            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_DELIVERY_NOTICE_REQUIRED.getMsg() );
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.SO_DELIVERY_REQUIRED_PENDING_NOT_APPROVED.getMsg() );
         }
         //根据装箱状态生成报关单
         generateByPacked(entity,BillGenerateTimingEnum.AFTER_PACKING);
@@ -2751,11 +2751,11 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     private void generateByPacked(FirstMileDeliveryEntity entity, BillGenerateTimingEnum billGenerateTiming) {
         List<PackingTaskEntity> taskEntityList = packingTaskService.getPackingStatusByFirstMileDelivery(entity);
         if (CollectionUtils.isEmpty(taskEntityList)) {
-            throw new ServiceException(ApiError.ERROR_PACKING_NOT_COMPLETED_DECLARATION_FORBIDDEN);
+            throw new ServiceException(ApiError.LOGISTICS_PACKING_NOT_COMPLETED_DECLARATION_FORBIDDEN);
         } else {
             boolean packed = taskEntityList.stream().allMatch(taskEntity -> taskEntity.getPackingStatus().equals(PackingTaskStatusEnum.PACKED.getCode()));
             if (Boolean.FALSE.equals(packed) && billGenerateTiming.equals(BillGenerateTimingEnum.AFTER_PACKING)) {
-                throw new ServiceException(ApiError.ERROR_PACKING_NOT_COMPLETED_DECLARATION_FORBIDDEN);
+                throw new ServiceException(ApiError.LOGISTICS_PACKING_NOT_COMPLETED_DECLARATION_FORBIDDEN);
             } else {
                 if (!WmsDeclareStatusEnum.WAIT.equals(entity.getDeclareStatus())) {
                     throw new ServiceException("报关单状态不为待生成，不能下推生成报关单");
@@ -2793,7 +2793,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE,"发货单不存在");
         }
         if (validateExistsTransferInfo(entity.getId())) {
-            throw new ServiceException(ApiError.ERROR_TRANSFER_NOT_RETRY_OUTSTOCK);
+            throw new ServiceException(ApiError.SO_TRANSFER_NOT_RETRY_OUTSTOCK);
         }
         //查询发货详情
         List<FirstMileDeliveryDetailEntity> detailEntityList = firstMileDeliveryDetailService.listByMainIds(Collections.singletonList(entity.getId()));

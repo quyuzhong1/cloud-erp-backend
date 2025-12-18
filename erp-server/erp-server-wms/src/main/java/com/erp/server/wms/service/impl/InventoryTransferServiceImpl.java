@@ -80,7 +80,7 @@ public class InventoryTransferServiceImpl extends AbstractInventoryServiceImpl {
                 // 当前仓仓库和仓位信息
                 WarehouseDTO.UpdateDTO warehouseDetail = warehouseMap.computeIfAbsent(param.getCurWarehouseId(), v -> warehouseService.detailWithCache(v));
                 if(Objects.isNull(warehouseDetail) || CharSequenceUtil.isEmpty(warehouseDetail.getId())) {
-                    ServiceException.runError(ApiError.WH_NOT_FOUND);
+                    ServiceException.runError(ApiError.WH_PARAM_NOT_FOUND);
                 }
 
                 if(StrUtils.isNotEmpty(param.getCurWarehouseLocation())) {
@@ -92,7 +92,7 @@ public class InventoryTransferServiceImpl extends AbstractInventoryServiceImpl {
                 // 目的仓仓库和仓位信息
                 warehouseDetail = warehouseMap.computeIfAbsent(param.getTargetWarehouseId(), v ->warehouseService.detailWithCache(v));
                 if(Objects.isNull(warehouseDetail) || CharSequenceUtil.isEmpty(warehouseDetail.getId())) {
-                    ServiceException.runError(ApiError.WH_NOT_FOUND);
+                    ServiceException.runError(ApiError.WH_PARAM_NOT_FOUND);
                 }
                 if(StrUtils.isNotEmpty(param.getTargetWarehouseLocation())) {
                     WarehouseLocationEntity warehouseLocation = warehouseLocationMap.computeIfAbsent(param.getTargetWarehouseLocation(),v->warehouseLocationService.findByWarehouseIdAndCode(param.getTargetWarehouseId(), v));

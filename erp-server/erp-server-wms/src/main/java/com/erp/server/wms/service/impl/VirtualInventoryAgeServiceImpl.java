@@ -125,7 +125,7 @@ public class VirtualInventoryAgeServiceImpl extends SuperServiceImpl<VirtualInve
         //仓库信息
         WarehouseEntity warehouseEntity = warehouseService.getById(dto.getWarehouseId());
         if (ObjUtil.isEmpty(warehouseEntity)) {
-            throw new ServiceException(ApiError.WH_NOT_FOUND);
+            throw new ServiceException(ApiError.WH_PARAM_NOT_FOUND);
         }
         viewDTO.setWarehouseName(warehouseEntity.getName());
         //虚拟仓库

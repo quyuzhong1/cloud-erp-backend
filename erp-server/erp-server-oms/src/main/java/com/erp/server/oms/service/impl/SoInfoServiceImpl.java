@@ -578,7 +578,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
         List<SoDetailEntity> detailList = soDetailService.listBaseByMainId(entity.getId());
         if (CollUtil.isEmpty(detailList)) {
-            throw new ServiceException(ApiError.ERROR_SO_DETAIL_NOT_EXIST);
+            throw new ServiceException(ApiError.SO_DETAIL_NOT_EXIST);
         }
         //产品名称
         List<String> skuIdList = detailList.stream().map(SoDetailEntity::getSkuId).distinct().collect(Collectors.toList());
@@ -4332,7 +4332,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             String warehouseId = "";
             String warehouseOrgId = "";
             if (Objects.isNull(warehouse)) {
-                errorMsgList.add(MessageUtils.getMessage(ApiError.WAREHOUSE_NOT_EXIST_NO_PERMISSION));
+                errorMsgList.add(MessageUtils.getMessage(ApiError.WH_NOT_EXIST_OR_NO_PERMISSION));
             } else {
                 warehouseId = warehouse.getId();
                 warehouseOrgId = warehouse.getOrgId();
@@ -4800,7 +4800,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         //仓库
         WarehouseEntity warehouseEntity = FeignQuery.getById(WarehouseEntity.class, soInfoEntity.getWarehouseId());
         if (ObjectUtil.isEmpty(warehouseEntity)) {
-            throw new ServiceException(ApiError.WH_NOT_FOUND);
+            throw new ServiceException(ApiError.WH_PARAM_NOT_FOUND);
         }
         dto.setWarehouseName(warehouseEntity.getName());
         //虚拟仓库

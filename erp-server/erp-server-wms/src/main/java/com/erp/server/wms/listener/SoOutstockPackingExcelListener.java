@@ -126,7 +126,7 @@ public class SoOutstockPackingExcelListener extends AnalysisEventListener<SoOuts
 
             //只允许B2B订单装箱
             if (!OrderTypeEnum.B2B.getCode().equals(soOutstockEntity.getOrderType())) {
-                packingExcelDTO.setErrorMsg(ApiError.B2B_ORDER_IS_PACK.getMsg());
+                packingExcelDTO.setErrorMsg(ApiError.SO_B2B_ORDER_PACK_ONLY.getMsg());
                 errorList.add(packingExcelDTO);
                 it.remove();
                 continue;

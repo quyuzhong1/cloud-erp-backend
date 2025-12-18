@@ -647,7 +647,7 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
         //委外发料明细
         List<SubcontractIssueDetailEntity> subcontractIssueDetailList = subcontractIssueDetailService.listByMainIds(Collections.singletonList(data.getId()));
         if (CollUtil.isEmpty(subcontractIssueDetailList)) {
-            throw new ServiceException(ApiError.ERROR_SUBCONTRACT_ISSUE_DETAIL_NOT_EXIST);
+            throw new ServiceException(ApiError.PO_SUBCONTRACT_ISSUE_DETAIL_NOT_EXIST);
         }
 
         //产品信息
@@ -883,7 +883,7 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
         long count = parentDetailList.stream().map(SubcontractOrderDetailEntity::getSupplierId).distinct().count();
         if (count > 1) {
             String supplierNames = parentDetailList.stream().map(SubcontractOrderDetailEntity::getSupplierName).collect(Collectors.joining(","));
-            throw new ServiceException(ApiError.ERROR_SUBCONTRACT_ISSUE_SUPPLIER_DIFF,supplierNames);
+            throw new ServiceException(ApiError.PO_SUBCONTRACT_ISSUE_SUPPLIER_DIFF,supplierNames);
         }
         subcontractIssueEntity.setSupplierId(parentDetailList.get(0).getSupplierId());
         subcontractIssueEntity.setSupplierName(parentDetailList.get(0).getSupplierName());
@@ -900,7 +900,7 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
         //委外发料明细
         List<SubcontractIssueDetailEntity> subcontractIssueDetailList = subcontractIssueDetailService.listByMainIds(Collections.singletonList(entity.getId()));
         if (CollUtil.isEmpty(subcontractIssueDetailList)) {
-            throw new ServiceException(ApiError.ERROR_SUBCONTRACT_ISSUE_DETAIL_NOT_EXIST);
+            throw new ServiceException(ApiError.PO_SUBCONTRACT_ISSUE_DETAIL_NOT_EXIST);
         }
         List<InOutStockDTO> inOutStockList = new ArrayList<>();
         for (SubcontractIssueDetailEntity detailEntity : subcontractIssueDetailList) {

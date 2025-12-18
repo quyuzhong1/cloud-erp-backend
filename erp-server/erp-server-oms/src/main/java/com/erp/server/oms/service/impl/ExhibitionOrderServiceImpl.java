@@ -2018,7 +2018,7 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
                 String warehouseId = "";
                 String warehouseOrgId = "";
                 if (Objects.isNull(warehouse)) {
-                    errorMsgList.add(ApiError.WAREHOUSE_NOT_EXIST_NO_PERMISSION.getMsg());
+                    errorMsgList.add(ApiError.WH_NOT_EXIST_OR_NO_PERMISSION.getMsg());
                 } else {
                     warehouseId = warehouse.getId();
                     warehouseOrgId = warehouse.getOrgId();

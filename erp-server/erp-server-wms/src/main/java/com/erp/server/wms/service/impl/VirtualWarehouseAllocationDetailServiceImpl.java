@@ -141,7 +141,7 @@ public class VirtualWarehouseAllocationDetailServiceImpl extends SuperServiceImp
         handleData(detailEntityList, mainId);
         boolean save = super.saveBatch(detailEntityList);
         if (!save) {
-            throw new ServiceException(ApiError.ERROR_VMALLOCATION_DETAIL_ADD);
+            throw new ServiceException(ApiError.VM_ALLOCATION_DETAIL_SAVE_FAILED);
         }
     }
 
@@ -204,7 +204,7 @@ public class VirtualWarehouseAllocationDetailServiceImpl extends SuperServiceImp
             //手动完结中台任务
             dmpMqFeign.batchNoNeedSyncBySourceId(Collections.singletonList(handleRelation.getHandleDetailId()));
         } else {
-            throw new ServiceException(ApiError.ERROR_NO_SYNC);
+            throw new ServiceException(ApiError.VM_NO_SYNC_INFO);
         }
         return BatchResultDTO.success(vwAllocationDetailEntity.getId(), vwAllocationEntity.getCode(), OperationTypeEnum.MANUAL_FINISH);
     }

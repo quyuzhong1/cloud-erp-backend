@@ -99,7 +99,7 @@ public class InstockForcastServiceImpl extends SuperServiceImpl<InstockForcastMa
         // 仓库信息
         WarehouseDTO.UpdateDTO warehouseDetail = warehouseService.detailWithCache(dto.getWarehouseId());
         if(Objects.isNull(warehouseDetail) || CharSequenceUtil.isEmpty(warehouseDetail.getId())) {
-            throw new ServiceException(ApiError.WH_NOT_FOUND);
+            throw new ServiceException(ApiError.WH_PARAM_NOT_FOUND);
         }
 
         // 仓库组织

@@ -305,7 +305,7 @@ public class OverseasProviderWarehouseServiceImpl extends SuperServiceImpl<Overs
         overseasProviderWarehouseEntity.setDisabled(feignDTO.getDisabled());
         int flag = baseMapper.updateById(overseasProviderWarehouseEntity);
         if (flag <= 0) {
-            throw new ServiceException(ApiError.ERROR_BINDING);
+            throw new ServiceException(ApiError.COMMON_BINDING_ERROR);
         }
 
         return Boolean.TRUE;

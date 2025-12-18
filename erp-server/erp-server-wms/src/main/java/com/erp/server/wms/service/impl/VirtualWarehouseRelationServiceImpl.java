@@ -150,7 +150,7 @@ public class VirtualWarehouseRelationServiceImpl extends SuperServiceImpl<Virtua
             }
         } else {
             //校验实体仓库是否存在
-            Optional.ofNullable(warehouseService.getById(warehouseIdList.get(0))).orElseThrow(()->new ServiceException(ApiError.ERROR_WAREHOUSE_NOTFOUND));
+            Optional.ofNullable(warehouseService.getById(warehouseIdList.get(0))).orElseThrow(()->new ServiceException(ApiError.WH_ENTITY_NOT_FOUND));
             //获取实体仓绑定关系
             if (CollectionUtils.isNotEmpty(existRelationList)) {
                 //判断原始绑定与变更数据是否相同

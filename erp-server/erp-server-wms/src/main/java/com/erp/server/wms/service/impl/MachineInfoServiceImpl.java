@@ -519,7 +519,7 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
         List<String> warehouseIds = machineSubComponentsList.stream().map(MachineSubComponentsEntity::getWarehouseId).collect(Collectors.toList());
         List<WarehouseEntity> warehouseList = warehouseService.listByIds(warehouseIds);
         if (CollectionUtils.isEmpty(warehouseList)) {
-            throw new ServiceException(ApiError.WH_NOT_FOUND);
+            throw new ServiceException(ApiError.WH_PARAM_NOT_FOUND);
         }
 
         for (MachineSubComponentsDTO.ViewDTO viewDTO : resultList) {
@@ -1027,7 +1027,7 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
         //仓库信息
         WarehouseEntity warehouseEntity = warehouseService.getById(warehouseId);
         if  (ObjectUtils.isEmpty(warehouseEntity)) {
-            throw new ServiceException(ApiError.WH_NOT_FOUND);
+            throw new ServiceException(ApiError.WH_PARAM_NOT_FOUND);
         }
         entity.setWarehouseName(warehouseEntity.getName());
         //库存组织

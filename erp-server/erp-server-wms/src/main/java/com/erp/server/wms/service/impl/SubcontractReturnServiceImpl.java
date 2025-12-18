@@ -606,7 +606,7 @@ public class SubcontractReturnServiceImpl extends SuperServiceImpl<SubcontractRe
         //委外退料明细
         List<SubcontractReturnDetailEntity> subcontractReturnDetailList = subcontractReturnDetailService.listByMainIds(Collections.singletonList(data.getId()));
         if (CollUtil.isEmpty(subcontractReturnDetailList)) {
-            throw new ServiceException(ApiError.ERROR_SUBCONTRACT_RETURN_DETAIL_NOT_EXIST);
+            throw new ServiceException(ApiError.PO_SUBCONTRACT_RETURN_DETAIL_NOT_EXIST);
         }
 
         //产品信息
@@ -824,7 +824,7 @@ public class SubcontractReturnServiceImpl extends SuperServiceImpl<SubcontractRe
         long count = parentDetailList.stream().map(SubcontractOrderDetailEntity::getSupplierId).distinct().count();
         if (count > 1) {
             String supplierNames = parentDetailList.stream().map(SubcontractOrderDetailEntity::getSupplierName).collect(Collectors.joining(","));
-            throw new ServiceException(ApiError.ERROR_SUBCONTRACT_RETURN_SUPPLIER_DIFF,supplierNames);
+            throw new ServiceException(ApiError.PO_SUBCONTRACT_RETURN_SUPPLIER_DIFF,supplierNames);
         }
         subcontractReturnEntity.setSupplierId(parentDetailList.get(0).getSupplierId());
         subcontractReturnEntity.setSupplierName(parentDetailList.get(0).getSupplierName());
@@ -840,7 +840,7 @@ public class SubcontractReturnServiceImpl extends SuperServiceImpl<SubcontractRe
         //委外退料明细
         List<SubcontractReturnDetailEntity> subcontractReturnDetailList = subcontractReturnDetailService.listByMainIds(Collections.singletonList(entity.getId()));
         if (CollUtil.isEmpty(subcontractReturnDetailList)) {
-            throw new ServiceException(ApiError.ERROR_SUBCONTRACT_RETURN_DETAIL_NOT_EXIST);
+            throw new ServiceException(ApiError.PO_SUBCONTRACT_RETURN_DETAIL_NOT_EXIST);
         }
         List<InOutStockDTO> inOutStockList = new ArrayList<>();
         for (SubcontractReturnDetailEntity detailEntity : subcontractReturnDetailList) {

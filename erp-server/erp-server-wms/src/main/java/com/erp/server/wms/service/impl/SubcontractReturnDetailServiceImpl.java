@@ -69,7 +69,7 @@ public class SubcontractReturnDetailServiceImpl extends SuperServiceImpl<Subcont
         //委外退料主表信息
         SubcontractReturnEntity subcontractReturnEntity = subcontractReturnService.getById(mainId);
         if (ObjectUtil.isEmpty(subcontractReturnEntity)) {
-            throw new ServiceException(ApiError.ERROR_SUBCONTRACT_RETURN_NOT_EXIST);
+            throw new ServiceException(ApiError.PO_SUBCONTRACT_RETURN_NOT_EXIST);
         }
 
         // 数据处理
@@ -109,7 +109,7 @@ public class SubcontractReturnDetailServiceImpl extends SuperServiceImpl<Subcont
         //委外退料主表信息
         SubcontractReturnEntity subcontractReturnEntity = subcontractReturnService.getById(mainId);
         if (ObjectUtil.isEmpty(subcontractReturnEntity)) {
-            throw new ServiceException(ApiError.ERROR_SUBCONTRACT_RETURN_NOT_EXIST);
+            throw new ServiceException(ApiError.PO_SUBCONTRACT_RETURN_NOT_EXIST);
         }
 
         // 数据处理
@@ -286,7 +286,7 @@ public class SubcontractReturnDetailServiceImpl extends SuperServiceImpl<Subcont
             //最大可退
             Integer maxReturnQty = totalIssueQty - totalReturnQty;
             if (entity.getReturnQty() > maxReturnQty) {
-                throw new ServiceException(ApiError.ERROR_SUBCONTRACT_RETURN_QTY_EXCEED,detailEntity.getSkuNo(),entity.getReturnQty(),maxReturnQty);
+                throw new ServiceException(ApiError.PO_SUBCONTRACT_RETURN_QTY_EXCEED,detailEntity.getSkuNo(),entity.getReturnQty(),maxReturnQty);
             }
         }
     }

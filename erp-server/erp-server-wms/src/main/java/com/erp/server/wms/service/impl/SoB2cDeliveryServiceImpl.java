@@ -661,7 +661,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             throw new ServiceException(ApiError.SO_DELIVERY_B2C_NOT_EXISTS);
         }
         if (SoB2cDeliveryStatusEnum.notFinishPrint().contains(soB2cDeliveryEntity.getStatus())) {
-            throw new ServiceException(ApiError.B2C_SO_DELIVERY_NOT_FINISH_PRINT,soB2cDeliveryEntity.getCode());
+            throw new ServiceException(ApiError.SO_B2C_DELIVERY_NOT_FINISH_PRINT_ONLY,soB2cDeliveryEntity.getCode());
         }
 
         //查询是否冻结
@@ -1288,7 +1288,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             List<TransferInfoEntity> collect = transferInfoEntities.stream().filter(e -> Objects.nonNull(e) && ApproveStatusEnum.APPROVE.getStatus().equals(e.getApproveStatus())).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(collect)){
                 List<String> codeList = collect.stream().map(TransferInfoEntity::getCode).distinct().collect(Collectors.toList());
-                throw new ServiceException(ApiError.ERROR_TRANSFER_ALREADY_APPROVED_MODIFY_FORBIDDEN, String.join(",", codeList));
+                throw new ServiceException(ApiError.WH_TRANSFER_ALREADY_APPROVED_MODIFY_FORBIDDEN, String.join(",", codeList));
             }
         }
         String transferWarehouseIdList = "";
@@ -1845,7 +1845,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             throw new ServiceException(ApiError.SO_DELIVERY_B2C_NOT_EXISTS);
         }
         if (SoB2cDeliveryStatusEnum.notFinishPrint().contains(soB2cDeliveryEntity.getStatus())) {
-            throw new ServiceException(ApiError.B2C_SO_DELIVERY_FINISH_PRINT,soB2cDeliveryEntity.getCode());
+            throw new ServiceException(ApiError.SO_B2C_DELIVERY_FINISH_PRINT_ONLY,soB2cDeliveryEntity.getCode());
         }
 
         //查询是否冻结
@@ -1927,7 +1927,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         List<String> paperSizeList = channelInfoList.stream().map(req -> req.getPaperSize()).distinct().collect(Collectors.toList());
         //打印配货单默认100*100不校验
         if (paperSizeList.size() > 1 && !SoB2cDeliveryPrintTypeEnum.ALLOCATE_CARGO_BILL.getCode().equals(param.getPrintType())) {
-            throw new ServiceException(ApiError.PAPER_SIZE_INCONSISTENT_NOT_PRINT);
+            throw new ServiceException(ApiError.COMMON_PAPER_SIZE_INCONSISTENT_NOT_PRINT);
         }
 
 
@@ -2589,7 +2589,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         }
         String warehouseId = soB2cDeliveryDetailList.get(0).getWarehouseId();
         if (CharSequenceUtil.isBlank(warehouseId)){
-            throw new ServiceException(ApiError.ERROR_SO_B2C_SHIPMENT_WAREHOUSE_REQUIRED, entity.getCode());
+            throw new ServiceException(ApiError.SO_B2C_SHIPMENT_WAREHOUSE_REQUIRED, entity.getCode());
         }
         Boolean isNotOutbound = Objects.nonNull(entity.getIsNotOutbound()) && Boolean.TRUE.equals(entity.getIsNotOutbound());
         List<PickingListsDTO.SourceView> pickingList = null;

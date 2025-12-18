@@ -123,7 +123,7 @@ public class PurchaseApplicationExcelListener extends AnalysisEventListener<Purc
                 List<WarehouseDTO.ListDTO> warehouseList = wmsTaskFeign.listWarehouseByNameList(Collections.singletonList(importExcelDTO.getDestWarehouseName()));
 //                WarehouseDTO.UpdateDTO warehouseDTO = warehouseList.stream().filter(obj -> obj.getName().equals(importExcelDTO.getDestWarehouseName())).findFirst().orElse(null);
                 if (CollUtil.isEmpty(warehouseList)) {
-                    errorMsgList.add(ApiError.WAREHOUSE_NOT_EXIST_NO_PERMISSION.getMsg());
+                    errorMsgList.add(ApiError.WH_NOT_EXIST_OR_NO_PERMISSION.getMsg());
                 } else {
                     excelDTO.setDestWarehouseId(warehouseList.get(0).getId());
                 }

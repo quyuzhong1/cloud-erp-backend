@@ -274,7 +274,7 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
 
         //已处理不可重复操作
         if (SoB2cDeliveryInterceptStatusEnum.HANDLE.getStatus().equals(entity.getHandleStatus()) || SoB2cDeliveryInterceptStatusEnum.CANCEL.getStatus().equals(entity.getHandleStatus())) {
-            throw new ServiceException(ApiError.HANDLE_STATUS_IS_HANDLE_OR_CANCEL_NOT);
+            throw new ServiceException(ApiError.LOGISTICS_HANDLE_STATUS_ALREADY_HANDLED_OR_CANCEL_NOT);
         }
 
         List<SoB2cEntity> soB2cEntityList = soB2cFeign.listByIds(Collections.singletonList(entity.getSourceId()));
@@ -374,7 +374,7 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
         }
         //已处理不可重复操作
         if (SoB2cDeliveryInterceptStatusEnum.HANDLE.getStatus().equals(entity.getHandleStatus())) {
-            throw new ServiceException(ApiError.STATUS_IS_HANDLE_NOT_OPERATE);
+            throw new ServiceException(ApiError.BILL_STATUS_ALREADY_HANDLED_NOT_OPERATE);
         }
 
         LoginUser userInfo = UserContext.getDefaultLoginUser();
@@ -396,7 +396,7 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
                     //已中转
                     String alreadyTransfer = TransferStatusEnum.SUCCESS.getCode();
                     if (alreadyPackage.equals(packageStatus) || alreadyTransfer.equals(transferStatus)) {
-                        throw new ServiceException(ApiError.ALREADY_PACKAGE_TRANSFER_NOT_INTERCEPT, entity.getCode());
+                        throw new ServiceException(ApiError.LOGISTICS_ALREADY_PACKAGE_TRANSFER_NOT_INTERCEPT, entity.getCode());
                     }
                 }
             }

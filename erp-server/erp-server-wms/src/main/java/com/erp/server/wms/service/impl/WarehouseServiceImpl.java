@@ -644,7 +644,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
                 WarehouseMappingEntity checkThirdWarehouseNameExist = warehouseMappingService.checkThirdWarehouseNameExist(dto.getThirdWarehouseName(), PlatformDictEnum.ALI_EXPRESS.getCode());
                 if (ObjectUtil.isNotEmpty(checkThirdWarehouseNameExist)) {
                     WarehouseEntity entity = this.getById(checkThirdWarehouseNameExist.getWarehouseId());
-                    throw new ServiceException(ApiError.THIRD_WAREHOUSE_NAME_EXIST, PlatformDictEnum.ALI_EXPRESS.getCode(), dto.getThirdWarehouseName(), entity.getName());
+                    throw new ServiceException(ApiError.WH_THIRD_WAREHOUSE_NAME_EXIST, PlatformDictEnum.ALI_EXPRESS.getCode(), dto.getThirdWarehouseName(), entity.getName());
                 }
                 WarehouseMappingDTO.AddDTO addDTO = new WarehouseMappingDTO.AddDTO();
                 addDTO.setName(dto.getThirdWarehouseName());
@@ -748,11 +748,11 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
             if (ObjectUtil.isNotEmpty(mappingViewByDictPlatform)) {
                 updateDTO.setId(mappingViewByDictPlatform.getId());
                 if (ObjectUtil.isNotEmpty(checkThirdWarehouseNameExist) && !checkThirdWarehouseNameExist.getId().equals(mappingViewByDictPlatform.getId())) {
-                    throw new ServiceException(ApiError.THIRD_WAREHOUSE_NAME_EXIST, PlatformDictEnum.ALI_EXPRESS.getCode(), dto.getThirdWarehouseName());
+                    throw new ServiceException(ApiError.WH_THIRD_WAREHOUSE_NAME_EXIST, PlatformDictEnum.ALI_EXPRESS.getCode(), dto.getThirdWarehouseName());
                 }
             } else {
                 if (ObjectUtil.isNotEmpty(checkThirdWarehouseNameExist)) {
-                    throw new ServiceException(ApiError.THIRD_WAREHOUSE_NAME_EXIST, PlatformDictEnum.ALI_EXPRESS.getCode(), dto.getThirdWarehouseName());
+                    throw new ServiceException(ApiError.WH_THIRD_WAREHOUSE_NAME_EXIST, PlatformDictEnum.ALI_EXPRESS.getCode(), dto.getThirdWarehouseName());
                 }
             }
             updateDTO.setName(dto.getThirdWarehouseName());
@@ -948,7 +948,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         viewParamDTO.setSysId(warehouseId);
         Boolean hasThirdMapping = dmpThirdMappingFeign.getWhetherBind(viewParamDTO);
         if (!hasThirdMapping){
-            throw new ServiceException(ApiError.EXIST_THIRD_WAREHOUSE_MAPPING,warehouseName);
+            throw new ServiceException(ApiError.WH_THIRD_WAREHOUSE_MAPPING_EXIST,warehouseName);
         }
     }
 

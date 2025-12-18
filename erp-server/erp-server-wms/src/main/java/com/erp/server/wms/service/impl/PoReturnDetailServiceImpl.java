@@ -223,10 +223,10 @@ public class PoReturnDetailServiceImpl extends SuperServiceImpl<PoReturnDetailMa
         }
         for (PoReturnDetailEntity detailEntity : listDetail) {
             if (CharSequenceUtil.equals(returnMode,ReturnModeEnum.REPLENISHMENT.getCode()) && MathUtil.compareTo(detailEntity.getReplenishQty(),MathUtil.ZERO)  <= 0) {
-                throw new ServiceException(ApiError.ERROR_PO_RETURN_REPLENISH_QTY_CHECK, detailEntity.getSkuNo());
+                throw new ServiceException(ApiError.PO_RETURN_REPLENISH_QTY_CHECK, detailEntity.getSkuNo());
             }
             if (CharSequenceUtil.equals(returnMode,ReturnModeEnum.DEDUCTION.getCode()) && MathUtil.compareTo(detailEntity.getDeductAmountQty(),MathUtil.ZERO)  <= 0) {
-                throw new ServiceException(ApiError.ERROR_PO_RETURN_DEDUCT_AMOUNT_QTY_CHECK, detailEntity.getSkuNo());
+                throw new ServiceException(ApiError.PO_RETURN_DEDUCT_AMOUNT_QTY_CHECK, detailEntity.getSkuNo());
             }
         }
     }
@@ -293,7 +293,7 @@ public class PoReturnDetailServiceImpl extends SuperServiceImpl<PoReturnDetailMa
         //仓库
         WarehouseEntity warehouse = warehouseService.getById(dto.getReturnWarehouseId());
         if (ObjectUtils.isEmpty(warehouse)) {
-            throw new ServiceException(ApiError.WH_NOT_FOUND);
+            throw new ServiceException(ApiError.WH_PARAM_NOT_FOUND);
         }
         List<PoReturnDetailEntity> addList = new ArrayList<>();
         Integer returnQty = 0;

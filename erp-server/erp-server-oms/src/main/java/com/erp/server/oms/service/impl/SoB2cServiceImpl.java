@@ -3408,7 +3408,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             if (ObjectUtil.isNotEmpty(cfgSettingEntity) && ObjectUtil.isNotEmpty(cfgSettingEntity.getDataJson())) {
                 CfgSettingValueDTO.B2cDeliveryInterceptDTO dto = BeanUtil.toBean(cfgSettingEntity.getDataJson(), CfgSettingValueDTO.B2cDeliveryInterceptDTO.class);
                 if (Objects.nonNull(dto) && Objects.nonNull(dto.getB2cDeliveryIntercept()) && dto.getB2cDeliveryIntercept()) {
-                    throw new ServiceException(ApiError.ERROR_DELIVERY_INTERCEPT_READY_PACKAGED, entity.getCode());
+                    throw new ServiceException(ApiError.LOGISTICS_DELIVERY_INTERCEPT_READY_PACKAGED, entity.getCode());
                 }
             }
         }
@@ -11325,7 +11325,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                             detailEntity.setWarehouseId(warehouseId);
                             detailEntity.setWarehouseName(detail.getWarehouseName());
                         }else {
-                            msgList.add(ApiError.WAREHOUSE_NOT_EXIST_NO_PERMISSION.getMsg());
+                            msgList.add(ApiError.WH_NOT_EXIST_OR_NO_PERMISSION.getMsg());
                         }
                     }
                     detailEntity.setMainId(soB2cEntity.getId());

@@ -254,12 +254,12 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         List<TransferInfoDetailDTO.AddDTO> detailList = dto.getDetailList();
         if(CollUtil.isEmpty(detailList)){
             log.warn("调拨单的明细条数为0 dto={}", JSONUtil.toJsonStr(dto));
-            throw new ServiceException(ApiError.ERROR_DETAIL_IS_ZERO, "调拨单");
+            throw new ServiceException(ApiError.BILL_DETAIL_IS_ZERO, "调拨单");
         }
         List<TransferInfoDetailDTO.AddDTO> addDetailList = detailList.stream().filter(item -> item.getQty() > 0).collect(Collectors.toList());
         if(CollUtil.isEmpty(addDetailList)){
             log.warn("调拨单大于0的明细条数为0 dto={}", JSONUtil.toJsonStr(dto));
-            throw new ServiceException(ApiError.ERROR_DETAIL_IS_ZERO, "调拨单数量大于0");
+            throw new ServiceException(ApiError.BILL_DETAIL_IS_ZERO, "调拨单数量大于0");
         }
         dto.setDetailList(addDetailList);
         TransferInfoEntity entity = new TransferInfoEntity();
@@ -336,7 +336,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             throw new ServiceException(ApiError.WH_TRANSFER_DIRECT_NOT_FOUND);
         }
         if (CharSequenceUtil.isNotBlank(old.getBatchNo())){
-            throw new ServiceException(ApiError.ERROR_TRANSFER_AUTO_CREATED_DIRECT_FORBIDDEN);
+            throw new ServiceException(ApiError.WH_TRANSFER_AUTO_CREATED_DIRECT_FORBIDDEN);
         }
         if (!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(old.getApproveStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(old.getApproveStatus())) {
             throw new ServiceException(ApiError.BILL_UPDATE_STATUS_NOT_ALLOWED);
@@ -2012,7 +2012,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
                 try {
                     this.disApprove(entity, Boolean.TRUE, Boolean.TRUE);
                 } catch (Exception e) {
-                    throw new ServiceException(ApiError.TRANSFER_INFO_ERROR_NOT_CANCEL_PROCESS, entity.getCode());
+                    throw new ServiceException(ApiError.WH_TRANSFER_INFO_ERROR_NOT_CANCEL_PROCESS, entity.getCode());
                 }
             }
 
@@ -2021,7 +2021,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
                 try {
                     this.cancelProcess(Collections.singletonList(entity.getId()));
                 } catch (Exception e) {
-                    throw new ServiceException(ApiError.TRANSFER_INFO_CANCEL_PROCESS_ERROR, entity.getCode());
+                    throw new ServiceException(ApiError.WH_TRANSFER_INFO_CANCEL_PROCESS_ERROR, entity.getCode());
                 }
             }
 

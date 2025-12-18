@@ -295,7 +295,7 @@ public abstract class AbstractInventoryServiceImpl implements InventoryStockServ
                     .orElse(null);
             if (null != lastDTO && (billDate.isBefore(lastDTO.getBillDate()) || billDate.equals(lastDTO.getBillDate()))) {
                 // 已有盘盈盘亏单【{}】不允许操作【{}】之前单据
-                ServiceException.runError(ApiError.ERROR_STOCKTAKING_PROFIT_LOSS_CLOSED, lastDTO.getCode(), lastDTO.getBillDate().format(DateTimeFormatter.ISO_LOCAL_DATE));
+                ServiceException.runError(ApiError.WH_STOCKTAKING_PROFIT_LOSS_CLOSED, lastDTO.getCode(), lastDTO.getBillDate().format(DateTimeFormatter.ISO_LOCAL_DATE));
             }
         }
     }
@@ -354,7 +354,7 @@ public abstract class AbstractInventoryServiceImpl implements InventoryStockServ
         // 仓库信息
         WarehouseDTO.UpdateDTO warehouseInfo = warehouseService.detailWithCache(param.getWarehouseId());
         if (Objects.isNull(warehouseInfo) || CharSequenceUtil.isEmpty(warehouseInfo.getId())) {
-            ServiceException.runError(ApiError.WH_NOT_FOUND);
+            ServiceException.runError(ApiError.WH_PARAM_NOT_FOUND);
         }
         // 查询最新库存关账记录
         Map<String, LocalDate> closedDateMap = inventoryClosedRecordService.mapByOrgId(InventoryClosedRecordEnum.STK.getCode());
@@ -408,7 +408,7 @@ public abstract class AbstractInventoryServiceImpl implements InventoryStockServ
         // 仓库信息
         WarehouseDTO.UpdateDTO warehouseInfo = warehouseService.detailWithCache(param.getWarehouseId());
         if (Objects.isNull(warehouseInfo) || CharSequenceUtil.isEmpty(warehouseInfo.getId())) {
-            throw new ServiceException(ApiError.WH_NOT_FOUND);
+            throw new ServiceException(ApiError.WH_PARAM_NOT_FOUND);
         }
         // 查询最新库存关账记录
         Map<String, LocalDate> closedDateMap = inventoryClosedRecordService.mapByOrgId(InventoryClosedRecordEnum.STK.getCode());
@@ -620,7 +620,7 @@ public abstract class AbstractInventoryServiceImpl implements InventoryStockServ
         // 仓库信息
         WarehouseDTO.UpdateDTO warehouseDetail = warehouseService.detailWithCache(warehouseId);
         if (Objects.isNull(warehouseDetail) || CharSequenceUtil.isEmpty(warehouseDetail.getId())) {
-            ServiceException.runError(ApiError.WH_NOT_FOUND);
+            ServiceException.runError(ApiError.WH_PARAM_NOT_FOUND);
         }
         // 仓库组织
         String orgId = warehouseDetail.getOrgId();
@@ -667,7 +667,7 @@ public abstract class AbstractInventoryServiceImpl implements InventoryStockServ
                 Integer realInventoryTotal = inventoryService.getRealInventoryTotal(warehouseId, skuId);
                 log.info("仓库【{}】，SKU【{}】，已分配库存【{}】，实体参可用库存【{}】", warehouseDetail.getName(), skuNo, virtualQty, realInventoryTotal);
                 if (Math.abs(qty) > realInventoryTotal - virtualQty) {
-                    ServiceException.runError(ApiError.ERROR_CHECK_OUT_VIRTUAL_INVENTORY, skuNo, warehouseDetail.getName(), virtualQty, realInventoryTotal - virtualQty);
+                    ServiceException.runError(ApiError.VM_CHECK_OUT_VIRTUAL_INVENTORY, skuNo, warehouseDetail.getName(), virtualQty, realInventoryTotal - virtualQty);
                 }
             }
         }
@@ -708,7 +708,7 @@ public abstract class AbstractInventoryServiceImpl implements InventoryStockServ
         // 仓库信息
         WarehouseDTO.UpdateDTO warehouseDetail = warehouseService.detailWithCache(warehouseId);
         if (Objects.isNull(warehouseDetail) || CharSequenceUtil.isEmpty(warehouseDetail.getId())) {
-            ServiceException.runError(ApiError.WH_NOT_FOUND);
+            ServiceException.runError(ApiError.WH_PARAM_NOT_FOUND);
         }
         Boolean warehouseAllowNegativeInventory = warehouseDetail.getAllowNegativeInventory();
         log.warn("仓库【{}】【{}】负库存", warehouseDetail.getName(), Objects.equals(warehouseAllowNegativeInventory, Boolean.TRUE) ? "允许" : "不允许");

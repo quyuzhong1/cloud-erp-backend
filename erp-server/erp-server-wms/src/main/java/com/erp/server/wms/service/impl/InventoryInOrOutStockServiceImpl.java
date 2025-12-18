@@ -70,7 +70,7 @@ public class InventoryInOrOutStockServiceImpl extends AbstractInventoryServiceIm
 
                 WarehouseDTO.UpdateDTO warehouseDetail = warehouseMap.computeIfAbsent(param.getWarehouseId(), v -> warehouseService.detailWithCache(v));
                 if (Objects.isNull(warehouseDetail) || CharSequenceUtil.isEmpty(warehouseDetail.getId())) {
-                    ServiceException.runError(ApiError.WH_NOT_FOUND);
+                    ServiceException.runError(ApiError.WH_PARAM_NOT_FOUND);
                 }
                 if (StrUtils.isNotEmpty(param.getWarehouseLocation())) {
                     WarehouseLocationEntity warehouseLocation = warehouseLocationMap.computeIfAbsent(param.getWarehouseLocation(), v -> warehouseLocationService.findByWarehouseIdAndCode(param.getWarehouseId(), v));

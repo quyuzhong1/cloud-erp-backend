@@ -1283,7 +1283,7 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
             if(DeliveryPlanTypeEnum.FBA.getCode().equals(wmsDeliveryPlanEntity.getType())){
                 long count = detailList.stream().filter(obj -> CharSequenceUtil.isBlank(obj.getFnSku())).count();
                 if (count > 0) {
-                    throw new ServiceException(ApiError.ERROR_FBA_FNSKU_NOT_BLANK);
+                    throw new ServiceException(ApiError.WH_FBA_FNSKU_NOT_BLANK);
                 }
             }
 

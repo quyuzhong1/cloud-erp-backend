@@ -230,7 +230,7 @@ public class PAUpdateBillStatusHandler implements CreateBillHandler {
             if (ObjectUtil.isNotEmpty(destWarehouseName)) {
                 List<WarehouseEntity> list = FeignQuery.create(WarehouseEntity.class).eq(WarehouseEntity::getName, destWarehouseName).list();
                 if (ObjectUtil.isEmpty(list)) {
-                    throw new ServiceException(ApiError.ERROR_WH_NOT_FOUND, destWarehouseName);
+                    throw new ServiceException(ApiError.WH_PARAM_NOT_FOUND, destWarehouseName);
                 }
                 detailMap.put("destWarehouseId", list.get(0).getId());
             }

@@ -238,7 +238,7 @@ public class MachineDetailServiceImpl extends SuperServiceImpl<MachineDetailMapp
         }
         WarehouseEntity warehouseEntity = warehouseService.getById(machineInfoEntity.getWarehouseId());
         if (ObjectUtils.isEmpty(warehouseEntity)) {
-            throw new ServiceException(ApiError.WH_NOT_FOUND);
+            throw new ServiceException(ApiError.WH_PARAM_NOT_FOUND);
         }
         //仓位必填验证
         checkWarehouseLocation(warehouseEntity,newList);
