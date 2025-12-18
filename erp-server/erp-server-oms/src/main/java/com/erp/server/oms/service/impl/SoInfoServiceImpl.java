@@ -1107,7 +1107,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             item.setAvailableQty(availableQty);
 
             //发货通知数量
-            if (CollectionUtils.isNotEmpty(soDeliveryNoticeDetailList)) {
+            List<SoDeliveryNoticeDetailEntity> soDeliveryNoticeDetailEntityList = soDeliveryNoticeDetailList.stream().filter(obj -> obj.getSourceDetailId().equals(item.getDetailId())).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(soDeliveryNoticeDetailEntityList)) {
                 Integer effectiveNoticeQty = soDeliveryNoticeDetailList.stream().filter(obj -> obj.getSourceDetailId().equals(item.getDetailId())).map(SoDeliveryNoticeDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
                 effectiveNoticeQty = effectiveNoticeQty * item.getPerBoxQty();
                 item.setEffectiveNoticeQty(effectiveNoticeQty);
@@ -1116,7 +1117,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 Integer remainingNoticeQty = item.getQty() - effectiveNoticeQty;
                 item.setRemainingNoticeQty(remainingNoticeQty > 0 ? remainingNoticeQty : 0);
             }
-            if (CollUtil.isNotEmpty(b2bThirdDeliveryDetailList)){
+            List<B2bThirdDeliveryDetailEntity> b2bThirdDeliveryDetailEntityList = b2bThirdDeliveryDetailList.stream().filter(obj -> obj.getSoDetailId().equals(item.getDetailId())).collect(Collectors.toList());
+            if (CollUtil.isNotEmpty(b2bThirdDeliveryDetailEntityList)){
                 Integer effectiveNoticeQty = b2bThirdDeliveryDetailList.stream().filter(obj -> obj.getSoDetailId().equals(item.getDetailId()) && !ThirdDeliveryStatusEnum.CANCEL_DELIVERY.getCode().equals(obj.getStatus())).map(B2bThirdDeliveryDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
                 item.setEffectiveNoticeQty(effectiveNoticeQty);
 
