@@ -69,4 +69,12 @@ public class DmpThirdMappingFeignController {
     public ThirdMappingDTO.MappingViewDTO view(@RequestBody @Validated ThirdMappingDTO.ViewParamDTO viewParamDTO) {
         return thirdMappingService.view(viewParamDTO);
     }
+
+    /**
+     * 查询三方仓库映射
+     */
+    @GetMapping("/getShopByThirdCode")
+    ThirdMappingEntity getShopByThirdCode(@RequestParam String thirdCode, @RequestParam String sysType){
+        return thirdMappingService.getShopByThirdCode(thirdCode, sysType);
+    }
 }

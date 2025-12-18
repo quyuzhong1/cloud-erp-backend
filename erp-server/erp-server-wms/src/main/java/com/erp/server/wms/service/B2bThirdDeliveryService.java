@@ -5,6 +5,7 @@ import com.erp.model.wms.entity.B2bThirdDeliveryEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.wms.dto.B2bThirdDeliveryDTO;
+import com.erp.model.wms.entity.SoOutstockEntity;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -110,5 +111,5 @@ public interface B2bThirdDeliveryService extends SuperService<B2bThirdDeliveryEn
 
     List<B2bThirdDeliveryEntity> listBySoIds(List<String> soIds);
 
-    void submitApprove(String outstockId);
+    void submitApprove(SoOutstockEntity soOutstockEntity);
 }

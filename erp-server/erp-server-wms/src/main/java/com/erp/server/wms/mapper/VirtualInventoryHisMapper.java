@@ -26,7 +26,7 @@ public interface VirtualInventoryHisMapper extends BaseMapper<VirtualInventoryHi
      * @date 2024/12/11 10:12
      * @return List<AddDTO>
      */
-    List<VirtualInventoryHisDTO.AddDTO> listVirtualInventoryHis(@Param("localDate") LocalDate localDate);
+    List<VirtualInventoryHisDTO.AddDTO> listVirtualInventoryHis(@Param("virtualInventoryId")String virtualInventoryId,@Param("localDate") LocalDate localDate);
     /**
      * 根据关联id和日期查询
      * @author will

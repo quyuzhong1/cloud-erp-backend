@@ -365,7 +365,7 @@ public class DmpInoutController extends BaseController {
     		try {
 				List<DmpOutputTaskRecordEntity> dmpOutputTaskRecordEntityList = dmpOutputTaskRecordService.lambdaQuery()
 				    	.in(DmpOutputTaskRecordEntity::getStatus, Arrays.asList(DmpOutputTaskRecordStatusEnum.ERROR.getCode()))
-				    	.last(" and response_data like '旺店通出库消费数据失败%库存不足%' and response_data not like '%虚拟库存不足%' ")
+				    	.last(" and response_data like '旺店通出库消费数据失败%库存不足%' and response_data not like '%虚拟%' ")
 				    	.list();
 					Map<String, WdtInsufficientInventoryDTO> map = new TreeMap<>();
 					if(CollUtil.isNotEmpty(dmpOutputTaskRecordEntityList)) {

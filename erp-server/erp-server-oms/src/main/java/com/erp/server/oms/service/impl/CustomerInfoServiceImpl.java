@@ -770,10 +770,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
 
         String code = customer.getCode();
 
-        if(!customer.getCountryId().equals(dto.getCountryId()) &&
-                (customer.getPlatformType().equals(PlatformDictEnum.AMAZON.getCode()) ||customer.getPlatformType().equals(PlatformDictEnum.SHOPEE.getCode()) )){
-            throw new ServiceException("B2B客户平台归属为shopee和亚马逊时，国家字段不允许修改");
-        }
+
         //旧的
         CustomerInfoEntity old = new CustomerInfoEntity();
 

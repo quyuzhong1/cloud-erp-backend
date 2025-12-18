@@ -378,7 +378,9 @@ public class PayableInfoServiceImpl extends SuperServiceImpl<PayableInfoMapper, 
         Map<String, PurchaseOrderEntity> poMap = CollUtil.isEmpty(poList) ? new HashMap<>() : poList.stream().collect(Collectors.toMap(PurchaseOrderEntity::getId, Function.identity()));
         for (PoReconciliationDetailEntity detailEntity : poReconciliationDetailList) {
             PurchaseOrderEntity purchaseOrderEntity = poMap.get(detailEntity.getPoId());
-            if (ObjectUtil.isEmpty(purchaseOrderEntity) || CharSequenceUtil.equals(purchaseOrderEntity.getType(), PurchaseOrderTypeEnum.ENUM_PURCHASE.getCode())) {
+            if (ObjectUtil.isEmpty(purchaseOrderEntity)
+                    || CharSequenceUtil.equals(purchaseOrderEntity.getType(), PurchaseOrderTypeEnum.ENUM_PURCHASE.getCode())
+                    || CharSequenceUtil.equals(purchaseOrderEntity.getType(), PurchaseOrderTypeEnum.ENUM_RETURN.getCode())) {
                 if (CharSequenceUtil.equals(detailEntity.getSourceType(),SourceTypeEnum.PO_INSTOCK.getCode())) {
                     detailEntity.setPayableType(PayableTypeEnum.PURCHASE_INSTOCK.getCode());
                 } else if (CharSequenceUtil.equals(detailEntity.getSourceType(),SourceTypeEnum.PO_RETURN.getCode())) {
