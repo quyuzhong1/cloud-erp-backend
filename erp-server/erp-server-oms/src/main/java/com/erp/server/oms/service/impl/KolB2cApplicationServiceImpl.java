@@ -175,7 +175,7 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
 
         //国家
         List<DictCountryDTO.ListDTO> dictCountryList = sysUserFeign.countryList();
-        Map<String, String> dictCountryMap = dictCountryList.stream().collect(Collectors.toMap(DictCountryDTO.ListDTO::getNameCn, DictCountryDTO.ListDTO::getId));
+        Map<String, String> dictCountryMap = dictCountryList.stream().collect(Collectors.toMap(DictCountryDTO.ListDTO::getId, DictCountryDTO.ListDTO::getNameCn));
         //省市区
         List<DictCityEntity> dictCityEntities = sysUserFeign.listByCountryCode(DictValueEnum.CN.getCode());
         Map<String, List<DictCityEntity>> dictCityGroup = dictCityEntities.stream().filter(e -> e.getDisabled().equals(Boolean.FALSE)).collect(Collectors.groupingBy(DictCityEntity::getType));
@@ -186,61 +186,62 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         List<KolB2cApplicationAddressEntity> kolB2cApplicationAddressEntities = BeanMapper.copyList(addDTO.getAddressList(), KolB2cApplicationAddressEntity.class);
         for (KolB2cApplicationAddressEntity entity : kolB2cApplicationAddressEntities) {
             entity.setMainId(id);
-            //国家
-            String countryName = dictCountryMap.getOrDefault(entity.getCountryId(), "");
-            if(StringUtils.isNotBlank(countryName)){
-                entity.setCountryName(countryName);
-            }else {
-                throw new ServiceException("国家名称不存在");
-            }
-            checkAndSetProvinceCity(entity, provinceMap, cityMap, districtMap);
+            checkAndSetAddress(entity, dictCountryMap, provinceMap, cityMap, districtMap);
         }
         kolB2cApplicationAddressService.saveBatch(kolB2cApplicationAddressEntities);
 
         return new BaseResultDTO.AddDTO(kolB2cApplicationEntity.getId(), code);
     }
 
-    //国内校验id 国外校验name
-    private static void checkAndSetProvinceCity(KolB2cApplicationAddressEntity kolB2cApplicationAddressEntity, Map<String, String> provinceMap, Map<String, String> cityMap, Map<String, String> districtMap) {
-        if(kolB2cApplicationAddressEntity.getCountryId().equals(DictValueEnum.CN.getCode())){
+
+    //校验并设置国家省市区
+    private static void checkAndSetAddress(KolB2cApplicationAddressEntity KolB2cApplicationAddressEntity, Map<String, String> dictCountryMap, Map<String, String> provinceMap, Map<String, String> cityMap, Map<String, String> districtMap) {
+        //国家
+        String countryName = dictCountryMap.getOrDefault(KolB2cApplicationAddressEntity.getCountryId(), "");
+        if(StringUtils.isNotBlank(countryName)){
+            KolB2cApplicationAddressEntity.setCountryName(countryName);
+        }else {
+            throw new ServiceException("国家名称不存在");
+        }
+        if(KolB2cApplicationAddressEntity.getCountryId().equals(DictValueEnum.CN.getCode())){
             //省
-            if(StringUtils.isBlank(kolB2cApplicationAddressEntity.getProvinceId())){
+            if(StringUtils.isBlank(KolB2cApplicationAddressEntity.getProvinceId())){
                 throw new ServiceException("省不能为空");
             }
-            String province = provinceMap.getOrDefault(kolB2cApplicationAddressEntity.getProvinceId(), "");
+            String province = provinceMap.getOrDefault(KolB2cApplicationAddressEntity.getProvinceId(), "");
             if(StringUtils.isNotBlank(province)){
-                kolB2cApplicationAddressEntity.setProvince(province);
+                KolB2cApplicationAddressEntity.setProvince(province);
             }else {
                 throw new ServiceException("省不存在");
             }
             //市
-            if(StringUtils.isBlank(kolB2cApplicationAddressEntity.getCityId())){
+            if(StringUtils.isBlank(KolB2cApplicationAddressEntity.getCityId())){
                 throw new ServiceException("市不能为空");
             }
-            String city = cityMap.getOrDefault(kolB2cApplicationAddressEntity.getCityId(), "");
+            String city = cityMap.getOrDefault(KolB2cApplicationAddressEntity.getCityId(), "");
             if(StringUtils.isNotBlank(city)){
-                kolB2cApplicationAddressEntity.setCity(city);
+                KolB2cApplicationAddressEntity.setCity(city);
             }else {
                 throw new ServiceException("市不存在");
             }
             //区域
-            if(StringUtils.isBlank(kolB2cApplicationAddressEntity.getDistrictId())){
-                String district = districtMap.getOrDefault(kolB2cApplicationAddressEntity.getDistrictId(), "");
+            if(StringUtils.isNotBlank(KolB2cApplicationAddressEntity.getDistrictId())){
+                String district = districtMap.getOrDefault(KolB2cApplicationAddressEntity.getDistrictId(), "");
                 if(StringUtils.isNotBlank(district)){
-                    kolB2cApplicationAddressEntity.setDistrict(district);
+                    KolB2cApplicationAddressEntity.setDistrict(district);
                 }else {
-                    if(kolB2cApplicationAddressEntity.getCountryId().equals(DictValueEnum.CN.getCode())){
-                        throw new ServiceException("区域不存在");
-                    }
+                    throw new ServiceException("区域不存在");
                 }
+            }else {
+                throw new ServiceException("国家为中国大陆则区域不能为空");
             }
         }else{
             //省
-            if(StringUtils.isBlank(kolB2cApplicationAddressEntity.getProvince())){
+            if(StringUtils.isBlank(KolB2cApplicationAddressEntity.getProvince())){
                 throw new ServiceException("省不能为空");
             }
             //市
-            if(StringUtils.isBlank(kolB2cApplicationAddressEntity.getCity())){
+            if(StringUtils.isBlank(KolB2cApplicationAddressEntity.getCity())){
                 throw new ServiceException("市不能为空");
             }
         }
@@ -402,7 +403,7 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
 
         //国家
         List<DictCountryDTO.ListDTO> dictCountryList = sysUserFeign.countryList();
-        Map<String, String> dictCountryMap = dictCountryList.stream().collect(Collectors.toMap(DictCountryDTO.ListDTO::getNameCn, DictCountryDTO.ListDTO::getId));
+        Map<String, String> dictCountryMap = dictCountryList.stream().collect(Collectors.toMap(DictCountryDTO.ListDTO::getId, DictCountryDTO.ListDTO::getNameCn));
         //省市区
         List<DictCityEntity> dictCityEntities = sysUserFeign.listByCountryCode(DictValueEnum.CN.getCode());
         Map<String, List<DictCityEntity>> dictCityGroup = dictCityEntities.stream().filter(e -> e.getDisabled().equals(Boolean.FALSE)).collect(Collectors.groupingBy(DictCityEntity::getType));
@@ -413,14 +414,7 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         List<KolB2cApplicationAddressEntity> kolB2cApplicationAddressEntities = BeanMapper.copyList(addOrUpdateDTO.getAddressList(), KolB2cApplicationAddressEntity.class);
         for (KolB2cApplicationAddressEntity entity : kolB2cApplicationAddressEntities) {
             entity.setMainId(id);
-            //国家
-            String countryName = dictCountryMap.getOrDefault(entity.getCountryId(), "");
-            if(StringUtils.isNotBlank(countryName)){
-                entity.setCountryName(countryName);
-            }else {
-                throw new ServiceException("国家名称不存在");
-            }
-            checkAndSetProvinceCity(entity, provinceMap, cityMap, districtMap);
+            checkAndSetAddress(entity, dictCountryMap, provinceMap, cityMap, districtMap);
 
         }
         List<KolB2cApplicationAddressEntity> oldKolB2cApplicationAddressEntities = kolB2cApplicationAddressService.lambdaQuery().eq(KolB2cApplicationAddressEntity::getMainId, id).list();
