@@ -88,7 +88,7 @@ public class SyncB2bThirdWarehouseServiceImpl implements SyncB2bThirdWarehouseSe
             taskFeignDTO.setMqTag(RocketMqTagEnum.ERP_B2B_THIRD_WAREHOUSE_CANCEL_TAG.getName());
             taskFeignDTO.setMqData(JSONUtil.toJsonStr(resultMap));
             taskFeignDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
-            taskFeignDTO.setTargetPlatformName(PlatformDictEnum.getNameByCode(thirdWarehouseProvideCode));
+            taskFeignDTO.setTargetPlatformName(PlatformEnum.ERP.getDesc());
             taskFeignDTO.setSyncOperate(operate);
             return dmpMqFeign.saveTask(taskFeignDTO);
         }
@@ -98,7 +98,7 @@ public class SyncB2bThirdWarehouseServiceImpl implements SyncB2bThirdWarehouseSe
         wmsPushMsgEntity.setSourceCode(entity.getCode());
         wmsPushMsgEntity.setSourceType(SourceTypeEnum.B2B_THIRD_DELIVERY_CANCEL.getCode());
         wmsPushMsgEntity.setPushData(JSON.toJSONString(resultMap));
-        wmsPushMsgEntity.setTargetPlatform(thirdWarehouseProvideCode);
+        wmsPushMsgEntity.setTargetPlatform(PlatformEnum.ERP.getName());
         wmsPushMsgEntity.setSyncOperate(operate);
         wmsPushMsgService.save(wmsPushMsgEntity);
         return null;
@@ -145,7 +145,7 @@ public class SyncB2bThirdWarehouseServiceImpl implements SyncB2bThirdWarehouseSe
             taskFeignDTO.setMqTag(RocketMqTagEnum.ERP_B2B_THIRD_WAREHOUSE_CREATE_TAG.getName());
             taskFeignDTO.setMqData(JSONUtil.toJsonStr(resultMap));
             taskFeignDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
-            taskFeignDTO.setTargetPlatformName(PlatformDictEnum.getNameByCode(thirdWarehouseProvideCode));
+            taskFeignDTO.setTargetPlatformName(PlatformEnum.ERP.getDesc());
             taskFeignDTO.setSyncOperate(operate);
             return dmpMqFeign.saveTask(taskFeignDTO);
         }
@@ -155,7 +155,7 @@ public class SyncB2bThirdWarehouseServiceImpl implements SyncB2bThirdWarehouseSe
         wmsPushMsgEntity.setSourceCode(entity.getCode());
         wmsPushMsgEntity.setSourceType(SourceTypeEnum.B2B_THIRD_DELIVERY_CREATE.getCode());
         wmsPushMsgEntity.setPushData(JSON.toJSONString(resultMap));
-        wmsPushMsgEntity.setTargetPlatform(thirdWarehouseProvideCode);
+        wmsPushMsgEntity.setTargetPlatform(PlatformEnum.ERP.getName());
         wmsPushMsgEntity.setSyncOperate(operate);
         wmsPushMsgService.save(wmsPushMsgEntity);
 
