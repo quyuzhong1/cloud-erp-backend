@@ -240,7 +240,7 @@ public class DaMaiHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         DaMaiBaseResp<DaMaiCreateFbaOrderResp> resp = daMaiService.createFbaOrder(ThirdWarehouseContext.getAuthMap(), daMaiCreateFbaOrderRequest);
         log.warn(getPlatForm().getName()+"创建FBA出库单结果:{}", JSONUtil.toJsonStr(resp));
         if (Objects.isNull(resp)){
-            return failure("创建FBA出库单失败:resp为空");
+            return failure("创建FBA出库单失败:" + JSONUtil.toJsonStr(resp));
         }
         if(!isSuccess(resp)){
             return failure(resp.getMsg());
@@ -266,7 +266,7 @@ public class DaMaiHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         DaMaiBaseResp<String> resp = daMaiService.cancelOrder(ThirdWarehouseContext.getAuthMap(),daMaiCancelOrderRequest);
         log.warn(getPlatForm().getName()+"取消出库单结果:{}", JSONUtil.toJsonStr(resp));
         if (Objects.isNull(resp)){
-            return failure("取消出库单失败:resp为空");
+            return failure("取消出库单失败:" + JSONUtil.toJsonStr(resp));
         }
         if(!isSuccess(resp)){
             return failure(resp.getMsg());
