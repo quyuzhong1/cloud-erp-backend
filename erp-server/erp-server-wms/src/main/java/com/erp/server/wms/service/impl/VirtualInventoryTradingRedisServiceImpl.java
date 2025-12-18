@@ -235,6 +235,7 @@ public class VirtualInventoryTradingRedisServiceImpl implements VirtualInventory
         virtualTransFlowEntity.setOperationMode("approve");
 
         virtualTransFlowService.save(virtualTransFlowEntity);
+        transactionDTO.setId(virtualTransFlowEntity.getId());
 
         //可用入库时，生成库龄流水
         if (InventoryStatusEnum.USABLE.getCode().equals(transactionDTO.getInventoryStatus()) && transactionDTO.getQty() > 0) {
