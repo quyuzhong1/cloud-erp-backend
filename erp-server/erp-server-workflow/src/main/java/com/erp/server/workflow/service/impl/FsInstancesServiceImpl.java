@@ -326,6 +326,9 @@ public class FsInstancesServiceImpl implements FsInstancesService {
         processDTO.setApproveStatus(ApproveTypeEnum.getByCode(approveStatus));
         // 来自第三方系统的用户ID可能需要转换为您系统内部的用户ID
         SysUserThirdEntity user = sysUserFeign.getUserByThird(ProcessSourcePlatformEnum.FS.getCode().toUpperCase(), userId);
+        if (user == null) {
+            throw new ServiceException("未找到飞书用户对应的系统用户,飞书userId: " + userId);
+        }
         processDTO.setApproveUserId(user.getUserId());
         processDTO.setApproveTime(approveTime);
         processDTO.setComment(comment);
