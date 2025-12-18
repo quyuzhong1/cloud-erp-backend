@@ -71,9 +71,9 @@ select case when t.id is null then g.virtual_inventory_id else t.id end id,t.a_q
 select case when t.id is null then g.virtual_inventory_id else t.id end id,t.qty a_qty,g.qty b_qty from (select * from virtual_inventory where is_deleted = false) t 
 full join (select virtual_inventory_id,sum(qty) qty from virtual_trans_flow where is_deleted = false group by virtual_inventory_id) g on t.id = g.virtual_inventory_id) t 
 full join (select * from virtual_inventory_his where is_deleted = false and (virtual_inventory_id , date) in (select virtual_inventory_id,max(date) from virtual_inventory_his where is_deleted = false group by virtual_inventory_id)) g on t.id = g.virtual_inventory_id) t
-full join (select * from virtual_trans_flow where id in (
-select max(id) from virtual_trans_flow where (virtual_inventory_id , bill_date , trade_time) in (
-select virtual_inventory_id , bill_date,max(trade_time) trade_time from virtual_trans_flow where (virtual_inventory_id , bill_date) in (
+full join (select * from virtual_trans_flow where is_deleted = false and id in (
+select max(id) from virtual_trans_flow where is_deleted = false and (virtual_inventory_id , bill_date , trade_time) in (
+select virtual_inventory_id , bill_date,max(trade_time) trade_time from virtual_trans_flow where is_deleted = false and (virtual_inventory_id , bill_date) in (
 select virtual_inventory_id,max(bill_date) bill_date from virtual_trans_flow where is_deleted = false group by virtual_inventory_id)
 group by virtual_inventory_id , bill_date) group by virtual_inventory_id , bill_date , trade_time)) g on t.id = g.virtual_inventory_id) t
 where (t.b_qty != t.a_qty or t.b_qty != t.c_qty or t.b_qty != t.d_qty) 
