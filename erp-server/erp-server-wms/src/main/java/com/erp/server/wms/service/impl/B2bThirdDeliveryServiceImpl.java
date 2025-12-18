@@ -255,6 +255,8 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
 
         // 数据处理
         handleData(b2bThirdDeliveryEntity);
+        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_SFFH);
+        b2bThirdDeliveryEntity.setCode(code);
         log.info("编辑 开始修改B2B三方发货单数据，单号：【{}】", old.getCode());
         boolean save = super.updateById(b2bThirdDeliveryEntity);
         if(!save) {

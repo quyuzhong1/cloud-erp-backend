@@ -239,6 +239,9 @@ public class DaMaiHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         log.warn(getPlatForm().getName()+"创建FBA出库单请求:{}", JSONUtil.toJsonStr(daMaiCreateFbaOrderRequest));
         DaMaiBaseResp<DaMaiCreateFbaOrderResp> resp = daMaiService.createFbaOrder(ThirdWarehouseContext.getAuthMap(), daMaiCreateFbaOrderRequest);
         log.warn(getPlatForm().getName()+"创建FBA出库单结果:{}", JSONUtil.toJsonStr(resp));
+        if (Objects.isNull(resp)){
+            return failure("创建FBA出库单失败:" + JSONUtil.toJsonStr(resp) );
+        }
         if(!isSuccess(resp)){
             return failure(resp.getMsg());
         }
@@ -259,7 +262,12 @@ public class DaMaiHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     protected ApiResult<String> cancelOutboundBill(ThirdWarehouseCancelOutboundReq cancelOutboundReq) {
         DaMaiCancelOrderRequest daMaiCancelOrderRequest = new DaMaiCancelOrderRequest();
         daMaiCancelOrderRequest.setSoNo(cancelOutboundReq.getOrderCode());
+        log.warn(getPlatForm().getName()+"取消出库单请求:{}", JSONUtil.toJsonStr(daMaiCancelOrderRequest));
         DaMaiBaseResp<String> resp = daMaiService.cancelOrder(ThirdWarehouseContext.getAuthMap(),daMaiCancelOrderRequest);
+        log.warn(getPlatForm().getName()+"取消出库单结果:{}", JSONUtil.toJsonStr(resp));
+        if (Objects.isNull(resp)){
+            return failure("取消出库单失败:" + JSONUtil.toJsonStr(resp));
+        }
         if(!isSuccess(resp)){
             return failure(resp.getMsg());
         }
