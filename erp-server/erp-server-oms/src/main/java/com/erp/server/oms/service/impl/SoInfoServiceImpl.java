@@ -3508,6 +3508,14 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     @Override
     public List<BatchResultDTO> generateSoOut(List<SoInfoDTO.GenerateSoOutView> generateSoOutViewList) {
         Map<String,List<SoInfoDTO.GenerateSoOutView>> groupMap = generateSoOutViewList.stream().collect(Collectors.groupingBy(SoInfoDTO.GenerateSoOutView::getCode));
+
+        List<String> collect = generateSoOutViewList.stream().map(item -> item.getDetailId()).collect(Collectors.toList());
+        List<SoDetailEntity> soDetailEntities = soDetailService.listByIds(collect);
+        long count = soDetailEntities.stream().filter(item -> item.getPerBoxQty() > 1).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_PROHIBIT_PER_BOX_ONE_GEN_SO_OUT_STOCK);
+        }
+
         List<BatchResultDTO> batchResultDTOList = new ArrayList<>();
         groupMap.forEach((key,val)->{
             List<SoOutstockDTO.GenerateSoOutstockViewDTO> generateSoOutstockViewDTOList = new ArrayList<>();

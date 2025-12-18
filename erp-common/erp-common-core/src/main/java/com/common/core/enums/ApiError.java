@@ -1697,6 +1697,7 @@ public enum ApiError implements Serializable {
     ERROR_DELIVERY_SKU_FORBID_UPDATE(92202,"已下推发货通知单的明细，不能修改发货sku"),
     ERROR_BOX_QTY_LESS_NOTICE_QTY(92203,"发货箱数不能少于已下推的发货通知单数量"),
     ERROR_BOX_QTY_PROHIBIT_ONE(92204,"单箱数量不能为1"),
+    ERROR_PROHIBIT_PER_BOX_ONE_GEN_SO_OUT_STOCK(92205,"单箱数量大于1的销售订单不能下推销售出库单"),
     /**
      * TMS 错误
      * 从94000 开始
