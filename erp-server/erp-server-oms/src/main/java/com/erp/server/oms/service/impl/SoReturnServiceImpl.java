@@ -663,7 +663,9 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
             detailView.setReturnReasonDictName(ReturnReasonEnum.getName(detailEntity.getReturnReasonDict()));
             if(null != soDetailEntity){
                 detailView.setSalesQty(soDetailEntity.getQty());
-                Integer actualQty = soOutstockDetailEntities.stream().filter(detail -> soDetailEntity.getMainId().equals(detail.getSoId()) && detail.getSkuId().equals(soDetailEntity.getSkuId()) && detail.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(SoOutstockDetailEntity::getActualQty).reduce(MathUtil.ZERO, Integer::sum);
+                Integer actualQty = soOutstockDetailEntities.stream()
+                        .filter(detail -> soDetailEntity.getMainId().equals(detail.getSoId()) && detail.getSkuId().equals(soDetailEntity.getDeliverySkuId()) && detail.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus()))
+                        .map(item -> item.getActualQty() * soDetailEntity.getPerBoxQty()).reduce(MathUtil.ZERO, Integer::sum);
                 detailView.setDeliveryQty(actualQty);
                 detailView.setUnDeliveryQty(soDetailEntity.getQty() - actualQty);
                 detailView.setSalesAmount(soDetailEntity.getAmount());
