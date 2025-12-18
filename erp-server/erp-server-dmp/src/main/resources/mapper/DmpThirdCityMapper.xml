@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.dmp.mapper.DmpThirdCityMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.dmp.entity.DmpThirdCityEntity">
+       <result column="id" property="id" />
+       <result column="create_time" property="createTime" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="disabled" property="disabled" />
+       <result column="name" property="name" />
+       <result column="country_code" property="countryCode" />
+       <result column="parent_code" property="parentCode" />
+       <result column="code" property="code" />
+       <result column="type" property="type" />
+       <result column="index" property="index" />
+       <result column="source_platform" property="sourcePlatform" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        dtc.id AS id,
+dtc.create_time AS createTime,
+dtc.create_user_id AS createUserId,
+dtc.create_user_name AS createUserName,
+dtc.update_time AS updateTime,
+dtc.update_user_id AS updateUserId,
+dtc.update_user_name AS updateUserName,
+dtc.version AS version,
+dtc.is_deleted AS isDeleted,
+dtc.disabled AS disabled,
+dtc.name AS name,
+dtc.country_code AS countryCode,
+dtc.parent_code AS parentCode,
+dtc.code AS code,
+dtc.type AS type,
+dtc.index AS index,
+dtc.source_platform AS sourcePlatform
+    </sql>
+
+    <select id="getThirdByAddress" resultType="com.erp.model.dmp.dto.DmpThirdCityDTO$ThirdAddressMappingDTO">
+        select
+            tm.sys_id as sysId,
+            dtc.id AS id,
+            dtc.is_deleted AS isDeleted,
+            dtc.disabled AS disabled,
+            dtc.name AS name,
+            dtc.country_code AS countryCode,
+            dtc.parent_code AS parentCode,
+            dtc.code AS code,
+            dtc.type AS type,
+            dtc.index AS index,
+            dtc.source_platform AS sourcePlatform
+        from
+            third_mapping tm
+            inner join dmp_third_city dtc on dtc.id = tm.third_id and dtc.type = tm.type
+        where
+            tm.is_deleted = false
+          and tm.disabled = false
+          and tm.type in ('province','city','district')
+          and dtc.is_deleted = false
+          and dtc.disabled = false
+          and dtc.sourcePlatform = #{params.sourcePlatform}
+        <if test="params.sysIds != null and params.sysIds.size > 0">
+            and tm.sys_id in
+            <foreach collection="params.sysIds" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
+    </select>
+
+
+</mapper>

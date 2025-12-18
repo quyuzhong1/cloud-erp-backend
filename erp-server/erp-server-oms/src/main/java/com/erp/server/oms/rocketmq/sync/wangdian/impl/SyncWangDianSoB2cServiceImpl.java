@@ -2,59 +2,79 @@ package com.erp.server.oms.rocketmq.sync.wangdian.impl;
 
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSON;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
 import com.common.business.wrapper.FeignQuery;
-import com.common.core.enums.ApiError;
-import com.common.core.exception.ServiceException;
+import com.erp.model.dmp.dto.DmpThirdCityDTO;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.entity.ThirdMappingEntity;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
+import com.erp.model.dmp.enums.ThirdSysTypeEnum;
 import com.erp.model.oms.dto.KolSubB2cApplicationDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
+import com.erp.rpc.dmp.feign.DmpThirdCityFeign;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.oms.rocketmq.sync.wangdian.SyncWangDianSoB2cService;
 import com.erp.server.oms.service.*;
 import com.sdk.wangdian.sdk.api.sales.dto.PushSelf2Request;
+import io.seata.spring.annotation.GlobalTransactional;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionSynchronizationAdapter;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 public class SyncWangDianSoB2cServiceImpl implements SyncWangDianSoB2cService {
 
     @Resource
-    private DmpMqFeign dmpMqFeign;
-    @Resource
     private OmsPushMsgService omsPushMsgService;
     @Resource
     private KolB2cApplicationService kolB2cApplicationService;
     @Resource
-    private KolB2cApplicationDetailService kolB2cApplicationDetailService;
+    private DmpThirdCityFeign DmpThirdCityFeign;
     @Resource
     private KolB2cApplicationAddressService kolB2cApplicationAddressService;
+    @Resource
+    private PlmTaskFeign plmTaskFeign;
 
     private static DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void syncDataToWangDian(KolSubB2cApplicationDTO.PushDTO pushDTO,Map<String, SkuVO> skuMap ) {
-        DmpPushTaskEntity dmpPushTask = buildDmpPushTask(pushDTO,skuMap);
-        if (ObjectUtil.isNotEmpty(dmpPushTask)) {
-            sendMTask(Collections.singletonList(dmpPushTask));
-        }
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
+    public DmpPushTaskEntity syncDataToWangDian(KolSubB2cApplicationDTO.PushDTO pushDTO,Map<String, SkuVO> skuMap ) {
+
+        PushSelf2Request request = newSyncKolB2c(pushDTO, skuMap);
+
+        KolSubB2cApplicationEntity entity = pushDTO.getEntity();
+        OmsPushMsgEntity omsPushMsgEntity = new OmsPushMsgEntity();
+        omsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.WDT.getCode());
+        omsPushMsgEntity.setSourceType(SourceTypeEnum.WDT_SO_B2C.getCode());
+        omsPushMsgEntity.setSourceId(entity.getId());
+        omsPushMsgEntity.setSourceCode(entity.getCode());
+        omsPushMsgEntity.setSyncOperate(SyncOperateEnum.OPERATE_APPROVE.getCode());
+        omsPushMsgEntity.setPushData(JSON.toJSONString(request));
+        omsPushMsgService.save(omsPushMsgEntity);
+        return  null ;
     }
 
-    private DmpPushTaskEntity buildDmpPushTask(KolSubB2cApplicationDTO.PushDTO pushDTO,Map<String, SkuVO> skuMap) {
+    @Override
+    public PushSelf2Request newSyncKolB2c(KolSubB2cApplicationDTO.PushDTO pushDTO, Map<String, SkuVO> skuMap) {
+        //判断skuMap不能为null 不能为空
+        if (skuMap == null || skuMap.isEmpty()) {
+            List<String> skuIds = pushDTO.getDetailList().stream().map(KolSubB2cApplicationDetailEntity::getSkuId).distinct().collect(Collectors.toList());
+            List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIds);
+            skuMap = skuList.stream().collect(Collectors.toMap(SkuVO::getSkuId, Function.identity()));
+        }
+
         PushSelf2Request request = new PushSelf2Request();
         //原始单信息
         List<PushSelf2Request.RawTrade> rawTradeList = new ArrayList<>();
@@ -70,27 +90,17 @@ public class SyncWangDianSoB2cServiceImpl implements SyncWangDianSoB2cService {
                 .eq(KolB2cApplicationAddressEntity::getMainId, entity.getSourceId())
                 .eq(KolB2cApplicationAddressEntity::getPartnerId, entity.getPartnerId())
                 .one();
-
-//        //wdt仓库映射
-//        String warehouseCode = "";
-//        String warehouseId = kolB2cApplicationEntity.getWarehouseId();
-//        if(StringUtils.isNotBlank(warehouseId)){
-//            List<ThirdMappingEntity> warehouses = FeignQuery.create(ThirdMappingEntity.class)
-//                    .eq(ThirdMappingEntity::getType, "warehouse")
-//                    .eq(ThirdMappingEntity::getThirdSysType, "wdt")
-//                    .eq(ThirdMappingEntity::getDisabled, false)
-//                    .eq(ThirdMappingEntity::getSysId, warehouseId)
-//                    .list();
-//            if(CollUtil.isEmpty(warehouses)){
-//                throw new ServiceException(ApiError.ERROR_WDT_NOT_FOUND_WAREHOUSE_MAPPING,kolB2cApplicationEntity.getWarehouseName());
-//            }
-//            warehouseCode = warehouses.get(0).getThirdCode();
-//        }
-
+        //省市区的映射
+        List<String> sysIds = Arrays.asList(kolB2cApplicationAddressEntity.getProvinceId(), kolB2cApplicationAddressEntity.getCityId(), kolB2cApplicationAddressEntity.getDistrictId());
+        DmpThirdCityDTO.SysAddressParamsDTO dto = new DmpThirdCityDTO.SysAddressParamsDTO();
+        dto.setSourcePlatform(ThirdSysTypeEnum.WDT.getCode());
+        dto.setSysIds(sysIds);
+        List<DmpThirdCityDTO.ThirdAddressMappingDTO > thirdByAddress = DmpThirdCityFeign.getThirdByAddress(dto);
+        Map<String, DmpThirdCityDTO.ThirdAddressMappingDTO> thirdAddressMap = thirdByAddress.stream().collect(Collectors.toMap(DmpThirdCityDTO.ThirdAddressMappingDTO::getSysId, Function.identity(), (o1, o2) -> o1));
 
         //wdt物流渠道映射
-        String logisticsCode = "";
-                String logisticsChannelId = kolB2cApplicationEntity.getLogisticsChannelId();
+        String logisticsChannelId = kolB2cApplicationEntity.getLogisticsChannelId();
+        String logisticsCode = logisticsChannelId;
         if(StringUtils.isNotBlank(logisticsChannelId)){
             List<ThirdMappingEntity> logisticsChannels = FeignQuery.create(ThirdMappingEntity.class)
                     .eq(ThirdMappingEntity::getType, "logistics")
@@ -98,24 +108,24 @@ public class SyncWangDianSoB2cServiceImpl implements SyncWangDianSoB2cService {
                     .eq(ThirdMappingEntity::getDisabled, false)
                     .eq(ThirdMappingEntity::getSysId, logisticsChannelId)
                     .list();
-            if(CollUtil.isEmpty(logisticsChannels)){
-                throw new ServiceException(ApiError.ERROR_WDT_NOT_FOUND_LOGISTICSCHANNEL_MAPPING,kolB2cApplicationEntity.getLogisticsChannelName());
+            if (CollUtil.isNotEmpty(logisticsChannels)) {
+                logisticsCode = logisticsChannels.get(0).getThirdCode();
             }
-            logisticsCode = logisticsChannels.get(0).getThirdCode();
         }
-
         //wdt店铺映射
         String shopId = kolB2cApplicationEntity.getShopId();
-        List<ThirdMappingEntity> shops = FeignQuery.create(ThirdMappingEntity.class)
-                .eq(ThirdMappingEntity::getType, "shop")
-                .eq(ThirdMappingEntity::getThirdSysType, "wdt")
-                .eq(ThirdMappingEntity::getDisabled, false)
-                .eq(ThirdMappingEntity::getSysId, shopId)
-                .list();
-        if(CollUtil.isEmpty(shops)){
-            throw new ServiceException(ApiError.ERROR_WDT_NOT_FOUND_SHOP_MAPPING,kolB2cApplicationEntity.getShopName());
+        String shopNo =shopId;
+        if(StringUtils.isNotBlank(shopId)){
+            List<ThirdMappingEntity> shops = FeignQuery.create(ThirdMappingEntity.class)
+                    .eq(ThirdMappingEntity::getType, "shop")
+                    .eq(ThirdMappingEntity::getThirdSysType, "wdt")
+                    .eq(ThirdMappingEntity::getDisabled, false)
+                    .eq(ThirdMappingEntity::getSysId, shopId)
+                    .list();
+            if(CollUtil.isNotEmpty(shops)){
+                shopNo = shops.get(0).getThirdCode();
+            }
         }
-        String shopNo = shops.get(0).getThirdCode();
         request.setShopNo(shopNo);
 
         PushSelf2Request.RawTrade rawTrade = new PushSelf2Request.RawTrade();
@@ -140,7 +150,7 @@ public class SyncWangDianSoB2cServiceImpl implements SyncWangDianSoB2cService {
         rawTrade.setBuyerNick(entity.getNickname());
         rawTrade.setReceiverName(kolB2cApplicationAddressEntity.getReceiverName());
         //省市区空格分隔，示例【北京 北京市 朝阳区】
-        rawTrade.setReceiverArea(StrUtil.format("{} {} {}",kolB2cApplicationAddressEntity.getProvince(), kolB2cApplicationAddressEntity.getCity(), kolB2cApplicationAddressEntity.getDistrict()));
+        rawTrade.setReceiverArea(StrUtil.format("{} {} {}",thirdAddressMap.get(kolB2cApplicationAddressEntity.getProvinceId()), thirdAddressMap.get(kolB2cApplicationAddressEntity.getCityId()), thirdAddressMap.get(kolB2cApplicationAddressEntity.getDistrictId())));
         rawTrade.setReceiverAddress(kolB2cApplicationAddressEntity.getDetailAddress());
         rawTrade.setReceiverZip(kolB2cApplicationAddressEntity.getZipCode());
         rawTrade.setReceiverMobile(kolB2cApplicationAddressEntity.getReceiverPhone());
@@ -163,7 +173,6 @@ public class SyncWangDianSoB2cServiceImpl implements SyncWangDianSoB2cService {
 
         for (KolSubB2cApplicationDetailEntity detailEntity : detailList) {
             SkuVO skuVO = skuMap.get(detailEntity.getSkuId());
-
             PushSelf2Request.RawTradeOrder rawTradeOrder = new PushSelf2Request.RawTradeOrder();
             rawTradeOrder.setTid(entity.getCode());
             rawTradeOrder.setOid(detailEntity.getId());
@@ -189,46 +198,7 @@ public class SyncWangDianSoB2cServiceImpl implements SyncWangDianSoB2cService {
         }
         request.setRawTradeList(rawTradeList);
         request.setRawTradeOrderList(rawTradeOrderList);
-
-//        SettingEnum settingEnum = SettingEnum.NEW_DMP_PUSH_SWTICH_LIST;
-//        List<CfgSettingEntity> list = FeignQuery.create(CfgSettingEntity.class)
-//                .eq(CfgSettingEntity::getKey, SourceTypeEnum.WDT_SO_B2C.getCode())
-//                .eq(CfgSettingEntity::getType, settingEnum.getType())
-//                .eq(CfgSettingEntity::getValue, "1")
-//                .list();
-//        if(CollUtil.isEmpty(list)) {
-//            //添加推送任务
-//            DmpPushTaskFeignDTO taskEntity = new DmpPushTaskFeignDTO();
-//            taskEntity.setSourceId(entity.getId());
-//            taskEntity.setSourceCode(entity.getCode());
-//            taskEntity.setSourceType(SourceTypeEnum.KOL_SUB_B2C_APPLICATION.getCode());
-//            taskEntity.setMqTopic(RocketMqTopic.SYNC_WANGDIAN_ERP_TOPIC);
-//            taskEntity.setMqTag(RocketMqTagEnum.WDT_SO_B2C_TAG.getName());
-//            taskEntity.setMqData(JSONUtil.toJsonStr(request));
-//            taskEntity.setSourcePlatformName(PlatformEnum.ERP.getDesc());
-//            taskEntity.setTargetPlatformName(PlatformEnum.WANGDIAN.getDesc());
-//            taskEntity.setSyncOperate(SyncOperateEnum.OPERATE_APPROVE.getCode());
-//            return dmpMqFeign.saveTask(taskEntity);
-//        }
-
-        OmsPushMsgEntity omsPushMsgEntity = new OmsPushMsgEntity();
-        omsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.WDT.getCode());
-        omsPushMsgEntity.setSourceType(SourceTypeEnum.WDT_SO_B2C.getCode());
-        omsPushMsgEntity.setSourceId(entity.getId());
-        omsPushMsgEntity.setSourceCode(entity.getCode());
-        omsPushMsgEntity.setSyncOperate(SyncOperateEnum.OPERATE_APPROVE.getCode());
-        omsPushMsgEntity.setPushData(JSON.toJSONString(request));
-        omsPushMsgService.save(omsPushMsgEntity);
-        return null;
-    }
-
-    private void sendMTask(List<DmpPushTaskEntity> dmpPushTask) {
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
-            @Override
-            public void afterCommit() {
-                dmpMqFeign.sendTask(dmpPushTask);
-            }
-        });
+        return request;
     }
 
 }

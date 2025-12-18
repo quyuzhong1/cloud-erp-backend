@@ -4,7 +4,6 @@ package com.erp.server.oms.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
-import com.erp.model.oms.dto.KolB2cApplicationDTO;
 import com.erp.model.oms.dto.KolSubB2cApplicationDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.CfgKolOptionTypeEnum;
@@ -85,6 +84,20 @@ public class KolSubB2cApplicationServiceImpl extends SuperServiceImpl<KolSubB2cA
                 data.setProjectTagName(projectTagName);
             }
         }
+    }
+
+    @Override
+    public List<KolSubB2cApplicationDTO.PushDTO> listPushByIds(List<String> ids){
+        List<KolSubB2cApplicationDTO.PushDTO> result = new ArrayList<>();
+        List<KolSubB2cApplicationEntity> list = listByIds(ids);
+        List<KolSubB2cApplicationDetailEntity> detailList = kolSubB2cApplicationDetailService.lambdaQuery().in(KolSubB2cApplicationDetailEntity::getMainId, ids).list();
+        for (KolSubB2cApplicationEntity entity : list) {
+            KolSubB2cApplicationDTO.PushDTO pushDTO = new KolSubB2cApplicationDTO.PushDTO();
+            pushDTO.setEntity(entity);
+            List<KolSubB2cApplicationDetailEntity> detailEntities = detailList.stream().filter(e -> e.getMainId().equals(entity.getId())).collect(Collectors.toList());
+            pushDTO.setDetailList(detailEntities);
+        }
+        return result;
     }
 
     /**

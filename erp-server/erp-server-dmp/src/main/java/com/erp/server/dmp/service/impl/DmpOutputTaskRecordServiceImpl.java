@@ -583,7 +583,7 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
 		syncParamDTO.setSourceDetailList(sourceDetailList);
 		String outputSystemId = dmpCfgOutputEntity.getSystemId();
 		String outputSystemCode = dmpHandlerCache.getDmpBasicSystemEntityList(d -> d.getId().equals(outputSystemId)).get(0).getCode();
-		if(DmpBasicSystemCodeEnum.WDT.getCode().equals(outputSystemCode)) {
+		if(DmpBasicSystemCodeEnum.WDT.getCode().equals(outputSystemCode) && !"DmpOutputWdtKolB2cApplicationRocketMQTaskHandler".equals(dmpCfgOutputEntity.getOutputClass())) {
 			try {
 				FeignQuery.invoke("com.erp.server."+ system +".service.impl.SyncTaskServiceImpl", "findWdtDataSendSyncTask", Arrays.asList(syncParamDTO));
 				this.lambdaUpdate()

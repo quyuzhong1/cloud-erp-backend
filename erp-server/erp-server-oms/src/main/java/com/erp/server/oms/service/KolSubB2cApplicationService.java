@@ -18,6 +18,8 @@ import java.util.List;
  */
 public interface KolSubB2cApplicationService extends SuperService<KolSubB2cApplicationEntity> {
 
+    List<KolSubB2cApplicationDTO.PushDTO> listPushByIds(List<String> ids);
+
     /**
     * 根据B2C寄样申请生成拆分单
     * @author jack

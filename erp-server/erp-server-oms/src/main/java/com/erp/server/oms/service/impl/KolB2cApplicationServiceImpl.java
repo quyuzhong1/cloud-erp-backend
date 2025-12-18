@@ -13,6 +13,7 @@ import com.common.business.vo.LoginUser;
 import cn.hutool.core.util.StrUtil;
 import com.common.core.dto.MultiErrorExcelData;
 import com.common.core.enums.DictCityTypeEnum;
+import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.dto.excel.KolB2cApplicationAddressImportExcelDTO;
@@ -35,6 +36,7 @@ import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.workflow.dto.CfgQueryOptionDTO;
 import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
 import com.erp.model.workflow.enums.CfgQueryOptionBussinessKeyEnum;
+import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.file.feign.FileFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -88,6 +90,8 @@ import java.util.stream.Collectors;
 import java.util.*;
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
+import org.springframework.transaction.support.TransactionSynchronizationAdapter;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import static com.common.business.enums.FileTaskEventEnum.*;
 
@@ -146,6 +150,8 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
     private SyncWangDianSoB2cService syncWangDianSoB2cService;
     @Resource
     private OrderCategoryService orderCategoryService;
+    @Resource
+    private DmpMqFeign dmpMqFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -848,7 +854,6 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
             }else {
                 //旺店通
                 List<KolSubB2cApplicationDTO.PushDTO> pushDTOS = kolSubB2cApplicationService.generateSplitOrder(entity, list);
-
                 // 获取所有推送订单的所有明细 SKU ID 列表
                 List<String> skuNos = pushDTOS.stream()
                         .flatMap(e -> e.getDetailList().stream())
@@ -858,11 +863,9 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
 
                 List<SkuVO> skuVOS = plmTaskFeign.listBySkuNoList(skuNos);
                 Map<String, SkuVO> skuMap = skuVOS.stream().collect(Collectors.toMap(SkuVO::getSkuId, Function.identity()));
-
                 for (KolSubB2cApplicationDTO.PushDTO pushDTO : pushDTOS) {
-                    syncWangDianSoB2cService.syncDataToWangDian(pushDTO,skuMap);
+                    syncWangDianSoB2cService.syncDataToWangDian(pushDTO, skuMap);
                 }
-
             }
         }
         return Boolean.TRUE;
