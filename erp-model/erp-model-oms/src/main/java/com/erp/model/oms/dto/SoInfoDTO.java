@@ -2681,6 +2681,11 @@ public class SoInfoDTO implements Serializable {
          */
         @NotBlank(message = "退货物流单号不能为空")
         private String returnLogisticCode;
+
+        /**
+         * 单箱数量
+         */
+        private Integer perBoxQty;
     }
 
     @Data
