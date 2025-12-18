@@ -641,11 +641,10 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         }
         // 调用流程审核
         approveProcess(entity, dto);
-        ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
-        updateForApprove(entity.getId(), approveStatus.getStatus());
         // 操作日志
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作  审核结果：【{}】 审核意见 ：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "B2C寄样申请单", approveType.getName(), dto.getComment());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.KOL_B2C_APPLICATION.getCode(), entity.getId(), "审核操作");
+        ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.approveStatus(approveStatus));
     }
 
@@ -822,6 +821,8 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         if (ObjectUtil.isEmpty(entity)) {
             return Boolean.TRUE;
         }
+        ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
+        updateForApprove(entity.getId(), approveStatus.getStatus());
         // 只有审核通过才下推
         ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(dto.getType());
         if (ApproveTypeEnum.PASS.equals(approveType)) {
