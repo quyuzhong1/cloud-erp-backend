@@ -6,6 +6,8 @@ import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
+import com.common.message.constant.RocketMqNewConsumerGroup;
+import com.common.message.constant.RocketMqNewTag;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.handler.AbstractNewPlatformConsumerHandler;
 import com.erp.model.wms.dto.third.ThirdWarehouseCreateFbaOutboundReq;
@@ -38,8 +40,8 @@ import java.util.Objects;
 @Service
 @Slf4j
 @RocketMQMessageListener(topic = RocketMqTopic.SYNC_B2B_THIRD_DELIVERY_CREATE_ERP_TOPIC,
-        selectorExpression = "${spring.cloud.nacos.discovery.namespace}-erp_b2b_third_warehouse_create_tag",
-        consumerGroup = "${spring.cloud.nacos.discovery.namespace}-erp_dmp_group",
+        selectorExpression = RocketMqNewTag.ERP_B2B_THIRD_CREATE_TAG,
+        consumerGroup = RocketMqNewConsumerGroup.DMP_B2B_TO_WMS_GROUP,
         consumeMode = ConsumeMode.ORDERLY)
 public class PlatformNewB2BThirdDeliveryCreateService extends AbstractNewPlatformConsumerHandler {
     @Resource
