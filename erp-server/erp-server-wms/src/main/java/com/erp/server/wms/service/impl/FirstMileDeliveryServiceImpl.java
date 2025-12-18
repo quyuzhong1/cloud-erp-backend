@@ -2012,7 +2012,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         if (SourceTypeEnum.FBA_SHIPMENT.getCode().equals(firstMileDeliveryEntity.getSourceType())) {
             FbaShipmentEntity entity = fbaShipmentService.getById(firstMileDeliveryEntity.getSourceId());
             if (ObjectUtil.isEmpty(entity)) {
-                throw new ServiceException(ApiError.FBA_SHIPMENT_NOT_EXIST_BILL);
+                throw new ServiceException(ApiError.FIRST_MILE_FBA_SHIPMENT_NOT_EXIST_BILL);
             }
             //根据店铺id查询店铺信息
             List<ShopInfoEntity> shopInfoEntities = shopInfoFeign.listShopInfoByIds(Collections.singletonList(entity.getShopId()));

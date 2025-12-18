@@ -494,7 +494,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         List<String> shipmentIds = list.stream().map(FbaShipmentDTO.GenerateDeliverView::getMainId).distinct().collect(Collectors.toList());
         List<FbaShipmentEntity> fbaShipmentEntities = this.listByIds(shipmentIds);
         if (CollectionUtils.isEmpty(fbaShipmentEntities)) {
-            throw new ServiceException(ApiError.FBA_SHIPMENT_NOT_EXIST_BILL);
+            throw new ServiceException(ApiError.FIRST_MILE_FBA_SHIPMENT_NOT_EXIST_BILL);
         }
 
         //Delete和Cancel状态的货件不允许下推发货单
@@ -543,7 +543,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         //校验货件单据是否存在
         List<FbaShipmentEntity> fbaShipmentEntities = this.listByIds(Collections.singletonList(id));
         if (CollectionUtils.isEmpty(fbaShipmentEntities)) {
-            throw new ServiceException(ApiError.FBA_SHIPMENT_NOT_EXIST_BILL);
+            throw new ServiceException(ApiError.FIRST_MILE_FBA_SHIPMENT_NOT_EXIST_BILL);
         }
 
         List<FbaShipmentDetailEntity> list = fbaShipmentDetailService.listByMainIds(Collections.singletonList(id));

@@ -1406,7 +1406,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         String waitQcCode = QcBillStatusEnum.WAIT_QC.getCode();
         long count = qcList.stream().filter(q -> !q.getQcStatus().getCode().equals(waitQcCode)).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.QC_ASSIGN_ALLOWED_PENDING_ONLY);
+            throw new ServiceException(ApiError.PO_QC_ASSIGN_ALLOWED_PENDING_ONLY);
         }
 
         SysDepartmentUserNumberDTO userInfo = sysUserFeign.getDeptByUserId(qcUserId);
@@ -2057,7 +2057,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
 
         long count = list.stream().filter(f -> !f.getQcStatus().equals(finishQcCode) && !f.getQcStatus().equals(exemptionCode)).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.QC_PASSED_OR_EXEMPT_ONLY_ALLOWED);
+            throw new ServiceException(ApiError.PO_QC_PASSED_OR_EXEMPT_ONLY_ALLOWED);
         }
         long receiveCount = list.stream().filter(req -> !req.getSourceType().equals(SourceTypeEnum.SO_RETURN_RECEIVE.getCode())).count();
         if (receiveCount > 0) {
