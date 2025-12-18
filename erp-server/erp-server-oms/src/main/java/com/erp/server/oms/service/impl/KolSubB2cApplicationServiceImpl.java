@@ -116,7 +116,7 @@ public class KolSubB2cApplicationServiceImpl extends SuperServiceImpl<KolSubB2cA
         //明细按达人分组
         Map<String, List<KolB2cApplicationDetailEntity>> partnerGroup = list.stream().collect(Collectors.groupingBy(KolB2cApplicationDetailEntity::getPartnerId));
 
-        int index = 1;
+        int index = 0;
         for (Map.Entry<String, List<KolB2cApplicationDetailEntity>> entry : partnerGroup.entrySet()) {
             KolSubB2cApplicationDTO.PushDTO pushDTO = new KolSubB2cApplicationDTO.PushDTO();
 
@@ -127,7 +127,11 @@ public class KolSubB2cApplicationServiceImpl extends SuperServiceImpl<KolSubB2cA
             kolSubB2cApplicationEntity.setDeliveryStatus(KolSubB2cApplicationDeliveryStatusEnum.WAITSHIPPED.getCode());
             kolSubB2cApplicationEntity.setOrderStatus(KolSubB2cApplicationOrderStatusEnum.NOTAPPROVE.getCode());
             kolSubB2cApplicationEntity.setRemark(entity.getRemark());
-            kolSubB2cApplicationEntity.setCode(entity.getCode()+"_"+index);
+            if(index == 0){
+                kolSubB2cApplicationEntity.setCode(entity.getCode());
+            }else {
+                kolSubB2cApplicationEntity.setCode(entity.getCode()+"_"+index);
+            }
             kolSubB2cApplicationEntity.setPartnerId(entry.getKey());
             kolSubB2cApplicationEntity.setNickname(entry.getValue().get(0).getNickname());
 

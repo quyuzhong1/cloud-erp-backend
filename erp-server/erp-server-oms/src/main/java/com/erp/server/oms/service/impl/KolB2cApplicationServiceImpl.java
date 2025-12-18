@@ -912,7 +912,7 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         }
 
 
-        int index = 1;
+        int index = 0;
         for (Map.Entry<String, List<KolB2cApplicationDetailEntity>> entry : partnerGroup.entrySet()) {
             //------------按达人维度生成拆分单和拆分单明细------------
             KolSubB2cApplicationEntity kolSubB2cApplicationEntity = new KolSubB2cApplicationEntity();
@@ -921,11 +921,13 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
             kolSubB2cApplicationEntity.setDeliveryStatus(KolSubB2cApplicationDeliveryStatusEnum.WAITSHIPPED.getCode());
             kolSubB2cApplicationEntity.setOrderStatus(KolSubB2cApplicationOrderStatusEnum.NOTAPPROVE.getCode());
             kolSubB2cApplicationEntity.setRemark(entity.getRemark());
-            kolSubB2cApplicationEntity.setCode(entity.getCode()+"_"+index);
+            if(index == 0){
+                kolSubB2cApplicationEntity.setCode(entity.getCode());
+            }else {
+                kolSubB2cApplicationEntity.setCode(entity.getCode()+"_"+index);
+            }
             kolSubB2cApplicationEntity.setPartnerId(entry.getKey());
             kolSubB2cApplicationEntity.setNickname(entry.getValue().get(0).getNickname());
-
-
             //------------根据拆分单生成B2C------------oms/orderCategory/list
             //B2C
             SoB2cDTO.AddDTO b2cDto = new SoB2cDTO.AddDTO();
