@@ -166,6 +166,7 @@ public interface RedisCacheConstants {
      */
     String AUTH_TIKTOK_STATE = "third-party-auth:tiktok_state:{}";
 
+    String AUTH_PDD_STATE = "third-party-auth:pdd_state:{}";
     /**
      * 平台token刷新重试次数记录
      * platform-refresh-token:平台名称:店铺ID
