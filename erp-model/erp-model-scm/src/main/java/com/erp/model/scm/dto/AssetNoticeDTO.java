@@ -341,6 +341,16 @@ public class AssetNoticeDTO implements Serializable {
          * 资产通知单明细
          */
         private List<AssetNoticeDetailDTO.ViewDTO> assetNoticeDetailDTOList;
+
+        /**
+         * 附件名称集合
+         */
+        private List<String> attachmentNameList;
+
+        /**
+         * 附件URL集合
+         */
+        private List<String> attachmentUrlList;
     }
 
     /**
@@ -430,6 +440,15 @@ public class AssetNoticeDTO implements Serializable {
         @NotNull(message = "申请日期不能为空")
         private LocalDate applyDate;
 
+        /**
+         * 附件名称集合
+         */
+        private List<String> attachmentNameList;
+
+        /**
+         * 附件URL集合
+         */
+        private List<String> attachmentUrlList;
 
     }
 
