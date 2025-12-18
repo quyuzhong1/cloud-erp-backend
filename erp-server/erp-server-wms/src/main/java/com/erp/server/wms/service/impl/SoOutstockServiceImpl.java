@@ -2188,6 +2188,13 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 ruleDTO.setType(StockOutTransferTypeEnum.B2B.getCode());
                 ruleDTO.setReceiveCountry(customerDTO.getCountryId());
                 ruleDTO.setFromWarehouse(generateInfo.getWarehouseId());
+                if(StringUtils.isNotBlank(generateInfo.getWarehouseId())){
+                    WarehouseEntity deliveryWarehouse = warehouseService.getById(generateInfo.getWarehouseId());
+                    if(Objects.nonNull(deliveryWarehouse)){
+                        ruleDTO.setFromWarehouseOrg(deliveryWarehouse.getOrgId());
+                        ruleDTO.setFromWarehouseCountry(deliveryWarehouse.getCountry());
+                    }
+                }
                 ruleDTO.setSalesOrgId(soInfo.getSalesOrgId());
                 ruleDTO.setDictPlatform("");
                 CfgRuleOutDTO.MatchTransferResultDTO resultDTO = cfgRuleOutService.matchTransferRule(ruleDTO);

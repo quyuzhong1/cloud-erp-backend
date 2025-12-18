@@ -123,7 +123,7 @@
         sum(abs(diff_closing_qty)) AS diffClosingQty
         FROM ads_erp_inventory_diff aeid
         WHERE ${params.sqlMap.default}
-          and is_deleted = FALSE
+          and aeid.is_deleted = FALSE
         <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
         </if>

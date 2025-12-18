@@ -46,6 +46,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.time.Duration;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -336,6 +337,13 @@ public class ApproveTaskInfoServiceImpl extends SuperServiceImpl<ApproveTaskInfo
             listDTO.setBussinessKeyName(SourceTypeEnum.getName(listDTO.getBussinessKey()));
             //树大臣审核状态
             listDTO.setBussinessApproveStatusName(ApproveStatusEnum.getName(listDTO.getBussinessApproveStatus()));
+
+            //处理时效
+            if (listDTO.getHappenTime() != null && listDTO.getFinishTime() != null) {
+                // 计算时间间隔
+                Duration duration = Duration.between(listDTO.getHappenTime(), listDTO.getFinishTime());
+                listDTO.setHandleDuration((int) duration.toHours());
+            }
         }
     }
 

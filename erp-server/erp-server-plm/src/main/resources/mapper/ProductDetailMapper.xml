@@ -1692,7 +1692,7 @@
         pl.create_time,pl.create_user_id,pl.update_time,pl.update_user_id,pl.create_user_name,pl.update_user_name,
         pl.declare_model,pl.declare_unit,pl.declare_currency,pl.declare_currency_symbol,pl.dest_declare_price,
         pl.dest_currency,pl.dest_currency_symbol,pl.source_cargo,pl.exemption,pl.source_country,
-        pl.combination_declare_type,pd.sku_no as skuNo,
+        pl.combination_declare_type,pd.sku_no as skuNo,pi.property,
         pp.gross_weight as  grossWeight,
         pp.box_length / 10 AS boxSizeLength,
         pp.box_width / 10 AS boxSizeWide,

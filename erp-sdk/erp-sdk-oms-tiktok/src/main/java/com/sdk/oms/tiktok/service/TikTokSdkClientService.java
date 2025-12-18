@@ -43,6 +43,7 @@ import com.sdk.oms.tiktok.dto.tiktok.listing.view.DataBean;
 import com.sdk.oms.tiktok.dto.tiktok.listing.view.ListingViewDTO;
 import com.sdk.oms.tiktok.dto.tiktok.listing.view.SkusBean;
 import com.sdk.oms.tiktok.dto.tiktok.order.OrderDTO;
+import com.sdk.oms.tiktok.dto.tiktok.order.WarehouseDTO;
 import com.sdk.oms.tiktok.dto.tiktok.order.view.OrderViewDTO;
 import com.sdk.oms.tiktok.dto.tiktok.order.view.OrdersBean;
 import com.sdk.oms.tiktok.dto.tiktok.packages.PackageDetailDTO;
@@ -101,9 +102,9 @@ public class TikTokSdkClientService {
     public static void main(String[] args) {
         TikTokSdkClientService tikTokSdkClientService = new TikTokSdkClientService();
         TikTokShopInfoDTO tikTokShopInfoDTO = new TikTokShopInfoDTO();
-        String auth = "{\"@type\":\"com.sdk.oms.tiktok.dto.TikTokShopInfoDTO\",\"accessToken\":\"ROW_BbyWTgAAAACj-JAAAriAWjVtF2MrUIFdHRZvljXhCfG7h6gK9L_d7XUiGvUrvVcL5dTSfrmArwcZToZCJ724bMWtyrfq1KcdT5ve4dG2uiO_z2pUxpVdbK-P03SQSVMbywNXIO1p0ac03OdE_R7j_ogLmoavB_JyAZBCaNlPLB2eCtRxGFlvo9Lsw4Rm5Vqc5XqrrkcY0VRRQ_TC4txhBehavO2AYnIC\",\"baseUrl\":\"https://auth.tiktok-shops.com\",\"clientId\":\"6buinkjt3hmld\",\"clientSecret\":\"8ff628de24faf70c24855de4d967fb6a17a47e3f\",\"id\":\"1876468970494349314\",\"sellerType\":\"CROSS_BORDER\",\"shopCipher\":\"ROW_v6xWLgAAAADmmA7jfXmPW3bshGZX6LtQ\",\"site\":\"PH\"}";
+        String auth = "{\"@type\":\"com.sdk.oms.tiktok.dto.TikTokShopInfoDTO\",\"accessToken\":\"ROW_1rARVAAAAACj-JAAAriAWjVtF2MrUIFdiwpvtmvHXedAYA9cevCkZepCOiMyd4q0eyFfSnzeQNSPiYsbBmXgfkz3-MVFEcyD6QqmkIhMBjdTRnBo-Bw7DJLQhBfQclDuyJFobEG2ZV0DamkxSOUpgdFMisIF6tn2vDYDDz1xzzBPLVE7ds464g\",\"baseUrl\":\"https://auth.tiktok-shops.com\",\"clientId\":\"6buinkjt3hmld\",\"clientSecret\":\"8ff628de24faf70c24855de4d967fb6a17a47e3f\",\"id\":\"1820403424249143297\",\"sellerType\":\"null\",\"shopCipher\":\"TTP_pEhpJwAAAADvOkDJ2jIoaS9Uak191t0d\",\"site\":\"US\"}";
         tikTokShopInfoDTO = JSONUtil.toBean(auth, TikTokShopInfoDTO.class);
-        PackageDetailDTO packageDetailDTO = tikTokSdkClientService.getPackageDetail(tikTokShopInfoDTO,"1175051201532494971");
+        WarehouseDTO packageDetailDTO = tikTokSdkClientService.getWarehouse(tikTokShopInfoDTO);
         System.out.println(JSONUtil.toJsonStr(packageDetailDTO));
     }
 
@@ -1216,4 +1217,53 @@ public class TikTokSdkClientService {
         }
         return shipOrderOther;
     }
+
+    public WarehouseDTO getWarehouse(TikTokShopInfoDTO tikTokShopInfoDTO) {
+        String url = TikTokConstant.URL;
+        String path = "/logistics/" + TikTokConstant.VERSION + "/warehouses";
+        String clientSecret = tikTokShopInfoDTO.getClientSecret();
+        String clientId = tikTokShopInfoDTO.getClientId();
+
+        String shopCipher = tikTokShopInfoDTO.getShopCipher();
+        String token = tikTokShopInfoDTO.getAccessToken();
+        // 定义查询参数
+        Map<String, Object> params = new HashMap<>();
+        params.put("access_token", token);
+        params.put("app_key", clientId);
+        params.put("shop_cipher", shopCipher);
+        Long timestamp = System.currentTimeMillis() / 1000;
+        params.put("timestamp", timestamp);
+        params.put("version", TikTokConstant.VERSION);
+
+        //设置请求头
+        Map<String, String> headerMap = new HashMap<>(2);
+        headerMap.put("x-tts-access-token", token);
+        headerMap.put("content-type", "application/json");
+
+        //组装入参排序计算签名字符串
+        String input = EncryptionUtils.urlParamsSort(params, path, headerMap, clientSecret, "");
+
+        // 追加请求路径获取签名
+        String sign = EncryptionUtils.generateSHA256(input, clientSecret);
+
+        //加入sign签名入参
+        params.put("sign", sign);
+
+        //拉取数据
+        ApiResult apiResult = HttpCommonUtil.sendOkHttpApiResult(url + path, JSONUtil.toJsonStr(params), null, headerMap, RequestMethod.GET);
+        if (!Objects.equals(apiResult.getCode(), 200) && !Objects.equals(apiResult.getCode(), 201)) {
+            log.error("调用url={},入参params={}, TikTok查询仓库失败，返回值 responseMap={}", url + path, params.toString(), JSONUtil.toJsonStr(apiResult));
+            throw new RuntimeException(StrUtil.format("调用url={},入参params={}, TikTok查询仓库失败，返回值 responseMap={}",
+                    url + path, headerMap.toString(), JSONUtil.toJsonStr(apiResult)));
+        }
+        //解析数据
+        WarehouseDTO warehouseDTO = null;
+        try {
+            warehouseDTO = JSONUtil.toBean(JSONUtil.toJsonStr(apiResult.getData()), WarehouseDTO.class);
+        } catch (Exception e) {
+            throw new RuntimeException(StrUtil.format("调用url={},入参params={}, TikTok查询仓库返回值 responseMap={}，转换成实体错误", apiResult.getData()));
+        }
+        return warehouseDTO;
+    }
+
 }

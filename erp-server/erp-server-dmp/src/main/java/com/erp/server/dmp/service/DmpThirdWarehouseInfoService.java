@@ -35,4 +35,7 @@ public interface DmpThirdWarehouseInfoService extends SuperService<DmpThirdWareh
     Boolean update(DmpThirdWarehouseInfoDTO.UpdateDTO dto);
 
     List<DmpThirdWarehouseInfoEntity> listByAuthId(String authId);
+
+
+    List<DmpThirdWarehouseInfoEntity> getByPlatformAndCode(String platform, String name);
 }

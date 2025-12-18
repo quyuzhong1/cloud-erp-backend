@@ -2863,6 +2863,7 @@ public class SoB2cDTO implements Serializable {
          * 销售订单id
          */
         private String id;
+        private String platformDeliveryWarehouse;
         /**
          * 订单创建时间
          */
