@@ -9001,8 +9001,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             }
             List<SplitSkuDTO> transferDeclareProductDTOList = allTransferDeclareProductDTOList.stream().filter(v -> v.getSoId().equals(soB2cEntity.getId())).collect(Collectors.toList());
             if (CollectionUtils.isEmpty(transferDeclareProductDTOList)) {
-                soB2cEntity.setTransferStatus(TransferStatusEnum.NOT.getCode());
-                updateList.add(soB2cEntity);
+                resultDTOList.add(BatchResultDTO.fail(soB2cEntity.getId(), soB2cEntity.getCode(), "sku明细为空"));
                 continue;
             }
             if (!ApproveStatusEnum.APPROVE.equals(soB2cEntity.getApproveStatus()) || (!TransferStatusEnum.WAIT.getCode().equals(soB2cEntity.getTransferStatus()) && !TransferStatusEnum.FAILURE.getCode().equals(soB2cEntity.getTransferStatus()))) {
