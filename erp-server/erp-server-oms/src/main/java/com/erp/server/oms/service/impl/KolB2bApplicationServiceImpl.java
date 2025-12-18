@@ -493,7 +493,7 @@ public class KolB2bApplicationServiceImpl extends SuperServiceImpl<KolB2bApplica
         } catch (IOException e) {
             throw new ServiceException(ApiError.ERROR_95125);
         }
-        return Boolean.FALSE;
+        return Boolean.TRUE;
     }
 
     @Override
