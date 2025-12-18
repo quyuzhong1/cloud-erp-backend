@@ -244,6 +244,8 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         PurchasePriceDTO.ViewDTO viewDTO = new PurchasePriceDTO.ViewDTO();
         BeanMapper.copy(purchasePrice, viewDTO);
         viewDTO.setApproveStatus(purchasePrice.getApproveStatus().getStatus());
+        //是否含税名称
+        viewDTO.setIsTaxIncludedName(Boolean.TRUE.equals(purchasePrice.getIsTaxIncluded()) ? "是" : "否");
         //附件信息
         List<AttachmentDTO.UpdateDTO> attachmentList = attachmentService.getByBusinessId(id);
         List<String> attachmentUrlList = attachmentList.stream().map(AttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.toList());
@@ -613,6 +615,8 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
                 ApproveStatusEnum approveStatusEnum = item.getApproveStatus();
                 item.setApproveStatusCode(approveStatusEnum.getStatus());
                 item.setApproveStatusName(approveStatusEnum.getName());
+                //是否含税名称
+                item.setIsTaxIncludedName(Boolean.TRUE.equals(item.getIsTaxIncluded()) ? "是" : "否");
                 //币种
                 String currency = item.getCurrency();
                 String currencySymbol = currencyList.stream().filter(c -> c.getId().equals(currency)).findFirst().
