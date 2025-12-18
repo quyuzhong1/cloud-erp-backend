@@ -382,7 +382,22 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
             this.rollbackFreezeVirtualInventory(old);
         }else if (ThirdDeliveryStatusEnum.SHIPPED.getCode().equals(status)){
             //生成销售出库单
-            this.generateB2bThirdDelivery(id);
+            BatchResultDTO resultDTO = this.generateB2bThirdDelivery(id);
+            if (resultDTO.getSuccess()){
+                String outstockId = resultDTO.getId();
+                SoOutstockEntity soOutstockEntity = soOutstockService.getById(outstockId);
+                if (Objects.isNull(soOutstockEntity)) {
+                    throw new ServiceException(ApiError.NOT_EXIST_BILL,"销售出库单");
+                }
+                //提交审核
+                try {
+                    service.submitApprove(soOutstockEntity);
+                }catch (Exception e){
+                    log.error("销售出库单【{}】提交审核失败", outstockId, e);
+                    //更新销售订单明细
+                    soOutstockService.updateRemarkById(outstockId, "自动审核失败" + e.getMessage());
+                }
+            }
         }
     }
 
@@ -392,7 +407,6 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
     public BatchResultDTO generateB2bThirdDelivery(String id) {
         B2bThirdDeliveryEntity entity = this.getById(id);
         if (Objects.isNull(entity)){
@@ -437,18 +451,12 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
         //自动生成功能系统标识
         Boolean originalValue = UserContext.getIsUserSystem();
         UserContext.setIsUserSystem(Boolean.TRUE);
+        String outstockId = null;
         try {
             //构建销售出库单数据
-            String outstockId = soOutstockService.add(addDTO);
-            if (CharSequenceUtil.isBlank(id)) {
+            outstockId = soOutstockService.add(addDTO);
+            if (CharSequenceUtil.isBlank(outstockId)) {
                 throw new ServiceException(ApiError.ERROR_1019);
-            }
-            try {
-                service.submitApprove(outstockId);
-            }catch (Exception e){
-                log.error("销售出库单【{}】提交审核失败", outstockId, e);
-                //更新销售订单明细
-                soOutstockService.updateRemarkById(outstockId, "自动审核失败" + e.getMessage());
             }
         }catch (Exception e){
             throw new ServiceException(ApiError.ERROR_1042,e.getMessage());
@@ -456,7 +464,7 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
             //恢复系统标识
             UserContext.setIsUserSystem(originalValue);
         }
-        return BatchResultDTO.success(id, entity.getCode(), "生成销售出库单成功");
+        return BatchResultDTO.success(outstockId, entity.getCode(), "生成销售出库单成功");
     }
 
     @Override
@@ -543,6 +551,7 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
 
     @Override
     @Transactional(rollbackFor = Exception.class, propagation = Propagation.REQUIRES_NEW)
+    @GlobalTransactional(rollbackFor = Exception.class, propagation = io.seata.tm.api.transaction.Propagation.REQUIRES_NEW)
     public void handleResultData(String id, ThirdWarehouseQueryFbaOutboundResponse response) {
         XxlJobHelper.log("处理订单状态,id={},response={},",id, JSONUtil.toJsonStr(response));
         //订单已取消直接返回
@@ -585,16 +594,15 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
     @Override
     @Transactional(rollbackFor = Exception.class, propagation = Propagation.REQUIRES_NEW)
     @GlobalTransactional(rollbackFor = Exception.class, propagation = io.seata.tm.api.transaction.Propagation.REQUIRES_NEW)
-    public void submitApprove(String outstockId) {
-        SoOutstockEntity soOutstockEntity = soOutstockService.getById(outstockId);
-        if (ObjectUtil.isEmpty(soOutstockEntity)) {
+    public void submitApprove(SoOutstockEntity soOutstockEntity) {
+        if (Objects.isNull(soOutstockEntity)) {
             throw new ServiceException(ApiError.NOT_EXIST_BILL,"销售出库单");
         }
         BatchResultDTO submit = soOutstockService.submit(soOutstockEntity, Boolean.FALSE);
         if (!submit.getSuccess()){
             throw new ServiceException(ApiError.ERROR_1042,submit.getMsg());
         }
-        soOutstockService.approve(new ApproveOneDTO(outstockId, ApproveTypeEnum.PASS.getStatus(),"三方仓出库完成出库单自动审核通过",Boolean.FALSE));
+        soOutstockService.approve(new ApproveOneDTO(soOutstockEntity.getId(), ApproveTypeEnum.PASS.getStatus(),"三方仓出库完成出库单自动审核通过",Boolean.FALSE));
     }
 
 

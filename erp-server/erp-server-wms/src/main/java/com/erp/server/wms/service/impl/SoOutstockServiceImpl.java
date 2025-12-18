@@ -1139,7 +1139,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         }
         //虚拟仓冻结库存扣减,(来源发货通知单且非中转)
         if (CollectionUtils.isNotEmpty(members) && CharSequenceUtil.isBlank(entity.getBatchNo()) && (CollectionUtils.isNotEmpty(noticeList) || b2bThirdDelivery.equals(entity.getSourceType()))) {
-            b2BVirtualInventory(members);
+            b2BVirtualInventory(members,entity.getSourceType());
         }
         //自动生成功能系统标识
         Boolean originalValue = UserContext.getIsUserSystem();
@@ -1155,19 +1155,23 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
     /**
      * b2b虚拟仓数据
+     *
+     * @param members
+     * @param sourceType
      * @author will
      * @date 2024/12/17 11:29
-     * @param members
      */
 
-    private void b2BVirtualInventory (List<InOutStockDTO> members) {
+    private void b2BVirtualInventory (List<InOutStockDTO> members, String sourceType) {
         //bom信息调整
         List<String> skuIdList = members.stream().map(InOutStockDTO::getSkuId).distinct().collect(Collectors.toList());
         List<BomChildrenSkuDTO> bomChildList = plmTaskFeign.listBomChildBySkuIds(skuIdList);
         //无虚拟仓无需扣减库存
         List<InOutStockDTO> virtualInOutStockList = members.stream().filter(obj ->
                 CharSequenceUtil.isNotBlank(obj.getVirtualWarehouseId())
-                && bomChildList.stream().filter(e -> CharSequenceUtil.equals(e.getType(), BomTypeEnum.COMBINATION.getType()) && CharSequenceUtil.equals(e.getParentSkuId(), obj.getSkuId())).count() == MathUtil.ZERO
+                && ((bomChildList.stream().filter(e -> CharSequenceUtil.equals(e.getType(), BomTypeEnum.COMBINATION.getType()) && CharSequenceUtil.equals(e.getParentSkuId(), obj.getSkuId())).count() == MathUtil.ZERO)
+                || SourceTypeEnum.B2B_THIRD_DELIVERY.getCode().equals(sourceType))
+                //b2b第三方发货单无需比较组合品
         ).collect(Collectors.toList());
         if (CollectionUtils.isEmpty(virtualInOutStockList)) {
             return;
