@@ -988,6 +988,10 @@ public class KolB2bApplicationServiceImpl extends SuperServiceImpl<KolB2bApplica
             data.setApplyDeptName(deptMap.get(data.getApplyDeptId()));
             //发货状态名称 默认未发货，下面赋值
             data.setDeliveryStatusName(DeliveryStatusEnum.UN_SHIPPED.getName());
+            //项目标签
+            if (CollUtil.isNotEmpty(data.getProjectTag())) {
+                data.setProjectTags(StrUtil.join(",",data.getProjectTag()));
+            }
             //销售订单
             String b2bRefStatusName = KolB2bRefStatusEnum.WAIT_GENERATE.getName();
             SoDetailEntity soDetailEntity = soDetailMap.get(data.getDetailId());
