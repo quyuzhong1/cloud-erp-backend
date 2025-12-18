@@ -62,5 +62,15 @@
             </foreach>
         </if>
     </select>
+    <select id="getShopByThirdCode" resultType="com.erp.model.dmp.entity.ThirdMappingEntity">
+        select m.*
+        from third_mapping m
+                 left join third_shop w on m.third_id = w.shop_id
+        where m.disabled = false and w.disabled = false
+          and m.third_sys_type = #{sysType} and m.type = 'shop'
+          and m.is_deleted = false and w.is_deleted = false
+          and w.code = #{thirdCode}
+        limit 1
+    </select>
 
 </mapper>

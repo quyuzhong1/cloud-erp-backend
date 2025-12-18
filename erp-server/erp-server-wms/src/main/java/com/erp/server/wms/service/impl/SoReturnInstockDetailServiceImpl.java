@@ -435,8 +435,6 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
             detailEntity.setSkuNo(skuVO.getSkuNo());
             detailEntity.setRealQty(detailDto.getRealQty());
             detailEntity.setReceiveQty(detailDto.getReceiveQty());
-            detailEntity.setReturnTypeDict(ObjectUtil.isEmpty(soReturnReceiveDetailEntity) ? "" : soReturnReceiveDetailEntity.getReturnTypeDict());
-            detailEntity.setReturnReasonDict(ObjectUtil.isEmpty(soReturnReceiveDetailEntity) ? "" : soReturnReceiveDetailEntity.getReturnReasonDict());
             detailEntity.setWarehouseLocation(detailDto.getWarehouseLocation());
             detailEntity.setRemark(detailDto.getRemark());
             detailEntity.setSourceDetailId(detailDto.getSourceDetailId());
@@ -941,6 +939,8 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
             detailEntity.setIsChildSkuNo(detailDto.getIsChildSkuNo());
             detailEntity.setReturnAmount(detailDto.getReturnAmount());
             detailEntity.setTaxReturnAmount(detailDto.getTaxReturnAmount());
+            detailEntity.setReturnTypeDict(detailDto.getReturnTypeDict());
+            detailEntity.setReturnReasonDict(detailDto.getReturnReasonDict());
             detailEntity.setReturnAmountLocalCurrency(detailDto.getReturnAmountLocalCurrency());
             detailEntity.setTaxReturnAmountLocalCurrency(detailDto.getTaxReturnAmountLocalCurrency());
             if(null == detailDto.getExchangeRate()){

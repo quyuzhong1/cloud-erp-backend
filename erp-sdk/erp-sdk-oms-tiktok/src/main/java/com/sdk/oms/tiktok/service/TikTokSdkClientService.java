@@ -122,7 +122,6 @@ public class TikTokSdkClientService {
         String authCode = paramMap.get("code");
         String url = paramMap.get("baseUrl");
         String path = "/api/v2/token/get?app_key=%s&auth_code=%s&app_secret=%s&grant_type=authorized_code";
-        //https://auth.tiktok-shops.com/api/v2/token/get?app_key=6buinkjt3hmld&auth_code=ROW_fMForwAAAAAnHxxLkmbK6_5EjpV5Fe3TFAZztGCCUNTYS9Ncj5BHOEZr45OmjjjgKLuvsB12opx9yJvUgHadndBbqdRQZes-8GF5gXG22OX5vk6rG_cw1sv8BuS8L7zDkwyjNKQ0ps-9yp0daANK5GtmJ5h7CqVG3MEVumPxZ3FJqzufIygTCg&app_secret=8ff628de24faf70c24855de4d967fb6a17a47e3f&grant_type=authorized_code
         String baseUrl = String.format(url + path, clientId, authCode, clientSecret);
 
         //入参（无）

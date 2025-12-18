@@ -6124,8 +6124,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             country = receiver.getCountry();
             countryName = receiver.getCountryName();
         }
-        String deliveryMode = DeliveryModeEnum.DELIVERGOODS.getCode();
-        String deliveryModeName = DeliveryModeEnum.DELIVERGOODS.getName();
+        String deliveryMode = DeliveryModeEnum.EXPRESS.getCode();
+        String deliveryModeName = DeliveryModeEnum.EXPRESS.getName();
         b2cCustomer.setDeliveryMode(deliveryMode);
         b2cCustomer.setDeliveryModeName(deliveryModeName);
         if (StringUtils.isBlank(countryName) && StringUtils.isNotBlank(country)) {
@@ -7016,7 +7016,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     oldEntity.setApproveStatus(oldApproveStatus);
                     dto.setPayStatus(oldEntity.getPayStatus());
                     dto.setBillStatus(oldEntity.getBillStatus());
-                    dto.setInvalidStatus(oldEntity.getInvalidStatus());
                     if ("平台作废".equals(oldEntity.getRemark())) {
                         oldEntity.setRemark("");
                     }
@@ -7025,7 +7024,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     oldEntity.setApproveStatus(oldApproveStatus);
                     dto.setPayStatus(oldEntity.getPayStatus());
                     dto.setBillStatus(oldEntity.getBillStatus());
-                    dto.setInvalidStatus(oldEntity.getInvalidStatus());
                     dto.setIsCancel(Boolean.TRUE);
                 }
             }

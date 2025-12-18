@@ -338,7 +338,7 @@ public class RocketMqConsumerGroup {
     /**
      *
      */
-    public static final String SYS_SEND_THIRD_NOTICE_CONSUMER = "${spring.cloud.nacos.discovery.namespace}-sys_send_third_notice_consumer";
+    public static final String SEND_THIRD_NOTICE_CONSUMER = "${spring.cloud.nacos.discovery.namespace}-send_third_notice_consumer";
 
     /**
      *

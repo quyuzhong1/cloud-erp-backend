@@ -85,6 +85,11 @@ public class ContractInfoEntity extends BaseEntity<ContractInfoEntity> {
     */
     @TableField("disable")
     private Boolean disable;
+    /**
+    * 模板管理id
+    */
+    @TableField("template_id")
+    private String templateId;
 
 
     public static final String APPROVE_STATUS = "approve_status";

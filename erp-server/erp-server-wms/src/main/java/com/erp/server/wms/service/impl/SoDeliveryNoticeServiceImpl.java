@@ -723,7 +723,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
             detailView.setUnitName(productDetailEntity.getUnitName());
             //销售单信息
             SoDetailEntity soDetailEntity = soDetailEntities.stream().filter(detail -> detail.getId().equals(deliveryNoticeDetailEntity.getSourceDetailId())).findFirst().orElse(new SoDetailEntity());
-            detailView.setSalesQty(soDetailEntity.getQty());
+            detailView.setSalesQty(soDetailEntity.getBoxQty());
 
             List<WmsAttachmentDTO.UpdateDTO> currentAttachmentList = attachmentList.stream().
                     filter(attachment -> attachment.getBusinessId().equals(deliveryNoticeDetailEntity.getId())).
@@ -1968,6 +1968,9 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         //发货通知单明细信息
         List<SoDeliveryNoticeDetailEntity> soDeliveryNoticeDetailList = soDeliveryNoticeDetailService.listDetailByMainId(entity.getId());
 
+        List<String> collect = soDeliveryNoticeDetailList.stream().map(obj -> obj.getSourceDetailId()).collect(Collectors.toList());
+        List<SoDetailEntity> soDetailEntities = soInfoFeign.listSoDetailByIds(collect);
+
         //多退，退回冻结添加可用
         List<VirtualInventoryStockDTO.OutInStockDTO> subList = new ArrayList<>();
 
@@ -1982,8 +1985,12 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
             outInStockDTO.setSourceType(InventorySourceTypeEnum.SO_DELIVERY_NOTICE);
             outInStockDTO.setSourceDetailId(detailEntity.getId());
             outInStockDTO.setBillDate(LocalDate.now());
-            outInStockDTO.setSkuId(detailEntity.getSkuId());
-            outInStockDTO.setSkuNo(detailEntity.getSkuNo());
+            for (SoDetailEntity soDetailEntity : soDetailEntities) {
+                if (soDetailEntity.getId().equals(detailEntity.getSourceDetailId())) {
+                    outInStockDTO.setSkuId(soDetailEntity.getDeliverySkuId());
+                    outInStockDTO.setSkuNo(soDetailEntity.getDeliverySkuNo());
+                }
+            }
             outInStockDTO.setWarehouseId(entity.getWarehouseId());
             outInStockDTO.setVirtualWarehouseId(entity.getVirtualWarehouseId());
             //发货数量

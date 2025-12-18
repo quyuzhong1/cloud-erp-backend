@@ -165,4 +165,21 @@ public class WmsExecutorPoolConfig {
 
         return service;
     }
+    /**
+     * 虚拟库存历史记录线程池
+     * @author will
+     * @date 2025/10/10 14:59
+     * @return ExecutorService
+     */
+    @Bean(name = "virtualInventoryHisPool")
+    public ExecutorService virtualInventoryHisPool() {
+        ThreadPoolExecutor service = new ThreadPoolExecutor(5, 10,
+                5L, TimeUnit.SECONDS,
+                new LinkedBlockingQueue<>(100));
+        //设置线城池的饱和策略
+        RejectedExecutionHandler handler = new ThreadPoolExecutor.CallerRunsPolicy();
+        service.setRejectedExecutionHandler(handler);
+
+        return service;
+    }
 }

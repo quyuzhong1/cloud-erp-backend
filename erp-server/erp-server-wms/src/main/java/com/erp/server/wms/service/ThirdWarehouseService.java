@@ -52,11 +52,27 @@ public interface ThirdWarehouseService {
      */
     ApiResult<String> createOutboundBill(ThirdWarehouseCreateOutboundReq createOutboundReq, String authId);
 
+    /**
+     * b2b发货对接海外仓出库创建接口
+     * @param createOutboundReq
+     * @param authId
+     * @return
+     */
+    ApiResult<String> createFbaOutboundBill(ThirdWarehouseCreateFbaOutboundReq createOutboundReq, String authId);
+
 
     /**
      * 出库取消接口 ThirdWarehouseCancelResultEnum
      */
     ApiResult<String> cancelOutboundBill(ThirdWarehouseCancelOutboundReq cancelOutboundReq, String authId);
+
+    /**
+     * Fba出库取消接口 B2bThirdWarehouseCancelResultEnum
+     * @param cancelOutboundReq
+     * @param authId
+     * @return
+     */
+    ApiResult<String> cancelFbaOutboundBill(ThirdWarehouseCancelFbaOutboundReq cancelOutboundReq, String authId);
 
     /**
      *  查询出库单
@@ -65,6 +81,14 @@ public interface ThirdWarehouseService {
      * @return
      */
     ApiResult<String> queryOutboundBill(ThirdWarehouseQueryOutboundReq queryOutboundReq, String authId);
+
+    /**
+     * 查询FBA出库单
+     * @param queryOutboundReq
+     * @param authId
+     * @return
+     */
+    ApiResult<List<ThirdWarehouseQueryFbaOutboundResponse>> queryFbaOutboundBill(ThirdWarehouseQueryFbaOutboundReq queryOutboundReq, String authId);
     /**
      * 运费试算
      */

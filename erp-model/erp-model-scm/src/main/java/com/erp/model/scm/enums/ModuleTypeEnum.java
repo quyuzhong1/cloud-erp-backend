@@ -150,6 +150,7 @@ public enum ModuleTypeEnum {
     CFG_SUPPLIER_SALES("130", "销量设置"),
     CONTRACT_INFO("128", "合同管理"),
     SUPPLIER_REF_WAREHOUSE("129", "仓库绑定"),
+    TEMPLATE_MANAGEMENT("132", "模板管理"),
     LOGISTICS_THIRD_CHANNEL_REF("130", "物流第三方渠道关系"),
     CFG_RULE_INVOICE_PRODUCT_AMOUNT("130", "发票产品总价计算规则"),
     DICT_HS_CODE("133", "出口申报要素"),
@@ -200,6 +201,8 @@ public enum ModuleTypeEnum {
     DMP_OUTPUT_TASK("1008", "推送任务"),
 
     CFG_DIFF_STRATEGY("150", "差异策略配置"),
+    DELIVERY_BOX_RULE("156", "发货箱规"),
+    B2B_THIRD_DELIVERY("157", "B2B三方发货单"),
 
     // doris
     ADS_ERP_INVENTORY_DIFF("2000", "平台库存差异"),

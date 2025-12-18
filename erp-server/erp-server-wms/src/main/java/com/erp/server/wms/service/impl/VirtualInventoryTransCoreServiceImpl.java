@@ -169,6 +169,11 @@ public class VirtualInventoryTransCoreServiceImpl implements VirtualInventoryTra
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         List<WarehouseEntity> warehouseEntityList = warehouseService.listWarehouseWithCaches();
         List<BaseIdDTO> orgList = sysUserFeign.listAccountingCompany();
+        //虚拟仓
+        List<String> virtualWarehouseIdList = transactionFlowList.stream().map(VirtualTransFlowEntity::getVirtualWarehouseId).distinct().collect(Collectors.toList());
+        List<VirtualWarehouseEntity> virtualWarehouseList = virtualWarehouseService.listByIds(virtualWarehouseIdList);
+        Map<String, String> virtualWarehouseMap = CollUtil.isEmpty(virtualWarehouseList) ? new HashMap<>() :
+                virtualWarehouseList.stream().collect(Collectors.toMap(VirtualWarehouseEntity::getId, VirtualWarehouseEntity::getName));
 
         transactionFlowList.forEach(flow->{
             VirtualInventoryStockDTO.InventoryTransactionDTO transactionDTO = new VirtualInventoryStockDTO.InventoryTransactionDTO();
@@ -183,8 +188,10 @@ public class VirtualInventoryTransCoreServiceImpl implements VirtualInventoryTra
             transactionDTO.setSkuNo(flow.getSkuNo());
             transactionDTO.setOrgId(flow.getOrgId());
             transactionDTO.setWarehouseId(flow.getWarehouseId());
+            transactionDTO.setVirtualWarehouseId(flow.getVirtualWarehouseId());
             transactionDTO.setInventoryStatus(flow.getDictInventoryStatus());
 
+            transactionDTO.setVirtualWarehouseName(virtualWarehouseMap.get(flow.getVirtualWarehouseId()));
             transactionDTO.setOrgName(getOrgName(orgList,flow.getOrgId()));
             transactionDTO.setWarehouseName(getWarehouseInfo(warehouseEntityList,flow.getWarehouseId()).getName());
             transactionDTO.setInventoryStatusName(InventoryStatusEnum.getByCode(flow.getDictInventoryStatus()).getName());
@@ -229,6 +236,12 @@ public class VirtualInventoryTransCoreServiceImpl implements VirtualInventoryTra
         List<WarehouseEntity> warehouseEntityList = warehouseService.listWarehouseWithCaches();
         List<BaseIdDTO> orgList = sysUserFeign.listAccountingCompany();
 
+        //虚拟仓
+        List<String> virtualWarehouseIdList = transferList.stream().map(VirtualInventoryStockDTO.TransferStockDTO::getVirtualWarehouseId).distinct().collect(Collectors.toList());
+        List<VirtualWarehouseEntity> virtualWarehouseList = virtualWarehouseService.listByIds(virtualWarehouseIdList);
+        Map<String, String> virtualWarehouseMap = CollUtil.isEmpty(virtualWarehouseList) ? new HashMap<>() :
+                virtualWarehouseList.stream().collect(Collectors.toMap(VirtualWarehouseEntity::getId, VirtualWarehouseEntity::getName));
+
         // 关联交易号
         String transactionNo = IdUtil.getSnowflake().nextIdStr();
 
@@ -258,11 +271,14 @@ public class VirtualInventoryTransCoreServiceImpl implements VirtualInventoryTra
                 // 交易明细信息
                 transactionDTO.setSkuId(stockBaseDTO.getSkuId());
                 transactionDTO.setSkuNo(stockBaseDTO.getSkuNo());
-                transactionDTO.setOrgId(stockBaseDTO.getOrgId());
+                String orgId = getOrgIdFromWarehouse(warehouseEntityList, stockBaseDTO.getWarehouseId());
+                transactionDTO.setOrgId(orgId);
                 transactionDTO.setWarehouseId(stockBaseDTO.getWarehouseId());
+                transactionDTO.setVirtualWarehouseId(stockBaseDTO.getVirtualWarehouseId());
                 transactionDTO.setInventoryStatus(rule.getInventoryStatus().getCode());
                 // 设置冗余信息部分
-                transactionDTO.setOrgName(getOrgName(orgList,stockBaseDTO.getOrgId()));
+                transactionDTO.setVirtualWarehouseName(virtualWarehouseMap.get(stockBaseDTO.getVirtualWarehouseId()));
+                transactionDTO.setOrgName(getOrgName(orgList,orgId));
                 transactionDTO.setWarehouseName(getWarehouseInfo(warehouseEntityList,stockBaseDTO.getWarehouseId()).getName());
                 transactionDTO.setInventoryStatusName(rule.getInventoryStatus().getName());
 
@@ -335,6 +351,10 @@ public class VirtualInventoryTransCoreServiceImpl implements VirtualInventoryTra
                 transactionDTO.setVirtualWarehouseId(outInStockDTO.getVirtualWarehouseId());
                 transactionDTO.setInventoryStatus(rule.getInventoryStatus().getCode());
 
+                // 库存基础信息
+                VirtualInventoryEntity virtualInventoryEntity = virtualInventoryService.getByTransaction(transactionDTO);
+                transactionDTO.setVirtualInventoryId(ObjectUtil.isEmpty(virtualInventoryEntity) ? null : virtualInventoryEntity.getId());
+
                 // 设置冗余信息部分
                 transactionDTO.setOrgName(getOrgName(orgList,orgId));
                 transactionDTO.setWarehouseName(getWarehouseInfo(warehouseEntityList,outInStockDTO.getWarehouseId()).getName());
@@ -357,9 +377,6 @@ public class VirtualInventoryTransCoreServiceImpl implements VirtualInventoryTra
                 transactionDTO.setUserId(userInfo.getUid());
                 transactionDTO.setUserName(userInfo.getUserName());
 
-                // 库存基础信息
-                VirtualInventoryEntity virtualInventoryEntity = virtualInventoryService.getByTransaction(transactionDTO);
-                transactionDTO.setVirtualInventoryId(ObjectUtil.isEmpty(virtualInventoryEntity) ? null : virtualInventoryEntity.getId());
                 // 是否允许负库存
                 transactionDTO.setAllowNegativeInventory(Boolean.FALSE);
 

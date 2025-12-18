@@ -1,0 +1,184 @@
+package com.erp.server.wms.service.impl;
+
+import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson.JSON;
+import com.common.business.dto.DmpPushTaskFeignDTO;
+import com.common.business.enums.PlatformDictEnum;
+import com.common.business.enums.SourceTypeEnum;
+import com.common.business.enums.SyncOperateEnum;
+import com.common.business.threadlocal.UserContext;
+import com.common.business.wrapper.FeignQuery;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.FastDFSClientUtil;
+import com.common.message.constant.RocketMqTopic;
+import com.common.message.enums.RocketMqTagEnum;
+import com.erp.model.dmp.entity.CfgSettingEntity;
+import com.erp.model.dmp.entity.DmpPushTaskEntity;
+import com.erp.model.dmp.enums.PlatformEnum;
+import com.erp.model.dmp.enums.SettingEnum;
+import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.wms.dto.WmsAttachmentDTO;
+import com.erp.model.wms.dto.third.ThirdWarehouseCancelFbaOutboundReq;
+import com.erp.model.wms.dto.third.ThirdWarehouseCreateFbaOutboundReq;
+import com.erp.model.wms.entity.B2bThirdDeliveryDetailEntity;
+import com.erp.model.wms.entity.B2bThirdDeliveryEntity;
+import com.erp.model.wms.entity.OverseasProviderEntity;
+import com.erp.model.wms.entity.WmsPushMsgEntity;
+import com.erp.rpc.dmp.feign.DmpMqFeign;
+import com.erp.server.wms.convert.B2bThirdDeliveryConverter;
+import com.erp.server.wms.service.*;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import javax.annotation.Resource;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+
+@Slf4j
+@Service
+public class SyncB2bThirdWarehouseServiceImpl implements SyncB2bThirdWarehouseService {
+
+    @Autowired
+    private OperateLogService operateLogService;
+    @Resource
+    private WmsPushMsgService wmsPushMsgService;
+    @Resource
+    private OverseasProviderWarehouseService overseasProviderWarehouseService;
+    @Resource
+    private WmsAttachmentService wmsAttachmentService;
+    @Resource
+    private DmpMqFeign dmpMqFeign;
+    @Override
+    public DmpPushTaskEntity syncB2bThirdWarehouse(B2bThirdDeliveryEntity entity, List<B2bThirdDeliveryDetailEntity> detailEntityList, String operate) {
+        //生成任务
+        if (SyncOperateEnum.OPERATE_ADD.getCode().equals(operate)) {
+            return saveCreateTask(entity, operate, this.newSyncDataToThirdWarehouseCreate(entity, detailEntityList));
+        }else if (SyncOperateEnum.OPERATE_INVALID.getCode().equals(operate)){
+            return saveCancelTask(entity, operate, this.newSyncDataToThirdWarehouseCancel(entity));
+        } else {
+            throw new ServiceException("操作类型【{}】不支持同步B2B第三方发货单", operate);
+        }
+    }
+
+    private DmpPushTaskEntity saveCancelTask(B2bThirdDeliveryEntity entity, String operate, Map<String, Object> resultMap) {
+        SettingEnum settingEnum = SettingEnum.NEW_DMP_PUSH_SWTICH_LIST;
+        List<CfgSettingEntity> list = FeignQuery.create(CfgSettingEntity.class)
+                .eq(CfgSettingEntity::getKey, SourceTypeEnum.B2B_THIRD_DELIVERY_CANCEL.getCode())
+                .eq(CfgSettingEntity::getType, settingEnum.getType())
+                .eq(CfgSettingEntity::getValue, "1")
+                .list();
+        String msg = StrUtil.format("用户【{}】操作【{}】单据单号为【{}】异步拦截三方仓出库订单，等待三方仓处理/未同步三方仓", UserContext.getDefaultLoginUser().getUserName(), "B2B三方发货单" , entity.getCode());
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.B2B_THIRD_DELIVERY.getCode(), entity.getId(), "【中台任务】发货拦截");
+
+        String thirdWarehouseProvideCode = resultMap.getOrDefault("thirdWarehouseProvideCode","").toString();
+        if (CollUtil.isEmpty(list)) {
+            //添加推送任务
+            DmpPushTaskFeignDTO taskFeignDTO = new DmpPushTaskFeignDTO();
+            taskFeignDTO.setSourceId(entity.getId());
+            taskFeignDTO.setSourceCode(entity.getCode());
+            taskFeignDTO.setSourceType(SourceTypeEnum.B2B_THIRD_DELIVERY_CANCEL.getCode());
+            taskFeignDTO.setMqTopic(RocketMqTopic.SYNC_B2B_THIRD_DELIVERY_CANCEL_ERP_TOPIC);
+            taskFeignDTO.setMqTag(RocketMqTagEnum.ERP_B2B_THIRD_WAREHOUSE_CANCEL_TAG.getName());
+            taskFeignDTO.setMqData(JSONUtil.toJsonStr(resultMap));
+            taskFeignDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
+            taskFeignDTO.setTargetPlatformName(PlatformDictEnum.getNameByCode(thirdWarehouseProvideCode));
+            taskFeignDTO.setSyncOperate(operate);
+            return dmpMqFeign.saveTask(taskFeignDTO);
+        }
+
+        WmsPushMsgEntity wmsPushMsgEntity = new WmsPushMsgEntity();
+        wmsPushMsgEntity.setSourceId(entity.getId());
+        wmsPushMsgEntity.setSourceCode(entity.getCode());
+        wmsPushMsgEntity.setSourceType(SourceTypeEnum.B2B_THIRD_DELIVERY_CANCEL.getCode());
+        wmsPushMsgEntity.setPushData(JSON.toJSONString(resultMap));
+        wmsPushMsgEntity.setTargetPlatform(thirdWarehouseProvideCode);
+        wmsPushMsgEntity.setSyncOperate(operate);
+        wmsPushMsgService.save(wmsPushMsgEntity);
+        return null;
+    }
+
+    @Override
+    public Map<String, Object> newSyncDataToThirdWarehouseCreate(B2bThirdDeliveryEntity entity, List<B2bThirdDeliveryDetailEntity> detailEntityList) {
+        OverseasProviderEntity overseasProviderEntity = overseasProviderWarehouseService.findPlatformByWarehouseId(entity.getDeliveryWarehouseId());
+        if (Objects.isNull(overseasProviderEntity)){
+            throw new ServiceException(ApiError.NOT_FOUND_OVERSEAS_PROVIDE);
+        }
+        List<WmsAttachmentDTO.UpdateDTO> attachmentList = wmsAttachmentService.getByBusinessIds(Collections.singletonList(entity.getId()), ModuleTypeEnum.B2B_THIRD_DELIVERY.getCode());
+        ThirdWarehouseCreateFbaOutboundReq req = B2bThirdDeliveryConverter.INSTANCE.toCreateFbaOutboundReq(entity, detailEntityList);
+        req.setAuthId(overseasProviderEntity.getId());
+        req.setThirdWarehouseProvideCode(overseasProviderEntity.getCode());
+        req.setFileUrl(CollUtil.isNotEmpty(attachmentList) ? FastDFSClientUtil.publicUrl + attachmentList.get(0).getAttachUrl() : null);
+        return BeanUtil.beanToMap(req);
+    }
+    /**
+     * @param operate
+     * @param resultMap
+     * @description: 生成任务
+     * @author Will
+     * @date: 2023/10/16 9:17
+     */
+    private DmpPushTaskEntity saveCreateTask(B2bThirdDeliveryEntity entity, String operate, Map<String, Object> resultMap) {
+        SettingEnum settingEnum = SettingEnum.NEW_DMP_PUSH_SWTICH_LIST;
+        List<CfgSettingEntity> list = FeignQuery.create(CfgSettingEntity.class)
+                .eq(CfgSettingEntity::getKey, SourceTypeEnum.B2B_THIRD_DELIVERY_CREATE.getCode())
+                .eq(CfgSettingEntity::getType, settingEnum.getType())
+                .eq(CfgSettingEntity::getValue, "1")
+                .list();
+        String msg = StrUtil.format("用户【{}】操作【{}】单据单号为【{}】异步创建三方仓出库订单", UserContext.getDefaultLoginUser().getUserName(), "B2B三方发货单" , entity.getCode());
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.B2B_THIRD_DELIVERY.getCode(), entity.getId(), "【中台任务】创建三方仓出库订单");
+
+        String thirdWarehouseProvideCode = resultMap.getOrDefault("thirdWarehouseProvideCode","").toString();
+        if (CollUtil.isEmpty(list)) {
+            //添加推送任务
+            DmpPushTaskFeignDTO taskFeignDTO = new DmpPushTaskFeignDTO();
+            taskFeignDTO.setSourceId(entity.getId());
+            taskFeignDTO.setSourceCode(entity.getCode());
+            taskFeignDTO.setSourceType(SourceTypeEnum.B2B_THIRD_DELIVERY_CREATE.getCode());
+            taskFeignDTO.setMqTopic(RocketMqTopic.SYNC_B2B_THIRD_DELIVERY_CREATE_ERP_TOPIC);
+            taskFeignDTO.setMqTag(RocketMqTagEnum.ERP_B2B_THIRD_WAREHOUSE_CREATE_TAG.getName());
+            taskFeignDTO.setMqData(JSONUtil.toJsonStr(resultMap));
+            taskFeignDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
+            taskFeignDTO.setTargetPlatformName(PlatformDictEnum.getNameByCode(thirdWarehouseProvideCode));
+            taskFeignDTO.setSyncOperate(operate);
+            return dmpMqFeign.saveTask(taskFeignDTO);
+        }
+
+        WmsPushMsgEntity wmsPushMsgEntity = new WmsPushMsgEntity();
+        wmsPushMsgEntity.setSourceId(entity.getId());
+        wmsPushMsgEntity.setSourceCode(entity.getCode());
+        wmsPushMsgEntity.setSourceType(SourceTypeEnum.B2B_THIRD_DELIVERY_CREATE.getCode());
+        wmsPushMsgEntity.setPushData(JSON.toJSONString(resultMap));
+        wmsPushMsgEntity.setTargetPlatform(thirdWarehouseProvideCode);
+        wmsPushMsgEntity.setSyncOperate(operate);
+        wmsPushMsgService.save(wmsPushMsgEntity);
+
+        return null;
+    }
+
+
+    @Override
+    public Map<String, Object> newSyncDataToThirdWarehouseCancel(B2bThirdDeliveryEntity entity) {
+
+        OverseasProviderEntity overseasProviderEntity = overseasProviderWarehouseService.findPlatformByWarehouseId(entity.getDeliveryWarehouseId());
+        if (Objects.isNull(overseasProviderEntity)){
+            throw new ServiceException(ApiError.NOT_FOUND_OVERSEAS_PROVIDE);
+        }
+
+        ThirdWarehouseCancelFbaOutboundReq req = new ThirdWarehouseCancelFbaOutboundReq();
+        req.setAuthId(overseasProviderEntity.getId());
+        req.setThirdWarehouseProvideCode(overseasProviderEntity.getCode());
+        req.setErpOrderCode(entity.getCode());
+        req.setOrderCode(entity.getPlatformOrderCode());
+        req.setSourceId(entity.getId());
+        req.setSourceCode(entity.getCode());
+        req.setSoCode(entity.getSoCode());
+        return BeanUtil.beanToMap(req);
+    }
+}

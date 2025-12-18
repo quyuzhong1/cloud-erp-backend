@@ -360,21 +360,34 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         //出库金额
         BigDecimal outStockAmount = BigDecimal.ZERO;
         for (SoOutstockDetailDTO.AddDTO item : detailList) {
-
-            //实发数量
+            // 实发数量
             Integer actualQty = item.getActualQty();
             String soDetailId = item.getSoDetailId();
 
-            BigDecimal price = soDetailList.stream().filter(s -> s.getId().equals(soDetailId)).
-                    findFirst().map(SoDetailEntity::getPrice).orElse(BigDecimal.ZERO);
-            //税率
-            BigDecimal taxRate = soDetailList.stream().filter(s -> s.getId().equals(soDetailId)).
-                    findFirst().map(SoDetailEntity::getTaxRate).orElse(BigDecimal.ZERO);
+            // 获取对应的销售明细
+            SoDetailEntity soDetail = soDetailList.stream()
+                    .filter(s -> s.getId().equals(soDetailId))
+                    .findFirst()
+                    .orElse(null);
 
+            if (soDetail == null) {
+                continue;
+            }
+
+            // 计算价格
+            BigDecimal price;
+            if (sourceType.equals(SourceTypeEnum.SO_DELIVERY_NOTICE.getCode())) {
+                price = soDetail.getPrice().multiply(new BigDecimal(soDetail.getPerBoxQty()));
+            } else {
+                price = soDetail.getPrice();
+            }
+
+            // 计算税率
+            BigDecimal taxRate = soDetail.getTaxRate();
             BigDecimal flagTaxRate = MathUtil.divide(taxRate, MathUtil.BigDecimal_100);
-
             BigDecimal taxPrice = MathUtil.getTaxValue(price, flagTaxRate, 4);
 
+            // 累加出库金额
             outStockAmount = outStockAmount.add(MathUtil.multiplyWithTwo(taxPrice, actualQty));
         }
 
@@ -734,7 +747,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 List<SoOutstockDetailEntity> detailEntities = soOutstockDetailService.listDetailBySoIds(Collections.singletonList(entity.getSoId()));
                 List<SoDetailEntity> soDetails = soInfoFeign.listSoDetailByMainIds(Collections.singletonList(entity.getSoId()));
                 Map<String, Integer> detailMap = detailEntities.stream().filter(e -> Boolean.FALSE.equals(e.getInvalidStatus())).collect(Collectors.toMap(SoOutstockDetailEntity::getSkuNo, SoOutstockDetailEntity::getPlanQty, Integer::sum));
-                Map<String, Integer> soDetailMap = soDetails.stream().collect(Collectors.toMap(SoDetailEntity::getSkuNo, SoDetailEntity::getQty, Integer::sum));
+                Map<String, Integer> soDetailMap = soDetails.stream().collect(Collectors.toMap(SoDetailEntity::getDeliverySkuNo, SoDetailEntity::getBoxQty, Integer::sum));
                 for (Map.Entry<String, Integer> entry : detailMap.entrySet()) {
                     int sellQty = Optional.ofNullable(soDetailMap.get(entry.getKey())).orElse(0);
                     if (sellQty == 0) {
@@ -1070,20 +1083,16 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         if (Objects.isNull(entity)) {
             return;
         }
-
-
-        //这个是销售出库单id
-        List<String> allList = Collections.singletonList(entity.getId());
+        String sourceType = entity.getSourceType();
         //发货通知单
         String soDeliveryNotice = SourceTypeEnum.SO_DELIVERY_NOTICE.getCode();
-        String sourceType = entity.getSourceType();
+        String b2bThirdDelivery = SourceTypeEnum.B2B_THIRD_DELIVERY.getCode();
         //发货通知单的 id
         List<SoOutstockEntity> noticeSoOutstockList = soDeliveryNotice.equals(sourceType) ? Collections.singletonList(entity) : Collections.emptyList();
         //发货通知单的 id
         List<String> noticeIdList = noticeSoOutstockList.stream().map(SoOutstockEntity::getSourceId).collect(Collectors.toList());
         //发货通知集合
         List<SoDeliveryNoticeEntity> noticeList = CollectionUtils.isNotEmpty(noticeIdList) ? soDeliveryNoticeService.listByIds(noticeIdList) : Collections.emptyList();
-
         //发货通知单详情
         for (SoDeliveryNoticeEntity item : noticeList) {
             String deliveryNoticeId = item.getId();
@@ -1096,9 +1105,11 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             item.setDeliveryStatus(Boolean.TRUE);
         }
         //更改打包日期 以及发货状态
-        soDeliveryNoticeService.updateBatchById(noticeList);
+        if (CollUtil.isNotEmpty(noticeList)){
+            soDeliveryNoticeService.updateBatchById(noticeList);
+        }
 
-        List<SoOutstockDetailEntity> soOutstockDetailList = soOutstockDetailService.listByMainIds(allList);
+        List<SoOutstockDetailEntity> soOutstockDetailList = soOutstockDetailService.listByMainIds(Collections.singletonList(entity.getId()));
         soOutstockDetailList=soOutstockDetailList.stream().filter(s->CharSequenceUtil.isNotBlank(s.getSoDetailId())).collect(Collectors.toList());
         List<SoDetailDTO.UpdateDeliveryStatusDTO> paramList = new ArrayList<>();
         for (SoOutstockDetailEntity item : soOutstockDetailList) {
@@ -1109,7 +1120,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         }
         soInfoFeign.updateDeliveryStatus(paramList);
         //查询出库信息
-        List<InOutStockDTO> members = baseMapper.listInventoryInOut(allList);
+        List<InOutStockDTO> members = baseMapper.listInventoryInOut(Collections.singletonList(entity.getId()));
 
         InventoryInOutStockDTO inventoryInOutStockDTO = new InventoryInOutStockDTO();
         if (ObjectUtil.isNotEmpty(entity.getBatchNo()) || soDeliveryNotice.equals(entity.getSourceType())) {
@@ -1127,8 +1138,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             inventoryTransCoreService.approveByType(inventoryInOutStockDTO);
         }
         //虚拟仓冻结库存扣减,(来源发货通知单且非中转)
-        if (CollectionUtils.isNotEmpty(members) && CharSequenceUtil.isBlank(entity.getBatchNo()) && CollectionUtils.isNotEmpty(noticeList)) {
-            b2BVirtualInventory(members);
+        if (CollectionUtils.isNotEmpty(members) && CharSequenceUtil.isBlank(entity.getBatchNo()) && (CollectionUtils.isNotEmpty(noticeList) || b2bThirdDelivery.equals(entity.getSourceType()))) {
+            b2BVirtualInventory(members,entity.getSourceType());
         }
         //自动生成功能系统标识
         Boolean originalValue = UserContext.getIsUserSystem();
@@ -1144,19 +1155,23 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
     /**
      * b2b虚拟仓数据
+     *
+     * @param members
+     * @param sourceType
      * @author will
      * @date 2024/12/17 11:29
-     * @param members
      */
 
-    private void b2BVirtualInventory (List<InOutStockDTO> members) {
+    private void b2BVirtualInventory (List<InOutStockDTO> members, String sourceType) {
         //bom信息调整
         List<String> skuIdList = members.stream().map(InOutStockDTO::getSkuId).distinct().collect(Collectors.toList());
         List<BomChildrenSkuDTO> bomChildList = plmTaskFeign.listBomChildBySkuIds(skuIdList);
         //无虚拟仓无需扣减库存
         List<InOutStockDTO> virtualInOutStockList = members.stream().filter(obj ->
                 CharSequenceUtil.isNotBlank(obj.getVirtualWarehouseId())
-                && bomChildList.stream().filter(e -> CharSequenceUtil.equals(e.getType(), BomTypeEnum.COMBINATION.getType()) && CharSequenceUtil.equals(e.getParentSkuId(), obj.getSkuId())).count() == MathUtil.ZERO
+                && ((bomChildList.stream().filter(e -> CharSequenceUtil.equals(e.getType(), BomTypeEnum.COMBINATION.getType()) && CharSequenceUtil.equals(e.getParentSkuId(), obj.getSkuId())).count() == MathUtil.ZERO)
+                || SourceTypeEnum.B2B_THIRD_DELIVERY.getCode().equals(sourceType))
+                //b2b第三方发货单无需比较组合品
         ).collect(Collectors.toList());
         if (CollectionUtils.isEmpty(virtualInOutStockList)) {
             return;
@@ -4665,6 +4680,14 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         if (StringUtils.isNotBlank(deliveryId)){
             soB2cDeliveryService.deleteSoB2cDelivery(deliveryId);
         }
+    }
+
+    @Override
+    public void updateRemarkById(String outstockId, String remark) {
+        if (CharSequenceUtil.isBlank(outstockId)){
+            return;
+        }
+        this.lambdaUpdate().set(SoOutstockEntity::getRemark, remark).eq(SoOutstockEntity::getId, outstockId).update();
     }
 
     private void fillExportLogisticsHandoverListDTO(List<SoOutstockDTO.ExportLogisticsHandoverListDTO> list) {

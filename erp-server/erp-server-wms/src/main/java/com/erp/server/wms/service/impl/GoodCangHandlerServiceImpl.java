@@ -203,11 +203,23 @@ public class GoodCangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         }
         return success(ThirdWarehouseCancelResultEnum.INTERCEPTION_SUCCESSFUL.getCode());
     }
+
+    @Override
+    protected ApiResult<String> cancelFbaOutboundBill(ThirdWarehouseCancelFbaOutboundReq cancelOutboundReq) {
+        return failure("ERP功能暂不支持");
+    }
+
     @Override
     protected ApiResult<String> queryOutboundBill(@Valid ThirdWarehouseQueryOutboundReq queryOutboundReq){
         GoodCangResponse<String> response = goodCangService.getOutboundCode(queryOutboundReq.getErpOrderCode());
         return CharSequenceUtil.isNotBlank(response.getData()) ? success(response.getData()) : failure(response.getMessage());
     }
+
+    @Override
+    protected ApiResult<List<ThirdWarehouseQueryFbaOutboundResponse>> queryFbaOutboundBill(ThirdWarehouseQueryFbaOutboundReq req) {
+        return failure("ERP功能暂不支持");
+    }
+
     @Override
     protected Boolean warehouseAuthorize(OverseasProviderDTO.AuthorizeParamDTO dto) {
         GoodCangResponse<List<GoodCangWarehouseResp>> response = goodCangService.getWarehouse();
@@ -256,6 +268,10 @@ public class GoodCangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
 
         goodCangCreateInboundReq.setItems(itemList);
         return goodCangCreateInboundReq;
+    }
+    @Override
+    protected ApiResult<String> createFbaOutboundBill(ThirdWarehouseCreateFbaOutboundReq createOutboundReq) {
+        return failure("ERP功能暂不支持");
     }
     public boolean isSuccess(String ask, String message){
         return "Success".equals(ask) ||"success".equals(message);
