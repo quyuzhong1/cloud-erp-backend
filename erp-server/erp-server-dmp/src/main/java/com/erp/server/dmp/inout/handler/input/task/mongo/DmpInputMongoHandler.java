@@ -58,6 +58,7 @@ public abstract class DmpInputMongoHandler extends DmpInputTaskHandler{
 	protected List<Map<String, Object>> changeConvertInputMongoEntityList = new ArrayList<>();
 	
 	public static final String MONGO_BASE_ID = "_id";
+	public static final String MONGO_FID = "fid";
 	public static final String MONGO_BASE_INPUTTASKID = "inputTaskId";
 	public static final String MONGO_BASE_NEXTLEVELID = "nextLevelId";
 	protected static final String MONGO_BASE_FILEID = "fileId";
