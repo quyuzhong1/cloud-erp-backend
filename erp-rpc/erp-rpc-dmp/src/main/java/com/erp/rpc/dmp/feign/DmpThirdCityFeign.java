@@ -33,7 +33,7 @@ public interface DmpThirdCityFeign {
      * @author jack
      * @date: 2025-12-18
      */
-    @PostMapping("/feign/dmpThirdCity/getThirdByAddress")
+    @PostMapping("/getThirdByAddress")
     List<DmpThirdCityDTO.ThirdAddressMappingDTO> getThirdByAddress(@RequestBody @Validated DmpThirdCityDTO.SysAddressParamsDTO dto) ;
 
 }

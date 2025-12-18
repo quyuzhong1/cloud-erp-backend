@@ -65,7 +65,7 @@ dtc.source_platform AS sourcePlatform
           and tm.type in ('province','city','district')
           and dtc.is_deleted = false
           and dtc.disabled = false
-          and dtc.sourcePlatform = #{params.sourcePlatform}
+          and dtc.source_platform = #{params.sourcePlatform}
         <if test="params.sysIds != null and params.sysIds.size > 0">
             and tm.sys_id in
             <foreach collection="params.sysIds" item="id" open="(" separator="," close=")">

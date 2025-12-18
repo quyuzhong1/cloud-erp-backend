@@ -96,7 +96,7 @@ public class SyncWangDianSoB2cServiceImpl implements SyncWangDianSoB2cService {
         dto.setSourcePlatform(ThirdSysTypeEnum.WDT.getCode());
         dto.setSysIds(sysIds);
         List<DmpThirdCityDTO.ThirdAddressMappingDTO > thirdByAddress = DmpThirdCityFeign.getThirdByAddress(dto);
-        Map<String, DmpThirdCityDTO.ThirdAddressMappingDTO> thirdAddressMap = thirdByAddress.stream().collect(Collectors.toMap(DmpThirdCityDTO.ThirdAddressMappingDTO::getSysId, Function.identity(), (o1, o2) -> o1));
+        Map<String,String> thirdAddressMap = thirdByAddress.stream().collect(Collectors.toMap(DmpThirdCityDTO.ThirdAddressMappingDTO::getSysId, DmpThirdCityDTO.ThirdAddressMappingDTO::getName, (o1, o2) -> o1));
 
         //wdt物流渠道映射
         String logisticsChannelId = kolB2cApplicationEntity.getLogisticsChannelId();

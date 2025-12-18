@@ -96,6 +96,7 @@ public class KolSubB2cApplicationServiceImpl extends SuperServiceImpl<KolSubB2cA
             pushDTO.setEntity(entity);
             List<KolSubB2cApplicationDetailEntity> detailEntities = detailList.stream().filter(e -> e.getMainId().equals(entity.getId())).collect(Collectors.toList());
             pushDTO.setDetailList(detailEntities);
+            result.add(pushDTO);
         }
         return result;
     }
