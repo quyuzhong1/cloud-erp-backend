@@ -103,7 +103,6 @@ public enum SourceTypeEnum {
     WAREHOUSE_LOCATION_MOVE_INFO("warehouseLocationMoveInfo","仓位移动","warehouse_location_move"),
     KOL_B2B_APPLICATION("kolB2bApplication","B2B寄样申请","kol_b2b_application"),
     KOL_B2C_APPLICATION("kolB2cApplication","B2C寄样申请","kol_b2c_application"),
-    KOL_SUB_B2C_APPLICATION("kolSubB2cApplication","B2C寄样申请拆分单","kol_sub_b2c_application"),
 
 
     //OMS

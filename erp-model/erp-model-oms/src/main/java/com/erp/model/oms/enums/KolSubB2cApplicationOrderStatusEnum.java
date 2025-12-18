@@ -14,8 +14,11 @@ import org.apache.commons.lang3.StringUtils;
  */
 public enum KolSubB2cApplicationOrderStatusEnum implements EnumMessage {
 	NOT("not", "未生成"),
+    WAIT_SUBMIT("waitSubmit", "待提交"),
 	NOTAPPROVE("notApprove", "未审核"),
+    APPROVE_ING("approveIng", "审核中"),
 	APPROVE("approve", "已审核"),
+    REJECT("reject", "审核不通过"),
     ;
     /**
      * 类型

@@ -413,6 +413,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Resource
     private SyncThirdWarehouseService syncThirdWarehouseService;
 
+    @Resource
+    private KolSubB2cApplicationService kolSubB2cApplicationService;
+
     @Override
     public PagingVO<SoB2cDTO.ListDTO> paging(PagingDTO<SoB2cDTO.PagingParamDTO> pagingParamDTO) {
         PagingParamDTO params = pagingParamDTO.getParams();
@@ -1525,6 +1528,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 //生成nf-e发票
                 UserContext.setIsUserSystem(true);
                 cfgInvoiceSettingDetailService.generateNfeInvoice (entity,InvoiceNodeEnum.AFTER_AUDIT.getCode());
+                //回写更新kol-b2c拆分单 审核状态
+                if(entity.getSourceType().equals(SourceTypeEnum.KOL_B2C_APPLICATION.getCode())){
+                    kolSubB2cApplicationService.lambdaUpdate()
+                            .set(KolSubB2cApplicationEntity::getOrderStatus,KolSubB2cApplicationOrderStatusEnum.APPROVE.getCode())
+                            .eq(KolSubB2cApplicationEntity::getId,entity.getSourceId())
+                            .update();
+                }
             }finally {
                 UserContext.clearIsUserSystem();
             }
@@ -6512,6 +6522,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         this.updateApproveStatus(id, waitSubmit.getStatus(), Boolean.FALSE);
         //删除已生成的申报信息
         soB2cDeclareProductService.removeBySoId(id);
+        //回写更新kol-b2c拆分单审核状态
+        if(entity.getSourceType().equals(SourceTypeEnum.KOL_B2C_APPLICATION.getCode())){
+            kolSubB2cApplicationService.lambdaUpdate()
+                    .set(KolSubB2cApplicationEntity::getOrderStatus,KolSubB2cApplicationOrderStatusEnum.NOTAPPROVE.getCode())
+                    .eq(KolSubB2cApplicationEntity::getId,entity.getSourceId())
+                    .update();
+        }
         String msg = "销售订单【{}】反审核流程";
         operateLogService.addModuleOperateLog(CharSequenceUtil.format(msg, entity.getCode()), ModuleTypeEnum.SO_B2C.getCode(), id, "反审核流程");
 
@@ -7726,6 +7743,27 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         } else {
             deliveryTimeDTO.getSoB2cLogisticsList().forEach(obj -> obj.setDeliveryTime(deliveryTimeDTO.getDeliveryTime()));
             soB2cLogisticsService.updateBatchById(deliveryTimeDTO.getSoB2cLogisticsList());
+        }
+
+        //回写更新kol-b2c拆分单
+        List<SoB2cEntity> soB2cEntities = listByIds(deliveryTimeDTO.getSoB2cIds()).stream().filter(e ->e.getSourceType().equals(SourceTypeEnum.KOL_B2C_APPLICATION.getCode())).collect(Collectors.toList());
+        if(CollUtil.isNotEmpty(soB2cEntities) && deliveryTimeDTO.getStatus().equals(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode())){
+            List<String> kolSubB2cIds = soB2cEntities.stream().map(SoB2cEntity::getSourceId).collect(Collectors.toList());
+            List<KolSubB2cApplicationEntity> kolSubB2cApplicationEntities = kolSubB2cApplicationService.listByIds(kolSubB2cIds);
+            for (KolSubB2cApplicationEntity entity : kolSubB2cApplicationEntities) {
+                SoB2cEntity soB2cEntity = soB2cEntities.stream().filter(e -> e.getSourceId().equals(entity.getId())).findFirst().orElse(null);
+                if(Objects.nonNull(soB2cEntity)){
+                    entity.setTrackNo(soB2cEntity.getShippingOrderNo());
+                    entity.setDeliveryStatus(KolSubB2cApplicationDeliveryStatusEnum.SHIPPED.getCode());
+                }
+            }
+            try {
+                //生成nf-e发票
+                UserContext.setIsUserSystem(true);
+                kolSubB2cApplicationService.updateBatchById(kolSubB2cApplicationEntities);
+            }finally {
+                UserContext.clearIsUserSystem();
+            }
         }
 
         String statusName = SoB2cBillStatusEnum.getName(deliveryTimeDTO.getStatus());
