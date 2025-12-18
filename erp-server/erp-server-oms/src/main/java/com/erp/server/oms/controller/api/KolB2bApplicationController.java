@@ -415,8 +415,9 @@ public class KolB2bApplicationController extends BaseController {
             tableAlias = "kba"
     )
     @LogAction(value = LogActionEnum.EXPORT, desc = "B2B寄样申请主表导出Excel数据")
-    public void exportList(@RequestBody @Validated KolB2bApplicationDTO.PagingParamDTO dto, HttpServletResponse response) {
+    public ApiResult<Object> exportList(@RequestBody @Validated KolB2bApplicationDTO.PagingParamDTO dto, HttpServletResponse response) {
         kolB2bApplicationService.exportList(dto, response);
+        return success();
     }
 
     /**
