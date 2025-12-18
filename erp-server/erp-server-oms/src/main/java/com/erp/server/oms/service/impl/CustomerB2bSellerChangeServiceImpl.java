@@ -526,12 +526,13 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
     }
 
     @Override
-    public CustomerB2bSellerChangeEntity getByMainId(String businessId) {
+    public CustomerB2bSellerChangeEntity getNotApprovedByMainId(String businessId) {
         if(StringUtils.isBlank(businessId)){
             return new CustomerB2bSellerChangeEntity();
         }
         return lambdaQuery()
                 .eq(CustomerB2bSellerChangeEntity::getMainId, businessId)
+                .ne(CustomerB2bSellerChangeEntity::getApproveStatus, ApproveStatusEnum.APPROVE.getCode())
                 .last(" LIMIT 1")
                 .one();
     }
