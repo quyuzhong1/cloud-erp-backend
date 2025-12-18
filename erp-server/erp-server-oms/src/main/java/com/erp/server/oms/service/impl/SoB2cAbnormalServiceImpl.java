@@ -23,6 +23,7 @@ import com.erp.rpc.wms.feign.SoB2cDeliveryFeign;
 import com.erp.rpc.wms.feign.SoOutstockFeign;
 import com.erp.server.oms.service.*;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -164,6 +165,10 @@ public class SoB2cAbnormalServiceImpl implements SoB2cAbnormalService {
         Map<String, Object> ruleMap = new HashMap<>();
         List<SoB2cDetailEntity> detailList = soB2cDetailService.listByMainId(id);
         ruleMap = soB2cService.handleMatchJson(id, detailList, ruleMap);
+        List<Map<String, Object>> mapList = (List<Map<String, Object>>) ruleMap.get("detailList");
+        //要匹配渠道id 是空的 如果有就 不用匹配了返回成功
+        String logisticsChannelIdKey="logisticsChannelId";
+        mapList.forEach(v->v.remove(logisticsChannelIdKey));
         RuleLogisticsDTO.RuleMatchResultDTO matchResult = ruleLogisticsService.getRuleOrderMatchResult(ruleMap);
         return Objects.nonNull(matchResult) && Objects.nonNull(matchResult.getAutoGetTrackNotOfRangeDelivery()) && matchResult.getAutoGetTrackNotOfRangeDelivery();
     }
