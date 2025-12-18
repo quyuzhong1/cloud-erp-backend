@@ -165,7 +165,7 @@ public class SoB2cAbnormalServiceImpl implements SoB2cAbnormalService {
         List<SoB2cDetailEntity> detailList = soB2cDetailService.listByMainId(id);
         ruleMap = soB2cService.handleMatchJson(id, detailList, ruleMap);
         RuleLogisticsDTO.RuleMatchResultDTO matchResult = ruleLogisticsService.getRuleOrderMatchResult(ruleMap);
-        return Objects.nonNull(matchResult) && matchResult.getAutoGetTrackNotOfRangeDelivery();
+        return Objects.nonNull(matchResult) && Objects.nonNull(matchResult.getAutoGetTrackNotOfRangeDelivery()) && matchResult.getAutoGetTrackNotOfRangeDelivery();
     }
 
     @Override
