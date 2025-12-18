@@ -43,7 +43,7 @@ public class B2bThirdDeliveryFeignController {
         b2bThirdDeliveryService.createFbaOutbound(req);
     }
     @PostMapping("/cancelFbaOutbound")
-    public void cancelFbaOutbound(ThirdWarehouseCancelFbaOutboundReq req){
+    public void cancelFbaOutbound(@RequestBody ThirdWarehouseCancelFbaOutboundReq req){
         b2bThirdDeliveryService.cancelFbaOutbound(req);
     }
 }
