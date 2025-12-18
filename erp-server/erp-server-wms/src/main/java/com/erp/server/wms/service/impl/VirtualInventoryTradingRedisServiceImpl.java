@@ -9,6 +9,7 @@ import com.common.business.annotation.DistributeLocker;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.wms.dto.WmsVirtualDetailMsgDTO;
+import com.erp.model.wms.dto.inventory.InventoryTransactionDTO;
 import com.erp.model.wms.dto.inventory.VirtualInventoryStockDTO;
 import com.erp.model.wms.entity.VirtualInventoryEntity;
 import com.erp.model.wms.entity.VirtualInventoryHisEntity;
@@ -49,6 +50,8 @@ public class VirtualInventoryTradingRedisServiceImpl implements VirtualInventory
     @Resource
     private WmsVirtualDetailMsgService wmsVirtualDetailMsgService;
 
+    @Resource
+    private VirtualInventoryTransactionService virtualInventoryTransactionService;
 
     @Override
     @DistributeLocker(businessType = VirtualInventoryTransCoreService.BUSINESS_TYPE,keyName = "transactionList.skuId,transactionList.warehouseId,transactionList.virtualWarehouseId,transactionList.inventoryStatus",unlockAfterTx = false)
@@ -66,8 +69,6 @@ public class VirtualInventoryTradingRedisServiceImpl implements VirtualInventory
             transactionList = this.sortVirtualInventoryTransactionList(transactionList);
             log.warn("stopwatch1 ={}",stopwatch.elapsed(TimeUnit.MILLISECONDS));
 
-            // 检查库存是否充足
-            this.checkVirtualInventoryList(transactionList);
             log.warn("stopwatch2 ={}",stopwatch.elapsed(TimeUnit.MILLISECONDS));
 
             // 3-处理库存更新逻辑
@@ -76,6 +77,9 @@ public class VirtualInventoryTradingRedisServiceImpl implements VirtualInventory
             }
             log.warn("stopwatch3 ={}",stopwatch.elapsed(TimeUnit.MILLISECONDS));
 
+            //3.5-新增库存流水
+            this.addInventoryTransaction(transactionList , approveType);
+            
             // 4-反审核时，批量删除交易记录
             if(approveType.equals(InventoryTradingService.UNAPPROVE)){
                 List<String> ids = this.getTransactionFlowIds(transactionList);
@@ -109,18 +113,12 @@ public class VirtualInventoryTradingRedisServiceImpl implements VirtualInventory
      * @param isApprove     是否审批
      */
     public void doTransaction(VirtualInventoryStockDTO.InventoryTransactionDTO transactionDTO, boolean isApprove) {
-        //查询单个库存交易，检查库存是否充足
-        this.checkVirtualInventoryList(Collections.singletonList(transactionDTO));
         // 更新库存
-        this.updateVirtualInventory(transactionDTO);
-        // 更新库存历史
-        this.updateInventoryHis(transactionDTO);
+        this.setInventoryId(transactionDTO);
         // 保存当前审批的交易记录
         if(isApprove){
             this.saveCurrTransactionFlow(transactionDTO);
         }
-        // 更新库存交易记录 剩余库存
-        this.updateInventoryTransaction(transactionDTO,isApprove);
     }
 
     /**
@@ -222,7 +220,6 @@ public class VirtualInventoryTradingRedisServiceImpl implements VirtualInventory
 
         // 交易数量
         virtualTransFlowEntity.setQty(transactionDTO.getQty());
-        virtualTransFlowEntity.setCurInventoryQty(getLastTransactionInventoryQty(transactionDTO)+transactionDTO.getQty());
 
         // 交易人员信息
         virtualTransFlowEntity.setCreateUserId(transactionDTO.getUserId());
@@ -301,7 +298,7 @@ public class VirtualInventoryTradingRedisServiceImpl implements VirtualInventory
      * 更新库存
      * @param transactionDTO    库存交易信息
      */
-    private void updateVirtualInventory(VirtualInventoryStockDTO.InventoryTransactionDTO transactionDTO) {
+    private void setInventoryId(VirtualInventoryStockDTO.InventoryTransactionDTO transactionDTO) {
         VirtualInventoryEntity virtualInventoryEntity;
         if(null != transactionDTO.getVirtualInventoryId()) {
             virtualInventoryEntity = virtualInventoryService.getById(transactionDTO.getVirtualInventoryId());
@@ -314,17 +311,7 @@ public class VirtualInventoryTradingRedisServiceImpl implements VirtualInventory
             log.warn("####VirtualInventoryTradingServiceImpl===>updateVirtualInventory====>virtualInventoryEntity = {}  transactionDTO={}", JSON.toJSONString(virtualInventoryEntity), JSON.toJSONString(transactionDTO));
             throw new ServiceException(ApiError.ERROR_INVENTORY_NOT_EXIST, transactionDTO.getWarehouseName(), transactionDTO.getSkuNo(), transactionDTO.getInventoryStatusName());
         }
-        LambdaUpdateWrapper<VirtualInventoryEntity> wrapper = new LambdaUpdateWrapper<>();
-        wrapper.setSql("qty = qty + " +transactionDTO.getQty())
-                .set(VirtualInventoryEntity::getSkuNo, transactionDTO.getSkuNo())
-                .set(VirtualInventoryEntity::getUpdateTime, LocalDateTime.now())
-                .set(VirtualInventoryEntity::getUpdateUserId, transactionDTO.getUserId())
-                .set(VirtualInventoryEntity::getUpdateUserName, transactionDTO.getUserName())
-                //条件
-                .eq(VirtualInventoryEntity::getId, virtualInventoryEntity.getId());
-
-        virtualInventoryService.update(wrapper);
-
+        
         if(null == transactionDTO.getVirtualInventoryId()) {
             //方面后续记录流水与历史库存
             transactionDTO.setVirtualInventoryId(virtualInventoryEntity.getId());
@@ -499,4 +486,8 @@ public class VirtualInventoryTradingRedisServiceImpl implements VirtualInventory
         transactionList = transactionList.stream().sorted(comparing).collect(Collectors.toList());
         return transactionList;
     }
+    
+    private void addInventoryTransaction(List<VirtualInventoryStockDTO.InventoryTransactionDTO> transactionList, String approveType) {
+    	virtualInventoryTransactionService.addInventoryTransaction(transactionList, approveType);
+	}
 }

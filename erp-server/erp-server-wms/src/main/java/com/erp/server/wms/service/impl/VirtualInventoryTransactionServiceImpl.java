@@ -36,7 +36,7 @@ import com.common.message.service.mq.MQProducerService;
 import com.erp.model.msg.dto.WarnMsgInfoDTO;
 import com.erp.model.msg.enums.WarnMsgTypeEnum;
 import com.erp.model.wms.dto.InventoryTransactionDTO.CheckInventoryDTO;
-import com.erp.model.wms.dto.inventory.InventoryTransactionDTO;
+import com.erp.model.wms.dto.inventory.VirtualInventoryStockDTO;
 import com.erp.model.wms.entity.VirtualInventoryEntity;
 import com.erp.model.wms.entity.VirtualInventoryHisEntity;
 import com.erp.model.wms.entity.VirtualInventoryTransactionEntity;
@@ -314,20 +314,20 @@ public class VirtualInventoryTransactionServiceImpl extends SuperServiceImpl<Vir
     
     @Transactional(rollbackFor = Exception.class)
 	@Override
-	public void addInventoryTransaction(List<InventoryTransactionDTO> transactionList, String approveType) {
+	public void addInventoryTransaction(List<VirtualInventoryStockDTO.InventoryTransactionDTO> transactionList, String approveType) {
     	if(CollUtil.isEmpty(transactionList)) {
     		ServiceException.runError("库存流水不能为空");
     	}
-    	String logMsg = StringUtil.appendLogMsg("addInventoryTransaction", transactionList.stream().map(InventoryTransactionDTO::getSourceCode)
+    	String logMsg = StringUtil.appendLogMsg("addInventoryTransaction", transactionList.stream().map(VirtualInventoryStockDTO.InventoryTransactionDTO::getSourceCode)
     			.filter(Objects::nonNull).collect(Collectors.joining("、")) , approveType);
     	log.info("{}开始" , logMsg);
     	if(transactionList.stream().anyMatch(t -> StringUtils.isBlank(t.getId()))) {
     		ServiceException.runError("库存流水id不能为空");
     	}
-    	if(transactionList.stream().anyMatch(t -> StringUtils.isBlank(t.getInventoryId()))) {
+    	if(transactionList.stream().anyMatch(t -> StringUtils.isBlank(t.getVirtualInventoryId()))) {
     		ServiceException.runError("即时库存id不能为空");
     	}
-    	Set<String> flowIds = transactionList.stream().map(InventoryTransactionDTO::getId).collect(Collectors.toSet());
+    	Set<String> flowIds = transactionList.stream().map(VirtualInventoryStockDTO.InventoryTransactionDTO::getId).collect(Collectors.toSet());
 		List<VirtualTransFlowEntity> transactionFlowEntityList = virtualTransFlowService.listByIds(flowIds);
 		if(transactionFlowEntityList.size() != flowIds.size()) {
 			ServiceException.runError("库存流水缺少");
@@ -353,6 +353,7 @@ public class VirtualInventoryTransactionServiceImpl extends SuperServiceImpl<Vir
 		for(VirtualTransFlowEntity transactionFlowEntity : transactionFlowEntityList) {
 			VirtualInventoryTransactionEntity inventoryTransactionEntity = BeanUtil.copyProperties(transactionFlowEntity, VirtualInventoryTransactionEntity.class);
 			inventoryTransactionEntity.setId(null);
+			inventoryTransactionEntity.setInventoryId(transactionFlowEntity.getVirtualInventoryId());
 			LocalDateTime now = LocalDateTime.now();
 			inventoryTransactionEntity.setCreateTime(now);
 			inventoryTransactionEntity.setUpdateTime(now);
@@ -377,30 +378,30 @@ public class VirtualInventoryTransactionServiceImpl extends SuperServiceImpl<Vir
 	}
 
     @Override
-    public void tryRedis(String transactionId , List<InventoryTransactionDTO> transactionList) {
+    public void tryRedis(String transactionId , List<VirtualInventoryStockDTO.InventoryTransactionDTO> transactionList) {
     	String logMsg = StringUtil.appendLogMsg("tryRedis", transactionId);
     	log.info("{}开始" , logMsg);
     	if(StringUtils.isBlank(transactionId)) {
 			log.error("冻结redis库存事务transactionId不能为空");
 			throw new ServiceException("冻结redis库存事务transactionId不能为空");
 		}
-    	Map<String, List<InventoryTransactionDTO>> inventoryIdMaps = transactionList.stream().collect(Collectors.groupingBy(InventoryTransactionDTO::getInventoryId));
+    	Map<String, List<VirtualInventoryStockDTO.InventoryTransactionDTO>> inventoryIdMaps = transactionList.stream().collect(Collectors.groupingBy(VirtualInventoryStockDTO.InventoryTransactionDTO::getVirtualInventoryId));
     	List<String> transactionRedisParam = new ArrayList<>();
-    	for(Map.Entry<String, List<InventoryTransactionDTO>> inventoryIdMap : inventoryIdMaps.entrySet()) {
-    		List<InventoryTransactionDTO> value = inventoryIdMap.getValue();
-    		Integer totalQty = value.stream().map(InventoryTransactionDTO::getQty).reduce(Integer::sum).orElse(0);
+    	for(Map.Entry<String, List<VirtualInventoryStockDTO.InventoryTransactionDTO>> inventoryIdMap : inventoryIdMaps.entrySet()) {
+    		List<VirtualInventoryStockDTO.InventoryTransactionDTO> value = inventoryIdMap.getValue();
+    		Integer totalQty = value.stream().map(VirtualInventoryStockDTO.InventoryTransactionDTO::getQty).reduce(Integer::sum).orElse(0);
     		if(totalQty != 0) {
     			StringBuilder sb = new StringBuilder();
-    			InventoryTransactionDTO transactionDTO = value.get(0);
-    			sb.append(transactionDTO.getInventoryId());
+    			VirtualInventoryStockDTO.InventoryTransactionDTO transactionDTO = value.get(0);
+    			sb.append(transactionDTO.getVirtualInventoryId());
     			sb.append(InventoryRedisUtil.atSign);
     			sb.append(totalQty);
     			if(!transactionDTO.isAllowNegativeInventory()) {
     				sb.append(InventoryRedisUtil.atSign);
-    				sb.append(CharSequenceUtil.format("库存不足：sku=[{}],仓库=[{}],仓位=[{}],库存状态=[{}],库存:{},交易数:{},缺少数：{}\n"
+    				sb.append(CharSequenceUtil.format("库存不足：sku=[{}],仓库=[{}],虚拟仓=[{}],库存状态=[{}],库存:{},交易数:{},缺少数：{}\n"
                             , transactionDTO.getSkuNo()
                             , transactionDTO.getWarehouseName()
-                            , transactionDTO.getWarehouseLocationName()
+                            , transactionDTO.getVirtualWarehouseName()
                             , transactionDTO.getInventoryStatusName()
                             , "ss1ss"
                             , totalQty

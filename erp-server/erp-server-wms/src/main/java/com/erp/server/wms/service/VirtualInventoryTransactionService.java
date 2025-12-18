@@ -5,6 +5,7 @@ import java.util.Map;
 
 import com.common.business.service.SuperService;
 import com.erp.model.wms.dto.inventory.InventoryTransactionDTO;
+import com.erp.model.wms.dto.inventory.VirtualInventoryStockDTO;
 import com.erp.model.wms.entity.VirtualInventoryTransactionEntity;
 
 import cn.hutool.core.lang.Pair;
@@ -53,14 +54,14 @@ Map<String , Boolean> overrideDbInventory(LocalDate startDate , List<String> inv
      * @param transactionList
      * @param approveType
      */
-    void addInventoryTransaction(List<InventoryTransactionDTO> transactionList, String approveType);
+    void addInventoryTransaction(List<VirtualInventoryStockDTO.InventoryTransactionDTO> transactionList, String approveType);
     
     /**
      * 冻结redis库存
      * @param transactionId
      * @param transactionList
      */
-    void tryRedis(String transactionId , List<InventoryTransactionDTO> transactionList);
+    void tryRedis(String transactionId , List<VirtualInventoryStockDTO.InventoryTransactionDTO> transactionList);
     
     /**
      * 提交redis库存
