@@ -1,12 +1,12 @@
 package com.erp.server.oms.service;
 
-import com.common.business.dto.base.BaseDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.KolSampleCostDTO;
 import com.erp.model.oms.entity.KolSampleCostEntity;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
 
@@ -67,11 +67,11 @@ public interface KolSampleCostService extends SuperService<KolSampleCostEntity> 
      * 导入
      * @author will
      * @date 2025/12/8 10:32
-     * @param dto
+     * @param excelFile
      * @param response
      * @return Boolean
      */
-    Boolean importFile(BaseDTO.ImportDTO dto, HttpServletResponse response);
+    Boolean importFile(MultipartFile excelFile, HttpServletResponse response);
     /**
      * 寄样费用定时更新任务
      * @author will

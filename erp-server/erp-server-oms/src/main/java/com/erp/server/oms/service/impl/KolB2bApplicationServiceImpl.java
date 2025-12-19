@@ -66,10 +66,10 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -458,15 +458,17 @@ public class KolB2bApplicationServiceImpl extends SuperServiceImpl<KolB2bApplica
     }
 
     @Override
-    public Boolean importFile(BaseDTO.ImportDTO dto, HttpServletResponse response) {
+    public Boolean importFile(MultipartFile excelFile, HttpServletResponse response) {
 
         KolB2bApplicationExcelListener excelListenerUtil = new KolB2bApplicationExcelListener();
         try {
-            byte[] bytes = fileFeign.downloadFile(dto.getFileUrl());
-            EasyExcel.read(new ByteArrayInputStream(bytes), KolB2bApplicationImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+            EasyExcel.read(excelFile.getInputStream(), KolB2bApplicationImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (ExcelCommonException e) {
             log.error("导入格式错误！", e);
             throw new ServiceException(ApiError.ERROR_1016);
+        } catch (IOException e) {
+            log.error("导入错误！>>>{}", e);
+            throw new ServiceException(ApiError.ERROR_95124);
         }
         //验证导入数据是否为空
         List<KolB2bApplicationImportExcelDTO> excelDateList = excelListenerUtil.getAllList();

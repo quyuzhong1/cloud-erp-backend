@@ -11,7 +11,6 @@ import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.annotation.DistributeLocker;
-import com.common.business.dto.base.BaseDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.FileTaskEventEnum;
@@ -50,10 +49,10 @@ import org.apache.commons.math3.util.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -161,15 +160,16 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
 
 
     @Override
-    public Boolean importFile(BaseDTO.ImportDTO dto, HttpServletResponse response) {
+    public Boolean importFile(MultipartFile excelFile, HttpServletResponse response) {
         KolSampleCostExcelListener excelListenerUtil = new KolSampleCostExcelListener();
-
         try {
-            byte[] bytes = fileFeign.downloadFile(dto.getFileUrl());
-            EasyExcel.read(new ByteArrayInputStream(bytes), KolSampleCostImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+            EasyExcel.read(excelFile.getInputStream(), KolSampleCostImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (ExcelCommonException e) {
             log.error("导入格式错误！", e);
             throw new ServiceException(ApiError.ERROR_1016);
+        } catch (IOException e) {
+            log.error("导入错误！>>>{}", e);
+            throw new ServiceException(ApiError.ERROR_95124);
         }
         //验证导入数据是否为空
         List<KolSampleCostImportExcelDTO> excelDateList = excelListenerUtil.getAllList();

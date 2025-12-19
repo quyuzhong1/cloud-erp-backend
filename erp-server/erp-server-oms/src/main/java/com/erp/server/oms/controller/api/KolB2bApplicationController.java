@@ -22,6 +22,7 @@ import com.erp.server.oms.service.KolB2bApplicationService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
@@ -440,13 +441,13 @@ public class KolB2bApplicationController extends BaseController {
      * 导入Excel数据
      * @author will
      * @date 2025/12/1 16:25
-     * @param dto
+     * @param excelFile
      * @return ApiResult<Object>
      */
     @LogAction(value = LogActionEnum.IMPORT, desc = "导入其他入库单")
     @PostMapping("/import")
-    public ApiResult<?> importFile(@RequestBody BaseDTO.ImportDTO dto, HttpServletResponse response) {
-        Boolean result = kolB2bApplicationService.importFile(dto, response);
+    public ApiResult<?> importFile(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
+        Boolean result = kolB2bApplicationService.importFile(excelFile, response);
         return result ? success() : failure();
     }
 
