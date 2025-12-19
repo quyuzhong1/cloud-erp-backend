@@ -200,6 +200,10 @@ public class KolB2cApplicationController extends BaseController {
             BatchResultDTO approveResult;
             try {
                 approveResult = kolB2cApplicationService.approve(new ApproveOneDTO(id, dto.getType(),dto.getComment()));
+                //回写更新
+                if(approveResult.getSuccess()){
+                    kolB2cApplicationService.updateKolSubStatus(id);
+                }
             }catch (Exception e){
                 log.error("B2C寄样申请单审核失败",e);
                 KolB2cApplicationEntity entity = idEntityMap.get(id);
@@ -212,6 +216,8 @@ public class KolB2cApplicationController extends BaseController {
             }
             resultDTOS.add(approveResult);
         }
+
+
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 

@@ -4,7 +4,6 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.extra.spring.SpringUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
-import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.enums.*;
 import com.common.business.validator.ValidList;
@@ -13,13 +12,10 @@ import com.common.business.vo.LoginUser;
 import cn.hutool.core.util.StrUtil;
 import com.common.core.dto.MultiErrorExcelData;
 import com.common.core.enums.DictCityTypeEnum;
-import com.erp.model.dmp.entity.DmpPushTaskEntity;
-import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.dto.excel.KolB2cApplicationAddressImportExcelDTO;
 import com.erp.model.oms.dto.excel.KolB2cApplicationDetailImportExcelDTO;
 import com.erp.model.oms.dto.excel.KolB2cApplicationImportExcelDTO;
-import com.erp.model.oms.dto.excel.KolPartnerInfoImportExcelDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.*;
 import com.erp.model.plm.entity.ProductDetailEntity;
@@ -47,7 +43,6 @@ import com.erp.rpc.workflow.feign.CfgQueryOptionFeign;
 import com.erp.server.oms.listener.KolB2cApplicationAddressExcelListener;
 import com.erp.server.oms.listener.KolB2cApplicationDetailExcelListener;
 import com.erp.server.oms.listener.KolB2cApplicationExcelListener;
-import com.erp.server.oms.listener.KolPartnerInfoExcelListener;
 import com.erp.server.oms.rocketmq.sync.wangdian.SyncWangDianSoB2cService;
 import com.erp.server.oms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -62,8 +57,6 @@ import com.common.core.controller.vo.ApiResult;
 import cn.hutool.core.util.ObjectUtil;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.jetbrains.annotations.NotNull;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -84,14 +77,11 @@ import java.io.File;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import javax.annotation.Resource;
-import javax.validation.Valid;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.*;
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
-import org.springframework.transaction.support.TransactionSynchronizationAdapter;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import static com.common.business.enums.FileTaskEventEnum.*;
 
@@ -846,39 +836,14 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
             if(entity.getIsInternational()){
                 try {
                     UserContext.setIsUserSystem(true);
+                    //
+                    List<KolSubB2cApplicationDTO.PushDTO> pushDTOS = kolSubB2cApplicationService.generateSplitOrder(entity, list);
                     //下推B2C订单
-                    pushSoB2c(entity, list, partnerMap, partnerAddressMap);
+                    Map<String, String> b2cCodeMap = pushSoB2c(entity,pushDTOS, partnerMap, partnerAddressMap);
                 }finally {
                     UserContext.clearIsUserSystem();
                 }
-                TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
-                    @Override
-                    public void afterCommit() {
-                        List<KolSubB2cApplicationEntity> kolSubB2cApplicationEntities = kolSubB2cApplicationService.lambdaQuery().eq(KolSubB2cApplicationEntity::getSourceId, entity.getId()).list();
-                        if(CollUtil.isNotEmpty(kolSubB2cApplicationEntities)){
-                            List<String> sourceIds = kolSubB2cApplicationEntities.stream().map(KolSubB2cApplicationEntity::getId).collect(Collectors.toList());
-                            List<SoB2cEntity> soB2cEntities = soB2cService.lambdaQuery().eq(SoB2cEntity::getSourceType, SourceTypeEnum.KOL_B2C_APPLICATION.getCode())
-                                    .in(SoB2cEntity::getSourceId, sourceIds).list();
 
-                            for (KolSubB2cApplicationEntity entity : kolSubB2cApplicationEntities) {
-                                SoB2cEntity soB2cEntity = soB2cEntities.stream().filter(e -> e.getSourceId().equals(entity.getId())).findFirst().orElse(null);
-                                if(Objects.isNull(soB2cEntity)){
-                                    entity.setPlatformSoCode(soB2cEntity.getCode());
-                                    entity.setPlatformOrderCode(soB2cEntity.getCode());
-                                    entity.setOrderStatus(soB2cEntity.getApproveStatus().getStatus());
-                                    if(StringUtils.isNotBlank(soB2cEntity.getBillStatus())&&soB2cEntity.getBillStatus().equals(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode())){
-                                        entity.setDeliveryStatus(KolSubB2cApplicationDeliveryStatusEnum.SHIPPED.getCode());
-                                    }else {
-                                        entity.setDeliveryStatus(KolSubB2cApplicationDeliveryStatusEnum.WAITSHIPPED.getCode());
-                                    }
-                                    entity.setTrackNo(soB2cEntity.getShippingOrderNo());
-
-                                }
-                            }
-                            kolSubB2cApplicationService.updateBatchById(kolSubB2cApplicationEntities);
-                        }
-                    }
-                });
             }else {
                 //旺店通
                 List<KolSubB2cApplicationDTO.PushDTO> pushDTOS = kolSubB2cApplicationService.generateSplitOrder(entity, list);
@@ -899,11 +864,47 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         return Boolean.TRUE;
     }
 
-    //审核通过下推B2C订单
-    private void pushSoB2c(KolB2cApplicationEntity entity,List<KolB2cApplicationDetailEntity> list, Map<String, KolPartnerInfoEntity> partnerMap, Map<String, KolB2cApplicationAddressEntity> partnerAddressMap) {
-        //明细按达人分组
-        Map<String, List<KolB2cApplicationDetailEntity>> partnerGroup = list.stream().collect(Collectors.groupingBy(KolB2cApplicationDetailEntity::getPartnerId));
+    /**
+     * 审核通过生成B2C订单则自动回写kol-b2c拆分单的状态
+     * @author jack
+     * @date: 2025-12-04
+     * @return
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void updateKolSubStatus(String kolId) {
+        List<KolSubB2cApplicationEntity> kolSubB2cApplicationEntities = kolSubB2cApplicationService.lambdaQuery().eq(KolSubB2cApplicationEntity::getSourceId, kolId).list();
+        if(CollUtil.isNotEmpty(kolSubB2cApplicationEntities)){
+            List<String> sourceIds = kolSubB2cApplicationEntities.stream().map(KolSubB2cApplicationEntity::getId).collect(Collectors.toList());
+            List<SoB2cEntity> soB2cEntities = soB2cService.lambdaQuery().eq(SoB2cEntity::getSourceType, SourceTypeEnum.KOL_B2C_APPLICATION.getCode())
+                    .in(SoB2cEntity::getSourceId, sourceIds).list();
 
+            for (KolSubB2cApplicationEntity entity : kolSubB2cApplicationEntities) {
+                SoB2cEntity soB2cEntity = soB2cEntities.stream().filter(e -> e.getSourceId().equals(entity.getId())).findFirst().orElse(null);
+                if(Objects.nonNull(soB2cEntity)){
+                    entity.setPlatformSoCode(soB2cEntity.getCode());
+                    entity.setPlatformOrderCode(soB2cEntity.getCode());
+                    entity.setOrderStatus(soB2cEntity.getApproveStatus().getStatus());
+                    if(StringUtils.isNotBlank(soB2cEntity.getBillStatus())&&soB2cEntity.getBillStatus().equals(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode())){
+                        entity.setDeliveryStatus(KolSubB2cApplicationDeliveryStatusEnum.SHIPPED.getCode());
+                    }else {
+                        entity.setDeliveryStatus(KolSubB2cApplicationDeliveryStatusEnum.WAITSHIPPED.getCode());
+                    }
+                    entity.setTrackNo(soB2cEntity.getShippingOrderNo());
+                }
+            }
+            kolSubB2cApplicationService.updateBatchById(kolSubB2cApplicationEntities);
+        }
+    }
+
+    /**
+     * 审核通过自动下推B2C订单
+     * @author jack
+     * @date: 2025-12-04
+     * @return
+     */
+    private Map<String,String> pushSoB2c(KolB2cApplicationEntity kolB2cApplicationEntity, List<KolSubB2cApplicationDTO.PushDTO> pushDTOS, Map<String, KolPartnerInfoEntity> partnerMap, Map<String, KolB2cApplicationAddressEntity> partnerAddressMap) {
+        Map<String,String> resultMap = new HashMap<>();
 
         String orderCategoryId ="";
         List<OrderCategoryEntity> orderCategoryEntityList = orderCategoryService.lambdaQuery().eq(OrderCategoryEntity::getGroupName, "网红财务审核").list();
@@ -911,34 +912,21 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
             orderCategoryId = orderCategoryEntityList.get(0).getId();
         }
 
+        for (KolSubB2cApplicationDTO.PushDTO pushDTO : pushDTOS) {
+            KolSubB2cApplicationEntity entity = pushDTO.getEntity();
+            List<KolSubB2cApplicationDetailEntity> detailList = pushDTO.getDetailList();
 
-        int index = 0;
-        for (Map.Entry<String, List<KolB2cApplicationDetailEntity>> entry : partnerGroup.entrySet()) {
-            //------------按达人维度生成拆分单和拆分单明细------------
-            KolSubB2cApplicationEntity kolSubB2cApplicationEntity = new KolSubB2cApplicationEntity();
-            kolSubB2cApplicationEntity.setSourceId(entity.getId());
-            kolSubB2cApplicationEntity.setDictPlatform(getDictPlatform(entity.getIsInternational()));
-            kolSubB2cApplicationEntity.setDeliveryStatus(KolSubB2cApplicationDeliveryStatusEnum.WAITSHIPPED.getCode());
-            kolSubB2cApplicationEntity.setOrderStatus(KolSubB2cApplicationOrderStatusEnum.NOTAPPROVE.getCode());
-            kolSubB2cApplicationEntity.setRemark(entity.getRemark());
-            if(index == 0){
-                kolSubB2cApplicationEntity.setCode(entity.getCode());
-            }else {
-                kolSubB2cApplicationEntity.setCode(entity.getCode()+"_"+index);
-            }
-            kolSubB2cApplicationEntity.setPartnerId(entry.getKey());
-            kolSubB2cApplicationEntity.setNickname(entry.getValue().get(0).getNickname());
-            //------------根据拆分单生成B2C------------oms/orderCategory/list
+            //------------根据拆分单生成B2C------------
             //B2C
             SoB2cDTO.AddDTO b2cDto = new SoB2cDTO.AddDTO();
             //销售平台 -- 其他平台
             b2cDto.setDictPlatform(PlatformDictEnum.OTHER_PLATFORM.getCode());
             //店铺
-            b2cDto.setShopId(entity.getShopId());
+            b2cDto.setShopId(kolB2cApplicationEntity.getShopId());
             //订单金额
             b2cDto.setAmount(BigDecimal.ZERO);
             //币别
-            b2cDto.setCurrency(entity.getCurrency());
+            b2cDto.setCurrency(kolB2cApplicationEntity.getCurrency());
             //订单付款时间
             b2cDto.setPayTime(LocalDateTime.now());
             //订单分类
@@ -950,17 +938,16 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
             //物流信息
             SoB2cLogisticsDTO.AddDTO logisticsDTO = new SoB2cLogisticsDTO.AddDTO();
             //物流渠道
-            logisticsDTO.setLogisticsChannelId(entity.getLogisticsChannelId());
+            logisticsDTO.setLogisticsChannelId(kolB2cApplicationEntity.getLogisticsChannelId());
             b2cDto.setLogisticsDTO(logisticsDTO);
 
-            KolB2cApplicationDetailEntity kolB2cApplicationDetailEntity = entry.getValue().get(0);
             //达人信息
-            KolPartnerInfoEntity kolPartnerInfoEntity = partnerMap.get(entry.getKey());
+            KolPartnerInfoEntity kolPartnerInfoEntity = partnerMap.get(entity.getPartnerId());
             //B2C寄样申请地址
-            KolB2cApplicationAddressEntity kolB2cApplicationAddressEntity = partnerAddressMap.get(entry.getKey());
+            KolB2cApplicationAddressEntity kolB2cApplicationAddressEntity = partnerAddressMap.get(entity.getPartnerId());
             //买家信息
             SoB2cReceiverDTO.AddDTO receiverDTO = new SoB2cReceiverDTO.AddDTO();
-            receiverDTO.setCustomerId(kolB2cApplicationDetailEntity.getNickname());
+            receiverDTO.setCustomerId(entity.getNickname());
             receiverDTO.setEmail(kolPartnerInfoEntity.getEmail());
             receiverDTO.setTelNumber(kolPartnerInfoEntity.getPhone());
             receiverDTO.setCountry(kolB2cApplicationAddressEntity.getCountryId());
@@ -973,59 +960,29 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
             receiverDTO.setPostCode(kolB2cApplicationAddressEntity.getZipCode());
             b2cDto.setReceiverDTO(receiverDTO);
 
-            boolean save = kolSubB2cApplicationService.save(kolSubB2cApplicationEntity);
-            if(!save) {
-                throw new ServiceException("B2C寄样申请单拆分单保存失败");
-            }
-            String id = kolSubB2cApplicationEntity.getId();
-
             //------------根据生成拆分单明细，以及生成B2C明细------------
-            List<KolB2cApplicationDetailEntity> value = entry.getValue();
-            List<KolSubB2cApplicationDetailEntity> detailList = new ArrayList<>();
-            List<SoB2cDetailDTO.AddDTO> soB2cDetailList = new ArrayList<>(value.size());
-            for (KolB2cApplicationDetailEntity b2cApplicationDetailEntity : value) {
-                KolSubB2cApplicationDetailEntity subB2cApplicationDetailEntity = new KolSubB2cApplicationDetailEntity();
-                String idStr = IdWorker.getIdStr();
-                subB2cApplicationDetailEntity.setId(idStr);
-                subB2cApplicationDetailEntity.setSourceDetailId(b2cApplicationDetailEntity.getId());
-                subB2cApplicationDetailEntity.setSkuId(b2cApplicationDetailEntity.getSkuId());
-                subB2cApplicationDetailEntity.setSkuNo(b2cApplicationDetailEntity.getSkuNo());
-                subB2cApplicationDetailEntity.setApplyQty(b2cApplicationDetailEntity.getApplyQty());
-                subB2cApplicationDetailEntity.setRemark(b2cApplicationDetailEntity.getRemark());
-                subB2cApplicationDetailEntity.setProjectTag(b2cApplicationDetailEntity.getProjectTag());
-                subB2cApplicationDetailEntity.setMainId(id);
-                detailList.add(subB2cApplicationDetailEntity);
-
+            List<SoB2cDetailDTO.AddDTO> soB2cDetailList = new ArrayList<>(detailList.size());
+            for (KolSubB2cApplicationDetailEntity detailEntity : detailList) {
                 SoB2cDetailDTO.AddDTO detailAddDto = new SoB2cDetailDTO.AddDTO();
-                detailAddDto.setSourceDetailId(idStr);
-                detailAddDto.setSkuId(b2cApplicationDetailEntity.getSkuId());
-                detailAddDto.setQty(b2cApplicationDetailEntity.getApplyQty());
-                detailAddDto.setWarehouseId(entity.getWarehouseId());
+                detailAddDto.setSourceDetailId(detailEntity.getId());
+                detailAddDto.setSkuId(detailEntity.getSkuId());
+                detailAddDto.setQty(detailEntity.getApplyQty());
+                detailAddDto.setWarehouseId(kolB2cApplicationEntity.getWarehouseId());
                 detailAddDto.setPrice(BigDecimal.ZERO);
                 soB2cDetailList.add(detailAddDto);
             }
-            //保存明细
-            kolSubB2cApplicationDetailService.saveBatch(detailList);
 
             //下推B2C
             //来源
-            b2cDto.setSourceId(id);
-            b2cDto.setSourceCode(kolSubB2cApplicationEntity.getCode());
+            b2cDto.setSourceId(entity.getId());
+            b2cDto.setSourceCode(entity.getCode());
             b2cDto.setSourceType(SourceTypeEnum.KOL_B2C_APPLICATION.getCode());
             b2cDto.setDetailList(soB2cDetailList);
-            soB2cService.processOrderCreation(b2cDto);
-            //序号+1
-            index+=1;
+            String b2cCode = soB2cService.processOrderCreation(b2cDto);
+            resultMap.put(entity.getCode(),b2cCode);
         }
+        return resultMap;
     }
-
-    /**
-     *  根据业务类型判断是哪个平台
-     */
-    private String getDictPlatform(Boolean isInternational) {
-        return Boolean.TRUE.equals(isInternational) ? DmpBasicSystemCodeEnum.ERP.getCode() : DmpBasicSystemCodeEnum.WDT.getCode();
-    }
-
 
     @Override
     public KolB2cApplicationDTO.ViewDTO view(String id) {

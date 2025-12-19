@@ -51,9 +51,7 @@ public class SyncWangDianSoB2cServiceImpl implements SyncWangDianSoB2cService {
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public DmpPushTaskEntity syncDataToWangDian(KolSubB2cApplicationDTO.PushDTO pushDTO,Map<String, SkuVO> skuMap ) {
-
         PushSelf2Request request = newSyncKolB2c(pushDTO, skuMap);
-
         KolSubB2cApplicationEntity entity = pushDTO.getEntity();
         OmsPushMsgEntity omsPushMsgEntity = new OmsPushMsgEntity();
         omsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.WDT.getCode());

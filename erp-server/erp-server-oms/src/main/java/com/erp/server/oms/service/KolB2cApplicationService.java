@@ -60,6 +60,8 @@ public interface KolB2cApplicationService extends SuperService<KolB2cApplication
     */
     List<KolB2cApplicationDTO.TabListDTO> tabList(PermissionsDTO dto);
 
+    void updateKolSubStatus(String kolId);
+
     /**
     * 详情
     * @author jack
