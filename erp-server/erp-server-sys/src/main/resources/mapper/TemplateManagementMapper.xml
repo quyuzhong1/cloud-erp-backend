@@ -75,12 +75,12 @@ tm.size as size
             tm.ID,
             tm.code,
             tm.NAME,
-            tm.is_default AS isDefault
+            tm.is_default AS isDefault,
+            tm.disabled AS disabled
         FROM
             template_management AS tm
         WHERE
             tm.is_deleted = FALSE
-          AND tm.disabled = FALSE
           and tm.status = 'finished'
           <if test="params.type!=null and params.type!=''">
               and tm.type = #{params.type}

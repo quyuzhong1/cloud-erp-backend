@@ -411,4 +411,20 @@ public class ContractInfoDTO implements Serializable {
         private String content;
     }
 
+
+
+    /**
+     *
+     */
+    @Data
+    @NoArgsConstructor
+    public static class UpdateContractNameDTO {
+        /**
+         * 名称
+         */
+        private String name;
+
+        private String templateId;
+    }
+
 }

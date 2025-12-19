@@ -733,6 +733,38 @@ public class ContractInfoServiceImpl extends SuperServiceImpl<ContractInfoMapper
         }
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
         updateForApprove(entity.getId(), approveStatus.getStatus());
+        if (Objects.equals(ApproveTypeEnum.PASS.getStatus(), dto.getType())) {
+            //校验有效期
+            LocalDate effectiveDate = entity.getEffectiveDate();
+            LocalDate expireDate = entity.getExpireDate();
+            if (Objects.nonNull(effectiveDate) && Objects.nonNull(expireDate) && expireDate.compareTo(effectiveDate) < 0) {
+                entity.setStatus("");
+
+                //更新状态值
+                lambdaUpdate()
+                        .set(ContractInfoEntity::getStatus, "")
+                        .eq(ContractInfoEntity::getId, entity.getId())
+                        .update();
+            } else {
+                LocalDate now = LocalDate.now();
+                //状态处理
+                ContractInfoStatusEnum status = ContractInfoStatusEnum.NOT_EFFECTIVE;
+                if (now.compareTo(effectiveDate) >= 0 && now.compareTo(expireDate) <= 0) {
+                    status = ContractInfoStatusEnum.EFFECTIVE;
+                } else if (now.compareTo(expireDate) > 0) {
+                    status = ContractInfoStatusEnum.EXPIRED;
+                }
+                if (!Objects.equals(entity.getStatus(), status.getCode())) {
+                    entity.setStatus(status.getCode());
+                    //更新状态值
+                    lambdaUpdate()
+                            .set(ContractInfoEntity::getStatus, status.getCode())
+                            .eq(ContractInfoEntity::getId, entity.getId())
+                            .update();
+
+                }
+            }
+        }
         return Boolean.TRUE;
     }
 

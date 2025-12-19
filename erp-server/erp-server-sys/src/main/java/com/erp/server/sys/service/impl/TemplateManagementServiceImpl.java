@@ -14,6 +14,7 @@ import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
+import com.erp.model.scm.dto.ContractInfoDTO;
 import com.erp.model.scm.entity.ContractInfoEntity;
 import com.erp.model.scm.entity.DictBasicEntity;
 import com.erp.model.scm.enums.DictBasicEnum;
@@ -24,6 +25,7 @@ import com.erp.model.sys.enums.TemplateManagementBizTypeEnum;
 import com.erp.model.sys.enums.TemplateManagementStatusEnum;
 import com.erp.model.sys.enums.TemplateManagementTypeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.scm.feign.ScmTaskFeign;
 import com.erp.server.sys.mapper.TemplateManagementMapper;
 import com.erp.server.sys.service.TemplateManagementService;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -68,6 +70,9 @@ public class TemplateManagementServiceImpl extends SuperServiceImpl<TemplateMana
 
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+
+    @Resource
+    private ScmTaskFeign scmTaskFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -149,6 +154,13 @@ public class TemplateManagementServiceImpl extends SuperServiceImpl<TemplateMana
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.TEMPLATE_MANAGEMENT.getCode(), templateManagementEntity.getId(), "编辑信息");
         //再记录一个修改字段的日志
         operateLogService.addModuleOperateLogByObj(old, templateManagementEntity, ModuleTypeEnum.TEMPLATE_MANAGEMENT.getCode(), templateManagementEntity.getId(), msg);
+
+        if(!old.getName().equals(templateManagementEntity.getName())){
+            ContractInfoDTO.UpdateContractNameDTO dto = new ContractInfoDTO.UpdateContractNameDTO();
+            dto.setName(templateManagementEntity.getName());
+            dto.setTemplateId(templateManagementEntity.getId());
+            scmTaskFeign.updateContractNameByTempId(dto);
+        }
         return Boolean.TRUE;
     }
 
