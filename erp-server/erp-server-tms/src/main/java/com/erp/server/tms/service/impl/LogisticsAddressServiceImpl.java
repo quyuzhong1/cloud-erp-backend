@@ -162,7 +162,7 @@ public class LogisticsAddressServiceImpl extends SuperServiceImpl<LogisticsAddre
         if (entity.getIsBySync()) throw new ServiceException(ApiError.LOGISTICS_SYNC_ADDRESS_NOT_DELETABLE);
         List<LogisticsChannelEntity> channelList= logisticsChannelService.listByAddressId(id);
         if(CollectionUtils.isNotEmpty(channelList)){
-               throw new ServiceException(ApiError.ERROR_LOGISTICS_CHANNEL_ADDRESS_EXIST,entity.getName());
+               throw new ServiceException(ApiError.LOGISTICS_CHANNEL_ADDRESS_REF_DELETE_FORBIDDEN,entity.getName());
         }
         this.removeById(id);
         return BatchResultDTO.success(entity.getId(), entity.getName(), OperationTypeEnum.DELETE);
@@ -277,7 +277,7 @@ public class LogisticsAddressServiceImpl extends SuperServiceImpl<LogisticsAddre
         Integer count = this.lambdaQuery().eq(LogisticsAddressEntity::getName, name).
                 ne(StringUtils.isNotBlank(id), LogisticsAddressEntity::getId, id).count();
         if (count > 0) {
-           throw new ServiceException(ApiError.ERROR_LOGISTICS_ADDRESS_NAME_EXIST,name);
+           throw new ServiceException(ApiError.LOGISTICS_ADDRESS_NAME_ALREADY_EXISTS,name);
         }
 
         String country = entity.getCountry();

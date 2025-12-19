@@ -952,12 +952,12 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             List<BaseIdDTO.CodeDTO> logisticsChannelList = logisticsFeign.listBySupplierId(supplierId);
             long count = logisticsChannelList.stream().filter(c -> !c.getDisabled()).count();
             if (count > 0) {
-                throw new ServiceException(ApiError.ERROR_LOGISTICS_CHANNEL_DISABLED_EXIST);
+                throw new ServiceException(ApiError.LOGISTICS_CHANNEL_EXIST_ENABLED_DISABLE_FORBIDDEN);
             }
             List<BaseIdDTO.CodeDTO> transferLogisticsChannelList = transferLogisticsFeign.listBySupplierId(supplierId);
             long transferLogisticsChannelCount = transferLogisticsChannelList.stream().filter(c -> !c.getDisabled()).count();
             if (transferLogisticsChannelCount > 0) {
-                throw new ServiceException(ApiError.ERROR_TRANSFER_LOGISTICS_CHANNEL_DISABLED_EXIST);
+                throw new ServiceException(ApiError.LOGISTICS_TRANSFER_CHANNEL_EXIST_ENABLED_DISABLE_FORBIDDEN);
             }
         }
         supplier.setDisabled(state);

@@ -702,7 +702,7 @@ public class ContractInfoServiceImpl extends SuperServiceImpl<ContractInfoMapper
     public ExportZipResultDTO exportZip(ContractInfoDTO.PagingParamDTO pagingParamDTO) {
         List<ContractInfoDTO.ListAttachDTO> list = this.baseMapper.listAttachByIds(pagingParamDTO);
         if(CollUtil.isEmpty(list)){
-            throw new ServiceException(ApiError.ERROR_EXPORT_DATA_EMPTY);
+            throw new ServiceException(ApiError.FILE_EXPORT_DATA_EMPTY);
         }
         // 动态生成文件名
         String fileName = SourceTypeEnum.CONTRACT_INFO.getName()+"_"+ LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME) + ".zip";

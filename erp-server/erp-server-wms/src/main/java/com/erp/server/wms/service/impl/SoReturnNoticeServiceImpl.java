@@ -615,7 +615,7 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
         Map<String, Object> variablesMap = BeanUtil.beanToMap(entity);
         List<SoReturnNoticeDetailEntity> detailList = soReturnNoticeDetailService.lambdaQuery().eq(SoReturnNoticeDetailEntity::getMainId,entity.getId()).list();
         if (CollUtil.isEmpty(detailList)) {
-            throw new ServiceException(ApiError.ERROR_RETURN_SIGN_DETAIL_REQUIRED);
+            throw new ServiceException(ApiError.SO_RETURN_SIGN_DETAIL_REQUIRED);
         }
         variablesMap.put(ThirdConstants.DETAIL_LIST, BeanUtil.copyToList(detailList,Map.class));
         return variablesMap;
@@ -629,7 +629,7 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
         }
         SoReturnNoticeEntity entity = this.getById(id);
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_RETURN_NOTICE_DETAIL_REQUIRED);
+            throw new ServiceException(ApiError.SO_RETURN_NOTICE_DETAIL_REQUIRED);
         }
         BatchResultDTO submit = this.submit(entity, Boolean.TRUE);
         return submit.getSuccess();
@@ -643,7 +643,7 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
         }
         SoReturnNoticeEntity entity = this.getById(dto.getId());
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_RETURN_NOTICE_DETAIL_REQUIRED);
+            throw new ServiceException(ApiError.SO_RETURN_NOTICE_DETAIL_REQUIRED);
         }
         BatchResultDTO submit = this.submit(entity, Boolean.TRUE);
         return submit.getSuccess();
@@ -868,7 +868,7 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
         List<SoReturnEntity> soReturnEntities = soReturnFeign.listByIds(soReturnIdList);
         long count = soReturnEntities.stream().filter(req -> !ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus())).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_RETURN_ORDER_APPROVED_REQUIRED_NOTICE);
+            throw new ServiceException(ApiError.SO_DELIVERY_RETURN_ORDER_APPROVED_REQUIRED_NOTICE);
         }
         //退货单明细
         List<SoReturnDetailEntity> soReturnDetailEntities = soReturnFeign.listDetailByMainIds(soReturnIdList);

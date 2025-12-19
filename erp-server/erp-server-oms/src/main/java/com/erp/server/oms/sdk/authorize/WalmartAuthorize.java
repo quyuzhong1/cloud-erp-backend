@@ -72,13 +72,13 @@ public class WalmartAuthorize implements IShopAuthorizeService<T> {
     public Boolean shopAuthorize(ShopAuthorizeDTO dto, HttpServletResponse response) {
         String shopId = dto.getShopId();
         if (StringUtils.isBlank(shopId)) {
-            throw new ServiceException(ApiError.ERROR_WALMART_SHOP_ID_NOT_NULL);
+            throw new ServiceException(ApiError.SHOP_WALMART_ID_REQUIRED);
         }
         if (StringUtils.isBlank(dto.getClientId())) {
-            throw new ServiceException(ApiError.ERROR_WALMART_CLIENT_ID_NOT_NULL);
+            throw new ServiceException(ApiError.SHOP_WALMART_CLIENT_ID_REQUIRED);
         }
         if (StringUtils.isBlank(dto.getClientSecret())) {
-            throw new ServiceException(ApiError.ERROR_WALMART_CLIENT_SECRET_NOT_NULL);
+            throw new ServiceException(ApiError.SHOP_WALMART_CLIENT_SECRET_REQUIRED);
         }
         ShopInfoEntity shopInfo = shopInfoService.getById(shopId);
         //根据店铺id 获取到授权信息

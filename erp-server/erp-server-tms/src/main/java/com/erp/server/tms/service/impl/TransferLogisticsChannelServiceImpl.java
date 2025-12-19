@@ -128,7 +128,7 @@ public class TransferLogisticsChannelServiceImpl extends SuperServiceImpl<Transf
 
         TransferDeclareEntity declareEntity = transferDeclareService.checkExistByChannelIds(Arrays.asList(id));
         if(ObjectUtil.isNotEmpty(declareEntity)){
-            throw new ServiceException(ApiError.ERROR_CHANNEL_QUOTE);
+            throw new ServiceException(ApiError.LOGISTICS_CHANNEL_QUOTE_REF_DELETE_FORBIDDEN);
         }
         String msg = CharSequenceUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "盘点计划");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.TRANSFER_LOGISTICS_CHANNEL.getCode(), entity.getId(), "删除盘点计划单数据");
@@ -165,7 +165,7 @@ public class TransferLogisticsChannelServiceImpl extends SuperServiceImpl<Transf
         if (CollectionUtils.isNotEmpty(channelIdList)) {
             TransferDeclareEntity declareEntity = transferDeclareService.checkExistByChannelIds(channelIdList);
             if(ObjectUtil.isNotEmpty(declareEntity)){
-                throw new ServiceException(ApiError.ERROR_CHANNEL_QUOTE);
+                throw new ServiceException(ApiError.LOGISTICS_CHANNEL_QUOTE_REF_DELETE_FORBIDDEN);
             }
 
             this.removeByIds(channelIdList);
@@ -230,7 +230,7 @@ public class TransferLogisticsChannelServiceImpl extends SuperServiceImpl<Transf
         //查询授权信息
         TransferLogisticsAuthEntity authEntity = transferLogisticsAuthService.getByMainId("", transferLogisticsSupplierId);
         if (ObjectUtil.isEmpty(authEntity)) {
-            throw new ServiceException(ApiError.ERROR_LOGISTICS_CHANNEL_NOT_AUTU_EXIST);
+            throw new ServiceException(ApiError.LOGISTICS_CHANNEL_AUTH_INFO_NOT_FOUND);
         }
 
         TransferLogisticsService service = transferLogisticsRegistry.getHandler(authEntity.getLogisticsPlatform());

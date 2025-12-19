@@ -290,7 +290,7 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
                 //获取退货单信息
                 SoReturnEntity soReturnEntity = soReturnFeign.getSoReturnById(dto.getSourceId());
                 if (ObjectUtil.isEmpty(soReturnEntity)) {
-                    throw new ServiceException(ApiError.ERROR_RETURN_ORDER_SKU_NOT_FOUND);
+                    throw new ServiceException(ApiError.SO_DELIVERY_RETURN_ORDER_SKU_NOT_FOUND);
                 }
                 if(null != soReturnEntity){
                     entity.setSourceCode(soReturnEntity.getCode());
@@ -492,7 +492,7 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
         Map<String, Object> variablesMap = BeanUtil.beanToMap(entity);
         List<SoReturnReceiveDetailEntity> detailList = soReturnReceiveDetailService.lambdaQuery().eq(SoReturnReceiveDetailEntity::getMainId,entity.getId()).list();
         if (CollUtil.isEmpty(detailList)) {
-            throw new ServiceException(ApiError.ERROR_RETURN_SIGN_DETAIL_REQUIRED);
+            throw new ServiceException(ApiError.SO_RETURN_SIGN_DETAIL_REQUIRED);
         }
         variablesMap.put(ThirdConstants.DETAIL_LIST, BeanUtil.copyToList(detailList,Map.class));
         return variablesMap;
@@ -506,7 +506,7 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
         }
         SoReturnReceiveEntity entity = this.getById(id);
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_RETURN_SIGN_DETAIL_REQUIRED);
+            throw new ServiceException(ApiError.SO_RETURN_SIGN_DETAIL_REQUIRED);
         }
         BatchResultDTO submit = this.submit(entity, Boolean.TRUE);
         return submit.getSuccess();
@@ -520,7 +520,7 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
         }
         SoReturnReceiveEntity entity = this.getById(dto.getId());
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_RETURN_SIGN_DETAIL_REQUIRED);
+            throw new ServiceException(ApiError.SO_RETURN_SIGN_DETAIL_REQUIRED);
         }
         BatchResultDTO submit = this.submit(entity, Boolean.TRUE);
         return submit.getSuccess();
@@ -897,7 +897,7 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
         List<String> soReturnNoticeIdList = list.stream().map(SoReturnNoticeDTO.GenerateSoReturnReceiveView::getMainId).distinct().collect(Collectors.toList());
         long count = soReturnNoticeService.listByIds(soReturnNoticeIdList).stream().filter(req -> !ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus())).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_RETURN_NOTICE_APPROVED_REQUIRED_PUSH);
+            throw new ServiceException(ApiError.SO_DELIVERY_RETURN_NOTICE_APPROVED_REQUIRED_PUSH);
         }
         for (String id : soReturnNoticeIdList) {
             List<SoReturnNoticeDTO.GenerateSoReturnReceiveView> viewList = list.stream().filter(req -> req.getMainId().equals(id)).collect(Collectors.toList());

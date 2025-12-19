@@ -142,7 +142,7 @@ public class TikTokSdkClientService {
         }
 
         if (!"success".equalsIgnoreCase(tikTokTokenDTO.getMessage())) {
-            throw new ServiceException(ApiError.ERROR_SHOP_AUTHORIZE_FAIL, PlatformDictEnum.TIK_TOK.getName(), JSONUtil.toJsonStr(apiResult));
+            throw new ServiceException(ApiError.SHOP_PARAM_AUTHORIZE_FAILED, PlatformDictEnum.TIK_TOK.getName(), JSONUtil.toJsonStr(apiResult));
         }
         TokenDTO tokenDTO = tikTokTokenDTO.getData();
         if(StringUtils.isBlank(paramMap.get("isFully"))) {
@@ -255,7 +255,7 @@ public class TikTokSdkClientService {
         }
 
         if (StringUtil.isBlank(tikTokTokenDTO.getData().getAccessToken())) {
-            throw new ServiceException(ApiError.ERROR_SHOP_AUTHORIZE_FAIL, PlatformDictEnum.TIK_TOK.getName(), JSONUtil.toJsonStr(apiResult));
+            throw new ServiceException(ApiError.SHOP_PARAM_AUTHORIZE_FAILED, PlatformDictEnum.TIK_TOK.getName(), JSONUtil.toJsonStr(apiResult));
         }
 
         //返回token实体

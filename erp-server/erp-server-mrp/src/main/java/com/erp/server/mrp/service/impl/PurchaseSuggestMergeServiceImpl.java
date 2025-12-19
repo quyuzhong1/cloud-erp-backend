@@ -172,7 +172,7 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
         PurchaseSuggestMergeEntity purchaseSuggestMergeEntity =  BeanMapperUtils.map(PurchaseSuggestMergeEntity.class, updateDTO);
 
         if (!Arrays.asList(SuggestStatusEnum.DRAFT.getCode(),SuggestStatusEnum.WAIT_CONFIRM.getCode()).contains(old.getStatus()) || old.getInvalidStatus()) {
-            throw new ServiceException(ApiError.ERROR_SUGGEST_UPDATE);
+            throw new ServiceException(ApiError.REPLENISHMENT_SUGGESTION_UPDATE_FORBIDDEN);
         }
         // 数据处理
         handleData(purchaseSuggestMergeEntity);
@@ -193,7 +193,7 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
         PurchaseSuggestMergeEntity purchaseSuggestMergeEntity =  BeanMapperUtils.map(PurchaseSuggestMergeEntity.class, updateDTO);
 
         if (!Arrays.asList(SuggestStatusEnum.DRAFT.getCode(),SuggestStatusEnum.WAIT_CONFIRM.getCode()).contains(old.getStatus()) || old.getInvalidStatus()) {
-            throw new ServiceException(ApiError.ERROR_SUGGEST_UPDATE);
+            throw new ServiceException(ApiError.REPLENISHMENT_SUGGESTION_UPDATE_FORBIDDEN);
         }
         // 数据处理
         handleData(purchaseSuggestMergeEntity);
@@ -230,7 +230,7 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
     public BatchResultDTO locking(String id) {
         PurchaseSuggestMergeEntity old = Optional.ofNullable(super.getById(id)).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "采购建议"));
         if (!StrUtil.equals(old.getStatus(), SuggestStatusEnum.DRAFT.getCode())) {
-            throw new ServiceException(ApiError.ERROR_SUGGEST_LOCKING);
+            throw new ServiceException(ApiError.REPLENISHMENT_SUGGESTION_ONLY_DRAFT_ALLOW_LOCK);
         }
         //更新成待确认状态
         old.setStatus(SuggestStatusEnum.WAIT_CONFIRM.getCode());
@@ -247,7 +247,7 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
     public BatchResultDTO confirm(String id) {
         PurchaseSuggestMergeEntity old = Optional.ofNullable(super.getById(id)).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "采购建议"));
         if (!StrUtil.equals(old.getStatus(), SuggestStatusEnum.WAIT_CONFIRM.getCode())) {
-            throw new ServiceException(ApiError.ERROR_SUGGEST_CONFIRM);
+            throw new ServiceException(ApiError.REPLENISHMENT_SUGGESTION_ONLY_PENDING_CONFIRM_ALLOW);
         }
         if (MathUtil.compareTo(old.getPlanPurchaseQty(),MathUtil.ZERO) <= MathUtil.ZERO) {
             throw new ServiceException("计划修正值必须大于0");
@@ -272,7 +272,7 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
         List<PurchaseApplicationDetailDTO.PurchaseApplicationDTO> applicationDTOList = purchaseApplicationDetailFeign.listByMergeIdList(Collections.singletonList(id));
         //草稿和待确认支持作废
         if (CollectionUtils.isNotEmpty(applicationDTOList)) {
-            throw new ServiceException(ApiError.ERROR_SUGGEST_INVALID);
+            throw new ServiceException(ApiError.REPLENISHMENT_SUGGESTION_PUSHED_INVALID_FORBIDDEN);
         }
         if (old.getInvalidStatus()) {
             throw new ServiceException(ApiError.BILL_ALREADY_VOID_CANNOT_VOID_AGAIN);
@@ -305,7 +305,7 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
         PurchaseSuggestMergeEntity old = Optional.ofNullable(super.getById(id)).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "采购建议"));
         //草稿和待确认支持更新备注
         if (!Arrays.asList(SuggestStatusEnum.DRAFT.getCode(),SuggestStatusEnum.WAIT_CONFIRM.getCode()).contains(old.getStatus())) {
-            throw new ServiceException(ApiError.ERROR_SUGGEST_UPDATE_REMARK);
+            throw new ServiceException(ApiError.REPLENISHMENT_SUGGESTION_UPDATE_REMARK_FORBIDDEN);
         }
         // 操作日志备注
         String msg = StrUtil.format("更新了采购建议备注，由【{}】更新为【{}】",old.getRemark(),remark);

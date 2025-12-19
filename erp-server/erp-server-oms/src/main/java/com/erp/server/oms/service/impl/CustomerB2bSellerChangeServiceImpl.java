@@ -100,12 +100,12 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
     public BatchResultDTO add(CustomerB2bSellerChangeDTO.AddDTO addDTO) {
         String xsyCode = KingdeeBusinessOperatorTypeEnum.XSY.getCode();
         if(StringUtils.isBlank(addDTO.getChangeSellerId())){
-            return BatchResultDTO.fail(addDTO.getMainId(), addDTO.getCode(), ApiError.ERROR_SALESMAN_ID_REQUIRED.getMsg());
+            return BatchResultDTO.fail(addDTO.getMainId(), addDTO.getCode(), ApiError.COMMON_SALESMAN_ID_REQUIRED.getMsg());
         }
         String changeSellerId = addDTO.getChangeSellerId();
         FindUserDTO userByUserId = sysUserFeign.getUserByUserId(changeSellerId);
         if (Objects.isNull(userByUserId)) {
-            return BatchResultDTO.fail(addDTO.getMainId(), addDTO.getCode(), ApiError.ERROR_SALESMAN_NOT_FOUND.getMsg());
+            return BatchResultDTO.fail(addDTO.getMainId(), addDTO.getCode(), ApiError.COMMON_SALESMAN_NOT_FOUND.getMsg());
         }else{
             addDTO.setChangeSellerName(userByUserId.getUserName());
         }
@@ -137,7 +137,7 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
             return BatchResultDTO.fail(addDTO.getMainId(), addDTO.getCode(), "b2b客户销售员变更单保存失败");
         }
         // 操作日志
-        String msg =  CharSequenceUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), ApiError.ERROR_B2B_SALESMAN_CHANGE.getMsg() , customerB2bSellerChangeEntity.getId());
+        String msg =  CharSequenceUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), ApiError.SO_B2B_SALESMAN_CHANGE.getMsg() , customerB2bSellerChangeEntity.getId());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.CUSTOMER_B2B_SELLER_CHANGE.getCode(), customerB2bSellerChangeEntity.getId(), "新增操作");
         return BatchResultDTO.success(customerB2bSellerChangeEntity.getId(),addDTO.getCode(),"新增成功");
     }
@@ -160,7 +160,7 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
         boolean result = this.updateById(entity);
         if (result) {
             //添加日志
-            String content = String.format(ApiError.ERROR_STATUS_CHANGE.getMsg(), ApproveStatusEnum.WAIT_SUBMIT.getName(), ApproveStatusEnum.APPROVE_ING.getName());
+            String content = String.format(ApiError.COMMON_STATUS_CHANGE_LOG.getMsg(), ApproveStatusEnum.WAIT_SUBMIT.getName(), ApproveStatusEnum.APPROVE_ING.getName());
             operateLogService.addModuleOperateLog(content, ModuleTypeEnum.CUSTOMER_B2B_SELLER_CHANGE.getCode(), entity.getId(), "状态变更");
             batchResultDTO.setMsg("提交审核成功");
         }else{
@@ -244,11 +244,11 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
     @Transactional(rollbackFor = Exception.class)
     public Boolean updateAndSubmit(CustomerB2bSellerChangeDTO.UpdateDTO dto) {
         if(StringUtils.isBlank(dto.getChangeSellerId())){
-            throw new ServiceException(ApiError.ERROR_SALESMAN_ID_REQUIRED.getMsg());
+            throw new ServiceException(ApiError.COMMON_SALESMAN_ID_REQUIRED.getMsg());
         }
         FindUserDTO userByUserId = sysUserFeign.getUserByUserId(dto.getChangeSellerId());
         if (Objects.isNull(userByUserId)) {
-            throw new ServiceException(ApiError.ERROR_SALESMAN_NOT_FOUND.getMsg());
+            throw new ServiceException(ApiError.COMMON_SALESMAN_NOT_FOUND.getMsg());
         }else{
             dto.setChangeSellerName(userByUserId.getUserName());
         }
@@ -264,7 +264,7 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
         boolean result = this.updateById(entity);
         if (result) {
             //添加日志
-            String content = String.format(ApiError.ERROR_STATUS_CHANGE.getMsg(), ApproveStatusEnum.WAIT_SUBMIT.getName(), ApproveStatusEnum.APPROVE_ING.getName());
+            String content = String.format(ApiError.COMMON_STATUS_CHANGE_LOG.getMsg(), ApproveStatusEnum.WAIT_SUBMIT.getName(), ApproveStatusEnum.APPROVE_ING.getName());
             operateLogService.addModuleOperateLog(content, ModuleTypeEnum.CUSTOMER_B2B_SELLER_CHANGE.getCode(), entity.getId(), "状态变更");
         }else{
             throw new ServiceException("更新审核状态失败");
@@ -284,7 +284,7 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
                 batchResultDTO.setSuccess(false);
                 batchResultDTO.setId(id);
                 batchResultDTO.setCode(id);
-                batchResultDTO.setMsg(ApiError.ERROR_DOC_NOT_FOUND.getMsg());
+                batchResultDTO.setMsg(ApiError.BILL_NOT_FOUND.getMsg());
                 resultDTOList.add(batchResultDTO);
                 continue;
             }
@@ -306,7 +306,7 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
             boolean result = this.updateApproveInfo(entity,"",null);
             if (result) {
                 //添加日志
-                String content = String.format(ApiError.ERROR_STATUS_CHANGE.getMsg(), ApproveStatusEnum.WAIT_SUBMIT.getName(), ApproveStatusEnum.APPROVE_ING.getName());
+                String content = String.format(ApiError.COMMON_STATUS_CHANGE_LOG.getMsg(), ApproveStatusEnum.WAIT_SUBMIT.getName(), ApproveStatusEnum.APPROVE_ING.getName());
                 operateLogService.addModuleOperateLog(content, ModuleTypeEnum.CUSTOMER_B2B_SELLER_CHANGE.getCode(), entity.getId(), "状态变更");
                 batchResultDTO.setSuccess(true);
                 batchResultDTO.setMsg("提交审核成功");
@@ -331,7 +331,7 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
                 batchResultDTO.setSuccess(false);
                 batchResultDTO.setId(id);
                 batchResultDTO.setCode(id);
-                batchResultDTO.setMsg(ApiError.ERROR_DOC_NOT_FOUND.getMsg());
+                batchResultDTO.setMsg(ApiError.BILL_NOT_FOUND.getMsg());
                 continue;
             }
             CustomerInfoEntity customerInfoEntity = customerInfoService.getById(entity.getMainId());
@@ -366,7 +366,7 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
                 batchResultDTO.setSuccess(false);
                 batchResultDTO.setId(id);
                 batchResultDTO.setCode(id);
-                batchResultDTO.setMsg(ApiError.ERROR_DOC_NOT_FOUND.getMsg());
+                batchResultDTO.setMsg(ApiError.BILL_NOT_FOUND.getMsg());
                 continue;
             }
             CustomerInfoEntity customerInfoEntity = customerInfoService.getById(entity.getMainId());
@@ -391,7 +391,7 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
             boolean result = this.updateById(entity);
             if (result) {
                 //添加日志
-                String content = String.format(ApiError.ERROR_STATUS_CHANGE.getMsg(), ApproveStatusEnum.WAIT_SUBMIT.getName(), ApproveStatusEnum.APPROVE_ING.getName());
+                String content = String.format(ApiError.COMMON_STATUS_CHANGE_LOG.getMsg(), ApproveStatusEnum.WAIT_SUBMIT.getName(), ApproveStatusEnum.APPROVE_ING.getName());
                 operateLogService.addModuleOperateLog(content, ModuleTypeEnum.CUSTOMER_B2B_SELLER_CHANGE.getCode(), entity.getId(), "状态变更");
                 batchResultDTO.setSuccess(true);
                 batchResultDTO.setMsg("撤销成功");
@@ -512,7 +512,7 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
         customerInfoService.updateById(customerInfoEntity);
         customerSellerService.batchSellerHistory(Collections.singletonList(customerInfoEntity),entity.getStartDate());
 
-        String approveContent = String.format(ApiError.ERROR_STATUS_CHANGE.getMsg(), ApproveStatusEnum.APPROVE_ING.getName(), approve.getName());
+        String approveContent = String.format(ApiError.COMMON_STATUS_CHANGE_LOG.getMsg(), ApproveStatusEnum.APPROVE_ING.getName(), approve.getName());
         operateLogService.addModuleOperateLog(approveContent, ModuleTypeEnum.CUSTOMER_B2B_SELLER_CHANGE.getCode(), entity.getId(), "状态变更");
         //记录操作日志
         String content = String.format("销售员变更单[%s]审核通过自动修改销售员从[%s]为[%s]",customerInfoEntity.getCode(),entity.getOriginSellerName(),entity.getChangeSellerName());
@@ -574,18 +574,18 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
     public Boolean update(CustomerB2bSellerChangeDTO.UpdateDTO updateDTO) {
         CustomerB2bSellerChangeEntity old = super.getById(updateDTO.getId());
         if(null == old){
-            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, ApiError.ERROR_B2B_SALESMAN_CHANGE.getMsg());
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, ApiError.SO_B2B_SALESMAN_CHANGE.getMsg());
         }
         // 待提交和审核不通过允许修改
         if (Boolean.FALSE.equals(ApproveStatusEnum.allowUpdateStatus(old.getApproveStatus()))) {
             throw new ServiceException(ApiError.BILL_UPDATE_STATUS_NOT_ALLOWED);
         }
         if(StringUtils.isBlank(updateDTO.getChangeSellerId())){
-            throw new ServiceException(ApiError.ERROR_SALESMAN_ID_REQUIRED.getMsg());
+            throw new ServiceException(ApiError.COMMON_SALESMAN_ID_REQUIRED.getMsg());
         }
         FindUserDTO userByUserId = sysUserFeign.getUserByUserId(updateDTO.getChangeSellerId());
         if (Objects.isNull(userByUserId)) {
-            throw new ServiceException(ApiError.ERROR_SALESMAN_NOT_FOUND.getMsg());
+            throw new ServiceException(ApiError.COMMON_SALESMAN_NOT_FOUND.getMsg());
         }else{
             updateDTO.setChangeSellerName(userByUserId.getUserName());
 
@@ -606,7 +606,7 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
             throw new ServiceException("b2b客户销售员变更单保存失败");
         }
         log.info("编辑 开始记录b2b客户销售员变更单日志数据，id：【{}】", customerB2bSellerChangeEntity.getId());
-        String msg =  CharSequenceUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), customerB2bSellerChangeEntity.getId(), ApiError.ERROR_B2B_SALESMAN_CHANGE.getMsg());
+        String msg =  CharSequenceUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), customerB2bSellerChangeEntity.getId(), ApiError.SO_B2B_SALESMAN_CHANGE.getMsg());
         operateLogService.addModuleOperateLogByObj(old, customerB2bSellerChangeEntity, ModuleTypeEnum.CUSTOMER_B2B_SELLER_CHANGE.getCode(), customerB2bSellerChangeEntity.getId(), msg);
         return Boolean.TRUE;
     }

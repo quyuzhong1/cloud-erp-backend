@@ -264,11 +264,11 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         }
         List<SoB2cReceiverEntity> receiverList = FeignQuery.create(SoB2cReceiverEntity.class).eq(SoB2cReceiverEntity::getMainId, soB2cDeliveryEntity.getSourceId()).list();
         if (CollUtil.isEmpty(receiverList)) {
-            throw new ServiceException(ApiError.ERROR_SO_B2C_RECEIVER_NOT_EXIST);
+            throw new ServiceException(ApiError.SO_B2C_RECEIVER_NOT_FOUND);
         }
         SoB2cEntity soB2cEntity = soB2cFeign.getById(soB2cDeliveryEntity.getSourceId());
         if(Objects.isNull(soB2cEntity)){
-            throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
+            throw new ServiceException(ApiError.SO_B2C_NOT_FOUND);
         }
         CfgRuleOutDTO.MatchTransferRuleDTO dto = new CfgRuleOutDTO.MatchTransferRuleDTO();
         dto.setType(StockOutTransferTypeEnum.B2C.getCode());
@@ -738,7 +738,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             //查询是否允许打印面单和配货单
             LogisticsSupplierDTO.AuthDTO authDTO = logisticsAuthFeign.getAuthByChannelId(logisticsChannelId);
             if (ObjectUtil.isEmpty(authDTO)) {
-                throw new ServiceException(ApiError.ERROR_LOGISTICS_CHANNEL_NOT_AUTU_EXIST);
+                throw new ServiceException(ApiError.LOGISTICS_CHANNEL_AUTH_INFO_NOT_FOUND);
             }
 
             LogisticsPlatformEnum logisticsPlatformEnum = LogisticsPlatformEnum.getByCode(authDTO.getLogisticsPlatform());
@@ -1960,7 +1960,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                             && req.getLogisticsChannelId().equals(deliveryEntities.get(0).getLogisticsChannelId())
                     ).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(logisticsPrintTypeEntity) && !param.getPrintType().equals(SoB2cDeliveryPrintTypeEnum.LOGISTICS_BILL.getCode())) {
-                waybillDTO.setErrorMsg(MessageUtils.getMessage(ApiError.LOGISTICS_PRINT_TYPE_SETTING_NOT_EXIST, deliveryEntities.get(0).getLogisticsChannelName()));
+                waybillDTO.setErrorMsg(MessageUtils.getMessage(ApiError.LOGISTICS_PRINT_SETTING_NOT_FOUND, deliveryEntities.get(0).getLogisticsChannelName()));
                 waybillDTO.setDisabled(Boolean.TRUE);
             }
 
@@ -1986,7 +1986,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                     case LOGISTICS_BILL :
                         //打印面单预览
                         if ("N".equalsIgnoreCase(logisticsPlatformEnum.getPrintLabel())) {
-                            waybillDTO.setErrorMsg(MessageUtils.getMessage(ApiError.LOGISTICS_NOT_PRINT_LOGISTICS_BILL, logisticsPlatformEnum.getName()));
+                            waybillDTO.setErrorMsg(MessageUtils.getMessage(ApiError.LOGISTICS_PRINT_WAYBILL_NOT_SUPPORTED, logisticsPlatformEnum.getName()));
                             waybillDTO.setDisabled(Boolean.TRUE);
                         }
                         break;
@@ -1994,7 +1994,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                         //打印配货单预览
                         if (ObjectUtil.isNotEmpty(logisticsPrintTypeEntity) && LogisticsLabelTypeEnum.AUTHORITY.getCode().equals(logisticsPrintTypeEntity.getLabelType())) {
                             if ("N".equalsIgnoreCase(logisticsPlatformEnum.getPrintDelivery())) {
-                                waybillDTO.setErrorMsg(MessageUtils.getMessage(ApiError.LOGISTICS_NOT_PRINT_ALLOCATE_CARGO_BILL, logisticsPlatformEnum.getName()));
+                                waybillDTO.setErrorMsg(MessageUtils.getMessage(ApiError.LOGISTICS_PRINT_ALLOCATE_CARGO_NOT_SUPPORTED, logisticsPlatformEnum.getName()));
                                 waybillDTO.setDisabled(Boolean.TRUE);
                             }
                         }
@@ -2429,7 +2429,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
 
         List<SoB2cReceiverEntity> receiverList = FeignQuery.create(SoB2cReceiverEntity.class).eq(SoB2cReceiverEntity::getMainId, entity.getSourceId()).list();
         if (CollUtil.isEmpty(receiverList) && !PlatformDictEnum.TIK_TOK_FULLY.getCode().equals(entity.getDictPlatform())) {
-            throw new ServiceException(ApiError.ERROR_SO_B2C_RECEIVER_NOT_EXIST);
+            throw new ServiceException(ApiError.SO_B2C_RECEIVER_NOT_FOUND);
         }
         if (CharSequenceUtil.isNotBlank(entity.getTransferWarehouseIds())){
             List<String> split = StrUtil.split(entity.getTransferWarehouseIds(), ",");
@@ -2519,7 +2519,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         dto.getParams().setPermissionSql(dto.getPermissionSql());
         Page<SoB2cDeliveryDTO.ListDTO> page = this.baseMapper.list(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
         if (CollUtil.isEmpty(page.getRecords())) {
-            throw new ServiceException(ApiError.ERROR_EXPORT_DATA_EMPTY);
+            throw new ServiceException(ApiError.FILE_EXPORT_DATA_EMPTY);
         }
         // 数据处理
         fillList(page.getRecords());
@@ -2774,7 +2774,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         //查询B2C销售订单
         List<SoB2cEntity> soB2cEntities = soB2cFeign.listByIds(Collections.singletonList(soB2cDeliveryEntity.getSourceId()));
         if (CollectionUtils.isEmpty(soB2cEntities)) {
-            throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
+            throw new ServiceException(ApiError.SO_B2C_NOT_FOUND);
         }
 
         //订单信息

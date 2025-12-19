@@ -337,11 +337,11 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
         //买家信息
         SoB2cReceiverEntity receiverEntity = soB2cReceiverService.getByMainId(orderId);
         if (Objects.isNull(receiverEntity)) {
-            throw new ServiceException(ApiError.ERROR_SO_B2C_RECEIVER_NOT_NULL);
+            throw new ServiceException(ApiError.BILL_RECEIVER_REQUIRED);
         }
         SoB2cLogisticsEntity entity = this.getByMainId(orderId);
         if (Objects.isNull(entity)) {
-            throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_NOT_EXIST);
+            throw new ServiceException(ApiError.SO_B2C_LOGISTICS_NOT_FOUND);
         }
         SoB2cDTO.ShippingCalculationDTO shippingCalculationDTO = new SoB2cDTO.ShippingCalculationDTO();
         shippingCalculationDTO.setWeight(entity.getWeight());

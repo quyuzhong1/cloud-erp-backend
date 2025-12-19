@@ -945,7 +945,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         //下推出库单不能反审核
         List<SoOutstockEntity> soOutstockEntityList = soOutstockService.listBySourceId(Collections.singletonList(entity.getId()));
         if (CollectionUtils.isNotEmpty(soOutstockEntityList)) {
-            throw new ServiceException(ApiError.ERROR_SO_OUTBOUND_PUSH_REVERSE_FORBIDDEN);
+            throw new ServiceException(ApiError.SO_OUTBOUND_PUSH_REVERSE_FORBIDDEN);
         }
         //修改状态为待提交
         lambdaUpdate().set(SoDeliveryNoticeEntity::getApproveStatus, ApproveStatusEnum.WAIT_SUBMIT.getStatus())
@@ -2299,7 +2299,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
             isHasAdd = Boolean.TRUE;
         }
         if (!isHasAdd) {
-            throw new ServiceException(ApiError.ERROR_SO_INFO_PUSH_MACHINE_NOT_EXIST_DATA);
+            throw new ServiceException(ApiError.SO_PUSH_MACHINE_DATA_NOT_FOUND);
         }
         return Boolean.TRUE;
     }

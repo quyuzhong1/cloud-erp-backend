@@ -528,7 +528,7 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
         //对账单信息
         TmsB2cDeclareReconciliationEntity oldMainEntity = tmsB2cDeclareReconciliationService.getById(id);
         if (ObjectUtil.isEmpty(oldMainEntity)) {
-            throw new ServiceException(ApiError.ERROR_DECLARE_RECONCILIATION_NOT_EXIST);
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_RECONCILIATION_NOT_FOUND);
         }
         //对账单明细
         List<TmsB2cDeclareReconciliationDetailEntity> oldDetailList = this.listMainIdList(Arrays.asList(oldMainEntity.getId()));
@@ -717,7 +717,7 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
         //对账单信息
         TmsB2cDeclareReconciliationEntity oldMainEntity = tmsB2cDeclareReconciliationService.getById(id);
         if (ObjectUtil.isEmpty(oldMainEntity)) {
-            throw new ServiceException(ApiError.ERROR_DECLARE_RECONCILIATION_NOT_EXIST);
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_RECONCILIATION_NOT_FOUND);
         }
 
         //中转物流供应商查询
@@ -916,7 +916,7 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
 
         if (CollectionUtils.isNotEmpty(oldDetailList)) {
             String codes = oldDetailList.stream().map(TmsB2cDeclareReconciliationDetailEntity::getSourceCode).collect(Collectors.joining(","));
-            throw new ServiceException(ApiError.ERROR_PO_RECONCILIATION_DETAIL_HAS_GENERATE,codes);
+            throw new ServiceException(ApiError.PO_RECONCILIATION_DETAIL_ALREADY_GENERATED,codes);
         }
     }
 
@@ -1067,7 +1067,7 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
         //对账单
         TmsB2cDeclareReconciliationEntity declareReconciliationEntity = tmsB2cDeclareReconciliationService.getById(mainId);
         if (ObjectUtils.isEmpty(declareReconciliationEntity)) {
-            throw new ServiceException(ApiError.ERROR_DECLARE_RECONCILIATION_NOT_EXIST);
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_RECONCILIATION_NOT_FOUND);
         }
         //新增不需要添加新增SKU的日志
         List<TmsB2cDeclareReconciliationDetailEntity> addList = list.stream().filter(obj -> CharSequenceUtil.isBlank(obj.getMainId())).collect(Collectors.toList());
@@ -1080,11 +1080,11 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
             //添加日志
             TmsB2cDeclareReconciliationDetailEntity old = declareReconciliationDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), entity.getId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(old)) {
-                throw new ServiceException(ApiError.ERROR_DECLARE_RECONCILIATION_DETAIL_NOT_EXIST);
+                throw new ServiceException(ApiError.LOGISTICS_DECLARE_RECONCILIATION_DETAIL_NOT_FOUND);
             }
             //供应商、结算组织验证
             if (!CharSequenceUtil.equals(declareReconciliationEntity.getLogisticsSupplierId(),old.getLogisticsSupplierId())) {
-                throw new ServiceException(ApiError.ERROR_DECLARE_RECONCILIATION_ADD_DETAIL,declareReconciliationEntity.getCode(),declareReconciliationEntity.getLogisticsSupplierName());
+                throw new ServiceException(ApiError.LOGISTICS_DECLARE_RECONCILIATION_SUPPLIER_MISMATCH,declareReconciliationEntity.getCode(),declareReconciliationEntity.getLogisticsSupplierName());
             }
 
             entity.setMainId(mainId);

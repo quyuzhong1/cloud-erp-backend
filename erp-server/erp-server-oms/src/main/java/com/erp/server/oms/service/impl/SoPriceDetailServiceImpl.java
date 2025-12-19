@@ -152,11 +152,11 @@ public class SoPriceDetailServiceImpl extends SuperServiceImpl<SoPriceDetailMapp
             SoPriceDetailEntity entity = list.get(i);
             //检验失效时间需要大于生效时间
             if (entity.getExpireDate().isBefore(entity.getEffectiveDate())) {
-                throw new ServiceException(ApiError.ERROR_SO_PRICE_DATE,entity.getSkuNo());
+                throw new ServiceException(ApiError.SO_PRICE_EXPIRE_BEFORE_EFFECTIVE,entity.getSkuNo());
             }
             //校验区间到需要大于区间从
             if (entity.getMaxQty().compareTo(entity.getMinQty()) <= MathUtil.ZERO) {
-                throw new ServiceException(ApiError.ERROR_SO_PRICE_INTERVAL_SIZE,entity.getSkuNo());
+                throw new ServiceException(ApiError.SO_PRICE_INTERVAL_INVALID,entity.getSkuNo());
             }
             //校验录入数据是否存在时间重叠
             for (int j = 0;j < list.size();j++) {
@@ -192,7 +192,7 @@ public class SoPriceDetailServiceImpl extends SuperServiceImpl<SoPriceDetailMapp
             //时间不能重叠
             boolean overlap = LocalDateUtil.isOverlap(entity.getEffectiveDate(), entity.getExpireDate(), detailEntity.getEffectiveDate(), detailEntity.getExpireDate());
             if (overlap) {
-                throw new ServiceException(ApiError.ERROR_SO_PRICE_DATE_OVERLAP,entity.getSkuNo());
+                throw new ServiceException(ApiError.SO_PRICE_DATE_RANGE_OVERLAP,entity.getSkuNo());
             }
         }
         //时间重叠时
@@ -201,7 +201,7 @@ public class SoPriceDetailServiceImpl extends SuperServiceImpl<SoPriceDetailMapp
             //区间不能重叠
             if (entity.getMinQty().compareTo(detailEntity.getMaxQty()) < MathUtil.ZERO
                     && detailEntity.getMinQty().compareTo(entity.getMaxQty()) < MathUtil.ZERO ) {
-                throw new ServiceException(ApiError.ERROR_INTERVAL_CUSTOMER_OVERLAP);
+                throw new ServiceException(ApiError.CUSTOMER_SKU_INTERVAL_OVERLAP);
             }
         }
     }
@@ -237,7 +237,7 @@ public class SoPriceDetailServiceImpl extends SuperServiceImpl<SoPriceDetailMapp
         SoPriceChangeDTO.ViewDTO viewDTO = new SoPriceChangeDTO.ViewDTO();
         List<SoPriceDetailDTO.ViewDTO> viewList = this.listBySoPriceDetailIds(soPriceDetailIds);
         if (CollectionUtils.isEmpty(viewList)) {
-            throw new ServiceException(ApiError.ERROR_NOT_FOUND_SO_PRICE_DETAIL);
+            throw new ServiceException(ApiError.SO_PRICE_DETAIL_NOT_FOUND);
         }
 
         //查询价目信息

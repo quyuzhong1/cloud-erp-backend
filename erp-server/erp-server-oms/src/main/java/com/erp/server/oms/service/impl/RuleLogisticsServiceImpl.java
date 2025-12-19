@@ -85,13 +85,13 @@ public class RuleLogisticsServiceImpl extends SuperServiceImpl<RuleLogisticsMapp
         String expression = sqElDTO.getExpression();
         Boolean checkResult = spElServer.checkExpressionIsEnabled(expression);
         if (Boolean.FALSE.equals(checkResult)) {
-            throw new ServiceException(ApiError.ERROR_RULE_EXPRESSION_ERROR);
+            throw new ServiceException(ApiError.COMMON_RULE_EXPRESSION_ERROR);
         }
         RuleLogisticsEntity ruleLogisticsEntity = new RuleLogisticsEntity();
         BeanMapperUtils.copy(addDTO, ruleLogisticsEntity);
         handleData(ruleLogisticsEntity);
         if(Boolean.TRUE.equals(ruleLogisticsEntity.getAutoGetTrackNo()) && Boolean.TRUE.equals(ruleLogisticsEntity.getAutoGetTrackNotOfRangeDelivery())){
-            throw new ServiceException(ApiError.ERROR_DELIVERY_AUTO_SUBMIT_OPTION_LIMIT);
+            throw new ServiceException(ApiError.SO_DELIVERY_AUTO_SUBMIT_OPTION_LIMIT);
         }
         boolean save = super.save(ruleLogisticsEntity);
         if (!save) {
@@ -126,13 +126,13 @@ public class RuleLogisticsServiceImpl extends SuperServiceImpl<RuleLogisticsMapp
         String expression = sqElDTO.getExpression();
         Boolean checkResult = spElServer.checkExpressionIsEnabled(expression);
         if (Boolean.FALSE.equals(checkResult)) {
-            throw new ServiceException(ApiError.ERROR_RULE_EXPRESSION_ERROR);
+            throw new ServiceException(ApiError.COMMON_RULE_EXPRESSION_ERROR);
         }
         RuleLogisticsEntity ruleLogisticsEntity = BeanMapperUtils.map(RuleLogisticsEntity.class, updateDTO);
         // 数据处理
         handleData(ruleLogisticsEntity);
         if(Boolean.TRUE.equals(ruleLogisticsEntity.getAutoGetTrackNo()) && Boolean.TRUE.equals(ruleLogisticsEntity.getAutoGetTrackNotOfRangeDelivery())){
-            throw new ServiceException(ApiError.ERROR_DELIVERY_AUTO_SUBMIT_OPTION_LIMIT);
+            throw new ServiceException(ApiError.SO_DELIVERY_AUTO_SUBMIT_OPTION_LIMIT);
         }
         boolean save = super.updateById(ruleLogisticsEntity);
         if (!save) {

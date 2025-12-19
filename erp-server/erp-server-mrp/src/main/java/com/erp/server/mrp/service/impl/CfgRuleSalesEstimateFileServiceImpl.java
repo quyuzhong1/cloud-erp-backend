@@ -109,7 +109,7 @@ public class CfgRuleSalesEstimateFileServiceImpl extends SuperServiceImpl<CfgRul
                 .findFirst()
                 .orElse("");
         if (ObjectUtils.isEmpty(salesQty)) {
-            throw new ServiceException(ApiError.ERROR_CFG_RULE_SALES_NOT_EXIST, platformName);
+            throw new ServiceException(ApiError.REPLENISHMENT_SALES_RULE_CONFIG_NOT_EXIST, platformName);
         }
         Map<String, String> platformMap = salesPlatformList.stream()
                 .collect(Collectors.toMap(com.erp.model.oms.entity.DictBasicEntity::getName, com.erp.model.oms.entity.DictBasicEntity::getValue, (o1, o2) -> o1));

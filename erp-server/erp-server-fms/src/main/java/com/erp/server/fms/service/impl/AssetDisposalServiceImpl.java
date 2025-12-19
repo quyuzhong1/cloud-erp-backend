@@ -524,7 +524,7 @@ public class AssetDisposalServiceImpl extends SuperServiceImpl<AssetDisposalMapp
         }
         String error = sb.toString();
         if(StringUtils.isNotBlank(error)){
-            return new ValidationResult(BatchResultDTO.fail(entity.getId(), entity.getCode(),StrUtil.format(ApiError.ERROR_ASSET_NOT_FOUND.getMsg(),error)));
+            return new ValidationResult(BatchResultDTO.fail(entity.getId(), entity.getCode(),StrUtil.format(ApiError.SAMPLE_ASSET_NOT_FOUND.getMsg(),error)));
         }
 
         List<String> detailIds = assetDisposalDetailEntities.stream().map(AssetDisposalDetailEntity::getId).collect(Collectors.toList());
@@ -571,7 +571,7 @@ public class AssetDisposalServiceImpl extends SuperServiceImpl<AssetDisposalMapp
         if(!isDisApprove) {
             error = sb.toString();
             if(StringUtils.isNotBlank(error)){
-                return new ValidationResult(BatchResultDTO.fail(entity.getId(), entity.getCode(),StrUtil.format(ApiError.ERROR_ASSET_DISPOSAL_QTY_EXCEED.getMsg(),error)));
+                return new ValidationResult(BatchResultDTO.fail(entity.getId(), entity.getCode(),StrUtil.format(ApiError.SAMPLE_ASSET_DISPOSAL_QTY_EXCEEDS_BOOK_QTY.getMsg(),error)));
             }
         }
 

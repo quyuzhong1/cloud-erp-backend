@@ -265,7 +265,7 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
             //店铺信息
             String shopId = shopInfoList.stream().filter(obj -> CharSequenceUtil.equals(obj.getName(), excelDTO.getShopName()) && CharSequenceUtil.equals(obj.getDictPlatform(), platformCode)).map(ShopInfoDTO.ListDTO::getId).findFirst().orElse("");
             if (CharSequenceUtil.isBlank(shopId)){
-                errorMsgList.add(MessageUtils.getMessage(ApiError.ERROR_SHOP_NOT_EXIST_NO_PERMISSION));
+                errorMsgList.add(MessageUtils.getMessage(ApiError.SHOP_NOT_EXIST_NO_PERMISSION));
             }
             //SKU
             String skuId = productDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSkuNo(), excelDTO.getSkuNo())).map(ProductDetailEntity::getId).findFirst().orElse("");
@@ -529,7 +529,7 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
             //店铺信息
             String shopId = shopInfoList.stream().filter(obj -> CharSequenceUtil.equals(obj.getName(), excelDTO.getShopName()) && CharSequenceUtil.equals(obj.getDictPlatform(), platformCode)).map(ShopInfoDTO.ListDTO::getId).findFirst().orElse("");
             if (CharSequenceUtil.isBlank(shopId)){
-                errorMsgList.add(MessageUtils.getMessage(ApiError.ERROR_SHOP_NOT_EXIST_NO_PERMISSION));
+                errorMsgList.add(MessageUtils.getMessage(ApiError.SHOP_NOT_EXIST_NO_PERMISSION));
             }
             //SKU
             String skuId = productDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSkuNo(), excelDTO.getSkuNo())).map(ProductDetailEntity::getId).findFirst().orElse("");
@@ -666,7 +666,7 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
             //店铺信息
             String shopId = shopInfoList.stream().filter(obj -> CharSequenceUtil.equals(obj.getName(), excelDTO.getShopName()) && CharSequenceUtil.equals(obj.getDictPlatform(), platformCode)).map(ShopInfoDTO.ListDTO::getId).findFirst().orElse("");
             if (CharSequenceUtil.isBlank(shopId)){
-                errorMsgList.add(MessageUtils.getMessage(ApiError.ERROR_SHOP_NOT_EXIST_NO_PERMISSION));
+                errorMsgList.add(MessageUtils.getMessage(ApiError.SHOP_NOT_EXIST_NO_PERMISSION));
             }
             //SKU
             String skuId = productDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSkuNo(), excelDTO.getSkuNo())).map(ProductDetailEntity::getId).findFirst().orElse("");
@@ -847,7 +847,7 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
             //店铺信息
             String shopId = shopInfoList.stream().filter(obj -> CharSequenceUtil.equals(obj.getName(), excelDTO.getShopName()) && CharSequenceUtil.equals(obj.getDictPlatform(), platformCode)).map(ShopInfoDTO.ListDTO::getId).findFirst().orElse("");
             if (CharSequenceUtil.isBlank(shopId)){
-                errorMsgList.add(MessageUtils.getMessage(ApiError.ERROR_SHOP_NOT_EXIST_NO_PERMISSION));
+                errorMsgList.add(MessageUtils.getMessage(ApiError.SHOP_NOT_EXIST_NO_PERMISSION));
             }
             //SKU
             String skuId = productDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSkuNo(), excelDTO.getSkuNo())).map(ProductDetailEntity::getId).findFirst().orElse("");
@@ -976,7 +976,7 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
             //店铺信息
             String shopId = shopInfoList.stream().filter(obj -> CharSequenceUtil.equals(obj.getName(), excelDTO.getShopName()) && CharSequenceUtil.equals(obj.getDictPlatform(), platformCode)).map(ShopInfoDTO.ListDTO::getId).findFirst().orElse("");
             if (CharSequenceUtil.isBlank(shopId)){
-                errorMsgList.add(MessageUtils.getMessage(ApiError.ERROR_SHOP_NOT_EXIST_NO_PERMISSION));
+                errorMsgList.add(MessageUtils.getMessage(ApiError.SHOP_NOT_EXIST_NO_PERMISSION));
             }
             //SKU
             String skuId = productDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSkuNo(), excelDTO.getSkuNo())).map(ProductDetailEntity::getId).findFirst().orElse("");
@@ -1106,7 +1106,7 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
             //店铺信息
             String shopId = shopInfoList.stream().filter(obj -> CharSequenceUtil.equals(obj.getName(), excelDTO.getShopName()) && CharSequenceUtil.equals(obj.getDictPlatform(), platformCode)).map(ShopInfoDTO.ListDTO::getId).findFirst().orElse("");
             if (CharSequenceUtil.isBlank(shopId)){
-                errorMsgList.add(ApiError.ERROR_SHOP_NOT_EXIST_NO_PERMISSION.getMsg());
+                errorMsgList.add(ApiError.SHOP_NOT_EXIST_NO_PERMISSION.getMsg());
             }
             //SKU
             String skuId = productDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSkuNo(), excelDTO.getSkuNo())).map(ProductDetailEntity::getId).findFirst().orElse("");
@@ -1372,7 +1372,7 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
             //店铺信息
             String shopId = shopInfoList.stream().filter(obj -> CharSequenceUtil.equals(obj.getName(), excelDTO.getShopName()) && CharSequenceUtil.equals(obj.getDictPlatform(), platformCode)).map(ShopInfoDTO.ListDTO::getId).findFirst().orElse("");
             if (CharSequenceUtil.isBlank(shopId)){
-                errorMsgList.add(ApiError.ERROR_SHOP_NOT_EXIST_NO_PERMISSION.getMsg());
+                errorMsgList.add(ApiError.SHOP_NOT_EXIST_NO_PERMISSION.getMsg());
             }
             //SKU
             String skuId = productDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSkuNo(), excelDTO.getSkuNo())).map(ProductDetailEntity::getId).findFirst().orElse("");

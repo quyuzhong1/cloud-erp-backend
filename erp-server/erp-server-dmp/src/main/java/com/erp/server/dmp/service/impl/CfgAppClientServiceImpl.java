@@ -133,10 +133,10 @@ public class CfgAppClientServiceImpl extends SuperServiceImpl<CfgAppClientMapper
         }
         ShopInfoEntity shopInfo = shopInfoFeign.getShopInfoById(shopId);
         if (null == shopInfo) {
-            throw new ServiceException(ApiError.ERROR_SHOP_NOT_FOUND);
+            throw new ServiceException(ApiError.SHOP_NOT_FOUND);
         }
         if (shopInfo.getDisabled()){
-            throw new ServiceException(ApiError.ERROR_MARKETPLACE_UNAUTHORIZED, shopInfo.getId());
+            throw new ServiceException(ApiError.SHOP_FBA_MARKETPLACE_DISABLED, shopInfo.getId());
         }
         // 相同账号的关联店铺
         List<ShopInfoEntity> relatedshopInfoList = shopInfoFeign.getRelatedShopById(shopInfo);

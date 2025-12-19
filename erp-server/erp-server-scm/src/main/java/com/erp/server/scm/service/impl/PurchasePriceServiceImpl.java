@@ -1217,7 +1217,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         //查询明细
         List<PurchasePriceDetailEntity> purchasePriceDetailList = purchasePriceDetailService.listDetailByMainId(bussinessId);
         if (CollUtil.isEmpty(purchasePriceDetailList)) {
-            throw new ServiceException(ApiError.ERROR_NOT_FOUND_SO_PRICE_DETAIL);
+            throw new ServiceException(ApiError.SO_PRICE_DETAIL_NOT_FOUND);
         }
         List<String> skuIdList = purchasePriceDetailList.stream().map(PurchasePriceDetailEntity::getSkuId).distinct().collect(Collectors.toList());
         List<ProductDetailEntity> productDetailList = FeignQuery.getByIds(ProductDetailEntity.class, skuIdList);

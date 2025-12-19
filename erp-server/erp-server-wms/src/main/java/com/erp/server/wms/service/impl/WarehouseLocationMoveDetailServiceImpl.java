@@ -136,7 +136,7 @@ public class WarehouseLocationMoveDetailServiceImpl extends SuperServiceImpl<War
             paramDTO.setSkuIds(Collections.singletonList(detailEntity.getSkuId()));
             if ((ObjectUtil.isEmpty(detailEntity.getInWarehouseLocation()) && ObjectUtil.isEmpty(detailEntity.getOutWarehouseLocation()))
                     || detailEntity.getInWarehouseLocation().equals(detailEntity.getOutWarehouseLocation())) {
-                throw new ServiceException(ApiError.ERROR_CANNOT_SAME_POSITION);
+                throw new ServiceException(ApiError.WH_PICK_AND_PUTAWAY_POSITION_SAME_FORBIDDEN);
             }
             paramDTO.setWarehouseLocations(Collections.singletonList(detailEntity.getOutWarehouseLocation()));
             List<InventoryDTO.PdaInventoryDTO> inventoryByParams = inventoryService.getInventoryByParam(paramDTO);
@@ -210,7 +210,7 @@ public class WarehouseLocationMoveDetailServiceImpl extends SuperServiceImpl<War
             detailEntity.setOutInventoryStatus(Optional.ofNullable(detailEntity.getOutInventoryStatus()).orElse(InventoryStatusEnum.USABLE.getCode()));
             if ((ObjectUtil.isEmpty(detailEntity.getInWarehouseLocation()) && ObjectUtil.isEmpty(detailEntity.getOutWarehouseLocation()))
                     || detailEntity.getInWarehouseLocation().equals(detailEntity.getOutWarehouseLocation())) {
-                throw new ServiceException(ApiError.ERROR_CANNOT_SAME_POSITION);
+                throw new ServiceException(ApiError.WH_PICK_AND_PUTAWAY_POSITION_SAME_FORBIDDEN);
             }
             paramDTO.setWarehouseLocations(Collections.singletonList(detailEntity.getOutWarehouseLocation()));
             List<InventoryDTO.PdaInventoryDTO> inventoryByParams = inventoryService.getInventoryByParam(paramDTO);

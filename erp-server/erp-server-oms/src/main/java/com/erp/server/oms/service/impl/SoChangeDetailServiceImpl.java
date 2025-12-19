@@ -3,7 +3,6 @@ package com.erp.server.oms.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.common.business.dto.PlatformB2bOrderDetailDTO;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.enums.ApiError;
@@ -223,7 +222,7 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
     public List<SoChangeDetailDTO.ViewDTO> listDetailByMainId(String mainId) {
         List<SoChangeDetailEntity> dbList = this.listDetailDbByMainId(mainId);
         if (CollectionUtils.isEmpty(dbList)) {
-            throw new ServiceException(ApiError.ERROR_SO_CHANGE_DETAIL_NOT_FOUND);
+            throw new ServiceException(ApiError.SO_CHANGE_DETAIL_NOT_FOUND);
         }
         List<SoChangeDetailDTO.ViewDTO> viewList = BeanMapper.copyList(dbList, SoChangeDetailDTO.ViewDTO.class);
         List<String> skuIdList = viewList.stream().map(SoChangeDetailDTO.ViewDTO::getSkuId).collect(Collectors.toList());
@@ -357,7 +356,7 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
     public List<SoChangeDetailDTO.SoDetailViewDTO> listSelectDetailBySoId(String soId, List<String> soDetailIds, Boolean hasContain) {
         SoInfoEntity soInfo = soInfoService.getById(soId);
         if (Objects.isNull(soInfo)) {
-            throw new ServiceException(ApiError.ERROR_SO_NOT_FOUND);
+            throw new ServiceException(ApiError.SO_NOT_FOUND);
         }
         String warehouseOrgName = soInfo.getWarehouseOrgName();
         String warehouseId = soInfo.getWarehouseId();
@@ -702,14 +701,14 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
             List<String> soDetailIdList = deleteDetailList.stream().
                     map(SoChangeDetailDTO.UpdateDTO::getSoDetailId).collect(Collectors.toList());
             if (CollectionUtils.isEmpty(soDetailIdList)) {
-                throw new ServiceException(ApiError.ERROR_SO_DETAIL_NOT_FOUND);
+                throw new ServiceException(ApiError.SO_DETAIL_NOT_FOUND);
             }
             //下推单据的数量
             List<SoDeliveryNoticeDetailDTO.PushDownDTO> pushDownDTOList = wmsTaskFeign.getPushDownBySoDetailIds(soDetailIdList);
             if(CollUtil.isNotEmpty(pushDownDTOList)){
                 StringBuilder sb = new StringBuilder();
                 for (SoDeliveryNoticeDetailDTO.PushDownDTO pushDownDTO : pushDownDTOList) {
-                    sb.append(String.format(ApiError.ERROR_SO_ASSOCIATED_DOC_DELETE_FORBIDDEN.getMsg(), pushDownDTO.getSkuNo()));
+                    sb.append(String.format(ApiError.SO_ASSOCIATED_DOC_DELETE_FORBIDDEN.getMsg(), pushDownDTO.getSkuNo()));
                     sb.append("<br>");
                 }
                 throw new ServiceException(sb.toString());
@@ -719,7 +718,7 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
             if(CollUtil.isNotEmpty(pushDownDTOList)){
                 StringBuilder sb = new StringBuilder();
                 for (SoDeliveryNoticeDetailDTO.PushDownDTO pushDownDTO : pushDownDTOList) {
-                    sb.append(String.format(ApiError.ERROR_SO_ASSOCIATED_DOC_DELETE_FORBIDDEN.getMsg(), pushDownDTO.getSkuNo()));
+                    sb.append(String.format(ApiError.SO_ASSOCIATED_DOC_DELETE_FORBIDDEN.getMsg(), pushDownDTO.getSkuNo()));
                     sb.append("<br>");
                 }
                 throw new ServiceException(sb.toString());
@@ -741,7 +740,7 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
             List<String> soDetailIdList = updateDetailList.stream().
                     map(SoChangeDetailDTO.UpdateDTO::getSoDetailId).collect(Collectors.toList());
             if (CollectionUtils.isEmpty(soDetailIdList)) {
-                throw new ServiceException(ApiError.ERROR_SO_DETAIL_NOT_FOUND);
+                throw new ServiceException(ApiError.SO_DETAIL_NOT_FOUND);
             }
             //发货通知单
             List<SoDeliveryNoticeDetailEntity> soDeliveryNoticeDetailList = soDeliveryNoticeFeign.listDetailBySourceDetailIds(soDetailIdList);
@@ -751,7 +750,7 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
                                 equals(item.getSoDetailId()) && !s.getInvalidStatus()).
                         mapToInt(SoDeliveryNoticeDetailEntity::getDeliveryQty).sum();
                 if (qty < deliveryQty) {
-                    throw new ServiceException(ApiError.ERROR_SO_CHANGE_QTY_LT_DELIVERY_NOTICE);
+                    throw new ServiceException(ApiError.SO_CHANGE_QTY_LT_DELIVERY_NOTICE);
                 }
             }
         }
@@ -769,7 +768,7 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
             List<SoChangeDetailEntity>  needCheckList= dbChangeDetailList.stream().filter(d->!idList.contains(d.getId())).collect(Collectors.toList());
             long existCount= needCheckList.stream().filter(c->soDetailIdList.contains(c.getSoDetailId())).count();
             if(existCount>0){
-                throw new ServiceException(ApiError.SO_CHANGE_TERMINATE_EXIST);
+                throw new ServiceException(ApiError.SO_CHANGE_ALREADY_TERMINATED);
             }
 
             //下推单据的数量
@@ -777,7 +776,7 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
             if(CollUtil.isNotEmpty(pushDownDTOList)){
                 StringBuilder sb = new StringBuilder();
                 for (SoDeliveryNoticeDetailDTO.PushDownDTO pushDownDTO : pushDownDTOList) {
-                    sb.append(String.format(ApiError.ERROR_SO_OUTBOUND_ALREADY_GENERATED.getMsg(), pushDownDTO.getSkuNo()));
+                    sb.append(String.format(ApiError.SO_OUTBOUND_ALREADY_GENERATED_TERMINATE_FORBIDDEN.getMsg(), pushDownDTO.getSkuNo()));
                     sb.append("<br>");
                 }
                 throw new ServiceException(sb.toString());

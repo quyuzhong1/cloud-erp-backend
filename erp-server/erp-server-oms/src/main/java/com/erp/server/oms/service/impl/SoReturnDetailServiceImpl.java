@@ -108,7 +108,7 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
         //获取退货详情
         List<SoDetailEntity> soDetailEntitieList = soDetailService.listSoDetailByIds(returnDetailIds);
         if (CollectionUtils.isEmpty(soDetailEntitieList)) {
-            throw new ServiceException(ApiError.ERROR_SO_NOT_FOUND);
+            throw new ServiceException(ApiError.SO_NOT_FOUND);
         }
         List<SoReturnDetailEntity> soReturnDetailEntities = this.listDetailBySourceId(Arrays.asList(dto.getSourceId()));
         List<SoReturnDetailEntity> list = new ArrayList<>();
@@ -119,7 +119,7 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
             Integer actualQty = soOutstockDetailEntities.stream().filter(detail -> soDetailEntity.getMainId().equals(detail.getSoId()) && detail.getSkuId().equals(soDetailEntity.getSkuId()) && detail.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(SoOutstockDetailEntity::getActualQty).reduce(MathUtil.ZERO, Integer::sum);
 
             if (actualQty < detailDto.getReturnQty() + returnQty) {
-                throw new ServiceException(ApiError.ERROR_RETURN_QTY_EXCEEDS_OUTBOUND);
+                throw new ServiceException(ApiError.SO_DELIVERY_RETURN_QTY_EXCEEDS_OUTBOUND);
             }
             soReturnDetailEntity.setMainId(id);
             soReturnDetailEntity.setSkuId(soDetailEntity.getSkuId());
@@ -179,7 +179,7 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
         //获取退货详情
         List<SoDetailEntity> soDetailEntitieList = soDetailService.listSoDetailByIds(returnDetailIds);
         if (CollectionUtils.isEmpty(soDetailEntitieList)) {
-            throw new ServiceException(ApiError.ERROR_SO_NOT_FOUND);
+            throw new ServiceException(ApiError.SO_NOT_FOUND);
         }
         //原明细数据
         List<SoReturnDetailEntity> oldList = this.listDetailByMainId(dto.getId());
@@ -205,7 +205,7 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
             }
 
             if (actualQty < detailDto.getReturnQty() + returnQty) {
-                throw new ServiceException(ApiError.ERROR_RETURN_QTY_EXCEEDS_OUTBOUND);
+                throw new ServiceException(ApiError.SO_DELIVERY_RETURN_QTY_EXCEEDS_OUTBOUND);
             }
 
             soReturnDetailEntity.setMainId(dto.getId());

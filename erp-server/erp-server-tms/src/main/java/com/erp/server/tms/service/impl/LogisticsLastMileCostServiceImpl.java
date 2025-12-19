@@ -120,7 +120,7 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
     public Boolean downloadTemplate(HttpServletResponse response) {
         List<TmsCfgCostEntity> cfgCostList = tmsCfgCostService.listByCostAttribution(DictCostAttributionEnum.LAST_MILE.getCode());
         if (CollectionUtils.isEmpty(cfgCostList)) {
-            throw new ServiceException(ApiError.ERROR_CFG_COST_EMPTY,"尾程");
+            throw new ServiceException(ApiError.LOGISTICS_COST_CONFIG_NOT_FOUND,"尾程");
         }
         LinkedList<String> headerNameList = getHeaderNameList();
         LinkedList<String> costNameList = cfgCostList.stream().map(TmsCfgCostEntity::getCostName).distinct().collect(Collectors.toCollection(LinkedList::new));

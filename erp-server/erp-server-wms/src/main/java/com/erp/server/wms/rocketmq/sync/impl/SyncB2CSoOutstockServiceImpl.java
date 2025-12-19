@@ -249,7 +249,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
                 .eq(ThirdMappingEntity::getThirdSysType, PlatformDictEnum.WDT.getCode())
                 .eq(ThirdMappingEntity::getThirdId, entity.getShopId()));
         if (CollectionUtils.isEmpty(shop)) {
-            throw new ServiceException(ApiError.ERROR_WDT_NOT_FOUND_SHOP_MAPPING, entity.getShopId());
+            throw new ServiceException(ApiError.MAPPING_SHOP_WDT_NOT_FOUND, entity.getShopId());
         }
         soOutstock.setShopId(shop.get(0).getSysId());
         ShopInfoEntity shopInfo = FeignQuery.getById(ShopInfoEntity.class, shop.get(0).getSysId());
@@ -259,7 +259,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
                 .eq(ThirdMappingEntity::getThirdSysType, PlatformDictEnum.WDT.getCode())
                 .eq(ThirdMappingEntity::getThirdId, entity.getWarehouseId()));
         if (CollectionUtils.isEmpty(warehouseList)) {
-            throw new ServiceException(ApiError.ERROR_WDT_NOT_FOUND_WAREHOUSE_MAPPING, entity.getWarehouseName());
+            throw new ServiceException(ApiError.MAPPING_WAREHOUSE_WDT_NOT_FOUND, entity.getWarehouseName());
         }
         List<String> skuNoList = entity.getDetailList().stream().map(WdtSoOutStockDetailDTO::getSkuNo).collect(Collectors.toList());
         List<String> suiteNoList = entity.getDetailList().stream().map(WdtSoOutStockDetailDTO::getSuiteNo).filter(CharSequenceUtil::isNotBlank).collect(Collectors.toList());
@@ -269,7 +269,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         List<SkuVO> skuList = plmTaskFeign.listBySkuNoList(skuNoList);
         WarehouseEntity warehouse = FeignQuery.getById(WarehouseEntity.class, warehouseList.get(0).getSysId());
         if (ObjectUtil.isNull(warehouse)) {
-            throw new ServiceException(ApiError.ERROR_WDT_NOT_FOUND_WAREHOUSE_MAPPING, warehouseList.get(0).getSysName());
+            throw new ServiceException(ApiError.MAPPING_WAREHOUSE_WDT_NOT_FOUND, warehouseList.get(0).getSysName());
         }
         CustomerInfoEntity customerInfo = FeignQuery.getById(CustomerInfoEntity.class, shopInfo.getCustomerId());
         //组织信息
@@ -724,7 +724,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
                         equals(fStockNumber)).findFirst().orElse(null);
                 //并且扣库存 才执行
                 if (Objects.isNull(warehouse)) {
-                    throw new ServiceException(ApiError.ERROR_K3_B2C_OUTBOUND_WAREHOUSE_NOT_FOUND, fStockNumber);
+                    throw new ServiceException(ApiError.SO_B2C_DELIVERY_K3_CLOUD_OUTBOUND_WAREHOUSE_NOT_FOUND, fStockNumber);
                 } else {
                     warehouseId = warehouse.getId();
                     warehouseName = warehouse.getName();

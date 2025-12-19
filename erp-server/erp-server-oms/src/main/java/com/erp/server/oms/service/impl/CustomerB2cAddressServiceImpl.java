@@ -75,7 +75,7 @@ public class CustomerB2cAddressServiceImpl extends SuperServiceImpl<CustomerB2cA
         if (CollectionUtils.isNotEmpty(addressList)) {
             long count = addressList.stream().filter(c -> c.getIsDefault() != null && c.getIsDefault()).count();
             if (count > 1) {
-                throw new ServiceException(ApiError.ERROR_CUSTOMER_DEFAULT_ADDRESS_LIMIT);
+                throw new ServiceException(ApiError.CUSTOMER_DEFAULT_ADDRESS_LIMIT);
             }
         }
 
@@ -163,7 +163,7 @@ public class CustomerB2cAddressServiceImpl extends SuperServiceImpl<CustomerB2cA
         if (CollectionUtils.isNotEmpty(deleteIdList)) {
             int count = soInfoService.getCountByAddressIds(deleteIdList);
             if (count > 0) {
-                throw new ServiceException(ApiError.ERROR_CUSTOMER_ADDRESS_IN_USE_DELETE_FORBIDDEN);
+                throw new ServiceException(ApiError.CUSTOMER_ADDRESS_IN_USE_DELETE_FORBIDDEN);
             }
             this.removeByIds(deleteIdList);
         }

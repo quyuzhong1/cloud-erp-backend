@@ -134,11 +134,11 @@ public class WalmartSdkClientService {
             tokenDTO = JSONUtil.toBean(bodyStr, WalmartTokenDTO.class);
             log.info(String.format("::::: 沃尔玛授权 ::::: clientId => %s, clientSecret => %s, 返回参数 => %s ", clientId, clientSecret, tokenDTO));
         } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_AUTHORIZE_FAIL, bodyStr);
+            throw new ServiceException(ApiError.SHOP_AUTHORIZE_FAILED, bodyStr);
         }
 
         if (StringUtil.isBlank(tokenDTO.getAccessToken())) {
-            throw new ServiceException(ApiError.ERROR_AUTHORIZE_FAIL, bodyStr);
+            throw new ServiceException(ApiError.SHOP_AUTHORIZE_FAILED, bodyStr);
         }
 
         return tokenDTO;

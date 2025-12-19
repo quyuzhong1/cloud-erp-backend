@@ -274,7 +274,7 @@ public class TmsCfgSailingServiceImpl extends SuperServiceImpl<TmsCfgSailingMapp
             //新增校验是否重复
             TmsCfgSailingEntity old = oldList.stream().filter(obj -> CharSequenceUtil.equals(obj.getLogisticsChannelId(), logisticsChannelId)).findFirst().orElse(null);
             if (isAdd && ObjectUtil.isNotEmpty(old)) {
-                throw new ServiceException(ApiError.ERROR_CFG_SAILING_EXIST,channelEntity.getName());
+                throw new ServiceException(ApiError.LOGISTICS_SAILING_CONFIG_ALREADY_EXISTS,channelEntity.getName());
             }
             resultList.add(entity);
         }

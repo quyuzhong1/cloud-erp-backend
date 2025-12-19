@@ -72,7 +72,7 @@ public class SoB2cAbnormalServiceImpl implements SoB2cAbnormalService {
         //销售订单
         SoB2cEntity soB2cEntity = soB2cService.getById(id);
         if (ObjUtil.isEmpty(soB2cEntity)) {
-            throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
+            throw new ServiceException(ApiError.SO_B2C_NOT_FOUND);
         }
         SoB2cErrorTypeEnum soB2cErrorTypeEnum = SoB2cErrorTypeEnum.getEnum(soB2cEntity.getSignOrderError());
         if(Objects.isNull(soB2cErrorTypeEnum)){

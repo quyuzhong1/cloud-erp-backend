@@ -436,11 +436,11 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         //step1 参数校验
         String id = dto.getId();
         if (Objects.isNull(skuMapping)) {
-            throw new ServiceException(ApiError.ERROR_SKU_MAPPING_NOT_FOUND);
+            throw new ServiceException(ApiError.COMMON_SKU_MAPPING_NOT_FOUND);
         }
         //启用日期不能大于上个映射关系的开始时间
         if (dto.getEffectiveTime().isBefore(skuMapping.getEffectiveTime())){
-            throw new ServiceException(ApiError.ERROR_MAPPING_START_DATE_BEFORE_PREVIOUS,skuMapping.getEffectiveTime());
+            throw new ServiceException(ApiError.MAPPING_START_DATE_INVALID,skuMapping.getEffectiveTime());
         }
         // 历史skuId
         String historyProductSkuId = skuMapping.getProductSkuId();
@@ -453,7 +453,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         String platformDict = dto.getDictPlatform();
         DictBasicEntity dictBasic = dictBasicService.getByTypeAndValue(DictBasicTypeEnum.SALES_PLATFORM.getType(), platformDict);
         if (Objects.isNull(dictBasic)) {
-            throw new ServiceException(ApiError.ERROR_PLATFORM_NOT_FOUND);
+            throw new ServiceException(ApiError.COMMON_PLATFORM_NOT_FOUND);
         }
         String platformSkuNo = dto.getPlatformSkuNo();
         if (null == listing) {
@@ -694,11 +694,11 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         String id = dto.getId();
         SkuMappingEntity skuMapping = this.getById(id);
         if (Objects.isNull(skuMapping)) {
-            throw new ServiceException(ApiError.ERROR_SKU_MAPPING_NOT_FOUND);
+            throw new ServiceException(ApiError.COMMON_SKU_MAPPING_NOT_FOUND);
         }
         //启用日期不能大于上个映射关系的开始时间
         if (dto.getEffectiveTime().isBefore(skuMapping.getEffectiveTime())){
-            throw new ServiceException(ApiError.ERROR_MAPPING_START_DATE_BEFORE_PREVIOUS,skuMapping.getEffectiveTime());
+            throw new ServiceException(ApiError.MAPPING_START_DATE_INVALID,skuMapping.getEffectiveTime());
         }
         String productSkuId = dto.getProductSkuId();
         List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(Arrays.asList(productSkuId));
@@ -1200,7 +1200,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         }
         long count = this.count(queryWrapper);
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_SKU_MAPPING_DUPLICATE_PLATFORM_SHOP);
+            throw new ServiceException(ApiError.COMMON_SKU_MAPPING_DUPLICATE_PLATFORM_SHOP);
         }
 
 
@@ -1212,7 +1212,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         if(CollectionUtils.isEmpty(oldEntities)){
             return;
         }
-        throw new ServiceException(ApiError.SKU_MAPPING_NOT_ALLOW_HISTORY, oldEntities.get(0).getExpireTime().toString());
+        throw new ServiceException(ApiError.MAPPING_SKU_HISTORY_EXISTS, oldEntities.get(0).getExpireTime().toString());
     }
 
     /**

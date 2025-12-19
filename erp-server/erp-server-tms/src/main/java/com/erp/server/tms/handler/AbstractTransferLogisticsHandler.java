@@ -70,7 +70,7 @@ public abstract class AbstractTransferLogisticsHandler extends BaseController im
         try {
             TransferLogisticsContext.setAuthMap(authConfig);
             ApiResult<List<TransferLogisticsChannelEntity>>  result = this.getShippingMethodList();
-            return result.isSuccess()?ApiResult.success():ApiResult.error(ApiError.ERROR_AUTHORIZE_FAIL.getCode(),"授权失败:"+result.getMsg());
+            return result.isSuccess()?ApiResult.success():ApiResult.error(ApiError.SHOP_AUTHORIZE_FAILED.getCode(),"授权失败:"+result.getMsg());
         } finally {
             TransferLogisticsContext.remove();
         }

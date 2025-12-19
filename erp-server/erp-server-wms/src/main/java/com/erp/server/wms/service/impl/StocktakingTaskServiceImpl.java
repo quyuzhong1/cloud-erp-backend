@@ -731,7 +731,7 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
         //获取导出数据
         List<StocktakingTaskDTO.PagingViewDTO> list = baseMapper.listExport(params);
         if (CollectionUtils.isEmpty(list)) {
-            throw new ServiceException(ApiError.ERROR_EXPORT_DATA_EMPTY);
+            throw new ServiceException(ApiError.FILE_EXPORT_DATA_EMPTY);
         }
         //填充数据
         fillDb(list);

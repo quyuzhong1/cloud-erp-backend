@@ -229,13 +229,13 @@ public class CfgRuleCommonServiceImpl extends SuperServiceImpl<CfgRuleCommonMapp
         CfgRuleCommonEntity entity = list.stream()
                 .filter(v -> v.getCode().equals(CfgRuleSuggestedAmountNodeEnum.TIME_FRAME.getCode()))
                 .findFirst()
-                .orElseThrow(() -> new ServiceException(ApiError.ERROR_TIME_FRAME_NOT_EXIST));
+                .orElseThrow(() -> new ServiceException(ApiError.COMMON_TIME_FRAME_RULE_CONFIG_NOT_EXIST));
         return list.stream()
                 .filter(v -> v.getParentId().equals(entity.getId()))
                 .filter(v -> "true".equals(v.getValue()))
                 .map(CfgRuleCommonEntity::getCode)
                 .findFirst()
-                .orElseThrow(() -> new ServiceException(ApiError.ERROR_TIME_FRAME_NOT_EXIST));
+                .orElseThrow(() -> new ServiceException(ApiError.COMMON_TIME_FRAME_RULE_CONFIG_NOT_EXIST));
     }
 
     // 去掉 baseKey 前缀部分的方法

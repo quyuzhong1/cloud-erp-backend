@@ -61,7 +61,7 @@ public class CustomerInfoApproveHandler extends AbstractApproveHandler {
     public Boolean disApprove(ApproveDTO.DisApproveDTO dto) {
         CustomerInfoEntity customerInfo = customerInfoService.getById(dto.getId());
         if (ObjectUtil.isEmpty(customerInfo)) {
-            throw new ServiceException(ApiError.ERROR_CUSTOMER_NOT_FOUND);
+            throw new ServiceException(ApiError.CUSTOMER_NOT_FOUND);
         }
         BatchResultDTO resultDTO = customerInfoService.disApprove(customerInfo);
         return resultDTO.getSuccess();

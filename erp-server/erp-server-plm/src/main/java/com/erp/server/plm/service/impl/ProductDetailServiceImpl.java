@@ -1548,20 +1548,20 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     private void checkSizeAndWeight(ProductPackDTO productPackDTO) {
         if (ObjectUtils.isNotEmpty(productPackDTO)) {
             //校验包装尺寸：长≥宽≥高
-            compareDimensions(productPackDTO.getProductLength(), productPackDTO.getProductWidth(), ApiError.ERROR_PRODUCT_LENGTH_LESS_THAN_WIDTH);
-            compareDimensions(productPackDTO.getProductWidth(), productPackDTO.getProductHeight(), ApiError.ERROR_PRODUCT_WIDTH_LESS_THAN_HEIGHT);
+            compareDimensions(productPackDTO.getProductLength(), productPackDTO.getProductWidth(), ApiError.COMMON_PRODUCT_LENGTH_LT_WIDTH_FORBIDDEN);
+            compareDimensions(productPackDTO.getProductWidth(), productPackDTO.getProductHeight(), ApiError.COMMON_PRODUCT_WIDTH_LT_HEIGHT_FORBIDDEN);
             
             //校验箱规尺寸：长≥宽≥高
-            compareDimensions(productPackDTO.getBoxLength(), productPackDTO.getBoxWidth(), ApiError.ERROR_BOX_LENGTH_LESS_THAN_WIDTH);
-            compareDimensions(productPackDTO.getBoxWidth(), productPackDTO.getBoxHeight(), ApiError.ERROR_BOX_WIDTH_LESS_THAN_HEIGHT);
+            compareDimensions(productPackDTO.getBoxLength(), productPackDTO.getBoxWidth(), ApiError.COMMON_BOX_LENGTH_LT_WIDTH_FORBIDDEN);
+            compareDimensions(productPackDTO.getBoxWidth(), productPackDTO.getBoxHeight(), ApiError.COMMON_BOX_WIDTH_LT_HEIGHT_FORBIDDEN);
             
             //校验箱规必须大于等于包装尺寸
-            compareDimensions(productPackDTO.getBoxLength(), productPackDTO.getProductLength(), ApiError.ERROR_LENGTH_BOX_LITTER_THAN_PRODUCT);
-            compareDimensions(productPackDTO.getBoxWidth(), productPackDTO.getProductWidth(), ApiError.ERROR_WIDTH_BOX_LITTER_THAN_PRODUCT);
-            compareDimensions(productPackDTO.getBoxHeight(), productPackDTO.getProductHeight(), ApiError.ERROR_HEIGHT_BOX_LITTER_THAN_PRODUCT);
+            compareDimensions(productPackDTO.getBoxLength(), productPackDTO.getProductLength(), ApiError.COMMON_BOX_LENGTH_LT_PRODUCT_FORBIDDEN);
+            compareDimensions(productPackDTO.getBoxWidth(), productPackDTO.getProductWidth(), ApiError.COMMON_BOX_WIDTH_LT_PRODUCT_FORBIDDEN);
+            compareDimensions(productPackDTO.getBoxHeight(), productPackDTO.getProductHeight(), ApiError.COMMON_BOX_HEIGHT_LT_PRODUCT_FORBIDDEN);
             
             //毛重大于等于净重
-            compareDimensions(productPackDTO.getGrossWeight(), productPackDTO.getNetWeight(), ApiError.ERROR_WEIGHT_GROSS_LITTER_THAN_NET);
+            compareDimensions(productPackDTO.getGrossWeight(), productPackDTO.getNetWeight(), ApiError.COMMON_GROSS_WEIGHT_LT_NET_WEIGHT_FORBIDDEN);
         }
     }
 
@@ -5319,7 +5319,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                     productLength = LengthConverterUtil.cmToMm(productLength);
                 }
                 if(boxLength.compareTo(productLength)<0){
-                    errorMsgList.add(ApiError.ERROR_LENGTH_BOX_LITTER_THAN_PRODUCT.getMsg());
+                    errorMsgList.add(ApiError.COMMON_BOX_LENGTH_LT_PRODUCT_FORBIDDEN.getMsg());
                 }
             }
             if(StringUtils.isNotBlank(dto.getBoxWidth()) || StringUtils.isNotBlank(dto.getProductWidth())){
@@ -5336,7 +5336,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                     productWidth = LengthConverterUtil.cmToMm(productWidth);
                 }
                 if(boxWidth.compareTo(productWidth)<0){
-                    errorMsgList.add(ApiError.ERROR_WIDTH_BOX_LITTER_THAN_PRODUCT.getMsg());
+                    errorMsgList.add(ApiError.COMMON_BOX_WIDTH_LT_PRODUCT_FORBIDDEN.getMsg());
                 }
             }
             if(StringUtils.isNotBlank(dto.getBoxHeight()) || StringUtils.isNotBlank(dto.getProductHeight())){
@@ -5353,7 +5353,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                     productHeight = LengthConverterUtil.cmToMm(productHeight);
                 }
                 if(boxHeight.compareTo(productHeight)<0){
-                    errorMsgList.add(ApiError.ERROR_HEIGHT_BOX_LITTER_THAN_PRODUCT.getMsg());
+                    errorMsgList.add(ApiError.COMMON_BOX_HEIGHT_LT_PRODUCT_FORBIDDEN.getMsg());
                 }
             }
             if(StringUtils.isNotBlank(dto.getGrossWeight()) || StringUtils.isNotBlank(dto.getNetWeight())){
@@ -5366,7 +5366,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                     netWeight = oldPackEntity.getNetWeight();
                 }
                 if(grossWeight.compareTo(netWeight)<0){
-                    errorMsgList.add(ApiError.ERROR_WEIGHT_GROSS_LITTER_THAN_NET.getMsg());
+                    errorMsgList.add(ApiError.COMMON_GROSS_WEIGHT_LT_NET_WEIGHT_FORBIDDEN.getMsg());
                 }
             }
 
@@ -6175,16 +6175,16 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
             //正常情况下箱规尺寸>=包装尺寸，毛重>=净重
             if(MathUtil.valueOf(dto.getBoxLength()).compareTo(MathUtil.valueOf(dto.getProductLength()))<0){
-                errorMsgList.add(ApiError.ERROR_LENGTH_BOX_LITTER_THAN_PRODUCT.getMsg());
+                errorMsgList.add(ApiError.COMMON_BOX_LENGTH_LT_PRODUCT_FORBIDDEN.getMsg());
             }
             if(MathUtil.valueOf(dto.getBoxWidth()).compareTo(MathUtil.valueOf(dto.getProductWidth()))<0){
-                errorMsgList.add(ApiError.ERROR_WIDTH_BOX_LITTER_THAN_PRODUCT.getMsg());
+                errorMsgList.add(ApiError.COMMON_BOX_WIDTH_LT_PRODUCT_FORBIDDEN.getMsg());
             }
             if(MathUtil.valueOf(dto.getBoxHeight()).compareTo(MathUtil.valueOf(dto.getProductHeight()))<0){
-                errorMsgList.add(ApiError.ERROR_HEIGHT_BOX_LITTER_THAN_PRODUCT.getMsg());
+                errorMsgList.add(ApiError.COMMON_BOX_HEIGHT_LT_PRODUCT_FORBIDDEN.getMsg());
             }
             if(MathUtil.valueOf(dto.getGrossWeight()).compareTo(MathUtil.valueOf(dto.getNetWeight()))<0){
-                errorMsgList.add(ApiError.ERROR_WEIGHT_GROSS_LITTER_THAN_NET.getMsg());
+                errorMsgList.add(ApiError.COMMON_GROSS_WEIGHT_LT_NET_WEIGHT_FORBIDDEN.getMsg());
             }
 
             //存在错误信息则返回
@@ -7049,20 +7049,20 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             }
 
             //校验包装尺寸：长≥宽≥高
-            compareDimensions(productPackDTO.getProductLength(), productPackDTO.getProductWidth(), ApiError.ERROR_PRODUCT_LENGTH_LESS_THAN_WIDTH);
-            compareDimensions(productPackDTO.getProductWidth(), productPackDTO.getProductHeight(), ApiError.ERROR_PRODUCT_WIDTH_LESS_THAN_HEIGHT);
+            compareDimensions(productPackDTO.getProductLength(), productPackDTO.getProductWidth(), ApiError.COMMON_PRODUCT_LENGTH_LT_WIDTH_FORBIDDEN);
+            compareDimensions(productPackDTO.getProductWidth(), productPackDTO.getProductHeight(), ApiError.COMMON_PRODUCT_WIDTH_LT_HEIGHT_FORBIDDEN);
             
             //校验箱规尺寸：长≥宽≥高
-            compareDimensions(productPackDTO.getBoxLength(), productPackDTO.getBoxWidth(), ApiError.ERROR_BOX_LENGTH_LESS_THAN_WIDTH);
-            compareDimensions(productPackDTO.getBoxWidth(), productPackDTO.getBoxHeight(), ApiError.ERROR_BOX_WIDTH_LESS_THAN_HEIGHT);
+            compareDimensions(productPackDTO.getBoxLength(), productPackDTO.getBoxWidth(), ApiError.COMMON_BOX_LENGTH_LT_WIDTH_FORBIDDEN);
+            compareDimensions(productPackDTO.getBoxWidth(), productPackDTO.getBoxHeight(), ApiError.COMMON_BOX_WIDTH_LT_HEIGHT_FORBIDDEN);
             
             //校验箱规必须大于等于包装尺寸
-            compareDimensions(productPackDTO.getBoxLength(), productPackDTO.getProductLength(), ApiError.ERROR_LENGTH_BOX_LITTER_THAN_PRODUCT);
-            compareDimensions(productPackDTO.getBoxWidth(), productPackDTO.getProductWidth(), ApiError.ERROR_WIDTH_BOX_LITTER_THAN_PRODUCT);
-            compareDimensions(productPackDTO.getBoxHeight(), productPackDTO.getProductHeight(), ApiError.ERROR_HEIGHT_BOX_LITTER_THAN_PRODUCT);
+            compareDimensions(productPackDTO.getBoxLength(), productPackDTO.getProductLength(), ApiError.COMMON_BOX_LENGTH_LT_PRODUCT_FORBIDDEN);
+            compareDimensions(productPackDTO.getBoxWidth(), productPackDTO.getProductWidth(), ApiError.COMMON_BOX_WIDTH_LT_PRODUCT_FORBIDDEN);
+            compareDimensions(productPackDTO.getBoxHeight(), productPackDTO.getProductHeight(), ApiError.COMMON_BOX_HEIGHT_LT_PRODUCT_FORBIDDEN);
             
             //毛重大于等于净重
-            compareDimensions(productPackDTO.getGrossWeight(), productPackDTO.getNetWeight(), ApiError.ERROR_WEIGHT_GROSS_LITTER_THAN_NET);
+            compareDimensions(productPackDTO.getGrossWeight(), productPackDTO.getNetWeight(), ApiError.COMMON_GROSS_WEIGHT_LT_NET_WEIGHT_FORBIDDEN);
         }
     }
 

@@ -339,7 +339,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         String sourceId = dto.getSourceId();
         List<SoOutstockDetailDTO.AddDTO> detailList = dto.getDetailList();
         if (CollectionUtils.isEmpty(detailList)) {
-            throw new ServiceException(ApiError.ERROR_SO_OUTBOUND_DETAIL_REQUIRED);
+            throw new ServiceException(ApiError.SO_DELIVERY_OUTBOUND_DETAIL_REQUIRED);
         }
         //销售订单详情集合
         List<SoDetailEntity> soDetailList = soInfoFeign.listSoDetailByMainIds(Collections.singletonList(dto.getSoId()));
@@ -381,7 +381,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         String soId = dto.getSoId();
         SoInfoDTO.CustomerDTO soCustomer = soInfoFeign.getSoBaseById(soId);
         if (Objects.isNull(soCustomer)) {
-            throw new ServiceException(ApiError.ERROR_SO_NOT_FOUND);
+            throw new ServiceException(ApiError.SO_NOT_FOUND);
         }
         //销售订单折扣额
         BigDecimal discountAmount = soCustomer.getDiscountAmount();
@@ -1654,7 +1654,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         //获取导出数据
 		Page<SoOutstockDTO.PagingViewDTO> page = baseMapper.listExport(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams());
         if (CollectionUtils.isEmpty(page.getRecords())) {
-            throw new ServiceException(ApiError.ERROR_EXPORT_DATA_EMPTY);
+            throw new ServiceException(ApiError.FILE_EXPORT_DATA_EMPTY);
         }
         fillPaging(page.getRecords(),true);
         return new PagingVO<>(page);
@@ -2048,7 +2048,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         String soId = dto.getSoId();
         SoInfoDTO.CustomerDTO soInfo = soInfoFeign.getSoBaseById(soId);
         if (Objects.isNull(soInfo)) {
-            throw new ServiceException(ApiError.ERROR_SO_NOT_FOUND);
+            throw new ServiceException(ApiError.SO_NOT_FOUND);
         }
 
         //销售订单的总金额
@@ -2155,7 +2155,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         List<String> soIdList = list.stream().map(SoOutstockDTO.GenerateSoOutstockViewDTO::getSoId).collect(Collectors.toList());
         List<SoInfoEntity> soInfoList = soInfoFeign.listSoInfoByIds(soIdList);
         if (CollectionUtils.isEmpty(soInfoList)) {
-            throw new ServiceException(ApiError.ERROR_SO_NOT_FOUND);
+            throw new ServiceException(ApiError.SO_NOT_FOUND);
         }
         List<SoInfoDTO.CustomerDTO> customerDTOS = soInfoFeign.listSoCustomer(soIdList);
         Map<String, List<SoOutstockDTO.GenerateSoOutstockViewDTO>> map = list.stream().collect(Collectors.groupingBy(SoOutstockDTO.GenerateSoOutstockViewDTO::getSourceId));
@@ -2363,7 +2363,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         List<SoInfoEntity> soInfoList = soInfoFeign.listSoInfoByIds(soIdList);
         if (CollectionUtils.isEmpty(soInfoList)) {
             log.info("销售订单不存在，soIdList = {}", soInfoList);
-            throw new ServiceException(ApiError.ERROR_SO_NOT_FOUND);
+            throw new ServiceException(ApiError.SO_NOT_FOUND);
         }
 
         Map<String, List<SoInfoDTO.GenerateDeliveryView>> map = list.stream().collect(Collectors.groupingBy(SoInfoDTO.GenerateDeliveryView::getSoId));
@@ -2377,7 +2377,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             SoInfoEntity soInfoEntity = soInfoList.stream().filter(obj -> obj.getId().equals(soId)).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(soInfoEntity)) {
                 log.info("销售订单不存在，soId = {}", soId);
-                throw new ServiceException(ApiError.ERROR_SO_NOT_FOUND);
+                throw new ServiceException(ApiError.SO_NOT_FOUND);
             }
             SoInfoDTO.GenerateDeliveryView generateInfo = generateInfoList.stream().filter(g -> CharSequenceUtil.isNotBlank(g.getSoId())).findFirst().orElse(null);
             if (generateInfo != null) {
@@ -3180,7 +3180,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         }
         SoB2cEntity soB2cEntity = FeignQuery.getById(SoB2cEntity.class, dto.getSoId());
         if (ObjectUtil.isEmpty(soB2cEntity)) {
-            throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
+            throw new ServiceException(ApiError.SO_B2C_NOT_FOUND);
         }
         //虾皮、美克多、领星平台需要按明细仓库出
         if (PlatformDictEnum.SHOPEE.getCode().equals(dto.getDictPlatform())
@@ -3251,7 +3251,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         String sourceId = dto.getSourceId();
         List<SoOutstockDetailDTO.AddDTO> detailList = dto.getDetailList();
         if (CollectionUtils.isEmpty(detailList)) {
-            throw new ServiceException(ApiError.ERROR_SO_OUTBOUND_DETAIL_REQUIRED);
+            throw new ServiceException(ApiError.SO_DELIVERY_OUTBOUND_DETAIL_REQUIRED);
         }
 
         if(dto.isHasPlatformWarehouseOrder()) {
@@ -3883,7 +3883,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             try {
                 SoB2cEntity currentEntity = mainMap.get(id);
                 if (null == currentEntity){
-                    throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
+                    throw new ServiceException(ApiError.SO_B2C_NOT_FOUND);
                 }
                 PlatformRetryHandler.retrySoOutStock(currentEntity, Collections.singletonList(currentEntity));
             } catch (Exception e) {

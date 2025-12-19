@@ -310,7 +310,7 @@ public class AliExpressOrderService {
         AliExpressShopInfoDTO shopInfoDTO = this.getShopInfoByShopId(shopId);
         if (Objects.isNull(shopInfoDTO)) {
             log.error("[速卖通订单声明发货  获取 token 失败: shopId={}", shopId);
-            throw new ServiceException(ApiError.ERROR_SHOP_TOKEN_IS_NULL, shopName);
+            throw new ServiceException(ApiError.SHOP_TOKEN_FETCH_FAILED, shopName);
         }
         String appKey = shopInfoDTO.getClientId();
         String appSecret = shopInfoDTO.getClientSecret();
@@ -465,7 +465,7 @@ public class AliExpressOrderService {
         AliExpressShopInfoDTO shopInfoDTO = this.getShopInfoByShopId(shopId);
         if (Objects.isNull(shopInfoDTO)) {
             log.error("[速卖通子订单声明发货  获取 token 失败: shopId={}", shopId);
-            throw new ServiceException(ApiError.ERROR_SHOP_TOKEN_IS_NULL, shopId);
+            throw new ServiceException(ApiError.SHOP_TOKEN_FETCH_FAILED, shopId);
         }
         // 组合请求参数
         QueryShipmentOrder.Shipment shipment = QueryShipmentOrder.Shipment.builder()

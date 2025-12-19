@@ -359,7 +359,7 @@ public class StocktakingTaskDetailServiceImpl extends SuperServiceImpl<Stocktaki
                 map(StocktakingTaskUserEntity::getUserName).collect(Collectors.joining(","));
         List<StocktakingTaskDetailDTO.ExportDTO> exportList = baseMapper.listExportByMainId(mainId);
         if (CollectionUtils.isEmpty(exportList)) {
-            throw new ServiceException(ApiError.ERROR_EXPORT_DATA_EMPTY);
+            throw new ServiceException(ApiError.FILE_EXPORT_DATA_EMPTY);
         }
         List<String> skuIdList = exportList.stream().map(StocktakingTaskDetailDTO.ExportDTO::getSkuId).collect(Collectors.toList());
         List<ProductDetailEntity> skuList = productDetailService.listProductDetailByIds(skuIdList);

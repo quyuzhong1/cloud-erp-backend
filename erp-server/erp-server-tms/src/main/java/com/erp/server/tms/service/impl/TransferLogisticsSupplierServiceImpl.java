@@ -187,7 +187,7 @@ public class TransferLogisticsSupplierServiceImpl extends SuperServiceImpl<Trans
         // 检查订单是否引用
         Boolean flag = transferDeclareService.checkExistTransferLogisticsSupplier(id);
         if (flag) {
-            throw new ServiceException(ApiError.EXIST_TRANSFER_LOGISTICS_SUPPLIER_NOT_DELETE);
+            throw new ServiceException(ApiError.LOGISTICS_TRANSFER_SUPPLIER_REF_DELETE_FORBIDDEN);
         }
 
         supplierService.removeById(id);
@@ -212,11 +212,11 @@ public class TransferLogisticsSupplierServiceImpl extends SuperServiceImpl<Trans
         String authStatus = logisticsSupplier.getAuthStatus();
         String alreadyCode = LogisticsAuthStatusEnum.ALREADY.getCode();
         if (!alreadyCode.equals(authStatus)) {
-            throw new ServiceException(ApiError.NOT_SYNC_BY_NOT_AUTH);
+            throw new ServiceException(ApiError.LOGISTICS_SYNC_FORBIDDEN_NOT_AUTHORIZED);
         }
         TransferLogisticsAuthEntity authEntity = transferLogisticsAuthService.getByMainId("", id);
         if (Objects.isNull(authEntity)) {
-            throw new ServiceException(ApiError.NOT_SYNC_BY_NOT_AUTH);
+            throw new ServiceException(ApiError.LOGISTICS_SYNC_FORBIDDEN_NOT_AUTHORIZED);
         }
         String logisticsPlatform = authEntity.getLogisticsPlatform();
 

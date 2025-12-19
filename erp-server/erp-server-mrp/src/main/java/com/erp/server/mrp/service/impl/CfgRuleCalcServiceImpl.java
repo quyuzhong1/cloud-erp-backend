@@ -198,16 +198,16 @@ public class CfgRuleCalcServiceImpl extends SuperServiceImpl<CfgRuleCalcMapper, 
      */
     private void verifyDate(CfgRuleCalcDTO.AddDTO addDTO) {
         if (addDTO.getStartCalcDate().isAfter(LocalDate.now())) {
-            throw new ServiceException(ApiError.ERROR_VERIFY_START_CALC_DATE);
+            throw new ServiceException(ApiError.TRIAL_CALC_START_DATE_AFTER_NOW_FORBIDDEN);
         }
         if (addDTO.getStartCalcDate().isAfter(addDTO.getEndCalcDate())) {
-            throw new ServiceException(ApiError.ERROR_VERIFY_END_CALC_DATE);
+            throw new ServiceException(ApiError.TRIAL_CALC_END_DATE_BEFORE_START_FORBIDDEN);
         }
         if (!addDTO.getStartCalcDate().plusYears(1).isAfter(addDTO.getEndCalcDate())) {
-            throw new ServiceException(ApiError.ERROR_VERIFY_CALC_DATE);
+            throw new ServiceException(ApiError.TRIAL_CALC_DATE_RANGE_EXCEEDS_ONE_YEAR);
         }
         if (addDTO.getSkuIds().size() * addDTO.getShopIds().size() > 999999) {
-            throw new ServiceException(ApiError.ERROR_CALC_SIZE);
+            throw new ServiceException(ApiError.TRIAL_CALC_TASK_SIZE_EXCEEDS_LIMIT);
         }
     }
 

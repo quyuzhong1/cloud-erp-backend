@@ -409,11 +409,11 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
                 list();
         if (CollectionUtils.isNotEmpty(shopInfoList)) {
             if (StringUtils.isBlank(dictAreaCode)) {
-                throw new ServiceException(ApiError.ERROR_SHOP_EXIST, dictPlatform, account);
+                throw new ServiceException(ApiError.SHOP_EXIST, dictPlatform, account);
             } else {
                 String countryName = shopInfoList.stream().map(ShopInfoEntity::getCountryName).distinct().
                         collect(Collectors.joining(","));
-                throw new ServiceException(ApiError.ERROR_SHOP_COUNTRY_EXIST, dictPlatform, account, countryName);
+                throw new ServiceException(ApiError.SHOP_COUNTRY_EXIST, dictPlatform, account, countryName);
             }
         }
 
@@ -573,7 +573,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
     	}
         ShopInfoEntity shopInfo = this.getById(dto.getId());
         if (Objects.isNull(shopInfo)) {
-            throw new ServiceException(ApiError.ERROR_SHOP_NOT_FOUND);
+            throw new ServiceException(ApiError.SHOP_NOT_FOUND);
         }
 
         String customerId = shopInfo.getCustomerId();
@@ -747,7 +747,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
     public ShopInfoEntity updateInternalShop(ShopDTO.UpdateInternalDTO dto) {
         ShopInfoEntity shopInfo = this.getById(dto.getId());
         if (Objects.isNull(shopInfo)) {
-            throw new ServiceException(ApiError.ERROR_SHOP_NOT_FOUND);
+            throw new ServiceException(ApiError.SHOP_NOT_FOUND);
         }
 
         String customerId = shopInfo.getCustomerId();
@@ -823,7 +823,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         if (StringUtils.isNotBlank(customerId)) {
             CustomerInfoEntity customerInfoEntity = customerInfoService.getById(customerId);
             if (ObjectUtil.isEmpty(customerInfoEntity)) {
-                throw new ServiceException(ApiError.ERROR_CUSTOMER_NOT_FOUND);
+                throw new ServiceException(ApiError.CUSTOMER_NOT_FOUND);
             }
             ShopInfoEntity other = this.lambdaQuery().eq(ShopInfoEntity::getCustomerId,customerId).ne(StringUtils.isNotBlank(shopInfo.getId()),ShopInfoEntity::getId,shopInfo.getId()).last("limit 1").one();
             if(Objects.nonNull(other)){
@@ -1785,7 +1785,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
             }
             //只有禁用的店铺允许删除
             if (Objects.equals(shopInfoEntity.getDisabled(), false)) {
-                deleteResult = BatchResultDTO.fail(id, shopInfoEntity.getAccount(), ApiError.ERROR_SHOP_UNDISABLED.getMsg());
+                deleteResult = BatchResultDTO.fail(id, shopInfoEntity.getAccount(), ApiError.SHOP_DELETE_ONLY_DISABLED.getMsg());
                 resultDTOS.add(deleteResult);
                 continue;
             }

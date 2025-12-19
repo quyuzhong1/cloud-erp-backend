@@ -166,7 +166,7 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
                 SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
                 addError.setType(SoB2cErrorTypeEnum.ORDER_FETCH.getCode());
                 addError.setMainId(mainEntity.getId());
-                addError.setMessage(ApiError.ERROR_SO_B2C_ORDER_FETCH.getMsg());
+                addError.setMessage(ApiError.SO_B2C_ORDER_FETCH_FAILED.getMsg());
                 soB2cErrorService.add(addError);
 
                 //更新主表error标识

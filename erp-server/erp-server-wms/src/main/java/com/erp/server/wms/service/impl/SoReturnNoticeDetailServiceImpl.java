@@ -76,7 +76,7 @@ public class SoReturnNoticeDetailServiceImpl extends SuperServiceImpl<SoReturnNo
         List<ProductDetailEntity> productDetailEntitys = plmTaskFeign.getByIdList(skuIds);
         List<SoReturnNoticeDetailDTO.Add> detailList = dto.getDetailList();
         if(CollUtil.isEmpty(detailList)) {
-            throw new ServiceException(ApiError.ERROR_RETURN_NOTICE_DETAIL_REQUIRED);
+            throw new ServiceException(ApiError.SO_RETURN_NOTICE_DETAIL_REQUIRED);
         }
         Map<String , Integer> returnDetailIdMap = new HashMap<>();
         for (SoReturnNoticeDetailDTO.Add detailDto : dto.getDetailList()) {
@@ -91,7 +91,7 @@ public class SoReturnNoticeDetailServiceImpl extends SuperServiceImpl<SoReturnNo
                 //下推通知单
                 SoReturnDetailEntity soReturnDetailEntity = soReturnDetailEntities.stream().filter(req -> req.getId().equals(detailDto.getSourceDetailId())).findFirst().orElse(null);
                 if (ObjectUtil.isEmpty(soReturnDetailEntity)) {
-                    throw new ServiceException(ApiError.ERROR_RETURN_ORDER_SKU_NOT_FOUND);
+                    throw new ServiceException(ApiError.SO_DELIVERY_RETURN_ORDER_SKU_NOT_FOUND);
                 }
                 detailEntity.setSkuId(soReturnDetailEntity.getSkuId());
                 detailEntity.setSkuNo(soReturnDetailEntity.getSkuNo());
@@ -132,14 +132,14 @@ public class SoReturnNoticeDetailServiceImpl extends SuperServiceImpl<SoReturnNo
                     if(returnDetailIdMap.containsKey(detailDto.getSourceDetailId())){
                         Integer detailReturnQtySum = returnDetailIdMap.get(detailDto.getSourceDetailId()) + detailDto.getReturnQty();
                         if (returnQty <  detailReturnQtySum + returnNoticeQty) {
-                            throw new ServiceException(ApiError.ERROR_RETURN_ORDER_QTY_EXCEEDS, skuVO.getSkuNo());
+                            throw new ServiceException(ApiError.SO_DELIVERY_RETURN_ORDER_QTY_EXCEEDS, skuVO.getSkuNo());
                         }
                         returnDetailIdMap.put(detailDto.getSourceDetailId(),detailReturnQtySum);
                     }else {
                         returnDetailIdMap.put(detailDto.getSourceDetailId(),detailDto.getReturnQty());
                     }
                     if (returnQty <  detailDto.getReturnQty() + returnNoticeQty) {
-                        throw new ServiceException(ApiError.ERROR_RETURN_ORDER_QTY_EXCEEDS, skuVO.getSkuNo());
+                        throw new ServiceException(ApiError.SO_DELIVERY_RETURN_ORDER_QTY_EXCEEDS, skuVO.getSkuNo());
                     }else if(returnNoticeQty > 0 && returnQty == detailDto.getReturnQty() + returnNoticeQty){
                         // 退货通知单的数量之和等于退货订单数量，则需要对退货金额CNY，含税退货金额CNY，退货金额（本位币），含税退货金额（本位币）调整差值。
                         SoReturnDetailEntity soReturnDetailEntity = soReturnDetailEntities.stream().filter(req -> req.getId().equals(detailDto.getSourceDetailId())).findFirst().orElse(null);
@@ -186,7 +186,7 @@ public class SoReturnNoticeDetailServiceImpl extends SuperServiceImpl<SoReturnNo
             SoReturnNoticeDetailEntity detailEntity = new SoReturnNoticeDetailEntity();
             SoB2cReturnDetailEntity soB2cReturnDetailEntity = soReturnDetailEntities.stream().filter(req -> req.getId().equals(detailDto.getSourceDetailId())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(soB2cReturnDetailEntity)) {
-                throw new ServiceException(ApiError.ERROR_RETURN_ORDER_SKU_NOT_FOUND);
+                throw new ServiceException(ApiError.SO_DELIVERY_RETURN_ORDER_SKU_NOT_FOUND);
             }
             //退货通知单数量
             Integer returnNoticeQty = noticeDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(detailDto.getSourceDetailId())).map(SoReturnNoticeDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
@@ -197,7 +197,7 @@ public class SoReturnNoticeDetailServiceImpl extends SuperServiceImpl<SoReturnNo
                 log.warn("sku id: {}，sku编号：{}产品属性是费用或服务，不参与库存出入库，不做库存验证", soB2cReturnDetailEntity.getSkuId(), soB2cReturnDetailEntity.getSkuNo());
             } else {
                 if (returnQty <  detailDto.getReturnQty() + returnNoticeQty) {
-                    throw new ServiceException(ApiError.ERROR_RETURN_ORDER_QTY_EXCEEDS);
+                    throw new ServiceException(ApiError.SO_DELIVERY_RETURN_ORDER_QTY_EXCEEDS);
                 }
             }
             detailEntity.setMainId(id);
@@ -246,7 +246,7 @@ public class SoReturnNoticeDetailServiceImpl extends SuperServiceImpl<SoReturnNo
 
         List<SoReturnNoticeDetailDTO.Update> detailList = dto.getDetailList();
         if(CollUtil.isEmpty(detailList)) {
-            throw new ServiceException(ApiError.ERROR_RETURN_NOTICE_DETAIL_REQUIRED);
+            throw new ServiceException(ApiError.SO_RETURN_NOTICE_DETAIL_REQUIRED);
         }
         for (SoReturnNoticeDetailDTO.Update detailDto : dto.getDetailList()) {
             SoReturnNoticeDetailEntity detailEntity = new SoReturnNoticeDetailEntity();
@@ -271,7 +271,7 @@ public class SoReturnNoticeDetailServiceImpl extends SuperServiceImpl<SoReturnNo
             if(Boolean.FALSE.equals(detailDto.getIsChildSkuNo()) && StringUtils.isNotBlank(detailDto.getSourceDetailId())){
                 SoReturnDetailEntity soReturnDetailEntity = soReturnDetailEntities.stream().filter(req -> req.getId().equals(detailDto.getSourceDetailId())).findFirst().orElse(null);
                 if (ObjectUtil.isEmpty(soReturnDetailEntity)) {
-                    throw new ServiceException(ApiError.ERROR_SO_RECEIVE_DETAIL_SKU_NOT_EXIST);
+                    throw new ServiceException(ApiError.SO_RETURN_DETAIL_SKU_NOT_FOUND);
                 }
                 //历史退货通知单的退货数量
                 Integer returnNoticeQty = noticeDetailEntities.stream()
@@ -292,7 +292,7 @@ public class SoReturnNoticeDetailServiceImpl extends SuperServiceImpl<SoReturnNo
                         .map(SoReturnDetailEntity::getReturnQty)
                         .reduce(MathUtil.ZERO, Integer::sum);
                 if (returnQty <  detailDto.getReturnQty() + returnNoticeQty) {
-                    throw new ServiceException(ApiError.ERROR_RETURN_ORDER_QTY_EXCEEDS, soReturnDetailEntity.getSkuNo());
+                    throw new ServiceException(ApiError.SO_DELIVERY_RETURN_ORDER_QTY_EXCEEDS, soReturnDetailEntity.getSkuNo());
                 }else if(returnNoticeQty > 0 && returnQty == detailDto.getReturnQty() + returnNoticeQty){
                     // 退货通知单的数量之和等于退货订单数量，则需要对退货金额CNY，含税退货金额CNY，退货金额（本位币），含税退货金额（本位币）调整差值。
                     BigDecimal returnAmount = soReturnDetailEntity.getReturnAmount();
@@ -363,12 +363,12 @@ public class SoReturnNoticeDetailServiceImpl extends SuperServiceImpl<SoReturnNo
             if("B2C".equals(entity.getType())){
                 SoB2cReturnDetailEntity soReturnDetailEntity = soB2cReturnDetailEntityList.stream().filter(req -> req.getId().equals(detailDto.getSourceDetailId())).findFirst().orElse(null);
                 if (ObjectUtil.isEmpty(soReturnDetailEntity)) {
-                    throw new ServiceException(ApiError.ERROR_RETURN_ORDER_SKU_NOT_FOUND);
+                    throw new ServiceException(ApiError.SO_DELIVERY_RETURN_ORDER_SKU_NOT_FOUND);
                 }
                 //退货单数量
                 Integer returnQty = soB2cReturnDetailEntityList.stream().filter(req -> req.getId().equals(detailDto.getSourceDetailId())).map(SoB2cReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
                 if (returnQty <  detailDto.getReturnQty() + returnNoticeQty) {
-                    throw new ServiceException(ApiError.ERROR_RETURN_ORDER_QTY_EXCEEDS);
+                    throw new ServiceException(ApiError.SO_DELIVERY_RETURN_ORDER_QTY_EXCEEDS);
                 }
                 detailEntity.setSkuId(soReturnDetailEntity.getSkuId());
                 detailEntity.setSkuNo(soReturnDetailEntity.getSkuNo());

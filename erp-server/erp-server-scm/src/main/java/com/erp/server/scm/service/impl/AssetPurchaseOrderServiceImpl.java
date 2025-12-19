@@ -1738,7 +1738,7 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
                 .eq(AssetPurchaseOrderSupplierEntity::getIsDeleted, Boolean.FALSE)
                 .one();
         if (Objects.isNull(assetPurchaseOrderSupplierEntity)) {
-            throw new ServiceException(ApiError.ERROR_SUPPLIER_NOT_FOUND);
+            throw new ServiceException(ApiError.SUPPLIER_REF_NOT_FOUND);
         }
         BeanUtils.copyProperties(assetPurchaseOrderSupplierEntity,supplierDTO);
         viewGeneratePurchaseChangeOrderDTO.setAssetPurchaseSupplierDTO(supplierDTO);
@@ -1797,7 +1797,7 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
                     .update();
         } else {
             // 已验收数量大于采购数量，抛异常
-            throw new ServiceException(ApiError.ERROR_ASSET_ACCEPT_QTY_EXCEED_PURCHASE);
+            throw new ServiceException(ApiError.SAMPLE_ASSET_ACCEPT_QTY_EXCEEDS_PURCHASE_QTY);
         }
         return Boolean.TRUE;
     }

@@ -126,7 +126,7 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
         //主表信息
         SoB2cEntity soB2cEntity = soB2cService.getById(mainId);
         if (ObjectUtils.isEmpty(soB2cEntity)) {
-            throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
+            throw new ServiceException(ApiError.SO_B2C_NOT_FOUND);
         }
         //处理明细中的数据id
         handleDetailList(list,soB2cEntity,Boolean.TRUE);
@@ -157,7 +157,7 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
         //主表信息
         SoB2cEntity soB2cEntity = soB2cService.getById(mainId);
         if (ObjectUtils.isEmpty(soB2cEntity)) {
-            throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
+            throw new ServiceException(ApiError.SO_B2C_NOT_FOUND);
         }
         //处理明细中的数据id
         handleDetailList(list,soB2cEntity,Boolean.FALSE);
@@ -182,7 +182,7 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
 
         List<SoB2cDetailEntity> detailList = this.listByMainId(mainId);
         if (CollectionUtils.isEmpty(detailList)) {
-            throw new ServiceException(ApiError.ERROR_SO_B2C_DETAIL_NOT_EXIST);
+            throw new ServiceException(ApiError.SO_B2C_DETAIL_NOT_FOUND);
         }
         List<String> detailIdList = detailList.stream().map(SoB2cDetailEntity::getId).collect(Collectors.toList());
         if (!isCover) {
@@ -251,7 +251,7 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
         List<String> ids = saveDetailList.stream().map(SoB2cDTO.SaveSoB2cDistributionDetailDTO::getDetailId).collect(Collectors.toList());
         List<SoB2cDetailEntity> detailList = this.listByIds(ids);
         if (CollectionUtils.isEmpty(detailList)) {
-            throw new ServiceException(ApiError.ERROR_SO_B2C_DETAIL_NOT_EXIST);
+            throw new ServiceException(ApiError.SO_B2C_DETAIL_NOT_FOUND);
         }
         List<String> detailIdList = detailList.stream().map(SoB2cDetailEntity::getId).collect(Collectors.toList());
         if (!isCover) {
@@ -377,13 +377,13 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
     @Override
     public Boolean updateWarehouse(List<SoB2cDetailEntity> detailList) {
         if (CollectionUtils.isEmpty(detailList)) {
-            throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
+            throw new ServiceException(ApiError.SO_B2C_NOT_FOUND);
         }
         //主表信息
         List<String> mainIdList = detailList.stream().map(SoB2cDetailEntity::getMainId).collect(Collectors.toList());
         List<SoB2cEntity> soB2cList = soB2cService.listByIds(mainIdList);
         if (CollectionUtils.isEmpty(soB2cList)) {
-            throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
+            throw new ServiceException(ApiError.SO_B2C_NOT_FOUND);
         }
 
         List<String> warehouseIdList = detailList.stream().map(SoB2cDetailEntity::getWarehouseId).collect(Collectors.toList());
@@ -1192,7 +1192,7 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
             String sourceId = operateDetailList.stream().filter(obj -> obj.getId().equals(detailEntity.getOperateDetailId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getMainId())).orElse("");
             if (StrUtil.isBlank(sourceId)) {
                 log.error("addSoB2cRef >>>>>> 未找到销售订单明细，detailId = {}",detailEntity.getId());
-                throw new ServiceException(ApiError.ERROR_SO_B2C_DETAIL_NOT_EXIST);
+                throw new ServiceException(ApiError.SO_B2C_DETAIL_NOT_FOUND);
             }
             addRefDTO.setSourceId(sourceId);
             addRefDTO.setTargetId(soB2cEntity.getId());

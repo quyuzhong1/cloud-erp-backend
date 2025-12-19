@@ -135,18 +135,18 @@ public class PackageServiceImpl implements PackageService {
         if (TransferStatusEnum.WAIT.getCode().equals(scanResult.getTransferStatus())
                 || TransferStatusEnum.FAILURE.getCode().equals(scanResult.getTransferStatus())) {
             //校验订单状态中转状态为待中转/上传失败，扫描识别后非成功状态若勾选则取消勾选并禁用，若未勾选则直接禁用
-            throw new ServiceException(ApiError.TRANSFER_FAILURE_NOT_PACKAGE);
+            throw new ServiceException(ApiError.LOGISTICS_TRANSFER_ORDER_INVALID_NOT_PACKAGE);
         }
         if (CharSequenceUtil.isBlank(scanResult.getTransferLogisticsSupplierId()) && !TransferStatusEnum.NOT.getCode().equals(entity.getTransferStatus())) {
-            throw new ServiceException(ApiError.TRANSFER_LOGISTICS_SUPPLIER_IS_NULL_NOT_PACKAGE);
+            throw new ServiceException(ApiError.LOGISTICS_TRANSFER_SUPPLIER_NOT_FOUND_NOT_PACKAGE);
         }
 
         if (entity.getInvalidStatus()) {
-            throw new ServiceException(ApiError.INVALID_NOT_PACKAGE);
+            throw new ServiceException(ApiError.LOGISTICS_ORDER_VOIDED_NOT_PACKAGE);
         }
 
         if (entity.getIsIntercept()) {
-            throw new ServiceException(ApiError.LOGISTICS_INTERCEPT_NOT_PACKAGE);
+            throw new ServiceException(ApiError.LOGISTICS_ORDER_INTERCEPTED_NOT_PACKAGE);
         }
 
         String billStatus = scanResult.getBillStatus();
