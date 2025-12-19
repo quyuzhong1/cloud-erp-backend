@@ -124,6 +124,10 @@ public class VirtualInventoryTransCoreServiceImpl implements VirtualInventoryTra
     public void unApprove(InventoryUnApproveDTO dto) {
         ValidatorUtil.validateEntity(dto);
         List< VirtualTransFlowEntity> transactionFlowList = this.queryTransactionFlowList(dto.getSourceType(),dto.getBillId());
+        if (CollUtil.isEmpty(transactionFlowList)) {
+            // 无交易流水，无需反审核
+            return;
+        }
         List<VirtualInventoryStockDTO.InventoryTransactionDTO> transactionDtoList= this.parseTransactionForUnApprove(transactionFlowList);
         virtualInventoryTradingService.doTransactionList(transactionDtoList,InventoryTradingService.UNAPPROVE);
     }
@@ -169,6 +173,11 @@ public class VirtualInventoryTransCoreServiceImpl implements VirtualInventoryTra
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         List<WarehouseEntity> warehouseEntityList = warehouseService.listWarehouseWithCaches();
         List<BaseIdDTO> orgList = sysUserFeign.listAccountingCompany();
+        //虚拟仓
+        List<String> virtualWarehouseIdList = transactionFlowList.stream().map(VirtualTransFlowEntity::getVirtualWarehouseId).distinct().collect(Collectors.toList());
+        List<VirtualWarehouseEntity> virtualWarehouseList = virtualWarehouseService.listByIds(virtualWarehouseIdList);
+        Map<String, String> virtualWarehouseMap = CollUtil.isEmpty(virtualWarehouseList) ? new HashMap<>() :
+                virtualWarehouseList.stream().collect(Collectors.toMap(VirtualWarehouseEntity::getId, VirtualWarehouseEntity::getName));
 
         transactionFlowList.forEach(flow->{
             VirtualInventoryStockDTO.InventoryTransactionDTO transactionDTO = new VirtualInventoryStockDTO.InventoryTransactionDTO();
@@ -183,8 +192,10 @@ public class VirtualInventoryTransCoreServiceImpl implements VirtualInventoryTra
             transactionDTO.setSkuNo(flow.getSkuNo());
             transactionDTO.setOrgId(flow.getOrgId());
             transactionDTO.setWarehouseId(flow.getWarehouseId());
+            transactionDTO.setVirtualWarehouseId(flow.getVirtualWarehouseId());
             transactionDTO.setInventoryStatus(flow.getDictInventoryStatus());
 
+            transactionDTO.setVirtualWarehouseName(virtualWarehouseMap.get(flow.getVirtualWarehouseId()));
             transactionDTO.setOrgName(getOrgName(orgList,flow.getOrgId()));
             transactionDTO.setWarehouseName(getWarehouseInfo(warehouseEntityList,flow.getWarehouseId()).getName());
             transactionDTO.setInventoryStatusName(InventoryStatusEnum.getByCode(flow.getDictInventoryStatus()).getName());
@@ -229,6 +240,12 @@ public class VirtualInventoryTransCoreServiceImpl implements VirtualInventoryTra
         List<WarehouseEntity> warehouseEntityList = warehouseService.listWarehouseWithCaches();
         List<BaseIdDTO> orgList = sysUserFeign.listAccountingCompany();
 
+        //虚拟仓
+        List<String> virtualWarehouseIdList = transferList.stream().map(VirtualInventoryStockDTO.TransferStockDTO::getVirtualWarehouseId).distinct().collect(Collectors.toList());
+        List<VirtualWarehouseEntity> virtualWarehouseList = virtualWarehouseService.listByIds(virtualWarehouseIdList);
+        Map<String, String> virtualWarehouseMap = CollUtil.isEmpty(virtualWarehouseList) ? new HashMap<>() :
+                virtualWarehouseList.stream().collect(Collectors.toMap(VirtualWarehouseEntity::getId, VirtualWarehouseEntity::getName));
+
         // 关联交易号
         String transactionNo = IdUtil.getSnowflake().nextIdStr();
 
@@ -264,6 +281,7 @@ public class VirtualInventoryTransCoreServiceImpl implements VirtualInventoryTra
                 transactionDTO.setVirtualWarehouseId(stockBaseDTO.getVirtualWarehouseId());
                 transactionDTO.setInventoryStatus(rule.getInventoryStatus().getCode());
                 // 设置冗余信息部分
+                transactionDTO.setVirtualWarehouseName(virtualWarehouseMap.get(stockBaseDTO.getVirtualWarehouseId()));
                 transactionDTO.setOrgName(getOrgName(orgList,orgId));
                 transactionDTO.setWarehouseName(getWarehouseInfo(warehouseEntityList,stockBaseDTO.getWarehouseId()).getName());
                 transactionDTO.setInventoryStatusName(rule.getInventoryStatus().getName());

@@ -172,7 +172,9 @@ public class PAUpdateBillStatusHandler implements CreateBillHandler {
             taskInfo.setBussinessId(batchResultDTO.getId());
             //更新三方生成查询
             taskInfo.setBussinessKey(thirdProcessEntity.getBussinessKey());
-            taskInfo.setHappenTime(LocalDateTime.now());
+            LocalDateTime now = LocalDateTime.now();
+            taskInfo.setHappenTime(now);
+            taskInfo.setFinishTime(now);
             taskInfo.setBussinessApproveStatus(FSApprovalStatusEnum.getErpApproveStatusByCode(status).getCode());
             taskInfo.setStatus(taskStatus);
             taskInfo.setReason(reason);

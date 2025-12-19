@@ -5,6 +5,7 @@ import cn.hutool.core.text.CharSequenceUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.EasyExcelFactory;
 import com.alibaba.excel.exception.ExcelCommonException;
+import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.dto.FindUserDTO;
@@ -23,6 +24,7 @@ import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.*;
 import com.erp.model.scm.entity.*;
 import com.erp.model.scm.enums.*;
+import com.erp.server.scm.service.AttachmentService;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
@@ -91,6 +93,9 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
     private ModuleOperateLogService moduleOperateLogService;
 
     @Autowired
+    private AttachmentService attachmentService;
+
+    @Autowired
     private AssetNoticeDetailService assetNoticeDetailService;
 
     @Autowired
@@ -153,6 +158,17 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
         // 新增明细
         assetNoticeDetailService.add(addDTO.getAssetNoticeDetailDTO(),assetNoticeEntity.getId());
 
+        // 保存附件
+        List<String> attachmentUrlList = addDTO.getAttachmentUrlList();
+        List<String> attachmentNameList = addDTO.getAttachmentNameList();
+        if (CollectionUtils.isNotEmpty(attachmentUrlList) && CollectionUtils.isNotEmpty(attachmentNameList) 
+                && attachmentUrlList.size() == attachmentNameList.size()) {
+            Class<AssetNoticeEntity> entityClass = AssetNoticeEntity.class;
+            TableName tableName = entityClass.getDeclaredAnnotation(TableName.class);
+            String type = tableName.value();
+            attachmentService.batchSave(attachmentUrlList, attachmentNameList, type, assetNoticeEntity.getId());
+        }
+
         // 操作日志
         String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "开模通知单" , assetNoticeEntity.getCode());
         moduleOperateLogService.addModuleOperateLog(msg, ModuleTypeEnum.ASSET_NOTICE.getCode(), assetNoticeEntity.getId(), "新增操作");
@@ -185,6 +201,43 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
         }
         hanleUpdateDetailData(assetNoticeEntity,addOrUpdateDTO.getAssetNoticeDetailDTO());
         assetNoticeDetailService.update(addOrUpdateDTO.getAssetNoticeDetailDTO(),assetNoticeEntity.getId());
+
+        // 更新附件
+        List<String> attachmentUrlList = addOrUpdateDTO.getAttachmentUrlList();
+        List<String> attachmentNameList = addOrUpdateDTO.getAttachmentNameList();
+        if (CollectionUtils.isNotEmpty(attachmentUrlList) && CollectionUtils.isNotEmpty(attachmentNameList)
+                && attachmentUrlList.size() == attachmentNameList.size()) {
+            // 获取旧附件列表
+            List<AttachmentDTO.UpdateDTO> oldAttachmentList = attachmentService.getByBusinessId(assetNoticeEntity.getId());
+            if (CollUtil.isNotEmpty(oldAttachmentList)) {
+                // 处理删除的数据
+                List<AttachmentDTO.UpdateDTO> remove = oldAttachmentList.stream()
+                        .filter(oldAttachment -> !attachmentUrlList.contains(oldAttachment.getAttachUrl()))
+                        .collect(Collectors.toList());
+                if (CollUtil.isNotEmpty(remove)) {
+                    attachmentService.deleteByUrlList(remove.stream().map(AttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.toList()));
+                }
+            }
+
+            // 处理需要新增的数据
+            List<String> oldUrlList = oldAttachmentList.stream().map(AttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.toList());
+            List<String> addUrls = attachmentUrlList.stream()
+                    .filter(url -> !oldUrlList.contains(url))
+                    .collect(Collectors.toList());
+            if (CollUtil.isNotEmpty(addUrls)) {
+                Class<AssetNoticeEntity> entityClass = AssetNoticeEntity.class;
+                TableName tableName = entityClass.getDeclaredAnnotation(TableName.class);
+                String type = tableName.value();
+                List<String> addNames = new ArrayList<>();
+                for (int i = 0; i < attachmentUrlList.size(); i++) {
+                    if (addUrls.contains(attachmentUrlList.get(i))) {
+                        addNames.add(attachmentNameList.get(i));
+                    }
+                }
+                attachmentService.batchSave(addUrls, addNames, type, assetNoticeEntity.getId());
+            }
+        }
+
         // 记录主单操作日志
             log.info("编辑 开始记录日志数据，单号：【{}】", assetNoticeEntity.getCode());
             String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), assetNoticeEntity.getCode(), "开模通知单");
@@ -709,11 +762,13 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
         //删除明细
         assetNoticeDetailService.removeByIds(collect);
 
+        // 删除附件
+        log.info("删除 开始删除附件数据，id：【{}】", id);
+        attachmentService.deleteByBusinessIds(Arrays.asList(id));
+
         // 删除主单数据
         log.info("删除 开始删除主单数据，id：【{}】", id);
         super.removeById(id);
-        // 删除日志数据
-        log.info("删除 开始删除日志数据，id：【{}】", id);
 
         // 删除日志数据
         log.info("删除 开始删除日志数据，id：【{}】", id);
@@ -865,6 +920,23 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
         List<AssetNoticeDetailDTO.ViewDTO> dtoList = BeanMapperUtils.copyList(AssetNoticeDetailDTO.ViewDTO.class, detailList);
         fillViewList(dtoList);
         data.setAssetNoticeDetailDTOList(dtoList);
+
+        // 查询附件信息
+        Class<AssetNoticeEntity> entityClass = AssetNoticeEntity.class;
+        TableName tableName = entityClass.getDeclaredAnnotation(TableName.class);
+        String type = tableName.value();
+        List<AttachmentDTO.UpdateDTO> attachmentList = attachmentService.getByBusinessIdAndType(Arrays.asList(id), type);
+        if (CollUtil.isNotEmpty(attachmentList)) {
+            List<String> attachmentUrlList = attachmentList.stream()
+                    .map(AttachmentDTO.UpdateDTO::getAttachUrl)
+                    .collect(Collectors.toList());
+            List<String> attachmentNameList = attachmentList.stream()
+                    .map(AttachmentDTO.UpdateDTO::getAttachName)
+                    .collect(Collectors.toList());
+            data.setAttachmentUrlList(attachmentUrlList);
+            data.setAttachmentNameList(attachmentNameList);
+        }
+
         return data;
     }
 

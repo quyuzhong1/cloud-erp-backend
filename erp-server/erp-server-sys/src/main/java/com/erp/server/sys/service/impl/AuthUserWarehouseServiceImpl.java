@@ -126,7 +126,7 @@ public class AuthUserWarehouseServiceImpl extends SuperServiceImpl<AuthUserWareh
         List<String> warehouseTableFieldList = Arrays.asList(warehouseTableField.split(","));
         int warehouseTableFieldSize = warehouseTableFieldList.size();
         if (CollectionUtils.isNotEmpty(warehouseUserList)) {
-        	boolean isDoris = (StringUtils.isNotBlank(dynamicDataSource) && dynamicDataSource.equals(DynamicDataSourceTypeEnum.DORIS.getCode()));
+        	boolean isDoris = DynamicDataSourceTypeEnum.isDorisByStr(dynamicDataSource);
             if ("part".equals(authType)){
             	if(isDoris) {
                     if (warehouseTableFieldSize == 1) {

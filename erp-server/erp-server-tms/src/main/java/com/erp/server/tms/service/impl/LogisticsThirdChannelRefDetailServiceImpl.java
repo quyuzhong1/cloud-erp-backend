@@ -115,6 +115,7 @@ public class LogisticsThirdChannelRefDetailServiceImpl extends SuperServiceImpl<
                 detailList.forEach(detail -> {
                     ShopInfoEntity shopInfoEntity = shopInfoEntities.stream().filter(shop -> shop.getId().equals(detail.getShopId())).findFirst().orElseThrow(()->new ServiceException("店铺不存在"));
                     detail.setShopName(shopInfoEntity.getName());
+                    detail.setCustomerId(shopInfoEntity.getCustomerId());
                 });
             }else if (logisticsThirdChannelRefEntity.getPushType().equals(LogisticsThirdChannelRefPushTypeEnum.PLATFORM_SENDER.getCode())) {
                 //增加平台是否重复校验

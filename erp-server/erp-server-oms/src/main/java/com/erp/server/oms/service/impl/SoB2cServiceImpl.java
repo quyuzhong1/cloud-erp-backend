@@ -887,6 +887,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                             && StrUtil.isNotEmpty(e.getParentSkuNo()) && e.getParentSkuId().equals(soB2cDetailEntity.getSkuId()))
                     .findFirst().orElse(null);
             LogisticsProductDTO.ProductDTO productDTO = skuMap.get(soB2cDetailEntity.getSkuId());
+            if ("费用".equalsIgnoreCase(productDTO.getProperty()) || "服务".equalsIgnoreCase(productDTO.getProperty())){
+                return;
+            }
 
             Boolean isCombination = Boolean.FALSE;
             //检查sku是否是组合产品
@@ -918,6 +921,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                             BigDecimal price = Objects.nonNull(soB2cDetailEntity.getPrice()) ? soB2cDetailEntity.getPrice() : BigDecimal.ZERO;
                             price1 = MathUtil.divide(MathUtil.multiplyWithTwo(actualTaxCost,quantity), totalPrice).multiply(price);
                         }
+                        if ("费用".equalsIgnoreCase(bomProduct.getProperty()) || "服务".equalsIgnoreCase(bomProduct.getProperty())){
+                            return;
+                        }
+
                         splitSkuDTOS.add(SplitSkuDTO.builder()
                                 .soId(soB2cDetailEntity.getMainId())
                                 .soCode(orderMap.get(soB2cDetailEntity.getMainId()))
@@ -2291,6 +2298,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         ruleDTO.setReceiveCountry(receiverEntity.getCountry());
         String deliveryWarehouseId = detailList.stream().map(SoB2cDetailEntity::getWarehouseId).filter(CharSequenceUtil::isNotBlank).findFirst().orElse("");
         ruleDTO.setFromWarehouse(deliveryWarehouseId);
+        if(StringUtils.isNotBlank(deliveryWarehouseId)){
+            WarehouseEntity deliveryWarehouse = FeignQuery.getById(WarehouseEntity.class, deliveryWarehouseId);
+            if(Objects.nonNull(deliveryWarehouse)){
+                ruleDTO.setFromWarehouseOrg(deliveryWarehouse.getOrgId());
+                ruleDTO.setFromWarehouseCountry(deliveryWarehouse.getCountry());
+            }
+        }
         ruleDTO.setSalesOrgId(entity.getOrgId());
         ruleDTO.setDictPlatform(entity.getDictPlatform());
         CfgRuleOutDTO.MatchTransferResultDTO resultDTO = cfgRuleOutFeign.matchTransferRule(ruleDTO);
@@ -4081,6 +4095,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             logisticsDTO.setDeclareOrgName(Objects.nonNull(company)?company.getCompanyName():"");
             logisticsDTO.setUsciCode(Objects.nonNull(company)?company.getUsciCode():"");
         }
+        logisticsDTO.setPlatformDeliveryWarehouse(soB2cEntity.getPlatformDeliveryWarehouse());
 //        logisticsDTO.setActualShippingCost(logisticsBillCostFeign.getActualLogisticCost(soB2cEntity.getId()));
         data.setLogisticsDTO(logisticsDTO);
         if (isFullyManagedOrder(soB2cEntity.getDictPlatform())){
@@ -5580,6 +5595,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         String payTimeStr = Objects.nonNull(payTime) ? LocalDateUtil.formatTime(payTime, DateUtil.fmt) : "";
         map.put("payTime", payTimeStr);
 
+        map.put("platformDeliveryWarehouse", soB2cEntity.getPlatformDeliveryWarehouse());
         //产品信息尺寸
         map.put("packageWeight", logisticsEntity.getWeight());
         map.put("packageLength", logisticsEntity.getLength());
@@ -5651,6 +5667,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             detailMap.put("skuNo", detailEntity.getSkuNo());
             detailMap.put("dictPayMethod", soB2cEntity.getDictPayMethod());
             detailMap.put("goodsTotalQty", goodsTotalQty);
+            detailMap.put("platformDeliveryWarehouse", soB2cEntity.getPlatformDeliveryWarehouse());
             detailMap.put("payTime", payTimeStr);
             detailMap.put("packageWeight", logisticsEntity.getWeight());
             detailMap.put("packageLength", logisticsEntity.getLength());
@@ -6107,8 +6124,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             country = receiver.getCountry();
             countryName = receiver.getCountryName();
         }
-        String deliveryMode = DeliveryModeEnum.DELIVERGOODS.getCode();
-        String deliveryModeName = DeliveryModeEnum.DELIVERGOODS.getName();
+        String deliveryMode = DeliveryModeEnum.EXPRESS.getCode();
+        String deliveryModeName = DeliveryModeEnum.EXPRESS.getName();
         b2cCustomer.setDeliveryMode(deliveryMode);
         b2cCustomer.setDeliveryModeName(deliveryModeName);
         if (StringUtils.isBlank(countryName) && StringUtils.isNotBlank(country)) {
@@ -6999,7 +7016,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     oldEntity.setApproveStatus(oldApproveStatus);
                     dto.setPayStatus(oldEntity.getPayStatus());
                     dto.setBillStatus(oldEntity.getBillStatus());
-                    dto.setInvalidStatus(oldEntity.getInvalidStatus());
                     if ("平台作废".equals(oldEntity.getRemark())) {
                         oldEntity.setRemark("");
                     }
@@ -7008,7 +7024,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     oldEntity.setApproveStatus(oldApproveStatus);
                     dto.setPayStatus(oldEntity.getPayStatus());
                     dto.setBillStatus(oldEntity.getBillStatus());
-                    dto.setInvalidStatus(oldEntity.getInvalidStatus());
                     dto.setIsCancel(Boolean.TRUE);
                 }
             }
@@ -7396,6 +7411,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 ruleDTO.setReceiveCountry(soB2cReceiver.getCountry());
                 String deliveryWarehouseId = StrUtil.isBlank(warehouseId) ? detailList.get(0).getWarehouseId() : warehouseId;
                 ruleDTO.setFromWarehouse(deliveryWarehouseId);
+                if(StringUtils.isNotBlank(deliveryWarehouseId)){
+                    WarehouseEntity deliveryWarehouse = FeignQuery.getById(WarehouseEntity.class, deliveryWarehouseId);
+                    if(Objects.nonNull(deliveryWarehouse)){
+                        ruleDTO.setFromWarehouseOrg(deliveryWarehouse.getOrgId());
+                        ruleDTO.setFromWarehouseCountry(deliveryWarehouse.getCountry());
+                    }
+                }
                 ruleDTO.setSalesOrgId(entity.getOrgId());
                 ruleDTO.setDictPlatform(entity.getDictPlatform());
                 CfgRuleOutDTO.MatchTransferResultDTO resultDTO = cfgRuleOutFeign.matchTransferRule(ruleDTO);

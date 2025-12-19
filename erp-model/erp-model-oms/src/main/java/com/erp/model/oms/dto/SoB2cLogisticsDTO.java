@@ -86,6 +86,8 @@ public class SoB2cLogisticsDTO implements Serializable {
          * 申报组织ID（sys_accounting_company.id）
          */
         private String declareOrgId;
+
+        private String platformDeliveryWarehouse;
     }
 
     @Data

@@ -57,7 +57,7 @@ public class DhtOrderServiceTest {
                         .filters(Arrays.asList(
                                 DhtCommonQueryReq.DataDTO.SearchQueryInfoDTO.FiltersDTO.builder()
                                         .fieldName("name")
-                                        .fieldValues(Arrays.asList("Order20251014-000135"))
+                                        .fieldValues(Arrays.asList("Order20251212-000182"))
                                         .operator("eq")
                                         .build()
 //                                DhtCommonQueryReq.DataDTO.SearchQueryInfoDTO.FiltersDTO.builder()
@@ -89,7 +89,7 @@ public class DhtOrderServiceTest {
                         .filters(Arrays.asList(
                                 DhtCommonQueryReq.DataDTO.SearchQueryInfoDTO.FiltersDTO.builder()
                                         .fieldName("order_id")
-                                        .fieldValues(Arrays.asList("6879b6ba04bdaa0007697175"))
+                                        .fieldValues(Arrays.asList("693b6ebddd771800074d396f"))
                                         .operator("IN")
                                         .build()
                         ))

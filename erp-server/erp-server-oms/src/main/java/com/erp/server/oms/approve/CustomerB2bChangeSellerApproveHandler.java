@@ -13,7 +13,6 @@ import com.common.business.enums.SourceTypeEnum;
 import com.common.business.handler.AbstractApproveHandler;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.BeanMapper;
 import com.erp.model.oms.dto.OperateLogDTO;
 import com.erp.model.oms.entity.CustomerB2bSellerChangeEntity;
 import com.erp.model.oms.entity.CustomerInfoEntity;
@@ -55,7 +54,7 @@ public class CustomerB2bChangeSellerApproveHandler extends AbstractApproveHandle
         baseApproveParamDTO.setDeliveryDate(dto.getDeliveryDate());
 
         CustomerInfoEntity customerInfo = customerInfoService.getById(dto.getId());
-        CustomerB2bSellerChangeEntity entity = customerB2bSellerChangeService.getByMainId(customerInfo.getId());
+        CustomerB2bSellerChangeEntity entity = customerB2bSellerChangeService.getNotApprovedByMainId(customerInfo.getId());
 
         return customerB2bSellerChangeService.approve(baseApproveParamDTO,entity,customerInfo);
     }
@@ -77,7 +76,7 @@ public class CustomerB2bChangeSellerApproveHandler extends AbstractApproveHandle
     public Boolean approveEnd(ApproveDTO.EndProcessDTO dto) {
         //销售变更单
         CustomerInfoEntity customerInfo = customerInfoService.getById(dto.getBusinessId());
-        CustomerB2bSellerChangeEntity entity = customerB2bSellerChangeService.getByMainId(customerInfo.getId());
+        CustomerB2bSellerChangeEntity entity = customerB2bSellerChangeService.getNotApprovedByMainId(customerInfo.getId());
         BaseApproveParamDTO baseApproveParamDTO = new BaseApproveParamDTO();
         baseApproveParamDTO.setType(dto.getApproveStatus().getStatus());
         baseApproveParamDTO.setIds(Collections.singletonList(dto.getBusinessId()));

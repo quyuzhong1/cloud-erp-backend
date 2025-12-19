@@ -60,7 +60,7 @@ public class AdsErpInventoryDiffController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "dmp:adsErpInventoryDiff:paging",
-            tableAlias = ""
+            tableAlias = "aeid"
     )
     @WebAdvanceQuery(handler = AdsErpInventoryDiffQueryHandler.class)
     public ApiResult<AdsErpInventoryDiffDTO.StatisticsDTO> statistics(@RequestBody @Validated PagingDTO<AdsErpInventoryDiffDTO.PagingParamDTO> dto) {

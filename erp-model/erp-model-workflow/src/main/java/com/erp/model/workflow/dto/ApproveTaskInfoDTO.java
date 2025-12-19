@@ -150,6 +150,14 @@ public class ApproveTaskInfoDTO implements Serializable {
          * 发生时间【可排序】
          */
         private LocalDateTime happenTime;
+        /**
+         * 处理完成时间【可排序】
+         */
+        private LocalDateTime finishTime;
+        /**
+         * 处理时效
+         */
+        private Integer handleDuration;
 
         /**
          * 执行状态，ApproveTaskStatusEnum枚举【可排序】
@@ -366,6 +374,10 @@ public class ApproveTaskInfoDTO implements Serializable {
          * 发生时间
          */
         private LocalDateTime happenTime;
+        /**
+         * 完成时间
+         */
+        private LocalDateTime finishTime;
 
         /**
          * 执行状态，ApproveTaskStatusEnum枚举

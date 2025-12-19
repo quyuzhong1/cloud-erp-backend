@@ -169,6 +169,11 @@ public class TongYouHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         return success();
     }
 
+    @Override
+    protected ApiResult<String> createFbaOutboundBill(ThirdWarehouseCreateFbaOutboundReq createOutboundReq) {
+        return failure("ERP功能暂不支持");
+    }
+
     /**
      * 海外仓出库数据格式化
      * @author will
@@ -209,6 +214,12 @@ public class TongYouHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         return success(ThirdWarehouseCancelResultEnum.INTERCEPTION_SUCCESSFUL.getCode());
 
     }
+
+    @Override
+    protected ApiResult<String> cancelFbaOutboundBill(ThirdWarehouseCancelFbaOutboundReq cancelOutboundReq) {
+        return failure("ERP功能暂不支持");
+    }
+
     @Override
     protected ApiResult<String> queryOutboundBill(@Valid ThirdWarehouseQueryOutboundReq queryOutboundReq){
         Map<String, Object> authJson = new HashMap<>();
@@ -225,6 +236,12 @@ public class TongYouHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         }
         return success(tongYouBaseResp.getData());
     }
+
+    @Override
+    protected ApiResult<List<ThirdWarehouseQueryFbaOutboundResponse>> queryFbaOutboundBill(ThirdWarehouseQueryFbaOutboundReq req) {
+        return failure("ERP功能暂不支持");
+    }
+
     @Override
     protected Boolean warehouseAuthorize(OverseasProviderDTO.AuthorizeParamDTO dto) {
         dto.getAuthJson().put("token",dto.getAuthJson().get("appToken"));

@@ -36,13 +36,13 @@ public class LogisticsProductExcelDTO {
     private String declareModel;
 
     @ColumnWidth(30)
-    @ExcelProperty(value = "出口申报价", index = 4)
-    @FieldValid(fieldName = "出口申报价",formatPattern= FieldFormatPatternTypeEnum.AMOUNT)
+    @ExcelProperty(value = "*出口申报价", index = 4)
+    @FieldValid(fieldName = "*出口申报价",formatPattern= FieldFormatPatternTypeEnum.AMOUNT, isNotBlank = true )
     private String declarePrice;
 
     @ColumnWidth(30)
-    @ExcelProperty(value = "出口申报价币种", index = 5)
-    @FieldValid(fieldName = "出口申报价币种")
+    @ExcelProperty(value = "*出口申报价币种", index = 5)
+    @FieldValid(fieldName = "*出口申报价币种", isNotBlank = true )
     private String declareCurrency;
 
     @ColumnWidth(30)

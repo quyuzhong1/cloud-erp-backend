@@ -1,7 +1,14 @@
 package com.erp.server.sys.controller.feign;
 
+import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.DataAttributeEnum;
+import com.common.business.vo.PagingVO;
+import com.erp.model.sys.dto.*;
+import com.erp.server.sys.query.TemplateManagementQueryHandler;
+import com.erp.server.sys.service.*;
 import javax.annotation.Resource;
-
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -38,6 +45,8 @@ public class ExportSysFeignController {
     @Resource
     private ThirdNoticePushRecordService thirdNoticePushRecordService;
     @Resource
+    private TemplateManagementService templateManagementService;
+    @Resource
     private DictBasicAllService dictBasicAllService;
 
     @PostMapping("/city")
@@ -68,7 +77,13 @@ public class ExportSysFeignController {
     public PagingVO<ThirdNoticePushRecordDTO.ListDTO> exportCfgThirdNoticePushRecord(@RequestBody PagingDTO<ThirdNoticePushRecordDTO.PagingParamDTO> dto){
         return thirdNoticePushRecordService.paging(dto);
     }
-    
+
+    @PostMapping("/exportTemplateManagement")
+    @WebAdvanceQuery(handler = TemplateManagementQueryHandler.class)
+    public PagingVO<TemplateManagementDTO.ListDTO> exportTemplateManagement(@RequestBody  PagingDTO<TemplateManagementDTO.PagingParamDTO> dto){
+        return templateManagementService.paging(dto);
+    }
+
     @PostMapping("/exportDictBasicAll")
     @WebAdvanceQuery(handler = DictBasicAllQueryHandler.class)
     public PagingVO<DictBasicAllDTO.ViewDTO> exportDictBasicAll(@RequestBody PagingDTO<DictBasicAllDTO.PagingParamDTO> dto){

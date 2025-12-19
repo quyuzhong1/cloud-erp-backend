@@ -9,6 +9,7 @@ import com.erp.model.oms.dto.listAddDetailViewDTO;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.scm.dto.ExcelImportDTO;
 import com.erp.model.wms.dto.ReportOrderDataDTO;
 import com.erp.model.wms.dto.VirtualInventoryDTO;
 import org.springframework.web.multipart.MultipartFile;
@@ -366,4 +367,7 @@ public interface SoDetailService extends SuperService<SoDetailEntity> {
      * @return Boolean
      */
     Boolean updatePlatformOrderIdByMainId(String id, List<String> platformDetailIdList);
+
+
+    SoDetailDTO.ImportDivideSkuBoxDTO importDivideBoxFile(MultipartFile excelFile, HttpServletResponse response);
 }

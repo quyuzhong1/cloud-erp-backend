@@ -10,16 +10,15 @@ import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.common.business.annotation.DataIdempotent;
 import com.common.business.annotation.DistributeLocker;
-import com.common.business.dto.TeMuSoOutStockDTO;
-import com.common.business.dto.TeMuSoOutStockDetailDTO;
-import com.common.business.dto.WdtSoOutStockDTO;
-import com.common.business.dto.WdtSoOutStockDetailDTO;
+import com.common.business.config.DocNoGenHelper;
+import com.common.business.dto.*;
 import com.common.business.dto.WdtSoOutStockDetailDTO.PositionDetailsList;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.*;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
+import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.date.LocalDateUtil;
@@ -52,6 +51,7 @@ import com.erp.model.wms.enums.inventory.*;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
 import com.erp.rpc.oms.feign.CustomerFeign;
+import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysPartitionFeign;
@@ -90,6 +90,9 @@ import static cn.hutool.core.text.CharSequenceUtil.format;
 @Service
 @Slf4j
 public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
+
+    @Resource
+    private SyncB2CSoOutstockServiceImpl service;
 
     @Resource
     private WarehouseService warehouseService;
@@ -138,6 +141,15 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
     private OperateLogService operateLogService;
     @Resource
     private LogisticsFeign logisticsFeign;
+
+    @Resource
+    private DmpThirdMappingFeign thirdMappingFeign;
+
+    @Resource
+    private ShopInfoFeign shopInfoFeign;
+
+    @Resource
+    private DocNoGenHelper docNoGenHelper;
 
     private static final List<String> WDT_NULL_LOCATION = new ArrayList<>();
 
@@ -238,6 +250,14 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         if(StringUtils.isNotBlank(entity.getStatus()) && entity.getStatus().equals("2")){
             return;
         }
+        SoOutstockEntity pddSoOutstockEntity = soOutstockService.getOne(Wrappers.<SoOutstockEntity>lambdaQuery()
+                .eq(SoOutstockEntity::getThirdCode, entity.getCode()).last(" limit 1"));
+        //单据已经存在
+        if (ObjectUtil.isNotEmpty(pddSoOutstockEntity)) {
+            log.warn("旺店通销售出库单同步，拼多多单据已存在，第三方单号：{}", entity.getCode());
+            return;
+        }
+
         //不需要管的sku
         List<SkuVO> noInventorySkuList = plmTaskFeign.getNoInventorySku();
         //对应不需要的验证的sku no list
@@ -551,6 +571,136 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
             }
         }
 
+    }
+
+    @Override
+    @DistributeLocker(keyName = "dto.sourceCode",waiteTime = 60)
+    public void syncPddSoOutStock(PddSoOutStockDTO dto) {
+        SoOutstockEntity soOutstockEntity = soOutstockService.getOne(Wrappers.<SoOutstockEntity>lambdaQuery()
+                .eq(SoOutstockEntity::getSourceCode, dto.getSourceCode()));
+        if (ObjectUtil.isNotEmpty(soOutstockEntity)) {
+            log.warn("同步拼多多销售出库单失败，销售出库单已存在，来源单号：{}", dto.getSourceCode());
+            return;
+        }
+        SoOutstockEntity wdtSoOutstockEntity = soOutstockService.getOne(Wrappers.<SoOutstockEntity>lambdaQuery()
+                .eq(SoOutstockEntity::getCode, dto.getThirdCode()));
+        if (ObjectUtil.isNotEmpty(wdtSoOutstockEntity)) {
+            log.warn("同步拼多多销售出库单失败，旺店通销售出库单已存在，来源单号：{}", dto.getSourceCode());
+            return;
+        }
+
+        //通过映射找ERP的店铺
+        if(StringUtils.isBlank(dto.getPlatformShop())){
+            throw new ServiceException("拼多多平台店铺编码不能为空");
+        }
+        ThirdMappingEntity thirdMappingEntity = thirdMappingFeign.getShopByThirdCode(dto.getPlatformShop(),PlatformDictEnum.WDT.getCode());
+        if(Objects.isNull(thirdMappingEntity)){
+            throw new ServiceException("未找到拼多多平台店铺编码对应的ERP店铺映射关系，平台店铺编码：{}",dto.getPlatformShop());
+        }
+        ShopInfoEntity shopInfo = shopInfoFeign.getShopInfoById(thirdMappingEntity.getSysId());
+        if(Objects.isNull(shopInfo)){
+            throw new ServiceException("未找到拼多多平台店铺编码对应的ERP店铺信息，平台店铺编码：{}",dto.getPlatformShop());
+        }
+        //通过店铺找客户
+        CustomerInfoEntity customerInfo = customerFeign.getCustomerById(shopInfo.getCustomerId());
+        if(Objects.isNull(customerInfo)){
+            throw new ServiceException("未找到拼多多平台店铺对应的客户信息，平台店铺编码：{}",dto.getPlatformShop());
+        }
+        //通过映射找ERP的仓库
+        ThirdMappingDTO.ViewParamDTO viewParamDTO = new ThirdMappingDTO.ViewParamDTO();
+        viewParamDTO.setType(ThirdSysTypeEnum.WAREHOUSE.getCode());
+        viewParamDTO.setSysType(PlatformDictEnum.WDT.getCode());
+        viewParamDTO.setThirdCode(dto.getPlatformWarehouse());
+        List<ThirdMappingEntity> thirdMappingEntities = thirdMappingFeign.getByThirdId(viewParamDTO);
+        if(CollectionUtils.isEmpty(thirdMappingEntities)){
+            throw new ServiceException("未找到拼多多平台仓库编码对应的ERP仓库映射关系，平台仓库编码：{}",dto.getThirdCode());
+        }
+        String erpWarehouseId = thirdMappingEntities.get(0).getSysId();
+        WarehouseEntity warehouse = warehouseService.getById(erpWarehouseId);
+        SysAccountingCompanyEntity company = sysUserFeign.getCompanyById(warehouse.getOrgId());
+        List<String> skuNoList = dto.getDetailList().stream().map(PddSoOutStockDTO.PddSoOutStockDetailDTO::getSkuNo).collect(Collectors.toList());
+        List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(skuNoList);
+        //查询虚拟仓
+        String virtualWarehouseId = handleVirtualWarehouse(Collections.singletonList(erpWarehouseId), shopInfo.getDictPlatform(),shopInfo.getId(), shopInfo.getCustomerId(), customerInfo.getCountryId());
+
+        SoOutstockEntity soOutstock  = buildPddOutEntity(dto, shopInfo, customerInfo, warehouse, company, skuVOList, virtualWarehouseId);
+
+        boolean result = service.save(soOutstock);
+        if(!result){
+            throw new ServiceException("同步拼多多销售出库单失败，销售出库单保存失败，来源单号：{}", dto.getSourceCode());
+        }
+        try {
+            soOutstockService.submitAndApprove(soOutstock.getId());
+        }catch (Exception e){
+            log.error("拼多多销售出库单提交审核失败，销售出库单号：{}，错误信息：{}", soOutstock.getCode(), e.getMessage());
+        }
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public boolean save(SoOutstockEntity soOutstockEntity){
+        boolean mainResult = soOutstockService.save(soOutstockEntity);
+        if(!mainResult){
+            return false;
+        }
+        List<SoOutstockDetailEntity> soOutstockDetailEntityList = soOutstockEntity.getDetailList();
+        soOutstockDetailEntityList.forEach(v->v.setMainId(soOutstockEntity.getId()));
+        return soOutstockDetailService.saveBatch(soOutstockDetailEntityList);
+    }
+
+    private SoOutstockEntity buildPddOutEntity(PddSoOutStockDTO dto, ShopInfoEntity shopInfo, CustomerInfoEntity customerInfo, WarehouseEntity warehouse, SysAccountingCompanyEntity company, List<SkuVO> skuVOList, String virtualWarehouseId) {
+        SoOutstockEntity soOutstock = BeanMapperUtils.map(SoOutstockEntity.class, dto);
+        BusinessNoTypeEnum businessNoType = BusinessNoTypeEnum.CODE_XSCK;
+        String code = docNoGenHelper.generateCode(businessNoType);
+        soOutstock.setCode(code);
+        soOutstock.setShopId(shopInfo.getId());
+        soOutstock.setCustomerId(customerInfo.getId());
+        soOutstock.setCustomerName(customerInfo.getName());
+        soOutstock.setSellerId(customerInfo.getSellerId());
+        soOutstock.setSellerName(customerInfo.getSellerName());
+        soOutstock.setWarehouseId(warehouse.getId());
+        soOutstock.setSourceType(SourceTypeEnum.SO_OUTSTOCK.getCode());
+        soOutstock.setOrderType(OrderTypeEnum.B2C.getCode());
+        soOutstock.setWarehouseName(warehouse.getName());
+        soOutstock.setWarehouseOrgId(warehouse.getOrgId());
+        soOutstock.setWarehouseOrgName(company.getCompanyName());
+        soOutstock.setSalesDeptId(customerInfo.getSalesDeptId());
+        soOutstock.setSalesOrgId(shopInfo.getSalesOrgId());
+        soOutstock.setSalesOrgName(shopInfo.getSalesOrgName());
+        soOutstock.setDictPlatform(customerInfo.getPlatformType());
+        soOutstock.setCountry(customerInfo.getCountryId());
+        soOutstock.setLogisticsChannelCode(dto.getLogisticsCompanyCode());
+        soOutstock.setLogisticsChannelName(dto.getLogisticsCompanyName());
+
+        List<SoOutstockDetailEntity> soOutstockDetailEntityList = new ArrayList<>();
+        BigDecimal totalAmount = dto.getDetailList().stream()
+                .map(item -> item.getPrice().multiply(new BigDecimal(item.getActualQty())))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        for (PddSoOutStockDTO.PddSoOutStockDetailDTO pddSoOutStockDetailDTO : dto.getDetailList()) {
+            SkuVO skuVO = skuVOList.stream().filter(s -> s.getSkuNo().equals(pddSoOutStockDetailDTO.getSkuNo())).findFirst().orElseThrow(() -> new ServiceException("同步拼多多销售出库单失败，SKU信息不存在，SKU编码：{}", pddSoOutStockDetailDTO.getSkuNo()));
+            SoOutstockDetailEntity soOutstockDetailEntity = new SoOutstockDetailEntity();
+            soOutstockDetailEntity.setPlatformCode(pddSoOutStockDetailDTO.getPlatformCode());
+            soOutstockDetailEntity.setSkuId(skuVO.getSkuId());
+            soOutstockDetailEntity.setSkuNo(skuVO.getSkuNo());
+            soOutstockDetailEntity.setPlanQty(pddSoOutStockDetailDTO.getActualQty());
+            soOutstockDetailEntity.setActualQty(pddSoOutStockDetailDTO.getActualQty());
+            soOutstockDetailEntity.setWarehouseId(warehouse.getId());
+            soOutstockDetailEntity.setWarehouseName(warehouse.getName());
+            soOutstockDetailEntity.setPrice(pddSoOutStockDetailDTO.getPrice());
+            soOutstockDetailEntity.setAmount(pddSoOutStockDetailDTO.getPrice().multiply(new BigDecimal(pddSoOutStockDetailDTO.getActualQty())));
+            soOutstockDetailEntity.setCurrency(CurrencyEnum.CNY.getCurrencyCode());
+            soOutstockDetailEntity.setCurrencySymbol(CurrencyEnum.CNY.getCurrencySymbol());
+            soOutstockDetailEntity.setVirtualWarehouseId(virtualWarehouseId);
+            //价税合计 = 金额比例乘以已支付金额
+            if (totalAmount.compareTo(BigDecimal.ZERO) > 0) {
+                BigDecimal amountRatio = soOutstockDetailEntity.getAmount().divide(totalAmount, 6, RoundingMode.HALF_UP);
+                soOutstockDetailEntity.setAllAmountLocalCurrency(dto.getPaidAmount().multiply(amountRatio).setScale(2, RoundingMode.HALF_UP));
+            } else {
+                soOutstockDetailEntity.setAllAmountLocalCurrency(BigDecimal.ZERO);
+            }
+            soOutstockDetailEntityList.add(soOutstockDetailEntity);
+        }
+        soOutstock.setDetailList(soOutstockDetailEntityList);
+        return soOutstock;
     }
 
     private void syncToSdy(SoOutstockEntity entity, String operate) {

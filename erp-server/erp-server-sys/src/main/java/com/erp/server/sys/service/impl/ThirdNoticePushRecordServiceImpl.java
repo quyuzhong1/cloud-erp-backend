@@ -9,6 +9,7 @@ import cn.hutool.core.util.ReflectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson2.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -35,6 +36,8 @@ import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.msg.constant.NoticeMsgConstant;
+import com.erp.model.msg.dto.NoticeMsgInfoDTO;
+import com.erp.model.msg.enums.NoticeTypeEnum;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.plm.enums.FirstMassProductTypeEnum;
 import com.erp.model.sys.dto.DictBasicDTO;
@@ -254,10 +257,10 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
                 sendThirdNoticeByMq(dto);
                 break;
             case NOPERSON:
-                handleNoPersonFailedType(dto, entity, dataJson);
+                handleNoPersonFailedType(dto, entity);
                 break;
             case SENDNOTICE:
-                handleSendNoticeFailedType(dto, entity, dataJson);
+                handleSendNoticeFailedType(entity);
                 break;
             default:
                 return BatchResultDTO.fail(entity.getId(), entity.getId(), "未知重推类型");
@@ -266,8 +269,8 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
     }
 
     @Override
-    public void handleNoPersonFailedType(MqConsumerRecordDTO.MqDTO dto, ThirdNoticePushRecordEntity entity, Map<String, Object> dataJson) {
-        String cfgThirdNoticeId = String.valueOf(dataJson.get("cfgThirdNoticeId"));
+    public void handleNoPersonFailedType(MqConsumerRecordDTO.MqDTO dto, ThirdNoticePushRecordEntity entity) {
+        String cfgThirdNoticeId = entity.getCfgThirdNoticeId();
         CfgThirdNoticeEntity noticeEntity = cfgThirdNoticeService.getById(cfgThirdNoticeId);
         if (Objects.isNull(noticeEntity)) {
             throw new ServiceException("通知配置不存在");
@@ -307,36 +310,23 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
     }
 
     @Override
-    public void handleSendNoticeFailedType(MqConsumerRecordDTO.MqDTO dto, ThirdNoticePushRecordEntity entity, Map<String, Object> dataJson) {
-        String cfgThirdNoticeId = String.valueOf(dataJson.get("cfgThirdNoticeId"));
+    public void handleSendNoticeFailedType(ThirdNoticePushRecordEntity recordEntity) {
+        String cfgThirdNoticeId = recordEntity.getCfgThirdNoticeId();
         CfgThirdNoticeEntity noticeEntity = cfgThirdNoticeService.getById(cfgThirdNoticeId);
         if (Objects.isNull(noticeEntity)) {
             throw new ServiceException("通知配置不存在");
         }
-
-        List<ThirdUnionDTO> unionList = sysUserFeign.getThirdByUserIds(
-                ThirdpartyPlatformEnum.FS.getCode(),
-                Collections.singletonList(entity.getReceiverId())
-        );
-        Map<String, ThirdUnionDTO> unionMap = unionList.stream()
-                .collect(Collectors.toMap(ThirdUnionDTO::getUserId, e -> e, (o1, o2) -> o1));
-
-        ThirdUnionDTO unionDTO = unionMap.get(entity.getReceiverId());
-        if (Objects.isNull(unionDTO) || StringUtils.isBlank(unionDTO.getThirdUnionId())) {
-            throw new ServiceException("重推失败");
-        }
-
         SendThirdNoticeConsumerDTO sendMessage = new SendThirdNoticeConsumerDTO();
-        sendMessage.setUnionIds(Collections.singletonList(unionDTO.getThirdUnionId()));
-        sendMessage.setContentMap(dataJson);
-
-        if (Boolean.TRUE.equals(fsService.sendMessage(sendMessage))) {
-            lambdaUpdate()
-                    .set(ThirdNoticePushRecordEntity::getStatus, ThirdNoticePushRecordStatusEnum.SUCCESS.getCode())
-                    .set(ThirdNoticePushRecordEntity::getSendTime, LocalDateTime.now())
-                    .set(ThirdNoticePushRecordEntity::getErrorReason, "")
-                    .eq(ThirdNoticePushRecordEntity::getId, entity.getId())
-                    .update();
+        sendMessage.setThirdNoticePushRecordEntity(recordEntity);
+        sendMessage.setTitle(recordEntity.getTitle());
+        sendMessage.setContent(recordEntity.getContent());
+        sendMessage.setReceiverUserIds(Arrays.asList(recordEntity.getReceiverId()));
+        sendMessage.setNoticeTypeEnum(NoticeTypeEnum.SYS_TASK);
+        SendResult sendResult = mqProducerService.syncClassMsg(RocketMqTopic.SEND_THIRD_NOTICE_TOPIC, RocketMqTagEnum.SEND_THIRD_NOTICE_TAG.getName(), sendMessage, recordEntity.getId());
+        if (!SendStatus.SEND_OK.equals(sendResult.getSendStatus())) {
+            log.error("消息发送结果失败：{}", JSONObject.toJSONString(sendResult));
+        }else {
+            log.error("MQ数据结果：{}", JSONUtil.toJsonStr(sendResult));
         }
     }
 
@@ -771,22 +761,35 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
                             continue;
                         }
 
-                        String thirdUnionId = unionMap.get(userId).getThirdUnionId();
                         Boolean save = insertBatch(Arrays.asList(recordEntity));
                         if(Boolean.TRUE.equals(save)){
                             SendThirdNoticeConsumerDTO sendMessage = new SendThirdNoticeConsumerDTO();
-                            sendMessage.setMessageId(recordEntity.getId());
-                            sendMessage.setUnionIds(Arrays.asList(thirdUnionId));
-                            sendMessage.setContentMap(contentMap);
-                            SendResult sendResult = mqProducerService.syncClassMsg(RocketMqTopic.SEND_THIRD_NOTICE_SYS_TOPIC, RocketMqTagEnum.SYS_SEND_THIRD_NOTICE_TAG.getName(), sendMessage, IdUtil.simpleUUID());
+                            sendMessage.setThirdNoticePushRecordEntity(recordEntity);
+                            sendMessage.setTitle(title);
+                            sendMessage.setContent(content);
+                            sendMessage.setReceiverUserIds(Arrays.asList(userId));
+                            sendMessage.setNoticeTypeEnum(NoticeTypeEnum.SYS_TASK);
+                            SendResult sendResult = mqProducerService.syncClassMsg(RocketMqTopic.SEND_THIRD_NOTICE_TOPIC, RocketMqTagEnum.SEND_THIRD_NOTICE_TAG.getName(), sendMessage, recordEntity.getId());
                             if (!SendStatus.SEND_OK.equals(sendResult.getSendStatus())) {
-                                throw new ServiceException(StrUtil.format("MQ数据异常，{}", JSONUtil.toJsonStr(sendResult)));
+                                log.error("消息发送结果失败：{}", JSONObject.toJSONString(sendResult));
+                            }else {
+                                log.error("MQ数据结果：{}", JSONUtil.toJsonStr(sendResult));
                             }
-                            log.info("MQ数据结果：{}", JSONUtil.toJsonStr(sendResult));
                         }
                     }
                 }
             }
+        }
+    }
+
+
+    @Override
+    public void sendMqRecordConsumer(String jsonStr) {
+        SendResult sendResult = mqProducerService.syncClassMsg(RocketMqTopic.RECEIVE_DDL_TO_MQ_SYS_TOPIC, RocketMqTagEnum.SYS_RECEIVE_DDL_TO_MQ_TAG.getName(), jsonStr, IdUtil.simpleUUID());
+        if (!SendStatus.SEND_OK.equals(sendResult.getSendStatus())) {
+            log.error("消息发送结果失败：{}", JSONObject.toJSONString(sendResult));
+        }else {
+            log.error("MQ数据结果：{}", JSONUtil.toJsonStr(sendResult));
         }
     }
 
@@ -1451,21 +1454,17 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
                         }
                         boolean save = save(recordEntity);
                         if(Boolean.TRUE.equals(save)){
-                            if(unionMap.containsKey(userId) &&  StringUtils.isNotBlank(unionMap.get(userId).getThirdUnionId())){
-                                String messageId = recordEntity.getId();
-                                SendThirdNoticeConsumerDTO sendMessage = new SendThirdNoticeConsumerDTO();
-                                sendMessage.setUnionIds(Collections.singletonList(unionMap.get(userId).getThirdUnionId()));
-
-                                //跳转URL
-                                String url = noticeEntity.getUrl();
-                                Map<String, Object> contentMap = fsService.getCardMessageMap(title, content, url);
-                                sendMessage.setContentMap(contentMap);
-                                sendMessage.setMessageId(messageId);
-                                SendResult sendResult = mqProducerService.syncClassMsgWithDelayLevel(RocketMqTopic.SEND_THIRD_NOTICE_SYS_TOPIC, RocketMqTagEnum.SYS_SEND_THIRD_NOTICE_TAG.getName(), sendMessage, IdUtil.simpleUUID(), delayLevel);
-                                if (!SendStatus.SEND_OK.equals(sendResult.getSendStatus())) {
-                                    throw new ServiceException(StrUtil.format("MQ数据异常，{}", JSONUtil.toJsonStr(sendResult)));
-                                }
-                                log.info("MQ数据结果：{}", JSONUtil.toJsonStr(sendResult));
+                            SendThirdNoticeConsumerDTO sendMessage = new SendThirdNoticeConsumerDTO();
+                            sendMessage.setThirdNoticePushRecordEntity(recordEntity);
+                            sendMessage.setTitle(title);
+                            sendMessage.setContent(content);
+                            sendMessage.setReceiverUserIds(Arrays.asList(userId));
+                            sendMessage.setNoticeTypeEnum(NoticeTypeEnum.SYS_TASK);
+                            SendResult sendResult = mqProducerService.syncClassMsgWithDelayLevel(RocketMqTopic.SEND_THIRD_NOTICE_TOPIC, RocketMqTagEnum.SEND_THIRD_NOTICE_TAG.getName(), sendMessage, recordEntity.getId(),delayLevel);
+                            if (!SendStatus.SEND_OK.equals(sendResult.getSendStatus())) {
+                                log.error("消息发送结果失败：{}", JSONObject.toJSONString(sendResult));
+                            }else {
+                                log.error("MQ数据结果：{}", JSONUtil.toJsonStr(sendResult));
                             }
                         }
                     }
