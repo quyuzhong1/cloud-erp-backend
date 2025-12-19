@@ -622,6 +622,7 @@ public class KolB2bApplicationServiceImpl extends SuperServiceImpl<KolB2bApplica
             addDTO.setBillDate(now);
             addDTO.setRequireDate(now);
             addDTO.setSourceId(mainEntity.getId());
+            addDTO.setSourceCode(mainEntity.getCode());
             addDTO.setSourceType(SourceTypeEnum.KOL_B2B_APPLICATION.getCode());
             addDTO.setSellerId(mainEntity.getApplyUserId());
             addDTO.setSalesDeptId(mainEntity.getApplyDeptId());

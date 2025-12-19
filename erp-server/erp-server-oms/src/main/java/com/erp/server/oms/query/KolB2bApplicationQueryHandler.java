@@ -63,6 +63,12 @@ public class KolB2bApplicationQueryHandler extends AbstractQueryHandler {
      */
     public String getTabSql (Object value) {
 
+        //待提交
+        if(KolB2bApplicationTableEnum.WAIT_SUBMIT.getCode().equals(value)){
+            super.buildDefaultDTO("kba.invalid_status", Collections.singletonList(InvalidStatusEnum.NOT_VOIDED.getStatus()));
+            super.buildDefaultDTO("kba.approve_status", Collections.singletonList(ApproveStatusEnum.WAIT_SUBMIT.getCode()));
+        }
+
         //待我审核
         if(KolB2bApplicationTableEnum.TO_BE_APPROVE.getCode().equals(value)){
             super.buildDefaultDTO("kba.approve_status", Collections.singletonList(ApproveStatusEnum.APPROVE_ING.getStatus()));
@@ -74,10 +80,6 @@ public class KolB2bApplicationQueryHandler extends AbstractQueryHandler {
                 //返回空结果
                 return this.getQueryEmptySql();
             }
-        }
-        //审核通过
-        if(KolB2bApplicationTableEnum.APPROVE.getCode().equals(value)){
-            super.buildDefaultDTO("kba.approve_status", Collections.singletonList(ApproveStatusEnum.APPROVE.getCode()));
         }
         //审核不通过
         if(KolB2bApplicationTableEnum.REJECT.getCode().equals(value)){

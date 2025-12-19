@@ -9,8 +9,8 @@ public enum KolB2bApplicationTableEnum implements EnumMessage {
 
 
     ALL("all", "全部"),
+    WAIT_SUBMIT("waitSubmit", "待提交"),
     TO_BE_APPROVE("toBeApprove", "待我审核"),
-    APPROVE("approve", "审核通过"),
     WAIT_SHIPPED("waitShipped", "待发货"),
     SHIPPED("shipped", "已发货"),
     REJECT("reject", "不通过"),
