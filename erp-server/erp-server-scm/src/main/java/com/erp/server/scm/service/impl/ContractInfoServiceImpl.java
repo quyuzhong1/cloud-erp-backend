@@ -987,6 +987,11 @@ public class ContractInfoServiceImpl extends SuperServiceImpl<ContractInfoMapper
 
     @Override
     public void updateContractInfoStatus() {
+        lambdaUpdate().set(ContractInfoEntity::getStatus,ContractInfoStatusEnum.NOT_EFFECTIVE.getCode())
+                .eq(ContractInfoEntity::getDisable, Boolean.FALSE)
+                .ne(ContractInfoEntity::getTemplateId, "")
+                .update();
+
         LocalDate now = LocalDate.now();
         // 查询适用于所有服务商的合同(已审核，启用)
         List<ContractInfoEntity> list = lambdaQuery()
