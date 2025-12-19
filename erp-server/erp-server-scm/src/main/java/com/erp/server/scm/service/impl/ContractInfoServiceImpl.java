@@ -128,7 +128,11 @@ public class ContractInfoServiceImpl extends SuperServiceImpl<ContractInfoMapper
             }
             String name = list.get(0).getName();
             addDTO.setName(name);
-            //关联模板校验-同一个模板不能重复添加相同供应商【含所有供应商】
+            //关联模板校验-同一个模板不能重复添加相同供应商【含所有供应商】 ,涉及包含关系
+            Integer count = lambdaQuery().eq(ContractInfoEntity::getServiceProviderId, "all").eq(ContractInfoEntity::getTemplateId, templateId).count();
+            if(count > 0){
+                throw new ServiceException(ApiError.ERROR_CONTRACT_TEMPLATE_DICTINCT,"所有供应商",name);
+            }
             List<ContractInfoEntity> oldList = lambdaQuery().in(ContractInfoEntity::getServiceProviderId, serviceProviderIdList).eq(ContractInfoEntity::getTemplateId, templateId).list();
             if(CollUtil.isNotEmpty(oldList)){
                 String supplierNames = oldList.stream()
