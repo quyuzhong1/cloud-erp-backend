@@ -31,6 +31,12 @@ public class RocketMqNewConsumerGroup {
      * 新中台旺店通销售出库单
      */
     public static final String DMP_WDT_SO_OUTSTOCK_TO_WMS_GROUP = "${spring.cloud.nacos.discovery.namespace}-dmp_wdt_so_outstock_to_wms_group";
+
+    /**
+     * 新中台PDD销售出库单
+     */
+    public static final String DMP_PDD_SO_OUTSTOCK_TO_WMS_GROUP = "${spring.cloud.nacos.discovery.namespace}-dmp_pdd_so_outstock_to_wms_group";
+
     /**
      * 新中台TeMu销售出库单
      */
