@@ -55,18 +55,6 @@ import java.util.stream.Collectors;
 public class RetryThirdWarehouseDeliveryJob {
 
     @Resource
-    private DmpThirdMappingFeign dmpThirdMappingFeign;
-
-    @Resource
-    private TemuClient temuClient;
-
-    @Resource
-    private ShopInfoFeign shopInfoFeign;
-
-    @Resource
-    private SoB2cFeign soB2cFeign;
-
-    @Resource
     private SoOutstockService soOutstockService;
 
     @Resource
