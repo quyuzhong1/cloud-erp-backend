@@ -23,7 +23,6 @@ import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.rpc.tms.feign.LogisticsMappingFeign;
 import com.sdk.oms.shopify.api.graphql.ShopifyGraphQLClient;
 import com.sdk.oms.shopify.api.graphql.ShopifyGraphQLClientService;
-import com.sdk.oms.shopify.api.graphql.model.ShopifyOrderResponse;
 import com.sdk.oms.shopify.api.rest.ShopifyRestClient;
 import com.sdk.oms.shopify.api.rest.ShopifyRestClientService;
 import com.sdk.oms.shopify.api.rest.model.*;
@@ -75,7 +74,7 @@ public class ShopifyShipOrder extends AbstractShipOrder {
             //检查销售订单详情是否存在
             List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cDetailEntityListMap.get(mainEntity.getId());
             if (CollectionUtils.isEmpty(soB2cDetailEntityList)) {
-                throw new ServiceException(ApiError.ERROR_SO_B2C_DETAIL_NOT_EXIST);
+                throw new ServiceException(ApiError.SO_B2C_DETAIL_NOT_FOUND);
             }
             // 来源明细ID为空代表是手工添加的明细忽略
             soB2cDetailEntityList =  soB2cDetailEntityList.stream()

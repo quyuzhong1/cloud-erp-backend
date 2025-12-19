@@ -50,7 +50,7 @@ public enum TimePeriodEnum implements EnumMessage {
 
     public static TimePeriodEnum of(String code) {
         return Arrays.stream(TimePeriodEnum.values()).filter(v -> v.getCode().equals(code))
-                .findFirst().orElseThrow(() -> new ServiceException(ApiError.COMMON_NOT_EXIST, "时间段类型"));
+                .findFirst().orElseThrow(() -> new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC, "时间段类型"));
     }
 
     /**

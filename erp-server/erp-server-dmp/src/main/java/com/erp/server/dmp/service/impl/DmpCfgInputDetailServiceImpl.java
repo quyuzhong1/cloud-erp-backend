@@ -164,7 +164,7 @@ public class DmpCfgInputDetailServiceImpl extends SuperServiceImpl<DmpCfgInputDe
         //添加输出配置
         DmpCfgOutputDetailEntity outputDetailEntity = dmpCfgOutputDetailService.getDmpCfgOutputDetailByOption(detailEntity.getMainId(),detailEntity.getNextLevelId());
         if (ObjUtil.isEmpty(outputDetailEntity)) {
-            throw new ServiceException(ApiError.COMMON_NOT_EXIST, CharSequenceUtil.format("{}平台{}编码输出配置不存在,请检查", cfgOptionDTO.getSystem(), cfgOptionDTO.getCode()));
+            throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC, CharSequenceUtil.format("{}平台{}编码输出配置不存在,请检查", cfgOptionDTO.getSystem(), cfgOptionDTO.getCode()));
         }
         if (OperationTypeEnum.ADD.getStatus().equals(cfgOptionDTO.getOption()) || OperationTypeEnum.UPDATE.getStatus().equals(cfgOptionDTO.getOption())) {
             outputDetailEntity.setNextLevelId(cfgOptionDTO.getNextLevelId());
@@ -193,7 +193,7 @@ public class DmpCfgInputDetailServiceImpl extends SuperServiceImpl<DmpCfgInputDe
         //需要添加的输入配置不存在则新增，存在则修改
         DmpCfgInputDetailEntity detailEntity = baseMapper.getDmpCfgInputDetailByOption(cfgOptionDTO);
         if (ObjUtil.isEmpty(detailEntity)) {
-            throw new ServiceException(ApiError.COMMON_NOT_EXIST, CharSequenceUtil.format("{}平台{}编码输入配置不存在,请检查", cfgOptionDTO.getSystem(), cfgOptionDTO.getCode()));
+            throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC, CharSequenceUtil.format("{}平台{}编码输入配置不存在,请检查", cfgOptionDTO.getSystem(), cfgOptionDTO.getCode()));
         }
         if (CharSequenceUtil.isBlank(detailEntity.getId())) {
             LocalDateTime now = LocalDateTime.now();

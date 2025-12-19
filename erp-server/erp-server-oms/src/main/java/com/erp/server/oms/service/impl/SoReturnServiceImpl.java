@@ -621,7 +621,7 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         List<SoReturnDetailDTO.View> detailViewDTOS = new ArrayList<>();
         List<SoReturnDetailEntity> detailEntityList = soReturnDetailService.listDetailByMainId(id);
         if (CollectionUtils.isEmpty(detailEntityList)) {
-            throw new ServiceException(ApiError.ERROR_RETURN_ORDER_SKU_NOT_FOUND);
+            throw new ServiceException(ApiError.SO_DELIVERY_RETURN_ORDER_SKU_NOT_FOUND);
         }
         if(StringUtils.isNotBlank(soReturnEntity.getSourceId())){
             SoInfoEntity soInfoEntity = soInfoService.getById(soReturnEntity.getSourceId());
@@ -754,7 +754,7 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         }
         SoReturnEntity entity = this.getById(id);
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_RETURN_SIGN_DETAIL_REQUIRED);
+            throw new ServiceException(ApiError.SO_RETURN_SIGN_DETAIL_REQUIRED);
         }
         BatchResultDTO submit = this.submit(entity, Boolean.TRUE);
         return submit.getSuccess();
@@ -769,7 +769,7 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         }
         SoReturnEntity entity = this.getById(dto.getId());
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_RETURN_SIGN_DETAIL_REQUIRED);
+            throw new ServiceException(ApiError.SO_RETURN_SIGN_DETAIL_REQUIRED);
         }
         BatchResultDTO submit = this.submit(entity, Boolean.TRUE);
         return submit.getSuccess();
@@ -1087,12 +1087,12 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         //有退货通知单不能反审核
         List<SoReturnNoticeEntity> soReturnNoticeEntities = soReturnNoticeFeign.listBySourceId(ids);
         if (CollectionUtils.isNotEmpty(soReturnNoticeEntities)) {
-            throw new ServiceException(ApiError.ERROR_RETURN_NOTICE_PUSH_REVERSE_FORBIDDEN);
+            throw new ServiceException(ApiError.SO_DELIVERY_RETURN_NOTICE_PUSH_REVERSE_FORBIDDEN);
         }
         //有退货签收单不能反审核
         List<SoReturnReceiveEntity> soReturnReceiveEntities = soReturnReceiveFeign.listBySourceId(ids);
         if (CollectionUtils.isNotEmpty(soReturnReceiveEntities)) {
-            throw new ServiceException(ApiError.ERROR_RETURN_SIGN_PUSH_REVERSE_FORBIDDEN);
+            throw new ServiceException(ApiError.SO_DELIVERY_RETURN_SIGN_PUSH_REVERSE_FORBIDDEN);
         }
         //修改状态为待提交
         lambdaUpdate().set(SoReturnEntity::getApproveStatus, ApproveStatusEnum.WAIT_SUBMIT.getStatus())
@@ -1523,7 +1523,7 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         List<SoReturnDetailDTO.View> detailViewDTOS = new ArrayList<>();
         List<SoReturnDetailEntity> detailEntityList = soReturnDetailService.listDetailByMainId(id);
         if (CollectionUtils.isEmpty(detailEntityList)) {
-            throw new ServiceException(ApiError.ERROR_RETURN_ORDER_SKU_NOT_FOUND);
+            throw new ServiceException(ApiError.SO_DELIVERY_RETURN_ORDER_SKU_NOT_FOUND);
         }
         SoInfoEntity soInfoEntity = soInfoService.getById(soReturnEntity.getSourceId());
         BeanMapperUtils.copy(soInfoEntity, viewDTO);

@@ -537,7 +537,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         //物流单号
         LogisticsBillEntity logisticsBillEntity = logisticsBillService.getById(entity.getLogisticsBillId());
         if (ObjectUtil.isEmpty(logisticsBillEntity)) {
-            throw new ServiceException(ApiError.COMMON_NOT_EXIST,"物流订单");
+            throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC,"物流订单");
         }
         entity.setTransportNo(logisticsBillEntity.getTransportNo());
         entity.setChannelId(logisticsBillEntity.getChannelId());

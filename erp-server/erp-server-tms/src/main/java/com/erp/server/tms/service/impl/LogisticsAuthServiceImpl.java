@@ -342,7 +342,7 @@ public class LogisticsAuthServiceImpl extends SuperServiceImpl<LogisticsAuthMapp
         }
         String authStatus = supplierEntity.getAuthStatus();
         if (!LogisticsAuthStatusEnum.ALREADY.getCode().equals(authStatus)) {
-            throw new ServiceException(ApiError.ERROR_CANCEL_CONDITION);
+            throw new ServiceException(ApiError.LOGISTICS_CANCEL_AUTH_NOT_ALLOWED);
         }
         this.removeById(entity.getId());
         supplierEntity.setAuthStatus(LogisticsAuthStatusEnum.NOT.getCode());

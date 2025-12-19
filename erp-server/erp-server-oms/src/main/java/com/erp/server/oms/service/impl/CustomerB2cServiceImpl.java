@@ -434,7 +434,7 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
         CustomerB2CDTO.ViewDTO view = new CustomerB2CDTO.ViewDTO();
         CustomerB2cEntity customer = this.getById(id);
         if (Objects.isNull(customer)) {
-            throw new ServiceException(ApiError.ERROR_CUSTOMER_NOT_FOUND);
+            throw new ServiceException(ApiError.CUSTOMER_NOT_FOUND);
         }
         BeanMapper.copy(customer, view);
         String areaId = customer.getAreaId();
@@ -496,7 +496,7 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
         String id = dto.getId();
         CustomerB2cEntity customer = this.getById(id);
         if (Objects.isNull(customer)) {
-            throw new ServiceException(ApiError.ERROR_CUSTOMER_NOT_FOUND);
+            throw new ServiceException(ApiError.CUSTOMER_NOT_FOUND);
         }
 
         //检查名称
@@ -746,7 +746,7 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
                 continue;
             }
             if (entity.getOccupyStatus()){
-                resultDTOList.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_SO_IN_USE_DELETE_FORBIDDEN.getMsg()));
+                resultDTOList.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.BILL_IN_USE_DELETE_FORBIDDEN.getMsg()));
                 continue;
             }
             removeList.add(entity);
@@ -854,7 +854,7 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
         List<String> ids = dto.getIds();
         List<CustomerB2cEntity> customerList = this.listByIds(ids);
         if (CollectionUtils.isEmpty(customerList)) {
-            throw new ServiceException(ApiError.ERROR_CUSTOMER_NOT_FOUND);
+            throw new ServiceException(ApiError.CUSTOMER_NOT_FOUND);
         }
 
         Boolean disabled = dto.getDisabled();
@@ -866,7 +866,7 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
             //客户是否有使用
             Boolean isUseCustomer = soInfoService.getIsUseCustomer(ids);
             if (isUseCustomer) {
-                throw new ServiceException(ApiError.ERROR_CUSTOMER_DISABLE_FORBIDDEN);
+                throw new ServiceException(ApiError.CUSTOMER_DISABLE_FORBIDDEN);
             }
         }
         customerList.forEach(d -> d.setDisabled(disabled));
@@ -969,7 +969,7 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
         CustomerB2CDTO.BaseDTO base = new CustomerB2CDTO.BaseDTO();
         CustomerB2cEntity customer = this.getById(customerId);
         if (Objects.isNull(customer)) {
-            throw new ServiceException(ApiError.ERROR_CUSTOMER_NOT_FOUND);
+            throw new ServiceException(ApiError.CUSTOMER_NOT_FOUND);
         }
         base.setId(customer.getId());
         base.setCode(customer.getCode());
@@ -1356,7 +1356,7 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
         //客户信息
         CustomerB2cEntity entity = this.getById(id);
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_B2C_CUSTOMER_NOT_EXIST);
+            throw new ServiceException(ApiError.SO_B2C_CUSTOMER_NOT_FOUND);
         }
         SoB2cDTO.ViewReceiveDataDTO viewReceiveDataDTO = new SoB2cDTO.ViewReceiveDataDTO();
         viewReceiveDataDTO.setCustomerId(id);

@@ -64,7 +64,7 @@ public class SoInfoApproveHandler extends AbstractApproveHandler {
     public Boolean disApprove(ApproveDTO.DisApproveDTO dto) {
         SoInfoEntity entity = soInfoService.getById(dto.getId());
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_SO_NOT_FOUND);
+            throw new ServiceException(ApiError.SO_NOT_FOUND);
         }
         List<SoChangeEntity> soChangeList = soChangeService.listBySoIds(Collections.singletonList(dto.getId()));
         BatchResultDTO resultDTO = soInfoService.disApprove(entity, soChangeList);
@@ -76,7 +76,7 @@ public class SoInfoApproveHandler extends AbstractApproveHandler {
     public Boolean approveEnd(ApproveDTO.EndProcessDTO dto) {
         SoInfoEntity entity = soInfoService.getById(dto.getBusinessId());
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_SO_NOT_FOUND);
+            throw new ServiceException(ApiError.SO_NOT_FOUND);
         }
         BaseApproveParamDTO baseApproveParamDTO = new BaseApproveParamDTO();
         baseApproveParamDTO.setType(dto.getApproveStatus().getStatus());

@@ -355,7 +355,7 @@ public class SkuMappingController extends BaseController {
         String id = dto.getId();
         SkuMappingEntity skuMapping = skuMappingService.getById(id);
         if (Objects.isNull(skuMapping)) {
-            resultDTOList.add(BatchResultDTO.fail(id,id,ApiError.ERROR_SKU_MAPPING_NOT_FOUND.getMsg()));
+            resultDTOList.add(BatchResultDTO.fail(id,id,ApiError.COMMON_SKU_MAPPING_NOT_FOUND.getMsg()));
             return failure(resultDTOList);
         }
         ListingInfoEntity listing = listingInfoService.getById(skuMapping.getListingId());

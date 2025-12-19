@@ -184,7 +184,7 @@ public class CfgRuleOutServiceImpl extends SuperServiceImpl<CfgRuleOutMapper, Cf
             String expression = splElDTO.getExpression();
             Boolean checkResult = spElServer.checkExpressionIsEnabled(expression);
             if (!checkResult) {
-                throw new ServiceException(ApiError.ERROR_RULE_EXPRESSION_ERROR);
+                throw new ServiceException(ApiError.COMMON_RULE_EXPRESSION_ERROR);
             }
         }
 
@@ -492,7 +492,7 @@ public class CfgRuleOutServiceImpl extends SuperServiceImpl<CfgRuleOutMapper, Cf
         String expression = splElDTO.getExpression();
         Boolean checkResult = spElServer.checkExpressionIsEnabled(expression);
         if (!checkResult) {
-            throw new ServiceException(ApiError.ERROR_RULE_EXPRESSION_ERROR);
+            throw new ServiceException(ApiError.COMMON_RULE_EXPRESSION_ERROR);
         }
     }
 }

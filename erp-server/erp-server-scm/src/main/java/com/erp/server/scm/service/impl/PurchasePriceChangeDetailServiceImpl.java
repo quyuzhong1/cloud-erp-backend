@@ -490,7 +490,7 @@ public class PurchasePriceChangeDetailServiceImpl extends SuperServiceImpl<Purch
             }
             //校验区间到需要大于区间从
             if (entity.getMaxQty().compareTo(entity.getMinQty()) <= MathUtil.ZERO) {
-                throw new ServiceException(ApiError.ERROR_SO_PRICE_INTERVAL_SIZE,entity.getSkuNo());
+                throw new ServiceException(ApiError.SO_PRICE_INTERVAL_INVALID,entity.getSkuNo());
             }
 
             //1、数据与新增同类数据校验

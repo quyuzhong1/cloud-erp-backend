@@ -386,11 +386,11 @@ public class SoPriceChangeDetailServiceImpl extends SuperServiceImpl<SoPriceChan
         for (SoPriceChangeDetailEntity entity : list) {
             //检验失效时间需要大于等于生效时间
             if (entity.getExpireDate().isBefore(entity.getEffectiveDate())) {
-                throw new ServiceException(ApiError.ERROR_SO_PRICE_DATE,entity.getSkuNo());
+                throw new ServiceException(ApiError.SO_PRICE_EXPIRE_BEFORE_EFFECTIVE,entity.getSkuNo());
             }
             //校验区间到需要大于区间从
             if (entity.getMaxQty().compareTo(entity.getMinQty()) < MathUtil.ZERO) {
-                throw new ServiceException(ApiError.ERROR_SO_PRICE_INTERVAL_SIZE,entity.getSkuNo());
+                throw new ServiceException(ApiError.SO_PRICE_INTERVAL_INVALID,entity.getSkuNo());
             }
         }
         SoPriceChangeEntity soPriceChangeEntity = soPriceChangeService.getById(soPriceChangeId);
@@ -439,11 +439,11 @@ public class SoPriceChangeDetailServiceImpl extends SuperServiceImpl<SoPriceChan
             SoPriceChangeDetailEntity entity = list.get(i);
             //检验失效时间需要大于生效时间
             if (entity.getExpireDate().isBefore(entity.getEffectiveDate())) {
-                throw new ServiceException(ApiError.ERROR_SO_PRICE_DATE,entity.getSkuNo());
+                throw new ServiceException(ApiError.SO_PRICE_EXPIRE_BEFORE_EFFECTIVE,entity.getSkuNo());
             }
             //校验区间到需要大于区间从
             if (entity.getMaxQty().compareTo(entity.getMinQty()) <= MathUtil.ZERO) {
-                throw new ServiceException(ApiError.ERROR_SO_PRICE_INTERVAL_SIZE,entity.getSkuNo());
+                throw new ServiceException(ApiError.SO_PRICE_INTERVAL_INVALID,entity.getSkuNo());
             }
 
             //1、数据与新增同类数据校验

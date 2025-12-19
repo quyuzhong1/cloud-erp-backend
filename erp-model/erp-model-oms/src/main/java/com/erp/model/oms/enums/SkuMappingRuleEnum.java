@@ -104,7 +104,7 @@ public enum SkuMappingRuleEnum implements EnumMessage{
         List<String> list = new ArrayList<>(commonDTO.getRuleContentList().size());
         for(SkuMappingRuleDTO.RuleConditionsDTO ruleConditionsDTO : commonDTO.getRuleContentList()){
             if(StringUtils.isBlank(ruleConditionsDTO.getIgnorePrefix()) && StringUtils.isBlank(ruleConditionsDTO.getIgnoringSuffixes())){
-                throw new ServiceException(ApiError.ERROR_SKU_MAPPING_RULE_NULL);
+                throw new ServiceException(ApiError.MAPPING_SKU_RULE_REQUIRED);
             }
             String prefix = StringUtils.isBlank(ruleConditionsDTO.getIgnorePrefix())?"":ruleConditionsDTO.getIgnorePrefix();
             String suffixes = StringUtils.isBlank(ruleConditionsDTO.getIgnoringSuffixes())?"":ruleConditionsDTO.getIgnoringSuffixes();
@@ -122,7 +122,7 @@ public enum SkuMappingRuleEnum implements EnumMessage{
         List<String> list = new ArrayList<>(commonDTO.getRuleContentList().size());
         for(SkuMappingRuleDTO.RuleConditionsDTO ruleConditionsDTO : commonDTO.getRuleContentList()){
             if(Objects.isNull(ruleConditionsDTO.getIgnoringBeforePosition()) && Objects.isNull(ruleConditionsDTO.getIgnoringAfterPosition())){
-                throw new ServiceException(ApiError.ERROR_SKU_MAPPING_RULE_NULL);
+                throw new ServiceException(ApiError.MAPPING_SKU_RULE_REQUIRED);
             }
             int prefix = Objects.isNull(ruleConditionsDTO.getIgnoringBeforePosition())?0:ruleConditionsDTO.getIgnoringBeforePosition();
             int suffixes = Objects.isNull(ruleConditionsDTO.getIgnoringAfterPosition())?0:ruleConditionsDTO.getIgnoringAfterPosition();
@@ -136,7 +136,7 @@ public enum SkuMappingRuleEnum implements EnumMessage{
         List<String> list = new ArrayList<>(commonDTO.getRuleContentList().size());
         for(SkuMappingRuleDTO.RuleConditionsDTO ruleConditionsDTO : commonDTO.getRuleContentList()){
             if(Objects.isNull(ruleConditionsDTO.getInterceptionFrontPosition()) && Objects.isNull(ruleConditionsDTO.getInterceptionBehindPosition())){
-                throw new ServiceException(ApiError.ERROR_SKU_MAPPING_RULE_NULL);
+                throw new ServiceException(ApiError.MAPPING_SKU_RULE_REQUIRED);
             }
             int prefix = Objects.isNull(ruleConditionsDTO.getInterceptionFrontPosition())?1:ruleConditionsDTO.getInterceptionFrontPosition();
             int suffixes = Objects.isNull(ruleConditionsDTO.getInterceptionBehindPosition())?Integer.MAX_VALUE:ruleConditionsDTO.getInterceptionBehindPosition();
@@ -183,7 +183,7 @@ public enum SkuMappingRuleEnum implements EnumMessage{
             }
             String finalRegex = waitHandleRegex;
             if(StringUtils.isBlank(ruleConditionsDTO.getStartingSymbol()) && StringUtils.isBlank(ruleConditionsDTO.getEndSymbol())){
-                throw new ServiceException(ApiError.ERROR_SKU_MAPPING_RULE_NULL);
+                throw new ServiceException(ApiError.MAPPING_SKU_RULE_REQUIRED);
             }
             //起始符或终止符为空，正则都不一样
             if(StringUtils.isNotBlank(ruleConditionsDTO.getStartingSymbol()) && StringUtils.isBlank(ruleConditionsDTO.getEndSymbol())){

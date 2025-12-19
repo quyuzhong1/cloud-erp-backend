@@ -529,7 +529,7 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
         //查询授权信息
         TransferLogisticsAuthEntity authEntity = transferLogisticsAuthService.getByMainId("", transferDeclareEntity.getTransferLogisticsSupplierId());
         if (ObjectUtil.isEmpty(authEntity)) {
-            throw new ServiceException(ApiError.ERROR_LOGISTICS_CHANNEL_NOT_AUTU_EXIST);
+            throw new ServiceException(ApiError.LOGISTICS_CHANNEL_AUTH_INFO_NOT_FOUND);
         }
         TransferLogisticsService service = transferLogisticsRegistry.getHandler(authEntity.getLogisticsPlatform());
         if (Objects.isNull(service)){
@@ -997,7 +997,7 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
         }
 
         if (StringUtils.isBlank(transferDeclareEntity.getTransferLogisticsSupplierId())) {
-            throw new ServiceException(ApiError.ERROR_LOGISTICS_CHANNEL_NOT_AUTU_EXIST);
+            throw new ServiceException(ApiError.LOGISTICS_CHANNEL_AUTH_INFO_NOT_FOUND);
         }
         //中转物流商名称
         TransferLogisticsSupplierEntity transferLogisticsSupplierEntity = transferLogisticsSupplierService.getById(transferDeclareEntity.getTransferLogisticsSupplierId());

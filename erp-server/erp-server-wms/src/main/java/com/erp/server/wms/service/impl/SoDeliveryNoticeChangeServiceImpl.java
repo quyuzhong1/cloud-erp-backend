@@ -777,7 +777,7 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
         //销售订单
         SoInfoEntity soInfoEntity = soInfoFeign.getSoInfoById(soDeliveryNoticeEntity.getSourceId());
         if (ObjectUtil.isEmpty(soInfoEntity)) {
-            throw new ServiceException(ApiError.ERROR_SO_NOT_FOUND);
+            throw new ServiceException(ApiError.SO_NOT_FOUND);
         }
         //无虚拟仓不扣库存
         if (StrUtil.isBlank(soInfoEntity.getVirtualWarehouseId())) {
@@ -786,7 +786,7 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
         //销售订单明细
         List<SoDetailEntity> soDetailList = soInfoFeign.listSoDetailByMainId(soInfoEntity.getId());
         if (CollectionUtils.isEmpty(soDetailList)) {
-            throw new ServiceException(ApiError.ERROR_SO_DETAIL_NOT_FOUND);
+            throw new ServiceException(ApiError.SO_DETAIL_NOT_FOUND);
         }
         //销售订单参数
         List<VirtualInventoryStockDTO.OutInStockDTO> subParamList = new ArrayList<>();
@@ -833,7 +833,7 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
             SoDeliveryNoticeDetailEntity finalDetailEntity = detailEntity;
             SoDetailEntity soDetailEntity = soDetailList.stream().filter(obj -> StrUtil.equals(obj.getId(), finalDetailEntity.getSourceDetailId())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(soDetailEntity)) {
-                throw new ServiceException(ApiError.ERROR_SO_DETAIL_NOT_FOUND);
+                throw new ServiceException(ApiError.SO_DETAIL_NOT_FOUND);
             }
             //删除类型时新数量设置为0
             Integer newQty = StrUtil.equals(SoDeliveryNoticeChangeTypeEnum.DELETE.getCode(),changeDetailEntity.getChangeType())

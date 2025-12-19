@@ -337,7 +337,7 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         }
         List<SoB2cLogisticsEntity> b2cLogisticsList = soB2cFeign.listSoB2cLogisticsByChannelId(id);
         if(CollectionUtils.isNotEmpty(b2cLogisticsList)){
-            return BatchResultDTO.fail(id,entity.getCode(), ApiError.ERROR_CHANNEL_QUOTE.getMsg());
+            return BatchResultDTO.fail(id,entity.getCode(), ApiError.LOGISTICS_CHANNEL_QUOTE_REF_DELETE_FORBIDDEN.getMsg());
         }
         String msg = CharSequenceUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "盘点计划");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LOGISTICS_CHANNEL.getCode(), entity.getId(), "删除盘点计划单数据");
@@ -689,7 +689,7 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
             //存在空值，校验是否存在非空值，存在则报错
             if (logisticsChannelEntity.getMaxHeight().compareTo(BigDecimal.ZERO) != 0 || logisticsChannelEntity.getMaxLength().compareTo(BigDecimal.ZERO) != 0
                     || logisticsChannelEntity.getMaxWidth().compareTo(BigDecimal.ZERO) != 0){
-                throw new ServiceException(ApiError.ERROR_LOGISTICS_MAX_LIMIT_NOT_EMPTY);
+                throw new ServiceException(ApiError.LOGISTICS_PACKAGE_DIMENSION_REQUIRED);
             }
         }
         String code = logisticsChannelEntity.getCode();
@@ -708,7 +708,7 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
     public LogisticsChannelDTO.SignShipDTO getScaleChannelByChannelById(String logisticsChannelId, String dictPlatform) {
         LogisticsChannelEntity channelEntity = this.getById(logisticsChannelId);
         if (null == channelEntity){
-            throw new ServiceException(ApiError.COMMON_NOT_EXIST, "物流渠道id："+logisticsChannelId+"");
+            throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC, "物流渠道id："+logisticsChannelId+"");
         }
         if (StringUtils.isBlank(dictPlatform)){
             throw new ServiceException("关联的销售平台不能为空");
@@ -775,7 +775,7 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
     public void deliverySetting(LogisticsChannelDTO.DeliveryDTO dto) {
         LogisticsChannelEntity old = this.getById(dto.getId());
         if (null == old){
-            throw new ServiceException(ApiError.COMMON_NOT_EXIST, "物流渠道");
+            throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC, "物流渠道");
         }
         //更新配置
         this.lambdaUpdate().eq(LogisticsChannelEntity::getId, dto.getId())
@@ -832,7 +832,7 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
     public void platformSignSetting(LogisticsChannelDTO.PlatformSignSettingDTO dto) {
         LogisticsChannelEntity old = this.getById(dto.getId());
         if (null == old){
-            throw new ServiceException(ApiError.COMMON_NOT_EXIST, "物流渠道");
+            throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC, "物流渠道");
         }
         //更新配置
         this.lambdaUpdate().eq(LogisticsChannelEntity::getId, dto.getId())

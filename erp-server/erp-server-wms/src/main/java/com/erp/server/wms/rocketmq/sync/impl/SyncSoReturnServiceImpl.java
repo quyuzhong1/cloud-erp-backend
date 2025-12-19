@@ -145,7 +145,7 @@ public class SyncSoReturnServiceImpl implements SyncSoReturnService {
         List<SkuVO> skuNoList = plmTaskFeign.listBySkuNoList(kingdeeSkuNoList);
         //金蝶sku和plm对应不上跳过
         if (CollectionUtils.isEmpty(skuNoList)) {
-            throw new ServiceException(ApiError.ERROR_K3_B2C_RETURN_SKU_NOT_FOUND, StringUtil.join(skuNoList, ","));
+            throw new ServiceException(ApiError.SO_B2C_DELIVERY_K3_CLOUD_RETURN_SKU_NOT_FOUND, StringUtil.join(skuNoList, ","));
         }
 
         //获取退货单明细
@@ -203,7 +203,7 @@ public class SyncSoReturnServiceImpl implements SyncSoReturnService {
             WarehouseEntity warehouseEntity = warehouseEntities.stream().filter(req -> req.getKingdeeWarehouseCode().equals(kingdeeReturnOrderItemEntity.getFStockNumber())).findFirst().orElse(null);
             //如果仓库不存在抛出异常
             if (ObjectUtil.isEmpty(warehouseEntity)) {
-                throw new ServiceException(ApiError.ERROR_K3_B2C_RETURN_WAREHOUSE_NOT_FOUND, kingdeeReturnOrderItemEntity.getFStockNumber());
+                throw new ServiceException(ApiError.SO_B2C_DELIVERY_K3_CLOUD_RETURN_WAREHOUSE_NOT_FOUND, kingdeeReturnOrderItemEntity.getFStockNumber());
             }
 
             instockDetailEntity.setWarehouseId(warehouseEntity.getId());
@@ -307,7 +307,7 @@ public class SyncSoReturnServiceImpl implements SyncSoReturnService {
                 .eq(ThirdMappingEntity::getThirdSysType, PlatformDictEnum.WDT.getCode())
                 .eq(ThirdMappingEntity::getThirdId, dto.getShopId()));
         if (CollectionUtils.isEmpty(shop)) {
-            throw new ServiceException(ApiError.ERROR_WDT_NOT_FOUND_SHOP_MAPPING, dto.getShopName());
+            throw new ServiceException(ApiError.MAPPING_SHOP_WDT_NOT_FOUND, dto.getShopName());
         }
         ShopInfoEntity shopInfo = FeignQuery.getById(ShopInfoEntity.class, shop.get(0).getSysId());
         if(Objects.isNull(shopInfo)){
@@ -319,7 +319,7 @@ public class SyncSoReturnServiceImpl implements SyncSoReturnService {
                 .eq(ThirdMappingEntity::getThirdSysType, PlatformDictEnum.WDT.getCode())
                 .eq(ThirdMappingEntity::getThirdId, dto.getWarehouseId()));
         if (CollectionUtils.isEmpty(warehouseList)) {
-            throw new ServiceException(ApiError.ERROR_WDT_NOT_FOUND_WAREHOUSE_MAPPING, dto.getWarehouseName());
+            throw new ServiceException(ApiError.MAPPING_WAREHOUSE_WDT_NOT_FOUND, dto.getWarehouseName());
         }
         WarehouseEntity warehouse = FeignQuery.getById(WarehouseEntity.class, warehouseList.get(0).getSysId());
         //组织信息
@@ -353,7 +353,7 @@ public class SyncSoReturnServiceImpl implements SyncSoReturnService {
         }
         //金蝶sku和plm对应不上跳过
         if (CollectionUtils.isEmpty(skuEntityList)) {
-            throw new ServiceException(ApiError.ERROR_WDT_NOT_FOUND_SKU, StringUtil.join(skuList, ","));
+            throw new ServiceException(ApiError.MAPPING_SKU_WDT_NOT_FOUND, StringUtil.join(skuList, ","));
         }
         inStockEntity.setId(IdWorker.getIdStr());
         //平台订单号
@@ -366,7 +366,7 @@ public class SyncSoReturnServiceImpl implements SyncSoReturnService {
             detailEntity.setWarehouseName(warehouse.getName());
             Optional<ProductDetailEntity> skuVoOptional = skuEntityList.stream().filter(req -> req.getSkuNo().equals(detailEntity.getSkuNo())).findFirst();
             if (!skuVoOptional.isPresent()) {
-                throw new ServiceException(ApiError.ERROR_WDT_NOT_FOUND_SKU, detailEntity.getSkuNo());
+                throw new ServiceException(ApiError.MAPPING_SKU_WDT_NOT_FOUND, detailEntity.getSkuNo());
             }
             ProductDetailEntity skuVO =skuVoOptional.get();
             detailEntity.setMainId(inStockEntity.getId());

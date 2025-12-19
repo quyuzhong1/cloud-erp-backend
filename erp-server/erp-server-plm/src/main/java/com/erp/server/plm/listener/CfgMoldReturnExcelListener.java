@@ -3,24 +3,16 @@ package com.erp.server.plm.listener;
 import cn.hutool.extra.spring.SpringUtil;
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
-import com.common.business.config.DocNoGenHelper;
-import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseDTO;
-import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.DisabledEnum;
 import com.common.business.enums.FileTaskStatusEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.utils.FieldValidUtil;
 import com.erp.model.plm.dto.excel.CfgMoldReturnImportExcelDTO;
-import com.erp.model.plm.entity.BasicCategoryEntity;
 import com.erp.model.plm.entity.MoldInfoEntity;
 import com.erp.model.plm.enums.CfgMoldReturnAlertRuleCountDimEnum;
-import com.erp.model.plm.enums.MoldInfoTagEnum;
-import com.erp.model.scm.dto.SupplierDTO;
-import com.erp.model.wms.dto.excel.SampleBorrowImportExcelDTO;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.plm.service.CfgMoldReturnAlertRuleService;
-import com.erp.server.plm.service.MoldInfoService;
 import lombok.Getter;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -32,7 +24,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 /**
  * @author jack
@@ -169,7 +160,7 @@ public class CfgMoldReturnExcelListener extends AnalysisEventListener<CfgMoldRet
 
         //结束日期不能小于开始日期
         if (Objects.nonNull(excelDTO.getEndDate()) && Objects.nonNull(excelDTO.getStartDate()) && excelDTO.getEndDate().isBefore(excelDTO.getStartDate())) {
-            errorMsgList.add(ApiError.ERROR_DATE_RANGE_INVALID.getMsg());
+            errorMsgList.add(ApiError.COMMON_DATE_RANGE_INVALID.getMsg());
         }
 
         //存在错误数据则直接返回

@@ -773,7 +773,7 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
             soInfoEntity = FeignQuery.getById(SoInfoEntity.class, soDeliveryNoticeEntity.getSourceId());
         }
         if (ObjUtil.isEmpty(soInfoEntity)) {
-            throw new ServiceException(ApiError.ERROR_SO_NOT_FOUND);
+            throw new ServiceException(ApiError.SO_NOT_FOUND);
         }
         if (CharSequenceUtil.isBlank(soInfoEntity.getVirtualWarehouseId())) {
             return;

@@ -161,7 +161,7 @@ public class CfgMoldAlertExcelListener extends AnalysisEventListener<CfgMoldAler
 
         //结束日期不能小于开始日期
         if (Objects.nonNull(excelDTO.getEndDate()) && Objects.nonNull(excelDTO.getStartDate()) && excelDTO.getEndDate().isBefore(excelDTO.getStartDate())) {
-            errorMsgList.add(ApiError.ERROR_DATE_RANGE_INVALID.getMsg());
+            errorMsgList.add(ApiError.COMMON_DATE_RANGE_INVALID.getMsg());
         }
 
         //预警数量和预警比例 不能同时为空

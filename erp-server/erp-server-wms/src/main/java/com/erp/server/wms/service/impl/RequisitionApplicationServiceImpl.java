@@ -1410,7 +1410,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         page1.setOptimizeCountSql(false);
         Page<RequisitionApplicationDTO.ListDTO> page = baseMapper.listExport(page1, dto.getParams());
         if(CollUtil.isEmpty(page.getRecords())) {
-            throw new ServiceException(ApiError.ERROR_EXPORT_DATA_EMPTY);
+            throw new ServiceException(ApiError.FILE_EXPORT_DATA_EMPTY);
         }
         // 数据处理
         fillList(page.getRecords());
@@ -2007,7 +2007,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         List<String> ignoreInventorySkus = ignoreInventorySkuList.stream().map(SkuVO::getSkuId).collect(Collectors.toList());
         IPage<RequisitionApplicationDTO.PickingViewDTO> picking = baseMapper.pagingPicking(new Page<>(page.getCurrPage(), page.getPageSize()), page.getParams(), ignoreInventorySkus);
         if(CollUtil.isEmpty(picking.getRecords())){
-            throw new ServiceException(ApiError.ERROR_PICKLIST_NOT_PROCESSED);
+            throw new ServiceException(ApiError.SO_PICKLIST_NOT_PROCESSED_FORBIDDEN);
         }
         return new PagingVO<>(picking);
     }
@@ -2318,7 +2318,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         Pair<List<CfgRulePickingDTO.CfgRulePickingInventoryDTO>, List<WarehouseLocationEntity>> gtPair = Pair.create(cfgRulePickingInventoryGtList, listListPair.getSecond());
         ruleOrderMatchResult = cfgRulePickingService.getSoB2CRuleOrderMatchResult(executionData, gtPair);
         if (ObjectUtil.isEmpty(ruleOrderMatchResult)) {
-            throw new ServiceException(ApiError.COMMON_NOT_EXIST, "拣货规则");
+            throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC, "拣货规则");
         }
         List<LocationInventoryResultDTO> first = ruleOrderMatchResult.getFirst();
         addDTO.setRuleOrderMatchResult(first);

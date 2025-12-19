@@ -28,7 +28,7 @@ public class AmazonSpApiExceptionUtils {
         // 系统内部定义授权异常
         if (exception instanceof ServiceException) {
             ServiceException serviceException = (ServiceException) exception;
-            if (ApiError.ERROR_MARKETPLACE_UNAUTHORIZED.getCode().equals(serviceException.getCode())) {
+            if (ApiError.SHOP_FBA_MARKETPLACE_DISABLED.getCode().equals(serviceException.getCode())) {
                 return true;
             }
         }

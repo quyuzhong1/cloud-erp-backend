@@ -291,7 +291,7 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
 
         List<ShippingTemplateRefChannelDTO.ViewDTO> refList = shippingTemplateRefChannelService.listByMainIds(Arrays.asList(id));
         if (CollectionUtils.isNotEmpty(refList)) {
-            throw new ServiceException(ApiError.ERROR_SHIPPING_TEMPLATE_DISABLED);
+            throw new ServiceException(ApiError.LOGISTICS_SHIPPING_TEMPLATE_CHANNEL_REF_DISABLED_FORBIDDEN);
         }
 
         lambdaUpdate().eq(ShippingTemplateEntity::getId, id)
@@ -313,7 +313,7 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
 
         List<ShippingTemplateRefChannelDTO.ViewDTO> refList = shippingTemplateRefChannelService.listByMainIds(Arrays.asList(id));
         if (CollectionUtils.isNotEmpty(refList)) {
-            throw new ServiceException(ApiError.ERROR_SHIPPING_TEMPLATE_DELETE);
+            throw new ServiceException(ApiError.LOGISTICS_SHIPPING_TEMPLATE_CHANNEL_REF_DELETE_FORBIDDEN);
         }
 
         //删除规则
@@ -924,7 +924,7 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
      */
     private BigDecimal calculationByCountry (ShippingTemplateDTO.TrialCalculationParamDTO dto,ShippingTemplateEntity entity) {
         if (StringUtils.isEmpty(dto.getToCountry())) {
-            throw new ServiceException(ApiError.ERROR_SHIPPING_TO_COUNTRY_NOT_NUll);
+            throw new ServiceException(ApiError.LOGISTICS_SHIPPING_DEST_COUNTRY_REQUIRED);
         }
         ShippingTemplateRuleDTO.ViewParamDTO viewParamDTO = new ShippingTemplateRuleDTO.ViewParamDTO();
         viewParamDTO.setMainId(entity.getId());
@@ -933,7 +933,7 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
         viewParamDTO.setWeight(dto.getWeight());
         ShippingTemplateRuleEntity shippingTemplateRule = shippingTemplateRuleService.getShippingTemplateRule(viewParamDTO);
         if (ObjectUtil.isEmpty(shippingTemplateRule)) {
-            throw new ServiceException(ApiError.ERROR_SHIPPING_RULE_NOT_EXIST);
+            throw new ServiceException(ApiError.LOGISTICS_SHIPPING_RULE_NOT_FOUND);
         }
         //计算最终运费
         ShippingCalculationDTO.ViewDTO shippingCalculationDTO = shippingCalculationService.calculationFinalShippingCost(entity, shippingTemplateRule, dto.getWeight());
@@ -945,7 +945,7 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
      */
     private BigDecimal calculationByRegion (ShippingTemplateDTO.TrialCalculationParamDTO dto,ShippingTemplateEntity entity) {
         if (StringUtils.isEmpty(dto.getRegion())) {
-            throw new ServiceException(ApiError.ERROR_SHIPPING_REGION_NOT_NULL);
+            throw new ServiceException(ApiError.LOGISTICS_SHIPPING_REGION_REQUIRED);
         }
         ShippingTemplateRuleDTO.ViewParamDTO viewParamDTO = new ShippingTemplateRuleDTO.ViewParamDTO();
         viewParamDTO.setMainId(entity.getId());
@@ -955,7 +955,7 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
         viewParamDTO.setWeight(dto.getWeight());
         ShippingTemplateRuleEntity shippingTemplateRule = shippingTemplateRuleService.getShippingTemplateRule(viewParamDTO);
         if (ObjectUtil.isEmpty(shippingTemplateRule)) {
-            throw new ServiceException(ApiError.ERROR_SHIPPING_RULE_NOT_EXIST);
+            throw new ServiceException(ApiError.LOGISTICS_SHIPPING_RULE_NOT_FOUND);
         }
         //计算最终运费
         ShippingCalculationDTO.ViewDTO shippingCalculationDTO = shippingCalculationService.calculationFinalShippingCost(entity, shippingTemplateRule, dto.getWeight());
@@ -967,7 +967,7 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
      */
     private BigDecimal calculationByWarehouse (ShippingTemplateDTO.TrialCalculationParamDTO dto,ShippingTemplateEntity entity) {
         if (StringUtils.isEmpty(dto.getToWarehouseName())) {
-            throw new ServiceException(ApiError.ERROR_SHIPPING_WAREHOUSE_NOT_NULL);
+            throw new ServiceException(ApiError.LOGISTICS_SHIPPING_WAREHOUSE_REQUIRED);
         }
         ShippingTemplateRuleDTO.ViewParamDTO viewParamDTO = new ShippingTemplateRuleDTO.ViewParamDTO();
         viewParamDTO.setMainId(entity.getId());
@@ -976,7 +976,7 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
         viewParamDTO.setWeight(dto.getWeight());
         ShippingTemplateRuleEntity shippingTemplateRule = shippingTemplateRuleService.getShippingTemplateRule(viewParamDTO);
         if (ObjectUtil.isEmpty(shippingTemplateRule)) {
-            throw new ServiceException(ApiError.ERROR_SHIPPING_RULE_NOT_EXIST);
+            throw new ServiceException(ApiError.LOGISTICS_SHIPPING_RULE_NOT_FOUND);
         }
         //计算最终运费
         ShippingCalculationDTO.ViewDTO shippingCalculationDTO = shippingCalculationService.calculationFinalShippingCost(entity, shippingTemplateRule, dto.getWeight());
@@ -992,13 +992,13 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
 
         ShippingTemplateEntity entity = this.listByName(shippingTemplateEntity.getName());
         if (ObjectUtil.isNotEmpty(entity) && !CharSequenceUtil.equals(entity.getId(),shippingTemplateEntity.getId())) {
-            throw new ServiceException(ApiError.ERROR_SHIPPING_TEMPLATE_EXIST);
+            throw new ServiceException(ApiError.LOGISTICS_SHIPPING_TEMPLATE_ALREADY_EXISTS);
         }
         //验证是否能停用
         if (StringUtils.isNotBlank(shippingTemplateEntity.getId())) {
             List<ShippingTemplateRefChannelDTO.ViewDTO> refList = shippingTemplateRefChannelService.listByMainIds(Arrays.asList(shippingTemplateEntity.getId()));
             if (CollectionUtils.isNotEmpty(refList) && shippingTemplateEntity.getDisabled()) {
-                throw new ServiceException(ApiError.ERROR_SHIPPING_TEMPLATE_DISABLED);
+                throw new ServiceException(ApiError.LOGISTICS_SHIPPING_TEMPLATE_CHANNEL_REF_DISABLED_FORBIDDEN);
             }
         }
     }

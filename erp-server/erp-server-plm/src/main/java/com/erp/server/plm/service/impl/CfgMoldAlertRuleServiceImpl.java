@@ -156,7 +156,7 @@ public class CfgMoldAlertRuleServiceImpl extends SuperServiceImpl<CfgMoldAlertRu
         }
         //结束日期不能小于开始日期
         if (Objects.nonNull(entity.getEndDate()) && Objects.nonNull(entity.getStartDate()) && entity.getEndDate().isBefore(entity.getStartDate())) {
-            throw new ServiceException(ApiError.ERROR_DATE_RANGE_INVALID);
+            throw new ServiceException(ApiError.COMMON_DATE_RANGE_INVALID);
         }
 
         //校验寿命数量必须大于预警寿命（数量）

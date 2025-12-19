@@ -481,7 +481,7 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
 
     @Override
     public void downloadHistorySales(String calcSalesInfoDimId, HttpServletResponse response) {
-        CalcSalesInfoDimEntity entity = Optional.ofNullable(getById(calcSalesInfoDimId)).orElseThrow(() -> new ServiceException(ApiError.COMMON_NOT_EXIST, "销量试算"));
+        CalcSalesInfoDimEntity entity = Optional.ofNullable(getById(calcSalesInfoDimId)).orElseThrow(() -> new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC, "销量试算"));
         List<CalcSalesInfoHisEsEntity> calcSalesInfoHisList = calcSalesInfoHisEsService.findByCfgRuleCalcIdAndShopIdAndSkuId(entity.getCfgRuleCalcId(), entity.getShopId(), entity.getSkuId());
         List<CfgRuleCalcDTO.HistorySaleDTO> list = new ArrayList<>();
         if (!ObjectUtil.isEmpty(calcSalesInfoHisList)) {
@@ -568,7 +568,7 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
             return endDate;
         }
         if (endDate1.isAfter(endDate)) {
-            throw new ServiceException(ApiError.ERROR_VERIFY_END_DATE);
+            throw new ServiceException(ApiError.TRIAL_CALC_END_DATE_AFTER_MIN_FORBIDDEN);
         }
         return endDate1;
     }
@@ -782,23 +782,23 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
      */
     private void verifyData(List<CalcSalesInfoDimDTO.CompareResultDTO> list, LocalDate startDate) {
         if (CollectionUtils.isEmpty(list)) {
-            throw new ServiceException(ApiError.ERROR_NOT_EXIST_CALC_DATA);
+            throw new ServiceException(ApiError.TRIAL_CALC_DATA_NOT_FOUND);
         }
         // 校验是否是相同sku 店铺 试算开始时间
         long count = list.stream().map(v -> v.getSkuId() + "-" + v.getShopId() + "-" + v.getStartCalcDate())
                 .distinct().count();
         if (count > 1) {
-            throw new ServiceException(ApiError.ERROR_DATA_IS_DIFFERENT);
+            throw new ServiceException(ApiError.TRIAL_CALC_DATA_INCONSISTENT);
         }
         // 校验历史销量是否一致
         long md5Count = list.stream().map(CalcSalesInfoDimDTO.CompareResultDTO::getHisDataMd5)
                 .distinct().count();
         if (md5Count > 1) {
-            throw new ServiceException(ApiError.ERROR_HIS_SALES_IS_DIFFERENT);
+            throw new ServiceException(ApiError.TRIAL_CALC_HISTORY_SALES_INCONSISTENT);
         }
         LocalDate startCalcDate = list.get(0).getStartCalcDate();
         if (!ObjectUtils.isEmpty(startDate) && startDate.isBefore(startCalcDate)) {
-            throw new ServiceException(ApiError.ERROR_VERIFY_START_DATE);
+            throw new ServiceException(ApiError.TRIAL_CALC_START_DATE_BEFORE_MIN_FORBIDDEN);
         }
     }
 

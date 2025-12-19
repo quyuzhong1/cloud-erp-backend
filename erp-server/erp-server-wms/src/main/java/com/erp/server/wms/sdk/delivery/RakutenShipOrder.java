@@ -79,7 +79,7 @@ public class RakutenShipOrder extends AbstractShipOrder {
             //检查销售订单详情是否存在
             List<SoB2cDetailEntity> currentDetailEntityList = soB2cDetailEntityListMap.get(mainEntity.getId());
             if (CollectionUtils.isEmpty(currentDetailEntityList)) {
-                throw new ServiceException(ApiError.ERROR_SO_B2C_DETAIL_NOT_EXIST);
+                throw new ServiceException(ApiError.SO_B2C_DETAIL_NOT_FOUND);
             }
             if(StringUtils.isBlank(mainEntity.getThirdCode())){
                 throw new ServiceException("【乐天标记发货】操作失败，订单号【{}】领星单号为空",mainEntity.getThirdCode());

@@ -578,11 +578,11 @@ public class FbaTransitCalculateReportServiceImpl extends SuperServiceImpl<FbaTr
     public Boolean adjustTransitQty(FbaTransitCalculateReportDTO.AdjustDTO adjustDTO) {
         FbaTransitCalculateReportEntity entity = this.getById(adjustDTO.getId());
         if (Objects.isNull(entity)){
-            throw new ServiceException(ApiError.COMMON_NOT_EXIST,"FBA在途核对记录");
+            throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC,"FBA在途核对记录");
         }
         FbaTransitCalculateDetailReportEntity detailReportEntity = fbaTransitCalculateDetailReportService.getById(adjustDTO.getDetailId());
         if (Objects.isNull(detailReportEntity)){
-            throw new ServiceException(ApiError.COMMON_NOT_EXIST,"FBA在途核对明细记录");
+            throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC,"FBA在途核对明细记录");
         }
         //存在下期在途记录不能调整
         LocalDate reportMonth = entity.getReportMonth();

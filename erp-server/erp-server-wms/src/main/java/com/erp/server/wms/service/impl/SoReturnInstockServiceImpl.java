@@ -558,7 +558,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         if (SourceTypeEnum.THIRD_WAREHOUSE_RETURN_INSTOCK.getCode().equalsIgnoreCase(entity.getSourceType()) || SourceTypeEnum.SELF_ADD.getCode().equalsIgnoreCase(entity.getSourceType())){
             CustomerInfoEntity customerInfo = customerFeign.getCustomerById(dto.getCustomerId());
             if (null == customerInfo){
-                ServiceException.runError(ApiError.ERROR_CUSTOMER_NOT_FOUND);
+                ServiceException.runError(ApiError.CUSTOMER_NOT_FOUND);
             }
             entity.setCustomerId(dto.getCustomerId());
             entity.setCustomerName(customerInfo.getName());
@@ -785,7 +785,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         Map<String, Object> variablesMap = BeanUtil.beanToMap(entity);
         List<SoReturnInstockDetailEntity> detailList = soReturnInstockDetailService.lambdaQuery().eq(SoReturnInstockDetailEntity::getMainId,entity.getId()).list();
         if (CollUtil.isEmpty(detailList)) {
-            throw new ServiceException(ApiError.ERROR_RETURN_INBOUND_DETAIL_REQUIRED);
+            throw new ServiceException(ApiError.SO_RETURN_INBOUND_DETAIL_REQUIRED);
         }
         variablesMap.put(ThirdConstants.DETAIL_LIST, BeanUtil.copyToList(detailList,Map.class));
         return variablesMap;
@@ -1141,7 +1141,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         List<String> soReceiveIdList = list.stream().map(SoReturnInstockDTO.GenerateSoReturnInstockView::getMainId).distinct().collect(Collectors.toList());
         long count = soReturnReceiveDetailService.listByIds(soReceiveIdList).stream().filter(req -> !ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus())).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_RETURN_SIGN_APPROVED_REQUIRED_PUSH_INBOUND);
+            throw new ServiceException(ApiError.SO_DELIVERY_RETURN_SIGN_APPROVED_REQUIRED_PUSH_INBOUND);
         }
 
         for (String id : soReceiveIdList) {
@@ -1222,7 +1222,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         List<String> soReceiveIdList = list.stream().map(SoReturnReceiveDTO.ReceiveGenerateSoReturnInstockView::getMainId).distinct().collect(Collectors.toList());
         long count = soReturnReceiveService.listByIds(soReceiveIdList).stream().filter(req -> !ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus())).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_RETURN_SIGN_APPROVED_REQUIRED_PUSH_INBOUND);
+            throw new ServiceException(ApiError.SO_DELIVERY_RETURN_SIGN_APPROVED_REQUIRED_PUSH_INBOUND);
         }
         for (String id : soReceiveIdList) {
             List<SoReturnReceiveDTO.ReceiveGenerateSoReturnInstockView> viewList = list.stream().filter(req -> req.getMainId().equals(id)).collect(Collectors.toList());
@@ -2306,7 +2306,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         SoB2cReturnDTO.ReturnInstockDTO instockDTO = returnInstockDTOS.get(0);
         WarehouseEntity warehouseEntity = warehouseService.getById(instockDTO.getWarehouseId());
         if (Objects.isNull(warehouseEntity)){
-            throw new ServiceException(ApiError.COMMON_NOT_EXIST,"仓库【"+instockDTO.getWarehouseName()+"】");
+            throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC,"仓库【"+instockDTO.getWarehouseName()+"】");
         }
         //构建退货入库单新增数据
         SoReturnInstockDTO.Add add = SoB2cReturnInstockConverter.INSTANCE.soB2cReturnEntityToAdd(instockDTO);

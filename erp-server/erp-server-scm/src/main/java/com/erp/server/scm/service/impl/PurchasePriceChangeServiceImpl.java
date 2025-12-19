@@ -370,7 +370,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
         statusList.add(rejectStatus);
         statusList.add(waitSubmitStatus);
         if (!statusList.contains(status)) {
-            throw new ServiceException(ApiError.);
+            throw new ServiceException(ApiError.BILL_UPDATE_STATUS_NOT_ALLOWED);
         }
         //code
         String code = priceChangeEntity.getCode();

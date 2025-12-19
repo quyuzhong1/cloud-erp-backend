@@ -283,12 +283,12 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
         }
         List<SoB2cLogisticsEntity> soB2cLogisticsEntities = soB2cFeign.listSoB2cLogisticsByMainIdList(Collections.singletonList(entity.getSoId()));
         if (CollectionUtils.isEmpty(soB2cLogisticsEntities)) {
-            throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_NOT_EXIST);
+            throw new ServiceException(ApiError.SO_B2C_LOGISTICS_NOT_FOUND);
         }
 
         LogisticsSupplierDTO.AuthDTO auth = logisticsAuthFeign.getAuthByChannelId(entity.getLogisticsChannelId());
         if (Objects.isNull(auth)) {
-            throw new ServiceException(ApiError.ERROR_LOGISTICS_CHANNEL_NOT_EXIST);
+            throw new ServiceException(ApiError.LOGISTICS_CHANNEL_NOT_FOUND);
         }
 
         SoB2cEntity soB2cEntity = soB2cEntityList.get(0);

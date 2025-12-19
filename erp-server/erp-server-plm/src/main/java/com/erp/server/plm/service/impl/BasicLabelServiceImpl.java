@@ -145,7 +145,7 @@ public class BasicLabelServiceImpl extends SuperServiceImpl<BasicLabelMapper, Ba
     @Transactional(rollbackFor = Exception.class)
     public Boolean update(BasicLabelDTO.UpdateDTO updateDTO) {
         BasicLabelEntity old = super.getById(updateDTO.getId());
-        BasicLabelEntity oldEntity = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.COMMON_NOT_EXIST, "基础标签单"));
+        BasicLabelEntity oldEntity = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC, "基础标签单"));
         BasicLabelEntity basicLabelEntity = BeanMapperUtils.map(BasicLabelEntity.class, updateDTO);
 
         // 数据处理
@@ -161,9 +161,9 @@ public class BasicLabelServiceImpl extends SuperServiceImpl<BasicLabelMapper, Ba
     @Override
     public void removeBasicLabelById(String id) {
         BasicLabelEntity basicLabelEntity = this.getById(id);
-        BasicLabelEntity oldBasicLabelEntity = Optional.ofNullable(basicLabelEntity).orElseThrow(() -> new ServiceException(ApiError.COMMON_NOT_EXIST, "基础标签单"));
+        BasicLabelEntity oldBasicLabelEntity = Optional.ofNullable(basicLabelEntity).orElseThrow(() -> new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC, "基础标签单"));
         LoginUser user = UserContext.getDefaultLoginUser();
-        LoginUser loginUser = Optional.ofNullable(user).orElseThrow(() -> new ServiceException(ApiError.COMMON_NOT_EXIST, "当前登录用户"));
+        LoginUser loginUser = Optional.ofNullable(user).orElseThrow(() -> new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC, "当前登录用户"));
         if (!StringUtils.equalsIgnoreCase(oldBasicLabelEntity.getCreateUserId(), loginUser.getUid())){
             throw new ServiceException("只能删除自己创建的标签");
         }

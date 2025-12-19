@@ -1089,7 +1089,7 @@ public class SampleTransferInfoServiceImpl extends SuperServiceImpl<SampleTransf
                 .findFirst()
                 .orElse(null);
         if(Objects.isNull(transferInUser)){
-            throw new ServiceException(ApiError.COMMON_NOT_EXIST, "转入人");
+            throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC, "转入人");
         }
         
         FindUserDTO transferOutUser = users.stream()
@@ -1097,7 +1097,7 @@ public class SampleTransferInfoServiceImpl extends SuperServiceImpl<SampleTransf
                 .findFirst()
                 .orElse(null);
         if(Objects.isNull(transferOutUser)){
-            throw new ServiceException(ApiError.COMMON_NOT_EXIST, "转出人");
+            throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC, "转出人");
         }
 
         // 查询部门信息
@@ -1113,7 +1113,7 @@ public class SampleTransferInfoServiceImpl extends SuperServiceImpl<SampleTransf
                 .findFirst()
                 .orElse(null);
         if(Objects.isNull(transferInDept)){
-            throw new ServiceException(ApiError.COMMON_NOT_EXIST, "转入部门");
+            throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC, "转入部门");
         }
         
         SysDepartmentEntity transferOutDept = sysDepartmentEntities.stream()
@@ -1121,7 +1121,7 @@ public class SampleTransferInfoServiceImpl extends SuperServiceImpl<SampleTransf
                 .findFirst()
                 .orElse(null);
         if(Objects.isNull(transferOutDept)){
-            throw new ServiceException(ApiError.COMMON_NOT_EXIST, "转出部门");
+            throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC, "转出部门");
         }
 
         // 赋值

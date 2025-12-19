@@ -287,7 +287,7 @@ public class TmsWarehouseMappingServiceImpl extends SuperServiceImpl<TmsWarehous
         //查询是否存在相同编码数据
         List<TmsWarehouseMappingEntity> oldList = listByLogisticsWarehouseCodeList(Arrays.asList(tmsWarehouseMappingEntity.getLogisticsWarehouseCode()));
         if (CollectionUtils.isNotEmpty(oldList) && !CharSequenceUtil.equals(tmsWarehouseMappingEntity.getId(),oldList.get(0).getId())) {
-            throw new ServiceException(ApiError.ERROR_WAREHOUSE_MAPPING_EXIST,tmsWarehouseMappingEntity.getLogisticsWarehouseCode());
+            throw new ServiceException(ApiError.LOGISTICS_WAREHOUSE_MAPPING_ALREADY_EXISTS,tmsWarehouseMappingEntity.getLogisticsWarehouseCode());
         }
     }
 

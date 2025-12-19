@@ -177,7 +177,7 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
     public Boolean update(DeliverySuggestDTO.UpdateDTO updateDTO) {
         DeliverySuggestEntity old = Optional.ofNullable(super.getById(updateDTO.getId())).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "补货计划"));
         if (!Arrays.asList(SuggestStatusEnum.DRAFT.getCode(),SuggestStatusEnum.WAIT_CONFIRM.getCode()).contains(old.getStatus()) || old.getInvalidStatus()) {
-            throw new ServiceException(ApiError.ERROR_SUGGEST_UPDATE);
+            throw new ServiceException(ApiError.REPLENISHMENT_SUGGESTION_UPDATE_FORBIDDEN);
         }
         DeliverySuggestEntity deliverySuggestEntity =  BeanMapperUtils.map(DeliverySuggestEntity.class, updateDTO);
         deliverySuggestEntity.setSourceId(old.getSourceId());
@@ -198,7 +198,7 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
     public Boolean importUpdate(DeliverySuggestDTO.ImportUpdateDTO updateDTO) {
         DeliverySuggestEntity old = Optional.ofNullable(super.getById(updateDTO.getId())).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "补货计划"));
         if (!Arrays.asList(SuggestStatusEnum.DRAFT.getCode(),SuggestStatusEnum.WAIT_CONFIRM.getCode()).contains(old.getStatus()) || old.getInvalidStatus()) {
-            throw new ServiceException(ApiError.ERROR_SUGGEST_UPDATE);
+            throw new ServiceException(ApiError.REPLENISHMENT_SUGGESTION_UPDATE_FORBIDDEN);
         }
         DeliverySuggestEntity deliverySuggestEntity =  BeanMapperUtils.map(DeliverySuggestEntity.class, updateDTO);
         log.info("编辑 开始修改补货计划数据，单号：【{}】", old.getCode());
@@ -389,7 +389,7 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
     public BatchResultDTO locking(String id) {
         DeliverySuggestEntity old = Optional.ofNullable(super.getById(id)).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "补货计划"));
         if (!StrUtil.equals(old.getStatus(), SuggestStatusEnum.DRAFT.getCode()) || old.getInvalidStatus()) {
-            throw new ServiceException(ApiError.ERROR_SUGGEST_LOCKING);
+            throw new ServiceException(ApiError.REPLENISHMENT_SUGGESTION_ONLY_DRAFT_ALLOW_LOCK);
         }
         //更新成待确认状态
         old.setStatus(SuggestStatusEnum.WAIT_CONFIRM.getCode());
@@ -406,7 +406,7 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
     public BatchResultDTO confirm(String id) {
         DeliverySuggestEntity old = Optional.ofNullable(super.getById(id)).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "补货计划"));
         if (!StrUtil.equals(old.getStatus(), SuggestStatusEnum.WAIT_CONFIRM.getCode()) || old.getInvalidStatus()) {
-            throw new ServiceException(ApiError.ERROR_SUGGEST_CONFIRM);
+            throw new ServiceException(ApiError.REPLENISHMENT_SUGGESTION_ONLY_PENDING_CONFIRM_ALLOW);
         }
         if (MathUtil.compareTo(old.getPlanDeliveryQty(),MathUtil.ZERO) <= MathUtil.ZERO) {
             throw new ServiceException("计划修正值必须大于0");
@@ -434,7 +434,7 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
         DeliverySuggestEntity old = Optional.ofNullable(super.getById(id)).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "补货计划"));
         Boolean isPush = isPushDeliveryPlan(id);
         if (isPush) {
-            return BatchResultDTO.fail(old.getId(),old.getCode(), MessageUtils.getMessage(ApiError.ERROR_SUGGEST_INVALID));
+            return BatchResultDTO.fail(old.getId(),old.getCode(), MessageUtils.getMessage(ApiError.REPLENISHMENT_SUGGESTION_PUSHED_INVALID_FORBIDDEN));
         }
 
         if (old.getInvalidStatus()) {
@@ -490,12 +490,12 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
         String codes = deliverySuggestList.stream().filter(obj -> !CharSequenceUtil.equals(obj.getStatus(), SuggestStatusEnum.FINISH.getCode()))
                 .map(DeliverySuggestEntity::getCode).collect(Collectors.joining(","));
         if (CharSequenceUtil.isNotBlank(codes)) {
-            throw new ServiceException(ApiError.ERROR_DELIVERY_SUGGEST_PUSH,codes);
+            throw new ServiceException(ApiError.DELIVERY_SUGGESTION_ONLY_COMPLETED_ALLOW_PUSH,codes);
         }
         String invalidCodes = deliverySuggestList.stream().filter(obj -> obj.getInvalidStatus().equals(Boolean.TRUE))
                 .map(DeliverySuggestEntity::getCode).collect(Collectors.joining(","));
         if (CharSequenceUtil.isNotBlank(invalidCodes)) {
-            throw new ServiceException(ApiError.ERROR_DELIVERY_SUGGEST_PUSH_INVALID,codes);
+            throw new ServiceException(ApiError.DELIVERY_SUGGESTION_INVALID_FORBIDDEN,codes);
         }
 
         DeliverySuggestDTO.ViewPushDeliveryPlanDTO viewPushDeliveryPlanDTO = new DeliverySuggestDTO.ViewPushDeliveryPlanDTO();
@@ -749,7 +749,7 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
         DeliverySuggestEntity old = Optional.ofNullable(super.getById(id)).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "补货计划"));
         //草稿和待确认支持更新备注
         if (!Arrays.asList(SuggestStatusEnum.DRAFT.getCode(),SuggestStatusEnum.WAIT_CONFIRM.getCode()).contains(old.getStatus()) || old.getInvalidStatus()) {
-            throw new ServiceException(ApiError.ERROR_SUGGEST_UPDATE_REMARK);
+            throw new ServiceException(ApiError.REPLENISHMENT_SUGGESTION_UPDATE_REMARK_FORBIDDEN);
         }
         // 操作日志备注
         String msg = StrUtil.format("更新了补货计划备注，由【{}】更新为【{}】",old.getRemark(),remark);

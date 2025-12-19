@@ -46,7 +46,7 @@ public class SoB2cRefundDetailServiceImpl extends SuperServiceImpl<SoB2cRefundDe
         }
 
         // 操作日志
-        String msg =  CharSequenceUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), ApiError.ERROR_REFUND_ORDER_DETAIL.getMsg() , soB2cRefundDetailEntity.getId());
+        String msg =  CharSequenceUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), ApiError.SO_REFUND_ORDER_DETAIL.getMsg() , soB2cRefundDetailEntity.getId());
         operateLogService.addModuleOperateLog(msg, null, soB2cRefundDetailEntity.getId(), "新增操作");
         return new BaseResultDTO.AddDTO(soB2cRefundDetailEntity.getId(), soB2cRefundDetailEntity.getId());
     }
@@ -59,7 +59,7 @@ public class SoB2cRefundDetailServiceImpl extends SuperServiceImpl<SoB2cRefundDe
     public Boolean update(RefundOrderDetailDTO.UpdateDTO updateDTO) {
         SoB2cRefundDetailEntity old = super.getById(updateDTO.getId());
         if(null == old){
-            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, ApiError.ERROR_REFUND_ORDER_DETAIL.getMsg());
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, ApiError.SO_REFUND_ORDER_DETAIL.getMsg());
         }
         SoB2cRefundDetailEntity soB2cRefundDetailEntity =  BeanMapperUtils.map(SoB2cRefundDetailEntity.class, updateDTO);
         log.info("编辑 开始修改退款订单明细数据，id：【{}】", old.getId());
@@ -70,7 +70,7 @@ public class SoB2cRefundDetailServiceImpl extends SuperServiceImpl<SoB2cRefundDe
 
         // 记录主单操作日志
             log.info("编辑 开始记录退款订单明细日志数据，id：【{}】", soB2cRefundDetailEntity.getId());
-            String msg =  CharSequenceUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), soB2cRefundDetailEntity.getId(), ApiError.ERROR_REFUND_ORDER_DETAIL.getMsg());
+            String msg =  CharSequenceUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), soB2cRefundDetailEntity.getId(), ApiError.SO_REFUND_ORDER_DETAIL.getMsg());
         operateLogService.addModuleOperateLogByObj(old, soB2cRefundDetailEntity, null, soB2cRefundDetailEntity.getId(), msg);
         return Boolean.TRUE;
     }

@@ -352,7 +352,7 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
         PagingVO<VirtualInventoryDTO.ListDTO> resultList = this.paging(dto);
         List<VirtualInventoryDTO.ListDTO> list = (List<VirtualInventoryDTO.ListDTO>) resultList.getList();
         if (CollectionUtils.isEmpty(list)) {
-            throw new ServiceException(ApiError.ERROR_EXPORT_DATA_EMPTY);
+            throw new ServiceException(ApiError.FILE_EXPORT_DATA_EMPTY);
         }
         return new PagingVO<>(list, resultList.getTotalCount(), dto.getPageSize(), dto.getCurrPage());
     }

@@ -66,7 +66,7 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
         //查询字典表 type = workflowTaskNode
         List<DictBasicDTO.ViewDTO> dictList = dictBasicService.getByType(dto.getDictBasicTypeEnum().getType(),dto.getSourceTypeEnum().getCode());
         if(CollUtil.isEmpty(dictList)){
-            throw new ServiceException(ApiError.COMMON_NOT_EXIST,dto.getSourceTypeEnum().getName());
+            throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC,dto.getSourceTypeEnum().getName());
         }
         // 根据 sort 字段升序排序
         dictList = dictList.stream()

@@ -190,25 +190,25 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
 
         List<PoReconciliationDetailEntity> poReconciliationDetailList = this.listByIds(dto.getDetailIdList());
         if (CollectionUtils.isEmpty(poReconciliationDetailList)) {
-            throw new ServiceException(ApiError.ERROR_PO_RECONCILIATION_DETAIL_NOT_EXIST);
+            throw new ServiceException(ApiError.FIN_RECONCILIATION_DETAIL_NOT_FOUND);
         }
         //校验确认状态
         String confirmSourceCodes = poReconciliationDetailList.stream().filter(obj -> !CharSequenceUtil.equals(obj.getBusinessStatus(), ConfirmStatusEnum.CONFIRM.getCode()))
                 .map(PoReconciliationDetailEntity::getSourceCode).collect(Collectors.joining(","));
         if (CharSequenceUtil.isNotBlank(confirmSourceCodes)) {
-            throw new ServiceException(ApiError.ERROR_PO_RECONCILIATION_NOT_GENERATE,confirmSourceCodes);
+            throw new ServiceException(ApiError.PO_RECONCILIATION_NOT_CONFIRMED_FOR_GENERATE,confirmSourceCodes);
         }
         //校验对账状态
         String statusCodes = poReconciliationDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getStatus(), PoReconciliationDetailEnum.StatusEnum.NOT_NEED_RECONCILIATION.getCode()))
                 .map(PoReconciliationDetailEntity::getSourceCode).collect(Collectors.joining(","));
         if (CharSequenceUtil.isNotBlank(statusCodes)) {
-            throw new ServiceException(ApiError.ERROR_PO_RECONCILIATION_NOT_NEED_RECONCILIATION,statusCodes);
+            throw new ServiceException(ApiError.PO_RECONCILIATION_NOT_REQUIRED_FORBIDDEN,statusCodes);
         }
         //校验是否已经加入对账
         String generateSourceCodes = poReconciliationDetailList.stream().filter(obj -> CharSequenceUtil.isNotBlank(obj.getMainId()))
                 .map(PoReconciliationDetailEntity::getSourceCode).collect(Collectors.joining(","));
         if (CharSequenceUtil.isNotBlank(generateSourceCodes)) {
-            throw new ServiceException(ApiError.ERROR_PO_RECONCILIATION_HAS_GENERATE,generateSourceCodes);
+            throw new ServiceException(ApiError.PO_RECONCILIATION_ALREADY_GENERATED,generateSourceCodes);
         }
         if (PoReconciliationEnum.GenerateTypeEnum.CREATE_NEW.getCode().equals(dto.getGenerateType())) {
             //新生成对账单
@@ -394,9 +394,9 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
                 .map(PoReconciliationDetailEntity::getSourceCode).collect(Collectors.joining(","));
         if (StrUtil.isNotBlank(codes)) {
             if(isFromDisApprove){
-                throw new ServiceException(ApiError.ERROR_PO_RECEIVE_DISAPPROVE_FAILURE,codes);
+                throw new ServiceException(ApiError.PO_RECONCILIATION_REF_RECEIVE_DISAPPROVE_FORBIDDEN,codes);
             }else{
-                throw new ServiceException(ApiError.ERROR_PO_RECONCILIATION_DETAIL_DELETE,codes);
+                throw new ServiceException(ApiError.PO_RECONCILIATION_DETAIL_DELETE_FORBIDDEN,codes);
             }
         }
         lambdaUpdate().in(PoReconciliationDetailEntity::getSourceDetailId,sourceDetailIdList).remove();
@@ -508,7 +508,7 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
             //采购入库
             addInstockPoReconciliationDetail(paramDTO);
         } else {
-            throw new ServiceException(ApiError.ERROR_PO_RECONCILIATION_MANUAL_GENERATE);
+            throw new ServiceException(ApiError.PO_RECONCILIATION_MANUAL_GENERATE_FORBIDDEN);
         }
         return BatchResultDTO.success(paramDTO.getCode(), paramDTO.getCode(), OperationTypeEnum.MANUAL_GENERATE);
     }
@@ -527,7 +527,7 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
         }
         PoInstockEntity entity = poInstockList.get(0);
         if (!CharSequenceUtil.equals(ApproveStatusEnum.APPROVE.getStatus(),entity.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_INSTOCK_ADD_PO_RECONCILIATION_DETAIL);
+            throw new ServiceException(ApiError.PO_INSTOCK_NOT_APPROVED_RECONCILIATION_DETAIL_FORBIDDEN);
         }
         //采购入库明细
         List<PoInstockDetailEntity> poInstockDetailList = FeignQuery.create(PoInstockDetailEntity.class)
@@ -596,10 +596,10 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
         }
         PoReturnEntity entity = poReturnEntityList.get(0);
         if (!CharSequenceUtil.equals(ApproveStatusEnum.APPROVE.getStatus(),entity.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_INSTOCK_ADD_PO_RECONCILIATION_DETAIL);
+            throw new ServiceException(ApiError.PO_INSTOCK_NOT_APPROVED_RECONCILIATION_DETAIL_FORBIDDEN);
         }
         if (CharSequenceUtil.equals(SourceTypeEnum.QC_INFO.getCode(),entity.getSourceType())) {
-            throw new ServiceException(ApiError.ERROR_RETURN_ADD_PO_RECONCILIATION_DETAIL);
+            throw new ServiceException(ApiError.PO_INSTOCK_QC_RETURN_RECONCILIATION_DETAIL_FORBIDDEN);
         }
 
         List<PoReturnDetailEntity> poReturnDetailList = FeignQuery.create(PoReturnDetailEntity.class)
@@ -660,7 +660,7 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
     public BatchResultDTO updateStatus(String id,String status) {
         PoReconciliationDetailEntity entity = this.getById(id);
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_PO_RECONCILIATION_DETAIL_NOT_EXIST);
+            throw new ServiceException(ApiError.FIN_RECONCILIATION_DETAIL_NOT_FOUND);
         }
         String oldStatus = entity.getStatus();
         if (CharSequenceUtil.equals(oldStatus,status)) {
@@ -745,7 +745,7 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
         }
         PoReconciliationEntity poReconciliationEntity = poReconciliationScmService.getById(dto.getId());
         if (ObjectUtils.isEmpty(poReconciliationEntity)) {
-            throw new ServiceException(ApiError.ERROR_PO_RECONCILIATION_NOT_EXIST);
+            throw new ServiceException(ApiError.FIN_RECONCILIATION_NOT_FOUND);
         }
         //校验
         long count = poReconciliationDetailList.stream().filter(obj -> !CharSequenceUtil.equals(obj.getSupplierId(),poReconciliationEntity.getSupplierId())
@@ -779,7 +779,7 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
 
         if (CollectionUtils.isNotEmpty(oldDetailList)) {
             String codes = oldDetailList.stream().map(PoReconciliationDetailEntity::getSourceCode).collect(Collectors.joining(","));
-            throw new ServiceException(ApiError.ERROR_PO_RECONCILIATION_DETAIL_HAS_GENERATE,codes);
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_RECONCILIATION_NOT_FOUND,codes);
         }
     }
 
@@ -914,7 +914,7 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
         //对账单
         PoReconciliationEntity poReconciliationEntity = poReconciliationScmService.getById(mainId);
         if (ObjectUtils.isEmpty(poReconciliationEntity)) {
-            throw new ServiceException(ApiError.ERROR_PO_RECONCILIATION_NOT_EXIST);
+            throw new ServiceException(ApiError.FIN_RECONCILIATION_NOT_FOUND);
         }
         //新增不需要添加新增SKU的日志
         List<String> idList = list.stream().map(PoReconciliationDetailEntity::getId).collect(Collectors.toList());
@@ -927,12 +927,12 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
             //添加日志
             PoReconciliationDetailEntity old = poReconciliationDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), entity.getId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(old)) {
-                throw new ServiceException(ApiError.ERROR_PO_RECONCILIATION_DETAIL_NOT_EXIST);
+                throw new ServiceException(ApiError.FIN_RECONCILIATION_DETAIL_NOT_FOUND);
             }
             //供应商、结算组织验证
             if (!CharSequenceUtil.equals(poReconciliationEntity.getSupplierId(),old.getSupplierId())
                     || !CharSequenceUtil.equals(poReconciliationEntity.getSettleOrgId(),old.getSettleOrgId())) {
-                throw new ServiceException(ApiError.ERROR_PO_RECONCILIATION_ADD_DETAIL,poReconciliationEntity.getCode(),poReconciliationEntity.getSupplierName(),poReconciliationEntity.getSettleOrgName());
+                throw new ServiceException(ApiError.PO_RECONCILIATION_DETAIL_SUPPLIER_ORG_MISMATCH,poReconciliationEntity.getCode(),poReconciliationEntity.getSupplierName(),poReconciliationEntity.getSettleOrgName());
             }
             //税率
             BigDecimal taxRate = MathUtil.compareTo(entity.getTaxRate(), MathUtil.ZERO) == MathUtil.ZERO ? BigDecimal.ZERO : MathUtil.divide(entity.getTaxRate(), MathUtil.BigDecimal_100);

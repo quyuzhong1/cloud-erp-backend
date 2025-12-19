@@ -1198,7 +1198,7 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
         List<String> soIds = forecastDetailEntityList.stream().map(PackageForecastDetailEntity::getSoId).distinct().collect(Collectors.toList());
         List<SoB2cEntity> soB2cEntityList = soB2cFeign.listByIds(soIds);
         if (CollectionUtils.isEmpty(soB2cEntityList)) {
-            throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
+            throw new ServiceException(ApiError.SO_B2C_NOT_FOUND);
         }
         List<String> shopIds = soB2cEntityList.stream().map(SoB2cEntity::getShopId).distinct().collect(Collectors.toList());
         if (CollectionUtils.isEmpty(shopIds)){
@@ -1215,7 +1215,7 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
     public PagingVO<PackageForecastDTO.ExportViewDTO> exportPackageForecast(PagingDTO<PackageForecastDTO.ExportDTO> dto) {
         Page<PackageForecastDTO.ExportViewDTO> page = baseMapper.listExcel(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams());
         if (CollectionUtils.isEmpty(page.getRecords())) {
-            throw new ServiceException(ApiError.ERROR_EXPORT_DATA_EMPTY);
+            throw new ServiceException(ApiError.FILE_EXPORT_DATA_EMPTY);
         }
         //处理分页数据
         fillExportPaging(page.getRecords());

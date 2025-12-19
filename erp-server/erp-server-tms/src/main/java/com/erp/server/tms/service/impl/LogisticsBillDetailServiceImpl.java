@@ -163,7 +163,7 @@ public class LogisticsBillDetailServiceImpl extends SuperServiceImpl<LogisticsBi
         String manualCompleteCode = LogisticTrackStatusEnum.MANUAL_COMPLETE.getCode();
         String dbTrackStatus=detailEntity.getTrackStatus();
         if (signCode.equals(dbTrackStatus) && detailEntity.getIsApiUpdate()) {
-            throw new ServiceException(ApiError.ERROR_NOT_UPDATE_TRACK_STATUS);
+            throw new ServiceException(ApiError.LOGISTICS_TRACK_STATUS_SYSTEM_MANAGED_NOT_EDITABLE);
         }
         detailEntity.setIsApiUpdate(Boolean.FALSE);
         //表示签收

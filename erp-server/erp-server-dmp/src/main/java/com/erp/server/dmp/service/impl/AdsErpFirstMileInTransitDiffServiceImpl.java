@@ -128,7 +128,7 @@ public class AdsErpFirstMileInTransitDiffServiceImpl extends SuperServiceImpl<Ad
     public Boolean adjustTransitQty(AdsErpFirstMileInTransitDiffDTO.AdjustDTO adjustDTO) {
         AdsErpFirstMileInTransitDiffEntity entity = this.getById(adjustDTO.getId());
         if (Objects.isNull(entity)) {
-            throw new ServiceException(ApiError.COMMON_NOT_EXIST, "平台在途报告记录");
+            throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC, "平台在途报告记录");
         }
         //存在下期在途记录不能调整
         LocalDateTime reportMonth = LocalDateTimeUtil.parse(entity.getCheckMonthQuery(), "yyyy-MM-dd HH:mm:ss");

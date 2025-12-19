@@ -86,7 +86,7 @@ public class OtherOutstockCustomerServiceImpl extends SuperServiceImpl<OtherOuts
         }
         CustomerInfoEntity customerInfoEntity = customerFeign.getCustomerById(entity.getCustomerId());
         if (ObjectUtil.isEmpty(customerInfoEntity)) {
-            throw new ServiceException(ApiError.ERROR_CUSTOMER_NOT_FOUND);
+            throw new ServiceException(ApiError.CUSTOMER_NOT_FOUND);
         }
         entity.setCustomerCode(customerInfoEntity.getCode());
     }

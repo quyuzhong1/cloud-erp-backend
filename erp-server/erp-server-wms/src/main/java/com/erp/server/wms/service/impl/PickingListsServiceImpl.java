@@ -455,7 +455,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
             SoDeliveryNoticeEntity soDeliveryNotice = noticeEntities.stream().filter(v -> v.getId().equals(picking.getSourceId()))
                     .findFirst().orElseThrow(() -> new ServiceException(ApiError.SO_DELIVERY_NOTICE_NOT_EXIST));
             SoInfoEntity soInfo = soInfos.stream().filter(v -> v.getId().equals(soDeliveryNotice.getSourceId()))
-                    .findFirst().orElseThrow(() -> new ServiceException(ApiError.ERROR_SO_NOT_FOUND));
+                    .findFirst().orElseThrow(() -> new ServiceException(ApiError.SO_NOT_FOUND));
             printView.setCode(soDeliveryNotice.getSourceCode());
             printView.setChannelName(soDeliveryNotice.getCustomerName());
             printView.setHandlingUserName(soInfo.getCreateUserName());

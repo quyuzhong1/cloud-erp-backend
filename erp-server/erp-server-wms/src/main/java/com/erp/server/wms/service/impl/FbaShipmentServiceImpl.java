@@ -188,7 +188,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
             throw new ServiceException(ApiError.MAPPING_SKU_MAPPING_EXIST);
         }
         if (ObjectUtil.isEmpty(skuDTOS)) {
-            throw new ServiceException(ApiError.ERROR_M_SKU_NOT_EXIST);
+            throw new ServiceException(ApiError.MAPPING_SKU_MAPPING_EXIST);
         }
 
         //映射sku
@@ -294,7 +294,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         // 检查当前店铺是否授权
         ShopInfoEntity shopInfoEntity = shopInfoFeign.getShopInfoById(dto.getShopId());
         if (null == shopInfoEntity) {
-            throw new ServiceException(ApiError.ERROR_SHOP_NOT_FOUND);
+            throw new ServiceException(ApiError.SHOP_NOT_FOUND);
         }
         if (!AuthStatusEnum.ALREADY.getCode().equalsIgnoreCase(shopInfoEntity.getAuthStatus())) {
             throw new ServiceException(ApiError.SHOP_AUTH_SHIPMENT_ERROR);

@@ -281,7 +281,7 @@ public class CfgMoldReturnAlertRuleServiceImpl extends SuperServiceImpl<CfgMoldR
         }
         //结束日期不能小于开始日期
         if (Objects.nonNull(entity.getEndDate()) && Objects.nonNull(entity.getStartDate()) && entity.getEndDate().isBefore(entity.getStartDate())) {
-            throw new ServiceException(ApiError.ERROR_DATE_RANGE_INVALID);
+            throw new ServiceException(ApiError.COMMON_DATE_RANGE_INVALID);
         }
         entity.setMoldCode(moldInfoEntity.getCode());
         entity.setMoldName(moldInfoEntity.getName());

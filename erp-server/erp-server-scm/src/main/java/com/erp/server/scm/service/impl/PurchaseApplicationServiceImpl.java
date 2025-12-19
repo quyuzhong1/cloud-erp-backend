@@ -1311,9 +1311,9 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
             exceptionDataMap.put("purchaseApplicationDetailIds", prohibitDetailIds);
             prohibitDetails.stream().forEach(detail->{
                 PurchaseApplicationEntity entity = detailMainMap.get(detail.getId());
-                errMsg.append(MessageUtils.getMessage(ApiError.ERROR_PO_APPLY_QTY_MORE,entity.getCode(),detail.getSkuNo())).append("</br>");
+                errMsg.append(MessageUtils.getMessage(ApiError.PO_APPLY_QTY_EXCEEDS_PENDING_QTY,entity.getCode(),detail.getSkuNo())).append("</br>");
             });
-            throw new ServiceException(new ApiResult<>(ApiError.ERROR_PO_APPLY_QTY_MORE.getCode(),errMsg.toString(), exceptionDataMap));
+            throw new ServiceException(new ApiResult<>(ApiError.PO_APPLY_QTY_EXCEEDS_PENDING_QTY.getCode(),errMsg.toString(), exceptionDataMap));
         }
         return  detailList;
     }

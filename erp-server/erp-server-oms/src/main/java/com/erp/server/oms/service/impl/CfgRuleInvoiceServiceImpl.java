@@ -85,7 +85,7 @@ public class CfgRuleInvoiceServiceImpl extends SuperServiceImpl<CfgRuleInvoiceMa
         String expression = sqElDTO.getExpression();
         Boolean checkResult = spElServer.checkExpressionIsEnabled(expression);
         if (Boolean.FALSE.equals(checkResult)) {
-            throw new ServiceException(ApiError.ERROR_RULE_EXPRESSION_ERROR);
+            throw new ServiceException(ApiError.COMMON_RULE_EXPRESSION_ERROR);
         }
         CfgRuleInvoiceEntity entity = new CfgRuleInvoiceEntity();
         BeanMapperUtils.copy(addDTO, entity);
@@ -124,7 +124,7 @@ public class CfgRuleInvoiceServiceImpl extends SuperServiceImpl<CfgRuleInvoiceMa
         String expression = sqElDTO.getExpression();
         Boolean checkResult = spElServer.checkExpressionIsEnabled(expression);
         if (Boolean.FALSE.equals(checkResult)) {
-            throw new ServiceException(ApiError.ERROR_RULE_EXPRESSION_ERROR);
+            throw new ServiceException(ApiError.COMMON_RULE_EXPRESSION_ERROR);
         }
         CfgRuleInvoiceEntity entity = BeanMapperUtils.map(CfgRuleInvoiceEntity.class, updateDTO);
         // 数据处理

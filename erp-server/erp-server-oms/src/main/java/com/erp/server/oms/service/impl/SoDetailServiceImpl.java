@@ -1011,7 +1011,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
     public List<SoDetailDTO.ViewDTO> listBySoId(String soId) {
         SoInfoEntity soInfo = soInfoService.getById(soId);
         if (Objects.isNull(soInfo)) {
-            throw new ServiceException(ApiError.ERROR_SO_NOT_FOUND);
+            throw new ServiceException(ApiError.SO_NOT_FOUND);
         }
         String warehouseId = soInfo.getWarehouseId();
 
@@ -1487,7 +1487,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         //客户信息
         CustomerInfoEntity customerInfoEntity = customerInfoService.getCustomerById(soInfoEntity.getCustomerId());
         if (ObjectUtil.isEmpty(customerInfoEntity)) {
-            throw new ServiceException(ApiError.ERROR_CUSTOMER_NOT_FOUND);
+            throw new ServiceException(ApiError.CUSTOMER_NOT_FOUND);
         }
         //虚拟仓库信息
         VirtualWarehouseChannelDTO.PlatformDTO platformDTO = new VirtualWarehouseChannelDTO.PlatformDTO();
@@ -1697,12 +1697,12 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
     public BatchResultDTO saveLockVirtualInventory(SoInfoDTO.LockVirtualInventorySaveDTO saveDTO) {
         SoDetailEntity soDetailEntity = this.getById(saveDTO.getDetailId());
         if (ObjectUtil.isEmpty(soDetailEntity)) {
-            throw new ServiceException(ApiError.ERROR_SO_DETAIL_NOT_FOUND);
+            throw new ServiceException(ApiError.SO_DETAIL_NOT_FOUND);
         }
         //销售订单
         SoInfoEntity soInfoEntity = soInfoService.getById(soDetailEntity.getMainId());
         if (ObjectUtil.isEmpty(soInfoEntity)) {
-            throw new ServiceException(ApiError.ERROR_SO_NOT_FOUND);
+            throw new ServiceException(ApiError.SO_NOT_FOUND);
         }
         if (CharSequenceUtil.equals(soInfoEntity.getApproveStatus().getStatus(), BillApproveStatusEnum.DRAFT.getStatus())) {
             throw new ServiceException("暂存状态不允许锁定");
@@ -1755,11 +1755,11 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
     public BatchResultDTO batchUnLockVirtualInventory(String detailId,SoInfoEntity oldEntity) {
         SoDetailEntity old =  this.getById(detailId);
         if (ObjectUtil.isEmpty(old)) {
-            throw new ServiceException(ApiError.ERROR_SO_DETAIL_NOT_FOUND);
+            throw new ServiceException(ApiError.SO_DETAIL_NOT_FOUND);
         }
         SoInfoEntity soInfoEntity = ObjectUtil.isEmpty(oldEntity) ? soInfoService.getById(old.getMainId()) : oldEntity;
         if (ObjectUtil.isEmpty(soInfoEntity)) {
-            throw new ServiceException(ApiError.ERROR_SO_NOT_FOUND);
+            throw new ServiceException(ApiError.SO_NOT_FOUND);
         }
         //无虚拟仓库
         if (StrUtil.isBlank(soInfoEntity.getVirtualWarehouseId())) {
@@ -1794,11 +1794,11 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
     public BatchResultDTO batchUnLockVirtualInventory(List<String> detailIdList,SoInfoEntity oldEntity) {
         List<SoDetailEntity> oldList =  this.listByIds(detailIdList);
         if (CollectionUtils.isEmpty(oldList)) {
-            throw new ServiceException(ApiError.ERROR_SO_DETAIL_NOT_FOUND);
+            throw new ServiceException(ApiError.SO_DETAIL_NOT_FOUND);
         }
         SoInfoEntity soInfoEntity = ObjectUtil.isEmpty(oldEntity) ? soInfoService.getById(oldList.get(0).getMainId()) : oldEntity;
         if (ObjectUtil.isEmpty(soInfoEntity)) {
-            throw new ServiceException(ApiError.ERROR_SO_NOT_FOUND);
+            throw new ServiceException(ApiError.SO_NOT_FOUND);
         }
         //无虚拟仓库
         if (StrUtil.isBlank(soInfoEntity.getVirtualWarehouseId())) {
@@ -1975,7 +1975,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             //明细
             SoDetailEntity soDetailEntity = dbList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), updateDTO.getId())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(soDetailEntity)) {
-                throw new ServiceException(ApiError.ERROR_SO_DETAIL_NOT_FOUND);
+                throw new ServiceException(ApiError.SO_DETAIL_NOT_FOUND);
             }
             //有效数量
             Integer noticeQty = soDeliveryNoticeDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSourceDetailId(), updateDTO.getId()))

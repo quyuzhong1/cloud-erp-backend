@@ -936,7 +936,7 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
 
             List<WorkflowTaskRecordEntity> workflowTaskRecordEntities = workflowTaskRecordService.addTask(addTaskDTO);
             if(CollUtil.isEmpty(workflowTaskRecordEntities)){
-                throw new ServiceException(ApiError.COMMON_NOT_EXIST,DictBasicTypeEnum.WORKFLOW_TASK_NODE.getDesc());
+                throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC,DictBasicTypeEnum.WORKFLOW_TASK_NODE.getDesc());
             }
             SendResult result = mqProducerService.syncClassMsgWithDelayLevel(RocketMqTopic.OMS_WORKFLOW_TASK_RECORD_TOPIC, RocketMqTagEnum.OMS_WORKFLOW_TASK_RECORD_TAG.getName(), addTaskDTO, entity.getId(),2);
             if (!result.getSendStatus().equals(SendStatus.SEND_OK)) {
@@ -1077,7 +1077,7 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
             addTaskDTO.setFirstNodeInputData(map);
             List<WorkflowTaskRecordEntity> workflowTaskRecordEntities = workflowTaskRecordService.addTask(addTaskDTO);
             if(CollUtil.isEmpty(workflowTaskRecordEntities)){
-                throw new ServiceException(ApiError.COMMON_NOT_EXIST,DictBasicTypeEnum.WORKFLOW_TASK_NODE.getDesc());
+                throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC,DictBasicTypeEnum.WORKFLOW_TASK_NODE.getDesc());
             }
             SendResult result = mqProducerService.syncClassMsgWithDelayLevel(RocketMqTopic.OMS_WORKFLOW_TASK_RECORD_TOPIC, RocketMqTagEnum.OMS_WORKFLOW_TASK_RECORD_TAG.getName(), addTaskDTO, entity.getId(),2);
             if (!result.getSendStatus().equals(SendStatus.SEND_OK)) {

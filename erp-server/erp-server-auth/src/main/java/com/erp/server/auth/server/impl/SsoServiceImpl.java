@@ -1,6 +1,5 @@
 package com.erp.server.auth.server.impl;
 
-import cn.hutool.core.bean.BeanUtil;
 import com.alibaba.fastjson.JSON;
 import com.common.business.dto.FindUserDTO;
 import com.common.core.utils.IdUtils;
@@ -24,7 +23,6 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -64,7 +62,7 @@ public class SsoServiceImpl implements SsoService {
                 // 这里需要先获取配置来解密，所以先查询所有配置
                 List<SysRefererConfigEntity> configList = getRefererConfigList(appId);
                 if (configList == null || configList.isEmpty()) {
-                    throw new ServiceException(ApiError.SSO_APP_NOT_FOUND);
+                    throw new ServiceException(ApiError.AUTH_SSO_APP_NOT_FOUND);
                 }
                 
                 // 尝试用每个配置解密，找到正确的配置
@@ -89,29 +87,29 @@ public class SsoServiceImpl implements SsoService {
                 }
                 
                 if (config == null) {
-                    throw new ServiceException(ApiError.SSO_DECRYPT_FAILED);
+                    throw new ServiceException(ApiError.AUTH_SSO_DECRYPT_FAILED);
                 }
                 
                 // 2. 检查是否开启单点登录
                 if (Boolean.TRUE.equals(config.getSsoDisabled())) {
-                    throw new ServiceException(ApiError.SSO_DISABLED);
+                    throw new ServiceException(ApiError.AUTH_SSO_DISABLED);
                 }
                 
                 // 3. 解析payload
                 SsoPayloadDTO payload = JSON.parseObject(decryptedPayload, SsoPayloadDTO.class);
                 if (payload == null) {
-                    throw new ServiceException(ApiError.SSO_PARSE_PAYLOAD_FAILED);
+                    throw new ServiceException(ApiError.AUTH_SSO_PAYLOAD_PARSE_FAILED);
                 }
                 
                 // 4. 验证payload内容
                 if (!validatePayload(payload)) {
-                    throw new ServiceException(ApiError.SSO_INVALID_PAYLOAD);
+                    throw new ServiceException(ApiError.AUTH_SSO_INVALID_PAYLOAD);
                 }
                 
                 // 5. 根据应用类型查询ERP用户
                 String userId = getUserByThirdParty(payload.getUnionId(), payload.getAppType());
                 if (StringUtils.isBlank(userId)) {
-                    throw new ServiceException(ApiError.SSO_USER_NOT_BOUND);
+                    throw new ServiceException(ApiError.AUTH_SSO_USER_NOT_BOUND_ERP);
                 }
                 
                 // 6. 生成Redis键值对存储对称密钥
@@ -198,7 +196,7 @@ public class SsoServiceImpl implements SsoService {
                 throw e;
             } catch (Exception e) {
                 log.error("解密payload失败", e);
-                throw new ServiceException(ApiError.SSO_DECRYPT_FAILED);
+                throw new ServiceException(ApiError.AUTH_SSO_DECRYPT_FAILED);
             }
 
         } catch (ServiceException e) {
@@ -206,7 +204,7 @@ public class SsoServiceImpl implements SsoService {
             throw e;
         } catch (Exception e) {
             log.error("单点登录处理异常", e);
-            throw new ServiceException(ApiError.SSO_SYSTEM_ERROR, e.getMessage());
+            throw new ServiceException(ApiError.AUTH_SSO_SYSTEM_ERROR, e.getMessage());
         }
     }
 
@@ -326,7 +324,7 @@ public class SsoServiceImpl implements SsoService {
             // 1. 根据App-Id查询所有配置
             List<SysRefererConfigEntity> configList = getRefererConfigList(appId);
             if (configList == null || configList.isEmpty()) {
-                throw new ServiceException(ApiError.SSO_APP_NOT_FOUND);
+                throw new ServiceException(ApiError.AUTH_SSO_APP_NOT_FOUND);
             }
 
             // 2. 尝试用每个配置解密，找到正确的配置
@@ -352,13 +350,13 @@ public class SsoServiceImpl implements SsoService {
             }
 
             if (config == null) {
-                throw new ServiceException(ApiError.SSO_DECRYPT_FAILED);
+                throw new ServiceException(ApiError.AUTH_SSO_DECRYPT_FAILED);
             }
 
             // 3. 解析payload
             KeyRegistrationPayloadDTO payload = JSON.parseObject(decryptedPayload, KeyRegistrationPayloadDTO.class);
             if (payload == null || StringUtils.isBlank(payload.getSymmetricKey())) {
-                throw new ServiceException(ApiError.SSO_PARSE_PAYLOAD_FAILED);
+                throw new ServiceException(ApiError.AUTH_SSO_PAYLOAD_PARSE_FAILED);
             }
 
             // 4. 从payload中获取userId，如果为空则使用"none"
@@ -381,7 +379,7 @@ public class SsoServiceImpl implements SsoService {
             throw e;
         } catch (Exception e) {
             log.error("密钥注册处理异常", e);
-            throw new ServiceException(ApiError.SSO_SYSTEM_ERROR, e.getMessage());
+            throw new ServiceException(ApiError.AUTH_SSO_SYSTEM_ERROR, e.getMessage());
         }
     }
 }

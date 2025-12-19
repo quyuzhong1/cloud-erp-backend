@@ -278,7 +278,7 @@ public class SoB2cReceiverServiceImpl extends SuperServiceImpl<SoB2cReceiverMapp
         //验证地址信息
         if (StringUtils.isBlank(entity.getFirstAddress()) && StringUtils.isBlank(entity.getSecondAddress())
                 && StringUtils.isBlank(entity.getFullAddress())) {
-            throw new ServiceException(ApiError.ERROR_SO_B2C_RECEIVER_ADDRESS_NOT_NULL);
+            throw new ServiceException(ApiError.BILL_RECEIVER_ADDRESS_REQUIRED);
         }
 
         CustomerB2cEntity customerB2cEntity = customerB2cService.getById(entity.getCustomerId());

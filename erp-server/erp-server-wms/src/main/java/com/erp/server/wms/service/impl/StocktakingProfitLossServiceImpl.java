@@ -1055,7 +1055,7 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
         //获取导出数据
         Page<StocktakingProfitLossDTO.ExportViewDTO> page = baseMapper.listExport(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams());
         if (CollectionUtils.isEmpty(page.getRecords())) {
-            throw new ServiceException(ApiError.ERROR_EXPORT_DATA_EMPTY);
+            throw new ServiceException(ApiError.FILE_EXPORT_DATA_EMPTY);
         }
         List<String> sourceIdList = page.getRecords().stream().map(StocktakingProfitLossDTO.ExportViewDTO::getSourceId).collect(Collectors.toList());
         List<String> idList = page.getRecords().stream().map(StocktakingProfitLossDTO.ExportViewDTO::getId).collect(Collectors.toList());

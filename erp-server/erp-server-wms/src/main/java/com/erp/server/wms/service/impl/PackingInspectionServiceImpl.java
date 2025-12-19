@@ -95,7 +95,7 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
 
         SoB2cEntity soB2cEntity = soB2cFeign.getById(entity.getSourceId());
         if(ObjectUtil.isEmpty(soB2cEntity)) {
-            throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
+            throw new ServiceException(ApiError.SO_B2C_NOT_FOUND);
         }
         //验证订单平台是否取消
         if (soB2cEntity.getIsCancel()) {
@@ -122,10 +122,10 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
         }*/
 
         if (soB2cEntity.getIsIntercept()) {
-            throw new ServiceException(ApiError.LOGISTICS_INTERCEPT_NOT_PACKAGE);
+            throw new ServiceException(ApiError.LOGISTICS_ORDER_INTERCEPTED_NOT_PACKAGE);
         }
         if (soB2cEntity.getInvalidStatus()) {
-            throw new ServiceException(ApiError.INVALID_NOT_PACKAGE);
+            throw new ServiceException(ApiError.LOGISTICS_ORDER_VOIDED_NOT_PACKAGE);
         }
 
         //因为明细只保存父级SKU，所以如果有组合品没办法直接更新明细，将明细sku拆分放到redis，扫描时操作redis的值，在最后全部扫描完成统一更新数据库

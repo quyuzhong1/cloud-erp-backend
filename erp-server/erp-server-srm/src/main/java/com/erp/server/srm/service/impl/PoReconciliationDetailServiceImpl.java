@@ -159,7 +159,7 @@ public class PoReconciliationDetailServiceImpl extends SuperServiceImpl<PoReconc
             //添加日志
             PoReconciliationDetailEntity old = poReconciliationDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), entity.getId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(old)) {
-                throw new ServiceException(ApiError.ERROR_PO_RECONCILIATION_DETAIL_NOT_EXIST);
+                throw new ServiceException(ApiError.FIN_RECONCILIATION_DETAIL_NOT_FOUND);
             }
             operateLogService.addModuleOperateLogByObj(old,entity, ModuleTypeEnum.PO_RECONCILIATION.getCode(),mainId,"",String.format("【%s】",old.getSkuNo()));
         }

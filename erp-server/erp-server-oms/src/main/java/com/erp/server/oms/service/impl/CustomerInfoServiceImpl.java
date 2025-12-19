@@ -448,11 +448,11 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         Boolean result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(ingStatus), "");
         if (result) {
             //添加日志
-            String content = String.format(ApiError.ERROR_STATUS_CHANGE.getMsg(), ApproveStatusEnum.WAIT_SUBMIT.getName(), ApproveStatusEnum.APPROVE_ING.getName());
+            String content = String.format(ApiError.COMMON_STATUS_CHANGE_LOG.getMsg(), ApproveStatusEnum.WAIT_SUBMIT.getName(), ApproveStatusEnum.APPROVE_ING.getName());
             operateLogService.batchAddModuleOperateLog(content, ModuleTypeEnum.CUSTOMER.getCode(), pairList, "状态变更");
 
             //审核不通过
-            String rejectContent = String.format(ApiError.ERROR_STATUS_CHANGE.getMsg(), ApproveStatusEnum.REJECT.getName(), ApproveStatusEnum.APPROVE_ING.getName());
+            String rejectContent = String.format(ApiError.COMMON_STATUS_CHANGE_LOG.getMsg(), ApproveStatusEnum.REJECT.getName(), ApproveStatusEnum.APPROVE_ING.getName());
             operateLogService.batchAddModuleOperateLog(rejectContent, ModuleTypeEnum.PURCHASE_PRICE_CHANGE.getCode(), rejectPairList, "状态变更");
         }
         return result;
@@ -669,7 +669,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         CustomerDTO.ViewDTO view = new CustomerDTO.ViewDTO();
         CustomerInfoEntity customer = this.getById(id);
         if (Objects.isNull(customer)) {
-            throw new ServiceException(ApiError.ERROR_CUSTOMER_NOT_FOUND);
+            throw new ServiceException(ApiError.CUSTOMER_NOT_FOUND);
         }
         BeanMapper.copy(customer, view);
         String areaId = customer.getAreaId();
@@ -747,7 +747,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         String id = dto.getId();
         CustomerInfoEntity customer = this.getById(id);
         if (Objects.isNull(customer)) {
-            throw new ServiceException(ApiError.ERROR_CUSTOMER_NOT_FOUND);
+            throw new ServiceException(ApiError.CUSTOMER_NOT_FOUND);
         }
 
         //检查名称
@@ -1010,7 +1010,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         //反审核
         if (result) {
             //添加日志
-            String ingContent = String.format(ApiError.ERROR_STATUS_CHANGE.getMsg(), ApproveStatusEnum.APPROVE.getName(), ApproveStatusEnum.WAIT_SUBMIT.getName());
+            String ingContent = String.format(ApiError.COMMON_STATUS_CHANGE_LOG.getMsg(), ApproveStatusEnum.APPROVE.getName(), ApproveStatusEnum.WAIT_SUBMIT.getName());
             operateLogService.batchAddModuleOperateLog(ingContent, ModuleTypeEnum.CUSTOMER.getCode(), pairList, "状态变更");
 
             //发送金蝶
@@ -1052,7 +1052,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
                 continue;
             }
             if (entity.getOccupyStatus()){
-                resultDTOList.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_SO_IN_USE_DELETE_FORBIDDEN.getMsg()));
+                resultDTOList.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.BILL_IN_USE_DELETE_FORBIDDEN.getMsg()));
                 continue;
             }
             removeList.add(entity);
@@ -1124,7 +1124,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         List<String> ids = dto.getIds();
         List<CustomerInfoEntity> customerList = this.listByIds(ids);
         if (CollectionUtils.isEmpty(customerList)) {
-            throw new ServiceException(ApiError.ERROR_CUSTOMER_NOT_FOUND);
+            throw new ServiceException(ApiError.CUSTOMER_NOT_FOUND);
         }
 
         Boolean disabled = dto.getDisabled();
@@ -1258,7 +1258,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         CustomerDTO.BaseDTO base = new CustomerDTO.BaseDTO();
         CustomerInfoEntity customer = this.getById(customerId);
         if (Objects.isNull(customer)) {
-            throw new ServiceException(ApiError.ERROR_CUSTOMER_NOT_FOUND);
+            throw new ServiceException(ApiError.CUSTOMER_NOT_FOUND);
         }
         base.setId(customer.getId());
         base.setCode(customer.getCode());
@@ -1621,13 +1621,13 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             customerInfoEntity.setRemark(remark);
             // 审核状态
             customerInfoEntity.setApproveStatus(ApproveStatusEnum.APPROVE);
-            customerInfoEntity.setApproveUserName(ApiError.ADMIN.getMsg());
+            customerInfoEntity.setApproveUserName(ApiError.COMMON_ADMIN_USER.getMsg());
             customerInfoEntity.setCreateTime(LocalDateTime.now());
             customerInfoEntity.setUpdateTime(LocalDateTime.now());
             customerInfoEntity.setCreateUserId("");
-            customerInfoEntity.setCreateUserName(ApiError.ADMIN.getMsg());
+            customerInfoEntity.setCreateUserName(ApiError.COMMON_ADMIN_USER.getMsg());
             customerInfoEntity.setUpdateUserId("");
-            customerInfoEntity.setUpdateUserName(ApiError.ADMIN.getMsg());
+            customerInfoEntity.setUpdateUserName(ApiError.COMMON_ADMIN_USER.getMsg());
 
             if (!customerBaseMap.containsKey(code)) {
                 super.save(customerInfoEntity);

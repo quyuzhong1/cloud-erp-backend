@@ -141,7 +141,7 @@ public class MercadoLocalAuthorize implements IShopAuthorizeService<T> {
         }
         String shopId = shopIdObj.toString();
         if (StringUtils.isBlank(shopId)) {
-            throw new ServiceException(ApiError.ERROR_SO_B2C_SHOP_USER_AUTH_PART);
+            throw new ServiceException(ApiError.SHOP_AUTH_REQUIRED);
         }
         ShopInfoEntity shopInfo = shopInfoService.getById(shopId);
         if (Objects.isNull(shopInfo)) {
@@ -149,7 +149,7 @@ public class MercadoLocalAuthorize implements IShopAuthorizeService<T> {
         }
         String code = dto.getCode();
         if (StringUtils.isBlank(code)) {
-            throw new ServiceException(ApiError.ERROR_AUTHORIZE_CODE_NOT_NULL);
+            throw new ServiceException(ApiError.SHOP_AUTHORIZE_CODE_REQUIRED);
         }
 
         CfgAppClientDTO.FindDTO findDTO = new CfgAppClientDTO.FindDTO();

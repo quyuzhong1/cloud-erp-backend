@@ -1229,11 +1229,11 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
 
         FindUserDTO borrowUser = users.stream().filter(e -> Objects.equals(e.getUserId(), borrowUserId)).findFirst().orElse(null);
         if(Objects.isNull(borrowUser)){
-            throw new ServiceException(ApiError.COMMON_NOT_EXIST,"借入人");
+            throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC,"借入人");
         }
         FindUserDTO lendUser = users.stream().filter(e -> Objects.equals(e.getUserId(), lendUserId)).findFirst().orElse(null);
         if(Objects.isNull(lendUser)){
-            throw new ServiceException(ApiError.COMMON_NOT_EXIST,"借出人");
+            throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC,"借出人");
         }
 
         String borrowDeptId = sampleBorrowInfoEntity.getBorrowDeptId();
@@ -1245,11 +1245,11 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
 
         SysDepartmentEntity borrowDept = sysDepartmentEntities.stream().filter(e -> Objects.equals(e.getId(), borrowDeptId)).findFirst().orElse(null);
         if(Objects.isNull(borrowDept)){
-            throw new ServiceException(ApiError.COMMON_NOT_EXIST,"借入部门");
+            throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC,"借入部门");
         }
         SysDepartmentEntity lendDept = sysDepartmentEntities.stream().filter(e -> Objects.equals(e.getId(), lendDeptId)).findFirst().orElse(null);
         if(Objects.isNull(lendDept)){
-            throw new ServiceException(ApiError.COMMON_NOT_EXIST,"借入部门");
+            throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC,"借入部门");
         }
 
         //赋值

@@ -988,11 +988,11 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
         }
         FindUserDTO returnUser = users.stream().filter(e -> Objects.equals(e.getUserId(), returnUserId)).findFirst().orElse(null);
         if(Objects.isNull(returnUser)){
-            throw new ServiceException(ApiError.COMMON_NOT_EXIST,"归还人");
+            throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC,"归还人");
         }
         FindUserDTO receiverUser = users.stream().filter(e -> Objects.equals(e.getUserId(), receiverUserId)).findFirst().orElse(null);
         if(Objects.isNull(receiverUser)){
-            throw new ServiceException(ApiError.COMMON_NOT_EXIST,"接收人");
+            throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC,"接收人");
         }
 
         String returnDeptId = sampleReturnInfoEntity.getReturnDeptId();
@@ -1004,11 +1004,11 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
 
         SysDepartmentEntity returnDept = sysDepartmentEntities.stream().filter(e -> Objects.equals(e.getId(), returnDeptId)).findFirst().orElse(null);
         if(Objects.isNull(returnDept)){
-            throw new ServiceException(ApiError.COMMON_NOT_EXIST,"归还部门");
+            throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC,"归还部门");
         }
         SysDepartmentEntity receiverDept = sysDepartmentEntities.stream().filter(e -> Objects.equals(e.getId(), receiverDeptId)).findFirst().orElse(null);
         if(Objects.isNull(receiverDept)){
-            throw new ServiceException(ApiError.COMMON_NOT_EXIST,"接收部门");
+            throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC,"接收部门");
         }
         //赋值
         sampleReturnInfoEntity.setReturnUserName(returnUser.getUserName());

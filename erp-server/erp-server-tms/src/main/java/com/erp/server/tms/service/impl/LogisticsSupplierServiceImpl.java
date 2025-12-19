@@ -245,11 +245,11 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
         String authStatus = logisticsSupplier.getAuthStatus();
         String alreadyCode = LogisticsAuthStatusEnum.ALREADY.getCode();
         if (!alreadyCode.equals(authStatus)) {
-            throw new ServiceException(ApiError.NOT_SYNC_BY_NOT_AUTH);
+            throw new ServiceException(ApiError.LOGISTICS_SYNC_FORBIDDEN_NOT_AUTHORIZED);
         }
         LogisticsAuthEntity authEntity = logisticsAuthService.getByMainId("", id);
         if (Objects.isNull(authEntity)) {
-            throw new ServiceException(ApiError.NOT_SYNC_BY_NOT_AUTH);
+            throw new ServiceException(ApiError.LOGISTICS_SYNC_FORBIDDEN_NOT_AUTHORIZED);
         }
         String logisticsPlatform = authEntity.getLogisticsPlatform();
         //同步第三方渠道

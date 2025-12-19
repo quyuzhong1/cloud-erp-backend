@@ -72,13 +72,13 @@ public class LoginAuthService {
         if(loginDTO.getUserType().equals(UserTypeEnum.SRM.getCode())){
             SupplierEntity supplier = supplierFeign.getSupplierByUid(info.getUid());
             if(Objects.isNull(supplier)){
-                return ApiResult.error(ApiError.ERROR_SUPPLIER_NOT_FOUND);
+                return ApiResult.error(ApiError.SUPPLIER_REF_NOT_FOUND);
             }
             if(supplier.getDisabled()){
-                return ApiResult.error(ApiError.ERROR_LOGIN_DISABLE);
+                return ApiResult.error(ApiError.COMMON_LOGIN_COOPERATION_TERMINATED);
             }
             if(supplier.getSrmDisabled()){
-                return ApiResult.error(ApiError.ERROR_LOGIN_SRM_DISABLE);
+                return ApiResult.error(ApiError.COMMON_LOGIN_ACCOUNT_DISABLED);
             }
         }
         String ip = IpUtils.getIpAddress(request);

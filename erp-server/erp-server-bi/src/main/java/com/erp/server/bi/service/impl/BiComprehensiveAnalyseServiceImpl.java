@@ -556,7 +556,7 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
         // 商品详情
         BiProductDetailEntity detailEntity = biProductDetailService.getBySkuNo(dto.getSkuNo());
         if(null == detailEntity){
-            throw new ServiceException(ApiError.ERROR_SKU_MAPPING_NOT_FOUND);
+            throw new ServiceException(ApiError.COMMON_SKU_MAPPING_NOT_FOUND);
         }
         // 商品信息
         BiProductInfoEntity productEntity = biProductInfoService.getById(detailEntity.getProductId());

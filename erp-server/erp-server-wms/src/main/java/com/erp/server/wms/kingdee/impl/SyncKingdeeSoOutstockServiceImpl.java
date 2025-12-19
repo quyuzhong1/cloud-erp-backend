@@ -425,7 +425,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
 
         //明细字段转换
         if (CollUtil.isEmpty(details)) {
-            throw new ServiceException(ApiError.ERROR_SO_OUTBOUND_DETAIL_REQUIRED);
+            throw new ServiceException(ApiError.SO_DELIVERY_OUTBOUND_DETAIL_REQUIRED);
         }
         //订单明细
         List<BiDeliveryDetailItemEntity> orderItemEntities = new ArrayList<>(details.size());
@@ -940,7 +940,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         //销售单信息
         SoB2cEntity soB2cEntity = soB2cFeign.getById(soId);
         if (Objects.isNull(soB2cEntity)) {
-            throw new ServiceException(ApiError.ERROR_SO_B2C_DETAIL_NOT_EXIST);
+            throw new ServiceException(ApiError.SO_B2C_DETAIL_NOT_FOUND);
         }
         List<SoB2cDetailEntity> soB2cDetailList = soB2cFeign.listDetailByMainIds(Collections.singletonList(soId));
         //获取销售出库单详情

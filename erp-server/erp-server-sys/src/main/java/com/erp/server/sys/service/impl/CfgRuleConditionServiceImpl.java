@@ -86,7 +86,7 @@ public class CfgRuleConditionServiceImpl extends SuperServiceImpl<CfgRuleConditi
         String expression = splElDTO.getExpression();
         Boolean checkResult = spElServer.checkExpressionIsEnabled(expression);
         if (Boolean.FALSE.equals(checkResult)) {
-            throw new ServiceException(ApiError.ERROR_RULE_EXPRESSION_ERROR);
+            throw new ServiceException(ApiError.COMMON_RULE_EXPRESSION_ERROR);
         }
     }
 

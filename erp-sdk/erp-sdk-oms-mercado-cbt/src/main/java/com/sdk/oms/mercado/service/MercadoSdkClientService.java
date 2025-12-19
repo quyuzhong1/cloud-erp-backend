@@ -175,7 +175,7 @@ public class MercadoSdkClientService {
                     bodyStr, param.toString(), JSONUtil.toJsonStr(bodyStr), e.getMessage()));
         }
         if (StringUtil.isBlank(tokenDTO.getAccessToken())) {
-            throw new ServiceException(ApiError.ERROR_SHOP_AUTHORIZE_FAIL, PlatformDictEnum.MERCADOLIBRE.getName(), bodyStr);
+            throw new ServiceException(ApiError.SHOP_PARAM_AUTHORIZE_FAILED, PlatformDictEnum.MERCADOLIBRE.getName(), bodyStr);
         }
 
         //返回token实体
@@ -216,7 +216,7 @@ public class MercadoSdkClientService {
 
             if(StringUtil.isBlank(refreshTokenDTO.getAccessToken())) {
                 if(count == 10) {
-                    throw new ServiceException(ApiError.ERROR_SHOP_AUTHORIZE_FAIL, PlatformDictEnum.MERCADOLIBRE.getName(), bodyStr);
+                    throw new ServiceException(ApiError.SHOP_PARAM_AUTHORIZE_FAILED, PlatformDictEnum.MERCADOLIBRE.getName(), bodyStr);
 
                 }
                 try {
@@ -271,7 +271,7 @@ public class MercadoSdkClientService {
 
             if(StringUtil.isBlank(refreshTokenDTO.getAccessToken())) {
                 if(count == 10) {
-                    throw new ServiceException(ApiError.ERROR_SHOP_AUTHORIZE_FAIL, PlatformDictEnum.MERCADOLIBRE.getName(), bodyStr);
+                    throw new ServiceException(ApiError.SHOP_PARAM_AUTHORIZE_FAILED, PlatformDictEnum.MERCADOLIBRE.getName(), bodyStr);
 
                 }
                 try {

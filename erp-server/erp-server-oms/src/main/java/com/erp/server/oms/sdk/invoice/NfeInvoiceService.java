@@ -560,12 +560,12 @@ public class NfeInvoiceService {
         //财务信息
         SoB2cFinanceEntity financeEntity = soB2cFinanceService.getByMainId(soB2cEntity.getId());
         if (ObjUtil.isEmpty(financeEntity)) {
-            throw new ServiceException(ApiError.ERROR_SO_B2C_FINANCE_NOT_EXIST);
+            throw new ServiceException(ApiError.SO_B2C_FINANCE_NOT_FOUND);
         }
 
         List<SoB2cDetailEntity> detailList = soB2cDetailService.listByMainId(soB2cEntity.getId());
         if (CollUtil.isEmpty(detailList)) {
-            throw new ServiceException(ApiError.ERROR_SO_B2C_DETAIL_NOT_EXIST);
+            throw new ServiceException(ApiError.SO_B2C_DETAIL_NOT_FOUND);
         }
         //平台sku
         List<String> platformSkuNoList = detailList.stream().map(SoB2cDetailEntity::getPlatformSkuNo).distinct().collect(Collectors.toList());
@@ -589,7 +589,7 @@ public class NfeInvoiceService {
         //店铺名称
         ShopInfoEntity shopInfoEntity = shopInfoService.getById(soB2cEntity.getShopId());
         if (ObjUtil.isEmpty(shopInfoEntity)) {
-            throw new ServiceException(ApiError.ERROR_SHOP_NOT_FOUND);
+            throw new ServiceException(ApiError.SHOP_NOT_FOUND);
         }
 
         BigDecimal valorTotal = BigDecimal.ZERO;
@@ -600,7 +600,7 @@ public class NfeInvoiceService {
             //税务信息
             InvoiceTaxEntity invoiceTaxEntity = CollUtil.isEmpty(listingInfoWithSkuMappingList) ? null : listingInfoWithSkuMappingList.stream().filter(obj -> ObjUtil.isNotEmpty(taxMap.get(obj.getListingId()))).map(obj -> taxMap.get(obj.getListingId())).findFirst().orElse(null);
             if (Objects.isNull(invoiceTaxEntity)) {
-                throw new ServiceException(ApiError.ERROR_SKU_INVOICE_TAX_NOT_EXIST,detailEntity.getPlatformSkuNo(),shopInfoEntity.getName());
+                throw new ServiceException(ApiError.FIN_SKU_INVOICE_TAX_INFO_NOT_FOUND,detailEntity.getPlatformSkuNo(),shopInfoEntity.getName());
             }
             nfeItensDTO.setName(invoiceTaxEntity.getInvoiceProductName());
             nfeItensDTO.setSku(detailEntity.getPlatformSkuNo());
@@ -672,10 +672,10 @@ public class NfeInvoiceService {
         //b2c订单信息
         SoB2cEntity soB2cEntity = soB2cService.getById(invoiceInfoEntity.getSoId());
         if (Objects.isNull(soB2cEntity)){
-            throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
+            throw new ServiceException(ApiError.SO_B2C_NOT_FOUND);
         }
         if (CharSequenceUtil.isBlank(soB2cEntity.getDictPlatform()) || CharSequenceUtil.isBlank(soB2cEntity.getShopId())) {
-            throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST_PLATFORM_SHOP,soB2cEntity.getCode());
+            throw new ServiceException(ApiError.SO_B2C_PLATFORM_SHOP_REQUIRED,soB2cEntity.getCode());
         }
         //税务信息
         CfgInvoiceSettingDetailEntity invoiceSettingDetail = cfgInvoiceSettingDetailService.getInvoiceSettingDetail(soB2cEntity.getDictPlatform(), soB2cEntity.getShopId());
@@ -684,7 +684,7 @@ public class NfeInvoiceService {
         try {
              obj = tfFiscalService.cancelInvoice(nfeCancelDTO);
         } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_INVOICE_NFE_CANCEL,e.getMessage());
+            throw new ServiceException(ApiError.FIN_INVOICE_NFE_CANCEL_FAILED,e.getMessage());
         }
     }
 
@@ -697,10 +697,10 @@ public class NfeInvoiceService {
         //b2c订单信息
         SoB2cEntity soB2cEntity = soB2cService.getById(invoiceInfoEntity.getSoId());
         if (Objects.isNull(soB2cEntity)){
-            throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
+            throw new ServiceException(ApiError.SO_B2C_NOT_FOUND);
         }
         if (CharSequenceUtil.isBlank(soB2cEntity.getDictPlatform()) || CharSequenceUtil.isBlank(soB2cEntity.getShopId())) {
-            throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST_PLATFORM_SHOP,soB2cEntity.getCode());
+            throw new ServiceException(ApiError.SO_B2C_PLATFORM_SHOP_REQUIRED,soB2cEntity.getCode());
         }
         //税务信息
         CfgInvoiceSettingDetailEntity invoiceSettingDetail = cfgInvoiceSettingDetailService.getInvoiceSettingDetail(soB2cEntity.getDictPlatform(), soB2cEntity.getShopId());
@@ -711,7 +711,7 @@ public class NfeInvoiceService {
             obj = tfFiscalService.returnInvoice(nfeReturnDTO);
             log.error("退票接口返回：{}", JSONUtil.toJsonStr(obj));
         } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_INVOICE_NFE_RETURN,e.getMessage());
+            throw new ServiceException(ApiError.FIN_INVOICE_NFE_RETURN_FAILED,e.getMessage());
         }
         //解析是否成功，失败抛出异常原因
         NfeInvoiceDTO.NfeReturnResultDTO resultDTO = JSONUtil.toBean(obj.toString(), NfeInvoiceDTO.NfeReturnResultDTO.class);
@@ -730,7 +730,7 @@ public class NfeInvoiceService {
             obj = tfFiscalService.voidedInvoice(nfeVoidedDTO);
             log.error("作废接口返回：{}", JSONUtil.toJsonStr(obj));
         } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_INVOICE_NFE_VOIDED,e.getMessage());
+            throw new ServiceException(ApiError.FIN_INVOICE_NFE_VOID_FAILED,e.getMessage());
         }
         //{"retorno":{"attributes":{"versao":"4.00"},"infInut":{"tpAmb":"1","verAplic":"SP_NFE_PL009_V4","cStat":"102","xMotivo":"Inutilização de número homologado","cUF":"35","ano":"25","CNPJ":"59399522000150","mod":"55","serie":"1","nNFIni":"1","nNFFin":"2","dhRecbto":"2025-07-10T00:53:25-03:00","nProt":"135251896535761"}}}
 
@@ -753,7 +753,7 @@ public class NfeInvoiceService {
         try {
             obj = tfFiscalService.updateCceInvoice(nfeCceDTO);
         } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_INVOICE_NFE_UPDATE_CCE,e.getMessage());
+            throw new ServiceException(ApiError.FIN_INVOICE_NFE_UPDATE_CCE_FAILED,e.getMessage());
         }
         NfeInvoiceDTO.NfeCceResultDTO resultDTO = new NfeInvoiceDTO.NfeCceResultDTO();
         try {
@@ -761,11 +761,11 @@ public class NfeInvoiceService {
             resultDTO = JSONUtil.toBean(obj.toString(), NfeInvoiceDTO.NfeCceResultDTO.class);
         } catch (Exception e) {
             log.error("解析信息失败,返回信息:{}", JSONUtil.toJsonStr(resultDTO));
-            throw new ServiceException(ApiError.ERROR_INVOICE_NFE_CREATE_JSON_HANDLE);
+            throw new ServiceException(ApiError.FIN_INVOICE_NFE_JSON_PARSE_FAILED);
         }
         if (resultDTO.getErro() || 200 !=  resultDTO.getStatus()) {
             log.error("创建发票失败,返回错误信息,返回信息:{}", JSONUtil.toJsonStr(resultDTO));
-            throw new ServiceException(ApiError.ERROR_INVOICE_NFE_UPDATE_CCE,"未知");
+            throw new ServiceException(ApiError.FIN_INVOICE_NFE_UPDATE_CCE_FAILED,"未知");
         }
         //上传发票
         uploadFile(invoiceInfoEntity.getId(),resultDTO.getUrlXmlUpload(),"");
@@ -786,7 +786,7 @@ public class NfeInvoiceService {
     private String getCompanyToken(String platform,String shopId) {
         CfgInvoiceSettingDetailEntity invoiceSettingDetail = cfgInvoiceSettingDetailService.getInvoiceSettingDetail(platform, shopId);
         if (ObjUtil.isEmpty(invoiceSettingDetail) || CharSequenceUtil.isBlank(invoiceSettingDetail.getToken())) {
-            throw new ServiceException(ApiError.ERROR_INVOICE_COMPANY_TOKEN_NOT_EXIST);
+            throw new ServiceException(ApiError.FIN_COMPANY_TOKEN_NOT_FOUND);
         }
         return invoiceSettingDetail.getToken();
     }
@@ -801,7 +801,7 @@ public class NfeInvoiceService {
      */
     private void uploadFile (String invoiceId,String invoiceXmlUrl,String invoicePdfUrl) {
         if (CharSequenceUtil.isBlank(invoiceXmlUrl) && CharSequenceUtil.isBlank(invoicePdfUrl)) {
-            throw new ServiceException(ApiError.ERROR_INVOICE_NFE_UPLOAD_NOT_EXIST);
+            throw new ServiceException(ApiError.FIN_INVOICE_UPLOAD_FILE_NOT_FOUND);
         }
         List<OmsAttachmentDTO.UpdateDTO> addOrUpdateList = new ArrayList<>();
         //上传xml
