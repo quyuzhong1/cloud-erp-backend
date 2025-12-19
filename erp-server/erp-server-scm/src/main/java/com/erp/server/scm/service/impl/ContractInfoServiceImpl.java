@@ -271,7 +271,10 @@ public class ContractInfoServiceImpl extends SuperServiceImpl<ContractInfoMapper
             String name = list.get(0).getName();
             addOrUpdateDTO.setName(name);
             //关联模板校验-同一个模板不能重复添加相同供应商【含所有供应商】
-            List<ContractInfoEntity> oldList = lambdaQuery().in(ContractInfoEntity::getServiceProviderId, serviceProviderIdList).eq(ContractInfoEntity::getTemplateId, templateId).list();
+            List<ContractInfoEntity> oldList = lambdaQuery().in(ContractInfoEntity::getServiceProviderId, serviceProviderIdList)
+                    .eq(ContractInfoEntity::getTemplateId, templateId)
+                    .ne(ContractInfoEntity::getId, addOrUpdateDTO.getId())
+                    .list();
             if(CollUtil.isNotEmpty(oldList)){
                 String supplierNames = oldList.stream()
                         .map(ContractInfoEntity::getServiceProviderName)
