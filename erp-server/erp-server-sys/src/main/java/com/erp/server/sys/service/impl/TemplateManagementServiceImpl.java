@@ -257,12 +257,11 @@ public class TemplateManagementServiceImpl extends SuperServiceImpl<TemplateMana
     public BatchResultDTO setDisabled(String id, Boolean disabledStatus) {
         TemplateManagementEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "模板管理"));
         List<ContractInfoEntity> contractInfoList = FeignQuery.create(ContractInfoEntity.class).eq(ContractInfoEntity::getTemplateId, id).list();
-        if(CollUtil.isNotEmpty(contractInfoList)){
-            return BatchResultDTO.fail(id, entity.getName(), "合同管理已引用不可设置停用");
-        }
+//        if(CollUtil.isNotEmpty(contractInfoList)){
+//            return BatchResultDTO.fail(id, entity.getName(), "合同管理已引用不可设置停用");
+//        }
         entity.setDisabled(disabledStatus);
         super.updateById(entity);
-
         // 日志数据
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据更新启用状态由【{}】为【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "模板管理", disabledStatus ? "停用" : "启用", disabledStatus ? "启用" : "停用" );
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.TEMPLATE_MANAGEMENT.getCode(), entity.getId(), "更新模板管理");
@@ -282,10 +281,8 @@ public class TemplateManagementServiceImpl extends SuperServiceImpl<TemplateMana
                 throw new ServiceException(ApiError.ERROR_9057,TemplateManagementBizTypeEnum.getName(bizType));
             }
         }
-
         entity.setIsDefault(newValue);
         super.updateById(entity);
-
         // 日志数据
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据更新默认状态由【{}】为【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "模板管理", isDefault ? "默认" : "不默认", newValue ?  "默认" : "不默认" );
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.TEMPLATE_MANAGEMENT.getCode(), entity.getId(), "更新模板管理");

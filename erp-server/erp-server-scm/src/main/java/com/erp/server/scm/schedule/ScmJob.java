@@ -7,10 +7,7 @@ import com.erp.model.scm.entity.KingdeePaymentConditionEntity;
 import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
 import com.erp.sdk.third.kingdee.utils.KingdeePushModuleEnum;
 import com.erp.server.scm.rocketmq.sync.wms.WmsSyncPurchaseService;
-import com.erp.server.scm.service.KingdeePaymentConditionService;
-import com.erp.server.scm.service.PurchaseOrderDetailService;
-import com.erp.server.scm.service.PurchaseOrderService;
-import com.erp.server.scm.service.PurchaseOrderSupplierService;
+import com.erp.server.scm.service.*;
 import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;
 import lombok.extern.slf4j.Slf4j;
@@ -46,6 +43,9 @@ public class ScmJob {
 
     @Resource
     private KingdeePaymentConditionService kingdeePaymentConditionService;
+
+    @Resource
+    private ContractInfoService contractInfoService;
 
     /**
      * 同步采购信息到wms
@@ -165,6 +165,20 @@ public class ScmJob {
         long end = System.currentTimeMillis();
         XxlJobHelper.log("主线程花费时间：{}", (end - start));
         XxlJobHelper.log("=====(供应商+采购订单+sku)采购数量计算 结束任务=====");
+    }
+
+
+    /**
+     * 每日更新合同管理生效状态
+     */
+    @XxlJob("updateContractInfoStatus")
+    public void updateContractInfoStatus() {
+        XxlJobHelper.log("=====每日更新合同管理生效状态 开始任务=====");
+        long start = System.currentTimeMillis();
+        contractInfoService.updateContractInfoStatus();
+        long end = System.currentTimeMillis();
+        XxlJobHelper.log("主线程花费时间：{}", (end - start));
+        XxlJobHelper.log("=====每日更新合同管理生效状态 结束任务=====");
     }
 
 }

@@ -392,38 +392,38 @@ public class ContractInfoServiceImpl extends SuperServiceImpl<ContractInfoMapper
 
         // 属性赋值
         for(ContractInfoDTO.ListDTO data : list) {
-            //审核通过的，才需要判断生效状态
-            if(Objects.equals(data.getApproveStatus(),ApproveStatusEnum.APPROVE.getCode())){
-                //校验有效期
-                LocalDate effectiveDate = data.getEffectiveDate();
-                LocalDate expireDate = data.getExpireDate();
-                if (Objects.nonNull(effectiveDate) && Objects.nonNull(expireDate) && expireDate.compareTo(effectiveDate) < 0) {
-                    data.setStatus("");
-
-                    //更新状态值
-                    lambdaUpdate()
-                            .set(ContractInfoEntity::getStatus,"")
-                            .eq(ContractInfoEntity::getId,data.getId())
-                            .update();
-                }else {
-                    //状态处理
-                    ContractInfoStatusEnum status = ContractInfoStatusEnum.NOT_EFFECTIVE;
-                    if (now.compareTo(effectiveDate) >= 0 && now.compareTo(expireDate) <= 0) {
-                        status = ContractInfoStatusEnum.EFFECTIVE;
-                    } else if(now.compareTo(expireDate) > 0){
-                        status = ContractInfoStatusEnum.EXPIRED;
-                    }
-                    if(!Objects.equals(data.getStatus(),status.getCode())){
-                        data.setStatus(status.getCode());
-                        //更新状态值
-                        lambdaUpdate()
-                                .set(ContractInfoEntity::getStatus,status.getCode())
-                                .eq(ContractInfoEntity::getId,data.getId())
-                                .update();
-
-                    }
-                }
-            }
+//            //审核通过的，才需要判断生效状态
+//            if(Objects.equals(data.getApproveStatus(),ApproveStatusEnum.APPROVE.getCode())){
+//                //校验有效期
+//                LocalDate effectiveDate = data.getEffectiveDate();
+//                LocalDate expireDate = data.getExpireDate();
+//                if (Objects.nonNull(effectiveDate) && Objects.nonNull(expireDate) && expireDate.compareTo(effectiveDate) < 0) {
+//                    data.setStatus("");
+//
+//                    //更新状态值
+//                    lambdaUpdate()
+//                            .set(ContractInfoEntity::getStatus,"")
+//                            .eq(ContractInfoEntity::getId,data.getId())
+//                            .update();
+//                }else {
+//                    //状态处理
+//                    ContractInfoStatusEnum status = ContractInfoStatusEnum.NOT_EFFECTIVE;
+//                    if (now.compareTo(effectiveDate) >= 0 && now.compareTo(expireDate) <= 0) {
+//                        status = ContractInfoStatusEnum.EFFECTIVE;
+//                    } else if(now.compareTo(expireDate) > 0){
+//                        status = ContractInfoStatusEnum.EXPIRED;
+//                    }
+//                    if(!Objects.equals(data.getStatus(),status.getCode())){
+//                        data.setStatus(status.getCode());
+//                        //更新状态值
+//                        lambdaUpdate()
+//                                .set(ContractInfoEntity::getStatus,status.getCode())
+//                                .eq(ContractInfoEntity::getId,data.getId())
+//                                .update();
+//
+//                    }
+//                }
+//            }
 
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
             data.setStatusName(ContractInfoStatusEnum.getName(data.getStatus()));
@@ -927,26 +927,26 @@ public class ContractInfoServiceImpl extends SuperServiceImpl<ContractInfoMapper
             throw new ServiceException(ApiError.ERROR_CONTACT_NOT_BINDING);
         }
 
-        LocalDate now = LocalDate.now();
-        // 遍历合同列表，根据当前日期判断合同状态（未生效、生效中、已过期）
-        for (ContractInfoEntity contractInfoEntity : list) {
-            LocalDate effectiveDate = contractInfoEntity.getEffectiveDate();
-            LocalDate expireDate = contractInfoEntity.getExpireDate();
-
-            // 空值保护
-            if (effectiveDate == null || expireDate == null) {
-                continue;
-            }
-
-            //状态处理
-            ContractInfoStatusEnum status = ContractInfoStatusEnum.NOT_EFFECTIVE;
-            if (now.compareTo(effectiveDate) >= 0 && now.compareTo(expireDate) <= 0) {
-                status = ContractInfoStatusEnum.EFFECTIVE;
-            } else if(now.compareTo(expireDate) > 0){
-                status = ContractInfoStatusEnum.EXPIRED;
-            }
-            contractInfoEntity.setStatus(status.getCode());
-        }
+//        LocalDate now = LocalDate.now();
+//        // 遍历合同列表，根据当前日期判断合同状态（未生效、生效中、已过期）
+//        for (ContractInfoEntity contractInfoEntity : list) {
+//            LocalDate effectiveDate = contractInfoEntity.getEffectiveDate();
+//            LocalDate expireDate = contractInfoEntity.getExpireDate();
+//
+//            // 空值保护
+//            if (effectiveDate == null || expireDate == null) {
+//                continue;
+//            }
+//
+//            //状态处理
+//            ContractInfoStatusEnum status = ContractInfoStatusEnum.NOT_EFFECTIVE;
+//            if (now.compareTo(effectiveDate) >= 0 && now.compareTo(expireDate) <= 0) {
+//                status = ContractInfoStatusEnum.EFFECTIVE;
+//            } else if(now.compareTo(expireDate) > 0){
+//                status = ContractInfoStatusEnum.EXPIRED;
+//            }
+//            contractInfoEntity.setStatus(status.getCode());
+//        }
 
         // 过滤出处于“生效中”状态的合同
         list = list.stream().filter(e -> e.getStatus().equals(ContractInfoStatusEnum.EFFECTIVE.getCode())).collect(Collectors.toList());
@@ -955,7 +955,7 @@ public class ContractInfoServiceImpl extends SuperServiceImpl<ContractInfoMapper
         }
 
         // 提取有效的模板ID集合
-        List<String> templateIds = list.stream().map(ContractInfoEntity::getTemplateId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+        List<String> templateIds = list.stream().map(ContractInfoEntity::getTemplateId).distinct().filter(StringUtils::isNotBlank).collect(Collectors.toList());
 
         // 批量查询模板信息
         List<TemplateManagementEntity> templateManagementList = FeignQuery.create(TemplateManagementEntity.class)
@@ -983,6 +983,38 @@ public class ContractInfoServiceImpl extends SuperServiceImpl<ContractInfoMapper
             }
         }
         return result;
+    }
+
+    @Override
+    public void updateContractInfoStatus() {
+        LocalDate now = LocalDate.now();
+        // 查询适用于所有服务商的合同(已审核，启用)
+        List<ContractInfoEntity> list = lambdaQuery()
+                .eq(ContractInfoEntity::getApproveStatus, ApproveStatusEnum.APPROVE.getCode())
+                .eq(ContractInfoEntity::getDisable, Boolean.FALSE)
+                .ne(ContractInfoEntity::getTemplateId, "")
+                .list();
+        if(CollUtil.isNotEmpty(list)){
+            // 遍历合同列表，根据当前日期判断合同状态（未生效、生效中、已过期）
+            for (ContractInfoEntity contractInfoEntity : list) {
+                LocalDate effectiveDate = contractInfoEntity.getEffectiveDate();
+                LocalDate expireDate = contractInfoEntity.getExpireDate();
+                // 空值保护
+                if ( null == effectiveDate || null == expireDate) {
+                    continue;
+                }
+
+                //状态处理
+                ContractInfoStatusEnum status = ContractInfoStatusEnum.NOT_EFFECTIVE;
+                if (now.compareTo(effectiveDate) >= 0 && now.compareTo(expireDate) <= 0) {
+                    status = ContractInfoStatusEnum.EFFECTIVE;
+                } else if(now.compareTo(expireDate) > 0){
+                    status = ContractInfoStatusEnum.EXPIRED;
+                }
+                contractInfoEntity.setStatus(status.getCode());
+            }
+            updateBatchById(list);
+        }
     }
 
 }
