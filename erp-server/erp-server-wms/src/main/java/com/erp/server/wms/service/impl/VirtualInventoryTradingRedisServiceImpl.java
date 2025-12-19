@@ -54,7 +54,6 @@ public class VirtualInventoryTradingRedisServiceImpl implements VirtualInventory
     private VirtualInventoryTransactionService virtualInventoryTransactionService;
 
     @Override
-    @DistributeLocker(businessType = VirtualInventoryTransCoreService.BUSINESS_TYPE,keyName = "transactionList.skuId,transactionList.warehouseId,transactionList.virtualWarehouseId,transactionList.inventoryStatus",unlockAfterTx = false)
     public void doTransactionList(List<VirtualInventoryStockDTO.InventoryTransactionDTO> transactionList, String approveType) {
         //1、过滤掉不需要处理的数据
         transactionList.removeIf(VirtualInventoryStockDTO.InventoryTransactionDTO::isIgnoreTransaction);
