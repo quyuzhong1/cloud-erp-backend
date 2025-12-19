@@ -169,6 +169,10 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         if (Objects.isNull(supplier)) {
             throw new ServiceException(ApiError.ERROR_SUPPLIER_ABSENCE);
         }
+        
+        // 校验是否含税与税率的关系
+        validateTaxIncludedAndTaxRate(dto.getIsTaxIncluded(), dto.getPurchasePriceDetailList());
+        
         PurchasePriceEntity purchasePrice = new PurchasePriceEntity();
         String id = IdWorker.getIdStr();
         BeanMapper.copy(dto, purchasePrice);
@@ -309,6 +313,10 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         if (!statusList.contains(status.getStatus())) {
             throw new ServiceException(ApiError.ERROR_98019);
         }
+        
+        // 校验是否含税与税率的关系
+        validateTaxIncludedAndTaxRate(dto.getIsTaxIncluded(), dto.getPurchasePriceDetailList());
+        
         BeanMapper.copy(dto, purchasePrice);
         //编号
         String code = purchasePrice.getCode();
@@ -1234,4 +1242,45 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
             throw new ServiceException(ApiError.ERROR_PURCHASE_PRICE_SUBMIT_SKU_UN_APPROVE,skuNos);
         }
     }
+
+    /**
+     * 校验是否含税与税率的关系
+     * 若选择"否"，明细字段"税率"得为0，否则报错
+     * @author admin
+     * @date 2025/12/19
+     * @param isTaxIncluded 是否含税
+     * @param detailList 明细列表
+     */
+    private void validateTaxIncludedAndTaxRate(Boolean isTaxIncluded, List<? extends PurchasePriceDetailDTO.AddDTO> detailList) {
+        // 如果是否含税字段为空，直接返回（由@NotNull注解校验）
+        if (isTaxIncluded == null) {
+            return;
+        }
+        
+        // 如果明细为空，直接返回
+        if (CollectionUtils.isEmpty(detailList)) {
+            return;
+        }
+        
+        // 若选择"否"（不含税），则所有明细的税率必须为0
+        if (Boolean.FALSE.equals(isTaxIncluded)) {
+            List<String> invalidSkuNos = new ArrayList<>();
+            for (PurchasePriceDetailDTO.AddDTO detail : detailList) {
+                if (detail.getTaxRate() != null && detail.getTaxRate().compareTo(BigDecimal.ZERO) != 0) {
+                    // 收集税率不为0的SKU编号
+                    if (StringUtils.isNotBlank(detail.getSkuNo())) {
+                        invalidSkuNos.add(detail.getSkuNo());
+                    }
+                }
+            }
+            
+            // 如果存在税率不为0的明细，抛出异常
+            if (CollectionUtils.isNotEmpty(invalidSkuNos)) {
+                String skuList = String.join("、", invalidSkuNos);
+                throw new ServiceException(ApiError.DEFAULT.code, 
+                    String.format("当选择【不含税】时，所有明细的税率必须为0，以下SKU的税率不为0：%s", skuList));
+            }
+        }
+    }
+
 }
