@@ -41,7 +41,7 @@ import com.erp.model.sys.enums.DictValueEnum;
 import com.erp.model.tms.dto.LogisticsBillCostDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.entity.WarehouseEntity;
-import com.erp.model.wms.enums.ShopOrderRouteEnum;
+import com.erp.model.oms.enums.ShopOrderRouteEnum;
 import com.erp.rpc.dmp.feign.DmpInoutTaskFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;

@@ -893,7 +893,19 @@ public class ShopDTO implements Serializable {
          */
         @NotBlank(message = "转帐的选项不能为空")
         private String dictTransferOption;
+        /**
+         * ioss税号
+         */
+        private String iossTaxNo;
+        /**
+         * EORI税号
+         */
+        private String eoriTaxNo;
 
+        /**
+         * VOEC税号
+         */
+        private String voecTaxNo;
 
     }
 
