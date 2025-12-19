@@ -24,6 +24,7 @@
        <result column="template_version" property="templateVersion" />
        <result column="is_default" property="isDefault" />
        <result column="index" property="index" />
+       <result column="size" property="size" />
     </resultMap>
 
     <!-- 通用查询结果列 -->
@@ -48,7 +49,8 @@ tm.width as width,
 tm.content as content,
 tm.template_version as templateVersion,
 tm.is_default as isDefault,
-tm.index as index
+tm.index as index,
+tm.size as size
     </sql>
 
     <select id="tabList" resultType="com.erp.model.sys.dto.TemplateManagementDTO$TabListDTO">
@@ -124,7 +126,8 @@ tm.index as index
         tm.CONTENT AS CONTENT,
         tm.template_version AS templateVersion,
         tm.is_default AS isDefault,
-        tm.INDEX AS INDEX
+        tm.INDEX AS INDEX,
+        tm.size AS size
         FROM
         template_management AS tm
         WHERE

@@ -32,6 +32,7 @@ import com.erp.model.scm.enums.ContractInfoStatusEnum;
 import com.erp.model.scm.enums.DictBasicEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.entity.TemplateManagementEntity;
+import com.erp.model.sys.enums.TemplateManagementBizTypeEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
@@ -103,7 +104,39 @@ public class ContractInfoServiceImpl extends SuperServiceImpl<ContractInfoMapper
     public BaseResultDTO.AddDTO add(ContractInfoDTO.AddDTO addDTO) {
         List<String> serviceProviderIdList = addDTO.getServiceProviderIdList().stream().filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
         if(CollUtil.isEmpty(serviceProviderIdList)){
-            throw new ServiceException("服务商不能为空");
+            throw new ServiceException(ApiError.ERROR_MISSING_SUPPLIER);
+        }
+
+        //根据类型判断
+        if(addDTO.getType().equals(TemplateManagementBizTypeEnum.PURCHASEFRAMEWORK.getCode())){
+            if(CollUtil.isEmpty(addDTO.getAttachmentUrlList()) || CollUtil.isEmpty(addDTO.getAttachmentNameList())){
+                throw new ServiceException(ApiError.ERROR_PURCHASE_FRAMEWORK_CONTRACT_ATTACHMENT_REQUIRED);
+            }
+        }else {
+            //查询模板
+            String templateId = addDTO.getTemplateId();
+            if(StringUtils.isBlank(templateId)){
+                throw new ServiceException(ApiError.ERROR_CONTRACT_TEMPLATE_REQUIRED);
+            }
+
+            List<TemplateManagementEntity> list = FeignQuery.create(TemplateManagementEntity.class)
+                    .eq(TemplateManagementEntity::getDisabled, Boolean.FALSE)
+                    .eq(TemplateManagementEntity::getId, templateId)
+                    .list();
+            if(CollUtil.isEmpty(list)){
+                throw new ServiceException(ApiError.ERROR_CONTRACT_TEMPLATE_NOT_EXIST);
+            }
+            String name = list.get(0).getName();
+            addDTO.setName(name);
+            //关联模板校验-同一个模板不能重复添加相同供应商【含所有供应商】
+            List<ContractInfoEntity> oldList = lambdaQuery().in(ContractInfoEntity::getServiceProviderId, serviceProviderIdList).eq(ContractInfoEntity::getTemplateId, templateId).list();
+            if(CollUtil.isNotEmpty(oldList)){
+                String supplierNames = oldList.stream()
+                        .map(ContractInfoEntity::getServiceProviderName)
+                        .filter(StrUtil::isNotBlank)
+                        .collect(Collectors.joining(","));
+                throw new ServiceException(ApiError.ERROR_CONTRACT_TEMPLATE_DICTINCT,supplierNames,name);
+            }
         }
 
         //适用所有供应商
@@ -115,17 +148,6 @@ public class ContractInfoServiceImpl extends SuperServiceImpl<ContractInfoMapper
             ContractInfoEntity contractInfoEntity = new ContractInfoEntity();
             BeanMapperUtils.copy(addDTO, contractInfoEntity);
             contractInfoEntity.setServiceProviderId(serviceProviderId);
-
-            //根据类型判断
-            if(addDTO.getType().equals("purchaseFramework")){
-                if(CollUtil.isEmpty(addDTO.getAttachmentUrlList()) || CollUtil.isEmpty(addDTO.getAttachmentNameList())){
-                    throw new ServiceException("采购框架合同类型附件不能为空");
-                }
-            }else {
-                if(StringUtils.isBlank(addDTO.getTemplateId())){
-                    throw new ServiceException("合同模板不能为空");
-                }
-            }
 
             // 数据处理
             handleData(contractInfoEntity);
@@ -211,7 +233,7 @@ public class ContractInfoServiceImpl extends SuperServiceImpl<ContractInfoMapper
     public Boolean update(ContractInfoDTO.UpdateDTO addOrUpdateDTO) {
         List<String> serviceProviderIdList = addOrUpdateDTO.getServiceProviderIdList().stream().filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
         if(CollUtil.isEmpty(serviceProviderIdList)){
-            throw new ServiceException("服务商不能为空");
+            throw new ServiceException(ApiError.ERROR_SUPPLIER_ABSENCE);
         }
 
         String serviceProviderId = serviceProviderIdList.get(0);
@@ -224,23 +246,41 @@ public class ContractInfoServiceImpl extends SuperServiceImpl<ContractInfoMapper
         }
 
         if(!serviceProviderId.equals(old.getServiceProviderId())){
-            throw new ServiceException("服务商不允许修改");
+            throw new ServiceException(ApiError.ERROR_SUPPLIER_NOT_ALLOW_MODIFY);
+        }
+
+        //根据类型判断
+        if(addOrUpdateDTO.getType().equals(TemplateManagementBizTypeEnum.PURCHASEFRAMEWORK.getCode())){
+            if(CollUtil.isEmpty(addOrUpdateDTO.getAttachmentUrlList()) || CollUtil.isEmpty(addOrUpdateDTO.getAttachmentNameList())){
+                throw new ServiceException(ApiError.ERROR_PURCHASE_FRAMEWORK_CONTRACT_ATTACHMENT_REQUIRED);
+            }
+        }else {
+            //查询模板
+            String templateId = addOrUpdateDTO.getTemplateId();
+            if(StringUtils.isBlank(templateId)){
+                throw new ServiceException(ApiError.ERROR_CONTRACT_TEMPLATE_REQUIRED);
+            }
+            List<TemplateManagementEntity> list = FeignQuery.create(TemplateManagementEntity.class)
+                    .eq(TemplateManagementEntity::getDisabled, Boolean.FALSE)
+                    .eq(TemplateManagementEntity::getId, templateId)
+                    .list();
+            if(CollUtil.isEmpty(list)){
+                throw new ServiceException(ApiError.ERROR_CONTRACT_TEMPLATE_NOT_EXIST);
+            }
+            String name = list.get(0).getName();
+            addOrUpdateDTO.setName(name);
+            //关联模板校验-同一个模板不能重复添加相同供应商【含所有供应商】
+            List<ContractInfoEntity> oldList = lambdaQuery().in(ContractInfoEntity::getServiceProviderId, serviceProviderIdList).eq(ContractInfoEntity::getTemplateId, templateId).list();
+            if(CollUtil.isNotEmpty(oldList)){
+                String supplierNames = oldList.stream()
+                        .map(ContractInfoEntity::getServiceProviderName)
+                        .filter(StrUtil::isNotBlank)
+                        .collect(Collectors.joining(","));
+                throw new ServiceException(ApiError.ERROR_CONTRACT_TEMPLATE_DICTINCT,supplierNames,name);
+            }
         }
 
         ContractInfoEntity contractInfoEntity =  map(ContractInfoEntity.class, addOrUpdateDTO);
-
-        //根据类型判断
-        if(addOrUpdateDTO.getType().equals("purchaseFramework")){
-            if(CollUtil.isEmpty(addOrUpdateDTO.getAttachmentUrlList()) || CollUtil.isEmpty(addOrUpdateDTO.getAttachmentNameList())){
-                throw new ServiceException("采购框架合同类型附件不能为空");
-            }
-            contractInfoEntity.setTemplateId("");
-        }else {
-            if(StringUtils.isBlank(addOrUpdateDTO.getTemplateId())){
-                throw new ServiceException("合同模板不能为空");
-            }
-        }
-
         // 数据处理
         handleData(contractInfoEntity);
 

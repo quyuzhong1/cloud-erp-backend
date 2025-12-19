@@ -89,6 +89,10 @@ public class TemplateManagementServiceImpl extends SuperServiceImpl<TemplateMana
         }
         //默认已发布
         templateManagementEntity.setStatus(TemplateManagementStatusEnum.FINISHED.getCode());
+        //模板大小
+        BigDecimal length = templateManagementEntity.getLength();
+        BigDecimal width = templateManagementEntity.getWidth();
+        templateManagementEntity.setSize(String.format("%.2f", length)  + "*" + String.format("%.2f", width));
 
         log.info("开始新增模板管理");
         // 生成单号
@@ -129,6 +133,10 @@ public class TemplateManagementServiceImpl extends SuperServiceImpl<TemplateMana
 
         //默认已发布
         templateManagementEntity.setStatus(TemplateManagementStatusEnum.FINISHED.getCode());
+        //模板大小
+        BigDecimal length = templateManagementEntity.getLength();
+        BigDecimal width = templateManagementEntity.getWidth();
+        templateManagementEntity.setSize(String.format("%.2f", length)  + "*" + String.format("%.2f", width));
 
         log.info("编辑 开始修改模板管理数据，单号：【{}】", old.getCode());
         boolean save = super.updateById(templateManagementEntity);
@@ -185,10 +193,7 @@ public class TemplateManagementServiceImpl extends SuperServiceImpl<TemplateMana
             record.setStatusName(TemplateManagementStatusEnum.getName(record.getStatus()));
             //启用状态
             record.setDisabledName(record.getDisabled() ? "停用" : "启用");
-            //模板大小
-            BigDecimal length = record.getLength();
-            BigDecimal width = record.getWidth();
-            record.setSize(String.format("%.2f", length)  + "*" + String.format("%.2f", width) +" 毫米");
+
         }
     }
 

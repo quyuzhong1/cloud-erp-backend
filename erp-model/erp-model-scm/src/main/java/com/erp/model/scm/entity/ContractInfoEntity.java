@@ -36,6 +36,11 @@ public class ContractInfoEntity extends BaseEntity<ContractInfoEntity> {
     @TableField("code")
     private String code;
     /**
+     * 合同名称
+     */
+    @TableField("name")
+    private String name;
+    /**
     * 服务商id
     */
     @TableField("service_provider_id")

@@ -104,6 +104,12 @@ public class TemplateManagementDTO implements Serializable {
         private Integer index;
 
 
+        /**
+         * 尺寸
+         */
+        private String size;
+
+
     }
 
     /**
