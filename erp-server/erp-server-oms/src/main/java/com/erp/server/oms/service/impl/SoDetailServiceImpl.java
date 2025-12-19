@@ -86,6 +86,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.constraints.NotBlank;
 import java.io.File;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -2007,12 +2008,30 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         //需要释放库存的明细
         List<String> unLockIdList = new ArrayList<>();
 
+        List<String> skuIdList = updateList.stream().map(item -> item.getSkuId()).collect(Collectors.toList());
+        List<ProductDetailEntity> productDetailList = plmTaskFeign.getByIdList(skuIdList);
+
         for (SoDetailDTO.UpdateDTO updateDTO : updateList) {
             //明细
             SoDetailEntity soDetailEntity = dbList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), updateDTO.getId())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(soDetailEntity)) {
                 throw new ServiceException(ApiError.ERROR_92015);
             }
+            //订货通需要给默认的发货sku
+            if (StringUtils.isNotBlank(updateDTO.getSkuId()) && StringUtils.isBlank(updateDTO.getDeliverySkuId())) {
+                updateDTO.setDeliverySkuId(updateDTO.getSkuId());
+                ProductDetailEntity productDetailEntity = productDetailList.stream()
+                        .filter(item -> item.getId().equals(updateDTO.getSkuId()))
+                        .findFirst()
+                        .orElse(null);
+                if (Objects.nonNull(productDetailEntity)) {
+                    updateDTO.setDeliverySkuNo(productDetailEntity.getSkuNo());
+                    updateDTO.setBoxQty(updateDTO.getQty());
+                    updateDTO.setPerBoxQty(1);
+                }
+            }
+
+
             //有效数量
             Integer noticeQty = soDeliveryNoticeDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSourceDetailId(), updateDTO.getId()))
                     .map(SoDeliveryNoticeDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
