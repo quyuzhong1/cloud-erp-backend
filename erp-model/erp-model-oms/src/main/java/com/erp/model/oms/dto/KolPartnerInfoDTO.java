@@ -185,6 +185,10 @@ public class KolPartnerInfoDTO implements Serializable {
         private String createUserName;
 
         /**
+         * detailId
+         */
+        private String detailId;
+        /**
          * 合作平台名称
          */
         private String platformName;

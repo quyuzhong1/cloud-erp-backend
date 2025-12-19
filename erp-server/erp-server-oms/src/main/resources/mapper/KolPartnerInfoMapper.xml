@@ -60,6 +60,7 @@ kpi.dept_name AS deptName
     </sql>
 
     <sql id="Cooperation_Column_List">
+kcp.id AS detailId,
 kcp.platform_name AS platformName,
 kcp.platform_account_id AS platformAccountId,
 kcp.platform_account_name AS platformAccountName,
