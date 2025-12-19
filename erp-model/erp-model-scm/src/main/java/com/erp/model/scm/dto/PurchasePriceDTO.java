@@ -736,6 +736,12 @@ public class PurchasePriceDTO implements Serializable {
          */
         private String supplierId;
 
+
+        /**
+         * 是否含税
+         */
+        private Boolean isTaxIncluded;
+
         /**
          * 供应商名称
          */

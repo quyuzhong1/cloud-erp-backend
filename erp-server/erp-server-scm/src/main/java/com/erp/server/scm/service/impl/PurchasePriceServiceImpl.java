@@ -987,6 +987,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
 
                 Boolean disabled = item.getDisabled();
                 excelDTO.setEnabled((disabled != null && disabled) ? "停用" : "启用");
+                excelDTO.setIsTaxIncludedName(Boolean.TRUE.equals(item.getIsTaxIncluded()) ? "是" : "否");
                 //含税单价
                 BigDecimal taxPrice = item.getTaxPrice();
                 //币种
