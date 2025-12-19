@@ -133,6 +133,7 @@ public class ContractInfoServiceImpl extends SuperServiceImpl<ContractInfoMapper
             if(CollUtil.isNotEmpty(oldList)){
                 String supplierNames = oldList.stream()
                         .map(ContractInfoEntity::getServiceProviderName)
+                        .distinct()
                         .filter(StrUtil::isNotBlank)
                         .collect(Collectors.joining(","));
                 throw new ServiceException(ApiError.ERROR_CONTRACT_TEMPLATE_DICTINCT,supplierNames,name);
@@ -274,6 +275,7 @@ public class ContractInfoServiceImpl extends SuperServiceImpl<ContractInfoMapper
             if(CollUtil.isNotEmpty(oldList)){
                 String supplierNames = oldList.stream()
                         .map(ContractInfoEntity::getServiceProviderName)
+                        .distinct()
                         .filter(StrUtil::isNotBlank)
                         .collect(Collectors.joining(","));
                 throw new ServiceException(ApiError.ERROR_CONTRACT_TEMPLATE_DICTINCT,supplierNames,name);
