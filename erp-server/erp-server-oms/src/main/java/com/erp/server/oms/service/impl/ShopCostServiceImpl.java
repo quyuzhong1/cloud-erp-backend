@@ -56,6 +56,10 @@ public class ShopCostServiceImpl extends SuperServiceImpl<ShopCostMapper, ShopCo
                 throw new ServiceException("店铺费率不存在");
             }
         }
+        ShopInfoEntity shopInfo = shopInfoService.getById(dto.getShopId());
+        shopInfo.setEoriTaxNo(dto.getEoriTaxNo());
+        shopInfo.setIossTaxNo(dto.getIossTaxNo());
+        shopInfo.setVoecTaxNo(dto.getVoecTaxNo());
         BeanMapper.copy(dto, shopCost);
         Boolean updateResult = this.saveOrUpdate(shopCost);
         return updateResult;
@@ -107,6 +111,10 @@ public class ShopCostServiceImpl extends SuperServiceImpl<ShopCostMapper, ShopCo
         viewCost.setDictPlatform(shop.getDictPlatform());
         viewCost.setShopId(shopId);
         viewCost.setShopName(shop.getName());
+
+        viewCost.setIossTaxNo(shop.getIossTaxNo());
+        viewCost.setEoriTaxNo(shop.getEoriTaxNo());
+        viewCost.setVoecTaxNo(shop.getVoecTaxNo());
         return viewCost;
     }
 
