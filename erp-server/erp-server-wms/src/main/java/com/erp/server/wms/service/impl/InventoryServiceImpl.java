@@ -26,6 +26,7 @@ import com.common.core.utils.ValidatorUtil;
 import com.erp.model.dmp.dto.DmpSyncKingdeeDTO;
 import com.erp.model.plm.enums.SaleStateEnum;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.scm.dto.SupplierDTO;
 import com.erp.model.sys.dto.CfgUserRangeDTO;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.sys.enums.UserRangeTypeEnum;
@@ -42,6 +43,7 @@ import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.rpc.dmp.feign.DmpSyncFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.scm.feign.SupplierFeign;
 import com.erp.rpc.sys.feign.AuthDataFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.constant.WmsConstant;
@@ -60,6 +62,7 @@ import org.apache.poi.xssf.usermodel.XSSFCellStyle;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -108,6 +111,9 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
     private DownloadTaskFeign downloadTaskFeign;
     @Resource
     private AuthDataFeign authDataFeign;
+
+    @Autowired
+    private SupplierFeign supplierFeign;
 
     @Override
     public InventoryEntity findInventory(String orgId, String warehouseId, String skuId, String warehouseLocationId, String status) {
@@ -743,6 +749,11 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
         List<String> warehouseIdIds = list.stream().map(req -> req.getWarehouseId()).distinct().collect(Collectors.toList());
         List<WarehouseLocationEntity> warehouseLocationEntities = warehouseLocationService.listByWarehouseIds(warehouseIdIds);
 
+        List<String> mainSupplierIds = list.stream().map(InventoryDTO.PagingViewDTO::getMainSupplier).distinct().collect(Collectors.toList());
+        List<String> secondSupplierIds = list.stream().map(InventoryDTO.PagingViewDTO::getSecondSupplier).distinct().collect(Collectors.toList());
+        mainSupplierIds.addAll(secondSupplierIds);
+        List<String> supplierIds = mainSupplierIds.stream().distinct().collect(Collectors.toList());
+        Map<String, SupplierDTO.SupplierSimpleDTO> supplierMap = supplierFeign.getSupplierSimpleInfo(supplierIds);
 
         list.stream().parallel().forEach(data -> {
             // 仓库名称赋值
@@ -786,6 +797,16 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
 
             // 销售状态名称
             data.setSaleStateName(SaleStateEnum.getNameByCode(data.getSaleState()));
+
+            // 一级供应商名称
+            if (StrUtils.isNotEmpty(data.getMainSupplier()) && supplierMap.containsKey(data.getMainSupplier())) {
+                data.setMainSupplierName(supplierMap.get(data.getMainSupplier()).getName());
+            }
+
+            // 二级供应商名称
+            if (StrUtils.isNotEmpty(data.getSecondSupplier()) && supplierMap.containsKey(data.getSecondSupplier())) {
+                data.setSecondSupplierName(supplierMap.get(data.getSecondSupplier()).getName());
+            }
         });
     }
 
