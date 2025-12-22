@@ -183,6 +183,67 @@ public class FsService {
         return Collections.emptyMap();
     }
 
+    /**
+     * 飞书定义订阅
+     * @author will
+     * @date 2025/12/22 15:15
+     * @param approvalCode
+     * @return void
+     */
+    public void subscribeFeiShuDefinition(String approvalCode) {
+        // 构建client
+        Client client = Client.newBuilder(fsProperties.getClientId(), fsProperties.getClientSecret()).build();
+
+        // 创建请求对象
+        SubscribeApprovalReq req = SubscribeApprovalReq.newBuilder()
+                .approvalCode(approvalCode)
+                .build();
+
+        // 发起请求
+        SubscribeApprovalResp resp;
+        try {
+             resp = client.approval().v4().approval().subscribe(req);
+        } catch (Exception e) {
+            log.error("飞书审批定义订阅异常>>>>>{}", e.getMessage());
+            throw new ServiceException(ApiError.WORKFLOW_FEI_SHU_DEFINITION_SUBSCRIBE_FAIL);
+        }
+        // 处理服务端错误
+        if (!resp.success()) {
+            log.error("飞书审批定义订阅失败>>>>>{}", resp.getMsg());
+            throw new ServiceException(ApiError.WORKFLOW_FEI_SHU_DEFINITION_SUBSCRIBE_FAIL);
+        }
+    }
+
+    /**
+     * 取消飞书定义订阅
+     * @author will
+     * @date 2025/12/22 15:15
+     * @param approvalCode
+     * @return void
+     */
+    public void unSubscribeFeiShuDefinition(String approvalCode) {
+        // 构建client
+        Client client = Client.newBuilder(fsProperties.getClientId(), fsProperties.getClientSecret()).build();
+
+        // 创建请求对象
+        UnsubscribeApprovalReq req = UnsubscribeApprovalReq.newBuilder()
+                .approvalCode(approvalCode)
+                .build();
+
+        // 发起请求
+        UnsubscribeApprovalResp resp;
+        try {
+            resp = client.approval().v4().approval().unsubscribe(req);
+        } catch (Exception e) {
+            log.error("飞书审批定义取消订阅异常>>>>>{}", e.getMessage());
+            throw new ServiceException(ApiError.WORKFLOW_FEI_SHU_DEFINITION_SUBSCRIBE_FAIL);
+        }
+        // 处理服务端错误
+        if (!resp.success()) {
+            log.error("飞书审批取消定义订阅失败>>>>>{}", resp.getMsg());
+            throw new ServiceException(ApiError.WORKFLOW_FEI_SHU_DEFINITION_SUBSCRIBE_FAIL);
+        }
+    }
 
     /**
      * 获取飞书自建应用的 tenant_access_token
