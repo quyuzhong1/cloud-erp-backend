@@ -206,7 +206,12 @@ public class RocketMqNewTag {
      * restcloudb2b订单
      */
     public static final String RESTCLOUD_PLATFORM_B2B_ORDER_TO_OMS_TAG = "${spring.cloud.nacos.discovery.namespace}-restcloud_platform_b2b_order_to_oms_tag";
-    
+
+    /**
+     * restcloudb2b订单
+     */
+    public static final String DMP_PLATFORM_B2B_ORDER_TO_OMS_TAG = "${spring.cloud.nacos.discovery.namespace}-dmp_platform_b2b_order_to_oms_tag";
+
     /**
      * restcloud收款单
      */

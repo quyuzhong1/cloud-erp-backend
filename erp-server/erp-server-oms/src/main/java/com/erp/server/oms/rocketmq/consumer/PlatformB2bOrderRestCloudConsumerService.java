@@ -9,17 +9,11 @@ import com.common.core.exception.ServiceException;
 import com.common.message.constant.RocketMqNewConsumerGroup;
 import com.common.message.constant.RocketMqNewTag;
 import com.common.message.constant.RocketMqNewTopic;
-import com.common.message.handler.AbstractNewPlatformConsumerHandler;
 import com.common.message.handler.AbstractRestCloudPlatformConsumerHandler;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
-import com.erp.model.oms.entity.CustomerAddressEntity;
-import com.erp.model.oms.entity.CustomerInfoEntity;
-import com.erp.model.oms.entity.ShopInfoEntity;
-import com.erp.model.oms.enums.CustomerAddressTypeEnum;
-import com.erp.model.oms.enums.DeliveryModeEnum;
-import com.erp.model.oms.enums.RuleTypeEnum;
-import com.erp.model.oms.enums.ShopOrderRouteEnum;
+import com.erp.model.oms.entity.*;
+import com.erp.model.oms.enums.*;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
@@ -47,11 +41,11 @@ import java.util.stream.Collectors;
  *
  */
 @Service
-@RocketMQMessageListener(topic = RocketMqNewTopic.DMP_PLATFORM_B2B_ORDER_TO_OMS_TOPIC,
-        selectorExpression = RocketMqNewTag.DMP_PLATFORM_B2B_ORDER_TO_OMS_TAG,
-        consumerGroup = RocketMqNewConsumerGroup.DMP_PLATFORM_B2B_ORDER_TO_OMS_GROUP)
+@RocketMQMessageListener(topic = RocketMqNewTopic.RESTCLOUD_PLATFORM_B2B_ORDER_TO_OMS_TOPIC,
+        selectorExpression = RocketMqNewTag.RESTCLOUD_PLATFORM_B2B_ORDER_TO_OMS_TAG,
+        consumerGroup = RocketMqNewConsumerGroup.RESTCLOUD_PLATFORM_B2B_ORDER_TO_OMS_GROUP)
 @Slf4j
-public class PlatformB2bOrderConsumerService extends AbstractNewPlatformConsumerHandler {
+public class PlatformB2bOrderRestCloudConsumerService extends AbstractRestCloudPlatformConsumerHandler {
 
 	@Resource
 	private CustomerInfoService customerInfoService;
@@ -67,6 +61,12 @@ public class PlatformB2bOrderConsumerService extends AbstractNewPlatformConsumer
 
 	@Resource
 	private SoInfoService soInfoService;
+
+	@Resource
+	private DmpThirdMappingFeign dmpThirdMappingFeign;
+
+	@Resource
+	private DictBasicService dictBasicService;
 
 	@Resource
 	private ShopInfoService shopInfoService;
