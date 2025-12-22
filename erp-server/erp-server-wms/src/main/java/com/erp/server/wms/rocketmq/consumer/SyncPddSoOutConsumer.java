@@ -17,7 +17,7 @@ import javax.annotation.Resource;
 @Component
 @RocketMQMessageListener(topic = RocketMqNewTopic.RESTCLOUD_PDD_SO_OUT_TO_WMS_TOPIC,
 selectorExpression = RocketMqNewTag.RESTCLOUD_PDD_SO_OUT_TO_WMS_TAG,
-consumerGroup = RocketMqNewConsumerGroup.DMP_WDT_SO_OUTSTOCK_TO_WMS_GROUP)
+consumerGroup = RocketMqNewConsumerGroup.DMP_PDD_SO_OUTSTOCK_TO_WMS_GROUP)
 public class SyncPddSoOutConsumer extends AbstractRestCloudPlatformConsumerHandler {
 
 	@Resource
