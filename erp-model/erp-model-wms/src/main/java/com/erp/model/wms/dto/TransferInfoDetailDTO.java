@@ -1,5 +1,6 @@
 package com.erp.model.wms.dto;
 
+import com.common.business.dto.base.SuperDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -19,7 +20,7 @@ public class TransferInfoDetailDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class AddDTO {
+    public static class AddDTO extends SuperDTO {
 
         /**
          * skuId

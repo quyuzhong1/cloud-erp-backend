@@ -5,7 +5,6 @@ import com.sdk.wangdian.sdk.WdtProperties;
 import com.sdk.wangdian.sdk.impl.ApiFactory;
 import com.sdk.wangdian.sdk.impl.DefaultClient;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
 
 /**
  * 旺店通连接工具类
@@ -13,7 +12,6 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
  * @author tanmujin
  */
 @Slf4j
-@EnableConfigurationProperties(WdtProperties.class)
 public class WangDianClientService {
 
     private Client defaultClient;
@@ -22,8 +20,8 @@ public class WangDianClientService {
         this.defaultClient = DefaultClient.get("wdtapi3", "http://47.92.239.46/", "wjkj03-test", "b6412a9b6:806828718719806966febbfe948893e8");
     }*/
 
-    WangDianClientService(WdtProperties properties){
-        this.defaultClient = DefaultClient.get(properties.getSid(), properties.getUrl(), properties.getAppKey(), properties.getAppSecret());
+    public WangDianClientService(WdtProperties properties){
+        this.defaultClient = DefaultClient.get("wdtapi3", "http://47.92.239.46/", "wjkj03-test", "b6412a9b6:806828718719806966febbfe948893e8");
         log.info("初始化 WangDianClientService, {}", properties);
     }
 
