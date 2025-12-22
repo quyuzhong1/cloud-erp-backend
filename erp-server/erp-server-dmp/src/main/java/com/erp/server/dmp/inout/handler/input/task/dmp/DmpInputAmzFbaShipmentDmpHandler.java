@@ -1,15 +1,24 @@
 package com.erp.server.dmp.inout.handler.input.task.dmp;
 
+import cn.hutool.core.collection.CollUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
+import com.common.core.anno.ParamData;
+import com.common.core.enums.PannoEnum;
+import com.erp.model.dmp.entity.DmpSoInfoEntity;
+import com.erp.model.dmp.entity.ShopInfoMappingEntity;
 import com.erp.sdk.oms.amz.spapi.model.fulfillmentinbound.Address;
 import com.erp.sdk.oms.amz.spapi.model.fulfillmentinbound.LabelPrepType;
+import com.erp.server.dmp.enums.FbaOutStockTypeEnum;
+import com.erp.server.dmp.inout.handler.input.task.mongo.DmpInputMongoHandler;
+import com.erp.server.dmp.service.ShopInfoMappingService;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
+import javax.annotation.Resource;
+import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * dmp处理下一个扩展handler，如何订单收货人信息单独一张表，使用此handler即可，因有成员变量，最终实现类由spring管理需要是多例@Scope("prototype")
@@ -20,6 +29,48 @@ import java.util.TreeMap;
 @Scope("prototype")
 public class DmpInputAmzFbaShipmentDmpHandler extends DmpInputDbConvertDmpHandler {
 
+    protected Map<List<Map<String, Object>>, List<TreeMap<String, Object>>> convertData(List<Map<String, Object>> dmpInputMongoEntityList) {
+
+        Map<List<Map<String, Object>>, List<TreeMap<String, Object>>> result = new HashMap<>();
+
+        if (CollUtil.isNotEmpty(dmpInputMongoEntityList)) {
+            // 提取shipment_id列表
+            List<String> shipmentIds = dmpInputMongoEntityList.stream()
+                    .map(d -> d.get("shipment_id") != null ? d.get("shipment_id").toString() : null)
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList());
+
+            if (CollUtil.isNotEmpty(shipmentIds)) {
+                // 查询关联数据
+                List<ParamData> paramDataList = Collections.singletonList(
+                        new ParamData("shipmentId", "shipmentId", PannoEnum.IN, shipmentIds)
+                );
+
+                List<Map<String, Object>> lxData = mongoService.findMongoData(paramDataList, "lx_fba_shipment_data");
+                List<Map<String, Object>> amzData = mongoService.findMongoData(paramDataList, "amz_fba_shipment_data");
+
+                if (CollUtil.isNotEmpty(lxData) && CollUtil.isNotEmpty(amzData)) {
+                    // 按shipment_id分组
+                    Map<String, Map<String, Object>> lxMap = lxData.stream()
+                            .collect(Collectors.toMap(d -> d.get("shipment_id").toString(), d -> d));
+                    Map<String, Map<String, Object>> amzMap = amzData.stream()
+                            .collect(Collectors.toMap(d -> d.get("shipment_id").toString(), d -> d));
+
+                    amzMap.forEach((shipmentId, amzRecord) -> {
+                        if (lxMap.containsKey(shipmentId)) {
+                            TreeMap<String, Object> dmpData = new TreeMap<>();
+                            Map<String, Object> map = lxMap.get("shipmentId");
+                            int isSta = (int)map.get("is_sta");
+                            dmpData.put("nextLevelId", nextLevelId);
+                            dmpData.put("outStockType", isSta == 0 ? FbaOutStockTypeEnum.STA.getName() : FbaOutStockTypeEnum.AWD.getName());
+                            result.put(Collections.singletonList(amzRecord), Collections.singletonList(dmpData));
+                        }
+                    });
+                }
+            }
+        }
+        return result;
+    }
 
     @Override
     protected void afterConvertData(Map<List<Map<String, Object>>, List<TreeMap<String, Object>>> dmpInputDataDmpRelationMaps) {
