@@ -6904,6 +6904,12 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
             operateLogService.addSysLogByOther(new OperateLogEntity().setClassPath(SKUCLASSPATH).setPid(purchaseEntity.getProductId())
                     .setBusinessId(purchaseEntity.getId()).setOperation("品质称重").setContent(logContent + logContent2));
+            
+            // 当包装尺寸长宽高变更时，同步更新旺店通货品长宽高
+            // 只同步审核通过的产品
+            if(productDetailEntity.getStatus().equals(ProductDetailStatusEnum.APPROVAL_PASS.getCode())){
+                syncWangDianProductDetailService.syncDataToWangDian(productDetailEntity);
+            }
         }
 
         return "操作成功";
@@ -7005,6 +7011,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             syncLingXingProductDetailService.syncDataToLingxing(productDetailEntity);
             //增加缓存清除
             redisUtil.hdel(RedisKeyConstant.LIST_SKU_INFO, productDetailEntity.getId());
+            // 当包装尺寸长宽高变更时，同步更新旺店通货品长宽高
+            // 只同步审核通过的产品
+            if(productDetailEntity.getStatus().equals(ProductDetailStatusEnum.APPROVAL_PASS.getCode())){
+                syncWangDianProductDetailService.syncDataToWangDian(productDetailEntity);
+            }
         }
 
 
