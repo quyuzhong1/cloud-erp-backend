@@ -151,7 +151,7 @@ public class SoB2cDeliveryQueryHandler extends AbstractQueryHandler {
             if (bool){
                 return "fsbl.logistics_label_url is not null and fsbl.logistics_label_url <> ''";
             }else {
-                return "fsbl.logistics_label_url is null or fsbl.logistics_label_url = ''";
+                return "(fsbl.logistics_label_url is null or fsbl.logistics_label_url = '')";
             }
         }
         return null;
