@@ -1104,6 +1104,10 @@ public class SoInfoDTO implements Serializable {
          */
         private String platformOrderCode;
         /**
+         * 第三方单据编号
+         */
+        private String thirdCode;
+        /**
          * 平台订单Id
          */
         private String platformOrderId;
@@ -1751,6 +1755,10 @@ public class SoInfoDTO implements Serializable {
          */
         private String platformOrderCode;
 
+        /**
+         * 第三方单据编号
+         */
+        private String thirdCode;
         /**
          * 销售员id
          */
