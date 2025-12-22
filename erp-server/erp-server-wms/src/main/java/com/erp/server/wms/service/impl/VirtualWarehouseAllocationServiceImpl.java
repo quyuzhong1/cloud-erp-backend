@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
@@ -28,7 +29,6 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.MathUtil;
-import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.*;
@@ -38,7 +38,6 @@ import com.erp.model.wms.dto.excel.VwAllocationAllocationTransferExcelDTO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.dto.pickingstrategy.CfgRulePickingDTO;
 import com.erp.model.wms.dto.pickingstrategy.LocationInventoryResultDTO;
-import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.*;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
@@ -716,13 +715,13 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
         if (CollUtil.isEmpty(transferWarehouseList)) {
             return;
         }
+        //查询拣货策略
         CfgRulePickingDTO.CfgExecutionDataDTO executionData = new CfgRulePickingDTO.CfgExecutionDataDTO();
         executionData.setBillType(PickingBillTypeEnum.TRANSFER.getCode());
         executionData.setSourceCode(allocationEntity.getCode());
         List<CfgRulePickingDTO.CfgExecutionDataDetailDTO> details = transferWarehouseList.stream()
                 .map(v -> new CfgRulePickingDTO.CfgExecutionDataDetailDTO(v.getFromWarehouseId(), v.getSkuId(), v.getSkuNo(),v.getSkuNo(), v.getQty(), v.getSourceDetailId())).collect(Collectors.toList());
         executionData.setDetails(details);
-
         Pair<List<CfgRulePickingDTO.CfgRulePickingInventoryDTO>, List<WarehouseLocationEntity>> pickPair = cfgRulePickingService.matchRuleActionList(executionData, "gt");
         Pair<List<LocationInventoryResultDTO>, Map<String, Integer>> ruleOrderMatchResult = cfgRulePickingService.getSoB2CRuleOrderMatchResult(executionData, pickPair);
 
@@ -750,11 +749,21 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
                 detailAddDTO.setOutWarehouseId(transferWarehouseDTO.getFromWarehouseId());
                 detailAddDTO.setInWarehouseId(transferWarehouseDTO.getToWarehouseId());
                 detailAddDTO.setIsUserSystem(Boolean.TRUE);
-
-                //查询拣货策略TODO
                 detailAddDTO.setInWarehouseLocation("");
                 detailAddDTO.setOutWarehouseLocation("");
-                detailDTOList.add(detailAddDTO);
+                //查询拣货策略
+                List<LocationInventoryResultDTO> inventoryResultDTOList = ruleOrderMatchResult.getFirst().stream().filter(obj -> CharSequenceUtil.equals(obj.getWarehouseId(), detailAddDTO.getOutWarehouseId()) && CharSequenceUtil.equals(obj.getSkuId(), detailAddDTO.getSkuId())).collect(Collectors.toList());
+                if (CollUtil.isEmpty(inventoryResultDTOList)) {
+                    detailDTOList.add(detailAddDTO);
+                }
+                for (LocationInventoryResultDTO resultDTO : inventoryResultDTOList) {
+                    TransferInfoDetailDTO.AddDTO detailResultDTO = new TransferInfoDetailDTO.AddDTO();
+                    BeanUtil.copyProperties(detailAddDTO,detailResultDTO);
+                    detailResultDTO.setOutWarehouseLocation(resultDTO.getWarehouseLocation());
+                    detailResultDTO.setInWarehouseLocation(resultDTO.getWarehouseLocation());
+                    detailResultDTO.setQty(resultDTO.getQuantity());
+                    detailDTOList.add(detailResultDTO);
+                }
             }
             addDTO.setDetailList(detailDTOList);
             //新增并审核调拨单
