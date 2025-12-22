@@ -6,6 +6,8 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import com.baomidou.mybatisplus.annotation.TableField;
 import java.io.Serializable;
+
+import jdk.nashorn.internal.ir.annotations.Ignore;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -76,6 +78,11 @@ public class KolB2cApplicationEntity extends BaseEntity<KolB2cApplicationEntity>
     */
     @TableField("sample_type")
     private String sampleType;
+    /**
+     * 寄样类型
+     */
+    @TableField(exist = false)
+    private String sampleTypeName;
     /**
     * 是否国际
     */

@@ -80,6 +80,11 @@ public class KolB2cApplicationDetailEntity extends BaseEntity<KolB2cApplicationD
     */
     @TableField("project_tag")
     private String projectTag;
+    /**
+    * 项目标签
+    */
+    @TableField(exist = false)
+    private String projectTagName;
 
 
     public static final String MAIN_ID = "main_id";
