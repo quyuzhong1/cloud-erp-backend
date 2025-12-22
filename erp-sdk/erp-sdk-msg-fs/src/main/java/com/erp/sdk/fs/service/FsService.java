@@ -212,6 +212,7 @@ public class FsService {
             log.error("飞书审批定义订阅失败>>>>>{}", resp.getMsg());
             throw new ServiceException(ApiError.WORKFLOW_FEI_SHU_DEFINITION_SUBSCRIBE_FAIL);
         }
+        log.warn("飞书审批定义订阅成功>>>>>{}", approvalCode);
     }
 
     /**
@@ -243,6 +244,7 @@ public class FsService {
             log.error("飞书审批取消定义订阅失败>>>>>{}", resp.getMsg());
             throw new ServiceException(ApiError.WORKFLOW_FEI_SHU_DEFINITION_SUBSCRIBE_FAIL);
         }
+        log.warn("飞书审批定义取消订阅成功>>>>>{}", approvalCode);
     }
 
     /**
