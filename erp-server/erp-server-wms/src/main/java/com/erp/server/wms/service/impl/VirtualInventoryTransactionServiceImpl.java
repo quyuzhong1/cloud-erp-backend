@@ -240,7 +240,9 @@ public class VirtualInventoryTransactionServiceImpl extends SuperServiceImpl<Vir
     @Override
     public void innerInventoryIdToInventoryHis(String inventoryId , String transactionId) {
 		List<VirtualInventoryTransactionEntity> inventoryTransactionEntityList = lambdaQuery().eq(VirtualInventoryTransactionEntity::getInventoryId, inventoryId)
-				.orderByAsc(VirtualInventoryTransactionEntity::getCreateTime).list();
+				.orderByAsc(VirtualInventoryTransactionEntity::getCreateTime)
+				.last(" for update ")
+				.list();
 		if(CollUtil.isNotEmpty(inventoryTransactionEntityList)) {
 			//1、补偿提交redis库存
 			Set<String> transactionIdSet = inventoryTransactionEntityList.stream()
