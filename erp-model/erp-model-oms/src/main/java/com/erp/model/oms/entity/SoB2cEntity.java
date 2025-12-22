@@ -403,6 +403,12 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
     @TableField("after_tax_amount")
     private BigDecimal afterTaxAmount;
 
+    /**
+     * 平台发货仓库
+     */
+    @TableField("platform_delivery_warehouse")
+    private String platformDeliveryWarehouse;
+
     @TableField(exist = false)
     private List<SoB2cDetailEntity> detailEntityList;
 

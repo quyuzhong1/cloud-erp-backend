@@ -273,7 +273,19 @@ public class DaMaiService {
         ThirdWarehouseContext.setResponseJson(bodyStr);
         return DaMaiUtils.parseToResp(bodyStr, DaMaiCreateOrderResp.class);
     }
-
+    /**
+     * 创建Fba出库单
+     * @param authMap
+     * @return
+     */
+    public DaMaiBaseResp<DaMaiCreateFbaOrderResp> createFbaOrder(Map<String,Object> authMap, DaMaiCreateFbaOrderRequest daMaiCreateFbaOrderRequest){
+        String path = "/omsService/non/fbaApi/createOrder";
+        Map<String, String> headerMap = buildHearderMap(authMap);
+        ThirdWarehouseContext.setRequestJson(JSONUtil.toJsonStr(daMaiCreateFbaOrderRequest));
+        String bodyStr = OkHttpUtils.doPostJson(getPreUrl() + path, JSONUtil.toJsonStr(daMaiCreateFbaOrderRequest), headerMap);
+        ThirdWarehouseContext.setResponseJson(bodyStr);
+        return DaMaiUtils.parseToResp(bodyStr, DaMaiCreateFbaOrderResp.class);
+    }
     /**
      * 取消入库单
      * @param authMap
@@ -288,7 +300,20 @@ public class DaMaiService {
         DaMaiBaseResp<String> response = DaMaiUtils.parseToResp(bodyStr,String.class);
         return response;
     }
-
+    /**
+     * 取消入库单
+     * @param authMap
+     * @return
+     */
+    public DaMaiBaseResp<DaMaiCancelFbaOrderResp> cancelFbaOrder(Map<String,Object> authMap, DaMaiCancelFbaOrderRequest request){
+        String path = "/omsService/non/fbaApi/cancelFbaOrder";
+        Map<String, String> headerMap = buildHearderMap(authMap);
+        ThirdWarehouseContext.setRequestJson(JSONUtil.toJsonStr(request));
+        String bodyStr = OkHttpUtils.doPostJson(getPreUrl() + path, JSONUtil.toJsonStr(request), headerMap);
+        ThirdWarehouseContext.setResponseJson(bodyStr);
+        DaMaiBaseResp<DaMaiCancelFbaOrderResp> response = DaMaiUtils.parseToResp(bodyStr,DaMaiCancelFbaOrderResp.class);
+        return response;
+    }
     /**
      * 查询入库单
      * @param authMap
@@ -297,6 +322,7 @@ public class DaMaiService {
     public DaMaiBaseResp<List<DaMaiGetOrderResp>> getOrderList(Map<String,Object> authMap, DaMaiGetOrderRequest daMaiGetOrderRequest){
         String path = "/omsService/non/soApi/getOrderList";
         Map<String, String> headerMap = buildHearderMap(authMap);
+        ThirdWarehouseContext.setRequestJson(JSONUtil.toJsonStr(daMaiGetOrderRequest));
         String bodyStr = OkHttpUtils.doPostJson(getPreUrl() + path, JSONUtil.toJsonStr(daMaiGetOrderRequest), headerMap);
         ThirdWarehouseContext.setRequestJson(JSONUtil.toJsonStr(daMaiGetOrderRequest));
         ThirdWarehouseContext.setResponseJson(bodyStr);
@@ -304,6 +330,19 @@ public class DaMaiService {
         return response;
     }
 
+    /**
+     * 查询FBA入库单
+     * @param authMap
+     * @return
+     */
+    public DaMaiBaseResp<List<DaMaiGetFbaOrderResp>> getFbaOrderList(Map<String,Object> authMap, DaMaiGetFbaOrderRequest request){
+        String path = "/omsService/non/fbaApi/getFbaOrderList";
+        Map<String, String> headerMap = buildHearderMap(authMap);
+        ThirdWarehouseContext.setRequestJson(JSONUtil.toJsonStr(request));
+        String bodyStr = OkHttpUtils.doPostJson(getPreUrl() + path, JSONUtil.toJsonStr(request), headerMap);
+        DaMaiBaseResp<List<DaMaiGetFbaOrderResp>> response = DaMaiUtils.parseToResp(bodyStr,new TypeReference<DaMaiBaseResp<List<DaMaiGetFbaOrderResp>>>() {});
+        return response;
+    }
     private Map<String, String> buildHearderMap(Map<String, Object> authMap) {
         Map<String, String> headerMap = new HashMap<>();
         headerMap.put("appToken", authMap.get("appToken").toString());

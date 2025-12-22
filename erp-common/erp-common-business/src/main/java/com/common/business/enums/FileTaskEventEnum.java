@@ -123,6 +123,9 @@ public enum FileTaskEventEnum implements EnumMessage {
 
     EXPORT_OMS_EXHIBITION_ORDER("EXPORT_OMS_EXHIBITION_ORDER", "展会订单导出","","",""),
     IMPORT_OMS_EXHIBITION_ORDER("IMPORT_OMS_EXHIBITION_ORDER","展会订单导入","com.erp.rpc.oms.feign.ImportOmsFeign","importExhibitionOrder",""),
+    EXPORT_OMS_DELIVERY_BOX_RULE("EXPORT_OMS_DELIVERY_BOX_RULE", "发货箱规导出","","",""),
+    IMPORT_OMS_DELIVERY_BOX_RULE("IMPORT_OMS_DELIVERY_BOX_RULE", "发货箱规导入","com.erp.rpc.oms.feign.ImportOmsFeign","importDeliveryBoxRule",""),
+
 
     //scm
     EXPORT_SCM_SUPPLIER_USER("EXPORT_SCM_SUPPLIER_USER","供应商协同用户列表","","",""),
@@ -168,6 +171,7 @@ public enum FileTaskEventEnum implements EnumMessage {
     EXPORT_SYS_THIRD_NOTICE("EXPORT_SYS_THIRD_NOTICE", "三方通知配置导出","","",""),
     EXPORT_SYS_THIRD_NOTICE_RECORD("EXPORT_SYS_THIRD_NOTICE_RECORD", "三方通知推送导出","","",""),
     EXPORT_DICT_BASIC_ALL("EXPORT_DICT_BASIC_ALL", "字典数据导出","","",""),
+    EXPORT_SYS_TEMPLATE("EXPORT_SYS_TEMPLATE", "模板导出","","",""),
     //wms
     EXPORT_WMS_INVENTORY("EXPORT_WMS_INVENTORY","即时库存导出","","",""),
     EXPORT_WMS_B2C_DELIVERY_ORDER("EXPORT_WMS_B2C_DELIVERY_ORDER", "发货单导出","","",""),
@@ -283,6 +287,7 @@ public enum FileTaskEventEnum implements EnumMessage {
     EXPORT_WMS_SAMPLE_ADJUSTMENT_INFO_REPORT("EXPORT_WMS_SAMPLE_ADJUSTMENT_INFO_REPORT", "样品调整单导出","","",""),
     IMPORT_WMS_SAMPLE_ADJUSTMENT_INFO("IMPORT_WMS_SAMPLE_ADJUSTMENT_INFO","样品调整单导入","com.erp.rpc.wms.feign.ImportWmsFeign","importSampleAdjustment",""),
 
+    EXPORT_WMS_B2B_THIRD_DELIVERY_REPORT("EXPORT_WMS_B2B_THIRD_DELIVERY_REPORT", "B2B三方发货单导出","","",""),
 
     //tms
     EXPORT_TMS_LOGISTICS_ADDRESS("EXPORT_TMS_LOGISTICS_ADDRESS", "物流地址列表","","",""),

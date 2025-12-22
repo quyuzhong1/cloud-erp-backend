@@ -31,6 +31,9 @@ public enum AppClientEnum  {
     TIKTOK_ACCESS_TOKEN("tikTokAccessToken","sales","TikTok"),
     WILDBERRIES_ACCESS_TOKEN("wildberriesAccessToken","sales","wildberries"),
 
+    PDD_AUTHORIZE("pddAuthorize","sales","PDD"),
+    PDD_ACCESS_TOKEN("pddAccessToken","sales","PDD"),
+
     TIKTOK_FULLY_AUTHORIZE("tikTokAuthorize","sales","TikTokFully"),
     TIKTOK_FULLY_ACCESS_TOKEN("tikTokAccessToken","sales","TikTokFully"),
 

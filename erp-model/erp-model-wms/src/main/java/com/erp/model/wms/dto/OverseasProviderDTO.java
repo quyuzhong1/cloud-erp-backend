@@ -457,6 +457,10 @@ public class OverseasProviderDTO implements Serializable {
          * 禁用状态
          */
         private Boolean disabled;
+        /**
+         * 是否b2b发货
+         */
+        private Boolean isB2BApiDelivery;
     }
 
     /**

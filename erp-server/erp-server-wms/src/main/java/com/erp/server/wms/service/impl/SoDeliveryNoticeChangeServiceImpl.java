@@ -724,7 +724,7 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
             data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
             SoDetailEntity soDetailEntity = soDetailEntityList.stream().filter(v->v.getId().equals(data.getSoDetailId())).findFirst().orElse(new SoDetailEntity());
-            data.setSaleQty(soDetailEntity.getQty());
+            data.setSaleQty(soDetailEntity.getDeliveryQty());
             List<SoDeliveryNoticeDetailEntity> currentNoticeDetailList = soDeliveryNoticeDetailEntityList.stream().filter(v->v.getSourceDetailId().equals(data.getSoDetailId())).collect(Collectors.toList());
             data.setAllNoticeQty(currentNoticeDetailList.stream().map(SoDeliveryNoticeDetailEntity::getDeliveryQty).reduce(0, Integer::sum));
             data.setChangeTypeName(SoDeliveryNoticeChangeTypeEnum.getName(data.getChangeType()));
@@ -945,8 +945,8 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
         outInStockDTO.setSourceCode(soInfoEntity.getCode());
         outInStockDTO.setSourceDetailId(soDetailEntity.getId());
         outInStockDTO.setBillDate(LocalDate.now());
-        outInStockDTO.setSkuId(soDetailEntity.getSkuId());
-        outInStockDTO.setSkuNo(soDetailEntity.getSkuNo());
+        outInStockDTO.setSkuId(soDetailEntity.getDeliverySkuId());
+        outInStockDTO.setSkuNo(soDetailEntity.getDeliverySkuNo());
         outInStockDTO.setQty(MathUtil.compareTo(soDetailEntity.getFrozenQty(),diffQty) > MathUtil.ZERO ? diffQty : soDetailEntity.getFrozenQty());
         outInStockDTO.setWarehouseId(soInfoEntity.getWarehouseId());
         outInStockDTO.setVirtualWarehouseId(soInfoEntity.getVirtualWarehouseId());

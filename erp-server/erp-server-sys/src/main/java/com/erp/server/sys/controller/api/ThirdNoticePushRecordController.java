@@ -132,12 +132,22 @@ public class ThirdNoticePushRecordController extends BaseController {
 
 
     /**
-     *
+     * 手动执行发送第三方通知（汇总类型）
      * @return
      */
     @PostMapping("/sendThirdNoticeJob")
     public ApiResult<Object> sendThirdNoticeJob() {
         thirdNoticePushRecordService.sendThirdNoticeJob();
+        return success();
+    }
+
+    /**
+     *
+     * @return
+     */
+    @PostMapping("/sendMqRecordConsumer")
+    public ApiResult<Object> sendMqRecordConsumer(@RequestBody String jsonStr) {
+        thirdNoticePushRecordService.sendMqRecordConsumer(jsonStr);
         return success();
     }
 

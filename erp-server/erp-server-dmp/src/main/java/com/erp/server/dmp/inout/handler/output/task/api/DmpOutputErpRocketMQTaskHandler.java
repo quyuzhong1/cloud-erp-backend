@@ -40,6 +40,6 @@ public class DmpOutputErpRocketMQTaskHandler extends DmpOutputRocketMQTaskHandle
 
     @Override
     protected List<String> getSourceCodeKeys() {
-    	return Collections.singletonList("soCode");
+    	return Arrays.asList("soCode","sourceCode");
     }
 }

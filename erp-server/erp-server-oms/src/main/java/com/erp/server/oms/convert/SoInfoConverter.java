@@ -6,6 +6,8 @@ import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
+import com.erp.model.wms.dto.B2bThirdDeliveryDTO;
+import com.erp.model.wms.dto.B2bThirdDeliveryDetailDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -13,6 +15,7 @@ import org.mapstruct.Mappings;
 import org.mapstruct.factory.Mappers;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.Optional;
 
 @Mapper
@@ -124,4 +127,41 @@ public interface SoInfoConverter {
             @Mapping(target = "remark", source = "remark"),
     })
     SoOutstockDTO.GenerateSoOutstockViewDTO soOutViewToGenerateSoOut(SoInfoDTO.GenerateSoOutView soOutView);
+
+    @Mapping(target = "attachList", ignore = true)
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "code", ignore = true)
+    @Mapping(target = "warehouseOperationTypeName", expression = "java(com.erp.model.wms.enums.WarehouseOperationTypeEnum.NO_OPEN_RELABLE.getName())")
+    @Mapping(target = "warehouseOperationType", expression = "java(com.erp.model.wms.enums.WarehouseOperationTypeEnum.NO_OPEN_RELABLE.getCode())")
+    @Mapping(target = "trackNo", ignore = true)
+    @Mapping(target = "statusName", expression = "java(com.erp.model.wms.enums.ThirdDeliveryStatusEnum.CREATING.getName())")
+    @Mapping(target = "status", expression = "java(com.erp.model.wms.enums.ThirdDeliveryStatusEnum.CREATING.getCode())")
+    @Mapping(target = "soId", source = "soInfoEntity.id")
+    @Mapping(target = "soCode", source = "soInfoEntity.code")
+    @Mapping(target = "operationDesc", ignore = true)
+    @Mapping(target = "logisticsChannelName", ignore = true)
+    @Mapping(target = "logisticsChannelId", ignore = true)
+    @Mapping(target = "isApiDelivery", ignore = true)
+    @Mapping(target = "detailList", source = "soDetailEntityList")
+    @Mapping(target = "deliveryWarehouseName", ignore = true)
+    @Mapping(target = "deliveryWarehouseId", source = "soInfoEntity.warehouseId")
+    @Mapping(target = "customerName", ignore = true)
+    @Mapping(target = "customerId", source = "soInfoEntity.customerId")
+    @Mapping(target = "receiveAddress", ignore = true)
+    @Mapping(target = "countryId", ignore = true)
+    @Mapping(target = "countryName", ignore = true)
+    @Mapping(target = "deliveryTime", ignore = true)
+    @Mapping(target = "deliveryMethod", source = "soInfoEntity.deliveryMode")
+    @Mapping(target = "deliveryMethodName", expression = "java(com.erp.model.oms.enums.DeliveryModeEnum.getName(soInfoEntity.getDeliveryMode()))")
+    B2bThirdDeliveryDTO.ViewDTO toB2bThirdDeliveryViewDTO(SoInfoEntity soInfoEntity, List<SoDetailEntity> soDetailEntityList);
+
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "mainId", ignore = true)
+    @Mapping(target = "soDetailId", source = "id")
+    @Mapping(target = "warehousePlatformSku", ignore = true)
+    @Mapping(target = "sort", ignore = true)
+    @Mapping(target = "saleQty", source = "qty")
+    @Mapping(target = "deliveryQty", constant = "0")
+    @Mapping(target = "boxSpecNo", ignore = true)
+    B2bThirdDeliveryDetailDTO.ViewDTO toB2bThirdDeliveryDetailViewDTO(SoDetailEntity soDetailEntity);
 }

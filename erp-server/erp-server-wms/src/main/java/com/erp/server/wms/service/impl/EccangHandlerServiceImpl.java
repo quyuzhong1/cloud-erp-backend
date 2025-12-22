@@ -152,6 +152,12 @@ public class EccangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         }
         return success(ThirdWarehouseCancelResultEnum.INTERCEPTION_SUCCESSFUL.getCode());
     }
+
+    @Override
+    protected ApiResult<String> cancelFbaOutboundBill(ThirdWarehouseCancelFbaOutboundReq cancelOutboundReq) {
+        return failure("ERP功能暂不支持");
+    }
+
     @Override
     protected ApiResult<String> queryOutboundBill(@Valid ThirdWarehouseQueryOutboundReq queryOutboundReq){
         AntuGetOutboundRefReq antuGetOutboundReq = AntuGetOutboundRefReq.builder()
@@ -160,6 +166,12 @@ public class EccangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         AntuResponse<AntuOutboundResp> response = antuService.getOrderByRefCode(antuGetOutboundReq, getPlatForm());
         return Objects.nonNull(response.getData()) ? success(response.getData().getOrderCode()) : failure(response.getMessage());
     }
+
+    @Override
+    protected ApiResult<List<ThirdWarehouseQueryFbaOutboundResponse>> queryFbaOutboundBill(ThirdWarehouseQueryFbaOutboundReq req) {
+        return failure("ERP功能暂不支持");
+    }
+
     @Override
     protected Boolean warehouseAuthorize(OverseasProviderDTO.AuthorizeParamDTO dto) {
         AntuResponse<List<AntuWarehouseResp>> response = antuService.getWarehouse(AntuBaseRequest.builder()
@@ -196,6 +208,10 @@ public class EccangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
                 antuCreateOutboundReq.setProvince(dictCityEntityList.get(0).getCodeTwo());
             }
         }
+    }
+    @Override
+    protected ApiResult<String> createFbaOutboundBill(ThirdWarehouseCreateFbaOutboundReq createOutboundReq) {
+        return failure("ERP功能暂不支持");
     }
     public boolean isSuccess(String ask){
         return "Success".equals(ask);

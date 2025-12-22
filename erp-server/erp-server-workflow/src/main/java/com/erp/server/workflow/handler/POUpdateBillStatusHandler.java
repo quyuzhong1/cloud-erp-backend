@@ -145,7 +145,9 @@ public class POUpdateBillStatusHandler implements CreateBillHandler {
             taskInfoEntity.setBussinessKey(thirdProcessEntity.getBussinessKey());
             taskInfoEntity.setBussinessCode(list.get(0).getCode());
             taskInfoEntity.setBussinessId(list.get(0).getId().toString());
-            taskInfoEntity.setHappenTime(LocalDateTime.now());
+            LocalDateTime now = LocalDateTime.now();
+            taskInfoEntity.setHappenTime(now);
+            taskInfoEntity.setFinishTime(now);
             taskInfoEntity.setStatus(taskStatus);
             taskInfoEntity.setReason(reason);
             boolean b = taskInfoService.updateById(taskInfoEntity);

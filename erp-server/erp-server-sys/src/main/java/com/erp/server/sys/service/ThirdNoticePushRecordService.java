@@ -56,7 +56,9 @@ public interface ThirdNoticePushRecordService extends SuperService<ThirdNoticePu
 
     void sendThirdNoticeJob();
 
-    void handleSendNoticeFailedType(MqConsumerRecordDTO.MqDTO dto, ThirdNoticePushRecordEntity entity, Map<String, Object> dataJson);
+    void handleSendNoticeFailedType(ThirdNoticePushRecordEntity entity);
 
-    void handleNoPersonFailedType(MqConsumerRecordDTO.MqDTO dto, ThirdNoticePushRecordEntity entity, Map<String, Object> dataJson);
+    void handleNoPersonFailedType(MqConsumerRecordDTO.MqDTO dto, ThirdNoticePushRecordEntity entity);
+
+    void sendMqRecordConsumer(String jsonStr);
 }

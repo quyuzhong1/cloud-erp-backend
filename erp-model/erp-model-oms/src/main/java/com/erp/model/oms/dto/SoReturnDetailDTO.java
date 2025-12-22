@@ -103,9 +103,6 @@ public class SoReturnDetailDTO {
         /**
          * 销售数量
          */
-        @NotNull(message = "销售数量不能为空")
-        @Min(value = 1, message = "销售数量最小值为1")
-        @Max(value = 999999999, message = "销售数量最大值为999999999")
         private Integer salesQty;
         /**
          * 退货数量
@@ -143,7 +140,6 @@ public class SoReturnDetailDTO {
         /**
          * 单位
          */
-        @NotBlank(message = "单位不能为空")
         private String unitName;
         /**
          * listing_id
