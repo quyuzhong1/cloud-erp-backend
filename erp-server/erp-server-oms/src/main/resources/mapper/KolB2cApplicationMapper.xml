@@ -148,7 +148,7 @@ ksba.platform_order_code AS platformOrderCode
             kf.url
             FROM kol_feedback kf
             INNER JOIN (
-            SELECT source_id, MIN(id) AS min_id
+            SELECT source_id, MAX(id) AS min_id
             FROM kol_feedback
             WHERE is_deleted = false
             GROUP BY source_id
