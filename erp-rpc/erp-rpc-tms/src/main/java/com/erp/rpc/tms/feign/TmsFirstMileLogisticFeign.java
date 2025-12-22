@@ -58,7 +58,7 @@ public interface TmsFirstMileLogisticFeign {
      * @param paramDTO
      * @return void
      */
-    @PostMapping("/feign/inventorySkuCost/listInventorySkuCost")
+    @PostMapping("/feign/tmsFirstMileLogistic/listInventorySkuCost")
     List<InventorySkuCostDTO.InvSkuCostDTO> listInventorySkuCost(@RequestBody InventorySkuCostDTO.SkuCostParamDTO paramDTO);
     /**
      * 查询小包分摊费用
@@ -67,6 +67,6 @@ public interface TmsFirstMileLogisticFeign {
      * @param bagCostParamDTO
      * @return List<SmallBagCostDTO>
      */
-    @PostMapping("/feign/smallBagCostAllocation/listSmallBagCost")
+    @PostMapping("/feign/tmsFirstMileLogistic/listSmallBagCost")
     List<SmallBagCostAllocationDTO.SmallBagCostDTO> listSmallBagCost(@RequestBody SmallBagCostAllocationDTO.SmallBagCostParamDTO bagCostParamDTO);
 }

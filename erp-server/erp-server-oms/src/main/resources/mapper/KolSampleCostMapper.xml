@@ -56,7 +56,7 @@
         update_time,
         version,
         is_deleted,
-        source_id, source_code, source_type, type, partner_id, partner_nickname, feedback_url, so_code, so_id, so_org_id, so_org_name, so_outstock_id, so_outstock_code, so_outstock_date, warehouse_id, warehouse_name, partition_id, partition_name, sku_id, sku_no, qty, currency, currency_symbol, exchange_rate, total_cost, product_cost, first_mile_shipping_cost, clearance_customs_tax, shipping_cost, customs_tax, other_cost
+        source_id, source_code, source_type, type, partner_id, partner_nickname, feedback_url, so_code, so_id,so_detail_id, so_org_id, so_org_name, so_outstock_id,so_outstock_detail_id, so_outstock_code, so_outstock_date, warehouse_id, warehouse_name, partition_id, partition_name, sku_id, sku_no, qty, currency, currency_symbol, exchange_rate, total_cost, product_cost, first_mile_shipping_cost, clearance_customs_tax, shipping_cost, customs_tax, other_cost
     </sql>
 
     <!-- 分页查询 -->
@@ -114,6 +114,7 @@
             sba.source_type,
             sba.so_detail_id,
             sba.partition_id,
+            sba.type,
             kfb.partner_id,
             kfb.partner_nickname,
             kfb.url as feedback_url
@@ -121,7 +122,9 @@
                   kba.code as source_code,
                   kba.id as source_id,
                   'kolB2bApplication' as source_type,
+                  kba.type,
                   sd.id as so_detail_id,
+                  si.code as so_code,
                   si.partition_id,
                   kbad.id as detailId
               from kol_b2b_application kba
@@ -136,11 +139,14 @@
                   kba.code as source_code,
                   kba.id as source_id,
                   'kolB2cApplication' as source_type,
+                  kba.sample_type as type,
                   sbd.id as so_detail_id,
+                  sb.code as so_code,
                   sbr.partition_id,
                   kbad.id as detailId
               from kol_b2c_application kba
                        inner join kol_b2c_application_detail kbad on kba.id = kbad.main_id and kbad.is_deleted = false
+                       inner join so_b2c sb on sb.source_id = kba.id and sb.is_deleted = false
                        inner join so_b2c_detail sbd on sbd.source_detail_id = kbad.id and sbd.is_deleted = false
                        inner join so_b2c_receiver sbr on sbd.main_id = sbr.main_id and sbr.is_deleted = false
               where kba.is_deleted = false

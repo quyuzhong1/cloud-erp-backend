@@ -16,6 +16,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.FileTaskEventEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
 import com.common.core.enums.CurrencyEnum;
 import com.common.core.excel.ExcelPrintUtils;
@@ -27,7 +28,9 @@ import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.oms.dto.KolSampleCostDTO;
 import com.erp.model.oms.dto.excel.KolSampleCostImportExcelDTO;
 import com.erp.model.oms.entity.KolSampleCostEntity;
+import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.sys.entity.DictPartitionEntity;
 import com.erp.model.tms.dto.InventorySkuCostDTO;
 import com.erp.model.tms.dto.SmallBagCostAllocationDTO;
 import com.erp.model.tms.enums.AllocationFeeTypeEnum;
@@ -58,9 +61,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -147,7 +148,7 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
     public void updateCost(KolSampleCostDTO.UpdateCostDTO dto) {
         String date = dto.getDate();
         LocalDate localDate = LocalDateTimeUtil.parseDate(date, DateTimeFormatter.ofPattern("yyyy-MM"));
-        LocalDateTime endTIme = LocalDateUtil.getThisMonthStart(localDate);
+        LocalDateTime endTIme = LocalDateUtil.getThisMonthEnd(localDate);
         LocalDateTime startTime = LocalDateUtil.getThisMonthStart(localDate);
         updateKolSampleCostByDate(startTime,endTIme);
     }
@@ -220,6 +221,10 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
         //查询月份内存在的寄样费用
         List<KolSampleCostEntity> oldList = this.baseMapper.listByTime(startTime,endTIme);
 
+        //军区信息
+        List<DictPartitionEntity> partitionList = FeignQuery.list(DictPartitionEntity.class);
+        Map<String, String> partitionMap = CollUtil.isEmpty(partitionList) ? new HashMap<>() : partitionList.stream().collect(Collectors.toMap(DictPartitionEntity::getId, DictPartitionEntity::getName));
+
         //查询是时间区间内已出库的销售出库单
         List<SoOutstockDTO.KolSoOutstockDTO> soOutstockDTOList = soOutstockFeign.listSoOutstockByTime(new SoOutstockDTO.KolSoOutstockDateDTO(startTime,endTIme));
         if (CollUtil.isEmpty(soOutstockDTOList)) {
@@ -249,13 +254,19 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
                     if (ObjUtil.isNotEmpty(oldEntity)) {
                         costEntity.setId(oldEntity.getId());
                     }
+                    costEntity.setType(sampleCostEntity.getType());
                     costEntity.setSourceCode(sampleCostEntity.getSourceCode());
                     costEntity.setSourceId(sampleCostEntity.getSourceId());
                     costEntity.setSourceType(sampleCostEntity.getSourceType());
                     costEntity.setPartitionId(sampleCostEntity.getPartitionId());
+                    costEntity.setPartitionName(partitionMap.get(sampleCostEntity.getPartitionId()));
                     costEntity.setPartnerId(sampleCostEntity.getPartnerId());
                     costEntity.setPartnerNickname(sampleCostEntity.getPartnerNickname());
                     costEntity.setFeedbackUrl(sampleCostEntity.getFeedbackUrl());
+                    costEntity.setSoOrgId(kolSoOutstockDTO.getSalesOrgId());
+                    costEntity.setSoOrgName(kolSoOutstockDTO.getSalesOrgName());
+                    costEntity.setQty(kolSoOutstockDTO.getActualQty());
+                    costEntity.setSoOutstockDate(kolSoOutstockDTO.getSoOutstockDate());
                     thisMonthList.add(costEntity);
                 }
             }
@@ -409,6 +420,12 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
     private void fillList(List<KolSampleCostDTO.ListDTO> list) {
         if (CollUtil.isEmpty(list)) {
             return;
+        }
+        List<String> skuIdList = list.stream().map(KolSampleCostDTO.ListDTO::getSkuId).distinct().collect(Collectors.toList());
+        List<ProductDetailEntity> skuList = FeignQuery.getByIds(ProductDetailEntity.class, skuIdList);
+        Map<String, String> skuMap = CollUtil.isEmpty(skuList) ? new HashMap<>() : skuList.stream().collect(Collectors.toMap(ProductDetailEntity::getId, ProductDetailEntity::getName));
+        for (KolSampleCostDTO.ListDTO listDTO : list) {
+            listDTO.setProductName(skuMap.get(listDTO.getSkuId()));
         }
     }
 

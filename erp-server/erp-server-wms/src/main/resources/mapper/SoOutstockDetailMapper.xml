@@ -147,6 +147,7 @@
             so.id as soOutstockId,
             so.code as soOutstockCode,
             so.so_id as soId,
+            so.so_code as soCode,
             so.source_type as sourceType,
             so.sales_org_id as salesOrgId,
             so.sales_org_name as salesOrgName,
@@ -157,8 +158,7 @@
             sod.sku_no as skuNo,
             sod.actual_qty as actualQty,
             sod.warehouse_id as warehouseId,
-            sod.warehouse_name as warehouseName,
-            sod.actual_qty as actualQty
+            sod.warehouse_name as warehouseName
         from so_outstock so
         inner join so_outstock_detail sod on so.id = sod.main_id and sod.is_deleted = false
         where so.is_deleted = false and so.approve_status = 'approve' and so.source_type in ('soInfo','soDeliveryNotice','soB2c','soB2cDelivery')
