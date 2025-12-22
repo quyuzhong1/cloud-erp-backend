@@ -109,6 +109,10 @@ public class AttachmentDTO implements Serializable {
         @NotBlank(message = "附件名称不能为空")
         @Size(max = 50,message = "附件名称最大长度不能超过50位")
         private String attachName;
+        /**
+        * 日志id
+        */
+        private String logId;
 
     }
 
@@ -184,6 +188,26 @@ public class AttachmentDTO implements Serializable {
         @NotBlank(message = "附件地址不能为空")
         private String attachUrl;
 
+
+    }
+
+    /**
+     * 根据产品ID查询SKU附件请求参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class GetSkuUrlByPidDTO {
+
+        /**
+         * 产品ID
+         */
+        @NotBlank(message = "产品ID不能为空")
+        private String id;
+
+        /**
+         * 日志ID（可选）
+         */
+        private String logId;
 
     }
 }

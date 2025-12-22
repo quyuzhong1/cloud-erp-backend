@@ -101,7 +101,7 @@ public class AttachmentController extends BaseController {
      * @return
      */
     @PostMapping("/getSkuUrlByPid")
-    public ApiResult<List<AttachmentDTO.CommonDTO>> getSkuUrlByPid(@RequestBody BaseIdDTO dto) {
-        return success( plmAttachmentService.getSkuUrlByPid(dto.getId()));
+    public ApiResult<List<AttachmentDTO.CommonDTO>> getSkuUrlByPid(@RequestBody AttachmentDTO.GetSkuUrlByPidDTO dto) {
+        return success( plmAttachmentService.getSkuUrlByPid(dto.getId(), dto.getLogId()));
     }
 }

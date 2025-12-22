@@ -73,5 +73,5 @@ public interface PlmAttachmentService extends SuperService<PlmAttachmentEntity> 
 
     List<AttachmentDTO.CommonDTO> getUrlById(String id);
 
-    List<AttachmentDTO.CommonDTO> getSkuUrlByPid(String id);
+    List<AttachmentDTO.CommonDTO> getSkuUrlByPid(String id, String logId);
 }
