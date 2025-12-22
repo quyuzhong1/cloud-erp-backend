@@ -333,6 +333,13 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
         allocationEntity.setStatus(code);
         allocationEntity.setHandleDate(LocalDate.now());
         this.updateById(allocationEntity);
+
+        //调拨需要先扣减虚拟仓库存
+        if (CharSequenceUtil.equals(allocationEntity.getType(),VirtualWarehouseAllocationTypeEnum.TRANSFER.getCode())) {
+            //执行扣减库存
+            virtualWarehouseAllocationDetailService.submit(allocationEntity);
+        }
+
         //生成自动借调直接调拨单
         generateAutoTransferInfo(allocationEntity,transferWarehouseList);
 
@@ -341,8 +348,12 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
 
         //变更明细同步状态
         virtualWarehouseAllocationDetailService.updateByMainId(allocationEntity.getId(), VirtualWarehouseAllocationSyncStatusEnum.IN_SYNC.getCode());
-        //执行扣减库存
-        virtualWarehouseAllocationDetailService.submit(allocationEntity);
+
+        //非调拨类型需要先扣减实体仓库存
+        if (!CharSequenceUtil.equals(allocationEntity.getType(),VirtualWarehouseAllocationTypeEnum.TRANSFER.getCode())) {
+            //执行扣减库存
+            virtualWarehouseAllocationDetailService.submit(allocationEntity);
+        }
 
         // 记录操作日志
         log.info("提交 开始记录分货单主单日志数据，id：【{}】", allocationEntity.getId());
