@@ -56,10 +56,10 @@ public class VirtualWarehouseAllocationDetailEntity extends BaseEntity<VirtualWa
     private String warehouseName;
 
     /**
-     * 借调实体仓库id
+     * 调入实体仓库id
      */
-    @TableField("from_warehouse_id")
-    private String fromWarehouseId;
+    @TableField("to_warehouse_id")
+    private String toWarehouseId;
 
     /**
     * 调出虚拟仓id

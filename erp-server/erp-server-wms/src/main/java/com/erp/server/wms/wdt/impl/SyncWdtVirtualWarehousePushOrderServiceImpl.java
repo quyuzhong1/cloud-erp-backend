@@ -1,13 +1,16 @@
 package com.erp.server.wms.wdt.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.json.JSONUtil;
-
 import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.dto.DmpPushTaskFeignDTO;
+import com.common.business.dto.WdtSearchHandelDetailDTO;
 import com.common.business.enums.SourceTypeEnum;
+import com.common.business.service.WdtVirtualInventoryService;
 import com.common.business.wrapper.FeignQuery;
+import com.common.core.utils.MathUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.erp.model.dmp.entity.CfgSettingEntity;
@@ -58,6 +61,9 @@ public class SyncWdtVirtualWarehousePushOrderServiceImpl implements SyncWdtVirtu
     private VirtualWarehousePushHandleService virtualWarehousePushHandleService;
     @Resource
     private WmsPushMsgService wmsPushMsgService;
+    @Resource
+    private WdtVirtualInventoryService wdtVirtualInventoryService;
+
 
     @Override
     public List<DmpPushTaskEntity> saveTaskList(List<VirtualWarehousePushHandleDetailEntity> handleDetailList,
@@ -142,6 +148,9 @@ public class SyncWdtVirtualWarehousePushOrderServiceImpl implements SyncWdtVirtu
             request.setDetailList(detailList);
             request.setRemark("原始单据号：" + vwAllocationCode);
 
+            //查询旺店通可用库存是否足够
+            checkWdtUseInventoryQty(request,detailList);
+
             if(CollUtil.isEmpty(cfgSettingEntityList)) {
             	//添加推送任务
                 dmpSyncTaskDTO.setSourceId(handleDetail.getId());
@@ -172,4 +181,46 @@ public class SyncWdtVirtualWarehousePushOrderServiceImpl implements SyncWdtVirtu
         
         return dmpMqFeign.saveTaskList(dmpPushTaskEntityList);
     }
+
+
+    /**
+     * 校验旺店通库存
+     * @author will
+     * @date 2025/12/22 09:45
+     * @param request
+     * @param detailList
+     * @return void
+     */
+    private void checkWdtUseInventoryQty(VwPushHandelDetailPushDTO request,List<VwPushHandelDetailPushDTO.DetailList> detailList) {
+        if (CollUtil.isEmpty(detailList)) {
+            return;
+        }
+
+        Map<String, List<VwPushHandelDetailPushDTO.DetailList>> map = detailList.stream().collect(Collectors.groupingBy(VwPushHandelDetailPushDTO.DetailList::getWarehouse_no));
+        for (Map.Entry<String, List<VwPushHandelDetailPushDTO.DetailList>> entry : map.entrySet()) {
+            String warehouseNo = entry.getKey();
+            List<VwPushHandelDetailPushDTO.DetailList> value = entry.getValue();
+            String skuNoList = value.stream().map(VwPushHandelDetailPushDTO.DetailList::getSpec_no).collect(Collectors.joining(","));
+
+            WdtSearchHandelDetailDTO.SearchVirtualInventoryParamDTO detailDTO = new WdtSearchHandelDetailDTO.SearchVirtualInventoryParamDTO();
+            detailDTO.setSpec_nos(skuNoList);
+            detailDTO.setVirtual_warehouse_no(request.getVirtual_warehouse_no());
+            detailDTO.setWarehouse_no(warehouseNo);
+            List<WdtSearchHandelDetailDTO.SearchVirtualInventoryDTO> searchVirtualInventoryDTOS = wdtVirtualInventoryService.searchVirtualInventory(detailDTO);
+            if (CollUtil.isEmpty(searchVirtualInventoryDTOS)) {
+                throw new RuntimeException("调用旺店通虚拟仓库存查询接口无可用库存，仓库编码：" + warehouseNo + "，SKU列表：" + skuNoList);
+            }
+            for (VwPushHandelDetailPushDTO.DetailList detailPush : value) {
+                searchVirtualInventoryDTOS.stream().filter(obj -> CharSequenceUtil.equals(detailPush.getSpec_no(),obj.getSkuNo()) && CharSequenceUtil.equals(warehouseNo,obj.getWarehouseCode()) && CharSequenceUtil.equals(request.getVirtual_warehouse_no(),obj.getVirtualWarehouseCode()))
+                        .findFirst().ifPresent(obj -> {
+                            if (MathUtil.compareTo(new BigDecimal(obj.getQty()),detailPush.getNum()) < 0) {
+                                throw new RuntimeException("调用旺店通虚拟仓库存查询接口可用库存不足，仓库编码：" + warehouseNo + "，SKU：" + detailPush.getSpec_no()
+                                        + "，可用库存：" + obj.getQty() + "，需求数量：" + detailPush.getNum());
+                            }
+                });
+            }
+        }
+
+    }
+
 }
