@@ -87,7 +87,7 @@ public class VirtualInventoryDetailHisServiceImpl extends SuperServiceImpl<Virtu
 
 
     @Override
-    public void hisVirtualInventoryJob(String virtualInventoryId, LocalDate startDate) {
+    public void hisVirtualInventoryJob(List<String> virtualInventoryIdList, LocalDate startDate) {
         // 生成日期集合
         List<LocalDate> dateList = new ArrayList<>();
         // 获取天数差
@@ -98,7 +98,7 @@ public class VirtualInventoryDetailHisServiceImpl extends SuperServiceImpl<Virtu
         }
         // 使用自定义线程池处理订单类型
         List<CompletableFuture<Void>> futures = dateList.stream()
-                .map(date -> CompletableFuture.runAsync(() -> processVirtualInventoryHis(virtualInventoryId,date), virtualInventoryHisPool))
+                .map(date -> CompletableFuture.runAsync(() -> processVirtualInventoryHis(virtualInventoryIdList,date), virtualInventoryHisPool))
                 .collect(Collectors.toList());
 
         // 等待所有任务完成
@@ -112,10 +112,10 @@ public class VirtualInventoryDetailHisServiceImpl extends SuperServiceImpl<Virtu
      * @param localDate
      * @return void
      */
-    private void processVirtualInventoryHis(String virtualInventoryId,LocalDate localDate) {
+    private void processVirtualInventoryHis(List<String> virtualInventoryIdList,LocalDate localDate) {
         try {
             //添加虚拟仓每日库存
-            virtualInventoryHisService.addVirtualInventoryHis(virtualInventoryId,localDate);
+            virtualInventoryHisService.addVirtualInventoryHis(virtualInventoryIdList,localDate);
             //添加虚拟仓明细每日库存
             this.addVirtualInventoryDetailHis(new VirtualTransFlowEntity().setBillDate(localDate));
         } catch (Exception e) {
