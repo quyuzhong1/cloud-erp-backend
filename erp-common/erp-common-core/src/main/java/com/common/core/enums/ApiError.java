@@ -901,6 +901,7 @@ public enum ApiError implements Serializable {
     ERROR_PURCHASE_FRAMEWORK_CONTRACT_ATTACHMENT_REQUIRED(98158,"采购框架合同类型附件不能为空"),
     ERROR_CONTRACT_TEMPLATE_NOT_EXIST(98159,"合同模板不存在或被禁用"),
     ERROR_CONTRACT_TEMPLATE_DICTINCT(98160,"【{}】已绑定【{}】，不可重复绑定"),
+    ERROR_CONTRACT_TEMPLATE_EXIST(98161,"【{}】已被其他供应商绑定，请先解除关联再绑定所有供应商"),
 
     /**
      * WMS 错误
