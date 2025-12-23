@@ -65,6 +65,7 @@ public enum CfgQueryOptionBussinessKeyEnum implements EnumMessage {
 	ASSET_STOCKTAKING("assetStocktaking", "资产盘点表"),
 	ASSET_STOCKTAKING_PLAN("assetStocktakingPlan", "盘点方案"),
 	ASSET_LOCATION("assetLocation", "资产位置"),
+	KOL_B2C_APPLICATION("kolB2cApplication","B2C寄样申请"),
     ;
     /**
      * 类型

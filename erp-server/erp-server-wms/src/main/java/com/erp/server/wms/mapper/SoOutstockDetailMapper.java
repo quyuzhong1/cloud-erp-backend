@@ -7,10 +7,7 @@ import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
-import java.time.LocalDate;
-import java.time.LocalTime;
 import java.util.List;
-import java.util.Map;
 
 /**
  * <p>
@@ -72,4 +69,12 @@ public interface SoOutstockDetailMapper extends BaseMapper<SoOutstockDetailEntit
      * @return
      */
     List<SoOutstockDTO.LastBillDateDTO> mapLastOutstockDateBySkuIds(@Param("skuIds") List<String> skuIds);
+    /**
+     * 根据时间范围查询出库单信息
+     * @author will
+     * @date 2025/12/9 15:37
+     * @param param
+     * @return List<KolSoOutstockDTO>
+     */
+    List<SoOutstockDTO.KolSoOutstockDTO> listSoOutstockByTime(@Param("param")SoOutstockDTO.KolSoOutstockDateDTO param);
 }

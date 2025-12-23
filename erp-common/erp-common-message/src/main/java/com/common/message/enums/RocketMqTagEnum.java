@@ -617,6 +617,10 @@ public enum RocketMqTagEnum {
      * 速帝云通用推送
      */
     SDY_GENERAL_PUSH_TAG(11006, RocketMqTagEnum.SYNC_WANGDIAN, "sdy_general_push_tag"),
+    /**
+     * 创建原始订单到旺店通
+     */
+    WDT_SO_B2C_TAG(11007, RocketMqTagEnum.SYNC_WANGDIAN, "wdt_so_b2c_tag"),
 
     //-----------------------------workflow 从12001开始------------------------------------------------------------------
     /**

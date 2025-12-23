@@ -149,8 +149,9 @@ public class PackagePlanController extends BaseController {
      * @return
      */
     @PostMapping("/batchOrderPrint")
-    public void batchOrderPrint(@RequestBody @Valid BaseIdsDTO.IdsDTO dto, HttpServletResponse response) {
-        packagePlanService.batchOrderPrint(dto.getIds(), response);
+    public ApiResult<String> batchOrderPrint(@RequestBody @Valid BaseIdsDTO.IdsDTO dto, HttpServletResponse response) {
+        String base64Url = packagePlanService.batchOrderPrint(dto.getIds(), response);
+        return success(base64Url);
     }
     /**
      * 批量打印交接标签

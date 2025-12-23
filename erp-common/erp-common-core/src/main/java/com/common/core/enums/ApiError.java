@@ -222,6 +222,7 @@ public enum ApiError implements Serializable {
     ERROR_THIRD_LOGISTICS_NOTFOUND(80017,"第三方渠道不存在"),
     ERROR_CFG_SETTING_NOTFOUND(80018,"未找到推送配置项【{}】"),
     ERROR_THIRD_NOT_ALLOW_MULTIPLE(80018,"不允许绑定多个海外三方仓"),
+    ERROR_WDT_SALES_RAW_TRADE_PUSHSELF2(80019,"ERP原始订单推送旺店通结果：新增订单的数量:【{}】，更新订单的数量:【{}】，错误信息:【{}】"),
 
     /**
      * 工作流错误 workflow
@@ -302,6 +303,9 @@ public enum ApiError implements Serializable {
     CFG_PROCESS_RULE_DELETE(94063,"{}已被单据使用,不可删除"),
     CFG_THIRD_PROCESS_BUSSINESSKEY_EXIST(94064,"单据类型【{}】下已存在第三方配置，暂不支持再次添加"),
     WORKFLOW_APPROVE_CREATE_APPROVE_DIFF(94065,"创建人和审批人不能一致，人员：【{}】"),
+    PROCESS_FEISHU_USER_NOT_FOUND(94066,"未找到飞书用户对应的系统用户,飞书userId: {}"),
+    WORKFLOW_FEI_SHU_DEFINITION_SUBSCRIBE_FAIL(94066,"飞书定义订阅失败，请检查"),
+    WORKFLOW_FEI_SHU_DEFINITION_UNSUBSCRIBE_FAIL(94067,"取消飞书定义订阅失败，请检查"),
 
     /**
      * PLM 错误
@@ -896,6 +900,13 @@ public enum ApiError implements Serializable {
     ERROR_98152(98152,"sku【{}】的新采购数量不能小于已验收数量"),
     ERROR_98153(98153,"模具编码【{}】验收数量不能超过可验收数量"),
     ERROR_98154(98154,"没有找到供应商的账户信息"),
+    ERROR_MISSING_SUPPLIER(98155,"供应商不能为空"),
+    ERROR_CONTRACT_TEMPLATE_REQUIRED(98156,"合同模板不能为空"),
+    ERROR_SUPPLIER_NOT_ALLOW_MODIFY(98157,"供应商不允许修改"),
+    ERROR_PURCHASE_FRAMEWORK_CONTRACT_ATTACHMENT_REQUIRED(98158,"采购框架合同类型附件不能为空"),
+    ERROR_CONTRACT_TEMPLATE_NOT_EXIST(98159,"合同模板不存在或被禁用"),
+    ERROR_CONTRACT_TEMPLATE_DICTINCT(98160,"【{}】已绑定【{}】，不可重复绑定"),
+    ERROR_CONTRACT_TEMPLATE_EXIST(98161,"【{}】已被其他供应商绑定，请先解除关联再绑定所有供应商"),
 
     /**
      * WMS 错误
@@ -1188,6 +1199,7 @@ public enum ApiError implements Serializable {
     PLATFORM_SHIP_ORDER_ERROR(92116,"平台【{}】，更新平台订单发货状态失败！,错误信息【{}】"),
     NOT_ADD_SO_B2C_DELIVERY(92117,"订单【{}】已生成过发货单，不可以重复新增！"),
     ORDER_IS_INTERCEPT_NOT_UPDATE(92118,"订单【{}】已发起拦截已被冻结，禁止变更状态"),
+    ORDER_NOT_PRINT_LOGISTICS_WAYBILL(92118,"【{}】面单未获取，无法打印，请获取后操作！"),
     ORDER_IS_FULLY_MANAGEDT_NOT_UPDATE(92118,"全托管订单【{}】，无需标发"),
     ORDER_IS_FULLY_MANAGED_NOT_PRINT(92118,"订单【{}】不是全托管订单，禁止打印SKU条码"),
     ORDER_IS_FULLY_MANAGED_AND_B2C_NOT_PRINT(92118,"托管订单以及B2C订单不可同时打印"),
@@ -1613,6 +1625,7 @@ public enum ApiError implements Serializable {
     ERROR_WDT_NOT_FOUND_WAREHOUSE_MAPPING(92083,"同步旺店通B2C单据未找到对应的仓库映射【{}】"),
     ERROR_WAREHOUSE_NOT_FOUND(92083,"未找到对应的仓库【{}】"),
     ERROR_WDT_NOT_FOUND_SHOP_MAPPING(92084,"同步旺店通B2C单据未找到对应的店铺映射【{}】"),
+    ERROR_WDT_NOT_FOUND_LOGISTICSCHANNEL_MAPPING(92084,"同步旺店通B2C单据未找到对应的物流渠道映射【{}】"),
     ERROR_WDT_NOT_FOUND_SKU(92085,"同步旺店通单据未找到对应的SKU【{}】"),
 
     ERROR_SHOP_UNDISABLED(92142,"只有禁用的店铺允许删除"),
@@ -1698,6 +1711,18 @@ public enum ApiError implements Serializable {
     ERROR_BOX_QTY_LESS_NOTICE_QTY(92203,"发货箱数不能少于已下推的发货通知单数量"),
     ERROR_BOX_QTY_PROHIBIT_ONE(92204,"单箱数量不能为1"),
     ERROR_PROHIBIT_PER_BOX_ONE_GEN_SO_OUT_STOCK(92205,"单箱数量大于1的销售订单不能下推销售出库单"),
+    ERROR_KOL_B2B_APPLICATION_NOT_EXIST(92195,"B2B寄样申请单不存在"),
+    ERROR_KOL_B2B_APPLICATION_DETAIL_NOT_EXIST(92196,"B2B寄样申请明细单不存在"),
+    ERROR_KOL_B2B_APPLICATION_NOT_APPROVE(92197,"B2B寄样申请单【{}】未审核完成不支持下推"),
+    ERROR_PUSH_DETAIL_ID_NOT_EXIST(92198,"明细id【{}】未找到B2B寄样申请单明细数据"),
+    ERROR_PUSH_DETAIL_ID_WAREHOUSE_DIFF(92199,"B2B寄样申请单【{}】明细下推发货仓库不一致"),
+    ERROR_PUSH_DETAIL_ID_ORG_DIFF(92200,"B2B寄样申请单【{}】明细下推销售组织不一致"),
+    ERROR_92201(92201,"请选择B2C寄样申请审核通过的数据"),
+    ERROR_KOL_B2C_HAS_DOWN_BILL(92202,"B2C寄样申请已生成销售订单，无法反审核"),
+    ERROR_KOL_PARTNER_MULTIPLE_DEFAULT_ADDRESSES(92203,"企业达人地址不允许多个默认"),
+    ERROR_PUSH_SO_DETAIL_ID_EXIST(92204,"B2B寄样申请单【{}】SKU【{}】已下推销售订单，不允许重复下推"),
+    ERROR_PUSH_KOL_B2B_APPLICATION_SO_DETAIL_DELETE(92205,"B2B寄样申请单下推的销售订单明细不允许删除"),
+
     /**
      * TMS 错误
      * 从94000 开始

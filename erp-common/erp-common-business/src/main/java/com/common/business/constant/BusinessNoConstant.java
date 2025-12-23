@@ -248,6 +248,15 @@ public interface BusinessNoConstant {
     String MPOCC="MPOCC";
     //资产编码
     String ZC="ZC";
+    //回片列表
+    String HP="HP";
+    //B2B寄样申请单
+    String KOLB="KOLB";
+    //企业达人库
+    String DR="DR";
+    //B2C寄样申请单
+    String KOLC="KOLC";
+
 
     //差异策略配置
     String CYCL="CYCL";

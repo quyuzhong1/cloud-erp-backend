@@ -1,0 +1,208 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.oms.mapper.KolPartnerInfoMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.oms.entity.KolPartnerInfoEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="disabled" property="disabled" />
+       <result column="remark" property="remark" />
+       <result column="code" property="code" />
+       <result column="nickname" property="nickname" />
+       <result column="type" property="type" />
+       <result column="cooperation_type" property="cooperationType" />
+       <result column="cooperation_date" property="cooperationDate" />
+       <result column="country_id" property="countryId" />
+       <result column="country_name" property="countryName" />
+       <result column="language" property="language" />
+       <result column="email" property="email" />
+       <result column="phone" property="phone" />
+       <result column="charge_id" property="chargeId" />
+       <result column="charge_name" property="chargeName" />
+       <result column="dept_id" property="deptId" />
+       <result column="dept_name" property="deptName" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        kpi.id AS id,
+kpi.create_user_id AS createUserId,
+kpi.create_user_name AS createUserName,
+kpi.create_time AS createTime,
+kpi.update_user_id AS updateUserId,
+kpi.update_user_name AS updateUserName,
+kpi.update_time AS updateTime,
+kpi.version AS version,
+kpi.is_deleted AS isDeleted,
+kpi.disabled AS disabled,
+kpi.remark AS remark,
+kpi.code AS code,
+kpi.nickname AS nickname,
+kpi.type AS type,
+kpi.cooperation_type AS cooperationType,
+kpi.cooperation_date AS cooperationDate,
+kpi.country_id AS countryId,
+kpi.country_name AS countryName,
+kpi.language AS language,
+kpi.email AS email,
+kpi.phone AS phone,
+kpi.charge_id AS chargeId,
+kpi.charge_name AS chargeName,
+kpi.dept_id AS deptId,
+kpi.dept_name AS deptName
+    </sql>
+
+    <sql id="Cooperation_Column_List">
+kcp.id AS detailId,
+kcp.platform_name AS platformName,
+kcp.platform_account_id AS platformAccountId,
+kcp.platform_account_name AS platformAccountName,
+kcp.follower_count AS followerCount,
+kcp.homepage_url AS homepageUrl,
+kcp.remark AS platformRemark
+    </sql>
+
+    <select id="paging" resultType="com.erp.model.oms.dto.KolPartnerInfoDTO$ListDTO">
+        SELECT
+        <include refid="Base_Column_List"></include>
+            ,
+        <include refid="Cooperation_Column_List"></include>
+        FROM
+            kol_partner_info kpi
+        LEFT JOIN Kol_cooperation_platform kcp ON kpi.id = kcp.main_id AND kcp.is_deleted = FALSE
+        WHERE
+            ${params.sqlMap.default}
+          AND kpi.is_deleted = FALSE
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        kpi.create_time desc
+    </select>
+
+    <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
+        select approve_status, count(id) from kol_partner_info where is_deleted = false group by approve_status
+    </select>
+
+    <select id="tabList" resultType="com.erp.model.oms.dto.KolPartnerInfoDTO$TabListDTO">
+        SELECT
+        'false' AS tabFlag,
+        '启用' AS tabFlagName,
+        count(1)  AS count
+        FROM  kol_partner_info kpi
+        WHERE kpi.is_deleted=FALSE and kpi.disabled = false
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        union all
+        SELECT
+        'true' AS tabFlag,
+        '停用' AS tabFlagName,
+        count(1)  AS count
+        FROM  kol_partner_info kpi
+        WHERE kpi.is_deleted=FALSE and kpi.disabled = true
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+    </select>
+
+    <select id="partnerAddressList" resultType="com.erp.model.oms.dto.KolPartnerInfoDTO$PartnerAddressDTO">
+        SELECT
+            kpi.ID,
+            kai.ID AS addressId,
+            kai.country_id AS countryId,
+            kai.country_name AS countryName,
+            kai.province_Id AS provinceId,
+            kai.province AS province,
+            kai.city_id AS cityId,
+            kai.city AS city,
+            kai.district_id AS districtId,
+            kai.district AS district,
+            kai.detail_address AS detailAddress,
+            kai.contact_person AS contactPerson,
+            kai.email AS email,
+            kai.phone AS phone,
+            kai.zip_code AS zipCode,
+            kai.is_default AS isDefault,
+            kai.disabled AS disabled,
+            kai.remark AS remark
+        FROM
+            kol_partner_info AS kpi
+                INNER JOIN kol_address_info AS kai ON kpi.ID = kai.main_id
+                AND kai.is_deleted = FALSE
+                AND kai.disabled = FALSE
+        WHERE
+        kpi.is_deleted = FALSE
+        <if test="params != null and params.id != null and params.id != ''">
+            AND   kpi.id = #{params.id}
+        </if>
+        <if test="params != null and params.searchKeyword != null and params.searchKeyword != ''">
+         AND  ( kai.country_name LIKE CONCAT('%', #{params.searchKeyword}, '%')  or kai.province LIKE CONCAT('%', #{params.searchKeyword}, '%') or kai.city LIKE CONCAT('%', #{params.searchKeyword}, '%') )
+        </if>
+        ORDER BY
+            kai.is_default desc,
+            kai.create_time desc
+    </select>
+    <select id="dropDown" resultType="com.erp.model.oms.dto.KolPartnerInfoDTO$DropDownDTO">
+        SELECT
+        kpi.id AS id,
+        kpi.remark AS remark,
+        kpi.code AS code,
+        kpi.nickname AS nickname,
+        kpi.type AS type,
+        kpi.cooperation_type AS cooperationType,
+        kpi.cooperation_date AS cooperationDate,
+        kpi.country_id AS countryId,
+        kpi.country_name AS countryName,
+        kpi.language AS language,
+        kpi.email AS email,
+        kpi.phone AS phone,
+        kpi.charge_id AS chargeId,
+        kpi.charge_name AS chargeName,
+        kpi.dept_id AS deptId,
+        kpi.dept_name AS deptName,
+        kai.ID AS addressId,
+        kai.country_id AS addressCountryId,
+        kai.country_name AS addressCountryName,
+        kai.province_id AS provinceId,
+        kai.province AS province,
+        kai.city_id AS cityId,
+        kai.city AS city,
+        kai.district_id AS districtId,
+        kai.district AS district,
+        kai.detail_address AS detailAddress,
+        kai.contact_person AS contactPerson,
+        kai.email AS email,
+        kai.phone AS phone,
+        kai.zip_code AS zipCode,
+        kai.disabled AS disabled,
+        kai.is_default AS isDefault
+        FROM
+        kol_partner_info kpi
+        LEFT JOIN kol_address_info AS kai ON kpi.ID = kai.main_id
+        AND kai.is_deleted = FALSE
+        AND kai.disabled = FALSE
+        AND kai.is_default = TRUE
+        WHERE
+        kpi.is_deleted = FALSE
+        and kpi.disabled = FALSE
+        <if test="params != null and params.searchKeyword != null and params.searchKeyword != ''">
+        AND kpi.nickname LIKE CONCAT('%', #{params.searchKeyword}, '%')
+        </if>
+        ORDER BY
+        kpi.create_time desc
+    </select>
+
+</mapper>

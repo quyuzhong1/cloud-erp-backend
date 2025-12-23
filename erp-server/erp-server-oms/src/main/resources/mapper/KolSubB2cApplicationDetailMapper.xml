@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.oms.mapper.KolSubB2cApplicationDetailMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.oms.entity.KolSubB2cApplicationDetailEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="main_id" property="mainId" />
+       <result column="source_detail_id" property="sourceDetailId" />
+       <result column="platform_detail_id" property="platformDetailId" />
+       <result column="third_detail_id" property="thirdDetailId" />
+       <result column="sku_id" property="skuId" />
+       <result column="sku_no" property="skuNo" />
+       <result column="apply_qty" property="applyQty" />
+       <result column="remark" property="remark" />
+       <result column="project_tag" property="projectTag" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        ksbad.id AS id,
+ksbad.create_user_id AS createUserId,
+ksbad.create_user_name AS createUserName,
+ksbad.create_time AS createTime,
+ksbad.update_user_id AS updateUserId,
+ksbad.update_user_name AS updateUserName,
+ksbad.update_time AS updateTime,
+ksbad.version AS version,
+ksbad.is_deleted AS isDeleted,
+ksbad.main_id AS mainId,
+ksbad.source_detail_id AS sourceDetailId,
+ksbad.platform_detail_id AS platformDetailId,
+ksbad.third_detail_id AS thirdDetailId,
+ksbad.sku_id AS skuId,
+ksbad.sku_no AS skuNo,
+ksbad.apply_qty AS applyQty,
+ksbad.remark AS remark,
+ksbad.project_tag AS projectTag
+    </sql>
+
+
+</mapper>

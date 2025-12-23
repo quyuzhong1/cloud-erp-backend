@@ -19,6 +19,7 @@ import com.alibaba.excel.write.metadata.WriteTable;
 import com.alibaba.excel.write.metadata.style.WriteCellStyle;
 import com.alibaba.excel.write.metadata.style.WriteFont;
 import com.alibaba.excel.write.style.HorizontalCellStyleStrategy;
+import com.common.core.dto.MultiErrorExcelData;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.*;
 import com.common.core.exception.ServiceException;
@@ -755,6 +756,35 @@ public class ExcelUtil {
             }
 
             return tempFile;
+        } catch (Exception e) {
+            throw new ServiceException(ApiError.DEFAULT);
+        }
+    }
+
+    public static File generateTemplateFile(String fileName, List<MultiErrorExcelData> list) {
+        try {
+            File tempDirectory = FileUtils.getTempDirectory();
+            File outputFile = new File(tempDirectory, fileName);
+
+            // 创建ExcelWriter
+            ExcelWriter excelWriter = EasyExcel.write(outputFile).build();
+
+            try {
+                for (MultiErrorExcelData multiErrorExcelData : list) {
+                    // 写入每个sheet
+                    WriteSheet writeSheet = EasyExcel.writerSheet(multiErrorExcelData.getSheetName())
+                            .head(multiErrorExcelData.getClazz())
+                            .build();
+                    excelWriter.write(multiErrorExcelData.getDataResult(), writeSheet);
+                }
+            } finally {
+                // 确保ExcelWriter被正确关闭
+                if (excelWriter != null) {
+                    excelWriter.finish();
+                }
+            }
+
+            return outputFile;
         } catch (Exception e) {
             throw new ServiceException(ApiError.DEFAULT);
         }

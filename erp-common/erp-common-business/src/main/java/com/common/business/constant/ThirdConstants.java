@@ -56,6 +56,9 @@ public class ThirdConstants {
     //更新审批 Bot 消息地址
     public static final String FS_APPROVE_MESSAGE_UPDATE_URL = "https://open.feishu.cn/open-apis/approval/v1/message/update/";
 
+    //飞书定义订阅url
+    public static final String FS_APPROVE_DEFINITION_SUBSCRIBE_URL = "https://open.feishu.cn/open-apis/approval/v4/approvals/:approval_code/subscribe";
+
     public static final String DETAIL_LIST = "detailList";
 
     public static final String PURCHASE_ORDER_DETAIL = "purchase_order_detail";
