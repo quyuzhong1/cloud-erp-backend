@@ -28,7 +28,9 @@ import com.erp.model.dmp.kingdee.KingdeeReturnOrderEntity;
 import com.erp.model.dmp.kingdee.item.KingdeeReturnOrderItemEntity;
 import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
+import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.oms.enums.BillTypeEnum;
+import com.erp.model.oms.enums.ShopOrderRouteEnum;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
@@ -314,6 +316,11 @@ public class SyncSoReturnServiceImpl implements SyncSoReturnService {
         if(Objects.isNull(shopInfo)){
             throw new ServiceException("erp店铺信息为空");
         }
+        if(ShopOrderRouteEnum.B2B.getCode().equals(shopInfo.getOrderRouteType())){
+            inStockEntity.setType(OrderTypeEnum.B2B.getCode());
+        }else{
+            inStockEntity.setType(OrderTypeEnum.B2C.getCode());
+        }
         //查询旺店通对应系统仓库
         List<ThirdMappingEntity> warehouseList = FeignQuery.list(FeignQuery.create(ThirdMappingEntity.class)
                 .eq(ThirdMappingEntity::getType, ThirdSysTypeEnum.WAREHOUSE.getCode())
@@ -380,7 +387,23 @@ public class SyncSoReturnServiceImpl implements SyncSoReturnService {
             }
         }
         inStockEntity.setDetailEntityList(detailList);
+        if(OrderTypeEnum.B2B.getCode().equals(inStockEntity.getType())){
+            this.buildB2bOrder(inStockEntity);
+        }
         return inStockEntity;
+    }
+
+    private void buildB2bOrder(SoReturnInstockEntity inStockEntity) {
+        if(StringUtils.isBlank(inStockEntity.getPlatformOrderCode())){
+            return;
+        }
+        List<SoInfoEntity> soInfoEntityList = FeignQuery.create(SoInfoEntity.class).eq(SoInfoEntity::getPlatformOrderCode,inStockEntity.getPlatformOrderCode()).list();
+        if (CollectionUtils.isEmpty(soInfoEntityList)) {
+            return;
+        }
+        SoInfoEntity soInfoEntity = soInfoEntityList.get(0);
+        inStockEntity.setSoId(soInfoEntity.getId());
+        inStockEntity.setSoCode(soInfoEntity.getCode());
     }
 
     private void sendPushTask(List<SoReturnInstockEntity> list, String operate) {
