@@ -79,7 +79,7 @@ public class AwdOutstockServiceImpl extends SuperServiceImpl<AwdOutstockMapper, 
             throw new ServiceException("保存失败");
         }
 
-        boolean saveDetail = awdOutstockDetailService.add(addDTO.getAwdDetailList());
+        boolean saveDetail = awdOutstockDetailService.add(addDTO.getAwdDetailList(),awdOutstockEntity.getId());
         if(!saveDetail) {
             throw new ServiceException("明细保存失败");
         }
@@ -125,16 +125,7 @@ public class AwdOutstockServiceImpl extends SuperServiceImpl<AwdOutstockMapper, 
         List<AwdOutstockEntity> awdOutstockEntities = this.listByIds(ids);
         for (AwdOutstockEntity awdOutstockEntity : awdOutstockEntities) {
             AwdOutstockDTO.FirstMileDeliveryViewDTO firstMileDeliveryViewDTO = new AwdOutstockDTO.FirstMileDeliveryViewDTO();
-            firstMileDeliveryViewDTO.setCode(awdOutstockEntity.getCode());
-            firstMileDeliveryViewDTO.setFbaShipmentId(awdOutstockEntity.getFbaShipmentId());
-            firstMileDeliveryViewDTO.setFbaShipmentCode(awdOutstockEntity.getFbaShipmentCode());
-            List<AwdOutstockDetailEntity> detailList = awdOutstockDetailService.lambdaQuery()
-                    .eq(AwdOutstockDetailEntity::getMainId, awdOutstockEntity.getId())
-                    .list();
-            for (AwdOutstockDetailEntity awdOutstockDetailEntity : detailList) {
-                firstMileDeliveryViewDTO.setDetailId(awdOutstockDetailEntity.getId());
-            }
-
+            BeanUtils.copyProperties(awdOutstockEntity,firstMileDeliveryViewDTO);
             firstMileDeliveryViewDTOS.add(firstMileDeliveryViewDTO);
         }
         return firstMileDeliveryViewDTOS;

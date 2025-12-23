@@ -165,11 +165,12 @@ public class AwdOutstockDetailServiceImpl extends SuperServiceImpl<AwdOutstockDe
     }
 
     @Override
-    public boolean add(List<AwdOutstockDetailDTO.AddDTO> awdDetailList) {
+    public boolean add(List<AwdOutstockDetailDTO.AddDTO> awdDetailList,String mainId) {
         List<AwdOutstockDetailEntity> detailList = new ArrayList<>();
         for (AwdOutstockDetailDTO.AddDTO addDTO : awdDetailList) {
             AwdOutstockDetailEntity awdOutstockDetailEntity = new AwdOutstockDetailEntity();
             BeanUtils.copyProperties(addDTO,awdOutstockDetailEntity);
+            awdOutstockDetailEntity.setMainId(mainId);
             detailList.add(awdOutstockDetailEntity);
         }
 

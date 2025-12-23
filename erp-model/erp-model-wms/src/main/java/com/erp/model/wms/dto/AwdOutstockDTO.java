@@ -189,10 +189,9 @@ public class AwdOutstockDTO implements Serializable {
     public static class FirstMileDeliveryViewDTO{
 
         /**
-         * 明细id
+         * id
          */
-        private String detailId;
-
+        private String id;
         /**
          * AWD出库单号
          */
@@ -207,6 +206,16 @@ public class AwdOutstockDTO implements Serializable {
          * FBA货件编码
          */
         private String fbaShipmentCode;
+
+        /**
+         * 店铺id
+         */
+        private String shopId;
+
+        /**
+         * 店铺名称
+         */
+        private String shopName;
 
 
     }
