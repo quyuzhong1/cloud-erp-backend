@@ -36,20 +36,20 @@ public interface AwdOutstockService extends SuperService<AwdOutstockEntity> {
     * @param dto
     * @return
     */
-    Boolean updateBillDate(AwdOutstockDTO.UpdateDTO dto);
+    Boolean batchUpdateBillDate(List<AwdOutstockDTO.UpdateDTO> dtoList);
 
 
     /**
      * 下推调拨单弹窗
      * @param dto
      */
-    void generateDeliveryView(BaseIdsDTO.IdsDTO dto);
+    List<AwdOutstockDTO.FirstMileDeliveryViewDTO> generateFirstMileDeliveryView(BaseIdsDTO.IdsDTO dto);
 
     /**
      * 下推调拨单
      * @param dto
      */
-    void generateDelivery(AwdOutstockDTO.GenerateDeliveryDTO dto);
+    boolean generateFirstMileDelivery(AwdOutstockDTO.GenerateDeliveryDTO dto);
 
 
     /**

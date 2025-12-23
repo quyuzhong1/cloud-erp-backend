@@ -59,18 +59,18 @@ public class AwdOutstockController extends BaseController {
     * 更新发货时间
     * @author wtr
     * @date:  2025-12-22
-    * @param dto
+    * @param dtoList
     * @return ApiResult
     */
-    @PostMapping("/updateBillDate")
+    @PostMapping("/batchUpdateBillDate")
     @LogAction(value = LogActionEnum.UPDATE, desc = "修改")
         @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
         tableField = "create_user_id",
         menuCode = "wms:awdOutstock:update",
         serviceClass = AwdOutstockService.class,
         keyIdName = "id")
-    public ApiResult<?> updateBillDate(@RequestBody @Validated AwdOutstockDTO.UpdateDTO dto) {
-        awdOutstockService.updateBillDate(dto);
+    public ApiResult<?> batchUpdateBillDate(@RequestBody @Validated List<AwdOutstockDTO.UpdateDTO> dtoList) {
+        awdOutstockService.batchUpdateBillDate(dtoList);
         return success();
     }
 
@@ -81,10 +81,9 @@ public class AwdOutstockController extends BaseController {
      * @param dto
      * @return ApiResult
      */
-    @PostMapping("/generateDeliveryView")
-    public ApiResult<?> generateTransferView(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        awdOutstockService.generateDeliveryView(dto);
-        return success();
+    @PostMapping("/generateFirstMileDeliveryView")
+    public ApiResult<?> generateFirstMileDeliveryView(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        return success(awdOutstockService.generateFirstMileDeliveryView(dto));
     }
 
     /**
@@ -94,16 +93,16 @@ public class AwdOutstockController extends BaseController {
      * @param dto
      * @return ApiResult
      */
-    @PostMapping("/generateDelivery")
+    @PostMapping("/generateFirstMileDelivery")
     @LogAction(value = LogActionEnum.UPDATE, desc = "修改")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
             menuCode = "wms:awdOutstock:update",
             serviceClass = AwdOutstockService.class,
             keyIdName = "id")
-    public ApiResult<?> generateDelivery(@RequestBody @Validated AwdOutstockDTO.GenerateDeliveryDTO dto) {
-        awdOutstockService.generateDelivery(dto);
-        return success();
+    public ApiResult<?> generateFirstMileDelivery(@RequestBody @Validated AwdOutstockDTO.GenerateDeliveryDTO dto) {
+
+        return success(awdOutstockService.generateFirstMileDelivery(dto));
     }
 
     /**

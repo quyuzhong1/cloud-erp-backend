@@ -149,7 +149,7 @@ public enum BusinessNoTypeEnum {
     CODE_DC(114 ,"DC","资质字典表",BusinessNoConstant.DC),
     CODE_CYCL(115 ,"HD","差异策略配置表",BusinessNoConstant.CYCL),
     CODE_SFFH(115 ,"SFFH","B2B三方发货单",BusinessNoConstant.SFFH),
-
+    CODE_AWD(116,"AWD","AWD出库货件",BusinessNoConstant.AWD),
     CODE_MPL(111 ,"MPL","资产通知单",BusinessNoConstant.MPL),
     CODE_MPO(112 ,"MPO","资产采购单",BusinessNoConstant.MPO),
     CODE_MPOCC(113 ,"MPOCC","资产采购变更单",BusinessNoConstant.MPOCC),

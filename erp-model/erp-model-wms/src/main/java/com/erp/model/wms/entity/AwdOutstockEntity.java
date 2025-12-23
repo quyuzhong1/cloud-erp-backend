@@ -35,6 +35,10 @@ public class AwdOutstockEntity extends BaseEntity<AwdOutstockEntity> {
     private String shopName;
     @TableField("bill_date")
     private LocalDate billDate;
+    @TableField("fba_shipment_id")
+    private String fbaShipmentId;
+    @TableField("fba_shipment_code")
+    private String fbaShipmentCode;
 
 
     public static final String CODE = "code";

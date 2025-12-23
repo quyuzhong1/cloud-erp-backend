@@ -184,6 +184,28 @@ public class AwdOutstockDetailDTO implements Serializable {
     public static class AddDTO extends CommonDTO {
 
 
+        /**
+         * 平台产品id
+         */
+        private String asin;
+
+        /**
+         * 平台sku
+         */
+        private String msku;
+
+        private String fnsku;
+
+        private String skuId;
+
+        private String skuNo;
+
+        private String productName;
+
+        /**
+         * 发货数量
+         */
+        private Integer qty;
     }
 
     /**

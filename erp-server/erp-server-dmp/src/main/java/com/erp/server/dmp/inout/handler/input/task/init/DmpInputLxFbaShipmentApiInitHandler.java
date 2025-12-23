@@ -5,6 +5,7 @@ import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.constant.RedisCacheConstants;
 import com.common.business.enums.BusinessTypeEnum;
@@ -14,7 +15,6 @@ import com.common.core.anno.ParamData;
 import com.common.core.enums.PannoEnum;
 import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.entity.ShopInfoMappingEntity;
-import com.erp.model.dmp.enums.DmpInputTaskStatusEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputInitRequest;
@@ -132,9 +132,25 @@ public class DmpInputLxFbaShipmentApiInitHandler extends DmpInputInitHandler {
             return Collections.emptyList();
         }
 
-        List<JSONObject> allResultList = resultData.getData().stream()
-                .map(e->  (JSONObject) JSONObject.toJSON(e))
-                .collect(Collectors.toList());
+        Object data = resultData.getData();
+        List<JSONObject> allResultList = new ArrayList<>();
+
+        if (data != null) {
+            // 无论 data 是 List、JSONArray 还是单个对象，都先转成 JSON 字符串再解析
+            String jsonStr = JSON.toJSONString(data);
+            // 解析 JSON 字符串
+            JSONObject jsonObject = JSON.parseObject(jsonStr);
+
+            // 获取 list 数组
+            JSONArray jsonArray = jsonObject.getJSONArray("list");
+
+            // 遍历 JSONArray，将每个元素添加到结果列表中
+            for (int i = 0; i < jsonArray.size(); i++) {
+                JSONObject item = jsonArray.getJSONObject(i);
+                allResultList.add(item);
+            }
+        }
+
 
         if (resultData.getTotal() < 1000) {
             allResultList.forEach(e -> e.put("shopId", shopId));
@@ -209,13 +225,9 @@ public class DmpInputLxFbaShipmentApiInitHandler extends DmpInputInitHandler {
     }
 
     protected List<Map<String, Object>> getParentStorageMongoData() {
-        String parentStorageName = this.getParentStorageName(DmpInputTaskStatusEnum.MONGO);
-        if (StringUtils.isBlank(parentStorageName)) {
-            return Collections.emptyList();
-        }
         List<ParamData> paramDataList = new ArrayList<>();
         paramDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, PannoEnum.EQ, dmpInputTaskEntity.getParentTaskId()));
-        return mongoService.findMongoData(paramDataList, parentStorageName);
+        return mongoService.findMongoData(paramDataList, "amazon_fba_shipment_data");
     }
 
 }

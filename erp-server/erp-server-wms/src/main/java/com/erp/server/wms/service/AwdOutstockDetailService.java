@@ -73,4 +73,6 @@ public interface AwdOutstockDetailService extends SuperService<AwdOutstockDetail
     * @return
     */
     void exportList(AwdOutstockDetailDTO.ExportDTO dto, HttpServletResponse response);
+
+    boolean add(List<AwdOutstockDetailDTO.AddDTO> awdDetailList);
 }

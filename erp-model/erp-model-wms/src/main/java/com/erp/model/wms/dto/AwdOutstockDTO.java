@@ -157,7 +157,10 @@ public class AwdOutstockDTO implements Serializable {
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
 
-
+        /**
+         * 明细
+         */
+        private List<AwdOutstockDetailDTO.AddDTO> awdDetailList;
     }
 
     /**
@@ -178,6 +181,33 @@ public class AwdOutstockDTO implements Serializable {
          */
         @NotNull(message = "发货时间不能为空")
         private LocalDate billDate;
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class FirstMileDeliveryViewDTO{
+
+        /**
+         * 明细id
+         */
+        private String detailId;
+
+        /**
+         * AWD出库单号
+         */
+        private String code;
+
+        /**
+         * FBA货件id
+         */
+        private String fbaShipmentId;
+
+        /**
+         * FBA货件编码
+         */
+        private String fbaShipmentCode;
+
 
     }
 

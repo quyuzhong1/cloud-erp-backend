@@ -16,11 +16,13 @@ import com.common.business.threadlocal.UserContext;
 import com.erp.server.wms.service.OperateLogService;
 import com.common.core.exception.ServiceException;
 import cn.hutool.core.util.ObjectUtil;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.wms.dto.AwdOutstockDetailDTO;
 import javax.annotation.Resource;
+import java.lang.reflect.Array;
 import java.util.stream.Collectors;
 import java.util.*;
 import com.common.core.utils.*;
@@ -161,6 +163,19 @@ public class AwdOutstockDetailServiceImpl extends SuperServiceImpl<AwdOutstockDe
             throw new ServiceException(ApiError.ERROR_1015);
         }
     }
+
+    @Override
+    public boolean add(List<AwdOutstockDetailDTO.AddDTO> awdDetailList) {
+        List<AwdOutstockDetailEntity> detailList = new ArrayList<>();
+        for (AwdOutstockDetailDTO.AddDTO addDTO : awdDetailList) {
+            AwdOutstockDetailEntity awdOutstockDetailEntity = new AwdOutstockDetailEntity();
+            BeanUtils.copyProperties(addDTO,awdOutstockDetailEntity);
+            detailList.add(awdOutstockDetailEntity);
+        }
+
+        return this.saveBatch(detailList);
+    }
+
     /**
     * 新增修改处理数据
     */

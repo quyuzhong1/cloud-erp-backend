@@ -1,6 +1,11 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.util.StrUtil;
+import com.common.business.enums.BusinessNoTypeEnum;
+import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.wms.entity.AwdOutstockDetailEntity;
+import com.erp.server.wms.service.AwdOutstockDetailService;
+import com.erp.server.wms.service.FirstMileDeliveryService;
 import io.seata.spring.annotation.GlobalTransactional;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.dto.base.BaseResultDTO;
@@ -12,6 +17,7 @@ import com.common.business.threadlocal.UserContext;
 import com.erp.server.wms.service.OperateLogService;
 import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.extern.slf4j.Slf4j;
@@ -28,6 +34,7 @@ import com.common.business.dto.base.*;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.utils.date.DateUtil;
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.constraints.NotEmpty;
 
 /**
  * <p>
@@ -40,8 +47,16 @@ import javax.servlet.http.HttpServletResponse;
 @Slf4j
 @Service
 public class AwdOutstockServiceImpl extends SuperServiceImpl<AwdOutstockMapper, AwdOutstockEntity> implements AwdOutstockService {
+
+    @Resource
+    private AwdOutstockDetailService awdOutstockDetailService;
+
+    @Resource
+    private FirstMileDeliveryService firstMileDeliveryService;
+
     @Resource
     private OperateLogService operateLogService;
+
     @Resource
     private DocNoGenHelper docNoGenHelper;
 
@@ -57,19 +72,20 @@ public class AwdOutstockServiceImpl extends SuperServiceImpl<AwdOutstockMapper, 
 
         log.info("开始新增");
         // 生成单号
-        // TODO 此处的null需填写生成单号类型，type查看BusinessNoTypeEnum枚举类 注意需要填写prefix 为单号前缀
-        String code = docNoGenHelper.generateCode(null);
+        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_AWD);
         awdOutstockEntity.setCode(code);
         boolean save = super.save(awdOutstockEntity);
         if(!save) {
             throw new ServiceException("保存失败");
         }
 
+        boolean saveDetail = awdOutstockDetailService.add(addDTO.getAwdDetailList());
+        if(!saveDetail) {
+            throw new ServiceException("明细保存失败");
+        }
         // 操作日志
         String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "" , awdOutstockEntity.getCode());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, awdOutstockEntity.getId(), "新增操作");
-        // TODO 新增明细（如果有明细的话）
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.AWD_OUTSTOCK.getCode(), awdOutstockEntity.getId(), "新增操作");
 
         return new BaseResultDTO.AddDTO(awdOutstockEntity.getId(), code);
     }
@@ -77,34 +93,57 @@ public class AwdOutstockServiceImpl extends SuperServiceImpl<AwdOutstockMapper, 
     @DistributeLocker(keyName = "addOrUpdateDTO.getId()")
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Boolean updateBillDate(AwdOutstockDTO.UpdateDTO addOrUpdateDTO) {
-        AwdOutstockEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, ""));
-        AwdOutstockEntity awdOutstockEntity =  BeanMapperUtils.map(AwdOutstockEntity.class, addOrUpdateDTO);
+    public Boolean batchUpdateBillDate(List<AwdOutstockDTO.UpdateDTO> updateDTOList) {
+        for (AwdOutstockDTO.UpdateDTO updateDTO : updateDTOList) {
+            AwdOutstockEntity old = super.getById(updateDTO.getId());
+            old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, ""));
+            AwdOutstockEntity awdOutstockEntity =  BeanMapperUtils.map(AwdOutstockEntity.class, updateDTO);
 
-        // 数据处理
-        handleData(awdOutstockEntity);
-        log.info("编辑 开始修改数据，单号：【{}】", old.getCode());
-        boolean save = super.updateById(awdOutstockEntity);
-        if(!save) {
-            throw new ServiceException("保存失败");
+            // 数据处理
+            handleData(awdOutstockEntity);
+            log.info("编辑 开始修改数据，单号：【{}】", old.getCode());
+            boolean save = super.updateById(awdOutstockEntity);
+            if(!save) {
+                throw new ServiceException("保存失败");
+            }
+
+            //generateFirstMileDelivery();
+
+            // 记录主单操作日志
+            log.info("编辑 开始记录日志数据，单号：【{}】", awdOutstockEntity.getCode());
+            String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), awdOutstockEntity.getCode(), "");
+            operateLogService.addModuleOperateLogByObj(old, awdOutstockEntity, null, awdOutstockEntity.getId(), msg);
+            return Boolean.TRUE;
         }
-
-        // 记录主单操作日志
-        log.info("编辑 开始记录日志数据，单号：【{}】", awdOutstockEntity.getCode());
-        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), awdOutstockEntity.getCode(), "");
-        operateLogService.addModuleOperateLogByObj(old, awdOutstockEntity, null, awdOutstockEntity.getId(), msg);
         return Boolean.TRUE;
     }
 
     @Override
-    public void generateDeliveryView(BaseIdsDTO.IdsDTO dto) {
+    public List<AwdOutstockDTO.FirstMileDeliveryViewDTO> generateFirstMileDeliveryView(BaseIdsDTO.IdsDTO dto) {
+        List<String> ids = dto.getIds();
+        ArrayList<AwdOutstockDTO.FirstMileDeliveryViewDTO> firstMileDeliveryViewDTOS = new ArrayList<>();
+        List<AwdOutstockEntity> awdOutstockEntities = this.listByIds(ids);
+        for (AwdOutstockEntity awdOutstockEntity : awdOutstockEntities) {
+            AwdOutstockDTO.FirstMileDeliveryViewDTO firstMileDeliveryViewDTO = new AwdOutstockDTO.FirstMileDeliveryViewDTO();
+            firstMileDeliveryViewDTO.setCode(awdOutstockEntity.getCode());
+            firstMileDeliveryViewDTO.setFbaShipmentId(awdOutstockEntity.getFbaShipmentId());
+            firstMileDeliveryViewDTO.setFbaShipmentCode(awdOutstockEntity.getFbaShipmentCode());
+            List<AwdOutstockDetailEntity> detailList = awdOutstockDetailService.lambdaQuery()
+                    .eq(AwdOutstockDetailEntity::getMainId, awdOutstockEntity.getId())
+                    .list();
+            for (AwdOutstockDetailEntity awdOutstockDetailEntity : detailList) {
+                firstMileDeliveryViewDTO.setDetailId(awdOutstockDetailEntity.getId());
+            }
 
+            firstMileDeliveryViewDTOS.add(firstMileDeliveryViewDTO);
+        }
+        return firstMileDeliveryViewDTOS;
     }
 
     @Override
-    public void generateDelivery(AwdOutstockDTO.GenerateDeliveryDTO dto) {
-
+    @Transactional(rollbackFor = Exception.class)
+    public boolean generateFirstMileDelivery(AwdOutstockDTO.GenerateDeliveryDTO dto) {
+        return false;
     }
 
 
@@ -146,6 +185,7 @@ public class AwdOutstockServiceImpl extends SuperServiceImpl<AwdOutstockMapper, 
     * 新增修改处理数据
     */
     private void handleData(AwdOutstockEntity awdOutstockEntity) {
+
     }
 
    /**
