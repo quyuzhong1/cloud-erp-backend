@@ -11,14 +11,10 @@ import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.FileUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.erp.model.plm.dto.AttachmentDTO;
-import com.erp.model.plm.entity.OperateLogEntity;
 import com.erp.model.plm.entity.PlmAttachmentEntity;
-import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.rpc.file.feign.FileFeign;
 import com.erp.server.plm.mapper.PlmAttachmentMapper;
-import com.erp.server.plm.service.OperateLogService;
 import com.erp.server.plm.service.PlmAttachmentService;
-import com.erp.server.plm.service.ProductDetailService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -31,9 +27,6 @@ import java.io.File;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -48,11 +41,7 @@ import java.util.stream.Collectors;
 public class PlmAttachmentServiceImpl extends SuperServiceImpl<PlmAttachmentMapper, PlmAttachmentEntity> implements PlmAttachmentService {
 
     @Resource
-    private ProductDetailService productDetailService;
-    @Resource
     private FileFeign fileFeign;
-    @Resource
-    private OperateLogService operateLogService;
 
     /**
      * 批量保存附件信息
@@ -174,107 +163,32 @@ public class PlmAttachmentServiceImpl extends SuperServiceImpl<PlmAttachmentMapp
     }
 
     @Override
-    public List<AttachmentDTO.CommonDTO> getSkuUrlByPid(String id, String logId) {
-        if(StringUtils.isBlank(id)){
+    public List<AttachmentDTO.CommonDTO> getSkuUrlByPid(String id, String businessId, LocalDateTime createTime) {
+        if(StringUtils.isBlank(id) || StringUtils.isBlank(businessId)){
             return Collections.emptyList();
         }
         
-        // 查询 operate_log，根据 pid（product_id）查询，创建人为 "system"
-        LambdaQueryWrapper<OperateLogEntity> logQueryWrapper = new LambdaQueryWrapper<>();
-        logQueryWrapper.eq(OperateLogEntity::getPid, id)
-                .eq(OperateLogEntity::getCreateUserName, "system")
-                .eq(StringUtils.isNotBlank(logId), OperateLogEntity::getId, logId)
-                .orderByDesc(OperateLogEntity::getCreateTime);
-        List<OperateLogEntity> operateLogs = operateLogService.list(logQueryWrapper);
+        // 构建查询条件
+        LambdaQueryWrapper<PlmAttachmentEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(PlmAttachmentEntity::getBusinessId, businessId)
+                .eq(PlmAttachmentEntity::getType, SourceTypeEnum.PRODUCT_DETAIL.getTableName());
         
-        if(CollectionUtils.isEmpty(operateLogs)){
-            return Collections.emptyList();
+        // 如果提供了 createTime，则匹配时间范围（前后1秒）
+        if(createTime != null) {
+            LocalDateTime startTime = createTime.minusSeconds(1);
+            LocalDateTime endTime = createTime.plusSeconds(1);
+            queryWrapper.ge(PlmAttachmentEntity::getCreateTime, startTime)
+                    .le(PlmAttachmentEntity::getCreateTime, endTime);
         }
         
-        // 提取所有 SKU 号并构建日志到 SKU 的映射
-        Pattern skuPattern = Pattern.compile("【([^】]+)】");
-        Map<OperateLogEntity, Set<String>> logSkuMap = new LinkedHashMap<>();
-        Set<String> allSkuNos = new HashSet<>();
+        queryWrapper.orderByDesc(PlmAttachmentEntity::getCreateTime);
         
-        for(OperateLogEntity log : operateLogs) {
-            if(StringUtils.isBlank(log.getContent()) || log.getCreateTime() == null) {
-                continue;
-            }
-            Set<String> skuNos = new HashSet<>();
-            Matcher matcher = skuPattern.matcher(log.getContent());
-            while(matcher.find()) {
-                String skuNo = matcher.group(1);
-                skuNos.add(skuNo);
-                allSkuNos.add(skuNo);
-            }
-            if(CollectionUtils.isNotEmpty(skuNos)) {
-                logSkuMap.put(log, skuNos);
-            }
-        }
-        
-        if(CollectionUtils.isEmpty(allSkuNos)){
-            return Collections.emptyList();
-        }
-        
-        // 查询 product_detail 并构建 SKU 到 detailId 的映射
-        List<ProductDetailEntity> productDetails = productDetailService.list(
-                new LambdaQueryWrapper<ProductDetailEntity>()
-                        .eq(ProductDetailEntity::getProductId, id)
-                        .in(ProductDetailEntity::getSkuNo, allSkuNos));
-        
-        if(CollectionUtils.isEmpty(productDetails)){
-            return Collections.emptyList();
-        }
-        
-        Map<String, String> skuToDetailIdMap = productDetails.stream()
-                .collect(Collectors.toMap(ProductDetailEntity::getSkuNo, ProductDetailEntity::getId, (v1, v2) -> v1));
-        List<String> detailIds = new ArrayList<>(skuToDetailIdMap.values());
-        
-        // 查询所有相关的 attachment
-        List<PlmAttachmentEntity> attachments = this.lambdaQuery()
-                .in(PlmAttachmentEntity::getBusinessId, detailIds)
-                .eq(PlmAttachmentEntity::getType, SourceTypeEnum.PRODUCT_DETAIL.getTableName())
-                .orderByDesc(PlmAttachmentEntity::getCreateTime)
-                .list();
+        List<PlmAttachmentEntity> attachments = this.list(queryWrapper);
         
         if(CollectionUtils.isEmpty(attachments)){
             return Collections.emptyList();
         }
         
-        // 按 detailId 和 createTime 分组 attachment，便于快速查找
-        Map<String, List<PlmAttachmentEntity>> attachmentMap = attachments.stream()
-                .collect(Collectors.groupingBy(PlmAttachmentEntity::getBusinessId));
-        
-        // 筛选符合条件的 attachment
-        List<AttachmentDTO.CommonDTO> result = new ArrayList<>();
-        for(Map.Entry<OperateLogEntity, Set<String>> entry : logSkuMap.entrySet()) {
-            OperateLogEntity log = entry.getKey();
-            LocalDateTime logTime = log.getCreateTime();
-            LocalDateTime startTime = logTime.minusSeconds(1);
-            LocalDateTime endTime = logTime.plusSeconds(1);
-            
-            for(String skuNo : entry.getValue()) {
-                String detailId = skuToDetailIdMap.get(skuNo);
-                if(StringUtils.isBlank(detailId)) {
-                    continue;
-                }
-                
-                List<PlmAttachmentEntity> detailAttachments = attachmentMap.get(detailId);
-                if(CollectionUtils.isEmpty(detailAttachments)) {
-                    continue;
-                }
-                
-                for(PlmAttachmentEntity attachment : detailAttachments) {
-                    LocalDateTime attachTime = attachment.getCreateTime();
-                    if(attachTime != null && !attachTime.isBefore(startTime) && !attachTime.isAfter(endTime)) {
-                        AttachmentDTO.CommonDTO dto = BeanUtil.copyProperties(attachment, AttachmentDTO.CommonDTO.class);
-                        dto.setLogId(log.getId());
-                        result.add(dto);
-                    }
-                }
-            }
-        }
-        
-        return result;
+        return BeanUtil.copyToList(attachments, AttachmentDTO.CommonDTO.class);
     }
 }

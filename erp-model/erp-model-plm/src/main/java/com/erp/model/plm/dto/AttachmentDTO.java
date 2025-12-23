@@ -205,9 +205,15 @@ public class AttachmentDTO implements Serializable {
         private String id;
 
         /**
-         * 日志ID（可选）
+         * 业务ID（附件表的businessId）
          */
-        private String logId;
+        @NotBlank(message = "业务ID不能为空")
+        private String businessId;
+
+        /**
+         * 创建时间（用于匹配附件创建时间）
+         */
+        private LocalDateTime createTime;
 
     }
 }
