@@ -304,6 +304,8 @@ public enum ApiError implements Serializable {
     CFG_THIRD_PROCESS_BUSSINESSKEY_EXIST(94064,"单据类型【{}】下已存在第三方配置，暂不支持再次添加"),
     WORKFLOW_APPROVE_CREATE_APPROVE_DIFF(94065,"创建人和审批人不能一致，人员：【{}】"),
     PROCESS_FEISHU_USER_NOT_FOUND(94066,"未找到飞书用户对应的系统用户,飞书userId: {}"),
+    WORKFLOW_FEI_SHU_DEFINITION_SUBSCRIBE_FAIL(94066,"飞书定义订阅失败，请检查"),
+    WORKFLOW_FEI_SHU_DEFINITION_UNSUBSCRIBE_FAIL(94067,"取消飞书定义订阅失败，请检查"),
 
     /**
      * PLM 错误
