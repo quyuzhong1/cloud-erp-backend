@@ -14,6 +14,7 @@
     <select id="paging" resultType="com.erp.model.oms.dto.SoInfoDTO$PagingViewDTO">
         SELECT
         si.code,
+        si.third_code as thirdCode,
         si.platform_order_code as platformOrderCode,
         si.dict_platform as dictPlatform,
         si.account_deduct_amount as accountDeductAmount,

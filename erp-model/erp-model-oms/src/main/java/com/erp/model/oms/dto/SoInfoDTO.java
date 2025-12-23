@@ -96,6 +96,8 @@ public class SoInfoDTO implements Serializable {
          */
         private String code;
 
+        private String thirdCode;
+
         /**
          * 平台订单编号
          */
@@ -1187,6 +1189,7 @@ public class SoInfoDTO implements Serializable {
          * code
          */
         private String code;
+        private String thirdCode;
 
         /**
          * 平台

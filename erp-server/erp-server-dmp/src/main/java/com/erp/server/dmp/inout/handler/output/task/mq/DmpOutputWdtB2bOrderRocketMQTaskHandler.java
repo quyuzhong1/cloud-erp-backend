@@ -27,6 +27,7 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.*;
 
 @Slf4j
@@ -170,7 +171,7 @@ public class DmpOutputWdtB2bOrderRocketMQTaskHandler extends DmpOutputRocketMQTa
 			detailDTO.setQty(dmpSoDetailEntity.getQty());
 			detailDTO.setTaxRate(dmpSoInfoEntity.getTaxRate());
 			detailDTO.setTaxPrice(dmpSoDetailEntity.getSellPriceOrigin());
-
+			detailDTO.setPrice(detailDTO.getTaxPrice().divide(BigDecimal.ONE.add(detailDTO.getTaxRate()), 2, RoundingMode.HALF_UP));
 			details.add(detailDTO);
 		}
 		platformB2bOrderDTO.setDetail(details);
