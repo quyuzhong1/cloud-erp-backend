@@ -527,4 +527,11 @@ public interface ScmTaskFeign {
      */
     @PostMapping("feign/scmWorkOption/assetPurchaseChangeApprove")
     List<BatchResultDTO> assetPurchaseChangeApprove(@RequestBody @Validated BaseApproveParamDTO dto);
+
+    /**
+     * 批量更新合同名称
+     * @return
+     */
+    @PostMapping("feign/contractInfo/updateContractNameByTempId")
+    void updateContractNameByTempId(@RequestBody ContractInfoDTO.UpdateContractNameDTO dto);
 }

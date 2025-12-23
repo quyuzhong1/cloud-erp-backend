@@ -896,6 +896,13 @@ public enum ApiError implements Serializable {
     ERROR_98152(98152,"sku【{}】的新采购数量不能小于已验收数量"),
     ERROR_98153(98153,"模具编码【{}】验收数量不能超过可验收数量"),
     ERROR_98154(98154,"没有找到供应商的账户信息"),
+    ERROR_MISSING_SUPPLIER(98155,"供应商不能为空"),
+    ERROR_CONTRACT_TEMPLATE_REQUIRED(98156,"合同模板不能为空"),
+    ERROR_SUPPLIER_NOT_ALLOW_MODIFY(98157,"供应商不允许修改"),
+    ERROR_PURCHASE_FRAMEWORK_CONTRACT_ATTACHMENT_REQUIRED(98158,"采购框架合同类型附件不能为空"),
+    ERROR_CONTRACT_TEMPLATE_NOT_EXIST(98159,"合同模板不存在或被禁用"),
+    ERROR_CONTRACT_TEMPLATE_DICTINCT(98160,"【{}】已绑定【{}】，不可重复绑定"),
+    ERROR_CONTRACT_TEMPLATE_EXIST(98161,"【{}】已被其他供应商绑定，请先解除关联再绑定所有供应商"),
 
     /**
      * WMS 错误
