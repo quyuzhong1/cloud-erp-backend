@@ -388,7 +388,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             BigDecimal taxPrice = MathUtil.getTaxValue(price, flagTaxRate, 4);
 
             // 累加出库金额
-            outStockAmount = outStockAmount.add(MathUtil.multiplyWithTwo(taxPrice, actualQty * soDetail.getPerBoxQty()));
+            outStockAmount = outStockAmount.add(MathUtil.multiplyWithTwo(taxPrice, actualQty));
         }
 
         //销售订单
