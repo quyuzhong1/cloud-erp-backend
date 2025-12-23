@@ -63,8 +63,8 @@ public class VirtualInventoryHisServiceImpl extends SuperServiceImpl<VirtualInve
     }
 
     @Override
-    public void addVirtualInventoryHis(String virtualInventoryId,LocalDate localDate) {
-        List<VirtualInventoryHisDTO.AddDTO> list = baseMapper.listVirtualInventoryHis(virtualInventoryId,localDate);
+    public void addVirtualInventoryHis(List<String> virtualInventoryIds,LocalDate localDate) {
+        List<VirtualInventoryHisDTO.AddDTO> list = baseMapper.listVirtualInventoryHis(virtualInventoryIds,localDate);
         if (CollUtil.isEmpty(list)) {
             return;
         }
