@@ -75,8 +75,9 @@ public class SecondarySortingController extends BaseController {
      * @see SecondarySortingDTO.BasketDetail
      */
     @GetMapping("/printDistribution")
-    public void printDistribution(@RequestParam("waveId") String waveId, HttpServletResponse response) {
-        secondarySortingService.printDistribution(waveId, response);
+    public ApiResult<String> printDistribution(@RequestParam("waveId") String waveId, HttpServletResponse response) {
+        String url = secondarySortingService.printDistribution(waveId, response);
+        return success(url);
     }
 
 }
