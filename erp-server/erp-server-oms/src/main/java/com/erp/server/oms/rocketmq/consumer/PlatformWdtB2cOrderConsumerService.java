@@ -4,6 +4,7 @@ import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.dto.WdtKolB2cApplicationDTO;
 import com.common.core.utils.BeanMapper;
+import com.common.message.constant.RocketMqConsumerGroup;
 import com.common.message.constant.RocketMqNewTag;
 import com.common.message.constant.RocketMqNewTopic;
 import com.common.message.handler.AbstractNewPlatformConsumerHandler;
@@ -27,14 +28,14 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
- * 下载平台商品消费服务
- * @author Jim
+ * KOL-B2C寄样申请单更新消费者
+ * @author jack
  */
 @Service
 @Slf4j
 @RocketMQMessageListener(topic = RocketMqNewTopic.DMP_WDT_KOL_B2C_APPLICATION_TO_OMS_TOPIC,
         selectorExpression = RocketMqNewTag.DMP_WDT_KOL_B2C_APPLICATION_TO_OMS_TAG,
-        consumerGroup ="${spring.cloud.nacos.discovery.namespace}-erp_dmp_group")
+        consumerGroup = RocketMqConsumerGroup.DMP_WDT_KOL_B2C_APPLICATION_CONSUMER)
 public class PlatformWdtB2cOrderConsumerService extends AbstractNewPlatformConsumerHandler {
 
     @Resource
