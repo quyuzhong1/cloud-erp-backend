@@ -11,6 +11,8 @@ import com.common.message.handler.AbstractNewPlatformConsumerHandler;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.oms.entity.KolSubB2cApplicationDetailEntity;
 import com.erp.model.oms.entity.KolSubB2cApplicationEntity;
+import com.erp.model.oms.enums.KolSubB2cApplicationDeliveryStatusEnum;
+import com.erp.model.oms.enums.KolSubB2cApplicationOrderStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.rpc.dmp.feign.DmpMongoDbFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
@@ -81,9 +83,11 @@ public class PlatformWdtB2cOrderConsumerService extends AbstractNewPlatformConsu
                 detailEntity.setThirdDetailId(detailDTO.getThirdDetailId());
             }
         }
-
-        entity.setOrderStatus(dto.getOrderStatus());
         entity.setDeliveryStatus(dto.getDeliveryStatus());
+        entity.setOrderStatus(dto.getOrderStatus());
+        if(Objects.equals(KolSubB2cApplicationDeliveryStatusEnum.SHIPPED.getCode(),dto.getDeliveryStatus())){
+            entity.setOrderStatus(KolSubB2cApplicationOrderStatusEnum.APPROVE.getCode());
+        }
         entity.setTrackNo(dto.getTrackNo());
         entity.setPlatformSoCode(dto.getPlatformSoCode());
         entity.setPlatformOrderCode(dto.getPlatformOrderCode());
