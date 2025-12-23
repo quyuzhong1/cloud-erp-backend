@@ -6,6 +6,7 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.crypto.digest.DigestUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.annotation.DistributeLocker;
@@ -28,6 +29,7 @@ import com.erp.model.oms.dto.KolFeedbackDTO;
 import com.erp.model.oms.dto.excel.KolFeedbackExcelDTO;
 import com.erp.model.oms.entity.KolFeedbackEntity;
 import com.erp.model.oms.entity.KolPartnerInfoEntity;
+import com.erp.model.oms.entity.KolSocialMediaEntity;
 import com.erp.model.oms.enums.FeedbackStatusEnum;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.ProductVO;
@@ -41,6 +43,7 @@ import com.erp.server.oms.listener.KolFeedbackExcelListener;
 import com.erp.server.oms.mapper.KolFeedbackMapper;
 import com.erp.server.oms.service.KolFeedbackService;
 import com.erp.server.oms.service.KolPartnerInfoService;
+import com.erp.server.oms.service.KolSocialMediaService;
 import com.erp.server.oms.service.OperateLogService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -100,6 +103,9 @@ public class KolFeedbackServiceImpl extends SuperServiceImpl<KolFeedbackMapper, 
 
     @Autowired
     private KolPartnerInfoService kolPartnerInfoService;
+
+    @Autowired
+    private KolSocialMediaService kolSocialMediaService;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -653,9 +659,24 @@ public class KolFeedbackServiceImpl extends SuperServiceImpl<KolFeedbackMapper, 
             kolFeedbackEntity.setUrlHash(urlHash);
         }
 
-        // feedbackStatus 回片状态默认 "待回片"
+        // feedbackStatus 回片状态：如果 urlHash 不为空，查询达人社媒数据，如果有数据则设置为已回片，否则为待回片
         if (StrUtil.isBlank(kolFeedbackEntity.getFeedbackStatus())) {
-            kolFeedbackEntity.setFeedbackStatus(FeedbackStatusEnum.PENDING.getCode());
+            if (StrUtil.isNotBlank(kolFeedbackEntity.getUrlHash())) {
+                // 根据 urlHash 查询达人社媒数据是否存在（使用 count 避免 getOne 在多条记录时抛异常）
+                LambdaQueryWrapper<KolSocialMediaEntity> queryWrapper = new LambdaQueryWrapper<>();
+                queryWrapper.eq(KolSocialMediaEntity::getUrlHash, kolFeedbackEntity.getUrlHash())
+                        .eq(KolSocialMediaEntity::getIsDeleted, false);
+                long count = kolSocialMediaService.count(queryWrapper);
+                // 如果查询到社媒数据，设置为已回片，否则设置为待回片
+                if (count > 0) {
+                    kolFeedbackEntity.setFeedbackStatus(FeedbackStatusEnum.COMPLETED.getCode());
+                } else {
+                    kolFeedbackEntity.setFeedbackStatus(FeedbackStatusEnum.PENDING.getCode());
+                }
+            } else {
+                // 如果没有 urlHash，默认设置为待回片
+                kolFeedbackEntity.setFeedbackStatus(FeedbackStatusEnum.PENDING.getCode());
+            }
         }
     }
 
