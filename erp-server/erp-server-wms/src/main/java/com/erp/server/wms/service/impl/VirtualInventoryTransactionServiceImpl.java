@@ -1,29 +1,10 @@
 package com.erp.server.wms.service.impl;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
-import java.util.stream.Collectors;
-
-import javax.annotation.Resource;
-
-import org.apache.commons.lang3.StringUtils;
-import org.redisson.RedissonMultiLock;
-import org.slf4j.MDC;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
+import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.date.DateUtil;
+import cn.hutool.core.lang.Pair;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
@@ -45,22 +26,26 @@ import com.erp.model.wms.enums.inventory.InventoryRedisOpEnum;
 import com.erp.model.wms.enums.inventory.InventoryRedisOpKeyEnum;
 import com.erp.server.wms.config.VirtualInventoryTransactionSynchronizationAdapter;
 import com.erp.server.wms.mapper.VirtualInventoryTransactionMapper;
-import com.erp.server.wms.service.InventoryTradingService;
-import com.erp.server.wms.service.VirtualInventoryDetailHisService;
-import com.erp.server.wms.service.VirtualInventoryHisService;
-import com.erp.server.wms.service.VirtualInventoryService;
-import com.erp.server.wms.service.VirtualInventoryTransactionService;
-import com.erp.server.wms.service.VirtualTransFlowService;
+import com.erp.server.wms.service.*;
 import com.erp.server.wms.utils.InventoryRedisUtil;
 import com.erp.server.wms.utils.VirtualInventoryRedisUtil;
-
-import cn.hutool.core.bean.BeanUtil;
-import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.date.DateUtil;
-import cn.hutool.core.lang.Pair;
-import cn.hutool.core.text.CharSequenceUtil;
 import io.seata.core.context.RootContext;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
+import org.redisson.RedissonMultiLock;
+import org.slf4j.MDC;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import javax.annotation.Resource;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -127,7 +112,7 @@ public class VirtualInventoryTransactionServiceImpl extends SuperServiceImpl<Vir
     @Transactional(rollbackFor = Exception.class)
     public Pair<String, Boolean> overrideDb(LocalDate startDate , String inventoryId){
     	virtualTransFlowService.overrideVirtualTransFlow(startDate, inventoryId);
-    	virtualInventoryDetailHisService.hisVirtualInventoryJob(inventoryId,startDate);
+    	virtualInventoryDetailHisService.hisVirtualInventoryJob(Collections.singletonList(inventoryId),startDate);
 		this.inventoryHisToInventory(inventoryId);
 		return Pair.of(inventoryId, Boolean.TRUE);
     }
