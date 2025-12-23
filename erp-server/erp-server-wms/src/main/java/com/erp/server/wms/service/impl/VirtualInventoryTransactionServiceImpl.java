@@ -1,6 +1,5 @@
 package com.erp.server.wms.service.impl;
 
-
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -37,21 +36,23 @@ import com.common.message.service.mq.MQProducerService;
 import com.erp.model.msg.dto.WarnMsgInfoDTO;
 import com.erp.model.msg.enums.WarnMsgTypeEnum;
 import com.erp.model.wms.dto.InventoryTransactionDTO.CheckInventoryDTO;
-import com.erp.model.wms.dto.inventory.InventoryTransactionDTO;
-import com.erp.model.wms.entity.InventoryEntity;
-import com.erp.model.wms.entity.InventoryHisEntity;
-import com.erp.model.wms.entity.InventoryTransactionEntity;
-import com.erp.model.wms.entity.TransactionFlowEntity;
+import com.erp.model.wms.dto.inventory.VirtualInventoryStockDTO;
+import com.erp.model.wms.entity.VirtualInventoryEntity;
+import com.erp.model.wms.entity.VirtualInventoryHisEntity;
+import com.erp.model.wms.entity.VirtualInventoryTransactionEntity;
+import com.erp.model.wms.entity.VirtualTransFlowEntity;
 import com.erp.model.wms.enums.inventory.InventoryRedisOpEnum;
 import com.erp.model.wms.enums.inventory.InventoryRedisOpKeyEnum;
-import com.erp.server.wms.config.InventoryTransactionSynchronizationAdapter;
-import com.erp.server.wms.mapper.InventoryTransactionMapper;
-import com.erp.server.wms.service.InventoryHisService;
-import com.erp.server.wms.service.InventoryService;
+import com.erp.server.wms.config.VirtualInventoryTransactionSynchronizationAdapter;
+import com.erp.server.wms.mapper.VirtualInventoryTransactionMapper;
 import com.erp.server.wms.service.InventoryTradingService;
-import com.erp.server.wms.service.InventoryTransactionService;
-import com.erp.server.wms.service.TransactionFlowService;
+import com.erp.server.wms.service.VirtualInventoryDetailHisService;
+import com.erp.server.wms.service.VirtualInventoryHisService;
+import com.erp.server.wms.service.VirtualInventoryService;
+import com.erp.server.wms.service.VirtualInventoryTransactionService;
+import com.erp.server.wms.service.VirtualTransFlowService;
 import com.erp.server.wms.utils.InventoryRedisUtil;
+import com.erp.server.wms.utils.VirtualInventoryRedisUtil;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
@@ -60,30 +61,34 @@ import cn.hutool.core.lang.Pair;
 import cn.hutool.core.text.CharSequenceUtil;
 import io.seata.core.context.RootContext;
 import lombok.extern.slf4j.Slf4j;
+
 /**
  * <p>
- * 库存事务表 服务实现类
+ * 虚拟仓库存事务表 服务实现类
  * </p>
  *
  * @author shukai
- * @since 2025-10-13
+ * @since 2025-12-18
  */
 @Slf4j
 @Service
-public class InventoryTransactionServiceImpl extends SuperServiceImpl<InventoryTransactionMapper, InventoryTransactionEntity> implements InventoryTransactionService {
+public class VirtualInventoryTransactionServiceImpl extends SuperServiceImpl<VirtualInventoryTransactionMapper, VirtualInventoryTransactionEntity> implements VirtualInventoryTransactionService {
+
     @Autowired
-    private InventoryHisService inventoryHisService;
+    private VirtualInventoryHisService virtualInventoryHisService;
     @Autowired
-    private InventoryService inventoryService;
+    private VirtualInventoryService virtualInventoryService;
     @Autowired
-    private InventoryRedisUtil inventoryRedisUtil;
+    private VirtualInventoryRedisUtil virtualInventoryRedisUtil;
     @Autowired
-    private TransactionFlowService transactionFlowService;
+    private VirtualTransFlowService virtualTransFlowService;
     @Resource
     private MQProducerService mqProducerService;
     @Resource
-    @Qualifier("transactionIdToInventoryHisPool")
-    private ExecutorService transactionIdToInventoryHisPool;
+    @Qualifier("virtualTransactionIdToInventoryHisPool")
+    private ExecutorService virtualTransactionIdToInventoryHisPool;
+    @Resource
+    private VirtualInventoryDetailHisService virtualInventoryDetailHisService;
 
     @Override
 	public Map<String , Boolean> overrideDbInventory(LocalDate startDate , List<String> inventoryIds){
@@ -94,11 +99,11 @@ public class InventoryTransactionServiceImpl extends SuperServiceImpl<InventoryT
     		for(CheckInventoryDTO dto : checkInventoryList) {
     			String inventoryId = dto.getInventoryId();
     			result.put(inventoryId, Boolean.FALSE);
-    			futureList.add(transactionIdToInventoryHisPool.submit(() -> {
+    			futureList.add(virtualTransactionIdToInventoryHisPool.submit(() -> {
     				String logMsg = StringUtil.appendLogMsg("overrideDbInventory循环", inventoryId);
     				log.info("{}开始" , logMsg);
     				try {
-    					Pair<String, Boolean> overrideDb = ApplicationContextUtils.getBean(InventoryTransactionService.class).overrideDb(startDate , inventoryId);
+    					Pair<String, Boolean> overrideDb = ApplicationContextUtils.getBean(VirtualInventoryTransactionService.class).overrideDb(startDate , inventoryId);
     					log.info("{}结束" , logMsg);
 						return overrideDb;
 					} catch (Exception e) {
@@ -121,7 +126,8 @@ public class InventoryTransactionServiceImpl extends SuperServiceImpl<InventoryT
     
     @Transactional(rollbackFor = Exception.class)
     public Pair<String, Boolean> overrideDb(LocalDate startDate , String inventoryId){
-    	transactionFlowService.overrideInventoryFlow(startDate, inventoryId, "");
+    	virtualTransFlowService.overrideVirtualTransFlow(startDate, inventoryId);
+    	virtualInventoryDetailHisService.hisVirtualInventoryJob(inventoryId,startDate);
 		this.inventoryHisToInventory(inventoryId);
 		return Pair.of(inventoryId, Boolean.TRUE);
     }
@@ -133,7 +139,7 @@ public class InventoryTransactionServiceImpl extends SuperServiceImpl<InventoryT
 		if(isCheck) {
 			redisCheckInventoryList = this.checkRedisInventorySame(inventoryIds);
 		}else {
-			List<InventoryEntity> list = inventoryService.lambdaQuery().in(CollUtil.isNotEmpty(inventoryIds) , InventoryEntity::getId ,inventoryIds).eq(InventoryEntity::getIsDeleted, false).select(InventoryEntity::getId).list();
+			List<VirtualInventoryEntity> list = virtualInventoryService.lambdaQuery().in(CollUtil.isNotEmpty(inventoryIds) , VirtualInventoryEntity::getId ,inventoryIds).eq(VirtualInventoryEntity::getIsDeleted, false).select(VirtualInventoryEntity::getId).list();
 			redisCheckInventoryList = list.stream().map(l -> {
 				CheckInventoryDTO dto = new CheckInventoryDTO();
 				dto.setInventoryId(l.getId());
@@ -144,7 +150,7 @@ public class InventoryTransactionServiceImpl extends SuperServiceImpl<InventoryT
 			List<Future<Pair<String, Boolean>>> futureList = new ArrayList<>(redisCheckInventoryList.size());
 			for(CheckInventoryDTO dto : redisCheckInventoryList) {
 				String inventoryId = dto.getInventoryId();
-				futureList.add(transactionIdToInventoryHisPool.submit(() -> {
+				futureList.add(virtualTransactionIdToInventoryHisPool.submit(() -> {
 					String logMsg = StringUtil.appendLogMsg("overrideRedisInventory循环", inventoryId);
     				log.info("{}开始" , logMsg);
     				try {
@@ -170,7 +176,7 @@ public class InventoryTransactionServiceImpl extends SuperServiceImpl<InventoryT
 	
 	private Pair<String, Boolean> overrideRedis(String id){
 		Pair<String, Boolean> of = Pair.of(id, Boolean.TRUE);
-		 RedissonMultiLock tryLock = inventoryRedisUtil.tryLock(InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.OVERRIDE, id));
+		 RedissonMultiLock tryLock = virtualInventoryRedisUtil.tryLock(InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.OVERRIDE, id));
 		 if(tryLock != null) {
 			 try {
 				 int i = 0;
@@ -178,15 +184,15 @@ public class InventoryTransactionServiceImpl extends SuperServiceImpl<InventoryT
 					 try {
 						 this.inventoryIdToInventoryHis(id , "");
 						 Integer qty = 0;
-						 QueryWrapper<TransactionFlowEntity> queryWrapper = new QueryWrapper<>();
-						 queryWrapper.eq("inventory_id", id);
-						 queryWrapper.groupBy("inventory_id");
+						 QueryWrapper<VirtualTransFlowEntity> queryWrapper = new QueryWrapper<>();
+						 queryWrapper.eq("virtual_inventory_id", id);
+						 queryWrapper.groupBy("virtual_inventory_id");
 						 queryWrapper.select(" sum(qty) qty ");
-						 List<TransactionFlowEntity> transactionFlowEntityList = transactionFlowService.list(queryWrapper);
+						 List<VirtualTransFlowEntity> transactionFlowEntityList = virtualTransFlowService.list(queryWrapper);
 						 if(CollUtil.isNotEmpty(transactionFlowEntityList)) {
 							 qty = transactionFlowEntityList.get(0).getQty();
 						 }
-						 inventoryRedisUtil.execute(InventoryRedisOpEnum.OVERRIDE , InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.CURRENT, id) , qty.toString());
+						 virtualInventoryRedisUtil.execute(InventoryRedisOpEnum.OVERRIDE , InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.CURRENT, id) , qty.toString());
 						 break;
 					 } catch (Exception e) {
 						 log.error("{}库存重算第{}次失败" , id , i , e);
@@ -198,7 +204,7 @@ public class InventoryTransactionServiceImpl extends SuperServiceImpl<InventoryT
 				 log.error("{}库存重算最终失败" , id , e);
 				 of = Pair.of(id, Boolean.FALSE);
 			 } finally{
-				 inventoryRedisUtil.unLock(tryLock);
+				 virtualInventoryRedisUtil.unLock(tryLock);
 			 }
 		 }else {
 			 log.error("{}库存重算获取锁失败" , id);
@@ -212,16 +218,16 @@ public class InventoryTransactionServiceImpl extends SuperServiceImpl<InventoryT
     	String logMsg = StringUtil.appendLogMsg("inventoryIdToInventoryHis", inventoryId , transactionId);
     	log.info("{}开始" , logMsg);
     	String key = InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.HISTORY, inventoryId);
-    	RedissonMultiLock tryLock = inventoryRedisUtil.tryLock(key , 5);
+    	RedissonMultiLock tryLock = virtualInventoryRedisUtil.tryLock(key , 5);
     	if(tryLock != null) {
     		try {
-    			ApplicationContextUtils.getBean(InventoryTransactionService.class).innerInventoryIdToInventoryHis(inventoryId , transactionId);
+    			ApplicationContextUtils.getBean(VirtualInventoryTransactionService.class).innerInventoryIdToInventoryHis(inventoryId , transactionId);
     		} catch (Exception e) {
     			log.error("{}失败" , logMsg , e);
     			sendFeishuMsg("迁移redis历史库存失败" , inventoryId, e.getMessage());
     			throw e;
     		} finally{
-    			inventoryRedisUtil.unLock(tryLock);
+    			virtualInventoryRedisUtil.unLock(tryLock);
     		}
     	}else {
     		log.error("{}正在迁移中" , logMsg);
@@ -233,27 +239,27 @@ public class InventoryTransactionServiceImpl extends SuperServiceImpl<InventoryT
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void innerInventoryIdToInventoryHis(String inventoryId , String transactionId) {
-		List<InventoryTransactionEntity> inventoryTransactionEntityList = lambdaQuery().eq(InventoryTransactionEntity::getInventoryId, inventoryId)
-				.orderByAsc(InventoryTransactionEntity::getCreateTime)
+		List<VirtualInventoryTransactionEntity> inventoryTransactionEntityList = lambdaQuery().eq(VirtualInventoryTransactionEntity::getInventoryId, inventoryId)
+				.orderByAsc(VirtualInventoryTransactionEntity::getCreateTime)
 				.last(" for update ")
 				.list();
 		if(CollUtil.isNotEmpty(inventoryTransactionEntityList)) {
 			//1、补偿提交redis库存
 			Set<String> transactionIdSet = inventoryTransactionEntityList.stream()
-					.map(InventoryTransactionEntity::getTransactionId)
+					.map(VirtualInventoryTransactionEntity::getTransactionId)
 					.filter(t -> !t.equals(transactionId))
 					.collect(Collectors.toSet());
 			transactionIdSet.forEach(t -> this.commitRedis(t , false));
 			
 			Integer allTotalQty = 0;
 			//合并单据日期统一处理
-			Map<LocalDate, List<InventoryTransactionEntity>> billDateEntityMaps = inventoryTransactionEntityList.stream().collect(Collectors.groupingBy(InventoryTransactionEntity::getBillDate));
-			for(Map.Entry<LocalDate, List<InventoryTransactionEntity>> billDateEntityMap : billDateEntityMaps.entrySet()) {
-				List<InventoryTransactionEntity> value = billDateEntityMap.getValue();
-				Integer totalQty = value.stream().map(InventoryTransactionEntity::getQty).reduce(Integer::sum).orElse(0);
+			Map<LocalDate, List<VirtualInventoryTransactionEntity>> billDateEntityMaps = inventoryTransactionEntityList.stream().collect(Collectors.groupingBy(VirtualInventoryTransactionEntity::getBillDate));
+			for(Map.Entry<LocalDate, List<VirtualInventoryTransactionEntity>> billDateEntityMap : billDateEntityMaps.entrySet()) {
+				List<VirtualInventoryTransactionEntity> value = billDateEntityMap.getValue();
+				Integer totalQty = value.stream().map(VirtualInventoryTransactionEntity::getQty).reduce(Integer::sum).orElse(0);
 				allTotalQty = allTotalQty + totalQty;
 				LocalDate billDate = billDateEntityMap.getKey();
-				InventoryTransactionEntity v = value.get(0);
+				VirtualInventoryTransactionEntity v = value.get(0);
 				//2、更新历史库存
 				this.updateInventoryHis(inventoryId , billDate , totalQty , v.getUpdateUserId() , v.getUpdateUserName());
 				//3、更新单据日期之后流水的结余库存
@@ -266,7 +272,7 @@ public class InventoryTransactionServiceImpl extends SuperServiceImpl<InventoryT
 				this.inventoryHisToInventory(inventoryId);
 			}
 			//6、删除库存交易
-			Set<String> transactionIds = inventoryTransactionEntityList.stream().map(InventoryTransactionEntity::getId).collect(Collectors.toSet());
+			Set<String> transactionIds = inventoryTransactionEntityList.stream().map(VirtualInventoryTransactionEntity::getId).collect(Collectors.toSet());
 			transactionIds.forEach(t -> log.error("{}删除库存交易" , t));
 			removeByIds(transactionIds);
 		}
@@ -276,17 +282,17 @@ public class InventoryTransactionServiceImpl extends SuperServiceImpl<InventoryT
     public void transactionIdToInventoryHis(String transactionId) {
     	String logMsg = StringUtil.appendLogMsg("transactionIdToInventoryHis", transactionId);
     	log.info("{}开始" , logMsg);
-    	List<InventoryTransactionEntity> list = lambdaQuery().eq(InventoryTransactionEntity::getTransactionId, transactionId)
+    	List<VirtualInventoryTransactionEntity> list = lambdaQuery().eq(VirtualInventoryTransactionEntity::getTransactionId, transactionId)
             	.last(" group by inventory_id ")
-            	.select(InventoryTransactionEntity::getInventoryId)
+            	.select(VirtualInventoryTransactionEntity::getInventoryId)
             	.list();
     	if(CollUtil.isNotEmpty(list)) {
-    		for(InventoryTransactionEntity l : list) {
+    		for(VirtualInventoryTransactionEntity l : list) {
     			String inventoryId = l.getInventoryId();
     			String forLogMsg = StringUtil.appendLogMsg("transactionIdToInventoryHis循环", transactionId , inventoryId);
     			log.info("{}开始" , forLogMsg);
     			try {
-					ApplicationContextUtils.getBean(InventoryTransactionService.class).inventoryIdToInventoryHis(inventoryId , transactionId);
+					ApplicationContextUtils.getBean(VirtualInventoryTransactionService.class).inventoryIdToInventoryHis(inventoryId , transactionId);
 				} catch (Exception e) {
 					log.error("{}失败" , forLogMsg , e);
 				}
@@ -301,7 +307,7 @@ public class InventoryTransactionServiceImpl extends SuperServiceImpl<InventoryT
         warnMsgInfo.setBizName("预警消息");
         warnMsgInfo.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_WMS);
         warnMsgInfo.setTitle(title);
-        warnMsgInfo.setTableName("inventory_transaction");
+        warnMsgInfo.setTableName("virtual_inventory_transaction");
         warnMsgInfo.setTableId(tableId);
         warnMsgInfo.setKeyInfo(keyInfo);
         warnMsgInfo.setWarnMsgTypeEnum(WarnMsgTypeEnum.SYS_EXCEPTION);
@@ -310,21 +316,21 @@ public class InventoryTransactionServiceImpl extends SuperServiceImpl<InventoryT
     
     @Transactional(rollbackFor = Exception.class)
 	@Override
-	public void addInventoryTransaction(List<InventoryTransactionDTO> transactionList, String approveType) {
+	public void addInventoryTransaction(List<VirtualInventoryStockDTO.InventoryTransactionDTO> transactionList, String approveType) {
     	if(CollUtil.isEmpty(transactionList)) {
     		ServiceException.runError("库存流水不能为空");
     	}
-    	String logMsg = StringUtil.appendLogMsg("addInventoryTransaction", transactionList.stream().map(InventoryTransactionDTO::getSourceCode)
+    	String logMsg = StringUtil.appendLogMsg("addInventoryTransaction", transactionList.stream().map(VirtualInventoryStockDTO.InventoryTransactionDTO::getSourceCode)
     			.filter(Objects::nonNull).collect(Collectors.joining("、")) , approveType);
     	log.info("{}开始" , logMsg);
     	if(transactionList.stream().anyMatch(t -> StringUtils.isBlank(t.getId()))) {
     		ServiceException.runError("库存流水id不能为空");
     	}
-    	if(transactionList.stream().anyMatch(t -> StringUtils.isBlank(t.getInventoryId()))) {
+    	if(transactionList.stream().anyMatch(t -> StringUtils.isBlank(t.getVirtualInventoryId()))) {
     		ServiceException.runError("即时库存id不能为空");
     	}
-    	Set<String> flowIds = transactionList.stream().map(InventoryTransactionDTO::getId).collect(Collectors.toSet());
-		List<TransactionFlowEntity> transactionFlowEntityList = transactionFlowService.listByIds(flowIds);
+    	Set<String> flowIds = transactionList.stream().map(VirtualInventoryStockDTO.InventoryTransactionDTO::getId).collect(Collectors.toSet());
+		List<VirtualTransFlowEntity> transactionFlowEntityList = virtualTransFlowService.listByIds(flowIds);
 		if(transactionFlowEntityList.size() != flowIds.size()) {
 			ServiceException.runError("库存流水缺少");
 		}
@@ -345,10 +351,11 @@ public class InventoryTransactionServiceImpl extends SuperServiceImpl<InventoryT
 		
 		this.tryRedis(transactionId , transactionList);
 		
-		List<InventoryTransactionEntity> inventoryTransactionEntityList = new ArrayList<>();
-		for(TransactionFlowEntity transactionFlowEntity : transactionFlowEntityList) {
-			InventoryTransactionEntity inventoryTransactionEntity = BeanUtil.copyProperties(transactionFlowEntity, InventoryTransactionEntity.class);
+		List<VirtualInventoryTransactionEntity> inventoryTransactionEntityList = new ArrayList<>();
+		for(VirtualTransFlowEntity transactionFlowEntity : transactionFlowEntityList) {
+			VirtualInventoryTransactionEntity inventoryTransactionEntity = BeanUtil.copyProperties(transactionFlowEntity, VirtualInventoryTransactionEntity.class);
 			inventoryTransactionEntity.setId(null);
+			inventoryTransactionEntity.setInventoryId(transactionFlowEntity.getVirtualInventoryId());
 			LocalDateTime now = LocalDateTime.now();
 			inventoryTransactionEntity.setCreateTime(now);
 			inventoryTransactionEntity.setUpdateTime(now);
@@ -368,35 +375,35 @@ public class InventoryTransactionServiceImpl extends SuperServiceImpl<InventoryT
 			inventoryTransactionEntityList.add(inventoryTransactionEntity);
 		}
 		this.saveBatch(inventoryTransactionEntityList);
-		InventoryTransactionSynchronizationAdapter.register(transactionId);
+		VirtualInventoryTransactionSynchronizationAdapter.register(transactionId);
 		log.info("{}结束" , logMsg);
 	}
 
     @Override
-    public void tryRedis(String transactionId , List<InventoryTransactionDTO> transactionList) {
+    public void tryRedis(String transactionId , List<VirtualInventoryStockDTO.InventoryTransactionDTO> transactionList) {
     	String logMsg = StringUtil.appendLogMsg("tryRedis", transactionId);
     	log.info("{}开始" , logMsg);
     	if(StringUtils.isBlank(transactionId)) {
 			log.error("冻结redis库存事务transactionId不能为空");
 			throw new ServiceException("冻结redis库存事务transactionId不能为空");
 		}
-    	Map<String, List<InventoryTransactionDTO>> inventoryIdMaps = transactionList.stream().collect(Collectors.groupingBy(InventoryTransactionDTO::getInventoryId));
+    	Map<String, List<VirtualInventoryStockDTO.InventoryTransactionDTO>> inventoryIdMaps = transactionList.stream().collect(Collectors.groupingBy(VirtualInventoryStockDTO.InventoryTransactionDTO::getVirtualInventoryId));
     	List<String> transactionRedisParam = new ArrayList<>();
-    	for(Map.Entry<String, List<InventoryTransactionDTO>> inventoryIdMap : inventoryIdMaps.entrySet()) {
-    		List<InventoryTransactionDTO> value = inventoryIdMap.getValue();
-    		Integer totalQty = value.stream().map(InventoryTransactionDTO::getQty).reduce(Integer::sum).orElse(0);
+    	for(Map.Entry<String, List<VirtualInventoryStockDTO.InventoryTransactionDTO>> inventoryIdMap : inventoryIdMaps.entrySet()) {
+    		List<VirtualInventoryStockDTO.InventoryTransactionDTO> value = inventoryIdMap.getValue();
+    		Integer totalQty = value.stream().map(VirtualInventoryStockDTO.InventoryTransactionDTO::getQty).reduce(Integer::sum).orElse(0);
     		if(totalQty != 0) {
     			StringBuilder sb = new StringBuilder();
-    			InventoryTransactionDTO transactionDTO = value.get(0);
-    			sb.append(transactionDTO.getInventoryId());
+    			VirtualInventoryStockDTO.InventoryTransactionDTO transactionDTO = value.get(0);
+    			sb.append(transactionDTO.getVirtualInventoryId());
     			sb.append(InventoryRedisUtil.atSign);
     			sb.append(totalQty);
     			if(!transactionDTO.isAllowNegativeInventory()) {
     				sb.append(InventoryRedisUtil.atSign);
-    				sb.append(CharSequenceUtil.format("库存不足：sku=[{}],仓库=[{}],仓位=[{}],库存状态=[{}],库存:{},交易数:{},缺少数：{}\n"
+    				sb.append(CharSequenceUtil.format("库存不足：sku=[{}],仓库=[{}],虚拟仓=[{}],库存状态=[{}],库存:{},交易数:{},缺少数：{}\n"
                             , transactionDTO.getSkuNo()
                             , transactionDTO.getWarehouseName()
-                            , transactionDTO.getWarehouseLocationName()
+                            , transactionDTO.getVirtualWarehouseName()
                             , transactionDTO.getInventoryStatusName()
                             , "ss1ss"
                             , totalQty
@@ -406,7 +413,7 @@ public class InventoryTransactionServiceImpl extends SuperServiceImpl<InventoryT
     		}
     	}
     	if(CollUtil.isNotEmpty(transactionRedisParam)) {
-    		inventoryRedisUtil.execute(InventoryRedisOpEnum.TRY , transactionId  , InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.OVERRIDE, ""),
+    		virtualInventoryRedisUtil.execute(InventoryRedisOpEnum.TRY , transactionId  , InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.OVERRIDE, ""),
     				InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.CURRENT, ""),
     				InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.TRANSACTION, ""),
     				transactionRedisParam.stream().collect(Collectors.joining(InventoryRedisUtil.splitSign)));
@@ -422,15 +429,15 @@ public class InventoryTransactionServiceImpl extends SuperServiceImpl<InventoryT
 			log.error("提交redis库存事务transactionId不能为空");
 			throw new ServiceException("提交redis库存事务transactionId不能为空");
 		}
-		Integer count = lambdaQuery().eq(InventoryTransactionEntity::getTransactionId, transactionId).count();
+		Integer count = lambdaQuery().eq(VirtualInventoryTransactionEntity::getTransactionId, transactionId).count();
 		if(count == null || count == 0) {
 			return;
 		}
 		InventoryRedisOpEnum commit = InventoryRedisOpEnum.COMMIT;
-		inventoryRedisUtil.execute(commit , commit.getCode() , transactionId , InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.TRANSACTION, transactionId) 
+		virtualInventoryRedisUtil.execute(commit , commit.getCode() , transactionId , InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.TRANSACTION, transactionId) 
 				, InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.CURRENT, ""));
 		if(toDoHis) {
-			transactionIdToInventoryHisPool.execute(() -> ApplicationContextUtils.getBean(InventoryTransactionService.class).transactionIdToInventoryHis(transactionId));
+			virtualTransactionIdToInventoryHisPool.execute(() -> ApplicationContextUtils.getBean(VirtualInventoryTransactionService.class).transactionIdToInventoryHis(transactionId));
 		}
     	log.info("{}结束" , logMsg);
 	}
@@ -443,12 +450,12 @@ public class InventoryTransactionServiceImpl extends SuperServiceImpl<InventoryT
 			log.error("回滚redis库存事务transactionId不能为空");
 			throw new ServiceException("回滚redis库存事务transactionId不能为空");
 		}
-		Integer count = lambdaQuery().eq(InventoryTransactionEntity::getTransactionId, transactionId).count();
+		Integer count = lambdaQuery().eq(VirtualInventoryTransactionEntity::getTransactionId, transactionId).count();
 		if(count != null && count > 0) {
 			throw new ServiceException("存在库存交易记录，不允许回滚redis库存transactionId={}" , transactionId);
 		}
 		InventoryRedisOpEnum rollback = InventoryRedisOpEnum.ROLLBACK;
-		inventoryRedisUtil.execute(rollback , rollback.getCode() , transactionId , InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.TRANSACTION, transactionId) 
+		virtualInventoryRedisUtil.execute(rollback , rollback.getCode() , transactionId , InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.TRANSACTION, transactionId) 
 				, InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.CURRENT, ""));
 		log.info("{}结束" , logMsg);
 	}
@@ -463,16 +470,16 @@ public class InventoryTransactionServiceImpl extends SuperServiceImpl<InventoryT
 
         if(qty != 0) {
         	// 更新当天之后的历史库存
-            LambdaUpdateWrapper<InventoryHisEntity> wrapper = new LambdaUpdateWrapper<>();
+            LambdaUpdateWrapper< VirtualInventoryHisEntity> wrapper = new LambdaUpdateWrapper<>();
             wrapper.setSql("qty = qty + " + qty)
-                    .set(InventoryHisEntity::getUpdateTime, LocalDateTime.now())
-                    .set(InventoryHisEntity::getUpdateUserId, userId)
-                    .set(InventoryHisEntity::getUpdateUserName, userName)
+                    .set(VirtualInventoryHisEntity::getUpdateTime, LocalDateTime.now())
+                    .set(VirtualInventoryHisEntity::getUpdateUserId, userId)
+                    .set(VirtualInventoryHisEntity::getUpdateUserName, userName)
                     //条件
-                    .eq(InventoryHisEntity::getInfoId, inventoryId)
-                    .gt(InventoryHisEntity::getBillDate, billDate);
+                    .eq(VirtualInventoryHisEntity::getVirtualInventoryId, inventoryId)
+                    .gt(VirtualInventoryHisEntity::getDate, billDate);
 
-            inventoryHisService.update(wrapper);
+            virtualInventoryHisService.update(wrapper);
         }
     }
 	
@@ -481,16 +488,16 @@ public class InventoryTransactionServiceImpl extends SuperServiceImpl<InventoryT
      * @param transactionDTO    库存交易信息
      */
     private void saveInventoryCurrentday(String inventoryId, LocalDate billDate, Integer qty , String userId , String userName) {
-        InventoryHisEntity inventoryHis = this.queryInventoryHisLast(inventoryId, billDate,true);
+    	VirtualInventoryHisEntity inventoryHis = this.queryInventoryHisLast(inventoryId, billDate,true);
 
         if(null == inventoryHis) {
             // 查询当天以前的库存
             inventoryHis = this.queryInventoryHisLast(inventoryId, billDate,false);
             int inventoryQty = (null == inventoryHis) ? 0 : inventoryHis.getQty();
 
-            inventoryHis = new InventoryHisEntity();
-            inventoryHis.setInfoId(inventoryId);
-            inventoryHis.setBillDate(billDate);
+            inventoryHis = new VirtualInventoryHisEntity();
+            inventoryHis.setVirtualInventoryId(inventoryId);
+            inventoryHis.setDate(billDate);
             inventoryHis.setQty(inventoryQty+ qty);
             inventoryHis.setCreateUserId(userId);
             inventoryHis.setCreateUserName(userName);
@@ -499,19 +506,19 @@ public class InventoryTransactionServiceImpl extends SuperServiceImpl<InventoryT
             inventoryHis.setUpdateUserName(userName);
             inventoryHis.setUpdateTime(LocalDateTime.now());
 
-            inventoryHisService.save(inventoryHis);
+            virtualInventoryHisService.save(inventoryHis);
         }else {
         	if(qty != 0) {
         		// 更新当天历史库存
-                LambdaUpdateWrapper<InventoryHisEntity> wrapper = new LambdaUpdateWrapper<>();
+                LambdaUpdateWrapper<VirtualInventoryHisEntity> wrapper = new LambdaUpdateWrapper<>();
                 wrapper.setSql("qty = qty + " + qty)
-                        .set(InventoryHisEntity::getUpdateTime, LocalDateTime.now())
-                        .set(InventoryHisEntity::getUpdateUserId, userId)
-                        .set(InventoryHisEntity::getUpdateUserName, userName)
+                        .set(VirtualInventoryHisEntity::getUpdateTime, LocalDateTime.now())
+                        .set(VirtualInventoryHisEntity::getUpdateUserId, userId)
+                        .set(VirtualInventoryHisEntity::getUpdateUserName, userName)
                         //条件
-                        .eq(InventoryHisEntity::getId, inventoryHis.getId());
+                        .eq(VirtualInventoryHisEntity::getId, inventoryHis.getId());
 
-                inventoryHisService.update(wrapper);
+                virtualInventoryHisService.update(wrapper);
         	}
         }
     }
@@ -523,19 +530,19 @@ public class InventoryTransactionServiceImpl extends SuperServiceImpl<InventoryT
      * @param isOnlyCurrBillDate   是否只查询当天的历史
      * @return  库存历史
      */
-    private InventoryHisEntity queryInventoryHisLast(String inventoryId, LocalDate billDate, boolean isOnlyCurrBillDate) {
-        LambdaQueryWrapper<InventoryHisEntity> queryWrapper = new LambdaQueryWrapper<>();
+    private VirtualInventoryHisEntity queryInventoryHisLast(String inventoryId, LocalDate billDate, boolean isOnlyCurrBillDate) {
+        LambdaQueryWrapper<VirtualInventoryHisEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper
-                .eq(InventoryHisEntity::getInfoId, inventoryId)
-                .orderByDesc(InventoryHisEntity::getBillDate)
-                .orderByDesc(InventoryHisEntity::getId)
+                .eq(VirtualInventoryHisEntity::getVirtualInventoryId, inventoryId)
+                .orderByDesc(VirtualInventoryHisEntity::getDate)
+                .orderByDesc(VirtualInventoryHisEntity::getId)
                 .last("limit 1");
         if(isOnlyCurrBillDate) {
-            queryWrapper.eq(InventoryHisEntity::getBillDate, billDate);
+            queryWrapper.eq(VirtualInventoryHisEntity::getDate, billDate);
         }else{
-            queryWrapper.lt(InventoryHisEntity::getBillDate, billDate);
+            queryWrapper.lt(VirtualInventoryHisEntity::getDate, billDate);
         }
-        return inventoryHisService.getOne(queryWrapper);
+        return virtualInventoryHisService.getOne(queryWrapper);
 
     }
     
@@ -545,16 +552,16 @@ public class InventoryTransactionServiceImpl extends SuperServiceImpl<InventoryT
      */
     private void inventoryHisToInventory(String inventoryId) {
     	int qty = 0;
-    	List<InventoryHisEntity> hisList = inventoryHisService.lambdaQuery()
-    			.eq(InventoryHisEntity::getInfoId, inventoryId)
-    			.orderByDesc(InventoryHisEntity::getBillDate)
+    	List<VirtualInventoryHisEntity> hisList = virtualInventoryHisService.lambdaQuery()
+    			.eq(VirtualInventoryHisEntity::getVirtualInventoryId, inventoryId)
+    			.orderByDesc(VirtualInventoryHisEntity::getDate)
     			.last("limit 1")
     			.list();
     	if(CollUtil.isNotEmpty(hisList)) {
     		qty = hisList.get(0).getQty();
     	}
     	
-		inventoryService.lambdaUpdate().set(InventoryEntity::getQty, qty).eq(InventoryEntity::getId, inventoryId).update();
+		virtualInventoryService.lambdaUpdate().set(VirtualInventoryEntity::getQty, qty).eq(VirtualInventoryEntity::getId, inventoryId).update();
     }
     
     
@@ -565,13 +572,13 @@ public class InventoryTransactionServiceImpl extends SuperServiceImpl<InventoryT
     private void updateInventoryTransaction(String inventoryId , LocalDate billDate , Integer qty) {
         if(qty != 0) {
         	// 日期大于当前单据日期的流水更新
-            LambdaUpdateWrapper<TransactionFlowEntity> wrapper = new LambdaUpdateWrapper<>();
+            LambdaUpdateWrapper<VirtualTransFlowEntity> wrapper = new LambdaUpdateWrapper<>();
             wrapper.setSql("cur_inventory_qty = cur_inventory_qty + " + qty)
-                    .set(TransactionFlowEntity::getUpdateTime, LocalDateTime.now())
+                    .set(VirtualTransFlowEntity::getUpdateTime, LocalDateTime.now())
                     //条件
-                    .eq(TransactionFlowEntity::getInventoryId, inventoryId)
-                    .gt(TransactionFlowEntity::getBillDate, billDate);
-            transactionFlowService.update(wrapper);
+                    .eq(VirtualTransFlowEntity::getVirtualInventoryId, inventoryId)
+                    .gt(VirtualTransFlowEntity::getBillDate, billDate);
+            virtualTransFlowService.update(wrapper);
         }
     }
     
@@ -581,25 +588,25 @@ public class InventoryTransactionServiceImpl extends SuperServiceImpl<InventoryT
      */
     private void updateCurrInventoryTransaction(String inventoryId , LocalDate billDate) {
         // 当前单据日期需要进行流水重算
-        List<TransactionFlowEntity> toDayFlowList = transactionFlowService.lambdaQuery().eq(TransactionFlowEntity::getInventoryId, inventoryId)
-        		.eq(TransactionFlowEntity::getBillDate, billDate)
-        		.orderByAsc(TransactionFlowEntity::getId)
+        List<VirtualTransFlowEntity> toDayFlowList = virtualTransFlowService.lambdaQuery().eq(VirtualTransFlowEntity::getVirtualInventoryId, inventoryId)
+        		.eq(VirtualTransFlowEntity::getBillDate, billDate)
+        		.orderByAsc(VirtualTransFlowEntity::getId)
         		.list();
         if(CollUtil.isNotEmpty(toDayFlowList)) {
-        	InventoryHisEntity hisEntity = inventoryHisService.findLastInventory(inventoryId, billDate.minusDays(1));
+        	VirtualInventoryHisEntity hisEntity = virtualInventoryHisService.findLastInventory(inventoryId, billDate.minusDays(1));
             int beforeQty = 0;
             if(hisEntity != null){
             	beforeQty = hisEntity.getQty();
             }
-            List<TransactionFlowEntity> updateToDayFlowList = new ArrayList<>(toDayFlowList.size());
-            for(TransactionFlowEntity toDayFlow : toDayFlowList) {
-            	TransactionFlowEntity transactionFlowEntity = new TransactionFlowEntity();
+            List<VirtualTransFlowEntity> updateToDayFlowList = new ArrayList<>(toDayFlowList.size());
+            for(VirtualTransFlowEntity toDayFlow : toDayFlowList) {
+            	VirtualTransFlowEntity transactionFlowEntity = new VirtualTransFlowEntity();
             	transactionFlowEntity.setId(toDayFlow.getId());
             	transactionFlowEntity.setCurInventoryQty(beforeQty + toDayFlow.getQty());
             	beforeQty = transactionFlowEntity.getCurInventoryQty();
             	updateToDayFlowList.add(transactionFlowEntity);
             }
-            transactionFlowService.updateBatchById(updateToDayFlowList);
+            virtualTransFlowService.updateBatchById(updateToDayFlowList);
         }
     }
 
@@ -607,15 +614,15 @@ public class InventoryTransactionServiceImpl extends SuperServiceImpl<InventoryT
     
 	@Override
 	public void inventoryCheckRollback(int timeout) {
-		Collection<String> keys = inventoryRedisUtil.keys(InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.TRANSACTION, "*"));
+		Collection<String> keys = virtualInventoryRedisUtil.keys(InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.TRANSACTION, "*"));
 		if(CollUtil.isNotEmpty(keys)) {
 			Set<String> transactions = keys.stream().map(k -> {
 				String[] split = k.split(":");
 				return split[split.length - 1];
 			}).collect(Collectors.toSet());
-			Set<String> dbTransactions = lambdaQuery().in(InventoryTransactionEntity::getId, transactions)
-					.select(InventoryTransactionEntity::getId).list()
-					.stream().map(InventoryTransactionEntity::getId).collect(Collectors.toSet());
+			Set<String> dbTransactions = lambdaQuery().in(VirtualInventoryTransactionEntity::getId, transactions)
+					.select(VirtualInventoryTransactionEntity::getId).list()
+					.stream().map(VirtualInventoryTransactionEntity::getId).collect(Collectors.toSet());
 			transactions.removeIf(dbTransactions::contains);
 			if(CollUtil.isNotEmpty(transactions)) {
 				transactions.forEach(t -> {
@@ -687,7 +694,7 @@ public class InventoryTransactionServiceImpl extends SuperServiceImpl<InventoryT
     		if(CollUtil.isEmpty(checkInventoryList)) {
     			break;
     		}else {
-    			checkInventoryList.forEach(dto -> ApplicationContextUtils.getBean(InventoryTransactionService.class).inventoryIdToInventoryHis(dto.getInventoryId(), ""));
+    			checkInventoryList.forEach(dto -> ApplicationContextUtils.getBean(VirtualInventoryTransactionService.class).inventoryIdToInventoryHis(dto.getInventoryId(), ""));
     		}
     		i = i + 1;
     	}
@@ -699,22 +706,22 @@ public class InventoryTransactionServiceImpl extends SuperServiceImpl<InventoryT
 		List<CheckInventoryDTO> redisCheckInventoryList = new ArrayList<>();
     	String lastInventoryId = "0";
     	while(true) {
-    		QueryWrapper<TransactionFlowEntity> queryWrapper = new QueryWrapper<>();
-    		queryWrapper.select(" inventory_id,sum(qty) qty ");
+    		QueryWrapper<VirtualTransFlowEntity> queryWrapper = new QueryWrapper<>();
+    		queryWrapper.select(" virtual_inventory_id,sum(qty) qty ");
     		if(CollUtil.isNotEmpty(inventoryIds)) {
-    			queryWrapper.in("inventory_id", inventoryIds);
+    			queryWrapper.in("virtual_inventory_id", inventoryIds);
     		}
-    		queryWrapper.gt("inventory_id", lastInventoryId);
-			queryWrapper.groupBy("inventory_id");
-			queryWrapper.last(" order by inventory_id limit " + pageSize + " ");
-			List<TransactionFlowEntity> transactionFlowEntityList = transactionFlowService.list(queryWrapper);
+    		queryWrapper.gt("virtual_inventory_id", lastInventoryId);
+			queryWrapper.groupBy("virtual_inventory_id");
+			queryWrapper.last(" order by virtual_inventory_id limit " + pageSize + " ");
+			List<VirtualTransFlowEntity> transactionFlowEntityList = virtualTransFlowService.list(queryWrapper);
 			if(CollUtil.isEmpty(transactionFlowEntityList)) {
 				break;
 			}
 			transactionFlowEntityList.forEach(t -> {
 				Integer redisQty = 0;
-				String inventoryId = t.getInventoryId();
-				Object redisQtyObj = inventoryRedisUtil.get(InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.CURRENT, inventoryId));
+				String inventoryId = t.getVirtualInventoryId();
+				Object redisQtyObj = virtualInventoryRedisUtil.get(InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.CURRENT, inventoryId));
 				if(redisQtyObj != null) {
 					redisQty = Integer.valueOf(redisQtyObj.toString().split(InventoryRedisUtil.splitSign)[0]);
 				}
@@ -727,9 +734,10 @@ public class InventoryTransactionServiceImpl extends SuperServiceImpl<InventoryT
 					redisCheckInventoryList.add(dto);
 				}
 			});
-			lastInventoryId = transactionFlowEntityList.get(transactionFlowEntityList.size() - 1).getInventoryId();
+			lastInventoryId = transactionFlowEntityList.get(transactionFlowEntityList.size() - 1).getVirtualInventoryId();
     	}
     	return redisCheckInventoryList;
 	}
+
 
 }
