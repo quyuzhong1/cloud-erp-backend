@@ -51,7 +51,7 @@
             vtf.totalQty as qty,
             vi.id as virtualInventoryId
         from virtual_inventory vi
-        left join virtualTransFlow vtf on vi.id = vtf.virtual_inventory_id
+        inner join virtualTransFlow vtf on vi.id = vtf.virtual_inventory_id
         where vi.is_deleted = false
     </select>
 
