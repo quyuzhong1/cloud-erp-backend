@@ -7,19 +7,35 @@ import lombok.Getter;
 import java.io.Serializable;
 
 /**
- * 全局错误码定义，用于定义接口的响应数据，
+ * 【错误码规范说明】
  *
- * 通用前缀
- * COMMON_XXXX → 通过HTTP状态码定义的通用错误
+ * 一、业务域前缀清晰化（按单据/能力域划分）
+ * COMMON_        通用错误（参数、配置、重复操作、基础校验）
+ * BILL_          单据通用（保存 / 提交 / 审核 / 状态流转）
+ * PO_            采购订单 / 采购入库
+ * PURCHASE_PRICE_ 采购价目表
+ * SO_            销售订单 / 销售发货 / 出库
+ * WH_            仓库 / 仓位 / 调拨 / 拣货 / 波次
+ * VM_            虚拟仓
+ * SUPPLIER_      供应商
+ * CUSTOMER_      客户
+ * SAMPLE_        样品 / 寄样（B2B / B2C / KOL）
+ * SALES_DEMAND_  备货申请
+ * LOGISTICS_     物流 / 运输 / 运费模板 / 报关
+ * WF_            工作流 / 审批
+ * PROJECT_       项目 / 任务 / 模板
+ * FILE_          文件 / 导入 / 导出
+ * AUTH_          认证 / 授权 / SSO
+ * EMAIL_         邮件
+ * FIN_           财务 / 发票 / 对账
+ * DMP_           数据中台
+ * MAPPING_       映射关系
+ * MOULD_         模具
+ * 二、占位符规范
+ * - 统一使用国际化占位符：{0} {1} {2} ...
+ * - 严禁混用 {} / %s / $1 等格式
+ * - 占位符顺序必须与参数顺序一致
  *
- *
- * 模块前缀清晰化：
- * WMS → 仓库/库存/拣货/波次/出入库
- * QC → 质检
- * TRANSFER → 调拨
- * PROCESS → 加工
- * SO → 销售订单/出库
- * 占位符统一：统一国际化占位符 {0} {1}{2}{3} 避免混用
  */
 
 public enum ApiError implements Serializable {
@@ -281,6 +297,7 @@ public enum ApiError implements Serializable {
     BILL_UPDATE_FIELD_APPROVEING(3032,"状态在审核中不可更新"),
     BILL_ROW_CHANGE_FORBIDDEN(3033,"已验收和已关闭的明细行不允许变更"),
     BILL_SELECTION_REQUIRED(3034,"选择数据不能为空"),
+    BILL_PARAM_SELECTION_REQUIRED(3034,"{0}明细数据不能为空"),
     BILL_VOID_ALLOWED_STATUS_ONLY(3035,"只有待提交和审核不通过数据支持作废"),
     BILL_DELETE_ALLOWED_STATUS_ONLY(3036,"只有待提交并且未作废数据支持删除"),
     BILL_SUBMIT_ALLOWED_STATUS_ONLY(3037,"只有待提交或审核不通过并且未作废数据支持提交"),
@@ -395,7 +412,9 @@ public enum ApiError implements Serializable {
     WF_APPROVAL_DELETE_FORBIDDEN(4057, "审核中和审核通过状态不可删除"),
     WF_APPROVE_ALLOWED_STATUS_ONLY(4058,"只有审核中数据支持审核"),
     WF_REVOKE_PROCESS_ALLOWED_STATUS_ONLY(4059,"只有审核中数据支持撤销流程"),
-
+    WF_FS_PROCESS_USER_NOT_FOUND(4060,"未找到飞书用户对应的系统用户,飞书userId: {}"),
+    WF_FS_DEFINITION_SUBSCRIBE_FAIL(4061,"飞书定义订阅失败，请检查"),
+    WF_FS_DEFINITION_UNSUBSCRIBE_FAIL(4062,"取消飞书定义订阅失败，请检查"),
     /**
      * PROJECT 项目相关 4500 - 5000
      */
@@ -605,8 +624,8 @@ public enum ApiError implements Serializable {
     PRODUCT_PACKING_SKU_BOX_QTY_IS_NOT_NULL(5101,"箱规【{0}】中未填写箱数"),
     PRODUCT_SKU_PARAM_NOT_FOUND(5102,"SKU【{0}】不存在"),
     PRODUCT_DEV_STATUS_REQUIRED(5103, "产品开发状态必填，请填写产品开发状态"),
-    PRODUCT_APP_CATEGORY_CODE_EXISTS(95244, "应用分类代号已存在"),
-    PRODUCT_APP_CATEGORY_NAME_EXISTS(95245, "应用分类名称已存在"),
+    PRODUCT_APP_CATEGORY_CODE_EXISTS(5104, "应用分类代号已存在"),
+    PRODUCT_APP_CATEGORY_NAME_EXISTS(5105, "应用分类名称已存在"),
     /**
      * BOM 错误信息 6000 - 6499
      */
@@ -930,14 +949,14 @@ public enum ApiError implements Serializable {
     PO_RECONCILIATION_DETAIL_DELETE_FORBIDDEN(96013,"单据【{0}】已完成对账，不支持删除对账明细"),
     PO_RECONCILIATION_DETAIL_ALREADY_GENERATED(96016,"单据单号【{0}】已生成对账明细"),
     PO_RECONCILIATION_REF_RECEIVE_DISAPPROVE_FORBIDDEN(96017,"单据单号【{0}】已关联对账单，无法反审核"),
-    PO_RECONCILIATION_ONLY_RECEIVED_CANCEL_ALLOWED(96007,"仅处于【已收单据】状态的对账单支持取消签收"),
-    PO_RECONCILIATION_NOT_REQUIRED_FORBIDDEN(96008,"单据单号【{0}】无需对账，不支持生成对账单"),
-    PO_INSTOCK_NOT_APPROVED_RECONCILIATION_DETAIL_FORBIDDEN(94103,"单据未审核，不支持生成待对账明细"),
-    PO_INSTOCK_QC_RETURN_RECONCILIATION_DETAIL_FORBIDDEN(94104,"质检退货单据不支持生成待对账明细"),
-    PO_RECONCILIATION_MANUAL_GENERATE_FORBIDDEN(94105,"当前单据不支持手动生成对账明细"),
-    PO_RECONCILIATION_NOT_FOUND(96003,"采购对账单不存在"),
-    PO_RECONCILIATION_DETAIL_NOT_FOUND(96004,"采购对账明细不存在"),
-    PO_RECONCILIATION_DETAIL_SUPPLIER_ORG_MISMATCH(96009,"对账单【{0}】新增对账明细的供应商【{1}】与结算组织【{2}】必须保持一致"),
+    PO_RECONCILIATION_ONLY_RECEIVED_CANCEL_ALLOWED(96018,"仅处于【已收单据】状态的对账单支持取消签收"),
+    PO_RECONCILIATION_NOT_REQUIRED_FORBIDDEN(96019,"单据单号【{0}】无需对账，不支持生成对账单"),
+    PO_INSTOCK_NOT_APPROVED_RECONCILIATION_DETAIL_FORBIDDEN(96020,"单据未审核，不支持生成待对账明细"),
+    PO_INSTOCK_QC_RETURN_RECONCILIATION_DETAIL_FORBIDDEN(96021,"质检退货单据不支持生成待对账明细"),
+    PO_RECONCILIATION_MANUAL_GENERATE_FORBIDDEN(96022,"当前单据不支持手动生成对账明细"),
+    PO_RECONCILIATION_NOT_FOUND(96023,"采购对账单不存在"),
+    PO_RECONCILIATION_DETAIL_NOT_FOUND(96024,"采购对账明细不存在"),
+    PO_RECONCILIATION_DETAIL_SUPPLIER_ORG_MISMATCH(96025,"对账单【{0}】新增对账明细的供应商【{1}】与结算组织【{2}】必须保持一致"),
 
 
     /**
@@ -1185,7 +1204,6 @@ public enum ApiError implements Serializable {
     SO_ALREADY_REF_DOWNSTREAM_BILL_FORBIDDEN(10713,"销售订单已存在关联单据【{0}】，不支持该操作"),
     SO_RETURN_DETAIL_SKU_NOT_FOUND(10714,"SKU在销售退货单中未找到"),
     SO_B2C_ADD_GIFT_STATUS_FORBIDDEN(10715,"非待提交或审核不通过状态的订单不允许添加赠品"),
-
     /**
      * 销售订单错误信息 11000-11500
      */
@@ -1360,6 +1378,17 @@ public enum ApiError implements Serializable {
     SAMPLE_ASSET_ACCEPT_QTY_EXCEEDS_PURCHASE_QTY(12012,"资产验收数量不能大于模具采购单的采购数量"),
     SAMPLE_ASSET_NOT_FOUND(12013,"资产卡片【{0}】不存在"),
     SAMPLE_ASSET_DISPOSAL_QTY_EXCEEDS_BOOK_QTY(12014,"资产编码【{0}】处置数量不能大于账存数量"),
+    SAMPLE_B2B_APPLICATION_NOT_FOUND(10716,"B2B寄样申请单不存在"),
+    SAMPLE_B2B_APPLICATION_DETAIL_NOT_FOUND(10717,"B2B寄样申请单明细不存在"),
+    SAMPLE_B2B_APPLICATION_NOT_APPROVED(10718,"B2B寄样申请单【{0}】未审核完成，暂不支持下推"),
+    SAMPLE_PUSH_DETAIL_ID_NOT_FOUND(10719,"未找到明细ID【{0}】对应的B2B寄样申请明细"),
+    SAMPLE_PUSH_WAREHOUSE_MISMATCH(10720,"B2B寄样申请单【{0}】明细下推的发货仓库不一致"),
+    SAMPLE_PUSH_SALES_ORG_MISMATCH(10721,"B2B寄样申请单【{0}】明细下推的销售组织不一致"),
+    SAMPLE_B2C_APPROVED_REQUIRED(10722,"请选择审核通过的B2C寄样申请数据"),
+    SAMPLE_B2C_HAS_GENERATED_SO(10723,"B2C寄样申请已生成销售订单，不支持反审核"),
+    SAMPLE_PARTNER_MULTIPLE_DEFAULT_ADDRESS_FORBIDDEN(10724,"企业达人不允许配置多个默认地址"),
+    SAMPLE_B2B_DETAIL_ALREADY_PUSHED_SO(10725,"B2B寄样申请单【{0}】SKU【{1}】已下推销售订单，禁止重复下推"),
+    SAMPLE_B2B_PUSHED_SO_DETAIL_DELETE_FORBIDDEN(10726,"由B2B寄样申请单下推生成的销售订单明细不允许删除"),
 
     /**
      * 虚拟仓 错误 信息 12500-13000

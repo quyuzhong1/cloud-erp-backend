@@ -49,7 +49,7 @@ public class KolB2bApplicationDetailServiceImpl extends SuperServiceImpl<KolB2bA
     @Override
     public Boolean add(List<KolB2bApplicationDetailDTO.AddDTO> detailList,String mainId) {
         if (CollUtil.isEmpty(detailList)) {
-            throw new ServiceException(ApiError.ERROR_1041, "B2B寄样申请明细单");
+            throw new ServiceException(ApiError.BILL_PARAM_SELECTION_REQUIRED, "B2B寄样申请明细单");
         }
         List<KolB2bApplicationDetailEntity> list = BeanMapperUtils.copyList(KolB2bApplicationDetailEntity.class, detailList);
 
@@ -71,7 +71,7 @@ public class KolB2bApplicationDetailServiceImpl extends SuperServiceImpl<KolB2bA
     @Override
     public Boolean update(List<KolB2bApplicationDetailDTO.UpdateDTO> detailList,String mainId) {
         if (CollUtil.isEmpty(detailList)) {
-            throw new ServiceException(ApiError.ERROR_1041, "B2B寄样申请明细单");
+            throw new ServiceException(ApiError.BILL_PARAM_SELECTION_REQUIRED, "B2B寄样申请明细单");
         }
         List<KolB2bApplicationDetailEntity> list = BeanMapperUtils.copyList(KolB2bApplicationDetailEntity.class, detailList);
 

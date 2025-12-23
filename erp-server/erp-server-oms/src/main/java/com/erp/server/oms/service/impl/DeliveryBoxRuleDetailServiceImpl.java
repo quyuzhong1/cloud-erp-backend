@@ -79,7 +79,7 @@ public class DeliveryBoxRuleDetailServiceImpl extends SuperServiceImpl<DeliveryB
     @Override
     public Boolean update(DeliveryBoxRuleDetailDTO.UpdateDTO addOrUpdateDTO) {
         DeliveryBoxRuleDetailEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, ""));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, ""));
         DeliveryBoxRuleDetailEntity deliveryBoxRuleDetailEntity =  BeanMapperUtils.map(DeliveryBoxRuleDetailEntity.class, addOrUpdateDTO);
 
         // 数据处理

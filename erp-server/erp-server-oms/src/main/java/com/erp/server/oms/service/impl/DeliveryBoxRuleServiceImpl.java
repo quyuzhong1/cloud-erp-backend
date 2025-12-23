@@ -127,7 +127,7 @@ public class DeliveryBoxRuleServiceImpl extends SuperServiceImpl<DeliveryBoxRule
     @Override
     public Boolean update(DeliveryBoxRuleDTO.UpdateDTO addOrUpdateDTO) {
         DeliveryBoxRuleEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, ""));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, ""));
         this.lambdaUpdate().set(DeliveryBoxRuleEntity::getUpdateUserId,UserContext.getDefaultLoginUser().getUid())
                 .set(DeliveryBoxRuleEntity::getUpdateUserName,UserContext.getDefaultLoginUser().getUserName())
                 .set(DeliveryBoxRuleEntity::getUpdateTime,LocalDateTime.now())
@@ -212,7 +212,7 @@ public class DeliveryBoxRuleServiceImpl extends SuperServiceImpl<DeliveryBoxRule
             ExcelUtil.export(fileName, "task", errorList, DeliveryBoxRuleImportExcelDTO.class, response);
         } catch (ExcelCommonException e) {
             log.error("导入格式错误！", e);
-            throw new ServiceException(ApiError.ERROR_1016);
+            throw new ServiceException(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX);
         }
         return false;
     }
@@ -240,7 +240,7 @@ public class DeliveryBoxRuleServiceImpl extends SuperServiceImpl<DeliveryBoxRule
             EasyExcel.read(new ByteArrayInputStream(bytes), DeliveryBoxRuleImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (ExcelCommonException e) {
             log.error("导入格式错误！", e);
-            throw new ServiceException(ApiError.ERROR_1016);
+            throw new ServiceException(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX);
         }
 
         BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();

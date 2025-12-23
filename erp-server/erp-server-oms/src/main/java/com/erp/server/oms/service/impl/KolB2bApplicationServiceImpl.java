@@ -162,10 +162,10 @@ public class KolB2bApplicationServiceImpl extends SuperServiceImpl<KolB2bApplica
     @Override
     public Boolean update(KolB2bApplicationDTO.UpdateDTO addOrUpdateDTO) {
         KolB2bApplicationEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "B2B寄样申请主单"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "B2B寄样申请主单"));
         // 待提交和审核不通过允许修改
         if (!ApproveStatusEnum.allowUpdateStatus(old.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_1029);
+            throw new ServiceException(ApiError.BILL_UPDATE_STATUS_NOT_ALLOWED);
         }
         KolB2bApplicationEntity kolB2bApplicationEntity =  BeanMapperUtils.map(KolB2bApplicationEntity.class, addOrUpdateDTO);
 
@@ -284,12 +284,12 @@ public class KolB2bApplicationServiceImpl extends SuperServiceImpl<KolB2bApplica
     public BatchResultDTO approve(ApproveOneDTO dto) {
         ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(dto.getType());
         if(Objects.equals(approveType, ApproveTypeEnum.REJECT) && StrUtils.isEmpty(dto.getComment())) {
-            throw new ServiceException(ApiError.REJECT_COMMENT_NOT_EMPTY);
+            throw new ServiceException(ApiError.WF_REJECT_COMMENT_REQUIRED);
         }
         KolB2bApplicationEntity entity = getById(dto.getId());
         // 审核中的数据允许审核
         if(!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
-            throw new ServiceException(ApiError.ERROR_98006);
+            throw new ServiceException(ApiError.WF_APPROVE_ALLOWED_STATUS_ONLY);
         }
         // 调用流程审核
         approveProcess(entity, dto);
@@ -317,7 +317,7 @@ public class KolB2bApplicationServiceImpl extends SuperServiceImpl<KolB2bApplica
         ApiResult<ProcessManagementDTO.ApproveResultDTO> approveResult = workflowFeign.approve(approveDTO);
         Integer code = approveResult.getCode();
         if (200 != code) {
-            throw new ServiceException(ApiError.ERROR_94006);
+            throw new ServiceException(ApiError.WF_APPROVE_FAILED);
         }
         ProcessManagementDTO.ApproveResultDTO data = approveResult.getData();
         if (ObjectUtil.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()) {
@@ -353,7 +353,7 @@ public class KolB2bApplicationServiceImpl extends SuperServiceImpl<KolB2bApplica
     private Boolean validateDisApprove(KolB2bApplicationEntity entity) {
         // 已审核支持反审核
         if (!Objects.equals(entity.getApproveStatus().getStatus(), ApproveStatusEnum.APPROVE.getStatus())) {
-            throw new ServiceException(ApiError.ERROR_98014);
+            throw new ServiceException(ApiError.BILL_REVERSE_APPROVAL_ALLOWED_APPROVED_ONLY);
         }
         //校验是否已经下推B2B销售订单
         List<SoInfoEntity> list = soInfoService.listBySourceId(entity.getId());
@@ -401,7 +401,7 @@ public class KolB2bApplicationServiceImpl extends SuperServiceImpl<KolB2bApplica
         // 待提交或审核不通过并且未作废允许作废
         if ((!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(entity.getApproveStatus().getCode()) && !ApproveStatusEnum.REJECT.getStatus().equals(entity.getApproveStatus().getCode()))
                 || !InvalidStatusEnum.NOT_VOIDED.getStatus().equals(entity.getInvalidStatus())) {
-           throw new ServiceException(ApiError.ERROR_98005);
+           throw new ServiceException(ApiError.BILL_VOID_ALLOWED_STATUS_ONLY);
         }
         log.info("作废 开始修改B2B寄样申请主单状态数据，id：【{}】", id);
         lambdaUpdate().eq(KolB2bApplicationEntity::getId, id)
@@ -426,7 +426,7 @@ public class KolB2bApplicationServiceImpl extends SuperServiceImpl<KolB2bApplica
         KolB2bApplicationEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到B2B寄样申请主单数据"));
         // 只有审核中的单据允许撤销
         if (!Objects.equals(entity.getApproveStatus().getStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())) {
-            throw new ServiceException(ApiError.ERROR_98007);
+            throw new ServiceException(ApiError.WF_REVOKE_PROCESS_ALLOWED_STATUS_ONLY);
         }
         log.info("撤销 开始撤销流程，id：【{}】",id);
 
@@ -465,7 +465,7 @@ public class KolB2bApplicationServiceImpl extends SuperServiceImpl<KolB2bApplica
             EasyExcel.read(excelFile.getInputStream(), KolB2bApplicationImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (ExcelCommonException e) {
             log.error("导入格式错误！", e);
-            throw new ServiceException(ApiError.ERROR_1016);
+            throw new ServiceException(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX);
         } catch (IOException e) {
             log.error("导入错误！>>>{}", e);
             throw new ServiceException(ApiError.ERROR_95124);
@@ -504,12 +504,12 @@ public class KolB2bApplicationServiceImpl extends SuperServiceImpl<KolB2bApplica
         //寄样申请单信息
         KolB2bApplicationEntity entity = this.getById(id);
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_KOL_B2B_APPLICATION_NOT_EXIST);
+            throw new ServiceException(ApiError.SAMPLE_B2B_APPLICATION_NOT_FOUND);
         }
         //寄样申请单明细信息
         List<KolB2bApplicationDetailEntity> detailList = kolB2bApplicationDetailService.listByMainIdList(Collections.singletonList(id));
         if (CollUtil.isEmpty(detailList)) {
-            throw new ServiceException(ApiError.ERROR_KOL_B2B_APPLICATION_DETAIL_NOT_EXIST);
+            throw new ServiceException(ApiError.SAMPLE_B2B_APPLICATION_DETAIL_NOT_FOUND);
         }
         //销售订单信息
         List<KolB2bApplicationDTO.B2bSoInfoDTO> b2bSoInfoDTOList = soInfoService.listRefBill(id);
@@ -555,14 +555,14 @@ public class KolB2bApplicationServiceImpl extends SuperServiceImpl<KolB2bApplica
         List<String> detailIdList = listList.stream().map(KolB2bApplicationDTO.GenerateSoInfoDTO::getDetailId).distinct().collect(Collectors.toList());
         List<KolB2bApplicationDetailEntity> detailList = kolB2bApplicationDetailService.listByIds(detailIdList);
         if (CollUtil.isEmpty(detailList)) {
-            throw new ServiceException(ApiError.ERROR_KOL_B2B_APPLICATION_DETAIL_NOT_EXIST);
+            throw new ServiceException(ApiError.SAMPLE_B2B_APPLICATION_DETAIL_NOT_FOUND);
         }
 
         //B2B寄样申请单主单信息
         List<String> mainIdList = detailList.stream().map(KolB2bApplicationDetailEntity::getMainId).distinct().collect(Collectors.toList());
         List<KolB2bApplicationEntity> mainList = this.listByIds(mainIdList);
         if (CollUtil.isEmpty(mainList)) {
-            throw new ServiceException(ApiError.ERROR_KOL_B2B_APPLICATION_NOT_EXIST);
+            throw new ServiceException(ApiError.SAMPLE_B2B_APPLICATION_NOT_FOUND);
         }
         Map<String, KolB2bApplicationEntity> mainMap = mainList.stream().collect(Collectors.toMap(KolB2bApplicationEntity::getId, obj -> obj));
 
@@ -576,7 +576,7 @@ public class KolB2bApplicationServiceImpl extends SuperServiceImpl<KolB2bApplica
         String codes = mainList.stream().filter(obj -> !CharSequenceUtil.equals(obj.getApproveStatus().getCode(), ApproveStatusEnum.APPROVE.getStatus()))
                 .map(KolB2bApplicationEntity::getCode).collect(Collectors.joining(","));
         if (CharSequenceUtil.isNotBlank(codes)) {
-            throw new ServiceException(ApiError.ERROR_KOL_B2B_APPLICATION_NOT_APPROVE,codes);
+            throw new ServiceException(ApiError.SAMPLE_B2B_APPLICATION_NOT_APPROVED,codes);
         }
         //销售订单明细
         List<SoDetailEntity> oldSoDetailList = soDetailService.listBySourceDetailIdList(detailIdList);
@@ -589,12 +589,12 @@ public class KolB2bApplicationServiceImpl extends SuperServiceImpl<KolB2bApplica
             //B2B寄样申请单主表数据
             KolB2bApplicationEntity mainEntity = mainMap.get(key);
             if (ObjectUtil.isEmpty(mainEntity)) {
-                throw new ServiceException(ApiError.ERROR_KOL_B2B_APPLICATION_NOT_EXIST);
+                throw new ServiceException(ApiError.SAMPLE_B2B_APPLICATION_NOT_FOUND);
             }
             //B2B寄样申请单明细表数据
             List<KolB2bApplicationDetailEntity> value = entry.getValue();
             if (CollUtil.isEmpty(value)) {
-                throw new ServiceException(ApiError.ERROR_KOL_B2B_APPLICATION_DETAIL_NOT_EXIST);
+                throw new ServiceException(ApiError.SAMPLE_B2B_APPLICATION_DETAIL_NOT_FOUND);
             }
 
 
@@ -608,12 +608,12 @@ public class KolB2bApplicationServiceImpl extends SuperServiceImpl<KolB2bApplica
             long warehouseCount = list.stream().filter(obj -> thisDetailIdList.contains(obj.getDetailId()))
                     .map(KolB2bApplicationDTO.GenerateSoInfoDTO::getWarehouseId).distinct().count();
             if (warehouseCount > 1) {
-                throw new ServiceException(ApiError.ERROR_PUSH_DETAIL_ID_WAREHOUSE_DIFF, mainEntity.getCode());
+                throw new ServiceException(ApiError.SAMPLE_PUSH_WAREHOUSE_MISMATCH, mainEntity.getCode());
             }
             long orgCount = list.stream().filter(obj -> thisDetailIdList.contains(obj.getDetailId()))
                     .map(KolB2bApplicationDTO.GenerateSoInfoDTO::getSoOrgId).distinct().count();
             if (orgCount > 1) {
-                throw new ServiceException(ApiError.ERROR_PUSH_DETAIL_ID_ORG_DIFF, mainEntity.getCode());
+                throw new ServiceException(ApiError.SAMPLE_PUSH_SALES_ORG_MISMATCH, mainEntity.getCode());
             }
 
             SoInfoDTO.AddDTO addDTO = new SoInfoDTO.AddDTO();
@@ -635,12 +635,12 @@ public class KolB2bApplicationServiceImpl extends SuperServiceImpl<KolB2bApplica
             for (KolB2bApplicationDetailEntity detailEntity : value) {
                 KolB2bApplicationDTO.GenerateSoInfoDTO generateSoInfoDTO = paramMap.get(detailEntity.getId());
                 if (ObjectUtil.isEmpty(generateSoInfoDTO)) {
-                    throw new ServiceException(ApiError.ERROR_PUSH_DETAIL_ID_NOT_EXIST,detailEntity.getId());
+                    throw new ServiceException(ApiError.SAMPLE_PUSH_DETAIL_ID_NOT_FOUND,detailEntity.getId());
                 }
                 //查看对于明细的销售订单明细是否已存在
                 oldSoDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSourceDetailId(), detailEntity.getId()))
                         .findFirst().ifPresent(obj -> {
-                    throw new ServiceException(ApiError.ERROR_PUSH_SO_DETAIL_ID_EXIST,mainEntity.getCode(),detailEntity.getSkuNo());
+                    throw new ServiceException(ApiError.SAMPLE_B2B_DETAIL_ALREADY_PUSHED_SO,mainEntity.getCode(),detailEntity.getSkuNo());
                 });
 
                 //主表赋值，取明细其一即可
@@ -671,7 +671,7 @@ public class KolB2bApplicationServiceImpl extends SuperServiceImpl<KolB2bApplica
         List<String> detailIdList = listList.stream().map(KolB2bApplicationDTO.GenerateFeedbackDTO::getDetailId).distinct().collect(Collectors.toList());
         List<KolB2bApplicationDetailEntity> detailList = kolB2bApplicationDetailService.listByIds(detailIdList);
         if (CollUtil.isEmpty(detailList)) {
-            throw new ServiceException(ApiError.ERROR_KOL_B2B_APPLICATION_DETAIL_NOT_EXIST);
+            throw new ServiceException(ApiError.SAMPLE_B2B_APPLICATION_DETAIL_NOT_FOUND);
         }
         Map<String, KolB2bApplicationDetailEntity> detailMap = detailList.stream().collect(Collectors.toMap(KolB2bApplicationDetailEntity::getId, obj -> obj));
 
@@ -680,7 +680,7 @@ public class KolB2bApplicationServiceImpl extends SuperServiceImpl<KolB2bApplica
         List<String> mainIdList = detailList.stream().map(KolB2bApplicationDetailEntity::getMainId).distinct().collect(Collectors.toList());
         List<KolB2bApplicationEntity> mainList = this.listByIds(mainIdList);
         if (CollUtil.isEmpty(mainList)) {
-            throw new ServiceException(ApiError.ERROR_KOL_B2B_APPLICATION_NOT_EXIST);
+            throw new ServiceException(ApiError.SAMPLE_B2B_APPLICATION_NOT_FOUND);
         }
         Map<String, KolB2bApplicationEntity> mainMap = mainList.stream().collect(Collectors.toMap(KolB2bApplicationEntity::getId, obj -> obj));
 
@@ -688,7 +688,7 @@ public class KolB2bApplicationServiceImpl extends SuperServiceImpl<KolB2bApplica
         String codes = mainList.stream().filter(obj -> !CharSequenceUtil.equals(obj.getApproveStatus().getCode(), ApproveStatusEnum.APPROVE.getStatus()))
                 .map(KolB2bApplicationEntity::getCode).collect(Collectors.joining(","));
         if (CharSequenceUtil.isNotBlank(codes)) {
-            throw new ServiceException(ApiError.ERROR_KOL_B2B_APPLICATION_NOT_APPROVE,codes);
+            throw new ServiceException(ApiError.SAMPLE_B2B_APPLICATION_NOT_APPROVED,codes);
         }
         for (KolB2bApplicationDTO.GenerateFeedbackDTO feedbackDTO : list) {
             KolFeedbackDTO.AddDTO addDTO = new KolFeedbackDTO.AddDTO();
@@ -696,13 +696,13 @@ public class KolB2bApplicationServiceImpl extends SuperServiceImpl<KolB2bApplica
             //B2B寄样申请单明细表数据
             KolB2bApplicationDetailEntity detailEntity = detailMap.get(feedbackDTO.getDetailId());
             if (ObjectUtil.isEmpty(detailEntity)) {
-                throw new ServiceException(ApiError.ERROR_KOL_B2B_APPLICATION_DETAIL_NOT_EXIST);
+                throw new ServiceException(ApiError.SAMPLE_B2B_APPLICATION_DETAIL_NOT_FOUND);
             }
 
             //B2B寄样申请单主表数据
             KolB2bApplicationEntity mainEntity = mainMap.get(detailEntity.getMainId());
             if (ObjectUtil.isEmpty(mainEntity)) {
-                throw new ServiceException(ApiError.ERROR_KOL_B2B_APPLICATION_NOT_EXIST);
+                throw new ServiceException(ApiError.SAMPLE_B2B_APPLICATION_NOT_FOUND);
             }
             BeanUtil.copyProperties(feedbackDTO,addDTO);
             addDTO.setSourceId(mainEntity.getId());
@@ -879,7 +879,7 @@ public class KolB2bApplicationServiceImpl extends SuperServiceImpl<KolB2bApplica
         //查询明细数据
         List<KolB2bApplicationDetailEntity> detailList = kolB2bApplicationDetailService.listByMainIdList(Collections.singletonList(data.getId()));
         if (CollUtil.isEmpty(detailList)) {
-            throw new ServiceException(ApiError.ERROR_KOL_B2B_APPLICATION_DETAIL_NOT_EXIST);
+            throw new ServiceException(ApiError.SAMPLE_B2B_APPLICATION_DETAIL_NOT_FOUND);
         }
 
         List<String> skuIdList = detailList.stream().map(KolB2bApplicationDetailEntity::getSkuId).distinct().collect(Collectors.toList());
@@ -1033,7 +1033,7 @@ public class KolB2bApplicationServiceImpl extends SuperServiceImpl<KolB2bApplica
     private void validateSubmit(KolB2bApplicationEntity entity) {
         // 待提交或审核不通过并且未作废允许提交
         if(!ApproveStatusEnum.allowUpdateStatus(entity.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_98010);
+            throw new ServiceException(ApiError.BILL_SUBMIT_ALLOWED_STATUS_ONLY);
         }
         return;
     }

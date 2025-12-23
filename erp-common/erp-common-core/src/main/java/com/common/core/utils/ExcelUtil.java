@@ -785,7 +785,7 @@ public class ExcelUtil {
 
             return outputFile;
         } catch (Exception e) {
-            throw new ServiceException(ApiError.DEFAULT);
+            throw new ServiceException(ApiError.HTTP_UNKNOWN);
         }
     }
 

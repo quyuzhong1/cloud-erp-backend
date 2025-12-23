@@ -254,7 +254,7 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
     @Override
     public Boolean update(B2bThirdDeliveryDTO.UpdateDTO addOrUpdateDTO) {
         B2bThirdDeliveryEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "B2B三方发货单"));
+        old = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "B2B三方发货单"));
         if (!ThirdDeliveryStatusEnum.FAILED.getCode().equals(old.getStatus())) {
             throw new ServiceException("只有创建失败允许编辑");
         }
@@ -410,7 +410,7 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
                 String outstockId = resultDTO.getId();
                 SoOutstockEntity soOutstockEntity = soOutstockService.getById(outstockId);
                 if (Objects.isNull(soOutstockEntity)) {
-                    throw new ServiceException(ApiError.NOT_EXIST_BILL, "销售出库单");
+                    throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "销售出库单");
                 }
                 return BatchResultDTO.success(soOutstockEntity.getId(), soOutstockEntity.getCode(), "销售出库单生成");
             }
@@ -628,7 +628,7 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
     public void submitApprove(String soOutStockId) {
         SoOutstockEntity soOutstockEntity = soOutstockService.getById(soOutStockId);
         if (Objects.isNull(soOutstockEntity)) {
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "销售出库单");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "销售出库单");
         }
         BatchResultDTO submit = soOutstockService.submit(soOutstockEntity, Boolean.FALSE);
         if (!submit.getSuccess()) {

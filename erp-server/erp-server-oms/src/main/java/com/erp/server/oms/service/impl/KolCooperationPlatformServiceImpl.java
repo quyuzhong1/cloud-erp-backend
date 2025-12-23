@@ -68,7 +68,7 @@ public class KolCooperationPlatformServiceImpl extends SuperServiceImpl<KolCoope
     @Override
     public Boolean update(KolCooperationPlatformDTO.UpdateDTO addOrUpdateDTO) {
         KolCooperationPlatformEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "达人合作平台信息"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "达人合作平台信息"));
         KolCooperationPlatformEntity kolCooperationPlatformEntity =  BeanMapperUtils.map(KolCooperationPlatformEntity.class, addOrUpdateDTO);
 
         // 数据处理

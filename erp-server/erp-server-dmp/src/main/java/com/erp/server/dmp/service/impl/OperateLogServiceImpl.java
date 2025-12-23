@@ -83,7 +83,7 @@ public class OperateLogServiceImpl extends SuperServiceImpl<OperateLogMapper, Op
 //    @Override
 //    public Boolean update(OperateLogDTO.UpdateDTO updateDTO) {
 //        OperateLogEntity old = super.getById(updateDTO.getId());
-//        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "操作日志单"));
+//        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "操作日志单"));
 //        OperateLogEntity operateLogEntity =  BeanMapperUtils.map(OperateLogEntity.class, updateDTO);
 //
 //        // 数据处理

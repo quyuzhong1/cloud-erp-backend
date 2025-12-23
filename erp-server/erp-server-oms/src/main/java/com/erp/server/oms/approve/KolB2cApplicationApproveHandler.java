@@ -65,7 +65,7 @@ public class KolB2cApplicationApproveHandler extends AbstractApproveHandler {
     public Boolean approveEnd(ApproveDTO.EndProcessDTO dto) {
         KolB2cApplicationEntity entity = kolB2cApplicationService.getById(dto.getBusinessId());
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.NOT_EXIST_BILL,"B2C寄样申请");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE,"B2C寄样申请");
         }
         Boolean approve = kolB2cApplicationService.approveEnd(new ApproveOneDTO(dto.getBusinessId(),dto.getApproveStatus().getStatus(),dto.getComment()),entity);
         if (Boolean.FALSE.equals(approve)) {
