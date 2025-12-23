@@ -99,7 +99,7 @@
             resultType="com.erp.model.oms.dto.KolFeedbackDTO$FeedbackQtyDTO">
         select
         kf.source_detail_id,
-        count(0) as feedbackedQty,
+        count(0) as feedbackQty,
         sum(case when kf.feedback_status = 'completed' then 1 else 0 end) as captureFeedbackQty,
         "max"(kf.url) as feedbackUrl
         from kol_feedback kf
