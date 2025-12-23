@@ -7,6 +7,7 @@ import lombok.experimental.Accessors;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -116,7 +117,7 @@ public class PlatformB2bOrderDTO {
     /**
      * 附件列表
      */
-    private List<AttachDTO> attachment;
+    private List<AttachDTO> attachment = new ArrayList<>();
 
     private List<PlatformB2bOrderDetailDTO> detail;
 

@@ -149,9 +149,14 @@ public class DmpOutputWdtB2bOrderRocketMQTaskHandler extends DmpOutputRocketMQTa
 		String orderStatus = dmpSoInfoEntity.getOrderStatus();
 		if("55".equals(orderStatus)){
 			platformB2bOrderDTO.setStatus(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
+			platformB2bOrderDTO.setIsInvalid(false);
+		}else if("10".equals(orderStatus)){
+			platformB2bOrderDTO.setStatus(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
+			platformB2bOrderDTO.setIsInvalid(true);
 		}else{
 			return null;
 		}
+
 
 		List<PlatformB2bOrderDetailDTO> details = new ArrayList<>();
 

@@ -138,7 +138,7 @@ public class PlatformB2bOrderConsumerService extends AbstractNewPlatformConsumer
 		dto.setAddressType(CustomerAddressTypeEnum.FORWARDER.getCode());
 		dto.setDeliveryMode(DeliveryModeEnum.EXPRESS.getCode());
 		List<PlatformB2bOrderDetailDTO> platformB2bOrderDetailDTOS = dto.getDetail();
-		List<String> skuNoList = platformB2bOrderDetailDTOS.stream().map(PlatformB2bOrderDetailDTO::getPlatformSkuNo).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+		List<String> skuNoList = platformB2bOrderDetailDTOS.stream().map(PlatformB2bOrderDetailDTO::getSkuNo).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
 		List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(skuNoList);
 		for (PlatformB2bOrderDetailDTO platformB2bOrderDetailDTO : platformB2bOrderDetailDTOS) {
 			SkuVO skuVO = skuVOList.stream().filter(e -> e.getSkuNo().equals(platformB2bOrderDetailDTO.getSkuNo())).findFirst().orElse(null);
