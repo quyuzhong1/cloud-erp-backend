@@ -239,7 +239,9 @@ public class AwdOutstockDTO implements Serializable {
 
         private LocalDate billDate;
 
+        private String fbaShipmentId;
 
+        private String fbaShipmentCode;
     }
 
 }

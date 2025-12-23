@@ -126,6 +126,7 @@ public interface FbaShipmentConverter {
             @Mapping(target = "deliveryFromAddress", source = "entity.deliveryFromAddress"),
             @Mapping(target = "deliveryToAddress", source = "entity.deliveryToAddress"),
             @Mapping(target = "isPackingDownload", source = "oldEntity.isPackingDownload"),
+            @Mapping(target = "orderType", source = "entity.orderType"),
             @Mapping(target = "isUserSystem" ,ignore = true),
     })
     FbaShipmentEntity oldToNew(FbaShipmentEntity entity, FbaShipmentEntity oldEntity);

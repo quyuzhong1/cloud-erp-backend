@@ -29,6 +29,7 @@ public interface FbaShipmentConsumerConverter {
     @Mappings({
             @Mapping(target = "deliveryToAddress", constant = ""),
             @Mapping(target = "code", source = "fbaShipmentId"),
+            @Mapping(target = "orderType", source = "orderType"),
     })
     FbaShipmentEntity fbaShipmentToEntity(PlatformFbaShipmentDTO dto);
 

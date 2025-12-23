@@ -1,8 +1,9 @@
-package com.erp.server.dmp.enums;
+package com.common.business.enums;
 
 import com.baomidou.mybatisplus.annotation.EnumValue;
 import com.common.core.constant.EnumMessage;
 import com.fasterxml.jackson.annotation.JsonValue;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * @Author: wtr
@@ -14,7 +15,7 @@ import com.fasterxml.jackson.annotation.JsonValue;
 public enum FbaOutStockTypeEnum implements EnumMessage {
 
     AWD(1,"awd"),
-    STA(0,"sta"),
+    FBA(0,"fba"),
     ;
 
     @EnumValue
@@ -35,5 +36,16 @@ public enum FbaOutStockTypeEnum implements EnumMessage {
     @Override
     public String getName() {
         return name;
+    }
+
+    public static String getName(String code) {
+        if (StringUtils.isNotBlank(code)) {
+            for (FbaOutStockTypeEnum item : FbaOutStockTypeEnum.values()) {
+                if (code.equals(item.getCode())) {
+                    return item.getName();
+                }
+            }
+        }
+        return "";
     }
 }

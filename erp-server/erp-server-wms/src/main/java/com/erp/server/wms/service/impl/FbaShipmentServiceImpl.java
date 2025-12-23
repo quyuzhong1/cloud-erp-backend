@@ -114,6 +114,8 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
     @Resource
     private FirstMileDeliveryDetailService firstMileDeliveryDetailService;
     @Resource
+    private AwdOutstockService awdOutstockService;
+    @Resource
     private WarehouseService warehouseService;
     @Resource
     private PlmTaskFeign plmTaskFeign;
@@ -867,6 +869,50 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
                 this.handlerWarehouse(entity, entry.getValue(), billDate, closedDateMap);
             }
         }
+
+        List<String> mSkuList = newDetailEntityList.stream().map(item -> item.getMsku()).collect(Collectors.toList());
+        //根据平台sku查询映射信息
+        ListingInfoParamDTO listingInfoParamDTO = new ListingInfoParamDTO();
+        listingInfoParamDTO.setPlatformSkuNoList(mSkuList);
+        listingInfoParamDTO.setPlatform(PlatformDictEnum.AMAZON.getCode());
+        listingInfoParamDTO.setShopIdList(Collections.singletonList(entity.getShopId()));
+        List<SkuMappingDTO.MappingSkuViewDTO> skuDTOS = skuMappingFeign.listByPlatformSkuNoAndPlatform(listingInfoParamDTO);
+
+        if (entity.getOrderType().equals(FbaOutStockTypeEnum.AWD.getName())) {
+
+            AwdOutstockDTO.AddDTO awdOutStockDTO = new AwdOutstockDTO.AddDTO();
+            List<AwdOutstockDetailDTO.AddDTO> awdOutStockDetailDTOList = new ArrayList<>();
+
+            awdOutStockDTO.setShopId(entity.getShopId());
+            awdOutStockDTO.setShopName(entity.getShopName());
+            awdOutStockDTO.setBillDate(LocalDate.now());
+            awdOutStockDTO.setFbaShipmentId(entity.getId());
+            awdOutStockDTO.setFbaShipmentCode(entity.getCode());
+
+            for (FbaShipmentDetailEntity fbaShipmentDetailEntity : newDetailEntityList) {
+                SkuMappingDTO.MappingSkuViewDTO mappingSkuViewDTO = skuDTOS.stream()
+                        .filter(req -> req.getPlatformSkuNo().equals(fbaShipmentDetailEntity.getMsku())
+                                && CharSequenceUtil.isNotBlank(req.getProductSkuNo()))
+                        .findFirst()
+                        .orElse(null);
+
+                AwdOutstockDetailDTO.AddDTO addDTO = new AwdOutstockDetailDTO.AddDTO();
+                addDTO.setAsin(StringUtils.isNotBlank(fbaShipmentDetailEntity.getAsin()) ? fbaShipmentDetailEntity.getAsin() : "");
+                addDTO.setFnsku(StringUtils.isNotBlank(fbaShipmentDetailEntity.getFnSku()) ? fbaShipmentDetailEntity.getFnSku() : "");
+                addDTO.setMsku(StringUtils.isNotBlank(fbaShipmentDetailEntity.getMsku()) ? fbaShipmentDetailEntity.getMsku() : "");
+                addDTO.setQty(fbaShipmentDetailEntity.getDeclareQty());
+                if (Objects.nonNull(mappingSkuViewDTO)) {
+                    addDTO.setSkuId(mappingSkuViewDTO.getProductSkuId());
+                    addDTO.setSkuNo(mappingSkuViewDTO.getProductSkuNo());
+                    addDTO.setProductName(mappingSkuViewDTO.getProductName());
+                }
+                awdOutStockDetailDTOList.add(addDTO);
+            }
+            awdOutStockDTO.setAwdDetailList(awdOutStockDetailDTOList);
+            awdOutstockService.add(awdOutStockDTO);
+
+        }
+
 
         // 检查货件是否生成签收记录
 //        if (this.checkStopGenReceived(entity)){
