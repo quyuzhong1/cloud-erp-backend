@@ -30,8 +30,8 @@ public class SoB2cLabelEntity extends BaseEntity<SoB2cLabelEntity> {
     @TableField("main_id")
     private String mainId;
     /**
-    * 平台物流面单base64
-    */
+     * 平台物流面单base64
+     */
     @TableField("logistics_label_base64")
     private String logisticsLabelBase64;
     /**
@@ -39,6 +39,11 @@ public class SoB2cLabelEntity extends BaseEntity<SoB2cLabelEntity> {
      */
     @TableField("cross_label_url")
     private String crossLabelUrl;
+    /**
+     * 平台物流面单url
+     */
+    @TableField("logistics_label_url")
+    private String logisticsLabelUrl;
 
     /**
      * 来源类型
@@ -47,8 +52,6 @@ public class SoB2cLabelEntity extends BaseEntity<SoB2cLabelEntity> {
     private String sourceType;
 
     public static final String MAIN_ID = "main_id";
-
-    public static final String LOGISTICS_LABEL_BASE64 = "logistics_label_base64";
 
     @Override
     public Serializable pkVal() {

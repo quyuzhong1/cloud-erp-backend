@@ -8,7 +8,8 @@ import lombok.Getter;
 @Getter
 public enum FileTaskTypeEnum implements EnumMessage {
     ASYNC_IMPORT("asyncImport","异步导入"),
-    ASYNC_EXPORT("asyncExport","异步导出");
+    ASYNC_EXPORT("asyncExport","异步导出"),
+    MERGE_LABEL("mergeLabel","合并标签");
 
     private final String code;
     private final String name;

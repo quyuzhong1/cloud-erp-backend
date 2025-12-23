@@ -510,7 +510,6 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO manualDelivery(B2bThirdDeliveryEntity entity) {
         if (entity.getIsApiDelivery()) {
             throw new ServiceException(ApiError.ERROR_THIRD_DELIVERY_MANUAL_DELIVERY);

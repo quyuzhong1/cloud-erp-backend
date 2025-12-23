@@ -188,6 +188,16 @@ public class WmsExecutorPoolConfig {
 
         return service;
     }
+    @Bean(name = "printLabelPool")
+    public ExecutorService printLabelPool() {
+        ThreadPoolExecutor service = new ThreadPoolExecutor(10, 20,
+                30L, TimeUnit.SECONDS,
+                new LinkedBlockingQueue<>(1000));
+        //设置线城池的饱和策略
+        RejectedExecutionHandler handler = new ThreadPoolExecutor.DiscardOldestPolicy();
+        service.setRejectedExecutionHandler(handler);
+        return service;
+    }
     /**
      * 虚拟库存历史记录线程池
      * @author will
