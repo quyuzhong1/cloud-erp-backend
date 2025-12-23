@@ -666,7 +666,6 @@ public class KolB2bApplicationServiceImpl extends SuperServiceImpl<KolB2bApplica
             throw new ServiceException(ApiError.ERROR_98004);
         }
         List<KolB2bApplicationDTO.GenerateFeedbackDTO> listList = list.getList();
-        Map<String, KolB2bApplicationDTO.GenerateFeedbackDTO> paramMap = listList.stream().collect(Collectors.toMap(KolB2bApplicationDTO.GenerateFeedbackDTO::getDetailId, obj -> obj));
 
         //B2B寄样申请单明细信息
         List<String> detailIdList = listList.stream().map(KolB2bApplicationDTO.GenerateFeedbackDTO::getDetailId).distinct().collect(Collectors.toList());
