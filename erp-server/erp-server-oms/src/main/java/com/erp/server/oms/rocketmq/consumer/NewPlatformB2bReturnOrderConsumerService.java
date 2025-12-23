@@ -3,6 +3,7 @@ package com.erp.server.oms.rocketmq.consumer;
 import cn.hutool.json.JSONUtil;
 import com.common.business.dto.PlatformB2BReturnOrderDTO;
 import com.common.business.dto.PlatformReturnOrderDTO;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.OrderTypeEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
@@ -163,7 +164,7 @@ public class NewPlatformB2bReturnOrderConsumerService extends AbstractNewPlatfor
 		CustomerAddressEntity customerAddressEntity = customerAddressService.getDefaultAddrByMainId(customerInfo.getId());
 		ThirdMappingDTO.ViewParamDTO viewParamDTO = new ThirdMappingDTO.ViewParamDTO();
 		viewParamDTO.setThirdId(dto.getPlatformWarehouseId());
-		viewParamDTO.setType(ThirdSysTypeEnum.SHOP.getCode());
+		viewParamDTO.setType(ThirdSysTypeEnum.WAREHOUSE.getCode());
 		viewParamDTO.setSysType(PlatformDictEnum.WDT.getCode());
 		List<ThirdMappingEntity> thirdMappingEntityList = dmpThirdMappingFeign.getByThirdId(viewParamDTO);
 		if(CollectionUtils.isEmpty(thirdMappingEntityList)){
@@ -196,6 +197,7 @@ public class NewPlatformB2bReturnOrderConsumerService extends AbstractNewPlatfor
 		soReturn.setCurrencySymbol(CurrencyEnum.CNY.getCurrencySymbol());
 		soReturn.setCustomerId(customerInfo.getId());
 		soReturn.setCustomerName(customerInfo.getName());
+		soReturn.setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
 		if(Objects.nonNull(customerAddressEntity)){
 			soReturn.setReceiverName(customerAddressEntity.getPerson());
 			soReturn.setReceiveAddress(customerAddressEntity.getAddress());

@@ -1418,6 +1418,10 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
 
         soB2cReturnDetailEntityList.forEach(v->v.setMainId(soReturn.getId()));
         soReturnDetailService.saveBatch(soB2cReturnDetailEntityList);
+        this.submit(soReturn,false);
+        ApproveOneDTO dto = new ApproveOneDTO();
+        dto.setType(ApproveTypeEnum.PASS.getStatus());
+        this.approveEnd(dto,soReturn);
     }
 
     @Override
