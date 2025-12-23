@@ -1154,6 +1154,7 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
         addDTO.setOrderType(BillTypeEnum.B2B.getCode());
         addDTO.setTransactionSubType(OrderSubTypeEnum.OFFLINE_ORDER.getCode());
         addDTO.setSourceId(entity.getId());
+        addDTO.setSourceCode(entity.getCode());
         addDTO.setSourceType(SourceTypeEnum.EXHIBITION_ORDER.getCode());
         addDTO.setDictPlatform("");
 

@@ -1059,6 +1059,10 @@ public class LogisticsProductDTO implements Serializable {
          * 备案审核状态
          */
         private String approveStatus;
+        /**
+         * 产品属性
+         */
+        private String property;
 
         /**
          * 第一数量

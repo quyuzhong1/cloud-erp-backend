@@ -1016,4 +1016,58 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         }
         return resultList;
     }
+
+    @Override
+    public List<LogisticsChannelDTO.WarehouseChannelDTO> listThirdWarehouseChannel(LogisticsChannelDTO.WarehouseChannelParamDTO dto) {
+        //查询所有有匹配系统仓库的海外仓
+        List<OverseasProviderEntity> overseasProviderEntityList = FeignQuery.create(OverseasProviderEntity.class).eq(OverseasProviderEntity::getAuthStatus, AuthStatusEnum.ALREADY.getCode()).list();
+        if(CollectionUtils.isEmpty(overseasProviderEntityList)){
+            return new ArrayList<>();
+        }
+        List<String> authIds = overseasProviderEntityList.stream().map(OverseasProviderEntity::getId).distinct().collect(Collectors.toList());
+        List<OverseasProviderWarehouseEntity> overseasProviderWarehouseEntityList = FeignQuery.create(OverseasProviderWarehouseEntity.class)
+                .in(OverseasProviderWarehouseEntity::getMainId, authIds)
+                .eq(OverseasProviderWarehouseEntity::getWarehouseId, dto.getWarehouseId())
+                .eq(OverseasProviderWarehouseEntity::getDisabled, Boolean.FALSE)
+                .list();
+        if(CollectionUtils.isEmpty(overseasProviderWarehouseEntityList)){
+            return new ArrayList<>();
+        }
+        //查询物流渠道(存在物流-仓库-渠道配置数据)
+        List<LogisticsChannelDTO.WarehouseChannelDTO> warehouseChannelDTOS = baseMapper.listWarehouseChannel();
+        //查询配置物流平台
+        List<LogisticsChannelDTO.WarehouseChannelDTO> warehouseChannelDTOS1 = getDictChannel(overseasProviderEntityList, overseasProviderWarehouseEntityList);
+        if (Objects.isNull(warehouseChannelDTOS)){
+            warehouseChannelDTOS = warehouseChannelDTOS1;
+        }else {
+            warehouseChannelDTOS.addAll(warehouseChannelDTOS1);
+        }
+        if (CollectionUtils.isEmpty(warehouseChannelDTOS)) {
+            return Collections.emptyList();
+        }
+        List<String> warehouseIdList = overseasProviderWarehouseEntityList.stream()
+                .map(OverseasProviderWarehouseEntity::getWarehouseId)
+                .distinct()
+                .collect(Collectors.toList());
+        List<WarehouseEntity> warehouseEntities = FeignQuery.getByIds(WarehouseEntity.class,warehouseIdList);
+        Map<String, String> warehouseMap = warehouseEntities.stream()
+                .collect(Collectors.toMap(WarehouseEntity::getId, WarehouseEntity::getName, (oldValue, newValue) -> oldValue));
+        warehouseChannelDTOS = warehouseChannelDTOS.stream().filter(v->{
+            OverseasProviderWarehouseEntity overseasProviderWarehouseEntity = overseasProviderWarehouseEntityList.stream()
+                    .filter(e -> e.getId().equals(v.getOverseasWarehouseId()))
+                    .findFirst()
+                    .orElse(null);
+            if(Objects.isNull(overseasProviderWarehouseEntity)){
+                return false;
+            }
+            v.setWarehouseId(overseasProviderWarehouseEntity.getWarehouseId());
+            String warehouseName = warehouseMap.get(v.getWarehouseId());
+            if (StringUtils.isBlank(warehouseName)){
+                return false;
+            }
+            v.setWarehouseName(warehouseName);
+            return true;
+        }).collect(Collectors.toList());
+        return warehouseChannelDTOS;
+    }
 }

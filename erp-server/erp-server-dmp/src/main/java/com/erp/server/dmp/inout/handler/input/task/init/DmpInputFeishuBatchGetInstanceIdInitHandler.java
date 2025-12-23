@@ -4,12 +4,10 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.common.business.wrapper.FeignQuery;
 import com.common.core.exception.ServiceException;
-import com.erp.model.workflow.entity.ThirdProcessDefinitionEntity;
-import com.erp.model.workflow.enums.ThirdProcessDefinitionStatusEnum;
 import com.erp.sdk.fs.service.FsService;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputInitRequest;
@@ -49,13 +47,23 @@ public class DmpInputFeishuBatchGetInstanceIdInitHandler extends DmpInputInitHan
         LocalDateTime endTime = dmpInputTaskEntity.getEndTime();
 
         //获取第三方审批定义
-        String approvalCode = dmpResponse.getDmpCfgInputDetailEntity().getNextLevelId();
+        String approvalCode = dmpCfgInputDetailEntity.getNextLevelId();
         if (StringUtils.isBlank(approvalCode)) {
             ServiceException.runError("第三方审批定义代号配置为空");
         }
+        //优先取扩展json中的实例id
+        List<String> instancdIdList = new ArrayList<>();
+        String extendJson = dmpInputTaskEntity.getExtendJson();
+        if (CharSequenceUtil.isNotBlank(extendJson)) {
+            JSONObject jsonObject = JSON.parseObject(extendJson);
+            String instanceId = jsonObject.getString("instanceId");
+            if (CharSequenceUtil.isNotBlank(instanceId)) {
+                instancdIdList.add(instanceId);
+            }
+        }
         JSONArray result = new JSONArray();
         try {
-            List<String> ids = fsService.batchGetInstanceId(approvalCode, startTime, endTime);
+            List<String> ids = CollUtil.isNotEmpty(instancdIdList) ? instancdIdList : fsService.batchGetInstanceId(approvalCode, startTime, endTime);
             for (String id : ids) {
                 JSONObject object = new JSONObject();
                 object.put("instance_id", id);

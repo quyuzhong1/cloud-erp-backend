@@ -144,11 +144,12 @@ public class InventorySkuCostDetailServiceImpl extends SuperServiceImpl<Inventor
                         && !Objects.equals(entity.getId(), e.getId())
                         && Objects.equals(e.getCompanyId(), entity.getCompanyId())
                         && Objects.equals(e.getAllocatedMonth(), entity.getAllocatedMonth())
+                        && Objects.equals(e.getAccountingMonth(), entity.getAccountingMonth())
                         && Objects.equals(e.getWarehouseId(), detailEntity.getWarehouseId())
                         && Objects.equals(e.getSkuId(), detailEntity.getSkuId())
                         && Objects.equals(e.getSkuNo(), detailEntity.getSkuNo())).findFirst().orElse(null);
                 if (Objects.nonNull(pagingVO)){
-                    throw new ServiceException(CharSequenceUtil.format("SKU成本中【{}】成本组织【{}】SKU【{}】分摊月份【{}】仓库【{}】已存在", pagingVO.getCode(), entity.getCompanyName(),pagingVO.getSkuNo(),pagingVO.getAllocatedMonthStr(),pagingVO.getWarehouseName()));
+                    throw new ServiceException(CharSequenceUtil.format("SKU成本中【{}】成本组织【{}】SKU【{}】分摊月份【{}】核算月份【{}】仓库【{}】已存在", pagingVO.getCode(), entity.getCompanyName(),pagingVO.getSkuNo(),pagingVO.getAllocatedMonthStr(),pagingVO.getAccountingMonth(),pagingVO.getWarehouseName()));
                 }
             }
         });

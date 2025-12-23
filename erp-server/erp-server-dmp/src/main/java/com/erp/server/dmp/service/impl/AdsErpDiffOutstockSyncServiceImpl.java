@@ -264,7 +264,7 @@ public class AdsErpDiffOutstockSyncServiceImpl extends SuperServiceImpl<AdsErpDi
 			Integer count = lambdaQuery().in(AdsErpDiffOutstockSyncEntity::getCheckMonth, list.stream().map(AdsErpDiffOutstockSyncEntity::getCheckMonth).collect(Collectors.toSet()))
 					.eq(AdsErpDiffOutstockSyncEntity::getExecStatus, "doing").count();
 			if(count != null && count > 0) {
-				throw new ServiceException(list.stream().map(AdsErpDiffOutstockSyncEntity::getCheckMonth).collect(Collectors.joining("、")) + "中有核对任务正在执行中");
+				throw new ServiceException(list.stream().map(AdsErpDiffOutstockSyncEntity::getCheckMonth).distinct().collect(Collectors.joining("、")) + "中有核对任务正在执行中");
 			}
 			boolean reCreate = RestCloudApiUtil.reCreate("", "dbtodb/check_month_diff_so_outstock");
 			if(reCreate) {

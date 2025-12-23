@@ -53,7 +53,7 @@ public class AdsErpInventoryDiffKingdeeController extends BaseController {
             menuCode = "dmp:adsErpInventoryDiffKingdee:paging",
             tableAlias = "aeidk"
     )
-    @WebAdvanceQuery
+    @WebAdvanceQuery(handler = AdsErpInventoryDiffKingdeeQueryHandler.class)
     public ApiResult<AdsErpInventoryDiffKingdeeDTO.StatisticsDTO> statistics(@RequestBody @Validated PagingDTO<AdsErpInventoryDiffKingdeeDTO.PagingParamDTO> dto) {
        return success(adsErpInventoryDiffKingdeeService.statistics(dto));
     }

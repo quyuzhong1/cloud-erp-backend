@@ -12,6 +12,7 @@ import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.entity.BaseEntity;
 import com.common.message.constant.RedisKeyConstant;
+import com.erp.model.oms.dto.RuleLogisticsDTO;
 import com.erp.model.oms.entity.RuleLogisticsEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cErrorEntity;
@@ -22,6 +23,7 @@ import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.server.oms.service.*;
 import com.xxl.job.core.biz.model.ReturnT;
+import com.xxl.job.core.context.XxlJobContext;
 import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;
 import lombok.extern.slf4j.Slf4j;
@@ -71,7 +73,7 @@ public class SoB2cRetryJob {
      **/
     @XxlJob("SoB2cRetryJob")
     public ReturnT<String> soB2cRetryJob() {
-        String redisKey =  CharSequenceUtil.format(RedisKeyConstant.SOB2C_RETRY_JOB, namespace);
+        String redisKey =  CharSequenceUtil.format(RedisKeyConstant.SOB2C_RETRY_JOB, namespace+XxlJobHelper.getJobParam());
         Boolean setSignResult = redisTemplate.opsForValue().setIfAbsent(redisKey, DateUtil.now(), 600, TimeUnit.SECONDS);
         if (Boolean.FALSE.equals(setSignResult)) {
             XxlJobHelper.log("SoB2cRetryJob 执行中,当前跳过");
@@ -82,6 +84,7 @@ public class SoB2cRetryJob {
             String jobParam = XxlJobHelper.getJobParam();
             int count = 3;
             int intervalHour = 0;
+            int beginDay = 30;
             List<String> typeList = new ArrayList<>();
             typeList.add(SoB2cErrorTypeEnum.SIGN_DELIVERY.getCode());
             Integer maxRetryCount = 3;
@@ -99,9 +102,11 @@ public class SoB2cRetryJob {
                 }
                 maxRetryCount = jsonObject.getInt("maxRetryCount", 3);
                 intervalHour = jsonObject.getInt("intervalHour", 0);
+                beginDay = jsonObject.getInt("beginDay", 30);
             }
 
             LocalDateTime todayNoon = LocalDateTime.now();
+            LocalDateTime beginTime = LocalDateTime.now().minusDays(beginDay);
             if (intervalHour > 0) {
                 todayNoon = LocalDateTime.now().minusHours(intervalHour);
             }
@@ -113,6 +118,7 @@ public class SoB2cRetryJob {
                 queryWrapper.eq(SoB2cErrorEntity::getType, type)
                         .ne(SoB2cErrorEntity::getMainId, "")
                         .le(SoB2cErrorEntity::getUpdateTime, todayNoon)
+                        .ge(SoB2cErrorEntity::getUpdateTime, beginTime)
                         .le(SoB2cErrorEntity::getRetryCount, maxRetryCount);
 
                 if (CollectionUtils.isNotEmpty(messageList)) {

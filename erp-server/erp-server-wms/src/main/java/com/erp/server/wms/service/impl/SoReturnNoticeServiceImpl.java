@@ -184,8 +184,23 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
                 obj.setProductName(productDetailEntity.getName());
                 CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(obj.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
                 obj.setCustomerName(customerInfoEntity.getName());
-                Integer actualQty = soOutstockDetailEntities.stream().filter(detail -> obj.getSoId().equals(detail.getSoId()) && detail.getSkuId().equals(obj.getSkuId()) && detail.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(SoOutstockDetailEntity::getActualQty).reduce(MathUtil.ZERO, Integer::sum);
-                obj.setDeliveryQty(actualQty);
+
+                SoReturnDetailEntity soReturnDetailEntity = returnDetailEntityList.stream().filter(detail -> detail.getId().equals(obj.getSourceDetailId())).findFirst().orElse(null);
+                if (ObjectUtils.isNotEmpty(soReturnDetailEntity)) {
+
+                    SoDetailEntity soDetailEntity = soDetailEntities.stream()
+                            .filter(detail -> detail.getId().equals(soReturnDetailEntity.getSourceDetailId()))
+                            .findFirst()
+                            .orElse(new SoDetailEntity());
+
+                    Integer actualQty = soOutstockDetailEntities.stream()
+                            .filter(detail -> obj.getSoId().equals(detail.getSoId()) && detail.getSkuId().equals(soDetailEntity.getDeliverySkuId()) && detail.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus()))
+                            .map(item -> item.getActualQty() * soDetailEntity.getPerBoxQty())
+                            .reduce(MathUtil.ZERO, Integer::sum);
+
+                    obj.setDeliveryQty(actualQty);
+                }
+
                 if("B2C".equals(obj.getType())){
                     SoB2cReturnEntity soB2cReturnEntity = soB2cReturnEntityList.stream().filter(v -> v.getId().equals(obj.getSourceId())).findFirst().orElse(null);
                     if (ObjectUtils.isNotEmpty(soB2cReturnEntity)) {
@@ -196,7 +211,6 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
                 }else{
                     obj.setReturnTypeDictName(ReturnTypeEnum.getName(obj.getReturnTypeDict()));
                     if(StringUtils.isNotBlank(obj.getSourceDetailId())){
-                        SoReturnDetailEntity soReturnDetailEntity = returnDetailEntityList.stream().filter(detail -> detail.getId().equals(obj.getSourceDetailId())).findFirst().orElse(null);
                         if (ObjectUtils.isNotEmpty(soReturnDetailEntity)) {
                             SoDetailEntity soDetailEntity = soDetailEntities.stream().filter(detail -> detail.getId().equals(soReturnDetailEntity.getSourceDetailId())).findFirst().orElse(new SoDetailEntity());
                             obj.setSalesQty(soDetailEntity.getQty());
@@ -542,7 +556,10 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
                     SoReturnDetailEntity soReturnDetailEntity = returnDetailEntityList.stream().filter(detail -> detail.getId().equals(detailEntity.getSourceDetailId())).findFirst().orElse(new SoReturnDetailEntity());
                     SoDetailEntity soDetailEntity = soDetailEntities.stream().filter(detail -> detail.getId().equals(soReturnDetailEntity.getSourceDetailId())).findFirst().orElse(new SoDetailEntity());
                     detailView.setSalesQty(soDetailEntity.getQty());
-                    Integer actualQty = soOutstockDetailEntities.stream().filter(detail -> soDetailEntity.getMainId().equals(detail.getSoId()) && detail.getSkuId().equals(detailEntity.getSkuId()) && detail.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(SoOutstockDetailEntity::getActualQty).reduce(MathUtil.ZERO, Integer::sum);
+                    Integer actualQty = soOutstockDetailEntities.stream()
+                            .filter(detail -> soDetailEntity.getMainId().equals(detail.getSoId()) && soDetailEntity.getSkuId().equals(detailEntity.getSkuId()) && detail.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus()))
+                            .map(item -> item.getActualQty() * soDetailEntity.getPerBoxQty())
+                            .reduce(MathUtil.ZERO, Integer::sum);
                     detailView.setDeliveryQty(actualQty);
                 }
             }

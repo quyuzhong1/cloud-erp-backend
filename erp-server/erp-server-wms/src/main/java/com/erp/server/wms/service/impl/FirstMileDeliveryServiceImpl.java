@@ -303,6 +303,20 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         matchRuleDTO.setFromWarehouse(entity.getDeliveryWarehouseId());
         matchRuleDTO.setSalesOrgId(entity.getInventoryOrgId());
         matchRuleDTO.setDictPlatform("");
+        if(StringUtils.isNotBlank(entity.getDestWarehouseId()) || StringUtils.isNotBlank(entity.getDeliveryWarehouseId())){
+            List<String> warehouseIds = new ArrayList<>();
+            warehouseIds.add(entity.getDestWarehouseId());
+            warehouseIds.add(entity.getDeliveryWarehouseId());
+            List<WarehouseEntity> warehouseEntityList = warehouseService.listByIds(warehouseIds);
+            WarehouseEntity fromWarehouse = warehouseEntityList.stream().filter(wh -> wh.getId().equals(entity.getDeliveryWarehouseId())).findFirst().orElse(new WarehouseEntity());
+            WarehouseEntity toWarehouse = warehouseEntityList.stream().filter(wh -> wh.getId().equals(entity.getDestWarehouseId())).findFirst().orElse(new WarehouseEntity());
+            matchRuleDTO.setFromWarehouseCountry(fromWarehouse.getCountry());
+            matchRuleDTO.setFromWarehouseOrg(fromWarehouse.getOrgId());
+            matchRuleDTO.setDestWarehouseCountry(toWarehouse.getCountry());
+            matchRuleDTO.setDestWarehouseOrg(toWarehouse.getOrgId());
+        }
+
+
         CfgRuleOutDTO.MatchTransferResultDTO matchTransferResultDTO = cfgRuleOutService.matchTransferRule(matchRuleDTO);
         if (Objects.nonNull(matchTransferResultDTO) && Objects.nonNull(matchTransferResultDTO.getIsTransit()) && matchTransferResultDTO.getIsTransit()){
             if (CollectionUtils.isNotEmpty(matchTransferResultDTO.getTransferWarehouseIdList())){
@@ -1059,7 +1073,8 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                             && !OmsPlatformEnum.JIFENG.getCode().equals(providerEntity.getCode())
                             && !OmsPlatformEnum.WEI_SHI.getCode().equals(providerEntity.getCode())
                             && !OmsPlatformEnum.DA_MAI.getCode().equals(providerEntity.getCode())
-                            && !OmsPlatformEnum.OMS_IML.getCode().equals(providerEntity.getCode())) {
+                            && !OmsPlatformEnum.OMS_IML.getCode().equals(providerEntity.getCode())
+                            && !OmsPlatformEnum.TONG_YOU.getCode().equals(providerEntity.getCode())) {
                         // 推送第三方发货单审核通过
                         ApiResult<String> resultInfo = overseasWarehouseInboundService.pullThirdOverseasPlatform(providerEntity, inboundEntity, detailEntityList, OverseasVerifyEnum.PASS.getCode());
                         if (200 != resultInfo.getCode()) {

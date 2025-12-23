@@ -441,6 +441,10 @@ public class CfgRuleOutServiceImpl extends SuperServiceImpl<CfgRuleOutMapper, Cf
         detailMap.put("destWarehouse", dto.getDestWarehouse());
         detailMap.put("fromWarehouse",dto.getFromWarehouse());
         detailMap.put("saleOrg",dto.getSalesOrgId());
+        detailMap.put("fromWarehouseCountry",dto.getFromWarehouseCountry());
+        detailMap.put("destWarehouseCountry",dto.getDestWarehouseCountry());
+        detailMap.put("fromWarehouseOrg",dto.getFromWarehouseOrg());
+        detailMap.put("destWarehouseOrg",dto.getDestWarehouseOrg());
         Map<String, Object> map = new HashMap<>();
         map.put("detailList", Collections.singletonList(detailMap));
         map.put("type", dto.getType());
@@ -448,6 +452,10 @@ public class CfgRuleOutServiceImpl extends SuperServiceImpl<CfgRuleOutMapper, Cf
         map.put("destWarehouse", dto.getDestWarehouse());
         map.put("fromWarehouse",dto.getFromWarehouse());
         map.put("saleOrg",dto.getSalesOrgId());
+        map.put("fromWarehouseCountry",dto.getFromWarehouseCountry());
+        map.put("destWarehouseCountry",dto.getDestWarehouseCountry());
+        map.put("fromWarehouseOrg",dto.getFromWarehouseOrg());
+        map.put("destWarehouseOrg",dto.getDestWarehouseOrg());
 
         List<CfgRuleOutEntity> cfgRuleOutList = this.baseMapper.selectList(new LambdaQueryWrapper<CfgRuleOutEntity>().eq(CfgRuleOutEntity::getType, CfgRuleOutEnum.CfgRuleOutTypeEnum.STOCK_OUT_TRANSFER.getCode()));
         for (CfgRuleOutEntity entity : cfgRuleOutList) {

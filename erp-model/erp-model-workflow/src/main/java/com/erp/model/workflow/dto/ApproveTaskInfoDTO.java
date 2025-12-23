@@ -138,9 +138,26 @@ public class ApproveTaskInfoDTO implements Serializable {
         private String bussinessCode;
 
         /**
+         * 业务单据审核状态【可排序】
+         */
+        private String bussinessApproveStatus;
+        /**
+         * 业务单据审核状态名称
+         */
+        private String bussinessApproveStatusName;
+
+        /**
          * 发生时间【可排序】
          */
         private LocalDateTime happenTime;
+        /**
+         * 处理完成时间【可排序】
+         */
+        private LocalDateTime finishTime;
+        /**
+         * 处理时效
+         */
+        private Integer handleDuration;
 
         /**
          * 执行状态，ApproveTaskStatusEnum枚举【可排序】
@@ -348,11 +365,19 @@ public class ApproveTaskInfoDTO implements Serializable {
         @NotBlank(message = "数大臣单据id，单据id不能为空")
         @Size(max = 19,message = "数大臣单据id，单据id最大长度不能超过19位")
         private String bussinessId;
+        /**
+         *  业务单审核状态
+         */
+        private String bussinessApproveStatus;
 
         /**
          * 发生时间
          */
         private LocalDateTime happenTime;
+        /**
+         * 完成时间
+         */
+        private LocalDateTime finishTime;
 
         /**
          * 执行状态，ApproveTaskStatusEnum枚举

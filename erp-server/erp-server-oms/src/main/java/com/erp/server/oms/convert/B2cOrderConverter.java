@@ -83,6 +83,7 @@ public interface B2cOrderConverter {
             @Mapping(target = "buyerNumber", source = "telNumber"),
             @Mapping(target = "phone", source = "receiverTelNumber"),
             @Mapping(target = "countryCode", source = "country"),
+            @Mapping(target = "countryName", source = "countryName"),
             @Mapping(target = "province", source = "provinceName"),
             @Mapping(target = "city", source = "cityName"),
             @Mapping(target = "zipcode", source = "postCode"),
@@ -200,6 +201,7 @@ public interface B2cOrderConverter {
             @Mapping(target = "updateUserId", ignore = true),
             @Mapping(target = "updateUserName", ignore = true),
             @Mapping(target = "version", ignore = true),
+            @Mapping(target = "isUserSystem", ignore = true),
             @Mapping(target = "declareLabel", ignore = true)
     })
     SoB2cDeclareProductEntity convertDeclareProductByMap(Map<String, Object> detailMap);

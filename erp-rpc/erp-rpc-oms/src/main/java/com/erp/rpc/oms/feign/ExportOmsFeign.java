@@ -7,7 +7,6 @@ import com.erp.model.oms.dto.*;
 import com.erp.model.oms.dto.excel.CustomerB2bSellerExcelDTO;
 import com.erp.model.oms.dto.excel.SoPriceChangeExportExcelDTO;
 import com.erp.model.oms.dto.excel.SoPriceExportExcelDTO;
-import com.erp.model.wms.dto.SampleBorrowInfoDTO;
 import feign.Request;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -93,4 +92,49 @@ public interface ExportOmsFeign {
      */
     @PostMapping("/feign/export/b2bPlatformSku")
     PagingVO<SkuMappingDTO.PagingViewDTO> exportB2bPlatformSku(PagingDTO<SkuMappingDTO.PagingParamDTO> dto);
+    @PostMapping("/feign/export/exportDeliveryBoxRule")
+    PagingVO<DeliveryBoxRuleDTO.ListDTO> exportDeliveryBoxRule(PagingDTO<DeliveryBoxRuleDTO.PagingParamDTO> dto);
+    /**
+     * 导出KOL回片列表
+     */
+    @PostMapping("/feign/export/exportKolFeedback")
+    PagingVO<KolFeedbackDTO.ListDTO> exportKolFeedback(@RequestBody PagingDTO<KolFeedbackDTO.ParamDTO> dto);
+
+    /**
+     * 导出KOLB2B寄样申请列表
+     */
+    @PostMapping("/feign/export/exportKolB2bApplication")
+    PagingVO<KolB2bApplicationDTO.ListDTO> exportKolB2bApplication(PagingDTO<KolB2bApplicationDTO.PagingParamDTO> dto);
+    /**
+     * KOL回片费用导出
+     */
+    @PostMapping("/feign/export/exportKolFeedbackCost")
+    PagingVO<KolFeedbackCostDTO.ListDTO> exportKolFeedbackCost(@RequestBody PagingDTO<KolFeedbackCostDTO.ParamDTO> dto);
+    /**
+     * 企业达人库导出
+     * @date 2025-12-03
+     * @author jack
+     */
+    @PostMapping("/feign/export/exportKolPartnerInfo")
+    PagingVO<KolPartnerInfoDTO.ListDTO> exportKolPartnerInfo(@RequestBody PagingDTO<KolPartnerInfoDTO.PagingParamDTO> dto);
+    /**
+     * 达人社媒数据表导出
+     * @date 2025-12-04
+     * @author wuhaotian
+     */
+    @PostMapping("/feign/export/exportKolSocialMedia")
+    PagingVO<KolSocialMediaDTO.ListDTO> exportKolSocialMedia(@RequestBody PagingDTO<KolSocialMediaDTO.ParamDTO> dto);
+
+    /**
+     * KOL寄样费用导出
+     */
+    @PostMapping("/feign/export/exportKolSampleCost")
+    PagingVO<KolSampleCostDTO.ListDTO> exportKolSampleCost(PagingDTO<KolSampleCostDTO.PagingParamDTO> dto);
+    /**
+     * B2C寄样申请导出
+     * @date 2025-12-03
+     * @author jack
+     */
+    @PostMapping("/feign/export/exportOmsKolB2cApplication")
+    PagingVO<KolB2cApplicationDTO.ListDTO> exportOmsKolB2cApplication(@RequestBody PagingDTO<KolB2cApplicationDTO.PagingParamDTO> dto);
 }

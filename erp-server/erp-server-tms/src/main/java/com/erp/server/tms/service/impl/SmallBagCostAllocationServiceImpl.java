@@ -1,21 +1,10 @@
 package com.erp.server.tms.service.impl;
 
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.text.DecimalFormat;
-import java.util.*;
-import java.util.stream.Collectors;
-
-import javax.annotation.Resource;
-
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
-import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
+import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -38,37 +27,26 @@ import com.erp.model.tms.dto.SmallBagCostAllocationDTO;
 import com.erp.model.tms.dto.SmallBagCostAllocationDTO.ListDTO;
 import com.erp.model.tms.dto.SmallBagCostAllocationDTO.PagingParamDTO;
 import com.erp.model.tms.dto.SmallBagCostAllocationDTO.TabListDTO;
-import com.erp.model.tms.entity.LogisticsBillCostEntity;
-import com.erp.model.tms.entity.LogisticsChannelEntity;
-import com.erp.model.tms.entity.LogisticsSupplierEntity;
-import com.erp.model.tms.entity.SmallBagCostAllocationDetailEntity;
-import com.erp.model.tms.entity.SmallBagCostAllocationEntity;
-import com.erp.model.tms.entity.SmallBagCostAllocationMainEntity;
-import com.erp.model.tms.enums.AllocationFeeTypeEnum;
-import com.erp.model.tms.enums.CostAllocationEnum;
-import com.erp.model.tms.enums.LogisticTrackStatusEnum;
-import com.erp.model.tms.enums.LogisticsBillCostCheckStatusEnum;
-import com.erp.model.tms.enums.ReconciliationStatusEnum;
-import com.erp.model.tms.enums.SmallBagCostAllocationBigTableStatusEnum;
-import com.erp.model.tms.enums.SmallBagCostAllocationMainFeeSourceEnum;
-import com.erp.model.tms.enums.SmallBagCostAllocationReportStatusEnum;
-import com.erp.model.tms.enums.WeightAllocationSmallBagEnum;
+import com.erp.model.tms.entity.*;
+import com.erp.model.tms.enums.*;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.tms.mapper.SmallBagCostAllocationMapper;
-import com.erp.server.tms.service.LogisticsBillCostService;
-import com.erp.server.tms.service.LogisticsChannelService;
-import com.erp.server.tms.service.LogisticsSupplierService;
-import com.erp.server.tms.service.OperateLogService;
-import com.erp.server.tms.service.SmallBagCostAllocationDetailService;
-import com.erp.server.tms.service.SmallBagCostAllocationMainService;
-import com.erp.server.tms.service.SmallBagCostAllocationService;
-
-import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
+import com.erp.server.tms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import javax.annotation.Resource;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.text.DecimalFormat;
+import java.util.*;
+import java.util.stream.Collectors;
 /**
  * <p>
  * 小包费用分摊 服务实现类
@@ -342,7 +320,12 @@ public class SmallBagCostAllocationServiceImpl extends SuperServiceImpl<SmallBag
         return baseMapper.listByReportPeriodStr(reportPeriodStr,reportStatus);
     }
 
-    @Override
+	@Override
+	public List<SmallBagCostAllocationDTO.SmallBagCostDTO> listSmallBagCost(SmallBagCostAllocationDTO.SmallBagCostParamDTO paramDTO) {
+		return baseMapper.listSmallBagCost(paramDTO);
+	}
+
+	@Override
 	@Transactional(rollbackFor = Exception.class)
 	public BatchResultDTO delete(String id) {
 		SmallBagCostAllocationMainEntity smallBagCostAllocationMainEntity = smallBagCostAllocationMainService.getById(id);

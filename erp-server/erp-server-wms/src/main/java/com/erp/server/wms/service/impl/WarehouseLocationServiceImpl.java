@@ -530,16 +530,30 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
     }
 
     @Override
-    public WarehouseLocationEntity findByWarehouseCode(String warehouseLocation) {
-        if (StringUtils.isEmpty(warehouseLocation)){
+    public WarehouseLocationEntity findByWarehouseCodeOrName(String warehouseLocation) {
+        if (StringUtils.isEmpty(warehouseLocation)) {
             return null;
         }
-        List<WarehouseLocationEntity> list = lambdaQuery().eq(WarehouseLocationEntity::getCode, warehouseLocation).list();
-        if (CollectionUtils.isNotEmpty(list)){
+
+        // 先按 code 查询
+        List<WarehouseLocationEntity> list = lambdaQuery()
+                .eq(WarehouseLocationEntity::getCode, warehouseLocation)
+                .list();
+
+        if (CollectionUtils.isNotEmpty(list)) {
             return list.get(0);
-        }else {
-            return null;
         }
+
+        // 如果按 code 没找到，再按 name 查询
+        list = lambdaQuery()
+                .eq(WarehouseLocationEntity::getName, warehouseLocation)
+                .list();
+
+        if (CollectionUtils.isNotEmpty(list)) {
+            return list.get(0);
+        }
+
+        return null;
     }
 
     @Override

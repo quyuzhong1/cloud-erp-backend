@@ -1,20 +1,18 @@
 package com.erp.model.tms.dto;
 
+import com.common.business.dto.AdvanceQueryDTO;
+import com.common.business.dto.base.SortDTO;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
-
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
-
-import com.common.business.dto.AdvanceQueryDTO;
-import com.common.business.dto.base.SortDTO;
-
-import lombok.Data;
-import lombok.NoArgsConstructor;
 
 /**
  * <p>
@@ -450,6 +448,59 @@ public class SmallBagCostAllocationDTO implements Serializable {
          */
         private String reportPeriodStr;
 
+    }
+
+    /**
+     * 成本查询参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class SmallBagCostParamDTO {
+        /**
+         * skuId集合
+         */
+        private List<String> skuIdList;
+        /**
+         *  销售出库单明细id集合
+         */
+        private List<String> soOutstockDetailIdList;
+    }
+
+    /**
+     * 成本查询
+     */
+    @Data
+    @NoArgsConstructor
+    public static class SmallBagCostDTO {
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * 销售出库单明细id
+         */
+        private String soOutstockDetailId;
+
+        /**
+         * 费用类型 AllocationFeeTypeEnum
+         */
+        private String feeType;
+        /**
+         * 费用分摊类型 CostAllocationEnum
+         */
+        private String feeAllocationType;
+        /**
+         * 分摊金额
+         */
+        private BigDecimal allocatedAmount;
+        /**
+         * 分摊金额兑换汇率
+         */
+        private BigDecimal allocatedAmountExchange;
+        /**
+         * 分摊币种
+         */
+        private String allocatedCurrency;
     }
 
 }

@@ -200,6 +200,7 @@ public interface BusinessNoConstant {
 
     //合同管理
     String GYSHT = "GYSHT";
+    String MB = "MB";
     //样品作废单
     String YPBF = "YPBF";
     //样品借用单
@@ -221,6 +222,7 @@ public interface BusinessNoConstant {
     String YPTZ="YPTZ";
     //资质字典
     String DC="DC";
+    String SFFH="SFFH";
 
     //资产位置
     String ZCWZ="ZCWZ";
@@ -246,6 +248,15 @@ public interface BusinessNoConstant {
     String MPOCC="MPOCC";
     //资产编码
     String ZC="ZC";
+    //回片列表
+    String HP="HP";
+    //B2B寄样申请单
+    String KOLB="KOLB";
+    //企业达人库
+    String DR="DR";
+    //B2C寄样申请单
+    String KOLC="KOLC";
+
 
     //差异策略配置
     String CYCL="CYCL";

@@ -1,5 +1,4 @@
 package com.erp.server.tms.service;
-import java.util.List;
 
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
@@ -9,6 +8,8 @@ import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.tms.dto.SmallBagCostAllocationDTO;
 import com.erp.model.tms.entity.SmallBagCostAllocationEntity;
+
+import java.util.List;
 
 /**
  * <p>
@@ -59,4 +60,12 @@ public interface SmallBagCostAllocationService extends SuperService<SmallBagCost
      * @return
      */
     List<SmallBagCostAllocationEntity> listByReportPeriodStr(String reportPeriodStr, String reportStatus);
+    /**
+     * 查询小包费用分摊
+     * @author will
+     * @date 2025/12/10 14:40
+     * @param paramDTO
+     * @return List<SmallBagCostDTO>
+     */
+    List<SmallBagCostAllocationDTO.SmallBagCostDTO> listSmallBagCost(SmallBagCostAllocationDTO.SmallBagCostParamDTO paramDTO);
 }

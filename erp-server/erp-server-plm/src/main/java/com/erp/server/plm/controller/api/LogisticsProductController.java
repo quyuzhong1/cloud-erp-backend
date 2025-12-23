@@ -279,7 +279,7 @@ public class LogisticsProductController extends BaseController {
     @LogAction(value = LogActionEnum.EXPORT, desc = "下载模板物流产品")
     @GetMapping("/exportTemplate")
     public ApiResult<Object> exportTemplate(HttpServletRequest request, HttpServletResponse response) {
-        String path = "classpath:excel/logisticsProductTemplate.xlsx";
+        String path = "excel/logisticsProductTemplate.xlsx";
         String excelName = "template.xlsx";
         ResourceLoader resourceLoader = new DefaultResourceLoader();
         try {

@@ -76,7 +76,7 @@ public class SyncThirdWarehouseServiceImpl implements SyncThirdWarehouseService 
     private DmpPushTaskEntity saveTask(ThirdWarehouseCreateOutboundPushDTO pushDTO, String operate, Map<String, Object> resultMap) {
         SettingEnum settingEnum = SettingEnum.NEW_DMP_PUSH_SWTICH_LIST;
         List<CfgSettingEntity> list = FeignQuery.create(CfgSettingEntity.class)
-                .eq(CfgSettingEntity::getKey, SourceTypeEnum.SO_MULTI_CHANNEL.getCode())
+                .eq(CfgSettingEntity::getKey, SourceTypeEnum.THIRD_WAREHOUSE_DELIVERY.getCode())
                 .eq(CfgSettingEntity::getType, settingEnum.getType())
                 .eq(CfgSettingEntity::getValue, "1")
                 .list();

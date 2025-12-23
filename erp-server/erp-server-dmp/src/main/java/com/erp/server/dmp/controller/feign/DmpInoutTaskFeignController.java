@@ -1,11 +1,27 @@
 package com.erp.server.dmp.controller.feign;
 
-import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.ObjUtil;
-import cn.hutool.json.JSONUtil;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.stream.Collectors;
+
+import javax.annotation.Resource;
+
+import org.apache.commons.collections4.CollectionUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.common.business.dto.DmpSyncTaskDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
+import com.erp.model.dmp.dto.DmpCfgEtlDTO;
 import com.erp.model.dmp.dto.DmpInoutDTO;
 import com.erp.model.dmp.dto.DmpOutputTaskRecordDTO;
 import com.erp.model.dmp.dto.DmpPushTaskDTO;
@@ -13,6 +29,7 @@ import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
 import com.erp.model.dmp.entity.DmpInputTaskEntity;
 import com.erp.model.dmp.entity.DmpOutputTaskRecordEntity;
 import com.erp.model.dmp.enums.DmpCfgInputExecSystemEnum;
+import com.erp.server.dmp.controller.api.DmpCfgEtlController;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputFinishRequest;
 import com.erp.server.dmp.inout.dto.request.DmpInputHotfixCreateRequest;
@@ -25,21 +42,10 @@ import com.erp.server.dmp.service.CfgSettingService;
 import com.erp.server.dmp.service.DmpCfgInputDetailService;
 import com.erp.server.dmp.service.DmpInputTaskService;
 import com.erp.server.dmp.service.DmpOutputTaskRecordService;
-import org.apache.commons.collections4.CollectionUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
 
-import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ExecutorService;
-import java.util.stream.Collectors;
+import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.ObjUtil;
+import cn.hutool.json.JSONUtil;
 
 @RestController
 @RequestMapping("/feign/inout")
@@ -62,6 +68,8 @@ public class DmpInoutTaskFeignController{
 	private DmpInputTaskFactory dmpInputTaskFactory;
 	@Resource
 	private CfgSettingService cfgSettingService;
+	@Resource
+	private DmpCfgEtlController dmpCfgEtlController;
 
 	/**
 	 * @param updateDTO
@@ -255,4 +263,8 @@ public class DmpInoutTaskFeignController{
 		return dmpOutputTaskRecordService.updateBatchById(dmpOutputTaskRecordEntityList);
 	}
 
+	@PostMapping("/doEtlTask")
+	public ApiResult<List<BatchResultDTO>> doEtlTask(@RequestBody DmpCfgEtlDTO.DoTaskDTO dto) {
+		return dmpCfgEtlController.doTask(dto);
+	}
 }

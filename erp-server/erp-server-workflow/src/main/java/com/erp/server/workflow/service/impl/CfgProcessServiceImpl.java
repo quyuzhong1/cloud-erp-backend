@@ -16,6 +16,7 @@ import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -433,6 +434,7 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
         addDTO.setBussinessCode(dto.getBusinessCode());
         addDTO.setBussinessId(dto.getBusinessId());
         addDTO.setHappenTime(LocalDateTime.now());
+        addDTO.setBussinessApproveStatus(ApproveStatusEnum.APPROVE_ING.getCode());
         addDTO.setStatus(ApproveTaskStatusEnum.SUCCESS.getCode());
         return addDTO;
     }

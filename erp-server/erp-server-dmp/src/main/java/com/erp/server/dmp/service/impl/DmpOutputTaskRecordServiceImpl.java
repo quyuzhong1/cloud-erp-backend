@@ -568,8 +568,8 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
     	String extendJson = dmpCfgInputEntity.getExtendJson();
 		JSONObject parseObject = JSON.parseObject(extendJson);
 		String system = parseObject.getString("system");
-		
-		List<DmpPushMsgEntity> dmpPushMsgEntityList = dmpPushMsgService.listByIds(dataIds);
+
+        List<DmpPushMsgEntity> dmpPushMsgEntityList = dmpPushMsgService.listByIds(dataIds);
 		DmpSyncMqDTO.SyncParamDTO syncParamDTO = new DmpSyncMqDTO.SyncParamDTO();
 		List<SyncParamDetailDTO> sourceDetailList = new ArrayList<>();
 		for(DmpPushMsgEntity dmpPushMsgEntity : dmpPushMsgEntityList) {
@@ -582,8 +582,17 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
 		}
 		syncParamDTO.setSourceDetailList(sourceDetailList);
 		String outputSystemId = dmpCfgOutputEntity.getSystemId();
-		String outputSystemCode = dmpHandlerCache.getDmpBasicSystemEntityList(d -> d.getId().equals(outputSystemId)).get(0).getCode();
-		if(DmpBasicSystemCodeEnum.WDT.getCode().equals(outputSystemCode)) {
+        String outputSystemCode = dmpHandlerCache.getDmpBasicSystemEntityList(d -> d.getId().equals(outputSystemId)).get(0).getCode();
+        String outputExtendJson = dmpCfgOutputEntity.getExtendJson();
+        Boolean isNewFindDataSendSyncTask = false;
+        if(StringUtils.isNotBlank(outputExtendJson)){
+            JSONObject outputParseObject = JSON.parseObject(outputExtendJson);
+            isNewFindDataSendSyncTask = outputParseObject.getBoolean("isNewFindDataSendSyncTask");
+            if(null == isNewFindDataSendSyncTask){
+                isNewFindDataSendSyncTask = false;
+            }
+        }
+        if(DmpBasicSystemCodeEnum.WDT.getCode().equals(outputSystemCode) && !isNewFindDataSendSyncTask) {
 			try {
 				FeignQuery.invoke("com.erp.server."+ system +".service.impl.SyncTaskServiceImpl", "findWdtDataSendSyncTask", Arrays.asList(syncParamDTO));
 				this.lambdaUpdate()

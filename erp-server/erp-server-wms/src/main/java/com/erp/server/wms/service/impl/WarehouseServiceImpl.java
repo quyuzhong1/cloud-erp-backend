@@ -111,6 +111,8 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
     @Resource
     private WarehouseLocationService warehouseLocationService;
 
+    @Resource
+    private OverseasProviderWarehouseService overseasProviderWarehouseService;
 
     @Resource
     private ShopInfoFeign shopInfoFeign;
@@ -326,6 +328,11 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
             OmsPlatformEnum platformEnum = this.checkAndGetPlatformInfo(listDTO, warehouseBindMap);
             listDTO.setDictPlatform(null == platformEnum ? "" : platformEnum.getCode());
             listDTO.setPlatformName(null == platformEnum ? "" : platformEnum.getName());
+            //从三方仓管理查询是否b2b发货
+            OverseasProviderWarehouseEntity overseasProviderWarehouseEntity = overseasProviderWarehouseService.getByWarehouseId(listDTO.getId());
+            if (Objects.nonNull(overseasProviderWarehouseEntity)) {
+                listDTO.setIsB2BApiDelivery(overseasProviderWarehouseEntity.getIsB2BApiDelivery());
+            }
         }
     }
 

@@ -6,6 +6,7 @@ import com.erp.model.scm.entity.SupplierRefWarehouseEntity;
 import com.erp.model.wms.dto.SupplierInventoryDTO;
 import com.erp.model.wms.dto.VirtualInventoryDTO;
 import com.erp.model.wms.dto.VirtualInventoryDiffDTO;
+import com.erp.model.wms.dto.inventory.VirtualInventoryStockDTO;
 import com.erp.model.wms.entity.VirtualInventoryEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
@@ -168,4 +169,12 @@ public interface VirtualInventoryMapper extends BaseMapper<VirtualInventoryEntit
      * @return IPage<ListDTO>
      */
     IPage<SupplierInventoryDTO.ListDTO> supplierInventoryPaging(Page query, @Param("params") SupplierInventoryDTO.PagingParamDTO params, @Param("supplierRefWarehouseList") List<SupplierRefWarehouseEntity> supplierRefWarehouseList);
+    /**
+     * 根据库存交易对象查询虚拟库存信息
+     * @author will
+     * @date 2025/11/24 16:31
+     * @param params
+     * @return VirtualInventoryEntity
+     */
+    VirtualInventoryEntity getByTransaction(@Param("params") VirtualInventoryStockDTO.InventoryTransactionDTO params);
 }

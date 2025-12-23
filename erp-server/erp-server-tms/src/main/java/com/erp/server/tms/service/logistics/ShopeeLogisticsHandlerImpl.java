@@ -16,6 +16,7 @@ import com.common.core.utils.ValidatorUtil;
 import com.erp.model.dmp.dto.CfgAppClientDTO;
 import com.erp.model.dmp.entity.CfgAppClientEntity;
 import com.erp.model.dmp.enums.AppClientEnum;
+import com.erp.model.file.dto.FileDTO;
 import com.erp.model.oms.entity.ShopAuthEntity;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.tms.enums.BusinessTypeEnum;
@@ -26,6 +27,7 @@ import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
 import com.erp.model.tms.vo.response.LogisticsPrintLabelResponse;
 import com.erp.model.tms.vo.response.LogisticsServiceResponseVO;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
+import com.erp.rpc.file.feign.FileFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.server.tms.convert.LogisticsChannelConverter;
 import com.erp.server.tms.handler.AbstractLogisticsHandler;
@@ -64,7 +66,8 @@ public class ShopeeLogisticsHandlerImpl extends AbstractLogisticsHandler {
     private DmpTaskFeign dmpTaskFeign;
     @Resource
     private LogisticsOperateService logisticsOperateService;
-
+    @Resource
+    private FileFeign fileFeign;
 
     /**
      * 虾皮  authId 需要是店铺 shopId
@@ -345,11 +348,16 @@ public class ShopeeLogisticsHandlerImpl extends AbstractLogisticsHandler {
         }
         try {
             String base64Str = shopeeLogisticsService.downloadShippingDocument(baseRequest, orderRequestList, shippingDocumentType);
+            FileDTO.UploadBase64 uploadBase64 = FileDTO.UploadBase64.builder()
+                    .base64(base64Str)
+                    .fileName(orderRequestList.get(0).getOrderSn() + ".pdf")
+                    .build();
+            String url = fileFeign.uploadFileByBase64(uploadBase64);
             List<LogisticsPrintLabelResponse> responses = new ArrayList<>();
-            String prefix = "data:application/pdf;base64,";
+//            String prefix = "data:application/pdf;base64,";
             LogisticsPrintLabelResponse response = LogisticsPrintLabelResponse.builder()
                     .deliveryNoList(orderRequestList.stream().map(ShippingOrderRequest::getOrderSn).collect(Collectors.toList()))
-                    .base64(prefix + base64Str).build();
+                    .labelUrl(url).build();
             logisticsOperateService.pullOperateLog("", orderSnList, BusinessTypeEnum.DOWNLOAD_SHIPPING_DOCUMENT.getCode(), LogisticsPlatformEnum.SHOPEE.getCode(),
                     RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(baseRequest) + JSONUtil.toJsonStr(orderRequestList), JSONUtil.toJsonStr(base64Str));
             responses.add(response);

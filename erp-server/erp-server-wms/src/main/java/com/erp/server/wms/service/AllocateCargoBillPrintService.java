@@ -14,5 +14,5 @@ public interface AllocateCargoBillPrintService {
 
     AllocateCargoBillPrintDTO.ScanWaveDTO scanWaveOrPickingCarCode(String businessCode);
 
-    void print(String waveId, HttpServletResponse response);
+    String print(String waveId, HttpServletResponse response);
 }

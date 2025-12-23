@@ -138,4 +138,15 @@ public class SoDeliveryNoticeFeignController {
     public void updateSalesInfo(@RequestBody SoInfoEntity soInfoEntity){
         soDeliveryNoticeService.updateSalesInfo(soInfoEntity);
     }
+
+    /**
+     * 通过明细idList获取通知记录详情
+     *
+     * @param idList
+     * @return
+     */
+    @PostMapping("/getNoticeDetailByIdList")
+    public List<SoDeliveryNoticeDetailEntity> getNoticeDetailByIdList(@RequestParam(value = "id") List<String> idList) {
+        return soDeliveryNoticeDetailService.listByIds(idList);
+    }
 }

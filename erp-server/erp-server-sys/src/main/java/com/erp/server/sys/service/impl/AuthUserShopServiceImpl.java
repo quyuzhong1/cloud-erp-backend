@@ -139,7 +139,7 @@ public class AuthUserShopServiceImpl extends SuperServiceImpl<AuthUserShopMapper
         List<String> shopTableFieldList = Arrays.asList(shopTableField.split(","));
         int shopTableFieldSize = shopTableFieldList.size();
         if ("part".equals(authType)){
-        	boolean isDoris = (StringUtils.isNotBlank(dynamicDataSource) && dynamicDataSource.equals(DynamicDataSourceTypeEnum.DORIS.getCode()));
+            boolean isDoris = DynamicDataSourceTypeEnum.isDorisByStr(dynamicDataSource);
         	if(isDoris) {
                 if (shopTableFieldSize == 1) {
                     sqlString.append(" AND ((").append(shopTableFieldList.get(0)).append( " = '') OR (");

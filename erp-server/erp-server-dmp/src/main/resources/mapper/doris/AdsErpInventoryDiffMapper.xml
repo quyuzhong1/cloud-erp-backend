@@ -102,6 +102,13 @@
         <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
         </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        aeid.check_month_query desc
     </select>
 
 
@@ -116,7 +123,7 @@
         sum(abs(diff_closing_qty)) AS diffClosingQty
         FROM ads_erp_inventory_diff aeid
         WHERE ${params.sqlMap.default}
-          and is_deleted = FALSE
+          and aeid.is_deleted = FALSE
         <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
         </if>

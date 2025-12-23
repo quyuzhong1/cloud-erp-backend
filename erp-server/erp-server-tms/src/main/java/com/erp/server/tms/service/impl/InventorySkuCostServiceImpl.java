@@ -50,7 +50,10 @@ import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.tms.convert.InventorySkuCostConverter;
 import com.erp.server.tms.listener.InventorySkuCostDetailExcelListener;
 import com.erp.server.tms.mapper.InventorySkuCostMapper;
-import com.erp.server.tms.service.*;
+import com.erp.server.tms.service.FirstMileSkuCostRefService;
+import com.erp.server.tms.service.InventorySkuCostDetailService;
+import com.erp.server.tms.service.InventorySkuCostService;
+import com.erp.server.tms.service.OperateLogService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -114,6 +117,7 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
         BeanMapperUtils.copy(addDTO, inventorySkuCostEntity);
         // 数据处理
         handleData(inventorySkuCostEntity);
+
         log.info("开始新增SKU成本");
         boolean save = super.save(inventorySkuCostEntity);
         if (!save) {
@@ -130,6 +134,7 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
         }
         return new BaseResultDTO.AddDTO(inventorySkuCostEntity.getId(), inventorySkuCostEntity.getCode());
     }
+
 
     /**
      * 修改
@@ -374,6 +379,10 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
         if (Objects.nonNull(viewDTO.getAllocatedMonth())){
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM");
             viewDTO.setAllocatedMonthStr(viewDTO.getAllocatedMonth().format(formatter));
+        }
+        if (Objects.nonNull(viewDTO.getAccountingMonth())) {
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM");
+            viewDTO.setAccountingMonthStr(viewDTO.getAccountingMonth().format(formatter));
         }
         List<InventorySkuCostDetailEntity> detailEntityList = inventorySkuCostDetailService.listByMainIds(Collections.singletonList(id));
         if (!CollectionUtils.isEmpty(detailEntityList)) {
@@ -680,4 +689,10 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
 
         return result != null ? result : Collections.emptyList();
     }
+
+    @Override
+    public List<InventorySkuCostDTO.InvSkuCostDTO> listInventorySkuCost(InventorySkuCostDTO.SkuCostParamDTO paramDTO) {
+        return baseMapper.listInventorySkuCost(paramDTO);
+    }
+
 }

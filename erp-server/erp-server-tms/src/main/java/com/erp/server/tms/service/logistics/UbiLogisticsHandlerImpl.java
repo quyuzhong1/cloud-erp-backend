@@ -9,12 +9,14 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.ValidatorUtil;
+import com.erp.model.file.dto.FileDTO;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.tms.enums.BusinessTypeEnum;
 import com.erp.model.tms.enums.LogisticsPlatformResultEnum;
 import com.erp.model.tms.enums.RequestStatusEnums;
 import com.erp.model.tms.vo.request.*;
 import com.erp.model.tms.vo.response.*;
+import com.erp.rpc.file.feign.FileFeign;
 import com.erp.server.tms.convert.LogisticsOrderConverter;
 import com.erp.server.tms.handler.AbstractLogisticsHandler;
 import com.erp.server.tms.service.LogisticsOperateService;
@@ -52,7 +54,8 @@ public class UbiLogisticsHandlerImpl extends AbstractLogisticsHandler {
     UbiShipperService ubiShipperService;
     @Resource
     private LogisticsOperateService logisticsOperateService;
-
+    @Resource
+    private FileFeign fileFeign;
     /**
      * 创建订单
      *
@@ -248,9 +251,14 @@ public class UbiLogisticsHandlerImpl extends AbstractLogisticsHandler {
                     RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsQueryVO), JSONUtil.toJsonStr(labelSpecs));
             List<LogisticsPrintLabelResponse> responses = new ArrayList<>();
             labelSpecs.forEach(labelResponse -> {
+                FileDTO.UploadBase64 uploadBase64 = FileDTO.UploadBase64.builder()
+                        .base64(labelResponse.getLabelContent())
+                        .fileName(logisticsGetLabelVO.getDeliveryNo() + ".pdf")
+                        .build();
+                String url = fileFeign.uploadFileByBase64(uploadBase64);
                 responses.add(LogisticsPrintLabelResponse.builder()
                         .deliveryNoList(Collections.singletonList(labelResponse.getOrderId()))
-                        .base64(labelResponse.getLabelContent())
+                        .labelUrl(url)
                         .trackNoList(Collections.singletonList(labelResponse.getTrackingNo()))
                         .build());
             });

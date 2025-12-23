@@ -79,8 +79,7 @@ public interface OperateLogService extends SuperService<OperateLogEntity> {
      */
     Boolean addModuleOperateLog(String content, String moduleType, String businessId,String operation);
 
-
-    Boolean addModuleOperateLogBySystem(String content, String moduleType, String businessId, String operation);
+    Boolean addModuleOperateLog(String content, String moduleType, String businessId,String operation,Boolean isUserSystem);
 
     /**
      * @description: 批量新增日志

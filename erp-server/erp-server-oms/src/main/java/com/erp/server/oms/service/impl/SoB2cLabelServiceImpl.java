@@ -8,6 +8,7 @@ import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.oms.dto.SoB2cLabelDTO;
 import com.erp.model.oms.entity.SoB2cLabelEntity;
 import com.erp.model.oms.enums.SoB2cLabelSourceTypeEnum;
+import com.erp.rpc.file.feign.FileFeign;
 import com.erp.server.oms.mapper.SoB2cLabelMapper;
 import com.erp.server.oms.service.OperateLogService;
 import com.erp.server.oms.service.SoB2cLabelService;
@@ -17,6 +18,7 @@ import javax.annotation.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -35,6 +37,8 @@ import java.util.stream.Collectors;
 public class SoB2cLabelServiceImpl extends SuperServiceImpl<SoB2cLabelMapper, SoB2cLabelEntity> implements SoB2cLabelService {
     @Resource
     private OperateLogService operateLogService;
+    @Resource
+    private FileFeign fileFeign;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -63,7 +67,7 @@ public class SoB2cLabelServiceImpl extends SuperServiceImpl<SoB2cLabelMapper, So
     }
 
     @Override
-    public void ManualUploadLabel(String base64, String id) {
+    public void ManualUploadLabel(String url, String id) {
 
         SoB2cLabelEntity existApiEntity = lambdaQuery().eq(SoB2cLabelEntity::getMainId, id).eq(SoB2cLabelEntity::getSourceType, SoB2cLabelSourceTypeEnum.API.getCode()).last("LIMIT 1").one();
         if(Objects.nonNull(existApiEntity)){
@@ -77,7 +81,7 @@ public class SoB2cLabelServiceImpl extends SuperServiceImpl<SoB2cLabelMapper, So
         }
         SoB2cLabelEntity addEntity = new SoB2cLabelEntity();
         addEntity.setMainId(id);
-        addEntity.setLogisticsLabelBase64(base64);
+        addEntity.setLogisticsLabelUrl(url);
         addEntity.setSourceType(SoB2cLabelSourceTypeEnum.MANUAL.getCode());
         this.save(addEntity);
     }
@@ -88,6 +92,44 @@ public class SoB2cLabelServiceImpl extends SuperServiceImpl<SoB2cLabelMapper, So
             return;
         }
         lambdaUpdate().set(SoB2cLabelEntity::getCrossLabelUrl, crossLabelUrl).eq(SoB2cLabelEntity::getMainId, mainId).update();
+    }
+
+    @Override
+    public void changeLogisticsLabelToUrl() {
+        //获取所有订单标签数量
+        Integer count = lambdaQuery().eq(SoB2cLabelEntity::getLogisticsLabelUrl, CharSequenceUtil.EMPTY).ne(SoB2cLabelEntity::getLogisticsLabelBase64, CharSequenceUtil.EMPTY).count();
+        if(count == 0){
+            return;
+        }
+        //分批处理订单标签数据
+        // 分页处理
+        int pageSize = 100;
+        int totalPages = (int) Math.ceil((double) count / pageSize);
+        for (int pageNum = 0; pageNum < totalPages; pageNum++) {
+            //每次处理100条数据
+            List<SoB2cLabelEntity> soB2cLabelEntities = lambdaQuery().eq(SoB2cLabelEntity::getLogisticsLabelUrl, CharSequenceUtil.EMPTY).ne(SoB2cLabelEntity::getLogisticsLabelBase64, CharSequenceUtil.EMPTY).orderByAsc(SoB2cLabelEntity::getCreateTime).last("LIMIT 100").list();
+            if(CollectionUtils.isEmpty(soB2cLabelEntities)){
+                return;
+            }
+            //处理数据
+            soB2cLabelEntities.forEach(this::uploadFile);
+        }
+
+    }
+
+    private void uploadFile(SoB2cLabelEntity entity) {
+        if (Objects.isNull(entity)){
+            return;
+        }
+        if (CharSequenceUtil.isBlank(entity.getLogisticsLabelBase64())){
+            return;
+        }
+        if (CharSequenceUtil.isNotBlank(entity.getLogisticsLabelUrl())){
+            return;
+        }
+        FileDTO.UploadBase64 uploadBase64 = FileDTO.UploadBase64.builder().base64(entity.getLogisticsLabelBase64()).fileName(entity.getMainId() + ".pdf").build();
+        String url = fileFeign.uploadFileByBase64(uploadBase64);
+        this.lambdaUpdate().set(SoB2cLabelEntity::getLogisticsLabelUrl, url).eq(SoB2cLabelEntity::getId, entity.getId()).update();
     }
 
     /**

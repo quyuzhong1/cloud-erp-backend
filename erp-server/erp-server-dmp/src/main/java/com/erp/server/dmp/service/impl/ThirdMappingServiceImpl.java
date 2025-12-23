@@ -40,6 +40,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.collectingAndThen;
@@ -498,7 +499,8 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
         List<ThirdMappingEntity> existMappingList = baseMapper.selectList(new LambdaQueryWrapper<ThirdMappingEntity>()
                 .eq(ThirdMappingEntity::getType, viewParamDTO.getType())
                 .eq(ThirdMappingEntity::getThirdSysType, viewParamDTO.getSysType())
-                .eq(ThirdMappingEntity::getThirdId, viewParamDTO.getThirdId())
+                .eq(StringUtils.isNotBlank(viewParamDTO.getThirdId()),ThirdMappingEntity::getThirdId, viewParamDTO.getThirdId())
+                .eq(StringUtils.isNotBlank(viewParamDTO.getThirdCode()),ThirdMappingEntity::getThirdCode, viewParamDTO.getThirdCode())
                 .eq(ThirdMappingEntity::getIsDeleted, false).eq(ThirdMappingEntity::getDisabled, false));
         return existMappingList;
     }
@@ -835,6 +837,7 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
     private void checkThirdAddList(List<ThirdAddDTO> thirdList, String sysName, ThirdMappingDTO.AddDTO addDTO, String dictPlatform) {
         String type = addDTO.getType();
         String sysId = addDTO.getSysId();
+        AtomicInteger count = new AtomicInteger();
         thirdList.forEach(thirdAddDTO -> {
             String thirdName = null;
             switch (ThirdSysTypeEnum.getByCode(type)) {
@@ -848,6 +851,11 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
                         thirdAddDTO.setThirdCode(thirdWarehouseEntity.getCode());
                     }
                     if (OmsPlatformEnum.getByCode(thirdAddDTO.getSysType()) != null) {
+                        //校验是否只添加了一个海外仓
+                        count.getAndIncrement();
+                        if (count.get() > 1) {
+                            throw new ServiceException(ApiError.ERROR_THIRD_NOT_ALLOW_MULTIPLE);
+                        }
                         OverseasProviderDTO.FeignDTO feignDTO = new OverseasProviderDTO.FeignDTO();
                         feignDTO.setCode(thirdAddDTO.getSysType());
                         feignDTO.setPlatformShortName(thirdAddDTO.getThirdShortName());
@@ -940,6 +948,11 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
                 .eq(ThirdMappingEntity::getType, type)
                 .last(" limit 1")
         );
+    }
+
+    @Override
+    public ThirdMappingEntity getShopByThirdCode(String thirdCode, String sysType) {
+        return this.baseMapper.getShopByThirdCode(thirdCode, sysType);
     }
 
 

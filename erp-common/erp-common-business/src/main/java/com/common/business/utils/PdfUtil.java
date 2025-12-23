@@ -123,6 +123,73 @@ public class PdfUtil {
             e.printStackTrace();
         }
     }
+    /**
+     * 重载方法，支持单个PDF字节数组的处理
+     * @param pdfBytes 单个PDF字节数组
+     * @return 原PDF字节数组（不进行任何处理）
+     */
+    public static byte[] mergePdfFiles(byte[] pdfBytes) {
+        if (pdfBytes == null || pdfBytes.length == 0) {
+            throw new IllegalArgumentException("PDF bytes cannot be null or empty");
+        }
+        return pdfBytes;
+    }
+    /**
+     * 合并多个PDF文件的字节数组，直接返回合并后的字节数组
+     * @param pdfBytesList PDF文件字节数组列表
+     * @return 合并后的PDF字节数组
+     */
+    public static byte[] mergePdfFiles(List<byte[]> pdfBytesList) {
+        if (pdfBytesList == null || pdfBytesList.isEmpty()) {
+            throw new IllegalArgumentException("PDF bytes list cannot be null or empty");
+        }
+
+        ByteArrayOutputStream outputStream = null;
+        Document document = null;
+
+        try {
+            // 使用第一个PDF的页面尺寸作为基础
+            PdfReader firstReader = new PdfReader(pdfBytesList.get(0));
+            document = new Document(firstReader.getPageSize(1));
+
+            // 使用ByteArrayOutputStream替代FileOutputStream
+            outputStream = new ByteArrayOutputStream();
+            PdfCopy copy = new PdfCopy(document, outputStream);
+            document.open();
+
+            // 遍历所有PDF字节数组进行合并
+            for (byte[] pdfBytes : pdfBytesList) {
+                PdfReader reader = new PdfReader(pdfBytes);
+                int pageCount = reader.getNumberOfPages();
+
+                for (int pageNum = 1; pageNum <= pageCount; pageNum++) {
+                    document.newPage();
+                    PdfImportedPage page = copy.getImportedPage(reader, pageNum);
+                    copy.addPage(page);
+                }
+                reader.close();
+            }
+
+            // 关闭文档并返回字节数组
+            document.close();
+            return outputStream.toByteArray();
+
+        } catch (IOException | DocumentException e) {
+            throw new RuntimeException("PDF merge failed", e);
+        } finally {
+            // 确保资源被正确关闭
+            if (document != null && document.isOpen()) {
+                document.close();
+            }
+            if (outputStream != null) {
+                try {
+                    outputStream.close();
+                } catch (IOException e) {
+                    // 忽略关闭异常
+                }
+            }
+        }
+    }
 
     /**
      * base62 文件，转byte[]

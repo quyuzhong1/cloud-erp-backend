@@ -5,13 +5,16 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
+import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.constant.DmpPullConstant;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -20,6 +23,8 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
+import com.erp.model.dmp.dto.DmpInoutDTO;
+import com.erp.model.dmp.enums.DmpInputTaskTaskTypeEnum;
 import com.erp.model.workflow.dto.ApproveTaskDetailDTO;
 import com.erp.model.workflow.dto.ApproveTaskInfoDTO;
 import com.erp.model.workflow.dto.ProcessDelegateDTO;
@@ -28,6 +33,7 @@ import com.erp.model.workflow.entity.ApproveTaskInfoEntity;
 import com.erp.model.workflow.entity.CfgQueryOptionEntity;
 import com.erp.model.workflow.entity.CfgThirdProcessEntity;
 import com.erp.model.workflow.enums.*;
+import com.erp.rpc.dmp.feign.DmpInoutTaskFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.workflow.context.CreateBillFactory;
 import com.erp.server.workflow.handler.CreateBillHandler;
@@ -40,6 +46,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.time.Duration;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -74,6 +81,10 @@ public class ApproveTaskInfoServiceImpl extends SuperServiceImpl<ApproveTaskInfo
 
     @Resource
     private CfgThirdProcessService cfgThirdProcessService;
+
+    @Resource
+    private DmpInoutTaskFeign dmpInoutTaskFeign;
+
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -276,6 +287,34 @@ public class ApproveTaskInfoServiceImpl extends SuperServiceImpl<ApproveTaskInfo
         return Boolean.TRUE;
     }
 
+    @Override
+    public BatchResultDTO updateThirdStatus(String id) {
+        ApproveTaskInfoEntity entity = getById(id);
+        if (ObjectUtil.isEmpty(entity)) {
+            throw new ServiceException(ApiError.PROCESS_APPROVE_TASK_NOT_EXIST);
+        }
+        //根据审批定义和审批实例id生成中台即时拉取任务
+        DmpInoutDTO.CreateInputDTO dto = new DmpInoutDTO.CreateInputDTO();
+        dto.setSystemCode(CfgApproveSyncSyncPlatformEnum.FEISHU.getCode());
+        dto.setBillType(DmpPullConstant.INSTANCE_IDS);
+        dto.setNextLevelId(entity.getThirdApprovalCode());
+        dto.setTaskType(DmpInputTaskTaskTypeEnum.NORMAL.getCode());
+        // 手动指定创建审批实例id
+        Map<String, Object> map = Collections.singletonMap("instanceId",entity.getThirdInstanceId());
+        dto.setDetailExtendJson(JSON.toJSONString(map));
+
+        List<String> requestList = new ArrayList<>();
+        try {
+            requestList = dmpInoutTaskFeign.doHotfixReturnInputTask(Collections.singletonList(dto));
+        }catch (Exception e){
+            throw new ServiceException(e.getMessage());
+        }
+        if (CollUtil.isEmpty(requestList)) {
+            throw new ServiceException("所选数据未找到同步信息");
+        }
+        return BatchResultDTO.success(entity.getId(), entity.getBussinessCode(), OperationTypeEnum.MANUAL_GENERATE);
+    }
+
     /**
      * 分页查询数据处理
      * @author will
@@ -296,6 +335,15 @@ public class ApproveTaskInfoServiceImpl extends SuperServiceImpl<ApproveTaskInfo
             listDTO.setStatusName(ApproveTaskStatusEnum.getName(listDTO.getStatus()));
             //数大臣单据名称
             listDTO.setBussinessKeyName(SourceTypeEnum.getName(listDTO.getBussinessKey()));
+            //树大臣审核状态
+            listDTO.setBussinessApproveStatusName(ApproveStatusEnum.getName(listDTO.getBussinessApproveStatus()));
+
+            //处理时效
+            if (listDTO.getHappenTime() != null && listDTO.getFinishTime() != null) {
+                // 计算时间间隔
+                Duration duration = Duration.between(listDTO.getHappenTime(), listDTO.getFinishTime());
+                listDTO.setHandleDuration((int) duration.toHours());
+            }
         }
     }
 

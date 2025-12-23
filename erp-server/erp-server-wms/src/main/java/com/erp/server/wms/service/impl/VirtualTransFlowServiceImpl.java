@@ -37,12 +37,15 @@ import com.erp.server.wms.service.VirtualTransFlowDetailService;
 import com.erp.server.wms.service.VirtualTransFlowService;
 import com.erp.server.wms.service.WarehouseService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_VIRTUAL_TRANS_FLOW;
@@ -71,6 +74,9 @@ public class VirtualTransFlowServiceImpl extends SuperServiceImpl<VirtualTransFl
     @Resource
     private VirtualTransFlowDetailService virtualTransFlowDetailService;
 
+    @Resource
+    @Qualifier("wmsDataCompareExecutorPool")
+    private ExecutorService executorPool;
 
     @Override
     public PagingVO<VirtualTransFlowDTO.ListDTO> paging(PagingDTO<VirtualTransFlowDTO.SearchParamDTO> dto) {
@@ -264,7 +270,14 @@ public class VirtualTransFlowServiceImpl extends SuperServiceImpl<VirtualTransFl
             baseMapper.cleanALlData();
         }
         log.warn("清除数据完成，开始处理虚拟库存流水数据，参数:{}", dto);
-        virtualTransFlowDetailService.handleAddTransFlowDetail(virtualTransFlowList);
+        
+        Map<String, List<VirtualTransFlowEntity>> flowMap = virtualTransFlowList.stream().collect(Collectors.groupingBy(obj -> CharSequenceUtil.format("{}-{}-{}", obj.getSkuId(), obj.getWarehouseId(), obj.getVirtualWarehouseId())));
+        // 使用固定大小的线程池
+        CompletableFuture<Void> allOf = CompletableFuture.allOf(flowMap.entrySet().stream()
+                .map(value -> CompletableFuture.runAsync(() ->
+                        virtualTransFlowDetailService.handleAddTransFlowDetail(value.getValue()), executorPool))
+                .toArray(CompletableFuture[]::new));
+        allOf.thenRun(() -> log.info("虚拟仓库存流水消费，所有任务执行完毕")).join();
     }
 
     @Override

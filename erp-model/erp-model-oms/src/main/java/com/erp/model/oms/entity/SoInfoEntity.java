@@ -341,6 +341,12 @@ public class SoInfoEntity extends BaseEntity<SoInfoEntity> {
      */
     @TableField("source_id")
     private String sourceId;
+
+    /**
+     * 来源单号
+     */
+    @TableField("source_code")
+    private String sourceCode;
     /**
      * 来源类型
      */
@@ -398,6 +404,24 @@ public class SoInfoEntity extends BaseEntity<SoInfoEntity> {
      */
     @TableField("dict_platform")
     private String dictPlatform;
+
+    /**
+     * 省/州
+     */
+    @TableField("province")
+    private String province;
+
+    /**
+     * 城市
+     */
+    @TableField("city")
+    private String city;
+
+    /**
+     * 邮编
+     */
+    @TableField("post_code")
+    private String postCode;
 
     public static final String CODE = "code";
 

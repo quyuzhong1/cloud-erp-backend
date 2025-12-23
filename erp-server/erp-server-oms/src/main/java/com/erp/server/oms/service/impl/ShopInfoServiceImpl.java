@@ -1902,7 +1902,9 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         //设置用户信息
         setCustom(dto.getCustomerId(), shop);
         shop.setType(ShopTypeEnum.INTERNAL.getCode());
-        shop.setAuthStatus(AuthStatusEnum.ALREADY.getCode());
+        if(!shop.getDictPlatform().equals(PlatformDictEnum.PDD.getCode())){
+            shop.setAuthStatus(AuthStatusEnum.ALREADY.getCode());
+        }
         shop.setAuthTime(LocalDateTime.now());
         Boolean result = this.save(shop);
         //添加用户权限

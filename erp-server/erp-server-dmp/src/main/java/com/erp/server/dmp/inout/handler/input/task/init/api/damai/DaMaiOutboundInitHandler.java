@@ -28,6 +28,7 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -69,10 +70,11 @@ public class DaMaiOutboundInitHandler extends DmpInputInitHandler {
 			throw new ServiceException("大卖仓对应授权ID信息不存在");
 		}
 		//查询销售订单海外仓库待发货的订单
+		List<String> statusList = Arrays.asList(SoB2cWarehouseDeliveryStatusEnum.WAIT_HANDLE.getStatus(),SoB2cWarehouseDeliveryStatusEnum.INTERCEPTING.getStatus());
 		//查询待发货的订单
 		List<ThirdWarehouseDeliveryEntity> deliveryList = FeignQuery.create(ThirdWarehouseDeliveryEntity.class)
 				.eq(ThirdWarehouseDeliveryEntity::getThirdWarehousePlatform, PlatformDictEnum.DA_MAI.getCode())
-				.eq(ThirdWarehouseDeliveryEntity::getStatus, SoB2cWarehouseDeliveryStatusEnum.WAIT_HANDLE.getStatus())
+				.in(ThirdWarehouseDeliveryEntity::getStatus, statusList)
 				.list();
 		List<String> allCodes = deliveryList.stream().map(ThirdWarehouseDeliveryEntity::getCode).collect(Collectors.toList());
 		//分组，每组最多50个

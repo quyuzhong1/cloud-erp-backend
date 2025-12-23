@@ -110,6 +110,16 @@ public class FsInstancesServiceImpl implements FsInstancesService {
                 log.warn("未找到对应的三方审批生成任务信息，无需消费,thirdInstanceId = {}", jsonObject.getStr(FsRequestBodyAttributesEnum.INSTANCECODE.getCode()));
                 return;
             }
+            String erpSpproveStatus = FSApprovalStatusEnum.getErpApproveStatusByCode(statusEnum.getCode()).getCode();
+            if (CharSequenceUtil.equals(one.getBussinessApproveStatus(), erpSpproveStatus)) {
+                log.warn("三方审批生成任务信息状态未变化，无需重复消费,thirdInstanceId = {},status = {}", jsonObject.getStr(FsRequestBodyAttributesEnum.INSTANCECODE.getCode()), erpSpproveStatus);
+                return;
+            }
+            one.setBussinessApproveStatus(erpSpproveStatus);
+            one.setFinishTime(LocalDateTime.now());
+            approveTaskInfoService.updateById(one);
+
+
             handleCallbackLogic(jsonObject, statusEnum, one);
         }
     }
@@ -187,7 +197,10 @@ public class FsInstancesServiceImpl implements FsInstancesService {
         taskInfo.setBussinessKey(thirdProcessEntity.getBussinessKey());
         taskInfo.setBussinessCode(batchResultDTO.getCode());
         taskInfo.setBussinessId(batchResultDTO.getId());
-        taskInfo.setHappenTime(LocalDateTime.now());
+        LocalDateTime now = LocalDateTime.now();
+        taskInfo.setHappenTime(now);
+        taskInfo.setFinishTime(now);
+        taskInfo.setBussinessApproveStatus(ApproveStatusEnum.APPROVE.getCode());
         taskInfo.setStatus(taskStatus);
         taskInfo.setReason(reason);
         approveTaskInfoService.add(taskInfo);
@@ -330,6 +343,9 @@ public class FsInstancesServiceImpl implements FsInstancesService {
         processDTO.setApproveStatus(ApproveTypeEnum.getByCode(approveStatus));
         // 来自第三方系统的用户ID可能需要转换为您系统内部的用户ID
         SysUserThirdEntity user = sysUserFeign.getUserByThird(ProcessSourcePlatformEnum.FS.getCode().toUpperCase(), userId);
+        if (user == null) {
+            throw new ServiceException(ApiError.PROCESS_FEISHU_USER_NOT_FOUND, userId);
+        }
         processDTO.setApproveUserId(user.getUserId());
         processDTO.setApproveTime(approveTime);
         processDTO.setComment(comment);

@@ -8,6 +8,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.utils.FileUtil;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.ValidatorUtil;
+import com.erp.model.file.dto.FileDTO;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.tms.enums.BusinessTypeEnum;
 import com.erp.model.tms.enums.PaperSizeEnum;
@@ -17,6 +18,7 @@ import com.erp.model.tms.vo.response.CancelResponseVO;
 import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
 import com.erp.model.tms.vo.response.LogisticsPrintLabelResponse;
 import com.erp.model.tms.vo.response.LogisticsServiceResponseVO;
+import com.erp.rpc.file.feign.FileFeign;
 import com.erp.server.tms.convert.LogisticsChannelConverter;
 import com.erp.server.tms.convert.LogisticsOrderConverter;
 import com.erp.server.tms.handler.AbstractLogisticsHandler;
@@ -59,7 +61,8 @@ public class BaTongLogisticsHandlerImpl extends AbstractLogisticsHandler {
 
     @Resource
     private LogisticsOperateService logisticsOperateService;
-
+    @Resource
+    private FileFeign fileFeign;
 
     @Override
     public ApiResult<LogisticsOrderResponseVO> createOrder(LogisticsOrderVO logisticsOrder) {
@@ -324,8 +327,14 @@ public class BaTongLogisticsHandlerImpl extends AbstractLogisticsHandler {
                 LabelResponse labelResponse= labelResponseList.get(0);
                 String labelUrl = labelResponse.getLabelUrl();
                 String base64 = FileUtil.convertPdfUrlToBase64(labelUrl);
-                labelResponse.setBase64(base64);
-                response.setBase64(base64);
+
+                FileDTO.UploadBase64 uploadBase64 = FileDTO.UploadBase64.builder()
+                        .base64(base64)
+                        .fileName(deliveryNo + ".pdf")
+                        .build();
+                String url = fileFeign.uploadFileByBase64(uploadBase64);
+                labelResponse.setBase64(url);
+                response.setLabelUrl(url);
                 logisticsOperateService.pullOperateLog(logisticsGetLabelVO.getOrderId(),
                         logisticsGetLabelVO.getDeliveryNo(), BusinessTypeEnum.GET_LABEL.getCode(), LogisticsPlatformEnum.BaTong.getCode(),
                         RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsGetLabelVO), JSONUtil.toJsonStr(labelResponse));

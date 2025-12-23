@@ -10,6 +10,7 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.erp.server.dmp.service.OperateLogService;
 import com.common.core.exception.ServiceException;
+import org.apache.commons.lang.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -94,6 +95,14 @@ public class DmpThirdWarehouseInfoServiceImpl extends SuperServiceImpl<DmpThirdW
                     .list();
         }
         return Collections.emptyList();
+    }
+
+    @Override
+    public List<DmpThirdWarehouseInfoEntity> getByPlatformAndCode(String platform, String code) {
+        if(StringUtils.isBlank(platform) || StringUtils.isBlank(code)){
+            return Collections.emptyList();
+        }
+        return lambdaQuery().eq(DmpThirdWarehouseInfoEntity::getSourcePlatform,platform).eq(DmpThirdWarehouseInfoEntity::getWarehouseCode,code).list();
     }
 
 

@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.oms.mapper.DeliveryBoxRuleDetailMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.oms.entity.DeliveryBoxRuleDetailEntity">
+       <result column="id" property="id" />
+       <result column="create_time" property="createTime" />
+       <result column="update_time" property="updateTime" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="delivery_sku_id" property="deliverySkuId" />
+       <result column="delivery_sku_no" property="deliverySkuNo" />
+       <result column="delivery_product_name" property="deliveryProductName" />
+       <result column="per_box_qty" property="perBoxQty" />
+       <result column="sort" property="sort" />
+       <result column="invalid_time" property="invalidTime" />
+       <result column="invalid_status" property="invalidStatus" />
+       <result column="invalid_user_id" property="invalidUserId" />
+       <result column="invalid_user_name" property="invalidUserName" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_time,
+        update_time,
+        create_user_name,
+        create_user_id,
+        update_user_name,
+        update_user_id,
+        version,
+        is_deleted,
+        sku_id, sku_no,
+        product_name,
+        per_box_qty,
+        priority,
+        invalid_time,
+        invalid_status,
+        invalid_user_id,
+        invalid_user_name
+    </sql>
+
+
+</mapper>

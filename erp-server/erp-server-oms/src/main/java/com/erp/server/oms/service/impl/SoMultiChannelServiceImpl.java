@@ -405,6 +405,9 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
 
         // 更新审核信息
         updateForDisApprove(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
+        if (CreateStatusEnum.CREATING.getCode().equals(entity.getCreateStatus())){
+            throw new ServiceException("创建中不允许反审核");
+        }
         if (!CreateStatusEnum.WAIT.getCode().equals(entity.getCreateStatus())){
             Boolean b = dmpSyncFeign.batchNoNeedSyncBySourceCode(new BaseIdsDTO.SourceCodeDTO(Collections.singletonList(entity.getDeliveryCode()), "反审核取消同步"));
             if (!Boolean.TRUE.equals(b)){
@@ -652,6 +655,9 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
                 log.error("亚马逊发货拦截异常：", e);
                 return BatchResultDTO.fail(entity.getId(), entity.getDeliveryCode(), "亚马逊取消订单失败" + e.getMessage());
             }
+        }
+        if (CreateStatusEnum.CREATING.getCode().equals(entity.getCreateStatus())){
+            throw new ServiceException("创建中不允许拦截");
         }
         if (!CreateStatusEnum.WAIT.getCode().equals(entity.getCreateStatus())) {
             Boolean b = dmpSyncFeign.batchNoNeedSyncBySourceCode(new BaseIdsDTO.SourceCodeDTO(Collections.singletonList(entity.getDeliveryCode()), "反审核取消同步"));

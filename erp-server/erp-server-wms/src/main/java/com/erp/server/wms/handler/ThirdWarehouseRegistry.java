@@ -46,7 +46,7 @@ public class ThirdWarehouseRegistry {
         }
         ThirdWarehouseService warehouseService = getHandler(authEntity.getCode());
         if(Objects.isNull(warehouseService)){
-            throw new ServiceException(ApiError.COMMON_PROVIDER_SERVICE_NOT_ENABLED);
+            throw new ServiceException(ApiError.COMMON_PROVIDER_SERVICE_NOT_ENABLED, authEntity.getCode());
         }
         return warehouseService;
     }

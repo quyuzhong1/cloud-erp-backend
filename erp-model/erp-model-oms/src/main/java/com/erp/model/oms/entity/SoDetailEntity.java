@@ -293,6 +293,30 @@ public class SoDetailEntity extends BaseEntity<SoDetailEntity> {
     @TableField("platform_sku_no")
     private String platformSkuNo;
 
+    /**
+     * 单箱数量
+     */
+    @TableField("per_box_qty")
+    private Integer perBoxQty;
+
+    /**
+     * 发货skuId
+     */
+    @TableField("delivery_sku_id")
+    private String deliverySkuId;
+
+    /**
+     * 发货skuNo
+     */
+    @TableField("delivery_sku_no")
+    private String deliverySkuNo;
+
+    /**
+     * 发货箱数
+     */
+    @TableField("box_qty")
+    private Integer boxQty;
+
 
     public static final String MAIN_ID = "main_id";
 

@@ -142,7 +142,7 @@ public class OverseasTransferWarehouseServiceImpl extends SuperServiceImpl<Overs
             return convertResult(list);
         }
 
-        if (OmsPlatformEnum.OMS_IML.getCode().equalsIgnoreCase(providerEntity.getCode())){
+        if (OmsPlatformEnum.OMS_IML.getCode().equalsIgnoreCase(providerEntity.getCode()) || OmsPlatformEnum.TONG_YOU.getCode().equalsIgnoreCase(providerEntity.getCode())){
             List<OverseasProviderWarehouseEntity> list = overseasProviderWarehouseService.lambdaQuery()
                     .eq(OverseasProviderWarehouseEntity::getMainId, entity.getMainId())
                     .eq(OverseasProviderWarehouseEntity::getPlatformWarehouseType,"1")

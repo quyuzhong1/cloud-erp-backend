@@ -1,6 +1,5 @@
 package com.erp.model.oms.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.annotation.Dict;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
@@ -95,6 +94,10 @@ public class SoInfoDTO implements Serializable {
          * code
          */
         private String code;
+        /**
+         * 来源单号
+         */
+        private String sourceCode;
 
         /**
          * 平台订单编号
@@ -711,6 +714,31 @@ public class SoInfoDTO implements Serializable {
          * 客户PO号
          */
         private String customerPO;
+
+        /**
+         * 单箱数量
+         */
+        private Integer perBoxQty;
+
+        /**
+         * 发货skuId
+         */
+        private String deliverySkuId;
+
+        /**
+         * 发货sku编码
+         */
+        private String deliverySkuNo;
+
+        /**
+         * 发货箱数
+         */
+        private Integer boxQty;
+
+        /**
+         * 经营类型
+         */
+        private String warehouseManageType;
     }
 
     /**
@@ -992,7 +1020,7 @@ public class SoInfoDTO implements Serializable {
          * 交货方式 oms/common/enumDropDown?type=DeliveryMode
          * 描述：deliverGoods（发货）selfExtraction（自提）
          */
-        @StateEnumValue(strValues = {"deliverGoods", "selfExtraction"}, message = "交货方式有误", groups = {AddGroup.class})
+        @StateEnumValue(strValues = {"EXPRESS", "TRUCK","SELF","TRUCK_SELF"}, message = "交货方式有误", groups = {AddGroup.class})
         private String deliveryMode;
 
 
@@ -1095,7 +1123,10 @@ public class SoInfoDTO implements Serializable {
          * 来源类型
          */
         private String sourceType;
-
+        /**
+         * 来源单号
+         */
+        private String sourceCode;
         /**
          * 平台更新时间
          */
@@ -1118,6 +1149,21 @@ public class SoInfoDTO implements Serializable {
          * 授信抵扣金额
          */
         private BigDecimal creditDeductAmount;
+
+        /**
+         * 省/州
+         */
+        private String province;
+
+        /**
+         * 城市
+         */
+        private String city;
+
+        /**
+         * 邮编
+         */
+        private String postCode;
 
         /**
          * 收款单信息
@@ -1482,6 +1528,26 @@ public class SoInfoDTO implements Serializable {
         private BigDecimal creditDeductAmount;
 
         /**
+         * 省/州
+         */
+        private String province;
+
+        /**
+         * 城市
+         */
+        private String city;
+
+        /**
+         * 邮编
+         */
+        private String postCode;
+
+        /**
+         * 是否b2b发货
+         */
+        private Boolean isB2BApiDelivery;
+
+        /**
          * 订单产品详情
          */
         private List<SoDetailDTO.ViewDTO> detailList;
@@ -1789,7 +1855,7 @@ public class SoInfoDTO implements Serializable {
          * 交货方式 oms/common/enumDropDown?type=DeliveryMode
          * 描述：deliverGoods（发货）selfExtraction（自提）
          */
-        @StateEnumValue(strValues = {"deliverGoods", "selfExtraction"}, message = "交货方式有误", groups = {AddGroup.class})
+        @StateEnumValue(strValues = {"EXPRESS", "TRUCK","SELF","TRUCK_SELF"}, message = "交货方式有误", groups = {AddGroup.class})
         private String deliveryMode;
 
 
@@ -1875,6 +1941,21 @@ public class SoInfoDTO implements Serializable {
          */
         @Dict(enumClass = OrderSubTypeEnum.class)
         private String transactionSubType;
+
+        /**
+         * 省/州
+         */
+        private String province;
+
+        /**
+         * 城市
+         */
+        private String city;
+
+        /**
+         * 邮编
+         */
+        private String postCode;
 
         /**
          * 收款单信息
@@ -2606,6 +2687,11 @@ public class SoInfoDTO implements Serializable {
          */
         @NotBlank(message = "退货物流单号不能为空")
         private String returnLogisticCode;
+
+        /**
+         * 单箱数量
+         */
+        private Integer perBoxQty;
     }
 
     @Data

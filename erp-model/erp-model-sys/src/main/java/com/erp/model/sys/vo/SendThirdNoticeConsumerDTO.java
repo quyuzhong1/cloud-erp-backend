@@ -1,5 +1,7 @@
 package com.erp.model.sys.vo;
 
+import com.erp.model.msg.dto.NoticeMsgInfoDTO;
+import com.erp.model.sys.entity.ThirdNoticePushRecordEntity;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -14,9 +16,9 @@ import java.util.*;
  */
 @Data
 @NoArgsConstructor
-public class SendThirdNoticeConsumerDTO extends FsBatchSendMessageDTO implements Serializable {
+public class SendThirdNoticeConsumerDTO extends NoticeMsgInfoDTO implements Serializable {
     /**
-     * 推送记录主键id
+     * 推送记录
      */
-    private String messageId;
+    private ThirdNoticePushRecordEntity thirdNoticePushRecordEntity;
 }

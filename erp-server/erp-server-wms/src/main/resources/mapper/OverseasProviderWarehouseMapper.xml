@@ -49,6 +49,7 @@
             opw.warehouse_name,
             opw.warehouse_code,
             opw.disabled,
+            opw.is_b2b_api_delivery as isB2BApiDelivery,
             op.code AS providerCode,
             op.name AS providerName,
             op.owner_code as ownerCode

@@ -9,6 +9,7 @@ import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.ValidatorUtil;
+import com.erp.model.file.dto.FileDTO;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.tms.enums.BusinessTypeEnum;
 import com.erp.model.tms.enums.RequestStatusEnums;
@@ -22,6 +23,7 @@ import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
 import com.erp.model.tms.vo.response.LogisticsPrintLabelResponse;
 import com.erp.model.tms.vo.response.LogisticsServiceResponseVO;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
+import com.erp.rpc.file.feign.FileFeign;
 import com.erp.server.tms.convert.LogisticsOperationOrderConverter;
 import com.erp.server.tms.convert.LogisticsChannelConverter;
 import com.erp.server.tms.convert.LogisticsOrderConverter;
@@ -60,7 +62,8 @@ public class YanWenLogisticsHandlerImpl extends AbstractLogisticsHandler {
     @Resource
     private DmpTaskFeign dmpTaskFeign;
     public static final String YYYY_MM_DD = "yyyy-MM-dd";
-
+    @Resource
+    private FileFeign fileFeign;
     @Override
     public ApiResult<List<LogisticsSaleChannelEntity>> getChannel(ChanelQueryVO chanelQueryVO) {
         try {
@@ -187,8 +190,13 @@ public class YanWenLogisticsHandlerImpl extends AbstractLogisticsHandler {
                     response.failure(getPlatForm().getName(),logisticsGetLabelVO.getDeliveryNo(),labelResponse.getMessage());
                     isSuccess = false;
                 }else {
-                    String prefix = "data:application/pdf;base64,";
-                    response.setBase64(prefix + labelResponse.getData().getBase64String());
+                    FileDTO.UploadBase64 uploadBase64 = FileDTO.UploadBase64.builder()
+                            .base64(labelResponse.getData().getBase64String())
+                            .fileName(logisticsGetLabelVO.getDeliveryNo() + ".pdf")
+                            .build();
+                    String url = fileFeign.uploadFileByBase64(uploadBase64);
+//                    String prefix = "data:application/pdf;base64,";
+                    response.setLabelUrl(url);
                     response.setTransportNoList(Collections.singletonList(labelResponse.getData().getWaybillNumber()));
                     response.setDeliveryNoList(Collections.singletonList(logisticsGetLabelVO.getDeliveryNo()));
                     logisticsOperateService.pullOperateLog(logisticsGetLabelVO.getOrderId(),

@@ -31,7 +31,7 @@ public interface SecondarySortingService {
      * @param waveId     波次编号
      * @see SecondarySortingDTO.BasketDetail
      */
-    void printDistribution(String waveId, HttpServletResponse response);
+    String printDistribution(String waveId, HttpServletResponse response);
     /**
      * 重置
      * @param waveId 波次id
