@@ -622,9 +622,12 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         //总计数量
         Integer qtyTotal = detailList.stream().map(SoDetailEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
         variablesMap.put("qtyTotal", qtyTotal);
+        //总销售毛利
+        BigDecimal saleProfitRateTotal = detailList.stream().map(SoDetailEntity::getSaleProfit).reduce(BigDecimal.ZERO, BigDecimal::add);
+        //总销售金额(本位币)
+        BigDecimal saleAmountTotal = detailList.stream().map(SoDetailEntity::getAmountLocalCurrency).reduce(BigDecimal.ZERO, BigDecimal::add);
         //总销售毛利率
-        BigDecimal saleProfitRateTotal = detailList.stream().map(SoDetailEntity::getSaleProfitRate).reduce(BigDecimal.ZERO, BigDecimal::add);
-        variablesMap.put("saleProfitRateTotal", saleProfitRateTotal);
+        variablesMap.put("saleProfitRateTotal", MathUtil.multiplyWithTwo(MathUtil.divide(saleProfitRateTotal, saleAmountTotal), MathUtil.BigDecimal_100));
 
         //SKU
         String skuNo = detailList.stream().map(SoDetailEntity::getSkuNo).collect(Collectors.joining(","));
