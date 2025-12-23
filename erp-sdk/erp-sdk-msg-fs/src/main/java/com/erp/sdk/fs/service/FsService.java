@@ -237,12 +237,12 @@ public class FsService {
             resp = client.approval().v4().approval().unsubscribe(req);
         } catch (Exception e) {
             log.error("飞书审批定义取消订阅异常>>>>>{}", e.getMessage());
-            throw new ServiceException(ApiError.WORKFLOW_FEI_SHU_DEFINITION_SUBSCRIBE_FAIL);
+            throw new ServiceException(ApiError.WORKFLOW_FEI_SHU_DEFINITION_UNSUBSCRIBE_FAIL);
         }
         // 处理服务端错误
         if (!resp.success()) {
             log.error("飞书审批取消定义订阅失败>>>>>{}", resp.getMsg());
-            throw new ServiceException(ApiError.WORKFLOW_FEI_SHU_DEFINITION_SUBSCRIBE_FAIL);
+            throw new ServiceException(ApiError.WORKFLOW_FEI_SHU_DEFINITION_UNSUBSCRIBE_FAIL);
         }
         log.warn("飞书审批定义取消订阅成功>>>>>{}", approvalCode);
     }
