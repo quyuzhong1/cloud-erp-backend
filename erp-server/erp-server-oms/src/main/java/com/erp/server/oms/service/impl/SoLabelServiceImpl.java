@@ -5,37 +5,31 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
-import com.common.business.utils.PdfUtil;
-import com.common.business.wrapper.FeignQuery;
-import com.erp.model.oms.entity.SoB2cLogisticsEntity;
-import com.erp.model.oms.entity.SoLabelEntity;
-import com.erp.model.wms.dto.SoDeliveryNoticeDTO;
-import com.erp.model.wms.entity.SoDeliveryNoticeEntity;
-import com.erp.server.oms.convert.SoLabelConverter;
-import com.erp.server.oms.mapper.SoLabelMapper;
-import com.erp.server.oms.service.SoLabelService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
-import com.erp.server.oms.service.OperateLogService;
-import com.erp.server.oms.service.CommonService;
+import com.common.business.wrapper.FeignQuery;
+import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
+import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.file.dto.FileDTO;
+import com.erp.model.oms.dto.SoLabelDTO;
+import com.erp.model.oms.entity.SoLabelEntity;
+import com.erp.model.wms.entity.SoDeliveryNoticeEntity;
+import com.erp.rpc.file.feign.FileFeign;
+import com.erp.server.oms.convert.SoLabelConverter;
+import com.erp.server.oms.mapper.SoLabelMapper;
+import com.erp.server.oms.service.OperateLogService;
+import com.erp.server.oms.service.SoLabelService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.oms.dto.SoLabelDTO;
+import org.apache.commons.collections4.CollectionUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.io.IOException;
-import java.io.OutputStream;
+import javax.annotation.Resource;
 import java.util.*;
 import java.util.stream.Collectors;
-
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
-import sun.misc.BASE64Decoder;
-
-import javax.servlet.http.HttpServletResponse;
 
 /**
  * <p>
@@ -50,6 +44,8 @@ import javax.servlet.http.HttpServletResponse;
 public class SoLabelServiceImpl extends SuperServiceImpl<SoLabelMapper, SoLabelEntity> implements SoLabelService {
     @Autowired
     private OperateLogService operateLogService;
+    @Resource
+    private FileFeign fileFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -118,8 +114,8 @@ public class SoLabelServiceImpl extends SuperServiceImpl<SoLabelMapper, SoLabelE
         }
         dtoList.forEach(label -> {
             SoLabelEntity labelEntity = soLabelEntityList.stream().filter(e -> e.getMainId().equals(label.getSoId())).findFirst().orElse(null);
-            if (Objects.nonNull(labelEntity) && CharSequenceUtil.isNotBlank(labelEntity.getLogisticsLabelBase64())){
-                label.setFileData(labelEntity.getLogisticsLabelBase64());
+            if (Objects.nonNull(labelEntity) && CharSequenceUtil.isNotBlank(labelEntity.getLogisticsLabelUrl())){
+                label.setLogisticsLabelUrl(labelEntity.getLogisticsLabelUrl());
                 label.setHasLabel(Boolean.TRUE);
             }else {
                 label.setHasLabel(Boolean.FALSE);
@@ -129,32 +125,53 @@ public class SoLabelServiceImpl extends SuperServiceImpl<SoLabelMapper, SoLabelE
     }
 
     @Override
-    public void printLogisticsLabel(List<String> ids, HttpServletResponse response) {
+    public String printLogisticsLabel(List<String> ids) {
         List<SoLabelEntity> soLabelEntityList = this.listByMainIds(ids);
         if (CollUtil.isEmpty(soLabelEntityList)){
             throw new ServiceException("无可打印的物流面单");
         }
-        Map<String, String> baseMap = soLabelEntityList.stream().collect(Collectors.toMap(SoLabelEntity::getMainId, SoLabelEntity::getLogisticsLabelBase64));
-        List<String> base64List = ids.stream().map(e -> baseMap.getOrDefault(e,null)).filter(CharSequenceUtil::isNotBlank).collect(Collectors.toList());
+        Map<String, String> baseMap = soLabelEntityList.stream().collect(Collectors.toMap(SoLabelEntity::getMainId, SoLabelEntity::getLogisticsLabelUrl));
+        List<String> urlList = ids.stream().map(e -> baseMap.getOrDefault(e,null)).filter(CharSequenceUtil::isNotBlank).collect(Collectors.toList());
         try {
-            String newMergePdfBase64 = PdfUtil.getNewMergePdfBase64(base64List);
-            // 设置响应头，告诉浏览器返回的是一个 PDF 文件
-            response.setContentType("application/pdf");
-            response.setHeader("Content-Disposition", "inline; filename=\"filename.pdf\""); // 设置 PDF 的显示方式和文件名
-            BASE64Decoder decoder = new BASE64Decoder();
-            try (OutputStream out = response.getOutputStream()) {
-                // 将 Base64 编码的字符串解码为字节数组
-                byte[] pdfBytes = decoder.decodeBuffer(newMergePdfBase64);
-                // 将字节数组写入到响应输出流中
-                out.write(pdfBytes);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
+            return fileFeign.mergeFiles(urlList);
         } catch (Exception e) {
             e.printStackTrace();
             throw new ServiceException(ApiError.ERROR_PDF_SO_MERGE);
         }
+    }
+
+    @Override
+    public void changeLogisticsLabelToUrl() {
+        //获取所有订单标签数量
+        Integer count = lambdaQuery().eq(SoLabelEntity::getLogisticsLabelUrl, CharSequenceUtil.EMPTY).ne(SoLabelEntity::getLogisticsLabelBase64, CharSequenceUtil.EMPTY).count();
+        if(count == 0){
+            return;
+        }
+        //分批处理订单标签数据
+        // 分页处理
+        int pageSize = 100;
+        int totalPages = (int) Math.ceil((double) count / pageSize);
+        for (int pageNum = 0; pageNum < totalPages; pageNum++) {
+            //每次处理100条数据
+            List<SoLabelEntity> soB2cLabelEntities = lambdaQuery().eq(SoLabelEntity::getLogisticsLabelUrl, CharSequenceUtil.EMPTY).ne(SoLabelEntity::getLogisticsLabelBase64, CharSequenceUtil.EMPTY).orderByAsc(SoLabelEntity::getCreateTime).last("LIMIT 100").list();
+            if(CollectionUtils.isEmpty(soB2cLabelEntities)){
+                return;
+            }
+            //处理数据
+            soB2cLabelEntities.forEach(this::uploadFile);
+        }
+    }
+
+    private void uploadFile(SoLabelEntity entity) {
+        if (Objects.isNull(entity)){
+            return;
+        }
+        if (CharSequenceUtil.isNotBlank(entity.getLogisticsLabelUrl())){
+            return;
+        }
+        FileDTO.UploadBase64 uploadBase64 = FileDTO.UploadBase64.builder().base64(entity.getLogisticsLabelBase64()).fileName(entity.getMainId() + ".pdf").build();
+        String url = fileFeign.uploadFileByBase64(uploadBase64);
+        this.lambdaUpdate().set(SoLabelEntity::getLogisticsLabelUrl, url).eq(SoLabelEntity::getId, entity.getId()).update();
     }
 
     private List<SoLabelEntity> listByMainIds(List<String> soIds) {

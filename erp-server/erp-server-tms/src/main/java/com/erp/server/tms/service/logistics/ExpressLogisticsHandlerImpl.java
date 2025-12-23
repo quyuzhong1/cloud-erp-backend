@@ -6,11 +6,13 @@ import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.utils.FileUtil;
 import com.common.core.utils.ValidatorUtil;
+import com.erp.model.file.dto.FileDTO;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.tms.enums.BusinessTypeEnum;
 import com.erp.model.tms.enums.RequestStatusEnums;
 import com.erp.model.tms.vo.request.*;
 import com.erp.model.tms.vo.response.*;
+import com.erp.rpc.file.feign.FileFeign;
 import com.erp.server.tms.convert.LogisticsOrderConverter;
 import com.erp.server.tms.handler.AbstractLogisticsHandler;
 import com.erp.server.tms.service.LogisticsOperateService;
@@ -55,7 +57,8 @@ public class ExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
 
     @Value("${tms.sf-express.fileType}")
     private String fileType;
-
+    @Resource
+    private FileFeign fileFeign;
     /**
      * 创建订单
      *
@@ -438,8 +441,13 @@ public class ExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
                     responseVO.setTrackNoList(Collections.singletonList(logisticsGetLabelVO.getTrackNo()));
                     List<LogisticsPrintLabelResponse> logisticsPrintLabelResponses = new ArrayList<>();
                     if (1 == files.size()){
+                        FileDTO.UploadBase64 uploadBase64 = FileDTO.UploadBase64.builder()
+                                .base64(FileUtil.convertPdfUrlToBase64(files.get(0).getUrl(), files.get(0).getToken()))
+                                .fileName(logisticsGetLabelVO.getDeliveryNo() + ".pdf")
+                                .build();
+                        String url = fileFeign.uploadFileByBase64(uploadBase64);
                         responseVO.setMore(false);
-                        responseVO.setBase64(FileUtil.convertPdfUrlToBase64(files.get(0).getUrl(), files.get(0).getToken()));
+                        responseVO.setLabelUrl(url);
                     }else {
                         files.forEach(printFile -> {
                             responseVO.setMore(true);
@@ -448,7 +456,13 @@ public class ExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
                             response.setTransportNoList(Collections.singletonList(printFile.getWaybillNo()));
                             response.setDeliveryNoList(Collections.singletonList(printFile.getSeqNo()));
                             try {
-                                response.setBase64(FileUtil.convertPdfUrlToBase64(printFile.getUrl(), printFile.getToken()));
+//                                response.setBase64(FileUtil.convertPdfUrlToBase64(printFile.getUrl(), printFile.getToken()));
+                                FileDTO.UploadBase64 uploadBase64 = FileDTO.UploadBase64.builder()
+                                        .base64(FileUtil.convertPdfUrlToBase64(printFile.getUrl(), printFile.getToken()))
+                                        .fileName(logisticsGetLabelVO.getDeliveryNo() + ".pdf")
+                                        .build();
+                                String url = fileFeign.uploadFileByBase64(uploadBase64);
+                                responseVO.setLabelUrl(url);
                             } catch (IOException e) {
                                 log.error("获取标签文件异常：{}", e.getMessage());
                             }

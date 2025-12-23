@@ -78,6 +78,7 @@ import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.file.feign.FileFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.scm.feign.SaleDemandFeign;
 import com.erp.rpc.scm.feign.ScmTaskFeign;
@@ -263,6 +264,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
     @Resource
     private SyncDhtService syncDhtService;
+    @Resource
+    private FileFeign fileFeign;
     @Resource
     private B2bThirdDeliveryFeign b2bThirdDeliveryFeign;
 
@@ -4291,16 +4294,18 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             if (Objects.nonNull(entity.getIsUploadLabel()) || !entity.getIsUploadLabel()){
                 this.lambdaUpdate().set(SoInfoEntity::getIsUploadLabel, Boolean.TRUE).eq(SoInfoEntity::getId, entity.getId()).update();
             }
-            String base64 = FileUtil.convertToBase64AndCheckIfPdf(multipartFile);
-            String prefix = "data:application/pdf;base64,";
-            labelEntity.setLogisticsLabelBase64(prefix + base64);
+            String fileUrl = fileFeign.uploadFile(multipartFile);
+//            String base64 = FileUtil.convertToBase64AndCheckIfPdf(multipartFile);
+//            String prefix = "data:application/pdf;base64,";
+//            labelEntity.setLogisticsLabelBase64(prefix + base64);
+            labelEntity.setLogisticsLabelUrl(fileUrl);
             labelEntity.setMainId(entity.getId());
             labelEntity.setSourceType(SoB2cLabelSourceTypeEnum.MANUAL.getCode());
             soLabelService.saveOrUpdate(labelEntity);
             String msg = CharSequenceUtil.format("用户【{}】上传文件名为【{}】的物流面单 ", UserContext.getDefaultLoginUser().getUserName(), multipartFile.getOriginalFilename());
             operateLogService.addModuleOperateLog(msg ,ModuleTypeEnum.SO.getCode(), entity.getId(), "上传面单");
             return BatchResultDTO.success(entity.getId(), entity.getCode(), "上传面单成功");
-        } catch (IOException e) {
+        } catch (Exception e) {
             log.error("物流文件转换异常:{}", e.getMessage());
             return BatchResultDTO.fail(entity.getId(), entity.getCode(), "物流文件转换异常");
         }
