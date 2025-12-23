@@ -2,7 +2,6 @@ package com.erp.server.oms.controller.api;
 
 
 import com.common.business.annotation.WebAdvanceQuery;
-import com.common.business.dto.base.BaseDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
@@ -74,8 +73,9 @@ public class KolSampleCostController extends BaseController {
      */
     @PostMapping("/export")
     @LogAction(value = LogActionEnum.EXPORT, desc = "寄样费用导出Excel数据")
-    public void exportList(@RequestBody @Validated KolSampleCostDTO.ExportDTO dto, HttpServletResponse response) {
+    public ApiResult<Object> exportList(@RequestBody @Validated KolSampleCostDTO.ExportDTO dto, HttpServletResponse response) {
         kolSampleCostService.exportList(dto, response);
+        return success();
     }
 
 
