@@ -57,6 +57,16 @@ public class DictCityServiceFeignController {
         List<DictCityDTO.ListDTO> list = dictCityService.listCity(countryCode);
         return list;
     }
+    /**
+     * 获取省份城市区域列表
+     *
+     * @param countryCode
+     * @return
+     */
+    @GetMapping("/listByCountryCode")
+    public List<DictCityEntity> listByCountryCode(@RequestParam("countryCode") String countryCode) {
+        return dictCityService.listByCountryCode(countryCode);
+    }
 
 
     @PostMapping("/listByIdList")

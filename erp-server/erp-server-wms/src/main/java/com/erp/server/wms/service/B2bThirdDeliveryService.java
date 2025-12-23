@@ -1,5 +1,7 @@
 package com.erp.server.wms.service;
 import com.common.business.vo.PagingVO;
+import com.erp.model.wms.dto.third.ThirdWarehouseCancelFbaOutboundReq;
+import com.erp.model.wms.dto.third.ThirdWarehouseCreateFbaOutboundReq;
 import com.erp.model.wms.dto.third.ThirdWarehouseQueryFbaOutboundResponse;
 import com.erp.model.wms.entity.B2bThirdDeliveryEntity;
 import com.common.business.service.SuperService;
@@ -60,7 +62,7 @@ public interface B2bThirdDeliveryService extends SuperService<B2bThirdDeliveryEn
      * @param trackNo
      * @param deliveryTime 发货时间
      */
-    void updateStatus(String id, String status, String errorMsg, String platformOrderCode, String remark, String trackNo, LocalDateTime deliveryTime);
+    BatchResultDTO updateStatus(String id, String status, String errorMsg, String platformOrderCode, String remark, String trackNo, LocalDateTime deliveryTime);
 
     /**
      * 生成三方发货单 销售出库单
@@ -111,5 +113,8 @@ public interface B2bThirdDeliveryService extends SuperService<B2bThirdDeliveryEn
 
     List<B2bThirdDeliveryEntity> listBySoIds(List<String> soIds);
 
-    void submitApprove(SoOutstockEntity soOutstockEntity);
+    void submitApprove(String soOutstockId);
+
+    void createFbaOutbound(ThirdWarehouseCreateFbaOutboundReq req);
+    void cancelFbaOutbound(ThirdWarehouseCancelFbaOutboundReq req);
 }

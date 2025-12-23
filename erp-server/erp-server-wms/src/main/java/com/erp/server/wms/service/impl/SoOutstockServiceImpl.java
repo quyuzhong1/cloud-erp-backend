@@ -378,6 +378,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             BigDecimal price;
             if (sourceType.equals(SourceTypeEnum.SO_DELIVERY_NOTICE.getCode())) {
                 price = soDetail.getPrice().multiply(new BigDecimal(soDetail.getPerBoxQty()));
+            } else if (sourceType.equals(SourceTypeEnum.B2B_THIRD_DELIVERY.getCode())) {
+                price = soDetail.getPrice().multiply(new BigDecimal(soDetail.getPerBoxQty()));
             } else {
                 price = soDetail.getPrice();
             }
@@ -2083,8 +2085,17 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
             String soDetailId = item.getSoDetailId();
 
-            BigDecimal price = soDetailList.stream().filter(s -> s.getId().equals(soDetailId)).
-                    findFirst().map(SoDetailEntity::getPrice).orElse(BigDecimal.ZERO);
+            SoDetailEntity soDetail = soDetailList.stream().filter(s -> s.getId().equals(soDetailId)).
+                    findFirst().orElse(null);
+            // 计算价格
+            BigDecimal price = BigDecimal.ZERO;
+            if (sourceType.equals(SourceTypeEnum.SO_DELIVERY_NOTICE.getCode()) && Objects.nonNull(soDetail)) {
+                price = soDetail.getPrice().multiply(new BigDecimal(soDetail.getPerBoxQty()));
+            } else if (sourceType.equals(SourceTypeEnum.B2B_THIRD_DELIVERY.getCode()) && Objects.nonNull(soDetail)) {
+                price = soDetail.getPrice().multiply(new BigDecimal(soDetail.getPerBoxQty()));
+            } else if (Objects.nonNull(soDetail)){
+                price = soDetail.getPrice();
+            }
             //税率
             BigDecimal taxRate = soDetailList.stream().filter(s -> s.getId().equals(soDetailId)).
                     findFirst().map(SoDetailEntity::getTaxRate).orElse(BigDecimal.ZERO);
@@ -2188,6 +2199,13 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 ruleDTO.setType(StockOutTransferTypeEnum.B2B.getCode());
                 ruleDTO.setReceiveCountry(customerDTO.getCountryId());
                 ruleDTO.setFromWarehouse(generateInfo.getWarehouseId());
+                if(StringUtils.isNotBlank(generateInfo.getWarehouseId())){
+                    WarehouseEntity deliveryWarehouse = warehouseService.getById(generateInfo.getWarehouseId());
+                    if(Objects.nonNull(deliveryWarehouse)){
+                        ruleDTO.setFromWarehouseOrg(deliveryWarehouse.getOrgId());
+                        ruleDTO.setFromWarehouseCountry(deliveryWarehouse.getCountry());
+                    }
+                }
                 ruleDTO.setSalesOrgId(soInfo.getSalesOrgId());
                 ruleDTO.setDictPlatform("");
                 CfgRuleOutDTO.MatchTransferResultDTO resultDTO = cfgRuleOutService.matchTransferRule(ruleDTO);

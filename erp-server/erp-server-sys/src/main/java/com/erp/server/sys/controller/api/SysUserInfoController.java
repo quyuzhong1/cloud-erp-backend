@@ -4,6 +4,7 @@ package com.erp.server.sys.controller.api;
 import com.common.business.annotation.DataIdempotent;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.FindUserDTO;
+import com.common.business.dto.base.BaseSearchDTO;
 import com.common.business.dto.base.ForgotPasswordDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.UserTypeEnum;
@@ -236,5 +237,11 @@ public class SysUserInfoController extends BaseController {
     @PostMapping("/syncFsUser")
     public void syncFsUser() {
         sysUserInfoService.syncFsUser();
+    }
+
+    @PostMapping("/findList")
+    public ApiResult<List<FindUserDTO>> findList(@RequestBody @Validated BaseSearchDTO dto) {
+        List<FindUserDTO> list = sysUserInfoService.getUserList(dto);
+        return success(list);
     }
 }

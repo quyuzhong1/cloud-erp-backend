@@ -1,6 +1,8 @@
 package com.erp.rpc.wms.feign;
 
 import com.common.business.config.FeignErrorDecoder;
+import com.erp.model.wms.dto.third.ThirdWarehouseCancelFbaOutboundReq;
+import com.erp.model.wms.dto.third.ThirdWarehouseCreateFbaOutboundReq;
 import com.erp.model.wms.entity.B2bThirdDeliveryDetailEntity;
 import com.erp.model.wms.entity.B2bThirdDeliveryEntity;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -22,4 +24,10 @@ public interface B2bThirdDeliveryFeign {
 
     @PostMapping("feign/b2bThirdDelivery/listBySoIds")
     List<B2bThirdDeliveryEntity> listBySoIds(@RequestBody List<String> soIds);
+
+    @PostMapping("feign/b2bThirdDelivery/createFbaOutbound")
+    void createFbaOutbound(@RequestBody ThirdWarehouseCreateFbaOutboundReq req);
+
+    @PostMapping("feign/b2bThirdDelivery/cancelFbaOutbound")
+    void cancelFbaOutbound(@RequestBody ThirdWarehouseCancelFbaOutboundReq req);
 }

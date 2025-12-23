@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.oms.mapper.KolB2cApplicationDetailMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.oms.entity.KolB2cApplicationDetailEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="main_id" property="mainId" />
+       <result column="sku_id" property="skuId" />
+       <result column="sku_no" property="skuNo" />
+       <result column="brand_id" property="brandId" />
+       <result column="brand_name" property="brandName" />
+       <result column="partner_id" property="partnerId" />
+       <result column="nickname" property="nickname" />
+       <result column="apply_qty" property="applyQty" />
+       <result column="plan_feedback_date" property="planFeedbackDate" />
+       <result column="remark" property="remark" />
+       <result column="project_tag" property="projectTag" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        kbad.id AS id,
+kbad.create_user_id AS createUserId,
+kbad.create_user_name AS createUserName,
+kbad.create_time AS createTime,
+kbad.update_user_id AS updateUserId,
+kbad.update_user_name AS updateUserName,
+kbad.update_time AS updateTime,
+kbad.version AS version,
+kbad.is_deleted AS isDeleted,
+kbad.main_id AS mainId,
+kbad.sku_id AS skuId,
+kbad.sku_no AS skuNo,
+kbad.brand_id AS brandId,
+kbad.brand_name AS brandName,
+kbad.partner_id AS partnerId,
+kbad.nickname AS nickname,
+kbad.apply_qty AS applyQty,
+kbad.plan_feedback_date AS planFeedbackDate,
+kbad.remark AS remark,
+kbad.project_tag AS projectTag
+    </sql>
+
+
+</mapper>

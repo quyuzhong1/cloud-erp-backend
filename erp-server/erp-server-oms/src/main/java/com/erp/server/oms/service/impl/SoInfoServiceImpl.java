@@ -78,6 +78,7 @@ import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.file.feign.FileFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.scm.feign.SaleDemandFeign;
 import com.erp.rpc.scm.feign.ScmTaskFeign;
@@ -263,6 +264,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
     @Resource
     private SyncDhtService syncDhtService;
+    @Resource
+    private FileFeign fileFeign;
     @Resource
     private B2bThirdDeliveryFeign b2bThirdDeliveryFeign;
 
@@ -622,9 +625,12 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         //总计数量
         Integer qtyTotal = detailList.stream().map(SoDetailEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
         variablesMap.put("qtyTotal", qtyTotal);
+        //总销售毛利
+        BigDecimal saleProfitRateTotal = detailList.stream().map(SoDetailEntity::getSaleProfit).reduce(BigDecimal.ZERO, BigDecimal::add);
+        //总销售金额(本位币)
+        BigDecimal saleAmountTotal = detailList.stream().map(SoDetailEntity::getAmountLocalCurrency).reduce(BigDecimal.ZERO, BigDecimal::add);
         //总销售毛利率
-        BigDecimal saleProfitRateTotal = detailList.stream().map(SoDetailEntity::getSaleProfitRate).reduce(BigDecimal.ZERO, BigDecimal::add);
-        variablesMap.put("saleProfitRateTotal", saleProfitRateTotal);
+        variablesMap.put("saleProfitRateTotal", MathUtil.multiplyWithTwo(MathUtil.divide(saleProfitRateTotal, saleAmountTotal), MathUtil.BigDecimal_100));
 
         //SKU
         String skuNo = detailList.stream().map(SoDetailEntity::getSkuNo).collect(Collectors.joining(","));
@@ -1031,8 +1037,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             //存在虚拟仓库则判断是否缺货
             if (StrUtil.isNotBlank(item.getVirtualWarehouseId())) {
 
-                Integer approveNoticeQty = soDeliveryNoticeDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSourceDetailId(), item.getDetailId()) && CharSequenceUtil.equals(obj.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus())
-                ).map(SoDeliveryNoticeDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
+                Integer approveNoticeQty = soDeliveryNoticeDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSourceDetailId(), item.getDetailId())).map(SoDeliveryNoticeDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
                 //b2b三方仓发货单 已发货数量
                 Integer b2bBoxQty = b2bThirdDeliveryDetailList.stream().filter(e -> !ThirdDeliveryStatusEnum.CANCEL_DELIVERY.getCode().equals(e.getStatus()) && CharSequenceUtil.equals(e.getSoDetailId(),item.getDetailId())).map(B2bThirdDeliveryDetailEntity::getBoxQty).reduce(Integer::sum).orElse(0);
 
@@ -1107,7 +1112,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             item.setAvailableQty(availableQty);
 
             //发货通知数量
-            if (CollectionUtils.isNotEmpty(soDeliveryNoticeDetailList)) {
+            List<SoDeliveryNoticeDetailEntity> soDeliveryNoticeDetailEntityList = soDeliveryNoticeDetailList.stream().filter(obj -> obj.getSourceDetailId().equals(item.getDetailId())).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(soDeliveryNoticeDetailEntityList)) {
                 Integer effectiveNoticeQty = soDeliveryNoticeDetailList.stream().filter(obj -> obj.getSourceDetailId().equals(item.getDetailId())).map(SoDeliveryNoticeDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
                 effectiveNoticeQty = effectiveNoticeQty * item.getPerBoxQty();
                 item.setEffectiveNoticeQty(effectiveNoticeQty);
@@ -1116,7 +1122,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 Integer remainingNoticeQty = item.getQty() - effectiveNoticeQty;
                 item.setRemainingNoticeQty(remainingNoticeQty > 0 ? remainingNoticeQty : 0);
             }
-            if (CollUtil.isNotEmpty(b2bThirdDeliveryDetailList)){
+            List<B2bThirdDeliveryDetailEntity> b2bThirdDeliveryDetailEntityList = b2bThirdDeliveryDetailList.stream().filter(obj -> obj.getSoDetailId().equals(item.getDetailId())).collect(Collectors.toList());
+            if (CollUtil.isNotEmpty(b2bThirdDeliveryDetailEntityList)){
                 Integer effectiveNoticeQty = b2bThirdDeliveryDetailList.stream().filter(obj -> obj.getSoDetailId().equals(item.getDetailId()) && !ThirdDeliveryStatusEnum.CANCEL_DELIVERY.getCode().equals(obj.getStatus())).map(B2bThirdDeliveryDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
                 item.setEffectiveNoticeQty(effectiveNoticeQty);
 
@@ -2550,7 +2557,10 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(entityClass -> entityClass.getId().equals(view.getSkuId())).findFirst().orElse(new ProductDetailEntity());
             view.setProductName(productDetailEntity.getName());
             view.setReturnQty(view.getSalesQty());
-            Integer actualQty = soOutstockDetailEntities.stream().filter(detail -> view.getSoId().equals(detail.getSoId()) && detail.getSkuId().equals(view.getSkuId()) && detail.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(SoOutstockDetailEntity::getActualQty).reduce(MathUtil.ZERO, Integer::sum);
+            Integer actualQty = soOutstockDetailEntities.stream()
+                    .filter(detail -> view.getSoId().equals(detail.getSoId()) && detail.getSkuId().equals(view.getSkuId()) && detail.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus()))
+                    .map(detail -> detail.getActualQty() * view.getPerBoxQty())
+                    .reduce(MathUtil.ZERO, Integer::sum);
             view.setDeliveryQty(actualQty);
             CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(view.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
             view.setCustomerName(customerInfoEntity.getName());
@@ -3505,6 +3515,14 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     @Override
     public List<BatchResultDTO> generateSoOut(List<SoInfoDTO.GenerateSoOutView> generateSoOutViewList) {
         Map<String,List<SoInfoDTO.GenerateSoOutView>> groupMap = generateSoOutViewList.stream().collect(Collectors.groupingBy(SoInfoDTO.GenerateSoOutView::getCode));
+
+        List<String> collect = generateSoOutViewList.stream().map(item -> item.getDetailId()).collect(Collectors.toList());
+        List<SoDetailEntity> soDetailEntities = soDetailService.listByIds(collect);
+        long count = soDetailEntities.stream().filter(item -> item.getPerBoxQty() > 1).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_PROHIBIT_PER_BOX_ONE_GEN_SO_OUT_STOCK);
+        }
+
         List<BatchResultDTO> batchResultDTOList = new ArrayList<>();
         groupMap.forEach((key,val)->{
             List<SoOutstockDTO.GenerateSoOutstockViewDTO> generateSoOutstockViewDTOList = new ArrayList<>();
@@ -4219,6 +4237,16 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     }
 
     @Override
+    public List<SoInfoEntity> listBySourceId(String sourceId) {
+        return lambdaQuery().eq(SoInfoEntity::getSourceId, sourceId).eq(SoInfoEntity::getInvalidStatus,Boolean.FALSE).list();
+    }
+
+    @Override
+    public List<KolB2bApplicationDTO.B2bSoInfoDTO> listRefBill(String sourceId) {
+        return baseMapper.listRefBill(sourceId);
+    }
+
+    @Override
     public List<SoInfoEntity> getByPlatformOrderCode(String platformOrderCode) {
         if(StringUtils.isBlank(platformOrderCode)){
             return new ArrayList<>();
@@ -4285,16 +4313,18 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             if (Objects.nonNull(entity.getIsUploadLabel()) || !entity.getIsUploadLabel()){
                 this.lambdaUpdate().set(SoInfoEntity::getIsUploadLabel, Boolean.TRUE).eq(SoInfoEntity::getId, entity.getId()).update();
             }
-            String base64 = FileUtil.convertToBase64AndCheckIfPdf(multipartFile);
-            String prefix = "data:application/pdf;base64,";
-            labelEntity.setLogisticsLabelBase64(prefix + base64);
+            String fileUrl = fileFeign.uploadFile(multipartFile);
+//            String base64 = FileUtil.convertToBase64AndCheckIfPdf(multipartFile);
+//            String prefix = "data:application/pdf;base64,";
+//            labelEntity.setLogisticsLabelBase64(prefix + base64);
+            labelEntity.setLogisticsLabelUrl(fileUrl);
             labelEntity.setMainId(entity.getId());
             labelEntity.setSourceType(SoB2cLabelSourceTypeEnum.MANUAL.getCode());
             soLabelService.saveOrUpdate(labelEntity);
             String msg = CharSequenceUtil.format("用户【{}】上传文件名为【{}】的物流面单 ", UserContext.getDefaultLoginUser().getUserName(), multipartFile.getOriginalFilename());
             operateLogService.addModuleOperateLog(msg ,ModuleTypeEnum.SO.getCode(), entity.getId(), "上传面单");
             return BatchResultDTO.success(entity.getId(), entity.getCode(), "上传面单成功");
-        } catch (IOException e) {
+        } catch (Exception e) {
             log.error("物流文件转换异常:{}", e.getMessage());
             return BatchResultDTO.fail(entity.getId(), entity.getCode(), "物流文件转换异常");
         }

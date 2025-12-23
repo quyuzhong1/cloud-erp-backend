@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.oms.mapper.KolFeedbackCostMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.oms.entity.KolFeedbackCostEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="url" property="url" />
+       <result column="url_hash" property="urlHash" />
+       <result column="cost_type" property="costType" />
+       <result column="cost_type_id" property="costTypeId" />
+       <result column="currency" property="currency" />
+       <result column="exchange_rate" property="exchangeRate" />
+       <result column="original_amount" property="originalAmount" />
+       <result column="base_amount" property="baseAmount" />
+       <result column="remark" property="remark" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_user_id,
+        create_user_name,
+        create_time,
+        update_user_id,
+        update_user_name,
+        update_time,
+        version,
+        is_deleted,
+        url, url_hash, cost_type, cost_type_id, currency, exchange_rate, original_amount, base_amount, remark
+    </sql>
+
+    <select id="paging" resultType="com.erp.model.oms.dto.KolFeedbackCostDTO$ListDTO">
+        SELECT
+            kfc.id,
+            kfc.url,
+            kfc.url_hash AS urlHash,
+            kfc.cost_type AS costType,
+            kfc.cost_type_id AS costTypeId,
+            kfc.currency,
+            kfc.exchange_rate AS exchangeRate,
+            kfc.original_amount AS originalAmount,
+            kfc.base_amount AS baseAmount,
+            kfc.remark,
+            kfc.create_time AS createTime,
+            kfc.create_user_id AS createUserId,
+            kfc.create_user_name AS createUserName,
+            kfc.update_time AS updateTime,
+            kfc.update_user_id AS updateUserId,
+            kfc.update_user_name AS updateUserName,
+            kfc.version
+        FROM kol_feedback_cost kfc
+        WHERE
+        ${params.sqlMap.default}
+        AND kfc.is_deleted = false
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        kfc.create_time DESC
+    </select>
+
+</mapper>

@@ -335,13 +335,12 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
                     String sourceDetailId = item.getSourceDetailId();
                     //这个是销售数量
                     Integer soQty = soDetailList.stream().filter(s -> s.getId().equals(sourceDetailId)).findFirst().
-                            flatMap(obj -> Optional.ofNullable(obj.getBoxQty())).orElse(0);
+                            flatMap(obj -> Optional.ofNullable(obj.getQty())).orElse(0);
 
                     //这个是已出的数量 这个对应的就是销售订单的详情id
                     Integer outStockQty = soOutstockDetailList.stream().filter(s ->
                             s.getSoDetailId().equals(sourceDetailId)
                     ).mapToInt(SoOutstockDetailDTO.DeliveryQtyDTO::getActualQty).sum();
-
 
                     if (outStockQty + planQty > soQty) {
                         throw new ServiceException(ApiError.ERROR_92028);
@@ -1175,5 +1174,10 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
             return Collections.emptyMap();
         }
         return lastBillDateDTOS.stream().collect(Collectors.toMap(SoOutstockDTO.LastBillDateDTO::getSkuId, SoOutstockDTO.LastBillDateDTO::getBillDate));
+    }
+
+    @Override
+    public List<SoOutstockDTO.KolSoOutstockDTO> listSoOutstockByTime(SoOutstockDTO.KolSoOutstockDateDTO dto) {
+        return baseMapper.listSoOutstockByTime(dto);
     }
 }

@@ -1,6 +1,5 @@
 package com.erp.model.oms.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.annotation.Dict;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
@@ -95,6 +94,10 @@ public class SoInfoDTO implements Serializable {
          * code
          */
         private String code;
+        /**
+         * 来源单号
+         */
+        private String sourceCode;
 
         private String thirdCode;
 
@@ -1126,7 +1129,10 @@ public class SoInfoDTO implements Serializable {
          * 来源类型
          */
         private String sourceType;
-
+        /**
+         * 来源单号
+         */
+        private String sourceCode;
         /**
          * 平台更新时间
          */
@@ -2692,6 +2698,11 @@ public class SoInfoDTO implements Serializable {
          */
         @NotBlank(message = "退货物流单号不能为空")
         private String returnLogisticCode;
+
+        /**
+         * 单箱数量
+         */
+        private Integer perBoxQty;
     }
 
     @Data

@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.oms.mapper.KolSubB2cApplicationMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.oms.entity.KolSubB2cApplicationEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="remark" property="remark" />
+       <result column="source_id" property="sourceId" />
+       <result column="code" property="code" />
+       <result column="platform_so_code" property="platformSoCode" />
+       <result column="dict_platform" property="dictPlatform" />
+       <result column="partner_id" property="partnerId" />
+       <result column="nickname" property="nickname" />
+       <result column="delivery_status" property="deliveryStatus" />
+       <result column="order_status" property="orderStatus" />
+       <result column="track_no" property="trackNo" />
+       <result column="platform_order_code" property="platformOrderCode" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        ksba.id AS id,
+ksba.create_user_id AS createUserId,
+ksba.create_user_name AS createUserName,
+ksba.create_time AS createTime,
+ksba.update_user_id AS updateUserId,
+ksba.update_user_name AS updateUserName,
+ksba.update_time AS updateTime,
+ksba.version AS version,
+ksba.is_deleted AS isDeleted,
+ksba.remark AS remark,
+ksba.source_id AS sourceId,
+ksba.code AS code,
+ksba.platform_so_code AS platformSoCode,
+ksba.dict_platform AS dictPlatform,
+ksba.partner_id AS partnerId,
+ksba.nickname AS nickname,
+ksba.delivery_status AS deliveryStatus,
+ksba.order_status AS orderStatus,
+ksba.track_no AS trackNo,
+ksba.platform_order_code AS platformOrderCode
+    </sql>
+
+    <sql id="Detail_Column_List">
+        ksbad.id AS detailId,
+ksbad.source_detail_id AS sourceDetailId,
+ksbad.platform_detail_id AS platformDetailId,
+ksbad.third_detail_id AS thirdDetailId,
+ksbad.sku_id AS skuId,
+ksbad.sku_no AS skuNo,
+ksbad.apply_qty AS applyQty,
+ksbad.remark AS detailRemark,
+ksbad.project_tag AS projectTag
+    </sql>
+
+    <select id="listSubBySourceId" resultType="com.erp.model.oms.dto.KolSubB2cApplicationDTO$ListDTO">
+        SELECT
+        <include refid="Base_Column_List"></include>
+        ,
+        <include refid="Detail_Column_List"></include>
+        FROM
+        kol_sub_b2c_application ksba
+        left join kol_sub_b2c_application_detail ksbad on ksba.id = ksbad.main_id and ksbad.is_deleted = false
+        where ksba.source_id = #{sourceId}
+            and ksba.is_deleted = false
+        order by ksba.id,ksbad.id
+    </select>
+
+
+</mapper>

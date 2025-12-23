@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.oms.mapper.KolB2bApplicationMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.oms.entity.KolB2bApplicationEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="code" property="code" />
+       <result column="date" property="date" />
+       <result column="approve_status" property="approveStatus" />
+       <result column="approve_user_id" property="approveUserId" />
+       <result column="approve_user_name" property="approveUserName" />
+       <result column="approve_time" property="approveTime" />
+       <result column="invalid_status" property="invalidStatus" />
+       <result column="invalid_remark" property="invalidRemark" />
+       <result column="invalid_time" property="invalidTime" />
+       <result column="type" property="type" />
+       <result column="customer_id" property="customerId" />
+       <result column="apply_remark" property="applyRemark" />
+       <result column="apply_user_id" property="applyUserId" />
+       <result column="apply_dept_id" property="applyDeptId" />
+       <result column="country_id" property="countryId" />
+       <result column="country_name" property="countryName" />
+       <result column="receiver_name" property="receiverName" />
+       <result column="tel_number" property="telNumber" />
+       <result column="receive_address_id" property="receiveAddressId" />
+       <result column="address_type" property="addressType" />
+       <result column="remark" property="remark" />
+    </resultMap>
+
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="PagingResultMap" type="com.erp.model.oms.dto.KolB2bApplicationDTO$ListDTO">
+        <result column="id" property="id" />
+        <result column="code" property="code" />
+        <result column="date" property="date" />
+        <result column="approveStatus" property="approveStatus" />
+        <result column="approveUserName" property="approveUserName" />
+        <result column="approveTime" property="approveTime" />
+        <result column="invalidStatus" property="invalidStatus" />
+        <result column="type" property="type" />
+        <result column="customerId" property="customerId" />
+        <result column="applyRemark" property="applyRemark" />
+        <result column="applyUserId" property="applyUserId" />
+        <result column="applyDeptId" property="applyDeptId" />
+        <result column="approve_time" property="approveTime" />
+        <result column="createTime" property="createTime" />
+        <result column="createUserName" property="createUserName" />
+        <result column="detailId" property="detailId" />
+        <result column="skuId" property="skuId" />
+        <result column="skuNo" property="skuNo" />
+        <result column="qty" property="qty" />
+        <result column="planFeedbackDate" property="planFeedbackDate" />
+        <result column="projectTag" property="projectTag" jdbcType="OTHER"  typeHandler="com.erp.server.oms.handler.ObjectJsonArrayHandler" />
+        <result column="detailRemark" property="detailRemark" />
+        <result column="customerName" property="customerName" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_user_id,
+        create_user_name,
+        create_time,
+        update_user_id,
+        update_user_name,
+        update_time,
+        version,
+        is_deleted,
+        code, date, approve_status, approve_user_id, approve_user_name, approve_time, invalid_status, invalid_remark, invalid_time, type, customer_id, apply_remark, apply_user_id, apply_dept_id, country_id, country_name, receiver_name, tel_number, receive_address, address_type, remark
+    </sql>
+
+    <!-- 分页查询 -->
+    <select id="paging" resultMap="PagingResultMap">
+        select
+            kba.id,
+            kba.code,
+            kba.date,
+            kba.approve_status as approveStatus,
+            kba.approve_user_name as approveUserName,
+            kba.approve_time as approveTime,
+            kba.invalid_status as invalidStatus,
+            kba.type,
+            kba.customer_id as customerId,
+            kba.apply_remark as applyRemark,
+            kba.apply_user_id as applyUserId,
+            kba.apply_dept_id as applyDeptId,
+            kba.create_time as createTime,
+            kba.create_user_name as createUserName,
+            kbad.id as detailId,
+            kbad.sku_id as skuId,
+            kbad.sku_no as skuNo,
+            kbad.qty,
+            kbad.plan_feedback_date as planFeedbackDate,
+            kbad.project_tag as projectTag,
+            kbad.remark as detailRemark,
+            ci.name as customerName
+        from kol_b2b_application kba
+        inner join kol_b2b_application_detail kbad on kba.id = kbad.main_id and kbad.is_deleted = false
+        left join customer_info ci on kba.customer_id = ci.id and ci.is_deleted = false
+        <where>
+            ${params.sqlMap.default}
+            and kba.is_deleted = false
+            <!--权限-->
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
+            </if>
+            ORDER BY
+            <if test="params.sortList != null and params.sortList.size > 0">
+                <foreach collection="params.sortList" item="item" separator="," close=",">
+                    ${item.field} ${item.sort}
+                </foreach>
+            </if>
+            kba.id desc
+        </where>
+    </select>
+
+    <!-- 列表查询统计 -->
+    <select id="tabList" resultType="java.lang.Integer">
+        SELECT
+        count(distinct kba.id)
+        FROM  kol_b2b_application kba
+        inner join kol_b2b_application_detail kbad on kba.id = kbad.main_id and kbad.is_deleted = false
+        WHERE
+        ${params.sqlMap.default}
+        and kba.is_deleted = FALSE
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+    </select>
+
+    <!-- 列表查询统计 -->
+    <select id="tabDetailList" resultType="java.lang.Integer">
+        SELECT
+            count(kbad.id)
+        FROM  kol_b2b_application kba
+        inner join kol_b2b_application_detail kbad on kba.id = kbad.main_id and kbad.is_deleted = false
+        WHERE
+        ${params.sqlMap.default}
+        and kba.is_deleted = FALSE
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+    </select>
+
+</mapper>

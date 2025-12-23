@@ -116,6 +116,7 @@ public class FsInstancesServiceImpl implements FsInstancesService {
                 return;
             }
             one.setBussinessApproveStatus(erpSpproveStatus);
+            one.setFinishTime(LocalDateTime.now());
             approveTaskInfoService.updateById(one);
 
 
@@ -196,7 +197,9 @@ public class FsInstancesServiceImpl implements FsInstancesService {
         taskInfo.setBussinessKey(thirdProcessEntity.getBussinessKey());
         taskInfo.setBussinessCode(batchResultDTO.getCode());
         taskInfo.setBussinessId(batchResultDTO.getId());
-        taskInfo.setHappenTime(LocalDateTime.now());
+        LocalDateTime now = LocalDateTime.now();
+        taskInfo.setHappenTime(now);
+        taskInfo.setFinishTime(now);
         taskInfo.setBussinessApproveStatus(ApproveStatusEnum.APPROVE.getCode());
         taskInfo.setStatus(taskStatus);
         taskInfo.setReason(reason);
@@ -340,6 +343,9 @@ public class FsInstancesServiceImpl implements FsInstancesService {
         processDTO.setApproveStatus(ApproveTypeEnum.getByCode(approveStatus));
         // 来自第三方系统的用户ID可能需要转换为您系统内部的用户ID
         SysUserThirdEntity user = sysUserFeign.getUserByThird(ProcessSourcePlatformEnum.FS.getCode().toUpperCase(), userId);
+        if (user == null) {
+            throw new ServiceException(ApiError.PROCESS_FEISHU_USER_NOT_FOUND, userId);
+        }
         processDTO.setApproveUserId(user.getUserId());
         processDTO.setApproveTime(approveTime);
         processDTO.setComment(comment);

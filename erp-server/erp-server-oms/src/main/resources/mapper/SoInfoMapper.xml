@@ -45,6 +45,7 @@
         si.customer_order_no AS customerOrderNo,
         si.is_declare as isDeclare,
         si.is_upload_label as isUploadLabel,
+        si.source_code,
         sod.sku_id AS skuId,
         sod.sku_no AS skuNo,
         sod.qty,
@@ -357,8 +358,8 @@
         si.customer_id,
         sd.id AS detailId,
         sd.main_id AS soId,
-        sd.sku_id,
-        sd.sku_no,
+        sd.delivery_sku_id as skuId,
+        sd.delivery_sku_no as skuNo,
         sd.qty AS salesQty,
         si.currency,
         si.currency_symbol,
@@ -366,7 +367,8 @@
         sd.tax_amount,
         sd.exchange_rate,
         si.sales_org_id,
-        si.warehouse_org_id as warehouseOrgId
+        si.warehouse_org_id as warehouseOrgId,
+        sd.per_box_qty as perBoxQty
         FROM so_info si
         LEFT JOIN so_detail sd ON si.id = sd.main_id AND si.is_deleted = FALSE
         WHERE sd.is_deleted = FALSE
@@ -474,5 +476,23 @@
           AND si.source_id = #{exhibitionId}
         ORDER BY
             si.create_time DESC
+    </select>
+
+    <!-- KOL B2B应用-查询销售订单信息 -->
+    <select id="listRefBill" resultType="com.erp.model.oms.dto.KolB2bApplicationDTO$B2bSoInfoDTO">
+        select
+            si.id as soId,
+            sd.id as soDetailId,
+            si.code as soCode,
+            si.approve_status as approveStatus,
+            si.warehouse_id as warehouseId,
+            sd.sku_id as skuId,
+            sd.sku_no as skuNo,
+            sd.qty as qty,
+            sd.remark as detailRemark,
+            sd.delivery_status as deliveryStatus
+        from so_info si
+        inner join so_detail sd on si.id = sd.main_id and sd.is_deleted = false
+        where si.is_deleted = false and si.source_id = #{sourceId}
     </select>
 </mapper>

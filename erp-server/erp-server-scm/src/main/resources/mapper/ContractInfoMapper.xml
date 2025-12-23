@@ -14,6 +14,7 @@
        <result column="is_deleted" property="isDeleted" />
        <result column="approve_status" property="approveStatus" />
        <result column="code" property="code" />
+       <result column="name" property="name" />
        <result column="service_provider_id" property="serviceProviderId" />
        <result column="service_provider_name" property="serviceProviderName" />
        <result column="approve_time" property="approveTime" />
@@ -39,6 +40,7 @@
 	ci.is_deleted AS isDeleted,
 	ci.approve_status AS approveStatus,
 	ci.code AS code,
+	ci.name AS name,
 	ci.service_provider_id AS serviceProviderId,
 	ci.service_provider_name AS serviceProviderName,
 	ci.approve_time AS approveTime,
@@ -64,6 +66,7 @@
             ci.is_deleted AS isDeleted,
             ci.approve_status AS approveStatus,
             ci.code AS code,
+            ci.name AS name,
             ci.service_provider_id AS serviceProviderId,
             ci.service_provider_name AS serviceProviderName,
             ci.approve_time AS approveTime,

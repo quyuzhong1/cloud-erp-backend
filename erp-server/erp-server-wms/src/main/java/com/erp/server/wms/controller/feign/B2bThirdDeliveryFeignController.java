@@ -1,5 +1,7 @@
 package com.erp.server.wms.controller.feign;
 
+import com.erp.model.wms.dto.third.ThirdWarehouseCancelFbaOutboundReq;
+import com.erp.model.wms.dto.third.ThirdWarehouseCreateFbaOutboundReq;
 import com.erp.model.wms.entity.B2bThirdDeliveryDetailEntity;
 import com.erp.model.wms.entity.B2bThirdDeliveryEntity;
 import com.erp.server.wms.service.B2bThirdDeliveryDetailService;
@@ -35,5 +37,13 @@ public class B2bThirdDeliveryFeignController {
     @PostMapping("/listBySoIds")
     public List<B2bThirdDeliveryEntity> listBySoIds(@RequestBody List<String> soIds) {
         return b2bThirdDeliveryService.listBySoIds(soIds);
+    }
+    @PostMapping("/createFbaOutbound")
+    public void createFbaOutbound(@RequestBody ThirdWarehouseCreateFbaOutboundReq req){
+        b2bThirdDeliveryService.createFbaOutbound(req);
+    }
+    @PostMapping("/cancelFbaOutbound")
+    public void cancelFbaOutbound(@RequestBody ThirdWarehouseCancelFbaOutboundReq req){
+        b2bThirdDeliveryService.cancelFbaOutbound(req);
     }
 }

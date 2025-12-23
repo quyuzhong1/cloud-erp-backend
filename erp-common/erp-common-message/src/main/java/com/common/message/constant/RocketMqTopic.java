@@ -20,7 +20,7 @@ public class RocketMqTopic {
     /**
      * 推送三方通知
      */
-    public static final String SEND_THIRD_NOTICE_SYS_TOPIC = "${spring.cloud.nacos.discovery.namespace}-send_third_notice_sys_topic";
+    public static final String SEND_THIRD_NOTICE_TOPIC = "${spring.cloud.nacos.discovery.namespace}-send_third_notice_topic";
 
     /**
      * dmp 拉取第三方ERP订单topic
@@ -41,8 +41,8 @@ public class RocketMqTopic {
     public static final String SYNC_KINGDEE_ERP_TOPIC = "${spring.cloud.nacos.discovery.namespace}-sync_kingdee_erp_topic";
     public static final String SYNC_AMAZON_ERP_TOPIC = "${spring.cloud.nacos.discovery.namespace}-sync_amazon_erp_topic";
     public static final String SYNC_THIRD_WAREHOUSE_ERP_TOPIC = "${spring.cloud.nacos.discovery.namespace}-sync_third_warehouse_erp_topic";
-    public static final String SYNC_B2B_THIRD_DELIVERY_CREATE_ERP_TOPIC = "${spring.cloud.nacos.discovery.namespace}-sync_b2b_third_delivery_create_erp_topic";
-    public static final String SYNC_B2B_THIRD_DELIVERY_CANCEL_ERP_TOPIC = "${spring.cloud.nacos.discovery.namespace}-sync_b2b_third_delivery_cancel_erp_topic";
+    public static final String SYNC_B2B_THIRD_DELIVERY_CREATE_ERP_TOPIC = "${spring.cloud.nacos.discovery.namespace}-sync_b2b_third_create_erp_topic";
+    public static final String SYNC_B2B_THIRD_DELIVERY_CANCEL_ERP_TOPIC = "${spring.cloud.nacos.discovery.namespace}-sync_b2b_third_cancel_erp_topic";
     /**
      * 推送数据到金蝶
      */

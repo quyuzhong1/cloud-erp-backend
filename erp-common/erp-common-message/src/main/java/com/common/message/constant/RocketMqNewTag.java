@@ -138,7 +138,9 @@ public class RocketMqNewTag {
      * 新中台FBA库存
      */
     public static final String DMP_FBA_INVENTORY_TO_WMS_TAG = "${spring.cloud.nacos.discovery.namespace}-dmp_fba_inventory_to_wms_tag";
-    
+    public static final String ERP_B2B_THIRD_CREATE_TAG = "${spring.cloud.nacos.discovery.namespace}-erp_b2b_third_create_tag";
+    public static final String ERP_B2B_THIRD_CANCEL_TAG = "${spring.cloud.nacos.discovery.namespace}-erp_b2b_third_cancel_tag";
+
     /**
      * 新中台推送产品上架时间
      */
@@ -250,5 +252,15 @@ public class RocketMqNewTag {
      * pdd销售出库单
      */
     public static final String RESTCLOUD_PDD_SO_OUT_TO_WMS_TAG = "${spring.cloud.nacos.discovery.namespace}-restcloud_pdd_so_out_to_wms_tag";
+
+    /**
+     * restcloud云听社媒数据
+     */
+    public static final String RESTCLOUD_YUNTING_SOCIAL_MEDIA_TO_OMS_TAG = "${spring.cloud.nacos.discovery.namespace}-restcloud_yunting_social_media_to_oms_tag";
+
+    /**
+     *  WDT KOL B2C申请
+     */
+    public static final String DMP_WDT_KOL_B2C_APPLICATION_TO_OMS_TAG = "${spring.cloud.nacos.discovery.namespace}-dmp_wdt_kol_b2c_application_to_oms_tag";
 
 }

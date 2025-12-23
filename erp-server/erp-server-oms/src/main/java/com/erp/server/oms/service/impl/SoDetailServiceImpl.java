@@ -3,10 +3,8 @@ package com.erp.server.oms.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
-import cn.hutool.json.JSON;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.excel.EasyExcel;
@@ -41,7 +39,6 @@ import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
-import com.erp.model.sys.dto.ThirdNoticePushRecordDTO;
 import com.erp.model.sys.enums.ThirdNoticePushRecordNoticeNodeEnum;
 import com.erp.model.tms.dto.InventorySkuCostDTO;
 import com.erp.model.wms.dto.*;
@@ -59,7 +56,6 @@ import com.erp.model.wms.enums.inventory.VirtualInventoryBusinessTypeEnum;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.rpc.sys.feign.ThirdNoticePushRecordFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.rpc.wms.feign.*;
 import com.erp.sdk.third.kingdee.utils.KingdeePushModuleEnum;
@@ -75,7 +71,6 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.apache.rocketmq.client.producer.SendResult;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
@@ -86,6 +81,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.constraints.NotBlank;
 import java.io.File;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -569,10 +565,11 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             this.removeByIds(deleteIdList);
         }
         List<String> skuIdList = detailList.stream().map(SoDetailDTO.UpdateDTO::getSkuId).collect(Collectors.toList());
+        List<String> deliverySkuIdList = detailList.stream().map(SoDetailDTO.UpdateDTO::getDeliverySkuId).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.listSkuCostByIds(skuIdList);
         //重置sku含税成本
         resetSkuVo(skuIdList,skuList,soInfoEntity);
-        List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuIds(skuIdList);
+        List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuIds(deliverySkuIdList);
         //币种列表
         List<String> currencyList = detailList.stream().map(SoDetailDTO.UpdateDTO::getCurrency).collect(Collectors.toList());
         List<CurrencyDTO.ViewDTO> currencyViewList = sysUserFeign.listByCurrency(currencyList);
@@ -595,6 +592,8 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             List<BomChildrenSkuDTO> sonSkuList = bomChildrenSkuDTOS.stream().filter(req -> req.getParentSkuId().equals(item.getDeliverySkuId())).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(sonSkuList)) {
                 item.setBomVersion(sonSkuList.get(MathUtil.ZERO).getBomVersion());
+            } else {
+                item.setBomVersion("");
             }
             String symbol = currencyViewList.stream().filter(c -> c.getId().equals(currency)).findFirst().
                     flatMap(obj -> Optional.ofNullable(obj.getSymbol())).orElse("");
@@ -681,6 +680,11 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
     @Override
     public SoDetailDTO.ImportDivideSkuBoxDTO importDivideBoxFile(MultipartFile excelFile, HttpServletResponse response) {
         return null;
+    }
+
+    @Override
+    public List<SoDetailEntity> listBySourceDetailIdList(List<String> sourceDetailIdList) {
+        return baseMapper.listBySourceDetailIdList(sourceDetailIdList);
     }
 
 
@@ -2004,12 +2008,30 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         //需要释放库存的明细
         List<String> unLockIdList = new ArrayList<>();
 
+        List<String> skuIdList = updateList.stream().map(item -> item.getSkuId()).collect(Collectors.toList());
+        List<ProductDetailEntity> productDetailList = plmTaskFeign.getByIdList(skuIdList);
+
         for (SoDetailDTO.UpdateDTO updateDTO : updateList) {
             //明细
             SoDetailEntity soDetailEntity = dbList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), updateDTO.getId())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(soDetailEntity)) {
                 throw new ServiceException(ApiError.ERROR_92015);
             }
+            //订货通需要给默认的发货sku
+            if (StringUtils.isNotBlank(updateDTO.getSkuId()) && StringUtils.isBlank(updateDTO.getDeliverySkuId())) {
+                updateDTO.setDeliverySkuId(updateDTO.getSkuId());
+                ProductDetailEntity productDetailEntity = productDetailList.stream()
+                        .filter(item -> item.getId().equals(updateDTO.getSkuId()))
+                        .findFirst()
+                        .orElse(null);
+                if (Objects.nonNull(productDetailEntity)) {
+                    updateDTO.setDeliverySkuNo(productDetailEntity.getSkuNo());
+                    updateDTO.setBoxQty(updateDTO.getQty());
+                    updateDTO.setPerBoxQty(1);
+                }
+            }
+
+
             //有效数量
             Integer noticeQty = soDeliveryNoticeDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSourceDetailId(), updateDTO.getId()))
                     .map(SoDeliveryNoticeDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
@@ -2049,6 +2071,11 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
                     .map(SoDeliveryNoticeDetailEntity::getDeliveryQty).count();
             if (count > 0) {
                 throw new ServiceException( CharSequenceUtil.format("SKU【{}】已下推发货通知单不支持删除",soDetailEntity.getDeliverySkuNo()));
+            }
+
+            //数据为b2b寄样申请单，明细不允许单独删除
+            if (CharSequenceUtil.equals(soInfoEntity.getSourceType(), SourceTypeEnum.KOL_B2B_APPLICATION.getCode()) && CharSequenceUtil.isNotBlank(soDetailEntity.getSourceDetailId())) {
+                throw new ServiceException(ApiError.ERROR_PUSH_KOL_B2B_APPLICATION_SO_DETAIL_DELETE);
             }
 
             //B2B销售订单明细行冻结库存检查 - 删除时不允许删除已冻结库存的明细行

@@ -341,6 +341,12 @@ public class SoInfoEntity extends BaseEntity<SoInfoEntity> {
      */
     @TableField("source_id")
     private String sourceId;
+
+    /**
+     * 来源单号
+     */
+    @TableField("source_code")
+    private String sourceCode;
     /**
      * 来源类型
      */

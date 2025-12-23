@@ -164,4 +164,12 @@ public interface InventorySkuCostService extends SuperService<InventorySkuCostEn
      * @return
      */
     List<InventorySkuCostDTO.SkuCostCNYDTO> getSkuCostInCNY(InventorySkuCostDTO.SkuCostCNYQueryDTO queryDTO);
+    /**
+     * 查询sku成本
+     * @author will
+     * @date 2025/12/10 14:40
+     * @param paramDTO
+     * @return List<InvSkuCostDTO>
+     */
+    List<InventorySkuCostDTO.InvSkuCostDTO> listInventorySkuCost(InventorySkuCostDTO.SkuCostParamDTO paramDTO);
 }

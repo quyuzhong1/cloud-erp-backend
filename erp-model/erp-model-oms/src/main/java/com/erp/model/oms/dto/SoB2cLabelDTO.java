@@ -85,10 +85,10 @@ public class SoB2cLabelDTO implements Serializable {
         private String mainId;
 
         /**
-        * 平台物流面单base64
+        * 平台物流面单url
         */
-        @NotBlank(message = "平台物流面单base64不能为空")
-        private String logisticsLabelBase64;
+        @NotBlank(message = "平台物流面单url不能为空")
+        private String logisticsLabelUrl;
 
 
     }
