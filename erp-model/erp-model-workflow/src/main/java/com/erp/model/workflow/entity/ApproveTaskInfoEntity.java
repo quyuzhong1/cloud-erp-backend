@@ -65,6 +65,13 @@ public class ApproveTaskInfoEntity extends BaseEntity<ApproveTaskInfoEntity> {
      */
     @TableField("bussiness_id")
     private String bussinessId;
+
+    /**
+     * 单据审核状态
+     */
+    @TableField("bussiness_approve_status")
+    private String bussinessApproveStatus;
+
     /**
      * 发生时间
      */
@@ -82,7 +89,11 @@ public class ApproveTaskInfoEntity extends BaseEntity<ApproveTaskInfoEntity> {
      */
     @TableField("reason")
     private String reason;
-
+    /**
+     * 完成时间
+     */
+    @TableField("finish_time")
+    private LocalDateTime finishTime;
 
     public static final String SOURCE_PLATFORM = "source_platform";
 

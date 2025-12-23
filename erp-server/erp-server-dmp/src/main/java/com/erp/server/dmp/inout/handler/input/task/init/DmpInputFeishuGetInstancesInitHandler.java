@@ -8,7 +8,11 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.anno.ParamData;
+import com.common.core.enums.PannoEnum;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.FastDFSClientUtil;
+import com.common.core.utils.FileUtil;
+import com.erp.model.dmp.enums.DmpInputTaskStatusEnum;
 import com.erp.model.workflow.entity.CfgThirdProcessEntity;
 import com.erp.model.workflow.entity.ThirdProcessDefinitionEntity;
 import com.erp.model.workflow.entity.ThirdProcessInstanceEntity;
@@ -18,17 +22,18 @@ import com.erp.sdk.fs.service.FsService;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputInitRequest;
 import com.erp.server.dmp.inout.dto.response.DmpInputTaskResponse;
+import com.erp.server.dmp.inout.handler.input.task.mongo.DmpInputMongoHandler;
 import com.lark.oapi.service.approval.v4.model.GetInstanceResp;
 import com.lark.oapi.service.approval.v4.model.GetInstanceRespBody;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.io.File;
+import java.util.*;
 import java.util.stream.Collectors;
 
 
@@ -53,8 +58,14 @@ public class DmpInputFeishuGetInstancesInitHandler extends DmpInputInitHandler {
         //获取第三方审批定义
         List<CfgThirdProcessEntity> cfgThirdProcessList = listCfgThirdProcess();
 
-        //分页查询
-        List<Map<String, Object>> dmpInputMongoChildList = mongoService.findMongoData(paramDataList, "feishu_instanceIds_data");
+        String parentStorageName = this.getParentStorageName(DmpInputTaskStatusEnum.MONGO);
+        if (StringUtils.isBlank(parentStorageName)) {
+            return Collections.emptyList();
+        }
+        // 查询父任务变更的信息
+        paramDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, PannoEnum.EQ, dmpInputTaskEntity.getParentTaskId()));
+        //查询变更的实例ID
+        List<Map<String, Object>> dmpInputMongoChildList = mongoService.findMongoData(paramDataList, parentStorageName);
 
         //已启用的审批定义编码
         List<String> approvalCodeList = cfgThirdProcessList.stream().map(CfgThirdProcessEntity::getThirdProcessDefinitionCode).distinct().collect(Collectors.toList());

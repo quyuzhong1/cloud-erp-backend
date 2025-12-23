@@ -23,6 +23,8 @@ public class ImportOmsFeignController {
     private ExhibitionOrderService exhibitionOrderService;
 
     @Resource
+    private DeliveryBoxRuleService deliveryBoxRuleService;
+    @Resource
     private KolFeedbackService kolFeedbackService;
 
     @Resource
@@ -44,6 +46,20 @@ public class ImportOmsFeignController {
             exhibitionOrderService.importExhibitionOrder(dto);
         } catch (Exception e) {
             log.error("导入展会订单失败", e);
+            BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
+            importResultDTO.setTaskId(dto.getTaskId());
+            importResultDTO.setStatus(FileTaskStatusEnum.FAIL.getCode());
+            importResultDTO.setRemark(e.getMessage().length() > 490 ? e.getMessage().substring(0, 490) : e.getMessage());
+            downloadTaskFeign.updateTask(importResultDTO);
+        }
+    }
+
+    @PostMapping("/importDeliveryBoxRule")
+    public void importDeliveryBoxRule(@RequestBody BaseDTO.ImportDTO dto) {
+        try {
+            deliveryBoxRuleService.importDeliveryBoxRule(dto);
+        } catch (Exception e) {
+            log.error("导入发货箱规失败", e);
             BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
             importResultDTO.setTaskId(dto.getTaskId());
             importResultDTO.setStatus(FileTaskStatusEnum.FAIL.getCode());

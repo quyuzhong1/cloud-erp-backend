@@ -113,6 +113,93 @@ public class ProductSaleEntity extends BaseEntity<ProductSaleEntity> implements 
     @TableField(value = "data_url")
     private String dataUrl;
 
+    /**
+     * 产品属性
+     */
+    @TableField(value = "product_property")
+    private String productProperty;
+
+    /**
+     * 产品属性id
+     */
+    @TableField(value = "product_property_id")
+    private String productPropertyId;
+
+    /**
+     * 保险属性
+     */
+    @TableField("insurance_property")
+    private String insuranceProperty;
+
+
+    /**
+     * 输入电压
+     */
+    @TableField(value = "input_voltage")
+    private BigDecimal inputVoltage;
+    /**
+     * 输出电压
+     */
+    @TableField(value = "output_voltage")
+    private BigDecimal outputVoltage;
+
+    /**
+     * 电压单位  dict type=voltageUnit
+     */
+    @TableField(value = "voltage_unit")
+    private String voltageUnit;
+
+    /**
+     * 输入电流
+     */
+    @TableField(value = "input_electric")
+    private BigDecimal inputElectric;
+    /**
+     * 输出电流
+     */
+    @TableField(value = "output_electric")
+    private BigDecimal outputElectric;
+
+    /**
+     * 电流单位 dict type=electricUnit
+     */
+    @TableField(value = "electric_unit")
+    private String electricUnit;
+
+    /**
+     * 输入功率
+     */
+    @TableField(value = "input_power")
+    private BigDecimal inputPower;
+    /**
+     * 输出功率
+     */
+    @TableField(value = "output_power")
+    private BigDecimal outputPower;
+
+    /**
+     * 功率单位 dict type=powerUnit
+     */
+    @TableField(value = "power_unit")
+    private String powerUnit;
+
+    /**
+     * 输入电池容量
+     */
+    @TableField(value = "input_battery_capacity")
+    private BigDecimal inputBatteryCapacity;
+    /**
+     * 输出电池容量
+     */
+    @TableField(value = "output_battery_capacity")
+    private BigDecimal outputBatteryCapacity;
+
+    /**
+     * 电池容量单位 dict type=batteryCapacityUnit
+     */
+    @TableField(value = "battery_capacity_unit")
+    private String batteryCapacityUnit;
+
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
 }

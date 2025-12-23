@@ -71,6 +71,10 @@ public class ThirdWarehouseCreateInboundReq {
      * 目的仓库
      */
     private String warehouseCode;
+    /**
+     * 目的仓库国家编码
+     */
+    private String countryName;
 
     /**
      * 备注
@@ -151,6 +155,10 @@ public class ThirdWarehouseCreateInboundReq {
 
     //发货信息
     private ShiperInfo shiperInfo;
+    /**
+     * 物流渠道
+     */
+    private String logisticsChannel;
 
     @Data
     @AllArgsConstructor
@@ -280,6 +288,10 @@ public class ThirdWarehouseCreateInboundReq {
          * 海外仓产品SKU
          */
         private String productSku;
+        /**
+         * 产品条码（三方仓商品条码）
+         */
+        private String thirdBarcode;
 
         /**
          * 海外仓产品SKUId

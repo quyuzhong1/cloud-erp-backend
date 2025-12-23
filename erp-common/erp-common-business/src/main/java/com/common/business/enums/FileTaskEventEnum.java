@@ -45,6 +45,14 @@ public enum FileTaskEventEnum implements EnumMessage {
     EXPORT_DMP_ETL_TASK("EXPORT_DMP_ETL_TASK", "DMP清洗任务导出", "", "", ""),
     EXPORT_DMP_INPUT_TASK("EXPORT_DMP_INPUT_TASK", "DMP拉取任务导出", "", "", ""),
     EXPORT_DMP_OUTPUT_TASK("EXPORT_DMP_OUTPUT_TASK", "DMP推送任务导出", "", "", ""),
+    EXPORT_CFG_DIFF_STRATEGY("EXPORT_CFG_DIFF_STRATEGY","差异策略配置表","","",""),
+    EXPORT_ADS_ERP_OUTSTOCK_DIFF_FLOW("EXPORT_ADS_ERP_OUTSTOCK_DIFF_FLOW","平台单据差异","","",""),
+    EXPORT_ADS_ERP_INVENTORY_DIFF_FLOW("EXPORT_ADS_ERP_INVENTORY_DIFF_FLOW","平台流水差异","","",""),
+    EXPORT_ADS_ERP_DIFF_OUTSTOCK_SYNC("EXPORT_ADS_ERP_DIFF_OUTSTOCK_SYNC","出库同步差异","","",""),
+    EXPORT_ADS_ERP_DIFF_RETURN_INSTOCK_SYNC("EXPORT_ADS_ERP_DIFF_RETURN_INSTOCK_SYNC","退货同步差异","","",""),
+    EXPORT_ADS_ERP_INVENTORY_DIFF("EXPORT_ADS_ERP_INVENTORY_DIFF","平台库存差异","","",""),
+    EXPORT_ADS_ERP_INVENTORY_DIFF_KINGDEE("EXPORT_ADS_ERP_INVENTORY_DIFF_KINGDEE","金蝶库存差异","","",""),
+    EXPORT_ADS_ERP_FIRST_MILE_INTRANSIT_DIFF("EXPORT_ADS_ERP_FIRST_MILE_INTRANSIT_DIFF","平台在途报表","","",""),
 
     //plm
     EXPORT_PLM_BOM("EXPORT_PLM_BOM", "BOM数据","","",""),
@@ -115,6 +123,8 @@ public enum FileTaskEventEnum implements EnumMessage {
 
     EXPORT_OMS_EXHIBITION_ORDER("EXPORT_OMS_EXHIBITION_ORDER", "展会订单导出","","",""),
     IMPORT_OMS_EXHIBITION_ORDER("IMPORT_OMS_EXHIBITION_ORDER","展会订单导入","com.erp.rpc.oms.feign.ImportOmsFeign","importExhibitionOrder",""),
+    EXPORT_OMS_DELIVERY_BOX_RULE("EXPORT_OMS_DELIVERY_BOX_RULE", "发货箱规导出","","",""),
+    IMPORT_OMS_DELIVERY_BOX_RULE("IMPORT_OMS_DELIVERY_BOX_RULE", "发货箱规导入","com.erp.rpc.oms.feign.ImportOmsFeign","importDeliveryBoxRule",""),
     EXPORT_OMS_KOL_FEEDBACK("EXPORT_OMS_KOL_FEEDBACK", "KOL回片列表导出","","",""),
     IMPORT_OMS_KOL_FEEDBACK("IMPORT_OMS_KOL_FEEDBACK","KOL回片列表导入","com.erp.rpc.oms.feign.ImportOmsFeign","importKolFeedback",""),
     EXPORT_OMS_KOL_FEEDBACK_COST("EXPORT_OMS_KOL_FEEDBACK_COST", "KOL回片费用导出","","",""),
@@ -171,6 +181,7 @@ public enum FileTaskEventEnum implements EnumMessage {
     EXPORT_SYS_THIRD_NOTICE("EXPORT_SYS_THIRD_NOTICE", "三方通知配置导出","","",""),
     EXPORT_SYS_THIRD_NOTICE_RECORD("EXPORT_SYS_THIRD_NOTICE_RECORD", "三方通知推送导出","","",""),
     EXPORT_DICT_BASIC_ALL("EXPORT_DICT_BASIC_ALL", "字典数据导出","","",""),
+    EXPORT_SYS_TEMPLATE("EXPORT_SYS_TEMPLATE", "模板导出","","",""),
     //wms
     EXPORT_WMS_INVENTORY("EXPORT_WMS_INVENTORY","即时库存导出","","",""),
     EXPORT_WMS_B2C_DELIVERY_ORDER("EXPORT_WMS_B2C_DELIVERY_ORDER", "发货单导出","","",""),
@@ -286,6 +297,7 @@ public enum FileTaskEventEnum implements EnumMessage {
     EXPORT_WMS_SAMPLE_ADJUSTMENT_INFO_REPORT("EXPORT_WMS_SAMPLE_ADJUSTMENT_INFO_REPORT", "样品调整单导出","","",""),
     IMPORT_WMS_SAMPLE_ADJUSTMENT_INFO("IMPORT_WMS_SAMPLE_ADJUSTMENT_INFO","样品调整单导入","com.erp.rpc.wms.feign.ImportWmsFeign","importSampleAdjustment",""),
 
+    EXPORT_WMS_B2B_THIRD_DELIVERY_REPORT("EXPORT_WMS_B2B_THIRD_DELIVERY_REPORT", "B2B三方发货单导出","","",""),
 
 
     //tms

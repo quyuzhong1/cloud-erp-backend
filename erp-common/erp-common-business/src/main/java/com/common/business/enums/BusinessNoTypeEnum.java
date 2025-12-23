@@ -120,6 +120,7 @@ public enum BusinessNoTypeEnum {
     CODE_LCPZ(89, "LCPZ","流程配置",BusinessNoConstant.LCPZ),
     CODE_WFHD(88, "whud","b2c三方仓发货单",BusinessNoConstant.WFHD),
     CODE_SFSC(90, "SFSC","三方审批生成配置",BusinessNoConstant.SFSC),
+    CODE_MB(92, "MB","模板管理",BusinessNoConstant.MB),
     CODE_GYSDM(91, "GYSDM","供应商代码", BusinessNoConstant.GYSDM),
     CODE_YPLY(93, "YPLY","样品领用", BusinessNoConstant.YPLY),
 
@@ -146,6 +147,8 @@ public enum BusinessNoTypeEnum {
     CODE_YPTZ(116, "YPTZ","样品调整单", BusinessNoConstant.YPTZ),
 
     CODE_DC(114 ,"DC","资质字典表",BusinessNoConstant.DC),
+    CODE_CYCL(115 ,"HD","差异策略配置表",BusinessNoConstant.CYCL),
+    CODE_SFFH(115 ,"SFFH","B2B三方发货单",BusinessNoConstant.SFFH),
 
     CODE_MPL(111 ,"MPL","资产通知单",BusinessNoConstant.MPL),
     CODE_MPO(112 ,"MPO","资产采购单",BusinessNoConstant.MPO),

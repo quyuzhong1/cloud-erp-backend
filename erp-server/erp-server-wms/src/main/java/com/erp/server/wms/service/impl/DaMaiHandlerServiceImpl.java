@@ -1,17 +1,17 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.json.JSONUtil;
-import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.enums.OmsPlatformEnum;
 import com.common.business.threadlocal.ThirdWarehouseContext;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
-import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.wms.dto.OverseasProviderDTO;
 import com.erp.model.wms.dto.third.*;
+import com.erp.model.wms.enums.B2bThirdWarehouseCancelResultEnum;
 import com.erp.model.wms.enums.ThirdWarehouseCancelResultEnum;
+import com.erp.server.wms.convert.B2bThirdDeliveryConverter;
 import com.erp.server.wms.handler.AbstractThirdWarehouseHandler;
 import com.sdk.wms.damai.dto.request.*;
 import com.sdk.wms.damai.dto.response.*;
@@ -233,16 +233,67 @@ public class DaMaiHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         return success(resp.getData().getSoNo());
     }
 
+    @Override
+    protected ApiResult<String> createFbaOutboundBill(ThirdWarehouseCreateFbaOutboundReq createOutboundReq) {
+        DaMaiCreateFbaOrderRequest daMaiCreateFbaOrderRequest = this.buildFbaOrderDto(createOutboundReq);
+        log.warn(getPlatForm().getName()+"创建FBA出库单请求:{}", JSONUtil.toJsonStr(daMaiCreateFbaOrderRequest));
+        DaMaiBaseResp<DaMaiCreateFbaOrderResp> resp = daMaiService.createFbaOrder(ThirdWarehouseContext.getAuthMap(), daMaiCreateFbaOrderRequest);
+        log.warn(getPlatForm().getName()+"创建FBA出库单结果:{}", JSONUtil.toJsonStr(resp));
+        if (Objects.isNull(resp)){
+            return failure("创建FBA出库单失败:" + JSONUtil.toJsonStr(resp) );
+        }
+        if(!isSuccess(resp)){
+            return failure(resp.getMsg());
+        }
+        return success(resp.getData().getFbaNo());
+    }
+
+    private DaMaiCreateFbaOrderRequest buildFbaOrderDto(ThirdWarehouseCreateFbaOutboundReq createOutboundReq) {
+        DaMaiCreateFbaOrderRequest request = B2bThirdDeliveryConverter.INSTANCE.toDaMaiFbaOrderRequest(createOutboundReq);
+        DaMaiCreateFbaOrderRequest.CommandDTO commandDTO = new DaMaiCreateFbaOrderRequest.CommandDTO();
+        commandDTO.setCommandDesc(createOutboundReq.getOperationDesc());
+        commandDTO.setCommandType(createOutboundReq.getWarehouseOperationType());
+        request.setCommandList(Collections.singletonList(commandDTO));
+        return request;
+    }
+
 
     @Override
     protected ApiResult<String> cancelOutboundBill(ThirdWarehouseCancelOutboundReq cancelOutboundReq) {
         DaMaiCancelOrderRequest daMaiCancelOrderRequest = new DaMaiCancelOrderRequest();
         daMaiCancelOrderRequest.setSoNo(cancelOutboundReq.getOrderCode());
+        log.warn(getPlatForm().getName()+"取消出库单请求:{}", JSONUtil.toJsonStr(daMaiCancelOrderRequest));
         DaMaiBaseResp<String> resp = daMaiService.cancelOrder(ThirdWarehouseContext.getAuthMap(),daMaiCancelOrderRequest);
+        log.warn(getPlatForm().getName()+"取消出库单结果:{}", JSONUtil.toJsonStr(resp));
+        if (Objects.isNull(resp)){
+            return failure("取消出库单失败:" + JSONUtil.toJsonStr(resp));
+        }
         if(!isSuccess(resp)){
             return failure(resp.getMsg());
         }
+        if("订单取消失败".equals(resp.getMsg())){
+            return failure(resp.getMsg());
+        }
+        if("请求已受理".equals(resp.getMsg())){
+            return success(ThirdWarehouseCancelResultEnum.INTERCEPTING.getCode());
+        }
         return success(ThirdWarehouseCancelResultEnum.INTERCEPTION_SUCCESSFUL.getCode());
+    }
+    @Override
+    protected ApiResult<String> cancelFbaOutboundBill(ThirdWarehouseCancelFbaOutboundReq req) {
+        DaMaiCancelFbaOrderRequest request = new DaMaiCancelFbaOrderRequest();
+        request.setCustRefNo(req.getErpOrderCode());
+        request.setFbaSoNo(req.getOrderCode());
+        log.warn(getPlatForm().getName()+"取消FBA出库单请求:{}", JSONUtil.toJsonStr(request));
+        DaMaiBaseResp<DaMaiCancelFbaOrderResp> resp = daMaiService.cancelFbaOrder(ThirdWarehouseContext.getAuthMap(), request);
+        log.warn(getPlatForm().getName()+"取消FBA出库单结果:{}", JSONUtil.toJsonStr(resp));
+        if(!isSuccess(resp)){
+            return failure(resp.getMsg());
+        }
+        if (!Objects.equals(resp.getMsg(), "请求已受理") || !Objects.equals(resp.getMsg(), "订单单已取消")){
+            return failure(resp.getMsg());
+        }
+        return success(B2bThirdWarehouseCancelResultEnum.INTERCEPTION_SUCCESSFUL.getCode());
     }
     @Override
     protected ApiResult<String> queryOutboundBill(@Valid ThirdWarehouseQueryOutboundReq queryOutboundReq){
@@ -257,6 +308,24 @@ public class DaMaiHandlerServiceImpl extends AbstractThirdWarehouseHandler {
             return failure("订单不存在");
         }
         return success(data.get(0).getSoNo());
+    }
+
+    @Override
+    protected ApiResult<List<ThirdWarehouseQueryFbaOutboundResponse>> queryFbaOutboundBill(@Valid ThirdWarehouseQueryFbaOutboundReq req){
+        log.warn(getPlatForm().getName()+"查询FBA出库单请求:{}", JSONUtil.toJsonStr(req));
+        DaMaiGetFbaOrderRequest daMaiGetOrderRequest = new DaMaiGetFbaOrderRequest();
+        daMaiGetOrderRequest.setCustRefNoList(req.getErpOrderCodeList());
+        DaMaiBaseResp<List<DaMaiGetFbaOrderResp>> fbaOrderList = daMaiService.getFbaOrderList(ThirdWarehouseContext.getAuthMap(), daMaiGetOrderRequest);
+        log.warn(getPlatForm().getName()+"查询FBA出库单结果:{}", JSONUtil.toJsonStr(fbaOrderList));
+        if(!isSuccess(fbaOrderList)){
+            return failure(fbaOrderList.getMsg());
+        }
+        List<DaMaiGetFbaOrderResp> dataList = fbaOrderList.getData();
+        if(CollectionUtils.isEmpty(dataList)){
+            return failure("订单不存在");
+        }
+        List<ThirdWarehouseQueryFbaOutboundResponse> responseList = B2bThirdDeliveryConverter.INSTANCE.toB2bThirdDeliveryQueryDTO(dataList);
+        return success(responseList);
     }
     private DaMaiCreateOrderRequest buildOrderDto(ThirdWarehouseCreateOutboundReq createOutboundReq) {
 

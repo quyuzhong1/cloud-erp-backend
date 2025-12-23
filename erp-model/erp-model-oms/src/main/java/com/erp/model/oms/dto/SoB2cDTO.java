@@ -745,6 +745,10 @@ public class SoB2cDTO implements Serializable {
          */
         private String fromWarehouseId;
         /**
+         * 发货仓库名称
+         */
+        private String fromWarehouseName;
+        /**
          * 审核时间
          */
         private LocalDateTime approveTime;
@@ -2863,6 +2867,7 @@ public class SoB2cDTO implements Serializable {
          * 销售订单id
          */
         private String id;
+        private String platformDeliveryWarehouse;
         /**
          * 订单创建时间
          */

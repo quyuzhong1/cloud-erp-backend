@@ -18,6 +18,9 @@ public interface ImportOmsFeign {
     @PostMapping("/feign/import/exhibitionOrder")
     void importExhibitionOrder(@RequestBody BaseDTO.ImportDTO dto);
 
+    @PostMapping("/feign/import/importDeliveryBoxRule")
+    void importDeliveryBoxRule(@RequestBody BaseDTO.ImportDTO dto);
+
     @PostMapping("/feign/import/kolFeedback")
     void importKolFeedback(@RequestBody BaseDTO.ImportDTO dto);
 

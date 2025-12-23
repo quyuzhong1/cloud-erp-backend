@@ -577,6 +577,13 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         ruleDTO.setType(StockOutTransferTypeEnum.B2B.getCode());
         ruleDTO.setReceiveCountry(customerDTO.getCountryId());
         ruleDTO.setFromWarehouse(soDeliveryNoticeEntity.getWarehouseId());
+        if(StringUtils.isNotBlank(soDeliveryNoticeEntity.getWarehouseId())){
+            WarehouseEntity deliveryWarehouse = warehouseService.getById(soDeliveryNoticeEntity.getWarehouseId());
+            if(Objects.nonNull(deliveryWarehouse)){
+                ruleDTO.setFromWarehouseOrg(deliveryWarehouse.getOrgId());
+                ruleDTO.setFromWarehouseCountry(deliveryWarehouse.getCountry());
+            }
+        }
         ruleDTO.setSalesOrgId(soInfoEntity.getSalesOrgId());
         ruleDTO.setDictPlatform("");
         CfgRuleOutDTO.MatchTransferResultDTO matchTransferResultDTO = cfgRuleOutService.matchTransferRule(ruleDTO);
@@ -673,9 +680,10 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         //获取销售单详情信息
         List<SoDetailEntity> soDetailEntities = soInfoFeign.listSoDetailByIds(orderDetailIds);
 
-        List<CustomerInfoEntity> customerInfoEntities = customerFeign.listCustomer();
-        CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(soDeliveryNoticeEntity.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
-        viewDTO.setCustomerName(customerInfoEntity.getName());
+        CustomerInfoEntity customerInfoEntity = customerFeign.getCustomerById(soDeliveryNoticeEntity.getCustomerId());
+        if(ObjectUtil.isNotEmpty(customerInfoEntity)) {
+            viewDTO.setCustomerName(customerInfoEntity.getName());
+        }
         viewDTO.setApproveStatusName(ApproveStatusEnum.getName(viewDTO.getApproveStatus()));
         viewDTO.setInvalidStatusName(InvalidStatusEnum.getName(viewDTO.getInvalidStatus()));
         viewDTO.setTypeName(BillTypeEnum.getName(viewDTO.getType()));
@@ -701,24 +709,29 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         List<CustomerAddressEntity> customerAddressEntities = customerFeign.listCustomerAddressByIds(Collections.singletonList(soInfoEntity.getReceiveAddressId()));
         CustomerAddressEntity customerAddressEntity = customerAddressEntities.stream().filter(req -> req.getId().equals(soInfoEntity.getReceiveAddressId())).findFirst().orElse(new CustomerAddressEntity());
         viewDTO.setReceiveAddress(customerAddressEntity.getAddress());
+        List<String> detailIds = detailEntityList.stream().map(SoDeliveryNoticeDetailEntity::getId).collect(Collectors.toList());
+        List<WmsAttachmentDTO.UpdateDTO> attachmentList = wmsAttachmentService.getByBusinessIds(detailIds);
         for (SoDeliveryNoticeDetailEntity deliveryNoticeDetailEntity : detailEntityList) {
             SoDeliveryNoticeDetailDTO.View detailView = new SoDeliveryNoticeDetailDTO.View();
             BeanMapperUtils.copy(deliveryNoticeDetailEntity, detailView);
             //产品sku信息
             ProductDetailEntity productDetailEntity = productDetailEntitys.stream().filter(entityClass -> entityClass.getId().equals(deliveryNoticeDetailEntity.getSkuId())).findFirst().orElse(null);
-            if (ObjectUtil.isEmpty(productDetailEntity)) {
+            if (Objects.isNull(productDetailEntity)) {
                 throw new ServiceException(ApiError.ERROR_95107);
             }
             detailView.setProductName(productDetailEntity.getName());
+            detailView.setUnitName(productDetailEntity.getUnitName());
             //销售单信息
             SoDetailEntity soDetailEntity = soDetailEntities.stream().filter(detail -> detail.getId().equals(deliveryNoticeDetailEntity.getSourceDetailId())).findFirst().orElse(new SoDetailEntity());
-            detailView.setSalesQty(soDetailEntity.getQty());
+            detailView.setSalesQty(soDetailEntity.getBoxQty());
 
-            List<WmsAttachmentDTO.UpdateDTO> attachmentList = wmsAttachmentService.getByBusinessIds(Collections.singletonList(deliveryNoticeDetailEntity.getId()));
-            List<String> attachmentUrlList = attachmentList.stream().
+            List<WmsAttachmentDTO.UpdateDTO> currentAttachmentList = attachmentList.stream().
+                    filter(attachment -> attachment.getBusinessId().equals(deliveryNoticeDetailEntity.getId())).
+                    collect(Collectors.toList());
+            List<String> attachmentUrlList = currentAttachmentList.stream().
                     map(WmsAttachmentDTO.UpdateDTO::getAttachUrl).
                     collect(Collectors.toList());
-            List<String> attachmentNameList = attachmentList.stream().
+            List<String> attachmentNameList = currentAttachmentList.stream().
                     map(WmsAttachmentDTO.UpdateDTO::getAttachName).
                     collect(Collectors.toList());
             detailView.setAttachUrlList(attachmentUrlList);
@@ -1955,6 +1968,9 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         //发货通知单明细信息
         List<SoDeliveryNoticeDetailEntity> soDeliveryNoticeDetailList = soDeliveryNoticeDetailService.listDetailByMainId(entity.getId());
 
+        List<String> collect = soDeliveryNoticeDetailList.stream().map(obj -> obj.getSourceDetailId()).collect(Collectors.toList());
+        List<SoDetailEntity> soDetailEntities = soInfoFeign.listSoDetailByIds(collect);
+
         //多退，退回冻结添加可用
         List<VirtualInventoryStockDTO.OutInStockDTO> subList = new ArrayList<>();
 
@@ -1969,8 +1985,12 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
             outInStockDTO.setSourceType(InventorySourceTypeEnum.SO_DELIVERY_NOTICE);
             outInStockDTO.setSourceDetailId(detailEntity.getId());
             outInStockDTO.setBillDate(LocalDate.now());
-            outInStockDTO.setSkuId(detailEntity.getSkuId());
-            outInStockDTO.setSkuNo(detailEntity.getSkuNo());
+            for (SoDetailEntity soDetailEntity : soDetailEntities) {
+                if (soDetailEntity.getId().equals(detailEntity.getSourceDetailId())) {
+                    outInStockDTO.setSkuId(soDetailEntity.getDeliverySkuId());
+                    outInStockDTO.setSkuNo(soDetailEntity.getDeliverySkuNo());
+                }
+            }
             outInStockDTO.setWarehouseId(entity.getWarehouseId());
             outInStockDTO.setVirtualWarehouseId(entity.getVirtualWarehouseId());
             //发货数量

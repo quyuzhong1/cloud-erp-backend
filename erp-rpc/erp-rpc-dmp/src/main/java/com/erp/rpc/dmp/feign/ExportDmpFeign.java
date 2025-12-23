@@ -10,6 +10,11 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
+import com.common.business.config.ExportFeignConfig;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.vo.PagingVO;
+import com.erp.model.dmp.dto.excel.DmpAfterSaleExcelDTO;
+
 @FeignClient(name = "erp-dmp", contextId = "exportDmpFeign", configuration = ExportFeignConfig.class)
 public interface ExportDmpFeign {
 
@@ -55,7 +60,32 @@ public interface ExportDmpFeign {
 
     @PostMapping("/feign/export/exportDmpOutputTask")
     PagingVO<DmpOutputTaskDTO.ListDTO> exportDmpOutputTask(@RequestBody @Validated PagingDTO<DmpOutputTaskDTO.ExportDTO> dto);
-    
+
     @PostMapping("/feign/export/exportRestcloudPushTask")
     PagingVO<DmpOutputTaskRecordDTO.PagingDTO> exportRestcloudPushTask(@RequestBody PagingDTO<DmpOutputTaskRecordDTO.ExpotParamDTO> dto);
+
+    @PostMapping("/feign/export/exportCfgDiffStrategy")
+    PagingVO<CfgDiffStrategyDTO.ViewDTO> exportCfgDiffStrategy(@RequestBody @Validated PagingDTO<CfgDiffStrategyDTO.PagingParamDTO> dto);
+
+    @PostMapping("/feign/export/exportAdsErpOutstockDiffFlow")
+    PagingVO<AdsErpOutstockDiffFlowDTO.PagingDTO> exportAdsErpOutstockDiffFlow(@RequestBody @Validated PagingDTO<AdsErpOutstockDiffFlowDTO.PagingParamDTO> dto);
+
+    @PostMapping("/feign/export/exportAdsErpInventoryDiffFlow")
+    PagingVO<AdsErpInventoryDiffFlowDTO.ListDTO> exportAdsErpInventoryDiffFlow(@RequestBody @Validated PagingDTO<AdsErpInventoryDiffFlowDTO.PagingParamDTO> dto);
+
+    @PostMapping("/feign/export/exportAdsErpDiffOutstockSync")
+    PagingVO<AdsErpDiffOutstockSyncDTO.ListDTO> exportAdsErpDiffOutstockSync(@RequestBody @Validated PagingDTO<AdsErpDiffOutstockSyncDTO.PagingParamDTO> dto);
+
+    @PostMapping("/feign/export/exportAdsErpDiffReturnInstockSync")
+    PagingVO<AdsErpDiffReturnInstockSyncDTO.ListDTO> exportAdsErpDiffReturnInstockSync(@RequestBody @Validated PagingDTO<AdsErpDiffReturnInstockSyncDTO.PagingParamDTO> dto);
+
+    @PostMapping("/feign/export/exportAdsErpInventoryDiff")
+    PagingVO<AdsErpInventoryDiffDTO.ListDTO> exportAdsErpInventoryDiff(@RequestBody @Validated PagingDTO<AdsErpInventoryDiffDTO.PagingParamDTO> dto);
+
+    @PostMapping("/feign/export/exportAdsErpInventoryDiffKingdee")
+    PagingVO<AdsErpInventoryDiffKingdeeDTO.ListDTO> exportAdsErpInventoryDiffKingdee(@RequestBody @Validated PagingDTO<AdsErpInventoryDiffKingdeeDTO.PagingParamDTO> dto);
+
+    @PostMapping("/feign/export/exportAdsErpFirstMileInTransitDiff")
+    PagingVO<AdsErpFirstMileInTransitDiffDTO.ListDTO> exportAdsErpFirstMileInTransitDiff(@RequestBody @Validated PagingDTO<AdsErpFirstMileInTransitDiffDTO.PagingParamDTO> dto);
+
 }

@@ -9,10 +9,10 @@ package ${package.Dto};
 <#list table.importPackages as pkg>
 import ${pkg};
 </#list>
-<#if fieldMap["approveStatus"]?? && fieldMap["code"]??>
+<#--<#if fieldMap["approveStatus"]?? && fieldMap["code"]??>-->
 import com.common.business.dto.base.SortDTO;
 import java.util.List;
-</#if>
+<#--</#if>-->
 <#if swagger2>
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
@@ -22,6 +22,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
+import com.common.business.dto.base.SuperDTO;
 import java.time.LocalDateTime;
 </#if>
 <#if dtoValidate>
@@ -29,11 +30,11 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 </#if>
-<#if fieldMap["approveStatus"]?? && fieldMap["code"]??>
+<#--<#if fieldMap["approveStatus"]?? && fieldMap["code"]??>-->
 import javax.validation.constraints.NotEmpty;
 import com.common.business.dto.AdvanceQueryDTO;
 import java.util.Map;
-</#if>
+<#--</#if>-->
 <#list table.fields as field>
 <#if field.propertyType == 'BigDecimal'>
 import javax.validation.constraints.Digits;
@@ -59,7 +60,7 @@ public class ${table.dtoName} implements Serializable {
     private static final long serialVersionUID = 1L;
 </#if>
 
-     <#if fieldMap["approveStatus"]?? && fieldMap["code"]??>
+
      /**
      * 状态统计
      */
@@ -79,8 +80,8 @@ public class ${table.dtoName} implements Serializable {
          private Integer count;
 
      }
-     </#if>
-     <#if fieldMap["approveStatus"]?? && fieldMap["code"]??>
+
+
      /**
      * 分页列表查询参数
      */
@@ -99,8 +100,8 @@ public class ${table.dtoName} implements Serializable {
         private Map<String,String> sqlMap;
 
      }
-     </#if>
-    <#if fieldMap["approveStatus"]?? && fieldMap["code"]??>
+
+
     /**
     * 分页列表
     */
@@ -138,7 +139,7 @@ public class ${table.dtoName} implements Serializable {
 
         </#if>
         <#------------ 如果包含approveStatus字段则展示createTime字段-------------->
-        <#if fieldMap["approveStatus"]?? && fieldMap["code"]??>
+
         /**
         * 创建时间
         */
@@ -148,11 +149,10 @@ public class ${table.dtoName} implements Serializable {
         * 创建人名称
         */
         private String createUserName;
-        </#if>
-    }
-    </#if>
 
-    <#if fieldMap["approveStatus"]?? && fieldMap["code"]??>
+    }
+
+
     /**
     * 导出Excel
     */
@@ -164,7 +164,6 @@ public class ${table.dtoName} implements Serializable {
         */
         private List<String> ids;
     }
-    </#if>
 
     /**
     * 详情
@@ -219,7 +218,7 @@ public class ${table.dtoName} implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class CommonDTO {
+    public static class CommonDTO extends SuperDTO {
 
     <#-- ----------  BEGIN 字段循环遍历  ---------->
     <#list table.fields as field>

@@ -300,6 +300,11 @@ public class WarehouseDTO implements Serializable {
          * 仓库负责人id
          */
         private String chargeId;
+
+        /**
+         * 是否b2b发货
+         */
+        private Boolean isB2BApiDelivery;
     }
 
     @Data

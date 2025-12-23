@@ -12,6 +12,7 @@
 
 package com.erp.server.dmp.amz;
 
+import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.erp.model.dmp.dto.AmazonShopInfoDTO;
 import com.erp.sdk.oms.amz.spapi.api.FbaInboundApi;
@@ -117,8 +118,13 @@ public class FbaOutboundApiTest {
      */
     @Test
     public void createFulfillmentOrderTest() throws ApiException, LWAException {
-        CreateFulfillmentOrderRequest body = null;
-        CreateFulfillmentOrderResponse response = api.createFulfillmentOrder(body);
+        String str = "{\"marketplaceId\":\"A1VC38T7YXB528\",\"sellerFulfillmentOrderId\":\"WFHD25102706819\",\"displayableOrderId\":\"430315-20251023-0158533478\",\"displayableOrderDate\":\"2025-10-27T02:24:46.126Z\",\"displayableOrderComment\":\"WFHD25102706819\",\"shippingSpeedCategory\":\"Expedited\",\"destinationAddress\":{\"name\":\"石川 大樹\",\"addressLine1\":\"大字下落合1074-1サンクタス与野タワーレジデンス2002号\",\"addressLine2\":\"\",\"addressLine3\":\"\",\"city\":\"さいたま市中央区\",\"districtOrCounty\":\"\",\"stateOrRegion\":\"埼玉県\",\"postalCode\":\"338-0002\",\"countryCode\":\"JP\",\"phone\":\"090-5423-7124\"},\"fulfillmentPolicy\":\"FillOrKill\",\"items\":[{\"sellerSku\":\"3090+0605-JP1\",\"sellerFulfillmentOrderItemId\":\"1982634200921341954\",\"quantity\":1,\"fulfillmentNetworkSku\":\"X0012ZSPXV\",\"perUnitDeclaredValue\":{\"currencyCode\":\"JPY\",\"value\":\"5880.0000\"}}]}";
+        JSONObject jsonObject = JSONUtil.parseObj(str);
+        CreateFulfillmentOrderRequest body = JSONUtil.toBean(jsonObject, CreateFulfillmentOrderRequest.class);
+        String shopId = jsonObject.getStr("shopId", "");
+        AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(shopId);
+        FbaOutboundApi fbaOutboundApi = AmazonSpApiInitUtils.create(FbaOutboundApi.class, shopInfoDTO, false);
+        CreateFulfillmentOrderResponse response = fbaOutboundApi.createFulfillmentOrder(body);
 
 // TODO: test validations
     }

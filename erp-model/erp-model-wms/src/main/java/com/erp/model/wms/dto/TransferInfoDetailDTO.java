@@ -31,7 +31,11 @@ public class TransferInfoDetailDTO implements Serializable {
          * SKU
          */
         private String  skuNo;
-
+        /**
+         * 单位
+         */
+        @NotBlank(message = "单位不能为空")
+        private String unitName;
         /**
          * 数量
          */

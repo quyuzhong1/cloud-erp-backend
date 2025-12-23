@@ -1,11 +1,11 @@
 package com.erp.model.scm.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.web.multipart.MultipartFile;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
@@ -92,6 +92,10 @@ public class ContractInfoDTO implements Serializable {
         * 单据编号
         */
         private String code;
+        /**
+        * 名称
+        */
+        private String name;
 
         /**
         * 服务商id
@@ -206,12 +210,16 @@ public class ContractInfoDTO implements Serializable {
         * 单据编号
         */
         private String code;
+        /**
+        * 名称
+        */
+        private String name;
 
         /**
         * 服务商id
         */
-        private String serviceProviderId;
-        private String serviceProviderName;
+        private List<String> serviceProviderIdList;
+        private List<String> serviceProviderNameList;
 
         /**
         * 合同类型,contractType字典
@@ -241,6 +249,8 @@ public class ContractInfoDTO implements Serializable {
 
         private List<String> attachmentUrlList;
         private List<String> attachmentNameList;
+
+        private String templateId;
     }
 
     /**
@@ -265,7 +275,6 @@ public class ContractInfoDTO implements Serializable {
         */
         @NotBlank(message = "主键id不能为空")
         private String id;
-
     }
 
     @Data
@@ -275,9 +284,7 @@ public class ContractInfoDTO implements Serializable {
         /**
         * 服务商id
         */
-        @NotBlank(message = "服务商不能为空")
-        @Size(max = 19,message = "服务商最大长度不能超过19位")
-        private String serviceProviderId;
+        private List<String> serviceProviderIdList;
 
         /**
         * 合同类型,contractType字典
@@ -308,12 +315,21 @@ public class ContractInfoDTO implements Serializable {
         /**
          * 文件不能为空
          */
-        @NotEmpty(message = "附件不能为空")
+//        @NotEmpty(message = "附件不能为空")
         @Size(max = 1, message = "支持1个附件上传")
         private List<String> attachmentUrlList;
-        @NotEmpty(message = "附件不能为空")
+//        @NotEmpty(message = "附件不能为空")
         @Size(max = 1, message = "支持1个附件上传")
         private List<String> attachmentNameList;
+
+        /**
+         * 模板管理id
+         */
+        private String templateId;
+        /**
+         * 名称
+         */
+        private String name;
     }
 
 
@@ -353,5 +369,62 @@ public class ContractInfoDTO implements Serializable {
 
     }
 
+    /**
+     *
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ProviderParamsDTO {
+
+        @NotBlank(message = "服务商不能为空")
+        private String serviceProviderId;
+
+    }
+
+    /**
+     *
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ProviderResultDTO {
+        /**
+         * 合同id
+         */
+        private String id;
+
+        /**
+         * 合同编码
+         */
+        private String code;
+        /**
+         * 模板id
+         */
+        private String templateId;
+        /**
+         * 模板名称
+         */
+        private String templateName;
+
+        /**
+         * 前端渲染配置JSON
+         */
+        private String content;
+    }
+
+
+
+    /**
+     *
+     */
+    @Data
+    @NoArgsConstructor
+    public static class UpdateContractNameDTO {
+        /**
+         * 名称
+         */
+        private String name;
+
+        private String templateId;
+    }
 
 }

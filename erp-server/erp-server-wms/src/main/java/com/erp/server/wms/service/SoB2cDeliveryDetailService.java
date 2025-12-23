@@ -44,4 +44,10 @@ public interface SoB2cDeliveryDetailService extends SuperService<SoB2cDeliveryDe
      * @create 2023-12-18 11:31
      */
     List<SoB2cDeliveryDetailEntity> listBySoDetailIds(List<String> soDetailIdList);
+
+    /**
+     * 根据主表id删除子表数据
+     * @param ids
+     */
+    void removeByMainIds(List<String> ids);
 }

@@ -22,10 +22,12 @@ import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.FastDFSClientUtil;
 import com.erp.model.dmp.enums.SettingEnum;
+import com.erp.model.oms.dto.ListingInfoDTO;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.SkuMappingDTO;
+import com.erp.model.oms.entity.ListingInfoEntity;
+import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.entity.DictCityEntity;
@@ -43,7 +45,6 @@ import com.erp.rpc.oms.feign.OmsListingInfoFeign;
 import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
-import com.erp.server.wms.constant.WmsConstant;
 import com.erp.server.wms.convert.OverseasWarehouseInboundConverter;
 import com.erp.server.wms.handler.ThirdWarehouseRegistry;
 import com.erp.server.wms.mapper.OverseasWarehouseInboundMapper;
@@ -226,14 +227,14 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         // 推送到第三方草稿
         if (null != providerEntity && !OmsPlatformEnum.CAI_NIAO.getCode().equals(providerEntity.getCode())) {
             // 推送到第三方草稿
-            ApiResult<String> resultInfo = this.pullThirdOverseasPlatformWithSkuMapping( providerEntity, mainEntity, deliveryDetailEntityList, OverseasVerifyEnum.INIT.getCode());
+            ApiResult<String> resultInfo = this.pullThirdOverseasPlatformWithSkuMapping(providerEntity, mainEntity, deliveryDetailEntityList, OverseasVerifyEnum.INIT.getCode());
             if (200 != resultInfo.getCode()) {
                 log.error("推送第三方仓库新增失败:msg={}", JSONUtil.toJsonStr(resultInfo));
                 throw new ServiceException("推送第三方仓库失败:" + resultInfo.getMsg());
             }
             log.info("推送第三方仓库新增结果: ={}", JSONUtil.toJsonStr(resultInfo));
-            // 记录单号
-            mainEntity.setCode(resultInfo.getData());
+                // 记录单号
+                mainEntity.setCode(resultInfo.getData());
             if (!this.updateById(mainEntity)) {
                 throw new ServiceException("更新单号失败");
             }
@@ -268,6 +269,12 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         // OpenCollectingServiceEnum： 0=自送货物，1=上门提货
         OverseasDeliveryModeEnum deliveryModeEnum = OverseasDeliveryModeEnum.getByCode(mainEntity.getDeliveryMode());
         String collectingService = null == deliveryModeEnum ? "" : deliveryModeEnum.getCode();
+        //listingInfo信息
+        ListingInfoDTO.QueryDTO queryDTO = new ListingInfoDTO.QueryDTO();
+        queryDTO.setType(RuleTypeEnum.WAREHOUSE.getCode());
+        List<String> platformSkuNoList = deliveryDetailEntityList.stream().map(FirstMileDeliveryDetailEntity::getPlatformSkuNo).distinct().collect(Collectors.toList());
+        queryDTO.setPlatformSkuNoList(platformSkuNoList);
+        List<ListingInfoEntity> listingInfoList = omsListingInfoFeign.listInfoByPlatformSkuNo(queryDTO);
 
         // 装箱信息item
         List<ThirdWarehouseCreateInboundReq.Item> itemList = new LinkedList<>();
@@ -277,8 +284,12 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                 String msg = CharSequenceUtil.format("海外仓入库单明细中找不到skuId为【{}】的明细", itemDTO.getSkuId());
                 throw new ServiceException(msg);
             }
+            //三方条码
+            String thirdBarcode = listingInfoList.stream().filter(obj -> CharSequenceUtil.equals(obj.getPlatformSkuNo(), firstMileDeliveryDetailEntity.getPlatformSkuNo())).map(ListingInfoEntity::getThirdBarcode).findFirst().orElse("");
+
             ThirdWarehouseCreateInboundReq.Item currentItem = BeanUtil.copyProperties(itemDTO, ThirdWarehouseCreateInboundReq.Item.class);
             currentItem.setProductSku(firstMileDeliveryDetailEntity.getPlatformSkuNo());
+            currentItem.setThirdBarcode(thirdBarcode);
             currentItem.setQuantity(itemDTO.getPackQty());
             currentItem.setBoxNo(Integer.parseInt(itemDTO.getBoxNo()));
             itemList.add(currentItem);
@@ -324,6 +335,8 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                 .deliveryCode(mainEntity.getExpressNo())
                 .declareType(mainEntity.getDeclareType())
                 .remark(mainEntity.getRemark())
+                .countryName(mainEntity.getCountryName())
+                .logisticsChannel(mainEntity.getLogisticsProductCode())
                 //发货信息
                 .shiperInfo(ThirdWarehouseCreateInboundReq.ShiperInfo.builder()
                         .contacterName(contactName)
@@ -503,7 +516,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                 throw new ServiceException("【deliveryMode】交货方式不能为空");
             }
             // 查询设置中转仓信息
-            if (OmsPlatformEnum.OMS_IML.getCode().equalsIgnoreCase(dictPlatform)){
+            if (OmsPlatformEnum.OMS_IML.getCode().equalsIgnoreCase(dictPlatform) || OmsPlatformEnum.TONG_YOU.getCode().equalsIgnoreCase(dictPlatform)){
                 transferWarehouse = overseasProviderWarehouseService.getById(commonDTO.getTransferWarehouseId());
                 if(Objects.isNull(transferWarehouse)){
                     throw new ServiceException("未找到中转仓");
@@ -563,7 +576,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                     throw new ServiceException("【transferWarehouseId】中转仓ID不能为空");
                 }
                 // 查询设置中转仓信息
-                if (OmsPlatformEnum.OMS_IML.getCode().equalsIgnoreCase(dictPlatform)){
+                if (OmsPlatformEnum.OMS_IML.getCode().equalsIgnoreCase(dictPlatform) || OmsPlatformEnum.TONG_YOU.getCode().equalsIgnoreCase(dictPlatform)){
                     OverseasProviderWarehouseEntity overseasProviderWarehouseEntity = overseasProviderWarehouseService.getById(commonDTO.getTransferWarehouseId());
                     if(Objects.isNull(overseasProviderWarehouseEntity)){
                         throw new ServiceException("未找到中转仓");
@@ -685,7 +698,8 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         mainEntity.setDeliveryWarehouseId(deliveryEntity.getDeliveryWarehouseId());
         mainEntity.setDeliveryWarehouseName(deliveryEntity.getDeliveryWarehouseName());
         mainEntity.setPlatformToWarehouseCode(null == toEntity ? "" : toEntity.getPlatformWarehouseCode());
-        if(OmsPlatformEnum.OMS_IML.getCode().equalsIgnoreCase(dictPlatform)){
+        mainEntity.setCountryName(null == toEntity ? "" : toEntity.getCountryName());
+        if(OmsPlatformEnum.OMS_IML.getCode().equalsIgnoreCase(dictPlatform) || OmsPlatformEnum.TONG_YOU.getCode().equalsIgnoreCase(dictPlatform)){
             mainEntity.setPlatformTransferWarehouseCode(null == transferWarehouse ? "" : transferWarehouse.getPlatformWarehouseCode());
         }else{
             mainEntity.setPlatformTransferWarehouseCode(null == transferEntity ? "" : transferEntity.getPlatformWarehouseCode());
@@ -1109,7 +1123,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                 .distinct()
                 .collect(Collectors.toList());
         // 调用
-        return this.pullThirdOverseasPlatformWithSkuMapping( providerEntity, mainEntity, deliveryDetailEntityList, verityCode);
+        return this.pullThirdOverseasPlatformWithSkuMapping(providerEntity, mainEntity, deliveryDetailEntityList, verityCode);
     }
 
     @Override
@@ -1164,6 +1178,32 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                 .map(entry -> new PlatformInboundDTO.Item(entry.getKey(), entry.getValue()))
                 .collect(Collectors.toList()));
     }
+    /**
+     * 根据产品条码查询sku
+     * @author will
+     * @date 2025/12/4 11:50
+     * @param dto
+     * @return void
+     */
+    private void handleThirdBarcode (PlatformInboundDTO dto) {
+        List<String> thirdBarcodeList = dto.getItems().stream().map(PlatformInboundDTO.Item::getThirdBarcode).distinct().collect(Collectors.toList());
+        if (CollUtil.isEmpty(thirdBarcodeList) || !CharSequenceUtil.equals(dto.getPlatform(), PlatformDictEnum.TONG_YOU_WAREHOUSE.getCode())) {
+            return;
+        }
+        List<ListingInfoEntity> list = FeignQuery.create(ListingInfoEntity.class)
+                .eq(ListingInfoEntity::getPlatform, dto.getPlatform())
+                .eq(ListingInfoEntity::getAuthId, dto.getAuthId())
+                .in(ListingInfoEntity::getThirdBarcode, thirdBarcodeList)
+                .list();
+        if (CollUtil.isEmpty(list)) {
+            return;
+        }
+        for (PlatformInboundDTO.Item item : dto.getItems()) {
+            list.stream().filter(obj -> CharSequenceUtil.equals(dto.getAuthId(),obj.getAuthId()) && CharSequenceUtil.equals(dto.getPlatform(),obj.getPlatform()) && CharSequenceUtil.equals(item.getThirdBarcode(),obj.getThirdBarcode()))
+                    .findFirst()
+                    .ifPresent(obj -> item.setProductSku(obj.getPlatformSkuNo()));
+        }
+    }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -1173,6 +1213,8 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         if(StringUtils.isBlank(dto.getReceivingCode()) && StringUtils.isBlank(dto.getSourceCode())){
             return ApiResult.success();
         }
+        //根据产品条码查询sku
+        handleThirdBarcode(dto);
         //根据sku汇总数量
         this.groupBySku(dto);
         //通过单号查询主表记录

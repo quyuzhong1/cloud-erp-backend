@@ -582,9 +582,14 @@ public class SampleRecipientDTO implements Serializable {
     public static class ProductDTO {
 
         /**
-         * id 新增这个字段为空
+         * id 前端临时ID，可能被污染
          */
         private String id;
+        
+        /**
+         * recordId 数据库记录ID，用于区分更新和新增
+         */
+        private String recordId;
         
         /**
          * SKU编码

@@ -179,6 +179,11 @@ public class WeiShiHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         return success(resp.getData().getOrderNo());
     }
 
+    @Override
+    protected ApiResult<String> createFbaOutboundBill(ThirdWarehouseCreateFbaOutboundReq createOutboundReq) {
+        return failure("ERP功能暂不支持");
+    }
+
     private WeiShiCreateOutboundRequest buildOutboundDto(ThirdWarehouseCreateOutboundReq createOutboundReq) {
         List<WeiShiCreateOutboundRequest.SkuListDTO> skuListDTOS = new ArrayList<>();
         for (ThirdWarehouseCreateOutboundReq.Item item : createOutboundReq.getItems()) {
@@ -223,11 +228,19 @@ public class WeiShiHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         }
         return success(ThirdWarehouseCancelResultEnum.INTERCEPTION_SUCCESSFUL.getCode());
     }
+
+    @Override
+    protected ApiResult<String> cancelFbaOutboundBill(ThirdWarehouseCancelFbaOutboundReq cancelOutboundReq) {
+        return failure("ERP功能暂不支持");
+    }
+
     @Override
     protected ApiResult<String> queryOutboundBill(@Valid ThirdWarehouseQueryOutboundReq queryOutboundReq){
         WeiShiGetOutboundRequest weiShiGetOutboundRequest = new WeiShiGetOutboundRequest();
         weiShiGetOutboundRequest.setReferNo(queryOutboundReq.getErpOrderCode());
+        log.warn(getPlatForm().getName()+"查询出库单请求:{}", JSONUtil.toJsonStr(weiShiGetOutboundRequest));
         WeiShiBaseResp<WeiShiOutboundResp> resp = weiShiService.getOutbound(weiShiGetOutboundRequest, ThirdWarehouseContext.getAuthMap());
+        log.warn(getPlatForm().getName()+"查询出库单结果:{}", JSONUtil.toJsonStr(resp));
         if (null == resp || resp.getData() == null) {
             throw new ServiceException("纬狮获取出库单数据失败: 响应结果为空");
         }
@@ -237,6 +250,12 @@ public class WeiShiHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         }
         return success(resp.getData().getOrderNo());
     }
+
+    @Override
+    protected ApiResult<List<ThirdWarehouseQueryFbaOutboundResponse>> queryFbaOutboundBill(ThirdWarehouseQueryFbaOutboundReq req) {
+        return failure("ERP功能暂不支持");
+    }
+
     @Override
     protected Boolean warehouseAuthorize(OverseasProviderDTO.AuthorizeParamDTO dto) {
         Map<String, Object> authJson = dto.getAuthJson();

@@ -275,10 +275,19 @@ public class SoOutstockFeignController {
     }
 
     /**
+     * 自动反审核并删除出库单
+     * @param id
+     */
+    @GetMapping("/deleteSoOutstock")
+    void deleteSoOutstock(@RequestParam(value = "id") String id, @RequestParam(value = "deliveryId",required = false)String deliveryId){
+        soOutstockService.deleteSoOutstock(id, deliveryId);
+    }
+
+    /**
      * kol寄样费用查询出库信息
-     * @author will 
+     * @author will
      * @date 2025/12/9 15:37
-     * @param dto 
+     * @param dto
      * @return List<KolSoOutstockDTO>
      */
     @PostMapping("/listSoOutstockByTime")

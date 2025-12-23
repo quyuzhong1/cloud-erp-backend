@@ -31,7 +31,11 @@ public class OtherOutstockDetailDTO implements Serializable {
          */
         @NotBlank(message = "SKU不能为空")
         private String skuNo;
-
+        /**
+         * 产品单位
+         */
+        @NotBlank(message = "单位不能为空")
+        private String unitName;
         /**
          * 实发数量
          */
@@ -51,6 +55,10 @@ public class OtherOutstockDetailDTO implements Serializable {
         @Size(max = 255,message = "备注不能大于255字符")
         private String remark;
 
+        /**
+         * 来源明细ID
+         */
+        private String sourceDetailId;
 
     }
 
@@ -86,7 +94,7 @@ public class OtherOutstockDetailDTO implements Serializable {
         /**
          * 单位
          */
-        private String unit;
+        private String unitName;
 
         /**
          * 即时库存

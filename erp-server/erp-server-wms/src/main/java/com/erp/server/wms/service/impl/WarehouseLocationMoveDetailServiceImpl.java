@@ -15,6 +15,7 @@ import com.erp.model.wms.dto.WarehouseLocationMoveDTO;
 import com.erp.model.wms.dto.WarehouseLocationMoveDetailDTO;
 import com.erp.model.wms.dto.inventory.InventoryDTO;
 import com.erp.model.wms.entity.WarehouseEntity;
+import com.erp.model.wms.entity.WarehouseLocationEntity;
 import com.erp.model.wms.entity.WarehouseLocationMoveDetailEntity;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.model.wms.entity.WarehouseLocationMoveEntity;
@@ -124,6 +125,11 @@ public class WarehouseLocationMoveDetailServiceImpl extends SuperServiceImpl<War
     private void handleData(List<WarehouseLocationMoveDetailEntity> list, WarehouseLocationMoveEntity warehouseLocationMoveEntity, String warehouseId) {
         //获取仓库信息
         WarehouseEntity warehouseEntity = Optional.ofNullable(warehouseService.getById(warehouseId)).orElse(new WarehouseEntity());
+        List<String> warehouseIds = list.stream().map(WarehouseLocationMoveDetailEntity::getWarehouseId).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+        if (CharSequenceUtil.isNotBlank(warehouseId)){
+            warehouseIds.add(warehouseId);
+        }
+        List<WarehouseLocationEntity> warehouseLocationEntityList = warehouseLocationService.listByWarehouseIdsAndCodeList(warehouseIds,new ArrayList<>());
         for (WarehouseLocationMoveDetailEntity detailEntity : list) {
             InventoryDTO.PdaSearchParamDTO paramDTO = new InventoryDTO.PdaSearchParamDTO();
             paramDTO.setOrgId(warehouseEntity.getOrgId());
@@ -154,6 +160,23 @@ public class WarehouseLocationMoveDetailServiceImpl extends SuperServiceImpl<War
                     }
                 }
             }
+            //校验仓位是否存在
+            WarehouseLocationEntity inLocationEntity = warehouseLocationEntityList.stream()
+                    .filter(req -> req.getWarehouseId().equals(warehouseId)
+                            && (req.getCode().equals(detailEntity.getInWarehouseLocation()) || req.getName().equals(detailEntity.getInWarehouseLocation()) ))
+                    .findFirst().orElse(null);
+            if(Objects.isNull(inLocationEntity)){
+                throw new ServiceException("上架仓位{}不存在",detailEntity.getInWarehouseLocation());
+            }
+            detailEntity.setInWarehouseLocation(inLocationEntity.getCode());
+            WarehouseLocationEntity outLocationEntity = warehouseLocationEntityList.stream()
+                    .filter(req -> req.getWarehouseId().equals(warehouseId)
+                            && (req.getCode().equals(detailEntity.getOutWarehouseLocation()) || req.getName().equals(detailEntity.getOutWarehouseLocation()) ))
+                    .findFirst().orElse(null);
+            if(Objects.isNull(outLocationEntity)){
+                throw new ServiceException("取货仓位{}不存在",detailEntity.getInWarehouseLocation());
+            }
+            detailEntity.setOutWarehouseLocation(outLocationEntity.getCode());
             detailEntity.setInInventoryStatus(Optional.ofNullable(detailEntity.getInInventoryStatus()).orElse(InventoryStatusEnum.USABLE.getCode()));
             detailEntity.setOutInventoryStatus(Optional.ofNullable(detailEntity.getOutInventoryStatus()).orElse(InventoryStatusEnum.USABLE.getCode()));
             detailEntity.setMainId(warehouseLocationMoveEntity.getId());

@@ -1,5 +1,7 @@
 package com.erp.server.dmp.service.impl;
 
+
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
@@ -32,9 +34,14 @@ import com.erp.server.dmp.inout.dto.request.DmpOutputHotfixCreateRequest;
 import com.erp.server.dmp.inout.dto.response.DmpOutputCreateResponse;
 import com.erp.server.dmp.inout.handler.factory.DmpOutputCreateFactory;
 import com.erp.server.dmp.mapper.DmpCfgOutputDetailMapper;
+import com.erp.server.dmp.service.DmpCfgOutputDetailService;
 import com.erp.server.dmp.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Optional;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -123,6 +130,11 @@ public class DmpCfgOutputDetailServiceImpl extends SuperServiceImpl<DmpCfgOutput
         operateLogService.addModuleOperateLogByObj(old, dmpCfgOutputDetailEntity, ModuleTypeEnum.DMP_CFG_OUTPUT_DETAIL.getCode(), dmpCfgOutputDetailEntity.getId(), msg);
 
         return Boolean.TRUE;
+    }
+
+    @Override
+    public DmpCfgOutputDetailEntity getDmpCfgOutputDetailByOption(String inputId,String nextLevelId) {
+        return baseMapper.getDmpCfgOutputDetailByOption(inputId,nextLevelId);
     }
 
 

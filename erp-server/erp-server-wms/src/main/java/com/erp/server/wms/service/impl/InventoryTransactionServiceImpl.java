@@ -234,7 +234,9 @@ public class InventoryTransactionServiceImpl extends SuperServiceImpl<InventoryT
     @Override
     public void innerInventoryIdToInventoryHis(String inventoryId , String transactionId) {
 		List<InventoryTransactionEntity> inventoryTransactionEntityList = lambdaQuery().eq(InventoryTransactionEntity::getInventoryId, inventoryId)
-				.orderByAsc(InventoryTransactionEntity::getCreateTime).list();
+				.orderByAsc(InventoryTransactionEntity::getCreateTime)
+				.last(" for update ")
+				.list();
 		if(CollUtil.isNotEmpty(inventoryTransactionEntityList)) {
 			//1、补偿提交redis库存
 			Set<String> transactionIdSet = inventoryTransactionEntityList.stream()
@@ -264,7 +266,9 @@ public class InventoryTransactionServiceImpl extends SuperServiceImpl<InventoryT
 				this.inventoryHisToInventory(inventoryId);
 			}
 			//6、删除库存交易
-			removeByIds(inventoryTransactionEntityList.stream().map(InventoryTransactionEntity::getId).collect(Collectors.toSet()));
+			Set<String> transactionIds = inventoryTransactionEntityList.stream().map(InventoryTransactionEntity::getId).collect(Collectors.toSet());
+			transactionIds.forEach(t -> log.error("{}删除库存交易" , t));
+			removeByIds(transactionIds);
 		}
     }
     
@@ -623,9 +627,9 @@ public class InventoryTransactionServiceImpl extends SuperServiceImpl<InventoryT
 					}else {
 						if(new Date().after(DateUtil.offsetSecond(date, timeout))) {
 							try {
-								log.info("{}自动回滚开始" , logMsg);
+								log.error("{}自动回滚开始" , logMsg);
 								this.rollbackRedis(t);
-								log.info("{}自动回滚结束" , logMsg);
+								log.error("{}自动回滚结束" , logMsg);
 							} catch (Exception e) {
 								log.error("检查redis自动回滚执行失败：{}" , t , e);
 							}

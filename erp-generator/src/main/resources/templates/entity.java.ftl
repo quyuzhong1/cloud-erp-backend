@@ -11,6 +11,7 @@ import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
+import lombok.NoArgsConstructor;
 import com.common.business.enums.ApproveStatusEnum;
 </#if>
 
@@ -33,6 +34,7 @@ import com.common.business.enums.ApproveStatusEnum;
 @Accessors(chain = true)
 </#if>
 <#if table.convert>
+@NoArgsConstructor
 @TableName("${table.name}")
 </#if>
 <#if swagger2>

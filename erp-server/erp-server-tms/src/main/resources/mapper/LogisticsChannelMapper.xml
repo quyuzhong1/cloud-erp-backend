@@ -40,6 +40,7 @@
         <!-- 嵌套 Compare 列表 -->
         <collection property="channelDTOList" ofType="com.erp.model.tms.dto.LogisticsChannelDTO$WarehouseChannelDTO$ChannelDTO">
             <result property="platformLogisticsChannelId" column="id"/>
+            <result property="platformLogisticsChannelCode" column="code"/>
             <result property="platformLogisticsChannelName" column="name"/>
         </collection>
     </resultMap>
@@ -189,6 +190,7 @@
         from logistics_channel lc
         left join logistics_supplier ls on ls.id = lc.main_id and ls.is_deleted = false
         left join logistics_auth la on ls.id = la.main_id and la.is_deleted = false
+        left join logistics_channel_warehouse lcw on lc.id = lcw.logistics_channel_id and lcw.is_deleted = false
         where
         lc.is_deleted = false
           and ls.id is not null
@@ -203,6 +205,9 @@
         </if>
         <if test="params.logisticsPlatform != null and params.logisticsPlatform != ''">
             and la.logistics_platform = #{params.logisticsPlatform}
+        </if>
+        <if test="params.warehouseId != null and params.warehouseId != ''">
+            and (lcw.warehouse_id = #{params.warehouseId} or lcw.type = 'all')
         </if>
         order by lc.disabled asc,
         <if test="params.searchKeyword != null and params.searchKeyword != ''">
@@ -338,7 +343,7 @@
 
     <select id="listWarehouseChannel"
             resultMap="warehouseChannelMap">
-        SELECT   lcw.overseas_warehouse_id,lc.id,lc.name
+        SELECT   lcw.overseas_warehouse_id,lc.id,lc.name,lc.code
         from logistics_channel lc
                  inner join logistics_supplier ls on ls.id = lc.main_id
                  inner join logistics_warehouse lcw on ls.id = lcw.main_id
@@ -369,6 +374,20 @@
         <if test="dto.channelType != null and dto.channelType != ''">
             and lc.channel_type = #{dto.channelType}
         </if>
+    </select>
+     <select id="getChannelByCodeAndPlatform" resultType="com.erp.model.tms.dto.LogisticsChannelDTO$BaseDTO">
+        SELECT
+            lc.id,
+            lc.code,
+            lc."name",
+            lc.main_id as mainId,
+            ls.supplier_id as supplierId
+        FROM logistics_channel lc
+                 LEFT JOIN logistics_auth la ON la.main_id = lc.main_id and la.is_deleted=false
+                 LEFT JOIN logistics_supplier ls ON ls.id = lc.main_id and ls.is_deleted=false
+        where lc.is_deleted= false
+          and lc.code = #{channelCode}
+          and la.logistics_platform = #{logisticsPlatform}
     </select>
 
 

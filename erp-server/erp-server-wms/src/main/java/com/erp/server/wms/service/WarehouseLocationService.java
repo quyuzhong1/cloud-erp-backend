@@ -276,7 +276,7 @@ public interface WarehouseLocationService extends SuperService<WarehouseLocation
      * @param warehouseLocation
      * @return
      */
-    WarehouseLocationEntity findByWarehouseCode(String warehouseLocation);
+    WarehouseLocationEntity findByWarehouseCodeOrName(String warehouseLocation);
 
     void updateLocationStatus(String warehouseId, String warehouseLocation, String status);
 

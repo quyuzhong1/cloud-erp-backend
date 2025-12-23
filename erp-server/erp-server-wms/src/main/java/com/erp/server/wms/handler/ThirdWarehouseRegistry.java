@@ -46,7 +46,7 @@ public class ThirdWarehouseRegistry {
         }
         ThirdWarehouseService warehouseService = getHandler(authEntity.getCode());
         if(Objects.isNull(warehouseService)){
-            throw new ServiceException(ApiError.OVERSEAS_PROVIDE_NOT_SERVICE);
+            throw new ServiceException(ApiError.OVERSEAS_PROVIDE_NOT_SERVICE, authEntity.getCode());
         }
         return warehouseService;
     }

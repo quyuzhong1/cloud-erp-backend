@@ -202,9 +202,17 @@ public class PurchaseOrderDetailDTO implements Serializable {
     @NoArgsConstructor
     public static class ExportPdfDTO {
         /**
+         * 产品图片 主图
+         */
+        private String image;
+        /**
          * 物料编码
          */
         private String skuNo;
+        /**
+         * spuNo
+         */
+        private String spuNo;
 
         /**
          * 名称
@@ -281,6 +289,28 @@ public class PurchaseOrderDetailDTO implements Serializable {
          * 备注
          */
         private String remark;
+
+        /**
+         * 是否赠品
+         */
+
+        private Boolean isGift;
+        private String isGiftStr;
+        /**
+         * 新品首批
+         */
+        private String firstMassProduct;
+        private String firstMassProductName;
+        /**
+         * 是否加急
+         */
+        private Boolean isUrgent;
+        private String isUrgentStr;
+
+
+
+
+
     }
 
     @Data
@@ -343,6 +373,14 @@ public class PurchaseOrderDetailDTO implements Serializable {
          * sku编码
          */
         private String  skuNo;
+        /**
+         * 单位名称
+         */
+        private String unitName;
+        /**
+         * ean编码
+         */
+        private String ean;
 
         /**
          * 产品名称

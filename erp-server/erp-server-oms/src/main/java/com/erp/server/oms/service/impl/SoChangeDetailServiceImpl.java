@@ -240,6 +240,7 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
                 variantProperty = sku.getVariantProperty();
             }
             item.setUnit(unit);
+            item.setUnitName(unit);
             item.setProductName(productName);
             item.setVariantProperty(variantProperty);
             //税率
@@ -332,6 +333,7 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
                     variantProperty = sku.getVariantProperty();
                 }
                 view.setUnit(unit);
+                view.setUnitName(unit);
                 view.setProductName(productName);
                 view.setVariantProperty(variantProperty);
                 viewList.add(view);
@@ -442,17 +444,10 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
             view.setDeliveryQty(deliveryQty);
             view.setWaitQty(waitQty);
             SkuVO sku = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().orElse(null);
-            String unit = "";
-            String productName = "";
-            String variantProperty = "";
-            if (sku != null) {
-                unit = sku.getUnitName();
-                productName = sku.getSkuName();
-                variantProperty = sku.getVariantProperty();
-            }
-            view.setUnit(unit);
-            view.setProductName(productName);
-            view.setVariantProperty(variantProperty);
+            view.setUnit(Objects.nonNull(sku) ? sku.getUnitName() : "");
+            view.setUnitName(Objects.nonNull(sku) ? sku.getUnitName() : "");
+            view.setProductName(Objects.nonNull(sku) ? sku.getSkuName() : "");
+            view.setVariantProperty(Objects.nonNull(sku) ? sku.getVariantProperty() : "");
             viewList.add(view);
         }
         return viewList;
@@ -583,12 +578,22 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
                 //添加的话id 为null
                 if (addType.equals(changeType)) {
                     soDetail.setId(null);
+                    //新增发货sku信息
+                    soDetail.setDeliverySkuId(item.getSkuId());
+                    soDetail.setDeliverySkuNo(item.getSkuNo());
+                    soDetail.setBoxQty(item.getQty());
+                    soDetail.setPerBoxQty(1);
                 } else {
                     SoDetailEntity dbEntity = soDetailEntityList.stream().filter(v->v.getId().equals(soDetailId)).findFirst().orElse(null);
                     if(Objects.nonNull(dbEntity)){
                         soDetail.setExchangeRate(dbEntity.getExchangeRate());
                     }
                     soDetail.setId(soDetailId);
+                    //修改发货sku信息
+                    SoDetailEntity soDetailEntity = soDetailService.getById(soDetailId);
+                    //新的发货箱数
+                    soDetail.setBoxQty(item.getQty() / soDetailEntity.getPerBoxQty());
+                    soDetail.setPerBoxQty(soDetailEntity.getPerBoxQty());
                 }
 
                 saveOrUpdateList.add(soDetail);
@@ -758,6 +763,13 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
                 if (qty < deliveryQty) {
                     throw new ServiceException(ApiError.ERROR_92049);
                 }
+                //发货箱规校验
+                SoDetailEntity soDetailEntity = soDetailService.getById(item.getSoDetailId());
+                //数量必须是箱规的整数倍
+                if (item.getQty() % soDetailEntity.getPerBoxQty() != 0) {
+                    throw new ServiceException(ApiError.ERROR_SO_CHANGE_QTY_MUST_INTEGER_MULTIPLE_BOX_RULE);
+                }
+
             }
         }
         //这个是终止

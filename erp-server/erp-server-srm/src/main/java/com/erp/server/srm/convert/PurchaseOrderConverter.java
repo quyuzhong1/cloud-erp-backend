@@ -50,5 +50,6 @@ public interface PurchaseOrderConverter {
     @Mapping(target = "deliveryWarehouseName", source = "purchaseOrder.deliveryWarehouseName")
     @Mapping(target = "type", source = "purchaseOrder.type")
     @Mapping(target = "supplierId", source = "orderSupplierEntity.supplierId")
+    @Mapping(target = "isUserSystem", ignore = true)
     PurchaseOrderDetailEntity scmPurchaseOrderToSrmPurchaseOrderDetail(PurchaseOrderEntity purchaseOrder, com.erp.model.scm.entity.PurchaseOrderDetailEntity purchaseOrderDetail, PurchaseOrderSupplierEntity orderSupplierEntity );
 }

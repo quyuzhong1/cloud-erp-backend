@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.oms.mapper.DeliveryBoxRuleMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.oms.entity.DeliveryBoxRuleEntity">
+       <result column="id" property="id" />
+       <result column="create_time" property="createTime" />
+       <result column="update_time" property="updateTime" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="sku_id" property="skuId" />
+       <result column="sku_no" property="skuNo" />
+       <result column="product_name" property="productName" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_time,
+        update_time,
+        create_user_name,
+        create_user_id,
+        update_user_name,
+        update_user_id,
+        version,
+        is_deleted,
+        sku_id, sku_no, product_name
+    </sql>
+
+    <select id="paging" resultType="com.erp.model.oms.dto.DeliveryBoxRuleDTO$ListDTO">
+        SELECT
+        dbr.id,
+        dbrd.id as detailId,
+        dbr.sku_id as skuId,
+        dbr.sku_no as skuNo,
+        dbr.product_name as productName,
+        dbrd.delivery_sku_id as deliverySkuId,
+        dbrd.delivery_sku_no as deliverySkuNo,
+        dbrd.delivery_product_name as deliveryProductName,
+        dbrd.per_box_qty as perBoxQty,
+        dbrd.sort as sort,
+        dbrd.invalid_time as invalidTime,
+        dbrd.invalid_status as invalidStatus,
+        dbr.create_user_id as createUserId,
+        dbr.create_user_name as createUserName,
+        dbr.create_time as createTime,
+        dbr.update_user_id as updateUserId,
+        dbr.update_user_name as updateUserName,
+        dbr.update_time as updateTime
+        FROM
+        delivery_box_rule dbr
+        LEFT JOIN delivery_box_rule_detail dbrd on dbr.id = dbrd.main_id
+        WHERE
+        ${params.sqlMap.default}
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        order by
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        dbr.update_time desc
+    </select>
+</mapper>

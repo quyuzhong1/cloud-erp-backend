@@ -59,4 +59,8 @@ public interface ThirdWarehouseDeliveryService extends SuperService<ThirdWarehou
     void batchAdd(List<ThirdWarehouseDeliveryEntity> addList);
 
     void deleteById(String id);
+
+    List<ThirdWarehouseDeliveryEntity> listBySourceId(List<String> sourceIds);
+
+    void deleteByCode(String code);
 }

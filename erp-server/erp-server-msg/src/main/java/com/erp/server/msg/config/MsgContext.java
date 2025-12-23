@@ -15,11 +15,13 @@ import com.erp.model.sys.vo.MsgChannelConfigDTO;
 import com.erp.model.sys.vo.MsgConfigDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.msg.enums.MessageChannelAppEnum;
+import com.erp.server.msg.model.MsgResultVO;
 import com.erp.server.msg.model.MsgSendChannelWrapParam;
 import com.erp.server.msg.service.IMessageSendService;
 import com.erp.server.msg.utils.MsgConvertUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.compress.utils.Lists;
+import org.apache.poi.ss.formula.functions.T;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -81,6 +83,16 @@ public class MsgContext {
             });
         }
     }
+
+    /**
+     * 指定飞书发送
+     * @param noticeMsgInfo
+     */
+    public MsgResultVO<T>  sendByFeishu(MsgSendChannelWrapParam noticeMsgInfo) {
+        return HOLDER.get(MessageChannelEnum.FEISHU).doSendMsg(noticeMsgInfo);
+    }
+
+
 
     public void routeSendWarnMsg(WarnMsgInfoDTO warnMsgInfo) {
         HOLDER.get(MessageChannelEnum.FEISHU).doSendWarnMsg(warnMsgInfo);

@@ -70,19 +70,29 @@
         fdp.code as partitionCode,
         fdp.name as partitionName,
         <if test="params.fieldList != null and params.fieldList.size > 0 and  params.fieldList.contains('remainingNoticeQty')">
-        COALESCE(sdnd.deliveryQty, 0) as effectiveNoticeQty,
-        (sod.qty - COALESCE(sdnd.deliveryQty, 0)) as remainingNoticeQty,
+        COALESCE(sdnd.deliveryQty* sod.per_box_qty, 0) + COALESCE(btdd.deliveryQty, 0) as effectiveNoticeQty,
+        (sod.qty - COALESCE(sdnd.deliveryQty, 0) - COALESCE(btdd.deliveryQty, 0)) as remainingNoticeQty,
         </if>
-        GREATEST(si.order_amount - si.discount_amount - si.receive_amount - si.account_deduct_amount - si.rebate_deduct_amount - si.credit_deduct_amount,0) as remainReceiveAmount
+        GREATEST(si.order_amount - si.discount_amount - si.receive_amount - si.account_deduct_amount - si.rebate_deduct_amount - si.credit_deduct_amount,0) as remainReceiveAmount,
+        sod.delivery_sku_id AS deliverySkuId,
+        sod.delivery_sku_no AS deliverySkuNo,
+        sod.box_qty as boxQty,
+        sod.per_box_qty as perBoxQty
         FROM so_info si
         LEFT JOIN so_detail sod
         ON sod.main_id =si.id AND si.is_deleted=false
         left join customer_info ci on si.customer_id = ci.id and ci.is_deleted = false
         left join foreign_dict_partition fdp on fdp.id = si.partition_id and fdp.is_deleted = false
+        <if test="params.fieldList != null and params.fieldList.size > 0 and  params.fieldList.contains('remainingNoticeQty')">
         left join (
             select sum(sdnd.delivery_qty) as deliveryQty ,sdnd.source_detail_id  from so_delivery_notice sdn left join so_delivery_notice_detail sdnd on sdn.id = sdnd.main_id and sdnd.is_deleted = false
             where sdn.is_deleted = false and sdn.approve_status = 'approve' group by sdnd.source_detail_id
         ) sdnd on sod.id = sdnd.source_detail_id
+        left join (
+        select sum(btdd.delivery_qty) as deliveryQty ,btdd.so_detail_id as source_detail_id  from foreign_b2b_third_delivery btd left join foreign_b2b_third_delivery_detail btdd on btd.id = btdd.main_id and btdd.is_deleted = false
+        where btd.is_deleted = false and btd.status != 'cancelDelivery' group by btdd.so_detail_id
+        ) btdd on sod.id = btdd.source_detail_id
+        </if>
         <if test="params.fieldList != null and params.fieldList.size > 0 and ( params.fieldList.contains('isVirtualScarce') or params.fieldList.contains('isVirtualOutStock') or params.fieldList.contains('remainingNoticeQty'))">
             left join (
             select sum(vi.qty) as virtualQty ,vi.sku_id,vi.virtual_warehouse_id,vi.warehouse_id  from virtual_inventory vi where vi.is_deleted = false  and vi.dict_inventory_status = 'usable' group by vi.sku_id,vi.virtual_warehouse_id
@@ -123,6 +133,10 @@
             select sum(sdnd.delivery_qty) as deliveryQty ,sdnd.source_detail_id  from so_delivery_notice sdn left join so_delivery_notice_detail sdnd on sdn.id = sdnd.main_id and sdnd.is_deleted = false
             where sdn.is_deleted = false and sdn.approve_status = 'approve' group by sdnd.source_detail_id
             ) sdnd on sod.id = sdnd.source_detail_id
+            left join (
+            select sum(btdd.delivery_qty) as deliveryQty ,btdd.so_detail_id as source_detail_id  from foreign_b2b_third_delivery btd left join foreign_b2b_third_delivery_detail btdd on btd.id = btdd.main_id and btdd.is_deleted = false
+            where btd.is_deleted = false and btd.status != 'cancelDelivery' group by btdd.so_detail_id
+            ) btdd on sod.id = btdd.source_detail_id
             left join (
             select sum(vi.qty) as virtualQty ,vi.sku_id,vi.virtual_warehouse_id,vi.warehouse_id  from virtual_inventory vi where vi.is_deleted = false  and vi.dict_inventory_status = 'usable' group by vi.sku_id,vi.virtual_warehouse_id
             ,vi.warehouse_id
@@ -241,10 +255,14 @@
         fdp.id as partitionId,
         fdp.code as partitionCode,
         fdp.name as partitionName,
-            sod.customer_po
+            sod.customer_po,
+            sod.delivery_sku_id AS deliverySkuId,
+            sod.delivery_sku_no AS deliverySkuNo,
+            sod.box_qty as boxQty,
+            sod.per_box_qty as perBoxQty
         <if test="params.fieldList != null and params.fieldList.size > 0 and  params.fieldList.contains('remainingNoticeQty')">
-            ,COALESCE(sdnd.deliveryQty, 0) as effectiveNoticeQty,
-            (sod.qty - COALESCE(sdnd.deliveryQty, 0)) as remainingNoticeQty
+            ,COALESCE(sdnd.deliveryQty, 0) + COALESCE(btdd.deliveryQty, 0) as effectiveNoticeQty,
+            (sod.qty - COALESCE(sdnd.deliveryQty, 0) - COALESCE(btdd.deliveryQty, 0)) as remainingNoticeQty
         </if>
         FROM so_detail sod
         INNER JOIN so_info si
@@ -257,6 +275,10 @@
             select sum(sdnd.delivery_qty) as deliveryQty ,sdnd.source_detail_id  from so_delivery_notice sdn left join so_delivery_notice_detail sdnd on sdn.id = sdnd.main_id and sdnd.is_deleted = false
             where sdn.is_deleted = false and sdn.approve_status = 'approve' group by sdnd.source_detail_id
             ) sdnd on sod.id = sdnd.source_detail_id
+            left join (
+            select sum(btdd.delivery_qty * btdd.per_box_qty) as deliveryQty ,btdd.so_detail_id as source_detail_id  from foreign_b2b_third_delivery btd left join foreign_b2b_third_delivery_detail btdd on btd.id = btdd.main_id and btdd.is_deleted = false
+            where btd.is_deleted = false and btd.status != 'cancelDelivery' group by btdd.so_detail_id
+            ) btdd on sod.id = btdd.source_detail_id
             left join (
             select sum(vi.qty) as virtualQty ,vi.sku_id,vi.virtual_warehouse_id,vi.warehouse_id  from virtual_inventory vi where vi.is_deleted = false  and vi.dict_inventory_status = 'usable' group by vi.sku_id,vi.virtual_warehouse_id
             ,vi.warehouse_id
@@ -285,8 +307,8 @@
         si.id as sourceId,
         si.code as sourceCode,
         sd.id as sourceDetailId,
-        sd.sku_id as skuId,
-        sd.sku_no as skuNo,
+        sd.delivery_sku_id as skuId,
+        sd.delivery_sku_no as skuNo,
         sd.qty,
         si.warehouse_id as warehouseId
         from so_info si
@@ -308,11 +330,11 @@
         si.warehouse_id,
         sd.id AS detailId,
         sd.main_id AS soId,
-        sd.sku_id,
-        sd.sku_no,
+        sd.delivery_sku_id as skuId,
+        sd.delivery_sku_no as skuNo,
         sd.platform_sku_no,
         sd.is_close,
-        sd.qty AS salesQty,
+        sd.box_qty AS salesQty,
         (select COALESCE(sum(sdnd.delivery_qty),0) from so_delivery_notice sdn
                 inner join so_delivery_notice_detail sdnd on sdn.id = sdnd.main_id and sdnd.is_deleted = false
                 where sdn.is_deleted = false and sdn.invalid_status = false and sdnd.source_detail_id = sd.id) as alreadyDeliveryQty,
@@ -335,8 +357,8 @@
         si.customer_id,
         sd.id AS detailId,
         sd.main_id AS soId,
-        sd.sku_id,
-        sd.sku_no,
+        sd.delivery_sku_id as skuId,
+        sd.delivery_sku_no as skuNo,
         sd.qty AS salesQty,
         si.currency,
         si.currency_symbol,
@@ -344,7 +366,8 @@
         sd.tax_amount,
         sd.exchange_rate,
         si.sales_org_id,
-        si.warehouse_org_id as warehouseOrgId
+        si.warehouse_org_id as warehouseOrgId,
+        sd.per_box_qty as perBoxQty
         FROM so_info si
         LEFT JOIN so_detail sd ON si.id = sd.main_id AND si.is_deleted = FALSE
         WHERE sd.is_deleted = FALSE

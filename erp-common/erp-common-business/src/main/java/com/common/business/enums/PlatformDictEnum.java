@@ -34,7 +34,7 @@ public enum PlatformDictEnum implements EnumMessage {
     B2B_INTERNAL("B2B_INTERNAL", "B2B线下-国内", "B2B", "020"),
     B2B_FOREIGN("B2B_FOREIGN", "B2B", "B2B", "021"),
     LITTLE_RED_BOOK("RedBook", "小红书", "RED", "014"),
-    PDD("PDD", "拼多多", "Temu", "009"),
+    PDD("PDD", "拼多多", "PDD", "009"),
     TMALL("Tmall", "天猫", "Tmall", "006"),
     SOP("JDZY", "京东自营厂送", "京东自营", "007"),
     POIZON("Poizon", "得物", "得物", "045"),
@@ -70,6 +70,8 @@ public enum PlatformDictEnum implements EnumMessage {
     WDT("wdt", "旺店通", "旺店通", "51"),
     DHT("dht", "订货通", "订货通", "57"),
     QI_MEN("qimen", "奇门", "奇门", "52"),
+    TONG_YOU_WAREHOUSE("tongyou", "通邮", "通邮", "62"),
+
     // 拼多多海外版
     TE_MU("TeMu", "TEMU半托管", "TEMU半托管", "034"),
     ANTU("antu", "安兔", "安兔", "53"),

@@ -31,6 +31,7 @@ import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.entity.*;
+import com.erp.model.oms.enums.DeliveryModeEnum;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.oms.enums.OrderSubTypeEnum;
 import com.erp.model.oms.enums.SoChangeTypeEnum;
@@ -383,7 +384,14 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
             throw new ServiceException("未找到销售订单明细");
         }
         //交货方式
-        resultMap.put("deliveryMode", entity.getDeliveryMode());
+        if (entity.getDeliveryMode().equals(DeliveryModeEnum.SELF.getCode()) || entity.getDeliveryMode().equals(DeliveryModeEnum.TRUCK_SELF.getCode())) {
+            //自提
+            resultMap.put("deliveryMode", "selfExtraction");
+        } else {
+            //发货
+            resultMap.put("deliveryMode", "deliverGoods");
+        }
+
         //单据类型
         resultMap.put("orderType", entity.getOrderType());
         LocalDate createDate = entity.getCreateTime().toLocalDate();
@@ -580,7 +588,7 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
             BigDecimal discountAmount = Objects.nonNull(item.getDiscountAmount()) ? item.getDiscountAmount() : BigDecimal.ZERO;
             jsonObject.set("amount", item.getAmount().add(discountAmount).setScale(4, BigDecimal.ROUND_HALF_UP));
             //单位
-            String unit = item.getUnit();
+            String unit = item.getUnitName();
             jsonObject.set("unit", StringUtils.isNotBlank(unit) ? unit : "Pcs");
             jsonObject.set("warehouseOrgCode", warehouseOrgCode);
             jsonObject.set("curInventoryQty", item.getQty());

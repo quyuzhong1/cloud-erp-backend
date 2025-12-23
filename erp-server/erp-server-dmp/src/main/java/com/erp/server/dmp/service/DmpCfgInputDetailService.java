@@ -1,9 +1,12 @@
 package com.erp.server.dmp.service;
-import com.erp.model.dmp.dto.DmpInoutDTO;
-import com.erp.model.dmp.entity.DmpCfgInputDetailEntity;
+
+import com.common.business.dto.DmpInputFeignDTO;
+import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.dmp.dto.DmpCfgInputDetailDTO;
+import com.erp.model.dmp.dto.DmpInoutDTO;
+import com.erp.model.dmp.entity.DmpCfgInputDetailEntity;
 import com.common.business.vo.PagingVO;
 import com.erp.model.dmp.entity.DmpCfgInputEntity;
 
@@ -99,4 +102,12 @@ public interface DmpCfgInputDetailService extends SuperService<DmpCfgInputDetail
     BatchResultDTO disable(DmpCfgInputDetailEntity entity);
 
     BatchResultDTO doTask(String id, DmpCfgInputDetailDTO.DoTaskDTO dto, DmpCfgInputEntity dmpCfgInputEntity, DmpCfgInputDetailEntity entity);
+    /**
+     * 操作dmp拉取dmp_cfg_input_detail表配置
+     * @author will
+     * @date 2025/11/7 16:19
+     * @param cfgOptionDTO
+     * @return void
+     */
+    void optionDmpCfgInputDetail(DmpInputFeignDTO.CfgOptionDTO cfgOptionDTO);
 }

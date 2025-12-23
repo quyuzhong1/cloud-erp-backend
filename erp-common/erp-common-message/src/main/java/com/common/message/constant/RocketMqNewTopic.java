@@ -244,6 +244,12 @@ public class RocketMqNewTopic {
      */
     public static final String RESTCLOUD_PLATFORM_RETURN_INSTOCK_TO_WMS_TOPIC = "${spring.cloud.nacos.discovery.namespace}-restcloud_platform_return_instock_to_wms_topic";
 
+
+    /**
+     * pdd销售出库单
+     */
+    public static final String RESTCLOUD_PDD_SO_OUT_TO_WMS_TOPIC = "${spring.cloud.nacos.discovery.namespace}-restcloud_pdd_so_out_to_wms_topic";
+
     /**
      * restcloud云听社媒数据
      */

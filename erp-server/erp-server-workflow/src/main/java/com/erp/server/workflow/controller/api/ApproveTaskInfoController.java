@@ -3,6 +3,7 @@ package com.erp.server.workflow.controller.api;
 
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
@@ -138,4 +139,36 @@ public class ApproveTaskInfoController extends BaseController {
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
+
+
+    /**
+     * 状态获取
+     * @author will
+     * @date 2025/12/10 15:33
+     * @param dto
+     * @return ApiResult<List<BatchResultDTO>>
+     */
+    @PostMapping("/updateThirdStatus")
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "第三方生成查询状态获取")
+    public ApiResult<List<BatchResultDTO>> updateThirdStatus(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO resultDTO;
+            try {
+                resultDTO = approveTaskInfoService.updateThirdStatus(id);
+            }catch (Exception e){
+                log.error("三方生成查询状态获取失败",e);
+                ApproveTaskInfoEntity entity = approveTaskInfoService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    resultDTO = BatchResultDTO.fail(id, id, "三方生成查询数据不存在, 状态获取失败");
+                    resultDTOS.add(resultDTO);
+                    continue;
+                }
+                resultDTO = BatchResultDTO.fail(entity.getId(), entity.getBussinessCode(), e.getMessage());
+            }
+            resultDTOS.add(resultDTO);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
 }

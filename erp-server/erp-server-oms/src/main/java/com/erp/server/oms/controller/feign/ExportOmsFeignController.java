@@ -81,6 +81,9 @@ public class ExportOmsFeignController {
     private SoReceiptService soReceiptService;
 
     @Resource
+    private DeliveryBoxRuleService deliveryBoxRuleService;
+
+    @Resource
     private KolPartnerInfoService kolPartnerInfoService;
 
     @Resource
@@ -347,6 +350,17 @@ public class ExportOmsFeignController {
     @WebAdvanceQuery(handler = ExhibitionOrderQueryHandler.class)
     public PagingVO<ExhibitionOrderDTO.ListDTO> exportExhibitionOrder(@RequestBody PagingDTO<ExhibitionOrderDTO.PagingParamDTO> dto) {
         return exhibitionOrderService.paging(dto);
+    }
+
+    @PostMapping("/exportDeliveryBoxRule")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "oms:deliveryBoxRule:paging",
+            tableAlias = "dbr"
+    )
+    @WebAdvanceQuery
+    public PagingVO<DeliveryBoxRuleDTO.ListDTO> exportDeliveryBoxRule(@RequestBody PagingDTO<DeliveryBoxRuleDTO.PagingParamDTO> dto) {
+        return deliveryBoxRuleService.paging(dto);
     }
 
     /**

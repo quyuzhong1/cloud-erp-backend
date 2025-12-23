@@ -374,11 +374,11 @@ public class AliExpressOrder implements Serializable {
     @Deprecated
     public boolean convertCancel() {
         // 冻结中视为取消走拦截逻辑或初始化作废
-        if("IN_CANCEL".equals(orderStatus)
-                || "RISK_CONTROL".equals(orderStatus)
-                ||"IN_FROZEN".equals(orderStatus)){
-            return true;
-        }
+//        if("IN_CANCEL".equals(orderStatus)
+//                || "RISK_CONTROL".equals(orderStatus)
+//                ||"IN_FROZEN".equals(orderStatus)){
+//            return true;
+//        }
 
         if (!"FINISH".equalsIgnoreCase(this.orderStatus)){
             // 非完结
@@ -410,11 +410,11 @@ public class AliExpressOrder implements Serializable {
      */
     public boolean convertNewCancel(Object logisticInfoListObj) {
         // 冻结中视为取消走拦截逻辑或初始化作废
-        if("IN_CANCEL".equals(orderStatus)
-                || "RISK_CONTROL".equals(orderStatus)
-                ||"IN_FROZEN".equals(orderStatus)){
-            return true;
-        }
+//        if("IN_CANCEL".equals(orderStatus)
+////                || "RISK_CONTROL".equals(orderStatus)
+//                ||"IN_FROZEN".equals(orderStatus)){
+//            return true;
+//        }
 
         if (!"FINISH".equalsIgnoreCase(this.orderStatus)){
             // 非完结

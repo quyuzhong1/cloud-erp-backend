@@ -1,7 +1,7 @@
 package com.erp.model.oms.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.validator.AddGroup;
+import jnr.ffi.annotations.In;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -37,6 +37,11 @@ public class SoDetailDTO implements Serializable {
          */
         @NotBlank(message = "sku不能为空", groups = {AddGroup.class})
         private String skuId;
+        /**
+         * 单位
+         */
+        @NotBlank(message = "单位不能为空", groups = {AddGroup.class})
+        private String unitName;
 
         /**
          * 销售数量
@@ -158,6 +163,29 @@ public class SoDetailDTO implements Serializable {
          * 来源明细ID
          */
         private String sourceDetailId;
+
+        /**
+         * 单箱数量
+         */
+        @Min(value = 1)
+        private Integer perBoxQty;
+
+        /**
+         * 发货skuId
+         */
+        @NotBlank(message = "发货sku不能为空")
+        private String deliverySkuId;
+
+        /**
+         * 发货sku编码
+         */
+        private String deliverySkuNo;
+
+        /**
+         * 发货箱数
+         */
+        @Min(value = 1)
+        private Integer boxQty;
     }
 
 
@@ -312,7 +340,12 @@ public class SoDetailDTO implements Serializable {
         /**
          * 单位
          */
+        @Deprecated
         private String unit;
+        /**
+         * 单位名称
+         */
+        private String unitName;
 
         /**
          * 销售金额
@@ -458,6 +491,26 @@ public class SoDetailDTO implements Serializable {
          * 目的地
          */
         private String toCountry;
+
+        /**
+         * 单箱数量
+         */
+        private Integer perBoxQty;
+
+        /**
+         * 发货skuId
+         */
+        private String deliverySkuId;
+
+        /**
+         * 发货skuNo
+         */
+        private String deliverySkuNo;
+
+        /**
+         * 发货箱数
+         */
+        private Integer boxQty;
     }
 
     /**
@@ -670,6 +723,26 @@ public class SoDetailDTO implements Serializable {
          * 目的地
          */
         private String toCountry;
+
+        /**
+         * 单箱数量
+         */
+        private Integer perBoxQty;
+
+        /**
+         * 发货skuId
+         */
+        private String deliverySkuId;
+
+        /**
+         * 发货skuNo
+         */
+        private String deliverySkuNo;
+
+        /**
+         * 发货箱数
+         */
+        private Integer boxQty;
     }
 
 
@@ -849,7 +922,12 @@ public class SoDetailDTO implements Serializable {
         /**
          * 单位
          */
+        @Deprecated
         private String unit;
+        /**
+         * 单位名称
+         */
+        private String unitName;
 
         /**
          * 销售金额
@@ -1020,6 +1098,10 @@ public class SoDetailDTO implements Serializable {
          * skuNo
          */
         private String skuNo;
+        /**
+         * 单位名称
+         */
+        private String unitName;
         /**
          * 产品名称
          */
@@ -1622,5 +1704,49 @@ public class SoDetailDTO implements Serializable {
          */
         @NotBlank(message = "冻结数量不能为空")
         private Integer frozenQty;
+    }
+
+    /**
+     * 导入分箱数据返回
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ImportDivideSkuBoxDTO {
+
+        /**
+         * 成功返回数据
+         */
+        private List<DivideSkuBoxDTO> successList;
+
+        /**
+         * 错误的url
+         */
+        private String errorUrl;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class DivideSkuBoxDTO {
+
+        /**
+         * sku id
+         */
+        private String skuId;
+
+        /**
+         * sku no
+         */
+        private String skuNo;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 销售数量
+         */
+        private Integer qty;
+
     }
 }

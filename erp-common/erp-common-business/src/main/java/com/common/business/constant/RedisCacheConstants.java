@@ -166,6 +166,7 @@ public interface RedisCacheConstants {
      */
     String AUTH_TIKTOK_STATE = "third-party-auth:tiktok_state:{}";
 
+    String AUTH_PDD_STATE = "third-party-auth:pdd_state:{}";
     /**
      * 平台token刷新重试次数记录
      * platform-refresh-token:平台名称:店铺ID
@@ -251,6 +252,12 @@ public interface RedisCacheConstants {
      * 中台历史输出记录总数
      */
     String DMP_OUTPUT_RECORD_HIS_COUNT = "dmp:output:record:his:count";
+
+
+    /**
+     * 飞书接口请求缓存响应信息:fei_shu_api_result:businessTypeName:请求的唯一key
+     */
+    String FEI_SHU_RESULT_PREFIX = "fei_shu_api_result:{}:{}";
 
 
     String TMS_LOGISTIC_LABEL = "tms:logistic:label:{}:{}";

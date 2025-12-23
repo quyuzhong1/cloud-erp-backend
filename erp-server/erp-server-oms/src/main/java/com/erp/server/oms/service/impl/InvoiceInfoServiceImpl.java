@@ -101,8 +101,6 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
     @Resource
     private SoB2cService soB2cService;
     @Resource
-    private CfgRuleInvoiceService cfgRuleInvoiceService;
-    @Resource
     private SoB2cDetailService soB2cDetailService;
     @Resource
     private SoB2cReceiverService soB2cReceiverService;
@@ -949,6 +947,9 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
             List<RuleConditionEntity> ruleConditionList = allRuleConditionList.stream().
                     filter(r -> r.getRuleId().equals(ruleId)).
                     sorted(Comparator.comparing(RuleConditionEntity::getIndex)).collect(Collectors.toList());
+            if (CollUtil.isEmpty(ruleConditionList)){
+                continue;
+            }
             List<ConditionElement> conditionElementList = BeanMapper.copyList(ruleConditionList, ConditionElement.class);
             //获取到表达式
             Boolean matchResult = spElServer.matchExpressionByConditionList(conditionElementList, map, "");
@@ -956,6 +957,7 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
                 ruleResultDTO.setIsMatch(Boolean.TRUE);
                 CfgInvoiceSettingDetailEntity cfgInvoiceSettingDetailEntity = detailEntityList.stream().filter(e -> e.getMainId().equals(ruleInvoiceProductAmountEntity.getCfgId())).findFirst().orElse(null);
                 ruleResultDTO.setInvoiceSettingDetail(cfgInvoiceSettingDetailEntity);
+                ruleResultDTO.setInvoiceSetting(cfgInvoiceSettingService.getById(cfgInvoiceSettingDetailEntity.getMainId()));
                 ruleResultDTO.setDictInvoiceRule(ruleInvoiceProductAmountEntity.getDictInvoiceRule());
                 ruleResultDTO.setRatio(ruleInvoiceProductAmountEntity.getRatio());
                 return ruleResultDTO;
@@ -964,6 +966,16 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
         ruleResultDTO.setIsMatch(Boolean.FALSE);
         ruleResultDTO.setMsg("未匹配到符合条件规则");
         return ruleResultDTO;
+    }
+
+    @Override
+    public InvoiceInfoEntity findLatestInvoice(String soId) {
+        if (CharSequenceUtil.isBlank(soId)){
+            return null;
+        }
+        List<InvoiceInfoEntity> list = lambdaQuery().eq(InvoiceInfoEntity::getSoId, soId)
+                .orderByDesc(InvoiceInfoEntity::getCreateTime).list();
+        return CollUtil.isEmpty(list) ? null : list.get(0);
     }
 
     private Map<String, Object> handleMatchJson(SoB2cEntity soB2cEntity) {
@@ -1280,6 +1292,8 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
         invoiceInfoEntity.setId(IdWorker.getIdStr());
         invoiceInfoEntity.setCode(businessNo);
         invoiceInfoEntity.setCfgId(cfgVatInvoiceEntity.getId());
+        invoiceInfoEntity.setCompanyName(cfgVatInvoiceEntity.getCompanyName());
+        invoiceInfoEntity.setSellerTaxNo(cfgVatInvoiceEntity.getVatNo());
         invoiceInfoEntity.setInvoiceType(InvoiceInfoInvoiceTypeEnum.VAT.getCode());
         invoiceInfoEntity.setShopId(soB2cEntity.getShopId());
         invoiceInfoEntity.setSoId(soB2cEntity.getId());

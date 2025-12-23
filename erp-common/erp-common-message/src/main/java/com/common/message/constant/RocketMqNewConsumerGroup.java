@@ -31,6 +31,12 @@ public class RocketMqNewConsumerGroup {
      * 新中台旺店通销售出库单
      */
     public static final String DMP_WDT_SO_OUTSTOCK_TO_WMS_GROUP = "${spring.cloud.nacos.discovery.namespace}-dmp_wdt_so_outstock_to_wms_group";
+
+    /**
+     * 新中台PDD销售出库单
+     */
+    public static final String DMP_PDD_SO_OUTSTOCK_TO_WMS_GROUP = "${spring.cloud.nacos.discovery.namespace}-dmp_pdd_so_outstock_to_wms_group";
+
     /**
      * 新中台TeMu销售出库单
      */
@@ -140,7 +146,8 @@ public class RocketMqNewConsumerGroup {
      * 新中台平台库存
      */
     public static final String DMP_FBA_INVENTORY_TO_WMS_GROUP = "${spring.cloud.nacos.discovery.namespace}-dmp_fba_inventory_to_wms_group";
-    
+    public static final String DMP_B2B_TO_WMS_GROUP = "${spring.cloud.nacos.discovery.namespace}-dmp_b2b_to_wms_group";
+
     /**
      * 新中台推送产品上架时间
      */
@@ -234,6 +241,11 @@ public class RocketMqNewConsumerGroup {
      * 新中台平台退货入库
      */
     public static final String RESTCLOUD_PLATFORM_RETURN_INSTOCK_TO_WMS_GROUP = "${spring.cloud.nacos.discovery.namespace}-restcloud_platform_return_instock_to_wms_group";
+
+    /**
+     * pdd销售出库
+     */
+    public static final String RESTCLOUD_PDD_SO_OUT_TO_WMS_GROUP = "${spring.cloud.nacos.discovery.namespace}-restcloud_pdd_so_out_to_wms_group";
 
     /**
      * restcloud云听社媒数据
