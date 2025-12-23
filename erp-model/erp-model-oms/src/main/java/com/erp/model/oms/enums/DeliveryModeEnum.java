@@ -5,8 +5,10 @@ import com.common.core.constant.EnumMessage;
 import com.fasterxml.jackson.annotation.JsonValue;
 
 public enum DeliveryModeEnum implements EnumMessage {
-    DELIVERGOODS("deliverGoods","发货"),
-    SELFEXTRACTION("selfExtraction","自提"),
+    EXPRESS("EXPRESS","渠道订单"),
+    TRUCK("TRUCK","卡车订单"),
+    SELF("SELF","自提订单"),
+    TRUCK_SELF("TRUCK_SELF","卡车自提"),
     ;
     /**
      * 类型

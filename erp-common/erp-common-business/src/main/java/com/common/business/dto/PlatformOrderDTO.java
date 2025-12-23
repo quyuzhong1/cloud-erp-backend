@@ -1,6 +1,7 @@
 package com.common.business.dto;
 
 import cn.hutool.core.text.CharSequenceUtil;
+import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -41,7 +42,10 @@ public class PlatformOrderDTO extends UniqueDto {
      * NF-E发票状态,nfeInvoiceStatus字典
      */
     private String nfeInvoiceStatus;
-
+    /**
+     * 平台发货仓库
+     */
+    private String platformDeliveryWarehouse;
     /**
      * 店铺
      */

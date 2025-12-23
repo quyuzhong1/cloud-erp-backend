@@ -186,6 +186,16 @@ public interface SoOutstockFeign {
     @GetMapping("/feign/soOutstock/deleteSoOutstock")
     void deleteSoOutstock(@RequestParam(value = "id") String id, @RequestParam(value = "deliveryId",required = false)String deliveryId);
 
+    /**
+     * kol寄样费用查询出库信息
+     * @author will
+     * @date 2025/12/9 15:36
+     * @param dto
+     * @return List<KolSoOutstockDTO>
+     */
+    @PostMapping("feign/soOutstock/listSoOutstockByTime")
+    List<SoOutstockDTO.KolSoOutstockDTO> listSoOutstockByTime(@RequestBody SoOutstockDTO.KolSoOutstockDateDTO dto);
+
     @PostMapping("feign/soOutstock/updateSoB2cLogisticsInfo")
     void updateSoB2cLogisticsInfo(@RequestBody SoB2cLogisticsDTO.transferOrderDTO dto);
 }

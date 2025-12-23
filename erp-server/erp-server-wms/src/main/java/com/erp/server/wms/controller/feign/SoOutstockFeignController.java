@@ -285,6 +285,18 @@ public class SoOutstockFeignController {
     }
 
     /**
+     * kol寄样费用查询出库信息
+     * @author will
+     * @date 2025/12/9 15:37
+     * @param dto
+     * @return List<KolSoOutstockDTO>
+     */
+    @PostMapping("/listSoOutstockByTime")
+    public List<SoOutstockDTO.KolSoOutstockDTO> listSoOutstockByTime(@RequestBody SoOutstockDTO.KolSoOutstockDateDTO dto){
+        return soOutstockDetailService.listSoOutstockByTime(dto);
+    }
+
+    /**
      * 更新物流信息
      * @return
      */

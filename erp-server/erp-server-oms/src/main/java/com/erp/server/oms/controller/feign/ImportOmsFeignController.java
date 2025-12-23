@@ -3,12 +3,13 @@ package com.erp.server.oms.controller.feign;
 import com.common.business.dto.base.BaseDTO;
 import com.common.business.enums.FileTaskStatusEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
-import com.erp.server.oms.service.ExhibitionOrderService;
+import com.erp.server.oms.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
 import javax.annotation.Resource;
 
 @Slf4j
@@ -21,6 +22,22 @@ public class ImportOmsFeignController {
     @Resource
     private ExhibitionOrderService exhibitionOrderService;
 
+    @Resource
+    private DeliveryBoxRuleService deliveryBoxRuleService;
+    @Resource
+    private KolFeedbackService kolFeedbackService;
+
+    @Resource
+    private KolFeedbackCostService kolFeedbackCostService;
+
+    @Resource
+    private KolPartnerInfoService kolPartnerInfoService;
+
+    @Resource
+    private KolB2bApplicationService kolB2bApplicationService;
+
+    @Resource
+    private KolB2cApplicationService kolB2cApplicationService;
 
 
     @PostMapping("/exhibitionOrder")
@@ -37,4 +54,74 @@ public class ImportOmsFeignController {
         }
     }
 
+    @PostMapping("/importDeliveryBoxRule")
+    public void importDeliveryBoxRule(@RequestBody BaseDTO.ImportDTO dto) {
+        try {
+            deliveryBoxRuleService.importDeliveryBoxRule(dto);
+        } catch (Exception e) {
+            log.error("导入发货箱规失败", e);
+            BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
+            importResultDTO.setTaskId(dto.getTaskId());
+            importResultDTO.setStatus(FileTaskStatusEnum.FAIL.getCode());
+            importResultDTO.setRemark(e.getMessage().length() > 490 ? e.getMessage().substring(0, 490) : e.getMessage());
+            downloadTaskFeign.updateTask(importResultDTO);
+        }
+    }
+
+    @PostMapping("/kolFeedback")
+    public void importKolFeedback(@RequestBody BaseDTO.ImportDTO dto) {
+        try {
+            kolFeedbackService.importKolFeedback(dto);
+        } catch (Exception e) {
+            log.error("导入KOL回片列表失败", e);
+            BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
+            importResultDTO.setTaskId(dto.getTaskId());
+            importResultDTO.setStatus(FileTaskStatusEnum.FAIL.getCode());
+            importResultDTO.setRemark(e.getMessage().length() > 490 ? e.getMessage().substring(0, 490) : e.getMessage());
+            downloadTaskFeign.updateTask(importResultDTO);
+        }
+    }
+
+
+    @PostMapping("/importKolPartnerInfo")
+    public void importKolPartnerInfo(@RequestBody BaseDTO.ImportDTO dto) {
+        try {
+            kolPartnerInfoService.importKolPartnerInfo(dto);
+        } catch (Exception e) {
+            log.error("导入企业达人库失败", e);
+            BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
+            importResultDTO.setTaskId(dto.getTaskId());
+            importResultDTO.setStatus(FileTaskStatusEnum.FAIL.getCode());
+            importResultDTO.setRemark(e.getMessage().length() > 490 ? e.getMessage().substring(0, 490) : e.getMessage());
+            downloadTaskFeign.updateTask(importResultDTO);
+        }
+    }
+
+    @PostMapping("/importKolFeedbackCost")
+    public void importKolFeedbackCost(@RequestBody BaseDTO.ImportDTO dto) {
+        try {
+            kolFeedbackCostService.importKolFeedbackCost(dto);
+        } catch (Exception e) {
+            log.error("导入KOL回片费用失败", e);
+            BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
+            importResultDTO.setTaskId(dto.getTaskId());
+            importResultDTO.setStatus(FileTaskStatusEnum.FAIL.getCode());
+            importResultDTO.setRemark(e.getMessage().length() > 490 ? e.getMessage().substring(0, 490) : e.getMessage());
+            downloadTaskFeign.updateTask(importResultDTO);
+        }
+    }
+
+    @PostMapping("/importKolB2cApplication")
+    public void importKolB2cApplication(@RequestBody BaseDTO.ImportDTO dto) {
+        try {
+            kolB2cApplicationService.importKolB2cApplication(dto);
+        } catch (Exception e) {
+            log.error("导入B2C寄样申请失败", e);
+            BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
+            importResultDTO.setTaskId(dto.getTaskId());
+            importResultDTO.setStatus(FileTaskStatusEnum.FAIL.getCode());
+            importResultDTO.setRemark(e.getMessage().length() > 490 ? e.getMessage().substring(0, 490) : e.getMessage());
+            downloadTaskFeign.updateTask(importResultDTO);
+        }
+    }
 }

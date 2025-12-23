@@ -144,6 +144,17 @@ public class WmsExecutorPoolConfig {
         return service;
     }
     
+    @Bean(name = "virtualTransactionIdToInventoryHisPool")
+    public ExecutorService virtualTransactionIdToInventoryHisPool() {
+        ThreadPoolExecutor service = new ThreadPoolExecutor(50, 100,
+                30L, TimeUnit.SECONDS,
+                new LinkedBlockingQueue<>(10000));
+        //设置线城池的饱和策略
+        RejectedExecutionHandler handler = new ThreadPoolExecutor.CallerRunsPolicy();
+        service.setRejectedExecutionHandler(handler);
+        return service;
+    }
+    
     @Bean(name = "inventoryTransactionToInventoryHisPool")
     public ExecutorService inventoryTransactionToInventoryHisPool() {
         ThreadPoolExecutor service = new ThreadPoolExecutor(10, 20,
@@ -154,11 +165,40 @@ public class WmsExecutorPoolConfig {
         service.setRejectedExecutionHandler(handler);
         return service;
     }
+    
+    @Bean(name = "virtualInventoryTransactionToInventoryHisPool")
+    public ExecutorService virtualInventoryTransactionToInventoryHisPool() {
+        ThreadPoolExecutor service = new ThreadPoolExecutor(10, 20,
+                30L, TimeUnit.SECONDS,
+                new LinkedBlockingQueue<>(1000));
+        //设置线城池的饱和策略
+        RejectedExecutionHandler handler = new ThreadPoolExecutor.DiscardOldestPolicy();
+        service.setRejectedExecutionHandler(handler);
+        return service;
+    }
+    
     @Bean(name = "wmsTaskExecutorPool")
     public ExecutorService wmsTaskExecutorPool() {
         ThreadPoolExecutor service = new ThreadPoolExecutor(5, 10,
                 5L, TimeUnit.SECONDS,
                 new LinkedBlockingQueue<Runnable>(100));
+        //设置线城池的饱和策略
+        RejectedExecutionHandler handler = new ThreadPoolExecutor.CallerRunsPolicy();
+        service.setRejectedExecutionHandler(handler);
+
+        return service;
+    }
+    /**
+     * 虚拟库存历史记录线程池
+     * @author will
+     * @date 2025/10/10 14:59
+     * @return ExecutorService
+     */
+    @Bean(name = "virtualInventoryHisPool")
+    public ExecutorService virtualInventoryHisPool() {
+        ThreadPoolExecutor service = new ThreadPoolExecutor(5, 10,
+                5L, TimeUnit.SECONDS,
+                new LinkedBlockingQueue<>(100));
         //设置线城池的饱和策略
         RejectedExecutionHandler handler = new ThreadPoolExecutor.CallerRunsPolicy();
         service.setRejectedExecutionHandler(handler);

@@ -38,7 +38,8 @@
     </sql>
     <sql id="pagingSql">
         SELECT
-        c.id,c.code as code, c.status,c.allocated_month as allocatedMonth, to_char(C.allocated_month, 'YYYY-MM') AS allocatedMonthStr,
+        c.id,c.code as code, c.status,c.allocated_month as allocatedMonth,c.accounting_month as accountingMonth, to_char(C.allocated_month, 'YYYY-MM') AS allocatedMonthStr,
+        to_char(c.accounting_month, 'YYYY-MM') AS accountingMonthStr,
         c.currency, c.currency_symbol,c.exchange_rate, c.company_id, c.company_name as companyName,cd.id as detailId,cd.sku_no as skuNo, cd.sku_id,
         cd.product_name, cd.unit, cast(cd.product_cost AS NUMERIC(16, 6)) as productCost,cd.warehouse_id as warehouseId,cd.warehouse_name as warehouseName,
         cast(cd.first_mile_shipping_cost AS NUMERIC(16, 6)) as firstMileShippingCost,cast(cd.clearance_customs_tax AS NUMERIC(16, 6)) as clearanceCustomsTax,
@@ -215,6 +216,47 @@
         FROM
             latest_approved_costs
         WHERE rn = 1
+    </select>
+
+    <!-- 列出库存SKU成本列表 -->
+    <select id="listInventorySkuCost" resultType="com.erp.model.tms.dto.InventorySkuCostDTO$InvSkuCostDTO">
+        select
+            isc.company_id as orgId,
+            isc.currency,
+            isc.exchange_rate,
+            iscd.warehouse_id as warehouseId,
+            iscd.sku_id as skuId,
+            iscd.product_cost as productCost,
+            iscd.first_mile_shipping_cost as firstMileShippingCost,
+            iscd.clearance_customs_tax as clearanceCustomsTax
+        from inventory_sku_cost isc
+        inner join inventory_sku_cost_detail iscd on isc.id = iscd.main_id and iscd.is_deleted = false
+        where isc.is_deleted = false
+        <if test="param.skuIdList != null and param.skuIdList.size > 0">
+            and iscd.sku_id in
+            <foreach collection="param.skuIdList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.warehouseIdList != null and param.warehouseIdList.size > 0">
+            and iscd.warehouse_id in
+            <foreach collection="param.warehouseIdList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.orgIdList != null and param.orgIdList.size > 0">
+            and isc.company_id in
+            <foreach collection="param.orgIdList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.startAccountingMonth != null ">
+            and isc.accounting_month >= #{param.startAccountingMonth}
+        </if>
+        <if test="param.endAccountingMonth != null ">
+            and #{param.endAccountingMonth} > isc.accounting_month
+        </if>
+        and isc.status = 'approve'
     </select>
 
 </mapper>

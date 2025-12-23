@@ -89,7 +89,11 @@ public class ApproveTaskInfoEntity extends BaseEntity<ApproveTaskInfoEntity> {
      */
     @TableField("reason")
     private String reason;
-
+    /**
+     * 完成时间
+     */
+    @TableField("finish_time")
+    private LocalDateTime finishTime;
 
     public static final String SOURCE_PLATFORM = "source_platform";
 

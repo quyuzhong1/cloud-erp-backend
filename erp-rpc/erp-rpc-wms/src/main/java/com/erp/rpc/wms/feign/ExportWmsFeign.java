@@ -397,4 +397,10 @@ public interface ExportWmsFeign {
      */
     @PostMapping("/feign/export/exportSampleAdjustmentInfo")
     PagingVO<SampleAdjustmentInfoDTO.ListDTO> exportSampleAdjustmentInfo(@RequestBody PagingDTO<SampleAdjustmentInfoDTO.PagingParamDTO> dto);
+
+    /**
+     * 导出B2B三方发货单
+     */
+    @PostMapping("/feign/export/exportB2bThirdDelivery")
+    PagingVO<B2bThirdDeliveryDTO.PagingViewDTO> exportB2bThirdDelivery(@RequestBody PagingDTO<B2bThirdDeliveryDTO.PagingParamDTO> dto);
 }

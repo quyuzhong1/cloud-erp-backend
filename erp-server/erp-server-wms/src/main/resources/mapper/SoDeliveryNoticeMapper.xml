@@ -36,7 +36,7 @@
         sdnd.customer_po AS customerPO,
         sdnd.to_country AS toCountry,
         sdnd.picking_qty AS pickedQty,
-        sd.qty as salesQty,
+        sd.box_qty as salesQty,
         pd.name as productName,
         pd.unit_name as unit,
         CASE WHEN total.total_delivery_qty = total.total_picked_qty THEN '已生成' WHEN total.total_picked_qty > 0 THEN '部分生成' ELSE '未生成' END AS generationPickStatus

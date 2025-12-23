@@ -1,5 +1,8 @@
 package com.erp.server.oms.service;
 
+import com.common.business.service.SuperService;
+import com.common.core.entity.BaseEntity;
+
 import java.util.List;
 
 /**
@@ -19,4 +22,6 @@ public interface CommonService {
      * @return List<String>
      */
     List<String> listProcessCurBusinessIds (String businessKey);
+
+    <T extends BaseEntity> void updateDetail(String businessId, String moduleType, SuperService service, List<T> detailList, List<T> oldDetailList, String keyFieldName);
 }

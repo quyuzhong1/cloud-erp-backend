@@ -18,4 +18,22 @@ public interface ImportOmsFeign {
     @PostMapping("/feign/import/exhibitionOrder")
     void importExhibitionOrder(@RequestBody BaseDTO.ImportDTO dto);
 
+    @PostMapping("/feign/import/importDeliveryBoxRule")
+    void importDeliveryBoxRule(@RequestBody BaseDTO.ImportDTO dto);
+
+    @PostMapping("/feign/import/kolFeedback")
+    void importKolFeedback(@RequestBody BaseDTO.ImportDTO dto);
+
+    /**
+     * 导入KOL回片费用
+     */
+    @PostMapping("/feign/import/importKolFeedbackCost")
+    void importKolFeedbackCost(@RequestBody BaseDTO.ImportDTO dto);
+
+    @PostMapping("/feign/import/importKolPartnerInfo")
+    void importKolPartnerInfo(@RequestBody BaseDTO.ImportDTO dto);
+
+    @PostMapping("/feign/import/importKolB2cApplication")
+    void importKolB2cApplication(@RequestBody BaseDTO.ImportDTO dto);
+
 }

@@ -199,4 +199,12 @@ public interface SoOutstockDetailService extends SuperService<SoOutstockDetailEn
      * @return
      */
     Map<String, LocalDate> mapLastOutstockDateBySkuIds(List<String> skuIds);
+    /**
+     * 根据时间范围查询出库单信息
+     * @author will
+     * @date 2025/12/9 15:37
+     * @param dto
+     * @return List<KolSoOutstockDTO>
+     */
+    List<SoOutstockDTO.KolSoOutstockDTO> listSoOutstockByTime(SoOutstockDTO.KolSoOutstockDateDTO dto);
 }

@@ -1015,6 +1015,10 @@ public class LogisticsChannelDTO implements Serializable {
          */
         private String logisticsPlatform;
         /**
+         * 仓库id
+         */
+        private String warehouseId;
+        /**
          * 禁用状态
          */
         private Boolean disabled;

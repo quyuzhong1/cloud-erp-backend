@@ -1,0 +1,106 @@
+package com.erp.model.oms.entity;
+
+import com.baomidou.mybatisplus.annotation.TableName;
+import com.common.core.entity.BaseEntity;
+import com.baomidou.mybatisplus.annotation.TableField;
+import java.io.Serializable;
+import java.time.LocalDateTime;
+import java.util.Objects;
+
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.experimental.Accessors;
+import com.common.business.enums.ApproveStatusEnum;
+
+
+/**
+ * <p>
+ * 
+ * </p>
+ *
+ * @author wtr
+ * @since 2025-11-24
+*/
+@Data
+@EqualsAndHashCode(callSuper = true)
+@Accessors(chain = true)
+@TableName("delivery_box_rule_detail")
+public class DeliveryBoxRuleDetailEntity extends BaseEntity<DeliveryBoxRuleDetailEntity> {
+
+    /**
+     * 箱规id
+     */
+    @TableField("main_id")
+    private String mainId;
+
+    /**
+    * 发货skuId
+    */
+    @TableField("delivery_sku_id")
+    private String deliverySkuId;
+    /**
+    * 发货sku编码
+    */
+    @TableField("delivery_sku_no")
+    private String deliverySkuNo;
+    /**
+    * 发货sku名称
+    */
+    @TableField("delivery_product_name")
+    private String deliveryProductName;
+    /**
+    * 每箱数量
+    */
+    @TableField("per_box_qty")
+    private Integer perBoxQty;
+    /**
+    * 优先级
+    */
+    @TableField("sort")
+    private Integer sort;
+
+    @TableField("invalid_time")
+    private LocalDateTime invalidTime;
+
+    @TableField("invalid_status")
+    private Boolean invalidStatus;
+
+    @TableField("invalid_user_id")
+    private String invalidUserId;
+
+    @TableField("invalid_user_name")
+    private String invalidUserName;
+
+
+    public static final String SKU_ID = "sku_id";
+
+    public static final String SKU_NO = "sku_no";
+
+    public static final String PRODUCT_NAME = "product_name";
+
+    public static final String PER_BOX_QTY = "per_box_qty";
+
+    public static final String PRIORITY = "priority";
+
+    @Override
+    public Serializable pkVal() {
+        return null;
+    }
+
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        DeliveryBoxRuleDetailEntity that = (DeliveryBoxRuleDetailEntity) o;
+        return Objects.equals(deliverySkuNo, that.deliverySkuNo) &&
+                Objects.equals(perBoxQty, that.perBoxQty) &&
+                Objects.equals(sort, that.sort);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(deliverySkuNo, perBoxQty, sort);
+    }
+
+}

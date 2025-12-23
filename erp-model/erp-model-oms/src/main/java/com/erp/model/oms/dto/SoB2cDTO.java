@@ -1348,6 +1348,10 @@ public class SoB2cDTO implements Serializable {
          */
         private String sourceCode;
         /**
+         * 来源ID
+         */
+        private String sourceId;
+        /**
          * 扩展字段
          */
         private String extendData;
@@ -2863,6 +2867,7 @@ public class SoB2cDTO implements Serializable {
          * 销售订单id
          */
         private String id;
+        private String platformDeliveryWarehouse;
         /**
          * 订单创建时间
          */

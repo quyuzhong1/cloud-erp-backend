@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.oms.mapper.KolCooperationPlatformMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.oms.entity.KolCooperationPlatformEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="main_id" property="mainId" />
+       <result column="platform_name" property="platformName" />
+       <result column="platform_account_id" property="platformAccountId" />
+       <result column="platform_account_name" property="platformAccountName" />
+       <result column="follower_count" property="followerCount" />
+       <result column="homepage_url" property="homepageUrl" />
+       <result column="remark" property="remark" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        kcp.id AS id,
+kcp.create_user_id AS createUserId,
+kcp.create_user_name AS createUserName,
+kcp.create_time AS createTime,
+kcp.update_user_id AS updateUserId,
+kcp.update_user_name AS updateUserName,
+kcp.update_time AS updateTime,
+kcp.version AS version,
+kcp.is_deleted AS isDeleted,
+kcp.main_id AS mainId,
+kcp.platform_name AS platformName,
+kcp.platform_account_id AS platformAccountId,
+kcp.platform_account_name AS platformAccountName,
+kcp.follower_count AS followerCount,
+kcp.homepage_url AS homepageUrl,
+kcp.remark AS remark
+
+    </sql>
+
+
+</mapper>

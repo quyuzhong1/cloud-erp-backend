@@ -624,5 +624,7 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      */
     void deleteSoOutstock(String id, String deliveryId);
 
+    void updateRemarkById(String outstockId, String remark);
+
     void updateSoB2cLogisticsInfo(SoB2cLogisticsDTO.transferOrderDTO dto);
 }

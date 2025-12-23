@@ -164,7 +164,14 @@ public class DaMaiServiceTest {
         DaMaiBaseResp<DaMaiCreateOrderResp> resp = daMaiService.createOrder(authMap,daMaiCreateOrderRequest);
         System.out.println(JSONUtil.toJsonStr(resp));
     }
-
+     @Test
+    public void createFbaOrder() {
+//         String jsonStr = "{\"custRefNo\":\"API-3\",\"whCode\":\"CA-001\",\"consigneeCountryCode\":\"US\",\"deliverType\":\"EXPRESS\",\"carriersCode\":\"NHGDHT\",\"shopName\":\"我的亚马逊小铺\",\"shopRemark\":\"123\",\"remark\":\"AAAA\",\"platformShipNo\":\"BKJWHERT\",\"platformRefNo\":\"ERGDHERH\",\"fileUrl\":\"https://img2.baidu.com/it/u=3853345508,384760633&fm=253&fmt=auto&app=120&f=JPEG?w=800&h=1200\",\"fbaAddressFlag\":\"1\",\"shortName\":\"ABE2\",\"consigneeName\":\"asdf\",\"consigneeTel\":\"adsf\",\"consigneeTelExt\":\"asdf\",\"consigneeProvince\":\"AK\",\"consigneeCity\":\"asdf\",\"consigneeAddress1\":\"sdfaszzz\",\"consigneeAddress2\":\"sdf\",\"consigneeAddress3\":\"\",\"consigneePostalCode\":\"88310\",\"consigneeHouseNumber\":\"asdf\",\"consigneeEmail\":\"88310@qq.com\",\"skuList\":[{\"custPackageNo\":\"aa\",\"custSkuCode\":\"HTDT\",\"custLotNo\":\"aA\",\"sn\":\"123321\",\"skuQty\":\"2\",\"packQty\":\"3\"}],\"commandList\":[{\"commandType\":\"NO_OPEN_RELABLE\",\"commandDesc\":\"LALALLALA\",\"commandRemark\":\"123123\"}]}";
+         String jsonStr = "{\"custRefNo\":\"wj20250801111\",\"whCode\":\"CAVCR1\",\"consigneeCountryCode\":\"CA\",\"deliverType\":\"EXPRESS\",\"carriersCode\":\"JIAYOU-001\",\"shopRemark\":\"123\",\"remark\":\"AAAA\",\"platformShipNo\":\"BKJWHERT\",\"platformRefNo\":\"ERGDHERH\",\"fileUrl\":\"https://img2.baidu.com/it/u=3853345508,384760633&fm=253&fmt=auto&app=120&f=JPEG?w=800&h=1200\",\"fbaAddressFlag\":\"1\",\"shortName\":\"ABE2\",\"consigneeName\":\"asdf\",\"consigneeTel\":\"adsf\",\"consigneeTelExt\":\"asdf\",\"consigneeProvince\":\"California\",\"consigneeCity\":\"Los Angeles\",\"consigneeAddress1\":\"123 Main St\",\"consigneeAddress2\":\"sdf\",\"consigneeAddress3\":\"\",\"consigneePostalCode\":\"88310\",\"consigneeHouseNumber\":\"asdf\",\"consigneeEmail\":\"88310@qq.com\",\"skuList\":[{\"custPackageNo\":\"aa\",\"custSkuCode\":\"HTDT\",\"custLotNo\":\"aA\",\"sn\":\"123321\",\"skuQty\":\"2\",\"packQty\":\"3\"}],\"commandList\":[{\"commandType\":\"NO_OPEN_RELABLE\",\"commandDesc\":\"LALALLALA\",\"commandRemark\":\"123123\"}]}";
+         DaMaiCreateFbaOrderRequest daMaiCreateFbaOrderRequest = JSONUtil.toBean(jsonStr, DaMaiCreateFbaOrderRequest.class);
+         DaMaiBaseResp<DaMaiCreateFbaOrderResp> resp = daMaiService.createFbaOrder(authMap, daMaiCreateFbaOrderRequest);
+        System.out.println(JSONUtil.toJsonStr(resp));
+    }
 
 
     @Test

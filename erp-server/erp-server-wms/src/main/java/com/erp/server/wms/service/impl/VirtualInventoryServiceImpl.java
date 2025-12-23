@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
@@ -16,27 +17,27 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.ValidatorUtil;
+import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.scm.entity.SupplierRefWarehouseEntity;
 import com.erp.model.wms.dto.SupplierInventoryDTO;
 import com.erp.model.wms.dto.VirtualInventoryDTO;
+import com.erp.model.wms.dto.VirtualWarehouseChannelDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.inventory.InventoryDTO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.dto.inventory.VirtualInventoryStockDTO;
 import com.erp.model.wms.entity.VirtualInventoryEntity;
 import com.erp.model.wms.entity.VirtualWarehouseEntity;
+import com.erp.model.wms.entity.VirtualWarehouseRelationEntity;
 import com.erp.model.wms.enums.VirtualWarehouseAllocationTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.VirtualInventoryMapper;
-import com.erp.server.wms.service.InventoryService;
-import com.erp.server.wms.service.VirtualInventoryService;
-import com.erp.server.wms.service.VirtualWarehouseService;
-import com.erp.server.wms.service.WarehouseService;
+import com.erp.server.wms.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.BeanUtils;
@@ -75,6 +76,10 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
 
     @Resource
     private PlmTaskFeign plmTaskFeign;
+
+    @Resource
+    private VirtualWarehouseChannelService virtualWarehouseChannelService;
+
 
     @Override
     public PagingVO<VirtualInventoryDTO.ListDTO> paging(PagingDTO<VirtualInventoryDTO.SearchParamDTO> dto) {
@@ -653,5 +658,55 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
         return found;
     }
 
+    @Override
+    public VirtualInventoryDTO.AllInventoryDTO getAllUseInventory(VirtualInventoryDTO.AllInventoryParamDTO dto) {
+        VirtualInventoryDTO.AllInventoryDTO allInventoryDTO = new VirtualInventoryDTO.AllInventoryDTO();
+        BeanUtil.copyProperties(dto,allInventoryDTO);
+        //实体仓库存
+        Integer usableInventoryTotal = inventoryService.getUsableInventoryTotal(dto.getWarehouseId(), dto.getSkuId());
+        allInventoryDTO.setUsableQty(usableInventoryTotal);
+        //虚拟仓id
+        String virtualWarehouseId = handleVirtualWarehouse(dto.getCustomerId(), dto.getWarehouseId());
+        VirtualWarehouseEntity virtualWarehouseEntity = virtualWarehouseService.getById(virtualWarehouseId);
+        if (ObjectUtil.isEmpty(virtualWarehouseEntity)) {
+            return allInventoryDTO;
+        }
+        allInventoryDTO.setVirtualWarehouseId(virtualWarehouseId);
+        allInventoryDTO.setVirtualWarehouseName(virtualWarehouseEntity.getName());
+        VirtualInventoryDTO.ParamDTO params = new VirtualInventoryDTO.ParamDTO();
+        params.setSkuIdList(Collections.singletonList(allInventoryDTO.getSkuId()));
+        params.setWarehouseIdList(Collections.singletonList(allInventoryDTO.getWarehouseId()));
+        params.setVirtualWarehouseIdList(Collections.singletonList(allInventoryDTO.getVirtualWarehouseId()));
+        List<VirtualInventoryDTO.ViewQtyDTO> usableQtyList = baseMapper.getUsableQty(params);
+        if (CollUtil.isNotEmpty(usableQtyList)) {
+            allInventoryDTO.setVirtualUsableQty(usableQtyList.get(0).getToVirtualWarehouseUsableQty());
+        }
+        return allInventoryDTO;
+    }
+    /**
+     * 查询虚拟仓库
+     * @author will
+     * @date 2025/12/02 19:14
+     * @param customerId
+     * @param warehouseId
+     */
+    private String handleVirtualWarehouse (String customerId,String warehouseId) {
+        //查询客户信息
+        CustomerInfoEntity customerInfoEntity = FeignQuery.getById(CustomerInfoEntity.class,customerId);
+        if (ObjectUtil.isEmpty(customerInfoEntity)) {
+            throw new ServiceException(ApiError.ERROR_92011);
+        }
+        //查询虚拟仓信息
+        VirtualWarehouseChannelDTO.PlatformDTO platformDTO = new VirtualWarehouseChannelDTO.PlatformDTO();
+        platformDTO.setDictPlatform(customerInfoEntity.getPlatformType());
+        platformDTO.setWarehouseIdList(Arrays.asList(warehouseId));
+        platformDTO.setRelationId("");
+        platformDTO.setPartitionId("");
+        List<VirtualWarehouseRelationEntity> virtualWarehouseList = virtualWarehouseChannelService.getVirtualWarehouse(platformDTO);
+        if (CollectionUtils.isEmpty(virtualWarehouseList)) {
+            return "";
+        }
+         return virtualWarehouseList.get(0).getVirtualWarehouseId();
+    }
 
 }

@@ -118,4 +118,6 @@ public interface ThirdMappingService extends SuperService<ThirdMappingEntity> {
     List<ThirdMappingDTO.WarehouseMappingDTO> listMappingBySysIds(List<String> warehouseIdList, String sysType);
 
     ThirdMappingEntity getByThirdCodeAndType(String warehouseNo, String sysType, String type);
+
+    ThirdMappingEntity getShopByThirdCode(String platformShop, String sysType);
 }

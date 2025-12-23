@@ -136,7 +136,7 @@ public class SoInfoQueryHandler extends AbstractQueryHandler {
          */
         if("remainingNoticeQty".equals(field)){
             // 使用 XML 中关联的发货通知明细聚合别名 sdnd
-            return "(sod.qty - COALESCE(sdnd.deliveryQty, 0)) " + compareCodeSplicingValueSql;
+            return "(sod.qty - COALESCE(sdnd.deliveryQty, 0) - COALESCE(btdd.deliveryQty, 0)) " + compareCodeSplicingValueSql;
         }
 
         if("tab".equals(field)){
