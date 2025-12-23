@@ -143,17 +143,17 @@ ksba.platform_order_code AS platformOrderCode
         left join (
             SELECT
             kf.id,
-            kf.source_id,
+            kf.source_detail_id,
             kf.partner_id,
             kf.url
             FROM kol_feedback kf
             INNER JOIN (
-            SELECT source_id, MAX(id) AS min_id
+            SELECT source_detail_id, MAX(id) AS max_id
             FROM kol_feedback
             WHERE is_deleted = false
-            GROUP BY source_id
-            ) AS earliest ON kf.source_id = earliest.source_id AND kf.id = earliest.min_id
-            WHERE kf.is_deleted = false) as kfu on kfu.partner_id = ksba.partner_id and kba.id = kfu.source_id
+            GROUP BY source_detail_id
+            ) AS earliest ON kf.source_detail_id = earliest.source_detail_id AND kf.id = earliest.max_id
+            WHERE kf.is_deleted = false) as kfu on kfu.partner_id = ksba.partner_id and kbad.id = kfu.source_detail_id
         WHERE
         ${params.sqlMap.default}
         AND kba.is_deleted = FALSE
