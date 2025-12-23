@@ -135,7 +135,7 @@ public class SupplierPoReturnController extends BaseController {
     @WebAdvanceQuery(handler = SupplierPoReturnQueryHandler.class)
     public ApiResult<Boolean> exportList(@RequestBody @Validated PurchaseReturnOrderDTO.SupplierPagingParamDTO dto) {
         poReturnService.supplierExportList(dto);
-        return success(true);
+        return success();
     }
 
 }
