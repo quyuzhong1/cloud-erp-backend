@@ -66,7 +66,7 @@ public class WmsVirtualDetailMsgJob {
         long start = System.currentTimeMillis();
         String jobParam = XxlJobHelper.getJobParam();
         String virtualInventoryId = "";
-        LocalDateTime date = null;
+        LocalDateTime date = LocalDateTime.now();
         if (CharSequenceUtil.isNotBlank(jobParam)) {
             JSONObject jsonParam = JSONUtil.parseObj(jobParam);
             virtualInventoryId = jsonParam.getStr("virtualInventoryId");
