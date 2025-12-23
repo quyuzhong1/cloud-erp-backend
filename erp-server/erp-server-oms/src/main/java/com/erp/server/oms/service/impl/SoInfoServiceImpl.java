@@ -4218,6 +4218,17 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         return viewDTO;
     }
 
+    @Override
+    public List<SoInfoEntity> getByPlatformOrderCode(String platformOrderCode) {
+        if(StringUtils.isBlank(platformOrderCode)){
+            return new ArrayList<>();
+        }
+
+        return this.lambdaQuery()
+                .eq(SoInfoEntity::getPlatformOrderCode, platformOrderCode)
+                .list();
+    }
+
     /**
      * 更新平台订单ID
      * @author will

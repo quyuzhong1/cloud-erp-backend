@@ -5,6 +5,7 @@ import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.dto.SoReturnDTO;
+import com.erp.model.oms.entity.SoReturnDetailEntity;
 import com.erp.model.oms.entity.SoReturnEntity;
 import org.springframework.web.bind.annotation.RequestBody;
 
@@ -271,4 +272,8 @@ public interface SoReturnService extends SuperService<SoReturnEntity> {
     Map<String,String> getCurrencySymbol(List<String> currencys);
 
     Map<String,BigDecimal> getCurrencyMap(List<String> currencys);
+
+    SoReturnEntity getByPlatformOrderCode(String platformOrderCode);
+
+    void addByPlatform(SoReturnEntity soReturn, List<SoReturnDetailEntity> soB2cReturnDetailEntityList);
 }

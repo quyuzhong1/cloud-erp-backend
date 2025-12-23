@@ -128,7 +128,7 @@ public class DmpOutputWdtB2bOrderRocketMQTaskHandler extends DmpOutputRocketMQTa
 			return null;
 		}
 		//只推送京东自营的店铺
-		if(PlatformDictEnum.SOP.getCode().equals(shopInfo.getDictPlatform())){
+		if(!PlatformDictEnum.SOP.getCode().equals(shopInfo.getDictPlatform())){
 			return null;
 		}
 

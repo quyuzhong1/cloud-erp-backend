@@ -1395,6 +1395,32 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
     }
 
     @Override
+    public SoReturnEntity getByPlatformOrderCode(String platformOrderCode) {
+        if(StringUtils.isBlank(platformOrderCode)){
+            return null;
+        }
+        return this.lambdaQuery()
+                .eq(SoReturnEntity::getPlatformOrderCode,platformOrderCode)
+                .eq(SoReturnEntity::getInvalidStatus,Boolean.FALSE)
+                .last("limit 1")
+                .one();
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void addByPlatform(SoReturnEntity soReturn, List<SoReturnDetailEntity> soB2cReturnDetailEntityList) {
+        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_THDD);
+        soReturn.setCode(code);
+        this.save(soReturn);
+
+        //操作日志
+        operateLogService.addModuleOperateLog(String.format("平台自动新增退货单【%s】", code), ModuleTypeEnum.SO_B2C_RETURN.getCode(), soReturn.getId(), "新增操作");
+
+        soB2cReturnDetailEntityList.forEach(v->v.setMainId(soReturn.getId()));
+        soReturnDetailService.saveBatch(soB2cReturnDetailEntityList);
+    }
+
+    @Override
     public List<SoReturnDTO.PagingView> listSoReturnDetailBySourceId(String sourceId) {
         List<SoReturnDTO.PagingView> list = this.baseMapper.listSoReturnDetailBySourceId(sourceId);
         if (CollectionUtils.isEmpty(list)) {
