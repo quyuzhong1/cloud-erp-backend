@@ -87,7 +87,17 @@ public class SoLabelController extends BaseController {
      * @return
      */
     @PostMapping("/printLogisticsLabel")
-    public void printLogisticsLabel(@RequestBody @Validated BaseIdsDTO.IdsDTO dto, HttpServletResponse response){
-        soLabelService.printLogisticsLabel(dto.getIds(),response);
+    public ApiResult<String> printLogisticsLabel(@RequestBody @Validated BaseIdsDTO.IdsDTO dto){
+        return success(soLabelService.printLogisticsLabel(dto.getIds()));
+    }
+
+    /**
+     * 转换物流标签成URL
+     * @return
+     */
+    @PostMapping("/changeLogisticsLabelToUrl")
+    public ApiResult changeLogisticsLabelToUrl(){
+        soLabelService.changeLogisticsLabelToUrl();
+        return success();
     }
 }

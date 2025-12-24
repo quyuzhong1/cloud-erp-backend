@@ -28,6 +28,7 @@
         sbdd.warehouse_id,
         sbdd.warehouse_name AS warehouseName,
         sbdd.warehouse_location AS warehouseLocation,
+        fsbl.logistics_label_url AS logisticsLabelUrl,
         sbd.create_time AS createTime,
         sbd.delivery_time AS deliveryTime,
         sbd.finish_print_time as finishPrintTime,
@@ -39,6 +40,7 @@
         sbd.transfer_warehouse_ids
         FROM so_b2c_delivery sbd
         LEFT JOIN so_b2c_delivery_detail sbdd ON sbd.id = sbdd.main_id AND sbd.is_deleted = FALSE
+        LEFT JOIN foreign_so_b2c_label fsbl ON sbd.source_id = fsbl.main_id AND fsbl.is_deleted = FALSE
         WHERE ${params.sqlMap.default}
         AND sbdd.is_deleted = FALSE
 
@@ -81,11 +83,11 @@
         sbd.status AS tabFlag,
         count(distinct sbd.id) AS count
         FROM so_b2c_delivery sbd
-        LEFT JOIN so_b2c_delivery_detail sbdd ON sbd.id = sbdd.main_id AND sbd.is_deleted = FALSE
-        left join so_b2c_delivery_intercept  sbdi on sbdi.delivery_id = sbd.id  and sbdi.handle_status = 'waitHandle' and sbdi.is_deleted = false
+        LEFT JOIN so_b2c_delivery_detail sbdd ON sbd.id = sbdd.main_id AND sbdd.is_deleted = FALSE
+        LEFT JOIN foreign_so_b2c_label fsbl ON sbd.source_id = fsbl.main_id AND fsbl.is_deleted = FALSE
         WHERE
         sbd.is_deleted=FALSE
-        and sbdi.id is null
+        AND NOT EXISTS (SELECT 1 FROM so_b2c_delivery_intercept sbdi WHERE sbdi.delivery_id = sbd.id AND sbdi.handle_status = 'waitHandle' AND sbdi.is_deleted = FALSE)
         <!--数据权限-->
         <if test="params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}

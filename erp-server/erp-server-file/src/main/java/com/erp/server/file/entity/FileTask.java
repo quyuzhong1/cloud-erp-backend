@@ -72,6 +72,7 @@ public class FileTask extends BaseEntity<FileTask> {
         task.setStatus(FileTaskStatusEnum.PENDING.name());
         // 元数据信息
         task.setMetaInfo(metaInfo);
+        task.setCount(0);
         return task;
     }
 

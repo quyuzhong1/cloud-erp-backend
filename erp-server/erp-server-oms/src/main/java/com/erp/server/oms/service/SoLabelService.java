@@ -53,8 +53,9 @@ public interface SoLabelService extends SuperService<SoLabelEntity> {
     /**
      * 合并物流面单
      * @param ids
-     * @param response
      * @return
      */
-    void printLogisticsLabel(List<String> ids, HttpServletResponse response);
+    String printLogisticsLabel(List<String> ids);
+
+    void changeLogisticsLabelToUrl();
 }
