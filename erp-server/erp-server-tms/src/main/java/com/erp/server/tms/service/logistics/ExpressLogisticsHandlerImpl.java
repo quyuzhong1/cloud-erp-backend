@@ -4,7 +4,6 @@ import cn.hutool.json.JSONUtil;
 import com.common.business.annotation.LogisticsPlatformType;
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.core.controller.vo.ApiResult;
-import com.common.core.exception.ServiceException;
 import com.common.core.utils.FileUtil;
 import com.common.core.utils.ValidatorUtil;
 import com.erp.model.file.dto.FileDTO;
