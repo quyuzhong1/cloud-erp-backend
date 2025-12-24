@@ -67,7 +67,7 @@ public class PlatformWdtB2cOrderConsumerService extends AbstractNewPlatformConsu
         KolSubB2cApplicationEntity oldEntity = kolSubB2cApplicationService.lambdaQuery().eq(KolSubB2cApplicationEntity::getCode, dto.getCode()).one();
 
         if(Objects.isNull(oldEntity)){
-            log.warn("[KolSubB2c] 消费:KolSubB2cApplicationEntity不存在");
+            log.warn("[KolSubB2c] 消费:KolSubB2cApplicationEntity不存在,code:{}",dto.getCode());
             return;
         }
         KolSubB2cApplicationEntity entity = new KolSubB2cApplicationEntity();
