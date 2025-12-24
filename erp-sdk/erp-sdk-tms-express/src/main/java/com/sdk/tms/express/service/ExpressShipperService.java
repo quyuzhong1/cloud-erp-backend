@@ -115,12 +115,13 @@ public class ExpressShipperService {
      * @throws UnsupportedEncodingException
      */
     public BaseResult getLabel(Map<String, String> authMap, OrderLabelRequest orderLabelRequest) throws UnsupportedEncodingException {
-        String partnerId = authMap.get(CLIENT_ID);
-        String md5Key = authMap.get(CLIENT_SECRET);
-        String url = authMap.get("url");
-        validate(partnerId, md5Key, url);
-        IServiceCodeStandard standardService = ExpressServiceCodeEnum.COM_RECE_CLOUD_PRINT_WAYBILLS; //面单打印
-        return doPost(url, partnerId, md5Key, JSONUtil.toJsonStr(orderLabelRequest), standardService.getCode());
+        throw new ServiceException("模拟打印接口异常");
+//        String partnerId = authMap.get(CLIENT_ID);
+//        String md5Key = authMap.get(CLIENT_SECRET);
+//        String url = authMap.get("url");
+//        validate(partnerId, md5Key, url);
+//        IServiceCodeStandard standardService = ExpressServiceCodeEnum.COM_RECE_CLOUD_PRINT_WAYBILLS; //面单打印
+//        return doPost(url, partnerId, md5Key, JSONUtil.toJsonStr(orderLabelRequest), standardService.getCode());
     }
 
     /**
