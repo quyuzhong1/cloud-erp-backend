@@ -6,6 +6,7 @@ import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.DmpSyncTaskIdDTO;
@@ -26,6 +27,11 @@ import com.sdk.wangdian.sdk.Pager;
 import com.sdk.wangdian.sdk.api.sales.RawTradeAPI;
 import com.sdk.wangdian.sdk.api.sales.dto.PushSelf2Request;
 import com.sdk.wangdian.sdk.api.sales.dto.PushSelf2Response;
+import com.sdk.wangdian.sdk.api.wms.stockout.StockoutAPI;
+import com.sdk.wangdian.sdk.api.wms.stockout.dto.CreateOtherStockoutResponse;
+import com.sdk.wangdian.sdk.api.wms.stockout.dto.SalesStockoutRequest;
+import com.sdk.wangdian.sdk.api.wms.stockout.dto.SalesStockoutResponse;
+import com.sdk.wangdian.sdk.api.wms.stockout.dto.SalesWeighingResponse;
 import com.sdk.wangdian.server.WangDianClientService;
 import io.seata.common.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -102,41 +108,26 @@ public class WdtSoB2bDeliveryConsumer<T extends DmpSyncTaskIdDTO> extends Abstra
             try {
                 boolean locked = lock.tryLock(10, TimeUnit.SECONDS);
                 if (locked) {
-                    Client client = wangDianClientService.getClient();
-                    JSONObject parseObject = new JSONObject();
-                    parseObject.put("src_order_no",request.getThirdCode());
+                    StockoutAPI stockoutAPI = wangDianClientService.get(StockoutAPI.class);
+                    SalesStockoutRequest salesStockoutRequest = new SalesStockoutRequest();
+                    salesStockoutRequest.setSrcOrderNo(request.getThirdCode());
                     Pager pager = new Pager();
-                    int pageSize = 200;
-                    pager.setPageSize(pageSize);
-                    pager.setCalcTotal(true);
                     pager.setPageNo(0);
+                    pager.setPageSize(100);
+                    pager.setCalcTotal(true);
+                    SalesStockoutResponse sales = stockoutAPI.querySales(salesStockoutRequest,pager);
+                    if(CollectionUtils.isEmpty(sales.getOrderList())){
+                        return ApiResult.error(0, "未找到对应的旺店通销售订单");
+                    }
+                    String outCode = sales.getOrderList().get(0).getOrderNo();
 
-                    String execute = client.execute("wms.stockout.Sales.queryWithDetail", JSON.toJSONString(Collections.singletonList(parseObject)), pager);
-                    JSONObject jsonObject = JSON.parseObject(execute);
-                    if(Objects.isNull(jsonObject)){
-                        throw new ServiceException("旺店通获取出库明细为空，传参：{},结果{}",JSON.toJSONString(Collections.singletonList(parseObject)),execute);
-                    }
-                    JSONObject data = jsonObject.getJSONObject("data");
-                    if(Objects.isNull(data)){
-                        throw new ServiceException("旺店通获取出库明细data为空，传参：{},结果{}",JSON.toJSONString(Collections.singletonList(parseObject)),execute);
-                    }
-                    JSONArray jsonArray = data.getJSONArray("order");
-                    if(Objects.isNull(jsonArray) || jsonArray.isEmpty()){
-                        throw new ServiceException("旺店通获取出库明细order为空，传参：{},结果{}",JSON.toJSONString(Collections.singletonList(parseObject)),execute);
-                    }
-                    String outCode = jsonArray.getJSONObject(0).getString("order_no");
-                    if(StringUtils.isBlank(outCode)){
-                        throw new ServiceException("旺店通获取出库单号为空，传参：{},结果{}",JSON.toJSONString(Collections.singletonList(parseObject)),execute);
-                    }
-                    JSONObject deliveryParam = new JSONObject();
-                    deliveryParam.put("order_no",outCode);
-                    deliveryParam.put("weight",0);
+                    Map<String, Object> weightingReq = new HashMap<>();
+                    weightingReq.put("order_no", outCode);
+                    weightingReq.put("weight", 0);
 
-                    String deliveryResult = client.execute("wms.stockout.Sales.salesWeighing", JSON.toJSONString(deliveryParam), null);
-                    JSONObject resultJson = JSON.parseObject(deliveryResult);
-                    if(resultJson.getInteger("status")!=0){
-                        log.error("推送旺店通发货失败:{}", resultJson.getString("message"));
-                        return ApiResult.error(0, "推送旺店通失败:" + resultJson.getString("message"));
+                    SalesWeighingResponse response = stockoutAPI.salesWeighing(weightingReq);
+                    if(response.getStatus()!= 0){
+                        return ApiResult.error(0, "旺店通发货失败:" + response.getMessage());
                     }
                 }
             } catch (InterruptedException e) {
