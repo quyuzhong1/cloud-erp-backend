@@ -315,11 +315,6 @@ public class PoReconciliationRefDetailDTO implements Serializable {
          */
         private String id;
 
-        /**
-         * 采购对账单id
-         */
-        @NotBlank(message = "采购对账单id不能为空")
-        private String poReconciliationId;
 
         /**
          * 采购对账单明细id
@@ -351,11 +346,6 @@ public class PoReconciliationRefDetailDTO implements Serializable {
          */
         private String id;
 
-        /**
-         * 采购对账单id
-         */
-        @NotBlank(message = "采购对账单id不能为空")
-        private String poReconciliationId;
 
         /**
          * 采购对账单明细id
