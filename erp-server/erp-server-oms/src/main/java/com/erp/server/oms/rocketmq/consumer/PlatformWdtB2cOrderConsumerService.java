@@ -4,12 +4,15 @@ import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.dto.WdtKolB2cApplicationDTO;
 import com.common.core.utils.BeanMapper;
+import com.common.message.constant.RocketMqConsumerGroup;
 import com.common.message.constant.RocketMqNewTag;
 import com.common.message.constant.RocketMqNewTopic;
 import com.common.message.handler.AbstractNewPlatformConsumerHandler;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.oms.entity.KolSubB2cApplicationDetailEntity;
 import com.erp.model.oms.entity.KolSubB2cApplicationEntity;
+import com.erp.model.oms.enums.KolSubB2cApplicationDeliveryStatusEnum;
+import com.erp.model.oms.enums.KolSubB2cApplicationOrderStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.rpc.dmp.feign.DmpMongoDbFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
@@ -27,14 +30,14 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
- * 下载平台商品消费服务
- * @author Jim
+ * KOL-B2C寄样申请单更新消费者
+ * @author jack
  */
 @Service
 @Slf4j
 @RocketMQMessageListener(topic = RocketMqNewTopic.DMP_WDT_KOL_B2C_APPLICATION_TO_OMS_TOPIC,
         selectorExpression = RocketMqNewTag.DMP_WDT_KOL_B2C_APPLICATION_TO_OMS_TAG,
-        consumerGroup ="${spring.cloud.nacos.discovery.namespace}-erp_dmp_group")
+        consumerGroup = RocketMqConsumerGroup.DMP_WDT_KOL_B2C_APPLICATION_CONSUMER)
 public class PlatformWdtB2cOrderConsumerService extends AbstractNewPlatformConsumerHandler {
 
     @Resource
@@ -80,9 +83,11 @@ public class PlatformWdtB2cOrderConsumerService extends AbstractNewPlatformConsu
                 detailEntity.setThirdDetailId(detailDTO.getThirdDetailId());
             }
         }
-
-        entity.setOrderStatus(dto.getOrderStatus());
         entity.setDeliveryStatus(dto.getDeliveryStatus());
+        entity.setOrderStatus(dto.getOrderStatus());
+        if(Objects.equals(KolSubB2cApplicationDeliveryStatusEnum.SHIPPED.getCode(),dto.getDeliveryStatus())){
+            entity.setOrderStatus(KolSubB2cApplicationOrderStatusEnum.APPROVE.getCode());
+        }
         entity.setTrackNo(dto.getTrackNo());
         entity.setPlatformSoCode(dto.getPlatformSoCode());
         entity.setPlatformOrderCode(dto.getPlatformOrderCode());
