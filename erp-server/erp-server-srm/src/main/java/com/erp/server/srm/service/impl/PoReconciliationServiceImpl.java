@@ -70,7 +70,8 @@ public class PoReconciliationServiceImpl extends SuperServiceImpl<PoReconciliati
     private PoReconciliationQueryHandler poReconciliationQueryHandler;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
-
+    @Resource
+    private PoReconciliationRefDetailService poReconciliationRefDetailService;
     /**
     * 修改
     */
@@ -84,7 +85,7 @@ public class PoReconciliationServiceImpl extends SuperServiceImpl<PoReconciliati
         //添加上传附件url
         addMultipartFileUrl(updateDTO);
         //更新明细
-        poReconciliationDetailService.update(updateDTO.getDetailList(),updateDTO.getId());
+        poReconciliationRefDetailService.srmUpdate(updateDTO.getDetailList(),updateDTO.getId());
         //更新主表对账金额
         poReconciliationScmService.updateAmount(updateDTO.getId());
         return Boolean.TRUE;
@@ -122,11 +123,6 @@ public class PoReconciliationServiceImpl extends SuperServiceImpl<PoReconciliati
         return poReconciliationScmService.viewMain(id);
     }
 
-    @Override
-    public List<PoReconciliationDetailDTO.ViewDTO> viewDetail(PoReconciliationDetailDTO.PagingParamDTO dto) {
-        dto.setIsSrm(Boolean.TRUE);
-        return poReconciliationScmService.viewDetail(dto);
-    }
 
     @Override
     public void exportPoReconciliation(PoReconciliationDTO.PagingParamDTO dto, HttpServletResponse response) {

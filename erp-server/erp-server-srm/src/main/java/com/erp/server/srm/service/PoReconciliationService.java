@@ -79,14 +79,6 @@ public interface PoReconciliationService extends SuperService<PoReconciliationEn
      */
     PoReconciliationDTO.ViewDTO viewMain(String id);
     /**
-     * @description: 查询明细
-     * @author Will
-     * @date: 2024/1/23 17:25
-     * @param dto
-     * @return List<ViewDTO>
-     */
-    List<PoReconciliationDetailDTO.ViewDTO> viewDetail(PoReconciliationDetailDTO.PagingParamDTO dto);
-    /**
      * @param dto
      * @description: 导出对账单
      * @author Will

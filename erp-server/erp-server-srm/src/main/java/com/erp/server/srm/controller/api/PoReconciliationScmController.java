@@ -14,9 +14,11 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.srm.dto.PoReconciliationDTO;
 import com.erp.model.srm.dto.PoReconciliationDetailDTO;
+import com.erp.model.srm.dto.PoReconciliationRefDetailDTO;
 import com.erp.model.srm.entity.PoReconciliationEntity;
 import com.erp.server.srm.query.PoReconciliationDetailScmQueryHandler;
 import com.erp.server.srm.query.PoReconciliationScmQueryHandler;
+import com.erp.server.srm.service.PoReconciliationRefDetailService;
 import com.erp.server.srm.service.PoReconciliationScmService;
 import com.erp.server.srm.service.PoReconciliationService;
 import lombok.extern.slf4j.Slf4j;
@@ -44,6 +46,8 @@ public class PoReconciliationScmController extends BaseController {
     @Resource
     private PoReconciliationScmService poReconciliationScmService;
 
+    @Resource
+    private PoReconciliationRefDetailService poReconciliationRefDetailService;
 
     /**
      * 分页查询
@@ -126,8 +130,8 @@ public class PoReconciliationScmController extends BaseController {
      */
     @PostMapping("/viewDetail")
     @WebAdvanceQuery(handler = PoReconciliationDetailScmQueryHandler.class)
-    public ApiResult<List<PoReconciliationDetailDTO.ViewDTO>> viewDetail(@RequestBody @Validated PoReconciliationDetailDTO.PagingParamDTO dto) {
-        List<PoReconciliationDetailDTO.ViewDTO> list = poReconciliationScmService.viewDetail(dto);
+    public ApiResult<List<PoReconciliationRefDetailDTO.ViewDTO>> viewDetail(@RequestBody @Validated PoReconciliationRefDetailDTO.PagingParamDTO dto) {
+        List<PoReconciliationRefDetailDTO.ViewDTO> list = poReconciliationRefDetailService.viewDetail(dto);
         return success(list);
     }
 

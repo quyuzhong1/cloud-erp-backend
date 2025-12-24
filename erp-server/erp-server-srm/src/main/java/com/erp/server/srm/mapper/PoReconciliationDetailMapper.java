@@ -41,14 +41,6 @@ public interface PoReconciliationDetailMapper extends BaseMapper<PoReconciliatio
     List<PoReconciliationDetailDTO.ListDTO> listExport(@Param("params") PoReconciliationDetailDTO.PagingParamDTO params);
     Page<PoReconciliationDetailDTO.ListDTO> listExport(@Param("page") Page<PoReconciliationDetailDTO.ListDTO> page, @Param("params") PoReconciliationDetailDTO.PagingParamDTO params);
     /**
-     * @description: 根据对账单查询对账明细详情
-     * @author Will
-     * @date: 2024/1/23 15:51
-     * @param params
-     * @return List<ListDTO>
-     */
-    List<PoReconciliationDetailDTO.ListDTO> listDetail(@Param("params") PoReconciliationDetailDTO.PagingParamDTO params);
-    /**
      * @description: 查询可自动生成对账的数据
      * @author Will
      * @date: 2024/2/2 14:48

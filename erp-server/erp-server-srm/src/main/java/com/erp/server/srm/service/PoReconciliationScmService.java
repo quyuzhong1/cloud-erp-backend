@@ -100,14 +100,6 @@ public interface PoReconciliationScmService extends SuperService<PoReconciliatio
      * @return ViewDTO
      */
     PoReconciliationDTO.ViewDTO viewMain(String id);
-    /**
-     * @description: 查看详情(详情)
-     * @author Will
-     * @date: 2024/1/23 15:48
-     * @param dto
-     * @return List<ViewDTO>
-     */
-    List<PoReconciliationDetailDTO.ViewDTO> viewDetail(PoReconciliationDetailDTO.PagingParamDTO dto);
 
     /**
      * 数据处理
