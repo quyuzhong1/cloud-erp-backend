@@ -335,7 +335,7 @@ public class LogisticsBillController extends BaseController {
             }
             LogisticsBillDTO.PrintLogisticsWaybillDTO waybillDTO = new LogisticsBillDTO.PrintLogisticsWaybillDTO();
             waybillDTO.setB2cSoId(entity.getId());
-            waybillDTO.setDeliveryNo(entity.getPlatformCode());
+            waybillDTO.setDeliveryNo(entity.getCode());
             waybillDTO.setShopId(entity.getShopId());
             waybillDTO.setChannelId(soB2cLogisticsEntity.getLogisticsChannelId());
             waybillDTO.setTransportNo(soB2cLogisticsEntity.getCode());
