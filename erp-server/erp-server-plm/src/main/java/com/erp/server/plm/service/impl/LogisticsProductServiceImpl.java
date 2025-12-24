@@ -318,6 +318,16 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
         BeanMapper.copy(oldEntity, productLogistics);
 
         BeanMapper.copy(declareInfo, productLogistics);
+        // 如果 productPropertyId 有值但 productProperty 为空，需要根据 productPropertyId 重新生成 productProperty
+        if (StringUtils.isNotBlank(productLogistics.getProductPropertyId())) {
+            List<BasicDictEntity> propertytList = basicDictService.listByType(BasicDictTypeEnum.DECLARE_PROPERTY.getCode());
+            List<String> propertyIdList = Arrays.stream(productLogistics.getProductPropertyId().split(",")).collect(Collectors.toList());
+            String propertyNames = propertytList.stream()
+                    .filter(obj -> propertyIdList.contains(obj.getId()))
+                    .map(BasicDictEntity::getName)
+                    .collect(Collectors.joining(","));
+            productLogistics.setProductProperty(propertyNames);
+        }
         handleProductLogistics(productLogistics);
 
         //海关编码
