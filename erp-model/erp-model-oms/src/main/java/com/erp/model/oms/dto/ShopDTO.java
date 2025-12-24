@@ -291,7 +291,6 @@ public class ShopDTO implements Serializable {
         /**
          * 是否包含平台仓 true 包含
          */
-        @NotNull(message = "是否包含平台仓不能为空")
         private Boolean  isHaveWarehouse;
 
         /**
@@ -690,7 +689,6 @@ public class ShopDTO implements Serializable {
         /**
          * 是否包含平台仓  true 包含
          */
-        @NotNull(message = "是否包含平台仓不能为空")
         private Boolean  isHaveWarehouse;
         /**
          * 是否多渠道发货

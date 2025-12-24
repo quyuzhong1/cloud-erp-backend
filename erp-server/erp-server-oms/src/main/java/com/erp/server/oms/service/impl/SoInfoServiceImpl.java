@@ -3766,9 +3766,10 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @DistributeLocker(keyName = "dto.code")
     public void handlePlatformConsumer(PlatformB2bOrderDTO dto) {
         //查询是否存在
-        SoInfoEntity exist = this.getByThirdSystemAndCode(dto.getThirdSystem(), dto.getCode());
+        SoInfoEntity exist = this.getByThirdSystemAndCode(dto.getDictPlatform(), dto.getCode());
         List<SoDetailEntity> existList;
         if(exist != null) {
             existList = soDetailService.listBaseByMainIdList(Arrays.asList((exist.getId())));
@@ -3803,6 +3804,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             SoInfoDTO.UpdateDTO updateDTO = new SoInfoDTO.UpdateDTO();
             updateDTO.setId(exist.getId());
             updateDTO.setDictPlatform(dto.getDictPlatform());
+            updateDTO.setThirdSystem(dto.getThirdSystem());
             updateDTO.setPlatformOrderCode(dto.getCode());
             updateDTO.setPlatformOrderId(dto.getPlatformId());
             updateDTO.setOrderAmount(dto.getOrderAmount());
@@ -3813,7 +3815,6 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             updateDTO.setSalesOrgId(dto.getSalesOrgId());
             updateDTO.setSellerId(dto.getSellerId());
             updateDTO.setWarehouseId(dto.getWarehouseId());
-            updateDTO.setDictPlatform(dto.getThirdSystem());
             updateDTO.setCustomerId(dto.getCustomerId());
             updateDTO.setSalesDeptId(dto.getSalesDeptId());
             updateDTO.setReceiverName(dto.getReceiverName());
@@ -3890,6 +3891,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             //新增单据
             SoInfoDTO.AddDTO addDTO = new SoInfoDTO.AddDTO();
             addDTO.setDictPlatform(dto.getDictPlatform());
+            addDTO.setThirdSystem(dto.getThirdSystem());
             addDTO.setPlatformOrderCode(dto.getCode());
             addDTO.setPlatformOrderId(dto.getPlatformId());
             addDTO.setOrderAmount(dto.getOrderAmount());

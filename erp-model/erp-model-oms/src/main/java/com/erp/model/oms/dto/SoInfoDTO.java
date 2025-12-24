@@ -907,6 +907,7 @@ public class SoInfoDTO implements Serializable {
          * 平台
          */
         private String dictPlatform;
+        private String thirdSystem;
 
         /**
          * 订单金额
@@ -1721,6 +1722,7 @@ public class SoInfoDTO implements Serializable {
          * 平台
          */
         private String dictPlatform;
+        private String thirdSystem;
 
         private String platformOrderId;
         /**
