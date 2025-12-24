@@ -93,6 +93,7 @@ import org.springframework.transaction.support.TransactionSynchronizationAdapter
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import javax.annotation.Resource;
+import javax.validation.constraints.NotBlank;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
@@ -196,6 +197,10 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     private MQProducerService<NoticeMsgInfoDTO> mqProducerService;
     @Resource
     private FbaShipmentPackingService fbaShipmentPackingService;
+    @Resource
+    private AwdOutstockService awdOutstockService;
+    @Resource
+    private AwdOutstockDetailService awdOutstockDetailService;
     @Resource
     private CfgQueryOptionFeign cfgQueryOptionFeign;
 
@@ -2827,6 +2832,93 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         //日志
         operateLogService.addModuleOperateLog(CharSequenceUtil.format("【{}】重新出库", UserContext.getLoginUser().getUserName()), ModuleTypeEnum.FIRST_MILE_DELIVERY.getCode(), entity.getId(), "重新出库");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.GENERATE);
+    }
+
+    @Override
+    public BatchResultDTO generateFirstMileDeliveryByAwdOutStock(AwdOutstockDTO.GenerateDeliveryDTO dto) {
+        FirstMileDeliveryEntity firstMileDeliveryEntity = this.lambdaQuery()
+                .eq(FirstMileDeliveryEntity::getSourceId,dto.getId())
+                .one();
+        if (Objects.nonNull(firstMileDeliveryEntity)) {
+            throw new ServiceException(ApiError.ERROR_EXIST_BILL,"头程发货单【" + dto.getCode() + "】");
+        }
+
+        AwdOutstockEntity awdOutstockEntity = awdOutstockService.getById(dto.getId());
+        if (Objects.isNull(awdOutstockEntity)) {
+            throw new ServiceException(ApiError.NOT_EXIST_BILL,"AWD出库");
+        }
+
+        List<AwdOutstockDetailEntity> awdOutstockDetailEntityList = awdOutstockDetailService.lambdaQuery()
+                .eq(AwdOutstockDetailEntity::getMainId, dto.getId())
+                .list();
+
+        if (awdOutstockDetailEntityList.isEmpty()) {
+            throw new ServiceException(ApiError.ERROR_1040,"AWD出库");
+        }
+
+        long count = awdOutstockDetailEntityList.stream()
+                .filter(item -> StringUtils.isBlank(item.getSkuId()))
+                .count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_1040,"AWD出库");
+        }
+
+        FbaShipmentEntity fbaShipmentEntity = fbaShipmentService.getById(awdOutstockEntity.getFbaShipmentId());
+        if (Objects.isNull(fbaShipmentEntity)) {
+            throw new ServiceException(ApiError.NOT_EXIST_BILL,"FBA货件");
+        }
+
+        FirstMileDeliveryDTO.AddDTO addDTO = new FirstMileDeliveryDTO.AddDTO();
+        List<FirstMileDeliveryDetailDTO.AddDTO> addDetailDTOList = new ArrayList<>();
+
+        ShopInfoEntity shopInfoEntity = shopInfoFeign.getShopInfoById(dto.getShopId());
+        if (Objects.nonNull(shopInfoEntity)) {
+            addDTO.setDeliveryWarehouseId(shopInfoEntity.getWarehouseId());
+            addDTO.setDeliveryWarehouseName(shopInfoEntity.getWarehouseName());
+            addDTO.setFulfillmentCenter(shopInfoEntity.getWarehouseName());
+        }
+
+        List<String> skuIdList = awdOutstockDetailEntityList.stream().map(item -> item.getSkuId()).collect(Collectors.toList());
+        List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(skuIdList);
+        if (CollectionUtils.isEmpty(skuVOList)){
+            throw new ServiceException(ApiError.ERROR_95107);
+        }
+
+        addDTO.setSourceId(dto.getId());
+        addDTO.setSourceCode(dto.getCode());
+        addDTO.setSourceType(SourceTypeEnum.AWD_OUT_STOCK.getCode());
+        addDTO.setDemandType(FbaDemandTypeEnum.DEMAND_AWD_WAREHOUSE.getCode());
+        addDTO.setShopId(dto.getShopId());
+        addDTO.setShopName(dto.getShopName());
+        addDTO.setCountryId(fbaShipmentEntity.getCountryId());
+        addDTO.setCountryName(fbaShipmentEntity.getCountryName());
+
+        for (AwdOutstockDetailEntity awdOutstockDetailEntity : awdOutstockDetailEntityList) {
+            FirstMileDeliveryDetailDTO.AddDTO firstMildDetailDTO = new FirstMileDeliveryDetailDTO.AddDTO();
+            firstMildDetailDTO.setPlatformSkuNo(awdOutstockDetailEntity.getMsku());
+            firstMildDetailDTO.setFnSku(awdOutstockDetailEntity.getFnsku());
+            firstMildDetailDTO.setSkuId(awdOutstockDetailEntity.getSkuId());
+            firstMildDetailDTO.setSkuNo(awdOutstockDetailEntity.getSkuNo());
+            firstMildDetailDTO.setDeclareQty(awdOutstockDetailEntity.getQty());
+            firstMildDetailDTO.setSourceDetailId(awdOutstockDetailEntity.getId());
+            for (SkuVO skuVO : skuVOList) {
+                firstMildDetailDTO.setNetWeight(skuVO.getNetWeight());
+                firstMildDetailDTO.setProductSizeLength(skuVO.getProductLength());
+                firstMildDetailDTO.setProductSizeWidth(skuVO.getProductWidth());
+                firstMildDetailDTO.setProductSizeHeight(skuVO.getProductHeight());
+            }
+            addDetailDTOList.add(firstMildDetailDTO);
+        }
+        addDTO.setDetailList(addDetailDTOList);
+        BaseResultDTO.AddDTO add = this.add(addDTO);
+
+//        this.submit(add.getId());
+//
+//        ApproveOneDTO approveOneDTO = new ApproveOneDTO();
+//        approveOneDTO.setId(add.getId());
+//        approveOneDTO.setDeliveryDate(awdOutstockEntity.getBillDate());
+//        approve(approveOneDTO);
+        return BatchResultDTO.success(dto.getId(), dto.getCode(), "操作成功");
     }
 }
 

@@ -1,31 +1,26 @@
 package com.erp.server.wms.controller.api;
 
 
+import com.common.business.annotation.WebAdvanceQuery;
+import com.erp.server.wms.query.AwdOutStockQueryHandler;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import javax.annotation.Resource;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
-import com.common.core.anno.LogViewService;
 import com.common.core.enums.LogActionEnum;
 import com.common.business.dto.base.*;
 import org.springframework.web.bind.annotation.RestController;
-
 import com.common.core.controller.BaseController;
 import com.erp.server.wms.service.AwdOutstockService;
 import com.common.core.controller.vo.ApiResult;
 import com.common.business.vo.PagingVO;
-import com.common.business.dto.base.*;
-import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.wms.dto.AwdOutstockDTO;
 import javax.servlet.http.HttpServletResponse;
 import java.util.*;
-import java.util.stream.Collectors;
-import com.erp.model.wms.entity.AwdOutstockEntity;
 
 /**
  * 
@@ -75,15 +70,15 @@ public class AwdOutstockController extends BaseController {
     }
 
     /**
-     * 下推头程发货单弹窗
+     * 更新发货时间弹窗
      * @author wtr
      * @date:  2025-12-22
      * @param dto
      * @return ApiResult
      */
-    @PostMapping("/generateFirstMileDeliveryView")
-    public ApiResult<?> generateFirstMileDeliveryView(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        return success(awdOutstockService.generateFirstMileDeliveryView(dto));
+    @PostMapping("/batchUpdateBillDateView")
+    public ApiResult<?> batchUpdateBillDateView(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        return success(awdOutstockService.batchUpdateBillDateView(dto));
     }
 
     /**
@@ -101,8 +96,8 @@ public class AwdOutstockController extends BaseController {
             serviceClass = AwdOutstockService.class,
             keyIdName = "id")
     public ApiResult<?> generateFirstMileDelivery(@RequestBody @Validated AwdOutstockDTO.GenerateDeliveryDTO dto) {
-
-        return success(awdOutstockService.generateFirstMileDelivery(dto));
+        boolean flag = awdOutstockService.generateFirstMileDelivery(dto);
+        return flag == true ? success() : failure();
     }
 
     /**
@@ -116,8 +111,9 @@ public class AwdOutstockController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "wms:awdOutstock:paging",
-            tableAlias = ""
+            tableAlias = "ao"
     )
+    @WebAdvanceQuery(handler = AwdOutStockQueryHandler.class)
     public ApiResult<PagingVO<AwdOutstockDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<AwdOutstockDTO.PagingParamDTO> dto) {
         return success(awdOutstockService.paging(dto));
     }
@@ -134,7 +130,7 @@ public class AwdOutstockController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "wms:awdOutstock:export",
-            tableAlias = ""
+            tableAlias = "ao"
     )
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出Excel数据")
     public void exportList(@RequestBody @Validated AwdOutstockDTO.ExportDTO dto, HttpServletResponse response) {

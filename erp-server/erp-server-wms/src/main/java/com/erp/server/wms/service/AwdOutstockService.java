@@ -43,10 +43,10 @@ public interface AwdOutstockService extends SuperService<AwdOutstockEntity> {
      * 下推调拨单弹窗
      * @param dto
      */
-    List<AwdOutstockDTO.FirstMileDeliveryViewDTO> generateFirstMileDeliveryView(BaseIdsDTO.IdsDTO dto);
+    List<AwdOutstockDTO.BatchUpdateBillDateViewDTO> batchUpdateBillDateView(BaseIdsDTO.IdsDTO dto);
 
     /**
-     * 下推调拨单
+     * 下推头程发货单
      * @param dto
      */
     boolean generateFirstMileDelivery(AwdOutstockDTO.GenerateDeliveryDTO dto);

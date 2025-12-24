@@ -11,8 +11,6 @@ import com.common.business.dto.base.SuperDTO;
 import java.time.LocalDateTime;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
-import javax.validation.constraints.NotEmpty;
 import com.common.business.dto.AdvanceQueryDTO;
 import java.util.Map;
 
@@ -83,34 +81,90 @@ public class AwdOutstockDTO implements Serializable {
         */
         private String  id;
 
+        /**
+         * 明细id
+         */
+        private String  detailId;
+
+        /**
+         * 货件单号
+         */
         private String code;
 
+        /**
+         * 店铺id
+         */
         private String shopId;
 
+        /**
+         * 店铺名称
+         */
         private String shopName;
 
+        /**
+         * 发货日期
+         */
         private LocalDate billDate;
 
+        /**
+         * FBA货件id
+         */
         private String fbaShipmentId;
 
+        /**
+         * FBA货件号
+         */
         private String fbaShipmentCode;
 
+        /**
+         * asin
+         */
+        private String asin;
 
         /**
-        * 审核状态名称
-        */
-        private String approveStatusName;
-
-
-        /**
-        * 创建时间
-        */
-        private LocalDateTime createTime;
+         * msku
+         */
+        private String msku;
 
         /**
-        * 创建人名称
-        */
-        private String createUserName;
+         * fnsku
+         */
+        private String fnsku;
+
+        /**
+         * skuId
+         */
+        private String skuId;
+
+        /**
+         * sku编码
+         */
+        private String skuNo;
+
+        /**
+         * sku名称
+         */
+        private String productName;
+
+        /**
+         * 发货数量
+         */
+        private Integer qty;
+
+        /**
+         * 更新人id
+         */
+        private String updateUserId;
+
+        /**
+         * 更新人名称
+         */
+        private String updateUserName;
+
+        /**
+         * 更新时间
+         */
+        private LocalDateTime updateTime;
 
     }
 
@@ -186,7 +240,7 @@ public class AwdOutstockDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class FirstMileDeliveryViewDTO{
+    public static class BatchUpdateBillDateViewDTO{
 
         /**
          * id
@@ -229,6 +283,24 @@ public class AwdOutstockDTO implements Serializable {
          */
         @NotBlank(message = "主键id不能为空")
         private String id;
+
+        /**
+         * AWD出库货件单号
+         */
+        @NotBlank(message = "编码不能为空")
+        private String code;
+
+        /**
+         * 店铺id
+         */
+        @NotBlank(message = "店铺id不能为空")
+        private String shopId;
+
+        /**
+         * 店铺名称
+         */
+        @NotBlank(message = "店铺名称不能为空")
+        private String shopName;
 
         /**
          * 发货时间

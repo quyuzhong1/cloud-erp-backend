@@ -116,6 +116,8 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
     @Resource
     private AwdOutstockService awdOutstockService;
     @Resource
+    private AwdOutstockDetailService awdOutstockDetailService;
+    @Resource
     private WarehouseService warehouseService;
     @Resource
     private PlmTaskFeign plmTaskFeign;
@@ -270,6 +272,28 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
                 detailEntity.setSkuNo(skuDTO.getProductSkuNo());
                 detailEntity.setSkuId(skuDTO.getProductSkuId());
                 detailEntity.setAsin(skuDTO.getPlatformSpuNo());
+
+                //更新awd的sku映射
+                FbaShipmentEntity fbaShipmentEntity = this.getById(detailEntity.getMainId());
+                AwdOutstockEntity awdOutstockEntity = awdOutstockService.lambdaQuery()
+                        .eq(AwdOutstockEntity::getFbaShipmentId,fbaShipmentEntity.getId())
+                        .one();
+                List<AwdOutstockDetailEntity> detailList = awdOutstockDetailService.lambdaQuery()
+                        .eq(AwdOutstockDetailEntity::getMainId, awdOutstockEntity.getId())
+                        .list();
+                for (AwdOutstockDetailEntity awdOutstockDetailEntity : detailList) {
+                    if (awdOutstockDetailEntity.getMsku().equals(detailEntity.getMsku())) {
+                        awdOutstockDetailService.lambdaUpdate()
+                                .set(AwdOutstockDetailEntity::getSkuId,skuDTO.getProductSkuId())
+                                .set(AwdOutstockDetailEntity::getSkuNo,skuDTO.getProductSkuNo())
+                                .set(AwdOutstockDetailEntity::getAsin,skuDTO.getPlatformSpuNo())
+                                .set(AwdOutstockDetailEntity::getProductName,skuDTO.getProductName())
+                                .eq(AwdOutstockDetailEntity::getMsku,detailEntity.getMsku())
+                                .eq(AwdOutstockDetailEntity::getMainId,awdOutstockEntity.getId())
+                                .update();
+                    }
+                }
+
                 //查询sku是否存在子SKU
                 List<BomChildrenSkuDTO> sonSkuList = bomChildrenSkuDTOS.stream().filter(req -> req.getParentSkuId().equals(skuDTO.getProductSkuId())).collect(Collectors.toList());
                 if (CollectionUtils.isNotEmpty(sonSkuList)) {

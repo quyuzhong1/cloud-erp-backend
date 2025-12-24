@@ -389,4 +389,10 @@ public interface FirstMileDeliveryService extends SuperService<FirstMileDelivery
      * @return BatchResultDTO
      */
     BatchResultDTO retryOutstock(String id);
+
+    /**
+     * AWD出库货件下推头程发货单
+     */
+    BatchResultDTO generateFirstMileDeliveryByAwdOutStock(AwdOutstockDTO.GenerateDeliveryDTO dto);
+
 }

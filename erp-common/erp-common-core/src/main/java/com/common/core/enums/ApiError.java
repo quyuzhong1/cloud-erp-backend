@@ -1178,7 +1178,7 @@ public enum ApiError implements Serializable {
     ERROR_SAMPLE_RETURN_USER_SAME(99162,"归还人和接收人不能相同"),
     ERROR_SAMPLE_RETURN_EXIST(99163,"已下推的归还单不支持反审核"),
     ERROR_GENERATE_CAN_RETURN_QTY_NOT(99164,"可归还数量为0，没有可下推的数据"),
-
+    ERROR_MSKU_NOT_MAPPING(99165,"MSKU【{}】未映射SKU"),
 
     ERROR_PDF_MERGE(92115,"打印面单/配货单失败，合并PDF时出错"),
     ERROR_PDF_MERGE_SKU_BARCODE(92115,"打印SKU条码失败，合并PDF时出错"),
@@ -1400,7 +1400,7 @@ public enum ApiError implements Serializable {
 
     ERROR_UPDATE_IS_ALLOW_OUTSTOCK(92288,"只有待通知出库状态下允许操作待通知出库"),
     ERROR_IS_ALLOW_OUTSTOCK_PUSH(92289,"  - 只有允许出库的通知单允许下推销售出库单"),
-
+    ERROR_GENERATE_FIRST_MILE_DELIVERY(92290,"下推头程发货单失败"),
 
     /**
      * OMS 错误
