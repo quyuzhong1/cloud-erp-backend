@@ -198,12 +198,6 @@ public class PoReconciliationRefDetailEntity extends BaseEntity<PoReconciliation
     private String remark;
 
     /**
-     * 金蝶明细id
-     */
-    @TableField("kingdee_detail_id")
-    private String kingdeeDetailId;
-
-    /**
      * 应付单类型
      */
     @TableField(exist = false)

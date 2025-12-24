@@ -37,7 +37,7 @@ public class PoReconciliationDetailScmQueryHandler extends AbstractQueryHandler 
             }
         }
 
-        //明细高级查询
+        //待对账明细高级查询
         if("reconciliationDetail".equals(field)){
             //对账单
             PoReconciliationEntity entity = poReconciliationService.getById(value.toString());
@@ -48,7 +48,7 @@ public class PoReconciliationDetailScmQueryHandler extends AbstractQueryHandler 
             super.buildDefaultDTO("prrd.po_reconciliation_id",entity.getId());
         }
 
-        //查询待对账明细
+        //查询待对账、部分对账明细
         if("waitReconciliationDetail".equals(field)){
             //对账单
             PoReconciliationEntity entity = poReconciliationService.getById(value.toString());

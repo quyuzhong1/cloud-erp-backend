@@ -433,7 +433,7 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
             String paymentConditionName = payList.stream().filter(obj -> CharSequenceUtil.equals(obj.getCode(), exportDetailDTO.getPaymentCondition())).map(KingdeePaymentConditionEntity::getName).findFirst().orElse("");
             exportDetailDTO.setPaymentConditionName(paymentConditionName);
             //业务状态名称
-            exportDetailDTO.setBusinessStatusName(ConfirmStatusEnum.getNameByCode(exportDetailDTO.getBusinessStatus()));
+            exportDetailDTO.setBusinessStatusName(ConfirmStatusEnum.CONFIRM.getName());
         }
 
     }

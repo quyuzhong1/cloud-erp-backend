@@ -1831,7 +1831,8 @@ public enum ApiError implements Serializable {
     ERROR_PO_RECONCILIATION_MANUAL_GENERATE(94105,"单据不支持生成对账明细"),
     ERROR_PO_RECONCILIATION_DETAIL_UPDATE_STATUS(94106,"仅待对账或无需对账数据允许状态更新"),
     ERROR_PO_RECONCILIATION_DETAIL_ADD_RECONCILED(94107,"单号【{}】无需对账不支持自动更新对账状态"),
-    ERROR_PO_RECONCILIATION_DETAIL_QTY_OVERFLOW(94108,"单号【{}】SKU【{}】本期对账数量{}超出可对账数量{}}"),
+    ERROR_PO_RECONCILIATION_DETAIL_QTY_OVERFLOW(94108,"单号【{}】SKU【{}】本期对账数量{}超出可对账数量{}"),
+    ERROR_PO_RECONCILIATION_DETAIL_HAS_IN_RECONCILIATION(94109,"单号【{}】SKU【{}】已加入对账单，不允许重复添加"),
 
 
 

@@ -6,7 +6,6 @@ import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.srm.dto.PoReconciliationDTO;
-import com.erp.model.srm.dto.PoReconciliationDetailDTO;
 import com.erp.model.srm.entity.PoReconciliationEntity;
 
 import javax.servlet.http.HttpServletResponse;
@@ -88,13 +87,4 @@ public interface PoReconciliationService extends SuperService<PoReconciliationEn
 
     Integer countByStatus(String supplierId, String status);
 
-    /**
-     * 更新金蝶id
-     * @author will
-     * @date 2025/4/23 18:29
-     * @param businessId
-     * @param syncKingdeeId
-     * @return void
-     */
-    Boolean updateSyncKingdeeId(String businessId, String syncKingdeeId);
 }

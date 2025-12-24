@@ -21,7 +21,6 @@ import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.srm.dto.PoReconciliationDTO;
-import com.erp.model.srm.dto.PoReconciliationDetailDTO;
 import com.erp.model.srm.entity.PoReconciliationEntity;
 import com.erp.model.srm.enums.PoReconciliationEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
@@ -203,14 +202,6 @@ public class PoReconciliationServiceImpl extends SuperServiceImpl<PoReconciliati
         String msg =  CharSequenceUtil.format("用户【{}】单号为【{}】的【{}】单据取消确认 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "对账单");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.PO_RECONCILIATION.getCode(), entity.getId(), "取消确认操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.CANCEL_CONFIRM);
-    }
-
-    @Override
-    public Boolean updateSyncKingdeeId(String businessId, String syncKingdeeId) {
-        return  this.lambdaUpdate()
-                .eq(PoReconciliationEntity::getId,businessId)
-                .set(CharSequenceUtil.isNotBlank(syncKingdeeId),PoReconciliationEntity::getSyncKingdeeId,syncKingdeeId)
-                .update();
     }
 
     /**

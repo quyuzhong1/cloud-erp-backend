@@ -107,7 +107,7 @@ public class PoReconciliationRefDetailServiceImpl extends SuperServiceImpl<PoRec
             operateLogService.batchAddModuleOperateLog("删除了一个SKU【%s】", ModuleTypeEnum.PO_RECONCILIATION.getCode(),pairList,"编辑操作");
         }
         //更新数据处理
-        handleUpdateData (list,poReconciliationId,Boolean.TRUE);
+        handleUpdateData (list,poReconciliationId,Boolean.FALSE);
 
         log.info("编辑 开始修改采购对账单数据，id：【{}】", poReconciliationId);
         boolean save = super.saveOrUpdateBatch(list);
@@ -117,6 +117,9 @@ public class PoReconciliationRefDetailServiceImpl extends SuperServiceImpl<PoRec
         //更新对账状态
         List<String> detailIdList = detailList.stream().map(PoReconciliationRefDetailDTO.UpdateDTO::getPoReconciliationDetailId).distinct().collect(Collectors.toList());
         poReconciliationDetailScmService.autoUpdateStatus(detailIdList);
+
+        //更新主表对账金额
+        poReconciliationScmService.updateAmount(poReconciliationId);
         return Boolean.TRUE;
     }
 
@@ -132,7 +135,7 @@ public class PoReconciliationRefDetailServiceImpl extends SuperServiceImpl<PoRec
         List<PoReconciliationRefDetailEntity> list =  BeanMapperUtils.copyList(PoReconciliationRefDetailEntity.class, detailList);
 
         //更新数据处理
-        handleUpdateData (list,poReconciliationId,Boolean.FALSE);
+        handleUpdateData (list,poReconciliationId,Boolean.TRUE);
 
         //原明细数据被删除的需要清除mainId
         List<PoReconciliationRefDetailEntity> oldList = this.listPoReconciliationIdList(Collections.singletonList(poReconciliationId));
@@ -153,6 +156,9 @@ public class PoReconciliationRefDetailServiceImpl extends SuperServiceImpl<PoRec
         //更新对账状态
         List<String> detailIdList = detailList.stream().map(PoReconciliationRefDetailDTO.ScmUpdateDTO::getPoReconciliationDetailId).distinct().collect(Collectors.toList());
         poReconciliationDetailScmService.autoUpdateStatus(detailIdList);
+
+        //更新主表对账金额
+        poReconciliationScmService.updateAmount(poReconciliationId);
         return Boolean.TRUE;
     }
 
@@ -207,20 +213,20 @@ public class PoReconciliationRefDetailServiceImpl extends SuperServiceImpl<PoRec
         List<PoReconciliationRefDetailEntity> oldRefDetailList = this.listPoReconciliationDetailIdList(detailIdList);
 
         List<PoReconciliationRefDetailEntity> refDetailList = poReconciliationDetailList.stream().map(detail -> {
-            //校验是否在这个单下面已生成过对账信息
-            String sourceCodes = oldRefDetailList.stream().filter(obj -> CharSequenceUtil.equals(detail.getId(), obj.getPoReconciliationDetailId())).map(PoReconciliationRefDetailEntity::getSourceCode).collect(Collectors.joining(","));
-            if (CharSequenceUtil.isNotBlank(sourceCodes)) {
-                throw new ServiceException(ApiError.ERROR_PO_RECONCILIATION_HAS_GENERATE,sourceCodes);
-            }
-            //新增默认取可对账数量生成对账单明细
-            Integer hasQty = oldRefDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getPoReconciliationDetailId(), obj.getPoReconciliationDetailId())).map(PoReconciliationRefDetailEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
 
+            //新增默认取可对账数量生成对账单明细
+            Integer hasQty = oldRefDetailList.stream().filter(obj -> CharSequenceUtil.equals(detail.getId(), obj.getPoReconciliationDetailId())).map(PoReconciliationRefDetailEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
+            if (hasQty >= detail.getQty()) {
+                throw new ServiceException(ApiError.ERROR_PO_RECONCILIATION_DETAIL_HAS_IN_RECONCILIATION,detail.getSourceCode(),detail.getSkuNo());
+            }
             PoReconciliationRefDetailEntity refDetailEntity = new PoReconciliationRefDetailEntity();
             BeanUtil.copyProperties(detail,refDetailEntity);
             refDetailEntity.setId(IdWorker.getIdStr());
             refDetailEntity.setPoReconciliationId(id);
             refDetailEntity.setPoReconciliationDetailId(detail.getId());
             refDetailEntity.setQty(detail.getQty() - hasQty);
+            refDetailEntity.setTaxAmount(MathUtil.multiplyWithFour(new BigDecimal(refDetailEntity.getQty()),refDetailEntity.getTaxPrice()));
+            refDetailEntity.setDiscountTaxAmount(refDetailEntity.getTaxAmount());
             return refDetailEntity;
         }).collect(Collectors.toList());
         boolean save = this.saveBatch(refDetailList);
@@ -229,6 +235,8 @@ public class PoReconciliationRefDetailServiceImpl extends SuperServiceImpl<PoRec
         }
         //更新对账状态
         poReconciliationDetailScmService.autoUpdateStatus(detailIdList);
+        //更新对账单主表对账金额
+        poReconciliationScmService.updateAmount(id);
     }
 
 
@@ -291,7 +299,8 @@ public class PoReconciliationRefDetailServiceImpl extends SuperServiceImpl<PoRec
         Integer index = MathUtil.ONE;
         for (PoReconciliationRefDetailDTO.ListDTO listDTO : list) {
             listDTO.setSourceTypeName(SourceTypeEnum.PO_RETURN.getCode().equals(listDTO.getSourceType()) ? ReturnOrderSourceEnum.getName(listDTO.getReturnSourceType()) : "采购入库");
-            listDTO.setBusinessStatusName(ConfirmStatusEnum.getNameByCode(listDTO.getBusinessStatus()));
+            //对账单下的明细都是确认状态
+            listDTO.setBusinessStatusName(ConfirmStatusEnum.CONFIRM.getName());
             listDTO.setTaxRate(MathUtil.multiplyWithTwo(listDTO.getTaxRate(),MathUtil.BigDecimal_100));
             listDTO.setTaxRateStr( CharSequenceUtil.format("{}%",listDTO.getTaxRate().stripTrailingZeros().toPlainString()));
             BigDecimal discountAmount = MathUtil.multiplyWithFour(listDTO.getTaxAmount(), listDTO.getDiscountRate());
@@ -377,7 +386,7 @@ public class PoReconciliationRefDetailServiceImpl extends SuperServiceImpl<PoRec
      * @param list
      * @param poReconciliationId
      */
-    private void handleUpdateData (List<PoReconciliationRefDetailEntity> list,String poReconciliationId,Boolean isSrm) {
+    private void handleUpdateData (List<PoReconciliationRefDetailEntity> list,String poReconciliationId,Boolean isScm) {
         if (CollectionUtils.isEmpty(list)) {
             return;
         }
@@ -426,14 +435,19 @@ public class PoReconciliationRefDetailServiceImpl extends SuperServiceImpl<PoRec
             if (hasReconciledQty + entity.getQty() > detailEntity.getQty()) {
                 throw new ServiceException(ApiError.ERROR_PO_RECONCILIATION_DETAIL_QTY_OVERFLOW,detailEntity.getSourceCode(),detailEntity.getSkuNo(),entity.getQty(), detailEntity.getQty() - hasReconciledQty );
             }
-
+            //设置主表ID
+            entity.setPoReconciliationId(poReconciliationId);
             //更新数据
             PoReconciliationRefDetailEntity old = poReconciliationRefDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), entity.getId())).findFirst().orElse(null);
             if (ObjectUtils.isNotEmpty(old)) {
                 entity.setId(old.getId());
+            } else {
+                String[] ignoreProperties = {"qty", "taxRate", "discountRate"," taxPrice", "taxAmount", "discountTaxAmount","prepayAmount"};
+                BeanUtil.copyProperties(detailEntity,entity,ignoreProperties);
+                entity.setId(IdWorker.getIdStr());
             }
             //srm需要更新税率、折扣、价税合计、折后价税合计
-            if (isSrm) {
+            if (isScm) {
                 //税率
                 BigDecimal taxRate = MathUtil.compareTo(entity.getTaxRate(), MathUtil.ZERO) == MathUtil.ZERO ? BigDecimal.ZERO : MathUtil.divide(entity.getTaxRate(), MathUtil.BigDecimal_100);
                 entity.setTaxRate(taxRate);
@@ -443,7 +457,7 @@ public class PoReconciliationRefDetailServiceImpl extends SuperServiceImpl<PoRec
                 entity.setDiscountRate(discountRate);
 
                 //价税合计
-                entity.setTaxAmount(MathUtil.multiplyWithTwo(entity.getTaxPrice(),old.getQty()));
+                entity.setTaxAmount(MathUtil.multiplyWithTwo(entity.getTaxPrice(),entity.getQty()));
                 //折后价税合计
                 BigDecimal discountAmount = MathUtil.multiplyWithFour(entity.getTaxAmount(), entity.getDiscountRate());
                 entity.setDiscountTaxAmount(MathUtil.subtract(entity.getTaxAmount(),entity.getPrepayAmount()).subtract(discountAmount));

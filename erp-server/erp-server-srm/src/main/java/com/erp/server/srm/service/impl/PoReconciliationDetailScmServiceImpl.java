@@ -641,6 +641,16 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
         if (ObjectUtils.isEmpty(poReconciliationEntity)) {
             throw new ServiceException(ApiError.ERROR_PO_RECONCILIATION_NOT_EXIST);
         }
+        //校验对账单中是否已存在需要添加的待对账明细
+        List<PoReconciliationRefDetailEntity> refDetailList = poReconciliationRefDetailService.listPoReconciliationIdList(Collections.singletonList(dto.getId()));
+        if (CollUtil.isNotEmpty(poReconciliationDetailList)) {
+            List<String> sourceDetailIdList = poReconciliationDetailList.stream().map(PoReconciliationDetailEntity::getSourceDetailId).distinct().collect(Collectors.toList());
+            refDetailList.stream().filter(obj -> sourceDetailIdList.contains(obj.getSourceDetailId()))
+                    .findFirst().ifPresent(obj -> {
+                        throw new ServiceException(ApiError.ERROR_PO_RECONCILIATION_DETAIL_HAS_IN_RECONCILIATION, obj.getSourceCode(),obj.getSkuNo());
+                    });
+        }
+
         //校验
         long count = poReconciliationDetailList.stream().filter(obj -> !CharSequenceUtil.equals(obj.getSupplierId(),poReconciliationEntity.getSupplierId())
                         || !CharSequenceUtil.equals(obj.getSettleOrgId(),poReconciliationEntity.getSettleOrgId()))
