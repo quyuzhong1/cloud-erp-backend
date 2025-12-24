@@ -65,13 +65,14 @@ public class PlatformWdtB2cOrderConsumerService extends AbstractNewPlatformConsu
             }
 
         KolSubB2cApplicationEntity oldEntity = kolSubB2cApplicationService.lambdaQuery().eq(KolSubB2cApplicationEntity::getCode, dto.getCode()).one();
-        KolSubB2cApplicationEntity entity = new KolSubB2cApplicationEntity();
-        BeanMapper.copy(oldEntity, entity);
 
-        if(Objects.isNull(entity)){
+        if(Objects.isNull(oldEntity)){
             log.warn("[KolSubB2c] 消费:KolSubB2cApplicationEntity不存在");
             return;
         }
+        KolSubB2cApplicationEntity entity = new KolSubB2cApplicationEntity();
+        BeanMapper.copy(oldEntity, entity);
+
 
         List<WdtKolB2cApplicationDTO.WdtKolB2cApplicationDetailDTO> details = dto.getDetails();
         Map<String, WdtKolB2cApplicationDTO.WdtKolB2cApplicationDetailDTO> map = details.stream().collect(Collectors.toMap(WdtKolB2cApplicationDTO.WdtKolB2cApplicationDetailDTO::getSkuNo, Function.identity()));
