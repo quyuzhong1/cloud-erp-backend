@@ -77,12 +77,13 @@ public class YunTuService {
      *  标签打印
      */
     public YunTuResponse<List<YunTuPrintLabel>> getPrintLabel(@Valid YunTuPrintLabelRequest request,Map<String, String> authMap){
-        String appKey = authMap.get(CLIENT_ID);
-        String appSecret = authMap.get(CLIENT_SECRET);
-        String url = authMap.get("url");
-        validate(appKey,appSecret,url);
-        String response = YunTuUtils.sendPostList(url,YunTuConstants.METHOD_PRINT_LABEL,request.getOrderNumbers(),appKey,appSecret);
-        return JSON.parseObject(response,new TypeReference<YunTuResponse<List<YunTuPrintLabel>>>() {}.getType());
+        throw new ServiceException("模拟打印接口异常");
+//        String appKey = authMap.get(CLIENT_ID);
+//        String appSecret = authMap.get(CLIENT_SECRET);
+//        String url = authMap.get("url");
+//        validate(appKey,appSecret,url);
+//        String response = YunTuUtils.sendPostList(url,YunTuConstants.METHOD_PRINT_LABEL,request.getOrderNumbers(),appKey,appSecret);
+//        return JSON.parseObject(response,new TypeReference<YunTuResponse<List<YunTuPrintLabel>>>() {}.getType());
     }
 
     /**
