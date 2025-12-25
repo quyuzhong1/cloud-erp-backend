@@ -2,6 +2,7 @@ package com.erp.server.wms.service;
 
 import cn.hutool.core.lang.Tuple;
 import com.common.business.dto.AdvanceQueryContainer;
+import com.common.business.dto.PlatformAwdShipmentReceiveDTO;
 import com.common.business.dto.PlatformFbaShipmentReceiveDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BatchResultDTO;
@@ -14,6 +15,7 @@ import com.erp.model.wms.dto.FbaShipmentDTO;
 import com.erp.model.wms.dto.FbaTransitCalculateReportDTO;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.model.wms.entity.FbaShipmentEntity;
+import com.erp.model.wms.entity.FbaShipmentExtendEntity;
 import com.erp.model.wms.entity.FbaShipmentReceiveEntity;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 
@@ -285,4 +287,32 @@ public interface FbaShipmentService extends SuperService<FbaShipmentEntity> {
      * @return
      */
     List<BatchResultDTO> changeReceived(List<FbaShipmentDTO.ReceivedDTO> dtoList);
+
+    /**
+     * 打印标签
+     * @param dto
+     * @return
+     */
+    String printLabel(FbaShipmentDTO.PrintLabelDTO dto);
+
+    /**
+     * 校验并创建
+     * @param entity
+     * @param extendEntity
+     * @param listingInfoWithSkuMappingDTOMap
+     * @param hasChildrenSkuIds
+     * @param platformAwdShipmentReceiveDTOS
+     */
+    void awdCheckAndSaveAll(FbaShipmentEntity entity, FbaShipmentExtendEntity extendEntity, Map<String, ListingInfoWithSkuMappingDTO> listingInfoWithSkuMappingDTOMap, List<String> hasChildrenSkuIds, List<PlatformAwdShipmentReceiveDTO> platformAwdShipmentReceiveDTOS);
+
+    /**
+     * 更新
+     * @param oldEntity
+     * @param entity
+     * @param extendEntity
+     * @param listingInfoWithSkuMappingDTOMap
+     * @param hasChildrenSkuIds
+     * @param platformAwdShipmentReceiveDTOS
+     */
+    void awdCheckAndUpdateAll(FbaShipmentEntity oldEntity, FbaShipmentEntity entity, FbaShipmentExtendEntity extendEntity, Map<String, ListingInfoWithSkuMappingDTO> listingInfoWithSkuMappingDTOMap, List<String> hasChildrenSkuIds, List<PlatformAwdShipmentReceiveDTO> platformAwdShipmentReceiveDTOS);
 }

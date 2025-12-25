@@ -75,7 +75,7 @@ public class FileFeignController {
         }
     }
     @PostMapping(value = "/uploadFileByBase64")
-    public String uploadFileByBase64(@RequestParam("base64Str")String base64Str){
+    public String uploadFileByBase64(@RequestBody String base64Str){
         FileService fileService = fileRegistry.getHandler();
         String[] parts = base64Str.split(",");
         byte[] bytes = Base64.getDecoder().decode(parts.length > 1 ? parts[1] : parts[0]);

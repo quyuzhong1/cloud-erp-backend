@@ -168,6 +168,7 @@ public class RocketMqNewConsumerGroup {
      * 新中台平台FBA货件
      */
     public static final String DMP_FBA_SHIPMENT_TO_WMS_GROUP = "${spring.cloud.nacos.discovery.namespace}-dmp_fba_shipment_to_wms_group";
+    public static final String DMP_THIRD_WAREHOUSE_TO_WMS_GROUP = "${spring.cloud.nacos.discovery.namespace}-erp_dmp_group";
     public static final String DMP_FULFILL_ORDER_TO_OMS_GROUP = "${spring.cloud.nacos.discovery.namespace}-dmp_fulfill_order_to_oms_group";
 
     /**
@@ -247,4 +248,5 @@ public class RocketMqNewConsumerGroup {
      */
     public static final String RESTCLOUD_PDD_SO_OUT_TO_WMS_GROUP = "${spring.cloud.nacos.discovery.namespace}-restcloud_pdd_so_out_to_wms_group";
 
+    public static final String DMP_AWD_SHIPMENT_TO_WMS_GROUP = "${spring.cloud.nacos.discovery.namespace}-dmp_awd_shipment_to_wms_group";
 }

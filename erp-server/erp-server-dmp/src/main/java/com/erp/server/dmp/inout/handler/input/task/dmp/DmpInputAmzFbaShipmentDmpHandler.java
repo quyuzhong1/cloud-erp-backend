@@ -1,6 +1,7 @@
 package com.erp.server.dmp.inout.handler.input.task.dmp;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.common.core.anno.ParamData;
@@ -26,6 +27,7 @@ public class DmpInputAmzFbaShipmentDmpHandler extends DmpInputDbConvertDmpHandle
     protected void afterConvertData(Map<List<Map<String, Object>>, List<TreeMap<String, Object>>> dmpInputDataDmpRelationMaps) {
         super.afterConvertData(dmpInputDataDmpRelationMaps);
         List<Map<String, Object>> lxData = new ArrayList<>();
+        List<Map<String, Object>> labelData = new ArrayList<>();
         if (CollUtil.isNotEmpty(dmpInputDataDmpRelationMaps)) {
             for (Map.Entry<List<Map<String, Object>>, List<TreeMap<String, Object>>> dmpInputDataDmpRelationMap : dmpInputDataDmpRelationMaps.entrySet()) {
                 List<TreeMap<String, Object>> dmpDataMaps = dmpInputDataDmpRelationMap.getValue();
@@ -41,7 +43,7 @@ public class DmpInputAmzFbaShipmentDmpHandler extends DmpInputDbConvertDmpHandle
                             new ParamData("shipment_id", "shipment_id", PannoEnum.IN, shipmentIds)
                     );
                     lxData.addAll(mongoService.findMongoData(lxParamDataList, "lingxing_fba_shipment_data"));
-
+                    labelData.addAll(mongoService.findMongoData(lxParamDataList, "amazon_fba_shipment_label_data"));
                 }
             }
         }
@@ -87,6 +89,16 @@ public class DmpInputAmzFbaShipmentDmpHandler extends DmpInputDbConvertDmpHandle
                         if (lxDatum.get("shipment_id").toString().equals(dmpDataMap.get("fbaShipmentId"))) {
                             int isSta = (int)lxDatum.get("is_sta");
                             dmpDataMap.put("orderType",isSta == 0 ? FbaOutStockTypeEnum.FBA.getName() : FbaOutStockTypeEnum.AWD.getName());
+                        }
+                    }
+
+                }
+                if (!labelData.isEmpty()) {
+                    for (Map<String, Object> label : labelData) {
+                        if (label.get("shipment_id").toString().equals(dmpDataMap.get("fbaShipmentId"))) {
+                            String labelUrl = (String)label.get("label_url");
+                            dmpDataMap.put("labelUrl", CharSequenceUtil.isNotBlank(labelUrl) ? labelUrl : "");
+                            dmpDataMap.put("pageType", "PackageLabel_Plain_Paper");
                         }
                     }
 

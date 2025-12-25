@@ -118,7 +118,28 @@ public class FbaShipmentEntity extends BaseEntity<FbaShipmentEntity> {
     @TableField("order_type")
     private String orderType;
 
+    /**
+     * 是否打印标签
+     */
+    @TableField("is_print_label")
+    private Boolean isPrintLabel;
 
+    /**
+     * 标签url
+     */
+    @TableField("label_url")
+    private String labelUrl;
+    /**
+     * 标签类型（区分类型）
+     */
+    @TableField("page_type")
+    private String pageType;
+    /**
+     * 数据来源类型
+     * ShipmentOrderTypeEnum
+     */
+    @TableField("source_type")
+    private String sourceType;
 
     public static final String SHOP_ID = "shop_id";
 

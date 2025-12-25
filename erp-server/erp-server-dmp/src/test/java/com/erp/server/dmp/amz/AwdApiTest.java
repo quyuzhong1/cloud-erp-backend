@@ -12,8 +12,11 @@
 
 package com.erp.server.dmp.amz;
 
+import com.erp.model.dmp.dto.AmazonShopInfoDTO;
 import com.erp.sdk.oms.amz.spapi.api.AwdApi;
 import com.erp.sdk.oms.amz.spapi.client.ApiException;
+import com.erp.sdk.oms.amz.spapi.enums.AmazonAwdQueryTypeEnum;
+import com.erp.sdk.oms.amz.spapi.enums.AmazonAwdSortTypeEnum;
 import com.erp.sdk.oms.amz.spapi.model.awd.ErrorList;
 import com.erp.sdk.oms.amz.spapi.model.awd.InboundEligibility;
 import com.erp.sdk.oms.amz.spapi.model.awd.InboundOrder;
@@ -29,6 +32,9 @@ import com.erp.sdk.oms.amz.spapi.model.awd.ShipmentLabels;
 import com.erp.sdk.oms.amz.spapi.model.awd.ShipmentListing;
 import com.erp.sdk.oms.amz.spapi.model.awd.TransportationDetails;
 import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiInitUtils;
+import com.erp.server.dmp.ErpServerDmpApplication;
+import com.erp.server.dmp.service.CfgAppClientService;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 import org.junit.Ignore;
 
@@ -38,14 +44,24 @@ import java.util.List;
 import java.util.Map;
 
 import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.LWAException;
+import org.junit.runner.RunWith;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Profile;
+import org.springframework.test.context.junit4.SpringRunner;
+
+import javax.annotation.Resource;
 
 /**
  * API tests for AwdApi
  */
-@Ignore
+@Slf4j
+@RunWith(SpringRunner.class)
+@SpringBootTest(classes = {ErpServerDmpApplication.class}, webEnvironment = SpringBootTest.WebEnvironment.NONE)
+@Profile("dev")
 public class AwdApiTest {
-
-    private final AwdApi api = null;
+    @Resource
+    private CfgAppClientService cfgAppClientService;
+    private final AwdApi api = new AwdApi(null);
 
     /**
      *
@@ -172,15 +188,20 @@ public class AwdApiTest {
      */
     @Test
     public void listInboundShipmentsTest() throws ApiException, LWAException {
-        String sortBy = null;
-        String sortOrder = null;
+        String shopId = "1735479610549735425";
+        // 获取店铺授权信息
+        AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(shopId);
+        // 创建AwdApi实例
+        AwdApi api = AmazonSpApiInitUtils.create(AwdApi.class, shopInfoDTO, false);
+        String sortBy = AmazonAwdQueryTypeEnum.UPDATED_AT.getCode();
+        String sortOrder = AmazonAwdSortTypeEnum.DESCENDING.getCode();
         String shipmentStatus = null;
-        OffsetDateTime updatedAfter = null;
-        OffsetDateTime updatedBefore = null;
-        Integer maxResults = null;
+        String updatedAfter = "2025-12-01T00:00:00.000Z";
+        String updatedBefore = "2025-12-12T00:00:00.000Z";
+        Integer maxResults = 20;
         String nextToken = null;
         ShipmentListing response = api.listInboundShipments(sortBy, sortOrder, shipmentStatus, updatedAfter, updatedBefore, maxResults, nextToken);
-
+        System.out.println(response);
 // TODO: test validations
     }
 

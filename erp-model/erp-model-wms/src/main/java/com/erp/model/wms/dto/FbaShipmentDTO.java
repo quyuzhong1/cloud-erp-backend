@@ -962,4 +962,20 @@ public class FbaShipmentDTO implements Serializable {
          */
         private String deliveryCode;
     }
+
+    @Data
+    @NoArgsConstructor
+    public static class PrintLabelDTO {
+        /**
+         * id
+         */
+        @NotBlank(message = "货件id不能为空")
+        private String id;
+        /**
+         * 打印类型
+         * FbaPageTypeEnum
+         * 字典下拉接口 http://172.16.100.11:3002/project/92/interface/api/13147  type=fbaPageType FBA标签类型,awdPageType AWD标签类型
+         */
+        private String pageType;
+    }
 }

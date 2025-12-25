@@ -111,7 +111,21 @@ public class DmpFbaShipmentEntity extends BaseEntity<DmpFbaShipmentEntity> {
      */
     @TableField("data_encrypt")
     private String dataEncrypt;
-
+    /**
+     * 关联单号
+     */
+    @TableField("reference_id")
+    private String referenceId;
+    /**
+     * 面单url
+     */
+    @TableField("label_url")
+    private String labelUrl;
+    /**
+     * 面单类型
+     */
+    @TableField("page_type")
+    private String pageType;
 
     public static final String CODE = "code";
 

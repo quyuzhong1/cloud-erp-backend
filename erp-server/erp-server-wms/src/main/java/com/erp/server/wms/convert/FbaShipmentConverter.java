@@ -122,11 +122,15 @@ public interface FbaShipmentConverter {
             @Mapping(target = "platformShipmentStatus", source = "entity.platformShipmentStatus"),
             @Mapping(target = "shipmentReceiveTime", source = "entity.shipmentReceiveTime"),
             @Mapping(target = "labelType", source = "entity.labelType"),
+            @Mapping(target = "isPrintLabel", source = "oldEntity.isPrintLabel"),
+            @Mapping(target = "labelUrl", source = "oldEntity.labelUrl"),
+            @Mapping(target = "pageType", source = "oldEntity.pageType"),
             @Mapping(target = "packType", source = "entity.packType"),
             @Mapping(target = "deliveryFromAddress", source = "entity.deliveryFromAddress"),
             @Mapping(target = "deliveryToAddress", source = "entity.deliveryToAddress"),
             @Mapping(target = "isPackingDownload", source = "oldEntity.isPackingDownload"),
             @Mapping(target = "orderType", source = "entity.orderType"),
+            @Mapping(target = "sourceType", source = "entity.sourceType"),
             @Mapping(target = "isUserSystem" ,ignore = true),
     })
     FbaShipmentEntity oldToNew(FbaShipmentEntity entity, FbaShipmentEntity oldEntity);

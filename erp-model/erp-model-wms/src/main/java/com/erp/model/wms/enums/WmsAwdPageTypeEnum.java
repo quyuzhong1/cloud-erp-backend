@@ -1,4 +1,4 @@
-package com.erp.model.dmp.enums;
+package com.erp.model.wms.enums;
 import com.baomidou.mybatisplus.annotation.EnumValue;
 import com.common.core.constant.EnumMessage;
 import com.fasterxml.jackson.annotation.JsonValue;
@@ -6,18 +6,16 @@ import org.apache.commons.lang3.StringUtils;
 
 /**
  * <p>
- * 系统类型 枚举
+ * AWD标签类型 枚举
  * </p>
  *
  * @author zdy
- * @since 2025-12-23 16:29:02
+ * @since 2025-12-24 18:59:43
  */
-public enum DmpDmpBasicSystemTypeEnum implements EnumMessage {
-	WMS("wms", "仓储"),
-	TMS("tms", "物流"),
-	FINANCE("finance", "财务"),
-	THIRDERP("thirdErp", "第三方ERP"),
-	OMS("oms", "销售平台"),
+public enum WmsAwdPageTypeEnum implements EnumMessage {
+	THERMAL_NONPCP("THERMAL_NONPCP", "热敏纸一个标签"),
+	PLAIN_PAPER("PLAIN_PAPER", "每张美国信纸1个标签"),
+	LETTER_6("LETTER_6", "每张美国信纸6个标签"),
     ;
     /**
      * 类型
@@ -30,7 +28,7 @@ public enum DmpDmpBasicSystemTypeEnum implements EnumMessage {
      */
     private String name;
 
-    DmpDmpBasicSystemTypeEnum(String code, String name) {
+    WmsAwdPageTypeEnum(String code, String name) {
         this.code = code;
         this.name = name;
     }
@@ -49,7 +47,7 @@ public enum DmpDmpBasicSystemTypeEnum implements EnumMessage {
         if (StringUtils.isBlank(code)) {
             return "";
         }
-        for (DmpDmpBasicSystemTypeEnum statusEnum : DmpDmpBasicSystemTypeEnum.values()) {
+        for (WmsAwdPageTypeEnum statusEnum : WmsAwdPageTypeEnum.values()) {
             if (code.equals(statusEnum.getCode())) {
                 return statusEnum.getName();
             }

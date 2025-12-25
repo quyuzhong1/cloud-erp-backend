@@ -1018,7 +1018,7 @@ public class AwdApi {
      * @throws ApiException If fail to serialize the request body object
      * @throws LWAException If calls to fetch LWA access token fails
      */
-    public okhttp3.Call listInboundShipmentsCall(String sortBy, String sortOrder, String shipmentStatus, OffsetDateTime updatedAfter, OffsetDateTime updatedBefore, Integer maxResults, String nextToken, final ProgressResponseBody.ProgressListener progressListener, final ProgressRequestBody.ProgressRequestListener progressRequestListener) throws ApiException, LWAException {
+    public okhttp3.Call listInboundShipmentsCall(String sortBy, String sortOrder, String shipmentStatus, String updatedAfter, String updatedBefore, Integer maxResults, String nextToken, final ProgressResponseBody.ProgressListener progressListener, final ProgressRequestBody.ProgressRequestListener progressRequestListener) throws ApiException, LWAException {
         Object localVarPostBody = null;
 
         // create path and map variables
@@ -1074,7 +1074,7 @@ public class AwdApi {
     }
 
     @SuppressWarnings("rawtypes")
-    private okhttp3.Call listInboundShipmentsValidateBeforeCall(String sortBy, String sortOrder, String shipmentStatus, OffsetDateTime updatedAfter, OffsetDateTime updatedBefore, Integer maxResults, String nextToken, final ProgressResponseBody.ProgressListener progressListener, final ProgressRequestBody.ProgressRequestListener progressRequestListener) throws ApiException, LWAException {
+    private okhttp3.Call listInboundShipmentsValidateBeforeCall(String sortBy, String sortOrder, String shipmentStatus, String updatedAfter, String updatedBefore, Integer maxResults, String nextToken, final ProgressResponseBody.ProgressListener progressListener, final ProgressRequestBody.ProgressRequestListener progressRequestListener) throws ApiException, LWAException {
 
         okhttp3.Call call = listInboundShipmentsCall(sortBy, sortOrder, shipmentStatus, updatedAfter, updatedBefore, maxResults, nextToken, progressListener, progressRequestListener);
         return call;
@@ -1096,7 +1096,7 @@ public class AwdApi {
      * @throws ApiException If fail to call the API, e.g. server error or cannot deserialize the response body
      * @throws LWAException If calls to fetch LWA access token fails
      */
-    public ShipmentListing listInboundShipments(String sortBy, String sortOrder, String shipmentStatus, OffsetDateTime updatedAfter, OffsetDateTime updatedBefore, Integer maxResults, String nextToken) throws ApiException, LWAException {
+    public ShipmentListing listInboundShipments(String sortBy, String sortOrder, String shipmentStatus, String updatedAfter, String updatedBefore, Integer maxResults, String nextToken) throws ApiException, LWAException {
         ApiResponse<ShipmentListing> resp = listInboundShipmentsWithHttpInfo(sortBy, sortOrder, shipmentStatus, updatedAfter, updatedBefore, maxResults, nextToken);
         return resp.getData();
     }
@@ -1116,7 +1116,7 @@ public class AwdApi {
      * @throws ApiException If fail to call the API, e.g. server error or cannot deserialize the response body
      * @throws LWAException If calls to fetch LWA access token fails
      */
-    public ApiResponse<ShipmentListing> listInboundShipmentsWithHttpInfo(String sortBy, String sortOrder, String shipmentStatus, OffsetDateTime updatedAfter, OffsetDateTime updatedBefore, Integer maxResults, String nextToken) throws ApiException, LWAException {
+    public ApiResponse<ShipmentListing> listInboundShipmentsWithHttpInfo(String sortBy, String sortOrder, String shipmentStatus, String updatedAfter, String updatedBefore, Integer maxResults, String nextToken) throws ApiException, LWAException {
         okhttp3.Call call = listInboundShipmentsValidateBeforeCall(sortBy, sortOrder, shipmentStatus, updatedAfter, updatedBefore, maxResults, nextToken, null, null);
         Type localVarReturnType = new TypeToken<ShipmentListing>() {
         }.getType();
@@ -1139,7 +1139,7 @@ public class AwdApi {
      * @throws ApiException If fail to process the API call, e.g. serializing the request body object
      * @throws LWAException If calls to fetch LWA access token fails
      */
-    public okhttp3.Call listInboundShipmentsAsync(String sortBy, String sortOrder, String shipmentStatus, OffsetDateTime updatedAfter, OffsetDateTime updatedBefore, Integer maxResults, String nextToken, final ApiCallback<ShipmentListing> callback) throws ApiException, LWAException {
+    public okhttp3.Call listInboundShipmentsAsync(String sortBy, String sortOrder, String shipmentStatus, String updatedAfter, String updatedBefore, Integer maxResults, String nextToken, final ApiCallback<ShipmentListing> callback) throws ApiException, LWAException {
 
         ProgressResponseBody.ProgressListener progressListener = null;
         ProgressRequestBody.ProgressRequestListener progressRequestListener = null;

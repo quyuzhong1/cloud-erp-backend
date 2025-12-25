@@ -1,6 +1,5 @@
 package com.common.business.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -21,7 +20,7 @@ import java.util.List;
 @EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
 @NoArgsConstructor
-public class PlatformFbaShipmentDTO extends UniqueDto {
+public class PlatformAwdShipmentDTO extends UniqueDto {
     /**
      * FBA货件名称
      */
@@ -99,16 +98,96 @@ public class PlatformFbaShipmentDTO extends UniqueDto {
     private String pageType;
 
     /**
-     * 物流签收信息
+     * 入库计划单号
      */
-    List<PlatformFbaShipmentReceiveDTO> receiveDTOList;
+    private String planCode;
+    /**
+     * 发货单号
+     */
+    private String deliveryCode;
+    /**
+     * 发货单ID
+     */
+    private String deliveryId;
+    /**
+     * 地区偏好
+     */
+    private String preferredRegion;
+    /**
+     * 发货人
+     */
+    private String deliveryFromName;
+    /**
+     * 发货手机号
+     */
+    private String deliveryFromMobile;
+    /**
+     * 发货城市
+     */
+    private String deliveryFromCity;
+    /**
+     * 发货州/省
+     */
+    private String deliveryFromProvince;
+    /**
+     * 发货地区
+     */
+    private String deliveryFromArea;
+    /**
+     * 发货邮编
+     */
+    private String deliveryFromPostCode;
+    /**
+     * 发货目的仓（取值店铺绑定的AWD仓）
+     */
+    private String deliveryToWarehouseId;
+    /**
+     * 平台货件发货时间（拉取数据的日期）
+     */
+    private LocalDateTime shipmentDeliveryTime;
+    /**
+     * 收货电话号码
+     */
+    private String deliveryToMobile;
+    /**
+     * 收货人
+     */
+    private String deliveryToName;
+    /**
+     * 收货邮编
+     */
+    private String deliveryToPostCode;
+    /**
+     * 收货地区
+     */
+    private String deliveryToArea;
+    /**
+     * 收货州/省
+     */
+    private String deliveryToProvince;
+    /**
+     * 收货城市
+     */
+    private String deliveryToCity;
+    /**
+     * 收货国家
+     */
+    private String deliveryToCountryId;
+    /**
+     * 收货国家名称
+     */
+    private String deliveryToCountryName;
+    /**
+     * 详细地址
+     */
+    private String deliveryToAddress;
 
     /**
      * 货件详情(由物流签收信息合并）
      */
-    List<PlatformFbaShipmentReceiveDTO> detailList;
+    List<PlatformAwdShipmentReceiveDTO> detailList;
 
-    public List<PlatformFbaShipmentReceiveDTO> checkAndGetDetailList(){
+    public List<PlatformAwdShipmentReceiveDTO> checkAndGetDetailList(){
         if (CollectionUtils.isEmpty(this.detailList)){
             return Collections.emptyList();
         }

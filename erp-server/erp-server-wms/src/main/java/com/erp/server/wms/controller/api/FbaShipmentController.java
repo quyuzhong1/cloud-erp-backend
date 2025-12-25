@@ -445,4 +445,17 @@ public class FbaShipmentController extends BaseController {
         List<BatchResultDTO> resultDTOS = fbaShipmentService.changeReceived(dtoList);
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
+
+    /**
+     * 打印标签
+     *
+     * @return ApiResult
+     * @author zdy
+     * @date: 2025-12-24
+     */
+    @PostMapping("/printLabel")
+    public ApiResult<String> printLabel(@RequestBody @Validated FbaShipmentDTO.PrintLabelDTO dto) {
+        String url = fbaShipmentService.printLabel(dto);
+        return success(url);
+    }
 }
