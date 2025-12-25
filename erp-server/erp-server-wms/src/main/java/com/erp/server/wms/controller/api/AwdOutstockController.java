@@ -77,7 +77,7 @@ public class AwdOutstockController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/batchUpdateBillDateView")
-    public ApiResult<?> batchUpdateBillDateView(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+    public ApiResult<List<AwdOutstockDTO.BatchUpdateBillDateViewDTO>> batchUpdateBillDateView(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         return success(awdOutstockService.batchUpdateBillDateView(dto));
     }
 

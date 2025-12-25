@@ -271,7 +271,10 @@ public class AwdOutstockDTO implements Serializable {
          */
         private String shopName;
 
-
+        /**
+         * 发货时间
+         */
+        private LocalDate billDate;
     }
 
     @Data
@@ -307,6 +310,11 @@ public class AwdOutstockDTO implements Serializable {
          */
         @NotNull(message = "发货时间不能为空")
         private LocalDate billDate;
+
+        public GenerateDeliveryDTO(String id, LocalDate billDate) {
+            this.id = id;
+            this.billDate = billDate;
+        }
     }
 
 

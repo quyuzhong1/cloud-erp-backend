@@ -94,46 +94,43 @@ public class AwdOutstockServiceImpl extends SuperServiceImpl<AwdOutstockMapper, 
         return new BaseResultDTO.AddDTO(awdOutstockEntity.getId(), code);
     }
 
-    @DistributeLocker(keyName = "addOrUpdateDTO.getId()")
+    @DistributeLocker(keyName = "#updateDTOList[0].id")
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean batchUpdateBillDate(List<AwdOutstockDTO.UpdateDTO> updateDTOList) {
         for (AwdOutstockDTO.UpdateDTO updateDTO : updateDTOList) {
-            AwdOutstockEntity old = super.getById(updateDTO.getId());
-            old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, ""));
-            AwdOutstockEntity awdOutstockEntity =  BeanMapperUtils.map(AwdOutstockEntity.class, updateDTO);
+            //查询旧数据
+            AwdOutstockEntity old = Optional.ofNullable(super.getById(updateDTO.getId()))
+                    .orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "AWD"));
 
-            handleUpdateData(awdOutstockEntity);
+            //映射新数据
+            AwdOutstockEntity newEntity = BeanMapperUtils.map(AwdOutstockEntity.class, updateDTO);
+            handleUpdateData(newEntity);
 
-            Optional<LocalDate> optionalDate = Optional.ofNullable(old.getBillDate());
-            if (!optionalDate.isPresent()) {
-                boolean save = this.lambdaUpdate()
-                        .set(AwdOutstockEntity::getBillDate, updateDTO.getBillDate())
-                        .eq(AwdOutstockEntity::getId, updateDTO.getId())
-                        .update();
+            //更新日期
+            boolean updated = this.lambdaUpdate()
+                    .set(AwdOutstockEntity::getBillDate, updateDTO.getBillDate())
+                    .eq(AwdOutstockEntity::getId, updateDTO.getId())
+                    .update();
+            if (!updated) {
+                throw new ServiceException("保存失败");
+            }
 
-                if(!save) {
-                    throw new ServiceException("保存失败");
-                }
-
-                //下推头程发货单
-                AwdOutstockDTO.GenerateDeliveryDTO generateDeliveryDTO = new AwdOutstockDTO.GenerateDeliveryDTO();
-                generateDeliveryDTO.setId(updateDTO.getId());
-                generateDeliveryDTO.setBillDate(updateDTO.getBillDate());
-                boolean generateFirstMileDelivery = generateFirstMileDelivery(generateDeliveryDTO);
-                if (!generateFirstMileDelivery) {
+            //下推发货单
+            if (old.getBillDate() != null) {
+                boolean generated = generateFirstMileDelivery(
+                        new AwdOutstockDTO.GenerateDeliveryDTO(updateDTO.getId(), updateDTO.getBillDate())
+                );
+                if (!generated) {
                     throw new ServiceException(ApiError.ERROR_GENERATE_FIRST_MILE_DELIVERY);
                 }
-
-                // 记录主单操作日志
-                log.info("编辑 开始记录日志数据，单号：【{}】", awdOutstockEntity.getCode());
-                String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), awdOutstockEntity.getCode(), "");
-                operateLogService.addModuleOperateLogByObj(old, awdOutstockEntity, null, awdOutstockEntity.getId(), msg);
-                return Boolean.TRUE;
             }
-            return Boolean.TRUE;
-        }
 
+            //记录日志
+            String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【出库单】单据",
+                    UserContext.getDefaultLoginUser().getUserName(), newEntity.getCode());
+            operateLogService.addModuleOperateLogByObj(old, newEntity, null, newEntity.getId(), msg);
+        }
         return Boolean.TRUE;
     }
 
