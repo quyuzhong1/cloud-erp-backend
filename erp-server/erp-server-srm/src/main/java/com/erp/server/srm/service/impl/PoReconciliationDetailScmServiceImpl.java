@@ -601,8 +601,10 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
                     .map(PoReconciliationRefDetailEntity::getQty).reduce(MathUtil.ZERO,Integer::sum);
             if (Objects.equals(detailEntity.getQty(), totalQty)) {
                 detailEntity.setStatus(PoReconciliationDetailEnum.StatusEnum.RECONCILED.getCode());
-            } else {
+            } else if (Math.abs(detailEntity.getQty()) > Math.abs(totalQty)) {
                 detailEntity.setStatus(PoReconciliationDetailEnum.StatusEnum.PART_RECONCILIATION.getCode());
+            } else {
+                detailEntity.setStatus(PoReconciliationDetailEnum.StatusEnum.WAIT_RECONCILIATION.getCode());
             }
         }
         super.updateBatchById(poReconciliationDetailList);
