@@ -200,7 +200,7 @@ public class PoReconciliationRefDetailEntity extends BaseEntity<PoReconciliation
     /**
      * 采方备注
      */
-    @TableField("supplier_remark")
+    @TableField("purchase_remark")
     private String purchaseRemark;
 
     /**
