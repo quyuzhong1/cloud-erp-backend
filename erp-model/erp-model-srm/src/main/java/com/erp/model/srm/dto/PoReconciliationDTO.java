@@ -433,7 +433,7 @@ public class PoReconciliationDTO implements Serializable {
          * 明细修改
          */
         @NotEmpty(message = "对账明细不能为空")
-        private List<PoReconciliationDetailDTO.UpdateDTO> detailList;
+        private List<PoReconciliationRefDetailDTO.UpdateDTO> detailList;
     }
 
 
@@ -470,7 +470,7 @@ public class PoReconciliationDTO implements Serializable {
          * 明细修改
          */
         @NotEmpty(message = "对账明细不能为空")
-        private List<PoReconciliationDetailDTO.ScmUpdateDTO> detailList;
+        private List<PoReconciliationRefDetailDTO.ScmUpdateDTO> detailList;
     }
 
 

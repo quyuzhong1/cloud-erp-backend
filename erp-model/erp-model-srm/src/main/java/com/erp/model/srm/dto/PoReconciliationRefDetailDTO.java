@@ -4,14 +4,11 @@ import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.core.utils.MathUtil;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.validation.constraints.Digits;
 import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.Size;
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -21,15 +18,15 @@ import java.util.Map;
 
 /**
  * <p>
- * 采购对账单明细请求响应实体
+ * 采购对账单明细已对账信息请求响应实体
  * </p>
  *
  * @author will
- * @since 2024-01-19
+ * @since 2025-12-22
 */
 @Data
 @NoArgsConstructor
-public class PoReconciliationDetailDTO implements Serializable {
+public class PoReconciliationRefDetailDTO implements Serializable {
 
 
     /**
@@ -76,6 +73,15 @@ public class PoReconciliationDetailDTO implements Serializable {
          * 对账明细主键id
          */
         private String id;
+
+        /**
+         * 采购对账单id
+         */
+        private String poReconciliationId;
+        /**
+         * 采购对账单明细id
+         */
+        private String poReconciliationDetailId;
 
         /**
          * 单据单号【可排序】
@@ -158,10 +164,17 @@ public class PoReconciliationDetailDTO implements Serializable {
         private String productName;
 
         /**
-         * 数量【可排序】
+         * 本期对账数量【可排序】
          */
         private Integer qty;
-
+        /**
+         * 单据数量（待对账明细数量）
+         */
+        private Integer billQty;
+        /**
+         * 已对账数量
+         */
+        private Integer reconciledQty;
         /**
          * 单位
          */
@@ -223,6 +236,16 @@ public class PoReconciliationDetailDTO implements Serializable {
         private String paymentConditionName;
 
         /**
+         * 供应商备注
+         */
+        private String supplierRemark;
+
+        /**
+         * 采购备注
+         */
+        private String purchaseRemark;
+
+        /**
          * 单据备注
          */
         private String remark;
@@ -252,6 +275,26 @@ public class PoReconciliationDetailDTO implements Serializable {
          * 送货编码
          */
         private String deliveryCode;
+        /**
+         * 折扣税率
+         */
+        private BigDecimal discountRate;
+        /**
+         * 折扣税率,%
+         */
+        private String discountRateStr;
+        /**
+         * 折扣额
+         */
+        private BigDecimal discountAmount;
+        /**
+         * 预付金额
+         */
+        private BigDecimal prepayAmount;
+        /**
+         * 税价合计（折扣）
+         */
+        private BigDecimal discountTaxAmount;
 
         /**
          * 采购申请单id集合
@@ -260,53 +303,138 @@ public class PoReconciliationDetailDTO implements Serializable {
         private List<String> purchaseApplicationIds;
     }
 
+    /**
+     * 修改
+     */
+    @Data
+    @NoArgsConstructor
+    public static class UpdateDTO {
 
+        /**
+         * 主键id
+         */
+        private String id;
+
+
+        /**
+         * 采购对账单明细id
+         */
+        @NotBlank(message = "采购对账单明细id不能为空")
+        private String poReconciliationDetailId;
+
+        /**
+         * 供方备注
+         */
+        private String supplierRemark;
+
+        /**
+         * 本期对账数量
+         */
+        @NotNull(message = "本期对账数量不能为空")
+        private Integer qty;
+    }
 
     /**
-    * 详情
-    */
+     * 修改
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ScmUpdateDTO {
+
+        /**
+         * 主键id
+         */
+        private String id;
+
+
+        /**
+         * 采购对账单明细id
+         */
+        @NotBlank(message = "采购对账单明细id不能为空")
+        private String poReconciliationDetailId;
+
+
+        /**
+         * 本期对账数量
+         */
+        @NotNull(message = "本期对账数量不能为空")
+        private Integer qty;
+
+        /**
+         * 税率
+         */
+        private BigDecimal taxRate;
+
+        /**
+         * 含税单价
+         */
+        private BigDecimal taxPrice;
+
+        /**
+         * 折扣率
+         */
+        private BigDecimal discountRate;
+
+        /**
+         * 预付金额
+         */
+        private BigDecimal prepayAmount;
+
+        /**
+         * 采方备注
+         */
+        private String purchaseRemark;
+    }
+
+    /**
+     * 详情
+     */
     @Data
     @NoArgsConstructor
     public static class ViewDTO {
 
         /**
-        * 主键id
-        */
+         * 主键id
+         */
         private String  id;
+        /**
+         * 采购对账单id
+         */
+        private String poReconciliationId;
+        /**
+         * 采购对账单明细id
+         */
+        private String poReconciliationDetailId;
+
 
         /**
-        * 供应商id
-        */
+         * 供应商id
+         */
         private String supplierId;
 
         /**
-        * 供应商名称
-        */
+         * 供应商名称
+         */
         private String supplierName;
 
         /**
-        * 对账单Id
-        */
-        private String mainId;
-
-        /**
-        * 来源明细id
-        */
+         * 来源明细id
+         */
         private String sourceDetailId;
 
         /**
-        * 来源id
-        */
+         * 来源id
+         */
         private String sourceId;
 
         /**
-        * 来源订单号
-        */
+         * 来源订单号
+         */
         private String sourceCode;
 
         /**
-        * 来源类型
-        */
+         * 来源类型
+         */
         private String sourceType;
 
         /**
@@ -315,13 +443,13 @@ public class PoReconciliationDetailDTO implements Serializable {
         private String sourceTypeName;
 
         /**
-        * 采购订单编码
-        */
+         * 采购订单编码
+         */
         private String poCode;
 
         /**
-        * 采购订单id
-        */
+         * 采购订单id
+         */
         private String poId;
         /**
          * 采购订单来源单号
@@ -329,18 +457,18 @@ public class PoReconciliationDetailDTO implements Serializable {
         private String poSourceCode;
 
         /**
-        * 单据日期
-        */
+         * 单据日期
+         */
         private LocalDate date;
 
         /**
-        * skuId
-        */
+         * skuId
+         */
         private String skuId;
 
         /**
-        * sku编码
-        */
+         * sku编码
+         */
         private String skuNo;
 
         /**
@@ -349,13 +477,21 @@ public class PoReconciliationDetailDTO implements Serializable {
         private String productName;
 
         /**
-        * 数量
-        */
+         * 本期对账数量
+         */
         private Integer qty;
+        /**
+         * 单据数量（待对账明细数量）
+         */
+        private Integer billQty;
+        /**
+         * 已对账数量
+         */
+        private Integer reconciledQty;
 
         /**
-        * 税率
-        */
+         * 税率
+         */
         private BigDecimal taxRate;
 
         /**
@@ -364,28 +500,28 @@ public class PoReconciliationDetailDTO implements Serializable {
         private String taxRateStr;
 
         /**
-        * 含税单价
-        */
+         * 含税单价
+         */
         private BigDecimal taxPrice;
 
         /**
-        * 价税合计
-        */
+         * 价税合计
+         */
         private BigDecimal taxAmount;
 
         /**
-        * 结算组织id
-        */
+         * 结算组织id
+         */
         private String settleOrgId;
 
         /**
-        * 结算组织名称
-        */
+         * 结算组织名称
+         */
         private String settleOrgName;
 
         /**
-        * 结算方式
-        */
+         * 结算方式
+         */
         private String settleDict;
 
         /**
@@ -394,8 +530,8 @@ public class PoReconciliationDetailDTO implements Serializable {
         private String settleDictName;
 
         /**
-        * 付款条件
-        */
+         * 付款条件
+         */
         private String paymentCondition;
 
         /**
@@ -404,8 +540,8 @@ public class PoReconciliationDetailDTO implements Serializable {
         private String paymentConditionName;
 
         /**
-        * 业务状态
-        */
+         * 业务状态
+         */
         private String businessStatus;
 
         /**
@@ -414,18 +550,18 @@ public class PoReconciliationDetailDTO implements Serializable {
         private String businessStatusName;
 
         /**
-        * 供方备注
-        */
+         * 供方备注
+         */
         private String supplierRemark;
 
         /**
-        * 采方备注
-        */
+         * 采方备注
+         */
         private String purchaseRemark;
 
         /**
-        * 币别
-        */
+         * 币别
+         */
         private String currency;
 
         /**
@@ -434,8 +570,8 @@ public class PoReconciliationDetailDTO implements Serializable {
         private String currencySymbol;
 
         /**
-        * 汇率
-        */
+         * 汇率
+         */
         private BigDecimal exchangeRate;
 
         /**
@@ -481,272 +617,5 @@ public class PoReconciliationDetailDTO implements Serializable {
         public BigDecimal getDiscountAmount () {
             return MathUtil.multiplyWithFour(discountRate,discountRate);
         }
-    }
-
-    /**
-    * 新增
-    */
-    @Data
-    @NoArgsConstructor
-    public static class AddDTO extends CommonDTO {
-
-
-    }
-
-
-    @Data
-    @NoArgsConstructor
-    public static class CommonDTO {
-
-        /**
-        * 供应商id
-        */
-        @NotBlank(message = "供应商id不能为空")
-        @Size(max = 19,message = "供应商id最大长度不能超过19位")
-        private String supplierId;
-
-        /**
-        * 供应商名称
-        */
-        @NotBlank(message = "供应商名称不能为空")
-        @Size(max = 100,message = "供应商名称最大长度不能超过100位")
-        private String supplierName;
-
-        /**
-        * 来源明细id
-        */
-        @NotBlank(message = "来源明细id不能为空")
-        @Size(max = 19,message = "来源明细id最大长度不能超过19位")
-        private String sourceDetailId;
-
-        /**
-        * 来源id
-        */
-        @NotBlank(message = "来源id不能为空")
-        @Size(max = 19,message = "来源id最大长度不能超过19位")
-        private String sourceId;
-
-        /**
-        * 来源订单号
-        */
-        @NotBlank(message = "来源订单号不能为空")
-        @Size(max = 64,message = "来源订单号最大长度不能超过64位")
-        private String sourceCode;
-
-        /**
-        * 来源类型
-        */
-        @NotBlank(message = "来源类型不能为空")
-        @Size(max = 32,message = "来源类型最大长度不能超过32位")
-        private String sourceType;
-
-        /**
-        * 采购订单编码
-        */
-        @Size(max = 32,message = "采购订单编码最大长度不能超过32位")
-        private String poCode;
-
-        /**
-        * 采购订单id
-        */
-        @Size(max = 19,message = "采购订单id最大长度不能超过19位")
-        private String poId;
-
-        /**
-         * 采购订单详情id
-         */
-        @Size(max = 19,message = "采购订单id最大长度不能超过19位")
-        private String poDetailId;
-
-        /**
-        * 单据日期
-        */
-        private LocalDate date;
-
-        /**
-        * skuId
-        */
-        @NotBlank(message = "SKUid不能为空")
-        private String skuId;
-
-        /**
-        * 数量
-        */
-        private Integer qty;
-
-        /**
-        * 含税单价
-        */
-        @Digits(integer = 12, fraction = 4, message = "含税单价整数位不能超过12位，小数位不能超过4位")
-        private BigDecimal taxPrice;
-
-        /**
-        * 结算组织id
-        */
-        @Size(max = 19,message = "结算组织id最大长度不能超过19位")
-        private String settleOrgId;
-
-        /**
-        * 业务状态
-        */
-        @NotBlank(message = "业务状态不能为空")
-        @Size(max = 32,message = "业务状态最大长度不能超过32位")
-        private String businessStatus;
-
-        /**
-        * 币别
-        */
-        @Size(max = 32,message = "币别最大长度不能超过32位")
-        private String currency;
-
-        /**
-         * 退货来源
-         */
-        private String returnSourceType;
-        /**
-         * 送货单id
-         */
-        private String deliveryId;
-        /**
-         * 送货明细id
-         */
-        private String deliveryDetailId;
-        /**
-         * 送货单编码
-         */
-        private String deliveryCode;
-
-        /**
-         * 单据备注
-         */
-        private String remark;
-    }
-
-    @Data
-    @NoArgsConstructor
-    public static class AddPoReconciliationViewDTO {
-
-        /**
-         * 对账单id
-         */
-        private String id;
-
-        /**
-         * 对账单编号
-         */
-        private String code;
-
-    }
-
-        @Data
-    @NoArgsConstructor
-    public static class GeneratePoReconciliationDTO {
-
-        /**
-         * 选择明细id集合
-         */
-        @NotEmpty(message = "选择明细id集合不能未空")
-        private List<String> detailIdList;
-
-        /**
-         * 对账账单类型，/srm/drop/down/dict/list?key=poReconciliationGenerateType
-         */
-        @NotBlank(message = "对账单账单不能为空")
-        private String generateType;
-
-        /**
-         * 对账周期
-         */
-        private List<LocalDate> reconciliationDateList;
-
-        /**
-         * 对账单id
-         */
-        private String id;
-    }
-
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class UpdateBusinessStatusDTO {
-
-        /**
-         * 来源id集合
-         */
-        @NotEmpty(message = "来源id集合不能为空")
-        private List<String> sourceIdList;
-
-        /**
-         * 业务状态
-         */
-        @NotBlank(message = "业务状态不能为空")
-        private String businessStatus;
-
-    }
-
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class CodeDTO {
-
-        /**
-         * 入库/退货单号
-         */
-        @NotEmpty(message = "入库/退货单号不能为空")
-        private List<String> codeList;
-    }
-
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class GenerateParamDTO {
-        /**
-         * 编码
-         */
-        private String code;
-        /**
-         * 明细id
-         */
-        private String detailId;
-
-        public GenerateParamDTO (String code) {
-            this.code = code;
-        }
-    }
-
-
-        /**
-     * 添加设置
-     */
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class AddSettingDTO {
-
-        /**
-         * 付款条件集合
-         */
-        @NotEmpty(message = "付款条件不能为空")
-        private List<String> paymentConditionList;
-
-    }
-
-
-    /**
-     * 导入质
-     */
-    @Data
-    @NoArgsConstructor
-    public static class ImportDTO {
-
-        /**
-         * 成功返回数据
-         */
-        private List<PoReconciliationRefDetailDTO.ViewDTO> successList;
-
-        /**
-         * 错误的url
-         */
-        private String errorUrl;
     }
 }

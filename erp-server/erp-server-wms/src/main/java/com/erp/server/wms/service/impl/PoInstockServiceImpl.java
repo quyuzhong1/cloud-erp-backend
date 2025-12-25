@@ -37,7 +37,7 @@ import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.scm.entity.*;
 import com.erp.model.scm.enums.*;
 import com.erp.model.srm.dto.PoReconciliationDetailDTO;
-import com.erp.model.srm.entity.PoReconciliationDetailEntity;
+import com.erp.model.srm.entity.PoReconciliationRefDetailEntity;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
 import com.erp.model.wms.dto.*;
@@ -1003,18 +1003,14 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
      * @return void
      */
     private void checkPoReconciliation (PoInstockEntity entity) {
-      List<PoReconciliationDetailEntity> list =  FeignQuery.create(PoReconciliationDetailEntity.class)
-              .eq(PoReconciliationDetailEntity::getSourceId,entity.getId())
+      List<PoReconciliationRefDetailEntity> list =  FeignQuery.create(PoReconciliationRefDetailEntity.class)
+              .eq(PoReconciliationRefDetailEntity::getSourceId,entity.getId())
               .list();
-         if (CollUtil.isEmpty(list)) {
-              return;
-        }
-        long count = list.stream().filter(obj -> CharSequenceUtil.isNotBlank(obj.getMainId())).count();
-        if (count > 0) {
-          throw new ServiceException(ApiError.ERROR_PO_INSTOCK_PUSH_PO_RECONCILIATION);
+         if (CollUtil.isNotEmpty(list)) {
+             throw new ServiceException(ApiError.ERROR_PO_INSTOCK_PUSH_PO_RECONCILIATION);
         }
         //对账单删除
-        List<String> sourceDetailIdList = list.stream().map(PoReconciliationDetailEntity::getSourceDetailId).distinct().collect(Collectors.toList());
+        List<String> sourceDetailIdList = list.stream().map(PoReconciliationRefDetailEntity::getSourceDetailId).distinct().collect(Collectors.toList());
         srmPoReconciliationFeign.deleteDetailBySourceDetailIdList(sourceDetailIdList);
     }
 
