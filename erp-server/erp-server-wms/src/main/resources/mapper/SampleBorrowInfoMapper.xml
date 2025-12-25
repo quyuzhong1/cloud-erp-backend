@@ -339,6 +339,12 @@ sbi.remark as remark
         AND sbi.approve_status = 'approve'
         AND sbd.wait_return_qty > 0
         AND sbi.code = #{params.sourceCode}
+        <if test="params.useUserId != null and params.useUserId != ''">
+            AND sl.use_user_id = #{params.useUserId}
+        </if>
+        <if test="params.useUserName != null and params.useUserName != ''">
+            AND sl.use_user_name ILIKE concat('%',#{params.useUserName}::text,'%')
+        </if>
         <if test="params.skuNos != null and params.skuNos.size > 1">
             AND sbd.sku_no IN
             <foreach item="item" index="index" collection="params.skuNos" open="(" separator="," close=")">
@@ -347,14 +353,21 @@ sbi.remark as remark
         </if>
         <if test="params.skuNo != null and params.skuNo != ''">
             and sbd.sku_no ILIKE concat('%',#{params.skuNo}::text,'%')
-            ORDER BY
-            case
-            when sbd.sku_no = #{params.skuNo} THEN 1
-            when sbd.sku_no ILIKE concat(#{params.skuNo}::text,'%') THEN 2
-            when sbd.sku_no ILIKE concat('%',#{params.skuNo}::text)  THEN 3
-            when sbd.sku_no ILIKE concat('%',#{params.skuNo}::text,'%') THEN 4
-            end, sbd.sku_no
         </if>
+        <choose>
+            <when test="params.skuNo != null and params.skuNo != ''">
+                ORDER BY
+                case
+                when sbd.sku_no = #{params.skuNo} THEN 1
+                when sbd.sku_no ILIKE concat(#{params.skuNo}::text,'%') THEN 2
+                when sbd.sku_no ILIKE concat('%',#{params.skuNo}::text)  THEN 3
+                when sbd.sku_no ILIKE concat('%',#{params.skuNo}::text,'%') THEN 4
+                end, sl.use_user_name, sbd.sku_no
+            </when>
+            <otherwise>
+                ORDER BY sl.use_user_name, sbd.sku_no
+            </otherwise>
+        </choose>
     </select>
 
     <select id="pagingApp" resultType="com.erp.model.wms.dto.SampleBorrowInfoDTO$ListDTO">

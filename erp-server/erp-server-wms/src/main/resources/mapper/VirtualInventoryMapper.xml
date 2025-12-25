@@ -62,6 +62,7 @@
                 vi.virtual_warehouse_id as virtualWarehouseId
             from virtual_inventory vi
             left join virtual_warehouse vw on vi.virtual_warehouse_id = vw.id and vw.is_deleted = false
+            left join product_detail pd on vi.sku_id = pd.id and pd.is_deleted = false
             <where>
                 ${params.sqlMap.default}
                 and vi.is_deleted = false

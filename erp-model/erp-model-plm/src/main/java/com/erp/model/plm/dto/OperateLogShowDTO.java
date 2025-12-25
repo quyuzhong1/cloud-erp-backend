@@ -47,6 +47,12 @@ public class OperateLogShowDTO implements Serializable {
      */
     private String moduleType;
 
+    /**
+     * 业务ID
+     */
+    private String businessId;
+
+
     @Data
     @NoArgsConstructor
     public static class HistoryDTO {

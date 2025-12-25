@@ -221,6 +221,13 @@ public class PurchasePriceDTO implements Serializable {
          */
         @NotBlank(message = "币种不能为空")
         private String currency;
+
+        /**
+         * 是否含税（true=是，false=否）
+         */
+        @NotNull(message = "是否含税不能为空")
+        private Boolean isTaxIncluded;
+
         /**
          * 外部平台单号
          */
@@ -347,6 +354,16 @@ public class PurchasePriceDTO implements Serializable {
         @Valid
         private List<PurchasePriceDetailDTO.ViewDTO> purchasePriceDetailList;
 
+        /**
+         * 是否含税-中文
+         */
+        private String isTaxIncludedName;
+
+        /**
+         * 是否含税
+         */
+        private Boolean isTaxIncluded;
+
     }
 
 
@@ -372,6 +389,13 @@ public class PurchasePriceDTO implements Serializable {
          */
         @NotBlank(message = "供应商不能为空")
         private String supplierId;
+
+        /**
+         * 是否含税（true=是，false=否）
+         */
+        @NotNull(message = "是否含税不能为空")
+        private Boolean isTaxIncluded;
+
         /**
          * 外部平台单号
          */
@@ -458,6 +482,16 @@ public class PurchasePriceDTO implements Serializable {
          * 供应商名
          */
         private String supplierName;
+
+        /**
+         * 是否含税（true=是，false=否）
+         */
+        private Boolean isTaxIncluded;
+
+        /**
+         * 是否含税名称
+         */
+        private String isTaxIncludedName;
 
         /**
          * sku id
@@ -706,6 +740,12 @@ public class PurchasePriceDTO implements Serializable {
          * 供应商id
          */
         private String supplierId;
+
+
+        /**
+         * 是否含税
+         */
+        private Boolean isTaxIncluded;
 
         /**
          * 供应商名称

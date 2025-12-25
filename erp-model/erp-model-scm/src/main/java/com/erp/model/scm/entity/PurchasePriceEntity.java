@@ -118,6 +118,12 @@ public class PurchasePriceEntity extends BaseEntity<PurchasePriceEntity> {
     private String voucherNo;
 
     /**
+     * 是否含税（true=是，false=否）
+     */
+    @TableField("is_tax_included")
+    private Boolean isTaxIncluded;
+
+    /**
      * 明细ids
      */
     @TableField(exist = false)

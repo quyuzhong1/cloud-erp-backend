@@ -808,6 +808,7 @@ public enum ApiError implements Serializable {
     ERROR_98085(98085,"未找到委外变更单明细"),
     ERROR_98086(98086,"SKU【{}】已存在下推单据，不支持删除变更"),
     ERROR_98087(98087,"SKU【{}】变更数量【{}】不能小于关联订单采购数量【{}】"),
+    ERROR_98088(98088,"【%s】调出仓库+调出仓位不能等于调入仓库+调入仓位"),
     ERROR_98089(98089,"采购申请单【{}】明细SKU【{}】已下推委外订单"),
     ERROR_98090(98090,"所选采购申请单已下推委外订单，不支持反审核"),
     ERROR_98091(98091,"父级SKU【{}】数量不能超过采购申请剩余可下推数量【{}】"),
@@ -1063,6 +1064,17 @@ public enum ApiError implements Serializable {
     ERROR_BILL_NOT_EXIST(99088,"单据不存在"),
     ERROR_99089(99089,"只有待提交的单据支持分配盘点人"),
     ERROR_99090(99090,"盘点任务明细为空"),
+    
+    /**
+     * 样品领用单相关错误
+     */
+    ERROR_99250(99250,"审核数量修改明细列表不能为空"),
+    ERROR_99251(99251,"样品领用单不存在"),
+    ERROR_99252(99252,"只有审核中的样品领用单才能修改审核数量"),
+    ERROR_99253(99253,"已作废的样品领用单不支持修改审核数量"),
+    ERROR_99254(99254,"部分明细不存在或不属于该样品领用单"),
+    ERROR_99255(99255,"SKU【{}】的审核数量{}不能大于领用数量{}"),
+    ERROR_99256(99256,"修改审核数量失败"),
     NOT_EXIST_BILL(99091, "{}单据不存在"),
     ERROR_EXIST_BILL(99091, "{}单据已存在"),
     STOCKTAKING_TASK_STARTED(99091, "盘点任务已开始, 无法反审核"),
@@ -1412,6 +1424,8 @@ public enum ApiError implements Serializable {
 
     ERROR_UPDATE_IS_ALLOW_OUTSTOCK(92288,"只有待通知出库状态下允许操作待通知出库"),
     ERROR_IS_ALLOW_OUTSTOCK_PUSH(92289,"  - 只有允许出库的通知单允许下推销售出库单"),
+    ERROR_VIRTUAL_WAREHOUSE_FROM_WAREHOUSE_NOT_BLANK(92290,"启动自动借调时，借调仓不能为空"),
+    ERROR_VIRTUAL_WAREHOUSE_NOT_CONTAINS_FROM_WAREHOUSE(92291,"虚拟仓关联实体仓不能包含借调仓"),
 
 
     /**

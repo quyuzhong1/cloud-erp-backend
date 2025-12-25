@@ -280,10 +280,10 @@ public class VirtualInventoryTransCoreServiceImpl implements VirtualInventoryTra
                 stockBaseDTO.setSkuNo(flow.getSkuNo());
                 stockBaseDTO.setInventoryStatus(rule.getInventoryStatus());
                 if(rule.getWarehouseOption()==InventoryWarehouseOptionEnum.WAREHOUSE_CURRENT){
-                    stockBaseDTO.setWarehouseId(flow.getWarehouseId());
+                    stockBaseDTO.setWarehouseId(flow.getCurWarehouseId());
                     stockBaseDTO.setVirtualWarehouseId(flow.getVirtualCurWarehouseId());
                 }else {
-                    stockBaseDTO.setWarehouseId(flow.getWarehouseId());
+                    stockBaseDTO.setWarehouseId(flow.getTargetWarehouseId());
                     stockBaseDTO.setVirtualWarehouseId(flow.getVirtualTargetWarehouseId());
                 }
                 VirtualInventoryEntity virtualInventoryEntity = virtualInventoryService.getByTransaction(VirtualInventoryStockDTO.InventoryTransactionDTO.getInventoryTransactionDTO(stockBaseDTO));
