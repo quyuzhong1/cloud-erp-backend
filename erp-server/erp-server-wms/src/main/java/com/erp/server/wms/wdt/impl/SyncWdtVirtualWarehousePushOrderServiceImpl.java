@@ -10,6 +10,7 @@ import com.common.business.dto.WdtSearchHandelDetailDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.WdtVirtualInventoryService;
 import com.common.business.wrapper.FeignQuery;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
@@ -208,14 +209,14 @@ public class SyncWdtVirtualWarehousePushOrderServiceImpl implements SyncWdtVirtu
             detailDTO.setWarehouse_no(warehouseNo);
             List<WdtSearchHandelDetailDTO.SearchVirtualInventoryDTO> searchVirtualInventoryDTOS = wdtVirtualInventoryService.searchVirtualInventory(detailDTO);
             if (CollUtil.isEmpty(searchVirtualInventoryDTOS)) {
-                throw new RuntimeException("调用旺店通虚拟仓库存查询接口无可用库存，仓库编码：" + warehouseNo + "，SKU列表：" + skuNoList);
+                throw new ServiceException("调用旺店通虚拟仓库存查询接口无可用库存，仓库编码：{}.虚拟仓库编码：{}，SKU列表：{}" , warehouseNo, request.getVirtual_warehouse_no(), skuNoList);
             }
             for (VwPushHandelDetailPushDTO.DetailList detailPush : value) {
                 searchVirtualInventoryDTOS.stream().filter(obj -> CharSequenceUtil.equals(detailPush.getSpec_no(),obj.getSkuNo()) && CharSequenceUtil.equals(warehouseNo,obj.getWarehouseCode()) && CharSequenceUtil.equals(request.getVirtual_warehouse_no(),obj.getVirtualWarehouseCode()))
                         .findFirst().ifPresent(obj -> {
                             if (MathUtil.compareTo(new BigDecimal(obj.getQty()),detailPush.getNum()) < 0) {
-                                throw new RuntimeException("调用旺店通虚拟仓库存查询接口可用库存不足，仓库编码：" + warehouseNo + "，SKU：" + detailPush.getSpec_no()
-                                        + "，可用库存：" + obj.getQty() + "，需求数量：" + detailPush.getNum());
+                                throw new ServiceException("调用旺店通虚拟仓库存查询接口可用库存不足，仓库编码：{}.虚拟仓库编码：{}，SKU：{}，可用库存：{}，需求数量：{}" , warehouseNo ,request.getVirtual_warehouse_no(), detailPush.getSpec_no()
+                                        , obj.getQty() , detailPush.getNum());
                             }
                 });
             }
