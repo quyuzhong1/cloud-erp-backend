@@ -4,6 +4,7 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
@@ -1010,7 +1011,7 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
      */
     private VirtualWarehouseAllocationDTO.TransferWarehouseDTO generateAndCheckQty(VirtualWarehouseAllocationDTO.DetailDto detailDto, String type, List<VirtualInventoryDTO.ViewQtyDTO> virtualInventoryQtyList, VirtualWarehouseEntity virtualWarehouseEntity) {
         //是否启用自动调拨
-        Boolean isAutoTransferEnabled = virtualWarehouseEntity.getIsAutoTransferEnabled();
+        Boolean isAutoTransferEnabled = ObjUtil.isEmpty(virtualWarehouseEntity) ? Boolean.FALSE : virtualWarehouseEntity.getIsAutoTransferEnabled();
         Integer qty = detailDto.getQty();
         switch (VirtualWarehouseAllocationTypeEnum.getEnum(type)) {
             case ALLOCATION:
