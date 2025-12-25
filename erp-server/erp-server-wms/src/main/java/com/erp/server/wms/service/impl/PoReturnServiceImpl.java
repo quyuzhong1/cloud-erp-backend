@@ -3068,7 +3068,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
 
         // 导出数据
         StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/wms/supplierPoReturnExport.xlsx";
+        String excelPath = "excel/supplierPoReturnExport.xlsx";
         String name = "SRM供应商退货单导出";
         String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
         sb.append(date).append(name);
