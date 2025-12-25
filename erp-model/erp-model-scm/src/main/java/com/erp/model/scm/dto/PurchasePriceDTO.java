@@ -257,8 +257,7 @@ public class PurchasePriceDTO implements Serializable {
          */
         @NotBlank(message = "付款条件不能为空")
         private String paymentCondition;
-        @NotBlank(message = "付款条件不能为空")
-        private String paymentConditionName;
+
 
         /**
          * 报价明细
@@ -428,9 +427,6 @@ public class PurchasePriceDTO implements Serializable {
          */
         @NotBlank(message = "付款条件不能为空")
         private String paymentCondition;
-        @NotBlank(message = "付款条件不能为空")
-        private String paymentConditionName;
-
         /**
          * 报价明细
          */

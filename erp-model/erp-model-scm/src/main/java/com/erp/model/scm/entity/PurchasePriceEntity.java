@@ -121,11 +121,6 @@ public class PurchasePriceEntity extends BaseEntity<PurchasePriceEntity> {
      */
     @TableField("payment_condition")
     private String paymentCondition;
-    /**
-     * 付款条件
-     */
-    @TableField("payment_condition_name")
-    private String paymentConditionName;
 
     /**
      * 明细ids
