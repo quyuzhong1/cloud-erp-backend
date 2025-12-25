@@ -29,15 +29,15 @@ import java.io.IOException;
 
 public class InventoryDetails {
   @SerializedName("availableDistributableQuantity")
-  private Long availableDistributableQuantity = null;
+  private Integer availableDistributableQuantity = null;
 
   @SerializedName("replenishmentQuantity")
-  private Long replenishmentQuantity = null;
+  private Integer replenishmentQuantity = null;
 
   @SerializedName("reservedDistributableQuantity")
-  private Long reservedDistributableQuantity = null;
+  private Integer reservedDistributableQuantity = null;
 
-  public InventoryDetails availableDistributableQuantity(Long availableDistributableQuantity) {
+  public InventoryDetails availableDistributableQuantity(Integer availableDistributableQuantity) {
     this.availableDistributableQuantity = availableDistributableQuantity;
     return this;
   }
@@ -47,15 +47,15 @@ public class InventoryDetails {
    * @return availableDistributableQuantity
   **/
   
-  public Long getAvailableDistributableQuantity() {
+  public Integer getAvailableDistributableQuantity() {
     return availableDistributableQuantity;
   }
 
-  public void setAvailableDistributableQuantity(Long availableDistributableQuantity) {
+  public void setAvailableDistributableQuantity(Integer availableDistributableQuantity) {
     this.availableDistributableQuantity = availableDistributableQuantity;
   }
 
-  public InventoryDetails replenishmentQuantity(Long replenishmentQuantity) {
+  public InventoryDetails replenishmentQuantity(Integer replenishmentQuantity) {
     this.replenishmentQuantity = replenishmentQuantity;
     return this;
   }
@@ -65,15 +65,15 @@ public class InventoryDetails {
    * @return replenishmentQuantity
   **/
   
-  public Long getReplenishmentQuantity() {
+  public Integer getReplenishmentQuantity() {
     return replenishmentQuantity;
   }
 
-  public void setReplenishmentQuantity(Long replenishmentQuantity) {
+  public void setReplenishmentQuantity(Integer replenishmentQuantity) {
     this.replenishmentQuantity = replenishmentQuantity;
   }
 
-  public InventoryDetails reservedDistributableQuantity(Long reservedDistributableQuantity) {
+  public InventoryDetails reservedDistributableQuantity(Integer reservedDistributableQuantity) {
     this.reservedDistributableQuantity = reservedDistributableQuantity;
     return this;
   }
@@ -83,11 +83,11 @@ public class InventoryDetails {
    * @return reservedDistributableQuantity
   **/
   
-  public Long getReservedDistributableQuantity() {
+  public Integer getReservedDistributableQuantity() {
     return reservedDistributableQuantity;
   }
 
-  public void setReservedDistributableQuantity(Long reservedDistributableQuantity) {
+  public void setReservedDistributableQuantity(Integer reservedDistributableQuantity) {
     this.reservedDistributableQuantity = reservedDistributableQuantity;
   }
 

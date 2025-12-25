@@ -42,10 +42,10 @@ public class InventorySummary {
   private String sku = null;
 
   @SerializedName("totalInboundQuantity")
-  private Long totalInboundQuantity = null;
+  private Integer totalInboundQuantity = null;
 
   @SerializedName("totalOnhandQuantity")
-  private Long totalOnhandQuantity = null;
+  private Integer totalOnhandQuantity = null;
 
   public InventorySummary expirationDetails(List<ExpirationDetails> expirationDetails) {
     this.expirationDetails = expirationDetails;
@@ -109,7 +109,7 @@ public class InventorySummary {
     this.sku = sku;
   }
 
-  public InventorySummary totalInboundQuantity(Long totalInboundQuantity) {
+  public InventorySummary totalInboundQuantity(Integer totalInboundQuantity) {
     this.totalInboundQuantity = totalInboundQuantity;
     return this;
   }
@@ -119,15 +119,15 @@ public class InventorySummary {
    * @return totalInboundQuantity
   **/
   
-  public Long getTotalInboundQuantity() {
+  public Integer getTotalInboundQuantity() {
     return totalInboundQuantity;
   }
 
-  public void setTotalInboundQuantity(Long totalInboundQuantity) {
+  public void setTotalInboundQuantity(Integer totalInboundQuantity) {
     this.totalInboundQuantity = totalInboundQuantity;
   }
 
-  public InventorySummary totalOnhandQuantity(Long totalOnhandQuantity) {
+  public InventorySummary totalOnhandQuantity(Integer totalOnhandQuantity) {
     this.totalOnhandQuantity = totalOnhandQuantity;
     return this;
   }
@@ -137,11 +137,11 @@ public class InventorySummary {
    * @return totalOnhandQuantity
   **/
   
-  public Long getTotalOnhandQuantity() {
+  public Integer getTotalOnhandQuantity() {
     return totalOnhandQuantity;
   }
 
-  public void setTotalOnhandQuantity(Long totalOnhandQuantity) {
+  public void setTotalOnhandQuantity(Integer totalOnhandQuantity) {
     this.totalOnhandQuantity = totalOnhandQuantity;
   }
 
