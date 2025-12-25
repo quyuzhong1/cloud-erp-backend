@@ -209,6 +209,7 @@ public class PoReconciliationRefDetailServiceImpl extends SuperServiceImpl<PoRec
     }
 
     @Override
+    @Transactional(rollbackFor =  Exception.class)
     public void batchAdd(List<PoReconciliationDetailEntity> poReconciliationDetailList, String id) {
         if (CollUtil.isEmpty(poReconciliationDetailList)) {
             throw new ServiceException(ApiError.ERROR_PO_RECONCILIATION_DETAIL_NOT_EXIST);
@@ -220,7 +221,7 @@ public class PoReconciliationRefDetailServiceImpl extends SuperServiceImpl<PoRec
 
             //新增默认取可对账数量生成对账单明细
             Integer hasQty = oldRefDetailList.stream().filter(obj -> CharSequenceUtil.equals(detail.getId(), obj.getPoReconciliationDetailId())).map(PoReconciliationRefDetailEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
-            if (hasQty >= detail.getQty()) {
+            if (Math.abs(hasQty) >= Math.abs(detail.getQty())) {
                 throw new ServiceException(ApiError.ERROR_PO_RECONCILIATION_DETAIL_HAS_IN_RECONCILIATION,detail.getSourceCode(),detail.getSkuNo());
             }
             PoReconciliationRefDetailEntity refDetailEntity = new PoReconciliationRefDetailEntity();
@@ -233,7 +234,7 @@ public class PoReconciliationRefDetailServiceImpl extends SuperServiceImpl<PoRec
             refDetailEntity.setDiscountTaxAmount(refDetailEntity.getTaxAmount());
             return refDetailEntity;
         }).collect(Collectors.toList());
-        boolean save = this.saveBatch(refDetailList);
+        boolean save = super.saveBatch(refDetailList);
         if (!save) {
             throw new ServiceException(ApiError.ERROR_1002);
         }
@@ -436,7 +437,7 @@ public class PoReconciliationRefDetailServiceImpl extends SuperServiceImpl<PoRec
             //已对账数量
             Integer hasReconciledQty = poReconciliationRefDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getPoReconciliationDetailId(), entity.getPoReconciliationDetailId()) && !CharSequenceUtil.equals(obj.getId(), entity.getId()))
                     .map(PoReconciliationRefDetailEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
-            if (hasReconciledQty + entity.getQty() > detailEntity.getQty()) {
+            if (Math.abs(hasReconciledQty)  + Math.abs(entity.getQty()) > Math.abs(detailEntity.getQty())) {
                 throw new ServiceException(ApiError.ERROR_PO_RECONCILIATION_DETAIL_QTY_OVERFLOW,detailEntity.getSourceCode(),detailEntity.getSkuNo(),entity.getQty(), detailEntity.getQty() - hasReconciledQty );
             }
             //设置主表ID
