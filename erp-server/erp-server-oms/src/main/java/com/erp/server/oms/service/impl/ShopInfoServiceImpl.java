@@ -1913,6 +1913,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         addUserShopAuthDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
         addUserShopAuthDTO.setShopIdList(Collections.singletonList(shop.getId()));
         authDataFeign.addUserShopAuth(addUserShopAuthDTO);
+        this.saveCustom(shop);
         return Collections.singletonList(shop);
     }
 

@@ -172,7 +172,7 @@ public class DmpOutputWdtB2bOrderRocketMQTaskHandler extends DmpOutputRocketMQTa
 			detailDTO.setQty(dmpSoDetailEntity.getQty());
 			detailDTO.setTaxRate(dmpSoInfoEntity.getTaxRate());
 			detailDTO.setTaxPrice(dmpSoDetailEntity.getSellPriceOrigin());
-			detailDTO.setPrice(detailDTO.getTaxPrice().divide(BigDecimal.ONE.add(detailDTO.getTaxRate()), 2, RoundingMode.HALF_UP));
+			detailDTO.setPrice(detailDTO.getTaxPrice().divide(BigDecimal.ONE.add(detailDTO.getTaxRate().divide(new BigDecimal("100"), 4, RoundingMode.HALF_UP)), 2, RoundingMode.HALF_UP));
 			details.add(detailDTO);
 		}
 		platformB2bOrderDTO.setDetail(details);

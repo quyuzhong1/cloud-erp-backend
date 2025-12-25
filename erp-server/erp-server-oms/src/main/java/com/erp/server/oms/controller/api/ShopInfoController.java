@@ -528,9 +528,6 @@ public class ShopInfoController extends BaseController {
     @PostMapping("/addIntenal")
     public ApiResult<?> addIntenal(@RequestBody @Validated ShopDTO.AddInternalDTO dto) {
         List<ShopInfoEntity> list = shopInfoService.addIntenal(dto);
-        for (ShopInfoEntity shop : list) {
-            shopInfoService.saveCustom(shop);
-        }
         return !CollectionUtils.isEmpty(list) ? success() : failure();
     }
 
