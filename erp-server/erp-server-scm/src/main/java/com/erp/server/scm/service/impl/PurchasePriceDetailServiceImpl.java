@@ -118,19 +118,25 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
         List<PurchasePriceDetailEntity> addList = BeanMapper.copyList(purchasePriceDetailList, PurchasePriceDetailEntity.class);
         List<String> skuIds = addList.stream().map(PurchasePriceDetailEntity::getSkuId).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIds);
-
+//        SkuVO skuVO = skuList.stream().filter(e -> Objects.equals("资产", e.getPropertyName())).findFirst().orElse(null);
         PurchasePriceEntity purchasePriceEntity = priceService.getById(purchasePriceId);
         if (ObjectUtils.isEmpty(purchasePriceEntity)) {
             throw new ServiceException(ApiError.ERROR_98024);
         }
         //验证时间
         checkPurchasePriceDetail(purchasePriceEntity.getSupplierId(),purchasePriceEntity.getPurchaseOrgId(),addList);
+        //验证是否包含资产属性sku
+        StringBuffer sb = new StringBuffer();
         for (PurchasePriceDetailEntity item : addList) {
             String skuId = item.getSkuId();
             SkuVO skuVO = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().orElse(new SkuVO());
             if (skuVO != null) {
                 item.setSkuNo(skuVO.getSkuNo());
                 item.setProductName(skuVO.getSkuName());
+                if(!Objects.equals("资产", skuVO.getPropertyName())){
+                    sb.append(skuVO.getSkuNo());
+                    sb.append(";");
+                }
             }
             item.setPurchasePriceId(purchasePriceId);
             //税率
@@ -141,6 +147,11 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
             }
             item.setCurrency(purchasePriceEntity.getCurrency());
             item.setPricingUserId(purchasePriceEntity.getPricingUserId());
+        }
+        //提示非资产属性SKU
+        String errorMsg = sb.toString();
+        if(StringUtils.isNotBlank(errorMsg)){
+            throw new ServiceException(ApiError.ERROR_PRODUCT_PROPERTY_ASSET_NOT_EXIST,errorMsg);
         }
         this.saveBatch(addList);
         //标记SKU
@@ -316,6 +327,8 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
         if (ObjectUtils.isEmpty(purchasePriceEntity)) {
             throw new ServiceException(ApiError.ERROR_98024);
         }
+        //验证是否包含资产属性sku
+        StringBuffer sb = new StringBuffer();
         for (PurchasePriceDetailDTO.UpdateDTO item : purchasePriceDetailList) {
             PurchasePriceDetailEntity entity = new PurchasePriceDetailEntity();
             BeanMapper.copy(item, entity);
@@ -324,6 +337,12 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
             if (skuVO != null) {
                 entity.setSkuNo(skuVO.getSkuNo());
                 entity.setProductName(skuVO.getSpuName());
+
+                if(!Objects.equals("资产", skuVO.getPropertyName())){
+                    sb.append("【");
+                    sb.append(skuVO.getSkuNo());
+                    sb.append("】;");
+                }
             }
             entity.setPurchasePriceId(purchasePriceId);
             //税率
@@ -335,6 +354,12 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
             entity.setCurrency(purchasePriceEntity.getCurrency());
             entity.setPricingUserId(purchasePriceEntity.getPricingUserId());
             saveOrUpdateList.add(entity);
+        }
+
+        //提示非资产属性SKU
+        String errorMsg = sb.toString();
+        if(StringUtils.isNotBlank(errorMsg)){
+            throw new ServiceException(ApiError.ERROR_PRODUCT_PROPERTY_ASSET_NOT_EXIST,errorMsg);
         }
 
         //验证时间

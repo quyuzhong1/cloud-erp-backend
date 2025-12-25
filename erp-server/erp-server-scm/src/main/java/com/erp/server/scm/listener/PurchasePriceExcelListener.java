@@ -8,6 +8,7 @@ import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.FieldValidUtil;
 import com.common.core.utils.StrUtils;
 import com.erp.model.plm.vo.SkuVO;
@@ -221,6 +222,9 @@ public class PurchasePriceExcelListener extends AnalysisEventListener<ImportPurc
             detailDTO.setSkuId(skuEntity.getSkuId());
             detailDTO.setSkuNo(skuNo);
             detailDTO.setProductName(skuEntity.getSkuName());
+            if(!Objects.equals("资产", skuEntity.getPropertyName())){
+                errorMsgList.add(StrUtil.format(ApiError.ERROR_PRODUCT_PROPERTY_ASSET_NOT_EXIST.msg,skuEntity.getSkuNo()));
+            }
         }
 
         // 采购交期

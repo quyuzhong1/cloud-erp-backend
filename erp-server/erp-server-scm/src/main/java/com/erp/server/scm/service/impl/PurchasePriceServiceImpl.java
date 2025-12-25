@@ -169,10 +169,10 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         if (Objects.isNull(supplier)) {
             throw new ServiceException(ApiError.ERROR_SUPPLIER_ABSENCE);
         }
-        
+
         // 校验是否含税与税率的关系
         validateTaxIncludedAndTaxRate(dto.getIsTaxIncluded(), dto.getPurchasePriceDetailList());
-        
+
         PurchasePriceEntity purchasePrice = new PurchasePriceEntity();
         String id = IdWorker.getIdStr();
         BeanMapper.copy(dto, purchasePrice);
@@ -266,6 +266,8 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         purchasePriceDetailList.forEach(req -> {
             SkuVO skuVO = skuNoList.stream().filter(obj -> obj.getSkuId().equals(req.getSkuId())).findFirst().orElse(new SkuVO());
             req.setProductName(skuVO.getSkuName());
+            req.setPropertyId(skuVO.getPropertyId());
+            req.setProperty(skuVO.getPropertyName());
         });
 
         viewDTO.setPurchasePriceDetailList(purchasePriceDetailList);
@@ -275,7 +277,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         viewDTO.setSupplierContactName(supplierDTO.getPerson());
         viewDTO.setContactTelNumber(supplierDTO.getTelNumber());
 
-        String paymentConditionCode = supplierDTO.getPaymentCondition();
+        String paymentConditionCode = purchasePrice.getPaymentCondition();
 
         //付款条件
         KingdeePaymentConditionEntity paymentCondition = kingdeePaymentConditionService.getByCode(paymentConditionCode);
@@ -314,10 +316,10 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         if (!statusList.contains(status.getStatus())) {
             throw new ServiceException(ApiError.ERROR_98019);
         }
-        
+
         // 校验是否含税与税率的关系
         validateTaxIncludedAndTaxRate(dto.getIsTaxIncluded(), dto.getPurchasePriceDetailList());
-        
+
         BeanMapper.copy(dto, purchasePrice);
         //编号
         String code = purchasePrice.getCode();
@@ -1257,12 +1259,12 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         if (isTaxIncluded == null) {
             return;
         }
-        
+
         // 如果明细为空，直接返回
         if (CollectionUtils.isEmpty(detailList)) {
             return;
         }
-        
+
         // 若选择"否"（不含税），则所有明细的税率必须为0
         if (Boolean.FALSE.equals(isTaxIncluded)) {
             List<String> invalidSkuNos = new ArrayList<>();
@@ -1274,14 +1276,42 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
                     }
                 }
             }
-            
+
             // 如果存在税率不为0的明细，抛出异常
             if (CollectionUtils.isNotEmpty(invalidSkuNos)) {
                 String skuList = String.join("、", invalidSkuNos);
-                throw new ServiceException(ApiError.DEFAULT.code, 
+                throw new ServiceException(ApiError.DEFAULT.code,
                     String.format("当选择【不含税】时，所有明细的税率必须为0，以下SKU的税率不为0：%s", skuList));
             }
         }
+    }
+
+
+    @Override
+    public PurchasePriceDTO.PayConditionBySupplierAndCompanyDTO getPayConditionBySupplierAndCompany(PurchasePriceDTO.PayConditionBySupplierAndCompanyDTO dto) {
+        if(Objects.isNull(dto)){
+            return null;
+        }
+
+        //查询 最新的 审批通过的
+        List<PurchasePriceEntity> list = lambdaQuery().eq(PurchasePriceEntity::getSupplierId,dto.getSupplierId())
+                .eq(PurchasePriceEntity::getPurchaseOrgId,dto.getPurchaseOrgId())
+                .eq(PurchasePriceEntity::getIsDeleted,false)
+                .eq(PurchasePriceEntity::getApproveStatus,ApproveStatusEnum.APPROVE.getCode())
+                .orderByDesc(PurchasePriceEntity::getCreateTime)
+                .list();
+        if(CollUtil.isNotEmpty(list)){
+            PurchasePriceEntity purchasePriceEntity = list.get(0);
+            dto.setPaymentCondition(purchasePriceEntity.getPaymentCondition());
+            //付款条件名称
+            if(StringUtils.isNotBlank(purchasePriceEntity.getPaymentCondition())){
+                KingdeePaymentConditionEntity paymentCondition = kingdeePaymentConditionService.getByCode(purchasePriceEntity.getPaymentCondition());
+                if (Objects.nonNull(paymentCondition)) {
+                    dto.setPaymentConditionName(paymentCondition.getName());
+                }
+            }
+        }
+        return dto;
     }
 
 }

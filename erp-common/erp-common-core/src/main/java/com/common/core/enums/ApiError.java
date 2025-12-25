@@ -847,11 +847,6 @@ public enum ApiError implements Serializable {
     PURCHASE_ORG_NOT_REPEAT(98113,"只有相同的采购组织可以批量变更报价"),
     ERROR_SUBCONTRACT_ORDER_WAREHOUSE_ORG(98114,"委外订单仓库【{}】与委外组织【{}】不匹配"),
     ERROR_SO_DELIVERY_NOTICE_NOT_EXIST(98115,"发货通知单不存在"),
-
-
-
-
-
     ERROR_PURCHASE_PRICE_DATE(98112,"采购价目表SKU【{}】失效时间不可小于生效时间"),
     ERROR_PURCHASE_PRICE_DATE_OVERLAP(98113,"采购价目表SKU【{}】时间区间重叠"),
     ERROR_PURCHASE_PRICE_CHANGE_DATE(98114,"采购调价表SKU【{}】失效时间不可小于生效时间"),
@@ -908,6 +903,7 @@ public enum ApiError implements Serializable {
     ERROR_CONTRACT_TEMPLATE_NOT_EXIST(98159,"合同模板不存在或被禁用"),
     ERROR_CONTRACT_TEMPLATE_DICTINCT(98160,"【{}】已绑定【{}】，不可重复绑定"),
     ERROR_CONTRACT_TEMPLATE_EXIST(98161,"【{}】已被其他供应商绑定，请先解除关联再绑定所有供应商"),
+    ERROR_PRODUCT_PROPERTY_ASSET_NOT_EXIST(98161,"SKU【{}】产品属性非资产，与供应商付款条件不一致"),
 
     /**
      * WMS 错误
