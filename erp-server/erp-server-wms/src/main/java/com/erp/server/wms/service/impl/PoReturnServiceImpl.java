@@ -20,11 +20,13 @@ import com.common.business.utils.ApplicationContextUtils;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
+import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.StrUtils;
+import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.dto.ThirdMappingDTO;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
@@ -85,11 +87,13 @@ import org.springframework.transaction.support.TransactionSynchronizationAdapter
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.Date;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -3007,8 +3011,72 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
     }
 
     @Override
-    public void supplierExportList(PurchaseReturnOrderDTO.SupplierPagingParamDTO dto) {
-        downloadTaskFeign.saveDownloadTask("SRM供应商退货单导出", EXPORT_WMS_SUPPLIER_PO_RETURN.getCode(), dto);
+    public void supplierExportList(PurchaseReturnOrderDTO.SupplierPagingParamDTO dto, HttpServletResponse response) {
+        // 设置权限SQL
+        dto.setPermissionSql(dto.getPermissionSql());
+        
+        //查询登录信息
+        LoginUser loginUser = UserContext.getDefaultLoginUser();
+        if(Objects.isNull(loginUser)){
+            throw new ServiceException(ApiError.ERROR_403);
+        }
+
+        //查询供应商信息
+        SupplierEntity supplier = supplierFeign.getSupplierByUid(loginUser.getUid());
+        if (ObjectUtils.isNotEmpty(supplier)) {
+            dto.setSupplierId(supplier.getId());
+        }
+
+        //分页查询所有数据
+        List<PurchaseReturnOrderDTO.SupplierPagingViewDTO> allRecords = new ArrayList<>();
+        int pageSize = 1000;
+        int currPage = 1;
+        IPage<PurchaseReturnOrderDTO.SupplierPagingViewDTO> pageData;
+        do {
+            pageData = this.baseMapper.supplierPaging(new Page<>(currPage, pageSize), dto);
+            if (CollUtil.isNotEmpty(pageData.getRecords())) {
+                allRecords.addAll(pageData.getRecords());
+            }
+            currPage++;
+        } while (pageData.getRecords().size() == pageSize && currPage <= pageData.getPages());
+
+        if (CollUtil.isEmpty(allRecords)) {
+            return;
+        }
+        
+        //根据ids查询sku信息
+        List<String> skuIdList = allRecords.stream().map(PurchaseReturnOrderDTO.SupplierPagingViewDTO::getSkuId).collect(Collectors.toList());
+        List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIdList);
+        for (PurchaseReturnOrderDTO.SupplierPagingViewDTO record : allRecords) {
+            //退货来源名称
+            ReturnOrderSourceEnum returnOrderSourceEnum = Objects.equals(record.getSourceType(), SourceTypeEnum.QC_INFO.getCode()) ?
+                    ReturnOrderSourceEnum.QC : ReturnOrderSourceEnum.OTHER;
+            record.setReturnOrderSource(returnOrderSourceEnum.getCode());
+            record.setReturnOrderSourceName(returnOrderSourceEnum.getName());
+
+            //订单确认状态名称
+            record.setConfirmStatusName(PoReturnConfirmStatusEnum.getName(record.getConfirmStatus()));
+
+            //异常分类名称
+            record.setUnusualTypeName(PoReturnUnusualTypeEnum.getName(record.getUnusualType()));
+            //退货方式名称
+            record.setReturnModeName(ReturnModeEnum.getName(record.getReturnMode()));
+            //产品信息
+            ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(entityClass -> entityClass.getId().equals(record.getSkuId())).findFirst().orElse(new ProductDetailEntity());
+            record.setProductName(productDetailEntity.getName());
+        }
+
+        // 导出数据
+        StringBuffer sb = new StringBuffer();
+        String excelPath = "excel/wms/supplierPoReturnExport.xlsx";
+        String name = "SRM供应商退货单导出";
+        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+        sb.append(date).append(name);
+        try {
+            new ExcelPrintUtils().patchExport(allRecords, response, sb.toString(), excelPath);
+        } catch (Exception e) {
+            throw new ServiceException(ApiError.ERROR_1015);
+        }
     }
 
     @Override

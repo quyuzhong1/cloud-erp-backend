@@ -23,6 +23,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -128,14 +129,13 @@ public class SupplierPoReturnController extends BaseController {
      * @Author system
      * @Date 2025/12/17
      * @param dto
-     * @return ApiResult<Boolean>
+     * @param response
      **/
     @PostMapping("/export")
     @LogAction(value = LogActionEnum.EXPORT, desc = "SRM供应商退货单导出Excel数据")
     @WebAdvanceQuery(handler = SupplierPoReturnQueryHandler.class)
-    public ApiResult<Boolean> exportList(@RequestBody @Validated PurchaseReturnOrderDTO.SupplierPagingParamDTO dto) {
-        poReturnService.supplierExportList(dto);
-        return success();
+    public void exportList(@RequestBody @Validated PurchaseReturnOrderDTO.SupplierPagingParamDTO dto, HttpServletResponse response) {
+        poReturnService.supplierExportList(dto, response);
     }
 
 }

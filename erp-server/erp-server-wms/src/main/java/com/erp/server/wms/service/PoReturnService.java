@@ -15,6 +15,7 @@ import com.erp.model.wms.entity.PoReturnDetailEntity;
 import com.erp.model.wms.entity.PoReturnEntity;
 import org.springframework.web.bind.annotation.RequestBody;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -434,10 +435,11 @@ public interface PoReturnService extends SuperService<PoReturnEntity> {
     BatchResultDTO deleteEntity(PoReturnEntity entity);
 
     /**
-     * SRM供应商退货单导出（异步）
+     * SRM供应商退货单导出（同步）
      * @param dto
+     * @param response
      */
-    void supplierExportList(PurchaseReturnOrderDTO.SupplierPagingParamDTO dto);
+    void supplierExportList(PurchaseReturnOrderDTO.SupplierPagingParamDTO dto, HttpServletResponse response);
 
     /**
      * SRM供应商退货单导出（Feign调用）
