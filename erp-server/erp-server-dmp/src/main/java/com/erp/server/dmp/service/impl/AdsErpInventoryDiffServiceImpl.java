@@ -223,7 +223,7 @@ public class AdsErpInventoryDiffServiceImpl extends SuperServiceImpl<AdsErpInven
         if (StringUtils.isNotBlank(platformListStr)) {
             platformList = Arrays.stream(platformListStr.split(",")).collect(Collectors.toList());
         }
-        List<AdsErpInventoryDiffDTO.WarehouseListDTO> resultList = new ArrayList<>();
+        Set<AdsErpInventoryDiffDTO.WarehouseListDTO> resultSet = new HashSet<>();
         // 仓储平台
         List<ThirdMappingEntity> mapppingWarehouseList = thirdMappingService.lambdaQuery()
                 .in(ThirdMappingEntity::getThirdSysType, platformList)
@@ -233,7 +233,7 @@ public class AdsErpInventoryDiffServiceImpl extends SuperServiceImpl<AdsErpInven
             List<AdsErpInventoryDiffDTO.WarehouseListDTO> collect = mapppingWarehouseList.stream()
                     .map(e -> new AdsErpInventoryDiffDTO.WarehouseListDTO(e.getSysId(), e.getSysName(), finalWarehouseList.contains(e.getSysId())))
                     .collect(Collectors.toList());
-            resultList.addAll(collect);
+            resultSet.addAll(collect);
         }
 
         List<String> finalPlatformList = platformList;
@@ -246,9 +246,10 @@ public class AdsErpInventoryDiffServiceImpl extends SuperServiceImpl<AdsErpInven
                 .list();
         if (CollectionUtils.isNotEmpty(shopList)){
             List<AdsErpInventoryDiffDTO.WarehouseListDTO> collect = shopList.stream()
+                    .filter(e-> StringUtils.isNotBlank(e.getWarehouseId()))
                     .map(e -> new AdsErpInventoryDiffDTO.WarehouseListDTO(e.getWarehouseId(), e.getWarehouseName(), finalWarehouseList.contains(e.getWarehouseId())))
                     .collect(Collectors.toList());
-            resultList.addAll(collect);
+            resultSet.addAll(collect);
         }
 
         // wms绑定仓库
@@ -257,11 +258,13 @@ public class AdsErpInventoryDiffServiceImpl extends SuperServiceImpl<AdsErpInven
                 .list();
         if (CollectionUtils.isNotEmpty(mappingList)){
             List<AdsErpInventoryDiffDTO.WarehouseListDTO> collect = mappingList.stream()
+                    .filter(e-> StringUtils.isNotBlank(e.getWarehouseId()))
                     .map(e -> new AdsErpInventoryDiffDTO.WarehouseListDTO(e.getWarehouseId(), e.getName(), finalWarehouseList.contains(e.getWarehouseId())))
+                    .distinct()
                     .collect(Collectors.toList());
-            resultList.addAll(collect);
+            resultSet.addAll(collect);
         }
-        return resultList;
+        return new ArrayList<>(resultSet);
     }
 
     @Override
