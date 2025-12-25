@@ -250,6 +250,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         viewDTO.setApproveStatus(purchasePrice.getApproveStatus().getStatus());
         //是否含税名称
         viewDTO.setIsTaxIncludedName(Boolean.TRUE.equals(purchasePrice.getIsTaxIncluded()) ? "是" : "否");
+        viewDTO.setIsTaxIncluded(purchasePrice.getIsTaxIncluded());
         //附件信息
         List<AttachmentDTO.UpdateDTO> attachmentList = attachmentService.getByBusinessId(id);
         List<String> attachmentUrlList = attachmentList.stream().map(AttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.toList());

@@ -355,9 +355,14 @@ public class PurchasePriceDTO implements Serializable {
         private List<PurchasePriceDetailDTO.ViewDTO> purchasePriceDetailList;
 
         /**
-         * 是否含税
+         * 是否含税-中文
          */
         private String isTaxIncludedName;
+
+        /**
+         * 是否含税
+         */
+        private Boolean isTaxIncluded;
 
     }
 
