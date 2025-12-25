@@ -331,6 +331,7 @@ public class ExportOmsFeignController {
     @PostMapping("/packagePlan")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
+            shopTableField = "pp.shop_id",
             menuCode = "oms:packagePlan:paging",
             tableAlias = "pp"
     )
