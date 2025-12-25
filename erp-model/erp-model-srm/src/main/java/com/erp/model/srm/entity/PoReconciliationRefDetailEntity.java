@@ -192,6 +192,18 @@ public class PoReconciliationRefDetailEntity extends BaseEntity<PoReconciliation
     private BigDecimal discountTaxAmount;
 
     /**
+     * 供方备注
+     */
+    @TableField("supplier_remark")
+    private String supplierRemark;
+
+    /**
+     * 采方备注
+     */
+    @TableField("purchase_remark")
+    private String purchaseRemark;
+
+    /**
      * 备注
      */
     @TableField("remark")
