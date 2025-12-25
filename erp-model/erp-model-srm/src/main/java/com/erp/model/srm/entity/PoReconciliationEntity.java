@@ -125,13 +125,6 @@ public class PoReconciliationEntity extends BaseEntity<PoReconciliationEntity> {
     private String remark;
 
 
-    /**
-     * 同步金蝶id
-     */
-    @TableField("sync_kingdee_id")
-    private String syncKingdeeId;
-
-
     public static final String CODE = "code";
 
     public static final String STATUS = "status";

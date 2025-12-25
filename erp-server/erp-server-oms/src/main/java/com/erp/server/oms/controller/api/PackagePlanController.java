@@ -118,7 +118,7 @@ public class PackagePlanController extends BaseController {
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
-            shopTableField = "si.id",
+            shopTableField = "pp.shop_id",
             menuCode = "oms:packagePlan:paging",
             tableAlias = "pp"
     )

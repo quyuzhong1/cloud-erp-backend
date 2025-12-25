@@ -81,7 +81,7 @@ public class SoB2cAbnormalServiceImpl implements SoB2cAbnormalService {
     }
 
     @Override
-    public List<BatchResultDTO> batchRetry(String id) {
+    public List<BatchResultDTO> batchRetry(String id,String type) {
         //返回信息
         List<BatchResultDTO> resultDTOList =  new ArrayList<>();
         //销售订单
@@ -90,6 +90,9 @@ public class SoB2cAbnormalServiceImpl implements SoB2cAbnormalService {
             throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
         }
         SoB2cErrorTypeEnum soB2cErrorTypeEnum = SoB2cErrorTypeEnum.getEnum(soB2cEntity.getSignOrderError());
+        if(SoB2cErrorTypeEnum.GET_LOGISTICS_LABEL.getCode().equals(type)){
+            soB2cErrorTypeEnum = SoB2cErrorTypeEnum.GET_LOGISTICS_LABEL;
+        }
         if(Objects.isNull(soB2cErrorTypeEnum)){
             return resultDTOList;
         }

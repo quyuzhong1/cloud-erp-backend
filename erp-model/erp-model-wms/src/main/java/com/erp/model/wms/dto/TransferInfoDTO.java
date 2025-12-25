@@ -2,6 +2,7 @@ package com.erp.model.wms.dto;
 
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
+import com.common.business.dto.base.SuperDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.core.anno.StateEnumValue;
 import com.erp.model.wms.entity.TransferInfoEntity;
@@ -10,7 +11,6 @@ import com.erp.model.wms.enums.TransferTypeEnum;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.checkerframework.checker.units.qual.A;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
@@ -247,7 +247,7 @@ public class TransferInfoDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class CommonDTO {
+    public static class CommonDTO extends SuperDTO {
 
         /**
          * 调拨类型

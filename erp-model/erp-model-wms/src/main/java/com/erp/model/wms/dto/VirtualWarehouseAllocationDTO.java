@@ -597,10 +597,17 @@ public class VirtualWarehouseAllocationDTO implements Serializable {
         private String productName;
         private String imageUrl;
         /**
-         * 实体仓
+         * 调出实体仓
          */
         private String warehouseId;
         private String warehouseName;
+
+        /**
+         * 调入实体仓
+         */
+        private String toWarehouseId;
+        private String toWarehouseName;
+
         /**
          * 调出仓
          */
@@ -910,5 +917,51 @@ public class VirtualWarehouseAllocationDTO implements Serializable {
          * 取消分货数量（已处理）
          */
         private Integer handleCancelAllocationQty;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class TransferWarehouseDTO {
+        /**
+         * 来源明细id,分货单明细id
+         */
+        private String sourceDetailId;
+        /**
+         * 调出仓库ID
+         */
+        private String fromWarehouseId;
+        /**
+         * 调出仓库组织id
+         */
+        private String fromOrgId;
+        /**
+         * 调入仓库ID
+         */
+        private String toWarehouseId;
+        /**
+         * 调入仓库组织ID
+         */
+        private String toOrgId;
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * skuNo
+         */
+        private String skuNo;
+        /**
+         * 数量
+         */
+        private Integer qty;
+
+        public TransferWarehouseDTO(String fromWarehouseId, String toWarehouseId, String skuId,String skuNo, Integer qty) {
+            this.fromWarehouseId = fromWarehouseId;
+            this.toWarehouseId = toWarehouseId;
+            this.skuId = skuId;
+            this.skuNo = skuNo;
+            this.qty = qty;
+        }
     }
 }

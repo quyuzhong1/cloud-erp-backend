@@ -1,4 +1,5 @@
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+  com.sdk.wangdian.sdk.api.virtualWarehouse.handler.WdtWdtVirtualInventoryHandler,\
   com.sdk.wangdian.server.WangDianClientService,\
   com.sdk.wangdian.handler.WdtWarehouseHandler,\
   com.sdk.wangdian.handler.WdtShopHandler,\

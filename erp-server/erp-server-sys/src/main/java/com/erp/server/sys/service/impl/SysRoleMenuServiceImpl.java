@@ -123,28 +123,39 @@ public class SysRoleMenuServiceImpl extends ServiceImpl<SysRoleMenuMapper, SysRo
         if (CollectionUtils.isEmpty(roleIds)) {
             return new ArrayList<>();
         }
-        List<SysMenuEntity> allList = sysMenuService
+        List<SysMenuEntity> allMenuList = sysMenuService
                 .lambdaQuery()
                 .eq(SysMenuEntity::getDisabled, Boolean.FALSE)
                 .eq(StringUtils.isNotBlank(userType), SysMenuEntity::getSystem, userType)
                 .list();
-        List<SysMenuVO> menuList = BeanMapperUtils.copyList(SysMenuVO.class, allList);
-        List<String> menuIds;
-        if (roleIds.contains(CommonConstants.ADMIN_ROLE_ID)) {
-            menuIds = allList.stream().map(s -> s.getMenuId()).collect(Collectors.toList());
-        } else {
-            menuIds = baseMapper.findMenuIdsByRoleIds(roleIds);
+        if (CollectionUtils.isEmpty(allMenuList)) {
+            return Collections.emptyList();
         }
-        List<SysMenuVO> resultList = menuList.stream().
-                filter(item -> "0".equals(item.getParentId()) && menuIds.contains(item.getMenuId()))
+        // 2. Entity → VO
+        List<SysMenuVO> menuVOList = BeanMapperUtils.copyList(SysMenuVO.class, allMenuList);
+        // 3. 计算【最终可用 menuId 集合】（Set，关键优化）
+        Set<String> menuIdSet;
+        if (roleIds.contains(CommonConstants.ADMIN_ROLE_ID)) {
+            menuIdSet = allMenuList.stream().map(s -> s.getMenuId()).collect(Collectors.toSet());
+        } else {
+            // 普通角色：角色菜单 + 所有父级
+            List<String> roleMenuIds = baseMapper.findMenuIdsByRoleIds(roleIds);
+            menuIdSet = getSelfAndParentMenuIds(roleMenuIds, allMenuList);
+        }
+        if (CollectionUtils.isEmpty(menuIdSet)) {
+            return Collections.emptyList();
+        }
+        // 4. 只在这里做一次 Set → List 的转换
+        List<String> menuIdList = new ArrayList<>(menuIdSet);
+        // 5. 构建左侧菜单树（只处理根节点）
+        return menuVOList.stream().
+                filter(item -> "0".equals(item.getParentId()) && menuIdList.contains(item.getMenuId()))
                 .sorted(Comparator.comparing(SysMenuVO::getIndex))
                 .map(item -> {
                     item.setParentName("");
-                    item.setChildrenList(getRoleChildrenList(item, menuList, menuIds));
+                    item.setChildrenList(getRoleChildrenList(item, menuVOList, menuIdList));
                     return item;
                 }).collect(Collectors.toList());
-        return resultList;
-
     }
 
     /**
