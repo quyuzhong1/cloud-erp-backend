@@ -95,7 +95,7 @@ public class AwdOutstockController extends BaseController {
             menuCode = "wms:awdOutstock:update",
             serviceClass = AwdOutstockService.class,
             keyIdName = "id")
-    public ApiResult<?> generateFirstMileDelivery(@RequestBody @Validated AwdOutstockDTO.GenerateDeliveryDTO dto) {
+    public ApiResult<?> generateFirstMileDelivery(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         boolean flag = awdOutstockService.generateFirstMileDelivery(dto);
         return flag == true ? success() : failure();
     }

@@ -94,43 +94,49 @@ public class AwdOutstockServiceImpl extends SuperServiceImpl<AwdOutstockMapper, 
         return new BaseResultDTO.AddDTO(awdOutstockEntity.getId(), code);
     }
 
-    @DistributeLocker(keyName = "#updateDTOList[0].id")
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean batchUpdateBillDate(List<AwdOutstockDTO.UpdateDTO> updateDTOList) {
         for (AwdOutstockDTO.UpdateDTO updateDTO : updateDTOList) {
-            //查询旧数据
-            AwdOutstockEntity old = Optional.ofNullable(super.getById(updateDTO.getId()))
-                    .orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "AWD"));
-
-            //映射新数据
-            AwdOutstockEntity newEntity = BeanMapperUtils.map(AwdOutstockEntity.class, updateDTO);
-            handleUpdateData(newEntity);
-
-            //更新日期
-            boolean updated = this.lambdaUpdate()
-                    .set(AwdOutstockEntity::getBillDate, updateDTO.getBillDate())
-                    .eq(AwdOutstockEntity::getId, updateDTO.getId())
-                    .update();
-            if (!updated) {
-                throw new ServiceException("保存失败");
-            }
-
-            //下推发货单
-            if (old.getBillDate() != null) {
-                boolean generated = generateFirstMileDelivery(
-                        new AwdOutstockDTO.GenerateDeliveryDTO(updateDTO.getId(), updateDTO.getBillDate())
-                );
-                if (!generated) {
-                    throw new ServiceException(ApiError.ERROR_GENERATE_FIRST_MILE_DELIVERY);
-                }
-            }
-
-            //记录日志
-            String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【出库单】单据",
-                    UserContext.getDefaultLoginUser().getUserName(), newEntity.getCode());
-            operateLogService.addModuleOperateLogByObj(old, newEntity, null, newEntity.getId(), msg);
+            updateBillDate(updateDTO);
         }
+        return Boolean.TRUE;
+    }
+
+    @DistributeLocker(keyName = "#updateDTO.getId()")
+    @Transactional(rollbackFor = Exception.class)
+    Boolean updateBillDate(AwdOutstockDTO.UpdateDTO updateDTO){
+        //查询旧数据
+        AwdOutstockEntity old = Optional.ofNullable(super.getById(updateDTO.getId()))
+                .orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "AWD"));
+
+        //映射新数据
+        AwdOutstockEntity newEntity = BeanMapperUtils.map(AwdOutstockEntity.class, updateDTO);
+        handleUpdateData(newEntity);
+
+        //更新日期
+        boolean updated = this.lambdaUpdate()
+                .set(AwdOutstockEntity::getBillDate, updateDTO.getBillDate())
+                .eq(AwdOutstockEntity::getId, updateDTO.getId())
+                .update();
+        if (!updated) {
+            throw new ServiceException("保存失败");
+        }
+
+        //下推发货单
+        if (old.getBillDate() != null) {
+            BaseIdsDTO.IdsDTO idsDTO = new BaseIdsDTO.IdsDTO();
+            idsDTO.setIds(Collections.singletonList(updateDTO.getId()));
+            boolean generated = generateFirstMileDelivery(idsDTO);
+            if (!generated) {
+                throw new ServiceException(ApiError.ERROR_GENERATE_FIRST_MILE_DELIVERY);
+            }
+        }
+
+        //记录日志
+        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【出库单】单据",
+                UserContext.getDefaultLoginUser().getUserName(), newEntity.getCode());
+        operateLogService.addModuleOperateLogByObj(old, newEntity, null, newEntity.getId(), msg);
         return Boolean.TRUE;
     }
 
@@ -149,9 +155,14 @@ public class AwdOutstockServiceImpl extends SuperServiceImpl<AwdOutstockMapper, 
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public boolean generateFirstMileDelivery(AwdOutstockDTO.GenerateDeliveryDTO dto) {
-        BatchResultDTO batchResultDTO = firstMileDeliveryService.generateFirstMileDeliveryByAwdOutStock(dto);
-        return batchResultDTO.getSuccess();
+    public boolean generateFirstMileDelivery(BaseIdsDTO.IdsDTO dto) {
+        List<AwdOutstockEntity> awdOutstockEntities = this.listByIds(dto.getIds());
+        for (AwdOutstockEntity awdOutstockEntity : awdOutstockEntities) {
+            AwdOutstockDTO.GenerateDeliveryDTO generateDeliveryDTO = new AwdOutstockDTO.GenerateDeliveryDTO();
+            BeanUtils.copyProperties(awdOutstockEntity,generateDeliveryDTO);
+            firstMileDeliveryService.generateFirstMileDeliveryByAwdOutStock(generateDeliveryDTO);
+        }
+        return Boolean.TRUE;
     }
 
 

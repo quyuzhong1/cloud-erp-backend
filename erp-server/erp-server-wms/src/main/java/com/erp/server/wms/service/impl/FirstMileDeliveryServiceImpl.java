@@ -2835,6 +2835,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO generateFirstMileDeliveryByAwdOutStock(AwdOutstockDTO.GenerateDeliveryDTO dto) {
         FirstMileDeliveryEntity firstMileDeliveryEntity = this.lambdaQuery()
                 .eq(FirstMileDeliveryEntity::getSourceId,dto.getId())
@@ -2856,11 +2857,10 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             throw new ServiceException(ApiError.ERROR_1040,"AWD出库");
         }
 
-        long count = awdOutstockDetailEntityList.stream()
-                .filter(item -> StringUtils.isBlank(item.getSkuId()))
-                .count();
-        if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_1040,"AWD出库");
+        for (AwdOutstockDetailEntity awdOutstockDetailEntity : awdOutstockDetailEntityList) {
+            if (StringUtils.isBlank(awdOutstockDetailEntity.getSkuId())) {
+                throw new ServiceException(ApiError.ERROR_MSKU_NOT_MAPPING,awdOutstockDetailEntity.getMsku());
+            }
         }
 
         FbaShipmentEntity fbaShipmentEntity = fbaShipmentService.getById(awdOutstockEntity.getFbaShipmentId());
