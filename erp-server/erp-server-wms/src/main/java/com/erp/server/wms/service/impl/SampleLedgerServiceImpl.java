@@ -254,6 +254,12 @@ public class SampleLedgerServiceImpl extends SuperServiceImpl<SampleLedgerMapper
         IPage<SampleLedgerDTO.SkuAvailableQtyDTO> pageData = this.baseMapper.listSku(query, params);
 
         List<SampleLedgerDTO.SkuAvailableQtyDTO> records = pageData.getRecords();
+        
+        // 如果查询结果为空，直接返回空列表
+        if (CollUtil.isEmpty(records)) {
+            return new PagingVO<>(pageData);
+        }
+        
         //处理展会冻结库存数量
         handleExhibitionFreezeQty(params, records);
 
