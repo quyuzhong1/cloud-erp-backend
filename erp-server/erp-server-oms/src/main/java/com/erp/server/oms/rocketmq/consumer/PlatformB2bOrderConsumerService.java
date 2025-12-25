@@ -11,6 +11,9 @@ import com.common.message.constant.RocketMqNewTag;
 import com.common.message.constant.RocketMqNewTopic;
 import com.common.message.handler.AbstractNewPlatformConsumerHandler;
 import com.common.message.handler.AbstractRestCloudPlatformConsumerHandler;
+import com.erp.model.dmp.dto.ThirdMappingDTO;
+import com.erp.model.dmp.entity.ThirdMappingEntity;
+import com.erp.model.dmp.enums.ThirdSysTypeEnum;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.entity.CustomerAddressEntity;
@@ -74,6 +77,9 @@ public class PlatformB2bOrderConsumerService extends AbstractNewPlatformConsumer
 	@Resource
 	private PlmTaskFeign plmTaskFeign;
 
+	@Resource
+	private DmpThirdMappingFeign dmpThirdMappingFeign;
+
 	@Override
 	public String getBizName() {
 		return "b2b销售订单";
@@ -132,6 +138,17 @@ public class PlatformB2bOrderConsumerService extends AbstractNewPlatformConsumer
 			dto.setTelNumber(customerAddressEntity.getTelNumber());
 			dto.setCountryId(customerAddressEntity.getCountryId());
 			dto.setCountryName(customerAddressEntity.getCountryName());
+		}
+
+		if(StringUtils.isNotBlank(dto.getPlatformWarehouseId())){
+			ThirdMappingDTO.ViewParamDTO viewParamDTO = new ThirdMappingDTO.ViewParamDTO();
+			viewParamDTO.setThirdId(dto.getPlatformWarehouseId());
+			viewParamDTO.setType(ThirdSysTypeEnum.WAREHOUSE.getCode());
+			viewParamDTO.setSysType(PlatformDictEnum.WDT.getCode());
+			List<ThirdMappingEntity> thirdMappingEntityList = dmpThirdMappingFeign.getByThirdId(viewParamDTO);
+			if(CollectionUtils.isNotEmpty(thirdMappingEntityList)){
+				dto.setWarehouseId(thirdMappingEntityList.get(0).getSysId());
+			}
 		}
 
 		dto.setDictPlatform(customerInfo.getPlatformType());

@@ -146,6 +146,7 @@ public class DmpOutputWdtB2bOrderRocketMQTaskHandler extends DmpOutputRocketMQTa
 		platformB2bOrderDTO.setPlatformShopId(dmpSoInfoEntity.getShopId());
 		platformB2bOrderDTO.setShopId(shopInfo.getId());
 		platformB2bOrderDTO.setCustomerOrderNo(dmpSoInfoEntity.getPlatformCode());
+		platformB2bOrderDTO.setPlatformWarehouseId(dmpSoInfoEntity.getWarehouseId());
 
 		String orderStatus = dmpSoInfoEntity.getOrderStatus();
 		if("55".equals(orderStatus)){
