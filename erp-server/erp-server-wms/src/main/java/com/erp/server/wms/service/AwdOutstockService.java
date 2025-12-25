@@ -49,7 +49,7 @@ public interface AwdOutstockService extends SuperService<AwdOutstockEntity> {
      * 下推头程发货单
      * @param dto
      */
-    boolean generateFirstMileDelivery(AwdOutstockDTO.GenerateDeliveryDTO dto);
+    boolean generateFirstMileDelivery(BaseIdsDTO.IdsDTO dto);
 
 
     /**
