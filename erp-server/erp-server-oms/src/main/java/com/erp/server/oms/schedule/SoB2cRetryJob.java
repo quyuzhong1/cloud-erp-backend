@@ -166,7 +166,7 @@ public class SoB2cRetryJob {
                             continue;
                         };
 
-                        List<BatchResultDTO> resultDTOS = soB2cAbnormalService.batchRetry(soB2cErrorEntity.getMainId());
+                        List<BatchResultDTO> resultDTOS = soB2cAbnormalService.batchRetry(soB2cErrorEntity.getMainId(),type);
                         try {
                             Thread.sleep(5000);
                         } catch (InterruptedException e) {
