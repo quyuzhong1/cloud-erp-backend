@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
@@ -14,57 +15,68 @@ import java.time.LocalDate;
 
 /**
  * <p>
- * 采购对账单明细
+ * 采购对账单明细已对账信息
  * </p>
  *
  * @author will
- * @since 2024-01-19
+ * @since 2025-12-22
 */
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
-@TableName("po_reconciliation_detail")
-public class PoReconciliationDetailEntity extends BaseEntity<PoReconciliationDetailEntity> {
+@NoArgsConstructor
+@TableName("po_reconciliation_ref_detail")
+public class PoReconciliationRefDetailEntity extends BaseEntity<PoReconciliationRefDetailEntity> {
 
     /**
-    * 供应商id
-    */
+     * 采购对账单id
+     */
+    @TableField("po_reconciliation_id")
+    private String poReconciliationId;
+    /**
+     * 采购对账单明细id
+     */
+    @TableField("po_reconciliation_detail_id")
+    private String poReconciliationDetailId;
+    /**
+     * 供应商id
+     */
     @TableField("supplier_id")
     private String supplierId;
     /**
-    * 供应商名称
-    */
+     * 供应商名称
+     */
     @TableField("supplier_name")
     private String supplierName;
 
     /**
-    * 来源明细id
-    */
+     * 来源明细id
+     */
     @TableField("source_detail_id")
     private String sourceDetailId;
     /**
-    * 来源id
-    */
+     * 来源id
+     */
     @TableField("source_id")
     private String sourceId;
     /**
-    * 来源订单号
-    */
+     * 来源订单号
+     */
     @TableField("source_code")
     private String sourceCode;
     /**
-    * 来源类型
-    */
+     * 来源类型
+     */
     @TableField("source_type")
     private String sourceType;
     /**
-    * 采购订单编码
-    */
+     * 采购订单编码
+     */
     @TableField("po_code")
     private String poCode;
     /**
-    * 采购订单id
-    */
+     * 采购订单id
+     */
     @TableField("po_id")
     private String poId;
 
@@ -74,74 +86,69 @@ public class PoReconciliationDetailEntity extends BaseEntity<PoReconciliationDet
     @TableField("po_detail_id")
     private String poDetailId;
     /**
-    * 日期
-    */
+     * 日期
+     */
     @TableField("date")
     private LocalDate date;
     /**
-    * skuId
-    */
+     * skuId
+     */
     @TableField("sku_id")
     private String skuId;
     /**
-    * sku编码
-    */
+     * sku编码
+     */
     @TableField("sku_no")
     private String skuNo;
 
     /**
-    * 数量
-    */
+     * 数量
+     */
     @TableField("qty")
     private Integer qty;
     /**
-    * 税率
-    */
+     * 税率
+     */
     @TableField("tax_rate")
     private BigDecimal taxRate;
     /**
-    * 含税单价
-    */
+     * 含税单价
+     */
     @TableField("tax_price")
     private BigDecimal taxPrice;
     /**
-    * 价税合计
-    */
+     * 价税合计
+     */
     @TableField("tax_amount")
     private BigDecimal taxAmount;
     /**
-    * 结算组织id
-    */
+     * 结算组织id
+     */
     @TableField("settle_org_id")
     private String settleOrgId;
     /**
-    * 结算组织名称
-    */
+     * 结算组织名称
+     */
     @TableField("settle_org_Name")
     private String settleOrgName;
     /**
-    * 结算方式
-    */
+     * 结算方式
+     */
     @TableField("settle_dict")
     private String settleDict;
     /**
-    * 付款条件
-    */
+     * 付款条件
+     */
     @TableField("payment_condition")
     private String paymentCondition;
     /**
-    * 业务状态
-    */
-    @TableField("business_status")
-    private String businessStatus;
-    /**
-    * 币别
-    */
+     * 币别
+     */
     @TableField("currency")
     private String currency;
     /**
-    * 汇率
-    */
+     * 汇率
+     */
     @TableField("exchange_rate")
     private BigDecimal exchangeRate;
     /**
@@ -149,12 +156,6 @@ public class PoReconciliationDetailEntity extends BaseEntity<PoReconciliationDet
      */
     @TableField("return_source_type")
     private String returnSourceType;
-
-    /**
-     * 对账状态，poReconciliationDetailStatus字典
-     */
-    @TableField("status")
-    private String status;
 
     /**
      * 送货单id
@@ -173,6 +174,34 @@ public class PoReconciliationDetailEntity extends BaseEntity<PoReconciliationDet
      */
     @TableField("delivery_code")
     private String deliveryCode;
+
+    /**
+     * 折扣率
+     */
+    @TableField("discount_rate")
+    private BigDecimal discountRate;
+    /**
+     * 预付金额
+     */
+    @TableField("prepay_amount")
+    private BigDecimal prepayAmount;
+    /**
+     * 价税合计（折扣后）
+     */
+    @TableField("discount_tax_amount")
+    private BigDecimal discountTaxAmount;
+
+    /**
+     * 供方备注
+     */
+    @TableField("supplier_remark")
+    private String supplierRemark;
+
+    /**
+     * 采方备注
+     */
+    @TableField("purchase_remark")
+    private String purchaseRemark;
 
     /**
      * 备注

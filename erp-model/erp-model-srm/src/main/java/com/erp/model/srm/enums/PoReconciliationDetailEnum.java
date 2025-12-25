@@ -14,6 +14,8 @@ public enum PoReconciliationDetailEnum {
     @Getter
     public enum StatusEnum implements EnumMessage {
         WAIT_RECONCILIATION("waitReconciliation", "待对账"),
+        PART_RECONCILIATION("partReconciliation", "部分对账"),
+        RECONCILED("reconciled", "已对账"),
         NOT_NEED_RECONCILIATION("notNeedReconciliation", "无需对账"),
         ;
         private final String code;

@@ -1804,7 +1804,7 @@
            and pi.is_deleted = FALSE AND pd.is_deleted = FALSE
     </select>
     <select id="listSku" resultType="com.erp.model.plm.dto.ProductDetailDTO$SkuDTO">
-        select id,sku_id,spu_no,sku_no,productName ,retailPrice,variantProperty from
+        select id,sku_id,spu_no,sku_no,productName ,retailPrice,variantProperty,property,property_id from
        (
             select
                 pi."id",
@@ -1812,6 +1812,8 @@
                 pi.spu_no,
                 pi.name as productName,
                 pd.sku_no,
+                pi.property,
+                pi.property_id,
                 pc.retail_price as retailPrice,
                 pd.variant_property as variantProperty
             FROM product_info pi
@@ -1953,6 +1955,8 @@
         pi.name AS spuName,
         pi.spec_type,
         pi.materials,
+        pi.property_id as propertyId,
+        pi.property as propertyName,
         pi.function_desc,
         pi.grade AS productGrade,
         pi.brand_id AS brandId,

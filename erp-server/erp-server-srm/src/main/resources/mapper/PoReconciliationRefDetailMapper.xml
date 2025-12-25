@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.srm.mapper.PoReconciliationRefDetailMapper">
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        prrd.id,
+        prrd.po_reconciliation_id as poReconciliationId,
+        prrd.po_reconciliation_detail_id as poReconciliationDetailId,
+        prrd.supplier_id as supplierId,
+        prrd.supplier_name as supplierName,
+        prrd.source_code as sourceCode,
+        prrd.source_type as sourceType,
+        prrd.return_source_type as returnSourceType,
+        prrd.po_id as poId,
+        prrd.po_code as poCode,
+        prrd.date as date,
+        prrd.sku_id as skuId,
+        prrd.sku_no as skuNo,
+        prrd.qty,
+        prrd.tax_rate as taxRate,
+        prrd.tax_price as taxPrice,
+        prrd.tax_amount as taxAmount,
+        prrd.settle_org_id as settleOrgId,
+        prrd.settle_org_Name as settleOrgName,
+        prrd.settle_dict as settleDict,
+        prrd.payment_condition as paymentCondition,
+        prrd.supplier_remark as supplierRemark,
+        prrd.purchase_remark as purchaseRemark,
+        prrd.currency,
+        prrd.create_time as createTime,
+        prrd.delivery_id as deliveryId,
+        prrd.delivery_detail_id as deliveryDetailId,
+        prrd.delivery_code as deliveryCode,
+        prrd.discount_rate as discountRate,
+        prrd.prepay_amount as prepayAmount,
+        prrd.discount_tax_amount as discountTaxAmount,
+        prrd.remark
+    </sql>
+
+    <!-- 查询对账单明细关联明细 -->
+    <select id="listDetail" resultType="com.erp.model.srm.dto.PoReconciliationRefDetailDTO$ListDTO">
+        WITH reconciled as (
+            select
+            source_detail_id,
+            sum(qty) as reconciledQty
+            from po_reconciliation_ref_detail where is_deleted = false group by source_detail_id
+        )
+        select
+        <include refid="Base_Column_List" />
+        , po.source_code as poSourceCode,
+        po.source_type as poSourceType,
+        prd.qty as billQty,
+        rd.reconciledQty - prrd.qty as reconciledQty
+        from po_reconciliation_ref_detail prrd
+        left join po_reconciliation_detail prd on prrd.source_detail_id = prd.source_detail_id and prd.is_deleted = false
+        left join reconciled rd on prrd.source_detail_id = rd.source_detail_id
+        left join foreign_purchase_order po on prrd.po_id = po.id and po.is_deleted = false
+        <where>
+            ${params.sqlMap.default}
+            and prrd.is_deleted = false
+            ORDER BY
+            <if test="params.sortList != null and params.sortList.size > 0">
+                <foreach collection="params.sortList" item="item" separator="," close=",">
+                    ${item.field} ${item.sort}
+                </foreach>
+            </if>
+            prrd.id desc
+        </where>
+    </select>
+
+
+</mapper>

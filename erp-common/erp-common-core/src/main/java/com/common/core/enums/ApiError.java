@@ -847,11 +847,6 @@ public enum ApiError implements Serializable {
     PURCHASE_ORG_NOT_REPEAT(98113,"只有相同的采购组织可以批量变更报价"),
     ERROR_SUBCONTRACT_ORDER_WAREHOUSE_ORG(98114,"委外订单仓库【{}】与委外组织【{}】不匹配"),
     ERROR_SO_DELIVERY_NOTICE_NOT_EXIST(98115,"发货通知单不存在"),
-
-
-
-
-
     ERROR_PURCHASE_PRICE_DATE(98112,"采购价目表SKU【{}】失效时间不可小于生效时间"),
     ERROR_PURCHASE_PRICE_DATE_OVERLAP(98113,"采购价目表SKU【{}】时间区间重叠"),
     ERROR_PURCHASE_PRICE_CHANGE_DATE(98114,"采购调价表SKU【{}】失效时间不可小于生效时间"),
@@ -908,6 +903,7 @@ public enum ApiError implements Serializable {
     ERROR_CONTRACT_TEMPLATE_NOT_EXIST(98159,"合同模板不存在或被禁用"),
     ERROR_CONTRACT_TEMPLATE_DICTINCT(98160,"【{}】已绑定【{}】，不可重复绑定"),
     ERROR_CONTRACT_TEMPLATE_EXIST(98161,"【{}】已被其他供应商绑定，请先解除关联再绑定所有供应商"),
+    ERROR_PRODUCT_PROPERTY_ASSET_NOT_EXIST(98161,"SKU【{}】产品属性非资产，与供应商付款条件不一致"),
 
     /**
      * WMS 错误
@@ -1817,7 +1813,8 @@ public enum ApiError implements Serializable {
     ERROR_96001(96001,"查询不到关联供应商"),
     ERROR_96002(96002,"单据供应商与用户供应商不一致"),
     ERROR_PO_RECONCILIATION_NOT_EXIST(96003,"对账单不存在"),
-    ERROR_PO_RECONCILIATION_DETAIL_NOT_EXIST(96004,"对账明细不存在"),
+    ERROR_PO_RECONCILIATION_DETAIL_NOT_EXIST(96004,"待对账明细不存在"),
+    ERROR_PO_RECONCILIATION_REF_DETAIL_NOT_EXIST(96004,"对账单明细不存在"),
     ERROR_PO_RECONCILIATION_CONFIRM(96005,"仅【待供方确认】支持此操作"),
     ERROR_PO_RECONCILIATION_CANCEL_CONFIRM(96005,"仅【待采方确认】支持此操作"),
     ERROR_PO_RECONCILIATION_SCM_CANCEL_CONFIRM(96005,"仅【待采方确认】或【已确认待完结】支持此操作"),
@@ -1865,6 +1862,12 @@ public enum ApiError implements Serializable {
     ERROR_INSTOCK_ADD_PO_RECONCILIATION_DETAIL(94103,"单据未审核不支持生成待对账明细"),
     ERROR_RETURN_ADD_PO_RECONCILIATION_DETAIL(94104,"质检退货不支持生成待对账明细"),
     ERROR_PO_RECONCILIATION_MANUAL_GENERATE(94105,"单据不支持生成对账明细"),
+    ERROR_PO_RECONCILIATION_DETAIL_UPDATE_STATUS(94106,"仅待对账或无需对账数据允许状态更新"),
+    ERROR_PO_RECONCILIATION_DETAIL_ADD_RECONCILED(94107,"单号【{}】无需对账不支持自动更新对账状态"),
+    ERROR_PO_RECONCILIATION_DETAIL_QTY_OVERFLOW(94108,"单号【{}】SKU【{}】本期对账数量{}超出可对账数量{}"),
+    ERROR_PO_RECONCILIATION_DETAIL_HAS_IN_RECONCILIATION(94109,"单号【{}】SKU【{}】已加入对账单，不允许重复添加"),
+
+
 
     /**
      * MRP 错误
