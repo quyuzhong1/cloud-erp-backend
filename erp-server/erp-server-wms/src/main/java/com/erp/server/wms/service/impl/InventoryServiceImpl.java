@@ -35,6 +35,7 @@ import com.erp.model.wms.dto.PickingDetailDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.WarehouseLocationDTO;
 import com.erp.model.wms.dto.inventory.*;
+import com.erp.model.wms.dto.VirtualInventoryDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.StocktakingTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryAgeTitleEnum;
@@ -50,6 +51,7 @@ import com.erp.server.wms.constant.WmsConstant;
 import com.erp.server.wms.mapper.InventoryMapper;
 import com.erp.server.wms.service.DictBasicService;
 import com.erp.server.wms.service.InventoryService;
+import com.erp.server.wms.service.VirtualInventoryService;
 import com.erp.server.wms.service.WarehouseLocationService;
 import com.erp.server.wms.service.WarehouseService;
 import com.google.common.collect.Lists;
@@ -114,6 +116,9 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
 
     @Autowired
     private SupplierFeign supplierFeign;
+
+    @Resource
+    private VirtualInventoryService virtualInventoryService;
 
     @Override
     public InventoryEntity findInventory(String orgId, String warehouseId, String skuId, String warehouseLocationId, String status) {
@@ -225,34 +230,43 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
         }
         String orgId = warehouseEntity.getOrgId();
 
-        // 实体仓：可用 + 冻结
-        int entityUsable = 0;
-        int entityFrozen = 0;
+        // 查询实体仓实际库存（可用+冻结）
+        int realQty = 0;
         if (Boolean.FALSE.equals(warehouseEntity.getIsVirtual())) {
-            entityUsable = ObjectUtil.defaultIfNull(
-                    this.getInventoryTotal(orgId, warehouseId, skuId, null, InventoryStatusEnum.USABLE.getCode()), 0);
-            entityFrozen = ObjectUtil.defaultIfNull(
-                    this.getInventoryTotal(orgId, warehouseId, skuId, null, InventoryStatusEnum.FROZEN.getCode()), 0);
+            InventoryQtyDTO.SkuInventoryStatusParamDTO dto = new InventoryQtyDTO.SkuInventoryStatusParamDTO();
+            dto.setWarehouseIdList(Collections.singletonList(warehouseId));
+            dto.setSkuIdList(Collections.singletonList(skuId));
+            dto.setInventoryStatusList(Arrays.asList(InventoryStatusEnum.USABLE.getCode(), InventoryStatusEnum.FROZEN.getCode()));
+            List<InventoryQtyDTO.SkuInventoryStatusTotalDTO> skuInventoryTotalList = this.listSkuInventory(dto);
+            realQty = skuInventoryTotalList.stream()
+                    .filter(obj -> Objects.equals(obj.getSkuId(), skuId) && Objects.equals(obj.getWarehouseId(), warehouseId))
+                    .mapToInt(InventoryQtyDTO.SkuInventoryStatusTotalDTO::getInventoryTotal)
+                    .sum();
         }
 
-        // 虚拟仓：可用 + 冻结（同组织下的虚拟仓）
-        int virtualUsable = 0;
-        int virtualFrozen = 0;
+        // 查询虚拟仓实际库存（从virtual_inventory表）
+        int virtualQty = 0;
         List<WarehouseEntity> virtualWarehouses = warehouseService.lambdaQuery()
                 .eq(WarehouseEntity::getOrgId, orgId)
                 .eq(WarehouseEntity::getIsVirtual, Boolean.TRUE)
                 .list();
         if (CollUtil.isNotEmpty(virtualWarehouses)) {
-            for (WarehouseEntity virtualWarehouse : virtualWarehouses) {
-                String vId = virtualWarehouse.getId();
-                virtualUsable += ObjectUtil.defaultIfNull(
-                        this.getInventoryTotal(orgId, vId, skuId, null, InventoryStatusEnum.USABLE.getCode()), 0);
-                virtualFrozen += ObjectUtil.defaultIfNull(
-                        this.getInventoryTotal(orgId, vId, skuId, null, InventoryStatusEnum.FROZEN.getCode()), 0);
-            }
+            List<String> virtualWarehouseIds = virtualWarehouses.stream()
+                    .map(WarehouseEntity::getId)
+                    .collect(Collectors.toList());
+            VirtualInventoryDTO.ParamDTO vmParamDto = new VirtualInventoryDTO.ParamDTO();
+            vmParamDto.setSkuIdList(Collections.singletonList(skuId));
+            vmParamDto.setWarehouseIdList(Collections.singletonList(warehouseId));
+            vmParamDto.setVirtualWarehouseIdList(virtualWarehouseIds);
+            List<VirtualInventoryDTO.ViewQtyDTO> vmRealQtyList = virtualInventoryService.getRealQty(vmParamDto);
+            virtualQty = vmRealQtyList.stream()
+                    .filter(obj -> Objects.equals(obj.getSkuId(), skuId) && Objects.equals(obj.getWarehouseId(), warehouseId))
+                    .mapToInt(VirtualInventoryDTO.ViewQtyDTO::getToVirtualWarehouseRealQty)
+                    .sum();
         }
 
-        return entityUsable + entityFrozen - virtualUsable - virtualFrozen;
+        // 可领用库存 = 实体仓实际库存 - 虚拟仓实际库存
+        return realQty - virtualQty;
     }
 
     @Override
