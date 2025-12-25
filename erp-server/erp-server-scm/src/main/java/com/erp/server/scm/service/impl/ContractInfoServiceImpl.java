@@ -104,19 +104,19 @@ public class ContractInfoServiceImpl extends SuperServiceImpl<ContractInfoMapper
     public BaseResultDTO.AddDTO add(ContractInfoDTO.AddDTO addDTO) {
         List<String> serviceProviderIdList = addDTO.getServiceProviderIdList().stream().filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
         if(CollUtil.isEmpty(serviceProviderIdList)){
-            throw new ServiceException(ApiError.ERROR_MISSING_SUPPLIER);
+            throw new ServiceException(ApiError.SUPPLIER_INFO_REQUIRED);
         }
 
         //根据类型判断
         if(addDTO.getType().equals(TemplateManagementBizTypeEnum.PURCHASEFRAMEWORK.getCode())){
             if(CollUtil.isEmpty(addDTO.getAttachmentUrlList()) || CollUtil.isEmpty(addDTO.getAttachmentNameList())){
-                throw new ServiceException(ApiError.ERROR_PURCHASE_FRAMEWORK_CONTRACT_ATTACHMENT_REQUIRED);
+                throw new ServiceException(ApiError.PO_FRAMEWORK_CONTRACT_ATTACHMENT_REQUIRED);
             }
         }else {
             //查询模板
             String templateId = addDTO.getTemplateId();
             if(StringUtils.isBlank(templateId)){
-                throw new ServiceException(ApiError.ERROR_CONTRACT_TEMPLATE_REQUIRED);
+                throw new ServiceException(ApiError.COMMON_CONTRACT_TEMPLATE_REQUIRED);
             }
 
             List<TemplateManagementEntity> list = FeignQuery.create(TemplateManagementEntity.class)
@@ -124,7 +124,7 @@ public class ContractInfoServiceImpl extends SuperServiceImpl<ContractInfoMapper
                     .eq(TemplateManagementEntity::getId, templateId)
                     .list();
             if(CollUtil.isEmpty(list)){
-                throw new ServiceException(ApiError.ERROR_CONTRACT_TEMPLATE_NOT_EXIST);
+                throw new ServiceException(ApiError.COMMON_CONTRACT_TEMPLATE_NOT_AVAILABLE);
             }
             String name = list.get(0).getName();
             addDTO.setName(name);
@@ -132,12 +132,12 @@ public class ContractInfoServiceImpl extends SuperServiceImpl<ContractInfoMapper
             if(serviceProviderIdList.contains("all")){
                 Integer count = lambdaQuery().eq(ContractInfoEntity::getTemplateId, templateId).count();
                 if(count > 0){
-                    throw new ServiceException(ApiError.ERROR_CONTRACT_TEMPLATE_EXIST,name);
+                    throw new ServiceException(ApiError.COMMON_CONTRACT_TEMPLATE_BOUND_BY_OTHER_SUPPLIER,name);
                 }
             }else {
                 Integer count = lambdaQuery().eq(ContractInfoEntity::getServiceProviderId, "all").eq(ContractInfoEntity::getTemplateId, templateId).count();
                 if(count > 0){
-                    throw new ServiceException(ApiError.ERROR_CONTRACT_TEMPLATE_DICTINCT,"所有供应商",name);
+                    throw new ServiceException(ApiError.COMMON_CONTRACT_TEMPLATE_BINDING_DUPLICATE,"所有供应商",name);
                 }
             }
             List<ContractInfoEntity> oldList = lambdaQuery().in(ContractInfoEntity::getServiceProviderId, serviceProviderIdList).eq(ContractInfoEntity::getTemplateId, templateId).list();
@@ -147,7 +147,7 @@ public class ContractInfoServiceImpl extends SuperServiceImpl<ContractInfoMapper
                         .distinct()
                         .filter(StrUtil::isNotBlank)
                         .collect(Collectors.joining(","));
-                throw new ServiceException(ApiError.ERROR_CONTRACT_TEMPLATE_DICTINCT,supplierNames,name);
+                throw new ServiceException(ApiError.COMMON_CONTRACT_TEMPLATE_BINDING_DUPLICATE,supplierNames,name);
             }
         }
 
@@ -245,7 +245,7 @@ public class ContractInfoServiceImpl extends SuperServiceImpl<ContractInfoMapper
     public Boolean update(ContractInfoDTO.UpdateDTO addOrUpdateDTO) {
         List<String> serviceProviderIdList = addOrUpdateDTO.getServiceProviderIdList().stream().filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
         if(CollUtil.isEmpty(serviceProviderIdList)){
-            throw new ServiceException(ApiError.ERROR_SUPPLIER_ABSENCE);
+            throw new ServiceException(ApiError.SUPPLIER_NOT_FOUND);
         }
 
         String serviceProviderId = serviceProviderIdList.get(0);
@@ -258,26 +258,26 @@ public class ContractInfoServiceImpl extends SuperServiceImpl<ContractInfoMapper
         }
 
         if(!serviceProviderId.equals(old.getServiceProviderId())){
-            throw new ServiceException(ApiError.ERROR_SUPPLIER_NOT_ALLOW_MODIFY);
+            throw new ServiceException(ApiError.SUPPLIER_MODIFY_FORBIDDEN);
         }
 
         //根据类型判断
         if(addOrUpdateDTO.getType().equals(TemplateManagementBizTypeEnum.PURCHASEFRAMEWORK.getCode())){
             if(CollUtil.isEmpty(addOrUpdateDTO.getAttachmentUrlList()) || CollUtil.isEmpty(addOrUpdateDTO.getAttachmentNameList())){
-                throw new ServiceException(ApiError.ERROR_PURCHASE_FRAMEWORK_CONTRACT_ATTACHMENT_REQUIRED);
+                throw new ServiceException(ApiError.PO_FRAMEWORK_CONTRACT_ATTACHMENT_REQUIRED);
             }
         }else {
             //查询模板
             String templateId = addOrUpdateDTO.getTemplateId();
             if(StringUtils.isBlank(templateId)){
-                throw new ServiceException(ApiError.ERROR_CONTRACT_TEMPLATE_REQUIRED);
+                throw new ServiceException(ApiError.COMMON_CONTRACT_TEMPLATE_REQUIRED);
             }
             List<TemplateManagementEntity> list = FeignQuery.create(TemplateManagementEntity.class)
                     .eq(TemplateManagementEntity::getDisabled, Boolean.FALSE)
                     .eq(TemplateManagementEntity::getId, templateId)
                     .list();
             if(CollUtil.isEmpty(list)){
-                throw new ServiceException(ApiError.ERROR_CONTRACT_TEMPLATE_NOT_EXIST);
+                throw new ServiceException(ApiError.COMMON_CONTRACT_TEMPLATE_NOT_AVAILABLE);
             }
             String name = list.get(0).getName();
             addOrUpdateDTO.setName(name);
@@ -292,7 +292,7 @@ public class ContractInfoServiceImpl extends SuperServiceImpl<ContractInfoMapper
                         .distinct()
                         .filter(StrUtil::isNotBlank)
                         .collect(Collectors.joining(","));
-                throw new ServiceException(ApiError.ERROR_CONTRACT_TEMPLATE_DICTINCT,supplierNames,name);
+                throw new ServiceException(ApiError.COMMON_CONTRACT_TEMPLATE_BINDING_DUPLICATE,supplierNames,name);
             }
         }
 
@@ -963,7 +963,7 @@ public class ContractInfoServiceImpl extends SuperServiceImpl<ContractInfoMapper
                 .orderByDesc(ContractInfoEntity::getUpdateTime)
                 .list();
         if(CollUtil.isEmpty(list)){
-            throw new ServiceException(ApiError.ERROR_CONTACT_NOT_BINDING);
+            throw new ServiceException(ApiError.COMMON_CONTRACT_NOT_BINDING);
         }
 
 //        LocalDate now = LocalDate.now();
@@ -990,7 +990,7 @@ public class ContractInfoServiceImpl extends SuperServiceImpl<ContractInfoMapper
         // 过滤出处于“生效中”状态的合同
         list = list.stream().filter(e -> e.getStatus().equals(ContractInfoStatusEnum.EFFECTIVE.getCode())).collect(Collectors.toList());
         if(CollUtil.isEmpty(list)){
-            throw new ServiceException(ApiError.ERROR_CONTACT_NOT_BINDING);
+            throw new ServiceException(ApiError.COMMON_CONTRACT_NOT_BINDING);
         }
 
         // 提取有效的模板ID集合
@@ -1003,7 +1003,7 @@ public class ContractInfoServiceImpl extends SuperServiceImpl<ContractInfoMapper
                 .list();
 
         if (CollUtil.isEmpty(templateManagementList)) {
-            throw new ServiceException(ApiError.ERROR_CONTACT_NOT_BINDING);
+            throw new ServiceException(ApiError.COMMON_CONTRACT_NOT_BINDING);
         }
 
         // 构建模板ID到模板实体的映射关系，用于快速查找

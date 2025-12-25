@@ -874,7 +874,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             mergePdfUrl = fileFeign.mergeFiles(base64UrlList);
         } catch (Exception e) {
             e.printStackTrace();
-            throw new ServiceException(ApiError.ERROR_PDF_MERGE);
+            throw new ServiceException(ApiError.LOGISTICS_PDF_MERGE_ERROR);
         }
         return mergePdfUrl;
     }
@@ -1949,7 +1949,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         List<String> soId2s = soB2cLabelEntities.stream().filter(e -> CharSequenceUtil.isNotBlank(e.getLogisticsLabelUrl())).map(SoB2cLabelEntity::getMainId).distinct().collect(Collectors.toList());
         List<String> notPrintCodes = deliveryEntityList.stream().filter(e -> !soId2s.contains(e.getSourceId())).map(SoB2cDeliveryEntity::getCode).distinct().collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(notPrintCodes)) {
-            throw new ServiceException(ApiError.ORDER_NOT_PRINT_LOGISTICS_WAYBILL, CharSequenceUtil.join(",", notPrintCodes));
+            throw new ServiceException(ApiError.SO_LOGISTICS_WAYBILL_NOT_OBTAINED, CharSequenceUtil.join(",", notPrintCodes));
         }
         //查询物流商信息
         List<String> logisticsChannelIds = soB2cDeliveryEntities.stream().map(req -> req.getLogisticsChannelId()).distinct().collect(Collectors.toList());

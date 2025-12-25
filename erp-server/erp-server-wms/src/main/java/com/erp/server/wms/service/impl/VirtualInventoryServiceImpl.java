@@ -694,7 +694,7 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
         //查询客户信息
         CustomerInfoEntity customerInfoEntity = FeignQuery.getById(CustomerInfoEntity.class,customerId);
         if (ObjectUtil.isEmpty(customerInfoEntity)) {
-            throw new ServiceException(ApiError.ERROR_92011);
+            throw new ServiceException(ApiError.CUSTOMER_NOT_FOUND);
         }
         //查询虚拟仓信息
         VirtualWarehouseChannelDTO.PlatformDTO platformDTO = new VirtualWarehouseChannelDTO.PlatformDTO();

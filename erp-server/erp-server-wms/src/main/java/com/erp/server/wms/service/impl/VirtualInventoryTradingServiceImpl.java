@@ -312,7 +312,7 @@ public class VirtualInventoryTradingServiceImpl implements VirtualInventoryTradi
         log.info("####VirtualInventoryTradingServiceImpl===>updateVirtualInventory====>virtualInventoryEntity = {}  transactionDTO={}", JSON.toJSONString(virtualInventoryEntity), JSON.toJSONString(transactionDTO));
         if(null == virtualInventoryEntity || null == virtualInventoryEntity.getId()) {
             log.warn("####VirtualInventoryTradingServiceImpl===>updateVirtualInventory====>virtualInventoryEntity = {}  transactionDTO={}", JSON.toJSONString(virtualInventoryEntity), JSON.toJSONString(transactionDTO));
-            throw new ServiceException(ApiError.ERROR_INVENTORY_NOT_EXIST, transactionDTO.getWarehouseName(), transactionDTO.getSkuNo(), transactionDTO.getInventoryStatusName());
+            throw new ServiceException(ApiError.WH_INVENTORY_NOT_EXIST, transactionDTO.getWarehouseName(), transactionDTO.getSkuNo(), transactionDTO.getInventoryStatusName());
         }
         LambdaUpdateWrapper<VirtualInventoryEntity> wrapper = new LambdaUpdateWrapper<>();
         wrapper.setSql("qty = qty + " +transactionDTO.getQty())

@@ -854,7 +854,7 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
                         //校验是否只添加了一个海外仓
                         count.getAndIncrement();
                         if (count.get() > 1) {
-                            throw new ServiceException(ApiError.ERROR_THIRD_NOT_ALLOW_MULTIPLE);
+                            throw new ServiceException(ApiError.WH_THIRD_NOT_ALLOW_MULTIPLE);
                         }
                         OverseasProviderDTO.FeignDTO feignDTO = new OverseasProviderDTO.FeignDTO();
                         feignDTO.setCode(thirdAddDTO.getSysType());

@@ -4,7 +4,6 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -70,7 +69,6 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.interceptor.TransactionAspectSupport;
 import org.springframework.transaction.support.TransactionSynchronizationAdapter;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -340,7 +338,7 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
         } else {
             B2bThirdDeliveryEntity entity = this.getById(dto.getId());
             if (Objects.isNull(entity)) {
-                throw new ServiceException(ApiError.NOT_EXIST, "B2B三方发货单");
+                throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC, "B2B三方发货单");
             }
             SoInfoEntity soInfoEntity = CharSequenceUtil.isNotBlank(dto.getSoId()) ? soInfoFeign.getSoInfoById(dto.getSoId()) : null;
             List<B2bThirdDeliveryDetailEntity> detailEntityList = b2bThirdDeliveryDetailService.listByMainIds(Collections.singletonList(dto.getId()));
@@ -428,11 +426,11 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
     public BatchResultDTO generateB2bThirdDelivery(String id) {
         B2bThirdDeliveryEntity entity = this.getById(id);
         if (Objects.isNull(entity)) {
-            throw new ServiceException(ApiError.NOT_EXIST, "B2B三方发货单");
+            throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC, "B2B三方发货单");
         }
         //只有已发货允许生成销售出库单
         if (!ThirdDeliveryStatusEnum.SHIPPED.getCode().equals(entity.getStatus())) {
-            throw new ServiceException(ApiError.ERROR_THIRD_DELIVERY_GENERATE_OUTSTOCK);
+            throw new ServiceException(ApiError.SO_THIRD_DELIVERY_GENERATE_OUTSTOCK_ONLY_SHIPPED);
         }
         //检查是否已生成销售出库单
         SoOutstockEntity outstockEntity = soOutstockService.getBySourceCode(entity.getCode());
@@ -441,7 +439,7 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
         }
         SoInfoEntity soInfoEntity = soInfoFeign.getSoInfoById(entity.getSoId());
         if (Objects.isNull(soInfoEntity)) {
-            throw new ServiceException(ApiError.NOT_EXIST, "销售订单");
+            throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC, "销售订单");
         }
         SoOutstockDTO.AddDTO addDTO = B2bThirdDeliveryConverter.INSTANCE.toSoOutstockAddDTO(entity, soInfoEntity);
         //承运商
@@ -460,7 +458,7 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
             SoDetailEntity soDetailEntity = CollUtil.isNotEmpty(soDetailList) ? soDetailList.stream().filter(e1 -> e1.getId().equals(e.getSoDetailId())).findFirst().orElse(null) : null;
             if (Objects.isNull(soDetailEntity)) {
                 log.warn("销售订单明细【{}】不存在", e.getSoDetailId());
-                throw new ServiceException(ApiError.NOT_EXIST, "销售订单明细不存在");
+                throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC, "销售订单明细不存在");
             }
             SoOutstockDetailDTO.AddDTO detailDTO = B2bThirdDeliveryConverter.INSTANCE.toSoOutstockAddDetailDTO(entity, e, soDetailEntity, soInfoEntity);
             detailList.add(detailDTO);
@@ -474,10 +472,10 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
             //构建销售出库单数据
             outstockId = soOutstockService.add(addDTO);
             if (CharSequenceUtil.isBlank(outstockId)) {
-                throw new ServiceException(ApiError.ERROR_1019);
+                throw new ServiceException(ApiError.BILL_DATA_CREATE_FAILED);
             }
         } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_1042, e.getMessage());
+            throw new ServiceException(ApiError.BILL_SUBMIT_FAILED, e.getMessage());
         } finally {
             //恢复系统标识
             UserContext.setIsUserSystem(originalValue);
@@ -490,11 +488,11 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
     public BatchResultDTO deliveryIntercept(String id, String remark) {
         B2bThirdDeliveryEntity entity = this.getById(id);
         if (Objects.isNull(entity)) {
-            throw new ServiceException(ApiError.NOT_EXIST, "B2B三方发货单");
+            throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC, "B2B三方发货单");
         }
         //只有待发货允许发货拦截
         if (!ThirdDeliveryStatusEnum.WAIT_SHIPPED.getCode().equals(entity.getStatus())) {
-            throw new ServiceException(ApiError.ERROR_THIRD_DELIVERY_INTERCEPT);
+            throw new ServiceException(ApiError.SO_THIRD_DELIVERY_INTERCEPT_ONLY_WAIT_SHIPPED);
         }
         if (entity.getIsApiDelivery()) {
             //调三方仓
@@ -512,10 +510,10 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
     @Override
     public BatchResultDTO manualDelivery(B2bThirdDeliveryEntity entity) {
         if (entity.getIsApiDelivery()) {
-            throw new ServiceException(ApiError.ERROR_THIRD_DELIVERY_MANUAL_DELIVERY);
+            throw new ServiceException(ApiError.SO_THIRD_DELIVERY_MANUAL_ONLY_B2B_DISABLED);
         }
         if (!ThirdDeliveryStatusEnum.WAIT_SHIPPED.getCode().equals(entity.getStatus())) {
-            throw new ServiceException(ApiError.ERROR_THIRD_DELIVERY_WAIT_SHIPPED_DELIVERY);
+            throw new ServiceException(ApiError.SO_THIRD_DELIVERY_ONLY_WAIT_SHIPPED);
         }
         //更新状态为已发货 并生成出库单
         BatchResultDTO resultDTO = service.updateStatus(entity.getId(), ThirdDeliveryStatusEnum.SHIPPED.getCode(), "", "", entity.getRemark(), "", LocalDateTime.now());
@@ -536,7 +534,7 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
     public BatchResultDTO delete(B2bThirdDeliveryEntity entity) {
         //只有创建失败、取消发货允许删除
         if (!ThirdDeliveryStatusEnum.FAILED.getCode().equals(entity.getStatus()) && !ThirdDeliveryStatusEnum.CANCEL_DELIVERY.getCode().equals(entity.getStatus())) {
-            throw new ServiceException(ApiError.ERROR_THIRD_DELIVERY_DELETE_STATUS);
+            throw new ServiceException(ApiError.SO_THIRD_DELIVERY_DELETE_ONLY_FAILED_OR_CANCELED);
         }
         this.removeById(entity.getId());
         b2bThirdDeliveryDetailService.deleteByMainIds(Collections.singletonList(entity.getId()));
@@ -632,7 +630,7 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
         }
         BatchResultDTO submit = soOutstockService.submit(soOutstockEntity, Boolean.FALSE);
         if (!submit.getSuccess()) {
-            throw new ServiceException(ApiError.ERROR_1042, submit.getMsg());
+            throw new ServiceException(ApiError.BILL_SUBMIT_FAILED, submit.getMsg());
         }
         soOutstockService.approve(new ApproveOneDTO(soOutstockEntity.getId(), ApproveTypeEnum.PASS.getStatus(), "三方仓出库完成出库单自动审核通过", Boolean.FALSE));
     }
@@ -644,7 +642,7 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
         String sourceId = req.getSourceId();
         B2bThirdDeliveryEntity entity = this.getById(sourceId);
         if (Objects.isNull(entity)) {
-            this.updateStatus(sourceId, ThirdDeliveryStatusEnum.FAILED.getCode(), CharSequenceUtil.format(ApiError.NOT_EXIST.msg, req.getSourceCode()), "", "", "", null);
+            this.updateStatus(sourceId, ThirdDeliveryStatusEnum.FAILED.getCode(), CharSequenceUtil.format(ApiError.COMMON_NOT_EXIST_GENERIC.getMsg(), req.getSourceCode()), "", "", "", null);
             return;
         }
         if (!ThirdDeliveryStatusEnum.CREATING.getCode().equals(entity.getStatus())) {
@@ -653,7 +651,7 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
         }
         ThirdWarehouseService service = thirdWarehouseRegistry.getHandler(req.getThirdWarehouseProvideCode());
         if (Objects.isNull(service)) {
-            this.updateStatus(sourceId, ThirdDeliveryStatusEnum.FAILED.getCode(), CharSequenceUtil.format(ApiError.OVERSEAS_PROVIDE_NOT_SERVICE.msg, req.getThirdWarehouseProvideCode()), "", "", "", null);
+            this.updateStatus(sourceId, ThirdDeliveryStatusEnum.FAILED.getCode(), CharSequenceUtil.format(ApiError.COMMON_PROVIDER_SERVICE_NOT_ENABLED.getMsg(), req.getThirdWarehouseProvideCode()), "", "", "", null);
             return;
         }
         ApiResult<String> fbaOutboundBill = createFbaOutboundBill(service, req, 0);
@@ -744,13 +742,13 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
         String sourceId = req.getSourceId();
         B2bThirdDeliveryEntity entity = this.getById(sourceId);
         if (Objects.isNull(entity)) {
-            this.updateStatus(sourceId, ThirdDeliveryStatusEnum.FAILED.getCode(), CharSequenceUtil.format(ApiError.NOT_EXIST.msg, req.getSourceCode()), "", "", "", null);
+            this.updateStatus(sourceId, ThirdDeliveryStatusEnum.FAILED.getCode(), CharSequenceUtil.format(ApiError.COMMON_NOT_EXIST_GENERIC.getMsg(), req.getSourceCode()), "", "", "", null);
             return;
         }
 
         ThirdWarehouseService service = thirdWarehouseRegistry.getHandler(req.getThirdWarehouseProvideCode());
         if (Objects.isNull(service)) {
-            this.updateStatus(sourceId, ThirdDeliveryStatusEnum.FAILED.getCode(), CharSequenceUtil.format(ApiError.OVERSEAS_PROVIDE_NOT_SERVICE.msg, req.getThirdWarehouseProvideCode()), "", "", "", null);
+            this.updateStatus(sourceId, ThirdDeliveryStatusEnum.FAILED.getCode(), CharSequenceUtil.format(ApiError.COMMON_PROVIDER_SERVICE_NOT_ENABLED.getMsg(), req.getThirdWarehouseProvideCode()), "", "", "", null);
             return;
         }
         ApiResult<String> fbaOutboundBill = cancelFbaOutboundBill(service, req, 0);

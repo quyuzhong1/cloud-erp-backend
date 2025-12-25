@@ -282,7 +282,7 @@ public class DeliveryBoxRuleServiceImpl extends SuperServiceImpl<DeliveryBoxRule
         for (DeliveryBoxRuleDTO.SkuDTO skuDTO : skuList) {
             SkuVO skuInfo = skuInfoMap.get(skuDTO.getSkuNo());
             if (skuInfo == null) {
-                throw new ServiceException(ApiError.ERROR_NOT_FOUND_SKU, skuDTO.getSkuNo());
+                throw new ServiceException(ApiError.PRODUCT_NOT_FOUND_SKU, skuDTO.getSkuNo());
             }
 
             DeliveryBoxRuleEntity deliveryBoxRuleEntity = this.lambdaQuery()

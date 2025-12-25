@@ -291,7 +291,7 @@ public class ApproveTaskInfoServiceImpl extends SuperServiceImpl<ApproveTaskInfo
     public BatchResultDTO updateThirdStatus(String id) {
         ApproveTaskInfoEntity entity = getById(id);
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.PROCESS_APPROVE_TASK_NOT_EXIST);
+            throw new ServiceException(ApiError.WF_APPROVE_TASK_NOT_FOUND);
         }
         //根据审批定义和审批实例id生成中台即时拉取任务
         DmpInoutDTO.CreateInputDTO dto = new DmpInoutDTO.CreateInputDTO();

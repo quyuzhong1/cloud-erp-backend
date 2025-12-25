@@ -34,7 +34,6 @@ import com.erp.server.sys.service.OperateLogService;
 import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
 import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -89,7 +88,7 @@ public class TemplateManagementServiceImpl extends SuperServiceImpl<TemplateMana
             String type = templateManagementEntity.getType();
             Integer count = lambdaQuery().eq(TemplateManagementEntity::getType, type).eq(TemplateManagementEntity::getIsDefault, Boolean.TRUE).count();
             if(count > 0){
-                throw new ServiceException(ApiError.ERROR_9057,TemplateManagementTypeEnum.getName(type));
+                throw new ServiceException(ApiError.COMMON_TEMPLATE_DEFAULT_CONTRACT_EXISTS,TemplateManagementTypeEnum.getName(type));
             }
         }
         //默认已发布
@@ -132,7 +131,7 @@ public class TemplateManagementServiceImpl extends SuperServiceImpl<TemplateMana
             String type = templateManagementEntity.getType();
             Integer count = lambdaQuery().ne(TemplateManagementEntity::getId,old.getId()).eq(TemplateManagementEntity::getType, type).eq(TemplateManagementEntity::getIsDefault, Boolean.TRUE).count();
             if(count > 0){
-                throw new ServiceException(ApiError.ERROR_9057,TemplateManagementTypeEnum.getName(type));
+                throw new ServiceException(ApiError.COMMON_TEMPLATE_DEFAULT_CONTRACT_EXISTS,TemplateManagementTypeEnum.getName(type));
             }
         }
 
@@ -246,7 +245,7 @@ public class TemplateManagementServiceImpl extends SuperServiceImpl<TemplateMana
         for (String id : ids) {
             TemplateManagementEntity entity = idEntityMap.getOrDefault(id, null);
             if(Objects.isNull(entity)){
-                resultDTOList.add(BatchResultDTO.fail(id, id, CharSequenceUtil.format(ApiError.BILL_NOT_EXIST_WITH_TYPE.msg, "模板管理")));
+                resultDTOList.add(BatchResultDTO.fail(id, id, CharSequenceUtil.format(ApiError.BILL_NOT_EXIST_WITH_TYPE.getMsg(), "模板管理")));
                 continue;
             }
 
@@ -290,7 +289,7 @@ public class TemplateManagementServiceImpl extends SuperServiceImpl<TemplateMana
             String bizType = entity.getBizType();
             Integer count = lambdaQuery().eq(TemplateManagementEntity::getBizType, bizType).eq(TemplateManagementEntity::getIsDefault, Boolean.TRUE).count();
             if(count > 0){
-                throw new ServiceException(ApiError.ERROR_9057,TemplateManagementBizTypeEnum.getName(bizType));
+                throw new ServiceException(ApiError.COMMON_TEMPLATE_DEFAULT_CONTRACT_EXISTS,TemplateManagementBizTypeEnum.getName(bizType));
             }
         }
         entity.setIsDefault(newValue);

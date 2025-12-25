@@ -601,7 +601,7 @@ public class KolB2bApplicationServiceImpl extends SuperServiceImpl<KolB2bApplica
             //客户信息
             CustomerInfoEntity customerInfoEntity = customerInfoMap.get(mainEntity.getCustomerId());
             if (ObjectUtil.isEmpty(customerInfoEntity)) {
-                throw new ServiceException(ApiError.ERROR_92011, mainEntity.getCustomerId());
+                throw new ServiceException(ApiError.CUSTOMER_NOT_FOUND, mainEntity.getCustomerId());
             }
 
             List<String> thisDetailIdList = value.stream().map(KolB2bApplicationDetailEntity::getId).distinct().collect(Collectors.toList());
@@ -846,7 +846,7 @@ public class KolB2bApplicationServiceImpl extends SuperServiceImpl<KolB2bApplica
         //客户名称
         CustomerInfoEntity customerInfo = customerInfoService.getById(data.getCustomerId());
         if (ObjectUtil.isEmpty(customerInfo)) {
-            throw new ServiceException(ApiError.ERROR_92011);
+            throw new ServiceException(ApiError.CUSTOMER_NOT_FOUND);
         }
         data.setCustomerName(customerInfo.getName());
 

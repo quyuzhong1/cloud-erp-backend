@@ -20,6 +20,7 @@ import com.erp.server.oms.convert.SoLabelConverter;
 import com.erp.server.oms.mapper.SoLabelMapper;
 import com.erp.server.oms.service.OperateLogService;
 import com.common.core.exception.ServiceException;
+import com.erp.server.oms.service.SoLabelService;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
