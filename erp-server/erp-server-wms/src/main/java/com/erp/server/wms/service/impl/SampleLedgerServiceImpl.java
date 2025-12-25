@@ -270,22 +270,22 @@ public class SampleLedgerServiceImpl extends SuperServiceImpl<SampleLedgerMapper
             }
         });
 
-        // 如果有多个SKU，需要按输入顺序返回结果
+        // 如果有多个SKU，需要按输入顺序返回结果（只返回实际查询到的数据，不创建空对象）
         if(CollUtil.isNotEmpty(params.getSkuNos()) && params.getSkuNos().size() > 1){
             Map<String, SampleLedgerDTO.SkuAvailableQtyDTO> map = records.stream()
                 .collect(Collectors.toMap(SampleLedgerDTO.SkuAvailableQtyDTO::getSkuNo, Function.identity(), (o1, o2) -> o1));
             
             List<SampleLedgerDTO.SkuAvailableQtyDTO> result = new ArrayList<>();
             for (String skuNo : params.getSkuNos()) {
-                SampleLedgerDTO.SkuAvailableQtyDTO skuAvailableQtyDTO = map.getOrDefault(skuNo, null);
-                if(Objects.isNull(skuAvailableQtyDTO)){
-                    // 如果查询结果中没有该SKU，创建一个空对象（SKU编号已设置）
-                    skuAvailableQtyDTO = new SampleLedgerDTO.SkuAvailableQtyDTO();
-                    skuAvailableQtyDTO.setSkuNo(skuNo);
+                SampleLedgerDTO.SkuAvailableQtyDTO skuAvailableQtyDTO = map.get(skuNo);
+                // 只添加实际查询到的数据，不创建空对象
+                if(Objects.nonNull(skuAvailableQtyDTO)){
+                    result.add(skuAvailableQtyDTO);
                 }
-                result.add(skuAvailableQtyDTO);
             }
             pageData.setRecords(result);
+            // 更新总数
+            pageData.setTotal(result.size());
         }
 
         return new PagingVO<>(pageData);
