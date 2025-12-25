@@ -336,6 +336,10 @@ public class PurchasePriceDTO implements Serializable {
         /**
          * 付款条件名称
          */
+        private String paymentCondition;
+        /**
+         * 付款条件名称
+         */
         private String paymentConditionName;
 
         /**

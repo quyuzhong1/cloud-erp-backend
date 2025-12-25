@@ -270,7 +270,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         viewDTO.setSupplierContactName(supplierDTO.getPerson());
         viewDTO.setContactTelNumber(supplierDTO.getTelNumber());
 
-        String paymentConditionCode = supplierDTO.getPaymentCondition();
+        String paymentConditionCode = purchasePrice.getPaymentCondition();
 
         //付款条件
         KingdeePaymentConditionEntity paymentCondition = kingdeePaymentConditionService.getByCode(paymentConditionCode);
