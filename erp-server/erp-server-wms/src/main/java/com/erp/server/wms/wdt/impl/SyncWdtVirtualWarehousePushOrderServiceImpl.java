@@ -196,7 +196,9 @@ public class SyncWdtVirtualWarehousePushOrderServiceImpl implements SyncWdtVirtu
         if (CollUtil.isEmpty(detailList)) {
             return;
         }
-
+        if (request.getOrder_type() == 1) {
+            return;
+        }
         Map<String, List<VwPushHandelDetailPushDTO.DetailList>> map = detailList.stream().collect(Collectors.groupingBy(VwPushHandelDetailPushDTO.DetailList::getWarehouse_no));
         for (Map.Entry<String, List<VwPushHandelDetailPushDTO.DetailList>> entry : map.entrySet()) {
             String warehouseNo = entry.getKey();
