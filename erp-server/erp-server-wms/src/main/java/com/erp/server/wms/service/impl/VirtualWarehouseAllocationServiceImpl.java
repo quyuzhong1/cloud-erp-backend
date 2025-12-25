@@ -699,7 +699,7 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
             //校验数据唯一
             checkUniqueInfo(entity.getType(), detailList);
             //虚拟仓信息
-            VirtualWarehouseEntity virtualWarehouseEntity = virtualWarehouseMap.get(detailDto.getFromVirtualWarehouseId());
+            VirtualWarehouseEntity virtualWarehouseEntity = virtualWarehouseMap.get(detailDto.getToVirtualWarehouseId());
             //校验库存、生成借调数据
             VirtualWarehouseAllocationDTO.TransferWarehouseDTO transferWarehouseDTO = generateAndCheckQty(detailDto, entity.getType(), virtualInventoryQtyList, virtualWarehouseEntity);
             if (ObjectUtil.isEmpty(transferWarehouseDTO)){
