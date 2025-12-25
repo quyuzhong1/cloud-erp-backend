@@ -476,7 +476,8 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
             WarehouseDTO.UpdateDTO updateDTO = warehouseList.stream().filter(w -> w.getId().equals(dto.getWarehouseId())).findFirst().orElse(new WarehouseDTO.UpdateDTO());
             warehouseName = updateDTO.getName();
         }
-        List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Arrays.asList(dto.getWarehouseId()));
+        String awdWarehouseId = CharSequenceUtil.isNotBlank(dto.getAwdWarehouseId()) ? dto.getAwdWarehouseId() : "";
+//        List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Arrays.asList(dto.getWarehouseId()));
 
         for (String countryCode : countryCodeList) {
             String countryName = countryList.stream().filter(c -> c.getId().equals(countryCode)).findFirst().
@@ -491,6 +492,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
                 shop.setSalesOrgName(orgName);
                 shop.setChargeName(chargeName);
                 shop.setWarehouseName(warehouseName);
+                shop.setAwdWarehouseId(awdWarehouseId);
                 addList.add(shop);
             }
 
@@ -647,6 +649,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         shopInfo.setTimeZone(StringUtils.isBlank(dto.getTimeZone())? shopInfo.getTimeZone() : dto.getTimeZone());
         shopInfo.setInitPullTime(dto.getInitPullTime());
         shopInfo.setIsMultiChannel(Objects.nonNull(dto.getIsMultiChannel())? dto.getIsMultiChannel() : shopInfo.getIsMultiChannel());
+        shopInfo.setAwdWarehouseId(CharSequenceUtil.isNotBlank(dto.getAwdWarehouseId()) ? dto.getAwdWarehouseId() : "");
         String warehouseId = dto.getWarehouseId();
         if (StringUtils.isNotBlank(warehouseId)) {
             List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Arrays.asList(warehouseId));
