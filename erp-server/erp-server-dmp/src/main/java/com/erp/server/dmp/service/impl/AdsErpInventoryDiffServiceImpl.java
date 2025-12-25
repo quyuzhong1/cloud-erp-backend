@@ -258,7 +258,7 @@ public class AdsErpInventoryDiffServiceImpl extends SuperServiceImpl<AdsErpInven
                 .list();
         if (CollectionUtils.isNotEmpty(mappingList)){
             List<AdsErpInventoryDiffDTO.WarehouseListDTO> collect = mappingList.stream()
-                    .filter(e-> StringUtils.isNotBlank(e.getWarehouseId()))
+                    .filter(e-> StringUtils.isNotBlank(e.getWarehouseId()) && StringUtils.isNotBlank(e.getName()))
                     .map(e -> new AdsErpInventoryDiffDTO.WarehouseListDTO(e.getWarehouseId(), e.getName(), finalWarehouseList.contains(e.getWarehouseId())))
                     .distinct()
                     .collect(Collectors.toList());
