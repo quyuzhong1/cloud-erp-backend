@@ -173,6 +173,15 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         // 校验是否含税与税率的关系
         validateTaxIncludedAndTaxRate(dto.getIsTaxIncluded(), dto.getPurchasePriceDetailList());
 
+
+        Boolean isAsset = true;
+        //供应商付款条件
+        String supplierPaymentCondition = supplier.getPaymentCondition();
+        //参数付款条件
+        String paymentCondition = dto.getPaymentCondition();
+        if(!Objects.equals(paymentCondition,supplierPaymentCondition)){
+            isAsset = false;
+        }
         PurchasePriceEntity purchasePrice = new PurchasePriceEntity();
         String id = IdWorker.getIdStr();
         BeanMapper.copy(dto, purchasePrice);
@@ -204,7 +213,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
             /**
              * 添加明细
              */
-            priceDetailService.addPriceDetail(id, dto.getPurchasePriceDetailList());
+            priceDetailService.addPriceDetail(id, dto.getPurchasePriceDetailList(),isAsset);
             //添加日志
             String content = String.format("新增了一个{%s}-采购价目-{%s}", ApproveStatusEnum.WAIT_SUBMIT.getName(), code);
             addModuleOperateLog(content, ModuleTypeEnum.PURCHASE_PRICE.getCode(), id, "新增操作");
@@ -303,6 +312,22 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         if (Objects.isNull(purchasePrice)) {
             throw new ServiceException(ApiError.ERROR_98024);
         }
+        //供应商id
+        String supplierId = dto.getSupplierId();
+        SupplierEntity supplier = supplierService.getById(supplierId);
+        if (Objects.isNull(supplier)) {
+            throw new ServiceException(ApiError.ERROR_SUPPLIER_ABSENCE);
+        }
+
+        Boolean isAsset = true;
+        //供应商付款条件
+        String supplierPaymentCondition = supplier.getPaymentCondition();
+        //参数付款条件
+        String paymentCondition = dto.getPaymentCondition();
+        if(!Objects.equals(paymentCondition,supplierPaymentCondition)){
+            isAsset = false;
+        }
+
         ApproveStatusEnum status = purchasePrice.getApproveStatus();
         PurchasePriceEntity old = new PurchasePriceEntity();
         BeanMapper.copy(purchasePrice, old);
@@ -346,7 +371,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
             String type = tableName.value();
             attachmentService.batchSave(dto.getAttachmentUrlList(), dto.getAttachmentNameList(), type, id);
             //修改明细
-            priceDetailService.updatePriceDetail(id, dto.getPurchasePriceDetailList());
+            priceDetailService.updatePriceDetail(id, dto.getPurchasePriceDetailList(), isAsset );
             return purchasePrice;
         }
         return null;

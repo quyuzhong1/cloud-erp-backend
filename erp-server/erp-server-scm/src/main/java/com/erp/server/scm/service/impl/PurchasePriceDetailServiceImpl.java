@@ -111,7 +111,7 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void addPriceDetail(String purchasePriceId, List<PurchasePriceDetailDTO.AddDTO> purchasePriceDetailList) {
+    public void addPriceDetail(String purchasePriceId, List<PurchasePriceDetailDTO.AddDTO> purchasePriceDetailList,Boolean isAsset ) {
         if (CollectionUtils.isEmpty(purchasePriceDetailList)) {
             return;
         }
@@ -149,9 +149,11 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
             item.setPricingUserId(purchasePriceEntity.getPricingUserId());
         }
         //提示非资产属性SKU
-        String errorMsg = sb.toString();
-        if(StringUtils.isNotBlank(errorMsg)){
-            throw new ServiceException(ApiError.ERROR_PRODUCT_PROPERTY_ASSET_NOT_EXIST,errorMsg);
+        if(!isAsset){
+            String errorMsg = sb.toString();
+            if( StringUtils.isNotBlank(errorMsg)){
+                throw new ServiceException(ApiError.ERROR_PRODUCT_PROPERTY_ASSET_NOT_EXIST,errorMsg);
+            }
         }
         this.saveBatch(addList);
         //标记SKU
@@ -308,7 +310,7 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void updatePriceDetail(String purchasePriceId, List<PurchasePriceDetailDTO.UpdateDTO> purchasePriceDetailList) {
+    public void updatePriceDetail(String purchasePriceId, List<PurchasePriceDetailDTO.UpdateDTO> purchasePriceDetailList,Boolean isAsset ) {
         if (CollectionUtils.isEmpty(purchasePriceDetailList)) {
             return;
         }
@@ -357,10 +359,13 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
         }
 
         //提示非资产属性SKU
-        String errorMsg = sb.toString();
-        if(StringUtils.isNotBlank(errorMsg)){
-            throw new ServiceException(ApiError.ERROR_PRODUCT_PROPERTY_ASSET_NOT_EXIST,errorMsg);
+        if(!isAsset){
+            String errorMsg = sb.toString();
+            if(StringUtils.isNotBlank(errorMsg)){
+                throw new ServiceException(ApiError.ERROR_PRODUCT_PROPERTY_ASSET_NOT_EXIST,errorMsg);
+            }
         }
+
 
         //验证时间
         checkPurchasePriceDetail(purchasePriceEntity.getSupplierId(),purchasePriceEntity.getPurchaseOrgId(),saveOrUpdateList);
