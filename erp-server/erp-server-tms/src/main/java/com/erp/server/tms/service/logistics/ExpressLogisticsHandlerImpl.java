@@ -2,7 +2,6 @@ package com.erp.server.tms.service.logistics;
 
 import cn.hutool.json.JSONUtil;
 import com.common.business.annotation.LogisticsPlatformType;
-import com.common.business.constant.BusinessCommonConstants;
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.utils.FileUtil;
@@ -68,10 +67,6 @@ public class ExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
      */
     @Override
     public ApiResult<LogisticsOrderResponseVO> createOrder(LogisticsOrderVO logisticsOrderVO) {
-        //如果是测试环境直接抛异常
-        if (!BusinessCommonConstants.hasProfile("prod")){
-            throw new RuntimeException("当前环境非生产环境，禁止创建顺丰订单");
-        }
         LogisticsOrderResponseVO responseVO = new LogisticsOrderResponseVO();
         OrderRequest orderRequest = processCreateOrderData(logisticsOrderVO);
         boolean success = false;
