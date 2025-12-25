@@ -689,7 +689,7 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
 
         //查询虚拟仓下的借调仓
         List<String> vmIds = detailList.stream().map(VirtualWarehouseAllocationDTO.DetailDto::getToVirtualWarehouseId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
-        List<VirtualWarehouseEntity> virtualWarehouseList = virtualWarehouseService.listByIds(vmIds);
+        List<VirtualWarehouseEntity> virtualWarehouseList = CollUtil.isEmpty(vmIds) ? new ArrayList<>() : virtualWarehouseService.listByIds(vmIds);
         Map<String,VirtualWarehouseEntity> virtualWarehouseMap = CollUtil.isEmpty(virtualWarehouseList) ?
                 new HashMap<>() :
                 virtualWarehouseList.stream().collect(Collectors.toMap(VirtualWarehouseEntity::getId, e -> e));
