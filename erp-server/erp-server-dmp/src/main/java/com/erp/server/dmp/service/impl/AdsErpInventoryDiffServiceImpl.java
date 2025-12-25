@@ -3,6 +3,7 @@ package com.erp.server.dmp.service.impl;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.enums.FileTaskEventEnum;
 import com.common.business.enums.OperationTypeEnum;
+import com.common.business.enums.PlatformDictEnum;
 import com.common.business.wrapper.FeignQuery;
 import com.erp.model.dmp.entity.ThirdMappingEntity;
 import com.erp.model.dmp.entity.doris.AdsErpInventoryDiffKingdeeEntity;
@@ -232,9 +233,13 @@ public class AdsErpInventoryDiffServiceImpl extends SuperServiceImpl<AdsErpInven
             resultList.addAll(collect);
         }
 
+        List<String> finalPlatformList = platformList;
+        List<String> omsPlatformList = Arrays.stream(PlatformDictEnum.values()).map(PlatformDictEnum::getCode).filter(e -> finalPlatformList.contains(e.toLowerCase())).collect(Collectors.toList());
+        omsPlatformList.addAll(finalPlatformList);
+
         // 销售平台
         List<ShopInfoEntity> shopList = FeignQuery.create(ShopInfoEntity.class)
-                .in(ShopInfoEntity::getDictPlatform, platformList)
+                .in(ShopInfoEntity::getDictPlatform, omsPlatformList)
                 .list();
         if (CollectionUtils.isNotEmpty(shopList)){
             List<AdsErpInventoryDiffDTO.WarehouseListDTO> collect = shopList.stream()
