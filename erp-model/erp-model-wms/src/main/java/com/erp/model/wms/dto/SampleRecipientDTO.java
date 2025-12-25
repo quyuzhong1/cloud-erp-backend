@@ -132,6 +132,11 @@ public class SampleRecipientDTO implements Serializable {
         private LocalDateTime invalidTime;
 
         /**
+        * 跟踪号（关联其他出库单的跟踪号，多个用逗号分隔）
+        */
+        private String trackNo;
+
+        /**
         * 样品领用单号
         */
         private String code;
@@ -145,6 +150,10 @@ public class SampleRecipientDTO implements Serializable {
         * 用途 /wms/dict/drop/down?type=sampleUsage
         */
         private String usage;
+        /**
+         * 用途说明
+         */
+        private String usageDesc;
 
         /**
         * 发货仓库ID
@@ -260,6 +269,10 @@ public class SampleRecipientDTO implements Serializable {
          */
         @NotNull(message = "领用数量不能为空")
         private Integer recipientQty;
+        /**
+         * 审核数量
+         */
+        private Integer auditQty;
 
         /**
          * 已出库数量
@@ -422,6 +435,10 @@ public class SampleRecipientDTO implements Serializable {
         * 用途  /wms/dict/drop/down?type=sampleUsage
         */
         private String usage;
+        /**
+         * 用途说明
+         */
+        private String usageDesc;
 
         /**
         * 发货仓库ID 接口：warehouse/list
@@ -616,6 +633,11 @@ public class SampleRecipientDTO implements Serializable {
         private Integer quantity;
 
         /**
+         * 审核数量
+         */
+        private Integer auditQty;
+
+        /**
          * 可领用库存
          */
         private Integer usableQty;
@@ -687,6 +709,12 @@ public class SampleRecipientDTO implements Serializable {
          */
         @NotBlank(message = "用途 不能为空")
         private String usage;
+        /**
+         * 用途说明
+         */
+        @NotBlank(message = "用途说明不能为空")
+        @Size(max = 200, message = "用途说明最大长度不能超过200位")
+        private String usageDesc;
 
         /**
          * 发货仓库ID  接口： warehouse/list
@@ -1140,6 +1168,45 @@ public class SampleRecipientDTO implements Serializable {
          */
         private Integer availableQty;
         
+    }
+
+    /**
+     * 修改审核数量请求参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class UpdateAuditQtyDTO {
+        /**
+         * 样品领用单ID
+         */
+        @NotBlank(message = "样品领用单ID不能为空")
+        private String id;
+
+        /**
+         * 审核数量修改明细列表
+         */
+        @NotEmpty(message = "审核数量修改明细列表不能为空")
+        private List<UpdateAuditQtyDetailDTO> detailList;
+    }
+    
+    /**
+     * 修改审核数量明细
+     */
+    @Data
+    @NoArgsConstructor
+    public static class UpdateAuditQtyDetailDTO {
+        /**
+         * 明细ID
+         */
+        @NotBlank(message = "明细ID不能为空")
+        private String detailId;
+
+        /**
+         * 审核数量
+         */
+        @NotNull(message = "审核数量不能为空")
+        @Min(value = 0, message = "审核数量不能小于0")
+        private Integer auditQty;
     }
 
     /**

@@ -18,6 +18,7 @@
        <result column="sku_id" property="skuId" />
        <result column="product_name" property="productName" />
        <result column="recipient_qty" property="recipientQty" />
+       <result column="audit_qty" property="auditQty" />
        <result column="delivery_qty" property="deliveryQty" />
        <result column="remark" property="remark" />
     </resultMap>
@@ -33,7 +34,7 @@
         update_time,
         version,
         is_deleted,
-        main_id, exec_status, sku_no, sku_id, product_name, recipient_qty, delivery_qty, remark
+        main_id, exec_status, sku_no, sku_id, product_name, recipient_qty, audit_qty, delivery_qty, remark
     </sql>
 
 

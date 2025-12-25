@@ -277,6 +277,8 @@ public enum SourceTypeEnum {
     // 旺店通相关
     WDT_OUT_STOCK("wdt_out_stock", "旺店通销售出库单","dmp_pull_task"),
     WDT_RETURN_ORDER("wdt_return_order", "旺店通退货入库单","dmp_pull_task"),
+    WDT_VIRTUAL_INVENTORY("wdt_virtual_inventory", "旺店通虚拟仓库存","dmp_pull_task"),
+
 
     //旺店通
     WDT_WAREHOUSE("wdt_warehouse", "旺店通仓库基础数据", "dmp_pull_task"),

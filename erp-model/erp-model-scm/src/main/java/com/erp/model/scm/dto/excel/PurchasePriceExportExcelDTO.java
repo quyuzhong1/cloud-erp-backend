@@ -40,10 +40,19 @@ public class PurchasePriceExportExcelDTO implements Serializable {
 
 
     /**
+     * 是否含税
+     */
+    @ColumnWidth(30)
+    @ExcelProperty(value = "是否含税", index = 2)
+    private String isTaxIncludedName;
+
+
+
+    /**
      * sku
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "SKU", index = 2)
+    @ExcelProperty(value = "SKU", index = 3)
     private String skuNo;
 
 
@@ -51,14 +60,14 @@ public class PurchasePriceExportExcelDTO implements Serializable {
      * sku
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "产品名称", index = 3)
+    @ExcelProperty(value = "产品名称", index = 4)
     private String productName;
 
     /**
      * 区间
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "区间从-到", index = 4)
+    @ExcelProperty(value = "区间从-到", index = 5)
     private String qtySection;
 
 
@@ -69,7 +78,7 @@ public class PurchasePriceExportExcelDTO implements Serializable {
      * 含税单价
      */
     @ColumnWidth(10)
-    @ExcelProperty(value = "含税单价", index = 5)
+    @ExcelProperty(value = "含税单价", index = 6)
     private String taxPrice;
 
 
@@ -77,7 +86,7 @@ public class PurchasePriceExportExcelDTO implements Serializable {
      * 含税单价
      */
     @ColumnWidth(10)
-    @ExcelProperty(value = "税率(%)", index = 6)
+    @ExcelProperty(value = "税率(%)", index = 7)
     private BigDecimal taxRate;
 
 
@@ -85,7 +94,7 @@ public class PurchasePriceExportExcelDTO implements Serializable {
      * 生效时间
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "生效时间", index = 7)
+    @ExcelProperty(value = "生效时间", index = 8)
     private LocalDate effectiveDate;
 
 
@@ -93,55 +102,55 @@ public class PurchasePriceExportExcelDTO implements Serializable {
      * 失效时间
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "失效时间", index = 8)
+    @ExcelProperty(value = "失效时间", index = 9)
     private LocalDate expireDate;
 
     /**
      * 生效时间
      */
     @ColumnWidth(10)
-    @ExcelProperty(value = "启用状态", index = 9)
+    @ExcelProperty(value = "启用状态", index = 10)
     private String enabled;
 
     /**
      * 采购组织名
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "采购组织", index = 10)
+    @ExcelProperty(value = "采购组织", index = 11)
     private String purchaseOrgName;
 
     /**
      * 单据状态
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "单据状态", index = 11)
+    @ExcelProperty(value = "单据状态", index = 12)
     private String approveStatusName;
 
 
     /**
      * 审核人（最新）
      */
-    @ExcelProperty(value = "审核人（最新）", index = 12)
+    @ExcelProperty(value = "审核人（最新）", index = 13)
     @ColumnWidth(20)
     private String approveUserName;
 
     /**
      * 审核完成时间
      */
-    @ExcelProperty(value = "审核完成时间", index = 13,converter= LocalDateStringConverter.class)
+    @ExcelProperty(value = "审核完成时间", index = 14,converter= LocalDateStringConverter.class)
     @ColumnWidth(20)
     private LocalDateTime approveTime;
 
 
     @ColumnWidth(10)
-    @ExcelProperty(value = "创建人", index = 14)
+    @ExcelProperty(value = "创建人", index = 15)
     private String createUserName;
 
     /**
      * 创建时间
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "创建时间", index = 15,converter= LocalDateStringConverter.class)
+    @ExcelProperty(value = "创建时间", index = 16,converter= LocalDateStringConverter.class)
     private LocalDateTime createTime;
 
 
