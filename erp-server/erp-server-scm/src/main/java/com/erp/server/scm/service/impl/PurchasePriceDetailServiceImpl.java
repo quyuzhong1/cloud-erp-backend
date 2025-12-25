@@ -134,9 +134,8 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
                 item.setSkuNo(skuVO.getSkuNo());
                 item.setProductName(skuVO.getSkuName());
                 if(!Objects.equals("资产", skuVO.getPropertyName())){
-                    sb.append("【");
                     sb.append(skuVO.getSkuNo());
-                    sb.append("】;");
+                    sb.append(";");
                 }
             }
             item.setPurchasePriceId(purchasePriceId);

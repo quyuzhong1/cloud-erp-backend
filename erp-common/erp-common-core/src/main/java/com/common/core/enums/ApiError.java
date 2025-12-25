@@ -898,7 +898,7 @@ public enum ApiError implements Serializable {
     ERROR_CONTRACT_TEMPLATE_NOT_EXIST(98159,"合同模板不存在或被禁用"),
     ERROR_CONTRACT_TEMPLATE_DICTINCT(98160,"【{}】已绑定【{}】，不可重复绑定"),
     ERROR_CONTRACT_TEMPLATE_EXIST(98161,"【{}】已被其他供应商绑定，请先解除关联再绑定所有供应商"),
-    ERROR_PRODUCT_PROPERTY_ASSET_NOT_EXIST(98161,"SKU{}产品属性非资产，与供应商付款条件不一致"),
+    ERROR_PRODUCT_PROPERTY_ASSET_NOT_EXIST(98161,"SKU【{}】产品属性非资产，与供应商付款条件不一致"),
 
     /**
      * WMS 错误
