@@ -1,5 +1,6 @@
 package com.erp.model.scm.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PermissionsDTO;
@@ -252,6 +253,12 @@ public class PurchasePriceDTO implements Serializable {
         private String remark;
 
         /**
+         * 付款条件
+         */
+        @NotBlank(message = "付款条件不能为空")
+        private String paymentCondition;
+
+        /**
          * 报价明细
          */
         @Valid
@@ -409,6 +416,12 @@ public class PurchasePriceDTO implements Serializable {
          * 备注
          */
         private String remark;
+
+        /**
+         * 付款条件
+         */
+        @NotBlank(message = "付款条件不能为空")
+        private String paymentCondition;
 
         /**
          * 报价明细
@@ -831,5 +844,30 @@ public class PurchasePriceDTO implements Serializable {
     public static class UpdateApprovalStatusDTO {
         private PurchasePriceEntity  purchasePriceEntity;
         private ApproveStatusEnum approveStatus;
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    public static class PayConditionBySupplierAndCompanyDTO {
+        /**
+         * 供应商id
+         */
+        @NotBlank(message = "供应商不能为空")
+        private String supplierId;
+        /**
+         * 采购组织id
+         */
+        @NotBlank(message = "采购组织不能为空")
+        private String purchaseOrgId;
+        /**
+         * 付款条件code
+         */
+        private String paymentCondition;
+        /**
+         * 付款条件
+         */
+        private String paymentConditionName;
+
     }
 }

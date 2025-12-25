@@ -1231,4 +1231,32 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
             throw new ServiceException(ApiError.ERROR_PURCHASE_PRICE_SUBMIT_SKU_UN_APPROVE,skuNos);
         }
     }
+
+    @Override
+    public PurchasePriceDTO.PayConditionBySupplierAndCompanyDTO getPayConditionBySupplierAndCompany(PurchasePriceDTO.PayConditionBySupplierAndCompanyDTO dto) {
+        if(Objects.isNull(dto)){
+            return null;
+        }
+
+        //查询 最新的 审批通过的
+        List<PurchasePriceEntity> list = lambdaQuery().eq(PurchasePriceEntity::getSupplierId,dto.getSupplierId())
+                .eq(PurchasePriceEntity::getPurchaseOrgId,dto.getPurchaseOrgId())
+                .eq(PurchasePriceEntity::getIsDeleted,false)
+                .eq(PurchasePriceEntity::getApproveStatus,ApproveStatusEnum.APPROVE.getCode())
+                .orderByDesc(PurchasePriceEntity::getCreateTime)
+                .list();
+        if(CollUtil.isNotEmpty(list)){
+            PurchasePriceEntity purchasePriceEntity = list.get(0);
+            dto.setPaymentCondition(purchasePriceEntity.getPaymentCondition());
+            //付款条件名称
+            if(StringUtils.isNotBlank(purchasePriceEntity.getPaymentCondition())){
+                KingdeePaymentConditionEntity paymentCondition = kingdeePaymentConditionService.getByCode(purchasePriceEntity.getPaymentCondition());
+                if (Objects.nonNull(paymentCondition)) {
+                    dto.setPaymentConditionName(paymentCondition.getName());
+                }
+            }
+        }
+        return dto;
+    }
+
 }

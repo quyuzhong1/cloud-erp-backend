@@ -116,6 +116,11 @@ public class PurchasePriceEntity extends BaseEntity<PurchasePriceEntity> {
      */
     @TableField("voucher_no")
     private String voucherNo;
+    /**
+     * 付款条件
+     */
+    @TableField("payment_condition")
+    private String paymentCondition;
 
     /**
      * 明细ids
