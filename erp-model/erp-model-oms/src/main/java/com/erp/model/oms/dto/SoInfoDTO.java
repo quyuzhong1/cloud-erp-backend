@@ -1197,6 +1197,7 @@ public class SoInfoDTO implements Serializable {
          */
         private String code;
         private String thirdCode;
+        private String thirdSystem;
 
         /**
          * 平台
