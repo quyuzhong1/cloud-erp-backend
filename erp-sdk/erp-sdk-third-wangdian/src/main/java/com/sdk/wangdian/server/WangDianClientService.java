@@ -23,8 +23,8 @@ public class WangDianClientService {
     }*/
 
     WangDianClientService(WdtProperties properties){
-        this.defaultClient = DefaultClient.get("wjkj03", "https://wdt.wangdian.cn/", "wjkj03-ot", "af9a8ab635bdf3756a302f404a154a89:8479510573065989536f2cf426f8079a");
-//        this.defaultClient = DefaultClient.get(properties.getSid(), properties.getUrl(), properties.getAppKey(), properties.getAppSecret());
+//        this.defaultClient = DefaultClient.get("wjkj03", "https://wdt.wangdian.cn/", "wjkj03-ot", "af9a8ab635bdf3756a302f404a154a89:8479510573065989536f2cf426f8079a");
+        this.defaultClient = DefaultClient.get(properties.getSid(), properties.getUrl(), properties.getAppKey(), properties.getAppSecret());
         log.info("初始化 WangDianClientService, {}", properties);
     }
 
