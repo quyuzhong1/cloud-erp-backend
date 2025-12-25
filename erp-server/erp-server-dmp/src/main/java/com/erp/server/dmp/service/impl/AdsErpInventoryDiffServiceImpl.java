@@ -254,7 +254,7 @@ public class AdsErpInventoryDiffServiceImpl extends SuperServiceImpl<AdsErpInven
 
         // wms绑定仓库
         List<WarehouseMappingEntity> mappingList = FeignQuery.create(WarehouseMappingEntity.class)
-                .eq(WarehouseMappingEntity::getDictPlatform, omsPlatformList)
+                .in(WarehouseMappingEntity::getDictPlatform, omsPlatformList)
                 .list();
         if (CollectionUtils.isNotEmpty(mappingList)){
             List<AdsErpInventoryDiffDTO.WarehouseListDTO> collect = mappingList.stream()
