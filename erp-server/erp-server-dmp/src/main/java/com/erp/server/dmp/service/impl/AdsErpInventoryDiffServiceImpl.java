@@ -1,6 +1,7 @@
 package com.erp.server.dmp.service.impl;
 
 import cn.hutool.core.util.StrUtil;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.FileTaskEventEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.PlatformDictEnum;
@@ -9,9 +10,11 @@ import com.erp.model.dmp.entity.ThirdMappingEntity;
 import com.erp.model.dmp.entity.doris.AdsErpInventoryDiffKingdeeEntity;
 import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.oms.entity.DictBasicEntity;
+import com.erp.model.oms.entity.ShopAuthEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.entity.WarehouseEntity;
+import com.erp.model.wms.entity.WarehouseMappingEntity;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.dmp.service.CfgSettingService;
 import com.erp.server.dmp.service.ThirdMappingService;
@@ -244,6 +247,17 @@ public class AdsErpInventoryDiffServiceImpl extends SuperServiceImpl<AdsErpInven
         if (CollectionUtils.isNotEmpty(shopList)){
             List<AdsErpInventoryDiffDTO.WarehouseListDTO> collect = shopList.stream()
                     .map(e -> new AdsErpInventoryDiffDTO.WarehouseListDTO(e.getWarehouseId(), e.getWarehouseName(), finalWarehouseList.contains(e.getWarehouseId())))
+                    .collect(Collectors.toList());
+            resultList.addAll(collect);
+        }
+
+        // wms绑定仓库
+        List<WarehouseMappingEntity> mappingList = FeignQuery.create(WarehouseMappingEntity.class)
+                .eq(WarehouseMappingEntity::getDictPlatform, omsPlatformList)
+                .list();
+        if (CollectionUtils.isNotEmpty(mappingList)){
+            List<AdsErpInventoryDiffDTO.WarehouseListDTO> collect = mappingList.stream()
+                    .map(e -> new AdsErpInventoryDiffDTO.WarehouseListDTO(e.getWarehouseId(), e.getName(), finalWarehouseList.contains(e.getWarehouseId())))
                     .collect(Collectors.toList());
             resultList.addAll(collect);
         }
