@@ -35,7 +35,6 @@ import com.common.core.utils.MathUtil;
 import com.common.core.utils.StrUtils;
 import com.erp.model.dmp.dto.ThirdMappingDTO;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
-import com.erp.model.oms.entity.SoReturnEntity;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.enums.BomTypeEnum;
@@ -84,8 +83,6 @@ import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionSynchronizationAdapter;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
@@ -317,6 +314,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             throw new ServiceException(ApiError.ERROR_99047);
         }
         //提交
+        entity.setIsUserSystem(dto.getIsUserSystem());
         this.submit(entity, Boolean.FALSE);
 
         //审核
@@ -324,6 +322,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         if (ObjectUtil.isEmpty(approveEntity)) {
             throw new ServiceException(ApiError.ERROR_99047);
         }
+        approveEntity.setIsUserSystem(dto.getIsUserSystem());
         this.approve(approveEntity,ApproveType.PASS,"", null , Boolean.TRUE, Boolean.FALSE);
         return id;
     }
@@ -644,7 +643,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             //审核通过 TODO(判断是否存在流程)
 
             //更新单据(后面有流程了调用监听可删)
-            updateApproveStatusForApprove(entity.getId(), ApproveStatusEnum.APPROVE.getStatus());
+            updateApproveStatusForApprove(entity, ApproveStatusEnum.APPROVE.getStatus());
             //直接调拨单明细
             List<TransferInfoDetailEntity> detailList = transferInfoDetailService.listByMainIds(Collections.singletonList(entity.getId()));
             if (CollectionUtils.isEmpty(detailList)) {
@@ -676,7 +675,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             //中止当前审核流程
 
             //更新单据状态
-            updateApproveStatusForApprove(entity.getId(), ApproveStatusEnum.REJECT.getStatus());
+            updateApproveStatusForApprove(entity, ApproveStatusEnum.REJECT.getStatus());
         }
         //操作日志
         operateLogService.addModuleOperateLog(String.format("审核【%s】了一个直接调拨单【%s】", ApproveTypeEnum.getName(type),entity.getCode()).concat(CharSequenceUtil.isNotBlank(comment) ? String.format(",意见：%s", comment) : ""), ModuleTypeEnum.TRANSFER_INFO.getCode(), entity.getId(), "审核操作");
@@ -725,7 +724,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         log.info("直接调拨单【{}】，id=【{}】", ApproveTypeEnum.getName(type), entity.getId());
         //更新状态
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(type);
-        updateApproveStatusForApprove(entity.getId(), approveStatus.getCode());
+        updateApproveStatusForApprove(entity, approveStatus.getCode());
         //审核通过
         if (ApproveTypeEnum.PASS.getStatus().equals(type)) {
             log.info("直接调拨单【{}】审核通过，id=【{}】", ApproveTypeEnum.getName(type), entity.getId());
@@ -1855,11 +1854,11 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
     /**
      * 审核后更新审核状态、审核人、审核时间
      */
-    private void updateApproveStatusForApprove(String id, String approveStatus) {
+    private void updateApproveStatusForApprove(TransferInfoEntity entity, String approveStatus) {
         //当前登录人
-        LoginUser userInfo = UserContext.getDefaultLoginUser();
+        LoginUser userInfo = Boolean.TRUE.equals(entity.getIsUserSystem()) ? UserContext.getSystemLoginUser() : UserContext.getDefaultLoginUser();
 
-        this.lambdaUpdate().eq(TransferInfoEntity::getId, id)
+        this.lambdaUpdate().eq(TransferInfoEntity::getId, entity.getId())
                 .set(TransferInfoEntity::getApproveUserId, userInfo.getUid())
                 .set(TransferInfoEntity::getApproveUserName, userInfo.getUserName())
                 .set(TransferInfoEntity::getApproveStatus, approveStatus)
