@@ -81,6 +81,21 @@ public class AssetNoticeDetailEntity extends BaseEntity<AssetNoticeDetailEntity>
      */
     @TableField("create_po_type")
     private String createPoType;
+    /**
+    * 供应商id
+    */
+    @TableField("supplier_id")
+    private String supplierId;
+    /**
+    * 供应商名称
+    */
+    @TableField("supplier_name")
+    private String supplierName;
+    /**
+    * 项目名称（展示字段，从模具档案获取）
+    */
+    @TableField(exist = false)
+    private String projectName;
 
 
     public static final String MAIN_ID = "main_id";
@@ -102,6 +117,12 @@ public class AssetNoticeDetailEntity extends BaseEntity<AssetNoticeDetailEntity>
     public static final String PURCHASE_ORG_ID = "purchase_org_id";
 
     public static final String REMARK = "remark";
+
+    public static final String CREATE_PO_TYPE = "create_po_type";
+
+    public static final String SUPPLIER_ID = "supplier_id";
+
+    public static final String SUPPLIER_NAME = "supplier_name";
 
     @Override
     public Serializable pkVal() {

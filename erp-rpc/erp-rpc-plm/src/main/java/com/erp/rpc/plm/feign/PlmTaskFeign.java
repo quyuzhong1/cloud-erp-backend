@@ -687,6 +687,21 @@ public interface PlmTaskFeign {
     MoldInfoEntity getMoldInfoByCode(@RequestBody String moldCode);
 
     /**
+     * 批量获取模具信息
+     * @param moldCodes 模具编码列表
+     */
+    @PostMapping("feign/moldInfo/listMoldInfoByCodes")
+    List<MoldInfoEntity> listMoldInfoByCodes(@RequestBody List<String> moldCodes);
+
+    /**
+     * 根据项目名称查询模具编码列表
+     * @param projectName 项目名称
+     * @return 模具编码列表
+     */
+    @PostMapping("feign/moldInfo/listMoldCodesByProjectName")
+    List<String> listMoldCodesByProjectName(@RequestBody String projectName);
+
+    /**
      * 获取模具信息
      * @param dto
      */
