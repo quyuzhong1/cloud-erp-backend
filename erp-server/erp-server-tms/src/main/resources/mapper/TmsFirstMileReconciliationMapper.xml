@@ -160,14 +160,14 @@
     </select>
     <select id="tabList" resultType="com.erp.model.tms.dto.TmsFirstMileReconciliationDTO$TabListDTO">
         SELECT
-        approve_status AS tabFlag,
-        count(*)  AS count
-        FROM  tms_first_mile_reconciliation
-        WHERE is_deleted=FALSE
+        tfmr.approve_status AS tabFlag,
+        count(1)  AS count
+        FROM  tms_first_mile_reconciliation tfmr
+        WHERE tfmr.is_deleted=FALSE
         <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
         </if>
-        GROUP BY approve_status
+        GROUP BY tfmr.approve_status
     </select>
     <select id="listReconciliationAndCostByBillIds"
             resultType="com.erp.model.tms.dto.TmsFirstMileLogisticDTO$ReconciliationDTO">
