@@ -1664,9 +1664,11 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
 
             // 4. 构建明细ID到审核数量的映射
             Map<String, Integer> auditQtyMap = dto.getDetailList().stream()
+                    .filter(item -> item.getDetailId() != null && item.getAuditQty() != null)
                     .collect(Collectors.toMap(
                             SampleRecipientDTO.UpdateAuditQtyDetailDTO::getDetailId,
-                            SampleRecipientDTO.UpdateAuditQtyDetailDTO::getAuditQty
+                            SampleRecipientDTO.UpdateAuditQtyDetailDTO::getAuditQty,
+                            (existing, replacement) -> replacement
                     ));
 
             // 5. 更新明细的审核数量
