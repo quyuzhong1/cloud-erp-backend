@@ -253,7 +253,6 @@ public class SkuVO implements Serializable {
      */
     private PropertyDTO propertyDTO;
 
-
     /**
      * 是否是捆绑商品:true=是，false=否
      * (可能字段为null，需添加查询)

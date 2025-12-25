@@ -259,6 +259,8 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         purchasePriceDetailList.forEach(req -> {
             SkuVO skuVO = skuNoList.stream().filter(obj -> obj.getSkuId().equals(req.getSkuId())).findFirst().orElse(new SkuVO());
             req.setProductName(skuVO.getSkuName());
+            req.setPropertyId(skuVO.getPropertyId());
+            req.setProperty(skuVO.getPropertyName());
         });
 
         viewDTO.setPurchasePriceDetailList(purchasePriceDetailList);

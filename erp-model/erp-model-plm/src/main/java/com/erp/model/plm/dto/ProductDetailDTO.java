@@ -436,6 +436,14 @@ public class ProductDetailDTO implements Serializable {
          * 模具标识名称
          */
         private String tagName;
+        /**
+         *产品属性
+         */
+        private String property;
+        /**
+         *产品属性id
+         */
+        private String propertyId;
     }
     @Data
     @NoArgsConstructor
