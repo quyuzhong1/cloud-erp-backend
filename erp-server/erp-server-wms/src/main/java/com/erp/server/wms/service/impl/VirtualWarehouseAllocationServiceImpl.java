@@ -205,9 +205,9 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
         List<VirtualWarehouseAllocationDetailEntity> detailList = virtualWarehouseAllocationDetailService.list(new LambdaQueryWrapper<VirtualWarehouseAllocationDetailEntity>()
                 .eq(VirtualWarehouseAllocationDetailEntity::getMainId, id).orderByAsc(VirtualWarehouseAllocationDetailEntity::getId));
         //实体仓信息
-        List<String> fromWarehouseIdList = detailList.stream().map(VirtualWarehouseAllocationDetailEntity::getToWarehouseId).distinct().collect(Collectors.toList());
-        List<WarehouseEntity> fromWarehouseList = CollUtil.isEmpty(fromWarehouseIdList) ? Collections.emptyList() : warehouseService.listByIds(fromWarehouseIdList);
-        Map<String, String> fromWarehouseNameMap = CollUtil.isEmpty(fromWarehouseList) ? new HashMap<>() : fromWarehouseList.stream().collect(Collectors.toMap(WarehouseEntity::getId, WarehouseEntity::getName));
+        List<String> toWarehouseIdList = detailList.stream().map(VirtualWarehouseAllocationDetailEntity::getToWarehouseId).distinct().collect(Collectors.toList());
+        List<WarehouseEntity> toWarehouseList = CollUtil.isEmpty(toWarehouseIdList) ? Collections.emptyList() : warehouseService.listByIds(toWarehouseIdList);
+        Map<String, String> toWarehouseNameMap = CollUtil.isEmpty(toWarehouseList) ? new HashMap<>() : toWarehouseList.stream().collect(Collectors.toMap(WarehouseEntity::getId, WarehouseEntity::getName));
 
         //获取数量
         VirtualInventoryDTO.QtyTypeDTO qtyTypeDTO = new VirtualInventoryDTO.QtyTypeDTO();
@@ -226,7 +226,7 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
                 detailDto.setImageUrl(skuVO.getSkuImagesUrl());
             }
             //借调实体仓名称
-            detailDto.setToWarehouseName(fromWarehouseNameMap.get(detailDto.getToWarehouseId()));
+            detailDto.setToWarehouseName(toWarehouseNameMap.get(detailDto.getToWarehouseId()));
             qtyDTOList.forEach(qtyDTO -> {
                 if (Objects.equals(qtyDTO.getWarehouseId(), detailDto.getWarehouseId()) && Objects.equals(qtyDTO.getSkuId(), detailDto.getSkuId())) {
                     detailDto.setWarehouseUsableQty(qtyDTO.getWarehouseAllocationQty());
