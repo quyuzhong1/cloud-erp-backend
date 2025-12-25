@@ -3782,7 +3782,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 return;
             }
             //判断平台更新时间有更新
-            if(!dto.getPlatformUpdateTime().isAfter(exist.getPlatformUpdateTime())){
+            if(Objects.isNull(dto.getPlatformUpdateTime()) || !dto.getPlatformUpdateTime().isAfter(exist.getPlatformUpdateTime())){
                 log.warn("平台更新时间没有更新，{}",exist.getCode());
                 return;
             }
