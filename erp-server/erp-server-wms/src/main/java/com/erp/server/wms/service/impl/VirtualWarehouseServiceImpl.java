@@ -3,6 +3,7 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -385,6 +386,11 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
         ThirdMappingDTO.MappingViewDTO view = dmpThirdMappingFeign.view(viewParamDTO);
         if (Objects.nonNull(view)) {
             viewDTO.setThirdMappingList(view.getThirdList());
+        }
+        //借调仓名称
+        WarehouseEntity warehouseEntity = warehouseService.getById(vmEntity.getFromWarehouseId());
+        if (ObjUtil.isNotEmpty(warehouseEntity)) {
+            viewDTO.setFromWarehouseName(warehouseEntity.getName());
         }
         return viewDTO;
     }

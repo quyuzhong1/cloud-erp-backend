@@ -66,6 +66,10 @@ public class VirtualWarehouseDTO implements Serializable {
          *  借调仓id
          */
         private String fromWarehouseId;
+        /**
+         * 借调仓名称
+         */
+        private String fromWarehouseName;
 
 
         //        private List<VirtualWarehouseChannelDTO.ChannelAddDTO> channelList;
