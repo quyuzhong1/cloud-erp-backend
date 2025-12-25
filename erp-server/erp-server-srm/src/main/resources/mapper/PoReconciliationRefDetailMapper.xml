@@ -51,7 +51,7 @@
         , po.source_code as poSourceCode,
         po.source_type as poSourceType,
         prd.qty as billQty,
-        rd.reconciledQty
+        rd.reconciledQty - prrd.qty as reconciledQty
         from po_reconciliation_ref_detail prrd
         left join po_reconciliation_detail prd on prrd.source_detail_id = prd.source_detail_id and prd.is_deleted = false
         left join reconciled rd on prrd.source_detail_id = rd.source_detail_id

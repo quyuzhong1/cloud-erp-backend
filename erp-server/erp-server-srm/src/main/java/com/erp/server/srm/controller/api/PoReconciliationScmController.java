@@ -402,5 +402,33 @@ public class PoReconciliationScmController extends BaseController {
         return success(poReconciliationScmService.exportDetailList(dto,response));
     }
 
-
+    /**
+     * 处理历史数据
+     * @author will
+     * @date 2025/12/24 18:13
+     * @param dto
+     * @return ApiResult<Object>
+     */
+    @PostMapping("/handleHisData")
+    @LogAction(value = LogActionEnum.CONFIRM, desc = "处理历史数据")
+    public ApiResult<Object> handleHisData(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO resultDTO;
+            try {
+                resultDTO = poReconciliationScmService.handleHisData(id);
+            }catch (Exception e){
+                log.error("对账单 处理历史数据失败",e);
+                PoReconciliationEntity entity = poReconciliationScmService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    resultDTO = BatchResultDTO.fail(id, id, "对账单不存在, 处理历史数据失败");
+                    resultDTOS.add(resultDTO);
+                    continue;
+                }
+                resultDTO = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(resultDTO);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
 }

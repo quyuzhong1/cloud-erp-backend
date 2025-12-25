@@ -43,7 +43,7 @@
         left join foreign_purchase_order po on prd.po_id = po.id and po.is_deleted = false
         <where>
             ${params.sqlMap.default}
-            and prd.is_deleted = false
+            and prd.is_deleted = false and prd.status in ('waitReconciliation','partReconciled','notNeedReconciliation')
             <if test="params.supplierId != null and params.supplierId != ''">
                 and prd.supplier_id = #{params.supplierId}
             </if>
@@ -99,6 +99,16 @@
             prd.is_deleted = false  and prd.business_status = 'confirm' and prd.status in ('waitReconciliation')
             and prd.date >= #{startDate}
             and (#{endDate}::TIMESTAMP + INTERVAL '1 DAY') > prd.date
+        </where>
+    </select>
+
+    <!-- 根据主表ID查询明细列表 -->
+    <select id="listByMainId" resultType="com.erp.model.srm.entity.PoReconciliationDetailEntity">
+        select
+            <include refid="Base_Column_List" />
+        from po_reconciliation_detail prd
+        <where>
+            prd.is_deleted = false and prd.main_id = #{mainId}
         </where>
     </select>
 

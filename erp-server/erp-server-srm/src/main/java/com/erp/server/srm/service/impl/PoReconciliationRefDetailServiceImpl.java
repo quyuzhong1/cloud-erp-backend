@@ -116,6 +116,8 @@ public class PoReconciliationRefDetailServiceImpl extends SuperServiceImpl<PoRec
         }
         //更新对账状态
         List<String> detailIdList = detailList.stream().map(PoReconciliationRefDetailDTO.UpdateDTO::getPoReconciliationDetailId).distinct().collect(Collectors.toList());
+        List<String> oldDetailIdList = oldList.stream().map(PoReconciliationRefDetailEntity::getPoReconciliationDetailId).distinct().collect(Collectors.toList());
+        detailIdList.addAll(oldDetailIdList);
         poReconciliationDetailScmService.autoUpdateStatus(detailIdList);
 
         //更新主表对账金额
@@ -155,6 +157,8 @@ public class PoReconciliationRefDetailServiceImpl extends SuperServiceImpl<PoRec
         }
         //更新对账状态
         List<String> detailIdList = detailList.stream().map(PoReconciliationRefDetailDTO.ScmUpdateDTO::getPoReconciliationDetailId).distinct().collect(Collectors.toList());
+        List<String> oldDetailIdList = oldList.stream().map(PoReconciliationRefDetailEntity::getPoReconciliationDetailId).distinct().collect(Collectors.toList());
+        detailIdList.addAll(oldDetailIdList);
         poReconciliationDetailScmService.autoUpdateStatus(detailIdList);
 
         //更新主表对账金额

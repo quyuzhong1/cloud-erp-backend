@@ -49,4 +49,12 @@ public interface PoReconciliationDetailMapper extends BaseMapper<PoReconciliatio
      * @return List<PoReconciliationDetailEntity>
      */
     List<PoReconciliationDetailEntity> listAutoGeneratePoReconciliation(@Param("startDate")LocalDate startDate,@Param("endDate") LocalDate endDate);
+    /**
+     * 根据主表ID查询明细
+     * @author will
+     * @date 2025/12/24 18:45
+     * @param mainId
+     * @return List<PoReconciliationDetailEntity>
+     */
+    List<PoReconciliationDetailEntity> listByMainId(@Param("mainId") String mainId);
 }

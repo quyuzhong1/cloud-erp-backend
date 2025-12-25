@@ -182,4 +182,13 @@ public interface PoReconciliationScmService extends SuperService<PoReconciliatio
      * @return PagingVO<ExportDetailDTO>
      */
     PagingVO<PoReconciliationDTO.ExportDetailDTO> exportAllPoReconciliationDetail(PagingDTO<PoReconciliationDTO.PagingParamDTO> dto);
+
+    /**
+     * 处理历史数据
+     * @author will
+     * @date 2025/12/24 18:18
+     * @param id
+     * @return BatchResultDTO
+     */
+    BatchResultDTO handleHisData(String id);
 }

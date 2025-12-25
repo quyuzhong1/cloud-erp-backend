@@ -608,6 +608,11 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
         super.updateBatchById(poReconciliationDetailList);
     }
 
+    @Override
+    public List<PoReconciliationDetailEntity> listByMainId(String mainId) {
+        return baseMapper.listByMainId(mainId);
+    }
+
 
     /**
      * 新生成对账单

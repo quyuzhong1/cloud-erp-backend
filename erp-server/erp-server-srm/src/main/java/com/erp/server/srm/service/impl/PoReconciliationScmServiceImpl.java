@@ -5,6 +5,7 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
@@ -383,6 +384,33 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
         IPage<PoReconciliationDTO.ExportDetailDTO> pageData = this.baseMapper.exportAllPoReconciliationDetail(query, pagingParamDTO.getParams());
         handleExportAllData(pageData.getRecords());
         return new PagingVO(pageData);
+    }
+
+    @Override
+    public BatchResultDTO handleHisData(String id) {
+        PoReconciliationEntity entity = super.getById(id);
+        if (ObjUtil.isEmpty(entity)) {
+            return new BatchResultDTO(id, id, "未找到对账单主表数据", Boolean.TRUE);
+        }
+        List<PoReconciliationRefDetailEntity> refDetailList = poReconciliationRefDetailService.listPoReconciliationIdList(Collections.singletonList(id));
+        if (CollUtil.isNotEmpty(refDetailList)) {
+            return new BatchResultDTO(id, id, "已存在对账单明细数据无需处理", Boolean.TRUE);
+        }
+        List<PoReconciliationDetailEntity> detailList =  poReconciliationDetailScmService.listByMainId(id);
+        if (CollUtil.isEmpty(detailList)) {
+            return new BatchResultDTO(id, id, "未找到待对账明细数据", Boolean.TRUE);
+        }
+        List<PoReconciliationRefDetailEntity> refDetailEntityList = new ArrayList<>();
+        for (PoReconciliationDetailEntity detailEntity : detailList) {
+            PoReconciliationRefDetailEntity refDetailEntity = new PoReconciliationRefDetailEntity();
+            BeanUtil.copyProperties(detailEntity, refDetailEntity);
+            refDetailEntity.setId(null);
+            refDetailEntity.setPoReconciliationId(id);
+            refDetailEntity.setPoReconciliationDetailId(detailEntity.getId());
+            refDetailEntityList.add(refDetailEntity);
+        }
+        poReconciliationRefDetailService.saveBatch(refDetailEntityList);
+        return new BatchResultDTO(id, id, "处理成功", Boolean.TRUE);
     }
 
     /**

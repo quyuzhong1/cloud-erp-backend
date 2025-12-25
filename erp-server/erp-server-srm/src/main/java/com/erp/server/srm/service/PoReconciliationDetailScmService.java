@@ -132,4 +132,12 @@ public interface PoReconciliationDetailScmService extends SuperService<PoReconci
      * @return void
      */
     void autoUpdateStatus(List<String> detailIdList);
+    /**
+     * 根据主表id查询
+     * @author will
+     * @date 2025/12/24 18:44
+     * @param mainId
+     * @return List<PoReconciliationDetailEntity>
+     */
+    List<PoReconciliationDetailEntity> listByMainId(String mainId);
 }
