@@ -96,10 +96,10 @@ public class DmpFbaShipmentEntity extends BaseEntity<DmpFbaShipmentEntity> {
     private String nextLevelId;
 
     /**
-     * 是否是sta:sta,awd
+     * 是否sta
      */
-    @TableField("order_type")
-    private String orderType;
+    @TableField("is_sta")
+    private Boolean isSta;
 
     /**
      * 任务来源唯一加密代号

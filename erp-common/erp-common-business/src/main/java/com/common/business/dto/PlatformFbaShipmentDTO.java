@@ -85,10 +85,9 @@ public class PlatformFbaShipmentDTO extends UniqueDto {
     private LocalDateTime platformUpdateTime;
 
     /**
-     * 订单类型
-     * FbaOutStockTypeEnum
+     * 是否sta
      */
-    private String orderType;
+    private Boolean isSta;
     /**
      * 面单url
      */

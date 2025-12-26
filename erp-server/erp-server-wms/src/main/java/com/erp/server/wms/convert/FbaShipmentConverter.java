@@ -128,7 +128,7 @@ public interface FbaShipmentConverter {
             @Mapping(target = "deliveryFromAddress", source = "entity.deliveryFromAddress"),
             @Mapping(target = "deliveryToAddress", source = "entity.deliveryToAddress"),
             @Mapping(target = "isPackingDownload", source = "oldEntity.isPackingDownload"),
-            @Mapping(target = "orderType", source = "entity.orderType"),
+            @Mapping(target = "isSta", source = "entity.isSta"),
             @Mapping(target = "sourceType", source = "entity.sourceType"),
             @Mapping(target = "isUserSystem" ,ignore = true),
     })

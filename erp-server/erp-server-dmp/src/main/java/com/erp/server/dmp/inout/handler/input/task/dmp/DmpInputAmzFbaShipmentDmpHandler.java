@@ -8,7 +8,6 @@ import com.common.core.anno.ParamData;
 import com.common.core.enums.PannoEnum;
 import com.erp.sdk.oms.amz.spapi.model.fulfillmentinbound.Address;
 import com.erp.sdk.oms.amz.spapi.model.fulfillmentinbound.LabelPrepType;
-import com.common.business.enums.FbaOutStockTypeEnum;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 import java.util.*;
@@ -88,7 +87,7 @@ public class DmpInputAmzFbaShipmentDmpHandler extends DmpInputDbConvertDmpHandle
                     for (Map<String, Object> lxDatum : lxData) {
                         if (lxDatum.get("shipment_id").toString().equals(dmpDataMap.get("fbaShipmentId"))) {
                             int isSta = (int)lxDatum.get("is_sta");
-                            dmpDataMap.put("orderType",isSta == 0 ? FbaOutStockTypeEnum.FBA.getName() : FbaOutStockTypeEnum.AWD.getName());
+                            dmpDataMap.put("isSta",isSta == 0 ? Boolean.FALSE : Boolean.TRUE);
                         }
                     }
 

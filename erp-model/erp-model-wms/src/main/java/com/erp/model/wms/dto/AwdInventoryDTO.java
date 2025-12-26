@@ -325,6 +325,12 @@ public class AwdInventoryDTO implements Serializable {
         private String skuId;
 
         /**
+         * sku编码
+         */
+        @NotBlank(message = "skuNo不能为空")
+        private String skuNo;
+
+        /**
         * 产品名称
         */
         @NotBlank(message = "产品名称不能为空")

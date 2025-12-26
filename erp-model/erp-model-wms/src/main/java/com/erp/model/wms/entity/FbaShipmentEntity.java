@@ -112,11 +112,10 @@ public class FbaShipmentEntity extends BaseEntity<FbaShipmentEntity> {
     private Boolean isPackingDownload;
 
     /**
-     * 订单类型
-     * FbaOutStockTypeEnum
+     * 是否sta
      */
-    @TableField("order_type")
-    private String orderType;
+    @TableField("is_sta")
+    private Boolean isSta;
 
     /**
      * 标签url

@@ -8,8 +8,12 @@ import com.erp.model.dmp.entity.DmpAwdInventoryEntity;
 import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.SkuMappingDTO;
+import com.erp.model.oms.entity.ShopInfoEntity;
+import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.entity.AwdInventoryEntity;
+import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.SkuMappingFeign;
+import com.erp.rpc.wms.feign.WmsWarehouseFeign;
 import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
 import org.apache.commons.lang3.StringUtils;
@@ -31,6 +35,12 @@ public class DmpOutputAwdInventoryRocketMQTaskHandler extends DmpOutputRocketMQT
 
     @Resource
     private SkuMappingFeign skuMappingFeign;
+
+    @Resource
+    private ShopInfoFeign shopInfoFeign;
+
+    @Resource
+    private WmsWarehouseFeign wmsWarehouseFeign;
 
     @Override
     public Map<String, String> getPushJsonDataMap(DmpOutputTaskRequest dmpRequest, DmpOutputTaskResponse dmpResponse) {
@@ -84,11 +94,20 @@ public class DmpOutputAwdInventoryRocketMQTaskHandler extends DmpOutputRocketMQT
         listingInfoParamDTO.setShopIdList(Collections.singletonList(shopId));
         List<SkuMappingDTO.MappingSkuViewDTO> mappingSkuViewDTOS = skuMappingFeign.listByPlatformSkuNoAndPlatform(listingInfoParamDTO);
 
+        ShopInfoEntity shopInfo = shopInfoFeign.getShopInfoById(shopId);
+        List<WarehouseDTO.ListDTO> wareHouseList = new ArrayList<>();
+        if (StringUtils.isNotBlank(shopInfo.getAwdWarehouseId())) {
+            List<WarehouseDTO.ListDTO> listDTOS = wmsWarehouseFeign.listByIds(Collections.singletonList(shopInfo.getAwdWarehouseId()));
+            if (!listDTOS.isEmpty()) {
+                wareHouseList.addAll(listDTOS);
+            }
+        }
+
         Map<String, String> map = new HashMap<>();
         String cfgOutputId = dmpResponse.getDmpCfgOutputEntity().getId();
         for (String changId : changeIds) {
             DmpAwdInventoryEntity dmpEntity = dmpAwdInventoryEntityMap.get(changId);
-            AwdInventoryEntity entity = this.convert(dmpEntity, cfgOutputId, mappingSkuViewDTOS);
+            AwdInventoryEntity entity = this.convert(dmpEntity, cfgOutputId, shopInfo, wareHouseList, mappingSkuViewDTOS);
             if (null != entity) {
                 map.put(changId, JSON.toJSONString(entity));
             }
@@ -99,7 +118,7 @@ public class DmpOutputAwdInventoryRocketMQTaskHandler extends DmpOutputRocketMQT
     /**
      * DMP数据转换推送DTO
      **/
-    public AwdInventoryEntity convert(DmpAwdInventoryEntity dmpEntity, String cfgOutputId,List<SkuMappingDTO.MappingSkuViewDTO> mappingSkuViewDTOS) {
+    public AwdInventoryEntity convert(DmpAwdInventoryEntity dmpEntity, String cfgOutputId, ShopInfoEntity shopInfo, List<WarehouseDTO.ListDTO> wareHouseList, List<SkuMappingDTO.MappingSkuViewDTO> mappingSkuViewDTOS) {
         if (this.validateDataBlack(dmpEntity, cfgOutputId)) {
             return null;
         }
@@ -114,16 +133,20 @@ public class DmpOutputAwdInventoryRocketMQTaskHandler extends DmpOutputRocketMQT
             dtoEntity.setSkuNo(StringUtils.isNotBlank(mappingSkuViewDTO.getProductSkuNo()) ? mappingSkuViewDTO.getProductSkuNo() : "");
             dtoEntity.setProductName(StringUtils.isNotBlank(mappingSkuViewDTO.getProductName()) ? mappingSkuViewDTO.getProductName() : "");
         }
-        dtoEntity.setMsku(dmpEntity.getMsku());
 
+        dtoEntity.setMsku(dmpEntity.getMsku());
         dtoEntity.setReplenishmentQty(Objects.isNull(dmpEntity.getReplenishmentQty()) ? 0 : dmpEntity.getReplenishmentQty());
         dtoEntity.setReservedDistributableQty(Objects.isNull(dmpEntity.getReservedDistributableQty()) ? 0 : dmpEntity.getReservedDistributableQty());
         dtoEntity.setAvailableDistributableQty(Objects.isNull(dmpEntity.getAvailableDistributableQty()) ? 0 : dmpEntity.getAvailableDistributableQty());
         dtoEntity.setTotalInboundQty(Objects.isNull(dmpEntity.getTotalInboundQty()) ? 0 : dmpEntity.getTotalInboundQty());
         dtoEntity.setTotalOnhandQty(Objects.isNull(dmpEntity.getTotalOnhandQty()) ? 0 : dmpEntity.getTotalOnhandQty());
         //店铺管理-基础设置-AWD仓
-        dtoEntity.setWarehouseName("");
-        dtoEntity.setWarehouseId("");
+        if (StringUtils.isNotBlank(shopInfo.getAwdWarehouseId())) {
+            dtoEntity.setWarehouseId(shopInfo.getAwdWarehouseId());
+        }
+        if (!wareHouseList.isEmpty()) {
+            dtoEntity.setWarehouseName(wareHouseList.get(0).getName());
+        }
 
         return dtoEntity;
     }
