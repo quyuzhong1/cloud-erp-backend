@@ -227,6 +227,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
                 chargeName = user.getUserName();
             }
         }
+        shop.setOrderRouteType(ShopOrderRouteEnum.B2C.getCode());
         //设置用户信息
         setCustom(dto.getCustomerId(), shop);
         shop.setChargeName(chargeName);
@@ -1903,6 +1904,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         //设置用户信息
         setCustom(dto.getCustomerId(), shop);
         shop.setType(ShopTypeEnum.INTERNAL.getCode());
+        shop.setOrderRouteType(ShopOrderRouteEnum.B2B.getCode());
         if(!shop.getDictPlatform().equals(PlatformDictEnum.PDD.getCode())){
             shop.setAuthStatus(AuthStatusEnum.ALREADY.getCode());
         }
