@@ -90,7 +90,7 @@ public class AwdInventoryDTO implements Serializable {
         /**
         * 仓库名称
         */
-        private String warehouseName ;
+        private String warehouseName;
 
         /**
         * 平台产品id
@@ -146,23 +146,6 @@ public class AwdInventoryDTO implements Serializable {
         * 发AWD在途
         */
         private Integer totalInboundQty;
-
-
-        /**
-        * 审核状态名称
-        */
-        private String approveStatusName;
-
-
-        /**
-        * 创建时间
-        */
-        private LocalDateTime createTime;
-
-        /**
-        * 创建人名称
-        */
-        private String createUserName;
 
     }
 

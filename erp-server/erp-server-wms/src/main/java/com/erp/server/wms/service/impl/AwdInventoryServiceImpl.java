@@ -27,6 +27,7 @@ import com.common.business.vo.PagingVO;
 import com.common.business.dto.base.*;
 import javax.servlet.http.HttpServletResponse;
 
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_AWD_INVENTORY;
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_AWD_OUT_STOCK;
 
 /**
@@ -109,7 +110,7 @@ public class AwdInventoryServiceImpl extends SuperServiceImpl<AwdInventoryMapper
 
     @Override
     public void exportList(AwdInventoryDTO.ExportDTO param, HttpServletResponse response) {
-        downloadTaskFeign.saveDownloadTask("AWD库存导出", EXPORT_WMS_AWD_OUT_STOCK.getCode(), param);
+        downloadTaskFeign.saveDownloadTask("AWD库存导出", EXPORT_WMS_AWD_INVENTORY.getCode(), param);
     }
 
    /**

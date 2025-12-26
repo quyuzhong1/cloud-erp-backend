@@ -216,6 +216,8 @@ public class ExportWmsFeignController {
     private B2bThirdDeliveryService b2bThirdDeliveryService;
     @Resource
     private AwdOutstockService awdOutstockService;
+    @Resource
+    private AwdInventoryService awdInventoryService;
 
     @PostMapping("/b2cDelivery")
     @DataPermission(operationType = DataAttributeEnum.LIST,
@@ -1287,5 +1289,11 @@ public class ExportWmsFeignController {
     @WebAdvanceQuery(handler = AwdOutStockQueryHandler.class)
     public PagingVO<AwdOutstockDTO.ListDTO> exportAwdOutStock(@RequestBody @Validated PagingDTO<AwdOutstockDTO.PagingParamDTO> dto) {
         return awdOutstockService.paging(dto);
+    }
+
+    @PostMapping("/exportAwdInventory")
+    @WebAdvanceQuery(handler = AwdInventoryQueryHandler.class)
+    public PagingVO<AwdInventoryDTO.ListDTO> exportAwdInventory(@RequestBody @Validated PagingDTO<AwdInventoryDTO.PagingParamDTO> dto) {
+        return awdInventoryService.paging(dto);
     }
 }

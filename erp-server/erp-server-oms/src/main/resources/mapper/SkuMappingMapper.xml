@@ -318,7 +318,8 @@
         li.platform_sku_id as platformSkuId,
         li.platform_sku_name AS platformProductName,
         li.platform_spu_no AS platformSpuNo,
-        li.platform_spu_name AS platformSpuName
+        li.platform_spu_name AS platformSpuName,
+        li.platform_fn_sku AS platformFnSku
         FROM sku_mapping sm
         INNER JOIN listing_info li ON sm.listing_id = li.id AND li.is_deleted = FALSE
         WHERE sm.is_deleted = FALSE

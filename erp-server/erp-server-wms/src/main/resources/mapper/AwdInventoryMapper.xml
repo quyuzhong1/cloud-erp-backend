@@ -43,9 +43,33 @@
 
     <select id="paging" resultType="com.erp.model.wms.dto.AwdInventoryDTO$ListDTO">
         SELECT
-            *
+            id as id,
+            ai.msku as msku,
+            ai.sku_id as skuId,
+            ai.sku_no as skuNo,
+			ai.product_name as productName,
+            ai.available_distributable_qty as availableDistributableQty,
+			ai.replenishment_qty as replenishmentQty,
+			ai.reserved_distributable_qty as reservedDistributableQty,
+			ai.total_onhand_qty as totalOnhandQty,
+			ai.total_inbound_qty as totalInboundQty
         FROM
-            awd_inventory
+            awd_inventory ai
+        WHERE 1 = 1
+        <if test="params.sqlMap != null and params.sqlMap.default != null and params.sqlMap.default != ''">
+            AND ${params.sqlMap.default}
+        </if>
+        <!--数据权限-->
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        ai.create_time DESC
     </select>
 
     <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">

@@ -35,7 +35,7 @@ import com.erp.model.wms.entity.AwdInventoryEntity;
  */
 @Slf4j
 @RestController
-@LogSystemModule("")
+@LogSystemModule("AWD库存")
 @RequestMapping("/awdInventory")
 public class AwdInventoryController extends BaseController {
 

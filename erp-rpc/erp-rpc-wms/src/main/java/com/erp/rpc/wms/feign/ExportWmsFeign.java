@@ -416,4 +416,12 @@ public interface ExportWmsFeign {
     @PostMapping("/feign/export/exportAwdOutStock")
     PagingVO<AwdOutstockDTO.ListDTO> exportAwdOutStock(@RequestBody @Validated PagingDTO<AwdOutstockDTO.PagingParamDTO> dto);
 
+    /**
+     * 导出awd库存
+     * @param dto
+     * @return
+     */
+    @PostMapping("/feign/export/exportAwdInventory")
+    PagingVO<AwdInventoryDTO.ListDTO> exportAwdInventory(@RequestBody @Validated PagingDTO<AwdInventoryDTO.PagingParamDTO> dto);
+
 }

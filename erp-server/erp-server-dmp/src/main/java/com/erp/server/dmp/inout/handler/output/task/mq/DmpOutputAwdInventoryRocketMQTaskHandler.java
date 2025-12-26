@@ -129,6 +129,8 @@ public class DmpOutputAwdInventoryRocketMQTaskHandler extends DmpOutputRocketMQT
                 .orElse(null);
 
         if (Objects.nonNull(mappingSkuViewDTO)) {
+            dtoEntity.setAsin(StringUtils.isNotBlank(mappingSkuViewDTO.getPlatformSkuId()) ? mappingSkuViewDTO.getPlatformSkuId() : "");
+            dtoEntity.setFnsku(StringUtils.isNotBlank(mappingSkuViewDTO.getPlatformFnSku()) ? mappingSkuViewDTO.getPlatformFnSku() : "");
             dtoEntity.setSkuId(StringUtils.isNotBlank(mappingSkuViewDTO.getProductSkuId()) ? mappingSkuViewDTO.getProductSkuId() : "");
             dtoEntity.setSkuNo(StringUtils.isNotBlank(mappingSkuViewDTO.getProductSkuNo()) ? mappingSkuViewDTO.getProductSkuNo() : "");
             dtoEntity.setProductName(StringUtils.isNotBlank(mappingSkuViewDTO.getProductName()) ? mappingSkuViewDTO.getProductName() : "");
