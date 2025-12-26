@@ -924,7 +924,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         listingInfoParamDTO.setShopIdList(Collections.singletonList(entity.getShopId()));
         List<SkuMappingDTO.MappingSkuViewDTO> skuDTOS = skuMappingFeign.listByPlatformSkuNoAndPlatform(listingInfoParamDTO);
 
-        if (entity.getOrderType().equals(FbaOutStockTypeEnum.AWD.getName())) {
+        if (Boolean.FALSE.equals(entity.getIsSta())) {
 
             AwdOutstockDTO.AddDTO awdOutStockDTO = new AwdOutstockDTO.AddDTO();
             List<AwdOutstockDetailDTO.AddDTO> awdOutStockDetailDTOList = new ArrayList<>();

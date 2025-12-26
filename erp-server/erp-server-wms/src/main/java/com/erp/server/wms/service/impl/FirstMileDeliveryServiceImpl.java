@@ -577,8 +577,11 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         }
         //要货申请查询
         RequisitionApplicationEntity requisitionApplication = CharSequenceUtil.isNotBlank(entity.getSourceId()) ? requisitionApplicationService.getById(entity.getSourceId()) : null;
-        //发货单关联的发后计划类型是三方仓发三方仓，存在组合品校验加工单逻辑时，不校验加工单，可以直接审核
-        if (Objects.isNull(requisitionApplication) || !ThirdDeliveryTypeEnum.THIRD_TO_THIRD.getCode().equals(requisitionApplication.getDeliveryType())){
+        AwdOutstockEntity awdOutstockEntity = CharSequenceUtil.isNotBlank(entity.getSourceId()) ? awdOutstockService.getById(entity.getSourceId()) : null;
+        //发货单关联的发后计划类型是三方仓发三方仓，存在组合品校验加工单逻辑时，不校验加工单，可以直接审核 || 来源是awd出库货件
+        if (Objects.isNull(requisitionApplication)
+                || !ThirdDeliveryTypeEnum.THIRD_TO_THIRD.getCode().equals(requisitionApplication.getDeliveryType())
+                || Objects.isNull(awdOutstockEntity)){
             //已装箱才能审核
             List<PackingTaskEntity> taskEntityList = packingTaskService.listBySourceCodes(Arrays.asList(entity.getCode(),entity.getSourceCode()));
             if (CollectionUtils.isEmpty(taskEntityList)) {
@@ -2911,13 +2914,16 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         }
         addDTO.setDetailList(addDetailDTOList);
         BaseResultDTO.AddDTO add = this.add(addDTO);
-
-//        this.submit(add.getId());
-//
-//        ApproveOneDTO approveOneDTO = new ApproveOneDTO();
-//        approveOneDTO.setId(add.getId());
-//        approveOneDTO.setDeliveryDate(awdOutstockEntity.getBillDate());
-//        approve(approveOneDTO);
+        //提交
+        this.submit(add.getId());
+        //装箱任务
+        FirstMileDeliveryEntity entity = this.getById(add.getId());
+        generatePackingTask(entity);
+        //审核
+        ApproveOneDTO approveOneDTO = new ApproveOneDTO();
+        approveOneDTO.setId(add.getId());
+        approveOneDTO.setDeliveryDate(awdOutstockEntity.getBillDate());
+        approve(approveOneDTO);
         return BatchResultDTO.success(dto.getId(), dto.getCode(), "操作成功");
     }
 }

@@ -300,7 +300,7 @@ public enum FileTaskEventEnum implements EnumMessage {
 
     EXPORT_WMS_B2B_THIRD_DELIVERY_REPORT("EXPORT_WMS_B2B_THIRD_DELIVERY_REPORT", "B2B三方发货单导出","","",""),
     EXPORT_WMS_AWD_OUT_STOCK("EXPORT_WMS_AWD_OUT_STOCK", "AWD出库货件导出","","",""),
-
+    EXPORT_WMS_AWD_INVENTORY("EXPORT_WMS_AWD_INVENTORY", "AWD库存导出","","",""),
 
 
     //tms
