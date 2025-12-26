@@ -369,4 +369,5 @@ public interface SoDetailService extends SuperService<SoDetailEntity> {
     Boolean updatePlatformOrderIdByMainId(String id, List<String> platformDetailIdList);
 
 
+    SoDetailDTO.ImportDivideSkuBoxDTO importDivideBoxFile(MultipartFile excelFile, HttpServletResponse response);
 }
