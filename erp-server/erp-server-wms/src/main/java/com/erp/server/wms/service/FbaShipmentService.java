@@ -316,4 +316,18 @@ public interface FbaShipmentService extends SuperService<FbaShipmentEntity> {
      * @param platformAwdShipmentReceiveDTOS
      */
     void awdCheckAndUpdateAll(FbaShipmentEntity oldEntity, FbaShipmentEntity entity, FbaShipmentExtendEntity extendEntity, Map<String, ListingInfoWithSkuMappingDTO> listingInfoWithSkuMappingDTOMap, List<String> hasChildrenSkuIds, List<PlatformAwdShipmentReceiveDTO> platformAwdShipmentReceiveDTOS);
+
+    /**
+     * 分页查询
+     * @param dto
+     * @return
+     */
+    PagingVO<FbaShipmentDTO.AwdListDTO> awdPaging(PagingDTO<FbaShipmentDTO.PagingParamDTO> dto);
+
+    /**
+     * 详情
+     * @param id
+     * @return
+     */
+    FbaShipmentDTO.ViewAwdDTO awdView(String id);
 }

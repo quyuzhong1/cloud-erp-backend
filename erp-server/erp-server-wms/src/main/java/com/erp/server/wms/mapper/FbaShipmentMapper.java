@@ -76,4 +76,6 @@ public interface FbaShipmentMapper extends BaseMapper<FbaShipmentEntity> {
 
 
     List<FbaTransitCalculateReportDTO.FbaReceiveDTO> listByReceiveAndReportMonth(@Param("reportMonth") LocalDate reportMonth, @Param("shipmentCode") String shipmentCode, @Param("asin") String asin, @Param("msku") String msku);
+
+    IPage<FbaShipmentDTO.AwdListDTO> awdPaging(@Param("query") Page query, @Param("params") FbaShipmentDTO.PagingParamDTO params);
 }

@@ -1,50 +1,47 @@
 package com.erp.server.wms.controller.api;
 
 
-import cn.hutool.core.util.ObjectUtil;
-import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.AdvanceQueryContainer;
-import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.dto.base.BaseIdsDTO;
-import com.common.business.dto.base.BatchResultDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.enums.DataAttributeEnum;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.validator.ValidList;
-import com.common.business.vo.PagingVO;
-import com.common.core.anno.LogAction;
-import com.common.core.anno.LogSystemModule;
-import com.common.core.controller.BaseController;
-import com.common.core.controller.vo.ApiResult;
-import com.common.core.enums.LogActionEnum;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.entity.FbaShipmentEntity;
 import com.erp.model.wms.enums.ShipmentSourceTypeEnum;
 import com.erp.server.wms.query.FbaShipmentSyncQueryHandler;
 import com.erp.server.wms.service.FbaShipmentPackingService;
 import com.erp.server.wms.service.FbaShipmentService;
-import com.erp.server.wms.service.OverseasWarehouseInboundService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
+import com.common.core.enums.LogActionEnum;
+import com.common.business.dto.base.*;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.common.core.controller.BaseController;
+import com.common.core.controller.vo.ApiResult;
+import com.common.business.vo.PagingVO;
+import cn.hutool.core.util.ObjectUtil;
+import com.common.business.annotation.DataPermission;
+import com.common.business.enums.DataAttributeEnum;
+
+import java.util.*;
 
 /**
- * FBA货件表
+ * AWD货件表
  *
- * @author Luo_WG
- * @since 2023-10-30
+ * @author zdy
+ * @since 2025-12-24
  */
 @Slf4j
 @RestController
-@LogSystemModule("FBA货件表")
-@RequestMapping("/fbaShipment")
-public class FbaShipmentController extends BaseController {
+@LogSystemModule("AWD货件表")
+@RequestMapping("/awdShipment")
+public class AwdShipmentController extends BaseController {
 
     @Resource
     private FbaShipmentService fbaShipmentService;
@@ -63,9 +60,9 @@ public class FbaShipmentController extends BaseController {
             menuCode = "wms:fbaShipment:paging"
     )
     @WebAdvanceQuery
-    public ApiResult<PagingVO<FbaShipmentDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<FbaShipmentDTO.PagingParamDTO> dto) {
-        dto.getParams().setSourceType(ShipmentSourceTypeEnum.FBA.getCode());
-        PagingVO<FbaShipmentDTO.ListDTO> list = fbaShipmentService.paging(dto);
+    public ApiResult<PagingVO<FbaShipmentDTO.AwdListDTO>> paging(@RequestBody @Validated PagingDTO<FbaShipmentDTO.PagingParamDTO> dto) {
+        dto.getParams().setSourceType(ShipmentSourceTypeEnum.AWD.getCode());
+        PagingVO<FbaShipmentDTO.AwdListDTO> list = fbaShipmentService.awdPaging(dto);
         return success(list);
     }
     /**
@@ -73,7 +70,7 @@ public class FbaShipmentController extends BaseController {
      **/
     @PostMapping("/searchByCode")
     public ApiResult<PagingVO<FbaShipmentDTO.SearchResultDTO>> searchByCode(@RequestBody @Validated PagingDTO<FbaShipmentDTO.SearchDTO> dto) {
-        dto.getParams().setSourceType(ShipmentSourceTypeEnum.FBA.getCode());
+        dto.getParams().setSourceType(ShipmentSourceTypeEnum.AWD.getCode());
         PagingVO<FbaShipmentDTO.SearchResultDTO> pagingVO = fbaShipmentService.search(dto);
         return success(pagingVO);
     }
@@ -85,7 +82,7 @@ public class FbaShipmentController extends BaseController {
      */
     @PostMapping("/export")
     public ApiResult export(@RequestBody @Validated FbaShipmentDTO.PagingParamDTO dto) {
-        dto.setSourceType(ShipmentSourceTypeEnum.FBA.getCode());
+        dto.setSourceType(ShipmentSourceTypeEnum.AWD.getCode());
         fbaShipmentService.export(dto);
         return success();
     }
@@ -97,7 +94,7 @@ public class FbaShipmentController extends BaseController {
      */
     @PostMapping("/packingExport")
     public ApiResult packingExport(@RequestBody @Validated FbaShipmentDTO.PagingParamDTO dto) {
-        dto.setSourceType(ShipmentSourceTypeEnum.FBA.getCode());
+        dto.setSourceType(ShipmentSourceTypeEnum.AWD.getCode());
         fbaShipmentPackingService.packingExport(dto);
         return success();
     }
@@ -133,10 +130,10 @@ public class FbaShipmentController extends BaseController {
             try {
                 deleteResult = fbaShipmentService.skuMappingBatch(id);
             } catch (Exception e) {
-                log.error("FBA货件单更新sku映射失败",e);
+                log.error("AWD货件单更新sku映射失败",e);
                 FbaShipmentEntity entity = fbaShipmentService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    deleteResult = BatchResultDTO.fail(id, id, "FBA货件单不存在, 更新sku映射失败");
+                    deleteResult = BatchResultDTO.fail(id, id, "AWD货件单不存在, 更新sku映射失败");
                     resultDTOS.add(deleteResult);
                     continue;
                 }
@@ -147,23 +144,6 @@ public class FbaShipmentController extends BaseController {
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
-    /**
-     * 拉取货件信息
-     * @param dto
-     * @return com.common.core.controller.vo.ApiResult
-     */
-    @PostMapping("/pullShipment")
-    @LogAction(value = LogActionEnum.INSERT, desc = "拉取货件")
-    public ApiResult pullShipment(@RequestBody @Validated FbaShipmentDTO.PullShipmentDTO dto) {
-        Boolean flag;
-        try {
-            UserContext.setIsUserSystem(true);
-            flag = fbaShipmentService.pullShipment(dto);
-        }finally {
-            UserContext.clearIsUserSystem();
-        }
-        return flag ? success() : failure();
-    }
 
     /**
      * 查询发货记录
@@ -208,8 +188,8 @@ public class FbaShipmentController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.wms.dto.FbaShipmentDTO.ViewDTO>>
      **/
     @GetMapping("/view")
-    public ApiResult<FbaShipmentDTO.ViewDTO> view(@RequestParam("id") String id) {
-        FbaShipmentDTO.ViewDTO result = fbaShipmentService.view(id);
+    public ApiResult<FbaShipmentDTO.ViewAwdDTO> view(@RequestParam("id") String id) {
+        FbaShipmentDTO.ViewAwdDTO result = fbaShipmentService.awdView(id);
         return success(result);
     }
 
@@ -291,7 +271,7 @@ public class FbaShipmentController extends BaseController {
             menuCode = "wms:fbaShipment:delete",
             serviceClass = FbaShipmentService.class,
             keyIdName = "ids")
-    @LogAction(value = LogActionEnum.DELETE, desc = "FBA货件单删除")
+    @LogAction(value = LogActionEnum.DELETE, desc = "AWD货件单删除")
     public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
@@ -302,7 +282,7 @@ public class FbaShipmentController extends BaseController {
                 log.error("FBA货件单删除失败",e);
                 FbaShipmentEntity entity = fbaShipmentService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    deleteResult = BatchResultDTO.fail(id, id, "FBA货件单不存在, 删除失败");
+                    deleteResult = BatchResultDTO.fail(id, id, "AWD货件单不存在, 删除失败");
                     resultDTOS.add(deleteResult);
                     continue;
                 }
@@ -334,7 +314,7 @@ public class FbaShipmentController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult
      **/
     @PostMapping("/generateRequisitionApplicationSave")
-    @LogAction(value = LogActionEnum.INSERT, desc = "FBA货件下推要货申请保存")
+    @LogAction(value = LogActionEnum.INSERT, desc = "AWD货件下推要货申请保存")
     public ApiResult generateRequisitionApplicationSave(@RequestBody @Validated ValidList<FbaShipmentDTO.GenerateRequisitionApplicationViewDTO> dto) {
         Boolean flag = fbaShipmentService.generateRequisitionApplicationSave(dto.getList());
         return flag ? success() : failure();
@@ -348,7 +328,7 @@ public class FbaShipmentController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult
      **/
     @PostMapping("/generateRequisitionApplicationSaveAndSubmit")
-    @LogAction(value = LogActionEnum.INSERT, desc = "FBA货件下推要货申请保存并提交")
+    @LogAction(value = LogActionEnum.INSERT, desc = "AWD货件下推要货申请保存并提交")
     public ApiResult generateRequisitionApplicationSaveAndSubmit(@RequestBody @Validated ValidList<FbaShipmentDTO.GenerateRequisitionApplicationViewDTO> dto) {
         Boolean flag = fbaShipmentService.generateRequisitionApplicationSaveAndSubmit(dto.getList());
         return flag ? success() : failure();
@@ -380,7 +360,7 @@ public class FbaShipmentController extends BaseController {
                 log.error("FBA货件单重新生成调拨单失败",e);
                 FbaShipmentEntity entity = fbaShipmentService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    deleteResult = BatchResultDTO.fail(id, id, "FBA货件单不存在, 重新生成调拨单失败");
+                    deleteResult = BatchResultDTO.fail(id, id, "AWD货件单不存在, 重新生成调拨单失败");
                     resultDTOS.add(deleteResult);
                     continue;
                 }
@@ -404,7 +384,7 @@ public class FbaShipmentController extends BaseController {
      **/
     @PostMapping("/searchByCodeWithRequisition")
     public ApiResult<PagingVO<FbaShipmentDTO.SearchResultDTO>> searchByCodeWithRequisition(@RequestBody @Validated PagingDTO<FbaShipmentDTO.SearchDTO> dto) {
-        dto.getParams().setSourceType(ShipmentSourceTypeEnum.FBA.getCode());
+        dto.getParams().setSourceType(ShipmentSourceTypeEnum.AWD.getCode());
         PagingVO<FbaShipmentDTO.SearchResultDTO> pagingVO = fbaShipmentService.searchByCodeWithRequisition(dto);
         return success(pagingVO);
     }
@@ -435,7 +415,7 @@ public class FbaShipmentController extends BaseController {
      */
     @PostMapping("/viewList")
     public ApiResult<List<FbaShipmentDTO.ListDTO>> view(@RequestBody @Validated FbaShipmentDTO.ViewListReqDTO dto) {
-        dto.setSourceType(ShipmentSourceTypeEnum.FBA.getCode());
+        dto.setSourceType(ShipmentSourceTypeEnum.AWD.getCode());
         List<FbaShipmentDTO.ListDTO> resultList = fbaShipmentService.viewList(dto);
         return success(resultList);
     }

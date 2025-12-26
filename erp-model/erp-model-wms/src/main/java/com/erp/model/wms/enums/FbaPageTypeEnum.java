@@ -2,6 +2,7 @@ package com.erp.model.wms.enums;
 
 import com.baomidou.mybatisplus.annotation.EnumValue;
 import com.common.core.constant.EnumMessage;
+import com.common.core.exception.ServiceException;
 import com.fasterxml.jackson.annotation.JsonValue;
 import org.apache.commons.lang3.StringUtils;
 
@@ -50,14 +51,15 @@ public enum FbaPageTypeEnum implements EnumMessage {
 
     public static void validate(String pageType, String orderType) {
         if (StringUtils.isBlank(pageType)) {
-            throw new IllegalArgumentException("标签类型不能为空");
+            throw new ServiceException("标签类型不能为空");
         }
         if (StringUtils.isBlank(orderType)) {
-            throw new IllegalArgumentException("订单类型不能为空");
+            throw new ServiceException("订单类型不能为空");
         }
         // 校验标签类型是否支持该订单类型
-        if (!listByType(orderType).contains(FbaPageTypeEnum.valueOf(pageType))) {
-            throw new IllegalArgumentException("标签类型" + pageType + "不支持订单类型" + orderType);
+        if (!listByType(orderType).contains(getEnumByCode(pageType))) {
+            throw new ServiceException("订单类型【{}】不支持标签类型【{}】", orderType, pageType);
+
         }
     }
 
@@ -76,6 +78,17 @@ public enum FbaPageTypeEnum implements EnumMessage {
         return type;
     }
 
+    public static FbaPageTypeEnum getEnumByCode(String code){
+        if (StringUtils.isBlank(code)) {
+            return null;
+        }
+        for (FbaPageTypeEnum billTypeEnum : FbaPageTypeEnum.values()) {
+            if (code.equals(billTypeEnum.getCode())) {
+                return billTypeEnum;
+            }
+        }
+        return null;
+    }
     public static String getName(String code) {
         if (StringUtils.isBlank(code)) {
             return "";

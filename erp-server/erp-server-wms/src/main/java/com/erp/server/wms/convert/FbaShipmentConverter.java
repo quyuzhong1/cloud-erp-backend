@@ -122,7 +122,6 @@ public interface FbaShipmentConverter {
             @Mapping(target = "platformShipmentStatus", source = "entity.platformShipmentStatus"),
             @Mapping(target = "shipmentReceiveTime", source = "entity.shipmentReceiveTime"),
             @Mapping(target = "labelType", source = "entity.labelType"),
-            @Mapping(target = "isPrintLabel", source = "oldEntity.isPrintLabel"),
             @Mapping(target = "labelUrl", source = "oldEntity.labelUrl"),
             @Mapping(target = "pageType", source = "oldEntity.pageType"),
             @Mapping(target = "packType", source = "entity.packType"),
@@ -205,4 +204,8 @@ public interface FbaShipmentConverter {
     @Mapping(target = "receiveUTCDate", ignore = true)
     @Mapping(target = "isUserSystem" ,ignore = true)
     FbaShipmentReceiveEntity receivedDTOToEntity(FbaShipmentDTO.ReceivedDTO dto, FbaShipmentEntity mainEntity, FbaShipmentDetailEntity detailEntity);
+
+    @Mapping(target = "detailList", ignore = true)
+    @Mapping(target = "id", source = "entity.id")
+    FbaShipmentDTO.ViewAwdDTO awdShipmentToViewDTO(FbaShipmentEntity entity, FbaShipmentExtendEntity fbaShipmentExtendEntity);
 }

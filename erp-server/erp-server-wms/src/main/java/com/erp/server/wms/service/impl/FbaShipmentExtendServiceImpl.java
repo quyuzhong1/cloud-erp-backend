@@ -165,7 +165,7 @@ public class FbaShipmentExtendServiceImpl extends SuperServiceImpl<FbaShipmentEx
     @Override
     public List<FbaShipmentExtendEntity> listByMainIds(List<String> mainIds) {
         if (CollUtil.isNotEmpty(mainIds)){
-            this.lambdaQuery().in(FbaShipmentExtendEntity::getMainId, mainIds).list();
+            return this.lambdaQuery().in(FbaShipmentExtendEntity::getMainId, mainIds).list();
         }
         return Collections.emptyList();
     }

@@ -119,12 +119,6 @@ public class FbaShipmentEntity extends BaseEntity<FbaShipmentEntity> {
     private String orderType;
 
     /**
-     * 是否打印标签
-     */
-    @TableField("is_print_label")
-    private Boolean isPrintLabel;
-
-    /**
      * 标签url
      */
     @TableField(exist = false)
@@ -136,7 +130,7 @@ public class FbaShipmentEntity extends BaseEntity<FbaShipmentEntity> {
     private String pageType;
     /**
      * 数据来源类型
-     * ShipmentOrderTypeEnum
+     * ShipmentSourceTypeEnum
      */
     @TableField("source_type")
     private String sourceType;

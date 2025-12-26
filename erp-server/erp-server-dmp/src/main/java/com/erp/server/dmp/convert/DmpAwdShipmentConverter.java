@@ -2,7 +2,6 @@ package com.erp.server.dmp.convert;
 
 import com.common.business.dto.PlatformAwdShipmentDTO;
 import com.common.business.dto.PlatformAwdShipmentReceiveDTO;
-import com.common.business.dto.PlatformFbaShipmentReceiveDTO;
 import com.erp.model.dmp.entity.DmpAwdShipmentDetailEntity;
 import com.erp.model.dmp.entity.DmpAwdShipmentEntity;
 import org.mapstruct.Mapper;
@@ -14,7 +13,7 @@ import java.util.List;
 
 /**
  * @author zdy
- * @ClassName DmpTrackConverter
+ * @ClassName DmpAwdShipmentConverter
  * @description: TODO
  * @date 2024年10月08日
  * @version: 1.0

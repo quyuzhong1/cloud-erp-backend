@@ -117,6 +117,7 @@ public class FbaShipmentDetailEntity extends BaseEntity<FbaShipmentDetailEntity>
     private BigDecimal packageHeight;
     /**
      * 箱子尺寸单位
+     * UnitEnum.SizeUnitEnum
      */
     @TableField("package_unit")
     private String packageUnit;
@@ -127,6 +128,7 @@ public class FbaShipmentDetailEntity extends BaseEntity<FbaShipmentDetailEntity>
     private BigDecimal packageWeight;
     /**
      * 箱子重量单位
+     * UnitEnum.WeightUnitEnum
      */
     @TableField("package_weight_unit")
     private String packageWeightUnit;

@@ -28,7 +28,6 @@ public interface FbaShipmentConsumerConverter {
     @Mappings({
             @Mapping(target = "deliveryToAddress", constant = ""),
             @Mapping(target = "code", source = "fbaShipmentId"),
-            @Mapping(target = "isPrintLabel", constant = "false"),
             @Mapping(target = "sourceType", constant = "fba"),
             @Mapping(target = "createTime", ignore = true),
             @Mapping(target = "createUserId", ignore = true),
@@ -153,7 +152,6 @@ public interface FbaShipmentConsumerConverter {
     @Mapping(target = "updateTime", ignore = true)
     @Mapping(target = "sourceType", constant = "awd")
     @Mapping(target = "isUserSystem", ignore = true)
-    @Mapping(target = "isPrintLabel", constant = "false")
     @Mapping(target = "isPackingDownload", ignore = true)
     @Mapping(target = "isDeleted", ignore = true)
     @Mapping(target = "id", ignore = true)

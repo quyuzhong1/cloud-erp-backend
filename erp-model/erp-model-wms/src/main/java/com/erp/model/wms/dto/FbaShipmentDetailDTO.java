@@ -1,8 +1,10 @@
 package com.erp.model.wms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import java.io.Serializable;
+import java.math.BigDecimal;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
@@ -88,6 +90,35 @@ public class FbaShipmentDetailDTO implements Serializable {
          * 是否组合品
          */
         private Boolean isCombination;
+
+        /**
+         * 单箱数量
+         */
+        private String perBoxQty;
+        /**
+         * 箱子长
+         */
+        private BigDecimal packageLength;
+        /**
+         * 箱子宽
+         */
+        private BigDecimal packageWidth;
+        /**
+         * 箱子高
+         */
+        private BigDecimal packageHeight;
+        /**
+         * 箱子尺寸单位
+         */
+        private String packageUnit;
+        /**
+         * 箱子重量
+         */
+        private BigDecimal packageWeight;
+        /**
+         * 箱子重量单位
+         */
+        private String packageWeightUnit;
     }
 
     /**

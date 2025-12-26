@@ -68,6 +68,7 @@ import com.erp.rpc.tms.feign.FirstMileChangeRecordFeign;
 import com.erp.rpc.tms.feign.TmsFirstMileLogisticFeign;
 import com.erp.sdk.oms.amz.spapi.api.AwdApi;
 import com.erp.sdk.oms.amz.spapi.api.FbaInboundApi;
+import com.erp.sdk.oms.amz.spapi.client.ApiException;
 import com.erp.sdk.oms.amz.spapi.model.awd.ShipmentLabels;
 import com.erp.sdk.oms.amz.spapi.model.fulfillmentinbound.GetLabelsResponse;
 import com.erp.sdk.oms.amz.spapi.model.fulfillmentinbound.ShipmentStatus;
@@ -87,6 +88,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -784,7 +786,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
      * @Author Luo_WG
      * @Date 2023/11/2 17:35
      **/
-    private void fillList(List<FbaShipmentDTO.ListDTO> records) {
+    private void fillList(List<? extends FbaShipmentDTO.ListDTO> records) {
         List<String> codes = records.stream().map(req -> req.getCode()).distinct().collect(Collectors.toList());
         List<String> skuNos = records.stream().map(req -> req.getSkuNo()).distinct().collect(Collectors.toList());
         //根据来源详情id查询发货详情
@@ -2034,6 +2036,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         } else if (RequestIdTypeEnum.DETAIL_ID.equals(dto.getRequestIdType())) {
             params.setDetailIds(dto.getRequestIdList());
         }
+        params.setSourceType(dto.getSourceType());
         listDTOS = baseMapper.paging(params);
         if (CollectionUtils.isEmpty(listDTOS)) {
             return Collections.emptyList();
@@ -2141,7 +2144,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         if (Objects.isNull(entity)){
             throw new ServiceException("货件不存在");
         }
-        String type = FbaOrderTypeEnum.FBA.getCode().equals(entity.getOrderType()) ? FbaPageTypeEnum.FBA_A4_2.getType() : FbaPageTypeEnum.AWD_LETTER_6.getType();
+        String type = FbaOrderTypeEnum.FBA.getCode().equals(entity.getSourceType()) ? FbaPageTypeEnum.FBA_A4_2.getType() : FbaPageTypeEnum.AWD_LETTER_6.getType();
         String pageType = dto.getPageType();
         // 校验打印类型
         FbaPageTypeEnum.validate(pageType, type);
@@ -2159,7 +2162,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         String labelUrl = null;
         // 获取店铺授权信息
         AmazonShopInfoDTO shopInfoDTO = dmpAmazonFeign.getShopAuth(entity.getShopId());
-        if (FbaOrderTypeEnum.FBA.getCode().equals(entity.getOrderType())){
+        if (FbaOrderTypeEnum.FBA.getCode().equals(entity.getSourceType())){
             try {
                 FbaInboundApi api = AmazonSpApiInitUtils.create(FbaInboundApi.class, shopInfoDTO, false);
                 GetLabelsResponse response = api.getLabels(entity.getFbaShipmentId(), pageType, "BARCODE_2D", null, null, null, null, null);
@@ -2171,8 +2174,10 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
                             .build();
                     labelUrl = fileFeign.uploadFileByBase64(uploadBase64);
                 }
-            }catch (Exception e){
-                throw new ServiceException("货件【{}】打印标签失败：{}", entity.getFbaShipmentId(), e.getMessage());
+            }catch (ApiException e){
+                throw new ServiceException("货件【{}】打印标签失败：{}", entity.getFbaShipmentId(), e.getResponseBody());
+            } catch (IOException e) {
+                throw new ServiceException("货件【{}】标签转换失败：{}", entity.getFbaShipmentId(), e.getMessage());
             }
         }else {
             try {
@@ -2413,5 +2418,53 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
 //            Map<String, LocalDate> closedDateMap = inventoryClosedRecordService.mapByOrgId();
 //            handlerWarehouse(entity, saveReceiveList, LocalDate.now(), closedDateMap);
 //        }
+    }
+
+    @Override
+    public PagingVO<FbaShipmentDTO.AwdListDTO> awdPaging(PagingDTO<FbaShipmentDTO.PagingParamDTO> dto) {
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        IPage<FbaShipmentDTO.AwdListDTO> pageData = this.baseMapper.awdPaging(query, dto.getParams());
+        if (CollUtil.isEmpty(pageData.getRecords())) {
+            return new PagingVO(pageData);
+        }
+        // 数据处理
+        fillList(pageData.getRecords());
+        return new PagingVO(pageData);
+    }
+
+    @Override
+    public FbaShipmentDTO.ViewAwdDTO awdView(String id) {
+        FbaShipmentEntity entity = this.getById(id);
+        if (Objects.isNull(entity)){
+        }
+        List<FbaShipmentExtendEntity> extendEntityList = fbaShipmentExtendService.listByMainIds(Collections.singletonList(id));
+        //映射字段
+        FbaShipmentDTO.ViewAwdDTO viewDTO = FbaShipmentConverter.INSTANCE.awdShipmentToViewDTO(entity,extendEntityList.get(0));
+
+        //根据主表id查询详情信息
+        List<FbaShipmentDetailEntity> fbaShipmentDetailEntities = fbaShipmentDetailService.listByMainIds(Collections.singletonList(id));
+        List<String> skuNos = fbaShipmentDetailEntities.stream().map(req -> req.getSkuNo()).collect(Collectors.toList());
+        //根据sku获取产品信息
+        List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(skuNos);
+
+        //设置详情信息
+        List<FbaShipmentDetailDTO.ViewDTO> detailViewList = new ArrayList<>();
+        for (FbaShipmentDetailEntity fbaShipmentDetailEntity : fbaShipmentDetailEntities) {
+
+            //映射详情字段
+            FbaShipmentDetailDTO.ViewDTO detailViewDTO = FbaShipmentConverter.INSTANCE.fbaShipmentDetailToViewDTO(fbaShipmentDetailEntity);
+
+            //产品名称
+            SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuNo().equals(fbaShipmentDetailEntity.getSkuNo())).findFirst().orElse(new SkuVO());
+            detailViewDTO.setProductName(skuVO.getSkuName());
+
+            //组装详情信息
+            detailViewList.add(detailViewDTO);
+        }
+
+        //给产品信息赋值
+        viewDTO.setDetailList(detailViewList);
+        return viewDTO;
     }
 }

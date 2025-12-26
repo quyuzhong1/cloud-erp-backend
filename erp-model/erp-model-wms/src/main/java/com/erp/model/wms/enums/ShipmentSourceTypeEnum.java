@@ -9,7 +9,7 @@ import org.apache.commons.lang3.StringUtils;
 
 @Getter
 @AllArgsConstructor
-public enum ShipmentOrderTypeEnum implements EnumMessage {
+public enum ShipmentSourceTypeEnum implements EnumMessage {
     FBA("fba", "FBA"),
     AWD("awd", "AWD"),
     ;
@@ -27,7 +27,7 @@ public enum ShipmentOrderTypeEnum implements EnumMessage {
 
     public static String getName(String code) {
         if (StringUtils.isNotBlank(code)) {
-            for (ShipmentOrderTypeEnum item : ShipmentOrderTypeEnum.values()) {
+            for (ShipmentSourceTypeEnum item : ShipmentSourceTypeEnum.values()) {
                 if (code.equals(item.getCode())) {
                     return item.getName();
                 }
@@ -36,9 +36,9 @@ public enum ShipmentOrderTypeEnum implements EnumMessage {
         return "";
     }
 
-    public static ShipmentOrderTypeEnum getByCode(String code) {
-        ShipmentOrderTypeEnum[] eumnList = ShipmentOrderTypeEnum.values();
-        for (ShipmentOrderTypeEnum item : eumnList) {
+    public static ShipmentSourceTypeEnum getByCode(String code) {
+        ShipmentSourceTypeEnum[] eumnList = ShipmentSourceTypeEnum.values();
+        for (ShipmentSourceTypeEnum item : eumnList) {
             if (code.equals(item.getCode())) {
                 return item;
             }
