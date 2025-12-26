@@ -27,10 +27,7 @@ import com.common.business.dto.base.ApproveOneDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
-import com.common.business.enums.ApproveTypeEnum;
-import com.common.business.enums.OperationTypeEnum;
-import com.common.business.enums.SourceTypeEnum;
-import com.common.business.enums.SyncOperateEnum;
+import com.common.business.enums.*;
 import com.common.business.service.impl.RedisService;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.utils.ApplicationContextUtils;
@@ -50,6 +47,8 @@ import com.erp.model.dmp.entity.DmpSkuCostEntity;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.*;
+import com.erp.model.plm.enums.ImportTypeEnum;
+import com.erp.model.plm.enums.ProductTypeEnum;
 import com.erp.model.plm.vo.ProductRefLabelVO;
 import com.erp.model.plm.vo.SkuInfoSimpleVO;
 import com.erp.model.plm.vo.SkuSimpleVO;
@@ -6570,25 +6569,24 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             return new PagingVO<>(pageData);
         }
         //是否存在资产属性
-        List<String> moldCodeList = list.stream().map(ProductDetailDTO.SkuDTO::getSkuNo).distinct().collect(Collectors.toList());
-        List<MoldInfoEntity> moldList = moldInfoService.lambdaQuery().in(MoldInfoEntity::getCode, moldCodeList).list();
-        Map<String, MoldInfoEntity> moldMap = moldList.stream().collect(Collectors.toMap(MoldInfoEntity::getCode, Function.identity()));
-        if(moldMap.size() > 0){
-            for (ProductDetailDTO.SkuDTO item : list) {
-                //模具档案
-                MoldInfoEntity moldInfoEntity = moldMap.getOrDefault(item.getSkuNo(), null);
-                if(Objects.nonNull(moldInfoEntity)){
-                    item.setMoldId(moldInfoEntity.getId());
-                    item.setMoldCode(moldInfoEntity.getCode());
-                    item.setMoldName(moldInfoEntity.getName());
-                    item.setTag(moldInfoEntity.getTag());
-                    item.setTagName(MoldInfoTagEnum.getName(moldInfoEntity.getTag()));
+        List<String> moldCodeList = list.stream().filter(e -> e.getSkuNo().contains(BusinessNoTypeEnum.CODE_MOLD.getName())).map(ProductDetailDTO.SkuDTO::getSkuNo).distinct().collect(Collectors.toList());
+        if(CollUtil.isNotEmpty(moldCodeList)){
+            List<MoldInfoEntity> moldList = moldInfoService.lambdaQuery().in(MoldInfoEntity::getCode, moldCodeList).list();
+            Map<String, MoldInfoEntity> moldMap = moldList.stream().collect(Collectors.toMap(MoldInfoEntity::getCode, Function.identity()));
+            if(moldMap.size() > 0){
+                for (ProductDetailDTO.SkuDTO item : list) {
+                    //模具档案
+                    MoldInfoEntity moldInfoEntity = moldMap.getOrDefault(item.getSkuNo(), null);
+                    if(Objects.nonNull(moldInfoEntity)){
+                        item.setMoldId(moldInfoEntity.getId());
+                        item.setMoldCode(moldInfoEntity.getCode());
+                        item.setMoldName(moldInfoEntity.getName());
+                        item.setTag(moldInfoEntity.getTag());
+                        item.setTagName(MoldInfoTagEnum.getName(moldInfoEntity.getTag()));
+                    }
                 }
             }
         }
-
-
-
         return new PagingVO<>(pageData);
     }
 
@@ -6903,6 +6901,12 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
             operateLogService.addSysLogByOther(new OperateLogEntity().setClassPath(SKUCLASSPATH).setPid(purchaseEntity.getProductId())
                     .setBusinessId(purchaseEntity.getId()).setOperation("品质称重").setContent(logContent + logContent2));
+            
+            // 当包装尺寸长宽高变更时，同步更新旺店通货品长宽高
+            // 只同步审核通过的产品
+            if(productDetailEntity.getStatus().equals(ProductDetailStatusEnum.APPROVAL_PASS.getCode())){
+                syncWangDianProductDetailService.syncDataToWangDian(productDetailEntity);
+            }
         }
 
         return "操作成功";
@@ -7004,6 +7008,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             syncLingXingProductDetailService.syncDataToLingxing(productDetailEntity);
             //增加缓存清除
             redisUtil.hdel(RedisKeyConstant.LIST_SKU_INFO, productDetailEntity.getId());
+            // 当包装尺寸长宽高变更时，同步更新旺店通货品长宽高
+            // 只同步审核通过的产品
+            if(productDetailEntity.getStatus().equals(ProductDetailStatusEnum.APPROVAL_PASS.getCode())){
+                syncWangDianProductDetailService.syncDataToWangDian(productDetailEntity);
+            }
         }
 
 

@@ -372,5 +372,7 @@ public class RocketMqConsumerGroup {
     public static final String SYNC_WDT_OTHER_OUT_STOCK = "${spring.cloud.nacos.discovery.namespace}-sync_wdt_other_out_stock";
     public static final String SYNC_WDT_VIRTUAL_ALLOCATION_HANDLE_DETAIL = "${spring.cloud.nacos.discovery.namespace}-sync_wdt_virtual_allocation_handle_detail";
 
+    public static final String DMP_WDT_KOL_B2C_APPLICATION_CONSUMER = "${spring.cloud.nacos.discovery.namespace}-dmp_wdt_kol_b2c_application_consumer";
+
 
 }

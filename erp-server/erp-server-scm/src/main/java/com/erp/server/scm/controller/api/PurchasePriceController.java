@@ -507,4 +507,13 @@ public class PurchasePriceController extends BaseController {
     public ApiResult<List<PurchasePriceDTO.PriceDTO>> batchGetPurchasePrice(@RequestBody List<PurchasePriceDTO.PriceDTO> list) {
         return success(purchasePriceService.batchGetPurchasePrice(list));
     }
+
+
+    /**
+     * 根据供应商和采购组织获取采购价目表（已审核）最新的付款条件
+     */
+    @PostMapping("/getPayConditionBySupplierAndCompany")
+    public ApiResult<PurchasePriceDTO.PayConditionBySupplierAndCompanyDTO> getPayConditionBySupplierAndCompany(@RequestBody @Valid PurchasePriceDTO.PayConditionBySupplierAndCompanyDTO dto) {
+        return success(purchasePriceService.getPayConditionBySupplierAndCompany(dto));
+    }
 }

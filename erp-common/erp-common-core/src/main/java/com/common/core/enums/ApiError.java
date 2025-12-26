@@ -219,6 +219,15 @@ public enum ApiError implements Serializable {
     ERROR_KOL_PARTNER_MULTIPLE_DEFAULT_ADDRESSES(92203,"企业达人地址不允许多个默认"),
     ERROR_PUSH_SO_DETAIL_ID_EXIST(92204,"B2B寄样申请单【{}】SKU【{}】已下推销售订单，不允许重复下推"),
     ERROR_PUSH_KOL_B2B_APPLICATION_SO_DETAIL_DELETE(92205,"B2B寄样申请单下推的销售订单明细不允许删除"),
+    ERROR_100000(100000,"资产验收单验收数量超过模具采购单采购数量"),
+    ERROR_100001(100001,"资产卡片【{}】不存在"),
+    ERROR_100002(100002,"资产编码【{}】处置数量不能大于账存数量"),
+    ERROR_PO_RECONCILIATION_DETAIL_NOT_EXIST(96004,"待对账明细不存在"),
+    ERROR_PO_RECONCILIATION_REF_DETAIL_NOT_EXIST(96004,"对账单明细不存在"),
+    ERROR_PO_RECONCILIATION_DETAIL_UPDATE_STATUS(94106,"仅待对账或无需对账数据允许状态更新"),
+    ERROR_PO_RECONCILIATION_DETAIL_ADD_RECONCILED(94107,"单号【{}】无需对账不支持自动更新对账状态"),
+    ERROR_PO_RECONCILIATION_DETAIL_QTY_OVERFLOW(94108,"单号【{}】SKU【{}】本期对账数量{}超出可对账数量{}"),
+    ERROR_PO_RECONCILIATION_DETAIL_HAS_IN_RECONCILIATION(94109,"单号【{}】SKU【{}】已加入对账单，不允许重复添加"),
 
     /**
      * AUTH 授权与登录 相关 2000 - 2200

@@ -66,6 +66,8 @@ public class WildberriesLogisticsHandlerImpl extends AbstractLogisticsHandler {
                 map.put("token", shopAuth.getAccessToken());
             }
         }
+        map.put("shopId", shopId);
+        map.put("logisticsPlatform", getPlatForm().getCode());
         return map;
     }
     @Override

@@ -148,6 +148,7 @@ public class DmpOutputWdtKolB2cApplicationRocketMQTaskHandler extends DmpOutputR
 		if(Objects.equals(orderStatus,"95") || Objects.equals(orderStatus,"96") || Objects.equals(orderStatus,"101") || Objects.equals(orderStatus,"110")){
 			//95已发货、96成本确认（待录入计划成本，订单结算时有货品无计划成本）、101已过账、110已完成
 			wdtKolB2cApplicationDTO.setDeliveryStatus(KolSubB2cApplicationDeliveryStatusEnum.SHIPPED.getCode());
+			wdtKolB2cApplicationDTO.setOrderStatus(KolSubB2cApplicationOrderStatusEnum.APPROVE.getCode());
 		} else {
 			wdtKolB2cApplicationDTO.setDeliveryStatus(KolSubB2cApplicationDeliveryStatusEnum.WAITSHIPPED.getCode());
 		}

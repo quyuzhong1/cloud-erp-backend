@@ -138,6 +138,9 @@ public interface ExportWmsFeign {
     @PostMapping("/feign/export/purchaseReturnOrder")
     PagingVO<PurchaseReturnOrderDTO.PagingViewDTO> exportPurchaseReturnOrder(@RequestBody PagingDTO<PurchaseReturnOrderDTO.PagingParamDTO> dto);
 
+    @PostMapping("/feign/export/supplierPoReturn")
+    PagingVO<PurchaseReturnOrderDTO.SupplierPagingViewDTO> exportSupplierPoReturn(@RequestBody PagingDTO<PurchaseReturnOrderDTO.SupplierPagingParamDTO> dto);
+
     @PostMapping("/feign/export/qcBill")
     PagingVO<QcBillExportExcelDTO> exportQcBill(@RequestBody PagingDTO<QcInfoDTO.ExportDTO> dto);
 

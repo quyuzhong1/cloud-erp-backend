@@ -36,11 +36,7 @@ public class PoReconciliationDetailEntity extends BaseEntity<PoReconciliationDet
     */
     @TableField("supplier_name")
     private String supplierName;
-    /**
-    * 对账单Id
-    */
-    @TableField("main_id")
-    private String mainId;
+
     /**
     * 来源明细id
     */
@@ -139,16 +135,6 @@ public class PoReconciliationDetailEntity extends BaseEntity<PoReconciliationDet
     @TableField("business_status")
     private String businessStatus;
     /**
-    * 供方备注
-    */
-    @TableField("supplier_remark")
-    private String supplierRemark;
-    /**
-    * 采方备注
-    */
-    @TableField("purchase_remark")
-    private String purchaseRemark;
-    /**
     * 币别
     */
     @TableField("currency")
@@ -189,34 +175,10 @@ public class PoReconciliationDetailEntity extends BaseEntity<PoReconciliationDet
     private String deliveryCode;
 
     /**
-     * 折扣率
-     */
-    @TableField("discount_rate")
-    private BigDecimal discountRate;
-
-    /**
-     * 预付金额
-     */
-    @TableField("prepay_amount")
-    private BigDecimal prepayAmount;
-
-    /**
-     * 价税合计（折扣后）
-     */
-    @TableField("discount_tax_amount")
-    private BigDecimal discountTaxAmount;
-
-    /**
      * 备注
      */
     @TableField("remark")
     private String remark;
-
-    /**
-     * 金蝶详情Id
-     */
-    @TableField("kingdee_detail_id")
-    private String KingdeeDetailId;
 
     /**
      * 应付单类型

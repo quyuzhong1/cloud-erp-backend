@@ -28,10 +28,7 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.scm.enums.PurchaseOrderTypeEnum;
 import com.erp.model.srm.dto.PayableDetailDTO;
 import com.erp.model.srm.dto.PayableInfoDTO;
-import com.erp.model.srm.entity.PayableDetailEntity;
-import com.erp.model.srm.entity.PayableInfoEntity;
-import com.erp.model.srm.entity.PoReconciliationDetailEntity;
-import com.erp.model.srm.entity.PoReconciliationEntity;
+import com.erp.model.srm.entity.*;
 import com.erp.model.srm.enums.PayableTypeEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -371,12 +368,12 @@ public class PayableInfoServiceImpl extends SuperServiceImpl<PayableInfoMapper, 
     }
 
     @Override
-    public void generatePayableInfo(PoReconciliationEntity entity,List<PoReconciliationDetailEntity> poReconciliationDetailList) {
+    public void generatePayableInfo(PoReconciliationEntity entity,List<PoReconciliationRefDetailEntity> refDetailList) {
         //采购订单id集合
-        List<String> poIdList = poReconciliationDetailList.stream().map(PoReconciliationDetailEntity::getPoId).filter(CharSequenceUtil::isNotBlank).collect(Collectors.toList());
+        List<String> poIdList = refDetailList.stream().map(PoReconciliationRefDetailEntity::getPoId).filter(CharSequenceUtil::isNotBlank).collect(Collectors.toList());
         List<PurchaseOrderEntity> poList = FeignQuery.getByIds(PurchaseOrderEntity.class, poIdList);
         Map<String, PurchaseOrderEntity> poMap = CollUtil.isEmpty(poList) ? new HashMap<>() : poList.stream().collect(Collectors.toMap(PurchaseOrderEntity::getId, Function.identity()));
-        for (PoReconciliationDetailEntity detailEntity : poReconciliationDetailList) {
+        for (PoReconciliationRefDetailEntity detailEntity : refDetailList) {
             PurchaseOrderEntity purchaseOrderEntity = poMap.get(detailEntity.getPoId());
             if (ObjectUtil.isEmpty(purchaseOrderEntity)
                     || CharSequenceUtil.equals(purchaseOrderEntity.getType(), PurchaseOrderTypeEnum.ENUM_PURCHASE.getCode())
@@ -399,15 +396,15 @@ public class PayableInfoServiceImpl extends SuperServiceImpl<PayableInfoMapper, 
         }
         Integer index = 1;
         //根据类型分组生成数据
-        Map<String, List<PoReconciliationDetailEntity>> payableMap = poReconciliationDetailList.stream().collect(Collectors.groupingBy(PoReconciliationDetailEntity::getPayableType));
-        for (Map.Entry<String, List<PoReconciliationDetailEntity>> entry : payableMap.entrySet()) {
-            List<PoReconciliationDetailEntity> value = entry.getValue();
+        Map<String, List<PoReconciliationRefDetailEntity>> payableMap = refDetailList.stream().collect(Collectors.groupingBy(PoReconciliationRefDetailEntity::getPayableType));
+        for (Map.Entry<String, List<PoReconciliationRefDetailEntity>> entry : payableMap.entrySet()) {
+            List<PoReconciliationRefDetailEntity> value = entry.getValue();
             PayableInfoDTO.AddDTO addDTO = PayableInfoConverter.INSTANCE.poReconciliationToPayableEntity(entity);
             addDTO.setType(value.get(0).getPayableType());
             addDTO.setCode(CharSequenceUtil.format("{}_{}",entity.getCode(),index));
             addDTO.setDate(entity.getEndDate());
             List<PayableDetailDTO.AddDTO> detailList = new ArrayList<>();
-            for (PoReconciliationDetailEntity detailEntity : value) {
+            for (PoReconciliationRefDetailEntity detailEntity : value) {
                 PayableDetailDTO.AddDTO detailAddDTO = PayableInfoConverter.INSTANCE.poReconciliationDetailToPayableDetailEntity(detailEntity);
                 detailList.add(detailAddDTO);
             }

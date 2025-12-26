@@ -8,6 +8,7 @@ import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.FieldValidUtil;
 import com.common.core.utils.StrUtils;
 import com.erp.model.plm.vo.SkuVO;
@@ -135,6 +136,20 @@ public class PurchasePriceExcelListener extends AnalysisEventListener<ImportPurc
             addDTO.setSupplierId(StrUtils.null2EmptyWithTrim(supplierMap.get("id")));
         }
         addDTO.setSupplierName(supplierName);
+        //是否含税
+        String isTaxIncludedName = excelDTO.getIsTaxIncludedName();
+
+        if(StrUtils.isNotEmpty(isTaxIncludedName)) {
+
+            if(isTaxIncludedName.equals("是")) {
+                addDTO.setIsTaxIncluded(true);
+            } else if (isTaxIncludedName.equals("否")){
+                addDTO.setIsTaxIncluded(false);
+            }else {
+                errorMsgList.add("是否含税字段值错误 只支持 是或否");
+            }
+        }
+
         // 报价日期
         String quotedDateStr = excelDTO.getQuotedDate();
         if(StrUtils.isNotEmpty(quotedDateStr)) {
@@ -207,6 +222,9 @@ public class PurchasePriceExcelListener extends AnalysisEventListener<ImportPurc
             detailDTO.setSkuId(skuEntity.getSkuId());
             detailDTO.setSkuNo(skuNo);
             detailDTO.setProductName(skuEntity.getSkuName());
+            if(!Objects.equals("资产", skuEntity.getPropertyName())){
+                errorMsgList.add(StrUtil.format(ApiError.ERROR_PRODUCT_PROPERTY_ASSET_NOT_EXIST.msg,skuEntity.getSkuNo()));
+            }
         }
 
         // 采购交期

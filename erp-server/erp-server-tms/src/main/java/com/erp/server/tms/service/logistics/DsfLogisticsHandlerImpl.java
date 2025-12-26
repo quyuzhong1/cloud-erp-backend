@@ -5,6 +5,7 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.nacos.api.utils.StringUtils;
 import com.common.business.annotation.LogisticsPlatformType;
 import com.common.business.enums.LogisticsPlatformEnum;
+import com.common.business.utils.PdfUtil;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.enums.CurrencyEnum;
@@ -379,7 +380,7 @@ public class DsfLogisticsHandlerImpl extends AbstractLogisticsHandler {
                         logisticsGetLabelVO.getDeliveryNo(), BusinessTypeEnum.GET_LABEL_LIST.getCode(), LogisticsPlatformEnum.DSF.getCode(),
                         RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsQueryVO), JSONUtil.toJsonStr(responseMsg));
                 FileDTO.UploadBase64 uploadBase64 = FileDTO.UploadBase64.builder()
-                        .base64(responseMsg.getData().toString())
+                        .base64(PdfUtil.convertPdfUrlToBase64(responseMsg.getData().toString(),true))
                         .fileName(logisticsGetLabelVO.getDeliveryNo() + ".pdf")
                         .build();
                 String url = fileFeign.uploadFileByBase64(uploadBase64);

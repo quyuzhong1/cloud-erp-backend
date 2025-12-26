@@ -510,6 +510,18 @@ public class VirtualInventoryStockDTO implements Serializable {
             private String sourceDetailId;
 
             /**
+             * 当前仓库
+             */
+            @NotBlank(message = "当前仓库不能为空")
+            private String curWarehouseId;
+
+            /**
+             * 目的仓库
+             */
+            @NotBlank(message = "目的仓库不能为空")
+            private String targetWarehouseId;
+
+            /**
              * 虚拟当前仓库
              */
             @NotBlank(message = "当前虚拟仓库不能为空")

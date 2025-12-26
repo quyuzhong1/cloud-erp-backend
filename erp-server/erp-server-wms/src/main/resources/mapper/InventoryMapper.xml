@@ -113,6 +113,8 @@
             pd.images_url AS productImgUrl,
             pi.spu_no AS spuNo,
             ps.sale_state AS saleState,
+            ppu.main_supplier AS mainSupplier,
+            ppu.second_supplier AS secondSupplier,
             SUM(CASE WHEN it.dict_inventory_status = 'usable' THEN it.qty ELSE 0 END) AS usableQty,
             SUM(CASE WHEN it.dict_inventory_status = 'frozen' THEN it.qty ELSE 0 END) AS frozenQty,
             SUM(CASE WHEN it.dict_inventory_status = 'inTransit' THEN it.qty ELSE 0 END) AS intransitQty,
@@ -122,6 +124,7 @@
         LEFT JOIN product_detail pd ON pd.id = it.sku_id AND pd.is_deleted = FALSE
         LEFT JOIN product_info pi ON pd.product_id = pi.id AND pi.is_deleted = FALSE
         LEFT JOIN product_sale ps ON ps.sku_id = pd.id AND ps.is_deleted = FALSE
+        left join product_purchase ppu on pd.id = ppu.sku_id AND ppu.is_deleted = FALSE
         <where>
             ${params.sqlMap.default} and it.is_deleted = false
             <if test="params.productName != null and params.productName != ''">
@@ -167,7 +170,7 @@
                 ${params.permissionSql}
             </if>
         </where>
-        GROUP BY it.warehouse_id,it.org_id,it.sku_id,pd.sku_no,pd.name,pd.images_url,pi.spu_no,ps.sale_state
+        GROUP BY it.warehouse_id,it.org_id,it.sku_id,pd.sku_no,pd.name,pd.images_url,pi.spu_no,ps.sale_state,ppu.main_supplier,ppu.second_supplier
         <if test="params.hideZeroInventory">
             Having SUM(CASE WHEN it.dict_inventory_status IN ('usable', 'frozen') THEN it.qty ELSE 0 END) != 0
         </if>
@@ -864,6 +867,8 @@
             pd.images_url AS productImgUrl,
             pi.spu_no AS spuNo,
             ps.sale_state AS saleState,
+        ppu.main_supplier AS mainSupplier,
+        ppu.second_supplier AS secondSupplier,
             SUM(CASE WHEN it.dict_inventory_status = 'usable' THEN it.qty ELSE 0 END) AS usableQty,
             SUM(CASE WHEN it.dict_inventory_status = 'frozen' THEN it.qty ELSE 0 END) AS frozenQty,
             SUM(CASE WHEN it.dict_inventory_status IN ('usable', 'frozen') THEN it.qty ELSE 0 END) AS realQty,
@@ -872,6 +877,7 @@
         LEFT JOIN product_detail pd ON pd.id = it.sku_id AND pd.is_deleted = FALSE
         LEFT JOIN product_info pi ON pd.product_id = pi.id AND pi.is_deleted = FALSE
         LEFT JOIN product_sale ps ON ps.sku_id = pd.id AND ps.is_deleted = FALSE
+        left join product_purchase ppu on pd.id = ppu.sku_id AND ppu.is_deleted = FALSE
         LEFT JOIN (
             SELECT DISTINCT
             s.code AS location_code,
@@ -930,7 +936,7 @@
                 ${params.permissionSql}
             </if>
         </where>
-        GROUP BY it.warehouse_id,it.org_id,it.sku_id,pd.sku_no,pd.name,pd.images_url,pi.spu_no,ps.sale_state,wl.area_code
+        GROUP BY it.warehouse_id,it.org_id,it.sku_id,pd.sku_no,pd.name,pd.images_url,pi.spu_no,ps.sale_state,wl.area_code,ppu.main_supplier,ppu.second_supplier
         <if test="params.hideZeroInventory">
             Having SUM(CASE WHEN it.dict_inventory_status IN ('usable', 'frozen') THEN it.qty ELSE 0 END) != 0
         </if>
@@ -952,6 +958,8 @@
             pd.images_url AS productImgUrl,
             pi.spu_no AS spuNo,
             ps.sale_state AS saleState,
+        ppu.main_supplier AS mainSupplier,
+        ppu.second_supplier AS secondSupplier,
             SUM(CASE WHEN it.dict_inventory_status = 'usable' THEN it.qty ELSE 0 END) AS usableQty,
             SUM(CASE WHEN it.dict_inventory_status = 'frozen' THEN it.qty ELSE 0 END) AS frozenQty,
             SUM(CASE WHEN it.dict_inventory_status IN ('usable', 'frozen') THEN it.qty ELSE 0 END) AS realQty,
@@ -960,6 +968,7 @@
         LEFT JOIN product_detail pd ON pd.id = it.sku_id AND pd.is_deleted = FALSE
         LEFT JOIN product_info pi ON pd.product_id = pi.id AND pi.is_deleted = FALSE
         LEFT JOIN product_sale ps ON ps.sku_id = pd.id AND ps.is_deleted = FALSE
+        left join product_purchase ppu on pd.id = ppu.sku_id AND ppu.is_deleted = FALSE
         <where>
             ${params.sqlMap.default} and it.is_deleted = false
             <if test="params.productName != null and params.productName != ''">
@@ -1011,7 +1020,7 @@
                 ${params.permissionSql}
             </if>
         </where>
-        GROUP BY it.warehouse_id, it.org_id, it.sku_id, pd.sku_no, pd.name, pd.images_url, pi.spu_no, ps.sale_state, it.warehouse_location
+        GROUP BY it.warehouse_id, it.org_id, it.sku_id, pd.sku_no, pd.name, pd.images_url, pi.spu_no, ps.sale_state, it.warehouse_location,ppu.main_supplier,ppu.second_supplier
         <if test="params.hideZeroInventory">
             Having SUM(CASE WHEN it.dict_inventory_status IN ('usable', 'frozen') THEN it.qty ELSE 0 END) != 0
         </if>

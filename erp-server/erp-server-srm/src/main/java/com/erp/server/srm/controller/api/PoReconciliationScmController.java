@@ -14,9 +14,11 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.srm.dto.PoReconciliationDTO;
 import com.erp.model.srm.dto.PoReconciliationDetailDTO;
+import com.erp.model.srm.dto.PoReconciliationRefDetailDTO;
 import com.erp.model.srm.entity.PoReconciliationEntity;
 import com.erp.server.srm.query.PoReconciliationDetailScmQueryHandler;
 import com.erp.server.srm.query.PoReconciliationScmQueryHandler;
+import com.erp.server.srm.service.PoReconciliationRefDetailService;
 import com.erp.server.srm.service.PoReconciliationScmService;
 import com.erp.server.srm.service.PoReconciliationService;
 import lombok.extern.slf4j.Slf4j;
@@ -44,6 +46,8 @@ public class PoReconciliationScmController extends BaseController {
     @Resource
     private PoReconciliationScmService poReconciliationScmService;
 
+    @Resource
+    private PoReconciliationRefDetailService poReconciliationRefDetailService;
 
     /**
      * 分页查询
@@ -126,8 +130,8 @@ public class PoReconciliationScmController extends BaseController {
      */
     @PostMapping("/viewDetail")
     @WebAdvanceQuery(handler = PoReconciliationDetailScmQueryHandler.class)
-    public ApiResult<List<PoReconciliationDetailDTO.ViewDTO>> viewDetail(@RequestBody @Validated PoReconciliationDetailDTO.PagingParamDTO dto) {
-        List<PoReconciliationDetailDTO.ViewDTO> list = poReconciliationScmService.viewDetail(dto);
+    public ApiResult<List<PoReconciliationRefDetailDTO.ViewDTO>> viewDetail(@RequestBody @Validated PoReconciliationRefDetailDTO.PagingParamDTO dto) {
+        List<PoReconciliationRefDetailDTO.ViewDTO> list = poReconciliationRefDetailService.viewDetail(dto);
         return success(list);
     }
 
@@ -398,5 +402,33 @@ public class PoReconciliationScmController extends BaseController {
         return success(poReconciliationScmService.exportDetailList(dto,response));
     }
 
-
+    /**
+     * 处理历史数据
+     * @author will
+     * @date 2025/12/24 18:13
+     * @param dto
+     * @return ApiResult<Object>
+     */
+    @PostMapping("/handleHisData")
+    @LogAction(value = LogActionEnum.CONFIRM, desc = "处理历史数据")
+    public ApiResult<Object> handleHisData(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO resultDTO;
+            try {
+                resultDTO = poReconciliationScmService.handleHisData(id);
+            }catch (Exception e){
+                log.error("对账单 处理历史数据失败",e);
+                PoReconciliationEntity entity = poReconciliationScmService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    resultDTO = BatchResultDTO.fail(id, id, "对账单不存在, 处理历史数据失败");
+                    resultDTOS.add(resultDTO);
+                    continue;
+                }
+                resultDTO = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(resultDTO);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
 }
