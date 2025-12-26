@@ -140,6 +140,11 @@ public class RocketMqNewTopic {
      * 新中台平台库存
      */
     public static final String DMP_FBA_INVENTORY_TO_WMS_TOPIC = "${spring.cloud.nacos.discovery.namespace}-dmp_fba_inventory_to_wms_topic";
+
+    /**
+     * 新中台平台AWD库存
+     */
+    public static final String DMP_AWD_INVENTORY_TO_WMS_TOPIC = "${spring.cloud.nacos.discovery.namespace}-dmp_awd_inventory_to_wms_topic";
     
     /**
      * 新中台推送产品上架时间

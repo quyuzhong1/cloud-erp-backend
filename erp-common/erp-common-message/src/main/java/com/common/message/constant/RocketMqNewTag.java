@@ -140,6 +140,10 @@ public class RocketMqNewTag {
     public static final String DMP_FBA_INVENTORY_TO_WMS_TAG = "${spring.cloud.nacos.discovery.namespace}-dmp_fba_inventory_to_wms_tag";
     public static final String ERP_B2B_THIRD_CREATE_TAG = "${spring.cloud.nacos.discovery.namespace}-erp_b2b_third_create_tag";
     public static final String ERP_B2B_THIRD_CANCEL_TAG = "${spring.cloud.nacos.discovery.namespace}-erp_b2b_third_cancel_tag";
+    /**
+     * 新中台AWD库存
+     */
+    public static final String DMP_AWD_INVENTORY_TO_WMS_TAG = "${spring.cloud.nacos.discovery.namespace}-dmp_awd_inventory_to_wms_tag";
 
     /**
      * 新中台推送产品上架时间
