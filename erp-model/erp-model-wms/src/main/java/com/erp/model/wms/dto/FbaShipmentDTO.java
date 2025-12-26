@@ -252,6 +252,14 @@ public class FbaShipmentDTO implements Serializable {
          * 收货国家名称
          */
         private String deliveryToCountryName;
+        /**
+         * 备注
+         */
+        private String remark;
+        /**
+         * 目的仓名称
+         */
+        private String deliveryToWarehouseName;
 
     }
         /**
