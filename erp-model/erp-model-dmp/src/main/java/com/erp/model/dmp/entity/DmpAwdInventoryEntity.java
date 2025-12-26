@@ -28,24 +28,6 @@ public class DmpAwdInventoryEntity extends BaseEntity<DmpAwdInventoryEntity> {
      */
     @TableField("msku")
     private String msku;
-
-    /**
-     *  skuId
-     */
-    @TableField("sku_id")
-    private String skuId;
-
-    /**
-     * sku编码
-     */
-    @TableField("sku_no")
-    private String skuNo;
-
-    /**
-     * 产品名称
-     */
-    @TableField("product_name")
-    private String productName;
     /**
      * 输入任务ID
      */
