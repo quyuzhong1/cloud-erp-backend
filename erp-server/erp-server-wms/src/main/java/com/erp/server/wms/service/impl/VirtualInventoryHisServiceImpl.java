@@ -4,6 +4,8 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjUtil;
+
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.exception.ServiceException;
@@ -63,8 +65,8 @@ public class VirtualInventoryHisServiceImpl extends SuperServiceImpl<VirtualInve
     }
 
     @Override
-    public void addVirtualInventoryHis(String virtualInventoryId,LocalDate localDate) {
-        List<VirtualInventoryHisDTO.AddDTO> list = baseMapper.listVirtualInventoryHis(virtualInventoryId,localDate);
+    public void addVirtualInventoryHis(List<String> virtualInventoryIds,LocalDate localDate) {
+        List<VirtualInventoryHisDTO.AddDTO> list = baseMapper.listVirtualInventoryHis(virtualInventoryIds,localDate);
         if (CollUtil.isEmpty(list)) {
             return;
         }
@@ -94,5 +96,15 @@ public class VirtualInventoryHisServiceImpl extends SuperServiceImpl<VirtualInve
     */
     private void handleData(VirtualInventoryHisEntity virtualInventoryHisEntity) {
     // TODO 验证数据 & 数据赋值
+    }
+    
+    @Override
+    public VirtualInventoryHisEntity findLastInventory(String inventoryId, LocalDate localDate) {
+        LambdaQueryWrapper<VirtualInventoryHisEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(VirtualInventoryHisEntity::getVirtualInventoryId, inventoryId)
+                .le(VirtualInventoryHisEntity::getDate, localDate)
+                .orderByDesc(VirtualInventoryHisEntity::getDate)
+                .last("limit 1");
+        return baseMapper.selectOne(queryWrapper);
     }
 }

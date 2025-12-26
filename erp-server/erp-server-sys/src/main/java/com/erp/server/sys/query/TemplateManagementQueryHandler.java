@@ -16,9 +16,6 @@ public class TemplateManagementQueryHandler extends AbstractQueryHandler {
         if("tab".equals(field)){
             return getTabSql(value);
         }
-        if("size".equals(field)){
-            return getSizeSql(value,compareCodeSplicingValueSql);
-        }
         return null;
     }
 

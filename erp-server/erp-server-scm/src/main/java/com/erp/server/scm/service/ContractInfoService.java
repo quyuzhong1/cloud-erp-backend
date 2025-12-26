@@ -131,4 +131,6 @@ public interface ContractInfoService extends SuperService<ContractInfoEntity> {
     ExportZipResultDTO exportZip(ContractInfoDTO.PagingParamDTO dto);
 
     List<ContractInfoDTO.ProviderResultDTO> listContractByProvider(ContractInfoDTO.ProviderParamsDTO dto);
+
+    void updateContractInfoStatus();
 }

@@ -55,6 +55,7 @@
         <module>erp-sdk-oms-wildberries</module>
         <module>erp-sdk-wms-tongyou</module>
         <module>erp-sdk-oms-pdd</module>
+        <module>erp-sdk-oms-yunting-cem</module>
     </modules>
 
     <dependencies>

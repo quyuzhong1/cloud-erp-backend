@@ -13,7 +13,7 @@
        <result column="version" property="version" />
        <result column="is_deleted" property="isDeleted" />
        <result column="main_id" property="mainId" />
-       <result column="logistics_label_base64" property="logisticsLabelBase64" />
+       <result column="logistics_label_url" property="logisticsLabelUrl" />
     </resultMap>
 
     <!-- 通用查询结果列 -->
@@ -27,7 +27,7 @@
         update_time,
         version,
         is_deleted,
-        main_id, logistics_label_base64
+        main_id,logistics_label_url
     </sql>
 
 

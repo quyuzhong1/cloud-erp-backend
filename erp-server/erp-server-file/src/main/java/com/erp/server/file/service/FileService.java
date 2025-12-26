@@ -25,4 +25,11 @@ public interface FileService {
     byte[] downloadFile(String fileId);
     ResponseEntity<byte[]> downloadByte(String fileId, String fileName, String contentType, boolean bPreview);
     InputStream getInputStream(String fileId);
+
+    /**
+     * 合并多个文件为一个文件
+     * @param fileUrlList 文件url列表
+     * @return 合并后的文件url
+     */
+    String mergeFiles(List<String> fileUrlList);
 }

@@ -78,6 +78,11 @@ public class SampleRecipientEntity extends BaseEntity<SampleRecipientEntity> {
     @TableField("usage")
     private String usage;
     /**
+     * 用途说明
+     */
+    @TableField("usage_desc")
+    private String usageDesc;
+    /**
     * 发货仓库ID
     */
     @TableField("warehouse_id")
@@ -227,6 +232,8 @@ public class SampleRecipientEntity extends BaseEntity<SampleRecipientEntity> {
     public static final String RECIPIENT_DATE = "recipient_date";
 
     public static final String USAGE = "usage";
+
+    public static final String USAGE_DESC = "usage_desc";
 
     public static final String WAREHOUSE_ID = "warehouse_id";
 

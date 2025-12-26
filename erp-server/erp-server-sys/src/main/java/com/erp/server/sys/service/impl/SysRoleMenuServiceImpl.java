@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 
@@ -122,28 +123,39 @@ public class SysRoleMenuServiceImpl extends ServiceImpl<SysRoleMenuMapper, SysRo
         if (CollectionUtils.isEmpty(roleIds)) {
             return new ArrayList<>();
         }
-        List<SysMenuEntity> allList = sysMenuService
+        List<SysMenuEntity> allMenuList = sysMenuService
                 .lambdaQuery()
                 .eq(SysMenuEntity::getDisabled, Boolean.FALSE)
                 .eq(StringUtils.isNotBlank(userType), SysMenuEntity::getSystem, userType)
                 .list();
-        List<SysMenuVO> menuList = BeanMapperUtils.copyList(SysMenuVO.class, allList);
-        List<String> menuIds;
-        if (roleIds.contains(CommonConstants.ADMIN_ROLE_ID)) {
-            menuIds = allList.stream().map(s -> s.getMenuId()).collect(Collectors.toList());
-        } else {
-            menuIds = baseMapper.findMenuIdsByRoleIds(roleIds);
+        if (CollectionUtils.isEmpty(allMenuList)) {
+            return Collections.emptyList();
         }
-        List<SysMenuVO> resultList = menuList.stream().
-                filter(item -> "0".equals(item.getParentId()) && menuIds.contains(item.getMenuId()))
+        // 2. Entity → VO
+        List<SysMenuVO> menuVOList = BeanMapperUtils.copyList(SysMenuVO.class, allMenuList);
+        // 3. 计算【最终可用 menuId 集合】（Set，关键优化）
+        Set<String> menuIdSet;
+        if (roleIds.contains(CommonConstants.ADMIN_ROLE_ID)) {
+            menuIdSet = allMenuList.stream().map(s -> s.getMenuId()).collect(Collectors.toSet());
+        } else {
+            // 普通角色：角色菜单 + 所有父级
+            List<String> roleMenuIds = baseMapper.findMenuIdsByRoleIds(roleIds);
+            menuIdSet = getSelfAndParentMenuIds(roleMenuIds, allMenuList);
+        }
+        if (CollectionUtils.isEmpty(menuIdSet)) {
+            return Collections.emptyList();
+        }
+        // 4. 只在这里做一次 Set → List 的转换
+        List<String> menuIdList = new ArrayList<>(menuIdSet);
+        // 5. 构建左侧菜单树（只处理根节点）
+        return menuVOList.stream().
+                filter(item -> "0".equals(item.getParentId()) && menuIdList.contains(item.getMenuId()))
                 .sorted(Comparator.comparing(SysMenuVO::getIndex))
                 .map(item -> {
                     item.setParentName("");
-                    item.setChildrenList(getRoleChildrenList(item, menuList, menuIds));
+                    item.setChildrenList(getRoleChildrenList(item, menuVOList, menuIdList));
                     return item;
                 }).collect(Collectors.toList());
-        return resultList;
-
     }
 
     /**
@@ -297,56 +309,146 @@ public class SysRoleMenuServiceImpl extends ServiceImpl<SysRoleMenuMapper, SysRo
         if (CollectionUtils.isEmpty(roleIds)) {
             return new ArrayList<>();
         }
-        List<SysMenuEntity> allList = sysMenuService
-                .lambdaQuery()
+        // 1. 查询所有可用菜单（一次）
+        List<SysMenuEntity> allMenuList = sysMenuService.lambdaQuery()
                 .eq(SysMenuEntity::getDisabled, Boolean.FALSE)
                 .eq(StringUtils.isNotBlank(userType), SysMenuEntity::getSystem, userType)
                 .list();
-        List<SysMenuVO> menuList = BeanMapperUtils.copyList(SysMenuVO.class, allList);
-        List<String> menuIds;
-        if (roleIds.contains(CommonConstants.ADMIN_ROLE_ID)) {
-            menuIds = allList.stream().map(s -> s.getMenuId()).collect(Collectors.toList());
-        } else {
-            menuIds = baseMapper.findMenuIdsByRoleIds(roleIds);
+
+        if (CollectionUtils.isEmpty(allMenuList)) {
+            return Collections.emptyList();
         }
-        List<SysMenuVO> resultList = menuList.stream().
-                filter(item -> "0".equals(item.getParentId()) && menuIds.contains(item.getMenuId()))
+        // 2. Entity → VO
+        List<SysMenuVO> menuVOList = BeanMapperUtils.copyList(SysMenuVO.class, allMenuList);
+
+        // 3. 计算最终可用 menuId（Set，性能 & 正确性关键）
+        Set<String> menuIdSet;
+        if (roleIds.contains(CommonConstants.ADMIN_ROLE_ID)) {
+            // 管理员：拥有全部菜单
+            menuIdSet = allMenuList.stream()
+                    .map(SysMenuEntity::getMenuId)
+                    .collect(Collectors.toSet());
+        } else {
+            // 普通角色：角色菜单 + 所有父级菜单
+            List<String> roleMenuIds = baseMapper.findMenuIdsByRoleIds(roleIds);
+            menuIdSet = getSelfAndParentMenuIds(roleMenuIds, allMenuList);
+        }
+
+        if (CollectionUtils.isEmpty(menuIdSet)) {
+            return Collections.emptyList();
+        }
+
+        // 4. 只在这里做一次 Set → List，兼容旧方法签名
+        List<String> menuIdList = new ArrayList<>(menuIdSet);
+
+        // 5. 构建左侧菜单树（从根节点开始）
+        return menuVOList.stream()
+                .filter(menu -> "0".equals(menu.getParentId()) && menuIdSet.contains(menu.getMenuId()))
                 .sorted(Comparator.comparing(SysMenuVO::getIndex))
-                .map(item -> {
-                    item.setParentName("");
-                    item.setChildrenList(getRoleChildrenLeftList(item, menuList, menuIds, SysConstant.FUNCTION_TYPE, SysConstant.BUTTON_TYPE));
-                    return item;
+                .map(menu -> {
+                    menu.setParentName("");
+                    menu.setChildrenList(
+                            getRoleChildrenLeftList(menu, menuVOList, menuIdList, SysConstant.FUNCTION_TYPE, SysConstant.BUTTON_TYPE)
+                    );
+                    return menu;
                 }).collect(Collectors.toList());
-        return resultList;
     }
 
     @Override
     public List<SysMenuVO> findLeftMenuByRoleIds(List<String> roleIds, Integer type, String userType) {
         if (CollectionUtils.isEmpty(roleIds)) {
-            return new ArrayList<>();
+            return Collections.emptyList();
         }
-        List<SysMenuEntity> allList = sysMenuService
+        // 1. 查询所有可用菜单（一次）
+        List<SysMenuEntity> allMenuList = sysMenuService
                 .lambdaQuery()
                 .eq(SysMenuEntity::getDisabled, Boolean.FALSE)
                 .eq(SysMenuEntity::getType,type)
                 .eq(SysMenuEntity::getSystem, userType)
                 .list();
-        List<SysMenuVO> menuList = BeanMapperUtils.copyList(SysMenuVO.class, allList);
-        List<String> menuIds;
-        if (roleIds.contains(CommonConstants.ADMIN_ROLE_ID)) {
-            menuIds = allList.stream().map(s -> s.getMenuId()).collect(Collectors.toList());
-        } else {
-            menuIds = baseMapper.findMenuIdsByRoleIdsAndType(roleIds,type,userType);
+        if (CollectionUtils.isEmpty(allMenuList)) {
+            return Collections.emptyList();
         }
-        List<SysMenuVO> resultList = menuList.stream().
-                filter(item -> "0".equals(item.getParentId()) && menuIds.contains(item.getMenuId()))
+        // 2. Entity → VO
+        List<SysMenuVO> menuVOList = BeanMapperUtils.copyList(SysMenuVO.class, allMenuList);
+        // 3. 计算【最终可用 menuId 集合】（Set，关键优化）
+        Set<String> menuIdSet;
+        if (roleIds.contains(CommonConstants.ADMIN_ROLE_ID)) {
+            // 管理员：直接拥有全部
+            menuIdSet = allMenuList.stream()
+                    .map(SysMenuEntity::getMenuId)
+                    .collect(Collectors.toSet());
+        } else {
+            // 普通角色：角色菜单 + 所有父级
+            List<String> roleMenuIds = baseMapper.findMenuIdsByRoleIdsAndType(roleIds, type, userType);
+            menuIdSet = getSelfAndParentMenuIds(roleMenuIds, allMenuList);
+        }
+
+        if (CollectionUtils.isEmpty(menuIdSet)) {
+            return Collections.emptyList();
+        }
+
+        // 4. 只在这里做一次 Set → List 的转换
+        List<String> menuIdList = new ArrayList<>(menuIdSet);
+        // 5. 构建左侧菜单树（只处理根节点）
+        return menuVOList.stream()
+                .filter(menu -> "0".equals(menu.getParentId()) && menuIdSet.contains(menu.getMenuId()))
                 .sorted(Comparator.comparing(SysMenuVO::getIndex))
-                .map(item -> {
-                    item.setParentName("");
-                    item.setChildrenList(getRoleChildrenLeftList(item, menuList, menuIds, SysConstant.FUNCTION_TYPE, SysConstant.BUTTON_TYPE));
-                    return item;
+                .map(menu -> {
+                    menu.setParentName("");
+                    menu.setChildrenList(
+                         getRoleChildrenLeftList(menu, menuVOList, menuIdList, SysConstant.FUNCTION_TYPE, SysConstant.BUTTON_TYPE)
+                    );
+                    return menu;
                 }).collect(Collectors.toList());
-        return resultList;
+    }
+
+    /**
+     * 获取自身及所有父级菜单ID
+     *
+     * @param menuIds  菜单ID列表
+     * @param allMenus 所有菜单列表
+     * @return 包含自身及所有父级菜单ID的集合
+     */
+    private static Set<String> getSelfAndParentMenuIds(
+            List<String> menuIds,
+            List<SysMenuEntity> allMenus
+    ) {
+        if (menuIds == null || menuIds.isEmpty() || allMenus == null || allMenus.isEmpty()) {
+            return Collections.emptySet();
+        }
+
+        // 1. 构建 menuId -> SysMenuEntity 的 Map，方便 O(1) 查找
+        Map<String, SysMenuEntity> menuMap = allMenus.stream()
+                .filter(m -> m.getMenuId() != null)
+                .collect(Collectors.toMap(
+                        SysMenuEntity::getMenuId,
+                        Function.identity(),
+                        (a, b) -> a
+                ));
+
+        Set<String> result = new HashSet<>();
+
+        // 2. 对每一个 menuId 向上递归 / 迭代查找父级
+        for (String menuId : menuIds) {
+            String currentId = menuId;
+
+            while (currentId != null && !currentId.isEmpty()) {
+                // 已处理过则跳出，避免死循环
+                if (!result.add(currentId)) {
+                    break;
+                }
+
+                SysMenuEntity currentMenu = menuMap.get(currentId);
+                if (currentMenu == null) {
+                    break;
+                }
+
+                currentId = currentMenu.getParentId();
+            }
+        }
+
+        return result;
     }
 
 

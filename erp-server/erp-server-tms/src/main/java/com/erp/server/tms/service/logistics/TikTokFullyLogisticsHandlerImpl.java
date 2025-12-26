@@ -6,9 +6,7 @@ import com.common.business.annotation.LogisticsPlatformType;
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.business.utils.PdfUtil;
 import com.common.core.controller.vo.ApiResult;
-import com.erp.model.dmp.dto.CfgAppClientDTO;
-import com.erp.model.dmp.entity.CfgAppClientEntity;
-import com.erp.model.dmp.enums.AppClientEnum;
+import com.erp.model.file.dto.FileDTO;
 import com.erp.model.oms.entity.ShopAuthEntity;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.tms.enums.BusinessTypeEnum;
@@ -21,10 +19,10 @@ import com.erp.model.tms.vo.request.LogisticsProductVO;
 import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
 import com.erp.model.tms.vo.response.LogisticsPrintLabelResponse;
 import com.erp.model.tms.vo.response.LogisticsServiceResponseVO;
+import com.erp.rpc.file.feign.FileFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.server.tms.handler.AbstractLogisticsHandler;
 import com.erp.server.tms.service.LogisticsOperateService;
-import com.sdk.oms.tiktok.dto.tiktok.channel.provider.ShippingProviderDTO;
 import com.sdk.oms.tiktok.dto.tiktok.fully.TikTokFullyDeliveryReq;
 import com.sdk.oms.tiktok.dto.tiktok.fully.TikTokFullyDeliveryResp;
 import com.sdk.oms.tiktok.dto.tiktok.fully.TikTokFullyPrintDeliveryResp;
@@ -57,7 +55,8 @@ public class TikTokFullyLogisticsHandlerImpl extends AbstractLogisticsHandler {
     private ShopInfoFeign shopInfoFeign;
     @Resource
     private LogisticsOperateService logisticsOperateService;
-
+    @Resource
+    private FileFeign fileFeign;
     /**
      * 查询店铺
      * @param shopId
@@ -68,6 +67,7 @@ public class TikTokFullyLogisticsHandlerImpl extends AbstractLogisticsHandler {
         //获取商铺配置信息
         Map<String, String> map = new HashMap<>();
         map.put("shopId", shopId);
+        map.put("logisticsPlatform", getPlatForm().getCode());
         return map;
     }
 
@@ -158,12 +158,17 @@ public class TikTokFullyLogisticsHandlerImpl extends AbstractLogisticsHandler {
                 throw new ServiceException("获取标签失败");
             }else{
                 String base64 = PdfUtil.convertPdfUrlToBase64(tikTokFullyPrintDeliveryResp.getData().getDocumentUrl(),true);
-                String prefix = "data:application/pdf;base64,";
+                FileDTO.UploadBase64 uploadBase64 = FileDTO.UploadBase64.builder()
+                        .base64(base64)
+                        .fileName(logisticsGetLabelVO.getDeliveryNo() + ".pdf")
+                        .build();
+                String url = fileFeign.uploadFileByBase64(uploadBase64);
+//                String prefix = "data:application/pdf;base64,";
                 LogisticsPrintLabelResponse response = LogisticsPrintLabelResponse.builder()
                         .deliveryNoList(Collections.singletonList(vo.getDeliveryNo()))
                         .transportNoList(Collections.singletonList(vo.getTransportNo()))
                         .trackNoList(Collections.singletonList(vo.getTrackNo()))
-                        .base64(prefix + base64).build();
+                        .labelUrl(url).build();
                 resultList.add(response);
             }
         }

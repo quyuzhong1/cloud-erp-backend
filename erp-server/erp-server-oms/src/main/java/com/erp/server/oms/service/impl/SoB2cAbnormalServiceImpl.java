@@ -19,6 +19,9 @@ import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.tms.dto.LogisticsMappingDTO;
+import com.erp.model.tms.enums.LogisticsMappingTypeEnum;
+import com.erp.rpc.tms.feign.LogisticsMappingFeign;
 import com.erp.rpc.wms.feign.SoB2cDeliveryFeign;
 import com.erp.rpc.wms.feign.SoOutstockFeign;
 import com.erp.server.oms.service.*;
@@ -62,6 +65,8 @@ public class SoB2cAbnormalServiceImpl implements SoB2cAbnormalService {
     private OperateLogService operateLogService;
 
     @Resource
+    private LogisticsMappingFeign logisticsMappingFeign;
+    @Resource
     private RuleLogisticsService ruleLogisticsService;
 
 
@@ -76,7 +81,7 @@ public class SoB2cAbnormalServiceImpl implements SoB2cAbnormalService {
     }
 
     @Override
-    public List<BatchResultDTO> batchRetry(String id) {
+    public List<BatchResultDTO> batchRetry(String id,String type) {
         //返回信息
         List<BatchResultDTO> resultDTOList =  new ArrayList<>();
         //销售订单
@@ -85,6 +90,9 @@ public class SoB2cAbnormalServiceImpl implements SoB2cAbnormalService {
             throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
         }
         SoB2cErrorTypeEnum soB2cErrorTypeEnum = SoB2cErrorTypeEnum.getEnum(soB2cEntity.getSignOrderError());
+        if(SoB2cErrorTypeEnum.GET_LOGISTICS_LABEL.getCode().equals(type)){
+            soB2cErrorTypeEnum = SoB2cErrorTypeEnum.GET_LOGISTICS_LABEL;
+        }
         if(Objects.isNull(soB2cErrorTypeEnum)){
             return resultDTOList;
         }
@@ -92,7 +100,14 @@ public class SoB2cAbnormalServiceImpl implements SoB2cAbnormalService {
         // 重试逻辑
         switch (soB2cErrorTypeEnum) {
             case SUBMIT_DELIVERY:
-                resultDTOList.add(soB2cService.submitDelivery(id, ""));
+                // 查询配置的海外仓物流
+                SoB2cLogisticsEntity soB2cLogisticsEntity = soB2cLogisticsService.getByMainId(id);
+                String channelId = soB2cLogisticsEntity.getLogisticsChannelId();
+                List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cDetailService.listByMainId(id);
+                List<LogisticsMappingDTO.ViewDTO> viewDTOS = logisticsMappingFeign.listByChannelIdAndType(channelId, LogisticsMappingTypeEnum.WAREHOUSE.getCode());
+                LogisticsMappingDTO.ViewDTO viewDTO = viewDTOS.stream().filter(v->v.getWarehouseId().equals(soB2cDetailEntityList.get(0).getWarehouseId())).findFirst().orElse(null);
+                String warehouseLogisticsChannelId = Objects.nonNull(viewDTO)?viewDTO.getPlatformLogisticsChannelId():"";
+                resultDTOList.add(soB2cService.submitDelivery(id, warehouseLogisticsChannelId));
                 break;
             case SIGN_DELIVERY:
                 resultDTOList.add(soB2cErrorService.retryFalseDelivery(id));
@@ -133,9 +148,9 @@ public class SoB2cAbnormalServiceImpl implements SoB2cAbnormalService {
                 resultDTOList.addAll(resultDTOS);
                 break;
             case GET_LOGISTICS_LABEL:
-                SoB2cLogisticsEntity soB2cLogisticsEntity = soB2cLogisticsService.getByMainId(id);
+                SoB2cLogisticsEntity soB2cLogistics = soB2cLogisticsService.getByMainId(id);
                 soB2cEntity.setBillStatus(SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode());
-                BatchResultDTO resultDTO1 = soB2cService.getLogisticsLabel(soB2cEntity,soB2cLogisticsEntity);
+                BatchResultDTO resultDTO1 = soB2cService.getLogisticsLabel(soB2cEntity,soB2cLogistics);
                 if(resultDTO1.getSuccess()){
                     autoSubmitDelivery = getLogisticsRuleResult(id);
                     if(autoSubmitDelivery){

@@ -499,10 +499,10 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
         if (entity.getIsApiDelivery()) {
             //调三方仓
             sendB2bThirdWarehousePushTask(entity, null, SyncOperateEnum.OPERATE_INVALID.getCode());
-            updateStatus(id, ThirdDeliveryStatusEnum.INTERCEPTING.getCode(), "", "", remark, "", null);
+            updateStatus(id, ThirdDeliveryStatusEnum.INTERCEPTING.getCode(), "", "", "", "", null);
         } else {
             //直接拦截成功
-            updateStatus(id, ThirdDeliveryStatusEnum.CANCEL_DELIVERY.getCode(), "", "", remark, "", null);
+            updateStatus(id, ThirdDeliveryStatusEnum.CANCEL_DELIVERY.getCode(), "", "", "", "", null);
             String msg = CharSequenceUtil.format("用户【{}】提交发货拦截申请成功,拦截成功", UserContext.getDefaultLoginUser().getUserName());
             operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.B2B_THIRD_DELIVERY.getCode(), entity.getId(), "发货拦截");
         }
@@ -510,7 +510,6 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO manualDelivery(B2bThirdDeliveryEntity entity) {
         if (entity.getIsApiDelivery()) {
             throw new ServiceException(ApiError.ERROR_THIRD_DELIVERY_MANUAL_DELIVERY);

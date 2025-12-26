@@ -6,6 +6,7 @@ import com.erp.model.plm.dto.AttachmentDTO;
 import com.erp.model.plm.entity.PlmAttachmentEntity;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 
@@ -73,5 +74,5 @@ public interface PlmAttachmentService extends SuperService<PlmAttachmentEntity> 
 
     List<AttachmentDTO.CommonDTO> getUrlById(String id);
 
-    List<AttachmentDTO.CommonDTO> getSkuUrlByPid(String id);
+    List<AttachmentDTO.CommonDTO> getSkuUrlByPid(String id, String businessId, LocalDateTime createTime);
 }

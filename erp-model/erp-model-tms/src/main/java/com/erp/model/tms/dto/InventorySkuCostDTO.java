@@ -76,6 +76,15 @@ public class InventorySkuCostDTO implements Serializable {
         private String allocatedMonthStr;
 
         /**
+         * 核算月份
+         */
+        private LocalDate accountingMonth;
+        /**
+         * 核算月份【导出使用】
+         */
+        private String accountingMonthStr;
+
+        /**
         * 币种
         */
         private String currency;
@@ -197,7 +206,11 @@ public class InventorySkuCostDTO implements Serializable {
         @Size(max = 100,message = "核算公司名称最大长度不能超过100位")
         private String companyName;
 
-
+        /**
+         * 核算月份
+         */
+        @NotNull(message = "核算月份不能为空")
+        private LocalDate accountingMonth;
     }
 
 
@@ -252,6 +265,14 @@ public class InventorySkuCostDTO implements Serializable {
          * 分摊月份【导出使用】 yyyy-MM
          */
         private String allocatedMonthStr;
+        /**
+         * 核算月份【可排序】
+         */
+        private LocalDate accountingMonth;
+        /**
+         * 核算月份【导出使用】 yyyy-MM
+         */
+        private String accountingMonthStr;
         /**
          *币种
          */
@@ -568,5 +589,78 @@ public class InventorySkuCostDTO implements Serializable {
          * 分摊月份
          */
         private LocalDate allocatedMonth;
+    }
+
+    /**
+     * 成本查询参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class SkuCostParamDTO {
+        /**
+         * skuId集合
+         */
+        private List<String> skuIdList;
+        /**
+         *  仓库id集合
+         */
+        private List<String> warehouseIdList;
+        /**
+         * 销售组织列表
+         */
+        private List<String> orgIdList;
+        /**
+         * 核算月份
+         */
+        private LocalDateTime  startAccountingMonth;
+
+        /**
+         * 核算月份
+         */
+        private LocalDateTime  endAccountingMonth;
+    }
+
+    /**
+     * 成本查询
+     */
+    @Data
+    @NoArgsConstructor
+    public static class InvSkuCostDTO {
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
+        /**
+         *组织id
+         */
+        private String orgId;
+
+        /**
+         * 币种
+         */
+        private String currency;
+
+        /**
+         * 汇率（兑换人民币汇率）
+         */
+        private BigDecimal exchangeRate;
+
+        /**
+         * 材料成本（6位小数）
+         */
+        private BigDecimal productCost;
+
+        /**
+         * 头程运费（6位小数）
+         */
+        private BigDecimal firstMileShippingCost;
+        /**
+         * 清关税费（6位小数）
+         */
+        private BigDecimal clearanceCustomsTax;
     }
 }

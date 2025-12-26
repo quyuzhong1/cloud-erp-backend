@@ -417,6 +417,26 @@ public class InventoryDTO implements Serializable {
          */
         private String warehouseAreaName;
 
+        /**
+         * 一级供应商
+         */
+        private String mainSupplier;
+
+        /**
+         * 二级供应商
+         */
+        private String secondSupplier;
+        /**
+         * 一级供应商名称
+         */
+        private String mainSupplierName;
+
+        /**
+         * 二级供应商名称
+         */
+        private String secondSupplierName;
+
+
     }
 
     /**

@@ -78,7 +78,7 @@ public class AllocateCargoBillPrintServiceImpl implements AllocateCargoBillPrint
     }
 
     @Override
-    public void print(String waveId, HttpServletResponse response) {
+    public String print(String waveId, HttpServletResponse response) {
         WaveListEntity pickingWave = waveListService.getById(waveId);
         if(Objects.isNull(pickingWave)){
             throw new ServiceException("波次为空");
@@ -96,6 +96,6 @@ public class AllocateCargoBillPrintServiceImpl implements AllocateCargoBillPrint
         SoB2cDeliveryDTO.PrintLogisticsBillConfirmDTO dto = new SoB2cDeliveryDTO.PrintLogisticsBillConfirmDTO();
         dto.setDetailList(printDetailDTOList);
         dto.setPrintType(SoB2cDeliveryPrintTypeEnum.ALLOCATE_CARGO_BILL.getCode());
-        soB2cDeliveryService.printLogisticsBillConfirm(dto,response);
+        return soB2cDeliveryService.printLogisticsBillConfirm(dto,response);
     }
 }

@@ -42,5 +42,13 @@ public interface VirtualInventoryHisService extends SuperService<VirtualInventor
      * @author will
      * @date 2024/12/11 10:09
      */
-    void addVirtualInventoryHis(String virtualInventoryId,LocalDate localDate);
+    void addVirtualInventoryHis(List<String> virtualInventoryIdList,LocalDate localDate);
+
+    /**
+     * 获取最近一次的历史库存
+     * @param inventoryId
+     * @param localDate
+     * @return
+     */
+    VirtualInventoryHisEntity findLastInventory(String inventoryId, LocalDate localDate);
 }

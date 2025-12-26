@@ -97,7 +97,7 @@ public class SoB2cAbnormalController extends BaseController {
             List<String> ids = dto.getIds().stream().distinct().collect(Collectors.toList());
             for (String id : ids) {
                 try {
-                    List<BatchResultDTO>  resultList = soB2cAbnormalService.batchRetry(id);
+                    List<BatchResultDTO>  resultList = soB2cAbnormalService.batchRetry(id,"");
                     resultDTOS.addAll(resultList);
                 }catch (Exception e){
                     log.error("b2c销售订单 批量重试失败",e);

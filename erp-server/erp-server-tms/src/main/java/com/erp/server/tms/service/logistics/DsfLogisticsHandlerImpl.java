@@ -5,19 +5,21 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.nacos.api.utils.StringUtils;
 import com.common.business.annotation.LogisticsPlatformType;
 import com.common.business.enums.LogisticsPlatformEnum;
+import com.common.business.utils.PdfUtil;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.FileUtil;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.ValidatorUtil;
+import com.erp.model.file.dto.FileDTO;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.tms.enums.BusinessTypeEnum;
 import com.erp.model.tms.enums.RequestStatusEnums;
 import com.erp.model.tms.vo.request.*;
 import com.erp.model.tms.vo.response.*;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
+import com.erp.rpc.file.feign.FileFeign;
 import com.erp.server.tms.convert.LogisticsChannelConverter;
 import com.erp.server.tms.convert.LogisticsOrderConverter;
 import com.erp.server.tms.handler.AbstractLogisticsHandler;
@@ -60,7 +62,8 @@ public class DsfLogisticsHandlerImpl extends AbstractLogisticsHandler {
     private LogisticsOperateService logisticsOperateService;
     @Resource
     private DmpTaskFeign dmpTaskFeign;
-
+    @Resource
+    private FileFeign fileFeign;
     private List<Parcel> getParcel(LogisticsOrderVO logisticsOrderVO) {
         if (CollectionUtils.isEmpty(logisticsOrderVO.getLogisticsProductVOList())) {
             return Collections.emptyList();
@@ -376,9 +379,14 @@ public class DsfLogisticsHandlerImpl extends AbstractLogisticsHandler {
                 logisticsOperateService.pullOperateLog(logisticsGetLabelVO.getOrderId(),
                         logisticsGetLabelVO.getDeliveryNo(), BusinessTypeEnum.GET_LABEL_LIST.getCode(), LogisticsPlatformEnum.DSF.getCode(),
                         RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsQueryVO), JSONUtil.toJsonStr(responseMsg));
+                FileDTO.UploadBase64 uploadBase64 = FileDTO.UploadBase64.builder()
+                        .base64(PdfUtil.convertPdfUrlToBase64(responseMsg.getData().toString(),true))
+                        .fileName(logisticsGetLabelVO.getDeliveryNo() + ".pdf")
+                        .build();
+                String url = fileFeign.uploadFileByBase64(uploadBase64);
                 response = LogisticsPrintLabelResponse.builder()
                         .deliveryNoList(logisticsQueryVO.stream().map(LogisticsGetLabelVO::getDeliveryNo).collect(Collectors.toList()))
-                        .base64(FileUtil.convertPdfUrlToBase64((String) responseMsg.getData())).build();
+                        .labelUrl(url).build();
                 response.success();
                 responses.add(response);
                 return success(responses);

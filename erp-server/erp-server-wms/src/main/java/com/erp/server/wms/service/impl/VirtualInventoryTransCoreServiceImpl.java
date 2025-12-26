@@ -9,6 +9,7 @@ import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.threadlocal.UserContext;
+import com.common.business.utils.ApplicationContextUtils;
 import com.common.business.validator.ValidGroup;
 import com.common.business.vo.LoginUser;
 import com.common.core.exception.ServiceException;
@@ -20,6 +21,7 @@ import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.wms.dto.DictBasicDTO;
 import com.erp.model.wms.dto.inventory.*;
 import com.erp.model.wms.entity.*;
+import com.erp.model.wms.enums.CfgSettingEnum;
 import com.erp.model.wms.enums.DictBasicEnum;
 import com.erp.model.wms.enums.inventory.*;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -52,9 +54,6 @@ public class VirtualInventoryTransCoreServiceImpl implements VirtualInventoryTra
     private CfgVirtualTransRulesService cfgVirtualTransRulesService;
 
     @Resource
-    private VirtualInventoryTradingService virtualInventoryTradingService;
-
-    @Resource
     private WarehouseService warehouseService;
 
     @Resource
@@ -71,6 +70,9 @@ public class VirtualInventoryTransCoreServiceImpl implements VirtualInventoryTra
 
     @Resource
     private VirtualTransFlowService virtualTransFlowService;
+    
+    @Resource
+    private CfgSettingService cfgSettingService;
 
 
 
@@ -96,7 +98,12 @@ public class VirtualInventoryTransCoreServiceImpl implements VirtualInventoryTra
         //解析库存交易数据
         List<VirtualInventoryStockDTO.InventoryTransactionDTO> transactionDtoList = this.parseTranactionFromInOut(dto.getBusinessType(),outInStockList,rules);
         //执行库存交易
-        virtualInventoryTradingService.doTransactionList(transactionDtoList, InventoryTradingService.APPROVE);
+        CfgSettingEntity cfgSettingEntity = cfgSettingService.getByKey(CfgSettingEnum.VIRTUAL_INVENTORY_REDIS.getCode());
+        if(cfgSettingEntity == null) {
+        	ApplicationContextUtils.getBean(VirtualInventoryTradingServiceImpl.class).doTransactionList(transactionDtoList, InventoryTradingService.APPROVE);
+        }else {
+        	ApplicationContextUtils.getBean(VirtualInventoryTradingRedisServiceImpl.class).doTransactionList(transactionDtoList, InventoryTradingService.APPROVE);
+        }
     }
 
 
@@ -116,7 +123,12 @@ public class VirtualInventoryTransCoreServiceImpl implements VirtualInventoryTra
         //解析库存交易数据
         List<VirtualInventoryStockDTO.InventoryTransactionDTO> transactionDtoList = this.parseTransactionFromTransfer(dto.getBusinessType(),dto.getParamList(),rules);
         //执行库存交易
-        virtualInventoryTradingService.doTransactionList(transactionDtoList, InventoryTradingService.APPROVE);
+        CfgSettingEntity cfgSettingEntity = cfgSettingService.getByKey(CfgSettingEnum.VIRTUAL_INVENTORY_REDIS.getCode());
+        if(cfgSettingEntity == null) {
+        	ApplicationContextUtils.getBean(VirtualInventoryTradingServiceImpl.class).doTransactionList(transactionDtoList, InventoryTradingService.APPROVE);
+        }else {
+        	ApplicationContextUtils.getBean(VirtualInventoryTradingRedisServiceImpl.class).doTransactionList(transactionDtoList, InventoryTradingService.APPROVE);
+        }
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -129,7 +141,12 @@ public class VirtualInventoryTransCoreServiceImpl implements VirtualInventoryTra
             return;
         }
         List<VirtualInventoryStockDTO.InventoryTransactionDTO> transactionDtoList= this.parseTransactionForUnApprove(transactionFlowList);
-        virtualInventoryTradingService.doTransactionList(transactionDtoList,InventoryTradingService.UNAPPROVE);
+        CfgSettingEntity cfgSettingEntity = cfgSettingService.getByKey(CfgSettingEnum.VIRTUAL_INVENTORY_REDIS.getCode());
+        if(cfgSettingEntity == null) {
+        	ApplicationContextUtils.getBean(VirtualInventoryTradingServiceImpl.class).doTransactionList(transactionDtoList,InventoryTradingService.UNAPPROVE);
+        }else {
+        	ApplicationContextUtils.getBean(VirtualInventoryTradingRedisServiceImpl.class).doTransactionList(transactionDtoList,InventoryTradingService.UNAPPROVE);
+        }
     }
 
 
@@ -263,10 +280,10 @@ public class VirtualInventoryTransCoreServiceImpl implements VirtualInventoryTra
                 stockBaseDTO.setSkuNo(flow.getSkuNo());
                 stockBaseDTO.setInventoryStatus(rule.getInventoryStatus());
                 if(rule.getWarehouseOption()==InventoryWarehouseOptionEnum.WAREHOUSE_CURRENT){
-                    stockBaseDTO.setWarehouseId(flow.getWarehouseId());
+                    stockBaseDTO.setWarehouseId(flow.getCurWarehouseId());
                     stockBaseDTO.setVirtualWarehouseId(flow.getVirtualCurWarehouseId());
                 }else {
-                    stockBaseDTO.setWarehouseId(flow.getWarehouseId());
+                    stockBaseDTO.setWarehouseId(flow.getTargetWarehouseId());
                     stockBaseDTO.setVirtualWarehouseId(flow.getVirtualTargetWarehouseId());
                 }
                 VirtualInventoryEntity virtualInventoryEntity = virtualInventoryService.getByTransaction(VirtualInventoryStockDTO.InventoryTransactionDTO.getInventoryTransactionDTO(stockBaseDTO));

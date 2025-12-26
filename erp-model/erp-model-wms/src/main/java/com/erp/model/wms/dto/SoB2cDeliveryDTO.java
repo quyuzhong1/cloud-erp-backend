@@ -410,6 +410,14 @@ public class SoB2cDeliveryDTO implements Serializable {
          */
         private String soCode;
         /**
+         * 物流标签url
+         */
+        private String logisticsLabelUrl;
+        /**
+         * 物流标签名称
+         */
+        private String logisticsLabelUrlName;
+        /**
          * 状态【可排序】
          */
         private String status;

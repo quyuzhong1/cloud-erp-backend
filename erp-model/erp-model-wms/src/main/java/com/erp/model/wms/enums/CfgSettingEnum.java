@@ -30,6 +30,7 @@ public enum CfgSettingEnum implements EnumMessage {
     QC_USER("qcUser","质检员"),
     SHOP_EXPIRE_NOTICE("shopExpireNotice","店铺过期通知"),
     INVENTORY_REDIS("inventoryRedis","库存redis扣减配置"),
+    VIRTUAL_INVENTORY_REDIS("virtualInventoryRedis","虚拟仓库存redis扣减配置"),
     ;
 
     /**

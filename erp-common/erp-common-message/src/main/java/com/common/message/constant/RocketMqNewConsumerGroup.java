@@ -248,5 +248,10 @@ public class RocketMqNewConsumerGroup {
      */
     public static final String RESTCLOUD_PDD_SO_OUT_TO_WMS_GROUP = "${spring.cloud.nacos.discovery.namespace}-restcloud_pdd_so_out_to_wms_group";
 
+    /**
+     * restcloud云听社媒数据
+     */
+    public static final String RESTCLOUD_YUNTING_SOCIAL_MEDIA_TO_OMS_GROUP = "${spring.cloud.nacos.discovery.namespace}-restcloud_yunting_social_media_to_oms_group";
+
     public static final String DMP_AWD_SHIPMENT_TO_WMS_GROUP = "${spring.cloud.nacos.discovery.namespace}-dmp_awd_shipment_to_wms_group";
 }

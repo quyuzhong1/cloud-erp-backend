@@ -16,6 +16,7 @@ import com.common.core.utils.ValidatorUtil;
 import com.erp.model.dmp.dto.CfgAppClientDTO;
 import com.erp.model.dmp.entity.CfgAppClientEntity;
 import com.erp.model.dmp.enums.AppClientEnum;
+import com.erp.model.file.dto.FileDTO;
 import com.erp.model.oms.entity.ShopAuthEntity;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.tms.enums.BusinessTypeEnum;
@@ -29,6 +30,7 @@ import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
 import com.erp.model.tms.vo.response.LogisticsPrintLabelResponse;
 import com.erp.model.tms.vo.response.LogisticsServiceResponseVO;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
+import com.erp.rpc.file.feign.FileFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.server.tms.convert.LogisticsChannelConverter;
@@ -91,6 +93,8 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
 
     @Resource
     private SoB2cFeign soB2cFeign;
+    @Resource
+    private FileFeign fileFeign;
     /**
      * 根据平台获取授权列表
      *
@@ -609,10 +613,14 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
                         logisticsGetLabelVO.getDeliveryNo(), BusinessTypeEnum.GET_LABEL_LIST.getCode(), LogisticsPlatformEnum.ALI_EXPRESS.getCode(),
                         RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsQueryVO), JSONUtil.toJsonStr(labelList));
                 //结果："http://bss-fss.i4px.com/fpx-print-label-e1298724-0b8d-4be3-8238-bd7a96d9874b.pdf" 需要考虑 pdf转图片
-                String prefix = "data:application/pdf;base64,";
+//                String prefix = "data:application/pdf;base64,";
+                FileDTO.UploadBase64 uploadBase64 = FileDTO.UploadBase64.builder()
+                        .base64(labelResponse.getBody())
+                        .fileName(logisticsGetLabelVO.getDeliveryNo() + ".pdf")
+                        .build();
                 response = LogisticsPrintLabelResponse.builder()
                         .transportNoList(logisticsQueryVO.stream().map(LogisticsGetLabelVO::getTransportNo).collect(Collectors.toList()))
-                        .base64(prefix + labelResponse.getBody()).build();
+                        .labelUrl(fileFeign.uploadFileByBase64(uploadBase64)).build();
                 response.success();
                 responses.add(response);
                 return success(responses);
