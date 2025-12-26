@@ -24,6 +24,7 @@ import java.util.List;
 public interface DmpAwdShipmentConverter {
     DmpAwdShipmentConverter INSTANCE = Mappers.getMapper(DmpAwdShipmentConverter.class);
 
+    @Mapping(target = "deliveryToWarehouseId", ignore = true)
     @Mapping(target = "uniqueId", source = "dmpMainEntity.fbaShipmentId")
     @Mapping(target = "shopName", ignore = true)
     @Mapping(target = "shopId", source = "dmpMainEntity.nextLevelId")

@@ -454,8 +454,8 @@ public class FbaShipmentController extends BaseController {
      * @date: 2025-12-24
      */
     @PostMapping("/printLabel")
-    public ApiResult<String> printLabel(@RequestBody @Validated FbaShipmentDTO.PrintLabelDTO dto) {
-        String url = fbaShipmentService.printLabel(dto);
-        return success(url);
+    public ApiResult<WmsAttachmentDTO.UpdateDTO> printLabel(@RequestBody @Validated FbaShipmentDTO.PrintLabelDTO dto) {
+        WmsAttachmentDTO.UpdateDTO updateDTO = fbaShipmentService.printLabel(dto);
+        return success(updateDTO);
     }
 }

@@ -61,7 +61,6 @@ public interface FileFeign {
 
     @PostMapping(value = "/feign/file/uploadFileByBase64")
     String uploadFileByBase64(@RequestBody FileDTO.UploadBase64 uploadBase64);
-
     /**
      * 合并多个文件为一个文件
      * @param fileIds 文件id列表

@@ -127,12 +127,12 @@ public class FbaShipmentEntity extends BaseEntity<FbaShipmentEntity> {
     /**
      * 标签url
      */
-    @TableField("label_url")
+    @TableField(exist = false)
     private String labelUrl;
     /**
      * 标签类型（区分类型）
      */
-    @TableField("page_type")
+    @TableField(exist = false)
     private String pageType;
     /**
      * 数据来源类型

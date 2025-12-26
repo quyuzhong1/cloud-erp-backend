@@ -138,10 +138,6 @@ public class PlatformAwdShipmentDTO extends UniqueDto {
      */
     private String deliveryFromPostCode;
     /**
-     * 发货目的仓（取值店铺绑定的AWD仓）
-     */
-    private String deliveryToWarehouseId;
-    /**
      * 平台货件发货时间（拉取数据的日期）
      */
     private LocalDateTime shipmentDeliveryTime;
