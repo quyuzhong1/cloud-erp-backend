@@ -1,5 +1,6 @@
 package com.erp.server.oms.rocketmq.consumer;
 
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.dto.PlatformB2BReturnOrderDTO;
 import com.common.business.dto.PlatformReturnOrderDTO;
@@ -24,9 +25,12 @@ import com.erp.model.oms.enums.SoB2cReturnSourceTypeEnum;
 import com.erp.model.oms.enums.SoB2cReturnStatusEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
+import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.wms.dto.SoReturnInstockDetailDTO;
 import com.erp.model.wms.entity.SoReturnInstockDetailEntity;
 import com.erp.model.wms.entity.SoReturnInstockEntity;
+import com.erp.model.wms.entity.WarehouseEntity;
+import com.erp.model.wms.enums.ReturnReasonEnum;
 import com.erp.model.wms.enums.ReturnTypeEnum;
 import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -133,7 +137,7 @@ public class NewPlatformB2bReturnOrderConsumerService extends AbstractNewPlatfor
 				throw new ServiceException("未匹配到SKU，sku编号："+detail.getSkuNo());
 			}
 			soReturnDetailEntity.setSkuId(skuVO.getSkuId());
-			soReturnDetailEntity.setSkuNo(soReturnDetailEntity.getSkuNo());
+			soReturnDetailEntity.setSkuNo(skuVO.getSkuNo());
 			soReturnDetailEntity.setPlatformSkuNo( detail.getPlatformSkuNo());
 			soReturnDetailEntity.setReturnQty(detail.getReturnQty());
 			soReturnDetailEntity.setReturnAmount(detail.getReturnAmount());
@@ -141,7 +145,8 @@ public class NewPlatformB2bReturnOrderConsumerService extends AbstractNewPlatfor
 			soReturnDetailEntity.setReturnAmountLocalCurrency(detail.getReturnAmount());
 			soReturnDetailEntity.setTaxReturnAmountLocalCurrency(detail.getReturnAmount());
 			soReturnDetailEntity.setExchangeRate(BigDecimal.ONE);
-			soReturnDetailEntity.setReturnReasonDict(detail.getReturnReasonDict());
+			soReturnDetailEntity.setReturnReasonDict(ReturnReasonEnum.OTHER.getCode());
+			soReturnDetailEntity.setReturnTypeDict(detail.getReturnTypeDict());
 			soReturnDetailEntity.setRemark(detail.getRemark());
 			soReturnDetailEntities.add(soReturnDetailEntity);
 		}
@@ -171,6 +176,7 @@ public class NewPlatformB2bReturnOrderConsumerService extends AbstractNewPlatfor
 			throw new ServiceException("未匹配到仓库映射关系，平台仓库id："+dto.getPlatformWarehouseId());
 		}
 		ThirdMappingEntity thirdMappingEntity = thirdMappingEntityList.get(0);
+		WarehouseEntity warehouseEntity = FeignQuery.getById(WarehouseEntity.class,thirdMappingEntity.getSysId());
 
 		soReturn.setType(OrderTypeEnum.B2B.getCode());
 		if(Objects.nonNull(soInfo)){
@@ -192,6 +198,12 @@ public class NewPlatformB2bReturnOrderConsumerService extends AbstractNewPlatfor
 		soReturn.setSellerName(customerInfo.getSellerName());
 		soReturn.setWarehouseId(thirdMappingEntity.getSysId());
 		soReturn.setWarehouseName(thirdMappingEntity.getSysName());
+		soReturn.setInventoryOrgId(warehouseEntity.getOrgId());
+		//获取核算公司
+		SysAccountingCompanyEntity companyEntity = sysUserFeign.getCompanyById(warehouseEntity.getOrgId());
+		if (ObjectUtil.isNotEmpty(companyEntity)) {
+			soReturn.setInventoryOrgName(companyEntity.getCompanyName());
+		}
 		soReturn.setReturnLogisticCode(dto.getReturnLogisticCode());
 		soReturn.setCurrency(CurrencyEnum.CNY.getCurrencyCode());
 		soReturn.setCurrencySymbol(CurrencyEnum.CNY.getCurrencySymbol());

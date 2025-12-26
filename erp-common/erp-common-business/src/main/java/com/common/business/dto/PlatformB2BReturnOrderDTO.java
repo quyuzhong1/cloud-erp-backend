@@ -43,6 +43,7 @@ public class PlatformB2BReturnOrderDTO extends UniqueDto {
      */
     private LocalDate billDate;
 
+    private String platformOrderType;
     /**
      * 明细
      */
@@ -62,6 +63,7 @@ public class PlatformB2BReturnOrderDTO extends UniqueDto {
 
         private BigDecimal returnAmount;
 
+        private String returnTypeDict;
 
         private String returnReasonDict;
 

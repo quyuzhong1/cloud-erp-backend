@@ -19,6 +19,7 @@ import com.erp.model.dmp.entity.ThirdMappingEntity;
 import com.erp.model.dmp.enums.ThirdSysTypeEnum;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.AuthStatusEnum;
+import com.erp.model.wms.enums.ReturnTypeEnum;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
@@ -137,6 +138,7 @@ public class DmpOutputWdtB2BReturnRocketMQTaskHandler extends DmpOutputRocketMQT
 		platformB2BReturnOrderDTO.setShopId(shopInfo.getId());
 		platformB2BReturnOrderDTO.setPlatformWarehouseId(itemList.get(0).getWarehouseId());
 		platformB2BReturnOrderDTO.setReturnLogisticCode(dmpSoReturnInfoEntity.getTrackingNumber());
+		platformB2BReturnOrderDTO.setPlatformOrderType(dmpSoReturnInfoEntity.getPlatformOrderType());
 		platformB2BReturnOrderDTO.setBillDate(dmpSoReturnInfoEntity.getReturnTime().toLocalDate());
 		List<PlatformB2BReturnOrderDTO.Detail> detailList = new ArrayList<>();
 		for (DmpSoReturnDetailEntity dmpSoReturnDetailEntity : itemList) {
@@ -146,6 +148,11 @@ public class DmpOutputWdtB2BReturnRocketMQTaskHandler extends DmpOutputRocketMQT
 			detail.setReturnQty(dmpSoReturnDetailEntity.getQty());
 			detail.setReturnAmount(dmpSoReturnDetailEntity.getAmount());
 			detail.setReturnReasonDict(dmpSoReturnInfoEntity.getRemarkName());
+			if("2".equals(dmpSoReturnInfoEntity.getPlatformOrderType())){
+				detail.setReturnTypeDict(ReturnTypeEnum.DEDUCTION.getCode());
+			}else if("3".equals(dmpSoReturnInfoEntity.getPlatformOrderType())){
+				detail.setReturnTypeDict(ReturnTypeEnum.REPLENISHMENT.getCode());
+			}
 			detail.setRemark(dmpSoReturnInfoEntity.getRemark());
 			detailList.add(detail);
 		}
