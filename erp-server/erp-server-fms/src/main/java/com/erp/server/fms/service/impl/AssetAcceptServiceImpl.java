@@ -1569,7 +1569,7 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
             AssetCardDetailDTO.AddDTO detailDTO = new AssetCardDetailDTO.AddDTO();
             
             // 实物信息字段映射
-            detailDTO.setAssetCode(docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_ZC)); // 资产编码 = SKU编号 + 序号
+            detailDTO.setAssetCode(detail.getSkuNo()); // 资产编码
             detailDTO.setAssetLocationId(detail.getAssetLocationId()); // 资产位置ID
             detailDTO.setUseDeptId(detail.getUseDeptId()); // 使用部门ID
             detailDTO.setUseDeptName(detail.getUseDeptName()); // 使用部门名称
