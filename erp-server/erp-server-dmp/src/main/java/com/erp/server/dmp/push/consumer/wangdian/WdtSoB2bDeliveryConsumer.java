@@ -126,9 +126,6 @@ public class WdtSoB2bDeliveryConsumer<T extends DmpSyncTaskIdDTO> extends Abstra
                     weightingReq.put("weight", 0);
 
                     SalesWeighingResponse response = stockoutAPI.salesWeighing(weightingReq);
-                    if(response.getStatus()!= 0){
-                        return ApiResult.error(0, "旺店通发货失败:" + response.getMessage());
-                    }
                 }
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();

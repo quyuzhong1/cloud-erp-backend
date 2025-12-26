@@ -1,25 +1,26 @@
 package com.sdk.wangdian.sdk.api.wms.stockout.dto;
 
+import com.alibaba.fastjson.annotation.JSONField;
 import com.google.gson.annotations.SerializedName;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
-public class SalesWeighingResponse
-{
-	/*
-	 * { "status":0 "data": { "message":"CK2020072018" "status":20 } }
-	 */
-	private String message;
-	private Integer status;
+public class SalesWeighingResponse {
 
-	@SerializedName("data")
-	private DataDto data;
 
-	@Data
-	public static class DataDto
-	{
-		private String message;
-		private Integer status;
-	}
-
+	@SerializedName( "logistics_name")
+	private String logisticsName;
+	@SerializedName( "sys_logistics_name")
+	private String sysLogisticsName;
+	@SerializedName( "province")
+	private Integer province;
+	@SerializedName( "city")
+	private Integer city;
+	@SerializedName( "logistics_no")
+	private String logisticsNo;
+	@SerializedName( "district")
+	private Integer district;
+	@SerializedName( "calc_weight")
+	private Double calcWeight;
 }
