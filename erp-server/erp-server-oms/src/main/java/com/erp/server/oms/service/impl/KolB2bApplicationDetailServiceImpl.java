@@ -140,7 +140,7 @@ public class KolB2bApplicationDetailServiceImpl extends SuperServiceImpl<KolB2bA
             if (CharSequenceUtil.isNotBlank(entity.getId())) {
                 KolB2bApplicationDetailEntity old = this.getById(entity.getId());
                 if (ObjectUtils.isEmpty(old)) {
-                    throw new ServiceException(ApiError.ERROR_NOT_FOUND,"B2B寄样申请明细单");
+                    throw new ServiceException(ApiError.COMMON_NOT_FOUND,"B2B寄样申请明细单");
                 }
                 operateLogService.addModuleOperateLogByObj(old,entity, ModuleTypeEnum.KOL_B2B_APPLICATION.getCode(),mainId,"",String.format("【%s】",old.getSkuNo()));
             }

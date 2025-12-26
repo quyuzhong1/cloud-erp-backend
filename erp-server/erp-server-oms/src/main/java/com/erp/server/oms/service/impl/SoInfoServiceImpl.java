@@ -1870,7 +1870,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         }
         List<B2bThirdDeliveryEntity> entityList = b2bThirdDeliveryFeign.listBySoIds(soIds);
         if (CollectionUtils.isNotEmpty(entityList)) {
-            throw new ServiceException(ApiError.ERROR_92040);
+            throw new ServiceException(ApiError.SO_ASSOCIATED_DOC_REVERSE_FORBIDDEN);
         }
     }
 
@@ -4150,7 +4150,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     public B2bThirdDeliveryDTO.ViewDTO getB2bThirdDeliveryView(B2bThirdDeliveryDTO.ViewQueryDTO dto) {
         SoInfoEntity soInfoEntity = this.getById(dto.getSoId());
         if (ObjectUtil.isEmpty(soInfoEntity)) {
-            throw new ServiceException(ApiError.ERROR_92016);
+            throw new ServiceException(ApiError.SO_NOT_FOUND);
         }
         if (!BillApproveStatusEnum.APPROVE.equals(soInfoEntity.getApproveStatus())){
             throw new ServiceException("订单未审核,不允许下推三方发货单");

@@ -170,12 +170,12 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
             throw new ServiceException(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX);
         } catch (IOException e) {
             log.error("导入错误！>>>{}", e);
-            throw new ServiceException(ApiError.ERROR_95124);
+            throw new ServiceException(ApiError.FILE_DATA_IMPORT_FAILED);
         }
         //验证导入数据是否为空
         List<KolSampleCostImportExcelDTO> excelDateList = excelListenerUtil.getAllList();
         if (CollectionUtils.isEmpty(excelDateList)) {
-            throw new ServiceException(ApiError.ERROR_95123);
+            throw new ServiceException(ApiError.FILE_DATA_REQUIRED);
         }
         //导入数据处理
         List<KolSampleCostImportExcelDTO> successList = excelListenerUtil.getSuccessList();
@@ -195,7 +195,7 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
                     StrUtil.builder().append(DateUtil.nowExcelFileFormat()).append(name).toString(),
                     excelPath);
         } catch (IOException e) {
-            throw new ServiceException(ApiError.ERROR_95125);
+            throw new ServiceException(ApiError.FILE_EXPORT_ERROR_DATA_FAILED);
         }
         return Boolean.TRUE;
     }

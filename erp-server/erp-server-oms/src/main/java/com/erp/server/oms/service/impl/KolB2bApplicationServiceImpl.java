@@ -376,7 +376,7 @@ public class KolB2bApplicationServiceImpl extends SuperServiceImpl<KolB2bApplica
         KolB2bApplicationEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到B2B寄样申请主单数据"));
         // 只有待提交数据允许删除
         if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT, entity.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_98032);
+            throw new ServiceException(ApiError.BILL_SUBMIT_ALLOWED_STATUS_ONLY);
         }
         // 删除主单数据
         log.info("删除 开始删除B2B寄样申请主单主单数据，id：【{}】", id);
@@ -468,12 +468,12 @@ public class KolB2bApplicationServiceImpl extends SuperServiceImpl<KolB2bApplica
             throw new ServiceException(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX);
         } catch (IOException e) {
             log.error("导入错误！>>>{}", e);
-            throw new ServiceException(ApiError.ERROR_95124);
+            throw new ServiceException(ApiError.FILE_DATA_IMPORT_FAILED);
         }
         //验证导入数据是否为空
         List<KolB2bApplicationImportExcelDTO> excelDateList = excelListenerUtil.getAllList();
         if (CollectionUtils.isEmpty(excelDateList)) {
-            throw new ServiceException(ApiError.ERROR_95123);
+            throw new ServiceException(ApiError.FILE_DATA_REQUIRED);
         }
         //导入数据处理
         List<KolB2bApplicationImportExcelDTO> successList = excelListenerUtil.getSuccessList();
@@ -493,7 +493,7 @@ public class KolB2bApplicationServiceImpl extends SuperServiceImpl<KolB2bApplica
                     StrUtil.builder().append(DateUtil.nowExcelFileFormat()).append(name).toString(),
                     excelPath);
         } catch (IOException e) {
-            throw new ServiceException(ApiError.ERROR_95125);
+            throw new ServiceException(ApiError.FILE_EXPORT_ERROR_DATA_FAILED);
         }
         return Boolean.TRUE;
     }
@@ -546,7 +546,7 @@ public class KolB2bApplicationServiceImpl extends SuperServiceImpl<KolB2bApplica
     @Transactional(rollbackFor = Exception.class)
     public Boolean generateSoInfo(ValidList<KolB2bApplicationDTO.GenerateSoInfoDTO> list) {
         if (CollUtil.isEmpty(list)) {
-            throw new ServiceException(ApiError.ERROR_98004);
+            throw new ServiceException(ApiError.BILL_SELECTION_REQUIRED);
         }
         List<KolB2bApplicationDTO.GenerateSoInfoDTO> listList = list.getList();
         Map<String, KolB2bApplicationDTO.GenerateSoInfoDTO> paramMap = listList.stream().collect(Collectors.toMap(KolB2bApplicationDTO.GenerateSoInfoDTO::getDetailId, obj -> obj));
@@ -663,7 +663,7 @@ public class KolB2bApplicationServiceImpl extends SuperServiceImpl<KolB2bApplica
     @Override
     public Boolean generateFeedback(ValidList<KolB2bApplicationDTO.GenerateFeedbackDTO> list) {
         if (CollUtil.isEmpty(list)) {
-            throw new ServiceException(ApiError.ERROR_98004);
+            throw new ServiceException(ApiError.BILL_SELECTION_REQUIRED);
         }
         List<KolB2bApplicationDTO.GenerateFeedbackDTO> listList = list.getList();
 
@@ -892,7 +892,7 @@ public class KolB2bApplicationServiceImpl extends SuperServiceImpl<KolB2bApplica
             //sku信息
             SkuVO skuVO = skuMap.get(viewDTO.getSkuId());
             if (ObjectUtil.isEmpty(skuVO)) {
-                throw new ServiceException(ApiError.ERROR_95084);
+                throw new ServiceException(ApiError.PRODUCT_INFO_NOT_FOUND);
             }
             viewDTO.setProductName(skuVO.getSkuName());
             viewDTO.setBrandName(skuVO.getBrandName());
