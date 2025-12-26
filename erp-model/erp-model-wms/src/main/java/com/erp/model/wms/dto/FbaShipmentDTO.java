@@ -742,6 +742,10 @@ public class FbaShipmentDTO implements Serializable {
          */
         private String referenceId;
         /**
+         * 创建人用户名
+         */
+        private String createUserName;
+        /**
          * 箱数
          */
         private Integer boxQty;

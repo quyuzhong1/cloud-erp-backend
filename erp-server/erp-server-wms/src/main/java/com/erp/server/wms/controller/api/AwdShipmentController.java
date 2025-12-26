@@ -83,7 +83,7 @@ public class AwdShipmentController extends BaseController {
     @PostMapping("/export")
     public ApiResult export(@RequestBody @Validated FbaShipmentDTO.PagingParamDTO dto) {
         dto.setSourceType(ShipmentSourceTypeEnum.AWD.getCode());
-        fbaShipmentService.export(dto);
+        fbaShipmentService.awdExport(dto);
         return success();
     }
 
