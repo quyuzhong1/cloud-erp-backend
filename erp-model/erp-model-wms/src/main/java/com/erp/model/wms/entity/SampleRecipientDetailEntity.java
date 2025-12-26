@@ -57,6 +57,11 @@ public class SampleRecipientDetailEntity extends BaseEntity<SampleRecipientDetai
     @TableField("recipient_qty")
     private Integer recipientQty;
     /**
+     * 审核数量
+     */
+    @TableField("audit_qty")
+    private Integer auditQty;
+    /**
     * 已出库数量
     */
     @TableField("delivery_qty")
@@ -80,6 +85,8 @@ public class SampleRecipientDetailEntity extends BaseEntity<SampleRecipientDetai
 
     public static final String RECIPIENT_QTY = "recipient_qty";
 
+    public static final String AUDIT_QTY = "audit_qty";
+
     public static final String DELIVERY_QTY = "delivery_qty";
 
     public static final String REMARK = "remark";
@@ -91,11 +98,11 @@ public class SampleRecipientDetailEntity extends BaseEntity<SampleRecipientDetai
 
     /**
      * 实现接口方法：获取数量
-     * 领用单使用 recipientQty 字段
+     * 领用单使用审核数量
      */
     @Override
     public Integer getQty() {
-        return this.recipientQty;
+        return this.auditQty != null ? this.auditQty : 0;
     }
 
     /**

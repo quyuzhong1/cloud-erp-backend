@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.oms.mapper.KolFeedbackMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.oms.entity.KolFeedbackEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="source_code" property="sourceCode" />
+       <result column="source_id" property="sourceId" />
+       <result column="source_detail_id" property="sourceDetailId" />
+       <result column="source_type" property="sourceType" />
+       <result column="sku_no" property="skuNo" />
+       <result column="sku_id" property="skuId" />
+       <result column="product_name" property="productName" />
+       <result column="qty" property="qty" />
+       <result column="partner_nickname" property="partnerNickname" />
+       <result column="partner_id" property="partnerId" />
+       <result column="url" property="url" />
+       <result column="url_hash" property="urlHash" />
+       <result column="publish_type" property="publishType" />
+       <result column="publish_date" property="publishDate" />
+       <result column="remark" property="remark" />
+       <result column="feedback_status" property="feedbackStatus" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_user_id,
+        create_user_name,
+        create_time,
+        update_user_id,
+        update_user_name,
+        update_time,
+        version,
+        is_deleted,
+        source_code, source_id, source_detail_id, source_type, sku_no, sku_id, product_name, qty, partner_nickname, partner_id, url, url_hash, publish_type, publish_date, remark, feedback_status
+    </sql>
+
+    <select id="paging" resultType="com.erp.model.oms.dto.KolFeedbackDTO$ListDTO">
+        SELECT
+            kf.id,
+            kf.source_code AS sourceCode,
+            kf.source_id AS sourceId,
+            kf.source_detail_id AS sourceDetailId,
+            kf.source_type AS sourceType,
+            kf.sku_no AS skuNo,
+            kf.sku_id AS skuId,
+            kf.product_name AS productName,
+            kf.qty,
+            kf.partner_nickname AS partnerNickname,
+            kf.partner_id AS partnerId,
+            kf.url,
+            kf.url_hash AS urlHash,
+            kf.publish_type AS publishType,
+            kf.publish_date AS publishDate,
+            kf.remark,
+            kf.feedback_status AS feedbackStatus,
+            kf.create_time AS createTime,
+            kf.create_user_id AS createUserId,
+            kf.create_user_name AS createUserName
+        FROM kol_feedback kf
+        WHERE
+        ${params.sqlMap.default}
+        AND kf.is_deleted = false
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        kf.create_time DESC
+    </select>
+
+    <select id="tabList" resultType="com.erp.model.oms.dto.KolFeedbackDTO$TabListDTO">
+        SELECT
+        feedback_status AS tabFlag,
+        count(*) AS count
+        FROM kol_feedback kf
+        WHERE is_deleted = false
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        GROUP BY feedback_status
+    </select>
+
+    <!-- 根据来源类型和来源ID统计反馈数量明细 -->
+    <select id="listFeedbackQtyBySourceDetailIdList"
+            resultType="com.erp.model.oms.dto.KolFeedbackDTO$FeedbackQtyDTO">
+        select
+        kf.source_detail_id,
+        count(0) as feedbackQty,
+        sum(case when kf.feedback_status = 'completed' then 1 else 0 end) as captureFeedbackQty,
+        "max"(kf.url) as feedbackUrl
+        from kol_feedback kf
+        <where>
+            kf.is_deleted = false and kf.source_detail_id in
+            <foreach collection="sourceDetailIdList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </where>
+        group by kf.source_detail_id
+    </select>
+
+</mapper>

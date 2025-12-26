@@ -246,4 +246,14 @@ public class RocketMqNewTag {
      */
     public static final String RESTCLOUD_PDD_SO_OUT_TO_WMS_TAG = "${spring.cloud.nacos.discovery.namespace}-restcloud_pdd_so_out_to_wms_tag";
 
+    /**
+     * restcloud云听社媒数据
+     */
+    public static final String RESTCLOUD_YUNTING_SOCIAL_MEDIA_TO_OMS_TAG = "${spring.cloud.nacos.discovery.namespace}-restcloud_yunting_social_media_to_oms_tag";
+
+    /**
+     *  WDT KOL B2C申请
+     */
+    public static final String DMP_WDT_KOL_B2C_APPLICATION_TO_OMS_TAG = "${spring.cloud.nacos.discovery.namespace}-dmp_wdt_kol_b2c_application_to_oms_tag";
+
 }

@@ -13,6 +13,7 @@ import com.common.business.utils.RedisUtil;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.FileUtil;
 import com.erp.model.dmp.dto.AmazonShopInfoDTO;
+import com.erp.model.file.dto.FileDTO;
 import com.erp.rpc.file.feign.FileFeign;
 import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.LWAException;
 import com.erp.sdk.oms.amz.spapi.api.AwdApi;
@@ -111,10 +112,12 @@ public class DmpInputAmzAwdShipmentLabelInitHandler extends DmpInputAmzCommonIni
                 ShipmentLabels inboundShipmentLabels = api.getInboundShipmentLabels(shipmentId, "PLAIN_PAPER", "PDF");
                 String labelUrl = "";
                 if (CharSequenceUtil.isNotBlank(inboundShipmentLabels.getLabelDownloadURL())){
-                    labelUrl = fileFeign.uploadFileByBase64(PdfUtil.convertPdfUrlToBase64(inboundShipmentLabels.getLabelDownloadURL(), true));
-                    String pdfUrlToBase64 = FileUtil.convertPdfUrlToBase64(inboundShipmentLabels.getLabelDownloadURL());
-                    String url = fileFeign.uploadFileByBase64(pdfUrlToBase64);
-                    inboundShipmentLabels.setLabelDownloadURL(url);
+                    String pdfUrlToBase64 = PdfUtil.convertPdfUrlToBase64(inboundShipmentLabels.getLabelDownloadURL(), true);
+                    FileDTO.UploadBase64 uploadBase64 = FileDTO.UploadBase64.builder()
+                            .fileName(shipmentId + ".pdf")
+                            .base64(pdfUrlToBase64)
+                            .build();
+                    labelUrl = fileFeign.uploadFileByBase64(uploadBase64);
                 }
                 JSONObject jsonObject = (JSONObject) JSON.toJSON(inboundShipmentLabels);
                 jsonObject.put("shipment_id",shipmentId);

@@ -55,6 +55,11 @@ public class OtherOutstockDTO implements Serializable {
         private String customerName;
 
         /**
+         * 跟踪号
+         */
+        private String trackNo;
+
+        /**
          * 业务类型 sys/dictKingdee/drop/down?typeName=其他出库单业务类型
          */
         private String type;
@@ -159,6 +164,16 @@ public class OtherOutstockDTO implements Serializable {
         private LocalDateTime approveTime;
 
         /**
+         * 领料部门ID
+         */
+        private String deptId;
+
+        /**
+         * 领料部门名称
+         */
+        private String deptName;
+
+        /**
          * 创建人名称
          */
         private String createUserName;
@@ -209,6 +224,10 @@ public class OtherOutstockDTO implements Serializable {
          * 入库日期集合
          */
         private List<LocalDate>  billDateList;
+        /**
+         * 跟踪号（支持单个或多个）
+         */
+        private String trackNo;
     }
 
     @Data

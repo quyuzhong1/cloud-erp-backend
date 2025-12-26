@@ -78,6 +78,7 @@ import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.file.feign.FileFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.scm.feign.SaleDemandFeign;
 import com.erp.rpc.scm.feign.ScmTaskFeign;
@@ -263,6 +264,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
     @Resource
     private SyncDhtService syncDhtService;
+    @Resource
+    private FileFeign fileFeign;
     @Resource
     private B2bThirdDeliveryFeign b2bThirdDeliveryFeign;
 
@@ -622,9 +625,12 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         //总计数量
         Integer qtyTotal = detailList.stream().map(SoDetailEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
         variablesMap.put("qtyTotal", qtyTotal);
+        //总销售毛利
+        BigDecimal saleProfitRateTotal = detailList.stream().map(SoDetailEntity::getSaleProfit).reduce(BigDecimal.ZERO, BigDecimal::add);
+        //总销售金额(本位币)
+        BigDecimal saleAmountTotal = detailList.stream().map(SoDetailEntity::getAmountLocalCurrency).reduce(BigDecimal.ZERO, BigDecimal::add);
         //总销售毛利率
-        BigDecimal saleProfitRateTotal = detailList.stream().map(SoDetailEntity::getSaleProfitRate).reduce(BigDecimal.ZERO, BigDecimal::add);
-        variablesMap.put("saleProfitRateTotal", saleProfitRateTotal);
+        variablesMap.put("saleProfitRateTotal", MathUtil.multiplyWithTwo(MathUtil.divide(saleProfitRateTotal, saleAmountTotal), MathUtil.BigDecimal_100));
 
         //SKU
         String skuNo = detailList.stream().map(SoDetailEntity::getSkuNo).collect(Collectors.joining(","));
@@ -4222,6 +4228,16 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         return viewDTO;
     }
 
+    @Override
+    public List<SoInfoEntity> listBySourceId(String sourceId) {
+        return lambdaQuery().eq(SoInfoEntity::getSourceId, sourceId).eq(SoInfoEntity::getInvalidStatus,Boolean.FALSE).list();
+    }
+
+    @Override
+    public List<KolB2bApplicationDTO.B2bSoInfoDTO> listRefBill(String sourceId) {
+        return baseMapper.listRefBill(sourceId);
+    }
+
     /**
      * 更新平台订单ID
      * @author will
@@ -4278,16 +4294,18 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             if (Objects.nonNull(entity.getIsUploadLabel()) || !entity.getIsUploadLabel()){
                 this.lambdaUpdate().set(SoInfoEntity::getIsUploadLabel, Boolean.TRUE).eq(SoInfoEntity::getId, entity.getId()).update();
             }
-            String base64 = FileUtil.convertToBase64AndCheckIfPdf(multipartFile);
-            String prefix = "data:application/pdf;base64,";
-            labelEntity.setLogisticsLabelBase64(prefix + base64);
+            String fileUrl = fileFeign.uploadFile(multipartFile);
+//            String base64 = FileUtil.convertToBase64AndCheckIfPdf(multipartFile);
+//            String prefix = "data:application/pdf;base64,";
+//            labelEntity.setLogisticsLabelBase64(prefix + base64);
+            labelEntity.setLogisticsLabelUrl(fileUrl);
             labelEntity.setMainId(entity.getId());
             labelEntity.setSourceType(SoB2cLabelSourceTypeEnum.MANUAL.getCode());
             soLabelService.saveOrUpdate(labelEntity);
             String msg = CharSequenceUtil.format("用户【{}】上传文件名为【{}】的物流面单 ", UserContext.getDefaultLoginUser().getUserName(), multipartFile.getOriginalFilename());
             operateLogService.addModuleOperateLog(msg ,ModuleTypeEnum.SO.getCode(), entity.getId(), "上传面单");
             return BatchResultDTO.success(entity.getId(), entity.getCode(), "上传面单成功");
-        } catch (IOException e) {
+        } catch (Exception e) {
             log.error("物流文件转换异常:{}", e.getMessage());
             return BatchResultDTO.fail(entity.getId(), entity.getCode(), "物流文件转换异常");
         }

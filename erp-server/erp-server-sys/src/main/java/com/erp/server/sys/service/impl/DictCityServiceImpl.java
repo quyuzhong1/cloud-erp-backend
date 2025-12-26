@@ -494,7 +494,8 @@ public class DictCityServiceImpl extends SuperServiceImpl<DictCityMapper, DictCi
 
     }
 
-    private List<DictCityEntity> listByCountryCode(String countryCode) {
+    @Override
+    public List<DictCityEntity> listByCountryCode(String countryCode) {
         List<DictCityEntity> list = this.lambdaQuery().eq(DictCityEntity::getCountryCode, countryCode).list();
         return list;
     }

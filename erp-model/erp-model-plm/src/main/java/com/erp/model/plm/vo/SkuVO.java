@@ -122,6 +122,10 @@ public class SkuVO implements Serializable {
     private String productGrade;
 
     /**
+     * 产品品牌ID
+     */
+    private String brandId;
+    /**
      * 产品品牌
      */
     private String brandName;
@@ -252,7 +256,6 @@ public class SkuVO implements Serializable {
      * 属性
      */
     private PropertyDTO propertyDTO;
-
 
     /**
      * 是否是捆绑商品:true=是，false=否

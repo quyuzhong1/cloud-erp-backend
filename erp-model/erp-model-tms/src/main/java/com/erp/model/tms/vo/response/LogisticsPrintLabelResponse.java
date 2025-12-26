@@ -38,5 +38,5 @@ public class LogisticsPrintLabelResponse extends LogisticsBaseResponseVO impleme
     /**
      * 文件base64编码
      */
-    private String base64;
+    private String labelUrl;
 }

@@ -11,6 +11,7 @@ import com.common.business.utils.PdfUtil;
 import com.common.business.utils.RedisUtil;
 import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.dto.AmazonShopInfoDTO;
+import com.erp.model.file.dto.FileDTO;
 import com.erp.rpc.file.feign.FileFeign;
 import com.erp.sdk.oms.amz.spapi.api.FbaInboundApi;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
@@ -104,7 +105,12 @@ public class DmpInputAmzFbaShipmentLabelInitHandler extends DmpInputAmzCommonIni
                 String labelUrl = "";
                 if (Objects.nonNull(response) && Objects.nonNull(response.getPayload())){
                     String downloadURL = response.getPayload().getDownloadURL();
-                    labelUrl = fileFeign.uploadFileByBase64(PdfUtil.convertPdfUrlToBase64(downloadURL, true));
+                    String pdfUrlToBase64 = PdfUtil.convertPdfUrlToBase64(downloadURL, true);
+                    FileDTO.UploadBase64 uploadBase64 = FileDTO.UploadBase64.builder()
+                            .fileName(shipmentId + ".pdf")
+                            .base64(pdfUrlToBase64)
+                            .build();
+                    labelUrl = fileFeign.uploadFileByBase64(uploadBase64);
                 }
                 JSONObject jsonObject = (JSONObject)JSON.toJSON(response);
                 jsonObject.put("shipment_id",shipmentId);

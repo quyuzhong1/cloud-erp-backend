@@ -25,6 +25,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
+import com.common.business.utils.PdfUtil;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.entity.BaseEntity;
@@ -38,6 +39,7 @@ import com.erp.model.dmp.dto.AmazonShopInfoDTO;
 import com.erp.model.dmp.dto.DmpInoutDTO;
 import com.erp.model.dmp.dto.DmpPullShipmentDTO;
 import com.erp.model.dmp.enums.PlatformEnum;
+import com.erp.model.file.dto.FileDTO;
 import com.erp.model.mrp.enums.FbaOrderTypeEnum;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.ShopInfoEntity;
@@ -165,6 +167,8 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
     private FileFeign fileFeign;
     @Resource
     private FbaShipmentExtendService fbaShipmentExtendService;
+    @Resource
+    private WmsAttachmentService wmsAttachmentService;
 
     @Override
     public PagingVO<FbaShipmentDTO.ListDTO> paging(PagingDTO<FbaShipmentDTO.PagingParamDTO> dto) {
@@ -870,7 +874,11 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         }
         String msg = CharSequenceUtil.format("新增了FBA货件【{}】",entity.getFbaShipmentId());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.FBA_SHIPMENT.getCode(), entity.getId(), "新增FBA货件");
-
+        //面单保存
+        if (CharSequenceUtil.isNotBlank(entity.getLabelUrl())){
+            String pageType = CharSequenceUtil.isNotBlank(entity.getPageType()) ? entity.getPageType() : FbaPageTypeEnum.FBA_PLAIN_PAPER.getCode();
+            wmsAttachmentService.batchSave(Collections.singletonList(entity.getLabelUrl()),Collections.singletonList(entity.getFbaShipmentId() + ".pdf"),pageType, entity.getId());
+        }
         // 记录货件状态
         fbaShipmentStatusService.saveByFbaShipment(entity);
 
@@ -1030,7 +1038,14 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
                 throw new ServiceException("[FbaShipmentEntity] 更新失败: entity="+ JSONUtil.toJsonStr(entity));
             }
         }
-
+        //附件信息
+        if (CharSequenceUtil.isNotBlank(entity.getLabelUrl())){
+            String pageType = CharSequenceUtil.isNotBlank(entity.getPageType()) ? entity.getPageType() : FbaPageTypeEnum.FBA_PLAIN_PAPER.getCode();
+            List<WmsAttachmentDTO.UpdateDTO> updateDTOList = wmsAttachmentService.getByBusinessIds(Collections.singletonList(entity.getId()), pageType);
+            if (CollUtil.isEmpty(updateDTOList)){
+                wmsAttachmentService.batchSave(Collections.singletonList(entity.getLabelUrl()),Collections.singletonList(entity.getFbaShipmentId() + ".pdf"),pageType, entity.getId());
+            }
+        }
         // 历史详情
         List<FbaShipmentDetailEntity> oldfbaShipmentDetailEntityList = fbaShipmentDetailService.listByMainIds(Collections.singletonList(oldEntity.getId()));
         Map<String, FbaShipmentDetailEntity> entityMap = oldfbaShipmentDetailEntityList.stream()
@@ -2121,7 +2136,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
     }
 
     @Override
-    public String printLabel(FbaShipmentDTO.PrintLabelDTO dto) {
+    public WmsAttachmentDTO.UpdateDTO printLabel(FbaShipmentDTO.PrintLabelDTO dto) {
         FbaShipmentEntity entity = this.getById(dto.getId());
         if (Objects.isNull(entity)){
             throw new ServiceException("货件不存在");
@@ -2136,9 +2151,10 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         if (CharSequenceUtil.isBlank(entity.getFbaShipmentId())){
             throw new ServiceException("货件ID不能为空");
         }
+        List<WmsAttachmentDTO.UpdateDTO> updateDTOList = wmsAttachmentService.getByBusinessIds(Collections.singletonList(entity.getId()), pageType);
         //已存在相同类型的标签URL，直接返回
-        if (Objects.equals(dto.getPageType(), entity.getPageType()) && CharSequenceUtil.isNotBlank(entity.getLabelUrl())){
-            return entity.getLabelUrl();
+        if (CollUtil.isNotEmpty(updateDTOList)){
+            return updateDTOList.get(0);
         }
         String labelUrl = null;
         // 获取店铺授权信息
@@ -2148,8 +2164,12 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
                 FbaInboundApi api = AmazonSpApiInitUtils.create(FbaInboundApi.class, shopInfoDTO, false);
                 GetLabelsResponse response = api.getLabels(entity.getFbaShipmentId(), pageType, "BARCODE_2D", null, null, null, null, null);
                 if (CharSequenceUtil.isNotBlank(response.getPayload().getDownloadURL())){
-                    String pdfUrlToBase64 = FileUtil.convertPdfUrlToBase64(response.getPayload().getDownloadURL());
-                    labelUrl = fileFeign.uploadFileByBase64(pdfUrlToBase64);
+                    String pdfUrlToBase64 = PdfUtil.convertPdfUrlToBase64(response.getPayload().getDownloadURL(), true);
+                    FileDTO.UploadBase64 uploadBase64 = FileDTO.UploadBase64.builder()
+                            .fileName(entity.getFbaShipmentId() + ".pdf")
+                            .base64(pdfUrlToBase64)
+                            .build();
+                    labelUrl = fileFeign.uploadFileByBase64(uploadBase64);
                 }
             }catch (Exception e){
                 throw new ServiceException("货件【{}】打印标签失败：{}", entity.getFbaShipmentId(), e.getMessage());
@@ -2161,8 +2181,12 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
                 AwdApi api = AmazonSpApiInitUtils.create(AwdApi.class, shopInfoDTO, false);
                 ShipmentLabels inboundShipmentLabels = api.getInboundShipmentLabels(entity.getFbaShipmentId(), pageType, formatType);
                 if (CharSequenceUtil.isNotBlank(inboundShipmentLabels.getLabelDownloadURL())){
-                    String pdfUrlToBase64 = FileUtil.convertPdfUrlToBase64(inboundShipmentLabels.getLabelDownloadURL());
-                    labelUrl = fileFeign.uploadFileByBase64(pdfUrlToBase64);
+                    String pdfUrlToBase64 = PdfUtil.convertPdfUrlToBase64(inboundShipmentLabels.getLabelDownloadURL(), true);
+                    FileDTO.UploadBase64 uploadBase64 = FileDTO.UploadBase64.builder()
+                            .fileName(entity.getFbaShipmentId() + ".pdf")
+                            .base64(pdfUrlToBase64)
+                            .build();
+                    labelUrl = fileFeign.uploadFileByBase64(uploadBase64);
                 }
             }catch (Exception e){
                 throw new ServiceException("货件【{}】打印标签失败：{}", entity.getFbaShipmentId(), e.getMessage());
@@ -2170,13 +2194,13 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         }
         // 保存标签URL
         if (CharSequenceUtil.isNotBlank(labelUrl)){
-            entity.setPageType(pageType);
-            entity.setLabelUrl(labelUrl);
-            this.lambdaUpdate().set(FbaShipmentEntity::getLabelUrl, labelUrl)
-                    .set(FbaShipmentEntity::getPageType, pageType)
-                    .eq(FbaShipmentEntity::getId, entity.getId())
-                    .update();
-            return labelUrl;
+            wmsAttachmentService.batchSave(Collections.singletonList(labelUrl),Collections.singletonList(entity.getFbaShipmentId() + ".pdf"),pageType, entity.getId());
+            WmsAttachmentDTO.UpdateDTO updateDTO = new WmsAttachmentDTO.UpdateDTO();
+            updateDTO.setAttachUrl(labelUrl);
+            updateDTO.setAttachName(entity.getFbaShipmentId() + ".pdf");
+            updateDTO.setType(pageType);
+            updateDTO.setBusinessId(entity.getId());
+            return updateDTO;
         }else {
             throw new ServiceException("货件【{}】打印标签失败：未获取到标签下载URL", entity.getFbaShipmentId());
         }
@@ -2191,8 +2215,14 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         String msg = CharSequenceUtil.format("新增了FBA货件【{}】",entity.getFbaShipmentId());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.FBA_SHIPMENT.getCode(), entity.getId(), "新增FBA货件");
         extendEntity.setMainId(entity.getId());
+        //扩展信息保存
         if (!fbaShipmentExtendService.save(extendEntity)){
             throw new ServiceException("[FbaShipmentExtendEntity] 保存失败: entity=" + JSONUtil.toJsonStr(extendEntity));
+        }
+        //面单保存
+        if (CharSequenceUtil.isNotBlank(entity.getLabelUrl())){
+            String pageType = CharSequenceUtil.isNotBlank(entity.getPageType()) ? entity.getPageType() : FbaPageTypeEnum.AWD_PLAIN_PAPER.getCode();
+            wmsAttachmentService.batchSave(Collections.singletonList(entity.getLabelUrl()),Collections.singletonList(entity.getFbaShipmentId() + ".pdf"),pageType, entity.getId());
         }
         // 记录货件状态
         fbaShipmentStatusService.saveByFbaShipment(entity);
@@ -2243,6 +2273,14 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         }else {
             extendEntity.setMainId(entity.getId());
             fbaShipmentExtendService.save(extendEntity);
+        }
+        //附件信息
+        if (CharSequenceUtil.isNotBlank(entity.getLabelUrl())){
+            String pageType = CharSequenceUtil.isNotBlank(entity.getPageType()) ? entity.getPageType() : FbaPageTypeEnum.AWD_PLAIN_PAPER.getCode();
+            List<WmsAttachmentDTO.UpdateDTO> updateDTOList = wmsAttachmentService.getByBusinessIds(Collections.singletonList(entity.getId()), pageType);
+            if (CollUtil.isEmpty(updateDTOList)){
+                wmsAttachmentService.batchSave(Collections.singletonList(entity.getLabelUrl()),Collections.singletonList(entity.getFbaShipmentId() + ".pdf"),pageType, entity.getId());
+            }
         }
         // 历史详情
         List<FbaShipmentDetailEntity> oldfbaShipmentDetailEntityList = fbaShipmentDetailService.listByMainIds(Collections.singletonList(oldEntity.getId()));

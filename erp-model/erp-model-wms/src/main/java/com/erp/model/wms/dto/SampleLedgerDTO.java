@@ -393,16 +393,33 @@ public class SampleLedgerDTO implements Serializable {
          */
         private String type;
 
+        /**
+         * SKU编号（支持换行多个，用换行符分割）
+         */
         private String skuNo;
 
+        /**
+         * SKU编号列表
+         */
         private List<String> skuNos;
 
+        /**
+         * SKU ID列表
+         */
         private List<String> skuIds;
 
         @NotBlank(message = "归属用户不能为空")
         private String userId;
 
+        /**
+         * 使用方ID（支持模糊查询）
+         */
         private String useUserId;
+
+        /**
+         * 使用方名称（支持模糊查询）
+         */
+        private String useUserName;
     }
 
     /**

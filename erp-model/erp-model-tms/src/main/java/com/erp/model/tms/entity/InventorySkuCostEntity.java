@@ -72,6 +72,11 @@ public class InventorySkuCostEntity extends BaseEntity<InventorySkuCostEntity> {
     @TableField("company_name")
     private String companyName;
 
+    /**
+     * 核算月份
+     */
+    @TableField("accounting_month")
+    private LocalDate accountingMonth;
 
     public static final String FIELD_REMARK = "remark";
 

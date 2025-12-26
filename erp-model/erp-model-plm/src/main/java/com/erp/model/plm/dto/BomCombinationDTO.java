@@ -66,6 +66,15 @@ public class BomCombinationDTO implements Serializable {
         private List<ChildDTO> childList;
 
         /**
+         * 创建人
+         */
+        private String createUserName;
+        /**
+         * 创建人ID
+         */
+        private String createUserId;
+
+        /**
          * 创建时间
          */
         private LocalDateTime createTime;
@@ -129,6 +138,14 @@ public class BomCombinationDTO implements Serializable {
          * 更新时间集合
          */
         private List<LocalDate> updateTimeList;
+        /**
+         * 创建人id集合
+         */
+        private List<String> createUserIdList;
+        /**
+         * 创建时间集合
+         */
+        private List<LocalDate> createTimeList;
         /**
          * 页面高级查询
          */

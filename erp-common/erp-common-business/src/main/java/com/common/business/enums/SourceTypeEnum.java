@@ -106,6 +106,8 @@ public enum SourceTypeEnum {
     SAMPLE_TRANSFER_INFO("sampleTransferInfo","样品转移单","sample_transfer_info"),
     SAMPLE_ADJUSTMENT_INFO("sampleAdjustmentInfo","样品调整单","sample_adjustment_info"),
     WAREHOUSE_LOCATION_MOVE_INFO("warehouseLocationMoveInfo","仓位移动","warehouse_location_move"),
+    KOL_B2B_APPLICATION("kolB2bApplication","B2B寄样申请","kol_b2b_application"),
+    KOL_B2C_APPLICATION("kolB2cApplication","B2C寄样申请","kol_b2c_application"),
 
 
     //OMS
@@ -119,6 +121,7 @@ public enum SourceTypeEnum {
     SDY_CUSTOMER_INFO( "sdy_customerInfo", "数帝云客户表","customer_info"),
     CUSTOMER_B2B_CHANGE_SELLER( "customerB2bChangeSeller", "B2B客户表变更销售员","customer_b2b_seller_change"),
     SO_B2C( "soB2c", "B2C销售订单","so_b2c"),
+    WDT_SO_B2C( "wdtSoB2c", "B2C销售订单","so_b2c"),
     SO_MULTI_CHANNEL( "soMultiChannel", "多渠道订单","so_multi_channel"),
     TIK_TOK_FULLY( "TikTokFully", "TikTok全托管","so_b2c"),
     CUSTOMER_B2C( "customerB2c", "B2C客户表","customer_b2c"),
@@ -139,6 +142,8 @@ public enum SourceTypeEnum {
     SO_RECEIPT("soReceipt", "收款单","so_receipt"),
     SO_B2C_REFUND("soB2cRefund", "售后订单","so_b2c_refund"),
 
+    //KOL
+    KOL_FEEDBACK("kolFeedback", "回片列表","kol_feedback"),
 
     //SRM
     DELIVERY_ORDER( "deliveryOrder", "送货单","delivery_order"),
@@ -273,6 +278,8 @@ public enum SourceTypeEnum {
     // 旺店通相关
     WDT_OUT_STOCK("wdt_out_stock", "旺店通销售出库单","dmp_pull_task"),
     WDT_RETURN_ORDER("wdt_return_order", "旺店通退货入库单","dmp_pull_task"),
+    WDT_VIRTUAL_INVENTORY("wdt_virtual_inventory", "旺店通虚拟仓库存","dmp_pull_task"),
+
 
     //旺店通
     WDT_WAREHOUSE("wdt_warehouse", "旺店通仓库基础数据", "dmp_pull_task"),

@@ -3,7 +3,6 @@ package com.common.business.threadlocal;
 import com.common.business.constant.UserStateConstants;
 import com.common.business.vo.LoginUser;
 
-import java.util.HashMap;
 import java.util.Objects;
 
 public final class UserContext {
@@ -59,6 +58,20 @@ public final class UserContext {
             loginUser.setUserName(UserStateConstants.USER_SYSTEM);
             loginUser.setUserAccount("");
         }
+        return loginUser;
+    }
+
+    /**
+     * 获取系统用户
+     * @author will
+     * @date 2025/12/25 18:45
+     * @return LoginUser
+     */
+    public static LoginUser getSystemLoginUser() {
+        LoginUser loginUser = new LoginUser();
+        loginUser.setUid(UserStateConstants.USER_SYSTEM_ID);
+        loginUser.setUserName(UserStateConstants.USER_SYSTEM);
+        loginUser.setUserAccount("");
         return loginUser;
     }
 

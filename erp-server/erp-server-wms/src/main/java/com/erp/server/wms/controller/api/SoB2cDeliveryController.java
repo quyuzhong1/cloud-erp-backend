@@ -324,8 +324,9 @@ public class SoB2cDeliveryController extends BaseController {
      **/
     @PostMapping("/printLogisticsBillConfirm")
     @Idempotent
-    public void printLogisticsBillConfirm(@RequestBody @Validated SoB2cDeliveryDTO.PrintLogisticsBillConfirmDTO dto, HttpServletResponse response) {
-        soB2cDeliveryService.printLogisticsBillConfirm(dto, response);
+    public ApiResult<String> printLogisticsBillConfirm(@RequestBody @Validated SoB2cDeliveryDTO.PrintLogisticsBillConfirmDTO dto, HttpServletResponse response) {
+        String pdfUrl = soB2cDeliveryService.printLogisticsBillConfirm(dto, response);
+        return success(pdfUrl);
     }
 
     /**
@@ -336,8 +337,9 @@ public class SoB2cDeliveryController extends BaseController {
      * @param response
      */
     @PostMapping("/printLogisticsBillConfirmById")
-    public void printLogisticsBillConfirmById(@RequestBody @Validated BaseIdDTO dto, HttpServletResponse response) {
-        soB2cDeliveryService.printLogisticsBillConfirmById(dto.getId(), response);
+    public ApiResult<String> printLogisticsBillConfirmById(@RequestBody @Validated BaseIdDTO dto, HttpServletResponse response) {
+        String pdfUrl = soB2cDeliveryService.printLogisticsBillConfirmById(dto.getId(), response);
+        return success(pdfUrl);
     }
 
 

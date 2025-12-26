@@ -795,6 +795,18 @@ public class DmpOutputSdyOrderHandler extends DmpOutputSdyBaseTaskHandler {
             }else {
             	shudiyunB2cOrderDTO.setRoot_node_no_initial(dmpSoDetailEntity.getSrcTid());
             	shudiyunB2cOrderDTO.setRoot_node_no(dmpSoDetailEntity.getSrcTid());
+            	if("3".equals(dmpSoInfoEntity.getOrderType())) {
+            		String platformDetailId = dmpSoDetailEntity.getPlatformDetailId();
+            		if(StringUtils.isNotBlank(platformDetailId) && !platformDetailId.startsWith("AD")) {
+            			if(platformDetailId.contains(":")) {
+                			shudiyunB2cOrderDTO.setRoot_node_no_initial(platformDetailId.split(":")[0]);
+                        	shudiyunB2cOrderDTO.setRoot_node_no(platformDetailId.split(":")[0]);
+                		}else {
+                			shudiyunB2cOrderDTO.setRoot_node_no_initial(platformDetailId);
+                        	shudiyunB2cOrderDTO.setRoot_node_no(platformDetailId);
+                		}
+            		}
+            	}
             }
             
             shudiyunB2cOrderDTO.setSuite_no(dmpSoDetailEntity.getSuiteNo());

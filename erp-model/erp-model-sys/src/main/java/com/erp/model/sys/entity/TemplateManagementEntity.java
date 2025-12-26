@@ -85,6 +85,11 @@ public class TemplateManagementEntity extends BaseEntity<TemplateManagementEntit
     */
     @TableField("index")
     private Integer index;
+    /**
+     * 尺寸
+     */
+    @TableField("size")
+    private String size;
 
 
     public static final String DISABLED = "disabled";

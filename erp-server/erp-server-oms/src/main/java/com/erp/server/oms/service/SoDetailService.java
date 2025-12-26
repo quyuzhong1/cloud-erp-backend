@@ -370,4 +370,12 @@ public interface SoDetailService extends SuperService<SoDetailEntity> {
 
 
     SoDetailDTO.ImportDivideSkuBoxDTO importDivideBoxFile(MultipartFile excelFile, HttpServletResponse response);
+    /**
+     * 销售订单明细根据来源明细id集合查询
+     * @author will
+     * @date 2025/12/2 14:19
+     * @param sourceDetailIdList
+     * @return List<SoDetailEntity>
+     */
+    List<SoDetailEntity> listBySourceDetailIdList(List<String> sourceDetailIdList);
 }

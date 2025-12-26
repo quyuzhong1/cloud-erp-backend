@@ -14,6 +14,7 @@ import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.wms.dto.FbaShipmentDTO;
 import com.erp.model.wms.dto.FbaTransitCalculateReportDTO;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
+import com.erp.model.wms.dto.WmsAttachmentDTO;
 import com.erp.model.wms.entity.FbaShipmentEntity;
 import com.erp.model.wms.entity.FbaShipmentExtendEntity;
 import com.erp.model.wms.entity.FbaShipmentReceiveEntity;
@@ -293,7 +294,7 @@ public interface FbaShipmentService extends SuperService<FbaShipmentEntity> {
      * @param dto
      * @return
      */
-    String printLabel(FbaShipmentDTO.PrintLabelDTO dto);
+    WmsAttachmentDTO.UpdateDTO printLabel(FbaShipmentDTO.PrintLabelDTO dto);
 
     /**
      * 校验并创建

@@ -73,7 +73,8 @@ public class SoB2cFeignController extends BaseController {
 
     @Resource
     private SyncSoB2cService syncSoB2cService;
-
+    @Resource
+    private SoB2cLabelService soB2cLabelService;
 
     /**
      * 根据b2c订单id获取物流信息
@@ -88,6 +89,21 @@ public class SoB2cFeignController extends BaseController {
         List<SoB2cLogisticsEntity> soB2cLogisticsList = soB2cLogisticsService.listByMainIds(mainIdList);
         return soB2cLogisticsList;
     }
+    /**
+     * 根据b2c订单id获取标签信息
+     *
+     * @param mainIdList
+     * @return ApiResult<List < SoB2cLogisticsEntity>>
+     * @author Will
+     * @date: 2023/11/20 11:53
+     */
+    @PostMapping("/listSoB2cLabelByMainIdList")
+    public List<SoB2cLabelEntity> listSoB2cLabelByMainIdList(@RequestBody List<String> mainIdList) {
+        List<SoB2cLabelEntity> soB2cLogisticsList = soB2cLabelService.listSoB2cLabelByMainIds(mainIdList);
+        return soB2cLogisticsList;
+    }
+
+
 
     /**
      * 根据跟踪单号查询订单物流信息

@@ -178,57 +178,7 @@ public class SoB2cController extends BaseController {
          * 4.创建物流运单
          * 5.创建发货单
          */
-        // 速卖通手工订单首次添加税后金额=订单金额(其他平台=0)
-        dto.checkAndSetAfterTaxAmount();
-        ShopInfoEntity shopInfoEntity = shopInfoService.getById(dto.getShopId());
-        if(Objects.nonNull(shopInfoEntity) && shopInfoEntity.getDisabled()){
-            throw new ServiceException("店铺已禁用，无法新增订单");
-        }
-        SoB2cEntity add = soB2cService.add(dto, null);
-        String id = add.getId();
-        //检查是否备案并修改状态
-        soB2cService.checkProductRegistrationAndUpdate(id, "");
-
-
-        //速卖通平台仓订单不走任何规则
-        if (PlatformDictEnum.ALI_EXPRESS.getCode().equals(add.getDictPlatform()) && add.hasPlatformWarehouseOrder()) {
-            return success(add.getId());
-        }
-
-
-        SoB2cDTO.RuleResultDTO orderRuleResult = soB2cService.orderRule(id);
-        //匹配成功
-        Boolean ruleMatch = orderRuleResult.getIsRuleMatch();
-        Boolean isPass = orderRuleResult.getIsPass();
-
-
-        if (ruleMatch && isPass) {
-            //仓库规则
-            SoB2cDTO.RuleResultDTO warehouseRuleResult = soB2cService.warehouseRule(orderRuleResult.getId(), orderRuleResult.getSoB2cDetailList(), orderRuleResult.getMap());
-            Boolean warehouseRuleMatch = warehouseRuleResult.getIsRuleMatch();
-            if (warehouseRuleMatch) {
-                SoB2cDTO.RuleResultDTO logisticsRuleResult = soB2cService.logisticsRule(id, new HashMap<>(), false);
-                Boolean autoGetTrackNo = logisticsRuleResult.getAutoGetTrackNo();
-                Boolean autoGetTrackNotOfRangeDelivery = logisticsRuleResult.getAutoGetTrackNotOfRangeDelivery();
-                Boolean isRuleMatch = logisticsRuleResult.getIsRuleMatch();
-                //表示成功
-                if(isRuleMatch){
-                    //检查是否备案并修改状态
-                    soB2cService.checkProductRegistrationAndUpdate(id, "");
-                    //申报信息规则
-                    soB2cService.declareRule(id, new HashMap<>(), Boolean.FALSE, false);
-                }
-                SoB2cEntity entity = soB2cService.getById(id);
-                Boolean isOutOfRangeDelivery = entity.getIsOutOfRangeDelivery();
-                if ((Objects.nonNull(autoGetTrackNo) && Boolean.TRUE.equals(autoGetTrackNo))
-                        || (Boolean.FALSE.equals(isOutOfRangeDelivery) && Objects.nonNull(autoGetTrackNotOfRangeDelivery) && Boolean.TRUE.equals(autoGetTrackNotOfRangeDelivery))) {
-                    soB2cRuleService.handleAutoSubmitDelivery(id, logisticsRuleResult.getName());
-                }
-            }
-        }
-        //自动计算预估运费到订单的预估运费字段
-        soB2cService.autoCalcEstimatedShippingCost(Collections.singletonList(id));
-        return success(add.getCode());
+        return success(soB2cService.processOrderCreation(dto));
     }
 
 

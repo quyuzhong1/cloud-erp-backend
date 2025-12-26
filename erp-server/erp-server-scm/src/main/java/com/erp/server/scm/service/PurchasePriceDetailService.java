@@ -33,7 +33,7 @@ public interface PurchasePriceDetailService extends SuperService<PurchasePriceDe
      * @param purchasePriceDetailList
      * @return void
      */
-    void addPriceDetail(String id, List<PurchasePriceDetailDTO.AddDTO> purchasePriceDetailList);
+    void addPriceDetail(String id, List<PurchasePriceDetailDTO.AddDTO> purchasePriceDetailList,Boolean isAsset );
 
     /**
      * @description: 报价信息验证
@@ -107,7 +107,7 @@ public interface PurchasePriceDetailService extends SuperService<PurchasePriceDe
      * @param purchasePriceDetailList
      * @return void
      */
-    void updatePriceDetail(String id, List<PurchasePriceDetailDTO.UpdateDTO> purchasePriceDetailList);
+    void updatePriceDetail(String id, List<PurchasePriceDetailDTO.UpdateDTO> purchasePriceDetailList,Boolean isAsset );
 
     
     /**

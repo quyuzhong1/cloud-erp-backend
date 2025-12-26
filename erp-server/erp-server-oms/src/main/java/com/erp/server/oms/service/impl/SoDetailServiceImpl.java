@@ -3,10 +3,8 @@ package com.erp.server.oms.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
-import cn.hutool.json.JSON;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.excel.EasyExcel;
@@ -41,7 +39,6 @@ import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
-import com.erp.model.sys.dto.ThirdNoticePushRecordDTO;
 import com.erp.model.sys.enums.ThirdNoticePushRecordNoticeNodeEnum;
 import com.erp.model.tms.dto.InventorySkuCostDTO;
 import com.erp.model.wms.dto.*;
@@ -59,7 +56,6 @@ import com.erp.model.wms.enums.inventory.VirtualInventoryBusinessTypeEnum;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.rpc.sys.feign.ThirdNoticePushRecordFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.rpc.wms.feign.*;
 import com.erp.sdk.third.kingdee.utils.KingdeePushModuleEnum;
@@ -75,7 +71,6 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.apache.rocketmq.client.producer.SendResult;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
@@ -685,6 +680,11 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
     @Override
     public SoDetailDTO.ImportDivideSkuBoxDTO importDivideBoxFile(MultipartFile excelFile, HttpServletResponse response) {
         return null;
+    }
+
+    @Override
+    public List<SoDetailEntity> listBySourceDetailIdList(List<String> sourceDetailIdList) {
+        return baseMapper.listBySourceDetailIdList(sourceDetailIdList);
     }
 
 
@@ -2071,6 +2071,11 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
                     .map(SoDeliveryNoticeDetailEntity::getDeliveryQty).count();
             if (count > 0) {
                 throw new ServiceException( CharSequenceUtil.format("SKU【{}】已下推发货通知单不支持删除",soDetailEntity.getDeliverySkuNo()));
+            }
+
+            //数据为b2b寄样申请单，明细不允许单独删除
+            if (CharSequenceUtil.equals(soInfoEntity.getSourceType(), SourceTypeEnum.KOL_B2B_APPLICATION.getCode()) && CharSequenceUtil.isNotBlank(soDetailEntity.getSourceDetailId())) {
+                throw new ServiceException(ApiError.ERROR_PUSH_KOL_B2B_APPLICATION_SO_DETAIL_DELETE);
             }
 
             //B2B销售订单明细行冻结库存检查 - 删除时不允许删除已冻结库存的明细行

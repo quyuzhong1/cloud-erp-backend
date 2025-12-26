@@ -146,7 +146,7 @@ public class SecondarySortingServiceImpl implements SecondarySortingService {
     }
 
     @Override
-    public void printDistribution(String waveId, HttpServletResponse response) {
+    public String printDistribution(String waveId, HttpServletResponse response) {
         if (ObjectUtils.isEmpty(waveId)) {
             throw new ServiceException(ApiError.ERROR_99119);
         }
@@ -160,7 +160,7 @@ public class SecondarySortingServiceImpl implements SecondarySortingService {
         SoB2cDeliveryDTO.PrintLogisticsBillConfirmDTO dto = new SoB2cDeliveryDTO.PrintLogisticsBillConfirmDTO();
         dto.setPrintType(SoB2cDeliveryPrintTypeEnum.ALLOCATE_CARGO_BILL.getCode());
         dto.setDetailList(printDetailDTOList);
-        soB2cDeliveryService.printLogisticsBillConfirm(dto,response);
+        return soB2cDeliveryService.printLogisticsBillConfirm(dto,response);
     }
 
     @Override

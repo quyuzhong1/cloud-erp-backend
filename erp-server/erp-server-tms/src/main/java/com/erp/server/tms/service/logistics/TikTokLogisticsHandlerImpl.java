@@ -7,6 +7,7 @@ import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.business.utils.PdfUtil;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
+import com.erp.model.file.dto.FileDTO;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.tms.enums.BusinessTypeEnum;
 import com.erp.model.tms.enums.DeliveryTypeEnum;
@@ -18,6 +19,7 @@ import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
 import com.erp.model.tms.vo.response.LogisticsPrintLabelResponse;
 import com.erp.model.tms.vo.response.LogisticsServiceResponseVO;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
+import com.erp.rpc.file.feign.FileFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.server.tms.handler.AbstractLogisticsHandler;
 import com.erp.server.tms.service.LogisticsOperateService;
@@ -27,7 +29,6 @@ import com.sdk.oms.tiktok.dto.tiktok.packages.PackageDocumentDTO;
 import com.sdk.oms.tiktok.dto.tiktok.ship.ShipOrderOther;
 import com.sdk.oms.tiktok.dto.tiktok.ship.ShipOrderOtherParam;
 import com.sdk.oms.tiktok.service.TikTokSdkClientService;
-import com.sdk.tms.shopee.model.logistics.request.ShippingOrderRequest;
 import com.sdk.tms.tiktok.channel.provider.ShippingProvidersBean;
 import com.sdk.tms.tiktok.service.TikTokShipperService;
 import io.seata.common.util.StringUtils;
@@ -38,7 +39,6 @@ import org.springframework.stereotype.Component;
 import javax.annotation.Resource;
 import java.io.IOException;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * TikTok物流
@@ -59,7 +59,8 @@ public class TikTokLogisticsHandlerImpl extends AbstractLogisticsHandler {
 
     @Resource
     private LogisticsOperateService logisticsOperateService;
-
+    @Resource
+    private FileFeign fileFeign;
     /**
      * 查询店铺
      * @param shopId
@@ -70,6 +71,7 @@ public class TikTokLogisticsHandlerImpl extends AbstractLogisticsHandler {
         //获取商铺配置信息
         Map<String, String> map = new HashMap<>();
         map.put("shopId", shopId);
+        map.put("logisticsPlatform", getPlatForm().getCode());
         return map;
     }
 
@@ -205,14 +207,19 @@ public class TikTokLogisticsHandlerImpl extends AbstractLogisticsHandler {
             if(StringUtils.isBlank(packageDocumentDTO.getData().getDocUrl())){
                 throw new ServiceException("获取标签失败");
             }else{
-                String base64 = "";
+                String url = "";
                 int maxRetries = 3; // 最大重试次数
                 long retryInterval = 1000; // 重试间隔1秒
                 Exception lastException = null;
 
                 for (int attempt = 0; attempt <= maxRetries; attempt++) { // 包含初始请求+3次重试
                     try {
-                        base64 = PdfUtil.convertPdfUrlToBase64(packageDocumentDTO.getData().getDocUrl(),false);
+                        String base64 = PdfUtil.convertPdfUrlToBase64(packageDocumentDTO.getData().getDocUrl(),false);
+                        FileDTO.UploadBase64 uploadBase64 = FileDTO.UploadBase64.builder()
+                                .base64(base64)
+                                .fileName(logisticsGetLabelVO.getDeliveryNo() + ".pdf")
+                                .build();
+                        url = fileFeign.uploadFileByBase64(uploadBase64);
                         break; // 成功则跳出循环
                     } catch (Exception e) {
                         lastException = e;
@@ -227,7 +234,7 @@ public class TikTokLogisticsHandlerImpl extends AbstractLogisticsHandler {
                     }
                 }
 
-                if (base64.isEmpty()) {
+                if (url.isEmpty()) {
                     String errorMsg = "获取标签失败，重试" + maxRetries + "次后仍失败";
                     if (lastException != null) {
                         log.error("TokTok获取面单获取标签失败，最后一次异常:", lastException);
@@ -235,12 +242,12 @@ public class TikTokLogisticsHandlerImpl extends AbstractLogisticsHandler {
                     }
                     throw new ServiceException(errorMsg);
                 }
-                String prefix = "data:application/pdf;base64,";
+//                String prefix = "data:application/pdf;base64,";
                 LogisticsPrintLabelResponse response = LogisticsPrintLabelResponse.builder()
                         .deliveryNoList(Collections.singletonList(vo.getDeliveryNo()))
                         .transportNoList(Collections.singletonList(vo.getTransportNo()))
                         .trackNoList(Collections.singletonList(vo.getTrackNo()))
-                        .base64(prefix + base64).build();
+                        .labelUrl(url).build();
                 resultList.add(response);
             }
         }
