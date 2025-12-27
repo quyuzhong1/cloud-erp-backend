@@ -31,6 +31,8 @@ import com.erp.model.sys.entity.*;
 import com.erp.server.dmp.service.CfgTimezoneService;
 import com.erp.server.dmp.service.DictBasicService;
 import com.erp.server.dmp.service.DmpAmzSoOutstockDetailService;
+import com.erp.server.dmp.service.DmpSoDeliveryDetailService;
+import com.erp.server.dmp.service.DmpSoDeliveryService;
 import com.erp.server.dmp.service.DmpSoDetailService;
 import com.erp.server.dmp.service.DmpSoInfoService;
 import com.erp.server.dmp.service.DmpSoOutstockDetailService;
@@ -92,6 +94,10 @@ public class DmpOutputSdySoOutstockHandler extends DmpOutputSdyBaseTaskHandler {
 	private DmpSoOutstockService dmpSoOutstockService;
 	@Resource
 	private DmpSoOutstockDetailService dmpSoOutstockDetailService;
+	@Resource
+	private DmpSoDeliveryService dmpSoDeliveryService;
+	@Resource
+	private DmpSoDeliveryDetailService dmpSoDeliveryDetailService;
 
     @Override
     public Map<String, String> getPushJsonDataMap(DmpOutputTaskRequest dmpRequest, DmpOutputTaskResponse dmpResponse) {
@@ -255,6 +261,56 @@ public class DmpOutputSdySoOutstockHandler extends DmpOutputSdyBaseTaskHandler {
 				}
 			}
 			cfgMaps.put("wdtPlatformCodeMap", wdtPlatformCodeMap);
+			
+			Map<String, String> platformCodeSkuMSkuMap = new HashMap<>();
+			List<String> mSkuWdtThirdCodes = changeDmpSoOutstockEntity.stream().filter(c -> StringUtils.isNotBlank(c.getPlatformCode()) && c.getPlatformCode().startsWith("JY"))
+				.map(DmpSoOutstockEntity::getPlatformCode).collect(Collectors.toList());
+			if(CollUtil.isNotEmpty(mSkuWdtThirdCodes)) {
+				Map<String, String> mSkuWdtIdThirdCodeMaps = dmpSoInfoService.lambdaQuery().in(DmpSoInfoEntity::getThirdCode, mSkuWdtThirdCodes)
+						.eq(DmpSoInfoEntity::getSourceSystem, "wdt")
+						.select(DmpSoInfoEntity::getId , DmpSoInfoEntity::getThirdCode)
+						.list().stream().collect(Collectors.toMap(DmpSoInfoEntity::getId , DmpSoInfoEntity::getThirdCode));
+					if(CollUtil.isNotEmpty(mSkuWdtIdThirdCodeMaps)) {
+						Map<String, List<DmpSoDetailEntity>> mSkuMainIdDetailMap = dmpSoDetailService.lambdaQuery().in(DmpSoDetailEntity::getMainId, mSkuWdtIdThirdCodeMaps.keySet()).list()
+								.stream().collect(Collectors.groupingBy(DmpSoDetailEntity::getMainId));
+							for(Map.Entry<String, String> mSkuIdThirdCodeMap : mSkuWdtIdThirdCodeMaps.entrySet()) {
+								List<DmpSoDetailEntity> mSkuDetailList = mSkuMainIdDetailMap.get(mSkuIdThirdCodeMap.getKey());
+								if(CollUtil.isNotEmpty(mSkuDetailList)) {
+									for(DmpSoDetailEntity mSkuDetail : mSkuDetailList) {
+										String platformSku = mSkuDetail.getPlatformSku();
+										if(StringUtils.isNotBlank(platformSku)) {
+											platformCodeSkuMSkuMap.put(mSkuIdThirdCodeMap.getValue() + "_" + mSkuDetail.getSkuNo(), platformSku);
+										}
+									}
+								}
+							}
+					}
+			}
+			
+			List<String> mSkuSdcThirdCodes = changeDmpSoOutstockEntity.stream().filter(c -> StringUtils.isNotBlank(c.getPlatformCode()) && !c.getPlatformCode().startsWith("JY"))
+					.map(DmpSoOutstockEntity::getPlatformCode).collect(Collectors.toList());
+			if(CollUtil.isNotEmpty(mSkuSdcThirdCodes)) {
+				Map<String, String> mSkuSdcIdThirdCodeMaps = dmpSoDeliveryService.lambdaQuery().in(DmpSoDeliveryEntity::getThirdDeliveryCode, mSkuSdcThirdCodes)
+						.select(DmpSoDeliveryEntity::getId , DmpSoDeliveryEntity::getThirdDeliveryCode)
+						.list().stream().collect(Collectors.toMap(DmpSoDeliveryEntity::getId , DmpSoDeliveryEntity::getThirdDeliveryCode));
+					if(CollUtil.isNotEmpty(mSkuSdcIdThirdCodeMaps)) {
+						Map<String, List<DmpSoDeliveryDetailEntity>> mSkuMainIdDetailMap = dmpSoDeliveryDetailService.lambdaQuery().in(DmpSoDeliveryDetailEntity::getMainId, mSkuSdcIdThirdCodeMaps.keySet()).list()
+								.stream().collect(Collectors.groupingBy(DmpSoDeliveryDetailEntity::getMainId));
+							for(Map.Entry<String, String> mSkuIdThirdCodeMap : mSkuSdcIdThirdCodeMaps.entrySet()) {
+								List<DmpSoDeliveryDetailEntity> mSkuDetailList = mSkuMainIdDetailMap.get(mSkuIdThirdCodeMap.getKey());
+								if(CollUtil.isNotEmpty(mSkuDetailList)) {
+									for(DmpSoDeliveryDetailEntity mSkuDetail : mSkuDetailList) {
+										String platformSku = mSkuDetail.getPlatformSkuNo();
+										if(StringUtils.isNotBlank(platformSku)) {
+											platformCodeSkuMSkuMap.put(mSkuIdThirdCodeMap.getValue() + "_" + mSkuDetail.getSkuNo(), platformSku);
+										}
+									}
+								}
+							}
+					}
+			}
+			
+			cfgMaps.put("platformCodeSkuMSkuMap", platformCodeSkuMSkuMap);
 		}
 
 
@@ -493,6 +549,11 @@ public class DmpOutputSdySoOutstockHandler extends DmpOutputSdyBaseTaskHandler {
         	        		shudiyunB2cOrderDTO.setRoot_node_no_initial(rootNodeNo);
     	        		}
     				}
+    	        }
+    	        
+    	        Map<String, String> platformCodeSkuMSkuMap = cfgMaps.get("platformCodeSkuMSkuMap");
+    	        if(platformCodeSkuMSkuMap != null) {
+    	        	shudiyunB2cOrderDTO.setMsku_code(platformCodeSkuMSkuMap.get(platformCode + "_" + skuNo));
     	        }
     	        
     	        shudiyunB2cOrderDTO.setDefaultValue();
