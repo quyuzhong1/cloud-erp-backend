@@ -12,6 +12,7 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.erp.server.wms.service.OperateLogService;
 import com.common.core.exception.ServiceException;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -48,7 +49,6 @@ public class AwdInventoryServiceImpl extends SuperServiceImpl<AwdInventoryMapper
     @Resource
     private OperateLogService operateLogService;
 
-    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(AwdInventoryDTO.AddDTO addDTO) {
@@ -59,14 +59,16 @@ public class AwdInventoryServiceImpl extends SuperServiceImpl<AwdInventoryMapper
         if (Objects.nonNull(awdInventoryEntity)) {
             log.info("awd库存开始更新");
             boolean update = this.lambdaUpdate()
-                    .set(AwdInventoryEntity::getSkuId, addDTO.getSkuId())
-                    .set(AwdInventoryEntity::getSkuNo, addDTO.getSkuNo())
-                    .set(AwdInventoryEntity::getProductName, addDTO.getProductName())
-                    .set(AwdInventoryEntity::getAvailableDistributableQty, addDTO.getAvailableDistributableQty())
-                    .set(AwdInventoryEntity::getReplenishmentQty, addDTO.getReplenishmentQty())
-                    .set(AwdInventoryEntity::getReservedDistributableQty, addDTO.getReservedDistributableQty())
-                    .set(AwdInventoryEntity::getTotalInboundQty, addDTO.getTotalInboundQty())
-                    .set(AwdInventoryEntity::getTotalOnhandQty, addDTO.getTotalOnhandQty())
+                    .set(AwdInventoryEntity::getSkuId, StringUtils.isNotBlank(addDTO.getSkuId()) ? addDTO.getSkuId() : "")
+                    .set(AwdInventoryEntity::getSkuNo, StringUtils.isNotBlank(addDTO.getSkuNo()) ? addDTO.getSkuNo() : "")
+                    .set(AwdInventoryEntity::getProductName, StringUtils.isNotBlank(addDTO.getProductName()) ? addDTO.getProductName() : "")
+                    .set(AwdInventoryEntity::getAvailableDistributableQty, addDTO.getAvailableDistributableQty() != null ? addDTO.getAvailableDistributableQty() : 0)
+                    .set(AwdInventoryEntity::getReplenishmentQty, addDTO.getReplenishmentQty() != null ? addDTO.getReplenishmentQty() : 0)
+                    .set(AwdInventoryEntity::getReservedDistributableQty, addDTO.getReservedDistributableQty() != null ? addDTO.getReservedDistributableQty() : 0)
+                    .set(AwdInventoryEntity::getTotalInboundQty, addDTO.getTotalInboundQty() != null ? addDTO.getTotalInboundQty() : 0)
+                    .set(AwdInventoryEntity::getTotalOnhandQty, addDTO.getTotalOnhandQty() != null ? addDTO.getTotalOnhandQty() : 0)
+                    .set(AwdInventoryEntity::getWarehouseId,StringUtils.isNotBlank(addDTO.getWarehouseId()) ? addDTO.getWarehouseId() : "")
+                    .set(AwdInventoryEntity::getWarehouseName,StringUtils.isNotBlank(addDTO.getWarehouseName()) ? addDTO.getWarehouseName() : "")
                     .eq(AwdInventoryEntity::getMsku, addDTO.getMsku())
                     .update();
             if(!update) {
