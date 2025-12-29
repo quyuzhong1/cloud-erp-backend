@@ -448,6 +448,11 @@ public class CfgMoldReturnAlertRuleServiceImpl extends SuperServiceImpl<CfgMoldR
     }
 
     @Override
+    public BatchResultDTO generateReturnAlertRule(CfgMoldReturnAlertRuleDTO.AddDTO addDTO) {
+        return null;
+    }
+
+    @Override
     public void exportList(CfgMoldReturnAlertRuleDTO.PagingParamDTO param, HttpServletResponse response) {
         downloadTaskFeign.saveDownloadTask("模具返还策略导出", EXPORT_PLM_CFG_MOLD_RETURN.getCode(), param);
     }
