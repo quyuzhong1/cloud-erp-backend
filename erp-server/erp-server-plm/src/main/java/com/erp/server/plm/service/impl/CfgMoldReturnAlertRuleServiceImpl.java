@@ -447,10 +447,6 @@ public class CfgMoldReturnAlertRuleServiceImpl extends SuperServiceImpl<CfgMoldR
         return BatchResultDTO.success(entity.getId(), entity.getMoldCode(), OperationTypeEnum.DISABLED);
     }
 
-    @Override
-    public BatchResultDTO generateReturnAlertRule(CfgMoldReturnAlertRuleDTO.AddDTO addDTO) {
-        return null;
-    }
 
     @Override
     public void exportList(CfgMoldReturnAlertRuleDTO.PagingParamDTO param, HttpServletResponse response) {

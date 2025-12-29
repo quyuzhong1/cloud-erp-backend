@@ -63,5 +63,4 @@ public interface CfgMoldReturnAlertRuleService extends SuperService<CfgMoldRetur
 
     BatchResultDTO updateStatus(String id, Boolean disabled);
 
-    BatchResultDTO generateReturnAlertRule(CfgMoldReturnAlertRuleDTO.AddDTO addDTO);
 }
