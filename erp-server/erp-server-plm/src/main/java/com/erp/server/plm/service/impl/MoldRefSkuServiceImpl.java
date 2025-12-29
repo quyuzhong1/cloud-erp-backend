@@ -205,6 +205,14 @@ public class MoldRefSkuServiceImpl extends SuperServiceImpl<MoldRefSkuMapper, Mo
         dto.setBusinessKey(CfgQueryOptionBussinessKeyEnum.MOLD_REF_SKU.getCode());
         dto.setVariablesMap(BeanUtil.beanToMap(entity));
         Map<String, Object> map = cfgQueryOptionFeign.getVariablesMapByBusinessKey(dto);
+
+        MoldInfoEntity moldInfoEntity = moldInfoService.getById(entity.getMoldId());
+        if(Objects.nonNull(moldInfoEntity)){
+            map.put("chargeId",moldInfoEntity.getChargeId());
+            map.put("chargeName",moldInfoEntity.getChargeName());
+            map.put("projectChargeId",moldInfoEntity.getProjectChargeId());
+            map.put("projectChargeName",moldInfoEntity.getProjectChargeName());
+        }
         return map;
     }
 
