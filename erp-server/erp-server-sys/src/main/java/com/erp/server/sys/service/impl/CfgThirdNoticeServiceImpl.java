@@ -630,4 +630,9 @@ public class CfgThirdNoticeServiceImpl extends SuperServiceImpl<CfgThirdNoticeMa
                 .list();
 
     }
+
+    @Override
+    public List<CfgThirdNoticeDTO.DropDownDTO> dropDownByMoldMonitor( String sourceType) {
+        return baseMapper.dropDownByMoldMonitor(sourceType);
+    }
 }

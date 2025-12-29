@@ -91,6 +91,11 @@ public class CfgMoldReturnAlertRuleEntity extends BaseEntity<CfgMoldReturnAlertR
     */
     @TableField("count_dim")
     private String countDim;
+    /**
+     * 通知类型
+     */
+    @TableField("notice_type")
+    private String noticeType;
 
 
     public static final String DISABLED = "disabled";

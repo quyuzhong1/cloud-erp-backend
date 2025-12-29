@@ -10,6 +10,8 @@ import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
+import lombok.NoArgsConstructor;
+import com.common.business.enums.ApproveStatusEnum;
 
 
 /**
@@ -18,11 +20,12 @@ import lombok.experimental.Accessors;
  * </p>
  *
  * @author jack
- * @since 2025-10-10
+ * @since 2025-12-26
 */
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
+@NoArgsConstructor
 @TableName("mold_info")
 public class MoldInfoEntity extends BaseEntity<MoldInfoEntity> {
 
@@ -199,6 +202,11 @@ public class MoldInfoEntity extends BaseEntity<MoldInfoEntity> {
     private String paymentCondition;
     @TableField(exist = false)
     private String paymentConditionName;
+    /**
+     * 是否已生成策略
+     */
+    @TableField("is_strategy_generated")
+    private Boolean isStrategyGenerated;
 
 
     public static final String INVALID_STATUS = "invalid_status";
@@ -266,6 +274,10 @@ public class MoldInfoEntity extends BaseEntity<MoldInfoEntity> {
     public static final String PAY_METHOD_ID = "pay_method_id";
 
     public static final String PAYMENT_CONDITION = "payment_condition";
+
+    public static final String CATEGORY_CODE = "category_code";
+
+    public static final String IS_STRATEGY_GENERATED = "is_strategy_generated";
 
     @Override
     public Serializable pkVal() {

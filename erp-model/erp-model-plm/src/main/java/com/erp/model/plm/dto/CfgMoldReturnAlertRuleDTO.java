@@ -311,6 +311,19 @@ public class CfgMoldReturnAlertRuleDTO implements Serializable {
     }
 
     /**
+     * 新增
+     */
+    @Data
+    @NoArgsConstructor
+    public static class BatchAddDTO {
+        /**
+         *
+         */
+        @NotEmpty(message = "模具档案不能为空" )
+        private List<@Valid AddDTO> list;
+    }
+
+    /**
     * 修改
     */
     @Data

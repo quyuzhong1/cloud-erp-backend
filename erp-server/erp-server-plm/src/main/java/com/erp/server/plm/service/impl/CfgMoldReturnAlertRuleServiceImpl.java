@@ -129,7 +129,6 @@ public class CfgMoldReturnAlertRuleServiceImpl extends SuperServiceImpl<CfgMoldR
         return new BaseResultDTO.AddDTO(cfgMoldReturnAlertRuleEntity.getId(), cfgMoldReturnAlertRuleEntity.getId());
     }
 
-
     /**
      * 修改
      */

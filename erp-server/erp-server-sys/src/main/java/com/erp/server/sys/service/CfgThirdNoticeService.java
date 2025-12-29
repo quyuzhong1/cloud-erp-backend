@@ -53,4 +53,6 @@ public interface CfgThirdNoticeService extends SuperService<CfgThirdNoticeEntity
     void testPush(String jsonStr);
 
     List<CfgThirdNoticeEntity> listByMethod(String method);
+
+    List<CfgThirdNoticeDTO.DropDownDTO> dropDownByMoldMonitor( String sourceType);
 }

@@ -8,12 +8,14 @@ import com.common.core.anno.LogViewService;
 import com.common.core.utils.ExcelUtil;
 import com.erp.model.plm.dto.CfgMoldReturnAlertRuleDTO;
 import com.erp.model.plm.entity.CfgMoldReturnAlertRuleEntity;
+import com.erp.model.plm.entity.MoldInfoEntity;
 import com.erp.server.plm.query.CfgMoldReturnAlertRuleQueryHandler;
 import com.erp.server.plm.query.MoldInfoQueryHandler;
 import com.erp.server.plm.service.MoldInfoService;
 import lombok.extern.slf4j.Slf4j;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.Valid;
 
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -50,6 +52,9 @@ public class CfgMoldReturnAlertRuleController extends BaseController {
     @Resource
     private CfgMoldReturnAlertRuleService cfgMoldReturnAlertRuleService;
 
+    @Resource
+    private MoldInfoService moldInfoService;
+
     /**
     * 新增
     * @author jack
@@ -61,6 +66,42 @@ public class CfgMoldReturnAlertRuleController extends BaseController {
     @LogAction(value = LogActionEnum.INSERT, desc = "模具返还策略新增")
     public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated CfgMoldReturnAlertRuleDTO.AddDTO dto) {
         return success(cfgMoldReturnAlertRuleService.add(dto));
+    }
+
+    /**
+     * 批量生成模具预警策略
+     * @author jack
+     * @date:  2025-12-29
+     * @param dto
+     * @return ApiResult<List<BatchResultDTO>>
+     */
+    @PostMapping("/batchAdd")
+    public ApiResult<List<BatchResultDTO>> batchAdd(@RequestBody @Validated CfgMoldReturnAlertRuleDTO.BatchAddDTO dto) {
+        List<CfgMoldReturnAlertRuleDTO.AddDTO> addList = dto.getList();
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(addList.size());
+
+        List<String> moldIds = addList.stream().map(CfgMoldReturnAlertRuleDTO.AddDTO::getMoldId).collect(Collectors.toList());
+        List<MoldInfoEntity> list = moldInfoService.lambdaQuery().in(MoldInfoEntity::getId, moldIds).list();
+        Map<String, MoldInfoEntity> idEntityMap = list.stream().collect(Collectors.toMap(MoldInfoEntity::getId, w -> w));
+        for (String id : moldIds) {
+            MoldInfoEntity entity = idEntityMap.get(id);
+            BatchResultDTO result;
+            try {
+                CfgMoldReturnAlertRuleDTO.AddDTO addDTO = addList.stream().filter(w -> id.equals(w.getMoldId())).findFirst().orElse(null);
+                cfgMoldReturnAlertRuleService.add(addDTO);
+                result = BatchResultDTO.success(entity.getId(), entity.getCode());
+            }catch (Exception e){
+                log.error("生成模具返还策略失败",e);
+                if (ObjectUtil.isEmpty(entity)) {
+                    result = BatchResultDTO.fail(id, id, "模具档案不存在, 生成模具返还策略失败");
+                    resultDTOS.add(result);
+                    continue;
+                }
+                result = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(result);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**
