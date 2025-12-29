@@ -13,6 +13,7 @@ import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import javax.validation.Valid;
 import javax.validation.constraints.*;
 
 /**
@@ -138,6 +139,19 @@ public class CfgMoldAlertRuleDTO implements Serializable {
         @Size(max = 19,message = "模具id最大长度不能超过19位")
         private String moldId;
 
+    }
+
+    /**
+     * 新增
+     */
+    @Data
+    @NoArgsConstructor
+    public static class BatchAddDTO {
+        /**
+         *
+         */
+        @NotEmpty(message = "模具档案不能为空" )
+        private List<@Valid AddDTO> list;
     }
 
     /**

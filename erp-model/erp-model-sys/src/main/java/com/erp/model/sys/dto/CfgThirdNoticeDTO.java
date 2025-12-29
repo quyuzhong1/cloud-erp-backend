@@ -396,6 +396,36 @@ public class CfgThirdNoticeDTO implements Serializable {
 
     }
 
+    /**
+     * 分页列表查询参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class DropDownDTO{
+        /**
+         * 主键id
+         */
+        private String id;
+        /**
+         * 通知状态
+         */
+        private String noticeStatus;
+        /**
+         * 通知类型
+         */
+        private String noticeType;
+        /**
+         * 来源类型
+         */
+        private String sourceType;
+        /**
+         * 单据类型
+         */
+        private String businessType;
+
+
+    }
+
 
 
 }

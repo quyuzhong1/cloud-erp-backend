@@ -3,6 +3,7 @@ package com.erp.server.plm.controller.api;
 
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.core.utils.ExcelUtil;
+import com.erp.model.plm.entity.CfgMoldReturnAlertRuleEntity;
 import com.erp.server.plm.query.MoldInfoQueryHandler;
 import lombok.extern.slf4j.Slf4j;
 

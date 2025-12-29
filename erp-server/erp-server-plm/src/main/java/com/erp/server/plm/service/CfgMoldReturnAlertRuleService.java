@@ -62,4 +62,6 @@ public interface CfgMoldReturnAlertRuleService extends SuperService<CfgMoldRetur
     void handleImportSuccessList(List<CfgMoldReturnImportExcelDTO> successList, List<CfgMoldReturnImportExcelDTO> errorList2, String importType);
 
     BatchResultDTO updateStatus(String id, Boolean disabled);
+
+    BatchResultDTO generateReturnAlertRule(CfgMoldReturnAlertRuleDTO.AddDTO addDTO);
 }
