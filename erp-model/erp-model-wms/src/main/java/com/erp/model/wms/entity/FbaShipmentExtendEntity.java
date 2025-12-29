@@ -88,6 +88,11 @@ public class FbaShipmentExtendEntity extends BaseEntity<FbaShipmentExtendEntity>
     @TableField("delivery_to_warehouse_id")
     private String deliveryToWarehouseId;
     /**
+     * 发货目的仓名称
+     */
+    @TableField("delivery_to_warehouse_name")
+    private String deliveryToWarehouseName;
+    /**
     * 平台货件发货时间（拉取数据的日期）
     */
     @TableField("shipment_delivery_time")

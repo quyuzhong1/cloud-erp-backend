@@ -132,6 +132,11 @@ public class FbaShipmentDetailEntity extends BaseEntity<FbaShipmentDetailEntity>
      */
     @TableField("package_weight_unit")
     private String packageWeightUnit;
+    /**
+     * 平台产品名称
+     */
+    @TableField("platform_product_name")
+    private String platformProductName;
 
     public static final String MAIN_ID = "main_id";
 

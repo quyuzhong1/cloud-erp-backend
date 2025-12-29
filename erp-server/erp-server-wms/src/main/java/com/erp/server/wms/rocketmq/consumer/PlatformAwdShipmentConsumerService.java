@@ -21,6 +21,7 @@ import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.wms.entity.FbaShipmentEntity;
 import com.erp.model.wms.entity.FbaShipmentExtendEntity;
+import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.rpc.dmp.feign.DmpMongoDbFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
@@ -30,6 +31,7 @@ import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.convert.FbaShipmentConsumerConverter;
 import com.erp.server.wms.service.CfgAmzFulfillmentCenterService;
 import com.erp.server.wms.service.FbaShipmentService;
+import com.erp.server.wms.service.WarehouseService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -67,6 +69,8 @@ public class PlatformAwdShipmentConsumerService<T extends DmpSyncTaskIdDTO> exte
     private CfgAmzFulfillmentCenterService cfgAmzFulfillmentCenterService;
     @Resource
     private DmpMongoDbFeign dmpMongoDbFeign;
+    @Resource
+    private WarehouseService warehouseService;
 
 
     @Override
@@ -120,6 +124,10 @@ public class PlatformAwdShipmentConsumerService<T extends DmpSyncTaskIdDTO> exte
         ShopInfoEntity currentShopEntity = shopInfoFeign.getShopInfoById(entity.getShopId());
         entity.setShopName(Objects.nonNull(currentShopEntity) ? currentShopEntity.getName() : "");
         extendEntity.setDeliveryToWarehouseId(Objects.nonNull(currentShopEntity) ? currentShopEntity.getAwdWarehouseId():"");
+        if (CharSequenceUtil.isNotBlank(extendEntity.getDeliveryToWarehouseId())){
+            WarehouseEntity warehouseEntity = warehouseService.getById(extendEntity.getDeliveryToWarehouseId());
+            extendEntity.setDeliveryToWarehouseName(Objects.nonNull(warehouseEntity) ? warehouseEntity.getName() : "");
+        }
         // 查询仓库中心对应国家并设置对应店铺
         checkAndSetCountryWithShop(entity, dto, currentShopEntity);
 

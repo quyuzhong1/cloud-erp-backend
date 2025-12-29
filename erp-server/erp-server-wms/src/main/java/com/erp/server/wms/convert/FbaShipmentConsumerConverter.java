@@ -59,10 +59,20 @@ public interface FbaShipmentConsumerConverter {
             @Mapping(target = "fnSku", source = "receiveDTO.fnSku", defaultValue = ""),
             @Mapping(target = "skuNo", source = "mappingDTO.productSkuNo", defaultValue = ""),
             @Mapping(target = "skuId", source = "mappingDTO.productSkuId", defaultValue = ""),
+            @Mapping(target = "platformProductName", source = "mappingDTO.platformSkuName", defaultValue = ""),
             @Mapping(target = "declareQty", source = "receiveDTO.declareQty"),
-            @Mapping(target = "diffQty",constant = "0"),
+            @Mapping(target = "diffQty", constant = "0"),
             @Mapping(target = "receiveQty", ignore = true),
             @Mapping(target = "receiveDate", expression = "java(receiveDTO.getReceiveQty() > 0 ? receiveDTO.getReceiveDate() : null)"),
+            @Mapping(target = "isCombination", ignore = true),
+            @Mapping(target = "packageHeight", ignore = true),
+            @Mapping(target = "packageLength", ignore = true),
+            @Mapping(target = "packageUnit", ignore = true),
+            @Mapping(target = "packageWeight", ignore = true),
+            @Mapping(target = "packageWeightUnit", ignore = true),
+            @Mapping(target = "packageWidth", ignore = true),
+            @Mapping(target = "perBoxQty", ignore = true),
+            @Mapping(target = "shipmentCode", ignore = true)
     })
     FbaShipmentDetailEntity fbaShipmentToDetailEntity(
             PlatformFbaShipmentReceiveDTO receiveDTO,
@@ -90,7 +100,8 @@ public interface FbaShipmentConsumerConverter {
             @Mapping(target = "receiveQty", ignore = true),
             @Mapping(target = "receiveDate", ignore = true),
             @Mapping(target = "isCombination", ignore = true),
-            @Mapping(target = "shipmentCode", ignore = true)
+            @Mapping(target = "shipmentCode", ignore = true),
+            @Mapping(target = "platformProductName", source = "mappingDTO.platformSkuName", defaultValue = "")
     })
     FbaShipmentDetailEntity awdShipmentToDetailEntity(PlatformAwdShipmentReceiveDTO receiveDTO, FbaShipmentEntity shipmentEntity, ListingInfoWithSkuMappingDTO mappingDTO);
 
