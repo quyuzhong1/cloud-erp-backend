@@ -467,4 +467,16 @@ public class MoldInfoController extends BaseController {
         return success(moldInfoService.searchMold(searchDTO));
     }
 
+    /**
+     * 通过模具code获取供应商信息
+     * @author wuhaotian
+     * @date: 2025-12-29
+     * @param code 模具编码
+     * @return ApiResult<MoldInfoDTO.SupplierInfoByCodeDTO>
+     */
+    @GetMapping("/getSupplierInfoByCode")
+    public ApiResult<MoldInfoDTO.SupplierInfoByCodeDTO> getSupplierInfoByCode(@RequestParam("code") String code) {
+        return success(moldInfoService.getSupplierInfoByCode(code));
+    }
+
 }

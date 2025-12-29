@@ -792,6 +792,27 @@ public class MoldInfoDTO implements Serializable {
         private String approveStatus;
     }
 
+    /**
+     * 通过模具code获取供应商信息响应DTO
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class SupplierInfoByCodeDTO {
+        /**
+         * 供应商id
+         */
+        private String supplierId;
 
+        /**
+         * 供应商编码
+         */
+        private String supplierCode;
+
+        /**
+         * 供应商名称
+         */
+        private String supplierName;
+    }
 
 }

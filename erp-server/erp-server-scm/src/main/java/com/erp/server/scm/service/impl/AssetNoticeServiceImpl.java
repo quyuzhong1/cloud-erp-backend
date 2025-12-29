@@ -13,6 +13,7 @@ import com.common.business.enums.*;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 import cn.hutool.core.util.StrUtil;
+import com.erp.model.plm.dto.MoldInfoDTO;
 import com.erp.model.plm.entity.MoldInfoEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.ProductPurchaseEntity;
@@ -1234,6 +1235,22 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
         List<SysDepartmentDTO> deptList = sysUserFeign.getDeptList();
         List<FindUserDTO> userList = sysUserFeign.getUserList();
 
+        // 收集所有的assetCode并去重
+        Set<String> assetCodeSet = successList.stream()
+                .map(AssetNoticeImportExcelDTO::getAssertCode)
+                .filter(StringUtils::isNotBlank)
+                .collect(Collectors.toSet());
+
+        // 批量获取供应商信息
+        Map<String, com.erp.model.plm.dto.MoldInfoDTO.SupplierInfoByCodeDTO> supplierInfoMap = new HashMap<>();
+        if (CollectionUtils.isNotEmpty(assetCodeSet)) {
+            try {
+                supplierInfoMap = plmTaskFeign.batchGetSupplierInfoByCodes(new ArrayList<>(assetCodeSet));
+            } catch (Exception e) {
+                log.warn("批量获取模具供应商信息失败", e);
+            }
+        }
+
         // 按序号分组
         Map<String, List<AssetNoticeImportExcelDTO>> groupedBySerialNumber = successList.stream()
                 .collect(Collectors.groupingBy(AssetNoticeImportExcelDTO::getSerialNumber));
@@ -1246,7 +1263,7 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
                 // 数据校验和转换
                 List<String> errorMsgList = new ArrayList<>();
                 AssetNoticeDetailDTO.MoldImportDTO moldImportDTO = validateAndConvertData(
-                        importMainDTO, value, skuVOList, companyList, deptList, userList, errorMsgList);
+                        importMainDTO, value, skuVOList, companyList, deptList, userList, errorMsgList, supplierInfoMap);
                 
                 // 如果存在错误，添加到错误列表
                 if (errorMsgList.size() > 0) {
@@ -1325,7 +1342,8 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
             List<BaseIdDTO> companyList,
             List<SysDepartmentDTO> deptList,
             List<FindUserDTO> userList,
-            List<String> errorMsgList) {
+            List<String> errorMsgList,
+            Map<String, MoldInfoDTO.SupplierInfoByCodeDTO> supplierInfoMap) {
         
         AssetNoticeDetailDTO.MoldImportDTO moldImportDTO = new AssetNoticeDetailDTO.MoldImportDTO();
         
@@ -1439,19 +1457,14 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
                     detail.setSupplierName(supplierEntity.getName());
                 }
             } else {
-                // 如果Excel中没有供应商名称，从模具档案获取默认供应商
+                // 如果Excel中没有供应商名称，从批量获取的供应商信息中获取
                 if (StringUtils.isNotBlank(detail.getAssetCode())) {
-                    try {
-                        MoldInfoEntity moldInfoEntity = plmTaskFeign.getMoldInfoByCode(detail.getAssetCode());
-                        if (Objects.nonNull(moldInfoEntity) && StringUtils.isNotBlank(moldInfoEntity.getSupplierId())) {
-                            detail.setSupplierId(moldInfoEntity.getSupplierId());
-                            detail.setSupplierName(moldInfoEntity.getSupplierName());
-                        } else {
-                            errorMsgList.add("模具档案中未维护供应商信息，请手动录入供应商名称");
-                        }
-                    } catch (Exception e) {
-                        log.warn("查询模具档案失败，assetCode={}", detail.getAssetCode(), e);
-                        errorMsgList.add("查询模具档案失败，无法获取默认供应商");
+                    MoldInfoDTO.SupplierInfoByCodeDTO supplierInfo = supplierInfoMap.get(detail.getAssetCode());
+                    if (supplierInfo != null && StringUtils.isNotBlank(supplierInfo.getSupplierId())) {
+                        detail.setSupplierId(supplierInfo.getSupplierId());
+                        detail.setSupplierName(supplierInfo.getSupplierName());
+                    } else {
+                        errorMsgList.add("模具档案中未维护供应商信息，请手动录入供应商名称");
                     }
                 }
             }

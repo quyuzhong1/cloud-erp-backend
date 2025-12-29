@@ -715,7 +715,13 @@ public interface PlmTaskFeign {
     @PostMapping("feign/moldInfo/searchMoldRefSkuByAssetId")
     List<AssetNoticeDetailDTO.AssetDetailRefSkuDTO> searchMoldRefSkuByAssetId(@RequestBody String assetId);
 
-
+    /**
+     * 批量通过模具code获取供应商信息
+     * @param moldCodes 模具编码列表
+     * @return Map<String, MoldInfoDTO.SupplierInfoByCodeDTO> key为模具编码，value为供应商信息
+     */
+    @PostMapping("feign/moldInfo/batchGetSupplierInfoByCodes")
+    Map<String, com.erp.model.plm.dto.MoldInfoDTO.SupplierInfoByCodeDTO> batchGetSupplierInfoByCodes(@RequestBody List<String> moldCodes);
 
     /**
      * 模具档案审核
