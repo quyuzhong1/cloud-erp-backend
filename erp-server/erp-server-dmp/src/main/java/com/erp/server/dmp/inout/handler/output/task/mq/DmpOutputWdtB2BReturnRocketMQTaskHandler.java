@@ -134,12 +134,15 @@ public class DmpOutputWdtB2BReturnRocketMQTaskHandler extends DmpOutputRocketMQT
 		}
 		PlatformB2BReturnOrderDTO platformB2BReturnOrderDTO = new PlatformB2BReturnOrderDTO();
 		platformB2BReturnOrderDTO.setThirdCode(dmpSoReturnInfoEntity.getThirdCode());
-		platformB2BReturnOrderDTO.setPlatformOrderCode(dmpSoReturnInfoEntity.getPlatformOrderCode());
+		platformB2BReturnOrderDTO.setPlatformOrderCode(dmpSoReturnInfoEntity.getPlatformCode());
 		platformB2BReturnOrderDTO.setShopId(shopInfo.getId());
 		platformB2BReturnOrderDTO.setPlatformWarehouseId(itemList.get(0).getWarehouseId());
 		platformB2BReturnOrderDTO.setReturnLogisticCode(dmpSoReturnInfoEntity.getTrackingNumber());
 		platformB2BReturnOrderDTO.setPlatformOrderType(dmpSoReturnInfoEntity.getPlatformOrderType());
 		platformB2BReturnOrderDTO.setBillDate(dmpSoReturnInfoEntity.getReturnTime().toLocalDate());
+		if("10".equals(dmpSoReturnInfoEntity.getStatus())){
+			platformB2BReturnOrderDTO.setInvalidStatus(true);
+		}
 		List<PlatformB2BReturnOrderDTO.Detail> detailList = new ArrayList<>();
 		for (DmpSoReturnDetailEntity dmpSoReturnDetailEntity : itemList) {
 			PlatformB2BReturnOrderDTO.Detail detail = new PlatformB2BReturnOrderDTO.Detail();

@@ -3778,6 +3778,14 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 if(exist.getInvalidStatus()){
                     return;
                 }
+                //如果是审核中，撤销审核
+                if(BillApproveStatusEnum.APPROVE_ING.equals(exist.getApproveStatus())){
+                    this.cancelProcess(Arrays.asList(exist.getId()));
+                }
+                //如果是已审核，反审核
+                if(BillApproveStatusEnum.APPROVE.equals(exist.getApproveStatus())){
+                    this.disApprove(exist,new ArrayList<>());
+                }
                 this.invalid(Collections.singletonList(exist.getId()),"平台单据作废");
                 return;
             }

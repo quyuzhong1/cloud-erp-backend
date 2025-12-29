@@ -103,9 +103,21 @@ public class NewPlatformB2bReturnOrderConsumerService extends AbstractNewPlatfor
 			return;
 		}
         SoReturnEntity exist = soReturnService.getByPlatformOrderCode(dto.getPlatformOrderCode());
-
 		if(Objects.nonNull(exist)){
-			log.warn("平台B2B退货单消费:订单已存在:{}", dto.getPlatformOrderCode());
+			if(!exist.getInvalidStatus() && dto.getInvalidStatus()){
+				exist.setInvalidStatus(true);
+				exist.setInvalidRemark("平台退货单取消");
+				exist.setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
+				exist.setApproveUserName("");
+				exist.setApproveUserId("");
+				exist.setApproveTime(null);
+				soReturnService.updateById(exist);
+			}else{
+				log.warn("平台B2B退货单消费:订单已存在:{}", dto.getPlatformOrderCode());
+			}
+			return;
+		}
+		if(dto.getInvalidStatus()){
 			return;
 		}
 		if(CollectionUtils.isEmpty(dto.getDetailList())){

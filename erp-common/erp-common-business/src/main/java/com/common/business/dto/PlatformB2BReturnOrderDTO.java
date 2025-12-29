@@ -44,6 +44,8 @@ public class PlatformB2BReturnOrderDTO extends UniqueDto {
     private LocalDate billDate;
 
     private String platformOrderType;
+
+    private Boolean invalidStatus = false;
     /**
      * 明细
      */
