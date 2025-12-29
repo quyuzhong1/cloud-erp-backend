@@ -38,16 +38,6 @@ public class FbaShipmentExtendEntity extends BaseEntity<FbaShipmentExtendEntity>
     @TableField("plan_code")
     private String planCode;
     /**
-    * 发货单号
-    */
-    @TableField("delivery_code")
-    private String deliveryCode;
-    /**
-    * 发货单ID
-    */
-    @TableField("delivery_id")
-    private String deliveryId;
-    /**
     * 地区偏好
     */
     @TableField("preferred_region")

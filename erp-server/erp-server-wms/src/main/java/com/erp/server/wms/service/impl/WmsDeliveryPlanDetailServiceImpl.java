@@ -71,7 +71,7 @@ public class WmsDeliveryPlanDetailServiceImpl extends SuperServiceImpl<WmsDelive
 
         //校验是否重复
         String type = addDTO.getType();
-        if (DeliveryPlanTypeEnum.FBA.getCode().equals(type)) {
+        if (DeliveryPlanTypeEnum.FBA.getCode().equals(type) || DeliveryPlanTypeEnum.AWD.getCode().equals(type)) {
             // 分组并检查 FBA 类型的唯一性
             Map<String, List<WmsDeliveryPlanDetailEntity>> fbaGroup = list.stream()
                     .collect(Collectors.groupingBy(detail -> detail.getPlatformSku() + detail.getPlatformFnSku() + detail.getSkuNo()));

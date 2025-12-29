@@ -260,6 +260,11 @@ public class ShopInfoEntity extends BaseEntity<ShopInfoEntity> {
      */
     @TableField("awd_warehouse_id")
     private String awdWarehouseId;
+    /**
+     * AWD仓库名称
+     */
+    @TableField("awd_warehouse_name")
+    private String awdWarehouseName;
 
     public static final String PLATFORM_DICT = "platform_dict";
 

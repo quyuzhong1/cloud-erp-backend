@@ -1,14 +1,16 @@
 package com.erp.server.wms.controller.api;
 
 
+import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.AdvanceQueryContainer;
-import com.common.business.threadlocal.UserContext;
 import com.common.business.validator.ValidList;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.entity.FbaShipmentEntity;
+import com.erp.model.wms.entity.FbaShipmentExtendEntity;
 import com.erp.model.wms.enums.ShipmentSourceTypeEnum;
 import com.erp.server.wms.query.FbaShipmentSyncQueryHandler;
+import com.erp.server.wms.service.FbaShipmentExtendService;
 import com.erp.server.wms.service.FbaShipmentPackingService;
 import com.erp.server.wms.service.FbaShipmentService;
 import lombok.extern.slf4j.Slf4j;
@@ -30,6 +32,7 @@ import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * AWD货件表
@@ -48,6 +51,8 @@ public class AwdShipmentController extends BaseController {
 
     @Resource
     private FbaShipmentPackingService fbaShipmentPackingService;
+    @Resource
+    private FbaShipmentExtendService fbaShipmentExtendService;
 
     /**
      * 列表查询
@@ -357,7 +362,7 @@ public class AwdShipmentController extends BaseController {
             try {
                 deleteResult = fbaShipmentService.regenerateTransferOut(id);
             }catch (Exception e){
-                log.error("FBA货件单重新生成调拨单失败",e);
+                log.error("AWD货件单重新生成调拨单失败",e);
                 FbaShipmentEntity entity = fbaShipmentService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
                     deleteResult = BatchResultDTO.fail(id, id, "AWD货件单不存在, 重新生成调拨单失败");
@@ -414,22 +419,41 @@ public class AwdShipmentController extends BaseController {
      * @date: 2025/05/09
      */
     @PostMapping("/viewList")
-    public ApiResult<List<FbaShipmentDTO.ListDTO>> view(@RequestBody @Validated FbaShipmentDTO.ViewListReqDTO dto) {
+    public ApiResult<List<FbaShipmentDTO.AwdListDTO>> view(@RequestBody @Validated FbaShipmentDTO.ViewListReqDTO dto) {
         dto.setSourceType(ShipmentSourceTypeEnum.AWD.getCode());
-        List<FbaShipmentDTO.ListDTO> resultList = fbaShipmentService.viewList(dto);
+        List<FbaShipmentDTO.AwdListDTO> resultList = fbaShipmentService.viewAwdList(dto);
         return success(resultList);
     }
     /**
-     * 调整签收
+     * 手动签收
      *
      * @return ApiResult
-     * @author Jim
-     * @date: 2023-11-24
+     * @author zdy
+     * @date: 2025-12-29
      */
-    @PostMapping("/changeReceived")
-    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "调整签收:{detailId}")
-    public ApiResult changeReceived(@RequestBody @Validated List<FbaShipmentDTO.ReceivedDTO> dtoList) {
-        List<BatchResultDTO> resultDTOS = fbaShipmentService.changeReceived(dtoList);
+    @PostMapping("/manualReceived")
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "手动签收:{detailId}")
+    public ApiResult<List<BatchResultDTO>> manualReceived(@RequestBody @Validated List<FbaShipmentDTO.ReceivedDTO> dtoList) {
+        List<String> ids = dtoList.stream().map(FbaShipmentDTO.ReceivedDTO::getId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        List<FbaShipmentEntity> entityList = fbaShipmentService.listByIds(ids);
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(entityList.size());
+        for (String id : ids) {
+            FbaShipmentEntity entity = entityList.stream().filter(e -> e.getId().equals(id)).findFirst().orElse(null);
+            if (ObjectUtil.isEmpty(entity)) {
+                resultDTOS.add(BatchResultDTO.fail(id, id, "货件单不存在, 手动签收失败"));
+                continue;
+            }
+            List<FbaShipmentDTO.ReceivedDTO> dtoList1 = dtoList.stream().filter(e -> e.getId().equals(id)).collect(Collectors.toList());
+            BatchResultDTO resultDTO = null;
+            try {
+                resultDTO = fbaShipmentService.manualAwdReceived(dtoList1,entity);
+                resultDTOS.add(resultDTO);
+            }catch (Exception e){
+                log.error("AWD货件单手动签收失败",e);
+                resultDTOS.add(BatchResultDTO.fail(id, id, e.getMessage()));
+            }
+
+        }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 

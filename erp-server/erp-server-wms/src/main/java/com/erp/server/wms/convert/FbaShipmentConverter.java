@@ -200,10 +200,10 @@ public interface FbaShipmentConverter {
     @Mapping(target = "uniqueIndex", ignore = true)
     @Mapping(target = "handleStatus", constant = "already")
     @Mapping(target = "sourcePlatform", constant = "erp")
-    @Mapping(target = "sourceType", constant = "change")
+    @Mapping(target = "sourceType", source = "sourceType")
     @Mapping(target = "receiveUTCDate", ignore = true)
     @Mapping(target = "isUserSystem" ,ignore = true)
-    FbaShipmentReceiveEntity receivedDTOToEntity(FbaShipmentDTO.ReceivedDTO dto, FbaShipmentEntity mainEntity, FbaShipmentDetailEntity detailEntity);
+    FbaShipmentReceiveEntity receivedDTOToEntity(FbaShipmentDTO.ReceivedDTO dto, FbaShipmentEntity mainEntity, FbaShipmentDetailEntity detailEntity, String sourceType);
 
     @Mapping(target = "detailList", ignore = true)
     @Mapping(target = "id", source = "entity.id")

@@ -67,7 +67,7 @@ public class RequisitionApplicationDetailServiceImpl extends SuperServiceImpl<Re
 
         //校验是否重复
         String type = addDTO.getType();
-        if (RequisitionApplicationTypeEnum.FBA.getCode().equals(type)) {
+        if (RequisitionApplicationTypeEnum.FBA.getCode().equals(type) || RequisitionApplicationTypeEnum.AWD.getCode().equals(type)) {
             //明细中的fnsku不能为空
             long count = list.stream().filter(obj -> CharSequenceUtil.isBlank(obj.getPlatformFnSku())).count();
             if (count > 0) {

@@ -750,6 +750,14 @@ public class FbaShipmentDTO implements Serializable {
          */
         private String referenceId;
         /**
+         * 目的仓id
+         */
+        private String deliveryToWarehouseId;
+        /**
+         * 目的仓名称
+         */
+        private String deliveryToWarehouseName;
+        /**
          * 创建人用户名
          */
         private String createUserName;
@@ -1083,6 +1091,11 @@ public class FbaShipmentDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class ReceivedDTO {
+        /**
+         * 货件id
+         */
+        @NotBlank(message = "货件id不能为空")
+        private String id;
         /**
          * 详情detailId
          */
