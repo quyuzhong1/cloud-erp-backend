@@ -182,7 +182,7 @@ public class FeiShuMsgJob {
             warnMsgInfo.setTableName("so_b2c_error");
             warnMsgInfo.setTableId("");
             warnMsgInfo.setHappenTime(LocalDateTime.now());
-            warnMsgInfo.setWarnMsgTypeEnum(WarnMsgTypeEnum.SYS_EXCEPTION);
+            warnMsgInfo.setWarnMsgTypeEnum(WarnMsgTypeEnum.IMPLEMENT_GROUP_NOTICE);
             List<String> keyInfoList = new ArrayList<>(list.size());
             list.forEach(typeCountDTO -> {
                 String format = StrUtil.format("异常类型【{}】存在数量:{}", CharSequenceUtil.isBlank(typeCountDTO.getTypeName()) ? typeCountDTO.getType() : typeCountDTO.getTypeName(),typeCountDTO.getTypeCount());
