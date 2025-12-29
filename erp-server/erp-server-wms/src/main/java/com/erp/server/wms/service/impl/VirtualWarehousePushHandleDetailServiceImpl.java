@@ -231,9 +231,6 @@ public class VirtualWarehousePushHandleDetailServiceImpl extends SuperServiceImp
             List<DmpPushTaskEntity> dmpPushTaskEntityList = syncWdtVirtualWarehousePushOrderService.saveTaskList(handleDetailList,
                     allocationEntity.getCode(), SyncOperateEnum.OPERATE_APPROVE.getCode(), SourceTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION.getCode());
             if (CollectionUtils.isNotEmpty(dmpPushTaskEntityList)) {
-//                TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
-//                    @Override
-//                    public void afterCommit() {
                 //获取合单表和分货单明细关联关系，修改为同步中状态
                 List<String> handleDetailIds = dmpPushTaskEntityList.stream().map(DmpPushTaskEntity::getSourceId).collect(Collectors.toList());
                 List<String> allocationDetailList = virtualWarehousePushHandleRelationService.list(new LambdaQueryWrapper<VirtualWarehousePushHandleRelationEntity>()
@@ -252,8 +249,7 @@ public class VirtualWarehousePushHandleDetailServiceImpl extends SuperServiceImp
                     }
                 });
             }
-//                });
-//            }
+
             //设置没有关联虚拟仓的分货单子单无需同步
             if (CollectionUtils.isNotEmpty(noSyncDetailList)) {
                 //设置分货单子单无需同步

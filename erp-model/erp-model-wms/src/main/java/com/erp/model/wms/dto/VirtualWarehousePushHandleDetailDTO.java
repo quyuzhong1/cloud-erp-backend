@@ -3,10 +3,10 @@ package com.erp.model.wms.dto;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.io.Serializable;
-import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
+import java.io.Serializable;
 
 /**
  * <p>
@@ -217,5 +217,27 @@ public class VirtualWarehousePushHandleDetailDTO implements Serializable {
 
     }
 
-
+    /**
+     * 校验数据DTO
+     */
+    @Data
+    @NoArgsConstructor
+    public static class CheckDataDTO {
+        /**
+         * 仓库ID
+         */
+        private String warehouseId;
+        /**
+         * 虚拟仓ID
+         */
+        private String virtualWarehouseId;
+        /**
+         * SKUId
+         */
+        private String skuId;
+        /**
+         * 明细id
+         */
+        private String detailId;
+    }
 }

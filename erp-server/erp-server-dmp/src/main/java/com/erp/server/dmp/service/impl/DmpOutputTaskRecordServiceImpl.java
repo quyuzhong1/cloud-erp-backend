@@ -1,6 +1,7 @@
 package com.erp.server.dmp.service.impl;
 
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.ReflectUtil;
@@ -808,5 +809,18 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
     @Override
     public List<DmpOutputTaskRecordEntity> getLastOutputTaskRecordList(List<String> sourceCodeList, String outputClass) {
         return baseMapper.getLastOutputTaskRecordList(sourceCodeList, outputClass);
+    }
+
+    @Override
+    public List<DmpPushTaskDTO.SyncInfoDTO> listErrorData(DmpSyncTaskDTO.ListDTO listDTO) {
+        List<DmpPushTaskDTO.SyncInfoDTO> list = baseMapper.listErrorData(listDTO);
+        if (CollUtil.isNotEmpty(list)) {
+            return list;
+        }
+        List<DmpPushTaskEntity> taskList = dmpPushTaskService.listByParam(listDTO);
+        if (CollUtil.isEmpty(taskList)) {
+            return Collections.emptyList();
+        }
+        return BeanUtil.copyToList(taskList,DmpPushTaskDTO.SyncInfoDTO.class);
     }
 }

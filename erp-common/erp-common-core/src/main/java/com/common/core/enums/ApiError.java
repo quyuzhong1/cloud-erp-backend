@@ -1422,6 +1422,8 @@ public enum ApiError implements Serializable {
     ERROR_IS_ALLOW_OUTSTOCK_PUSH(92289,"  - 只有允许出库的通知单允许下推销售出库单"),
     ERROR_VIRTUAL_WAREHOUSE_FROM_WAREHOUSE_NOT_BLANK(92290,"启动自动借调时，借调仓不能为空"),
     ERROR_VIRTUAL_WAREHOUSE_NOT_CONTAINS_FROM_WAREHOUSE(92291,"虚拟仓关联实体仓不能包含借调仓"),
+    ERROR_VIRTUAL_WAREHOUSE_ALLOCATION_NOT_REPEAT(92292,"存在未同步成功的虚拟仓分货单调出任务，调出仓库ID：{}，调出虚拟仓ID：{}，SKU：{}，请确认后再操作"),
+    ERROR_VMALLOCATION_DETAIL_NOT_EXIST(92293 , "分货单明细未找到"),
 
 
     /**
