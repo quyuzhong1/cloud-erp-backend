@@ -13,8 +13,8 @@ import org.apache.commons.lang3.StringUtils;
  * @since 2025-10-22 16:35:38
  */
 public enum MoldMonitorTypeEnum implements EnumMessage {
-    CFG_MOLD_RETURN_ALERT_RULE("cfgMoldReturnAlertrRule", "模具返还策略"),
-    CFG_MOLD_ALERT_RULE("cfgMoldAlertrRule", "模具预警策略"),
+    CFG_MOLD_RETURN_ALERT_RULE("cfgMoldReturnAlertRule", "模具返还策略"),
+    CFG_MOLD_ALERT_RULE("cfgMoldAlertRule", "模具预警策略"),
     ;
     /**
      * 类型
