@@ -124,6 +124,18 @@ public class CfgMoldAlertRuleDTO implements Serializable {
         private String countDimName;
 
 
+        /**
+         * 通知类型
+         */
+        private String noticeType;
+        private List<String> noticeTypeList;
+        /**
+         * 通知类型名称
+         */
+        private String noticeTypeName;
+        private List<String> noticeTypeNameList;
+
+
     }
 
     /**
@@ -225,7 +237,11 @@ public class CfgMoldAlertRuleDTO implements Serializable {
         @NotBlank(message = "预警标准不能为空")
         private String countDim;
 
-
+        /**
+         * 通知类型    /sys/cfgThirdNotice/dropDownByMoldMonitor
+         */
+        @NotEmpty(message = "通知类型不能为空")
+        private List<String> noticeTypeList;
     }
 
 
@@ -349,6 +365,16 @@ public class CfgMoldAlertRuleDTO implements Serializable {
          * 预警标准
          */
         private String countDimName;
+
+
+        /**
+         * 通知类型
+         */
+        private String noticeType;
+        /**
+         * 通知类型名称
+         */
+        private String noticeTypeName;
     }
 
     /**

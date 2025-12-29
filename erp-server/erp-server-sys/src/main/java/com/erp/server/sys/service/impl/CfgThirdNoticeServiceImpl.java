@@ -21,6 +21,7 @@ import com.common.message.service.mq.MQProducerService;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.*;
 import com.erp.model.sys.entity.*;
+import com.erp.model.sys.enums.CfgThirdNoticeApplyScopeEnum;
 import com.erp.model.sys.enums.CfgThirdNoticeMethodEnum;
 import com.erp.model.sys.enums.RuleTypeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
@@ -451,6 +452,8 @@ public class CfgThirdNoticeServiceImpl extends SuperServiceImpl<CfgThirdNoticeMa
         for (CfgThirdNoticeDTO.ListDTO record : records) {
             record.setBusinessTypeName(businessTypeMap.getOrDefault(record.getBusinessType(),""));
 
+            record.setApplyScopeName(CfgThirdNoticeApplyScopeEnum.getName(record.getApplyScope()));
+
             String method = record.getMethod();
             record.setMethodName(CfgThirdNoticeMethodEnum.getName(method));
 
@@ -517,6 +520,8 @@ public class CfgThirdNoticeServiceImpl extends SuperServiceImpl<CfgThirdNoticeMa
     private CfgThirdNoticeDTO.ViewDTO fillOne(CfgThirdNoticeEntity entity) {
         CfgThirdNoticeDTO.ViewDTO data = new CfgThirdNoticeDTO.ViewDTO();
         BeanMapper.copy(entity,data);
+
+        data.setApplyScopeName(CfgThirdNoticeApplyScopeEnum.getName(entity.getApplyScope()));
 
         //单据类型
         List<DictBasicDTO.ViewDTO> thirdNoticeBusinessType = dictBasicService.listByType("thirdNoticeBusinessType");

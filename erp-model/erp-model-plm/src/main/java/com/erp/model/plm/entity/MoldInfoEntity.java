@@ -203,10 +203,16 @@ public class MoldInfoEntity extends BaseEntity<MoldInfoEntity> {
     @TableField(exist = false)
     private String paymentConditionName;
     /**
-     * 是否已生成策略
+     * 是否已生成返还策略
      */
-    @TableField("is_strategy_generated")
-    private Boolean isStrategyGenerated;
+    @TableField("is_return_strategy_generated")
+    private Boolean isReturnStrategyGenerated;
+
+    /**
+     * 是否已生成预警策略
+     */
+    @TableField("is_alert_strategy_generated")
+    private Boolean isAlertStrategyGenerated;
 
 
     public static final String INVALID_STATUS = "invalid_status";

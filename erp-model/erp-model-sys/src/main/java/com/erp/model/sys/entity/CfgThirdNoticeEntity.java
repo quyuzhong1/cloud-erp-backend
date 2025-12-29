@@ -87,7 +87,7 @@ public class CfgThirdNoticeEntity extends BaseEntity<CfgThirdNoticeEntity> {
     @TableField("post")
     private String post;
     /**
-    * 适用范围：bill_type  =单据类型,bill_header=单据整单,bill_line=单据明细  枚举：CfgThirdNoticeApplyScopeEnum
+    * 适用范围：billType  =单据类型,billHeader=单据整单,billLine=单据明细  枚举：CfgThirdNoticeApplyScopeEnum
     */
     @TableField("apply_scope")
     private String applyScope;

@@ -69,7 +69,7 @@ public class CfgMoldReturnAlertRuleController extends BaseController {
     }
 
     /**
-     * 批量生成模具预警策略
+     * 批量生成模具返还策略
      * @author jack
      * @date:  2025-12-29
      * @param dto

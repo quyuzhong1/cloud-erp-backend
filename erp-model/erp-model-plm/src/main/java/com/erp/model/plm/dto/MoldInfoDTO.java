@@ -3,6 +3,8 @@ package com.erp.model.plm.dto;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.base.SortDTO;
 import java.util.List;
 import lombok.Data;
@@ -274,6 +276,16 @@ public class MoldInfoDTO implements Serializable {
         * 创建人名称
         */
         private String createUserName;
+
+        /**
+         * 是否已生成返还策略
+         */
+        private Boolean isReturnStrategyGenerated;
+
+        /**
+         * 是否已生成预警策略
+         */
+        private Boolean isAlertStrategyGenerated;
     }
 
     /**

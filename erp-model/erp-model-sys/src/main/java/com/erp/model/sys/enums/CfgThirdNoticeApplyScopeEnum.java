@@ -13,9 +13,9 @@ import org.apache.commons.lang3.StringUtils;
  * @since 2025-12-26 10:35:11
  */
 public enum CfgThirdNoticeApplyScopeEnum implements EnumMessage {
-	BILL_TYPE("bill_type", "单据类型"),
-	BILL_HEADER("bill_header", "单据整单"),
-	BILL_LINE("bill_line", "单据明细"),
+	BILL_TYPE("billType", "单据类型"),
+	BILL_HEADER("billHeader", "单据整单"),
+	BILL_LINE("billLine", "单据明细"),
     ;
     /**
      * 类型

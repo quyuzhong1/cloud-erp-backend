@@ -197,6 +197,15 @@ public class CfgMoldReturnAlertRuleDTO implements Serializable {
          */
         private String detailRemark;
 
+        /**
+         * 通知类型
+         */
+        private String noticeType;
+        /**
+         * 通知类型名称
+         */
+        private String noticeTypeName;
+
 
 
     }
@@ -287,6 +296,17 @@ public class CfgMoldReturnAlertRuleDTO implements Serializable {
          */
         private List<CfgMoldReturnAlertDetailDTO.ViewDTO> detailList;
 
+        /**
+         * 通知类型
+         */
+        private String noticeType;
+        private List<String> noticeTypeList;
+        /**
+         * 通知类型名称
+         */
+        private String noticeTypeName;
+        private List<String> noticeTypeNameList;
+
 
     }
 
@@ -360,7 +380,6 @@ public class CfgMoldReturnAlertRuleDTO implements Serializable {
         @Size(max = 200,message = "备注最大长度不能超过200位")
         private String remark;
 
-
         /**
         * 开始日期
         */
@@ -378,6 +397,11 @@ public class CfgMoldReturnAlertRuleDTO implements Serializable {
         */
         @NotBlank(message = "返还标准不能为空")
         private String countDim;
+        /**
+         * 通知类型    /sys/cfgThirdNotice/dropDownByMoldMonitor
+         */
+        @NotEmpty(message = "通知类型不能为空")
+        private List<String> noticeTypeList;
 
 
     }
