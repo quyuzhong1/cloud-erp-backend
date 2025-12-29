@@ -29,6 +29,7 @@ import com.erp.model.dmp.kingdee.item.KingdeeReturnOrderItemEntity;
 import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
+import com.erp.model.oms.entity.SoReturnEntity;
 import com.erp.model.oms.enums.BillTypeEnum;
 import com.erp.model.oms.enums.ShopOrderRouteEnum;
 import com.erp.model.plm.entity.ProductDetailEntity;
@@ -398,12 +399,20 @@ public class SyncSoReturnServiceImpl implements SyncSoReturnService {
             return;
         }
         List<SoInfoEntity> soInfoEntityList = FeignQuery.create(SoInfoEntity.class).eq(SoInfoEntity::getPlatformOrderCode,inStockEntity.getPlatformOrderCode()).list();
-        if (CollectionUtils.isEmpty(soInfoEntityList)) {
-            return;
+        if (CollectionUtils.isNotEmpty(soInfoEntityList)) {
+            SoInfoEntity soInfoEntity = soInfoEntityList.get(0);
+            inStockEntity.setSoId(soInfoEntity.getId());
+            inStockEntity.setSoCode(soInfoEntity.getCode());
         }
-        SoInfoEntity soInfoEntity = soInfoEntityList.get(0);
-        inStockEntity.setSoId(soInfoEntity.getId());
-        inStockEntity.setSoCode(soInfoEntity.getCode());
+
+        List<SoReturnEntity> soReturnEntityList = FeignQuery.create(SoReturnEntity.class).eq(SoReturnEntity::getPlatformOrderCode,inStockEntity.getPlatformOrderCode()).list();
+        if (CollectionUtils.isNotEmpty(soReturnEntityList)) {
+            SoReturnEntity soReturn = soReturnEntityList.get(0);
+            inStockEntity.setSoReturnId(soReturn.getId());
+            inStockEntity.setSoReturnCode(soReturn.getCode());
+            inStockEntity.setSourceCode(soReturn.getCode());
+            inStockEntity.setSourceId(soReturn.getId());
+        }
     }
 
     private void sendPushTask(List<SoReturnInstockEntity> list, String operate) {
