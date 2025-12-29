@@ -322,7 +322,7 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
         List<VirtualWarehouseAllocationDetailEntity> detailEntityList = virtualWarehouseAllocationDetailService.list(new LambdaQueryWrapper<VirtualWarehouseAllocationDetailEntity>()
                 .eq(VirtualWarehouseAllocationDetailEntity::getMainId, allocationEntity.getId()));
         if (CollUtil.isEmpty(detailEntityList)) {
-            throw new ServiceException(ApiError.ERROR_VMALLOCATION_NOTFOUND);
+            throw new ServiceException(ApiError.VM_ALLOCATION_NOT_FOUND);
         }
         //实体仓信息
         List<WarehouseEntity> list = warehouseService.list();

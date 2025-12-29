@@ -416,8 +416,8 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             String inWarehouseLocation = StrUtils.null2EmptyWithTrim(detailEntity.getInWarehouseLocation());
             if (detailEntity.getInWarehouseId().equals(detailEntity.getOutWarehouseId())
                     && outWarehouseLocation.equals(inWarehouseLocation)) {
-                throw new ServiceException(new ApiResult(ApiError.ERROR_98088.code,
-                        String.format(ApiError.ERROR_98088.msg, entity.getCode())));
+                throw new ServiceException(new ApiResult(ApiError.ERROR_98088.getCode(),
+                        String.format(ApiError.ERROR_98088.getMsg(), entity.getCode())));
             }
         }
     }

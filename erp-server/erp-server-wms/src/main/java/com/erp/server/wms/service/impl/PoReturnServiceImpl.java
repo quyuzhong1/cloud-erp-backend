@@ -3018,7 +3018,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         //查询登录信息
         LoginUser loginUser = UserContext.getDefaultLoginUser();
         if(Objects.isNull(loginUser)){
-            throw new ServiceException(ApiError.ERROR_403);
+            throw new ServiceException(ApiError.HTTP_FORBIDDEN);
         }
 
         //查询供应商信息
@@ -3075,7 +3075,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         try {
             new ExcelPrintUtils().patchExport(allRecords, response, sb.toString(), excelPath);
         } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_1015);
+            throw new ServiceException(ApiError.FILE_EXPORT_FAILED);
         }
     }
 
@@ -3086,7 +3086,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         //查询登录信息
         LoginUser loginUser = UserContext.getDefaultLoginUser();
         if(Objects.isNull(loginUser)){
-            throw new ServiceException(ApiError.ERROR_403);
+            throw new ServiceException(ApiError.HTTP_FORBIDDEN);
         }
 
         PurchaseReturnOrderDTO.SupplierPagingParamDTO params = dto.getParams();

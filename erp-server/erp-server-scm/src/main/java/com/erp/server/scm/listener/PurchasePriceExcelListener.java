@@ -223,7 +223,7 @@ public class PurchasePriceExcelListener extends AnalysisEventListener<ImportPurc
             detailDTO.setSkuNo(skuNo);
             detailDTO.setProductName(skuEntity.getSkuName());
             if(!Objects.equals("资产", skuEntity.getPropertyName())){
-                errorMsgList.add(StrUtil.format(ApiError.ERROR_PRODUCT_PROPERTY_ASSET_NOT_EXIST.msg,skuEntity.getSkuNo()));
+                errorMsgList.add(StrUtil.format(ApiError.ERROR_PRODUCT_PROPERTY_ASSET_NOT_EXIST.getMsg(),skuEntity.getSkuNo()));
             }
         }
 

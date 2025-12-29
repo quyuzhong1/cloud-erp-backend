@@ -316,7 +316,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         String supplierId = dto.getSupplierId();
         SupplierEntity supplier = supplierService.getById(supplierId);
         if (Objects.isNull(supplier)) {
-            throw new ServiceException(ApiError.ERROR_SUPPLIER_ABSENCE);
+            throw new ServiceException(ApiError.SUPPLIER_NOT_FOUND);
         }
 
         Boolean isAsset = true;
@@ -1305,7 +1305,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
             // 如果存在税率不为0的明细，抛出异常
             if (CollectionUtils.isNotEmpty(invalidSkuNos)) {
                 String skuList = String.join("、", invalidSkuNos);
-                throw new ServiceException(ApiError.DEFAULT.code,
+                throw new ServiceException(ApiError.HTTP_UNKNOWN.getCode(),
                     String.format("当选择【不含税】时，所有明细的税率必须为0，以下SKU的税率不为0：%s", skuList));
             }
         }

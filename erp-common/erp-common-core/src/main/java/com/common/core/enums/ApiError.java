@@ -229,6 +229,17 @@ public enum ApiError implements Serializable {
     ERROR_PO_RECONCILIATION_DETAIL_QTY_OVERFLOW(94108,"单号【{}】SKU【{}】本期对账数量{}超出可对账数量{}"),
     ERROR_PO_RECONCILIATION_DETAIL_HAS_IN_RECONCILIATION(94109,"单号【{}】SKU【{}】已加入对账单，不允许重复添加"),
     ERROR_PO_RECONCILIATION_REMARK_NOT_BLANK(96009,"对账单备注不能为空"),
+    ERROR_PRODUCT_PROPERTY_ASSET_NOT_EXIST(98161,"SKU【{}】产品属性非资产，与供应商付款条件不一致"),
+    ERROR_VIRTUAL_WAREHOUSE_FROM_WAREHOUSE_NOT_BLANK(92290,"启动自动借调时，借调仓不能为空"),
+    ERROR_VIRTUAL_WAREHOUSE_NOT_CONTAINS_FROM_WAREHOUSE(92291,"虚拟仓关联实体仓不能包含借调仓"),
+    ERROR_99250(99250,"审核数量修改明细列表不能为空"),
+    ERROR_99251(99251,"样品领用单不存在"),
+    ERROR_99252(99252,"只有审核中的样品领用单才能修改审核数量"),
+    ERROR_99253(99253,"已作废的样品领用单不支持修改审核数量"),
+    ERROR_99254(99254,"部分明细不存在或不属于该样品领用单"),
+    ERROR_99255(99255,"SKU【{}】的审核数量{}不能大于领用数量{}"),
+    ERROR_99256(99256,"修改审核数量失败"),
+    ERROR_98088(98088,"【%s】调出仓库+调出仓位不能等于调入仓库+调入仓位"),
 
     /**
      * AUTH 授权与登录 相关 2000 - 2200

@@ -236,7 +236,7 @@ public class PoReconciliationRefDetailServiceImpl extends SuperServiceImpl<PoRec
         }).collect(Collectors.toList());
         boolean save = super.saveBatch(refDetailList);
         if (!save) {
-            throw new ServiceException(ApiError.ERROR_1002);
+            throw new ServiceException(ApiError.BILL_SAVE_FAIL, "采购对账单明细");
         }
         //更新对账状态
         poReconciliationDetailScmService.autoUpdateStatus(detailIdList);
@@ -406,7 +406,7 @@ public class PoReconciliationRefDetailServiceImpl extends SuperServiceImpl<PoRec
         //对账单
         PoReconciliationEntity poReconciliationEntity = poReconciliationScmService.getById(poReconciliationId);
         if (ObjectUtils.isEmpty(poReconciliationEntity)) {
-            throw new ServiceException(ApiError.ERROR_PO_RECONCILIATION_NOT_EXIST);
+            throw new ServiceException(ApiError.FIN_RECONCILIATION_NOT_FOUND);
         }
         //对账单明细基础信息
         List<PoReconciliationDetailEntity> poReconciliationDetailList = poReconciliationDetailScmService.listByIds(poReconciliationDetailIdList);
@@ -432,7 +432,7 @@ public class PoReconciliationRefDetailServiceImpl extends SuperServiceImpl<PoRec
             //供应商、结算组织验证
             if (!CharSequenceUtil.equals(poReconciliationEntity.getSupplierId(),detailEntity.getSupplierId())
                     || !CharSequenceUtil.equals(poReconciliationEntity.getSettleOrgId(),detailEntity.getSettleOrgId())) {
-                throw new ServiceException(ApiError.ERROR_PO_RECONCILIATION_ADD_DETAIL,poReconciliationEntity.getCode(),poReconciliationEntity.getSupplierName(),poReconciliationEntity.getSettleOrgName());
+                throw new ServiceException(ApiError.PO_RECONCILIATION_DETAIL_SUPPLIER_ORG_MISMATCH, poReconciliationEntity.getCode(),poReconciliationEntity.getSupplierName(),poReconciliationEntity.getSettleOrgName());
             }
             //已对账数量
             Integer hasReconciledQty = poReconciliationRefDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getPoReconciliationDetailId(), entity.getPoReconciliationDetailId()) && !CharSequenceUtil.equals(obj.getId(), entity.getId()))

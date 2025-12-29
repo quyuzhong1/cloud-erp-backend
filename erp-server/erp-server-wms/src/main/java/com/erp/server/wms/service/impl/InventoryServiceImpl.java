@@ -226,7 +226,7 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
     public Integer getRecipientAvailableQty(String warehouseId, String skuId) {
         WarehouseEntity warehouseEntity = warehouseService.getById(warehouseId);
         if (Objects.isNull(warehouseEntity)) {
-            throw new ServiceException(ApiError.NOT_EXIST, "仓库信息");
+            throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC, "仓库信息");
         }
         String orgId = warehouseEntity.getOrgId();
 
