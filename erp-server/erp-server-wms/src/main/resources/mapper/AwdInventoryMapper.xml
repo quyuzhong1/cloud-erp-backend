@@ -52,7 +52,8 @@
 			ai.replenishment_qty as replenishmentQty,
 			ai.reserved_distributable_qty as reservedDistributableQty,
 			ai.total_onhand_qty as totalOnhandQty,
-			ai.total_inbound_qty as totalInboundQty
+			ai.total_inbound_qty as totalInboundQty,
+			ai.update_time as updateTime
         FROM
             awd_inventory ai
         WHERE 1 = 1

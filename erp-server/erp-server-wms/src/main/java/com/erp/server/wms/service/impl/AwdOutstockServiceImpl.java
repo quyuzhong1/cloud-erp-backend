@@ -88,8 +88,7 @@ public class AwdOutstockServiceImpl extends SuperServiceImpl<AwdOutstockMapper, 
             throw new ServiceException("明细保存失败");
         }
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "" , awdOutstockEntity.getCode());
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.AWD_OUTSTOCK.getCode(), awdOutstockEntity.getId(), "新增操作");
+        operateLogService.addModuleOperateLog("生成AWD出库货件", ModuleTypeEnum.AWD_OUTSTOCK.getCode(), awdOutstockEntity.getId(), "新增操作");
 
         return new BaseResultDTO.AddDTO(awdOutstockEntity.getId(), code);
     }
@@ -134,9 +133,10 @@ public class AwdOutstockServiceImpl extends SuperServiceImpl<AwdOutstockMapper, 
         }
 
         //记录日志
-        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【出库单】单据",
-                UserContext.getDefaultLoginUser().getUserName(), newEntity.getCode());
-        operateLogService.addModuleOperateLogByObj(old, newEntity, null, newEntity.getId(), msg);
+        String msg = StrUtil.format("更新发货时间从【】为【】",
+                Objects.nonNull(old.getBillDate()) ? old.getBillDate() : ""
+                , newEntity.getBillDate());
+        operateLogService.addModuleOperateLogByObj(old, newEntity, ModuleTypeEnum.AWD_OUTSTOCK.getCode(), newEntity.getId(), msg);
         return Boolean.TRUE;
     }
 
@@ -161,6 +161,7 @@ public class AwdOutstockServiceImpl extends SuperServiceImpl<AwdOutstockMapper, 
             AwdOutstockDTO.GenerateDeliveryDTO generateDeliveryDTO = new AwdOutstockDTO.GenerateDeliveryDTO();
             BeanUtils.copyProperties(awdOutstockEntity,generateDeliveryDTO);
             firstMileDeliveryService.generateFirstMileDeliveryByAwdOutStock(generateDeliveryDTO);
+            operateLogService.addModuleOperateLog("操作生成头程发货单", ModuleTypeEnum.AWD_OUTSTOCK.getCode(), awdOutstockEntity.getId(), "生成头程发货单");
         }
         return Boolean.TRUE;
     }

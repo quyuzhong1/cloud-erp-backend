@@ -103,7 +103,7 @@ public interface FirstMileDeliveryService extends SuperService<FirstMileDelivery
      * @param id
      * @return
      */
-    BatchResultDTO submit(String id);
+    BatchResultDTO submit(String id,Boolean isStartProcess);
 
     /**
     * 审核

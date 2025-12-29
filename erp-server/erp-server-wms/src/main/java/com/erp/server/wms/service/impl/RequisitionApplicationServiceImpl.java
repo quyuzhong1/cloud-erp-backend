@@ -1988,7 +1988,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
             //回写要货申请的头程发货单生成状态
             writeBackRequisitionDeliveryPushDownStatus(addDTO.getSourceId());
             if (Boolean.TRUE.equals(isSubmit)) {
-                firstMileDeliveryService.submit(add.getId());
+                firstMileDeliveryService.submit(add.getId(),Boolean.TRUE);
             }
             if(CollectionUtils.isNotEmpty(updateDetailList)){
                 requisitionApplicationDetailService.updateBatchById(updateDetailList);

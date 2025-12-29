@@ -1131,7 +1131,7 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
 
             BaseResultDTO.AddDTO add = firstMileDeliveryService.add(addDTO);
             if (isSubmit) {
-                firstMileDeliveryService.submit(add.getId());
+                firstMileDeliveryService.submit(add.getId(),Boolean.TRUE);
             }
         }
         return Boolean.TRUE;
