@@ -64,6 +64,23 @@
         <if test="params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
         </if>
+
+        <!--是否显示0库存-->
+        <if test="params.isShowZeroInventory">
+            AND NOT EXISTS (
+                SELECT
+                id
+                FROM
+                awd_inventory a
+                WHERE
+                a.id = ai.id
+                AND ai.available_distributable_qty = 0
+                AND ai.replenishment_qty = 0
+                AND ai.reserved_distributable_qty = 0
+                AND ai.total_onhand_qty = 0
+                AND ai.total_inbound_qty = 0
+            )
+        </if>
         ORDER BY
         <if test="params.sortList != null and params.sortList.size > 0">
             <foreach collection="params.sortList" item="item" separator="," close=",">

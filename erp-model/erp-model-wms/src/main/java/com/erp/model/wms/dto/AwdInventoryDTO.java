@@ -67,6 +67,10 @@ public class AwdInventoryDTO implements Serializable {
         */
         private Map<String,String> sqlMap;
 
+         /**
+          * 不显示0库存
+          */
+         private Boolean isShowZeroInventory;
      }
 
 
