@@ -245,6 +245,7 @@
         fs.shipment_create_time AS shipmentCreateTime,
         fse.shipment_delivery_time AS shipmentDeliveryTime,
         fs.reference_id AS referenceId,
+        fs.create_user_name AS createUserName,
         fsd.receive_date AS shipmentReceiveTime,
         fsd.asin,
         fsd.msku,

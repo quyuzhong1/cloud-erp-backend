@@ -2467,4 +2467,9 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         viewDTO.setDetailList(detailViewList);
         return viewDTO;
     }
+
+    @Override
+    public void awdExport(FbaShipmentDTO.PagingParamDTO dto) {
+        downloadTaskFeign.saveDownloadTask("AWD货件导出", EXPORT_WMS_FBA_SHIPMENT.getCode(), dto);
+    }
 }

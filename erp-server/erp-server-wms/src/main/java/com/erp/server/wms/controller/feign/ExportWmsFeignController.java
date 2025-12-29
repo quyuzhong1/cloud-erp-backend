@@ -398,7 +398,19 @@ public class ExportWmsFeignController {
     public PagingVO<FbaShipmentDTO.ExportDTO> exportFbaShipment(@RequestBody PagingDTO<FbaShipmentDTO.PagingParamDTO> dto) {
         return fbaShipmentService.exportFbaShipment(dto);
     }
-
+    /**
+     * 导出awd发货单
+     * @param dto
+     * @return
+     */
+    @PostMapping("/exportAwdShipment")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            shopTableField = "fs.shop_id",
+            menuCode = "wms:awdShipment:paging"
+    )
+    PagingVO<FbaShipmentDTO.AwdListDTO> exportAwdShipment(@RequestBody PagingDTO<FbaShipmentDTO.PagingParamDTO> dto){
+        return fbaShipmentService.awdPaging(dto);
+    }
     @PostMapping("/fbaShipmentPacking")
     @WebAdvanceQuery
     public PagingVO<FbaShipmentPackingDTO.ViewDTO> exportFbaShipmentPacking(@RequestBody PagingDTO<FbaShipmentDTO.PagingParamDTO> dto) {

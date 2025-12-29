@@ -330,4 +330,6 @@ public interface FbaShipmentService extends SuperService<FbaShipmentEntity> {
      * @return
      */
     FbaShipmentDTO.ViewAwdDTO awdView(String id);
+
+    void awdExport(FbaShipmentDTO.PagingParamDTO dto);
 }

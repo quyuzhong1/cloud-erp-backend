@@ -417,6 +417,13 @@ public interface ExportWmsFeign {
     PagingVO<AwdOutstockDTO.ListDTO> exportAwdOutStock(@RequestBody @Validated PagingDTO<AwdOutstockDTO.PagingParamDTO> dto);
 
     /**
+     * 导出awd发货单
+     * @param dto
+     * @return
+     */
+    @PostMapping("/feign/export/exportAwdShipment")
+    PagingVO<FbaShipmentDTO.AwdListDTO> exportAwdShipment(@RequestBody PagingDTO<FbaShipmentDTO.PagingParamDTO> dto);
+    /**
      * 导出awd库存
      * @param dto
      * @return
