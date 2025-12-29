@@ -515,7 +515,7 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
         List<String> mainIdList = list.stream().map(PoReconciliationDTO.ListDTO::getId).collect(Collectors.toList());
         List<PoReconciliationRefDetailEntity>  poReconciliationRefDetailList = poReconciliationRefDetailService.listPoReconciliationIdList(mainIdList);
         if (CollUtil.isEmpty(poReconciliationRefDetailList)) {
-            throw new ServiceException(ApiError.ERROR_PO_RECONCILIATION_REF_DETAIL_NOT_EXIST);
+            throw new ServiceException(ApiError.PO_RECONCILIATION_DETAIL_REF_NOT_FOUND);
         }
 
         for (PoReconciliationDTO.ListDTO listDTO : list) {
@@ -628,7 +628,7 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
         }
         //备注不能为空
         if (CharSequenceUtil.isBlank(entity.getRemark())) {
-            throw new ServiceException(ApiError.ERROR_PO_RECONCILIATION_REMARK_NOT_BLANK);
+            throw new ServiceException(ApiError.PO_RECONCILIATION_REMARK_REQUIRED);
         }
 
         log.info("开始采购方确认，id = {}",id);

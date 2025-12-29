@@ -9,8 +9,6 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
-import com.common.business.enums.ApproveStatusEnum;
-import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.FileTaskStatusEnum;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
@@ -55,7 +53,6 @@ import java.util.stream.Collectors;
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
 
-import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import static com.common.business.enums.FileTaskEventEnum.*;
 
@@ -487,7 +484,7 @@ public class DeliveryBoxRuleServiceImpl extends SuperServiceImpl<DeliveryBoxRule
                     boolean addSuccess = deliveryBoxRuleDetailService.saveBatch(addList);
 
                     if (!addSuccess) {
-                        throw new ServiceException(ApiError.ERROR_BATCH_UPDATE_BOX_RULE);
+                        throw new ServiceException(ApiError.WH_BOX_RULE_BATCH_UPDATE_FAILED);
                     }
                 }
 
@@ -502,7 +499,7 @@ public class DeliveryBoxRuleServiceImpl extends SuperServiceImpl<DeliveryBoxRule
                                 .update();
 
                         if (!updateSuccess) {
-                            throw new ServiceException(ApiError.ERROR_BATCH_ADD_BOX_RULE);
+                            throw new ServiceException(ApiError.WH_BOX_RULE_BATCH_ADD_FAILED);
                         }
                     }
                 }
@@ -525,7 +522,7 @@ public class DeliveryBoxRuleServiceImpl extends SuperServiceImpl<DeliveryBoxRule
     private void handleAddData(DeliveryBoxRuleEntity deliveryBoxRuleEntity) {
         Integer count = this.lambdaQuery().eq(DeliveryBoxRuleEntity::getSkuId, deliveryBoxRuleEntity.getSkuId()).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_BOX_RULE_REPEAT);
+            throw new ServiceException(ApiError.WH_BOX_RULE_SKU_EXISTS);
         }
     }
 

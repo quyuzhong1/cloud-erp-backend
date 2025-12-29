@@ -186,60 +186,9 @@ public enum ApiError implements Serializable {
     COMMON_TEMPLATE_DEFAULT_CONTRACT_EXISTS(1102, "模板类型【{0}】已存在默认合同"),
     COMMON_CONTRACT_TEMPLATE_REQUIRED(1103,"合同模板不能为空"),
     COMMON_CONTRACT_TEMPLATE_NOT_AVAILABLE(1104,"合同模板不存在或被禁用"),
-    COMMON_CONTRACT_TEMPLATE_BINDING_DUPLICATE(1105,"【{}】已绑定【{}】，不可重复绑定"),
-    COMMON_CONTRACT_TEMPLATE_BOUND_BY_OTHER_SUPPLIER(1106,"【{}】已被其他供应商绑定，请先解除关联再绑定所有供应商"),
+    COMMON_CONTRACT_TEMPLATE_BINDING_DUPLICATE(1105,"【{0}】已绑定【{1}】，不可重复绑定"),
+    COMMON_CONTRACT_TEMPLATE_BOUND_BY_OTHER_SUPPLIER(1106,"【{0}】已被其他供应商绑定，请先解除关联再绑定所有供应商"),
     COMMON_CONTRACT_NOT_BINDING(98127,"无关联合同，请在合同管理页面关联后打印"),
-    WH_INVENTORY_NOT_EXIST(92250, "仓库:【{}】,SKU:【{}】,库存状态:【{}】,库存不存在"),
-    SO_LOGISTICS_WAYBILL_NOT_OBTAINED(92118,"【{}】面单未获取，无法打印，请获取后操作！"),
-    SO_THIRD_DELIVERY_INTERCEPT_ONLY_WAIT_SHIPPED(92248,"只有待发货允许发货拦截"),
-    SO_THIRD_DELIVERY_MANUAL_ONLY_B2B_DISABLED(92248,"只有未开启B2B发货的允许手动发货"),
-    SO_THIRD_DELIVERY_ONLY_WAIT_SHIPPED(92248,"只有待发货状态的允许发货"),
-    SO_THIRD_DELIVERY_GENERATE_OUTSTOCK_ONLY_SHIPPED(92248,"只有已发货状态的允许生成销售出库单"),
-    SO_THIRD_DELIVERY_DELETE_ONLY_FAILED_OR_CANCELED(92248,"只有创建失败、取消发货允许删除"),
-    BILL_DATA_CREATE_FAILED(1019, "数据新增失败"),
-    ERROR_BOX_RULE_REPEAT(92195,"箱规sku已存在"),
-    ERROR_BATCH_UPDATE_BOX_RULE(92196,"批量更新箱规失败"),
-    ERROR_DUPLICATE_SORT(92197,"箱规优先级【{}】重复"),
-    ERROR_BATCH_ADD_BOX_RULE(92198,"批量新增箱规失败"),
-    ERROR_SO_CHANGE_QTY_MUST_INTEGER_MULTIPLE_BOX_RULE(92199,"变更数量必须是发货箱规的整数倍"),
-    ERROR_DUPLICATE_SKU(92200,"箱规SKU【{}】重复"),
-    ERROR_DUPLICATE_QTY(92201,"箱规单箱数量【{}】重复"),
-    ERROR_DELIVERY_SKU_FORBID_UPDATE(92202,"已下推发货通知单的明细，不能修改发货sku"),
-    ERROR_BOX_QTY_LESS_NOTICE_QTY(92203,"发货箱数不能少于已下推的发货通知单数量"),
-    ERROR_BOX_QTY_PROHIBIT_ONE(92204,"单箱数量不能为1"),
-    ERROR_PROHIBIT_PER_BOX_ONE_GEN_SO_OUT_STOCK(92205,"单箱数量大于1的销售订单不能下推销售出库单"),
-    ERROR_KOL_B2B_APPLICATION_NOT_EXIST(92195,"B2B寄样申请单不存在"),
-    ERROR_KOL_B2B_APPLICATION_DETAIL_NOT_EXIST(92196,"B2B寄样申请明细单不存在"),
-    ERROR_KOL_B2B_APPLICATION_NOT_APPROVE(92197,"B2B寄样申请单【{}】未审核完成不支持下推"),
-    ERROR_PUSH_DETAIL_ID_NOT_EXIST(92198,"明细id【{}】未找到B2B寄样申请单明细数据"),
-    ERROR_PUSH_DETAIL_ID_WAREHOUSE_DIFF(92199,"B2B寄样申请单【{}】明细下推发货仓库不一致"),
-    ERROR_PUSH_DETAIL_ID_ORG_DIFF(92200,"B2B寄样申请单【{}】明细下推销售组织不一致"),
-    ERROR_92201(92201,"请选择B2C寄样申请审核通过的数据"),
-    ERROR_KOL_B2C_HAS_DOWN_BILL(92202,"B2C寄样申请已生成销售订单，无法反审核"),
-    ERROR_KOL_PARTNER_MULTIPLE_DEFAULT_ADDRESSES(92203,"企业达人地址不允许多个默认"),
-    ERROR_PUSH_SO_DETAIL_ID_EXIST(92204,"B2B寄样申请单【{}】SKU【{}】已下推销售订单，不允许重复下推"),
-    ERROR_PUSH_KOL_B2B_APPLICATION_SO_DETAIL_DELETE(92205,"B2B寄样申请单下推的销售订单明细不允许删除"),
-    ERROR_100000(100000,"资产验收单验收数量超过模具采购单采购数量"),
-    ERROR_100001(100001,"资产卡片【{}】不存在"),
-    ERROR_100002(100002,"资产编码【{}】处置数量不能大于账存数量"),
-    ERROR_PO_RECONCILIATION_DETAIL_NOT_EXIST(96004,"待对账明细不存在"),
-    ERROR_PO_RECONCILIATION_REF_DETAIL_NOT_EXIST(96004,"对账单明细不存在"),
-    ERROR_PO_RECONCILIATION_DETAIL_UPDATE_STATUS(94106,"仅待对账或无需对账数据允许状态更新"),
-    ERROR_PO_RECONCILIATION_DETAIL_ADD_RECONCILED(94107,"单号【{}】无需对账不支持自动更新对账状态"),
-    ERROR_PO_RECONCILIATION_DETAIL_QTY_OVERFLOW(94108,"单号【{}】SKU【{}】本期对账数量{}超出可对账数量{}"),
-    ERROR_PO_RECONCILIATION_DETAIL_HAS_IN_RECONCILIATION(94109,"单号【{}】SKU【{}】已加入对账单，不允许重复添加"),
-    ERROR_PO_RECONCILIATION_REMARK_NOT_BLANK(96009,"对账单备注不能为空"),
-    ERROR_PRODUCT_PROPERTY_ASSET_NOT_EXIST(98161,"SKU【{}】产品属性非资产，与供应商付款条件不一致"),
-    ERROR_VIRTUAL_WAREHOUSE_FROM_WAREHOUSE_NOT_BLANK(92290,"启动自动借调时，借调仓不能为空"),
-    ERROR_VIRTUAL_WAREHOUSE_NOT_CONTAINS_FROM_WAREHOUSE(92291,"虚拟仓关联实体仓不能包含借调仓"),
-    ERROR_99250(99250,"审核数量修改明细列表不能为空"),
-    ERROR_99251(99251,"样品领用单不存在"),
-    ERROR_99252(99252,"只有审核中的样品领用单才能修改审核数量"),
-    ERROR_99253(99253,"已作废的样品领用单不支持修改审核数量"),
-    ERROR_99254(99254,"部分明细不存在或不属于该样品领用单"),
-    ERROR_99255(99255,"SKU【{}】的审核数量{}不能大于领用数量{}"),
-    ERROR_99256(99256,"修改审核数量失败"),
-    ERROR_98088(98088,"【%s】调出仓库+调出仓位不能等于调入仓库+调入仓位"),
 
     /**
      * AUTH 授权与登录 相关 2000 - 2200
@@ -321,7 +270,7 @@ public enum ApiError implements Serializable {
      */
     BILL_SAVE_FAILED(3000, "数据保存失败"),
     BILL_UPDATE_FAILED(3001, "数据修改失败"),
-    BILL_DATA_DUPLICATE(3002, "数据【{}】重复，请修改后再提交"),
+    BILL_DATA_DUPLICATE(3002, "数据【{0}】重复，请修改后再提交"),
     BILL_UPDATE_STATUS_NOT_ALLOWED(3003, "只有待提交和审核不通过数据支持修改"),
     BILL_SOURCE_NOT_FOUND(3004, "未找到来源单据"),
     BILL_SOURCE_DETAIL_NOT_FOUND(3005, "未找到来源单据明细"),
@@ -387,6 +336,9 @@ public enum ApiError implements Serializable {
     BILL_MANUAL_SUB_TYPE_REQUIRED(3064,"【{0}】手工单的单据子类型不能为空"),
     BILL_HAS_DOWNSTREAM_VOID_FORBIDDEN(3065,"当前单据存在下游单据，不允许作废"),
     BILL_DETAIL_DATA_NOT_FOUND(3066,"明细数据不存在"),
+    BILL_DATA_CREATE_FAILED(1019, "数据新增失败"),
+    BILL_AUDIT_QTY_DETAIL_REQUIRED(99250,"审核数量修改明细列表不能为空"),
+
 
     /**
      * DMP 服务通用配置错误 3500 - 4000
@@ -469,7 +421,7 @@ public enum ApiError implements Serializable {
     WF_APPROVAL_DELETE_FORBIDDEN(4057, "审核中和审核通过状态不可删除"),
     WF_APPROVE_ALLOWED_STATUS_ONLY(4058,"只有审核中数据支持审核"),
     WF_REVOKE_PROCESS_ALLOWED_STATUS_ONLY(4059,"只有审核中数据支持撤销流程"),
-    WF_FS_PROCESS_USER_NOT_FOUND(4060,"未找到飞书用户对应的系统用户,飞书userId: {}"),
+    WF_FS_PROCESS_USER_NOT_FOUND(4060,"未找到飞书用户对应的系统用户,飞书userId: {0}"),
     WF_FS_DEFINITION_SUBSCRIBE_FAIL(4061,"飞书定义订阅失败，请检查"),
     WF_FS_DEFINITION_UNSUBSCRIBE_FAIL(4062,"取消飞书定义订阅失败，请检查"),
     /**
@@ -683,6 +635,8 @@ public enum ApiError implements Serializable {
     PRODUCT_DEV_STATUS_REQUIRED(5103, "产品开发状态必填，请填写产品开发状态"),
     PRODUCT_APP_CATEGORY_CODE_EXISTS(5104, "应用分类代号已存在"),
     PRODUCT_APP_CATEGORY_NAME_EXISTS(5105, "应用分类名称已存在"),
+    PRODUCT_PROPERTY_ASSET_NOT_EXIST(98161,"SKU【{0}】产品属性非资产，与供应商付款条件不一致"),
+
     /**
      * BOM 错误信息 6000 - 6499
      */
@@ -1261,7 +1215,23 @@ public enum ApiError implements Serializable {
     SO_ALREADY_REF_DOWNSTREAM_BILL_FORBIDDEN(10713,"销售订单已存在关联单据【{0}】，不支持该操作"),
     SO_RETURN_DETAIL_SKU_NOT_FOUND(10714,"SKU在销售退货单中未找到"),
     SO_B2C_ADD_GIFT_STATUS_FORBIDDEN(10715,"非待提交或审核不通过状态的订单不允许添加赠品"),
-    SO_WDT_SALES_RAW_TRADE_PUSHSELF(10716,"ERP原始订单推送旺店通结果：新增订单的数量:【{}】，更新订单的数量:【{}】，错误信息:【{}】"),
+    SO_WDT_SALES_RAW_TRADE_PUSHSELF(10716,"ERP原始订单推送旺店通结果：新增订单的数量:【{0}】，更新订单的数量:【{1}】，错误信息:【{2}】"),
+    SO_LOGISTICS_WAYBILL_NOT_OBTAINED(92118,"【{0}】面单未获取，无法打印，请获取后操作！"),
+    SO_THIRD_DELIVERY_INTERCEPT_ONLY_WAIT_SHIPPED(92248,"只有待发货允许发货拦截"),
+    SO_THIRD_DELIVERY_MANUAL_ONLY_B2B_DISABLED(92248,"只有未开启B2B发货的允许手动发货"),
+    SO_THIRD_DELIVERY_ONLY_WAIT_SHIPPED(92248,"只有待发货状态的允许发货"),
+    SO_THIRD_DELIVERY_GENERATE_OUTSTOCK_ONLY_SHIPPED(92248,"只有已发货状态的允许生成销售出库单"),
+    SO_THIRD_DELIVERY_DELETE_ONLY_FAILED_OR_CANCELED(92248,"只有创建失败、取消发货允许删除"),
+    PO_DELIVERY_SKU_UPDATE_FORBIDDEN(92202,"已下推发货通知单的明细，不能修改发货sku"),
+    PO_BOX_QTY_LESS_THAN_NOTICE_QTY(92203,"发货箱数不能少于已下推的发货通知单数量"),
+    PO_BOX_PER_QTY_GT_ONE_SO_OUTBOUND_FORBIDDEN(92205,"单箱数量>1的销售订单不能下推销售出库单"),
+    PO_RECONCILIATION_DETAIL_REF_NOT_FOUND(96004,"对账单明细不存在"),
+    PO_RECONCILIATION_DETAIL_STATUS_UPDATE_FORBIDDEN(94106,"仅待对账或无需对账数据允许状态更新"),
+    PO_RECONCILIATION_DETAIL_AUTO_UPDATE_FORBIDDEN(94107,"单号【{0}】无需对账不支持自动更新对账状态"),
+    PO_RECONCILIATION_DETAIL_QTY_EXCEEDS_AVAILABLE(94108,"单号【{0}】SKU【{1}】本期对账数量{2}超出可对账数量{3}"),
+    PO_RECONCILIATION_DETAIL_ALREADY_IN_RECONCILIATION(94109,"单号【{0}】SKU【{1}】已加入对账单，不允许重复添加"),
+    PO_RECONCILIATION_REMARK_REQUIRED(96009,"对账单备注不能为空"),
+
     /**
      * 销售订单错误信息 11000-11500
      */
@@ -1386,7 +1356,15 @@ public enum ApiError implements Serializable {
     WH_SKU_MAPPING_STOCK_INSUFFICIENT(11118,"需要扣除的映射关系SKU【{0}】可用库存不足"),
     WH_WAREHOUSE_LOCATION_NOT_FOUND(11119,"仓库【{0}】下的仓位【{1}】不存在"),
     WH_THIRD_NOT_ALLOW_MULTIPLE(11120,"不允许绑定多个海外三方仓"),
-
+    WH_INVENTORY_NOT_EXIST(11121, "仓库:【{0}】,SKU:【{1}】,库存状态:【{2}】,库存不存在"),
+    WH_BOX_RULE_SKU_EXISTS(11122,"箱规sku已存在"),
+    WH_BOX_RULE_BATCH_UPDATE_FAILED(11123,"批量更新箱规失败"),
+    WH_BOX_RULE_PRIORITY_DUPLICATE(11124,"箱规优先级【{0}】重复"),
+    WH_BOX_RULE_BATCH_ADD_FAILED(11125,"批量新增箱规失败"),
+    WH_BOX_RULE_QTY_NOT_MULTIPLE(11126,"变更数量必须是发货箱规的整数倍"),
+    WH_BOX_RULE_SKU_DUPLICATE(11127,"箱规SKU【{0}】重复"),
+    WH_BOX_RULE_PER_BOX_QTY_DUPLICATE(11128,"箱规单箱数量【{0}】重复"),
+    WH_BOX_PER_QTY_FORBIDDEN_ONE(11129,"单箱数量必须大>1"),
     /**
      * 头程发货单 错误 信息 11500-12000
      */
@@ -1448,7 +1426,23 @@ public enum ApiError implements Serializable {
     SAMPLE_PARTNER_MULTIPLE_DEFAULT_ADDRESS_FORBIDDEN(10724,"企业达人不允许配置多个默认地址"),
     SAMPLE_B2B_DETAIL_ALREADY_PUSHED_SO(10725,"B2B寄样申请单【{0}】SKU【{1}】已下推销售订单，禁止重复下推"),
     SAMPLE_B2B_PUSHED_SO_DETAIL_DELETE_FORBIDDEN(10726,"由B2B寄样申请单下推生成的销售订单明细不允许删除"),
-
+//    SAMPLE_KOL_B2B_APPLICATION_NOT_FOUND(10727,"B2B寄样申请单不存在"),
+//    SAMPLE_KOL_B2B_APPLICATION_DETAIL_NOT_FOUND(10728,"B2B寄样申请明细单不存在"),
+//    SAMPLE_KOL_B2B_APPLICATION_NOT_APPROVED(10729,"B2B寄样申请单【{0}】未审核完成不支持下推"),
+//    SAMPLE_KOL_B2B_DETAIL_ID_NOT_FOUND(10730,"明细id【{0}】未找到B2B寄样申请单明细数据"),
+//    SAMPLE_KOL_B2B_WAREHOUSE_INCONSISTENT(10731,"B2B寄样申请单【{0}】明细下推发货仓库不一致"),
+//    SAMPLE_KOL_B2B_ORG_INCONSISTENT(10732,"B2B寄样申请单【{0}】明细下推销售组织不一致"),
+//    SAMPLE_KOL_B2C_APPROVED_REQUIRED(10733,"请选择审核通过的 B2C 寄样申请数据"),
+//    SAMPLE_KOL_B2C_ALREADY_PUSHED_SO(10734,"B2C 寄样申请已生成销售订单，不允许反审核"),
+//    SAMPLE_KOL_PARTNER_MULTI_DEFAULT_ADDRESS_FORBIDDEN(10735,"企业达人不允许配置多个默认地址"),
+//    SAMPLE_KOL_B2B_DETAIL_ALREADY_PUSHED_SO(10736,"B2B 寄样申请单【{0}】SKU【{1}】已下推销售订单，不允许重复下推"),
+//    SAMPLE_KOL_B2B_PUSHED_SO_DETAIL_DELETE_FORBIDDEN(10737,"B2B 寄样申请单下推的销售订单明细不允许删除"),
+    SAMPLE_APPLY_NOT_FOUND(10738,"样品领用单不存在"),
+    SAMPLE_ONLY_AUDITING_ALLOW_MODIFY_QTY(10739,"只有审核中的样品领用单才能修改审核数量"),
+    SAMPLE_VOIDED_MODIFY_QTY_FORBIDDEN(10740,"已作废的样品领用单不支持修改审核数量"),
+    SAMPLE_DETAIL_NOT_BELONG_TO_APPLY(10741,"部分明细不存在或不属于该样品领用单"),
+    SAMPLE_AUDIT_QTY_EXCEEDS_APPLY_QTY(10742,"SKU【{0}】的审核数量【{1}】不能大于领用数量【{2}】"),
+    SAMPLE_AUDIT_QTY_UPDATE_FAILED(10743,"修改审核数量失败"),
     /**
      * 虚拟仓 错误 信息 12500-13000
      */
@@ -1477,6 +1471,8 @@ public enum ApiError implements Serializable {
     VM_CHECK_OUT_VIRTUAL_INVENTORY(12522,"SKU【{0}】实体仓【{1}】虚拟仓库存已分配【{2}】，出库数量不能超过【{3}】"),
     VM_CHANNEL_RELATION_ERROR(12523,"平台【{0}】店铺【{1}】军区【{2}】已绑定虚拟仓【{3}】\n"),
     VM_INVENTORY_INSUFFICIENT_FOR_TRANSFER(12524,"虚拟仓【{0}】库存不足"),
+    VM_FROM_WAREHOUSE_NOT_BLANK(92290,"启动自动借调时，借调仓不能为空"),
+    VM_NOT_CONTAINS_FROM_WAREHOUSE(92291,"虚拟仓关联实体仓不能包含借调仓"),
 
     /**
      * 客户管理 错误 信息 13000-13500
@@ -1629,7 +1625,9 @@ public enum ApiError implements Serializable {
     FIN_INVOICE_NFE_VOID_FAILED(14012,"作废发票失败，原因：{0}"),
     FIN_RECONCILIATION_NOT_FOUND(14013,"对账单不存在"),
     FIN_RECONCILIATION_DETAIL_NOT_FOUND(14014,"对账明细不存在"),
-
+//    FIN_ASSET_ACCEPT_QTY_EXCEEDS_PURCHASE_QTY(100000,"资产验收单验收数量超过模具采购单采购数量"),
+//    FIN_ASSET_CARD_NOT_FOUND(100001,"资产卡片【{0}】不存在"),
+//    FIN_ASSET_DISPOSAL_QTY_EXCEEDS_STOCK(100002,"资产编码【{0}】处置数量不能大于账存数量"),
 
     /**
      * 补货管理 错误 信息 14500-15000

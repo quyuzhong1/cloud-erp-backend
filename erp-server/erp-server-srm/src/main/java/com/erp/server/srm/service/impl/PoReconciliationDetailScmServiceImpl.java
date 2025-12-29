@@ -553,7 +553,7 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
         }
         if (!CharSequenceUtil.equals(entity.getStatus(), PoReconciliationDetailEnum.StatusEnum.WAIT_RECONCILIATION.getCode()) &&
                 !CharSequenceUtil.equals(entity.getStatus(), PoReconciliationDetailEnum.StatusEnum.NOT_NEED_RECONCILIATION.getCode())) {
-            throw new ServiceException(ApiError.ERROR_PO_RECONCILIATION_DETAIL_UPDATE_STATUS);
+            throw new ServiceException(ApiError.PO_RECONCILIATION_DETAIL_STATUS_UPDATE_FORBIDDEN);
         }
 
         entity.setStatus(status);
@@ -587,14 +587,14 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
         }
         List<PoReconciliationDetailEntity> poReconciliationDetailList = this.listByIds(detailIdList);
         if (CollUtil.isEmpty(poReconciliationDetailList)) {
-            throw new ServiceException(ApiError.ERROR_PO_RECONCILIATION_DETAIL_NOT_EXIST);
+            throw new ServiceException(ApiError.PO_RECONCILIATION_DETAIL_NOT_FOUND);
         }
         List<PoReconciliationRefDetailEntity> poReconciliationRefDetailList = poReconciliationRefDetailService.listPoReconciliationDetailIdList(detailIdList);
 
         for (PoReconciliationDetailEntity detailEntity : poReconciliationDetailList) {
             //无需对账状态不支持自动更新
             if (CharSequenceUtil.equals(detailEntity.getStatus(), PoReconciliationDetailEnum.StatusEnum.NOT_NEED_RECONCILIATION.getCode())) {
-               throw new ServiceException(ApiError.ERROR_PO_RECONCILIATION_DETAIL_ADD_RECONCILED,detailEntity.getSourceCode());
+               throw new ServiceException(ApiError.PO_RECONCILIATION_DETAIL_AUTO_UPDATE_FORBIDDEN,detailEntity.getSourceCode());
             }
             //已对账数量
             Integer totalQty = poReconciliationRefDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getPoReconciliationDetailId(),detailEntity.getId()))
@@ -654,7 +654,7 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
             List<String> sourceDetailIdList = poReconciliationDetailList.stream().map(PoReconciliationDetailEntity::getSourceDetailId).distinct().collect(Collectors.toList());
             refDetailList.stream().filter(obj -> sourceDetailIdList.contains(obj.getSourceDetailId()))
                     .findFirst().ifPresent(obj -> {
-                        throw new ServiceException(ApiError.ERROR_PO_RECONCILIATION_DETAIL_HAS_IN_RECONCILIATION, obj.getSourceCode(),obj.getSkuNo());
+                        throw new ServiceException(ApiError.PO_RECONCILIATION_DETAIL_ALREADY_IN_RECONCILIATION, obj.getSourceCode(),obj.getSkuNo());
                     });
         }
 

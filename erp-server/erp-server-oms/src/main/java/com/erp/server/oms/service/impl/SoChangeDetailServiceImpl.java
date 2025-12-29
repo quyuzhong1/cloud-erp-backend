@@ -766,7 +766,7 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
                 SoDetailEntity soDetailEntity = soDetailService.getById(item.getSoDetailId());
                 //数量必须是箱规的整数倍
                 if (item.getQty() % soDetailEntity.getPerBoxQty() != 0) {
-                    throw new ServiceException(ApiError.ERROR_SO_CHANGE_QTY_MUST_INTEGER_MULTIPLE_BOX_RULE);
+                    throw new ServiceException(ApiError.WH_BOX_RULE_QTY_NOT_MULTIPLE);
                 }
 
             }

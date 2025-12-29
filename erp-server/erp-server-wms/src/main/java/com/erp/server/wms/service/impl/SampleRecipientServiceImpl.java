@@ -1629,23 +1629,23 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
 
             // 参数校验
             if (CollUtil.isEmpty(dto.getDetailList())) {
-                throw new ServiceException(ApiError.ERROR_99250);
+                throw new ServiceException(ApiError.BILL_AUDIT_QTY_DETAIL_REQUIRED);
             }
 
             // 1. 查询样品领用单主表
             SampleRecipientEntity entity = this.getById(dto.getId());
             if (entity == null) {
-                throw new ServiceException(ApiError.ERROR_99251);
+                throw new ServiceException(ApiError.SAMPLE_APPLY_NOT_FOUND);
             }
 
             // 2. 校验单据状态：只有审核中的才能修改
             if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
-                throw new ServiceException(ApiError.ERROR_99252);
+                throw new ServiceException(ApiError.SAMPLE_ONLY_AUDITING_ALLOW_MODIFY_QTY);
             }
 
             // 检查单据是否已作废
             if (InvalidStatusEnum.VOIDED.getStatus().equals(entity.getInvalidStatus())) {
-                throw new ServiceException(ApiError.ERROR_99253);
+                throw new ServiceException(ApiError.SAMPLE_VOIDED_MODIFY_QTY_FORBIDDEN);
             }
 
             // 3. 查询所有明细
@@ -1659,7 +1659,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
                     .list();
 
             if (detailList.size() != detailIds.size()) {
-                throw new ServiceException(ApiError.ERROR_99254);
+                throw new ServiceException(ApiError.SAMPLE_DETAIL_NOT_BELONG_TO_APPLY);
             }
 
             // 4. 构建明细ID到审核数量的映射
@@ -1680,7 +1680,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
                 
                 // 校验审核数量不能大于领用数量
                 if (auditQty > ObjectUtil.defaultIfNull(detail.getRecipientQty(), 0)) {
-                    throw new ServiceException(ApiError.ERROR_99255, detail.getSkuNo(), auditQty, detail.getRecipientQty());
+                    throw new ServiceException(ApiError.SAMPLE_AUDIT_QTY_EXCEEDS_APPLY_QTY, detail.getSkuNo(), auditQty, detail.getRecipientQty());
                 }
                 
                 detail.setAuditQty(auditQty);
@@ -1689,7 +1689,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
             // 6. 批量更新明细
             boolean updateResult = sampleRecipientDetailService.updateBatchById(detailList);
             if (!updateResult) {
-                throw new ServiceException(ApiError.ERROR_99256);
+                throw new ServiceException(ApiError.SAMPLE_AUDIT_QTY_UPDATE_FAILED);
             }
 
             // 7. 记录操作日志
@@ -1704,7 +1704,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
             throw e;
         } catch (Exception e) {
             log.error("修改审核数量失败，参数：{}，错误：{}", JSONUtil.toJsonStr(dto), e.getMessage(), e);
-            throw new ServiceException(ApiError.ERROR_99256, e.getMessage());
+            throw new ServiceException(ApiError.SAMPLE_AUDIT_QTY_UPDATE_FAILED, e.getMessage());
         }
     }
 

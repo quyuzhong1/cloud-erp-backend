@@ -3520,7 +3520,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         List<SoDetailEntity> soDetailEntities = soDetailService.listByIds(collect);
         long count = soDetailEntities.stream().filter(item -> item.getPerBoxQty() > 1).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_PROHIBIT_PER_BOX_ONE_GEN_SO_OUT_STOCK);
+            throw new ServiceException(ApiError.PO_BOX_PER_QTY_GT_ONE_SO_OUTBOUND_FORBIDDEN);
         }
 
         List<BatchResultDTO> batchResultDTOList = new ArrayList<>();

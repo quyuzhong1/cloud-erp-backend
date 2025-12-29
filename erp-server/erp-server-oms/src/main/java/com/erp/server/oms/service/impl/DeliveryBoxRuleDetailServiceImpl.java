@@ -2,11 +2,8 @@ package com.erp.server.oms.service.impl;
 
 
 import cn.hutool.core.util.StrUtil;
-import com.common.business.dto.base.BatchResultDTO;
 import com.erp.model.oms.dto.DeliveryBoxRuleDetailDTO;
 import com.erp.model.oms.entity.DeliveryBoxRuleDetailEntity;
-import com.erp.model.oms.entity.DeliveryBoxRuleEntity;
-import com.erp.model.scm.enums.CreatePoTypeEnum;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.server.oms.mapper.DeliveryBoxRuleDetailMapper;
@@ -21,7 +18,6 @@ import com.common.core.exception.ServiceException;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
-import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -195,7 +191,7 @@ public class DeliveryBoxRuleDetailServiceImpl extends SuperServiceImpl<DeliveryB
         }
         boolean success = this.saveOrUpdateBatch(newList);
         if (!success) {
-            throw new ServiceException(ApiError.ERROR_BATCH_UPDATE_BOX_RULE);
+            throw new ServiceException(ApiError.WH_BOX_RULE_BATCH_UPDATE_FAILED);
         }
         return success;
     }
@@ -203,7 +199,7 @@ public class DeliveryBoxRuleDetailServiceImpl extends SuperServiceImpl<DeliveryB
     private void checkAddDuplicate(List<DeliveryBoxRuleDetailDTO.AddDTO> dtoList){
         long count = dtoList.stream().filter(item -> item.getPerBoxQty().equals(1)).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_BOX_QTY_PROHIBIT_ONE);
+            throw new ServiceException(ApiError.WH_BOX_PER_QTY_FORBIDDEN_ONE);
         }
 
         //发货sku是否有重复值
@@ -220,7 +216,7 @@ public class DeliveryBoxRuleDetailServiceImpl extends SuperServiceImpl<DeliveryB
 
         if (CollectionUtils.isNotEmpty(duplicateSkus)) {
             throw new ServiceException(
-                    ApiError.ERROR_DUPLICATE_SKU,
+                    ApiError.WH_BOX_RULE_SKU_DUPLICATE,
                     duplicateSkus
             );
         }
@@ -238,7 +234,7 @@ public class DeliveryBoxRuleDetailServiceImpl extends SuperServiceImpl<DeliveryB
 
         if (CollectionUtils.isNotEmpty(duplicateQtys)) {
             throw new ServiceException(
-                    ApiError.ERROR_DUPLICATE_QTY,
+                    ApiError.WH_BOX_RULE_PER_BOX_QTY_DUPLICATE,
                     duplicateQtys
             );
         }
@@ -257,7 +253,7 @@ public class DeliveryBoxRuleDetailServiceImpl extends SuperServiceImpl<DeliveryB
 
         if (CollectionUtils.isNotEmpty(duplicateSorts)) {
             throw new ServiceException(
-                    ApiError.ERROR_DUPLICATE_SORT,
+                    ApiError.WH_BOX_RULE_PRIORITY_DUPLICATE,
                     duplicateSorts
             );
         }
@@ -266,7 +262,7 @@ public class DeliveryBoxRuleDetailServiceImpl extends SuperServiceImpl<DeliveryB
     private void checkUpdateDuplicate(List<DeliveryBoxRuleDetailDTO.UpdateDTO> dtoList) {
         long count = dtoList.stream().filter(item -> item.getPerBoxQty().equals(1)).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_BOX_QTY_PROHIBIT_ONE);
+            throw new ServiceException(ApiError.WH_BOX_PER_QTY_FORBIDDEN_ONE);
         }
 
         // 检查发货sku重复
@@ -304,19 +300,19 @@ public class DeliveryBoxRuleDetailServiceImpl extends SuperServiceImpl<DeliveryB
 
         if (!duplicateDeliveries.isEmpty()) {
             throw new ServiceException(
-                    ApiError.ERROR_DUPLICATE_SKU,
+                    ApiError.WH_BOX_RULE_SKU_DUPLICATE,
                     String.join("】, 【", duplicateDeliveries.toString())
             );
         }
         if (!duplicatePerBoxQtys.isEmpty()) {
             throw new ServiceException(
-                    ApiError.ERROR_DUPLICATE_QTY,
+                    ApiError.WH_BOX_RULE_PER_BOX_QTY_DUPLICATE,
                     String.join("】, 【", duplicatePerBoxQtys.toString())
             );
         }
         if (!duplicateSorts.isEmpty()) {
             throw new ServiceException(
-                    ApiError.ERROR_DUPLICATE_SORT,
+                    ApiError.WH_BOX_RULE_PRIORITY_DUPLICATE,
                     String.join("】, 【", duplicateSorts.toString())
             );
         }

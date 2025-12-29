@@ -150,7 +150,7 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
         if(!isAsset){
             String errorMsg = sb.toString();
             if( StringUtils.isNotBlank(errorMsg)){
-                throw new ServiceException(ApiError.ERROR_PRODUCT_PROPERTY_ASSET_NOT_EXIST,errorMsg);
+                throw new ServiceException(ApiError.PRODUCT_PROPERTY_ASSET_NOT_EXIST,errorMsg);
             }
         }
         this.saveBatch(addList);
@@ -360,7 +360,7 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
         if(!isAsset){
             String errorMsg = sb.toString();
             if(StringUtils.isNotBlank(errorMsg)){
-                throw new ServiceException(ApiError.ERROR_PRODUCT_PROPERTY_ASSET_NOT_EXIST,errorMsg);
+                throw new ServiceException(ApiError.PRODUCT_PROPERTY_ASSET_NOT_EXIST,errorMsg);
             }
         }
 

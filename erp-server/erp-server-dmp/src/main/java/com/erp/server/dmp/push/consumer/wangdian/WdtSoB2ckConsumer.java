@@ -10,6 +10,7 @@ import com.common.business.dto.DmpSyncTaskIdDTO;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.MessageUtils;
 import com.common.message.handler.AbstractPlatformConsumerHandler;
 import com.erp.model.dmp.entity.PlatformEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
@@ -121,9 +122,9 @@ public class WdtSoB2ckConsumer<T extends DmpSyncTaskIdDTO> extends AbstractPlatf
                             errorMsg = Optional.ofNullable(errorList).orElse(new ArrayList<>()).stream()
                                     .map(error -> String.format("【拆分单号:%s，错误原因：%s】", error.getNo(), error.getError()))
                                     .collect(Collectors.joining(","));
-                            return ApiResult.error(StrUtil.format(ApiError.SO_WDT_SALES_RAW_TRADE_PUSHSELF.getMsg(),newCount,chgCount,errorMsg));
+                            return ApiResult.error(MessageUtils.getMessage(ApiError.SO_WDT_SALES_RAW_TRADE_PUSHSELF.getMsg(),newCount,chgCount,errorMsg));
                         }else {
-                            return ApiResult.success(StrUtil.format(ApiError.SO_WDT_SALES_RAW_TRADE_PUSHSELF.getMsg(),newCount,chgCount,errorMsg));
+                            return ApiResult.success(MessageUtils.getMessage(ApiError.SO_WDT_SALES_RAW_TRADE_PUSHSELF.getMsg(),newCount,chgCount,errorMsg));
                         }
                     }else {
                         return ApiResult.error("返回结果为空");
