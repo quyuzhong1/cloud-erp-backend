@@ -898,6 +898,17 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
             }
         }
 
+        //获取项目名称
+        List<String> moldCodes = list.stream().map(AssetPurchaseOrderDTO.ListDTO::getAssetCode).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+        Map<String, String> codeToProjectNameMap = new HashMap<>();
+        if (CollectionUtils.isNotEmpty(moldCodes)) {
+            List<MoldInfoEntity> moldInfoEntities = plmTaskFeign.listMoldInfoByCodes(moldCodes);
+            codeToProjectNameMap = moldInfoEntities.stream()
+                    .filter(x -> StringUtils.isNotBlank(x.getCode()) && StringUtils.isNotBlank(x.getProjectName()))
+                    .collect(Collectors.toMap(MoldInfoEntity::getCode, MoldInfoEntity::getProjectName, (oldValue, newValue) -> oldValue));
+        }
+
+
         // 属性赋值
         for(AssetPurchaseOrderDTO.ListDTO data : list) {
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
@@ -924,6 +935,7 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
                     data.setApproveUserName(curApprove);
                 }
             }
+            data.setProjectName(codeToProjectNameMap.getOrDefault(data.getAssetCode(),""));
 
         }
     }
