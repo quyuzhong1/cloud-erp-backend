@@ -283,7 +283,6 @@ public class MoldInfoEntity extends BaseEntity<MoldInfoEntity> {
 
     public static final String CATEGORY_CODE = "category_code";
 
-    public static final String IS_STRATEGY_GENERATED = "is_strategy_generated";
 
     @Override
     public Serializable pkVal() {
