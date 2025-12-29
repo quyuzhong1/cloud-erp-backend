@@ -88,12 +88,14 @@ public class CfgMoldAlertRuleServiceImpl extends SuperServiceImpl<CfgMoldAlertRu
         CfgMoldAlertRuleEntity cfgMoldAlertRuleEntity = new CfgMoldAlertRuleEntity();
         BeanMapperUtils.copy(addDTO, cfgMoldAlertRuleEntity);
 
+        MoldInfoEntity moldInfoEntity = moldInfoService.getById(addDTO.getMoldId());
+
         Integer count = lambdaQuery()
                 .eq(CfgMoldAlertRuleEntity::getMoldId, cfgMoldAlertRuleEntity.getMoldId())
                 .eq(CfgMoldAlertRuleEntity::getInvalidStatus, Boolean.FALSE)
                 .count();
         if(count > 0){
-            throw new ServiceException("该模具编码已存在模具预警策略");
+            throw new ServiceException(ApiError.ERROR_SKU_MOLD_ALERT_EXIST,moldInfoEntity.getName());
         }
 
         // 数据处理
@@ -108,6 +110,9 @@ public class CfgMoldAlertRuleServiceImpl extends SuperServiceImpl<CfgMoldAlertRu
         if(!save) {
             throw new ServiceException("模具预警策略保存失败");
         }
+        //回写模具档案状态
+        moldInfoEntity.setIsAlertStrategyGenerated(true);
+        moldInfoService.updateById(moldInfoEntity);
 
         // 操作日志
         String msg = StrUtil.format("新增了一个模具预警策略【{}】",cfgMoldAlertRuleEntity.getMoldCode());
@@ -126,13 +131,15 @@ public class CfgMoldAlertRuleServiceImpl extends SuperServiceImpl<CfgMoldAlertRu
         old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "模具预警策略"));
         CfgMoldAlertRuleEntity cfgMoldAlertRuleEntity =  BeanMapperUtils.map(CfgMoldAlertRuleEntity.class, addOrUpdateDTO);
 
+        MoldInfoEntity moldInfoEntity = moldInfoService.getById(old.getMoldId());
+
         Integer count = lambdaQuery()
                 .eq(CfgMoldAlertRuleEntity::getMoldId, cfgMoldAlertRuleEntity.getMoldId())
                 .eq(CfgMoldAlertRuleEntity::getInvalidStatus, Boolean.FALSE)
                 .ne(CfgMoldAlertRuleEntity::getId, cfgMoldAlertRuleEntity.getId())
                 .count();
         if(count > 0){
-            throw new ServiceException("该模具编码已存在模具预警策略");
+            throw new ServiceException(ApiError.ERROR_SKU_MOLD_ALERT_EXIST,moldInfoEntity.getName());
         }
 
         cfgMoldAlertRuleEntity.setMoldId(old.getMoldId());
@@ -375,6 +382,10 @@ public class CfgMoldAlertRuleServiceImpl extends SuperServiceImpl<CfgMoldAlertRu
                 .list();
         Map<String, MoldInfoEntity> moldInfoMap = moldInfoEntities.stream().collect(Collectors.toMap(MoldInfoEntity::getCode, Function.identity(), (o1, o2) -> o1));
 
+        //通知类型
+        List<CfgThirdNoticeDTO.DropDownDTO> cfgMoldReturnAlertRule = cfgThirdNoticeFeign.dropDownByMoldMonitor(SourceTypeEnum.CFG_MOLD_ALERT_RULE.getCode());
+        Map<String, String>  cfgMoldAlertRuleMap = cfgMoldReturnAlertRule.stream().collect(Collectors.toMap(CfgThirdNoticeDTO.DropDownDTO::getNoticeType, CfgThirdNoticeDTO.DropDownDTO::getId,(o1,o2)->o1));
+
         //用户
         List<FindUserDTO> userList = sysUserFeign.getUserList();
 
@@ -390,7 +401,7 @@ public class CfgMoldAlertRuleServiceImpl extends SuperServiceImpl<CfgMoldAlertRu
             UserContext.setLoginUser(user);
         }
 
-        CfgMoldAlertExcelListener excelListenerUtil = new CfgMoldAlertExcelListener(dto.getTaskId(),dto.getImportType(),dto.getImportCount(),moldInfoMap);
+        CfgMoldAlertExcelListener excelListenerUtil = new CfgMoldAlertExcelListener(dto.getTaskId(),dto.getImportType(),dto.getImportCount(),moldInfoMap,cfgMoldAlertRuleMap);
         try {
             byte[] bytes = fileFeign.downloadFile(dto.getFileUrl());
             EasyExcel.read(new ByteArrayInputStream(bytes), CfgMoldAlertImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();

@@ -90,12 +90,14 @@ public class CfgMoldReturnAlertRuleServiceImpl extends SuperServiceImpl<CfgMoldR
         CfgMoldReturnAlertRuleEntity cfgMoldReturnAlertRuleEntity = new CfgMoldReturnAlertRuleEntity();
         BeanMapperUtils.copy(addDTO, cfgMoldReturnAlertRuleEntity);
 
+        MoldInfoEntity moldInfoEntity = moldInfoService.getById(addDTO.getMoldId());
+
         Integer count = lambdaQuery()
                 .eq(CfgMoldReturnAlertRuleEntity::getMoldId, cfgMoldReturnAlertRuleEntity.getMoldId())
                 .eq(CfgMoldReturnAlertRuleEntity::getInvalidStatus, Boolean.FALSE)
                 .count();
         if(count > 0){
-            throw new ServiceException("该模具编码已存在模具返还策略");
+            throw new ServiceException(ApiError.ERROR_SKU_MOLD_RETURN_EXIST,moldInfoEntity.getName());
         }
 
         // 数据处理
@@ -110,6 +112,10 @@ public class CfgMoldReturnAlertRuleServiceImpl extends SuperServiceImpl<CfgMoldR
         if (!save) {
             throw new ServiceException("模具返还策略保存失败");
         }
+
+        //回写模具档案状态
+        moldInfoEntity.setIsReturnStrategyGenerated(true);
+        moldInfoService.updateById(moldInfoEntity);
 
         // 操作日志
         String msg = StrUtil.format("新增了一个模具返还策略【{}】",cfgMoldReturnAlertRuleEntity.getMoldCode());
@@ -145,13 +151,15 @@ public class CfgMoldReturnAlertRuleServiceImpl extends SuperServiceImpl<CfgMoldR
         old = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "模具返还策略"));
         CfgMoldReturnAlertRuleEntity cfgMoldReturnAlertRuleEntity = BeanMapperUtils.map(CfgMoldReturnAlertRuleEntity.class, addOrUpdateDTO);
 
+        MoldInfoEntity moldInfoEntity = moldInfoService.getById(old.getMoldId());
+
         Integer count = lambdaQuery()
                 .eq(CfgMoldReturnAlertRuleEntity::getMoldId, cfgMoldReturnAlertRuleEntity.getMoldId())
                 .eq(CfgMoldReturnAlertRuleEntity::getInvalidStatus, Boolean.FALSE)
                 .ne(CfgMoldReturnAlertRuleEntity::getId, cfgMoldReturnAlertRuleEntity.getId())
                 .count();
         if(count > 0){
-            throw new ServiceException("该模具编码已存在模具返还策略");
+            throw new ServiceException(ApiError.ERROR_SKU_MOLD_RETURN_EXIST,moldInfoEntity.getName());
         }
 
         cfgMoldReturnAlertRuleEntity.setMoldId(old.getMoldId());
@@ -510,6 +518,10 @@ public class CfgMoldReturnAlertRuleServiceImpl extends SuperServiceImpl<CfgMoldR
                 .list();
         Map<String, MoldInfoEntity> moldInfoMap = moldInfoEntities.stream().collect(Collectors.toMap(MoldInfoEntity::getCode, Function.identity(), (o1, o2) -> o1));
 
+        //通知类型
+        List<CfgThirdNoticeDTO.DropDownDTO> cfgMoldReturnAlertRule = cfgThirdNoticeFeign.dropDownByMoldMonitor(SourceTypeEnum.CFG_MOLD_RETURN_ALERT_RULE.getCode());
+        Map<String, String>  cfgMoldReturnAlertRuleMap = cfgMoldReturnAlertRule.stream().collect(Collectors.toMap(CfgThirdNoticeDTO.DropDownDTO::getNoticeType, CfgThirdNoticeDTO.DropDownDTO::getId,(o1,o2)->o1));
+
         //用户
         List<FindUserDTO> userList = sysUserFeign.getUserList();
 
@@ -525,7 +537,7 @@ public class CfgMoldReturnAlertRuleServiceImpl extends SuperServiceImpl<CfgMoldR
             UserContext.setLoginUser(user);
         }
 
-        CfgMoldReturnExcelListener excelListenerUtil = new CfgMoldReturnExcelListener(dto.getTaskId(),dto.getImportType(),dto.getImportCount(),moldInfoMap);
+        CfgMoldReturnExcelListener excelListenerUtil = new CfgMoldReturnExcelListener(dto.getTaskId(),dto.getImportType(),dto.getImportCount(),moldInfoMap,cfgMoldReturnAlertRuleMap);
         try {
             byte[] bytes = fileFeign.downloadFile(dto.getFileUrl());
             EasyExcel.read(new ByteArrayInputStream(bytes), CfgMoldReturnImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
