@@ -182,6 +182,11 @@ public class RocketMqNewTopic {
     public static final String DMP_PLATFORM_RETURN_ORDER_TO_OMS_TOPIC = "${spring.cloud.nacos.discovery.namespace}-dmp_platform_return_order_to_oms_topic";
 
     /**
+     * 新中台B2B退货订单
+     */
+    public static final String DMP_PLATFORM_B2B_RETURN_ORDER_TO_OMS_TOPIC = "${spring.cloud.nacos.discovery.namespace}-dmp_platform_b2b_return_order_to_oms_topic";
+
+    /**
      * 新中台退货订单
      */
     public static final String DMP_PLATFORM_REFUND_ORDER_TO_OMS_TOPIC = "${spring.cloud.nacos.discovery.namespace}-dmp_platform_refund_order_to_oms_topic";
@@ -205,6 +210,12 @@ public class RocketMqNewTopic {
      * restcloudb2b订单
      */
     public static final String RESTCLOUD_PLATFORM_B2B_ORDER_TO_OMS_TOPIC = "${spring.cloud.nacos.discovery.namespace}-restcloud_platform_b2b_order_to_oms_topic";
+
+    /**
+     * restcloudb2b订单
+     */
+    public static final String DMP_PLATFORM_B2B_ORDER_TO_OMS_TOPIC = "${spring.cloud.nacos.discovery.namespace}-dmp_platform_b2b_order_to_oms_topic";
+
 
     /**
      * restcloud收款单

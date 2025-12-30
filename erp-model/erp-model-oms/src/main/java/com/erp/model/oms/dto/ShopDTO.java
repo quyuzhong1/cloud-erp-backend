@@ -1,5 +1,6 @@
 package com.erp.model.oms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.annotation.Dict;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
@@ -290,7 +291,6 @@ public class ShopDTO implements Serializable {
         /**
          * 是否包含平台仓 true 包含
          */
-        @NotNull(message = "是否包含平台仓不能为空")
         private Boolean  isHaveWarehouse;
 
         /**
@@ -689,7 +689,6 @@ public class ShopDTO implements Serializable {
         /**
          * 是否包含平台仓  true 包含
          */
-        @NotNull(message = "是否包含平台仓不能为空")
         private Boolean  isHaveWarehouse;
         /**
          * 是否多渠道发货
@@ -892,7 +891,19 @@ public class ShopDTO implements Serializable {
          */
         @NotBlank(message = "转帐的选项不能为空")
         private String dictTransferOption;
+        /**
+         * ioss税号
+         */
+        private String iossTaxNo;
+        /**
+         * EORI税号
+         */
+        private String eoriTaxNo;
 
+        /**
+         * VOEC税号
+         */
+        private String voecTaxNo;
 
     }
 
@@ -935,10 +946,76 @@ public class ShopDTO implements Serializable {
          */
         @NotBlank(message = "转帐的选项不能为空")
         private String dictTransferOption;
+        /**
+         * ioss税号
+         */
+        private String iossTaxNo;
+        /**
+         * EORI税号
+         */
+        private String eoriTaxNo;
+
+        /**
+         * VOEC税号
+         */
+        private String voecTaxNo;
 
 
     }
 
+
+    @Data
+    @NoArgsConstructor
+    public static class ViewBaseDTO  {
+
+        /**
+         * 店铺id
+         */
+        private String id;
+
+        private String dictPlatform;
+
+        private Boolean isMultiChannel;
+
+        /**
+         * 订单路由类型
+         */
+        private String orderRouteType;
+        /**
+         * 订单路由类型名称
+         */
+        private String orderRouteTypeName;
+        /**
+         * 是否包含平台仓  true 包含
+         */
+        private Boolean  isHaveWarehouse;
+        /**
+         * 店铺平台仓库
+         */
+        private String warehouseId;
+
+        /**
+         * 店铺平台仓库
+         */
+        private String warehouseName;
+
+        /**
+         * 店铺退货仓库：名称字段为returnWarehouseName
+         */
+        private String returnWarehouse;
+
+        private String returnWarehouseName;
+
+        /**
+         * 渠道信息
+         */
+        private List<ShopChannelRefDTO.ViewDTO> shopChannelRefDTOList;
+
+        /**
+         * 渠道id
+         */
+        private List<String> channelIdList;
+    }
 
     @Data
     @NoArgsConstructor
@@ -995,6 +1072,20 @@ public class ShopDTO implements Serializable {
          * 转帐选项
          */
         private String dictTransferOption;
+
+        /**
+         * ioss税号
+         */
+        private String iossTaxNo;
+        /**
+         * EORI税号
+         */
+        private String eoriTaxNo;
+
+        /**
+         * VOEC税号
+         */
+        private String voecTaxNo;
 
 
     }

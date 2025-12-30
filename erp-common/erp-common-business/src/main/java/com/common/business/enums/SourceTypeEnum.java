@@ -108,6 +108,7 @@ public enum SourceTypeEnum {
     KOL_B2B_APPLICATION("kolB2bApplication","B2B寄样申请","kol_b2b_application"),
     KOL_B2C_APPLICATION("kolB2cApplication","B2C寄样申请","kol_b2c_application"),
 
+    WDT_SO_B2B_DELIVERY( "wdtSoB2bDelivery", "旺店通B2B订单发货","so_info"),
 
     //OMS
     SO_RETURN("soReturn", "销售退货订单","so_return"),

@@ -253,4 +253,12 @@ public class CustomerAddressServiceImpl extends SuperServiceImpl<CustomerAddress
     public List<CustomerAddressEntity> listAllByMainIds(List<String> ids) {
         return baseMapper.listAllByMainIds(ids);
     }
+
+    @Override
+    public CustomerAddressEntity getDefaultAddrByMainId(String mainId) {
+        if(StringUtils.isBlank(mainId)){
+            return null;
+        }
+        return customerAddressService.lambdaQuery().eq(CustomerAddressEntity::getMainId,mainId).eq(CustomerAddressEntity::getIsDefault,true).last("LIMIT 1").one();
+    }
 }

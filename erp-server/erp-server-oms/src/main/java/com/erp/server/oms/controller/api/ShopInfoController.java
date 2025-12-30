@@ -343,6 +343,28 @@ public class ShopInfoController extends BaseController {
         return success(result);
     }
 
+    /**
+     * 单个店铺基础设置View
+     *
+     * @return
+     */
+    @PostMapping("/viewBase")
+    public ApiResult<ShopDTO.ViewBaseDTO> viewBase(@RequestBody @Validated BaseIdDTO dto) {
+        ShopDTO.ViewBaseDTO result = shopInfoService.viewBase(dto.getId());
+        return success(result);
+    }
+
+    /**
+     * 单个店铺基础设置更新
+     * @return
+     */
+    @PostMapping("/setBase")
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "单个店铺基础设置")
+    public ApiResult setBase(@RequestBody @Validated ShopDTO.ViewBaseDTO dto) {
+        Boolean result = shopInfoService.setBase(dto);
+        return result ? success() : failure();
+    }
+
 
     /**
      * 获取店铺授权地址的url
@@ -506,9 +528,6 @@ public class ShopInfoController extends BaseController {
     @PostMapping("/addIntenal")
     public ApiResult<?> addIntenal(@RequestBody @Validated ShopDTO.AddInternalDTO dto) {
         List<ShopInfoEntity> list = shopInfoService.addIntenal(dto);
-        for (ShopInfoEntity shop : list) {
-            shopInfoService.saveCustom(shop);
-        }
         return !CollectionUtils.isEmpty(list) ? success() : failure();
     }
 
