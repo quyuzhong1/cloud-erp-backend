@@ -66,7 +66,9 @@ public class ThirdWarehouseServiceImpl extends SuperServiceImpl<ThirdWarehouseMa
             return new BaseResultDTO.AddDTO(addDTO1.getId(), addDTO1.getCode());
         }else{
             //判断是否存在
-            addDTO.setCategory(ThirdSysTypeEnum.WAREHOUSE.getCode());
+            if(StringUtils.isBlank(addDTO.getCategory())){
+                addDTO.setCategory(ThirdSysTypeEnum.WAREHOUSE.getCode());
+            }
             ThirdWarehouseEntity existEntity = this.getOne(new LambdaQueryWrapper<ThirdWarehouseEntity>()
                             .eq(ThirdWarehouseEntity::getSysType, addDTO.getSysType())
                             .eq(ThirdWarehouseEntity::getCategory, addDTO.getCategory())
