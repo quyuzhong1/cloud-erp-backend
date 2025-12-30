@@ -99,6 +99,8 @@ public class SoInfoDTO implements Serializable {
          */
         private String sourceCode;
 
+        private String thirdCode;
+
         /**
          * 平台订单编号
          */
@@ -905,6 +907,7 @@ public class SoInfoDTO implements Serializable {
          * 平台
          */
         private String dictPlatform;
+        private String thirdSystem;
 
         /**
          * 订单金额
@@ -1107,6 +1110,10 @@ public class SoInfoDTO implements Serializable {
          */
         private String platformOrderCode;
         /**
+         * 第三方单据编号
+         */
+        private String thirdCode;
+        /**
          * 平台订单Id
          */
         private String platformOrderId;
@@ -1189,6 +1196,8 @@ public class SoInfoDTO implements Serializable {
          * code
          */
         private String code;
+        private String thirdCode;
+        private String thirdSystem;
 
         /**
          * 平台
@@ -1714,6 +1723,7 @@ public class SoInfoDTO implements Serializable {
          * 平台
          */
         private String dictPlatform;
+        private String thirdSystem;
 
         private String platformOrderId;
         /**
@@ -1757,6 +1767,10 @@ public class SoInfoDTO implements Serializable {
          */
         private String platformOrderCode;
 
+        /**
+         * 第三方单据编号
+         */
+        private String thirdCode;
         /**
          * 销售员id
          */

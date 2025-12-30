@@ -98,11 +98,11 @@ public class ProcessDelegateServiceImpl extends SuperServiceImpl<ProcessDelegate
     @Override
     public Boolean update(ProcessDelegateDTO.UpdateDTO updateDTO) {
         ProcessDelegateEntity old = super.getById(updateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "委托审批"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "委托审批"));
         ProcessDelegateEntity entity =  BeanMapperUtils.map(ProcessDelegateEntity.class, updateDTO);
         //状态校验
         if (!ProcessDelegateStatusEnum.PENDING.getCode().equals(old.getStatus())) {
-            throw new ServiceException(ApiError.PROCESS_DELEGATE_UPDATE);
+            throw new ServiceException(ApiError.WF_DELEGATE_UPDATE_ALLOWED_ONLY_PENDING);
         }
         //更新校验
         checkUpdateData(entity);
@@ -163,7 +163,7 @@ public class ProcessDelegateServiceImpl extends SuperServiceImpl<ProcessDelegate
         ProcessDelegateEntity entity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到委托审批单数据"));
         if (!ProcessDelegateStatusEnum.PENDING.getCode().equals(entity.getStatus())
                 && !ProcessDelegateStatusEnum.RUNNING.getCode().equals(entity.getStatus())) {
-            throw new ServiceException(ApiError.PROCESS_DELEGATE_CLOSE);
+            throw new ServiceException(ApiError.WF_DELEGATE_CLOSE_ALLOWED_ONLY_RUNNING);
         }
         //更新终止时间和状态
         entity.setStatus(ProcessDelegateStatusEnum.ENDED.getCode());
@@ -171,7 +171,7 @@ public class ProcessDelegateServiceImpl extends SuperServiceImpl<ProcessDelegate
         entity.setIsAuto(Boolean.FALSE);
         boolean isClose = this.updateById(entity);
         if (!isClose) {
-            throw new ServiceException(ApiError.PROCESS_DELEGATE_CLOSE_ERROR);
+            throw new ServiceException(ApiError.WF_DELEGATE_CLOSE_FAILED);
         }
         //添加操作日志
         String msg = CharSequenceUtil.format("操作终止【{}】 ", entity.getCode());
@@ -289,7 +289,7 @@ public class ProcessDelegateServiceImpl extends SuperServiceImpl<ProcessDelegate
     private void checkUpdateData (ProcessDelegateEntity entity) {
         //时间校验
         if (entity.getEffectiveTime().isAfter(entity.getExpireTime()) || entity.getEffectiveTime().equals(entity.getExpireTime())) {
-            throw new ServiceException(ApiError.PROCESS_DELEGATE_TIME_ERROR);
+            throw new ServiceException(ApiError.WF_DELEGATE_TIME_INVALID);
         }
         List<ProcessDelegateEntity> processDelegateList = this.listByBusinessKeyList(Collections.singletonList(entity.getBusinessKey()),entity.getStartUserId());
 
@@ -301,7 +301,7 @@ public class ProcessDelegateServiceImpl extends SuperServiceImpl<ProcessDelegate
             //时间不能重叠
             boolean overlap = LocalDateUtil.isOverlapLocalDateTime(entity.getEffectiveTime(), entity.getExpireTime(), detailEntity.getEffectiveTime(), detailEntity.getExpireTime());
             if (overlap) {
-                throw new ServiceException(ApiError.PROCESS_PROCESS_DELEGATE_OVERLAP);
+                throw new ServiceException(ApiError.WF_DELEGATE_OVERLAP_NOT_ALLOWED);
             }
         }
     }

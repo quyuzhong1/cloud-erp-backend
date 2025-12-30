@@ -5,28 +5,15 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.dto.base.BaseResultDTO;
-import com.common.business.dto.base.BatchResultDTO;
-import com.common.business.enums.ApproveStatusEnum;
-import com.common.business.enums.OperationTypeEnum;
-import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.*;
-import com.erp.model.wms.dto.inventory.InventoryDTO;
 import com.erp.model.wms.entity.VirtualAdjustDetailEntity;
-import com.erp.model.wms.entity.VirtualAdjustEntity;
-import com.erp.model.wms.entity.VirtualWarehouseEntity;
-import com.erp.model.wms.enums.inventory.InventoryInOutEnum;
-import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
-import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.VirtualAdjustDetailMapper;
 import com.erp.server.wms.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.core.exception.ServiceException;
-import org.apache.commons.math3.util.Pair;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,10 +25,6 @@ import java.util.stream.Collectors;
 
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
-
-import javax.annotation.Resource;
-
-import static cn.hutool.json.XMLTokener.entity;
 
 /**
  * <p>
@@ -85,7 +68,7 @@ public class VirtualAdjustDetailServiceImpl extends SuperServiceImpl<VirtualAdju
     @Override
     public Boolean update(VirtualAdjustDetailDTO.UpdateDTO addOrUpdateDTO) {
         VirtualAdjustDetailEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "虚拟仓调整单明细单"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "虚拟仓调整单明细单"));
         VirtualAdjustDetailEntity virtualAdjustDetailEntity =  BeanMapperUtils.map(VirtualAdjustDetailEntity.class, addOrUpdateDTO);
 
         // 数据处理

@@ -1,18 +1,13 @@
 package com.erp.server.tms.service.impl;
 
 
-import cn.hutool.core.util.StrUtil;
-import com.common.business.dto.base.BaseResultDTO;
 import com.erp.model.tms.entity.ShippingRegionCityEntity;
 import com.erp.server.tms.mapper.ShippingRegionCityMapper;
 import com.erp.server.tms.service.ShippingRegionCityService;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.erp.server.tms.service.OperateLogService;
-import com.erp.server.tms.service.CommonService;
 import com.common.core.exception.ServiceException;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -21,7 +16,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
+
 /**
  * <p>
  * 运费规则分区城市表 服务实现类

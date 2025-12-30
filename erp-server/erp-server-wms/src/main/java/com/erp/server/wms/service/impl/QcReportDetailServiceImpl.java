@@ -207,7 +207,7 @@ public class QcReportDetailServiceImpl extends SuperServiceImpl<QcReportDetailMa
             EasyExcel.read(excelFile.getInputStream(), QcReportDetailImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (Exception e) {
             log.error("导入错误！", e);
-            throw new ServiceException(ApiError.ERROR_95124);
+            throw new ServiceException(ApiError.FILE_DATA_IMPORT_FAILED);
         }
         QcReportDetailDTO.ImportDTO result = new QcReportDetailDTO.ImportDTO();
         //导入数据处理

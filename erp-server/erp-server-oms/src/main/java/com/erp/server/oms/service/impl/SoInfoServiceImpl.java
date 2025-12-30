@@ -297,7 +297,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         } else {
             SoInfoEntity so = this.getById(id);
             if (Objects.isNull(so)) {
-                throw new ServiceException(ApiError.ERROR_92016);
+                throw new ServiceException(ApiError.SO_NOT_FOUND);
             }
             code = so.getCode();
         }
@@ -308,7 +308,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         //同步金蝶的时候要货日期要大于单据日期
         if (requireDate != null && billDate != null) {
             if (requireDate.compareTo(billDate) < 0) {
-                throw new ServiceException(ApiError.ERROR_92059);
+                throw new ServiceException(ApiError.SO_DEMAND_DATE_GT_ORDER_DATE);
             }
         }
 
@@ -432,7 +432,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         //查询客户信息
         CustomerInfoEntity customerInfoEntity = customerInfoService.getById(entity.getCustomerId());
         if (ObjectUtil.isEmpty(customerInfoEntity)) {
-            throw new ServiceException(ApiError.ERROR_92011);
+            throw new ServiceException(ApiError.CUSTOMER_NOT_FOUND);
         }
         //查询虚拟仓信息
         VirtualWarehouseChannelDTO.PlatformDTO platformDTO = new VirtualWarehouseChannelDTO.PlatformDTO();
@@ -463,7 +463,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     @DistributeLocker(businessType = RedisKeyConstant.SO_B2B_ORDER_KEY, keyName = "entity.id")
     public BatchResultDTO submit(SoInfoEntity entity,Boolean isNeedProcess, boolean isFromDht) {
         if(entity.getInvalidStatus()) {
-            throw new ServiceException(ApiError.ERROR_INVALID_TO_SUBMIT);
+            throw new ServiceException(ApiError.BILL_VOIDED_CANNOT_SUBMIT);
         }
         //售后订单
         String afterSaleOrder = BillTypeEnum.AFTER_SALES.getCode();
@@ -490,7 +490,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         statusList.add(rejectStatus);
         statusList.add(waitSubmitStatus);
         if (!statusList.contains(entity.getApproveStatus().getStatus())) {
-            throw new ServiceException(ApiError.ERROR_WAIT_SUBMIT_TO_APPROVE_ING);
+            throw new ServiceException(ApiError.BILL_WAIT_SUBMIT_TO_APPROVE_ING);
         }
         //启动审核流程
         if(isNeedProcess){
@@ -586,7 +586,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
         List<SoDetailEntity> detailList = soDetailService.listBaseByMainId(entity.getId());
         if (CollUtil.isEmpty(detailList)) {
-            throw new ServiceException(ApiError.ERROR_SO_DETAIL_NOT_EXIST);
+            throw new ServiceException(ApiError.SO_DETAIL_NOT_EXIST);
         }
         //产品名称
         List<String> skuIdList = detailList.stream().map(SoDetailEntity::getSkuId).distinct().collect(Collectors.toList());
@@ -661,11 +661,11 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     public Boolean addAndSubmit(SoInfoDTO.AddDTO dto) {
         String id = this.add(dto);
         if (StringUtils.isBlank(id)) {
-            throw new ServiceException(ApiError.ERROR_1019);
+            throw new ServiceException(ApiError.BILL_SAVE_FAILED);
         }
         SoInfoEntity soInfoEntity = this.getById(id);
         if (ObjectUtil.isEmpty(soInfoEntity)) {
-            throw new ServiceException(ApiError.ERROR_92016);
+            throw new ServiceException(ApiError.SO_NOT_FOUND);
         }
         BatchResultDTO submit = this.submit(soInfoEntity,Boolean.TRUE, false);
         return submit.getSuccess();
@@ -685,7 +685,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         SoInfoDTO.ViewDTO view = new SoInfoDTO.ViewDTO();
         SoInfoEntity soInfo = this.getById(id);
         if (Objects.isNull(soInfo)) {
-            throw new ServiceException(ApiError.ERROR_92016);
+            throw new ServiceException(ApiError.SO_NOT_FOUND);
         }
 
         BeanMapper.copy(soInfo, view);
@@ -942,7 +942,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = soIdList.stream().map(obj -> new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.SO_INFO.getCode(), obj)).collect(Collectors.toCollection(ValidList::new));
         ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = workflowFeign.curApprover(dtoList);
         if (200 != listApiResult.getCode()) {
-            throw new ServiceException(new ApiResult(ApiError.DEFAULT.code,listApiResult.getMsg()));
+            throw new ServiceException(new ApiResult(ApiError.HTTP_UNKNOWN.getCode(),listApiResult.getMsg()));
         }
         // 忽略库存计算SKU
         List<SkuVO> ignoreInventorySkuList = plmTaskFeign.getNoInventorySku();
@@ -1353,7 +1353,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         if (StringUtils.isNotBlank(id)) {
             SoInfoEntity soInfo = this.getById(id);
             if (Objects.isNull(soInfo)) {
-                throw new ServiceException(ApiError.ERROR_92016);
+                throw new ServiceException(ApiError.SO_NOT_FOUND);
             }
         } else {
             isFirst = true;
@@ -1451,7 +1451,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         String id = dto.getId();
         SoInfoEntity soInfo = this.getById(id);
         if (Objects.isNull(soInfo)) {
-            throw new ServiceException(ApiError.ERROR_92016);
+            throw new ServiceException(ApiError.SO_NOT_FOUND);
         }
         Boolean needUpdateDeliveryNotice = false;
         if (!soInfo.getSalesOrgId().equals(dto.getSalesOrgId()) || !soInfo.getSellerId().equals(dto.getSellerId()) || !soInfo.getSalesDeptId().equals(dto.getSalesDeptId())) {
@@ -1467,7 +1467,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         }
         //已审核不能编辑
         if (soInfo.getApproveStatus() == BillApproveStatusEnum.APPROVE) {
-            throw new ServiceException(ApiError.ERROR_92017);
+            throw new ServiceException(ApiError.SO_DELETE_FORBIDDEN);
         }
         String oldReceiptAccount = soInfo.getReceiveAccount();
         List<SoReceiptEntity> existReceipt = soReceiptService.listBySoId(id);
@@ -1531,7 +1531,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         //同步金蝶的时候要货日期要大于单据日期
         if (requireDate != null && billDate != null) {
             if (requireDate.compareTo(billDate) < 0) {
-                throw new ServiceException(ApiError.ERROR_92059);
+                throw new ServiceException(ApiError.SO_DEMAND_DATE_GT_ORDER_DATE);
             }
         }
 
@@ -1640,11 +1640,11 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     public Boolean updateAndSubmit(SoInfoDTO.UpdateDTO dto) {
         String id = this.updateSo(dto);
         if (StringUtils.isBlank(id)) {
-            throw new ServiceException(ApiError.ERROR_1020);
+            throw new ServiceException(ApiError.BILL_UPDATE_FAILED);
         }
         SoInfoEntity soInfoEntity = this.getById(id);
         if (ObjectUtil.isEmpty(soInfoEntity)) {
-            throw new ServiceException(ApiError.ERROR_92016);
+            throw new ServiceException(ApiError.SO_NOT_FOUND);
         }
         BatchResultDTO submit = this.submit(soInfoEntity,Boolean.TRUE, false);
         return submit.getSuccess();
@@ -1665,7 +1665,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     public BatchResultDTO approve(BaseApproveParamDTO dto, SoInfoEntity entity) {
         String ingStatus = ApproveStatusEnum.APPROVE_ING.getStatus();
         if(!ingStatus.equals(entity.getApproveStatus().getStatus())){
-            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_98006.msg);
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),MessageUtils.getMessage(ApiError.WF_APPROVE_ALLOWED_STATUS_ONLY));
         }
         //审核流程
         approveProcess(entity, dto);
@@ -1694,7 +1694,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         ApiResult<ProcessManagementDTO.ApproveResultDTO> listApiResult = workflowFeign.approve(approveDTO);
         Integer code = listApiResult.getCode();
         if (200 != code) {
-            throw new ServiceException(ApiError.ERROR_94006);
+            throw new ServiceException(ApiError.WF_APPROVE_FAILED);
         }
         ProcessManagementDTO.ApproveResultDTO data = listApiResult.getData();
         if (ObjectUtil.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()) {
@@ -1787,7 +1787,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
 
         if(!BillApproveStatusEnum.APPROVE.equals(entity.getApproveStatus())){
-            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_98014.msg);
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),MessageUtils.getMessage(ApiError.BILL_REVERSE_APPROVAL_ALLOWED_APPROVED_ONLY));
         }
 
         //检查关联单据
@@ -1797,7 +1797,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         long soChangeCount = soChangeList.stream().filter(s -> !s.getInvalidStatus()).count();
         //表示 有变更中的销售变更单
         if (soChangeCount > 0) {
-            throw new ServiceException(ApiError.ERROR_92047);
+            throw new ServiceException(ApiError.SO_CHANGE_IN_REVERSE_FORBIDDEN);
         }
         //订货通来源的订单不能反审核
         if(PlatformDictEnum.DHT.getCode().equals(entity.getDictPlatform())){
@@ -1850,42 +1850,42 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         List<PurchaseApplicationEntity> purchaseApplicationList = scmTaskFeign.listPurchaseApplicationBySourceIds(soIds);
         if (CollUtil.isNotEmpty(purchaseApplicationList)) {
             String codes = purchaseApplicationList.stream().map(PurchaseApplicationEntity::getCode).distinct().collect(Collectors.joining(","));
-            throw new ServiceException(ApiError.ERROR_SO_INFO_EXIST_REF_BILL,codes);
+            throw new ServiceException(ApiError.SO_ALREADY_REF_DOWNSTREAM_BILL_FORBIDDEN,codes);
         }
         Integer wmsCount = wmsTaskFeign.getPushDownBySourceIds(soIds);
         if (wmsCount > 0) {
-            throw new ServiceException(ApiError.ERROR_92040);
+            throw new ServiceException(ApiError.SO_ASSOCIATED_DOC_REVERSE_FORBIDDEN);
         }
         Integer omsCount = soReturnService.getPushDownBySourceIds(soIds);
         if (omsCount > 0) {
-            throw new ServiceException(ApiError.ERROR_92040);
+            throw new ServiceException(ApiError.SO_ASSOCIATED_DOC_REVERSE_FORBIDDEN);
         }
         Integer scmCount = scmTaskFeign.getPushDownBySourceIds(soIds);
         if (scmCount > 0) {
-            throw new ServiceException(ApiError.ERROR_92040);
+            throw new ServiceException(ApiError.SO_ASSOCIATED_DOC_REVERSE_FORBIDDEN);
         }
         List<MachineRefSoEntity> machineRefSoList = machineInfoFeign.listBySoIdList(soIds);
         if (CollectionUtils.isNotEmpty(machineRefSoList)) {
-            throw new ServiceException(ApiError.ERROR_92040);
+            throw new ServiceException(ApiError.SO_ASSOCIATED_DOC_REVERSE_FORBIDDEN);
         }
         List<B2bThirdDeliveryEntity> entityList = b2bThirdDeliveryFeign.listBySoIds(soIds);
         if (CollectionUtils.isNotEmpty(entityList)) {
-            throw new ServiceException(ApiError.ERROR_92040);
+            throw new ServiceException(ApiError.SO_ASSOCIATED_DOC_REVERSE_FORBIDDEN);
         }
     }
 
     private void checkRemove(List<String> soIds) {
         Integer wmsCount = wmsTaskFeign.getPushDownBySourceIds(soIds);
         if (wmsCount > 0) {
-            throw new ServiceException(ApiError.ERROR_92018);
+            throw new ServiceException(ApiError.BILL_IN_USE_DELETE_FORBIDDEN);
         }
         Integer omsCount = soReturnService.getPushDownBySourceIds(soIds);
         if (omsCount > 0) {
-            throw new ServiceException(ApiError.ERROR_92018);
+            throw new ServiceException(ApiError.BILL_IN_USE_DELETE_FORBIDDEN);
         }
         Integer scmCount = scmTaskFeign.getPushDownBySourceIds(soIds);
         if (scmCount > 0) {
-            throw new ServiceException(ApiError.ERROR_92018);
+            throw new ServiceException(ApiError.BILL_IN_USE_DELETE_FORBIDDEN);
         }
 
     }
@@ -1906,7 +1906,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         List<SoInfoEntity> list = this.listByIds(ids);
         long count = list.stream().filter(obj -> !ApproveStatusEnum.APPROVE_ING.getStatus().equals(obj.getApproveStatus().getStatus())).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_98007);
+            throw new ServiceException(ApiError.WF_REVOKE_PROCESS_ALLOWED_STATUS_ONLY);
         }
         //撤销现有流程
         LoginUser userInfo = UserContext.getDefaultLoginUser();
@@ -1945,13 +1945,13 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         statusList.add(draftStatus);
 //        long count = list.stream().filter(s -> !statusList.contains(s.getApproveStatus().getStatus())).count();
 //        if (count > 0) {
-//            throw new ServiceException(ApiError.ERROR_92017);
+//            throw new ServiceException(ApiError.ERROR_SO_DELETE_FORBIDDEN);
 //        }
         List<SoInfoEntity> removeList=new ArrayList<>();
         List<BatchResultDTO> resultDTOList=new ArrayList<>();
         for (SoInfoEntity entity : list) {
             if (!statusList.contains(entity.getApproveStatus().getStatus())){
-                resultDTOList.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_92017.msg));
+                resultDTOList.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), MessageUtils.getMessage(ApiError.SO_DELETE_FORBIDDEN)));
                 continue;
             }
             removeList.add(entity);
@@ -2009,7 +2009,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 syncKingdeeSoService.syncDataToSdy(view, soDetailEntities, SyncOperateEnum.OPERATE_DELETE.getCode());
             }
         }else {
-            throw new ServiceException(ApiError.ERROR_DATA_DELETE_ERROR);
+            throw new ServiceException(ApiError.BILL_DELETE_FAILED);
         }
         return resultDTOList;
     }
@@ -2038,11 +2038,11 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         statusList.add(rejectStatus);
         long invalidCount = list.stream().filter(d -> !d.getInvalidStatus()).count();
         if (invalidCount != list.size()) {
-            throw new ServiceException(ApiError.ERROR_98012);
+            throw new ServiceException(ApiError.BILL_ALREADY_VOID_CANNOT_VOID_AGAIN);
         }
         long count = list.stream().filter(s -> !statusList.contains(s.getApproveStatus().getStatus())).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_92019);
+            throw new ServiceException(ApiError.BILL_VOID_FORBIDDEN);
         }
         //校验是否有下游单据
         isExistDowmstream(ids);
@@ -2070,7 +2070,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 //                .eq(SoChangeEntity::getIsDeleted,Boolean.FALSE)
 //                .count();
 //        if(soChangeCount > 0){
-//            throw new ServiceException(ApiError.ERROR_92175);
+//            throw new ServiceException(ApiError.ERROR_DOC_HAS_DOWNSTREAM_CANNOT_VOID);
 //        }
 //        //销售退货订单
 //        Integer soReturnCount = soReturnService.lambdaQuery().in(SoReturnEntity::getSourceId, ids)
@@ -2078,7 +2078,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 //                .eq(SoReturnEntity::getIsDeleted,Boolean.FALSE)
 //                .count();
 //        if(soReturnCount > 0){
-//            throw new ServiceException(ApiError.ERROR_92175);
+//            throw new ServiceException(ApiError.ERROR_DOC_HAS_DOWNSTREAM_CANNOT_VOID);
 //        }
         //发货通知单
         List<SoDeliveryNoticeEntity> soDeliveryNoticeList = FeignQuery.create(SoDeliveryNoticeEntity.class)
@@ -2087,7 +2087,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 .eq(SoDeliveryNoticeEntity::getIsDeleted,Boolean.FALSE)
                 .list();
         if(!soDeliveryNoticeList.isEmpty()){
-            throw new ServiceException(ApiError.ERROR_92175);
+            throw new ServiceException(ApiError.BILL_HAS_DOWNSTREAM_VOID_FORBIDDEN);
         }
 //        //销售出库单
 //        List<SoOutstockEntity> soOutstockList = FeignQuery.create(SoOutstockEntity.class)
@@ -2096,12 +2096,12 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 //                .eq(SoOutstockEntity::getIsDeleted,Boolean.FALSE)
 //                .list();
 //        if(!soOutstockList.isEmpty()){
-//            throw new ServiceException(ApiError.ERROR_92175);
+//            throw new ServiceException(ApiError.ERROR_DOC_HAS_DOWNSTREAM_CANNOT_VOID);
 //        }
 //        //备货申请单
 //        List<SalesDemandEntity> salesDemandList = saleDemandFeign.listBySourceIds(ids);
 //        if(!salesDemandList.isEmpty()){
-//            throw new ServiceException(ApiError.ERROR_92175);
+//            throw new ServiceException(ApiError.ERROR_DOC_HAS_DOWNSTREAM_CANNOT_VOID);
 //        }
     }
 
@@ -2154,7 +2154,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         SoInfoDTO.CustomerDTO customer = new SoInfoDTO.CustomerDTO();
         SoInfoEntity soInfo = this.getById(id);
         if (Objects.isNull(soInfo)) {
-            throw new ServiceException(ApiError.ERROR_92016);
+            throw new ServiceException(ApiError.SO_NOT_FOUND);
         }
         BeanMapper.copy(soInfo, customer);
         customer.setSoRemark(soInfo.getRemark());
@@ -2240,7 +2240,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
         Boolean invalidStatus = customer.getInvalidStatus();
         if (invalidStatus != null && invalidStatus) {
-            throw new ServiceException(ApiError.ERROR_92022);
+            throw new ServiceException(ApiError.SO_EXPORT_CONTRACT_INVOICE_ALLOWED);
         }
 
 
@@ -2250,7 +2250,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         String waitSubmit = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
         List<String> statusList = Arrays.asList(approve, approveIng, waitSubmit);
         if (!statusList.contains(approveStatus)) {
-            throw new ServiceException(ApiError.ERROR_92022);
+            throw new ServiceException(ApiError.SO_EXPORT_CONTRACT_INVOICE_ALLOWED);
         }
         result.setCode(customer.getCode());
         result.setCustomerName(customer.getCustomerName());
@@ -2330,13 +2330,13 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         //未审核完成不支持下推备货申请单
         SoInfoDTO.ViewGenerateSalesDemandDTO viewGenerateSalesDemandDTO = list.stream().filter(obj -> !ApproveStatusEnum.APPROVE.getStatus().equals(obj.getApproveStatus())).findFirst().orElse(null);
         if (ObjectUtils.isNotEmpty(viewGenerateSalesDemandDTO)) {
-            throw new ServiceException(ApiError.ERROR_92025.code, String.format(ApiError.ERROR_92025.msg, viewGenerateSalesDemandDTO.getSourceCode()));
+            throw new ServiceException(ApiError.SO_NOT_APPROVED_CANNOT_PUSH_STOCKREQ.getCode(), MessageUtils.getMessage(ApiError.SO_NOT_APPROVED_CANNOT_PUSH_STOCKREQ, viewGenerateSalesDemandDTO.getSourceCode()));
         }
 
         List<String> skuIds = list.stream().map(SoInfoDTO.ViewGenerateSalesDemandDTO::getSkuId).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIds);
         if (CollectionUtils.isEmpty(skuList)) {
-            throw new ServiceException(ApiError.ERROR_95084);
+            throw new ServiceException(ApiError.PRODUCT_INFO_NOT_FOUND);
         }
         List<String> soIdList = list.stream().map(SoInfoDTO.ViewGenerateSalesDemandDTO::getSourceId).collect(Collectors.toList());
         //发货通知单的
@@ -2418,11 +2418,11 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         long unApprove = soInfoList.stream().filter(s -> !s.getApproveStatus().getStatus().
                 equals(approveStatus)).count();
         if (unApprove > 0) {
-            throw new ServiceException(ApiError.ERROR_92042);
+            throw new ServiceException(ApiError.SO_APPROVED_REQUIRED_PUSH);
         }
         long invalidCount = soInfoList.stream().filter(s -> s.getInvalidStatus()).count();
         if (invalidCount > 0) {
-            throw new ServiceException(ApiError.ERROR_92043);
+            throw new ServiceException(ApiError.SO_NOT_VOID_REQUIRED_PUSH);
         }
 
         List<SoChangeEntity> soChangeList = soChangeService.listBySoIds(ids);
@@ -2437,7 +2437,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             //但是 如果 有作废的数据 也可以下推
             long invalidNum = soChangeList.stream().filter(s -> statusList.contains(s.getApproveStatus().getStatus()) && s.getInvalidStatus()).count();
             if (invalidNum != count) {
-                throw new ServiceException(ApiError.ERROR_92041);
+                throw new ServiceException(ApiError.SO_CHANGE_IN_PROGRESS);
             }
 
         }
@@ -2505,7 +2505,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         List<SoInfoDTO.GenerateDeliveryView> viewList = baseMapper.generateDeliveryView(ids);
         long closeCount = viewList.stream().filter(s -> s.getIsClose()).count();
         if (closeCount > 0) {
-            throw new ServiceException(ApiError.ERROR_98068);
+            throw new ServiceException(ApiError.SO_CLOSED_PRODUCT_EXISTS_CANNOT_PUSH);
         }
         //获取sku的id集合
         List<String> skuIdList = viewList.stream().map(SoInfoDTO.GenerateDeliveryView::getSkuId).collect(Collectors.toList());
@@ -2680,11 +2680,11 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         SoInfoDTO.SoPIDTO soPi = new SoInfoDTO.SoPIDTO();
         SoInfoEntity soInfo = this.getById(id);
         if (Objects.isNull(soInfo)) {
-            throw new ServiceException(ApiError.ERROR_92003);
+            throw new ServiceException(ApiError.SO_NOT_FOUND);
         }
         Boolean invalidStatus = soInfo.getInvalidStatus();
         if (invalidStatus != null && invalidStatus) {
-            throw new ServiceException(ApiError.ERROR_92022);
+            throw new ServiceException(ApiError.SO_EXPORT_CONTRACT_INVOICE_ALLOWED);
         }
         String approveStatus = soInfo.getApproveStatus().getStatus();
         String approve = ApproveStatusEnum.APPROVE.getStatus();
@@ -2692,7 +2692,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         String waitSubmit = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
         List<String> statusList = Arrays.asList(approve, approveIng, waitSubmit);
         if (!statusList.contains(approveStatus)) {
-            throw new ServiceException(ApiError.ERROR_92022);
+            throw new ServiceException(ApiError.SO_EXPORT_CONTRACT_INVOICE_ALLOWED);
         }
 
 
@@ -2821,7 +2821,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     public void brushCostData(String id) {
         SoInfoEntity soInfoEntity = super.getById(id);
         if(null == soInfoEntity){
-            throw new ServiceException(ApiError.ERROR_92016);
+            throw new ServiceException(ApiError.SO_NOT_FOUND);
         }
         List<SoDetailEntity> detailList = soDetailService.listBaseByMainId(soInfoEntity.getId());
         if (CollUtil.isEmpty(detailList)) {
@@ -2866,7 +2866,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         List<SoInfoDTO.PrintDTO> printDTOList = new ArrayList<>();
         List<SoInfoEntity> soInfoEntities = this.listByIds(ids);
         if (CollectionUtils.isEmpty(soInfoEntities)) {
-            throw new ServiceException(ApiError.ERROR_98004);
+            throw new ServiceException(ApiError.BILL_SELECTION_REQUIRED);
         }
         //获取客户id集合
         List<String> customerIds = soInfoEntities.stream().map(SoInfoEntity::getCustomerId).distinct().collect(Collectors.toList());
@@ -2928,7 +2928,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         SoInfoDTO.CustomerDTO customer = this.getSoCustomer(id);
         Boolean invalidStatus = customer.getInvalidStatus();
         if (invalidStatus != null && invalidStatus) {
-            throw new ServiceException(ApiError.ERROR_92022);
+            throw new ServiceException(ApiError.SO_EXPORT_CONTRACT_INVOICE_ALLOWED);
         }
         String approveStatus = customer.getApproveStatus().getStatus();
         String approve = ApproveStatusEnum.APPROVE.getStatus();
@@ -2936,7 +2936,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         String waitSubmit = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
         List<String> statusList = Arrays.asList(approve, approveIng, waitSubmit);
         if (!statusList.contains(approveStatus)) {
-            throw new ServiceException(ApiError.ERROR_92022);
+            throw new ServiceException(ApiError.SO_EXPORT_CONTRACT_INVOICE_ALLOWED);
         }
         result.setCode(customer.getCode());
         result.setCustomerName(customer.getCustomerName());
@@ -3040,7 +3040,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     public Boolean checkSoPushDeliveryNotice(String id) {
         SoInfoEntity soInfoEntity = this.getById(id);
         if (Objects.isNull(soInfoEntity)) {
-            throw new ServiceException(ApiError.ERROR_92003);
+            throw new ServiceException(ApiError.SO_NOT_FOUND);
         }
         String soId = soInfoEntity.getId();
         Map<String, Long> pushDownMap = soDeliveryNoticeFeign.getPushDownDeliveryNoticeCnt(Lists.newArrayList(soId));
@@ -3161,11 +3161,11 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         SoInfoDTO.SoPIDTO soPi = new SoInfoDTO.SoPIDTO();
         SoInfoEntity soInfo = this.getById(id);
         if (Objects.isNull(soInfo)) {
-            throw new ServiceException(ApiError.ERROR_92003);
+            throw new ServiceException(ApiError.SO_NOT_FOUND);
         }
         Boolean invalidStatus = soInfo.getInvalidStatus();
         if (invalidStatus != null && invalidStatus) {
-            throw new ServiceException(ApiError.ERROR_92022);
+            throw new ServiceException(ApiError.SO_EXPORT_CONTRACT_INVOICE_ALLOWED);
         }
         String approveStatus = soInfo.getApproveStatus().getStatus();
         String approve = ApproveStatusEnum.APPROVE.getStatus();
@@ -3173,7 +3173,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         String waitSubmit = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
         List<String> statusList = Arrays.asList(approve, approveIng, waitSubmit);
         if (!statusList.contains(approveStatus)) {
-            throw new ServiceException(ApiError.ERROR_92022);
+            throw new ServiceException(ApiError.SO_EXPORT_CONTRACT_INVOICE_ALLOWED);
         }
 
 
@@ -3323,7 +3323,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             wb.close();
         } catch (Exception e) {
             log.error("b2b 销售订单导入 downloadTemplate  出错了 e>>>>>>>{}", e);
-            throw new ServiceException(ApiError.ERROR_95131);
+            throw new ServiceException(ApiError.FILE_IMPORT_TEMPLATE_DOWNLOAD_FAILED);
         }
     }
 
@@ -3344,7 +3344,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             EasyExcel.read(excelFile.getInputStream(), B2BSoImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
             List<B2BSoImportExcelDTO> excelDateList = excelListenerUtil.getExcelDateList();
             if (CollectionUtils.isEmpty(excelDateList)) {
-                throw new ServiceException(ApiError.ERROR_95123);
+                throw new ServiceException(ApiError.FILE_DATA_REQUIRED);
             }
             //错误的
             List<B2BSoImportExcelDTO> errorList = excelListenerUtil.getErrorList();
@@ -3362,19 +3362,19 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 try {
                     new ExcelPrintUtils().patchExport(errorList, response, sb.toString(), excelPath);
                 } catch (IOException e) {
-                    throw new ServiceException(ApiError.ERROR_95125);
+                    throw new ServiceException(ApiError.FILE_EXPORT_ERROR_DATA_FAILED);
                 }
                 return Boolean.FALSE;
             }
         } catch (SocketTimeoutException e) {
             log.error("导入超时错误！>>>{}", e);
-            throw new ServiceException(ApiError.ERROR_IMPORT_TIMEOUT);
+            throw new ServiceException(ApiError.FILE_IMPORT_TIMEOUT);
         } catch (IOException e) {
             log.error("导入错误！>>>{}", e);
-            throw new ServiceException(ApiError.ERROR_95124);
+            throw new ServiceException(ApiError.FILE_DATA_IMPORT_FAILED);
         } catch (ExcelCommonException e) {
             log.error("导入错误！>>>{}", e);
-            throw new ServiceException(ApiError.ERROR_1016);
+            throw new ServiceException(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX);
         }
 
         return Boolean.TRUE;
@@ -3387,18 +3387,18 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     public Boolean generateMachineInfo(List<String> ids) {
         List<SoDetailEntity> soDetailEntityList = soDetailService.listByIds(ids);
         if (CollectionUtils.isEmpty(soDetailEntityList)) {
-            throw new ServiceException(ApiError.ERROR_SO_B2C_DETAIL_NOT_EXIST);
+            throw new ServiceException(ApiError.SO_B2C_DETAIL_NOT_FOUND);
         }
 
         //主表信息
         List<String> mainIds = soDetailEntityList.stream().map(SoDetailEntity::getMainId).collect(Collectors.toList());
         List<SoInfoEntity> soInfoEntityList = this.listByIds(mainIds);
         if (CollectionUtils.isEmpty(soInfoEntityList)) {
-            throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
+            throw new ServiceException(ApiError.SO_B2C_NOT_FOUND);
         }
         String codes = soInfoEntityList.stream().filter(obj -> !BillApproveStatusEnum.APPROVE.equals(obj.getApproveStatus())).map(SoInfoEntity::getCode).collect(Collectors.joining(","));
         if (StringUtils.isNotBlank(codes)) {
-            throw new ServiceException(ApiError.ERROR_SO_PUSH_APPROVE_STATUS,codes);
+            throw new ServiceException(ApiError.SO_NOT_APPROVED_PUSH_FORBIDDEN,codes);
         }
 
         //非组合品不能下推加工单
@@ -3423,7 +3423,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             //明细信息
             List<SoDetailEntity> soDetailList = soDetailEntityList.stream().filter(obj -> entry.getId().equals(obj.getMainId())).collect(Collectors.toList());
             if (CollectionUtils.isEmpty(soDetailList)) {
-                throw new ServiceException(ApiError.ERROR_SO_B2C_DETAIL_NOT_EXIST);
+                throw new ServiceException(ApiError.SO_B2C_DETAIL_NOT_FOUND);
             }
             List<MachineDetailDTO.AddDTO> detailList = new ArrayList<>();
             for (SoDetailEntity soDetailEntity : soDetailList) {
@@ -3435,7 +3435,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 CfgRulePickingStagingEntity pickingStaging = warehouseStagingList.stream()
                         .filter(staging -> PickingBillTypeEnum.B2B.getCode().equals(staging.getBillType()))
                         .filter(staging -> staging.getWarehouseId().equals(entry.getWarehouseId()))
-                        .findFirst().orElseThrow(() -> new ServiceException(ApiError.ERROR_99088));
+                        .findFirst().orElseThrow(() -> new ServiceException(ApiError.WH_LOCATION_DEFAULT_STAGING_NOT_FOUND));
                 addDetailDTO.setWarehouseLocation(pickingStaging.getWarehouseLocation());
                 List<BomChildrenSkuDTO> bomList = bomChildrenList.stream().filter(obj -> obj.getParentSkuId().equals(soDetailEntity.getSkuId()) && BomTypeEnum.COMBINATION.getType().equals(obj.getType())).collect(Collectors.toList());
                 if (CollectionUtils.isEmpty(bomList)) {
@@ -3467,7 +3467,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             isHasAdd = Boolean.TRUE;
         }
         if (!isHasAdd) {
-            throw new ServiceException(ApiError.ERROR_SO_INFO_PUSH_MACHINE_NOT_EXIST_DATA);
+            throw new ServiceException(ApiError.SO_PUSH_MACHINE_DATA_NOT_FOUND);
         }
         return Boolean.TRUE;
     }
@@ -3478,7 +3478,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         List<SoDetailEntity> soDetailEntityList = soDetailService.listSoDetailByIds(ids);
         long closeCount = soDetailEntityList.stream().filter(s -> s.getIsClose()).count();
         if (closeCount > 0) {
-            throw new ServiceException(ApiError.ERROR_98068);
+            throw new ServiceException(ApiError.SO_CLOSED_PRODUCT_EXISTS_CANNOT_PUSH);
         }
         soDetailEntityList = soDetailEntityList.stream()
                 .filter(v -> Boolean.FALSE.equals(v.getIsClose()))
@@ -3520,7 +3520,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         List<SoDetailEntity> soDetailEntities = soDetailService.listByIds(collect);
         long count = soDetailEntities.stream().filter(item -> item.getPerBoxQty() > 1).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_PROHIBIT_PER_BOX_ONE_GEN_SO_OUT_STOCK);
+            throw new ServiceException(ApiError.PO_BOX_PER_QTY_GT_ONE_SO_OUTBOUND_FORBIDDEN);
         }
 
         List<BatchResultDTO> batchResultDTOList = new ArrayList<>();
@@ -3591,7 +3591,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     public SoInfoDTO.LockVirtualInventoryDTO viewLockVirtualInventory(String id) {
         SoInfoEntity soInfoEntity = this.getById(id);
         if (ObjectUtil.isEmpty(soInfoEntity)) {
-            throw new ServiceException(ApiError.ERROR_92016);
+            throw new ServiceException(ApiError.SO_NOT_FOUND);
         }
         if (soInfoEntity.getInvalidStatus()) {
             throw new ServiceException( CharSequenceUtil.format("销售订单【{}】已作废不支持锁定库存",soInfoEntity.getCode()));
@@ -3604,7 +3604,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     public List<SoInfoDTO.BatchLockVirtualInventoryDTO> viewBatchLockVirtualInventory(List<String> detailIdList) {
         List<SoDetailEntity> soDetailList = soDetailService.listByIds(detailIdList);
         if (CollectionUtils.isEmpty(soDetailList)) {
-            throw new ServiceException(ApiError.ERROR_92015);
+            throw new ServiceException(ApiError.SO_DETAIL_NOT_FOUND);
         }
         List<SoInfoDTO.BatchLockVirtualInventoryDTO> resuleList = handleBatchLockVirtualInventory(detailIdList,soDetailList);
         return resuleList;
@@ -3616,14 +3616,14 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     public Boolean unLockVirtualInventory(String id) {
         SoInfoEntity soInfoEntity = getById(id);
         if (ObjectUtil.isEmpty(soInfoEntity)) {
-            throw new ServiceException(ApiError.ERROR_92016);
+            throw new ServiceException(ApiError.SO_NOT_FOUND);
         }
         if (soInfoEntity.getInvalidStatus()) {
             throw new ServiceException( CharSequenceUtil.format("销售订单【{}】已作废不支持释放库存",soInfoEntity.getCode()));
         }
         List<SoDetailEntity> soDetailList = soDetailService.listBaseByMainId(id);
         if (CollectionUtils.isEmpty(soDetailList)) {
-            throw new ServiceException(ApiError.ERROR_92015);
+            throw new ServiceException(ApiError.SO_DETAIL_NOT_FOUND);
         }
         List<String> detailIdList = soDetailList.stream().map(SoDetailEntity::getId).collect(Collectors.toList());
         BatchResultDTO resultDTO = soDetailService.batchUnLockVirtualInventory(detailIdList, null);
@@ -3766,9 +3766,10 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @DistributeLocker(keyName = "dto.code")
     public void handlePlatformConsumer(PlatformB2bOrderDTO dto) {
         //查询是否存在
-        SoInfoEntity exist = this.getByThirdSystemAndCode(dto.getThirdSystem(), dto.getCode());
+        SoInfoEntity exist = this.getByThirdSystemAndCode(dto.getDictPlatform(), dto.getCode());
         List<SoDetailEntity> existList;
         if(exist != null) {
             existList = soDetailService.listBaseByMainIdList(Arrays.asList((exist.getId())));
@@ -3777,11 +3778,19 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 if(exist.getInvalidStatus()){
                     return;
                 }
+                //如果是审核中，撤销审核
+                if(BillApproveStatusEnum.APPROVE_ING.equals(exist.getApproveStatus())){
+                    this.cancelProcess(Arrays.asList(exist.getId()));
+                }
+                //如果是已审核，反审核
+                if(BillApproveStatusEnum.APPROVE.equals(exist.getApproveStatus())){
+                    this.disApprove(exist,new ArrayList<>());
+                }
                 this.invalid(Collections.singletonList(exist.getId()),"平台单据作废");
                 return;
             }
             //判断平台更新时间有更新
-            if(!dto.getPlatformUpdateTime().isAfter(exist.getPlatformUpdateTime())){
+            if(Objects.isNull(dto.getPlatformUpdateTime()) || !dto.getPlatformUpdateTime().isAfter(exist.getPlatformUpdateTime())){
                 log.warn("平台更新时间没有更新，{}",exist.getCode());
                 return;
             }
@@ -3800,9 +3809,10 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 this.disApprove(exist,new ArrayList<>());
             }
             //其他状态，直接更新
-            PlatformB2bOrderDTO.ErpInfoDTO erpInfoDTO = dto.getErpInfoDTO();
             SoInfoDTO.UpdateDTO updateDTO = new SoInfoDTO.UpdateDTO();
             updateDTO.setId(exist.getId());
+            updateDTO.setDictPlatform(dto.getDictPlatform());
+            updateDTO.setThirdSystem(dto.getThirdSystem());
             updateDTO.setPlatformOrderCode(dto.getCode());
             updateDTO.setPlatformOrderId(dto.getPlatformId());
             updateDTO.setOrderAmount(dto.getOrderAmount());
@@ -3810,29 +3820,33 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             updateDTO.setOrderType(OrderTypeEnum.B2B.getCode());
             updateDTO.setRequireDate(dto.getBillDate());
             updateDTO.setBillDate(dto.getBillDate());
-            updateDTO.setSalesOrgId(erpInfoDTO.getSalesOrgId());
-            updateDTO.setSellerId(erpInfoDTO.getSellerId());
-            updateDTO.setWarehouseId(erpInfoDTO.getWarehouseId());
-            updateDTO.setDictPlatform(dto.getThirdSystem());
-            updateDTO.setCustomerId(erpInfoDTO.getCustomerId());
-            updateDTO.setSalesDeptId(erpInfoDTO.getSalesDeptId());
-            updateDTO.setReceiverName(erpInfoDTO.getReceiverName());
+            updateDTO.setSalesOrgId(dto.getSalesOrgId());
+            updateDTO.setSellerId(dto.getSellerId());
+            updateDTO.setWarehouseId(dto.getWarehouseId());
+            updateDTO.setCustomerId(dto.getCustomerId());
+            updateDTO.setSalesDeptId(dto.getSalesDeptId());
+            updateDTO.setReceiverName(dto.getReceiverName());
             updateDTO.setIsCollectShippingFee(false);
-            updateDTO.setTelNumber(erpInfoDTO.getTelNumber());
-            updateDTO.setReceiveAddressId(erpInfoDTO.getCustomerAddressId());
+            updateDTO.setTelNumber(dto.getTelNumber());
+            updateDTO.setReceiveAddressId(dto.getCustomerAddressId());
             updateDTO.setCurrency(dto.getCurrency());
-            updateDTO.setReceiveCondition(erpInfoDTO.getReceiveCondition());
+            updateDTO.setReceiveCondition(dto.getReceiveCondition());
             updateDTO.setPlatformCreateTime(dto.getPlatformCreateTime());
             updateDTO.setPlatformUpdateTime(dto.getPlatformUpdateTime());
             updateDTO.setAccountDeductAmount(dto.getAccountDeductAmount());
             updateDTO.setRebateDeductAmount(dto.getRebateDeductAmount());
             updateDTO.setCreditDeductAmount(dto.getCreditDeductAmount());
-            updateDTO.setIsDeclare(erpInfoDTO.getIsDeclare());
+            updateDTO.setIsDeclare(dto.getIsDeclare());
             updateDTO.setTransactionSubType(OrderSubTypeEnum.ONLINE_ORDER.code);
             updateDTO.setRemark(dto.getRemark());
-            updateDTO.setIsTax(erpInfoDTO.getIsTax());
+            updateDTO.setIsTax(dto.getIsTax());
             updateDTO.setDeliveryMode(DeliveryModeEnum.EXPRESS.getCode());
-            updateDTO.setAddressType(CustomerAddressTypeEnum.DELIVER.getCode());
+            updateDTO.setAddressType(dto.getAddressType());
+            updateDTO.setShippingFee(dto.getShippingFee());
+            updateDTO.setIsCollectShippingFee(dto.getIsCollectShippingFee());
+            updateDTO.setPlatformOrderCode(dto.getPlatformOrderCode());
+            updateDTO.setThirdCode(dto.getThirdCode());
+            updateDTO.setCustomerOrderNo(dto.getCustomerOrderNo());
             List<String> attachUrlList = dto.getAttachment().stream().map(AttachDTO::getAttachUrl).filter(StringUtils::isNotBlank).collect(Collectors.toList());
             List<String> attachNameList = dto.getAttachment().stream().map(AttachDTO::getAttachName).filter(StringUtils::isNotBlank).collect(Collectors.toList());
             updateDTO.setAttachUrlList(attachUrlList);
@@ -3883,8 +3897,9 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 return;
             }
             //新增单据
-            PlatformB2bOrderDTO.ErpInfoDTO erpInfoDTO = dto.getErpInfoDTO();
             SoInfoDTO.AddDTO addDTO = new SoInfoDTO.AddDTO();
+            addDTO.setDictPlatform(dto.getDictPlatform());
+            addDTO.setThirdSystem(dto.getThirdSystem());
             addDTO.setPlatformOrderCode(dto.getCode());
             addDTO.setPlatformOrderId(dto.getPlatformId());
             addDTO.setOrderAmount(dto.getOrderAmount());
@@ -3893,28 +3908,32 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             addDTO.setIsCollectShippingFee(false);
             addDTO.setBillDate(dto.getBillDate());
             addDTO.setDiscountAmount(dto.getDiscountAmount());
-            addDTO.setSalesOrgId(erpInfoDTO.getSalesOrgId());
-            addDTO.setSalesDeptId(erpInfoDTO.getSalesDeptId());
-            addDTO.setSellerId(erpInfoDTO.getSellerId());
-            addDTO.setWarehouseId(erpInfoDTO.getWarehouseId());
-            addDTO.setDictPlatform(dto.getThirdSystem());
-            addDTO.setCustomerId(erpInfoDTO.getCustomerId());
-            addDTO.setReceiverName(erpInfoDTO.getReceiverName());
-            addDTO.setReceiveAddressId(erpInfoDTO.getCustomerAddressId());
+            addDTO.setSalesOrgId(dto.getSalesOrgId());
+            addDTO.setSalesDeptId(dto.getSalesDeptId());
+            addDTO.setSellerId(dto.getSellerId());
+            addDTO.setWarehouseId(dto.getWarehouseId());
+            addDTO.setCustomerId(dto.getCustomerId());
+            addDTO.setReceiverName(dto.getReceiverName());
+            addDTO.setReceiveAddressId(dto.getCustomerAddressId());
             addDTO.setCurrency(dto.getCurrency());
-            addDTO.setTelNumber(erpInfoDTO.getTelNumber());
-            addDTO.setReceiveCondition(erpInfoDTO.getReceiveCondition());
+            addDTO.setTelNumber(dto.getTelNumber());
+            addDTO.setReceiveCondition(dto.getReceiveCondition());
             addDTO.setPlatformCreateTime(dto.getPlatformCreateTime());
             addDTO.setPlatformUpdateTime(dto.getPlatformUpdateTime());
             addDTO.setAccountDeductAmount(dto.getAccountDeductAmount());
             addDTO.setRebateDeductAmount(dto.getRebateDeductAmount());
             addDTO.setCreditDeductAmount(dto.getCreditDeductAmount());
             addDTO.setTransactionSubType(OrderSubTypeEnum.ONLINE_ORDER.code);
-            addDTO.setIsDeclare(erpInfoDTO.getIsDeclare());
+            addDTO.setIsDeclare(dto.getIsDeclare());
             addDTO.setRemark(dto.getRemark());
-            addDTO.setIsTax(erpInfoDTO.getIsTax());
-            addDTO.setAddressType(CustomerAddressTypeEnum.DELIVER.getCode());
+            addDTO.setIsTax(dto.getIsTax());
+            addDTO.setAddressType(dto.getAddressType());
             addDTO.setDeliveryMode(DeliveryModeEnum.EXPRESS.getCode());
+            addDTO.setShippingFee(dto.getShippingFee());
+            addDTO.setIsCollectShippingFee(dto.getIsCollectShippingFee());
+            addDTO.setPlatformOrderCode(dto.getPlatformOrderCode());
+            addDTO.setThirdCode(dto.getThirdCode());
+            addDTO.setCustomerOrderNo(dto.getCustomerOrderNo());
             List<String> attachUrlList = dto.getAttachment().stream().map(AttachDTO::getAttachUrl).filter(StringUtils::isNotBlank).collect(Collectors.toList());
             List<String> attachNameList = dto.getAttachment().stream().map(AttachDTO::getAttachName).filter(StringUtils::isNotBlank).collect(Collectors.toList());
             addDTO.setAttachUrlList(attachUrlList);
@@ -3951,14 +3970,13 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     }
 
     private boolean judgeHasChange(SoInfoEntity exist, List<SoDetailEntity> existList, PlatformB2bOrderDTO dto) {
-        PlatformB2bOrderDTO.ErpInfoDTO erpInfoDTO = dto.getErpInfoDTO();
         //校验主表字段
-        if(!exist.getCustomerId().equals(erpInfoDTO.getCustomerId())
+        if(!exist.getCustomerId().equals(dto.getCustomerId())
                 || !exist.getCurrency().equals(dto.getCurrency())
                 || !exist.getOrderAmount().equals(dto.getOrderAmount())
                 || !exist.getBillDate().equals(dto.getBillDate())
                 || !exist.getRemark().equals(dto.getRemark())
-                || !exist.getWarehouseId().equals(erpInfoDTO.getWarehouseId())
+                || !exist.getWarehouseId().equals(dto.getWarehouseId())
                 || !exist.getAccountDeductAmount().equals(dto.getAccountDeductAmount())
                 || !exist.getRebateDeductAmount().equals(dto.getRebateDeductAmount())
                 || !exist.getCreditDeductAmount().equals(dto.getCreditDeductAmount())
@@ -4113,7 +4131,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     public Boolean updateDhfPlatformOrderId(SoInfoDTO.UpdatePlatformOrderIdDTO dto) {
         SoInfoEntity soInfoEntity = getBySoCode(dto.getSoCode());
         if (ObjectUtil.isEmpty(soInfoEntity)) {
-            throw new ServiceException(ApiError.ERROR_92016);
+            throw new ServiceException(ApiError.SO_NOT_FOUND);
         }
         //更新主表平台订单Id
         updatePlatformOrderId(soInfoEntity.getId(),dto.getPlatformOrderId());
@@ -4150,7 +4168,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     public B2bThirdDeliveryDTO.ViewDTO getB2bThirdDeliveryView(B2bThirdDeliveryDTO.ViewQueryDTO dto) {
         SoInfoEntity soInfoEntity = this.getById(dto.getSoId());
         if (ObjectUtil.isEmpty(soInfoEntity)) {
-            throw new ServiceException(ApiError.ERROR_92016);
+            throw new ServiceException(ApiError.SO_NOT_FOUND);
         }
         if (!BillApproveStatusEnum.APPROVE.equals(soInfoEntity.getApproveStatus())){
             throw new ServiceException("订单未审核,不允许下推三方发货单");
@@ -4236,6 +4254,17 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     @Override
     public List<KolB2bApplicationDTO.B2bSoInfoDTO> listRefBill(String sourceId) {
         return baseMapper.listRefBill(sourceId);
+    }
+
+    @Override
+    public List<SoInfoEntity> getByPlatformOrderCode(String platformOrderCode) {
+        if(StringUtils.isBlank(platformOrderCode)){
+            return new ArrayList<>();
+        }
+
+        return this.lambdaQuery()
+                .eq(SoInfoEntity::getPlatformOrderCode, platformOrderCode)
+                .list();
     }
 
     /**
@@ -4497,7 +4526,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             String warehouseId = "";
             String warehouseOrgId = "";
             if (Objects.isNull(warehouse)) {
-                errorMsgList.add(ApiError.WAREHOUSE_NOT_EXIST_NO_PERMISSION.msg);
+                errorMsgList.add(MessageUtils.getMessage(ApiError.WH_NOT_EXIST_OR_NO_PERMISSION));
             } else {
                 warehouseId = warehouse.getId();
                 warehouseOrgId = warehouse.getOrgId();
@@ -4841,7 +4870,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         List<String> customerIdList = soInfoList.stream().map(SoInfoEntity::getCustomerId).distinct().collect(Collectors.toList());
         List<CustomerInfoEntity> customerInfoList = customerInfoService.listByIds(customerIdList);
         if (CollectionUtils.isEmpty(customerInfoList)) {
-            throw new ServiceException(ApiError.ERROR_92011);
+            throw new ServiceException(ApiError.CUSTOMER_NOT_FOUND);
         }
         //仓库
         List<String> warehouseIdList = soInfoList.stream().map(SoInfoEntity::getWarehouseId).distinct().collect(Collectors.toList());
@@ -4884,14 +4913,14 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             //销售订单明细
             SoDetailEntity soDetailEntity = soDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), soDetailId)).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(soDetailEntity)) {
-                throw new ServiceException(ApiError.ERROR_92016);
+                throw new ServiceException(ApiError.SO_NOT_FOUND);
             }
 
             SoInfoDTO.BatchLockVirtualInventoryDTO batchLockDTO = new SoInfoDTO.BatchLockVirtualInventoryDTO();
             //主表信息
             SoInfoEntity soInfoEntity = soInfoList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), soDetailEntity.getMainId())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(soInfoEntity)) {
-                throw new ServiceException(ApiError.ERROR_92016);
+                throw new ServiceException(ApiError.SO_NOT_FOUND);
             }
             batchLockDTO.setId(soInfoEntity.getId());
             batchLockDTO.setDetailId(soDetailEntity.getId());
@@ -4971,7 +5000,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         //客户信息
         CustomerInfoEntity customerInfoEntity = customerInfoService.getCustomerById(soInfoEntity.getCustomerId());
         if (ObjectUtil.isEmpty(customerInfoEntity)) {
-            throw new ServiceException(ApiError.ERROR_92011);
+            throw new ServiceException(ApiError.CUSTOMER_NOT_FOUND);
         }
         dto.setCustomerName(customerInfoEntity.getName());
         //订单类型名称
@@ -4979,13 +5008,13 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         //部门名称
         List<SysDepartmentEntity> sysDepartmentEntityList = sysUserFeign.listDeptByIds(Arrays.asList(soInfoEntity.getSalesDeptId()));
         if (CollectionUtils.isEmpty(sysDepartmentEntityList)) {
-            throw new ServiceException(ApiError.ERROR_9029);
+            throw new ServiceException(ApiError.COMMON_DEPT_NOT_FOUND);
         }
         dto.setSalesDeptName(sysDepartmentEntityList.get(0).getName());
         //仓库
         WarehouseEntity warehouseEntity = FeignQuery.getById(WarehouseEntity.class, soInfoEntity.getWarehouseId());
         if (ObjectUtil.isEmpty(warehouseEntity)) {
-            throw new ServiceException(ApiError.ERROR_99002);
+            throw new ServiceException(ApiError.WH_PARAM_NOT_FOUND);
         }
         dto.setWarehouseName(warehouseEntity.getName());
         //虚拟仓库
@@ -4996,7 +5025,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         //明细信息
         List<SoDetailEntity> soDetailList = soDetailService.listBaseByMainId(soInfoEntity.getId());
         if (CollectionUtils.isEmpty(soDetailList)) {
-            throw new ServiceException(ApiError.ERROR_92015);
+            throw new ServiceException(ApiError.SO_DETAIL_NOT_FOUND);
         }
         //产品信息
         List<String> skuIdList = soDetailList.stream().map(SoDetailEntity::getDeliverySkuId).distinct().collect(Collectors.toList());

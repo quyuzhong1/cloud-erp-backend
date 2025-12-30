@@ -147,7 +147,7 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
         //不允许重复添加
         long sourceDetailIdCount = detailList.stream().map(SampleReturnDetailDTO.AddDTO::getSourceDetailId).distinct().count();
         if(sourceDetailIdCount != detailList.size()){
-            throw new ServiceException(ApiError.ERROR_REPEAT_SKU);
+            throw new ServiceException(ApiError.PRODUCT_SKU_DUPLICATE);
         }
         List<SampleReturnDetailEntity> sampleReturnDetailEntities = BeanMapperUtils.copyList(SampleReturnDetailEntity.class, detailList);
         List<String> skuIds = sampleReturnDetailEntities.stream().map(SampleReturnDetailEntity::getSkuId).distinct().collect(Collectors.toList());
@@ -181,13 +181,13 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
             String sourceDetailId = sampleReturnDetailEntity.getSourceDetailId();
             SampleBorrowInfoDTO.SampleReturnView sampleReturnView = viewMap.getOrDefault(sourceDetailId, null);
             if(Objects.isNull(sampleReturnView)){
-                throw new ServiceException(ApiError.ERROR_SAMPLE_RETURN_QTY_NOT_EXIST,sampleReturnDetailEntity.getSkuNo());
+                throw new ServiceException(ApiError.SAMPLE_RETURN_QTY_NOT_EXIST,sampleReturnDetailEntity.getSkuNo());
             }
 
             Integer returnQty = Objects.isNull(sampleReturnDetailEntity.getReturnQty()) ? 0 :sampleReturnDetailEntity.getReturnQty();
             Integer canReturnQty =Objects.isNull(sampleReturnView.getCanReturnQty()) ? 0 :sampleReturnView.getCanReturnQty();
             if(canReturnQty < returnQty){
-                throw new ServiceException(ApiError.ERROR_SAMPLE_RETURN_QTY_NOT_ENOUGH,sampleReturnDetailEntity.getSkuNo(),returnQty,canReturnQty);
+                throw new ServiceException(ApiError.SAMPLE_RETURN_QTY_NOT_ENOUGH,sampleReturnDetailEntity.getSkuNo(),returnQty,canReturnQty);
             }
         }
     }
@@ -229,10 +229,10 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
     @Override
     public Boolean update(SampleReturnInfoDTO.UpdateDTO addOrUpdateDTO) {
         SampleReturnInfoEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "样品归还单"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "样品归还单"));
         // 待提交和审核不通过允许修改
         if (!ApproveStatusEnum.allowUpdateStatus(old.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_1029);
+            throw new ServiceException(ApiError.BILL_UPDATE_STATUS_NOT_ALLOWED);
         }
         // 校验明细不能为空
         if (CollUtil.isEmpty(addOrUpdateDTO.getDetailList())) {
@@ -269,7 +269,7 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
         //不允许重复添加
         long sourceDetailIdCount = detailList.stream().map(SampleReturnDetailDTO.UpdateDTO::getSourceDetailId).distinct().count();
         if(sourceDetailIdCount != detailList.size()){
-            throw new ServiceException(ApiError.ERROR_REPEAT_SKU);
+            throw new ServiceException(ApiError.PRODUCT_SKU_DUPLICATE);
         }
         List<SampleReturnDetailEntity> oldList = sampleReturnDetailService.listByMainId(sampleReturnInfoEntity.getId());
 
@@ -508,12 +508,12 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
     public BatchResultDTO approve(ApproveOneDTO dto, ClientTypeEnum clientType) {
         ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(dto.getType());
         if(Objects.equals(approveType, ApproveTypeEnum.REJECT) && StrUtils.isEmpty(dto.getComment())) {
-            throw new ServiceException(ApiError.REJECT_COMMENT_NOT_EMPTY);
+            throw new ServiceException(ApiError.WF_REJECT_COMMENT_REQUIRED);
         }
         SampleReturnInfoEntity entity = getById(dto.getId());
         // 审核中的数据允许审核
         if(!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
-            throw new ServiceException(ApiError.ERROR_98006);
+            throw new ServiceException(ApiError.WF_APPROVE_ALLOWED_STATUS_ONLY);
         }
 
         // 使用分布式锁进行数量校验
@@ -545,7 +545,7 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
         ApiResult<ProcessManagementDTO.ApproveResultDTO> approveResult = workflowFeign.approve(approveDTO);
         Integer code = approveResult.getCode();
         if (200 != code) {
-            throw new ServiceException(ApiError.ERROR_94006);
+            throw new ServiceException(ApiError.WF_APPROVE_FAILED);
         }
         ProcessManagementDTO.ApproveResultDTO data = approveResult.getData();
         if (ObjectUtil.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()) {
@@ -605,7 +605,7 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
     private Boolean validateDisApprove(SampleReturnInfoEntity entity) {
         // 已审核支持反审核
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE)) {
-            throw new ServiceException(ApiError.ERROR_98014);
+            throw new ServiceException(ApiError.BILL_REVERSE_APPROVAL_ALLOWED_APPROVED_ONLY);
         }
         return true;
     }
@@ -616,7 +616,7 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
         SampleReturnInfoEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到样品归还单数据"));
         // 只有待提交数据允许删除
         if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT, entity.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_98032);
+            throw new ServiceException(ApiError.BILL_SUBMIT_ALLOWED_STATUS_ONLY);
         }
         // 删除数据
         log.info("删除 开始删除样品归还单数据，id：【{}】", id);
@@ -645,11 +645,11 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
         SampleReturnInfoEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到样品归还单数据"));
         // 只有待提交、审核不通过数据允许作废
         if (!(Objects.equals(ApproveStatusEnum.WAIT_SUBMIT, entity.getApproveStatus()) || Objects.equals(ApproveStatusEnum.REJECT, entity.getApproveStatus()))) {
-            throw new ServiceException(ApiError.ERROR_98005);
+            throw new ServiceException(ApiError.BILL_VOID_ALLOWED_STATUS_ONLY);
         }
         //已作废不支持作废
         if(entity.getInvalidStatus()){
-            throw new ServiceException(ApiError.ERROR_98012);
+            throw new ServiceException(ApiError.BILL_ALREADY_VOID_CANNOT_VOID_AGAIN);
         }
 
         log.info("作废 开始作废样品归还单数据，id：【{}】", id);
@@ -673,7 +673,7 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
         SampleReturnInfoEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到样品归还单数据"));
         // 只有审核中的单据允许撤销
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
-            throw new ServiceException(ApiError.ERROR_98007);
+            throw new ServiceException(ApiError.WF_REVOKE_PROCESS_ALLOWED_STATUS_ONLY);
         }
         // TODO 撤销流程
         log.info("撤销 开始撤销流程，id：【{}】",id);
@@ -934,7 +934,7 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
             listApiResult = workflowFeign.curApprover(dtoList);
             Integer code = listApiResult.getCode();
             if (200 != code) {
-                throw new ServiceException(new ApiResult(ApiError.DEFAULT.code, listApiResult.getMsg()));
+                throw new ServiceException(new ApiResult(ApiError.HTTP_UNKNOWN.getCode(), listApiResult.getMsg()));
             }
         }
 
@@ -965,7 +965,7 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
     private void validateSubmit(SampleReturnInfoEntity entity) {
         // 待提交或审核不通过并且未作废允许提交
         if(!ApproveStatusEnum.allowUpdateStatus(entity.getApproveStatus()) || entity.getInvalidStatus()) {
-            throw new ServiceException(ApiError.ERROR_98010);
+            throw new ServiceException(ApiError.BILL_SUBMIT_ALLOWED_STATUS_ONLY);
         }
         return;
     }
@@ -980,35 +980,35 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
         String returnUserId = sampleReturnInfoEntity.getReturnUserId();
         String receiverUserId = sampleReturnInfoEntity.getReceiverUserId();
         if(Objects.equals(returnUserId,receiverUserId)){
-            throw new ServiceException(ApiError.ERROR_SAMPLE_RETURN_USER_SAME);
+            throw new ServiceException(ApiError.SAMPLE_RETURN_USER_SAME_FORBIDDEN);
         }
         List<FindUserDTO> users = sysUserFeign.getUserListByUserIds(Arrays.asList(returnUserId, receiverUserId));
         if(CollUtil.isEmpty(users)){
-            throw new ServiceException(ApiError.USER_NOT_EXIST);
+            throw new ServiceException(ApiError.AUTH_CREDENTIALS_INVALID);
         }
         FindUserDTO returnUser = users.stream().filter(e -> Objects.equals(e.getUserId(), returnUserId)).findFirst().orElse(null);
         if(Objects.isNull(returnUser)){
-            throw new ServiceException(ApiError.NOT_EXIST,"归还人");
+            throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC,"归还人");
         }
         FindUserDTO receiverUser = users.stream().filter(e -> Objects.equals(e.getUserId(), receiverUserId)).findFirst().orElse(null);
         if(Objects.isNull(receiverUser)){
-            throw new ServiceException(ApiError.NOT_EXIST,"接收人");
+            throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC,"接收人");
         }
 
         String returnDeptId = sampleReturnInfoEntity.getReturnDeptId();
         String receiverDeptId = sampleReturnInfoEntity.getReceiverDeptId();
         List<SysDepartmentEntity> sysDepartmentEntities = sysUserFeign.listDeptByIds(Arrays.asList(returnDeptId, receiverDeptId));
         if(CollUtil.isEmpty(sysDepartmentEntities)){
-            throw new ServiceException(ApiError.ERROR_9029);
+            throw new ServiceException(ApiError.COMMON_DEPT_NOT_FOUND);
         }
 
         SysDepartmentEntity returnDept = sysDepartmentEntities.stream().filter(e -> Objects.equals(e.getId(), returnDeptId)).findFirst().orElse(null);
         if(Objects.isNull(returnDept)){
-            throw new ServiceException(ApiError.NOT_EXIST,"归还部门");
+            throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC,"归还部门");
         }
         SysDepartmentEntity receiverDept = sysDepartmentEntities.stream().filter(e -> Objects.equals(e.getId(), receiverDeptId)).findFirst().orElse(null);
         if(Objects.isNull(receiverDept)){
-            throw new ServiceException(ApiError.NOT_EXIST,"接收部门");
+            throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC,"接收部门");
         }
         //赋值
         sampleReturnInfoEntity.setReturnUserName(returnUser.getUserName());

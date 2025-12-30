@@ -69,7 +69,7 @@ public class LogisticsWarehouseServiceImpl extends SuperServiceImpl<LogisticsWar
     @Override
     public Boolean update(LogisticsWarehouseDTO.UpdateDTO updateDTO) {
         LogisticsWarehouseEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "海外仓物流商 仓库单"));
+        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "海外仓物流商 仓库单"));
         LogisticsWarehouseEntity logisticsWarehouseEntity =  BeanMapperUtils.map(LogisticsWarehouseEntity.class, updateDTO);
 
         // 数据处理

@@ -54,7 +54,7 @@ public class PlmPushMsgServiceImpl extends SuperServiceImpl<PlmPushMsgMapper, Pl
     @Override
     public Boolean update(PlmPushMsgDTO.UpdateDTO updateDTO) {
         PlmPushMsgEntity old = super.getById(updateDTO.getId());
-        PlmPushMsgEntity oldEntity = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "本地推送消息单"));
+        PlmPushMsgEntity oldEntity = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "本地推送消息单"));
         PlmPushMsgEntity plmPushMsgEntity =  BeanMapperUtils.map(PlmPushMsgEntity.class, updateDTO);
 
         log.info("编辑 开始修改本地推送消息单数据，id：【{}】", oldEntity.getId());

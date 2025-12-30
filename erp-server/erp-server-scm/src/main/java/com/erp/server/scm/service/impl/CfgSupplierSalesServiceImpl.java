@@ -180,7 +180,7 @@ public class CfgSupplierSalesServiceImpl extends SuperServiceImpl<CfgSupplierSal
     @Override
     public Boolean update(CfgSupplierSalesDTO.CommonDTO addOrUpdateDTO) {
         CfgSupplierSalesEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "销量设置"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "销量设置"));
 
         Integer count = lambdaQuery()
                 .eq(CfgSupplierSalesEntity::getSupplierId, addOrUpdateDTO.getSupplierId())

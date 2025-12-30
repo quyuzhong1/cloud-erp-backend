@@ -90,13 +90,13 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
 //        if (ThirdSysTypeEnum.WAREHOUSE.getCode().equals(addDTO.getType())) {
 //            List<WarehouseDTO.ListDTO> listDTOS = wmsWarehouseFeign.listByIds(Collections.singletonList(addDTO.getSysId()));
 //            if (CollectionUtils.isEmpty(listDTOS)) {
-//                throw new ServiceException(ApiError.ERROR_SYS_TYPE_NOTFOUND, ThirdSysTypeEnum.getNameByCode(addDTO.getType()));
+//                throw new ServiceException(ApiError.COMMON_NOT_FOUND, ThirdSysTypeEnum.getNameByCode(addDTO.getType()));
 //            }
 //            warehouse = listDTOS.get(0);
 //        } else {
 //            ShopInfoEntity shopInfo = shopInfoFeign.getShopInfoById(addDTO.getSysId());
 //            if (Objects.isNull(shopInfo)) {
-//                throw new ServiceException(ApiError.ERROR_SYS_TYPE_NOTFOUND, ThirdSysTypeEnum.getNameByCode(addDTO.getType()));
+//                throw new ServiceException(ApiError.COMMON_NOT_FOUND, ThirdSysTypeEnum.getNameByCode(addDTO.getType()));
 //            }
 //        }
 //        List<ThirdMappingDTO.ThirdAddDTO> thirdList = addDTO.getThirdList();
@@ -194,7 +194,7 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
         if (CollectionUtils.isNotEmpty(updateList)) {
             List<ThirdMappingEntity> oldList = this.listByIds(updateList.stream().map(ThirdMappingEntity::getId).collect(Collectors.toList()));
             updateList.forEach(existMapping -> {
-                ThirdMappingEntity oldEntity = oldList.stream().filter(item -> Objects.equals(item.getId(), existMapping.getId())).findFirst().orElseThrow(() -> new ServiceException(ApiError.ERROR_THIRD_WAREHOUSE_NOTFOUND));
+                ThirdMappingEntity oldEntity = oldList.stream().filter(item -> Objects.equals(item.getId(), existMapping.getId())).findFirst().orElseThrow(() -> new ServiceException(ApiError.DMP_THIRD_WAREHOUSE_NOT_FOUND));
                 if("logistics".equals(oldEntity.getType())){
                     // 操作日志
                     String msg = StrUtil.format("编辑了【{}】的渠道由【{}】到【{}】", EnumMessage.getNameByCode(PlatformDictEnum.class, existMapping.getThirdSysType()),
@@ -261,7 +261,7 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
         ThirdMappingStrategy strategy = addStrategies.stream()
                 .filter(s -> s.supports(type))
                 .findFirst()
-                .orElseThrow(() -> new ServiceException(ApiError.ERROR_SYS_TYPE_NOTFOUND, ThirdSysTypeEnum.getNameByCode(type)));
+                .orElseThrow(() -> new ServiceException(ApiError.COMMON_NOT_FOUND, ThirdSysTypeEnum.getNameByCode(type)));
         return strategy;
     }
 
@@ -453,7 +453,7 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
         Map<String, List<ThirdAddDTO>> result = thirdList.stream().collect(groupingBy(ThirdMappingDTO.ThirdAddDTO::getSysType,
                 collectingAndThen(Collectors.toList(), list -> {
                             if (list.size() > 1) {
-                                throw new ServiceException(ApiError.ERROR_THIRD_SYS_TYPE_BINDING, ThirdSysTypeEnum.getNameByCode(type));
+                                throw new ServiceException(ApiError.DMP_THIRD_SYS_TYPE_SINGLE_BINDING, ThirdSysTypeEnum.getNameByCode(type));
                             }
                             return list;
                         }
@@ -653,10 +653,10 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
         if (ThirdSysTypeEnum.SHOP.getCode().equals(thirdMappingEntity.getType())) {
             //校验系统店铺是否存在
             ShopInfoEntity shopInfoEntity = Optional.ofNullable(shopInfoFeign.getShopInfoById(thirdMappingEntity.getSysId()))
-                    .orElseThrow(() -> new ServiceException(ApiError.ERROR_92058));
+                    .orElseThrow(() -> new ServiceException(ApiError.SHOP_NOT_FOUND));
             //校验第三方店铺是否存在
             ThirdShopEntity thirdShopEntity = thirdShopService.getByIdOpt(thirdMappingEntity.getThirdId())
-                    .orElseThrow(() -> new ServiceException(ApiError.ERROR_THIRD_SHOP_NOTFOUND));
+                    .orElseThrow(() -> new ServiceException(ApiError.DMP_THIRD_SHOP_NOT_FOUND));
             thirdName = thirdShopEntity.getName();
             sysName = shopInfoEntity.getName();
             thirdMappingEntity.setThirdInfoId(thirdShopEntity.getShopId());
@@ -664,12 +664,12 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
         } else {
             //校验系统仓库是否存在
             List<WarehouseDTO.ListDTO> listDTOS = Optional.ofNullable(wmsWarehouseFeign.listByIds(Collections.singletonList(thirdMappingEntity.getSysId())))
-                    .orElseThrow(() -> new ServiceException(ApiError.ERROR_92058));
+                    .orElseThrow(() -> new ServiceException(ApiError.SHOP_NOT_FOUND));
             if (PlatformDictEnum.WDT.getCode().equals(thirdMappingEntity.getThirdSysType())) {
 
                 //校验第三方仓库是否存在
                 ThirdWarehouseEntity thirdWarehouseEntity = thirdWarehouseService.getByIdOpt(thirdMappingEntity.getThirdId())
-                        .orElseThrow(() -> new ServiceException(ApiError.ERROR_THIRD_WAREHOUSE_NOTFOUND));
+                        .orElseThrow(() -> new ServiceException(ApiError.DMP_THIRD_WAREHOUSE_NOT_FOUND));
                 thirdName = thirdWarehouseEntity.getName();
                 sysName = listDTOS.get(0).getName();
                 thirdMappingEntity.setThirdInfoId(thirdWarehouseEntity.getWarehouseId());
@@ -681,7 +681,7 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
                 feignDTO.setOverseasProviderWarehouseId(thirdMappingEntity.getThirdId());
                 //校验第三方仓库是否存在
                 OverseasProviderDTO.FeignDTO overseasWarehouse = Optional.ofNullable(overseasProviderFeign.getOverseasWarehouse(feignDTO))
-                        .orElseThrow(() -> new ServiceException(ApiError.ERROR_THIRD_WAREHOUSE_NOTFOUND));
+                        .orElseThrow(() -> new ServiceException(ApiError.DMP_THIRD_WAREHOUSE_NOT_FOUND));
                 thirdName = overseasWarehouse.getPlatformWarehouseName();
                 sysName = overseasWarehouse.getWarehouseName();
                 thirdMappingEntity.setThirdInfoId(overseasWarehouse.getOverseasProviderWarehouseId());
@@ -697,7 +697,7 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
                 .eq(ThirdMappingEntity::getIsDeleted, false).eq(ThirdMappingEntity::getDisabled, false));
         if (Objects.nonNull(existSysMapping)) {
             if (!Objects.equals(thirdMappingEntity.getSysId(), existSysMapping.getSysId())) {
-                throw new ServiceException(ApiError.ERROR_THIRD_BINDED, ThirdSysTypeEnum.getNameByCode(thirdMappingEntity.getType()), thirdName, sysName);
+                throw new ServiceException(ApiError.DMP_THIRD_ALREADY_BINDED, ThirdSysTypeEnum.getNameByCode(thirdMappingEntity.getType()), thirdName, sysName);
             } else {
                 thirdMappingEntity.setId(existSysMapping.getId());
             }
@@ -705,7 +705,7 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
         ThirdMappingEntity existThirdMapping = baseMapper.selectOne(new LambdaQueryWrapper<ThirdMappingEntity>().eq(ThirdMappingEntity::getType, thirdMappingEntity.getType())
                 .eq(ThirdMappingEntity::getThirdId, thirdMappingEntity.getThirdId()).eq(ThirdMappingEntity::getDisabled, false));
         if (Objects.nonNull(existThirdMapping) && ((Objects.nonNull(existSysMapping) && !Objects.equals(thirdMappingEntity.getSysId(), existSysMapping.getSysId())) || Objects.isNull(existSysMapping))) {
-            throw new ServiceException(ApiError.ERROR_THIRD_BINDED, ThirdSysTypeEnum.getNameByCode(thirdMappingEntity.getType()), sysName, thirdName);
+            throw new ServiceException(ApiError.DMP_THIRD_ALREADY_BINDED, ThirdSysTypeEnum.getNameByCode(thirdMappingEntity.getType()), sysName, thirdName);
         }
     }
 
@@ -739,7 +739,7 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
             case WAREHOUSE:
                 WarehouseDTO.ListDTO warehouse = wmsWarehouseFeign.listByIds(Collections.singletonList(addDTO.getSysId())).stream().findFirst().orElse(null);
                 if (Objects.isNull(warehouse)) {
-                    throw new ServiceException(ApiError.ERROR_SYS_TYPE_NOTFOUND, ThirdSysTypeEnum.getNameByCode(addDTO.getType()));
+                    throw new ServiceException(ApiError.COMMON_NOT_FOUND, ThirdSysTypeEnum.getNameByCode(addDTO.getType()));
                 }
                 sysName = warehouse.getName();
                 kingDeeCode = warehouse.getKingdeeWarehouseCode();
@@ -747,7 +747,7 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
             case SHOP:
                 ShopInfoEntity shopInfo = shopInfoFeign.getShopInfoById(addDTO.getSysId());
                 if (Objects.isNull(shopInfo)) {
-                    throw new ServiceException(ApiError.ERROR_SYS_TYPE_NOTFOUND, ThirdSysTypeEnum.getNameByCode(addDTO.getType()));
+                    throw new ServiceException(ApiError.COMMON_NOT_FOUND, ThirdSysTypeEnum.getNameByCode(addDTO.getType()));
                 }
                 sysName = shopInfo.getName();
                 dictPlatform = shopInfo.getDictPlatform();
@@ -770,7 +770,7 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
                 sysName =  systemEntity.getName();
                 break;
             default:
-                throw new ServiceException(ApiError.ERROR_400);
+                throw new ServiceException(ApiError.HTTP_BAD_REQUEST);
         }
         addDTO.setSysName(sysName);
 
@@ -845,7 +845,7 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
                     if (PlatformDictEnum.WDT.getCode().equals(thirdAddDTO.getSysType()) || PlatformDictEnum.TE_MU.getCode().equals(thirdAddDTO.getSysType()) || PlatformDictEnum.DHT.getCode().equals(thirdAddDTO.getSysType())) {
                         //校验第三方仓库是否存在
                         ThirdWarehouseEntity thirdWarehouseEntity = Optional.ofNullable(thirdWarehouseService.getByWarehouseId(thirdAddDTO.getThirdId(), ThirdSysTypeEnum.WAREHOUSE.getCode()))
-                                .orElseThrow(() -> new ServiceException(ApiError.ERROR_THIRD_WAREHOUSE_NOTFOUND));
+                                .orElseThrow(() -> new ServiceException(ApiError.DMP_THIRD_WAREHOUSE_NOT_FOUND));
                         thirdName = thirdWarehouseEntity.getName();
                         thirdAddDTO.setThirdInfoId(thirdWarehouseEntity.getId());
                         thirdAddDTO.setThirdCode(thirdWarehouseEntity.getCode());
@@ -854,7 +854,7 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
                         //校验是否只添加了一个海外仓
                         count.getAndIncrement();
                         if (count.get() > 1) {
-                            throw new ServiceException(ApiError.ERROR_THIRD_NOT_ALLOW_MULTIPLE);
+                            throw new ServiceException(ApiError.WH_THIRD_NOT_ALLOW_MULTIPLE);
                         }
                         OverseasProviderDTO.FeignDTO feignDTO = new OverseasProviderDTO.FeignDTO();
                         feignDTO.setCode(thirdAddDTO.getSysType());
@@ -862,7 +862,7 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
                         feignDTO.setOverseasProviderWarehouseId(thirdAddDTO.getThirdId());
                         //校验第三方仓库是否存在
                         OverseasProviderDTO.FeignDTO overseasWarehouse = Optional.ofNullable(overseasProviderFeign.getOverseasWarehouse(feignDTO))
-                                .orElseThrow(() -> new ServiceException(ApiError.ERROR_THIRD_WAREHOUSE_NOTFOUND));
+                                .orElseThrow(() -> new ServiceException(ApiError.DMP_THIRD_WAREHOUSE_NOT_FOUND));
                         thirdName = overseasWarehouse.getPlatformWarehouseName();
                         thirdAddDTO.setThirdInfoId(overseasWarehouse.getOverseasProviderWarehouseId());
                         thirdAddDTO.setThirdCode(overseasWarehouse.getPlatformWarehouseCode());
@@ -871,7 +871,7 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
                 case SHOP:
                     //校验第三方店铺是否存在
                     ThirdShopEntity thirdShopEntity = Optional.ofNullable(thirdShopService.getByShopId(thirdAddDTO.getThirdId()))
-                            .orElseThrow(() -> new ServiceException(ApiError.ERROR_THIRD_SHOP_NOTFOUND));
+                            .orElseThrow(() -> new ServiceException(ApiError.DMP_THIRD_SHOP_NOT_FOUND));
                     thirdName = thirdShopEntity.getName();
                     thirdAddDTO.setThirdInfoId(thirdShopEntity.getId());
                     thirdAddDTO.setThirdCode(thirdShopEntity.getCode());
@@ -888,14 +888,14 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
                 case VIRTUAL_WAREHOUSE:
                     //校验第三方仓库是否存在
                     ThirdWarehouseEntity thirdWarehouseEntity = Optional.ofNullable(thirdWarehouseService.getByWarehouseId(thirdAddDTO.getThirdId(), ThirdSysTypeEnum.VIRTUAL_WAREHOUSE.getCode()))
-                            .orElseThrow(() -> new ServiceException(ApiError.ERROR_THIRD_WAREHOUSE_NOTFOUND));
+                            .orElseThrow(() -> new ServiceException(ApiError.DMP_THIRD_WAREHOUSE_NOT_FOUND));
                     thirdName = thirdWarehouseEntity.getName();
                     thirdAddDTO.setThirdInfoId(thirdWarehouseEntity.getId());
                     thirdAddDTO.setThirdCode(thirdWarehouseEntity.getCode());
                     break;
                 case LOGISTICS:
                     ThirdLogisticsEntity thirdLogisticsEntity = Optional.ofNullable(thirdLogisticsService.getById(thirdAddDTO.getThirdId()))
-                            .orElseThrow(() -> new ServiceException(ApiError.ERROR_THIRD_LOGISTICS_NOTFOUND));
+                            .orElseThrow(() -> new ServiceException(ApiError.DMP_THIRD_LOGISTICS_NOT_FOUND));
                     thirdName = thirdLogisticsEntity.getChannelName();
                     thirdAddDTO.setThirdInfoId(thirdLogisticsEntity.getId());
                     thirdAddDTO.setThirdCode(thirdLogisticsEntity.getChannelName());
@@ -906,7 +906,7 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
                     thirdName = thirdAddDTO.getThirdName();
                     break;
                 default:
-                    throw new ServiceException(ApiError.ERROR_400);
+                    throw new ServiceException(ApiError.HTTP_BAD_REQUEST);
             }
 
             thirdAddDTO.setThirdName(thirdName);
@@ -923,14 +923,14 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
             ThirdMappingEntity existSysMapping = getByTypeAndSysIdAndSysType(thirdMappingEntity);
             if (Objects.nonNull(existSysMapping)) {
                 if (!Objects.equals(thirdAddDTO.getSysId(), existSysMapping.getSysId())) {
-                    throw new ServiceException(ApiError.ERROR_THIRD_BINDED, ThirdSysTypeEnum.getNameByCode(thirdMappingEntity.getType()), thirdName, existSysMapping.getSysName());
+                    throw new ServiceException(ApiError.DMP_THIRD_ALREADY_BINDED, ThirdSysTypeEnum.getNameByCode(thirdMappingEntity.getType()), thirdName, existSysMapping.getSysName());
                 } else {
                     thirdAddDTO.setId(existSysMapping.getId());
                 }
             }
             ThirdMappingEntity existThirdMapping = getByTypeAndThirdId(thirdMappingEntity);
             if (Objects.nonNull(existThirdMapping) && ((Objects.nonNull(existSysMapping) && !Objects.equals(thirdAddDTO.getSysId(), existThirdMapping.getSysId())) || Objects.isNull(existSysMapping))) {
-                throw new ServiceException(ApiError.ERROR_THIRD_BINDED, ThirdSysTypeEnum.getNameByCode(thirdAddDTO.getType()), thirdName, existThirdMapping.getSysName());
+                throw new ServiceException(ApiError.DMP_THIRD_ALREADY_BINDED, ThirdSysTypeEnum.getNameByCode(thirdAddDTO.getType()), thirdName, existThirdMapping.getSysName());
             }
         });
     }

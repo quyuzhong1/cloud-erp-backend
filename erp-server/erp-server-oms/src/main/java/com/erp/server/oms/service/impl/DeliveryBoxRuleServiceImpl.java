@@ -9,8 +9,6 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
-import com.common.business.enums.ApproveStatusEnum;
-import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.FileTaskStatusEnum;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
@@ -55,7 +53,6 @@ import java.util.stream.Collectors;
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
 
-import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import static com.common.business.enums.FileTaskEventEnum.*;
 
@@ -127,7 +124,7 @@ public class DeliveryBoxRuleServiceImpl extends SuperServiceImpl<DeliveryBoxRule
     @Override
     public Boolean update(DeliveryBoxRuleDTO.UpdateDTO addOrUpdateDTO) {
         DeliveryBoxRuleEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, ""));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, ""));
         this.lambdaUpdate().set(DeliveryBoxRuleEntity::getUpdateUserId,UserContext.getDefaultLoginUser().getUid())
                 .set(DeliveryBoxRuleEntity::getUpdateUserName,UserContext.getDefaultLoginUser().getUserName())
                 .set(DeliveryBoxRuleEntity::getUpdateTime,LocalDateTime.now())
@@ -212,7 +209,7 @@ public class DeliveryBoxRuleServiceImpl extends SuperServiceImpl<DeliveryBoxRule
             ExcelUtil.export(fileName, "task", errorList, DeliveryBoxRuleImportExcelDTO.class, response);
         } catch (ExcelCommonException e) {
             log.error("导入格式错误！", e);
-            throw new ServiceException(ApiError.ERROR_1016);
+            throw new ServiceException(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX);
         }
         return false;
     }
@@ -240,7 +237,7 @@ public class DeliveryBoxRuleServiceImpl extends SuperServiceImpl<DeliveryBoxRule
             EasyExcel.read(new ByteArrayInputStream(bytes), DeliveryBoxRuleImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (ExcelCommonException e) {
             log.error("导入格式错误！", e);
-            throw new ServiceException(ApiError.ERROR_1016);
+            throw new ServiceException(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX);
         }
 
         BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
@@ -282,7 +279,7 @@ public class DeliveryBoxRuleServiceImpl extends SuperServiceImpl<DeliveryBoxRule
         for (DeliveryBoxRuleDTO.SkuDTO skuDTO : skuList) {
             SkuVO skuInfo = skuInfoMap.get(skuDTO.getSkuNo());
             if (skuInfo == null) {
-                throw new ServiceException(ApiError.ERROR_NOT_FOUND_SKU, skuDTO.getSkuNo());
+                throw new ServiceException(ApiError.PRODUCT_NOT_FOUND_SKU, skuDTO.getSkuNo());
             }
 
             DeliveryBoxRuleEntity deliveryBoxRuleEntity = this.lambdaQuery()
@@ -487,7 +484,7 @@ public class DeliveryBoxRuleServiceImpl extends SuperServiceImpl<DeliveryBoxRule
                     boolean addSuccess = deliveryBoxRuleDetailService.saveBatch(addList);
 
                     if (!addSuccess) {
-                        throw new ServiceException(ApiError.ERROR_BATCH_UPDATE_BOX_RULE);
+                        throw new ServiceException(ApiError.WH_BOX_RULE_BATCH_UPDATE_FAILED);
                     }
                 }
 
@@ -502,7 +499,7 @@ public class DeliveryBoxRuleServiceImpl extends SuperServiceImpl<DeliveryBoxRule
                                 .update();
 
                         if (!updateSuccess) {
-                            throw new ServiceException(ApiError.ERROR_BATCH_ADD_BOX_RULE);
+                            throw new ServiceException(ApiError.WH_BOX_RULE_BATCH_ADD_FAILED);
                         }
                     }
                 }
@@ -525,7 +522,7 @@ public class DeliveryBoxRuleServiceImpl extends SuperServiceImpl<DeliveryBoxRule
     private void handleAddData(DeliveryBoxRuleEntity deliveryBoxRuleEntity) {
         Integer count = this.lambdaQuery().eq(DeliveryBoxRuleEntity::getSkuId, deliveryBoxRuleEntity.getSkuId()).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_BOX_RULE_REPEAT);
+            throw new ServiceException(ApiError.WH_BOX_RULE_SKU_EXISTS);
         }
     }
 

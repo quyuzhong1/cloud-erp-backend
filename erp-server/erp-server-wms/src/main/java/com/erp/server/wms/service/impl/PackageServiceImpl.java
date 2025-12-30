@@ -4,7 +4,6 @@ import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.annotation.DataIdempotent;
 import com.common.business.dto.base.BatchResultDTO;
@@ -44,7 +43,6 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -137,18 +135,18 @@ public class PackageServiceImpl implements PackageService {
         if (TransferStatusEnum.WAIT.getCode().equals(scanResult.getTransferStatus())
                 || TransferStatusEnum.FAILURE.getCode().equals(scanResult.getTransferStatus())) {
             //校验订单状态中转状态为待中转/上传失败，扫描识别后非成功状态若勾选则取消勾选并禁用，若未勾选则直接禁用
-            throw new ServiceException(ApiError.TRANSFER_FAILURE_NOT_PACKAGE);
+            throw new ServiceException(ApiError.LOGISTICS_TRANSFER_ORDER_INVALID_NOT_PACKAGE);
         }
         if (CharSequenceUtil.isBlank(scanResult.getTransferLogisticsSupplierId()) && !TransferStatusEnum.NOT.getCode().equals(entity.getTransferStatus())) {
-            throw new ServiceException(ApiError.TRANSFER_LOGISTICS_SUPPLIER_IS_NULL_NOT_PACKAGE);
+            throw new ServiceException(ApiError.LOGISTICS_TRANSFER_SUPPLIER_NOT_FOUND_NOT_PACKAGE);
         }
 
         if (entity.getInvalidStatus()) {
-            throw new ServiceException(ApiError.INVALID_NOT_PACKAGE);
+            throw new ServiceException(ApiError.LOGISTICS_ORDER_VOIDED_NOT_PACKAGE);
         }
 
         if (entity.getIsIntercept()) {
-            throw new ServiceException(ApiError.LOGISTICS_INTERCEPT_NOT_PACKAGE);
+            throw new ServiceException(ApiError.LOGISTICS_ORDER_INTERCEPTED_NOT_PACKAGE);
         }
 
         String billStatus = scanResult.getBillStatus();
@@ -287,7 +285,7 @@ public class PackageServiceImpl implements PackageService {
                     .map(SoB2cDeliveryEntity::getSoCode)
                     .collect(Collectors.joining(","));
             if (StringUtils.isNotEmpty(notShipmentSoCodes)) {
-                throw new ServiceException(ApiError.ERROR_99115, notShipmentSoCodes);
+                throw new ServiceException(ApiError.SO_ABNORMAL_ORDER_AUTO_DELIVERY_FORBIDDEN_FOR_SO, notShipmentSoCodes);
             }
         }
         for (PackageForecastDTO.AddDTO item : addList) {

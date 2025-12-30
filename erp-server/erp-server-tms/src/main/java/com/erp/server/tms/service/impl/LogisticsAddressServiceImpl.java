@@ -19,7 +19,6 @@ import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.tms.dto.LogisticsAddressDTO;
-import com.erp.model.tms.dto.LogisticsChannelDTO;
 import com.erp.model.tms.entity.LogisticsAddressEntity;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.tms.enums.LogisticsAddressTypeEnum;
@@ -104,8 +103,8 @@ public class LogisticsAddressServiceImpl extends SuperServiceImpl<LogisticsAddre
     @Override
     public Boolean update(LogisticsAddressDTO.UpdateDTO updateDTO) {
         LogisticsAddressEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "物流地址单"));
-        if (old.getIsBySync()) throw new ServiceException(ApiError.ERROR_SYNC_LOGISTICS_ADDRESS_IS_NOT_EDIT);
+        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "物流地址单"));
+        if (old.getIsBySync()) throw new ServiceException(ApiError.LOGISTICS_SYNC_ADDRESS_NOT_EDITABLE);
         LogisticsAddressEntity logisticsAddressEntity = BeanMapperUtils.map(LogisticsAddressEntity.class, updateDTO);
         // 数据处理
         handleData(logisticsAddressEntity);
@@ -124,7 +123,7 @@ public class LogisticsAddressServiceImpl extends SuperServiceImpl<LogisticsAddre
     @Override
     public LogisticsAddressDTO.ViewDTO view(String id) {
         LogisticsAddressEntity entity = super.getById(id);
-        Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "物流地址"));
+        Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "物流地址"));
         LogisticsAddressDTO.ViewDTO view = new LogisticsAddressDTO.ViewDTO();
         BeanMapper.copy(entity, view);
         view.setTypeName(view.getType().getName());
@@ -160,10 +159,10 @@ public class LogisticsAddressServiceImpl extends SuperServiceImpl<LogisticsAddre
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO delete(String id) {
         LogisticsAddressEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("物流地址"));
-        if (entity.getIsBySync()) throw new ServiceException(ApiError.ERROR_SYNC_LOGISTICS_ADDRESS_IS_NOT_DEL);
+        if (entity.getIsBySync()) throw new ServiceException(ApiError.LOGISTICS_SYNC_ADDRESS_NOT_DELETABLE);
         List<LogisticsChannelEntity> channelList= logisticsChannelService.listByAddressId(id);
         if(CollectionUtils.isNotEmpty(channelList)){
-               throw new ServiceException(ApiError.ERROR_LOGISTICS_CHANNEL_ADDRESS_EXIST,entity.getName());
+               throw new ServiceException(ApiError.LOGISTICS_CHANNEL_ADDRESS_REF_DELETE_FORBIDDEN,entity.getName());
         }
         this.removeById(id);
         return BatchResultDTO.success(entity.getId(), entity.getName(), OperationTypeEnum.DELETE);
@@ -278,7 +277,7 @@ public class LogisticsAddressServiceImpl extends SuperServiceImpl<LogisticsAddre
         Integer count = this.lambdaQuery().eq(LogisticsAddressEntity::getName, name).
                 ne(StringUtils.isNotBlank(id), LogisticsAddressEntity::getId, id).count();
         if (count > 0) {
-           throw new ServiceException(ApiError.ERROR_LOGISTICS_ADDRESS_NAME_EXIST,name);
+           throw new ServiceException(ApiError.LOGISTICS_ADDRESS_NAME_ALREADY_EXISTS,name);
         }
 
         String country = entity.getCountry();

@@ -9,7 +9,6 @@ import com.erp.server.wms.service.SampleReturnDetailService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.erp.server.wms.service.OperateLogService;
-import com.erp.server.wms.service.CommonService;
 import com.common.core.exception.ServiceException;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
@@ -67,7 +66,7 @@ public class SampleReturnDetailServiceImpl extends SuperServiceImpl<SampleReturn
     @Override
     public Boolean update(SampleReturnDetailDTO.UpdateDTO addOrUpdateDTO) {
         SampleReturnDetailEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "样品归还单明细单"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "样品归还单明细单"));
         SampleReturnDetailEntity sampleReturnDetailEntity =  BeanMapperUtils.map(SampleReturnDetailEntity.class, addOrUpdateDTO);
 
         // 数据处理

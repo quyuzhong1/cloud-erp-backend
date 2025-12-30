@@ -359,7 +359,7 @@ public class CfgApproveSyncServiceImpl extends SuperServiceImpl<CfgApproveSyncMa
     @Override
     public Boolean update(CfgApproveSyncDTO.UpdateDTO addOrUpdateDTO) {
         CfgApproveSyncEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "ERP审批同步配置"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "ERP审批同步配置"));
 
         //校验是否已存在
         String businessType = addOrUpdateDTO.getBusinessType();

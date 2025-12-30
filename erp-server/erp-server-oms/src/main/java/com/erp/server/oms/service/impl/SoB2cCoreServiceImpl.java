@@ -98,11 +98,11 @@ public class SoB2cCoreServiceImpl implements SoB2cCoreService {
     public List<SoB2cCoreDTO.ListRetryOutstockDTO> listRetryOutstock(BaseIdsDTO.IdsDTO dto) {
         List<SoB2cEntity> soB2cList = soB2cService.listByIds(dto.getIds());
         if (CollUtil.isEmpty(soB2cList)) {
-            throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
+            throw new ServiceException(ApiError.SO_B2C_NOT_FOUND);
         }
         List<SoB2cDetailEntity> soB2cDetailList = soB2cDetailService.listByMainIds(dto.getIds());
         if (CollUtil.isEmpty(soB2cDetailList)) {
-            throw new ServiceException(ApiError.ERROR_SO_B2C_DETAIL_NOT_EXIST);
+            throw new ServiceException(ApiError.SO_B2C_DETAIL_NOT_FOUND);
         }
         Map<String, List<SoB2cDetailEntity>> detailMap = soB2cDetailList.stream().collect(Collectors.groupingBy(SoB2cDetailEntity::getMainId));
 
@@ -134,12 +134,12 @@ public class SoB2cCoreServiceImpl implements SoB2cCoreService {
             List<SoB2cDetailEntity> thisDetailList = detailMap.get(soB2cEntity.getId());
             if (CollUtil.isEmpty(thisDetailList)) {
                 log.error("未找到销售订单明细，订单号：{}", soB2cEntity.getCode());
-               throw new ServiceException(ApiError.ERROR_SYS_TYPE_NOTFOUND,CharSequenceUtil.format("订单{}明细信息",soB2cEntity.getCode()));
+               throw new ServiceException(ApiError.COMMON_NOT_FOUND,CharSequenceUtil.format("订单{}明细信息",soB2cEntity.getCode()));
             }
             SoB2cReceiverEntity receiverEntity = soB2cReceiverMap.get(soB2cEntity.getId());
             if (ObjectUtil.isEmpty(receiverEntity)) {
                 log.error("未找到销售订单买家信息，订单号：{}", soB2cEntity.getCode());
-                throw new ServiceException(ApiError.ERROR_SYS_TYPE_NOTFOUND,CharSequenceUtil.format("订单{}买家信息",soB2cEntity.getCode()));
+                throw new ServiceException(ApiError.COMMON_NOT_FOUND,CharSequenceUtil.format("订单{}买家信息",soB2cEntity.getCode()));
             }
 
             for (SoB2cDetailEntity soB2cDetailEntity : thisDetailList) {
@@ -233,7 +233,7 @@ public class SoB2cCoreServiceImpl implements SoB2cCoreService {
             List<SoB2cDetailEntity> thisDetailList = detailMap.get(soB2cEntity.getId());
             if (CollUtil.isEmpty(thisDetailList)) {
                 log.error("未找到销售订单明细，订单号：{}", soB2cEntity.getCode());
-                throw new ServiceException(ApiError.ERROR_SYS_TYPE_NOTFOUND,CharSequenceUtil.format("订单{}明细信息",soB2cEntity.getCode()));
+                throw new ServiceException(ApiError.COMMON_NOT_FOUND,CharSequenceUtil.format("订单{}明细信息",soB2cEntity.getCode()));
             }
         }
     }
@@ -242,12 +242,12 @@ public class SoB2cCoreServiceImpl implements SoB2cCoreService {
     @Transactional(rollbackFor = Exception.class)
     public Boolean retryOutstock(List<SoB2cCoreDTO.RetryOutstockDTO> list) {
         if (CollUtil.isEmpty(list)) {
-            throw new ServiceException(ApiError.ERROR_98004);
+            throw new ServiceException(ApiError.BILL_SELECTION_REQUIRED);
         }
         List<String> b2cSoIdList = list.stream().map(SoB2cCoreDTO.RetryOutstockDTO::getB2cSoId).distinct().collect(Collectors.toList());
         List<SoB2cEntity> soB2cList = soB2cService.listByIds(b2cSoIdList);
         if (CollUtil.isEmpty(soB2cList)) {
-            throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
+            throw new ServiceException(ApiError.SO_B2C_NOT_FOUND);
         }
         List<String> shopIdList = soB2cList.stream().map(SoB2cEntity::getShopId).distinct().collect(Collectors.toList());
         List<ShopInfoEntity> shopInfoEntityList = shopInfoService.listByIds(shopIdList);
@@ -255,7 +255,7 @@ public class SoB2cCoreServiceImpl implements SoB2cCoreService {
 
         List<SoB2cDetailEntity> soB2cDetailList = soB2cDetailService.listByMainIds(b2cSoIdList);
         if (CollUtil.isEmpty(soB2cDetailList)) {
-            throw new ServiceException(ApiError.ERROR_SO_B2C_DETAIL_NOT_EXIST);
+            throw new ServiceException(ApiError.SO_B2C_DETAIL_NOT_FOUND);
         }
         //校验
         checkRetryOutsrock(list,soB2cList,soB2cDetailList);
@@ -422,7 +422,7 @@ public class SoB2cCoreServiceImpl implements SoB2cCoreService {
         Boolean isFlag = this.listPayMethodSetting(entity);
         //如果支付状态是待付款，并且支付方式不支持继续发货，则抛出异常
         if ((ObjectUtil.isEmpty(entity.getPayStatus()) || SoB2cPayStatusEnum.ENUM_PAYMENT.getCode().equals(entity.getPayStatus())) && !isFlag) {
-            throw new ServiceException(ApiError.ERROR_SO_B2C_PAYMENT_NOT_OPERATE, entity.getCode());
+            throw new ServiceException(ApiError.SO_B2C_PAYMENT_REQUIRED, entity.getCode());
         }
     }
 
@@ -455,7 +455,7 @@ public class SoB2cCoreServiceImpl implements SoB2cCoreService {
     public Boolean handleSoOutStock(String soId) {
         SoB2cEntity soB2cEntity = soB2cService.getById(soId);
         if (ObjectUtil.isEmpty(soB2cEntity)) {
-            throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST, soId);
+            throw new ServiceException(ApiError.SO_B2C_NOT_FOUND, soId);
         }
         //明细
         List<SoB2cDetailEntity> thisDetailList = soB2cDetailService.listByMainId(soId);

@@ -14,7 +14,6 @@ import com.common.business.handler.BusinessHandlerRegistry;
 import com.common.business.handler.IBusinessHandler;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MapUtil;
-import com.common.core.utils.Md5Util;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.dto.OrderMongoDTO;

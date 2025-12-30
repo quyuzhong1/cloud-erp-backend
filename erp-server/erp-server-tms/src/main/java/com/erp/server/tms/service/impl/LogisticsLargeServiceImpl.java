@@ -279,7 +279,7 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
     @Override
     public Boolean update(LogisticsLargeDTO.UpdateDTO updateDTO) {
         LogisticsLargeEntity old = super.getById(updateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "物流大单"));
+        old = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "物流大单"));
         LogisticsLargeEntity logisticsLargeEntity = BeanMapperUtils.map(LogisticsLargeEntity.class, updateDTO);
 
         // 数据处理
@@ -924,11 +924,11 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         mainEntity = smallBagCostAllocationMainService.getById(mainEntity.getId());
         //已确认才能下推
         if (!SmallBagCostAllocationReportStatusEnum.CONFIRMED.getCode().equals(mainEntity.getReportStatus())) {
-            throw new ServiceException(ApiError.ERROR_SMALL_BAG_NOT_CONFIRMED);
+            throw new ServiceException(ApiError.LOGISTICS_SMALL_BAG_NOT_CONFIRMED);
         }
         //已生成物流大表不能再次生成
         if (SmallBagCostAllocationBigTableStatusEnum.DONE.getCode().equals(mainEntity.getBigTableStatus())) {
-            throw new ServiceException(ApiError.ERROR_EXISTS_LOGISTICS_LARGE);
+            throw new ServiceException(ApiError.LOGISTICS_LARGE_TABLE_EXISTS);
         }
 
         for (SmallBagCostAllocationEntity costAllocationEntity : costAllocationEntityList) {
@@ -1009,7 +1009,7 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         }
         //已生成物流大表不能再次生成
         if (SmallBagCostAllocationBigTableStatusEnum.DONE.getCode().equals(mainEntity.getBigTableStatus())) {
-            throw new ServiceException(ApiError.ERROR_EXISTS_LOGISTICS_LARGE);
+            throw new ServiceException(ApiError.LOGISTICS_LARGE_TABLE_EXISTS);
         }
 
         List<LogisticsLargeEntity> logisticsLargeEntities = this.listByIdSourceId(Arrays.asList(mainEntity.getId()));
@@ -1021,7 +1021,7 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
                         && SourceTypeEnum.TRANSFER_DECLARE_COST_ALLOCATION.getCode().equals(req.getSourceType()))
                 .findFirst().orElse(null);
         if (logisticsLargeActualEntity != null) {
-            throw new ServiceException(ApiError.ERROR_EXISTS_LOGISTICS_LARGE);
+            throw new ServiceException(ApiError.LOGISTICS_LARGE_TABLE_EXISTS);
         }
         //预估账单只能推送一个
         LogisticsLargeEntity logisticsLargeEstimatedEntity = logisticsLargeEntities.stream()
@@ -1030,7 +1030,7 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
                         && SourceTypeEnum.TRANSFER_DECLARE_COST_ALLOCATION.getCode().equals(req.getSourceType()))
                 .findFirst().orElse(null);
         if (logisticsLargeEstimatedEntity != null) {
-            throw new ServiceException(ApiError.ERROR_EXISTS_ESTIMATED_LOGISTICS_LARGE);
+            throw new ServiceException(ApiError.LOGISTICS_LARGE_ESTIMATED_EXISTS);
         }
 
         for (TransferDeclareCostAllocationEntity entity : costAllocationEntityList) {
@@ -1060,13 +1060,13 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         //根据销售出库单id查询物流单
         List<LogisticsBillEntity> logisticsBillEntityList = logisticsBillService.listByOutstockIdList(Arrays.asList(soOutstockEntity.getId()));
         if (logisticsBillEntityList == null) {
-            throw new ServiceException(ApiError.ERROR_99058);
+            throw new ServiceException(ApiError.SO_OUTBOUND_NOT_FOUND);
         }
         LogisticsBillEntity logisticsBillEntity = logisticsBillEntityList.get(0);
         List<LogisticsBillDetailEntity> billDetailEntities = logisticsBillDetailService.listByMainIds(Arrays.asList(logisticsBillEntityList.get(0).getId()));
         List<LogisticsBillCostEntity> logisticsBillCostEntities = logisticsBillCostService.listByLogisticsBillIdList(Arrays.asList(logisticsBillEntityList.get(0).getId()));
         if (CollUtil.isEmpty(logisticsBillCostEntities)) {
-            throw new ServiceException(ApiError.ERROR_NOT_EXISTS);
+            throw new ServiceException(ApiError.LOGISTICS_SELF_SHIP_FEE_NOT_FOUND);
         }
         LogisticsBillCostEntity logisticsBillCostEntity = logisticsBillCostEntities.get(0);
 

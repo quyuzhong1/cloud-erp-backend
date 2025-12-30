@@ -69,7 +69,7 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
     @Override
     public Boolean update(CfgSettingDTO.UpdateDTO addOrUpdateDTO) {
         CfgSettingEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "系统配置管理"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "系统配置管理"));
         CfgSettingEntity cfgSettingEntity =  BeanMapperUtils.map(CfgSettingEntity.class, addOrUpdateDTO);
 
         // 数据处理

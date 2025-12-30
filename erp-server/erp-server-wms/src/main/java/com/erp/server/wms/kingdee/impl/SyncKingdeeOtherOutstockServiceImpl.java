@@ -228,7 +228,7 @@ public class SyncKingdeeOtherOutstockServiceImpl implements SyncKingdeeOtherOuts
 
         List<OtherOutstockDetailEntity> detailList = otherOutstockDetailService.listByMainId(entity.getId());
         if (CollectionUtils.isEmpty(detailList)) {
-            throw new ServiceException(ApiError.ERROR_99062);
+            throw new ServiceException(ApiError.WH_OTHER_OUTBOUND_DETAIL_NOT_FOUND);
         }
         //客户信息
         OtherOutstockCustomerEntity customerEntity = otherOutstockCustomerService.getByMainId(entity.getId());

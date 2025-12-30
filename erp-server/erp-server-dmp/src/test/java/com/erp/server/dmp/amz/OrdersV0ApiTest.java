@@ -14,8 +14,6 @@
 package com.erp.server.dmp.amz;
 
 import cn.hutool.core.exceptions.ExceptionUtil;
-import cn.hutool.json.JSONArray;
-import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.date.DateUtil;
@@ -32,9 +30,7 @@ import com.erp.sdk.oms.amz.spapi.model.orders.*;
 import com.erp.server.dmp.service.CfgAppClientService;
 import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.tools.ant.taskdefs.Sleep;
 import org.junit.runner.RunWith;
 import org.springframework.beans.BeanUtils;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -45,8 +41,6 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.junit.Test;
 
 import javax.annotation.Resource;
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;

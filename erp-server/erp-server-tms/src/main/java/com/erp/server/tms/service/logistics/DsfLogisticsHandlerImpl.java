@@ -109,14 +109,14 @@ public class DsfLogisticsHandlerImpl extends AbstractLogisticsHandler {
                 }
                 BigDecimal exchangeRate1 = dmpTaskFeign.getRate(LocalDate.now().format(DateTimeFormatter.ofPattern(YYYY_MM_DD)), currency);
                 if (Objects.isNull(exchangeRate1)){
-                    throw new ServiceException(ApiError.ERROR_EXCHANGE_RATE_NOT_EXIST, LocalDate.now(), currency);
+                    throw new ServiceException(ApiError.COMMON_EXCHANGE_RATE_NOT_EXIST, LocalDate.now(), currency);
                 }
                 //先转换成人民币
                 BigDecimal cnyDestDeclarePrice = MathUtil.multiplyWithTwo(destDeclarePrice, exchangeRate1).setScale(4, RoundingMode.HALF_UP);
                 //再统一转换成美元
                 BigDecimal exchangeRate2 = dmpTaskFeign.getRate(LocalDate.now().format(DateTimeFormatter.ofPattern(YYYY_MM_DD)), CurrencyEnum.USD.getCurrencyCode());
                 if (Objects.isNull(exchangeRate2)){
-                    throw new ServiceException(ApiError.ERROR_EXCHANGE_RATE_NOT_EXIST, LocalDate.now(), CurrencyEnum.USD.getCurrencyCode());
+                    throw new ServiceException(ApiError.COMMON_EXCHANGE_RATE_NOT_EXIST, LocalDate.now(), CurrencyEnum.USD.getCurrencyCode());
                 }
                 BigDecimal usdDestDeclarePrice = MathUtil.divide(cnyDestDeclarePrice, exchangeRate2).setScale(4, RoundingMode.HALF_UP);
                 productInfo.setDeclare_unit_price_import(usdDestDeclarePrice);
@@ -132,14 +132,14 @@ public class DsfLogisticsHandlerImpl extends AbstractLogisticsHandler {
                 }
                 BigDecimal exchangeRate1 = dmpTaskFeign.getRate(LocalDate.now().format(DateTimeFormatter.ofPattern(YYYY_MM_DD)), currency);
                 if (Objects.isNull(exchangeRate1)){
-                    throw new ServiceException(ApiError.ERROR_EXCHANGE_RATE_NOT_EXIST, LocalDate.now(), currency);
+                    throw new ServiceException(ApiError.COMMON_EXCHANGE_RATE_NOT_EXIST, LocalDate.now(), currency);
                 }
                 //先转换成人民币
                 BigDecimal cnyDeclarePrice = MathUtil.multiplyWithTwo(declarePrice, exchangeRate1).setScale(4, RoundingMode.HALF_UP);
                 //再统一转换成美元
                 BigDecimal exchangeRate2 = dmpTaskFeign.getRate(LocalDate.now().format(DateTimeFormatter.ofPattern(YYYY_MM_DD)), CurrencyEnum.USD.getCurrencyCode());
                 if (Objects.isNull(exchangeRate2)){
-                    throw new ServiceException(ApiError.ERROR_EXCHANGE_RATE_NOT_EXIST, LocalDate.now(), CurrencyEnum.USD.getCurrencyCode());
+                    throw new ServiceException(ApiError.COMMON_EXCHANGE_RATE_NOT_EXIST, LocalDate.now(), CurrencyEnum.USD.getCurrencyCode());
                 }
                 BigDecimal usdDeclarePrice = MathUtil.divide(cnyDeclarePrice, exchangeRate2).setScale(4, RoundingMode.HALF_UP);
                 productInfo.setDeclare_unit_price_export(usdDeclarePrice);
@@ -458,7 +458,7 @@ public class DsfLogisticsHandlerImpl extends AbstractLogisticsHandler {
                 logisticsOperateService.pushOperateLog(logisticsUpdateWeightVO.getOrderId(),
                         logisticsUpdateWeightVO.getDeliveryNo(), BusinessTypeEnum.UPDATE_WEIGHT.getCode(), LogisticsPlatformEnum.DSF.getCode(),
                         RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsUpdateWeightVO), JSONUtil.toJsonStr(response),false);
-                return ApiResult.error(ApiError.CALL_THIRD_LOGISTICS_PLATFORM_ERROR.code,response.getMsg());
+                return ApiResult.error(ApiError.LOGISTICS_CALL_THIRD_PLATFORM_ERROR.getCode(),response.getMsg());
             }
             logisticsOperateService.pushOperateLog(logisticsUpdateWeightVO.getOrderId(),
                     logisticsUpdateWeightVO.getDeliveryNo(), BusinessTypeEnum.UPDATE_WEIGHT.getCode(), LogisticsPlatformEnum.DSF.getCode(),

@@ -51,7 +51,7 @@ public class CfgProductCategoryFieldServiceImpl extends SuperServiceImpl<CfgProd
     @Override
     public Boolean update(CfgProductCategoryFieldDTO.UpdateDTO updateDTO) {
         CfgProductCategoryFieldEntity old = super.getById(updateDTO.getId());
-        CfgProductCategoryFieldEntity oldEntity = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "产品分类字段配置单"));
+        CfgProductCategoryFieldEntity oldEntity = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "产品分类字段配置单"));
         CfgProductCategoryFieldEntity cfgProductCategoryFieldEntity =  BeanMapperUtils.map(CfgProductCategoryFieldEntity.class, updateDTO);
 
         log.info("编辑 开始修改产品分类字段配置单数据，id：【{}】", oldEntity.getId());

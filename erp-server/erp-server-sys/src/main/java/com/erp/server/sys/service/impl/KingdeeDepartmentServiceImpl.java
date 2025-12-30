@@ -104,7 +104,7 @@ public class KingdeeDepartmentServiceImpl extends SuperServiceImpl<KingdeeDepart
     @Override
     public Boolean update(KingdeeDepartmentDTO.UpdateDTO updateDTO) {
         KingdeeDepartmentEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "金蝶部门不存在"));
+        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "金蝶部门不存在"));
         String oldOrgId = old.getUseOrgId();
         String newOrgId = updateDTO.getUseOrgId();
         if (!oldOrgId.equals(newOrgId)) {
@@ -306,7 +306,7 @@ public class KingdeeDepartmentServiceImpl extends SuperServiceImpl<KingdeeDepart
             throw new ServiceException("该部门下存在子部门,无法删除");
         }
 
-        Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "金蝶部门不存在"));
+        Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "金蝶部门不存在"));
         Boolean result = this.removeById(id);
         if (result) {
             //金蝶推送

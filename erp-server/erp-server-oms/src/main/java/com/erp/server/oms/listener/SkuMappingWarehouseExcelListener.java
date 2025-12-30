@@ -15,7 +15,6 @@ import com.erp.model.oms.dto.excel.SkuMappingWarehouseImportExcelDTO;
 import com.erp.model.oms.entity.ListingInfoEntity;
 import com.erp.model.oms.entity.SkuMappingEntity;
 import com.erp.model.oms.enums.AuthStatusEnum;
-import com.erp.model.oms.enums.ListingInfoPlatformStatusEnum;
 import com.erp.model.oms.enums.ListingMatchResultEnum;
 import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
@@ -141,7 +140,7 @@ public class SkuMappingWarehouseExcelListener extends AnalysisEventListener<SkuM
         List<WarehouseDTO.ListDTO> warehouseList = wmsTaskFeign.listWarehouseByNameList(Collections.singletonList(warehouseName));
         //仓库名称
         if (CollUtil.isEmpty(warehouseList) && StringUtils.isBlank(importExcelDTO.getAccount())) {
-            errorMsgList.add(ApiError.WAREHOUSE_NOT_EXIST_NO_PERMISSION.msg);
+            errorMsgList.add(ApiError.WH_NOT_EXIST_OR_NO_PERMISSION.getMsg());
         }else {
             warehouseId = warehouseList.stream().filter(w -> w.getName().equals(warehouseName)).
                     findFirst().map(WarehouseDTO.ListDTO::getId).orElse("");

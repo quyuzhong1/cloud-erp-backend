@@ -172,7 +172,7 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
 
             InboundShipmentList responseList = shipments.getPayload().getShipmentData();
             if (CollectionUtils.isEmpty(shipments.getPayload().getShipmentData())) {
-                throw new ServiceException(ApiError.FBA_SHIPMENT_ERROR);
+                throw new ServiceException(ApiError.FIRST_MILE_SHIPMENT_ERROR);
             }
             // 返回下载源数据
             List<PlatformAmazonFbaShipmentDTO> amazonFbaShipmentDTOList = responseList.stream()

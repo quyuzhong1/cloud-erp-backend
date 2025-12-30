@@ -129,7 +129,7 @@ public class InitFirstMileAllocationServiceImpl extends SuperServiceImpl<InitFir
     @Override
     public Boolean update(InitFirstMileAllocationDTO.UpdateDTO updateDTO) {
         InitFirstMileAllocationEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "期初头程分摊"));
+        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "期初头程分摊"));
 
         InitFirstMileAllocationEntity initFirstMileAllocationEntity = BeanMapperUtils.map(InitFirstMileAllocationEntity.class, updateDTO);
         // 数据处理
@@ -191,12 +191,12 @@ public class InitFirstMileAllocationServiceImpl extends SuperServiceImpl<InitFir
     public BatchResultDTO approve(InitFirstMileAllocationEntity entity, String type, String comment, Boolean isNeedProcess) {
         //审核中允许审核
         if (!ApproveStatusEnum.APPROVE_ING.getStatus().equals(entity.getStatus())) {
-            return BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_98006.msg);
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.WF_APPROVE_ALLOWED_STATUS_ONLY.getMsg());
         }
         //当前登陆人,启用流程后可删除
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         if (CharSequenceUtil.equals(entity.getCreateUserId(),userInfo.getUid()) && !CharSequenceUtil.equals(entity.getCreateUserId(), UserStateConstants.USER_SYSTEM_ID)) {
-            throw new ServiceException(ApiError.WORKFLOW_APPROVE_CREATE_APPROVE_DIFF,userInfo.getUserName());
+            throw new ServiceException(ApiError.WF_CREATOR_APPROVER_NOT_SAME,userInfo.getUserName());
         }
         log.info("期初头程分摊记录【{}】，code=【{}】", ApproveTypeEnum.getName(type), entity.getCode());
         //审核通过
@@ -219,7 +219,7 @@ public class InitFirstMileAllocationServiceImpl extends SuperServiceImpl<InitFir
     public BatchResultDTO disApprove(InitFirstMileAllocationEntity entity) {
         //已审核允许反审核
         if (!ApproveStatusEnum.APPROVE.getStatus().equals(entity.getStatus())) {
-            return BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_98014.msg);
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.BILL_REVERSE_APPROVAL_ALLOWED_APPROVED_ONLY.getMsg());
         }
         log.info("期初头程分摊记录反审核，code=【{}】", entity.getCode());
         //数据是否已经被引用
@@ -252,7 +252,7 @@ public class InitFirstMileAllocationServiceImpl extends SuperServiceImpl<InitFir
     public BatchResultDTO cancel(InitFirstMileAllocationEntity entity) {
         //审核中允许撤销
         if (!ApproveStatusEnum.APPROVE_ING.getStatus().equals(entity.getStatus())) {
-            return BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_98007.msg);
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.WF_REVOKE_PROCESS_ALLOWED_STATUS_ONLY.getMsg());
         }
         return approve(entity, ApproveTypeEnum.CANCEL.getStatus(), "", Boolean.FALSE);
     }
@@ -261,7 +261,7 @@ public class InitFirstMileAllocationServiceImpl extends SuperServiceImpl<InitFir
     public BatchResultDTO submit(InitFirstMileAllocationEntity entity) {
         //只有待提交状态才能发起提交
         if (!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(entity.getStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(entity.getStatus())) {
-            return BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_98032.msg);
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.BILL_SUBMIT_ALLOWED_STATUS_ONLY.getMsg());
         }
         log.info("期初头程分摊记录提交审核，code=【{}】", entity.getCode());
         //更新单据为审核中
@@ -317,16 +317,16 @@ public class InitFirstMileAllocationServiceImpl extends SuperServiceImpl<InitFir
             EasyExcel.read(excelFile.getInputStream(), InitFirstMileAllocationDetailExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (IOException e) {
             log.error("导入错误！", e);
-            throw new ServiceException(ApiError.ERROR_95124);
+            throw new ServiceException(ApiError.FILE_DATA_IMPORT_FAILED);
         } catch (ExcelCommonException e) {
             log.error("导入格式错误！", e);
-            throw new ServiceException(ApiError.ERROR_1016);
+            throw new ServiceException(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX);
         }
         List<InitFirstMileAllocationDetailExcelDTO> excelDateList = excelListenerUtil.getExcelDateList();
         if (CollectionUtils.isEmpty(excelDateList)) {
-            throw new ServiceException(ApiError.ERROR_95123);
+            throw new ServiceException(ApiError.FILE_DATA_REQUIRED);
         } else if (excelDateList.size() > 5000) {
-            throw new ServiceException(ApiError.ERROR_EXCEL_IMPORT_SIZE);
+            throw new ServiceException(ApiError.FILE_EXCEL_IMPORT_SIZE);
         }
         List<InitFirstMileAllocationDetailExcelDTO> errorList = excelListenerUtil.getErrorList();
 
@@ -365,7 +365,7 @@ public class InitFirstMileAllocationServiceImpl extends SuperServiceImpl<InitFir
             wb.write(output);
             wb.close();
         } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_95131);
+            throw new ServiceException(ApiError.FILE_IMPORT_TEMPLATE_DOWNLOAD_FAILED);
         }
     }
 

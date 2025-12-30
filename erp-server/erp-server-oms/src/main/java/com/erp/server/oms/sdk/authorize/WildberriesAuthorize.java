@@ -24,7 +24,6 @@ import com.sdk.oms.wildberries.service.WildberriesSDKService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.ss.formula.functions.T;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -70,7 +69,7 @@ public class WildberriesAuthorize implements IShopAuthorizeService<T> {
     public Boolean shopAuthorize(ShopAuthorizeDTO dto, HttpServletResponse response) {
         String shopId = dto.getShopId();
         if (StringUtils.isBlank(shopId)) {
-            throw new ServiceException(ApiError.ERROR_WALMART_SHOP_ID_NOT_NULL);
+            throw new ServiceException(ApiError.SHOP_WALMART_ID_REQUIRED);
         }
 
         ShopInfoEntity shopInfo = shopInfoService.getById(shopId);

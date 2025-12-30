@@ -103,7 +103,7 @@ public class RemotePostcodeServiceImpl extends SuperServiceImpl<RemotePostcodeMa
         }
 
         RemotePostcodeEntity old = super.getById(updateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "偏远邮编组"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "偏远邮编组"));
         RemotePostcodeEntity remotePostcodeEntity =  BeanMapperUtils.map(RemotePostcodeEntity.class, updateDTO);
 
         // 数据处理

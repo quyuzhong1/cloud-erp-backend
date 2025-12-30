@@ -93,7 +93,7 @@ public class ExcelAnalysisHelper<T> {
                         field.set(object, filedValue);
                         break;
                     } catch (IllegalAccessException e) {
-                        throw new ServiceException(ApiError.ERROR_1012);
+                        throw new ServiceException(ApiError.FILE_EXCEL_PARSE);
                     }
                 }
             }
@@ -124,7 +124,7 @@ public class ExcelAnalysisHelper<T> {
                         filedValue = field.get(object);
                         break;
                     } catch (IllegalAccessException e) {
-                        throw new ServiceException(ApiError.ERROR_1012);
+                        throw new ServiceException(ApiError.FILE_EXCEL_PARSE);
                     }
                 }
             }

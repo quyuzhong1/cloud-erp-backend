@@ -56,7 +56,7 @@ public class PilotApplicationDetailServiceImpl extends SuperServiceImpl<PilotApp
     @Override
     public Boolean update(PilotApplicationDetailDTO.UpdateDTO updateDTO) {
         PilotApplicationDetailEntity old = super.getById(updateDTO.getId());
-        PilotApplicationDetailEntity oldEntity = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "试产/量产 明细"));
+        PilotApplicationDetailEntity oldEntity = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "试产/量产 明细"));
         PilotApplicationDetailEntity pilotApplicationDetailEntity =  BeanMapperUtils.map(PilotApplicationDetailEntity.class, updateDTO);
 
         log.info("编辑 开始修改试产/量产 明细数据，id：【{}】", oldEntity.getId());

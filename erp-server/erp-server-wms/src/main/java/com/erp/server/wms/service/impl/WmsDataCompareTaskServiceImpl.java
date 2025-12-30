@@ -15,7 +15,6 @@ import javax.annotation.Resource;
 import cn.hutool.core.text.CharSequenceUtil;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
@@ -87,7 +86,6 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.lang.UUID;
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.http.HttpUtil;
 import lombok.extern.slf4j.Slf4j;
 /**
@@ -310,7 +308,7 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
     public Boolean update(WmsDataCompareTaskDTO.UpdateDTO updateDTO) {
         WmsDataCompareTaskEntity old = super.getById(updateDTO.getId());
 		if (Objects.isNull(old)){
-			throw new ServiceException(ApiError.NOT_EXIST_BILL, "数据对比任务");
+			throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "数据对比任务");
 		}
         WmsDataCompareTaskEntity wmsDataCompareTaskEntity =  BeanMapperUtils.map(WmsDataCompareTaskEntity.class, updateDTO);
 

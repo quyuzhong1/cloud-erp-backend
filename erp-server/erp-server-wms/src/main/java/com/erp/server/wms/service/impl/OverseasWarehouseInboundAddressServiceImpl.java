@@ -4,9 +4,7 @@ import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.erp.model.plm.entity.BomInfoEntity;
 import com.erp.model.sys.entity.DictCityEntity;
-import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.wms.dto.OverseasWarehouseInboundAddressDTO;
 import com.erp.model.wms.entity.OverseasWarehouseInboundAddressEntity;
 import com.erp.rpc.sys.feign.SysDictFeign;
@@ -20,9 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.*;
-import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * <p>
@@ -93,7 +89,7 @@ public class OverseasWarehouseInboundAddressServiceImpl extends SuperServiceImpl
     public void update(OverseasWarehouseInboundAddressDTO.UpdateDTO dto) {
         OverseasWarehouseInboundAddressEntity entity = this.getById(dto.getId());
         if (Objects.isNull(entity)) {
-            throw new ServiceException(ApiError.ERROR_95146);
+            throw new ServiceException(ApiError.PROJECT_TASK_RECORD_NOT_FOUND);
         }
         sysDictService.mapAndCheckDictCityIds(
                 dto.getDictProvinceId(),

@@ -196,7 +196,7 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
         if (ObjectUtil.isNotEmpty(purchaseUserName)) {
             FindUserDTO findUserDTO = sysUserFeign.getUserByUserName(purchaseUserName.toString(), UserTypeEnum.ERP.getCode());
             if (ObjectUtil.isEmpty(findUserDTO)) {
-                throw new ServiceException(ApiError.ERROR_NOT_FOUND,CharSequenceUtil.format("采购员【{}】未找到", purchaseUserName));
+                throw new ServiceException(ApiError.COMMON_NOT_FOUND,CharSequenceUtil.format("采购员【{}】未找到", purchaseUserName));
             }
             map.put("purchaseUserId", findUserDTO.getUserId());
         }
@@ -219,7 +219,7 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
         // 如果付款条件不存在，抛出异常
         if (CharSequenceUtil.isBlank(paymentConditionCode)) {
             log.error("付款条件未找到，当前付款条件：{}", paymentCondition);
-            throw new ServiceException(ApiError.ERROR_NOT_FOUND, CharSequenceUtil.format("付款条件【{}】", paymentCondition));
+            throw new ServiceException(ApiError.COMMON_NOT_FOUND, CharSequenceUtil.format("付款条件【{}】", paymentCondition));
         }
         map.put("paymentCondition", paymentConditionCode);
 
@@ -289,7 +289,7 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
                     List<DictBankEntity> bankList = FeignQuery.create(DictBankEntity.class).eq(DictBankEntity::getName, bankName).list();
                     if (CollUtil.isEmpty(bankList)) {
                         log.error("银行名称未找到，当前银行名称：{}", bankName);
-                        throw new ServiceException(ApiError.ERROR_NOT_FOUND, CharSequenceUtil.format("银行名称【{}】", bankName));
+                        throw new ServiceException(ApiError.COMMON_NOT_FOUND, CharSequenceUtil.format("银行名称【{}】", bankName));
                     }
                     bankAccountMap.put("bankId", bankList.get(0).getId());
                 }
@@ -311,7 +311,7 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
             Object attachmentObject = credentialMap.get("attachment");
             if (ObjectUtil.isEmpty(attachmentObject)) {
                 log.error("资质附件不能为空");
-                throw new ServiceException(ApiError.ERROR_NOT_FOUND, "资质附件");
+                throw new ServiceException(ApiError.COMMON_NOT_FOUND, "资质附件");
             }
             //供应商按附件生成资质信息
             Set<Map> attachList =  new HashSet<>();
@@ -358,7 +358,7 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
                 // 如果凭证类型不存在，抛出异常
                 if (CharSequenceUtil.isBlank(credentialCode)) {
                     log.error("凭证类型未找到，当前凭证类型：{}", fieldName);
-                    throw new ServiceException(ApiError.ERROR_NOT_FOUND, CharSequenceUtil.format("凭证类型【{}】", fieldName));
+                    throw new ServiceException(ApiError.COMMON_NOT_FOUND, CharSequenceUtil.format("凭证类型【{}】", fieldName));
                 }
                 detailAttachMap.put("attachment",attachmentObject);
                 detailAttachMap.put("code", credentialCode);
@@ -419,7 +419,7 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
         }
         SupplierEntity supplierEntity = FeignQuery.getById(SupplierEntity.class, taskInfo.getBussinessId());
         if (ObjectUtil.isNotEmpty(supplierEntity)) {
-            throw new ServiceException(ApiError.ERROR_EXIST_BILL, CharSequenceUtil.format("供应商{}",supplierEntity.getCode()));
+            throw new ServiceException(ApiError.BILL_ALREADY_EXIST, CharSequenceUtil.format("供应商{}",supplierEntity.getCode()));
         }
         if (DictBasicEnum.CREATEANDUPDATE.equals(dictBasicEnum)) {
             //创建人

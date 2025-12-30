@@ -9,7 +9,6 @@ import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -21,11 +20,7 @@ import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
-import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.date.DateUtil;
-import com.erp.model.plm.vo.SkuVO;
-import com.erp.model.scm.dto.excel.SupplierVisitImportExcelDTO;
-import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.tms.dto.TmsCfgSailingDTO;
 import com.erp.model.tms.dto.excel.TmsCfgSailingExcelDTO;
 import com.erp.model.tms.entity.DictBasicEntity;
@@ -58,7 +53,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.DayOfWeek;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
@@ -119,7 +113,7 @@ public class TmsCfgSailingServiceImpl extends SuperServiceImpl<TmsCfgSailingMapp
     @Override
     public Boolean update(TmsCfgSailingDTO.UpdateDTO updateDTO) {
         TmsCfgSailingEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "截单开船配置"));
+        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "截单开船配置"));
         TmsCfgSailingEntity tmsCfgSailingEntity =  BeanMapperUtils.map(TmsCfgSailingEntity.class, updateDTO);
 
         log.info("编辑 开始修改截单开船配置数据，id：【{}】", old.getId());
@@ -280,7 +274,7 @@ public class TmsCfgSailingServiceImpl extends SuperServiceImpl<TmsCfgSailingMapp
             //新增校验是否重复
             TmsCfgSailingEntity old = oldList.stream().filter(obj -> CharSequenceUtil.equals(obj.getLogisticsChannelId(), logisticsChannelId)).findFirst().orElse(null);
             if (isAdd && ObjectUtil.isNotEmpty(old)) {
-                throw new ServiceException(ApiError.ERROR_CFG_SAILING_EXIST,channelEntity.getName());
+                throw new ServiceException(ApiError.LOGISTICS_SAILING_CONFIG_ALREADY_EXISTS,channelEntity.getName());
             }
             resultList.add(entity);
         }
@@ -370,7 +364,7 @@ public class TmsCfgSailingServiceImpl extends SuperServiceImpl<TmsCfgSailingMapp
                         StrUtil.builder().append(DateUtil.nowExcelFileFormat()).append(name).toString(),
                         excelPath);
             } catch (IOException e) {
-                throw new ServiceException(ApiError.ERROR_95125);
+                throw new ServiceException(ApiError.FILE_EXPORT_ERROR_DATA_FAILED);
             }
         }
 
@@ -419,7 +413,7 @@ public class TmsCfgSailingServiceImpl extends SuperServiceImpl<TmsCfgSailingMapp
             wb.close();
         } catch (Exception e) {
             log.error("warehouse downloadTemplate  出错了 e==", e);
-            throw new ServiceException(ApiError.ERROR_95131);
+            throw new ServiceException(ApiError.FILE_IMPORT_TEMPLATE_DOWNLOAD_FAILED);
         }
     }
 

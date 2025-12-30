@@ -200,7 +200,7 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
             // 查询仓库下面仓位的SKU可用库存
             WarehouseEntity warehouseEntity = warehouseService.getById(warehouseId);
             if (Objects.isNull(warehouseEntity)){
-                throw new ServiceException(ApiError.NOT_EXIST,"仓库信息");
+                throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC,"仓库信息");
             }
             return this.getInventoryTotal(warehouseEntity.getOrgId(), warehouseId, skuId, warehouseLocationId, InventoryStatusEnum.USABLE.getCode());
         }
@@ -211,7 +211,7 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
         // 查询仓库组织
         WarehouseEntity warehouseEntity = warehouseService.getById(warehouseId);
         if (Objects.isNull(warehouseEntity)){
-            throw new ServiceException(ApiError.NOT_EXIST,"仓库信息");
+            throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC,"仓库信息");
         }
         LambdaQueryWrapper<InventoryEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(InventoryEntity::getWarehouseId, warehouseId).eq(InventoryEntity::getOrgId, warehouseEntity.getOrgId())
@@ -226,7 +226,7 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
     public Integer getRecipientAvailableQty(String warehouseId, String skuId) {
         WarehouseEntity warehouseEntity = warehouseService.getById(warehouseId);
         if (Objects.isNull(warehouseEntity)) {
-            throw new ServiceException(ApiError.NOT_EXIST, "仓库信息");
+            throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC, "仓库信息");
         }
         String orgId = warehouseEntity.getOrgId();
 
@@ -274,7 +274,7 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
         // 查询仓库组织
         WarehouseEntity warehouseEntity = warehouseService.getById(warehouseId);
         if (Objects.isNull(warehouseEntity)){
-            throw new ServiceException(ApiError.NOT_EXIST,"仓库信息");
+            throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC,"仓库信息");
         }
         LambdaQueryWrapper<InventoryEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(InventoryEntity::getWarehouseId, warehouseId).eq(InventoryEntity::getOrgId, warehouseEntity.getOrgId())
@@ -316,7 +316,7 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
             // 更新实时库存表数量
             boolean updateFlag = this.updateQtyById(inventory.getId(), qty);
             if (!updateFlag) {
-                throw new ServiceException(ApiError.ERROR_1027);
+                throw new ServiceException(ApiError.BILL_DATA_LOCKED);
             }
             inventorySaveDTO.setInventoryId(inventory.getId());
         }
@@ -329,7 +329,7 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
         InventoryStatusEnum inventoryStatusEnum = InventoryStatusEnum.getByCode(status);
         ValidatorUtil.isTrue(Objects.nonNull(inventoryStatusEnum), () -> new ServiceException("库存状态错误"));
         WarehouseDTO.UpdateDTO warehouse = warehouseService.detailWithCache(warehouseId);
-        ValidatorUtil.isTrue(Objects.nonNull(warehouse) && StrUtils.isNotEmpty(warehouse.getId()), () -> new ServiceException(ApiError.ERROR_99002));
+        ValidatorUtil.isTrue(Objects.nonNull(warehouse) && StrUtils.isNotEmpty(warehouse.getId()), () -> new ServiceException(ApiError.WH_PARAM_NOT_FOUND));
         // sku id去重
         skuIds = skuIds.stream().distinct().collect(Collectors.toList());
         LambdaQueryWrapper<InventoryEntity> queryWrapper = new LambdaQueryWrapper<>();
@@ -444,7 +444,7 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
                 .update(new InventoryEntity());
 
         if (!flag) {
-            throw new ServiceException(ApiError.ERROR_1027);
+            throw new ServiceException(ApiError.BILL_DATA_LOCKED);
         }
 
         return true;
@@ -733,7 +733,7 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
             wb.write(outputStream);
             wb.close();
         } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_1015);
+            throw new ServiceException(ApiError.FILE_EXPORT_FAILED);
         } finally {
             IOUtils.closeQuietly(outputStream);
         }
@@ -749,7 +749,7 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
         List<String> skuIds = list.stream().map(InventoryDTO.PagingViewDTO::getSkuId).distinct().collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIds);
         if (CollectionUtils.isEmpty(skuList)) {
-            throw new ServiceException(ApiError.ERROR_95010);
+            throw new ServiceException(ApiError.PRODUCT_NOT_FOUND);
         }
         //仓库
         List<String> warehouseIdList = list.stream().map(InventoryDTO.PagingViewDTO::getWarehouseId).distinct().collect(Collectors.toList());
@@ -1163,7 +1163,7 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
             } else {
                 WarehouseEntity warehouseEntity = warehouseEntities.stream().filter(req -> req.getId().equals(usableInventoryParamDTO.getWarehouseId())).findFirst().orElse(null);
                 if (Objects.isNull(warehouseEntity)){
-                    throw new ServiceException(ApiError.NOT_EXIST,"仓库信息");
+                    throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC,"仓库信息");
                 }
                 Integer inventoryUsableTotal = this.getInventoryTotal(warehouseEntity.getOrgId(), warehouseEntity.getId(), usableInventoryParamDTO.getSkuId(), usableInventoryParamDTO.getWarehouseLocation(), InventoryStatusEnum.USABLE.getCode());
                 view.setSkuId(usableInventoryParamDTO.getSkuId());
@@ -1212,7 +1212,7 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
     public InventoryDTO.LocationInventory recommendedLocation(InventoryDTO.RecommendedLocationParam param) {
         InventoryEntity inventory = getRecommendedInventory(param);
         if (ObjectUtil.isEmpty(inventory)){
-            throw new ServiceException(ApiError.ERROR_99100);
+            throw new ServiceException(ApiError.WH_BIN_NOT_AVAILABLE);
         }
         WarehouseLocationEntity entity = warehouseLocationService.getOne(Wrappers.<WarehouseLocationEntity>lambdaQuery()
                 .eq(WarehouseLocationEntity::getWarehouseId, param.getWarehouseId())
@@ -1393,7 +1393,7 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
         // 查询仓库组织
         WarehouseEntity warehouseEntity = warehouseService.getById(warehouseId);
         if (Objects.isNull(warehouseEntity)){
-            throw new ServiceException(ApiError.NOT_EXIST,"仓库信息");
+            throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC,"仓库信息");
         }
         LambdaQueryWrapper<InventoryEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(InventoryEntity::getWarehouseId, warehouseId).eq(InventoryEntity::getOrgId, warehouseEntity.getOrgId())

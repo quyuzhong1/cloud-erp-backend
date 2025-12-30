@@ -62,7 +62,7 @@ public class TransferDeclareDeadlineSettingServiceImpl extends SuperServiceImpl<
         //组装数据，保存
         for (TransferDeclareDeadlineSettingDTO.AddDTO addDTO : addList) {
             if (addDTO.getGenerateTime().isAfter(addDTO.getDeadlineTime())) {
-                throw new ServiceException(ApiError.GENERATE_TIME_GT_DEADLINE_TIME);
+                throw new ServiceException(ApiError.LOGISTICS_GENERATE_TIME_AFTER_DEADLINE_FORBIDDEN);
             }
 
             TransferDeclareDeadlineSettingEntity entity = new TransferDeclareDeadlineSettingEntity();
@@ -97,7 +97,7 @@ public class TransferDeclareDeadlineSettingServiceImpl extends SuperServiceImpl<
         }
         Set<String> set = new HashSet<>(transferLogisticsSupplierIdList);
         if (set.size() != transferLogisticsSupplierIdList.size()) {
-            throw new ServiceException(ApiError.TRANSFER_DELIVERY_LOGISTICS_SUPPLIER);
+            throw new ServiceException(ApiError.LOGISTICS_TRANSFER_SUPPLIER_DUPLICATE);
         }
     }
 

@@ -59,9 +59,17 @@ public class MQSyncFsHandler {
     private CfgQueryOptionExtService cfgQueryOptionExtService;
     @Autowired
     private CfgQueryOptionService cfgQueryOptionService;
+    @Resource
+    private CfgApproveNoticeService cfgApproveNoticeService;
 
     public boolean handler(CfgApproveSyncDTO.SyncFsProcessToMqDTO dto) {
         CfgApproveSyncEntity cfgApproveSyncEntity = dto.getCfgApproveSyncEntity();
+        if(Objects.isNull(cfgApproveSyncEntity)){
+            log.error("【{}】同步飞书审批实例失败，审批同步配置不存在", dto.getBusinessCode());
+            return false;
+        }
+
+
 
         ApproveSyncRecordEntity syncRecordEntity = buildSyncRecord(dto);
         String errorReason ="";
@@ -96,6 +104,16 @@ public class MQSyncFsHandler {
         List<String> approveIds = processTaskManagementEntities.stream().map(ProcessTaskManagementEntity::getCurApproveId).filter(StringUtil::isNotBlank).collect(Collectors.toList());
         //抄送人
         List<String> ccIds = processTaskCcEntities.stream().map(ProcessTaskCcEntity::getCcUserId).filter(StringUtil::isNotBlank).collect(Collectors.toList());
+        //关注人
+        List<CfgApproveNoticeEntity> cfgApproveNoticeEntities = cfgApproveNoticeService.lambdaQuery().eq(CfgApproveNoticeEntity::getMainId, cfgApproveSyncEntity.getId()).list();
+        if(CollUtil.isNotEmpty(cfgApproveNoticeEntities)){
+            for (CfgApproveNoticeEntity cfgApproveNoticeEntity : cfgApproveNoticeEntities) {
+                String specificPerson = cfgApproveNoticeEntity.getSpecificPerson();
+                if(StringUtils.isNotBlank(specificPerson)){
+                    allUserIds.addAll(Arrays.asList(specificPerson.split(",")));
+                }
+            }
+        }
         // 合并成一个集合（包含去重后的用户ID）
         allUserIds.add(createUserId);
         allUserIds.addAll(approveIds);

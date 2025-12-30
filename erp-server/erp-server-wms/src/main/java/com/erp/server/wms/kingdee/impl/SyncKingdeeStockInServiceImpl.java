@@ -259,7 +259,7 @@ public class SyncKingdeeStockInServiceImpl implements SyncKingdeeStockInService 
         //入库单明细
         List<PoInstockDetailEntity> detailList = poInstockDetailService.listByMainId(entity.getId());
         if (CollectionUtils.isEmpty(detailList)) {
-            throw new ServiceException(ApiError.ERROR_98051);
+            throw new ServiceException(ApiError.PO_INSTOCK_DETAIL_NOT_FOUND);
         }
 
         //获取sku的id集合

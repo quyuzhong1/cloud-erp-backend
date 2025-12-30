@@ -11,7 +11,6 @@ import com.erp.server.wms.service.SampleTransferDetailService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.erp.server.wms.service.OperateLogService;
-import com.erp.server.wms.service.CommonService;
 import com.common.core.exception.ServiceException;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -68,7 +67,7 @@ public class SampleTransferDetailServiceImpl extends SuperServiceImpl<SampleTran
     @Override
     public Boolean update(SampleTransferDetailDTO.UpdateDTO addOrUpdateDTO) {
         SampleTransferDetailEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "样品转移单明细单"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "样品转移单明细单"));
         SampleTransferDetailEntity sampleTransferDetailEntity =  BeanMapperUtils.map(SampleTransferDetailEntity.class, addOrUpdateDTO);
 
         // 数据处理

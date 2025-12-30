@@ -3,6 +3,7 @@ package com.common.core.exception;
 import cn.hutool.core.text.CharSequenceUtil;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
+import com.common.core.utils.MessageUtils;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -38,29 +39,13 @@ public class ServiceException extends RuntimeException {
         this.code = apiResult.getCode();
         this.msg = apiResult.getMsg();
         this.data = apiResult.getData();
-        log.error(msg);
+        log.error("[ServiceException] code={}, msg={}", code, msg);
     }
 
 
-    /**
-     * 从枚举中获取参数
-     *
-     * @param apiError  API错误信息
-     */
-    public ServiceException(ApiError apiError) {
-        // 加上super，否则会显示null
-        super(apiError.msg);
-        this.code = apiError.code;
-        this.msg = apiError.msg;
-        log.error(msg);
-    }
-
-    public ServiceException(String formatErrMsg,Object... args) {
-        // 加上super，否则会显示null
-        super(CharSequenceUtil.format(formatErrMsg,args) );
-        this.code = ApiError.DEFAULT.code;
-        this.msg = CharSequenceUtil.format(formatErrMsg,args) ;
-        log.error(msg);
+    /** 仅传入消息，使用默认错误码 */
+    public ServiceException(String msg, Object... args) {
+        this(ApiError.HTTP_UNKNOWN.getCode(), msg, args);
     }
 
     /**
@@ -71,59 +56,28 @@ public class ServiceException extends RuntimeException {
      */
     public ServiceException(ApiError apiError,Object... args) {
         // 加上super，否则会显示null
-        super(CharSequenceUtil.format(apiError.msg,args) );
-        this.code = apiError.code;
-        this.msg = CharSequenceUtil.format(apiError.msg,args) ;
-        log.error(msg);
+        super(resolveMessage(apiError, args));
+        this.code = apiError.getCode();
+        this.msg = resolveMessage(apiError, args);
+        log.error("[ServiceException] code={}, msg={}", code, msg);
     }
 
-    /**
-     * 构建 异常信息
-     * @param code  错误代号
-     * @param msg   错误信息
-     */
-    public ServiceException(Integer code, String msg) {
-        // 加上super，否则会显示null
-        super(msg);
-        this.code = code;
-        this.msg = msg;
-        log.error(msg);
+    /** 直接构建（非国际化消息） */
+    public ServiceException(Integer code, String msg, Object... args) {
+        super(CharSequenceUtil.format(msg, args));
+        this.code = code != null ? code : ApiError.HTTP_UNKNOWN.getCode();
+        this.msg = CharSequenceUtil.format(msg, args);
+        this.data = null;
+        log.error("[ServiceException] code={}, msg={}", code, this.msg);
     }
 
-    /**
-     * 构建 异常信息
-     * @param msg   错误信息
-     */
-    public ServiceException(String msg) {
-        // 加上super，否则会显示null
-        super(msg);
-        this.code = ApiError.DEFAULT.code;
-        this.msg = msg;
-        log.error(msg);
-    }
-
+    // ====================== 静态快速抛出方法 ====================== //
     /**
      * 抛出 ServiceException 异常
-     * @param msg    错误消息,支持格式化
+     * @param msg    错误消息,支持格式化，如：XXX[{}]成功
      */
-    public static void runError(String msg) {
-        throw new ServiceException(msg);
-    }
-    /**
-     * 抛出 ServiceException 异常
-     * @param formatedErrMsg    错误消息,支持格式化，如：XXX[{}]成功
-     */
-    public static void runError(String formatedErrMsg,Object... params) {
-        throw new ServiceException(formatedErrMsg,params);
-    }
-
-    /**
-     * 抛出 ServiceException 异常
-     * @param code  错误代号
-     * @param msg   错误消息
-     */
-    public static void runError(Integer code,String msg) {
-        throw new ServiceException(code,msg);
+    public static void runError(String msg,Object... params) {
+        throw new ServiceException(msg,params);
     }
 
     /**
@@ -138,11 +92,11 @@ public class ServiceException extends RuntimeException {
     /**
      * 抛出 ServiceException 异常
      * @param code              错误代号
-     * @param formatedErrMsg    错误消息,支持格式化，如：XXX[{}]成功
+     * @param msg    错误消息,支持格式化，如：XXX[{}]成功
      * @param params            错误信息 参数
      */
-    public static void runError(Integer code, String formatedErrMsg,Object... params) {
-        throw new ServiceException(code,CharSequenceUtil.format(formatedErrMsg,params));
+    public static void runError(Integer code, String msg,Object... params) {
+        throw new ServiceException(code,CharSequenceUtil.format(msg,params));
     }
 
     /**
@@ -152,10 +106,27 @@ public class ServiceException extends RuntimeException {
      */
     public static void runWarn(String formatedErrMsg,Object... params) {
         String msg = CharSequenceUtil.format(formatedErrMsg,params);
-        Integer code = ApiError.WARNING.code;
+        Integer code = ApiError.WARNING.getCode();
         throw new ServiceException(code,msg);
     }
 
+    // ====================== 工具方法 ====================== //
+
+    /**
+     * 国际化消息解析（带回退机制）
+     */
+    private static String resolveMessage(ApiError apiError, Object... args) {
+        if (apiError == null) {
+            return ApiError.HTTP_UNKNOWN.getMsg();
+        }
+        try {
+            String msg = MessageUtils.getMessage(apiError, args);
+            return CharSequenceUtil.isNotBlank(msg) ? msg : apiError.getMsg();
+        } catch (Exception e) {
+            log.warn("[ServiceException] 国际化消息解析失败，使用默认文案：{}", apiError.name());
+            return apiError.getMsg();
+        }
+    }
 }
 
 

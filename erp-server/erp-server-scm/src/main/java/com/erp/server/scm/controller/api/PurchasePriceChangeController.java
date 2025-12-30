@@ -157,20 +157,20 @@ public class PurchasePriceChangeController extends BaseController {
         try {
             entity  = purchasePriceChangeService.add(dto);
             if (null == entity) {
-                return failure(ApiError.ERROR_1019.msg,new BaseResultDTO.AddAndSubmmitDTO("","",Boolean.FALSE));
+                return failure(ApiError.BILL_SAVE_FAILED.getMsg(),new BaseResultDTO.AddAndSubmmitDTO("","",Boolean.FALSE));
             }
         } catch (ServiceException e) {
             log.error("新增失败，dto: {}", dto, e);
             return failure(e.getMessage(),new BaseResultDTO.AddAndSubmmitDTO("","",Boolean.FALSE));
         } catch (Exception e) {
             log.error("新增失败，dto: {}", dto, e);
-            return failure(ApiError.ERROR_1019.msg,new BaseResultDTO.AddAndSubmmitDTO("","",Boolean.FALSE));
+            return failure(ApiError.BILL_SAVE_FAILED.getMsg(),new BaseResultDTO.AddAndSubmmitDTO("","",Boolean.FALSE));
         }
         //提审
         try {
             entity = purchasePriceChangeService.getById(entity.getId());
             if (ObjectUtil.isEmpty(entity)) {
-                throw new ServiceException(ApiError.NOT_EXIST_BILL,"采购价目变更");
+                throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE,"采购价目变更");
             }
             purchasePriceChangeService.submitApprove(Collections.singletonList(entity.getId()), Boolean.TRUE);
         } catch (ServiceException e) {
@@ -178,7 +178,7 @@ public class PurchasePriceChangeController extends BaseController {
             return failure(e.getMessage(),new BaseResultDTO.AddAndSubmmitDTO(entity.getId(),entity.getCode(),Boolean.TRUE));
         } catch (Exception e) {
             log.error("提交审批失败，ID: {}", entity.getId(), e);
-            return failure(ApiError.RETRY_SUBMIT_ERROR.msg,new BaseResultDTO.AddAndSubmmitDTO(entity.getId(),entity.getCode(),Boolean.TRUE));
+            return failure(ApiError.BILL_APPROVE_SUBMIT_RETRY.getMsg(),new BaseResultDTO.AddAndSubmmitDTO(entity.getId(),entity.getCode(),Boolean.TRUE));
         }
         //发送消息
         try {
@@ -247,14 +247,14 @@ public class PurchasePriceChangeController extends BaseController {
         try {
             id = purchasePriceChangeService.updatePurchasePriceChange(dto);
             if (StringUtils.isBlank(id)) {
-                return failure(ApiError.ERROR_1020.msg,new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.FALSE));
+                return failure(ApiError.BILL_UPDATE_FAILED.getMsg(),new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.FALSE));
             }
         } catch (ServiceException e) {
             log.error("更新失败，dto: {}", dto, e);
             return failure(e.getMessage(), new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.FALSE));
         } catch (Exception e) {
             log.error("更新失败，dto: {}", dto, e);
-            return failure(ApiError.ERROR_1020.msg,new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.FALSE));
+            return failure(ApiError.BILL_UPDATE_FAILED.getMsg(),new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.FALSE));
         }
         //提审
         try {
@@ -264,7 +264,7 @@ public class PurchasePriceChangeController extends BaseController {
             return failure( e.getMessage(),new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.TRUE));
         } catch (Exception e) {
             log.error("提交审批失败，ID: {}", id, e);
-            return failure(ApiError.RETRY_SUBMIT_ERROR.msg,new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.TRUE));
+            return failure(ApiError.BILL_APPROVE_SUBMIT_RETRY.getMsg(),new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.TRUE));
         }
 
         //发送消息

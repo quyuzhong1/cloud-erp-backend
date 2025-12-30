@@ -1,6 +1,5 @@
 package com.erp.server.file.core;
 
-import com.common.business.dto.base.BaseDTO;
 import com.common.core.exception.ServiceException;
 import com.erp.server.file.entity.FileTask;
 import com.fasterxml.jackson.core.JsonProcessingException;

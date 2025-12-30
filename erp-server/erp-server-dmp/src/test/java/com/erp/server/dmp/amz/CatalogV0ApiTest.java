@@ -13,17 +13,12 @@
 package com.erp.server.dmp.amz;
 
 import cn.hutool.json.JSONUtil;
-import com.common.core.exception.ServiceException;
-import com.erp.model.dmp.dto.AmazonShopInfoDTO;
-import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.*;
-import com.erp.sdk.oms.amz.spapi.api.CatalogApi;
 import com.erp.sdk.oms.amz.spapi.api.CatalogV0Api;
 import com.erp.sdk.oms.amz.spapi.client.ApiException;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
 import com.erp.sdk.oms.amz.spapi.model.catalogitems.GetCatalogItemResponse;
 import com.erp.sdk.oms.amz.spapi.model.catalogitems.ListCatalogCategoriesResponse;
 import com.erp.sdk.oms.amz.spapi.model.catalogitems.ListCatalogItemsResponse;
-import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiConfigUtils;
 import com.erp.server.dmp.ErpServerDmpApplication;
 import com.erp.server.dmp.service.CfgAppClientService;
 import org.junit.Test;
@@ -33,8 +28,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.annotation.Resource;
-import java.util.Arrays;
-import java.util.List;
 
 
 /**

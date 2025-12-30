@@ -47,7 +47,7 @@ public class EnumsUtil {
         try {
             initialSingleEnumMap(clazz);
         } catch (Exception e){
-            throw new ServiceException(ApiError.ERROR_9028);
+            throw new ServiceException(ApiError.COMMON_ENUM_CONVERT_FAILED);
         }
         T  retobj = (T)SINGLE_ENUM_MAP.get(String.valueOf(value));
         if (ObjectUtils.isEmpty(retobj)) {

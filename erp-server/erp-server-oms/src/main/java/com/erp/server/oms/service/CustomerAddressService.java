@@ -85,4 +85,11 @@ public interface CustomerAddressService extends SuperService<CustomerAddressEnti
      * @return
      */
     List<CustomerAddressEntity> listAllByMainIds(List<String> ids);
+
+    /**
+     * 获取客户默认地址
+     * @param mainId
+     * @return
+     */
+    CustomerAddressEntity getDefaultAddrByMainId(String mainId);
 }

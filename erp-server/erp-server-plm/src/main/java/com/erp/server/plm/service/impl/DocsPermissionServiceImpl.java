@@ -119,7 +119,7 @@ public class DocsPermissionServiceImpl extends ServiceImpl<DocsPermissionEntityM
     @Override
     public SetDocsPowerDTO getDocsPower(String deliveryDocsId) {
         if (StringUtils.isBlank(deliveryDocsId)) {
-            throw new ServiceException(ApiError.ERROR_95052);
+            throw new ServiceException(ApiError.FILE_DOC_NOT_FOUND);
         }
         LambdaQueryWrapper<DocsPermissionEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(DocsPermissionEntity::getDeliveryDocsId, deliveryDocsId);

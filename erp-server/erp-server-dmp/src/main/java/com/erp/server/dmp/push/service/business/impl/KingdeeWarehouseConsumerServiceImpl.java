@@ -165,9 +165,9 @@ public class KingdeeWarehouseConsumerServiceImpl implements KingdeeWarehouseCons
 
         //未配置发送字段
         if (CollectionUtils.isEmpty(json)) {
-            log.error(ApiError.ERROR_97025.msg);
+            log.error(ApiError.MAPPING_NOT_SET_PUSH_FORBIDDEN.getMsg());
             //错误日志
-            throw new ServiceException(ApiError.ERROR_NOT_EXIST_KINGDEE_FIELD);
+            throw new ServiceException(ApiError.DMP_KINGDEE_FIELD_NOT_FOUND);
         }
         //判断金蝶系统是否已存在该数据
         KingdeeParamDTO.SaveParamDTO param = new KingdeeParamDTO.SaveParamDTO(json);

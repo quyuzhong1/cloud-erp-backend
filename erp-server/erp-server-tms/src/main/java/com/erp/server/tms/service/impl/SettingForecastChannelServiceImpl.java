@@ -147,7 +147,7 @@ public class SettingForecastChannelServiceImpl extends SuperServiceImpl<SettingF
                 }
                 long count = oldList.stream().filter(obj -> CharSequenceUtil.equals(obj.getLogisticsChannelId(), logisticsChannelId)).count();
                 if (count > 1) {
-                    throw new ServiceException(ApiError.ERROR_LOGISTICS_CHANNEL_EXIST,logisticsChannelName);
+                    throw new ServiceException(ApiError.LOGISTICS_CHANNEL_ALREADY_USED,logisticsChannelName);
                 }
                 if (ObjectUtil.isNotEmpty(exist.get(logisticsChannelId))) {
                     throw new ServiceException(CharSequenceUtil.format("物流渠道【{}】不可重复选择，请选择其他物流渠道",logisticsChannelName));

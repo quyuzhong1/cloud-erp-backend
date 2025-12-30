@@ -4,7 +4,6 @@ package com.erp.server.tms.service.impl;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.crypto.digest.DigestUtil;
-import cn.hutool.json.JSONObject;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
 import com.common.business.dto.base.BaseDTO;
@@ -13,7 +12,6 @@ import com.common.business.enums.FileTaskStatusEnum;
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
-import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
@@ -22,20 +20,16 @@ import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.MathUtil;
 import com.erp.model.tms.dto.LogisticsBillDetailQueryDTO;
 import com.erp.model.tms.dto.LogisticsTrackDTO;
-import com.erp.model.tms.dto.excel.LogisticsBillCostExcelDTO;
 import com.erp.model.tms.dto.excel.LogisticsTrackInfoExcelDTO;
 import com.erp.model.tms.entity.LogisticsTrackEntity;
 import com.erp.model.tms.enums.FmLogisticTrackStatusEnum;
 import com.erp.model.tms.enums.LogisticTrackStatusEnum;
 import com.erp.model.tms.vo.request.LogisticsRegisterVO;
 import com.erp.model.tms.vo.request.RegisterTrackVO;
-import com.erp.model.tms.vo.response.RegisterResponseVO;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.file.feign.FileFeign;
 import com.erp.server.tms.convert.TrackDataConverter;
 import com.erp.server.tms.handler.LogisticsRegistry;
-import com.erp.server.tms.listener.LogisticsBillCostExcelListener;
-import com.erp.server.tms.listener.LogisticsLastMileCostExcelListener;
 import com.erp.server.tms.listener.LogisticsTrackInfoExcelListener;
 import com.erp.server.tms.mapper.LogisticsTrackMapper;
 import com.erp.server.tms.service.LogisticsBillDetailService;
@@ -120,7 +114,7 @@ public class LogisticsTrackServiceImpl extends SuperServiceImpl<LogisticsTrackMa
     @Override
     public Boolean update(LogisticsTrackDTO.UpdateDTO updateDTO) {
         LogisticsTrackEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "物流轨迹单"));
+        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "物流轨迹单"));
         LogisticsTrackEntity logisticsTrackEntity = BeanMapperUtils.map(LogisticsTrackEntity.class, updateDTO);
 
         // 数据处理
@@ -283,7 +277,7 @@ public class LogisticsTrackServiceImpl extends SuperServiceImpl<LogisticsTrackMa
             EasyExcel.read(new ByteArrayInputStream(bytes), LogisticsTrackInfoExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (ExcelCommonException e) {
             log.error("导入格式错误！", e);
-            throw new ServiceException(ApiError.ERROR_1016);
+            throw new ServiceException(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX);
         }
         BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
         importResultDTO.setTaskId(dto.getTaskId());

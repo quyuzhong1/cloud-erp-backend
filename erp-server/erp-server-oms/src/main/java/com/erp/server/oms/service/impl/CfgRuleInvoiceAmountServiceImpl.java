@@ -83,7 +83,7 @@ public class CfgRuleInvoiceAmountServiceImpl extends SuperServiceImpl<CfgRuleInv
     @Override
     public Boolean update(CfgRuleInvoiceAmountDTO.UpdateDTO addOrUpdateDTO) {
         CfgRuleInvoiceAmountEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "发票产品总价计算规则"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "发票产品总价计算规则"));
         CfgRuleInvoiceAmountEntity cfgRuleInvoiceAmountEntity =  BeanMapperUtils.map(CfgRuleInvoiceAmountEntity.class, addOrUpdateDTO);
 
         // 数据处理

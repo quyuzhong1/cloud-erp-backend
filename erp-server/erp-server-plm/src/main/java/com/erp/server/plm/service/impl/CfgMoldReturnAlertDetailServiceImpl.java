@@ -2,7 +2,6 @@ package com.erp.server.plm.service.impl;
 
 
 import cn.hutool.core.util.StrUtil;
-import com.erp.model.plm.entity.CfgMoldReturnAlertRuleEntity;
 import io.seata.spring.annotation.GlobalTransactional;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.dto.base.BaseResultDTO;
@@ -12,7 +11,6 @@ import com.erp.server.plm.service.CfgMoldReturnAlertDetailService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.erp.server.plm.service.OperateLogService;
-import com.erp.server.plm.service.CommonService;
 import com.common.core.exception.ServiceException;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -69,7 +67,7 @@ public class CfgMoldReturnAlertDetailServiceImpl extends SuperServiceImpl<CfgMol
     @Override
     public Boolean update(CfgMoldReturnAlertDetailDTO.UpdateDTO addOrUpdateDTO) {
         CfgMoldReturnAlertDetailEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "模具返回策略明细"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "模具返回策略明细"));
         CfgMoldReturnAlertDetailEntity cfgMoldReturnAlertDetailEntity =  BeanMapperUtils.map(CfgMoldReturnAlertDetailEntity.class, addOrUpdateDTO);
 
         // 数据处理

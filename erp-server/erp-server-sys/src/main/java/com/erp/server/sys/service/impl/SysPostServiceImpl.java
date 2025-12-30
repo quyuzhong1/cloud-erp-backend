@@ -24,7 +24,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -56,7 +55,7 @@ public class SysPostServiceImpl extends ServiceImpl<SysPostMapper, SysPostEntity
         String postName = dto.getPostName();
         SysPostEntity postEntity=getPostEntityByName(postName);
         if(!Objects.isNull(postEntity)){
-            throw new ServiceException(ApiError.ERROR_9023);
+            throw new ServiceException(ApiError.COMMON_DEPT_NAME_EXISTS);
         }
         SysPostEntity entity = new SysPostEntity();
         BeanMapperUtils.copy(dto, entity);

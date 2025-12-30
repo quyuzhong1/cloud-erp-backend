@@ -191,11 +191,11 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
     public Boolean skuMapping(FbaShipmentDTO.SkuMappingParamDTO dto) {
         SkuMappingEntity skuMapping = skuMappingService.getById(dto.getId());
         if (ObjectUtil.isEmpty(skuMapping)) {
-            throw new ServiceException(ApiError.ERROR_M_SKU_NOT_EXIST);
+            throw new ServiceException(ApiError.MAPPING_SKU_MAPPING_EXIST);
         }
         ListingInfoEntity listingInfoEntity = this.getById(skuMapping.getListingId());
         if (ObjectUtil.isEmpty(listingInfoEntity)) {
-            throw new ServiceException(ApiError.ERROR_M_SKU_NOT_EXIST);
+            throw new ServiceException(ApiError.MAPPING_SKU_MAPPING_EXIST);
         }
         List<SkuVO> skuVOList;
         if(StringUtils.isNotBlank(dto.getSkuId())){
@@ -399,11 +399,11 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
     public Boolean warehouseSkuMapping(ListingInfoDTO.WarehouseSkuMappingParamDTO dto) {
         SkuMappingEntity skuMapping = skuMappingService.getById(dto.getId());
         if (ObjectUtil.isEmpty(skuMapping)) {
-            throw new ServiceException(ApiError.ERROR_M_SKU_NOT_EXIST);
+            throw new ServiceException(ApiError.MAPPING_SKU_MAPPING_EXIST);
         }
         ListingInfoEntity listingInfoEntity = this.getById(skuMapping.getListingId());
         if (ObjectUtil.isEmpty(listingInfoEntity)) {
-            throw new ServiceException(ApiError.ERROR_M_SKU_NOT_EXIST);
+            throw new ServiceException(ApiError.MAPPING_SKU_MAPPING_EXIST);
         }
         List<OverseasProviderWarehouseDTO.ViewDTO> viewDTOList = wmsOverseasWarehouseFeign.listByWarehouseIdList(Arrays.asList(dto.getWarehouseId()));
         String provideCode;

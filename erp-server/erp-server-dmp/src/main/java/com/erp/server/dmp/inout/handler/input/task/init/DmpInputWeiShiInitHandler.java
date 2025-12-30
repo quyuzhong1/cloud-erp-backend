@@ -16,7 +16,6 @@ import com.erp.server.dmp.inout.utils.DmpHandlerCache;
 import com.sdk.wms.weishi.dto.request.WeiShiProductRequest;
 import com.sdk.wms.weishi.dto.response.WeiShiBaseResp;
 import com.sdk.wms.weishi.dto.response.WeiShiProductResp;
-import com.sdk.wms.weishi.dto.response.WeiShiWarehouseResp;
 import com.sdk.wms.weishi.service.WeiShiService;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;

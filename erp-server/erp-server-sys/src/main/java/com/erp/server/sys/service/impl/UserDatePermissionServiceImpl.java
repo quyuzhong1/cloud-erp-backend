@@ -4,10 +4,7 @@ import cn.hutool.core.util.ObjectUtil;
 import com.common.business.dto.UserRequestPermissionsDTO;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
-import com.common.core.enums.ApiError;
-import com.common.core.exception.ServiceException;
 import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.server.sys.service.CommonService;
 import com.erp.server.sys.service.SysRoleUserService;
 import com.erp.server.sys.service.SysUserInfoService;
 import com.erp.server.sys.service.UserDatePermissionService;
@@ -15,7 +12,6 @@ import io.seata.common.util.CollectionUtils;
 import jodd.util.StringUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;

@@ -73,7 +73,7 @@ public class SupplierContactServiceImpl extends SuperServiceImpl<SupplierContact
     public void checkIsDefault(List<SupplierContactDTO.AddDTO> contactList) {
         long count = contactList.stream().filter(c -> c.getIsDefault() != null && c.getIsDefault()).count();
         if (count > 1) {
-            throw new ServiceException(ApiError.ERROR_98003);
+            throw new ServiceException(ApiError.SUPPLIER_DEFAULT_CONTACT_EXCEEDS_ONE);
         }
     }
 
