@@ -2920,6 +2920,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             firstMildDetailDTO.setFnSku(awdOutstockDetailEntity.getFnsku());
             firstMildDetailDTO.setSkuId(awdOutstockDetailEntity.getSkuId());
             firstMildDetailDTO.setSkuNo(awdOutstockDetailEntity.getSkuNo());
+            firstMildDetailDTO.setPlanQty(awdOutstockDetailEntity.getQty());
             firstMildDetailDTO.setDeclareQty(awdOutstockDetailEntity.getQty());
             firstMildDetailDTO.setDeliveryQty(awdOutstockDetailEntity.getQty());
             firstMildDetailDTO.setSourceDetailId(awdOutstockDetailEntity.getId());

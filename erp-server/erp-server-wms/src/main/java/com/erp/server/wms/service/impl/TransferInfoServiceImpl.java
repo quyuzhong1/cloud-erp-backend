@@ -61,6 +61,7 @@ import com.erp.model.workflow.enums.CfgQueryOptionBussinessKeyEnum;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -194,6 +195,16 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
 
     @Resource
     private TransactionFlowService transactionFlowService;
+
+    @Resource
+    private AwdOutstockService awdOutstockService;
+
+    @Resource
+    private AwdOutstockDetailService awdOutstockDetailService;
+
+    @Resource
+    private ShopInfoFeign shopInfoFeign;
+
     @Resource
     private CfgQueryOptionFeign cfgQueryOptionFeign;
 
@@ -388,10 +399,10 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         if (CollectionUtils.isEmpty(detailList)) {
             throw new ServiceException(ApiError.ERROR_99048);
         }
-        
+
         // 验证调拨明细
         validateTransferDetail(entity, detailList);
-        
+
         log.info("直接调拨单提交，id=【{}】", entity.getId());
         //提交流程
         if (isStartProcess) {
@@ -414,7 +425,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         for (TransferInfoDetailEntity detailEntity : detailList) {
             String outWarehouseLocation = StrUtils.null2EmptyWithTrim(detailEntity.getOutWarehouseLocation());
             String inWarehouseLocation = StrUtils.null2EmptyWithTrim(detailEntity.getInWarehouseLocation());
-            if (detailEntity.getInWarehouseId().equals(detailEntity.getOutWarehouseId()) 
+            if (detailEntity.getInWarehouseId().equals(detailEntity.getOutWarehouseId())
                     && outWarehouseLocation.equals(inWarehouseLocation)) {
                 throw new ServiceException(new ApiResult(ApiError.ERROR_98088.code,
                         String.format(ApiError.ERROR_98088.msg, entity.getCode())));
@@ -1094,70 +1105,73 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
 
         //要货申请主表数据
         List<String> requisitionIds = firstMileDeliveryEntityList.stream().map(FirstMileDeliveryEntity::getSourceId).distinct().collect(Collectors.toList());
-        List<RequisitionApplicationEntity> requisitionApplicationList = requisitionApplicationService.listByIds(requisitionIds);
+        //来源是awd出库货件不操作虚拟仓库存
+        if (awdOutstockService.listByIds(requisitionIds).isEmpty()) {
+            List<RequisitionApplicationEntity> requisitionApplicationList = requisitionApplicationService.listByIds(requisitionIds);
 
-        //要货申请明细
-        List<String> applicationMainIdList = requisitionApplicationList.stream().map(RequisitionApplicationEntity::getId).distinct().collect(Collectors.toList());
-        List<RequisitionApplicationDetailEntity> requisitionApplicationDetailList = requisitionApplicationDetailService.listByMainIds(applicationMainIdList);
-        if (CollectionUtils.isEmpty(requisitionApplicationDetailList)) {
-            throw new ServiceException("未找到直接调拨单对应的要货申请明细");
-        }
-
-        List<String> skuIdList = pushDetailList.stream().map(TransferInfoDetailEntity::getSkuId).distinct().collect(Collectors.toList());
-        List<BomChildrenSkuDTO> bomChildList = plmTaskFeign.listBomChildBySkuIds(skuIdList);
-
-        //出冻结库存
-        List<VirtualInventoryStockDTO.OutInStockDTO> outList = new ArrayList<>();
-
-        for (TransferInfoDetailEntity entity : pushDetailList) {
-
-            //过滤组合品
-            long count = bomChildList.stream().filter(obj -> CharSequenceUtil.equals(obj.getType(), BomTypeEnum.COMBINATION.getType()) && CharSequenceUtil.equals(obj.getParentSkuId(), entity.getSkuId())).count();
-            if (count > 0) {
-                continue;
+            //要货申请明细
+            List<String> applicationMainIdList = requisitionApplicationList.stream().map(RequisitionApplicationEntity::getId).distinct().collect(Collectors.toList());
+            List<RequisitionApplicationDetailEntity> requisitionApplicationDetailList = requisitionApplicationDetailService.listByMainIds(applicationMainIdList);
+            if (CollectionUtils.isEmpty(requisitionApplicationDetailList)) {
+                throw new ServiceException("未找到直接调拨单对应的要货申请明细");
             }
 
-            //直接调拨单
-            TransferInfoEntity transferInfoEntity = pushFirstMileDeliveryList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), entity.getMainId())).findFirst().orElse(null);
-            if (ObjectUtil.isEmpty(transferInfoEntity)) {
-                throw new ServiceException("直接调拨单未找到");
-            }
+            List<String> skuIdList = pushDetailList.stream().map(TransferInfoDetailEntity::getSkuId).distinct().collect(Collectors.toList());
+            List<BomChildrenSkuDTO> bomChildList = plmTaskFeign.listBomChildBySkuIds(skuIdList);
 
-            FirstMileDeliveryDetailEntity firstMileDeliveryDetailEntity = firstMileDeliveryDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), entity.getSourceDetailId())).findFirst().orElse(null);
-            if (ObjectUtil.isEmpty(firstMileDeliveryDetailEntity)) {
-                throw new ServiceException("未找到头程发货单明细");
-            }
-            RequisitionApplicationDetailEntity applicationDetailEntity = requisitionApplicationDetailList.stream().filter(obj -> CharSequenceUtil.equals(firstMileDeliveryDetailEntity.getPlatformSkuNo(),obj.getPlatformSku()) && firstMileDeliveryDetailEntity.getSkuId().equals(obj.getSkuId())).findFirst().orElse(null);
-            if (ObjectUtil.isEmpty(applicationDetailEntity)) {
-                throw new ServiceException("未找到要货申请明细");
-            }
-            RequisitionApplicationEntity applicationEntity = requisitionApplicationList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), applicationDetailEntity.getMainId())).findFirst().orElse(null);
-            if (ObjectUtil.isEmpty(applicationEntity)) {
-                throw new ServiceException("未找到直接调拨单对应的要货申请信息");
-            }
+            //出冻结库存
+            List<VirtualInventoryStockDTO.OutInStockDTO> outList = new ArrayList<>();
 
-            VirtualInventoryStockDTO.OutInStockDTO outInStockDTO = new VirtualInventoryStockDTO.OutInStockDTO();
-            outInStockDTO.setBillDate(LocalDate.now());
-            outInStockDTO.setSourceId(transferInfoEntity.getId());
-            outInStockDTO.setSourceCode(transferInfoEntity.getCode());
-            outInStockDTO.setSourceType(InventorySourceTypeEnum.TRANSFER_INFO);
-            outInStockDTO.setSourceDetailId(entity.getId());
-            outInStockDTO.setBillDate(LocalDate.now());
-            outInStockDTO.setSkuId(applicationDetailEntity.getSkuId());
-            outInStockDTO.setSkuNo(applicationDetailEntity.getSkuNo());
-            outInStockDTO.setWarehouseId(applicationDetailEntity.getFromWarehouseId());
-            if (CharSequenceUtil.isBlank(applicationDetailEntity.getFromVirtualWarehouseId())) {
-                continue;
+            for (TransferInfoDetailEntity entity : pushDetailList) {
+
+                //过滤组合品
+                long count = bomChildList.stream().filter(obj -> CharSequenceUtil.equals(obj.getType(), BomTypeEnum.COMBINATION.getType()) && CharSequenceUtil.equals(obj.getParentSkuId(), entity.getSkuId())).count();
+                if (count > 0) {
+                    continue;
+                }
+
+                //直接调拨单
+                TransferInfoEntity transferInfoEntity = pushFirstMileDeliveryList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), entity.getMainId())).findFirst().orElse(null);
+                if (ObjectUtil.isEmpty(transferInfoEntity)) {
+                    throw new ServiceException("直接调拨单未找到");
+                }
+
+                FirstMileDeliveryDetailEntity firstMileDeliveryDetailEntity = firstMileDeliveryDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), entity.getSourceDetailId())).findFirst().orElse(null);
+                if (ObjectUtil.isEmpty(firstMileDeliveryDetailEntity)) {
+                    throw new ServiceException("未找到头程发货单明细");
+                }
+                RequisitionApplicationDetailEntity applicationDetailEntity = requisitionApplicationDetailList.stream().filter(obj -> CharSequenceUtil.equals(firstMileDeliveryDetailEntity.getPlatformSkuNo(),obj.getPlatformSku()) && firstMileDeliveryDetailEntity.getSkuId().equals(obj.getSkuId())).findFirst().orElse(null);
+                if (ObjectUtil.isEmpty(applicationDetailEntity)) {
+                    throw new ServiceException("未找到要货申请明细");
+                }
+                RequisitionApplicationEntity applicationEntity = requisitionApplicationList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), applicationDetailEntity.getMainId())).findFirst().orElse(null);
+                if (ObjectUtil.isEmpty(applicationEntity)) {
+                    throw new ServiceException("未找到直接调拨单对应的要货申请信息");
+                }
+
+                VirtualInventoryStockDTO.OutInStockDTO outInStockDTO = new VirtualInventoryStockDTO.OutInStockDTO();
+                outInStockDTO.setBillDate(LocalDate.now());
+                outInStockDTO.setSourceId(transferInfoEntity.getId());
+                outInStockDTO.setSourceCode(transferInfoEntity.getCode());
+                outInStockDTO.setSourceType(InventorySourceTypeEnum.TRANSFER_INFO);
+                outInStockDTO.setSourceDetailId(entity.getId());
+                outInStockDTO.setBillDate(LocalDate.now());
+                outInStockDTO.setSkuId(applicationDetailEntity.getSkuId());
+                outInStockDTO.setSkuNo(applicationDetailEntity.getSkuNo());
+                outInStockDTO.setWarehouseId(applicationDetailEntity.getFromWarehouseId());
+                if (CharSequenceUtil.isBlank(applicationDetailEntity.getFromVirtualWarehouseId())) {
+                    continue;
+                }
+                outInStockDTO.setVirtualWarehouseId(applicationDetailEntity.getFromVirtualWarehouseId());
+                outInStockDTO.setQty(entity.getQty());
+                outList.add(outInStockDTO);
             }
-            outInStockDTO.setVirtualWarehouseId(applicationDetailEntity.getFromVirtualWarehouseId());
-            outInStockDTO.setQty(entity.getQty());
-            outList.add(outInStockDTO);
-        }
-        if (CollectionUtils.isNotEmpty(outList)) {
-            VirtualInventoryStockDTO.StockParamDTO stockParamDTO = new VirtualInventoryStockDTO.StockParamDTO();
-            stockParamDTO.setBusinessType(VirtualInventoryBusinessTypeEnum.TRANSFER_INFO_APPROVE.getCode());
-            stockParamDTO.setParamList(outList);
-            virtualInventoryTransCoreService.approve(stockParamDTO);
+            if (CollectionUtils.isNotEmpty(outList)) {
+                VirtualInventoryStockDTO.StockParamDTO stockParamDTO = new VirtualInventoryStockDTO.StockParamDTO();
+                stockParamDTO.setBusinessType(VirtualInventoryBusinessTypeEnum.TRANSFER_INFO_APPROVE.getCode());
+                stockParamDTO.setParamList(outList);
+                virtualInventoryTransCoreService.approve(stockParamDTO);
+            }
         }
     }
 
@@ -1694,7 +1708,14 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         if(CollectionUtils.isNotEmpty(firstMileTransferList)){
             InventoryTransferDTO inventoryTransferDTO = new InventoryTransferDTO();
             inventoryTransferDTO.setParamList(firstMileTransferList);
-            inventoryTransferDTO.setBusinessType(InventoryBusinessTypeEnum.FIRST_MILE_PUSH_TRANSFER.getCode());
+            TransferInfoEntity transferInfoEntity = this.getById(firstMileTransferList.get(0).getSourceId());
+            FirstMileDeliveryEntity firstMileDeliveryEntity = firstMileDeliveryService.getById(transferInfoEntity.getSourceId());
+            AwdOutstockEntity awdOutstockEntity = awdOutstockService.getById(firstMileDeliveryEntity.getSourceId());
+            if (Objects.nonNull(awdOutstockEntity)) {
+                inventoryTransferDTO.setBusinessType(InventoryBusinessTypeEnum.AWD_FIRST_MILE_PUSH_TRANSFER.getCode());
+            }else {
+                inventoryTransferDTO.setBusinessType(InventoryBusinessTypeEnum.FIRST_MILE_PUSH_TRANSFER.getCode());
+            }
             //更新库存
             inventoryTransCoreService.approveByType(inventoryTransferDTO);
         }
