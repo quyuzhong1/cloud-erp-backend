@@ -1189,14 +1189,14 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
         if (StringUtils.isNotBlank(assetNoticeEntity.getPurchaseDevUserId())) {
             FindUserDTO purchaseDevUser = sysUserFeign.getUserByUserId(assetNoticeEntity.getPurchaseDevUserId());
             if (com.baomidou.mybatisplus.core.toolkit.ObjectUtils.isEmpty(purchaseDevUser)) {
-                throw new ServiceException(ApiError.USER_NOT_EXIST);
+                throw new ServiceException(ApiError.COMMON_USER_NOT_FOUND);
             }
         }
         // 采购跟单用户验证
         if (StringUtils.isNotBlank(assetNoticeEntity.getPurchaseFollowUserId())) {
             FindUserDTO purchaseFollowUser = sysUserFeign.getUserByUserId(assetNoticeEntity.getPurchaseFollowUserId());
             if (com.baomidou.mybatisplus.core.toolkit.ObjectUtils.isEmpty(purchaseFollowUser)) {
-                throw new ServiceException(ApiError.USER_NOT_EXIST);
+                throw new ServiceException(ApiError.COMMON_USER_NOT_FOUND);
             }
         }
 
