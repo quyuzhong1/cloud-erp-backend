@@ -108,5 +108,18 @@
         </if>
         GROUP BY approve_status
     </select>
-
+    <select id="summaryNumber" resultType="com.erp.model.wms.dto.AwdInventoryDTO$SummaryNumber">
+        SELECT
+        SUM(ai.available_distributable_qty) AS availableDistributableQty,
+        SUM(ai.replenishment_qty) AS replenishmentQty,
+        SUM(ai.reserved_distributable_qty) AS reservedDistributableQty,
+        SUM(ai.total_onhand_qty) AS totalOnhandQty,
+        SUM(ai.total_inbound_qty) AS totalInboundQty
+        FROM awd_inventory ai
+        WHERE ai.is_deleted = FALSE
+        <!--数据权限-->
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+    </select>
 </mapper>

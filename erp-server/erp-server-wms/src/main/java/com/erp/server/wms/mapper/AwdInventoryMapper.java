@@ -1,4 +1,5 @@
 package com.erp.server.wms.mapper;
+import com.erp.model.wms.dto.FbaInventoryDTO;
 import com.erp.model.wms.entity.AwdInventoryEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
@@ -51,4 +52,6 @@ public interface AwdInventoryMapper extends BaseMapper<AwdInventoryEntity> {
     * @return
     */
     List<AwdInventoryDTO.TabListDTO> tabList(@Param("params") AwdInventoryDTO.PagingParamDTO searchParam);
+
+    AwdInventoryDTO.SummaryNumber summaryNumber(@Param("params") AwdInventoryDTO.PagingParamDTO params);
 }

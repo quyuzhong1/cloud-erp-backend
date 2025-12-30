@@ -1,6 +1,7 @@
 package com.erp.server.wms.controller.api;
 
 
+import com.erp.model.wms.dto.FbaInventoryDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import javax.annotation.Resource;
@@ -78,5 +79,21 @@ public class AwdInventoryController extends BaseController {
         awdInventoryService.exportList(dto, response);
     }
 
-
+    /**
+     * 列表汇总数量
+     * @Author Luo_WG
+     * @Date 2023/11/9 11:42
+     * @param pagingParamDTO
+     * @return com.common.core.controller.vo.ApiResult<com.erp.model.wms.dto.FbaInventoryDTO.SummaryNumber>
+     **/
+    @PostMapping("/summaryNumber")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "wms:awdInventory:paging",
+            tableAlias = "ai"
+    )
+    public ApiResult<AwdInventoryDTO.SummaryNumber> summaryNumber(@RequestBody @Validated PagingDTO<AwdInventoryDTO.PagingParamDTO> pagingParamDTO) {
+        AwdInventoryDTO.SummaryNumber result = awdInventoryService.summaryNumber(pagingParamDTO);
+        return success(result);
+    }
 }
