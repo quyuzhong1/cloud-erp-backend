@@ -107,7 +107,7 @@ public class AwdOutstockServiceImpl extends SuperServiceImpl<AwdOutstockMapper, 
     Boolean updateBillDate(AwdOutstockDTO.UpdateDTO updateDTO){
         //查询旧数据
         AwdOutstockEntity old = Optional.ofNullable(super.getById(updateDTO.getId()))
-                .orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "AWD"));
+                .orElseThrow(() -> new ServiceException(ApiError.FIRST_MILE_SHIPMENT_AWD_OUTSTOCK_NOT_EXIST));
 
         //映射新数据
         AwdOutstockEntity newEntity = BeanMapperUtils.map(AwdOutstockEntity.class, updateDTO);
@@ -128,7 +128,7 @@ public class AwdOutstockServiceImpl extends SuperServiceImpl<AwdOutstockMapper, 
             idsDTO.setIds(Collections.singletonList(updateDTO.getId()));
             boolean generated = generateFirstMileDelivery(idsDTO);
             if (!generated) {
-                throw new ServiceException(ApiError.ERROR_GENERATE_FIRST_MILE_DELIVERY);
+                throw new ServiceException(ApiError.FIRST_MILE_SHIPMENT_DELIVERY_GENERATE_FAIL);
             }
         }
 
@@ -198,7 +198,7 @@ public class AwdOutstockServiceImpl extends SuperServiceImpl<AwdOutstockMapper, 
 
         for (AwdOutstockDetailEntity awdOutstockDetailEntity : detailList) {
             if (StringUtils.isBlank(awdOutstockDetailEntity.getSkuId())) {
-                throw new ServiceException(ApiError.ERROR_MSKU_NOT_MAPPING,awdOutstockDetailEntity.getMsku());
+                throw new ServiceException(ApiError.MAPPING_MSKU_NOT_MAPPING,awdOutstockDetailEntity.getMsku());
             }
         }
 

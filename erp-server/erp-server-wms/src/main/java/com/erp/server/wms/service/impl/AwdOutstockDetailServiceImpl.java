@@ -88,7 +88,7 @@ public class AwdOutstockDetailServiceImpl extends SuperServiceImpl<AwdOutstockDe
     @Override
     public Boolean update(AwdOutstockDetailDTO.UpdateDTO addOrUpdateDTO) {
         AwdOutstockDetailEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, ""));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, ""));
         AwdOutstockDetailEntity awdOutstockDetailEntity =  BeanMapperUtils.map(AwdOutstockDetailEntity.class, addOrUpdateDTO);
 
         // 数据处理
@@ -140,28 +140,6 @@ public class AwdOutstockDetailServiceImpl extends SuperServiceImpl<AwdOutstockDe
         list.add(new AwdOutstockDetailDTO.TabListDTO("all", list.stream().mapToInt(AwdOutstockDetailDTO.TabListDTO::getCount).sum()));
         // 计算合计数量
         return list;
-    }
-
-    @Override
-    public void exportList(AwdOutstockDetailDTO.ExportDTO param, HttpServletResponse response) {
-        List<AwdOutstockDetailDTO.ListDTO> list = this.baseMapper.listExport(param);
-        if(CollUtil.isEmpty(list)) {
-           return;
-        }
-        // 数据处理
-        fillList(list);
-
-        // 导出数据
-        StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/awdOutstockDetail.xlsx";
-        String name = "导出";
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date).append(name);
-        try {
-            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
-        } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_1015);
-        }
     }
 
     @Override

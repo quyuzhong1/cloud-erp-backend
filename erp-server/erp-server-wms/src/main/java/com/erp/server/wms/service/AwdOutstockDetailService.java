@@ -64,15 +64,5 @@ public interface AwdOutstockDetailService extends SuperService<AwdOutstockDetail
     AwdOutstockDetailDTO.ViewDTO view(String id);
 
 
-    /**
-    * 导出Excel
-    * @author wtr
-    * @date: 2025-12-22
-    * @param dto
-    * @param response
-    * @return
-    */
-    void exportList(AwdOutstockDetailDTO.ExportDTO dto, HttpServletResponse response);
-
     boolean add(List<AwdOutstockDetailDTO.AddDTO> awdDetailList,String mainId);
 }
