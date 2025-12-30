@@ -4,6 +4,8 @@ import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.plm.dto.NewProductDTO;
 import com.erp.model.plm.dto.ProductSaleDTO;
@@ -15,6 +17,7 @@ import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.enums.SaleStateEnum;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.rpc.sys.feign.SysDictFeign;
+import com.erp.server.plm.constant.ProductConstant;
 import com.erp.server.plm.mapper.ProductSaleMapper;
 import com.erp.server.plm.service.BasicDictService;
 import com.erp.server.plm.service.BomInfoService;
@@ -26,6 +29,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -197,6 +201,13 @@ public class ProductSaleServiceImpl extends ServiceImpl<ProductSaleMapper, Produ
                 List<String> propertyIdList = Arrays.stream(productSaleEntity.getProductPropertyId().split(",")).collect(Collectors.toList());
                 String propertyNames = propertytList.stream().filter(obj -> propertyIdList.contains(obj.getId())).map(BasicDictEntity::getName).collect(Collectors.joining(","));
                 productSaleEntity.setProductProperty(propertyNames);
+
+                //电池重量（g）
+                BigDecimal batteryWeight = productSaleEntity.getBatteryWeight();
+                if( (Objects.isNull(batteryWeight) || batteryWeight.compareTo(BigDecimal.ZERO) <=0 )
+                        && ( propertyNames.contains(ProductConstant.PRODUCT_BATTERY_LITHIUM_METAL)|| propertyNames.contains(ProductConstant.PRODUCT_BATTERY_LITHIUM_ION)|| propertyNames.contains(ProductConstant.PRODUCT_BATTERY_LITHIUM_POLYMER) ) ){
+                    throw new ServiceException(ApiError.ERROR_BATTERY_WEIGHT_NOT_NULL);
+                }
             }
         }
         for (ProductSaleEntity entity : list) {

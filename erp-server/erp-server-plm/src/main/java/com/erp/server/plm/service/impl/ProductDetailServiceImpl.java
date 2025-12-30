@@ -7151,7 +7151,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         scaleFactor(UnitConverterUtil.mmToPoints(printEanDTO.getWidth()) - 10, image);
         // 计算条形码居中的 X 坐标
         float xPosition = getXPosition(printEanDTO, document, image);
-        float barcodeYPosition = document.getPageSize().getHeight() - image.getScaledHeight() - 5;
+        float barcodeYPosition = getYPosition(printEanDTO, document, image);
+//        float barcodeYPosition = document.getPageSize().getHeight() - image.getScaledHeight() - 5;
         Image eanImage = null;
         float eanPosition = 0;
         float eanBarcodeYPosition = 0;
@@ -7159,7 +7160,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             eanImage = getImage(dto.getEan(), printEanDTO, writer, baseFont);
             scaleFactor(UnitConverterUtil.mmToPoints(printEanDTO.getWidth()) - 10, eanImage);
             eanPosition = getXPosition(printEanDTO, document, eanImage);
-            eanBarcodeYPosition = document.getPageSize().getHeight() - image.getScaledHeight() - eanImage.getScaledHeight() - 15;
+            eanBarcodeYPosition = barcodeYPosition - 15;
         }
         // 绘制条形码
         PdfContentByte canvas = writer.getDirectContent();
@@ -7238,7 +7239,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         scaleFactor(UnitConverterUtil.mmToPoints(printEanDTO.getWidth()) - 10, image);
         // 计算条形码居中的 X 坐标
         float xPosition = getXPosition(printEanDTO, document, image);
-        float barcodeYPosition = document.getPageSize().getHeight() - image.getScaledHeight() - 5;
+        float barcodeYPosition = getYPosition(printEanDTO, document, image);
+//        float barcodeYPosition = document.getPageSize().getHeight() - image.getScaledHeight() - 5;
 
         Font font = new Font(baseFont, fontSize);
         List<String> textContent = printEanDTO.getTextContent();
@@ -7326,7 +7328,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         scaleFactor(UnitConverterUtil.mmToPoints(printEanDTO.getWidth()) - 10, image);
         // 计算条形码居中的 X 坐标
         float xPosition = getXPosition(printEanDTO, document, image);
-        float barcodeYPosition = document.getPageSize().getHeight() - image.getScaledHeight() - 5;
+        float barcodeYPosition = getYPosition(printEanDTO, document, image);
+//        float barcodeYPosition = document.getPageSize().getHeight() - image.getScaledHeight() - 5;
+
         Font font = new Font(baseFont, fontSize);
         List<String> textContent = printEanDTO.getTextContent();
         textContent.remove(ProductContentEnum.EAN.getCode());

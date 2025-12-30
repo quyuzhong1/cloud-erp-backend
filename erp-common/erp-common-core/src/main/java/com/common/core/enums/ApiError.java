@@ -630,6 +630,7 @@ public enum ApiError implements Serializable {
     ERROR_95302(95302,"寿命数量不能小于预警寿命数量"),
     ERROR_MOLD_RETURN_EXIST(95303,"模具档案已存在返还策略"),
     ERROR_MOLD_ALERT_EXIST(95304,"模具档案已存在预警策略"),
+    ERROR_BATTERY_WEIGHT_NOT_NULL(95307,"电池重量（g）不能为空"),
 
 
 
