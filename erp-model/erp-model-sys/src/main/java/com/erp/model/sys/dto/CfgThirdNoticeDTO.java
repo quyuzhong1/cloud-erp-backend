@@ -433,10 +433,6 @@ public class CfgThirdNoticeDTO implements Serializable {
          */
         private String noticeType;
         /**
-         * 来源类型
-         */
-        private String sourceType;
-        /**
          * 单据类型
          */
         private String businessType;
