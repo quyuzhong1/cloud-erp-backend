@@ -5369,6 +5369,18 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 }
             }
 
+
+            //电池重量（g）
+            BigDecimal batteryWeight = dto.getBatteryWeight();
+            List<String> productPropertyIds = declarePropertyList.stream().map(BasicDictEntity::getId).collect(Collectors.toList());
+            List<String> productPropertyNames = declarePropertyList.stream().map(BasicDictEntity::getValue).collect(Collectors.toList());
+            String propertyNames = StringUtils.join(productPropertyNames, ",");
+            String propertyIds = StringUtils.join(productPropertyIds, ",");
+            if( (Objects.isNull(batteryWeight) || batteryWeight.compareTo(BigDecimal.ZERO) <=0 )
+                    && ( propertyNames.contains(ProductConstant.PRODUCT_BATTERY_LITHIUM_METAL)|| propertyNames.contains(ProductConstant.PRODUCT_BATTERY_LITHIUM_ION)|| propertyNames.contains(ProductConstant.PRODUCT_BATTERY_LITHIUM_POLYMER) ) ){
+                errorMsgList.add(ApiError.PRODUCT_SALES_BATTERY_WEIGHT_NOT_NULL.getMsg());
+            }
+
             //存在错误信息则返回
             if (CollUtil.isNotEmpty(errorMsgList)) {
                 dto.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
@@ -5683,10 +5695,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 productSaleDTO.setInsuranceProperty(insurancePropertyName);
             }
             if(CollUtil.isNotEmpty(declarePropertyList)){
-                List<String> productPropertyIds = declarePropertyList.stream().map(BasicDictEntity::getId).collect(Collectors.toList());
-                List<String> productPropertyNames = declarePropertyList.stream().map(BasicDictEntity::getValue).collect(Collectors.toList());
-                productSaleDTO.setProductProperty(StringUtils.join(productPropertyNames, ","));
-                productSaleDTO.setProductPropertyId(StringUtils.join(productPropertyIds, ","));
+                productSaleDTO.setProductProperty(propertyNames);
+                productSaleDTO.setProductPropertyId(propertyIds);
             }
             productNoSpecDTO.setProductSaleDTO(productSaleDTO);
 
@@ -5703,10 +5713,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
              * 报关产品属性
              */
             if(CollUtil.isNotEmpty(declarePropertyList)){
-                List<String> productPropertyIds = declarePropertyList.stream().map(BasicDictEntity::getId).collect(Collectors.toList());
-                List<String> productPropertyNames = declarePropertyList.stream().map(BasicDictEntity::getValue).collect(Collectors.toList());
-                productLogisticsDTO.setProductProperty(StringUtils.join(productPropertyNames, ","));
-                productLogisticsDTO.setProductPropertyId(StringUtils.join(productPropertyIds, ","));
+                productLogisticsDTO.setProductProperty(propertyNames);
+                productLogisticsDTO.setProductPropertyId(propertyIds);
             }
             /**
              * 报关申报价（$）
@@ -6186,6 +6194,17 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 errorMsgList.add(ApiError.COMMON_GROSS_WEIGHT_LT_NET_WEIGHT_FORBIDDEN.getMsg());
             }
 
+            //电池重量（g）
+            BigDecimal batteryWeight = dto.getBatteryWeight();
+            List<String> productPropertyIds = declarePropertyList.stream().map(BasicDictEntity::getId).collect(Collectors.toList());
+            List<String> productPropertyNames = declarePropertyList.stream().map(BasicDictEntity::getValue).collect(Collectors.toList());
+            String propertyNames = StringUtils.join(productPropertyNames, ",");
+            String propertyIds = StringUtils.join(productPropertyIds, ",");
+            if( (Objects.isNull(batteryWeight) || batteryWeight.compareTo(BigDecimal.ZERO) <=0 )
+                    && ( propertyNames.contains(ProductConstant.PRODUCT_BATTERY_LITHIUM_METAL)|| propertyNames.contains(ProductConstant.PRODUCT_BATTERY_LITHIUM_ION)|| propertyNames.contains(ProductConstant.PRODUCT_BATTERY_LITHIUM_POLYMER) ) ){
+                errorMsgList.add(ApiError.PRODUCT_SALES_BATTERY_WEIGHT_NOT_NULL.getMsg());
+            }
+
             //存在错误信息则返回
             if (CollectionUtils.isNotEmpty(errorMsgList)) {
                 dto.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
@@ -6449,6 +6468,14 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
              * 销售平台
              */
             productSaleDTO.setSalesPlatform(productSalesPlatformEnum.getCode());
+
+            /**
+             * 电池重量（g）
+             */
+            productSaleDTO.setBatteryWeight(dto.getBatteryWeight());
+            productSaleDTO.setProductProperty(propertyNames);
+            productSaleDTO.setProductPropertyId(propertyIds);
+
             productNoSpecDTO.setProductSaleDTO(productSaleDTO);
 
             //产品物流信息
@@ -6461,10 +6488,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             /**
              * 报关产品属性
              */
-            List<String> productPropertyIds = declarePropertyList.stream().map(BasicDictEntity::getId).collect(Collectors.toList());
-            List<String> productPropertyNames = declarePropertyList.stream().map(BasicDictEntity::getValue).collect(Collectors.toList());
-            productLogisticsDTO.setProductProperty(StringUtils.join(productPropertyNames, ","));
-            productLogisticsDTO.setProductPropertyId(StringUtils.join(productPropertyIds, ","));
+            productLogisticsDTO.setProductProperty(propertyNames);
+            productLogisticsDTO.setProductPropertyId(propertyIds);
+
             /**
              * 报关申报价（$）
              */

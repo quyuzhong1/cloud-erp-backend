@@ -8,6 +8,8 @@ import com.erp.model.plm.enums.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
+
 /**
  * @Description 产品sku信息导入
  * @Author jack
@@ -444,6 +446,12 @@ public class ProductDetailImprotUpdateExcelDTO {
     @FieldValid(fieldName = "保险属性")
     @ExcelProperty("保险属性")
     private String insuranceProperty;
+
+    /**
+     * 电池重量（g）
+     */
+    @FieldValid(fieldName = "电池重量（g）",formatPattern = FieldFormatPatternTypeEnum.AMOUNT4)
+    private BigDecimal batteryWeight;
 
     /**
      * 报关申报价（$）
