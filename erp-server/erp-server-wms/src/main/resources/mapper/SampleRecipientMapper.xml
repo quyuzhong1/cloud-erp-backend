@@ -22,6 +22,7 @@
        <result column="code" property="code" />
        <result column="recipient_date" property="recipientDate" />
        <result column="usage" property="usage" />
+       <result column="usage_desc" property="usageDesc" />
        <result column="warehouse_id" property="warehouseId" />
        <result column="user_id" property="userId" />
        <result column="user_name" property="userName" />
@@ -57,7 +58,7 @@
         update_time,
         version,
         is_deleted,
-        approve_status, approve_user_id, approve_user_name, approve_time, invalid_status, invalid_remark, invalid_time, code, recipient_date, usage, warehouse_id, user_id, user_name, dept_id, pick_org_id, pick_org_name, usage_scope, use_user_id, use_user_name, remark, is_delivery, receive_address, receiver_name, receive_phone, source_id, source_code, source_type, sku_total_cost
+        approve_status, approve_user_id, approve_user_name, approve_time, invalid_status, invalid_remark, invalid_time, code, recipient_date, usage, usage_desc, warehouse_id, user_id, user_name, dept_id, pick_org_id, pick_org_name, usage_scope, use_user_id, use_user_name, remark, is_delivery, receive_address, receiver_name, receive_phone, source_id, source_code, source_type, sku_total_cost
           ,is_outstock_required,no_outstock_reason,isLedgerRequired,warehouse_charge_id
     </sql>
 
@@ -72,8 +73,12 @@
             sr.invalid_status AS invalidStatus,
             sr.invalid_remark AS invalidRemark,
             sr.invalid_time AS invalidTime,
+            (SELECT STRING_AGG(track_no, ',' ORDER BY id) 
+             FROM other_outstock_track_no 
+             WHERE other_outstock_source_code = sr.code AND is_deleted = false) AS trackNo,
             sr.recipient_date AS recipientDate,
             sr.usage,
+            sr.usage_desc AS usageDesc,
             sr.warehouse_id AS warehouseId,
             wi.name AS warehouseName,
             sr.user_id AS userId,
@@ -99,10 +104,11 @@
             srd.sku_id AS skuId,
             srd.product_name AS productName,
             srd.recipient_qty AS recipientQty,
+            srd.audit_qty AS auditQty,
             srd.delivery_qty AS deliveryQty,
             CASE 
                 WHEN srd.exec_status = 'completeOutstock' THEN 0
-                ELSE (srd.recipient_qty - srd.delivery_qty)
+                ELSE (COALESCE(srd.audit_qty, 0) - srd.delivery_qty)
             END AS reservedQty,
             srd.exec_status AS execStatus,
             srd.remark AS detailRemark,
@@ -210,8 +216,12 @@
             sr.invalid_status AS invalidStatus,
             sr.invalid_remark AS invalidRemark,
             sr.invalid_time AS invalidTime,
+            (SELECT STRING_AGG(track_no, ',' ORDER BY id) 
+             FROM other_outstock_track_no 
+             WHERE other_outstock_source_code = sr.code AND is_deleted = false) AS trackNo,
             sr.recipient_date AS recipientDate,
             sr.usage,
+            sr.usage_desc AS usageDesc,
             sr.warehouse_id AS warehouseId,
             wi.name AS warehouseName,
             sr.user_id AS userId,
@@ -237,10 +247,11 @@
             srd.sku_id AS skuId,
             srd.product_name AS productName,
             srd.recipient_qty AS recipientQty,
+            srd.audit_qty AS auditQty,
             srd.delivery_qty AS deliveryQty,
             CASE 
                 WHEN srd.exec_status = 'completeOutstock' THEN 0
-                ELSE (srd.recipient_qty - srd.delivery_qty)
+                ELSE (COALESCE(srd.audit_qty, 0) - srd.delivery_qty)
             END AS reservedQty,
             srd.exec_status AS execStatus,
             srd.remark AS detailRemark,
@@ -289,8 +300,12 @@
             sr.invalid_status AS invalidStatus,
             sr.invalid_remark AS invalidRemark,
             sr.invalid_time AS invalidTime,
+            (SELECT STRING_AGG(track_no, ',' ORDER BY id) 
+             FROM other_outstock_track_no 
+             WHERE other_outstock_source_code = sr.code AND is_deleted = false) AS trackNo,
             sr.recipient_date AS recipientDate,
             sr.usage,
+            sr.usage_desc AS usageDesc,
             sr.warehouse_id AS warehouseId,
             wi.name AS warehouseName,
             sr.user_id AS userId,
@@ -316,10 +331,11 @@
             srd.sku_id AS skuId,
             srd.product_name AS productName,
             srd.recipient_qty AS recipientQty,
+            srd.audit_qty AS auditQty,
             srd.delivery_qty AS deliveryQty,
             CASE 
                 WHEN srd.exec_status = 'completeOutstock' THEN 0
-                ELSE (srd.recipient_qty - srd.delivery_qty)
+                ELSE (COALESCE(srd.audit_qty, 0) - srd.delivery_qty)
             END AS reservedQty,
             srd.exec_status AS execStatus,
             srd.remark AS detailRemark,

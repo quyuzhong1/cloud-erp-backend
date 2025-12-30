@@ -42,6 +42,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.Arrays;
 import java.util.stream.Stream;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_SAMPLE_LEDGER_REPORT;
@@ -231,13 +232,34 @@ public class SampleLedgerServiceImpl extends SuperServiceImpl<SampleLedgerMapper
         }
         Page<SampleLedgerDTO.SkuAvailableQtyDTO> query = new Page<>(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
         SampleLedgerDTO.SearchDTO params = pagingDTO.getParams();
-        if(CollUtil.isNotEmpty(params.getSkuNos()) && params.getSkuNos().size() == 1){
-            params.setSkuNo(params.getSkuNos().get(0));
+        
+        // 处理SKU换行多个搜索：如果skuNo包含换行符，则分割为skuNos列表
+        if (StringUtils.isNotBlank(params.getSkuNo())) {
+            String skuNo = params.getSkuNo().trim();
+            // 检查是否包含换行符（\n或\r\n）
+            if (skuNo.contains("\n") || skuNo.contains("\r\n")) {
+                // 按换行符分割，过滤空字符串并去重
+                List<String> skuNos = Arrays.stream(skuNo.split("[\r\n]+"))
+                    .map(String::trim)
+                    .filter(StringUtils::isNotBlank)
+                    .distinct()
+                    .collect(Collectors.toList());
+                if (CollUtil.isNotEmpty(skuNos)) {
+                    params.setSkuNos(skuNos);
+                    params.setSkuNo(null); // 清空单个SKU查询
+                }
+            }
         }
-
+        
         IPage<SampleLedgerDTO.SkuAvailableQtyDTO> pageData = this.baseMapper.listSku(query, params);
 
         List<SampleLedgerDTO.SkuAvailableQtyDTO> records = pageData.getRecords();
+        
+        // 如果查询结果为空，直接返回空列表
+        if (CollUtil.isEmpty(records)) {
+            return new PagingVO<>(pageData);
+        }
+        
         //处理展会冻结库存数量
         handleExhibitionFreezeQty(params, records);
 
@@ -248,23 +270,24 @@ public class SampleLedgerServiceImpl extends SuperServiceImpl<SampleLedgerMapper
             }
         });
 
-        Map<String, SampleLedgerDTO.SkuAvailableQtyDTO> map = records.stream().collect(Collectors.toMap(SampleLedgerDTO.SkuAvailableQtyDTO::getSkuNo, Function.identity(), (o1, o2) -> o1));
-
-        List<SampleLedgerDTO.SkuAvailableQtyDTO> result = new ArrayList<>();
-
+        // 如果有多个SKU，需要按输入顺序返回结果（只返回实际查询到的数据，不创建空对象）
         if(CollUtil.isNotEmpty(params.getSkuNos()) && params.getSkuNos().size() > 1){
-            for (String skuNo :  params.getSkuNos()) {
-                SampleLedgerDTO.SkuAvailableQtyDTO skuAvailableQtyDTO = map.getOrDefault(skuNo, null);
-                if(Objects.isNull(skuAvailableQtyDTO)){
-                    skuAvailableQtyDTO = new SampleLedgerDTO.SkuAvailableQtyDTO();
+            Map<String, SampleLedgerDTO.SkuAvailableQtyDTO> map = records.stream()
+                .collect(Collectors.toMap(SampleLedgerDTO.SkuAvailableQtyDTO::getSkuNo, Function.identity(), (o1, o2) -> o1));
+            
+            List<SampleLedgerDTO.SkuAvailableQtyDTO> result = new ArrayList<>();
+            for (String skuNo : params.getSkuNos()) {
+                SampleLedgerDTO.SkuAvailableQtyDTO skuAvailableQtyDTO = map.get(skuNo);
+                // 只添加实际查询到的数据，不创建空对象
+                if(Objects.nonNull(skuAvailableQtyDTO)){
+                    result.add(skuAvailableQtyDTO);
                 }
-                result.add(skuAvailableQtyDTO);
             }
-        }else {
-            result.addAll(records);
+            pageData.setRecords(result);
+            // 更新总数
+            pageData.setTotal(result.size());
         }
 
-        pageData.setRecords(result);
         return new PagingVO<>(pageData);
     }
 

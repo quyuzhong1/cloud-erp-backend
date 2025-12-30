@@ -57,7 +57,22 @@ public class VirtualWarehouseDTO implements Serializable {
          */
         private String name;
 
-//        private List<VirtualWarehouseChannelDTO.ChannelAddDTO> channelList;
+        /**
+         * 是否自动借调  true 是 false 否
+         */
+        private Boolean  isAutoTransferEnabled;
+
+        /**
+         *  借调仓id
+         */
+        private String fromWarehouseId;
+        /**
+         * 借调仓名称
+         */
+        private String fromWarehouseName;
+
+
+        //        private List<VirtualWarehouseChannelDTO.ChannelAddDTO> channelList;
         private List<ThirdMappingDTO.ViewDTO> thirdMappingList;
         //关联实体仓id集合
         private List<String> warehouseIdList;
@@ -180,6 +195,15 @@ public class VirtualWarehouseDTO implements Serializable {
         @Size(max = 200, message = "名称最大长度不能超过200位")
         private String name;
 
+        /**
+         * 是否自动借调  true 是 false 否
+         */
+        private Boolean  isAutoTransferEnabled;
+
+        /**
+         *  借调仓id
+         */
+        private String fromWarehouseId;
 
     }
 
