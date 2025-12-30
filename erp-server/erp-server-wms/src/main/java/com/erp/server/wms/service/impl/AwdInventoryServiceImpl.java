@@ -2,8 +2,8 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.util.StrUtil;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.wms.dto.FbaInventoryDTO;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
-import io.seata.spring.annotation.GlobalTransactional;
 import com.common.business.dto.base.BaseResultDTO;
 import com.erp.model.wms.entity.AwdInventoryEntity;
 import com.erp.server.wms.mapper.AwdInventoryMapper;
@@ -20,7 +20,6 @@ import lombok.extern.slf4j.Slf4j;
 import com.erp.model.wms.dto.AwdInventoryDTO;
 import javax.annotation.Resource;
 import java.util.*;
-import com.common.core.utils.*;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import cn.hutool.core.collection.CollUtil;
@@ -115,7 +114,14 @@ public class AwdInventoryServiceImpl extends SuperServiceImpl<AwdInventoryMapper
         downloadTaskFeign.saveDownloadTask("AWD库存导出", EXPORT_WMS_AWD_INVENTORY.getCode(), param);
     }
 
-   /**
+    @Override
+    public AwdInventoryDTO.SummaryNumber summaryNumber(PagingDTO<AwdInventoryDTO.PagingParamDTO> pagingParamDTO) {
+        pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
+        AwdInventoryDTO.SummaryNumber summaryNumber = baseMapper.summaryNumber(pagingParamDTO.getParams());
+        return summaryNumber;
+    }
+
+    /**
     * 分页查询、导出 数据处理
    */
    private void fillList(List<AwdInventoryDTO.ListDTO> list) {

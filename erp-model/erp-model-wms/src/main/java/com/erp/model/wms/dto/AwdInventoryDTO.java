@@ -356,5 +356,35 @@ public class AwdInventoryDTO implements Serializable {
 
     }
 
+    /**
+     * 列表汇总数量
+     */
+    @Data
+    @NoArgsConstructor
+    public static class SummaryNumber {
+        /**
+         * AWD在库
+         */
+        private Integer totalOnhandQty;
 
+        /**
+         * AWD可用
+         */
+        private Integer availableDistributableQty;
+
+        /**
+         * AWD发FBA在途
+         */
+        private Integer replenishmentQty;
+
+        /**
+         * AWD待发货
+         */
+        private Integer reservedDistributableQty;
+
+        /**
+         * 发AWD在途
+         */
+        private Integer totalInboundQty;
+    }
 }

@@ -43,4 +43,7 @@ public interface AwdInventoryService extends SuperService<AwdInventoryEntity> {
     * @return
     */
     void exportList(AwdInventoryDTO.ExportDTO dto, HttpServletResponse response);
+
+
+    AwdInventoryDTO.SummaryNumber summaryNumber(PagingDTO<AwdInventoryDTO.PagingParamDTO> pagingParamDTO);
 }
