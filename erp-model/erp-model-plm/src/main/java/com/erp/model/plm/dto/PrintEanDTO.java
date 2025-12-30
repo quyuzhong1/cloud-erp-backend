@@ -43,10 +43,16 @@ public class PrintEanDTO {
     private Boolean isPrintText;
 
     /**
-     * 文本位置
+     * 文本水平位置
      * @see Element
      */
     private Integer textPosition;
+
+    /**
+     * 文本垂直位置
+     * @see Element
+     */
+    private Integer textVerticalPosition;
 
     /**
      * 文本内容

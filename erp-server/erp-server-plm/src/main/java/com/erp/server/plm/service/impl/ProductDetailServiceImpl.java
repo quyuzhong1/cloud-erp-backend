@@ -7291,6 +7291,22 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             return document.getPageSize().getWidth() - image.getScaledWidth() - 5; // 右对齐，距离右边50个单位
         }
     }
+    /**
+     * 获取左边起点位置
+     *
+     * @param printEanDTO 参数
+     * @param document    页面
+     * @param image       图片
+     */
+    private float getYPosition(PrintEanDTO printEanDTO, Document document, Image image) {
+        if (Element.ALIGN_TOP == printEanDTO.getTextVerticalPosition()) {
+            return  document.getPageSize().getHeight() - image.getScaledHeight() - 5; // 上对齐，距离50个单位
+        } else if (Element.ALIGN_MIDDLE == printEanDTO.getTextVerticalPosition()) {
+            return  (document.getPageSize().getHeight() - image.getScaledHeight()) / 2;
+        } else {
+            return  5; // 下对齐，距离50个单位
+        }
+    }
 
     /**
      * 打印ean
@@ -7361,7 +7377,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         scaleFactor(UnitConverterUtil.mmToPoints(printEanDTO.getWidth()) - 10, image);
         // 计算条形码居中的 X 坐标
         float xPosition = getXPosition(printEanDTO, document, image);
-        float barcodeYPosition = document.getPageSize().getHeight() - image.getScaledHeight() - 5;
+        // 计算条形码居中的 Y 坐标
+        float barcodeYPosition = getYPosition(printEanDTO, document, image);
+
+//        float barcodeYPosition = document.getPageSize().getHeight() - image.getScaledHeight() - 5;
+
         for (int i = 0; i < dto.getQty(); i++) {
             // 将图像添加到 PDF
             canvas.addImage(image, image.getScaledWidth(), 0, 0, image.getScaledHeight(), xPosition, barcodeYPosition);
