@@ -317,7 +317,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         // 仓库权限
         String warehousePermissionSql = authDataFeign.getWarehousePermissionSql("ra.channel_id");
         warehousePermissionSql = CharSequenceUtil.isBlank(warehousePermissionSql)? " AND 1=1 " : warehousePermissionSql;
-        return CharSequenceUtil.format(" and ((ra.type = 'fba' {}) or (ra.type = 'thirdWarehouse' {}) or (ra.channel_id = '') or (ra.type = 'AliExpress' {}))", shopPermissionSql, warehousePermissionSql,shopPermissionSql);
+        return CharSequenceUtil.format(" and (((ra.type = 'fba' or ra.type = 'awd') {}) or (ra.type = 'thirdWarehouse' {}) or (ra.channel_id = '') or (ra.type = 'AliExpress' {}))", shopPermissionSql, warehousePermissionSql,shopPermissionSql);
     }
 
     @Override
@@ -1194,8 +1194,8 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                 resultDTOList.add(BatchResultDTO.fail(bindShipment.getId(),bindShipment.getId(), "单据不存在"));
                 continue;
             }
-            if(!RequisitionApplicationTypeEnum.FBA.getCode().equals(requisitionApplicationEntity.getType())){
-                resultDTOList.add(BatchResultDTO.fail(requisitionApplicationEntity.getId(),requisitionApplicationEntity.getCode(), "不是FBA要货单，无法绑定货件"));
+            if(!RequisitionApplicationTypeEnum.FBA.getCode().equals(requisitionApplicationEntity.getType()) && !RequisitionApplicationTypeEnum.AWD.getCode().equals(requisitionApplicationEntity.getType())){
+                resultDTOList.add(BatchResultDTO.fail(requisitionApplicationEntity.getId(),requisitionApplicationEntity.getCode(), "不是FBA/AWD要货单，无法绑定货件"));
                 continue;
             }
             if(!requisitionApplicationEntity.getStatus().equals(RequisitionApplicationStatusEnum.HANDLE.getCode())){
@@ -1420,8 +1420,8 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
     @Override
     public List<RequisitionApplicationDTO.FbaBindShipmentViewDetailDTO> fbaBindShipmentView(String id) {
         RequisitionApplicationEntity entity = Optional.ofNullable(this.getById(id)).orElseThrow(()-> new ServiceException("要货申请不存在"));
-        if(!entity.getType().equals(RequisitionApplicationTypeEnum.FBA.getCode())){
-            throw new ServiceException("非FBA来源无法绑定货件");
+        if(!entity.getType().equals(RequisitionApplicationTypeEnum.FBA.getCode()) && !entity.getType().equals(RequisitionApplicationTypeEnum.AWD.getCode())){
+            throw new ServiceException("非FBA/AWD来源无法绑定货件");
         }
 
         PackingTaskEntity packingTaskEntity = Optional.ofNullable(packingTaskService.getBySourceCode(entity.getCode())).orElseThrow(()-> new ServiceException("未生成装箱任务"));
@@ -1987,7 +1987,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
             //回写要货申请的头程发货单生成状态
             writeBackRequisitionDeliveryPushDownStatus(addDTO.getSourceId());
             if (Boolean.TRUE.equals(isSubmit)) {
-                firstMileDeliveryService.submit(add.getId());
+                firstMileDeliveryService.submit(add.getId(),Boolean.TRUE);
             }
             if(CollectionUtils.isNotEmpty(updateDetailList)){
                 requisitionApplicationDetailService.updateBatchById(updateDetailList);

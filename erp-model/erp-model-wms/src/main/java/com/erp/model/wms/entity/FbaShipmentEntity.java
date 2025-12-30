@@ -111,7 +111,28 @@ public class FbaShipmentEntity extends BaseEntity<FbaShipmentEntity> {
     @TableField("is_packing_download")
     private Boolean isPackingDownload;
 
+    /**
+     * 是否sta
+     */
+    @TableField("is_sta")
+    private Boolean isSta;
 
+    /**
+     * 标签url
+     */
+    @TableField(exist = false)
+    private String labelUrl;
+    /**
+     * 标签类型（区分类型）
+     */
+    @TableField(exist = false)
+    private String pageType;
+    /**
+     * 数据来源类型
+     * ShipmentSourceTypeEnum
+     */
+    @TableField("source_type")
+    private String sourceType;
 
     public static final String SHOP_ID = "shop_id";
 

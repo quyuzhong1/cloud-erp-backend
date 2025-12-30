@@ -175,8 +175,8 @@ public enum ModuleTypeEnum {
     SAMPLE_ADJUSTMENT_INFO("160", "样品调整单"),
     PAYABLE_INFO("145", "应付单"),
     SO_B2C_REFUND("146", "售后订单"),
-
-
+    AWD_OUTSTOCK("156", "AWD出库"),
+    AWD_INVENTORY("157","AWD库存"),
     // ==================== 资产相关模块 ====================
     ASSET_LOCATION("146", "资产位置"),
     ASSET_ACCEPTANCE("147", "资产验收单"),

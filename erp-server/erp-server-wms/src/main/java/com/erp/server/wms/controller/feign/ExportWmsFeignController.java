@@ -7,6 +7,7 @@ import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
+import com.common.core.controller.vo.ApiResult;
 import com.erp.model.scm.dto.PurchaseBusinessGatherTableDTO;
 import com.erp.model.srm.dto.DeliveryOrderDTO;
 import com.erp.model.srm.dto.excel.DeliveryOrderExportExcelDTO;
@@ -24,6 +25,7 @@ import com.erp.rpc.dmp.feign.DmpInoutTaskFeign;
 import com.erp.server.wms.handler.InventoryQueryHandler;
 import com.erp.server.wms.query.*;
 import com.erp.server.wms.service.*;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -212,6 +214,10 @@ public class ExportWmsFeignController {
     private SampleTransferInfoService sampleTransferInfoService;
     @Resource
     private B2bThirdDeliveryService b2bThirdDeliveryService;
+    @Resource
+    private AwdOutstockService awdOutstockService;
+    @Resource
+    private AwdInventoryService awdInventoryService;
 
     @PostMapping("/b2cDelivery")
     @DataPermission(operationType = DataAttributeEnum.LIST,
@@ -392,7 +398,19 @@ public class ExportWmsFeignController {
     public PagingVO<FbaShipmentDTO.ExportDTO> exportFbaShipment(@RequestBody PagingDTO<FbaShipmentDTO.PagingParamDTO> dto) {
         return fbaShipmentService.exportFbaShipment(dto);
     }
-
+    /**
+     * 导出awd发货单
+     * @param dto
+     * @return
+     */
+    @PostMapping("/exportAwdShipment")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            shopTableField = "fs.shop_id",
+            menuCode = "wms:awdShipment:paging"
+    )
+    PagingVO<FbaShipmentDTO.AwdListDTO> exportAwdShipment(@RequestBody PagingDTO<FbaShipmentDTO.PagingParamDTO> dto){
+        return fbaShipmentService.awdPaging(dto);
+    }
     @PostMapping("/fbaShipmentPacking")
     @WebAdvanceQuery
     public PagingVO<FbaShipmentPackingDTO.ViewDTO> exportFbaShipmentPacking(@RequestBody PagingDTO<FbaShipmentDTO.PagingParamDTO> dto) {
@@ -1277,5 +1295,17 @@ public class ExportWmsFeignController {
     @WebAdvanceQuery(handler = B2bThirdWarehouseDeliveryQueryHandler.class)
     public PagingVO<B2bThirdDeliveryDTO.PagingViewDTO> exportB2bThirdDelivery(@RequestBody PagingDTO<B2bThirdDeliveryDTO.PagingParamDTO> dto){
         return b2bThirdDeliveryService.paging(dto);
+    }
+
+    @PostMapping("/exportAwdOutStock")
+    @WebAdvanceQuery(handler = AwdOutStockQueryHandler.class)
+    public PagingVO<AwdOutstockDTO.ListDTO> exportAwdOutStock(@RequestBody @Validated PagingDTO<AwdOutstockDTO.PagingParamDTO> dto) {
+        return awdOutstockService.paging(dto);
+    }
+
+    @PostMapping("/exportAwdInventory")
+    @WebAdvanceQuery(handler = AwdInventoryQueryHandler.class)
+    public PagingVO<AwdInventoryDTO.ListDTO> exportAwdInventory(@RequestBody @Validated PagingDTO<AwdInventoryDTO.PagingParamDTO> dto) {
+        return awdInventoryService.paging(dto);
     }
 }

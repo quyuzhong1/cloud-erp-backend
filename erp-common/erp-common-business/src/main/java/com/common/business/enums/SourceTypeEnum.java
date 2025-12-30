@@ -65,12 +65,13 @@ public enum SourceTypeEnum {
     SO_B2C_DELIVERY_INTERCEPT("soB2cDeliveryIntercept", "B2C发货单拦截","so_b2c_delivery_intercept"),
     PLATFORM_SO_OUT_STOCK("platformSoOutStock", "平台销售出库单",""),
     PACKING_TASK("packingTask", "装箱任务",""),
-
+    AWD_OUT_STOCK("awdOutStock","awd出库货件","awd_out_stock"),
 
     STOCKTAKING_PROFIT_LOSS("stocktakingTaskProfitLoss", "盘盈盘亏单","stocktaking_profit_loss"),
     STOCKTAKING_LOSS("stocktakingTaskLoss", "盘亏单","stocktaking_profit_loss"),
     STOCKTAKING_PROFIT("stocktakingTaskProfit", "盘盈单","stocktaking_profit_loss"),
     FBA_SHIPMENT("fbaShipment", "FBA货件","fba_shipment"),
+    AWD_SHIPMENT("awdShipment", "AWD货件","fba_shipment"),
     FBA_SHIPMENT_DETAIL("fbaShipmentDetail", "FBA货件明细","fba_shipment_detail"),
     FIRST_MILE_DELIVERY("firstMileDelivery", "头程发货单", "first_mile_delivery"),
     //当前仓可用减少，中转仓冻结增加
