@@ -157,6 +157,13 @@ public class ProductSaleServiceImpl extends ServiceImpl<ProductSaleMapper, Produ
             List<String> propertyIdList = Arrays.stream(productSaleDTO.getProductPropertyId().split(",")).collect(Collectors.toList());
             String propertyNames = propertytList.stream().filter(obj -> propertyIdList.contains(obj.getId())).map(BasicDictEntity::getName).collect(Collectors.joining(","));
             saleEntity.setProductProperty(propertyNames);
+
+            //电池重量（g）
+            BigDecimal batteryWeight = saleEntity.getBatteryWeight();
+            if( (Objects.isNull(batteryWeight) || batteryWeight.compareTo(BigDecimal.ZERO) <=0 )
+                    && ( propertyNames.contains(ProductConstant.PRODUCT_BATTERY_LITHIUM_METAL)|| propertyNames.contains(ProductConstant.PRODUCT_BATTERY_LITHIUM_ION)|| propertyNames.contains(ProductConstant.PRODUCT_BATTERY_LITHIUM_POLYMER) ) ){
+                throw new ServiceException(ApiError.PRODUCT_SALES_BATTERY_WEIGHT_NOT_NULL);
+            }
         }
         //处理数据
         handleSaveOrUpdate(saleEntity);
@@ -206,7 +213,7 @@ public class ProductSaleServiceImpl extends ServiceImpl<ProductSaleMapper, Produ
                 BigDecimal batteryWeight = productSaleEntity.getBatteryWeight();
                 if( (Objects.isNull(batteryWeight) || batteryWeight.compareTo(BigDecimal.ZERO) <=0 )
                         && ( propertyNames.contains(ProductConstant.PRODUCT_BATTERY_LITHIUM_METAL)|| propertyNames.contains(ProductConstant.PRODUCT_BATTERY_LITHIUM_ION)|| propertyNames.contains(ProductConstant.PRODUCT_BATTERY_LITHIUM_POLYMER) ) ){
-                    throw new ServiceException(ApiError.ERROR_BATTERY_WEIGHT_NOT_NULL);
+                    throw new ServiceException(ApiError.PRODUCT_SALES_BATTERY_WEIGHT_NOT_NULL);
                 }
             }
         }
