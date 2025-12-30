@@ -1928,6 +1928,8 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
             //备货类型
             if(RequisitionApplicationTypeEnum.FBA.getCode().equals(view.getType())){
                 addDTO.setDemandType(FbaDemandTypeEnum.DEMAND_PLATFORM_WAREHOUSE.getCode());
+            }else if (RequisitionApplicationTypeEnum.AWD.getCode().equals(view.getType())){
+                addDTO.setDemandType(FbaDemandTypeEnum.DEMAND_AWD_WAREHOUSE.getCode());
             }else if (RequisitionApplicationTypeEnum.THIRD_WAREHOUSE.getCode().equals(view.getType())){
                 addDTO.setDemandType(FbaDemandTypeEnum.DEMAND_OVERSEAS_WAREHOUSE.getCode());
             }else{
@@ -2041,11 +2043,20 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         }
 
         PickingListsDTO.AddDTO addDTO = new PickingListsDTO.AddDTO();
-        addDTO.setBillType(RequisitionApplicationTypeEnum.FBA.getCode().equals(application.getType()) ?
-                PickingBillTypeEnum.FBA.getCode() : PickingBillTypeEnum.THIRD.getCode());
+        if (RequisitionApplicationTypeEnum.AWD.getCode().equals(application.getType())) {
+            addDTO.setBillType(PickingBillTypeEnum.AWD.getCode());
+        }else if (RequisitionApplicationTypeEnum.FBA.getCode().equals(application.getType())){
+            addDTO.setBillType(PickingBillTypeEnum.FBA.getCode());
+        }else {
+            addDTO.setBillType(PickingBillTypeEnum.THIRD.getCode());
+        }
         if (RequisitionApplicationTypeEnum.FBA.getCode().equals(application.getType())) {
             ShopInfoEntity shopInfo = shopInfoFeign.getShopInfoById(application.getChannelId());
             addDTO.setDeliveryWarehouseId(shopInfo.getWarehouseId());
+            addDTO.setCountryCode(shopInfo.getDictCountryCode());
+        }else if (RequisitionApplicationTypeEnum.AWD.getCode().equals(application.getType())){
+            ShopInfoEntity shopInfo = shopInfoFeign.getShopInfoById(application.getChannelId());
+            addDTO.setDeliveryWarehouseId(shopInfo.getAwdWarehouseId());
             addDTO.setCountryCode(shopInfo.getDictCountryCode());
         }else {
             OverseasProviderWarehouseEntity overseasProviderWarehouseEntity = overseasProviderWarehouseService.getByWarehouseId(application.getChannelId());

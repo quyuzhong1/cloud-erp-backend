@@ -5,6 +5,8 @@ import com.common.business.utils.IdGeneratorUtil;
 import com.common.core.utils.IdUtils;
 import com.common.core.utils.UUID;
 import com.erp.model.wms.entity.WarehouseEntity;
+import com.erp.model.wms.enums.FbaDemandTypeEnum;
+import com.erp.model.wms.enums.ShipmentSourceTypeEnum;
 import org.mapstruct.Named;
 import org.springframework.stereotype.Component;
 
@@ -61,5 +63,22 @@ public class TypeConversionWorker {
             return value;
         }
         return value.setScale(2, RoundingMode.HALF_UP);
+    }
+
+     /**
+     * 转换sourceType到demandType
+     */
+    @Named("convertSourceTypeToDemandType")
+    public String convertSourceTypeToDemandType(String sourceType){
+        if (CharSequenceUtil.isBlank(sourceType)){
+            return sourceType;
+        }
+        if (ShipmentSourceTypeEnum.FBA.getCode().equals(sourceType)){
+            return FbaDemandTypeEnum.DEMAND_PLATFORM_WAREHOUSE.getCode();
+        }
+        if (ShipmentSourceTypeEnum.AWD.getCode().equals(sourceType)){
+            return FbaDemandTypeEnum.DEMAND_AWD_WAREHOUSE.getCode();
+        }
+        return sourceType;
     }
 }
