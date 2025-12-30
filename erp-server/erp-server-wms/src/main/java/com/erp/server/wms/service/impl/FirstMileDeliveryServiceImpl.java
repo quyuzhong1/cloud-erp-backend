@@ -2919,6 +2919,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             firstMildDetailDTO.setFnSku(awdOutstockDetailEntity.getFnsku());
             firstMildDetailDTO.setSkuId(awdOutstockDetailEntity.getSkuId());
             firstMildDetailDTO.setSkuNo(awdOutstockDetailEntity.getSkuNo());
+            firstMildDetailDTO.setPlanQty(awdOutstockDetailEntity.getQty());
             firstMildDetailDTO.setDeclareQty(awdOutstockDetailEntity.getQty());
             firstMildDetailDTO.setDeliveryQty(awdOutstockDetailEntity.getQty());
             firstMildDetailDTO.setSourceDetailId(awdOutstockDetailEntity.getId());
@@ -2940,7 +2941,14 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         approveOneDTO.setDeliveryDate(awdOutstockEntity.getBillDate());
         approveOneDTO.setComment("");
         approveOneDTO.setType(ApproveTypeEnum.PASS.getStatus());
-        approve(approveOneDTO);
+        Boolean originalValue = UserContext.getIsUserSystem();
+        UserContext.setIsUserSystem(Boolean.TRUE);
+        try {
+            approve(approveOneDTO);
+        }finally {
+            //恢复系统标识
+            UserContext.setIsUserSystem(originalValue);
+        }
         return BatchResultDTO.success(dto.getId(), dto.getCode(), "操作成功");
     }
 }
