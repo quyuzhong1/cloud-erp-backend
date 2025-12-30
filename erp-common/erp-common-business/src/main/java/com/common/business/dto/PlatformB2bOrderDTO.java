@@ -1,15 +1,13 @@
 package com.common.business.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.common.business.validator.AddGroup;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
 
-import javax.validation.constraints.NotBlank;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -119,88 +117,122 @@ public class PlatformB2bOrderDTO {
     /**
      * 附件列表
      */
-    private List<AttachDTO> attachment;
-
-    /**
-     * erp信息
-     */
-    private ErpInfoDTO erpInfoDTO;
-
+    private List<AttachDTO> attachment = new ArrayList<>();
 
     private List<PlatformB2bOrderDetailDTO> detail;
 
     /**
-     * erp信息
+     * 运费
      */
-    @Data
-    @NoArgsConstructor
-    public static class ErpInfoDTO {
-        /**
-         * erp客户地址id
-         */
-        private String customerAddressId;
-        /**
-         * erp仓库Id
-         */
-        private String warehouseId;
-        /**
-         * erp客户id
-         */
-        private String customerId;
-        /**
-         * 组织id
-         */
-        private String salesOrgId;
+    private BigDecimal shippingFee;
 
-        /**
-         * 销售部门id
-         */
-        private String salesDeptId;
+    /**
+     * 是否收取运费 true 收取
+     */
+    private Boolean isCollectShippingFee;
+    /**
+     * 平台订单编号
+     */
+    private String platformOrderCode;
 
-        /**
-         * 销售员id
-         */
-        private String sellerId;
+    /**
+     * 第三方编号
+     */
+    private String thirdCode;
 
-        /**
-         * 收货国家id
-         */
-        private String countryId;
-        /**
-         * 收货国家
-         */
-        private String countryName;
-        /**
-         * 收货人
-         */
-        private String receiverName;
+    /**
+     * 平台店铺Id
+     */
+    private String platformShopId;
+
+    /**
+     * ERP店铺ID
+     */
+    private String shopId;
+    /**
+     * 客户订单号
+     */
+    private String customerOrderNo;
 
 
-        /**
-         * 币种符号
-         */
-        private String currencySymbol;
-        /**
-         * 收款条件
-         */
-        private String receiveCondition;
-        /**
-         * 是否报关
-         */
-        private Boolean isDeclare;
-        /**
-         * 是否含税
-         */
-        private Boolean isTax = true;
+    //ERP信息
 
-        /**
-         * 交货方式
-         */
-        private String deliveryMode;
+    /**
+     * erp客户地址id
+     */
+    private String customerAddressId;
+    /**
+     * erp仓库Id
+     */
+    private String warehouseId;
+    /**
+     * erp客户id
+     */
+    private String customerId;
+    /**
+     * 组织id
+     */
+    private String salesOrgId;
 
-        /**
-         * 联系电话
-         */
-        private String telNumber;
-    }
+    /**
+     * 销售部门id
+     */
+    private String salesDeptId;
+
+    /**
+     * 销售员id
+     */
+    private String sellerId;
+
+    /**
+     * 收货国家id
+     */
+    private String countryId;
+    /**
+     * 收货国家
+     */
+    private String countryName;
+    /**
+     * 收货人
+     */
+    private String receiverName;
+
+
+    /**
+     * 币种符号
+     */
+    private String currencySymbol;
+    /**
+     * 收款条件
+     */
+    private String receiveCondition;
+    /**
+     * 是否报关
+     */
+    private Boolean isDeclare;
+    /**
+     * 是否含税
+     */
+    private Boolean isTax = true;
+
+    /**
+     * 交货方式
+     */
+    private String deliveryMode;
+
+    /**
+     * 联系电话
+     */
+    private String telNumber;
+
+    /**
+     * 平台
+     */
+    private String dictPlatform;
+
+    /**
+     * 地址类型
+     */
+    private String addressType;
+
 }

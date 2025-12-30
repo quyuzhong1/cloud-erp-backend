@@ -1,5 +1,6 @@
 package com.erp.model.oms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.erp.model.oms.entity.SoReturnEntity;
@@ -201,6 +202,19 @@ public class SoReturnDTO {
          *含税退货金额（本位币）
          */
         private BigDecimal taxReturnAmountLocalCurrency;
+
+        /**
+         * 第三方编号
+         */
+        @TableField("third_code")
+        private String thirdCode;
+
+        /**
+         * 平台订单号
+         */
+        @TableField("platform_order_code")
+        private String platformOrderCode;
+
     }
 
     /**

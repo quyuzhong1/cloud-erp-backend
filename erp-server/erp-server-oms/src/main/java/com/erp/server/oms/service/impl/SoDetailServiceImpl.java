@@ -13,10 +13,7 @@ import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PermissionsDTO;
-import com.common.business.enums.ApproveStatusEnum;
-import com.common.business.enums.BillApproveStatusEnum;
-import com.common.business.enums.PlatformDictEnum;
-import com.common.business.enums.SourceTypeEnum;
+import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.utils.RedisUtil;
 import com.common.core.enums.ApiError;
@@ -60,8 +57,10 @@ import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.rpc.wms.feign.*;
 import com.erp.sdk.third.kingdee.utils.KingdeePushModuleEnum;
 import com.erp.server.oms.constant.OmsConstant;
+import com.erp.server.oms.dht.SyncDhtService;
 import com.erp.server.oms.listener.SoDetailExcelListener;
 import com.erp.server.oms.mapper.SoDetailMapper;
+import com.erp.server.oms.rocketmq.sync.wangdian.SyncWangDianDeliveryService;
 import com.erp.server.oms.service.*;
 import com.erp.server.oms.utils.SoUtils;
 import com.google.common.collect.Lists;
@@ -104,6 +103,9 @@ import java.util.stream.Collectors;
 @Service
 @Slf4j
 public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDetailEntity> implements SoDetailService {
+
+    @Resource
+    private SyncWangDianDeliveryService syncWangDianDeliveryService;
 
     @Resource
     private CommonService commonService;
@@ -1169,6 +1171,13 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
                 item.setDeliveryStatus(DeliveryStatusEnum.UN_SHIPPED.getCode());
             }
         }
+        //全部明细已发货，同步旺店通发货
+        if(soDetailList.stream().allMatch(v-> DeliveryStatusEnum.COMPLETE_SHIPMENT.getCode().equals(v.getDeliveryStatus()))){
+            SoInfoEntity soInfoEntity = soInfoService.getById(soDetailList.get(0).getMainId());
+            if(soInfoEntity.getThirdSystem().equals(PlatformDictEnum.WDT.getCode())){
+                syncWangDianDeliveryService.syncDataToWangDian(soInfoEntity);
+            }
+        }
         this.updateBatchById(soDetailList);
     }
 
@@ -1293,7 +1302,6 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
     /**
      * 添加销售订单明细
      *
-     * @param mainId detailList
      * @param isTax  是否含税  true 是
      * @return
      * @author yl

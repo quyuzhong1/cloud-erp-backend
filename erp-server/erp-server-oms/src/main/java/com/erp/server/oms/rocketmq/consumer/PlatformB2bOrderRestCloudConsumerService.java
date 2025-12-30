@@ -9,20 +9,11 @@ import com.common.core.exception.ServiceException;
 import com.common.message.constant.RocketMqNewConsumerGroup;
 import com.common.message.constant.RocketMqNewTag;
 import com.common.message.constant.RocketMqNewTopic;
-import com.common.message.handler.AbstractNewPlatformConsumerHandler;
 import com.common.message.handler.AbstractRestCloudPlatformConsumerHandler;
-import com.erp.model.dmp.dto.ThirdMappingDTO;
-import com.erp.model.dmp.entity.ThirdMappingEntity;
-import com.erp.model.dmp.enums.ThirdSysTypeEnum;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
-import com.erp.model.oms.entity.CustomerAddressEntity;
-import com.erp.model.oms.entity.CustomerInfoEntity;
-import com.erp.model.oms.entity.ShopInfoEntity;
-import com.erp.model.oms.enums.CustomerAddressTypeEnum;
-import com.erp.model.oms.enums.DeliveryModeEnum;
-import com.erp.model.oms.enums.RuleTypeEnum;
-import com.erp.model.oms.enums.ShopOrderRouteEnum;
+import com.erp.model.oms.entity.*;
+import com.erp.model.oms.enums.*;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
@@ -50,11 +41,11 @@ import java.util.stream.Collectors;
  *
  */
 @Service
-@RocketMQMessageListener(topic = RocketMqNewTopic.DMP_PLATFORM_B2B_ORDER_TO_OMS_TOPIC,
-        selectorExpression = RocketMqNewTag.DMP_PLATFORM_B2B_ORDER_TO_OMS_TAG,
-        consumerGroup = RocketMqNewConsumerGroup.DMP_PLATFORM_B2B_ORDER_TO_OMS_GROUP)
+@RocketMQMessageListener(topic = RocketMqNewTopic.RESTCLOUD_PLATFORM_B2B_ORDER_TO_OMS_TOPIC,
+        selectorExpression = RocketMqNewTag.RESTCLOUD_PLATFORM_B2B_ORDER_TO_OMS_TAG,
+        consumerGroup = RocketMqNewConsumerGroup.RESTCLOUD_PLATFORM_B2B_ORDER_TO_OMS_GROUP)
 @Slf4j
-public class PlatformB2bOrderConsumerService extends AbstractNewPlatformConsumerHandler {
+public class PlatformB2bOrderRestCloudConsumerService extends AbstractRestCloudPlatformConsumerHandler {
 
 	@Resource
 	private CustomerInfoService customerInfoService;
@@ -72,13 +63,16 @@ public class PlatformB2bOrderConsumerService extends AbstractNewPlatformConsumer
 	private SoInfoService soInfoService;
 
 	@Resource
+	private DmpThirdMappingFeign dmpThirdMappingFeign;
+
+	@Resource
+	private DictBasicService dictBasicService;
+
+	@Resource
 	private ShopInfoService shopInfoService;
 
 	@Resource
 	private PlmTaskFeign plmTaskFeign;
-
-	@Resource
-	private DmpThirdMappingFeign dmpThirdMappingFeign;
 
 	@Override
 	public String getBizName() {
@@ -140,22 +134,11 @@ public class PlatformB2bOrderConsumerService extends AbstractNewPlatformConsumer
 			dto.setCountryName(customerAddressEntity.getCountryName());
 		}
 
-		if(StringUtils.isNotBlank(dto.getPlatformWarehouseId())){
-			ThirdMappingDTO.ViewParamDTO viewParamDTO = new ThirdMappingDTO.ViewParamDTO();
-			viewParamDTO.setThirdId(dto.getPlatformWarehouseId());
-			viewParamDTO.setType(ThirdSysTypeEnum.WAREHOUSE.getCode());
-			viewParamDTO.setSysType(PlatformDictEnum.WDT.getCode());
-			List<ThirdMappingEntity> thirdMappingEntityList = dmpThirdMappingFeign.getByThirdId(viewParamDTO);
-			if(CollectionUtils.isNotEmpty(thirdMappingEntityList)){
-				dto.setWarehouseId(thirdMappingEntityList.get(0).getSysId());
-			}
-		}
-
 		dto.setDictPlatform(customerInfo.getPlatformType());
 		dto.setAddressType(CustomerAddressTypeEnum.FORWARDER.getCode());
 		dto.setDeliveryMode(DeliveryModeEnum.EXPRESS.getCode());
 		List<PlatformB2bOrderDetailDTO> platformB2bOrderDetailDTOS = dto.getDetail();
-		List<String> skuNoList = platformB2bOrderDetailDTOS.stream().map(PlatformB2bOrderDetailDTO::getSkuNo).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+		List<String> skuNoList = platformB2bOrderDetailDTOS.stream().map(PlatformB2bOrderDetailDTO::getPlatformSkuNo).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
 		List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(skuNoList);
 		for (PlatformB2bOrderDetailDTO platformB2bOrderDetailDTO : platformB2bOrderDetailDTOS) {
 			SkuVO skuVO = skuVOList.stream().filter(e -> e.getSkuNo().equals(platformB2bOrderDetailDTO.getSkuNo())).findFirst().orElse(null);
