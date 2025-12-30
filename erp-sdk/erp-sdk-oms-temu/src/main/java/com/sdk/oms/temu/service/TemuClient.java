@@ -13,7 +13,6 @@ import com.google.gson.Gson;
 import com.sdk.oms.temu.dto.*;
 import com.sdk.oms.temu.enums.TemuEnum;
 import com.sdk.oms.temu.util.EncryptionUtils;
-import io.seata.common.util.CollectionUtils;
 import io.seata.common.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;

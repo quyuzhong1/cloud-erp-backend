@@ -34,7 +34,6 @@ import com.erp.server.sys.service.OperateLogService;
 import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
 import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -89,7 +88,7 @@ public class TemplateManagementServiceImpl extends SuperServiceImpl<TemplateMana
             String type = templateManagementEntity.getType();
             Integer count = lambdaQuery().eq(TemplateManagementEntity::getType, type).eq(TemplateManagementEntity::getIsDefault, Boolean.TRUE).count();
             if(count > 0){
-                throw new ServiceException(ApiError.ERROR_9057,TemplateManagementTypeEnum.getName(type));
+                throw new ServiceException(ApiError.COMMON_TEMPLATE_DEFAULT_CONTRACT_EXISTS,TemplateManagementTypeEnum.getName(type));
             }
         }
         //默认已发布
@@ -124,7 +123,7 @@ public class TemplateManagementServiceImpl extends SuperServiceImpl<TemplateMana
             throw new ServiceException("采购框架合同无法创建模板");
         }
         TemplateManagementEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "模板管理"));
+        old = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "模板管理"));
         TemplateManagementEntity templateManagementEntity = BeanMapperUtils.map(TemplateManagementEntity.class, addOrUpdateDTO);
 
         Boolean isDefault = templateManagementEntity.getIsDefault();
@@ -132,7 +131,7 @@ public class TemplateManagementServiceImpl extends SuperServiceImpl<TemplateMana
             String type = templateManagementEntity.getType();
             Integer count = lambdaQuery().ne(TemplateManagementEntity::getId,old.getId()).eq(TemplateManagementEntity::getType, type).eq(TemplateManagementEntity::getIsDefault, Boolean.TRUE).count();
             if(count > 0){
-                throw new ServiceException(ApiError.ERROR_9057,TemplateManagementTypeEnum.getName(type));
+                throw new ServiceException(ApiError.COMMON_TEMPLATE_DEFAULT_CONTRACT_EXISTS,TemplateManagementTypeEnum.getName(type));
             }
         }
 
@@ -212,7 +211,7 @@ public class TemplateManagementServiceImpl extends SuperServiceImpl<TemplateMana
     @Override
     public TemplateManagementDTO.ViewDTO view(String id) {
         TemplateManagementEntity old = super.getById(id);
-        old = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "模板管理"));
+        old = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "模板管理"));
         TemplateManagementDTO.ViewDTO view = new TemplateManagementDTO.ViewDTO();
         BeanMapper.copy(old,view);
 
@@ -246,7 +245,7 @@ public class TemplateManagementServiceImpl extends SuperServiceImpl<TemplateMana
         for (String id : ids) {
             TemplateManagementEntity entity = idEntityMap.getOrDefault(id, null);
             if(Objects.isNull(entity)){
-                resultDTOList.add(BatchResultDTO.fail(id, id, CharSequenceUtil.format(ApiError.NOT_EXIST_BILL.msg, "模板管理")));
+                resultDTOList.add(BatchResultDTO.fail(id, id, CharSequenceUtil.format(ApiError.BILL_NOT_EXIST_WITH_TYPE.getMsg(), "模板管理")));
                 continue;
             }
 
@@ -267,7 +266,7 @@ public class TemplateManagementServiceImpl extends SuperServiceImpl<TemplateMana
 
     @Override
     public BatchResultDTO setDisabled(String id, Boolean disabledStatus) {
-        TemplateManagementEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "模板管理"));
+        TemplateManagementEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "模板管理"));
         List<ContractInfoEntity> contractInfoList = FeignQuery.create(ContractInfoEntity.class).eq(ContractInfoEntity::getTemplateId, id).list();
 //        if(CollUtil.isNotEmpty(contractInfoList)){
 //            return BatchResultDTO.fail(id, entity.getName(), "合同管理已引用不可设置停用");
@@ -282,7 +281,7 @@ public class TemplateManagementServiceImpl extends SuperServiceImpl<TemplateMana
 
     @Override
     public BatchResultDTO setDefault(String id) {
-        TemplateManagementEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "模板管理"));
+        TemplateManagementEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "模板管理"));
 
         Boolean isDefault = entity.getIsDefault();
         Boolean newValue = isDefault ? Boolean.FALSE : Boolean.TRUE;
@@ -290,7 +289,7 @@ public class TemplateManagementServiceImpl extends SuperServiceImpl<TemplateMana
             String bizType = entity.getBizType();
             Integer count = lambdaQuery().eq(TemplateManagementEntity::getBizType, bizType).eq(TemplateManagementEntity::getIsDefault, Boolean.TRUE).count();
             if(count > 0){
-                throw new ServiceException(ApiError.ERROR_9057,TemplateManagementBizTypeEnum.getName(bizType));
+                throw new ServiceException(ApiError.COMMON_TEMPLATE_DEFAULT_CONTRACT_EXISTS,TemplateManagementBizTypeEnum.getName(bizType));
             }
         }
         entity.setIsDefault(newValue);

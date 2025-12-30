@@ -168,7 +168,7 @@ public class SyncKingdeeTransferOutServiceImpl implements SyncKingdeeTransferOut
         //组织机构编码
         List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(entity.getInOrgId(), entity.getOutOrgId()));
         if (CollectionUtils.isEmpty(accountingCompanyList)) {
-            throw new ServiceException(ApiError.ERROR_9014);
+            throw new ServiceException(ApiError.COMMON_COMPANY_NOT_FOUND);
         }
         //调入组织机构编码
         String inOrgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getInOrgId()))
@@ -181,7 +181,7 @@ public class SyncKingdeeTransferOutServiceImpl implements SyncKingdeeTransferOut
         resultMap.put("outOrgCode", outOrgCode);
 
         if (CollectionUtils.isEmpty(detailList)) {
-            throw new ServiceException(ApiError.ERROR_99048);
+            throw new ServiceException(ApiError.WH_TRANSFER_DIRECT_DETAIL_NOT_FOUND);
         }
 
         //获取sku的id集合
@@ -189,7 +189,7 @@ public class SyncKingdeeTransferOutServiceImpl implements SyncKingdeeTransferOut
         //根据ids查询sku信息
         List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIdList);
         if (CollectionUtils.isEmpty(detailEntityList)) {
-            throw new ServiceException(ApiError.ERROR_95084);
+            throw new ServiceException(ApiError.PRODUCT_INFO_NOT_FOUND);
         }
         List<String> warehouseIds = Arrays.asList(entity.getInWarehouseId(), entity.getOutWarehouseId());
         //仓库

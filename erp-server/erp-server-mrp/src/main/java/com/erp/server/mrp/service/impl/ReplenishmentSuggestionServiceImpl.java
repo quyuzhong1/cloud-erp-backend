@@ -575,9 +575,9 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
     @Override
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO notRestockingReplenishment(String id, String replenishmentRemark) {
-        ReplenishmentSuggestionEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException(ApiError.ERROR_REPLENISHMENT_NOT_EXIST));
+        ReplenishmentSuggestionEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException(ApiError.REPLENISHMENT_SUGGESTION_NOT_FOUND));
         if (!ReplenishmentTypeEnum.NORMAL.getCode().equals(entity.getReplenishmentType())) {
-            throw new ServiceException(ApiError.ERROR_NOT_RESTOCKING_REPLENISHMENT);
+            throw new ServiceException(ApiError.REPLENISHMENT_ONLY_NORMAL_ALLOW_STOP);
         }
         updateIsReplenishment(id, replenishmentRemark, ReplenishmentTypeEnum.NOT_RESTOCKING.getCode());
 
@@ -606,9 +606,9 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
     @Override
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO restoreReplenishment(String id, String replenishmentRemark) {
-        ReplenishmentSuggestionEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException(ApiError.ERROR_REPLENISHMENT_NOT_EXIST));
+        ReplenishmentSuggestionEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException(ApiError.REPLENISHMENT_SUGGESTION_NOT_FOUND));
         if (!ReplenishmentTypeEnum.NOT_RESTOCKING.getCode().equals(entity.getReplenishmentType())) {
-            throw new ServiceException(ApiError.ERROR_RESTORE_REPLENISHMENT);
+            throw new ServiceException(ApiError.REPLENISHMENT_ONLY_STOPPED_ALLOW_RESTORE);
         }
         updateIsReplenishment(id, replenishmentRemark, ReplenishmentTypeEnum.NORMAL.getCode());
         // 操作日志
@@ -636,9 +636,9 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
         if (ObjectUtil.isEmpty(stockUpUpdateDTO) && ObjectUtil.isEmpty(salesQtyUpdateDTO)) {
             throw new ServiceException("备货、销量设置不能全部为空！");
         }
-        ReplenishmentSuggestionEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException(ApiError.ERROR_REPLENISHMENT_NOT_EXIST));
+        ReplenishmentSuggestionEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException(ApiError.REPLENISHMENT_SUGGESTION_NOT_FOUND));
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "补货建议");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "补货建议");
         }
 
         //更新备货信息
@@ -664,7 +664,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
     @Override
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO restoreRule(String id, List<String> ruleTypeList) {
-        ReplenishmentSuggestionEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException(ApiError.ERROR_REPLENISHMENT_NOT_EXIST));
+        ReplenishmentSuggestionEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException(ApiError.REPLENISHMENT_SUGGESTION_NOT_FOUND));
         if (CollectionUtils.isEmpty(ruleTypeList)) {
             ruleTypeList = Arrays.asList(ReplenishmentRuleTypeEnum.STOCK_UP.getCode(), ReplenishmentRuleTypeEnum.SALES.getCode());
         }
@@ -683,7 +683,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
     @Override
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO favorite(String id) {
-        ReplenishmentSuggestionEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException(ApiError.ERROR_REPLENISHMENT_NOT_EXIST));
+        ReplenishmentSuggestionEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException(ApiError.REPLENISHMENT_SUGGESTION_NOT_FOUND));
 
         //当前登陆人
         LoginUser userInfo = UserContext.getDefaultLoginUser();
@@ -706,7 +706,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
     @Override
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO cancelFavorite(String id) {
-        ReplenishmentSuggestionEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException(ApiError.ERROR_REPLENISHMENT_NOT_EXIST));
+        ReplenishmentSuggestionEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException(ApiError.REPLENISHMENT_SUGGESTION_NOT_FOUND));
         //当前登陆人
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         Boolean isFavorite = replenishmentSuggestionFavoriteService.isFavorite(userInfo.getUid(), entity.getId());
@@ -724,7 +724,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
     @Override
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO updateLabel(ReplenishmentSuggestionDTO.UpdateLabelDTO updateLabelDTO) {
-        ReplenishmentSuggestionEntity entity = super.getByIdOpt(updateLabelDTO.getId()).orElseThrow(() -> new ServiceException(ApiError.ERROR_REPLENISHMENT_NOT_EXIST));
+        ReplenishmentSuggestionEntity entity = super.getByIdOpt(updateLabelDTO.getId()).orElseThrow(() -> new ServiceException(ApiError.REPLENISHMENT_SUGGESTION_NOT_FOUND));
 
         //原标签
         List<LabelInfoDTO.ViewDTO> oldList = replenishmentRefLabelService.listLabelInfoByRefId(updateLabelDTO.getId());
@@ -748,7 +748,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
     @Override
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO batchAddLabel(String id, List<String> labelIdList) {
-        ReplenishmentSuggestionEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException(ApiError.ERROR_REPLENISHMENT_NOT_EXIST));
+        ReplenishmentSuggestionEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException(ApiError.REPLENISHMENT_SUGGESTION_NOT_FOUND));
         if (CollectionUtils.isEmpty(labelIdList)) {
             return BatchResultDTO.success(entity.getId(), entity.getSkuNo(), OperationTypeEnum.UPDATE);
         }
@@ -769,7 +769,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
     @Override
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO cancelLabel(String id, List<String> labelIdList) {
-        ReplenishmentSuggestionEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException(ApiError.ERROR_REPLENISHMENT_NOT_EXIST));
+        ReplenishmentSuggestionEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException(ApiError.REPLENISHMENT_SUGGESTION_NOT_FOUND));
         if (CollectionUtils.isEmpty(labelIdList)) {
             return BatchResultDTO.success(entity.getId(), entity.getSkuNo(), OperationTypeEnum.DELETE);
         }
@@ -846,7 +846,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
     @Override
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO updateRemark(String id, String remark) {
-        ReplenishmentSuggestionEntity old = super.getByIdOpt(id).orElseThrow(() -> new ServiceException(ApiError.ERROR_REPLENISHMENT_NOT_EXIST));
+        ReplenishmentSuggestionEntity old = super.getByIdOpt(id).orElseThrow(() -> new ServiceException(ApiError.REPLENISHMENT_SUGGESTION_NOT_FOUND));
         //新建对象
         ReplenishmentSuggestionEntity entity = new ReplenishmentSuggestionEntity();
         BeanMapperUtils.copy(old, entity);
@@ -1792,7 +1792,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
                 .collect(Collectors.toMap(SalesEstimateEntity::getDate, SalesEstimateEntity::getSalesQty, (o1, o2) -> o1));
         CfgRulePlatformTypeEnum platformType = CfgRulePlatformTypeEnum.getEnum(suggestion.getPlatformType());
         if (ObjectUtils.isEmpty(platformType)) {
-            throw new ServiceException(ApiError.ERROR_9028);
+            throw new ServiceException(ApiError.COMMON_ENUM_CONVERT_FAILED);
         }
 
         switch (platformType) {
@@ -2071,7 +2071,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
                 .collect(Collectors.toMap(SalesEstimateEntity::getDate, SalesEstimateEntity::getSalesQty, (o1, o2) -> o1));
         CfgRulePlatformTypeEnum platformType = CfgRulePlatformTypeEnum.getEnum(suggestion.getPlatformType());
         if (ObjectUtils.isEmpty(platformType)) {
-            throw new ServiceException(ApiError.ERROR_9028);
+            throw new ServiceException(ApiError.COMMON_ENUM_CONVERT_FAILED);
         }
         long days = ChronoUnit.DAYS.between(LocalDate.now(), dto.getDate()) + 1;
         switch (platformType) {

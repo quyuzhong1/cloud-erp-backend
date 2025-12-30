@@ -89,7 +89,7 @@ public class SoB2cExtendServiceImpl extends SuperServiceImpl<SoB2cExtendMapper, 
     @Override
     public Boolean update(SoB2cExtendDTO.UpdateDTO addOrUpdateDTO,SoB2cEntity soB2cEntity) {
         SoB2cExtendEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "销售订单-全托管属性单"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "销售订单-全托管属性单"));
         SoB2cExtendEntity soB2cExtendEntity =  BeanMapperUtils.map(SoB2cExtendEntity.class, addOrUpdateDTO);
         // 数据处理
         handleData(soB2cExtendEntity, soB2cEntity);

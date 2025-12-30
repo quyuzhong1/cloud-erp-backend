@@ -57,7 +57,7 @@ public class SoPriceApproveHandler extends AbstractApproveHandler {
     public Boolean cancelProcess(ApproveDTO.CancelProcessDTO dto) {
         SoPriceEntity entity = soPriceService.getById(dto.getId());
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_NOT_FOUND_SO_PRICE);
+            throw new ServiceException(ApiError.SO_PRICE_NOT_FOUND);
         }
         BatchResultDTO resultDTO = soPriceService.cancelProcess(entity);
         return resultDTO.getSuccess();
@@ -68,7 +68,7 @@ public class SoPriceApproveHandler extends AbstractApproveHandler {
     public Boolean disApprove(ApproveDTO.DisApproveDTO dto) {
         SoPriceEntity entity = soPriceService.getById(dto.getId());
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_NOT_FOUND_SO_PRICE);
+            throw new ServiceException(ApiError.SO_PRICE_NOT_FOUND);
         }
         List<SoPriceDetailEntity> detailList = soPriceDetailService.listDetailByMainId(dto.getId());
         List<String> priceDetailIds = detailList.stream().map(SoPriceDetailEntity::getId).distinct().collect(Collectors.toList());
@@ -87,7 +87,7 @@ public class SoPriceApproveHandler extends AbstractApproveHandler {
         approveOneDTO.setComment(dto.getComment());
         Boolean approve = soPriceService.approveEnd(approveOneDTO, entity);
         if (Boolean.FALSE.equals(approve)) {
-            throw new ServiceException(ApiError.ERROR_BILL_APPROVE, SourceTypeEnum.getName(dto.getBusinessKey()));
+            throw new ServiceException(ApiError.BILL_APPROVE_FAILED, SourceTypeEnum.getName(dto.getBusinessKey()));
         }
         //非erp审核添加日志
         if (ApprovePlatformEnum.ERP.equals(dto.getApprovePlatformEnum())) {

@@ -64,7 +64,7 @@ public class KingdeeBomInfoConsumerServiceImpl implements KingdeeBomInfoConsumer
 
         PlatformEntity platformEntity = kingdeeCommonService.getPlatformEntity(map, PlatformEnum.KINGDEE.getDesc());
         if (ObjectUtils.isEmpty(platformEntity)) {
-            throw new ServiceException(ApiError.ERROR_97022);
+            throw new ServiceException(ApiError.COMMON_PLATFORM_NAME_NOT_FOUND);
         }
         //读取配置，初始化SDK
         KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.ENG_BOM.getCode());
@@ -108,7 +108,7 @@ public class KingdeeBomInfoConsumerServiceImpl implements KingdeeBomInfoConsumer
         JSONObject json = kingdeeCommonService.makeApiFieldJson(map, platformEntity.getId(), type);
         //未配置发送字段
         if (CollectionUtils.isEmpty(json)) {
-            throw new ServiceException(ApiError.ERROR_NOT_EXIST_KINGDEE_FIELD);
+            throw new ServiceException(ApiError.DMP_KINGDEE_FIELD_NOT_FOUND);
         }
 
         //判断金蝶系统是否已存在该数据

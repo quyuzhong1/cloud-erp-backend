@@ -13,7 +13,6 @@ import com.common.business.threadlocal.UserContext;
 import com.erp.server.dmp.service.OperateLogService;
 import com.common.core.exception.ServiceException;
 import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.dmp.dto.DmpFeishuInstanceDetailDTO;
@@ -72,7 +71,7 @@ public class DmpFeishuInstanceDetailServiceImpl extends SuperServiceImpl<DmpFeis
     @Override
     public Boolean update(DmpFeishuInstanceDetailDTO.UpdateDTO addOrUpdateDTO) {
         DmpFeishuInstanceDetailEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "DMP飞书审批实例详情记录单"));
+        old = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "DMP飞书审批实例详情记录单"));
         DmpFeishuInstanceDetailEntity dmpFeishuInstanceDetailEntity = BeanMapperUtils.map(DmpFeishuInstanceDetailEntity.class, addOrUpdateDTO);
 
         // 数据处理

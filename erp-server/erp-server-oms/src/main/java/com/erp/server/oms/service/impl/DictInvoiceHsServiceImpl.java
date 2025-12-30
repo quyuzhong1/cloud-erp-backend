@@ -70,7 +70,7 @@ public class DictInvoiceHsServiceImpl extends SuperServiceImpl<DictInvoiceHsMapp
     @Override
     public Boolean update(DictInvoiceHsDTO.UpdateDTO addOrUpdateDTO) {
         DictInvoiceHsEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "发票海关编码"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "发票海关编码"));
         DictInvoiceHsEntity dictInvoiceHsEntity =  BeanMapperUtils.map(DictInvoiceHsEntity.class, addOrUpdateDTO);
 
         // 数据处理

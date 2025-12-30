@@ -266,6 +266,12 @@ public class ShopInfoEntity extends BaseEntity<ShopInfoEntity> {
     @TableField("awd_warehouse_name")
     private String awdWarehouseName;
 
+    /**
+     * 订单路由类型
+     */
+    @TableField("order_route_type")
+    private String orderRouteType;
+
     public static final String PLATFORM_DICT = "platform_dict";
 
     public static final String SHOP_CODE = "shop_code";

@@ -342,10 +342,10 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
     @Cacheable(cacheNames = "cache:bi:salePriceDistribution",keyGenerator = "myKeyGenerator")
     public List<SalePriceDistributionVO> salePriceDistribution(BiFilterDTO biFilterDTO) {
         if (biFilterDTO.getRangeType() == null) {
-            throw new ServiceException(ApiError.ERROR_SALE_RANGE_EXIST);
+            throw new ServiceException(ApiError.BI_SALE_RANGE_EXIST);
         }
         if (biFilterDTO.getSettleMethod() == null) {
-            throw new ServiceException(ApiError.ERROR_SETTLE_METHOD_EXIST);
+            throw new ServiceException(ApiError.BI_SETTLE_METHOD_EXIST);
         }
         return biOrderInfoService.salePriceDistribution(biFilterDTO);
     }
@@ -556,7 +556,7 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
         // 商品详情
         BiProductDetailEntity detailEntity = biProductDetailService.getBySkuNo(dto.getSkuNo());
         if(null == detailEntity){
-            throw new ServiceException(ApiError.ERROR_92051);
+            throw new ServiceException(ApiError.COMMON_SKU_MAPPING_NOT_FOUND);
         }
         // 商品信息
         BiProductInfoEntity productEntity = biProductInfoService.getById(detailEntity.getProductId());
@@ -807,7 +807,7 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
         try {
             ExcelUtil.export(fileName, "区域-国家销售额数据", resultList, BiCountryRegionImportExcelDTO.class, response);
         } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_1015);
+            throw new ServiceException(ApiError.FILE_EXPORT_FAILED);
         }
         return Boolean.TRUE;
     }

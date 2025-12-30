@@ -43,7 +43,7 @@ public class SoB2cRefundApproveHandler extends AbstractApproveHandler {
     public Boolean cancelProcess(ApproveDTO.CancelProcessDTO dto) {
         SoB2cRefundEntity entity = soB2cRefundService.getById(dto.getId());
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.NOT_EXIST_BILL,"售后订单");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE,"售后订单");
         }
         BatchResultDTO resultDTO = soB2cRefundService.cancelProcess(entity);
         return resultDTO.getSuccess();
@@ -53,7 +53,7 @@ public class SoB2cRefundApproveHandler extends AbstractApproveHandler {
     public Boolean disApprove(ApproveDTO.DisApproveDTO dto) {
         SoB2cRefundEntity entity = soB2cRefundService.getById(dto.getId());
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.NOT_EXIST_BILL,"售后订单");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE,"售后订单");
         }
         BatchResultDTO resultDTO = soB2cRefundService.disApprove(entity);
         return resultDTO.getSuccess();
@@ -64,11 +64,11 @@ public class SoB2cRefundApproveHandler extends AbstractApproveHandler {
     public Boolean approveEnd(ApproveDTO.EndProcessDTO dto) {
         SoB2cRefundEntity entity = soB2cRefundService.getById(dto.getBusinessId());
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.NOT_EXIST_BILL,"售后订单");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE,"售后订单");
         }
         Boolean approve = soB2cRefundService.approveEnd(new ApproveOneDTO(dto.getBusinessId(),dto.getApproveStatus().getStatus(),dto.getComment()),entity);
         if (Boolean.FALSE.equals(approve)) {
-            throw new ServiceException(ApiError.ERROR_BILL_APPROVE, SourceTypeEnum.getName(dto.getBusinessKey()));
+            throw new ServiceException(ApiError.BILL_APPROVE_FAILED, SourceTypeEnum.getName(dto.getBusinessKey()));
         }
         //非erp审核添加日志
         if (ApprovePlatformEnum.ERP.equals(dto.getApprovePlatformEnum())) {

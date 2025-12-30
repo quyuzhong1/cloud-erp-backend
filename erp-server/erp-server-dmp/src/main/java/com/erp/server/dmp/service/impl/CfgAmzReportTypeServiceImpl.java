@@ -6,12 +6,10 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.entity.AmzReportTaskEntity;
 import com.erp.model.dmp.entity.CfgAmzReportTypeEntity;
-import com.erp.model.dmp.enums.ReportScheduleSubscribedTypeEnum;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
 import com.erp.server.dmp.mapper.CfgAmzReportTypeMapper;
 import com.erp.server.dmp.service.CfgAmzReportTypeService;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 

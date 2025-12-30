@@ -30,7 +30,7 @@ public class ProductPlanRemarkServiceImpl extends ServiceImpl<ProductPlanningRem
         //获取当前登录人
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         if (ObjectUtils.isEmpty(userInfo)) {
-            throw new ServiceException(ApiError.USER_NOT_EXIST);
+            throw new ServiceException(ApiError.AUTH_CREDENTIALS_INVALID);
         }
         LambdaUpdateWrapper<ProductPlanRemarkEntity> updateWrapper = new LambdaUpdateWrapper<>();
         updateWrapper.eq(ProductPlanRemarkEntity::getProductPlanId,productPlanId);

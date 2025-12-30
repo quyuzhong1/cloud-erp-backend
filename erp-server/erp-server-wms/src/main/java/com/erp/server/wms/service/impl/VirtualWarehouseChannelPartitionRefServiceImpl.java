@@ -11,7 +11,6 @@ import com.erp.server.wms.service.VirtualWarehouseChannelPartitionRefService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.erp.server.wms.service.OperateLogService;
-import com.erp.server.wms.service.CommonService;
 import com.common.core.exception.ServiceException;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -68,7 +67,7 @@ public class VirtualWarehouseChannelPartitionRefServiceImpl extends SuperService
     @Override
     public Boolean update(VirtualWarehouseChannelPartitionRefDTO.UpdateDTO updateDTO) {
         VirtualWarehouseChannelPartitionRefEntity old = super.getById(updateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "虚拟仓渠道分区关联单"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "虚拟仓渠道分区关联单"));
         VirtualWarehouseChannelPartitionRefEntity virtualWarehouseChannelPartitionRefEntity =  BeanMapperUtils.map(VirtualWarehouseChannelPartitionRefEntity.class, updateDTO);
 
         // 数据处理

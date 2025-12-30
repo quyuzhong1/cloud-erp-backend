@@ -1,27 +1,21 @@
 package com.erp.tms.batong.service;
 
 import cn.hutool.core.map.MapUtil;
-import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONUtil;
-import com.alibaba.fastjson2.JSONObject;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.FileUtil;
 import com.common.core.utils.OkHttpUtils;
 import com.erp.tms.batong.constants.BaTongConstants;
 import com.erp.tms.batong.model.label.base.BaseData;
 import com.erp.tms.batong.model.label.base.BaseResult;
 import com.erp.tms.batong.model.label.request.LabelRequest;
 import com.erp.tms.batong.model.label.request.ListOrder;
-import com.erp.tms.batong.model.label.response.LabelResponse;
 import com.erp.tms.batong.model.order.request.BaTongUpdateWeightReq;
 import com.erp.tms.batong.model.order.request.OrderRequest;
-import com.erp.tms.batong.model.order.response.OrderResponse;
 import com.erp.tms.batong.model.order.response.TrackBase;
 import io.seata.common.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;

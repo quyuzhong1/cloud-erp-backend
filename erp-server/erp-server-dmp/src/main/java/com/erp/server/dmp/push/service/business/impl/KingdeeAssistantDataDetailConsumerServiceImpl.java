@@ -2,7 +2,6 @@ package com.erp.server.dmp.push.service.business.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.json.JSONObject;
-import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
@@ -29,7 +28,6 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -117,9 +115,9 @@ public class KingdeeAssistantDataDetailConsumerServiceImpl implements KingdeeAss
 
         //未配置发送字段
         if (CollectionUtils.isEmpty(json)) {
-            log.error(ApiError.ERROR_97025.msg);
+            log.error(ApiError.MAPPING_NOT_SET_PUSH_FORBIDDEN.getMsg());
             //错误日志
-            throw new ServiceException(ApiError.ERROR_NOT_EXIST_KINGDEE_FIELD);
+            throw new ServiceException(ApiError.DMP_KINGDEE_FIELD_NOT_FOUND);
         }
         //判断金蝶系统是否已存在该数据
         JSONObject model = null;
@@ -208,7 +206,7 @@ public class KingdeeAssistantDataDetailConsumerServiceImpl implements KingdeeAss
     		}
     	}
         if(StringUtils.isBlank(id)) {
-        	throw new ServiceException(ApiError.ERROR_NOT_EXIST_PARENT_ASSISTANT_DATA);
+        	throw new ServiceException(ApiError.DMP_PARENT_ASSISTANT_NOT_FOUND);
         }
         return id;
     }

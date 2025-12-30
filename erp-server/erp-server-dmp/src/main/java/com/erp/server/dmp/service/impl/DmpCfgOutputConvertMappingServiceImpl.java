@@ -65,7 +65,7 @@ public class DmpCfgOutputConvertMappingServiceImpl extends SuperServiceImpl<DmpC
     @Override
     public Boolean update(DmpCfgOutputConvertMappingDTO.UpdateDTO updateDTO) {
         DmpCfgOutputConvertMappingEntity old = super.getById(updateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "推送字段映射单"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "推送字段映射单"));
         DmpCfgOutputConvertMappingEntity dmpCfgOutputConvertMappingEntity =  BeanMapperUtils.map(DmpCfgOutputConvertMappingEntity.class, updateDTO);
 
         // 数据处理

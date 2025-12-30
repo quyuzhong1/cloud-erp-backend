@@ -113,7 +113,7 @@ public class DmpPushTaskHistoryServiceImpl extends ServiceImpl<DmpPushTaskHistor
     public Boolean batchSync(List<String> ids) {
         List<DmpPushTaskHistoryEntity> list = this.listByIds(ids);
         if (CollectionUtils.isEmpty(list)) {
-            throw new ServiceException(ApiError.ERROR_NOT_EXIST_DMP_PUSH_TASK);
+            throw new ServiceException(ApiError.DMP_PUSH_TASK_NOT_FOUND);
         }
         List<DmpPushTaskEntity> taskEntities = list.stream()
                 .map(e -> {
@@ -145,7 +145,7 @@ public class DmpPushTaskHistoryServiceImpl extends ServiceImpl<DmpPushTaskHistor
     public Boolean batchFindDataSync(List<String> ids) {
         List<DmpPushTaskHistoryEntity> list = this.listByIds(ids);
         if (CollectionUtils.isEmpty(list)) {
-            throw new ServiceException(ApiError.ERROR_NOT_EXIST_DMP_PUSH_TASK);
+            throw new ServiceException(ApiError.DMP_PUSH_TASK_NOT_FOUND);
         }
         long count = list.stream().filter(obj -> !PlatformEnum.ERP.getDesc().equals(obj.getSourcePlatformName()) || !PlatformEnum.KINGDEE.getDesc().equals(obj.getTargetPlatformName())).count();
         if (count > 0) {

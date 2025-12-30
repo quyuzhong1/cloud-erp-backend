@@ -89,7 +89,7 @@ public class ShopSdkServer {
         boolean verify = verifyShop(params, hmac, shop, clientSecret);
         if (!verify) {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            throw new ServiceException(ApiError.ERROR_401);
+            throw new ServiceException(ApiError.HTTP_UNAUTHORIZED);
         }
         String accessTokenUrl = dto.getAccessTokenUrl();
         String path = String.format(accessTokenUrl, shop);

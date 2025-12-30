@@ -70,7 +70,7 @@ public class FirstMileSkuCostAllocationServiceImpl extends SuperServiceImpl<Firs
     @Override
     public Boolean update(FirstMileSkuCostAllocationDTO.UpdateDTO updateDTO) {
         FirstMileSkuCostAllocationEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "头程费用SKU分摊"));
+        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "头程费用SKU分摊"));
         FirstMileSkuCostAllocationEntity firstMileSkuCostAllocationEntity =  BeanMapperUtils.map(FirstMileSkuCostAllocationEntity.class, updateDTO);
 
         // 数据处理

@@ -4,7 +4,6 @@ import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
-import cn.hutool.json.JSON;
 import cn.hutool.json.JSONUtil;
 import com.common.business.constant.RedisCacheConstants;
 import com.common.business.dto.JobTaskDTO;
@@ -174,7 +173,7 @@ public class MercadoLocalSdkClientService {
                     bodyStr, param.toString(), JSONUtil.toJsonStr(bodyStr), e.getMessage()));
         }
         if (StringUtil.isBlank(tokenDTO.getAccessToken())) {
-            throw new ServiceException(ApiError.ERROR_SHOP_AUTHORIZE_FAIL, PlatformDictEnum.MERCADOLIBRE_LOCAL.getName(), bodyStr);
+            throw new ServiceException(ApiError.SHOP_PARAM_AUTHORIZE_FAILED, PlatformDictEnum.MERCADOLIBRE_LOCAL.getName(), bodyStr);
         }
 
         //返回token实体
@@ -219,7 +218,7 @@ public class MercadoLocalSdkClientService {
 
             if(StringUtil.isBlank(refreshTokenDTO.getAccessToken())) {
                 if(count == 10) {
-                    throw new ServiceException(ApiError.ERROR_SHOP_AUTHORIZE_FAIL, PlatformDictEnum.MERCADOLIBRE_LOCAL.getName(), bodyStr);
+                    throw new ServiceException(ApiError.SHOP_PARAM_AUTHORIZE_FAILED, PlatformDictEnum.MERCADOLIBRE_LOCAL.getName(), bodyStr);
 
                 }
                 try {

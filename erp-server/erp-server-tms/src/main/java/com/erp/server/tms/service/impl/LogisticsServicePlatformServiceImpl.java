@@ -22,10 +22,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
+
 /**
  * <p>
  * 物流平台服务表 服务实现类
@@ -72,7 +71,7 @@ public class LogisticsServicePlatformServiceImpl extends SuperServiceImpl<Logist
     @Override
     public Boolean update(LogisticsServicePlatformDTO.UpdateDTO updateDTO) {
         LogisticsServicePlatformEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "物流平台服务单"));
+        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "物流平台服务单"));
         LogisticsServicePlatformEntity logisticsServicePlatformEntity =  BeanMapperUtils.map(LogisticsServicePlatformEntity.class, updateDTO);
 
         // 数据处理

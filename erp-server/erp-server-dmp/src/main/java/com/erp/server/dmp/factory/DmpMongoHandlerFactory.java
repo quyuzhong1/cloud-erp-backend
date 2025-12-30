@@ -1,8 +1,6 @@
 package com.erp.server.dmp.factory;
 
 import com.common.core.exception.ServiceException;
-import com.erp.model.dmp.enums.AmzReportCreatedMethodEnum;
-import com.erp.sdk.oms.amz.spapi.enums.AmazonReportRecordTypeEnum;
 import com.erp.server.dmp.enums.DmpMongoHandleTypeEnum;
 import com.erp.server.dmp.handler.DmpMongoHandler;
 import org.apache.commons.lang3.StringUtils;

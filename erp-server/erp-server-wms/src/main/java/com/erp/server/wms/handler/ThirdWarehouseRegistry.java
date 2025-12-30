@@ -42,11 +42,11 @@ public class ThirdWarehouseRegistry {
     public ThirdWarehouseService getHandlerByAuthId(String authId) {
         OverseasProviderEntity authEntity = overseasProviderService.getById(authId);
         if(Objects.isNull(authEntity)){
-            throw new ServiceException(ApiError.NOT_FOUND_OVERSEAS_PROVIDE);
+            throw new ServiceException(ApiError.WH_OVERSEAS_PROVIDER_NOT_FOUND);
         }
         ThirdWarehouseService warehouseService = getHandler(authEntity.getCode());
         if(Objects.isNull(warehouseService)){
-            throw new ServiceException(ApiError.OVERSEAS_PROVIDE_NOT_SERVICE, authEntity.getCode());
+            throw new ServiceException(ApiError.COMMON_PROVIDER_SERVICE_NOT_ENABLED, authEntity.getCode());
         }
         return warehouseService;
     }

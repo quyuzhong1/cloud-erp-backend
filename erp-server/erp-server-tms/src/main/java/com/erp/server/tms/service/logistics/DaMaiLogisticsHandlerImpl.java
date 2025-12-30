@@ -1,38 +1,22 @@
 package com.erp.server.tms.service.logistics;
 
-import cn.hutool.json.JSONUtil;
 import com.common.business.annotation.LogisticsPlatformType;
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.business.enums.OmsPlatformEnum;
-import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
-import com.common.core.exception.ServiceException;
-import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.tms.vo.request.ChanelQueryVO;
 import com.erp.model.tms.vo.response.LogisticsServiceResponseVO;
-import com.erp.model.wms.entity.OverseasProviderEntity;
-import com.erp.model.wms.entity.OverseasProviderWarehouseEntity;
-import com.erp.rpc.wms.feign.WmsOverseasWarehouseFeign;
 import com.erp.server.tms.handler.AbstractLogisticsHandler;
-import com.erp.server.tms.service.LogisticsAuthFieldService;
 import com.sdk.wms.damai.dto.response.DaMaiBaseResp;
 import com.sdk.wms.damai.dto.response.DaMaiChannelResp;
 import com.sdk.wms.damai.dto.response.DaMaiWarehouseResp;
 import com.sdk.wms.damai.service.DaMaiService;
-import com.sdk.wms.jifeng.dto.request.JiFengAuthRequest;
-import com.sdk.wms.jifeng.dto.response.JiFengBaseResp;
-import com.sdk.wms.jifeng.dto.response.JiFengOfflineChannelResp;
-import com.sdk.wms.jifeng.dto.response.JiFengOnlineChannelResp;
-import com.sdk.wms.jifeng.dto.response.JiFengTokenResp;
-import com.sdk.wms.jifeng.service.JiFengService;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.util.*;
-import java.util.stream.Collectors;
 
 
 /**

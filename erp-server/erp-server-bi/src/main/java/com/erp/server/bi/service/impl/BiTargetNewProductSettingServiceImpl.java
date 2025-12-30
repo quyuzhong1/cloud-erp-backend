@@ -191,7 +191,7 @@ public class BiTargetNewProductSettingServiceImpl extends SuperServiceImpl<BiTar
     public Boolean update(BiTargetNewProductSettingDTO.UpdateDTO updateDTO) {
         String id = updateDTO.getId();
         BiTargetYearEntity oldTargetYear = biTargetYearService.getById(id);
-        Optional.ofNullable(oldTargetYear).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "新品目标设置"));
+        Optional.ofNullable(oldTargetYear).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "新品目标设置"));
         BiTargetYearEntity targetYear = BeanMapperUtils.map(BiTargetYearEntity.class, updateDTO);
         List<String> metricsList = updateDTO.getMetricsList();
         targetYear.setMetrics(metricsList.stream().collect(Collectors.joining(",")));
@@ -227,7 +227,7 @@ public class BiTargetNewProductSettingServiceImpl extends SuperServiceImpl<BiTar
     public BiTargetNewProductSettingDTO.ViewDTO view(String id) {
         BiTargetYearEntity targetYear = biTargetYearService.getById(id);
         if (Objects.isNull(targetYear)) {
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "新品目标设置");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "新品目标设置");
         }
         BiTargetNewProductSettingDTO.ViewDTO view = new BiTargetNewProductSettingDTO.ViewDTO();
         BeanMapperUtils.copy(targetYear, view);
@@ -378,7 +378,7 @@ public class BiTargetNewProductSettingServiceImpl extends SuperServiceImpl<BiTar
             wb.close();
         } catch (Exception e) {
             log.error(" downloadTemplate  出错了 e=={}", e);
-            throw new ServiceException(ApiError.ERROR_95131);
+            throw new ServiceException(ApiError.FILE_IMPORT_TEMPLATE_DOWNLOAD_FAILED);
         }
 
     }
@@ -581,7 +581,7 @@ public class BiTargetNewProductSettingServiceImpl extends SuperServiceImpl<BiTar
         }
         if (CollectionUtils.isNotEmpty(existStaffList)) {
             String existCategoryName = existStaffList.stream().distinct().collect(Collectors.joining(","));
-            throw new ServiceException(ApiError.YEAR_METRICS_EXIST, existCategoryName);
+            throw new ServiceException(ApiError.COMMON_SETTING_EXIST, existCategoryName);
         }
         //部门id
         String deptId = targetYear.getDeptId();

@@ -182,6 +182,10 @@ public class RocketMqNewTag {
      * 新中台平台退货订单
      */
     public static final String DMP_PLATFORM_RETURN_ORDER_TO_OMS_TAG = "${spring.cloud.nacos.discovery.namespace}-dmp_platform_return_order_to_oms_tag";
+    /**
+     * 新中台平台退货订单
+     */
+    public static final String DMP_PLATFORM_B2B_RETURN_ORDER_TO_OMS_TAG = "${spring.cloud.nacos.discovery.namespace}-dmp_platform_b2b_return_order_to_oms_tag";
 
     /**
      * 新中台平台退货订单
@@ -213,6 +217,12 @@ public class RocketMqNewTag {
      * restcloudb2b订单
      */
     public static final String RESTCLOUD_PLATFORM_B2B_ORDER_TO_OMS_TAG = "${spring.cloud.nacos.discovery.namespace}-restcloud_platform_b2b_order_to_oms_tag";
+
+    /**
+     * restcloudb2b订单
+     */
+    public static final String DMP_PLATFORM_B2B_ORDER_TO_OMS_TAG = "${spring.cloud.nacos.discovery.namespace}-dmp_platform_b2b_order_to_oms_tag";
+
     public static final String RESTCLOUD_THIRD_WAREHOUSE_TO_OMS_TAG = "${spring.cloud.nacos.discovery.namespace}-erp_third_warehouse_tag";
 
     /**

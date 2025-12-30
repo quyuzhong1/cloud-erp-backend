@@ -1,9 +1,7 @@
 package com.erp.server.dmp.inout.handler.factory;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.EnumMap;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -44,7 +42,6 @@ import com.erp.server.dmp.inout.handler.output.create.DmpOutputHotfixCreateHandl
 import com.erp.server.dmp.inout.handler.output.create.DmpOutputInputCreateHandler;
 import com.erp.server.dmp.inout.handler.output.task.DmpOutputTaskHandler;
 import com.erp.server.dmp.inout.handler.output.create.DmpOutputNormalCreateHandler;
-import com.erp.server.dmp.inout.handler.output.task.mq.DmpOutputRocketMQTaskHandler;
 import com.erp.server.dmp.inout.utils.DmpHandlerCache;
 import com.erp.server.dmp.inout.utils.DmpHandlerUtils;
 import com.erp.server.dmp.pull.mongo.MongoService;

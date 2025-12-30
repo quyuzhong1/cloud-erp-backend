@@ -5,8 +5,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-import com.common.business.utils.CollectionUtils;
-import com.erp.sdk.oms.amz.spapi.client.StringUtil;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -69,7 +67,7 @@ public class DmpSoDetailServiceImpl extends SuperServiceImpl<DmpSoDetailMapper, 
     @Override
     public Boolean update(DmpSoDetailDTO.UpdateDTO updateDTO) {
         DmpSoDetailEntity old = super.getById(updateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "中台销售订单详情单"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "中台销售订单详情单"));
         DmpSoDetailEntity dmpSoDetailEntity =  BeanMapperUtils.map(DmpSoDetailEntity.class, updateDTO);
 
         // 数据处理

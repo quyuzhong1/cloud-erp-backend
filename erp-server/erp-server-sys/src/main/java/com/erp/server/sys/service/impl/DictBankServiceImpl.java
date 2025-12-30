@@ -43,7 +43,7 @@ public class DictBankServiceImpl extends SuperServiceImpl<DictBankMapper, DictBa
     public Boolean saveOrUpdateBatchBank(ValidList<BankDTO.AddOrUpdateDTO> bankList) {
         List<BankDTO.AddOrUpdateDTO> list = bankList.getList();
         if (CollUtil.isEmpty(list)) {
-            throw new ServiceException(ApiError.ERROR_DICT_BANK_IS_EXIST);
+            throw new ServiceException(ApiError.COMMON_BANK_IS_EXIST);
         }
         List<String> bankNameList = list.stream().map(BankDTO.AddOrUpdateDTO::getName).distinct().collect(Collectors.toList());
         List<DictBankEntity> dictBankList = listByBankNameList(bankNameList);
@@ -51,13 +51,13 @@ public class DictBankServiceImpl extends SuperServiceImpl<DictBankMapper, DictBa
             //查询是否有传重复的名称保存
             long count = list.stream().filter(obj -> CharSequenceUtil.equals(obj.getName(), bankDTO.getName())).count();
             if (count > 1) {
-                throw new ServiceException(ApiError.ERROR_DICT_BANK_IS_EXIST, bankDTO.getName());
+                throw new ServiceException(ApiError.COMMON_BANK_IS_EXIST, bankDTO.getName());
             }
 
             //查询是否存在相同名称
             String oldName = dictBankList.stream().filter(obj -> CharSequenceUtil.equals(obj.getName(), bankDTO.getName()) && !CharSequenceUtil.equals(obj.getId(),bankDTO.getId())).map(DictBankEntity::getName).findFirst().orElse("");
             if (CharSequenceUtil.isNotBlank(oldName)) {
-                throw new ServiceException(ApiError.ERROR_DICT_BANK_IS_EXIST, oldName);
+                throw new ServiceException(ApiError.COMMON_BANK_IS_EXIST, oldName);
             }
         }
 

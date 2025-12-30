@@ -89,7 +89,7 @@ public class RuleConditionServiceImpl extends SuperServiceImpl<RuleConditionMapp
     @Override
     public Boolean update(RuleConditionDTO.UpdateDTO addOrUpdateDTO) {
         RuleConditionEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "规则条件单"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "规则条件单"));
         RuleConditionEntity ruleConditionEntity =  BeanMapperUtils.map(RuleConditionEntity.class, addOrUpdateDTO);
 
         // 数据处理

@@ -101,7 +101,7 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
     public BaseResultDTO.AddDTO add(KolPartnerInfoDTO.AddDTO addDTO) {
         FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(addDTO.getChargeId());
         if(ObjectUtil.isNull(findUserDTO)){
-            throw new ServiceException(ApiError.ERROR_SYS_TYPE_NOTFOUND, "负责人");
+            throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC, "负责人");
         }else {
             addDTO.setChargeName(findUserDTO.getUserName());
         }
@@ -109,7 +109,7 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
         if(StringUtils.isNotBlank(addDTO.getDeptId())){
             List<SysDepartmentEntity> depts = sysUserFeign.getDeptByIds(Arrays.asList(addDTO.getDeptId()));
             if (CollUtil.isEmpty(depts)) {
-                throw new ServiceException(ApiError.ERROR_SYS_TYPE_NOTFOUND, "负责部门");
+                throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC, "负责部门");
             } else {
                 addDTO.setDeptName(depts.get(0).getName());
             }
@@ -120,7 +120,7 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
         List<DictCountryDTO.ListDTO> dictCountryList = sysUserFeign.countryList();
         DictCountryDTO.ListDTO listDTO = dictCountryList.stream().filter(e -> e.getId().equals(addDTO.getCountryId())).findFirst().orElse(null);
         if(Objects.isNull(listDTO)){
-            throw new ServiceException(ApiError.ERROR_SYS_TYPE_NOTFOUND, "国家");
+            throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC, "国家");
         }
         addDTO.setCountryName(listDTO.getNameCn());
 
@@ -161,7 +161,7 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
         if(CollUtil.isNotEmpty(kolAddressInfoDTOList)){
             long count = kolAddressInfoDTOList.stream().filter(e -> e.getIsDefault().equals(true)).count();
             if(count > 1){
-                throw new ServiceException(ApiError.ERROR_KOL_PARTNER_MULTIPLE_DEFAULT_ADDRESSES);
+                throw new ServiceException(ApiError.SAMPLE_PARTNER_MULTIPLE_DEFAULT_ADDRESS_FORBIDDEN);
             }
             //国家
             Map<String, String> dictCountryMap = dictCountryList.stream().collect(Collectors.toMap(DictCountryDTO.ListDTO::getId, DictCountryDTO.ListDTO::getNameCn));
@@ -256,12 +256,12 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
     @Override
     public Boolean update(KolPartnerInfoDTO.UpdateDTO addOrUpdateDTO) {
         KolPartnerInfoEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "企业达人库"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "企业达人库"));
 
         // 数据处理
         FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(addOrUpdateDTO.getChargeId());
         if(ObjectUtil.isNull(findUserDTO)){
-            throw new ServiceException(ApiError.ERROR_SYS_TYPE_NOTFOUND, "负责人");
+            throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC, "负责人");
         }else {
             addOrUpdateDTO.setChargeName(findUserDTO.getUserName());
         }
@@ -269,7 +269,7 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
         if(StringUtils.isNotBlank(addOrUpdateDTO.getDeptId())){
             List<SysDepartmentEntity> depts = sysUserFeign.getDeptByIds(Arrays.asList(addOrUpdateDTO.getDeptId()));
             if (CollUtil.isEmpty(depts)) {
-                throw new ServiceException(ApiError.ERROR_SYS_TYPE_NOTFOUND, "负责部门");
+                throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC, "负责部门");
             } else {
                 addOrUpdateDTO.setDeptName(depts.get(0).getName());
             }
@@ -279,7 +279,7 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
         List<DictCountryDTO.ListDTO> dictCountryList = sysUserFeign.countryList();
         DictCountryDTO.ListDTO listDTO = dictCountryList.stream().filter(e -> e.getId().equals(addOrUpdateDTO.getCountryId())).findFirst().orElse(null);
         if(Objects.isNull(listDTO)){
-            throw new ServiceException(ApiError.ERROR_SYS_TYPE_NOTFOUND, "国家");
+            throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC, "国家");
         }
         addOrUpdateDTO.setCountryName(listDTO.getNameCn());
 
@@ -338,7 +338,7 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
         }else {
             long count = kolAddressInfoDTOList.stream().filter(e -> e.getIsDefault().equals(true)).count();
             if(count > 1){
-                throw new ServiceException(ApiError.ERROR_KOL_PARTNER_MULTIPLE_DEFAULT_ADDRESSES);
+                throw new ServiceException(ApiError.SAMPLE_PARTNER_MULTIPLE_DEFAULT_ADDRESS_FORBIDDEN);
             }
             //国家
             Map<String, String> dictCountryMap = dictCountryList.stream().collect(Collectors.toMap(DictCountryDTO.ListDTO::getId, DictCountryDTO.ListDTO::getNameCn));
@@ -457,7 +457,7 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
             EasyExcel.read(new ByteArrayInputStream(bytes), KolPartnerInfoImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (ExcelCommonException e) {
             log.error("导入格式错误！", e);
-            throw new ServiceException(ApiError.ERROR_1016);
+            throw new ServiceException(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX);
         }
         BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
         importResultDTO.setTaskId(dto.getTaskId());

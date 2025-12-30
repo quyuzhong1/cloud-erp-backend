@@ -106,7 +106,7 @@ public class SoReturnReceiveDetailServiceImpl extends SuperServiceImpl<SoReturnR
             List<SkuMappingDTO.ProductSkuInfoDTO> productSkuInfoList = skuMappingFeign.listSkuBySkuNos(skuParamDTO);
             List<SoReturnReceiveDetailDTO.Add> detailList = dto.getDetailList();
             if(CollUtil.isEmpty(detailList)) {
-                throw new ServiceException(ApiError.ERROR_92173);
+                throw new ServiceException(ApiError.SO_RETURN_SIGN_DETAIL_REQUIRED);
             }
             Map<String , Integer> returnDetailIdMap = new HashMap<>();
             for (SoReturnReceiveDetailDTO.Add detailDto : dto.getDetailList()) {
@@ -145,7 +145,7 @@ public class SoReturnReceiveDetailServiceImpl extends SuperServiceImpl<SoReturnR
                         && StringUtils.isNotBlank(detailDto.getNoticeDetailId())){
                     SoReturnNoticeDetailEntity soReturnNoticeDetailEntity = soReturnNoticeDetailEntities.stream().filter(v -> v.getId().equals(detailDto.getNoticeDetailId())).findFirst().orElse(null);
                     if(null == soReturnNoticeDetailEntity){
-                        throw new ServiceException(ApiError.ERROR_92169, detailDto.getSkuNo());
+                        throw new ServiceException(ApiError.SO_RETURN_NOTICE_SKU_NOT_FOUND, detailDto.getSkuNo());
                     }
                     Integer returnQty = soReturnNoticeDetailEntity.getReturnQty();
                     //此单历史签收数量
@@ -154,7 +154,7 @@ public class SoReturnReceiveDetailServiceImpl extends SuperServiceImpl<SoReturnR
                             .map(SoReturnReceiveDetailEntity::getReceiveQty)
                             .reduce(MathUtil.ZERO, Integer::sum);
                     if (returnQty < detailDto.getReceiveQty() + historyReceiveQty) {
-                        throw new ServiceException(ApiError.ERROR_92020, skuVO.getSkuNo());
+                        throw new ServiceException(ApiError.SO_DELIVERY_RETURN_SIGN_QTY_EXCEEDS, skuVO.getSkuNo());
                     }else if(historyReceiveQty > 0 && returnQty == detailDto.getReceiveQty() + historyReceiveQty){
                         BigDecimal returnAmount = soReturnNoticeDetailEntity.getReturnAmount();
                         BigDecimal taxReturnAmount = soReturnNoticeDetailEntity.getTaxReturnAmount();
@@ -176,7 +176,7 @@ public class SoReturnReceiveDetailServiceImpl extends SuperServiceImpl<SoReturnR
                         && StringUtils.isNotBlank(detailDto.getSourceDetailId())){
                     SoReturnDetailEntity soReturnDetailEntity = soReturnDetailEntities.stream().filter(req -> req.getId().equals(detailDto.getSourceDetailId())).findFirst().orElse(null);
                     if (ObjectUtil.isEmpty(soReturnDetailEntity)) {
-                        throw new ServiceException(ApiError.ERROR_92023, detailDto.getSkuNo());
+                        throw new ServiceException(ApiError.SO_DELIVERY_RETURN_ORDER_SKU_NOT_FOUND, detailDto.getSkuNo());
                     }
                     Integer returnQty = 0;
                     if(CollectionUtils.isNotEmpty(soReturnDetailEntities)){
@@ -194,14 +194,14 @@ public class SoReturnReceiveDetailServiceImpl extends SuperServiceImpl<SoReturnR
                     if(returnDetailIdMap.containsKey(detailDto.getSourceDetailId())){
                         Integer detailReturnQtySum = returnDetailIdMap.get(detailDto.getSourceDetailId()) + detailDto.getReceiveQty();
                         if (returnQty < detailReturnQtySum + historyReceiveQty) {
-                            throw new ServiceException(ApiError.ERROR_92020, skuVO.getSkuNo());
+                            throw new ServiceException(ApiError.SO_DELIVERY_RETURN_SIGN_QTY_EXCEEDS, skuVO.getSkuNo());
                         }
                         returnDetailIdMap.put(detailDto.getSourceDetailId(),detailReturnQtySum);
                     }else {
                         returnDetailIdMap.put(detailDto.getSourceDetailId(),detailDto.getReceiveQty());
                     }
                     if (returnQty < detailDto.getReceiveQty() + historyReceiveQty) {
-                        throw new ServiceException(ApiError.ERROR_92020, skuVO.getSkuNo());
+                        throw new ServiceException(ApiError.SO_DELIVERY_RETURN_SIGN_QTY_EXCEEDS, skuVO.getSkuNo());
                     }else if(historyReceiveQty > 0 && returnQty == detailDto.getReceiveQty() + historyReceiveQty){
                         BigDecimal returnAmount = soReturnDetailEntity.getReturnAmount();
                         BigDecimal taxReturnAmount = soReturnDetailEntity.getTaxReturnAmount();
@@ -256,7 +256,7 @@ public class SoReturnReceiveDetailServiceImpl extends SuperServiceImpl<SoReturnR
                 //此单历史签收数量
                 Integer historyReceiveQty = soReturnReceiveDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(detailDto.getSourceDetailId())).map(SoReturnReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
                 if (detailDto.getReceiveQty() + historyReceiveQty > returnQty) {
-                    throw new ServiceException(ApiError.ERROR_92020);
+                    throw new ServiceException(ApiError.SO_DELIVERY_RETURN_SIGN_QTY_EXCEEDS);
                 }
                 list.add(detailEntity);
             }
@@ -388,7 +388,7 @@ public class SoReturnReceiveDetailServiceImpl extends SuperServiceImpl<SoReturnR
             List<SkuMappingDTO.ProductSkuInfoDTO> productSkuInfoList = skuMappingFeign.listSkuBySkuNos(skuParamDTO);
             List<SoReturnReceiveDetailDTO.Update> detailList = dto.getDetailList();
             if(CollUtil.isEmpty(detailList)) {
-                throw new ServiceException(ApiError.ERROR_92172);
+                throw new ServiceException(ApiError.SO_RETURN_NOTICE_DETAIL_REQUIRED);
             }
             for (SoReturnReceiveDetailDTO.Update detailDto : dto.getDetailList()) {
                 SkuVO skuVO = skuInfoByIds.stream().filter(req -> req.getSkuId().equals(detailDto.getSkuId())).findFirst().orElse(new SkuVO());
@@ -427,7 +427,7 @@ public class SoReturnReceiveDetailServiceImpl extends SuperServiceImpl<SoReturnR
                         && StringUtils.isNotBlank(detailDto.getSourceDetailId())){
                     SoReturnDetailEntity soReturnDetailEntity = soReturnDetailEntities.stream().filter(req -> req.getId().equals(detailDto.getSourceDetailId())).findFirst().orElse(null);
                     if (ObjectUtil.isEmpty(soReturnDetailEntity)) {
-                        throw new ServiceException(ApiError.ERROR_92023, detailDto.getSkuNo());
+                        throw new ServiceException(ApiError.SO_DELIVERY_RETURN_ORDER_SKU_NOT_FOUND, detailDto.getSkuNo());
                     }
                     Integer returnQty = 0;
                     if(CollectionUtils.isNotEmpty(soReturnDetailEntities)){
@@ -450,7 +450,7 @@ public class SoReturnReceiveDetailServiceImpl extends SuperServiceImpl<SoReturnR
                                 .reduce(MathUtil.ZERO, Integer::sum);
                     }
                     if (returnQty < detailDto.getReceiveQty() + historyReceiveQty) {
-                        throw new ServiceException(ApiError.ERROR_92020, skuVO.getSkuNo());
+                        throw new ServiceException(ApiError.SO_DELIVERY_RETURN_SIGN_QTY_EXCEEDS, skuVO.getSkuNo());
                     }else if(historyReceiveQty > 0 && returnQty == detailDto.getReceiveQty() + historyReceiveQty){
                         BigDecimal returnAmount = soReturnDetailEntity.getReturnAmount();
                         BigDecimal taxReturnAmount = soReturnDetailEntity.getTaxReturnAmount();
@@ -522,11 +522,11 @@ public class SoReturnReceiveDetailServiceImpl extends SuperServiceImpl<SoReturnR
                 if("B2C".equals(dto.getType())){
                     SoB2cReturnDetailEntity soReturnDetailEntity = soB2cReturnDetailEntityList.stream().filter(req -> req.getId().equals(detailDto.getSourceDetailId())).findFirst().orElse(null);
                     if (ObjectUtil.isEmpty(soReturnDetailEntity)) {
-                        throw new ServiceException(ApiError.ERROR_92023, detailDto.getSkuNo());
+                        throw new ServiceException(ApiError.SO_DELIVERY_RETURN_ORDER_SKU_NOT_FOUND, detailDto.getSkuNo());
                     }
                     Integer returnQty = soB2cReturnDetailEntityList.stream().filter(req -> req.getId().equals(detailDto.getSourceDetailId())).map(SoB2cReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
                     if (detailDto.getReceiveQty() + historyReceiveQty > returnQty) {
-                        throw new ServiceException(ApiError.ERROR_92020);
+                        throw new ServiceException(ApiError.SO_DELIVERY_RETURN_SIGN_QTY_EXCEEDS);
                     }
                     detailEntity.setSkuId(soReturnDetailEntity.getSkuId());
                     detailEntity.setSkuNo(soReturnDetailEntity.getSkuNo());

@@ -75,7 +75,7 @@ public class AssetCardDetailServiceImpl extends SuperServiceImpl<AssetCardDetail
     @Override
     public Boolean update(AssetCardDetailDTO.UpdateDTO addOrUpdateDTO) {
         AssetCardDetailEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "资产卡片明细单"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "资产卡片明细单"));
         AssetCardDetailEntity assetCardDetailEntity =  BeanMapperUtils.map(AssetCardDetailEntity.class, addOrUpdateDTO);
 
         // 数据处理

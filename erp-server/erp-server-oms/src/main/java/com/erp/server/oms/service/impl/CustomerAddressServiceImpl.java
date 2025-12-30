@@ -27,7 +27,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -75,7 +74,7 @@ public class CustomerAddressServiceImpl extends SuperServiceImpl<CustomerAddress
         }
         long count = addressList.stream().filter(c -> c.getIsDefault() != null && c.getIsDefault()).count();
         if (count > 1) {
-            throw new ServiceException(ApiError.ERROR_92006);
+            throw new ServiceException(ApiError.CUSTOMER_DEFAULT_ADDRESS_LIMIT);
         }
     }
 
@@ -171,7 +170,7 @@ public class CustomerAddressServiceImpl extends SuperServiceImpl<CustomerAddress
         if (CollectionUtils.isNotEmpty(deleteIdList)) {
             int count = soInfoService.getCountByAddressIds(deleteIdList);
             if (count > 0) {
-                throw new ServiceException(ApiError.ERROR_92046);
+                throw new ServiceException(ApiError.CUSTOMER_ADDRESS_IN_USE_DELETE_FORBIDDEN);
             }
             this.removeByIds(deleteIdList);
         }
@@ -252,5 +251,13 @@ public class CustomerAddressServiceImpl extends SuperServiceImpl<CustomerAddress
     @Override
     public List<CustomerAddressEntity> listAllByMainIds(List<String> ids) {
         return baseMapper.listAllByMainIds(ids);
+    }
+
+    @Override
+    public CustomerAddressEntity getDefaultAddrByMainId(String mainId) {
+        if(StringUtils.isBlank(mainId)){
+            return null;
+        }
+        return customerAddressService.lambdaQuery().eq(CustomerAddressEntity::getMainId,mainId).eq(CustomerAddressEntity::getIsDefault,true).last("LIMIT 1").one();
     }
 }

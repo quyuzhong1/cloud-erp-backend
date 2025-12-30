@@ -101,7 +101,7 @@ public class KingdeeUserRefPostServiceImpl extends SuperServiceImpl<KingdeeUserR
     @Override
     public Boolean update(KingdeeUserRefPostDTO.UpdateDTO updateDTO) {
         KingdeeUserRefPostEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "金蝶员工任岗单"));
+        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "金蝶员工任岗单"));
         String oldOrgId = old.getUseOrgId();
         String newOrgId = updateDTO.getUseOrgId();
         if (!oldOrgId.equals(newOrgId)) {
@@ -303,7 +303,7 @@ public class KingdeeUserRefPostServiceImpl extends SuperServiceImpl<KingdeeUserR
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO delete(String id) {
         KingdeeUserRefPostEntity entity = super.getById(id);
-        Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "金蝶员工任岗"));
+        Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "金蝶员工任岗"));
         Boolean result = this.removeById(id);
         List<DmpPushTaskEntity> resultList = new ArrayList<>();
         if (result) {

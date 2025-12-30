@@ -88,7 +88,7 @@ public class TransferDeclareDetailServiceImpl extends SuperServiceImpl<TransferD
         List<TransferDeclareDetailEntity> oldList = this.listByMainIds(Arrays.asList(mainId));
         List<String> deleteIds = getDeleteIds(updateDTO.getDetailList(), oldList);
         if (deleteIds.size() >= oldList.size()) {
-            throw new ServiceException(ApiError.PLEASE_KEEP_LEAST_ONE_DATA);
+            throw new ServiceException(ApiError.BILL_KEEP_AT_LEAST_ONE_DETAIL_OR_DELETE);
         }
 
         if (CollectionUtils.isNotEmpty(deleteIds)) {
@@ -209,7 +209,7 @@ public class TransferDeclareDetailServiceImpl extends SuperServiceImpl<TransferD
         List<String> soCodeIds = list.stream().filter(req -> StringUtils.isBlank(req.getId())).map(req -> req.getSoCode()).distinct().collect(Collectors.toList());
         List<TransferDeclareDetailEntity> detailEntityList = this.listBySoCodeList(soCodeIds);
         if (CollectionUtils.isNotEmpty(detailEntityList)) {
-            throw new ServiceException(ApiError.TRANSFER_DECLARE_SO_EXISTS, detailEntityList.get(0).getSoCode());
+            throw new ServiceException(ApiError.WH_TRANSFER_DECLARE_SO_EXISTS, detailEntityList.get(0).getSoCode());
         }
 
 

@@ -18,10 +18,8 @@ import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.workflow.service.*;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import javax.crypto.Cipher;
@@ -100,17 +98,17 @@ public class CfgApproveSyncCallbackHandler {
                 if(StringUtils.isNotBlank(messageId)){//来自卡片审批
                     ProcessTaskManagementExtEntity processTaskManagementExtEntity = processTaskManagementExtService.lambdaQuery().eq(ProcessTaskManagementExtEntity::getMessageId, messageId).last("limit 1").one();
                     if (Objects.isNull(processTaskManagementExtEntity)) {
-                        throw new ServiceException(ApiError.ERROR_94000);
+                        throw new ServiceException(ApiError.WF_PROCESS_NOT_FOUND_OR_ENDED);
                     }
                     String processTaskManagementId = processTaskManagementExtEntity.getProcessTaskManagementId();
                     processTaskManagementEntity = processTaskManagementService.getById(processTaskManagementId);
                     if (Objects.isNull(processTaskManagementEntity)) {
-                        throw new ServiceException(ApiError.ERROR_94000);
+                        throw new ServiceException(ApiError.WF_PROCESS_NOT_FOUND_OR_ENDED);
                     }
                 }else if(StringUtils.isNotBlank(taskId)){//来自审批中心审批
                     processTaskManagementEntity = processTaskManagementService.getById(taskId);
                     if (Objects.isNull(processTaskManagementEntity)) {
-                        throw new ServiceException(ApiError.ERROR_94000);
+                        throw new ServiceException(ApiError.WF_PROCESS_NOT_FOUND_OR_ENDED);
                     }
                 }else {
                     throw new ServiceException("messageId和taskId不能为空");
@@ -118,13 +116,13 @@ public class CfgApproveSyncCallbackHandler {
 
                 //判断流程节点状态是可以审批状态
                 if (!processTaskManagementEntity.getTaskStatus().equals(ApproveStatusEnum.APPROVE_ING)) {
-                    throw new ServiceException(ApiError.ERROR_98006);
+                    throw new ServiceException(ApiError.WF_APPROVE_ALLOWED_STATUS_ONLY);
                 }
                 String processInstanceId = processTaskManagementEntity.getProcessInstanceId();
                 //流程实例管理
                 ProcessManagementEntity processManagementEntity = processManagementService.getByProcessInstanceId(processInstanceId);
                 if (Objects.isNull(processManagementEntity)) {
-                    throw new ServiceException(ApiError.ERROR_PROCESS_NOT_EXIST);
+                    throw new ServiceException(ApiError.WF_PROCESS_INSTANCE_NOT_FOUND);
                 }
 
                 //自动生成功能系统标识

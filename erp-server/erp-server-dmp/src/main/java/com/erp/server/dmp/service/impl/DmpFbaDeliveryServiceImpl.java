@@ -104,12 +104,12 @@ public class DmpFbaDeliveryServiceImpl extends SuperServiceImpl<DmpFbaDeliveryMa
         //新增主表数据
         boolean save = this.save(entity);
         if (!save) {
-            throw new ServiceException(ApiError.ERROR_1019);
+            throw new ServiceException(ApiError.BILL_SAVE_FAILED);
         }
         //新增明细
         Boolean addDetail = dmpFbaDeliveryDetailService.add(entity.getItemList(), entity.getId());
         if (!addDetail) {
-            throw new ServiceException(ApiError.ERROR_1019);
+            throw new ServiceException(ApiError.BILL_SAVE_FAILED);
         }
         return Boolean.TRUE;
     }

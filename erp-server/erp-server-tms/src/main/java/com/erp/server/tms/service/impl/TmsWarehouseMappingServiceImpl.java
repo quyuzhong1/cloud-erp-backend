@@ -95,7 +95,7 @@ public class TmsWarehouseMappingServiceImpl extends SuperServiceImpl<TmsWarehous
     @Override
     public Boolean update(TmsWarehouseMappingDTO.UpdateDTO updateDTO) {
         TmsWarehouseMappingEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, ""));
+        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, ""));
         TmsWarehouseMappingEntity tmsWarehouseMappingEntity =  BeanMapperUtils.map(TmsWarehouseMappingEntity.class, updateDTO);
 
         //数据校验
@@ -152,7 +152,7 @@ public class TmsWarehouseMappingServiceImpl extends SuperServiceImpl<TmsWarehous
             wb.write(output);
             wb.close();
         } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_95131);
+            throw new ServiceException(ApiError.FILE_IMPORT_TEMPLATE_DOWNLOAD_FAILED);
         }
     }
 
@@ -163,14 +163,14 @@ public class TmsWarehouseMappingServiceImpl extends SuperServiceImpl<TmsWarehous
             EasyExcel.read(excelFile.getInputStream(), TmsWarehouseMappingExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (IOException e) {
             log.error("导入错误！", e);
-            throw new ServiceException(ApiError.ERROR_95124);
+            throw new ServiceException(ApiError.FILE_DATA_IMPORT_FAILED);
         } catch (ExcelCommonException e) {
             log.error("导入格式错误！", e);
-            throw new ServiceException(ApiError.ERROR_1016);
+            throw new ServiceException(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX);
         }
         List<TmsWarehouseMappingExcelDTO> excelDateList = excelListenerUtil.getExcelDateList();
         if (CollectionUtils.isEmpty(excelDateList)) {
-            throw new ServiceException(ApiError.ERROR_95123);
+            throw new ServiceException(ApiError.FILE_DATA_REQUIRED);
         }
         List<TmsWarehouseMappingExcelDTO> errorList = excelListenerUtil.getErrorList();
 
@@ -188,7 +188,7 @@ public class TmsWarehouseMappingServiceImpl extends SuperServiceImpl<TmsWarehous
             try {
                 new ExcelPrintUtils().patchExport(errorList, response, sb.toString(), excelPath);
             } catch (IOException e) {
-                throw new ServiceException(ApiError.ERROR_95125);
+                throw new ServiceException(ApiError.FILE_EXPORT_ERROR_DATA_FAILED);
             }
             return Boolean.FALSE;
         }
@@ -271,7 +271,7 @@ public class TmsWarehouseMappingServiceImpl extends SuperServiceImpl<TmsWarehous
     private void handleData(TmsWarehouseMappingEntity tmsWarehouseMappingEntity) {
         List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Arrays.asList(tmsWarehouseMappingEntity.getErpWarehouseId()));
         if (CollectionUtils.isEmpty(warehouseList)) {
-            throw new ServiceException(ApiError.ERROR_99002);
+            throw new ServiceException(ApiError.WH_PARAM_NOT_FOUND);
         }
         tmsWarehouseMappingEntity.setErpWarehouseName(warehouseList.get(0).getName());
     }
@@ -287,7 +287,7 @@ public class TmsWarehouseMappingServiceImpl extends SuperServiceImpl<TmsWarehous
         //查询是否存在相同编码数据
         List<TmsWarehouseMappingEntity> oldList = listByLogisticsWarehouseCodeList(Arrays.asList(tmsWarehouseMappingEntity.getLogisticsWarehouseCode()));
         if (CollectionUtils.isNotEmpty(oldList) && !CharSequenceUtil.equals(tmsWarehouseMappingEntity.getId(),oldList.get(0).getId())) {
-            throw new ServiceException(ApiError.ERROR_WAREHOUSE_MAPPING_EXIST,tmsWarehouseMappingEntity.getLogisticsWarehouseCode());
+            throw new ServiceException(ApiError.LOGISTICS_WAREHOUSE_MAPPING_ALREADY_EXISTS,tmsWarehouseMappingEntity.getLogisticsWarehouseCode());
         }
     }
 

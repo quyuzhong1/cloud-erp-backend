@@ -130,7 +130,7 @@ public class TemplateTaskDocsNameServiceImpl extends ServiceImpl<TemplateTaskDoc
         List<TemplateTaskDocsNameEntity> docksNames = getByTemplateId(templateId);
         List<String> names = docksNames.stream().map(TemplateTaskDocsNameEntity::getName).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(names) && names.contains(name)) {
-            throw new ServiceException(ApiError.ERROR_95012);
+            throw new ServiceException(ApiError.FILE_NAME_DUPLICATE);
         }
         TemplateTaskDocsNameEntity entity = new TemplateTaskDocsNameEntity();
         entity.setName(name);
@@ -138,7 +138,7 @@ public class TemplateTaskDocsNameServiceImpl extends ServiceImpl<TemplateTaskDoc
         boolean flag = this.save(entity);
         LoginUser loginUser = UserContext.getLoginUser();
         if (ObjectUtils.isEmpty(loginUser)) {
-            throw new ServiceException(ApiError.USER_NOT_EXIST);
+            throw new ServiceException(ApiError.AUTH_CREDENTIALS_INVALID);
         }
 
         return flag;
@@ -199,18 +199,18 @@ public class TemplateTaskDocsNameServiceImpl extends ServiceImpl<TemplateTaskDoc
         String docsNameId = dto.getDeliveryDocsId();
         TemplateTaskDocsNameEntity docsNameEntity=this.getById(docsNameId);
         if(Objects.isNull(docsNameEntity)){
-            throw new ServiceException(ApiError.ERROR_95052);
+            throw new ServiceException(ApiError.FILE_DOC_NOT_FOUND);
         }
         List<String> names = docksNames.stream().map(TemplateTaskDocsNameEntity::getName).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(names) && names.contains(name)&&!docsNameEntity.getName().equals(name)) {
-            throw new ServiceException(ApiError.ERROR_95012);
+            throw new ServiceException(ApiError.FILE_NAME_DUPLICATE);
         }
 
         docsNameEntity.setName(name);
         boolean flag = this.updateById(docsNameEntity);
         LoginUser loginUser = UserContext.getLoginUser();
         if (ObjectUtils.isEmpty(loginUser)) {
-            throw new ServiceException(ApiError.USER_NOT_EXIST);
+            throw new ServiceException(ApiError.AUTH_CREDENTIALS_INVALID);
         }
         String uid = loginUser.getUid();
         String userName =loginUser.getUserName();
@@ -269,7 +269,7 @@ public class TemplateTaskDocsNameServiceImpl extends ServiceImpl<TemplateTaskDoc
         List<TemplateTaskDocsNameEntity> docksNames = getByTemplateId(templateId);
         List<String> names = docksNames.stream().map(TemplateTaskDocsNameEntity::getName).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(names) && names.contains(name)) {
-            throw new ServiceException(ApiError.ERROR_95012);
+            throw new ServiceException(ApiError.FILE_NAME_DUPLICATE);
         }
         TemplateTaskDocsNameEntity entity = new TemplateTaskDocsNameEntity();
         entity.setName(name);
@@ -277,7 +277,7 @@ public class TemplateTaskDocsNameServiceImpl extends ServiceImpl<TemplateTaskDoc
         this.save(entity);
         LoginUser loginUser = UserContext.getLoginUser();
         if (ObjectUtils.isEmpty(loginUser)) {
-            throw new ServiceException(ApiError.USER_NOT_EXIST);
+            throw new ServiceException(ApiError.AUTH_CREDENTIALS_INVALID);
         }
         return entity.getId();
     }

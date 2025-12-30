@@ -4,16 +4,11 @@ package com.erp.server.scm.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.enums.BusinessNoTypeEnum;
-import com.erp.model.scm.entity.DictBasicEntity;
-import com.erp.model.scm.enums.DictBasicEnum;
-import io.seata.spring.annotation.GlobalTransactional;
-import com.common.business.annotation.DistributeLocker;
 import com.common.business.dto.base.BaseResultDTO;
 import com.erp.model.scm.entity.DictCredentialEntity;
 import com.erp.server.scm.mapper.DictCredentialMapper;
 import com.erp.server.scm.service.DictCredentialService;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.threadlocal.UserContext;
 import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
 import org.springframework.stereotype.Service;
@@ -52,7 +47,7 @@ public class DictCredentialServiceImpl extends SuperServiceImpl<DictCredentialMa
                 .eq(DictCredentialEntity::getDisabled, false)
                 .count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_98124);
+            throw new ServiceException(ApiError.SUPPLIER_CERT_NAME_EXISTS);
         }
 
         log.info("开始新增供应商资质字典单");

@@ -67,7 +67,7 @@ public class DictRuleConditionServiceImpl extends SuperServiceImpl<DictRuleCondi
     @Override
     public Boolean update(DictRuleConditionDTO.UpdateDTO addOrUpdateDTO) {
         DictRuleConditionEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "条件字典单"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "条件字典单"));
         DictRuleConditionEntity dictRuleConditionEntity =  BeanMapperUtils.map(DictRuleConditionEntity.class, addOrUpdateDTO);
 
         // 数据处理

@@ -68,7 +68,7 @@ public class AssetDisposalPhysicalDetailServiceImpl extends SuperServiceImpl<Ass
     @Override
     public Boolean update(AssetDisposalPhysicalDetailDTO.UpdateDTO addOrUpdateDTO) {
         AssetDisposalPhysicalDetailEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "资产处置单实物明细单"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "资产处置单实物明细单"));
         AssetDisposalPhysicalDetailEntity assetDisposalPhysicalDetailEntity =  BeanMapperUtils.map(AssetDisposalPhysicalDetailEntity.class, addOrUpdateDTO);
 
         // 数据处理

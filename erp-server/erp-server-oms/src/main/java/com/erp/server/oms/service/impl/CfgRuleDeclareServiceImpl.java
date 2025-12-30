@@ -80,7 +80,7 @@ public class CfgRuleDeclareServiceImpl extends SuperServiceImpl<CfgRuleDeclareMa
         String expression = sqElDTO.getExpression();
         Boolean checkResult = spElServer.checkExpressionIsEnabled(expression);
         if (Boolean.FALSE.equals(checkResult)) {
-            throw new ServiceException(ApiError.ERROR_RULE_EXPRESSION_ERROR);
+            throw new ServiceException(ApiError.COMMON_RULE_EXPRESSION_ERROR);
         }
         CfgRuleDeclareEntity entity = new CfgRuleDeclareEntity();
         BeanMapperUtils.copy(addDTO, entity);
@@ -108,7 +108,7 @@ public class CfgRuleDeclareServiceImpl extends SuperServiceImpl<CfgRuleDeclareMa
         String id = updateDTO.getId();
         CfgRuleDeclareEntity old = super.getById(id);
         if(null == old){
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, ModuleTypeEnum.RULE_DECLARE.getName());
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, ModuleTypeEnum.RULE_DECLARE.getName());
         }
         List<RuleConditionDTO.UpdateDTO> conditionList = updateDTO.getConditionList();
         List<ConditionElement> conditionElementList = conditionList.stream().
@@ -119,7 +119,7 @@ public class CfgRuleDeclareServiceImpl extends SuperServiceImpl<CfgRuleDeclareMa
         String expression = sqElDTO.getExpression();
         Boolean checkResult = spElServer.checkExpressionIsEnabled(expression);
         if (Boolean.FALSE.equals(checkResult)) {
-            throw new ServiceException(ApiError.ERROR_RULE_EXPRESSION_ERROR);
+            throw new ServiceException(ApiError.COMMON_RULE_EXPRESSION_ERROR);
         }
         CfgRuleDeclareEntity entity = BeanMapperUtils.map(CfgRuleDeclareEntity.class, updateDTO);
         // 数据处理
@@ -169,7 +169,7 @@ public class CfgRuleDeclareServiceImpl extends SuperServiceImpl<CfgRuleDeclareMa
     public CfgRuleDeclareDTO.ViewDTO view(String id) {
         CfgRuleDeclareEntity entity = this.getById(id);
         if(null == entity){
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, ModuleTypeEnum.RULE_DECLARE.getName());
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, ModuleTypeEnum.RULE_DECLARE.getName());
         }
         CfgRuleDeclareDTO.ViewDTO view = new CfgRuleDeclareDTO.ViewDTO();
         BeanMapper.copy(entity, view);
@@ -183,11 +183,11 @@ public class CfgRuleDeclareServiceImpl extends SuperServiceImpl<CfgRuleDeclareMa
     public Boolean updateStatus(UpdateStateDTO dto) {
         CfgRuleDeclareEntity entity = this.getById(dto.getId());
         if(null == entity){
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, ModuleTypeEnum.RULE_DECLARE.getName());
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, ModuleTypeEnum.RULE_DECLARE.getName());
         }
         Boolean disabled = entity.getDisabled();
         if (disabled.equals(dto.getState())) {
-            throw new ServiceException(ApiError.ERROR_98027);
+            throw new ServiceException(ApiError.COMMON_INCONSISTENT_DISABLE_STATUS);
         }
         String content = String.format("启用状态[%s]变更为[%s]", Boolean.TRUE.equals(disabled) ? "停用" : "启用", Boolean.TRUE.equals(disabled) ? "启用" : "停用");
         entity.setDisabled(dto.getState());

@@ -185,7 +185,7 @@ public class ShippingTemplateRuleServiceImpl extends SuperServiceImpl<ShippingTe
 
                 ShippingTemplateRuleEntity old = this.getById(entity.getId());
                 if (ObjectUtils.isEmpty(old)) {
-                    throw new ServiceException(ApiError.ERROR_SHIPPING_RULE_NOT_EXIST);
+                    throw new ServiceException(ApiError.LOGISTICS_SHIPPING_RULE_NOT_FOUND);
                 }
                 old.setCityList(oldCityList);
                 operateLogService.addModuleOperateLogByObj(old,entity, ModuleTypeEnum.SHIPPING_TEMPLATE.getCode(),shippingTemplateId,"","");
@@ -213,13 +213,13 @@ public class ShippingTemplateRuleServiceImpl extends SuperServiceImpl<ShippingTe
     private void checkPurchasePrice(List<ShippingTemplateRuleEntity> detailList,String mainId) {
         ShippingTemplateEntity entity = shippingTemplateService.getById(mainId);
         if (ObjectUtils.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_SHIPPING_TEMPLATE_NOT_EXIST);
+            throw new ServiceException(ApiError.LOGISTICS_SHIPPING_TEMPLATE_NOT_FOUND);
         }
 
         //重量验证
         long weightCount = detailList.stream().filter(obj -> MathUtil.compareTo(obj.getStartWeight(), obj.getEndWeight()) >= MathUtil.ZERO).count();
         if (weightCount > 0) {
-            throw new ServiceException(ApiError.ERROR_RULE_WEIGHT_COMPARE);
+            throw new ServiceException(ApiError.COMMON_WEIGHT_RANGE_INVALID);
         }
 
         //查询国家信息
@@ -231,7 +231,7 @@ public class ShippingTemplateRuleServiceImpl extends SuperServiceImpl<ShippingTe
             //必填校验
             long count = detailList.stream().filter(obj -> CharSequenceUtil.isBlank(obj.getToCountry())).count();
             if (count > 0) {
-                throw new ServiceException(ApiError.ERROR_SHIPPING_TO_COUNTRY_NOT_NUll);
+                throw new ServiceException(ApiError.LOGISTICS_SHIPPING_DEST_COUNTRY_REQUIRED);
             }
             Map<String, List<ShippingTemplateRuleEntity>> map = detailList.stream().collect(Collectors.groupingBy(obj -> obj.getFromCountry().concat(obj.getToCountry())));
             for (Map.Entry<String, List<ShippingTemplateRuleEntity>> entry : map.entrySet()) {
@@ -244,7 +244,7 @@ public class ShippingTemplateRuleServiceImpl extends SuperServiceImpl<ShippingTe
                 //验证区间是否重叠
                 Boolean check = checkInterval(value);
                 if (check) {
-                    throw new ServiceException(ApiError.ERROR_SHIPPING_TEMPLATE_RULE_COUNTRY_REPEAT,fromCountryName,toCountryName);
+                    throw new ServiceException(ApiError.LOGISTICS_TEMPLATE_RULE_WEIGHT_COUNTRY_OVERLAP,fromCountryName,toCountryName);
                 }
                 //设置国家名称，用于操作日志
                 value.forEach(obj -> obj.setFromCountryName(fromCountryName).setToCountryName(toCountryName));
@@ -255,11 +255,11 @@ public class ShippingTemplateRuleServiceImpl extends SuperServiceImpl<ShippingTe
             //必填校验
             long regionCount = detailList.stream().filter(obj -> CharSequenceUtil.isBlank(obj.getRegion())).count();
             if (regionCount > 0) {
-                throw new ServiceException(ApiError.ERROR_SHIPPING_REGION_NOT_NULL);
+                throw new ServiceException(ApiError.LOGISTICS_SHIPPING_REGION_REQUIRED);
             }
             long cityCount = detailList.stream().filter(obj -> CollectionUtils.isEmpty(obj.getCityList())).count();
             if (cityCount > 0) {
-                throw new ServiceException(ApiError.ERROR_SHIPPING_CITY_NOT_NULL);
+                throw new ServiceException(ApiError.LOGISTICS_SHIPPING_CITY_REQUIRED);
             }
 
             Map<String, List<ShippingTemplateRuleEntity>> map = detailList.stream().collect(Collectors.groupingBy(obj -> obj.getFromCountry().concat(obj.getToCountry()).concat(obj.getRegion())));
@@ -273,7 +273,7 @@ public class ShippingTemplateRuleServiceImpl extends SuperServiceImpl<ShippingTe
                 //验证区间是否重叠
                 Boolean check = checkInterval(value);
                 if (check) {
-                    throw new ServiceException(ApiError.ERROR_SHIPPING_TEMPLATE_RULE_REGION_REPEAT,fromCountryName,toCountryName,value.get(0).getRegion());
+                    throw new ServiceException(ApiError.LOGISTICS_TEMPLATE_RULE_WEIGHT_REGION_OVERLAP,fromCountryName,toCountryName,value.get(0).getRegion());
                 }
                 //设置国家名称，用于操作日志
                 value.forEach(obj -> obj.setFromCountryName(fromCountryName).setToCountryName(toCountryName));
@@ -285,7 +285,7 @@ public class ShippingTemplateRuleServiceImpl extends SuperServiceImpl<ShippingTe
             //必填校验
             long count = detailList.stream().filter(obj -> CharSequenceUtil.isBlank(obj.getToWarehouseName())).count();
             if (count > 0) {
-                throw new ServiceException(ApiError.ERROR_SHIPPING_WAREHOUSE_NOT_NULL);
+                throw new ServiceException(ApiError.LOGISTICS_SHIPPING_WAREHOUSE_REQUIRED);
             }
             for (Map.Entry<String, List<ShippingTemplateRuleEntity>> entry : map.entrySet()) {
                 List<ShippingTemplateRuleEntity> value = entry.getValue();
@@ -295,7 +295,7 @@ public class ShippingTemplateRuleServiceImpl extends SuperServiceImpl<ShippingTe
                 //验证区间是否重叠
                 Boolean check = checkInterval(value);
                 if (check) {
-                    throw new ServiceException(ApiError.ERROR_SHIPPING_TEMPLATE_RULE_WAREHOUSE_REPEAT,fromCountryName,value.get(0).getToWarehouseName());
+                    throw new ServiceException(ApiError.LOGISTICS_TEMPLATE_RULE_WEIGHT_WAREHOUSE_OVERLAP,fromCountryName,value.get(0).getToWarehouseName());
                 }
                 //设置国家名称，用于操作日志
                 value.forEach(obj -> obj.setFromCountryName(fromCountryName));
@@ -306,22 +306,22 @@ public class ShippingTemplateRuleServiceImpl extends SuperServiceImpl<ShippingTe
             //首重
             long firstWeightCount = detailList.stream().filter(obj -> ObjectUtil.isEmpty(obj.getFirstWeight())).count();
             if (firstWeightCount > 0) {
-                throw new ServiceException(ApiError.ERROR_FIRST_WEIGHT_NOT_NULL);
+                throw new ServiceException(ApiError.LOGISTICS_FIRST_WEIGHT_REQUIRED);
             }
             //首重运费
             long firstWeightShippingCostCount = detailList.stream().filter(obj -> ObjectUtil.isEmpty(obj.getFirstWeightShippingCost())).count();
             if (firstWeightShippingCostCount > 0) {
-                throw new ServiceException(ApiError.ERROR_FIRST_WEIGHT_SHIPPING_COST_NOT_NULL);
+                throw new ServiceException(ApiError.LOGISTICS_FIRST_WEIGHT_COST_REQUIRED);
             }
             //续重单价重量
             long additionalUnitWeightCount = detailList.stream().filter(obj -> ObjectUtil.isEmpty(obj.getAdditionalUnitWeight())).count();
             if (additionalUnitWeightCount > 0) {
-                throw new ServiceException(ApiError.ERROR_ADDITIONAL_UNIT_WEIGHT_NOT_NULL);
+                throw new ServiceException(ApiError.LOGISTICS_ADDITIONAL_UNIT_WEIGHT_REQUIRED);
             }
             //续重单价
             long additionalPriceCount = detailList.stream().filter(obj -> ObjectUtil.isEmpty(obj.getAdditionalPrice())).count();
             if (additionalPriceCount > 0) {
-                throw new ServiceException(ApiError.ERROR_ADDITIONAL_PRICE_NOT_NULL);
+                throw new ServiceException(ApiError.LOGISTICS_ADDITIONAL_UNIT_PRICE_REQUIRED);
             }
         }
         //重量段必填校验
@@ -329,7 +329,7 @@ public class ShippingTemplateRuleServiceImpl extends SuperServiceImpl<ShippingTe
             //运费单价
             long shippingPriceCount = detailList.stream().filter(obj -> ObjectUtil.isEmpty(obj.getShippingPrice())).count();
             if (shippingPriceCount > 0) {
-                throw new ServiceException(ApiError.ERROR_SHIPPING_PRICE_NOT_NULL);
+                throw new ServiceException(ApiError.LOGISTICS_UNIT_PRICE_REQUIRED);
             }
         }
 

@@ -160,7 +160,7 @@ public class DmpOutputUtils{
         }else {
         	warnMsgInfo.setKeyInfo(outputErrorCountMsg.stream().collect(Collectors.joining("\n")));
         }
-        warnMsgInfo.setWarnMsgTypeEnum(WarnMsgTypeEnum.SYS_EXCEPTION);
+        warnMsgInfo.setWarnMsgTypeEnum(WarnMsgTypeEnum.IMPLEMENT_GROUP_NOTICE);
         mqProducerService.sendWarnMsg(warnMsgInfo);
 	}
 }

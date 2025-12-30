@@ -1,15 +1,12 @@
 package com.erp.sdk.oms.amz.spapi.enums;
 
 import com.baomidou.mybatisplus.annotation.EnumValue;
-import com.common.business.constant.MongoTableNameContant;
 import com.common.core.exception.ServiceException;
-import com.erp.sdk.oms.amz.spapi.csv.*;
 import com.erp.sdk.oms.amz.spapi.dto.*;
 import com.fasterxml.jackson.annotation.JsonValue;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;

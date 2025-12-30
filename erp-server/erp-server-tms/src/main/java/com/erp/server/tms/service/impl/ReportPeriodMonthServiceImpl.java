@@ -93,7 +93,7 @@ public class ReportPeriodMonthServiceImpl extends SuperServiceImpl<ReportPeriodM
     @Override
     public Boolean update(ReportPeriodMonthDTO.UpdateDTO updateDTO) {
         ReportPeriodMonthEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "核算期间月份单"));
+        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "核算期间月份单"));
         ReportPeriodMonthEntity reportPeriodMonthEntity =  BeanMapperUtils.map(ReportPeriodMonthEntity.class, updateDTO);
 
         // 数据处理

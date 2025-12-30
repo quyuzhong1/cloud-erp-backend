@@ -7,7 +7,6 @@ import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.wrapper.FeignQuery;
 import com.erp.model.dmp.entity.ThirdMappingEntity;
-import com.erp.model.dmp.entity.doris.AdsErpInventoryDiffKingdeeEntity;
 import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.ShopAuthEntity;
@@ -46,8 +45,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import cn.hutool.core.collection.CollUtil;
 import com.common.business.vo.PagingVO;
 import com.common.business.dto.base.*;
-import com.common.core.excel.ExcelPrintUtils;
-import com.common.core.utils.date.DateUtil;
+
 import javax.servlet.http.HttpServletResponse;
 
 /**
@@ -103,7 +101,7 @@ public class AdsErpInventoryDiffServiceImpl extends SuperServiceImpl<AdsErpInven
     @Override
     public Boolean update(AdsErpInventoryDiffDTO.UpdateDTO addOrUpdateDTO) {
         AdsErpInventoryDiffEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "平台库存差异"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "平台库存差异"));
         AdsErpInventoryDiffEntity adsErpInventoryDiffEntity =  BeanMapperUtils.map(AdsErpInventoryDiffEntity.class, addOrUpdateDTO);
 
         // 数据处理

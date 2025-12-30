@@ -67,7 +67,7 @@ public class CfgDiffStrategyDetailServiceImpl extends SuperServiceImpl<CfgDiffSt
     @Override
     public Boolean update(CfgDiffStrategyDetailDTO.UpdateDTO addOrUpdateDTO) {
         CfgDiffStrategyDetailEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "差异策略配置明细"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "差异策略配置明细"));
         CfgDiffStrategyDetailEntity cfgDiffStrategyDetailEntity =  BeanMapperUtils.map(CfgDiffStrategyDetailEntity.class, addOrUpdateDTO);
 
         // 数据处理

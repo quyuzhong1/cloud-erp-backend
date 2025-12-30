@@ -4,14 +4,12 @@ package com.erp.server.tms.service.impl;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
-import com.erp.model.tms.entity.SmallBagCostAllocationEntity;
 import com.erp.model.tms.entity.SmallBagCostAllocationMainEntity;
 import com.erp.server.tms.mapper.SmallBagCostAllocationMainMapper;
 import com.erp.server.tms.service.SmallBagCostAllocationMainService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.erp.server.tms.service.OperateLogService;
-import com.erp.server.tms.service.CommonService;
 import com.common.core.exception.ServiceException;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -68,7 +66,7 @@ public class SmallBagCostAllocationMainServiceImpl extends SuperServiceImpl<Smal
     @Override
     public Boolean update(SmallBagCostAllocationMainDTO.UpdateDTO updateDTO) {
         SmallBagCostAllocationMainEntity old = super.getById(updateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "小包费用分摊主单"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "小包费用分摊主单"));
         SmallBagCostAllocationMainEntity smallBagCostAllocationMainEntity =  BeanMapperUtils.map(SmallBagCostAllocationMainEntity.class, updateDTO);
 
         // 数据处理

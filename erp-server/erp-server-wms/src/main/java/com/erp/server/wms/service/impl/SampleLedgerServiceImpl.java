@@ -105,7 +105,7 @@ public class SampleLedgerServiceImpl extends SuperServiceImpl<SampleLedgerMapper
     @Override
     public Boolean update(SampleLedgerDTO.UpdateDTO addOrUpdateDTO) {
         SampleLedgerEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "样品台账统计"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "样品台账统计"));
         SampleLedgerEntity sampleLedgerEntity =  BeanMapperUtils.map(SampleLedgerEntity.class, addOrUpdateDTO);
 
         // 数据处理
@@ -339,17 +339,17 @@ public class SampleLedgerServiceImpl extends SuperServiceImpl<SampleLedgerMapper
     @Override
     public SampleLedgerDTO.SampleScrapView generateSampleScrapView(List<String> ids) {
         if(CollUtil.isEmpty(ids)){
-            throw new ServiceException(ApiError.ERROR_92271);
+            throw new ServiceException(ApiError.PO_QC_DETAIL_REQUIRED);
         }
 
         List<SampleLedgerEntity> sampleLedgerEntities = lambdaQuery().in(SampleLedgerEntity::getId, ids).list();
         if(CollUtil.isEmpty(sampleLedgerEntities)){
-            throw new ServiceException(ApiError.ERROR_GENERATE_SAMPLE_VIEW,"报废单");
+            throw new ServiceException(ApiError.SAMPLE_GENERATE_VIEW_LEDGER_QTY_ZERO_FORBIDDEN,"报废单");
         }
         //校验是否存在多个报废人
         long count = sampleLedgerEntities.stream().map(SampleLedgerEntity::getUserId).distinct().count();
         if(count > 1){
-            throw new ServiceException(ApiError.ERROR_GENERATE_SAMPLE_USER_IDS,"报废人");
+            throw new ServiceException(ApiError.SAMPLE_GENERATE_VIEW_USER_UNIQUE_REQUIRED,"报废人");
         }
         SampleLedgerDTO.SampleScrapView viewDTO = new SampleLedgerDTO.SampleScrapView();
         SampleLedgerDTO.SearchDTO params = new SampleLedgerDTO.SearchDTO();
@@ -358,7 +358,7 @@ public class SampleLedgerServiceImpl extends SuperServiceImpl<SampleLedgerMapper
         params.setUserId(sampleLedgerEntities.get(0).getUserId());
         List<SampleLedgerDTO.SkuAvailableQtyDTO> records = this.baseMapper.listSkuAvailableQtyByUserId(params);
         if(CollUtil.isEmpty(records)){
-            throw new ServiceException(ApiError.ERROR_GENERATE_SAMPLE_VIEW,"报废单");
+            throw new ServiceException(ApiError.SAMPLE_GENERATE_VIEW_LEDGER_QTY_ZERO_FORBIDDEN,"报废单");
         }
         //小于0则赋值为0
         records.forEach(e -> {
@@ -381,17 +381,17 @@ public class SampleLedgerServiceImpl extends SuperServiceImpl<SampleLedgerMapper
     @Override
     public SampleLedgerDTO.ExhibitionOrderView generateExhibitionOrderView(List<String> ids) {
         if(CollUtil.isEmpty(ids)){
-            throw new ServiceException(ApiError.ERROR_92271);
+            throw new ServiceException(ApiError.PO_QC_DETAIL_REQUIRED);
         }
 
         List<SampleLedgerEntity> sampleLedgerEntities = lambdaQuery().in(SampleLedgerEntity::getId, ids).list();
         if(CollUtil.isEmpty(sampleLedgerEntities)){
-            throw new ServiceException(ApiError.ERROR_GENERATE_SAMPLE_VIEW,"展会订单");
+            throw new ServiceException(ApiError.SAMPLE_GENERATE_VIEW_LEDGER_QTY_ZERO_FORBIDDEN,"展会订单");
         }
         //校验是否存在多个领用人
         long count = sampleLedgerEntities.stream().map(SampleLedgerEntity::getUserId).distinct().count();
         if(count > 1){
-            throw new ServiceException(ApiError.ERROR_GENERATE_SAMPLE_USER_IDS,"领用人");
+            throw new ServiceException(ApiError.SAMPLE_GENERATE_VIEW_USER_UNIQUE_REQUIRED,"领用人");
         }
 
         SampleLedgerDTO.ExhibitionOrderView viewDTO = new SampleLedgerDTO.ExhibitionOrderView();
@@ -401,7 +401,7 @@ public class SampleLedgerServiceImpl extends SuperServiceImpl<SampleLedgerMapper
         params.setUserId(sampleLedgerEntities.get(0).getUserId());
         List<SampleLedgerDTO.SkuAvailableQtyDTO> records = this.baseMapper.listSkuAvailableQtyByUserId(params);
         if(CollUtil.isEmpty(records)){
-            throw new ServiceException(ApiError.ERROR_GENERATE_SAMPLE_VIEW,"展会订单");
+            throw new ServiceException(ApiError.SAMPLE_GENERATE_VIEW_LEDGER_QTY_ZERO_FORBIDDEN,"展会订单");
         }
         //处理展会冻结库存数量
         handleExhibitionFreezeQty(params, records);
@@ -424,17 +424,17 @@ public class SampleLedgerServiceImpl extends SuperServiceImpl<SampleLedgerMapper
     @Override
     public SampleLedgerDTO.SampleBackView generateSampleBackInfo(List<String> ids) {
         if(CollUtil.isEmpty(ids)){
-            throw new ServiceException(ApiError.ERROR_92271);
+            throw new ServiceException(ApiError.PO_QC_DETAIL_REQUIRED);
         }
 
         List<SampleLedgerEntity> sampleLedgerEntities = lambdaQuery().in(SampleLedgerEntity::getId, ids).list();
         if(CollUtil.isEmpty(sampleLedgerEntities)){
-            throw new ServiceException(ApiError.ERROR_GENERATE_SAMPLE_VIEW,"退回单");
+            throw new ServiceException(ApiError.SAMPLE_GENERATE_VIEW_LEDGER_QTY_ZERO_FORBIDDEN,"退回单");
         }
         //校验是否存在多个退回人
         long count = sampleLedgerEntities.stream().map(SampleLedgerEntity::getUserId).distinct().count();
         if(count > 1){
-            throw new ServiceException(ApiError.ERROR_GENERATE_SAMPLE_USER_IDS,"退回人");
+            throw new ServiceException(ApiError.SAMPLE_GENERATE_VIEW_USER_UNIQUE_REQUIRED,"退回人");
         }
 
         SampleLedgerDTO.SampleBackView viewDTO = new SampleLedgerDTO.SampleBackView();
@@ -444,7 +444,7 @@ public class SampleLedgerServiceImpl extends SuperServiceImpl<SampleLedgerMapper
         params.setUserId(sampleLedgerEntities.get(0).getUserId());
         List<SampleLedgerDTO.SkuAvailableQtyDTO> records = this.baseMapper.listSkuAvailableQtyByUserId(params);
         if(CollUtil.isEmpty(records)){
-            throw new ServiceException(ApiError.ERROR_GENERATE_SAMPLE_VIEW,"退回单");
+            throw new ServiceException(ApiError.SAMPLE_GENERATE_VIEW_LEDGER_QTY_ZERO_FORBIDDEN,"退回单");
         }
         //小于0则赋值为0
         records.forEach(e -> {

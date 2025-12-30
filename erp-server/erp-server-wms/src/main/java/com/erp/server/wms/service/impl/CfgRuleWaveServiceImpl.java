@@ -158,7 +158,7 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
     public Boolean update(CfgRuleWaveDTO.UpdateDTO updateDTO) {
         CfgRuleWaveEntity old = super.getById(updateDTO.getId());
         if (Objects.isNull(old)){
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "波次规则");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "波次规则");
         }
         CfgRuleWaveEntity cfgRuleWaveEntity = BeanMapperUtils.map(CfgRuleWaveEntity.class, updateDTO);
 
@@ -696,17 +696,17 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
     private void handleData(List<LocalTime> executionTimeList, List<String> pickingCartTypeIdList, CfgRuleWaveEntity cfgRuleWaveEntity) {
         //数量验证
         if (MathUtil.compareTo(cfgRuleWaveEntity.getMinOrderQty(), cfgRuleWaveEntity.getMaxOrderQty()) > MathUtil.ZERO) {
-            throw new ServiceException(ApiError.CFG_RULE_WAVE_ORDER_QTY_COMPARE);
+            throw new ServiceException(ApiError.COMMON_WAVE_ORDER_QTY_COMPARE);
         }
         if (MathUtil.compareTo(cfgRuleWaveEntity.getMinQty(),MathUtil.ZERO) != MathUtil.ZERO
                 && MathUtil.compareTo(cfgRuleWaveEntity.getMaxQty(),MathUtil.ZERO) != MathUtil.ZERO
                 && MathUtil.compareTo(cfgRuleWaveEntity.getMinQty(), cfgRuleWaveEntity.getMaxQty()) > MathUtil.ZERO) {
-            throw new ServiceException(ApiError.CFG_RULE_WAVE_QTY_COMPARE);
+            throw new ServiceException(ApiError.COMMON_WAVE_QTY_COMPARE);
         }
         //波次名称重复验证
         CfgRuleWaveEntity ruleWaveEntity = getByWaveName(cfgRuleWaveEntity.getName());
         if (ObjectUtil.isNotEmpty(ruleWaveEntity) && !CharSequenceUtil.equals(cfgRuleWaveEntity.getId(), ruleWaveEntity.getId())) {
-            throw new ServiceException(ApiError.ERROR_DUPLICATION_NAME);
+            throw new ServiceException(ApiError.COMMON_DUPLICATION_NAME);
         }
         //拣货车类型
         cfgRuleWaveEntity.setPickingCartTypeJson(JSONUtil.toJsonStr(pickingCartTypeIdList));

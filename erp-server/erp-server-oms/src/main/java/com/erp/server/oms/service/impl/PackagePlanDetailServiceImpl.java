@@ -81,7 +81,7 @@ public class PackagePlanDetailServiceImpl extends SuperServiceImpl<PackagePlanDe
     @Override
     public Boolean update(PackagePlanDetailDTO.UpdateDTO addOrUpdateDTO) {
         PackagePlanDetailEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "组包计划明细"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "组包计划明细"));
         PackagePlanDetailEntity packagePlanDetailEntity =  BeanMapperUtils.map(PackagePlanDetailEntity.class, addOrUpdateDTO);
 
         // 数据处理

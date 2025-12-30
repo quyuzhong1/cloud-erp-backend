@@ -23,7 +23,6 @@ import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
-import com.common.core.utils.FastDFSClientUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
@@ -50,7 +49,6 @@ import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -153,7 +151,7 @@ public class PackagePlanServiceImpl extends SuperServiceImpl<PackagePlanMapper, 
     @Override
     public Boolean update(PackagePlanDTO.UpdateDTO addOrUpdateDTO) {
         PackagePlanEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "组包计划主单"));
+        old = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "组包计划主单"));
         PackagePlanEntity packagePlanEntity = BeanMapperUtils.map(PackagePlanEntity.class, addOrUpdateDTO);
 
         // 数据处理
@@ -1066,7 +1064,7 @@ public class PackagePlanServiceImpl extends SuperServiceImpl<PackagePlanMapper, 
         addTaskDTO.setFirstNodeInputData(map);
         workflowTaskRecordEntities = workflowTaskRecordService.addTask(addTaskDTO);
         if(CollUtil.isEmpty(workflowTaskRecordEntities)){
-            throw new ServiceException(ApiError.NOT_EXIST,DictBasicTypeEnum.WORKFLOW_TASK_NODE.getDesc());
+            throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC,DictBasicTypeEnum.WORKFLOW_TASK_NODE.getDesc());
         }
         SendResult result = mqProducerService.syncClassMsgWithDelayLevel(RocketMqTopic.OMS_WORKFLOW_TASK_RECORD_TOPIC, RocketMqTagEnum.OMS_WORKFLOW_TASK_RECORD_TAG.getName(), addTaskDTO, dto.getSoId(),2);
         if (!result.getSendStatus().equals(SendStatus.SEND_OK)) {
@@ -1120,12 +1118,12 @@ public class PackagePlanServiceImpl extends SuperServiceImpl<PackagePlanMapper, 
     public void downloadHandoverLabel(PackagePlanDTO.LabelDTO dto) {
         PackagePlanEntity entity = this.getById(dto.getId());
         if (Objects.isNull(entity)){
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "组包计划单");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "组包计划单");
         }
         String shopId = entity.getShopId();
         ShopAuthEntity authEntity = shopAuthService.getByShopId(shopId);
         if (Objects.isNull(authEntity)){
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "店铺授权信息");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "店铺授权信息");
         }
         String packageNo = entity.getPackageNo();
         if (CharSequenceUtil.isBlank(packageNo)){

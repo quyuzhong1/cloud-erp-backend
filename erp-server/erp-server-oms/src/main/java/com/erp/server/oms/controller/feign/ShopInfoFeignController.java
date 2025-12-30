@@ -1,11 +1,7 @@
 package com.erp.server.oms.controller.feign;
 
 
-import com.common.business.annotation.DataPermission;
-import com.common.business.annotation.WebAdvanceQuery;
-import com.common.business.dto.AdvanceQueryContainer;
 import com.common.business.dto.base.PagingDTO;
-import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
@@ -15,7 +11,6 @@ import com.erp.model.oms.dto.ShopDTO;
 import com.erp.model.oms.dto.ShopInfoDTO;
 import com.erp.model.oms.entity.ShopAuthEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
-import com.erp.server.oms.query.ShopQueryHandler;
 import com.erp.server.oms.service.ShopAuthService;
 import com.erp.server.oms.service.ShopInfoService;
 import lombok.extern.slf4j.Slf4j;

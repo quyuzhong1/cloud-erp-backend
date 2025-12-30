@@ -220,7 +220,7 @@ public class SyncKingdeeOtherInstockServiceImpl implements SyncKingdeeOtherInsto
 
         List<OtherInstockDetailEntity> detailList = otherInstockDetailService.listByMainId(entity.getId());
         if (CollectionUtils.isEmpty(detailList)) {
-            throw new ServiceException(ApiError.ERROR_99060);
+            throw new ServiceException(ApiError.WH_OTHER_INBOUND_DETAIL_NOT_FOUND);
         }
 
         //金蝶id

@@ -159,14 +159,14 @@ public class MailServiceImpl implements MailService {
         //读取邮件模板
         String html = this.extractTemplate(dto.getTemplate());
         if (StringUtils.isBlank(html)) {
-            throw new ServiceException(ApiError.ERROR_1006);
+            throw new ServiceException(ApiError.EMAIL_TEMPLATE_NOT_FOUND);
         }
         String content = ThymeleafUtil.generateTemplate(html, emailDTO);
         try {
             this.batchSendHtmlMail(dto.getRecipients(), dto.getSubject(), content, null);
         } catch (MessagingException e) {
             flag = false;
-            throw new ServiceException(ApiError.ERROR_1010);
+            throw new ServiceException(ApiError.EMAIL_SEND_FAILED);
         }
 
         return flag;

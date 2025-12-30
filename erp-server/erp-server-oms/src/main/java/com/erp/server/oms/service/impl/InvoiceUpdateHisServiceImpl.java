@@ -67,7 +67,7 @@ public class InvoiceUpdateHisServiceImpl extends SuperServiceImpl<InvoiceUpdateH
     @Override
     public Boolean update(InvoiceUpdateHisDTO.UpdateDTO addOrUpdateDTO) {
         InvoiceUpdateHisEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "发票更新历史"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "发票更新历史"));
         InvoiceUpdateHisEntity invoiceUpdateHisEntity =  BeanMapperUtils.map(InvoiceUpdateHisEntity.class, addOrUpdateDTO);
 
         // 数据处理

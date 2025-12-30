@@ -1,6 +1,5 @@
 package com.erp.server.plm.service.impl;
 
-import cn.hutool.core.collection.CollectionUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -19,8 +18,6 @@ import com.common.core.utils.MathUtil;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.DistributionTypeEnum;
-import com.erp.model.plm.enums.RelatedSkuTypeEnum;
-import com.erp.model.plm.enums.TaskTypeEnum;
 import com.erp.model.plm.vo.PreTaskVO;
 import com.erp.model.plm.vo.SysTaskVO;
 import com.erp.model.sys.dto.UserSuperiorDTO;
@@ -148,7 +145,7 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
                 //根据分配类型查询模板中的数据
                 for (TaskChargeDistributionEntity taskChargeDistributionEntity : taskChargeDistributionList) {
                     if (StringUtils.isBlank(taskChargeDistributionEntity.getCharges())) {
-                        throw new ServiceException(ApiError.ERROR_95097);
+                        throw new ServiceException(ApiError.PROJECT_PARAM_TASK_OWNER_REQUIRED);
                     }
                     if (DistributionTypeEnum.DISTRIBUTION_USER.getCode().equals(taskChargeDistributionEntity.getDistributionType())) {
                         taskChargeDistributionEntity.setChargeIds(taskChargeDistributionEntity.getCharges());
@@ -204,7 +201,7 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
         }
         int count = this.count(queryWrapper);
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_95013);
+            throw new ServiceException(ApiError.PROJECT_TASK_EXISTS);
         }
     }
 
@@ -329,7 +326,7 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
     public SysTaskVO taskDetails(String taskId) {
         ProjectTaskSysEntity sysEntity = this.getById(taskId);
         if (Objects.isNull(sysEntity)) {
-            throw new ServiceException(ApiError.ERROR_95027);
+            throw new ServiceException(ApiError.PROJECT_TASK_NOT_FOUND);
         }
         SysTaskVO sysTaskVO = new SysTaskVO();
         BeanMapper.copy(sysEntity, sysTaskVO);
@@ -412,7 +409,7 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
         queryWrapper.eq(ProjectTaskSysEntity::getPhaseId, phaseId);
         int count = this.count(queryWrapper);
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_95048);
+            throw new ServiceException(ApiError.PROJECT_STAGE_HAS_TASKS_DELETE_FORBIDDEN);
         }
     }
 }

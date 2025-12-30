@@ -75,25 +75,25 @@ public class UserServiceImpl implements UserService {
             //判断用户是否有效 防止账号被删除
             if (Objects.isNull(user)){
                 //用户不存在
-                throw new ServiceException(ApiError.USER_NOT_EXIST);
+                throw new ServiceException(ApiError.AUTH_CREDENTIALS_INVALID);
             }else if (Objects.isNull(user.getUserState()) || 0 == user.getUserState()){
-                throw new ServiceException(ApiError.ERROR_9016);
+                throw new ServiceException(ApiError.AUTH_ACCOUNT_DISABLED, user.getUserAccount());
             }
             //获取用户关联供应商
             SupplierUserInfoVO info = supplierUserFeign.info(uid);
             if (Objects.nonNull(info) && StringUtils.isNotEmpty(info.getSupplierId())){
                 //用户是否禁用
                 if (Objects.isNull(info.getUserState()) || 0 == info.getUserState()) {
-                    throw new ServiceException(ApiError.ERROR_9016);
+                    throw new ServiceException(ApiError.AUTH_ACCOUNT_DISABLED, user.getUserAccount());
                 }else {
                     return info.getSupplierId();
                 }
             }else {
                 //用户未关联供应商
-                throw new ServiceException(ApiError.ERROR_USER_NOT_REL_SUPPLIER);
+                throw new ServiceException(ApiError.SUPPLIER_USER_NOT_REL);
             }
         }else {
-            throw new ServiceException(ApiError.ERROR_403);
+            throw new ServiceException(ApiError.HTTP_FORBIDDEN);
         }
     }
 
@@ -120,14 +120,14 @@ public class UserServiceImpl implements UserService {
             EasyExcel.read(excelFile.getInputStream(), SupplierUserImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (IOException e) {
             log.error("导入错误！", e);
-            throw new ServiceException(ApiError.ERROR_95124);
+            throw new ServiceException(ApiError.FILE_DATA_IMPORT_FAILED);
         } catch (ExcelCommonException e) {
             log.error("导入格式错误！", e);
-            throw new ServiceException(ApiError.ERROR_1016);
+            throw new ServiceException(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX);
         }
         List<SupplierUserImportExcelDTO> excelDateList = excelListenerUtil.getExcelDateList();
         if (CollectionUtils.isEmpty(excelDateList)) {
-            throw new ServiceException(ApiError.ERROR_95123);
+            throw new ServiceException(ApiError.FILE_DATA_REQUIRED);
         }
         List<SupplierUserImportExcelDTO > errorList = excelListenerUtil.getErrorList();
 
@@ -145,7 +145,7 @@ public class UserServiceImpl implements UserService {
             try {
                 new ExcelPrintUtils().patchExport(errorList, response, sb.toString(), excelPath);
             } catch (IOException e) {
-                throw new ServiceException(ApiError.ERROR_95125);
+                throw new ServiceException(ApiError.FILE_EXPORT_ERROR_DATA_FAILED);
             }
             return Boolean.FALSE;
         }
@@ -199,7 +199,7 @@ public class UserServiceImpl implements UserService {
 
         List<String> errorMsgList = new ArrayList<>();
         if (StringUtils.isEmpty(excelDTO.getSupplierName()) || StringUtils.isEmpty(excelDTO.getSupplierName().trim())) {
-            errorMsgList.add(ApiError.ERROR_EMPTY_SUPPLIER.msg);
+            errorMsgList.add(ApiError.SUPPLIER_NAME_EMPTY.getMsg());
             return errorMsgList;
         }
         List<String> msgList = FieldValidUtil.fieldValid(excelDTO);
@@ -212,15 +212,15 @@ public class UserServiceImpl implements UserService {
             SupplierEntity supplierEntity = supplierEntityList.get(0);
             //供应商状态判断
             if (Objects.isNull(supplierEntity.getDisabled()) || supplierEntity.getDisabled()) {
-                errorMsgList.add(ApiError.ERROR_SUPPLIER_DISABLE.msg);
+                errorMsgList.add(ApiError.SUPPLIER_DISABLE.getMsg());
                 return errorMsgList;
             }
             if (Objects.isNull(supplierEntity.getApproveStatus()) || !supplierEntity.getApproveStatus().getStatus().equals(ApproveStatusEnum.APPROVE.getStatus())) {
-                errorMsgList.add(ApiError.ERROR_SUPPLIER_UN_APPROVE.msg);
+                errorMsgList.add(ApiError.SUPPLIER_UN_APPROVE.getMsg());
                 return errorMsgList;
             }
             if (Objects.isNull(supplierEntity.getSrmDisabled()) || supplierEntity.getSrmDisabled()) {
-                errorMsgList.add(ApiError.ERROR_SUPPLIER_SRM_DISABLE.msg);
+                errorMsgList.add(ApiError.SUPPLIER_SRM_DISABLE.getMsg());
                 return errorMsgList;
             }
             supplierEntity.getApproveStatus();
@@ -229,13 +229,13 @@ public class UserServiceImpl implements UserService {
             refUserEntity.setDisabled(false);
             refUserEntity.setIsSuper(true);
         } else {
-            errorMsgList.add(ApiError.ERROR_SUPPLIER_ABSENCE.msg);
+            errorMsgList.add(ApiError.SUPPLIER_NOT_FOUND.getMsg());
             return errorMsgList;
         }
         //用户是否存在
         FindUserDTO user = sysUserFeign.getUserByMobile(excelDTO.getMobile(), UserTypeEnum.SRM.code);
         if (Objects.isNull(user)) {
-            errorMsgList.add(ApiError.MOBILE_IS_EXIST.msg);
+            errorMsgList.add(ApiError.AUTH_MOBILE_IS_EXIST.getMsg());
             return errorMsgList;
         }
         return errorMsgList;
@@ -259,7 +259,7 @@ public class UserServiceImpl implements UserService {
             wb.write(output);
             wb.close();
         } catch (Exception e) {
-            throw new ServiceException(ApiError.DEFAULT);
+            throw new ServiceException(ApiError.HTTP_UNKNOWN);
         }
     }
 }

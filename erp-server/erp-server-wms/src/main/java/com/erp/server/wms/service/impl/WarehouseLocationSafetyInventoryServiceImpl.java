@@ -90,7 +90,7 @@ public class WarehouseLocationSafetyInventoryServiceImpl extends SuperServiceImp
         try {
             EasyExcel.read(file.getInputStream(), WarehouseLocationSafetyInventoryDTO.importExcelDTO.class, listener).sheet(0).doRead();
         } catch (IOException e) {
-            throw new ServiceException(ApiError.ERROR_95124);
+            throw new ServiceException(ApiError.FILE_DATA_IMPORT_FAILED);
         }
 
         //校验失败的数据
@@ -120,7 +120,7 @@ public class WarehouseLocationSafetyInventoryServiceImpl extends SuperServiceImp
             //填充仓库ID
             String warehouseId = warehouseMap.get(importExcelDto.getWarehouseName());
             if(CharSequenceUtil.isBlank(warehouseId)){
-                importExcelDto.setErrorInfo(ApiError.WAREHOUSE_NOT_EXIST_NO_PERMISSION.msg);
+                importExcelDto.setErrorInfo(ApiError.WH_NOT_EXIST_OR_NO_PERMISSION.getMsg());
                 errorList.add(importExcelDto);
                 continue;
             }
@@ -188,7 +188,7 @@ public class WarehouseLocationSafetyInventoryServiceImpl extends SuperServiceImp
             wb.close();
         } catch (Exception e) {
             e.printStackTrace();
-            throw new ServiceException(ApiError.ERROR_95131);
+            throw new ServiceException(ApiError.FILE_IMPORT_TEMPLATE_DOWNLOAD_FAILED);
         }
     }
 

@@ -481,7 +481,7 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
 
     @Override
     public void downloadHistorySales(String calcSalesInfoDimId, HttpServletResponse response) {
-        CalcSalesInfoDimEntity entity = Optional.ofNullable(getById(calcSalesInfoDimId)).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST, "销量试算"));
+        CalcSalesInfoDimEntity entity = Optional.ofNullable(getById(calcSalesInfoDimId)).orElseThrow(() -> new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC, "销量试算"));
         List<CalcSalesInfoHisEsEntity> calcSalesInfoHisList = calcSalesInfoHisEsService.findByCfgRuleCalcIdAndShopIdAndSkuId(entity.getCfgRuleCalcId(), entity.getShopId(), entity.getSkuId());
         List<CfgRuleCalcDTO.HistorySaleDTO> list = new ArrayList<>();
         if (!ObjectUtil.isEmpty(calcSalesInfoHisList)) {
@@ -503,7 +503,7 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
         try {
             new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
         } catch (IOException e) {
-            throw new ServiceException(ApiError.ERROR_95125);
+            throw new ServiceException(ApiError.FILE_EXPORT_ERROR_DATA_FAILED);
         }
     }
 
@@ -568,7 +568,7 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
             return endDate;
         }
         if (endDate1.isAfter(endDate)) {
-            throw new ServiceException(ApiError.ERROR__VERIFY_END_DATE);
+            throw new ServiceException(ApiError.TRIAL_CALC_END_DATE_AFTER_MIN_FORBIDDEN);
         }
         return endDate1;
     }
@@ -627,7 +627,7 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
         try {
             new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
         } catch (IOException e) {
-            throw new ServiceException(ApiError.ERROR_95125);
+            throw new ServiceException(ApiError.FILE_EXPORT_ERROR_DATA_FAILED);
         }
     }
 
@@ -782,23 +782,23 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
      */
     private void verifyData(List<CalcSalesInfoDimDTO.CompareResultDTO> list, LocalDate startDate) {
         if (CollectionUtils.isEmpty(list)) {
-            throw new ServiceException(ApiError.ERROR_NOT_EXIST_CALC_DATA);
+            throw new ServiceException(ApiError.TRIAL_CALC_DATA_NOT_FOUND);
         }
         // 校验是否是相同sku 店铺 试算开始时间
         long count = list.stream().map(v -> v.getSkuId() + "-" + v.getShopId() + "-" + v.getStartCalcDate())
                 .distinct().count();
         if (count > 1) {
-            throw new ServiceException(ApiError.ERROR_DATA_IS_DIFFERENT);
+            throw new ServiceException(ApiError.TRIAL_CALC_DATA_INCONSISTENT);
         }
         // 校验历史销量是否一致
         long md5Count = list.stream().map(CalcSalesInfoDimDTO.CompareResultDTO::getHisDataMd5)
                 .distinct().count();
         if (md5Count > 1) {
-            throw new ServiceException(ApiError.ERROR_HIS_SALES_IS_DIFFERENT);
+            throw new ServiceException(ApiError.TRIAL_CALC_HISTORY_SALES_INCONSISTENT);
         }
         LocalDate startCalcDate = list.get(0).getStartCalcDate();
         if (!ObjectUtils.isEmpty(startDate) && startDate.isBefore(startCalcDate)) {
-            throw new ServiceException(ApiError.ERROR__VERIFY_START_DATE);
+            throw new ServiceException(ApiError.TRIAL_CALC_START_DATE_BEFORE_MIN_FORBIDDEN);
         }
     }
 
@@ -939,7 +939,7 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
     private CalcSalesInfoDimEntity validateAndFetchEntity(String id) {
         CalcSalesInfoDimEntity entity = getById(id);
         if (ObjectUtils.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_SYS_TYPE_NOTFOUND, "试算数据");
+            throw new ServiceException(ApiError.COMMON_NOT_FOUND, "试算数据");
         }
         return entity;
     }
@@ -952,7 +952,7 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
     private CfgRuleCalcEntity fetchCfgRuleCalcEntity(String cfgRuleCalcId) {
         CfgRuleCalcEntity cfgRuleCalc = cfgRuleCalcService.getById(cfgRuleCalcId);
         if (ObjectUtils.isEmpty(cfgRuleCalc)) {
-            throw new ServiceException(ApiError.ERROR_SYS_TYPE_NOTFOUND, "试算配置");
+            throw new ServiceException(ApiError.COMMON_NOT_FOUND, "试算配置");
         }
         return cfgRuleCalc;
     }

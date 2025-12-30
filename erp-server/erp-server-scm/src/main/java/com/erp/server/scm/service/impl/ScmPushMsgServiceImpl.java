@@ -51,7 +51,7 @@ public class ScmPushMsgServiceImpl extends SuperServiceImpl<ScmPushMsgMapper, Sc
     @Override
     public Boolean update(ScmPushMsgDTO.UpdateDTO updateDTO) {
         ScmPushMsgEntity old = super.getById(updateDTO.getId());
-        ScmPushMsgEntity oldEntity = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "本地推送消息单"));
+        ScmPushMsgEntity oldEntity = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "本地推送消息单"));
         ScmPushMsgEntity scmPushMsgEntity =  BeanMapperUtils.map(ScmPushMsgEntity.class, updateDTO);
 
         log.info("编辑 开始修改本地推送消息单数据，id：【{}】", oldEntity.getId());

@@ -5,7 +5,6 @@ import com.common.business.annotation.WebAdvanceQuery;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.fms.dto.AssetAcceptDTO;
-import com.erp.model.scm.dto.ExcelImportDTO;
 import com.erp.server.scm.query.AssetPurchaseOrderQueryHandler;
 import com.erp.server.scm.service.AssetPurchaseOrderDetailService;
 import com.erp.server.scm.service.AssetPurchaseOrderService;
@@ -478,7 +477,7 @@ public class AssetPurchaseOrderController extends BaseController {
             wb.write(output);
             wb.close();
         } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_95131);
+            throw new ServiceException(ApiError.FILE_IMPORT_TEMPLATE_DOWNLOAD_FAILED);
         }
         return success();
     }

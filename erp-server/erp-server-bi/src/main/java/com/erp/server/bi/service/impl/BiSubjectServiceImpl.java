@@ -121,7 +121,7 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
         }
         BiSubjectEntity subject = this.getById(subjectId);
         if (Objects.isNull(subject)) {
-            throw new ServiceException(ApiError.ERROR_97000);
+            throw new ServiceException(ApiError.BI_TOPIC_REQUIRED);
         }
         //检查能否操作
         checkCanHandle(subject, userId);
@@ -155,7 +155,7 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
 
         BiSubjectEntity subject = this.getById(subjectId);
         if (Objects.isNull(subject)) {
-            throw new ServiceException(ApiError.ERROR_97000);
+            throw new ServiceException(ApiError.BI_TOPIC_REQUIRED);
         }
         checkCanHandle(subject, userId);
         boolean flag = this.removeById(subjectId);
@@ -189,7 +189,7 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
         queryWrapper.last("LIMIT 1");
         int count = this.count(queryWrapper);
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_97001);
+            throw new ServiceException(ApiError.COMMON_NAME_EXISTS);
         }
 
     }
@@ -312,7 +312,7 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
     public Boolean updateState(UpdateStateDTO dto) {
         BiSubjectEntity subject = this.getById(dto.getId());
         if (Objects.isNull(subject)) {
-            throw new ServiceException(ApiError.ERROR_97000);
+            throw new ServiceException(ApiError.BI_TOPIC_REQUIRED);
         }
         String userId = UserContext.getDefaultLoginUser().getUid();
         checkCanHandle(subject, userId);
@@ -343,7 +343,7 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
             handleFlag = userId.equals(createUserId);
         }
         if (!handleFlag) {
-            throw new ServiceException(ApiError.ERROR_97005);
+            throw new ServiceException(ApiError.AUTH_MODIFY_DELETE_DENIED);
         }
     }
 
@@ -437,7 +437,7 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
         String subjectId = dto.getSubjectId();
         BiSubjectEntity subject = this.getById(subjectId);
         if (Objects.isNull(subject)) {
-            throw new ServiceException(ApiError.ERROR_97000);
+            throw new ServiceException(ApiError.BI_TOPIC_REQUIRED);
         }
         BiSubjectEntity copySubject = new BiSubjectEntity();
         BeanMapper.copy(subject, copySubject);
@@ -639,7 +639,7 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
         String subjectId = dto.getSubjectId();
         BiSubjectEntity subject = this.getById(subjectId);
         if (Objects.isNull(subject)) {
-            throw new ServiceException(ApiError.ERROR_97000);
+            throw new ServiceException(ApiError.BI_TOPIC_REQUIRED);
         }
         String dashboardFlag = DictEnum.DASHBOARD.getValue();
         String type = DictEnum.DASHBOARD.getType();
@@ -650,7 +650,7 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
             categoryId = dict.getId();
         }
         if (!subject.getCategoryId().equals(categoryId)) {
-            throw new ServiceException(ApiError.ERROR_97017);
+            throw new ServiceException(ApiError.BI_NOT_DASHBOARD);
         }
         String name = dto.getName();
         String shareFlag = dto.getShareFlag();
@@ -685,7 +685,7 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
         if (scopeSelf.equals(dataScope)) {
             BiSubjectEntity subject = this.getById(dto.getId());
             if (Objects.isNull(subject)) {
-                throw new ServiceException(ApiError.ERROR_97000);
+                throw new ServiceException(ApiError.BI_TOPIC_REQUIRED);
             }
             String userId = UserContext.getDefaultLoginUser().getUid();
             checkCanHandle(subject, userId);
@@ -698,7 +698,7 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
     public BatchResultDTO updateShare(List<String> shareFlagIdList, String mainId, String shareFlag) {
         BiSubjectEntity entity = this.getById(mainId);
         if (Objects.isNull(entity)) {
-            throw new ServiceException(ApiError.ERROR_97000);
+            throw new ServiceException(ApiError.BI_TOPIC_REQUIRED);
         }
         // 主表状态更新
         if (!entity.getShareFlag().equalsIgnoreCase(shareFlag)){

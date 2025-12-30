@@ -17,7 +17,6 @@ import com.erp.server.dmp.inout.handler.input.task.init.DmpInputInitHandler;
 import com.erp.server.dmp.inout.utils.DmpHandlerCache;
 import com.sdk.wms.jifeng.dto.response.JiFengBaseResp;
 import com.sdk.wms.jifeng.dto.response.JiFengProductResp;
-import com.sdk.wms.jifeng.dto.response.JiFengWarehouseResp;
 import com.sdk.wms.jifeng.service.JiFengService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Scope;
