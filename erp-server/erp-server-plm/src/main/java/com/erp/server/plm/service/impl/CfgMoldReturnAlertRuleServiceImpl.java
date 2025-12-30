@@ -97,7 +97,7 @@ public class CfgMoldReturnAlertRuleServiceImpl extends SuperServiceImpl<CfgMoldR
                 .eq(CfgMoldReturnAlertRuleEntity::getInvalidStatus, Boolean.FALSE)
                 .count();
         if(count > 0){
-            throw new ServiceException(ApiError.ERROR_SKU_MOLD_RETURN_EXIST,moldInfoEntity.getName());
+            throw new ServiceException(ApiError.MOULD_RETURN_EXIST,moldInfoEntity.getName());
         }
 
         // 数据处理
@@ -159,7 +159,7 @@ public class CfgMoldReturnAlertRuleServiceImpl extends SuperServiceImpl<CfgMoldR
                 .ne(CfgMoldReturnAlertRuleEntity::getId, cfgMoldReturnAlertRuleEntity.getId())
                 .count();
         if(count > 0){
-            throw new ServiceException(ApiError.ERROR_SKU_MOLD_RETURN_EXIST,moldInfoEntity.getName());
+            throw new ServiceException(ApiError.MOULD_RETURN_EXIST,moldInfoEntity.getName());
         }
 
         cfgMoldReturnAlertRuleEntity.setMoldId(old.getMoldId());
