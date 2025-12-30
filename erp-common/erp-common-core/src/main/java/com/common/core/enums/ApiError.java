@@ -1426,17 +1426,6 @@ public enum ApiError implements Serializable {
     SAMPLE_PARTNER_MULTIPLE_DEFAULT_ADDRESS_FORBIDDEN(10724,"企业达人不允许配置多个默认地址"),
     SAMPLE_B2B_DETAIL_ALREADY_PUSHED_SO(10725,"B2B寄样申请单【{0}】SKU【{1}】已下推销售订单，禁止重复下推"),
     SAMPLE_B2B_PUSHED_SO_DETAIL_DELETE_FORBIDDEN(10726,"由B2B寄样申请单下推生成的销售订单明细不允许删除"),
-//    SAMPLE_KOL_B2B_APPLICATION_NOT_FOUND(10727,"B2B寄样申请单不存在"),
-//    SAMPLE_KOL_B2B_APPLICATION_DETAIL_NOT_FOUND(10728,"B2B寄样申请明细单不存在"),
-//    SAMPLE_KOL_B2B_APPLICATION_NOT_APPROVED(10729,"B2B寄样申请单【{0}】未审核完成不支持下推"),
-//    SAMPLE_KOL_B2B_DETAIL_ID_NOT_FOUND(10730,"明细id【{0}】未找到B2B寄样申请单明细数据"),
-//    SAMPLE_KOL_B2B_WAREHOUSE_INCONSISTENT(10731,"B2B寄样申请单【{0}】明细下推发货仓库不一致"),
-//    SAMPLE_KOL_B2B_ORG_INCONSISTENT(10732,"B2B寄样申请单【{0}】明细下推销售组织不一致"),
-//    SAMPLE_KOL_B2C_APPROVED_REQUIRED(10733,"请选择审核通过的 B2C 寄样申请数据"),
-//    SAMPLE_KOL_B2C_ALREADY_PUSHED_SO(10734,"B2C 寄样申请已生成销售订单，不允许反审核"),
-//    SAMPLE_KOL_PARTNER_MULTI_DEFAULT_ADDRESS_FORBIDDEN(10735,"企业达人不允许配置多个默认地址"),
-//    SAMPLE_KOL_B2B_DETAIL_ALREADY_PUSHED_SO(10736,"B2B 寄样申请单【{0}】SKU【{1}】已下推销售订单，不允许重复下推"),
-//    SAMPLE_KOL_B2B_PUSHED_SO_DETAIL_DELETE_FORBIDDEN(10737,"B2B 寄样申请单下推的销售订单明细不允许删除"),
     SAMPLE_APPLY_NOT_FOUND(10738,"样品领用单不存在"),
     SAMPLE_ONLY_AUDITING_ALLOW_MODIFY_QTY(10739,"只有审核中的样品领用单才能修改审核数量"),
     SAMPLE_VOIDED_MODIFY_QTY_FORBIDDEN(10740,"已作废的样品领用单不支持修改审核数量"),
@@ -1625,9 +1614,6 @@ public enum ApiError implements Serializable {
     FIN_INVOICE_NFE_VOID_FAILED(14012,"作废发票失败，原因：{0}"),
     FIN_RECONCILIATION_NOT_FOUND(14013,"对账单不存在"),
     FIN_RECONCILIATION_DETAIL_NOT_FOUND(14014,"对账明细不存在"),
-//    FIN_ASSET_ACCEPT_QTY_EXCEEDS_PURCHASE_QTY(100000,"资产验收单验收数量超过模具采购单采购数量"),
-//    FIN_ASSET_CARD_NOT_FOUND(100001,"资产卡片【{0}】不存在"),
-//    FIN_ASSET_DISPOSAL_QTY_EXCEEDS_STOCK(100002,"资产编码【{0}】处置数量不能大于账存数量"),
 
     /**
      * 补货管理 错误 信息 14500-15000
