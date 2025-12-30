@@ -2,6 +2,7 @@ package com.erp.server.fms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
@@ -33,8 +34,8 @@ import com.erp.model.fms.entity.AssetAcceptDetailEntity;
 import com.erp.model.fms.entity.AssetAcceptEntity;
 import com.erp.model.fms.entity.AssetAcceptPersonEntity;
 import com.erp.model.fms.entity.AttachmentEntity;
-import com.erp.model.fms.enums.*;
 import com.erp.model.fms.enums.UnitEnum;
+import com.erp.model.fms.enums.*;
 import com.erp.model.scm.dto.AssetPurchaseOrderDTO;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -49,6 +50,7 @@ import com.erp.rpc.scm.feign.AssetPurchaseOrderFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.rpc.workflow.feign.CfgQueryOptionFeign;
+import com.erp.server.fms.kingdee.SyncKingdeeAssetAcceptService;
 import com.erp.server.fms.listener.AssetAcceptExcelListener;
 import com.erp.server.fms.mapper.AssetAcceptMapper;
 import com.erp.server.fms.service.*;
@@ -72,7 +74,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 import static com.common.core.controller.vo.ApiResult.success;
 
@@ -116,6 +117,10 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
 
     @Resource
     private CfgQueryOptionFeign cfgQueryOptionFeign;
+
+    @Resource
+    private SyncKingdeeAssetAcceptService syncKingdeeAssetAcceptService;
+
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -803,6 +808,9 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
         // 回写模具采购订单验收状态
         rewriteAssetPurchaseOrderForDisApprove(entity);
 
+        //推送金蝶
+        syncKingdeeAssetAcceptService.syncDataToKingdee(entity,OperationTypeEnum.DISAPPROVE.getStatus());
+
         // 操作日志
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据反审核操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "资产验收单");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.ASSET_ACCEPTANCE.getCode(), entity.getId(), "反审核操作");
@@ -869,6 +877,9 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
         // 删除主单数据
         log.info("删除 开始删除资产验收单主单数据，id：【{}】", id);
         super.removeById(id);
+
+        //推送金蝶
+        syncKingdeeAssetAcceptService.syncDataToKingdee(entity,OperationTypeEnum.DELETE.getStatus());
         // 删除日志数据
         log.info("删除 开始删除资产验收单日志数据，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "资产验收单");
@@ -891,6 +902,9 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
             .set(AssetAcceptEntity::getInvalidStatus, InvalidStatusEnum.VOIDED.getStatus())
             .set(AssetAcceptEntity::getInvalidRemark, remark)
             .update();
+
+        //推送金蝶
+        syncKingdeeAssetAcceptService.syncDataToKingdee(entity,OperationTypeEnum.INVALID.getStatus());
 
         log.info("作废 开始记录操作日志，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据作废操作 作废原因：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "资产验收单", remark);
@@ -938,7 +952,10 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
         updateForApprove(entity.getId(), approveStatus.getStatus());
         // todo 明细数据处理 上下游数据处理
         rewriteAssetPurchaseOrder(entity);
-
+        if (CharSequenceUtil.equals(dto.getType(), ApproveTypeEnum.PASS.getStatus())) {
+            //推送金蝶
+            syncKingdeeAssetAcceptService.syncDataToKingdee(entity,OperationTypeEnum.APPROVE_PASS.getStatus());
+        }
         return Boolean.TRUE;
     }
 
@@ -2191,6 +2208,14 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
         }
 
         return new ArrayList<>();
+    }
+
+    @Override
+    public Boolean updateSyncKingdeeId(String businessId, String syncKingdeeId) {
+        return this.lambdaUpdate()
+                .eq(AssetAcceptEntity::getId, businessId)
+                .set(CharSequenceUtil.isNotBlank(syncKingdeeId), AssetAcceptEntity::getSyncKingdeeId, syncKingdeeId)
+                .update();
     }
 
     @Override
