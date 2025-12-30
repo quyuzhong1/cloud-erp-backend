@@ -14,6 +14,7 @@ import javax.validation.constraints.Size;
 import javax.validation.constraints.NotEmpty;
 import com.common.business.dto.AdvanceQueryDTO;
 import java.util.Map;
+import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
  * <p>
@@ -239,6 +240,61 @@ public class ProductImgCategoryDTO implements Serializable {
         private Integer sort;
 
 
+    }
+
+    /**
+     * 树形列表查询参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ListTreeParamDTO {
+        /**
+         * 分类名称（模糊查询）
+         */
+        private String name;
+    }
+
+    /**
+     * 树形列表DTO
+     */
+    @Data
+    @NoArgsConstructor
+    public static class TreeDTO {
+        /**
+         * 主键id
+         */
+        private String id;
+
+        /**
+         * 分类名称
+         */
+        private String name;
+
+        /**
+         * 父级分类ID，空字符串表示根节点
+         */
+        private String parentId;
+
+        /**
+         * 第几级分类（避免递归计算），1表示第一级
+         */
+        private Integer level;
+
+        /**
+         * 是否是系统自带，系统自带的分类不允许删除
+         */
+        private Boolean isSystem;
+
+        /**
+         * 排序字段，用于同级分类的排序
+         */
+        private Integer sort;
+
+        /**
+         * 子节点列表
+         */
+        @JsonInclude(JsonInclude.Include.NON_EMPTY)
+        private List<TreeDTO> childrenList;
     }
 
 

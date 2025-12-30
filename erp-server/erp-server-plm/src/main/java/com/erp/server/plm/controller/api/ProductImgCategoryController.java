@@ -76,73 +76,42 @@ public class ProductImgCategoryController extends BaseController {
 
 
     /**
-    * 获取状态统计
-    * @return
-    */
-    @PostMapping("/tabList")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            menuCode = "plm:productImgCategory:paging",
-            tableAlias = ""
-    )
-    public ApiResult<List<ProductImgCategoryDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
-       return success(productImgCategoryService.tabList(dto));
-    }
-
-    /**
-    * 列表查询
+    * 删除
     * @author wuhaotian
     * @date: 2025-12-29
     * @param dto
-    * @return ApiResult<PagingVO<ProductImgCategoryDTO.ListDTO>>
+    * @return ApiResult
     */
-    @PostMapping("/paging")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            menuCode = "plm:productImgCategory:paging",
-            tableAlias = ""
-    )
-    public ApiResult<PagingVO<ProductImgCategoryDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<ProductImgCategoryDTO.PagingParamDTO> dto) {
-        return success(productImgCategoryService.paging(dto));
-    }
-
-
-    /**
-    * 详情
-    * @author wuhaotian
-    * @date:  2025-12-29
-    * @param id
-    * @return ApiResult<ProductImgCategoryDTO.ViewDTO>>
-    */
-    @GetMapping("/view")
+    @PostMapping("/delete")
+    @LogAction(value = LogActionEnum.DELETE, desc = "图片分类表删除")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "plm:productImgCategory:view",
+            menuCode = "plm:productImgCategory:delete",
             serviceClass = ProductImgCategoryService.class,
             keyIdName = "id")
-    @LogViewService
-    public ApiResult<ProductImgCategoryDTO.ViewDTO> view(@RequestParam("id") String id) {
-        return success(productImgCategoryService.view(id));
+    public ApiResult<?> delete(@RequestBody @Validated BaseIdDTO dto) {
+        productImgCategoryService.delete(dto.getId());
+        return success();
     }
 
     /**
-    * 导出Excel数据
+    * 列表查询（不分页，树结构）
     * @author wuhaotian
-    * @date:  2025-12-29
+    * @date: 2025-12-29
     * @param dto
-    * @param response
-    * @return
+    * @return ApiResult<List<ProductImgCategoryDTO.TreeDTO>>
     */
-    @PostMapping("/export")
+    @PostMapping("/listTree")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
-            menuCode = "plm:productImgCategory:export",
+            menuCode = "plm:productImgCategory:listTree",
             tableAlias = ""
     )
-    @LogAction(value = LogActionEnum.EXPORT, desc = "图片分类表导出Excel数据")
-    public void exportList(@RequestBody @Validated ProductImgCategoryDTO.ExportDTO dto, HttpServletResponse response) {
-        productImgCategoryService.exportList(dto, response);
+    public ApiResult<List<ProductImgCategoryDTO.TreeDTO>> listTree(@RequestBody(required = false) ProductImgCategoryDTO.ListTreeParamDTO dto) {
+        if (dto == null) {
+            dto = new ProductImgCategoryDTO.ListTreeParamDTO();
+        }
+        return success(productImgCategoryService.listTree(dto));
     }
-
 
 }

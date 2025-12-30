@@ -27,7 +27,9 @@ import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.StrUtil;
 import com.google.common.collect.Sets;
 import com.alibaba.fastjson.JSONObject;
 import com.google.common.collect.Lists;
@@ -52,11 +54,26 @@ import javax.servlet.http.HttpServletResponse;
 public class ProductImgCategoryServiceImpl extends SuperServiceImpl<ProductImgCategoryMapper, ProductImgCategoryEntity> implements ProductImgCategoryService {
     @Resource
     private OperateLogService operateLogService;
+    
+    private static final String CLASSPATH = String.valueOf(ProductImgCategoryEntity.class);
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(ProductImgCategoryDTO.AddDTO addDTO) {
+        // 检查最多支持5级分类
+        if (addDTO.getLevel() != null && addDTO.getLevel() > 5) {
+            throw new ServiceException(ApiError.COMMON_CATEGORY_LEVEL_EXCEED_MAX, "5");
+        }
+        
+        // 如果有父分类，检查父分类的级别，防止在5级分类下新增子分类
+        if (StrUtil.isNotBlank(addDTO.getParentId())) {
+            ProductImgCategoryEntity parent = super.getById(addDTO.getParentId());
+            if (parent != null && parent.getLevel() != null && parent.getLevel() >= 5) {
+                throw new ServiceException(ApiError.COMMON_CATEGORY_LEVEL_EXCEED_MAX, "5");
+            }
+        }
+        
         ProductImgCategoryEntity productImgCategoryEntity = new ProductImgCategoryEntity();
         BeanMapperUtils.copy(addDTO, productImgCategoryEntity);
 
@@ -66,14 +83,12 @@ public class ProductImgCategoryServiceImpl extends SuperServiceImpl<ProductImgCa
         log.info("开始新增图片分类单");
         boolean save = super.save(productImgCategoryEntity);
         if(!save) {
-            throw new ServiceException("图片分类单保存失败");
+            throw new ServiceException(ApiError.BILL_SAVE_FAIL, "图片分类");
         }
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "图片分类单" , productImgCategoryEntity.getId());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-//        operateLogService.addModuleOperateLog(msg, null, productImgCategoryEntity.getId(), "新增操作");
-        // TODO 新增明细（如果有明细的话）
+        String content = StrUtil.format("新增了图片分类[{}]", productImgCategoryEntity.getName());
+        operateLogService.addSysLogBySave(content, CLASSPATH, productImgCategoryEntity.getId(), productImgCategoryEntity.getParentId());
 
         return new BaseResultDTO.AddDTO(productImgCategoryEntity.getId(), productImgCategoryEntity.getId());
     }
@@ -87,6 +102,10 @@ public class ProductImgCategoryServiceImpl extends SuperServiceImpl<ProductImgCa
     public Boolean update(ProductImgCategoryDTO.UpdateDTO addOrUpdateDTO) {
         ProductImgCategoryEntity old = super.getById(addOrUpdateDTO.getId());
         old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "图片分类单"));
+        
+        // 检查是否允许编辑
+        checkUpdatePermission(old);
+        
         ProductImgCategoryEntity productImgCategoryEntity =  BeanMapperUtils.map(ProductImgCategoryEntity.class, addOrUpdateDTO);
 
         // 数据处理
@@ -94,73 +113,21 @@ public class ProductImgCategoryServiceImpl extends SuperServiceImpl<ProductImgCa
         log.info("编辑 开始修改图片分类单数据，id：【{}】", old.getId());
         boolean save = super.updateById(productImgCategoryEntity);
         if(!save) {
-            throw new ServiceException("图片分类单保存失败");
+            throw new ServiceException(ApiError.BILL_UPDATE_FAILED);
         }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
 
         // 记录主单操作日志
-            log.info("编辑 开始记录图片分类单日志数据，id：【{}】", productImgCategoryEntity.getId());
-            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), productImgCategoryEntity.getId(), "图片分类单");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-//        operateLogService.addModuleOperateLogByObj(old, productImgCategoryEntity, null, productImgCategoryEntity.getId(), msg);
+        log.info("编辑 开始记录图片分类单日志数据，id：【{}】", productImgCategoryEntity.getId());
+        ProductImgCategoryDTO.ViewDTO oldDto = BeanMapperUtils.map(ProductImgCategoryDTO.ViewDTO.class, old);
+        ProductImgCategoryDTO.ViewDTO newDto = BeanMapperUtils.map(ProductImgCategoryDTO.ViewDTO.class, productImgCategoryEntity);
+        String msg = StrUtil.format("图片分类[{}]", productImgCategoryEntity.getName());
+        operateLogService.addSysLogByUpdate(oldDto, newDto, CLASSPATH, productImgCategoryEntity.getId(), productImgCategoryEntity.getParentId(), msg);
         return Boolean.TRUE;
     }
 
 
-    @Override
-    public PagingVO<ProductImgCategoryDTO.ListDTO> paging(PagingDTO<ProductImgCategoryDTO.PagingParamDTO> pagingParamDTO) {
-        pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
-        Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
-        IPage<ProductImgCategoryDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingParamDTO.getParams());
-        if(CollUtil.isEmpty(pageData.getRecords())) {
-           return new PagingVO(pageData);
-        }
-        // 数据处理
-        fillList(pageData.getRecords());
-        return new PagingVO(pageData);
-    }
 
-    @Override
-    public List<ProductImgCategoryDTO.TabListDTO> tabList(PermissionsDTO param) {
-        ProductImgCategoryDTO.PagingParamDTO searchParam = new ProductImgCategoryDTO.PagingParamDTO();
-        searchParam.setPermissionSql(param.getPermissionSql());
-        List<ProductImgCategoryDTO.TabListDTO> list = baseMapper.tabList(searchParam);
-        // 获取状态列表
-        // TODO 替换当前表Tab状态字段
-        List<String> statusList = null;
-        // 不存在的状态赋值为0
-        List<String> existStatusList = list.stream().map(ProductImgCategoryDTO.TabListDTO::getTabFlag).collect(Collectors.toList());
-        statusList.parallelStream().forEach(status -> {
-            if(!existStatusList.contains(status)) {
-            list.add(new ProductImgCategoryDTO.TabListDTO(status, 0));
-        }
-        });
-        list.add(new ProductImgCategoryDTO.TabListDTO("all", list.stream().mapToInt(ProductImgCategoryDTO.TabListDTO::getCount).sum()));
-        // 计算合计数量
-        return list;
-    }
 
-    @Override
-    public void exportList(ProductImgCategoryDTO.ExportDTO param, HttpServletResponse response) {
-        List<ProductImgCategoryDTO.ListDTO> list = this.baseMapper.listExport(param);
-        if(CollUtil.isEmpty(list)) {
-           return;
-        }
-        // 数据处理
-        fillList(list);
-
-        // 导出数据
-        StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/productImgCategory.xlsx";
-        String name = "图片分类单导出";
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date).append(name);
-        try {
-            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
-        } catch (Exception e) {
-//            throw new ServiceException(ApiError.ERROR_1015);
-        }
-    }
     /**
     * 新增修改处理数据
     */
@@ -168,9 +135,49 @@ public class ProductImgCategoryServiceImpl extends SuperServiceImpl<ProductImgCa
     // TODO 验证数据 & 数据赋值
     }
 
+    /**
+     * 检查分类是否允许删除
+     * 所有分类、产品主图、产品图片分类、未分类不允许删除
+     * 这些分类都是系统分类，通过isSystem字段判断
+     */
+    private void checkDeletePermission(ProductImgCategoryEntity entity) {
+        if (entity == null) {
+            return;
+        }
+        // 系统分类不允许删除
+        if (Boolean.TRUE.equals(entity.getIsSystem())) {
+            throw new ServiceException(ApiError.COMMON_SYSTEM_CATEGORY_DELETE_FORBIDDEN);
+        }
+
+        // 检查是否有子分类
+        LambdaQueryWrapper<ProductImgCategoryEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(ProductImgCategoryEntity::getParentId, entity.getId());
+        long count = this.count(queryWrapper);
+        if (count > 0) {
+            throw new ServiceException(ApiError.COMMON_DELETE_CHILD_NODE_EXISTS);
+        }
+        //todo 删除分支需要判断是否有图片绑定在这个分类上 如果有 就禁止删除
+    }
+
+    /**
+     * 检查分类是否允许编辑
+     * 所有分类、产品主图、产品图片分类不允许编辑
+     */
+    private void checkUpdatePermission(ProductImgCategoryEntity entity) {
+        if (entity == null) {
+            return;
+        }
+        String name = entity.getName();
+        // 检查是否是特殊分类：所有分类、产品主图、产品图片分类（产品营销图、京东营销图、其他产品图等）
+        // 由于这些分类都是系统分类，通过isSystem字段判断更准确
+        if (Boolean.TRUE.equals(entity.getIsSystem())) {
+            throw new ServiceException(ApiError.COMMON_SYSTEM_CATEGORY_UPDATE_FORBIDDEN);
+        }
+    }
+
     @Override
     public ProductImgCategoryDTO.ViewDTO view(String id) {
-    ProductImgCategoryEntity productImgCategoryEntity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到图片分类单数据"));
+    ProductImgCategoryEntity productImgCategoryEntity = super.getByIdOpt(id).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "图片分类"));
     ProductImgCategoryDTO.ViewDTO data = BeanMapperUtils.map(ProductImgCategoryDTO.ViewDTO.class, productImgCategoryEntity);
     // 数据填充处理
     fillOne(data);
@@ -196,4 +203,87 @@ public class ProductImgCategoryServiceImpl extends SuperServiceImpl<ProductImgCa
         // TODO 其他如需要显示名称的字段赋值
         }
    }
+
+    /**
+     * 删除
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
+    public Boolean delete(String id) {
+        ProductImgCategoryEntity entity = super.getById(id);
+        if (entity == null) {
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "图片分类");
+        }
+        
+        // 检查是否允许删除
+        checkDeletePermission(entity);
+
+        
+        return super.removeById(id);
+    }
+
+    /**
+     * 列表查询（不分页，树结构）
+     */
+    @Override
+    public List<ProductImgCategoryDTO.TreeDTO> listTree(ProductImgCategoryDTO.ListTreeParamDTO paramDTO) {
+        // 构建查询条件
+        LambdaQueryWrapper<ProductImgCategoryEntity> queryWrapper = new LambdaQueryWrapper<>();
+        if (paramDTO != null && StrUtil.isNotBlank(paramDTO.getName())) {
+            queryWrapper.like(ProductImgCategoryEntity::getName, paramDTO.getName());
+        }
+        queryWrapper.orderByAsc(ProductImgCategoryEntity::getSort);
+        queryWrapper.orderByAsc(ProductImgCategoryEntity::getCreateTime);
+        
+        // 查询所有数据
+        List<ProductImgCategoryEntity> allList = this.list(queryWrapper);
+        if (CollUtil.isEmpty(allList)) {
+            return new ArrayList<>();
+        }
+        
+        // 转换为DTO
+        List<ProductImgCategoryDTO.TreeDTO> allTreeList = allList.stream()
+                .map(entity -> {
+                    ProductImgCategoryDTO.TreeDTO treeDTO = new ProductImgCategoryDTO.TreeDTO();
+                    treeDTO.setId(entity.getId());
+                    treeDTO.setName(entity.getName());
+                    treeDTO.setParentId(entity.getParentId());
+                    treeDTO.setLevel(entity.getLevel());
+                    treeDTO.setIsSystem(entity.getIsSystem());
+                    treeDTO.setSort(entity.getSort());
+                    treeDTO.setChildrenList(new ArrayList<>());
+                    return treeDTO;
+                })
+                .collect(Collectors.toList());
+        
+        // 构建树结构（反向构造：从子节点到父节点）
+        Map<String, ProductImgCategoryDTO.TreeDTO> treeMap = new HashMap<>();
+        List<ProductImgCategoryDTO.TreeDTO> rootList = new ArrayList<>();
+        
+        // 先建立ID映射
+        for (ProductImgCategoryDTO.TreeDTO treeDTO : allTreeList) {
+            treeMap.put(treeDTO.getId(), treeDTO);
+        }
+        
+        // 构建树结构
+        for (ProductImgCategoryDTO.TreeDTO treeDTO : allTreeList) {
+            String parentId = treeDTO.getParentId();
+            if (StrUtil.isBlank(parentId) || "0".equals(parentId) || !treeMap.containsKey(parentId)) {
+                // 根节点
+                rootList.add(treeDTO);
+            } else {
+                // 子节点，添加到父节点的childrenList
+                ProductImgCategoryDTO.TreeDTO parent = treeMap.get(parentId);
+                if (parent != null) {
+                    if (parent.getChildrenList() == null) {
+                        parent.setChildrenList(new ArrayList<>());
+                    }
+                    parent.getChildrenList().add(treeDTO);
+                }
+            }
+        }
+        
+        return rootList;
+    }
 }

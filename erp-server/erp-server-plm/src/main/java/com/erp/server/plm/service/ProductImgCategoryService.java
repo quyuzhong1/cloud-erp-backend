@@ -36,23 +36,6 @@ public interface ProductImgCategoryService extends SuperService<ProductImgCatego
     Boolean update(ProductImgCategoryDTO.UpdateDTO dto);
 
 
-    /**
-    * 分页列表查询
-    * @author wuhaotian
-    * @date: 2025-12-29
-    * @param pagingParamDTO
-    * @return PagingVO<ProductImgCategoryDTO.ListDTO>>
-    */
-    PagingVO<ProductImgCategoryDTO.ListDTO> paging(PagingDTO<ProductImgCategoryDTO.PagingParamDTO> pagingParamDTO);
-
-    /**
-    * 状态统计
-    * @author wuhaotian
-    * @date: 2025-12-29
-    * @param dto
-    * @return List<ProductImgCategoryDTO.TabListDTO>>
-    */
-    List<ProductImgCategoryDTO.TabListDTO> tabList(PermissionsDTO dto);
 
     /**
     * 详情
@@ -65,12 +48,20 @@ public interface ProductImgCategoryService extends SuperService<ProductImgCatego
 
 
     /**
-    * 导出Excel
+    * 删除
     * @author wuhaotian
     * @date: 2025-12-29
-    * @param dto
-    * @param response
+    * @param id
     * @return
     */
-    void exportList(ProductImgCategoryDTO.ExportDTO dto, HttpServletResponse response);
+    Boolean delete(String id);
+
+    /**
+    * 列表查询（不分页，树结构）
+    * @author wuhaotian
+    * @date: 2025-12-29
+    * @param paramDTO
+    * @return List<ProductImgCategoryDTO.TreeDTO>
+    */
+    List<ProductImgCategoryDTO.TreeDTO> listTree(ProductImgCategoryDTO.ListTreeParamDTO paramDTO);
 }
