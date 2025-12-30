@@ -104,19 +104,19 @@ public class ContractInfoServiceImpl extends SuperServiceImpl<ContractInfoMapper
     public BaseResultDTO.AddDTO add(ContractInfoDTO.AddDTO addDTO) {
         List<String> serviceProviderIdList = addDTO.getServiceProviderIdList().stream().filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
         if(CollUtil.isEmpty(serviceProviderIdList)){
-            throw new ServiceException(ApiError.ERROR_MISSING_SUPPLIER);
+            throw new ServiceException(ApiError.SUPPLIER_INFO_REQUIRED);
         }
 
         //根据类型判断
         if(addDTO.getType().equals(TemplateManagementBizTypeEnum.PURCHASEFRAMEWORK.getCode())){
             if(CollUtil.isEmpty(addDTO.getAttachmentUrlList()) || CollUtil.isEmpty(addDTO.getAttachmentNameList())){
-                throw new ServiceException(ApiError.ERROR_PURCHASE_FRAMEWORK_CONTRACT_ATTACHMENT_REQUIRED);
+                throw new ServiceException(ApiError.PO_FRAMEWORK_CONTRACT_ATTACHMENT_REQUIRED);
             }
         }else {
             //查询模板
             String templateId = addDTO.getTemplateId();
             if(StringUtils.isBlank(templateId)){
-                throw new ServiceException(ApiError.ERROR_CONTRACT_TEMPLATE_REQUIRED);
+                throw new ServiceException(ApiError.COMMON_CONTRACT_TEMPLATE_REQUIRED);
             }
 
             List<TemplateManagementEntity> list = FeignQuery.create(TemplateManagementEntity.class)
@@ -124,7 +124,7 @@ public class ContractInfoServiceImpl extends SuperServiceImpl<ContractInfoMapper
                     .eq(TemplateManagementEntity::getId, templateId)
                     .list();
             if(CollUtil.isEmpty(list)){
-                throw new ServiceException(ApiError.ERROR_CONTRACT_TEMPLATE_NOT_EXIST);
+                throw new ServiceException(ApiError.COMMON_CONTRACT_TEMPLATE_NOT_AVAILABLE);
             }
             String name = list.get(0).getName();
             addDTO.setName(name);
@@ -132,12 +132,12 @@ public class ContractInfoServiceImpl extends SuperServiceImpl<ContractInfoMapper
             if(serviceProviderIdList.contains("all")){
                 Integer count = lambdaQuery().eq(ContractInfoEntity::getTemplateId, templateId).count();
                 if(count > 0){
-                    throw new ServiceException(ApiError.ERROR_CONTRACT_TEMPLATE_EXIST,name);
+                    throw new ServiceException(ApiError.COMMON_CONTRACT_TEMPLATE_BOUND_BY_OTHER_SUPPLIER,name);
                 }
             }else {
                 Integer count = lambdaQuery().eq(ContractInfoEntity::getServiceProviderId, "all").eq(ContractInfoEntity::getTemplateId, templateId).count();
                 if(count > 0){
-                    throw new ServiceException(ApiError.ERROR_CONTRACT_TEMPLATE_DICTINCT,"所有供应商",name);
+                    throw new ServiceException(ApiError.COMMON_CONTRACT_TEMPLATE_BINDING_DUPLICATE,"所有供应商",name);
                 }
             }
             List<ContractInfoEntity> oldList = lambdaQuery().in(ContractInfoEntity::getServiceProviderId, serviceProviderIdList).eq(ContractInfoEntity::getTemplateId, templateId).list();
@@ -147,7 +147,7 @@ public class ContractInfoServiceImpl extends SuperServiceImpl<ContractInfoMapper
                         .distinct()
                         .filter(StrUtil::isNotBlank)
                         .collect(Collectors.joining(","));
-                throw new ServiceException(ApiError.ERROR_CONTRACT_TEMPLATE_DICTINCT,supplierNames,name);
+                throw new ServiceException(ApiError.COMMON_CONTRACT_TEMPLATE_BINDING_DUPLICATE,supplierNames,name);
             }
         }
 
@@ -233,7 +233,7 @@ public class ContractInfoServiceImpl extends SuperServiceImpl<ContractInfoMapper
         LocalDate effectiveDate = contractInfoEntity.getEffectiveDate();
         LocalDate expireDate = contractInfoEntity.getExpireDate();
         if (Objects.nonNull(effectiveDate) && Objects.nonNull(expireDate) && expireDate.compareTo(effectiveDate) < 0) {
-            throw new ServiceException(ApiError.ERROR_98125);
+            throw new ServiceException(ApiError.COMMON_EXPIRE_AFTER_EFFECTIVE_REQUIRED);
         }
     }
 
@@ -245,39 +245,39 @@ public class ContractInfoServiceImpl extends SuperServiceImpl<ContractInfoMapper
     public Boolean update(ContractInfoDTO.UpdateDTO addOrUpdateDTO) {
         List<String> serviceProviderIdList = addOrUpdateDTO.getServiceProviderIdList().stream().filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
         if(CollUtil.isEmpty(serviceProviderIdList)){
-            throw new ServiceException(ApiError.ERROR_SUPPLIER_ABSENCE);
+            throw new ServiceException(ApiError.SUPPLIER_NOT_FOUND);
         }
 
         String serviceProviderId = serviceProviderIdList.get(0);
 
         ContractInfoEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "合同管理单"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "合同管理单"));
         // 待提交和审核不通过允许修改
         if (!ApproveStatusEnum.allowUpdateStatus(old.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_1029);
+            throw new ServiceException(ApiError.BILL_UPDATE_STATUS_NOT_ALLOWED);
         }
 
         if(!serviceProviderId.equals(old.getServiceProviderId())){
-            throw new ServiceException(ApiError.ERROR_SUPPLIER_NOT_ALLOW_MODIFY);
+            throw new ServiceException(ApiError.SUPPLIER_MODIFY_FORBIDDEN);
         }
 
         //根据类型判断
         if(addOrUpdateDTO.getType().equals(TemplateManagementBizTypeEnum.PURCHASEFRAMEWORK.getCode())){
             if(CollUtil.isEmpty(addOrUpdateDTO.getAttachmentUrlList()) || CollUtil.isEmpty(addOrUpdateDTO.getAttachmentNameList())){
-                throw new ServiceException(ApiError.ERROR_PURCHASE_FRAMEWORK_CONTRACT_ATTACHMENT_REQUIRED);
+                throw new ServiceException(ApiError.PO_FRAMEWORK_CONTRACT_ATTACHMENT_REQUIRED);
             }
         }else {
             //查询模板
             String templateId = addOrUpdateDTO.getTemplateId();
             if(StringUtils.isBlank(templateId)){
-                throw new ServiceException(ApiError.ERROR_CONTRACT_TEMPLATE_REQUIRED);
+                throw new ServiceException(ApiError.COMMON_CONTRACT_TEMPLATE_REQUIRED);
             }
             List<TemplateManagementEntity> list = FeignQuery.create(TemplateManagementEntity.class)
                     .eq(TemplateManagementEntity::getDisabled, Boolean.FALSE)
                     .eq(TemplateManagementEntity::getId, templateId)
                     .list();
             if(CollUtil.isEmpty(list)){
-                throw new ServiceException(ApiError.ERROR_CONTRACT_TEMPLATE_NOT_EXIST);
+                throw new ServiceException(ApiError.COMMON_CONTRACT_TEMPLATE_NOT_AVAILABLE);
             }
             String name = list.get(0).getName();
             addOrUpdateDTO.setName(name);
@@ -292,7 +292,7 @@ public class ContractInfoServiceImpl extends SuperServiceImpl<ContractInfoMapper
                         .distinct()
                         .filter(StrUtil::isNotBlank)
                         .collect(Collectors.joining(","));
-                throw new ServiceException(ApiError.ERROR_CONTRACT_TEMPLATE_DICTINCT,supplierNames,name);
+                throw new ServiceException(ApiError.COMMON_CONTRACT_TEMPLATE_BINDING_DUPLICATE,supplierNames,name);
             }
         }
 
@@ -537,7 +537,7 @@ public class ContractInfoServiceImpl extends SuperServiceImpl<ContractInfoMapper
         ContractInfoEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到合同管理单数据"));
         // 只有待提交数据允许删除
         if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT.getCode(), entity.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_98009);
+            throw new ServiceException(ApiError.BILL_DELETE_ALLOWED_STATUS_ONLY);
         }
         // 删除主单数据
         log.info("删除 开始删除合同管理单主单数据，id：【{}】", id);
@@ -585,7 +585,7 @@ public class ContractInfoServiceImpl extends SuperServiceImpl<ContractInfoMapper
     private void validateSubmit(ContractInfoEntity entity) {
         // 待提交或审核不通过并且未作废允许提交
         if(!ApproveStatusEnum.allowUpdateStatus(entity.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_98010);
+            throw new ServiceException(ApiError.BILL_SUBMIT_ALLOWED_STATUS_ONLY);
         }
         return;
     }
@@ -596,12 +596,12 @@ public class ContractInfoServiceImpl extends SuperServiceImpl<ContractInfoMapper
     public BatchResultDTO approve(ApproveOneDTO dto) {
         ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(dto.getType());
         if(Objects.equals(approveType, ApproveTypeEnum.REJECT) && StrUtils.isEmpty(dto.getComment())) {
-            throw new ServiceException(ApiError.REJECT_COMMENT_NOT_EMPTY);
+            throw new ServiceException(ApiError.WF_REJECT_COMMENT_REQUIRED);
         }
         ContractInfoEntity entity = getById(dto.getId());
         // 审核中的数据允许审核
         if(!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING.getCode())) {
-            throw new ServiceException(ApiError.ERROR_98006);
+            throw new ServiceException(ApiError.WF_APPROVE_ALLOWED_STATUS_ONLY);
         }
         // 调用流程审核
         approveProcess(entity, dto);
@@ -662,7 +662,7 @@ public class ContractInfoServiceImpl extends SuperServiceImpl<ContractInfoMapper
         ApiResult<ProcessManagementDTO.ApproveResultDTO> approveResult = workflowFeign.approve(approveDTO);
         Integer code = approveResult.getCode();
         if (200 != code) {
-            throw new ServiceException(ApiError.ERROR_94006);
+            throw new ServiceException(ApiError.WF_APPROVE_FAILED);
         }
         ProcessManagementDTO.ApproveResultDTO data = approveResult.getData();
         if (ObjectUtil.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()) {
@@ -697,7 +697,7 @@ public class ContractInfoServiceImpl extends SuperServiceImpl<ContractInfoMapper
     private Boolean validateDisApprove(ContractInfoEntity entity) {
         // 已审核支持反审核
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus())) {
-            throw new ServiceException(ApiError.ERROR_98014);
+            throw new ServiceException(ApiError.BILL_REVERSE_APPROVAL_ALLOWED_APPROVED_ONLY);
         }
         return true;
     }
@@ -713,7 +713,7 @@ public class ContractInfoServiceImpl extends SuperServiceImpl<ContractInfoMapper
         ContractInfoEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到合同管理单数据"));
         // 只有审核中的单据允许撤销
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())) {
-            throw new ServiceException(ApiError.ERROR_98007);
+            throw new ServiceException(ApiError.WF_REVOKE_PROCESS_ALLOWED_STATUS_ONLY);
         }
         log.info("撤销 开始修改合同管理单状态，id：【{}】", id);
         updateApproveStatus(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
@@ -859,7 +859,7 @@ public class ContractInfoServiceImpl extends SuperServiceImpl<ContractInfoMapper
     public ExportZipResultDTO exportZip(ContractInfoDTO.PagingParamDTO pagingParamDTO) {
         List<ContractInfoDTO.ListAttachDTO> list = this.baseMapper.listAttachByIds(pagingParamDTO);
         if(CollUtil.isEmpty(list)){
-            throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
+            throw new ServiceException(ApiError.FILE_EXPORT_DATA_EMPTY);
         }
         // 动态生成文件名
         String fileName = SourceTypeEnum.CONTRACT_INFO.getName()+"_"+ LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME) + ".zip";
@@ -963,7 +963,7 @@ public class ContractInfoServiceImpl extends SuperServiceImpl<ContractInfoMapper
                 .orderByDesc(ContractInfoEntity::getUpdateTime)
                 .list();
         if(CollUtil.isEmpty(list)){
-            throw new ServiceException(ApiError.ERROR_CONTACT_NOT_BINDING);
+            throw new ServiceException(ApiError.COMMON_CONTRACT_NOT_BINDING);
         }
 
 //        LocalDate now = LocalDate.now();
@@ -990,7 +990,7 @@ public class ContractInfoServiceImpl extends SuperServiceImpl<ContractInfoMapper
         // 过滤出处于“生效中”状态的合同
         list = list.stream().filter(e -> e.getStatus().equals(ContractInfoStatusEnum.EFFECTIVE.getCode())).collect(Collectors.toList());
         if(CollUtil.isEmpty(list)){
-            throw new ServiceException(ApiError.ERROR_CONTACT_NOT_BINDING);
+            throw new ServiceException(ApiError.COMMON_CONTRACT_NOT_BINDING);
         }
 
         // 提取有效的模板ID集合
@@ -1003,7 +1003,7 @@ public class ContractInfoServiceImpl extends SuperServiceImpl<ContractInfoMapper
                 .list();
 
         if (CollUtil.isEmpty(templateManagementList)) {
-            throw new ServiceException(ApiError.ERROR_CONTACT_NOT_BINDING);
+            throw new ServiceException(ApiError.COMMON_CONTRACT_NOT_BINDING);
         }
 
         // 构建模板ID到模板实体的映射关系，用于快速查找

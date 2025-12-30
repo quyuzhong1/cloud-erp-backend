@@ -3,7 +3,6 @@ package com.erp.server.wms.rocketmq.sync.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
@@ -28,7 +27,10 @@ import com.erp.model.dmp.kingdee.KingdeeReturnOrderEntity;
 import com.erp.model.dmp.kingdee.item.KingdeeReturnOrderItemEntity;
 import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
+import com.erp.model.oms.entity.SoInfoEntity;
+import com.erp.model.oms.entity.SoReturnEntity;
 import com.erp.model.oms.enums.BillTypeEnum;
+import com.erp.model.oms.enums.ShopOrderRouteEnum;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
@@ -146,7 +148,7 @@ public class SyncSoReturnServiceImpl implements SyncSoReturnService {
         List<SkuVO> skuNoList = plmTaskFeign.listBySkuNoList(kingdeeSkuNoList);
         //金蝶sku和plm对应不上跳过
         if (CollectionUtils.isEmpty(skuNoList)) {
-            throw new ServiceException(ApiError.ERROR_92057, StringUtil.join(skuNoList, ","));
+            throw new ServiceException(ApiError.SO_B2C_DELIVERY_K3_CLOUD_RETURN_SKU_NOT_FOUND, StringUtil.join(skuNoList, ","));
         }
 
         //获取退货单明细
@@ -204,7 +206,7 @@ public class SyncSoReturnServiceImpl implements SyncSoReturnService {
             WarehouseEntity warehouseEntity = warehouseEntities.stream().filter(req -> req.getKingdeeWarehouseCode().equals(kingdeeReturnOrderItemEntity.getFStockNumber())).findFirst().orElse(null);
             //如果仓库不存在抛出异常
             if (ObjectUtil.isEmpty(warehouseEntity)) {
-                throw new ServiceException(ApiError.ERROR_92056, kingdeeReturnOrderItemEntity.getFStockNumber());
+                throw new ServiceException(ApiError.SO_B2C_DELIVERY_K3_CLOUD_RETURN_WAREHOUSE_NOT_FOUND, kingdeeReturnOrderItemEntity.getFStockNumber());
             }
 
             instockDetailEntity.setWarehouseId(warehouseEntity.getId());
@@ -308,11 +310,16 @@ public class SyncSoReturnServiceImpl implements SyncSoReturnService {
                 .eq(ThirdMappingEntity::getThirdSysType, PlatformDictEnum.WDT.getCode())
                 .eq(ThirdMappingEntity::getThirdId, dto.getShopId()));
         if (CollectionUtils.isEmpty(shop)) {
-            throw new ServiceException(ApiError.ERROR_WDT_NOT_FOUND_SHOP_MAPPING, dto.getShopName());
+            throw new ServiceException(ApiError.MAPPING_SHOP_WDT_NOT_FOUND, dto.getShopName());
         }
         ShopInfoEntity shopInfo = FeignQuery.getById(ShopInfoEntity.class, shop.get(0).getSysId());
         if(Objects.isNull(shopInfo)){
             throw new ServiceException("erp店铺信息为空");
+        }
+        if(ShopOrderRouteEnum.B2B.getCode().equals(shopInfo.getOrderRouteType())){
+            inStockEntity.setType(OrderTypeEnum.B2B.getCode());
+        }else{
+            inStockEntity.setType(OrderTypeEnum.B2C.getCode());
         }
         //查询旺店通对应系统仓库
         List<ThirdMappingEntity> warehouseList = FeignQuery.list(FeignQuery.create(ThirdMappingEntity.class)
@@ -320,7 +327,7 @@ public class SyncSoReturnServiceImpl implements SyncSoReturnService {
                 .eq(ThirdMappingEntity::getThirdSysType, PlatformDictEnum.WDT.getCode())
                 .eq(ThirdMappingEntity::getThirdId, dto.getWarehouseId()));
         if (CollectionUtils.isEmpty(warehouseList)) {
-            throw new ServiceException(ApiError.ERROR_WDT_NOT_FOUND_WAREHOUSE_MAPPING, dto.getWarehouseName());
+            throw new ServiceException(ApiError.MAPPING_WAREHOUSE_WDT_NOT_FOUND, dto.getWarehouseName());
         }
         WarehouseEntity warehouse = FeignQuery.getById(WarehouseEntity.class, warehouseList.get(0).getSysId());
         //组织信息
@@ -354,7 +361,7 @@ public class SyncSoReturnServiceImpl implements SyncSoReturnService {
         }
         //金蝶sku和plm对应不上跳过
         if (CollectionUtils.isEmpty(skuEntityList)) {
-            throw new ServiceException(ApiError.ERROR_WDT_NOT_FOUND_SKU, StringUtil.join(skuList, ","));
+            throw new ServiceException(ApiError.MAPPING_SKU_WDT_NOT_FOUND, StringUtil.join(skuList, ","));
         }
         inStockEntity.setId(IdWorker.getIdStr());
         //平台订单号
@@ -367,7 +374,7 @@ public class SyncSoReturnServiceImpl implements SyncSoReturnService {
             detailEntity.setWarehouseName(warehouse.getName());
             Optional<ProductDetailEntity> skuVoOptional = skuEntityList.stream().filter(req -> req.getSkuNo().equals(detailEntity.getSkuNo())).findFirst();
             if (!skuVoOptional.isPresent()) {
-                throw new ServiceException(ApiError.ERROR_WDT_NOT_FOUND_SKU, detailEntity.getSkuNo());
+                throw new ServiceException(ApiError.MAPPING_SKU_WDT_NOT_FOUND, detailEntity.getSkuNo());
             }
             ProductDetailEntity skuVO =skuVoOptional.get();
             detailEntity.setMainId(inStockEntity.getId());
@@ -380,7 +387,31 @@ public class SyncSoReturnServiceImpl implements SyncSoReturnService {
             }
         }
         inStockEntity.setDetailEntityList(detailList);
+        if(OrderTypeEnum.B2B.getCode().equals(inStockEntity.getType())){
+            this.buildB2bOrder(inStockEntity);
+        }
         return inStockEntity;
+    }
+
+    private void buildB2bOrder(SoReturnInstockEntity inStockEntity) {
+        if(StringUtils.isBlank(inStockEntity.getPlatformOrderCode())){
+            return;
+        }
+        List<SoInfoEntity> soInfoEntityList = FeignQuery.create(SoInfoEntity.class).eq(SoInfoEntity::getPlatformOrderCode,inStockEntity.getPlatformOrderCode()).list();
+        if (CollectionUtils.isNotEmpty(soInfoEntityList)) {
+            SoInfoEntity soInfoEntity = soInfoEntityList.get(0);
+            inStockEntity.setSoId(soInfoEntity.getId());
+            inStockEntity.setSoCode(soInfoEntity.getCode());
+        }
+
+        List<SoReturnEntity> soReturnEntityList = FeignQuery.create(SoReturnEntity.class).eq(SoReturnEntity::getPlatformOrderCode,inStockEntity.getPlatformOrderCode()).list();
+        if (CollectionUtils.isNotEmpty(soReturnEntityList)) {
+            SoReturnEntity soReturn = soReturnEntityList.get(0);
+            inStockEntity.setSoReturnId(soReturn.getId());
+            inStockEntity.setSoReturnCode(soReturn.getCode());
+            inStockEntity.setSourceCode(soReturn.getCode());
+            inStockEntity.setSourceId(soReturn.getId());
+        }
     }
 
     private void sendPushTask(List<SoReturnInstockEntity> list, String operate) {

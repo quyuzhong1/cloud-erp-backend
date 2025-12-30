@@ -8,7 +8,6 @@ import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.enums.DynamicDataSourceTypeEnum;
 import com.common.business.vo.LoginUser;
 import com.erp.model.sys.dto.SysUserDTO;
-import com.erp.model.sys.entity.AuthUserShopEntity;
 import com.erp.model.sys.entity.AuthUserWarehouseEntity;
 import com.erp.model.sys.enums.AuthDataTypeEnum;
 import com.erp.server.sys.constant.SysConstant;
@@ -76,7 +75,7 @@ public class AuthUserWarehouseServiceImpl extends SuperServiceImpl<AuthUserWareh
     @Override
     public Boolean update(AuthUserWarehouseDTO.UpdateDTO addOrUpdateDTO) {
         AuthUserWarehouseEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "用户-仓库权限"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "用户-仓库权限"));
         AuthUserWarehouseEntity authUserWarehouseEntity =  BeanMapperUtils.map(AuthUserWarehouseEntity.class, addOrUpdateDTO);
 
         // 数据处理

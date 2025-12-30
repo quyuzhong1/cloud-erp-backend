@@ -317,13 +317,13 @@ public class FirstMileEstimatedBillServiceImpl extends SuperServiceImpl<FirstMil
             EasyExcel.read(excelFile.getInputStream(), FirstMileEstimatedBillExcelDTO.class, listener).sheet(0).doRead();
         } catch (IOException e) {
             log.error("导入错误！", e);
-            throw new ServiceException(ApiError.ERROR_95124);
+            throw new ServiceException(ApiError.FILE_DATA_IMPORT_FAILED);
         } catch (ExcelCommonException e) {
             log.error("导入格式错误！", e);
-            throw new ServiceException(ApiError.ERROR_1016);
+            throw new ServiceException(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX);
         }
         if (listener.getDataList().isEmpty()) {
-            throw new ServiceException(ApiError.ERROR_95123, "基础数据");
+            throw new ServiceException(ApiError.FILE_DATA_REQUIRED, "基础数据");
         }
         //物流费用配置
         List<TmsCfgCostEntity> tmsCfgCostList = tmsCfgCostService.lambdaQuery().eq(TmsCfgCostEntity::getDictCostAttribution, DictCostAttributionEnum.FIRST_MILE.getCode()).list();

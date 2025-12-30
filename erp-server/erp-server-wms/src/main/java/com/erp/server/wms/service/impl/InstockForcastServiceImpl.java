@@ -2,10 +2,8 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.StrUtil;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.enums.ApproveStatusEnum;
-import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
@@ -24,7 +22,6 @@ import com.erp.server.wms.service.*;
 import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,7 +30,6 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -103,7 +99,7 @@ public class InstockForcastServiceImpl extends SuperServiceImpl<InstockForcastMa
         // 仓库信息
         WarehouseDTO.UpdateDTO warehouseDetail = warehouseService.detailWithCache(dto.getWarehouseId());
         if(Objects.isNull(warehouseDetail) || CharSequenceUtil.isEmpty(warehouseDetail.getId())) {
-            throw new ServiceException(ApiError.ERROR_99002);
+            throw new ServiceException(ApiError.WH_PARAM_NOT_FOUND);
         }
 
         // 仓库组织

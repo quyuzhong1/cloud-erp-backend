@@ -12,8 +12,6 @@ import com.common.business.enums.SyncStatusEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.message.constant.RocketMqConsumerGroup;
-import com.common.message.constant.RocketMqTopic;
 import com.common.message.handler.AbstractPlatformConsumerHandler;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.entity.ThirdMappingEntity;
@@ -31,8 +29,6 @@ import com.sdk.wangdian.sdk.api.wms.stockout.dto.CreateOtherStockoutRequest;
 import com.sdk.wangdian.sdk.api.wms.stockout.dto.StockoutOtherQueryResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.rocketmq.spring.annotation.ConsumeMode;
-import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.python.google.common.util.concurrent.RateLimiter;
 import org.springframework.stereotype.Component;
 
@@ -112,7 +108,7 @@ public class WdtOtherOutStockConsumer<T extends DmpSyncTaskIdDTO> extends Abstra
                             && !StringUtils.equals(task.getStatus(), SyncStatusEnum.NO_NEED_SYNC.getCode()))
                     .count();
             if (count > 0) {
-                return ApiResult.error(ApiError.ERROR_WDT_CANCEL_PUSH.code, String.format("前序任务未完成, 跳过本次推送: %s", request));
+                return ApiResult.error(ApiError.COMMON_WDT_PRE_TASK_NOT_FINISHED_CANCEL_EXECUTION.getCode(), String.format("前序任务未完成, 跳过本次推送: %s", request));
             }
         }
 
@@ -125,16 +121,16 @@ public class WdtOtherOutStockConsumer<T extends DmpSyncTaskIdDTO> extends Abstra
                 .count();
         //先创建的任务必须先完成
         if (count > 0) {
-            return ApiResult.error(ApiError.ERROR_WDT_CANCEL_PUSH.code, String.format("前序任务未完成, 跳过本次推送: %s", request));
+            return ApiResult.error(ApiError.COMMON_WDT_PRE_TASK_NOT_FINISHED_CANCEL_EXECUTION.getCode(), String.format("前序任务未完成, 跳过本次推送: %s", request));
         }
 
         ThirdMappingEntity thirdMapping = thirdMappingService.getByThirdCodeAndType(request.getWarehouseNo(), ThirdSysTypeEnum.WDT.getCode(), ThirdSysTypeEnum.WAREHOUSE.getCode());
         if (ObjectUtils.isEmpty(thirdMapping)) {
-            throw new ServiceException(ApiError.ERROR_3000.code, String.format("推送旺店通其他出库单失败: 三方仓库%s未映射", request.getWarehouseNo()));
+            throw new ServiceException(ApiError.COMMON_WDT_API_CALL_FAILED.getCode(), String.format("推送旺店通其他出库单失败: 三方仓库%s未映射", request.getWarehouseNo()));
         }
         ThirdWarehouseEntity thirdWarehouse = thirdWarehouseService.getById(thirdMapping.getThirdInfoId());
         if (ObjectUtils.isEmpty(thirdWarehouse)) {
-            throw new ServiceException(ApiError.ERROR_3000.code, String.format("推送旺店通其他出库单失败: 三方仓库%s不存在", request.getWarehouseNo()));
+            throw new ServiceException(ApiError.COMMON_WDT_API_CALL_FAILED.getCode(), String.format("推送旺店通其他出库单失败: 三方仓库%s不存在", request.getWarehouseNo()));
         }
         //根据旺店通仓库类型，决定调用的API
         if (WdtWarehouseTypeEnum.SELF_TRANSFER.getCode().equals(thirdWarehouse.getType())) {

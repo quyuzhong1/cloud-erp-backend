@@ -848,19 +848,19 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
                 try {
                     new ExcelPrintUtils().patchExport(errorList, response, sb.toString(), excelPath);
                 } catch (IOException e) {
-                    throw new ServiceException(ApiError.ERROR_95125);
+                    throw new ServiceException(ApiError.FILE_EXPORT_ERROR_DATA_FAILED);
                 }
                 return Boolean.FALSE;
             }
         } catch (SocketTimeoutException e) {
             log.error("导入超时错误！>>>{}", e);
-            throw new ServiceException(ApiError.ERROR_IMPORT_TIMEOUT);
+            throw new ServiceException(ApiError.FILE_IMPORT_TIMEOUT);
         } catch (IOException e) {
             log.error("导入错误！>>>{}", e);
-            throw new ServiceException(ApiError.ERROR_95124);
+            throw new ServiceException(ApiError.FILE_DATA_IMPORT_FAILED);
         } catch (ExcelCommonException e) {
             log.error("导入错误！>>>{}", e);
-            throw new ServiceException(ApiError.ERROR_1016);
+            throw new ServiceException(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX);
         }
 
         return Boolean.TRUE;
@@ -895,7 +895,7 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
             wb.write(output);
             wb.close();
         } catch (Exception e) {
-            throw new ServiceException(ApiError.DEFAULT);
+            throw new ServiceException(ApiError.HTTP_UNKNOWN);
         }
     }
 

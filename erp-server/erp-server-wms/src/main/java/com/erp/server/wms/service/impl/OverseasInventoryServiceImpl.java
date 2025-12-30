@@ -103,7 +103,7 @@ public class OverseasInventoryServiceImpl extends SuperServiceImpl<OverseasInven
     public Boolean update(OverseasInventoryDTO.UpdateDTO updateDTO) {
         OverseasInventoryEntity old = super.getById(updateDTO.getId());
         if (Objects.isNull(old)){
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "海外仓库存");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "海外仓库存");
         }
         OverseasInventoryEntity overseasInventoryEntity =  BeanMapperUtils.map(OverseasInventoryEntity.class, updateDTO);
 

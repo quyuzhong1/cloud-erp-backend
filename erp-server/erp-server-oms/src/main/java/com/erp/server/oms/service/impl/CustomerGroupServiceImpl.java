@@ -61,7 +61,7 @@ public class CustomerGroupServiceImpl extends SuperServiceImpl<CustomerGroupMapp
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public Boolean saveOrUpdateBatchGroup(ValidList<CustomerGroupDTO.AddOrUpdateDTO> groupList) {
         if (CollectionUtils.isEmpty(groupList)) {
-            throw new ServiceException(ApiError.ERROR_92000);
+            throw new ServiceException(ApiError.CUSTOMER_GROUP_REQUIRED);
         }
         List<CustomerGroupEntity> dbList = this.list();
         //检查名称
@@ -72,7 +72,7 @@ public class CustomerGroupServiceImpl extends SuperServiceImpl<CustomerGroupMapp
         List<String> groupIdList = customerInfoService.listGroup();
         long count = groupIdList.stream().filter(g -> deleteIdList.contains(g)).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_92002);
+            throw new ServiceException(ApiError.CUSTOMER_GROUP_IN_USE_DELETE_FORBIDDEN);
         }
         List<CustomerGroupEntity> batchGroupList = BeanMapper.copyList(groupList, CustomerGroupEntity.class);
 
@@ -183,7 +183,7 @@ public class CustomerGroupServiceImpl extends SuperServiceImpl<CustomerGroupMapp
         int size = nameList.size();
         int distinctSize = nameList.stream().distinct().collect(Collectors.toList()).size();
         if(size!=distinctSize){
-            throw new ServiceException(ApiError.ERROR_92001);
+            throw new ServiceException(ApiError.CUSTOMER_GROUP_NAME_DUPLICATE);
         }
 
     }

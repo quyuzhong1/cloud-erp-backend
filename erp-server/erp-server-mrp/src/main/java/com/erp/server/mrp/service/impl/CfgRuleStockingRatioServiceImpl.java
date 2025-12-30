@@ -98,7 +98,7 @@ public class CfgRuleStockingRatioServiceImpl extends SuperServiceImpl<CfgRuleSto
         //备货信息
         CfgRuleStockUpEntity stockUpEntity = cfgRuleStockUpService.getById(stockUpId);
         if (ObjectUtil.isEmpty(stockUpEntity)) {
-            throw new ServiceException(ApiError.NOT_EXIST_BILL,"规则设置（备货）");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE,"规则设置（备货）");
         }
         Map<String, List<CfgRuleStockingRatioEntity>> map = list.stream().collect(Collectors.groupingBy(CfgRuleStockingRatioEntity::getType));
         //日志

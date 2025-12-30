@@ -2537,7 +2537,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         switch (dateType) {
             case "DAY":
             case "WEEK":
-                throw new ServiceException(ApiError.ERROR_DATE_TYPE);
+                throw new ServiceException(ApiError.BI_FIN_SALES_DATE_TYPE);
             case "MONTH":
                 String format;
                 list = salesList.stream().map(req -> (req.getGroupDate() + "").substring(0, 7)).collect(Collectors.toList());
@@ -2815,14 +2815,14 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
             case "DAY":
                 long days = Duration.between(dto.getStartTime(), dto.getEndTime()).toDays();
                 if (days > 31) {
-                    throw new ServiceException(ApiError.ERROR_DATE_RANGE_THIRTY_ONE);
+                    throw new ServiceException(ApiError.BI_DATE_RANGE_THIRTY_ONE);
                 }
                 dateTimeFormatter = DateTimeFormatter.ofPattern(DateUtil.fmt_day);
                 break;
             case "WEEK":
                 long weekDay = Duration.between(dto.getStartTime(), dto.getEndTime()).toDays();
                 if (weekDay > 90) {
-                    throw new ServiceException(ApiError.ERROR_DATE_RANGE_WEEK_DAY);
+                    throw new ServiceException(ApiError.BI_DATE_RANGE_WEEK_DAY);
                 }
                 dateTimeFormatter = DateTimeFormatter.ofPattern(DateUtil.fmt_day);
                 break;
@@ -3146,7 +3146,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
             case USER:
                 return userNewAndOldSalesAmount(dto);
             default:
-                throw new ServiceException(ApiError.SEARCH_TYPE_EXIST);
+                throw new ServiceException(ApiError.COMMON_SEARCH_TYPE_NOT_FOUND);
         }
     }
 
@@ -3491,7 +3491,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
             case USER:
                 return userCompletionRateRanking(dto);
             default:
-                throw new ServiceException(ApiError.SEARCH_TYPE_EXIST);
+                throw new ServiceException(ApiError.COMMON_SEARCH_TYPE_NOT_FOUND);
         }
     }
 

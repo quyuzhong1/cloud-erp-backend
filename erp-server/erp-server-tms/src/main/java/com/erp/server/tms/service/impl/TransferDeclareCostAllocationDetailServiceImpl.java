@@ -10,7 +10,6 @@ import com.erp.server.tms.service.TransferDeclareCostAllocationDetailService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.erp.server.tms.service.OperateLogService;
-import com.erp.server.tms.service.CommonService;
 import com.common.core.exception.ServiceException;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -67,7 +66,7 @@ public class TransferDeclareCostAllocationDetailServiceImpl extends SuperService
     @Override
     public Boolean update(TransferDeclareCostAllocationDetailDTO.UpdateDTO updateDTO) {
         TransferDeclareCostAllocationDetailEntity old = super.getById(updateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "中转费用分摊明细"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "中转费用分摊明细"));
         TransferDeclareCostAllocationDetailEntity transferDeclareCostAllocationDetailEntity =  BeanMapperUtils.map(TransferDeclareCostAllocationDetailEntity.class, updateDTO);
 
         // 数据处理

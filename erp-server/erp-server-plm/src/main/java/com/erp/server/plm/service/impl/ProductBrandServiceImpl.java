@@ -43,7 +43,7 @@ public class ProductBrandServiceImpl extends ServiceImpl<ProductBrandMapper, Pro
                 }
                 ProductBrandEntity existEntity = this.getOne(queryWrapper);
                 if (existEntity != null) {
-                    throw new ServiceException(ApiError.ERROR_DUPLICATION_NAME);
+                    throw new ServiceException(ApiError.COMMON_DUPLICATION_NAME);
                 }
             }
         }
@@ -70,7 +70,7 @@ public class ProductBrandServiceImpl extends ServiceImpl<ProductBrandMapper, Pro
     public Boolean delete(String id){
         ProductBrandEntity entity = this.getById(id);
         if (entity.getOccupyStatus()) {
-            throw new ServiceException(ApiError.ERROR_95168);
+            throw new ServiceException(ApiError.PRODUCT_VARIANT_VALUES_REF_DELETE_FORBIDDEN);
         }
         LambdaQueryWrapper<ProductBrandEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(ProductBrandEntity::getId, id);

@@ -19,7 +19,6 @@ import com.erp.server.dmp.inout.dto.response.DmpInputTaskResponse;
 import com.erp.server.dmp.inout.handler.input.task.mongo.DmpInputMongoHandler;
 import com.erp.server.dmp.service.CfgAppClientService;
 import com.sdk.tms.shopee.model.base.BaseRequest;
-import com.sdk.tms.shopee.model.logistics.response.ShipDetailResponse;
 import com.sdk.tms.shopee.service.ShopeeLogisticsService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;

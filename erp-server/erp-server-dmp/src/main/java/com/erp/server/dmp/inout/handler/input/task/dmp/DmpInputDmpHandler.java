@@ -16,8 +16,6 @@ import cn.hutool.core.date.DateUtil;
 import com.erp.model.dmp.dto.DmpCfgInputConvertValueDTO;
 import com.erp.server.dmp.inout.utils.DmpHandlerUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.rocketmq.client.producer.SendResult;
-import org.apache.rocketmq.client.producer.SendStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.RedisTemplate;

@@ -93,16 +93,16 @@ public class ApproveTaskDetailServiceImpl extends SuperServiceImpl<ApproveTaskDe
     private void handleErpField ( List<ApproveTaskDetailEntity> approveTaskDetailLis,String mainId) {
         ApproveTaskInfoEntity entity = approveTaskInfoService.getById(mainId);
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.TIME_NOT_NULL,"三方生成查询信息");
+            throw new ServiceException(ApiError.COMMON_PARAM_TIME_REQUIRED,"三方生成查询信息");
         }
         //明细信息
         List<ApproveTaskDetailEntity> approveTaskDetailList = this.listByMainId(mainId);
         if (ObjectUtil.isEmpty(approveTaskDetailList)) {
-            throw new ServiceException(ApiError.TIME_NOT_NULL,"三方生成查询明细信息");
+            throw new ServiceException(ApiError.COMMON_PARAM_TIME_REQUIRED,"三方生成查询明细信息");
         }
         List<CfgQueryOptionDTO.ViewDTO> optionList = cfgQueryOptionService.getSystemfield(entity.getBussinessKey(), CfgQueryOptionUseTypeEnum.ALL_DATA.getCode());
         if (CollUtil.isEmpty(optionList)) {
-            throw new ServiceException(ApiError.TIME_NOT_NULL,"字段映射信息");
+            throw new ServiceException(ApiError.COMMON_PARAM_TIME_REQUIRED,"字段映射信息");
         }
 
         Map<String, CfgQueryOptionDTO.ViewDTO> map = optionList.stream().collect(Collectors.toMap(CfgQueryOptionDTO.ViewDTO::getUniqueCode,Function.identity()));

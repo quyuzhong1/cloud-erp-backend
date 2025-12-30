@@ -62,7 +62,7 @@
 ////        //校验系统店铺是否存在
 ////        ShopInfoEntity shopInfo = shopInfoFeign.getShopInfoById(addDTO.getSysId());
 ////        if (Objects.isNull(shopInfo)) {
-////            throw new ServiceException(ApiError.ERROR_SYS_TYPE_NOTFOUND, ThirdSysTypeEnum.getNameByCode(addDTO.getType()));
+////            throw new ServiceException(ApiError.COMMON_NOT_FOUND, ThirdSysTypeEnum.getNameByCode(addDTO.getType()));
 ////        }
 //        List<ThirdMappingDTO.ThirdAddDTO> thirdList = addDTO.getThirdList();
 //        //如果第三方信息为空，删除绑定关系
@@ -241,7 +241,7 @@
 //    private void handleData(ThirdMappingEntity thirdMappingEntity) {
 ////        //校验系统虚拟仓库是否存在
 ////        ShopInfoEntity shopInfoEntity = Optional.ofNullable(shopInfoFeign.getShopInfoById(thirdMappingEntity.getSysId()))
-////                .orElseThrow(() -> new ServiceException(ApiError.ERROR_92058));
+////                .orElseThrow(() -> new ServiceException(ApiError.ERROR_SHOP_NOT_FOUND));
 ////        //校验第三方虚拟仓库是否存在
 ////        ThirdShopEntity thirdShopEntity = thirdShopService.getByIdOpt(thirdMappingEntity.getThirdId())
 ////                .orElseThrow(() -> new ServiceException(ApiError.ERROR_THIRD_SHOP_NOTFOUND));

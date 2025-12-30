@@ -97,7 +97,7 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
         checkCategoryName(categoryName, dto.getId());
         BasicCategoryEntity found = this.getById(dto.getId());
         if (ObjectUtils.isEmpty(found)) {
-            throw new ServiceException(ApiError.ERROR_95072);
+            throw new ServiceException(ApiError.PRODUCT_CATEGORY_NOT_FOUND);
         }
         checkCategoryCode(dto.getCode(), found.getPid(), dto.getId());
         BasicCategoryEntity entity = new BasicCategoryEntity();
@@ -525,11 +525,11 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
     public Integer checkId(String id) {
         List<BasicCategoryEntity> childrenList = getChildren(id);
         if (CollectionUtils.isNotEmpty(childrenList) && childrenList.size() > 0) {
-            throw new ServiceException(ApiError.ERROR_95005);
+            throw new ServiceException(ApiError.PRODUCT_CATEGORY_HAS_CHILD);
         }
         int count = productInfoService.countByCategoryId(id);
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_95006);
+            throw new ServiceException(ApiError.PRODUCT_CATEGORY_HAS_PRODUCT);
         }
         return count;
     }
@@ -586,7 +586,7 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
         queryWrapper.last("LIMIT 1");
         BasicCategoryEntity entity = this.getOne(queryWrapper);
         if (ObjectUtils.isNotEmpty(entity) && !entity.getId().equals(id)) {
-            throw new ServiceException(ApiError.ERROR_95000);
+            throw new ServiceException(ApiError.PRODUCT_CATEGORY_EXISTS);
         }
     }
 
@@ -602,11 +602,11 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
         BasicCategoryEntity parent = this.getById(pid);
         //一二级分类必须填写代号
         if (("0".equals(pid) || (ObjectUtils.isNotEmpty(parent) && "0".equals(parent.getPid()))) && StringUtils.isBlank(code)) {
-             throw new ServiceException(ApiError.ERROR_95069);
+             throw new ServiceException(ApiError.PRODUCT_CATEGORY_CODE_REQUIRED);
         }
         if ((!"0".equals(pid) && StringUtils.isNotBlank(code)) && (ObjectUtils.isNotEmpty(parent) && !"0".equals(parent.getPid()))) {
             //判断是否是二级分类，非一、二级分类无需添加代号
-             throw new ServiceException(ApiError.ERROR_95093);
+             throw new ServiceException(ApiError.PRODUCT_CATEGORY_CODE_NOT_ALLOWED);
         }
         //分类必须要填分类代码，并且当前分类级别的分类代码不能重复，只有一二级存在代号
         if (StringUtils.isBlank(code)) {
@@ -626,13 +626,13 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
             }
         }
         if (isError) {
-            throw new ServiceException(ApiError.ERROR_95071);
+            throw new ServiceException(ApiError.PRODUCT_CATEGORY_CODE_RANGE_INVALID);
         }
         BasicCategoryEntity entity = lambdaQuery().eq(BasicCategoryEntity::getCode, code)
                 .eq(BasicCategoryEntity::getPid, pid)
                 .one();
         if (ObjectUtils.isNotEmpty(entity) && !entity.getId().equals(id)) {
-            throw new ServiceException(ApiError.ERROR_95070);
+            throw new ServiceException(ApiError.PRODUCT_APP_CATEGORY_CODE_EXISTS);
         }
     }
 

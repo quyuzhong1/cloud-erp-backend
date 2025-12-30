@@ -9,7 +9,6 @@ import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
-import com.baomidou.mybatisplus.extension.conditions.query.LambdaQueryChainWrapper;
 import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.SourceTypeEnum;
@@ -186,7 +185,7 @@ public class SyncKingdeePurchaseOrderServiceImpl implements SyncKingdeePurchaseO
             //委外订单
             subcontractOrderEntity = subcontractOrderService.getById(entity.getSourceId());
             if (ObjectUtils.isEmpty(subcontractOrderEntity)) {
-                throw new ServiceException(ApiError.ERROR_98073);
+                throw new ServiceException(ApiError.PO_SUBCONTRACT_ORDER_NOT_FOUND);
             }
             //委外订单明细
             subcontractOrderDetailList = subcontractOrderDetailService.listByMainId(subcontractOrderEntity.getId());
@@ -274,7 +273,7 @@ public class SyncKingdeePurchaseOrderServiceImpl implements SyncKingdeePurchaseO
         //采购明细
         List<PurchaseOrderDetailEntity> details = purchaseOrderDetailService.listByPurchaseOrderId(entity.getId());
         if (CollectionUtils.isEmpty(details)) {
-            throw new ServiceException(ApiError.ERROR_98026);
+            throw new ServiceException(ApiError.PO_DETAIL_NOT_FOUND);
         }
         //组织机构编码
         List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(entity.getPurchaseOrgId(),entity.getReceiveOrgId()));
@@ -495,7 +494,7 @@ public class SyncKingdeePurchaseOrderServiceImpl implements SyncKingdeePurchaseO
         //采购明细
         List<AssetPurchaseOrderDetailEntity> details = assetPurchaseOrderDetailService.lambdaQuery().eq(AssetPurchaseOrderDetailEntity::getMainId, entity.getId()).list();
         if (CollectionUtils.isEmpty(details)) {
-            throw new ServiceException(ApiError.ERROR_98026);
+            throw new ServiceException(ApiError.PO_DETAIL_NOT_FOUND);
         }
         List<MoldInfoEntity> moldInfoEntities = plmTaskFeign.listMoldInfoByCodes(details
                 .stream().map(AssetPurchaseOrderDetailEntity::getAssetCode).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList())

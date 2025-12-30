@@ -135,7 +135,7 @@ public class MoldInfoServiceImpl extends SuperServiceImpl<MoldInfoMapper, MoldIn
 //        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_MOLD);
         BasicCategoryEntity category = basicCategoryService.getById(addDTO.getCategoryId());
         if(Objects.isNull(category)){
-            throw new ServiceException(ApiError.ERROR_95025);
+            throw new ServiceException(ApiError.PRODUCT_CATEGORY_NOT_FOUND);
         }
         String code = docNoGenHelper.generateMoldCode(BusinessNoTypeEnum.CODE_MOLD,category.getCode());
         moldInfoEntity.setCode(code);
@@ -158,10 +158,10 @@ public class MoldInfoServiceImpl extends SuperServiceImpl<MoldInfoMapper, MoldIn
     @Override
     public Boolean update(MoldInfoDTO.UpdateDTO addOrUpdateDTO) {
         MoldInfoEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "模具档案"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "模具档案"));
         // 待提交和审核不通过允许修改
         if (!ApproveStatusEnum.allowUpdateStatus(old.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_1029);
+            throw new ServiceException(ApiError.BILL_UPDATE_STATUS_NOT_ALLOWED);
         }
         MoldInfoEntity moldInfoEntity =  BeanMapperUtils.map(MoldInfoEntity.class, addOrUpdateDTO);
 
@@ -299,12 +299,12 @@ public class MoldInfoServiceImpl extends SuperServiceImpl<MoldInfoMapper, MoldIn
     public BatchResultDTO approve(ApproveOneDTO dto) {
         ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(dto.getType());
         if(Objects.equals(approveType, ApproveTypeEnum.REJECT) && StrUtils.isEmpty(dto.getComment())) {
-            throw new ServiceException(ApiError.REJECT_COMMENT_NOT_EMPTY);
+            throw new ServiceException(ApiError.WF_REJECT_COMMENT_REQUIRED);
         }
         MoldInfoEntity entity = getById(dto.getId());
         // 审核中的数据允许审核
         if(!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())) {
-            throw new ServiceException(ApiError.ERROR_98006);
+            throw new ServiceException(ApiError.WF_APPROVE_ALLOWED_STATUS_ONLY);
         }
         // 调用流程审核
         approveProcess(entity, dto);
@@ -332,7 +332,7 @@ public class MoldInfoServiceImpl extends SuperServiceImpl<MoldInfoMapper, MoldIn
         ApiResult<ProcessManagementDTO.ApproveResultDTO> approveResult = workflowFeign.approve(approveDTO);
         Integer code = approveResult.getCode();
         if (200 != code) {
-            throw new ServiceException(ApiError.ERROR_94006);
+            throw new ServiceException(ApiError.WF_APPROVE_FAILED);
         }
         ProcessManagementDTO.ApproveResultDTO data = approveResult.getData();
         if (ObjectUtil.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()) {
@@ -378,13 +378,13 @@ public class MoldInfoServiceImpl extends SuperServiceImpl<MoldInfoMapper, MoldIn
     private Boolean validateDisApprove(MoldInfoEntity entity) {
         // 已审核支持反审核
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus())) {
-            throw new ServiceException(ApiError.ERROR_98014);
+            throw new ServiceException(ApiError.BILL_REVERSE_APPROVAL_ALLOWED_APPROVED_ONLY);
         }
         // 校验下游SKU是否存在
         Integer count1 = productInfoService.lambdaQuery().eq(ProductInfoEntity::getSpuNo, entity.getCode()).count();
         Integer count2 = productDetailService.lambdaQuery().eq(ProductDetailEntity::getSkuNo, entity.getCode()).count();
         if (count1 > 0 || count2 > 0) {
-            throw new ServiceException(ApiError.ERROR_EXIST_SKU,entity.getCode());
+            throw new ServiceException(ApiError.PRODUCT_EXIST_SKU,entity.getCode());
         }
         return true;
     }
@@ -395,7 +395,7 @@ public class MoldInfoServiceImpl extends SuperServiceImpl<MoldInfoMapper, MoldIn
         MoldInfoEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到模具档案数据"));
         // 只有待提交数据允许删除
         if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus(), entity.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_1043);
+            throw new ServiceException(ApiError.BILL_DELETE_STATUS_NOT_ALLOWED);
         }
         //检查模具下游关联数据是否存在
         checkDownstream(id);
@@ -418,14 +418,14 @@ public class MoldInfoServiceImpl extends SuperServiceImpl<MoldInfoMapper, MoldIn
      */
     private void checkDownstream(String id) {
         if(moldRefSkuService.lambdaQuery().eq(MoldRefSkuEntity::getMoldId, id).count() > 0){
-            throw new ServiceException(ApiError.ERROR_MOLD_REF_SKU_EXIST);
+            throw new ServiceException(ApiError.MOULD_REF_SKU_EXISTS);
         }
 
         if(cfgMoldReturnAlertRuleService.lambdaQuery().eq(CfgMoldReturnAlertRuleEntity::getMoldId, id).count() > 0 ){
-            throw new ServiceException(ApiError.ERROR_MOLD_RETURN_EXIST);
+            throw new ServiceException(ApiError.MOULD_RETURN_EXISTS);
         }
         if(cfgMoldAlertRuleService.lambdaQuery().eq(CfgMoldAlertRuleEntity::getMoldId, id).count() > 0 ){
-            throw new ServiceException(ApiError.ERROR_MOLD_ALERT_EXIST);
+            throw new ServiceException(ApiError.MOULD_ALERT_EXISTS);
         }
     }
 
@@ -438,10 +438,10 @@ public class MoldInfoServiceImpl extends SuperServiceImpl<MoldInfoMapper, MoldIn
         MoldInfoEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到模具档案数据"));
         // 待提交或审核不通过并且未作废允许作废
         if(!InvalidStatusEnum.NOT_VOIDED.getStatus().equals(entity.getInvalidStatus())){
-            throw new ServiceException(ApiError.ERROR_98012);
+            throw new ServiceException(ApiError.BILL_ALREADY_VOID_CANNOT_VOID_AGAIN);
         }
         if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus(), entity.getApproveStatus()) && !Objects.equals(ApproveStatusEnum.REJECT.getStatus(), entity.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_98005);
+            throw new ServiceException(ApiError.BILL_VOID_ALLOWED_STATUS_ONLY);
         }
         //检查模具下游关联数据是否存在
         checkDownstream(id);
@@ -467,7 +467,7 @@ public class MoldInfoServiceImpl extends SuperServiceImpl<MoldInfoMapper, MoldIn
         MoldInfoEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到模具档案数据"));
         // 只有审核中的单据允许撤销
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())) {
-            throw new ServiceException(ApiError.ERROR_98007);
+            throw new ServiceException(ApiError.WF_REVOKE_PROCESS_ALLOWED_STATUS_ONLY);
         }
         log.info("撤销 开始撤销流程，id：【{}】",id);
 
@@ -632,7 +632,7 @@ public class MoldInfoServiceImpl extends SuperServiceImpl<MoldInfoMapper, MoldIn
         //提交
         BatchResultDTO submit = productDetailService.submit(id,Boolean.FALSE);
         if (!submit.getSuccess()) {
-            throw new ServiceException(ApiError.ERROR_1042);
+            throw new ServiceException(ApiError.BILL_SUBMIT_FAILED);
         }
         //审核
         ApproveOneDTO dto = new ApproveOneDTO();
@@ -640,7 +640,7 @@ public class MoldInfoServiceImpl extends SuperServiceImpl<MoldInfoMapper, MoldIn
         dto.setType(ApproveTypeEnum.PASS.getStatus());
         BatchResultDTO resultDTO = productDetailService.approve(dto,Boolean.FALSE);
         if (!resultDTO.getSuccess()) {
-            throw new ServiceException(ApiError.ERROR_94006);
+            throw new ServiceException(ApiError.WF_APPROVE_FAILED);
         }
     }
 
@@ -793,7 +793,7 @@ public class MoldInfoServiceImpl extends SuperServiceImpl<MoldInfoMapper, MoldIn
             listApiResult = workflowFeign.curApprover(dtoList);
             Integer code = listApiResult.getCode();
             if (200 != code) {
-                throw new ServiceException(new ApiResult(ApiError.DEFAULT.code, listApiResult.getMsg()));
+                throw new ServiceException(new ApiResult(ApiError.HTTP_UNKNOWN.getCode(), listApiResult.getMsg()));
             }
         }
 
@@ -832,7 +832,7 @@ public class MoldInfoServiceImpl extends SuperServiceImpl<MoldInfoMapper, MoldIn
     private void validateSubmit(MoldInfoEntity entity) {
         // 待提交或审核不通过并且未作废允许提交
         if(!ApproveStatusEnum.allowUpdateStatus(entity.getApproveStatus()) || entity.getInvalidStatus()) {
-            throw new ServiceException(ApiError.ERROR_98010);
+            throw new ServiceException(ApiError.BILL_SUBMIT_ALLOWED_STATUS_ONLY);
         }
         return;
     }
@@ -846,7 +846,7 @@ public class MoldInfoServiceImpl extends SuperServiceImpl<MoldInfoMapper, MoldIn
         Map<String, SupplierDTO.SupplierSimpleDTO> supplierMap = supplierSimpleList.stream().collect(Collectors.toMap(SupplierDTO.SupplierSimpleDTO::getId, Function.identity(),(o1,o2)->o1));
         SupplierDTO.SupplierSimpleDTO supplier = supplierMap.getOrDefault(moldInfoEntity.getSupplierId(), null);
         if(Objects.isNull(supplier)){
-            throw new ServiceException(ApiError.ERROR_SUPPLIER_ABSENCE);
+            throw new ServiceException(ApiError.SUPPLIER_NOT_FOUND);
         }
         moldInfoEntity.setSupplierCode(supplier.getCode());
         moldInfoEntity.setSupplierName(supplier.getName());
@@ -905,7 +905,7 @@ public class MoldInfoServiceImpl extends SuperServiceImpl<MoldInfoMapper, MoldIn
             EasyExcel.read(new ByteArrayInputStream(bytes), MoldInfoImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (ExcelCommonException e) {
             log.error("导入格式错误！", e);
-            throw new ServiceException(ApiError.ERROR_1016);
+            throw new ServiceException(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX);
         }
 
         BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
@@ -967,7 +967,7 @@ public class MoldInfoServiceImpl extends SuperServiceImpl<MoldInfoMapper, MoldIn
         List<MoldInfoEntity> moldInfoEntities = listByIds(ids);
         long count = moldInfoEntities.stream().filter(e -> !Objects.equals(e.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus())).count();
         if(count > 0){
-            throw new ServiceException(ApiError.ERROR_95294);
+            throw new ServiceException(ApiError.MOULD_FILE_AUDITED_ONLY);
         }
         Map<String, MoldInfoEntity> moldMap = moldInfoEntities.stream().collect(Collectors.toMap(MoldInfoEntity::getId, Function.identity(), (o1, o2) -> o1));
 
@@ -982,7 +982,7 @@ public class MoldInfoServiceImpl extends SuperServiceImpl<MoldInfoMapper, MoldIn
         for (String skuNo : skuNos) {
             SkuVO skuVO = skuVOMap.getOrDefault(skuNo, null);
             if(Objects.isNull(skuVO)){
-                throw new ServiceException(ApiError.ERROR_SKU_NOTFOUND,skuNo);
+                throw new ServiceException(ApiError.PRODUCT_SKU_PARAM_NOT_FOUND,skuNo);
             }
 
             for (String id : ids) {

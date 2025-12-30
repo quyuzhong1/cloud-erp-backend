@@ -13,24 +13,17 @@
 
 package com.erp.server.dmp.amz;
 
-import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONUtil;
-import com.common.business.constant.RedisCacheConstants;
-import com.common.business.service.impl.RedisService;
-import com.common.business.utils.RedisUtil;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.FastDFSClientUtil;
-import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.dto.AmazonShopInfoDTO;
 import com.erp.model.dmp.entity.CfgAmzReportTypeEntity;
 import com.erp.rpc.dmp.feign.DmpAmazonFeign;
 import com.erp.sdk.oms.amz.spapi.api.ReportsApi;
 import com.erp.sdk.oms.amz.spapi.client.ApiException;
 import com.erp.sdk.oms.amz.spapi.client.JSON;
-import com.erp.sdk.oms.amz.spapi.csv.ReportLedgerDetailViewEntity;
-import com.erp.sdk.oms.amz.spapi.csv.ReportListingCsvEntity;
 import com.erp.sdk.oms.amz.spapi.dto.ReportFbaMyiUnsuppressedInventoryMongoDTO;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonReportRecordTypeEnum;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
@@ -40,12 +33,6 @@ import com.erp.server.dmp.service.AmzReportScheduleService;
 import com.erp.server.dmp.service.CfgAmzReportFieldService;
 import com.erp.server.dmp.service.CfgAmzReportTypeService;
 import com.erp.server.dmp.service.CfgAppClientService;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.rocketmq.client.consumer.DefaultMQPullConsumer;
-import org.apache.rocketmq.client.exception.MQBrokerException;
-import org.apache.rocketmq.client.exception.MQClientException;
-import org.apache.rocketmq.common.message.MessageExt;
-import org.apache.rocketmq.remoting.exception.RemotingException;
 import org.apache.rocketmq.spring.core.RocketMQTemplate;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.runner.RunWith;

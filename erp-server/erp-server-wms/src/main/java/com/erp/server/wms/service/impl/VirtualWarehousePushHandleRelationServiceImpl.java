@@ -2,7 +2,6 @@ package com.erp.server.wms.service.impl;
 
 
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.threadlocal.UserContext;
 import com.erp.model.wms.entity.VirtualWarehousePushHandleRelationEntity;
@@ -12,7 +11,6 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.server.wms.service.OperateLogService;
 import com.common.core.exception.ServiceException;
 import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -70,7 +68,7 @@ public class VirtualWarehousePushHandleRelationServiceImpl extends SuperServiceI
     public Boolean update(VirtualWarehousePushHandleRelationDTO.UpdateDTO updateDTO) {
         VirtualWarehousePushHandleRelationEntity old = super.getById(updateDTO.getId());
         if (Objects.isNull(old)){
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "分货单拆单关联关系单");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "分货单拆单关联关系单");
         }
         VirtualWarehousePushHandleRelationEntity virtualWarehousePushHandleRelationEntity =  BeanMapperUtils.map(VirtualWarehousePushHandleRelationEntity.class, updateDTO);
 

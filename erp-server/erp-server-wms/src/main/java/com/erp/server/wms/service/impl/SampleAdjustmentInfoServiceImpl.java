@@ -65,22 +65,16 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import cn.hutool.core.collection.CollUtil;
-import com.google.common.collect.Sets;
-import com.alibaba.fastjson.JSONObject;
-import com.google.common.collect.Lists;
 
 import com.common.business.enums.ApproveStatusEnum;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
-import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.business.dto.base.*;
-import com.erp.model.sys.dto.SysCodeDTO;
 
 import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDateTime;
 import javax.annotation.Resource;
-import java.util.stream.Collectors;
 import java.util.*;
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
@@ -93,7 +87,6 @@ import com.erp.model.wms.dto.excel.SampleAdjustmentImportExcelDTO;
 import com.erp.server.wms.listener.SampleAdjustmentExcelListener;
 import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.util.Comparator;
 
 import static com.common.business.enums.FileTaskEventEnum.IMPORT_WMS_SAMPLE_ADJUSTMENT_INFO;
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_SAMPLE_ADJUSTMENT_INFO_REPORT;
@@ -168,7 +161,7 @@ public class SampleAdjustmentInfoServiceImpl extends SuperServiceImpl<SampleAdju
         //不允许重复添加
         long sampleLedgerIdCount = detailList.stream().map(SampleAdjustmentDetailDTO.AddDTO::getSampleLedgerId).distinct().count();
         if(sampleLedgerIdCount != detailList.size()){
-            throw new ServiceException(com.common.core.enums.ApiError.ERROR_REPEAT_SKU);
+            throw new ServiceException(com.common.core.enums.ApiError.PRODUCT_SKU_DUPLICATE);
         }
 
         List<SampleAdjustmentDetailEntity> sampleAdjustmentDetailEntities = BeanMapperUtils.copyList(SampleAdjustmentDetailEntity.class, detailList);
@@ -210,10 +203,10 @@ public class SampleAdjustmentInfoServiceImpl extends SuperServiceImpl<SampleAdju
     @Override
     public Boolean update(SampleAdjustmentInfoDTO.UpdateDTO addOrUpdateDTO) {
         SampleAdjustmentInfoEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "样品调整单"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "样品调整单"));
         // 待提交和审核不通过允许修改
         if (!ApproveStatusEnum.allowUpdateStatus(old.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_1029);
+            throw new ServiceException(ApiError.BILL_UPDATE_STATUS_NOT_ALLOWED);
         }
         // 校验明细不能为空
         if (CollUtil.isEmpty(addOrUpdateDTO.getDetailList())) {
@@ -358,12 +351,12 @@ public class SampleAdjustmentInfoServiceImpl extends SuperServiceImpl<SampleAdju
     public BatchResultDTO approve(ApproveOneDTO dto) {
         ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(dto.getType());
         if(Objects.equals(approveType, ApproveTypeEnum.REJECT) && StrUtils.isEmpty(dto.getComment())) {
-            throw new ServiceException(ApiError.REJECT_COMMENT_NOT_EMPTY);
+            throw new ServiceException(ApiError.WF_REJECT_COMMENT_REQUIRED);
         }
         SampleAdjustmentInfoEntity entity = getById(dto.getId());
         // 审核中的数据允许审核
         if(!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
-            throw new ServiceException(ApiError.ERROR_98006);
+            throw new ServiceException(ApiError.WF_APPROVE_ALLOWED_STATUS_ONLY);
         }
         // 使用分布式锁进行数量校验
         validateSampleLedgerQtyWithLock(entity, approveType);
@@ -393,7 +386,7 @@ public class SampleAdjustmentInfoServiceImpl extends SuperServiceImpl<SampleAdju
         ApiResult<ProcessManagementDTO.ApproveResultDTO> approveResult = workflowFeign.approve(approveDTO);
         Integer code = approveResult.getCode();
         if (200 != code) {
-            throw new ServiceException(ApiError.ERROR_94006);
+            throw new ServiceException(ApiError.WF_APPROVE_FAILED);
         }
         ProcessManagementDTO.ApproveResultDTO data = approveResult.getData();
         if (ObjectUtil.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()) {
@@ -444,7 +437,7 @@ public class SampleAdjustmentInfoServiceImpl extends SuperServiceImpl<SampleAdju
     private Boolean validateDisApprove(SampleAdjustmentInfoEntity entity) {
         // 已审核支持反审核
         if (!Objects.equals(entity.getApproveStatus().getStatus(), ApproveStatusEnum.APPROVE.getStatus())) {
-            throw new ServiceException(ApiError.ERROR_98014);
+            throw new ServiceException(ApiError.BILL_REVERSE_APPROVAL_ALLOWED_APPROVED_ONLY);
         }
         // TODO 下游盘点计划单反审核
         return true;
@@ -456,7 +449,7 @@ public class SampleAdjustmentInfoServiceImpl extends SuperServiceImpl<SampleAdju
         SampleAdjustmentInfoEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到样品调整单数据"));
         // 只有待提交数据允许删除
         if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT, entity.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_98032);
+            throw new ServiceException(ApiError.BILL_SUBMIT_ALLOWED_STATUS_ONLY);
         }
         // TODO 删除明细数据（如果有明细数据的话）
 
@@ -478,7 +471,7 @@ public class SampleAdjustmentInfoServiceImpl extends SuperServiceImpl<SampleAdju
         SampleAdjustmentInfoEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到样品调整单数据"));
         // 待提交或审核不通过并且未作废允许作废
         if ((!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(entity.getApproveStatus().getStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(entity.getApproveStatus().getStatus())) || !InvalidStatusEnum.NOT_VOIDED.getStatus().equals(entity.getInvalidStatus())) {
-           throw new ServiceException(ApiError.ERROR_98005);
+           throw new ServiceException(ApiError.BILL_VOID_ALLOWED_STATUS_ONLY);
         }
         log.info("作废 开始修改样品调整单状态数据，id：【{}】", id);
         lambdaUpdate().eq(SampleAdjustmentInfoEntity::getId, id)
@@ -503,7 +496,7 @@ public class SampleAdjustmentInfoServiceImpl extends SuperServiceImpl<SampleAdju
         SampleAdjustmentInfoEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到样品调整单数据"));
         // 只有审核中的单据允许撤销
         if (!Objects.equals(entity.getApproveStatus().getStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())) {
-            throw new ServiceException(ApiError.ERROR_98007);
+            throw new ServiceException(ApiError.WF_REVOKE_PROCESS_ALLOWED_STATUS_ONLY);
         }
         // TODO 撤销流程
         log.info("撤销 开始撤销流程，id：【{}】",id);
@@ -559,7 +552,7 @@ public class SampleAdjustmentInfoServiceImpl extends SuperServiceImpl<SampleAdju
         SampleAdjustmentInfoDTO.ViewDTO viewDTO = new SampleAdjustmentInfoDTO.ViewDTO();
         SampleAdjustmentInfoEntity entity = super.getById(id);
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "样品调整单");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "样品调整单");
         }
         BeanMapperUtils.copy(entity, viewDTO);
 
@@ -717,7 +710,7 @@ public class SampleAdjustmentInfoServiceImpl extends SuperServiceImpl<SampleAdju
             listApiResult = workflowFeign.curApprover(dtoList);
             Integer code = listApiResult.getCode();
             if (200 != code) {
-                throw new ServiceException(new ApiResult(ApiError.DEFAULT.code, listApiResult.getMsg()));
+                throw new ServiceException(new ApiResult(ApiError.HTTP_UNKNOWN.getCode(), listApiResult.getMsg()));
             }
         }
 
@@ -802,7 +795,7 @@ public class SampleAdjustmentInfoServiceImpl extends SuperServiceImpl<SampleAdju
     private void validateSubmit(SampleAdjustmentInfoEntity entity) {
         // 待提交或审核不通过并且未作废允许提交
         if(!ApproveStatusEnum.allowUpdateStatus(entity.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_98010);
+            throw new ServiceException(ApiError.BILL_SUBMIT_ALLOWED_STATUS_ONLY);
         }
         return;
     }
@@ -913,7 +906,7 @@ public class SampleAdjustmentInfoServiceImpl extends SuperServiceImpl<SampleAdju
         //不允许重复添加
         long sampleLedgerIdCount = detailList.stream().map(SampleAdjustmentDetailDTO.UpdateDTO::getSampleLedgerId).distinct().count();
         if(sampleLedgerIdCount != detailList.size()){
-            throw new ServiceException(com.common.core.enums.ApiError.ERROR_REPEAT_SKU);
+            throw new ServiceException(com.common.core.enums.ApiError.PRODUCT_SKU_DUPLICATE);
         }
 
         List<SampleAdjustmentDetailEntity> oldList = sampleAdjustmentDetailService.listByMainId(sampleAdjustmentInfoEntity.getId());
@@ -1150,7 +1143,7 @@ public class SampleAdjustmentInfoServiceImpl extends SuperServiceImpl<SampleAdju
             EasyExcel.read(new ByteArrayInputStream(bytes), SampleAdjustmentImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (ExcelCommonException e) {
             log.error("导入格式错误！", e);
-            throw new ServiceException(ApiError.ERROR_1016);
+            throw new ServiceException(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX);
         }
 
         BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
@@ -1228,14 +1221,14 @@ public class SampleAdjustmentInfoServiceImpl extends SuperServiceImpl<SampleAdju
 
                 //关联台账：通过调整人 + 使用方 + SKU 查询
                 if (CollUtil.isEmpty(skuAvailableQtyDTOS)) {
-                    errorMsg = errorMsg + indexTemp + "、" + ApiError.ERROR_SAMPLE_LEDGER_NOT_EXIST.msg + "；";
+                    errorMsg = errorMsg + indexTemp + "、" + ApiError.SAMPLE_LEDGER_NOT_EXIST.getMsg() + "；";
                 } else {
                     com.erp.model.wms.dto.SampleLedgerDTO.SkuAvailableQtyDTO skuAvailableQtyDTO = skuAvailableQtyDTOS.stream()
                             .filter(e -> e.getSkuId().equals(importDTO.getSkuId()) && 
                                     (StringUtils.isNotBlank(importDTO.getUseUserId()) && e.getUseUserId() != null && e.getUseUserId().equals(importDTO.getUseUserId())))
                             .findFirst().orElse(null);
                     if (Objects.isNull(skuAvailableQtyDTO)) {
-                        errorMsg = errorMsg + indexTemp + "、" + ApiError.ERROR_SAMPLE_LEDGER_NOT_EXIST.msg + "；";
+                        errorMsg = errorMsg + indexTemp + "、" + ApiError.SAMPLE_LEDGER_NOT_EXIST.getMsg() + "；";
                     } else {
                         importDTO.setSampleLedgerId(skuAvailableQtyDTO.getSampleLedgerId());
                         // 设置台账数量

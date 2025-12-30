@@ -11,10 +11,8 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.FastDFSClientUtil;
-import com.erp.model.plm.dto.ProductDetailDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
-import com.erp.model.plm.vo.ProductVO;
 import com.erp.model.wms.dto.SampleRecipientDetailDTO;
 import com.erp.model.wms.dto.excel.SampleRecipientDetailImportExcelDTO;
 import com.erp.model.wms.entity.SampleRecipientDetailEntity;
@@ -92,7 +90,7 @@ public class SampleRecipientDetailServiceImpl extends SuperServiceImpl<SampleRec
     @Override
     public Boolean update(SampleRecipientDetailDTO.UpdateDTO addOrUpdateDTO) {
         SampleRecipientDetailEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "样品领用单明细"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "样品领用单明细"));
         SampleRecipientDetailEntity sampleRecipientDetailEntity =  BeanMapperUtils.map(SampleRecipientDetailEntity.class, addOrUpdateDTO);
 
         // 数据处理
@@ -127,7 +125,7 @@ public class SampleRecipientDetailServiceImpl extends SuperServiceImpl<SampleRec
             EasyExcel.read(excelFile.getInputStream(), SampleRecipientDetailImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (Exception e) {
             log.error("导入样品领用单明细错误！", e);
-            throw new ServiceException(ApiError.ERROR_95124);
+            throw new ServiceException(ApiError.FILE_DATA_IMPORT_FAILED);
         }
 
         List<SampleRecipientDetailImportExcelDTO> errorList = excelListenerUtil.getErrorList();

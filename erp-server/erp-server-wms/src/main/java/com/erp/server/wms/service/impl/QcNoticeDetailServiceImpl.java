@@ -129,7 +129,7 @@ public class QcNoticeDetailServiceImpl extends SuperServiceImpl<QcNoticeDetailMa
             if (CharSequenceUtil.isNotBlank(e.getId())) {
                 QcNoticeDetailEntity old = oldList.stream().filter(obj -> obj.getId().equals(e.getId())).findFirst().orElse(null);
                 if (ObjectUtils.isEmpty(old)) {
-                    throw new ServiceException(ApiError.ERROR_NOT_REQUISITION_APPLICATION);
+                    throw new ServiceException(ApiError.FIRST_MILE_SHIPMENT_REQ_NOT_FOUND);
                 }
                 operateLogService.addModuleOperateLogByObj(old, e, ModuleTypeEnum.QC_NOTICE.getCode(), mainId,"", String.format("【%s】", old.getSkuNo()));
             }

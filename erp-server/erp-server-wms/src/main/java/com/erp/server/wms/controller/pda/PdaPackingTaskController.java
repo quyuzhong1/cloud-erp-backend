@@ -1,9 +1,7 @@
 package com.erp.server.wms.controller.pda;
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.text.CharSequenceUtil;
-import com.alibaba.nacos.api.utils.StringUtils;
 import com.common.business.annotation.DataIdempotent;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
@@ -22,16 +20,11 @@ import com.erp.model.wms.dto.PackingTaskDTO;
 import com.erp.model.wms.dto.WmsCartonDTO;
 import com.erp.model.wms.dto.WmsCartonSpecDTO;
 import com.erp.model.wms.entity.PackingTaskEntity;
-import com.erp.model.wms.entity.RequisitionApplicationEntity;
-import com.erp.model.wms.enums.CfgSettingEnum;
 import com.erp.model.wms.enums.PackingTaskStatusEnum;
-import com.erp.model.wms.enums.PackingWeightStatusEnum;
-import com.erp.model.wms.enums.PickingSourceTypeEnum;
 import com.erp.server.wms.query.PackingTaskQueryHandler;
 import com.erp.server.wms.service.PackingTaskService;
 import com.erp.server.wms.service.RequisitionApplicationService;
 import lombok.extern.slf4j.Slf4j;
-import org.omg.CORBA.OBJ_ADAPTER;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -124,7 +117,7 @@ public class PdaPackingTaskController extends BaseController {
     public ApiResult<WmsCartonSpecDTO.WmsCartonSpecView> packingViewBySourceCode(@RequestParam("sourceCode") String sourceCode) {
         List<PackingTaskEntity> taskEntityList = packingTaskService.listBySourceCodes(Collections.singletonList(sourceCode));
         if (CollUtil.isEmpty(taskEntityList)){
-            throw new ServiceException(ApiError.ERROR_92141);
+            throw new ServiceException(ApiError.LOGISTICS_PACKING_TASK_NOT_FOUND);
         }
         WmsCartonSpecDTO.WmsCartonSpecView wmsCartonSpecView = packingTaskService.packingView(taskEntityList.get(0).getId());
         return success(wmsCartonSpecView);

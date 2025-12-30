@@ -2,37 +2,23 @@ package com.erp.server.sys.service.impl;
 
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.common.business.dto.FindUserDTO;
-import com.common.business.dto.base.BaseResultDTO;
-import com.common.business.enums.ThirdpartyPlatformEnum;
 import com.erp.model.sys.entity.SysDepartmentThirdEntity;
-import com.erp.model.sys.entity.SysUserThirdEntity;
-import com.erp.model.sys.vo.ThirdUnionDTO;
 import com.erp.model.workflow.enums.CfgApproveSyncSyncPlatformEnum;
 import com.erp.sdk.fs.service.FsService;
 import com.erp.server.sys.mapper.SysDepartmentThirdMapper;
 import com.erp.server.sys.service.SysDepartmentThirdService;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.threadlocal.UserContext;
-import com.common.core.exception.ServiceException;
 import com.lark.oapi.service.contact.v3.model.ChildrenDepartmentReq;
 import com.lark.oapi.service.contact.v3.model.ChildrenDepartmentResp;
-import com.lark.oapi.service.contact.v3.model.ChildrenDepartmentRespBody;
 import com.lark.oapi.service.contact.v3.model.Department;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.sys.dto.SysDepartmentThirdDTO;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
 
 import javax.annotation.Resource;
 

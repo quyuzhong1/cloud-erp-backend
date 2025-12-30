@@ -228,7 +228,7 @@ public class BiTargetCategorySettingServiceImpl extends SuperServiceImpl<BiTarge
     public Boolean update(BiTargetCategorySettingDTO.UpdateDTO updateDTO) {
         String id = updateDTO.getId();
         BiTargetYearEntity oldTargetYear = biTargetYearService.getById(id);
-        Optional.ofNullable(oldTargetYear).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "品类目标设置单"));
+        Optional.ofNullable(oldTargetYear).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "品类目标设置单"));
         BiTargetYearEntity targetYear = BeanMapperUtils.map(BiTargetYearEntity.class, updateDTO);
         List<String> metricsList = updateDTO.getMetricsList();
         targetYear.setMetrics(metricsList.stream().collect(Collectors.joining(",")));
@@ -270,7 +270,7 @@ public class BiTargetCategorySettingServiceImpl extends SuperServiceImpl<BiTarge
         BiTargetCategorySettingDTO.ViewDTO view = new BiTargetCategorySettingDTO.ViewDTO();
         BiTargetYearEntity targetYear = biTargetYearService.getById(id);
         if (Objects.isNull(targetYear)) {
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "品类目标设置");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "品类目标设置");
         }
         BeanMapperUtils.copy(targetYear, view);
         String metrics = targetYear.getMetrics();
@@ -404,7 +404,7 @@ public class BiTargetCategorySettingServiceImpl extends SuperServiceImpl<BiTarge
             wb.close();
         } catch (Exception e) {
             log.error(" downloadTemplate  出错了 e=={}", e);
-            throw new ServiceException(ApiError.ERROR_95131);
+            throw new ServiceException(ApiError.FILE_IMPORT_TEMPLATE_DOWNLOAD_FAILED);
         }
     }
 
@@ -547,7 +547,7 @@ public class BiTargetCategorySettingServiceImpl extends SuperServiceImpl<BiTarge
     private void checkAndThrowIfCategoriesExist(List<String> existCategory) {
         if (CollectionUtils.isNotEmpty(existCategory)) {
             String existCategoryName = existCategory.stream().distinct().collect(Collectors.joining(","));
-            throw new ServiceException(ApiError.YEAR_METRICS_EXIST, existCategoryName);
+            throw new ServiceException(ApiError.COMMON_SETTING_EXIST, existCategoryName);
         }
     }
 

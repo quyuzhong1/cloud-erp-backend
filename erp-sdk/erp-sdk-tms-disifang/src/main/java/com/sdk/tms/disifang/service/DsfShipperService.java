@@ -2,9 +2,7 @@ package com.sdk.tms.disifang.service;
 
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONObject;
 import com.common.core.exception.ServiceException;
-import com.sdk.tms.disifang.constants.AmbientEnum;
 import com.sdk.tms.disifang.model.base.AffterentParam;
 import com.sdk.tms.disifang.model.base.ResponseMsg;
 import com.sdk.tms.disifang.model.label.request.LabelRequest;
@@ -17,8 +15,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.validation.annotation.Validated;
 
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 
 /**

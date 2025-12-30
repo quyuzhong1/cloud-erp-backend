@@ -232,7 +232,7 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
         statusList.add(rejectStatus);
         statusList.add(waitSubmitStatus);
         if (!statusList.contains(approveStatus)) {
-            throw new ServiceException(ApiError.ERROR_WAIT_SUBMIT_TO_APPROVE_ING);
+            throw new ServiceException(ApiError.BILL_WAIT_SUBMIT_TO_APPROVE_ING);
         }
 
         List<StocktakingTaskDetailEntity> taskDetailList = stocktakingTaskDetailService.listBaseByMainIds(Collections.singletonList(id));
@@ -316,7 +316,7 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
     public StocktakingTaskDTO.ViewDTO view(String id) {
         StocktakingTaskDTO.ViewDTO view = baseMapper.getViewById(id);
         if (Objects.isNull(view)) {
-            throw new ServiceException(ApiError.ERROR_BILL_NOT_EXIST);
+            throw new ServiceException(ApiError.BILL_NOT_EXIST);
         }
         //盘点方式
         StocktakingModeEnum stocktakingMode = view.getStocktakingMode();
@@ -355,7 +355,7 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
         ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(dto.getType());
         if (Objects.equals(approveType, ApproveTypeEnum.REJECT) && StringUtils.isEmpty(dto.getComment())) {
             // 审核不通过必须填写审核意见
-            throw new ServiceException(ApiError.REJECT_COMMENT_NOT_EMPTY);
+            throw new ServiceException(ApiError.WF_REJECT_COMMENT_REQUIRED);
         }
         StocktakingTaskEntity entity = this.getById(id);
         if (Objects.isNull(entity)) {
@@ -364,7 +364,7 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
         ApproveStatusEnum ingStatus = ApproveStatusEnum.APPROVE_ING;
         // 审核中的数据允许审核
         if (!Objects.equals(ingStatus, entity.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_98006);
+            throw new ServiceException(ApiError.WF_APPROVE_ALLOWED_STATUS_ONLY);
         }
 
         // 调用流程审核
@@ -415,7 +415,7 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
         ApiResult<ProcessManagementDTO.ApproveResultDTO> approveResult = workflowFeign.approve(approveDTO);
         Integer code = approveResult.getCode();
         if (200 != code) {
-            throw new ServiceException(ApiError.ERROR_94006);
+            throw new ServiceException(ApiError.WF_APPROVE_FAILED);
         }
         ProcessManagementDTO.ApproveResultDTO data = approveResult.getData();
         if (Objects.isNull(data.getIsExistProcess()) || !data.getIsExistProcess()) {
@@ -668,7 +668,7 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
         ApproveStatusEnum ingStatus = ApproveStatusEnum.APPROVE_ING;
         // 审核中的数据允许审核
         if (!Objects.equals(ingStatus, taskEntity.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_98007);
+            throw new ServiceException(ApiError.WF_REVOKE_PROCESS_ALLOWED_STATUS_ONLY);
         }
         String userId = UserContext.getDefaultLoginUser().getUid();
         handleCancelProcess(taskEntity, userId);
@@ -717,7 +717,7 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
     public BatchResultDTO assignUser(String id, List<String> userIdList) {
         StocktakingTaskEntity task = this.getById(id);
         if (Objects.isNull(task)) {
-            throw new ServiceException(ApiError.ERROR_BILL_NOT_EXIST);
+            throw new ServiceException(ApiError.BILL_NOT_EXIST);
         }
         Boolean result = stocktakingTaskUserService.assignUser(task, userIdList);
 
@@ -731,7 +731,7 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
         //获取导出数据
         List<StocktakingTaskDTO.PagingViewDTO> list = baseMapper.listExport(params);
         if (CollectionUtils.isEmpty(list)) {
-            throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
+            throw new ServiceException(ApiError.FILE_EXPORT_DATA_EMPTY);
         }
         //填充数据
         fillDb(list);
@@ -788,7 +788,7 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
             wb.close();
         } catch (Exception e) {
             log.error("盘点任务单 downloadTemplate  出错了 e==={}", e);
-            throw new ServiceException(ApiError.ERROR_95131);
+            throw new ServiceException(ApiError.FILE_IMPORT_TEMPLATE_DOWNLOAD_FAILED);
         }
     }
 
@@ -833,7 +833,7 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
                 WarehouseDTO.UpdateDTO updateDTO = warehouseService.detailWithCache(item.getWarehouseId());
                 String warehouseName = ObjectUtil.isNotEmpty(updateDTO) ? updateDTO.getName() : item.getWarehouseId();
                 log.error("仓库【{}】库位【{}】 SKU【{}】【{}】库存 已存在盘点任务，不能重复创建", warehouseName, item.getWarehouseLocation(), item.getSkuNo(), item.getDictInventoryStatus());
-                throw new ServiceException(ApiError.STOCKTAKING_TASK_EXIST, warehouseName, item.getWarehouseLocation(), item.getSkuNo(), item.getDictInventoryStatus());
+                throw new ServiceException(ApiError.WH_STOCKTAKING_TASK_EXIST, warehouseName, item.getWarehouseLocation(), item.getSkuNo(), item.getDictInventoryStatus());
             }
             String redisKey = CharSequenceUtil.format(RedisKeyConstant.INVENTORY_LOCK, entity.getCode(), item.getOrgId(), item.getWarehouseId(), item.getWarehouseLocation(), item.getSkuId(), item.getDictInventoryStatus());
             redisUtil.set(redisKey, planCode);

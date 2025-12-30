@@ -276,7 +276,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
     public PurchasePriceChangeEntity addAndSubmit(PurchasePriceChangeDTO.AddDTO dto) {
         PurchasePriceChangeEntity entity = this.add(dto);
         if (null == entity) {
-            throw new ServiceException(ApiError.ERROR_1019);
+            throw new ServiceException(ApiError.BILL_SAVE_FAILED);
         }
         Boolean result = this.submitApprove(Collections.singletonList(entity.getId()), Boolean.TRUE);
         return entity;
@@ -294,7 +294,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
     public PurchasePriceChangeDTO.ViewDTO view(String id) {
         PurchasePriceChangeEntity changeEntity = this.getById(id);
         if (Objects.isNull(changeEntity)) {
-            throw new ServiceException(ApiError.ERROR_98028);
+            throw new ServiceException(ApiError.PURCHASE_PRICE_CHANGE_NOT_FOUND);
         }
         PurchasePriceChangeDTO.ViewDTO viewDTO = new PurchasePriceChangeDTO.ViewDTO();
         BeanMapper.copy(changeEntity, viewDTO);
@@ -356,7 +356,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
         String id = dto.getId();
         PurchasePriceChangeEntity priceChangeEntity = this.getById(id);
         if (Objects.isNull(priceChangeEntity)) {
-            throw new ServiceException(ApiError.ERROR_98028);
+            throw new ServiceException(ApiError.PURCHASE_PRICE_CHANGE_NOT_FOUND);
         }
         PurchasePriceChangeEntity old = new PurchasePriceChangeEntity();
         BeanMapper.copy(priceChangeEntity, old);
@@ -370,7 +370,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
         statusList.add(rejectStatus);
         statusList.add(waitSubmitStatus);
         if (!statusList.contains(status)) {
-            throw new ServiceException(ApiError.ERROR_98019);
+            throw new ServiceException(ApiError.BILL_UPDATE_STATUS_NOT_ALLOWED);
         }
         //code
         String code = priceChangeEntity.getCode();
@@ -427,7 +427,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
         String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
         long count = priceChangeList.stream().filter(p -> !p.getApproveStatus().getStatus().equals(waitSubmitStatus)).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_98009);
+            throw new ServiceException(ApiError.BILL_DELETE_ALLOWED_STATUS_ONLY);
         }
         //删除价目表
         Boolean result = this.removeByIds(ids);
@@ -462,7 +462,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
         List<PurchasePriceChangeEntity> priceChangeList = this.listByIds(ids);
         priceChangeList = priceChangeList.stream().filter(p -> !ApproveStatusEnum.APPROVE.equals(p.getApproveStatus())).collect(Collectors.toList());
         if (CollectionUtils.isEmpty(priceChangeList)) {
-            throw new ServiceException(ApiError.ERROR_WAIT_SUBMIT_TO_APPROVE_ING);
+            throw new ServiceException(ApiError.BILL_WAIT_SUBMIT_TO_APPROVE_ING);
         }
 
         //校验附件信息
@@ -480,7 +480,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
         statusList.add(waitSubmitStatus);
         long count = priceChangeList.stream().filter(s -> !statusList.contains(s.getApproveStatus().getStatus())).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_WAIT_SUBMIT_TO_APPROVE_ING);
+            throw new ServiceException(ApiError.BILL_WAIT_SUBMIT_TO_APPROVE_ING);
         }
 
         if (isStartProcess) {
@@ -631,7 +631,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public BatchResultDTO approve(PurchasePriceChangeEntity entity, String type, String comment, Boolean isNeedProcess) {
         if (!ApproveStatusEnum.APPROVE_ING.getStatus().equals(entity.getApproveStatus().getStatus())) {
-            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_98006.msg);
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.WF_APPROVE_ALLOWED_STATUS_ONLY.getMsg());
         }
         //调用审核流程
         BatchResultDTO resultDTO = approveProcess(entity, type, comment, isNeedProcess);
@@ -662,7 +662,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
         Boolean  result = this.updateApproveStatus(Collections.singletonList(entity), approveStatus);
 
         if (!result) {
-            throw new ServiceException(ApiError.ERROR_94006);
+            throw new ServiceException(ApiError.WF_APPROVE_FAILED);
         }
         if (ScmConstant.PASS.equals(type)) {
             //更新价目表数据
@@ -696,7 +696,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
         String approveIngStatus = ApproveStatusEnum.APPROVE_ING.getStatus();
         long count = list.stream().filter(s -> !s.getApproveStatus().getStatus().equals(approveIngStatus)).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_98007);
+            throw new ServiceException(ApiError.WF_REVOKE_PROCESS_ALLOWED_STATUS_ONLY);
         }
         //撤销现有流程
         LoginUser userInfo = UserContext.getDefaultLoginUser();
@@ -753,7 +753,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
                 listApiResult = workflowFeign.curApprover(dtoList);
                 Integer code = listApiResult.getCode();
                 if (200 != code) {
-                    throw new ServiceException(new ApiResult(ApiError.DEFAULT.code,listApiResult.getMsg()));
+                    throw new ServiceException(new ApiResult(ApiError.HTTP_UNKNOWN.getCode(),listApiResult.getMsg()));
                 }
             }
             //历史调价数据
@@ -847,7 +847,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
     public Boolean updateAndSubmit(PurchasePriceChangeDTO.UpdateDTO dto) {
         String id = this.updatePurchasePriceChange(dto);
         if (StringUtils.isBlank(id)) {
-            throw new ServiceException(ApiError.ERROR_1020);
+            throw new ServiceException(ApiError.BILL_UPDATE_FAILED);
         }
         return this.submitApprove(Arrays.asList(id), Boolean.TRUE);
     }
@@ -997,7 +997,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
         ApiResult<ProcessManagementDTO.ApproveResultDTO> result = workflowFeign.approve(approveDTO);
         Integer code = result.getCode();
         if (200 != code) {
-            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_94006.msg);
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.WF_APPROVE_FAILED.getMsg());
         }
         ProcessManagementDTO.ApproveResultDTO data = result.getData();
         ApproveStatusEnum approveStatusEnum = ApproveStatusEnum.REJECT;
@@ -1034,7 +1034,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
 
         List<PurchasePriceChangeDetailEntity> detailList = purchasePriceChangeDetailService.listByPurchasePriceChangeId(entity.getId());
         if (CollUtil.isEmpty(detailList)) {
-            throw new ServiceException(ApiError.PRICE_NOT_EXIST);
+            throw new ServiceException(ApiError.PURCHASE_PRICE_NOT_EXIST);
         }
         //新品首批
         String skuNo = detailList.stream().map(PurchasePriceChangeDetailEntity::getSkuNo).collect(Collectors.joining(","));
@@ -1128,7 +1128,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
             listApiResult = workflowFeign.curApprover(dtoList);
             Integer code = listApiResult.getCode();
             if (200 != code) {
-                throw new ServiceException(ApiError.ERROR_500);
+                throw new ServiceException(ApiError.HTTP_UNKNOWN);
             }
         }
 
@@ -1200,7 +1200,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
     private void checkAttachment (String bussinessId) {
         List<AttachmentDTO.UpdateDTO> attachmentList = attachmentService.getByBusinessId(bussinessId);
         if (CollectionUtils.isEmpty(attachmentList)){
-            throw new ServiceException(ApiError.TIME_NOT_NULL,"附件信息");
+            throw new ServiceException(ApiError.COMMON_PARAM_TIME_REQUIRED,"附件信息");
         }
     }
 }

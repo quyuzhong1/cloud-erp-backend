@@ -65,7 +65,7 @@ public class DmpReturnInstockServiceImpl extends SuperServiceImpl<DmpReturnInsto
     @Override
     public Boolean update(DmpReturnInstockDTO.UpdateDTO addOrUpdateDTO) {
         DmpReturnInstockEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "中台退货入库单主单"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "中台退货入库单主单"));
         DmpReturnInstockEntity dmpReturnInstockEntity =  BeanMapperUtils.map(DmpReturnInstockEntity.class, addOrUpdateDTO);
 
         // 数据处理

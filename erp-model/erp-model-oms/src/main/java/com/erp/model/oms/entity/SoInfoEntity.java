@@ -423,6 +423,18 @@ public class SoInfoEntity extends BaseEntity<SoInfoEntity> {
     @TableField("post_code")
     private String postCode;
 
+    /**
+     * 第三方单据编号
+     */
+    @TableField("third_code")
+    private String thirdCode;
+
+    /**
+     * 第三方系统
+     */
+    @TableField("third_system")
+    private String thirdSystem;
+
     public static final String CODE = "code";
 
     public static final String APPROVE_STATUS = "approve_status";

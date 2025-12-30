@@ -66,7 +66,7 @@ public class InventoryHisServiceImpl extends SuperServiceImpl<InventoryHisMapper
         } else {
             int updateCnt = this.updateQtyById(inventoryHis.getId(), qty);
             if(updateCnt != 1) {
-                throw new ServiceException(ApiError.ERROR_1027);
+                throw new ServiceException(ApiError.BILL_DATA_LOCKED);
             }
         }
     }

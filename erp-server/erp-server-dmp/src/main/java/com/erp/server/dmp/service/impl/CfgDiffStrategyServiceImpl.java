@@ -3,7 +3,6 @@ package com.erp.server.dmp.service.impl;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -13,7 +12,6 @@ import java.util.stream.Collectors;
 
 import javax.annotation.Resource;
 
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,7 +29,6 @@ import com.common.business.enums.QueryConditionEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
-import com.common.core.constant.EnumMessage;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
@@ -123,7 +120,7 @@ public class CfgDiffStrategyServiceImpl extends SuperServiceImpl<CfgDiffStrategy
     @Override
     public Boolean update(CfgDiffStrategyDTO.UpdateDTO addOrUpdateDTO) {
         CfgDiffStrategyEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "差异策略配置基础信息"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "差异策略配置基础信息"));
         CfgDiffStrategyEntity cfgDiffStrategyEntity =  BeanMapperUtils.map(CfgDiffStrategyEntity.class, addOrUpdateDTO);
 
         // 数据处理

@@ -2,17 +2,7 @@ package com.sdk.wangdian.sdk.api.wms.stockout;
 
 import com.sdk.wangdian.sdk.Pager;
 import com.sdk.wangdian.sdk.WdtErpException;
-import com.sdk.wangdian.sdk.api.wms.stockout.dto.CreateOtherStockoutResponse;
-import com.sdk.wangdian.sdk.api.wms.stockout.dto.CreateTransferStockoutRequest;
-import com.sdk.wangdian.sdk.api.wms.stockout.dto.CreateTransferStockoutResponse;
-import com.sdk.wangdian.sdk.api.wms.stockout.dto.ProcessStockoutRequest;
-import com.sdk.wangdian.sdk.api.wms.stockout.dto.ProcessStockoutResponse;
-import com.sdk.wangdian.sdk.api.wms.stockout.dto.SalesStockoutRequest;
-import com.sdk.wangdian.sdk.api.wms.stockout.dto.SalesStockoutResponse;
-import com.sdk.wangdian.sdk.api.wms.stockout.dto.StockoutOtherQueryRequest;
-import com.sdk.wangdian.sdk.api.wms.stockout.dto.StockoutOtherQueryResponse;
-import com.sdk.wangdian.sdk.api.wms.stockout.dto.StockoutSearchRequest;
-import com.sdk.wangdian.sdk.api.wms.stockout.dto.StockoutSearchResponse;
+import com.sdk.wangdian.sdk.api.wms.stockout.dto.*;
 import com.sdk.wangdian.sdk.impl.Api;
 
 import java.net.ConnectException;
@@ -39,4 +29,7 @@ public interface StockoutAPI
 
 	@Api(value = "wms.stockout.Base.search", paged = true)
 	StockoutSearchResponse search(StockoutSearchRequest request, Pager pager) throws WdtErpException ;
+
+	@Api(value = "wms.stockout.Sales.salesWeighing")
+	SalesWeighingResponse salesWeighing(Map<String, Object> request) throws WdtErpException;
 }

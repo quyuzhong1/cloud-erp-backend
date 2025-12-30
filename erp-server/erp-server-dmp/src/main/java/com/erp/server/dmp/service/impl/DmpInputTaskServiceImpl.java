@@ -18,19 +18,13 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.FileTaskEventEnum;
 import com.common.business.enums.OperationTypeEnum;
-import com.common.business.enums.SyncStatusEnum;
 import com.common.business.vo.PagingVO;
-import com.common.core.excel.ExcelPrintUtils;
-import com.common.core.utils.date.DateUtil;
-import com.erp.model.dmp.constant.DmpConstant;
 import com.erp.model.dmp.dto.*;
-import com.erp.model.dmp.entity.DmpCfgInputDetailEntity;
 import com.erp.model.dmp.enums.*;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.dmp.service.CfgSettingService;
 import com.erp.server.dmp.service.OperateLogService;
-import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.MDC;
 import org.springframework.stereotype.Service;
@@ -81,7 +75,7 @@ public class DmpInputTaskServiceImpl extends SuperServiceImpl<DmpInputTaskMapper
     private DownloadTaskFeign downloadTaskFeign;
     @Resource
     private CfgSettingService cfgSettingService;
-	
+
 	@GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -113,7 +107,7 @@ public class DmpInputTaskServiceImpl extends SuperServiceImpl<DmpInputTaskMapper
     @Override
     public Boolean update(DmpInputTaskDTO.UpdateDTO updateDTO) {
         DmpInputTaskEntity old = super.getById(updateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "拉取任务"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "拉取任务"));
         DmpInputTaskEntity dmpInputTaskEntity =  BeanMapperUtils.map(DmpInputTaskEntity.class, updateDTO);
 
         // 数据处理

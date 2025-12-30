@@ -65,7 +65,7 @@ public class DmpSoDeliveryDetailServiceImpl extends SuperServiceImpl<DmpSoDelive
     @Override
     public Boolean update(DmpSoDeliveryDetailDTO.UpdateDTO addOrUpdateDTO) {
         DmpSoDeliveryDetailEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "中台配货单明细单"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "中台配货单明细单"));
         DmpSoDeliveryDetailEntity dmpSoDeliveryDetailEntity =  BeanMapperUtils.map(DmpSoDeliveryDetailEntity.class, addOrUpdateDTO);
 
         // 数据处理

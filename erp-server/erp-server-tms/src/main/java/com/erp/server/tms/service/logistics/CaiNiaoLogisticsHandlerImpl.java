@@ -1,34 +1,19 @@
 package com.erp.server.tms.service.logistics;
 
-import cn.hutool.core.util.StrUtil;
-import cn.hutool.json.JSONUtil;
 import com.common.business.annotation.LogisticsPlatformType;
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.business.enums.PlatformDictEnum;
-import com.common.business.threadlocal.ThirdWarehouseContext;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
-import com.erp.model.dmp.dto.CfgAppClientDTO;
-import com.erp.model.dmp.entity.CfgAppClientEntity;
-import com.erp.model.dmp.enums.AppClientEnum;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
-import com.erp.model.tms.enums.BusinessTypeEnum;
-import com.erp.model.tms.enums.RequestStatusEnums;
 import com.erp.model.tms.vo.request.ChanelQueryVO;
 import com.erp.model.tms.vo.response.LogisticsServiceResponseVO;
-import com.erp.model.wms.entity.OverseasProviderWarehouseEntity;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
-import com.erp.rpc.wms.feign.WmsOverseasWarehouseFeign;
-import com.erp.server.tms.convert.LogisticsChannelConverter;
 import com.erp.server.tms.handler.AbstractLogisticsHandler;
-import com.erp.server.tms.service.LogisticsOperateService;
-import com.sdk.wms.goodcang.dto.response.GoodCangLogisticsProductsResp;
-import com.sdk.wms.goodcang.dto.response.GoodCangResponse;
-import com.sdk.wms.goodcang.service.GoodCangService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Component;
@@ -37,8 +22,6 @@ import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import java.util.stream.Collectors;
 
 
 /**

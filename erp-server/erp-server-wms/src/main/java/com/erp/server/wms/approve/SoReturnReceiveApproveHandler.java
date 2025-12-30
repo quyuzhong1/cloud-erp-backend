@@ -49,7 +49,7 @@ public class SoReturnReceiveApproveHandler extends AbstractApproveHandler {
     public Boolean disApprove(ApproveDTO.DisApproveDTO dto) {
         SoReturnReceiveEntity entity = soReturnReceiveService.getById(dto.getId());
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.NOT_EXIST_BILL,"销售退货签收单");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE,"销售退货签收单");
         }
         BatchResultDTO resultDTO = soReturnReceiveService.disApprove(entity);
         return resultDTO.getSuccess();
@@ -60,11 +60,11 @@ public class SoReturnReceiveApproveHandler extends AbstractApproveHandler {
     public Boolean approveEnd(ApproveDTO.EndProcessDTO dto) {
         SoReturnReceiveEntity entity = soReturnReceiveService.getById(dto.getBusinessId());
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.NOT_EXIST_BILL,"销售退货签收单");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE,"销售退货签收单");
         }
         Boolean approve = soReturnReceiveService.approveEnd(new ApproveOneDTO(dto.getBusinessId(),dto.getApproveStatus().getStatus(),dto.getComment()),entity);
         if (Boolean.FALSE.equals(approve)) {
-            throw new ServiceException(ApiError.ERROR_BILL_APPROVE, SourceTypeEnum.getName(dto.getBusinessKey()));
+            throw new ServiceException(ApiError.BILL_APPROVE_FAILED, SourceTypeEnum.getName(dto.getBusinessKey()));
         }
         //非erp审核添加日志
         if (ApprovePlatformEnum.ERP.equals(dto.getApprovePlatformEnum())) {

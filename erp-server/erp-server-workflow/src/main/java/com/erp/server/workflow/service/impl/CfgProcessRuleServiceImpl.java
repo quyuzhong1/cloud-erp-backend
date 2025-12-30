@@ -310,11 +310,11 @@ public class CfgProcessRuleServiceImpl extends SuperServiceImpl<CfgProcessRuleMa
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO updateState(CfgProcessRuleEntity entity, Boolean disabled) {
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.NOT_EXIST_BILL,"流程规则");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE,"流程规则");
         }
         CfgProcessEntity cfgProcessEntity = cfgProcessService.getById(entity.getCfgProcessId());
         if (ObjectUtil.isEmpty(cfgProcessEntity)) {
-            throw new ServiceException(ApiError.NOT_EXIST_BILL,"流程配置");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE,"流程配置");
         }
         //判断审核条件状态是否发生变化
         if (disabled.equals(entity.getDisabled())) {
@@ -399,10 +399,10 @@ public class CfgProcessRuleServiceImpl extends SuperServiceImpl<CfgProcessRuleMa
                     continue;
                 }
             } else {
-                throw new ServiceException(ApiError.CFG_PROCESS_RULE_TYPE_NOT_EXIST);
+                throw new ServiceException(ApiError.WF_RULE_TYPE_NOT_FOUND);
             }
             //未跳过则根据类型报错
-            throw new ServiceException(ApiError.CFG_PROCESS_RULE_DELETE,CfgProcessRuleTypeEnum.getName(entity.getType()));
+            throw new ServiceException(ApiError.WF_RULE_USED_CANNOT_DELETE,CfgProcessRuleTypeEnum.getName(entity.getType()));
         }
     }
 }

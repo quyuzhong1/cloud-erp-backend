@@ -2,7 +2,6 @@ package com.erp.server.sys.service.impl;
 
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.common.business.utils.ApplicationContextUtils;
@@ -10,16 +9,13 @@ import com.common.core.dto.SpElExpressionDTO;
 import com.common.core.entity.ConditionElement;
 import com.common.core.enums.RuleCompareEnum;
 import com.common.core.server.rule.SpElServer;
-import com.erp.model.sys.dto.CfgConditionDTO;
 import com.erp.model.sys.dto.CfgRuleConditionDTO;
 import com.erp.model.sys.entity.CfgRuleConditionEntity;
 import com.erp.server.sys.mapper.CfgRuleConditionMapper;
-import com.erp.server.sys.service.CfgConditionService;
 import com.erp.server.sys.service.CfgRuleConditionService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.server.sys.service.OperateLogService;
 import com.common.core.exception.ServiceException;
-import org.apache.commons.math3.util.Pair;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,7 +26,6 @@ import java.util.stream.Collectors;
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
 import org.springframework.util.CollectionUtils;
-import org.springframework.util.StringUtils;
 
 import javax.annotation.Resource;
 
@@ -91,7 +86,7 @@ public class CfgRuleConditionServiceImpl extends SuperServiceImpl<CfgRuleConditi
         String expression = splElDTO.getExpression();
         Boolean checkResult = spElServer.checkExpressionIsEnabled(expression);
         if (Boolean.FALSE.equals(checkResult)) {
-            throw new ServiceException(ApiError.ERROR_RULE_EXPRESSION_ERROR);
+            throw new ServiceException(ApiError.COMMON_RULE_EXPRESSION_ERROR);
         }
     }
 

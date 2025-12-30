@@ -1,17 +1,13 @@
 package com.erp.server.plm.service.impl;
 
 
-import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
 import com.erp.model.plm.entity.PilotApplicationRefTaskEntity;
 import com.erp.server.plm.mapper.PilotApplicationRefTaskMapper;
 import com.erp.server.plm.service.PilotApplicationRefTaskService;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.threadlocal.UserContext;
-import com.erp.server.plm.service.CommonService;
 import com.common.core.exception.ServiceException;
 import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -57,7 +53,7 @@ public class PilotApplicationRefTaskServiceImpl extends SuperServiceImpl<PilotAp
     @Override
     public Boolean update(PilotApplicationRefTaskDTO.UpdateDTO updateDTO) {
         PilotApplicationRefTaskEntity old = super.getById(updateDTO.getId());
-        PilotApplicationRefTaskEntity oldEntity = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "试产/量产 关联任务"));
+        PilotApplicationRefTaskEntity oldEntity = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "试产/量产 关联任务"));
         PilotApplicationRefTaskEntity pilotApplicationRefTaskEntity =  BeanMapperUtils.map(PilotApplicationRefTaskEntity.class, updateDTO);
 
         log.info("编辑 开始修改试产/量产 关联任务数据，id：【{}】", oldEntity.getId());

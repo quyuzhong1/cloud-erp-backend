@@ -32,7 +32,9 @@
             srd.return_amount ,
             srd.tax_return_amount ,
             srd.return_amount_local_currency ,
-            srd.tax_return_amount_local_currency
+            srd.tax_return_amount_local_currency,
+            sr.third_code as thirdCode,
+            sr.platform_order_code as platformOrderCode
         FROM so_return_detail srd
         INNER JOIN so_return sr ON srd.main_id = sr.id AND srd.is_deleted = FALSE
         WHERE

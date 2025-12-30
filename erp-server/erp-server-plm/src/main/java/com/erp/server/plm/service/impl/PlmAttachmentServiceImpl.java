@@ -23,7 +23,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
-import java.io.File;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -97,18 +96,18 @@ public class PlmAttachmentServiceImpl extends SuperServiceImpl<PlmAttachmentMapp
         double fileSize = size / (1024 * 1024);
         fileSize = (double) Math.round(fileSize * 100) / 100;
         if (fileSize > 300) {
-            throw new ServiceException(ApiError.ERROR_95160, 300);
+            throw new ServiceException(ApiError.FILE_SIZE_EXCEEDS_LIMIT, 300);
         }
         String fileName = multipartFile.getOriginalFilename();
         if (org.springframework.util.StringUtils.isEmpty(fileName)) {
-            throw new ServiceException(ApiError.ERROR_1018);
+            throw new ServiceException(ApiError.COMMON_PARAM_NAME_TOO_LONG);
         }
         if (fileName.length() > 200) {
-            throw new ServiceException(ApiError.ERROR_1018);
+            throw new ServiceException(ApiError.COMMON_PARAM_NAME_TOO_LONG);
         }
         String fileUrl = fileFeign.uploadFile(multipartFile);
         if (StringUtils.isBlank(fileUrl)) {
-            throw new ServiceException(ApiError.ERROR_95018);
+            throw new ServiceException(ApiError.FILE_UPLOAD_FAILED);
         }
         PlmAttachmentEntity attachmentEntity = new PlmAttachmentEntity();
         attachmentEntity.setAttachUrl(fileUrl);
@@ -135,7 +134,7 @@ public class PlmAttachmentServiceImpl extends SuperServiceImpl<PlmAttachmentMapp
     @Transactional(rollbackFor = Exception.class)
     public List<PlmAttachmentEntity> batchUpload(List<MultipartFile> multipartFileList, String type) {
         if (CollectionUtils.isEmpty(multipartFileList)) {
-            throw new ServiceException(ApiError.ERROR_95018);
+            throw new ServiceException(ApiError.FILE_UPLOAD_FAILED);
         }
         List<PlmAttachmentEntity> resultList = new ArrayList<>();
         for(MultipartFile multipartFile :multipartFileList) {
@@ -167,12 +166,12 @@ public class PlmAttachmentServiceImpl extends SuperServiceImpl<PlmAttachmentMapp
         if(StringUtils.isBlank(id) || StringUtils.isBlank(businessId)){
             return Collections.emptyList();
         }
-        
+
         // 构建查询条件
         LambdaQueryWrapper<PlmAttachmentEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(PlmAttachmentEntity::getBusinessId, businessId)
                 .eq(PlmAttachmentEntity::getType, SourceTypeEnum.PRODUCT_DETAIL.getTableName());
-        
+
         // 如果提供了 createTime，则匹配时间范围（前后1秒）
         if(createTime != null) {
             LocalDateTime startTime = createTime.minusSeconds(1);
@@ -180,15 +179,15 @@ public class PlmAttachmentServiceImpl extends SuperServiceImpl<PlmAttachmentMapp
             queryWrapper.ge(PlmAttachmentEntity::getCreateTime, startTime)
                     .le(PlmAttachmentEntity::getCreateTime, endTime);
         }
-        
+
         queryWrapper.orderByDesc(PlmAttachmentEntity::getCreateTime);
-        
+
         List<PlmAttachmentEntity> attachments = this.list(queryWrapper);
-        
+
         if(CollectionUtils.isEmpty(attachments)){
             return Collections.emptyList();
         }
-        
+
         return BeanUtil.copyToList(attachments, AttachmentDTO.CommonDTO.class);
     }
 }

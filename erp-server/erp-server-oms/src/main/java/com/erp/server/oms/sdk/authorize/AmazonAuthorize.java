@@ -1,7 +1,6 @@
 package com.erp.server.oms.sdk.authorize;
 
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.constant.RedisCacheConstants;
 import com.common.business.enums.PlatformDictEnum;
@@ -184,7 +183,7 @@ public class AmazonAuthorize implements IShopAuthorizeService<T> {
         }
         List<String> shopIds = (List<String>) shopIdObj;
         if (CollectionUtils.isEmpty(shopIds)) {
-            throw new ServiceException(ApiError.ERROR_WALMART_SHOP_ID_NOT_NULL);
+            throw new ServiceException(ApiError.SHOP_AUTHORIZE_ERROR);
         }
         if (StringUtils.isBlank(dto.getSpapi_oauth_code())) {
             throw new ServiceException("信息Spapi_oauth_code不存在");
@@ -223,11 +222,11 @@ public class AmazonAuthorize implements IShopAuthorizeService<T> {
         for (String shopId : shopIds) {
             ShopInfoEntity shopInfo = shopInfoService.getById(shopId);
             if (null == shopInfo) {
-                throw new ServiceException(ApiError.ERROR_92058);
+                throw new ServiceException(ApiError.SHOP_NOT_FOUND);
             }
             // 店铺已授权
             if(AuthStatusEnum.ALREADY.getCode().equalsIgnoreCase(shopInfo.getAuthStatus())){
-                throw new ServiceException(ApiError.ERROR_SHOP_ALREADY_AUTH);
+                throw new ServiceException(ApiError.SHOP_ALREADY_AUTHORIZED);
             }
             // 添加授权账号校验
             if (StringUtils.isNotBlank(shopInfo.getPlatformShopCode())){

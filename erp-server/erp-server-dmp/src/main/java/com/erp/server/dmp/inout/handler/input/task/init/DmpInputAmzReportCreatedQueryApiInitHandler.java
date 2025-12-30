@@ -1,41 +1,30 @@
 package com.erp.server.dmp.inout.handler.input.task.init;
 
-import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.constant.RedisCacheConstants;
 import com.common.business.utils.RedisUtil;
-import com.common.core.anno.ParamData;
-import com.common.core.enums.PannoEnum;
 import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.dto.AmazonShopInfoDTO;
 import com.erp.model.dmp.entity.DmpAmzReportInfoEntity;
 import com.erp.model.dmp.enums.AmzReportTaskStatusEnum;
 import com.erp.sdk.oms.amz.spapi.api.ReportsApi;
 import com.erp.sdk.oms.amz.spapi.client.ApiException;
-import com.erp.sdk.oms.amz.spapi.client.ApiResponse;
-import com.erp.sdk.oms.amz.spapi.client.StringUtil;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
-import com.erp.sdk.oms.amz.spapi.model.reports.GetReportsResponse;
 import com.erp.sdk.oms.amz.spapi.model.reports.Report;
-import com.erp.sdk.oms.amz.spapi.model.reports.ReportList;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputInitRequest;
 import com.erp.server.dmp.inout.dto.response.DmpInputTaskResponse;
-import com.erp.server.dmp.service.AmzReportHandleService;
-import com.erp.server.dmp.service.CfgAmzReportTypeService;
 import com.erp.server.dmp.service.CfgAppClientService;
 import com.erp.server.dmp.service.DmpAmzReportInfoService;
-import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * dmp输入init任务基础处理器下的亚马逊api获取数据方式

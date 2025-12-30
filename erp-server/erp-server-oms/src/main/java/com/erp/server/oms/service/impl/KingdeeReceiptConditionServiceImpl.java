@@ -42,7 +42,7 @@ public class KingdeeReceiptConditionServiceImpl extends SuperServiceImpl<Kingdee
     public Boolean update(KingdeeReceiptConditionDTO.UpdateDTO updateDTO) {
         KingdeeReceiptConditionEntity old = super.getById(updateDTO.getId());
         if(null == old){
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "金蝶收款条件");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "金蝶收款条件");
         }
         KingdeeReceiptConditionEntity kingdeeReceiptConditionEntity =  BeanMapperUtils.map(KingdeeReceiptConditionEntity.class, updateDTO);
         log.info("编辑 开始修改金蝶收款条件数据，单号：【{}】", old.getCode());

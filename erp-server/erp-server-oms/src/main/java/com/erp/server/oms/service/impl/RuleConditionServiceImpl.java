@@ -87,7 +87,7 @@ public class RuleConditionServiceImpl extends SuperServiceImpl<RuleConditionMapp
     public Boolean update(RuleConditionDTO.UpdateDTO updateDTO) {
         RuleConditionEntity old = super.getById(updateDTO.getId());
         if(null == old){
-            throw new ServiceException(ApiError.NOT_EXIST_BILL,ModuleTypeEnum.RULE_CONDITION.getName());
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE,ModuleTypeEnum.RULE_CONDITION.getName());
         }
         RuleConditionEntity ruleConditionEntity = BeanMapperUtils.map(RuleConditionEntity.class, updateDTO);
 

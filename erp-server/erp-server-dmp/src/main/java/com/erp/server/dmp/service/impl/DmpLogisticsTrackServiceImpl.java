@@ -65,7 +65,7 @@ public class DmpLogisticsTrackServiceImpl extends SuperServiceImpl<DmpLogisticsT
     @Override
     public Boolean update(DmpLogisticsTrackDTO.UpdateDTO updateDTO) {
         DmpLogisticsTrackEntity old = super.getById(updateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, ""));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, ""));
         DmpLogisticsTrackEntity dmpLogisticsTrackEntity =  BeanMapperUtils.map(DmpLogisticsTrackEntity.class, updateDTO);
 
         // 数据处理

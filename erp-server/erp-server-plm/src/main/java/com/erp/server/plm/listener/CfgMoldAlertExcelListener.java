@@ -7,7 +7,6 @@ import com.common.business.dto.base.BaseDTO;
 import com.common.business.enums.DisabledEnum;
 import com.common.business.enums.FileTaskStatusEnum;
 import com.common.core.enums.ApiError;
-import com.common.core.exception.ServiceException;
 import com.common.core.utils.FieldValidUtil;
 import com.erp.model.plm.dto.excel.CfgMoldAlertImportExcelDTO;
 import com.erp.model.plm.entity.MoldInfoEntity;
@@ -164,7 +163,7 @@ public class CfgMoldAlertExcelListener extends AnalysisEventListener<CfgMoldAler
 
         //结束日期不能小于开始日期
         if (Objects.nonNull(excelDTO.getEndDate()) && Objects.nonNull(excelDTO.getStartDate()) && excelDTO.getEndDate().isBefore(excelDTO.getStartDate())) {
-            errorMsgList.add(ApiError.ERROR_92008.msg);
+            errorMsgList.add(ApiError.COMMON_DATE_RANGE_INVALID.getMsg());
         }
 
         //预警数量和预警比例 不能同时为空
@@ -175,7 +174,7 @@ public class CfgMoldAlertExcelListener extends AnalysisEventListener<CfgMoldAler
         //校验寿命数量必须大于预警寿命（数量）
         if(Objects.nonNull(excelDTO.getAlertLifeQty()) && Objects.nonNull(excelDTO.getLifeQty())){
             if(excelDTO.getLifeQty() < excelDTO.getAlertLifeQty()){
-                errorMsgList.add(ApiError.ERROR_95302.msg);
+                errorMsgList.add(ApiError.MOULD_LIFESPAN_TOO_SMALL.getMsg());
             }
         }
 

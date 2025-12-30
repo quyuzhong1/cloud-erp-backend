@@ -4,7 +4,6 @@ package com.erp.server.sys.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.bean.copier.CopyOptions;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.utils.StringUtil;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -83,7 +82,7 @@ public class DictKingdeeServiceImpl extends SuperServiceImpl<DictKingdeeMapper, 
     @Override
     public Boolean update(DictKingdeeDTO.UpdateDTO updateDTO) {
         DictKingdeeEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "金蝶字典单"));
+        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "金蝶字典单"));
         DictKingdeeEntity dictKingdeeEntity =  BeanMapperUtils.map(DictKingdeeEntity.class, updateDTO);
 
         // 数据处理

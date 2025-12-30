@@ -10,7 +10,6 @@ import com.erp.model.dmp.dto.DictBasicDTO;
 import com.erp.model.dmp.entity.ThirdMappingEntity;
 import com.erp.model.dmp.entity.ThirdShopEntity;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
-import com.erp.model.oms.enums.MercadoOrderLogisticTypeEnum;
 import com.erp.model.oms.enums.OrderLogisticTypeEnum;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.server.dmp.service.DictBasicService;
