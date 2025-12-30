@@ -9,6 +9,8 @@ import com.common.business.annotation.MenuCode;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
+
 /**
  * @Description 产品sku信息导出
  **/
@@ -472,8 +474,14 @@ public class ProductDetailExcelExportDTO {
      * 保险属性
      */
     @ExcelProperty("保险属性")
-    @MenuCode("plm:product:detail:listLogistics")
+    @MenuCode("plm:product:detail:listSale")
     private String insuranceProperty;
+    /**
+     * 电池重量（g）
+     */
+    @ExcelProperty("电池重量（g）")
+    @MenuCode("plm:product:detail:listSale")
+    private BigDecimal batteryWeight;
 
     /**
      * 报关申报价（$）

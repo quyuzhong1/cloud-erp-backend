@@ -189,6 +189,10 @@ public enum ApiError implements Serializable {
     COMMON_CONTRACT_TEMPLATE_BINDING_DUPLICATE(1105,"【{0}】已绑定【{1}】，不可重复绑定"),
     COMMON_CONTRACT_TEMPLATE_BOUND_BY_OTHER_SUPPLIER(1106,"【{0}】已被其他供应商绑定，请先解除关联再绑定所有供应商"),
     COMMON_USER_NOT_FOUND(1107, "用户不存在"),
+    COMMON_CATEGORY_LEVEL_EXCEED_MAX(1107,"分类级别最多支持{0}级"),
+    COMMON_SYSTEM_CATEGORY_DELETE_FORBIDDEN(1108,"系统分类不允许删除"),
+    COMMON_SYSTEM_CATEGORY_UPDATE_FORBIDDEN(1109,"系统分类不允许编辑"),
+    COMMON_DELETE_CHILD_NODE_EXISTS(1110,"存在子节点，无法删除"),
     COMMON_CONTRACT_NOT_BINDING(98127,"无关联合同，请在合同管理页面关联后打印"),
 
     /**
@@ -636,6 +640,7 @@ public enum ApiError implements Serializable {
     PRODUCT_APP_CATEGORY_CODE_EXISTS(5104, "应用分类代号已存在"),
     PRODUCT_APP_CATEGORY_NAME_EXISTS(5105, "应用分类名称已存在"),
     PRODUCT_PROPERTY_ASSET_NOT_EXIST(98161,"SKU【{0}】产品属性非资产，与供应商付款条件不一致"),
+    PRODUCT_SALES_BATTERY_WEIGHT_NOT_NULL(5106,"产品销售信息电池重量（g）不能为空"),
 
     /**
      * BOM 错误信息 6000 - 6499

@@ -5369,6 +5369,18 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 }
             }
 
+
+            //电池重量（g）
+            BigDecimal batteryWeight = dto.getBatteryWeight();
+            List<String> productPropertyIds = declarePropertyList.stream().map(BasicDictEntity::getId).collect(Collectors.toList());
+            List<String> productPropertyNames = declarePropertyList.stream().map(BasicDictEntity::getValue).collect(Collectors.toList());
+            String propertyNames = StringUtils.join(productPropertyNames, ",");
+            String propertyIds = StringUtils.join(productPropertyIds, ",");
+            if( (Objects.isNull(batteryWeight) || batteryWeight.compareTo(BigDecimal.ZERO) <=0 )
+                    && ( propertyNames.contains(ProductConstant.PRODUCT_BATTERY_LITHIUM_METAL)|| propertyNames.contains(ProductConstant.PRODUCT_BATTERY_LITHIUM_ION)|| propertyNames.contains(ProductConstant.PRODUCT_BATTERY_LITHIUM_POLYMER) ) ){
+                errorMsgList.add(ApiError.PRODUCT_SALES_BATTERY_WEIGHT_NOT_NULL.getMsg());
+            }
+
             //存在错误信息则返回
             if (CollUtil.isNotEmpty(errorMsgList)) {
                 dto.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
@@ -5683,10 +5695,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 productSaleDTO.setInsuranceProperty(insurancePropertyName);
             }
             if(CollUtil.isNotEmpty(declarePropertyList)){
-                List<String> productPropertyIds = declarePropertyList.stream().map(BasicDictEntity::getId).collect(Collectors.toList());
-                List<String> productPropertyNames = declarePropertyList.stream().map(BasicDictEntity::getValue).collect(Collectors.toList());
-                productSaleDTO.setProductProperty(StringUtils.join(productPropertyNames, ","));
-                productSaleDTO.setProductPropertyId(StringUtils.join(productPropertyIds, ","));
+                productSaleDTO.setProductProperty(propertyNames);
+                productSaleDTO.setProductPropertyId(propertyIds);
             }
             productNoSpecDTO.setProductSaleDTO(productSaleDTO);
 
@@ -5703,10 +5713,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
              * 报关产品属性
              */
             if(CollUtil.isNotEmpty(declarePropertyList)){
-                List<String> productPropertyIds = declarePropertyList.stream().map(BasicDictEntity::getId).collect(Collectors.toList());
-                List<String> productPropertyNames = declarePropertyList.stream().map(BasicDictEntity::getValue).collect(Collectors.toList());
-                productLogisticsDTO.setProductProperty(StringUtils.join(productPropertyNames, ","));
-                productLogisticsDTO.setProductPropertyId(StringUtils.join(productPropertyIds, ","));
+                productLogisticsDTO.setProductProperty(propertyNames);
+                productLogisticsDTO.setProductPropertyId(propertyIds);
             }
             /**
              * 报关申报价（$）
@@ -6186,6 +6194,17 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 errorMsgList.add(ApiError.COMMON_GROSS_WEIGHT_LT_NET_WEIGHT_FORBIDDEN.getMsg());
             }
 
+            //电池重量（g）
+            BigDecimal batteryWeight = dto.getBatteryWeight();
+            List<String> productPropertyIds = declarePropertyList.stream().map(BasicDictEntity::getId).collect(Collectors.toList());
+            List<String> productPropertyNames = declarePropertyList.stream().map(BasicDictEntity::getValue).collect(Collectors.toList());
+            String propertyNames = StringUtils.join(productPropertyNames, ",");
+            String propertyIds = StringUtils.join(productPropertyIds, ",");
+            if( (Objects.isNull(batteryWeight) || batteryWeight.compareTo(BigDecimal.ZERO) <=0 )
+                    && ( propertyNames.contains(ProductConstant.PRODUCT_BATTERY_LITHIUM_METAL)|| propertyNames.contains(ProductConstant.PRODUCT_BATTERY_LITHIUM_ION)|| propertyNames.contains(ProductConstant.PRODUCT_BATTERY_LITHIUM_POLYMER) ) ){
+                errorMsgList.add(ApiError.PRODUCT_SALES_BATTERY_WEIGHT_NOT_NULL.getMsg());
+            }
+
             //存在错误信息则返回
             if (CollectionUtils.isNotEmpty(errorMsgList)) {
                 dto.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
@@ -6449,6 +6468,14 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
              * 销售平台
              */
             productSaleDTO.setSalesPlatform(productSalesPlatformEnum.getCode());
+
+            /**
+             * 电池重量（g）
+             */
+            productSaleDTO.setBatteryWeight(dto.getBatteryWeight());
+            productSaleDTO.setProductProperty(propertyNames);
+            productSaleDTO.setProductPropertyId(propertyIds);
+
             productNoSpecDTO.setProductSaleDTO(productSaleDTO);
 
             //产品物流信息
@@ -6461,10 +6488,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             /**
              * 报关产品属性
              */
-            List<String> productPropertyIds = declarePropertyList.stream().map(BasicDictEntity::getId).collect(Collectors.toList());
-            List<String> productPropertyNames = declarePropertyList.stream().map(BasicDictEntity::getValue).collect(Collectors.toList());
-            productLogisticsDTO.setProductProperty(StringUtils.join(productPropertyNames, ","));
-            productLogisticsDTO.setProductPropertyId(StringUtils.join(productPropertyIds, ","));
+            productLogisticsDTO.setProductProperty(propertyNames);
+            productLogisticsDTO.setProductPropertyId(propertyIds);
+
             /**
              * 报关申报价（$）
              */
@@ -7150,7 +7176,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         scaleFactor(UnitConverterUtil.mmToPoints(printEanDTO.getWidth()) - 10, image);
         // 计算条形码居中的 X 坐标
         float xPosition = getXPosition(printEanDTO, document, image);
-        float barcodeYPosition = document.getPageSize().getHeight() - image.getScaledHeight() - 5;
+        float barcodeYPosition = getYPosition(printEanDTO, document, image);
+//        float barcodeYPosition = document.getPageSize().getHeight() - image.getScaledHeight() - 5;
         Image eanImage = null;
         float eanPosition = 0;
         float eanBarcodeYPosition = 0;
@@ -7158,7 +7185,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             eanImage = getImage(dto.getEan(), printEanDTO, writer, baseFont);
             scaleFactor(UnitConverterUtil.mmToPoints(printEanDTO.getWidth()) - 10, eanImage);
             eanPosition = getXPosition(printEanDTO, document, eanImage);
-            eanBarcodeYPosition = document.getPageSize().getHeight() - image.getScaledHeight() - eanImage.getScaledHeight() - 15;
+            eanBarcodeYPosition = barcodeYPosition - 15;
         }
         // 绘制条形码
         PdfContentByte canvas = writer.getDirectContent();
@@ -7237,7 +7264,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         scaleFactor(UnitConverterUtil.mmToPoints(printEanDTO.getWidth()) - 10, image);
         // 计算条形码居中的 X 坐标
         float xPosition = getXPosition(printEanDTO, document, image);
-        float barcodeYPosition = document.getPageSize().getHeight() - image.getScaledHeight() - 5;
+        float barcodeYPosition = getYPosition(printEanDTO, document, image);
+//        float barcodeYPosition = document.getPageSize().getHeight() - image.getScaledHeight() - 5;
 
         Font font = new Font(baseFont, fontSize);
         List<String> textContent = printEanDTO.getTextContent();
@@ -7290,6 +7318,22 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             return document.getPageSize().getWidth() - image.getScaledWidth() - 5; // 右对齐，距离右边50个单位
         }
     }
+    /**
+     * 获取左边起点位置
+     *
+     * @param printEanDTO 参数
+     * @param document    页面
+     * @param image       图片
+     */
+    private float getYPosition(PrintEanDTO printEanDTO, Document document, Image image) {
+        if (Element.ALIGN_TOP == printEanDTO.getTextVerticalPosition()) {
+            return  document.getPageSize().getHeight() - image.getScaledHeight() - 5; // 上对齐，距离50个单位
+        } else if (Element.ALIGN_MIDDLE == printEanDTO.getTextVerticalPosition()) {
+            return  (document.getPageSize().getHeight() - image.getScaledHeight()) / 2;
+        } else {
+            return  5; // 下对齐，距离50个单位
+        }
+    }
 
     /**
      * 打印ean
@@ -7309,7 +7353,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         scaleFactor(UnitConverterUtil.mmToPoints(printEanDTO.getWidth()) - 10, image);
         // 计算条形码居中的 X 坐标
         float xPosition = getXPosition(printEanDTO, document, image);
-        float barcodeYPosition = document.getPageSize().getHeight() - image.getScaledHeight() - 5;
+        float barcodeYPosition = getYPosition(printEanDTO, document, image);
+//        float barcodeYPosition = document.getPageSize().getHeight() - image.getScaledHeight() - 5;
+
         Font font = new Font(baseFont, fontSize);
         List<String> textContent = printEanDTO.getTextContent();
         textContent.remove(ProductContentEnum.EAN.getCode());
@@ -7360,7 +7406,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         scaleFactor(UnitConverterUtil.mmToPoints(printEanDTO.getWidth()) - 10, image);
         // 计算条形码居中的 X 坐标
         float xPosition = getXPosition(printEanDTO, document, image);
-        float barcodeYPosition = document.getPageSize().getHeight() - image.getScaledHeight() - 5;
+        // 计算条形码居中的 Y 坐标
+        float barcodeYPosition = getYPosition(printEanDTO, document, image);
+
+//        float barcodeYPosition = document.getPageSize().getHeight() - image.getScaledHeight() - 5;
+
         for (int i = 0; i < dto.getQty(); i++) {
             // 将图像添加到 PDF
             canvas.addImage(image, image.getScaledWidth(), 0, 0, image.getScaledHeight(), xPosition, barcodeYPosition);
