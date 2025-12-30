@@ -108,13 +108,10 @@
             ctn.id ,
             ctn.notice_status,
             ctn.notice_type,
-            ctn.business_type,
-            crc.value as sourceType
+            ctn.business_type
         FROM
             cfg_third_notice as ctn
-                inner join cfg_rule_condition as crc on ctn.id = crc.rule_id
         where ctn.is_deleted = false
-          and crc.is_deleted = false
           and ctn.business_type ='moldMonitor'
           and ctn.method ='single'
           and ctn.apply_scope like '%billLine%'
