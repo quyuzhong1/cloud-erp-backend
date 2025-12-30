@@ -2534,7 +2534,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
                     .findFirst()
                     .orElse(null);
             if (Objects.isNull(detailEntity)){
-                throw new ServiceException(ApiError.FBA_SHIPMENT_DETAIL_NOT_EXIST);
+                throw new ServiceException(ApiError.FIRST_MILE_SHIPMENT_DETAIL_NOT_EXIST);
             }
             // 校验
 //            FbaShipmentEntity entity = entityList.stream().filter(v->v.getId().equals(detailEntity.getMainId())).findFirst().orElse(null);

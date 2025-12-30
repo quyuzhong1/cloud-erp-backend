@@ -86,7 +86,7 @@ public class FbaShipmentExtendServiceImpl extends SuperServiceImpl<FbaShipmentEx
     @Override
     public Boolean update(FbaShipmentExtendDTO.UpdateDTO addOrUpdateDTO) {
         FbaShipmentExtendEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "FBA拣货扩展单"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "FBA拣货扩展单"));
         FbaShipmentExtendEntity fbaShipmentExtendEntity =  BeanMapperUtils.map(FbaShipmentExtendEntity.class, addOrUpdateDTO);
 
         // 数据处理
@@ -158,7 +158,7 @@ public class FbaShipmentExtendServiceImpl extends SuperServiceImpl<FbaShipmentEx
         try {
             new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
         } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_1015);
+            throw new ServiceException(ApiError.FILE_EXPORT_FAILED);
         }
     }
 

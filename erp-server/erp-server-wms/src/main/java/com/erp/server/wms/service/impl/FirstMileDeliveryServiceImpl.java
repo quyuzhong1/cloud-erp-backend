@@ -644,6 +644,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                 }
             }
         }
+    }
 
         // 调用流程审核
         approveProcess(entity, dto);
@@ -2855,12 +2856,12 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                 .eq(FirstMileDeliveryEntity::getSourceId,dto.getId())
                 .one();
         if (Objects.nonNull(firstMileDeliveryEntity)) {
-            throw new ServiceException(ApiError.ERROR_EXIST_BILL,"头程发货单【" + dto.getCode() + "】");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE,"头程发货单【" + dto.getCode() + "】");
         }
 
         AwdOutstockEntity awdOutstockEntity = awdOutstockService.getById(dto.getId());
         if (Objects.isNull(awdOutstockEntity)) {
-            throw new ServiceException(ApiError.NOT_EXIST_BILL,"AWD出库");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE,"AWD出库");
         }
 
         List<AwdOutstockDetailEntity> awdOutstockDetailEntityList = awdOutstockDetailService.lambdaQuery()
@@ -2868,18 +2869,18 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                 .list();
 
         if (awdOutstockDetailEntityList.isEmpty()) {
-            throw new ServiceException(ApiError.ERROR_1040,"AWD出库");
+            throw new ServiceException(ApiError.BILL_DETAIL_NOT_FOUND,"AWD出库");
         }
 
         for (AwdOutstockDetailEntity awdOutstockDetailEntity : awdOutstockDetailEntityList) {
             if (StringUtils.isBlank(awdOutstockDetailEntity.getSkuId())) {
-                throw new ServiceException(ApiError.ERROR_MSKU_NOT_MAPPING,awdOutstockDetailEntity.getMsku());
+                throw new ServiceException(ApiError.MAPPING_MSKU_NOT_MAPPING,awdOutstockDetailEntity.getMsku());
             }
         }
 
         FbaShipmentEntity fbaShipmentEntity = fbaShipmentService.getById(awdOutstockEntity.getFbaShipmentId());
         if (Objects.isNull(fbaShipmentEntity)) {
-            throw new ServiceException(ApiError.NOT_EXIST_BILL,"FBA货件");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE,"FBA货件");
         }
 
         FirstMileDeliveryDTO.AddDTO addDTO = new FirstMileDeliveryDTO.AddDTO();
@@ -2900,7 +2901,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         List<String> skuIdList = awdOutstockDetailEntityList.stream().map(item -> item.getSkuId()).collect(Collectors.toList());
         List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(skuIdList);
         if (CollectionUtils.isEmpty(skuVOList)){
-            throw new ServiceException(ApiError.ERROR_95107);
+            throw new ServiceException(ApiError.PRODUCT_SKU_NOT_FOUND);
         }
 
         addDTO.setSourceId(dto.getId());

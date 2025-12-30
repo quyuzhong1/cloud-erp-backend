@@ -721,6 +721,7 @@ public enum ApiError implements Serializable {
     MAPPING_SKU_WDT_NOT_FOUND(7508,"同步旺店通单据时未找到对应SKU【{0}】"),
     MAPPING_THIRD_SHOP_EXISTS(7509,"店铺【{0}】已存在第三方映射关系，请在【中台配置】页面中解除绑定后再进行操作!"),
     MAPPING_START_DATE_INVALID(7510,"启用日期不能早于上个映射关系的开始时间【{0}】"),
+    MAPPING_MSKU_NOT_MAPPING(7511,"MSKU【{0}】未映射SKU"),
 
 
     /**
@@ -1367,11 +1368,11 @@ public enum ApiError implements Serializable {
     /**
      * 头程发货单 错误 信息 11500-12000
      */
-    FIRST_MILE_FBA_SHIPMENT_NOT_EXIST_BILL(11500, "FBA货件单据不存在！"),
+    FIRST_MILE_FBA_SHIPMENT_NOT_EXIST_BILL(11500, "货件单据不存在！"),
     FIRST_MILE_SHIPMENT_NOT_FOUND(11501,"未找到头程发货单"),
     FIRST_MILE_SHIPMENT_DELETE_ALLOWED_PENDING_ONLY(11502,"只有未发货的头程数据支持删除"),
-    FIRST_MILE_SHIPMENT_DETAIL_NOT_EXIST(11503,"FBA货件详情不存在"),
-    FIRST_MILE_SHIPMENT_NOT_EXIST(11504,"FBA货件不存在"),
+    FIRST_MILE_SHIPMENT_DETAIL_NOT_EXIST(11503,"货件详情不存在"),
+    FIRST_MILE_SHIPMENT_NOT_EXIST(11504,"货件不存在"),
     FIRST_MILE_SHIPMENT_SKU_NOT_MAPPED(11505,"【{0}】包含未匹配到SKU的货件，不允许下推发货单"),
     FIRST_MILE_SHIPMENT_CONTAIN_COMBINATION_REQUIRE_MACHINE(11506,"发货单【{0}】包含组合产品，请先下推加工单并审核通过后重试"),
     FIRST_MILE_SHIPMENT_INVENTORY_INSUFFICIENT(11507,"提示：SKU【{0}】发货仓【{1}】可用库存不足，无法审核该发货单"),
