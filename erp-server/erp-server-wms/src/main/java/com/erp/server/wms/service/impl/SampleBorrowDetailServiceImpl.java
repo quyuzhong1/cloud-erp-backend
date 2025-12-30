@@ -2,33 +2,20 @@ package com.erp.server.wms.service.impl;
 
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
-import com.common.business.dto.FindUserDTO;
-import com.common.business.dto.base.BaseResultDTO;
 import com.erp.model.plm.vo.SkuVO;
-import com.erp.model.wms.dto.SampleScrapDetailDTO;
 import com.erp.model.wms.dto.excel.SampleBorrowDetailImportExcelDTO;
-import com.erp.model.wms.dto.excel.SampleScrapDetailImportExcelDTO;
 import com.erp.model.wms.entity.SampleBorrowDetailEntity;
-import com.erp.model.wms.entity.SampleScrapDetailEntity;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.listener.SampleBorrowDetailExcelListener;
-import com.erp.server.wms.listener.SampleScrapDetailExcelListener;
 import com.erp.server.wms.mapper.SampleBorrowDetailMapper;
 import com.erp.server.wms.service.SampleBorrowDetailService;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.threadlocal.UserContext;
-import com.erp.server.wms.service.OperateLogService;
-import com.erp.server.wms.service.CommonService;
 import com.common.core.exception.ServiceException;
 import com.erp.server.wms.service.SampleLedgerService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
-import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.wms.dto.SampleBorrowDetailDTO;
 
@@ -83,7 +70,7 @@ public class SampleBorrowDetailServiceImpl extends SuperServiceImpl<SampleBorrow
             EasyExcel.read(excelFile.getInputStream(), SampleBorrowDetailImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (Exception e) {
             log.error("导入样品借用单错误！", e);
-            throw new ServiceException(ApiError.ERROR_95124);
+            throw new ServiceException(ApiError.FILE_DATA_IMPORT_FAILED);
         }
         List<SampleBorrowDetailImportExcelDTO> errorList = excelListenerUtil.getErrorList();
         String url = "";

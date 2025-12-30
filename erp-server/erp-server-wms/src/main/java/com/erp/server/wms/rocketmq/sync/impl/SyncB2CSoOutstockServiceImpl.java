@@ -37,7 +37,6 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.sys.enums.DictValueEnum;
 import com.erp.model.tms.dto.LogisticsChannelDTO;
-import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.wms.dto.SyncKingdeeDTO;
 import com.erp.model.wms.dto.VirtualWarehouseChannelDTO;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
@@ -78,8 +77,6 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import static cn.hutool.core.text.CharSequenceUtil.format;
 
 /**
  * @author Lambda
@@ -272,7 +269,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
                 .eq(ThirdMappingEntity::getThirdSysType, PlatformDictEnum.WDT.getCode())
                 .eq(ThirdMappingEntity::getThirdId, entity.getShopId()));
         if (CollectionUtils.isEmpty(shop)) {
-            throw new ServiceException(ApiError.ERROR_WDT_NOT_FOUND_SHOP_MAPPING, entity.getShopId());
+            throw new ServiceException(ApiError.MAPPING_SHOP_WDT_NOT_FOUND, entity.getShopId());
         }
         soOutstock.setShopId(shop.get(0).getSysId());
         ShopInfoEntity shopInfo = FeignQuery.getById(ShopInfoEntity.class, shop.get(0).getSysId());
@@ -282,7 +279,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
                 .eq(ThirdMappingEntity::getThirdSysType, PlatformDictEnum.WDT.getCode())
                 .eq(ThirdMappingEntity::getThirdId, entity.getWarehouseId()));
         if (CollectionUtils.isEmpty(warehouseList)) {
-            throw new ServiceException(ApiError.ERROR_WDT_NOT_FOUND_WAREHOUSE_MAPPING, entity.getWarehouseName());
+            throw new ServiceException(ApiError.MAPPING_WAREHOUSE_WDT_NOT_FOUND, entity.getWarehouseName());
         }
         List<String> skuNoList = entity.getDetailList().stream().map(WdtSoOutStockDetailDTO::getSkuNo).collect(Collectors.toList());
         List<String> suiteNoList = entity.getDetailList().stream().map(WdtSoOutStockDetailDTO::getSuiteNo).filter(CharSequenceUtil::isNotBlank).collect(Collectors.toList());
@@ -292,7 +289,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         List<SkuVO> skuList = plmTaskFeign.listBySkuNoList(skuNoList);
         WarehouseEntity warehouse = FeignQuery.getById(WarehouseEntity.class, warehouseList.get(0).getSysId());
         if (ObjectUtil.isNull(warehouse)) {
-            throw new ServiceException(ApiError.ERROR_WAREHOUSE_NOT_FOUND, warehouseList.get(0).getSysName());
+            throw new ServiceException(ApiError.MAPPING_WAREHOUSE_WDT_NOT_FOUND, warehouseList.get(0).getSysName());
         }
         CustomerInfoEntity customerInfo = FeignQuery.getById(CustomerInfoEntity.class, shopInfo.getCustomerId());
         //组织信息
@@ -306,7 +303,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         String logisticsCode = entity.getLogisticsCompanyCode();
         LogisticsChannelDTO.BaseDTO channel = logisticsFeign.getChannelByCodeAndPlatform(logisticsCode, LogisticsPlatformEnum.WDT.getCode());
         if (Objects.isNull(channel)){
-            throw new ServiceException(ApiError.ERROR_CHANNEL_NOTFOUND, LogisticsPlatformEnum.WDT.getName(), logisticsCode);
+            throw new ServiceException(ApiError.COMMON_PLATFORM_CHANNEL_NOT_FOUND, LogisticsPlatformEnum.WDT.getName(), logisticsCode);
         }
         soOutstock.setLogisticsChannelId(channel.getId());
         soOutstock.setLogisticsChannelCode(channel.getCode());
@@ -348,7 +345,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
                 String skuId = skuList.stream().filter(s -> s.getSkuNo().equals(detailEntity.getSkuNo())).
                         findFirst().map(SkuVO::getSkuId).orElse("");
                 if (CharSequenceUtil.isBlank(skuId)) {
-                    throw new ServiceException(ApiError.ERROR_SKU_NOTFOUND, detailEntity.getSkuNo());
+                    throw new ServiceException(ApiError.PRODUCT_SKU_PARAM_NOT_FOUND, detailEntity.getSkuNo());
                 }
                 String detailId = IdWorker.getIdStr();
                 detailEntity.setId(detailId);
@@ -384,7 +381,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
                     String skuId = skuList.stream().filter(s -> s.getSkuNo().equals(detailEntity.getSkuNo())).
                             findFirst().map(SkuVO::getSkuId).orElse("");
                     if (CharSequenceUtil.isBlank(skuId)) {
-                        throw new ServiceException(ApiError.ERROR_SKU_NOTFOUND, detailEntity.getSkuNo());
+                        throw new ServiceException(ApiError.PRODUCT_SKU_PARAM_NOT_FOUND, detailEntity.getSkuNo());
                     }
                     String detailId = IdWorker.getIdStr();
                     detailEntity.setId(detailId);
@@ -849,7 +846,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
             String skuId = skuList.stream().filter(s -> s.getSkuNo().equals(skuNo)).
                     findFirst().map(SkuVO::getSkuId).orElse("");
             if (CharSequenceUtil.isBlank(skuId)) {
-                throw new ServiceException(ApiError.ERROR_SKU_NOTFOUND, skuNo);
+                throw new ServiceException(ApiError.PRODUCT_SKU_PARAM_NOT_FOUND, skuNo);
             }
             SoOutstockDetailEntity detailEntity = new SoOutstockDetailEntity();
             String detailId = IdWorker.getIdStr();
@@ -877,7 +874,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
                         equals(fStockNumber)).findFirst().orElse(null);
                 //并且扣库存 才执行
                 if (Objects.isNull(warehouse)) {
-                    throw new ServiceException(ApiError.ERROR_92054, fStockNumber);
+                    throw new ServiceException(ApiError.SO_B2C_DELIVERY_K3_CLOUD_OUTBOUND_WAREHOUSE_NOT_FOUND, fStockNumber);
                 } else {
                     warehouseId = warehouse.getId();
                     warehouseName = warehouse.getName();

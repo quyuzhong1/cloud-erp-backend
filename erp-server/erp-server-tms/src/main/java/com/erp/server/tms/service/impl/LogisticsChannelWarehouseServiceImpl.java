@@ -63,7 +63,7 @@ public class LogisticsChannelWarehouseServiceImpl extends SuperServiceImpl<Logis
         }
         if (LogisticsChannelWarehouseTypeEnum.ENUM_PART.getCode().equals(type)) {
             if (CollectionUtils.isEmpty(warehouseIdList)) {
-                throw new ServiceException(ApiError.ERROR_LOGISTICS_CHANNEL_WAREHOUSE_NOT_NULL);
+                throw new ServiceException(ApiError.LOGISTICS_CHANNEL_WAREHOUSE_REQUIRED);
             }
             List<LogisticsChannelWarehouseDTO.AddDTO> warehouseList = warehouseIdList.stream().map(e -> new LogisticsChannelWarehouseDTO.AddDTO(e, channelId, type)).collect(Collectors.toList());
             addList.addAll(warehouseList);
@@ -105,7 +105,7 @@ public class LogisticsChannelWarehouseServiceImpl extends SuperServiceImpl<Logis
         List<String> warehouseIdList = list.stream().map(LogisticsChannelWarehouseEntity::getWarehouseId).collect(Collectors.toList());
         List<WarehouseDTO.ListDTO> warehouseList = wmsWarehouseFeign.listByIds(warehouseIdList);
         if (CollectionUtils.isEmpty(warehouseList)) {
-            throw new ServiceException(ApiError.ERROR_99002);
+            throw new ServiceException(ApiError.WH_PARAM_NOT_FOUND);
         }
         List<String> warehouseNameList = warehouseList.stream().map(WarehouseDTO.ListDTO::getName).collect(Collectors.toList());
 

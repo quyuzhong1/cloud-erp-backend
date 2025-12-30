@@ -162,7 +162,7 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
     @Override
     public Boolean update(VirtualWarehouseAllocationDTO.UpdateDTO updateDTO) {
         VirtualWarehouseAllocationEntity old = Optional.ofNullable(super.getById(updateDTO.getId())).orElseThrow(() ->
-                new ServiceException(ApiError.NOT_EXIST_BILL, "分货单"));
+                new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "分货单"));
         VirtualWarehouseAllocationEntity virtualWarehouseAllocationEntity = BeanMapperUtils.map(VirtualWarehouseAllocationEntity.class, updateDTO);
         // 数据处理
         handleData(virtualWarehouseAllocationEntity, updateDTO.getDetailList());
@@ -194,7 +194,7 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
     public VirtualWarehouseAllocationDTO.ViewDTO view(String id) {
         VirtualWarehouseAllocationEntity vmAllocation = this.getById(id);
         if (Objects.isNull(vmAllocation)) {
-            throw new ServiceException(ApiError.ERROR_VMALLOCATION_NOTFOUND, id);
+            throw new ServiceException(ApiError.VM_ALLOCATION_NOT_FOUND, id);
         }
         VirtualWarehouseAllocationDTO.ViewDTO viewDTO = new VirtualWarehouseAllocationDTO.ViewDTO();
         BeanUtils.copyProperties(vmAllocation, viewDTO);
@@ -322,7 +322,7 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
         List<VirtualWarehouseAllocationDetailEntity> detailEntityList = virtualWarehouseAllocationDetailService.list(new LambdaQueryWrapper<VirtualWarehouseAllocationDetailEntity>()
                 .eq(VirtualWarehouseAllocationDetailEntity::getMainId, allocationEntity.getId()));
         if (CollUtil.isEmpty(detailEntityList)) {
-            throw new ServiceException(ApiError.ERROR_VMALLOCATION_NOTFOUND);
+            throw new ServiceException(ApiError.VM_ALLOCATION_NOT_FOUND);
         }
         //实体仓信息
         List<WarehouseEntity> list = warehouseService.list();
@@ -393,7 +393,7 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
     @Override
     public VirtualWarehouseAllocationDTO.DetailViewDto importFile(String type, MultipartFile excelFile, HttpServletResponse response) {
         if (CharSequenceUtil.isBlank(type) || Objects.isNull(VirtualWarehouseAllocationTypeEnum.getEnum(type))) {
-            throw new ServiceException(ApiError.ERROR_99999);
+            throw new ServiceException(ApiError.HTTP_BAD_REQUEST);
         }
         VirtualWarehouseAllocationDTO.DetailViewDto importDTO = new VirtualWarehouseAllocationDTO.DetailViewDto();
         switch (VirtualWarehouseAllocationTypeEnum.getEnum(type)) {
@@ -407,7 +407,7 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
                 getCancelImport(excelFile, importDTO);
                 break;
             default:
-                throw new ServiceException(ApiError.ERROR_99999);
+                throw new ServiceException(ApiError.HTTP_BAD_REQUEST);
         }
         return importDTO;
     }
@@ -419,19 +419,19 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
             EasyExcel.read(excelFile.getInputStream(), VwAllocationAllocationExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (IOException e) {
             log.error("导入错误！", e);
-            throw new ServiceException(ApiError.ERROR_95124);
+            throw new ServiceException(ApiError.FILE_DATA_IMPORT_FAILED);
         } catch (ExcelCommonException e) {
             log.error("导入格式错误！", e);
-            throw new ServiceException(ApiError.ERROR_1016);
+            throw new ServiceException(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX);
         }
         //验证导入数据是否为空
         List<VwAllocationAllocationExcelDTO> allList = excelListenerUtil.getAllList();
         if (CollectionUtils.isEmpty(allList)) {
-            throw new ServiceException(ApiError.ERROR_95123);
+            throw new ServiceException(ApiError.FILE_DATA_REQUIRED);
         }
         List<VirtualWarehouseAllocationDTO.DetailDto> successList = excelListenerUtil.getSuccessList();
         if (successList.size() > size) {
-            throw new ServiceException(ApiError.ERROR_IMPORT_SIZE_ERROR, size);
+            throw new ServiceException(ApiError.COMMON_IMPORT_SIZE_EXCEED_LIMIT, size);
         }
         String url = "";
         List<VwAllocationAllocationExcelDTO> errorList = excelListenerUtil.getErrorList();
@@ -454,19 +454,19 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
             EasyExcel.read(excelFile.getInputStream(), VwAllocationAllocationTransferExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (IOException e) {
             log.error("导入错误！", e);
-            throw new ServiceException(ApiError.ERROR_95124);
+            throw new ServiceException(ApiError.FILE_DATA_IMPORT_FAILED);
         } catch (ExcelCommonException e) {
             log.error("导入格式错误！", e);
-            throw new ServiceException(ApiError.ERROR_1016);
+            throw new ServiceException(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX);
         }
         //验证导入数据是否为空
         List<VwAllocationAllocationTransferExcelDTO> allList = excelListenerUtil.getAllList();
         if (CollectionUtils.isEmpty(allList)) {
-            throw new ServiceException(ApiError.ERROR_95123);
+            throw new ServiceException(ApiError.FILE_DATA_REQUIRED);
         }
         List<VirtualWarehouseAllocationDTO.DetailDto> successList = excelListenerUtil.getSuccessList();
         if (successList.size() > size) {
-            throw new ServiceException(ApiError.ERROR_IMPORT_SIZE_ERROR, size);
+            throw new ServiceException(ApiError.COMMON_IMPORT_SIZE_EXCEED_LIMIT, size);
         }
         String url = "";
         List<VwAllocationAllocationTransferExcelDTO> errorList = excelListenerUtil.getErrorList();
@@ -489,19 +489,19 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
             EasyExcel.read(excelFile.getInputStream(), VwAllocationAllocationCancelExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (IOException e) {
             log.error("导入错误！", e);
-            throw new ServiceException(ApiError.ERROR_95124);
+            throw new ServiceException(ApiError.FILE_DATA_IMPORT_FAILED);
         } catch (ExcelCommonException e) {
             log.error("导入格式错误！", e);
-            throw new ServiceException(ApiError.ERROR_1016);
+            throw new ServiceException(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX);
         }
         //验证导入数据是否为空
         List<VwAllocationAllocationCancelExcelDTO> allList = excelListenerUtil.getAllList();
         if (CollectionUtils.isEmpty(allList)) {
-            throw new ServiceException(ApiError.ERROR_95123);
+            throw new ServiceException(ApiError.FILE_DATA_REQUIRED);
         }
         List<VirtualWarehouseAllocationDTO.DetailDto> successList = excelListenerUtil.getSuccessList();
         if (successList.size() > size) {
-            throw new ServiceException(ApiError.ERROR_IMPORT_SIZE_ERROR, size);
+            throw new ServiceException(ApiError.COMMON_IMPORT_SIZE_EXCEED_LIMIT, size);
         }
         String url = "";
         List<VwAllocationAllocationCancelExcelDTO> errorList = excelListenerUtil.getErrorList();
@@ -589,7 +589,7 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
     public VirtualWarehouseAllocationDTO.ManualFinishViewDTO viewInvalid(String id) {
         VirtualWarehouseAllocationEntity vmAllocation = getById(id);
         if (Objects.isNull(vmAllocation)) {
-            throw new ServiceException(ApiError.ERROR_VMALLOCATION_NOTFOUND, id);
+            throw new ServiceException(ApiError.VM_ALLOCATION_NOT_FOUND, id);
         }
         VirtualWarehouseAllocationDTO.ManualFinishViewDTO manualFinishViewDTO=new VirtualWarehouseAllocationDTO.ManualFinishViewDTO();
         BeanUtils.copyProperties(vmAllocation,manualFinishViewDTO);
@@ -628,7 +628,7 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
      */
     private void handleData(VirtualWarehouseAllocationEntity virtualWarehouseAllocationEntity, List<VirtualWarehouseAllocationDTO.DetailDto> detailList) {
         if (CollectionUtils.isEmpty(detailList)) {
-            throw new ServiceException(ApiError.ERROR_600);
+            throw new ServiceException(ApiError.HTTP_BAD_REQUEST);
         }
         //获取调转方向：调拨方向-1
         if (VirtualWarehouseAllocationTypeEnum.TRANSFER.getCode().equals(virtualWarehouseAllocationEntity.getType())) {
@@ -661,7 +661,7 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
         //根据实体仓获取虚拟仓
         List<VirtualWarehouseRelationEntity> vwRelationList = virtualWarehouseRelationService.getByWarehouseId(warehouseIds);
         if (CollUtil.isEmpty(vwRelationList) || Objects.isNull(vwRelationList.get(0))) {
-            throw new ServiceException(ApiError.ERROR_WAREHOUSE_NORELATION_ERROR);
+            throw new ServiceException(ApiError.WH_ENTITY_NO_VIRTUAL_RELATION);
         }
         //获取库存
         detailList.forEach(detailDto -> {
@@ -840,10 +840,10 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
                         Integer warehouseAllocationQty = viewQtyDTO.getWarehouseAllocationQty();
                         Integer reduce = list.stream().map(VirtualWarehouseAllocationDTO.DetailDto::getQty).reduce(0, Integer::sum);
                         if (warehouseAllocationQty < reduce) {
-                            throw new ServiceException(ApiError.ERROR_WAREHOUSE_INVENTORY_ALLOCATION_ERROR, list.get(0).getSkuNo(), list.get(0).getWarehouseName(), warehouseAllocationQty);
+                            throw new ServiceException(ApiError.WH_ENTITY_ALLOCATION_STOCK_INSUFFICIENT, list.get(0).getSkuNo(), list.get(0).getWarehouseName(), warehouseAllocationQty);
                         }
                     } else {
-                        throw new ServiceException(ApiError.ERROR_WAREHOUSE_INVENTORY_ALLOCATION_ERROR, list.get(0).getSkuNo(), list.get(0).getWarehouseName(), 0);
+                        throw new ServiceException(ApiError.WH_ENTITY_ALLOCATION_STOCK_INSUFFICIENT, list.get(0).getSkuNo(), list.get(0).getWarehouseName(), 0);
                     }
                 });
                 break;
@@ -859,10 +859,10 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
                         Integer vwUsableQty = fromVmQty.getFromVirtualWarehouseUsableQty();
                         Integer reduce = list.stream().map(VirtualWarehouseAllocationDTO.DetailDto::getQty).reduce(0, Integer::sum);
                         if (vwUsableQty < reduce) {
-                            throw new ServiceException(ApiError.ERROR_FROMVM_INVENTORY_INSUFFICIENT, list.get(0).getSkuNo(), list.get(0).getFromVirtualWarehouseName(), fromVmQty.getFromVirtualWarehouseUsableQty());
+                            throw new ServiceException(ApiError.VM_SOURCE_INVENTORY_INSUFFICIENT, list.get(0).getSkuNo(), list.get(0).getFromVirtualWarehouseName(), fromVmQty.getFromVirtualWarehouseUsableQty());
                         }
                     } else {
-                        throw new ServiceException(ApiError.ERROR_VW_INVENTORY_ERROR, list.get(0).getSkuNo(), list.get(0).getFromVirtualWarehouseName(), 0);
+                        throw new ServiceException(ApiError.VM_INVENTORY_INSUFFICIENT_FOR_TRANSFER, list.get(0).getSkuNo(), list.get(0).getFromVirtualWarehouseName(), 0);
                     }
                 });
                 break;
@@ -896,16 +896,16 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
                 if (v > 1) {
                     switch (VirtualWarehouseAllocationTypeEnum.getEnum(type)) {
                         case ALLOCATION:
-                            msg.append(CharSequenceUtil.format(ApiError.ERROR_ALLOCATION_UNIQUE_ERROR.msg, split[0], split[1], split[3]));
+                            msg.append(CharSequenceUtil.format(ApiError.VM_ALLOCATION_UNIQUE_ERROR.getMsg(), split[0], split[1], split[3]));
                             break;
                         case TRANSFER:
-                            msg.append(CharSequenceUtil.format(ApiError.ERROR_ALLOCATION_TRANSFER_UNIQUE_ERROR.msg, split[0], split[1], split[2], split[3]));
+                            msg.append(CharSequenceUtil.format(ApiError.VM_ALLOCATION_TRANSFER_UNIQUE_ERROR.getMsg(), split[0], split[1], split[2], split[3]));
                             break;
                         case CANCEL:
-                            msg.append(CharSequenceUtil.format(ApiError.ERROR_ALLOCATION_CANCEL_UNIQUE_ERROR.msg, split[0], split[1], split[2]));
+                            msg.append(CharSequenceUtil.format(ApiError.VM_ALLOCATION_CANCEL_UNIQUE_ERROR.getMsg(), split[0], split[1], split[2]));
                             break;
                         default:
-                            throw new ServiceException(ApiError.ERROR_ALLOCATION_UNIQUE_ERROR);
+                            throw new ServiceException(ApiError.VM_ALLOCATION_UNIQUE_ERROR);
                     }
                 }
             }
@@ -928,35 +928,35 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
                            List<VirtualWarehouseEntity> virtualWarehouseList, List<VirtualWarehouseRelationEntity> vwRelationList) {
         SkuVO skuVO = skuVOList.stream().filter(item -> Objects.equals(item.getSkuId(), detailDto.getSkuId())).findFirst().orElse(null);
         if (Objects.isNull(skuVO)) {
-            throw new ServiceException(ApiError.ERROR_SKU_NOTFOUND, detailDto.getSkuId());
+            throw new ServiceException(ApiError.PRODUCT_SKU_PARAM_NOT_FOUND, detailDto.getSkuId());
         }
         detailDto.setSkuNo(skuVO.getSkuNo());
         WarehouseDTO.UpdateDTO updateDTO = warehouseList.stream().filter(item -> Objects.equals(item.getId(), detailDto.getWarehouseId())).findFirst().orElse(null);
         if (Objects.isNull(updateDTO)) {
-            throw new ServiceException(ApiError.ERROR_WAREHOUSE_NOTFOUND, detailDto.getWarehouseId());
+            throw new ServiceException(ApiError.WH_ENTITY_NOT_FOUND, detailDto.getWarehouseId());
         } else {
             if (Boolean.TRUE.equals(updateDTO.getDisabled())) {
-                throw new ServiceException(ApiError.ERROR_WAREHOUSE_NOTACTIVE, detailDto.getWarehouseId());
+                throw new ServiceException(ApiError.WH_ENTITY_NOT_ACTIVE, detailDto.getWarehouseId());
             }
         }
 
 
         detailDto.setWarehouseName(updateDTO.getName());
         if (CharSequenceUtil.isBlank(detailDto.getToVirtualWarehouseId()) && CharSequenceUtil.isBlank(detailDto.getFromVirtualWarehouseId())) {
-            throw new ServiceException(ApiError.ERROR_FROM_TO_VM_BOTHEMPTY);
+            throw new ServiceException(ApiError.VM_FROM_TO_BOTH_EMPTY);
         }
 
         if (CharSequenceUtil.isNotBlank(detailDto.getToVirtualWarehouseId()) && CharSequenceUtil.isNotBlank(detailDto.getFromVirtualWarehouseId()) &&
                 Objects.equals(detailDto.getToVirtualWarehouseId(), detailDto.getFromVirtualWarehouseId())) {
-            throw new ServiceException(ApiError.ERROR_FROM_TO_VM_SAME);
+            throw new ServiceException(ApiError.VM_FROM_TO_SAME);
         }
         if (CharSequenceUtil.isNotBlank(detailDto.getToVirtualWarehouseId())) {
             VirtualWarehouseEntity toVmWarehouse = virtualWarehouseList.stream().filter(item -> Objects.equals(item.getId(), detailDto.getToVirtualWarehouseId())).findFirst().orElse(null);
             if (Objects.isNull(toVmWarehouse)) {
-                throw new ServiceException(ApiError.ERROR_TOVM_NOTFOUND, detailDto.getToVirtualWarehouseId());
+                throw new ServiceException(ApiError.VM_TARGET_NOT_FOUND, detailDto.getToVirtualWarehouseId());
             } else {
                 if (Boolean.TRUE.equals(toVmWarehouse.getDisabled())) {
-                    throw new ServiceException(ApiError.ERROR_TOVM_NOTACTIVE, toVmWarehouse.getName());
+                    throw new ServiceException(ApiError.VM_TARGET_NOT_ACTIVE, toVmWarehouse.getName());
                 }
             }
 
@@ -964,7 +964,7 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
                 VirtualWarehouseRelationEntity toVmRelation = vwRelationList.stream().filter(item ->
                         Objects.equals(item.getVirtualWarehouseId(), detailDto.getToVirtualWarehouseId()) && Objects.equals(item.getWarehouseId(), detailDto.getWarehouseId())).findFirst().orElse(null);
                 if (Objects.isNull(toVmRelation)) {
-                    throw new ServiceException(ApiError.ERROR_VW_RELATION_ERROR, updateDTO.getName(), toVmWarehouse.getName());
+                    throw new ServiceException(ApiError.VM_RELATION_ERROR, updateDTO.getName(), toVmWarehouse.getName());
                 }
                 detailDto.setToVirtualWarehouseName(toVmWarehouse.getName());
                 detailDto.setToVirtualWarehouseCode(toVmWarehouse.getCode());
@@ -973,7 +973,7 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
                 VirtualWarehouseRelationEntity fromVmRelation = vwRelationList.stream().filter(item ->
                         Objects.equals(item.getVirtualWarehouseId(), detailDto.getFromVirtualWarehouseId()) && Objects.equals(item.getWarehouseId(), detailDto.getWarehouseId())).findFirst().orElse(null);
                 if (Objects.isNull(fromVmRelation)) {
-                    throw new ServiceException(ApiError.ERROR_VW_RELATION_ERROR, updateDTO.getName(), toVmWarehouse.getName());
+                    throw new ServiceException(ApiError.VM_RELATION_ERROR, updateDTO.getName(), toVmWarehouse.getName());
                 }
                 detailDto.setFromVirtualWarehouseName(toVmWarehouse.getName());
                 detailDto.setFromVirtualWarehouseCode(toVmWarehouse.getCode());
@@ -983,16 +983,16 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
         if (CharSequenceUtil.isNotBlank(detailDto.getFromVirtualWarehouseId())) {
             VirtualWarehouseEntity fromVmWarehouse = virtualWarehouseList.stream().filter(item -> Objects.equals(item.getId(), detailDto.getFromVirtualWarehouseId())).findFirst().orElse(null);
             if (Objects.isNull(fromVmWarehouse)) {
-                throw new ServiceException(ApiError.ERROR_FROMVM_NOTFOUND, detailDto.getFromVirtualWarehouseId());
+                throw new ServiceException(ApiError.VM_SOURCE_NOT_FOUND, detailDto.getFromVirtualWarehouseId());
             } else {
                 if (Boolean.TRUE.equals(fromVmWarehouse.getDisabled())) {
-                    throw new ServiceException(ApiError.ERROR_FROMVM_NOTACTIVE, detailDto.getFromVirtualWarehouseId());
+                    throw new ServiceException(ApiError.VM_SOURCE_NOT_ACTIVE, detailDto.getFromVirtualWarehouseId());
                 }
             }
             VirtualWarehouseRelationEntity fromVmRelation = vwRelationList.stream().filter(item ->
                     Objects.equals(item.getVirtualWarehouseId(), detailDto.getFromVirtualWarehouseId())).findFirst().orElse(null);
             if (Objects.isNull(fromVmRelation)) {
-                throw new ServiceException(ApiError.ERROR_VW_RELATION_ERROR, updateDTO.getName(), fromVmWarehouse.getName());
+                throw new ServiceException(ApiError.VM_RELATION_ERROR, updateDTO.getName(), fromVmWarehouse.getName());
             }
             detailDto.setFromVirtualWarehouseName(fromVmWarehouse.getName());
             detailDto.setFromVirtualWarehouseCode(fromVmWarehouse.getCode());
@@ -1020,7 +1020,7 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
                         && Objects.equals(item.getWarehouseId(), detailDto.getWarehouseId())).findFirst().orElse(new VirtualInventoryDTO.ViewQtyDTO());
                 if (warehouseQty.getWarehouseAllocationQty() < qty) {
                     if (!isAutoTransferEnabled) {
-                        throw new ServiceException(ApiError.ERROR_INVENTORY_INSUFFICIENT, detailDto.getSkuNo(), detailDto.getWarehouseName(), warehouseQty.getWarehouseAllocationQty());
+                        throw new ServiceException(ApiError.WH_ENTITY_INVENTORY_INSUFFICIENT, detailDto.getSkuNo(), detailDto.getWarehouseName(), warehouseQty.getWarehouseAllocationQty());
                     }
                     //生成借调对象
                     return new VirtualWarehouseAllocationDTO.TransferWarehouseDTO(virtualWarehouseEntity.getFromWarehouseId(),detailDto.getWarehouseId(),detailDto.getSkuId(),detailDto.getSkuNo(),qty - warehouseQty.getWarehouseAllocationQty());
@@ -1031,7 +1031,7 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
                         && Objects.equals(item.getWarehouseId(), detailDto.getWarehouseId()) && Objects.equals(item.getFromVirtualWarehouseId(), detailDto.getFromVirtualWarehouseId())).findFirst().orElse(new VirtualInventoryDTO.ViewQtyDTO());
                 if (fromVmQty.getFromVirtualWarehouseUsableQty() < qty) {
                     if (!isAutoTransferEnabled) {
-                        throw new ServiceException(ApiError.ERROR_FROMVM_INVENTORY_INSUFFICIENT, detailDto.getSkuNo(), detailDto.getFromVirtualWarehouseName(), fromVmQty.getFromVirtualWarehouseUsableQty());
+                        throw new ServiceException(ApiError.VM_SOURCE_INVENTORY_INSUFFICIENT, detailDto.getSkuNo(), detailDto.getFromVirtualWarehouseName(), fromVmQty.getFromVirtualWarehouseUsableQty());
                     }
                     //生成借调对象,调入仓库的借调仓->调入仓库
                     return new VirtualWarehouseAllocationDTO.TransferWarehouseDTO(virtualWarehouseEntity.getFromWarehouseId(),detailDto.getToWarehouseId(),detailDto.getSkuId(),detailDto.getSkuNo(),qty - fromVmQty.getWarehouseAllocationQty());
@@ -1041,7 +1041,7 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
                 VirtualInventoryDTO.ViewQtyDTO cancelVmQty = virtualInventoryQtyList.stream().filter(item -> Objects.equals(item.getSkuId(), detailDto.getSkuId())
                         && Objects.equals(item.getWarehouseId(), detailDto.getWarehouseId()) && Objects.equals(item.getFromVirtualWarehouseId(), detailDto.getFromVirtualWarehouseId())).findFirst().orElse(new VirtualInventoryDTO.ViewQtyDTO());
                 if (cancelVmQty.getFromVirtualWarehouseUsableQty() < qty) {
-                        throw new ServiceException(ApiError.ERROR_FROMVM_INVENTORY_INSUFFICIENT, detailDto.getSkuNo(), detailDto.getFromVirtualWarehouseName(), cancelVmQty.getFromVirtualWarehouseUsableQty());
+                        throw new ServiceException(ApiError.VM_SOURCE_INVENTORY_INSUFFICIENT, detailDto.getSkuNo(), detailDto.getFromVirtualWarehouseName(), cancelVmQty.getFromVirtualWarehouseUsableQty());
                 }
                 break;
         }
@@ -1154,7 +1154,7 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
     @Override
     public void updateIsStatistics(VirtualWarehouseAllocationDTO.UpdateIsStatisticsDTO dto) {
         VirtualWarehouseAllocationEntity old = Optional.ofNullable(super.getById(dto.getId())).orElseThrow(() ->
-                new ServiceException(ApiError.NOT_EXIST_BILL, "分货单"));
+                new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "分货单"));
         VirtualWarehouseAllocationEntity virtualWarehouseAllocationEntity = BeanMapperUtils.map(VirtualWarehouseAllocationEntity.class, dto);
         //字段值一致无需修改
         if (dto.getIsStatistics().equals(old.getIsStatistics())) {

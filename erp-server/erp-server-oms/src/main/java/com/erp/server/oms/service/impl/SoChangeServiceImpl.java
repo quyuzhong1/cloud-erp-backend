@@ -206,7 +206,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
         String id = dto.getId();
         SoChangeEntity soChange = this.getById(id);
         if (Objects.isNull(soChange)) {
-            throw new ServiceException(ApiError.ERROR_92034);
+            throw new ServiceException(ApiError.SO_CHANGE_NOT_FOUND);
         }
         List<SoChangeDetailDTO.UpdateDTO> detailList = dto.getDetailList();
         //检查对应详情的变更类型
@@ -268,7 +268,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
     public Boolean updateAndSubmit(SoChangeDTO.UpdateDTO dto) {
         String id = this.updateSoChange(dto);
         if (StringUtils.isBlank(id)) {
-            throw new ServiceException(ApiError.ERROR_1020);
+            throw new ServiceException(ApiError.BILL_UPDATE_FAILED);
         }
         return this.submit(Arrays.asList(id));
     }
@@ -286,12 +286,12 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
     private void checkIsChange(String soId) {
         SoInfoEntity soInfo = soInfoService.getById(soId);
         if (Objects.isNull(soInfo)) {
-            throw new ServiceException(ApiError.ERROR_92003);
+            throw new ServiceException(ApiError.SO_NOT_FOUND);
         }
         String approveStatus = soInfo.getApproveStatus().getStatus();
         String approve = ApproveStatusEnum.APPROVE.getStatus();
         if (!approve.equals(approveStatus)) {
-            throw new ServiceException(ApiError.ERROR_92033);
+            throw new ServiceException(ApiError.SO_CHANGE_APPROVED_REQUIRED);
         }
     }
 
@@ -310,7 +310,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
         if (Objects.equals(isPushed, Boolean.TRUE)) {
             // 已下推发货通知单不允许修改收货地址和联系人信息
             SoInfoEntity soInfoEntity = soInfoService.getById(soId);
-            ValidatorUtil.isTrue(Objects.nonNull(soInfoEntity), () -> new ServiceException(ApiError.ERROR_92016));
+            ValidatorUtil.isTrue(Objects.nonNull(soInfoEntity), () -> new ServiceException(ApiError.SO_NOT_FOUND));
             Boolean isChange = !Objects.equals(soInfoEntity.getReceiveAddressId(), receiveAddressId)
                     || !Objects.equals(StrUtils.null2EmptyWithTrim(soInfoEntity.getAddressType()), StrUtils.null2EmptyWithTrim(addressType))
                     || !Objects.equals(StrUtils.null2EmptyWithTrim(soInfoEntity.getReceiverName()), StrUtils.null2EmptyWithTrim(receiverName))
@@ -338,7 +338,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
         List<SoChangeEntity> list = this.listByIds(ids);
         long invalidCount = list.stream().filter(s -> s.getInvalidStatus()).count();
         if (invalidCount > 0) {
-            throw new ServiceException(ApiError.ERROR_INVALID_TO_SUBMIT);
+            throw new ServiceException(ApiError.BILL_VOIDED_CANNOT_SUBMIT);
         }
         //待审核
         String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
@@ -351,7 +351,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
         statusList.add(waitSubmitStatus);
         long count = list.stream().filter(s -> !statusList.contains(s.getApproveStatus().getStatus())).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_WAIT_SUBMIT_TO_APPROVE_ING);
+            throw new ServiceException(ApiError.BILL_WAIT_SUBMIT_TO_APPROVE_ING);
         }
 
         //提交流程
@@ -391,7 +391,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
     public Boolean addAndSubmit(SoChangeDTO.AddDTO dto) {
         String id = this.add(dto);
         if (StringUtils.isBlank(id)) {
-            throw new ServiceException(ApiError.ERROR_1019);
+            throw new ServiceException(ApiError.BILL_SAVE_FAILED);
         }
         Boolean result = this.submit(Arrays.asList(id));
         return result;
@@ -459,7 +459,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
         ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = ids.stream().map(obj -> new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.SO_CHANGE.getCode(), obj)).collect(Collectors.toCollection(ValidList::new));
         ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = workflowFeign.curApprover(dtoList);
         if (200 != listApiResult.getCode()) {
-            throw new ServiceException(new ApiResult(ApiError.DEFAULT.code,listApiResult.getMsg()));
+            throw new ServiceException(new ApiResult(ApiError.HTTP_UNKNOWN.getCode(),listApiResult.getMsg()));
         }
 
         //客户id
@@ -536,7 +536,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
     public SoChangeDTO.ViewDTO view(String id) {
         SoChangeEntity soChange = this.getById(id);
         if (Objects.isNull(soChange)) {
-            throw new ServiceException(ApiError.ERROR_92034);
+            throw new ServiceException(ApiError.SO_CHANGE_NOT_FOUND);
         }
         SoChangeDTO.ViewDTO view = new SoChangeDTO.ViewDTO();
         BeanMapper.copy(soChange, view);
@@ -591,15 +591,15 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
     @Override
     public SoChangeDTO.ViewDTO getViewBySoDetailIds(List<String> soDetailIds) {
         if (CollectionUtils.isEmpty(soDetailIds)) {
-            throw new ServiceException(ApiError.ERROR_92015);
+            throw new ServiceException(ApiError.SO_DETAIL_NOT_FOUND);
         }
         List<SoDetailEntity> soDetailList = soDetailService.listByIds(soDetailIds);
         if (CollectionUtils.isEmpty(soDetailList)) {
-            throw new ServiceException(ApiError.ERROR_92015);
+            throw new ServiceException(ApiError.SO_DETAIL_NOT_FOUND);
         }
         List<String> soIdList = soDetailList.stream().map(SoDetailEntity::getMainId).distinct().collect(Collectors.toList());
         if (soIdList.size() > 1) {
-            throw new ServiceException(ApiError.ERROR_92039);
+            throw new ServiceException(ApiError.SO_CHANGE_CONFLICT);
         }
         String soId = soDetailList.get(0).getMainId();
         SoChangeDTO.ViewDTO view = new SoChangeDTO.ViewDTO();
@@ -607,7 +607,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
         String soInfoApproveStatus = soInfo.getApproveStatus().getStatus();
         String soApproveStatus = ApproveStatusEnum.APPROVE.getStatus();
         if (!soInfoApproveStatus.equals(soApproveStatus)) {
-            throw new ServiceException(ApiError.ERROR_92033);
+            throw new ServiceException(ApiError.SO_CHANGE_APPROVED_REQUIRED);
         }
         view.setAddressTypeName(soInfo.getAddressTypeName());
         ApproveStatusEnum approveStatus = ApproveStatusEnum.WAIT_SUBMIT;
@@ -702,22 +702,22 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
     @Override
     public List<String> checkBySoDetailIds(List<String> soDetailIds) {
         if (CollectionUtils.isEmpty(soDetailIds)) {
-            throw new ServiceException(ApiError.ERROR_92015);
+            throw new ServiceException(ApiError.SO_DETAIL_NOT_FOUND);
         }
         List<SoDetailEntity> soDetailList = soDetailService.listByIds(soDetailIds);
         if (CollectionUtils.isEmpty(soDetailList)) {
-            throw new ServiceException(ApiError.ERROR_92015);
+            throw new ServiceException(ApiError.SO_DETAIL_NOT_FOUND);
         }
         List<String> soIdList = soDetailList.stream().map(SoDetailEntity::getMainId).distinct().collect(Collectors.toList());
         if (soIdList.size() > 1) {
-            throw new ServiceException(ApiError.ERROR_92039);
+            throw new ServiceException(ApiError.SO_CHANGE_CONFLICT);
         }
         String soId = soDetailList.get(0).getMainId();
         SoInfoDTO.CustomerDTO soInfo = soInfoService.getSoCustomer(soId);
         String soInfoApproveStatus = soInfo.getApproveStatus().getStatus();
         String soApproveStatus = ApproveStatusEnum.APPROVE.getStatus();
         if (!soInfoApproveStatus.equals(soApproveStatus)) {
-            throw new ServiceException(ApiError.ERROR_92033);
+            throw new ServiceException(ApiError.SO_CHANGE_APPROVED_REQUIRED);
         }
         return soDetailIds;
     }
@@ -788,7 +788,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
         ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = workflowFeign.curApprover(dtoList);
         Integer code = listApiResult.getCode();
         if (200 != code) {
-            throw new ServiceException(new ApiResult<>(ApiError.DEFAULT.code,listApiResult.getMsg()));
+            throw new ServiceException(new ApiResult<>(ApiError.HTTP_UNKNOWN.getCode(),listApiResult.getMsg()));
         }
         for (SoChangeDTO.PagingViewDTO item : page.getRecords()) {
             BillTypeEnum orderType = item.getOrderType();
@@ -853,7 +853,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
         String ingStatus = ApproveStatusEnum.APPROVE_ING.getStatus();
         long count = list.stream().filter(s -> !ingStatus.equals(s.getApproveStatus().getStatus())).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_98006);
+            throw new ServiceException(ApiError.WF_APPROVE_ALLOWED_STATUS_ONLY);
         }
 
         //调用审核流程
@@ -884,7 +884,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
         Boolean result = this.updateApproveInfo(list, approveStatus, user.getUid(), user.getUserName());
         if (!result) {
-            throw new ServiceException(ApiError.ERROR_94006);
+            throw new ServiceException(ApiError.WF_APPROVE_FAILED);
         }
 
         List<DmpPushTaskEntity> pushTaskList = new ArrayList<>();
@@ -893,7 +893,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
             List<String> idList = list.stream().map(SoChangeEntity::getId).collect(Collectors.toList());
             List<SoChangeDetailEntity> soChangeDetailList = soChangeDetailService.listByMainIdList(idList);
             if (CollectionUtils.isEmpty(soChangeDetailList)) {
-                throw new ServiceException(ApiError.ERROR_92036);
+                throw new ServiceException(ApiError.SO_CHANGE_DETAIL_NOT_FOUND);
             }
             List<SoChangeDetailDTO.UpdateDTO> updateList = BeanMapperUtils.copyList(SoChangeDetailDTO.UpdateDTO.class, soChangeDetailList);
             soChangeDetailService.checkChange(updateList);
@@ -945,11 +945,11 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
     public Boolean cancelProcess(List<String> ids) {
         List<SoChangeEntity> list = this.listByIds(ids);
         if (CollectionUtils.isEmpty(list)) {
-            throw new ServiceException(ApiError.ERROR_92034);
+            throw new ServiceException(ApiError.SO_CHANGE_NOT_FOUND);
         }
         long count = list.stream().filter(obj -> !ApproveStatusEnum.APPROVE_ING.getStatus().equals(obj.getApproveStatus().getStatus())).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_98007);
+            throw new ServiceException(ApiError.WF_REVOKE_PROCESS_ALLOWED_STATUS_ONLY);
         }
 
         //撤销现有流程
@@ -982,16 +982,16 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
     public Boolean deleteByIds(List<String> ids) {
         List<SoChangeEntity> list = this.listByIds(ids);
         if (CollectionUtils.isEmpty(list)) {
-            throw new ServiceException(ApiError.ERROR_92034);
+            throw new ServiceException(ApiError.SO_CHANGE_NOT_FOUND);
         }
         String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
         long count = list.stream().filter(s -> !s.getApproveStatus().getStatus().equals(waitSubmitStatus)).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_98009);
+            throw new ServiceException(ApiError.BILL_DELETE_ALLOWED_STATUS_ONLY);
         }
         long invalidCount = list.stream().filter(s -> s.getInvalidStatus()).count();
         if (invalidCount > 0) {
-            throw new ServiceException(ApiError.ERROR_98009);
+            throw new ServiceException(ApiError.BILL_DELETE_ALLOWED_STATUS_ONLY);
         }
         Boolean result = this.removeByIds(ids);
         if (result) {
@@ -1012,7 +1012,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
     public List<BatchResultDTO> deleteByIds(List<String> ids, boolean returnDetails) {
         List<SoChangeEntity> list = this.listByIds(ids);
         if (CollectionUtils.isEmpty(list)) {
-            throw new ServiceException(ApiError.ERROR_92034);
+            throw new ServiceException(ApiError.SO_CHANGE_NOT_FOUND);
         }
         String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
         List<SoChangeEntity> removeList=new ArrayList<>();
@@ -1020,7 +1020,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
         for (SoChangeEntity entity : list) {
             if (!entity.getApproveStatus().getStatus().equals(waitSubmitStatus)
                     ||entity.getInvalidStatus()){
-                resultDTOList.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_98009.msg));
+                resultDTOList.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.BILL_DELETE_ALLOWED_STATUS_ONLY.getMsg()));
                 continue;
             }
             removeList.add(entity);
@@ -1040,7 +1040,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
             soChangeDetailService.removeByMainIdList(removeIdList);
 
         }else {
-            throw new ServiceException(ApiError.ERROR_DATA_DELETE_ERROR);
+            throw new ServiceException(ApiError.BILL_DELETE_FAILED);
         }
         // 返回成功结果
         return resultDTOList;
@@ -1061,7 +1061,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
     public Boolean invalid(List<String> ids, String remark) {
         List<SoChangeEntity> list = this.listByIds(ids);
         if (CollectionUtils.isEmpty(list)) {
-            throw new ServiceException(ApiError.ERROR_92034);
+            throw new ServiceException(ApiError.SO_CHANGE_NOT_FOUND);
         }
         String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
         String rejectStatus = ApproveStatusEnum.REJECT.getStatus();
@@ -1070,11 +1070,11 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
         statusList.add(rejectStatus);
         long invalidCount = list.stream().filter(d -> !d.getInvalidStatus()).count();
         if (invalidCount != list.size()) {
-            throw new ServiceException(ApiError.ERROR_98061);
+            throw new ServiceException(ApiError.BILL_INCONSISTENT_VOID_STATUS);
         }
         long count = list.stream().filter(s -> !statusList.contains(s.getApproveStatus().getStatus())).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_98005);
+            throw new ServiceException(ApiError.BILL_VOID_ALLOWED_STATUS_ONLY);
         }
         lambdaUpdate().in(SoChangeEntity::getId, ids).
                 set(SoChangeEntity::getInvalidStatus, Boolean.TRUE).
@@ -1145,7 +1145,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
         ApiResult<List<ProcessManagementDTO.ApproveResultDTO>> listApiResult = workflowFeign.batchApproveProcess(resultList);
         Integer code = listApiResult.getCode();
         if (200 != code) {
-            throw new ServiceException(ApiError.ERROR_94006);
+            throw new ServiceException(ApiError.WF_APPROVE_FAILED);
         }
         List<ProcessManagementDTO.ApproveResultDTO> data = listApiResult.getData();
         List<String> updateIdList = data.stream()
@@ -1171,7 +1171,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
         Map<String, Object> variablesMap = BeanUtil.beanToMap(entity);
         List<SoChangeDetailEntity> detailList = soChangeDetailService.listByMainIdList(Collections.singletonList(entity.getId()));
         if(CollUtil.isEmpty(detailList)){
-            throw new ServiceException(ApiError.ERROR_92036);
+            throw new ServiceException(ApiError.SO_CHANGE_DETAIL_NOT_FOUND);
         }
         variablesMap.put(ThirdConstants.DETAIL_LIST, BeanUtil.copyToList(detailList,Map.class));
         //SKU

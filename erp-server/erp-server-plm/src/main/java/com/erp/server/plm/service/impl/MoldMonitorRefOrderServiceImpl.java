@@ -11,7 +11,6 @@ import com.erp.server.plm.service.MoldMonitorRefOrderService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.erp.server.plm.service.OperateLogService;
-import com.erp.server.plm.service.CommonService;
 import com.common.core.exception.ServiceException;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -67,7 +66,7 @@ public class MoldMonitorRefOrderServiceImpl extends SuperServiceImpl<MoldMonitor
     @Override
     public Boolean update(MoldMonitorRefOrderDTO.UpdateDTO addOrUpdateDTO) {
         MoldMonitorRefOrderEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "模具监控关联单据"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "模具监控关联单据"));
         MoldMonitorRefOrderEntity moldMonitorRefOrderEntity =  BeanMapperUtils.map(MoldMonitorRefOrderEntity.class, addOrUpdateDTO);
 
         // 数据处理

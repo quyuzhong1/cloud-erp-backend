@@ -1,8 +1,6 @@
 package com.erp.server.scm.controller.feign;
 
-import cn.hutool.core.lang.Assert;
 import com.common.business.annotation.WebAdvanceQuery;
-import com.common.business.dto.base.ForgotPasswordDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
@@ -25,13 +23,9 @@ import lombok.AllArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
-import javax.validation.Valid;
 import java.util.List;
-import java.util.Map;
 
 /**
  * 供应商用户feign

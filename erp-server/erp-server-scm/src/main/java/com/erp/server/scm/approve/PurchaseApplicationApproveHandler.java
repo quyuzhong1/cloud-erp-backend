@@ -47,7 +47,7 @@ public class PurchaseApplicationApproveHandler extends AbstractApproveHandler {
     public Boolean cancelProcess(ApproveDTO.CancelProcessDTO dto) {
         PurchaseApplicationEntity entity = purchaseApplicationService.getById(dto.getId());
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_98016);
+            throw new ServiceException(ApiError.PO_APPLY_NOT_FOUND);
         }
         BatchResultDTO resultDTO = purchaseApplicationService.cancelProcess(entity);
         return resultDTO.getSuccess();
@@ -57,7 +57,7 @@ public class PurchaseApplicationApproveHandler extends AbstractApproveHandler {
     public Boolean disApprove(ApproveDTO.DisApproveDTO dto) {
         PurchaseApplicationEntity entity = purchaseApplicationService.getById(dto.getId());
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_98016);
+            throw new ServiceException(ApiError.PO_APPLY_NOT_FOUND);
         }
         BatchResultDTO resultDTO = purchaseApplicationService.disApprove(entity);
         return resultDTO.getSuccess();
@@ -69,7 +69,7 @@ public class PurchaseApplicationApproveHandler extends AbstractApproveHandler {
         //采购申请订单
         PurchaseApplicationEntity entity = purchaseApplicationService.getById(dto.getBusinessId());
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_98016);
+            throw new ServiceException(ApiError.PO_APPLY_NOT_FOUND);
         }
         ApproveOneDTO baseApproveParamDTO = new ApproveOneDTO();
         baseApproveParamDTO.setType(dto.getApproveStatus().getStatus());
@@ -77,7 +77,7 @@ public class PurchaseApplicationApproveHandler extends AbstractApproveHandler {
         baseApproveParamDTO.setComment(dto.getComment());
         Boolean approve = purchaseApplicationService.approveEnd(baseApproveParamDTO, entity);
         if (Boolean.FALSE.equals(approve)) {
-            throw new ServiceException(ApiError.ERROR_BILL_APPROVE, SourceTypeEnum.getName(dto.getBusinessKey()));
+            throw new ServiceException(ApiError.BILL_APPROVE_FAILED, SourceTypeEnum.getName(dto.getBusinessKey()));
         }
         //非erp审核添加日志
         if (ApprovePlatformEnum.ERP.equals(dto.getApprovePlatformEnum())) {

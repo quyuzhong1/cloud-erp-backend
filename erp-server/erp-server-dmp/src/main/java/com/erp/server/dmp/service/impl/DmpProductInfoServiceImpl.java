@@ -65,7 +65,7 @@ public class DmpProductInfoServiceImpl extends SuperServiceImpl<DmpProductInfoMa
     @Override
     public Boolean update(DmpProductInfoDTO.UpdateDTO updateDTO) {
         DmpProductInfoEntity old = super.getById(updateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "产品spu信息"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "产品spu信息"));
         DmpProductInfoEntity dmpProductInfoEntity =  BeanMapperUtils.map(DmpProductInfoEntity.class, updateDTO);
 
         // 数据处理

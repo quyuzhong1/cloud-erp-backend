@@ -106,7 +106,7 @@ public class TransferDeclareGenerationSettingServiceImpl extends SuperServiceImp
         }
         Set<String> set = new HashSet<>(deliveryLogisticsSupplierIdList);
         if (set.size() != deliveryLogisticsSupplierIdList.size()) {
-            throw new ServiceException(ApiError.DUPLICATION_DELIVERY_LOGISTICS_SUPPLIER);
+            throw new ServiceException(ApiError.LOGISTICS_DELIVERY_SUPPLIER_DUPLICATE);
         }
     }
 

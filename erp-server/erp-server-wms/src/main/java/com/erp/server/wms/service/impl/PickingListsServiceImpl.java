@@ -185,7 +185,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                 CfgRulePickingStagingEntity pickingStaging = warehouseStagingList.stream()
                         .filter(staging -> staging.getBillType().equals(dto.getBillType()))
                         .filter(staging -> staging.getWarehouseId().equals(resultDTO.getWarehouseId()))
-                        .findFirst().orElseThrow(() -> new ServiceException(ApiError.ERROR_99088));
+                        .findFirst().orElseThrow(() -> new ServiceException(ApiError.WH_LOCATION_DEFAULT_STAGING_NOT_FOUND));
                 // 获取产品信息
                 ProductDetailEntity productDetailEntity = detailEntityList.stream()
                         .filter(entityClass -> entityClass.getId().equals(resultDTO.getSkuId()))
@@ -423,7 +423,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
         LoginUser user = UserContext.getDefaultLoginUser();
         List<PickingListsEntity> pickingLists = listByIds(ids);
         if (CollectionUtils.isEmpty(pickingLists)) {
-            throw new ServiceException(ApiError.ERROR_92258);
+            throw new ServiceException(ApiError.LOGISTICS_PACKING_SELECT_PICKLIST_REQUIRED);
         }
         List<PickingDetailEntity> detailList = pickingDetailService.list(Wrappers.<PickingDetailEntity>lambdaQuery().in(PickingDetailEntity::getMainId, ids));
         List<String> skuIds = detailList.stream().map(PickingDetailEntity::getSkuId).distinct().collect(Collectors.toList());
@@ -453,9 +453,9 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
             printView.setPrintUserName(user.getUserName());
             printView.setSourceCode(picking.getSourceCode());
             SoDeliveryNoticeEntity soDeliveryNotice = noticeEntities.stream().filter(v -> v.getId().equals(picking.getSourceId()))
-                    .findFirst().orElseThrow(() -> new ServiceException(ApiError.ERROR_SO_DELIVERY_NOTICE_NOT_EXIST));
+                    .findFirst().orElseThrow(() -> new ServiceException(ApiError.SO_DELIVERY_NOTICE_NOT_EXIST));
             SoInfoEntity soInfo = soInfos.stream().filter(v -> v.getId().equals(soDeliveryNotice.getSourceId()))
-                    .findFirst().orElseThrow(() -> new ServiceException(ApiError.ERROR_92016));
+                    .findFirst().orElseThrow(() -> new ServiceException(ApiError.SO_NOT_FOUND));
             printView.setCode(soDeliveryNotice.getSourceCode());
             printView.setChannelName(soDeliveryNotice.getCustomerName());
             printView.setHandlingUserName(soInfo.getCreateUserName());
@@ -472,8 +472,8 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
             List<String> noticeDetailIds = details.stream().map(PickingDetailEntity::getSourceDetailId).collect(Collectors.toList());
             List<SoDeliveryNoticeDetailEntity> soDeliveryNoticeDetailEntityList = noticeDetailEntities.stream().filter(v -> noticeDetailIds.contains(v.getId())).collect(Collectors.toList());
             for (PickingDetailEntity detail : details) {
-                SoDeliveryNoticeDetailEntity soDeliveryNoticeDetailEntity = soDeliveryNoticeDetailEntityList.stream().filter(e -> e.getId().equals(detail.getSourceDetailId())).findFirst().orElseThrow(() -> new ServiceException(ApiError.ERROR_NOT_DELIVERY_NOTICE_DETAIL));
-                SoDetailEntity soDetailEntity = finalSoDetailEntityList.stream().filter(v -> v.getId().equals(soDeliveryNoticeDetailEntity.getSourceDetailId())).findFirst().orElseThrow(() -> new ServiceException(ApiError.ERROR_SO_DETAIL_NOT_EXIST));
+                SoDeliveryNoticeDetailEntity soDeliveryNoticeDetailEntity = soDeliveryNoticeDetailEntityList.stream().filter(e -> e.getId().equals(detail.getSourceDetailId())).findFirst().orElseThrow(() -> new ServiceException(ApiError.FIRST_MILE_SHIPMENT_NOTICE_DETAIL_NOT_FOUND));
+                SoDetailEntity soDetailEntity = finalSoDetailEntityList.stream().filter(v -> v.getId().equals(soDeliveryNoticeDetailEntity.getSourceDetailId())).findFirst().orElseThrow(() -> new ServiceException(ApiError.SO_DETAIL_NOT_EXIST));
                 String customerPO = soDetailEntity.getCustomerPO();
                 String toCountry = soDetailEntity.getToCountry();
                 String pickRemark = soDetailEntity.getPickRemark();
@@ -500,7 +500,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                 if (CollectionUtils.isEmpty(sonSkuList)) {
                     PickingListsDTO.PrintSkuView printSkuSingleView = new PickingListsDTO.PrintSkuView();
                     //匹配sku信息
-                    SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(detail.getSkuId())).distinct().findFirst().orElseThrow(() -> new ServiceException(ApiError.ERROR_NOT_FOUND_SKU, detail.getSkuNo()));
+                    SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(detail.getSkuId())).distinct().findFirst().orElseThrow(() -> new ServiceException(ApiError.PRODUCT_NOT_FOUND_SKU, detail.getSkuNo()));
                     //sku产品名称
                     String skuName = skuVO.getSkuName();
                     printSkuSingleView.getPrintView(picking, detail, skuName, customerPO, toCountry, pickRemark);
@@ -520,10 +520,10 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                     groupList.add(customerPO + "-" + toCountry);
                     printSkuSingleViewList.add(printSkuSingleView);
                 } else {
-                    BomChildrenSkuDTO bomChildrenSkuDTO = sonSkuList.stream().filter(e -> e.getSkuId().equals(detail.getSkuId())).findFirst().orElseThrow(() -> new ServiceException(ApiError.ERROR_NOT_FOUND_SKU, detail.getSkuNo()));
+                    BomChildrenSkuDTO bomChildrenSkuDTO = sonSkuList.stream().filter(e -> e.getSkuId().equals(detail.getSkuId())).findFirst().orElseThrow(() -> new ServiceException(ApiError.PRODUCT_NOT_FOUND_SKU, detail.getSkuNo()));
                     PickingListsDTO.PrintSkuView combinationPrintDetailView = new PickingListsDTO.PrintSkuView();
                     //匹配sku信息
-                    SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(bomChildrenSkuDTO.getSkuId())).distinct().findFirst().orElseThrow(() -> new ServiceException(ApiError.ERROR_NOT_FOUND_SKU, detail.getSkuNo()));
+                    SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(bomChildrenSkuDTO.getSkuId())).distinct().findFirst().orElseThrow(() -> new ServiceException(ApiError.PRODUCT_NOT_FOUND_SKU, detail.getSkuNo()));
                     //sku产品名称
                     String skuName = skuVO.getSkuName();
                     combinationPrintDetailView.getPrintView(picking, detail, skuName, customerPO, toCountry, pickRemark);
@@ -830,18 +830,18 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
 
     private void checkStatus(PickingListsEntity entity) {
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_BILL_NOT_EXIST);
+            throw new ServiceException(ApiError.BILL_NOT_EXIST);
         }
         if (SourceTypeEnum.REQUISITION_APPLICATION.getCode().equals(entity.getSourceType())) {
             //要货申请下推发货单后，拣货单不允许修改和删除
             int count = firstMileDeliveryService.countNotVoided(entity.getSourceId());
             if (count > 0) {
-                throw new ServiceException(ApiError.ERROR_99086);
+                throw new ServiceException(ApiError.SO_DEMAND_REQ_PUSHED_DELIVERY_PICKLIST_LOCKED);
             }
             //要货申请完成后，拣货单不允许修改和删除
             RequisitionApplicationEntity application = requisitionApplicationService.getById(entity.getSourceId());
             if (RequisitionApplicationStatusEnum.HANDLE.getStatus().equals(application.getStatus())) {
-                throw new ServiceException(ApiError.ERROR_99130);
+                throw new ServiceException(ApiError.SO_DEMAND_REQ_COMPLETED_PICKLIST_LOCKED);
             }
             //校验明细是否有未审核的要货申请变更
             List<PickingDetailEntity> pickingDetails = pickingDetailService.list(Wrappers.<PickingDetailEntity>lambdaQuery().eq(PickingDetailEntity::getMainId, entity.getId()).orderByDesc(PickingDetailEntity::getCreateTime));
@@ -855,11 +855,11 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
             //销售通知单下推销售出库单后，拣货单不允许修改和删除
             int count = soOutstockService.countNotVoided(entity.getSourceId());
             if (count > 0) {
-                throw new ServiceException(ApiError.ERROR_99087);
+                throw new ServiceException(ApiError.SO_NOTICE_PUSHED_OUTBOUND_PICKLIST_LOCKED);
             }
             SoDeliveryNoticeEntity soDeliveryNotice = soDeliveryNoticeService.getById(entity.getSourceId());
             if (ApproveStatusEnum.APPROVE.getStatus().equals(soDeliveryNotice.getApproveStatus())) {
-                throw new ServiceException(ApiError.ERROR_99161);
+                throw new ServiceException(ApiError.SO_NOTICE_APPROVED_PICKLIST_MODIFY_DELETE_FORBIDDEN);
             }
         }
     }
@@ -912,7 +912,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
         LoginUser user = UserContext.getDefaultLoginUser();
         List<PickingListsEntity> pickingLists = listByIds(ids);
         if (CollectionUtils.isEmpty(pickingLists)) {
-            throw new ServiceException(ApiError.ERROR_92258);
+            throw new ServiceException(ApiError.LOGISTICS_PACKING_SELECT_PICKLIST_REQUIRED);
         }
         List<PickingDetailEntity> detailList = pickingDetailService.list(Wrappers.<PickingDetailEntity>lambdaQuery().in(PickingDetailEntity::getMainId, ids));
         List<String> skuIds = detailList.stream().map(PickingDetailEntity::getSkuId).distinct().collect(Collectors.toList());
@@ -938,7 +938,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
             printView.setSourceCode(picking.getSourceCode());
 
             RequisitionApplicationEntity application = applicationEntities.stream().filter(v -> v.getId().equals(picking.getSourceId()))
-                    .findFirst().orElseThrow(() -> new ServiceException(ApiError.ERROR_NOT_REQUISITION_APPLICATION));
+                    .findFirst().orElseThrow(() -> new ServiceException(ApiError.FIRST_MILE_SHIPMENT_REQ_NOT_FOUND));
             printView.setCode(application.getCode());
             printView.setChannelName(application.getChannelName());
             printView.setHandlingUserName(application.getCreateUserName());
@@ -952,7 +952,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
             List<String> requisitionDetailIds = details.stream().map(PickingDetailEntity::getSourceDetailId).collect(Collectors.toList());
             List<RequisitionApplicationDetailEntity> requisitionApplicationDetailEntityList = applicationDetails.stream().filter(v -> requisitionDetailIds.contains(v.getId())).collect(Collectors.toList());
             for (PickingDetailEntity detail : details) {
-                RequisitionApplicationDetailEntity requisitionApplicationDetail = requisitionApplicationDetailEntityList.stream().filter(e -> e.getId().equals(detail.getSourceDetailId())).findFirst().orElseThrow(() -> new ServiceException(ApiError.ERROR_NOT_REQUISITION_APPLICATION_DETAIL));
+                RequisitionApplicationDetailEntity requisitionApplicationDetail = requisitionApplicationDetailEntityList.stream().filter(e -> e.getId().equals(detail.getSourceDetailId())).findFirst().orElseThrow(() -> new ServiceException(ApiError.FIRST_MILE_SHIPMENT_REQ_DETAIL_NOT_FOUND));
 //                RequisitionApplicationEntity application = applicationEntities.stream().filter(v -> v.getId().equals(requisitionApplicationDetail.getMainId()))
 //                        .findFirst().orElseThrow(() -> new ServiceException(ApiError.ERROR_NOT_REQUISITION_APPLICATION));
                 //客户PO号
@@ -967,7 +967,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                 if (CollectionUtils.isEmpty(sonSkuList)) {
                     PickingListsDTO.PrintSkuView printSkuSingleView = new PickingListsDTO.PrintSkuView();
                     //匹配sku信息
-                    SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(detail.getSkuId())).distinct().findFirst().orElseThrow(() -> new ServiceException(ApiError.ERROR_NOT_FOUND_SKU, detail.getSkuNo()));
+                    SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(detail.getSkuId())).distinct().findFirst().orElseThrow(() -> new ServiceException(ApiError.PRODUCT_NOT_FOUND_SKU, detail.getSkuNo()));
                     //sku产品名称
                     String skuName = skuVO.getSkuName();
                     printSkuSingleView.getPrintView(picking, detail, skuName, customerPO, "", pickRemark);
@@ -992,7 +992,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                 } else {
                     PickingListsDTO.PrintSkuView combinationPrintDetailView = new PickingListsDTO.PrintSkuView();
                     //匹配sku信息
-                    SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(detail.getSkuId())).distinct().findFirst().orElseThrow(() -> new ServiceException(ApiError.ERROR_NOT_FOUND_SKU, detail.getSkuNo()));
+                    SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(detail.getSkuId())).distinct().findFirst().orElseThrow(() -> new ServiceException(ApiError.PRODUCT_NOT_FOUND_SKU, detail.getSkuNo()));
                     //sku产品名称
                     String skuName = skuVO.getSkuName();
                     combinationPrintDetailView.getPrintView(picking, detail, skuName, customerPO, "", pickRemark);
@@ -1165,7 +1165,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
             PickingDetailEntity detailEntity = detailList.stream()
                     .filter(v -> v.getId().equals(view.getId()))
                     .findFirst()
-                    .orElseThrow(() -> new ServiceException(ApiError.ERROR_400));
+                    .orElseThrow(() -> new ServiceException(ApiError.HTTP_BAD_REQUEST));
             if (!detailEntity.getWarehouseLocation().equals(view.getWarehouseLocation()) || !detailEntity.getActualQty().equals(view.getActualQty())) {
                 String context = CharSequenceUtil.format("编辑了【{}】明细行,拣货仓位由【{}】变更为【{}】，实拣数量由【{}】变更为【{}】", view.getSkuNo(),
                         detailEntity.getWarehouseLocation(), view.getWarehouseLocation(), detailEntity.getActualQty(), view.getActualQty());
@@ -1316,7 +1316,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
             for (BomChildrenSkuDTO bomChild : bomChildren) {
                 BigDecimal temp = new BigDecimal(Optional.ofNullable(skuMap.get(bomChild.getSkuNo())).orElse(0)).divide(new BigDecimal(bomChild.getQuantity()), 6, RoundingMode.HALF_UP);
                 if (proportion.compareTo(temp) != 0) {
-                    throw new ServiceException(ApiError.ERROR_99128, String.join(",", skuMap.keySet()));
+                    throw new ServiceException(ApiError.SO_BUNDLE_PICK_QTY_RATIO_INVALID, String.join(",", skuMap.keySet()));
                 }
             }
         }
@@ -1386,7 +1386,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
     public void exist(String id) {
         int count = count(Wrappers.<PickingListsEntity>lambdaQuery().eq(PickingListsEntity::getSourceId, id));
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_99102);
+            throw new ServiceException(ApiError.SO_PICKLIST_EXISTS_FORBID_VOID_DELETE);
         }
     }
 
@@ -1394,7 +1394,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
     public void exist(List<String> ids) {
         int count = count(Wrappers.<PickingListsEntity>lambdaQuery().in(PickingListsEntity::getSourceId, ids));
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_99102);
+            throw new ServiceException(ApiError.SO_PICKLIST_EXISTS_FORBID_VOID_DELETE);
         }
     }
 
@@ -1526,7 +1526,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
             PickingDetailEntity detailEntity = detailList.stream()
                     .filter(v -> v.getId().equals(view.getId()))
                     .findFirst()
-                    .orElseThrow(() -> new ServiceException(ApiError.ERROR_400));
+                    .orElseThrow(() -> new ServiceException(ApiError.HTTP_BAD_REQUEST));
             //处理仓位移动数据
             if (view.getWarehouseLocation().equals(detailEntity.getWarehouseLocation())) {
                 if (detailEntity.getQty() > view.getQty()) {

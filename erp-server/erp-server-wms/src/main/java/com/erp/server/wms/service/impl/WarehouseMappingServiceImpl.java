@@ -13,18 +13,13 @@ import com.erp.model.wms.dto.WarehouseMappingDTO;
 import com.erp.model.wms.entity.WarehouseMappingEntity;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.mapper.WarehouseMappingMapper;
-import com.erp.server.wms.service.CommonService;
-import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.WarehouseMappingService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;

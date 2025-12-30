@@ -69,7 +69,7 @@ public class AfterSaleDetailServiceImpl extends SuperServiceImpl<AfterSaleDetail
     @Override
     public Boolean update(AfterSaleDetailDTO.UpdateDTO addOrUpdateDTO) {
         AfterSaleDetailEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "售后申请明细单"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "售后申请明细单"));
         AfterSaleDetailEntity afterSaleDetailEntity =  BeanMapperUtils.map(AfterSaleDetailEntity.class, addOrUpdateDTO);
 
         // 数据处理

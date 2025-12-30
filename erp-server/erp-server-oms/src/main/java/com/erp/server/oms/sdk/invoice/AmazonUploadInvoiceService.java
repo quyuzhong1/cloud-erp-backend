@@ -1,6 +1,6 @@
 package com.erp.server.oms.sdk.invoice;
 
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
@@ -9,25 +9,15 @@ import com.erp.model.dmp.dto.AmazonShopInfoDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.rpc.dmp.feign.DmpAmazonFeign;
 import com.erp.sdk.oms.amz.spapi.api.FeedsApi;
-import com.erp.sdk.oms.amz.spapi.enums.AmazonEndpointsEnum;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
 import com.erp.sdk.oms.amz.spapi.model.feeds.*;
 import io.seata.common.util.StringUtils;
 import okhttp3.*;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.methods.HttpPut;
-import org.apache.http.entity.InputStreamEntity;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Objects;
 
@@ -171,7 +161,7 @@ public class AmazonUploadInvoiceService {
                 if(1 == a){
                     return ApiResult.success();
                 }else{
-                    return ApiResult.error(StrUtil.format("亚马逊处理发票失败,处理结果：{}",content));
+                    return ApiResult.error(CharSequenceUtil.format("亚马逊处理发票失败,处理结果：{}",content));
                 }
             }
         }

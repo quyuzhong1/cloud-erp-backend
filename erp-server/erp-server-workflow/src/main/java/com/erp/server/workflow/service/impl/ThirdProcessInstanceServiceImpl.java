@@ -67,7 +67,7 @@ public class ThirdProcessInstanceServiceImpl extends SuperServiceImpl<ThirdProce
     @Override
     public Boolean update(ThirdProcessInstanceDTO.UpdateDTO addOrUpdateDTO) {
         ThirdProcessInstanceEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "三方流程实例清单"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "三方流程实例清单"));
         ThirdProcessInstanceEntity thirdProcessInstanceEntity =  BeanMapperUtils.map(ThirdProcessInstanceEntity.class, addOrUpdateDTO);
 
         // 数据处理

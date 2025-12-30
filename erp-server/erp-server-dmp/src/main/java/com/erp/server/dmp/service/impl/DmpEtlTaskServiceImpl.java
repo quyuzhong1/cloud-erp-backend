@@ -10,20 +10,15 @@ import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
-import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.FileTaskEventEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
-import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
-import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.dto.DmpEtlTaskDTO;
-import com.erp.model.dmp.dto.DmpEtlTaskDTO;
-import com.erp.model.dmp.entity.DmpEtlTaskEntity;
 import com.erp.model.dmp.entity.DmpEtlTaskEntity;
 import com.erp.model.dmp.enums.DmpInputTaskStatusEnum;
 import com.erp.model.dmp.enums.DmpTaskStatuEnum;
@@ -36,8 +31,6 @@ import com.erp.server.dmp.service.DmpEtlTaskService;
 import com.erp.server.dmp.service.OperateLogService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -97,7 +90,7 @@ public class DmpEtlTaskServiceImpl extends SuperServiceImpl<DmpEtlTaskMapper, Dm
     @Override
     public Boolean update(DmpEtlTaskDTO.UpdateDTO addOrUpdateDTO) {
         DmpEtlTaskEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "etl任务"));
+        old = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "etl任务"));
         DmpEtlTaskEntity dmpEtlTaskEntity = BeanMapperUtils.map(DmpEtlTaskEntity.class, addOrUpdateDTO);
 
         // 数据处理

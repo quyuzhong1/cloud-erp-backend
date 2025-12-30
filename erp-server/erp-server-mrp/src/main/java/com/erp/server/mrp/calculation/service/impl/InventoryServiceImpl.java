@@ -805,7 +805,7 @@ public class InventoryServiceImpl implements InventoryService {
             }
         }
         if (!CollectionUtils.isEmpty(tableList)) {
-            throw new ServiceException(ApiError.ERROR_TABLE_NOT_EXIST, String.join(",", tableList));
+            throw new ServiceException(ApiError.COMMON_TABLE_NOT_FOUND, String.join(",", tableList));
         }
     }
 

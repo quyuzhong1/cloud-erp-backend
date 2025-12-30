@@ -46,19 +46,19 @@ public class LoginAuthService {
 
         int loginAttempts = Integer.parseInt(redisUtil.get(loginErrorKey) != null ?redisUtil.get(loginErrorKey).toString() : "0");
         if(loginAttempts >= RedisCacheConstants.MAX_LOGIN_ATTEMPTS){
-            return ApiResult.error(ApiError.LOGIN_ERROR);
+            return ApiResult.error(ApiError.AUTH_LOGIN_LOCKED);
         }
 
         ApiResult<SysUserDTO> apiResult = sysUserFeign.accountLogin(loginDTO);
         int code = apiResult.getCode();
         if (code != 200) {
-            if(code == ApiError.ERROR_9012.code){
+            if(code == ApiError.AUTH_CREDENTIALS_INVALID.getCode()){
                 loginAttempts++;
                 redisUtil.set(loginErrorKey, String.valueOf(loginAttempts),RedisCacheConstants.LOCK_DURATION_MINUTES*60L);
                 if(loginAttempts >= RedisCacheConstants.MAX_LOGIN_ATTEMPTS){
-                    return ApiResult.error(ApiError.LOGIN_ERROR);
+                    return ApiResult.error(ApiError.AUTH_LOGIN_LOCKED);
                 }
-                throw new ServiceException(ApiError.LOGIN_USER_ERROR, RedisCacheConstants.MAX_LOGIN_ATTEMPTS - loginAttempts);
+                throw new ServiceException(ApiError.AUTH_LOGIN_RETRY_LEFT, RedisCacheConstants.MAX_LOGIN_ATTEMPTS - loginAttempts);
             }
             return ApiResult.error(code, apiResult.getMsg());
         } else {
@@ -72,13 +72,13 @@ public class LoginAuthService {
         if(loginDTO.getUserType().equals(UserTypeEnum.SRM.getCode())){
             SupplierEntity supplier = supplierFeign.getSupplierByUid(info.getUid());
             if(Objects.isNull(supplier)){
-                return ApiResult.error(ApiError.ERROR_96001);
+                return ApiResult.error(ApiError.SUPPLIER_REF_NOT_FOUND);
             }
             if(supplier.getDisabled()){
-                return ApiResult.error(ApiError.ERROR_LOGIN_DISABLE);
+                return ApiResult.error(ApiError.COMMON_LOGIN_COOPERATION_TERMINATED);
             }
             if(supplier.getSrmDisabled()){
-                return ApiResult.error(ApiError.ERROR_LOGIN_SRM_DISABLE);
+                return ApiResult.error(ApiError.COMMON_LOGIN_ACCOUNT_DISABLED);
             }
         }
         String ip = IpUtils.getIpAddress(request);
@@ -114,7 +114,7 @@ public class LoginAuthService {
         SysLoginUserVO result = new SysLoginUserVO();
         LoginUser loginUser = authTokenService.getLoginUser(token);
         if (Objects.isNull(loginUser)) {
-            throw new ServiceException(ApiError.ERROR_403);
+            throw new ServiceException(ApiError.HTTP_FORBIDDEN);
         }
         SysUserDTO sysUser = sysUserFeign.getSysUserById(loginUser.getUid());
         result.setAccessToken(token);

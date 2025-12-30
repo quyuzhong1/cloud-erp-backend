@@ -1,8 +1,6 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.StrUtil;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -63,7 +61,7 @@ public class WaveListDetailPdaServiceImpl extends SuperServiceImpl<WaveListDetai
     public Boolean hangUp(WaveListDetailPdaDTO.HangUpParamDTO hangUpDTO) {
         WaveListEntity old = waveListService.getById(hangUpDTO.getWaveId());
         if (Objects.isNull(old)){
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "波次列表");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "波次列表");
         }
         if (!CharSequenceUtil.equals(old.getStatus(),WaveStatusEnum.PICK_ING.getCode())) {
             throw new ServiceException(CharSequenceUtil.format("波次【{}】非拣货中，不支持挂起。",old.getCode()));

@@ -3,7 +3,6 @@ package com.erp.server.scm.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import com.alibaba.excel.EasyExcel;
-import com.alibaba.excel.EasyExcelFactory;
 import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -64,7 +63,6 @@ import com.common.business.dto.base.*;
 import javax.servlet.http.HttpServletResponse;
 import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -73,7 +71,6 @@ import java.util.*;
 import java.util.stream.Stream;
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
-import org.springframework.web.multipart.MultipartFile;
 
 import static com.common.business.enums.FileTaskEventEnum.*;
 
@@ -185,10 +182,10 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
     @Override
     public Boolean update(AssetNoticeDTO.UpdateDTO addOrUpdateDTO) {
         AssetNoticeEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, ""));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, ""));
         // 待提交和审核不通过允许修改
         if (!ApproveStatusEnum.allowUpdateStatus(old.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_1029);
+            throw new ServiceException(ApiError.BILL_UPDATE_STATUS_NOT_ALLOWED);
         }
         AssetNoticeEntity assetNoticeEntity =  BeanMapperUtils.map(AssetNoticeEntity.class, addOrUpdateDTO);
 
@@ -364,12 +361,12 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
     public BatchResultDTO approve(ApproveOneDTO dto) {
         ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(dto.getType());
         if(Objects.equals(approveType, ApproveTypeEnum.REJECT) && StrUtils.isEmpty(dto.getComment())) {
-            throw new ServiceException(ApiError.REJECT_COMMENT_NOT_EMPTY);
+            throw new ServiceException(ApiError.WF_REJECT_COMMENT_REQUIRED);
         }
         AssetNoticeEntity entity = getById(dto.getId());
         // 审核中的数据允许审核
         if(!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING.getCode())) {
-            throw new ServiceException(ApiError.ERROR_98006);
+            throw new ServiceException(ApiError.WF_APPROVE_ALLOWED_STATUS_ONLY);
         }
 
         // 调用流程审核
@@ -386,7 +383,7 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
         List<AssetNoticeDTO.ViewGeneratePurchaseOrderDTO> viewGeneratePurchaseOrderDTOS = new ArrayList<>();
         List<AssetNoticeDetailEntity> assetNoticeDetailEntityList = assetNoticeDetailService.listByIds(idList);
         if (assetNoticeDetailEntityList.isEmpty()) {
-            throw new ServiceException(ApiError.ERROR_95298);
+            throw new ServiceException(ApiError.MOULD_NOTICE_DETAIL_NOT_FOUND);
         }
 
 
@@ -394,7 +391,7 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
         List<AssetNoticeDetailEntity> collect = assetNoticeDetailEntityList.stream()
                 .filter(obj -> !CreatePoTypeEnum.ALL_GENERATED.getStatus().equals(obj.getCreatePoType())).collect(Collectors.toList());
         if (CollectionUtils.isEmpty(collect)) {
-            throw new ServiceException(ApiError.ERROR_95299);
+            throw new ServiceException(ApiError.MOULD_NOTICE_NO_PUSHABLE);
         }
 
         for (AssetNoticeDetailEntity assetNoticeDetailEntity : collect) {
@@ -403,14 +400,14 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
             AssetNoticeEntity assetNoticeEntity = this.getById(assetNoticeDetailEntity.getMainId());
             //主表数据
             if (Objects.isNull(assetNoticeEntity)) {
-                throw new ServiceException(ApiError.ERROR_95297);
+                throw new ServiceException(ApiError.MOULD_NOTICE_NOT_FOUND);
             }
             BeanUtils.copyProperties(assetNoticeDetailEntity,viewGeneratePurchaseOrderDTO);
 
             //获取公司信息
             SysAccountingCompanyEntity companyEntity = sysUserFeign.getCompanyById(assetNoticeDetailEntity.getPurchaseOrgId());
             if (Objects.isNull(companyEntity)) {
-                throw new ServiceException(ApiError.ERROR_9014);
+                throw new ServiceException(ApiError.COMMON_COMPANY_NOT_FOUND);
             }
             viewGeneratePurchaseOrderDTO.setPurchaseOrgName(companyEntity.getCompanyName());
 
@@ -453,20 +450,20 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
         List<AssetNoticeEntity> mainList = this.listByIds(ids);
 
         if (CollectionUtils.isEmpty(mainList)) {
-            throw new ServiceException(ApiError.ERROR_95297);
+            throw new ServiceException(ApiError.MOULD_NOTICE_NOT_FOUND);
         }
 
         //已审核数据才能生成采购单
         long statusCount = mainList.stream().filter(obj -> !ApproveStatusEnum.APPROVE.getStatus().equals(obj.getApproveStatus())).count();
         if (statusCount > 0) {
-            throw new ServiceException(ApiError.ERROR_95299);
+            throw new ServiceException(ApiError.MOULD_NOTICE_NO_PUSHABLE);
         }
 
         //sku信息
         List<String> assetIdList = dtoList.stream().map(AssetNoticeDTO.ListGeneratePurchaseOrderDTO::getAssetId).collect(Collectors.toList());
         List<ProductDetailEntity> skuList = plmTaskFeign.getByIdList(assetIdList);
         if (CollectionUtils.isEmpty(skuList)) {
-            throw new ServiceException(ApiError.ERROR_95107);
+            throw new ServiceException(ApiError.PRODUCT_SKU_NOT_FOUND);
         }
 
         log.info("生成采购订单 ids= {}",ids);
@@ -501,7 +498,7 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
             AssetPurchaseOrderDTO.AddDTO addDTO = new AssetPurchaseOrderDTO.AddDTO();
             AssetNoticeEntity entity = mainList.stream().filter(obj -> obj.getId().equals(value.get(0).getId())).findFirst().orElse(null);
             if (org.springframework.util.ObjectUtils.isEmpty(entity)) {
-                throw new ServiceException(ApiError.ERROR_98016);
+                throw new ServiceException(ApiError.PO_APPLY_NOT_FOUND);
             }
             addDTO.setOrderType(AssetPurchaseOrderTypeEnum.ASSET_PURCHASE.getCode());
             addDTO.setPurchaseOrgId(value.get(0).getPurchaseOrgId());
@@ -559,7 +556,7 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
                     .orElseGet(() -> supplierAccountList.stream().findFirst().orElse(null));
             // 供应商账户
             if (Objects.isNull(supplierAccount)) {
-                throw new ServiceException(ApiError.ERROR_98154);
+                throw new ServiceException(ApiError.SUPPLIER_ACCOUNT_NOT_FOUND);
             }
             supplierDTO.setBankName(supplierAccount.getBankSubbranch());
             supplierDTO.setBankAccount(supplierAccount.getBankAccount());
@@ -577,12 +574,12 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
 
                 ProductDetailEntity productDetailEntity = skuList.stream().filter(obj -> obj.getSkuNo().equals(generatePurchaseOrderDTO.getAssetCode())).findFirst().orElse(null);
                 if (org.springframework.util.ObjectUtils.isEmpty(productDetailEntity)) {
-                    throw new ServiceException(ApiError.ERROR_95107);
+                    throw new ServiceException(ApiError.PRODUCT_SKU_NOT_FOUND);
                 }
 
                 MoldInfoEntity moldInfoEntity = plmTaskFeign.getMoldInfoByCode(generatePurchaseOrderDTO.getAssetCode());
                 if (Objects.isNull(moldInfoEntity)) {
-                    throw new ServiceException(ApiError.ERROR_MOLD_NOT_EXIST);
+                    throw new ServiceException(ApiError.MOULD_NOT_EXIST);
                 }
 
                 BeanUtils.copyProperties(generatePurchaseOrderDTO,addDetailDTO);
@@ -592,7 +589,7 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
                 addDetailDTO.setPurchaseQty(generatePurchaseOrderDTO.getApplyQty());
                 if (generatePurchaseOrderDTO.getTaxPrice() == null
                         || generatePurchaseOrderDTO.getTaxPrice().compareTo(BigDecimal.ZERO) == 0) {
-                    throw new ServiceException(ApiError.ERROR_PRICE_ZERO_SKUNO,generatePurchaseOrderDTO.getAssetCode());
+                    throw new ServiceException(ApiError.PURCHASE_PRICE_SKU_PRICE_ZERO,generatePurchaseOrderDTO.getAssetCode());
                 }
                 //采购金额
                 addDetailDTO.setTotalAmount(generatePurchaseOrderDTO.getTaxPrice().multiply(generatePurchaseOrderDTO.getApplyQty()));
@@ -622,7 +619,7 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
         //明细数据
         List<AssetNoticeDetailEntity> detailList = assetNoticeDetailService.listByIds(detailIds);
         if (CollectionUtils.isEmpty(detailList)) {
-            throw new ServiceException(ApiError.ERROR_95298);
+            throw new ServiceException(ApiError.MOULD_NOTICE_DETAIL_NOT_FOUND);
         }
 
         // 不允许下推的申请单明细id集合
@@ -665,9 +662,9 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
             exceptionDataMap.put("assetNoticeDetailIds", prohibitDetailIds);
             prohibitDetails.stream().forEach(detail->{
                 AssetNoticeEntity entity = detailMainMap.get(detail.getId());
-                errMsg.append(CharSequenceUtil.format(ApiError.ERROR_95300.msg,entity.getCode(),detail.getAssetCode())).append("</br>");
+                errMsg.append(CharSequenceUtil.format(ApiError.MOULD_NOTICE_QTY_EXCEED.getMsg(),entity.getCode(),detail.getAssetCode())).append("</br>");
             });
-            throw new ServiceException(new ApiResult<>(ApiError.ERROR_95300.code,errMsg.toString(), exceptionDataMap));
+            throw new ServiceException(new ApiResult<>(ApiError.MOULD_NOTICE_QTY_EXCEED.getCode(),errMsg.toString(), exceptionDataMap));
         }
         return  detailList;
     }
@@ -689,7 +686,7 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
         ApiResult<ProcessManagementDTO.ApproveResultDTO> approveResult = workflowFeign.approve(approveDTO);
         Integer code = approveResult.getCode();
         if (200 != code) {
-            throw new ServiceException(ApiError.ERROR_94006);
+            throw new ServiceException(ApiError.WF_APPROVE_FAILED);
         }
         ProcessManagementDTO.ApproveResultDTO data = approveResult.getData();
         if (ObjectUtil.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()) {
@@ -724,7 +721,7 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
     private Boolean validateDisApprove(AssetNoticeEntity entity) {
         // 已审核支持反审核
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus())) {
-            throw new ServiceException(ApiError.ERROR_98014);
+            throw new ServiceException(ApiError.BILL_REVERSE_APPROVAL_ALLOWED_APPROVED_ONLY);
         }
 
         LambdaQueryWrapper<AssetPurchaseOrderEntity> lambdaQueryWrapper = new LambdaQueryWrapper<>();
@@ -733,7 +730,7 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
 
         List<AssetPurchaseOrderEntity> purchaseOrderEntityList = assetPurchaseOrderService.list(lambdaQueryWrapper);
         if (CollectionUtils.isNotEmpty(purchaseOrderEntityList)) {
-            throw new ServiceException(ApiError.ERROR_98132);
+            throw new ServiceException(ApiError.MOULD_NOTICE_ALREADY_PUSHED);
         }
 
         return true;
@@ -745,7 +742,7 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
         AssetNoticeEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到数据"));
         // 只有待提交并且未作废数据支持删除
         if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT.getCode(), entity.getApproveStatus()) || entity.getInvalidStatus()) {
-            throw new ServiceException(ApiError.ERROR_98009);
+            throw new ServiceException(ApiError.BILL_DELETE_ALLOWED_STATUS_ONLY);
         }
 
         List<AssetNoticeDetailEntity> list = assetNoticeDetailService.lambdaQuery()
@@ -754,7 +751,7 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
                 .list();
 
         if (list.isEmpty()) {
-            throw new ServiceException(ApiError.ERROR_98135);
+            throw new ServiceException(ApiError.MOULD_PURCHASE_DETAIL_NOT_FOUND);
         }
 
         List<String> collect = list.stream().map(obj -> obj.getId()).collect(Collectors.toList());
@@ -787,7 +784,7 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
         AssetNoticeEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到数据"));
         // 只有审核中的单据允许撤销
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())) {
-            throw new ServiceException(ApiError.ERROR_98007);
+            throw new ServiceException(ApiError.WF_REVOKE_PROCESS_ALLOWED_STATUS_ONLY);
         }
         log.info("撤销 开始撤销流程，id：【{}】",id);
 
@@ -858,7 +855,7 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
             EasyExcel.read(new ByteArrayInputStream(bytes), AssetNoticeImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (ExcelCommonException e) {
             log.error("导入格式错误！", e);
-            throw new ServiceException(ApiError.ERROR_1016);
+            throw new ServiceException(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX);
         }
 
         BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
@@ -887,10 +884,10 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
 
         // 待提交或审核不通过并且未作废允许作废
         if(!InvalidStatusEnum.NOT_VOIDED.getStatus().equals(entity.getInvalidStatus())){
-            throw new ServiceException(ApiError.ERROR_98012);
+            throw new ServiceException(ApiError.BILL_ALREADY_VOID_CANNOT_VOID_AGAIN);
         }
         if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus(), entity.getApproveStatus()) && !Objects.equals(ApproveStatusEnum.REJECT.getStatus(), entity.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_98005);
+            throw new ServiceException(ApiError.BILL_VOID_ALLOWED_STATUS_ONLY);
         }
 
         log.info("作废 开始修改开模通知单状态数据，id：【{}】", entity.getId());
@@ -915,7 +912,7 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
         queryWrapper.eq(AssetNoticeDetailEntity::getMainId,id);
         List<AssetNoticeDetailEntity> detailList = assetNoticeDetailService.list(queryWrapper);
         if (CollectionUtils.isEmpty(detailList)) {
-            throw new ServiceException(ApiError.ERROR_95298);
+            throw new ServiceException(ApiError.MOULD_NOTICE_DETAIL_NOT_FOUND);
         }
         List<AssetNoticeDetailDTO.ViewDTO> dtoList = BeanMapperUtils.copyList(AssetNoticeDetailDTO.ViewDTO.class, detailList);
         fillViewList(dtoList);
@@ -1033,7 +1030,7 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
             listApiResult = workflowFeign.curApprover(dtoList);
             Integer code = listApiResult.getCode();
             if (200 != code) {
-                throw new ServiceException(new ApiResult(ApiError.DEFAULT.code, listApiResult.getMsg()));
+                throw new ServiceException(new ApiResult(ApiError.HTTP_UNKNOWN.getCode(), listApiResult.getMsg()));
             }
         }
 
@@ -1085,10 +1082,10 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
     private void validateSubmit(AssetNoticeEntity entity) {
         // 待提交或审核不通过并且未作废允许提交
         if(!ApproveStatusEnum.allowUpdateStatus(entity.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_98010);
+            throw new ServiceException(ApiError.BILL_SUBMIT_ALLOWED_STATUS_ONLY);
         }
         if(Objects.equals(entity.getInvalidStatus(), Boolean.TRUE)) {
-            throw new ServiceException(ApiError.ERROR_INVALID_TO_SUBMIT);
+            throw new ServiceException(ApiError.BILL_VOIDED_CANNOT_SUBMIT);
         }
         return;
     }
@@ -1105,7 +1102,7 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
             FindUserDTO purchaseUser = sysUserFeign.getUserByUserId(assetNoticeEntity.getApplyUserId());
 
             if (com.baomidou.mybatisplus.core.toolkit.ObjectUtils.isEmpty(purchaseUser)) {
-                throw new ServiceException(ApiError.USER_NOT_EXIST);
+                throw new ServiceException(ApiError.AUTH_USER_NOT_FOUND, assetNoticeEntity.getApplyUserName());
             }
             assetNoticeEntity.setApplyUserName(purchaseUser.getUserName());
 
@@ -1117,7 +1114,7 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
             depIdList.add(assetNoticeEntity.getApplyDeptId());
             List<SysDepartmentEntity> deptList = sysUserFeign.getDeptByIds(depIdList);
             if (deptList.isEmpty()) {
-                throw new ServiceException(ApiError.ERROR_9029);
+                throw new ServiceException(ApiError.COMMON_DEPT_NOT_FOUND);
             }
             assetNoticeEntity.setApplyDeptId(deptList.get(0).getId());
             assetNoticeEntity.setApplyDeptName(deptList.get(0).getName());

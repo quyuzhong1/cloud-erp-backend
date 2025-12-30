@@ -13,18 +13,14 @@ import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputInitRequest;
 import com.erp.server.dmp.inout.dto.response.DmpInputTaskResponse;
 import com.erp.server.dmp.inout.utils.DmpHandlerCache;
-import com.sdk.wms.weishi.dto.request.WeiShiProductRequest;
 import com.sdk.wms.weishi.dto.request.WeiShiStockRequest;
 import com.sdk.wms.weishi.dto.response.WeiShiBaseResp;
-import com.sdk.wms.weishi.dto.response.WeiShiProductResp;
 import com.sdk.wms.weishi.dto.response.WeiShiStockResp;
 import com.sdk.wms.weishi.service.WeiShiService;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.List;
 

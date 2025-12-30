@@ -118,7 +118,7 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
     @Override
     public Boolean update(KolSampleCostDTO.UpdateDTO addOrUpdateDTO) {
         KolSampleCostEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "寄样费用单"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "寄样费用单"));
         KolSampleCostEntity kolSampleCostEntity =  BeanMapperUtils.map(KolSampleCostEntity.class, addOrUpdateDTO);
 
         // 数据处理
@@ -167,15 +167,15 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
             EasyExcel.read(excelFile.getInputStream(), KolSampleCostImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (ExcelCommonException e) {
             log.error("导入格式错误！", e);
-            throw new ServiceException(ApiError.ERROR_1016);
+            throw new ServiceException(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX);
         } catch (IOException e) {
             log.error("导入错误！>>>{}", e);
-            throw new ServiceException(ApiError.ERROR_95124);
+            throw new ServiceException(ApiError.FILE_DATA_IMPORT_FAILED);
         }
         //验证导入数据是否为空
         List<KolSampleCostImportExcelDTO> excelDateList = excelListenerUtil.getAllList();
         if (CollectionUtils.isEmpty(excelDateList)) {
-            throw new ServiceException(ApiError.ERROR_95123);
+            throw new ServiceException(ApiError.FILE_DATA_REQUIRED);
         }
         //导入数据处理
         List<KolSampleCostImportExcelDTO> successList = excelListenerUtil.getSuccessList();
@@ -195,7 +195,7 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
                     StrUtil.builder().append(DateUtil.nowExcelFileFormat()).append(name).toString(),
                     excelPath);
         } catch (IOException e) {
-            throw new ServiceException(ApiError.ERROR_95125);
+            throw new ServiceException(ApiError.FILE_EXPORT_ERROR_DATA_FAILED);
         }
         return Boolean.TRUE;
     }

@@ -143,7 +143,7 @@ public class ProcessTaskManagementServiceImpl extends SuperServiceImpl<ProcessTa
                 .eq(ProcessTaskManagementEntity::getTaskStatus, ApproveStatusEnum.APPROVE_ING)
                 .list();
         if(CollectionUtils.isEmpty(entityList)){
-            throw new ServiceException(ApiError.ERROR_TASK_AUDIT_STATUS);
+            throw new ServiceException(ApiError.PROJECT_TASK_AUDIT_STATUS_INVALID);
         }
         // 关闭原有记录
         for (ProcessTaskManagementEntity entity : entityList) {
@@ -195,7 +195,7 @@ public class ProcessTaskManagementServiceImpl extends SuperServiceImpl<ProcessTa
                 .in(ProcessTaskManagementEntity::getTaskStatus, ApproveStatusEnum.APPROVE, ApproveStatusEnum.REJECT)
                 .orderByDesc(ProcessTaskManagementEntity::getApproveTime, ProcessTaskManagementEntity::getTaskStatus)
                 .last(SqlConstants.LIMIT_1)
-                .oneOpt().orElseThrow(() -> new ServiceException(ApiError.ERROR_TASK_AUDIT_STATUS));
+                .oneOpt().orElseThrow(() -> new ServiceException(ApiError.PROJECT_TASK_AUDIT_STATUS_INVALID));
     }
 
     /**

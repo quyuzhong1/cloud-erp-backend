@@ -71,7 +71,7 @@
 //        //获取仓库信息
 //        List<WarehouseDTO.ListDTO> listDTOS = wmsWarehouseFeign.listByIds(Collections.singletonList(addDTO.getSysId()));
 //        if (CollectionUtils.isEmpty(listDTOS)) {
-//            throw new ServiceException(ApiError.ERROR_SYS_TYPE_NOTFOUND, ThirdSysTypeEnum.getNameByCode(addDTO.getType()));
+//            throw new ServiceException(ApiError.COMMON_NOT_FOUND, ThirdSysTypeEnum.getNameByCode(addDTO.getType()));
 //        }
 //        warehouse = listDTOS.get(0);
 //        List<ThirdMappingDTO.ThirdAddDTO> thirdList = addDTO.getThirdList();
@@ -335,7 +335,7 @@
 //        String sysName = thirdMappingEntity.getSysName();
 //        //校验系统仓库是否存在
 //        List<WarehouseDTO.ListDTO> listDTOS = Optional.ofNullable(wmsWarehouseFeign.listByIds(Collections.singletonList(thirdMappingEntity.getSysId())))
-//                .orElseThrow(() -> new ServiceException(ApiError.ERROR_92058));
+//                .orElseThrow(() -> new ServiceException(ApiError.ERROR_SHOP_NOT_FOUND));
 //        if (PlatformDictEnum.WDT.getCode().equals(thirdMappingEntity.getThirdSysType())) {
 //
 //            //校验第三方仓库是否存在

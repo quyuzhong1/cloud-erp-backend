@@ -11,7 +11,6 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.tms.dto.FirstMileSkuCostAllocationDetailDTO;
 import com.erp.model.tms.entity.FirstMileSkuCostAllocationDetailEntity;
-import com.erp.model.tms.entity.FirstMileWeightAllocationEntity;
 import com.erp.server.tms.mapper.FirstMileSkuCostAllocationDetailMapper;
 import com.erp.server.tms.service.FirstMileSkuCostAllocationDetailService;
 import com.erp.server.tms.service.OperateLogService;
@@ -72,7 +71,7 @@ public class FirstMileSkuCostAllocationDetailServiceImpl extends SuperServiceImp
     @Override
     public Boolean update(FirstMileSkuCostAllocationDetailDTO.UpdateDTO updateDTO) {
         FirstMileSkuCostAllocationDetailEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, MSG));
+        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, MSG));
         FirstMileSkuCostAllocationDetailEntity firstMileSkuCostAllocationDetailEntity =  BeanMapperUtils.map(FirstMileSkuCostAllocationDetailEntity.class, updateDTO);
 
         log.info("编辑 开始修改头程费用SKU分摊明细数据，id：【{}】", old.getId());

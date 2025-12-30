@@ -205,12 +205,12 @@ public class FsService {
              resp = client.approval().v4().approval().subscribe(req);
         } catch (Exception e) {
             log.error("飞书审批定义订阅异常>>>>>{}", e.getMessage());
-            throw new ServiceException(ApiError.WORKFLOW_FEI_SHU_DEFINITION_SUBSCRIBE_FAIL);
+            throw new ServiceException(ApiError.WF_FS_DEFINITION_SUBSCRIBE_FAIL);
         }
         // 处理服务端错误
         if (!resp.success()) {
             log.error("飞书审批定义订阅失败>>>>>{}", resp.getMsg());
-            throw new ServiceException(ApiError.WORKFLOW_FEI_SHU_DEFINITION_SUBSCRIBE_FAIL);
+            throw new ServiceException(ApiError.WF_FS_DEFINITION_SUBSCRIBE_FAIL);
         }
         log.warn("飞书审批定义订阅成功>>>>>{}", approvalCode);
     }
@@ -237,12 +237,12 @@ public class FsService {
             resp = client.approval().v4().approval().unsubscribe(req);
         } catch (Exception e) {
             log.error("飞书审批定义取消订阅异常>>>>>{}", e.getMessage());
-            throw new ServiceException(ApiError.WORKFLOW_FEI_SHU_DEFINITION_UNSUBSCRIBE_FAIL);
+            throw new ServiceException(ApiError.WF_FS_DEFINITION_UNSUBSCRIBE_FAIL);
         }
         // 处理服务端错误
         if (!resp.success()) {
             log.error("飞书审批取消定义订阅失败>>>>>{}", resp.getMsg());
-            throw new ServiceException(ApiError.WORKFLOW_FEI_SHU_DEFINITION_UNSUBSCRIBE_FAIL);
+            throw new ServiceException(ApiError.WF_FS_DEFINITION_UNSUBSCRIBE_FAIL);
         }
         log.warn("飞书审批定义取消订阅成功>>>>>{}", approvalCode);
     }
@@ -349,7 +349,7 @@ public class FsService {
         String tenantAccessToken = getFsTenantAccessToken();
         if (StringUtils.isBlank(tenantAccessToken)) {
             log.error("批量发送飞书消息失败 token为空 ={}", JSONUtil.toJsonStr(tenantAccessToken));
-            throw new ServiceException(ApiError.ERROR_LARK_TOKEN_IS_NULL);
+            throw new ServiceException(ApiError.COMMON_LARK_TOKEN_IS_NULL);
         }
         Map<String, String> headerMap = new HashMap<>();
         String authorization = FS_AUTHORIZATION + tenantAccessToken;
@@ -373,20 +373,20 @@ public class FsService {
 
         if (null == resultMap || 0 != resultMap.getCode()) {
             log.error("批量发送飞书消息失败 result ={}", JSONUtil.toJsonStr(resultMap));
-            throw new ServiceException(ApiError.ERROR_LARK_SEND_MSG_FAIL);
+            throw new ServiceException(ApiError.COMMON_LARK_SEND_MSG_FAIL);
         }
         return resultMap;
     }
 
     public void pressMessage(String messageId, List<String> unionIds) {
         if (CharSequenceUtil.isBlank(messageId) || CollUtil.isEmpty(unionIds)) {
-            throw new ServiceException(ApiError.ERROR_MSG_ID_OR_UNION_ID_IS_NULL);
+            throw new ServiceException(ApiError.COMMON_MSG_PARAM_REQUIRED);
         }
         //获取飞书的应用token
         String tenantAccessToken = getFsTenantAccessToken();
         if (StringUtils.isBlank(tenantAccessToken)) {
             log.error("批量加急飞书消息失败 token为空 ={}", JSONUtil.toJsonStr(tenantAccessToken));
-            throw new ServiceException(ApiError.ERROR_LARK_TOKEN_IS_NULL);
+            throw new ServiceException(ApiError.COMMON_LARK_TOKEN_IS_NULL);
         }
         String authorization = FS_AUTHORIZATION + tenantAccessToken;
         OkHttpClient client = new OkHttpClient().newBuilder()

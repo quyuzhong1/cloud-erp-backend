@@ -50,7 +50,7 @@ public class KingdeeOperatorTypeServiceImpl extends SuperServiceImpl<KingdeeOper
     @Override
     public Boolean update(KingdeeOperatorTypeDTO.UpdateDTO updateDTO) {
         KingdeeOperatorTypeEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, ""));
+        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, ""));
         KingdeeOperatorTypeEntity kingdeeOperatorTypeEntity =  BeanMapperUtils.map(KingdeeOperatorTypeEntity.class, updateDTO);
 
         // 数据处理

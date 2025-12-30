@@ -233,7 +233,7 @@ public class JasperHelperUtil {
         } catch (Exception e) {
             log.error("（按照类型导出不同格式文件）方法：exportToPdfStream " + e.getMessage());
             log.info("按照类型导出不同格式文件错误>>>>>>>>入参: parameters=={}", parameters);
-            throw new ServiceException(ApiError.ERROR_1015);
+            throw new ServiceException(ApiError.FILE_EXPORT_FAILED);
         }
     }
 
@@ -368,7 +368,7 @@ public class JasperHelperUtil {
         } catch (Exception e) {
             log.error("（按照类型导出不同格式文件）方法：exportToPdfStream " + e.getMessage());
             log.info("按照类型导出不同格式文件错误>>>>>>>>入参: parameters=={}", parameters);
-            throw new ServiceException(ApiError.ERROR_1015);
+            throw new ServiceException(ApiError.FILE_EXPORT_FAILED);
         }
     }
 }

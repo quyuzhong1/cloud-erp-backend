@@ -89,7 +89,7 @@ public class TransferLogisticsChannelServiceImpl extends SuperServiceImpl<Transf
     @Override
     public Boolean update(TransferLogisticsChannelDTO.UpdateDTO updateDTO) {
         TransferLogisticsChannelEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, Name));
+        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, Name));
         TransferLogisticsChannelEntity logisticsChannelEntity = BeanMapperUtils.map(TransferLogisticsChannelEntity.class, updateDTO);
 
         boolean save = super.updateById(logisticsChannelEntity);
@@ -111,7 +111,7 @@ public class TransferLogisticsChannelServiceImpl extends SuperServiceImpl<Transf
     public TransferLogisticsChannelDTO.ViewDTO view(String id) {
         TransferLogisticsChannelEntity channelEntity = this.getById(id);
         if (Objects.isNull(channelEntity)) {
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "物流渠道");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "物流渠道");
         }
         TransferLogisticsChannelDTO.ViewDTO view = new TransferLogisticsChannelDTO.ViewDTO();
         BeanMapperUtils.copy(channelEntity, view);
@@ -123,12 +123,12 @@ public class TransferLogisticsChannelServiceImpl extends SuperServiceImpl<Transf
     public BatchResultDTO delete(String id) {
         TransferLogisticsChannelEntity entity = this.getById(id);
         if (Objects.isNull(entity)) {
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "物流渠道");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "物流渠道");
         }
 
         TransferDeclareEntity declareEntity = transferDeclareService.checkExistByChannelIds(Arrays.asList(id));
         if(ObjectUtil.isNotEmpty(declareEntity)){
-            throw new ServiceException(ApiError.ERROR_CHANNEL_QUOTE);
+            throw new ServiceException(ApiError.LOGISTICS_CHANNEL_QUOTE_REF_DELETE_FORBIDDEN);
         }
         String msg = CharSequenceUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "盘点计划");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.TRANSFER_LOGISTICS_CHANNEL.getCode(), entity.getId(), "删除盘点计划单数据");
@@ -143,7 +143,7 @@ public class TransferLogisticsChannelServiceImpl extends SuperServiceImpl<Transf
     public BatchResultDTO updateStatus(String id, Boolean disabled) {
         TransferLogisticsChannelEntity entity = this.getById(id);
         if (Objects.isNull(entity)) {
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "物流渠道");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "物流渠道");
         }
         Boolean dbDisabled = entity.getDisabled();
         if (dbDisabled.equals(disabled)) {
@@ -165,7 +165,7 @@ public class TransferLogisticsChannelServiceImpl extends SuperServiceImpl<Transf
         if (CollectionUtils.isNotEmpty(channelIdList)) {
             TransferDeclareEntity declareEntity = transferDeclareService.checkExistByChannelIds(channelIdList);
             if(ObjectUtil.isNotEmpty(declareEntity)){
-                throw new ServiceException(ApiError.ERROR_CHANNEL_QUOTE);
+                throw new ServiceException(ApiError.LOGISTICS_CHANNEL_QUOTE_REF_DELETE_FORBIDDEN);
             }
 
             this.removeByIds(channelIdList);
@@ -230,7 +230,7 @@ public class TransferLogisticsChannelServiceImpl extends SuperServiceImpl<Transf
         //查询授权信息
         TransferLogisticsAuthEntity authEntity = transferLogisticsAuthService.getByMainId("", transferLogisticsSupplierId);
         if (ObjectUtil.isEmpty(authEntity)) {
-            throw new ServiceException(ApiError.ERROR_LOGISTICS_CHANNEL_NOT_AUTU_EXIST);
+            throw new ServiceException(ApiError.LOGISTICS_CHANNEL_AUTH_INFO_NOT_FOUND);
         }
 
         TransferLogisticsService service = transferLogisticsRegistry.getHandler(authEntity.getLogisticsPlatform());

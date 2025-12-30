@@ -85,13 +85,13 @@ public class RuleLogisticsServiceImpl extends SuperServiceImpl<RuleLogisticsMapp
         String expression = sqElDTO.getExpression();
         Boolean checkResult = spElServer.checkExpressionIsEnabled(expression);
         if (Boolean.FALSE.equals(checkResult)) {
-            throw new ServiceException(ApiError.ERROR_RULE_EXPRESSION_ERROR);
+            throw new ServiceException(ApiError.COMMON_RULE_EXPRESSION_ERROR);
         }
         RuleLogisticsEntity ruleLogisticsEntity = new RuleLogisticsEntity();
         BeanMapperUtils.copy(addDTO, ruleLogisticsEntity);
         handleData(ruleLogisticsEntity);
         if(Boolean.TRUE.equals(ruleLogisticsEntity.getAutoGetTrackNo()) && Boolean.TRUE.equals(ruleLogisticsEntity.getAutoGetTrackNotOfRangeDelivery())){
-            throw new ServiceException(ApiError.ERROR_92163);
+            throw new ServiceException(ApiError.SO_DELIVERY_AUTO_SUBMIT_OPTION_LIMIT);
         }
         boolean save = super.save(ruleLogisticsEntity);
         if (!save) {
@@ -126,13 +126,13 @@ public class RuleLogisticsServiceImpl extends SuperServiceImpl<RuleLogisticsMapp
         String expression = sqElDTO.getExpression();
         Boolean checkResult = spElServer.checkExpressionIsEnabled(expression);
         if (Boolean.FALSE.equals(checkResult)) {
-            throw new ServiceException(ApiError.ERROR_RULE_EXPRESSION_ERROR);
+            throw new ServiceException(ApiError.COMMON_RULE_EXPRESSION_ERROR);
         }
         RuleLogisticsEntity ruleLogisticsEntity = BeanMapperUtils.map(RuleLogisticsEntity.class, updateDTO);
         // 数据处理
         handleData(ruleLogisticsEntity);
         if(Boolean.TRUE.equals(ruleLogisticsEntity.getAutoGetTrackNo()) && Boolean.TRUE.equals(ruleLogisticsEntity.getAutoGetTrackNotOfRangeDelivery())){
-            throw new ServiceException(ApiError.ERROR_92163);
+            throw new ServiceException(ApiError.SO_DELIVERY_AUTO_SUBMIT_OPTION_LIMIT);
         }
         boolean save = super.updateById(ruleLogisticsEntity);
         if (!save) {
@@ -147,7 +147,7 @@ public class RuleLogisticsServiceImpl extends SuperServiceImpl<RuleLogisticsMapp
 
     private static void isExist(RuleLogisticsEntity old) {
         if(null == old){
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "物流规则单");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "物流规则单");
         }
     }
 
@@ -206,7 +206,7 @@ public class RuleLogisticsServiceImpl extends SuperServiceImpl<RuleLogisticsMapp
         isExist(ruleLogistics);
         Boolean disabled = ruleLogistics.getDisabled();
         if (disabled.equals(dto.getState())) {
-            throw new ServiceException(ApiError.ERROR_98027);
+            throw new ServiceException(ApiError.COMMON_INCONSISTENT_DISABLE_STATUS);
         }
         String content = String.format("启用状态[%s]变更为[%s]", Boolean.TRUE.equals(disabled) ? "停用" : "启用", Boolean.TRUE.equals(disabled) ? "启用" : "停用");
         ruleLogistics.setDisabled(dto.getState());

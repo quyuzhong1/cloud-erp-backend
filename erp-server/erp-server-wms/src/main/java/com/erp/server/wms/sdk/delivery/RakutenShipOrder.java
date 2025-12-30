@@ -7,7 +7,6 @@ import com.common.business.annotation.PlatformShipOrderAnno;
 import com.common.business.dto.PlatformDeliveryInterceptDTO;
 import com.common.business.dto.PlatformOrderQueryDTO;
 import com.common.business.dto.PlatformShipOrderDTO;
-import com.common.business.enums.OrderDeliveryMarkTypeEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
@@ -18,7 +17,6 @@ import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
-import com.erp.model.tms.dto.LogisticsChannelDTO;
 import com.erp.model.wms.dto.DictBasicDTO;
 import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
@@ -81,7 +79,7 @@ public class RakutenShipOrder extends AbstractShipOrder {
             //检查销售订单详情是否存在
             List<SoB2cDetailEntity> currentDetailEntityList = soB2cDetailEntityListMap.get(mainEntity.getId());
             if (CollectionUtils.isEmpty(currentDetailEntityList)) {
-                throw new ServiceException(ApiError.ERROR_SO_B2C_DETAIL_NOT_EXIST);
+                throw new ServiceException(ApiError.SO_B2C_DETAIL_NOT_FOUND);
             }
             if(StringUtils.isBlank(mainEntity.getThirdCode())){
                 throw new ServiceException("【乐天标记发货】操作失败，订单号【{}】领星单号为空",mainEntity.getThirdCode());

@@ -131,7 +131,7 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
             // 更新实时库存表数量
             boolean updateFlag = this.updateQtyById(found.getId(), qty);
             if (!updateFlag) {
-                throw new ServiceException(ApiError.ERROR_1027);
+                throw new ServiceException(ApiError.BILL_DATA_LOCKED);
             }
         }
         return found;
@@ -146,7 +146,7 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
                 .eq(VirtualInventoryEntity::getId, id)
                 .update(new VirtualInventoryEntity());
         if (!flag) {
-            throw new ServiceException(ApiError.ERROR_1027);
+            throw new ServiceException(ApiError.BILL_DATA_LOCKED);
         }
         return flag;
     }
@@ -358,7 +358,7 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
         PagingVO<VirtualInventoryDTO.ListDTO> resultList = this.paging(dto);
         List<VirtualInventoryDTO.ListDTO> list = (List<VirtualInventoryDTO.ListDTO>) resultList.getList();
         if (CollectionUtils.isEmpty(list)) {
-            throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
+            throw new ServiceException(ApiError.FILE_EXPORT_DATA_EMPTY);
         }
         return new PagingVO<>(list, resultList.getTotalCount(), dto.getPageSize(), dto.getCurrPage());
     }
@@ -544,7 +544,7 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
 
         for (VirtualInventoryDTO.ListDTO listDTO : list) {
             //产品信息
-            ProductDetailEntity productDetailEntity = productDetailEntityList.stream().filter(obj -> obj.getId().equals(listDTO.getSkuId())).findFirst().orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "产品信息"));
+            ProductDetailEntity productDetailEntity = productDetailEntityList.stream().filter(obj -> obj.getId().equals(listDTO.getSkuId())).findFirst().orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "产品信息"));
             listDTO.setSkuNo(productDetailEntity.getSkuNo());
             listDTO.setProductName(productDetailEntity.getName());
 
@@ -694,7 +694,7 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
         //查询客户信息
         CustomerInfoEntity customerInfoEntity = FeignQuery.getById(CustomerInfoEntity.class,customerId);
         if (ObjectUtil.isEmpty(customerInfoEntity)) {
-            throw new ServiceException(ApiError.ERROR_92011);
+            throw new ServiceException(ApiError.CUSTOMER_NOT_FOUND);
         }
         //查询虚拟仓信息
         VirtualWarehouseChannelDTO.PlatformDTO platformDTO = new VirtualWarehouseChannelDTO.PlatformDTO();

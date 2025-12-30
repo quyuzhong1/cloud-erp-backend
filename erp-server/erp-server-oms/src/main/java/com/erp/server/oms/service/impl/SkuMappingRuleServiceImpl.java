@@ -125,7 +125,7 @@ public class SkuMappingRuleServiceImpl extends SuperServiceImpl<SkuMappingRuleMa
 
     private static void isExist(SkuMappingRuleEntity old) {
         if(null == old){
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "sku对照表匹配规则");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "sku对照表匹配规则");
         }
     }
 

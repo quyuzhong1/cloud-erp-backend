@@ -108,7 +108,7 @@ public class SmallBagCostAllocationServiceImpl extends SuperServiceImpl<SmallBag
     @Override
     public Boolean update(SmallBagCostAllocationDTO.UpdateDTO updateDTO) {
         SmallBagCostAllocationEntity old = super.getById(updateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "小包费用分摊"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "小包费用分摊"));
         SmallBagCostAllocationEntity smallBagCostAllocationEntity =  BeanMapperUtils.map(SmallBagCostAllocationEntity.class, updateDTO);
 
         // 数据处理

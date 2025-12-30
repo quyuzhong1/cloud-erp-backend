@@ -80,13 +80,13 @@ public class WmsCartonDetailServiceImpl extends SuperServiceImpl<WmsCartonDetail
         //校验必填
         for (WmsCartonDetailDTO.AddDTO detail : addDTO.getDetailList()) {
             if (CharSequenceUtil.isBlank(detail.getSkuId()) || CharSequenceUtil.isBlank(detail.getSkuNo())) {
-                throw new ServiceException(ApiError.PACKING_SKU_IS_NOT_NULL, wmsCartonSpecEntity.getBoxSpecNo());
+                throw new ServiceException(ApiError.PRODUCT_PACKING_SKU_IS_NOT_NULL, wmsCartonSpecEntity.getBoxSpecNo());
             }
             if (detail.getPackQty() == null || detail.getPackQty() <= 0) {
-                throw new ServiceException(ApiError.PACKING_SKU_PACK_QTY_IS_NOT_NULL, wmsCartonSpecEntity.getBoxSpecNo(), detail.getSkuNo());
+                throw new ServiceException(ApiError.PRODUCT_PACKING_SKU_PACK_QTY_IS_NOT_NULL, wmsCartonSpecEntity.getBoxSpecNo(), detail.getSkuNo());
             }
             if (wmsCartonSpecEntity.getBoxQty() == null || wmsCartonSpecEntity.getBoxQty() <= 0) {
-                throw new ServiceException(ApiError.PACKING_SKU_BOX_QTY_IS_NOT_NULL, wmsCartonSpecEntity.getBoxSpecNo());
+                throw new ServiceException(ApiError.PRODUCT_PACKING_SKU_BOX_QTY_IS_NOT_NULL, wmsCartonSpecEntity.getBoxSpecNo());
             }
         }
 

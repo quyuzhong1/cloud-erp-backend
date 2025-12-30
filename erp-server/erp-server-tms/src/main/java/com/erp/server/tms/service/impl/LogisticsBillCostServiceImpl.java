@@ -256,7 +256,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 			}
     	
         }
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "自发货费用"));
+        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "自发货费用"));
         //赋值
         LogisticsBillCostEntity logisticsBillCostEntity =  BeanMapperUtils.map(LogisticsBillCostEntity.class, old);
         logisticsBillCostEntity.setBillingWeight(updateDTO.getBillingWeight());
@@ -272,7 +272,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         //物流单
         LogisticsBillEntity logisticsBillEntity = logisticsBillService.getById(logisticsBillCostEntity.getLogisticsBillId());
         if (ObjectUtil.isEmpty(logisticsBillEntity)) {
-            throw new ServiceException(ApiError.NOT_EXIST_BILL,"物流单");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE,"物流单");
         }
         logisticsBillCostEntity.setTransportNo(logisticsBillEntity.getTransportNo());
         logisticsBillCostEntity.setChannelId(logisticsBillEntity.getChannelId());
@@ -346,7 +346,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
     		throw new ServiceException("对账状态修改为" + reconciliationStatus + "时，对账确认时间不能为空");
         }
     	LogisticsBillCostEntity entity = super.getById(id);
-        Optional.ofNullable(entity).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "自发货费用"));
+        Optional.ofNullable(entity).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "自发货费用"));
         //自发货/尾程费用：状态变更【已确认/已作废】可以修改为其他状态【待确认/已确认】【现有功能优化】
 //        if (ReconciliationStatusEnum.INVALID.getCode().equals(entity.getReconciliationStatus()) || ReconciliationStatusEnum.CONFIRMED.getCode().equals(entity.getReconciliationStatus())) {
 //            throw new ServiceException(ApiError.ERROR_LOGISTICS_BILL_COST_RECONCILIATION_STATUS);
@@ -424,7 +424,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             wb.write(output);
             wb.close();
         } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_95131);
+            throw new ServiceException(ApiError.FILE_IMPORT_TEMPLATE_DOWNLOAD_FAILED);
         }
     }
 
@@ -537,7 +537,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         //物流单号
         LogisticsBillEntity logisticsBillEntity = logisticsBillService.getById(entity.getLogisticsBillId());
         if (ObjectUtil.isEmpty(logisticsBillEntity)) {
-            throw new ServiceException(ApiError.NOT_EXIST,"物流订单");
+            throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC,"物流订单");
         }
         entity.setTransportNo(logisticsBillEntity.getTransportNo());
         entity.setChannelId(logisticsBillEntity.getChannelId());
@@ -592,7 +592,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
                 String currentDate = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
                 BigDecimal rate = dmpTaskFeign.getRate(currentDate, entity.getCurrency());
                 if (Objects.isNull(rate)){
-                    throw new ServiceException(ApiError.ERROR_EXCHANGE_RATE_NOT_EXIST, LocalDate.now(), entity.getCurrency());
+                    throw new ServiceException(ApiError.COMMON_EXCHANGE_RATE_NOT_EXIST, LocalDate.now(), entity.getCurrency());
                 }
                 entity.setExchangeRate(rate);
             }
@@ -1540,7 +1540,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 
 	@Override
 	public BatchResultDTO updatePayStatus(String id, String payStatus, LocalDateTime payTime) {
-        LogisticsBillCostEntity entity = Optional.ofNullable(super.getById(id)).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "自发货费用"));
+        LogisticsBillCostEntity entity = Optional.ofNullable(super.getById(id)).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "自发货费用"));
         if(payStatus.equals(entity.getPayStatus())) {
         	throw new ServiceException("修改前后支付状态一致");
         }
@@ -2088,7 +2088,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             EasyExcel.read(new ByteArrayInputStream(bytes), LogisticsBillCostExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (ExcelCommonException e) {
             log.error("导入格式错误！", e);
-            throw new ServiceException(ApiError.ERROR_1016);
+            throw new ServiceException(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX);
         }
         BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
         importResultDTO.setTaskId(dto.getTaskId());

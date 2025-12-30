@@ -56,7 +56,7 @@ public class DmpSkuCostCustomServiceImpl extends SuperServiceImpl<DmpSkuCostCust
     @Override
     public Boolean update(DmpSkuCostCustomDTO.UpdateDTO updateDTO) {
         DmpSkuCostCustomEntity old = super.getById(updateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "sku自定义成本单"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "sku自定义成本单"));
         DmpSkuCostCustomEntity dmpSkuCostCustomEntity =  BeanMapperUtils.map(DmpSkuCostCustomEntity.class, updateDTO);
 
         // 数据处理

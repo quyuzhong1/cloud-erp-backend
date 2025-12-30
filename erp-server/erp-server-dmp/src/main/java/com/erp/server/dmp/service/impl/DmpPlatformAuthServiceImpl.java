@@ -59,7 +59,7 @@ public class DmpPlatformAuthServiceImpl extends SuperServiceImpl<DmpPlatformAuth
     @Override
     public Boolean update(DmpPlatformAuthDTO.UpdateDTO addOrUpdateDTO) {
         DmpPlatformAuthEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "平台token授权单"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "平台token授权单"));
         DmpPlatformAuthEntity dmpPlatformAuthEntity =  BeanMapperUtils.map(DmpPlatformAuthEntity.class, addOrUpdateDTO);
 
         // 数据处理

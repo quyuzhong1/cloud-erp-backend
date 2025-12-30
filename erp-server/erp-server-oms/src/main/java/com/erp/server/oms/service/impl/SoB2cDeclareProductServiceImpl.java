@@ -106,7 +106,7 @@ public class SoB2cDeclareProductServiceImpl extends SuperServiceImpl<SoB2cDeclar
     public BatchResultDTO update(SoB2cDeclareProductDTO.UpdateDTO updateDTO) {
         SoB2cDeclareProductEntity old = super.getById(updateDTO.getId());
         if(null == old){
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "B2C销售订单申报产品信息单");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "B2C销售订单申报产品信息单");
         }
         SoB2cDeclareProductEntity soB2cDeclareProductEntity = B2cOrderConverter.INSTANCE.convertDeclareProductByDto(updateDTO);
         //销售订单
@@ -187,7 +187,7 @@ public class SoB2cDeclareProductServiceImpl extends SuperServiceImpl<SoB2cDeclar
         Page<SoB2cDeclareProductDTO.ViewDTO> page = baseMapper.listViewBySoIds(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams().getIds());
         buildDeclareProductInfo(page.getRecords());
         if (CollectionUtils.isEmpty(page.getRecords())) {
-            throw new ServiceException(ApiError.ERROR_DECLARE_NOT_EXIST);
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_INFO_NOT_FOUND);
         }
         return new PagingVO<>(page);
     }
@@ -208,7 +208,7 @@ public class SoB2cDeclareProductServiceImpl extends SuperServiceImpl<SoB2cDeclar
 
         ProductCustomsEntity customs = soB2cService.getCustomsByCountry(country,soB2cDeclareProductEntity.getSkuId(),productCustomsList);
         if (Objects.isNull(customs)){
-            throw new ServiceException(ApiError.ERROR_SO_B2C_ORDER_DECLARE_CUSTOMS_NOT_EXIST, soB2cDeclareProductEntity.getSkuNo());
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_CUSTOMS_INFO_REQUIRED, soB2cDeclareProductEntity.getSkuNo());
         }
         //申报标签
         BigDecimal toDeclarePrice = customs.getToDeclarePrice();

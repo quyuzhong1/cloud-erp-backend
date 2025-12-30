@@ -91,7 +91,7 @@ public class SampleInitialLedgerDetailServiceImpl extends SuperServiceImpl<Sampl
     @Override
     public Boolean update(SampleInitialLedgerDetailDTO.UpdateDTO addOrUpdateDTO) {
         SampleInitialLedgerDetailEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "样品期初台账详情"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "样品期初台账详情"));
         SampleInitialLedgerDetailEntity sampleInitialLedgerDetailEntity =  BeanMapperUtils.map(SampleInitialLedgerDetailEntity.class, addOrUpdateDTO);
 
         // 数据处理
@@ -125,7 +125,7 @@ public class SampleInitialLedgerDetailServiceImpl extends SuperServiceImpl<Sampl
             EasyExcel.read(excelFile.getInputStream(), SampleInitialLedgerDetailImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (Exception e) {
             log.error("导入样品期初台账明细错误！", e);
-            throw new ServiceException(ApiError.ERROR_95124);
+            throw new ServiceException(ApiError.FILE_DATA_IMPORT_FAILED);
         }
 
         List<SampleInitialLedgerDetailImportExcelDTO> errorList = excelListenerUtil.getErrorList();

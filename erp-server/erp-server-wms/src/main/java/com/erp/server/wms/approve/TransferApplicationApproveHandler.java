@@ -54,7 +54,7 @@ public class TransferApplicationApproveHandler extends AbstractApproveHandler {
         //申请调拨单
         TransferApplicationEntity entity = transferApplicationService.getById(dto.getId());
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_99043);
+            throw new ServiceException(ApiError.WH_TRANSFER_APPLY_NOT_FOUND);
         }
         BatchResultDTO resultDTO = transferApplicationService.disApprove(entity);
         return resultDTO.getSuccess();
@@ -66,11 +66,11 @@ public class TransferApplicationApproveHandler extends AbstractApproveHandler {
         //申请调拨单
         TransferApplicationEntity entity = transferApplicationService.getById(dto.getBusinessId());
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_99043);
+            throw new ServiceException(ApiError.WH_TRANSFER_APPLY_NOT_FOUND);
         }
         Boolean approve = transferApplicationService.approveEnd(entity, dto.getApproveStatus().getStatus(), dto.getComment(), null);
         if (Boolean.FALSE.equals(approve)) {
-            throw new ServiceException(ApiError.ERROR_BILL_APPROVE, SourceTypeEnum.getName(dto.getBusinessKey()));
+            throw new ServiceException(ApiError.BILL_APPROVE_FAILED, SourceTypeEnum.getName(dto.getBusinessKey()));
         }
         //非erp审核添加日志
         if (ApprovePlatformEnum.ERP.equals(dto.getApprovePlatformEnum())) {

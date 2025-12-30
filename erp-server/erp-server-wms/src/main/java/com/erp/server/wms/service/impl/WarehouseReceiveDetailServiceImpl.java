@@ -20,11 +20,9 @@ import com.erp.model.wms.entity.PoReturnDetailEntity;
 import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
 import com.erp.model.wms.enums.ReturnModeEnum;
 import com.erp.rpc.scm.feign.ScmTaskFeign;
-import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.mapper.WarehouseReceiveDetailMapper;
 import com.erp.server.wms.service.*;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -79,7 +77,7 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
         List<PoReturnDetailEntity> returnDetailEntityList = poReturnDetailService.listReturnOrderDetailByPodIds(orderDetailIds);
 
         if(purchaseOrderDetailEntities.stream().anyMatch(v->!ExecutionStatusEnum.CONFIRM.getCode().equals(v.getExecutionStatus()) && !ExecutionStatusEnum.DELIVERY.getCode().equals(v.getExecutionStatus()))){
-            throw new ServiceException(ApiError.ERROR_98041);
+            throw new ServiceException(ApiError.PO_DETAIL_CONFIRM_OR_DELIVER_CAN_PUSH_RECEIPT);
         }
         //遍历需要保存的采购收货单详情信息，并赋值采购单信息
         List<WarehouseReceiveDetailDTO.AddDTO> warehouseReceiveDetailList = dto.getWarehouseReceiveDetailList();
@@ -99,7 +97,7 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
             //采购数量
             Integer purchaseQty = purchaseOrderDetailEntity.getPurchaseQty();
             if (receiveQty + addDTO.getReceiveQty() > purchaseQty + returnQty) {
-                throw new ServiceException(ApiError.ERROR_99025.code, String.format(ApiError.ERROR_99025.msg, purchaseOrderDetailEntity.getSkuNo()));
+                throw new ServiceException(ApiError.PO_RECEIPT_QTY_EXCEEDS_ALLOWED, purchaseOrderDetailEntity.getSkuNo());
             }
 
             warehouseReceiveDetailEntity.setReceiveQty(addDTO.getReceiveQty());
@@ -187,12 +185,12 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
             if (CharSequenceUtil.isNotBlank(updateDTO.getId())) {
                 Integer receive = detailEntityList.stream().filter(obj -> !deleteIds.contains(obj.getId()) && obj.getSkuId().equals(warehouseReceiveDetailEntity.getSkuId()) && obj.getPurchaseOrderDetailId().equals(updateDTO.getPurchaseOrderDetailId()) && !obj.getId().equals(updateDTO.getId())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
                 if (receive + updateDTO.getReceiveQty() > purchaseQty + returnQty) {
-                    throw new ServiceException(ApiError.ERROR_99025.code, String.format(ApiError.ERROR_99025.msg, purchaseOrderDetailEntity.getSkuNo()));
+                    throw new ServiceException(ApiError.PO_RECEIPT_QTY_EXCEEDS_ALLOWED, purchaseOrderDetailEntity.getSkuNo());
                 }
                 warehouseReceiveDetailEntity.setId(updateDTO.getId());
             } else {
                 if (receiveQty + updateDTO.getReceiveQty() > purchaseQty + returnQty) {
-                    throw new ServiceException(ApiError.ERROR_99054.code, String.format(ApiError.ERROR_99054.msg, purchaseOrderDetailEntity.getSkuNo()));
+                    throw new ServiceException(ApiError.PO_RECEIPT_QTY_EXCEEDS_UNDELIVERED, purchaseOrderDetailEntity.getSkuNo());
                 }
             }
             warehouseReceiveDetailEntity.setReceiveQty(updateDTO.getReceiveQty());

@@ -12,10 +12,7 @@ import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
 import com.erp.model.wms.dto.WaveListDTO;
 import com.erp.model.wms.dto.renovation.SecondarySortingDTO;
 import com.erp.model.wms.entity.*;
-import com.erp.model.wms.enums.SoB2cDeliveryInterceptStatusEnum;
 import com.erp.model.wms.enums.SoB2cDeliveryPrintTypeEnum;
-import com.erp.model.wms.enums.WavePickingTypeEnum;
-import com.erp.model.wms.enums.WaveStatusEnum;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.service.*;
@@ -51,7 +48,7 @@ public class SecondarySortingServiceImpl implements SecondarySortingService {
     public SecondarySortingDTO.ScanCodeView scanCode(String code) {
         WaveListEntity pickingWave = waveListService.getByCodeOrCarCode(code);
         if (ObjectUtils.isEmpty(pickingWave)) {
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, code);
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, code);
         }
         SecondarySortingDTO.ScanCodeView view = new SecondarySortingDTO.ScanCodeView();
         view.setWaveId(pickingWave.getId());
@@ -84,11 +81,11 @@ public class SecondarySortingServiceImpl implements SecondarySortingService {
     @Transactional(rollbackFor = Exception.class)
     public SecondarySortingDTO.ScanSkuView scanSku(String waveId, String skuCode) {
         if (ObjectUtils.isEmpty(waveId) || ObjectUtils.isEmpty(skuCode)) {
-            throw new ServiceException(ApiError.ERROR_99117);
+            throw new ServiceException(ApiError.SO_WAVE_NO_AND_SKU_REQUIRED);
         }
         ProductDetailEntity productDetail = plmTaskFeign.getBySkuNoOrEan(skuCode);
         if (ObjectUtils.isEmpty(productDetail)) {
-            throw new ServiceException(ApiError.ERROR_95107);
+            throw new ServiceException(ApiError.PRODUCT_SKU_NOT_FOUND);
         }
         SecondarySortingDTO.ScanSkuView view = new SecondarySortingDTO.ScanSkuView();
         List<WaveListDTO.PickingWaveDetailDTO> waveDetailList = waveListService.listDetailByMainId(waveId, null, productDetail.getId());
@@ -96,16 +93,16 @@ public class SecondarySortingServiceImpl implements SecondarySortingService {
                 .filter(v -> v.getSkuId().equals(productDetail.getId()))
                 .collect(Collectors.toList());
         if (CollectionUtils.isEmpty(skuList)) {
-            throw new ServiceException(ApiError.ERROR_99120);
+            throw new ServiceException(ApiError.SO_WAVE_SKU_NOT_FOUND);
         }
         int sum = skuList.stream().mapToInt(WaveListDTO.PickingWaveDetailDTO::getPickedQty).sum();
         if (sum == 0) {
-            throw new ServiceException(ApiError.ERROR_99126);
+            throw new ServiceException(ApiError.SO_SKU_NOT_PICKED_CANNOT_ALLOCATE);
         }
         WaveListDTO.PickingWaveDetailDTO detailDTO = skuList.stream()
                 .filter(v -> v.getPickedQty() > v.getAllocatedQty())
                 .min(Comparator.comparing(v -> Integer.parseInt(v.getBasketNo())))
-                .orElseThrow(() -> new ServiceException(ApiError.ERROR_99111, productDetail.getSkuNo()));
+                .orElseThrow(() -> new ServiceException(ApiError.SO_SKU_FULLY_ALLOCATED, productDetail.getSkuNo()));
         int pickingQty = waveDetailList.stream().mapToInt(WaveListDTO.PickingWaveDetailDTO::getPickedQty).sum();
         int allocatedQty = Optional.ofNullable(detailDTO.getAllocatedQty()).orElse(0);
         view.setBasketNo(detailDTO.getBasketNo());
@@ -123,7 +120,7 @@ public class SecondarySortingServiceImpl implements SecondarySortingService {
     @Override
     public List<SecondarySortingDTO.BasketDetail> basketDetail(String waveId, String basketNo) {
         if (ObjectUtils.isEmpty(waveId) || ObjectUtils.isEmpty(basketNo)) {
-            throw new ServiceException(ApiError.ERROR_99118);
+            throw new ServiceException(ApiError.SO_WAVE_NO_AND_BASKET_REQUIRED);
         }
         List<WaveListDTO.PickingWaveDetailDTO> waveDetailDTOS = waveListService.listDetailByMainId(waveId, basketNo);
         Map<String, List<WaveListDTO.PickingWaveDetailDTO>> skuMap = waveDetailDTOS.stream().collect(Collectors.groupingBy(WaveListDTO.PickingWaveDetailDTO::getSkuId));
@@ -148,7 +145,7 @@ public class SecondarySortingServiceImpl implements SecondarySortingService {
     @Override
     public String printDistribution(String waveId, HttpServletResponse response) {
         if (ObjectUtils.isEmpty(waveId)) {
-            throw new ServiceException(ApiError.ERROR_99119);
+            throw new ServiceException(ApiError.SO_WAVE_NO_REQUIRED);
         }
         List<WaveListDetailEntity> waveDetailEntities = waveListDetailService.listByMainId(waveId);
         List<String> deliveryIds = waveDetailEntities.stream().map(WaveListDetailEntity::getDeliveryId).distinct().collect(Collectors.toList());
@@ -167,7 +164,7 @@ public class SecondarySortingServiceImpl implements SecondarySortingService {
     @Transactional(rollbackFor = Exception.class)
     public SecondarySortingDTO.ScanCodeView reset(String waveId) {
         if (ObjectUtils.isEmpty(waveId)) {
-            throw new ServiceException(ApiError.ERROR_99119);
+            throw new ServiceException(ApiError.SO_WAVE_NO_REQUIRED);
         }
         WaveListEntity pickingWave = waveListService.getById(waveId);
         List<WaveListDTO.PickingWaveDetailDTO> waveDetailDTOS = waveListService.listDetailByMainId(waveId);

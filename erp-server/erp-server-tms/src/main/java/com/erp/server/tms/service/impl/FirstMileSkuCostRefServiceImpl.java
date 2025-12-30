@@ -67,7 +67,7 @@ public class FirstMileSkuCostRefServiceImpl extends SuperServiceImpl<FirstMileSk
     @Override
     public Boolean update(FirstMileSkuCostRefDTO.UpdateDTO updateDTO) {
         FirstMileSkuCostRefEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "sku成本关系记录"));
+        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "sku成本关系记录"));
         FirstMileSkuCostRefEntity firstMileSkuCostRefEntity =  BeanMapperUtils.map(FirstMileSkuCostRefEntity.class, updateDTO);
 
         log.info("编辑 开始修改sku成本关系记录数据，id：【{}】", old.getId());

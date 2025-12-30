@@ -62,7 +62,7 @@ public class DmpCfgInputConvertServiceImpl extends SuperServiceImpl<DmpCfgInputC
     @Override
     public Boolean update(DmpCfgInputConvertDTO.UpdateDTO updateDTO) {
         DmpCfgInputConvertEntity old = super.getById(updateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "外部系统接口转换内部数据"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "外部系统接口转换内部数据"));
         DmpCfgInputConvertEntity dmpCfgInputConvertEntity =  BeanMapperUtils.map(DmpCfgInputConvertEntity.class, updateDTO);
 
         // 数据处理

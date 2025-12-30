@@ -108,7 +108,7 @@ public class SyncB2bThirdWarehouseServiceImpl implements SyncB2bThirdWarehouseSe
     public Map<String, Object> newSyncDataToThirdWarehouseCreate(B2bThirdDeliveryEntity entity, List<B2bThirdDeliveryDetailEntity> detailEntityList) {
         OverseasProviderEntity overseasProviderEntity = overseasProviderWarehouseService.findPlatformByWarehouseId(entity.getDeliveryWarehouseId());
         if (Objects.isNull(overseasProviderEntity)){
-            throw new ServiceException(ApiError.NOT_FOUND_OVERSEAS_PROVIDE);
+            throw new ServiceException(ApiError.WH_OVERSEAS_PROVIDER_NOT_FOUND);
         }
         List<WmsAttachmentDTO.UpdateDTO> attachmentList = wmsAttachmentService.getByBusinessIds(Collections.singletonList(entity.getId()), ModuleTypeEnum.B2B_THIRD_DELIVERY.getCode());
         ThirdWarehouseCreateFbaOutboundReq req = B2bThirdDeliveryConverter.INSTANCE.toCreateFbaOutboundReq(entity, detailEntityList);
@@ -168,7 +168,7 @@ public class SyncB2bThirdWarehouseServiceImpl implements SyncB2bThirdWarehouseSe
 
         OverseasProviderEntity overseasProviderEntity = overseasProviderWarehouseService.findPlatformByWarehouseId(entity.getDeliveryWarehouseId());
         if (Objects.isNull(overseasProviderEntity)){
-            throw new ServiceException(ApiError.NOT_FOUND_OVERSEAS_PROVIDE);
+            throw new ServiceException(ApiError.WH_OVERSEAS_PROVIDER_NOT_FOUND);
         }
 
         ThirdWarehouseCancelFbaOutboundReq req = new ThirdWarehouseCancelFbaOutboundReq();

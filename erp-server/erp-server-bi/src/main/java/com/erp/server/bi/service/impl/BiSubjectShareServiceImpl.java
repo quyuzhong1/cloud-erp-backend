@@ -50,11 +50,11 @@ public class BiSubjectShareServiceImpl extends ServiceImpl<BiSubjectShareMapper,
         String subjectId = dto.getId();
         BiSubjectEntity subject = subjectService.getById(subjectId);
         if (Objects.isNull(subject)) {
-            throw new ServiceException(ApiError.ERROR_97000);
+            throw new ServiceException(ApiError.BI_TOPIC_REQUIRED);
         }
         String loginUserId = UserContext.getDefaultLoginUser().getUid();
         if (!loginUserId.equals(subject.getCreateUserId())) {
-            throw new ServiceException(ApiError.ERROR_97002);
+            throw new ServiceException(ApiError.BI_NOT_OWNER);
         }
         String shareFlag = dto.getShareFlag();
         String name = dto.getName();
@@ -158,7 +158,7 @@ public class BiSubjectShareServiceImpl extends ServiceImpl<BiSubjectShareMapper,
         //如果在 就返回
         if (Boolean.FALSE.equals(shareFlag)
                 && DashboardEnum.PERSONAL.getFlag().equals(subject.getShareFlag()) && !userId.equals(subject.getCreateUserId())) {//如果不在 那么就要看这个专题 是不是没有设置权限  就是私人的
-            throw new ServiceException(ApiError.ERROR_97006);
+            throw new ServiceException(ApiError.AUTH_VIEW_DENIED);
         }
     }
 
