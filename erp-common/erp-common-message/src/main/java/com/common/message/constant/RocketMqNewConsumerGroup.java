@@ -184,6 +184,12 @@ public class RocketMqNewConsumerGroup {
      * 新中台平台退货入库
      */
     public static final String DMP_PLATFORM_RETURN_ORDER_TO_OMS_GROUP = "${spring.cloud.nacos.discovery.namespace}-dmp_platform_return_order_to_oms_group";
+
+    /**
+     * 新中台平台退货入库
+     */
+    public static final String DMP_PLATFORM_B2B_RETURN_ORDER_TO_OMS_GROUP = "${spring.cloud.nacos.discovery.namespace}-dmp_platform_b2b_return_order_to_oms_group";
+
     /**
      * 新中台平台退货入库
      */
@@ -211,6 +217,10 @@ public class RocketMqNewConsumerGroup {
      * restcloudb2b订单
      */
     public static final String RESTCLOUD_PLATFORM_B2B_ORDER_TO_OMS_GROUP = "${spring.cloud.nacos.discovery.namespace}-restcloud_platform_b2b_order_to_oms_group";
+    /**
+     * restcloudb2b订单
+     */
+    public static final String DMP_PLATFORM_B2B_ORDER_TO_OMS_GROUP = "${spring.cloud.nacos.discovery.namespace}-dmp_platform_b2b_order_to_oms_group";
 
     /**
      * 新中台平台收款单

@@ -41,6 +41,7 @@ public interface BaoHongCreateOrderConverter {
             @Mapping(target = "iossNo", source = "logisticsOrderVO.iossCode"),
             @Mapping(target = "buyInsurance", source = "logisticsOrderVO.logisticsChannelEntity.isApiInsurance", qualifiedByName = "boolToInteger"),
             @Mapping(target = "tradeMode", constant = "1210"),
+            @Mapping(target = "orderType", ignore = true),
             @Mapping(target = "grossWeight", source = "logisticsOrderVO.parceInfoVO.totalWeight", qualifiedByName = "intToStr")
     })
     CreateOrderInfo LogisticsOrderVOToCreateOrderInfo(LogisticsOrderVO logisticsOrderVO);
