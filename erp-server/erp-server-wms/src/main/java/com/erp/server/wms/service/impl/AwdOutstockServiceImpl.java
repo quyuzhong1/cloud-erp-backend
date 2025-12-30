@@ -104,7 +104,7 @@ public class AwdOutstockServiceImpl extends SuperServiceImpl<AwdOutstockMapper, 
 
     @DistributeLocker(keyName = "#updateDTO.getId()")
     @Transactional(rollbackFor = Exception.class)
-    Boolean updateBillDate(AwdOutstockDTO.UpdateDTO updateDTO){
+    public Boolean updateBillDate(AwdOutstockDTO.UpdateDTO updateDTO){
         //查询旧数据
         AwdOutstockEntity old = Optional.ofNullable(super.getById(updateDTO.getId()))
                 .orElseThrow(() -> new ServiceException(ApiError.FIRST_MILE_SHIPMENT_AWD_OUTSTOCK_NOT_EXIST));
