@@ -12,6 +12,7 @@ import com.common.business.enums.*;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 import cn.hutool.core.util.StrUtil;
+import com.erp.model.plm.dto.MoldInfoDTO;
 import com.erp.model.plm.entity.MoldInfoEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.ProductPurchaseEntity;
@@ -51,8 +52,11 @@ import org.apache.commons.math3.util.Pair;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.extern.slf4j.Slf4j;
+import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -68,9 +72,12 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.stream.Collectors;
 import java.util.*;
+import java.util.Objects;
 import java.util.stream.Stream;
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
+import com.common.core.utils.FieldValidUtil;
+import org.springframework.web.multipart.MultipartFile;
 
 import static com.common.business.enums.FileTaskEventEnum.*;
 
@@ -436,6 +443,9 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
             viewGeneratePurchaseOrderDTO.setAssetNoticeDetailId(assetNoticeDetailEntity.getId());
             viewGeneratePurchaseOrderDTO.setCode(assetNoticeEntity.getCode());
             viewGeneratePurchaseOrderDTO.setPlanDeliveryDate(assetNoticeDetailEntity.getPlanDeliveryDate());
+            // 供应商信息从明细获取
+            viewGeneratePurchaseOrderDTO.setSupplierId(assetNoticeDetailEntity.getSupplierId());
+            viewGeneratePurchaseOrderDTO.setSupplierName(assetNoticeDetailEntity.getSupplierName());
 
             viewGeneratePurchaseOrderDTOS.add(viewGeneratePurchaseOrderDTO);
         }
@@ -827,18 +837,8 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void importAssetNotice(BaseDTO.ImportDTO dto) {
-        //查询所有审核通过的模具
-        List<SkuVO> skuVOList = plmTaskFeign.listAssetProduct();
-
-        //查询所有启用核算公司
-        List<BaseIdDTO> companyList = sysUserFeign.listAccountingCompany();
-
-        List<SysDepartmentDTO> deptList = sysUserFeign.getDeptList();
-
-        //用户
-        List<FindUserDTO> userList = sysUserFeign.getUserList();
-
         //设置操作人
+        List<FindUserDTO> userList = sysUserFeign.getUserList();
         FindUserDTO findUserDTO = userList.stream().filter(e -> org.apache.commons.lang3.StringUtils.isNotBlank(dto.getUserId()) && Objects.equals(e.getUserId(), dto.getUserId())).findFirst().orElse(null);
         if(Objects.nonNull(findUserDTO)){
             LoginUser user = new LoginUser();
@@ -849,7 +849,7 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
             user.setMobile(findUserDTO.getMobile());
             UserContext.setLoginUser(user);
         }
-        AssetNoticeExcelListener excelListenerUtil = new AssetNoticeExcelListener(dto.getTaskId(),dto.getImportType(),dto.getImportCount(),skuVOList,userList,deptList,companyList);
+        AssetNoticeExcelListener excelListenerUtil = new AssetNoticeExcelListener(dto.getTaskId(),dto.getImportType(),dto.getImportCount());
         try {
             byte[] bytes = fileFeign.downloadFile(dto.getFileUrl());
             EasyExcel.read(new ByteArrayInputStream(bytes), AssetNoticeImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
@@ -941,6 +941,13 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
 
         for (AssetNoticeDetailDTO.ViewDTO detailDTO : dtoList) {
             detailDTO.setTagName(MoldInfoTagEnum.getName(detailDTO.getTag()));
+            // 项目名称从模具档案获取
+            if (StringUtils.isNotBlank(detailDTO.getAssetCode())) {
+                MoldInfoEntity moldInfoEntity = plmTaskFeign.getMoldInfoByCode(detailDTO.getAssetCode());
+                if (Objects.nonNull(moldInfoEntity)) {
+                    detailDTO.setProjectName(moldInfoEntity.getProjectName());
+                }
+            }
         }
 
     }
@@ -968,7 +975,20 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
         if (ObjectUtil.isEmpty(data)) {
             return;
         }
-
+        // 采购开发用户名称
+        if (StringUtils.isNotBlank(data.getPurchaseDevUserId())) {
+            FindUserDTO purchaseDevUser = sysUserFeign.getUserByUserId(data.getPurchaseDevUserId());
+            if (Objects.nonNull(purchaseDevUser)) {
+                data.setPurchaseDevUserName(purchaseDevUser.getUserName());
+            }
+        }
+        // 采购跟单用户名称
+        if (StringUtils.isNotBlank(data.getPurchaseFollowUserId())) {
+            FindUserDTO purchaseFollowUser = sysUserFeign.getUserByUserId(data.getPurchaseFollowUserId());
+            if (Objects.nonNull(purchaseFollowUser)) {
+                data.setPurchaseFollowUserName(purchaseFollowUser.getUserName());
+            }
+        }
     }
 
     /**
@@ -1037,6 +1057,40 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
         List<String> skuIdList = list.stream().map(item -> item.getAssetId()).collect(Collectors.toList());
 
         List<ProductPurchaseEntity> productPurchaseEntityList = plmTaskFeign.listProductPurchaseBySkuId(skuIdList);
+
+        // 批量查询采购开发和采购跟单用户
+        Set<String> userIdSet = new HashSet<>();
+        list.forEach(data -> {
+            if (StringUtils.isNotBlank(data.getPurchaseDevUserId())) {
+                userIdSet.add(data.getPurchaseDevUserId());
+
+            }
+            if (StringUtils.isNotBlank(data.getPurchaseFollowUserId())) {
+                userIdSet.add(data.getPurchaseFollowUserId());
+            }
+        });
+        Map<String, FindUserDTO> userMap = new HashMap<>();
+        if (!userIdSet.isEmpty()) {
+            List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(new ArrayList<>(userIdSet));
+            if (CollectionUtils.isNotEmpty(userList)) {
+                userMap = userList.stream().collect(Collectors.toMap(FindUserDTO::getUserId, user -> user, (k1, k2) -> k1));
+            }
+        }
+
+        // 批量查询模具档案获取项目名称
+        Set<String> assetCodeSet = list.stream()
+                .map(AssetNoticeDTO.ListDTO::getAssetCode)
+                .filter(StringUtils::isNotBlank)
+                .collect(Collectors.toSet());
+        Map<String, MoldInfoEntity> moldInfoMap = new HashMap<>();
+        if (!assetCodeSet.isEmpty()) {
+            List<MoldInfoEntity> moldInfoList = plmTaskFeign.listMoldInfoByCodes(new ArrayList<>(assetCodeSet));
+            if (CollectionUtils.isNotEmpty(moldInfoList)) {
+                moldInfoMap = moldInfoList.stream()
+                        .collect(Collectors.toMap(MoldInfoEntity::getCode, mold -> mold, (k1, k2) -> k1));
+            }
+        }
+
         // 属性赋值
         for(AssetNoticeDTO.ListDTO data : list) {
             List<AssetPurchaseOrderDetailEntity> assetPurchaseOrderDetailEntityList = assetPurchaseOrderDetailService.lambdaQuery()
@@ -1055,15 +1109,27 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
             data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
             data.setCreatePoTypeName(CreatePoTypeEnum.getName(data.getCreatePoType()));
-            //供应商来自sku信息
-            for (ProductPurchaseEntity productPurchaseEntity : productPurchaseEntityList) {
-                if (data.getAssetId().equals(productPurchaseEntity.getSkuId())) {
-                    if (StringUtils.isNotBlank(productPurchaseEntity.getMainSupplier())) {
-                        data.setSupplierId(productPurchaseEntity.getMainSupplier());
-                        SupplierEntity supplierEntity = suppliserService.getById(productPurchaseEntity.getMainSupplier());
-                        data.setSupplierName(supplierEntity.getName());
 
-                    }
+            // 采购开发用户名称
+            if (StringUtils.isNotBlank(data.getPurchaseDevUserId())) {
+                FindUserDTO purchaseDevUser = userMap.get(data.getPurchaseDevUserId());
+                if (Objects.nonNull(purchaseDevUser)) {
+                    data.setPurchaseDevUserName(purchaseDevUser.getUserName());
+                }
+            }
+            // 采购跟单用户名称
+            if (StringUtils.isNotBlank(data.getPurchaseFollowUserId())) {
+                FindUserDTO purchaseFollowUser = userMap.get(data.getPurchaseFollowUserId());
+                if (Objects.nonNull(purchaseFollowUser)) {
+                    data.setPurchaseFollowUserName(purchaseFollowUser.getUserName());
+                }
+            }
+
+            // 项目名称从模具档案获取
+            if (StringUtils.isNotBlank(data.getAssetCode())) {
+                MoldInfoEntity moldInfoEntity = moldInfoMap.get(data.getAssetCode());
+                if (Objects.nonNull(moldInfoEntity)) {
+                    data.setProjectName(moldInfoEntity.getProjectName());
                 }
             }
 
@@ -1119,38 +1185,104 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
             assetNoticeEntity.setApplyDeptId(deptList.get(0).getId());
             assetNoticeEntity.setApplyDeptName(deptList.get(0).getName());
         }
+        // 采购开发用户验证
+        if (StringUtils.isNotBlank(assetNoticeEntity.getPurchaseDevUserId())) {
+            FindUserDTO purchaseDevUser = sysUserFeign.getUserByUserId(assetNoticeEntity.getPurchaseDevUserId());
+            if (com.baomidou.mybatisplus.core.toolkit.ObjectUtils.isEmpty(purchaseDevUser)) {
+                throw new ServiceException(ApiError.COMMON_USER_NOT_FOUND);
+            }
+        }
+        // 采购跟单用户验证
+        if (StringUtils.isNotBlank(assetNoticeEntity.getPurchaseFollowUserId())) {
+            FindUserDTO purchaseFollowUser = sysUserFeign.getUserByUserId(assetNoticeEntity.getPurchaseFollowUserId());
+            if (com.baomidou.mybatisplus.core.toolkit.ObjectUtils.isEmpty(purchaseFollowUser)) {
+                throw new ServiceException(ApiError.COMMON_USER_NOT_FOUND);
+            }
+        }
 
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
-    public void handleImportSuccessList(List<AssetNoticeDetailDTO.MoldImportDTO> successList) {
+    @Transactional(rollbackFor = Exception.class, propagation = Propagation.NESTED)
+    public void handleImportSuccessList(List<AssetNoticeImportExcelDTO> successList,
+                                       List<String> errorNoList,
+                                       List<AssetNoticeImportExcelDTO> errorList2,
+                                       String importType) {
         if (CollectionUtils.isEmpty(successList)) {
             return;
         }
 
-        // 按 serialNumber 分组
-        Map<String, List<AssetNoticeDetailDTO.MoldImportDTO>> groupedBySerialNumber = successList.stream()
-                .collect(Collectors.groupingBy(AssetNoticeDetailDTO.MoldImportDTO::getSerialNumber));
+        // 过滤掉错误序号的数据
+        if (CollectionUtils.isNotEmpty(errorNoList)) {
+            List<AssetNoticeImportExcelDTO> filteredList = successList.stream()
+                    .filter(e -> StringUtils.isNotBlank(e.getSerialNumber()) && !errorNoList.contains(e.getSerialNumber()))
+                    .collect(Collectors.toList());
 
-        try {
-            for (Map.Entry<String, List<AssetNoticeDetailDTO.MoldImportDTO>> entry : groupedBySerialNumber.entrySet()) {
-                String serialNumber = entry.getKey();
-                List<AssetNoticeDetailDTO.MoldImportDTO> moldImportDTOList = entry.getValue();
+            // 将错误序号的数据添加到错误列表
+            List<AssetNoticeImportExcelDTO> errorData = successList.stream()
+                    .filter(e -> StringUtils.isBlank(e.getSerialNumber()) || errorNoList.contains(e.getSerialNumber()))
+                    .collect(Collectors.toList());
+            errorList2.addAll(errorData);
 
-                if (CollectionUtils.isEmpty(moldImportDTOList)) {
+            successList = filteredList;
+        }
+
+        // 查询基础数据
+        List<SkuVO> skuVOList = plmTaskFeign.listAssetProduct();
+        List<BaseIdDTO> companyList = sysUserFeign.listAccountingCompany();
+        List<SysDepartmentDTO> deptList = sysUserFeign.getDeptList();
+        List<FindUserDTO> userList = sysUserFeign.getUserList();
+
+        // 收集所有的assetCode并去重
+        Set<String> assetCodeSet = successList.stream()
+                .map(AssetNoticeImportExcelDTO::getAssertCode)
+                .filter(StringUtils::isNotBlank)
+                .collect(Collectors.toSet());
+
+        // 批量获取供应商信息
+        Map<String, com.erp.model.plm.dto.MoldInfoDTO.SupplierInfoByCodeDTO> supplierInfoMap = new HashMap<>();
+        if (CollectionUtils.isNotEmpty(assetCodeSet)) {
+            try {
+                supplierInfoMap = plmTaskFeign.batchGetSupplierInfoByCodes(new ArrayList<>(assetCodeSet));
+            } catch (Exception e) {
+                log.warn("批量获取模具供应商信息失败", e);
+            }
+        }
+
+        // 按序号分组
+        Map<String, List<AssetNoticeImportExcelDTO>> groupedBySerialNumber = successList.stream()
+                .collect(Collectors.groupingBy(AssetNoticeImportExcelDTO::getSerialNumber));
+
+        for (Map.Entry<String, List<AssetNoticeImportExcelDTO>> entry : groupedBySerialNumber.entrySet()) {
+            List<AssetNoticeImportExcelDTO> value = entry.getValue();
+            AssetNoticeImportExcelDTO importMainDTO = value.get(0);
+
+            try {
+                // 数据校验和转换
+                List<String> errorMsgList = new ArrayList<>();
+                AssetNoticeDetailDTO.MoldImportDTO moldImportDTO = validateAndConvertData(
+                        importMainDTO, value, skuVOList, companyList, deptList, userList, errorMsgList, supplierInfoMap);
+
+                // 如果存在错误，添加到错误列表
+                if (errorMsgList.size() > 0) {
+                    String errorMsg = FieldValidUtil.getMsgSort(errorMsgList);
+                    for (AssetNoticeImportExcelDTO dto : value) {
+                        dto.setErrorMsg(errorMsg);
+                        errorList2.add(dto);
+                    }
                     continue;
                 }
 
-                // 取第一个元素作为主表数据
-                AssetNoticeDetailDTO.MoldImportDTO firstMoldImportDTO = moldImportDTOList.get(0);
+                // 保存数据
                 AssetNoticeEntity entity = new AssetNoticeEntity();
                 entity.setCode(docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_MPL));
-                entity.setApplyDate(firstMoldImportDTO.getApplyDate());
-                entity.setApplyUserId(firstMoldImportDTO.getApplyUserId());
-                entity.setApplyUserName(firstMoldImportDTO.getApplyUserName());
-                entity.setApplyDeptId(firstMoldImportDTO.getApplyDeptId());
-                entity.setApplyDeptName(firstMoldImportDTO.getApplyDeptName());
+                entity.setApplyDate(moldImportDTO.getApplyDate());
+                entity.setApplyUserId(moldImportDTO.getApplyUserId());
+                entity.setApplyUserName(moldImportDTO.getApplyUserName());
+                entity.setApplyDeptId(moldImportDTO.getApplyDeptId());
+                entity.setApplyDeptName(moldImportDTO.getApplyDeptName());
+                entity.setPurchaseDevUserId(moldImportDTO.getPurchaseDevUserId());
+                entity.setPurchaseFollowUserId(moldImportDTO.getPurchaseFollowUserId());
                 entity.setInvalidStatus(Boolean.FALSE);
                 entity.setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT.getCode());
 
@@ -1162,15 +1294,13 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
 
                 // 处理明细数据
                 List<AssetNoticeDetailEntity> assetNoticeDetailEntities = new ArrayList<>();
-                for (AssetNoticeDetailDTO.MoldImportDTO moldImportDTO : moldImportDTOList) {
-                    List<AssetNoticeDetailDTO.MoldDetailImportDTO> moldDetailImportDTOList = moldImportDTO.getMoldDetailImportDTOList();
-                    for (AssetNoticeDetailDTO.MoldDetailImportDTO moldDetailImportDTO : moldDetailImportDTOList) {
-                        AssetNoticeDetailEntity assetNoticeDetailEntity = new AssetNoticeDetailEntity();
-                        BeanMapperUtils.copy(moldDetailImportDTO, assetNoticeDetailEntity);
-                        assetNoticeDetailEntity.setMainId(entity.getId()); // 关联主表ID
-                        assetNoticeDetailEntity.setCreatePoType(CreatePoTypeEnum.NOT_GENERATED.getStatus());
-                        assetNoticeDetailEntities.add(assetNoticeDetailEntity);
-                    }
+                for (AssetNoticeDetailDTO.MoldDetailImportDTO moldDetailImportDTO : moldImportDTO.getMoldDetailImportDTOList()) {
+                    AssetNoticeDetailEntity assetNoticeDetailEntity = new AssetNoticeDetailEntity();
+                    BeanMapperUtils.copy(moldDetailImportDTO, assetNoticeDetailEntity);
+                    assetNoticeDetailEntity.setMainId(entity.getId());
+                    assetNoticeDetailEntity.setCreatePoType(CreatePoTypeEnum.NOT_GENERATED.getStatus());
+                    // 供应商信息已在validateAndConvertData中处理，这里直接使用
+                    assetNoticeDetailEntities.add(assetNoticeDetailEntity);
                 }
 
                 // 批量保存明细
@@ -1185,9 +1315,198 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
                         "开模通知单",
                         entity.getCode());
                 moduleOperateLogService.addModuleOperateLog(msg, ModuleTypeEnum.ASSET_NOTICE.getCode(), entity.getId(), "导入");
+            } catch (Exception e) {
+                // 保存失败，添加到错误列表
+                String errorMsg = e.getMessage();
+                if (errorMsg != null && errorMsg.length() > 200) {
+                    errorMsg = errorMsg.substring(0, 200);
+                }
+                for (AssetNoticeImportExcelDTO dto : value) {
+                    dto.setErrorMsg(errorMsg);
+                    errorList2.add(dto);
+                }
+                log.error("导入第{}条开模通知单失败", importMainDTO.getSerialNumber(), e);
             }
-        } catch (Exception e) {
-            throw new ServiceException("开模通知单导入保存失败", e);
+        }
+    }
+
+    /**
+     * 数据校验和转换
+     */
+    private AssetNoticeDetailDTO.MoldImportDTO validateAndConvertData(
+            AssetNoticeImportExcelDTO importMainDTO,
+            List<AssetNoticeImportExcelDTO> value,
+            List<SkuVO> skuVOList,
+            List<BaseIdDTO> companyList,
+            List<SysDepartmentDTO> deptList,
+            List<FindUserDTO> userList,
+            List<String> errorMsgList,
+            Map<String, MoldInfoDTO.SupplierInfoByCodeDTO> supplierInfoMap) {
+
+        AssetNoticeDetailDTO.MoldImportDTO moldImportDTO = new AssetNoticeDetailDTO.MoldImportDTO();
+
+        // 申请日期
+        LocalDate applyDate = parseDate(importMainDTO.getApplyDate());
+        if (applyDate == null && StringUtils.isNotBlank(importMainDTO.getApplyDate())) {
+            errorMsgList.add("申请日期格式错误");
+        }
+        moldImportDTO.setApplyDate(applyDate);
+        moldImportDTO.setSerialNumber(importMainDTO.getSerialNumber());
+
+        // 申请人
+        if (StringUtils.isNotBlank(importMainDTO.getApplyUserName())) {
+            FindUserDTO findUserDTO = userList.stream()
+                    .filter(obj -> obj.getUserName().equals(importMainDTO.getApplyUserName()))
+                    .findFirst()
+                    .orElse(null);
+            if (findUserDTO == null) {
+                errorMsgList.add("请录入申请人信息");
+            } else {
+                moldImportDTO.setApplyUserId(findUserDTO.getUserId());
+                moldImportDTO.setApplyUserName(findUserDTO.getUserName());
+            }
+        }
+
+        // 申请部门
+        if (StringUtils.isNotBlank(importMainDTO.getApplyDeptName())) {
+            SysDepartmentDTO sysDepartmentDTO = deptList.stream()
+                    .filter(obj -> obj.getName().equals(importMainDTO.getApplyDeptName()))
+                    .findFirst()
+                    .orElse(null);
+            if (sysDepartmentDTO == null) {
+                errorMsgList.add("请录入申请部门信息");
+            } else {
+                moldImportDTO.setApplyDeptId(sysDepartmentDTO.getId());
+                moldImportDTO.setApplyDeptName(sysDepartmentDTO.getName());
+            }
+        }
+
+        // 采购开发用户
+        if (StringUtils.isNotBlank(importMainDTO.getPurchaseDevUserName())) {
+            FindUserDTO purchaseDevUser = userList.stream()
+                    .filter(obj -> obj.getUserName().equals(importMainDTO.getPurchaseDevUserName()))
+                    .findFirst()
+                    .orElse(null);
+            if (purchaseDevUser == null) {
+                errorMsgList.add("请录入采购开发用户信息");
+            } else {
+                moldImportDTO.setPurchaseDevUserId(purchaseDevUser.getUserId());
+                moldImportDTO.setPurchaseDevUserName(purchaseDevUser.getUserName());
+            }
+        }
+
+        // 采购跟单用户
+        if (StringUtils.isNotBlank(importMainDTO.getPurchaseFollowUserName())) {
+            FindUserDTO purchaseFollowUser = userList.stream()
+                    .filter(obj -> obj.getUserName().equals(importMainDTO.getPurchaseFollowUserName()))
+                    .findFirst()
+                    .orElse(null);
+            if (purchaseFollowUser == null) {
+                errorMsgList.add("请录入采购跟单用户信息");
+            } else {
+                moldImportDTO.setPurchaseFollowUserId(purchaseFollowUser.getUserId());
+                moldImportDTO.setPurchaseFollowUserName(purchaseFollowUser.getUserName());
+            }
+        }
+
+        // 处理明细数据
+        List<AssetNoticeDetailDTO.MoldDetailImportDTO> detailList = new ArrayList<>();
+        for (AssetNoticeImportExcelDTO importExcelDTO : value) {
+            AssetNoticeDetailDTO.MoldDetailImportDTO detail = new AssetNoticeDetailDTO.MoldDetailImportDTO();
+
+            // 采购组织
+            if (StringUtils.isNotBlank(importExcelDTO.getPurchaseOrgName())) {
+                BaseIdDTO baseIdDTO = companyList.stream()
+                        .filter(obj -> obj.getName().equals(importExcelDTO.getPurchaseOrgName()))
+                        .findFirst()
+                        .orElse(null);
+                if (baseIdDTO == null) {
+                    errorMsgList.add("请录入启用采购组织");
+                } else {
+                    detail.setPurchaseOrgId(baseIdDTO.getId());
+                    detail.setPurchaseOrgName(importExcelDTO.getPurchaseOrgName());
+                }
+            }
+
+            // 模具信息
+            if (StringUtils.isNotBlank(importExcelDTO.getAssertCode())) {
+                SkuVO skuVO = skuVOList.stream()
+                        .filter(obj -> obj.getSkuNo().equals(importExcelDTO.getAssertCode()))
+                        .findFirst()
+                        .orElse(null);
+                if (skuVO == null) {
+                    errorMsgList.add("请录入启用的模具信息");
+                } else {
+                    detail.setAssetId(skuVO.getSkuId());
+                    detail.setAssetCode(skuVO.getSkuNo());
+                    detail.setAssetName(skuVO.getSkuName());
+                }
+            }
+
+            // 供应商信息处理
+            if (StringUtils.isNotBlank(importExcelDTO.getSupplierName())) {
+                // 如果Excel中有供应商名称，根据名称查找供应商
+                List<SupplierEntity> supplierList = suppliserService.listBySupplierByNames(Arrays.asList(importExcelDTO.getSupplierName()));
+                if (CollectionUtils.isEmpty(supplierList)) {
+                    errorMsgList.add("请录入有效的供应商名称");
+                } else {
+                    SupplierEntity supplierEntity = supplierList.get(0);
+                    detail.setSupplierId(supplierEntity.getId());
+                    detail.setSupplierName(supplierEntity.getName());
+                }
+            } else {
+                // 如果Excel中没有供应商名称，从批量获取的供应商信息中获取
+                if (StringUtils.isNotBlank(detail.getAssetCode())) {
+                    MoldInfoDTO.SupplierInfoByCodeDTO supplierInfo = supplierInfoMap.get(detail.getAssetCode());
+                    if (supplierInfo != null && StringUtils.isNotBlank(supplierInfo.getSupplierId())) {
+                        detail.setSupplierId(supplierInfo.getSupplierId());
+                        detail.setSupplierName(supplierInfo.getSupplierName());
+                    } else {
+                        errorMsgList.add("模具档案中未维护供应商信息，请手动录入供应商名称");
+                    }
+                }
+            }
+
+            // 其他字段
+            detail.setPlanDeliveryDate(parseDate(importExcelDTO.getPlanDeliveryDateStr()));
+            if (StringUtils.isNotBlank(importExcelDTO.getApplyQtyStr())) {
+                try {
+                    detail.setApplyQty(new BigDecimal(importExcelDTO.getApplyQtyStr()));
+                } catch (Exception e) {
+                    errorMsgList.add("申请数量格式错误");
+                }
+            }
+            if (StringUtils.isNotBlank(importExcelDTO.getIsUrgentName())) {
+                detail.setIsUrgent("是".equals(importExcelDTO.getIsUrgentName()) ? Boolean.TRUE : Boolean.FALSE);
+            }
+            detail.setRemark(importExcelDTO.getRemark());
+
+            detailList.add(detail);
+        }
+
+        moldImportDTO.setMoldDetailImportDTOList(detailList);
+        return moldImportDTO;
+    }
+
+    /**
+     * 日期解析
+     */
+    private LocalDate parseDate(String dateStr) {
+        if (StringUtils.isBlank(dateStr)) {
+            return null;
+        }
+        try {
+            return LocalDate.parse(dateStr, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+        } catch (Exception e1) {
+            try {
+                return LocalDate.parse(dateStr, DateTimeFormatter.ofPattern("yyyy/M/d"));
+            } catch (Exception e2) {
+                try {
+                    return LocalDate.parse(dateStr, DateTimeFormatter.ofPattern("yyyy/MM/dd"));
+                } catch (Exception e3) {
+                    return null;
+                }
+            }
         }
     }
 

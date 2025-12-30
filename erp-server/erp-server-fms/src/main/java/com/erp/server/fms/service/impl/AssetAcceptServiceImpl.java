@@ -11,6 +11,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.config.DocNoGenHelper;
+import com.common.business.constant.ApproveType;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
@@ -935,8 +936,11 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
         }
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
         updateForApprove(entity.getId(), approveStatus.getStatus());
-        // todo 明细数据处理 上下游数据处理
-        rewriteAssetPurchaseOrder(entity);
+        //通过后回写模具采购订单
+        if (ApproveTypeEnum.PASS.getStatus().equals(dto.getType())) {
+            rewriteAssetPurchaseOrder(entity);
+        }
+
 
         return Boolean.TRUE;
     }
@@ -1568,7 +1572,7 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
             AssetCardDetailDTO.AddDTO detailDTO = new AssetCardDetailDTO.AddDTO();
             
             // 实物信息字段映射
-            detailDTO.setAssetCode(docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_ZC)); // 资产编码 = SKU编号 + 序号
+            detailDTO.setAssetCode(detail.getSkuNo()); // 资产编码
             detailDTO.setAssetLocationId(detail.getAssetLocationId()); // 资产位置ID
             detailDTO.setUseDeptId(detail.getUseDeptId()); // 使用部门ID
             detailDTO.setUseDeptName(detail.getUseDeptName()); // 使用部门名称

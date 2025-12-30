@@ -181,6 +181,8 @@ public enum SourceTypeEnum {
     ASSET_NOTICE("assetNotice","资产通知","asset_notice"),
     ASSET_PURCHASE_ORDER("assetPurchaseOrder","资产采购单","asset_purchase_order"),
     ASSET_PURCHASE_CHANGE("assetPurchaseChange","资产采购变更单","asset_purchase_change"),
+    CFG_MOLD_RETURN_ALERT_RULE("cfgMoldReturnAlertRule","资产采购变更单","cfg_mold_return_alert_rule"),
+    CFG_MOLD_ALERT_RULE("cfgMoldAlertRule","资产采购变更单","cfg_mold_alert_rule"),
 
     //SYS
     SYS_DEPARTMENT("sysDepartment", "部门","sys_department"),

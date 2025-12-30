@@ -217,9 +217,34 @@ public class AssetNoticeDTO implements Serializable {
         private String supplierId;
 
         /**
-         * 供应商名称
+         * 供应商名称（列表字段"一级供应商"修改为供应商名称）
          */
         private String supplierName;
+
+        /**
+         * 采购开发用户id
+         */
+        private String purchaseDevUserId;
+
+        /**
+         * 采购开发用户名称
+         */
+        private String purchaseDevUserName;
+
+        /**
+         * 采购跟单用户id
+         */
+        private String purchaseFollowUserId;
+
+        /**
+         * 采购跟单用户名称
+         */
+        private String purchaseFollowUserName;
+
+        /**
+         * 项目名称
+         */
+        private String projectName;
 
         /**
          * 计划交期
@@ -351,6 +376,27 @@ public class AssetNoticeDTO implements Serializable {
          * 附件URL集合
          */
         private List<String> attachmentUrlList;
+
+        /**
+         * 采购开发用户id
+         */
+        private String purchaseDevUserId;
+
+        /**
+         * 采购开发用户名称
+         */
+        private String purchaseDevUserName;
+
+        /**
+         * 采购跟单用户id
+         */
+        private String purchaseFollowUserId;
+
+        /**
+         * 采购跟单用户名称
+         */
+        private String purchaseFollowUserName;
+
     }
 
     /**
@@ -413,6 +459,28 @@ public class AssetNoticeDTO implements Serializable {
         * 申请部门名称
         */
         private String applyDeptName;
+
+        /**
+        * 采购开发用户id
+        */
+        @NotBlank(message = "采购开发不能为空")
+        private String purchaseDevUserId;
+
+        /**
+        * 采购开发用户名称
+        */
+        private String purchaseDevUserName;
+
+        /**
+        * 采购跟单用户id
+        */
+        @NotBlank(message = "采购跟单不能为空")
+        private String purchaseFollowUserId;
+
+        /**
+        * 采购跟单用户名称
+        */
+        private String purchaseFollowUserName;
 
         /**
          * 作废状态（false未作废，true已作废）
@@ -564,13 +632,13 @@ public class AssetNoticeDTO implements Serializable {
         private String purchaseUserName;
 
         /**
-         * 一级供应商id
+         * 供应商id
          */
         @NotBlank(message = "供应商id不能为空")
         private String supplierId;
 
         /**
-         * 一级供应商名称
+         * 供应商名称
          */
         @NotBlank(message = "供应商名称不能为空")
         private String supplierName;
@@ -686,12 +754,12 @@ public class AssetNoticeDTO implements Serializable {
         private String purchaseUserName;
 
         /**
-         * 一级供应商id
+         * 供应商id
          */
         private String supplierId;
 
         /**
-         * 一级供应商名称
+         * 供应商名称
          */
         private String supplierName;
 

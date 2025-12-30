@@ -90,7 +90,9 @@ mi.supplier_name AS supplierName,
 mi.tax_price AS taxPrice,
 mi.rate AS rate,
 mi.pay_method_id AS payMethodId,
-mi.payment_condition AS paymentCondition
+mi.payment_condition AS paymentCondition,
+mi.is_return_strategy_generated AS isReturnStrategyGenerated,
+mi.is_alert_strategy_generated AS isAlertStrategyGenerated
     </sql>
 
     <select id="paging" resultType="com.erp.model.plm.dto.MoldInfoDTO$ListDTO">
