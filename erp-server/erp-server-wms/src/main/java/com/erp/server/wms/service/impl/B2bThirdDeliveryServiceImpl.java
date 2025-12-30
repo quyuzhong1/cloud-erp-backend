@@ -26,6 +26,7 @@ import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.oms.enums.DeliveryModeEnum;
+import com.erp.model.plm.dto.LogisticsProductDTO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.tms.dto.LogisticsChannelDTO;
@@ -54,6 +55,7 @@ import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.CustomerFeign;
 import com.erp.rpc.oms.feign.SoInfoFeign;
+import com.erp.rpc.plm.feign.LogisticsProductFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.server.wms.convert.B2bThirdDeliveryConverter;
@@ -124,6 +126,9 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
     @Lazy
     @Resource
     private B2bThirdDeliveryService service;
+
+    @Resource
+    private LogisticsProductFeign logisticsProductFeign;
 
     @Resource
     private ThirdWarehouseRegistry thirdWarehouseRegistry;
@@ -649,6 +654,25 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
             log.error("B2BThirdDelivery创建订单失败，状态不是CREATING，当前状态：{}", entity.getStatus());
             return;
         }
+        //过滤掉服务费用SKU
+        List<ThirdWarehouseCreateFbaOutboundReq.Item> items = req.getItems();
+        List<String> skuIdList = items.stream().map(ThirdWarehouseCreateFbaOutboundReq.Item::getSkuId).distinct().collect(Collectors.toList());
+        List<LogisticsProductDTO.ProductDTO> skuInfoList = logisticsProductFeign.listLogisticsProduct(skuIdList);
+        items = items.stream().filter(v->{
+            LogisticsProductDTO.ProductDTO productDTO = skuInfoList.stream().filter(s->s.getSkuId().equals(v.getSkuId())).findFirst().orElse(null);
+            if(Objects.isNull(productDTO)){
+                return true;
+            }
+            if ("费用".equalsIgnoreCase(productDTO.getProperty()) || "服务".equalsIgnoreCase(productDTO.getProperty())){
+                return false;
+            }
+            return true;
+        }).collect(Collectors.toList());
+        if(CollectionUtils.isEmpty(items)){
+            this.updateStatus(sourceId, ThirdDeliveryStatusEnum.FAILED.getCode(), ApiError.COMMON_NO_DELIVERY_SKU.getMsg(), "", "", "", null);
+            return;
+        }
+
         ThirdWarehouseService service = thirdWarehouseRegistry.getHandler(req.getThirdWarehouseProvideCode());
         if (Objects.isNull(service)) {
             this.updateStatus(sourceId, ThirdDeliveryStatusEnum.FAILED.getCode(), CharSequenceUtil.format(ApiError.COMMON_PROVIDER_SERVICE_NOT_ENABLED.getMsg(), req.getThirdWarehouseProvideCode()), "", "", "", null);

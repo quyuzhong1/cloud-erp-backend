@@ -3098,6 +3098,22 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         //合并相同sku的明细
         Map<String, Integer> sameSkuMap = detailList.stream().collect(Collectors.toMap(v -> v.getId(), SoB2cDetailEntity::getQty, Integer::sum));
         List<SoB2cDeliveryDTO.DeliverySkuDTO> wantSkuList = listDeliverySku(entity.getShopId(), detailList, entity.getDictPlatform(), warehouseManageType, false);
+        //过滤服务sku
+        List<String> wantSkuIds = wantSkuList.stream().map(v->v.getSkuId()).collect(Collectors.toList());
+        List<LogisticsProductDTO.ProductDTO> skuInfoList = logisticsProductFeign.listLogisticsProduct(wantSkuIds);
+        wantSkuList = wantSkuList.stream().filter(v->{
+            LogisticsProductDTO.ProductDTO productDTO = skuInfoList.stream().filter(s->s.getSkuId().equals(v.getSkuId())).findFirst().orElse(null);
+            if(Objects.isNull(productDTO)){
+                return true;
+            }
+            if ("费用".equalsIgnoreCase(productDTO.getProperty()) || "服务".equalsIgnoreCase(productDTO.getProperty())){
+                return false;
+            }
+            return true;
+        }).collect(Collectors.toList());
+        if(CollectionUtils.isEmpty(wantSkuList)){
+            throw new ServiceException("订单{}没有发货的SKU",entity.getCode());
+        }
         List<SkuMappingDTO.ListingSkuParamDTO> listSkuParamList = new ArrayList<>();
         String mainId = entity.getId();
         //平台

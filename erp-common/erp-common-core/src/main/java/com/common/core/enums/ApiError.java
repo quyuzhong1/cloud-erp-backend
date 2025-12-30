@@ -190,6 +190,8 @@ public enum ApiError implements Serializable {
     COMMON_CONTRACT_TEMPLATE_BOUND_BY_OTHER_SUPPLIER(1106,"【{0}】已被其他供应商绑定，请先解除关联再绑定所有供应商"),
     COMMON_CONTRACT_NOT_BINDING(98127,"无关联合同，请在合同管理页面关联后打印"),
 
+    COMMON_NO_DELIVERY_SKU(98128,"没有发货的SKU"),
+
     /**
      * AUTH 授权与登录 相关 2000 - 2200
      */
