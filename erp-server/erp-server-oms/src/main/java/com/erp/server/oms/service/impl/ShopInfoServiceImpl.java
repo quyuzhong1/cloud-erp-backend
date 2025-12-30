@@ -567,12 +567,6 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public ShopInfoEntity updateShop(ShopDTO.UpdateDTO dto) {
-    	Boolean isHaveWarehouse = dto.getIsHaveWarehouse();
-    	if(Boolean.TRUE.equals(isHaveWarehouse)) {
-    		if(StringUtils.isBlank(dto.getWarehouseId()) || StringUtils.isBlank(dto.getReturnWarehouse())) {
-    			throw new ServiceException("包含平台仓业务，店铺平台仓库和店铺退货仓库不能为空");
-    		}
-    	}
         ShopInfoEntity shopInfo = this.getById(dto.getId());
         if (Objects.isNull(shopInfo)) {
             throw new ServiceException(ApiError.ERROR_92058);
@@ -631,8 +625,6 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
                 chargeName = user.getUserName();
             }
         }
-        //检测仓库
-        checkWarehouseExist(isHaveWarehouse, dto.getWarehouseId());
         shopInfo.setChargeName(chargeName);
         List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(Arrays.asList(salesOrgId));
         String orgName = CollectionUtils.isNotEmpty(orgList) ? orgList.get(0).getName() : "";
@@ -655,11 +647,6 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
             WarehouseDTO.UpdateDTO updateDTO = warehouseList.stream().filter(w -> w.getId().equals(dto.getWarehouseId())).findFirst().orElse(new WarehouseDTO.UpdateDTO());
             shopInfo.setWarehouseName(updateDTO.getName());
             shopInfo.setWarehouseId(dto.getWarehouseId());
-        }
-        shopInfo.setIsHaveWarehouse(isHaveWarehouse);
-        if (!isHaveWarehouse){
-            shopInfo.setWarehouseName("");
-            shopInfo.setWarehouseId("");
         }
         if(StringUtils.isNotBlank(dto.getDictAreaCode())){
             shopInfo.setDictAreaCode(dto.getDictAreaCode());
