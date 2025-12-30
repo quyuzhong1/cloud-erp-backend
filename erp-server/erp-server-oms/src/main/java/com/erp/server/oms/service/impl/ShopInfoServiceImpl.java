@@ -91,6 +91,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_OMS_SHOP;
 
@@ -470,13 +471,19 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
             }
         }
         String warehouseId = dto.getWarehouseId();
+        String awdWarehouseId = CharSequenceUtil.isNotBlank(dto.getAwdWarehouseId()) ? dto.getAwdWarehouseId() : "";
         String warehouseName = "";
-        if (StringUtils.isNotBlank(warehouseId)) {
-            List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Arrays.asList(warehouseId));
+        String awdWarehouseName = "";
+        if (StringUtils.isNotBlank(warehouseId) || StringUtils.isNotBlank(awdWarehouseId)) {
+            List<String> warehouseIdList = Stream.of(warehouseId, awdWarehouseId).filter(CharSequenceUtil::isNotBlank).collect(Collectors.toList());
+            List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(warehouseIdList);
             WarehouseDTO.UpdateDTO updateDTO = warehouseList.stream().filter(w -> w.getId().equals(dto.getWarehouseId())).findFirst().orElse(new WarehouseDTO.UpdateDTO());
             warehouseName = updateDTO.getName();
+            WarehouseDTO.UpdateDTO updateDTO2 = warehouseList.stream().filter(w -> w.getId().equals(dto.getAwdWarehouseId())).findFirst().orElse(new WarehouseDTO.UpdateDTO());
+            awdWarehouseName = updateDTO2.getName();
+
         }
-        String awdWarehouseId = CharSequenceUtil.isNotBlank(dto.getAwdWarehouseId()) ? dto.getAwdWarehouseId() : "";
+
 //        List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Arrays.asList(dto.getWarehouseId()));
 
         for (String countryCode : countryCodeList) {
@@ -493,6 +500,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
                 shop.setChargeName(chargeName);
                 shop.setWarehouseName(warehouseName);
                 shop.setAwdWarehouseId(awdWarehouseId);
+                shop.setAwdWarehouseName(awdWarehouseName);
                 addList.add(shop);
             }
 
@@ -649,13 +657,17 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         shopInfo.setTimeZone(StringUtils.isBlank(dto.getTimeZone())? shopInfo.getTimeZone() : dto.getTimeZone());
         shopInfo.setInitPullTime(dto.getInitPullTime());
         shopInfo.setIsMultiChannel(Objects.nonNull(dto.getIsMultiChannel())? dto.getIsMultiChannel() : shopInfo.getIsMultiChannel());
-        shopInfo.setAwdWarehouseId(CharSequenceUtil.isNotBlank(dto.getAwdWarehouseId()) ? dto.getAwdWarehouseId() : "");
         String warehouseId = dto.getWarehouseId();
+        String awdWarehouseId = dto.getAwdWarehouseId();
         if (StringUtils.isNotBlank(warehouseId)) {
-            List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Arrays.asList(warehouseId));
+            List<String> warehouseIdList = Stream.of(warehouseId, awdWarehouseId).filter(CharSequenceUtil::isNotBlank).collect(Collectors.toList());
+            List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(warehouseIdList);
             WarehouseDTO.UpdateDTO updateDTO = warehouseList.stream().filter(w -> w.getId().equals(dto.getWarehouseId())).findFirst().orElse(new WarehouseDTO.UpdateDTO());
             shopInfo.setWarehouseName(updateDTO.getName());
             shopInfo.setWarehouseId(dto.getWarehouseId());
+            WarehouseDTO.UpdateDTO updateDTO2 = warehouseList.stream().filter(w -> w.getId().equals(dto.getAwdWarehouseId())).findFirst().orElse(new WarehouseDTO.UpdateDTO());
+            shopInfo.setAwdWarehouseName(updateDTO2.getName());
+            shopInfo.setAwdWarehouseId(dto.getAwdWarehouseId());
         }
         shopInfo.setIsHaveWarehouse(isHaveWarehouse);
         if (!isHaveWarehouse){

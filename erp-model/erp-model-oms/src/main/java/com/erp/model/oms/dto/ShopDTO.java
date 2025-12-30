@@ -393,6 +393,7 @@ public class ShopDTO implements Serializable {
          * AWD仓库id
          */
         private String awdWarehouseId;
+        private String awdWarehouseName;
     }
 
 
@@ -806,6 +807,7 @@ public class ShopDTO implements Serializable {
          * AWD仓库id
          */
         private String awdWarehouseId;
+        private String awdWarehouseName;
     }
 
     @Data

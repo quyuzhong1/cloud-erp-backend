@@ -1421,8 +1421,8 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
     @Override
     public List<RequisitionApplicationDTO.FbaBindShipmentViewDetailDTO> fbaBindShipmentView(String id) {
         RequisitionApplicationEntity entity = Optional.ofNullable(this.getById(id)).orElseThrow(()-> new ServiceException("要货申请不存在"));
-        if(!entity.getType().equals(RequisitionApplicationTypeEnum.FBA.getCode())){
-            throw new ServiceException("非FBA来源无法绑定货件");
+        if(!entity.getType().equals(RequisitionApplicationTypeEnum.FBA.getCode()) && !entity.getType().equals(RequisitionApplicationTypeEnum.AWD.getCode())){
+            throw new ServiceException("非FBA/AWD来源无法绑定货件");
         }
 
         PackingTaskEntity packingTaskEntity = Optional.ofNullable(packingTaskService.getBySourceCode(entity.getCode())).orElseThrow(()-> new ServiceException("未生成装箱任务"));
