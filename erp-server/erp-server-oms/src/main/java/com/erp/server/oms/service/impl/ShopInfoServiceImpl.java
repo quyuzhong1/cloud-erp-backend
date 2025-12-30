@@ -2048,7 +2048,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         }
         ShopInfoEntity shopInfo = this.getById(dto.getId());
         if (Objects.isNull(shopInfo)) {
-            throw new ServiceException(ApiError.ERROR_92058);
+            throw new ServiceException(ApiError.SHOP_NOT_FOUND);
         }
         if(Objects.nonNull(dto.getIsMultiChannel())){
             shopInfo.setIsMultiChannel(dto.getIsMultiChannel());

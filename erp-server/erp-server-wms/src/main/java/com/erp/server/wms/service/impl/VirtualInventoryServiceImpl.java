@@ -131,7 +131,7 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
             // 更新实时库存表数量
             boolean updateFlag = this.updateQtyById(found.getId(), qty);
             if (!updateFlag) {
-                throw new ServiceException(ApiError.BILL_DATA_CONFLICT);
+                throw new ServiceException(ApiError.BILL_DATA_LOCKED);
             }
         }
         return found;
@@ -146,7 +146,7 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
                 .eq(VirtualInventoryEntity::getId, id)
                 .update(new VirtualInventoryEntity());
         if (!flag) {
-            throw new ServiceException(ApiError.BILL_DATA_CONFLICT);
+            throw new ServiceException(ApiError.BILL_DATA_LOCKED);
         }
         return flag;
     }

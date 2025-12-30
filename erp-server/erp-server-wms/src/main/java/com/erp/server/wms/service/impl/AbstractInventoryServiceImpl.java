@@ -215,7 +215,7 @@ public abstract class AbstractInventoryServiceImpl implements InventoryStockServ
                 // 5，更新库存
                 boolean updateFlag = inventoryDetailService.updateQtyById(inventoryDetail.getId(), txnFlow.getQty());
                 if (!updateFlag) {
-                    ServiceException.runError(ApiError.BILL_DATA_CONFLICT);
+                    ServiceException.runError(ApiError.BILL_DATA_LOCKED);
                 }
                 InventoryEntity entity = inventoryService.getById(inventory.getId());
                 transactionFlowService.add(txnFlow, entity.getQty());

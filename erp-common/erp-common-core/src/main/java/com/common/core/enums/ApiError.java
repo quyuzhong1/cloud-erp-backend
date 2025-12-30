@@ -276,7 +276,6 @@ public enum ApiError implements Serializable {
     BILL_SOURCE_DETAIL_NOT_FOUND(3005, "未找到来源单据明细"),
     BILL_PUSH_DOWN_NOT_ALLOWED(3006,"单据【{0}】未审核完成，不支持下推"),
     BILL_DATA_LOCKED(3007, "数据已被他人锁住，为避免数据错误，请稍后再试"),
-    BILL_DATA_CONFLICT(3008, "数据已被他人修改，为避免数据错误，请稍后再试"),
     BILL_SAVE_FAIL(3009, "保存{0}单据失败"),
     BILL_DETAIL_NOT_FOUND(3010,"{0}单据明细不存在"),
     BILL_DETAIL_REQUIRED(3011,"{0}明细不能为空"),

@@ -316,7 +316,7 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
             // 更新实时库存表数量
             boolean updateFlag = this.updateQtyById(inventory.getId(), qty);
             if (!updateFlag) {
-                throw new ServiceException(ApiError.BILL_DATA_CONFLICT);
+                throw new ServiceException(ApiError.BILL_DATA_LOCKED);
             }
             inventorySaveDTO.setInventoryId(inventory.getId());
         }
@@ -444,7 +444,7 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
                 .update(new InventoryEntity());
 
         if (!flag) {
-            throw new ServiceException(ApiError.BILL_DATA_CONFLICT);
+            throw new ServiceException(ApiError.BILL_DATA_LOCKED);
         }
 
         return true;
