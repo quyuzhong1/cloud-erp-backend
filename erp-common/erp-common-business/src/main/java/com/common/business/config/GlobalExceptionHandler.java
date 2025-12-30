@@ -196,7 +196,7 @@ public class GlobalExceptionHandler {
     public ApiResult<?> handleGenericException(Exception e) {
         log.error("[UnknownException] {}", e.getMessage(), e);
         return buildResult(ApiError.HTTP_UNKNOWN.getCode(),
-                MessageUtils.getMessage(ApiError.HTTP_UNKNOWN) + "：" + e.getMessage());
+                MessageUtils.getMessage(ApiError.HTTP_UNKNOWN, e.getMessage()));
     }
 
     /** 客户端主动断开连接 */
