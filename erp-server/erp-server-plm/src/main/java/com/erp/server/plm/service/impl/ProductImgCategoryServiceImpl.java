@@ -72,7 +72,7 @@ public class ProductImgCategoryServiceImpl extends SuperServiceImpl<ProductImgCa
         // 操作日志
         String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "图片分类单" , productImgCategoryEntity.getId());
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, productImgCategoryEntity.getId(), "新增操作");
+//        operateLogService.addModuleOperateLog(msg, null, productImgCategoryEntity.getId(), "新增操作");
         // TODO 新增明细（如果有明细的话）
 
         return new BaseResultDTO.AddDTO(productImgCategoryEntity.getId(), productImgCategoryEntity.getId());
@@ -86,7 +86,7 @@ public class ProductImgCategoryServiceImpl extends SuperServiceImpl<ProductImgCa
     @Override
     public Boolean update(ProductImgCategoryDTO.UpdateDTO addOrUpdateDTO) {
         ProductImgCategoryEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "图片分类单"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "图片分类单"));
         ProductImgCategoryEntity productImgCategoryEntity =  BeanMapperUtils.map(ProductImgCategoryEntity.class, addOrUpdateDTO);
 
         // 数据处理
@@ -102,7 +102,7 @@ public class ProductImgCategoryServiceImpl extends SuperServiceImpl<ProductImgCa
             log.info("编辑 开始记录图片分类单日志数据，id：【{}】", productImgCategoryEntity.getId());
             String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), productImgCategoryEntity.getId(), "图片分类单");
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLogByObj(old, productImgCategoryEntity, null, productImgCategoryEntity.getId(), msg);
+//        operateLogService.addModuleOperateLogByObj(old, productImgCategoryEntity, null, productImgCategoryEntity.getId(), msg);
         return Boolean.TRUE;
     }
 
@@ -158,7 +158,7 @@ public class ProductImgCategoryServiceImpl extends SuperServiceImpl<ProductImgCa
         try {
             new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
         } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_1015);
+//            throw new ServiceException(ApiError.ERROR_1015);
         }
     }
     /**
