@@ -21,6 +21,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.constant.ApproveType;
 import com.common.business.constant.IsConstant;
 import com.common.business.dto.AdvanceQueryContainer;
+import com.common.business.dto.DynamicExcelDTO;
 import com.common.business.dto.ExcelImportFsDTO;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.ApproveOneDTO;
@@ -55,6 +56,7 @@ import com.erp.model.plm.vo.SkuSimpleVO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.PurchasePriceDTO;
 import com.erp.model.scm.dto.SupplierDTO;
+import com.erp.model.scm.dto.excel.SupplierExportExcelDTO;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.DictCountryDTO;
@@ -143,6 +145,7 @@ import static com.alibaba.excel.EasyExcelFactory.read;
 import static com.alibaba.fastjson.JSON.parseObject;
 import static com.alibaba.fastjson.JSON.toJSONString;
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_PLM_SKU;
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_PLM_SKU_DYNAMIC;
 
 /**
  * @Description: 产品明细信息服务类
@@ -2507,7 +2510,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
      **/
     @Override
     public void exportProduct(ProductSkuExcelDTO productSkuExcelDTO, HttpServletResponse response) {
-        downloadTaskFeign.saveDownloadTask("产品管理导出", EXPORT_PLM_SKU.getCode(), productSkuExcelDTO);
+        if (CollUtil.isEmpty(productSkuExcelDTO.getFieldList())) {
+            downloadTaskFeign.saveDownloadTask("产品管理导出", EXPORT_PLM_SKU.getCode(), productSkuExcelDTO);
+        }else {
+            downloadTaskFeign.saveDownloadTask("产品管理导出", EXPORT_PLM_SKU_DYNAMIC.getCode(), productSkuExcelDTO);
+        }
     }
 
     @Override
@@ -7485,5 +7492,31 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             return Collections.emptyList();
         }
         return baseMapper.listByApprovePropertyNotAsset(skuNos);
+    }
+
+    @Override
+    public PagingVO<DynamicExcelDTO> exportDynamicProductDetail(PagingDTO<ProductSkuExcelDTO> dto) {
+        PagingVO<ProductDetailExcelExportDTO> paging  = this.exportProductDetail(dto);
+        List<ProductDetailExcelExportDTO> resultList = paging.getList();
+        DynamicExcelDTO dynamicExcelDTO = new DynamicExcelDTO();
+        if(CollUtil.isNotEmpty(resultList)){
+            List<ProductSkuExcelDTO.ExportField> fieldList = dto.getParams().getFieldList();
+            List<String> fieldCodeList = fieldList.stream().map(ProductSkuExcelDTO.ExportField::getField).distinct().collect(Collectors.toList());
+            LinkedHashMap<String, String> fieldMap =  fieldList.stream().collect(Collectors.toMap(ProductSkuExcelDTO.ExportField::getField, ProductSkuExcelDTO.ExportField::getFieldName, (oldValue, newValue) -> oldValue, LinkedHashMap::new));
+            dynamicExcelDTO.setHeaders(fieldMap);
+            List<LinkedHashMap<String, Object>> data = new ArrayList<>();
+            for (ProductDetailExcelExportDTO exportExcelDTO : resultList) {
+                LinkedHashMap<String, Object> excelMap = (LinkedHashMap<String, Object>)BeanUtil.beanToMap(exportExcelDTO);
+                //添加值
+                LinkedHashMap<String, Object> exportMap = new LinkedHashMap<>();
+                for (String fieldCode : fieldCodeList) {
+                    Object value = excelMap.get(fieldCode);
+                    exportMap.put(fieldCode,value);
+                }
+                data.add(exportMap);
+            }
+        }
+        dynamicExcelDTO.setSheetName("产品sku明细表");
+        return new PagingVO<>(Collections.singletonList(dynamicExcelDTO), (int) paging.getTotalPage(), dto.getPageSize(), dto.getCurrPage());
     }
 }

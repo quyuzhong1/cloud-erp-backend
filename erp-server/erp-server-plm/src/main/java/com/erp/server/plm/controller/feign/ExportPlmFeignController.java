@@ -2,6 +2,7 @@ package com.erp.server.plm.controller.feign;
 
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.DynamicExcelDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
@@ -148,6 +149,11 @@ public class ExportPlmFeignController {
     @PostMapping("/exportProductDetail")
     public PagingVO<ProductDetailExcelExportDTO> exportProductDetail(@RequestBody @Validated PagingDTO<ProductSkuExcelDTO> dto) {
         return productDetailService.exportProductDetail(dto);
+    }
+
+    @PostMapping("/exportProductDetail")
+    public PagingVO<DynamicExcelDTO> exportDynamicProductDetail(@RequestBody @Validated PagingDTO<ProductSkuExcelDTO> dto) {
+        return productDetailService.exportDynamicProductDetail(dto);
     }
 
     @PostMapping("/exportProductCustoms")
