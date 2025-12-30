@@ -8,6 +8,8 @@
         <result column="name" property="name"></result>
         <result column="updateUserName" property="updateUserName"></result>
         <result column="updateTime" property="updateTime"></result>
+        <result column="createUserName" property="createUserName"></result>
+        <result column="createUserId" property="createUserId"></result>
         <result column="createTime" property="createTime"></result>
         <collection property="childList" ofType="com.erp.model.plm.dto.BomCombinationDTO$ChildDTO">
             <id column="detailId" property="id"></id>
@@ -222,6 +224,8 @@
             COALESCE(pc.target_tax_cost,0) as targetTaxCost,
             pbi.update_user_name as updateUserName,
             pbi.update_time as updateTime,
+            pbi.create_user_name as createUserName,
+            pbi.create_user_id as createUserId,
             pbi.create_time as createTime,
             pp.main_supplier as mainSupplierId
         from product_bom_info pbi

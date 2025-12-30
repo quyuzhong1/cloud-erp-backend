@@ -71,6 +71,7 @@ public class TikTokLogisticsHandlerImpl extends AbstractLogisticsHandler {
         //获取商铺配置信息
         Map<String, String> map = new HashMap<>();
         map.put("shopId", shopId);
+        map.put("logisticsPlatform", getPlatForm().getCode());
         return map;
     }
 

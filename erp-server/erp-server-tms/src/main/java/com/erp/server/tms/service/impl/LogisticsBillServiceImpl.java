@@ -36,10 +36,12 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.dto.SoB2cDTO;
+import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.dto.SoB2cLabelDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
+import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.oms.enums.SoB2cLabelSourceTypeEnum;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.entity.DictCountryOrgEntity;
@@ -1079,6 +1081,12 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                 } catch (Exception e) {
                     log.error("处理面单获取失败，订单ID: {}", dto.getB2cSoId(), e);
                     errorList.add(codeMap.get(dto.getB2cSoId()));
+                    SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
+                    addError.setType(SoB2cErrorTypeEnum.GET_LOGISTICS_LABEL.getCode());
+                    addError.setMainId(dto.getB2cSoId());
+                    addError.setMessage(e.getMessage());
+                    addError.setParamJson(JSONUtil.toJsonStr(dto));
+                    soB2cFeign.addSoB2cError(addError);
                 }
             }, tmsLogisticsLabelPool);
             futures.add(future);
@@ -1204,6 +1212,11 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         waybillDTO.setSoB2cId(b2cSoId);
         waybillDTO.setTrackNo(getLabelVO.getTrackNo());
         waybillDTO.setTransportNo(getLabelVO.getTransportNo());
+        //清空面单获取异常
+        SoB2cErrorDTO.DeleteDTO deleteDTO = new SoB2cErrorDTO.DeleteDTO();
+        deleteDTO.setMainId(b2cSoId);
+        deleteDTO.setType(SoB2cErrorTypeEnum.GET_LOGISTICS_LABEL.getCode());
+        soB2cFeign.deleteError(deleteDTO);
         return waybillDTO;
     }
 

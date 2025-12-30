@@ -2,6 +2,7 @@ package com.erp.server.tms.controller.api;
 
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
@@ -335,7 +336,7 @@ public class LogisticsBillController extends BaseController {
             }
             LogisticsBillDTO.PrintLogisticsWaybillDTO waybillDTO = new LogisticsBillDTO.PrintLogisticsWaybillDTO();
             waybillDTO.setB2cSoId(entity.getId());
-            waybillDTO.setDeliveryNo(entity.getPlatformCode());
+            waybillDTO.setDeliveryNo(entity.getCode());
             waybillDTO.setShopId(entity.getShopId());
             waybillDTO.setChannelId(soB2cLogisticsEntity.getLogisticsChannelId());
             waybillDTO.setTransportNo(soB2cLogisticsEntity.getCode());
@@ -343,15 +344,18 @@ public class LogisticsBillController extends BaseController {
             list.add(waybillDTO);
             soCodeList.add(entity.getCode());
         }
-        BatchResultDTO result = null;
-        try {
-            logisticsBillService.printLogisticsWaybill(list);
-            result = BatchResultDTO.success("", String.join(",", soCodeList), "获取物流面单成功");
-        } catch (Exception e) {
-            log.error("B2C销售订单获取物流单号失败", e);
-            result = BatchResultDTO.fail("", String.join(",", soCodeList), e.getMessage());
+        List<List<LogisticsBillDTO.PrintLogisticsWaybillDTO>> partition = ListUtil.partition(list, 10);
+        for (List<LogisticsBillDTO.PrintLogisticsWaybillDTO> list1 : partition){
+            BatchResultDTO result = null;
+            try {
+                logisticsBillService.printLogisticsWaybill(list1);
+                result = BatchResultDTO.success("", String.join(",", soCodeList), "获取物流面单成功");
+            } catch (Exception e) {
+                log.error("B2C销售订单获取物流单号失败", e);
+                result = BatchResultDTO.fail("", String.join(",", soCodeList), e.getMessage());
+            }
+            resultDTOS.add(result);
         }
-        resultDTOS.add(result);
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 }

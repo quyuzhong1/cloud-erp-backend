@@ -23,6 +23,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -121,6 +122,20 @@ public class SupplierPoReturnController extends BaseController {
     public ApiResult<PurchaseReturnOrderDTO.UnusualFeedbackView> unusualFeedbackView(@RequestParam("id") String id) {
         PurchaseReturnOrderDTO.UnusualFeedbackView result = poReturnService.unusualFeedbackView(id);
         return success(result);
+    }
+
+    /**
+     * 导出Excel数据
+     * @Author system
+     * @Date 2025/12/17
+     * @param dto
+     * @param response
+     **/
+    @PostMapping("/export")
+    @LogAction(value = LogActionEnum.EXPORT, desc = "SRM供应商退货单导出Excel数据")
+    @WebAdvanceQuery(handler = SupplierPoReturnQueryHandler.class)
+    public void exportList(@RequestBody @Validated PurchaseReturnOrderDTO.SupplierPagingParamDTO dto, HttpServletResponse response) {
+        poReturnService.supplierExportList(dto, response);
     }
 
 }

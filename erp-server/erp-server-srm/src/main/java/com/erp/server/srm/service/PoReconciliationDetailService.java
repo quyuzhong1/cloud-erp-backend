@@ -1,12 +1,12 @@
 package com.erp.server.srm.service;
-import com.common.business.vo.PagingVO;
-import com.erp.model.srm.entity.PoReconciliationDetailEntity;
+
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
+import com.common.business.vo.PagingVO;
 import com.erp.model.srm.dto.PoReconciliationDetailDTO;
+import com.erp.model.srm.entity.PoReconciliationDetailEntity;
 
 import javax.servlet.http.HttpServletResponse;
-import java.util.List;
 
 /**
  * <p>
@@ -17,16 +17,6 @@ import java.util.List;
  * @since 2024-01-19
  */
 public interface PoReconciliationDetailService extends SuperService<PoReconciliationDetailEntity> {
-
-    /**
-    * 修改
-    * @author will
-    * @date: 2024-01-19
-    * @param detailList
-    * @param mainId
-    * @return
-    */
-    Boolean update(List<PoReconciliationDetailDTO.UpdateDTO> detailList,String mainId);
 
     /**
      * @description: 分页查询

@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
@@ -433,7 +434,8 @@ public class PoReconciliationDTO implements Serializable {
          * 明细修改
          */
         @NotEmpty(message = "对账明细不能为空")
-        private List<PoReconciliationDetailDTO.UpdateDTO> detailList;
+        @Valid
+        private List<PoReconciliationRefDetailDTO.UpdateDTO> detailList;
     }
 
 
@@ -470,7 +472,8 @@ public class PoReconciliationDTO implements Serializable {
          * 明细修改
          */
         @NotEmpty(message = "对账明细不能为空")
-        private List<PoReconciliationDetailDTO.ScmUpdateDTO> detailList;
+        @Valid
+        private List<PoReconciliationRefDetailDTO.ScmUpdateDTO> detailList;
     }
 
 

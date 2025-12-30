@@ -2,8 +2,8 @@ package com.erp.server.srm.convert;
 
 import com.erp.model.srm.dto.PayableDetailDTO;
 import com.erp.model.srm.dto.PayableInfoDTO;
-import com.erp.model.srm.entity.PoReconciliationDetailEntity;
 import com.erp.model.srm.entity.PoReconciliationEntity;
+import com.erp.model.srm.entity.PoReconciliationRefDetailEntity;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.factory.Mappers;
@@ -41,5 +41,5 @@ public interface PayableInfoConverter {
     @Mapping(target = "businessType", source = "sourceType")
     @Mapping(target = "businessDetailId", source = "sourceDetailId")
     @Mapping(target = "remark", source = "remark")
-    PayableDetailDTO.AddDTO poReconciliationDetailToPayableDetailEntity(PoReconciliationDetailEntity detailEntity);
+    PayableDetailDTO.AddDTO poReconciliationDetailToPayableDetailEntity(PoReconciliationRefDetailEntity detailEntity);
 }

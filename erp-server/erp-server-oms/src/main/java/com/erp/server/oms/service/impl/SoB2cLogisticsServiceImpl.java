@@ -488,8 +488,14 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
 
     @Override
     public void updateLogisticsBySoId(String soId, String trackNo) {
-        if (CharSequenceUtil.isNotBlank(soId)){
+        if (CharSequenceUtil.isBlank(soId)){
+            return;
+        }
+        SoB2cLogisticsEntity entity = this.getByMainId(soId);
+        if (Objects.nonNull(entity) && !Objects.equals(trackNo, entity.getTrackNo()) ){
             this.lambdaUpdate().eq(SoB2cLogisticsEntity::getMainId, soId).set(SoB2cLogisticsEntity::getTrackNo, trackNo).update();
+            //清空面单
+            soB2cLabelService.deleteByMainIds(Collections.singletonList(soId));
         }
     }
 

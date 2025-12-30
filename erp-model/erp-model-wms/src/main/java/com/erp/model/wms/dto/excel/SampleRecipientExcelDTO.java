@@ -78,10 +78,18 @@ public class SampleRecipientExcelDTO implements Serializable {
     private String warehouseChargeId;
 
     /**
+     * 用途说明
+     */
+    @ColumnWidth(30)
+    @ExcelProperty(value = "*用途说明", index = 6)
+    @FieldValid(fieldName = "*用途说明",isNotBlank = true,maxLength = 200)
+    private String usageDesc;
+
+    /**
      * 领用人
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "*领用人", index = 6)
+    @ExcelProperty(value = "*领用人", index = 7)
     @FieldValid(fieldName = "*领用人",isNotBlank = true)
     private String userName;
     @ExcelIgnore
@@ -91,7 +99,7 @@ public class SampleRecipientExcelDTO implements Serializable {
      * 领用部门
      */
     @ColumnWidth(30)
-    @ExcelProperty(value = "*领用部门", index = 7)
+    @ExcelProperty(value = "*领用部门", index = 8)
     @FieldValid(fieldName = "*领用部门",isNotBlank = true)
     private String deptName;
     @ExcelIgnore
@@ -101,7 +109,7 @@ public class SampleRecipientExcelDTO implements Serializable {
      * 领料组织
      */
     @ColumnWidth(30)
-    @ExcelProperty(value = "*领料组织", index = 8)
+    @ExcelProperty(value = "*领料组织", index = 9)
     @FieldValid(fieldName = "*领料组织",isNotBlank = true)
     private String pickOrgName;
     @ExcelIgnore
@@ -111,7 +119,7 @@ public class SampleRecipientExcelDTO implements Serializable {
      * 使用范围
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "*使用范围", index = 9)
+    @ExcelProperty(value = "*使用范围", index = 10)
     @FieldValid(fieldName = "*使用范围",isNotBlank = true)
     private String usageScopeStr;
     @ExcelIgnore
@@ -120,7 +128,7 @@ public class SampleRecipientExcelDTO implements Serializable {
      * 使用方
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "使用方", index = 10)
+    @ExcelProperty(value = "使用方", index = 11)
     @FieldValid(fieldName = "使用方",isNotBlank = true)
     private String useUserName;
     @ExcelIgnore
@@ -130,7 +138,7 @@ public class SampleRecipientExcelDTO implements Serializable {
      * 是否需要入台账
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "是否需要入台账", index = 11)
+    @ExcelProperty(value = "是否需要入台账", index = 12)
     @FieldValid(fieldName = "是否需要入台账")
     private String isLedgerRequiredStr;
     @ExcelIgnore
@@ -141,7 +149,7 @@ public class SampleRecipientExcelDTO implements Serializable {
      * 备注
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "备注", index = 12)
+    @ExcelProperty(value = "备注", index = 13)
     @FieldValid(fieldName = "备注",maxLength =200)
     private String remark;
 
@@ -149,7 +157,7 @@ public class SampleRecipientExcelDTO implements Serializable {
      * SKU
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "*SKU", index = 13)
+    @ExcelProperty(value = "*SKU", index = 14)
     @FieldValid(fieldName = "*SKU",isNotBlank = true)
     private String skuNo;
     @ExcelIgnore
@@ -161,7 +169,7 @@ public class SampleRecipientExcelDTO implements Serializable {
      * 领用数量
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "*领用数量", index = 14)
+    @ExcelProperty(value = "*领用数量", index = 15)
     @FieldValid(fieldName = "*领用数量",isNotBlank = true,formatPattern = FieldFormatPatternTypeEnum.POSITIVEINTEGER)
     private String recipientQtyStr;
     @ExcelIgnore
@@ -171,7 +179,7 @@ public class SampleRecipientExcelDTO implements Serializable {
      * 明细备注
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "明细备注", index = 15)
+    @ExcelProperty(value = "明细备注", index = 16)
     @FieldValid(fieldName = "明细备注",maxLength =200)
     private String detailRemark;
 
@@ -179,7 +187,7 @@ public class SampleRecipientExcelDTO implements Serializable {
     /**
      * 错误数据
      */
-    @ExcelProperty(value = "错误数据", index = 16)
+    @ExcelProperty(value = "错误数据", index = 17)
     @ColumnWidth(50)
     private String errorMsg;
     /**
