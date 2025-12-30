@@ -100,6 +100,12 @@ public class FbaShipmentDetailEntity extends BaseEntity<FbaShipmentDetailEntity>
      */
     @TableField("per_box_qty")
     private String perBoxQty;
+
+    /**
+     * 单箱数量
+     */
+    @TableField("box_qty")
+    private String boxQty;
     /**
      * 箱子长
      */

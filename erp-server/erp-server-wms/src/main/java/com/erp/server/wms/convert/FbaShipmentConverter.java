@@ -27,6 +27,10 @@ public interface FbaShipmentConverter {
     @Mapping(target = "productName", ignore = true)
     @Mapping(target = "imageUrl", ignore = true)
     @Mapping(target = "deliveryQty", ignore = true)
+    @Mapping(target = "packageLength", source = "packageLength", defaultValue = "0", qualifiedByName = "fourDecimalToTwoDecimal")
+    @Mapping(target = "packageWidth", source = "packageWidth", defaultValue = "0", qualifiedByName = "fourDecimalToTwoDecimal")
+    @Mapping(target = "packageHeight", source = "packageHeight", defaultValue = "0", qualifiedByName = "fourDecimalToTwoDecimal")
+    @Mapping(target = "packageWeight", source = "packageWeight", defaultValue = "0", qualifiedByName = "fourDecimalToTwoDecimal")
     FbaShipmentDetailDTO.ViewDTO fbaShipmentDetailToViewDTO(FbaShipmentDetailEntity detailEntity);
 
     @Mapping(target = "receiveTime", source = "receiveDate")

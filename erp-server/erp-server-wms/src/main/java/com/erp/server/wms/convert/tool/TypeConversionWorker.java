@@ -8,6 +8,8 @@ import com.erp.model.wms.entity.WarehouseEntity;
 import org.mapstruct.Named;
 import org.springframework.stereotype.Component;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -47,5 +49,17 @@ public class TypeConversionWorker {
     @Named("getIsGift")
     public Integer getIsGift(Boolean isGift) {
         return Objects.isNull(isGift) || !isGift ? 2 : 1;
+    }
+
+    /**
+     * 四位小数转换成两位小数
+     *
+     */
+    @Named("fourDecimalToTwoDecimal")
+    public BigDecimal fourDecimalToTwoDecimal(BigDecimal value){
+        if (Objects.isNull(value)){
+            return value;
+        }
+        return value.setScale(2, RoundingMode.HALF_UP);
     }
 }
