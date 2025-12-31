@@ -245,7 +245,7 @@ public class MoldMonitorDTO implements Serializable {
     @NoArgsConstructor
     public static class TabDTO extends PermissionsDTO {
         /**
-         * 来源类型 cfgMoldReturnAlertrRule =模具返还策略 ， cfgMoldAlertrRule = 模具预警策略
+         * 来源类型 cfgMoldReturnAlertRule =模具返还策略 ， cfgMoldAlertRule = 模具预警策略
          */
         @NotBlank(message = "来源类型不能为空")
         private String sourceType;
@@ -273,7 +273,7 @@ public class MoldMonitorDTO implements Serializable {
          */
         private List<String> ids;
         /**
-         * 来源类型 cfgMoldReturnAlertrRule =模具返还策略 ， cfgMoldAlertrRule = 模具预警策略
+         * 来源类型 cfgMoldReturnAlertRule =模具返还策略 ， cfgMoldAlertRule = 模具预警策略
          */
         @NotBlank(message = "来源类型不能为空")
         private String sourceType;

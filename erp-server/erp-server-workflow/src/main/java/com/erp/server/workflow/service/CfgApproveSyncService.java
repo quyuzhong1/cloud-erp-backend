@@ -58,4 +58,6 @@ public interface CfgApproveSyncService extends SuperService<CfgApproveSyncEntity
     I18nResource[] mapToI18nResouceArray(Map<String, String> values);
 
     void cleanFeishuTest();
+
+    List<Map<String, Object>> listApproveNoticeRoleType(CfgApproveSyncDTO.ApproveNoticeRoleTypeParamDTO dto);
 }
