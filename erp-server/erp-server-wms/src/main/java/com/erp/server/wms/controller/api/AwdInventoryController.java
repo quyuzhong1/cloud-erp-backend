@@ -75,8 +75,9 @@ public class AwdInventoryController extends BaseController {
             tableAlias = "ai"
     )
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出Excel数据")
-    public void exportList(@RequestBody @Validated AwdInventoryDTO.ExportDTO dto, HttpServletResponse response) {
+    public ApiResult exportList(@RequestBody @Validated AwdInventoryDTO.ExportDTO dto, HttpServletResponse response) {
         awdInventoryService.exportList(dto, response);
+        return success();
     }
 
     /**
