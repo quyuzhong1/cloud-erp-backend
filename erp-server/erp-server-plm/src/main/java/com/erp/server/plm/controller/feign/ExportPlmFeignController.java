@@ -151,7 +151,7 @@ public class ExportPlmFeignController {
         return productDetailService.exportProductDetail(dto);
     }
 
-    @PostMapping("/exportProductDetail")
+    @PostMapping("/exportDynamicProductDetail")
     public PagingVO<DynamicExcelDTO> exportDynamicProductDetail(@RequestBody @Validated PagingDTO<ProductSkuExcelDTO> dto) {
         return productDetailService.exportDynamicProductDetail(dto);
     }
