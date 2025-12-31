@@ -62,6 +62,8 @@ public interface AwdOutstockService extends SuperService<AwdOutstockEntity> {
     PagingVO<AwdOutstockDTO.ListDTO> paging(PagingDTO<AwdOutstockDTO.PagingParamDTO> pagingParamDTO);
 
 
+    AwdOutstockDTO.ViewDTO view(String id);
+
     /**
     * 导出Excel
     * @author wtr

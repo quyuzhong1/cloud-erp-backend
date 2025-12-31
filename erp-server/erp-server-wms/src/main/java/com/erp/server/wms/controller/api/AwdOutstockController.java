@@ -2,6 +2,7 @@ package com.erp.server.wms.controller.api;
 
 
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.core.anno.LogViewService;
 import com.erp.server.wms.query.AwdOutStockQueryHandler;
 import lombok.extern.slf4j.Slf4j;
 import javax.annotation.Resource;
@@ -58,7 +59,6 @@ public class AwdOutstockController extends BaseController {
     * @return ApiResult
     */
     @PostMapping("/batchUpdateBillDate")
-    //@LogAction(value = LogActionEnum.UPDATE, desc = "修改")
         @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
         tableField = "create_user_id",
         menuCode = "wms:awdOutstock:update",
@@ -89,7 +89,6 @@ public class AwdOutstockController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/generateFirstMileDelivery")
-    @LogAction(value = LogActionEnum.UPDATE, desc = "修改")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
             menuCode = "wms:awdOutstock:update",
@@ -116,6 +115,18 @@ public class AwdOutstockController extends BaseController {
     @WebAdvanceQuery(handler = AwdOutStockQueryHandler.class)
     public ApiResult<PagingVO<AwdOutstockDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<AwdOutstockDTO.PagingParamDTO> dto) {
         return success(awdOutstockService.paging(dto));
+    }
+
+    @GetMapping("/view")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:awdOutstock:view",
+            serviceClass = AwdOutstockService.class,
+            keyIdName = "id")
+    @LogViewService
+    public ApiResult<AwdOutstockDTO.ViewDTO> view(@RequestParam("id") String id) {
+        AwdOutstockDTO.ViewDTO result = awdOutstockService.view(id);
+        return success(result);
     }
 
     /**
