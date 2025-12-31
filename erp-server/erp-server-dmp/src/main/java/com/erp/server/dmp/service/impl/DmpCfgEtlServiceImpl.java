@@ -91,7 +91,7 @@ public class DmpCfgEtlServiceImpl extends SuperServiceImpl<DmpCfgEtlMapper, DmpC
     @Override
     public Boolean update(DmpCfgEtlDTO.UpdateDTO addOrUpdateDTO) {
         DmpCfgEtlEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "etl配置信息"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "etl配置信息"));
         DmpCfgEtlEntity dmpCfgEtlEntity =  BeanMapperUtils.map(DmpCfgEtlEntity.class, addOrUpdateDTO);
 
         // 数据处理
@@ -180,7 +180,7 @@ public class DmpCfgEtlServiceImpl extends SuperServiceImpl<DmpCfgEtlMapper, DmpC
         DmpCfgEtlEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到etl配置信息数据"));
         // 只有待提交数据允许删除
 //        if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT, entity.getApproveStatus())) {
-//            throw new ServiceException(ApiError.ERROR_98032);
+//            throw new ServiceException(ApiError.ERROR_SCM_SUBMIT_ALLOWED_STATUS_ONLY);
 //        }
         //  删除明细数据（如果有明细数据的话）
 

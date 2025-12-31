@@ -3,8 +3,6 @@ package com.erp.server.wms.sdk.delivery;
 import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.lang.Tuple;
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
@@ -15,7 +13,6 @@ import com.common.business.dto.PlatformOrderQueryDTO;
 import com.common.business.dto.PlatformShipOrderDTO;
 import com.common.business.enums.OrderDeliveryMarkTypeEnum;
 import com.common.business.enums.PlatformDictEnum;
-import com.common.business.enums.SourceTypeEnum;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -39,14 +36,12 @@ import com.google.common.base.Stopwatch;
 import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -84,7 +79,7 @@ public class AmazonShipOrder extends AbstractShipOrder {
             //检查销售订单详情是否存在
             List<SoB2cDetailEntity> detailEntityList = soB2cDetailEntityListMap.get(mainEntity.getId());
             if (CollectionUtils.isEmpty(detailEntityList)) {
-                throw new ServiceException(ApiError.ERROR_SO_B2C_DETAIL_NOT_EXIST);
+                throw new ServiceException(ApiError.SO_B2C_DETAIL_NOT_FOUND);
             }
             // 校验捆绑商品拆分
             // 来源明细ID为空代表是手工添加的明细忽略

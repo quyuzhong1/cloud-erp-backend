@@ -265,7 +265,7 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
     @Override
     public void checkOutQty(String warehouseId, String soId, String sourceId, String sourceType, List<SoOutstockDetailDTO.UpdateDTO> detailList, String batchNo) {
         if (CollectionUtils.isEmpty(detailList)) {
-            throw new ServiceException(ApiError.ERROR_92029);
+            throw new ServiceException(ApiError.SO_DELIVERY_OUTBOUND_DETAIL_REQUIRED);
         }
         List<String> excludedIdList = detailList.stream().filter(d -> CharSequenceUtil.isNotBlank(d.getId())).
                 map(SoOutstockDetailDTO.UpdateDTO::getId).collect(Collectors.toList());
@@ -296,7 +296,7 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
                         .filter(v -> v.getDeliverySkuNo().equals(dto.getSkuNo()))
                         .mapToInt(SoDetailEntity::getBoxQty).sum();
                 if (sellQty == 0) {
-                    throw new ServiceException(ApiError.ERROR_99107, dto.getSkuNo());
+                    throw new ServiceException(ApiError.SO_PICKLIST_DETAIL_NOT_FOUND_FOR_SO, dto.getSkuNo());
                 }
                 int actualQty = detailEntities.stream()
                         .filter(e -> Boolean.FALSE.equals(e.getInvalidStatus()))
@@ -304,7 +304,7 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
                         .mapToInt(SoOutstockDetailEntity::getActualQty)
                         .sum();
                 if (sellQty < actualQty + Optional.ofNullable(dto.getPlanQty()).orElse(0)) {
-                    throw new ServiceException(ApiError.ERROR_99103, dto.getSkuNo());
+                    throw new ServiceException(ApiError.SO_OUTBOUND_QTY_EXCEEDS_ORDER, dto.getSkuNo());
                 }
             }
         } else {
@@ -329,7 +329,7 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
                     log.warn("sku id: {}产品属性是费用或服务，不参与库存出入库，不做库存验证", item.getSkuId());
                 } else {
                     if (actualQty > planQty) {
-                        throw new ServiceException(ApiError.ERROR_92027);
+                        throw new ServiceException(ApiError.SO_DELIVERY_QTY_GT_REQUIRED_QTY);
                     }
 
                     String sourceDetailId = item.getSourceDetailId();
@@ -343,14 +343,14 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
                     ).mapToInt(SoOutstockDetailDTO.DeliveryQtyDTO::getActualQty).sum();
 
                     if (outStockQty + planQty > soQty) {
-                        throw new ServiceException(ApiError.ERROR_92028);
+                        throw new ServiceException(ApiError.SO_DELIVERY_QTY_GT_AVAILABLE_QTY);
                     }
                     if (ObjectUtil.isEmpty(batchNo)) {
                         //即时库存
                         Integer inventory = skuInventoryList.stream().filter(s -> s.getSkuId().equals(skuId) && s.getWarehouseLocationId().
                                 equals(warehouseLocation)).findFirst().flatMap(obj -> Optional.ofNullable(obj.getInventoryTotal())).orElse(0);
                         if (planQty > inventory) {
-//                            throw new ServiceException(ApiError.ERROR_92030);
+//                            throw new ServiceException(ApiError.ERROR_DELIVERY_QTY_GT_STOCK);
                         }
                     }
                 }
@@ -371,7 +371,7 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
     @Override
     public void updateDetail(String mainId, List<SoOutstockDetailDTO.UpdateDTO> detailList) {
         if (CollectionUtils.isEmpty(detailList)) {
-            throw new ServiceException(ApiError.ERROR_92029);
+            throw new ServiceException(ApiError.SO_DELIVERY_OUTBOUND_DETAIL_REQUIRED);
         }
         List<SoOutstockDetailDTO.UpdateDTO> updateList = detailList.stream().filter(c -> CharSequenceUtil.isNotBlank(c.getId())).collect(Collectors.toList());
         List<SoOutstockDetailEntity> dbList = this.listBaseByMainId(mainId);
@@ -563,7 +563,7 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
     @Override
     public void checkB2cOrderQty(String warehouseId, String soId, String sourceId, String sourceType, List<SoOutstockDetailDTO.UpdateDTO> checkList) {
         if(CharSequenceUtil.isBlank(warehouseId)){
-            throw new ServiceException(ApiError.ERROR_99002);
+            throw new ServiceException(ApiError.WH_PARAM_NOT_FOUND);
         }
         // 忽略库存计算SKU
         List<SkuVO> ignoreInventorySkuList = plmTaskFeign.getNoInventorySku();
@@ -596,7 +596,7 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
                     log.warn("sku id: {}产品属性是费用或服务，不参与库存出入库，不做库存验证", item.getSkuId());
                 } else {
                     if (outStockQty + planQty > deliveryQty) {
-                        throw new ServiceException(ApiError.ERROR_92028);
+                        throw new ServiceException(ApiError.SO_DELIVERY_QTY_GT_AVAILABLE_QTY);
                     }
                 }
             }
@@ -625,7 +625,7 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
                     Integer inventory = skuInventoryList.stream().filter(s -> s.getSkuId().equals(skuId) && s.getWarehouseLocationId().
                             equals(warehouseLocation)).findFirst().flatMap(obj -> Optional.ofNullable(obj.getInventoryTotal())).orElse(0);
                     if (actualQty > inventory) {
-//                        throw new ServiceException(ApiError.ERROR_92030);
+//                        throw new ServiceException(ApiError.ERROR_DELIVERY_QTY_GT_STOCK);
                     }
 
                 }
@@ -676,7 +676,7 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
         // 查询仓库是否开启负库存
         WarehouseDTO.UpdateDTO warehouseDTO = warehouseService.detailWithCache(dto.getWarehouseId());
         if (null == warehouseDTO){
-            throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST_WAREHOUSE);
+            throw new ServiceException(ApiError.SO_B2C_WAREHOUSE_NOT_FOUND);
         }
         Boolean allowNegativeInventory = warehouseDTO.getAllowNegativeInventory();
 
@@ -718,7 +718,7 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
                             break;
                         } else {
                             // 库存不足
-                            throw new ServiceException(ApiError.SKU_MAPPING_INVENTORY_INSUFFICIENT, currentSkuMappingDTO.getProductSkuNo());
+                            throw new ServiceException(ApiError.WH_SKU_MAPPING_STOCK_INSUFFICIENT, currentSkuMappingDTO.getProductSkuNo());
                         }
                     } else {
                         // 非最后元素扣减
@@ -852,11 +852,11 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
             //销售订单明细
             SoDetailEntity soDetailEntity = soDetailList.stream().filter(obj -> obj.getId().equals(detailEntity.getSoDetailId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(soDetailEntity)) {
-                throw new ServiceException(ApiError.ERROR_92015);
+                throw new ServiceException(ApiError.SO_DETAIL_NOT_FOUND);
             }
             SoInfoEntity soInfoEntity = soInfoList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), soDetailEntity.getMainId())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(soInfoEntity)) {
-                throw new ServiceException(ApiError.ERROR_92016);
+                throw new ServiceException(ApiError.SO_NOT_FOUND);
             }
             //虚拟仓信息
             detailEntity.setVirtualWarehouseId(soInfoEntity.getVirtualWarehouseId());

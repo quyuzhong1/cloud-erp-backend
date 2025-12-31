@@ -3,7 +3,6 @@ package com.erp.model.bi.dto;
 import com.common.core.anno.StateEnumValue;
 import com.common.business.validator.UpdateGroup;
 import com.common.core.exception.ServiceException;
-import com.erp.model.bi.entity.BiModulePermissionEntity;
 import com.erp.model.bi.entity.BiSubjectShareEntity;
 import com.erp.model.bi.enums.BiShareIdentityTypeEnum;
 import lombok.Data;

@@ -1,7 +1,5 @@
 package com.erp.server.dmp.inout.handler.input.task.dmp;
 
-import cn.hutool.core.bean.BeanUtil;
-import cn.hutool.core.collection.CollUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
@@ -11,27 +9,16 @@ import com.common.core.enums.PannoEnum;
 import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.entity.ThirdMappingEntity;
 import com.erp.model.dmp.entity.ThirdShopEntity;
-import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
-import com.erp.model.dmp.enums.DmpInputTaskStatusEnum;
 import com.erp.model.dmp.enums.LingxingPlatformCodeEnum;
 import com.erp.model.sys.entity.DictCountryEntity;
-import com.erp.server.dmp.inout.handler.input.task.mongo.DmpInputMongoHandler;
-import com.erp.server.dmp.service.ThirdMappingService;
-import com.erp.server.dmp.service.ThirdShopService;
-import com.sdk.oms.temu.dto.TemuCommonDTO;
-import com.sdk.oms.temu.dto.TemuResp;
 import com.sdk.oms.temu.dto.TemuShippingDTO;
-import com.sdk.oms.temu.dto.TemuShippingInfoReq;
-import com.sdk.oms.temu.service.TemuClient;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.Resource;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * dmp处理下一个扩展handler，如何订单收货人信息单独一张表，使用此handler即可，因有成员变量，最终实现类由spring管理需要是多例@Scope("prototype")

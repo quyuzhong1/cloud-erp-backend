@@ -321,7 +321,7 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
     @Override
     public Boolean update(TransferDeclareDTO.UpdateDTO updateDTO) {
         TransferDeclareEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "中转报关单"));
+        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "中转报关单"));
         TransferDeclareEntity transferDeclareEntity =  BeanMapperUtils.map(TransferDeclareEntity.class, updateDTO);
 
         //包裹总重量
@@ -413,7 +413,7 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
     @Transactional(rollbackFor = Exception.class)
     public Boolean delete(List<String> ids) {
         if (CollectionUtil.isEmpty(ids)) {
-            throw new ServiceException(ApiError.ERROR_98004);
+            throw new ServiceException(ApiError.BILL_SELECTION_REQUIRED);
         }
 
         //上传成功不能删除
@@ -422,7 +422,7 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
                 .filter(req -> InstockForecastStatusEnum.UPLOAD_SUCCESS.getCode().equals(req.getInstockForecastStatus()))
                 .count();
         if (count > 0) {
-            throw new ServiceException(ApiError.UPLOAD_SUCCESS_NOT_DELETE);
+            throw new ServiceException(ApiError.LOGISTICS_UPLOAD_SUCCESS_NOT_DELETE);
         }
 
         //删除详情
@@ -524,12 +524,12 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
             }
         }
         if(CollectionUtils.isEmpty(receiveItemList)){
-            throw new ServiceException(ApiError.ERROR_TRANSFER_DECLARE_DETAIL_NOT_EXIST);
+            throw new ServiceException(ApiError.WH_TRANSFER_DECLARE_DETAIL_NOT_EXIST);
         }
         //查询授权信息
         TransferLogisticsAuthEntity authEntity = transferLogisticsAuthService.getByMainId("", transferDeclareEntity.getTransferLogisticsSupplierId());
         if (ObjectUtil.isEmpty(authEntity)) {
-            throw new ServiceException(ApiError.ERROR_LOGISTICS_CHANNEL_NOT_AUTU_EXIST);
+            throw new ServiceException(ApiError.LOGISTICS_CHANNEL_AUTH_INFO_NOT_FOUND);
         }
         TransferLogisticsService service = transferLogisticsRegistry.getHandler(authEntity.getLogisticsPlatform());
         if (Objects.isNull(service)){
@@ -997,7 +997,7 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
         }
 
         if (StringUtils.isBlank(transferDeclareEntity.getTransferLogisticsSupplierId())) {
-            throw new ServiceException(ApiError.ERROR_LOGISTICS_CHANNEL_NOT_AUTU_EXIST);
+            throw new ServiceException(ApiError.LOGISTICS_CHANNEL_AUTH_INFO_NOT_FOUND);
         }
         //中转物流商名称
         TransferLogisticsSupplierEntity transferLogisticsSupplierEntity = transferLogisticsSupplierService.getById(transferDeclareEntity.getTransferLogisticsSupplierId());

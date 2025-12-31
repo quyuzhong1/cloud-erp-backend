@@ -15,7 +15,6 @@ import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.server.oms.mapper.CfgConditionMapper;
 import com.erp.server.oms.service.CfgConditionService;
 import com.erp.server.oms.service.DictRuleConditionService;
-import com.erp.server.oms.service.OperateLogService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -63,7 +62,7 @@ public class CfgConditionServiceImpl extends SuperServiceImpl<CfgConditionMapper
     public Boolean update(CfgConditionDTO.UpdateDTO updateDTO) {
         CfgConditionEntity old = super.getById(updateDTO.getId());
         if(null == old){
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "条件配置单");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "条件配置单");
         }
         CfgConditionEntity cfConditionEntity = BeanMapperUtils.map(CfgConditionEntity.class, updateDTO);
 

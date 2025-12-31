@@ -1,7 +1,6 @@
 package com.erp.server.dmp.inout.handler.input.task.init.api.tiktok;
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
@@ -20,19 +19,15 @@ import com.erp.server.dmp.inout.handler.input.task.init.DmpInputInitHandler;
 import com.erp.server.dmp.inout.handler.input.task.mongo.DmpInputMongoHandler;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.Lists;
 import com.sdk.oms.tiktok.constant.TikTokConstant;
 import com.sdk.oms.tiktok.dto.TikTokShopInfoDTO;
 import com.sdk.oms.tiktok.dto.tiktok.listing.view.ListingViewDTO;
-import com.sdk.oms.tiktok.dto.tiktok.order.view.OrderViewDTO;
 import com.sdk.oms.tiktok.service.TikTokSdkClientService;
 import com.sdk.oms.tiktok.util.EncryptionUtils;
-import jodd.util.StringUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
-import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.RequestMethod;
 
 import javax.annotation.Resource;

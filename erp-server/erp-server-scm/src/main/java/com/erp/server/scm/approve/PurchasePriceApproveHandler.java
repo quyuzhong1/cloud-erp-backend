@@ -58,7 +58,7 @@ public class PurchasePriceApproveHandler extends AbstractApproveHandler {
         //采购价目
         PurchasePriceEntity entity = purchasePriceService.getById(dto.getId());
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_98024);
+            throw new ServiceException(ApiError.PURCHASE_PRICE_LIST_NOT_FOUND);
         }
         BatchResultDTO resultDTO = purchasePriceService.cancelProcessEntity(entity);
         return resultDTO.getSuccess();
@@ -68,7 +68,7 @@ public class PurchasePriceApproveHandler extends AbstractApproveHandler {
     public Boolean disApprove(ApproveDTO.DisApproveDTO dto) {
         PurchasePriceEntity entity = purchasePriceService.getById(dto.getId());
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_98024);
+            throw new ServiceException(ApiError.PURCHASE_PRICE_LIST_NOT_FOUND);
         }
         List<PurchasePriceDetailEntity> detailList = purchasePriceDetailService.listDetailByMainId(dto.getId());
         List<String> priceDetailIds = detailList.stream().map(PurchasePriceDetailEntity::getId).distinct().collect(Collectors.toList());
@@ -83,11 +83,11 @@ public class PurchasePriceApproveHandler extends AbstractApproveHandler {
         //采购价目
         PurchasePriceEntity entity = purchasePriceService.getById(dto.getBusinessId());
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_98024);
+            throw new ServiceException(ApiError.PURCHASE_PRICE_LIST_NOT_FOUND);
         }
         Boolean approve = purchasePriceService.approveEnd(entity, dto.getApproveStatus().getStatus(), dto.getComment());
         if (Boolean.FALSE.equals(approve)) {
-            throw new ServiceException(ApiError.ERROR_BILL_APPROVE, SourceTypeEnum.getName(dto.getBusinessKey()));
+            throw new ServiceException(ApiError.BILL_APPROVE_FAILED, SourceTypeEnum.getName(dto.getBusinessKey()));
         }
         //非erp审核添加日志
         if (ApprovePlatformEnum.ERP.equals(dto.getApprovePlatformEnum())) {

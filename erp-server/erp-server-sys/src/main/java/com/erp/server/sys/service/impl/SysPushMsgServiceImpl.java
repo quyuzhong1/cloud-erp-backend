@@ -8,10 +8,8 @@ import com.erp.server.sys.mapper.SysPushMsgMapper;
 import com.erp.server.sys.service.SysPushMsgService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
-import com.erp.server.sys.service.CommonService;
 import com.common.core.exception.ServiceException;
 import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -62,7 +60,7 @@ public class SysPushMsgServiceImpl extends SuperServiceImpl<SysPushMsgMapper, Sy
     @Override
     public Boolean update(SysPushMsgDTO.UpdateDTO updateDTO) {
         SysPushMsgEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "本地推送消息单"));
+        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "本地推送消息单"));
         SysPushMsgEntity sysPushMsgEntity =  BeanMapperUtils.map(SysPushMsgEntity.class, updateDTO);
 
         // 数据处理

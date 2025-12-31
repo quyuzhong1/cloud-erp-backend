@@ -132,7 +132,7 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
     @Transactional(rollbackFor = Exception.class)
     public Boolean update(ProductCertificateDTO.UpdateDTO dto) {
         ProductCertificateEntity old = this.getById(dto.getId());
-        ProductCertificateEntity oldEntity = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "产品认证"));
+        ProductCertificateEntity oldEntity = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "产品认证"));
 
         ProductCertificateEntity entity = new ProductCertificateEntity();
         entity.setId(dto.getId());
@@ -167,12 +167,12 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
         for (ProductCertificateDTO.ProductAddOrUpdateDTO productAddOrUpdateDTO : productCertificateList) {
             //新增数据附件不能为空
             if (isBlank(productAddOrUpdateDTO.getId()) && isBlank(productAddOrUpdateDTO.getAttachmentId())) {
-                throw new ServiceException(ApiError.TIME_NOT_NULL,"新增附件");
+                throw new ServiceException(ApiError.COMMON_PARAM_TIME_REQUIRED,"新增附件");
             }
             ProductCertificateEntity entity = BeanMapperUtils.map(ProductCertificateEntity.class, productAddOrUpdateDTO);
             ProductDetailEntity productDetailEntity = productDetailEntityList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), productAddOrUpdateDTO.getSkuId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(productDetailEntity)) {
-                throw new ServiceException(ApiError.ERROR_95084);
+                throw new ServiceException(ApiError.PRODUCT_INFO_NOT_FOUND);
             }
             entity.setProductId(productDetailEntity.getProductId());
             resultList.add(entity);
@@ -247,13 +247,13 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
         }
         ProductCertificateEntity productCertificateEntity = this.getById(businessId);
         if (ObjectUtil.isEmpty(productCertificateEntity)) {
-            throw new ServiceException(ApiError.TIME_NOT_NULL,"产品证书");
+            throw new ServiceException(ApiError.COMMON_PARAM_TIME_REQUIRED,"产品证书");
         }
 
         List<PlmAttachmentEntity> attachmentList = plmAttachmentService.listByBusinessIds(Arrays.asList(businessId));
         long count = attachmentList.stream().filter(obj -> !removeFileIdList.contains(obj.getId())).count();
         if (count <= 0) {
-            throw new ServiceException(ApiError.ERROR_FILE_NOT_DELETE_ALL);
+            throw new ServiceException(ApiError.FILE_NOT_DELETE_ALL);
         }
         List<PlmAttachmentEntity> removeFileList = attachmentList.stream().filter(obj -> removeFileIdList.contains(obj.getId())).collect(Collectors.toList());
         //删除附件表数据
@@ -279,7 +279,7 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
     @Override
     public ProductCertificateDTO.ViewDTO view(String id) {
         ProductCertificateEntity old = this.getById(id);
-        ProductCertificateEntity oldEntity = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "产品认证信息"));
+        ProductCertificateEntity oldEntity = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "产品认证信息"));
         ProductCertificateDTO.ViewDTO viewDTO = new ProductCertificateDTO.ViewDTO();
         BeanMapperUtils.copy(oldEntity,viewDTO);
         //数据处理
@@ -308,7 +308,7 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
         //产品信息
         ProductDetailEntity productDetailEntity = productDetailService.getById(viewDTO.getSkuId());
         if (ObjectUtil.isEmpty(productDetailEntity)) {
-            throw new ServiceException(ApiError.ERROR_95084);
+            throw new ServiceException(ApiError.PRODUCT_INFO_NOT_FOUND);
         }
         viewDTO.setSkuNo(productDetailEntity.getSkuNo());
 
@@ -356,14 +356,14 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
                     .doRead();
         } catch (IOException e) {
             log.error("导入错误！",e);
-            throw new ServiceException(ApiError.ERROR_95124);
+            throw new ServiceException(ApiError.FILE_DATA_IMPORT_FAILED);
         } catch (ExcelCommonException e) {
             log.error("导入格式错误！",e);
-            throw new ServiceException(ApiError.ERROR_1016);
+            throw new ServiceException(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX);
         }
         List<ProductCertificateExcelDTO> excelDateList = excelListenerUtil.getExcelDateList();
         if (CollectionUtils.isEmpty(excelDateList)) {
-            throw new ServiceException(ApiError.ERROR_95123);
+            throw new ServiceException(ApiError.FILE_DATA_REQUIRED);
         }
         List<ProductCertificateExcelDTO> errorList = excelListenerUtil.getErrorList();
 
@@ -381,7 +381,7 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
             try {
                 new ExcelPrintUtils().patchExport(errorList, response, sb.toString(), excelPath);
             } catch (IOException e) {
-                throw new ServiceException(ApiError.ERROR_95125);
+                throw new ServiceException(ApiError.FILE_EXPORT_ERROR_DATA_FAILED);
             }
             return Boolean.FALSE;
         }
@@ -456,7 +456,7 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
                                 && CharSequenceUtil.equals(obj.getDictProjectName(), excelDTO.getDictProjectName()))
                         .count();
                 if (count > 0) {
-                    errorMsgList.add(format(ApiError.ERROR_PRODUCT_CERTIFICATE_EXIST.msg,excelDTO.getSkuNo(), excelDTO.getDictProjectName()));
+                    errorMsgList.add(format(ApiError.PRODUCT_CERTIFICATE_EXISTS.getMsg(),excelDTO.getSkuNo(), excelDTO.getDictProjectName()));
                 }
             }
             //配置信息
@@ -712,13 +712,13 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
             //验证保存时数据是否重复
             if (value.size() > MathUtil.ONE) {
                 String skuNo = productDetailEntityList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), value.get(0).getSkuId())).map(ProductDetailEntity::getSkuNo).findFirst().orElse("");
-                throw new ServiceException(ApiError.ERROR_PRODUCT_CERTIFICATE_EXIST,skuNo, ProductCertificateProjectEnum.getName(value.get(0).getDictProject()));
+                throw new ServiceException(ApiError.PRODUCT_CERTIFICATE_EXISTS,skuNo, ProductCertificateProjectEnum.getName(value.get(0).getDictProject()));
             }
             //验证是否和已存在数据重复
             long count = productCertificateList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSkuId(), value.get(0).getSkuId()) && CharSequenceUtil.equals(obj.getDictProject(), value.get(0).getDictProject())).count();
             if (count > 0) {
                 String skuNo = productDetailEntityList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), value.get(0).getSkuId())).map(ProductDetailEntity::getSkuNo).findFirst().orElse("");
-                throw new ServiceException(ApiError.ERROR_PRODUCT_CERTIFICATE_EXIST,skuNo, ProductCertificateProjectEnum.getName(value.get(0).getDictProject()));
+                throw new ServiceException(ApiError.PRODUCT_CERTIFICATE_EXISTS,skuNo, ProductCertificateProjectEnum.getName(value.get(0).getDictProject()));
             }
         }
 
@@ -812,7 +812,7 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
             double fileSize = size / (1024 * 1024);
             fileSize = (double) Math.round(fileSize * 10000) / 10000;
             if (fileSize > 300) {
-                throw new ServiceException(ApiError.ERROR_95160, 300);
+                throw new ServiceException(ApiError.FILE_SIZE_EXCEEDS_LIMIT, 300);
             }
             //原名称
             String fileName = multipartFile.getOriginalFilename();
@@ -822,7 +822,7 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
             fileName = fileName.toLowerCase();
 
             if (fileName.length() > 200) {
-                throw new ServiceException(ApiError.ERROR_1018);
+                throw new ServiceException(ApiError.COMMON_PARAM_NAME_TOO_LONG);
             }
             if (isBlank(fileName)) {
                 try {
@@ -839,7 +839,7 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
             }
             String fileUrl = fileFeign.uploadFileAndName(multipartFile, fileName);
             if (StringUtils.isBlank(fileUrl)) {
-                throw new ServiceException(ApiError.ERROR_95018);
+                throw new ServiceException(ApiError.FILE_UPLOAD_FAILED);
             }
             PlmAttachmentEntity attachmentEntity = new PlmAttachmentEntity();
             attachmentEntity.setBusinessId(entity.getId());

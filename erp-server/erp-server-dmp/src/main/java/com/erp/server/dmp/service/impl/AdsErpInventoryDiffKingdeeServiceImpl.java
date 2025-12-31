@@ -3,8 +3,6 @@ package com.erp.server.dmp.service.impl;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.enums.FileTaskEventEnum;
 import com.common.business.enums.OperationTypeEnum;
-import com.erp.model.dmp.dto.AdsErpInventoryDiffDTO;
-import com.erp.model.dmp.entity.doris.AdsErpInventoryDiffEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.dmp.utils.RestCloudApiUtil;
@@ -25,7 +23,6 @@ import org.springframework.transaction.annotation.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.dmp.dto.AdsErpInventoryDiffKingdeeDTO;
 import javax.annotation.Resource;
-import java.util.stream.Collectors;
 import java.util.*;
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
@@ -34,8 +31,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import cn.hutool.core.collection.CollUtil;
 import com.common.business.vo.PagingVO;
 import com.common.business.dto.base.*;
-import com.common.core.excel.ExcelPrintUtils;
-import com.common.core.utils.date.DateUtil;
+
 import javax.servlet.http.HttpServletResponse;
 
 /**
@@ -87,7 +83,7 @@ public class AdsErpInventoryDiffKingdeeServiceImpl extends SuperServiceImpl<AdsE
     @Override
     public Boolean update(AdsErpInventoryDiffKingdeeDTO.UpdateDTO addOrUpdateDTO) {
         AdsErpInventoryDiffKingdeeEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "金蝶库存差异"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "金蝶库存差异"));
         AdsErpInventoryDiffKingdeeEntity adsErpInventoryDiffKingdeeEntity =  BeanMapperUtils.map(AdsErpInventoryDiffKingdeeEntity.class, addOrUpdateDTO);
 
         // 数据处理

@@ -64,7 +64,7 @@ public class CustomerB2cContactServiceImpl extends SuperServiceImpl<CustomerB2cC
         if (CollectionUtils.isNotEmpty(contactList)) {
             long count = contactList.stream().filter(c -> c.getIsDefault() != null && c.getIsDefault()).count();
             if (count > 1) {
-                throw new ServiceException(ApiError.ERROR_92005);
+                throw new ServiceException(ApiError.CUSTOMER_DEFAULT_CONTACT_LIMIT);
             }
         }
 

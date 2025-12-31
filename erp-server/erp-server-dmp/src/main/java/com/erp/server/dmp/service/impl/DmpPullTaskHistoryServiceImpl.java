@@ -88,7 +88,7 @@ public class DmpPullTaskHistoryServiceImpl extends ServiceImpl<DmpPullTaskHistor
     public Boolean batchSync(List<String> ids) {
         List<DmpPullTaskHistoryEntity> list = this.listByIds(ids);
         if (CollectionUtils.isEmpty(list)) {
-            throw new ServiceException(ApiError.ERROR_NOT_EXIST_DMP_PUSH_TASK);
+            throw new ServiceException(ApiError.DMP_PUSH_TASK_NOT_FOUND);
         }
         // 移除历史表数据新增新表数据
         List<DmpPullTaskEntity> entities = list.stream().map(entity -> {

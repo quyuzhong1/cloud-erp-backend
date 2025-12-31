@@ -83,19 +83,19 @@ public class ProductVariantServiceImpl extends ServiceImpl<ProductVariantMapper,
         if (StringUtils.isBlank(productVariantDTO.getId())) {
             List<ProductVariantEntity> list = lambdaQuery().eq(ProductVariantEntity::getPropertyType, productVariantDTO.getPropertyType()).list();
             if (CollectionUtils.isNotEmpty(list)) {
-                throw new ServiceException(ApiError.ERROR_95194);
+                throw new ServiceException(ApiError.PRODUCT_VARIANT_NAME_EXISTS);
             }
         }
         //获取变体值数据
         List<ProductVariantPropertyDTO> productVariantPropertyList = productVariantDTO.getProductVariantPropertyList();
         List<String> propertyValueList = productVariantPropertyList.stream().map(ProductVariantPropertyDTO::getPropertyValue).distinct().collect(Collectors.toList());
         if (propertyValueList.size() != productVariantPropertyList.size()) {
-            throw new ServiceException(ApiError.ERROR_95195);
+            throw new ServiceException(ApiError.PRODUCT_VARIANT_VALUE_DUPLICATE);
         }
         if (productVariantDTO.getPropertyType().equals("颜色")) {
             List<String> propertyCodeList = productVariantPropertyList.stream().map(ProductVariantPropertyDTO::getPropertyCode).distinct().collect(Collectors.toList());
             if (propertyCodeList.size() != productVariantPropertyList.size()) {
-                throw new ServiceException(ApiError.ERROR_95196);
+                throw new ServiceException(ApiError.PRODUCT_VARIANT_COLOR_CODE_DUPLICATE);
             }
         }
         //编辑变体类型
@@ -125,10 +125,10 @@ public class ProductVariantServiceImpl extends ServiceImpl<ProductVariantMapper,
     public Boolean deleteVariant(String variantId) {
         ProductVariantEntity entity = this.getById(variantId);
         if (ObjectUtils.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_95244);
+            throw new ServiceException(ApiError.PRODUCT_APP_CATEGORY_CODE_EXISTS);
         }
         if (entity.getOccupyStatus()) {
-            throw new ServiceException(ApiError.ERROR_95167);
+            throw new ServiceException(ApiError.PRODUCT_VARIANT_TYPE_REF_DELETE_FORBIDDEN);
         }
         LambdaQueryWrapper<ProductVariantEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(ProductVariantEntity::getId, variantId);

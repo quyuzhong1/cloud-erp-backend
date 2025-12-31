@@ -125,7 +125,7 @@ public class TransferDeclareCostAllocationServiceImpl extends SuperServiceImpl<T
     @Override
     public Boolean update(TransferDeclareCostAllocationDTO.UpdateDTO updateDTO) {
         TransferDeclareCostAllocationEntity old = super.getById(updateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "中转费用分摊"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "中转费用分摊"));
         TransferDeclareCostAllocationEntity transferDeclareCostAllocationEntity =  BeanMapperUtils.map(TransferDeclareCostAllocationEntity.class, updateDTO);
 
         // 数据处理

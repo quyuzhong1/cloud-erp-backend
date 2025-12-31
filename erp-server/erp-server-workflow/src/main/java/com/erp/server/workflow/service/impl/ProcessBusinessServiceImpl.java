@@ -57,12 +57,12 @@ public class ProcessBusinessServiceImpl extends SuperServiceImpl<ProcessBusiness
             entity.setBusinessKey(dto.getBusinessKey());
             entity.setProcessDefinitionId(dto.getId());
             if(!updateById(entity)){
-                throw new ServiceException(ApiError.UPDATE_PROCESS_ERROR);
+                throw new ServiceException(ApiError.WF_PROCESS_UPDATE_FAILED);
             }
         }else {
             ProcessBusinessEntity processBusinessEntity = new ProcessBusinessEntity(dto);
             if(!save(processBusinessEntity)){
-                throw new ServiceException(ApiError.SAVE_PROCESS_ERROR);
+                throw new ServiceException(ApiError.WF_PROCESS_SAVE_FAILED);
             }
         }
     }

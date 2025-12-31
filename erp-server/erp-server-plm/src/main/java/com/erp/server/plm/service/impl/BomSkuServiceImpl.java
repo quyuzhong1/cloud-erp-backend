@@ -79,7 +79,7 @@ public class BomSkuServiceImpl extends ServiceImpl<BomRefSkuMapper, BomSkuEntity
             //SKU重复验证
             String childSkuNos = childrenList.stream().filter(obj -> obj.getSkuId().equals(item.getSkuId())).map(BomChildrenSkuDTO::getSkuNo).collect(Collectors.joining(","));
             if (StringUtils.isNotBlank(childSkuNos)) {
-                throw new ServiceException(ApiError.ERROR_BOM_SKU_REPEAT,item.getSkuNo());
+                throw new ServiceException(ApiError.BOM_SKU_REPEAT,item.getSkuNo());
             }
             for (BomChildrenSkuDTO children : childrenList) {
                 BomSkuEntity entity = new BomSkuEntity();

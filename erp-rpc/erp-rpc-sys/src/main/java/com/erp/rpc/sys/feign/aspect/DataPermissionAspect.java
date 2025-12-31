@@ -84,7 +84,7 @@ public class DataPermissionAspect {
             userInfo.setUid("1549948476757303297");
         }
         if(ObjectUtil.isEmpty(userInfo) || StringUtils.isBlank(userInfo.getUid())){
-            throw new ServiceException(ApiError.ERROR_403);
+            throw new ServiceException(ApiError.HTTP_FORBIDDEN);
         }
         dataScopeFilter(joinPoint, userInfo, controllerDataScope);
     }
@@ -121,7 +121,7 @@ public class DataPermissionAspect {
                     .stream()
                     .filter(p -> p.getPermissionsCode().equals(controllerDataScope.menuCode()))
                     .findFirst()
-                    .orElseThrow(() -> new ServiceException(ApiError.NO_PERMISSION));
+                    .orElseThrow(() -> new ServiceException(ApiError.HTTP_FORBIDDEN));
         }
         List<String> userList = sysUserFeign.getDepUserList(user.getUid());
         //店铺权限
@@ -455,11 +455,11 @@ public class DataPermissionAspect {
         } else if (DATA_SCOPE_DEPT.equals(userRequestPermissions.getDataScope())) {
             long containsUserCount = users.stream().filter(u -> userList.contains(u)).count();
             if (containsUserCount == 0) {
-                throw new ServiceException(ApiError.NO_PERMISSION);
+                throw new ServiceException(ApiError.HTTP_FORBIDDEN);
             }
         } else if (DATA_SCOPE_SELF.equals(userRequestPermissions.getDataScope())) {
             if (!users.contains(user.getUid())) {
-                throw new ServiceException(ApiError.NO_PERMISSION);
+                throw new ServiceException(ApiError.HTTP_FORBIDDEN);
             }
 
         }
@@ -560,11 +560,11 @@ public class DataPermissionAspect {
         } else if (DATA_SCOPE_DEPT.equals(userRequestPermissions.getDataScope())) {
             long containsUserCount = users.stream().filter(u -> userList.contains(u)).count();
             if (containsUserCount == 0) {
-                throw new ServiceException(ApiError.NO_PERMISSION);
+                throw new ServiceException(ApiError.HTTP_FORBIDDEN);
             }
         } else if (DATA_SCOPE_SELF.equals(userRequestPermissions.getDataScope())) {
             if (!users.contains(user.getUid())) {
-                throw new ServiceException(ApiError.NO_PERMISSION);
+                throw new ServiceException(ApiError.HTTP_FORBIDDEN);
             }
         }
     }

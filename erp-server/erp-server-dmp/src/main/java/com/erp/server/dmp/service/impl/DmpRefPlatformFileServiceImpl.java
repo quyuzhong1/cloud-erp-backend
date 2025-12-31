@@ -72,7 +72,7 @@ public class DmpRefPlatformFileServiceImpl extends SuperServiceImpl<DmpRefPlatfo
     @Override
     public Boolean update(DmpRefPlatformFileDTO.UpdateDTO addOrUpdateDTO) {
         DmpRefPlatformFileEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "平台文件转存FastDFS关系记录单"));
+        old = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "平台文件转存FastDFS关系记录单"));
         DmpRefPlatformFileEntity dmpRefPlatformFileEntity = BeanMapperUtils.map(DmpRefPlatformFileEntity.class, addOrUpdateDTO);
 
         // 数据处理

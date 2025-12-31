@@ -91,7 +91,7 @@ public class ProjectPhaseServiceImpl extends ServiceImpl<ProjectPhaseMapper, Pro
             Integer seq = MathUtil.ONE;
             for (TaskPhaseDTO item : list) {
                 if (StringUtils.isBlank(item.getName())) {
-                    throw new ServiceException(ApiError.ERROR_95002);
+                    throw new ServiceException(ApiError.PROJECT_STAGE_TASK_REQUIRED);
                 }
                 if (StringUtils.isNotBlank(item.getId())) {
                     ProjectTaskEntity task = new ProjectTaskEntity();
@@ -146,7 +146,7 @@ public class ProjectPhaseServiceImpl extends ServiceImpl<ProjectPhaseMapper, Pro
 
         int size = list.stream().map(TaskPhaseDTO::getName).distinct().collect(Collectors.toList()).size();
         if (size != list.size()) {
-            throw new ServiceException(ApiError.ERROR_95001);
+            throw new ServiceException(ApiError.PROJECT_STAGE_TASK_EXISTS);
         }
 
         for (TaskPhaseDTO phase : list) {
@@ -159,7 +159,7 @@ public class ProjectPhaseServiceImpl extends ServiceImpl<ProjectPhaseMapper, Pro
                 phaseNames = phaseList.stream().map(ProjectPhaseEntity::getName).collect(Collectors.toList());
             }
             if (phaseNames.contains(name)/*||sysTaskPhase.contains(name)*/) {
-                throw new ServiceException(ApiError.ERROR_95001);
+                throw new ServiceException(ApiError.PROJECT_STAGE_TASK_EXISTS);
             }
 
         }
@@ -199,12 +199,12 @@ public class ProjectPhaseServiceImpl extends ServiceImpl<ProjectPhaseMapper, Pro
     public Boolean removeTaskPhaseById(String id) {
         ProjectPhaseEntity phaseEntity = this.getById(id);
         if (Objects.isNull(phaseEntity)) {
-            throw new ServiceException(ApiError.ERROR_95041);
+            throw new ServiceException(ApiError.PROJECT_STAGE_TASK_NOT_FOUND);
         }
         String name = phaseEntity.getName();
         String flagName = TaskConstant.APPROVAL_TASK_PHASE;
         if (flagName.equals(name)) {
-            throw new ServiceException(ApiError.ERROR_95042);
+            throw new ServiceException(ApiError.PROJECT_STAGE_INITIATION_DELETE_FORBIDDEN);
         }
         checkPhaseTask(id);
         return removeById(id);
@@ -312,7 +312,7 @@ public class ProjectPhaseServiceImpl extends ServiceImpl<ProjectPhaseMapper, Pro
         queryWrapper.eq(ProjectTaskEntity::getPhaseId, id);
         int count = projectTaskService.count(queryWrapper);
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_95043);
+            throw new ServiceException(ApiError.PROJECT_STAGE_HAS_TASKS_DELETE_FORBIDDEN);
         }
     }
 

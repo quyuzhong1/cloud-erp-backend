@@ -310,18 +310,18 @@ public class PurchaseApplicationController extends BaseController {
             }
             List<PurchaseApplicationDetailEntity> detailEntityList = detailList.stream().filter(e -> e.getPurchaseApplicationId().equals(id)).collect(Collectors.toList());
             if (CollectionUtils.isEmpty(detailEntityList)) {
-                resultDTOS.add(BatchResultDTO.fail(id,id,ApiError.ERROR_98017.msg));
+                resultDTOS.add(BatchResultDTO.fail(id,id,ApiError.PO_APPLY_DETAIL_NOT_FOUND.getMsg()));
                 continue;
             }
             //只有未生成的单才能反审核
             long createCount = detailEntityList.stream().filter(obj -> !CreatePoTypeEnum.NOT_GENERATED.getStatus().equals(obj.getCreatePoType())).count();
             if (createCount > 0) {
-                resultDTOS.add(BatchResultDTO.fail(id,id,ApiError.ERROR_98030.msg));
+                resultDTOS.add(BatchResultDTO.fail(id,id,ApiError.PO_APPLY_APPROVAL_NOT_ALLOWED_ONLY.getMsg()));
                 continue;
             }
             List<SubcontractOrderEntity> subcontractOrderEntityList = subcontractOrderList.stream().filter(e -> e.getSourceId().equals(id)).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(subcontractOrderEntityList)) {
-                resultDTOS.add(BatchResultDTO.fail(id,id,ApiError.ERROR_98090.msg));
+                resultDTOS.add(BatchResultDTO.fail(id,id,ApiError.SALES_DEMAND_ALREADY_PUSHED_SUBCONTRACT_REVERSE_FORBIDDEN.getMsg()));
                 continue;
             }
             try {
@@ -493,7 +493,7 @@ public class PurchaseApplicationController extends BaseController {
             wb.write(output);
             wb.close();
         } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_95131);
+            throw new ServiceException(ApiError.FILE_IMPORT_TEMPLATE_DOWNLOAD_FAILED);
         }
         return success();
     }
@@ -622,7 +622,7 @@ public class PurchaseApplicationController extends BaseController {
             wb.write(output);
             wb.close();
         } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_95131);
+            throw new ServiceException(ApiError.FILE_IMPORT_TEMPLATE_DOWNLOAD_FAILED);
         }
         return success();
     }

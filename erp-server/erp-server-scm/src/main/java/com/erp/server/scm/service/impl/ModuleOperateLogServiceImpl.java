@@ -236,17 +236,17 @@ public class ModuleOperateLogServiceImpl extends SuperServiceImpl<ModuleOperateL
      */
     private Pair<String,String> setEnumValue (CfgModuleOperateLogFieldEntity fieldEntity,Pair<String, String> valuePair) {
         if (StringUtils.isBlank(fieldEntity.getEnumClass())) {
-            throw new ServiceException(ApiError.ERROR_9028);
+            throw new ServiceException(ApiError.COMMON_ENUM_CONVERT_FAILED);
         }
         Class<?> aClass ;
         try {
             aClass = Class.forName(fieldEntity.getEnumClass());
         } catch (ClassNotFoundException e) {
-            throw new ServiceException(ApiError.ERROR_9028);
+            throw new ServiceException(ApiError.COMMON_ENUM_CONVERT_FAILED);
         }
         boolean anEnum = aClass.isEnum();
         if (!anEnum) {
-            throw new ServiceException(ApiError.ERROR_9028);
+            throw new ServiceException(ApiError.COMMON_ENUM_CONVERT_FAILED);
         }
         String oldValue = handleEnumVale(valuePair.getKey(), aClass);
         String newValue = handleEnumVale(valuePair.getValue(), aClass);

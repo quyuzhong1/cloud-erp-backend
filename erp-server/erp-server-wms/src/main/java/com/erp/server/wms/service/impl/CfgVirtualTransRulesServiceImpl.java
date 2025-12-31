@@ -2,7 +2,6 @@ package com.erp.server.wms.service.impl;
 
 
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
@@ -17,14 +16,13 @@ import com.erp.server.wms.service.CfgVirtualTransRulesService;
 import com.erp.server.wms.service.OperateLogService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
+
 /**
  * 虚拟库存交易规则表 服务实现类
  *
@@ -64,7 +62,7 @@ public class CfgVirtualTransRulesServiceImpl extends SuperServiceImpl<CfgVirtual
     public Boolean update(CfgVirtualTransRulesDTO.UpdateDTO updateDTO) {
         CfgVirtualTransRulesEntity old = super.getById(updateDTO.getId());
         if (Objects.isNull(old)){
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "虚拟库存交易规则单");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "虚拟库存交易规则单");
         }
         CfgVirtualTransRulesEntity cfgVirtualTransRulesEntity =  BeanMapperUtils.map(CfgVirtualTransRulesEntity.class, updateDTO);
         log.info("编辑 开始修改虚拟库存交易规则单数据，id：【{}】", old.getId());

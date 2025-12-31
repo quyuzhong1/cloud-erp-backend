@@ -180,7 +180,7 @@ public class VirtualWarehouseAllocationController extends BaseController {
                 } else {
                     //只有待提交状态可以修改
                     if (!Objects.equals(waitSubmitStatus, allocationEntity.getStatus())) {
-                        submit = BatchResultDTO.fail(id, allocationEntity.getCode(), ApiError.IS_SUBMIT_IN_SUBMIT.msg);
+                        submit = BatchResultDTO.fail(id, allocationEntity.getCode(), ApiError.BILL_SUBMIT_ALLOWED_PENDING_ONLY.getMsg());
                     } else {
                         flagCode = allocationEntity.getCode();
                         submit = virtualWarehouseAllocationService.submit(allocationEntity);
@@ -219,7 +219,7 @@ public class VirtualWarehouseAllocationController extends BaseController {
                 } else {
                     //只有待提交状态可以修改
                     if (!Objects.equals(waitSubmitStatus, allocationEntity.getStatus())) {
-                        submit = BatchResultDTO.fail(id, allocationEntity.getCode(), ApiError.ERROR_98009.msg);
+                        submit = BatchResultDTO.fail(id, allocationEntity.getCode(), ApiError.BILL_DELETE_ALLOWED_STATUS_ONLY.getMsg());
                     } else {
                         flagCode = allocationEntity.getCode();
                         submit = virtualWarehouseAllocationService.invalid(allocationEntity, VirtualWarehouseAllocationStatusEnum.INVALID.getCode(), dto.getRemark());
@@ -274,7 +274,7 @@ public class VirtualWarehouseAllocationController extends BaseController {
             wb.write(output);
             wb.close();
         } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_95131);
+            throw new ServiceException(ApiError.FILE_IMPORT_TEMPLATE_DOWNLOAD_FAILED);
         }
     }
 

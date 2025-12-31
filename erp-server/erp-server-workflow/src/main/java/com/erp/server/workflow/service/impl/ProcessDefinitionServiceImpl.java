@@ -83,7 +83,7 @@ public class ProcessDefinitionServiceImpl extends SuperServiceImpl<ProcessDefini
         // 查询数据是否存在
         ProcessDefinitionEntity entity = getProcessVersionEntity(dto.getId(),dto.getProcessVersion());
         if (ObjectUtil.isNotEmpty(entity) && Boolean.TRUE.equals(entity.getIsDeploy())) {
-            throw new ServiceException(ApiError.PROCESS_DEFINITION_DEPLOY_UPDATE_ERROR);
+            throw new ServiceException(ApiError.WF_PROCESS_DEPLOY_UPDATE_NOT_ALLOWED);
         }
         // dto转换为 processDefinitionEntity 和 processBusinessEntity 两个实体
         ProcessDefinitionEntity processDefinitionEntity = new ProcessDefinitionEntity(dto);
@@ -92,7 +92,7 @@ public class ProcessDefinitionServiceImpl extends SuperServiceImpl<ProcessDefini
         if (null == entity) {
             // 保存 processDefinitionEntity
             if (!(save(processDefinitionEntity))) {
-                throw new ServiceException(ApiError.SAVE_PROCESS_ERROR);
+                throw new ServiceException(ApiError.WF_PROCESS_SAVE_FAILED);
             }
             isSave = Boolean.TRUE;
         }else {
@@ -100,7 +100,7 @@ public class ProcessDefinitionServiceImpl extends SuperServiceImpl<ProcessDefini
             processDefinitionEntity.setIsDeploy(Boolean.FALSE);
             // 更新 processDefinitionEntity
             if (!this.update(processDefinitionEntity,getUpdateWrapper(processDefinitionEntity.getId(),entity.getProcessVersion()))) {
-                throw new ServiceException(ApiError.UPDATE_PROCESS_ERROR);
+                throw new ServiceException(ApiError.WF_PROCESS_UPDATE_FAILED);
             }
         }
         // 保存 processBusinessEntity
@@ -141,11 +141,11 @@ public class ProcessDefinitionServiceImpl extends SuperServiceImpl<ProcessDefini
         // 获取流程定义信息
         ProcessDefinitionEntity definitionEntity = getProcessVersionEntity(dto.getProcessDefinitionId(),dto.getProcessVersion());
         if(null == definitionEntity){
-            throw new ServiceException(ApiError.PROCESS_DEFINITION_NOT_EXIST);
+            throw new ServiceException(ApiError.WF_PROCESS_DEFINITION_NOT_EXIST);
         }
         // 已发布的流程不能再次发布
         if(Boolean.TRUE.equals(definitionEntity.getIsDeploy())){
-            throw new ServiceException(ApiError.PROCESS_DEFINITION_ALREADY_DEPLOY);
+            throw new ServiceException(ApiError.WF_PROCESS_ALREADY_DEPLOYED);
         }
         Deployment deploy = repositoryService.createDeployment()
                 .name(definitionEntity.getProcessName())
@@ -181,7 +181,7 @@ public class ProcessDefinitionServiceImpl extends SuperServiceImpl<ProcessDefini
         // 查询数据是否存在
         ProcessDefinitionEntity entity = getProcessVersionEntity(dto.getId(),dto.getProcessVersion());
         if(null == entity){
-            throw new ServiceException(ApiError.PROCESS_DEFINITION_NOT_EXIST);
+            throw new ServiceException(ApiError.WF_PROCESS_DEFINITION_NOT_EXIST);
         }
         // 查询关联业务数据
         ProcessBusinessEntity businessEntity = processBusinessService.getByDefinitionId(entity.getId());
@@ -209,11 +209,11 @@ public class ProcessDefinitionServiceImpl extends SuperServiceImpl<ProcessDefini
         // 查询数据是否存在
         ProcessDefinitionEntity entity = getProcessVersionEntity(id,processVersion);
         if(ObjUtil.isEmpty(entity)){
-            throw new ServiceException(ApiError.PROCESS_DEFINITION_NOT_EXIST);
+            throw new ServiceException(ApiError.WF_PROCESS_DEFINITION_NOT_EXIST);
         }
         // 已发布的流程不能删除
         if(entity.getIsDeploy() && isValidate){
-            throw new ServiceException(ApiError.PROCESS_DEFINITION_DEPLOY_DELETE);
+            throw new ServiceException(ApiError.WF_PROCESS_DEPLOY_DELETE_NOT_ALLOWED);
         }
         //不存在其他定义数据则删除业务信息
         List<ProcessDefinitionEntity> processDefinitionList = listByIds(Collections.singletonList(id));
@@ -228,7 +228,7 @@ public class ProcessDefinitionServiceImpl extends SuperServiceImpl<ProcessDefini
         // 删除流程定义
         boolean remove = lambdaUpdate().eq(ProcessDefinitionEntity::getId,id).eq(ProcessDefinitionEntity::getProcessVersion,processVersion).remove();
         if (!remove) {
-            throw new ServiceException(ApiError.ERROR_DATA_DELETE_ERROR);
+            throw new ServiceException(ApiError.BILL_DELETE_FAILED);
         }
         return BatchResultDTO.success(entity.getId(), entity.getProcessName(), OperationTypeEnum.DELETE);
     }
@@ -269,7 +269,7 @@ public class ProcessDefinitionServiceImpl extends SuperServiceImpl<ProcessDefini
         // 查询数据是否存在
         ProcessDefinitionEntity entity = getProcessVersionEntity(disableDTO.getId(),disableDTO.getProcessVersion());
         if(ObjectUtil.isEmpty(entity)){
-            throw new ServiceException(ApiError.PROCESS_DEFINITION_NOT_EXIST);
+            throw new ServiceException(ApiError.WF_PROCESS_DEFINITION_NOT_EXIST);
         }
 
         entity.setDisabled(disableDTO.getDisabled());
@@ -327,22 +327,22 @@ public class ProcessDefinitionServiceImpl extends SuperServiceImpl<ProcessDefini
         // 查询数据是否存在
         List<ProcessDefinitionEntity> list = listByIds(Collections.singletonList(dto.getId()));
         if(CollUtil.isEmpty(list)){
-            throw new ServiceException(ApiError.PROCESS_DEFINITION_NOT_EXIST);
+            throw new ServiceException(ApiError.WF_PROCESS_DEFINITION_NOT_EXIST);
         }
         ProcessDefinitionEntity oldEntity = list.stream().filter(obj -> obj.getProcessVersion().equals(dto.getProcessVersion())).findFirst().orElse(null);
         if (!oldEntity.getIsDeploy()) {
-            throw new ServiceException(ApiError.PROCESS_DEFINITION_CHANGE_ERROR);
+            throw new ServiceException(ApiError.WF_PROCESS_CHANGE_NOT_ALLOWED);
         }
         long count = list.stream().filter(obj -> !obj.getIsDeploy()).count();
         if (count > MathUtil.ZERO) {
-            throw new ServiceException(ApiError.PROCESS_DEFINITION_CHANGE_EXIST_NOT_DEPLOY);
+            throw new ServiceException(ApiError.WF_PROCESS_CHANGE_EXIST_NOT_DEPLOY);
         }
         // 实体转换
         ProcessDefinitionEntity processDefinitionEntity = new ProcessDefinitionEntity(dto);
         boolean save = save(processDefinitionEntity);
         // 保存 processDefinitionEntity
         if (!save) {
-            throw new ServiceException(ApiError.SAVE_PROCESS_ERROR);
+            throw new ServiceException(ApiError.WF_PROCESS_SAVE_FAILED);
         }
         return save;
     }

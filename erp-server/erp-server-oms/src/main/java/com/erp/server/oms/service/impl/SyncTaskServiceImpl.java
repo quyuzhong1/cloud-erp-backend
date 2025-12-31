@@ -345,6 +345,9 @@ public class SyncTaskServiceImpl implements SyncTaskService {
             case WDT_SO_B2C:
                 resultList = newSyncKolB2c(sourceDetailList);
                 break;
+            case WDT_SO_B2B_DELIVERY:
+                resultList = newSyncWdtB2bDelivery(sourceDetailList);
+                break;
             default:
                 break;
         }
@@ -378,6 +381,34 @@ public class SyncTaskServiceImpl implements SyncTaskService {
                 continue;
             }
             Map<String, Object> dataMap = JSONUtil.parseObj(request);
+            resultList.put(syncParamDetailDTO.getDataId(), dataMap);
+        }
+        return resultList;
+    }
+
+
+
+    /**
+     * 查询同步销售订单发货到旺店通wdt
+     */
+    private Map<String , Map<String, Object>> newSyncWdtB2bDelivery(List<DmpSyncMqDTO.SyncParamDetailDTO> sourceDetailList) {
+        Map<String , Map<String, Object>> resultList = new HashMap<>();
+        List<String> sourceIdList = sourceDetailList.stream().map(DmpSyncMqDTO.SyncParamDetailDTO::getSourceId).collect(Collectors.toList());
+        List<SoInfoEntity> list = soInfoService.listByIds(sourceIdList);
+        if (CollectionUtils.isEmpty(list)) {
+            log.error("newSyncWdtB2bDelivery >>>> 未找到数据！");
+            return resultList;
+        }
+        for (DmpSyncMqDTO.SyncParamDetailDTO syncParamDetailDTO :  sourceDetailList) {
+            String sourceId = syncParamDetailDTO.getSourceId();
+            SoInfoEntity pushDTO = list.stream()
+                    .filter(obj -> obj.getId().equals(sourceId))
+                    .findFirst()
+                    .orElse(null);
+            if (ObjectUtils.isEmpty(pushDTO)) {
+                continue;
+            }
+            Map<String, Object> dataMap = JSONUtil.parseObj(pushDTO);
             resultList.put(syncParamDetailDTO.getDataId(), dataMap);
         }
         return resultList;

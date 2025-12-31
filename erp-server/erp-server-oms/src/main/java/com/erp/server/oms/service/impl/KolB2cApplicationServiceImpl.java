@@ -247,7 +247,7 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         //店铺
         ShopInfoEntity shopInfoEntity = shopInfoService.getById(addDTO.getShopId());
         if(Objects.isNull(shopInfoEntity)){
-            throw new ServiceException(ApiError.ERROR_SYS_TYPE_NOTFOUND, "店铺");
+            throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC, "店铺");
         }else{
             addDTO.setShopName(shopInfoEntity.getName());
         }
@@ -256,7 +256,7 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         if(StringUtils.isNotBlank(addDTO.getWarehouseId())){
             List<WarehouseDTO.UpdateDTO> updateDTOS = wmsTaskFeign.listWarehouseByIds(Arrays.asList(addDTO.getWarehouseId()));
             if(CollUtil.isEmpty(updateDTOS)){
-                throw new ServiceException(ApiError.ERROR_SYS_TYPE_NOTFOUND, "仓库");
+                throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC, "仓库");
             }else {
                 addDTO.setWarehouseName(updateDTOS.get(0).getName());
             }
@@ -266,7 +266,7 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         if(StringUtils.isNotBlank(addDTO.getLogisticsChannelId())){
             LogisticsChannelEntity logisticsChannelEntity = logisticsFeign.getChannelById(addDTO.getLogisticsChannelId());
             if(Objects.isNull(logisticsChannelEntity)){
-                throw new ServiceException(ApiError.ERROR_SYS_TYPE_NOTFOUND, "物流渠道");
+                throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC, "物流渠道");
             }else {
                 addDTO.setLogisticsChannelName(logisticsChannelEntity.getName());
             }
@@ -275,7 +275,7 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         String applyUserId = addDTO.getApplyUserId();
         FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(applyUserId);
         if(ObjectUtil.isNull(findUserDTO)){
-            throw new ServiceException(ApiError.ERROR_SYS_TYPE_NOTFOUND, "申请人");
+            throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC, "申请人");
         }else {
             addDTO.setApplyUserName(findUserDTO.getUserName());
 
@@ -287,7 +287,7 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
                 }else {
                     List<SysDepartmentEntity> depts = sysUserFeign.getDeptByIds(Arrays.asList(applyDeptId));
                     if (CollUtil.isEmpty(depts)) {
-                        throw new ServiceException(ApiError.ERROR_SYS_TYPE_NOTFOUND, "申请部门");
+                        throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC, "申请部门");
                     } else {
                         addDTO.setApplyDeptName(depts.get(0).getName());
                     }
@@ -297,12 +297,12 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
 
         List<KolB2cApplicationDetailDTO.AddDTO> detailList = addDTO.getDetailList();
         if(CollUtil.isEmpty(detailList)){
-            throw new ServiceException(ApiError.ERROR_1041,"B2C寄样申请单");
+            throw new ServiceException(ApiError.BILL_PARAM_SELECTION_REQUIRED,"B2C寄样申请单");
         }
 
         List<KolB2cApplicationAddressDTO.AddDTO> addressList = addDTO.getAddressList();
         if(CollUtil.isEmpty(addressList)){
-            throw new ServiceException(ApiError.ERROR_1041,"B2C寄样申请单地址");
+            throw new ServiceException(ApiError.BILL_PARAM_SELECTION_REQUIRED,"B2C寄样申请单地址");
         }
         // 校验 partnerId 是否存在重复
         Set<String> partnerIdSet = new HashSet<>();
@@ -327,12 +327,12 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         for (KolB2cApplicationDetailDTO.AddDTO detail : detailList) {
             String nickName = partnerMap.get(detail.getPartnerId());
             if(StringUtils.isBlank(nickName)){
-                throw new ServiceException(ApiError.ERROR_SYS_TYPE_NOTFOUND, "第"+index+"行达人");
+                throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC, "第"+index+"行达人");
             }
             detail.setNickname(nickName);
             SkuVO skuVO = skuMap.get(detail.getSkuId());
             if(Objects.isNull(skuVO)){
-                throw new ServiceException(ApiError.ERROR_SYS_TYPE_NOTFOUND, "第"+index+"行SKU");
+                throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC, "第"+index+"行SKU");
             }
 
             detail.setSkuNo(skuVO.getSkuNo());
@@ -371,10 +371,10 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
     @Override
     public Boolean update(KolB2cApplicationDTO.UpdateDTO addOrUpdateDTO) {
         KolB2cApplicationEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "B2C寄样申请单"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "B2C寄样申请单"));
         // 待提交和审核不通过允许修改
         if (!ApproveStatusEnum.allowUpdateStatus(old.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_1029);
+            throw new ServiceException(ApiError.BILL_UPDATE_STATUS_NOT_ALLOWED);
         }
         handleUpdateData(addOrUpdateDTO);
 
@@ -422,7 +422,7 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         //店铺
         ShopInfoEntity shopInfoEntity = shopInfoService.getById(addDTO.getShopId());
         if(Objects.isNull(shopInfoEntity)){
-            throw new ServiceException(ApiError.ERROR_SYS_TYPE_NOTFOUND, "店铺");
+            throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC, "店铺");
         }else{
             addDTO.setShopName(shopInfoEntity.getName());
         }
@@ -431,7 +431,7 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         if(StringUtils.isNotBlank(addDTO.getWarehouseId())){
             List<WarehouseDTO.UpdateDTO> updateDTOS = wmsTaskFeign.listWarehouseByIds(Arrays.asList(addDTO.getWarehouseId()));
             if(CollUtil.isEmpty(updateDTOS)){
-                throw new ServiceException(ApiError.ERROR_SYS_TYPE_NOTFOUND, "仓库");
+                throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC, "仓库");
             }else {
                 addDTO.setWarehouseName(updateDTOS.get(0).getName());
             }
@@ -441,7 +441,7 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         if(StringUtils.isNotBlank(addDTO.getLogisticsChannelId())){
             LogisticsChannelEntity logisticsChannelEntity = logisticsFeign.getChannelById(addDTO.getLogisticsChannelId());
             if(Objects.isNull(logisticsChannelEntity)){
-                throw new ServiceException(ApiError.ERROR_SYS_TYPE_NOTFOUND, "物流渠道");
+                throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC, "物流渠道");
             }else {
                 addDTO.setLogisticsChannelName(logisticsChannelEntity.getName());
             }
@@ -450,7 +450,7 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         String applyUserId = addDTO.getApplyUserId();
         FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(applyUserId);
         if(ObjectUtil.isNull(findUserDTO)){
-            throw new ServiceException(ApiError.ERROR_SYS_TYPE_NOTFOUND, "申请人");
+            throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC, "申请人");
         }else {
             addDTO.setApplyUserName(findUserDTO.getUserName());
 
@@ -462,7 +462,7 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
                 }else {
                     List<SysDepartmentEntity> depts = sysUserFeign.getDeptByIds(Arrays.asList(applyDeptId));
                     if (CollUtil.isEmpty(depts)) {
-                        throw new ServiceException(ApiError.ERROR_SYS_TYPE_NOTFOUND, "申请部门");
+                        throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC, "申请部门");
                     } else {
                         addDTO.setLogisticsChannelName(depts.get(0).getName());
                     }
@@ -472,12 +472,12 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
 
         List<KolB2cApplicationDetailDTO.UpdateDTO> detailList = addDTO.getDetailList();
         if(CollUtil.isEmpty(detailList)){
-            throw new ServiceException(ApiError.ERROR_1041,"B2C寄样申请单");
+            throw new ServiceException(ApiError.BILL_PARAM_SELECTION_REQUIRED,"B2C寄样申请单");
         }
 
         List<KolB2cApplicationAddressDTO.UpdateDTO> addressList = addDTO.getAddressList();
         if(CollUtil.isEmpty(addressList)){
-            throw new ServiceException(ApiError.ERROR_1041,"B2C寄样申请单地址");
+            throw new ServiceException(ApiError.BILL_PARAM_SELECTION_REQUIRED,"B2C寄样申请单地址");
         }
         // 校验 partnerId 是否存在重复
         Set<String> partnerIdSet = new HashSet<>();
@@ -502,12 +502,12 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         for (KolB2cApplicationDetailDTO.UpdateDTO detail : detailList) {
             String nickName = partnerMap.get(detail.getPartnerId());
             if(StringUtils.isBlank(nickName)){
-                throw new ServiceException(ApiError.ERROR_SYS_TYPE_NOTFOUND, "第"+index+"行达人");
+                throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC, "第"+index+"行达人");
             }
             detail.setNickname(nickName);
             SkuVO skuVO = skuMap.get(detail.getSkuId());
             if(Objects.isNull(skuVO)){
-                throw new ServiceException(ApiError.ERROR_SYS_TYPE_NOTFOUND, "第"+index+"行SKU");
+                throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC, "第"+index+"行SKU");
             }
 
             detail.setSkuNo(skuVO.getSkuNo());
@@ -628,12 +628,12 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
     public BatchResultDTO approve(ApproveOneDTO dto) {
         ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(dto.getType());
         if(Objects.equals(approveType, ApproveTypeEnum.REJECT) && StrUtils.isEmpty(dto.getComment())) {
-            throw new ServiceException(ApiError.REJECT_COMMENT_NOT_EMPTY);
+            throw new ServiceException(ApiError.WF_REJECT_COMMENT_REQUIRED);
         }
         KolB2cApplicationEntity entity = getById(dto.getId());
         // 审核中的数据允许审核
         if(!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING.getCode())) {
-            throw new ServiceException(ApiError.ERROR_98006);
+            throw new ServiceException(ApiError.WF_APPROVE_ALLOWED_STATUS_ONLY);
         }
         // 调用流程审核
         approveProcess(entity, dto);
@@ -661,7 +661,7 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         ApiResult<ProcessManagementDTO.ApproveResultDTO> approveResult = workflowFeign.approve(approveDTO);
         Integer code = approveResult.getCode();
         if (200 != code) {
-            throw new ServiceException(ApiError.ERROR_94006);
+            throw new ServiceException(ApiError.WF_APPROVE_FAILED);
         }
         ProcessManagementDTO.ApproveResultDTO data = approveResult.getData();
         if (ObjectUtil.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()) {
@@ -683,13 +683,13 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
             //已发货或者已审核
             long count = subList.stream().filter(e -> e.getDeliveryStatus().equals(KolSubB2cApplicationDeliveryStatusEnum.SHIPPED.getCode())).count();
             if(count > 0){
-                throw new ServiceException(ApiError.ERROR_KOL_B2C_HAS_DOWN_BILL);
+                throw new ServiceException(ApiError.SAMPLE_B2C_HAS_GENERATED_SO);
             }
 
             List<String> sourceIds = subList.stream().map(KolSubB2cApplicationDTO.ListDTO::getId).collect(Collectors.toList());
             List<SoB2cEntity> soB2cList = soB2cService.lambdaQuery().in(SoB2cEntity::getSourceId, sourceIds).eq(SoB2cEntity::getInvalidStatus,false).list();
             if(CollUtil.isNotEmpty(soB2cList)){
-                throw new ServiceException(ApiError.ERROR_KOL_B2C_HAS_DOWN_BILL);
+                throw new ServiceException(ApiError.SAMPLE_B2C_HAS_GENERATED_SO);
             }
 
             //删除下游单据
@@ -712,7 +712,7 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
     private Boolean validateDisApprove(KolB2cApplicationEntity entity) {
         // 已审核支持反审核
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE.getCode())) {
-            throw new ServiceException(ApiError.ERROR_98014);
+            throw new ServiceException(ApiError.BILL_REVERSE_APPROVAL_ALLOWED_APPROVED_ONLY);
         }
         // TODO 下游盘点计划单反审核
         return true;
@@ -768,7 +768,7 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         KolB2cApplicationEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到B2C寄样申请单数据"));
         // 只有待提交、审核不通过数据允许作废
         if (!(Objects.equals(ApproveStatusEnum.WAIT_SUBMIT.getCode(), entity.getApproveStatus()) || Objects.equals(ApproveStatusEnum.REJECT.getCode(), entity.getApproveStatus()))) {
-            throw new ServiceException(ApiError.ERROR_98005);
+            throw new ServiceException(ApiError.BILL_VOID_ALLOWED_STATUS_ONLY);
         }
         log.info("作废 开始修改B2C寄样申请单状态数据，id：【{}】", id);
         lambdaUpdate().eq(KolB2cApplicationEntity::getId, id)
@@ -792,7 +792,7 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         KolB2cApplicationEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到B2C寄样申请单数据"));
         // 只有审核中的单据允许撤销
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING.getCode())) {
-            throw new ServiceException(ApiError.ERROR_98007);
+            throw new ServiceException(ApiError.WF_REVOKE_PROCESS_ALLOWED_STATUS_ONLY);
         }
         log.info("撤销 开始撤销流程，id：【{}】",id);
 
@@ -1140,7 +1140,7 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
             listApiResult = workflowFeign.curApprover(dtoList);
             Integer code = listApiResult.getCode();
             if (200 != code) {
-                throw new ServiceException(new ApiResult(ApiError.DEFAULT.code, listApiResult.getMsg()));
+                throw new ServiceException(new ApiResult(ApiError.HTTP_UNKNOWN.getCode(), listApiResult.getMsg()));
             }
         }
 
@@ -1202,7 +1202,7 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
     private void validateSubmit(KolB2cApplicationEntity entity) {
         // 待提交或审核不通过并且未作废允许提交
         if(!ApproveStatusEnum.allowUpdateStatus(entity.getApproveStatus()) || entity.getInvalidStatus()) {
-            throw new ServiceException(ApiError.ERROR_98010);
+            throw new ServiceException(ApiError.BILL_SUBMIT_ALLOWED_STATUS_ONLY);
         }
         return;
     }
@@ -1214,7 +1214,7 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         List<KolB2cApplicationDTO.DetailViewDTO> list = this.baseMapper.detailView(detailIdList);
         int count = list.stream().filter(e -> !e.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getCode())).collect(Collectors.toList()).size();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_92201);
+            throw new ServiceException(ApiError.SAMPLE_B2C_APPROVED_REQUIRED);
         }
         List<String> skuIds = list.stream().map(KolB2cApplicationDTO.DetailViewDTO::getSkuId).distinct().collect(Collectors.toList());
         List<ProductDetailEntity> productDetailEntities = plmTaskFeign.listByIds(skuIds);
@@ -1228,7 +1228,7 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
     @Override
     public Boolean generateReturnPiece(List<KolB2cApplicationDTO.DetailViewDTO> list) {
         if(CollUtil.isEmpty(list)){
-            throw new ServiceException(ApiError.ERROR_1041,"回片登记下推");
+            throw new ServiceException(ApiError.BILL_PARAM_SELECTION_REQUIRED,"回片登记下推");
         }
         for (KolB2cApplicationDTO.DetailViewDTO detailViewDTO : list) {
             KolFeedbackDTO.AddDTO addDTO = new KolFeedbackDTO.AddDTO();
@@ -1377,7 +1377,7 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
 
         } catch (ExcelCommonException e) {
             log.error("导入格式错误！", e);
-            throw new ServiceException(ApiError.ERROR_1016);
+            throw new ServiceException(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX);
         }
         BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
         importResultDTO.setTaskId(dto.getTaskId());

@@ -126,7 +126,7 @@ public class VirtualInventoryDiffServiceImpl extends SuperServiceImpl<VirtualInv
     @Override
     public void updateVirtualInventory(List<VirtualInventoryDiffDTO.UpdateVirtualInventoryDTO> list) {
         if (CollUtil.isEmpty(list)) {
-            throw new ServiceException(ApiError.ERROR_98004);
+            throw new ServiceException(ApiError.BILL_SELECTION_REQUIRED);
         }
 
         VirtualWarehouseAllocationDTO.AddDTO addDTO = new VirtualWarehouseAllocationDTO.AddDTO();

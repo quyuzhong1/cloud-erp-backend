@@ -123,7 +123,7 @@ public class SupplierRefWarehouseServiceImpl extends SuperServiceImpl<SupplierRe
         if (warehouseLocationCodeList.size() > MathUtil.ONE && count > MathUtil.ZERO) {
             WarehouseEntity warehouse = FeignQuery.getById(WarehouseEntity.class, addDTO.getWarehouseId());
             throw new ServiceException(
-                    ApiError.ERROR_SUPPLIER_REF_WAREHOUSE_GLOBAL_CONFLICT,
+                    ApiError.SUPPLIER_REF_WAREHOUSE_GLOBAL_CONFLICT,
                     addDTO.getSupplierCode(),
                     warehouse.getName()
             );
@@ -147,7 +147,7 @@ public class SupplierRefWarehouseServiceImpl extends SuperServiceImpl<SupplierRe
     @Override
     public Boolean update(SupplierRefWarehouseDTO.UpdateDTO addOrUpdateDTO) {
         SupplierRefWarehouseEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "供应商关联仓库单"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "供应商关联仓库单"));
         SupplierRefWarehouseEntity supplierRefWarehouseEntity =  BeanMapperUtils.map(SupplierRefWarehouseEntity.class, addOrUpdateDTO);
 
         // 数据处理
@@ -249,7 +249,7 @@ public class SupplierRefWarehouseServiceImpl extends SuperServiceImpl<SupplierRe
         SupplierRefWarehouseEntity entity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到供应商关联仓库单数据"));
         boolean flag = super.removeById(entity.getId());
         if (!flag) {
-            throw new ServiceException(ApiError.ERROR_DATA_DELETE);
+            throw new ServiceException(ApiError.BILL_DELETE_FAILED);
         }
         // 记录操作日志
         log.info("删除 开始记录供应商关联仓库单日志数据，id：【{}】", id);
@@ -264,7 +264,7 @@ public class SupplierRefWarehouseServiceImpl extends SuperServiceImpl<SupplierRe
     public BatchResultDTO updateDisabled(String id,Boolean disabled) {
         SupplierRefWarehouseEntity entity = this.getById(id);
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.NOT_EXIST,"仓库绑定数据");
+            throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC,"仓库绑定数据");
         }
         Boolean oldDisabled = entity.getDisabled();
         if (oldDisabled.equals(disabled)) {
@@ -294,14 +294,14 @@ public class SupplierRefWarehouseServiceImpl extends SuperServiceImpl<SupplierRe
             read(excelFile.getInputStream(), SupplierRefWarehouseExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (IOException e) {
             log.error("导入物流场频错误！{}", e);
-            throw new ServiceException(ApiError.ERROR_95124);
+            throw new ServiceException(ApiError.FILE_DATA_IMPORT_FAILED);
         } catch (ExcelCommonException e) {
             log.error("导入格式错误！{}", e);
-            throw new ServiceException(ApiError.ERROR_1016);
+            throw new ServiceException(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX);
         }
         List<SupplierRefWarehouseExcelDTO> excelDateList = excelListenerUtil.getAllList();
         if (CollectionUtils.isEmpty(excelDateList)) {
-            throw new ServiceException(ApiError.ERROR_95123);
+            throw new ServiceException(ApiError.FILE_DATA_REQUIRED);
         }
         List<SupplierRefWarehouseExcelDTO> errorList = excelListenerUtil.getErrorList();
         List<SupplierRefWarehouseExcelDTO> successList = excelListenerUtil.getSuccessList();
@@ -318,7 +318,7 @@ public class SupplierRefWarehouseServiceImpl extends SuperServiceImpl<SupplierRe
             try {
                 new ExcelPrintUtils().patchExport(errorList, response, sb.toString(), excelPath);
             } catch (IOException e) {
-                throw new ServiceException(ApiError.ERROR_95125);
+                throw new ServiceException(ApiError.FILE_EXPORT_ERROR_DATA_FAILED);
             }
             return Boolean.FALSE;
         }
@@ -423,7 +423,7 @@ public class SupplierRefWarehouseServiceImpl extends SuperServiceImpl<SupplierRe
         SupplierEntity supplierEntity = supplierService.getById(entity.getSupplierId());
         entity.setSupplierCode(supplierEntity.getCode());
         if (supplierEntity.getSrmDisabled()) {
-            throw new ServiceException(ApiError.ERROR_SUPPLIER_SRM_DISABLE);
+            throw new ServiceException(ApiError.SUPPLIER_SRM_DISABLE);
         }
         // 检查是否存在冲突记录
         checkConflictRecords(entity);
@@ -465,7 +465,7 @@ public class SupplierRefWarehouseServiceImpl extends SuperServiceImpl<SupplierRe
         if (!conflictRecords.isEmpty()) {
             WarehouseEntity warehouse = FeignQuery.getById(WarehouseEntity.class, entity.getWarehouseId());
             throw new ServiceException(
-                    ApiError.ERROR_SUPPLIER_REF_WAREHOUSE_GLOBAL_CONFLICT,
+                    ApiError.SUPPLIER_REF_WAREHOUSE_GLOBAL_CONFLICT,
                     entity.getSupplierCode(),
                     warehouse.getName()
             );
@@ -487,7 +487,7 @@ public class SupplierRefWarehouseServiceImpl extends SuperServiceImpl<SupplierRe
         if (globalRecord != null) {
             WarehouseEntity warehouse = FeignQuery.getById(WarehouseEntity.class, entity.getWarehouseId());
             throw new ServiceException(
-                    ApiError.ERROR_SUPPLIER_REF_WAREHOUSE_GLOBAL_EXISTS,
+                    ApiError.SUPPLIER_REF_WAREHOUSE_GLOBAL_EXISTS,
                     entity.getSupplierCode(),
                     warehouse.getName()
             );
@@ -504,7 +504,7 @@ public class SupplierRefWarehouseServiceImpl extends SuperServiceImpl<SupplierRe
         if (sameLocationRecord != null) {
             WarehouseEntity warehouse = FeignQuery.getById(WarehouseEntity.class, entity.getWarehouseId());
             throw new ServiceException(
-                    ApiError.ERROR_SUPPLIER_REF_WAREHOUSE_EXIST,
+                    ApiError.SUPPLIER_REF_WAREHOUSE_EXIST,
                     entity.getSupplierCode(),
                     warehouse.getName(),
                     entity.getWarehouseLocationCode()

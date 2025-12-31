@@ -22,6 +22,7 @@ public enum WarnMsgTypeEnum {
 
     SYS_EXCEPTION("sys_exception", "系统预警"),
     MACHINING_SKU_NOTICE("machining_sku_notice", "系统通知"),
+    IMPLEMENT_GROUP_NOTICE("implement_group_notice", "通知实施群"),
     CUSTOM_GROUP("custom_group", "自定义群通知"),
     ;
 

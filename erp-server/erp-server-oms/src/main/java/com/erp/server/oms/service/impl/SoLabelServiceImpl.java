@@ -19,7 +19,11 @@ import com.erp.rpc.file.feign.FileFeign;
 import com.erp.server.oms.convert.SoLabelConverter;
 import com.erp.server.oms.mapper.SoLabelMapper;
 import com.erp.server.oms.service.OperateLogService;
+import com.common.core.exception.ServiceException;
 import com.erp.server.oms.service.SoLabelService;
+import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -79,7 +83,7 @@ public class SoLabelServiceImpl extends SuperServiceImpl<SoLabelMapper, SoLabelE
     @Override
     public Boolean update(SoLabelDTO.UpdateDTO addOrUpdateDTO) {
         SoLabelEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "B2B订单面单表"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "B2B订单面单表"));
         SoLabelEntity soLabelEntity =  BeanMapperUtils.map(SoLabelEntity.class, addOrUpdateDTO);
 
         // 数据处理
@@ -136,7 +140,7 @@ public class SoLabelServiceImpl extends SuperServiceImpl<SoLabelMapper, SoLabelE
             return fileFeign.mergeFiles(urlList);
         } catch (Exception e) {
             e.printStackTrace();
-            throw new ServiceException(ApiError.ERROR_PDF_SO_MERGE);
+            throw new ServiceException(ApiError.LOGISTICS_PDF_SO_MERGE_ERROR);
         }
     }
 

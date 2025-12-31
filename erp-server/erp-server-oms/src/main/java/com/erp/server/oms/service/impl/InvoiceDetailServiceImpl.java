@@ -69,7 +69,7 @@ public class InvoiceDetailServiceImpl extends SuperServiceImpl<InvoiceDetailMapp
     @Override
     public Boolean update(InvoiceDetailDTO.UpdateDTO addOrUpdateDTO) {
         InvoiceDetailEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "上传记录订单明细"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "上传记录订单明细"));
         InvoiceDetailEntity invoiceDetailEntity =  BeanMapperUtils.map(InvoiceDetailEntity.class, addOrUpdateDTO);
 
         // 数据处理

@@ -12,8 +12,6 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
-import com.erp.model.oms.dto.DictInvoiceHsDTO;
-import com.erp.model.plm.dto.ProductCustomsDTO;
 import com.erp.model.plm.entity.ProductLogisticsEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.excel.DictHsCodeExcelDTO;
@@ -76,7 +74,7 @@ public class DictHsCodeServiceImpl extends SuperServiceImpl<DictHsCodeMapper, Di
                 .eq(DictHsCodeEntity::getCountry, "CN")
                 .count();
         if(count > 0 ){
-            throw new ServiceException(ApiError.ERROR_96008,dictHsCodeEntity.getHsCode());
+            throw new ServiceException(ApiError.COMMON_CUSTOMS_CN_HS_CODE_EXISTS,dictHsCodeEntity.getHsCode());
         }
 
         if(StringUtil.isBlank(addDTO.getCountry())){
@@ -101,7 +99,7 @@ public class DictHsCodeServiceImpl extends SuperServiceImpl<DictHsCodeMapper, Di
     @Override
     public Boolean update(DictHsCodeDTO.UpdateDTO addOrUpdateDTO) {
         DictHsCodeEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "出口申报要素单"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "出口申报要素单"));
         DictHsCodeEntity dictHsCodeEntity =  BeanMapperUtils.map(DictHsCodeEntity.class, addOrUpdateDTO);
 
         Integer count = lambdaQuery()
@@ -110,7 +108,7 @@ public class DictHsCodeServiceImpl extends SuperServiceImpl<DictHsCodeMapper, Di
                 .ne(DictHsCodeEntity::getId, dictHsCodeEntity.getId())
                 .count();
         if(count > 0 ){
-            throw new ServiceException(ApiError.ERROR_96008,dictHsCodeEntity.getHsCode());
+            throw new ServiceException(ApiError.COMMON_CUSTOMS_CN_HS_CODE_EXISTS,dictHsCodeEntity.getHsCode());
         }
 
         //不相等时
@@ -250,7 +248,7 @@ public class DictHsCodeServiceImpl extends SuperServiceImpl<DictHsCodeMapper, Di
             wb.close();
         } catch (Exception e) {
             log.error("warehouse downloadTemplate  出错了 e==", e);
-            throw new ServiceException(ApiError.ERROR_95131);
+            throw new ServiceException(ApiError.FILE_IMPORT_TEMPLATE_DOWNLOAD_FAILED);
         }
     }
 

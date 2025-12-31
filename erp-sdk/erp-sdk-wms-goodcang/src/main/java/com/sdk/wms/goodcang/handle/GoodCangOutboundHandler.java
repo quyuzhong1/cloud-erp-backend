@@ -10,7 +10,6 @@ import com.common.business.enums.ErpServerModuleEnum;
 import com.common.business.enums.PlatformCategoryEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.handler.AbstractPullThirdWarehouseHandler;
-import com.common.business.utils.MD5Util;
 import com.common.core.exception.ServiceException;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.enums.PlatformEnum;

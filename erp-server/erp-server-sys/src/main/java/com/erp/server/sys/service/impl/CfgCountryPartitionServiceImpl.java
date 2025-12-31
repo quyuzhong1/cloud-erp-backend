@@ -57,7 +57,7 @@ public class CfgCountryPartitionServiceImpl extends SuperServiceImpl<CfgCountryP
     @Override
     public Boolean update(CfgCountryPartitionDTO.UpdateDTO updateDTO) {
         CfgCountryPartitionEntity old = super.getById(updateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "分区国家关联单"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "分区国家关联单"));
         CfgCountryPartitionEntity cfgCountryPartitionEntity =  BeanMapperUtils.map(CfgCountryPartitionEntity.class, updateDTO);
 
         // 数据处理

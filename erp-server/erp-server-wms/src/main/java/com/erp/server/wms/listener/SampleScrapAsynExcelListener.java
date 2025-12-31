@@ -11,10 +11,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.utils.FieldValidUtil;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
-import com.erp.model.tms.dto.excel.LogisticsBillCostExcelDTO;
-import com.erp.model.tms.enums.DictCostAttributionEnum;
 import com.erp.model.wms.dto.SampleLedgerDTO;
-import com.erp.model.wms.dto.SampleScrapInfoDTO;
 import com.erp.model.wms.dto.excel.SampleScrapImportExcelDTO;
 import com.erp.model.wms.enums.SampleLedgerTypeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
@@ -177,11 +174,11 @@ public class SampleScrapAsynExcelListener extends AnalysisEventListener<SampleSc
             dto.setType(SampleLedgerTypeEnum.SCRAP.getCode());
             List<SampleLedgerDTO.SkuAvailableQtyDTO> skuAvailableQtyDTOS = sampleLedgerService.listLedgerByUserId(dto);
             if(CollUtil.isEmpty(skuAvailableQtyDTOS)){
-                errorMsgList.add(ApiError.ERROR_SAMPLE_LEDGER_NOT_EXIST.msg);
+                errorMsgList.add(ApiError.SAMPLE_LEDGER_NOT_EXIST.getMsg());
             }else {
                 SampleLedgerDTO.SkuAvailableQtyDTO skuAvailableQtyDTO = skuAvailableQtyDTOS.stream().filter(e -> e.getSkuId().equals(excelDTO.getSkuId()) && e.getUseUserName().equals(excelDTO.getUseUserName())).findFirst().orElse(null);
                 if(Objects.isNull(skuAvailableQtyDTO)){
-                    errorMsgList.add(ApiError.ERROR_SAMPLE_LEDGER_NOT_EXIST.msg);
+                    errorMsgList.add(ApiError.SAMPLE_LEDGER_NOT_EXIST.getMsg());
                 }else {
                     excelDTO.setSampleLedgerId(skuAvailableQtyDTO.getSampleLedgerId());
                 }

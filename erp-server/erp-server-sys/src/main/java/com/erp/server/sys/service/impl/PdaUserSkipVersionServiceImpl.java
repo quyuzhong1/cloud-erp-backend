@@ -53,7 +53,7 @@ public class PdaUserSkipVersionServiceImpl extends SuperServiceImpl<PdaUserSkipV
     @Override
     public Boolean update(PdaUserSkipVersionDTO.UpdateDTO updateDTO) {
         PdaUserSkipVersionEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "PDA用户跳过版本升级记录单"));
+        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "PDA用户跳过版本升级记录单"));
         PdaUserSkipVersionEntity pdaUserSkipVersionEntity =  BeanMapperUtils.map(PdaUserSkipVersionEntity.class, updateDTO);
 
         // 数据处理

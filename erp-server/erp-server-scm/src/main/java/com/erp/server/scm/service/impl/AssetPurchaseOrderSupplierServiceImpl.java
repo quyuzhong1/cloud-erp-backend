@@ -67,7 +67,7 @@ public class AssetPurchaseOrderSupplierServiceImpl extends SuperServiceImpl<Asse
     @Override
     public Boolean update(AssetPurchaseOrderSupplierDTO.UpdateDTO addOrUpdateDTO) {
         AssetPurchaseOrderSupplierEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, ""));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, ""));
         AssetPurchaseOrderSupplierEntity assetPurchaseOrderSupplierEntity =  BeanMapperUtils.map(AssetPurchaseOrderSupplierEntity.class, addOrUpdateDTO);
 
         // 数据处理

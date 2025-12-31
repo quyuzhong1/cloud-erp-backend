@@ -41,6 +41,6 @@ public class WorkMenuServiceImpl extends SuperServiceImpl<WorkMenuMapper, WorkMe
     @Override
     public WorkMenuEntity getByModuleCode(String code) {
         return lambdaQuery().eq(WorkMenuEntity::getModuleCode, code)
-                .last(SqlConstants.LIMIT_1).oneOpt().orElseThrow(() -> new ServiceException(ApiError.ERROR_WORK_MENU_NOT_EXIST));
+                .last(SqlConstants.LIMIT_1).oneOpt().orElseThrow(() -> new ServiceException(ApiError.WF_MENU_NOT_FOUND));
     }
 }

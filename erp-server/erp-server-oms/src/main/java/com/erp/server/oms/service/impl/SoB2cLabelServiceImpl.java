@@ -5,7 +5,6 @@ import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
-import com.erp.model.dmp.entity.DmpSoInfoEntity;
 import com.erp.model.file.dto.FileDTO;
 import com.erp.model.oms.dto.SoB2cLabelDTO;
 import com.erp.model.oms.entity.SoB2cLabelEntity;

@@ -83,7 +83,7 @@ public class CustomerB2bChangeSellerApproveHandler extends AbstractApproveHandle
         baseApproveParamDTO.setComment(dto.getComment());
         Boolean approve = customerB2bSellerChangeService.approveEnd(baseApproveParamDTO, entity, new BatchResultDTO(), customerInfo);
         if (Boolean.FALSE.equals(approve)) {
-            throw new ServiceException(ApiError.ERROR_BILL_APPROVE, SourceTypeEnum.getName(dto.getBusinessKey()));
+            throw new ServiceException(ApiError.BILL_APPROVE_FAILED, SourceTypeEnum.getName(dto.getBusinessKey()));
         }
         //非erp审核添加日志
         if (ApprovePlatformEnum.ERP.equals(dto.getApprovePlatformEnum())) {

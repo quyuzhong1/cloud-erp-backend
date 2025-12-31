@@ -3,23 +3,16 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import com.alibaba.excel.EasyExcel;
-import com.common.business.dto.FindUserDTO;
-import com.common.business.utils.ApplicationContextUtils;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.FastDFSClientUtil;
 import com.erp.model.plm.vo.SkuVO;
-import com.erp.model.sys.dto.SysDepartmentDTO;
-import com.erp.model.wms.dto.SampleScrapInfoDTO;
-import com.erp.model.wms.dto.excel.SampleScrapDetailImportExcelDTO;
 import com.erp.model.wms.dto.excel.SampleScrapDetailImportExcelDTO;
 import com.erp.model.wms.entity.SampleScrapDetailEntity;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.listener.SampleScrapDetailExcelListener;
-import com.erp.server.wms.listener.SampleScrapExcelListener;
 import com.erp.server.wms.mapper.SampleScrapDetailMapper;
 import com.erp.server.wms.service.SampleLedgerService;
 import com.erp.server.wms.service.SampleScrapDetailService;
@@ -71,7 +64,7 @@ public class SampleScrapDetailServiceImpl extends SuperServiceImpl<SampleScrapDe
             EasyExcel.read(excelFile.getInputStream(), SampleScrapDetailImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (Exception e) {
             log.error("导入样品报废单错误！", e);
-            throw new ServiceException(ApiError.ERROR_95124);
+            throw new ServiceException(ApiError.FILE_DATA_IMPORT_FAILED);
         }
 
         List<SampleScrapDetailImportExcelDTO> errorList = excelListenerUtil.getErrorList();

@@ -214,7 +214,7 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
         queryWrapper.eq(TemplateTaskEntity::getTemplateId, templateId);
         List<TemplateTaskEntity> list = this.list(queryWrapper);
         if (CollectionUtils.isEmpty(list)) {
-            throw new ServiceException(ApiError.ERROR_95058);
+            throw new ServiceException(ApiError.PROJECT_TEMPLATE_TASK_NOT_FOUND);
         }
         //判断是否是子任务
         checkTaskIfExistPid(id, templateId);
@@ -237,7 +237,7 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
         queryWrapper.eq(TemplateTaskEntity::getTemplateId, templateId);
         List<TemplateTaskEntity> list = this.list(queryWrapper);
         if (CollectionUtils.isEmpty(list)) {
-            throw new ServiceException(ApiError.ERROR_95058);
+            throw new ServiceException(ApiError.PROJECT_TEMPLATE_TASK_NOT_FOUND);
         }
         //删除任务交付文档数据
         templateDeliveryDocsService.removeByTaskIdsAndTemplateId(ids, templateId);
@@ -281,7 +281,7 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
 
         TemplateTaskEntity taskEntity = this.getByIdAndTemplateId(dto.getId(), dto.getTemplateId());
         if (Objects.isNull(taskEntity)) {
-            throw new ServiceException(ApiError.ERROR_95027);
+            throw new ServiceException(ApiError.PROJECT_TASK_NOT_FOUND);
         }
         TemplateTaskVO resultVO = new TemplateTaskVO();
         BeanMapper.copy(taskEntity, resultVO);
@@ -392,7 +392,7 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
             for (TemplateTaskEntity item : list) {
                 ProjectTaskEntity projectTaskEntity = byProductId.stream().filter(projectMembers -> projectMembers.getName().equals(item.getName())).findFirst().orElse(null);
                 if (!Objects.isNull(projectTaskEntity)) {
-                    throw new ServiceException(ApiError.ERROR_95013);
+                    throw new ServiceException(ApiError.PROJECT_TASK_EXISTS);
                 }
 
                 CopySourceDTO source = new CopySourceDTO();
@@ -485,7 +485,7 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
         BeanMapperUtils.copy(dto, entity);
         LoginUser loginUser = UserContext.getLoginUser();
         if (ObjectUtils.isEmpty(loginUser)) {
-            throw new ServiceException(ApiError.USER_NOT_EXIST);
+            throw new ServiceException(ApiError.AUTH_CREDENTIALS_INVALID);
         }
 
         String notRelated = RelatedSkuTypeEnum.NOT_RELATED.getCode();
@@ -530,7 +530,7 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
         if (StringUtils.isNotBlank(dto.getPhaseId())) {
             TemplatePhaseEntity phaseEntity = templatePhaseService.getByIdAndTemplateId(dto.getPhaseId(), dto.getTemplateId());
             if (ObjectUtils.isEmpty(phaseEntity)) {
-                throw new ServiceException(ApiError.ERROR_95041);
+                throw new ServiceException(ApiError.PROJECT_STAGE_TASK_NOT_FOUND);
             }
             entity.setPhaseName(phaseEntity.getName());
 
@@ -623,7 +623,7 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
         queryWrapper.eq(TemplateTaskEntity::getTemplateId, dto.getTemplateId());
         TemplateTaskEntity entity = this.getOne(queryWrapper);
         if (Objects.nonNull(entity) && !entity.getId().equals(dto.getId())) {
-            throw new ServiceException(ApiError.ERROR_95057);
+            throw new ServiceException(ApiError.PROJECT_TEMPLATE_TASK_EXISTS);
         }
     }
 
@@ -634,7 +634,7 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
         queryWrapper.eq(TemplateTaskEntity::getTemplateId, templateId);
         Integer count = baseMapper.selectCount(queryWrapper);
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_95024);
+            throw new ServiceException(ApiError.PROJECT_TASK_HAS_CHILD);
         }
     }
 
@@ -682,7 +682,7 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
             //根据分配类型查询模板中的数据
             for (TaskChargeDistributionEntity taskChargeDistributionEntity : taskChargeDistributionList) {
                 if (StringUtils.isBlank(taskChargeDistributionEntity.getCharges())) {
-                    throw new ServiceException(ApiError.ERROR_95097);
+                    throw new ServiceException(ApiError.PROJECT_PARAM_TASK_OWNER_REQUIRED);
                 }
                 //如果按人员分配的话
                 if (DistributionTypeEnum.DISTRIBUTION_USER.getCode().equals(taskChargeDistributionEntity.getDistributionType())) {
@@ -753,7 +753,7 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
                 Page<TemplateTaskSearchDTO> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
         TemplateTaskSearchDTO params = dto.getParams();
         if (StringUtils.isBlank(params.getTemplateId())) {
-            throw new ServiceException(ApiError.ERROR_95157);
+            throw new ServiceException(ApiError.PROJECT_TEMPLATE_REQUIRED);
         }
         String chargeNameStr = StringUtils.join(params.getChargeName(), ",");;
         List<String> docsName = params.getDocsName();
@@ -784,7 +784,7 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
         String productId = dto.getProductId();
         ProjectTemplateEntity template = templateService.getById(templateId);
         if (Objects.isNull(template)) {
-            throw new ServiceException(ApiError.ERROR_95051);
+            throw new ServiceException(ApiError.PROJECT_TEMPLATE_NOT_FOUND);
         }
         if (dto.getTaskIdList().size() <= 0 || dto.getTaskIdList() == null) {
             return true;
@@ -861,7 +861,7 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
             for (TemplateTaskEntity item : list) {
                 ProjectTaskEntity projectTaskEntity = byProductId.stream().filter(projectMembers -> projectMembers.getName().equals(item.getName())).findFirst().orElse(null);
                 if (!Objects.isNull(projectTaskEntity)) {
-                    throw new ServiceException(ApiError.ERROR_95013);
+                    throw new ServiceException(ApiError.PROJECT_TASK_EXISTS);
                 }
 
                 CopySourceDTO source = new CopySourceDTO();

@@ -138,7 +138,7 @@ public class CfgMoldReturnAlertRuleServiceImpl extends SuperServiceImpl<CfgMoldR
     @Override
     public Boolean update(CfgMoldReturnAlertRuleDTO.UpdateDTO addOrUpdateDTO) {
         CfgMoldReturnAlertRuleEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "模具返还策略"));
+        old = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "模具返还策略"));
         CfgMoldReturnAlertRuleEntity cfgMoldReturnAlertRuleEntity = BeanMapperUtils.map(CfgMoldReturnAlertRuleEntity.class, addOrUpdateDTO);
 
         Integer count = lambdaQuery()
@@ -277,11 +277,11 @@ public class CfgMoldReturnAlertRuleServiceImpl extends SuperServiceImpl<CfgMoldR
     private void handleData(CfgMoldReturnAlertRuleEntity entity) {
         MoldInfoEntity moldInfoEntity = moldInfoService.getByIdOpt(entity.getMoldId()).orElseThrow(() -> new ServiceException("未找到模具档案数据"));
         if(!moldInfoEntity.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getCode())){
-            throw new ServiceException(ApiError.ERROR_MOLD_NOT_APPROVE);
+            throw new ServiceException(ApiError.MOULD_NOT_APPROVED);
         }
         //结束日期不能小于开始日期
         if (Objects.nonNull(entity.getEndDate()) && Objects.nonNull(entity.getStartDate()) && entity.getEndDate().isBefore(entity.getStartDate())) {
-            throw new ServiceException(ApiError.ERROR_92008);
+            throw new ServiceException(ApiError.COMMON_DATE_RANGE_INVALID);
         }
         entity.setMoldCode(moldInfoEntity.getCode());
         entity.setMoldName(moldInfoEntity.getName());
@@ -378,7 +378,7 @@ public class CfgMoldReturnAlertRuleServiceImpl extends SuperServiceImpl<CfgMoldR
         CfgMoldReturnAlertRuleEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到模具返还策略数据"));
         // 只有禁用数据才能删除
         if (Objects.equals(DisabledEnum.ENABLE.getCode(), entity.getDisabled())) {
-            throw new ServiceException(ApiError.ERROR_1069);
+            throw new ServiceException(ApiError.BILL_DELETE_NOT_ALLOWED);
         }
 
         List<MoldMonitorEntity> list = moldMonitorService.lambdaQuery()
@@ -417,7 +417,7 @@ public class CfgMoldReturnAlertRuleServiceImpl extends SuperServiceImpl<CfgMoldR
         CfgMoldReturnAlertRuleEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到模具返还策略数据"));
         // 未作废允许作废
         if(!InvalidStatusEnum.NOT_VOIDED.getStatus().equals(entity.getInvalidStatus())){
-            throw new ServiceException(ApiError.ERROR_98012);
+            throw new ServiceException(ApiError.BILL_ALREADY_VOID_CANNOT_VOID_AGAIN);
         }
         log.info("作废 开始修改模具返还策略状态数据，id：【{}】", id);
         lambdaUpdate().eq(CfgMoldReturnAlertRuleEntity::getId, id)
@@ -492,7 +492,7 @@ public class CfgMoldReturnAlertRuleServiceImpl extends SuperServiceImpl<CfgMoldR
             EasyExcel.read(new ByteArrayInputStream(bytes), CfgMoldReturnImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (ExcelCommonException e) {
             log.error("导入格式错误！", e);
-            throw new ServiceException(ApiError.ERROR_1016);
+            throw new ServiceException(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX);
         }
 
         BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();

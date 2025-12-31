@@ -212,7 +212,7 @@ public class PoReconciliationRefDetailServiceImpl extends SuperServiceImpl<PoRec
     @Transactional(rollbackFor =  Exception.class)
     public void batchAdd(List<PoReconciliationDetailEntity> poReconciliationDetailList, String id) {
         if (CollUtil.isEmpty(poReconciliationDetailList)) {
-            throw new ServiceException(ApiError.ERROR_PO_RECONCILIATION_DETAIL_NOT_EXIST);
+            throw new ServiceException(ApiError.PO_RECONCILIATION_DETAIL_NOT_FOUND);
         }
         List<String> detailIdList = poReconciliationDetailList.stream().map(PoReconciliationDetailEntity::getId).distinct().collect(Collectors.toList());
         List<PoReconciliationRefDetailEntity> oldRefDetailList = this.listPoReconciliationDetailIdList(detailIdList);
@@ -222,7 +222,7 @@ public class PoReconciliationRefDetailServiceImpl extends SuperServiceImpl<PoRec
             //新增默认取可对账数量生成对账单明细
             Integer hasQty = oldRefDetailList.stream().filter(obj -> CharSequenceUtil.equals(detail.getId(), obj.getPoReconciliationDetailId())).map(PoReconciliationRefDetailEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
             if (Math.abs(hasQty) >= Math.abs(detail.getQty())) {
-                throw new ServiceException(ApiError.ERROR_PO_RECONCILIATION_DETAIL_HAS_IN_RECONCILIATION,detail.getSourceCode(),detail.getSkuNo());
+                throw new ServiceException(ApiError.PO_RECONCILIATION_DETAIL_ALREADY_IN_RECONCILIATION,detail.getSourceCode(),detail.getSkuNo());
             }
             PoReconciliationRefDetailEntity refDetailEntity = new PoReconciliationRefDetailEntity();
             BeanUtil.copyProperties(detail,refDetailEntity);
@@ -236,7 +236,7 @@ public class PoReconciliationRefDetailServiceImpl extends SuperServiceImpl<PoRec
         }).collect(Collectors.toList());
         boolean save = super.saveBatch(refDetailList);
         if (!save) {
-            throw new ServiceException(ApiError.ERROR_1002);
+            throw new ServiceException(ApiError.BILL_SAVE_FAIL, "采购对账单明细");
         }
         //更新对账状态
         poReconciliationDetailScmService.autoUpdateStatus(detailIdList);
@@ -406,13 +406,13 @@ public class PoReconciliationRefDetailServiceImpl extends SuperServiceImpl<PoRec
         //对账单
         PoReconciliationEntity poReconciliationEntity = poReconciliationScmService.getById(poReconciliationId);
         if (ObjectUtils.isEmpty(poReconciliationEntity)) {
-            throw new ServiceException(ApiError.ERROR_PO_RECONCILIATION_NOT_EXIST);
+            throw new ServiceException(ApiError.FIN_RECONCILIATION_NOT_FOUND);
         }
         //对账单明细基础信息
         List<PoReconciliationDetailEntity> poReconciliationDetailList = poReconciliationDetailScmService.listByIds(poReconciliationDetailIdList);
         if (CollUtil.isEmpty(poReconciliationDetailList)) {
             log.error("采购对账单待对账明细不存在，mainId：{}", poReconciliationId);
-            throw new ServiceException(ApiError.ERROR_PO_RECONCILIATION_DETAIL_NOT_EXIST);
+            throw new ServiceException(ApiError.PO_RECONCILIATION_DETAIL_NOT_FOUND);
         }
         Map<String, PoReconciliationDetailEntity> detailMap = poReconciliationDetailList.stream().collect(Collectors.toMap(PoReconciliationDetailEntity::getId, obj -> obj));
 
@@ -427,18 +427,18 @@ public class PoReconciliationRefDetailServiceImpl extends SuperServiceImpl<PoRec
             PoReconciliationDetailEntity detailEntity = detailMap.get(entity.getPoReconciliationDetailId());
             if (ObjUtil.isEmpty(detailEntity)) {
                 log.error("采购对账单明细不存在，id：{}", entity.getPoReconciliationDetailId());
-                throw new ServiceException(ApiError.ERROR_PO_RECONCILIATION_DETAIL_NOT_EXIST);
+                throw new ServiceException(ApiError.PO_RECONCILIATION_DETAIL_NOT_FOUND);
             }
             //供应商、结算组织验证
             if (!CharSequenceUtil.equals(poReconciliationEntity.getSupplierId(),detailEntity.getSupplierId())
                     || !CharSequenceUtil.equals(poReconciliationEntity.getSettleOrgId(),detailEntity.getSettleOrgId())) {
-                throw new ServiceException(ApiError.ERROR_PO_RECONCILIATION_ADD_DETAIL,poReconciliationEntity.getCode(),poReconciliationEntity.getSupplierName(),poReconciliationEntity.getSettleOrgName());
+                throw new ServiceException(ApiError.PO_RECONCILIATION_DETAIL_SUPPLIER_ORG_MISMATCH, poReconciliationEntity.getCode(),poReconciliationEntity.getSupplierName(),poReconciliationEntity.getSettleOrgName());
             }
             //已对账数量
             Integer hasReconciledQty = poReconciliationRefDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getPoReconciliationDetailId(), entity.getPoReconciliationDetailId()) && !CharSequenceUtil.equals(obj.getId(), entity.getId()))
                     .map(PoReconciliationRefDetailEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
             if (Math.abs(hasReconciledQty)  + Math.abs(entity.getQty()) > Math.abs(detailEntity.getQty())) {
-                throw new ServiceException(ApiError.ERROR_PO_RECONCILIATION_DETAIL_QTY_OVERFLOW,detailEntity.getSourceCode(),detailEntity.getSkuNo(),entity.getQty(), detailEntity.getQty() - hasReconciledQty );
+                throw new ServiceException(ApiError.PO_RECONCILIATION_DETAIL_QTY_EXCEEDS_AVAILABLE,detailEntity.getSourceCode(),detailEntity.getSkuNo(),entity.getQty(), detailEntity.getQty() - hasReconciledQty );
             }
             //设置主表ID
             entity.setPoReconciliationId(poReconciliationId);

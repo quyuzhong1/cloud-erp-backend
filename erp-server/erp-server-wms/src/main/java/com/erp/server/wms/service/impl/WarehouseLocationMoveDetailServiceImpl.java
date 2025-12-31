@@ -27,7 +27,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -72,7 +71,7 @@ public class WarehouseLocationMoveDetailServiceImpl extends SuperServiceImpl<War
         log.info("开始新增仓位移动明细单");
         boolean save = super.saveBatch(warehouseLocationMoveDetailEntities);
         if(!save) {
-            throw new ServiceException(ApiError.LOCATION_MOVE_DETAIL_ADD);
+            throw new ServiceException(ApiError.WH_LOCATION_MOVE_DETAIL_SAVE_FAILED);
         }
     }
 
@@ -83,7 +82,7 @@ public class WarehouseLocationMoveDetailServiceImpl extends SuperServiceImpl<War
     @Override
     public Boolean update(WarehouseLocationMoveDTO.UpdateDTO dto, WarehouseLocationMoveEntity warehouseLocationMoveEntity) {
         if (CollectionUtils.isEmpty(dto.getDetailList())) {
-            throw new ServiceException(ApiError.ERROR_1040, SourceTypeEnum.SO_B2C.getName());
+            throw new ServiceException(ApiError.BILL_DETAIL_NOT_FOUND, SourceTypeEnum.SO_B2C.getName());
         }
 
         //原明细数据
@@ -137,7 +136,7 @@ public class WarehouseLocationMoveDetailServiceImpl extends SuperServiceImpl<War
             paramDTO.setSkuIds(Collections.singletonList(detailEntity.getSkuId()));
             if ((ObjectUtil.isEmpty(detailEntity.getInWarehouseLocation()) && ObjectUtil.isEmpty(detailEntity.getOutWarehouseLocation()))
                     || detailEntity.getInWarehouseLocation().equals(detailEntity.getOutWarehouseLocation())) {
-                throw new ServiceException(ApiError.ERROR_CANNOT_SAME_POSITION);
+                throw new ServiceException(ApiError.WH_PICK_AND_PUTAWAY_POSITION_SAME_FORBIDDEN);
             }
             paramDTO.setWarehouseLocations(Collections.singletonList(detailEntity.getOutWarehouseLocation()));
             List<InventoryDTO.PdaInventoryDTO> inventoryByParams = inventoryService.getInventoryByParam(paramDTO);
@@ -146,17 +145,17 @@ public class WarehouseLocationMoveDetailServiceImpl extends SuperServiceImpl<War
 
             if (SourceTypeEnum.PICKING_LISTS_SUBTRACT.getCode().equals(warehouseLocationMoveEntity.getSourceType())) {
                 if (ObjectUtil.isEmpty(inventoryByParam) || detailEntity.getQty() > inventoryByParam.getFrozenQty()) {
-                    throw new ServiceException(ApiError.LOCATION_MOVE_FROZEN_QTY_ERROR, detailEntity.getSkuNo());
+                    throw new ServiceException(ApiError.WH_LOCATION_MOVE_FROZEN_QTY_EXCEEDS, detailEntity.getSkuNo());
                 }
             }else {
                 if (InventoryStatusEnum.USABLE.getCode().equals(detailEntity.getOutInventoryStatus())) {
                     if (ObjectUtil.isEmpty(inventoryByParam) || detailEntity.getQty() > inventoryByParam.getUsableQty()) {
-                        throw new ServiceException(ApiError.LOCATION_MOVE_QTY_ERROR, detailEntity.getSkuNo());
+                        throw new ServiceException(ApiError.WH_LOCATION_MOVE_QTY_EXCEEDS_AVAILABLE, detailEntity.getSkuNo());
                     }
                 }
                 if (InventoryStatusEnum.FROZEN.getCode().equals(detailEntity.getOutInventoryStatus())) {
                     if (ObjectUtil.isEmpty(inventoryByParam) || detailEntity.getQty() > inventoryByParam.getFrozenQty()) {
-                        throw new ServiceException(ApiError.LOCATION_MOVE_FROZEN_QTY_ERROR, detailEntity.getSkuNo());
+                        throw new ServiceException(ApiError.WH_LOCATION_MOVE_FROZEN_QTY_EXCEEDS, detailEntity.getSkuNo());
                     }
                 }
             }
@@ -211,7 +210,7 @@ public class WarehouseLocationMoveDetailServiceImpl extends SuperServiceImpl<War
             detailEntity.setOutInventoryStatus(Optional.ofNullable(detailEntity.getOutInventoryStatus()).orElse(InventoryStatusEnum.USABLE.getCode()));
             if ((ObjectUtil.isEmpty(detailEntity.getInWarehouseLocation()) && ObjectUtil.isEmpty(detailEntity.getOutWarehouseLocation()))
                     || detailEntity.getInWarehouseLocation().equals(detailEntity.getOutWarehouseLocation())) {
-                throw new ServiceException(ApiError.ERROR_CANNOT_SAME_POSITION);
+                throw new ServiceException(ApiError.WH_PICK_AND_PUTAWAY_POSITION_SAME_FORBIDDEN);
             }
             paramDTO.setWarehouseLocations(Collections.singletonList(detailEntity.getOutWarehouseLocation()));
             List<InventoryDTO.PdaInventoryDTO> inventoryByParams = inventoryService.getInventoryByParam(paramDTO);
@@ -219,17 +218,17 @@ public class WarehouseLocationMoveDetailServiceImpl extends SuperServiceImpl<War
                     && req.getSkuId().equals(detailEntity.getSkuId())).findFirst().orElse(null);
             if (SourceTypeEnum.PICKING_LISTS_SUBTRACT.getCode().equals(warehouseLocationMoveEntity.getSourceType())) {
                 if (ObjectUtil.isEmpty(inventoryByParam) || detailEntity.getQty() > inventoryByParam.getFrozenQty()) {
-                    throw new ServiceException(ApiError.LOCATION_MOVE_FROZEN_QTY_ERROR, detailEntity.getSkuNo());
+                    throw new ServiceException(ApiError.WH_LOCATION_MOVE_FROZEN_QTY_EXCEEDS, detailEntity.getSkuNo());
                 }
             }else {
                 if (InventoryStatusEnum.USABLE.getCode().equals(detailEntity.getOutInventoryStatus())) {
                     if (ObjectUtil.isEmpty(inventoryByParam) || detailEntity.getQty() > inventoryByParam.getUsableQty()) {
-                        throw new ServiceException(ApiError.LOCATION_MOVE_QTY_ERROR, detailEntity.getSkuNo());
+                        throw new ServiceException(ApiError.WH_LOCATION_MOVE_QTY_EXCEEDS_AVAILABLE, detailEntity.getSkuNo());
                     }
                 }
                 if (InventoryStatusEnum.FROZEN.getCode().equals(detailEntity.getOutInventoryStatus())) {
                     if (ObjectUtil.isEmpty(inventoryByParam) || detailEntity.getQty() > inventoryByParam.getFrozenQty()) {
-                        throw new ServiceException(ApiError.LOCATION_MOVE_FROZEN_QTY_ERROR, detailEntity.getSkuNo());
+                        throw new ServiceException(ApiError.WH_LOCATION_MOVE_FROZEN_QTY_EXCEEDS, detailEntity.getSkuNo());
                     }
                 }
             }

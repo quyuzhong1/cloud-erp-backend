@@ -51,7 +51,7 @@ public class SoB2cRefServiceImpl extends SuperServiceImpl<SoB2cRefMapper, SoB2cR
     @Override
     public Boolean add(List<SoB2cRefDTO.AddDTO> refList) {
         if (CollectionUtils.isEmpty(refList)) {
-            throw new ServiceException(ApiError.ERROR_1019);
+            throw new ServiceException(ApiError.BILL_SAVE_FAILED);
         }
         List<SoB2cRefEntity> list = BeanMapperUtils.copyList(SoB2cRefEntity.class, refList);
         return this.saveBatch(list);

@@ -1,41 +1,20 @@
 package com.erp.server.tms.service.logistics;
 
-import cn.hutool.core.util.StrUtil;
-import cn.hutool.json.JSONUtil;
-import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONObject;
 import com.common.business.annotation.LogisticsPlatformType;
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.core.controller.vo.ApiResult;
-import com.common.core.enums.ApiError;
-import com.common.core.exception.ServiceException;
-import com.common.core.utils.ValidatorUtil;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
-import com.erp.model.tms.enums.BusinessTypeEnum;
-import com.erp.model.tms.enums.RequestStatusEnums;
 import com.erp.model.tms.vo.request.*;
 import com.erp.model.tms.vo.response.*;
-import com.erp.server.tms.convert.LogisticsChannelConverter;
 import com.erp.server.tms.handler.AbstractLogisticsHandler;
-import com.erp.server.tms.service.LogisticsOperateService;
-import com.sdk.oms.shopify.api.rest.model.ShopifyFulfillmentServicesItem;
-import com.sdk.oms.shopify.api.rest.model.ShopifyFulfillmentServicesRoot;
-import com.sdk.oms.shopify.dto.ShopifyShopInfoDTO;
-import com.sdk.oms.shopify.service.ShopSdkServer;
-import com.sdk.tms.express.model.order.request.OrderRequest;
-import com.sdk.tms.shopee.model.base.BaseRequest;
-import com.sdk.tms.shopee.model.base.BaseResponse;
-import com.sdk.tms.shopee.model.logistics.response.LogisticsChannel;
 import com.sdk.oms.shopify.api.rest.ShopifyRestClientService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 /**
  * @author Jim

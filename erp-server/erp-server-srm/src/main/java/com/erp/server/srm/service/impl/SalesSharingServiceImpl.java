@@ -3,7 +3,6 @@ package com.erp.server.srm.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -15,13 +14,10 @@ import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
 import com.common.core.enums.RuleCompareEnum;
 import com.common.core.excel.ExcelPrintUtils;
-import com.common.core.exception.ServiceException;
-import com.common.core.server.rule.SpElServer;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.dto.DwsDbErpDmpSkuSalesReportFDTO;
 import com.erp.model.dmp.entity.doris.DwsDbErpDmpSkuSalesReportFEntity;
-import com.erp.model.scm.dto.CfgSupplierSalesConditionDTO;
 import com.erp.model.scm.dto.CfgSupplierSalesDTO;
 import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.scm.entity.*;
@@ -131,7 +127,7 @@ public class SalesSharingServiceImpl extends SuperServiceImpl<SalesSharingMapper
 
         String permission = cfgSupplierSalesList.get(0).getPermission();
         if(!Objects.equals(permission, CfgSupplierSalesPermissionEnum.DOWNLOAD.getCode())){
-            return ApiError.NO_PERMISSION.msg;
+            return ApiError.HTTP_FORBIDDEN.getMsg();
         }
         //供应商id
         pagingDTO.setSupplierId(supplierIds.get(0));

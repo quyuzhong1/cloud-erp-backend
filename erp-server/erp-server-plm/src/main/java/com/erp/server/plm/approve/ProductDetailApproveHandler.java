@@ -50,7 +50,7 @@ public class ProductDetailApproveHandler extends AbstractApproveHandler {
     public Boolean disApprove(ApproveDTO.DisApproveDTO dto) {
         ProductDetailEntity entity = productDetailService.getById(dto.getId());
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_95084);
+            throw new ServiceException(ApiError.PRODUCT_INFO_NOT_FOUND);
         }
         BatchResultDTO resultDTO = productDetailService.disApprove(entity);
         return resultDTO.getSuccess();
@@ -60,7 +60,7 @@ public class ProductDetailApproveHandler extends AbstractApproveHandler {
     public Boolean approveEnd(ApproveDTO.EndProcessDTO dto) {
         ProductDetailEntity entity = productDetailService.getById(dto.getBusinessId());
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_95084);
+            throw new ServiceException(ApiError.PRODUCT_INFO_NOT_FOUND);
         }
         ApproveOneDTO approveOne = new ApproveOneDTO();
         approveOne.setType(dto.getApproveStatus().getStatus());
@@ -69,7 +69,7 @@ public class ProductDetailApproveHandler extends AbstractApproveHandler {
         approveOne.setComment(dto.getComment());
         Boolean approve = productDetailService.approveEnd(approveOne, entity);
         if (!approve) {
-            throw new ServiceException(ApiError.ERROR_BILL_APPROVE, SourceTypeEnum.getName(dto.getBusinessKey()));
+            throw new ServiceException(ApiError.BILL_APPROVE_FAILED, SourceTypeEnum.getName(dto.getBusinessKey()));
         }
         //非erp审核添加日志
         if (ApprovePlatformEnum.ERP.equals(dto.getApprovePlatformEnum())) {

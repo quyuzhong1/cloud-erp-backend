@@ -10,7 +10,6 @@ import com.common.core.anno.ParamData;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.PannoEnum;
 import com.common.core.exception.ServiceException;
-import com.erp.model.dmp.entity.DmpSkuInfoEntity;
 import com.erp.sdk.oms.amz.spapi.model.catalogitems.*;
 import com.erp.sdk.oms.amz.spapi.model.productpricing.ASINIdentifier;
 import com.erp.sdk.oms.amz.spapi.model.productpricing.IdentifierType;

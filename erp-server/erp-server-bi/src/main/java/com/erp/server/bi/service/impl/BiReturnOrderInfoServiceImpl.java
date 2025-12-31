@@ -126,7 +126,7 @@ public class BiReturnOrderInfoServiceImpl extends ServiceImpl<BiReturnOrderInfoM
                 return false;
             }
         } catch (IOException e) {
-            throw new ServiceException(ApiError.DEFAULT);
+            throw new ServiceException(ApiError.HTTP_UNKNOWN);
         }
         return true;
     }

@@ -3,6 +3,10 @@ package com.erp.server.fms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
+import com.common.business.enums.ApproveStatusEnum;
+import com.erp.model.fms.entity.AssetAcceptEntity;
+import com.erp.server.fms.service.AssetAcceptService;
+import io.seata.spring.annotation.GlobalTransactional;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
@@ -82,7 +86,7 @@ public class AssetAcceptDetailServiceImpl extends SuperServiceImpl<AssetAcceptDe
     @Override
     public Boolean update(AssetAcceptDetailDTO.UpdateDTO addOrUpdateDTO) {
         AssetAcceptDetailEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "资产验收表明细单"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "资产验收表明细单"));
         AssetAcceptDetailEntity assetAcceptDetailEntity =  BeanMapperUtils.map(AssetAcceptDetailEntity.class, addOrUpdateDTO);
 
         // 数据处理

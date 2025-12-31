@@ -42,7 +42,7 @@ public class KingdeePaymentConditionServiceImpl extends SuperServiceImpl<Kingdee
     @Override
     public Boolean update(KingdeePaymentConditionDTO.UpdateDTO updateDTO) {
         KingdeePaymentConditionEntity old = super.getById(updateDTO.getId());
-        KingdeePaymentConditionEntity oldEntity = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, ""));
+        KingdeePaymentConditionEntity oldEntity = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, ""));
         KingdeePaymentConditionEntity kingdeePaymentConditionEntity =  BeanMapperUtils.map(KingdeePaymentConditionEntity.class, updateDTO);
 
         log.info("编辑 开始修改数据，单号：【{}】", oldEntity.getCode());

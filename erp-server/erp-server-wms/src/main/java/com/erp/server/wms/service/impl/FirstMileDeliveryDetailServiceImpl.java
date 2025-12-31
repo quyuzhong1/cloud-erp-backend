@@ -207,7 +207,7 @@ public class FirstMileDeliveryDetailServiceImpl extends SuperServiceImpl<FirstMi
         //产品名称
         List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(skuIds);
         if (CollectionUtils.isEmpty(skuVOList)) {
-            throw new ServiceException(ApiError.ERROR_95084);
+            throw new ServiceException(ApiError.PRODUCT_INFO_NOT_FOUND);
         }
         List<FirstMileDeliveryDetailEntity> oldList = this.listByMainIds(Collections.singletonList(mainId));
 
@@ -240,7 +240,7 @@ public class FirstMileDeliveryDetailServiceImpl extends SuperServiceImpl<FirstMi
             if (CharSequenceUtil.isNotBlank(firstMileDeliveryDetailEntity.getId())) {
                 FirstMileDeliveryDetailEntity old = oldList.stream().filter(obj -> obj.getId().equals(firstMileDeliveryDetailEntity.getId())).findFirst().orElse(null);
                 if (ObjectUtils.isEmpty(old)) {
-                    throw new ServiceException(ApiError.ERROR_NOT_FBA_DELIVERY_DETAIL);
+                    throw new ServiceException(ApiError.FIRST_MILE_SHIPMENT_NOT_FOUND);
                 }
                 operateLogService.addModuleOperateLogByObj(old, firstMileDeliveryDetailEntity, ModuleTypeEnum.FIRST_MILE_DELIVERY.getCode(),mainId,"",String.format("【%s】",old.getSkuNo()));
             }

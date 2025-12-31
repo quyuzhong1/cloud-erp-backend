@@ -229,6 +229,18 @@ public class SoReturnEntity extends BaseEntity<SoReturnEntity> {
     @TableField("return_logistic_code")
     private String returnLogisticCode;
 
+    /**
+     * 第三方编号
+     */
+    @TableField("third_code")
+    private String thirdCode;
+
+    /**
+     * 平台订单号
+     */
+    @TableField("platform_order_code")
+    private String platformOrderCode;
+
     public static final String APPROVE_STATUS = "approve_status";
 
     public static final String CODE = "code";

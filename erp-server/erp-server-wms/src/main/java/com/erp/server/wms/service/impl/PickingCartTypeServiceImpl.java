@@ -2,7 +2,6 @@ package com.erp.server.wms.service.impl;
 
 
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -46,7 +45,7 @@ public class PickingCartTypeServiceImpl extends SuperServiceImpl<PickingCartType
     @Override
     public Boolean batchUpdate(List<PickingCartTypeDTO.BatchUpdateDTO> list) {
         if (CollectionUtils.isEmpty(list)) {
-            throw new ServiceException(ApiError.TIME_NOT_NULL,"拣货车类型");
+            throw new ServiceException(ApiError.COMMON_PARAM_TIME_REQUIRED,"拣货车类型");
         }
 
         Map<String, List<PickingCartTypeDTO.BatchUpdateDTO>> map = list.stream().collect(Collectors.groupingBy(PickingCartTypeDTO.BatchUpdateDTO::getName));

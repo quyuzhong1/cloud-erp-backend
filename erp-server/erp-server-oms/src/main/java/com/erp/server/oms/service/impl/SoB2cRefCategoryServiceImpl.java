@@ -149,7 +149,7 @@ public class SoB2cRefCategoryServiceImpl extends SuperServiceImpl<SoB2cRefCatego
         }
         List<OrderCategoryDetailEntity> orderCategoryDetailList = orderCategoryDetailService.listByIds(categoryIdList);
         if (CollectionUtils.isEmpty(orderCategoryDetailList)) {
-            throw new ServiceException(ApiError.ERROR_SO_B2C_REF_CATEGORY_NOT_EXIST);
+            throw new ServiceException(ApiError.SO_B2C_CATEGORY_NOT_FOUND);
         }
         for (SoB2cRefCategoryEntity entity : soB2cRefCategoryList) {
             String categoryName = orderCategoryDetailList.stream().filter(obj -> obj.getId().equals(entity.getCategoryId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");

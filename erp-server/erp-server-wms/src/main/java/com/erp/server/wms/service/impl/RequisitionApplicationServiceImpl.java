@@ -6,7 +6,6 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
 import com.alibaba.fastjson2.JSONObject;
@@ -260,7 +259,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
     public Boolean update(RequisitionApplicationDTO.UpdateDTO updateDTO) {
         RequisitionApplicationEntity old = super.getById(updateDTO.getId());
         if (Objects.isNull(old)){
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "要货申请单");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "要货申请单");
         }
         RequisitionApplicationEntity requisitionApplicationEntity =  BeanMapperUtils.map(RequisitionApplicationEntity.class, updateDTO);
         if (!Objects.equals(old.getDeliveryType(),updateDTO.getDeliveryType())){
@@ -360,7 +359,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         List<RequisitionApplicationDTO.HandleListDTO> list = baseMapper.handleList(ids);
         long count = list.stream().filter(req -> !RequisitionApplicationStatusEnum.WAIT_HANDLE.getStatus().equals(req.getStatus())).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.WAIT_HANDLE_HANDLE);
+            throw new ServiceException(ApiError.FIRST_MILE_SHIPMENT_WAIT_HANDLE_ONLY);
         }
 
         //查询产品信息
@@ -669,7 +668,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         //字段映射处理
         for (RequisitionApplicationDTO.FinishListDTO finishListDTO : list) {
             if (!RequisitionApplicationStatusEnum.HANDLE_ING.getStatus().equals(finishListDTO.getStatus())) {
-                throw new ServiceException(ApiError.HANDLE_ING_FINISH, finishListDTO.getSourceCode());
+                throw new ServiceException(ApiError.FIRST_MILE_SHIPMENT_HANDLE_ING_FINISH_ONLY, finishListDTO.getSourceCode());
             }
 
             //产品信息
@@ -700,7 +699,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
     public Boolean finishSave(List<RequisitionApplicationDTO.FinishListDTO> list) {
         long countQty = list.stream().mapToInt(RequisitionApplicationDTO.FinishListDTO::getPickingQty).sum();
         if (countQty <= 0) {
-            throw new ServiceException(ApiError.ERROR_99106);
+            throw new ServiceException(ApiError.SO_PICKLIST_TOTAL_QTY_ZERO_FORBIDDEN);
         }
         List<String> raIds = list.stream().map(req -> req.getSourceId()).distinct().collect(Collectors.toList());
         //根据调出调入仓id查询仓库信息
@@ -847,7 +846,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                         && !RequisitionApplicationStatusEnum.HANDLE.getStatus().equals(req.getStatus()))
                 .count();
         if (count > 0) {
-            throw new ServiceException(ApiError.HANDLE_ING_OR_HANDLE_IS_PRINT_PICKING);
+            throw new ServiceException(ApiError.FIRST_MILE_SHIPMENT_HANDLE_PRINT_PICKING_ALLOWED);
         }
 
         List<RequisitionApplicationDetailEntity> requisitionApplicationDetailEntities = requisitionApplicationDetailService.listByMainIds(ids);
@@ -993,7 +992,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
             transferInfoService.requisitionApplicationCancelProcess(entity.getCode(), SourceTypeEnum.REQUISITION_APPLICATION_FINISH.getCode());
             updateApproveStatus(id, RequisitionApplicationStatusEnum.HANDLE_ING.getStatus());
         } else {
-            throw new ServiceException(ApiError.WAIT_HANDLE_IS_CANCEL_PROCESS);
+            throw new ServiceException(ApiError.BILL_WAIT_HANDLE_CANCEL_PROCESS_ALLOWED);
         }
         log.info("撤销 开始修改要货申请状态，id：【{}】", id);
 
@@ -1042,7 +1041,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         RequisitionApplicationEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到要货申请单数据"));
         // 只有待提交数据允许删除
         if (!Objects.equals(RequisitionApplicationStatusEnum.WAIT_SUBMIT.getCode(), entity.getStatus())) {
-            throw new ServiceException(ApiError.ERROR_1043);
+            throw new ServiceException(ApiError.BILL_DELETE_STATUS_NOT_ALLOWED);
         }
         List<RequisitionApplicationChangeEntity> changeEntityList = requisitionApplicationChangeService.listNotHandleByBusinessIds(Collections.singletonList(id));
         if(CollectionUtils.isNotEmpty(changeEntityList)){
@@ -1073,7 +1072,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
     public List<RequisitionApplicationDTO.ChildViewDTO> listChildBySku(RequisitionApplicationDTO.ChildParamDTO dto) {
         List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(Collections.singletonList(dto.getSkuId()));
         if (CollectionUtils.isEmpty(skuVOList)) {
-            throw new ServiceException(ApiError.ERROR_95107);
+            throw new ServiceException(ApiError.PRODUCT_SKU_NOT_FOUND);
         }
 
         //查询历史子件信息
@@ -1224,7 +1223,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         List<RequisitionApplicationDTO.GenerateDeliverViewDTO> list = baseMapper.generateDeliverView(ids);
         long count = list.stream().filter(e -> !RequisitionApplicationStatusEnum.HANDLE.getCode().equals(e.getStatus())).count();
         if (count > 1) {
-            throw new ServiceException(ApiError.ERROR_99104);
+            throw new ServiceException(ApiError.SO_DEMAND_REQ_ALREADY_PUSHED_DELIVERY);
         }
         if(list.stream().anyMatch(v->RequisitionApplicationTypeEnum.FBA.getCode().equals(v.getType()))){
             throw new ServiceException("FBA要货申请不支持批量下推");
@@ -1232,7 +1231,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         List<FirstMileDeliveryEntity> entities = firstMileDeliveryService.listBySourceIds(ids);
         boolean invalidStatus = entities.stream().anyMatch(FirstMileDeliveryEntity::getInvalidStatus);
         if (CollectionUtils.isNotEmpty(entities) && Boolean.FALSE.equals(invalidStatus)) {
-            throw new ServiceException(ApiError.ERROR_99104);
+            throw new ServiceException(ApiError.SO_DEMAND_REQ_ALREADY_PUSHED_DELIVERY);
         }
 
         //根据skuId查询拥有的子sku
@@ -1308,7 +1307,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         }
         List<RequisitionApplicationChangeEntity> changeEntityList = requisitionApplicationChangeService.listNotHandleByBusinessIds(Collections.singletonList(id));
         if(CollectionUtils.isNotEmpty(changeEntityList)){
-            return BatchResultDTO.fail(entity.getId(), entity.getCode(), StrUtil.format("存在待处理的要货申请变更单【{}】",changeEntityList.stream().map(RequisitionApplicationChangeEntity::getCode).collect(Collectors.toList())));
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), CharSequenceUtil.format("存在待处理的要货申请变更单【{}】",changeEntityList.stream().map(RequisitionApplicationChangeEntity::getCode).collect(Collectors.toList())));
         }
         detailList = detailList.stream().filter(obj -> Arrays.asList("1849287474372714497","1849287474376908802","1849287474376908803","1849287474385297410","1849287474385297411","1849287474385297412").contains(obj.getId())).collect(Collectors.toList());
         if (CollectionUtils.isEmpty(detailList)) {
@@ -1332,7 +1331,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         page1.setOptimizeCountSql(false);
         Page<RequisitionApplicationDTO.ListDTO> page = baseMapper.listExport(page1, dto.getParams());
         if(CollUtil.isEmpty(page.getRecords())) {
-            throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
+            throw new ServiceException(ApiError.FILE_EXPORT_DATA_EMPTY);
         }
         // 数据处理
         fillList(page.getRecords());
@@ -1536,7 +1535,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         CfgRulePickingStagingEntity pickingStaging = warehouseStagingList.stream()
                 .filter(staging -> PickingBillTypeEnum.firstLegs().contains(staging.getBillType()))
                 .filter(staging -> staging.getWarehouseId().equals(detailEntity.getToWarehouseId()))
-                .findFirst().orElseThrow(() -> new ServiceException(ApiError.ERROR_99088));
+                .findFirst().orElseThrow(() -> new ServiceException(ApiError.WH_LOCATION_DEFAULT_STAGING_NOT_FOUND));
         List<RequisitionApplicationDetailEntity> updateDetailList = new ArrayList<>();
 
         for (FbaShipmentEntity fbaShipmentEntity : fbaShipmentEntityList) {
@@ -1697,7 +1696,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         if (ObjectUtil.isNotEmpty(transferInfoEntity)) {
             List<TransferInfoDetailEntity> transferInfoDetailList = transferInfoDetailService.listByMainId(transferInfoEntity.getId());
             if (CollectionUtils.isEmpty(transferInfoDetailList)) {
-                throw new ServiceException(ApiError.ERROR_99047);
+                throw new ServiceException(ApiError.WH_TRANSFER_DIRECT_NOT_FOUND);
             }
             //出冻结库存
             List<VirtualInventoryStockDTO.OutInStockDTO> outList = new ArrayList<>();
@@ -1758,7 +1757,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
 
                 RequisitionApplicationDetailEntity applicationDetailEntity = detailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), detailEntity.getSourceDetailId())).findFirst().orElse(null);
                 if (ObjectUtil.isEmpty(applicationDetailEntity)) {
-                    throw new ServiceException(ApiError.ERROR_NOT_REQUISITION_APPLICATION);
+                    throw new ServiceException(ApiError.FIRST_MILE_SHIPMENT_REQ_NOT_FOUND);
                 }
                 //虚拟仓库存随调出仓出
                 if (!CharSequenceUtil.equals(applicationDetailEntity.getFromWarehouseId(),detailEntity.getOutWarehouseId())) {
@@ -1766,7 +1765,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                 }
                 TransferInfoEntity transferInfoEntity = handleList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), detailEntity.getMainId())).findFirst().orElse(null);
                 if (ObjectUtil.isEmpty(transferInfoEntity)) {
-                    throw new ServiceException(ApiError.ERROR_99047);
+                    throw new ServiceException(ApiError.WH_TRANSFER_DIRECT_NOT_FOUND);
                 }
                 //调拨操作请求实体
                 VirtualInventoryStockDTO.OutInStockDTO outInStockDTO = new VirtualInventoryStockDTO.OutInStockDTO();
@@ -1893,7 +1892,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                     CfgRulePickingStagingEntity pickingStaging = warehouseStagingList.stream()
                             .filter(staging -> PickingBillTypeEnum.firstLegs().contains(staging.getBillType()))
                             .filter(staging -> staging.getWarehouseId().equals(detailEntity.getToWarehouseId()))
-                            .findFirst().orElseThrow(() -> new ServiceException(ApiError.ERROR_99088));
+                            .findFirst().orElseThrow(() -> new ServiceException(ApiError.WH_LOCATION_DEFAULT_STAGING_NOT_FOUND));
                     detailAddDto.setWarehouseLocation(pickingStaging.getWarehouseLocation());
                 } else {
                     detailAddDto.setWarehouseLocation("");
@@ -1923,13 +1922,13 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         //判断是否存在下游单据，已有下游单据就不能再生成拣货单
         FirstMileDeliveryEntity firstMileDelivery = firstMileDeliveryService.findBySourceId(page.getParams().getId());
         if (ObjectUtil.isNotEmpty(firstMileDelivery)) {
-            throw new ServiceException(ApiError.ERROR_99110, "头程发货单");
+            throw new ServiceException(ApiError.SO_PICKLIST_ALREADY_EXISTS, "头程发货单");
         }
         List<SkuVO> ignoreInventorySkuList = plmTaskFeign.getNoInventorySku();
         List<String> ignoreInventorySkus = ignoreInventorySkuList.stream().map(SkuVO::getSkuId).collect(Collectors.toList());
         IPage<RequisitionApplicationDTO.PickingViewDTO> picking = baseMapper.pagingPicking(new Page<>(page.getCurrPage(), page.getPageSize()), page.getParams(), ignoreInventorySkus);
         if(CollUtil.isEmpty(picking.getRecords())){
-            throw new ServiceException(ApiError.ERROR_92167);
+            throw new ServiceException(ApiError.SO_PICKLIST_NOT_PROCESSED_FORBIDDEN);
         }
         return new PagingVO<>(picking);
     }
@@ -1938,7 +1937,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
     public List<WarehouseLocationMoveDTO.GenPickToSkuMove> generatePickingList(RequisitionApplicationDTO.GeneratePickingDTO picking) {
         RequisitionApplicationEntity application = getById(picking.getId());
         if (ObjectUtil.isEmpty(application)) {
-            throw new ServiceException(ApiError.ERROR_BILL_NOT_EXIST);
+            throw new ServiceException(ApiError.BILL_NOT_EXIST);
         }
         if (!RequisitionApplicationStatusEnum.getPickingList().contains(application.getStatus())) {
             throw new ServiceException("处理中才能下推拣货单");
@@ -1950,7 +1949,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         //判断sku是否被他人生成了拣货单
         boolean checkUnpickedQty = details.stream().allMatch(detail -> (detail.getApproveQty() - detail.getPickingQty()) > 0);
         if (Boolean.FALSE.equals(checkUnpickedQty)) {
-            throw new ServiceException(ApiError.UNPICKED_QUANTITY_SHORTAGE);
+            throw new ServiceException(ApiError.SO_UNPICKED_QUANTITY_SHORTAGE);
         }
         details = details.stream().filter(v->v.getApproveQty()>0).collect(Collectors.toList());
         if(CollectionUtils.isEmpty(details)){
@@ -2113,7 +2112,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         String requisitionId = pagingParamDTO.getId();
         RequisitionApplicationEntity requisitionApplicationEntity = getById(requisitionId);
         if (ObjectUtil.isEmpty(requisitionApplicationEntity)) {
-            throw new ServiceException(ApiError.ERROR_BILL_NOT_EXIST);
+            throw new ServiceException(ApiError.BILL_NOT_EXIST);
         }
         if(!SourceTypeEnum.DELIVERY_PLAN.getCode().equals(requisitionApplicationEntity.getSourceType())){
             throw new ServiceException("要货申请不是发货计划下推");
@@ -2240,7 +2239,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         Pair<List<CfgRulePickingDTO.CfgRulePickingInventoryDTO>, List<WarehouseLocationEntity>> gtPair = Pair.create(cfgRulePickingInventoryGtList, listListPair.getSecond());
         ruleOrderMatchResult = cfgRulePickingService.getSoB2CRuleOrderMatchResult(executionData, gtPair);
         if (ObjectUtil.isEmpty(ruleOrderMatchResult)) {
-            throw new ServiceException(ApiError.NOT_EXIST, "拣货规则");
+            throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC, "拣货规则");
         }
         List<LocationInventoryResultDTO> first = ruleOrderMatchResult.getFirst();
         addDTO.setRuleOrderMatchResult(first);
@@ -2327,21 +2326,21 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         List<OperateLogDTO.AddModuleOperateLogDTO> logList = new ArrayList<>();
         if (CollectionUtils.isNotEmpty(addList)) {
             addList.forEach(v->{
-                logList.add(new OperateLogDTO.AddModuleOperateLogDTO(StrUtil.format("要货申请变更单新增明细sku{}",v.getSkuNo()),ModuleTypeEnum.REQUISITION_APPLICATION.getCode(),v.getMainId(),"新增sku"));
+                logList.add(new OperateLogDTO.AddModuleOperateLogDTO(CharSequenceUtil.format("要货申请变更单新增明细sku{}",v.getSkuNo()),ModuleTypeEnum.REQUISITION_APPLICATION.getCode(),v.getMainId(),"新增sku"));
             });
             requisitionApplicationDetailService.saveBatch(addList);
         }
 
         if (CollectionUtils.isNotEmpty(updateList)) {
             updateList.forEach(v->{
-                logList.add(new OperateLogDTO.AddModuleOperateLogDTO(StrUtil.format("要货申请变更单修改明细sku【{}】数量，从{}修改为{}",v.getSkuNo(),v.getChangeBeforeQty(),v.getRequisitionQty()),ModuleTypeEnum.REQUISITION_APPLICATION.getCode(),v.getMainId(),"修改sku"));
+                logList.add(new OperateLogDTO.AddModuleOperateLogDTO(CharSequenceUtil.format("要货申请变更单修改明细sku【{}】数量，从{}修改为{}",v.getSkuNo(),v.getChangeBeforeQty(),v.getRequisitionQty()),ModuleTypeEnum.REQUISITION_APPLICATION.getCode(),v.getMainId(),"修改sku"));
             });
             requisitionApplicationDetailService.updateBatchById(updateList);
         }
 
         if (CollectionUtils.isNotEmpty(deleteList)) {
             deleteList.forEach(v->{
-                logList.add(new OperateLogDTO.AddModuleOperateLogDTO(StrUtil.format("删除sku{}",v.getSkuNo()),ModuleTypeEnum.REQUISITION_APPLICATION.getCode(),v.getMainId(),"删除明细"));
+                logList.add(new OperateLogDTO.AddModuleOperateLogDTO(CharSequenceUtil.format("删除sku{}",v.getSkuNo()),ModuleTypeEnum.REQUISITION_APPLICATION.getCode(),v.getMainId(),"删除明细"));
             });
             List<String> deleteIds = deleteList.stream().map(v->v.getId()).collect(Collectors.toList());
             deleteList.forEach(v->v.setVirtualFrozenQty(0));
@@ -2553,7 +2552,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
     private void validateSubmit(RequisitionApplicationEntity entity) {
         // 待提交允许提交
         if (!entity.getStatus().equals(RequisitionApplicationStatusEnum.WAIT_SUBMIT.getStatus())) {
-            throw new ServiceException(ApiError.IS_SUBMIT_IN_SUBMIT);
+            throw new ServiceException(ApiError.BILL_SUBMIT_ALLOWED_PENDING_ONLY);
         }
         return;
     }
@@ -2745,7 +2744,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
             CfgRulePickingStagingEntity pickingStaging = warehouseStagingList.stream()
                     .filter(staging -> PickingBillTypeEnum.firstLegs().contains(staging.getBillType()))
                     .filter(staging -> staging.getWarehouseId().equals(detailEntity.getToWarehouseId()))
-                    .findFirst().orElseThrow(() -> new ServiceException(ApiError.ERROR_99088));
+                    .findFirst().orElseThrow(() -> new ServiceException(ApiError.WH_LOCATION_DEFAULT_STAGING_NOT_FOUND));
             // 子件需要拆分
             if (CollectionUtils.isNotEmpty(sonSkuList)) {
                 for (BomChildrenSkuDTO bomChildrenSku : sonSkuList) {
@@ -2853,7 +2852,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         try {
             new ExcelPrintUtils().patchExport(detailDTOS, response, sb.toString(), excelPath);
         } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_1015);
+            throw new ServiceException(ApiError.FILE_EXPORT_FAILED);
         }
     }
 
@@ -2864,16 +2863,16 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
             EasyExcel.read(excelFile.getInputStream(), RequisitionApplicationDetailExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (IOException e) {
             log.error("导入错误！", e);
-            throw new ServiceException(ApiError.ERROR_95124);
+            throw new ServiceException(ApiError.FILE_DATA_IMPORT_FAILED);
         } catch (ExcelCommonException e) {
             log.error("导入格式错误！", e);
-            throw new ServiceException(ApiError.ERROR_1016);
+            throw new ServiceException(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX);
         }
         List<RequisitionApplicationDTO.FbaBindShipmentViewDetailDTO> excelDateList = excelListenerUtil.getSuccessList();
         if (CollectionUtils.isEmpty(excelListenerUtil.getSuccessList()) && CollUtil.isEmpty(excelListenerUtil.getErrorList())) {
-            throw new ServiceException(ApiError.ERROR_95123);
+            throw new ServiceException(ApiError.FILE_DATA_REQUIRED);
         } else if (excelDateList.size() > 5000) {
-            throw new ServiceException(ApiError.ERROR_EXCEL_IMPORT_SIZE);
+            throw new ServiceException(ApiError.FILE_EXCEL_IMPORT_SIZE);
         }
         List<RequisitionApplicationDetailExcelDTO> errorList = excelListenerUtil.getErrorList();
         RequisitionApplicationDTO.ImportDTO importDTO = new RequisitionApplicationDTO.ImportDTO();
@@ -2948,7 +2947,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
     public void printFnskuBillConfirm(RequisitionApplicationDTO.PrintFnskuBillConfirmDTO dto, HttpServletResponse response) {
         List<RequisitionApplicationDTO.PrintFnskuDetailDTO> details = dto.getDetails();
         if(CollUtil.isEmpty(details)){
-            throw new ServiceException(ApiError.ERROR_1041,"FNSKU标签");
+            throw new ServiceException(ApiError.BILL_DETAIL_REQUIRED,"FNSKU标签");
         }
         int totalPrintNum = details.stream()
                 .mapToInt(detail -> Optional.ofNullable(detail.getPrintNum()).orElse(0))
@@ -2976,7 +2975,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
 
         } catch (Exception e) {
             e.printStackTrace();
-            throw new ServiceException(ApiError.ERROR_92249);
+            throw new ServiceException(ApiError.LOGISTICS_FNSKU_LABEL_PRINT_FAILED);
         }
     }
 
@@ -3167,7 +3166,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
             //获取仓库暂存仓位
             CfgRulePickingStagingEntity stagingEntity = cfgRulePickingStagingService.getByWarehouseId(detailEntity.getFromWarehouseId(),"FBA");
             if (Objects.isNull(stagingEntity)){
-                throw new ServiceException(ApiError.ERROR_WAREHOUSE_NO_STAGING, detailEntity.getFromWarehouseName());
+                throw new ServiceException(ApiError.WH_LOCATION_STAGING_NOT_FOUND, detailEntity.getFromWarehouseName());
             }
             InOutStockDTO inOutStockDTO = new InOutStockDTO();
             inOutStockDTO.setWarehouseId(detailEntity.getFromWarehouseId());
@@ -3273,7 +3272,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
     public void generateThirdDelivery(RequisitionApplicationDTO.GenerateThirdDelivery dto) {
         RequisitionApplicationEntity entity = this.getById(dto.getId());
         if (Objects.isNull(entity)){
-            throw new ServiceException(ApiError.NOT_EXIST_BILL,"要货申请单");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE,"要货申请单");
         }
         if (!ThirdDeliveryTypeEnum.THIRD_TO_THIRD.getCode().equals(entity.getDeliveryType())){
             throw new ServiceException("发货类型（三方仓发三方仓）类型的要货申请单才能下推FBA发货单");
@@ -3281,11 +3280,11 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         List<RequisitionApplicationDetailEntity> detailEntityList = requisitionApplicationDetailService.listByMainIds(Collections.singletonList(dto.getId()));
         WmsDeliveryPlanEntity planEntity = wmsDeliveryPlanService.getById(entity.getSourceId());
         if (Objects.isNull(planEntity)){
-            throw new ServiceException(ApiError.NOT_EXIST_BILL,"发货计划单");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE,"发货计划单");
         }
         List<FbaShipmentEntity> shipmentEntityList = fbaShipmentService.listByCodes(Collections.singletonList(dto.getFbaShipmentCode()));
         if (CollUtil.isEmpty(shipmentEntityList)){
-            throw new ServiceException(ApiError.NOT_EXIST_BILL,"FBA货件");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE,"FBA货件");
         }
         if (shipmentEntityList.size() > 1){
             throw new ServiceException("FBA货件【"+dto.getFbaShipmentCode()+"】存在多个货件信息");
@@ -3349,7 +3348,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
             CfgRulePickingStagingEntity pickingStaging = warehouseStagingList.stream()
                     .filter(staging -> PickingBillTypeEnum.firstLegs().contains(staging.getBillType()))
                     .filter(staging -> staging.getWarehouseId().equals(detailEntity.getToWarehouseId()))
-                    .findFirst().orElseThrow(() -> new ServiceException(ApiError.ERROR_99088));
+                    .findFirst().orElseThrow(() -> new ServiceException(ApiError.WH_LOCATION_DEFAULT_STAGING_NOT_FOUND));
             SkuVO skuVO = skuVOList.stream().filter(v->v.getSkuId().equals(e.getSkuId())).findFirst().orElse(new SkuVO());
             FirstMileDeliveryDetailDTO.AddDTO detailAddDto = RequisitionApplicationConverter.INSTANCE.generateFbaDeliverDetailFDD(e,skuVO);
             detailAddDto.setFbaShipmentCode(shipmentEntity.getCode());

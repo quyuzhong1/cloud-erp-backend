@@ -40,7 +40,6 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.dmp.dto.AdsPushTaskDTO;
 import com.erp.model.dmp.dto.DmpOutputTaskRecordDTO;
-import com.erp.model.dmp.dto.DmpOutputTaskRecordDTO.AddOutputBlackDTO;
 import com.erp.model.dmp.dto.DmpOutputTaskRecordDTO.ExpotParamDTO;
 import com.erp.model.dmp.dto.DmpOutputTaskRecordDTO.PagingParamDTO;
 import com.erp.model.dmp.dto.DmpOutputTaskRecordDTO.TabListDTO;
@@ -115,7 +114,7 @@ public class AdsPushTaskServiceImpl extends SuperServiceImpl<AdsPushTaskMapper, 
     @Override
     public Boolean update(AdsPushTaskDTO.UpdateDTO addOrUpdateDTO) {
         AdsPushTaskEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "ads推送任务"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "ads推送任务"));
         AdsPushTaskEntity adsPushTaskEntity =  BeanMapperUtils.map(AdsPushTaskEntity.class, addOrUpdateDTO);
 
         // 数据处理

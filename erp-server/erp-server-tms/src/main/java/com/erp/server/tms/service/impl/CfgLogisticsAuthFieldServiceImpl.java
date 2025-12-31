@@ -52,7 +52,7 @@ public class CfgLogisticsAuthFieldServiceImpl extends SuperServiceImpl<CfgLogist
     @Override
     public Boolean update(CfgLogisticsAuthFieldDTO.UpdateDTO updateDTO) {
         CfgLogisticsAuthFieldEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "物流商授权字段配置单"));
+        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "物流商授权字段配置单"));
         CfgLogisticsAuthFieldEntity cfgLogisticsAuthFieldEntity = BeanMapperUtils.map(CfgLogisticsAuthFieldEntity.class, updateDTO);
 
         boolean save = super.updateById(cfgLogisticsAuthFieldEntity);

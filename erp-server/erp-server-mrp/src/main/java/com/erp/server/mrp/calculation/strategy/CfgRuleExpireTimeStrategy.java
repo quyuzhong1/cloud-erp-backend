@@ -79,7 +79,7 @@ public class CfgRuleExpireTimeStrategy implements CfgRuleSettingStrategy<CfgRule
         List<CfgRuleLogisticsDTO.LogisticsResultDTO> allLogistics = getAllLogistics(dto, expireTimeId);
         return allLogistics.stream()
                 .max(Comparator.comparing(v -> v.getLogisticsCycleDays() + v.getLogisticsDays()))
-                .orElseThrow(() -> new ServiceException(ApiError.ERROR_LOGISTICS_NOT_EXIST));
+                .orElseThrow(() -> new ServiceException(ApiError.LOGISTICS_CONFIG_NOT_FOUND));
     }
 
     private static List<CfgRuleLogisticsDTO.LogisticsResultDTO> getAllLogistics(CfgRuleExpireTimeDTO.StrategyDTO dto, String expireTimeId) {
@@ -106,7 +106,7 @@ public class CfgRuleExpireTimeStrategy implements CfgRuleSettingStrategy<CfgRule
         List<CfgRuleLogisticsDTO.LogisticsResultDTO> allLogistics = getAllLogistics(dto, expireTimeId);
         return allLogistics.stream()
                 .min(Comparator.comparing(v -> v.getLogisticsCycleDays() + v.getLogisticsDays()))
-                .orElseThrow(() -> new ServiceException(ApiError.ERROR_LOGISTICS_NOT_EXIST));
+                .orElseThrow(() -> new ServiceException(ApiError.LOGISTICS_CONFIG_NOT_FOUND));
     }
 
     private CfgRuleLogisticsDTO.LogisticsResultDTO getLogisticsMaxPriority(CfgRuleExpireTimeDTO.StrategyDTO dto, String expireTimeId) {
@@ -115,7 +115,7 @@ public class CfgRuleExpireTimeStrategy implements CfgRuleSettingStrategy<CfgRule
                 .filter(v -> v.getExpireTimeId().equals(expireTimeId))
                 .filter(v -> v.getPlatformType().equals(dto.getPlatformType()))
                 .min(Comparator.comparing(CfgRuleLogisticsEntity::getIndex))
-                .orElseThrow(() -> new ServiceException(ApiError.ERROR_CFG_RULE_STOCK_UP_NOT_EXIST));
+                .orElseThrow(() -> new ServiceException(ApiError.REPLENISHMENT_STOCK_UP_RULE_CONFIG_NOT_EXIST));
         //获取对应明细数据
         List<CfgRuleLogisticsDetailEntity> cfgRuleLogisticsDetails = dto.getCfgRuleLogisticsDetailList().stream().filter(v -> v.getMainId().equals(entity.getId())).collect(Collectors.toList());
         CfgRuleLogisticsDetailEntity detail = null;

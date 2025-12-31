@@ -21,9 +21,7 @@ import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.dto.SysUserDTO;
 import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.model.wms.dto.*;
-import com.erp.model.wms.dto.excel.SampleBorrowImportExcelDTO;
 import com.erp.model.wms.dto.excel.SampleScrapImportExcelDTO;
-import com.erp.model.wms.entity.SampleBorrowDetailEntity;
 import com.erp.model.wms.entity.SampleScrapDetailEntity;
 import com.erp.model.wms.entity.SampleScrapInfoEntity;
 import com.erp.model.wms.entity.WmsAttachmentEntity;
@@ -153,7 +151,7 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
         //不允许重复添加
         long sampleLedgerIdCount = detailList.stream().map(SampleScrapDetailDTO.AddDTO::getSampleLedgerId).distinct().count();
         if(sampleLedgerIdCount != detailList.size()){
-            throw new ServiceException(ApiError.ERROR_REPEAT_SKU);
+            throw new ServiceException(ApiError.PRODUCT_SKU_DUPLICATE);
         }
         List<SampleScrapDetailEntity> sampleScrapDetailEntities = BeanMapperUtils.copyList(SampleScrapDetailEntity.class, detailList);
         List<String> skuIds = sampleScrapDetailEntities.stream().map(SampleScrapDetailEntity::getSkuId).distinct().collect(Collectors.toList());
@@ -183,14 +181,14 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
         String scrapUserId = sampleScrapInfoEntity.getScrapUserId();
         SysUserDTO sysUserDTO = sysUserFeign.getSysUserById(scrapUserId);
         if(Objects.isNull(sysUserDTO)){
-            throw new ServiceException(ApiError.USER_NOT_EXIST);
+            throw new ServiceException(ApiError.AUTH_CREDENTIALS_INVALID);
         }
         sampleScrapInfoEntity.setScrapUserName(sysUserDTO.getUserName());
 
         String scrapDeptId = sampleScrapInfoEntity.getScrapDeptId();
         List<SysDepartmentEntity> deptByIds = sysUserFeign.getDeptByIds(Arrays.asList(scrapDeptId));
         if(CollUtil.isEmpty(deptByIds)){
-            throw new ServiceException(ApiError.ERROR_9029);
+            throw new ServiceException(ApiError.COMMON_DEPT_NOT_FOUND);
         }
         sampleScrapInfoEntity.setScrapDeptName(deptByIds.get(0).getName());
     }
@@ -232,10 +230,10 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
     @Override
     public Boolean update(SampleScrapInfoDTO.UpdateDTO addOrUpdateDTO) {
         SampleScrapInfoEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "样品报废单"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "样品报废单"));
         // 待提交和审核不通过允许修改
         if (!ApproveStatusEnum.allowUpdateStatus(old.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_1029);
+            throw new ServiceException(ApiError.BILL_UPDATE_STATUS_NOT_ALLOWED);
         }
         // 校验明细不能为空
         if (CollUtil.isEmpty(addOrUpdateDTO.getDetailList())) {
@@ -279,7 +277,7 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
         //不允许重复添加
         long sampleLedgerIdCount = detailList.stream().map(SampleScrapDetailDTO.UpdateDTO::getSampleLedgerId).distinct().count();
         if(sampleLedgerIdCount != detailList.size()){
-            throw new ServiceException(ApiError.ERROR_REPEAT_SKU);
+            throw new ServiceException(ApiError.PRODUCT_SKU_DUPLICATE);
         }
         List<SampleScrapDetailEntity> oldList = sampleScrapDetailService.listByMainId(sampleScrapInfoEntity.getId());
 
@@ -528,12 +526,12 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
     public BatchResultDTO approve(ApproveOneDTO dto, ClientTypeEnum clientType) {
         ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(dto.getType());
         if(Objects.equals(approveType, ApproveTypeEnum.REJECT) && StrUtils.isEmpty(dto.getComment())) {
-            throw new ServiceException(ApiError.REJECT_COMMENT_NOT_EMPTY);
+            throw new ServiceException(ApiError.WF_REJECT_COMMENT_REQUIRED);
         }
         SampleScrapInfoEntity entity = getById(dto.getId());
         // 审核中的数据允许审核
         if(!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
-            throw new ServiceException(ApiError.ERROR_98006);
+            throw new ServiceException(ApiError.WF_APPROVE_ALLOWED_STATUS_ONLY);
         }
 
         // 使用分布式锁进行数量校验
@@ -565,7 +563,7 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
         ApiResult<ProcessManagementDTO.ApproveResultDTO> approveResult = workflowFeign.approve(approveDTO);
         Integer code = approveResult.getCode();
         if (200 != code) {
-            throw new ServiceException(ApiError.ERROR_94006);
+            throw new ServiceException(ApiError.WF_APPROVE_FAILED);
         }
         ProcessManagementDTO.ApproveResultDTO data = approveResult.getData();
         if (ObjectUtil.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()) {
@@ -609,7 +607,7 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
     private Boolean validateDisApprove(SampleScrapInfoEntity entity) {
         // 已审核支持反审核
         if (!Objects.equals(entity.getApproveStatus().getStatus(), ApproveStatusEnum.APPROVE.getStatus())) {
-            throw new ServiceException(ApiError.ERROR_98014);
+            throw new ServiceException(ApiError.BILL_REVERSE_APPROVAL_ALLOWED_APPROVED_ONLY);
         }
         return true;
     }
@@ -651,11 +649,11 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
         SampleScrapInfoEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到样品报废单数据"));
         // 只有待提交、审核不通过数据允许作废
         if (!(Objects.equals(ApproveStatusEnum.WAIT_SUBMIT, entity.getApproveStatus()) || Objects.equals(ApproveStatusEnum.REJECT, entity.getApproveStatus()))) {
-            throw new ServiceException(ApiError.ERROR_98005);
+            throw new ServiceException(ApiError.BILL_VOID_ALLOWED_STATUS_ONLY);
         }
         //已作废不支持作废
         if(entity.getInvalidStatus()){
-            throw new ServiceException(ApiError.ERROR_98012);
+            throw new ServiceException(ApiError.BILL_ALREADY_VOID_CANNOT_VOID_AGAIN);
         }
         log.info("作废 开始作废样品报废单数据，id：【{}】", id);
         lambdaUpdate()
@@ -680,7 +678,7 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
         SampleScrapInfoEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到样品报废单数据"));
         // 只有审核中的单据允许撤销
         if (!Objects.equals(entity.getApproveStatus().getStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())) {
-            throw new ServiceException(ApiError.ERROR_98007);
+            throw new ServiceException(ApiError.WF_REVOKE_PROCESS_ALLOWED_STATUS_ONLY);
         }
         log.info("撤销 开始撤销流程，id：【{}】",id);
 
@@ -917,7 +915,7 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
             listApiResult = workflowFeign.curApprover(dtoList);
             Integer code = listApiResult.getCode();
             if (200 != code) {
-                throw new ServiceException(new ApiResult(ApiError.DEFAULT.code, listApiResult.getMsg()));
+                throw new ServiceException(new ApiResult(ApiError.HTTP_UNKNOWN.getCode(), listApiResult.getMsg()));
             }
         }
         // 属性赋值
@@ -947,7 +945,7 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
     private void validateSubmit(SampleScrapInfoEntity entity) {
         // 待提交或审核不通过并且未作废允许提交
         if(!ApproveStatusEnum.allowUpdateStatus(entity.getApproveStatus()) || entity.getInvalidStatus()) {
-            throw new ServiceException(ApiError.ERROR_98010);
+            throw new ServiceException(ApiError.BILL_SUBMIT_ALLOWED_STATUS_ONLY);
         }
         validateQty(entity);
     }
@@ -1085,7 +1083,7 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
             EasyExcel.read(new ByteArrayInputStream(bytes), SampleScrapImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (ExcelCommonException e) {
             log.error("导入格式错误！", e);
-            throw new ServiceException(ApiError.ERROR_1016);
+            throw new ServiceException(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX);
         }
         BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
         importResultDTO.setTaskId(dto.getTaskId());
@@ -1160,16 +1158,16 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
                 }
                 //关联台账
                 if (CollUtil.isEmpty(skuAvailableQtyDTOS)) {
-                    errorMsg = errorMsg + indexTemp + "、" + ApiError.ERROR_SAMPLE_LEDGER_NOT_EXIST.msg + "；";
+                    errorMsg = errorMsg + indexTemp + "、" + ApiError.SAMPLE_LEDGER_NOT_EXIST.getMsg() + "；";
                 } else {
                     SampleLedgerDTO.SkuAvailableQtyDTO skuAvailableQtyDTO = skuAvailableQtyDTOS.stream().filter(e -> e.getSkuId().equals(importDTO.getSkuId()) && e.getUseUserName().equals(importDTO.getUseUserName())).findFirst().orElse(null);
                     if (Objects.isNull(skuAvailableQtyDTO)) {
-                        errorMsg = errorMsg + indexTemp + "、" + ApiError.ERROR_SAMPLE_LEDGER_NOT_EXIST.msg + "；";
+                        errorMsg = errorMsg + indexTemp + "、" + ApiError.SAMPLE_LEDGER_NOT_EXIST.getMsg() + "；";
                     } else {
                         Integer ledgerQty = Objects.isNull(skuAvailableQtyDTO.getLedgerQty()) ? 0 : skuAvailableQtyDTO.getLedgerQty();
                         Integer scrapQty = Objects.isNull(importDTO.getScrapQty()) ? 0 : Integer.valueOf(importDTO.getScrapQty());
                         if (scrapQty.compareTo(ledgerQty) > 0) {
-                            errorMsg = errorMsg + indexTemp + "、" + CharSequenceUtil.format(ApiError.ERROR_SAMPLE_AVAILABLE_QTY.msg, importDTO.getSkuNo(), "报废") + "；";
+                            errorMsg = errorMsg + indexTemp + "、" + CharSequenceUtil.format(ApiError.SAMPLE_AVAILABLE_QTY_EXCEEDS_LEDGER.getMsg(), importDTO.getSkuNo(), "报废") + "；";
                         } else {
                             importDTO.setSampleLedgerId(skuAvailableQtyDTO.getSampleLedgerId());
                             //防止超量借用

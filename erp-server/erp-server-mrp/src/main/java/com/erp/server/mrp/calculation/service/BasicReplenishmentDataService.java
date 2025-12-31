@@ -401,11 +401,11 @@ public class BasicReplenishmentDataService {
         CfgSettingDTO newDaysSetting = settings.stream()
                 .filter(v -> v.getKey().equals(CfgSettingEnum.NEW_DAYS.getCode()))
                 .findFirst()
-                .orElseThrow(() -> new ServiceException(ApiError.ERROR_CFG_RULE_NEWS_NOT_EXIST));
+                .orElseThrow(() -> new ServiceException(ApiError.REPLENISHMENT_NEW_PRODUCT_RULE_CONFIG_NOT_EXIST));
         CfgSettingDTO replenishmentDaysSetting = settings.stream()
                 .filter(v -> v.getKey().equals(CfgSettingEnum.REPLENISHMENT_DAYS.getCode()))
                 .findFirst()
-                .orElseThrow(() -> new ServiceException(ApiError.ERROR_CFG_RULE_NEWS_NOT_EXIST));
+                .orElseThrow(() -> new ServiceException(ApiError.REPLENISHMENT_NEW_PRODUCT_RULE_CONFIG_NOT_EXIST));
         CfgSettingDTO.ReplenishmentDays replenishmentDays = JSON.parseObject(replenishmentDaysSetting.getDataJson(), CfgSettingDTO.ReplenishmentDays.class);
         Map<String, List<ReplenishmentSuggestionEntity>> platformSuggestionMap = suggestions.stream()
                 .collect(Collectors.groupingBy(ReplenishmentSuggestionEntity::getPlatform));

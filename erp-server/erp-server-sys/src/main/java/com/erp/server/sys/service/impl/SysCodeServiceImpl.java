@@ -48,7 +48,7 @@ public class SysCodeServiceImpl extends ServiceImpl<SysCodeMapper, SysCodeEntity
             isLock = lock.tryLock(5, TimeUnit.SECONDS);
             log.info("是否获取到分布式锁: {}", isLock);
             if (!isLock) {
-                throw new ServiceException(ApiError.ERROR_1026);
+                throw new ServiceException(ApiError.BILL_DATA_LOCKED);
             }
             SysCodeDTO sysCodeDto = new SysCodeDTO();
             BeanMapperUtils.copy(dto,sysCodeDto);
@@ -59,14 +59,14 @@ public class SysCodeServiceImpl extends ServiceImpl<SysCodeMapper, SysCodeEntity
             sysCode.append(sysCodeDto.getCategory())
                     .append(String.format("%03d",sysCodeDto.getNum()));
             if (StringUtils.isBlank(sysCode)) {
-                throw new ServiceException(ApiError.ERROR_9027);
+                throw new ServiceException(ApiError.COMMON_CODE_GENERATE_FAILED);
             }
             //更新当前顺序码
             updateNumByCode(sysCodeDto.getId(),sysCodeDto.getNum());
             return sysCode.toString();
         } catch (Exception e) {
             log.error("生成单号获取锁异常",e);
-            throw new ServiceException(ApiError.ERROR_1026);
+            throw new ServiceException(ApiError.BILL_DATA_LOCKED);
         } finally {
             //释放锁  锁是否存在，是当前执行线程的锁
             if(lock.isLocked() && lock.isHeldByCurrentThread()){
@@ -86,7 +86,7 @@ public class SysCodeServiceImpl extends ServiceImpl<SysCodeMapper, SysCodeEntity
             isLock = lock.tryLock(5, TimeUnit.SECONDS);
             log.info("是否获取到分布式锁: {}", isLock);
             if (!isLock) {
-                throw new ServiceException(ApiError.ERROR_1026);
+                throw new ServiceException(ApiError.BILL_DATA_LOCKED);
             }
             //生成单号
             getOrSaveSysCode(dto);
@@ -94,14 +94,14 @@ public class SysCodeServiceImpl extends ServiceImpl<SysCodeMapper, SysCodeEntity
             sysCode.append(dto.getCategory())
                     .append(String.format("%02d",dto.getNum()));
             if (StringUtils.isBlank(sysCode)) {
-                throw new ServiceException(ApiError.ERROR_9027);
+                throw new ServiceException(ApiError.COMMON_CODE_GENERATE_FAILED);
             }
             //更新当前顺序码
             updateNumByCode(dto.getId(),dto.getNum());
             return sysCode.toString();
         } catch (Exception e) {
             log.error("生成单号获取锁异常",e);
-            throw new ServiceException(ApiError.ERROR_1026);
+            throw new ServiceException(ApiError.BILL_DATA_LOCKED);
         } finally {
             // 释放锁 锁是否存在，是当前执行线程的锁
             if(lock.isLocked() && lock.isHeldByCurrentThread()){
@@ -121,7 +121,7 @@ public class SysCodeServiceImpl extends ServiceImpl<SysCodeMapper, SysCodeEntity
             isLock = lock.tryLock(5, TimeUnit.SECONDS);
             log.info("是否获取到分布式锁: {}", isLock);
             if (!isLock) {
-                throw new ServiceException(ApiError.ERROR_1026);
+                throw new ServiceException(ApiError.BILL_DATA_LOCKED);
             }
             //生成单号
             getOrSaveSysCode(dto);
@@ -129,14 +129,14 @@ public class SysCodeServiceImpl extends ServiceImpl<SysCodeMapper, SysCodeEntity
             sysCode.append(dto.getCategory())
                     .append(String.format("%05d",dto.getNum()));
             if (StringUtils.isBlank(sysCode)) {
-                throw new ServiceException(ApiError.ERROR_9027);
+                throw new ServiceException(ApiError.COMMON_CODE_GENERATE_FAILED);
             }
             //更新当前顺序码
             updateNumByCode(dto.getId(),dto.getNum());
             return sysCode.toString();
         } catch (Exception e) {
             log.error("生成单号获取锁异常",e);
-            throw new ServiceException(ApiError.ERROR_1026);
+            throw new ServiceException(ApiError.BILL_DATA_LOCKED);
         } finally {
             //释放锁 锁是否存在，是当前执行线程的锁
             if(lock.isLocked() && lock.isHeldByCurrentThread()){
@@ -159,7 +159,7 @@ public class SysCodeServiceImpl extends ServiceImpl<SysCodeMapper, SysCodeEntity
 //            isLock = lock.tryLock(5, TimeUnit.SECONDS);
 //            log.info("是否获取到分布式锁: {}", isLock);
 //            if (!isLock) {
-//                throw new ServiceException(ApiError.ERROR_1026);
+//                throw new ServiceException(ApiError.ERROR_DATA_LOCKED);
 //            }
 //            //生成单号
 //            getOrSaveSysCode(dto);
@@ -181,7 +181,7 @@ public class SysCodeServiceImpl extends ServiceImpl<SysCodeMapper, SysCodeEntity
 //            return sysCode.toString();
 //        }  catch (InterruptedException e) {
 //            log.error("生成单号获取锁异常",e);
-//            throw new ServiceException(ApiError.ERROR_1026);
+//            throw new ServiceException(ApiError.ERROR_DATA_LOCKED);
 //        } finally {
 //            //释放锁  锁是否存在，是当前执行线程的锁
 //            if(lock.isLocked() && lock.isHeldByCurrentThread()){
@@ -218,7 +218,7 @@ public class SysCodeServiceImpl extends ServiceImpl<SysCodeMapper, SysCodeEntity
         dto.setId(entity.getId());
         dto.setUpdateTime(entity.getUpdateTime());
         if (!flag) {
-            throw new ServiceException(ApiError.DEFAULT);
+            throw new ServiceException(ApiError.HTTP_UNKNOWN);
         }
     }
 

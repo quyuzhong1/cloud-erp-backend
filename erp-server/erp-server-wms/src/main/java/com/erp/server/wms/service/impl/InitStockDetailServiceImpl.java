@@ -2,7 +2,6 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.exception.ServiceException;
@@ -18,9 +17,7 @@ import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.InitStockDetailMapper;
 import com.erp.server.wms.service.InitStockDetailService;
 import com.erp.server.wms.service.OperateLogService;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

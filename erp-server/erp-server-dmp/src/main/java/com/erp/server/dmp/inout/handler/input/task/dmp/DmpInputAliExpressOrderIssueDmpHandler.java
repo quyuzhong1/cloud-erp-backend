@@ -13,12 +13,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
-import com.common.core.anno.ParamData;
-import com.common.core.enums.PannoEnum;
 import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.entity.DmpSoInfoEntity;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
-import com.erp.server.dmp.inout.handler.input.task.mongo.DmpInputMongoHandler;
 import com.erp.server.dmp.service.DmpSoInfoService;
 
 import cn.hutool.core.collection.CollUtil;

@@ -80,7 +80,7 @@ public class AuthUserShopServiceImpl extends SuperServiceImpl<AuthUserShopMapper
     @Override
     public Boolean update(AuthUserShopDTO.UpdateDTO addOrUpdateDTO) {
         AuthUserShopEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "用户-店铺权限"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "用户-店铺权限"));
         AuthUserShopEntity authUserShopEntity =  BeanMapperUtils.map(AuthUserShopEntity.class, addOrUpdateDTO);
 
         // 数据处理

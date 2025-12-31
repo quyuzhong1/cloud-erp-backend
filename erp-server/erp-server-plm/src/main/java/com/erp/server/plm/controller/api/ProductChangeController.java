@@ -124,7 +124,7 @@ public class ProductChangeController extends BaseController {
         //获取到变更信息
         ProductChangeEntity changeEntity = productChangeService.getById(dto.getId());
         if (Objects.isNull(changeEntity)) {
-            throw new ServiceException(ApiError.ERROR_95105);
+            throw new ServiceException(ApiError.COMMON_CHANGE_INFO_REQUIRED);
         }
         Object object = null;
         String type = changeEntity.getType();

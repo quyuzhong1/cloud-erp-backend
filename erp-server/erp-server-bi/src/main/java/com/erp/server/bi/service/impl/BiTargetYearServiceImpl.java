@@ -80,7 +80,7 @@ public class BiTargetYearServiceImpl extends SuperServiceImpl<BiTargetYearMapper
     @Override
     public Boolean update(BiTargetYearDTO.UpdateDTO updateDTO) {
         BiTargetYearEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "年度目标单"));
+        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "年度目标单"));
         BiTargetYearEntity biTargetYearEntity = BeanMapperUtils.map(BiTargetYearEntity.class, updateDTO);
 
         log.info("编辑 开始修改年度目标单数据，id：【{}】", old.getId());
