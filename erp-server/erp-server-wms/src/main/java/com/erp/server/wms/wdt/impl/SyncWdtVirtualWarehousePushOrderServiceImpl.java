@@ -116,7 +116,7 @@ public class SyncWdtVirtualWarehousePushOrderServiceImpl implements SyncWdtVirtu
                         .count();
                 //未找到同步记录或者存在失败同步记录则报错
                 if (CollUtil.isEmpty(thisSyncInfoList) || failCount > 0) {
-                    throw new ServiceException(ApiError.ERROR_VIRTUAL_WAREHOUSE_ALLOCATION_NOT_REPEAT,
+                    throw new ServiceException(ApiError.VM_ALLOCATION_NOT_REPEAT,
                             entity.getWarehouseName(),
                             entity.getFromVirtualWarehouseName(),
                             entity.getSkuNo());

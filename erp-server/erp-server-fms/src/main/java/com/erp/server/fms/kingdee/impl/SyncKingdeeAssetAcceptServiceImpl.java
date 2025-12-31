@@ -148,26 +148,26 @@ public class SyncKingdeeAssetAcceptServiceImpl implements SyncKingdeeAssetAccept
         //明细
         List<AssetAcceptDetailEntity> detailList =  assetAcceptDetailService.listByMainIdList(Collections.singletonList(entity.getId()));
         if (CollUtil.isEmpty(detailList)) {
-            throw new ServiceException(ApiError.ERROR_98025.ERROR_98025);
+            throw new ServiceException(ApiError.SAMPLE_ASSET_ACCEPT_DETAIL_NOT_FOUND);
         }
 
         //资金采购订单id
         AssetPurchaseOrderEntity assetPoEntity = FeignQuery.getById(AssetPurchaseOrderEntity.class, entity.getSourceId());
         if (ObjUtil.isEmpty(assetPoEntity)) {
-            throw new ServiceException(ApiError.ERROR_98025);
+            throw new ServiceException(ApiError.SAMPLE_ASSET_PURCHASE_ORDER_NOT_FOUND);
         }
         //资金采购订单明细id
         List<String> sourceDetailIdList = detailList.stream().map(AssetAcceptDetailEntity::getSourceDetailId).distinct().collect(Collectors.toList());
         List<AssetPurchaseOrderDetailEntity> podEntityList = FeignQuery.getByIds(AssetPurchaseOrderDetailEntity.class, sourceDetailIdList);
         if (CollUtil.isEmpty(podEntityList)) {
-            throw new ServiceException(ApiError.ERROR_98026);
+            throw new ServiceException(ApiError.SAMPLE_ASSET_PURCHASE_ORDER_DETAIL_NOT_FOUND);
         }
         Map<String, AssetPurchaseOrderDetailEntity> podMap = podEntityList.stream().collect(Collectors.toMap(AssetPurchaseOrderDetailEntity::getId, obj -> obj));
 
         //组织机构编码
         List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Collections.singletonList(entity.getAcceptOrgId()));
         if (CollUtil.isEmpty(accountingCompanyList)) {
-            throw new ServiceException(ApiError.ERROR_PURCHASE_ORG_NOT_FOUND);
+            throw new ServiceException(ApiError.PO_RECEIVE_ORG_NOT_FOUND);
         }
         //组织编码
         resultMap.put("orgCode", accountingCompanyList.get(0).getCode());
@@ -197,7 +197,7 @@ public class SyncKingdeeAssetAcceptServiceImpl implements SyncKingdeeAssetAccept
         //供应商编码
         SupplierEntity supplierEntity = FeignQuery.getById(SupplierEntity.class, entity.getSupplierId());
         if (ObjUtil.isEmpty(supplierEntity)) {
-            throw new ServiceException(ApiError.ERROR_SUPPLIER_ABSENCE);
+            throw new ServiceException(ApiError.SUPPLIER_NOT_FOUND);
         }
         resultMap.put("supplierCode", supplierEntity.getCode());
 
@@ -206,7 +206,7 @@ public class SyncKingdeeAssetAcceptServiceImpl implements SyncKingdeeAssetAccept
         List<String> skuIdList = detailList.stream().map(AssetAcceptDetailEntity::getSkuId).distinct().collect(Collectors.toList());
         List<ProductDetailEntity> productDetailList = FeignQuery.getByIds(ProductDetailEntity.class, skuIdList);
         if (CollUtil.isEmpty(productDetailList)) {
-            throw new ServiceException(ApiError.ERROR_95084);
+            throw new ServiceException(ApiError.PRODUCT_NOT_FOUND);
         }
         Map<String, ProductDetailEntity> skuMap = productDetailList.stream().collect(Collectors.toMap(ProductDetailEntity::getId, obj -> obj));
 
@@ -226,7 +226,7 @@ public class SyncKingdeeAssetAcceptServiceImpl implements SyncKingdeeAssetAccept
             //资金采购明细
             AssetPurchaseOrderDetailEntity assetPodEntity = podMap.get(detail.getSourceDetailId());
             if (ObjUtil.isEmpty(assetPodEntity)) {
-                throw new ServiceException(ApiError.ERROR_98026);
+                throw new ServiceException(ApiError.SAMPLE_ASSET_PURCHASE_ORDER_DETAIL_NOT_FOUND);
             }
 
             List<Map<String, Object>> mapList = new ArrayList<>();
