@@ -434,5 +434,15 @@ public class CfgApproveSyncDTO implements Serializable {
         private Map<String,Object> variablesMap;
 
     }
+    /**
+     *
+     */
+    @Data
+    @NoArgsConstructor
+    public class ApproveNoticeRoleTypeParamDTO {
 
+        //单据类型 sourceTypeEnum
+        private String businessType;
+
+    }
 }

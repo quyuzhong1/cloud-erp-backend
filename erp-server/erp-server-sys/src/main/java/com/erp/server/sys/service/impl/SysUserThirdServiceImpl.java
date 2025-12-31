@@ -2,6 +2,7 @@ package com.erp.server.sys.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.conditions.query.LambdaQueryChainWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.threadlocal.UserContext;
@@ -192,15 +193,18 @@ public class SysUserThirdServiceImpl extends ServiceImpl<SysUserThirdMapper, Sys
 
     @Override
     public List<ThirdUnionDTO> getThirdByUserIds(String platform, List<String> userIds) {
-        if(StringUtils.isBlank(platform) || CollUtil.isEmpty(userIds)){
+        if(StringUtils.isBlank(platform)){
             return Collections.emptyList();
         }
-        List<SysUserThirdEntity> list = lambdaQuery().eq(SysUserThirdEntity::getThirdPartyType, platform)
-                .in(SysUserThirdEntity::getUserId, userIds)
+        LambdaQueryChainWrapper<SysUserThirdEntity> lambdaQueryChainWrapper = lambdaQuery().eq(SysUserThirdEntity::getThirdPartyType, platform)
                 .ne(SysUserThirdEntity::getThirdOpenId, "")
                 .ne(SysUserThirdEntity::getThirdUserId, "")
-                .ne(SysUserThirdEntity::getThirdUnionId, "")
-                .list();
+                .ne(SysUserThirdEntity::getThirdUnionId, "");
+
+        if(CollUtil.isNotEmpty(userIds)){
+            lambdaQueryChainWrapper.in(SysUserThirdEntity::getUserId, userIds);
+        }
+        List<SysUserThirdEntity> list = lambdaQueryChainWrapper.list();
         List<ThirdUnionDTO> thirdUnionDTOs = BeanMapperUtils.copyList(ThirdUnionDTO.class,list);
         if(CollUtil.isEmpty(thirdUnionDTOs)){
             return Collections.emptyList();

@@ -5024,6 +5024,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         //消息推送
         List<ProductDetailDTO.NoticeDTO> noticeDTOList = new ArrayList<>();
 
+        ProductDetailServiceImpl bean = ApplicationContextUtils.getBean(ProductDetailServiceImpl.class);
         for (ProductDetailImprotUpdateExcelDTO dto : successList) {
             List<String> errorMsgList = new ArrayList<>();
 
@@ -5844,9 +5845,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             productIdList.add(productInfoDTO.getId());
 
             if(importType.equals(ImportTypeEnum.IMPORT_NOT_APPROVAL.getCode())){
-                this.inportExcel(productNoSpecDTO);
+                bean.inportExcel(productNoSpecDTO);
             }else if(importType.equals(ImportTypeEnum.IMPORT_APPROVAL.getCode())){
-                ProductDetailServiceImpl bean = ApplicationContextUtils.getBean(ProductDetailServiceImpl.class);
                 bean.inportExcelAndSync(productNoSpecDTO,productBy);
             }
         }
@@ -5926,6 +5926,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         List<BasicDictEntity> dictList = basicDictService.listByType(BasicDictTypeEnum.INSURANCE_PROPERTY.getCode());
         Map<String, BasicDictEntity>  insurancePropertyMap = dictList.stream()
                 .collect(Collectors.toMap(BasicDictEntity::getName, entity -> entity));
+
+        ProductDetailServiceImpl bean = ApplicationContextUtils.getBean(ProductDetailServiceImpl.class);
 
         for (ProductDetailExcelDTO dto : successList) {
             List<String> errorMsgList = new ArrayList<>();
@@ -6563,7 +6565,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             productPackDTO.setBoxQty(MathUtil.valueOf(dto.getBoxQty()));
             productNoSpecDTO.setProductPackDTO(productPackDTO);
 
-            String productId = this.inportExcel(productNoSpecDTO);
+            String productId = bean.inportExcel(productNoSpecDTO);
             prodcutIdList.add(productId);
         }
         return prodcutIdList;
@@ -7499,12 +7501,12 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         PagingVO<ProductDetailExcelExportDTO> paging  = this.exportProductDetail(dto);
         List<ProductDetailExcelExportDTO> resultList = paging.getList();
         DynamicExcelDTO dynamicExcelDTO = new DynamicExcelDTO();
+        List<LinkedHashMap<String, Object>> data = new ArrayList<>();
         if(CollUtil.isNotEmpty(resultList)){
             List<ProductSkuExcelDTO.ExportField> fieldList = dto.getParams().getFieldList();
             List<String> fieldCodeList = fieldList.stream().map(ProductSkuExcelDTO.ExportField::getField).distinct().collect(Collectors.toList());
             LinkedHashMap<String, String> fieldMap =  fieldList.stream().collect(Collectors.toMap(ProductSkuExcelDTO.ExportField::getField, ProductSkuExcelDTO.ExportField::getFieldName, (oldValue, newValue) -> oldValue, LinkedHashMap::new));
             dynamicExcelDTO.setHeaders(fieldMap);
-            List<LinkedHashMap<String, Object>> data = new ArrayList<>();
             for (ProductDetailExcelExportDTO exportExcelDTO : resultList) {
                 LinkedHashMap<String, Object> excelMap = (LinkedHashMap<String, Object>)BeanUtil.beanToMap(exportExcelDTO);
                 //添加值
@@ -7516,6 +7518,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 data.add(exportMap);
             }
         }
+        dynamicExcelDTO.setData(data);
         dynamicExcelDTO.setSheetName("产品sku明细表");
         return new PagingVO<>(Collections.singletonList(dynamicExcelDTO), (int) paging.getTotalPage(), dto.getPageSize(), dto.getCurrPage());
     }
