@@ -90,6 +90,7 @@ public enum FileTaskEventEnum implements EnumMessage {
     IMPORT_PLM_CFG_MOLD_ALERT("IMPORT_PLM_CFG_MOLD_ALERT", "模具预警策略导入","com.erp.rpc.plm.feign.ImportPlmFeign","importCfgMoldAlert",""),
     EXPORT_PLM_MOLD_MONITOR_RETURN("EXPORT_PLM_MOLD_MONITOR_RETURN", "模具返还监控导出","","",""),
     EXPORT_PLM_MOLD_MONITOR_ALERT("EXPORT_PLM_MOLD_MONITOR_ALERT", "模具预警监控导出","","",""),
+    EXPORT_PLM_PRODUCT_IMAGES("EXPORT_PLM_PRODUCT_IMAGES", "批量下载图片","","","ExportPlmProductImagesHandler"),
 
 
 

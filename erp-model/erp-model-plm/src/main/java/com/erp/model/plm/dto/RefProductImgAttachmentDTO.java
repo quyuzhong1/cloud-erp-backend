@@ -220,5 +220,96 @@ public class RefProductImgAttachmentDTO implements Serializable {
 
     }
 
+    /**
+     * 批量上传图片参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class BatchUploadDTO {
+        /**
+         * ZIP文件URL（从/plm/common/upload获取）
+         */
+        @NotBlank(message = "ZIP文件URL不能为空")
+        private String zipUrl;
+
+        /**
+         * 分类ID
+         */
+        @NotBlank(message = "分类ID不能为空")
+        private String categoryId;
+
+        /**
+         * 任务ID（用于更新任务状态）
+         */
+        private String taskId;
+    }
+
+    /**
+     * 批量上传错误信息DTO（用于导出Excel）
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class BatchUploadErrorDTO {
+        /**
+         * 文件名
+         */
+        private String fileName;
+
+        /**
+         * SKU编码（从文件名提取）
+         */
+        private String skuNo;
+
+        /**
+         * 错误原因
+         */
+        private String errorReason;
+    }
+
+    /**
+     * 移动分类DTO
+     */
+    @Data
+    @NoArgsConstructor
+    public static class MoveCategoryDTO {
+        /**
+         * 关联记录ID列表
+         */
+        @NotEmpty(message = "关联记录ID列表不能为空")
+        private List<String> ids;
+
+        /**
+         * 目标分类ID
+         */
+        @NotBlank(message = "目标分类ID不能为空")
+        private String categoryId;
+    }
+
+    /**
+     * 批量下载DTO
+     */
+    @Data
+    @NoArgsConstructor
+    public static class BatchDownloadDTO {
+        /**
+         * 关联记录ID列表
+         */
+        @NotEmpty(message = "关联记录ID列表不能为空")
+        private List<String> ids;
+    }
+
+    /**
+     * 批量下载任务参数DTO（用于异步任务）
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class BatchDownloadTaskDTO {
+        /**
+         * ZIP文件URL
+         */
+        private String zipUrl;
+    }
 
 }

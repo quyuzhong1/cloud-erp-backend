@@ -9,6 +9,7 @@ import com.erp.model.plm.dto.excel.ProductPlanExcelDTO;
 import com.erp.model.plm.dto.excel.TaskExportDTO;
 import com.erp.model.plm.vo.BomExportExcelVO;
 import com.erp.model.plm.vo.ProjectTaskTimeRecordPageVO;
+import com.erp.model.file.dto.FileDTO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -67,4 +68,12 @@ public interface ExportPlmFeign {
     PagingVO<MoldMonitorDTO.ListDTO> exportMoldMonitor(@RequestBody @Validated PagingDTO<MoldMonitorDTO.PagingParamDTO> dto);
     @PostMapping("/feign/export/exportDynamicProductDetail")
     PagingVO<DynamicExcelDTO> exportDynamicProductDetail(PagingDTO<ProductSkuExcelDTO> dto);
+    
+    /**
+     * 构建产品图片文件夹结构并创建ZIP（用于批量下载）
+     * @param dto 批量下载参数（包含ids）
+     * @return ZIP文件的FastDFS URL
+     */
+    @PostMapping("/feign/export/buildProductImagesFolderStructure")
+    String buildProductImagesFolderStructure(@RequestBody @Validated RefProductImgAttachmentDTO.BatchDownloadDTO dto);
 }

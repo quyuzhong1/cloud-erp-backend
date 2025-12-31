@@ -64,6 +64,8 @@ public class ExportPlmFeignController {
     private CfgMoldAlertRuleService cfgMoldAlertRuleService;
     @Resource
     private MoldMonitorService moldMonitorService;
+    @Resource
+    private RefProductImgAttachmentService refProductImgAttachmentService;
 
     @PostMapping("/exportBom")
     @WebAdvanceQuery(handler = BomInfoHandler.class)
@@ -195,5 +197,10 @@ public class ExportPlmFeignController {
     @WebAdvanceQuery(handler = MoldMonitorQueryHandler.class)
     public PagingVO<MoldMonitorDTO.ListDTO> exportMoldMonitor(@RequestBody @Validated PagingDTO<MoldMonitorDTO.PagingParamDTO> dto) {
         return moldMonitorService.paging(dto);
+    }
+
+    @PostMapping("/buildProductImagesFolderStructure")
+    public String buildProductImagesFolderStructure(@RequestBody @Validated RefProductImgAttachmentDTO.BatchDownloadDTO dto) {
+        return refProductImgAttachmentService.buildProductImagesFolderStructure(dto);
     }
 }

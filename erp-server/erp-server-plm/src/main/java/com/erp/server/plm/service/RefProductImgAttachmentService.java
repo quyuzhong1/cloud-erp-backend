@@ -73,4 +73,48 @@ public interface RefProductImgAttachmentService extends SuperService<RefProductI
     * @return
     */
     void exportList(RefProductImgAttachmentDTO.ExportDTO dto, HttpServletResponse response);
+
+    /**
+     * 批量上传图片
+     * @param dto 批量上传参数
+     * @author wuhaotian
+     * @date: 2025-12-29
+     */
+    void batchUpload(RefProductImgAttachmentDTO.BatchUploadDTO dto);
+
+    /**
+     * 单个删除
+     * @param id 关联记录ID
+     * @author wuhaotian
+     * @date: 2025-12-29
+     * @return BatchResultDTO
+     */
+    BatchResultDTO delete(String id);
+
+    /**
+     * 移动分类
+     * @param dto 移动分类参数（包含ids和categoryId）
+     * @author wuhaotian
+     * @date: 2025-12-29
+     * @return Boolean
+     */
+    Boolean moveCategory(RefProductImgAttachmentDTO.MoveCategoryDTO dto);
+
+    /**
+     * 批量下载图片
+     * @param dto 批量下载参数（包含ids）
+     * @author wuhaotian
+     * @date: 2025-12-29
+     * @return Boolean
+     */
+    Boolean batchDownload(RefProductImgAttachmentDTO.BatchDownloadDTO dto);
+
+    /**
+     * 构建产品图片文件夹结构并创建ZIP（用于批量下载）
+     * @param dto 批量下载参数（包含ids）
+     * @author wuhaotian
+     * @date: 2025-12-29
+     * @return ZIP文件的FastDFS URL
+     */
+    String buildProductImagesFolderStructure(RefProductImgAttachmentDTO.BatchDownloadDTO dto);
 }
