@@ -1847,4 +1847,32 @@ public class SoB2cController extends BaseController {
     public ApiResult<String> uploadLogisticLabel(@ModelAttribute @Validated SoB2cDTO.UploadFileDTO dto) throws IOException {
         return success(soB2cService.uploadLogisticLabel(dto));
     }
+
+
+    /**
+     * 刷新汇率
+     */
+    @PostMapping("/refreshExchangeRate")
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "刷新订单汇率")
+    public ApiResult<List<BatchResultDTO>> refreshExchangeRate(@RequestBody @Validated BaseIdsDTO.IdsDTO idDTO) throws IOException {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(idDTO.getIds().size());
+        List<SoB2cEntity> soB2cEntityList = soB2cService.listByIds(idDTO.getIds());
+        for (String id : idDTO.getIds()) {
+            BatchResultDTO result;
+            SoB2cEntity soB2cEntity = soB2cEntityList.stream().filter(e -> Objects.nonNull(e) && Objects.equals(e.getId(), id)).findFirst().orElse(null);
+            if(Objects.isNull(soB2cEntity)){
+                result = BatchResultDTO.fail(id, id, "B2C销售订单记录不存在");
+                resultDTOS.add(result);
+                continue;
+            }
+            try {
+                result = soB2cService.refreshExchangeRate(soB2cEntity);
+            } catch (Exception e) {
+                log.error("B2C销售订单刷新汇率异常", e);
+                result = BatchResultDTO.fail(soB2cEntity.getId(), soB2cEntity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(result);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
 }

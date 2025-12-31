@@ -670,6 +670,50 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         return add.getCode();
     }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public BatchResultDTO refreshExchangeRate(SoB2cEntity soB2cEntity) {
+        LocalDateTime getExchangeRateTime = soB2cEntity.getCreateTime();
+        List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cDetailService.listByMainId(soB2cEntity.getId());
+        if(Objects.nonNull(soB2cEntity.getPayTime())){
+            getExchangeRateTime = soB2cEntity.getPayTime();
+        }
+        if(StringUtils.isBlank(soB2cEntity.getCurrency())){
+            return BatchResultDTO.fail(soB2cEntity.getId(),soB2cEntity.getCode(),"订单币种不能为空，无法获取汇率");
+        }
+        BigDecimal exchangeRate = dmpTaskFeign.getRate(getExchangeRateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), soB2cEntity.getCurrency());
+        if(Objects.isNull(exchangeRate)){
+            return BatchResultDTO.fail(soB2cEntity.getId(),soB2cEntity.getCode(),"未获取到对应的汇率，无法更新订单汇率");
+        }
+        soB2cEntity.setExchangeRate(exchangeRate);
+        soB2cEntity.setIsFrozen(false);
+        soB2cEntity.setFrozenType("");
+        soB2cEntity.setSignOrderError("");
+        if(soB2cEntity.hasPlatformWarehouseOrder()){
+            soB2cEntity.setApproveStatus(ApproveStatusEnum.APPROVE);
+            soB2cEntity.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode());
+        }else{
+            soB2cEntity.setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT);
+            soB2cEntity.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
+        }
+        boolean updateMainResult = this.updateById(soB2cEntity);
+        if(!updateMainResult){
+            return BatchResultDTO.fail(soB2cEntity.getId(),soB2cEntity.getCode(),"更新订单汇率失败");
+        }
+        soB2cDetailEntityList.forEach(detail -> {
+            //更新明细的汇率
+            detail.setExchangeRate(exchangeRate);
+        });
+        soB2cDetailService.updateBatchById(soB2cDetailEntityList);
+        soB2cErrorService.removeErrorOrder(soB2cEntity.getId(), SoB2cErrorTypeEnum.GET_EXCHANGE_RATE.getCode());
+        //非平台仓走开票和审核规则
+        if(!soB2cEntity.hasPlatformWarehouseOrder() && !soB2cEntity.getIsCancel()){
+
+            SoB2cHandler.handleRule(soB2cEntity);
+        }
+        return BatchResultDTO.success(soB2cEntity.getId(),soB2cEntity.getCode());
+    }
+
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -5305,18 +5349,21 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         soB2cEntity.setBillDate(ObjectUtils.isEmpty(soB2cEntity.getBillDate()) ? LocalDate.now() : soB2cEntity.getBillDate());
         soB2cEntity.setCreateTime(ObjectUtils.isEmpty(soB2cEntity.getCreateTime()) ? LocalDateTime.now() : soB2cEntity.getCreateTime());
-        LocalDateTime createTime = soB2cEntity.getCreateTime();
+        LocalDateTime getExchangeRateTime = soB2cEntity.getCreateTime();
+        if(Objects.nonNull(soB2cEntity.getPayTime())){
+            getExchangeRateTime = soB2cEntity.getPayTime();
+        }
         //全托管订单设置币种
         if (isFullyManagedOrder(soB2cEntity.getDictPlatform())){
             if(CharSequenceUtil.isBlank(soB2cEntity.getCurrency())){
                 soB2cEntity.setCurrency(shopInfoEntity.getTradeCurrency());
             }
-            createTime = soB2cEntity.getPayTime();
+            getExchangeRateTime = soB2cEntity.getPayTime();
         }
         if (StringUtils.isNotBlank(soB2cEntity.getCurrency())) {
-            BigDecimal exchangeRate = dmpTaskFeign.getRate(createTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), soB2cEntity.getCurrency());
-            if (MathUtil.compareTo(exchangeRate, MathUtil.ZERO) == MathUtil.ZERO && exchangeRateThrow) {
-                throw new ServiceException(ApiError.COMMON_EXCHANGE_RATE_NOT_EXIST, createTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), soB2cEntity.getCurrency());
+            BigDecimal exchangeRate = dmpTaskFeign.getRate(getExchangeRateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), soB2cEntity.getCurrency());
+            if (MathUtil.compareTo(exchangeRate, MathUtil.ZERO) == MathUtil.ZERO  && exchangeRateThrow) {
+                throw new ServiceException(ApiError.COMMON_EXCHANGE_RATE_NOT_EXIST, getExchangeRateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), soB2cEntity.getCurrency());
             }
             soB2cEntity.setExchangeRate(null == exchangeRate ? BigDecimal.ZERO : exchangeRate);
         }
@@ -6970,6 +7017,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             if(entity.getInvalidStatus()){
                 entity.setInvalidType(SoB2cInvalidTypeEnum.ENUM_AUTOMATIC.getCode());
             }
+            //校验汇率
+            checkExchangeRate(entity);
+
             // 生成单号
             String businessNo = "";
             if (isFullyManagedOrder(dto.getDictPlatform())){
@@ -7165,6 +7215,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             if (StringUtils.isNotBlank(dto.getSellerOrderCode())) {
                 entity.setSellerOrderCode(dto.getSellerOrderCode());
             }
+            checkExchangeRate(entity);
+
             if (!oldEntity.toString().equals(entity.toString())) {
                 if (!this.updateById(entity)) {
                     throw new ServiceException("soB2c订单更新失败");
@@ -7174,6 +7226,28 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             resultDTO.setSoB2cEntity(entity);
 
             return resultDTO;
+        }
+    }
+
+    private void checkExchangeRate(SoB2cEntity entity) {
+        if (0 == entity.getExchangeRate().compareTo(BigDecimal.ZERO)) {
+            //记录订单异常
+            entity.setIsFrozen(true);
+            entity.setBillStatus(SoB2cBillStatusEnum.ENUM_FROZEN.getCode());
+            entity.setFrozenType(SoB2cFrozenTypeEnum.ENUM_AUTOMATIC.getCode());
+            entity.setSignOrderError(SoB2cErrorTypeEnum.GET_EXCHANGE_RATE.getCode());
+            if(entity.hasPlatformWarehouseOrder()){
+                entity.setApproveStatus(ApproveStatusEnum.APPROVE);
+            }else{
+                entity.setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT);
+            }
+            //记录异常
+            SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
+            addError.setType(SoB2cErrorTypeEnum.GET_EXCHANGE_RATE.getCode());
+            addError.setMainId(entity.getId());
+            addError.setMessage(ApiError.SO_B2C_GET_EXCHANGE_RATE_FAILED.getMsg());
+            soB2cErrorService.add(addError);
+
         }
     }
 

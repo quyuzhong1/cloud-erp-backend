@@ -187,6 +187,7 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
         // 取消订单不走规则
         if ( (!mainEntity.hasPlatformWarehouseOrder()
                 && !mainEntity.getIsCancel()
+                && !mainEntity.getIsFrozen()
                 && !ApproveStatusEnum.REJECT.equals(mainEntity.getApproveStatus())) || Boolean.TRUE.equals(retryFlag)
         ) {
             // 已审核过的订单不走规则
