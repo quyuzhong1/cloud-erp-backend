@@ -5,9 +5,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.FileTaskEventEnum;
 import com.common.business.vo.PagingVO;
 import com.erp.model.plm.dto.ProductSkuExcelDTO;
-import com.erp.model.scm.dto.SupplierDTO;
 import com.erp.rpc.plm.feign.ExportPlmFeign;
-import com.erp.rpc.scm.feign.ExportScmFeign;
 import com.erp.server.file.core.AbstractDynamicHeadersFileEventHandler;
 import com.erp.server.file.entity.FileTask;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -15,8 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-
-import static com.common.business.enums.FileTaskEventEnum.EXPORT_SCM_DYNAMIC_SUPPLIER;
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_PLM_SKU_DYNAMIC;
 
 @Component
 @Slf4j
@@ -39,7 +36,7 @@ public class ExportPlmDynamicProductDetailHandler extends AbstractDynamicHeaders
 
     @Override
     public FileTaskEventEnum getEvent() {
-        return EXPORT_SCM_DYNAMIC_SUPPLIER;
+        return EXPORT_PLM_SKU_DYNAMIC;
     }
 
 }
