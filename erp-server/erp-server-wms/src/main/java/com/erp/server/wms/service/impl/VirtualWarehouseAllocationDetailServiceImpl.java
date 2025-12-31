@@ -525,6 +525,15 @@ public class VirtualWarehouseAllocationDetailServiceImpl extends SuperServiceImp
         return  lambdaQuery().in(VirtualWarehouseAllocationDetailEntity::getMainId,mainIdList).list();
     }
 
+    @Override
+    public List<VirtualWarehouseAllocationDetailEntity> listRepeatHandleDetail(List<String> fromWarehouseIdList, List<String> fromVirtualWarehouseIdList, List<String> skuIdList, List<String> detailIdList) {
+        if (CollUtil.isEmpty(fromWarehouseIdList) || CollUtil.isEmpty(fromVirtualWarehouseIdList)
+                || CollUtil.isEmpty(skuIdList) || CollUtil.isEmpty(detailIdList)) {
+            return Collections.emptyList();
+        }
+        return baseMapper.listRepeatHandleDetail(fromWarehouseIdList,fromVirtualWarehouseIdList,skuIdList,detailIdList);
+    }
+
     /**
      * 更新历史数据
      * @param detailEntity

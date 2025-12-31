@@ -1,22 +1,8 @@
 package com.erp.server.dmp.controller.feign;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ExecutorService;
-import java.util.stream.Collectors;
-
-import javax.annotation.Resource;
-
-import org.apache.commons.collections4.CollectionUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
+import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.ObjUtil;
+import cn.hutool.json.JSONUtil;
 import com.common.business.dto.DmpSyncTaskDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.core.controller.vo.ApiResult;
@@ -42,10 +28,21 @@ import com.erp.server.dmp.service.CfgSettingService;
 import com.erp.server.dmp.service.DmpCfgInputDetailService;
 import com.erp.server.dmp.service.DmpInputTaskService;
 import com.erp.server.dmp.service.DmpOutputTaskRecordService;
+import org.apache.commons.collections4.CollectionUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.ObjUtil;
-import cn.hutool.json.JSONUtil;
+import javax.annotation.Resource;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/feign/inout")
@@ -89,6 +86,17 @@ public class DmpInoutTaskFeignController{
 	@PostMapping("/getErrorData")
 	public DmpPushTaskDTO.SyncInfoDTO getErrorData(@RequestBody DmpSyncTaskDTO.OneDTO oneDTO) {
 		return dmpOutputTaskRecordService.getErrorData(oneDTO);
+	}
+	/**
+	 * 查询同步数据列表
+	 * @author will
+	 * @date 2025/12/29 11:18
+	 * @param listDTO
+	 * @return List<SyncInfoDTO>
+	 */
+	@PostMapping("/listErrorData")
+	public List<DmpPushTaskDTO.SyncInfoDTO> listErrorData(@RequestBody DmpSyncTaskDTO.ListDTO listDTO) {
+		return dmpOutputTaskRecordService.listErrorData(listDTO);
 	}
 
 	/**

@@ -120,7 +120,7 @@ public class LingxingApiUtils {
                 .build();
         try (HttpResponse execute = HttpExecutor.create().execute(build)) {
             Result result = execute.readEntity(Result.class);
-            log.debug("Post请求领星接口:路径={}, 参数={}, 结果={}", path, JSONUtil.toJsonStr(requestBody), JSONUtil.toJsonStr(result));
+            log.warn("Post请求领星接口:路径={}, 参数={}, 结果={}", path, JSONUtil.toJsonStr(requestBody), JSONUtil.toJsonStr(result));
             return result;
         } catch (Exception e) {
             String errorMsg = StrUtil.format("Post请求领星接口失败:path={}, error={}", path, ExceptionUtil.stacktraceToString(e, 2000));
@@ -152,7 +152,7 @@ public class LingxingApiUtils {
                 .build();
         try (HttpResponse execute = HttpExecutor.create().execute(build)) {
             Result<T> result = execute.readEntity(Result.class);
-            log.debug("Get请求领星接口:路径={}, 参数={}, 结果={}", path, JSONUtil.toJsonStr(requestBody), JSONUtil.toJsonStr(result));
+            log.warn("Get请求领星接口:路径={}, 参数={}, 结果={}", path, JSONUtil.toJsonStr(requestBody), JSONUtil.toJsonStr(result));
             return result;
         } catch (Exception e) {
             String errorMsg = StrUtil.format("Post请求领星接口失败:path={}, error={}", path, ExceptionUtil.stacktraceToString(e, 2000));
