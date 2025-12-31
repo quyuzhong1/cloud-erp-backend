@@ -33,7 +33,31 @@
     </sql>
 
     <select id="paging" resultType="com.erp.model.plm.dto.RefProductImgAttachmentDTO$ListDTO">
-
+        SELECT
+        rpia.id AS id,
+        rpia.category_id AS categoryId,
+        rpia.product_detail_id AS productDetailId,
+        rpia.sku_no AS skuNo,
+        rpia.attachment_id AS attachmentId,
+        rpia.create_time AS createTime,
+        rpia.create_user_name AS createUserName
+        FROM
+        ref_product_img_attachment rpia
+        LEFT JOIN product_detail pd ON pd.id = rpia.product_detail_id AND pd.is_deleted = FALSE
+        LEFT JOIN attachment att ON att.id = rpia.attachment_id AND att.is_deleted = FALSE
+        WHERE
+        ${params.sqlMap.default}
+        AND rpia.is_deleted = FALSE
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        rpia.create_time desc
     </select>
 
     <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
