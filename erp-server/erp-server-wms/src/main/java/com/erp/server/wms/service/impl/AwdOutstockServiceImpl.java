@@ -125,7 +125,7 @@ public class AwdOutstockServiceImpl extends SuperServiceImpl<AwdOutstockMapper, 
         }
 
         //下推发货单
-        if (old.getBillDate() != null) {
+        if (old.getBillDate() == null) {
             BaseIdsDTO.IdsDTO idsDTO = new BaseIdsDTO.IdsDTO();
             idsDTO.setIds(Collections.singletonList(updateDTO.getId()));
             boolean generated = generateFirstMileDelivery(idsDTO);
