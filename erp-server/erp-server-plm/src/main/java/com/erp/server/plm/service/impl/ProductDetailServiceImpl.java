@@ -7499,12 +7499,12 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         PagingVO<ProductDetailExcelExportDTO> paging  = this.exportProductDetail(dto);
         List<ProductDetailExcelExportDTO> resultList = paging.getList();
         DynamicExcelDTO dynamicExcelDTO = new DynamicExcelDTO();
+        List<LinkedHashMap<String, Object>> data = new ArrayList<>();
         if(CollUtil.isNotEmpty(resultList)){
             List<ProductSkuExcelDTO.ExportField> fieldList = dto.getParams().getFieldList();
             List<String> fieldCodeList = fieldList.stream().map(ProductSkuExcelDTO.ExportField::getField).distinct().collect(Collectors.toList());
             LinkedHashMap<String, String> fieldMap =  fieldList.stream().collect(Collectors.toMap(ProductSkuExcelDTO.ExportField::getField, ProductSkuExcelDTO.ExportField::getFieldName, (oldValue, newValue) -> oldValue, LinkedHashMap::new));
             dynamicExcelDTO.setHeaders(fieldMap);
-            List<LinkedHashMap<String, Object>> data = new ArrayList<>();
             for (ProductDetailExcelExportDTO exportExcelDTO : resultList) {
                 LinkedHashMap<String, Object> excelMap = (LinkedHashMap<String, Object>)BeanUtil.beanToMap(exportExcelDTO);
                 //添加值
@@ -7516,6 +7516,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 data.add(exportMap);
             }
         }
+        dynamicExcelDTO.setData(data);
         dynamicExcelDTO.setSheetName("产品sku明细表");
         return new PagingVO<>(Collections.singletonList(dynamicExcelDTO), (int) paging.getTotalPage(), dto.getPageSize(), dto.getCurrPage());
     }
