@@ -96,9 +96,9 @@ public class ProductDetailExcelDTO {
     private String brandName;
 
     /**
-     * 研发团队
+     * 研发团队（产线）
      */
-    @FieldValid(fieldName = "研发团队", maxLength = 50)
+    @FieldValid(fieldName = "研发团队（产线）", maxLength = 50)
     private String rdtTeamName;
 
     /**

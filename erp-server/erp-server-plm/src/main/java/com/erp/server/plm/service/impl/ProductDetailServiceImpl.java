@@ -5024,6 +5024,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         //消息推送
         List<ProductDetailDTO.NoticeDTO> noticeDTOList = new ArrayList<>();
 
+        ProductDetailServiceImpl bean = ApplicationContextUtils.getBean(ProductDetailServiceImpl.class);
         for (ProductDetailImprotUpdateExcelDTO dto : successList) {
             List<String> errorMsgList = new ArrayList<>();
 
@@ -5844,9 +5845,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             productIdList.add(productInfoDTO.getId());
 
             if(importType.equals(ImportTypeEnum.IMPORT_NOT_APPROVAL.getCode())){
-                this.inportExcel(productNoSpecDTO);
+                bean.inportExcel(productNoSpecDTO);
             }else if(importType.equals(ImportTypeEnum.IMPORT_APPROVAL.getCode())){
-                ProductDetailServiceImpl bean = ApplicationContextUtils.getBean(ProductDetailServiceImpl.class);
                 bean.inportExcelAndSync(productNoSpecDTO,productBy);
             }
         }
@@ -5926,6 +5926,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         List<BasicDictEntity> dictList = basicDictService.listByType(BasicDictTypeEnum.INSURANCE_PROPERTY.getCode());
         Map<String, BasicDictEntity>  insurancePropertyMap = dictList.stream()
                 .collect(Collectors.toMap(BasicDictEntity::getName, entity -> entity));
+
+        ProductDetailServiceImpl bean = ApplicationContextUtils.getBean(ProductDetailServiceImpl.class);
 
         for (ProductDetailExcelDTO dto : successList) {
             List<String> errorMsgList = new ArrayList<>();
@@ -6563,7 +6565,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             productPackDTO.setBoxQty(MathUtil.valueOf(dto.getBoxQty()));
             productNoSpecDTO.setProductPackDTO(productPackDTO);
 
-            String productId = this.inportExcel(productNoSpecDTO);
+            String productId = bean.inportExcel(productNoSpecDTO);
             prodcutIdList.add(productId);
         }
         return prodcutIdList;

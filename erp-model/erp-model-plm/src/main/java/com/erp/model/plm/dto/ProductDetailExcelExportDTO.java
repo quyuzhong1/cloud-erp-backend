@@ -129,9 +129,9 @@ public class ProductDetailExcelExportDTO {
     private String brandName;
 
     /**
-     * 研发团队
+     * 研发团队（产线）
      */
-    @ExcelProperty("研发团队")
+    @ExcelProperty("研发团队（产线）")
     @MenuCode("plm:product:detail:listProinfo")
     private String rdtTeamName;
 

@@ -257,7 +257,7 @@ public class CfgApproveSyncController extends BaseController {
      * /api/workflow/common/enumDropDown?type=CfgApproveNoticeRoleType
      */
     @PostMapping("/listApproveNoticeRoleType")
-    public ApiResult<List<Map<String, Object>>> listApproveNoticeRoleType(@RequestBody @Validated CfgApproveSyncDTO.ApproveNoticeRoleTypeParamDTO dto) {
+    public ApiResult<List<Map<String, Object>>> listApproveNoticeRoleType(@RequestBody CfgApproveSyncDTO.ApproveNoticeRoleTypeParamDTO dto) {
         return success(cfgApproveSyncService.listApproveNoticeRoleType(dto));
     }
 
