@@ -2856,7 +2856,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                 .eq(FirstMileDeliveryEntity::getSourceId,dto.getId())
                 .one();
         if (Objects.nonNull(firstMileDeliveryEntity)) {
-            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE,"头程发货单【" + dto.getCode() + "】");
+            throw new ServiceException(ApiError.BILL_ALREADY_EXIST,"头程发货单【" + dto.getCode() + "】");
         }
 
         AwdOutstockEntity awdOutstockEntity = awdOutstockService.getById(dto.getId());
