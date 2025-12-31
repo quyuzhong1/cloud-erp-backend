@@ -1,8 +1,11 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.wms.dto.AwdOutstockDetailDTO;
 import com.erp.model.wms.entity.AwdOutstockDetailEntity;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.wms.service.AwdOutstockDetailService;
@@ -14,10 +17,10 @@ import com.erp.model.wms.entity.AwdOutstockEntity;
 import com.erp.server.wms.mapper.AwdOutstockMapper;
 import com.erp.server.wms.service.AwdOutstockService;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.threadlocal.UserContext;
 import com.erp.server.wms.service.OperateLogService;
 import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
@@ -25,7 +28,6 @@ import org.springframework.transaction.annotation.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.wms.dto.AwdOutstockDTO;
 import javax.annotation.Resource;
-import java.time.LocalDate;
 import java.util.*;
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
@@ -181,6 +183,23 @@ public class AwdOutstockServiceImpl extends SuperServiceImpl<AwdOutstockMapper, 
     }
 
     @Override
+    public AwdOutstockDTO.ViewDTO view(String id) {
+        AwdOutstockEntity awdOutstockEntity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到数据"));
+        AwdOutstockDTO.ViewDTO data = BeanMapperUtils.map(AwdOutstockDTO.ViewDTO.class, awdOutstockEntity);
+        // 数据填充处理
+        fillOne(data);
+        LambdaQueryWrapper<AwdOutstockDetailEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(AwdOutstockDetailEntity::getMainId,id);
+        List<AwdOutstockDetailEntity> detailList = awdOutstockDetailService.list(queryWrapper);
+        if (CollectionUtils.isEmpty(detailList)) {
+            throw new ServiceException(ApiError.BILL_DETAIL_NOT_FOUND,"AWD");
+        }
+        List<AwdOutstockDetailDTO.ViewDTO> dtoList = BeanMapperUtils.copyList(AwdOutstockDetailDTO.ViewDTO.class, detailList);
+        data.setDetaiDTOList(dtoList);
+        return data;
+    }
+
+    @Override
     public void exportList(AwdOutstockDTO.ExportDTO param, HttpServletResponse response) {
         downloadTaskFeign.saveDownloadTask("AWD出库货件导出", EXPORT_WMS_AWD_OUT_STOCK.getCode(), param);
     }
@@ -212,4 +231,11 @@ public class AwdOutstockServiceImpl extends SuperServiceImpl<AwdOutstockMapper, 
             return;
         }
    }
+
+    private void fillOne(AwdOutstockDTO.ViewDTO data) {
+        if (ObjectUtil.isEmpty(data)) {
+            return;
+        }
+
+    }
 }

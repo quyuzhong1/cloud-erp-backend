@@ -201,7 +201,7 @@ public class AwdOutstockDTO implements Serializable {
 
         private LocalDate billDate;
 
-
+        private List<AwdOutstockDetailDTO.ViewDTO> detaiDTOList;
     }
 
     /**
