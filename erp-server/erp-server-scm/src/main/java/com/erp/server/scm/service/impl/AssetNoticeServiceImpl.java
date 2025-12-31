@@ -400,6 +400,8 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
         if (CollectionUtils.isEmpty(collect)) {
             throw new ServiceException(ApiError.MOULD_NOTICE_NO_PUSHABLE);
         }
+        List<String> assetCodeList = collect.stream().map(AssetNoticeDetailEntity::getAssetCode).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+        Map<String, String> assetCodeToProjectNameMap = plmTaskFeign.listMoldInfoByCodes(assetCodeList).stream().collect(Collectors.toMap(MoldInfoEntity::getCode, MoldInfoEntity::getProjectName, (e, o) -> e));
 
         for (AssetNoticeDetailEntity assetNoticeDetailEntity : collect) {
             AssetNoticeDTO.ViewGeneratePurchaseOrderDTO viewGeneratePurchaseOrderDTO = new AssetNoticeDTO.ViewGeneratePurchaseOrderDTO();
@@ -447,6 +449,7 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
             viewGeneratePurchaseOrderDTO.setSupplierId(assetNoticeDetailEntity.getSupplierId());
             viewGeneratePurchaseOrderDTO.setSupplierName(assetNoticeDetailEntity.getSupplierName());
 
+            viewGeneratePurchaseOrderDTO.setProjectName(assetCodeToProjectNameMap.get(assetNoticeDetailEntity.getAssetCode()));
             viewGeneratePurchaseOrderDTOS.add(viewGeneratePurchaseOrderDTO);
         }
 

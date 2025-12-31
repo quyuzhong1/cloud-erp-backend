@@ -783,5 +783,10 @@ public class AssetNoticeDTO implements Serializable {
          */
         private String productName;
 
+        /**
+         * 项目名称
+         */
+        private String projectName;
+
     }
 }
