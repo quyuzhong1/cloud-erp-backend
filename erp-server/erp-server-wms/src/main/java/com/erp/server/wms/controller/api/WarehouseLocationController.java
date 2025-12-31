@@ -92,7 +92,7 @@ public class WarehouseLocationController extends BaseController {
      * 批量根据仓库获取仓位
      * @return
      */
-    @PostMapping(value = "/selectByWarehouseIds")
+    @PostMapping("/selectByWarehouseIds")
     public ApiResult<List<WarehouseLocationDTO.WarehouseLocationListDTO>> selectByWarehouseIds(@RequestBody ValidList<String> warehouseIds) {
         return success(warehouseLocationService.selectByWarehouseIds(warehouseIds.getList()));
     }
