@@ -809,7 +809,7 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
         rewriteAssetPurchaseOrderForDisApprove(entity);
 
         //推送金蝶
-        syncKingdeeAssetAcceptService.syncDataToKingdee(entity,OperationTypeEnum.DISAPPROVE.getStatus());
+        syncKingdeeAssetAcceptService.syncDataToKingdee(entity,SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
 
         // 操作日志
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据反审核操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "资产验收单");
@@ -879,7 +879,7 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
         super.removeById(id);
 
         //推送金蝶
-        syncKingdeeAssetAcceptService.syncDataToKingdee(entity,OperationTypeEnum.DELETE.getStatus());
+        syncKingdeeAssetAcceptService.syncDataToKingdee(entity,SyncOperateEnum.OPERATE_DELETE.getCode());
         // 删除日志数据
         log.info("删除 开始删除资产验收单日志数据，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "资产验收单");
@@ -904,7 +904,7 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
             .update();
 
         //推送金蝶
-        syncKingdeeAssetAcceptService.syncDataToKingdee(entity,OperationTypeEnum.INVALID.getStatus());
+        syncKingdeeAssetAcceptService.syncDataToKingdee(entity,SyncOperateEnum.OPERATE_INVALID.getCode());
 
         log.info("作废 开始记录操作日志，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据作废操作 作废原因：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "资产验收单", remark);
@@ -954,7 +954,7 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
         rewriteAssetPurchaseOrder(entity);
         if (CharSequenceUtil.equals(dto.getType(), ApproveTypeEnum.PASS.getStatus())) {
             //推送金蝶
-            syncKingdeeAssetAcceptService.syncDataToKingdee(entity,OperationTypeEnum.APPROVE_PASS.getStatus());
+            syncKingdeeAssetAcceptService.syncDataToKingdee(entity,SyncOperateEnum.OPERATE_APPROVE.getCode());
         }
         return Boolean.TRUE;
     }
