@@ -196,7 +196,7 @@ public class SyncWdtVirtualWarehousePushOrderServiceImpl implements SyncWdtVirtu
             request.setRemark("原始单据号：" + vwAllocationCode);
 
             //查询旺店通可用库存是否足够
-            //checkWdtUseInventoryQty(request,detailList);
+            checkWdtUseInventoryQty(request,detailList);
 
             if(CollUtil.isEmpty(cfgSettingEntityList)) {
             	//添加推送任务
