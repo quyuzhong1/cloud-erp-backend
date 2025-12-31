@@ -98,6 +98,7 @@
             fs.code AS sourceCode,
             fs.shop_id AS channelId,
             fs.shop_name AS channelName,
+            fs.source_type AS fbaType,
             fsd.asin,
             fsd.msku,
             fsd.fn_sku,

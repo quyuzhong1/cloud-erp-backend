@@ -75,7 +75,7 @@ public class RequisitionApplicationController extends BaseController {
     @LogAction(value = LogActionEnum.INSERT, desc = "要货申请单新增")
     public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated RequisitionApplicationDTO.AddDTO dto) {
         // 检查和刷新fnSku
-        if (RequisitionApplicationTypeEnum.FBA.getCode().equalsIgnoreCase(dto.getType())){
+        if (RequisitionApplicationTypeEnum.FBA.getCode().equalsIgnoreCase(dto.getType()) || RequisitionApplicationTypeEnum.AWD.getCode().equalsIgnoreCase(dto.getType())){
             fbaInventoryService.checkAndUpdateFnsku(dto);
         }
 
@@ -98,7 +98,7 @@ public class RequisitionApplicationController extends BaseController {
         keyIdName = "id")
     public ApiResult update(@RequestBody @Validated RequisitionApplicationDTO.UpdateDTO dto) {
         // 检查和刷新fnSku
-        if (RequisitionApplicationTypeEnum.FBA.getCode().equalsIgnoreCase(dto.getType())){
+        if (RequisitionApplicationTypeEnum.FBA.getCode().equalsIgnoreCase(dto.getType()) || RequisitionApplicationTypeEnum.AWD.getCode().equalsIgnoreCase(dto.getType())){
             fbaInventoryService.checkAndUpdateFnsku(dto);
         }
         requisitionApplicationService.update(dto);

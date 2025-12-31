@@ -791,9 +791,9 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
     public List<WmsDeliveryPlanDTO.GenerateDeliverViewDTO> generateDeliverView(List<String> ids) {
         List<WmsDeliveryPlanDTO.GenerateDeliverViewDTO> list = baseMapper.generateDeliverView(ids);
 
-        List<String> fbaTypeCodes = list.stream().filter(v->v.getType().equals(DeliveryPlanTypeEnum.FBA.getCode())).map(WmsDeliveryPlanDTO.GenerateDeliverViewDTO::getSourceCode).collect(Collectors.toList());
+        List<String> fbaTypeCodes = list.stream().filter(v->v.getType().equals(DeliveryPlanTypeEnum.FBA.getCode()) || v.getType().equals(DeliveryPlanTypeEnum.AWD.getCode())).map(WmsDeliveryPlanDTO.GenerateDeliverViewDTO::getSourceCode).collect(Collectors.toList());
         if(CollectionUtils.isNotEmpty(fbaTypeCodes)){
-            throw new ServiceException(CharSequenceUtil.format("【{}】为FBA发货计划，发货单需要从FBA货件下推",fbaTypeCodes));
+            throw new ServiceException(CharSequenceUtil.format("【{}】为FBA或AWD发货计划，发货单需要从货件下推",fbaTypeCodes));
         }
 
         //审核通过才能下推
@@ -989,7 +989,7 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
 
             Integer deliveryQty = MathUtil.ZERO;
             //设置发货单号拿最新的一个发货单
-            if(entity.getType().equals(DeliveryPlanTypeEnum.FBA.getCode())){
+            if(entity.getType().equals(DeliveryPlanTypeEnum.FBA.getCode()) || entity.getType().equals(DeliveryPlanTypeEnum.AWD.getCode())){
                 List<RequisitionApplicationEntity> requisitionApplicationList = requisitionApplicationEntityList.stream().filter(req -> req.getSourceId().equals(entity.getId())).collect(Collectors.toList());
                 List<String> requisitionIdList = requisitionApplicationList.stream().map(v->v.getId()).collect(Collectors.toList());
                 List<FirstMileDeliveryEntity> deliveryEntities = firstMileDeliveryEntities.stream().filter(v->requisitionIdList.contains(v.getSourceId()) || v.getSourceId().equals(entity.getId())).sorted(Comparator.comparing(FirstMileDeliveryEntity::getCreateTime).reversed()).collect(Collectors.toList());
@@ -1103,8 +1103,8 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
             //映射详情信息
             List<FirstMileDeliveryDetailDTO.AddDTO> detailAddList = new ArrayList<>();
             for (WmsDeliveryPlanDTO.GenerateDeliverViewDTO viewDTO : value) {
-                if(DeliveryPlanTypeEnum.FBA.getCode().equals(viewDTO.getType())){
-                    throw new ServiceException(CharSequenceUtil.format("【{}】为FBA发货计划，发货单需要从FBA货件下推",viewDTO.getSourceCode()));
+                if(DeliveryPlanTypeEnum.FBA.getCode().equals(viewDTO.getType()) || DeliveryPlanTypeEnum.AWD.getCode().equals(viewDTO.getType())){
+                    throw new ServiceException(CharSequenceUtil.format("【{}】为FBA或AWD发货计划，发货单需要从货件下推",viewDTO.getSourceCode()));
                 }
                 //发货仓库中文
                 WarehouseDTO.UpdateDTO updateDTO = warehouseList.stream().filter(w -> w.getId().equals(viewDTO.getDeliveryWarehouseId())).findFirst().orElse(new WarehouseDTO.UpdateDTO());
@@ -1183,7 +1183,7 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
             //物流方式
             data.setExpectLogisticsMethodName(LogisticsMethodEnum.getName(data.getExpectLogisticsMethod()));
             //设置发货单号拿最新的一个发货单
-            if(data.getType().equals(DeliveryPlanTypeEnum.FBA.getCode())){
+            if(data.getType().equals(DeliveryPlanTypeEnum.FBA.getCode()) || data.getType().equals(DeliveryPlanTypeEnum.AWD.getCode())){
                 List<RequisitionApplicationEntity> requisitionApplicationList = requisitionApplicationEntityList.stream().filter(req -> req.getSourceId().equals(data.getId())).collect(Collectors.toList());
                 List<String> requisitionIdList = requisitionApplicationList.stream().map(v->v.getId()).collect(Collectors.toList());
                 List<FirstMileDeliveryEntity> deliveryEntities = firstMileDeliveryEntities.stream().filter(v->requisitionIdList.contains(v.getSourceId()) || v.getSourceId().equals(data.getId())).sorted(Comparator.comparing(FirstMileDeliveryEntity::getCreateTime).reversed()).collect(Collectors.toList());

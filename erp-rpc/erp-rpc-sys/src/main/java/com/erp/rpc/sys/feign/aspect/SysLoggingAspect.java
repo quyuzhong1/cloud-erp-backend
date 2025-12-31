@@ -981,7 +981,9 @@ public class SysLoggingAspect {
                 continue;
             }
             Class<? extends Throwable> currentClass = Arrays.stream(annotation.value()).findFirst().orElse(null);
-            if (null != currentClass && exceptionClass == currentClass) {
+            if(obj instanceof ServiceException){
+                return obj;
+            }else if (null != currentClass && exceptionClass == currentClass) {
                 try {
                     return method.invoke(globalExceptionHandler, obj);
                 } catch (Exception e) {

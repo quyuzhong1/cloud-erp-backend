@@ -1063,7 +1063,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                 RequisitionApplicationEntity application = requisitionApplicationService.getById(entity.getSourceId());
                 if (ObjectUtil.isNotEmpty(application)) {
                     //如果是FBA货件来源，审核通过修改货件发货状态为已发货
-                    if (RequisitionApplicationTypeEnum.FBA.getCode().equals(application.getType())) {
+                    if (RequisitionApplicationTypeEnum.FBA.getCode().equals(application.getType()) || RequisitionApplicationTypeEnum.AWD.getCode().equals(application.getType())) {
                         fbaShipmentService.deliveryStatus(entity);
                     } else {
                         //如果是发货计划来源

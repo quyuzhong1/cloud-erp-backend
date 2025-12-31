@@ -1304,8 +1304,8 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         if (count > 1) {
             throw new ServiceException(ApiError.SO_DEMAND_REQ_ALREADY_PUSHED_DELIVERY);
         }
-        if(list.stream().anyMatch(v->RequisitionApplicationTypeEnum.FBA.getCode().equals(v.getType()))){
-            throw new ServiceException("FBA要货申请不支持批量下推");
+        if(list.stream().anyMatch(v->RequisitionApplicationTypeEnum.FBA.getCode().equals(v.getType()) || RequisitionApplicationTypeEnum.AWD.getCode().equals(v.getType()))){
+            throw new ServiceException("FBA/AWD要货申请不支持批量下推");
         }
         List<FirstMileDeliveryEntity> entities = firstMileDeliveryService.listBySourceIds(ids);
         boolean invalidStatus = entities.stream().anyMatch(FirstMileDeliveryEntity::getInvalidStatus);
@@ -1335,6 +1335,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
             viewDTO.setCountry(wmsDeliveryPlanEntity.getCountry());
 
             if (RequisitionApplicationTypeEnum.FBA.getCode().equals(viewDTO.getType()) ||
+                    RequisitionApplicationTypeEnum.AWD.getCode().equals(viewDTO.getType()) ||
                     RequisitionApplicationTypeEnum.ALIEXPRESS.getCode().equals(viewDTO.getType())) {
                 ShopInfoEntity shopInfo = shopInfoEntities.stream()
                         .filter(req -> req.getId().equals(viewDTO.getChannelId()))
@@ -1676,7 +1677,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
     @Override
     public List<RequisitionApplicationDTO.DeliverRecordView> listDeliverRecord(String id) {
         RequisitionApplicationEntity requisitionApplicationEntity = Optional.ofNullable(this.getById(id)).orElseThrow(()->new ServiceException("要货申请为空"));
-        if(requisitionApplicationEntity.getType().equals(RequisitionApplicationTypeEnum.FBA.getCode())){
+        if(requisitionApplicationEntity.getType().equals(RequisitionApplicationTypeEnum.FBA.getCode()) || RequisitionApplicationTypeEnum.AWD.getCode().equals(requisitionApplicationEntity.getType())){
             return baseMapper.listFbaDeliverRecord(id);
         }else{
             return baseMapper.listWarehouseDeliverRecord(id);
@@ -1919,7 +1920,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         for (Map.Entry<String, List<RequisitionApplicationDTO.GenerateDeliverViewDTO>> entry : map.entrySet()) {
             List<RequisitionApplicationDTO.GenerateDeliverViewDTO> value = entry.getValue();
             RequisitionApplicationDTO.GenerateDeliverViewDTO view = value.get(MathUtil.ZERO);
-            if(RequisitionApplicationTypeEnum.FBA.getCode().equals(view.getType()) && CharSequenceUtil.isBlank(view.getFbaShipmentCode())){
+            if((RequisitionApplicationTypeEnum.FBA.getCode().equals(view.getType()) || RequisitionApplicationTypeEnum.AWD.getCode().equals(view.getType())) && CharSequenceUtil.isBlank(view.getFbaShipmentCode())){
                 throw new ServiceException(CharSequenceUtil.format("要货申请{}未绑定货件单号，无法下推发货单",view.getSourceCode()));
             }
             //映射主表信息
@@ -2454,8 +2455,9 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                 return;
             }
             String channelName = "";
-            if(RequisitionApplicationTypeEnum.FBA.getCode().equals(requisitionApplicationEntity.getType())
-            ||RequisitionApplicationTypeEnum.ALIEXPRESS.getCode().equals(requisitionApplicationEntity.getType())){
+            if((RequisitionApplicationTypeEnum.FBA.getCode().equals(requisitionApplicationEntity.getType())
+                    || RequisitionApplicationTypeEnum.AWD.getCode().equals(requisitionApplicationEntity.getType()))
+                    || RequisitionApplicationTypeEnum.ALIEXPRESS.getCode().equals(requisitionApplicationEntity.getType())){
                 ShopInfoEntity shopInfoEntity = shopInfoFeign.getShopInfoById(requisitionApplicationEntity.getChannelId());
                 if(Objects.nonNull(shopInfoEntity)){
                     channelName = shopInfoEntity.getName();
