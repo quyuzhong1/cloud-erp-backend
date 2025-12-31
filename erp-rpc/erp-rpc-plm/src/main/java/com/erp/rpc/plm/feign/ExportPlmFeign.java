@@ -1,6 +1,7 @@
 package com.erp.rpc.plm.feign;
 
 import com.common.business.config.ExportFeignConfig;
+import com.common.business.dto.DynamicExcelDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.plm.dto.*;
@@ -64,4 +65,6 @@ public interface ExportPlmFeign {
     PagingVO<CfgMoldAlertRuleDTO.ListDTO> exportCfgMoldAlert(@RequestBody @Validated PagingDTO<CfgMoldAlertRuleDTO.PagingParamDTO> dto);
     @PostMapping("/feign/export/exportMoldMonitor")
     PagingVO<MoldMonitorDTO.ListDTO> exportMoldMonitor(@RequestBody @Validated PagingDTO<MoldMonitorDTO.PagingParamDTO> dto);
+    @PostMapping("/feign/export/exportDynamicProductDetail")
+    PagingVO<DynamicExcelDTO> exportDynamicProductDetail(PagingDTO<ProductSkuExcelDTO> dto);
 }

@@ -474,7 +474,7 @@ public class ProductDetailExcelExportDTO {
      * 保险属性
      */
     @ExcelProperty("保险属性")
-    @MenuCode("plm:product:detail:listSale")
+    @MenuCode("plm:product:detail:listLogistics")
     private String insuranceProperty;
     /**
      * 电池重量（g）
