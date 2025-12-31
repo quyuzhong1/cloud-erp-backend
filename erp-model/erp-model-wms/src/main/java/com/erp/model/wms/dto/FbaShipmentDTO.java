@@ -942,6 +942,10 @@ public class FbaShipmentDTO implements Serializable {
          * 来源类型
          */
         private String sourceType;
+        /**
+         * FBA类型
+         */
+        private String fbaType;
 
         /**
          * 来源类型中文

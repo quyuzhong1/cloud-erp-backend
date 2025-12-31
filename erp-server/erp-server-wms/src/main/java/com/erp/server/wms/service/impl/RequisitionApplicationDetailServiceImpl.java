@@ -134,7 +134,7 @@ public class RequisitionApplicationDetailServiceImpl extends SuperServiceImpl<Re
         handleData(list, mainId, Boolean.TRUE);
         //校验是否重复
         String type = updateDTO.getType();
-        if (RequisitionApplicationTypeEnum.FBA.getCode().equals(type)) {
+        if (RequisitionApplicationTypeEnum.FBA.getCode().equals(type) || RequisitionApplicationTypeEnum.AWD.getCode().equals(type)) {
             //明细中的fnsku不能为空
             long count = list.stream().filter(obj -> CharSequenceUtil.isBlank(obj.getPlatformFnSku())).count();
             if (count > 0) {
@@ -150,7 +150,7 @@ public class RequisitionApplicationDetailServiceImpl extends SuperServiceImpl<Re
                             .map(detail -> detail.getPlatformSku() + "+" + detail.getPlatformFnSku() + "+" + detail.getSkuNo())
                             .distinct()
                             .collect(Collectors.joining(", "));
-                    throw new ServiceException("FBA 类型的 MSKU+FNSKU+SKU 必须唯一 ,重复的组合:" + duplicateSkus);
+                    throw new ServiceException("FBA/AWD 类型的 MSKU+FNSKU+SKU 必须唯一 ,重复的组合:" + duplicateSkus);
                 }
             }
         } else if (RequisitionApplicationTypeEnum.THIRD_WAREHOUSE.getCode().equals(type)

@@ -2456,7 +2456,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
                         printDTO.setShopName(shopInfo.getName());
                     }
                 }
-            }else if (Objects.nonNull(requisitionApplication) && CharSequenceUtil.isNotBlank(requisitionApplication.getChannelId()) && Objects.equals(requisitionApplication.getType(),RequisitionApplicationTypeEnum.FBA.getCode())){
+            }else if (Objects.nonNull(requisitionApplication) && CharSequenceUtil.isNotBlank(requisitionApplication.getChannelId()) && (Objects.equals(requisitionApplication.getType(),RequisitionApplicationTypeEnum.FBA.getCode()) || Objects.equals(requisitionApplication.getType(),RequisitionApplicationTypeEnum.AWD.getCode()))){
                 printDTO.setShopId(requisitionApplication.getChannelId());
                 printDTO.setShopName(requisitionApplication.getChannelName());
                 ShopInfoEntity shopInfo = shopInfoFeign.getShopInfoById(requisitionApplication.getChannelId());
@@ -2579,7 +2579,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         taskDetailList.forEach(packingTaskDetailEntity -> {
             packingTaskDetailEntity.setMainId(packingTaskEntity.getId());
             RequisitionApplicationDetailEntity requisitionApplicationDetailEntity = detailEntityList.stream().filter(v->v.getId().equals(packingTaskDetailEntity.getSourceDetailId())).findFirst().orElse(new RequisitionApplicationDetailEntity());
-            if(entity.getType().equals(RequisitionApplicationTypeEnum.FBA.getCode())){
+            if(entity.getType().equals(RequisitionApplicationTypeEnum.FBA.getCode()) || entity.getType().equals(RequisitionApplicationTypeEnum.AWD.getCode())){
                 packingTaskDetailEntity.setFnSku(requisitionApplicationDetailEntity.getPlatformFnSku());
             }else{
                 packingTaskDetailEntity.setFnSku(requisitionApplicationDetailEntity.getPlatformSku());

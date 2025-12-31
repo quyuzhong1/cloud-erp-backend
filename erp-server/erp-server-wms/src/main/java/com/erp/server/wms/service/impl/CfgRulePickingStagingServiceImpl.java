@@ -107,6 +107,14 @@ public class CfgRulePickingStagingServiceImpl extends SuperServiceImpl<CfgRulePi
         fbaStagingEntity.setWarehouseId(dto.getWarehouseId());
         addList.add(fbaStagingEntity);
 
+        CfgRulePickingStagingEntity awdStagingEntity = new CfgRulePickingStagingEntity();
+        awdStagingEntity.setBillType(PickingBillTypeEnum.AWD.getCode());
+        awdStagingEntity.setWarehouseAreaId(fbaWarehouseLocation.getParentId());
+        awdStagingEntity.setWarehouseLocationId(fbaWarehouseLocation.getId());
+        awdStagingEntity.setWarehouseLocation(fbaWarehouseLocation.getCode());
+        awdStagingEntity.setWarehouseId(dto.getWarehouseId());
+        addList.add(awdStagingEntity);
+
         CfgRulePickingStagingEntity thirdStagingEntity = new CfgRulePickingStagingEntity();
         thirdStagingEntity.setBillType(PickingBillTypeEnum.THIRD.getCode());
         thirdStagingEntity.setWarehouseAreaId(thirdWarehouseLocation.getParentId());

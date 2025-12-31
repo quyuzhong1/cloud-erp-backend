@@ -1459,8 +1459,14 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
 
         for (FbaShipmentDTO.GenerateRequisitionApplicationViewDTO viewDTO : list) {
             //FBA下推要货单要货类型默认是：销售平台
-            viewDTO.setType(RequisitionApplicationTypeEnum.FBA.getCode());
-            viewDTO.setTypeName(RequisitionApplicationTypeEnum.FBA.getName());
+            if (ShipmentSourceTypeEnum.AWD.getCode().equalsIgnoreCase(viewDTO.getFbaType())){
+                viewDTO.setType(RequisitionApplicationTypeEnum.AWD.getCode());
+                viewDTO.setTypeName(RequisitionApplicationTypeEnum.AWD.getName());
+            }else {
+                viewDTO.setType(RequisitionApplicationTypeEnum.FBA.getCode());
+                viewDTO.setTypeName(RequisitionApplicationTypeEnum.FBA.getName());
+            }
+
             //来源类型
             viewDTO.setSourceType(SourceTypeEnum.FBA_SHIPMENT.getCode());
             //来源类型中文
