@@ -97,7 +97,19 @@ public interface FbaShipmentConverter {
             @Mapping(target = "planQty", source = "declareQty"),
             @Mapping(target = "deliveryQty", source = "declareQty"),
             @Mapping(target = "platformSkuNo", source = "msku"),
-            @Mapping(target = "platformSpuNo", source = "asin")
+            @Mapping(target = "platformSpuNo", source = "asin"),
+            @Mapping(target = "imageUrl", ignore = true),
+            @Mapping(target = "netWeight", ignore = true),
+            @Mapping(target = "productName", ignore = true),
+            @Mapping(target = "productSizeHeight", source = "packageHeight"),
+            @Mapping(target = "productSizeLength", source = "packageLength"),
+            @Mapping(target = "productSizeWidth", source = "packageWidth"),
+            @Mapping(target = "sourceDetailId", source = "id"),
+            @Mapping(target = "stockSku", ignore = true),
+            @Mapping(target = "thirdWarehouseSku", ignore = true),
+            @Mapping(target = "useDeliveryQty", ignore = true),
+            @Mapping(target = "warehouseLocation", ignore = true),
+            @Mapping(target = "warehouseLocationName", ignore = true)
     })
     FirstMileDeliveryDetailDTO.ViewDTO fbaShipmentDetailEntityToDeliveryDetailViewDTO(FbaShipmentDetailEntity detailEntity);
 

@@ -68,7 +68,14 @@ public interface RequisitionApplicationConverter {
     FirstMileDeliveryDTO.AddDTO generateDeliverFDD(RequisitionApplicationDTO.GenerateDeliverViewDTO dto);
 
     @Mappings({
-            @Mapping(target = "platformSkuNo", source = "platformSku")
+            @Mapping(target = "platformSkuNo", source = "platformSku"),
+            @Mapping(target = "declareQty", ignore = true),
+            @Mapping(target = "mainId", ignore = true),
+            @Mapping(target = "netWeight", ignore = true),
+            @Mapping(target = "productSizeHeight", ignore = true),
+            @Mapping(target = "productSizeLength", ignore = true),
+            @Mapping(target = "productSizeWidth", ignore = true),
+            @Mapping(target = "warehouseLocation", ignore = true)
     })
     FirstMileDeliveryDetailDTO.AddDTO generateDeliverDetailFDD(RequisitionApplicationDTO.GenerateDeliverViewDTO dto);
 
@@ -76,7 +83,7 @@ public interface RequisitionApplicationConverter {
             @Mapping(target = "sourceId", source = "entity.id"),
             @Mapping(target = "sourceType", expression = "java(com.common.business.enums.SourceTypeEnum.REQUISITION_APPLICATION.getCode())"),
             @Mapping(target = "sourceCode", source = "entity.code"),
-            @Mapping(target = "demandType", expression = "java(com.erp.model.wms.enums.FbaDemandTypeEnum.DEMAND_PLATFORM_WAREHOUSE.getCode())"),
+            @Mapping(target = "demandType", source = "fbaShipmentEntity.sourceType", qualifiedByName = "convertSourceTypeToDemandType"),
             @Mapping(target = "shopId", source = "shopInfo.id"),
             @Mapping(target = "shopName", source = "shopInfo.name"),
             @Mapping(target = "countryId", source = "fbaShipmentEntity.countryId"),
@@ -88,6 +95,9 @@ public interface RequisitionApplicationConverter {
             @Mapping(target = "remark", ignore = true),
             @Mapping(target = "fulfillmentCenter", source = "shopInfo.warehouseName"),
             @Mapping(target = "inventoryOrgId", ignore = true),
+            @Mapping(target = "attachNameList", ignore = true),
+            @Mapping(target = "attachUrlList", ignore = true),
+            @Mapping(target = "detailList", ignore = true)
     })
     FirstMileDeliveryDTO.AddDTO generateFbaDeliverFDD(FbaShipmentEntity fbaShipmentEntity, RequisitionApplicationEntity entity, ShopInfoEntity shopInfo);
 

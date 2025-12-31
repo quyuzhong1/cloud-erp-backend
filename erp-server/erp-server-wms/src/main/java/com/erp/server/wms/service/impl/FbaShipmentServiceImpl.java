@@ -585,8 +585,8 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
     @Override
     public FirstMileDeliveryDTO.ViewDTO getDeliverView(String id) {
         //校验货件单据是否存在
-        List<FbaShipmentEntity> fbaShipmentEntities = this.listByIds(Collections.singletonList(id));
-        if (CollectionUtils.isEmpty(fbaShipmentEntities)) {
+        FbaShipmentEntity entity = this.getById(id);
+        if (Objects.isNull(entity)) {
             throw new ServiceException(ApiError.FIRST_MILE_FBA_SHIPMENT_NOT_EXIST_BILL);
         }
 
@@ -609,15 +609,9 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
 */
 
         //Delete和Cancel状态的货件不允许下推发货单
-        List<FbaShipmentEntity> collect = fbaShipmentEntities.stream()
-                .filter(req -> ShipmentStatus.DELETED.getValue().equals(req.getPlatformShipmentStatus())
-                        || ShipmentStatus.CANCELLED.getValue().equals(req.getPlatformShipmentStatus()))
-                .collect(Collectors.toList());
-        if (CollectionUtils.isNotEmpty(collect)) {
+        if (ShipmentStatus.DELETED.getValue().equals(entity.getPlatformShipmentStatus()) || ShipmentStatus.CANCELLED.getValue().equals(entity.getPlatformShipmentStatus())) {
             throw new ServiceException(ApiError.FIRST_MILE_SHIPMENT_STATUS_CHECK_NOT_DELETE);
         }
-
-        FbaShipmentEntity entity = this.getById(id);
         //根据店铺id查询店铺信息
         List<ShopInfoEntity> shopInfoEntities = shopInfoFeign.listShopInfoByIds(Collections.singletonList(entity.getShopId()));
         //设置店铺的仓位为目的仓
@@ -627,10 +621,17 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         FirstMileDeliveryDTO.ViewDTO viewDTO = FbaShipmentConverter.INSTANCE.fbaShipmentEntityToFbaDeliveryViewDTO(entity);
         viewDTO.setSourceType(SourceTypeEnum.FBA_SHIPMENT.getCode());
         viewDTO.setSourceTypeName(SourceTypeEnum.FBA_SHIPMENT.getName());
-        viewDTO.setDemandType(FbaDemandTypeEnum.DEMAND_PLATFORM_WAREHOUSE.getCode());
-        viewDTO.setDemandTypeName(FbaDemandTypeEnum.DEMAND_PLATFORM_WAREHOUSE.getName());
-        viewDTO.setDestWarehouseId(shopInfoEntity.getWarehouseId());
-        viewDTO.setDestWarehouseName(shopInfoEntity.getWarehouseName());
+        if (entity.getSourceType().equals(ShipmentSourceTypeEnum.AWD.getCode())) {
+            viewDTO.setDemandType(FbaDemandTypeEnum.DEMAND_AWD_WAREHOUSE.getCode());
+            viewDTO.setDemandTypeName(FbaDemandTypeEnum.DEMAND_AWD_WAREHOUSE.getName());
+            viewDTO.setDestWarehouseId(shopInfoEntity.getAwdWarehouseId());
+            viewDTO.setDestWarehouseName(shopInfoEntity.getAwdWarehouseName());
+        }else {
+            viewDTO.setDemandType(FbaDemandTypeEnum.DEMAND_PLATFORM_WAREHOUSE.getCode());
+            viewDTO.setDemandTypeName(FbaDemandTypeEnum.DEMAND_PLATFORM_WAREHOUSE.getName());
+            viewDTO.setDestWarehouseId(shopInfoEntity.getWarehouseId());
+            viewDTO.setDestWarehouseName(shopInfoEntity.getWarehouseName());
+        }
         viewDTO.setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
         viewDTO.setApproveStatusName(ApproveStatusEnum.WAIT_SUBMIT.getName());
 
@@ -666,11 +667,11 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
                     .mapToInt(FirstMileDeliveryDetailEntity::getDeliveryQty)
                     .sum();
             detailDto.setUseDeliveryQty(useDeliveryQty);
-            detailDto.setProductSizeLength(skuVO.getProductLength());
-            detailDto.setProductSizeWidth(skuVO.getProductWidth());
-            detailDto.setProductSizeHeight(skuVO.getProductHeight());
-            //来源详情id
-            detailDto.setSourceDetailId(detailEntity.getId());
+            if (!ShipmentSourceTypeEnum.AWD.getCode().equals(entity.getSourceType())){
+                detailDto.setProductSizeLength(skuVO.getProductLength());
+                detailDto.setProductSizeWidth(skuVO.getProductWidth());
+                detailDto.setProductSizeHeight(skuVO.getProductHeight());
+            }
             detailList.add(detailDto);
         }
         viewDTO.setDetailList(detailList);
