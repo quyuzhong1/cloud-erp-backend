@@ -103,6 +103,7 @@
     <select id="listExport" resultType="com.erp.model.wms.dto.WmsDeliveryPlanDTO$ListDTO">
         SELECT
         odp.id,
+        odpd.id AS detailId,
         odp.code,
         odp.approve_status,
         odp.invalid_status,

@@ -32,12 +32,15 @@ import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.tms.feign.LogisticsBillFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
+import com.erp.rpc.wms.feign.SoOutstockFeign;
 import com.erp.server.oms.convert.B2cOrderConsumerConverter;
 import com.erp.server.oms.mapper.SoB2cLogisticsMapper;
 import com.erp.server.oms.service.*;
+import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -88,6 +91,9 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
     private WorkflowTaskRecordService workflowTaskRecordService;
     @Resource
     private PackagePlanService packagePlanService;
+    @Autowired
+    private SoOutstockFeign soOutstockFeign;
+
     @Override
     public Boolean add(SoB2cLogisticsDTO.AddDTO logisticsDTO, String mainId) {
         SoB2cLogisticsEntity entity = new SoB2cLogisticsEntity();
@@ -529,6 +535,8 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public BatchResultDTO transferOrderSave(SoB2cLogisticsDTO.transferOrderDTO dto, LogisticsChannelDTO.BaseDTO channel, SoB2cEntity soB2cEntity) {
         if (CharSequenceUtil.isBlank(dto.getTransportNo())){
             dto.setTransportNo(dto.getTrackNo());
@@ -543,7 +551,8 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
                .set(SoB2cLogisticsEntity::getCode, dto.getTransportNo())
                .set(SoB2cLogisticsEntity::getSourceSystem, SoB2cLogisticSourceSystemEnum.ERP.getCode())
                .set(SoB2cLogisticsEntity::getTrackNo, dto.getTrackNo()).update();
-         operateLogService.addModuleOperateLog(msg,ModuleTypeEnum.SO_B2C.getCode(), soB2cEntity.getId(), "物流转单");
+        operateLogService.addModuleOperateLog(msg,ModuleTypeEnum.SO_B2C.getCode(), soB2cEntity.getId(), "物流转单");
+        soOutstockFeign.updateSoB2cLogisticsInfo(dto);
         return BatchResultDTO.success(dto.getId(),soB2cEntity.getCode(),"转单成功");
     }
 }

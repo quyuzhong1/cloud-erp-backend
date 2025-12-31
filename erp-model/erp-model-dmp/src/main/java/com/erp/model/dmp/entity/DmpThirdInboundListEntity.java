@@ -15,14 +15,14 @@ import com.common.business.enums.ApproveStatusEnum;
  * 第三方仓库存
  * </p>
  *
- * @author shukai
- * @since 2024-08-08
+ * @author lrp
+ * @since 2025-11-11
 */
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
-@TableName("dmp_third_inbound")
-public class DmpThirdInboundEntity extends BaseEntity<DmpThirdInboundEntity> {
+@TableName("dmp_third_inbound_list")
+public class DmpThirdInboundListEntity extends BaseEntity<DmpThirdInboundListEntity> {
 
     /**
     * 仓库平台类型
@@ -44,11 +44,6 @@ public class DmpThirdInboundEntity extends BaseEntity<DmpThirdInboundEntity> {
     */
     @TableField("receiving_status")
     private String receivingStatus;
-    /**
-    * 明细json
-    */
-    @TableField("detail_list_json")
-    private String detailListJson;
     /**
     * 输入任务id
     */
@@ -74,14 +69,12 @@ public class DmpThirdInboundEntity extends BaseEntity<DmpThirdInboundEntity> {
     */
     @TableField("data_encrypt")
     private String dataEncrypt;
-
     /**
-     * 来源单号
-     */
+    * 来源单号
+    */
     @TableField("source_code")
     private String sourceCode;
-    @TableField("main_id")
-    private String mainId;
+
 
     public static final String WAREHOUSE_PLATFORM_TYPE = "warehouse_platform_type";
 
@@ -90,8 +83,6 @@ public class DmpThirdInboundEntity extends BaseEntity<DmpThirdInboundEntity> {
     public static final String RECEIVING_CODE = "receiving_code";
 
     public static final String RECEIVING_STATUS = "receiving_status";
-
-    public static final String DETAIL_LIST_JSON = "detail_list_json";
 
     public static final String INPUT_TASK_ID = "input_task_id";
 
@@ -102,6 +93,8 @@ public class DmpThirdInboundEntity extends BaseEntity<DmpThirdInboundEntity> {
     public static final String UNIQUE_ENCRYPT = "unique_encrypt";
 
     public static final String DATA_ENCRYPT = "data_encrypt";
+
+    public static final String SOURCE_CODE = "source_code";
 
     @Override
     public Serializable pkVal() {

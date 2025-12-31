@@ -2033,7 +2033,30 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         String b2c = OrderTypeEnum.B2C.getCode();
         Boolean isB2c = b2c.equals(orderType);
         if(isB2c){
-           throw new ServiceException("B2C订单不允许修改出库单");
+            SoOutstockEntity old = new SoOutstockEntity();
+            BeanMapper.copy(soOutstock, old);
+            BeanMapper.copy(dto, soOutstock);
+            Boolean updateResult = this.updateById(soOutstock);
+            if (updateResult) {
+                //更新TMS物流跟踪号
+                LogisticsBillDTO.BatchUpdateTrackNoDTO batchUpdateTrackNoDTO = new LogisticsBillDTO.BatchUpdateTrackNoDTO();
+                batchUpdateTrackNoDTO.setSoOutstockEntity(soOutstock);
+                batchUpdateTrackNoDTO.setLogisticsChannelId(soOutstock.getLogisticsChannelId());
+                batchUpdateTrackNoDTO.setTrackNoList(dto.getTrackNoList());
+                List<BatchResultDTO> batchResultDTOList = logisticsBillFeign.updateBatchTrackNo(Collections.singletonList(batchUpdateTrackNoDTO),false);
+                if(CollectionUtils.isNotEmpty(batchResultDTOList) && !batchResultDTOList.get(0).getSuccess()){
+                    throw new ServiceException("更新跟踪单号失败:"+batchResultDTOList.get(0).getMsg());
+                }
+                /**
+                 * 添加修改日志
+                 */
+                operateLogService.addModuleOperateLogByObj(old, soOutstock, ModuleTypeEnum.SO_OUT_STOCK.getCode(), id, "", "");
+                soOutstockDetailService.updateDetail(id, detailList, true);
+                return id;
+            }
+        }
+        if ("qimen".equals(soOutstock.getCreateUserName()) || "wangdiantong".equals(soOutstock.getCreateUserName())){
+            throw new ServiceException("旺店通不允许修改出库单");
         }
         List<SoDetailEntity> soDetailList = Collections.emptyList();
         if (!isB2c) {
@@ -2132,7 +2155,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
              * 添加修改日志
              */
             operateLogService.addModuleOperateLogByObj(old, soOutstock, ModuleTypeEnum.SO_OUT_STOCK.getCode(), id, "", "");
-            soOutstockDetailService.updateDetail(id, detailList);
+            soOutstockDetailService.updateDetail(id, detailList, false);
             return id;
         }
         return "";
@@ -2544,6 +2567,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         if (ObjectUtils.isEmpty(list)) {
             throw new ServiceException(ApiError.SO_OUTBOUND_NOT_FOUND);
         }
+
         List<String> channelIds = dtoList.stream().map(SoOutstockDTO.PagingUpdateDTO::getLogisticsChannelId).collect(Collectors.toList());
         //物流供应商信息
         List<LogisticsChannelDTO.BaseDTO> logisticsInfoList = logisticsFeign.listChannelInfoById(channelIds);
@@ -2566,6 +2590,27 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                     batchResultDTOList.add(batchResultDTO);
                     continue;
                 }
+                if(BillTypeEnum.B2C.getCode().equals(soOutstock.getOrderType())){
+                    BatchResultDTO batchResultDTO = BatchResultDTO.fail(pagingUpdateDTO.getId(),soOutstock.getCode(),"只允许B2B订单更新跟踪号");
+                    batchResultDTOList.add(batchResultDTO);
+                    continue;
+                }
+                if (CollectionUtils.isNotEmpty(pagingUpdateDTO.getTrackNoList())){
+
+                    boolean hasTrackNoError = false;
+                    //跟踪号只能是数字或英文
+                    for (String trackNo : pagingUpdateDTO.getTrackNoList()) {
+                        if (!trackNo.matches("^[a-zA-Z0-9]+$")) {
+                            hasTrackNoError = true;
+                            BatchResultDTO batchResultDTO = BatchResultDTO.fail(pagingUpdateDTO.getId(),soOutstock.getCode(),"跟踪号只能是数字或英文");
+                            batchResultDTOList.add(batchResultDTO);
+                        }
+                    }
+                    if(hasTrackNoError){
+                        continue;
+                    }
+                }
+
                 LogisticsBillDTO.BatchUpdateTrackNoDTO batchUpdateTrackNoDTO = new LogisticsBillDTO.BatchUpdateTrackNoDTO();
                 batchUpdateTrackNoDTO.setTrackNoList(pagingUpdateDTO.getTrackNoList());
                 batchUpdateTrackNoDTO.setSoOutstockEntity(soOutstock);
@@ -4738,6 +4783,36 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             if(Objects.nonNull(skuVO)){
                 v.setProductName(skuVO.getSkuName());
                 v.setSkuUnit(skuVO.getUnitName());
+            }
+        }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public void updateSoB2cLogisticsInfo(SoB2cLogisticsDTO.transferOrderDTO dto) {
+        List<SoOutstockEntity> soOutstockEntityList = this.listBySoIds(Collections.singletonList(dto.getId()));
+        if(CollectionUtils.isEmpty(soOutstockEntityList)){
+            return;
+        }
+        List<LogisticsChannelDTO.BaseDTO> logisticsInfoList = logisticsFeign.listChannelInfoById(Collections.singletonList(dto.getChannelId()));
+        LogisticsChannelDTO.BaseDTO logisticsInfo = logisticsInfoList.get(0);
+        List<SoOutstockEntity> updateList = new ArrayList<>();
+        for (SoOutstockEntity soOutstock : soOutstockEntityList) {
+            soOutstock.setCarrierId(logisticsInfo.getSupplierId());
+            soOutstock.setTrackNo(dto.getTransportNo());
+            soOutstock.setLogisticsChannelId(dto.getChannelId());
+            soOutstock.setLogisticsChannelName(logisticsInfo.getName());
+            updateList.add(soOutstock);
+        }
+
+        if(CollectionUtils.isNotEmpty(updateList)){
+            boolean update = this.updateBatchById(updateList);
+            //只批量同步更新审核通过的销售出库单
+            updateList = updateList.stream().filter(v -> v.getApproveStatus().getCode().equalsIgnoreCase(ApproveStatusEnum.APPROVE.getCode())).collect(Collectors.toList());
+            if(update && CollectionUtils.isNotEmpty(updateList)){
+                //推送金蝶同步任务
+                sendPushTask(updateList,SyncOperateEnum.OPERATE_APPROVE.getCode());
             }
         }
     }

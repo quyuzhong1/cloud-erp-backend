@@ -335,6 +335,9 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
         List<String> countryIds;
         if (Objects.nonNull(dto.getReceiver())){
             countryIds = Stream.of(shopInfo.getDictCountryCode(), dto.getReceiver().getCountry()).distinct().collect(Collectors.toList());
+            if(StringUtils.isBlank(dto.getReceiver().getCountry()) && PlatformDictEnum.TE_MU.getCode().equalsIgnoreCase(dto.getPlatform())){
+                dto.getReceiver().setCountry(shopInfo.getDictCountryCode());
+            }
         }else {
             countryIds = Stream.of(shopInfo.getDictCountryCode()).collect(Collectors.toList());
         }

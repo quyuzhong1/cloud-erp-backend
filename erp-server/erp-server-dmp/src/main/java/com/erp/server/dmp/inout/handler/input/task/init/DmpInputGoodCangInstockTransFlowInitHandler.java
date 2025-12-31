@@ -57,7 +57,6 @@ public class DmpInputGoodCangInstockTransFlowInitHandler extends DmpInputGoodCan
         }
         // 父级任务
         DmpInputTaskEntity parentTaskEntity = dmpInputTaskService.getById(dmpInputTaskEntity.getParentTaskId());
-
         // 开始时间=任务开始时间
         LocalDateTime createDateFrom = parentTaskEntity.getStartTime();
         // 结束时间=任务指定结束时间

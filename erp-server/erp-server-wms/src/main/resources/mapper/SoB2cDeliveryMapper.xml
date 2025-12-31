@@ -40,10 +40,14 @@
         sbd.transfer_warehouse_ids
         FROM so_b2c_delivery sbd
         LEFT JOIN so_b2c_delivery_detail sbdd ON sbd.id = sbdd.main_id AND sbd.is_deleted = FALSE
-        LEFT JOIN foreign_so_b2c_label fsbl ON sbd.source_id = fsbl.main_id AND fsbl.is_deleted = FALSE
+        <if test="params.dynamicDataSource != null and params.dynamicDataSource == 'doris'">
+            LEFT JOIN erp_oms.so_b2c_label fsbl ON sbd.source_id = fsbl.main_id AND fsbl.is_deleted = FALSE
+        </if>
+        <if test="params.dynamicDataSource == null or params.dynamicDataSource != 'doris'">
+            LEFT JOIN foreign_so_b2c_label fsbl ON sbd.source_id = fsbl.main_id AND fsbl.is_deleted = FALSE
+        </if>
         WHERE ${params.sqlMap.default}
         AND sbdd.is_deleted = FALSE
-
         <!--数据权限-->
         <if test="params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
