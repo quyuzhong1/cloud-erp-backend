@@ -1,6 +1,8 @@
 package com.erp.server.plm.controller.api;
 
 
+import com.common.business.annotation.WebAdvanceQuery;
+import com.erp.server.plm.query.RefProductImgAttachmentQueryHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import javax.annotation.Resource;
@@ -75,19 +77,6 @@ public class RefProductImgAttachmentController extends BaseController {
     }
 
 
-    /**
-    * 获取状态统计
-    * @return
-    */
-    @PostMapping("/tabList")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            menuCode = "plm:refProductImgAttachment:paging",
-            tableAlias = ""
-    )
-    public ApiResult<List<RefProductImgAttachmentDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
-       return success(refProductImgAttachmentService.tabList(dto));
-    }
 
     /**
     * 列表查询
@@ -102,6 +91,7 @@ public class RefProductImgAttachmentController extends BaseController {
             menuCode = "plm:refProductImgAttachment:paging",
             tableAlias = ""
     )
+    @WebAdvanceQuery(handler = RefProductImgAttachmentQueryHandler.class)
     public ApiResult<PagingVO<RefProductImgAttachmentDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<RefProductImgAttachmentDTO.PagingParamDTO> dto) {
         return success(refProductImgAttachmentService.paging(dto));
     }
