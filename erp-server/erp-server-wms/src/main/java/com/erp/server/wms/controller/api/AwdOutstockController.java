@@ -144,8 +144,9 @@ public class AwdOutstockController extends BaseController {
             tableAlias = "ao"
     )
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出Excel数据")
-    public void exportList(@RequestBody @Validated AwdOutstockDTO.ExportDTO dto, HttpServletResponse response) {
+    public ApiResult exportList(@RequestBody @Validated AwdOutstockDTO.ExportDTO dto, HttpServletResponse response) {
         awdOutstockService.exportList(dto, response);
+        return success();
     }
 
 

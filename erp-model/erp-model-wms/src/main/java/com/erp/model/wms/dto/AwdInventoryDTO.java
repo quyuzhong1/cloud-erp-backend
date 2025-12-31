@@ -151,6 +151,11 @@ public class AwdInventoryDTO implements Serializable {
         */
         private Integer totalInboundQty;
 
+        /**
+         * 更新时间
+         */
+        private LocalDateTime updateTime;
+
     }
 
 

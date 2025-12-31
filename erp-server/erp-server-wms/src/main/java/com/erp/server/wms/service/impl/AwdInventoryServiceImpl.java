@@ -28,7 +28,6 @@ import com.common.business.dto.base.*;
 import javax.servlet.http.HttpServletResponse;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_AWD_INVENTORY;
-import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_AWD_OUT_STOCK;
 
 /**
  * <p>
