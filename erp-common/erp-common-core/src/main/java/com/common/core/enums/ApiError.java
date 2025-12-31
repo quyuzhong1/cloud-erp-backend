@@ -191,6 +191,7 @@ public enum ApiError implements Serializable {
     COMMON_CONTRACT_NOT_BINDING(98127,"无关联合同，请在合同管理页面关联后打印"),
 
     COMMON_NO_DELIVERY_SKU(98128,"没有发货的SKU"),
+    COMMON_SKU_NOT_EXIST_OR_NOT_APPROVE(98129,"SKU【{0}】不存在或未审核"),
 
     /**
      * AUTH 授权与登录 相关 2000 - 2200
