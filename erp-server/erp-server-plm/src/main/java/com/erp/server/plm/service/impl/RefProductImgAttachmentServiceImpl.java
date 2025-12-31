@@ -108,7 +108,7 @@ public class RefProductImgAttachmentServiceImpl extends SuperServiceImpl<RefProd
         log.info("开始新增图片分类附件关联单");
         boolean save = super.save(refProductImgAttachmentEntity);
         if(!save) {
-            throw new ServiceException("图片分类附件关联单保存失败");
+            throw new ServiceException(ApiError.PRODUCT_IMG_ATTACHMENT_SAVE_FAILED);
         }
 
         // 如果分类是产品主图，自动生成产品缩略图
@@ -136,7 +136,7 @@ public class RefProductImgAttachmentServiceImpl extends SuperServiceImpl<RefProd
         log.info("编辑 开始修改图片分类附件关联单数据，id：【{}】", old.getId());
         boolean save = super.updateById(refProductImgAttachmentEntity);
         if(!save) {
-            throw new ServiceException("图片分类附件关联单保存失败");
+            throw new ServiceException(ApiError.PRODUCT_IMG_ATTACHMENT_SAVE_FAILED);
         }
         // TODO 修改明细数据（包含增删改）（如果有明细的话）
 
@@ -210,7 +210,7 @@ public class RefProductImgAttachmentServiceImpl extends SuperServiceImpl<RefProd
 
     @Override
     public RefProductImgAttachmentDTO.ViewDTO view(String id) {
-    RefProductImgAttachmentEntity refProductImgAttachmentEntity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到图片分类附件关联单数据"));
+    RefProductImgAttachmentEntity refProductImgAttachmentEntity = super.getByIdOpt(id).orElseThrow(()->new ServiceException(ApiError.PRODUCT_IMG_ATTACHMENT_NOT_FOUND));
     RefProductImgAttachmentDTO.ViewDTO data = BeanMapperUtils.map(RefProductImgAttachmentDTO.ViewDTO.class, refProductImgAttachmentEntity);
     // 数据填充处理
     fillOne(data);
@@ -361,7 +361,7 @@ public class RefProductImgAttachmentServiceImpl extends SuperServiceImpl<RefProd
         try {
             byte[] zipBytes = fileFeign.downloadFile(dto.getZipUrl());
             if (zipBytes == null || zipBytes.length == 0) {
-                throw new ServiceException("ZIP文件为空或不存在");
+                throw new ServiceException(ApiError.FILE_ZIP_NOT_FOUND, dto.getZipUrl());
             }
             double zipSizeMB = zipBytes.length / (1024.0 * 1024.0);
             zipSizeMB = Math.round(zipSizeMB * 100.0) / 100.0;
@@ -372,7 +372,7 @@ public class RefProductImgAttachmentServiceImpl extends SuperServiceImpl<RefProd
             throw e;
         } catch (Exception e) {
             log.error("检查ZIP文件大小失败：{}", dto.getZipUrl(), e);
-            throw new ServiceException("检查ZIP文件大小失败：" + e.getMessage());
+            throw new ServiceException(ApiError.FILE_CHECK_SIZE_FAILED, e.getMessage());
         }
         
         // 2. 调用文件服务解压缩ZIP文件并上传所有文件，获取文件信息列表（不传输文件本体）
@@ -381,11 +381,11 @@ public class RefProductImgAttachmentServiceImpl extends SuperServiceImpl<RefProd
             extractedFiles = fileFeign.unzipAndUploadFiles(dto.getZipUrl());
         } catch (Exception e) {
             log.error("解压缩ZIP文件失败：{}", dto.getZipUrl(), e);
-            throw new ServiceException("解压缩ZIP文件失败：" + e.getMessage());
+            throw new ServiceException(ApiError.FILE_ZIP_EXTRACT_FAILED, e.getMessage());
         }
         
         if (CollUtil.isEmpty(extractedFiles)) {
-            throw new ServiceException("ZIP文件中没有找到文件");
+            throw new ServiceException(ApiError.FILE_ZIP_EMPTY);
         }
         
         // 3. 从文件名提取SKU编号（第一次出现"_"前缀）
@@ -563,7 +563,7 @@ public class RefProductImgAttachmentServiceImpl extends SuperServiceImpl<RefProd
                 // 3. 删除关联记录
                 boolean deleted = super.removeById(id);
                 if (!deleted) {
-                    throw new ServiceException("删除关联记录失败");
+                    throw new ServiceException(ApiError.BILL_DELETE_FAILED);
                 }
                 
                 // 4. 删除附件记录
@@ -590,14 +590,14 @@ public class RefProductImgAttachmentServiceImpl extends SuperServiceImpl<RefProd
                 // 附件记录不存在，只删除关联记录
                 boolean deleted = super.removeById(id);
                 if (!deleted) {
-                    throw new ServiceException("删除关联记录失败");
+                    throw new ServiceException(ApiError.BILL_DELETE_FAILED);
                 }
             }
         } else {
             // 没有附件ID，只删除关联记录
             boolean deleted = super.removeById(id);
             if (!deleted) {
-                throw new ServiceException("删除关联记录失败");
+                throw new ServiceException(ApiError.BILL_DELETE_FAILED);
             }
         }
         
@@ -625,13 +625,13 @@ public class RefProductImgAttachmentServiceImpl extends SuperServiceImpl<RefProd
         
         // 2. 校验目标分类不是"所有分类"和"产品主图"分类
         if (ALL_CATEGORY_ID.equals(dto.getCategoryId())) {
-            throw new ServiceException("不能移动到\"所有分类\"");
+            throw new ServiceException(ApiError.PRODUCT_IMG_CATEGORY_MOVE_FORBIDDEN_ALL);
         }
         if (PRODUCT_MAIN_IMAGE_CATEGORY_ID.equals(dto.getCategoryId())) {
-            throw new ServiceException("不能移动到\"产品主图\"分类");
+            throw new ServiceException(ApiError.PRODUCT_IMG_CATEGORY_MOVE_FORBIDDEN_MAIN);
         }
         if (PRODUCT_THUMBNAIL_CATEGORY_ID.equals(dto.getCategoryId())) {
-            throw new ServiceException("不能移动到\"产品缩略图\"分类");
+            throw new ServiceException(ApiError.PRODUCT_IMG_CATEGORY_MOVE_FORBIDDEN_THUMBNAIL);
         }
         
         // 3. 批量查询关联记录
@@ -647,7 +647,7 @@ public class RefProductImgAttachmentServiceImpl extends SuperServiceImpl<RefProd
                 .update();
         
         if (!updated) {
-            throw new ServiceException("移动分类失败");
+            throw new ServiceException(ApiError.BILL_UPDATE_FAILED);
         }
         
         log.info("移动图片分类成功，共移动{}条记录到分类{}", refEntityList.size(), dto.getCategoryId());
@@ -664,12 +664,12 @@ public class RefProductImgAttachmentServiceImpl extends SuperServiceImpl<RefProd
         
         // 1. 校验至少选择一张图片
         if (CollUtil.isEmpty(dto.getIds())) {
-            throw new ServiceException("请至少选择一张图片");
+            throw new ServiceException(ApiError.PRODUCT_IMG_DOWNLOAD_MIN_REQUIRED);
         }
         
         // 2. 校验最多50张图片
         if (dto.getIds().size() > 50) {
-            throw new ServiceException("最多支持50张图片下载");
+            throw new ServiceException(ApiError.PRODUCT_IMG_DOWNLOAD_MAX_LIMIT);
         }
         
         // 3. 创建异步下载任务（传递ids，由handler处理）
@@ -792,7 +792,7 @@ public class RefProductImgAttachmentServiceImpl extends SuperServiceImpl<RefProd
         
         // 8. 校验是否有可下载的图片
         if (folderStructure.isEmpty() || folderStructure.values().stream().allMatch(List::isEmpty)) {
-            throw new ServiceException("未找到可下载的图片");
+            throw new ServiceException(ApiError.PRODUCT_IMG_DOWNLOAD_NOT_FOUND);
         }
         
         // 9. 构建CreateZipDTO并调用文件中心创建ZIP
@@ -804,7 +804,7 @@ public class RefProductImgAttachmentServiceImpl extends SuperServiceImpl<RefProd
         String zipUrl = fileFeign.createZipFromFolderStructure(createZipDTO);
         
         if (StrUtil.isBlank(zipUrl)) {
-            throw new ServiceException("创建ZIP文件失败");
+            throw new ServiceException(ApiError.FILE_ZIP_CREATE_FAILED, "");
         }
         
         log.info("构建产品图片文件夹结构并创建ZIP完成，共{}个文件夹，{}个文件，zipUrl={}", 

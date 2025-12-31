@@ -8,6 +8,8 @@ import com.common.business.enums.FileTaskStatusEnum;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.utils.PdfUtil;
 import com.common.business.vo.LoginUser;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.FastDFSClientUtil;
 import net.coobird.thumbnailator.Thumbnails;
 import javax.imageio.ImageIO;
@@ -123,7 +125,7 @@ public class FastDFSDownloadImpl implements FileService {
                         return fileBytes;
                     } catch (Exception e) {
                         log.error("Error processing file {}: {}", fileId, e.getMessage());
-                        throw new RuntimeException(e);
+                        throw new ServiceException(ApiError.FILE_OPERATION_FAILED, e.getMessage());
                     }
                 }, threadPoolTaskExecutor);
                 futures.add(future);
@@ -147,15 +149,15 @@ public class FastDFSDownloadImpl implements FileService {
                 fileTask.setFileUrl(fileUrl);
                 return fileUrl;
             } catch (TimeoutException e) {
-                throw new RuntimeException("File download timeout", e);
+                throw new ServiceException(ApiError.FILE_DOWNLOAD_TIMEOUT);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
-                throw new RuntimeException("Operation interrupted", e);
+                throw new ServiceException(ApiError.FILE_OPERATION_INTERRUPTED);
             }
         } catch (Exception e) {
             fileTask.setStatus(FileTaskStatusEnum.FAIL.getCode());
             fileTask.setRemark(e.getMessage().length() > 490 ? e.getMessage().substring(0, 490) : e.getMessage());
-            throw new RuntimeException("FastDFS operation failed", e);
+            throw new ServiceException(ApiError.FILE_OPERATION_FAILED, e.getMessage());
         }finally {
             // 更新文件任务状态为已完成
             fileTask.setFinishTime(LocalDateTime.now());
@@ -221,7 +223,7 @@ public class FastDFSDownloadImpl implements FileService {
             return compressedFileUrl;
         } catch (Exception e) {
             log.error("压缩图片失败: {}", fileUrl, e);
-            throw new RuntimeException("压缩图片失败: " + e.getMessage(), e);
+            throw new ServiceException(ApiError.FILE_IMAGE_COMPRESS_FAILED, e.getMessage());
         }
     }
     
@@ -362,7 +364,7 @@ public class FastDFSDownloadImpl implements FileService {
             // 1. 下载ZIP文件字节数据
             byte[] zipBytes = downloadFile(zipUrl);
             if (zipBytes == null || zipBytes.length == 0) {
-                throw new RuntimeException("ZIP文件为空或不存在: " + zipUrl);
+                throw new ServiceException(ApiError.FILE_ZIP_NOT_FOUND, zipUrl);
             }
             
             // 2. 解压ZIP文件，提取其中的文件并上传到FastDFS
@@ -414,7 +416,7 @@ public class FastDFSDownloadImpl implements FileService {
             return fileInfoList;
         } catch (Exception e) {
             log.error("解压缩ZIP文件失败：{}", zipUrl, e);
-            throw new RuntimeException("解压缩ZIP文件失败: " + e.getMessage(), e);
+            throw new ServiceException(ApiError.FILE_ZIP_EXTRACT_FAILED, e.getMessage());
         }
     }
 
@@ -428,7 +430,7 @@ public class FastDFSDownloadImpl implements FileService {
         log.info("开始根据文件夹结构创建ZIP文件");
         
         if (dto == null) {
-            throw new RuntimeException("请求参数不能为空");
+            throw new ServiceException(ApiError.FILE_PARAM_EMPTY);
         }
         
         Map<String, List<String>> folderStructure = dto.getFolderStructure();
@@ -439,7 +441,7 @@ public class FastDFSDownloadImpl implements FileService {
         // 如果文件夹结构为空，则从fileUrlToNameMap中获取所有文件，放在根目录
         if (folderStructure == null || folderStructure.isEmpty()) {
             if (fileUrlToNameMap.isEmpty()) {
-                throw new RuntimeException("文件夹结构和文件列表不能同时为空");
+                throw new ServiceException(ApiError.FILE_STRUCTURE_AND_FILES_EMPTY);
             }
             // 构建一个空的文件夹结构，所有文件放在根目录
             folderStructure = new HashMap<>();
@@ -526,7 +528,7 @@ public class FastDFSDownloadImpl implements FileService {
             return zipUrl;
         } catch (Exception e) {
             log.error("根据文件夹结构创建ZIP文件失败", e);
-            throw new RuntimeException("创建ZIP文件失败: " + e.getMessage(), e);
+            throw new ServiceException(ApiError.FILE_ZIP_CREATE_FAILED, e.getMessage());
         }
     }
 }
