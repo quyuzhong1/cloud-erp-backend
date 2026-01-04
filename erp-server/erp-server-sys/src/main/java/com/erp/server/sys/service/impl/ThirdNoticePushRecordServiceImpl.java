@@ -1412,13 +1412,12 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
         //根据通知方式查找人员 目前只有飞书
         String noticeMethod = noticeEntity.getNoticeMethod();
         if (StringUtils.isNotBlank(noticeMethod)) {
+            List<ThirdUnionDTO> unionList = sysUserFeign.getThirdByUserIds(ThirdpartyPlatformEnum.FS.getCode(), userIdList);
+            Map<String, ThirdUnionDTO> unionMap = unionList.stream().collect(Collectors.toMap(ThirdUnionDTO::getUserId, e -> e));
             List<String> noticeMethodList = Arrays.asList(noticeMethod.split(","));
             for (String str : noticeMethodList) {
                 //获取飞书的unionid 与用户关系
                 if (CfgApproveSyncSyncPlatformEnum.FEISHU.getCode().equals(str)) {
-                    List<ThirdUnionDTO> unionList = sysUserFeign.getThirdByUserIds(ThirdpartyPlatformEnum.FS.getCode() , userIdList);
-                    Map<String, ThirdUnionDTO> unionMap = unionList.stream().collect(Collectors.toMap(ThirdUnionDTO::getUserId, e -> e));
-
                     //根据用户id + businessType + noticeMethod + noticeType 判断是否已经在发送中。
                     ThirdNoticePushRecordDTO.ParamsDTO paramsDTO = new ThirdNoticePushRecordDTO.ParamsDTO();
                     paramsDTO.setBusinessType(noticeEntity.getBusinessType());
