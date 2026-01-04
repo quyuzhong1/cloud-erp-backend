@@ -1445,17 +1445,19 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
             data.setDeliveryModeName(OverseasDeliveryModeEnum.getNameByCode(data.getDeliveryMode()));
 
             // 无api对接平台查询映射关系
-            if (CharSequenceUtil.isBlank(data.getDictPlatform())){
-                //获取库存sku
-                SkuMappingDTO.ListStockSkuNoByProductSkuIdView listStockSkuNoByProductSkuIdView = listStockSkuNoByProductSkuIdViews.stream()
-                        .filter(req -> req.getProductSkuId().equals(data.getSkuId())
-                                && (req.getHasMappingAll() || req.getWarehouseId().equals(data.getToWarehouseId()))
-                        ).distinct()
-                        .findFirst().orElse(null);
+            if(StringUtils.isBlank(data.getPlatformSkuNo())){
+                if (CharSequenceUtil.isBlank(data.getDictPlatform())){
+                    //获取库存sku
+                    SkuMappingDTO.ListStockSkuNoByProductSkuIdView listStockSkuNoByProductSkuIdView = listStockSkuNoByProductSkuIdViews.stream()
+                            .filter(req -> req.getProductSkuId().equals(data.getSkuId())
+                                    && (req.getHasMappingAll() || req.getWarehouseId().equals(data.getToWarehouseId()))
+                            ).distinct()
+                            .findFirst().orElse(null);
 
-                if (null != listStockSkuNoByProductSkuIdView) {
-                    data.setPlatformSkuNo(listStockSkuNoByProductSkuIdView.getStockSku());
-                    data.setPlatformProductName(listStockSkuNoByProductSkuIdView.getStockSkuName());
+                    if (null != listStockSkuNoByProductSkuIdView) {
+                        data.setPlatformSkuNo(listStockSkuNoByProductSkuIdView.getStockSku());
+                        data.setPlatformProductName(listStockSkuNoByProductSkuIdView.getStockSkuName());
+                    }
                 }
             }
         }
