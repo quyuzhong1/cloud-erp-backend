@@ -38,7 +38,8 @@ public interface SyncSoReturnInstockService {
                                                   List<DictCountryEntity> countryEntityList,
                                                   List<DictGlobalAreaEntity> dictGlobalEntityList,
                                                   List<SysDepartmentEntity> deptList,
-                                                  List<CfgCountryPartitionEntity> countryPartitionEntityList);
+                                                  List<CfgCountryPartitionEntity> countryPartitionEntityList,
+                                                  String platformCode);
     
     Map<String, Object> syncNewDataToSdyFieldHandler(SoReturnInstockEntity entity,
     		SoReturnInstockDetailEntity detailEntity,
@@ -60,7 +61,8 @@ public interface SyncSoReturnInstockService {
     		List<DictCountryEntity> countryEntityList,
     		List<DictGlobalAreaEntity> dictGlobalEntityList,
     		List<SysDepartmentEntity> deptList,
-    		List<CfgCountryPartitionEntity> countryPartitionEntityList);
+    		List<CfgCountryPartitionEntity> countryPartitionEntityList,
+            String platformCode);
 
 
     /**
