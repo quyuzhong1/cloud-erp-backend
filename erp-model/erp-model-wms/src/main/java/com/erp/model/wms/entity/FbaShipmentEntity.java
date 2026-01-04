@@ -134,6 +134,18 @@ public class FbaShipmentEntity extends BaseEntity<FbaShipmentEntity> {
     @TableField("source_type")
     private String sourceType;
 
+    /**
+     * 关联单号
+     */
+    @TableField("reference_id")
+    private String referenceId;
+
+    /**
+     * 备注
+     */
+    @TableField("remark")
+    private String remark;
+
     public static final String SHOP_ID = "shop_id";
 
     public static final String SHOP_NAME = "shop_name";

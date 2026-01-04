@@ -124,6 +124,7 @@ public class DmpOutputAmzFbaShipmentRocketMQTaskHandler extends DmpOutputRocketM
         platformFbaShipmentDTO.setDeliveryStatus("unShipped");
         platformFbaShipmentDTO.setLabelUrl(dmpMainEntity.getLabelUrl());
         platformFbaShipmentDTO.setPageType(dmpMainEntity.getPageType());
+        platformFbaShipmentDTO.setReferenceId(dmpMainEntity.getReferenceId());
 
         // 明细
         List<PlatformFbaShipmentReceiveDTO> dtoDetailList = new LinkedList<>();

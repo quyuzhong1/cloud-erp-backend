@@ -89,6 +89,10 @@ public class PlatformFbaShipmentDTO extends UniqueDto {
      */
     private Boolean isSta;
     /**
+     * 关联单号
+     */
+    private String referenceId;
+    /**
      * 面单url
      */
     private String labelUrl;
