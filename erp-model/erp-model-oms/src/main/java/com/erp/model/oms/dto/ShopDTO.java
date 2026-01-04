@@ -287,11 +287,6 @@ public class ShopDTO implements Serializable {
         private String salesOrgId;
 
         /**
-         * 是否包含平台仓 true 包含
-         */
-        private Boolean  isHaveWarehouse;
-
-        /**
          * 是否多渠道发货
          */
         private Boolean isMultiChannel;
@@ -323,21 +318,6 @@ public class ShopDTO implements Serializable {
         private String domain;
 
         /**
-         * 店铺平台仓库
-         */
-        private String warehouseId;
-
-        /**
-         * VOEC税号
-         */
-        private String voecTaxNo;
-
-        /**
-         * EORI税号
-         */
-        private String eoriTaxNo;
-
-        /**
          * 结算币别 http://172.16.100.11:3002/project/36/interface/api/8485
          */
         @NotBlank(message = "结算币别不能为空")
@@ -352,11 +332,6 @@ public class ShopDTO implements Serializable {
          */
 //         @NotNull(message = "启用时间不能为空")
         private LocalDateTime enableTime;
-        /**
-         * 店铺退货仓库： 同店铺平台仓库获取方式
-         */
-//         @NotBlank(message = "店铺退货仓库不能为空")
-        private String returnWarehouse;
 
         /**
          * 渠道id
@@ -389,11 +364,6 @@ public class ShopDTO implements Serializable {
          * 时区
          */
         private String timeZone = "";
-        /**
-         * AWD仓库id
-         */
-        private String awdWarehouseId;
-        private String awdWarehouseName;
     }
 
 
@@ -709,18 +679,6 @@ public class ShopDTO implements Serializable {
         @NotNull(message = "数据下载时间不能为空")
         private LocalDateTime initPullTime;
         /**
-         * ioss税号
-         */
-        private String iossTaxNo;
-        /**
-         * VOEC税号
-         */
-        private String voecTaxNo;
-        /**
-         * EORI税号
-         */
-        private String eoriTaxNo;
-        /**
          * 销售组织
          */
         @NotBlank(message = "销售组织不能为空")
@@ -730,10 +688,6 @@ public class ShopDTO implements Serializable {
          * 渠道id
          */
         private List<String> channelIdList;
-        /**
-         * 仓库id
-         */
-        private String warehouseId;
 
         /**
          * 国家id
@@ -766,11 +720,6 @@ public class ShopDTO implements Serializable {
          */
 //         @NotNull(message = "启用时间不能为空")
         private LocalDateTime enableTime;
-        /**
-         * 店铺退货仓库：同店铺平台仓库获取方式
-         */
-//         @NotBlank(message = "店铺退货仓库不能为空")
-        private String returnWarehouse;
 
         /**
          * 平台经营模式
@@ -801,12 +750,6 @@ public class ShopDTO implements Serializable {
          * 时区
          */
         private String timeZone = "";
-
-        /**
-         * AWD仓库id
-         */
-        private String awdWarehouseId;
-        private String awdWarehouseName;
     }
 
     @Data
@@ -1021,6 +964,14 @@ public class ShopDTO implements Serializable {
         private String returnWarehouse;
 
         private String returnWarehouseName;
+
+        /**
+         * 店铺AWD仓库：名称字段为awdWarehouseName
+         */
+        private String awdWarehouseId;
+
+        private String awdWarehouseName;
+
 
         /**
          * 渠道信息

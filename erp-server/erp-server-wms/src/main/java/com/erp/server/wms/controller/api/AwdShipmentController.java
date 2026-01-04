@@ -9,6 +9,7 @@ import com.erp.model.wms.dto.*;
 import com.erp.model.wms.entity.FbaShipmentEntity;
 import com.erp.model.wms.entity.FbaShipmentExtendEntity;
 import com.erp.model.wms.enums.ShipmentSourceTypeEnum;
+import com.erp.server.wms.query.AwdShipmentQueryHandler;
 import com.erp.server.wms.query.FbaShipmentSyncQueryHandler;
 import com.erp.server.wms.service.FbaShipmentExtendService;
 import com.erp.server.wms.service.FbaShipmentPackingService;
@@ -64,7 +65,7 @@ public class AwdShipmentController extends BaseController {
             shopTableField = "fs.shop_id",
             menuCode = "wms:fbaShipment:paging"
     )
-    @WebAdvanceQuery
+    @WebAdvanceQuery(handler = AwdShipmentQueryHandler.class)
     public ApiResult<PagingVO<FbaShipmentDTO.AwdListDTO>> paging(@RequestBody @Validated PagingDTO<FbaShipmentDTO.PagingParamDTO> dto) {
         dto.getParams().setSourceType(ShipmentSourceTypeEnum.AWD.getCode());
         PagingVO<FbaShipmentDTO.AwdListDTO> list = fbaShipmentService.awdPaging(dto);
