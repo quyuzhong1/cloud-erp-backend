@@ -299,7 +299,7 @@ public class InventoryTradingServiceImpl implements InventoryTradingService {
                         .orElse(null);
                 if (null != lastDTO && (billDate.isBefore(lastDTO.getBillDate()) || billDate.equals(lastDTO.getBillDate()))){
                     // 已有盘盈盘亏单【{}】不允许操作【{}】之前单据
-                    errList.append(CharSequenceUtil.format("sku:[{}]仓库:[{}]仓位:[{}]库存状态：[{}]单据日期:[{}],已有盘盈盘亏单【{}】不允许操作【{}】之前单据\n"
+                    errList.append(CharSequenceUtil.format("sku:[{}]仓库:[{}]仓位:[{}]库存状态：[{}]单据日期:[{}],已有盘点任务单【{}】不允许操作【{}】之前单据\n"
                             , transactionDTO.getSkuNo()
                             , transactionDTO.getWarehouseName()
                             , transactionDTO.getWarehouseLocationName()
