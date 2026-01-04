@@ -1230,6 +1230,7 @@ public enum ApiError implements Serializable {
     PO_RECONCILIATION_DETAIL_QTY_EXCEEDS_AVAILABLE(94108,"单号【{0}】SKU【{1}】本期对账数量{2}超出可对账数量{3}"),
     PO_RECONCILIATION_DETAIL_ALREADY_IN_RECONCILIATION(94109,"单号【{0}】SKU【{1}】已加入对账单，不允许重复添加"),
     PO_RECONCILIATION_REMARK_REQUIRED(96009,"对账单备注不能为空"),
+    CUSTOMER_ADDRESS_NOT_MATCH(94108,"未匹配到客户地址，客户id：{0}，收货地址：{1}"),
 
     /**
      * 销售订单错误信息 11000-11500
