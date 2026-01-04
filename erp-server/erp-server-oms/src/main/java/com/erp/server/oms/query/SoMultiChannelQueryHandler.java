@@ -35,9 +35,11 @@ public class SoMultiChannelQueryHandler extends AbstractQueryHandler {
     public String getTabSql (Object value) {
         if (ApproveStatusEnum.WAIT_SUBMIT.getCode().equals(value) || ApproveStatusEnum.APPROVE_ING.getCode().equals(value)  || ApproveStatusEnum.REJECT.getCode().equals(value)){
             super.buildDefaultDTO("smc.approve_status", value.toString());
+            super.buildSplicingSQLDTO("smc.invalid_status", QueryConditionEnum.EQ, InvalidStatusEnum.NOT_VOIDED.getStatus(), QueryDataTypeEnum.BOOLEAN);
         }else if (CreateStatusEnum.CREATING.getCode().equals(value) || CreateStatusEnum.SUCCESS.getCode().equals(value)){
             super.buildDefaultDTO("smc.approve_status", ApproveStatusEnum.APPROVE.getCode());
             super.buildDefaultDTO("smc.create_status", value.toString());
+            super.buildSplicingSQLDTO("smc.invalid_status", QueryConditionEnum.EQ, InvalidStatusEnum.NOT_VOIDED.getStatus(), QueryDataTypeEnum.BOOLEAN);
         }else if (InvalidStatusEnum.VOIDED.getStatus().toString().equals(value)){
             super.buildSplicingSQLDTO("smc.invalid_status", QueryConditionEnum.EQ, InvalidStatusEnum.VOIDED.getStatus(), QueryDataTypeEnum.BOOLEAN);
         }
