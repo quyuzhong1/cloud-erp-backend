@@ -999,7 +999,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
 
         //删除发送金蝶
         sendPushTask(removeList,SyncOperateEnum.OPERATE_DELETE.getCode());
-        this.removeByIds(removeList);
+        this.removeByIds(removeIdList);
         return resultDTOList;
     }
 
