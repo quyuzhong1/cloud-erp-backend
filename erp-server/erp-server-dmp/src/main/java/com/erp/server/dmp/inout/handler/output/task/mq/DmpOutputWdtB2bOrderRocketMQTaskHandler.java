@@ -167,8 +167,8 @@ public class DmpOutputWdtB2bOrderRocketMQTaskHandler extends DmpOutputRocketMQTa
 			DmpSoDetailEntity dmpSoDetailEntity = dmpSoDetailEntityList.get(i);
 			PlatformB2bOrderDetailDTO detailDTO = new PlatformB2bOrderDetailDTO();
 			detailDTO.setSkuNo(dmpSoDetailEntity.getSkuNo());
-			detailDTO.setPlatformSkuNo(dmpSoDetailEntity.getSkuId());
-			detailDTO.setCustomerSkuNo(dmpSoDetailEntity.getSkuId());
+			detailDTO.setPlatformSkuNo(dmpSoDetailEntity.getPlatformSpuNo());
+			detailDTO.setCustomerSkuNo(dmpSoDetailEntity.getPlatformSpuNo());
 			detailDTO.setQty(dmpSoDetailEntity.getQty());
 			detailDTO.setTaxRate(dmpSoInfoEntity.getTaxRate());
 			detailDTO.setTaxPrice(dmpSoDetailEntity.getSellPriceOrigin());
