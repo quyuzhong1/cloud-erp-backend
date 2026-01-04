@@ -14,6 +14,8 @@ import java.util.stream.Collectors;
 
 import javax.annotation.Resource;
 
+import com.erp.model.wms.dto.StocktakingTaskDetailDTO;
+import com.erp.server.wms.service.*;
 import org.apache.commons.collections4.IteratorUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
@@ -37,14 +39,6 @@ import com.erp.model.wms.entity.TransactionFlowEntity;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
-import com.erp.server.wms.service.InventoryClosedRecordService;
-import com.erp.server.wms.service.InventoryHisService;
-import com.erp.server.wms.service.InventoryService;
-import com.erp.server.wms.service.InventoryTradingService;
-import com.erp.server.wms.service.InventoryTransactionService;
-import com.erp.server.wms.service.TransactionFlowService;
-import com.erp.server.wms.service.VirtualInventoryService;
-import com.erp.server.wms.service.WarehouseService;
 import com.google.common.base.Stopwatch;
 
 import cn.hutool.core.collection.CollUtil;
@@ -74,7 +68,7 @@ public class InventoryTradingRedisServiceImpl implements InventoryTradingService
     @Resource
     private InventoryClosedRecordService inventoryClosedRecordService;
     @Resource
-    private StocktakingProfitLossServiceImpl stocktakingProfitLossService;
+    private StocktakingTaskDetailService stocktakingTaskDetailService;
 
     @Resource
     private VirtualInventoryService virtualInventoryService;
@@ -287,15 +281,15 @@ public class InventoryTradingRedisServiceImpl implements InventoryTradingService
         List<String> orgIds = transactionList.stream().map(InventoryTransactionDTO::getOrgId).distinct().collect(Collectors.toList());
         List<String> skuIds = transactionList.stream().map(InventoryTransactionDTO::getSkuId).distinct().collect(Collectors.toList());
 
-        List<StocktakingProfitLossDetailDTO.LastDTO> lastStocktakingProfitLossList = stocktakingProfitLossService.maxDateByParams(warehouseIds, orgIds, skuIds);
-        if(CollectionUtils.isEmpty(lastStocktakingProfitLossList)) {
+        List<StocktakingTaskDetailDTO.LastDTO> lastStocktakingTaskDetailList = stocktakingTaskDetailService.maxDateByParams(warehouseIds, orgIds, skuIds);
+        if(CollectionUtils.isEmpty(lastStocktakingTaskDetailList)) {
             return;
         }
 
         for(InventoryTransactionDTO transactionDTO:transactionList) {
             if (!InventoryStatusEnum.IN_TRANSIT.getCode().equals(transactionDTO.getInventoryStatus())){
                 // 盘盈盘亏单 匹配 仓库ID, 组织ID，仓位，skuId
-                StocktakingProfitLossDetailDTO.LastDTO lastDTO = lastStocktakingProfitLossList.stream()
+                StocktakingTaskDetailDTO.LastDTO lastDTO = lastStocktakingTaskDetailList.stream()
                         .filter(e -> e.getSkuId().equalsIgnoreCase(transactionDTO.getSkuId())
                                 && e.getWarehouseOrgId().equalsIgnoreCase(transactionDTO.getOrgId())
                                 && e.getWarehouseId().equalsIgnoreCase(transactionDTO.getWarehouseId())
