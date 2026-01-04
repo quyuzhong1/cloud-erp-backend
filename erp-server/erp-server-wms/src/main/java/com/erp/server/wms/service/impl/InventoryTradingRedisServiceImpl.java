@@ -14,6 +14,7 @@ import java.util.stream.Collectors;
 
 import javax.annotation.Resource;
 
+import cn.hutool.core.date.LocalDateTimeUtil;
 import com.erp.model.wms.dto.StocktakingTaskDetailDTO;
 import com.erp.server.wms.service.*;
 import org.apache.commons.collections4.IteratorUtils;
@@ -297,7 +298,9 @@ public class InventoryTradingRedisServiceImpl implements InventoryTradingService
                                 )
                         .findFirst()
                         .orElse(null);
-                if (null != lastDTO && (billDate.isBefore(lastDTO.getBillDate()) || billDate.equals(lastDTO.getBillDate()))){
+
+
+                if (null != lastDTO && billDate.isBefore(lastDTO.getBillDate())){
                     // 已有盘盈盘亏单【{}】不允许操作【{}】之前单据
                     errList.append(CharSequenceUtil.format("sku:[{}]仓库:[{}]仓位:[{}]库存状态：[{}]单据日期:[{}],已有盘点任务单据【{}】不允许操作【{}】之前单据\n"
                             , transactionDTO.getSkuNo()
