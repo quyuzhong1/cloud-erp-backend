@@ -465,7 +465,7 @@ public class CfgMoldReturnAlertRuleServiceImpl extends SuperServiceImpl<CfgMoldR
         //回写模具档案状态
         MoldInfoEntity moldInfoEntity = moldInfoService.getById(entity.getMoldId());
         if(Objects.nonNull(moldInfoEntity)){
-            moldInfoEntity.setIsReturnStrategyGenerated(true);
+            moldInfoEntity.setIsReturnStrategyGenerated(false);
             moldInfoService.updateById(moldInfoEntity);
         }
 
@@ -488,7 +488,7 @@ public class CfgMoldReturnAlertRuleServiceImpl extends SuperServiceImpl<CfgMoldR
         //回写模具档案状态
         MoldInfoEntity moldInfoEntity = moldInfoService.getById(entity.getMoldId());
         if(Objects.nonNull(moldInfoEntity)){
-            moldInfoEntity.setIsReturnStrategyGenerated(true);
+            moldInfoEntity.setIsReturnStrategyGenerated(false);
             moldInfoService.updateById(moldInfoEntity);
         }
         // 作废日志数据
