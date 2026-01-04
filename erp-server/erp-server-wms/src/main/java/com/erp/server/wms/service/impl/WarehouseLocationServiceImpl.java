@@ -640,7 +640,7 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
         LambdaQueryWrapper<InventoryEntity> queryWrapper;
         for (WarehouseLocationEntity entity : list) {
             queryWrapper = Wrappers.lambdaQuery();
-            queryWrapper.eq(InventoryEntity::getWarehouseLocation, entity.getCode()).eq(InventoryEntity::getIsDeleted, false);
+            queryWrapper.eq(InventoryEntity::getWarehouseLocation, entity.getCode()).eq(InventoryEntity::getWarehouseId, entity.getWarehouseId()).eq(InventoryEntity::getIsDeleted, false);
             List<InventoryEntity> inventoryList = inventoryMapper.selectList(queryWrapper);
             if (! CollectionUtils.isEmpty(inventoryList)) {
                 //仓位有商品，不能删除
