@@ -111,8 +111,10 @@ public class CfgMoldAlertRuleServiceImpl extends SuperServiceImpl<CfgMoldAlertRu
             throw new ServiceException("模具预警策略保存失败");
         }
         //回写模具档案状态
-        moldInfoEntity.setIsAlertStrategyGenerated(true);
-        moldInfoService.updateById(moldInfoEntity);
+        if(Objects.nonNull(moldInfoEntity)){
+            moldInfoEntity.setIsAlertStrategyGenerated(true);
+            moldInfoService.updateById(moldInfoEntity);
+        }
 
         // 操作日志
         String msg = StrUtil.format("新增了一个模具预警策略【{}】",cfgMoldAlertRuleEntity.getMoldCode());
@@ -153,6 +155,12 @@ public class CfgMoldAlertRuleServiceImpl extends SuperServiceImpl<CfgMoldAlertRu
         boolean save = super.updateById(cfgMoldAlertRuleEntity);
         if(!save) {
             throw new ServiceException("模具预警策略保存失败");
+        }
+
+        //回写模具档案状态
+        if(Objects.nonNull(moldInfoEntity)){
+            moldInfoEntity.setIsAlertStrategyGenerated(true);
+            moldInfoService.updateById(moldInfoEntity);
         }
 
         // 记录主单操作日志
@@ -319,6 +327,13 @@ public class CfgMoldAlertRuleServiceImpl extends SuperServiceImpl<CfgMoldAlertRu
                 .set(MoldMonitorEntity::getIsDeleted,Boolean.TRUE)
                 .update();
 
+        //回写模具档案状态
+        MoldInfoEntity moldInfoEntity = moldInfoService.getById(entity.getMoldId());
+        if(Objects.nonNull(moldInfoEntity)){
+            moldInfoEntity.setIsAlertStrategyGenerated(false);
+            moldInfoService.updateById(moldInfoEntity);
+        }
+
         return BatchResultDTO.success(entity.getId(), entity.getMoldCode(), OperationTypeEnum.DELETE);
     }
 
@@ -335,6 +350,13 @@ public class CfgMoldAlertRuleServiceImpl extends SuperServiceImpl<CfgMoldAlertRu
                 .set(CfgMoldAlertRuleEntity::getInvalidStatus, InvalidStatusEnum.VOIDED.getStatus())
                 .set(CfgMoldAlertRuleEntity::getInvalidRemark, remark)
                 .update();
+
+        //回写模具档案状态
+        MoldInfoEntity moldInfoEntity = moldInfoService.getById(entity.getMoldId());
+        if(Objects.nonNull(moldInfoEntity)){
+            moldInfoEntity.setIsAlertStrategyGenerated(false);
+            moldInfoService.updateById(moldInfoEntity);
+        }
 
         // 作废日志数据
         log.info("作废 开始记录操作日志，id：【{}】", id);
