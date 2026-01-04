@@ -269,7 +269,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         //获取供应商信息
         SupplierEntity supplier = scmTaskFeign.getSupplierById(orderSupplierByOrderId.getSupplierId());
         if(!supplier.getSrmDisabled() && !dto.getGenerateByDelivery()){
-            throw new ServiceException(ApiError.RECEIVE_SHOULD_GENERATE_BY_DELIVERY,supplier.getName());
+            throw new ServiceException(ApiError.PO_RECEIVE_SHOULD_GENERATE_BY_DELIVERY,supplier.getName());
         }
 
         //获取用户信息
@@ -428,7 +428,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             //获取采购单详情
             PurchaseOrderDetailEntity purchaseOrderDetailEntity = purchaseOrderDetailEntities.stream().filter(entityClass -> entityClass.getId().equals(detailView.getPurchaseOrderDetailId())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(purchaseOrderDetailEntity)) {
-                throw new ServiceException(ApiError.ERROR_99006);
+                throw new ServiceException(ApiError.PO_DETAIL_NOT_FOUND);
             }
             Integer returnQty = returnDetailEntityList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(purchaseOrderDetailEntity.getId()) && obj.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus()) && obj.getReturnMode().equals(ReturnModeEnum.REPLENISHMENT.getCode())).map(PoReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
 
@@ -441,7 +441,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             //获取sku信息
             ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(entityClass -> entityClass.getId().equals(detailView.getSkuId())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(productDetailEntity)) {
-                throw new ServiceException(ApiError.ERROR_95107);
+                throw new ServiceException(ApiError.PRODUCT_SKU_NOT_FOUND);
             }
 
             if (CollectionUtils.isNotEmpty(poInstockDetailList)) {
@@ -473,7 +473,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
     public Boolean submit(List<String> ids) {
         List<WarehouseReceiveEntity> warehouseReceiveList = this.listByIds(ids);
         if (CollectionUtils.isEmpty(warehouseReceiveList)) {
-            throw new ServiceException(ApiError.ERROR_98004);
+            throw new ServiceException(ApiError.BILL_SELECTION_REQUIRED);
         }
 
         //未作废、待提交、审核不通过才可以提交
@@ -483,7 +483,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         ).count();
 
         if (count != warehouseReceiveList.size()) {
-            throw new ServiceException(ApiError.ERROR_98010);
+            throw new ServiceException(ApiError.BILL_SUBMIT_ALLOWED_STATUS_ONLY);
         }
 
         //TODO 待加审核流程
@@ -514,7 +514,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
     public WarehouseReceiveEntity addAndSubmit(WarehouseReceiveDTO.AddDTO dto) {
         WarehouseReceiveEntity entity = this.add(dto);
         if (null == entity) {
-            throw new ServiceException(ApiError.ERROR_1019);
+            throw new ServiceException(ApiError.BILL_SAVE_FAILED);
         }
         entity = this.getById(entity.getId());
         this.submitEntity(entity);
@@ -534,7 +534,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
     public Boolean updateAndSubmit(WarehouseReceiveDTO.UpdateDTO dto) {
         Boolean update = this.update(dto);
         if (!update) {
-            throw new ServiceException(ApiError.ERROR_1020);
+            throw new ServiceException(ApiError.BILL_UPDATE_FAILED);
         }
         return this.submit(Collections.singletonList(dto.getId()));
     }
@@ -550,12 +550,12 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO approve(WarehouseReceiveEntity entity, String type, String comment, Boolean isNeedProcess,List<WarehouseReceiveDetailEntity> receiveDetailList) {
         if (!entity.getApproveStatus().equals(ApproveStatusEnum.APPROVE_ING.getStatus())) {
-            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_98006.msg);
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.WF_APPROVE_ALLOWED_STATUS_ONLY.getMsg());
         }
         //当前登陆人,启用流程后可删除
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         if (CharSequenceUtil.equals(entity.getCreateUserId(),userInfo.getUid()) && !CharSequenceUtil.equals(entity.getCreateUserId(), UserStateConstants.USER_SYSTEM_ID)) {
-            throw new ServiceException(ApiError.WORKFLOW_APPROVE_CREATE_APPROVE_DIFF,userInfo.getUserName());
+            throw new ServiceException(ApiError.WF_CREATOR_APPROVER_NOT_SAME,userInfo.getUserName());
         }
 
         if (ApproveTypeEnum.PASS.getStatus().equals(type)) {
@@ -765,18 +765,18 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO disApprove(WarehouseReceiveEntity entity,List<WarehouseReceiveDetailEntity> receiveDetailList) {
         if (!entity.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())) {
-            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_99003.msg);
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.BILL_REVERSE_APPROVAL_ALLOWED_APPROVED_ONLY.getMsg());
         }
         //下推入库单不能反审核
         List<PoInstockEntity> stockInBySourceId = poInstockService.getStockInBySourceId(entity.getId());
         List<PoInstockEntity> collect = stockInBySourceId.stream().filter(obj -> InvalidStatusEnum.NOT_VOIDED.getStatus().equals(obj.getInvalidStatus())).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(collect)) {
-            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_99011.msg);
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.PO_INBOUND_ALREADY_PUSHED_REVERSE_FORBIDDEN.getMsg());
         }
         List<QcInfoEntity> qcList = qcInfoService.listQCBySourceId(entity.getId());
         if (CollectionUtils.isNotEmpty(qcList)) {
             String codes = qcList.stream().map(QcInfoEntity::getCode).collect(Collectors.joining(","));
-            return BatchResultDTO.fail(entity.getId(),entity.getCode(),CharSequenceUtil.format(ApiError.ERROR_99042.msg, codes));
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),CharSequenceUtil.format(ApiError.PO_QC_ALREADY_PUSHED_REVERSE_FORBIDDEN.getMsg(), codes));
         }
         //修改状态为待提交
         lambdaUpdate().set(WarehouseReceiveEntity::getApproveStatus, ApproveStatusEnum.WAIT_SUBMIT.getStatus())
@@ -820,7 +820,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
     public Boolean cancelProcess(List<String> ids) {
         List<WarehouseReceiveEntity> warehouseReceiveList = this.listByIds(ids);
         if (CollectionUtils.isEmpty(ids)) {
-            throw new ServiceException(ApiError.ERROR_98004);
+            throw new ServiceException(ApiError.BILL_SELECTION_REQUIRED);
         }
         //审核中可以撤销
         long count = warehouseReceiveList.stream().filter(entity -> entity.getInvalidStatus() == false
@@ -828,7 +828,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         ).count();
 
         if (count != warehouseReceiveList.size()) {
-            throw new ServiceException(ApiError.ERROR_98007);
+            throw new ServiceException(ApiError.WF_REVOKE_PROCESS_ALLOWED_STATUS_ONLY);
         }
 
         //撤销现有流程
@@ -859,7 +859,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
     public Boolean invalid(List<String> ids, String remark) {
         List<WarehouseReceiveEntity> warehouseReceiveList = this.listByIds(ids);
         if (CollectionUtils.isEmpty(ids)) {
-            throw new ServiceException(ApiError.ERROR_98004);
+            throw new ServiceException(ApiError.BILL_SELECTION_REQUIRED);
         }
         //审核不通过 待提交可以作废
         long count = warehouseReceiveList.stream().filter(entity -> entity.getInvalidStatus() == false
@@ -868,7 +868,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         ).count();
 
         if (count != warehouseReceiveList.size()) {
-            throw new ServiceException(ApiError.ERROR_98005);
+            throw new ServiceException(ApiError.BILL_VOID_ALLOWED_STATUS_ONLY);
         }
 
         //修改状态为待提交
@@ -907,7 +907,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
     public Boolean delete(List<String> ids) {
         List<WarehouseReceiveEntity> warehouseReceiveList = this.listByIds(ids);
         if (CollectionUtils.isEmpty(ids)) {
-            throw new ServiceException(ApiError.ERROR_98004);
+            throw new ServiceException(ApiError.BILL_SELECTION_REQUIRED);
         }
         //待提交支持删除
         long count = warehouseReceiveList.stream().filter(entity -> entity.getInvalidStatus() == false
@@ -915,7 +915,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         ).count();
 
         if (count != warehouseReceiveList.size()) {
-            throw new ServiceException(ApiError.ERROR_98009);
+            throw new ServiceException(ApiError.BILL_DELETE_ALLOWED_STATUS_ONLY);
         }
         List<WarehouseReceiveDetailEntity> receiveDetailList = warehouseReceiveDetailService.listDetailByMainIds(ids);
 
@@ -1001,7 +1001,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             req.setWarehouseLocationName(warehouseLocationEntity.getName());
             ProductDetailEntity productDetailEntity = byIdList.stream().filter(obj -> req.getSkuId().equals(obj.getId())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(productDetailEntity)) {
-                throw new ServiceException(ApiError.ERROR_95107);
+                throw new ServiceException(ApiError.PRODUCT_SKU_NOT_FOUND);
             }
             req.setProductName(productDetailEntity.getName());
             req.setStockInDate(LocalDate.now());
@@ -1044,7 +1044,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         //获取用户信息
         FindUserDTO userDTO = sysUserFeign.getUserByUserId(userInfo.getUid());
         if (ObjectUtil.isEmpty(userDTO)) {
-            throw new ServiceException(ApiError.USER_NOT_EXIST);
+            throw new ServiceException(ApiError.AUTH_USER_NOT_FOUND, userInfo.getUid());
         }
         //获取用户部门
         SysDepartmentUserNumberDTO deptByUserId = sysUserFeign.getDeptByUserId(userInfo.getUid());
@@ -1054,7 +1054,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
 
             WarehouseReceiveEntity entity = this.getById(id);
             if (!entity.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())) {
-                throw new ServiceException(ApiError.ERROR_98057);
+                throw new ServiceException(ApiError.BILL_APPROVED_ONLY_CAN_PUSH);
             }
             PoInstockDTO.AddDTO addDTO = new PoInstockDTO.AddDTO();
             addDTO.setSourceId(id);
@@ -1077,7 +1077,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
                     WarehouseReceiveDetailEntity warehouseReceiveDetailEntity = detailEntityList.stream().filter(obj -> obj.getId().equals(req.getId())).findFirst().orElse(null);
 
                     if (stockInQty + req.getStockInQty() > warehouseReceiveDetailEntity.getReceiveQty()) {
-                        throw new ServiceException(ApiError.ERROR_99041.code, String.format(ApiError.ERROR_99041.msg, warehouseReceiveDetailEntity.getSkuNo()));
+                        throw new ServiceException(ApiError.PO_PUSH_TOTAL_QTY_EXCEEDS_RECEIPT, warehouseReceiveDetailEntity.getSkuNo());
                     }
                     addDTO.setStockInDate(req.getStockInDate());
                     PoInstockDetailDTO.AddDTO detailDTO = new PoInstockDetailDTO.AddDTO();
@@ -1119,7 +1119,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         for (WarehouseReceiveDTO.OrderRefReceiveDTO orderRefReceiveDTO : orderRefReceiveDTOS) {
             PurchaseOrderDetailEntity purchaseOrderDetailEntity = purchaseOrderDetailEntities.stream().filter(entityClass -> entityClass.getId().equals(orderRefReceiveDTO.getPurchaseOrderDetailId())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(purchaseOrderDetailEntity)) {
-                throw new ServiceException(ApiError.ERROR_99006);
+                throw new ServiceException(ApiError.PO_DETAIL_NOT_FOUND);
             }
             orderRefReceiveDTO.setProductName(purchaseOrderDetailEntity.getProductName());
             orderRefReceiveDTO.setApproveStatusName(ApproveStatusEnum.getName(orderRefReceiveDTO.getApproveStatus()));
@@ -1164,23 +1164,23 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         List<PurchaseOrderDetailEntity> purchaseOrderDetailList = scmTaskFeign.listPurchaseOrderDetailById(purchaseOrderDetailIds);
 
         if (CollectionUtils.isEmpty(purchaseOrderDetailList)) {
-            throw new ServiceException(ApiError.ERROR_98017);
+            throw new ServiceException(ApiError.PO_APPLY_DETAIL_NOT_FOUND);
         }
         //已确认和送货中允许下推收货单
         long executionStatusCount = purchaseOrderDetailList.stream().filter(obj -> !ExecutionStatusEnum.CONFIRM.getCode().equals(obj.getExecutionStatus())
                 && !ExecutionStatusEnum.DELIVERY.getCode().equals(obj.getExecutionStatus())).count();
         if (executionStatusCount > 0) {
-            throw new ServiceException(ApiError.ERROR_98041);
+            throw new ServiceException(ApiError.PO_DETAIL_CONFIRM_OR_DELIVER_CAN_PUSH_RECEIPT);
         }
 
         List<String> purchaseOrderIds = purchaseOrderDetailList.stream().map(PurchaseOrderDetailEntity::getPurchaseOrderId).collect(Collectors.toList());
         List<PurchaseOrderEntity> purchaseOrderList = scmTaskFeign.listPurchaseOrderByIds(purchaseOrderIds);
         if (CollectionUtils.isEmpty(purchaseOrderList)) {
-            throw new ServiceException(ApiError.ERROR_98016);
+            throw new ServiceException(ApiError.PO_APPLY_NOT_FOUND);
         }
         long approveStatusCount = purchaseOrderList.stream().filter(obj -> !ApproveStatusEnum.APPROVE.getStatus().equals(obj.getApproveStatus())).count();
         if (approveStatusCount > 0) {
-            throw new ServiceException(ApiError.ERROR_98040);
+            throw new ServiceException(ApiError.PO_APPROVED_ONLY_CAN_PUSH_RECEIPT);
         }
         List<String> listSign = new ArrayList<>();
 
@@ -1188,7 +1188,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             //采购订单
             PurchaseOrderEntity entity = purchaseOrderList.stream().filter(obj -> obj.getId().equals(generateReceiveDTO.getId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(entity)) {
-                throw new ServiceException(ApiError.ERROR_98025);
+                throw new ServiceException(ApiError.PO_NOT_FOUND);
             }
             boolean contains = listSign.contains(generateReceiveDTO.getId());
             if (!contains) {
@@ -1211,7 +1211,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
                                 )
                                 .map(PurchaseOrderDetailEntity::getSkuNo).collect(Collectors.joining(","));
                         if (CharSequenceUtil.isNotBlank(skuNos)) {
-                            throw new ServiceException(ApiError.ERROR_PURCHASE_ORDER_PUSH_DOWN,entity.getCode(),skuNos);
+                            throw new ServiceException(ApiError.PO_SKU_PUSH_DOWN_NOT_ALLOWED,entity.getCode(),skuNos);
                         }
 
                         detailAddDTO.setReceiveQty(receiveDTO.getReceiveQty());
@@ -1350,14 +1350,14 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         for (WarehouseReceiveDetailDTO.AddDTO addDTO : warehouseReceiveDetailList) {
             PurchaseOrderDetailEntity detailEntity = purchaseOrderDetailEntityList.stream().filter(req -> req.getId().equals(addDTO.getPurchaseOrderDetailId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(detailEntity)) {
-                throw new ServiceException(ApiError.ERROR_PURCHASE_DETAIL_SKU_NOT_EXIST, addDTO.getSkuNo());
+                throw new ServiceException(ApiError.PO_DETAIL_SKU_NOT_EXIST, addDTO.getSkuNo());
             }
             List<PurchaseOrderDetailEntity> detailEntityList = detailEntityListByPoId.stream().filter(req -> req.getSkuId().equals(detailEntity.getSkuId())).collect(Collectors.toList());
             List<DeliveryOrderDetailEntity> deliveryOrderDetailist = allDeliveryOrderDetailList.stream().filter(req -> req.getSourceDetailId().equals(detailEntity.getId())).collect(Collectors.toList());
             if(CollectionUtils.isNotEmpty(deliveryOrderDetailist)){
                 int deliveryQty = deliveryOrderDetailist.stream().mapToInt(DeliveryOrderDetailEntity::getDeliveryQty).sum();
                 if(addDTO.getReceiveQty() > deliveryQty){
-                    throw new ServiceException(ApiError.RECEIVE_QTY_ERROR);
+                    throw new ServiceException(ApiError.PO_RECEIVE_QTY_EXCEEDS_DELIVERY);
                 }
             }
 
@@ -1375,7 +1375,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
                     //退货补货数量
                     Integer returnQty = returnDetailEntityList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(entity.getId()) && obj.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus()) && obj.getReturnMode().equals(ReturnModeEnum.REPLENISHMENT.getCode())).map(PoReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
                     if (receiveQty > purchaseQty + returnQty - alreadyReceiveQty) {
-                        throw new ServiceException(ApiError.ERROR_99054.code, String.format(ApiError.ERROR_99054.msg, entity.getSkuNo()));
+                        throw new ServiceException(ApiError.PO_RECEIPT_QTY_EXCEEDS_UNDELIVERED.getCode(), String.format(ApiError.PO_RECEIPT_QTY_EXCEEDS_UNDELIVERED.getMsg(), entity.getSkuNo()));
                     }
                     if (alreadyReceiveQty >= entity.getPurchaseQty() + returnQty) {
                         continue;
@@ -1415,7 +1415,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         for (WarehouseReceiveDetailDTO.UpdateDTO updateDTO : warehouseReceiveDetailList) {
             PurchaseOrderDetailEntity detailEntity = purchaseOrderDetailEntityList.stream().filter(req -> req.getId().equals(updateDTO.getPurchaseOrderDetailId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(detailEntity)) {
-                throw new ServiceException(ApiError.ERROR_PURCHASE_DETAIL_SKU_NOT_EXIST, updateDTO.getSkuNo());
+                throw new ServiceException(ApiError.PO_DETAIL_SKU_NOT_EXIST, updateDTO.getSkuNo());
             }
             List<PurchaseOrderDetailEntity> detailEntityList = detailEntityListByPoId.stream().filter(req -> req.getSkuId().equals(detailEntity.getSkuId())).collect(Collectors.toList());
             //校验sku是否有重复，重复需要拆单
@@ -1432,7 +1432,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
                     //退货补货数量
                     Integer returnQty = returnDetailEntityList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(entity.getId()) && obj.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus()) && obj.getReturnMode().equals(ReturnModeEnum.REPLENISHMENT.getCode())).map(PoReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
                     if (receiveQty > purchaseQty + returnQty - alreadyReceiveQty) {
-                        throw new ServiceException(ApiError.ERROR_99054.code, String.format(ApiError.ERROR_99054.msg, entity.getSkuNo()));
+                        throw new ServiceException(ApiError.PO_RECEIPT_QTY_EXCEEDS_UNDELIVERED.getCode(), String.format(ApiError.PO_RECEIPT_QTY_EXCEEDS_UNDELIVERED.getMsg(), entity.getSkuNo()));
                     }
                     if (alreadyReceiveQty >= entity.getPurchaseQty() + returnQty) {
                         continue;
@@ -1469,7 +1469,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         WarehouseReceiveDTO.ViewDTO viewDTO = new WarehouseReceiveDTO.ViewDTO();
         WarehouseReceiveEntity warehouseReceiveEntity = this.getById(id);
         if (ObjectUtils.isEmpty(warehouseReceiveEntity)) {
-            throw new ServiceException(ApiError.ERROR_99009);
+            throw new ServiceException(ApiError.PO_RECEIPT_NOT_FOUND);
         }
         BeanMapperUtils.copy(warehouseReceiveEntity, viewDTO);
         //获取采购订单主表信息
@@ -1526,7 +1526,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             //获取采购单详情
             PurchaseOrderDetailEntity purchaseOrderDetailEntity = purchaseOrderDetailEntities.stream().filter(entityClass -> entityClass.getId().equals(detailView.getPurchaseOrderDetailId())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(purchaseOrderDetailEntity)) {
-                throw new ServiceException(ApiError.ERROR_99006);
+                throw new ServiceException(ApiError.PO_DETAIL_NOT_FOUND);
             }
             Integer returnQty = returnDetailEntityList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(purchaseOrderDetailEntity.getId()) && obj.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus()) && obj.getReturnMode().equals(ReturnModeEnum.REPLENISHMENT.getCode())).map(PoReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
 
@@ -1631,7 +1631,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
     public Boolean pdaAddAndSubmit(WarehouseReceiveDTO.AddDTO dto) {
         String id = this.pdaAdd(dto);
         if (CharSequenceUtil.isBlank(id)) {
-            throw new ServiceException(ApiError.ERROR_1019);
+            throw new ServiceException(ApiError.BILL_SAVE_FAILED);
         }
         return this.submit(Collections.singletonList(id));
     }
@@ -1641,7 +1641,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
     public Boolean pdaUpdateAndSubmit(WarehouseReceiveDTO.UpdateDTO dto) {
         Boolean update = this.pdaUpdate(dto);
         if (!update) {
-            throw new ServiceException(ApiError.ERROR_1020);
+            throw new ServiceException(ApiError.BILL_UPDATE_FAILED);
         }
         return this.submit(Collections.singletonList(dto.getId()));
     }
@@ -1932,7 +1932,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             }
             ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(entityClass -> entityClass.getId().equals(obj.getSkuId())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(productDetailEntity)) {
-                throw new ServiceException(ApiError.ERROR_95107);
+                throw new ServiceException(ApiError.PRODUCT_SKU_NOT_FOUND);
             }
             obj.setProductName(productDetailEntity.getName());
             obj.setApproveStatusName(ApproveStatusEnum.getName(obj.getApproveStatus()));
@@ -1962,7 +1962,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         ).count();
 
         if (count <= 0 ) {
-            throw new ServiceException(ApiError.ERROR_98010);
+            throw new ServiceException(ApiError.BILL_SUBMIT_ALLOWED_STATUS_ONLY);
         }
 
         //TODO 待加审核流程
@@ -1991,7 +1991,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         ).count();
 
         if (count <= 0) {
-            throw new ServiceException(ApiError.ERROR_98005);
+            throw new ServiceException(ApiError.BILL_VOID_ALLOWED_STATUS_ONLY);
         }
 
         List<String> ids = Collections.singletonList(entity.getId());
@@ -2025,7 +2025,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         ).count();
 
         if (count <= 0) {
-            throw new ServiceException(ApiError.ERROR_98007);
+            throw new ServiceException(ApiError.WF_REVOKE_PROCESS_ALLOWED_STATUS_ONLY);
         }
         List<String> ids = Collections.singletonList(entity.getId());
 
@@ -2052,7 +2052,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         ).count();
 
         if (count <= 0 ) {
-            throw new ServiceException(ApiError.ERROR_98009);
+            throw new ServiceException(ApiError.BILL_DELETE_ALLOWED_STATUS_ONLY);
         }
         List<String> ids = Collections.singletonList(entity.getId());
 

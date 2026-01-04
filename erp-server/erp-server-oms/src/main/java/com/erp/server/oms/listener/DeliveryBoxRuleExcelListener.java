@@ -7,7 +7,6 @@ import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.dto.base.BaseDTO;
 import com.common.business.enums.FileTaskStatusEnum;
-import com.common.business.utils.StringUtil;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.FieldValidUtil;
@@ -282,7 +281,7 @@ public class DeliveryBoxRuleExcelListener extends AnalysisEventListener<Delivery
 
         if (org.apache.commons.collections4.CollectionUtils.isNotEmpty(duplicateSorts)) {
             throw new ServiceException(
-                    ApiError.ERROR_DUPLICATE_SORT,
+                    ApiError.WH_BOX_RULE_PRIORITY_DUPLICATE,
                     duplicateSorts
             );
         }

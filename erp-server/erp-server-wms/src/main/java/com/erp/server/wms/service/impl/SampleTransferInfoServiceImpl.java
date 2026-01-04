@@ -40,7 +40,6 @@ import com.erp.server.wms.service.SampleLedgerFlowBuilder;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.erp.server.wms.service.OperateLogService;
-import com.erp.server.wms.service.CommonService;
 import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
 import com.common.core.controller.vo.ApiResult;
@@ -60,25 +59,17 @@ import com.erp.rpc.workflow.WorkflowFeign;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import cn.hutool.core.collection.CollUtil;
-import com.google.common.collect.Sets;
-import com.alibaba.fastjson.JSONObject;
-import com.google.common.collect.Lists;
 
 import com.common.business.enums.ApproveStatusEnum;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.validator.ValidList;
-import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.business.dto.base.*;
-import com.erp.model.sys.dto.SysCodeDTO;
-import com.common.core.excel.ExcelPrintUtils;
-import com.common.core.utils.date.DateUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
 import com.common.business.enums.FileTaskStatusEnum;
-import com.common.business.enums.ImportTypeEnum;
 import com.common.business.utils.ApplicationContextUtils;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.FastDFSClientUtil;
@@ -172,7 +163,7 @@ public class SampleTransferInfoServiceImpl extends SuperServiceImpl<SampleTransf
         // 不允许重复添加相同的台账ID
         long sampleLedgerIdCount = detailList.stream().map(SampleTransferDetailDTO.AddDTO::getSampleLedgerId).distinct().count();
         if(sampleLedgerIdCount != detailList.size()){
-            throw new ServiceException(ApiError.ERROR_REPEAT_SKU);
+            throw new ServiceException(ApiError.PRODUCT_SKU_DUPLICATE);
         }
         
         List<SampleTransferDetailEntity> sampleTransferDetailEntities = BeanMapperUtils.copyList(SampleTransferDetailEntity.class, detailList);
@@ -239,10 +230,10 @@ public class SampleTransferInfoServiceImpl extends SuperServiceImpl<SampleTransf
     @Override
     public Boolean update(SampleTransferInfoDTO.UpdateDTO addOrUpdateDTO) {
         SampleTransferInfoEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "样品转移单主单"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "样品转移单主单"));
         // 待提交和审核不通过允许修改
         if (!ApproveStatusEnum.allowUpdateStatus(old.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_1029);
+            throw new ServiceException(ApiError.BILL_UPDATE_STATUS_NOT_ALLOWED);
         }
         // 校验明细不能为空
         if (CollUtil.isEmpty(addOrUpdateDTO.getDetailList())) {
@@ -291,7 +282,7 @@ public class SampleTransferInfoServiceImpl extends SuperServiceImpl<SampleTransf
         // 不允许重复添加相同的台账ID
         long sampleLedgerIdCount = detailList.stream().map(SampleTransferDetailDTO.UpdateDTO::getSampleLedgerId).distinct().count();
         if(sampleLedgerIdCount != detailList.size()){
-            throw new ServiceException(ApiError.ERROR_REPEAT_SKU);
+            throw new ServiceException(ApiError.PRODUCT_SKU_DUPLICATE);
         }
         
         // 查询旧的明细列表
@@ -595,12 +586,12 @@ public class SampleTransferInfoServiceImpl extends SuperServiceImpl<SampleTransf
     public BatchResultDTO approve(ApproveOneDTO dto, ClientTypeEnum clientType) {
         ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(dto.getType());
         if(Objects.equals(approveType, ApproveTypeEnum.REJECT) && StrUtils.isEmpty(dto.getComment())) {
-            throw new ServiceException(ApiError.REJECT_COMMENT_NOT_EMPTY);
+            throw new ServiceException(ApiError.WF_REJECT_COMMENT_REQUIRED);
         }
         SampleTransferInfoEntity entity = getById(dto.getId());
         // 审核中的数据允许审核
         if(!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
-            throw new ServiceException(ApiError.ERROR_98006);
+            throw new ServiceException(ApiError.WF_APPROVE_ALLOWED_STATUS_ONLY);
         }
         
         // 审核前先校验台账数量
@@ -632,7 +623,7 @@ public class SampleTransferInfoServiceImpl extends SuperServiceImpl<SampleTransf
         ApiResult<ProcessManagementDTO.ApproveResultDTO> approveResult = workflowFeign.approve(approveDTO);
         Integer code = approveResult.getCode();
         if (200 != code) {
-            throw new ServiceException(ApiError.ERROR_94006);
+            throw new ServiceException(ApiError.WF_APPROVE_FAILED);
         }
         ProcessManagementDTO.ApproveResultDTO data = approveResult.getData();
         if (ObjectUtil.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()) {
@@ -688,7 +679,7 @@ public class SampleTransferInfoServiceImpl extends SuperServiceImpl<SampleTransf
     private Boolean validateDisApprove(SampleTransferInfoEntity entity) {
         // 已审核支持反审核
         if (!Objects.equals(entity.getApproveStatus().getStatus(), ApproveStatusEnum.APPROVE.getStatus())) {
-            throw new ServiceException(ApiError.ERROR_98014);
+            throw new ServiceException(ApiError.BILL_REVERSE_APPROVAL_ALLOWED_APPROVED_ONLY);
         }
         // TODO 下游盘点计划单反审核
         return true;
@@ -700,7 +691,7 @@ public class SampleTransferInfoServiceImpl extends SuperServiceImpl<SampleTransf
         SampleTransferInfoEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到样品转移单主单数据"));
         // 只有待提交数据允许删除
         if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT, entity.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_98032);
+            throw new ServiceException(ApiError.BILL_SUBMIT_ALLOWED_STATUS_ONLY);
         }
         
         // 删除主单数据
@@ -738,7 +729,7 @@ public class SampleTransferInfoServiceImpl extends SuperServiceImpl<SampleTransf
         SampleTransferInfoEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到样品转移单主单数据"));
         // 待提交或审核不通过并且未作废允许作废
         if ((!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(entity.getApproveStatus().getStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(entity.getApproveStatus().getStatus())) || !InvalidStatusEnum.NOT_VOIDED.getStatus().equals(entity.getInvalidStatus())) {
-           throw new ServiceException(ApiError.ERROR_98005);
+           throw new ServiceException(ApiError.BILL_VOID_ALLOWED_STATUS_ONLY);
         }
         log.info("作废 开始修改样品转移单主单状态数据，id：【{}】", id);
         lambdaUpdate().eq(SampleTransferInfoEntity::getId, id)
@@ -762,7 +753,7 @@ public class SampleTransferInfoServiceImpl extends SuperServiceImpl<SampleTransf
         SampleTransferInfoEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到样品转移单主单数据"));
         // 只有审核中的单据允许撤销
         if (!Objects.equals(entity.getApproveStatus().getStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())) {
-            throw new ServiceException(ApiError.ERROR_98007);
+            throw new ServiceException(ApiError.WF_REVOKE_PROCESS_ALLOWED_STATUS_ONLY);
         }
         log.info("撤销 开始撤销流程，id：【{}】",id);
 
@@ -985,7 +976,7 @@ public class SampleTransferInfoServiceImpl extends SuperServiceImpl<SampleTransf
             listApiResult = workflowFeign.curApprover(dtoList);
             Integer code = listApiResult.getCode();
             if (200 != code) {
-                throw new ServiceException(new ApiResult(ApiError.DEFAULT.code, listApiResult.getMsg()));
+                throw new ServiceException(new ApiResult(ApiError.HTTP_UNKNOWN.getCode(), listApiResult.getMsg()));
             }
         }
 
@@ -1014,7 +1005,7 @@ public class SampleTransferInfoServiceImpl extends SuperServiceImpl<SampleTransf
     private void validateSubmit(SampleTransferInfoEntity entity) {
         // 待提交或审核不通过并且未作废允许提交
         if(!ApproveStatusEnum.allowUpdateStatus(entity.getApproveStatus()) || entity.getInvalidStatus()) {
-            throw new ServiceException(ApiError.ERROR_98010);
+            throw new ServiceException(ApiError.BILL_SUBMIT_ALLOWED_STATUS_ONLY);
         }
         // 校验转出人的样品台账数量
         validateQty(entity);
@@ -1090,7 +1081,7 @@ public class SampleTransferInfoServiceImpl extends SuperServiceImpl<SampleTransf
         // 查询用户信息
         List<FindUserDTO> users = sysUserFeign.getUserListByUserIds(Arrays.asList(transferInUserId, transferOutUserId));
         if(CollUtil.isEmpty(users)){
-            throw new ServiceException(ApiError.USER_NOT_EXIST);
+            throw new ServiceException(ApiError.AUTH_CREDENTIALS_INVALID);
         }
 
         FindUserDTO transferInUser = users.stream()
@@ -1098,7 +1089,7 @@ public class SampleTransferInfoServiceImpl extends SuperServiceImpl<SampleTransf
                 .findFirst()
                 .orElse(null);
         if(Objects.isNull(transferInUser)){
-            throw new ServiceException(ApiError.NOT_EXIST, "转入人");
+            throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC, "转入人");
         }
         
         FindUserDTO transferOutUser = users.stream()
@@ -1106,7 +1097,7 @@ public class SampleTransferInfoServiceImpl extends SuperServiceImpl<SampleTransf
                 .findFirst()
                 .orElse(null);
         if(Objects.isNull(transferOutUser)){
-            throw new ServiceException(ApiError.NOT_EXIST, "转出人");
+            throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC, "转出人");
         }
 
         // 查询部门信息
@@ -1114,7 +1105,7 @@ public class SampleTransferInfoServiceImpl extends SuperServiceImpl<SampleTransf
         String transferOutDeptId = sampleTransferInfoEntity.getTransferOutDeptId();
         List<SysDepartmentEntity> sysDepartmentEntities = sysUserFeign.listDeptByIds(Arrays.asList(transferInDeptId, transferOutDeptId));
         if(CollUtil.isEmpty(sysDepartmentEntities)){
-            throw new ServiceException(ApiError.ERROR_9029);
+            throw new ServiceException(ApiError.COMMON_DEPT_NOT_FOUND);
         }
 
         SysDepartmentEntity transferInDept = sysDepartmentEntities.stream()
@@ -1122,7 +1113,7 @@ public class SampleTransferInfoServiceImpl extends SuperServiceImpl<SampleTransf
                 .findFirst()
                 .orElse(null);
         if(Objects.isNull(transferInDept)){
-            throw new ServiceException(ApiError.NOT_EXIST, "转入部门");
+            throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC, "转入部门");
         }
         
         SysDepartmentEntity transferOutDept = sysDepartmentEntities.stream()
@@ -1130,7 +1121,7 @@ public class SampleTransferInfoServiceImpl extends SuperServiceImpl<SampleTransf
                 .findFirst()
                 .orElse(null);
         if(Objects.isNull(transferOutDept)){
-            throw new ServiceException(ApiError.NOT_EXIST, "转出部门");
+            throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC, "转出部门");
         }
 
         // 赋值
@@ -1377,7 +1368,7 @@ public class SampleTransferInfoServiceImpl extends SuperServiceImpl<SampleTransf
                     .doRead();
         } catch (ExcelCommonException e) {
             log.error("导入格式错误！", e);
-            throw new ServiceException(ApiError.ERROR_1016);
+            throw new ServiceException(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX);
         }
 
         BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
@@ -1462,7 +1453,7 @@ public class SampleTransferInfoServiceImpl extends SuperServiceImpl<SampleTransf
 
                 // 关联台账
                 if (CollUtil.isEmpty(skuAvailableQtyDTOS)) {
-                    errorMsg = errorMsg + indexTemp + "、" + ApiError.ERROR_SAMPLE_LEDGER_NOT_EXIST.msg + "；";
+                    errorMsg = errorMsg + indexTemp + "、" + ApiError.SAMPLE_LEDGER_NOT_EXIST.getMsg() + "；";
                 } else {
                     SampleLedgerDTO.SkuAvailableQtyDTO skuAvailableQtyDTO = skuAvailableQtyDTOS.stream()
                             .filter(e -> e.getSkuId().equals(importDTO.getSkuId()) 
@@ -1470,12 +1461,12 @@ public class SampleTransferInfoServiceImpl extends SuperServiceImpl<SampleTransf
                             .findFirst()
                             .orElse(null);
                     if (Objects.isNull(skuAvailableQtyDTO)) {
-                        errorMsg = errorMsg + indexTemp + "、" + ApiError.ERROR_SAMPLE_LEDGER_NOT_EXIST.msg + "；";
+                        errorMsg = errorMsg + indexTemp + "、" + ApiError.SAMPLE_LEDGER_NOT_EXIST.getMsg() + "；";
                     } else {
                         Integer ledgerQty = Objects.isNull(skuAvailableQtyDTO.getLedgerQty()) ? 0 : skuAvailableQtyDTO.getLedgerQty();
                         Integer transferredQty = Objects.isNull(importDTO.getTransferQty()) ? 0 : Integer.valueOf(importDTO.getTransferQty());
                         if (transferredQty.compareTo(ledgerQty) > 0) {
-                            errorMsg = errorMsg + indexTemp + "、" + CharSequenceUtil.format(ApiError.ERROR_SAMPLE_AVAILABLE_QTY.msg, importDTO.getSkuNo(), "转移") + "；";
+                            errorMsg = errorMsg + indexTemp + "、" + CharSequenceUtil.format(ApiError.SAMPLE_AVAILABLE_QTY_EXCEEDS_LEDGER.getMsg(), importDTO.getSkuNo(), "转移") + "；";
                         } else {
                             importDTO.setSampleLedgerId(skuAvailableQtyDTO.getSampleLedgerId());
                             // 防止超量转移

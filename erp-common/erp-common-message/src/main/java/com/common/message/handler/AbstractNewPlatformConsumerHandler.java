@@ -4,7 +4,6 @@ import java.util.concurrent.TimeUnit;
 
 import javax.annotation.Resource;
 
-import com.common.core.exception.ServiceException;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.spring.core.RocketMQListener;
 import org.slf4j.MDC;

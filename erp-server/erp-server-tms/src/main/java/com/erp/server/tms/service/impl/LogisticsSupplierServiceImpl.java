@@ -126,7 +126,7 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
     @Override
     public Boolean update(LogisticsSupplierDTO.UpdateDTO updateDTO) {
         LogisticsSupplierEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "物流商单"));
+        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "物流商单"));
         LogisticsSupplierEntity logisticsSupplierEntity = BeanMapperUtils.map(LogisticsSupplierEntity.class, updateDTO);
 
         // 数据处理
@@ -175,7 +175,7 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO delete(String id) {
         LogisticsSupplierEntity entity = super.getById(id);
-        Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "物流商"));
+        Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "物流商"));
         List<LogisticsWarehouseEntity> logisticsWarehouseList = logisticsWarehouseService.listByLogisticsSupplierId(id);
         List<String> supplierIds =Collections.singletonList(id);
         //渠道列表
@@ -240,16 +240,16 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
     public BatchResultDTO sync(String id) {
         LogisticsSupplierEntity logisticsSupplier = this.getById(id);
         if (Objects.isNull(logisticsSupplier)) {
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "物流商");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "物流商");
         }
         String authStatus = logisticsSupplier.getAuthStatus();
         String alreadyCode = LogisticsAuthStatusEnum.ALREADY.getCode();
         if (!alreadyCode.equals(authStatus)) {
-            throw new ServiceException(ApiError.NOT_SYNC_BY_NOT_AUTH);
+            throw new ServiceException(ApiError.LOGISTICS_SYNC_FORBIDDEN_NOT_AUTHORIZED);
         }
         LogisticsAuthEntity authEntity = logisticsAuthService.getByMainId("", id);
         if (Objects.isNull(authEntity)) {
-            throw new ServiceException(ApiError.NOT_SYNC_BY_NOT_AUTH);
+            throw new ServiceException(ApiError.LOGISTICS_SYNC_FORBIDDEN_NOT_AUTHORIZED);
         }
         String logisticsPlatform = authEntity.getLogisticsPlatform();
         //同步第三方渠道

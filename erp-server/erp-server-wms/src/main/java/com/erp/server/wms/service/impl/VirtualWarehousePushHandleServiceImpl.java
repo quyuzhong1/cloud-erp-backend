@@ -2,7 +2,6 @@ package com.erp.server.wms.service.impl;
 
 
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.threadlocal.UserContext;
@@ -74,7 +73,7 @@ public class VirtualWarehousePushHandleServiceImpl extends SuperServiceImpl<Virt
     public Boolean update(VirtualWarehousePushHandleDTO.UpdateDTO updateDTO) {
         VirtualWarehousePushHandleEntity old = super.getById(updateDTO.getId());
         if (Objects.isNull(old)){
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "分货单拆单主单");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "分货单拆单主单");
         }
         VirtualWarehousePushHandleEntity virtualWarehousePushHandleEntity =  BeanMapperUtils.map(VirtualWarehousePushHandleEntity.class, updateDTO);
 

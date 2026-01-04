@@ -68,7 +68,7 @@ public class KolSubB2cApplicationDetailServiceImpl extends SuperServiceImpl<KolS
     @Override
     public Boolean update(KolSubB2cApplicationDetailDTO.UpdateDTO addOrUpdateDTO) {
         KolSubB2cApplicationDetailEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "B2C寄样申请单拆分单明细"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "B2C寄样申请单拆分单明细"));
         KolSubB2cApplicationDetailEntity kolSubB2cApplicationDetailEntity =  BeanMapperUtils.map(KolSubB2cApplicationDetailEntity.class, addOrUpdateDTO);
 
         // 数据处理

@@ -63,7 +63,7 @@ public class DmpCfgInputCompensateServiceImpl extends SuperServiceImpl<DmpCfgInp
     @Override
     public Boolean update(DmpCfgInputCompensateDTO.UpdateDTO updateDTO) {
         DmpCfgInputCompensateEntity old = super.getById(updateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "外部系统接口明细补偿"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "外部系统接口明细补偿"));
         DmpCfgInputCompensateEntity dmpCfgInputCompensateEntity =  BeanMapperUtils.map(DmpCfgInputCompensateEntity.class, updateDTO);
 
         // 数据处理

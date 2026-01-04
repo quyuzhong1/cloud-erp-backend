@@ -40,7 +40,6 @@ import com.erp.model.wms.dto.SampleLedgerDTO;
 import com.erp.model.wms.dto.SampleLedgerFlowDTO;
 import com.erp.model.wms.entity.SampleInitialLedgerDetailEntity;
 import com.erp.model.wms.entity.SampleInitialLedgerEntity;
-import com.erp.model.wms.entity.SampleRecipientEntity;
 import com.erp.model.workflow.dto.CfgQueryOptionDTO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
@@ -155,10 +154,10 @@ public class SampleInitialLedgerServiceImpl extends SuperServiceImpl<SampleIniti
     @Override
     public Boolean update(SampleInitialLedgerDTO.UpdateDTO addOrUpdateDTO) {
         SampleInitialLedgerEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "样品期初台账"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "样品期初台账"));
         // 待提交和审核不通过允许修改
         if (!ApproveStatusEnum.allowUpdateStatus(old.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_1029);
+            throw new ServiceException(ApiError.BILL_UPDATE_STATUS_NOT_ALLOWED);
         }
         SampleInitialLedgerEntity sampleInitialLedgerEntity =  BeanMapperUtils.map(SampleInitialLedgerEntity.class, addOrUpdateDTO);
 
@@ -329,12 +328,12 @@ public class SampleInitialLedgerServiceImpl extends SuperServiceImpl<SampleIniti
     public BatchResultDTO approve(ApproveOneDTO dto) {
         ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(dto.getType());
         if(Objects.equals(approveType, ApproveTypeEnum.REJECT) && StrUtils.isEmpty(dto.getComment())) {
-            throw new ServiceException(ApiError.REJECT_COMMENT_NOT_EMPTY);
+            throw new ServiceException(ApiError.WF_REJECT_COMMENT_REQUIRED);
         }
         SampleInitialLedgerEntity entity = getById(dto.getId());
         // 审核中的数据允许审核
         if(!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
-            throw new ServiceException(ApiError.ERROR_98006);
+            throw new ServiceException(ApiError.WF_APPROVE_ALLOWED_STATUS_ONLY);
         }
 
         // 期初台账单审核时需要校验负数数量的台账是否足够扣减
@@ -366,7 +365,7 @@ public class SampleInitialLedgerServiceImpl extends SuperServiceImpl<SampleIniti
         ApiResult<ProcessManagementDTO.ApproveResultDTO> approveResult = workflowFeign.approve(approveDTO);
         Integer code = approveResult.getCode();
         if (200 != code) {
-            throw new ServiceException(ApiError.ERROR_94006);
+            throw new ServiceException(ApiError.WF_APPROVE_FAILED);
         }
         ProcessManagementDTO.ApproveResultDTO data = approveResult.getData();
         if (ObjectUtil.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()) {
@@ -408,7 +407,7 @@ public class SampleInitialLedgerServiceImpl extends SuperServiceImpl<SampleIniti
     private Boolean validateDisApprove(SampleInitialLedgerEntity entity) {
         // 已审核支持反审核
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE)) {
-            throw new ServiceException(ApiError.ERROR_98014);
+            throw new ServiceException(ApiError.BILL_REVERSE_APPROVAL_ALLOWED_APPROVED_ONLY);
         }
         // TODO 下游盘点计划单反审核
         return true;
@@ -420,7 +419,7 @@ public class SampleInitialLedgerServiceImpl extends SuperServiceImpl<SampleIniti
         SampleInitialLedgerEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到样品期初台账数据"));
         // 只有待提交数据允许删除
         if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT, entity.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_98032);
+            throw new ServiceException(ApiError.BILL_SUBMIT_ALLOWED_STATUS_ONLY);
         }
         List<SampleInitialLedgerDetailEntity> list = sampleInitialLedgerDetailService.list(new LambdaQueryWrapper<SampleInitialLedgerDetailEntity>().eq(SampleInitialLedgerDetailEntity::getMainId, id));
         sampleInitialLedgerDetailService.removeByIds(list.stream().map(SampleInitialLedgerDetailEntity::getId).collect(Collectors.toList()));
@@ -443,7 +442,7 @@ public class SampleInitialLedgerServiceImpl extends SuperServiceImpl<SampleIniti
         SampleInitialLedgerEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到样品期初台账数据"));
         // 待提交或审核不通过并且未作废允许作废
         if ((!ApproveStatusEnum.WAIT_SUBMIT.equals(entity.getApproveStatus()) && !ApproveStatusEnum.REJECT.equals(entity.getApproveStatus())) || !InvalidStatusEnum.NOT_VOIDED.getStatus().equals(entity.getInvalidStatus())) {
-           throw new ServiceException(ApiError.ERROR_98005);
+           throw new ServiceException(ApiError.BILL_VOID_ALLOWED_STATUS_ONLY);
         }
         log.info("作废 开始修改样品期初台账状态数据，id：【{}】", id);
         lambdaUpdate().eq(SampleInitialLedgerEntity::getId, id)
@@ -467,7 +466,7 @@ public class SampleInitialLedgerServiceImpl extends SuperServiceImpl<SampleIniti
         SampleInitialLedgerEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到样品期初台账数据"));
         // 只有审核中的单据允许撤销
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
-            throw new ServiceException(ApiError.ERROR_98007);
+            throw new ServiceException(ApiError.WF_REVOKE_PROCESS_ALLOWED_STATUS_ONLY);
         }
         log.info("撤销 开始撤销流程，id：【{}】",id);
 
@@ -587,7 +586,7 @@ public class SampleInitialLedgerServiceImpl extends SuperServiceImpl<SampleIniti
                 data.setUserName(user.getUserName());
             }
         }
-        
+
         //最新审核人：先判断流程中的审核人是否存在，如果存在则使用流程中的，否则保持数据库原值
         ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = new ValidList<>();
         dtoList.add(new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.SAMPLE_LEDGER_INIT.getCode(), data.getId()));
@@ -665,7 +664,7 @@ public class SampleInitialLedgerServiceImpl extends SuperServiceImpl<SampleIniti
             listApiResult = workflowFeign.curApprover(dtoList);
             Integer code = listApiResult.getCode();
             if (200 != code) {
-                throw new ServiceException(new ApiResult(ApiError.DEFAULT.code, listApiResult.getMsg()));
+                throw new ServiceException(new ApiResult(ApiError.HTTP_UNKNOWN.getCode(), listApiResult.getMsg()));
             }
         }
 
@@ -715,7 +714,7 @@ public class SampleInitialLedgerServiceImpl extends SuperServiceImpl<SampleIniti
     private void validateSubmit(SampleInitialLedgerEntity entity) {
         // 待提交或审核不通过并且未作废允许提交
         if(!ApproveStatusEnum.allowUpdateStatus(entity.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_98010);
+            throw new ServiceException(ApiError.BILL_SUBMIT_ALLOWED_STATUS_ONLY);
         }
         return;
     }
@@ -1112,7 +1111,7 @@ public class SampleInitialLedgerServiceImpl extends SuperServiceImpl<SampleIniti
             EasyExcel.read(new ByteArrayInputStream(bytes), com.erp.model.wms.dto.excel.SampleInitialLedgerImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (ExcelCommonException e) {
             log.error("导入格式错误！", e);
-            throw new ServiceException(ApiError.ERROR_1016);
+            throw new ServiceException(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX);
         }
 
         BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
@@ -1193,36 +1192,36 @@ public class SampleInitialLedgerServiceImpl extends SuperServiceImpl<SampleIniti
             new LambdaQueryWrapper<SampleInitialLedgerDetailEntity>()
                 .eq(SampleInitialLedgerDetailEntity::getMainId, entity.getId())
         );
-        
+
         if (CollUtil.isEmpty(detailList)) {
             log.info("样品期初台账单明细为空，跳过数量校验，单据编号：{}", entity.getCode());
             return;
         }
-        
+
         // 只筛选负数数量的明细（扣减操作）
         List<SampleInitialLedgerDetailEntity> negativeQtyDetails = detailList.stream()
                 .filter(detail -> detail.getQty() != null && detail.getQty() < 0)
                 .collect(Collectors.toList());
-        
+
         if (CollUtil.isEmpty(negativeQtyDetails)) {
             log.info("没有需要校验的负数数量明细，跳过数量校验，单据编号：{}", entity.getCode());
             return;
         }
-        
+
         // 批量查询台账：收集所有需要查询的SKU ID
         List<String> skuIds = negativeQtyDetails.stream()
                 .map(SampleInitialLedgerDetailEntity::getSkuId)
                 .distinct()
                 .collect(Collectors.toList());
-        
+
         // 一次性批量查询所有台账
         SampleLedgerDTO.SearchDTO searchDTO = new SampleLedgerDTO.SearchDTO();
         searchDTO.setUserId(entity.getUserId());
         searchDTO.setUseUserId(entity.getUserId());
         searchDTO.setSkuIds(skuIds);
-        
+
         List<SampleLedgerDTO.SkuAvailableQtyDTO> ledgerList = sampleLedgerService.listLedgerByUserId(searchDTO);
-        
+
         // 构建 skuId -> ledgerId 的映射
         Map<String, String> skuIdToLedgerIdMap = new HashMap<>();
         if (CollUtil.isNotEmpty(ledgerList)) {
@@ -1233,12 +1232,12 @@ public class SampleInitialLedgerServiceImpl extends SuperServiceImpl<SampleIniti
                             (existing, replacement) -> existing
                     ));
         }
-        
+
         // 收集需要校验的台账ID和数量
         List<String> sampleLedgerIds = new ArrayList<>();
         List<Integer> qtys = new ArrayList<>();
         List<String> skuNos = new ArrayList<>();
-        
+
         for (SampleInitialLedgerDetailEntity detail : negativeQtyDetails) {
             String ledgerId = skuIdToLedgerIdMap.get(detail.getSkuId());
             if (StrUtil.isNotBlank(ledgerId)) {
@@ -1246,19 +1245,19 @@ public class SampleInitialLedgerServiceImpl extends SuperServiceImpl<SampleIniti
                 qtys.add(detail.getQty()); // 直接使用负数数量
                 skuNos.add(detail.getSkuNo());
             } else {
-                log.warn("未找到台账，SKU：{}，使用方：{}，单据编号：{}", 
+                log.warn("未找到台账，SKU：{}，使用方：{}，单据编号：{}",
                     detail.getSkuNo(), entity.getUserName(), entity.getCode());
                 throw new ServiceException(StrUtil.format("SKU【{}】的样品台账不存在，无法审核负数数量", detail.getSkuNo()));
             }
         }
-        
+
         if (CollUtil.isEmpty(sampleLedgerIds)) {
             log.info("没有需要校验的样品台账，跳过数量校验，单据编号：{}", entity.getCode());
             return;
         }
-        
+
         log.info("开始校验样品期初台账单台账数量（负数明细），单据编号：{}，台账数量：{}", entity.getCode(), sampleLedgerIds.size());
-        
+
         // 使用分布式锁进行数量校验
         sampleLedgerLockUtil.executeWithLock(sampleLedgerIds, () -> {
             sampleLedgerQtyValidator.validateQty(sampleLedgerIds, qtys, approveType, skuNos, sampleLedgerService::getLedgerQtyMap);

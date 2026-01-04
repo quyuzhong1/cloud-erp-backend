@@ -167,7 +167,20 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         String supplierId = dto.getSupplierId();
         SupplierEntity supplier = supplierService.getById(supplierId);
         if (Objects.isNull(supplier)) {
-            throw new ServiceException(ApiError.ERROR_SUPPLIER_ABSENCE);
+            throw new ServiceException(ApiError.SUPPLIER_NOT_FOUND);
+        }
+
+        // 校验是否含税与税率的关系
+        validateTaxIncludedAndTaxRate(dto.getIsTaxIncluded(), dto.getPurchasePriceDetailList());
+
+
+        Boolean isAsset = true;
+        //供应商付款条件
+        String supplierPaymentCondition = supplier.getPaymentCondition();
+        //参数付款条件
+        String paymentCondition = dto.getPaymentCondition();
+        if(!Objects.equals(paymentCondition,supplierPaymentCondition)){
+            isAsset = false;
         }
         PurchasePriceEntity purchasePrice = new PurchasePriceEntity();
         String id = IdWorker.getIdStr();
@@ -200,7 +213,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
             /**
              * 添加明细
              */
-            priceDetailService.addPriceDetail(id, dto.getPurchasePriceDetailList());
+            priceDetailService.addPriceDetail(id, dto.getPurchasePriceDetailList(),isAsset);
             //添加日志
             String content = String.format("新增了一个{%s}-采购价目-{%s}", ApproveStatusEnum.WAIT_SUBMIT.getName(), code);
             addModuleOperateLog(content, ModuleTypeEnum.PURCHASE_PRICE.getCode(), id, "新增操作");
@@ -239,11 +252,14 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
     public PurchasePriceDTO.ViewDTO view(String id) {
         PurchasePriceEntity purchasePrice = this.getById(id);
         if (Objects.isNull(purchasePrice)) {
-            throw new ServiceException(ApiError.ERROR_98024);
+            throw new ServiceException(ApiError.PURCHASE_PRICE_LIST_NOT_FOUND);
         }
         PurchasePriceDTO.ViewDTO viewDTO = new PurchasePriceDTO.ViewDTO();
         BeanMapper.copy(purchasePrice, viewDTO);
         viewDTO.setApproveStatus(purchasePrice.getApproveStatus().getStatus());
+        //是否含税名称
+        viewDTO.setIsTaxIncludedName(Boolean.TRUE.equals(purchasePrice.getIsTaxIncluded()) ? "是" : "否");
+        viewDTO.setIsTaxIncluded(purchasePrice.getIsTaxIncluded());
         //附件信息
         List<AttachmentDTO.UpdateDTO> attachmentList = attachmentService.getByBusinessId(id);
         List<String> attachmentUrlList = attachmentList.stream().map(AttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.toList());
@@ -259,6 +275,8 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         purchasePriceDetailList.forEach(req -> {
             SkuVO skuVO = skuNoList.stream().filter(obj -> obj.getSkuId().equals(req.getSkuId())).findFirst().orElse(new SkuVO());
             req.setProductName(skuVO.getSkuName());
+            req.setPropertyId(skuVO.getPropertyId());
+            req.setProperty(skuVO.getPropertyName());
         });
 
         viewDTO.setPurchasePriceDetailList(purchasePriceDetailList);
@@ -268,7 +286,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         viewDTO.setSupplierContactName(supplierDTO.getPerson());
         viewDTO.setContactTelNumber(supplierDTO.getTelNumber());
 
-        String paymentConditionCode = supplierDTO.getPaymentCondition();
+        String paymentConditionCode = purchasePrice.getPaymentCondition();
 
         //付款条件
         KingdeePaymentConditionEntity paymentCondition = kingdeePaymentConditionService.getByCode(paymentConditionCode);
@@ -292,8 +310,24 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         String id = dto.getId();
         PurchasePriceEntity purchasePrice = this.getById(id);
         if (Objects.isNull(purchasePrice)) {
-            throw new ServiceException(ApiError.ERROR_98024);
+            throw new ServiceException(ApiError.PURCHASE_PRICE_LIST_NOT_FOUND);
         }
+        //供应商id
+        String supplierId = dto.getSupplierId();
+        SupplierEntity supplier = supplierService.getById(supplierId);
+        if (Objects.isNull(supplier)) {
+            throw new ServiceException(ApiError.SUPPLIER_NOT_FOUND);
+        }
+
+        Boolean isAsset = true;
+        //供应商付款条件
+        String supplierPaymentCondition = supplier.getPaymentCondition();
+        //参数付款条件
+        String paymentCondition = dto.getPaymentCondition();
+        if(!Objects.equals(paymentCondition,supplierPaymentCondition)){
+            isAsset = false;
+        }
+
         ApproveStatusEnum status = purchasePrice.getApproveStatus();
         PurchasePriceEntity old = new PurchasePriceEntity();
         BeanMapper.copy(purchasePrice, old);
@@ -305,8 +339,12 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         statusList.add(rejectStatus);
         statusList.add(waitSubmitStatus);
         if (!statusList.contains(status.getStatus())) {
-            throw new ServiceException(ApiError.ERROR_98019);
+            throw new ServiceException(ApiError.BILL_UPDATE_STATUS_NOT_ALLOWED);
         }
+
+        // 校验是否含税与税率的关系
+        validateTaxIncludedAndTaxRate(dto.getIsTaxIncluded(), dto.getPurchasePriceDetailList());
+
         BeanMapper.copy(dto, purchasePrice);
         //编号
         String code = purchasePrice.getCode();
@@ -333,7 +371,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
             String type = tableName.value();
             attachmentService.batchSave(dto.getAttachmentUrlList(), dto.getAttachmentNameList(), type, id);
             //修改明细
-            priceDetailService.updatePriceDetail(id, dto.getPurchasePriceDetailList());
+            priceDetailService.updatePriceDetail(id, dto.getPurchasePriceDetailList(), isAsset );
             return purchasePrice;
         }
         return null;
@@ -353,7 +391,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
     public PurchasePriceEntity addAndSubmit(PurchasePriceDTO.AddDTO dto) {
         PurchasePriceEntity entity = this.add(dto);
         if (null == entity) {
-            throw new ServiceException(ApiError.ERROR_1019);
+            throw new ServiceException(ApiError.BILL_SAVE_FAILED);
         }
         entity = this.getById(entity.getId());
         this.submitEntity(entity);
@@ -375,7 +413,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
     public PurchasePriceEntity updateAndSubmit(PurchasePriceDTO.UpdateDTO dto) {
         PurchasePriceEntity entity = this.updatePurchasePrice(dto);
         if (null == entity) {
-            throw new ServiceException(ApiError.ERROR_1020);
+            throw new ServiceException(ApiError.BILL_UPDATE_FAILED);
         }
         this.submitEntity(entity);
         return entity;
@@ -397,7 +435,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
         long count = Stream.of(entity).filter(p -> !p.getApproveStatus().getStatus().equals(waitSubmitStatus)).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_98009);
+            throw new ServiceException(ApiError.BILL_DELETE_ALLOWED_STATUS_ONLY);
         }
         List<String> ids = Collections.singletonList(entity.getId());
         //删除价目表
@@ -446,7 +484,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         statusList.add(waitSubmitStatus);
         long count = list.stream().filter(s -> !statusList.contains(s.getApproveStatus().getStatus())).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_WAIT_SUBMIT_TO_APPROVE_ING);
+            throw new ServiceException(ApiError.BILL_WAIT_SUBMIT_TO_APPROVE_ING);
         }
         //提交流程
         startProcess(list);
@@ -489,7 +527,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public BatchResultDTO approve(PurchasePriceEntity entity, String type, String comment, Boolean isNeedProcess) {
         if (!ApproveStatusEnum.APPROVE_ING.getStatus().equals(entity.getApproveStatus().getStatus())) {
-            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_98006.msg);
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.WF_APPROVE_ALLOWED_STATUS_ONLY.getMsg());
         }
         //调用审核流程
         approveProcess(entity, type, comment);
@@ -516,7 +554,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(type);
         Boolean result = this.updateApproveStatus(Collections.singletonList(entity), approveStatus);
         if (!result) {
-            throw new ServiceException(ApiError.ERROR_94006);
+            throw new ServiceException(ApiError.WF_APPROVE_FAILED);
         }
         //审核通过发送金蝶
         if (type.equals(ScmConstant.PASS)) {
@@ -542,7 +580,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         String approveIngStatus = ApproveStatusEnum.APPROVE_ING.getStatus();
         long count = Stream.of(entity).filter(s -> !s.getApproveStatus().getStatus().equals(approveIngStatus)).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_98007);
+            throw new ServiceException(ApiError.WF_REVOKE_PROCESS_ALLOWED_STATUS_ONLY);
         }
         List<String> ids = Collections.singletonList(entity.getId());
 
@@ -603,7 +641,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
                 listApiResult = workflowFeign.curApprover(dtoList);
                 Integer code = listApiResult.getCode();
                 if (200 != code) {
-                    throw new ServiceException(new ApiResult(ApiError.DEFAULT.code,listApiResult.getMsg()));
+                    throw new ServiceException(new ApiResult(ApiError.HTTP_UNKNOWN.getCode(),listApiResult.getMsg()));
                 }
             }
 
@@ -613,6 +651,8 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
                 ApproveStatusEnum approveStatusEnum = item.getApproveStatus();
                 item.setApproveStatusCode(approveStatusEnum.getStatus());
                 item.setApproveStatusName(approveStatusEnum.getName());
+                //是否含税名称
+                item.setIsTaxIncludedName(Boolean.TRUE.equals(item.getIsTaxIncluded()) ? "是" : "否");
                 //币种
                 String currency = item.getCurrency();
                 String currencySymbol = currencyList.stream().filter(c -> c.getId().equals(currency)).findFirst().
@@ -657,7 +697,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         if (CollectionUtils.isNotEmpty(supplierIds)) {
             long count = lambdaQuery().in(PurchasePriceEntity::getSupplierId, supplierIds).count();
             if (count > 0) {
-                throw new ServiceException(ApiError.ERROR_98052);
+                throw new ServiceException(ApiError.PURCHASE_PRICE_HAS_SUPPLIER_DELETE_FORBIDDEN);
             }
         }
 
@@ -889,7 +929,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
             wb.write(output);
             wb.close();
         } catch (Exception e) {
-            throw new ServiceException(ApiError.DEFAULT);
+            throw new ServiceException(ApiError.HTTP_UNKNOWN);
         }
     }
 
@@ -898,10 +938,10 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public BatchResultDTO disApprove(PurchasePriceEntity entity,List<PurchasePriceDetailEntity> purchasePriceDetailEntities,List<PurchasePriceChangeDetailEntity> changeDetailEntityList) {
         if (!Objects.equals(ApproveStatusEnum.APPROVE, entity.getApproveStatus())) {
-            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_98014.msg);
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.BILL_REVERSE_APPROVAL_ALLOWED_APPROVED_ONLY.getMsg());
         }
         if (CollectionUtils.isNotEmpty(changeDetailEntityList)) {
-            return BatchResultDTO.fail(entity.getId(),entity.getCode(),String.format(ApiError.ERROR_NOT_DISAPPROVE_CHANGE.msg, entity.getCode()));
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),String.format(ApiError.BILL_HAS_CHANGE_ORDER_REVERSE_FORBIDDEN.getMsg(), entity.getCode()));
         }
         Boolean result = this.updateApproveStatus(Collections.singletonList(entity), ApproveStatusEnum.WAIT_SUBMIT);
         //反审核时移除sku和采购组织表记录
@@ -967,7 +1007,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
                 listApiResult = workflowFeign.curApprover(dtoList);
                 Integer code = listApiResult.getCode();
                 if (200 != code) {
-                    throw new ServiceException(ApiError.ERROR_500);
+                    throw new ServiceException(ApiError.HTTP_UNKNOWN);
                 }
             }
             for (PurchasePriceDTO.PagingViewDTO item : page.getRecords()) {
@@ -983,6 +1023,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
 
                 Boolean disabled = item.getDisabled();
                 excelDTO.setEnabled((disabled != null && disabled) ? "停用" : "启用");
+                excelDTO.setIsTaxIncludedName(Boolean.TRUE.equals(item.getIsTaxIncluded()) ? "是" : "否");
                 //含税单价
                 BigDecimal taxPrice = item.getTaxPrice();
                 //币种
@@ -1149,7 +1190,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         ApiResult<ProcessManagementDTO.ApproveResultDTO> result = workflowFeign.approve(approveDTO);
         Integer code = result.getCode();
         if (200 != code) {
-            throw new ServiceException(ApiError.ERROR_94006);
+            throw new ServiceException(ApiError.WF_APPROVE_FAILED);
         }
         ProcessManagementDTO.ApproveResultDTO data = result.getData();
         if (ObjectUtil.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()) {
@@ -1173,7 +1214,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
 
         List<PurchasePriceDetailEntity> detailList = purchasePriceDetailService.listDetailByMainId(entity.getId());
         if (CollUtil.isEmpty(detailList)) {
-            throw new ServiceException(ApiError.PRICE_NOT_EXIST);
+            throw new ServiceException(ApiError.PURCHASE_PRICE_NOT_EXIST);
         }
         //SKU
         String skuNo = detailList.stream().map(PurchasePriceDetailEntity::getSkuNo).collect(Collectors.joining(","));
@@ -1212,21 +1253,90 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
     private void checkSubmitData(String bussinessId) {
         List<AttachmentDTO.UpdateDTO> attachmentList = attachmentService.getByBusinessId(bussinessId);
         if (CollectionUtils.isEmpty(attachmentList)){
-            throw new ServiceException(ApiError.TIME_NOT_NULL,"附件信息");
+            throw new ServiceException(ApiError.COMMON_PARAM_TIME_REQUIRED,"附件信息");
         }
         //查询明细
         List<PurchasePriceDetailEntity> purchasePriceDetailList = purchasePriceDetailService.listDetailByMainId(bussinessId);
         if (CollUtil.isEmpty(purchasePriceDetailList)) {
-            throw new ServiceException(ApiError.ERROR_NOT_FOUND_SO_PRICE_DETAIL);
+            throw new ServiceException(ApiError.SO_PRICE_DETAIL_NOT_FOUND);
         }
         List<String> skuIdList = purchasePriceDetailList.stream().map(PurchasePriceDetailEntity::getSkuId).distinct().collect(Collectors.toList());
         List<ProductDetailEntity> productDetailList = FeignQuery.getByIds(ProductDetailEntity.class, skuIdList);
         if (CollectionUtils.isEmpty(productDetailList)) {
-            throw new ServiceException(ApiError.ERROR_95084);
+            throw new ServiceException(ApiError.PRODUCT_INFO_NOT_FOUND);
         }
         String skuNos = productDetailList.stream().filter(obj -> !ProductDetailStatusEnum.APPROVAL_PASS.getCode().equals(obj.getStatus())).map(ProductDetailEntity::getSkuNo).distinct().collect(Collectors.joining(","));
         if  (CharSequenceUtil.isNotBlank(skuNos)) {
-            throw new ServiceException(ApiError.ERROR_PURCHASE_PRICE_SUBMIT_SKU_UN_APPROVE,skuNos);
+            throw new ServiceException(ApiError.PURCHASE_PRICE_SUBMIT_SKU_UN_APPROVE,skuNos);
         }
     }
+
+    /**
+     * 校验是否含税与税率的关系
+     * 若选择"否"，明细字段"税率"得为0，否则报错
+     * @author admin
+     * @date 2025/12/19
+     * @param isTaxIncluded 是否含税
+     * @param detailList 明细列表
+     */
+    private void validateTaxIncludedAndTaxRate(Boolean isTaxIncluded, List<? extends PurchasePriceDetailDTO.AddDTO> detailList) {
+        // 如果是否含税字段为空，直接返回（由@NotNull注解校验）
+        if (isTaxIncluded == null) {
+            return;
+        }
+
+        // 如果明细为空，直接返回
+        if (CollectionUtils.isEmpty(detailList)) {
+            return;
+        }
+
+        // 若选择"否"（不含税），则所有明细的税率必须为0
+        if (Boolean.FALSE.equals(isTaxIncluded)) {
+            List<String> invalidSkuNos = new ArrayList<>();
+            for (PurchasePriceDetailDTO.AddDTO detail : detailList) {
+                if (detail.getTaxRate() != null && detail.getTaxRate().compareTo(BigDecimal.ZERO) != 0) {
+                    // 收集税率不为0的SKU编号
+                    if (StringUtils.isNotBlank(detail.getSkuNo())) {
+                        invalidSkuNos.add(detail.getSkuNo());
+                    }
+                }
+            }
+
+            // 如果存在税率不为0的明细，抛出异常
+            if (CollectionUtils.isNotEmpty(invalidSkuNos)) {
+                String skuList = String.join("、", invalidSkuNos);
+                throw new ServiceException(ApiError.HTTP_UNKNOWN.getCode(),
+                    String.format("当选择【不含税】时，所有明细的税率必须为0，以下SKU的税率不为0：%s", skuList));
+            }
+        }
+    }
+
+
+    @Override
+    public PurchasePriceDTO.PayConditionBySupplierAndCompanyDTO getPayConditionBySupplierAndCompany(PurchasePriceDTO.PayConditionBySupplierAndCompanyDTO dto) {
+        if(Objects.isNull(dto)){
+            return null;
+        }
+
+        //查询 最新的 审批通过的
+        List<PurchasePriceEntity> list = lambdaQuery().eq(PurchasePriceEntity::getSupplierId,dto.getSupplierId())
+                .eq(PurchasePriceEntity::getPurchaseOrgId,dto.getPurchaseOrgId())
+                .eq(PurchasePriceEntity::getIsDeleted,false)
+                .eq(PurchasePriceEntity::getApproveStatus,ApproveStatusEnum.APPROVE.getCode())
+                .orderByDesc(PurchasePriceEntity::getCreateTime)
+                .list();
+        if(CollUtil.isNotEmpty(list)){
+            PurchasePriceEntity purchasePriceEntity = list.get(0);
+            dto.setPaymentCondition(purchasePriceEntity.getPaymentCondition());
+            //付款条件名称
+            if(StringUtils.isNotBlank(purchasePriceEntity.getPaymentCondition())){
+                KingdeePaymentConditionEntity paymentCondition = kingdeePaymentConditionService.getByCode(purchasePriceEntity.getPaymentCondition());
+                if (Objects.nonNull(paymentCondition)) {
+                    dto.setPaymentConditionName(paymentCondition.getName());
+                }
+            }
+        }
+        return dto;
+    }
+
 }

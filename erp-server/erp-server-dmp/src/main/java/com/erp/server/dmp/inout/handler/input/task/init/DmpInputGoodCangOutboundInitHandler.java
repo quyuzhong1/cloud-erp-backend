@@ -22,7 +22,6 @@ import com.erp.server.dmp.inout.dto.request.DmpInputInitRequest;
 import com.erp.server.dmp.inout.dto.response.DmpInputTaskResponse;
 import com.erp.server.dmp.inout.utils.DmpHandlerCache;
 import com.sdk.wms.goodcang.dto.request.GoodCangGetOutBoundReq;
-import com.sdk.wms.goodcang.dto.request.GoodCangGetSkuReq;
 import com.sdk.wms.goodcang.dto.response.GoodCangResponse;
 import com.sdk.wms.goodcang.utils.GoodCangUtils;
 

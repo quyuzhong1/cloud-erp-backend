@@ -1,16 +1,11 @@
 
 package com.erp.sdk.oms.amz.spapi.enums;
 
-import com.baomidou.mybatisplus.annotation.EnumValue;
 import com.common.business.constant.MongoTableNameContant;
-import com.common.core.exception.ServiceException;
 import com.erp.sdk.oms.amz.spapi.csv.*;
 import com.erp.sdk.oms.amz.spapi.dto.*;
-import com.fasterxml.jackson.annotation.JsonValue;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-
-import java.util.stream.Stream;
 
 /**
  * 亚马逊SP-API中使用的报告类型对应mongo信息

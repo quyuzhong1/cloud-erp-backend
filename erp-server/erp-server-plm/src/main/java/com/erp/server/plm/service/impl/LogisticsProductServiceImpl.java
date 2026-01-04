@@ -206,7 +206,7 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
         LogisticsProductDTO.DeclareInfoDTO declareInfo = new LogisticsProductDTO.DeclareInfoDTO();
         ProductLogisticsEntity productLogistics = productLogisticsService.getBySkuId(skuId);
         if (ObjectUtil.isEmpty(productLogistics)) {
-            throw new ServiceException(ApiError.NOT_EXIST_BILL,"产品物流信息");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE,"产品物流信息");
         }
 
         String usdCode = CurrencyEnum.USD.getCurrencyCode();
@@ -328,7 +328,7 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
                     .eq(DictHsCodeEntity::getCountry,"CN")
                     .eq(DictHsCodeEntity::getHsCode, customsCode).list();
             if(CollUtil.isEmpty(hsCodeList)){
-                throw new ServiceException(ApiError.ERROR_95292);
+                throw new ServiceException(ApiError.COMMON_CN_EXPORT_DECLARATION_HS_NOT_FOUND);
             }
         }
 
@@ -382,14 +382,14 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
             read(excelFile.getInputStream(), LogisticsProductExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (IOException e) {
             log.error("导入物流产品信息错误！{}", e);
-            throw new ServiceException(ApiError.ERROR_95124);
+            throw new ServiceException(ApiError.FILE_DATA_IMPORT_FAILED);
         } catch (ExcelCommonException e) {
             log.error("导入格式错误！{}", e);
-            throw new ServiceException(ApiError.ERROR_1016);
+            throw new ServiceException(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX);
         }
         List<LogisticsProductExcelDTO> excelDateList = excelListenerUtil.getExcelDateList();
         if (CollectionUtils.isEmpty(excelDateList)) {
-            throw new ServiceException(ApiError.ERROR_95123);
+            throw new ServiceException(ApiError.FILE_DATA_REQUIRED);
         }
         List<LogisticsProductExcelDTO> errorList = excelListenerUtil.getErrorList();
         List<LogisticsProductExcelDTO> successList = excelListenerUtil.getSuccessList();
@@ -406,7 +406,7 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
             try {
                 new ExcelPrintUtils().patchExport(errorList, response, sb.toString(), excelPath);
             } catch (IOException e) {
-                throw new ServiceException(ApiError.ERROR_95125);
+                throw new ServiceException(ApiError.FILE_EXPORT_ERROR_DATA_FAILED);
             }
             return Boolean.FALSE;
         }
@@ -421,14 +421,14 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
             read(excelFile.getInputStream(), UpdateDeclarePriceExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (IOException e) {
             log.error("导入更新出口申报价！{}", e);
-            throw new ServiceException(ApiError.ERROR_95124);
+            throw new ServiceException(ApiError.FILE_DATA_IMPORT_FAILED);
         } catch (ExcelCommonException e) {
             log.error("导入格式错误！{}", e);
-            throw new ServiceException(ApiError.ERROR_1016);
+            throw new ServiceException(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX);
         }
         List<UpdateDeclarePriceExcelDTO> excelDateList = excelListenerUtil.getExcelDateList();
         if (CollectionUtils.isEmpty(excelDateList)) {
-            throw new ServiceException(ApiError.ERROR_95123);
+            throw new ServiceException(ApiError.FILE_DATA_REQUIRED);
         }
         List<UpdateDeclarePriceExcelDTO> errorList = excelListenerUtil.getErrorList();
 
@@ -616,11 +616,11 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
     public BatchResultDTO submit(String id, Boolean aTrue) {
         ProductLogisticsEntity entity = productLogisticsService.getById(id);
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.NOT_EXIST_BILL,"物流产品");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE,"物流产品");
         }
         // 待提交或审核不通过并且未作废允许提交
         if ((!ApproveStatusEnum.WAIT_SUBMIT.equals(entity.getApproveStatus()) && !ApproveStatusEnum.REJECT.equals(entity.getApproveStatus()))) {
-            throw new ServiceException(ApiError.ERROR_98010);
+            throw new ServiceException(ApiError.BILL_SUBMIT_ALLOWED_STATUS_ONLY);
         }
 
         // 更新单据审核状态
@@ -646,11 +646,11 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
     public BatchResultDTO cancelProcess(String id) {
         ProductLogisticsEntity entity = productLogisticsService.getById(id);
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.NOT_EXIST_BILL,"物流产品");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE,"物流产品");
         }
         // 只有审核中的单据允许撤销
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
-            throw new ServiceException(ApiError.ERROR_98007);
+            throw new ServiceException(ApiError.WF_REVOKE_PROCESS_ALLOWED_STATUS_ONLY);
         }
 
         log.info("撤销 开始修改物流产品状态，id：【{}】", id);
@@ -678,15 +678,15 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
     public BatchResultDTO approve(ApproveOneDTO dto) {
         ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(dto.getType());
         if(Objects.equals(approveType, ApproveTypeEnum.REJECT) && StrUtils.isEmpty(dto.getComment())) {
-            throw new ServiceException(ApiError.REJECT_COMMENT_NOT_EMPTY);
+            throw new ServiceException(ApiError.WF_REJECT_COMMENT_REQUIRED);
         }
         ProductLogisticsEntity entity = productLogisticsService.getById(dto.getId());
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.NOT_EXIST_BILL,"物流产品");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE,"物流产品");
         }
         // 审核中的数据允许审核
         if(!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
-            throw new ServiceException(ApiError.ERROR_98006);
+            throw new ServiceException(ApiError.WF_APPROVE_ALLOWED_STATUS_ONLY);
         }
         // 调用流程审核
         approveProcess(entity, dto);
@@ -707,11 +707,11 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
     public BatchResultDTO disApprove(String id) {
         ProductLogisticsEntity entity = productLogisticsService.getEntityById(id);
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.NOT_EXIST_BILL,"物流产品");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE,"物流产品");
         }
         // 已审核支持反审核
         if (!Objects.equals(ApproveStatusEnum.APPROVE, entity.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_98014);
+            throw new ServiceException(ApiError.BILL_REVERSE_APPROVAL_ALLOWED_APPROVED_ONLY);
         }
         //校验下推是否备案
         List<ProductRegistrationEntity> productRegistrationList = forecastFeign.listBySkuId(entity.getSkuId());
@@ -753,7 +753,7 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
     public List<BatchResultDTO> pushRegistration(LogisticsProductDTO.PushRegistrationDTO dto) {
         List<ProductLogisticsEntity> productLogisticsList = productLogisticsService.listByIds(dto.getLogisticsProductIdList());
         if (CollectionUtils.isEmpty(productLogisticsList)) {
-            throw new ServiceException(ApiError.NOT_EXIST_BILL,"物流产品");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE,"物流产品");
         }
         List<String> skuIdList = productLogisticsList.stream().map(ProductLogisticsEntity::getSkuId).collect(Collectors.toList());
         List<ProductDetailEntity> productDetailEntityList = productDetailService.listByIds(skuIdList);
@@ -851,7 +851,7 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
         ApiResult<ProcessManagementDTO.ApproveResultDTO> approveResult = workflowFeign.approve(approveDTO);
         Integer code = approveResult.getCode();
         if (200 != code) {
-            throw new ServiceException(ApiError.ERROR_94006);
+            throw new ServiceException(ApiError.WF_APPROVE_FAILED);
         }
         ProcessManagementDTO.ApproveResultDTO data = approveResult.getData();
         if (ObjectUtil.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()) {
@@ -952,7 +952,7 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
                 String customsCode = item.getCustomsCode();
                 DictHsCodeEntity dictHsCodeEntity = hsCodeMap.getOrDefault(customsCode, null);
                 if(Objects.isNull(dictHsCodeEntity)){
-                    errorMsgList.add(ApiError.ERROR_95292.msg);
+                    errorMsgList.add(ApiError.COMMON_CN_EXPORT_DECLARATION_HS_NOT_FOUND.getMsg());
                 }else {
                     //如果logistics中报关名、报关单位、申报要素不存在或者为空，则使用dictHsCodeEntity的值
                     newLogistics.setDeclareChineseName(isBlank(newLogistics.getDeclareChineseName()) ? dictHsCodeEntity.getDescription() : newLogistics.getDeclareChineseName());

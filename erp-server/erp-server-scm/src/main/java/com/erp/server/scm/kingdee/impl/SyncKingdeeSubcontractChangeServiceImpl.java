@@ -147,7 +147,7 @@ public class SyncKingdeeSubcontractChangeServiceImpl implements SyncKingdeeSubco
         SubcontractOrderEntity subcontractOrderEntity = subcontractOrderService.getById(entity.getSourceId());
         //委外订单主表数据
         if (ObjectUtils.isEmpty(subcontractOrderEntity)) {
-            throw new ServiceException(ApiError.ERROR_98073);
+            throw new ServiceException(ApiError.PO_SUBCONTRACT_ORDER_NOT_FOUND);
         }
 
         //业务id
@@ -172,12 +172,12 @@ public class SyncKingdeeSubcontractChangeServiceImpl implements SyncKingdeeSubco
         //采购明细
         List<SubcontractChangeDetailEntity> details = subcontractChangeDetailService.listByMainIds(Arrays.asList(entity.getId()));
         if (CollectionUtils.isEmpty(details)) {
-            throw new ServiceException(ApiError.ERROR_98026);
+            throw new ServiceException(ApiError.PO_DETAIL_NOT_FOUND);
         }
         //父级数据
         List<SubcontractChangeDetailEntity> parentList = details.stream().filter(obj -> StringUtils.isBlank(obj.getParentId())).collect(Collectors.toList());
         if (CollectionUtils.isEmpty(parentList)) {
-            throw new ServiceException(ApiError.ERROR_98070);
+            throw new ServiceException(ApiError.PO_SUBCONTRACT_DETAIL_NOT_FOUND);
         }
 
         //仓库信息
@@ -213,7 +213,7 @@ public class SyncKingdeeSubcontractChangeServiceImpl implements SyncKingdeeSubco
         List<String> sourceDetailIds = parentList.stream().map(SubcontractChangeDetailEntity::getSourceDetailId).collect(Collectors.toList());
         List<SubcontractOrderDetailEntity> subcontractOrderDetailList = subcontractOrderDetailService.listByIds(sourceDetailIds);
         if (CollectionUtils.isEmpty(subcontractOrderDetailList)) {
-            throw new ServiceException(ApiError.ERROR_98070);
+            throw new ServiceException(ApiError.PO_SUBCONTRACT_DETAIL_NOT_FOUND);
         }
 
         List<JSONObject> list = new ArrayList<>();

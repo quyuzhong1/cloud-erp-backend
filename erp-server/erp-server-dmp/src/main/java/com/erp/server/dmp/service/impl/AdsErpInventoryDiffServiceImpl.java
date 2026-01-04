@@ -1,16 +1,19 @@
 package com.erp.server.dmp.service.impl;
 
 import cn.hutool.core.util.StrUtil;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.FileTaskEventEnum;
 import com.common.business.enums.OperationTypeEnum;
+import com.common.business.enums.PlatformDictEnum;
 import com.common.business.wrapper.FeignQuery;
 import com.erp.model.dmp.entity.ThirdMappingEntity;
-import com.erp.model.dmp.entity.doris.AdsErpInventoryDiffKingdeeEntity;
 import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.oms.entity.DictBasicEntity;
+import com.erp.model.oms.entity.ShopAuthEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.entity.WarehouseEntity;
+import com.erp.model.wms.entity.WarehouseMappingEntity;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.dmp.service.CfgSettingService;
 import com.erp.server.dmp.service.ThirdMappingService;
@@ -42,8 +45,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import cn.hutool.core.collection.CollUtil;
 import com.common.business.vo.PagingVO;
 import com.common.business.dto.base.*;
-import com.common.core.excel.ExcelPrintUtils;
-import com.common.core.utils.date.DateUtil;
+
 import javax.servlet.http.HttpServletResponse;
 
 /**
@@ -99,7 +101,7 @@ public class AdsErpInventoryDiffServiceImpl extends SuperServiceImpl<AdsErpInven
     @Override
     public Boolean update(AdsErpInventoryDiffDTO.UpdateDTO addOrUpdateDTO) {
         AdsErpInventoryDiffEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "平台库存差异"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "平台库存差异"));
         AdsErpInventoryDiffEntity adsErpInventoryDiffEntity =  BeanMapperUtils.map(AdsErpInventoryDiffEntity.class, addOrUpdateDTO);
 
         // 数据处理
@@ -219,7 +221,7 @@ public class AdsErpInventoryDiffServiceImpl extends SuperServiceImpl<AdsErpInven
         if (StringUtils.isNotBlank(platformListStr)) {
             platformList = Arrays.stream(platformListStr.split(",")).collect(Collectors.toList());
         }
-        List<AdsErpInventoryDiffDTO.WarehouseListDTO> resultList = new ArrayList<>();
+        Set<AdsErpInventoryDiffDTO.WarehouseListDTO> resultSet = new HashSet<>();
         // 仓储平台
         List<ThirdMappingEntity> mapppingWarehouseList = thirdMappingService.lambdaQuery()
                 .in(ThirdMappingEntity::getThirdSysType, platformList)
@@ -229,20 +231,38 @@ public class AdsErpInventoryDiffServiceImpl extends SuperServiceImpl<AdsErpInven
             List<AdsErpInventoryDiffDTO.WarehouseListDTO> collect = mapppingWarehouseList.stream()
                     .map(e -> new AdsErpInventoryDiffDTO.WarehouseListDTO(e.getSysId(), e.getSysName(), finalWarehouseList.contains(e.getSysId())))
                     .collect(Collectors.toList());
-            resultList.addAll(collect);
+            resultSet.addAll(collect);
         }
+
+        List<String> finalPlatformList = platformList;
+        List<String> omsPlatformList = Arrays.stream(PlatformDictEnum.values()).map(PlatformDictEnum::getCode).filter(e -> finalPlatformList.contains(e.toLowerCase())).collect(Collectors.toList());
+        omsPlatformList.addAll(finalPlatformList);
 
         // 销售平台
         List<ShopInfoEntity> shopList = FeignQuery.create(ShopInfoEntity.class)
-                .in(ShopInfoEntity::getDictPlatform, platformList)
+                .in(ShopInfoEntity::getDictPlatform, omsPlatformList)
                 .list();
         if (CollectionUtils.isNotEmpty(shopList)){
             List<AdsErpInventoryDiffDTO.WarehouseListDTO> collect = shopList.stream()
+                    .filter(e-> StringUtils.isNotBlank(e.getWarehouseId()))
                     .map(e -> new AdsErpInventoryDiffDTO.WarehouseListDTO(e.getWarehouseId(), e.getWarehouseName(), finalWarehouseList.contains(e.getWarehouseId())))
                     .collect(Collectors.toList());
-            resultList.addAll(collect);
+            resultSet.addAll(collect);
         }
-        return resultList;
+
+        // wms绑定仓库
+        List<WarehouseMappingEntity> mappingList = FeignQuery.create(WarehouseMappingEntity.class)
+                .in(WarehouseMappingEntity::getDictPlatform, omsPlatformList)
+                .list();
+        if (CollectionUtils.isNotEmpty(mappingList)){
+            List<AdsErpInventoryDiffDTO.WarehouseListDTO> collect = mappingList.stream()
+                    .filter(e-> StringUtils.isNotBlank(e.getWarehouseId()) && StringUtils.isNotBlank(e.getName()))
+                    .map(e -> new AdsErpInventoryDiffDTO.WarehouseListDTO(e.getWarehouseId(), e.getName(), finalWarehouseList.contains(e.getWarehouseId())))
+                    .distinct()
+                    .collect(Collectors.toList());
+            resultSet.addAll(collect);
+        }
+        return new ArrayList<>(resultSet);
     }
 
     @Override

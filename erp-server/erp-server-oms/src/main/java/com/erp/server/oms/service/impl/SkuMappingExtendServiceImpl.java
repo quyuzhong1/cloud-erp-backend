@@ -2,7 +2,6 @@ package com.erp.server.oms.service.impl;
 
 
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.StrUtil;
 import com.common.business.threadlocal.UserContext;
 import com.common.core.exception.ServiceException;
 import com.erp.model.oms.dto.SkuMappingDTO;

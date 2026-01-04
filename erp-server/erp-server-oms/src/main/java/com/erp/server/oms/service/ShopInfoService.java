@@ -381,4 +381,8 @@ public interface ShopInfoService extends SuperService<ShopInfoEntity> {
      * @return
      */
     List<ShopSysUserAuthDTO.ViewShopDTO> listUserAuthShop(String dictPlatform);
+
+    ShopDTO.ViewBaseDTO viewBase(String id);
+
+    Boolean setBase(ShopDTO.ViewBaseDTO dto);
 }

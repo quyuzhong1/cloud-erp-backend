@@ -68,7 +68,7 @@ public class AssetProfitLossDetailServiceImpl extends SuperServiceImpl<AssetProf
     @Override
     public Boolean update(AssetProfitLossDetailDTO.UpdateDTO addOrUpdateDTO) {
         AssetProfitLossDetailEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "盘盈盘亏单明细单"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "盘盈盘亏单明细单"));
         AssetProfitLossDetailEntity assetProfitLossDetailEntity =  BeanMapperUtils.map(AssetProfitLossDetailEntity.class, addOrUpdateDTO);
 
         // 数据处理

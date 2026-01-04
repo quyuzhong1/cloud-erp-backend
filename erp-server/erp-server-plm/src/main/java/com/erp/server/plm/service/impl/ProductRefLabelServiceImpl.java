@@ -39,15 +39,15 @@ public class ProductRefLabelServiceImpl extends SuperServiceImpl<ProductRefLabel
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void batchAdd(ProductRefLabelDTO.BatchAddDTO batchAddDTO) {
-        if (CollectionUtils.isEmpty(batchAddDTO.getLabelIds())) throw new ServiceException(ApiError.DEFAULT);
-        if (CollectionUtils.isEmpty(batchAddDTO.getProjectDTOs())) throw new ServiceException(ApiError.DEFAULT);
+        if (CollectionUtils.isEmpty(batchAddDTO.getLabelIds())) throw new ServiceException(ApiError.HTTP_UNKNOWN);
+        if (CollectionUtils.isEmpty(batchAddDTO.getProjectDTOs())) throw new ServiceException(ApiError.HTTP_UNKNOWN);
         List<ProductRefLabelEntity> productRefLabelEntities = new ArrayList<>();
         // 数据处理
         handleData(batchAddDTO, productRefLabelEntities);
         log.info("开始新增产品便签关系单");
         if (CollectionUtils.isNotEmpty(productRefLabelEntities)) {
             boolean save = super.saveBatch(productRefLabelEntities);
-            if (!save) throw new ServiceException(ApiError.ERROR_SAVE_PRODUCT_BASIC_LABEL);
+            if (!save) throw new ServiceException(ApiError.PRODUCT_BASIC_LABEL_REL_SAVE_FAILED);
         }
         log.info("结束新增产品便签关系单");
     }

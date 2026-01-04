@@ -3,10 +3,8 @@ package com.erp.server.wms.service.impl;
 
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 
 import cn.hutool.core.text.CharSequenceUtil;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,7 +20,6 @@ import com.erp.server.wms.mapper.WmsDataCompareTempMapper;
 import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.WmsDataCompareTempService;
 
-import cn.hutool.core.util.StrUtil;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 
@@ -75,7 +72,7 @@ public class WmsDataCompareTempServiceImpl extends SuperServiceImpl<WmsDataCompa
     public Boolean update(WmsDataCompareTempDTO.UpdateDTO updateDTO) {
         WmsDataCompareTempEntity old = super.getById(updateDTO.getId());
         if (Objects.isNull(old)){
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "数据对比对比加工临时单");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "数据对比对比加工临时单");
         }
         WmsDataCompareTempEntity wmsDataCompareTempEntity =  BeanMapperUtils.map(WmsDataCompareTempEntity.class, updateDTO);
 

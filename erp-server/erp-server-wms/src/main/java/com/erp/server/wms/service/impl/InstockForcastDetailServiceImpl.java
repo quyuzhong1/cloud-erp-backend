@@ -43,7 +43,7 @@ public class InstockForcastDetailServiceImpl extends SuperServiceImpl<InstockFor
         for (Map.Entry<String, List<InstockForcastDetailDTO.AddDTO>> entry : map.entrySet()) {
             List<InstockForcastDetailDTO.AddDTO> value = entry.getValue();
             if (value.size() > 1) {
-                throw new ServiceException(ApiError.ERROR_1024.code, "sku编码【".concat(value.get(0).getSkuNo()).concat("】不能重复"));
+                throw new ServiceException(ApiError.ERROR_DATA_DUPLICATE.code, "sku编码【".concat(value.get(0).getSkuNo()).concat("】不能重复"));
             }
         }
          */

@@ -18,7 +18,6 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.*;
 import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
-import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.dto.BomDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
@@ -59,7 +58,6 @@ import java.io.File;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -111,26 +109,32 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void addPriceDetail(String purchasePriceId, List<PurchasePriceDetailDTO.AddDTO> purchasePriceDetailList) {
+    public void addPriceDetail(String purchasePriceId, List<PurchasePriceDetailDTO.AddDTO> purchasePriceDetailList,Boolean isAsset ) {
         if (CollectionUtils.isEmpty(purchasePriceDetailList)) {
             return;
         }
         List<PurchasePriceDetailEntity> addList = BeanMapper.copyList(purchasePriceDetailList, PurchasePriceDetailEntity.class);
         List<String> skuIds = addList.stream().map(PurchasePriceDetailEntity::getSkuId).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIds);
-
+//        SkuVO skuVO = skuList.stream().filter(e -> Objects.equals("资产", e.getPropertyName())).findFirst().orElse(null);
         PurchasePriceEntity purchasePriceEntity = priceService.getById(purchasePriceId);
         if (ObjectUtils.isEmpty(purchasePriceEntity)) {
-            throw new ServiceException(ApiError.ERROR_98024);
+            throw new ServiceException(ApiError.PURCHASE_PRICE_LIST_NOT_FOUND);
         }
         //验证时间
         checkPurchasePriceDetail(purchasePriceEntity.getSupplierId(),purchasePriceEntity.getPurchaseOrgId(),addList);
+        //验证是否包含资产属性sku
+        StringBuffer sb = new StringBuffer();
         for (PurchasePriceDetailEntity item : addList) {
             String skuId = item.getSkuId();
             SkuVO skuVO = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().orElse(new SkuVO());
             if (skuVO != null) {
                 item.setSkuNo(skuVO.getSkuNo());
                 item.setProductName(skuVO.getSkuName());
+                if(!Objects.equals("资产", skuVO.getPropertyName())){
+                    sb.append(skuVO.getSkuNo());
+                    sb.append(";");
+                }
             }
             item.setPurchasePriceId(purchasePriceId);
             //税率
@@ -141,6 +145,13 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
             }
             item.setCurrency(purchasePriceEntity.getCurrency());
             item.setPricingUserId(purchasePriceEntity.getPricingUserId());
+        }
+        //提示非资产属性SKU
+        if(!isAsset){
+            String errorMsg = sb.toString();
+            if( StringUtils.isNotBlank(errorMsg)){
+                throw new ServiceException(ApiError.PRODUCT_PROPERTY_ASSET_NOT_EXIST,errorMsg);
+            }
         }
         this.saveBatch(addList);
         //标记SKU
@@ -170,7 +181,7 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
             PurchasePriceDetailEntity entity = list.get(i);
             //检验失效时间需要大于生效时间
             if (entity.getExpireDate().isBefore(entity.getEffectiveDate())) {
-                throw new ServiceException(ApiError.ERROR_PURCHASE_PRICE_DATE,entity.getSkuNo());
+                throw new ServiceException(ApiError.PURCHASE_PRICE_DATE_INVALID,entity.getSkuNo());
             }
             //校验录入数据是否存在时间重叠
             for (int j = 0;j < list.size();j++) {
@@ -205,7 +216,7 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
             //时间不能重叠
             boolean overlap = LocalDateUtil.isOverlap(entity.getEffectiveDate(), entity.getExpireDate(), detailEntity.getEffectiveDate(), detailEntity.getExpireDate());
             if (overlap) {
-                throw new ServiceException(ApiError.ERROR_PURCHASE_PRICE_DATE_OVERLAP,entity.getSkuNo());
+                throw new ServiceException(ApiError.PURCHASE_PRICE_DATE_OVERLAP,entity.getSkuNo());
             }
         }
         //时间重叠时
@@ -214,7 +225,7 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
             //区间不能重叠
             if (entity.getMinQty().compareTo(detailEntity.getMaxQty()) < MathUtil.ZERO
                     && detailEntity.getMinQty().compareTo(entity.getMaxQty()) < MathUtil.ZERO ) {
-                throw new ServiceException(ApiError.ERROR_INTERVAL_SUPPLIER_OVERLAP);
+                throw new ServiceException(ApiError.SUPPLIER_INTERVAL_OVERLAP);
             }
         }
     }
@@ -297,7 +308,7 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void updatePriceDetail(String purchasePriceId, List<PurchasePriceDetailDTO.UpdateDTO> purchasePriceDetailList) {
+    public void updatePriceDetail(String purchasePriceId, List<PurchasePriceDetailDTO.UpdateDTO> purchasePriceDetailList,Boolean isAsset ) {
         if (CollectionUtils.isEmpty(purchasePriceDetailList)) {
             return;
         }
@@ -314,8 +325,10 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
 
         PurchasePriceEntity purchasePriceEntity = priceService.getById(purchasePriceId);
         if (ObjectUtils.isEmpty(purchasePriceEntity)) {
-            throw new ServiceException(ApiError.ERROR_98024);
+            throw new ServiceException(ApiError.PURCHASE_PRICE_LIST_NOT_FOUND);
         }
+        //验证是否包含资产属性sku
+        StringBuffer sb = new StringBuffer();
         for (PurchasePriceDetailDTO.UpdateDTO item : purchasePriceDetailList) {
             PurchasePriceDetailEntity entity = new PurchasePriceDetailEntity();
             BeanMapper.copy(item, entity);
@@ -324,6 +337,12 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
             if (skuVO != null) {
                 entity.setSkuNo(skuVO.getSkuNo());
                 entity.setProductName(skuVO.getSpuName());
+
+                if(!Objects.equals("资产", skuVO.getPropertyName())){
+                    sb.append("【");
+                    sb.append(skuVO.getSkuNo());
+                    sb.append("】;");
+                }
             }
             entity.setPurchasePriceId(purchasePriceId);
             //税率
@@ -336,6 +355,15 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
             entity.setPricingUserId(purchasePriceEntity.getPricingUserId());
             saveOrUpdateList.add(entity);
         }
+
+        //提示非资产属性SKU
+        if(!isAsset){
+            String errorMsg = sb.toString();
+            if(StringUtils.isNotBlank(errorMsg)){
+                throw new ServiceException(ApiError.PRODUCT_PROPERTY_ASSET_NOT_EXIST,errorMsg);
+            }
+        }
+
 
         //验证时间
         checkPurchasePriceDetail(purchasePriceEntity.getSupplierId(),purchasePriceEntity.getPurchaseOrgId(),saveOrUpdateList);
@@ -395,7 +423,7 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
             wb.close();
         } catch (Exception e) {
             log.error("warehouse downloadTemplate  出错了 e==", e);
-            throw new ServiceException(ApiError.ERROR_95131);
+            throw new ServiceException(ApiError.FILE_IMPORT_TEMPLATE_DOWNLOAD_FAILED);
         }
 
     }
@@ -417,7 +445,7 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
             EasyExcel.read(excelFile.getInputStream(), PurchasePriceDetailImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (Exception e) {
             log.error("导入错误！", e);
-            throw new ServiceException(ApiError.ERROR_95124);
+            throw new ServiceException(ApiError.FILE_DATA_IMPORT_FAILED);
         }
         PurchasePriceDetailDTO.ImportDTO result = new PurchasePriceDetailDTO.ImportDTO();
         //导入数据处理
@@ -458,7 +486,7 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
         Boolean disabled = dto.getDisabled();
         long count = detailList.stream().filter(d -> !d.getDisabled() == disabled).count();
         if (count != detailList.size()) {
-            throw new ServiceException(ApiError.ERROR_98027);
+            throw new ServiceException(ApiError.COMMON_INCONSISTENT_DISABLE_STATUS);
         }
         detailList.forEach(d -> d.setDisabled(disabled));
 
@@ -522,7 +550,7 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
         PurchasePriceChangeDTO.ViewDTO viewDTO = new PurchasePriceChangeDTO.ViewDTO();
         List<PurchasePriceDetailDTO.ViewDTO> viewList = this.listByPurchasePriceDetailIds(purchasePriceDetailIds);
         if (CollectionUtils.isEmpty(viewList)) {
-            throw new ServiceException(ApiError.ERROR_NOT_FOUND_PURCHASE_PRICE_DETAIL);
+            throw new ServiceException(ApiError.PURCHASE_PRICE_DETAIL_NOT_FOUND);
         }
 
         //查询价目信息
@@ -533,14 +561,14 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
         for (PurchasePriceEntity purchasePriceEntity : purchasePriceEntities) {
             String approveStatus = purchasePriceEntity.getApproveStatus().getStatus();
             if (!approveStatus.equals(ApproveStatusEnum.APPROVE.getStatus())) {
-                throw new ServiceException(ApiError.ERROR_98029);
+                throw new ServiceException(ApiError.PURCHASE_PRICE_CHANGE_ALLOWED_APPROVED_ONLY);
             }
         }
 
         //只有相同的采购组织可以批量变更报价
         long purchaseOrgCount = purchasePriceEntities.stream().map(req -> req.getPurchaseOrgId()).distinct().count();
         if (purchaseOrgCount > 1) {
-            throw new ServiceException(ApiError.PURCHASE_ORG_NOT_REPEAT);
+            throw new ServiceException(ApiError.PURCHASE_PRICE_ORG_NOT_REPEAT);
         }
 
         viewDTO.setPurchaseOrgId(purchasePriceEntities.get(0).getPurchaseOrgId());
@@ -573,7 +601,7 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
             //采购价目信息
             PurchasePriceEntity purchasePriceEntity = purchasePriceEntities.stream().filter(req -> item.getPurchasePriceId().equals(req.getId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(purchasePriceEntity)) {
-                throw new ServiceException(ApiError.ERROR_98024);
+                throw new ServiceException(ApiError.PURCHASE_PRICE_LIST_NOT_FOUND);
             }
 
             //供应商名称
@@ -949,7 +977,7 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
 
         List<ProductDetailEntity> skuList = plmTaskFeign.getByIdList(Arrays.asList(dto.getSkuId()));
         if (CollectionUtils.isEmpty(skuList)) {
-            throw new ServiceException(ApiError.ERROR_95084);
+            throw new ServiceException(ApiError.PRODUCT_INFO_NOT_FOUND);
         }
 
         //采购价目表

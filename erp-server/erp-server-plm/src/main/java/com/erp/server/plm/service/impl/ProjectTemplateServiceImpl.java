@@ -1,6 +1,5 @@
 package com.erp.server.plm.service.impl;
 
-import cn.hutool.core.collection.CollectionUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
@@ -129,7 +128,7 @@ public class ProjectTemplateServiceImpl extends ServiceImpl<ProjectTemplateMappe
         //获取登录人信息
         LoginUser loginUser = UserContext.getLoginUser();
         if (ObjectUtils.isEmpty(loginUser)) {
-            throw new ServiceException(ApiError.USER_NOT_EXIST);
+            throw new ServiceException(ApiError.AUTH_CREDENTIALS_INVALID);
         }
         String uid = loginUser.getUid();
         String userName = loginUser.getUserName();
@@ -164,12 +163,12 @@ public class ProjectTemplateServiceImpl extends ServiceImpl<ProjectTemplateMappe
     public Boolean updateTemplateStatus(ProjectTemplateUpdateStatusDTO dto) {
         ProjectTemplateEntity entity = this.getById(dto.getId());
         if (ObjectUtils.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_95051);
+            throw new ServiceException(ApiError.PROJECT_TEMPLATE_NOT_FOUND);
         }
         //获取登录人信息
         LoginUser loginUser = UserContext.getLoginUser();
         if (ObjectUtils.isEmpty(loginUser)) {
-            throw new ServiceException(ApiError.USER_NOT_EXIST);
+            throw new ServiceException(ApiError.AUTH_CREDENTIALS_INVALID);
         }
         String uid = loginUser.getUid();
         String userName = loginUser.getUserName();
@@ -225,7 +224,7 @@ public class ProjectTemplateServiceImpl extends ServiceImpl<ProjectTemplateMappe
                 .eq(ProjectTemplateEntity::getId, dto.getTemplateId())
                 .one();
         if (null == templateEntity) {
-            throw new ServiceException(ApiError.ERROR_95051);
+            throw new ServiceException(ApiError.PROJECT_TEMPLATE_NOT_FOUND);
         }
         List<PreTaskListVO> preTaskList;
 
@@ -254,7 +253,7 @@ public class ProjectTemplateServiceImpl extends ServiceImpl<ProjectTemplateMappe
                 .eq(ProjectTemplateEntity::getId, dto.getTemplateId())
                 .one();
         if (null == templateEntity) {
-            throw new ServiceException(ApiError.ERROR_95051);
+            throw new ServiceException(ApiError.PROJECT_TEMPLATE_NOT_FOUND);
         }
         // 根据模板类型查询模板及前置任务
         List<PreTaskUpdateDTO> list = dto.getList();
@@ -262,7 +261,7 @@ public class ProjectTemplateServiceImpl extends ServiceImpl<ProjectTemplateMappe
         List<TemplatePreTaskEntity> updateList = list.stream().map(TemplatePreTaskEntity::new).collect(Collectors.toList());
         boolean result = templatePreTaskService.updateBatchById(updateList);
         if (!result) {
-            throw new ServiceException(ApiError.ERROR_95151);
+            throw new ServiceException(ApiError.PROJECT_TEMPLATE_PREREQUISITE_UPDATE_FAILED);
         }
         return Boolean.TRUE;
     }
@@ -474,7 +473,7 @@ public class ProjectTemplateServiceImpl extends ServiceImpl<ProjectTemplateMappe
         //获取登录人信息
         LoginUser loginUser = UserContext.getLoginUser();
         if (ObjectUtils.isEmpty(loginUser)) {
-            throw new ServiceException(ApiError.USER_NOT_EXIST);
+            throw new ServiceException(ApiError.AUTH_CREDENTIALS_INVALID);
         }
         String uid = loginUser.getUid();
         String userName = loginUser.getUserName();
@@ -515,7 +514,7 @@ public class ProjectTemplateServiceImpl extends ServiceImpl<ProjectTemplateMappe
         }
         int count = this.count(queryWrapper);
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_95011);
+            throw new ServiceException(ApiError.PROJECT_TEMPLATE_EXISTS);
         }
     }
 

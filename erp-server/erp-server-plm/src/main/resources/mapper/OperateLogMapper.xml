@@ -6,7 +6,7 @@
     <select id="paging" resultType="com.erp.model.plm.dto.OperateLogShowDTO">
         select
             sl.class_path,
-            sl.business_id,
+            sl.business_id as businessId,
             sl.module_type,
             sl.create_time as create_time,
             max(sl.create_user_name) as create_user_name,

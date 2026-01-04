@@ -36,10 +36,12 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.dto.SoB2cDTO;
+import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.dto.SoB2cLabelDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
+import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.oms.enums.SoB2cLabelSourceTypeEnum;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.entity.DictCountryOrgEntity;
@@ -197,7 +199,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
     @Override
     public Boolean update(LogisticsBillDTO.UpdateDTO updateDTO) {
         LogisticsBillEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "物流单"));
+        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "物流单"));
         LogisticsBillEntity logisticsBillEntity = BeanMapperUtils.map(LogisticsBillEntity.class, updateDTO);
 
         // 数据处理
@@ -434,12 +436,12 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         String channelId = dto.getChannelId();
         LogisticsSupplierDTO.AuthDTO auth = logisticsAuthService.getAuthByChannelId(channelId);
         if (Objects.isNull(auth)) {
-            throw new ServiceException(ApiError.ERROR_LOGISTICS_CHANNEL_NOT_EXIST);
+            throw new ServiceException(ApiError.LOGISTICS_CHANNEL_NOT_FOUND);
         }
         Map<String, String> authMap = logisticsAuthService.getLogisticsAuthConfig(auth.getAuthId(),dto.getShopId(), auth.getLogisticsPlatform());
         LogisticsChannelEntity logisticsChannel = logisticsChannelService.getById(channelId);
         if (Objects.isNull(logisticsChannel)) {
-            throw new ServiceException(ApiError.ERROR_LOGISTICS_CHANNEL_NOT_EXIST);
+            throw new ServiceException(ApiError.LOGISTICS_CHANNEL_NOT_FOUND);
         }
         String country = Objects.nonNull(dto.getReceiver())?Objects.nonNull(dto.getReceiver().getCountry())?dto.getReceiver().getCountry():"":"";
         LogisticsAddressTypeEnum deliverType = LogisticsAddressTypeEnum.DELIVER;
@@ -452,7 +454,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         LogisticsAddressTypeEnum finalDeliverType = deliverType;
         List<LogisticsAddressEntity> deliverList = addressList.stream().filter(a -> finalDeliverType.equals(a.getType())).collect(Collectors.toList());
         if (CollectionUtils.isEmpty(deliverList)) {
-            throw new ServiceException(ApiError.ERROR_CHANNEL_ADDRESS_NOT_EXIST, logisticsChannel.getName(), deliverType.getName());
+            throw new ServiceException(ApiError.LOGISTICS_CHANNEL_ADDRESS_TYPE_EMPTY, logisticsChannel.getName(), deliverType.getName());
         }
         //发货人信息
         LogisticsAddressEntity logisticsAddress = deliverList.get(0);
@@ -523,7 +525,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                 && !LogisticsPlatformEnum.TIK_TOK_FULLY.getCode().equals(logisticsPlatform)
                 && !LogisticsPlatformEnum.WILDBERRIES.getCode().equals(logisticsPlatform)
                 && !LogisticsPlatformEnum.AMZ_MULTI_CHANNEL.getCode().equals(logisticsPlatform)) {
-            throw new ServiceException(ApiError.ERROR_SALES_CHANNEL_NOT_EXIST, logisticsChannel.getName());
+            throw new ServiceException(ApiError.LOGISTICS_SALES_CHANNEL_NOT_CONFIGURED, logisticsChannel.getName());
         }
         //根据订单处理规则，判断是否需要清空国家、省市数据
         Map<String,Object> map = getRuleOrderHandleMap(dto);
@@ -646,7 +648,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         String channelId = dto.getChannelId();
         LogisticsSupplierDTO.AuthDTO auth = logisticsAuthService.getAuthByChannelId(channelId);
         if (Objects.isNull(auth)) {
-            throw new ServiceException(ApiError.ERROR_LOGISTICS_CHANNEL_NOT_EXIST);
+            throw new ServiceException(ApiError.LOGISTICS_CHANNEL_NOT_FOUND);
         }
         //物流商对接传运单号或参考号，在这边校验时参考号必填，如果没有运单号，判断如果有跟踪号，通过跟踪号查运单号
         //取消物流单的
@@ -660,7 +662,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         if (StringUtils.isBlank(dto.getTransportNo())) {
             LogisticsBillDTO.BaseDTO billBase = this.getBaseByTrackNo(dto.getTrackNo());
             if (ObjectUtil.isEmpty(billBase) || Objects.isNull(billBase.getId())) {
-                throw new ServiceException(ApiError.NOT_EXIST_BILL, "物流单");
+                throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "物流单");
             }
             cancelOrderVO.setTransportNo(billBase.getTransportNo());
         }
@@ -699,7 +701,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         String channelId = dto.getChannelId();
         LogisticsSupplierDTO.AuthDTO auth = logisticsAuthService.getAuthByChannelId(channelId);
         if (Objects.isNull(auth)) {
-            throw new ServiceException(ApiError.ERROR_LOGISTICS_CHANNEL_NOT_EXIST);
+            throw new ServiceException(ApiError.LOGISTICS_CHANNEL_NOT_FOUND);
         }
         //物流商对接传运单号或参考号，在这边校验时参考号必填，如果没有运单号，判断如果有跟踪号，通过跟踪号查运单号
         //取消物流单的
@@ -714,7 +716,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         if (StringUtils.isBlank(dto.getTransportNo())) {
             LogisticsBillDTO.BaseDTO billBase = this.getBaseByTrackNo(dto.getTrackNo());
             if (Objects.isNull(billBase.getId())) {
-                throw new ServiceException(ApiError.NOT_EXIST_BILL, "物流单");
+                throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "物流单");
             }
             interceptOrderVO.setTransportNo(billBase.getTransportNo());
         }
@@ -838,7 +840,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
             //物流信息
             List<SoB2cLogisticsEntity> soB2cLogisticsList = soB2cFeign.listSoB2cLogisticsByMainIdList(Arrays.asList(logisticsBillEntity.getSourceId()));
             if (CollectionUtils.isEmpty(soB2cLogisticsList)) {
-                throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_NOT_EXIST);
+                throw new ServiceException(ApiError.SO_B2C_LOGISTICS_NOT_FOUND);
             }
             //销售订单重量单位转成kg
             BigDecimal actualWeight = MathUtil.divide(soB2cLogisticsList.get(0).getWeight(), new BigDecimal(1000), 4);
@@ -972,7 +974,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         String channelId = soB2cLogisticsEntity.getLogisticsChannelId();
         LogisticsSupplierDTO.AuthDTO auth = logisticsAuthService.getAuthByChannelId(channelId);
         if (Objects.isNull(auth)) {
-            throw new ServiceException(ApiError.ERROR_LOGISTICS_CHANNEL_NOT_EXIST);
+            throw new ServiceException(ApiError.LOGISTICS_CHANNEL_NOT_FOUND);
         }
         if (StringUtils.isBlank(soB2cEntity.getCode())) {
             throw new ServiceException("订单为空");
@@ -1079,6 +1081,12 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                 } catch (Exception e) {
                     log.error("处理面单获取失败，订单ID: {}", dto.getB2cSoId(), e);
                     errorList.add(codeMap.get(dto.getB2cSoId()));
+                    SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
+                    addError.setType(SoB2cErrorTypeEnum.GET_LOGISTICS_LABEL.getCode());
+                    addError.setMainId(dto.getB2cSoId());
+                    addError.setMessage(e.getMessage());
+                    addError.setParamJson(JSONUtil.toJsonStr(dto));
+                    soB2cFeign.addSoB2cError(addError);
                 }
             }, tmsLogisticsLabelPool);
             futures.add(future);
@@ -1151,7 +1159,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                 .orElse(null);
         LogisticsSupplierDTO.AuthDTO auth = logisticsAuthService.getAuthByChannelId(channelId);
         if (Objects.isNull(auth)) {
-            throw new ServiceException(ApiError.ERROR_LOGISTICS_CHANNEL_NOT_EXIST);
+            throw new ServiceException(ApiError.LOGISTICS_CHANNEL_NOT_FOUND);
         }
 
         Map<String, String> authMap = logisticsAuthService.getLogisticsAuthConfig(
@@ -1188,11 +1196,11 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         }
         //校验是否请求成功
         if (!labelList.isSuccess()) {
-            throw new ServiceException(ApiError.PRINT_WAYBILL_ERROR, labelList.getMsg());
+            throw new ServiceException(ApiError.LOGISTICS_PRINT_WAYBILL_FAILED, labelList.getMsg());
         }
         for (LogisticsPrintLabelResponse datum : labelList.getData()) {
             if ("500".equals(datum.getCode())) {
-                throw new ServiceException(ApiError.PRINT_WAYBILL_ERROR, datum.getMessage());
+                throw new ServiceException(ApiError.LOGISTICS_PRINT_WAYBILL_FAILED, datum.getMessage());
             }
         }
         //获取标签信息
@@ -1204,6 +1212,11 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         waybillDTO.setSoB2cId(b2cSoId);
         waybillDTO.setTrackNo(getLabelVO.getTrackNo());
         waybillDTO.setTransportNo(getLabelVO.getTransportNo());
+        //清空面单获取异常
+        SoB2cErrorDTO.DeleteDTO deleteDTO = new SoB2cErrorDTO.DeleteDTO();
+        deleteDTO.setMainId(b2cSoId);
+        deleteDTO.setType(SoB2cErrorTypeEnum.GET_LOGISTICS_LABEL.getCode());
+        soB2cFeign.deleteError(deleteDTO);
         return waybillDTO;
     }
 
@@ -1542,19 +1555,19 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                 try {
                     new ExcelPrintUtils().patchExport(errorList, response, sb.toString(), excelPath);
                 } catch (IOException e) {
-                    throw new ServiceException(ApiError.ERROR_95125);
+                    throw new ServiceException(ApiError.FILE_EXPORT_ERROR_DATA_FAILED);
                 }
                 return Boolean.FALSE;
             }
         }catch (SocketTimeoutException e) {
             log.error("导入超时错误！>>>{}", e);
-            throw new ServiceException(ApiError.ERROR_IMPORT_TIMEOUT);
+            throw new ServiceException(ApiError.FILE_IMPORT_TIMEOUT);
         } catch (IOException e) {
             log.error("导入错误！>>>{}", e);
-            throw new ServiceException(ApiError.ERROR_95124);
+            throw new ServiceException(ApiError.FILE_DATA_IMPORT_FAILED);
         } catch (ExcelCommonException e) {
             log.error("导入错误！>>>{}", e);
-            throw new ServiceException(ApiError.ERROR_1016);
+            throw new ServiceException(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX);
         }
         return Boolean.TRUE;
     }

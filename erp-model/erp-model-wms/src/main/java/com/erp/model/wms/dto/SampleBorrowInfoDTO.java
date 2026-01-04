@@ -642,6 +642,16 @@ public class SampleBorrowInfoDTO implements Serializable {
         @NotBlank(message = "样品借用单编号不能为空")
         private String sourceCode;
 
+        /**
+         * 使用方ID
+         */
+        private String useUserId;
+
+        /**
+         * 使用方名称
+         */
+        private String useUserName;
+
     }
 
 

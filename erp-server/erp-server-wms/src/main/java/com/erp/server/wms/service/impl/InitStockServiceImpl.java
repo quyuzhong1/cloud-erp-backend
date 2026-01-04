@@ -184,7 +184,7 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
             EasyExcel.read(excelFile.getInputStream(), ImportInitStockExcelDTO.class, listener).sheet(0).doRead();
         } catch (Exception e) {
             log.error("excel导入错误", e);
-            throw new ServiceException(ApiError.ERROR_95124);
+            throw new ServiceException(ApiError.FILE_DATA_IMPORT_FAILED);
         }
         List<InitStockDetailDTO.AddDTO> successList = listener.getSuccessList(); // 导入成功数据
         List<ImportInitStockExcelDTO> errorList = listener.getErrorList(); // 导入失败数据
@@ -314,12 +314,12 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
     public BatchResultDTO approve(InitStockEntity entity, String type, String comment, Boolean isNeedProcess) {
         //只有审核中的数据允许审核
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())){
-            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_98006.msg);
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.WF_APPROVE_ALLOWED_STATUS_ONLY.getMsg());
         }
         //当前登陆人,启用流程后可删除
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         if (CharSequenceUtil.equals(entity.getCreateUserId(),userInfo.getUid()) && !CharSequenceUtil.equals(entity.getCreateUserId(), UserStateConstants.USER_SYSTEM_ID)) {
-            throw new ServiceException(ApiError.WORKFLOW_APPROVE_CREATE_APPROVE_DIFF,userInfo.getUserName());
+            throw new ServiceException(ApiError.WF_CREATOR_APPROVER_NOT_SAME,userInfo.getUserName());
         }
         ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(type);
         ApproveStatusEnum approveStatus = null;
@@ -355,7 +355,7 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
         List<BatchResultDTO> resultDTOList=new ArrayList<>();
         for (InitStockEntity entity : list) {
             if (!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(entity.getApproveStatus()) || entity.getInvalidStatus()){
-                resultDTOList.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_98009.msg));
+                resultDTOList.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.BILL_DELETE_ALLOWED_STATUS_ONLY.getMsg()));
                 continue;
             }
             removeList.add(entity);
@@ -386,7 +386,7 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
     @Override
     public BatchResultDTO disApprove(InitStockEntity entity) {
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus())){
-            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_98014.msg);
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.BILL_REVERSE_APPROVAL_ALLOWED_APPROVED_ONLY.getMsg());
         }
         log.info("反审核 开始修改期初库存状态数据，id集合：【{}】", entity.getId());
         ApproveStatusEnum approveStatus = ApproveStatusEnum.WAIT_SUBMIT;
@@ -469,7 +469,7 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
             wb.close();
         } catch (Exception e) {
             log.error("initStock downloadTemplate异常", e);
-            throw new ServiceException(ApiError.ERROR_95131);
+            throw new ServiceException(ApiError.FILE_IMPORT_TEMPLATE_DOWNLOAD_FAILED);
         }
     }
 
@@ -640,7 +640,7 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
         if(StrUtils.isNotEmpty(warehouseId)) {
             WarehouseDTO.UpdateDTO warehouseDetail = warehouseService.detailWithCache(warehouseId);
             if (Objects.isNull(warehouseDetail) || CharSequenceUtil.isBlank(warehouseDetail.getId())){
-                throw new ServiceException(ApiError.ERROR_99002);
+                throw new ServiceException(ApiError.WH_PARAM_NOT_FOUND);
             }
             initStockEntity.setWarehouseId(warehouseId);
             initStockEntity.setOrgId(warehouseDetail.getOrgId());

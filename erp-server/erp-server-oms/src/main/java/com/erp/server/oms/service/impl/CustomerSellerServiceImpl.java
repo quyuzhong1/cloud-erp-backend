@@ -1,6 +1,5 @@
 package com.erp.server.oms.service.impl;
 
-import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.enums.ApiError;
@@ -11,7 +10,6 @@ import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.CustomerSellerEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
-import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.oms.mapper.CustomerSellerMapper;
 import com.erp.server.oms.service.CustomerSellerService;
@@ -58,7 +56,7 @@ public class CustomerSellerServiceImpl extends SuperServiceImpl<CustomerSellerMa
             List<SellerDTO.AddDTO> list = sellerList.stream().filter(c -> c.getEndDate() != null && c.getStartDate() != null).collect(Collectors.toList());
             long count = list.stream().filter(c -> c.getEndDate().compareTo(c.getStartDate()) < 0).count();
             if (count > 0) {
-                throw new ServiceException(ApiError.ERROR_92008);
+                throw new ServiceException(ApiError.COMMON_DATE_RANGE_INVALID);
             }
             List<LocalDate> dateList = new ArrayList<>(sellerList.size());
             for (SellerDTO.AddDTO item : sellerList) {
@@ -67,7 +65,7 @@ public class CustomerSellerServiceImpl extends SuperServiceImpl<CustomerSellerMa
             //判断是否按序排序
             for (int i = 0; i < dateList.size() - 1; i++) {
                 if (dateList.get(i).compareTo(dateList.get(i + 1)) > 0) {
-                    throw new ServiceException(ApiError.ERROR_92048);
+                    throw new ServiceException(ApiError.COMMON_DATE_SORT_ASC_REQUIRED);
                 }
             }
         }

@@ -29,7 +29,6 @@ import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.server.sys.rocketmq.sync.kingdee.SyncKingdeeUserPostService;
 import com.erp.server.sys.service.KingdeeDepartmentService;
 import com.erp.server.sys.service.KingdeePostService;
-import com.erp.server.sys.service.SysAccountingCompanyService;
 import com.erp.server.sys.service.SysPushMsgService;
 import com.erp.server.sys.service.SysUserInfoService;
 import com.erp.server.sys.service.impl.SysAccountingCompanyImpl;

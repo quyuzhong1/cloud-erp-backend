@@ -111,7 +111,7 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
     public Boolean update(SoB2cLogisticsDTO.UpdateDTO logisticsDTO, String mainId) {
         SoB2cLogisticsEntity old = super.getById(logisticsDTO.getId());
         if(null == old){
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "B2C销售订单物流信息表");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "B2C销售订单物流信息表");
         }
         if(StringUtils.isNotBlank(old.getCode()) && old.getSourceSystem().equals(SoB2cLogisticSourceSystemEnum.THIRD.getCode())){
             if(!old.getLogisticsChannelId().equals(logisticsDTO.getLogisticsChannelId()) || !old.getCode().equals(logisticsDTO.getCode())){
@@ -343,11 +343,11 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
         //买家信息
         SoB2cReceiverEntity receiverEntity = soB2cReceiverService.getByMainId(orderId);
         if (Objects.isNull(receiverEntity)) {
-            throw new ServiceException(ApiError.ERROR_SO_B2C_RECEIVER_NOT_NULL);
+            throw new ServiceException(ApiError.BILL_RECEIVER_REQUIRED);
         }
         SoB2cLogisticsEntity entity = this.getByMainId(orderId);
         if (Objects.isNull(entity)) {
-            throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_NOT_EXIST);
+            throw new ServiceException(ApiError.SO_B2C_LOGISTICS_NOT_FOUND);
         }
         SoB2cDTO.ShippingCalculationDTO shippingCalculationDTO = new SoB2cDTO.ShippingCalculationDTO();
         shippingCalculationDTO.setWeight(entity.getWeight());
@@ -494,8 +494,14 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
 
     @Override
     public void updateLogisticsBySoId(String soId, String trackNo) {
-        if (CharSequenceUtil.isNotBlank(soId)){
+        if (CharSequenceUtil.isBlank(soId)){
+            return;
+        }
+        SoB2cLogisticsEntity entity = this.getByMainId(soId);
+        if (Objects.nonNull(entity) && !Objects.equals(trackNo, entity.getTrackNo()) ){
             this.lambdaUpdate().eq(SoB2cLogisticsEntity::getMainId, soId).set(SoB2cLogisticsEntity::getTrackNo, trackNo).update();
+            //清空面单
+            soB2cLabelService.deleteByMainIds(Collections.singletonList(soId));
         }
     }
 

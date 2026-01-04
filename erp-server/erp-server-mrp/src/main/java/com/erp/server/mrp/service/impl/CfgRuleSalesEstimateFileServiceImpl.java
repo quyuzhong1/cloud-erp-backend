@@ -109,7 +109,7 @@ public class CfgRuleSalesEstimateFileServiceImpl extends SuperServiceImpl<CfgRul
                 .findFirst()
                 .orElse("");
         if (ObjectUtils.isEmpty(salesQty)) {
-            throw new ServiceException(ApiError.ERROR_CFG_RULE_SALES_NOT_EXIST, platformName);
+            throw new ServiceException(ApiError.REPLENISHMENT_SALES_RULE_CONFIG_NOT_EXIST, platformName);
         }
         Map<String, String> platformMap = salesPlatformList.stream()
                 .collect(Collectors.toMap(com.erp.model.oms.entity.DictBasicEntity::getName, com.erp.model.oms.entity.DictBasicEntity::getValue, (o1, o2) -> o1));
@@ -117,11 +117,11 @@ public class CfgRuleSalesEstimateFileServiceImpl extends SuperServiceImpl<CfgRul
         try {
             EasyExcelFactory.read(excelFile.getInputStream(), CfgRuleSalesEstimateFileDTO.ExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (IOException e) {
-            log.error(ApiError.ERROR_95124.msg, e);
-            throw new ServiceException(ApiError.ERROR_95124);
+            log.error(ApiError.FILE_DATA_IMPORT_FAILED.getMsg(), e);
+            throw new ServiceException(ApiError.FILE_DATA_IMPORT_FAILED);
         } catch (ExcelCommonException e) {
-            log.error(ApiError.ERROR_1016.msg, e);
-            throw new ServiceException(ApiError.ERROR_1016);
+            log.error(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX.getMsg(), e);
+            throw new ServiceException(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX);
         }
         List<CfgRuleSalesEstimateFileDTO.ExcelDTO> errorList = excelListenerUtil.getErrorList();
         if (!CollectionUtils.isEmpty(errorList)) {
@@ -134,7 +134,7 @@ public class CfgRuleSalesEstimateFileServiceImpl extends SuperServiceImpl<CfgRul
             try {
                 new ExcelPrintUtils().patchExport(errorList, response, sb.toString(), excelPath);
             } catch (IOException e) {
-                throw new ServiceException(ApiError.ERROR_95125);
+                throw new ServiceException(ApiError.FILE_EXPORT_ERROR_DATA_FAILED);
             }
         } else {
             customerSalesEstimateEsService.removeByPlatform(platform);

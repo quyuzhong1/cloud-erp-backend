@@ -115,13 +115,13 @@ public abstract class AbstractShipOrder implements IPlatformService {
             //检查销售订单是否存在
             SoB2cEntity mainEntity = soB2cFeign.getById(dto.getSoB2cId());
             if (ObjectUtil.isEmpty(mainEntity)) {
-                throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
+                throw new ServiceException(ApiError.SO_B2C_NOT_FOUND);
             }
             sourceOrderList = Collections.singletonList(mainEntity);
             //检查销售订单详情是否存在
             List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cFeign.listDetailByMainIds(Collections.singletonList(dto.getSoB2cId()));
             if (CollectionUtils.isEmpty(soB2cDetailEntityList)) {
-                throw new ServiceException(ApiError.ERROR_SO_B2C_DETAIL_NOT_EXIST);
+                throw new ServiceException(ApiError.SO_B2C_DETAIL_NOT_FOUND);
             }
             soB2cDetailEntityListMap.put(dto.getSoB2cId(),soB2cDetailEntityList);
             //  查询拆分前的原单信息
@@ -136,7 +136,7 @@ public abstract class AbstractShipOrder implements IPlatformService {
             sourceOrderList = soB2cFeign.listByIds(mainIds);
             //检查销售订单是否存在
             if (CollectionUtils.isEmpty(sourceOrderList)) {
-                throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
+                throw new ServiceException(ApiError.SO_B2C_NOT_FOUND);
             }
             // 查询所有明细
             List<SoB2cDetailEntity> allDetailList = soB2cFeign.listDetailByIds(detailIds);
@@ -146,7 +146,7 @@ public abstract class AbstractShipOrder implements IPlatformService {
         SoB2cLogisticsEntity logisticsEntity = soB2cFeign.listSoB2cLogisticsByMainIdList(Collections.singletonList(dto.getSoB2cId()))
                 .stream().findFirst().orElse(null);
         if (null == logisticsEntity) {
-            throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_NOT_EXIST);
+            throw new ServiceException(ApiError.SO_B2C_LOGISTICS_NOT_FOUND);
         }
         return new Tuple(sourceOrderList, soB2cDetailEntityListMap, logisticsEntity, sourcePlatformOrderMap);
     }

@@ -147,14 +147,17 @@ public class DsfLogisticsHandlerImplTest {
 
     @Test
     public void getLabelList() throws IOException {
-        LogisticsGetLabelVO logisticsQueryVO2 = new LogisticsGetLabelVO();
-        logisticsQueryVO2.setDeliveryNo("XSDS25101000003_2");
-        logisticsQueryVO2.setIsPdn("Y");
-        logisticsQueryVO2.setAuthMap(authMap);
-        LogisticsSaleChannelEntity logisticsChannelEntity = new LogisticsSaleChannelEntity();
-        logisticsChannelEntity.setCode("OH");
-        logisticsQueryVO2.setLogisticsSaleChannelEntity(logisticsChannelEntity);
-        ApiResult<List<LogisticsPrintLabelResponse>> labelList = dsfLogisticsHandler.getLabelList(Collections.singletonList(logisticsQueryVO2));
+//        LogisticsGetLabelVO logisticsQueryVO2 = new LogisticsGetLabelVO();
+//        logisticsQueryVO2.setDeliveryNo("XSDS25101000003_2");
+//        logisticsQueryVO2.setIsPdn("Y");
+//        logisticsQueryVO2.setAuthMap(authMap);
+//        LogisticsSaleChannelEntity logisticsChannelEntity = new LogisticsSaleChannelEntity();
+//        logisticsChannelEntity.setCode("OH");
+//        logisticsQueryVO2.setLogisticsSaleChannelEntity(logisticsChannelEntity);
+//        String  jsonStr = "[{\"logisticsSaleChannelEntity\":{\"code\":\"D5\",\"isUserSystem\":false},\"isPdn\":\"N\",\"deliveryNo\":\"XSDS25122200002_1\",\"platformCode\":\"\",\"orderId\":\"2002932594412204033\",\"packageId\":\"\",\"transportNo\":\"DS310128651800\",\"trackNo\":\"310128651800\",\"pushPlatformCode\":\"XSDS25122200002-1\",\"authMap\":{\"clientId\":\"e4d8f282-5ab6-49ed-86e5-5fc7ea316703\",\"logisticsPlatform\":\"DSF\",\"clientSecret\":\"6c313d20-dbfd-4cc0-aaef-1c9d26f04461\",\"id\":\"1798615319959310337\",\"url\":\"https://open.4px.com\"}}]";
+        String jsonStr = "[{\"logisticsSaleChannelEntity\":{\"code\":\"D5\",\"isUserSystem\":false},\"isPdn\":\"N\",\"deliveryNo\":\"XSDS25122200002_2\",\"platformCode\":\"\",\"orderId\":\"2002932595339145217\",\"packageId\":\"\",\"transportNo\":\"DS310128657907\",\"trackNo\":\"310128657907\",\"pushPlatformCode\":\"XSDS25122200002-2\",\"authMap\":{\"clientId\":\"e4d8f282-5ab6-49ed-86e5-5fc7ea316703\",\"logisticsPlatform\":\"DSF\",\"clientSecret\":\"6c313d20-dbfd-4cc0-aaef-1c9d26f04461\",\"id\":\"1798615319959310337\",\"url\":\"https://open.4px.com\"}}]";
+        List<LogisticsGetLabelVO> list = JSONUtil.toList(jsonStr, LogisticsGetLabelVO.class);
+        ApiResult<List<LogisticsPrintLabelResponse>> labelList = dsfLogisticsHandler.getLabelList(list);
         System.out.println(labelList);
 
     }

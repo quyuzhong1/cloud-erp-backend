@@ -4,14 +4,12 @@ package com.erp.server.tms.service.impl;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
-import com.erp.model.tms.entity.TransferDeclareCostAllocationEntity;
 import com.erp.model.tms.entity.TransferDeclareCostAllocationMainEntity;
 import com.erp.server.tms.mapper.TransferDeclareCostAllocationMainMapper;
 import com.erp.server.tms.service.TransferDeclareCostAllocationMainService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.erp.server.tms.service.OperateLogService;
-import com.erp.server.tms.service.CommonService;
 import com.common.core.exception.ServiceException;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -68,7 +66,7 @@ public class TransferDeclareCostAllocationMainServiceImpl extends SuperServiceIm
     @Override
     public Boolean update(TransferDeclareCostAllocationMainDTO.UpdateDTO updateDTO) {
         TransferDeclareCostAllocationMainEntity old = super.getById(updateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "中转费用分摊主单"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "中转费用分摊主单"));
         TransferDeclareCostAllocationMainEntity transferDeclareCostAllocationMainEntity =  BeanMapperUtils.map(TransferDeclareCostAllocationMainEntity.class, updateDTO);
 
         // 数据处理

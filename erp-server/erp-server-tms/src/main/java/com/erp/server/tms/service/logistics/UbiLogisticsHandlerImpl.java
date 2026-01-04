@@ -92,7 +92,7 @@ public class UbiLogisticsHandlerImpl extends AbstractLogisticsHandler {
             logisticsOperateService.pushOperateLog(logisticsOrderVO.getSourceId(),
                     logisticsOrderVO.getDeliveryNo(), BusinessTypeEnum.CREATE_ORDER.getCode(), LogisticsPlatformEnum.UBI.getCode(),
                     RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsOrderVO), JSONUtil.toJsonStr(e), true);
-            return ApiResult.error(ApiError.CALL_THIRD_LOGISTICS_PLATFORM_ERROR.code, getPlatForm().getName() + ":" + e.getMessage());
+            return ApiResult.error(ApiError.LOGISTICS_CALL_THIRD_PLATFORM_ERROR.getCode(), getPlatForm().getName() + ":" + e.getMessage());
         }
     }
 

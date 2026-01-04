@@ -2,8 +2,6 @@ package com.erp.oms.aliexpress.service;
 
 import cn.hutool.json.JSONUtil;
 
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.dto.PlatformDeliveryDetailDTO;
 import com.common.core.exception.ServiceException;

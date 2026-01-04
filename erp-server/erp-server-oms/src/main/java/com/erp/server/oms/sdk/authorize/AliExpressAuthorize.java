@@ -2,7 +2,6 @@ package com.erp.server.oms.sdk.authorize;
 
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.annotation.PlatformAnnotate;
 import com.common.business.constant.RedisCacheConstants;
@@ -136,7 +135,7 @@ public class AliExpressAuthorize implements IShopAuthorizeService<T> {
         }
         String shopId = shopIdObj.toString();
         if (StringUtils.isBlank(shopId)) {
-            throw new ServiceException(ApiError.ERROR_SO_B2C_SHOP_USER_AUTH_PART);
+            throw new ServiceException(ApiError.SHOP_AUTH_REQUIRED);
         }
         ShopInfoEntity shopInfo = shopInfoService.getById(shopId);
         if (Objects.isNull(shopInfo)) {
@@ -144,7 +143,7 @@ public class AliExpressAuthorize implements IShopAuthorizeService<T> {
         }
         String code = dto.getCode();
         if (StringUtils.isBlank(code)) {
-            throw new ServiceException(ApiError.ERROR_AUTHORIZE_CODE_NOT_NULL);
+            throw new ServiceException(ApiError.SHOP_AUTHORIZE_CODE_REQUIRED);
         }
         AppClientEnum appClient = AppClientEnum.ALI_EXPRESS_TOKEN;
         CfgAppClientDTO.FindDTO findDTO = new CfgAppClientDTO.FindDTO();
@@ -208,7 +207,7 @@ public class AliExpressAuthorize implements IShopAuthorizeService<T> {
                 redisUtil.del(stateKey);
             } else {
                 String msg = jsonObject.getOrDefault("message", "").toString();
-                throw new ServiceException(ApiError.ERROR_AUTHORIZE_FAIL, msg);
+                throw new ServiceException(ApiError.SHOP_AUTHORIZE_FAILED, msg);
             }
 
         } catch (Exception e) {

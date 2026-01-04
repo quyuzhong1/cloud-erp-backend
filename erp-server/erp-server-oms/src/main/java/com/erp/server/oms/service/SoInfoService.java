@@ -6,6 +6,11 @@ import com.common.business.dto.PlatformB2bOrderDTO;
 import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
+import com.erp.model.oms.dto.ExhibitionOrderDTO;
+import com.erp.model.oms.dto.SoB2cDTO;
+import com.erp.model.oms.dto.SoDetailDTO;
+import com.erp.model.oms.dto.SoInfoDTO;
+import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.SoChangeEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
@@ -571,4 +576,6 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
      * @return List<B2bSoInfoDTO>
      */
     List<KolB2bApplicationDTO.B2bSoInfoDTO> listRefBill(String sourceId);
+
+    List<SoInfoEntity> getByPlatformOrderCode(String platformOrderCode);
 }

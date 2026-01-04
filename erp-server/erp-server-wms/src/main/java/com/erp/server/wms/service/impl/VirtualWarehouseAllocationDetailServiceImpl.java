@@ -115,7 +115,7 @@ public class VirtualWarehouseAllocationDetailServiceImpl extends SuperServiceImp
     public Boolean batchUpdate(VirtualWarehouseAllocationDetailDTO.UpdateDTO updateDTO) {
         VirtualWarehouseAllocationDetailEntity old = super.getById(updateDTO.getId());
         if (Objects.isNull(old)){
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "分货单明细");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "分货单明细");
         }
         VirtualWarehouseAllocationDetailEntity virtualWarehouseAllocationDetailEntity = BeanMapperUtils.map(VirtualWarehouseAllocationDetailEntity.class, updateDTO);
 
@@ -141,7 +141,7 @@ public class VirtualWarehouseAllocationDetailServiceImpl extends SuperServiceImp
         handleData(detailEntityList, mainId);
         boolean save = super.saveBatch(detailEntityList);
         if (!save) {
-            throw new ServiceException(ApiError.ERROR_VMALLOCATION_DETAIL_ADD);
+            throw new ServiceException(ApiError.VM_ALLOCATION_DETAIL_SAVE_FAILED);
         }
     }
 
@@ -149,7 +149,7 @@ public class VirtualWarehouseAllocationDetailServiceImpl extends SuperServiceImp
     @Transactional(rollbackFor = Exception.class)
     public Boolean batchUpdate(VirtualWarehouseAllocationDTO.UpdateDTO updateDTO, String mainId) {
         if (CollectionUtils.isEmpty(updateDTO.getDetailList())) {
-            throw new ServiceException(ApiError.ERROR_1040, ModuleTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION.getName());
+            throw new ServiceException(ApiError.BILL_DETAIL_NOT_FOUND, ModuleTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION.getName());
         }
         List<VirtualWarehouseAllocationDetailEntity> oldList = this.list(new LambdaQueryWrapper<VirtualWarehouseAllocationDetailEntity>().eq(VirtualWarehouseAllocationDetailEntity::getMainId, mainId));
         List<String> deleteIds = getDeleteIds(updateDTO.getDetailList(), oldList);
@@ -204,7 +204,7 @@ public class VirtualWarehouseAllocationDetailServiceImpl extends SuperServiceImp
             //手动完结中台任务
             dmpMqFeign.batchNoNeedSyncBySourceId(Collections.singletonList(handleRelation.getHandleDetailId()));
         } else {
-            throw new ServiceException(ApiError.ERROR_NO_SYNC);
+            throw new ServiceException(ApiError.VM_NO_SYNC_INFO);
         }
         return BatchResultDTO.success(vwAllocationDetailEntity.getId(), vwAllocationEntity.getCode(), OperationTypeEnum.MANUAL_FINISH);
     }
@@ -232,7 +232,7 @@ public class VirtualWarehouseAllocationDetailServiceImpl extends SuperServiceImp
                     virtualInventoryTransCoreService.approve(cancelDto);
                     break;
                 default:
-                    throw new ServiceException(ApiError.ERROR_400);
+                    throw new ServiceException(ApiError.HTTP_BAD_REQUEST);
             }
         }
     }
@@ -253,6 +253,8 @@ public class VirtualWarehouseAllocationDetailServiceImpl extends SuperServiceImp
             outInStockDTO.setSkuId(detailDto.getSkuId());
             outInStockDTO.setSkuNo(detailDto.getSkuNo());
             outInStockDTO.setWarehouseId(detailDto.getWarehouseId());
+            outInStockDTO.setCurWarehouseId(detailDto.getWarehouseId());
+            outInStockDTO.setTargetWarehouseId(detailDto.getToWarehouseId());
             outInStockDTO.setVirtualWarehouseId(detailDto.getFromVirtualWarehouseId());
             outInStockDTO.setVirtualCurWarehouseId(detailDto.getFromVirtualWarehouseId());
             outInStockDTO.setVirtualTargetWarehouseId(detailDto.getToVirtualWarehouseId());

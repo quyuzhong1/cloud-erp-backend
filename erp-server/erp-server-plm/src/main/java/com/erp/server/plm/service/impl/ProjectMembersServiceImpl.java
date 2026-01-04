@@ -163,7 +163,7 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
             userIdList = userIdList.stream().filter(e -> !members.contains(e)).collect(Collectors.toList());
         }
         if (CollectionUtils.isEmpty(userIdList) && MathUtil.ONE.equals(dto.getFlag())) {
-            throw new ServiceException(ApiError.ERROR_95021);
+            throw new ServiceException(ApiError.COMMON_MEMBER_ROLE_ALREADY_EXISTS);
         }
         List<ProjectMembersEntity> addList = new ArrayList<>(userIdList.size());
         for (String userId : userIdList) {
@@ -190,7 +190,7 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
         }
         ProjectRoleEntity projectRoleEntity = projectRoleService.getById(dto.getRoleId());
         if (ObjectUtils.isEmpty(projectRoleEntity)) {
-            throw new ServiceException(ApiError.ERROR_9021);
+            throw new ServiceException(ApiError.COMMON_ROLE_NOT_FOUND);
         }
         //成员新增成功后，需要更新产品下面的未发布、未开始、进行中的任务
         List<ProjectTaskEntity> projectTaskList = projectTaskService.listByProductId(dto.getProductId());
@@ -240,7 +240,7 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
                 //根据分配类型查询模板中的数据
                 for (TaskChargeDistributionEntity taskChargeDistributionEntity : taskChargeDistributionList) {
                     if (StringUtils.isBlank(taskChargeDistributionEntity.getCharges())) {
-                        throw new ServiceException(ApiError.ERROR_95097);
+                        throw new ServiceException(ApiError.PROJECT_PARAM_TASK_OWNER_REQUIRED);
                     }
                     List<String> chargeList = Arrays.stream(taskChargeDistributionEntity.getCharges().split(",")).collect(Collectors.toList());
                     //按角色分配

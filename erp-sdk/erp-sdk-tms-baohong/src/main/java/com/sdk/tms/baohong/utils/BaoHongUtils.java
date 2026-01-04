@@ -2,7 +2,6 @@ package com.sdk.tms.baohong.utils;
 
 import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.map.MapUtil;
-import com.common.business.threadlocal.ThirdWarehouseContext;
 import com.common.business.threadlocal.TransferLogisticsContext;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.OkHttpUtils;

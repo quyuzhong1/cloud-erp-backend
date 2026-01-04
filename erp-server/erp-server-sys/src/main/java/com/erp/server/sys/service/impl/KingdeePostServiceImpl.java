@@ -104,7 +104,7 @@ public class KingdeePostServiceImpl extends SuperServiceImpl<KingdeePostMapper, 
     @Override
     public Boolean update(KingdeePostDTO.UpdateDTO updateDTO) {
         KingdeePostEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "金蝶岗位"));
+        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "金蝶岗位"));
         String oldOrgId = old.getUseOrgId();
         String newOrgId = updateDTO.getUseOrgId();
         if (!oldOrgId.equals(newOrgId)) {
@@ -219,7 +219,7 @@ public class KingdeePostServiceImpl extends SuperServiceImpl<KingdeePostMapper, 
     public KingdeePostDTO.ViewDTO view(String id) {
         KingdeePostEntity postEntity = this.getById(id);
         if (Objects.isNull(postEntity)) {
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "金蝶岗位不存在");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "金蝶岗位不存在");
         }
         KingdeePostDTO.ViewDTO viewDTO = new KingdeePostDTO.ViewDTO();
         BeanUtil.copyProperties(postEntity, viewDTO);
@@ -246,7 +246,7 @@ public class KingdeePostServiceImpl extends SuperServiceImpl<KingdeePostMapper, 
     public BatchResultDTO delete(String id) {
         KingdeePostEntity entity = this.getById(id);
         if (Objects.isNull(entity)) {
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "金蝶岗位不存在");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "金蝶岗位不存在");
         }
         Boolean result = this.removeById(id);
 

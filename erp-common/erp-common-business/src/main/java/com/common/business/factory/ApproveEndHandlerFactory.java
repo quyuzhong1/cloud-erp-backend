@@ -45,7 +45,7 @@ public class ApproveEndHandlerFactory {
         AbstractApproveHandler handler = handlerMap.get(sourceType);
         if (handler == null) {
             // 未找到处理器
-            throw new ServiceException(ApiError.ERROR_NOT_FOUND_APPROVE_HANDLER,sourceType.getName());
+            throw new ServiceException(ApiError.BILL_APPROVE_NOT_FOUND,sourceType.getName());
         }
         return handler;
     }

@@ -9,6 +9,7 @@ import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.utils.FieldValidUtil;
+import com.common.core.utils.MessageUtils;
 import com.common.core.utils.StrUtils;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.PurchasePriceDTO;
@@ -130,11 +131,25 @@ public class PurchasePriceExcelListener extends AnalysisEventListener<ImportPurc
 
         Map<String, Object> supplierMap  = supplierList.stream().filter(r->Objects.equals(supplierName, StrUtils.null2EmptyWithTrim(r.get("name")))).findFirst().orElse(null);
         if(Objects.isNull(supplierMap)) {
-            errorMsgList.add(ApiError.ERROR_SUPPLIER_ABSENCE.msg);
+            errorMsgList.add(ApiError.SUPPLIER_NOT_FOUND.getMsg());
         } else {
             addDTO.setSupplierId(StrUtils.null2EmptyWithTrim(supplierMap.get("id")));
         }
         addDTO.setSupplierName(supplierName);
+        //是否含税
+        String isTaxIncludedName = excelDTO.getIsTaxIncludedName();
+
+        if(StrUtils.isNotEmpty(isTaxIncludedName)) {
+
+            if(isTaxIncludedName.equals("是")) {
+                addDTO.setIsTaxIncluded(true);
+            } else if (isTaxIncludedName.equals("否")){
+                addDTO.setIsTaxIncluded(false);
+            }else {
+                errorMsgList.add("是否含税字段值错误 只支持 是或否");
+            }
+        }
+
         // 报价日期
         String quotedDateStr = excelDTO.getQuotedDate();
         if(StrUtils.isNotEmpty(quotedDateStr)) {
@@ -207,6 +222,9 @@ public class PurchasePriceExcelListener extends AnalysisEventListener<ImportPurc
             detailDTO.setSkuId(skuEntity.getSkuId());
             detailDTO.setSkuNo(skuNo);
             detailDTO.setProductName(skuEntity.getSkuName());
+            if(!Objects.equals("资产", skuEntity.getPropertyName())){
+                errorMsgList.add(MessageUtils.getMessage(ApiError.PRODUCT_PROPERTY_ASSET_NOT_EXIST.getMsg(),skuEntity.getSkuNo()));
+            }
         }
 
         // 采购交期

@@ -3,17 +3,15 @@ package com.erp.server.srm.query;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.query.AbstractQueryHandler;
-import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.srm.entity.PoReconciliationEntity;
 import com.erp.model.srm.enums.ConfirmStatusEnum;
-import com.erp.model.wms.enums.PoReturnStatusEnum;
-import com.erp.model.wms.enums.PoReturnUnusualTypeEnum;
+import com.erp.model.srm.enums.PoReconciliationDetailEnum;
 import com.erp.model.wms.enums.ReturnOrderSourceEnum;
-import com.erp.server.srm.service.CommonService;
 import com.erp.server.srm.service.PoReconciliationService;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
+import java.util.Arrays;
 
 /**
  * @author liuruipeng
@@ -48,7 +46,7 @@ public class PoReconciliationDetailQueryHandler extends AbstractQueryHandler {
                 //返回空结果
                 return this.getQueryEmptySql();
             }
-            super.buildDefaultDTO("prd.main_id",entity.getId());
+            super.buildDefaultDTO("prrd.po_reconciliation_id",entity.getId());
         }
 
         //查询待对账明细
@@ -59,7 +57,7 @@ public class PoReconciliationDetailQueryHandler extends AbstractQueryHandler {
                 //返回空结果
                 return this.getQueryEmptySql();
             }
-            super.buildDefaultDTO("prd.main_id","");
+            super.buildDefaultDTO("prd.status", Arrays.asList(PoReconciliationDetailEnum.StatusEnum.WAIT_RECONCILIATION.getCode(),PoReconciliationDetailEnum.StatusEnum.PART_RECONCILIATION.getCode()));
             super.buildDefaultDTO("prd.supplier_id",entity.getSupplierId());
             super.buildDefaultDTO("prd.settle_org_id",entity.getSettleOrgId());
             super.buildDefaultDTO("prd.business_status", ConfirmStatusEnum.CONFIRM.getCode());

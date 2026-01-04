@@ -65,7 +65,7 @@ public class DmpTransferWarehouseInfoServiceImpl extends SuperServiceImpl<DmpTra
     @Override
     public Boolean update(DmpTransferWarehouseInfoDTO.UpdateDTO updateDTO) {
         DmpTransferWarehouseInfoEntity old = super.getById(updateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "第三方中转仓库"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "第三方中转仓库"));
         DmpTransferWarehouseInfoEntity dmpTransferWarehouseInfoEntity =  BeanMapperUtils.map(DmpTransferWarehouseInfoEntity.class, updateDTO);
 
         // 数据处理

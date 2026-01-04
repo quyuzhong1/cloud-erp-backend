@@ -120,7 +120,7 @@ public class ApproveTaskInfoServiceImpl extends SuperServiceImpl<ApproveTaskInfo
     @Override
     public Boolean update(ApproveTaskInfoDTO.UpdateDTO addOrUpdateDTO) {
         ApproveTaskInfoEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "三方生成查询"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "三方生成查询"));
         ApproveTaskInfoEntity approveTaskInfoEntity =  BeanMapperUtils.map(ApproveTaskInfoEntity.class, addOrUpdateDTO);
 
         // 数据处理
@@ -169,7 +169,7 @@ public class ApproveTaskInfoServiceImpl extends SuperServiceImpl<ApproveTaskInfo
     public ApproveTaskInfoDTO.ViewDTO view(String id) {
         ApproveTaskInfoEntity entity = this.getById(id);
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.PROCESS_APPROVE_TASK_NOT_EXIST);
+            throw new ServiceException(ApiError.WF_APPROVE_TASK_NOT_FOUND);
         }
         ApproveTaskInfoDTO.ViewDTO viewDTO = BeanMapperUtils.map(ApproveTaskInfoDTO.ViewDTO.class, entity);
         //来源平台
@@ -183,7 +183,7 @@ public class ApproveTaskInfoServiceImpl extends SuperServiceImpl<ApproveTaskInfo
         //明细
         List<ApproveTaskDetailEntity> approveTaskDetailList = approveTaskDetailService.listByMainId(id);
         if (CollUtil.isEmpty(approveTaskDetailList)) {
-            throw new ServiceException(ApiError.PROCESS_APPROVE_TASK_DETAIL_NOT_EXIST);
+            throw new ServiceException(ApiError.WF_TASK_DETAIL_NOT_FOUND);
         }
         List<ApproveTaskDetailDTO.ViewDTO> viewDetailList = BeanUtil.copyToList(approveTaskDetailList, ApproveTaskDetailDTO.ViewDTO.class);
 
@@ -224,7 +224,7 @@ public class ApproveTaskInfoServiceImpl extends SuperServiceImpl<ApproveTaskInfo
     public BatchResultDTO afreshGenerate(String id) {
         ApproveTaskInfoEntity entity = this.getById(id);
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.PROCESS_APPROVE_TASK_NOT_EXIST);
+            throw new ServiceException(ApiError.WF_APPROVE_TASK_NOT_FOUND);
         }
         if (entity.getStatus().equals(ApproveTaskStatusEnum.ALL)){
             throw new ServiceException("三方生成查询已完成，请不要重复生成");
@@ -291,7 +291,7 @@ public class ApproveTaskInfoServiceImpl extends SuperServiceImpl<ApproveTaskInfo
     public BatchResultDTO updateThirdStatus(String id) {
         ApproveTaskInfoEntity entity = getById(id);
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.PROCESS_APPROVE_TASK_NOT_EXIST);
+            throw new ServiceException(ApiError.WF_APPROVE_TASK_NOT_FOUND);
         }
         //根据审批定义和审批实例id生成中台即时拉取任务
         DmpInoutDTO.CreateInputDTO dto = new DmpInoutDTO.CreateInputDTO();

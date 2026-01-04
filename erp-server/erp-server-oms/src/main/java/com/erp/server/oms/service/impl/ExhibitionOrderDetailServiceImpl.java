@@ -2,14 +2,11 @@ package com.erp.server.oms.service.impl;
 
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
-import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.wrapper.FeignQuery;
 import com.erp.model.oms.dto.ExhibitionOrderImportDetailExcelDTO;
 import com.erp.model.oms.dto.SoDetailDTO;
-import com.erp.model.oms.dto.excel.SoDetailImportExcelDTO;
 import com.erp.model.oms.entity.ExhibitionOrderDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.wms.dto.SampleLedgerDTO;
@@ -21,16 +18,11 @@ import com.erp.server.oms.listener.ExhibitionOrderDetailExcelListener;
 import com.erp.server.oms.mapper.ExhibitionOrderDetailMapper;
 import com.erp.server.oms.service.ExhibitionOrderDetailService;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.threadlocal.UserContext;
-import com.erp.server.oms.service.OperateLogService;
 import com.common.core.exception.ServiceException;
 import com.erp.server.oms.service.SoDetailService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
-import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.oms.dto.ExhibitionOrderDetailDTO;
 
@@ -174,7 +166,7 @@ public class ExhibitionOrderDetailServiceImpl extends SuperServiceImpl<Exhibitio
             EasyExcel.read(excelFile.getInputStream(), ExhibitionOrderImportDetailExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (Exception e) {
             log.error("导入错误=={}", e);
-            throw new ServiceException(ApiError.ERROR_95124);
+            throw new ServiceException(ApiError.FILE_DATA_IMPORT_FAILED);
         }
         ExhibitionOrderDetailDTO.ImportDTO result = new ExhibitionOrderDetailDTO.ImportDTO();
         List<ExhibitionOrderDetailDTO.SkuDTO> successList = excelListenerUtil.getSuccessList();

@@ -68,7 +68,7 @@ public class KolAddressInfoServiceImpl extends SuperServiceImpl<KolAddressInfoMa
     @Override
     public Boolean update(KolAddressInfoDTO.UpdateDTO addOrUpdateDTO) {
         KolAddressInfoEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "达人地址信息"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "达人地址信息"));
         KolAddressInfoEntity kolAddressInfoEntity =  BeanMapperUtils.map(KolAddressInfoEntity.class, addOrUpdateDTO);
 
         // 数据处理

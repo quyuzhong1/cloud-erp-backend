@@ -15,6 +15,7 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.enums.LogActionEnum;
+import com.common.core.utils.MessageUtils;
 import com.erp.model.dmp.dto.ThirdMappingDTO;
 import com.erp.model.dmp.enums.ThirdSysTypeEnum;
 import com.erp.model.oms.dto.*;
@@ -268,7 +269,7 @@ public class ShopInfoController extends BaseController {
                         if (Objects.nonNull(disabled) && !Objects.equals(disabled, shop.getDisabled()) && Objects.equals(disabled, true)) {
                             Boolean flag = checkDmpThirdMapping(id);
                             if (!flag) {
-                                submit = BatchResultDTO.fail(id, shop.getName(), CharSequenceUtil.format(ApiError.EXIST_THIRD_SHOP_MAPPING.msg,shop.getName()));
+                                submit = BatchResultDTO.fail(id, shop.getName(), MessageUtils.getMessage(ApiError.MAPPING_THIRD_SHOP_EXISTS, shop.getName()));
                             }else{
                                 flagCode = shop.getName();
                                 submit = shopInfoService.updateStatus(shop, disabled);
@@ -341,6 +342,28 @@ public class ShopInfoController extends BaseController {
     public ApiResult<ShopDTO.ViewCostDTO> viewCost(@RequestBody @Validated BaseIdDTO dto) {
         ShopDTO.ViewCostDTO result = shopCostService.viewCost(dto.getId());
         return success(result);
+    }
+
+    /**
+     * 单个店铺基础设置View
+     *
+     * @return
+     */
+    @PostMapping("/viewBase")
+    public ApiResult<ShopDTO.ViewBaseDTO> viewBase(@RequestBody @Validated BaseIdDTO dto) {
+        ShopDTO.ViewBaseDTO result = shopInfoService.viewBase(dto.getId());
+        return success(result);
+    }
+
+    /**
+     * 单个店铺基础设置更新
+     * @return
+     */
+    @PostMapping("/setBase")
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "单个店铺基础设置")
+    public ApiResult setBase(@RequestBody @Validated ShopDTO.ViewBaseDTO dto) {
+        Boolean result = shopInfoService.setBase(dto);
+        return result ? success() : failure();
     }
 
 
@@ -506,9 +529,6 @@ public class ShopInfoController extends BaseController {
     @PostMapping("/addIntenal")
     public ApiResult<?> addIntenal(@RequestBody @Validated ShopDTO.AddInternalDTO dto) {
         List<ShopInfoEntity> list = shopInfoService.addIntenal(dto);
-        for (ShopInfoEntity shop : list) {
-            shopInfoService.saveCustom(shop);
-        }
         return !CollectionUtils.isEmpty(list) ? success() : failure();
     }
 

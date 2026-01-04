@@ -202,13 +202,13 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
             List<WorkOptionDTO.MyWorkOptionDTO> myWorkOptionDTOS = baseMapper.listMyWorkOption(userInfo.getUid());
             List<WorkOptionDTO.MyWorkOptionDTO> collect = myWorkOptionDTOS.stream().filter(req -> req.getModuleStatusId().equals(dto.getWorkMenuId())).collect(Collectors.toList());
             if (!CollectionUtils.isEmpty(collect)) {
-                throw new ServiceException(ApiError.ERROR_940022);
+                throw new ServiceException(ApiError.WF_MODULE_ALREADY_EXISTS);
             }
         } else {
             List<WorkOptionDTO.FrequentlyViewDTO> frequentlyViewDTOS = baseMapper.listFrequentlyView(userInfo.getUid());
             List<WorkOptionDTO.FrequentlyViewDTO> collect = frequentlyViewDTOS.stream().filter(req -> req.getModuleStatusId().equals(dto.getWorkMenuId())).collect(Collectors.toList());
             if (!CollectionUtils.isEmpty(collect)) {
-                throw new ServiceException(ApiError.ERROR_940022);
+                throw new ServiceException(ApiError.WF_MODULE_ALREADY_EXISTS);
             }
         }
         WorkOptionEntity workOptionEntity = new WorkOptionEntity();
@@ -256,13 +256,13 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
             List<WorkOptionDTO.MyWorkOptionDTO> myWorkOptionDTOS = baseMapper.listMyWorkOption(userInfo.getUid());
             List<WorkOptionDTO.MyWorkOptionDTO> collect = myWorkOptionDTOS.stream().filter(req -> req.getModuleStatusId().equals(dto.getWorkMenuId())).collect(Collectors.toList());
             if (!CollectionUtils.isEmpty(collect)) {
-                throw new ServiceException(ApiError.ERROR_940022);
+                throw new ServiceException(ApiError.WF_MODULE_ALREADY_EXISTS);
             }
         } else {
             List<WorkOptionDTO.FrequentlyViewDTO> frequentlyViewDTOS = baseMapper.listFrequentlyView(userInfo.getUid());
             List<WorkOptionDTO.FrequentlyViewDTO> collect = frequentlyViewDTOS.stream().filter(req -> req.getModuleStatusId().equals(dto.getWorkMenuId())).collect(Collectors.toList());
             if (!CollectionUtils.isEmpty(collect)) {
-                throw new ServiceException(ApiError.ERROR_940022);
+                throw new ServiceException(ApiError.WF_MODULE_ALREADY_EXISTS);
             }
         }
         WorkOptionEntity workOptionEntity = new WorkOptionEntity();
@@ -492,7 +492,7 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
         ProcessTaskManagementEntity taskManagementEntity = processTaskManagementService.getById(dto.getId());
         ProcessManagementEntity entity = processManagementService.getByProcessInstanceId(taskManagementEntity.getProcessInstanceId());
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_94000);
+            throw new ServiceException(ApiError.WF_PROCESS_NOT_FOUND_OR_ENDED);
         }
         dto.setId(entity.getBusinessId());
         String sysClassifyByCode = workMenuService.getSysClassifyByCode(entity.getBusinessKey());
@@ -514,7 +514,7 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
                 omsApprove(dto, entity);
                 break;
             default:
-                throw new ServiceException(ApiError.ERROR_94006);
+                throw new ServiceException(ApiError.WF_APPROVE_FAILED);
         }
         return Boolean.TRUE;
     }
@@ -581,7 +581,7 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
                 plmTaskFeign.moldRefSkuApprove(moldRefSkuApproveDTO);
                 break;
             default:
-                throw new ServiceException(ApiError.ERROR_94006);
+                throw new ServiceException(ApiError.WF_APPROVE_FAILED);
         }
         return Boolean.TRUE;
     }
@@ -632,7 +632,7 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
                 scmTaskFeign.assetPurchaseChangeApprove(baseApproveParamDTO);
                 break;
             default:
-                throw new ServiceException(ApiError.ERROR_94006);
+                throw new ServiceException(ApiError.WF_APPROVE_FAILED);
         }
         BatchResultDTO resultDTO = resultDTOList.stream().filter(req -> !req.getSuccess()).findFirst().orElse(null);
         if (resultDTO != null) {
@@ -721,7 +721,7 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
                 resultDTOList = wmsTaskFeign.soOutstockApprove(baseApproveParamDTO);
                 break;
             default:
-                throw new ServiceException(ApiError.ERROR_94006);
+                throw new ServiceException(ApiError.WF_APPROVE_FAILED);
         }
         BatchResultDTO resultDTO = resultDTOList.stream().filter(req -> !req.getSuccess()).findFirst().orElse(null);
         if (resultDTO != null) {
@@ -759,7 +759,7 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
                 resultDTOList = fmsTaskFeign.assetDisposalApprove(baseApproveParamDTO);
                 break;
             default:
-                throw new ServiceException(ApiError.ERROR_94006);
+                throw new ServiceException(ApiError.WF_APPROVE_FAILED);
         }
         BatchResultDTO resultDTO = resultDTOList.stream().filter(req -> !req.getSuccess()).findFirst().orElse(null);
         if (resultDTO != null) {
@@ -808,7 +808,7 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
                 resultDTOList = exhibitionOrderFeign.approve(baseApproveParamDTO);
                 break;
             default:
-                throw new ServiceException(ApiError.ERROR_94006);
+                throw new ServiceException(ApiError.WF_APPROVE_FAILED);
         }
         BatchResultDTO resultDTO = resultDTOList.stream().filter(req -> !req.getSuccess()).findFirst().orElse(null);
         if (resultDTO != null) {

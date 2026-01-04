@@ -3,16 +3,11 @@ package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.dto.base.BaseResultDTO;
-import com.erp.model.oms.dto.ListingInfoParamDTO;
-import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
-import com.erp.model.oms.dto.SoMultiChannelDTO;
 import com.erp.model.oms.entity.SoMultiChannelDetailEntity;
 import com.erp.model.oms.entity.SoMultiChannelEntity;
-import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -22,7 +17,6 @@ import com.erp.server.oms.service.SoMultiChannelDetailService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.erp.server.oms.service.OperateLogService;
-import com.erp.server.oms.service.CommonService;
 import com.common.core.exception.ServiceException;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -89,7 +83,7 @@ public class SoMultiChannelDetailServiceImpl extends SuperServiceImpl<SoMultiCha
     @Override
     public Boolean update(SoMultiChannelDetailDTO.UpdateDTO addOrUpdateDTO) {
         SoMultiChannelDetailEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "多渠道订单明细"));
+        old = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "多渠道订单明细"));
         SoMultiChannelDetailEntity soMultiChannelDetailEntity = BeanMapperUtils.map(SoMultiChannelDetailEntity.class, addOrUpdateDTO);
 
         // 数据处理
@@ -151,7 +145,7 @@ public class SoMultiChannelDetailServiceImpl extends SuperServiceImpl<SoMultiCha
         }
         detailList.forEach(e -> {
             SoMultiChannelDetailEntity old = super.getById(e.getId());
-            old = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "多渠道订单明细"));
+            old = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "多渠道订单明细"));
             SoMultiChannelDetailEntity soMultiChannelDetailEntity = BeanMapperUtils.map(SoMultiChannelDetailEntity.class, e);
             // 数据处理
             handleData(soMultiChannelDetailEntity);

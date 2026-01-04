@@ -5,8 +5,8 @@ import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.srm.dto.PayableInfoDTO;
 import com.erp.model.srm.entity.PayableInfoEntity;
-import com.erp.model.srm.entity.PoReconciliationDetailEntity;
 import com.erp.model.srm.entity.PoReconciliationEntity;
+import com.erp.model.srm.entity.PoReconciliationRefDetailEntity;
 
 import java.util.List;
 
@@ -143,7 +143,7 @@ public interface PayableInfoService extends SuperService<PayableInfoEntity> {
      * @param entity
      * @return void
      */
-    void generatePayableInfo(PoReconciliationEntity entity,List<PoReconciliationDetailEntity> poReconciliationDetailList);
+    void generatePayableInfo(PoReconciliationEntity entity,List<PoReconciliationRefDetailEntity> refDetailList);
     /**
      * 根据来源id删除
      * @author will

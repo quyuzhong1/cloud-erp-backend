@@ -14,7 +14,6 @@ import com.common.core.enums.CurrencyEnum;
 import com.erp.model.fms.dto.*;
 import com.erp.model.fms.dto.excel.AssetDisposalImportExcelDTO;
 import com.erp.model.fms.entity.*;
-import com.erp.model.fms.enums.AssetCardStatusEnum;
 import com.erp.model.fms.enums.AssetDisposalDetailInvoiceTypeEnum;
 import com.erp.model.fms.enums.AssetDisposalDisposalMethodEnum;
 import com.erp.model.fms.enums.DisposalStatusEnum;
@@ -169,10 +168,10 @@ public class AssetDisposalServiceImpl extends SuperServiceImpl<AssetDisposalMapp
     @Override
     public Boolean update(AssetDisposalDTO.UpdateDTO addOrUpdateDTO) {
         AssetDisposalEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "资产处置单主单"));
+        old = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "资产处置单主单"));
         // 待提交和审核不通过允许修改
         if (!ApproveStatusEnum.allowUpdateStatus(old.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_1029);
+            throw new ServiceException(ApiError.BILL_UPDATE_STATUS_NOT_ALLOWED);
         }
         AssetDisposalEntity assetDisposalEntity = BeanMapperUtils.map(AssetDisposalEntity.class, addOrUpdateDTO);
 
@@ -358,7 +357,7 @@ public class AssetDisposalServiceImpl extends SuperServiceImpl<AssetDisposalMapp
             listApiResult = workflowFeign.curApprover(dtoList);
             Integer code = listApiResult.getCode();
             if (200 != code) {
-                throw new ServiceException(new ApiResult(ApiError.DEFAULT.code, listApiResult.getMsg()));
+                throw new ServiceException(new ApiResult(ApiError.HTTP_UNKNOWN.getCode(), listApiResult.getMsg()));
             }
         }
 
@@ -438,12 +437,12 @@ public class AssetDisposalServiceImpl extends SuperServiceImpl<AssetDisposalMapp
     public BatchResultDTO approve(ApproveOneDTO dto) {
         ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(dto.getType());
         if (Objects.equals(approveType, ApproveTypeEnum.REJECT) && StrUtils.isEmpty(dto.getComment())) {
-            throw new ServiceException(ApiError.REJECT_COMMENT_NOT_EMPTY);
+            throw new ServiceException(ApiError.WF_REJECT_COMMENT_REQUIRED);
         }
         AssetDisposalEntity entity = getById(dto.getId());
         // 审核中的数据允许审核
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())) {
-            throw new ServiceException(ApiError.ERROR_98006);
+            throw new ServiceException(ApiError.WF_APPROVE_ALLOWED_STATUS_ONLY);
         }
 
         // 校验资产处置数量
@@ -511,7 +510,7 @@ public class AssetDisposalServiceImpl extends SuperServiceImpl<AssetDisposalMapp
         List<String> cardIds = assetDisposalDetailEntities.stream().map(AssetDisposalDetailEntity::getSourceId).distinct().collect(Collectors.toList());
         List<AssetCardDTO.ApprovedCardDetailDTO> approvedCardDetailDTOS = assetCardService.listApproveDetailByIds(cardIds);
         if(CollUtil.isEmpty(approvedCardDetailDTOS)){
-            return new ValidationResult(BatchResultDTO.fail(entity.getId(), entity.getCode(),StrUtil.format(ApiError.ERROR_SYS_TYPE_NOTFOUND.msg,"资产卡片")));
+            return new ValidationResult(BatchResultDTO.fail(entity.getId(), entity.getCode(),StrUtil.format(ApiError.COMMON_NOT_FOUND.getMsg(),"资产卡片")));
         }
         Map<String, List<AssetCardDTO.ApprovedCardDetailDTO>> map = approvedCardDetailDTOS.stream().collect(Collectors.groupingBy(AssetCardDTO.ApprovedCardDetailDTO::getId));
 
@@ -525,13 +524,13 @@ public class AssetDisposalServiceImpl extends SuperServiceImpl<AssetDisposalMapp
         }
         String error = sb.toString();
         if(StringUtils.isNotBlank(error)){
-            return new ValidationResult(BatchResultDTO.fail(entity.getId(), entity.getCode(),StrUtil.format(ApiError.ERROR_100001.msg,error)));
+            return new ValidationResult(BatchResultDTO.fail(entity.getId(), entity.getCode(),StrUtil.format(ApiError.SAMPLE_ASSET_NOT_FOUND.getMsg(),error)));
         }
 
         List<String> detailIds = assetDisposalDetailEntities.stream().map(AssetDisposalDetailEntity::getId).collect(Collectors.toList());
         List<AssetDisposalPhysicalDetailEntity> assetDisposalPhysicalDetailEntities = assetDisposalPhysicalDetailService.lambdaQuery().in(AssetDisposalPhysicalDetailEntity::getAssetDisposalDetailId, detailIds).list();
         if(CollUtil.isEmpty(assetDisposalPhysicalDetailEntities)){
-            return new ValidationResult(BatchResultDTO.fail(entity.getId(), entity.getCode(),StrUtil.format(ApiError.ERROR_SYS_TYPE_NOTFOUND.msg,"资产处置单实物明细")));
+            return new ValidationResult(BatchResultDTO.fail(entity.getId(), entity.getCode(),StrUtil.format(ApiError.COMMON_NOT_FOUND.getMsg(),"资产处置单实物明细")));
         }
 
         //key 由资产卡片编码 + 资产编码 组成，value 由相同key进行求和
@@ -572,7 +571,7 @@ public class AssetDisposalServiceImpl extends SuperServiceImpl<AssetDisposalMapp
         if(!isDisApprove) {
             error = sb.toString();
             if(StringUtils.isNotBlank(error)){
-                return new ValidationResult(BatchResultDTO.fail(entity.getId(), entity.getCode(),StrUtil.format(ApiError.ERROR_100002.msg,error)));
+                return new ValidationResult(BatchResultDTO.fail(entity.getId(), entity.getCode(),StrUtil.format(ApiError.SAMPLE_ASSET_DISPOSAL_QTY_EXCEEDS_BOOK_QTY.getMsg(),error)));
             }
         }
 
@@ -597,7 +596,7 @@ public class AssetDisposalServiceImpl extends SuperServiceImpl<AssetDisposalMapp
         ApiResult<ProcessManagementDTO.ApproveResultDTO> approveResult = workflowFeign.approve(approveDTO);
         Integer code = approveResult.getCode();
         if (200 != code) {
-            throw new ServiceException(ApiError.ERROR_94006);
+            throw new ServiceException(ApiError.WF_APPROVE_FAILED);
         }
         ProcessManagementDTO.ApproveResultDTO data = approveResult.getData();
         if (ObjectUtil.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()) {
@@ -950,7 +949,7 @@ public class AssetDisposalServiceImpl extends SuperServiceImpl<AssetDisposalMapp
     private Boolean validateDisApprove(AssetDisposalEntity entity) {
         // 已审核支持反审核
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus())) {
-            throw new ServiceException(ApiError.ERROR_98014);
+            throw new ServiceException(ApiError.BILL_REVERSE_APPROVAL_ALLOWED_APPROVED_ONLY);
         }
         return true;
     }
@@ -961,7 +960,7 @@ public class AssetDisposalServiceImpl extends SuperServiceImpl<AssetDisposalMapp
         AssetDisposalEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到资产处置单主单数据"));
         // 只有待提交数据允许删除
         if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus(), entity.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_1043);
+            throw new ServiceException(ApiError.BILL_DELETE_STATUS_NOT_ALLOWED);
         }
 
         assetDisposalDetailService.lambdaUpdate().set(AssetDisposalDetailEntity::getIsDeleted, true)
@@ -991,10 +990,10 @@ public class AssetDisposalServiceImpl extends SuperServiceImpl<AssetDisposalMapp
         AssetDisposalEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到资产处置单主单数据"));
         // 待提交或审核不通过并且未作废允许作废
         if (!InvalidStatusEnum.NOT_VOIDED.getStatus().equals(entity.getInvalidStatus())) {
-            throw new ServiceException(ApiError.ERROR_98012);
+            throw new ServiceException(ApiError.BILL_ALREADY_VOID_CANNOT_VOID_AGAIN);
         }
         if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus(), entity.getApproveStatus()) && !Objects.equals(ApproveStatusEnum.REJECT.getStatus(), entity.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_98005);
+            throw new ServiceException(ApiError.BILL_VOID_ALLOWED_STATUS_ONLY);
         }
         log.info("作废 开始修改资产处置单主单状态数据，id：【{}】", id);
         lambdaUpdate().eq(AssetDisposalEntity::getId, id)
@@ -1019,7 +1018,7 @@ public class AssetDisposalServiceImpl extends SuperServiceImpl<AssetDisposalMapp
         AssetDisposalEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到资产处置单主单数据"));
         // 只有审核中的单据允许撤销
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())) {
-            throw new ServiceException(ApiError.ERROR_98007);
+            throw new ServiceException(ApiError.WF_REVOKE_PROCESS_ALLOWED_STATUS_ONLY);
         }
         // TODO 撤销流程
         log.info("撤销 开始撤销流程，id：【{}】", id);
@@ -1182,7 +1181,7 @@ public class AssetDisposalServiceImpl extends SuperServiceImpl<AssetDisposalMapp
     private void validateSubmit(AssetDisposalEntity entity) {
         // 待提交或审核不通过并且未作废允许提交
         if (!ApproveStatusEnum.allowUpdateStatus(entity.getApproveStatus()) || entity.getInvalidStatus()) {
-            throw new ServiceException(ApiError.ERROR_98010);
+            throw new ServiceException(ApiError.BILL_SUBMIT_ALLOWED_STATUS_ONLY);
         }
         return;
     }
@@ -1245,7 +1244,7 @@ public class AssetDisposalServiceImpl extends SuperServiceImpl<AssetDisposalMapp
             EasyExcel.read(new ByteArrayInputStream(bytes), AssetDisposalImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (ExcelCommonException e) {
             log.error("导入格式错误！", e);
-            throw new ServiceException(ApiError.ERROR_1016);
+            throw new ServiceException(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX);
         }
 
         BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();

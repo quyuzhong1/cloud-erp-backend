@@ -6,15 +6,21 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
+import com.common.business.enums.PlatformDictEnum;
+import com.common.business.wrapper.FeignQuery;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.erp.model.dmp.dto.ThirdMappingDTO;
+import com.erp.model.dmp.entity.*;
+import com.erp.model.dmp.enums.ThirdSysTypeEnum;
+import com.erp.model.oms.entity.ShopInfoEntity;
+import com.erp.model.oms.enums.AuthStatusEnum;
+import com.erp.rpc.oms.feign.ShopInfoFeign;
+import com.erp.server.dmp.service.ThirdMappingService;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
@@ -28,19 +34,23 @@ import com.common.business.enums.OrderTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.CurrencyEnum;
-import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
-import com.erp.model.dmp.entity.DmpSoOutstockDetailEntity;
-import com.erp.model.dmp.entity.DmpSoOutstockEntity;
-import com.erp.model.dmp.entity.DmpSoOutstockPositionEntity;
 import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 
+import javax.annotation.Resource;
+
 @Service
 @Scope("prototype")
 public class DmpOutputWdtSoOutstockRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler{
+
+	@Resource
+	private ThirdMappingService thirdMappingService;
+
+	@Resource
+	private ShopInfoFeign shopInfoFeign;
 
 	public static List<String> nullPositionNo = Arrays.asList("直发暂存" , "发货暂存待放回" , "下架暂存" , "销退质检" , "补货暂存" , "其它未上架" , "销退暂存" , "盘亏暂存" , "发货暂存" , "采购未上架" , "空仓位");
 	
@@ -134,6 +144,22 @@ public class DmpOutputWdtSoOutstockRocketMQTaskHandler extends DmpOutputRocketMQ
     	if(this.validateDataBlack(entity, cfgOutputId)) {
     		return null;
     	}
+		//过滤掉京东自营的订单
+		String platformShopId = entity.getShopId();
+		ThirdMappingDTO.ViewParamDTO viewParamDTO = new ThirdMappingDTO.ViewParamDTO();
+		viewParamDTO.setThirdId(platformShopId);
+		viewParamDTO.setType(ThirdSysTypeEnum.SHOP.getCode());
+		viewParamDTO.setSysType(PlatformDictEnum.WDT.getCode());
+		List<ThirdMappingEntity> thirdMappingEntityList = thirdMappingService.getByThirdId(viewParamDTO);
+		if (CollectionUtils.isNotEmpty(thirdMappingEntityList)) {
+			ThirdMappingEntity thirdMappingEntity = thirdMappingEntityList.get(0);
+			ShopInfoEntity shopInfo = shopInfoFeign.getShopInfoById(thirdMappingEntity.getSysId());
+			if(Objects.nonNull(shopInfo) && PlatformDictEnum.SOP.getCode().equals(shopInfo.getDictPlatform())){
+				return null;
+			}
+		}
+
+
     	WdtSoOutStockDTO resultEntity = new WdtSoOutStockDTO();
     	
     	//单据编号

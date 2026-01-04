@@ -43,7 +43,6 @@ import com.erp.server.oms.service.CfgRuleOrderHandleService;
 import com.erp.server.oms.service.OperateLogService;
 import com.erp.server.oms.service.RuleConditionService;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.bcel.generic.I2F;
 import org.apache.poi.ss.formula.functions.T;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -115,7 +114,7 @@ public class CfgRuleOrderHandleServiceImpl extends SuperServiceImpl<CfgRuleOrder
     public Boolean update(CfgRuleOrderHandleDTO.UpdateDTO updateDTO) {
         CfgRuleOrderHandleEntity old = super.getById(updateDTO.getId());
         if(null == old){
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "订单处理规则单");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "订单处理规则单");
         }
         CfgRuleOrderHandleEntity cfgRuleOrderHandleEntity =  BeanMapperUtils.map(CfgRuleOrderHandleEntity.class, updateDTO);
         Map<String, Object> ruleMap = BeanUtil.beanToMap(updateDTO.getRuleContent());
@@ -198,7 +197,7 @@ public class CfgRuleOrderHandleServiceImpl extends SuperServiceImpl<CfgRuleOrder
     public CfgRuleOrderHandleDTO.ViewDTO view(String id) {
         CfgRuleOrderHandleEntity ruleOrderHandle = this.getById(id);
         if(null == ruleOrderHandle){
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "订单处理规则");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "订单处理规则");
         }
         CfgRuleOrderHandleDTO.ViewDTO view = new CfgRuleOrderHandleDTO.ViewDTO();
         BeanMapper.copy(ruleOrderHandle, view);
@@ -220,11 +219,11 @@ public class CfgRuleOrderHandleServiceImpl extends SuperServiceImpl<CfgRuleOrder
     public Boolean updateStatus(UpdateStateDTO dto) {
         CfgRuleOrderHandleEntity ruleOrderHandle = this.getById(dto.getId());
         if(null == ruleOrderHandle){
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "物流规则单");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "物流规则单");
         }
         Boolean disabled = ruleOrderHandle.getDisabled();
         if (disabled.equals(dto.getState())) {
-            throw new ServiceException(ApiError.ERROR_98027);
+            throw new ServiceException(ApiError.COMMON_INCONSISTENT_DISABLE_STATUS);
         }
         String content = String.format("启用状态[%s]变更为[%s]", Boolean.TRUE.equals(disabled) ? "停用" : "启用", Boolean.TRUE.equals(dto.getState()) ? "停用" : "启用");
         ruleOrderHandle.setDisabled(dto.getState());
@@ -371,14 +370,14 @@ public class CfgRuleOrderHandleServiceImpl extends SuperServiceImpl<CfgRuleOrder
         //校验名称是否存在
         CfgRuleOrderHandleEntity old = this.getByName(cfgRuleOrderHandleEntity.getName());
         if (ObjectUtil.isNotEmpty(old) && !CharSequenceUtil.equals(cfgRuleOrderHandleEntity.getId(),old.getId())) {
-            throw new ServiceException(ApiError.ERROR_NAME_EXIST,cfgRuleOrderHandleEntity.getName());
+            throw new ServiceException(ApiError.COMMON_NAME_EXIST,cfgRuleOrderHandleEntity.getName());
         }
         //校验规则表达式是否有效
         SpElExpressionDTO sqElDTO = spElServer.getConditionExpression(conditionElementList, Map.class);
         String expression = sqElDTO.getExpression();
         Boolean checkResult = spElServer.checkExpressionIsEnabled(expression);
         if (Boolean.FALSE.equals(checkResult)) {
-            throw new ServiceException(ApiError.ERROR_RULE_EXPRESSION_ERROR);
+            throw new ServiceException(ApiError.COMMON_RULE_EXPRESSION_ERROR);
         }
     }
 
