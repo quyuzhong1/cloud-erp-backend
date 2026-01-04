@@ -1,6 +1,8 @@
 package com.erp.model.plm.dto;
 
 import com.common.business.dto.base.SortDTO;
+
+import java.math.BigDecimal;
 import java.util.List;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -106,6 +108,16 @@ public class RefProductImgAttachmentDTO implements Serializable {
          * 附件名称
          */
         private String attachName;
+
+        /**
+         * 附件URL
+         */
+        private String attachUrl;
+
+        /**
+         * 附件大小
+         */
+        private BigDecimal attachSize;
 
         /**
         * 审核状态名称
