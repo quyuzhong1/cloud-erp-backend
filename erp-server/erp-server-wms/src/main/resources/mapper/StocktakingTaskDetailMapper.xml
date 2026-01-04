@@ -44,5 +44,53 @@
         WHERE std.is_deleted=FALSE
         AND std.main_id=#{mainId}
     </select>
+    <select id="maxDateByParams" resultType="com.erp.model.wms.dto.StocktakingTaskDetailDTO$LastDTO">
+        SELECT DISTINCT ON (
+        wh.org_id,
+        spld.warehouse_id,
+        spld.warehouse_location,
+        spld.sku_id
+        )
+        wh.org_id AS warehouseOrgId,
+        DATE(spl.create_time) AS billDate,
+        spld.sku_id AS skuId,
+        spld.warehouse_id AS warehouseId,
+        spld.warehouse_location AS warehouseLocation,
+        spl.code
+        FROM stocktaking_task_detail spld
+        JOIN stocktaking_task spl
+        ON spld.main_id = spl.id
+        JOIN warehouse wh
+        ON spld.warehouse_id = wh.id
+        WHERE
+        spld.is_deleted = FALSE
+        AND spl.is_deleted = FALSE
+        AND spl.approve_status = 'approve'
+        <if test="warehouseIdList!=null and warehouseIdList.size>0">
+            AND spld.warehouse_id IN
+            <foreach collection="warehouseIdList" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
+        <if test="orgIdList!=null and orgIdList.size>0">
+            AND wh.org_id IN
+            <foreach collection="orgIdList" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
+        <if test="skuIdList!=null and skuIdList.size>0">
+            AND spld.sku_id IN
+            <foreach collection="skuIdList" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
+        ORDER BY
+        wh.org_id,
+        spld.warehouse_id,
+        spld.warehouse_location,
+        spld.sku_id,
+        spl.create_time DESC,
+        spl.id DESC;
+    </select>
 
 </mapper>

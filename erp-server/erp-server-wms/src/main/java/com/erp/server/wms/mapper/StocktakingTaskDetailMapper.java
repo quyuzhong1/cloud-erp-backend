@@ -20,4 +20,14 @@ import java.util.List;
 public interface StocktakingTaskDetailMapper extends BaseMapper<StocktakingTaskDetailEntity> {
 
     List<StocktakingTaskDetailDTO.ExportDTO> listExportByMainId(@Param("mainId") String mainId);
+
+
+    /**
+     * 根据仓库id、组织id、skuId列表查询每个sku的最新盘点时间
+     * @param warehouseIds 仓库id列表
+     * @param orgIds 组织id列表
+     * @param skuIds skuId列表
+     * @return 每个sku的最新盘点时间列表
+     */
+    List<StocktakingTaskDetailDTO.LastDTO> maxDateByParams(List<String> warehouseIds, List<String> orgIds, List<String> skuIds);
 }

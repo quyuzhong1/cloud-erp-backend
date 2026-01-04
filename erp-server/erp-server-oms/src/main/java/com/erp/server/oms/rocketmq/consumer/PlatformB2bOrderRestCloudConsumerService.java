@@ -1,10 +1,12 @@
 package com.erp.server.oms.rocketmq.consumer;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.dto.PlatformB2bOrderDTO;
 import com.common.business.dto.PlatformB2bOrderDetailDTO;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.wrapper.FeignQuery;
+import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.message.constant.RocketMqNewConsumerGroup;
 import com.common.message.constant.RocketMqNewTag;
@@ -185,6 +187,10 @@ public class PlatformB2bOrderRestCloudConsumerService extends AbstractRestCloudP
 			// 通过收货地址匹配客户地址表
 			if(StringUtils.isNotBlank(dto.getReceiveAddress())){
 				CustomerAddressEntity customerAddressEntity = customerAddressService.lambdaQuery().eq(CustomerAddressEntity::getMainId,customerInfo.getId()).eq(CustomerAddressEntity::getAddress, dto.getReceiveAddress()).last("LIMIT 1").one();
+				if(Objects.isNull(customerAddressEntity)){
+					log.warn("未匹配到客户地址，客户id：{}，收货地址：{}",customerInfo.getId(),dto.getReceiveAddress());
+					throw new ServiceException(CharSequenceUtil.format(ApiError.CUSTOMER_ADDRESS_NOT_MATCH.getMsg(),customerInfo.getId(),dto.getReceiveAddress()));
+				}
 				dto.setCustomerAddressId(customerAddressEntity.getId());
 				dto.setReceiverName(customerAddressEntity.getPerson());
 				dto.setTelNumber(customerAddressEntity.getTelNumber());

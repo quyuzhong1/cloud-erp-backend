@@ -230,7 +230,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     private InventoryClosedRecordService inventoryClosedRecordService;
 
     @Resource
-    private StocktakingProfitLossService stocktakingProfitLossService;
+    private StocktakingTaskDetailService stocktakingTaskDetailService;
 
     @Resource
     private TmsDeclareBillFeign tmsDeclareBillFeign;
@@ -3220,7 +3220,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             List<String> warehourseLocationList = dto.getDetailList().stream().map(SoOutstockDetailDTO.AddDTO::getWarehouseLocation).distinct().collect(Collectors.toList());
             // SKU信息
             List<String> skuIds = dto.getDetailList().stream().map(SoOutstockDetailDTO.AddDTO::getSkuId).distinct().collect(Collectors.toList());
-            boolean closed = stocktakingProfitLossService.checkClosed(
+            boolean closed = stocktakingTaskDetailService.checkClosed(
                     Collections.singletonList(dto.getWarehouseId()),
                     warehourseLocationList,
                     Collections.singletonList(dto.getWarehouseOrgId()),
