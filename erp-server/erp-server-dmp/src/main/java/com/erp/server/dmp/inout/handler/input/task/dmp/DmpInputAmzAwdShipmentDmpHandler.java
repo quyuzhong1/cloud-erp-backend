@@ -53,8 +53,8 @@ public class DmpInputAmzAwdShipmentDmpHandler extends DmpInputDbConvertDmpHandle
         // 打平原始数据
         for (Map.Entry<List<Map<String, Object>>, List<TreeMap<String, Object>>> dmpInputDataDmpRelationMap : dmpInputDataDmpRelationMaps.entrySet()) {
             List<TreeMap<String, Object>> dmpDataMaps = dmpInputDataDmpRelationMap.getValue();
-            List<Map<String, Object>> mongoDataMaps = dmpInputDataDmpRelationMap.getKey();
-            Map<String, Object> mongoData = mongoDataMaps.get(0);
+//            List<Map<String, Object>> mongoDataMaps = dmpInputDataDmpRelationMap.getKey();
+//            Map<String, Object> mongoData = mongoDataMaps.get(0);
             for (TreeMap<String, Object> dmpDataMap : dmpDataMaps) {
 
                 if (!detailData.isEmpty()) {
@@ -92,6 +92,7 @@ public class DmpInputAmzAwdShipmentDmpHandler extends DmpInputDbConvertDmpHandle
                             }
                             //基础信息
                             dmpDataMap.put("platformShipmentStatus", detail.getOrDefault("shipmentStatus",""));
+                            dmpDataMap.put("referenceId", detail.getOrDefault("externalReferenceId",""));
                             String createdAt = (String)detail.getOrDefault("createdAt", "");
                             if (CharSequenceUtil.isNotBlank(createdAt)){
                                 OffsetDateTime offsetDateTime = OffsetDateTime.parse(createdAt);
