@@ -114,8 +114,10 @@ public class CfgMoldReturnAlertRuleServiceImpl extends SuperServiceImpl<CfgMoldR
         }
 
         //回写模具档案状态
-        moldInfoEntity.setIsReturnStrategyGenerated(true);
-        moldInfoService.updateById(moldInfoEntity);
+        if(Objects.nonNull(moldInfoEntity)){
+            moldInfoEntity.setIsReturnStrategyGenerated(true);
+            moldInfoService.updateById(moldInfoEntity);
+        }
 
         // 操作日志
         String msg = StrUtil.format("新增了一个模具返还策略【{}】",cfgMoldReturnAlertRuleEntity.getMoldCode());
@@ -283,6 +285,11 @@ public class CfgMoldReturnAlertRuleServiceImpl extends SuperServiceImpl<CfgMoldR
                     operateLogService.addSysLogByUpdate(oldDetail, detailEntity, String.valueOf(CfgMoldReturnAlertDetailEntity.class), cfgMoldReturnAlertRuleEntity.getId(), "", "编辑返还明细");
                 }
             }
+        }
+        //回写模具档案状态
+        if(Objects.nonNull(moldInfoEntity)){
+            moldInfoEntity.setIsReturnStrategyGenerated(true);
+            moldInfoService.updateById(moldInfoEntity);
         }
         return Boolean.TRUE;
     }
@@ -454,6 +461,14 @@ public class CfgMoldReturnAlertRuleServiceImpl extends SuperServiceImpl<CfgMoldR
                 .set(MoldMonitorEntity::getIsDeleted,Boolean.TRUE)
                 .update();
 
+
+        //回写模具档案状态
+        MoldInfoEntity moldInfoEntity = moldInfoService.getById(entity.getMoldId());
+        if(Objects.nonNull(moldInfoEntity)){
+            moldInfoEntity.setIsReturnStrategyGenerated(true);
+            moldInfoService.updateById(moldInfoEntity);
+        }
+
         return BatchResultDTO.success(entity.getId(), entity.getMoldCode(), OperationTypeEnum.DELETE);
     }
 
@@ -470,6 +485,12 @@ public class CfgMoldReturnAlertRuleServiceImpl extends SuperServiceImpl<CfgMoldR
                 .set(CfgMoldReturnAlertRuleEntity::getInvalidStatus, InvalidStatusEnum.VOIDED.getStatus())
                 .set(CfgMoldReturnAlertRuleEntity::getInvalidRemark, remark)
                 .update();
+        //回写模具档案状态
+        MoldInfoEntity moldInfoEntity = moldInfoService.getById(entity.getMoldId());
+        if(Objects.nonNull(moldInfoEntity)){
+            moldInfoEntity.setIsReturnStrategyGenerated(true);
+            moldInfoService.updateById(moldInfoEntity);
+        }
         // 作废日志数据
         log.info("作废 开始记录操作日志，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】模具编码为【{}】的【{}】单据作废操作 作废原因：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getMoldCode(), "模具返还策略", remark);
