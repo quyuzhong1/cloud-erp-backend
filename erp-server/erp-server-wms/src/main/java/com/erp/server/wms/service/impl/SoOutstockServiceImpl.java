@@ -3229,7 +3229,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             if (closed){
                 // 已有盘盈盘亏单不提交
                 // 记录明细(事务分开)
-                soOutstockDetailService.updateDetailRemark(soOutStockId, "因库已有盘盈盘亏单据时间停止提交",false);
+                soOutstockDetailService.updateDetailRemark(soOutStockId, "因库已有盘点任务单据时间停止提交",false);
                 return true;
             }
         }

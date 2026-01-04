@@ -403,7 +403,7 @@ public class StocktakingTaskDetailServiceImpl extends SuperServiceImpl<Stocktaki
             // 已有日期之前对应仓位已审核的盘盈盘亏单
             return lastStocktakingProfitLossList.stream()
                     .anyMatch(e-> warehourseLocationList.contains(e.getWarehouseLocation()) &&
-                            (billDate.isBefore(e.getBillDate()) || billDate.equals(e.getBillDate()))
+                            (billDate.isBefore(e.getBillDate()))
                     );
         }
         return false;
