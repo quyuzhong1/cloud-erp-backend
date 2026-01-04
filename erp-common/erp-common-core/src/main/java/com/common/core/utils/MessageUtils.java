@@ -23,9 +23,15 @@ public class MessageUtils {
         Locale locale = LocaleContextHolder.getLocale();
         // 尝试从国际化文件读取，失败则回退到默认msg
         try {
-            return messageSource.getMessage(apiError.getMessageKey(), args, locale);
+            String msg = messageSource.getMessage(apiError.getMessageKey(), args, locale);
+            // ⚠️ 防止返回 key 本身
+            if (msg == null || msg.equals(apiError.getMessageKey())) {
+                return format(apiError.getMsg(), args);
+            }
+            return msg;
         } catch (NoSuchMessageException e) {
-            return apiError.getMsg();
+            // 国际化异常 → 中文兜底
+            return format(apiError.getMsg(), args);
         }
     }
 
@@ -38,4 +44,9 @@ public class MessageUtils {
         }
     }
 
+    private static String format(String msg, Object... args) {
+        return args == null || args.length == 0
+                ? msg
+                : java.text.MessageFormat.format(msg, args);
+    }
 }

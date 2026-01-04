@@ -59,7 +59,7 @@ public class LoginAuthService {
                 if(loginAttempts >= RedisCacheConstants.MAX_LOGIN_ATTEMPTS){
                     return ApiResult.error(ApiError.AUTH_LOGIN_LOCKED);
                 }
-                return ApiResult.error(ApiError.AUTH_LOGIN_RETRY_LEFT.getCode(), MessageUtils.getMessage(ApiError.AUTH_LOGIN_RETRY_LEFT.getMsg(), RedisCacheConstants.MAX_LOGIN_ATTEMPTS - loginAttempts));
+                return ApiResult.error(ApiError.AUTH_LOGIN_RETRY_LEFT.getCode(), MessageUtils.getMessage(ApiError.AUTH_LOGIN_RETRY_LEFT, RedisCacheConstants.MAX_LOGIN_ATTEMPTS - loginAttempts));
             }
             return ApiResult.error(code, apiResult.getMsg());
         } else {

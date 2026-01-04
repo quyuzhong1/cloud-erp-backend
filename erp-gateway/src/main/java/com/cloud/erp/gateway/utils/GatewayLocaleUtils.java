@@ -21,9 +21,15 @@ public class GatewayLocaleUtils {
     public String getMessage(ApiError apiError, ServerHttpRequest request, Object... args) {
         Locale locale = resolveLocale(request);
         try {
-            return messageSource.getMessage(apiError.getMessageKey(), args, locale);
+            String msg = messageSource.getMessage(apiError.getMessageKey(), args, locale);
+            // ⚠️ 防止返回 key 本身
+            if (msg == null || msg.equals(apiError.getMessageKey())) {
+                return format(apiError.getMsg(), args);
+            }
+            return msg;
         } catch (NoSuchMessageException e) {
-            return apiError.getMsg();
+            // 国际化异常 → 中文兜底
+            return format(apiError.getMsg(), args);
         }
     }
 
@@ -33,6 +39,11 @@ public class GatewayLocaleUtils {
             return Locale.US;
         }
         return Locale.SIMPLIFIED_CHINESE;
+    }
+    private static String format(String msg, Object... args) {
+        return args == null || args.length == 0
+                ? msg
+                : java.text.MessageFormat.format(msg, args);
     }
 }
 
