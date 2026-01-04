@@ -39,6 +39,7 @@
         rpia.product_detail_id AS productDetailId,
         rpia.sku_no AS skuNo,
         rpia.attachment_id AS attachmentId,
+        att.attach_name as attachName,
         rpia.create_time AS createTime,
         rpia.create_user_name AS createUserName
         FROM

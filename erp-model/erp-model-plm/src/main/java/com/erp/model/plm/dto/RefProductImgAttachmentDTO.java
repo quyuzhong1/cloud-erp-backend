@@ -102,6 +102,10 @@ public class RefProductImgAttachmentDTO implements Serializable {
         */
         private String attachmentId;
 
+        /**
+         * 附件名称
+         */
+        private String attachName;
 
         /**
         * 审核状态名称
