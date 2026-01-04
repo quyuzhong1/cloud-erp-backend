@@ -205,7 +205,13 @@ public class RefProductImgAttachmentServiceImpl extends SuperServiceImpl<RefProd
     * 新增修改处理数据
     */
     private void handleData(RefProductImgAttachmentEntity refProductImgAttachmentEntity) {
-    // TODO 验证数据 & 数据赋值
+        // 填充 sku_no
+        if (StrUtil.isNotBlank(refProductImgAttachmentEntity.getProductDetailId())) {
+            ProductDetailEntity productDetail = productDetailService.getById(refProductImgAttachmentEntity.getProductDetailId());
+            if (ObjectUtil.isNotEmpty(productDetail) && StrUtil.isNotBlank(productDetail.getSkuNo())) {
+                refProductImgAttachmentEntity.setSkuNo(productDetail.getSkuNo());
+            }
+        }
     }
 
     @Override
@@ -231,9 +237,37 @@ public class RefProductImgAttachmentServiceImpl extends SuperServiceImpl<RefProd
         if(CollUtil.isEmpty(list)) {
             return;
         }
-        // 属性赋值
+        // 收集需要查询 sku_no 的记录（sku_no 为空且 productDetailId 不为空）
+        List<String> productDetailIds = list.stream()
+                .filter(data -> StrUtil.isBlank(data.getSkuNo()) && StrUtil.isNotBlank(data.getProductDetailId()))
+                .map(RefProductImgAttachmentDTO.ListDTO::getProductDetailId)
+                .distinct()
+                .collect(Collectors.toList());
+        
+        // 批量查询 ProductDetail
+        Map<String, String> productDetailIdToSkuNoMap = new HashMap<>();
+        if (CollUtil.isNotEmpty(productDetailIds)) {
+            List<ProductDetailEntity> productDetailList = productDetailService.listByIds(productDetailIds);
+            if (CollUtil.isNotEmpty(productDetailList)) {
+                productDetailIdToSkuNoMap = productDetailList.stream()
+                        .filter(pd -> StrUtil.isNotBlank(pd.getSkuNo()))
+                        .collect(Collectors.toMap(
+                                ProductDetailEntity::getId,
+                                ProductDetailEntity::getSkuNo,
+                                (v1, v2) -> v1
+                        ));
+            }
+        }
+        
+        // 填充 sku_no
+        final Map<String, String> finalMap = productDetailIdToSkuNoMap;
         for(RefProductImgAttachmentDTO.ListDTO data : list) {
-        // TODO 其他如需要显示名称的字段赋值
+            if (StrUtil.isBlank(data.getSkuNo()) && StrUtil.isNotBlank(data.getProductDetailId())) {
+                String skuNo = finalMap.get(data.getProductDetailId());
+                if (StrUtil.isNotBlank(skuNo)) {
+                    data.setSkuNo(skuNo);
+                }
+            }
         }
    }
 
