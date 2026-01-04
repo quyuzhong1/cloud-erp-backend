@@ -686,8 +686,8 @@ public enum ApiError implements Serializable {
     MOULD_PURCHASE_CHANGE_DETAIL_NOT_FOUND(6522,"未找到模具采购变更单明细"),
     MOULD_PURCHASE_AUDITED_ONLY_FOR_ACCEPTANCE(6523,"只有已审核的模具采购单才可以结束验收"),
     MOULD_CODE_ACCEPT_QTY_EXCEED(6524,"模具编码【{0}】验收数量不能超过可验收数量"),
-    MOULD_RETURN_EXIST(6525,"模具【{}】已生成模具返还策略，无法再次生成"),
-    MOULD_ALERT_EXIST(6526,"模具【{}】已生成模具预警策略，无法再次生成"),
+    MOULD_RETURN_EXIST(6525,"模具【{0}】已生成模具返还策略，无法再次生成"),
+    MOULD_ALERT_EXIST(6526,"模具【{0}】已生成模具预警策略，无法再次生成"),
 
     /**
      * BI 错误信息 7000 - 7499
