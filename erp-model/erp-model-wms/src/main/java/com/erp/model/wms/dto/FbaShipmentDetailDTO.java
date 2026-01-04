@@ -96,6 +96,10 @@ public class FbaShipmentDetailDTO implements Serializable {
          */
         private String perBoxQty;
         /**
+         * 箱子数量
+         */
+        private String boxQty;
+        /**
          * 箱子长
          */
         private BigDecimal packageLength;
