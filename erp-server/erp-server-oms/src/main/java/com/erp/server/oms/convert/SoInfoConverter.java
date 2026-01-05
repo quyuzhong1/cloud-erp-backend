@@ -131,8 +131,6 @@ public interface SoInfoConverter {
     @Mapping(target = "attachList", ignore = true)
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "code", ignore = true)
-    @Mapping(target = "warehouseOperationTypeName", expression = "java(com.erp.model.wms.enums.WarehouseOperationTypeEnum.NO_OPEN_RELABLE.getName())")
-    @Mapping(target = "warehouseOperationType", expression = "java(com.erp.model.wms.enums.WarehouseOperationTypeEnum.NO_OPEN_RELABLE.getCode())")
     @Mapping(target = "trackNo", ignore = true)
     @Mapping(target = "statusName", expression = "java(com.erp.model.wms.enums.ThirdDeliveryStatusEnum.CREATING.getName())")
     @Mapping(target = "status", expression = "java(com.erp.model.wms.enums.ThirdDeliveryStatusEnum.CREATING.getCode())")

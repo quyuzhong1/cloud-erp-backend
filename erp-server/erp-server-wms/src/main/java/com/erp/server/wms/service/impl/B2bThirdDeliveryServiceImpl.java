@@ -146,7 +146,7 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
         BeanMapperUtils.copy(addDTO, b2bThirdDeliveryEntity);
 
         // 数据处理
-        handleData(b2bThirdDeliveryEntity);
+        handleData(b2bThirdDeliveryEntity,addDTO);
 
         log.info("开始新增B2B三方发货单");
         // 生成单号
@@ -264,7 +264,7 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
         B2bThirdDeliveryEntity b2bThirdDeliveryEntity = BeanMapperUtils.map(B2bThirdDeliveryEntity.class, addOrUpdateDTO);
 
         // 数据处理
-        handleData(b2bThirdDeliveryEntity);
+        handleData(b2bThirdDeliveryEntity,addOrUpdateDTO);
         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_SFFH);
         b2bThirdDeliveryEntity.setCode(code);
         log.info("编辑 开始修改B2B三方发货单数据，单号：【{}】", old.getCode());
@@ -325,7 +325,10 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
     private void fillList(List<B2bThirdDeliveryDTO.PagingViewDTO> records) {
         records.forEach(e -> {
             e.setStatusName(ThirdDeliveryStatusEnum.getName(e.getStatus()));
-            e.setWarehouseOperationTypeName(WarehouseOperationTypeEnum.getName(e.getWarehouseOperationType()));
+            String warehouseOperationType = e.getWarehouseOperationType();
+            List<String> operationTypeList = Arrays.asList(warehouseOperationType.split(","));
+            List<String> operationTypeNameList = operationTypeList.stream().map(WarehouseOperationTypeEnum::getName).collect(Collectors.toList());
+            e.setWarehouseOperationTypeName(String.join(",", operationTypeNameList));
             e.setDeliveryMethodName(DeliveryModeEnum.getName(e.getDeliveryMethod()));
             e.setPushTypeName(B2BDeliveryPushTypeEnum.getName(e.getPushType()));
         });
@@ -349,6 +352,10 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
             List<B2bThirdDeliveryDetailEntity> detailEntityList = b2bThirdDeliveryDetailService.listByMainIds(Collections.singletonList(dto.getId()));
             //客户信息要使用销售订单的，不能使用B2B三方发货单的客户信息（销售订单的客户信息可能会发生变化）
             B2bThirdDeliveryDTO.ViewDTO viewDTO = B2bThirdDeliveryConverter.INSTANCE.toB2bThirdDeliveryViewDTO(entity, detailEntityList);
+            String operationDesc = entity.getOperationDesc();
+            String warehouseOperationType = entity.getWarehouseOperationType();
+            viewDTO.setWarehouseOperationTypeDTOList(B2bThirdDeliveryDTO.WarehouseOperationTypeDTO.convert(warehouseOperationType,operationDesc));
+
             viewDTO.setAttachList(wmsAttachmentService.getByBusinessIds(Collections.singletonList(dto.getId()), ModuleTypeEnum.B2B_THIRD_DELIVERY.getCode()));
             if (Objects.nonNull(soInfoEntity)) {
                 viewDTO.setReceiverName(soInfoEntity.getReceiverName());
@@ -810,7 +817,18 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
     /**
      * 新增修改处理数据
      */
-    private void handleData(B2bThirdDeliveryEntity b2bThirdDeliveryEntity) {
+    private void handleData(B2bThirdDeliveryEntity b2bThirdDeliveryEntity, B2bThirdDeliveryDTO.CommonDTO commonDTO) {
+        List<B2bThirdDeliveryDTO.WarehouseOperationTypeDTO> warehouseOperationTypeDTOList = commonDTO.getWarehouseOperationTypeDTOList();
+        if (CollUtil.isNotEmpty(warehouseOperationTypeDTOList)) {
+            String operationDesc = warehouseOperationTypeDTOList.stream()
+                    .map(B2bThirdDeliveryDTO.WarehouseOperationTypeDTO::getOperationDesc)
+                    .collect(Collectors.joining(","));
+            String warehouseOperationType = warehouseOperationTypeDTOList.stream()
+                    .map(B2bThirdDeliveryDTO.WarehouseOperationTypeDTO::getWarehouseOperationType)
+                    .collect(Collectors.joining(","));
+            b2bThirdDeliveryEntity.setOperationDesc(operationDesc);
+            b2bThirdDeliveryEntity.setWarehouseOperationType(warehouseOperationType);
+        }
         if (CharSequenceUtil.isBlank(b2bThirdDeliveryEntity.getCountryName()) && CharSequenceUtil.isNotBlank(b2bThirdDeliveryEntity.getCountryId())) {
             DictCountryEntity countryEntity = FeignQuery.getById(DictCountryEntity.class, b2bThirdDeliveryEntity.getCountryId());
             b2bThirdDeliveryEntity.setCountryName(Objects.nonNull(countryEntity) ? countryEntity.getNameCn() : "");

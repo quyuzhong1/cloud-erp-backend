@@ -490,4 +490,15 @@ public class SoB2cCoreServiceImpl implements SoB2cCoreService {
         soB2cEntity.setCoverOutDate(true);
         return SoB2cHandler.handleSoOutStock(dto, null, soB2cEntity);
     }
+
+    @Override
+    public void updateRemarkAndLog(SoB2cDTO.RemarkDTO remarkDTO) {
+        SoB2cEntity soB2cEntity = soB2cService.getById(remarkDTO.getId());
+        if (ObjectUtil.isEmpty(soB2cEntity)) {
+            return;
+        }
+        soB2cEntity.setRemark(remarkDTO.getRemark());
+        soB2cService.updateById(soB2cEntity);
+        operateLogService.batchAddModuleOperateLog(Collections.singletonList(remarkDTO.getOperateLogDTO()));
+    }
 }
