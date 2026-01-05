@@ -1,7 +1,7 @@
 package com.erp.server.fms.controller.feign;
 
 import com.common.business.dto.DmpSyncMqDTO;
-import com.erp.server.fms.kingdee.SyncKingdeeService;
+import com.erp.server.fms.service.SyncTaskService;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -15,7 +15,7 @@ import java.util.Map;
 public class FmsSyncKingdeeFeignController {
 
     @Resource
-    private SyncKingdeeService syncKingdeeService;
+    private SyncTaskService syncTaskService;
 
     /**
      * 更新状态
@@ -26,7 +26,7 @@ public class FmsSyncKingdeeFeignController {
      */
     @PostMapping("/updateBusinessSyncKingdeeStatus")
     public void updateBusinessSyncKingdeeStatus(@RequestBody Map<String, Object> params) {
-        syncKingdeeService.updateBusinessSyncKingdeeStatus(params);
+        syncTaskService.updateBusinessSyncKingdeeStatus(params);
     }
 
     /**
@@ -36,6 +36,6 @@ public class FmsSyncKingdeeFeignController {
      */
     @PostMapping("/newFindDataSendSyncTask")
     public Map<String, Map<String, Object>> newFindDataSendSyncTask(@RequestBody DmpSyncMqDTO.SyncParamDTO syncParamDTO) {
-        return syncKingdeeService.newFindDataSendSyncTask(syncParamDTO);
+        return syncTaskService.newFindDataSendSyncTask(syncParamDTO);
     }
 }

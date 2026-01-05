@@ -1,4 +1,4 @@
-package com.erp.server.fms.kingdee;
+package com.erp.server.fms.service;
 
 import com.common.business.dto.DmpSyncMqDTO;
 
@@ -9,7 +9,7 @@ import java.util.Map;
  * @Author Luo_WG
  * @Date 2023/5/31 14:40
  **/
-public interface SyncKingdeeService {
+public interface SyncTaskService {
 
     /**
      * 参数，code类型编码，businessId业务id，status状态，kingdeeId金蝶id
