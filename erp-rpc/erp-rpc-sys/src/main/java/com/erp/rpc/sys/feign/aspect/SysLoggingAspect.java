@@ -173,7 +173,7 @@ public class SysLoggingAspect {
      * 环切处理
      */
     @Around("logPointcut()")
-    public Object doAround(ProceedingJoinPoint joinPoint) {
+    public Object doAround(ProceedingJoinPoint joinPoint) throws Throwable {
         //接口重复提交校验
         String idempotentKey = getIdempotentKey(joinPoint);
         if (redisUtil.hasKey(idempotentKey)) {
@@ -238,6 +238,7 @@ public class SysLoggingAspect {
         } catch (Throwable e) {
             log.error("[系统日志]添加系统日志-doAround-异常：{}", ExceptionUtil.stacktraceToString(e));
 //            return checkAndResolveException(obj, e);
+            throw e;
         } finally {
             UpdateRecordItemBO bo = LOG_INFO_THREAD_LOCAL.get();
             if (null != bo) {
