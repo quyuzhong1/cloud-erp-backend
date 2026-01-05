@@ -21,6 +21,7 @@ import com.erp.sdk.oms.amz.spapi.model.finances.ShipmentItem;
 import com.erp.sdk.oms.amz.spapi.model.fulfillmentinbound.Address;
 import com.erp.sdk.oms.amz.spapi.model.fulfillmentinbound.LabelPrepType;
 import com.erp.server.dmp.inout.handler.input.task.mongo.DmpInputMongoHandler;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.bson.types.Decimal128;
 import org.springframework.context.annotation.Scope;
@@ -35,6 +36,7 @@ import java.util.*;
  * @author Administrator
  */
 @Service
+@Slf4j
 @Scope("prototype")
 public class DmpInputAmzAwdShipmentDetailDmpHandler extends DmpInputDoChildDmpHandler {
 
@@ -77,13 +79,14 @@ public class DmpInputAmzAwdShipmentDetailDmpHandler extends DmpInputDoChildDmpHa
                                         detailMap.put("msku", productMap.getOrDefault("sku", ""));
                                         detailMap.put("declareQty", qty * count);
                                         //箱子规格
-                                        detailMap.put("packageHeight", Objects.nonNull(dimensionMap) ? ((Decimal128)dimensionMap.getOrDefault("height", BigDecimal.ZERO)).bigDecimalValue() : BigDecimal.ZERO);
-                                        detailMap.put("packageWidth", Objects.nonNull(dimensionMap) ? ((Decimal128)dimensionMap.getOrDefault("width", BigDecimal.ZERO)).bigDecimalValue() : BigDecimal.ZERO);
-                                        detailMap.put("packageLength", Objects.nonNull(dimensionMap) ? ((Decimal128)dimensionMap.getOrDefault("length", BigDecimal.ZERO)).bigDecimalValue() : BigDecimal.ZERO);
-                                        detailMap.put("packageUnit", Objects.nonNull(dimensionMap) ? (String)dimensionMap.getOrDefault("unitOfMeasurement", "") : "");
+                                        log.warn("dimensionMap: {}, shipmentId: {}, mongoId: {}", JSONUtil.toJsonStr(dimensionMap), shipmentId, mongoId);
+                                        detailMap.put("packageHeight", Objects.nonNull(dimensionMap) ? convertToBigDecimal(dimensionMap.getOrDefault("height", new Decimal128(BigDecimal.ZERO))) : BigDecimal.ZERO);
+                                        detailMap.put("packageWidth", Objects.nonNull(dimensionMap) ? convertToBigDecimal(dimensionMap.getOrDefault("width", new Decimal128(BigDecimal.ZERO))) : BigDecimal.ZERO);
+                                        detailMap.put("packageLength", Objects.nonNull(dimensionMap) ? convertToBigDecimal(dimensionMap.getOrDefault("length", new Decimal128(BigDecimal.ZERO))) : BigDecimal.ZERO);
+                                        detailMap.put("packageUnit", Objects.nonNull(dimensionMap) ? dimensionMap.getOrDefault("unitOfMeasurement", "") : "");
                                         //箱重
-                                        detailMap.put("packageWeight", Objects.nonNull(weightMap) ? ((Decimal128)weightMap.getOrDefault("weight", BigDecimal.ZERO)).bigDecimalValue() : BigDecimal.ZERO);
-                                        detailMap.put("packageWeightUnit", Objects.nonNull(weightMap) ? (String)weightMap.getOrDefault("unitOfMeasurement", "") : "");
+                                        detailMap.put("packageWeight", Objects.nonNull(weightMap) ? convertToBigDecimal(weightMap.getOrDefault("weight", new Decimal128(BigDecimal.ZERO))) : BigDecimal.ZERO);
+                                        detailMap.put("packageWeightUnit", Objects.nonNull(weightMap) ? weightMap.getOrDefault("unitOfMeasurement", "") : "");
                                         detailMongoList.add(detailMap);
                                     }
                                 }
@@ -94,6 +97,20 @@ public class DmpInputAmzAwdShipmentDetailDmpHandler extends DmpInputDoChildDmpHa
             }
         }
         return detailMongoList;
+    }
+
+    private BigDecimal convertToBigDecimal(Object value) {
+        if (value instanceof BigDecimal) {
+            return (BigDecimal) value;
+        } else if (value instanceof Decimal128) {
+            return ((Decimal128) value).bigDecimalValue();
+        } else if (value instanceof Number) {
+            return BigDecimal.valueOf(((Number) value).doubleValue());
+        } else if (value instanceof String) {
+            return new BigDecimal((String) value);
+        } else {
+            return BigDecimal.ZERO;
+        }
     }
 
     @Override

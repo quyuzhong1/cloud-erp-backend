@@ -232,7 +232,7 @@
         fs.id,
         fsd.id AS detailId,
         fs.code,
-        fse.plan_code,
+        fse.plan_code AS planCode,
         fs.shop_id AS shopId,
         fs.shop_name AS shopName,
         fs.country_id AS countryId,
