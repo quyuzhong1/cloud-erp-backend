@@ -71,8 +71,8 @@ public class PlatformOutboundToOmsPushDownWmsConsumerService<T extends DmpSyncTa
     private SkuMappingFeign skuMappingFeign;
     @Resource
     private OverseasProviderService overseasProviderService;
-
-
+    @Resource
+    private PlatformOutboundConsumerService platformOutboundConsumerService;
 
     @Override
     public void updateMongodbData(String platform, String uniqueId, Integer isClean) {
@@ -136,13 +136,15 @@ public class PlatformOutboundToOmsPushDownWmsConsumerService<T extends DmpSyncTa
 
         //平台订单号
         String swOrderNumber = dto.getSwOrderNumber();
-        if(StringUtils.isBlank(swOrderNumber)){
+        //客户参考号
+        String referenceNo = dto.getReferenceNo();
+        if(StringUtils.isBlank(swOrderNumber) && StringUtils.isBlank(referenceNo)){
             log.error("三方仓自动出库: 平台订单号为空 >>>>>>>{}",JSONUtil.toJsonStr(dto));
             return ApiResult.success();
         }
 
         // 查询已有订单
-        List<SoB2cEntity> list = FeignQuery.create(SoB2cEntity.class).eq(SoB2cEntity::getPlatformCode, swOrderNumber).list();
+        List<SoB2cEntity> list = FeignQuery.create(SoB2cEntity.class).in (SoB2cEntity::getPlatformCode, Arrays.asList(swOrderNumber,referenceNo)).list();
         if (CollUtil.isEmpty(list)) {
             log.error("三方仓自动出库: 未找到B2C销售订单 >>>>>>>{}", JSONUtil.toJsonStr(dto));
             return ApiResult.success();
@@ -151,7 +153,12 @@ public class PlatformOutboundToOmsPushDownWmsConsumerService<T extends DmpSyncTa
             log.error("三方仓自动出库: 找到多条B2C销售订单 >>>>>>>{}", JSONUtil.toJsonStr(dto));
             return ApiResult.success();
         }
+
+        //根据平台不同，实际平台订单号可能存在referenceNo中
         SoB2cEntity mainEntity = list.get(0);
+        if(mainEntity.getPlatformCode().equals(referenceNo)){
+            dto.setSwOrderNumber(referenceNo);
+        }
 
         //1.校验B2C销售订单数是否已经审核通过
         ApproveStatusEnum approveStatus = mainEntity.getApproveStatus();
@@ -252,13 +259,14 @@ public class PlatformOutboundToOmsPushDownWmsConsumerService<T extends DmpSyncTa
             return ApiResult.success();
         }
         //4.三方仓发货单
-        generateThirdWarehouseDelivery(detailList, dto, mainEntity);
+        ThirdWarehouseDeliveryEntity thirdWarehouseDeliveryEntity = generateThirdWarehouseDelivery(detailList, dto, mainEntity);
 
-
+        //5.“销售出库单”、“物流轨迹单”、“虚拟仓库存流水”、“出货仓库存流水”
+        platformOutboundConsumerService.generateSoOut(mainEntity, thirdWarehouseDeliveryEntity, dto,"");
         return ApiResult.success();
     }
 
-    private void generateThirdWarehouseDelivery(List<SoB2cDetailEntity> detailList, PlatformOutboundDTO dto, SoB2cEntity mainEntity) {
+    private ThirdWarehouseDeliveryEntity generateThirdWarehouseDelivery(List<SoB2cDetailEntity> detailList, PlatformOutboundDTO dto, SoB2cEntity mainEntity) {
         List<ThirdWarehouseDeliveryDetailEntity> thirdWarehouseDeliveryDetailEntities = new ArrayList<>(detailList.size());
         for (SoB2cDetailEntity soB2cDetailEntity : detailList) {
             ThirdWarehouseDeliveryDetailEntity thirdWarehouseDeliveryDetailEntity = new ThirdWarehouseDeliveryDetailEntity();
@@ -283,7 +291,7 @@ public class PlatformOutboundToOmsPushDownWmsConsumerService<T extends DmpSyncTa
         thirdWarehouseDeliveryEntity.setShippingMethod(dto.getShippingMethod());
         thirdWarehouseDeliveryEntity.setStatus(dto.getOrderStatus());
         thirdWarehouseDeliveryEntity.setDetailEntityList(thirdWarehouseDeliveryDetailEntities);
-        thirdWarehouseDeliveryService.add(thirdWarehouseDeliveryEntity,true);
+        return thirdWarehouseDeliveryService.add(thirdWarehouseDeliveryEntity,true);
     }
 
     private WarnMsgInfoDTO buildWarnMsgInfoDTO(DmpPullTaskEntity dmpPullTaskEntity, String msg) {
