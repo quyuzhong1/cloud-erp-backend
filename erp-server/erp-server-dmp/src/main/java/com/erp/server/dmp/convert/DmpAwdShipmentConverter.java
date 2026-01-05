@@ -26,6 +26,7 @@ public interface DmpAwdShipmentConverter {
     @Mapping(target = "uniqueId", source = "dmpMainEntity.fbaShipmentId")
     @Mapping(target = "shopName", ignore = true)
     @Mapping(target = "shopId", source = "dmpMainEntity.nextLevelId")
+    @Mapping(target = "referenceId", source = "dmpMainEntity.referenceId")
     @Mapping(target = "shipmentReceiveTime", ignore = true)
     @Mapping(target = "shipmentCreateTime", source = "dmpMainEntity.platformCreateTime")
     @Mapping(target = "platform", expression = "java(com.common.business.enums.PlatformDictEnum.AMAZON.getCode())")

@@ -78,6 +78,7 @@ public class PlatformAwdShipmentDTO extends UniqueDto {
      * 第三方唯一编码
      */
     private String fbaShipmentId;
+    private String referenceId;
     /**
      * 平台最后修改时间
      */
