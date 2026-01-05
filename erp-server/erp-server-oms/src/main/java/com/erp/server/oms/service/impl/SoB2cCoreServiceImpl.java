@@ -428,27 +428,15 @@ public class SoB2cCoreServiceImpl implements SoB2cCoreService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void generateDeliveryAndOutStock(SoB2cEntity entity, List<SoB2cDetailEntity> detailEntityList, SoB2cDTO.DeliveryWithNotOutboundDTO dto,SoB2cLogisticsEntity soB2cLogisticsEntity,SoB2cReceiverEntity soB2cReceiverEntity) {
-        //判断是三方仓还是自发货生成不同的发货单
-        //检测是否是API 对接的仓库
-//        try {
-            List<OverseasProviderWarehouseDTO.ViewDTO> overseasWarehouseList = wmsOverseasWarehouseFeign.listByWarehouseIdList(Collections.singletonList(dto.getWarehouseId()));
-            Boolean isThirdWarehouse = CollectionUtils.isNotEmpty(overseasWarehouseList);
-            if(isThirdWarehouse){
-                GenerateDeliveryAndOutStockDTO generateDeliveryAndOutStockDTO = new GenerateDeliveryAndOutStockDTO(entity,detailEntityList,dto,overseasWarehouseList.get(0),soB2cLogisticsEntity);
-                thirdWarehouseDeliveryFeign.generateDeliveryAndOutStock(generateDeliveryAndOutStockDTO);
-            }else{
-                GenerateDeliveryAndOutStockDTO generateDeliveryAndOutStockDTO = new GenerateDeliveryAndOutStockDTO(entity,detailEntityList,dto,new OverseasProviderWarehouseDTO.ViewDTO(),soB2cLogisticsEntity);
-                soB2cDeliveryFeign.generateDeliveryAndOutStock(generateDeliveryAndOutStockDTO);
-            }
-//        }catch (Exception e){
-//            log.error("订单{}不出库发货生成发货单或出库单失败，异常信息：{}", entity.getCode(), e.getMessage());
-//            entity.setSignOrderError(SoB2cErrorTypeEnum.GENERATE_OUTSTOCK.getCode());
-//            entity.setBillStatus(SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode());
-//            entity.setIsNotOutbound(false);
-//            soB2cService.updateById(entity);
-//            throw new ServiceException(e.getMessage());
-//        }
+    public void generateDeliveryAndOutStock(SoB2cEntity entity, List<SoB2cDetailEntity> detailEntityList, SoB2cDTO.DeliveryWithNotOutboundDTO dto, SoB2cLogisticsEntity soB2cLogisticsEntity, SoB2cReceiverEntity soB2cReceiverEntity, OverseasProviderWarehouseDTO.ViewDTO overseasWarehouse) {
+        Boolean isThirdWarehouse = Objects.nonNull(overseasWarehouse);
+        if (isThirdWarehouse) {
+            GenerateDeliveryAndOutStockDTO generateDeliveryAndOutStockDTO = new GenerateDeliveryAndOutStockDTO(entity, detailEntityList, dto, overseasWarehouse, soB2cLogisticsEntity);
+            thirdWarehouseDeliveryFeign.generateDeliveryAndOutStock(generateDeliveryAndOutStockDTO);
+        } else {
+            GenerateDeliveryAndOutStockDTO generateDeliveryAndOutStockDTO = new GenerateDeliveryAndOutStockDTO(entity, detailEntityList, dto, new OverseasProviderWarehouseDTO.ViewDTO(), soB2cLogisticsEntity);
+            soB2cDeliveryFeign.generateDeliveryAndOutStock(generateDeliveryAndOutStockDTO);
+        }
     }
 
     @Override
