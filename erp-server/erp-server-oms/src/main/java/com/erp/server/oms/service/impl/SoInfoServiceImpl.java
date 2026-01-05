@@ -4953,7 +4953,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
             Integer b2bBoxQty = b2bThirdDeliveryDetailList.stream()
                     .filter(e -> !ThirdDeliveryStatusEnum.CANCEL_DELIVERY.getCode().equals(e.getStatus()) && CharSequenceUtil.equals(e.getSoDetailId(),soDetailEntity.getId()))
-                    .map(B2bThirdDeliveryDetailEntity::getDeliveryQty)
+                    .map(B2bThirdDeliveryDetailEntity::getBoxQty)
                     .reduce(Integer::sum)
                     .orElse(0);
 
@@ -4990,7 +4990,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                     && CharSequenceUtil.equals(obj.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus())
             ).map(SoOutstockDetailDTO.DeliveryQtyDTO::getActualQty).reduce(MathUtil.ZERO, Integer::sum);
             batchLockDTO.setOutstockQty(outstockQty + b2bBoxQty);
-            batchLockDTO.setUnOutstockQty(soDetailEntity.getQty() - outstockQty - b2bBoxQty);
+            batchLockDTO.setUnOutstockQty(soDetailEntity.getBoxQty() - outstockQty - b2bBoxQty);
             batchLockDTO.setDetailRemark(soDetailEntity.getRemark());
             resultList.add(batchLockDTO);
         }
