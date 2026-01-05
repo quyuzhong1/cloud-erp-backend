@@ -21,6 +21,9 @@ public interface FileFeign {
     @PostMapping(value = "/feign/file/uploadFile", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     String uploadFile(@RequestPart("multipartFile") MultipartFile multipartFile);
 
+    @PostMapping(value = "/feign/file/batchUploadFiles", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    List<String> batchUploadFiles(@RequestPart("multipartFiles") MultipartFile[] multipartFiles);
+
     /**
      * 上传文件支持定义文件名称
      * @param file

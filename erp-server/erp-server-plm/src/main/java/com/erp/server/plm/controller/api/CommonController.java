@@ -113,12 +113,8 @@ public class CommonController extends BaseController {
     @LogAction(value = LogActionEnum.UPLOAD, desc = "上传文件:文件名={name}")
     @PostMapping("/upload")
     public ApiResult<List<String>> upload(@RequestParam("multipartFile") MultipartFile[] multipartFile, HttpServletRequest request) {
-        List<String> list = new ArrayList<>();
-        for (MultipartFile file : multipartFile) {
-            String filePath = filefeign.uploadFile(file);
-            list.add(filePath);
-        }
-        return this.success(list);
+        List<String> filePathList = filefeign.batchUploadFiles(multipartFile);
+        return this.success(filePathList);
     }
 
     /**

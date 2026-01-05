@@ -71,16 +71,37 @@ public class ProductSaleServiceImpl extends ServiceImpl<ProductSaleMapper, Produ
         List<BasicDictEntity> dictList = basicDictService.listByType(BasicDictTypeEnum.INSURANCE_PROPERTY.getCode());
         Map<String, BasicDictEntity>  insurancePropertyMap = dictList.stream()
                 .collect(Collectors.toMap(BasicDictEntity::getValue, entity -> entity));
+
+        //收集所有需要查询的国家ID
+        Set<String> allCountryIds = new HashSet<>();
+        for (ProductSaleShowDTO productSaleShowDTO : list) {
+            if (StringUtils.isNotBlank(productSaleShowDTO.getSaleCountry())) {
+                List<String> saleCountryList = Arrays.asList(productSaleShowDTO.getSaleCountry().split(","));
+                allCountryIds.addAll(saleCountryList);
+            }
+        }
+
+        Map<String, String> countryIdToNameMap = new HashMap<>();
+        if (!allCountryIds.isEmpty()) {
+            List<DictCountryEntity> dictCountryEntities = sysDictFeign.listCountryByIds(new ArrayList<>(allCountryIds));
+            countryIdToNameMap = dictCountryEntities.stream()
+                    .collect(Collectors.toMap(DictCountryEntity::getId, DictCountryEntity::getNameCn));
+        }
+
         for (ProductSaleShowDTO productSaleShowDTO : list) {
 
             if(StringUtils.isNotBlank(productSaleShowDTO.getInsuranceProperty())){
                 productSaleShowDTO.setInsurancePropertyList(Arrays.asList(productSaleShowDTO.getInsuranceProperty().split(",")));
                 productSaleShowDTO.setInsurancePropertyNameList(getInsurancePropertyList(productSaleShowDTO.getInsuranceProperty(), insurancePropertyMap));
             }
+
             if (StringUtils.isNotBlank(productSaleShowDTO.getSaleCountry())) {
                 List<String> saleCountryList = Arrays.asList(productSaleShowDTO.getSaleCountry().split(","));
-                List<DictCountryEntity> dictCountryEntities = sysDictFeign.listCountryByIds(saleCountryList);
-                List<String> saleCountryNameList = dictCountryEntities.stream().map(DictCountryEntity::getNameCn).collect(Collectors.toList());
+                //从map中获取国家名称
+                List<String> saleCountryNameList = saleCountryList.stream()
+                        .map(countryIdToNameMap::get)
+                        .filter(Objects::nonNull)
+                        .collect(Collectors.toList());
                 productSaleShowDTO.setSaleCountryName(StringUtils.join(saleCountryNameList, ","));
             }
         }
@@ -125,15 +146,35 @@ public class ProductSaleServiceImpl extends ServiceImpl<ProductSaleMapper, Produ
         Map<String, BasicDictEntity>  insurancePropertyMap = dictList.stream()
                 .collect(Collectors.toMap(BasicDictEntity::getValue, entity -> entity));
 
+        //收集所有需要查询的国家ID
+        Set<String> allCountryIds = new HashSet<>();
+        for (ProductSaleShowDTO productSaleShowDTO : list) {
+            if (StringUtils.isNotBlank(productSaleShowDTO.getSaleCountry())) {
+                List<String> saleCountryList = Arrays.asList(productSaleShowDTO.getSaleCountry().split(","));
+                allCountryIds.addAll(saleCountryList);
+            }
+        }
+
+        Map<String, String> countryIdToNameMap = new HashMap<>();
+        if (!allCountryIds.isEmpty()) {
+            List<DictCountryEntity> dictCountryEntities = sysDictFeign.listCountryByIds(new ArrayList<>(allCountryIds));
+            countryIdToNameMap = dictCountryEntities.stream()
+                    .collect(Collectors.toMap(DictCountryEntity::getId, DictCountryEntity::getNameCn));
+        }
+
         for (ProductSaleShowDTO productSaleShowDTO : list) {
             if(com.baomidou.mybatisplus.core.toolkit.StringUtils.isNotBlank(productSaleShowDTO.getInsuranceProperty())){
                 productSaleShowDTO.setInsurancePropertyList(Arrays.asList(productSaleShowDTO.getInsuranceProperty().split(",")));
                 productSaleShowDTO.setInsurancePropertyNameList(getInsurancePropertyList(productSaleShowDTO.getInsuranceProperty(), insurancePropertyMap));
             }
+
             if (StringUtils.isNotBlank(productSaleShowDTO.getSaleCountry())) {
                 List<String> saleCountryList = Arrays.asList(productSaleShowDTO.getSaleCountry().split(","));
-                List<DictCountryEntity> dictCountryEntities = sysDictFeign.listCountryByIds(saleCountryList);
-                List<String> saleCountryNameList = dictCountryEntities.stream().map(DictCountryEntity::getNameCn).collect(Collectors.toList());
+                //从map中获取国家名称
+                List<String> saleCountryNameList = saleCountryList.stream()
+                        .map(countryIdToNameMap::get)
+                        .filter(Objects::nonNull)
+                        .collect(Collectors.toList());
                 productSaleShowDTO.setSaleCountryName(StringUtils.join(saleCountryNameList, ","));
             }
         }
