@@ -504,4 +504,166 @@ public interface SampleFeign {
      */
     @PostMapping("/sampleLedger/listSku")
     ApiResult<PagingVO<SampleLedgerDTO.SkuAvailableQtyDTO>> sampleLedgerListSku(@RequestBody @Valid PagingDTO<SampleLedgerDTO.SearchDTO> pagingDTO);
+
+    // ==================== 样品调整单相关接口 ====================
+
+    /**
+     * 样品调整单新增
+     */
+    @PostMapping("/sampleAdjustmentInfo/add")
+    ApiResult<BaseResultDTO.AddDTO> sampleAdjustmentInfoAdd(@RequestBody @Valid SampleAdjustmentInfoDTO.AddDTO dto);
+
+    /**
+     * 样品调整单修改
+     */
+    @PostMapping("/sampleAdjustmentInfo/update")
+    ApiResult<?> sampleAdjustmentInfoUpdate(@RequestBody @Valid SampleAdjustmentInfoDTO.UpdateDTO dto);
+
+    /**
+     * 样品调整单标签页列表
+     */
+    @PostMapping("/sampleAdjustmentInfo/tabList")
+    ApiResult<List<SampleAdjustmentInfoDTO.TabListDTO>> sampleAdjustmentInfoTabList(@RequestBody PermissionsDTO param);
+
+    /**
+     * 样品调整单分页查询
+     */
+    @PostMapping("/sampleAdjustmentInfo/paging")
+    ApiResult<PagingVO<SampleAdjustmentInfoDTO.ListDTO>> sampleAdjustmentInfoPaging(@RequestBody @Valid PagingDTO<SampleAdjustmentInfoDTO.PagingParamDTO> dto);
+
+    /**
+     * 样品调整单新增并提交
+     */
+    @PostMapping("/sampleAdjustmentInfo/addAndSubmit")
+    ApiResult<BaseResultDTO.AddDTO> sampleAdjustmentInfoAddAndSubmit(@RequestBody @Valid SampleAdjustmentInfoDTO.AddDTO dto);
+
+    /**
+     * 样品调整单修改并提交
+     */
+    @PostMapping("/sampleAdjustmentInfo/updateAndSubmit")
+    ApiResult<Void> sampleAdjustmentInfoUpdateAndSubmit(@RequestBody @Valid SampleAdjustmentInfoDTO.UpdateDTO dto);
+
+    /**
+     * 样品调整单提交审核
+     */
+    @PostMapping("/sampleAdjustmentInfo/submit")
+    ApiResult<List<BatchResultDTO>> sampleAdjustmentInfoSubmit(@RequestBody @Valid BaseIdsDTO.IdsDTO dto);
+
+    /**
+     * 样品调整单审核通过
+     */
+    @PostMapping("/sampleAdjustmentInfo/approve")
+    ApiResult<List<BatchResultDTO>> sampleAdjustmentInfoApprove(@RequestBody @Valid BaseApproveParamDTO dto);
+
+    /**
+     * 样品调整单审核不通过
+     */
+    @PostMapping("/sampleAdjustmentInfo/disApprove")
+    ApiResult<List<BatchResultDTO>> sampleAdjustmentInfoDisApprove(@RequestBody @Valid BaseIdsDTO.IdsDTO dto);
+
+    /**
+     * 样品调整单删除
+     */
+    @PostMapping("/sampleAdjustmentInfo/delete")
+    ApiResult<List<BatchResultDTO>> sampleAdjustmentInfoDelete(@RequestBody @Valid BaseIdsDTO.IdsDTO dto);
+
+    /**
+     * 样品调整单作废
+     */
+    @PostMapping("/sampleAdjustmentInfo/invalid")
+    ApiResult<List<BatchResultDTO>> sampleAdjustmentInfoInvalid(@RequestBody @Valid BaseIdsDTO.RemarkDTO dto);
+
+    /**
+     * 样品调整单取消流程
+     */
+    @PostMapping("/sampleAdjustmentInfo/cancelProcess")
+    ApiResult<List<BatchResultDTO>> sampleAdjustmentInfoCancelProcess(@RequestBody @Valid BaseIdsDTO.IdsDTO dto);
+
+    /**
+     * 样品调整单查看详情
+     */
+    @GetMapping("/sampleAdjustmentInfo/view")
+    ApiResult<SampleAdjustmentInfoDTO.ViewDTO> sampleAdjustmentInfoView(@RequestParam("id") String id);
+
+
+    // ==================== 样品转移单相关接口 ====================
+
+    /**
+     * 样品转移单新增
+     */
+    @PostMapping("/sampleTransferInfo/add")
+    ApiResult<BaseResultDTO.AddDTO> sampleTransferInfoAdd(@RequestBody @Valid SampleTransferInfoDTO.AddDTO dto);
+
+    /**
+     * 样品转移单修改
+     */
+    @PostMapping("/sampleTransferInfo/update")
+    ApiResult<?> sampleTransferInfoUpdate(@RequestBody @Valid SampleTransferInfoDTO.UpdateDTO dto);
+
+    /**
+     * 样品转移单标签页列表
+     */
+    @PostMapping("/sampleTransferInfo/tabList")
+    ApiResult<List<SampleTransferInfoDTO.TabListDTO>> sampleTransferInfoTabList(@RequestBody PermissionsDTO param);
+
+    /**
+     * 样品转移单分页查询
+     */
+    @PostMapping("/sampleTransferInfo/paging")
+    ApiResult<PagingVO<SampleTransferInfoDTO.ListDTO>> sampleTransferInfoPaging(@RequestBody @Valid PagingDTO<SampleTransferInfoDTO.PagingParamDTO> dto);
+
+    /**
+     * 样品转移单新增并提交
+     */
+    @PostMapping("/sampleTransferInfo/addAndSubmit")
+    ApiResult<BaseResultDTO.AddDTO> sampleTransferInfoAddAndSubmit(@RequestBody @Valid SampleTransferInfoDTO.AddDTO dto);
+
+    /**
+     * 样品转移单修改并提交
+     */
+    @PostMapping("/sampleTransferInfo/updateAndSubmit")
+    ApiResult<Void> sampleTransferInfoUpdateAndSubmit(@RequestBody @Valid SampleTransferInfoDTO.UpdateDTO dto);
+
+    /**
+     * 样品转移单提交审核
+     */
+    @PostMapping("/sampleTransferInfo/submit")
+    ApiResult<List<BatchResultDTO>> sampleTransferInfoSubmit(@RequestBody @Valid BaseIdsDTO.IdsDTO dto);
+
+    /**
+     * 样品转移单审核通过
+     */
+    @PostMapping("/sampleTransferInfo/approve")
+    ApiResult<List<BatchResultDTO>> sampleTransferInfoApprove(@RequestBody @Valid BaseApproveParamDTO dto);
+
+    /**
+     * 样品转移单审核不通过
+     */
+    @PostMapping("/sampleTransferInfo/disApprove")
+    ApiResult<List<BatchResultDTO>> sampleTransferInfoDisApprove(@RequestBody @Valid BaseIdsDTO.IdsDTO dto);
+
+    /**
+     * 样品转移单删除
+     */
+    @PostMapping("/sampleTransferInfo/delete")
+    ApiResult<List<BatchResultDTO>> sampleTransferInfoDelete(@RequestBody @Valid BaseIdsDTO.IdsDTO dto);
+
+    /**
+     * 样品转移单作废
+     */
+    @PostMapping("/sampleTransferInfo/invalid")
+    ApiResult<List<BatchResultDTO>> sampleTransferInfoInvalid(@RequestBody @Valid BaseIdsDTO.RemarkDTO dto);
+
+    /**
+     * 样品转移单取消流程
+     */
+    @PostMapping("/sampleTransferInfo/cancelProcess")
+    ApiResult<List<BatchResultDTO>> sampleTransferInfoCancelProcess(@RequestBody @Valid BaseIdsDTO.IdsDTO dto);
+
+    /**
+     * 样品转移单查看详情
+     */
+    @GetMapping("/sampleTransferInfo/view")
+    ApiResult<SampleTransferInfoDTO.ViewDTO> sampleTransferInfoView(@RequestParam("id") String id);
+
 }
