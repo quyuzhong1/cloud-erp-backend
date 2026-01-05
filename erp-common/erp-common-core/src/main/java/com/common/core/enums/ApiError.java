@@ -1445,9 +1445,7 @@ public enum ApiError implements Serializable {
     SAMPLE_ASSET_ACCEPT_DETAIL_NOT_FOUND(10744,"资产验收单明细不存在"),
     SAMPLE_ASSET_PURCHASE_ORDER_NOT_FOUND(10745,"资产采购订单不存在"),
     SAMPLE_ASSET_PURCHASE_ORDER_DETAIL_NOT_FOUND(10746,"资产采购订单明细不存在"),
-
-
-
+    SAMPLE_PARTNER_IN_USE(10744,"企业达人已被引用，不允许删除"),
     /**
      * 虚拟仓 错误 信息 12500-13000
      */
