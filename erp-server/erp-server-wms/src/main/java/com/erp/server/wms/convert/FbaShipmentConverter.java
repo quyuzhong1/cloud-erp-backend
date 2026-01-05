@@ -146,6 +146,8 @@ public interface FbaShipmentConverter {
             @Mapping(target = "isPackingDownload", source = "oldEntity.isPackingDownload"),
             @Mapping(target = "isSta", source = "entity.isSta"),
             @Mapping(target = "sourceType", source = "entity.sourceType"),
+            @Mapping(target = "referenceId", source = "entity.referenceId"),
+            @Mapping(target = "remark", source = "oldEntity.remark"),
             @Mapping(target = "isUserSystem" ,ignore = true),
     })
     FbaShipmentEntity oldToNew(FbaShipmentEntity entity, FbaShipmentEntity oldEntity);
