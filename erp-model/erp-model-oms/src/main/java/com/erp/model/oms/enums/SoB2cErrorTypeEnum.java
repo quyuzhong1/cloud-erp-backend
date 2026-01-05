@@ -30,6 +30,7 @@ public enum SoB2cErrorTypeEnum {
     ORDER_FETCH("orderFetch",  "订单拉取失败"),
     GET_LOGISTICS_LABEL("getLogisticsLabel",  "获取物流面单异常"),
     OTHER("other",  "其他异常"),
+    AUTO_OUTBOUND_ERROR("autoOutboundError",  "自动出库异常"),
     ;
     /**
      * 类型

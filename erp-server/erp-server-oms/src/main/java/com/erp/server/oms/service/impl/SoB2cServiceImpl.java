@@ -616,7 +616,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         return list;
     }
 
-
+    /**
+     * 1,创建订单
+     * 2,匹配订单规则
+     * 3.匹配物流仓储规则
+     * 4.创建物流运单
+     * 5.创建发货单
+     */
     @Override
     public String processOrderCreation(SoB2cDTO.AddDTO dto) {
         SoB2cServiceImpl soB2cServiceImpl = ApplicationContextUtils.getBean(SoB2cServiceImpl.class);

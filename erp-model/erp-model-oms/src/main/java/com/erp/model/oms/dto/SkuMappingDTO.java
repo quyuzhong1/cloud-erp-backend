@@ -1793,4 +1793,30 @@ public class SkuMappingDTO implements Serializable {
         @NotNull(message = "结束时间不能为空")
         private LocalDateTime endTime;
     }
+
+
+    @Data
+    @NoArgsConstructor
+    public static class PlatformSkuNoParamDTO {
+        /**
+         *
+         */
+        private List<String> platformSkuList;
+        /**
+         *
+         */
+        private List<String> platformSpuList;
+        /**
+         *
+         */
+        private String dictPlatform;
+        /**
+         *
+         */
+        private String shopId;
+
+
+
+    }
+
 }
