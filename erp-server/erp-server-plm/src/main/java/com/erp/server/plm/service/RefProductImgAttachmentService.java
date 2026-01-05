@@ -75,7 +75,16 @@ public interface RefProductImgAttachmentService extends SuperService<RefProductI
     void exportList(RefProductImgAttachmentDTO.ExportDTO dto, HttpServletResponse response);
 
     /**
-     * 批量上传图片
+     * 批量上传图片（异步入口）
+     * @param dto 批量上传参数
+     * @author wuhaotian
+     * @date: 2025-12-29
+     * @return Boolean
+     */
+    Boolean importBatchUpload(RefProductImgAttachmentDTO.BatchUploadDTO dto);
+
+    /**
+     * 批量上传图片（实际处理逻辑）
      * @param dto 批量上传参数
      * @author wuhaotian
      * @date: 2025-12-29

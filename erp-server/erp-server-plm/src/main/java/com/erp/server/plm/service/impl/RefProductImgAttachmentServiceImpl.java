@@ -39,6 +39,10 @@ import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.utils.date.DateUtil;
 import com.erp.rpc.file.feign.FileFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.sys.feign.SysUserFeign;
+import com.common.business.dto.FindUserDTO;
+import org.apache.commons.lang3.StringUtils;
+import java.util.Objects;
 import com.erp.server.plm.service.PlmAttachmentService;
 import com.erp.model.plm.entity.PlmAttachmentEntity;
 import com.erp.server.plm.service.ProductDetailService;
@@ -49,6 +53,7 @@ import com.erp.model.plm.enums.ProductDetailStatusEnum;
 import com.common.business.enums.FileTaskStatusEnum;
 import com.common.core.utils.FastDFSClientUtil;
 import com.erp.model.file.dto.FileDTO;
+import static com.common.business.enums.FileTaskEventEnum.IMPORT_PLM_PRODUCT_IMG_ATTACHMENT;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import java.io.File;
 import java.time.LocalDateTime;
@@ -85,6 +90,9 @@ public class RefProductImgAttachmentServiceImpl extends SuperServiceImpl<RefProd
     
     @Resource
     private ProductImgCategoryService productImgCategoryService;
+    
+    @Resource
+    private SysUserFeign sysUserFeign;
     
     // 所有分类ID
     private static final String ALL_CATEGORY_ID = "1000000000000000001";
@@ -382,6 +390,22 @@ public class RefProductImgAttachmentServiceImpl extends SuperServiceImpl<RefProd
     }
 
     /**
+     * 异步导入批量上传图片
+     */
+    @Override
+    public Boolean importBatchUpload(RefProductImgAttachmentDTO.BatchUploadDTO dto) {
+        // 将 zipUrl 赋值到 fileUrl（前端传的是 zipUrl，统一使用 fileUrl）
+        if (StrUtil.isNotBlank(dto.getZipUrl()) && StrUtil.isBlank(dto.getFileUrl())) {
+            dto.setFileUrl(dto.getZipUrl());
+        }
+        dto.setUserId(UserContext.getDefaultLoginUser().getUid());
+        // 直接传递 BatchUploadDTO 作为参数，saveImportTask 的 params 是 Object 类型，可以接收任何对象
+        // taskId 会在 FileTaskContext 中设置，这里不需要设置
+        downloadTaskFeign.saveImportTask("批量上传图片", IMPORT_PLM_PRODUCT_IMG_ATTACHMENT.getCode(), dto);
+        return Boolean.TRUE;
+    }
+
+    /**
      * 批量上传图片
      * @param dto 批量上传参数
      */
@@ -389,13 +413,27 @@ public class RefProductImgAttachmentServiceImpl extends SuperServiceImpl<RefProd
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 300000)
     @Transactional(rollbackFor = Exception.class)
     public void batchUpload(RefProductImgAttachmentDTO.BatchUploadDTO dto) {
-        log.info("开始批量上传图片，zipUrl={}, categoryId={}", dto.getZipUrl(), dto.getCategoryId());
+        // 设置操作人
+        if (StringUtils.isNotBlank(dto.getUserId())) {
+            FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(dto.getUserId());
+            if (Objects.nonNull(findUserDTO)) {
+                LoginUser user = new LoginUser();
+                user.setUid(findUserDTO.getUserId());
+                user.setUserName(findUserDTO.getUserName());
+                user.setRealName(findUserDTO.getRealName());
+                user.setUserAccount(findUserDTO.getMobile());
+                user.setMobile(findUserDTO.getMobile());
+                UserContext.setLoginUser(user);
+            }
+        }
+        
+        log.info("开始批量上传图片，fileUrl={}, categoryId={}", dto.getFileUrl(), dto.getCategoryId());
         
         // 1. 检查ZIP文件大小（限制300M）
         try {
-            byte[] zipBytes = fileFeign.downloadFile(dto.getZipUrl());
+            byte[] zipBytes = fileFeign.downloadFile(dto.getFileUrl());
             if (zipBytes == null || zipBytes.length == 0) {
-                throw new ServiceException(ApiError.FILE_ZIP_NOT_FOUND, dto.getZipUrl());
+                throw new ServiceException(ApiError.FILE_ZIP_NOT_FOUND, dto.getFileUrl());
             }
             double zipSizeMB = zipBytes.length / (1024.0 * 1024.0);
             zipSizeMB = Math.round(zipSizeMB * 100.0) / 100.0;
@@ -405,16 +443,16 @@ public class RefProductImgAttachmentServiceImpl extends SuperServiceImpl<RefProd
         } catch (ServiceException e) {
             throw e;
         } catch (Exception e) {
-            log.error("检查ZIP文件大小失败：{}", dto.getZipUrl(), e);
+            log.error("检查ZIP文件大小失败：{}", dto.getFileUrl(), e);
             throw new ServiceException(ApiError.FILE_CHECK_SIZE_FAILED, e.getMessage());
         }
         
         // 2. 调用文件服务解压缩ZIP文件并上传所有文件，获取文件信息列表（不传输文件本体）
         List<FileDTO.ExtractedFileInfo> extractedFiles;
         try {
-            extractedFiles = fileFeign.unzipAndUploadFiles(dto.getZipUrl());
+            extractedFiles = fileFeign.unzipAndUploadFiles(dto.getFileUrl());
         } catch (Exception e) {
-            log.error("解压缩ZIP文件失败：{}", dto.getZipUrl(), e);
+            log.error("解压缩ZIP文件失败：{}", dto.getFileUrl(), e);
             throw new ServiceException(ApiError.FILE_ZIP_EXTRACT_FAILED, e.getMessage());
         }
         

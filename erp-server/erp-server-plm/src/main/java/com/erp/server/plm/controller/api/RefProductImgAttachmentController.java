@@ -97,7 +97,7 @@ public class RefProductImgAttachmentController extends BaseController {
     }
 
     /**
-     * 批量上传图片
+     * 批量上传图片（异步）
      * @author wuhaotian
      * @date: 2025-12-29
      * @param dto 批量上传参数（包含zipUrl和categoryId）
@@ -106,8 +106,8 @@ public class RefProductImgAttachmentController extends BaseController {
     @PostMapping("/batchUpload")
     @LogAction(value = LogActionEnum.INSERT, desc = "批量上传图片")
     public ApiResult<?> batchUpload(@RequestBody @Validated RefProductImgAttachmentDTO.BatchUploadDTO dto) {
-        refProductImgAttachmentService.batchUpload(dto);
-        return success();
+        Boolean flag = refProductImgAttachmentService.importBatchUpload(dto);
+        return flag == true ? success() : failure();
     }
 
     /**

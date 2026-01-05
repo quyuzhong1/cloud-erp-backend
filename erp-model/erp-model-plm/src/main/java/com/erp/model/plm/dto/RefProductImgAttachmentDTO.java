@@ -7,8 +7,10 @@ import java.util.List;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
 import java.io.Serializable;
 import com.common.business.dto.base.SuperDTO;
+import com.common.business.dto.base.BaseDTO;
 import java.time.LocalDateTime;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
@@ -241,9 +243,10 @@ public class RefProductImgAttachmentDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class BatchUploadDTO {
+    @EqualsAndHashCode(callSuper = true)
+    public static class BatchUploadDTO extends BaseDTO.ImportDTO {
         /**
-         * ZIP文件URL（从/plm/common/upload获取）
+         * ZIP文件URL（从/plm/common/upload获取，前端传递，会赋值到fileUrl）
          */
         @NotBlank(message = "ZIP文件URL不能为空")
         private String zipUrl;
@@ -253,11 +256,6 @@ public class RefProductImgAttachmentDTO implements Serializable {
          */
         @NotBlank(message = "分类ID不能为空")
         private String categoryId;
-
-        /**
-         * 任务ID（用于更新任务状态）
-         */
-        private String taskId;
     }
 
     /**
