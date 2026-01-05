@@ -4,10 +4,10 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
-import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.dto.base.BaseIdDTO;
@@ -32,8 +32,10 @@ import com.erp.model.scm.entity.AssetPurchaseOrderDetailEntity;
 import com.erp.model.scm.entity.AssetPurchaseOrderEntity;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.sys.dto.DeptKingdeeDTO;
-import com.erp.model.sys.dto.KingdeePostDTO;
+import com.erp.model.sys.dto.KingdeeBusinessOperatorDTO;
+import com.erp.model.sys.dto.KingdeeOperatorRefPostDTO;
 import com.erp.model.sys.entity.KingdeeDepartmentEntity;
+import com.erp.model.sys.enums.KingdeeBusinessOperatorTypeEnum;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.sys.feign.KingdeeFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -186,13 +188,17 @@ public class SyncKingdeeAssetAcceptServiceImpl implements SyncKingdeeAssetAccept
         }
 
         //员工岗位
-        List<KingdeePostDTO.UserKingdeePostInfoDTO> userKingdeePostInfoList = sysUserFeign.listUserKingdeePostByUserIds(Collections.singletonList(entity.getAcceptUserId()));
-
-        if (CollectionUtils.isNotEmpty(userKingdeePostInfoList)) {
-            //收料人
-            String acceptUserCode = userKingdeePostInfoList.stream().filter(obj -> obj.getUserId().equals(entity.getAcceptUserId()))
-                    .findFirst().flatMap(obj -> Optional.ofNullable(obj.getKingdeePostCode())).orElse(null);
-            resultMap.put("acceptUserCode", acceptUserCode);
+        if (StrUtil.isNotBlank(entity.getAcceptUserId())) {
+            KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO findBusinessOperator = new KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO();
+            findBusinessOperator.setOrgCode(entity.getAcceptOrgId());
+            findBusinessOperator.setUserId(entity.getAcceptUserId());
+            findBusinessOperator.setBusinessOperatorType(KingdeeBusinessOperatorTypeEnum.WHY.getCode());
+            //获取员工业务信息
+            KingdeeOperatorRefPostDTO.OperatorDTO kingSellerInfo = kingdeeFeign.getBusinessOperator(findBusinessOperator);
+            //采购员
+            if (!Objects.isNull(kingSellerInfo)) {
+                resultMap.put("acceptUserCode", kingSellerInfo.getUserPostCode());
+            }
         }
         //供应商编码
         SupplierEntity supplierEntity = FeignQuery.getById(SupplierEntity.class, entity.getSupplierId());

@@ -11,7 +11,7 @@ import javax.annotation.Resource;
 import java.util.Map;
 
 @RestController
-@RequestMapping("feign/srmSyncKingdee")
+@RequestMapping("feign/fmsSyncKingdee")
 public class FmsSyncKingdeeFeignController {
 
     @Resource
