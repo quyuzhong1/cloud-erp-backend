@@ -5,7 +5,6 @@ import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.dto.KingdeeParamDTO;
 import com.common.business.enums.SyncOperateEnum;
 import com.common.core.enums.ApiError;
@@ -73,42 +72,27 @@ public class KingdeeAssetAcceptConsumerServiceImpl implements KingdeeAssetAccept
             throw new ServiceException(ApiError.DMP_KINGDEE_FIELD_NOT_FOUND);
         }
 
-        //判断金蝶系统是否已存在该数据
-        KingdeeParamDTO.SaveParamDTO param = new KingdeeParamDTO.SaveParamDTO(json);
-        JSONObject model;
-        try {
-            model = kingdeeCommonService.view(apiUtils,platformEntity.getId(),map);
-        } catch (Exception e) {
-            //更新数据
-            saveOrUpdate(platformEntity, map, apiUtils, json, param, type);
-            return;
-        }
-        //执行操作
-        operate (platformEntity,map,apiUtils,model,json,type);
-    }
-
-    /**
-     * 采购订单操作
-     */
-    public void operate (PlatformEntity platformEntity, Map<String, Object> map, KingdeeApiUtils apiUtils, JSONObject model, JSONObject json, Integer type) {
-        //查找到数据后的审核状态
-        String documentStatus = (String)model.get("DocumentStatus");
         //操作项
         String operate = (String) map.get("operate");
+
+        /**
+         * 作废
+         */
         if (SyncOperateEnum.OPERATE_INVALID.getCode().equals(operate)) {
-            operateInvalid(apiUtils, map);
+            operateInvalid(apiUtils,platformEntity,map,type,operate);
         }
-        //反审核
+        /**
+         * 反审核
+         */
         if (SyncOperateEnum.OPERATE_DISAPPROVE.getCode().equals(operate)) {
-            //审核中或已审核则要先反审
-            if (KingdeeDocStatusEnum.APPROVING.getCode().equals(documentStatus) || KingdeeDocStatusEnum.APPROVED.getCode().equals(documentStatus)) {
-                //反审核
-                operateDisapprove(apiUtils, map);
-            }
+            operateDisapprove(apiUtils,platformEntity, map,type);
+            operateDelete(apiUtils,platformEntity,map,operate);
         }
-        //审核
+        /**
+         * 审核
+         */
         if (SyncOperateEnum.OPERATE_APPROVE.getCode().equals(operate)) {
-            operateApprove(apiUtils, platformEntity, map, model, json, type);
+            operateApprove(apiUtils,platformEntity, map,json,type);
         }
         /**
          * 删除
@@ -118,46 +102,56 @@ public class KingdeeAssetAcceptConsumerServiceImpl implements KingdeeAssetAccept
         }
     }
 
-    public void operateInvalid(KingdeeApiUtils apiUtils,Map<String, Object> map) {
-        //业务编码
-        String code = (String) map.get("code");
-        //操作项
-        String operate = (String) map.get("operate");
+    /**
+     * 作废
+     */
+    public void operateInvalid (KingdeeApiUtils apiUtils,PlatformEntity platformEntity, Map<String, Object> map,Integer type,String operate){
         //作废
-        kingdeeCommonService.excuteOperation(apiUtils,map,code,operate);
-        return;
+        kingdeeCommonService.handleInvalid(apiUtils,platformEntity,map,type,operate);
     }
 
-    public void operateDisapprove(KingdeeApiUtils apiUtils,Map<String, Object> map) {
-        String syncKingdeeId = (String) map.get("syncKingdeeId");
-        if (StringUtils.isBlank(syncKingdeeId)) {
+
+    /**
+     * 反审核
+     */
+    public void operateDisapprove (KingdeeApiUtils apiUtils, PlatformEntity platformEntity, Map<String, Object> map, Integer type){
+
+        //反审核
+        kingdeeCommonService.handleUnAudit(platformEntity, map, apiUtils, type);
+    }
+
+    /**
+     * 审核
+     */
+    public void operateApprove (KingdeeApiUtils apiUtils, PlatformEntity platformEntity, Map<String, Object> map,JSONObject json,Integer type){
+        //判断金蝶系统是否已存在该数据
+        KingdeeParamDTO.SaveParamDTO param = new KingdeeParamDTO.SaveParamDTO(json);
+        JSONObject model;
+        try {
+            model = kingdeeCommonService.view(apiUtils,platformEntity.getId(),map);
+        } catch (Exception e) {
+            //新增或编辑
+            saveOrUpdate(apiUtils,platformEntity,map,type,json,param);
             return;
         }
-        //反审核
-        kingdeeCommonService.unAudit(apiUtils, syncKingdeeId);
-        return;
-    }
 
-    public void operateApprove(KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map, JSONObject model, JSONObject json, Integer type) {
-        KingdeeParamDTO.SaveParamDTO param = new KingdeeParamDTO.SaveParamDTO(json);
         //查找到数据后，判断其审核状态
         String documentStatus = (String)model.get("DocumentStatus");
         String id = String.valueOf(model.get("Id")) ;
         Boolean flag = Boolean.FALSE;
-
         //审核中或已审核则要先反审
         if (KingdeeDocStatusEnum.APPROVING.getCode().equals(documentStatus) || KingdeeDocStatusEnum.APPROVED.getCode().equals(documentStatus)) {
             flag = kingdeeCommonService.unAudit(apiUtils, id);
         }
         //创建状态则直接修改、删除
         if (KingdeeDocStatusEnum.CREATED.getCode().equals(documentStatus) || KingdeeDocStatusEnum.REAPPROVE.getCode().equals(documentStatus) || flag) {
-            //给修改json对象赋值ID
-            KingdeeUtils.makeFieldJson(json,"FID",".", id);
+            //主单据id
+            KingdeeUtils.makeFieldJson(json,"FId",".", id);
             StringBuffer allKey = FastJsonUtil.getAllKey(json);
             ArrayList<String> apiFieldList = (ArrayList) Arrays.stream(allKey.toString().split(",")).collect(Collectors.toList());
             param.setNeedUpDateFields(apiFieldList);
             //更新数据
-            saveOrUpdate(platformEntity, map, apiUtils, json, param, type);
+            saveOrUpdate(apiUtils,platformEntity,map,ApiModuleTypeEnum.ASSET_PURCHASE_ORDER.getCode(),json,param);
         }
     }
 
@@ -179,7 +173,7 @@ public class KingdeeAssetAcceptConsumerServiceImpl implements KingdeeAssetAccept
     /**
      * 新增
      */
-    public Boolean saveOrUpdate (PlatformEntity platformEntity,Map<String, Object> map ,KingdeeApiUtils apiUtils, JSONObject json,KingdeeParamDTO.SaveParamDTO param, Integer type) {
+    public Boolean saveOrUpdate (KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type,JSONObject json,KingdeeParamDTO.SaveParamDTO param) {
 
         Boolean isAdd = kingdeeCommonService.saveAndAutoApprove(platformEntity,map,apiUtils,json,param,type);
         if (isAdd) {
