@@ -351,6 +351,7 @@ public class MoldInfoServiceImpl extends SuperServiceImpl<MoldInfoMapper, MoldIn
         CfgQueryOptionDTO.VariablesParamsDTO dto = new CfgQueryOptionDTO.VariablesParamsDTO();
         dto.setBusinessKey(CfgQueryOptionBussinessKeyEnum.MOLD_INFO.getCode());
         dto.setVariablesMap(BeanUtil.beanToMap(entity));
+
         Map<String, Object> map = cfgQueryOptionFeign.getVariablesMapByBusinessKey(dto);
         return map;
     }
