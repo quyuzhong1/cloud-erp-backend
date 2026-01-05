@@ -1432,6 +1432,7 @@ public enum ApiError implements Serializable {
     SAMPLE_DETAIL_NOT_BELONG_TO_APPLY(10741,"部分明细不存在或不属于该样品领用单"),
     SAMPLE_AUDIT_QTY_EXCEEDS_APPLY_QTY(10742,"SKU【{0}】的审核数量【{1}】不能大于领用数量【{2}】"),
     SAMPLE_AUDIT_QTY_UPDATE_FAILED(10743,"修改审核数量失败"),
+    SAMPLE_PARTNER_IN_USE(10744,"企业达人已被引用，不允许删除"),
     /**
      * 虚拟仓 错误 信息 12500-13000
      */

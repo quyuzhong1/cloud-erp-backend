@@ -95,6 +95,10 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
     @Resource
     private OmsAttachmentService omsAttachmentService;
 
+    @Resource
+    private KolB2cApplicationAddressService  kolB2cApplicationAddressService;
+    @Resource
+    private KolFeedbackService  kolFeedbackService;
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -396,6 +400,13 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
     @Override
     public BatchResultDTO delete(String id) {
         KolPartnerInfoEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到企业达人库数据"));
+        //校验KOL-B2C是否被引用
+        Integer count = kolB2cApplicationAddressService.lambdaQuery().eq(KolB2cApplicationAddressEntity::getPartnerId, id).count();
+        //校验KOL-回片登记是否被引用
+        Integer count1 = kolFeedbackService.lambdaQuery().eq(KolFeedbackEntity::getPartnerId, id).count();
+        if(count > 0 || count1 > 0){
+            throw new ServiceException(ApiError.SAMPLE_PARTNER_IN_USE);
+        }
         // 删除主单数据
         log.info("删除 开始删除企业达人库主单数据，id：【{}】", id);
         super.removeById(id);
@@ -599,10 +610,6 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
                 String districtId = districtMap.getOrDefault(mainInfo.getDistrict(), "");
                 if(StringUtils.isNotBlank(districtId)){
                     mainInfo.setDistrictId(districtId);
-                }else {
-                    if(countryId.equals(DictValueEnum.CN.getCode())){
-                        errorMsgList.add("区域不存在");
-                    }
                 }
 
                 //语言
