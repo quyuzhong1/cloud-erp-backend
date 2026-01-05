@@ -4,7 +4,9 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
+import com.common.business.annotation.DistributeLocker;
 import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.DmpSyncTaskIdDTO;
 import com.common.business.dto.PlatformOutboundDTO;
@@ -22,9 +24,13 @@ import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.OverseasProviderDTO;
+import com.erp.model.wms.dto.SoOutstockDTO;
+import com.erp.model.wms.dto.SoOutstockDetailDTO;
 import com.erp.model.wms.entity.ThirdWarehouseDeliveryDetailEntity;
 import com.erp.model.wms.entity.ThirdWarehouseDeliveryEntity;
+import com.erp.model.wms.enums.SoB2cWarehouseDeliveryStatusEnum;
 import com.erp.rpc.dmp.feign.DmpMongoDbFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.oms.feign.SkuMappingFeign;
@@ -158,6 +164,8 @@ public class PlatformOutboundToOmsPushDownWmsConsumerService<T extends DmpSyncTa
         SoB2cEntity mainEntity = list.get(0);
         if(mainEntity.getPlatformCode().equals(referenceNo)){
             dto.setSwOrderNumber(referenceNo);
+        }else {
+            dto.setReferenceNo(swOrderNumber);
         }
 
         //1.校验B2C销售订单数是否已经审核通过
@@ -258,13 +266,13 @@ public class PlatformOutboundToOmsPushDownWmsConsumerService<T extends DmpSyncTa
             soB2cFeign.addSoB2cError(addError);
             return ApiResult.success();
         }
-        //4.三方仓发货单
+        //4.“三方仓发货单”
         ThirdWarehouseDeliveryEntity thirdWarehouseDeliveryEntity = generateThirdWarehouseDelivery(detailList, dto, mainEntity);
-
         //5.“销售出库单”、“物流轨迹单”、“虚拟仓库存流水”、“出货仓库存流水”
         platformOutboundConsumerService.generateSoOut(mainEntity, thirdWarehouseDeliveryEntity, dto,"");
         return ApiResult.success();
     }
+
 
     private ThirdWarehouseDeliveryEntity generateThirdWarehouseDelivery(List<SoB2cDetailEntity> detailList, PlatformOutboundDTO dto, SoB2cEntity mainEntity) {
         List<ThirdWarehouseDeliveryDetailEntity> thirdWarehouseDeliveryDetailEntities = new ArrayList<>(detailList.size());
