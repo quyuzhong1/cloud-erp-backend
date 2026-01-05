@@ -139,6 +139,10 @@ public abstract class DmpOutputTaskHandler extends DmpOutputHandler{
 	protected abstract List<DmpOutputTaskRecordEntity> outputData(DmpOutputTaskRequest dmpRequest, DmpOutputTaskResponse dmpResponse);
 	
 	protected void dealDeleteDmpBaseEntity(DmpOutputTaskRequest dmpRequest, DmpOutputTaskResponse dmpResponse, List<DmpOutputTaskRecordEntity> outputData) {
+		DmpCfgOutputEntity dmpCfgOutputEntity = dmpResponse.getDmpCfgOutputEntity();
+		if(!"1801574477567165866".equals(dmpCfgOutputEntity.getSystemId())) {
+			return;
+		}
 		Map<DmpCfgInputConvertEntity, Set<String>> deleteConvertInputDmpBaseEntityMaps = dmpRequest.getDeleteConvertInputDmpBaseEntityMaps();
 		if(CollUtil.isEmpty(deleteConvertInputDmpBaseEntityMaps)) {
 			return;
@@ -151,8 +155,10 @@ public abstract class DmpOutputTaskHandler extends DmpOutputHandler{
 			}
 		}
 		if(CollUtil.isNotEmpty(allDeleteConvertInputDmpBaseEntitySet)) {
+			String lastSql = " and exists (select 1 from dmp_output_task g where g.id = dmp_output_task_record.main_id and g.cfg_output_id = '"+ dmpCfgOutputEntity.getId() +"' ) ";
 			Map<String, DmpOutputTaskRecordEntity> dataIdRecordMaps = dmpOutputTaskRecordService.lambdaQuery()
 						.in(DmpOutputTaskRecordEntity::getDataId, allDeleteConvertInputDmpBaseEntitySet)
+						.last(lastSql)
 						.list()
 						.stream()
 						.filter(d -> StringUtils.isNotBlank(d.getRequestData()) && d.getRequestData().trim().startsWith("{"))
@@ -165,6 +171,7 @@ public abstract class DmpOutputTaskHandler extends DmpOutputHandler{
 				newValue.setSourceCode(value.getSourceCode());
 				newValue.setMainId(dmpRequest.getOutputTaskId());
 				newValue.setDataId(value.getDataId());
+				newValue.setStatus(DmpOutputTaskRecordStatusEnum.INIT.getCode());
 				JSONObject parseObject = JSON.parseObject(value.getRequestData());
 				parseObject.put("status", "已删除");
 				newValue.setRequestData(parseObject.toJSONString());
