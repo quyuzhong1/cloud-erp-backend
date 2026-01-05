@@ -4910,6 +4910,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         //销售出库信息
         List<SoOutstockDetailDTO.DeliveryQtyDTO> deliveryQtyList = soOutstockFeign.listDetailBySoDetailIds(soDetailIdList);
 
+        List<B2bThirdDeliveryDetailEntity> b2bThirdDeliveryDetailList = b2bThirdDeliveryFeign.listBySoDetailIds(soDetailIdList);
 
         for (String soDetailId :detailIdList) {
             //销售订单明细
@@ -4949,13 +4950,20 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             Integer totalNoticeQty = soDeliveryNoticeDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSourceDetailId(), soDetailEntity.getId())
                     && CharSequenceUtil.equals(obj.getSkuId(),soDetailEntity.getDeliverySkuId()))
                     .map(SoDeliveryNoticeDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
-            batchLockDTO.setTotalNoticeQty(totalNoticeQty);
+
+            Integer b2bBoxQty = b2bThirdDeliveryDetailList.stream()
+                    .filter(e -> !ThirdDeliveryStatusEnum.CANCEL_DELIVERY.getCode().equals(e.getStatus()) && CharSequenceUtil.equals(e.getSoDetailId(),soDetailEntity.getId()))
+                    .map(B2bThirdDeliveryDetailEntity::getDeliveryQty)
+                    .reduce(Integer::sum)
+                    .orElse(0);
+
+            batchLockDTO.setTotalNoticeQty(totalNoticeQty + b2bBoxQty);
 
             Integer effectiveNoticeQty = soDeliveryNoticeDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSourceDetailId(), soDetailEntity.getId())
                     && CharSequenceUtil.equals(obj.getSkuId(),soDetailEntity.getDeliverySkuId())
                     && CharSequenceUtil.equals(obj.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus())
             ).map(SoDeliveryNoticeDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
-            batchLockDTO.setEffectiveNoticeQty(effectiveNoticeQty);
+            batchLockDTO.setEffectiveNoticeQty(effectiveNoticeQty + b2bBoxQty);
 
             //入参
             SoInfoDTO.VirtuaParamScarceDTO paramScarceDTO = new SoInfoDTO.VirtuaParamScarceDTO();
@@ -4981,8 +4989,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             Integer outstockQty = deliveryQtyList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSourceDetailId(), soDetailEntity.getId())
                     && CharSequenceUtil.equals(obj.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus())
             ).map(SoOutstockDetailDTO.DeliveryQtyDTO::getActualQty).reduce(MathUtil.ZERO, Integer::sum);
-            batchLockDTO.setOutstockQty(outstockQty);
-            batchLockDTO.setUnOutstockQty(soDetailEntity.getDeliveryQty() - outstockQty);
+            batchLockDTO.setOutstockQty(outstockQty + b2bBoxQty);
+            batchLockDTO.setUnOutstockQty(soDetailEntity.getQty() - outstockQty - b2bBoxQty);
             batchLockDTO.setDetailRemark(soDetailEntity.getRemark());
             resultList.add(batchLockDTO);
         }
