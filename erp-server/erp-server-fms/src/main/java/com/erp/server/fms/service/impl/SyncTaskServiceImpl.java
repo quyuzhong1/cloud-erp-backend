@@ -1,4 +1,4 @@
-package com.erp.server.fms.kingdee.impl;
+package com.erp.server.fms.service.impl;
 
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONUtil;
@@ -9,7 +9,7 @@ import com.common.message.enums.ApiModuleTypeEnum;
 import com.erp.model.fms.entity.AssetAcceptDetailEntity;
 import com.erp.model.fms.entity.AssetAcceptEntity;
 import com.erp.server.fms.kingdee.SyncKingdeeAssetAcceptService;
-import com.erp.server.fms.kingdee.SyncKingdeeService;
+import com.erp.server.fms.service.SyncTaskService;
 import com.erp.server.fms.service.AssetAcceptDetailService;
 import com.erp.server.fms.service.AssetAcceptService;
 import lombok.extern.slf4j.Slf4j;
@@ -29,7 +29,7 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @Service
-public class SyncKingdeeServiceImpl implements SyncKingdeeService {
+public class SyncTaskServiceImpl implements SyncTaskService {
 
     @Resource
     private AssetAcceptService assetAcceptService;
