@@ -108,7 +108,8 @@ public class SyncSoReturnInstockServiceImpl implements SyncSoReturnInstockServic
                                                          List<DictCountryEntity> countryEntityList,
                                                          List<DictGlobalAreaEntity> dictGlobalEntityList,
                                                          List<SysDepartmentEntity> deptList,
-                                                         List<CfgCountryPartitionEntity> countryPartitionEntityList
+                                                         List<CfgCountryPartitionEntity> countryPartitionEntityList,
+                                                         String platformCode
     ) {
 
         DateTimeFormatter localDateTime = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
@@ -125,7 +126,7 @@ public class SyncSoReturnInstockServiceImpl implements SyncSoReturnInstockServic
 
 
         //退货物流单号
-        String rootNodeNoInitial = getRootNodeNoInitial(entity, soReturnEntityList, soReturnReceiveEntityList, receiveReturnList);
+        String rootNodeNoInitial = getRootNodeNoInitial(entity, soReturnEntityList, soReturnReceiveEntityList, receiveReturnList , platformCode);
 
         ShudiyunB2cOrderDTO shudiyunB2cOrderDTO = new ShudiyunB2cOrderDTO();
 
@@ -392,7 +393,8 @@ public class SyncSoReturnInstockServiceImpl implements SyncSoReturnInstockServic
                                                          List<DictCountryEntity> countryEntityList,
                                                          List<DictGlobalAreaEntity> dictGlobalEntityList,
                                                          List<SysDepartmentEntity> deptList,
-                                                         List<CfgCountryPartitionEntity> countryPartitionEntityList
+                                                         List<CfgCountryPartitionEntity> countryPartitionEntityList,
+                                                         String platformCode
     ) {
 
         // 字典分组
@@ -406,7 +408,7 @@ public class SyncSoReturnInstockServiceImpl implements SyncSoReturnInstockServic
 
 
         //退货物流单号
-        String rootNodeNoInitial = getRootNodeNoInitial(entity, soReturnEntityList, soReturnReceiveEntityList, receiveReturnList);
+        String rootNodeNoInitial = getRootNodeNoInitial(entity, soReturnEntityList, soReturnReceiveEntityList, receiveReturnList , platformCode);
 
         DmpReturnInstockDTO.ViewDTO viewDto = new DmpReturnInstockDTO.ViewDTO();
         DmpReturnInstockDetailDTO.ViewDTO detailViewDto = new DmpReturnInstockDetailDTO.ViewDTO();
@@ -666,7 +668,8 @@ public class SyncSoReturnInstockServiceImpl implements SyncSoReturnInstockServic
     private String getRootNodeNoInitial(SoReturnInstockEntity entity,
                                         List<SoReturnEntity> soReturnEntityList,
                                         List<SoReturnReceiveEntity> soReturnReceiveEntityList,
-                                        List<SoReturnEntity> receiveReturnList) {
+                                        List<SoReturnEntity> receiveReturnList,
+                                        String platformCode) {
         String rootNodeNoInitial = entity.getCode(); // 默认值是 entity.getCode()
 
         if (OrderTypeEnum.B2C.getCode().equals(entity.getType())) {
@@ -693,6 +696,10 @@ public class SyncSoReturnInstockServiceImpl implements SyncSoReturnInstockServic
             }
         }
 
+        if((StringUtils.isBlank(rootNodeNoInitial) || entity.getCode().equals(rootNodeNoInitial)) && StringUtils.isNotBlank(platformCode)) {
+        	rootNodeNoInitial = platformCode;
+        }
+        
         return rootNodeNoInitial;
     }
 
@@ -806,6 +813,8 @@ public class SyncSoReturnInstockServiceImpl implements SyncSoReturnInstockServic
             String partitionId = "";
             // 平台
             String dictPlatform = "";
+            // 平台单号
+            String platformCode = "";
 
             if ("B2B".equalsIgnoreCase(entity.getType())){
                 SoInfoEntity soInfoEntity = soInfoEntityList.stream().filter(e -> e.getId().equalsIgnoreCase(entity.getSoId())).findFirst().orElse(null);
@@ -826,6 +835,7 @@ public class SyncSoReturnInstockServiceImpl implements SyncSoReturnInstockServic
                 SoB2cEntity soB2cEntity = soB2cEntityList.stream().filter(e -> e.getId().equalsIgnoreCase(entity.getSoId())).findFirst().orElse(null);
                 if (null != soB2cEntity){
                     dictPlatform = soB2cEntity.getDictPlatform();
+                    platformCode = soB2cEntity.getPlatformCode();
                 }
             }
 
@@ -854,7 +864,8 @@ public class SyncSoReturnInstockServiceImpl implements SyncSoReturnInstockServic
                             countryEntityList,
                             dictGlobalEntityList,
                             deptList,
-                            countryPartitionEntityList
+                            countryPartitionEntityList,
+                            platformCode
                     );
             	}else {
             		syncDataToSdyFieldHandler = this.syncDataToSdyFieldHandler(entity,
@@ -877,7 +888,8 @@ public class SyncSoReturnInstockServiceImpl implements SyncSoReturnInstockServic
                             countryEntityList,
                             dictGlobalEntityList,
                             deptList,
-                            countryPartitionEntityList
+                            countryPartitionEntityList,
+                            platformCode
                     );
             	}
             	String sourceId = detailEntity.getId();
