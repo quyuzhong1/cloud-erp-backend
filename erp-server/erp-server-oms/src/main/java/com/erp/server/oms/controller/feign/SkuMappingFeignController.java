@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("feign/skuMapping")
@@ -103,5 +104,10 @@ public class SkuMappingFeignController extends BaseController {
     @PostMapping("/listSkuBySkuNos")
     public List<SkuMappingDTO.ProductSkuInfoDTO> listSkuBySkuNos(@RequestBody SkuMappingDTO.SkuParamDTO skuParamDTO) {
         return skuMappingService.listSkuBySkuNos(skuParamDTO);
+    }
+
+    @PostMapping("/mapListingByPlatformSkuNo")
+    public Map<String, List<ListingInfoWithSkuMappingDTO>> mapListingByPlatformSkuNo(@RequestBody SkuMappingDTO.PlatformSkuNoParamDTO paramDTO){
+        return skuMappingService.mapListingByPlatformSkuNo(paramDTO.getPlatformSkuList(), paramDTO.getPlatformSpuList(), paramDTO.getDictPlatform(), paramDTO.getShopId(), null, null);
     }
 }
