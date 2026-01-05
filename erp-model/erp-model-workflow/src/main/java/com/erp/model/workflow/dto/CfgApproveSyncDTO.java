@@ -439,7 +439,7 @@ public class CfgApproveSyncDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public class ApproveNoticeRoleTypeParamDTO {
+    public static class ApproveNoticeRoleTypeParamDTO {
 
         //单据类型 sourceTypeEnum
         private String businessType;

@@ -747,15 +747,12 @@ public class CfgApproveSyncServiceImpl extends SuperServiceImpl<CfgApproveSyncMa
         if(Objects.nonNull(dto) && StringUtils.isNotBlank(dto.getBusinessType())){
             List<DictBasicDTO.DropDownDTO> list = dictBasicService.listByType("processCondition", dto.getBusinessType());
             if(CollUtil.isNotEmpty(list)){
-                // 使用Stream API优化循环和Map创建
-                List<Map<String, Object>> additionalMaps = list.stream()
-                        .map(dropDownDTO -> {
-                            Map<String, Object> map = new HashMap<>();
-                            map.put(dropDownDTO.getCode(), dropDownDTO.getName());
-                            return map;
-                        })
-                        .collect(Collectors.toList());
-                resultList.addAll(additionalMaps);
+                for (DictBasicDTO.DropDownDTO dropDownDTO : list) {
+                    Map<String, Object> map = new HashMap<>();
+                    map.put("code", dropDownDTO.getCode());
+                    map.put("value", dropDownDTO.getName());
+                    resultList.add(map);
+                }
             }
         }
         return resultList;
