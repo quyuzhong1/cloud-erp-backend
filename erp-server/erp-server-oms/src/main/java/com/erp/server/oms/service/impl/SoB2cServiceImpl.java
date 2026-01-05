@@ -616,7 +616,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         return list;
     }
 
-
+    /**
+     * 1,创建订单
+     * 2,匹配订单规则
+     * 3.匹配物流仓储规则
+     * 4.创建物流运单
+     * 5.创建发货单
+     */
     @Override
     public String processOrderCreation(SoB2cDTO.AddDTO dto) {
         SoB2cServiceImpl soB2cServiceImpl = ApplicationContextUtils.getBean(SoB2cServiceImpl.class);
@@ -2443,6 +2449,18 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         return batchResultDTO;
     }
 
+    @Override
+    public String checkDeliveryRestriction(String id, String deliveryType) {
+        try {
+            List<SoB2cDetailEntity> detailList = soB2cDetailService.listByMainId(id);
+            Map<String, Object> map = this.handleMatchJson(id, detailList, new HashMap<>());
+            return cfgRuleOrderHandleService.checkDeliveryRestriction(map, deliveryType);
+        } catch (Exception e) {
+            log.error("检查发货限制失败,id:{}, deliveryType:{}", id, deliveryType, e);
+            return null;
+        }
+    }
+
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public BatchResultDTO submitDelivery(String id, String channelId) {
@@ -2525,6 +2543,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         //校验中转状态
         if (TransferStatusEnum.FAILURE.getCode().equals(entity.getTransferStatus()) || TransferStatusEnum.WAIT.getCode().equals(entity.getTransferStatus())) {
             throw new ServiceException(CharSequenceUtil.format("{}未成功预报无法提交发货", entity.getCode()));
+        }
+
+        //检查发货限制
+        String restrictionMsg = this.checkDeliveryRestriction(id, RuleOrderHandleEnum.DeliveryRestrictionEnum.SUBMIT_DELIVERY.getCode());
+        if (CharSequenceUtil.isNotBlank(restrictionMsg)) {
+            throw new ServiceException(restrictionMsg);
         }
 
         //物流渠道
@@ -5980,6 +6004,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             if (SoB2cDeliveryStatusEnum.SHIPPED.getCode().equals(deliveryEntity.getStatus())) {
                 throw new ServiceException(ApiError.SO_B2C_DELIVERY_STATUS_NOT_ALLOW_MANUAL_SHIP_FLAG, deliveryEntity.getCode());
             }
+        }
+
+        //检查发货限制
+        String restrictionMsg = this.checkDeliveryRestriction(id, RuleOrderHandleEnum.DeliveryRestrictionEnum.MANUAL_DELIVERY.getCode());
+        if (CharSequenceUtil.isNotBlank(restrictionMsg)) {
+            throw new ServiceException(restrictionMsg);
         }
 
         String msg = CharSequenceUtil.format("操作单据【{}】手动标发", entity.getCode());
@@ -11014,6 +11044,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     @Override
     public BatchResultDTO deliveryWithNotOutbound(SoB2cDTO.DeliveryWithNotOutboundDTO dto, SoB2cEntity soB2cEntity, SoB2cLogisticsEntity soB2cLogisticsEntity, List<SoB2cDetailEntity> detailEntityList, SoB2cReceiverEntity soB2cReceiverEntity, LogisticsChannelDTO.BaseDTO baseDTO, List<String> noInventorySkuIdList) {
+        //检查发货限制
+        String restrictionMsg = this.checkDeliveryRestriction(dto.getId(), RuleOrderHandleEnum.DeliveryRestrictionEnum.NO_OUTBOUND_DELIVERY.getCode());
+        if (CharSequenceUtil.isNotBlank(restrictionMsg)) {
+            throw new ServiceException(restrictionMsg);
+        }
         dto.setLogisticsChannelCode(baseDTO.getCode());
         //生成发货单和出库单
         try {

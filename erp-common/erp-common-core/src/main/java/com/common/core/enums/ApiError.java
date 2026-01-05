@@ -269,6 +269,17 @@ public enum ApiError implements Serializable {
     FILE_SIZE_EXCEEDS_LIMIT(2427,"文件不可超过{0}m"),
     FILE_NAME_DUPLICATE(2428, "文档名已存在,不可重复提交"),
     FILE_EXPORT_DATA_EMPTY(2429,"导出数据不能为空"),
+    FILE_PARAM_EMPTY(2430, "请求参数不能为空"),
+    FILE_STRUCTURE_AND_FILES_EMPTY(2431, "文件夹结构和文件列表不能同时为空"),
+    FILE_ZIP_CREATE_FAILED(2432, "创建ZIP文件失败: {0}"),
+    FILE_ZIP_EXTRACT_FAILED(2433, "解压缩ZIP文件失败: {0}"),
+    FILE_ZIP_NOT_FOUND(2434, "ZIP文件为空或不存在: {0}"),
+    FILE_IMAGE_COMPRESS_FAILED(2435, "压缩图片失败: {0}"),
+    FILE_OPERATION_FAILED(2436, "FastDFS操作失败: {0}"),
+    FILE_DOWNLOAD_TIMEOUT(2437, "文件下载超时"),
+    FILE_OPERATION_INTERRUPTED(2438, "操作被中断"),
+    FILE_ZIP_EMPTY(2439, "ZIP文件中没有找到文件"),
+    FILE_CHECK_SIZE_FAILED(2440, "检查ZIP文件大小失败: {0}"),
 
     /**
      * 单据相关提示 从3000 - 3500
@@ -641,6 +652,14 @@ public enum ApiError implements Serializable {
     PRODUCT_APP_CATEGORY_NAME_EXISTS(5105, "应用分类名称已存在"),
     PRODUCT_PROPERTY_ASSET_NOT_EXIST(98161,"SKU【{0}】产品属性非资产，与供应商付款条件不一致"),
     PRODUCT_SALES_BATTERY_WEIGHT_NOT_NULL(5106,"产品销售信息电池重量（g）不能为空"),
+    PRODUCT_IMG_ATTACHMENT_SAVE_FAILED(5107, "图片分类附件关联单保存失败"),
+    PRODUCT_IMG_ATTACHMENT_NOT_FOUND(5108, "未找到图片分类附件关联单数据"),
+    PRODUCT_IMG_CATEGORY_MOVE_FORBIDDEN_ALL(5109, "不能移动到\"所有分类\""),
+    PRODUCT_IMG_CATEGORY_MOVE_FORBIDDEN_MAIN(5110, "不能移动到\"产品主图\"分类"),
+    PRODUCT_IMG_CATEGORY_MOVE_FORBIDDEN_THUMBNAIL(5111, "不能移动到\"产品缩略图\"分类"),
+    PRODUCT_IMG_DOWNLOAD_MIN_REQUIRED(5112, "请至少选择一张图片"),
+    PRODUCT_IMG_DOWNLOAD_MAX_LIMIT(5113, "最多支持50张图片下载"),
+    PRODUCT_IMG_DOWNLOAD_NOT_FOUND(5114, "未找到可下载的图片"),
 
     /**
      * BOM 错误信息 6000 - 6499

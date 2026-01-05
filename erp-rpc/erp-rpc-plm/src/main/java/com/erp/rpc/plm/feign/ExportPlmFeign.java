@@ -67,4 +67,12 @@ public interface ExportPlmFeign {
     PagingVO<MoldMonitorDTO.ListDTO> exportMoldMonitor(@RequestBody @Validated PagingDTO<MoldMonitorDTO.PagingParamDTO> dto);
     @PostMapping("/feign/export/exportDynamicProductDetail")
     PagingVO<DynamicExcelDTO> exportDynamicProductDetail(PagingDTO<ProductSkuExcelDTO> dto);
+    
+    /**
+     * 构建产品图片文件夹结构并创建ZIP（用于批量下载）
+     * @param dto 批量下载参数（包含ids）
+     * @return ZIP文件的FastDFS URL
+     */
+    @PostMapping("/feign/export/buildProductImagesFolderStructure")
+    String buildProductImagesFolderStructure(@RequestBody @Validated RefProductImgAttachmentDTO.BatchDownloadDTO dto);
 }

@@ -9,8 +9,10 @@ import io.seata.spring.annotation.GlobalTransactional;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.dto.base.BaseResultDTO;
 import com.erp.model.plm.entity.ProductImgCategoryEntity;
+import com.erp.model.plm.entity.RefProductImgAttachmentEntity;
 import com.erp.server.plm.mapper.ProductImgCategoryMapper;
 import com.erp.server.plm.service.ProductImgCategoryService;
+import com.erp.server.plm.service.RefProductImgAttachmentService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.erp.server.plm.service.OperateLogService;
@@ -54,6 +56,9 @@ import javax.servlet.http.HttpServletResponse;
 public class ProductImgCategoryServiceImpl extends SuperServiceImpl<ProductImgCategoryMapper, ProductImgCategoryEntity> implements ProductImgCategoryService {
     @Resource
     private OperateLogService operateLogService;
+    
+    @Resource
+    private RefProductImgAttachmentService refProductImgAttachmentService;
     
     private static final String CLASSPATH = String.valueOf(ProductImgCategoryEntity.class);
 
@@ -152,11 +157,18 @@ public class ProductImgCategoryServiceImpl extends SuperServiceImpl<ProductImgCa
         // 检查是否有子分类
         LambdaQueryWrapper<ProductImgCategoryEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(ProductImgCategoryEntity::getParentId, entity.getId());
-        long count = this.count(queryWrapper);
-        if (count > 0) {
+        long childCount = this.count(queryWrapper);
+        if (childCount > 0) {
             throw new ServiceException(ApiError.COMMON_DELETE_CHILD_NODE_EXISTS);
         }
-        //todo 删除分支需要判断是否有图片绑定在这个分类上 如果有 就禁止删除
+        
+        // 检查分类下是否存在图片
+        LambdaQueryWrapper<RefProductImgAttachmentEntity> imageQueryWrapper = new LambdaQueryWrapper<>();
+        imageQueryWrapper.eq(RefProductImgAttachmentEntity::getCategoryId, entity.getId());
+        long imageCount = refProductImgAttachmentService.count(imageQueryWrapper);
+        if (imageCount > 0) {
+            throw new ServiceException("该分类下存在图片，无法删除");
+        }
     }
 
     /**

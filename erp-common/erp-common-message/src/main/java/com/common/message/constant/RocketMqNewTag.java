@@ -93,6 +93,10 @@ public class RocketMqNewTag {
      * 新中台平台出库
      */
     public static final String DMP_PLATFORM_OUTBOUND_TO_WMS_TAG = "${spring.cloud.nacos.discovery.namespace}-dmp_platform_outbound_to_wms_tag";
+    /**
+     * 新中台平出库单更新B2C并下推出库
+     */
+    public static final String DMP_PLATFORM_OUTBOUND_TO_OMS_PUSH_DOWN_WMS_TAG = "${spring.cloud.nacos.discovery.namespace}-dmp_platform_outbound_to_oms_push_down_wms_tag";
     
     /**
      * 新中台旺店通仓库
