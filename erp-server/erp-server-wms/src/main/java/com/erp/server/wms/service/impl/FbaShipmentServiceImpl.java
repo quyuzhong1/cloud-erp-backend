@@ -2213,7 +2213,12 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
                 }
             }catch (ApiException e){
                 log.error("货件【{}】打印标签失败：{}", entity.getFbaShipmentId(), JSONUtil.toJsonStr(e));
-                throw new ServiceException("货件【{}】打印标签失败：{}", entity.getFbaShipmentId(), e.getResponseBody());
+                String errorMsg = e.getResponseBody();
+                if (StringUtils.contains(errorMsg, "This operation is not supported for shipments with unsupported transportation types.")){
+                    throw new ServiceException("货件【{}】打印标签失败：在后台创建的AWD入库货件无法在系统打印箱子标签，请前往亚马逊后台打印", entity.getFbaShipmentId());
+                }else {
+                    throw new ServiceException("货件【{}】打印标签失败：{}", entity.getFbaShipmentId(), e.getResponseBody());
+                }
             }catch (LWAException e){
                 log.error("货件【{}】打印标签调用失败：{}", entity.getFbaShipmentId(), JSONUtil.toJsonStr(e));
                 throw new ServiceException("货件【{}】打印标签调用失败：{}", entity.getFbaShipmentId(), e.getErrorMessage());
