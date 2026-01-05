@@ -203,4 +203,22 @@ public interface SampleTransferInfoService extends SuperService<SampleTransferIn
     */
     void downloadTemplate(HttpServletResponse response);
 
+    /**
+     * APP端标签页列表
+     * @author wuhaotian
+     * @date: 2025-10-28
+     * @param dto
+     * @return List<SampleTransferInfoDTO.TabListDTO>
+     */
+    List<SampleTransferInfoDTO.TabListDTO> tabListApp(PermissionsDTO dto);
+
+    /**
+     * APP端分页列表查询
+     * @author wuhaotian
+     * @date: 2025-10-28
+     * @param pagingParamDTO
+     * @return PagingVO<SampleTransferInfoDTO.ListDTO>
+     */
+    PagingVO<SampleTransferInfoDTO.ListDTO> pagingApp(PagingDTO<SampleTransferInfoDTO.PagingParamDTO> pagingParamDTO);
+
 }
