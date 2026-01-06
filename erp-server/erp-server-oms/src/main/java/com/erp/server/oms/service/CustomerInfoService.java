@@ -58,11 +58,12 @@ public interface CustomerInfoService extends SuperService<CustomerInfoEntity> {
      * 提交
      *
      * @param ids
+     * @param isUpdateAddress
      * @return java.lang.Boolean
      * @author yl
      * @date 2023-05-12 16:47
      */
-    Boolean submit(List<String> ids);
+    Boolean submit(List<String> ids, Boolean isUpdateAddress);
 
     /**
      * 获取tab list
@@ -406,4 +407,6 @@ public interface CustomerInfoService extends SuperService<CustomerInfoEntity> {
      * @return
      */
     List<CustomerDTO.InfoDTO> listEnable2cCustomer(String permissionSql);
+
+    String updateCustomerAddress(CustomerDTO.UpdateDTO dto);
 }

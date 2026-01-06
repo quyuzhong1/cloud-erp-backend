@@ -1941,7 +1941,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
                     if (Objects.isNull( approveStatus) || Objects.equals(ApproveStatusEnum.REJECT.getStatus(), approveStatus.getStatus()) || Objects.equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus(), approveStatus.getStatus())) {
                         List<String> ids = Arrays.asList(customerInfoEntity.getId());
                         //提交
-                        Boolean submitResult = customerInfoService.submit(ids);
+                        Boolean submitResult = customerInfoService.submit(ids, false);
 //                    if (submitResult) {
 //                        customerInfoEntity.setApproveStatus(ApproveStatusEnum.APPROVE_ING);
 //                        customerInfoService.approve(new BaseApproveParamDTO(ids, ApproveTypeEnum.PASS.getStatus(), "", Boolean.FALSE),customerInfoEntity);
