@@ -97,6 +97,7 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_AWD_SHIPMENT;
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_FBA_SHIPMENT;
 
 /**
@@ -2507,7 +2508,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
 
     @Override
     public void awdExport(FbaShipmentDTO.PagingParamDTO dto) {
-        downloadTaskFeign.saveDownloadTask("AWD货件导出", EXPORT_WMS_FBA_SHIPMENT.getCode(), dto);
+        downloadTaskFeign.saveDownloadTask("AWD货件导出", EXPORT_WMS_AWD_SHIPMENT.getCode(), dto);
     }
 
     @Override
