@@ -47,6 +47,12 @@ public class RefProductImgAttachmentEntity extends BaseEntity<RefProductImgAttac
     @TableField("attachment_id")
     private String attachmentId;
 
+    /**
+    * 缩略图附件ID（如果图片不需要压缩，则与attachmentId相同）
+    */
+    @TableField("thumbnail_attachment_id")
+    private String thumbnailAttachmentId;
+
 
     public static final String CATEGORY_ID = "category_id";
 
@@ -55,6 +61,8 @@ public class RefProductImgAttachmentEntity extends BaseEntity<RefProductImgAttac
     public static final String SKU_NO = "sku_no";
 
     public static final String ATTACHMENT_ID = "attachment_id";
+
+    public static final String THUMBNAIL_ATTACHMENT_ID = "thumbnail_attachment_id";
 
     @Override
     public Serializable pkVal() {

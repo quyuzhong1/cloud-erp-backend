@@ -112,9 +112,14 @@ public class RefProductImgAttachmentDTO implements Serializable {
         private String attachName;
 
         /**
-         * 附件URL
+         * 附件URL（缩略图URL，如果存在则返回缩略图，否则返回原图）
          */
         private String attachUrl;
+
+        /**
+         * 主图URL（原图URL，用于前端下载）
+         */
+        private String originalImageUrl;
 
         /**
          * 附件大小
