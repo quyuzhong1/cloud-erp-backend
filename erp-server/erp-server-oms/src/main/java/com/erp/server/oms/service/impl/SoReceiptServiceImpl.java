@@ -916,6 +916,15 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
     public void handlePlatformConsumer(PlatformReceiptDTO dto) {
         //查询是否存在
         SoReceiptEntity exist = this.getByThirdSystemAndCode(dto.getThirdSystem(), dto.getCode());
+        //查询销售订单状态
+        SoInfoEntity soInfoEntity = new SoInfoEntity();
+        if (!dto.getDetail().isEmpty()) {
+            if (StringUtils.isNotBlank(dto.getDetail().get(0).getErpSoId())) {
+                soInfoEntity = soInfoService.lambdaQuery()
+                        .eq(SoInfoEntity::getCode,dto.getDetail().get(0).getErpSoId())
+                        .one();
+            }
+        }
         List<SoReceiptDetailEntity> existList;
         if(exist != null) {
             existList = soReceiptDetailService.listByMainIds(Arrays.asList((exist.getId())));
@@ -1014,6 +1023,19 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
                     soInfoService.updateSoReceiptAmount(soIds);
                 }
             }
+
+            if (Objects.nonNull(soInfoEntity)) {
+                if (soInfoEntity.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getCode())
+                        || soInfoEntity.getApproveStatus().equals(ApproveStatusEnum.APPROVE_ING.getCode())) {
+                    this.submit(exist.getId());
+                    ApproveOneDTO approveOneDTO = new ApproveOneDTO();
+                    approveOneDTO.setId(exist.getId());
+                    approveOneDTO.setType(ApproveTypeEnum.PASS.getStatus());
+                    approveOneDTO.setComment("");
+                    this.approve(approveOneDTO);
+                }
+            }
+
         }else{
             //如果是作废，直接跳过
             if(dto.getIsInvalid()){
@@ -1054,6 +1076,18 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
             }
             addDTO.setDetailList(detailAddDTOList);
             this.add(addDTO);
+
+            if (Objects.nonNull(soInfoEntity)) {
+                if (soInfoEntity.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getCode())
+                        || soInfoEntity.getApproveStatus().equals(ApproveStatusEnum.APPROVE_ING.getCode())) {
+                    this.submit(exist.getId());
+                    ApproveOneDTO approveOneDTO = new ApproveOneDTO();
+                    approveOneDTO.setId(exist.getId());
+                    approveOneDTO.setType(ApproveTypeEnum.PASS.getStatus());
+                    approveOneDTO.setComment("");
+                    this.approve(approveOneDTO);
+                }
+            }
         }
     }
 
