@@ -136,7 +136,6 @@ public interface SoInfoConverter {
     @Mapping(target = "status", expression = "java(com.erp.model.wms.enums.ThirdDeliveryStatusEnum.CREATING.getCode())")
     @Mapping(target = "soId", source = "soInfoEntity.id")
     @Mapping(target = "soCode", source = "soInfoEntity.code")
-    @Mapping(target = "operationDesc", ignore = true)
     @Mapping(target = "logisticsChannelName", ignore = true)
     @Mapping(target = "logisticsChannelId", ignore = true)
     @Mapping(target = "isApiDelivery", ignore = true)

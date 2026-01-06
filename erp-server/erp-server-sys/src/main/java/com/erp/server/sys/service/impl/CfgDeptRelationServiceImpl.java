@@ -86,7 +86,6 @@ public class CfgDeptRelationServiceImpl extends SuperServiceImpl<CfgDeptRelation
     @Override
     public Boolean update(CfgDeptRelationDTO.UpdateDTO addOrUpdateDTO) {
         CfgDeptRelationEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "部门关联单"));
         CfgDeptRelationEntity cfgDeptRelationEntity =  BeanMapperUtils.map(CfgDeptRelationEntity.class, addOrUpdateDTO);
 
         // 数据处理
@@ -158,7 +157,6 @@ public class CfgDeptRelationServiceImpl extends SuperServiceImpl<CfgDeptRelation
         try {
             new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
         } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_1015);
         }
     }
     /**
