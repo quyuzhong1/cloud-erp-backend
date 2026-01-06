@@ -1008,8 +1008,8 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
             }
 
             if (Objects.nonNull(soInfoEntity)) {
-                if (soInfoEntity.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getCode())
-                        || soInfoEntity.getApproveStatus().equals(ApproveStatusEnum.APPROVE_ING.getCode())) {
+                if (soInfoEntity.getApproveStatus().equals(BillApproveStatusEnum.APPROVE)
+                        || soInfoEntity.getApproveStatus().equals(BillApproveStatusEnum.APPROVE_ING)) {
                     this.submit(exist.getId());
                     ApproveOneDTO approveOneDTO = new ApproveOneDTO();
                     approveOneDTO.setId(exist.getId());
@@ -1061,8 +1061,8 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
             this.add(addDTO);
 
             if (Objects.nonNull(soInfoEntity)) {
-                if (soInfoEntity.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getCode())
-                        || soInfoEntity.getApproveStatus().equals(ApproveStatusEnum.APPROVE_ING.getCode())) {
+                if (soInfoEntity.getApproveStatus().equals(BillApproveStatusEnum.APPROVE)
+                        || soInfoEntity.getApproveStatus().equals(BillApproveStatusEnum.APPROVE_ING)) {
                     this.submit(exist.getId());
                     ApproveOneDTO approveOneDTO = new ApproveOneDTO();
                     approveOneDTO.setId(exist.getId());
