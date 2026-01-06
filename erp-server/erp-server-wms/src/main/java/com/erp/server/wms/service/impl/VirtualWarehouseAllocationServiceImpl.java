@@ -6,6 +6,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -956,7 +957,7 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
 
             if (CharSequenceUtil.isNotBlank(detailDto.getToVirtualWarehouseId())) {
                 VirtualWarehouseRelationEntity toVmRelation = vwRelationList.stream().filter(item ->
-                        Objects.equals(item.getVirtualWarehouseId(), detailDto.getToVirtualWarehouseId()) && Objects.equals(item.getWarehouseId(), detailDto.getToWarehouseId())).findFirst().orElse(null);
+                        Objects.equals(item.getVirtualWarehouseId(), detailDto.getToVirtualWarehouseId()) && Objects.equals(item.getWarehouseId(), StrUtil.blankToDefault(detailDto.getToWarehouseId(),detailDto.getWarehouseId()))).findFirst().orElse(null);
                 if (Objects.isNull(toVmRelation)) {
                     throw new ServiceException(ApiError.VM_RELATION_ERROR, updateDTO.getName(), toVmWarehouse.getName());
                 }
