@@ -919,9 +919,9 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
         //查询销售订单状态
         SoInfoEntity soInfoEntity = new SoInfoEntity();
         if (!dto.getDetail().isEmpty()) {
-            if (StringUtils.isNotBlank(dto.getDetail().get(0).getErpSoId())) {
+            if (StringUtils.isNotBlank(dto.getDetail().get(0).getSoCode())) {
                 soInfoEntity = soInfoService.lambdaQuery()
-                        .eq(SoInfoEntity::getCode,dto.getDetail().get(0).getErpSoId())
+                        .eq(SoInfoEntity::getCode,dto.getDetail().get(0).getSoCode())
                         .one();
             }
         }
