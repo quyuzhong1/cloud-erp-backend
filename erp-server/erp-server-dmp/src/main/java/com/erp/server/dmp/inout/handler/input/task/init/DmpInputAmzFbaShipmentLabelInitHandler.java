@@ -101,7 +101,7 @@ public class DmpInputAmzFbaShipmentLabelInitHandler extends DmpInputAmzCommonIni
             try {
                 // 查询FBA货件item
 
-                GetLabelsResponse response = api.getLabels(shipmentId, "PackageLabel_Plain_Paper", "BARCODE_2D", null, null, null, 100, null);
+                GetLabelsResponse response = api.getLabels(shipmentId, "PackageLabel_Plain_Paper", "BARCODE_2D", null, null, null, 100, 0);
                 String labelUrl = "";
                 if (Objects.nonNull(response) && Objects.nonNull(response.getPayload())){
                     String downloadURL = response.getPayload().getDownloadURL();

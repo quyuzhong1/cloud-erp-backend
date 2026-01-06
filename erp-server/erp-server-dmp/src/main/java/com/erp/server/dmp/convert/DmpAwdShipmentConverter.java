@@ -34,7 +34,7 @@ public interface DmpAwdShipmentConverter {
     @Mapping(target = "orderType", ignore = true)
     @Mapping(target = "dmpSyncTaskId", source = "dmpMainEntity.inputTaskId")
     @Mapping(target = "detailList", source = "dmpDetailEntityList")
-    @Mapping(target = "deliveryStatus", source = "dmpMainEntity.platformShipmentStatus")
+    @Mapping(target = "deliveryStatus", constant = "unShipped")
     @Mapping(target = "deliveryId", ignore = true)
     @Mapping(target = "deliveryCode", ignore = true)
     @Mapping(target = "countryName", ignore = true)
