@@ -66,4 +66,6 @@ public interface SoB2cCoreService {
     void generateDeliveryAndOutStock(SoB2cEntity soB2cEntity, List<SoB2cDetailEntity> detailEntityList, SoB2cDTO.DeliveryWithNotOutboundDTO dto, SoB2cLogisticsEntity soB2cLogisticsEntity, SoB2cReceiverEntity soB2cReceiverEntity, OverseasProviderWarehouseDTO.ViewDTO overseasWarehouse);
 
     Boolean handleSoOutStock(String soId);
+
+    void updateRemarkAndLog(SoB2cDTO.RemarkDTO remarkDTO);
 }

@@ -245,18 +245,28 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
         }
 
         if (SoB2cBillStatusEnum.ENUM_EXCEPTION.getCode().equals(dto.getOrderStatus())) {
-            //更新异常订单信息
-            SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO(
-                    mainEntity.getId(),
-                    SoB2cErrorTypeEnum.THIRD_WAREHOUSE_OUT_EXCEPTION.getCode(),
-                    null,
-                    dto.getAbnormalProblemReason(),
-                    JSONUtil.toJsonStr(dto),
-                    ""
-            );
-            soB2cFeign.addSoB2cError(addError);
-            //异步取消海外仓订单
-            asyncService.asyncCancelThirdWarehouseOrder(mainEntity,dto.getAbnormalProblemReason());
+            //大卖仓不拦截，只记录日志和备注
+            if (CharSequenceUtil.equals(PlatformDictEnum.DA_MAI.getCode(),dto.getPlatform())) {
+                SoB2cDTO.RemarkDTO remarkDTO = new SoB2cDTO.RemarkDTO();
+                remarkDTO.setId(mainEntity.getId());
+                remarkDTO.setRemark(dto.getAbnormalProblemReason());
+                OperateLogDTO.AddModuleOperateLogDTO operateLogDTO = new OperateLogDTO.AddModuleOperateLogDTO("海外仓出库异常，系统应拦截，为保证发货时效运营要求不予拦截，直接海外仓后台修改提交", ModuleTypeEnum.SO_B2C.getCode(), mainEntity.getId(), "三方仓出库异常");
+                remarkDTO.setOperateLogDTO(operateLogDTO);
+                soB2cFeign.updateRemarkAndLog(remarkDTO);
+            }else{
+                //更新异常订单信息
+                SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO(
+                        mainEntity.getId(),
+                        SoB2cErrorTypeEnum.THIRD_WAREHOUSE_OUT_EXCEPTION.getCode(),
+                        null,
+                        dto.getAbnormalProblemReason(),
+                        JSONUtil.toJsonStr(dto),
+                        ""
+                );
+                soB2cFeign.addSoB2cError(addError);
+                //异步取消海外仓订单
+                asyncService.asyncCancelThirdWarehouseOrder(mainEntity,dto.getAbnormalProblemReason());
+            }
         }
         if (SoB2cBillStatusEnum.ENUM_DISUSE.getCode().equals(dto.getOrderStatus())) {
             if(mainEntity.getBillStatus().equals(SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode())){

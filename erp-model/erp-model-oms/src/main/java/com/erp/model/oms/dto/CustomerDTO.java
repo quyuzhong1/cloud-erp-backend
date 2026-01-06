@@ -1144,7 +1144,8 @@ public class CustomerDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class BaseDTO {
+    public static class
+    BaseDTO {
 
         /**
          * id
@@ -1172,6 +1173,9 @@ public class CustomerDTO implements Serializable {
          */
         private String address;
 
+        private String address2;
+
+        private String address3;
         /**
          * 地址
          */

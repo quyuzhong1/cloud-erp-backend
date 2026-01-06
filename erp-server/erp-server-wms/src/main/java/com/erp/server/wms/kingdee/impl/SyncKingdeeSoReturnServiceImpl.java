@@ -31,6 +31,8 @@ import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.dto.KingdeeBusinessOperatorDTO;
 import com.erp.model.sys.dto.KingdeeOperatorRefPostDTO;
+import com.erp.model.sys.entity.CfgDeptRelationEntity;
+import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.model.sys.enums.KingdeeBusinessOperatorTypeEnum;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.entity.SoReturnInstockDetailEntity;
@@ -266,23 +268,23 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
             resultMap.put("inventoryOrgCode", inventoryOrgCode);
         }
         //销售员
-        String sellerId = entity.getSellerId();
-        String salesDeptId = entity.getSalesDeptId();
-        //获取业务员信息
-        if (CharSequenceUtil.isNotBlank(sellerId)) {
-            KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO findBusinessOperator = new KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO();
-            findBusinessOperator.setOrgId(entity.getSalesOrgId());
-            findBusinessOperator.setUserId(sellerId);
-            findBusinessOperator.setSalesDeptId(salesDeptId);
-            findBusinessOperator.setBusinessOperatorType(KingdeeBusinessOperatorTypeEnum.XSY.getCode());
-            //获取员工业务信息
-            KingdeeOperatorRefPostDTO.OperatorDTO kingSellerInfo = kingdeeFeign.getBusinessOperator(findBusinessOperator);
-            //销售员
-            if (!Objects.isNull(kingSellerInfo)) {
-                resultMap.put("sellerUserCode", kingSellerInfo.getUserPostCode());
-                resultMap.put("sellerDeptCode", kingSellerInfo.getDeptCode());
-            }
-        }
+//        String sellerId = entity.getSellerId();
+//        String salesDeptId = entity.getSalesDeptId();
+//        //获取业务员信息
+//        if (CharSequenceUtil.isNotBlank(sellerId)) {
+//            KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO findBusinessOperator = new KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO();
+//            findBusinessOperator.setOrgId(entity.getSalesOrgId());
+//            findBusinessOperator.setUserId(sellerId);
+//            findBusinessOperator.setSalesDeptId(salesDeptId);
+//            findBusinessOperator.setBusinessOperatorType(KingdeeBusinessOperatorTypeEnum.XSY.getCode());
+//            //获取员工业务信息
+//            KingdeeOperatorRefPostDTO.OperatorDTO kingSellerInfo = kingdeeFeign.getBusinessOperator(findBusinessOperator);
+//            //销售员
+//            if (!Objects.isNull(kingSellerInfo)) {
+//                resultMap.put("sellerUserCode", kingSellerInfo.getUserPostCode());
+//                resultMap.put("sellerDeptCode", kingSellerInfo.getDeptCode());
+//            }
+//        }
 
         if (CharSequenceUtil.isNotBlank(entity.getWarehouseKeeperId())) {
             //仓管员编码
@@ -297,6 +299,10 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
             CustomerInfoEntity customerInfoEntity = customerInfoEntitieList.stream().filter(obj -> obj.getId().equals(entity.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
             resultMap.put("customerCode", customerInfoEntity.getCode());
             String platformType = customerInfoEntity.getPlatformType();
+            String partitionId = soInfoEntity.getPartitionId();
+            if(StringUtils.isBlank(partitionId)){
+                partitionId = customerInfoEntity.getPartitionId();
+            }
             if(StringUtils.isNotBlank(platformType)) {
             	List<DictBasicEntity> dictBasicEntityList = FeignQuery.create(DictBasicEntity.class)
                         .eq(DictBasicEntity::getType, DictBasicTypeEnum.SDY_SUB_PLATFORM.getType())
@@ -315,6 +321,23 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
             List<CurrencyDTO.ViewDTO> currencyListt = sysUserFeign.listByCurrency(Collections.singletonList(customerInfoEntity.getCurrency()));
             CurrencyDTO.ViewDTO currencyDTO = currencyListt.stream().filter(req -> req.getId().equals(customerInfoEntity.getCurrency())).findFirst().orElse(new CurrencyDTO.ViewDTO());
             resultMap.put("currencyCode", currencyDTO.getKingdeeCode());
+
+            String deptId = customerInfoEntity.getSalesDeptId();
+            if(StringUtils.isNotBlank(platformType) && StringUtils.isNotBlank(partitionId)) {
+                List<CfgDeptRelationEntity> cfgDeptRelationEntityList = FeignQuery.create(CfgDeptRelationEntity.class).eq(CfgDeptRelationEntity::getDictPlatform, platformType)
+                        .eq(CfgDeptRelationEntity::getPartitionId, partitionId)
+                        .eq(CfgDeptRelationEntity::getDisabled,false)
+                        .list();
+                if(org.apache.commons.collections4.CollectionUtils.isNotEmpty(cfgDeptRelationEntityList)) {
+                    deptId = cfgDeptRelationEntityList.get(0).getDeptId();
+                }
+            }
+            if(StringUtils.isNotBlank(deptId)){
+                List<SysDepartmentEntity> deptList = sysUserFeign.listDeptByIds(Arrays.asList(deptId));
+                if(org.apache.commons.collections4.CollectionUtils.isNotEmpty(deptList)){
+                    resultMap.put("sellerDeptCode",deptList.get(0).getCode());
+                }
+            }
         }
 
         //结算组织

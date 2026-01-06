@@ -636,7 +636,10 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                 //校验组合SKU库存量是否满足调出，否则无法审核通过，提示：SKU【SKU编码】【发货仓】冻结库存不足，无法审核发货单
                 for (FirstMileDeliveryDetailEntity firstMileDeliveryDetailEntity : isCombinationList) {
                     //及时库存
-                    SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuNo().equals(firstMileDeliveryDetailEntity.getSkuNo())).findFirst().orElse(new SkuVO());
+                    SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuNo().equals(firstMileDeliveryDetailEntity.getSkuNo())).findFirst().orElse(null);
+                    if(Objects.isNull(skuVO)){
+                        throw new ServiceException(ApiError.COMMON_SKU_NOT_EXIST_OR_NOT_APPROVE, firstMileDeliveryDetailEntity.getSkuNo());
+                    }
                     Integer usableInventoryTotal = inventoryService.getInventoryTotal(entity.getInventoryOrgId() ,entity.getDeliveryWarehouseId(), skuVO.getSkuId(), firstMileDeliveryDetailEntity.getWarehouseLocation(), InventoryStatusEnum.FROZEN.getCode());
                     if (firstMileDeliveryDetailEntity.getDeliveryQty() > usableInventoryTotal) {
                         throw new ServiceException(ApiError.FIRST_MILE_SHIPMENT_INVENTORY_INSUFFICIENT, firstMileDeliveryDetailEntity.getSkuNo(), entity.getDeliveryWarehouseName());

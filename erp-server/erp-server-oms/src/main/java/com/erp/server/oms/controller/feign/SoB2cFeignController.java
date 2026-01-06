@@ -947,6 +947,15 @@ public class SoB2cFeignController extends BaseController {
        return soB2cCoreService.handleSoOutStock(soId);
     }
 
+
+    /**
+     * 添加日志备注
+     */
+    @PostMapping("/updateRemarkAndLog")
+    public void updateRemarkAndLog(@RequestBody SoB2cDTO.RemarkDTO remarkDTO) {
+        soB2cCoreService.updateRemarkAndLog(remarkDTO);
+    }
+
     /**
      * 销售订单审核
      * @Author Luo_WG

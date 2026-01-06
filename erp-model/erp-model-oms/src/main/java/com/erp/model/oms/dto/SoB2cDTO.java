@@ -3519,6 +3519,14 @@ public class SoB2cDTO implements Serializable {
          * 备注
          */
         private String remark;
+
+        private OperateLogDTO.AddModuleOperateLogDTO operateLogDTO;
+
+        public RemarkDTO(String soB2cId, String remark) {
+            this.id = soB2cId;
+            this.remark = remark;
+
+        }
     }
 
     /**

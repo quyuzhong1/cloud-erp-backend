@@ -35,7 +35,14 @@ public class CustomerAddressDTO implements Serializable {
         @NotBlank(message = "详细地址不能为空")
         @Size(max = 500, message = "详细地址最大500字符")
         private String address;
-
+        /**
+         * 地址2
+         */
+        private String address2;
+        /**
+         * 地址3
+         */
+        private String address3;
         /**
          * 联系人
          */
@@ -116,6 +123,14 @@ public class CustomerAddressDTO implements Serializable {
          * 地址
          */
         private String address;
+        /**
+         * 地址2
+         */
+        private String address2;
+        /**
+         * 地址3
+         */
+        private String address3;
 
         /**
          * 联系人

@@ -31,6 +31,7 @@ public enum SoB2cErrorTypeEnum {
     GET_LOGISTICS_LABEL("getLogisticsLabel",  "获取物流面单异常"),
     OTHER("other",  "其他异常"),
     AUTO_OUTBOUND_ERROR("autoOutboundError",  "自动出库异常"),
+    GET_EXCHANGE_RATE("getExchangeRate",  "获取汇率异常"),
     ;
     /**
      * 类型
