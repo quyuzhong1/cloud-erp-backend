@@ -592,26 +592,6 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
                 }else {
                     errorMsgList.add("国家名称不存在");
                 }
-                //省
-                String provinceId = provinceMap.getOrDefault(mainInfo.getProvince(), "");
-                if(StringUtils.isNotBlank(provinceId)){
-                    mainInfo.setProvinceId(provinceId);
-                }else {
-                    errorMsgList.add("省不存在");
-                }
-                //市
-                String cityId = cityMap.getOrDefault(mainInfo.getCity(), "");
-                if(StringUtils.isNotBlank(cityId)){
-                    mainInfo.setCityId(cityId);
-                }else {
-                    errorMsgList.add("市不存在");
-                }
-                //区域
-                String districtId = districtMap.getOrDefault(mainInfo.getDistrict(), "");
-                if(StringUtils.isNotBlank(districtId)){
-                    mainInfo.setDistrictId(districtId);
-                }
-
                 //语言
                 String language = languageMap.getOrDefault(mainInfo.getLanguageName(), "");
                 if(StringUtils.isNotBlank(language)){
@@ -671,7 +651,40 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
                                 kolAddressInfoDTO.setCountryId(addressCountryId);
                                 kolAddressInfoDTO.setCountryName(item.getAddressCountryName());
                             }else {
-                                msgList.add("地址信息--国家名称不存在");
+                                msgList.add("地址信息--国家名称未找到");
+                            }
+
+                            //省
+                            String provinceId = provinceMap.getOrDefault(item.getProvince(), "");
+                            if(StringUtils.isNotBlank(provinceId)){
+                                kolAddressInfoDTO.setProvinceId(provinceId);
+                            }else {
+                                msgList.add("地址信息--省未找到");
+                            }
+                            //市
+                            String cityId = cityMap.getOrDefault(item.getCity(), "");
+                            if(StringUtils.isNotBlank(cityId)){
+                                kolAddressInfoDTO.setCityId(cityId);
+                            }else {
+                                msgList.add("地址信息--市未找到");
+                            }
+                            //区域
+                            if(addressCountryId.equals(DictValueEnum.CN.getCode())){
+                                if(StringUtils.isBlank(item.getDistrict())) {
+                                    msgList.add("国家为中国大陆则区域不能为空");
+                                }else{
+                                    String districtId = districtMap.getOrDefault(item.getDistrict(), "");
+                                    if(StringUtils.isNotBlank(districtId)){
+                                        kolAddressInfoDTO.setDistrictId(districtId);
+                                    }else {
+                                        msgList.add("地址信息--区域未找到");
+                                    }
+                                }
+                            }else {
+                                String districtId = districtMap.getOrDefault(item.getDistrict(), "");
+                                if(StringUtils.isNotBlank(districtId)){
+                                    kolAddressInfoDTO.setDistrictId(districtId);
+                                }
                             }
 
                             kolAddressInfoDTO.setProvince(item.getProvince());
