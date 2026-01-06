@@ -187,10 +187,12 @@ public class SyncAmazonSoMultiChannelServiceImpl implements SyncAmazonSoMultiCha
         addressMap.put("addressLine3", receiverInfo.getAddress3());
         addressMap.put("city", receiverInfo.getCity());
         addressMap.put("districtOrCounty", receiverInfo.getDistrict());
-        if (CharSequenceUtil.isBlank(receiverInfo.getProvince())) {
-            throw new ServiceException("收货人州省不能为空");
+//        if (CharSequenceUtil.isBlank(receiverInfo.getProvince())) {
+//            throw new ServiceException("收货人州省不能为空");
+//        }
+        if (CharSequenceUtil.isNotBlank(receiverInfo.getProvince())){
+            addressMap.put("stateOrRegion", receiverInfo.getProvince());
         }
-        addressMap.put("stateOrRegion", receiverInfo.getProvince());
         if (CharSequenceUtil.isBlank(receiverInfo.getZipCode())) {
             throw new ServiceException("收货人邮编不能为空");
         }
