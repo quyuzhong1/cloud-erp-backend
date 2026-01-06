@@ -137,4 +137,15 @@ public class FileFeignController {
         FileService fileService = fileRegistry.getHandler();
         return fileService.createZipFromFolderStructure(dto);
     }
+
+    /**
+     * 批量获取文件大小
+     * @param fileUrlList 文件URL列表
+     * @return 文件大小信息列表
+     */
+    @PostMapping("/getBatchFileSize")
+    public List<FileDTO.FileSizeInfo> getBatchFileSize(@RequestBody List<String> fileUrlList) {
+        FileService fileService = fileRegistry.getHandler();
+        return fileService.getBatchFileSize(fileUrlList);
+    }
 }

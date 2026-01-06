@@ -531,4 +531,31 @@ public class FastDFSDownloadImpl implements FileService {
             throw new ServiceException(ApiError.FILE_ZIP_CREATE_FAILED, e.getMessage());
         }
     }
+
+    /**
+     * 批量获取文件大小
+     * @param fileUrlList 文件URL列表
+     * @return 文件大小信息列表
+     */
+    @Override
+    public List<FileDTO.FileSizeInfo> getBatchFileSize(List<String> fileUrlList) {
+        List<FileDTO.FileSizeInfo> result = new ArrayList<>();
+        if (fileUrlList == null || fileUrlList.isEmpty()) {
+            return result;
+        }
+        
+        // 调用FastDFSClientUtil批量获取文件大小
+        Map<String, Long> sizeMap = FastDFSClientUtil.getBatchFileSize(fileUrlList);
+        
+        // 转换为FileSizeInfo列表
+        for (String fileUrl : fileUrlList) {
+            FileDTO.FileSizeInfo fileSizeInfo = FileDTO.FileSizeInfo.builder()
+                    .fileUrl(fileUrl)
+                    .fileSize(sizeMap.get(fileUrl))
+                    .build();
+            result.add(fileSizeInfo);
+        }
+        
+        return result;
+    }
 }

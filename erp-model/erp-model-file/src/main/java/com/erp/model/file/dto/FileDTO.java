@@ -73,4 +73,24 @@ public class FileDTO {
         private Map<String, String> fileUrlToNameMap;
     }
 
+    /**
+     * 文件大小信息DTO
+     * 用于批量获取文件大小
+     */
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class FileSizeInfo {
+        /**
+         * 文件URL（FastDFS路径）
+         */
+        private String fileUrl;
+        
+        /**
+         * 文件大小（字节）
+         */
+        private Long fileSize;
+    }
+
 }

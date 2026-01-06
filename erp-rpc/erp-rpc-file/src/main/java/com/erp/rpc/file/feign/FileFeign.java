@@ -96,4 +96,12 @@ public interface FileFeign {
      */
     @PostMapping("/feign/file/createZipFromFolderStructure")
     String createZipFromFolderStructure(@RequestBody FileDTO.CreateZipDTO dto);
+
+    /**
+     * 批量获取文件大小
+     * @param fileUrlList 文件URL列表
+     * @return 文件大小信息列表
+     */
+    @PostMapping("/feign/file/getBatchFileSize")
+    List<FileDTO.FileSizeInfo> getBatchFileSize(@RequestBody List<String> fileUrlList);
 }
