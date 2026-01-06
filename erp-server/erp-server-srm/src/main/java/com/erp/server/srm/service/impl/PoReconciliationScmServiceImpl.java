@@ -561,7 +561,11 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
             }
 
             //已对账明细信息
-            List<PoReconciliationRefDetailEntity> refDetailList = poReconciliationRefDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getPoReconciliationId(), listDTO.getId())).collect(Collectors.toList());
+            List<PoReconciliationRefDetailEntity> refDetailList = poReconciliationRefDetailList.stream()
+                    .filter(obj -> CharSequenceUtil.equals(obj.getPoReconciliationId(), listDTO.getId()))
+                    .sorted(Comparator.comparing(PoReconciliationRefDetailEntity::getSourceType)
+                            .thenComparing(PoReconciliationRefDetailEntity::getDate)
+                    ).collect(Collectors.toList());
             if (CollUtil.isEmpty(refDetailList)) {
                continue;
             }
