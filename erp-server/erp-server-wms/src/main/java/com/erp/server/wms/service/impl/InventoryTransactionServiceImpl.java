@@ -406,10 +406,17 @@ public class InventoryTransactionServiceImpl extends SuperServiceImpl<InventoryT
     		}
     	}
     	if(CollUtil.isNotEmpty(transactionRedisParam)) {
-    		inventoryRedisUtil.execute(InventoryRedisOpEnum.TRY , transactionId  , InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.OVERRIDE, ""),
-    				InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.CURRENT, ""),
-    				InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.TRANSACTION, ""),
-    				transactionRedisParam.stream().collect(Collectors.joining(InventoryRedisUtil.splitSign)));
+    		try {
+				inventoryRedisUtil.execute(InventoryRedisOpEnum.TRY , transactionId  , InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.OVERRIDE, ""),
+						InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.CURRENT, ""),
+						InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.TRANSACTION, ""),
+						transactionRedisParam.stream().collect(Collectors.joining(InventoryRedisUtil.splitSign)));
+			} catch (Exception e) {
+				InventoryRedisOpEnum rollback = InventoryRedisOpEnum.ROLLBACK;
+				inventoryRedisUtil.execute(rollback , rollback.getCode() , transactionId , InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.TRANSACTION, transactionId) 
+						, InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.CURRENT, ""));
+				throw e;
+			}
     	}
     	log.info("{}结束" , logMsg);
     }
