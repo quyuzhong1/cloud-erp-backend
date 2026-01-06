@@ -6,6 +6,7 @@ import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.entity.*;
 import com.erp.server.wms.convert.tool.TypeConversionWorker;
+import org.codehaus.janino.Java;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Mappings;
@@ -90,8 +91,8 @@ public interface RequisitionApplicationConverter {
             @Mapping(target = "countryName", source = "fbaShipmentEntity.countryName"),
             @Mapping(target = "deliveryWarehouseId", source = "entity.requisitionWarehouseId"),
             @Mapping(target = "deliveryWarehouseName", source = "entity.requisitionWarehouseName"),
-            @Mapping(target = "destWarehouseId", source = "shopInfo.warehouseId"),
-            @Mapping(target = "destWarehouseName", source = "shopInfo.warehouseName"),
+            @Mapping(target = "destWarehouseId", expression = "java(fbaShipmentEntity.getSourceType().equals(com.erp.model.wms.enums.ShipmentSourceTypeEnum.AWD.getCode()) ? shopInfo.getAwdWarehouseId() : shopInfo.getWarehouseId())"),
+            @Mapping(target = "destWarehouseName", expression = "java(fbaShipmentEntity.getSourceType().equals(com.erp.model.wms.enums.ShipmentSourceTypeEnum.AWD.getCode()) ? shopInfo.getAwdWarehouseName() : shopInfo.getWarehouseName())"),
             @Mapping(target = "remark", ignore = true),
             @Mapping(target = "fulfillmentCenter", source = "shopInfo.warehouseName"),
             @Mapping(target = "inventoryOrgId", ignore = true),
