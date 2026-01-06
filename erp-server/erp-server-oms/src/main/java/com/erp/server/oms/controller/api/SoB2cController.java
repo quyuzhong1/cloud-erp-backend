@@ -1847,4 +1847,19 @@ public class SoB2cController extends BaseController {
     public ApiResult<String> uploadLogisticLabel(@ModelAttribute @Validated SoB2cDTO.UploadFileDTO dto) throws IOException {
         return success(soB2cService.uploadLogisticLabel(dto));
     }
+
+    /**
+     * 重新执行平台出库消费
+     *
+     * @param
+     * @return
+     * @description
+     * @author jack
+     * @create 20256-01-06
+     */
+    @PostMapping("retryPlatformOutbound")
+    public ApiResult<String> retryPlatformOutbound(@RequestBody BaseIdsDTO.IdsDTO dto) {
+        soB2cService.retryPlatformOutbound(dto.getIds());
+        return success();
+    }
 }

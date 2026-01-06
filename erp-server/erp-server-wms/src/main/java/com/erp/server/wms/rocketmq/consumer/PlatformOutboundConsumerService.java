@@ -162,18 +162,15 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
             referenceNo = referenceNo.split("_")[0];
         }
 
-        if(referenceNo.contains(BusinessNoConstant.WFHD)){
+        if(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(dto.getOrderStatus())
+                && (OmsPlatformEnum.OMS_ANTU.getCode().equals(dto.getPlatform()) || OmsPlatformEnum.OMS_SPT.getCode().equals(dto.getPlatform()))){
+            map = checkAndBuildMap(dto);
+        }else if(referenceNo.contains(BusinessNoConstant.WFHD)){
             //查询三方仓发货单
             ThirdWarehouseDeliveryEntity thirdWarehouseDeliveryEntity = thirdWarehouseDeliveryService.getLatestByCode(referenceNo);
             if(Objects.isNull(thirdWarehouseDeliveryEntity)){
-                if(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(dto.getOrderStatus())
-                        && (OmsPlatformEnum.OMS_ANTU.getCode().equals(dto.getPlatform()) || OmsPlatformEnum.OMS_SPT.getCode().equals(dto.getPlatform()))){
-
-                    map = checkAndBuildMap(dto, referenceNo);
-                }else {
-                    log.error("第三方出库单: 未找到三方仓发货单 >>>>>>>{}",JSONUtil.toJsonStr(dto));
-                    return ApiResult.success();
-                }
+                log.error("第三方出库单: 未找到三方仓发货单 >>>>>>>{}",JSONUtil.toJsonStr(dto));
+                return ApiResult.success();
             }else {
                 if(Objects.nonNull(thirdWarehouseDeliveryEntity) && thirdWarehouseDeliveryEntity.getStatus().equals(SoB2cWarehouseDeliveryStatusEnum.CANCEL_DELIVERY.getStatus())){
                     return ApiResult.success();
@@ -193,7 +190,7 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
 
                 map.put(mainEntity ,thirdWarehouseDeliveryEntity);
             }
-        }else{
+        }else {
             SoB2cEntity mainEntity = soB2cFeign.getSoCode(referenceNo);
             if(null == mainEntity){
                 if (CharSequenceUtil.isBlank(referenceNo)){
@@ -319,11 +316,12 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
     }
 
 
-    private Map<SoB2cEntity,ThirdWarehouseDeliveryEntity> checkAndBuildMap(PlatformOutboundDTO dto, String referenceNo) {
+    private Map<SoB2cEntity,ThirdWarehouseDeliveryEntity> checkAndBuildMap(PlatformOutboundDTO dto) {
         Map<SoB2cEntity,ThirdWarehouseDeliveryEntity> resultMap = new HashMap<>();
         List<SoB2cEntity> mainEntityList = new ArrayList<>();
         //平台订单号
         String swOrderNumber = dto.getSwOrderNumber();
+        String referenceNo = dto.getReferenceNo();
         if(StringUtils.isBlank(swOrderNumber) && StringUtils.isBlank(referenceNo)){
             log.error("三方仓自动出库: 平台订单号为空 >>>>>>>{}",JSONUtil.toJsonStr(dto));
             return null;
@@ -368,7 +366,7 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
                 //更新异常订单信息
                 SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO(
                         mainEntity.getId(),
-                        SoB2cErrorTypeEnum.AUTO_OUTBOUND_ERROR.getCode(),
+                        SoB2cErrorTypeEnum.RETRY_PLATFORM_OUTBOUND.getCode(),
                         null,
                         "自动生成销售出库单失败：订单未审核或审核不通过",
                         JSONUtil.toJsonStr(dto),
@@ -428,7 +426,7 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
                 //更新异常订单信息
                 SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO(
                         mainEntity.getId(),
-                        SoB2cErrorTypeEnum.AUTO_OUTBOUND_ERROR.getCode(),
+                        SoB2cErrorTypeEnum.RETRY_PLATFORM_OUTBOUND.getCode(),
                         null,
                         StrUtil.format("自动生成销售出库单失败：存在【{}】平台未映射SKU",PlatformDictEnum.getNameByCode(mainEntity.getDictPlatform()),skuMappingError),
                         JSONUtil.toJsonStr(dto),
@@ -442,6 +440,16 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
             String platformWarehouseCode = dto.getWarehouseCode();
             if(StringUtils.isBlank(platformWarehouseCode)){
                 log.error("三方仓自动出库: 三方仓代码warehouseCode为空 >>>>>>>{}",JSONUtil.toJsonStr(dto));
+                //更新异常订单信息
+                SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO(
+                        mainEntity.getId(),
+                        SoB2cErrorTypeEnum.RETRY_PLATFORM_OUTBOUND.getCode(),
+                        null,
+                        "自动生成销售出库单失败：三方仓代码warehouseCode为空",
+                        JSONUtil.toJsonStr(dto),
+                        ""
+                );
+                soB2cFeign.addSoB2cError(addError);
                 continue;
             }
             OverseasProviderDTO.FeignDTO feignDTO = new OverseasProviderDTO.FeignDTO();
@@ -452,7 +460,7 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
                 //更新异常订单信息
                 SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO(
                         mainEntity.getId(),
-                        SoB2cErrorTypeEnum.AUTO_OUTBOUND_ERROR.getCode(),
+                        SoB2cErrorTypeEnum.RETRY_PLATFORM_OUTBOUND.getCode(),
                         null,
                         "自动生成销售出库单失败：三方仓库未映射",
                         JSONUtil.toJsonStr(dto),
@@ -482,6 +490,12 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
 
     //生成三方仓发货单
     private ThirdWarehouseDeliveryEntity generateThirdWarehouseDelivery(List<SoB2cDetailEntity> detailList, PlatformOutboundDTO dto, SoB2cEntity mainEntity,String platformCode) {
+        ThirdWarehouseDeliveryEntity thirdWarehouseDeliveryEntity = thirdWarehouseDeliveryService.getLatestByCode(dto.getReferenceNo());
+
+        if(Objects.nonNull(thirdWarehouseDeliveryEntity)){
+            return thirdWarehouseDeliveryEntity;
+        }
+
         List<ThirdWarehouseDeliveryDetailEntity> thirdWarehouseDeliveryDetailEntities = new ArrayList<>(detailList.size());
         for (SoB2cDetailEntity soB2cDetailEntity : detailList) {
             ThirdWarehouseDeliveryDetailEntity thirdWarehouseDeliveryDetailEntity = new ThirdWarehouseDeliveryDetailEntity();
@@ -496,7 +510,7 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
             thirdWarehouseDeliveryDetailEntity.setSoDetailId(soB2cDetailEntity.getId());
             thirdWarehouseDeliveryDetailEntities.add(thirdWarehouseDeliveryDetailEntity);
         }
-        ThirdWarehouseDeliveryEntity thirdWarehouseDeliveryEntity = new ThirdWarehouseDeliveryEntity();
+        thirdWarehouseDeliveryEntity = new ThirdWarehouseDeliveryEntity();
         thirdWarehouseDeliveryEntity.setCode(dto.getReferenceNo());
         thirdWarehouseDeliveryEntity.setSoCode(mainEntity.getCode());
         thirdWarehouseDeliveryEntity.setSoId(mainEntity.getId());
