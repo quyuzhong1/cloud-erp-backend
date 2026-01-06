@@ -253,7 +253,12 @@ public class CustomerInfoEntity extends BaseEntity<CustomerInfoEntity> {
       */
      @TableField("partition_id")
      private String partitionId;
-     
+
+    /**
+     * 是否流程是更新地址
+     */
+    @TableField(exist = false)
+    private Boolean isUpdateAddress = false;
 
     public static final String CODE = "code";
 

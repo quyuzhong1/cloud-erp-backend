@@ -31,6 +31,7 @@ import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.entity.*;
+import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.enums.DeliveryModeEnum;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.oms.enums.OrderSubTypeEnum;
@@ -42,10 +43,7 @@ import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.dto.KingdeeBusinessOperatorDTO;
 import com.erp.model.sys.dto.KingdeeOperatorRefPostDTO;
-import com.erp.model.sys.entity.DictCountryEntity;
-import com.erp.model.sys.entity.DictGlobalAreaEntity;
-import com.erp.model.sys.entity.DictPartitionEntity;
-import com.erp.model.sys.entity.SysDepartmentEntity;
+import com.erp.model.sys.entity.*;
 import com.erp.model.sys.enums.KingdeeBusinessOperatorTypeEnum;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.enums.DeliveryStatusEnum;
@@ -419,23 +417,24 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
                 map(BaseIdDTO.CodeDTO::getCode).findFirst().orElse("");
 
         //销售员
-        String sellerId = entity.getSellerId();
-        String salesDeptId = entity.getSalesDeptId();
+//        String sellerId = entity.getSellerId();
+//        String salesDeptId = entity.getSalesDeptId();
         //获取业务员信息
-        if (StringUtils.isNotBlank(sellerId)) {
-            KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO findBusinessOperator = new KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO();
-            findBusinessOperator.setOrgId(salesOrgId);
-            findBusinessOperator.setUserId(sellerId);
-            findBusinessOperator.setSalesDeptId(salesDeptId);
-            findBusinessOperator.setBusinessOperatorType(KingdeeBusinessOperatorTypeEnum.XSY.getCode());
-            //获取员工业务信息
-            KingdeeOperatorRefPostDTO.OperatorDTO kingdeeSeller = kingdeeFeign.getBusinessOperator(findBusinessOperator);
-            //销售员
-            if (!Objects.isNull(kingdeeSeller)) {
-                resultMap.put("sellerCode", kingdeeSeller.getUserPostCode());
-                resultMap.put("deptCode", kingdeeSeller.getDeptCode());
-            }
-        }
+//        if (StringUtils.isNotBlank(sellerId)) {
+//            KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO findBusinessOperator = new KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO();
+//            findBusinessOperator.setOrgId(salesOrgId);
+//            findBusinessOperator.setUserId(sellerId);
+//            findBusinessOperator.setSalesDeptId(salesDeptId);
+//            findBusinessOperator.setBusinessOperatorType(KingdeeBusinessOperatorTypeEnum.XSY.getCode());
+//            //获取员工业务信息
+//            KingdeeOperatorRefPostDTO.OperatorDTO kingdeeSeller = kingdeeFeign.getBusinessOperator(findBusinessOperator);
+//            //销售员
+//            if (!Objects.isNull(kingdeeSeller)) {
+//                resultMap.put("sellerCode", kingdeeSeller.getUserPostCode());
+//                resultMap.put("deptCode", kingdeeSeller.getDeptCode());
+//            }
+//        }
+        //通过军区和平台获取部门信息
 
         String currency = entity.getCurrency();
         List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(Arrays.asList(currency));
@@ -467,6 +466,10 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
             if (customerInfo != null) {
                 resultMap.put("customerCode", customerInfo.getCode());
                 String platformType = customerInfo.getPlatformType();
+                String partitionId = entity.getPartitionId();
+                if(StringUtils.isBlank(partitionId)){
+                    partitionId = customerInfo.getPartitionId();
+                }
                 if(StringUtils.isNotBlank(platformType)) {
                 	List<DictBasicEntity> dictBasicEntityList = dictBasicService.lambdaQuery()
                             .eq(DictBasicEntity::getType, DictBasicTypeEnum.SDY_SUB_PLATFORM.getType())
@@ -476,7 +479,24 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
                 		resultMap.put("sdyPlatformType", dictBasicEntityList.get(0).getRemark());
                 	}
                 }
+                String deptId = customerInfo.getSalesDeptId();
+                if(StringUtils.isNotBlank(platformType) && StringUtils.isNotBlank(partitionId)) {
+                    List<CfgDeptRelationEntity> cfgDeptRelationEntityList = FeignQuery.create(CfgDeptRelationEntity.class).eq(CfgDeptRelationEntity::getDictPlatform, platformType)
+                            .eq(CfgDeptRelationEntity::getPartitionId, partitionId)
+                            .eq(CfgDeptRelationEntity::getDisabled,false)
+                            .list();
+                    if(CollectionUtils.isNotEmpty(cfgDeptRelationEntityList)) {
+                        deptId = cfgDeptRelationEntityList.get(0).getDeptId();
+                    }
+                }
+                if(StringUtils.isNotBlank(deptId)){
+                    List<SysDepartmentEntity> deptList = sysUserFeign.listDeptByIds(Arrays.asList(deptId));
+                    if(CollectionUtils.isNotEmpty(deptList)){
+                        resultMap.put("deptCode",deptList.get(0).getCode());
+                    }
+                }
             }
+
         }
         List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Arrays.asList(warehouseId));
         String kingdeeWarehouseCode = "";
