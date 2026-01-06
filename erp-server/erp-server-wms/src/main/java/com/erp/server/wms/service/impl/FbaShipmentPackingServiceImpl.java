@@ -36,6 +36,7 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_AWD_SHIPMENT;
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_FBA_SHIPMENT_PACKING;
 
 /**
@@ -160,7 +161,7 @@ public class FbaShipmentPackingServiceImpl extends SuperServiceImpl<FbaShipmentP
 
     @Override
     public void packingExport(FbaShipmentDTO.PagingParamDTO dto) {
-        downloadTaskFeign.saveDownloadTask("FBA货件装箱清单导出", EXPORT_WMS_FBA_SHIPMENT_PACKING.getCode(), dto);
+        downloadTaskFeign.saveDownloadTask("AWD货件装箱清单导出", EXPORT_WMS_AWD_SHIPMENT.getCode(), dto);
     }
 
     @Override

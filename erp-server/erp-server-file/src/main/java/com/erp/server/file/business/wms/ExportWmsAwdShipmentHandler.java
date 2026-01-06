@@ -15,7 +15,6 @@ import javax.annotation.Resource;
 import java.util.List;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_AWD_SHIPMENT;
-import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_FBA_SHIPMENT;
 
 @Component
 @Slf4j
