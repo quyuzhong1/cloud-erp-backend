@@ -77,6 +77,7 @@ public abstract class DmpOutputRocketMQTaskHandler extends DmpOutputTaskHandler{
 	@Override
 	public void pushData(DmpCfgOutputEntity dmpCfgOutputEntity , DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity) {
 		String typeId = dmpCfgOutputEntity.getTypeId();
+		String cfgOutputId = dmpCfgOutputEntity.getId();
 		String id = dmpOutputTaskRecordEntity.getId();
 		
 		boolean pushLastDataFlag = false;
@@ -90,12 +91,16 @@ public abstract class DmpOutputRocketMQTaskHandler extends DmpOutputTaskHandler{
 				}
 			}
 		}
+		
+		String lastSql = " and exists (select 1 from dmp_output_task g where g.id = dmp_output_task_record.main_id and g.cfg_output_id = '"+ cfgOutputId +"' ) ";
+		
 		if(pushLastDataFlag) {
 			dmpOutputTaskRecordService.lambdaUpdate()
 			.eq(DmpOutputTaskRecordEntity::getDataId, dmpOutputTaskRecordEntity.getDataId())
 			.ne(DmpOutputTaskRecordEntity::getId, id)
 			.le(DmpOutputTaskRecordEntity::getCreateTime, dmpOutputTaskRecordEntity.getCreateTime())
 			.ne(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
+			.last(lastSql)
 			.set(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
 			.set(DmpOutputTaskRecordEntity::getUpdateTime, LocalDateTime.now())
 			.setSql(" response_data = concat('配置同一dataid，推送最新的记录id="+ id +"' , response_data) ")
@@ -106,6 +111,7 @@ public abstract class DmpOutputRocketMQTaskHandler extends DmpOutputTaskHandler{
 					.ne(DmpOutputTaskRecordEntity::getId, dmpOutputTaskRecordEntity.getId())
 					.le(DmpOutputTaskRecordEntity::getCreateTime, dmpOutputTaskRecordEntity.getCreateTime())
 					.ne(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
+					.last(lastSql)
 					.count();
 			if(count != null && count > 0) {
 				dmpOutputTaskRecordService.lambdaUpdate()
@@ -113,6 +119,7 @@ public abstract class DmpOutputRocketMQTaskHandler extends DmpOutputTaskHandler{
 					.set(DmpOutputTaskRecordEntity::getUpdateTime, LocalDateTime.now())
 					.eq(DmpOutputTaskRecordEntity::getId, dmpOutputTaskRecordEntity.getId())
 					.ne(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
+					.last(lastSql)
 					.update();
 				return;
 			}

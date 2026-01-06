@@ -108,6 +108,7 @@ public class WdtSoB2bDeliveryConsumer<T extends DmpSyncTaskIdDTO> extends Abstra
             try {
                 boolean locked = lock.tryLock(10, TimeUnit.SECONDS);
                 if (locked) {
+                    log.warn("推送旺店通B2B发货单开始:{}", request.getThirdCode());
                     StockoutAPI stockoutAPI = wangDianClientService.get(StockoutAPI.class);
                     SalesStockoutRequest salesStockoutRequest = new SalesStockoutRequest();
                     salesStockoutRequest.setSrcOrderNo(request.getThirdCode());
@@ -129,7 +130,7 @@ public class WdtSoB2bDeliveryConsumer<T extends DmpSyncTaskIdDTO> extends Abstra
                 }
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
-                throw new ServiceException(ApiError.ERROR_1026);
+                throw new ServiceException(ApiError.BILL_DATA_LOCKED);
 
             } finally {
                 lock.unlock();

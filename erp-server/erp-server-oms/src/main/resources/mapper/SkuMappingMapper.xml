@@ -429,6 +429,7 @@
         LEFT JOIN listing_info li
         ON sm.listing_id=li.id AND li.is_deleted=FALSE
         WHERE sm.is_deleted=FALSE
+          and  (sm.expire_time is null or sm.effective_time is null or sm.expire_time > sm.effective_time)
         <!--is_expire 是否过期-->
         <if test="params.isExpire != null">
             AND sm.is_expire = #{params.isExpire}

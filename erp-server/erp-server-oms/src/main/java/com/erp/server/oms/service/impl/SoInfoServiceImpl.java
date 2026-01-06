@@ -682,13 +682,11 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
      */
     @Override
     public SoInfoDTO.ViewDTO view(String id) {
-        SoInfoDTO.ViewDTO view = new SoInfoDTO.ViewDTO();
         SoInfoEntity soInfo = this.getById(id);
         if (Objects.isNull(soInfo)) {
             throw new ServiceException(ApiError.SO_NOT_FOUND);
         }
-
-        BeanMapper.copy(soInfo, view);
+        SoInfoDTO.ViewDTO view = SoInfoConverter.INSTANCE.entityToViewDTO(soInfo);
         String customerId = soInfo.getCustomerId();
         String customerName = "";
         if (StringUtils.isNotBlank(customerId)) {
@@ -3931,7 +3929,9 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             addDTO.setDeliveryMode(DeliveryModeEnum.EXPRESS.getCode());
             addDTO.setShippingFee(dto.getShippingFee());
             addDTO.setIsCollectShippingFee(dto.getIsCollectShippingFee());
-            addDTO.setPlatformOrderCode(dto.getPlatformOrderCode());
+            if(StringUtils.isBlank(addDTO.getPlatformOrderCode())){
+                addDTO.setPlatformOrderCode(dto.getPlatformOrderCode());
+            }
             addDTO.setThirdCode(dto.getThirdCode());
             addDTO.setCustomerOrderNo(dto.getCustomerOrderNo());
             List<String> attachUrlList = dto.getAttachment().stream().map(AttachDTO::getAttachUrl).filter(StringUtils::isNotBlank).collect(Collectors.toList());

@@ -98,7 +98,8 @@ public enum AliexpressDeliveryOrderStatusEnum implements EnumMessage {
                         AliexpressDeliveryOrderStatusEnum.DISTRIBUTION_CENTER_DELIVERY,
                         AliexpressDeliveryOrderStatusEnum.SUCCESS_DELIVERY,
                         AliexpressDeliveryOrderStatusEnum.DELIVERY_FAILED,
-                        AliexpressDeliveryOrderStatusEnum.WAREHOUSE_HANDOVER_SUCCESS
+                        AliexpressDeliveryOrderStatusEnum.WAREHOUSE_HANDOVER_SUCCESS,
+                        AliexpressDeliveryOrderStatusEnum.CANCELED
                 )
                 .map(AliexpressDeliveryOrderStatusEnum::getName)
                 .collect(Collectors.toList());
