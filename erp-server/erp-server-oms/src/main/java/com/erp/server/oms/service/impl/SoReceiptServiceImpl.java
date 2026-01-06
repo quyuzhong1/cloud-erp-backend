@@ -1058,14 +1058,14 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
                 }
             }
             addDTO.setDetailList(detailAddDTOList);
-            this.add(addDTO);
+            BaseResultDTO.AddDTO add = this.add(addDTO);
 
             if (Objects.nonNull(soInfoEntity)) {
                 if (soInfoEntity.getApproveStatus().equals(BillApproveStatusEnum.APPROVE)
                         || soInfoEntity.getApproveStatus().equals(BillApproveStatusEnum.APPROVE_ING)) {
-                    this.submit(exist.getId());
+                    this.submit(add.getId());
                     ApproveOneDTO approveOneDTO = new ApproveOneDTO();
-                    approveOneDTO.setId(exist.getId());
+                    approveOneDTO.setId(add.getId());
                     approveOneDTO.setType(ApproveTypeEnum.PASS.getStatus());
                     approveOneDTO.setComment("");
                     this.approve(approveOneDTO);
