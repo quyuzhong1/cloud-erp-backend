@@ -258,10 +258,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     @Resource
     private RefProductImgAttachmentService refProductImgAttachmentService;
 
-    @Resource
-    @Qualifier("zipImageExecutorPool")
-    private ExecutorService zipImageExecutorPool;
-
     @Autowired
     private ProductUnitService productUnitService;
 
