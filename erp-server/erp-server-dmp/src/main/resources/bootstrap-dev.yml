@@ -6,7 +6,7 @@ spring:
         namespace: ${NACOS_NAMESPACE:dev}
       config:
         server-addr: 172.16.100.60:32570
-        namespace: dev-lrp
+        namespace: dev
         file-extension: yml
         shared-configs: common.yml,db-dmp.yml,druid-dmp.yml,erp-third-party.yml
     #显示日期的
