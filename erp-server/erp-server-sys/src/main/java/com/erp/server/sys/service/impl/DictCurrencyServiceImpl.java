@@ -1,8 +1,12 @@
 package com.erp.server.sys.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.vo.PagingVO;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.sys.dto.CurrencyDTO;
@@ -37,10 +41,7 @@ public class DictCurrencyServiceImpl extends SuperServiceImpl<DictCurrencyMapper
      */
     @Override
     public List<CurrencyDTO.ViewDTO> getList() {
-        LambdaQueryWrapper<DictCurrencyEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.orderByAsc(DictCurrencyEntity::getIndex);
-        List<DictCurrencyEntity> list = this.list(queryWrapper);
-        return BeanMapper.copyList(list, CurrencyDTO.ViewDTO.class);
+        return baseMapper.getList();
     }
 
     @Override
@@ -71,5 +72,15 @@ public class DictCurrencyServiceImpl extends SuperServiceImpl<DictCurrencyMapper
         }
         return this.lambdaQuery().select(DictCurrencyEntity::getId,DictCurrencyEntity::getCurrencyNum,DictCurrencyEntity::getSymbol)
                 .eq(DictCurrencyEntity::getCurrencyNum, num).last("limit 1").one();
+    }
+
+    @Override
+    public PagingVO<CurrencyDTO.ViewDTO> pagingSelect(PagingDTO<CurrencyDTO.SelectDTO> dto) {
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        IPage<CurrencyDTO.ViewDTO> pageData = baseMapper.pagingSelect(query, dto.getParams());
+        if (CollUtil.isEmpty(pageData.getRecords())) {
+            return new PagingVO(pageData);
+        }
+        return new PagingVO<>(pageData);
     }
 }

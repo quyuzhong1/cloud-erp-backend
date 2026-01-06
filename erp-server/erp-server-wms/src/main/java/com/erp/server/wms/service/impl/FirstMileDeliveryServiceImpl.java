@@ -621,7 +621,10 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                 //校验组合SKU库存量是否满足调出，否则无法审核通过，提示：SKU【SKU编码】【发货仓】冻结库存不足，无法审核发货单
                 for (FirstMileDeliveryDetailEntity firstMileDeliveryDetailEntity : isCombinationList) {
                     //及时库存
-                    SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuNo().equals(firstMileDeliveryDetailEntity.getSkuNo())).findFirst().orElse(new SkuVO());
+                    SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuNo().equals(firstMileDeliveryDetailEntity.getSkuNo())).findFirst().orElse(null);
+                    if(Objects.isNull(skuVO)){
+                        throw new ServiceException(ApiError.COMMON_SKU_NOT_EXIST_OR_NOT_APPROVE, firstMileDeliveryDetailEntity.getSkuNo());
+                    }
                     Integer usableInventoryTotal = inventoryService.getInventoryTotal(entity.getInventoryOrgId() ,entity.getDeliveryWarehouseId(), skuVO.getSkuId(), firstMileDeliveryDetailEntity.getWarehouseLocation(), InventoryStatusEnum.FROZEN.getCode());
                     if (firstMileDeliveryDetailEntity.getDeliveryQty() > usableInventoryTotal) {
                         throw new ServiceException(ApiError.FIRST_MILE_SHIPMENT_INVENTORY_INSUFFICIENT, firstMileDeliveryDetailEntity.getSkuNo(), entity.getDeliveryWarehouseName());
@@ -722,7 +725,8 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             detailAddDto.setInWarehouseLocation("");
             detailAddDto.setSourceDetailId(detailEntity.getId());
             //如果是备货海外仓
-            if (FbaDemandTypeEnum.DEMAND_OVERSEAS_WAREHOUSE.getCode().equals(entity.getDemandType())) {
+            if (FbaDemandTypeEnum.DEMAND_OVERSEAS_WAREHOUSE.getCode().equals(entity.getDemandType())
+            ||FbaDemandTypeEnum.DEMAND_ALIEXPRESS.getCode().equals(entity.getDemandType())) {
                 //查询已下推的入库单获取入库单号
                 OverseasWarehouseInboundEntity overseasWarehouseInboundEntity = overseasWarehouseInboundEntities.stream()
                         .filter(req -> req.getSourceId().equals(entity.getId())
@@ -1291,7 +1295,8 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             detailAddDto.setInWarehouseLocation("");
             detailAddDto.setSourceDetailId(detailEntity.getId());
             //如果是备货海外仓
-            if (FbaDemandTypeEnum.DEMAND_OVERSEAS_WAREHOUSE.getCode().equals(entity.getDemandType())) {
+            if (FbaDemandTypeEnum.DEMAND_OVERSEAS_WAREHOUSE.getCode().equals(entity.getDemandType())
+            ||FbaDemandTypeEnum.DEMAND_ALIEXPRESS.getCode().equals(entity.getDemandType())) {
                 //查询已下推的入库单获取入库单号
                 OverseasWarehouseInboundEntity overseasWarehouseInboundEntity = overseasWarehouseInboundEntities.stream()
                         .filter(req -> req.getSourceId().equals(entity.getId())

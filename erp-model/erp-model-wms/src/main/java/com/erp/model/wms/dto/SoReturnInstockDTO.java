@@ -344,6 +344,11 @@ public class SoReturnInstockDTO {
          * 平台订单编号
          */
         private String platformOrderCode;
+
+        /**
+         * 第三方单据编号
+         */
+        private String thirdCode;
         /**
          * 退货客户id
          */

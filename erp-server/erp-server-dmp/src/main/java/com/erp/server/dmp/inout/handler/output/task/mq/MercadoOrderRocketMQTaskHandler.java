@@ -160,7 +160,7 @@ public class MercadoOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandle
         orderDTO.setShopId(dmpSoInfoEntityList.get(0).getNextLevelId());
 
         //订单金额
-        BigDecimal amount = dmpSoInfoEntityList.stream().map(DmpSoInfoEntity::getPayAmount).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
+        BigDecimal amount = dmpSoInfoEntityList.stream().filter(d -> d.getPayAmount() != null).map(DmpSoInfoEntity::getPayAmount).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
         orderDTO.setAmount(amount);
         //币别
         orderDTO.setCurrency(dmpSoInfoEntityList.get(0).getCurrencyCode());

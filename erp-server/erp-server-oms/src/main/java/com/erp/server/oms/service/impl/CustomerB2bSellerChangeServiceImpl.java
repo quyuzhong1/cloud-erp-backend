@@ -116,7 +116,7 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
         if(!customerInfoEntity.getApproveStatus().equals(ApproveStatusEnum.APPROVE)){
             return BatchResultDTO.fail(addDTO.getMainId(), addDTO.getCode(), "客户信息未审核，无法进行销售员变更");
         }
-        List<CustomerB2bSellerChangeEntity> entityList = this.listByMainId(addDTO.getMainId());
+        List<CustomerB2bSellerChangeEntity> entityList = this.listByMainIds(Arrays.asList(addDTO.getMainId()));
         if(entityList.stream().anyMatch(v->v.getApproveStatus().equals(ApproveStatusEnum.APPROVE_ING)||v.getApproveStatus().equals(ApproveStatusEnum.WAIT_SUBMIT))){
             return BatchResultDTO.fail(addDTO.getMainId(), addDTO.getCode(), "已经有待提交，审核中的变更单，无法新增");
         }
@@ -171,8 +171,8 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
     }
 
     @Override
-    public List<CustomerB2bSellerChangeEntity> listByMainId(String mainId) {
-        return lambdaQuery().eq(CustomerB2bSellerChangeEntity::getMainId,mainId).list();
+    public List<CustomerB2bSellerChangeEntity> listByMainIds(List<String> mainIds) {
+        return lambdaQuery().in(CustomerB2bSellerChangeEntity::getMainId, mainIds).list();
     }
 
     @Override

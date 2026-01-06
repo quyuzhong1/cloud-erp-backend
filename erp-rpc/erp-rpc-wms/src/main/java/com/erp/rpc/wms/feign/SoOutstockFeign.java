@@ -4,6 +4,7 @@ import com.common.business.config.FeignErrorDecoder;
 import com.common.business.dto.AdvanceQueryContainer;
 import com.erp.model.oms.dto.ExhibitionOrderDTO;
 import com.erp.model.oms.dto.PlatformGenerateSoOutstockDTO;
+import com.erp.model.oms.dto.SoB2cLogisticsDTO;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
@@ -194,4 +195,7 @@ public interface SoOutstockFeign {
      */
     @PostMapping("feign/soOutstock/listSoOutstockByTime")
     List<SoOutstockDTO.KolSoOutstockDTO> listSoOutstockByTime(@RequestBody SoOutstockDTO.KolSoOutstockDateDTO dto);
+
+    @PostMapping("feign/soOutstock/updateSoB2cLogisticsInfo")
+    void updateSoB2cLogisticsInfo(@RequestBody SoB2cLogisticsDTO.transferOrderDTO dto);
 }
