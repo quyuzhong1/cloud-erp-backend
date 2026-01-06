@@ -326,4 +326,22 @@ public class RefProductImgAttachmentDTO implements Serializable {
         private String zipUrl;
     }
 
+    /**
+     * 上传产品主图DTO
+     */
+    @Data
+    @NoArgsConstructor
+    public static class UploadProductMainImageDTO {
+        /**
+         * 产品sku明细表id
+         */
+        @NotBlank(message = "SKU不能为空")
+        private String skuId;
+
+        /**
+         * 图片地址列表
+         */
+        private List<String> imagesUrls;
+    }
+
 }

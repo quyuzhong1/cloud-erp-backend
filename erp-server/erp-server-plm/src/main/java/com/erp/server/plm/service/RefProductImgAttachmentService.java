@@ -4,6 +4,7 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.plm.dto.RefProductImgAttachmentDTO;
 import com.common.business.vo.PagingVO;
+import org.springframework.web.multipart.MultipartFile;
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
@@ -126,4 +127,23 @@ public interface RefProductImgAttachmentService extends SuperService<RefProductI
      * @return ZIP文件的FastDFS URL
      */
     String buildProductImagesFolderStructure(RefProductImgAttachmentDTO.BatchDownloadDTO dto);
+
+    /**
+     * 上传产品主图（对比新增、删除、保留，自动生成缩略图，更新images_url）
+     * @param dto 上传产品主图参数（包含skuId和imagesUrls）
+     * @author wuhaotian
+     * @date: 2025-12-29
+     * @return Boolean
+     */
+    Boolean uploadProductMainImage(RefProductImgAttachmentDTO.UploadProductMainImageDTO dto);
+
+    /**
+     * 上传产品主图文件（保存原图和缩略图，返回缩略图URL）
+     * @param multipartFileList 图片文件数组
+     * @param skuId SKU ID
+     * @author wuhaotian
+     * @date: 2025-12-29
+     * @return List<String> 返回缩略图URL列表
+     */
+    List<String> uploadProductMainImageFile(MultipartFile[] multipartFileList, String skuId);
 }

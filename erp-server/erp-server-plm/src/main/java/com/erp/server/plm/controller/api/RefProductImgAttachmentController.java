@@ -26,7 +26,10 @@ import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.plm.dto.RefProductImgAttachmentDTO;
 import com.erp.model.plm.entity.RefProductImgAttachmentEntity;
 import cn.hutool.core.util.StrUtil;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import org.springframework.http.MediaType;
+import org.springframework.web.multipart.MultipartFile;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -182,6 +185,38 @@ public class RefProductImgAttachmentController extends BaseController {
     public ApiResult<?> batchDownload(@RequestBody @Validated RefProductImgAttachmentDTO.BatchDownloadDTO dto) {
         refProductImgAttachmentService.batchDownload(dto);
         return success();
+    }
+
+    /**
+     * 上传产品主图（对比新增、删除、保留，自动生成缩略图，更新images_url）
+     * @author wuhaotian
+     * @date: 2025-12-29
+     * @param dto 上传产品主图参数（包含skuId和imagesUrls）
+     * @return ApiResult<Boolean>
+     */
+    @PostMapping("/uploadProductMainImage")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "上传产品主图")
+    public ApiResult<Boolean> uploadProductMainImage(@RequestBody @Validated RefProductImgAttachmentDTO.UploadProductMainImageDTO dto) {
+        return success(refProductImgAttachmentService.uploadProductMainImage(dto));
+    }
+
+    /**
+     * 上传产品主图文件（保存原图和缩略图，返回缩略图URL）
+     * @author wuhaotian
+     * @date: 2025-12-29
+     * @param multipartFile 图片文件数组
+     * @param skuId SKU ID
+     * @param request
+     * @return ApiResult<List<String>> 返回缩略图URL列表
+     */
+    @LogAction(value = LogActionEnum.UPLOAD, desc = "上传产品主图文件:文件名={name}")
+    @PostMapping(value = "/uploadProductMainImageFile", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ApiResult<List<String>> uploadProductMainImageFile(
+            @RequestParam("multipartFile") MultipartFile[] multipartFile,
+            @RequestParam("skuId") String skuId,
+            HttpServletRequest request) {
+        List<String> thumbnailUrls = refProductImgAttachmentService.uploadProductMainImageFile(multipartFile, skuId);
+        return success(thumbnailUrls);
     }
 
 }

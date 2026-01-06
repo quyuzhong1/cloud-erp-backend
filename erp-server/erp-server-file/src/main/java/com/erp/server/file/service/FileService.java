@@ -54,4 +54,11 @@ public interface FileService {
      * @return ZIP文件的FastDFS URL
      */
     String createZipFromFolderStructure(com.erp.model.file.dto.FileDTO.CreateZipDTO dto);
+
+    /**
+     * 批量获取文件大小
+     * @param fileUrlList 文件URL列表
+     * @return 文件大小信息列表
+     */
+    List<com.erp.model.file.dto.FileDTO.FileSizeInfo> getBatchFileSize(List<String> fileUrlList);
 }
