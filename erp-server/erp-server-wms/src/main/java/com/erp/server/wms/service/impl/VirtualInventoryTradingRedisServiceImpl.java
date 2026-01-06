@@ -84,7 +84,7 @@ public class VirtualInventoryTradingRedisServiceImpl implements VirtualInventory
             }
             log.warn("stopwatch4 ={}",stopwatch.elapsed(TimeUnit.MILLISECONDS));
         }catch (Exception e) {
-            throw new RuntimeException(e);
+            throw new ServiceException(e.getMessage());
         } finally {
             stopwatch.stop();
             // 计时器-结束
