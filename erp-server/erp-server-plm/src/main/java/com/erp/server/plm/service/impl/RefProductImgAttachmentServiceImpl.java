@@ -1399,26 +1399,47 @@ public class RefProductImgAttachmentServiceImpl extends SuperServiceImpl<RefProd
                 .eq(RefProductImgAttachmentEntity::getProductDetailId, dto.getSkuId())
                 .list();
         
-        // 获取现有的附件ID列表
+        // 获取现有的附件ID列表（包括原图和缩略图）
         List<String> existingAttachmentIds = existingRefList.stream()
                 .map(RefProductImgAttachmentEntity::getAttachmentId)
                 .filter(StrUtil::isNotBlank)
                 .collect(Collectors.toList());
         
-        // 查询现有的附件记录，构建URL到附件的映射
-        Map<String, PlmAttachmentEntity> existingAttachmentMap = new HashMap<>();
-        Map<String, RefProductImgAttachmentEntity> urlToRefMap = new HashMap<>();
-        if (CollUtil.isNotEmpty(existingAttachmentIds)) {
-            List<PlmAttachmentEntity> existingAttachments = plmAttachmentService.listByIds(existingAttachmentIds);
-            for (PlmAttachmentEntity attachment : existingAttachments) {
-                if (StrUtil.isNotBlank(attachment.getAttachUrl())) {
-                    existingAttachmentMap.put(attachment.getAttachUrl(), attachment);
-                    // 找到对应的关联记录
-                    for (RefProductImgAttachmentEntity refEntity : existingRefList) {
-                        if (refEntity.getAttachmentId().equals(attachment.getId())) {
-                            urlToRefMap.put(attachment.getAttachUrl(), refEntity);
-                            break;
-                        }
+        // 收集所有缩略图attachmentId
+        List<String> thumbnailAttachmentIds = existingRefList.stream()
+                .map(RefProductImgAttachmentEntity::getThumbnailAttachmentId)
+                .filter(StrUtil::isNotBlank)
+                .collect(Collectors.toList());
+        
+        // 合并所有attachmentId（去重）
+        Set<String> allAttachmentIds = new HashSet<>(existingAttachmentIds);
+        allAttachmentIds.addAll(thumbnailAttachmentIds);
+        
+        // 查询现有的附件记录，构建URL到原图附件的映射（原图URL -> 原图attachment）
+        // 同时构建缩略图URL到原图附件的映射（缩略图URL -> 原图attachment）
+        Map<String, PlmAttachmentEntity> existingAttachmentMap = new HashMap<>(); // 原图URL -> 原图attachment
+        Map<String, PlmAttachmentEntity> thumbnailUrlToOriginalMap = new HashMap<>(); // 缩略图URL -> 原图attachment
+        Map<String, RefProductImgAttachmentEntity> urlToRefMap = new HashMap<>(); // 原图URL -> ref记录
+        if (CollUtil.isNotEmpty(allAttachmentIds)) {
+            List<PlmAttachmentEntity> allAttachments = plmAttachmentService.listByIds(new ArrayList<>(allAttachmentIds));
+            Map<String, PlmAttachmentEntity> attachmentMap = allAttachments.stream()
+                    .collect(Collectors.toMap(PlmAttachmentEntity::getId, att -> att));
+            
+            for (RefProductImgAttachmentEntity refEntity : existingRefList) {
+                PlmAttachmentEntity originalAttachment = attachmentMap.get(refEntity.getAttachmentId());
+                if (originalAttachment != null && StrUtil.isNotBlank(originalAttachment.getAttachUrl())) {
+                    // 原图URL -> 原图attachment
+                    existingAttachmentMap.put(originalAttachment.getAttachUrl(), originalAttachment);
+                    urlToRefMap.put(originalAttachment.getAttachUrl(), refEntity);
+                    
+                    // 如果有缩略图，构建缩略图URL -> 原图attachment的映射
+                    String thumbnailAttachmentId = StrUtil.isNotBlank(refEntity.getThumbnailAttachmentId()) 
+                            ? refEntity.getThumbnailAttachmentId() 
+                            : refEntity.getAttachmentId();
+                    PlmAttachmentEntity thumbnailAttachment = attachmentMap.get(thumbnailAttachmentId);
+                    if (thumbnailAttachment != null && StrUtil.isNotBlank(thumbnailAttachment.getAttachUrl())) {
+                        // 缩略图URL -> 原图attachment（用于通过缩略图URL找到原图）
+                        thumbnailUrlToOriginalMap.put(thumbnailAttachment.getAttachUrl(), originalAttachment);
                     }
                 }
             }
@@ -1508,19 +1529,42 @@ public class RefProductImgAttachmentServiceImpl extends SuperServiceImpl<RefProd
             }
         }
         
-        // 3. 对比新旧图片URL列表，找出要保留、要删除、要新增的
-        Set<String> existingUrls = new HashSet<>(existingAttachmentMap.keySet());
-        Set<String> newUrls = new HashSet<>(newImagesUrls);
+        // 3. 将传入的URL转换为原图URL（如果传入的是缩略图URL，找到对应的原图URL）
+        // 构建传入URL到原图URL的映射
+        Map<String, String> inputUrlToOriginalUrlMap = new HashMap<>();
+        List<String> normalizedNewImagesUrls = new ArrayList<>();
+        for (String inputUrl : newImagesUrls) {
+            // 先检查是否是原图URL
+            if (existingAttachmentMap.containsKey(inputUrl)) {
+                inputUrlToOriginalUrlMap.put(inputUrl, inputUrl);
+                normalizedNewImagesUrls.add(inputUrl);
+            } else if (thumbnailUrlToOriginalMap.containsKey(inputUrl)) {
+                // 如果是缩略图URL，找到对应的原图URL
+                PlmAttachmentEntity originalAttachment = thumbnailUrlToOriginalMap.get(inputUrl);
+                String originalUrl = originalAttachment.getAttachUrl();
+                inputUrlToOriginalUrlMap.put(inputUrl, originalUrl);
+                normalizedNewImagesUrls.add(originalUrl);
+                log.info("识别到缩略图URL，转换为原图URL：{} -> {}", inputUrl, originalUrl);
+            } else {
+                // 既不是原图URL也不是缩略图URL，按原图URL处理（可能是新上传的）
+                inputUrlToOriginalUrlMap.put(inputUrl, inputUrl);
+                normalizedNewImagesUrls.add(inputUrl);
+            }
+        }
         
-        // 要保留的URL（新旧都有的）
+        // 3.1 对比新旧图片URL列表，找出要保留、要删除、要新增的（使用原图URL）
+        Set<String> existingUrls = new HashSet<>(existingAttachmentMap.keySet());
+        Set<String> newUrls = new HashSet<>(normalizedNewImagesUrls);
+        
+        // 要保留的URL（新旧都有的，使用原图URL）
         Set<String> toKeepUrls = new HashSet<>(existingUrls);
         toKeepUrls.retainAll(newUrls);
         
-        // 要删除的URL（旧有但新没有的）
+        // 要删除的URL（旧有但新没有的，使用原图URL）
         Set<String> toDeleteUrls = new HashSet<>(existingUrls);
         toDeleteUrls.removeAll(newUrls);
         
-        // 要新增的URL（新有但旧没有的）
+        // 要新增的URL（新有但旧没有的，使用原图URL）
         Set<String> toAddUrls = new HashSet<>(newUrls);
         toAddUrls.removeAll(existingUrls);
         
@@ -1597,10 +1641,10 @@ public class RefProductImgAttachmentServiceImpl extends SuperServiceImpl<RefProd
         // 6. 确保只有一个主图：第一个图片为主图，其他图片归类到"未分类"
         String uncategorizedCategoryId = getUncategorizedCategoryId();
         
-        // 6.1 获取第一个图片URL（主图）
+        // 6.1 获取第一个图片的原图URL（主图）
         String firstImageUrl = null;
-        if (CollUtil.isNotEmpty(newImagesUrls)) {
-            firstImageUrl = newImagesUrls.get(0);
+        if (CollUtil.isNotEmpty(normalizedNewImagesUrls)) {
+            firstImageUrl = normalizedNewImagesUrls.get(0);
         }
         
         // 6.2 将之前的主图（如果不在新列表中）移出主图分类，归类到"未分类"
@@ -1611,7 +1655,7 @@ public class RefProductImgAttachmentServiceImpl extends SuperServiceImpl<RefProd
         
         for (RefProductImgAttachmentEntity oldMainImage : oldMainImages) {
             PlmAttachmentEntity oldAttachment = plmAttachmentService.getById(oldMainImage.getAttachmentId());
-            if (oldAttachment != null && !newImagesUrls.contains(oldAttachment.getAttachUrl())) {
+            if (oldAttachment != null && !normalizedNewImagesUrls.contains(oldAttachment.getAttachUrl())) {
                 // 这个主图不在新列表中，移出主图分类，归类到"未分类"
                 oldMainImage.setCategoryId(uncategorizedCategoryId);
                 super.updateById(oldMainImage);
@@ -1624,7 +1668,7 @@ public class RefProductImgAttachmentServiceImpl extends SuperServiceImpl<RefProd
         Map<String, String> originalToThumbnailMap = new HashMap<>();
         if (CollUtil.isNotEmpty(toAddUrls)) {
             for (String imageUrl : toAddUrls) {
-                // 先查找或创建attachment
+                // 先查找或创建attachment（通过原图URL查找）
                 PlmAttachmentEntity attachmentEntity = plmAttachmentService.lambdaQuery()
                         .eq(PlmAttachmentEntity::getAttachUrl, imageUrl)
                         .eq(PlmAttachmentEntity::getBusinessId, dto.getSkuId())
@@ -1635,12 +1679,18 @@ public class RefProductImgAttachmentServiceImpl extends SuperServiceImpl<RefProd
                     // 如果不存在，创建新的attachment
                     attachmentEntity = new PlmAttachmentEntity();
                     attachmentEntity.setAttachUrl(imageUrl);
-                    // 从URL提取文件名
+                    
+                    // 尝试从文件服务获取原始文件名（如果URL是FastDFS格式，可能需要从其他地方获取）
+                    // 如果无法获取，则从URL提取文件名（保留扩展名）
                     String fileName = imageUrl;
                     int lastSlash = imageUrl.lastIndexOf('/');
                     if (lastSlash >= 0 && lastSlash < imageUrl.length() - 1) {
                         fileName = imageUrl.substring(lastSlash + 1);
                     }
+                    // 如果文件名是FastDFS格式（类似rBBkDGldxKiAPCjWAAwlxJlwvGk304.png），
+                    // 尝试从文件服务获取原始文件名，如果获取不到，使用默认名称
+                    // 注意：这里假设FastDFS的文件名就是这样的格式，无法获取原始文件名
+                    // 如果需要保留原始文件名，应该在文件上传时就保存到attachment记录中
                     attachmentEntity.setAttachName(fileName);
                     
                     // 使用批量获取的文件大小
@@ -1656,24 +1706,52 @@ public class RefProductImgAttachmentServiceImpl extends SuperServiceImpl<RefProd
                     attachmentEntity.setType("product_detail");
                     attachmentEntity.setBusinessId(dto.getSkuId());
                     plmAttachmentService.save(attachmentEntity);
+                    log.info("为新图片创建attachment记录，id={}, url={}, fileName={}", attachmentEntity.getId(), imageUrl, fileName);
+                } else {
+                    log.info("找到已存在的attachment记录，id={}, url={}, fileName={}", attachmentEntity.getId(), imageUrl, attachmentEntity.getAttachName());
                 }
                 
-                // 确定分类：第一个图片为主图，其他为未分类
+                // 确定分类：第一个图片为主图，其他为未分类（使用原图URL判断）
                 String categoryId = imageUrl.equals(firstImageUrl) ? PRODUCT_MAIN_IMAGE_CATEGORY_ID : uncategorizedCategoryId;
                 
-                // 直接创建ref_product_img_attachment记录（不调用add方法）
-                RefProductImgAttachmentEntity refEntity = new RefProductImgAttachmentEntity();
-                refEntity.setCategoryId(categoryId);
-                refEntity.setProductDetailId(dto.getSkuId());
-                refEntity.setSkuNo(productDetailEntity.getSkuNo());
-                refEntity.setAttachmentId(attachmentEntity.getId());
-                super.save(refEntity);
+                // 检查是否已有ref_product_img_attachment记录
+                RefProductImgAttachmentEntity existingRef = super.lambdaQuery()
+                        .eq(RefProductImgAttachmentEntity::getProductDetailId, dto.getSkuId())
+                        .eq(RefProductImgAttachmentEntity::getAttachmentId, attachmentEntity.getId())
+                        .last("LIMIT 1")
+                        .one();
                 
-                // 生成缩略图（不更新product_detail）
-                String thumbnailUrl = generateThumbnailWithoutUpdate(attachmentEntity.getId(), dto.getSkuId(), productDetailEntity.getSkuNo());
-                // 保存原图URL到缩略图URL的映射
-                if (StrUtil.isNotBlank(thumbnailUrl)) {
-                    originalToThumbnailMap.put(imageUrl, thumbnailUrl);
+                if (existingRef == null) {
+                    // 直接创建ref_product_img_attachment记录（不调用add方法）
+                    RefProductImgAttachmentEntity refEntity = new RefProductImgAttachmentEntity();
+                    refEntity.setCategoryId(categoryId);
+                    refEntity.setProductDetailId(dto.getSkuId());
+                    refEntity.setSkuNo(productDetailEntity.getSkuNo());
+                    refEntity.setAttachmentId(attachmentEntity.getId());
+                    super.save(refEntity);
+                    
+                    // 生成缩略图（不更新product_detail）
+                    String thumbnailUrl = generateThumbnailWithoutUpdate(attachmentEntity.getId(), dto.getSkuId(), productDetailEntity.getSkuNo());
+                    // 保存原图URL到缩略图URL的映射
+                    if (StrUtil.isNotBlank(thumbnailUrl)) {
+                        originalToThumbnailMap.put(imageUrl, thumbnailUrl);
+                    }
+                    
+                    // 添加到映射中
+                    existingAttachmentMap.put(imageUrl, attachmentEntity);
+                    urlToRefMap.put(imageUrl, refEntity);
+                    log.info("为新图片创建ref_product_img_attachment记录，id={}, url={}, categoryId={}", refEntity.getId(), imageUrl, categoryId);
+                } else {
+                    // 如果已存在，更新分类
+                    if (!categoryId.equals(existingRef.getCategoryId())) {
+                        existingRef.setCategoryId(categoryId);
+                        super.updateById(existingRef);
+                        log.info("更新图片分类，refId={}, url={}, 新分类={}", existingRef.getId(), imageUrl, categoryId);
+                    }
+                    
+                    // 添加到映射中
+                    existingAttachmentMap.put(imageUrl, attachmentEntity);
+                    urlToRefMap.put(imageUrl, existingRef);
                 }
             }
         }
@@ -1714,18 +1792,18 @@ public class RefProductImgAttachmentServiceImpl extends SuperServiceImpl<RefProd
                         .list();
                 
                 // 收集所有缩略图attachmentId（包括等于原图的）
-                Set<String> thumbnailAttachmentIds = new HashSet<>();
+                Set<String> thumbnailAttachmentIdsSec = new HashSet<>();
                 for (RefProductImgAttachmentEntity ref : keepRefs) {
                     if (StrUtil.isNotBlank(ref.getThumbnailAttachmentId())) {
-                        thumbnailAttachmentIds.add(ref.getThumbnailAttachmentId());
+                        thumbnailAttachmentIdsSec.add(ref.getThumbnailAttachmentId());
                     } else {
                         // 如果thumbnailAttachmentId为空，使用原图ID
-                        thumbnailAttachmentIds.add(ref.getAttachmentId());
+                        thumbnailAttachmentIdsSec.add(ref.getAttachmentId());
                     }
                 }
                 
-                if (CollUtil.isNotEmpty(thumbnailAttachmentIds)) {
-                    List<PlmAttachmentEntity> thumbnailAttachments = plmAttachmentService.listByIds(new ArrayList<>(thumbnailAttachmentIds));
+                if (CollUtil.isNotEmpty(thumbnailAttachmentIdsSec)) {
+                    List<PlmAttachmentEntity> thumbnailAttachments = plmAttachmentService.listByIds(new ArrayList<>(thumbnailAttachmentIdsSec));
                     Map<String, PlmAttachmentEntity> thumbnailAttachmentMap = thumbnailAttachments.stream()
                             .collect(Collectors.toMap(PlmAttachmentEntity::getId, ta -> ta));
                     
