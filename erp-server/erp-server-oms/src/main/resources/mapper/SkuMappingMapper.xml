@@ -314,6 +314,7 @@
         li.auth_id as authId,
         sm.product_sku_id,
         sm.product_sku_no,
+        sm.product_name as productName,
         li.platform_sku_no AS platformSkuNo,
         li.platform_sku_id as platformSkuId,
         li.platform_sku_name AS platformProductName,
