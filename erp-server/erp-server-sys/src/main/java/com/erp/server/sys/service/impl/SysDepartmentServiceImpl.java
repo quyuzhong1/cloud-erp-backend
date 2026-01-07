@@ -13,6 +13,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.StrUtils;
+import com.erp.model.plm.entity.MoldInfoEntity;
 import com.erp.model.sys.dto.*;
 import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.model.sys.entity.SysDepartmentUserEntity;
@@ -624,6 +625,27 @@ public class SysDepartmentServiceImpl extends ServiceImpl<SysDepartmentMapper, S
             }
         }
         return departments;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void updateDisabled(SysDepartmentDTO.UpdateDisabledDTO dto) {
+        String id = dto.getId();
+        SysDepartmentEntity old = super.getById(id);
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC, "部门"));
+
+        List<SysDepartmentTreeDTO> flagList = baseMapper.findTree();
+        List<String> resultList = new LinkedList<>();
+        if (CollectionUtils.isNotEmpty(flagList)) {
+            for (SysDepartmentTreeDTO vo : flagList) {
+                //如果路径包含了 就说有
+                if (vo.getPath().contains(id)) {
+                    resultList.add(vo.getId());
+                }
+            }
+        }
+
+        lambdaUpdate().set(SysDepartmentEntity::getDisabled,dto.getDisabled()).in(SysDepartmentEntity::getId,resultList).update();
     }
 
 
