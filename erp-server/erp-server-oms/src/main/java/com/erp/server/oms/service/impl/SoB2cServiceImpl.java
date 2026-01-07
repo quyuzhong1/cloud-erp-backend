@@ -2621,11 +2621,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             //物流映射列表
             List<LogisticsMappingDTO.ViewDTO> mappingList = logisticsMappingFeign.listByChannelIdAndType(logisticsChannelId, LogisticsMappingTypeEnum.PLATFORM.getCode());
             if(CollectionUtils.isEmpty(mappingList)){
-                throw new ServiceException(ApiError.SO_REPLACE_SKU_STATUS_INVALID, soCode,entity.getDictPlatform(),logisticsEntity.getLogisticsChannelName());
+                throw new ServiceException(ApiError.LOGISTICS_MAPPING_NOT_NULL, soCode,entity.getDictPlatform(),logisticsEntity.getLogisticsChannelName());
             }
             List<LogisticsMappingDTO.ViewDTO> collect = mappingList.stream().filter(v -> null != v.getSalesPlatform() && v.getSalesPlatform().equalsIgnoreCase(entity.getDictPlatform())).collect(Collectors.toList());
             if(CollectionUtils.isEmpty(collect)){
-                throw new ServiceException(ApiError.SO_REPLACE_SKU_STATUS_INVALID, soCode,entity.getDictPlatform(),logisticsEntity.getLogisticsChannelName());
+                throw new ServiceException(ApiError.LOGISTICS_MAPPING_NOT_NULL, soCode,entity.getDictPlatform(),logisticsEntity.getLogisticsChannelName());
             }
         }
         //库存验证
