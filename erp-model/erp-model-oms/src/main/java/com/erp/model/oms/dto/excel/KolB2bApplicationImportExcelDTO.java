@@ -66,7 +66,7 @@ public class KolB2bApplicationImportExcelDTO implements Serializable {
      */
     @ColumnWidth(30)
     @ExcelProperty(value = "申请说明", index = 4)
-    @FieldValid(fieldName = "申请说明",isNotBlank = true)
+    @FieldValid(fieldName = "申请说明")
     private String applyRemark;
 
     /**
@@ -152,7 +152,7 @@ public class KolB2bApplicationImportExcelDTO implements Serializable {
      */
     @ColumnWidth(20)
     @ExcelProperty(value = "预计回片日期", index = 14)
-    @FieldValid(fieldName = "*预计回片日期",isNotBlank = true ,formatPattern = FieldFormatPatternTypeEnum.DATE)
+    @FieldValid(fieldName = "*预计回片日期",formatPattern = FieldFormatPatternTypeEnum.DATE)
     private String planFeedbackDateStr;
     @ExcelIgnore
     private LocalDate planFeedbackDate;

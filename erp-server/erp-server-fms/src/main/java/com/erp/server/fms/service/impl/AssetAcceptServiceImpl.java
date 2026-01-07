@@ -1022,17 +1022,21 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
                         Collectors.summingInt(detail -> detail.getAcceptQty() != null ? detail.getAcceptQty() : 0)
                 ));
 
-        // 回写采购订单状态
-        currentDetailList.stream()
+        List<AssetPurchaseOrderDTO.rewritePurchaseOrderDTO> rewriteDTOList = currentDetailList.stream()
                 .map(AssetAcceptDetailEntity::getSourceDetailId)
                 .filter(StringUtils::isNotBlank)
                 .distinct()
-                .forEach(sourceDetailId -> {
+                .map(sourceDetailId -> {
                     AssetPurchaseOrderDTO.rewritePurchaseOrderDTO rewriteDTO = new AssetPurchaseOrderDTO.rewritePurchaseOrderDTO();
                     rewriteDTO.setDetailId(sourceDetailId);
                     rewriteDTO.setAcceptedQty(new BigDecimal(approvedAcceptQtyMap.getOrDefault(sourceDetailId, 0)));
-                    assetPurchaseOrderFeign.rewriteAssetPurchaseOrder(rewriteDTO);
-                });
+                    return rewriteDTO;
+                })
+                .collect(Collectors.toList());
+
+        if (!rewriteDTOList.isEmpty()) {
+            assetPurchaseOrderFeign.batchRewriteAssetPurchaseOrder(rewriteDTOList);
+        }
     }
 
     @Override

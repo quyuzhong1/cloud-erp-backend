@@ -22,8 +22,15 @@ public class DmpInputAmzAwdInventoryDmpHandler extends DmpInputDbConvertDmpHandl
 
         for (Map.Entry<List<Map<String, Object>>, List<TreeMap<String, Object>>> dmpInputDataDmpRelationMap : dmpInputDataDmpRelationMaps.entrySet()) {
             List<TreeMap<String, Object>> dmpDataMaps = dmpInputDataDmpRelationMap.getValue();
+            List<Map<String, Object>> mongoDataMaps = dmpInputDataDmpRelationMap.getKey();
+            Map<String, Object> mongoData = mongoDataMaps.get(0);
             for (TreeMap<String, Object> dmpDataMap : dmpDataMaps) {
                 dmpDataMap.put("msku",Objects.nonNull(dmpDataMap.get("sku")) && StringUtils.isNotBlank(dmpDataMap.get("sku").toString()) ? dmpDataMap.get("sku") : "");
+                dmpDataMap.put("totalInboundQty",mongoData.get("totalInboundQuantity"));
+                dmpDataMap.put("totalOnhandQty",mongoData.get("totalOnhandQuantity"));
+                dmpDataMap.put("availableDistributableQty",mongoData.get("availableDistributableQuantity"));
+                dmpDataMap.put("replenishmentQty",mongoData.get("replenishmentQuantity"));
+                dmpDataMap.put("reservedDistributableQty",mongoData.get("reservedDistributableQuantity"));
             }
         }
     }

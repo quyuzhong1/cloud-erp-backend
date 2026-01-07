@@ -169,4 +169,6 @@ public interface SoReceiptService extends SuperService<SoReceiptEntity> {
     void handlePlatformConsumer(PlatformReceiptDTO dto);
 
     List<SoReceiptEntity> listBySoId(String soId);
+
+    void deleteReceiptJob();
 }

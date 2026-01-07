@@ -687,7 +687,7 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
 
         if (CollectionUtils.isNotEmpty(oldDetailList)) {
             String codes = oldDetailList.stream().map(PoReconciliationDetailEntity::getSourceCode).collect(Collectors.joining(","));
-            throw new ServiceException(ApiError.LOGISTICS_DECLARE_RECONCILIATION_NOT_FOUND,codes);
+            throw new ServiceException(ApiError.PO_RECONCILIATION_ALREADY_GENERATED,codes);
         }
     }
 

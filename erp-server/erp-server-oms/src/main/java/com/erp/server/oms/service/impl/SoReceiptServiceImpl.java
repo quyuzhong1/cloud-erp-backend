@@ -916,6 +916,15 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
     public void handlePlatformConsumer(PlatformReceiptDTO dto) {
         //查询是否存在
         SoReceiptEntity exist = this.getByThirdSystemAndCode(dto.getThirdSystem(), dto.getCode());
+        //查询销售订单状态
+        SoInfoEntity soInfoEntity = new SoInfoEntity();
+        if (!dto.getDetail().isEmpty()) {
+            if (StringUtils.isNotBlank(dto.getDetail().get(0).getSoCode())) {
+                soInfoEntity = soInfoService.lambdaQuery()
+                        .eq(SoInfoEntity::getCode,dto.getDetail().get(0).getSoCode())
+                        .one();
+            }
+        }
         List<SoReceiptDetailEntity> existList;
         if(exist != null) {
             existList = soReceiptDetailService.listByMainIds(Arrays.asList((exist.getId())));
@@ -1014,6 +1023,19 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
                     soInfoService.updateSoReceiptAmount(soIds);
                 }
             }
+
+            if (Objects.nonNull(soInfoEntity)) {
+                if (soInfoEntity.getApproveStatus().equals(BillApproveStatusEnum.APPROVE)
+                        || soInfoEntity.getApproveStatus().equals(BillApproveStatusEnum.APPROVE_ING)) {
+                    this.submit(exist.getId());
+                    ApproveOneDTO approveOneDTO = new ApproveOneDTO();
+                    approveOneDTO.setId(exist.getId());
+                    approveOneDTO.setType(ApproveTypeEnum.PASS.getStatus());
+                    approveOneDTO.setComment("");
+                    this.approve(approveOneDTO);
+                }
+            }
+
         }else{
             //如果是作废，直接跳过
             if(dto.getIsInvalid()){
@@ -1053,7 +1075,19 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
                 }
             }
             addDTO.setDetailList(detailAddDTOList);
-            this.add(addDTO);
+            BaseResultDTO.AddDTO add = this.add(addDTO);
+
+            if (Objects.nonNull(soInfoEntity)) {
+                if (soInfoEntity.getApproveStatus().equals(BillApproveStatusEnum.APPROVE)
+                        || soInfoEntity.getApproveStatus().equals(BillApproveStatusEnum.APPROVE_ING)) {
+                    this.submit(add.getId());
+                    ApproveOneDTO approveOneDTO = new ApproveOneDTO();
+                    approveOneDTO.setId(add.getId());
+                    approveOneDTO.setType(ApproveTypeEnum.PASS.getStatus());
+                    approveOneDTO.setComment("");
+                    this.approve(approveOneDTO);
+                }
+            }
         }
     }
 
@@ -1069,6 +1103,28 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
             }
         }
         return new ArrayList<>();
+    }
+
+    @Override
+    public void deleteReceiptJob() {
+        List<SoReceiptEntity> receiptList = this.lambdaQuery()
+                .lt(SoReceiptEntity::getCreateTime, LocalDateTime.now().minusDays(30)) // 30天前
+                .eq(SoReceiptEntity::getApproveStatus, ApproveStatusEnum.WAIT_SUBMIT)
+                .list();
+
+        List<String> receiptIdList = receiptList.stream().map(item -> item.getId()).collect(Collectors.toList());
+        if (!receiptIdList.isEmpty()) {
+            for (String mainId : receiptIdList) {
+                soReceiptDetailService.removeByMainId(mainId);
+            }
+        }
+
+        String ids = receiptList.stream()
+                .map(SoReceiptEntity::getId)
+                .collect(Collectors.joining(", "));
+        log.info("删除的收款单ID为: [{}]", ids);
+
+        this.removeByIds(receiptIdList);
     }
 
     private boolean judgeHasChange(SoReceiptEntity exist, List<SoReceiptDetailEntity> existList, PlatformReceiptDTO dto) {

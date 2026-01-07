@@ -57,6 +57,7 @@ public class AwdInventoryServiceImpl extends SuperServiceImpl<AwdInventoryMapper
         if (Objects.nonNull(awdInventoryEntity)) {
             log.info("awd库存开始更新");
             boolean update = this.lambdaUpdate()
+                    .set(AwdInventoryEntity::getAsin,StringUtils.isNotBlank(addDTO.getAsin()) ? addDTO.getAsin() : "")
                     .set(AwdInventoryEntity::getSkuId, StringUtils.isNotBlank(addDTO.getSkuId()) ? addDTO.getSkuId() : "")
                     .set(AwdInventoryEntity::getSkuNo, StringUtils.isNotBlank(addDTO.getSkuNo()) ? addDTO.getSkuNo() : "")
                     .set(AwdInventoryEntity::getProductName, StringUtils.isNotBlank(addDTO.getProductName()) ? addDTO.getProductName() : "")

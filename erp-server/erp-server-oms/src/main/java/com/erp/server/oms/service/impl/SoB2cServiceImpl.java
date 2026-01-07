@@ -54,6 +54,8 @@ import com.common.core.utils.*;
 import com.common.core.utils.date.DateUtil;
 import com.common.core.utils.date.LocalDateUtil;
 import com.common.message.constant.RedisKeyConstant;
+import com.common.message.constant.RocketMqNewTag;
+import com.common.message.constant.RocketMqNewTopic;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
@@ -11677,5 +11679,33 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             }
         }
 
+    }
+
+
+    @Override
+    public void retryPlatformOutbound(List<String> ids) {
+        Map<String, SoB2cEntity> mainMap = listByIds(ids)
+                .stream()
+                .collect(Collectors.toMap(BaseEntity::getId, Function.identity()));
+        for (String id : ids) {
+            SoB2cEntity currentEntity = mainMap.get(id);
+            if (Objects.isNull(currentEntity)){
+                throw new ServiceException(ApiError.SO_B2C_NOT_FOUND);
+            }
+
+            SoB2cErrorEntity b2cError = soB2cErrorService.lambdaQuery().eq(SoB2cErrorEntity::getMainId, id).
+                    eq(SoB2cErrorEntity::getType,SoB2cErrorTypeEnum.RETRY_PLATFORM_OUTBOUND.getCode()).
+                    orderByDesc(SoB2cErrorEntity::getCreateTime).
+                    last("LIMIT 1").
+                    one();
+
+            if(Objects.isNull(b2cError)){
+                throw new ServiceException(ApiError.SO_B2C_NOT_FOUND);
+            }
+            SendResult result = mqProducerService.syncClassMsg(RocketMqNewTopic.DMP_PLATFORM_OUTBOUND_TO_WMS_TOPIC,  RocketMqNewTag.DMP_PLATFORM_OUTBOUND_TO_WMS_TAG,b2cError.getParamJson(),id);
+            if (!SendStatus.SEND_OK.equals(result.getSendStatus())){
+                throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
+            }
+        }
     }
 }
