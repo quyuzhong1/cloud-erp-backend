@@ -7241,6 +7241,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             }else{
                 entity.setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT);
             }
+            if(StringUtils.isBlank(entity.getId())){
+                entity.setId(IdWorker.getIdStr());
+            }
             //记录异常
             SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
             addError.setType(SoB2cErrorTypeEnum.GET_EXCHANGE_RATE.getCode());
