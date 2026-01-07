@@ -1009,8 +1009,13 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
          if (CollUtil.isNotEmpty(list)) {
              throw new ServiceException(ApiError.PO_INSTOCK_PUSH_PO_RECONCILIATION_EXIST);
         }
+         //查询采购入库单明细
+        List<PoInstockDetailEntity> poInstockDetailList = poInstockDetailService.listByMainId(entity.getId());
+         if (CollUtil.isEmpty(poInstockDetailList)) {
+             throw new ServiceException(ApiError.PO_INSTOCK_DETAIL_NOT_FOUND);
+         }
         //对账单删除
-        List<String> sourceDetailIdList = list.stream().map(PoReconciliationRefDetailEntity::getSourceDetailId).distinct().collect(Collectors.toList());
+        List<String> sourceDetailIdList = poInstockDetailList.stream().map(PoInstockDetailEntity::getId).distinct().collect(Collectors.toList());
         srmPoReconciliationFeign.deleteDetailBySourceDetailIdList(sourceDetailIdList);
     }
 
