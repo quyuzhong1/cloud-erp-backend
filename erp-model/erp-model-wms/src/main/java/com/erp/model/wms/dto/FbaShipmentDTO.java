@@ -734,6 +734,10 @@ public class FbaShipmentDTO implements Serializable {
          * 装箱清单下载状态
          */
         private String packingDownload;
+        /**
+         * 是否sta
+         */
+        private Boolean isSta;
     }
     /**
      * 列表查询返回值
