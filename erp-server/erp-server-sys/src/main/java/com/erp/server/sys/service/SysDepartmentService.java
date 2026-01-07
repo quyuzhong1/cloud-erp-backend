@@ -160,5 +160,7 @@ public interface SysDepartmentService extends IService<SysDepartmentEntity> {
     List<SysDepartmentEntity> listByParentIds();
 
     List<DeptUserDTO.Tree> cascadeTree();
+
+    void updateDisabled(SysDepartmentDTO.UpdateDisabledDTO dto);
 }
 
