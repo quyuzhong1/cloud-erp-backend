@@ -203,6 +203,19 @@ public class RefProductImgAttachmentDTO implements Serializable {
     }
 
     /**
+     * 批量新增
+     */
+    @Data
+    @NoArgsConstructor
+    public static class BatchAddDTO {
+        /**
+         * 新增数据列表
+         */
+        @NotEmpty(message = "新增数据列表不能为空")
+        private List<AddDTO> addDTOList;
+    }
+
+    /**
     * 修改
     */
     @Data
