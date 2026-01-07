@@ -1542,9 +1542,9 @@ public class RefProductImgAttachmentServiceImpl extends SuperServiceImpl<RefProd
         }
         
         // 3. 将传入的URL转换为原图URL（如果传入的是缩略图URL，找到对应的原图URL）
-        // 构建传入URL到原图URL的映射
+        // 构建传入URL到原图URL的映射，同时保持原始顺序
         Map<String, String> inputUrlToOriginalUrlMap = new HashMap<>();
-        List<String> normalizedNewImagesUrls = new ArrayList<>();
+        List<String> normalizedNewImagesUrls = new ArrayList<>(); // 保持顺序，用于确定主图
         for (String inputUrl : newImagesUrls) {
             // 先检查是否是原图URL
             if (existingAttachmentMap.containsKey(inputUrl)) {
@@ -1579,6 +1579,16 @@ public class RefProductImgAttachmentServiceImpl extends SuperServiceImpl<RefProd
         // 要新增的URL（新有但旧没有的，使用原图URL）
         Set<String> toAddUrls = new HashSet<>(newUrls);
         toAddUrls.removeAll(existingUrls);
+        
+        // 重要：主图应该是传入列表的第一个（imagesUrls.get(0)），而不是normalizedNewImagesUrls的第一个
+        // 因为normalizedNewImagesUrls可能因为URL转换而改变顺序
+        String firstImageUrl = null;
+        if (CollUtil.isNotEmpty(newImagesUrls)) {
+            String firstInputUrl = newImagesUrls.get(0);
+            // 将第一个传入URL转换为原图URL
+            firstImageUrl = inputUrlToOriginalUrlMap.getOrDefault(firstInputUrl, firstInputUrl);
+            log.info("确定主图URL：传入的第一个URL={}, 转换后的原图URL={}", firstInputUrl, firstImageUrl);
+        }
         
         // 将新增的URL也加入到需要获取文件大小的列表中
         urlsToGetSize.addAll(toAddUrls);
@@ -1634,6 +1644,7 @@ public class RefProductImgAttachmentServiceImpl extends SuperServiceImpl<RefProd
         }
         
         // 5. 更新旧数据的文件大小（批量获取后更新）
+        // 注意：只更新文件大小，不修改attachName
         if (CollUtil.isNotEmpty(oldUrlsToCreate)) {
             for (String oldUrl : oldUrlsToCreate) {
                 PlmAttachmentEntity attachmentEntity = existingAttachmentMap.get(oldUrl);
@@ -1642,9 +1653,13 @@ public class RefProductImgAttachmentServiceImpl extends SuperServiceImpl<RefProd
                     if (fileSizeBytes != null && fileSizeBytes > 0) {
                         BigDecimal fileSizeMB = BigDecimal.valueOf(fileSizeBytes)
                                 .divide(BigDecimal.valueOf(1024 * 1024), 2, BigDecimal.ROUND_HALF_UP);
-                        attachmentEntity.setAttachSize(fileSizeMB);
-                        plmAttachmentService.updateById(attachmentEntity);
-                        log.info("更新旧数据文件大小，url={}, size={}MB", oldUrl, fileSizeMB);
+                        // 只更新文件大小，不修改attachName
+                        plmAttachmentService.lambdaUpdate()
+                                .eq(PlmAttachmentEntity::getId, attachmentEntity.getId())
+                                .set(PlmAttachmentEntity::getAttachSize, fileSizeMB)
+                                .update();
+                        log.info("更新旧数据文件大小，id={}, url={}, size={}MB, attachName保持不变={}", 
+                                attachmentEntity.getId(), oldUrl, fileSizeMB, attachmentEntity.getAttachName());
                     }
                 }
             }
@@ -1653,11 +1668,7 @@ public class RefProductImgAttachmentServiceImpl extends SuperServiceImpl<RefProd
         // 6. 确保只有一个主图：第一个图片为主图，其他图片归类到"未分类"
         String uncategorizedCategoryId = getUncategorizedCategoryId();
         
-        // 6.1 获取第一个图片的原图URL（主图）
-        String firstImageUrl = null;
-        if (CollUtil.isNotEmpty(normalizedNewImagesUrls)) {
-            firstImageUrl = normalizedNewImagesUrls.get(0);
-        }
+        // 6.1 主图URL已在步骤3中确定（使用传入列表的第一个）
         
         // 6.2 将之前的主图（如果不在新列表中）移出主图分类，归类到"未分类"
         List<RefProductImgAttachmentEntity> oldMainImages = super.lambdaQuery()
@@ -1848,20 +1859,17 @@ public class RefProductImgAttachmentServiceImpl extends SuperServiceImpl<RefProd
         }
         
         // 8. 更新product_detail的images_url（用缩略图URL替换原图URL）
-        // 先构建包含所有原图URL的列表
+        // 重要：保持传入的顺序，而不是使用Set的顺序
+        // 按照normalizedNewImagesUrls的顺序构建最终URL列表
         List<String> finalImagesUrls = new ArrayList<>();
-        finalImagesUrls.addAll(toKeepUrls); // 保留的原图URL
-        finalImagesUrls.addAll(toAddUrls); // 新增的原图URL
-        
-        // 在最终URL列表中替换原图URL为缩略图URL
-        for (int i = 0; i < finalImagesUrls.size(); i++) {
-            String originalUrl = finalImagesUrls.get(i);
-            String thumbnailUrl = allOriginalToThumbnailMap.get(originalUrl);
-            // 如果找到了对应的缩略图URL，替换原图URL
-            if (StrUtil.isNotBlank(thumbnailUrl)) {
-                finalImagesUrls.set(i, thumbnailUrl);
+        for (String normalizedUrl : normalizedNewImagesUrls) {
+            // 检查这个URL是否在保留或新增列表中
+            if (toKeepUrls.contains(normalizedUrl) || toAddUrls.contains(normalizedUrl)) {
+                // 查找对应的缩略图URL
+                String thumbnailUrl = allOriginalToThumbnailMap.get(normalizedUrl);
+                // 如果找到了对应的缩略图URL，使用缩略图URL，否则使用原图URL
+                finalImagesUrls.add(StrUtil.isNotBlank(thumbnailUrl) ? thumbnailUrl : normalizedUrl);
             }
-            // 如果没有缩略图，保留原图URL
         }
         
         String imagesUrlStr = "";
