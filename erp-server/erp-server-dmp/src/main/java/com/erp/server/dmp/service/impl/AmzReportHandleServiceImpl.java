@@ -123,6 +123,8 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
     private DmpCfgInputDetailService dmpCfgInputDetailService;
     @Resource
     private CfgSettingService cfgSettingService;
+    @Resource
+    private DmpFbaShipmentService dmpFbaShipmentService;
 
 
     @Override
@@ -676,6 +678,13 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
             ServiceException.runError("FBA查询配置明细不存在");
         }
         List<String> inputDetailIds = list.stream().map(BaseEntity::getId).collect(Collectors.toList());
+
+        if (!dto.getShipmentCodeList().isEmpty()) {
+            dmpFbaShipmentService.lambdaUpdate()
+                    .set(DmpFbaShipmentEntity::getDataEncrypt,"")
+                    .in(DmpFbaShipmentEntity::getFbaShipmentId,dto.getShipmentCodeList())
+                    .update();
+        }
 
         // 创建新中台hotfix任务
         DmpInputHotfixCreateRequest dmpInputHotfixCreateRequest = new DmpInputHotfixCreateRequest();
