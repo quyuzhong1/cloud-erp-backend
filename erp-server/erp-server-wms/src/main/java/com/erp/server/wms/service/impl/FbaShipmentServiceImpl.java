@@ -8,6 +8,7 @@ import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -2165,7 +2166,16 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
 
     @Override
     public WmsAttachmentDTO.UpdateDTO printLabel(FbaShipmentDTO.PrintLabelDTO dto) {
-        FbaShipmentEntity entity = this.getById(dto.getId());
+        if (CharSequenceUtil.isAllBlank(dto.getId(), dto.getFbaShipmentCode())){
+            throw new ServiceException("货件ID或货件单号不能同时为空");
+        }
+        FbaShipmentEntity entity;
+        if (CharSequenceUtil.isNotBlank(dto.getId())){
+            entity = this.getById(dto.getId());
+        }else {
+            entity = this.getOne(new LambdaQueryWrapper<FbaShipmentEntity>()
+                    .eq(FbaShipmentEntity::getCode, dto.getFbaShipmentCode()));
+        }
         if (Objects.isNull(entity)){
             throw new ServiceException("货件不存在");
         }
