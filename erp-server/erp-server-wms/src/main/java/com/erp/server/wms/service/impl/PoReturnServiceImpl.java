@@ -3314,6 +3314,9 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         //供应商联系人信息
         List<String> supplierContactIds = pushDownPurchaseViews.stream().filter(obj -> CharSequenceUtil.isNotBlank(obj.getSupplierContactId())).map(PurchasePriceDTO.PushDownPurchaseView::getSupplierContactId).collect(Collectors.toList());
         List<SupplierContactEntity> supplierContactList = scmTaskFeign.listSupplierContactByIds(supplierContactIds);
+        
+        //供应商账户信息
+        List<SupplierAccountEntity> supplierAccountList = scmTaskFeign.listSupplierAccount();
 
         //部门信息
         List<String> purchaseUserIds = pushDownPurchaseViews.stream().filter(obj -> CharSequenceUtil.isNotBlank(obj.getPurchaseUserId())).map(PurchasePriceDTO.PushDownPurchaseView::getPurchaseUserId).collect(Collectors.toList());
@@ -3358,6 +3361,17 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
                 if (ObjectUtils.isNotEmpty(supplierContactEntity)) {
                     //联系人电话
                     supplierDTO.setContactTelNumber(supplierContactEntity.getTelNumber());
+                }
+            }
+            //供应商账户信息
+            if (CollectionUtils.isNotEmpty(supplierAccountList)) {
+                SupplierAccountEntity supplierAccountEntity = supplierAccountList.stream()
+                        .filter(obj -> obj.getSupplierId().equals(mainView.getSupplierId()))
+                        .filter(obj -> obj.getIsDefault() != null && obj.getIsDefault())
+                        .findFirst()
+                        .orElse(null);
+                if (ObjectUtils.isNotEmpty(supplierAccountEntity)) {
+                    supplierDTO.setSupplierAccountId(supplierAccountEntity.getId());
                 }
             }
             addDTO.setPurchaseOrderSupplierDTO(supplierDTO);

@@ -11118,6 +11118,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             redisUtil.set(CharSequenceUtil.format("so_b2c_not_outbound:{}", soB2cEntity.getId()), Boolean.TRUE);
             soB2cCoreService.generateDeliveryAndOutStock(soB2cEntity, detailEntityList, dto, soB2cLogisticsEntity, soB2cReceiverEntity, overseasWarehouse);
         } catch (Exception e) {
+            log.error("生成发货单，出库单失败:{}", e.getMessage());
+            //回退订单状态
+            soB2cService.lambdaUpdate().set(SoB2cEntity::getSoOutstockDate, null).set(SoB2cEntity::getBillStatus, SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode()).set(SoB2cEntity::getIsNotOutbound, false)
+                    .eq(SoB2cEntity::getId, soB2cEntity.getId()).update();
             throw new ServiceException(CharSequenceUtil.format("生成发货单，出库单失败:{}", e.getMessage()));
         } finally {
             UserContext.clearIsUserSystem();
