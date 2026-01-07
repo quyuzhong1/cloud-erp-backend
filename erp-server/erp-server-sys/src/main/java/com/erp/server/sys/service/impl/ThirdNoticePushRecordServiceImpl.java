@@ -414,8 +414,8 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
 
     //模具监控（配置在预警策略和返还策略）
     private static List<String> getCfgNoticeByMoldMonitor(Map<String, Object> jsonMap) {
-        String sourceId = jsonMap.get("sourceId") == null ? "" : String.valueOf(jsonMap.get("sourceId"));
-        String sourceType = jsonMap.get("sourceType") == null ? "" : String.valueOf(jsonMap.get("sourceType"));
+        String sourceId = jsonMap.get("source_id") == null ? "" : String.valueOf(jsonMap.get("source_id"));
+        String sourceType = jsonMap.get("source_type") == null ? "" : String.valueOf(jsonMap.get("source_type"));
         if(StringUtils.isBlank(sourceId) || StringUtils.isBlank(sourceType)){
             log.error("通知配置消费者：模具监控策略类型或策略id为空");
             return Collections.emptyList();
