@@ -28,7 +28,8 @@
         fsd.receive_qty AS receiveQty,
         fsd.diff_qty AS diffQty,
         fsd.is_combination AS isCombination,
-        fs.is_packing_download as isPackingDownload
+        fs.is_packing_download as isPackingDownload,
+        fs.is_sta as isSta
         FROM fba_shipment_detail fsd
         INNER JOIN fba_shipment fs ON fs.id = fsd.main_id AND fsd.is_deleted = FALSE
         WHERE
