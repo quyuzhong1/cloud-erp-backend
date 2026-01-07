@@ -180,7 +180,8 @@ public class RefProductImgAttachmentServiceImpl extends SuperServiceImpl<RefProd
         }
 
         // 如果分类是产品主图，确保只有一个主图：将之前的主图移出主图分类
-        if (PRODUCT_MAIN_IMAGE_CATEGORY_ID.equals(refProductImgAttachmentEntity.getCategoryId())) {
+        boolean isMainImage = PRODUCT_MAIN_IMAGE_CATEGORY_ID.equals(refProductImgAttachmentEntity.getCategoryId());
+        if (isMainImage) {
             // 将同一个SKU的其他主图移出主图分类，归类到未分类
             String uncategorizedCategoryId = getUncategorizedCategoryId();
             List<RefProductImgAttachmentEntity> oldMainImages = super.lambdaQuery()
@@ -194,11 +195,33 @@ public class RefProductImgAttachmentServiceImpl extends SuperServiceImpl<RefProd
                 super.updateById(oldMainImage);
                 log.info("将旧主图移出主图分类，归类到未分类，refId={}", oldMainImage.getId());
             }
-            
-            // 自动生成产品缩略图
-            generateThumbnail(refProductImgAttachmentEntity);
         }
-
+        
+        // 缩略图不管怎么样都要生成，不管是什么分类
+        if (isMainImage) {
+            // 如果是主图，生成缩略图并更新product_detail的images_url（放在第一位）
+            generateThumbnail(refProductImgAttachmentEntity);
+        } else {
+            // 如果不是主图，生成缩略图并更新images_url（拼接到最后面）
+            String productDetailId = refProductImgAttachmentEntity.getProductDetailId();
+            String skuNo = refProductImgAttachmentEntity.getSkuNo();
+            if (StrUtil.isNotBlank(productDetailId) && StrUtil.isNotBlank(skuNo)) {
+                // 生成缩略图
+                String thumbnailUrl = generateThumbnailWithoutUpdate(
+                        refProductImgAttachmentEntity.getAttachmentId(), 
+                        productDetailId, 
+                        skuNo
+                );
+                // 获取原图URL
+                PlmAttachmentEntity attachment = plmAttachmentService.getById(refProductImgAttachmentEntity.getAttachmentId());
+                if (attachment != null && StrUtil.isNotBlank(attachment.getAttachUrl())) {
+                    String originalUrl = attachment.getAttachUrl();
+                    // 将缩略图URL（或原图URL）拼接到images_url的末尾
+                    String finalUrl = StrUtil.isNotBlank(thumbnailUrl) ? thumbnailUrl : originalUrl;
+                    appendThumbnailUrlToImagesUrl(productDetailId, finalUrl);
+                }
+            }
+        }
 
         return new BaseResultDTO.AddDTO(refProductImgAttachmentEntity.getId(), refProductImgAttachmentEntity.getId());
     }
@@ -718,6 +741,58 @@ public class RefProductImgAttachmentServiceImpl extends SuperServiceImpl<RefProd
         }
     }
 
+    /**
+     * 将缩略图URL拼接到product_detail的images_url的末尾
+     * @param productDetailId 产品明细ID
+     * @param thumbnailUrl 缩略图URL（如果为null，则不添加）
+     */
+    private void appendThumbnailUrlToImagesUrl(String productDetailId, String thumbnailUrl) {
+        if (StrUtil.isBlank(productDetailId) || StrUtil.isBlank(thumbnailUrl)) {
+            return;
+        }
+
+        try {
+            // 1. 获取product_detail记录
+            ProductDetailEntity productDetail = productDetailService.getById(productDetailId);
+            if (productDetail == null) {
+                log.warn("更新product_detail的images_url失败：产品明细不存在，productDetailId={}", productDetailId);
+                return;
+            }
+
+            // 2. 获取当前的images_url（用逗号分割）
+            String currentImagesUrl = productDetail.getImagesUrl();
+            List<String> imageUrlList = new ArrayList<>();
+            
+            // 如果当前images_url不为空，先添加到列表
+            if (StrUtil.isNotBlank(currentImagesUrl)) {
+                imageUrlList = Arrays.stream(currentImagesUrl.split(","))
+                        .map(String::trim)
+                        .filter(StrUtil::isNotBlank)
+                        .collect(Collectors.toList());
+            }
+
+            // 3. 如果缩略图URL已存在，先移除
+            imageUrlList.remove(thumbnailUrl);
+            
+            // 4. 将缩略图URL添加到列表末尾
+            imageUrlList.add(thumbnailUrl);
+
+            // 5. 重新组合成逗号分割的字符串
+            String newImagesUrl = String.join(",", imageUrlList);
+
+            // 6. 更新images_url字段
+            productDetail.setImagesUrl(newImagesUrl);
+            productDetailService.updateById(productDetail);
+
+            log.info("成功将缩略图URL拼接到images_url末尾：productDetailId={}, 缩略图URL={}, 新images_url={}", 
+                    productDetailId, thumbnailUrl, newImagesUrl);
+        } catch (Exception e) {
+            log.error("更新product_detail的images_url失败：productDetailId={}, thumbnailUrl={}, 错误信息={}", 
+                    productDetailId, thumbnailUrl, e.getMessage(), e);
+            // 不抛出异常，避免影响主流程
+        }
+    }
+    
     /**
      * 更新product_detail表的images_url字段，将新生成的缩略图URL放在第一位
      * @param productDetailId 产品明细ID
