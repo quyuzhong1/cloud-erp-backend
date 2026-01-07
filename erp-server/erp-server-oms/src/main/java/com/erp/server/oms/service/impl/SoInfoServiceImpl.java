@@ -4544,7 +4544,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             String receiveAccount = "";
             String finalSalesOrgId = salesOrgId;
             BankAccountEntity bankAccount = bankAccountList.stream().filter(b -> b.getAccountName().equals(receiveAccountStr) &&
-                    finalSalesOrgId.equals(b.getOrgId())).findFirst().orElse(null);
+                    finalSalesOrgId.equals(b.getOrgId()) && !b.getDisabled()).findFirst().orElse(null);
             if (Objects.isNull(bankAccount)) {
                 errorMsgList.add("收款账号不存在");
             } else {
