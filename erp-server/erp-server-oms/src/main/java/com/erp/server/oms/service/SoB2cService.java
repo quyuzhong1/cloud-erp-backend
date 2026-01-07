@@ -1162,4 +1162,6 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
     String processOrderCreation(SoB2cDTO.AddDTO dto);
 
     BatchResultDTO refreshExchangeRate(SoB2cEntity soB2cEntity);
+
+    void retryPlatformOutbound( List<String> ids);
 }

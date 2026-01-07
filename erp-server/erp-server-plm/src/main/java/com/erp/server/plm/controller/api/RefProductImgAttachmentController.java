@@ -195,7 +195,7 @@ public class RefProductImgAttachmentController extends BaseController {
      * @return ApiResult<Boolean>
      */
     @PostMapping("/uploadProductMainImage")
-    @LogAction(value = LogActionEnum.UPDATE, desc = "上传产品主图")
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "上传产品主图")
     public ApiResult<Boolean> uploadProductMainImage(@RequestBody @Validated RefProductImgAttachmentDTO.UploadProductMainImageDTO dto) {
         return success(refProductImgAttachmentService.uploadProductMainImage(dto));
     }
@@ -209,7 +209,7 @@ public class RefProductImgAttachmentController extends BaseController {
      * @param request
      * @return ApiResult<List<String>> 返回缩略图URL列表
      */
-    @LogAction(value = LogActionEnum.UPLOAD, desc = "上传产品主图文件:文件名={name}")
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "上传产品主图文件:文件名={name}")
     @PostMapping(value = "/uploadProductMainImageFile", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ApiResult<List<String>> uploadProductMainImageFile(
             @RequestParam("multipartFile") MultipartFile[] multipartFile,

@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -189,7 +190,13 @@ public class VirtualWarehousePushHandleDetailServiceImpl extends SuperServiceImp
                     fromToGroupMap.forEach((fromToGroupId, groupList) -> {
                         String[] split = fromToGroupId.split(splitStr);
                         List<ThirdMappingEntity> fromMappingList = fromToThirdMappingMap.get(split[0]);
+                        if (CollUtil.isEmpty(fromMappingList)) {
+                            throw new ServiceException(ApiError.VM_ALLOCATION_FORM_VIRTUAL_WAREHOUSE_NOT_THIRD_MAPPING,groupList.get(0).getFromVirtualWarehouseName());
+                        }
                         List<ThirdMappingEntity> toMappingList = fromToThirdMappingMap.get(split[1]);
+                        if (CollUtil.isEmpty(toMappingList)) {
+                            throw new ServiceException(ApiError.VM_ALLOCATION_TO_VIRTUAL_WAREHOUSE_NOT_THIRD_MAPPING,groupList.get(0).getToVirtualWarehouseName());
+                        }
                         //获取调出仓绑定的旺店通虚拟仓
                         if (CollectionUtils.isNotEmpty(toMappingList)) {
                             //保存合单明细
