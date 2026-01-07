@@ -1109,7 +1109,7 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
     public void deleteReceiptJob() {
         List<SoReceiptEntity> receiptList = this.lambdaQuery()
                 .lt(SoReceiptEntity::getCreateTime, LocalDateTime.now().minusDays(30)) // 30天前
-                .eq(SoReceiptEntity::getApproveStatus, ApproveStatusEnum.WAIT_SUBMIT.getCode())
+                .eq(SoReceiptEntity::getApproveStatus, ApproveStatusEnum.WAIT_SUBMIT)
                 .list();
 
         List<String> receiptIdList = receiptList.stream().map(item -> item.getId()).collect(Collectors.toList());
@@ -1124,7 +1124,7 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
                 .collect(Collectors.joining(", "));
         log.info("删除的收款单ID为: [{}]", ids);
 
-        this.removeByIds(receiptList);
+        this.removeByIds(receiptIdList);
     }
 
     private boolean judgeHasChange(SoReceiptEntity exist, List<SoReceiptDetailEntity> existList, PlatformReceiptDTO dto) {
