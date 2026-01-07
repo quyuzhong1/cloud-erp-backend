@@ -1469,18 +1469,26 @@ public class RefProductImgAttachmentServiceImpl extends SuperServiceImpl<RefProd
             // 这个URL在旧系统中，但不在新系统中，需要创建记录
             log.info("发现旧数据URL，需要创建记录：{}", oldUrl);
             
-            // 查找或创建attachment记录
-            PlmAttachmentEntity attachmentEntity = plmAttachmentService.lambdaQuery()
-                    .eq(PlmAttachmentEntity::getAttachUrl, oldUrl)
-                    .eq(PlmAttachmentEntity::getBusinessId, dto.getSkuId())
-                    .last("LIMIT 1")
-                    .one();
+            // 先检查这个URL是否是缩略图URL，如果是，应该使用对应的原图attachment
+            PlmAttachmentEntity attachmentEntity = null;
+            if (thumbnailUrlToOriginalMap.containsKey(oldUrl)) {
+                // 如果是缩略图URL，使用对应的原图attachment
+                attachmentEntity = thumbnailUrlToOriginalMap.get(oldUrl);
+                log.info("识别到旧数据URL是缩略图URL，使用对应的原图attachment，url={}, attachmentId={}", oldUrl, attachmentEntity.getId());
+            } else {
+                // 查找或创建attachment记录
+                attachmentEntity = plmAttachmentService.lambdaQuery()
+                        .eq(PlmAttachmentEntity::getAttachUrl, oldUrl)
+                        .eq(PlmAttachmentEntity::getBusinessId, dto.getSkuId())
+                        .last("LIMIT 1")
+                        .one();
+            }
             
             if (attachmentEntity == null) {
                 // 创建新的attachment记录（文件大小稍后批量获取后设置）
                 attachmentEntity = new PlmAttachmentEntity();
                 attachmentEntity.setAttachUrl(oldUrl);
-                // 从URL提取文件名
+                // 从URL提取文件名（注意：这可能会丢失原始文件名，但如果是新上传的文件，只能这样处理）
                 String fileName = oldUrl;
                 int lastSlash = oldUrl.lastIndexOf('/');
                 if (lastSlash >= 0 && lastSlash < oldUrl.length() - 1) {
@@ -1492,6 +1500,10 @@ public class RefProductImgAttachmentServiceImpl extends SuperServiceImpl<RefProd
                 attachmentEntity.setBusinessId(dto.getSkuId());
                 plmAttachmentService.save(attachmentEntity);
                 log.info("为旧数据创建attachment记录，id={}, url={}", attachmentEntity.getId(), oldUrl);
+            } else {
+                // 如果attachment已存在，保留原有的attachName，不修改
+                log.info("找到已存在的attachment记录，保留原有名称，id={}, url={}, attachName={}", 
+                        attachmentEntity.getId(), oldUrl, attachmentEntity.getAttachName());
             }
             
             // 检查是否已有ref_product_img_attachment记录（不限制分类）
@@ -1708,7 +1720,9 @@ public class RefProductImgAttachmentServiceImpl extends SuperServiceImpl<RefProd
                     plmAttachmentService.save(attachmentEntity);
                     log.info("为新图片创建attachment记录，id={}, url={}, fileName={}", attachmentEntity.getId(), imageUrl, fileName);
                 } else {
-                    log.info("找到已存在的attachment记录，id={}, url={}, fileName={}", attachmentEntity.getId(), imageUrl, attachmentEntity.getAttachName());
+                    // 如果attachment已存在，保留原有的attachName，不修改
+                    log.info("找到已存在的attachment记录，保留原有名称，id={}, url={}, attachName={}", 
+                            attachmentEntity.getId(), imageUrl, attachmentEntity.getAttachName());
                 }
                 
                 // 确定分类：第一个图片为主图，其他为未分类（使用原图URL判断）
