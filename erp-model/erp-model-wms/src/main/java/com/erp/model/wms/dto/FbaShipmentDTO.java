@@ -1133,8 +1133,11 @@ public class FbaShipmentDTO implements Serializable {
         /**
          * id
          */
-        @NotBlank(message = "货件id不能为空")
         private String id;
+        /**
+         * 货件号
+         */
+        private String fbaShipmentCode;
         /**
          * 打印类型
          * FbaPageTypeEnum
