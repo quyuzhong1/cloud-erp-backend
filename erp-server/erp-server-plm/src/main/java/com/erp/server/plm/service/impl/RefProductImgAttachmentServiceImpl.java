@@ -57,6 +57,8 @@ import com.erp.server.plm.service.OperateLogService;
 import com.common.business.enums.FileTaskStatusEnum;
 import com.common.core.utils.FastDFSClientUtil;
 import com.erp.model.file.dto.FileDTO;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_PLM_PRODUCT_IMAGES;
 import static com.common.business.enums.FileTaskEventEnum.IMPORT_PLM_PRODUCT_IMG_ATTACHMENT;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import org.springframework.web.multipart.MultipartFile;
@@ -1147,7 +1149,7 @@ public class RefProductImgAttachmentServiceImpl extends SuperServiceImpl<RefProd
         }
         
         // 3. 创建异步下载任务（传递ids，由handler处理）
-        downloadTaskFeign.saveDownloadTask("批量下载图片", "EXPORT_PLM_PRODUCT_IMAGES", dto);
+        downloadTaskFeign.saveDownloadTask("批量下载图片", EXPORT_PLM_PRODUCT_IMAGES.getCode(), dto);
         
         log.info("批量下载图片任务创建成功，共{}张图片", dto.getIds().size());
         return Boolean.TRUE;
