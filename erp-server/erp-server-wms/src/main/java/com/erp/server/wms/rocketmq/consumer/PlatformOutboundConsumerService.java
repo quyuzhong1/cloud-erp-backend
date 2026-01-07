@@ -215,6 +215,12 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
                             businessDesc, false, false);
                 }
             }
+            //拦截中清除拦截状态
+            if(mainEntity.getIsIntercept()){
+                mainEntity.setIsIntercept(false);
+                mainEntity.setIsFrozen(false);
+                soB2cFeign.updateStatus(mainEntity);
+            }
             //清除三方仓异常
             if(SoB2cErrorTypeEnum.THIRD_WAREHOUSE_OUT_EXCEPTION.getCode().equals(mainEntity.getSignOrderError())){
                 String type = SoB2cErrorTypeEnum.THIRD_WAREHOUSE_OUT_EXCEPTION.getCode();
