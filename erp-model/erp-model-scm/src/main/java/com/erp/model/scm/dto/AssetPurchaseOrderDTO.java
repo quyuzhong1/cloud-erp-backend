@@ -259,6 +259,11 @@ public class AssetPurchaseOrderDTO implements Serializable {
         private String assetName;
 
         /**
+         * 项目名称
+         */
+        private String projectName;
+
+        /**
          * 计划交期
          */
         private LocalDate planDeliveryDate;

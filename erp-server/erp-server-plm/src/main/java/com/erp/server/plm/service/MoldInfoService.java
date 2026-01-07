@@ -179,4 +179,13 @@ public interface MoldInfoService extends SuperService<MoldInfoEntity> {
     void handleImportSuccessList(List<MoldInfoImportExcelDTO> successList, List<MoldInfoImportExcelDTO> errorList2, String importType);
 
     List<MoldInfoDTO.SearchMoldDTO> searchMold(MoldInfoDTO.SearchDTO searchDTO);
+
+    /**
+     * 通过模具code获取供应商信息
+     * @author wuhaotian
+     * @date: 2025-12-29
+     * @param code 模具编码
+     * @return MoldInfoDTO.SupplierInfoByCodeDTO
+     */
+    MoldInfoDTO.SupplierInfoByCodeDTO getSupplierInfoByCode(String code);
 }

@@ -12,6 +12,7 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson2.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.conditions.query.LambdaQueryChainWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BatchResultDTO;
@@ -39,6 +40,8 @@ import com.erp.model.msg.constant.NoticeMsgConstant;
 import com.erp.model.msg.dto.NoticeMsgInfoDTO;
 import com.erp.model.msg.enums.NoticeTypeEnum;
 import com.erp.model.oms.entity.ShopInfoEntity;
+import com.erp.model.plm.entity.CfgMoldAlertRuleEntity;
+import com.erp.model.plm.entity.CfgMoldReturnAlertRuleEntity;
 import com.erp.model.plm.enums.FirstMassProductTypeEnum;
 import com.erp.model.sys.dto.DictBasicDTO;
 import com.erp.model.sys.dto.DictNoticeRoleOptionDTO;
@@ -340,25 +343,34 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
     public void sendThirdNoticeByMqAsync(Map<String, Object> jsonMap, List<String> diffFields) {
         //参数校验
         if (MapUtils.isEmpty(jsonMap) || CollectionUtils.isEmpty(diffFields)) {
-            log.error("MQ消息处理中止 - 参数不合法 jsonMap:{}, diffFields:{}", jsonMap, diffFields);
+            log.error("通知配置消费者：MqRecordConsumerService MQ消息处理中止 - 参数不合法 jsonMap:{}, diffFields:{}", jsonMap, diffFields);
             return;
         }
         //根据table获取业务单据类型（带缓存）
         String table = jsonMap.get("table") == null ? "" : String.valueOf(jsonMap.get("table"));
         String businessKey = getBusinessKeyWithCache(table);
         if (StringUtils.isBlank(businessKey)) {
-            log.error("未找到table[{}]对应的业务类型", table);
+            log.error("通知配置消费者：未找到table[{}]对应的业务类型", table);
             return;
         }
 
-        //检查是否存在有效配置
-        List<CfgThirdNoticeEntity> cfgThirdNoticeList = cfgThirdNoticeService.lambdaQuery()
+        LambdaQueryChainWrapper<CfgThirdNoticeEntity> lambdaQueryChainWrapper = cfgThirdNoticeService.lambdaQuery()
                 .eq(CfgThirdNoticeEntity::getBusinessType, businessKey)
                 .eq(CfgThirdNoticeEntity::getMethod, CfgThirdNoticeMethodEnum.SINGLE.getCode())
-                .eq(CfgThirdNoticeEntity::getNoticeStatus, Boolean.TRUE)
-                .list();
+                .eq(CfgThirdNoticeEntity::getNoticeStatus, Boolean.TRUE);
+        //模具监控（配置在预警策略和返还策略）
+        if(Objects.equals(businessKey , SourceTypeEnum.MOLD_MONITOR.getCode())){
+            List<String> cfgThirdNoticeIds = getCfgNoticeByMoldMonitor(jsonMap);
+            if(CollUtil.isEmpty(cfgThirdNoticeIds)){
+                return;
+            }
+            lambdaQueryChainWrapper.in(CfgThirdNoticeEntity::getId,cfgThirdNoticeIds);
+        }
+
+        //检查是否存在有效配置
+        List<CfgThirdNoticeEntity> cfgThirdNoticeList = lambdaQueryChainWrapper.list();
         if (CollUtil.isEmpty(cfgThirdNoticeList)) {
-            log.error("业务类型[{}]无有效通知配置", businessKey);
+            log.error("通知配置消费者：业务类型[{}]无有效通知配置", businessKey);
             return;
         }
 
@@ -371,7 +383,7 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
         // //保存mq消费记录
         String id = mqConsumerRecordService.addMqRecord(dto);
         if (StringUtils.isBlank(id)) {
-            log.error("保存MQ消费记录失败");
+            log.error("通知配置消费者：保存MQ消费记录失败");
             return;
         }
 
@@ -397,6 +409,47 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
             dto.setMqConsumerRecordId(id);
             sendThirdNoticeByMq(dto);
         }
+    }
+
+
+    //模具监控（配置在预警策略和返还策略）
+    private static List<String> getCfgNoticeByMoldMonitor(Map<String, Object> jsonMap) {
+        String sourceId = jsonMap.get("sourceId") == null ? "" : String.valueOf(jsonMap.get("sourceId"));
+        String sourceType = jsonMap.get("sourceType") == null ? "" : String.valueOf(jsonMap.get("sourceType"));
+        if(StringUtils.isBlank(sourceId) || StringUtils.isBlank(sourceType)){
+            log.error("通知配置消费者：模具监控策略类型或策略id为空");
+            return Collections.emptyList();
+        }
+
+        String noticeType ="";
+        String moldCode ="";
+        if(Objects.equals(sourceType,SourceTypeEnum.CFG_MOLD_RETURN_ALERT_RULE.getCode())){
+            List<CfgMoldReturnAlertRuleEntity> list = FeignQuery.create(CfgMoldReturnAlertRuleEntity.class).eq(CfgMoldReturnAlertRuleEntity::getId, sourceId).list();
+            if(CollUtil.isEmpty(list)){
+                log.error("通知配置消费者：模具监控返还策略不存在");
+                return Collections.emptyList();
+            }
+            noticeType = list.get(0).getNoticeType();
+            moldCode = list.get(0).getMoldCode();
+        }else if(Objects.equals(sourceType,SourceTypeEnum.CFG_MOLD_ALERT_RULE.getCode())){
+            List<CfgMoldAlertRuleEntity> list = FeignQuery.create(CfgMoldAlertRuleEntity.class).eq(CfgMoldReturnAlertRuleEntity::getId, sourceId).list();
+            if(CollUtil.isEmpty(list)){
+                log.error("通知配置消费者：模具监控预警策略不存在");
+                return Collections.emptyList();
+            }
+            noticeType = list.get(0).getNoticeType();
+            moldCode = list.get(0).getMoldCode();
+        }else {
+            log.error("通知配置消费者：模具监控类型数据策略类型异常【{}】",sourceType);
+        }
+
+
+        if(StringUtils.isBlank(noticeType)){
+            log.error("通知配置消费者：模具监控通知类型为空,模具【{}】",moldCode);
+            return Collections.emptyList();
+        }
+
+        return Arrays.asList(noticeType.split(","));
     }
 
     /**

@@ -68,9 +68,6 @@ public class MQSyncFsHandler {
             log.error("【{}】同步飞书审批实例失败，审批同步配置不存在", dto.getBusinessCode());
             return false;
         }
-
-
-
         ApproveSyncRecordEntity syncRecordEntity = buildSyncRecord(dto);
         String errorReason ="";
         //主流程
@@ -95,8 +92,8 @@ public class MQSyncFsHandler {
         //抄送任务
         List<String> taskManagementIds = processTaskManagementEntities.stream().map(ProcessTaskManagementEntity::getId).collect(Collectors.toList());
         List<ProcessTaskCcEntity> processTaskCcEntities = processTaskCcService.listTackCc(taskManagementIds);
-        //任务列表人员和抄送列表人员飞书信息
-        List<String> allUserIds = new ArrayList<>();
+//        //任务列表人员和抄送列表人员飞书信息
+//        List<String> allUserIds = new ArrayList<>();
         //申请人
         String createUserId = processManagementEntity.getCreateUserId();
         dto.setCreateUserId(createUserId);
@@ -104,22 +101,22 @@ public class MQSyncFsHandler {
         List<String> approveIds = processTaskManagementEntities.stream().map(ProcessTaskManagementEntity::getCurApproveId).filter(StringUtil::isNotBlank).collect(Collectors.toList());
         //抄送人
         List<String> ccIds = processTaskCcEntities.stream().map(ProcessTaskCcEntity::getCcUserId).filter(StringUtil::isNotBlank).collect(Collectors.toList());
-        //关注人
-        List<CfgApproveNoticeEntity> cfgApproveNoticeEntities = cfgApproveNoticeService.lambdaQuery().eq(CfgApproveNoticeEntity::getMainId, cfgApproveSyncEntity.getId()).list();
-        if(CollUtil.isNotEmpty(cfgApproveNoticeEntities)){
-            for (CfgApproveNoticeEntity cfgApproveNoticeEntity : cfgApproveNoticeEntities) {
-                String specificPerson = cfgApproveNoticeEntity.getSpecificPerson();
-                if(StringUtils.isNotBlank(specificPerson)){
-                    allUserIds.addAll(Arrays.asList(specificPerson.split(",")));
-                }
-            }
-        }
-        // 合并成一个集合（包含去重后的用户ID）
-        allUserIds.add(createUserId);
-        allUserIds.addAll(approveIds);
-        allUserIds.addAll(ccIds);
-        allUserIds = allUserIds.stream().distinct().collect(Collectors.toList());
-        Map<String, ThirdUnionDTO> thirdUnionMap = cfgApproveSyncBuildHandler.getThirdUnionDTOMap(allUserIds);
+//        //关注人
+//        List<CfgApproveNoticeEntity> cfgApproveNoticeEntities = cfgApproveNoticeService.lambdaQuery().eq(CfgApproveNoticeEntity::getMainId, cfgApproveSyncEntity.getId()).list();
+//        if(CollUtil.isNotEmpty(cfgApproveNoticeEntities)){
+//            for (CfgApproveNoticeEntity cfgApproveNoticeEntity : cfgApproveNoticeEntities) {
+//                String specificPerson = cfgApproveNoticeEntity.getSpecificPerson();
+//                if(StringUtils.isNotBlank(specificPerson)){
+//                    allUserIds.addAll(Arrays.asList(specificPerson.split(",")));
+//                }
+//            }
+//        }
+//        // 合并成一个集合（包含去重后的用户ID）
+//        allUserIds.add(createUserId);
+//        allUserIds.addAll(approveIds);
+//        allUserIds.addAll(ccIds);
+//        allUserIds = allUserIds.stream().distinct().collect(Collectors.toList());
+        Map<String, ThirdUnionDTO> thirdUnionMap = cfgApproveSyncBuildHandler.getThirdUnionDTOMap(new ArrayList<>());
 
         //推送消息 (快捷审批)
         List<CfgApproveSyncFieldMapEntity> fieldMapEntities = cfgApproveSyncFieldMapService.listByMainIds(Arrays.asList(cfgApproveSyncEntity.getId())).stream()
