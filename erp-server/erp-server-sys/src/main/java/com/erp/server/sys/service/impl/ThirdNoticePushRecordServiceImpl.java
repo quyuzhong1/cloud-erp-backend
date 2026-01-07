@@ -14,6 +14,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.conditions.query.LambdaQueryChainWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.constant.BusinessCommonConstants;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -49,6 +50,7 @@ import com.erp.model.sys.dto.MqConsumerRecordDTO;
 import com.erp.model.sys.dto.ThirdNoticePushRecordDTO;
 import com.erp.model.sys.entity.*;
 import com.erp.model.sys.enums.*;
+import com.erp.model.sys.vo.FsBatchSendMessageDTO;
 import com.erp.model.sys.vo.SendThirdNoticeConsumerDTO;
 import com.erp.model.sys.vo.ThirdUnionDTO;
 import com.erp.model.tms.dto.TmsFirstMileLogisticDTO;
@@ -814,25 +816,85 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
                             continue;
                         }
 
+
                         Boolean save = insertBatch(Arrays.asList(recordEntity));
                         if(Boolean.TRUE.equals(save)){
-                            SendThirdNoticeConsumerDTO sendMessage = new SendThirdNoticeConsumerDTO();
-                            sendMessage.setThirdNoticePushRecordEntity(recordEntity);
-                            sendMessage.setTitle(title);
-                            sendMessage.setContent(content);
-                            sendMessage.setReceiverUserIds(Arrays.asList(userId));
-                            sendMessage.setNoticeTypeEnum(NoticeTypeEnum.SYS_TASK);
-                            SendResult sendResult = mqProducerService.syncClassMsg(RocketMqTopic.SEND_THIRD_NOTICE_TOPIC, RocketMqTagEnum.SEND_THIRD_NOTICE_TAG.getName(), sendMessage, recordEntity.getId());
-                            if (!SendStatus.SEND_OK.equals(sendResult.getSendStatus())) {
-                                log.error("消息发送结果失败：{}", JSONObject.toJSONString(sendResult));
-                            }else {
-                                log.error("MQ数据结果：{}", JSONUtil.toJsonStr(sendResult));
+                            boolean uat = BusinessCommonConstants.hasProfile("uat");
+                            boolean dev = BusinessCommonConstants.hasProfile("dev");
+                            boolean test = BusinessCommonConstants.hasProfile("test");
+                            boolean prod = BusinessCommonConstants.hasProfile("prod");
+                            //根据环境进行消息发送
+                            if(dev||test||uat){//开发、测试、uat环境
+                                log.error("通知配置消费者：走开发、测试、uat环境");
+                                FsBatchSendMessageDTO sendMessage = new FsBatchSendMessageDTO();
+                                String thirdUnionId = unionMap.get(userId).getThirdUnionId();
+                                sendMessage.setUnionIds(Arrays.asList(thirdUnionId));
+                                sendMessage.setContentMap(contentMap);
+                                oldSend(sendMessage,recordEntity);
+                            }else {//生产环境
+                                log.error("通知配置消费者：走生产环境");
+                                SendThirdNoticeConsumerDTO sendMessage = new SendThirdNoticeConsumerDTO();
+                                sendMessage.setThirdNoticePushRecordEntity(recordEntity);
+                                sendMessage.setTitle(title);
+                                sendMessage.setContent(content);
+                                sendMessage.setReceiverUserIds(Arrays.asList(userId));
+                                sendMessage.setNoticeTypeEnum(NoticeTypeEnum.SYS_TASK);
+                                SendResult sendResult = mqProducerService.syncClassMsg(RocketMqTopic.SEND_THIRD_NOTICE_TOPIC, RocketMqTagEnum.SEND_THIRD_NOTICE_TAG.getName(), sendMessage, recordEntity.getId());
+                                if (!SendStatus.SEND_OK.equals(sendResult.getSendStatus())) {
+                                    log.error("消息发送结果失败：{}", JSONObject.toJSONString(sendResult));
+                                }else {
+                                    log.error("MQ数据结果：{}", JSONUtil.toJsonStr(sendResult));
+                                }
                             }
+
                         }
                     }
                 }
             }
         }
+    }
+
+    public void oldSend(FsBatchSendMessageDTO dto, ThirdNoticePushRecordEntity thirdNoticePushRecordEntity){
+        log.info("SendThirdNoticeConsumerService 开始");
+        LocalDateTime now = LocalDateTime.now();
+        try {
+            //发送消息的结果
+            Boolean sendResult = fsService.sendMessage(dto);
+            //当发送成功后
+            if (Boolean.TRUE.equals(sendResult)) {
+                log.info("sendMessage 当发送成功");
+                String messageId = thirdNoticePushRecordEntity.getId();
+                lambdaUpdate()
+                        .set(ThirdNoticePushRecordEntity::getStatus, ThirdNoticePushRecordStatusEnum.SUCCESS.getCode())
+                        .set(ThirdNoticePushRecordEntity::getSendTime,now)
+                        .eq(ThirdNoticePushRecordEntity::getId, messageId)
+                        .update();
+            }else {
+                log.info("sendMessage 当发送失败");
+                String messageId = thirdNoticePushRecordEntity.getId();
+                ThirdNoticePushRecordEntity record = getById(messageId);
+                String errorReason = record.getErrorReason();
+                if(StringUtils.isBlank(errorReason)){
+                    errorReason = "发送消息失败";
+                }
+                lambdaUpdate()
+                        .set(ThirdNoticePushRecordEntity::getStatus, ThirdNoticePushRecordStatusEnum.FAILED.getCode())
+                        .set(ThirdNoticePushRecordEntity::getSendTime,now)
+                        .set(ThirdNoticePushRecordEntity::getErrorReason,errorReason)
+                        .eq(ThirdNoticePushRecordEntity::getId, messageId)
+                        .update();
+            }
+        }catch(Exception e) {
+            log.error("sendMessage 发送异常 ",e);
+            String messageId = thirdNoticePushRecordEntity.getId();
+            lambdaUpdate()
+                    .set(ThirdNoticePushRecordEntity::getStatus, ThirdNoticePushRecordStatusEnum.FAILED.getCode())
+                    .set(ThirdNoticePushRecordEntity::getSendTime,now)
+                    .set(ThirdNoticePushRecordEntity::getErrorReason, JSONUtil.toJsonStr(e))
+                    .eq(ThirdNoticePushRecordEntity::getId, messageId)
+                    .update();
+        }
+        log.info("SendThirdNoticeConsumerService 结束");
     }
 
 
