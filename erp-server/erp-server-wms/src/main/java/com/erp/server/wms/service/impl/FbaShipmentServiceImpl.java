@@ -1628,7 +1628,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         List<WarehouseEntity> warehouseList = warehouseService.listByIds(warehouseIds);
 
         //仓库列表配置的在途归属仓库，目的仓为FBA第三方仓时，在途仓优先取仓库列表配置，配置为空时默认为“FBA在途仓-xgwj-fba”
-        WarehouseEntity warehouseEntity = warehouseList.stream().filter(req -> req.getId().equals(shopEntity.getWarehouseId())).findFirst().orElse(new WarehouseEntity());
+        WarehouseEntity warehouseEntity = CollUtil.isNotEmpty(warehouseList) ? warehouseList.get(0) : new WarehouseEntity();
         checkOnwayWarehouse(warehouseEntity);
 
         //查询在途仓
@@ -1872,7 +1872,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
             }
             List<WarehouseEntity> warehouseList = warehouseService.listByIds(warehouseIds);
             //仓库列表配置的在途归属仓库，目的仓为FBA第三方仓时，在途仓优先取仓库列表配置，配置为空时默认为“FBA在途仓-xgwj-fba”
-            WarehouseEntity warehouseEntity = warehouseList.stream().filter(req -> req.getId().equals(shopEntity.getWarehouseId())).findFirst().orElse(new WarehouseEntity());
+            WarehouseEntity warehouseEntity = CollUtil.isNotEmpty(warehouseList) ? warehouseList.get(0) : new WarehouseEntity();
             checkOnwayWarehouse(warehouseEntity);
             //查询在途仓
             WarehouseEntity onWayWarehouse = warehouseService.getById(warehouseEntity.getOnwayWarehouseId());
@@ -2648,7 +2648,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
             receiveEntitySet.addAll(new HashSet<>(list));
         }
         if (CollectionUtils.isEmpty(receiveEntityList)){
-            throw new ServiceException("未找到FBA货件签收记录");
+            throw new ServiceException("未找到货件签收记录");
         }
 
         // 根据调拨日志分组
