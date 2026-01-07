@@ -982,7 +982,7 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
                             .findFirst().orElse(new SoB2cDetailEntity());
                     //查询出库单明细是否有其他子件
                     List<BomChildrenSkuDTO> sameBomChildrenSkuDTOList = bomChildrenSkuDTOS.stream().filter(v->v.getParentSkuId().equals(bomChildrenSkuDTO.getParentSkuId()) && outSkuIds.contains(v.getSkuId())).collect(Collectors.toList());
-                    if (sameBomChildrenSkuDTOList.size() > 1) {
+                    if (!sameBomChildrenSkuDTOList.isEmpty()) {
                         // 有其他子件 将单价分摊
                         BigDecimal totalCost = costMap.get(bomChildrenSkuDTO.getParentSkuId());
                         BigDecimal totalQuantity = quantityMap.get(bomChildrenSkuDTO.getParentSkuId());
@@ -1016,7 +1016,7 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
                     if(ObjectUtils.isNotEmpty(bomChildrenSkuDTO)){
                         //查询出库单明细是否有其他子件
                         List<BomChildrenSkuDTO> sameBomChildrenSkuDTOList = bomChildrenSkuDTOS.stream().filter(v->v.getParentSkuId().equals(bomChildrenSkuDTO.getParentSkuId()) && outSkuIds.contains(v.getSkuId())).collect(Collectors.toList());
-                        if (sameBomChildrenSkuDTOList.size() > 1) {
+                        if (!sameBomChildrenSkuDTOList.isEmpty()) {
                             // 有其他子件 将单价分摊
                             BigDecimal totalCost = costMap.get(bomChildrenSkuDTO.getParentSkuId());
                             BigDecimal totalQuantity = quantityMap.get(bomChildrenSkuDTO.getParentSkuId());
