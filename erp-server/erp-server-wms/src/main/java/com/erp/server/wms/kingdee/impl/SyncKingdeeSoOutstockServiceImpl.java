@@ -566,9 +566,12 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
                 }
             }
             if(StringUtils.isNotBlank(deptId)){
-                List<SysDepartmentEntity> deptList = sysUserFeign.listDeptByIds(Arrays.asList(deptId));
-                if(org.apache.commons.collections4.CollectionUtils.isNotEmpty(deptList)){
-                    resultMap.put("salesDeptCode",deptList.get(0).getCode());
+                DeptKingdeeDTO.FindDeptKingdeeDTO findDeptKingdeeDTO = new DeptKingdeeDTO.FindDeptKingdeeDTO();
+                findDeptKingdeeDTO.setDeptId(deptId);
+                findDeptKingdeeDTO.setOrgId(soInfoById.getSalesOrgId());
+                KingdeeDepartmentEntity kingdeeDepartmentEntity = kingdeeFeign.getDeptKingdee(findDeptKingdeeDTO);
+                if(Objects.nonNull(kingdeeDepartmentEntity)){
+                    resultMap.put("salesDeptCode",kingdeeDepartmentEntity.getKingdeeDeptCode());
                 }
             }
         }

@@ -41,6 +41,7 @@ import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.sys.dto.CurrencyDTO;
+import com.erp.model.sys.dto.DeptKingdeeDTO;
 import com.erp.model.sys.dto.KingdeeBusinessOperatorDTO;
 import com.erp.model.sys.dto.KingdeeOperatorRefPostDTO;
 import com.erp.model.sys.entity.*;
@@ -490,9 +491,12 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
                     }
                 }
                 if(StringUtils.isNotBlank(deptId)){
-                    List<SysDepartmentEntity> deptList = sysUserFeign.listDeptByIds(Arrays.asList(deptId));
-                    if(CollectionUtils.isNotEmpty(deptList)){
-                        resultMap.put("deptCode",deptList.get(0).getCode());
+                    DeptKingdeeDTO.FindDeptKingdeeDTO findDeptKingdeeDTO = new DeptKingdeeDTO.FindDeptKingdeeDTO();
+                    findDeptKingdeeDTO.setDeptId(deptId);
+                    findDeptKingdeeDTO.setOrgId(salesOrgId);
+                    KingdeeDepartmentEntity kingdeeDepartmentEntity = kingdeeFeign.getDeptKingdee(findDeptKingdeeDTO);
+                    if(Objects.nonNull(kingdeeDepartmentEntity)){
+                        resultMap.put("deptCode",kingdeeDepartmentEntity.getKingdeeDeptCode());
                     }
                 }
             }
