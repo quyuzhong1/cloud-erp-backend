@@ -43,20 +43,25 @@
 
     <select id="paging" resultType="com.erp.model.wms.dto.AwdInventoryDTO$ListDTO">
         SELECT
-            id as id,
-            ai.msku as msku,
-            ai.sku_id as skuId,
-            ai.sku_no as skuNo,
-			ai.product_name as productName,
-            ai.available_distributable_qty as availableDistributableQty,
-			ai.replenishment_qty as replenishmentQty,
-			ai.reserved_distributable_qty as reservedDistributableQty,
-			ai.total_onhand_qty as totalOnhandQty,
-			ai.total_inbound_qty as totalInboundQty,
-			ai.update_time as updateTime
+            ID AS ID,
+            ai.warehouse_id as warehouseId,
+            ai.warehouse_name as warehouseName,
+            ai.asin as asin,
+            ai.msku AS msku,
+            ai.fnsku as fnsku,
+            ai.sku_id AS skuId,
+            ai.sku_no AS skuNo,
+            ai.product_name AS productName,
+            ai.available_distributable_qty AS availableDistributableQty,
+            ai.replenishment_qty AS replenishmentQty,
+            ai.reserved_distributable_qty AS reservedDistributableQty,
+            ai.total_onhand_qty AS totalOnhandQty,
+            ai.total_inbound_qty AS totalInboundQty,
+            ai.update_time AS updateTime
         FROM
             awd_inventory ai
-        WHERE 1 = 1
+        WHERE
+        1 = 1
         <if test="params.sqlMap != null and params.sqlMap.default != null and params.sqlMap.default != ''">
             AND ${params.sqlMap.default}
         </if>
