@@ -786,7 +786,7 @@ public class KolB2bApplicationServiceImpl extends SuperServiceImpl<KolB2bApplica
                 KolB2bApplicationDetailDTO.AddDTO detailDTO = new KolB2bApplicationDetailDTO.AddDTO();
                 BeanUtil.copyProperties(detailInfo, detailDTO);
                 detailDTO.setSkuId(skuId);
-                detailDTO.setPlanFeedbackDate(LocalDateUtil.stringToLocalDateTime(detailInfo.getPlanFeedbackDateStr()).toLocalDate());
+                detailDTO.setPlanFeedbackDate(CharSequenceUtil.isBlank(detailInfo.getPlanFeedbackDateStr()) ? null : LocalDateUtil.stringToLocalDateTime(detailInfo.getPlanFeedbackDateStr()).toLocalDate());
                 detailList.add(detailDTO);
             }
             addDTO.setDetailList(detailList);
