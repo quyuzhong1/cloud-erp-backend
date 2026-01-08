@@ -51,7 +51,7 @@ public enum ApiError implements Serializable {
     HTTP_PAYLOAD_TOO_LARGE(413, "请求数据过大"),
     HTTP_UNSUPPORTED_MEDIA_TYPE(415, "不支持的媒体类型"),
     HTTP_TOO_MANY_REQUESTS(429, "访问频率过高，请稍后再试"),
-    HTTP_UNKNOWN(500, "系统未知异常，请联系【实施人员】协调开发人员排查：{0} "),
+    HTTP_UNKNOWN(500, "系统未知异常，请联系【实施人员】协调开发人员排查："),
     HTTP_NOT_IMPLEMENTED(501, "接口未实现"),
     HTTP_BAD_GATEWAY(502, "网关错误"),
     HTTP_SERVICE_UNAVAILABLE(503, "服务不可用，服务器暂时过载或维护"),

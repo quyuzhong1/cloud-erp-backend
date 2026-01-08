@@ -1253,6 +1253,10 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                 String shipmentId = String.valueOf(jsonObject.getLong("shipmentId"));
                 getLabelVO.setDeliveryNo(shipmentId);
             }
+        }else if (logisticsPlatform.equals(LogisticsPlatformEnum.WILDBERRIES.getCode())){
+            if (Objects.nonNull(soB2cEntity)){
+                getLabelVO.setDeliveryNo(soB2cEntity.getPlatformCode());
+            }
         }
 
         // 设置物流跟踪信息
