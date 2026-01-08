@@ -1263,7 +1263,6 @@ public enum ApiError implements Serializable {
     PO_RECONCILIATION_REMARK_REQUIRED(96009,"对账单备注不能为空"),
     SO_B2C_GET_EXCHANGE_RATE_FAILED(10718,"获取汇率异常-汇率获取失败，请重新获取"),
     CUSTOMER_ADDRESS_NOT_MATCH(94108,"未匹配到客户地址，客户id：{0}，收货地址：{1}"),
-    SO_B2C_GET_EXCHANGE_RATE_FAILED(10718,"获取汇率异常-汇率获取失败，请重新获取"),
 
     /**
      * 销售订单错误信息 11000-11500
