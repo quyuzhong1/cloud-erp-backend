@@ -1020,4 +1020,20 @@ public class MoldInfoServiceImpl extends SuperServiceImpl<MoldInfoMapper, MoldIn
         return Boolean.TRUE;
     }
 
+    @Override
+    public MoldInfoDTO.SupplierInfoByCodeDTO getSupplierInfoByCode(String code) {
+        if (StrUtil.isBlank(code)) {
+            throw new ServiceException("模具编码不能为空");
+        }
+        MoldInfoEntity moldInfo = lambdaQuery().eq(MoldInfoEntity::getCode, code).one();
+        if (moldInfo == null) {
+            throw new ServiceException("未找到编码为【" + code + "】的模具档案");
+        }
+        return new MoldInfoDTO.SupplierInfoByCodeDTO(
+                moldInfo.getSupplierId(),
+                moldInfo.getSupplierCode(),
+                moldInfo.getSupplierName()
+        );
+    }
+
 }

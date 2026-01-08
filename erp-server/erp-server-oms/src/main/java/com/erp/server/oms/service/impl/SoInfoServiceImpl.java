@@ -682,13 +682,11 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
      */
     @Override
     public SoInfoDTO.ViewDTO view(String id) {
-        SoInfoDTO.ViewDTO view = new SoInfoDTO.ViewDTO();
         SoInfoEntity soInfo = this.getById(id);
         if (Objects.isNull(soInfo)) {
             throw new ServiceException(ApiError.SO_NOT_FOUND);
         }
-
-        BeanMapper.copy(soInfo, view);
+        SoInfoDTO.ViewDTO view = SoInfoConverter.INSTANCE.entityToViewDTO(soInfo);
         String customerId = soInfo.getCustomerId();
         String customerName = "";
         if (StringUtils.isNotBlank(customerId)) {

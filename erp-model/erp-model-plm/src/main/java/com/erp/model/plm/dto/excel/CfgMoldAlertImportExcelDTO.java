@@ -11,6 +11,7 @@ import lombok.NoArgsConstructor;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 
 /**
  * @author jack
@@ -107,17 +108,27 @@ public class CfgMoldAlertImportExcelDTO implements Serializable {
     private BigDecimal alertLifeRate;
 
     /**
+     * 通知类型
+     */
+    @ColumnWidth(20)
+    @ExcelProperty(value = "*通知类型(多个请用英文逗号隔开)", index = 8)
+    @FieldValid(fieldName = "*通知类型(多个请用英文逗号隔开)",isNotBlank = true)
+    private String noticeTypeName;
+    @ExcelIgnore
+    private List<String> noticeTypeList;
+
+    /**
      * 备注
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "备注", index = 8)
+    @ExcelProperty(value = "备注", index = 9)
     @FieldValid(fieldName = "备注")
     private String remark;
 
     /**
      * 错误数据
      */
-    @ExcelProperty(value = "错误数据", index =9)
+    @ExcelProperty(value = "错误数据", index =10)
     @ColumnWidth(50)
     private String  errorMsg = "";
 }

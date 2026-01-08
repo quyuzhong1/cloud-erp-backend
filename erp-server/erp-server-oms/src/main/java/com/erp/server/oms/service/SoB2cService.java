@@ -13,10 +13,7 @@ import com.erp.model.oms.enums.SoB2cInvalidTypeEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductCustomsEntity;
 import com.erp.model.tms.dto.*;
-import com.erp.model.wms.dto.ReportOrderDataDTO;
-import com.erp.model.wms.dto.SoOutstockDTO;
-import com.erp.model.wms.dto.WarehouseDTO;
-import com.erp.model.wms.dto.WmsDataCompareTaskDTO;
+import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 import com.erp.model.wms.entity.SoOutstockEntity;
@@ -1148,7 +1145,7 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
 
     BatchResultDTO retryPackagePlan(String soId);
 
-    BatchResultDTO deliveryWithNotOutbound(SoB2cDTO.DeliveryWithNotOutboundDTO dto, SoB2cEntity soB2cEntity, SoB2cLogisticsEntity soB2cLogisticsEntity, List<SoB2cDetailEntity> detailEntityList, SoB2cReceiverEntity soB2cReceiverEntity, LogisticsChannelDTO.BaseDTO baseDTO, List<String> noInventorySkuIdList);
+    BatchResultDTO deliveryWithNotOutbound(SoB2cDTO.DeliveryWithNotOutboundDTO dto, SoB2cEntity soB2cEntity, SoB2cLogisticsEntity soB2cLogisticsEntity, List<SoB2cDetailEntity> detailEntityList, SoB2cReceiverEntity soB2cReceiverEntity, LogisticsChannelDTO.BaseDTO baseDTO, List<String> noInventorySkuIdList, OverseasProviderWarehouseDTO.ViewDTO overseasWarehouse);
     /**
      * 1,创建订单
      * 2,匹配订单规则

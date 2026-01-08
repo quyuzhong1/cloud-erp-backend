@@ -232,4 +232,17 @@ public class CfgThirdNoticeController extends BaseController {
         return success();
     }
 
+
+
+    /**
+     * 根据模具监控类查询通知配置
+     * @author jack
+     * @date:  2025-12-26
+     * @return ApiResult<List<CfgThirdNoticeDTO.DropDownDTO>>
+     */
+    @GetMapping("/dropDownByMoldMonitor")
+    public ApiResult<List<CfgThirdNoticeDTO.DropDownDTO>> dropDownByMoldMonitor(@RequestParam(value = "sourceType",required = true) String sourceType) {
+        return success(cfgThirdNoticeService.dropDownByMoldMonitor(sourceType));
+    }
+
 }

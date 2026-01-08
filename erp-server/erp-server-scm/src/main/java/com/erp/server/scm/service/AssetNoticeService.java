@@ -1,5 +1,6 @@
 package com.erp.server.scm.service;
 import com.erp.model.scm.dto.AssetNoticeDetailDTO;
+import com.erp.model.scm.dto.excel.AssetNoticeImportExcelDTO;
 import com.erp.model.scm.entity.AssetNoticeEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -155,7 +156,10 @@ public interface AssetNoticeService extends SuperService<AssetNoticeEntity> {
 
     BatchResultDTO invalid(AssetNoticeEntity entity,String remark);
 
-    void handleImportSuccessList(List<AssetNoticeDetailDTO.MoldImportDTO> successList);
+    void handleImportSuccessList(List<AssetNoticeImportExcelDTO> successList,
+                                 List<String> errorNoList, 
+                                 List<AssetNoticeImportExcelDTO> errorList2, 
+                                 String importType);
 
     /**
      *

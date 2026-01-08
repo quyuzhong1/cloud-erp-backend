@@ -188,6 +188,7 @@ public enum ApiError implements Serializable {
     COMMON_CONTRACT_TEMPLATE_NOT_AVAILABLE(1104,"合同模板不存在或被禁用"),
     COMMON_CONTRACT_TEMPLATE_BINDING_DUPLICATE(1105,"【{0}】已绑定【{1}】，不可重复绑定"),
     COMMON_CONTRACT_TEMPLATE_BOUND_BY_OTHER_SUPPLIER(1106,"【{0}】已被其他供应商绑定，请先解除关联再绑定所有供应商"),
+    COMMON_USER_NOT_FOUND(1107, "用户不存在"),
     COMMON_CONTRACT_NOT_BINDING(98127,"无关联合同，请在合同管理页面关联后打印"),
 
     COMMON_NO_DELIVERY_SKU(98128,"没有发货的SKU"),
@@ -688,6 +689,8 @@ public enum ApiError implements Serializable {
     MOULD_PURCHASE_CHANGE_DETAIL_NOT_FOUND(6522,"未找到模具采购变更单明细"),
     MOULD_PURCHASE_AUDITED_ONLY_FOR_ACCEPTANCE(6523,"只有已审核的模具采购单才可以结束验收"),
     MOULD_CODE_ACCEPT_QTY_EXCEED(6524,"模具编码【{0}】验收数量不能超过可验收数量"),
+    MOULD_RETURN_EXIST(6525,"模具【{0}】已生成模具返还策略，无法再次生成"),
+    MOULD_ALERT_EXIST(6526,"模具【{0}】已生成模具预警策略，无法再次生成"),
 
     /**
      * BI 错误信息 7000 - 7499
@@ -1436,6 +1439,7 @@ public enum ApiError implements Serializable {
     SAMPLE_DETAIL_NOT_BELONG_TO_APPLY(10741,"部分明细不存在或不属于该样品领用单"),
     SAMPLE_AUDIT_QTY_EXCEEDS_APPLY_QTY(10742,"SKU【{0}】的审核数量【{1}】不能大于领用数量【{2}】"),
     SAMPLE_AUDIT_QTY_UPDATE_FAILED(10743,"修改审核数量失败"),
+    SAMPLE_PARTNER_IN_USE(10744,"企业达人已被引用，不允许删除"),
     /**
      * 虚拟仓 错误 信息 12500-13000
      */

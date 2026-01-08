@@ -161,4 +161,19 @@ public interface SoInfoConverter {
     @Mapping(target = "deliveryQty", constant = "0")
     @Mapping(target = "boxSpecNo", ignore = true)
     B2bThirdDeliveryDetailDTO.ViewDTO toB2bThirdDeliveryDetailViewDTO(SoDetailEntity soDetailEntity);
+
+    @Mapping(target = "warehouseName", ignore = true)
+    @Mapping(target = "virtualWarehouseName", ignore = true)
+    @Mapping(target = "soReceiptDTOList", ignore = true)
+    @Mapping(target = "salesDeptName", ignore = true)
+    @Mapping(target = "receiveMethodName", ignore = true)
+    @Mapping(target = "receiveConditionName", ignore = true)
+    @Mapping(target = "receiveAccountName", ignore = true)
+    @Mapping(target = "isB2BApiDelivery", ignore = true)
+    @Mapping(target = "detailList", ignore = true)
+    @Mapping(target = "customerName", ignore = true)
+    @Mapping(target = "attachUrlList", ignore = true)
+    @Mapping(target = "attachNameList", ignore = true)
+    @Mapping(target = "approveStatusName", ignore = true)
+    SoInfoDTO.ViewDTO entityToViewDTO(SoInfoEntity soInfo);
 }
