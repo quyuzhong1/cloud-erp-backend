@@ -670,6 +670,27 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         return add.getCode();
     }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void deleteB2cSoJob() {
+        List<SoB2cEntity> soB2cList = this.lambdaQuery()
+                .lt(SoB2cEntity::getCreateTime, LocalDateTime.now().minusDays(30)) // 30天前
+                .eq(SoB2cEntity::getApproveStatus, ApproveStatusEnum.WAIT_SUBMIT)
+                .eq(SoB2cEntity::getIsDeleted, Boolean.FALSE)
+                .list();
+
+        List<String> soB2cIdList = soB2cList.stream().map(item -> item.getId()).collect(Collectors.toList());
+        if (!soB2cIdList.isEmpty()) {
+            soB2cDetailService.removeByIds(soB2cIdList);
+        }
+
+        String ids = soB2cList.stream()
+                .map(SoB2cEntity::getId)
+                .collect(Collectors.joining(", "));
+        log.info("删除的b2c销售订单的ID为: [{}]", ids);
+
+        this.removeByIds(soB2cIdList);
+    }
 
     @Override
     @Transactional(rollbackFor = Exception.class)

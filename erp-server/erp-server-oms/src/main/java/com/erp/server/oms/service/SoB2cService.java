@@ -1156,4 +1156,6 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * 5.创建发货单
      */
     String processOrderCreation(SoB2cDTO.AddDTO dto);
+
+    void deleteB2cSoJob();
 }
