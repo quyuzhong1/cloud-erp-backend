@@ -1165,4 +1165,6 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
     BatchResultDTO refreshExchangeRate(SoB2cEntity soB2cEntity);
 
     void retryPlatformOutbound( List<String> ids);
+
+    void deleteB2cSoJob();
 }

@@ -1,5 +1,6 @@
 package com.erp.server.oms.schedule;
 
+import com.erp.server.oms.service.SoB2cService;
 import com.erp.server.oms.service.SoReceiptService;
 import com.xxl.job.core.biz.model.ReturnT;
 import com.xxl.job.core.context.XxlJobHelper;
@@ -18,17 +19,17 @@ import javax.annotation.Resource;
  **/
 @Component
 @Slf4j
-public class SoReceiptJob {
+public class SoB2cServiceJob {
 
     @Resource
-    private SoReceiptService soReceiptService;
+    private SoB2cService soB2cService;
 
-    @XxlJob("deleteReceiptJob")
-    public ReturnT<String> deleteReceiptJob() {
-        XxlJobHelper.log("定时删除30天以前的收款单开始...");
+    @XxlJob("deleteB2cSoJob")
+    public ReturnT<String> deleteB2cSoJob() {
+        XxlJobHelper.log("开始定时删除30天以前的b2c销售订单...");
         String jobParam = XxlJobHelper.getJobParam();
-        soReceiptService.deleteReceiptJob();
-        XxlJobHelper.log("定时删除30天以前的收款单结束...");
+        soB2cService.deleteB2cSoJob();
+        XxlJobHelper.log("定时删除30天以前的b2c销售订单结束...");
         return ReturnT.SUCCESS;
     }
 }
