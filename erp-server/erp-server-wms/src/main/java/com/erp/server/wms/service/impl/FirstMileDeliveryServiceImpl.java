@@ -2891,11 +2891,8 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             addDTO.setDeliveryWarehouseId(shopInfoEntity.getWarehouseId());
             addDTO.setDeliveryWarehouseName(shopInfoEntity.getWarehouseName());
             addDTO.setFulfillmentCenter(shopInfoEntity.getWarehouseName());
-            List<WarehouseDTO.ListDTO> listDTOS = wmsWarehouseFeign.listByIds(Collections.singletonList(shopInfoEntity.getWarehouseId()));
-            if (!listDTOS.isEmpty()) {
-                addDTO.setDestWarehouseId(listDTOS.get(0).getOnwayWarehouseId());
-                addDTO.setDestWarehouseName(listDTOS.get(0).getOnwayWarehouseName());
-            }
+            addDTO.setDestWarehouseId(StringUtils.isNotBlank(shopInfoEntity.getAwdWarehouseId()) ? shopInfoEntity.getAwdWarehouseId() : "");
+            addDTO.setDestWarehouseName(StringUtils.isNotBlank(shopInfoEntity.getAwdWarehouseName()) ? shopInfoEntity.getAwdWarehouseName() : "");
         }
 
         List<String> skuIdList = awdOutstockDetailEntityList.stream().map(item -> item.getSkuId()).collect(Collectors.toList());
@@ -2907,7 +2904,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         addDTO.setSourceId(dto.getId());
         addDTO.setSourceCode(dto.getCode());
         addDTO.setSourceType(SourceTypeEnum.AWD_OUT_STOCK.getCode());
-        addDTO.setDemandType(FbaDemandTypeEnum.DEMAND_AWD_WAREHOUSE.getCode());
+        addDTO.setDemandType(FbaDemandTypeEnum.DEMAND_PLATFORM_WAREHOUSE.getCode());
         addDTO.setShopId(dto.getShopId());
         addDTO.setShopName(dto.getShopName());
         addDTO.setCountryId(fbaShipmentEntity.getCountryId());
@@ -2916,6 +2913,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
 
         for (AwdOutstockDetailEntity awdOutstockDetailEntity : awdOutstockDetailEntityList) {
             FirstMileDeliveryDetailDTO.AddDTO firstMildDetailDTO = new FirstMileDeliveryDetailDTO.AddDTO();
+            firstMildDetailDTO.setPlatformSpuNo(awdOutstockDetailEntity.getAsin());
             firstMildDetailDTO.setPlatformSkuNo(awdOutstockDetailEntity.getMsku());
             firstMildDetailDTO.setFnSku(awdOutstockDetailEntity.getFnsku());
             firstMildDetailDTO.setSkuId(awdOutstockDetailEntity.getSkuId());
