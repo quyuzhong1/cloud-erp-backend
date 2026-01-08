@@ -6,11 +6,14 @@ import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.vo.PagingVO;
 import com.common.core.utils.ExcelUtil;
 import com.erp.model.plm.dto.CfgMoldAlertRuleDTO;
+import com.erp.model.plm.dto.CfgMoldReturnAlertRuleDTO;
 import com.erp.model.plm.entity.CfgMoldAlertRuleEntity;
 import com.erp.model.plm.entity.CfgMoldAlertRuleEntity;
+import com.erp.model.plm.entity.MoldInfoEntity;
 import com.erp.server.plm.query.CfgMoldAlertRuleQueryHandler;
 import com.erp.server.plm.service.CfgMoldAlertRuleService;
 import com.erp.server.plm.service.CfgMoldAlertRuleService;
+import com.erp.server.plm.service.MoldInfoService;
 import lombok.extern.slf4j.Slf4j;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
@@ -46,6 +49,9 @@ public class CfgMoldAlertRuleController extends BaseController {
     @Resource
     private CfgMoldAlertRuleService cfgMoldAlertRuleService;
 
+    @Resource
+    private MoldInfoService moldInfoService;
+
     /**
     * 新增
     * @author jack
@@ -58,6 +64,43 @@ public class CfgMoldAlertRuleController extends BaseController {
     public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated CfgMoldAlertRuleDTO.AddDTO dto) {
         return success(cfgMoldAlertRuleService.add(dto));
     }
+
+    /**
+     * 批量生成模具预警策略
+     * @author jack
+     * @date:  2025-12-29
+     * @param dto
+     * @return ApiResult<List<BatchResultDTO>>
+     */
+    @PostMapping("/batchAdd")
+    public ApiResult<List<BatchResultDTO>> batchAdd(@RequestBody @Validated CfgMoldAlertRuleDTO.BatchAddDTO dto) {
+        List<CfgMoldAlertRuleDTO.AddDTO> addList = dto.getList();
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(addList.size());
+
+        List<String> moldIds = addList.stream().map(CfgMoldAlertRuleDTO.AddDTO::getMoldId).collect(Collectors.toList());
+        List<MoldInfoEntity> list = moldInfoService.lambdaQuery().in(MoldInfoEntity::getId, moldIds).list();
+        Map<String, MoldInfoEntity> idEntityMap = list.stream().collect(Collectors.toMap(MoldInfoEntity::getId, w -> w));
+        for (String id : moldIds) {
+            MoldInfoEntity entity = idEntityMap.get(id);
+            BatchResultDTO result;
+            try {
+                CfgMoldAlertRuleDTO.AddDTO addDTO = addList.stream().filter(w -> id.equals(w.getMoldId())).findFirst().orElse(null);
+                cfgMoldAlertRuleService.add(addDTO);
+                result = BatchResultDTO.success(entity.getId(), entity.getCode());
+            }catch (Exception e){
+                log.error("生成模具预警策略失败",e);
+                if (ObjectUtil.isEmpty(entity)) {
+                    result = BatchResultDTO.fail(id, id, "模具档案不存在, 生成模具预警策略失败");
+                    resultDTOS.add(result);
+                    continue;
+                }
+                result = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(result);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
 
     /**
     * 修改

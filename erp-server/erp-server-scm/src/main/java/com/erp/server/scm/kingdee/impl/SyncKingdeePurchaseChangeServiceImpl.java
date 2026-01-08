@@ -26,6 +26,7 @@ import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.dmp.enums.SettingEnum;
+import com.erp.model.plm.entity.MoldInfoEntity;
 import com.erp.model.scm.entity.*;
 import com.erp.model.sys.dto.DeptKingdeeDTO;
 import com.erp.model.sys.dto.KingdeeBusinessOperatorDTO;
@@ -34,6 +35,7 @@ import com.erp.model.sys.entity.KingdeeDepartmentEntity;
 import com.erp.model.sys.enums.KingdeeBusinessOperatorTypeEnum;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.KingdeeFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
@@ -99,6 +101,8 @@ public class SyncKingdeePurchaseChangeServiceImpl implements SyncKingdeePurchase
 
     @Resource
     private KingdeeFeign kingdeeFeign;
+    @Resource
+    private PlmTaskFeign plmTaskFeign;
 
 
     @Override
@@ -456,6 +460,10 @@ public class SyncKingdeePurchaseChangeServiceImpl implements SyncKingdeePurchase
             log.error("未找到资产采购订单明细，assetPurchaseOrderDetailList = {}",purchaseDetailIdList);
             throw new ServiceException(ApiError.PO_DETAIL_NOT_FOUND);
         }
+        List<MoldInfoEntity> moldInfoEntities = plmTaskFeign.listMoldInfoByCodes(detailList
+                .stream().map(AssetPurchaseChangeDetailEntity::getAssetCode).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList())
+        );
+        Map<String, String> codeToProjectNameMap = moldInfoEntities.stream().filter(x -> StringUtils.isNotBlank(x.getCode()) && StringUtils.isNotBlank(x.getProjectName())).collect(Collectors.toMap(MoldInfoEntity::getCode, MoldInfoEntity::getProjectName, (oldValue, newValue) -> oldValue));
 
         //明细信息
         List<JSONObject> list = new ArrayList<>();
@@ -501,6 +509,8 @@ public class SyncKingdeePurchaseChangeServiceImpl implements SyncKingdeePurchase
             refJsonObject.set("refKingdeeDetailId",assetPurchaseOrderDetailEntity.getKingdeeDetailId());
 
             jsonObject.set("refList",Arrays.asList(refJsonObject));
+            jsonObject.set("projectName",codeToProjectNameMap.getOrDefault(detailEntity.getAssetCode(),""));
+
             list.add(jsonObject);
         }
         //明细信息

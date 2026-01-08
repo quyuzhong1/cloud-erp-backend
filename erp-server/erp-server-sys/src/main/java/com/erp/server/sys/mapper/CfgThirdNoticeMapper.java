@@ -28,4 +28,6 @@ public interface CfgThirdNoticeMapper extends BaseMapper<CfgThirdNoticeEntity> {
 
 
     IPage<CfgThirdNoticeDTO.ListDTO> paging(Page query, @Param("params")  CfgThirdNoticeDTO.PagingParamDTO params);
+
+    List<CfgThirdNoticeDTO.DropDownDTO> dropDownByMoldMonitor();
 }

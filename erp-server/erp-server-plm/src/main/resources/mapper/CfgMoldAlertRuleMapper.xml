@@ -28,6 +28,7 @@
        <result column="start_date" property="startDate" />
        <result column="end_date" property="endDate" />
        <result column="count_dim" property="countDim" />
+        <result column="notice_type" property="noticeType" />
     </resultMap>
 
     <!-- 通用查询结果列 -->
@@ -56,6 +57,7 @@ cmr.alert_life_qty AS alertLifeQty,
 cmr.alert_life_rate AS alertLifeRate,
 cmr.start_date AS startDate,
 cmr.end_date AS endDate,
+cmr.notice_type AS noticeType,
 cmr.count_dim AS countDim
     </sql>
 

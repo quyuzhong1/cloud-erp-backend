@@ -205,12 +205,13 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
             throw new ServiceException("样品领用单保存失败");
         }
 
-        // 库存校验
-        if (CollUtil.isNotEmpty(addDTO.getDetailList())) {
-            //去掉库存校验
-//            validateRecipientQuantity(sampleRecipientEntity.getWarehouseId(), addDTO.getDetailList());
+        // 库存校验：只有需要出库时才校验可领用库存
+        if (CollUtil.isNotEmpty(addDTO.getDetailList()) && Boolean.TRUE.equals(sampleRecipientEntity.getIsOutstockRequired())) {
+            validateRecipientQuantity(sampleRecipientEntity.getWarehouseId(), addDTO.getDetailList());
+        }
 
-            // 保存明细数据
+        // 保存明细数据
+        if (CollUtil.isNotEmpty(addDTO.getDetailList())) {
             List<SampleRecipientDetailEntity> detailEntities = new ArrayList<>();
             for (SampleRecipientDTO.ProductDTO productDTO : addDTO.getDetailList()) {
                 SampleRecipientDetailEntity detailEntity = new SampleRecipientDetailEntity();
@@ -315,10 +316,9 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
             throw new ServiceException("样品领用单明细不能为空");
         }
 
-        // 库存校验
-        if (CollUtil.isNotEmpty(addOrUpdateDTO.getDetailList())) {
-            //去掉库存校验
-//            validateRecipientQuantity(sampleRecipientEntity.getWarehouseId(), addOrUpdateDTO.getDetailList());
+        // 库存校验：只有需要出库时才校验可领用库存
+        if (CollUtil.isNotEmpty(addOrUpdateDTO.getDetailList()) && Boolean.TRUE.equals(sampleRecipientEntity.getIsOutstockRequired())) {
+            validateRecipientQuantity(sampleRecipientEntity.getWarehouseId(), addOrUpdateDTO.getDetailList());
         }
 
         log.info("编辑 开始修改样品领用单数据，单号：【{}】", old.getCode());

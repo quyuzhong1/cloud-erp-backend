@@ -259,6 +259,34 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
     }
 
     @Override
+    public List<WarehouseLocationDTO.LocationSelectDTO> searchByKeyword(String keyword) {
+        LambdaQueryWrapper<WarehouseLocationEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(WarehouseLocationEntity::getType, WarehouseLocationTypeEnum.LOCATION.getCode());
+        if (StringUtils.isNotBlank(keyword)) {
+            queryWrapper.like(WarehouseLocationEntity::getName, keyword);
+        }
+        List<WarehouseLocationEntity> warehouseLocationList = this.list(queryWrapper);
+        if(CollUtil.isEmpty(warehouseLocationList)) {
+            return Lists.newArrayList();
+        }
+        List<WarehouseLocationDTO.LocationSelectDTO> dataList = Lists.newArrayListWithExpectedSize(warehouseLocationList.size());
+        // 让空仓位排前面
+        warehouseLocationList = warehouseLocationList.stream().sorted(Comparator.comparing(WarehouseLocationEntity::getCode)).collect(Collectors.toList());
+        // 根据编码+名称去重
+        warehouseLocationList = warehouseLocationList.stream().collect(
+                Collectors.collectingAndThen(Collectors.toCollection(() -> new TreeSet<>(Comparator.comparing(
+                        o -> StrUtils.null2EmptyWithTrim(o.getCode()) + "-" + StrUtils.null2EmptyWithTrim(o.getName())))), ArrayList::new));
+
+        warehouseLocationList.stream().forEach(warehouseLocation->{
+            WarehouseLocationDTO.LocationSelectDTO data = new WarehouseLocationDTO.LocationSelectDTO();
+            data.setCode(warehouseLocation.getCode());
+            data.setName(warehouseLocation.getName());
+            dataList.add(data);
+        });
+        return dataList;
+    }
+
+    @Override
     public List<WarehouseLocationEntity> list(List<String> warehouseIds) {
         if(CollUtil.isEmpty(warehouseIds)) {
             return Lists.newArrayList();

@@ -78,11 +78,21 @@ public class WarehouseLocationController extends BaseController {
     public ApiResult<List<WarehouseLocationDTO.LocationSelectDTO>> all() {
         return success(warehouseLocationService.all( ));
     }
+
+    /**
+     * 根据关键词查询仓位名称符合的仓位数据
+     * @param keyword 关键词
+     * @return 仓位下拉列表
+     */
+    @GetMapping(value = "/searchByKeyword")
+    public ApiResult<List<WarehouseLocationDTO.LocationSelectDTO>> searchByKeyword(@RequestParam(value = "keyword", required = false) String keyword) {
+        return success(warehouseLocationService.searchByKeyword(keyword));
+    }
     /**
      * 批量根据仓库获取仓位
      * @return
      */
-    @PostMapping(value = "/selectByWarehouseIds")
+    @PostMapping("/selectByWarehouseIds")
     public ApiResult<List<WarehouseLocationDTO.WarehouseLocationListDTO>> selectByWarehouseIds(@RequestBody ValidList<String> warehouseIds) {
         return success(warehouseLocationService.selectByWarehouseIds(warehouseIds.getList()));
     }
