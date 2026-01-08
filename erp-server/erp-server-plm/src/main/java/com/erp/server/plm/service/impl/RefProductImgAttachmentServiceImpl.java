@@ -23,6 +23,9 @@ import com.erp.model.plm.dto.RefProductImgAttachmentDTO;
 import javax.annotation.Resource;
 import java.util.stream.Collectors;
 import java.util.*;
+import java.util.Collections;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -54,6 +57,8 @@ import com.erp.server.plm.service.OperateLogService;
 import com.common.business.enums.FileTaskStatusEnum;
 import com.common.core.utils.FastDFSClientUtil;
 import com.erp.model.file.dto.FileDTO;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_PLM_PRODUCT_IMAGES;
 import static com.common.business.enums.FileTaskEventEnum.IMPORT_PLM_PRODUCT_IMG_ATTACHMENT;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import org.springframework.web.multipart.MultipartFile;
@@ -65,6 +70,11 @@ import java.util.Arrays;
 import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletResponse;
 import java.util.LinkedHashMap;
+import org.springframework.beans.factory.annotation.Qualifier;
+import java.util.concurrent.ExecutorService;
+import com.common.business.wrapper.FeignQuery;
+import com.erp.model.dmp.entity.CfgSettingEntity;
+import com.erp.model.dmp.enums.SettingEnum;
 
 /**
  * <p>
@@ -99,16 +109,59 @@ public class RefProductImgAttachmentServiceImpl extends SuperServiceImpl<RefProd
     @Resource
     private OperateLogService operateLogService;
     
+    @Resource
+    @Qualifier("zipImageExecutorPool")
+    private ExecutorService zipImageExecutorPool;
+    
     // 所有分类ID
     private static final String ALL_CATEGORY_ID = "1000000000000000001";
     // 产品主图分类ID
     private static final String PRODUCT_MAIN_IMAGE_CATEGORY_ID = "1000000000000000002";
-    // 产品缩略图分类ID
-    private static final String PRODUCT_THUMBNAIL_CATEGORY_ID = "1000000000000000003";
-    // 缩略图压缩目标大小（KB），可根据需要调整
-    private static final Long THUMBNAIL_TARGET_SIZE_KB = 200L;
     // SKU类路径（用于操作日志）
     private static final String SKUCLASSPATH = String.valueOf(ProductDetailEntity.class);
+    
+    /**
+     * 获取图片上传大小配置（KB）
+     * @return 配置的大小（KB），如果未配置返回0
+     */
+    private Long getImgUploadSizeConfig() {
+        Long size = 0L;
+        try {
+            List<CfgSettingEntity> list = FeignQuery.create(CfgSettingEntity.class)
+                    .eq(CfgSettingEntity::getKey, SettingEnum.IMG_UPLOAD_SIZE_KEY.getKey())
+                    .list();
+            if (CollUtil.isNotEmpty(list) && ObjectUtil.isNotNull(list.get(0).getValue())) {
+                size = Long.valueOf(list.get(0).getValue());
+            }
+        } catch (Exception e) {
+            log.warn("获取图片上传大小配置失败，将使用默认值0，错误信息：{}", e.getMessage());
+        }
+        return size;
+    }
+    
+    /**
+     * 获取"未分类"的分类ID
+     * 如果不存在，返回"所有分类"ID作为默认值
+     * @return 未分类的分类ID
+     */
+    private String getUncategorizedCategoryId() {
+        try {
+            // 查询"所有分类"下名为"未分类"的子分类
+            List<ProductImgCategoryEntity> categories = productImgCategoryService.lambdaQuery()
+                    .eq(ProductImgCategoryEntity::getParentId, ALL_CATEGORY_ID)
+                    .eq(ProductImgCategoryEntity::getName, "未分类")
+                    .list();
+            if (CollUtil.isNotEmpty(categories)) {
+                return categories.get(0).getId();
+            }
+            // 如果找不到，使用"所有分类"ID作为默认值
+            log.warn("未找到'未分类'分类，使用'所有分类'作为默认值");
+            return ALL_CATEGORY_ID;
+        } catch (Exception e) {
+            log.warn("获取'未分类'分类ID失败，使用'所有分类'作为默认值，错误信息：{}", e.getMessage());
+            return ALL_CATEGORY_ID;
+        }
+    }
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -126,11 +179,49 @@ public class RefProductImgAttachmentServiceImpl extends SuperServiceImpl<RefProd
             throw new ServiceException(ApiError.PRODUCT_IMG_ATTACHMENT_SAVE_FAILED);
         }
 
-        // 如果分类是产品主图，自动生成产品缩略图
-        if (PRODUCT_MAIN_IMAGE_CATEGORY_ID.equals(refProductImgAttachmentEntity.getCategoryId())) {
-            generateThumbnail(refProductImgAttachmentEntity);
+        // 如果分类是产品主图，确保只有一个主图：将之前的主图移出主图分类
+        boolean isMainImage = PRODUCT_MAIN_IMAGE_CATEGORY_ID.equals(refProductImgAttachmentEntity.getCategoryId());
+        if (isMainImage) {
+            // 将同一个SKU的其他主图移出主图分类，归类到未分类
+            String uncategorizedCategoryId = getUncategorizedCategoryId();
+            List<RefProductImgAttachmentEntity> oldMainImages = super.lambdaQuery()
+                    .eq(RefProductImgAttachmentEntity::getProductDetailId, refProductImgAttachmentEntity.getProductDetailId())
+                    .eq(RefProductImgAttachmentEntity::getCategoryId, PRODUCT_MAIN_IMAGE_CATEGORY_ID)
+                    .ne(RefProductImgAttachmentEntity::getId, refProductImgAttachmentEntity.getId())
+                    .list();
+            
+            for (RefProductImgAttachmentEntity oldMainImage : oldMainImages) {
+                oldMainImage.setCategoryId(uncategorizedCategoryId);
+                super.updateById(oldMainImage);
+                log.info("将旧主图移出主图分类，归类到未分类，refId={}", oldMainImage.getId());
+            }
         }
-
+        
+        // 缩略图不管怎么样都要生成，不管是什么分类
+        if (isMainImage) {
+            // 如果是主图，生成缩略图并更新product_detail的images_url（放在第一位）
+            generateThumbnail(refProductImgAttachmentEntity);
+        } else {
+            // 如果不是主图，生成缩略图并更新images_url（拼接到最后面）
+            String productDetailId = refProductImgAttachmentEntity.getProductDetailId();
+            String skuNo = refProductImgAttachmentEntity.getSkuNo();
+            if (StrUtil.isNotBlank(productDetailId) && StrUtil.isNotBlank(skuNo)) {
+                // 生成缩略图
+                String thumbnailUrl = generateThumbnailWithoutUpdate(
+                        refProductImgAttachmentEntity.getAttachmentId(), 
+                        productDetailId, 
+                        skuNo
+                );
+                // 获取原图URL
+                PlmAttachmentEntity attachment = plmAttachmentService.getById(refProductImgAttachmentEntity.getAttachmentId());
+                if (attachment != null && StrUtil.isNotBlank(attachment.getAttachUrl())) {
+                    String originalUrl = attachment.getAttachUrl();
+                    // 将缩略图URL（或原图URL）拼接到images_url的末尾
+                    String finalUrl = StrUtil.isNotBlank(thumbnailUrl) ? thumbnailUrl : originalUrl;
+                    appendThumbnailUrlToImagesUrl(productDetailId, finalUrl);
+                }
+            }
+        }
 
         return new BaseResultDTO.AddDTO(refProductImgAttachmentEntity.getId(), refProductImgAttachmentEntity.getId());
     }
@@ -300,10 +391,48 @@ public class RefProductImgAttachmentServiceImpl extends SuperServiceImpl<RefProd
                 return;
             }
 
+            // 1.1 获取配置的图片上传大小（KB）
+            Long targetSizeKB = getImgUploadSizeConfig();
+            if (targetSizeKB == null || targetSizeKB <= 0) {
+                log.info("图片上传大小配置为0或未配置，跳过生成缩略图，直接使用原图，attachmentId: {}", mainImageEntity.getAttachmentId());
+                // 如果不需要压缩，thumbnailAttachmentId应该等于attachmentId
+                mainImageEntity.setThumbnailAttachmentId(mainImageEntity.getAttachmentId());
+                super.updateById(mainImageEntity);
+                return;
+            }
+
+            String thumbnailAttachmentId = null;
+
+            // 1.2 检查原图大小，如果符合要求则不需要生成缩略图
+            try {
+                List<FileDTO.FileSizeInfo> fileSizeInfoList = fileFeign.getBatchFileSize(
+                        Collections.singletonList(originalAttachment.getAttachUrl()));
+                if (CollUtil.isNotEmpty(fileSizeInfoList)) {
+                    FileDTO.FileSizeInfo fileSizeInfo = fileSizeInfoList.get(0);
+                    if (fileSizeInfo.getFileSize() != null && fileSizeInfo.getFileSize() > 0) {
+                        long fileSizeKB = fileSizeInfo.getFileSize() / 1024;
+                        if (fileSizeKB <= targetSizeKB) {
+                            log.info("原图大小{}KB符合要求（配置要求≤{}KB），无需生成缩略图，使用原图，attachmentId: {}", 
+                                    fileSizeKB, targetSizeKB, mainImageEntity.getAttachmentId());
+                            // 如果不需要压缩，thumbnailAttachmentId应该等于attachmentId
+                            mainImageEntity.setThumbnailAttachmentId(mainImageEntity.getAttachmentId());
+                            super.updateById(mainImageEntity);
+                            return;
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                log.warn("获取原图大小失败，继续生成缩略图，attachmentId: {}, 错误信息: {}", 
+                        mainImageEntity.getAttachmentId(), e.getMessage());
+            }
+
             // 2. 调用FileFeign压缩并上传图片
-            String thumbnailUrl = fileFeign.compressAndUploadImage(originalAttachment.getAttachUrl(), THUMBNAIL_TARGET_SIZE_KB);
+            String thumbnailUrl = fileFeign.compressAndUploadImage(originalAttachment.getAttachUrl(), targetSizeKB);
             if (StrUtil.isBlank(thumbnailUrl)) {
-                log.warn("压缩图片失败，无法生成缩略图，原URL: {}", originalAttachment.getAttachUrl());
+                log.warn("压缩图片失败，无法生成缩略图，使用原图，原URL: {}", originalAttachment.getAttachUrl());
+                // 如果压缩失败，thumbnailAttachmentId应该等于attachmentId
+                mainImageEntity.setThumbnailAttachmentId(mainImageEntity.getAttachmentId());
+                super.updateById(mainImageEntity);
                 return;
             }
 
@@ -317,26 +446,21 @@ public class RefProductImgAttachmentServiceImpl extends SuperServiceImpl<RefProd
                     : (originalName != null ? originalName + "_thumb.jpg" : "thumbnail.jpg");
             thumbnailAttachment.setAttachName(thumbnailName.toLowerCase());
             
-            // 计算缩略图大小（MB）
-            // 注意：这里无法直接获取压缩后文件的实际大小，可以后续通过下载文件获取
-            thumbnailAttachment.setAttachSize(BigDecimal.valueOf(THUMBNAIL_TARGET_SIZE_KB / 1024.0));
+            thumbnailAttachment.setAttachSize(BigDecimal.valueOf(targetSizeKB != null && targetSizeKB > 0 ? targetSizeKB / 1024.0 : 0.2));
             thumbnailAttachment.setType(originalAttachment.getType());
             thumbnailAttachment.setBusinessId(originalAttachment.getBusinessId());
             plmAttachmentService.save(thumbnailAttachment);
+            thumbnailAttachmentId = thumbnailAttachment.getId();
 
-            // 4. 创建缩略图分类附件关联记录
-            RefProductImgAttachmentEntity thumbnailEntity = new RefProductImgAttachmentEntity();
-            thumbnailEntity.setCategoryId(PRODUCT_THUMBNAIL_CATEGORY_ID);
-            thumbnailEntity.setProductDetailId(mainImageEntity.getProductDetailId());
-            thumbnailEntity.setSkuNo(mainImageEntity.getSkuNo());
-            thumbnailEntity.setAttachmentId(thumbnailAttachment.getId());
-            super.save(thumbnailEntity);
+            // 4. 更新原记录的thumbnailAttachmentId字段（不再创建新的分类记录）
+            mainImageEntity.setThumbnailAttachmentId(thumbnailAttachmentId);
+            super.updateById(mainImageEntity);
 
             // 5. 更新product_detail表的images_url字段，将新生成的缩略图URL放在第一位
             updateProductDetailImagesUrl(mainImageEntity.getProductDetailId(), thumbnailUrl);
 
-            log.info("成功生成产品缩略图：主图ID={}, 缩略图ID={}, 缩略图URL={}", 
-                    mainImageEntity.getId(), thumbnailEntity.getId(), thumbnailUrl);
+            log.info("成功生成产品缩略图：主图ID={},  缩略图URL={}",
+                    mainImageEntity.getId(), thumbnailUrl);
         } catch (Exception e) {
             log.error("生成产品缩略图失败：主图ID={}, 错误信息={}", mainImageEntity.getId(), e.getMessage(), e);
             // 不抛出异常，避免影响主流程
@@ -344,30 +468,79 @@ public class RefProductImgAttachmentServiceImpl extends SuperServiceImpl<RefProd
     }
 
     /**
-     * 生成产品缩略图（不更新product_detail）
-     * 仅生成缩略图并创建记录，不更新product_detail表的images_url字段
+     * 生成产品缩略图（不更新images_url）
      * @param mainImageAttachmentId 产品主图附件ID
      * @param productDetailId 产品明细ID
      * @param skuNo SKU编号
-     * @return 生成的缩略图URL，如果生成失败返回null
+     * @return 生成的缩略图URL，如果生成失败或不需要生成则返回null（表示使用原图）
      */
     private String generateThumbnailWithoutUpdate(String mainImageAttachmentId, String productDetailId, String skuNo) {
         try {
-            // 1. 获取原附件信息
+            // 1. 查找对应的ref_product_img_attachment记录
+            RefProductImgAttachmentEntity refEntity = super.lambdaQuery()
+                    .eq(RefProductImgAttachmentEntity::getProductDetailId, productDetailId)
+                    .eq(RefProductImgAttachmentEntity::getAttachmentId, mainImageAttachmentId)
+                    .one();
+            
+            if (refEntity == null) {
+                log.warn("无法生成缩略图：找不到对应的关联记录，attachmentId: {}, productDetailId: {}", 
+                        mainImageAttachmentId, productDetailId);
+                return null;
+            }
+
+            // 2. 获取原附件信息
             PlmAttachmentEntity originalAttachment = plmAttachmentService.getById(mainImageAttachmentId);
             if (originalAttachment == null || StrUtil.isBlank(originalAttachment.getAttachUrl())) {
                 log.warn("无法生成缩略图：原附件不存在或附件URL为空，attachmentId: {}", mainImageAttachmentId);
                 return null;
             }
 
-            // 2. 调用FileFeign压缩并上传图片
-            String thumbnailUrl = fileFeign.compressAndUploadImage(originalAttachment.getAttachUrl(), THUMBNAIL_TARGET_SIZE_KB);
-            if (StrUtil.isBlank(thumbnailUrl)) {
-                log.warn("压缩图片失败，无法生成缩略图，原URL: {}", originalAttachment.getAttachUrl());
-                return null;
+            String originalUrl = originalAttachment.getAttachUrl();
+
+            // 3. 获取配置的图片上传大小（KB）
+            Long targetSizeKB = getImgUploadSizeConfig();
+            if (targetSizeKB == null || targetSizeKB <= 0) {
+                log.info("图片上传大小配置为0或未配置，跳过生成缩略图，使用原图，attachmentId: {}", mainImageAttachmentId);
+                // 如果不需要压缩，thumbnailAttachmentId应该等于attachmentId
+                refEntity.setThumbnailAttachmentId(mainImageAttachmentId);
+                super.updateById(refEntity);
+                return null; // 返回null表示使用原图，不生成缩略图
             }
 
-            // 3. 创建缩略图附件记录
+            // 4. 检查原图大小，如果符合要求则不需要生成缩略图
+            try {
+                List<FileDTO.FileSizeInfo> fileSizeInfoList = fileFeign.getBatchFileSize(
+                        Collections.singletonList(originalUrl));
+                if (CollUtil.isNotEmpty(fileSizeInfoList)) {
+                    FileDTO.FileSizeInfo fileSizeInfo = fileSizeInfoList.get(0);
+                    if (fileSizeInfo.getFileSize() != null && fileSizeInfo.getFileSize() > 0) {
+                        long fileSizeKB = fileSizeInfo.getFileSize() / 1024;
+                        if (fileSizeKB <= targetSizeKB) {
+                            log.info("原图大小{}KB符合要求（配置要求≤{}KB），无需生成缩略图，使用原图，attachmentId: {}", 
+                                    fileSizeKB, targetSizeKB, mainImageAttachmentId);
+                            // 如果不需要压缩，thumbnailAttachmentId应该等于attachmentId
+                            refEntity.setThumbnailAttachmentId(mainImageAttachmentId);
+                            super.updateById(refEntity);
+                            return null; // 返回null表示使用原图，不生成缩略图
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                log.warn("获取原图大小失败，继续生成缩略图，attachmentId: {}, 错误信息: {}", 
+                        mainImageAttachmentId, e.getMessage());
+            }
+
+            // 5. 调用FileFeign压缩并上传图片
+            String thumbnailUrl = fileFeign.compressAndUploadImage(originalUrl, targetSizeKB);
+            if (StrUtil.isBlank(thumbnailUrl)) {
+                log.warn("压缩图片失败，无法生成缩略图，使用原图，原URL: {}", originalUrl);
+                // 如果压缩失败，thumbnailAttachmentId应该等于attachmentId
+                refEntity.setThumbnailAttachmentId(mainImageAttachmentId);
+                super.updateById(refEntity);
+                return null; // 返回null表示使用原图，不生成缩略图
+            }
+
+            // 6. 创建缩略图附件记录
             PlmAttachmentEntity thumbnailAttachment = new PlmAttachmentEntity();
             thumbnailAttachment.setAttachUrl(thumbnailUrl);
             // 缩略图文件名添加_thumb后缀
@@ -378,29 +551,248 @@ public class RefProductImgAttachmentServiceImpl extends SuperServiceImpl<RefProd
             thumbnailAttachment.setAttachName(thumbnailName.toLowerCase());
             
             // 计算缩略图大小（MB）
-            thumbnailAttachment.setAttachSize(BigDecimal.valueOf(THUMBNAIL_TARGET_SIZE_KB / 1024.0));
+            thumbnailAttachment.setAttachSize(BigDecimal.valueOf(targetSizeKB / 1024.0));
             thumbnailAttachment.setType(originalAttachment.getType());
             thumbnailAttachment.setBusinessId(originalAttachment.getBusinessId());
             plmAttachmentService.save(thumbnailAttachment);
 
-            // 4. 创建缩略图分类附件关联记录
-            RefProductImgAttachmentEntity thumbnailEntity = new RefProductImgAttachmentEntity();
-            thumbnailEntity.setCategoryId(PRODUCT_THUMBNAIL_CATEGORY_ID);
-            thumbnailEntity.setProductDetailId(productDetailId);
-            thumbnailEntity.setSkuNo(skuNo);
-            thumbnailEntity.setAttachmentId(thumbnailAttachment.getId());
-            super.save(thumbnailEntity);
+            // 7. 更新原记录的thumbnailAttachmentId字段（不再创建新的分类记录）
+            refEntity.setThumbnailAttachmentId(thumbnailAttachment.getId());
+            super.updateById(refEntity);
 
-            log.info("成功生成产品缩略图（不更新product_detail）：主图附件ID={}, 缩略图ID={}, 缩略图URL={}", 
-                    mainImageAttachmentId, thumbnailEntity.getId(), thumbnailUrl);
-            return thumbnailUrl;
+            log.info("成功生成产品缩略图：主图附件ID={}, 缩略图附件ID={}, 缩略图URL={}", 
+                    mainImageAttachmentId, thumbnailAttachment.getId(), thumbnailUrl);
+            return thumbnailUrl; // 返回缩略图URL
         } catch (Exception e) {
             log.error("生成产品缩略图失败：主图附件ID={}, 错误信息={}", mainImageAttachmentId, e.getMessage(), e);
             // 不抛出异常，避免影响主流程
-            return null;
+            return null; // 返回null表示使用原图
+        }
+    }
+    
+    /**
+     * 在product_detail的images_url中用缩略图URL替换原图URL
+     * @param productDetailId 产品明细ID
+     * @param originalUrl 原图URL
+     * @param thumbnailUrl 缩略图URL（如果为null，则不替换，保留原图）
+     */
+    private void replaceOriginalUrlWithThumbnailInImagesUrl(String productDetailId, String originalUrl, String thumbnailUrl) {
+        if (StrUtil.isBlank(productDetailId) || StrUtil.isBlank(originalUrl)) {
+            return;
+        }
+
+        try {
+            // 1. 获取product_detail记录
+            ProductDetailEntity productDetail = productDetailService.getById(productDetailId);
+            if (productDetail == null) {
+                log.warn("更新product_detail的images_url失败：产品明细不存在，productDetailId={}", productDetailId);
+                return;
+            }
+
+            // 2. 获取当前的images_url（用逗号分割）
+            String currentImagesUrl = productDetail.getImagesUrl();
+            List<String> imageUrlList = new ArrayList<>();
+            
+            // 如果当前images_url不为空，先添加到列表
+            if (StrUtil.isNotBlank(currentImagesUrl)) {
+                imageUrlList = Arrays.stream(currentImagesUrl.split(","))
+                        .map(String::trim)
+                        .filter(StrUtil::isNotBlank)
+                        .collect(Collectors.toList());
+            }
+
+            // 3. 替换原图URL为缩略图URL
+            if (StrUtil.isNotBlank(thumbnailUrl)) {
+                // 如果原图URL存在，替换为缩略图URL
+                int originalIndex = imageUrlList.indexOf(originalUrl);
+                if (originalIndex >= 0) {
+                    imageUrlList.set(originalIndex, thumbnailUrl);
+                    log.info("在images_url中用缩略图URL替换原图URL，productDetailId={}, 原图={}, 缩略图={}", 
+                            productDetailId, originalUrl, thumbnailUrl);
+                } else {
+                    // 如果原图URL不存在，将缩略图URL放在第一位
+                    imageUrlList.remove(thumbnailUrl); // 先移除可能存在的缩略图URL
+                    imageUrlList.add(0, thumbnailUrl);
+                    log.info("在images_url中添加缩略图URL，productDetailId={}, 缩略图={}", 
+                            productDetailId, thumbnailUrl);
+                }
+            }
+            // 如果thumbnailUrl为null，不做替换，保留原图URL
+
+            // 4. 重新组合成逗号分割的字符串
+            String newImagesUrl = String.join(",", imageUrlList);
+
+            // 5. 更新images_url字段
+            productDetail.setImagesUrl(newImagesUrl);
+            productDetailService.updateById(productDetail);
+
+            log.info("成功更新product_detail的images_url：productDetailId={}, 新images_url={}", 
+                    productDetailId, newImagesUrl);
+        } catch (Exception e) {
+            log.error("更新product_detail的images_url失败：productDetailId={}, originalUrl={}, thumbnailUrl={}, 错误信息={}", 
+                    productDetailId, originalUrl, thumbnailUrl, e.getMessage(), e);
+            // 不抛出异常，避免影响主流程
+        }
+    }
+    
+    /**
+     * 更新product_detail的images_url（使用缩略图URL，放在第一位，然后添加原图URL）
+     * @param productDetailId 产品明细ID
+     * @param thumbnailUrl 缩略图URL
+     * @param originalUrl 原图URL
+     */
+    private void updateProductDetailImagesUrlWithThumbnail(String productDetailId, String thumbnailUrl, String originalUrl) {
+        if (StrUtil.isBlank(productDetailId)) {
+            return;
+        }
+
+        try {
+            // 1. 获取product_detail记录
+            ProductDetailEntity productDetail = productDetailService.getById(productDetailId);
+            if (productDetail == null) {
+                log.warn("更新product_detail的images_url失败：产品明细不存在，productDetailId={}", productDetailId);
+                return;
+            }
+
+            // 2. 获取当前的images_url（用逗号分割）
+            String currentImagesUrl = productDetail.getImagesUrl();
+            List<String> imageUrlList = new ArrayList<>();
+            
+            // 如果当前images_url不为空，先添加到列表
+            if (StrUtil.isNotBlank(currentImagesUrl)) {
+                imageUrlList = Arrays.stream(currentImagesUrl.split(","))
+                        .map(String::trim)
+                        .filter(StrUtil::isNotBlank)
+                        .collect(Collectors.toList());
+            }
+
+            // 3. 将缩略图URL放在第一位（如果已存在则先移除）
+            imageUrlList.remove(thumbnailUrl);
+            imageUrlList.add(0, thumbnailUrl);
+            
+            // 4. 添加原图URL（如果不存在）
+            if (StrUtil.isNotBlank(originalUrl) && !imageUrlList.contains(originalUrl)) {
+                imageUrlList.add(originalUrl);
+            }
+
+            // 5. 重新组合成逗号分割的字符串
+            String newImagesUrl = String.join(",", imageUrlList);
+
+            // 6. 更新images_url字段
+            productDetail.setImagesUrl(newImagesUrl);
+            productDetailService.updateById(productDetail);
+
+            log.info("成功更新product_detail的images_url（含缩略图）：productDetailId={}, 新images_url={}", 
+                    productDetailId, newImagesUrl);
+        } catch (Exception e) {
+            log.error("更新product_detail的images_url失败：productDetailId={}, thumbnailUrl={}, originalUrl={}, 错误信息={}", 
+                    productDetailId, thumbnailUrl, originalUrl, e.getMessage(), e);
+            // 不抛出异常，避免影响主流程
+        }
+    }
+    
+    /**
+     * 更新product_detail的images_url（使用原图URL）
+     * @param productDetailId 产品明细ID
+     * @param originalUrl 原图URL
+     */
+    private void updateProductDetailImagesUrlWithOriginal(String productDetailId, String originalUrl) {
+        if (StrUtil.isBlank(productDetailId) || StrUtil.isBlank(originalUrl)) {
+            return;
+        }
+
+        try {
+            // 1. 获取product_detail记录
+            ProductDetailEntity productDetail = productDetailService.getById(productDetailId);
+            if (productDetail == null) {
+                log.warn("更新product_detail的images_url失败：产品明细不存在，productDetailId={}", productDetailId);
+                return;
+            }
+
+            // 2. 获取当前的images_url（用逗号分割）
+            String currentImagesUrl = productDetail.getImagesUrl();
+            List<String> imageUrlList = new ArrayList<>();
+            
+            // 如果当前images_url不为空，先添加到列表
+            if (StrUtil.isNotBlank(currentImagesUrl)) {
+                imageUrlList = Arrays.stream(currentImagesUrl.split(","))
+                        .map(String::trim)
+                        .filter(StrUtil::isNotBlank)
+                        .collect(Collectors.toList());
+            }
+
+            // 3. 将原图URL放在第一位（如果已存在则先移除）
+            imageUrlList.remove(originalUrl);
+            imageUrlList.add(0, originalUrl);
+
+            // 4. 重新组合成逗号分割的字符串
+            String newImagesUrl = String.join(",", imageUrlList);
+
+            // 5. 更新images_url字段
+            productDetail.setImagesUrl(newImagesUrl);
+            productDetailService.updateById(productDetail);
+
+            log.info("成功更新product_detail的images_url（原图）：productDetailId={}, 新images_url={}", 
+                    productDetailId, newImagesUrl);
+        } catch (Exception e) {
+            log.error("更新product_detail的images_url失败：productDetailId={}, originalUrl={}, 错误信息={}", 
+                    productDetailId, originalUrl, e.getMessage(), e);
+            // 不抛出异常，避免影响主流程
         }
     }
 
+    /**
+     * 将缩略图URL拼接到product_detail的images_url的末尾
+     * @param productDetailId 产品明细ID
+     * @param thumbnailUrl 缩略图URL（如果为null，则不添加）
+     */
+    private void appendThumbnailUrlToImagesUrl(String productDetailId, String thumbnailUrl) {
+        if (StrUtil.isBlank(productDetailId) || StrUtil.isBlank(thumbnailUrl)) {
+            return;
+        }
+
+        try {
+            // 1. 获取product_detail记录
+            ProductDetailEntity productDetail = productDetailService.getById(productDetailId);
+            if (productDetail == null) {
+                log.warn("更新product_detail的images_url失败：产品明细不存在，productDetailId={}", productDetailId);
+                return;
+            }
+
+            // 2. 获取当前的images_url（用逗号分割）
+            String currentImagesUrl = productDetail.getImagesUrl();
+            List<String> imageUrlList = new ArrayList<>();
+            
+            // 如果当前images_url不为空，先添加到列表
+            if (StrUtil.isNotBlank(currentImagesUrl)) {
+                imageUrlList = Arrays.stream(currentImagesUrl.split(","))
+                        .map(String::trim)
+                        .filter(StrUtil::isNotBlank)
+                        .collect(Collectors.toList());
+            }
+
+            // 3. 如果缩略图URL已存在，先移除
+            imageUrlList.remove(thumbnailUrl);
+            
+            // 4. 将缩略图URL添加到列表末尾
+            imageUrlList.add(thumbnailUrl);
+
+            // 5. 重新组合成逗号分割的字符串
+            String newImagesUrl = String.join(",", imageUrlList);
+
+            // 6. 更新images_url字段
+            productDetail.setImagesUrl(newImagesUrl);
+            productDetailService.updateById(productDetail);
+
+            log.info("成功将缩略图URL拼接到images_url末尾：productDetailId={}, 缩略图URL={}, 新images_url={}", 
+                    productDetailId, thumbnailUrl, newImagesUrl);
+        } catch (Exception e) {
+            log.error("更新product_detail的images_url失败：productDetailId={}, thumbnailUrl={}, 错误信息={}", 
+                    productDetailId, thumbnailUrl, e.getMessage(), e);
+            // 不抛出异常，避免影响主流程
+        }
+    }
+    
     /**
      * 更新product_detail表的images_url字段，将新生成的缩略图URL放在第一位
      * @param productDetailId 产品明细ID
@@ -597,6 +989,23 @@ public class RefProductImgAttachmentServiceImpl extends SuperServiceImpl<RefProd
             }
             
             // 处理该SKU的所有图片
+            // 如果是主图分类，确保只有一个主图：将之前的主图移出主图分类
+            String uncategorizedCategoryId = getUncategorizedCategoryId();
+            boolean isMainImageCategory = PRODUCT_MAIN_IMAGE_CATEGORY_ID.equals(dto.getCategoryId());
+            if (isMainImageCategory) {
+                List<RefProductImgAttachmentEntity> oldMainImages = super.lambdaQuery()
+                        .eq(RefProductImgAttachmentEntity::getProductDetailId, productDetail.getId())
+                        .eq(RefProductImgAttachmentEntity::getCategoryId, PRODUCT_MAIN_IMAGE_CATEGORY_ID)
+                        .list();
+                
+                for (RefProductImgAttachmentEntity oldMainImage : oldMainImages) {
+                    oldMainImage.setCategoryId(uncategorizedCategoryId);
+                    super.updateById(oldMainImage);
+                    log.info("批量上传：将旧主图移出主图分类，归类到未分类，refId={}", oldMainImage.getId());
+                }
+            }
+            
+            boolean isFirstFile = true;
             for (FileDTO.ExtractedFileInfo fileInfo : fileInfos) {
                 try {
                     // 保存附件记录
@@ -608,18 +1017,26 @@ public class RefProductImgAttachmentServiceImpl extends SuperServiceImpl<RefProd
                     attachmentEntity.setBusinessId(productDetail.getId());
                     plmAttachmentService.save(attachmentEntity);
                     
+                    // 确定分类：如果是主图分类，只有第一个文件是主图，其他为未分类
+                    String categoryId = dto.getCategoryId();
+                    if (isMainImageCategory && !isFirstFile) {
+                        categoryId = uncategorizedCategoryId;
+                    }
+                    
                     // 创建图片分类附件关联记录
                     RefProductImgAttachmentEntity refEntity = new RefProductImgAttachmentEntity();
-                    refEntity.setCategoryId(dto.getCategoryId());
+                    refEntity.setCategoryId(categoryId);
                     refEntity.setProductDetailId(productDetail.getId());
                     refEntity.setSkuNo(skuNo);
                     refEntity.setAttachmentId(attachmentEntity.getId());
                     super.save(refEntity);
                     
                     // 如果分类是产品主图，自动生成产品缩略图
-                    if (PRODUCT_MAIN_IMAGE_CATEGORY_ID.equals(dto.getCategoryId())) {
+                    if (PRODUCT_MAIN_IMAGE_CATEGORY_ID.equals(categoryId)) {
                         generateThumbnail(refEntity);
                     }
+                    
+                    isFirstFile = false;
                     
                     successCount++;
                 } catch (Exception e) {
@@ -767,9 +1184,6 @@ public class RefProductImgAttachmentServiceImpl extends SuperServiceImpl<RefProd
         if (PRODUCT_MAIN_IMAGE_CATEGORY_ID.equals(dto.getCategoryId())) {
             throw new ServiceException(ApiError.PRODUCT_IMG_CATEGORY_MOVE_FORBIDDEN_MAIN);
         }
-        if (PRODUCT_THUMBNAIL_CATEGORY_ID.equals(dto.getCategoryId())) {
-            throw new ServiceException(ApiError.PRODUCT_IMG_CATEGORY_MOVE_FORBIDDEN_THUMBNAIL);
-        }
         
         // 3. 批量查询关联记录
         List<RefProductImgAttachmentEntity> refEntityList = super.listByIds(dto.getIds());
@@ -810,7 +1224,7 @@ public class RefProductImgAttachmentServiceImpl extends SuperServiceImpl<RefProd
         }
         
         // 3. 创建异步下载任务（传递ids，由handler处理）
-        downloadTaskFeign.saveDownloadTask("批量下载图片", "EXPORT_PLM_PRODUCT_IMAGES", dto);
+        downloadTaskFeign.saveDownloadTask("批量下载图片", EXPORT_PLM_PRODUCT_IMAGES.getCode(), dto);
         
         log.info("批量下载图片任务创建成功，共{}张图片", dto.getIds().size());
         return Boolean.TRUE;
@@ -1055,32 +1469,52 @@ public class RefProductImgAttachmentServiceImpl extends SuperServiceImpl<RefProd
         String oldImagesUrl = productDetailEntity.getImagesUrl();
         List<String> newImagesUrls = dto.getImagesUrls() != null ? dto.getImagesUrls() : new ArrayList<>();
         
-        // 2. 查询现有的产品主图分类的关联记录（新系统）
+        // 2. 查询现有的所有关联记录（不限制分类，因为需要处理主图和未分类）
         List<RefProductImgAttachmentEntity> existingRefList = super.lambdaQuery()
                 .eq(RefProductImgAttachmentEntity::getProductDetailId, dto.getSkuId())
-                .eq(RefProductImgAttachmentEntity::getCategoryId, PRODUCT_MAIN_IMAGE_CATEGORY_ID)
                 .list();
         
-        // 获取现有的附件ID列表
+        // 获取现有的附件ID列表（包括原图和缩略图）
         List<String> existingAttachmentIds = existingRefList.stream()
                 .map(RefProductImgAttachmentEntity::getAttachmentId)
                 .filter(StrUtil::isNotBlank)
                 .collect(Collectors.toList());
         
-        // 查询现有的附件记录，构建URL到附件的映射
-        Map<String, PlmAttachmentEntity> existingAttachmentMap = new HashMap<>();
-        Map<String, RefProductImgAttachmentEntity> urlToRefMap = new HashMap<>();
-        if (CollUtil.isNotEmpty(existingAttachmentIds)) {
-            List<PlmAttachmentEntity> existingAttachments = plmAttachmentService.listByIds(existingAttachmentIds);
-            for (PlmAttachmentEntity attachment : existingAttachments) {
-                if (StrUtil.isNotBlank(attachment.getAttachUrl())) {
-                    existingAttachmentMap.put(attachment.getAttachUrl(), attachment);
-                    // 找到对应的关联记录
-                    for (RefProductImgAttachmentEntity refEntity : existingRefList) {
-                        if (refEntity.getAttachmentId().equals(attachment.getId())) {
-                            urlToRefMap.put(attachment.getAttachUrl(), refEntity);
-                            break;
-                        }
+        // 收集所有缩略图attachmentId
+        List<String> thumbnailAttachmentIds = existingRefList.stream()
+                .map(RefProductImgAttachmentEntity::getThumbnailAttachmentId)
+                .filter(StrUtil::isNotBlank)
+                .collect(Collectors.toList());
+        
+        // 合并所有attachmentId（去重）
+        Set<String> allAttachmentIds = new HashSet<>(existingAttachmentIds);
+        allAttachmentIds.addAll(thumbnailAttachmentIds);
+        
+        // 查询现有的附件记录，构建URL到原图附件的映射（原图URL -> 原图attachment）
+        // 同时构建缩略图URL到原图附件的映射（缩略图URL -> 原图attachment）
+        Map<String, PlmAttachmentEntity> existingAttachmentMap = new HashMap<>(); // 原图URL -> 原图attachment
+        Map<String, PlmAttachmentEntity> thumbnailUrlToOriginalMap = new HashMap<>(); // 缩略图URL -> 原图attachment
+        Map<String, RefProductImgAttachmentEntity> urlToRefMap = new HashMap<>(); // 原图URL -> ref记录
+        if (CollUtil.isNotEmpty(allAttachmentIds)) {
+            List<PlmAttachmentEntity> allAttachments = plmAttachmentService.listByIds(new ArrayList<>(allAttachmentIds));
+            Map<String, PlmAttachmentEntity> attachmentMap = allAttachments.stream()
+                    .collect(Collectors.toMap(PlmAttachmentEntity::getId, att -> att));
+            
+            for (RefProductImgAttachmentEntity refEntity : existingRefList) {
+                PlmAttachmentEntity originalAttachment = attachmentMap.get(refEntity.getAttachmentId());
+                if (originalAttachment != null && StrUtil.isNotBlank(originalAttachment.getAttachUrl())) {
+                    // 原图URL -> 原图attachment
+                    existingAttachmentMap.put(originalAttachment.getAttachUrl(), originalAttachment);
+                    urlToRefMap.put(originalAttachment.getAttachUrl(), refEntity);
+                    
+                    // 如果有缩略图，构建缩略图URL -> 原图attachment的映射
+                    String thumbnailAttachmentId = StrUtil.isNotBlank(refEntity.getThumbnailAttachmentId()) 
+                            ? refEntity.getThumbnailAttachmentId() 
+                            : refEntity.getAttachmentId();
+                    PlmAttachmentEntity thumbnailAttachment = attachmentMap.get(thumbnailAttachmentId);
+                    if (thumbnailAttachment != null && StrUtil.isNotBlank(thumbnailAttachment.getAttachUrl())) {
+                        // 缩略图URL -> 原图attachment（用于通过缩略图URL找到原图）
+                        thumbnailUrlToOriginalMap.put(thumbnailAttachment.getAttachUrl(), originalAttachment);
                     }
                 }
             }
@@ -1110,18 +1544,26 @@ public class RefProductImgAttachmentServiceImpl extends SuperServiceImpl<RefProd
             // 这个URL在旧系统中，但不在新系统中，需要创建记录
             log.info("发现旧数据URL，需要创建记录：{}", oldUrl);
             
-            // 查找或创建attachment记录
-            PlmAttachmentEntity attachmentEntity = plmAttachmentService.lambdaQuery()
-                    .eq(PlmAttachmentEntity::getAttachUrl, oldUrl)
-                    .eq(PlmAttachmentEntity::getBusinessId, dto.getSkuId())
-                    .last("LIMIT 1")
-                    .one();
+            // 先检查这个URL是否是缩略图URL，如果是，应该使用对应的原图attachment
+            PlmAttachmentEntity attachmentEntity = null;
+            if (thumbnailUrlToOriginalMap.containsKey(oldUrl)) {
+                // 如果是缩略图URL，使用对应的原图attachment
+                attachmentEntity = thumbnailUrlToOriginalMap.get(oldUrl);
+                log.info("识别到旧数据URL是缩略图URL，使用对应的原图attachment，url={}, attachmentId={}", oldUrl, attachmentEntity.getId());
+            } else {
+                // 查找或创建attachment记录
+                attachmentEntity = plmAttachmentService.lambdaQuery()
+                        .eq(PlmAttachmentEntity::getAttachUrl, oldUrl)
+                        .eq(PlmAttachmentEntity::getBusinessId, dto.getSkuId())
+                        .last("LIMIT 1")
+                        .one();
+            }
             
             if (attachmentEntity == null) {
                 // 创建新的attachment记录（文件大小稍后批量获取后设置）
                 attachmentEntity = new PlmAttachmentEntity();
                 attachmentEntity.setAttachUrl(oldUrl);
-                // 从URL提取文件名
+                // 从URL提取文件名（注意：这可能会丢失原始文件名，但如果是新上传的文件，只能这样处理）
                 String fileName = oldUrl;
                 int lastSlash = oldUrl.lastIndexOf('/');
                 if (lastSlash >= 0 && lastSlash < oldUrl.length() - 1) {
@@ -1133,20 +1575,31 @@ public class RefProductImgAttachmentServiceImpl extends SuperServiceImpl<RefProd
                 attachmentEntity.setBusinessId(dto.getSkuId());
                 plmAttachmentService.save(attachmentEntity);
                 log.info("为旧数据创建attachment记录，id={}, url={}", attachmentEntity.getId(), oldUrl);
+            } else {
+                // 如果attachment已存在，保留原有的attachName，不修改
+                log.info("找到已存在的attachment记录，保留原有名称，id={}, url={}, attachName={}", 
+                        attachmentEntity.getId(), oldUrl, attachmentEntity.getAttachName());
             }
             
-            // 检查是否已有ref_product_img_attachment记录
-            RefProductImgAttachmentEntity existingRef = super.lambdaQuery()
-                    .eq(RefProductImgAttachmentEntity::getProductDetailId, dto.getSkuId())
-                    .eq(RefProductImgAttachmentEntity::getCategoryId, PRODUCT_MAIN_IMAGE_CATEGORY_ID)
-                    .eq(RefProductImgAttachmentEntity::getAttachmentId, attachmentEntity.getId())
-                    .last("LIMIT 1")
-                    .one();
+            // 检查是否已有ref_product_img_attachment记录（不限制分类）
+            RefProductImgAttachmentEntity existingRef = urlToRefMap.get(oldUrl);
+            if (existingRef == null) {
+                existingRef = super.lambdaQuery()
+                        .eq(RefProductImgAttachmentEntity::getProductDetailId, dto.getSkuId())
+                        .eq(RefProductImgAttachmentEntity::getAttachmentId, attachmentEntity.getId())
+                        .last("LIMIT 1")
+                        .one();
+            }
             
             if (existingRef == null) {
+                // 确定分类：旧数据中第一个URL为主图，其他为未分类
+                String uncategorizedCategoryId = getUncategorizedCategoryId();
+                String firstOldUrl = CollUtil.isNotEmpty(oldUrlsFromImagesUrl) ? oldUrlsFromImagesUrl.get(0) : null;
+                String categoryId = oldUrl.equals(firstOldUrl) ? PRODUCT_MAIN_IMAGE_CATEGORY_ID : uncategorizedCategoryId;
+                
                 // 创建ref_product_img_attachment记录（但不调用add方法，避免重复生成缩略图）
                 RefProductImgAttachmentEntity refEntity = new RefProductImgAttachmentEntity();
-                refEntity.setCategoryId(PRODUCT_MAIN_IMAGE_CATEGORY_ID);
+                refEntity.setCategoryId(categoryId);
                 refEntity.setProductDetailId(dto.getSkuId());
                 refEntity.setSkuNo(productDetailEntity.getSkuNo());
                 refEntity.setAttachmentId(attachmentEntity.getId());
@@ -1155,7 +1608,7 @@ public class RefProductImgAttachmentServiceImpl extends SuperServiceImpl<RefProd
                 // 添加到映射中
                 existingAttachmentMap.put(oldUrl, attachmentEntity);
                 urlToRefMap.put(oldUrl, refEntity);
-                log.info("为旧数据创建ref_product_img_attachment记录，id={}, url={}", refEntity.getId(), oldUrl);
+                log.info("为旧数据创建ref_product_img_attachment记录，id={}, url={}, categoryId={}", refEntity.getId(), oldUrl, categoryId);
             } else {
                 // 如果已存在，添加到映射中
                 existingAttachmentMap.put(oldUrl, attachmentEntity);
@@ -1163,21 +1616,54 @@ public class RefProductImgAttachmentServiceImpl extends SuperServiceImpl<RefProd
             }
         }
         
-        // 3. 对比新旧图片URL列表，找出要保留、要删除、要新增的
-        Set<String> existingUrls = new HashSet<>(existingAttachmentMap.keySet());
-        Set<String> newUrls = new HashSet<>(newImagesUrls);
+        // 3. 将传入的URL转换为原图URL（如果传入的是缩略图URL，找到对应的原图URL）
+        // 构建传入URL到原图URL的映射，同时保持原始顺序
+        Map<String, String> inputUrlToOriginalUrlMap = new HashMap<>();
+        List<String> normalizedNewImagesUrls = new ArrayList<>(); // 保持顺序，用于确定主图
+        for (String inputUrl : newImagesUrls) {
+            // 先检查是否是原图URL
+            if (existingAttachmentMap.containsKey(inputUrl)) {
+                inputUrlToOriginalUrlMap.put(inputUrl, inputUrl);
+                normalizedNewImagesUrls.add(inputUrl);
+            } else if (thumbnailUrlToOriginalMap.containsKey(inputUrl)) {
+                // 如果是缩略图URL，找到对应的原图URL
+                PlmAttachmentEntity originalAttachment = thumbnailUrlToOriginalMap.get(inputUrl);
+                String originalUrl = originalAttachment.getAttachUrl();
+                inputUrlToOriginalUrlMap.put(inputUrl, originalUrl);
+                normalizedNewImagesUrls.add(originalUrl);
+                log.info("识别到缩略图URL，转换为原图URL：{} -> {}", inputUrl, originalUrl);
+            } else {
+                // 既不是原图URL也不是缩略图URL，按原图URL处理（可能是新上传的）
+                inputUrlToOriginalUrlMap.put(inputUrl, inputUrl);
+                normalizedNewImagesUrls.add(inputUrl);
+            }
+        }
         
-        // 要保留的URL（新旧都有的）
+        // 3.1 对比新旧图片URL列表，找出要保留、要删除、要新增的（使用原图URL）
+        Set<String> existingUrls = new HashSet<>(existingAttachmentMap.keySet());
+        Set<String> newUrls = new HashSet<>(normalizedNewImagesUrls);
+        
+        // 要保留的URL（新旧都有的，使用原图URL）
         Set<String> toKeepUrls = new HashSet<>(existingUrls);
         toKeepUrls.retainAll(newUrls);
         
-        // 要删除的URL（旧有但新没有的）
+        // 要删除的URL（旧有但新没有的，使用原图URL）
         Set<String> toDeleteUrls = new HashSet<>(existingUrls);
         toDeleteUrls.removeAll(newUrls);
         
-        // 要新增的URL（新有但旧没有的）
+        // 要新增的URL（新有但旧没有的，使用原图URL）
         Set<String> toAddUrls = new HashSet<>(newUrls);
         toAddUrls.removeAll(existingUrls);
+        
+        // 重要：主图应该是传入列表的第一个（imagesUrls.get(0)），而不是normalizedNewImagesUrls的第一个
+        // 因为normalizedNewImagesUrls可能因为URL转换而改变顺序
+        String firstImageUrl = null;
+        if (CollUtil.isNotEmpty(newImagesUrls)) {
+            String firstInputUrl = newImagesUrls.get(0);
+            // 将第一个传入URL转换为原图URL
+            firstImageUrl = inputUrlToOriginalUrlMap.getOrDefault(firstInputUrl, firstInputUrl);
+            log.info("确定主图URL：传入的第一个URL={}, 转换后的原图URL={}", firstInputUrl, firstImageUrl);
+        }
         
         // 将新增的URL也加入到需要获取文件大小的列表中
         urlsToGetSize.addAll(toAddUrls);
@@ -1233,6 +1719,7 @@ public class RefProductImgAttachmentServiceImpl extends SuperServiceImpl<RefProd
         }
         
         // 5. 更新旧数据的文件大小（批量获取后更新）
+        // 注意：只更新文件大小，不修改attachName
         if (CollUtil.isNotEmpty(oldUrlsToCreate)) {
             for (String oldUrl : oldUrlsToCreate) {
                 PlmAttachmentEntity attachmentEntity = existingAttachmentMap.get(oldUrl);
@@ -1241,19 +1728,45 @@ public class RefProductImgAttachmentServiceImpl extends SuperServiceImpl<RefProd
                     if (fileSizeBytes != null && fileSizeBytes > 0) {
                         BigDecimal fileSizeMB = BigDecimal.valueOf(fileSizeBytes)
                                 .divide(BigDecimal.valueOf(1024 * 1024), 2, BigDecimal.ROUND_HALF_UP);
-                        attachmentEntity.setAttachSize(fileSizeMB);
-                        plmAttachmentService.updateById(attachmentEntity);
-                        log.info("更新旧数据文件大小，url={}, size={}MB", oldUrl, fileSizeMB);
+                        // 只更新文件大小，不修改attachName
+                        plmAttachmentService.lambdaUpdate()
+                                .eq(PlmAttachmentEntity::getId, attachmentEntity.getId())
+                                .set(PlmAttachmentEntity::getAttachSize, fileSizeMB)
+                                .update();
+                        log.info("更新旧数据文件大小，id={}, url={}, size={}MB, attachName保持不变={}", 
+                                attachmentEntity.getId(), oldUrl, fileSizeMB, attachmentEntity.getAttachName());
                     }
                 }
             }
         }
         
-        // 6. 新增需要新增的图片（直接创建记录，生成缩略图，但不更新product_detail）
-        List<String> newThumbnailUrls = new ArrayList<>(); // 收集新生成的缩略图URL
+        // 6. 确保只有一个主图：第一个图片为主图，其他图片归类到"未分类"
+        String uncategorizedCategoryId = getUncategorizedCategoryId();
+        
+        // 6.1 主图URL已在步骤3中确定（使用传入列表的第一个）
+        
+        // 6.2 将之前的主图（如果不在新列表中）移出主图分类，归类到"未分类"
+        List<RefProductImgAttachmentEntity> oldMainImages = super.lambdaQuery()
+                .eq(RefProductImgAttachmentEntity::getProductDetailId, dto.getSkuId())
+                .eq(RefProductImgAttachmentEntity::getCategoryId, PRODUCT_MAIN_IMAGE_CATEGORY_ID)
+                .list();
+        
+        for (RefProductImgAttachmentEntity oldMainImage : oldMainImages) {
+            PlmAttachmentEntity oldAttachment = plmAttachmentService.getById(oldMainImage.getAttachmentId());
+            if (oldAttachment != null && !normalizedNewImagesUrls.contains(oldAttachment.getAttachUrl())) {
+                // 这个主图不在新列表中，移出主图分类，归类到"未分类"
+                oldMainImage.setCategoryId(uncategorizedCategoryId);
+                super.updateById(oldMainImage);
+                log.info("将图片移出主图分类，归类到未分类，refId={}, url={}", oldMainImage.getId(), oldAttachment.getAttachUrl());
+            }
+        }
+        
+        // 6.3 新增需要新增的图片（直接创建记录，生成缩略图，但不更新product_detail）
+        // 构建原图URL到缩略图URL的映射
+        Map<String, String> originalToThumbnailMap = new HashMap<>();
         if (CollUtil.isNotEmpty(toAddUrls)) {
             for (String imageUrl : toAddUrls) {
-                // 先查找或创建attachment
+                // 先查找或创建attachment（通过原图URL查找）
                 PlmAttachmentEntity attachmentEntity = plmAttachmentService.lambdaQuery()
                         .eq(PlmAttachmentEntity::getAttachUrl, imageUrl)
                         .eq(PlmAttachmentEntity::getBusinessId, dto.getSkuId())
@@ -1264,12 +1777,18 @@ public class RefProductImgAttachmentServiceImpl extends SuperServiceImpl<RefProd
                     // 如果不存在，创建新的attachment
                     attachmentEntity = new PlmAttachmentEntity();
                     attachmentEntity.setAttachUrl(imageUrl);
-                    // 从URL提取文件名
+                    
+                    // 尝试从文件服务获取原始文件名（如果URL是FastDFS格式，可能需要从其他地方获取）
+                    // 如果无法获取，则从URL提取文件名（保留扩展名）
                     String fileName = imageUrl;
                     int lastSlash = imageUrl.lastIndexOf('/');
                     if (lastSlash >= 0 && lastSlash < imageUrl.length() - 1) {
                         fileName = imageUrl.substring(lastSlash + 1);
                     }
+                    // 如果文件名是FastDFS格式（类似rBBkDGldxKiAPCjWAAwlxJlwvGk304.png），
+                    // 尝试从文件服务获取原始文件名，如果获取不到，使用默认名称
+                    // 注意：这里假设FastDFS的文件名就是这样的格式，无法获取原始文件名
+                    // 如果需要保留原始文件名，应该在文件上传时就保存到attachment记录中
                     attachmentEntity.setAttachName(fileName);
                     
                     // 使用批量获取的文件大小
@@ -1285,34 +1804,149 @@ public class RefProductImgAttachmentServiceImpl extends SuperServiceImpl<RefProd
                     attachmentEntity.setType("product_detail");
                     attachmentEntity.setBusinessId(dto.getSkuId());
                     plmAttachmentService.save(attachmentEntity);
+                    log.info("为新图片创建attachment记录，id={}, url={}, fileName={}", attachmentEntity.getId(), imageUrl, fileName);
+                } else {
+                    // 如果attachment已存在，保留原有的attachName，不修改
+                    log.info("找到已存在的attachment记录，保留原有名称，id={}, url={}, attachName={}", 
+                            attachmentEntity.getId(), imageUrl, attachmentEntity.getAttachName());
                 }
                 
-                // 直接创建ref_product_img_attachment记录（不调用add方法）
-                RefProductImgAttachmentEntity refEntity = new RefProductImgAttachmentEntity();
-                refEntity.setCategoryId(PRODUCT_MAIN_IMAGE_CATEGORY_ID);
-                refEntity.setProductDetailId(dto.getSkuId());
-                refEntity.setSkuNo(productDetailEntity.getSkuNo());
-                refEntity.setAttachmentId(attachmentEntity.getId());
-                super.save(refEntity);
+                // 确定分类：第一个图片为主图，其他为未分类（使用原图URL判断）
+                String categoryId = imageUrl.equals(firstImageUrl) ? PRODUCT_MAIN_IMAGE_CATEGORY_ID : uncategorizedCategoryId;
                 
-                // 生成缩略图（不更新product_detail）
-                String thumbnailUrl = generateThumbnailWithoutUpdate(attachmentEntity.getId(), dto.getSkuId(), productDetailEntity.getSkuNo());
-                if (StrUtil.isNotBlank(thumbnailUrl)) {
-                    newThumbnailUrls.add(thumbnailUrl);
+                // 检查是否已有ref_product_img_attachment记录
+                RefProductImgAttachmentEntity existingRef = super.lambdaQuery()
+                        .eq(RefProductImgAttachmentEntity::getProductDetailId, dto.getSkuId())
+                        .eq(RefProductImgAttachmentEntity::getAttachmentId, attachmentEntity.getId())
+                        .last("LIMIT 1")
+                        .one();
+                
+                if (existingRef == null) {
+                    // 直接创建ref_product_img_attachment记录（不调用add方法）
+                    RefProductImgAttachmentEntity refEntity = new RefProductImgAttachmentEntity();
+                    refEntity.setCategoryId(categoryId);
+                    refEntity.setProductDetailId(dto.getSkuId());
+                    refEntity.setSkuNo(productDetailEntity.getSkuNo());
+                    refEntity.setAttachmentId(attachmentEntity.getId());
+                    super.save(refEntity);
+                    
+                    // 生成缩略图（不更新product_detail）
+                    String thumbnailUrl = generateThumbnailWithoutUpdate(attachmentEntity.getId(), dto.getSkuId(), productDetailEntity.getSkuNo());
+                    // 保存原图URL到缩略图URL的映射
+                    if (StrUtil.isNotBlank(thumbnailUrl)) {
+                        originalToThumbnailMap.put(imageUrl, thumbnailUrl);
+                    }
+                    
+                    // 添加到映射中
+                    existingAttachmentMap.put(imageUrl, attachmentEntity);
+                    urlToRefMap.put(imageUrl, refEntity);
+                    log.info("为新图片创建ref_product_img_attachment记录，id={}, url={}, categoryId={}", refEntity.getId(), imageUrl, categoryId);
+                } else {
+                    // 如果已存在，更新分类
+                    if (!categoryId.equals(existingRef.getCategoryId())) {
+                        existingRef.setCategoryId(categoryId);
+                        super.updateById(existingRef);
+                        log.info("更新图片分类，refId={}, url={}, 新分类={}", existingRef.getId(), imageUrl, categoryId);
+                    }
+                    
+                    // 添加到映射中
+                    existingAttachmentMap.put(imageUrl, attachmentEntity);
+                    urlToRefMap.put(imageUrl, existingRef);
                 }
             }
         }
         
-        // 7. 更新product_detail的images_url（使用缩略图URL，放在第一位，然后保留原图URL）
-        List<String> finalImagesUrls = new ArrayList<>();
-        // 先添加新生成的缩略图URL（放在最前面）
-        if (CollUtil.isNotEmpty(newThumbnailUrls)) {
-            finalImagesUrls.addAll(newThumbnailUrls);
+        // 6.4 更新保留的图片分类：确保只有第一个是主图，其他都是未分类
+        if (CollUtil.isNotEmpty(toKeepUrls) && StrUtil.isNotBlank(firstImageUrl)) {
+            for (String keepUrl : toKeepUrls) {
+                RefProductImgAttachmentEntity refEntity = urlToRefMap.get(keepUrl);
+                if (refEntity != null) {
+                    String shouldBeCategoryId = keepUrl.equals(firstImageUrl) ? PRODUCT_MAIN_IMAGE_CATEGORY_ID : uncategorizedCategoryId;
+                    if (!shouldBeCategoryId.equals(refEntity.getCategoryId())) {
+                        refEntity.setCategoryId(shouldBeCategoryId);
+                        super.updateById(refEntity);
+                        log.info("更新图片分类，refId={}, url={}, 新分类={}", refEntity.getId(), keepUrl, shouldBeCategoryId);
+                    }
+                }
+            }
         }
-        // 然后添加保留的原图URL
-        finalImagesUrls.addAll(toKeepUrls);
-        // 最后添加新增的原图URL
-        finalImagesUrls.addAll(toAddUrls);
+        
+        // 7. 构建原图URL到缩略图URL的完整映射（包括保留的URL）
+        Map<String, String> allOriginalToThumbnailMap = new HashMap<>(originalToThumbnailMap);
+        
+        // 查询所有保留的图片记录，从thumbnailAttachmentId获取缩略图
+        if (CollUtil.isNotEmpty(toKeepUrls)) {
+            // 查询所有保留URL对应的ref记录
+            List<String> keepAttachmentIds = toKeepUrls.stream()
+                    .map(url -> {
+                        PlmAttachmentEntity att = existingAttachmentMap.get(url);
+                        return att != null ? att.getId() : null;
+                    })
+                    .filter(StrUtil::isNotBlank)
+                    .collect(Collectors.toList());
+            
+            if (CollUtil.isNotEmpty(keepAttachmentIds)) {
+                List<RefProductImgAttachmentEntity> keepRefs = super.lambdaQuery()
+                        .eq(RefProductImgAttachmentEntity::getProductDetailId, dto.getSkuId())
+                        .in(RefProductImgAttachmentEntity::getAttachmentId, keepAttachmentIds)
+                        .list();
+                
+                // 收集所有缩略图attachmentId（包括等于原图的）
+                Set<String> thumbnailAttachmentIdsSec = new HashSet<>();
+                for (RefProductImgAttachmentEntity ref : keepRefs) {
+                    if (StrUtil.isNotBlank(ref.getThumbnailAttachmentId())) {
+                        thumbnailAttachmentIdsSec.add(ref.getThumbnailAttachmentId());
+                    } else {
+                        // 如果thumbnailAttachmentId为空，使用原图ID
+                        thumbnailAttachmentIdsSec.add(ref.getAttachmentId());
+                    }
+                }
+                
+                if (CollUtil.isNotEmpty(thumbnailAttachmentIdsSec)) {
+                    List<PlmAttachmentEntity> thumbnailAttachments = plmAttachmentService.listByIds(new ArrayList<>(thumbnailAttachmentIdsSec));
+                    Map<String, PlmAttachmentEntity> thumbnailAttachmentMap = thumbnailAttachments.stream()
+                            .collect(Collectors.toMap(PlmAttachmentEntity::getId, ta -> ta));
+                    
+                    // 构建attachmentId到缩略图URL的映射
+                    Map<String, String> attachmentIdToThumbnailUrlMap = new HashMap<>();
+                    for (RefProductImgAttachmentEntity ref : keepRefs) {
+                        String thumbAttachmentId = StrUtil.isNotBlank(ref.getThumbnailAttachmentId()) 
+                                ? ref.getThumbnailAttachmentId() 
+                                : ref.getAttachmentId();
+                        PlmAttachmentEntity thumbAttachment = thumbnailAttachmentMap.get(thumbAttachmentId);
+                        if (thumbAttachment != null && StrUtil.isNotBlank(thumbAttachment.getAttachUrl())) {
+                            attachmentIdToThumbnailUrlMap.put(ref.getAttachmentId(), thumbAttachment.getAttachUrl());
+                        }
+                    }
+                    
+                    // 对于每个保留的原图URL，通过attachmentId找到对应的缩略图
+                    for (String originalUrl : toKeepUrls) {
+                        PlmAttachmentEntity originalAttachment = existingAttachmentMap.get(originalUrl);
+                        if (originalAttachment != null) {
+                            String thumbnailUrl = attachmentIdToThumbnailUrlMap.get(originalAttachment.getId());
+                            if (StrUtil.isNotBlank(thumbnailUrl)) {
+                                allOriginalToThumbnailMap.put(originalUrl, thumbnailUrl);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        // 8. 更新product_detail的images_url（用缩略图URL替换原图URL）
+        // 重要：保持传入的顺序，而不是使用Set的顺序
+        // 按照normalizedNewImagesUrls的顺序构建最终URL列表
+        List<String> finalImagesUrls = new ArrayList<>();
+        for (String normalizedUrl : normalizedNewImagesUrls) {
+            // 检查这个URL是否在保留或新增列表中
+            if (toKeepUrls.contains(normalizedUrl) || toAddUrls.contains(normalizedUrl)) {
+                // 查找对应的缩略图URL
+                String thumbnailUrl = allOriginalToThumbnailMap.get(normalizedUrl);
+                // 如果找到了对应的缩略图URL，使用缩略图URL，否则使用原图URL
+                finalImagesUrls.add(StrUtil.isNotBlank(thumbnailUrl) ? thumbnailUrl : normalizedUrl);
+            }
+        }
+        
         String imagesUrlStr = "";
         if (CollUtil.isNotEmpty(finalImagesUrls)) {
             imagesUrlStr = String.join(",", finalImagesUrls);
@@ -1365,23 +1999,37 @@ public class RefProductImgAttachmentServiceImpl extends SuperServiceImpl<RefProd
             throw new ServiceException(ApiError.PRODUCT_UPLOAD_FORBIDDEN_IN_APPROVING);
         }
         
-        List<String> thumbnailUrls = new ArrayList<>();
+        // 2. 确保只有一个主图：将之前的主图移出主图分类
+        String uncategorizedCategoryId = getUncategorizedCategoryId();
+        List<RefProductImgAttachmentEntity> oldMainImages = super.lambdaQuery()
+                .eq(RefProductImgAttachmentEntity::getProductDetailId, skuId)
+                .eq(RefProductImgAttachmentEntity::getCategoryId, PRODUCT_MAIN_IMAGE_CATEGORY_ID)
+                .list();
         
-        // 2. 遍历每个文件，上传并生成缩略图
+        for (RefProductImgAttachmentEntity oldMainImage : oldMainImages) {
+            oldMainImage.setCategoryId(uncategorizedCategoryId);
+            super.updateById(oldMainImage);
+            log.info("将旧主图移出主图分类，归类到未分类，refId={}", oldMainImage.getId());
+        }
+        
+        List<String> thumbnailUrls = new ArrayList<>();
+        boolean isFirstFile = true;
+        
+        // 3. 遍历每个文件，上传并生成缩略图
         for (MultipartFile multipartFile : multipartFileList) {
             try {
-                // 2.1 上传原图到FastDFS
+                // 3.1 上传原图到FastDFS
                 String originalFileUrl = fileFeign.uploadFile(multipartFile);
                 if (StrUtil.isBlank(originalFileUrl)) {
                     log.warn("上传原图失败，文件名：{}", multipartFile.getOriginalFilename());
                     continue;
                 }
                 
-                // 2.2 获取文件大小（MB）
+                // 3.2 获取文件大小（MB）
                 BigDecimal fileSizeMB = BigDecimal.valueOf(multipartFile.getSize())
                         .divide(BigDecimal.valueOf(1024 * 1024), 2, BigDecimal.ROUND_HALF_UP);
                 
-                // 2.3 保存原图到attachment表
+                // 3.3 保存原图到attachment表
                 PlmAttachmentEntity originalAttachment = new PlmAttachmentEntity();
                 originalAttachment.setAttachUrl(originalFileUrl);
                 String originalFileName = multipartFile.getOriginalFilename();
@@ -1394,27 +2042,37 @@ public class RefProductImgAttachmentServiceImpl extends SuperServiceImpl<RefProd
                 originalAttachment.setBusinessId(skuId);
                 plmAttachmentService.save(originalAttachment);
                 
-                // 2.4 创建ref_product_img_attachment记录（产品主图分类）
+                // 3.4 创建ref_product_img_attachment记录（第一个为主图，其他为未分类）
+                String categoryId = isFirstFile ? PRODUCT_MAIN_IMAGE_CATEGORY_ID : uncategorizedCategoryId;
                 RefProductImgAttachmentEntity mainImageRef = new RefProductImgAttachmentEntity();
-                mainImageRef.setCategoryId(PRODUCT_MAIN_IMAGE_CATEGORY_ID);
+                mainImageRef.setCategoryId(categoryId);
                 mainImageRef.setProductDetailId(skuId);
                 mainImageRef.setSkuNo(productDetailEntity.getSkuNo());
                 mainImageRef.setAttachmentId(originalAttachment.getId());
                 super.save(mainImageRef);
                 
-                // 2.5 生成缩略图（不更新product_detail）
+                // 3.5 生成缩略图（不更新product_detail）
                 String thumbnailUrl = generateThumbnailWithoutUpdate(
                         originalAttachment.getId(), 
                         skuId, 
                         productDetailEntity.getSkuNo()
                 );
                 
-                if (StrUtil.isNotBlank(thumbnailUrl)) {
-                    thumbnailUrls.add(thumbnailUrl);
-                    log.info("成功上传产品主图文件并生成缩略图，原图URL={}, 缩略图URL={}", originalFileUrl, thumbnailUrl);
-                } else {
-                    log.warn("生成缩略图失败，原图URL={}", originalFileUrl);
+                // 如果生成了缩略图，使用缩略图URL，否则使用原图URL
+                String finalUrl = StrUtil.isNotBlank(thumbnailUrl) ? thumbnailUrl : originalFileUrl;
+                thumbnailUrls.add(finalUrl);
+                
+                // 如果是第一个文件（主图），在images_url中用缩略图URL替换原图URL
+                if (isFirstFile) {
+                    if (StrUtil.isNotBlank(thumbnailUrl)) {
+                        replaceOriginalUrlWithThumbnailInImagesUrl(skuId, originalFileUrl, thumbnailUrl);
+                        log.info("成功上传产品主图文件并生成缩略图，原图URL={}, 缩略图URL={}", originalFileUrl, thumbnailUrl);
+                    } else {
+                        log.info("无需生成缩略图或生成失败，使用原图作为主图，原图URL={}", originalFileUrl);
+                    }
                 }
+                
+                isFirstFile = false; // 后续文件不是主图
                 
             } catch (Exception e) {
                 log.error("上传产品主图文件失败，文件名={}, 错误信息={}", 
@@ -1425,6 +2083,349 @@ public class RefProductImgAttachmentServiceImpl extends SuperServiceImpl<RefProd
         
         log.info("上传产品主图文件完成，skuId={}, 成功生成{}个缩略图", skuId, thumbnailUrls.size());
         return thumbnailUrls;
+    }
+
+    /**
+     * 处理产品保存后的图片URL（创建attachment记录、创建ref记录、异步生成缩略图）
+     * @param skuId SKU ID
+     * @param imagesUrl 图片URL字符串（逗号分隔）
+     * @author wuhaotian
+     * @date: 2025-12-29
+     */
+    @Override
+    public void handleProductImagesAfterSave(String skuId, String imagesUrl) {
+        if (StrUtil.isBlank(imagesUrl) || StrUtil.isBlank(skuId)) {
+            log.debug("图片URL或SKU ID为空，跳过处理，skuId={}, imagesUrl={}", skuId, imagesUrl);
+            return;
+        }
+
+        log.info("开始处理产品保存后的图片，skuId={}, imagesUrl={}", skuId, imagesUrl);
+
+        // 1. 查询产品明细信息
+        ProductDetailEntity productDetailEntity = productDetailService.getById(skuId);
+        if (ObjectUtil.isEmpty(productDetailEntity)) {
+            log.warn("产品明细不存在，跳过图片处理，skuId={}", skuId);
+            return;
+        }
+
+        // 2. 解析图片URL列表
+        List<String> imageUrls = Arrays.stream(imagesUrl.split(","))
+                .map(String::trim)
+                .filter(StrUtil::isNotBlank)
+                .collect(Collectors.toList());
+
+        if (CollUtil.isEmpty(imageUrls)) {
+            log.debug("解析后的图片URL列表为空，跳过处理，skuId={}", skuId);
+            return;
+        }
+
+        // 3. 查询现有的所有关联记录（不限制分类）
+        List<RefProductImgAttachmentEntity> existingRefList = super.lambdaQuery()
+                .eq(RefProductImgAttachmentEntity::getProductDetailId, skuId)
+                .list();
+
+        // 获取现有的附件ID列表
+        List<String> existingAttachmentIds = existingRefList.stream()
+                .map(RefProductImgAttachmentEntity::getAttachmentId)
+                .filter(StrUtil::isNotBlank)
+                .collect(Collectors.toList());
+
+        // 查询现有的附件记录，构建URL到附件的映射
+        Map<String, PlmAttachmentEntity> existingAttachmentMap = new HashMap<>();
+        Map<String, RefProductImgAttachmentEntity> urlToRefMap = new HashMap<>();
+        Set<String> existingUrls = new HashSet<>();
+        if (CollUtil.isNotEmpty(existingAttachmentIds)) {
+            List<PlmAttachmentEntity> existingAttachments = plmAttachmentService.listByIds(existingAttachmentIds);
+            for (PlmAttachmentEntity attachment : existingAttachments) {
+                if (StrUtil.isNotBlank(attachment.getAttachUrl())) {
+                    existingAttachmentMap.put(attachment.getAttachUrl(), attachment);
+                    existingUrls.add(attachment.getAttachUrl());
+                    // 找到对应的关联记录
+                    for (RefProductImgAttachmentEntity refEntity : existingRefList) {
+                        if (refEntity.getAttachmentId().equals(attachment.getId())) {
+                            urlToRefMap.put(attachment.getAttachUrl(), refEntity);
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        
+        // 3.1 确定主图：imagesUrl中第一个URL为主图，其他为未分类
+        String uncategorizedCategoryId = getUncategorizedCategoryId();
+        String firstImageUrl = CollUtil.isNotEmpty(imageUrls) ? imageUrls.get(0) : null;
+        
+        // 3.2 更新现有记录的分类：确保只有第一个是主图，其他都是未分类
+        if (CollUtil.isNotEmpty(existingRefList) && StrUtil.isNotBlank(firstImageUrl)) {
+            for (RefProductImgAttachmentEntity refEntity : existingRefList) {
+                PlmAttachmentEntity attachment = existingAttachmentMap.values().stream()
+                        .filter(att -> att.getId().equals(refEntity.getAttachmentId()))
+                        .findFirst()
+                        .orElse(null);
+                if (attachment != null && StrUtil.isNotBlank(attachment.getAttachUrl())) {
+                    String shouldBeCategoryId = attachment.getAttachUrl().equals(firstImageUrl) 
+                            ? PRODUCT_MAIN_IMAGE_CATEGORY_ID 
+                            : uncategorizedCategoryId;
+                    if (!shouldBeCategoryId.equals(refEntity.getCategoryId())) {
+                        refEntity.setCategoryId(shouldBeCategoryId);
+                        super.updateById(refEntity);
+                        log.info("更新现有图片分类，refId={}, url={}, 新分类={}", refEntity.getId(), attachment.getAttachUrl(), shouldBeCategoryId);
+                    }
+                }
+            }
+        }
+
+        // 4. 处理每个图片URL，收集需要生成缩略图的URL
+        // 使用线程安全的Map收集原图URL到缩略图URL的映射
+        Map<String, String> originalToThumbnailMap = new ConcurrentHashMap<>();
+        // 收集所有需要异步生成缩略图的任务
+        List<CompletableFuture<Void>> thumbnailTasks = new ArrayList<>();
+        
+        for (String imageUrl : imageUrls) {
+            try {
+                // 4.1 如果该URL已存在，跳过
+                if (existingUrls.contains(imageUrl)) {
+                    log.debug("图片URL已存在，跳过处理，url={}", imageUrl);
+                    continue;
+                }
+
+                // 4.2 查找或创建attachment记录
+                PlmAttachmentEntity attachmentEntity = plmAttachmentService.lambdaQuery()
+                        .eq(PlmAttachmentEntity::getAttachUrl, imageUrl)
+                        .eq(PlmAttachmentEntity::getBusinessId, skuId)
+                        .last("LIMIT 1")
+                        .one();
+
+                if (attachmentEntity == null) {
+                    // 创建新的attachment记录
+                    attachmentEntity = new PlmAttachmentEntity();
+                    attachmentEntity.setAttachUrl(imageUrl);
+                    // 从URL提取文件名
+                    String fileName = imageUrl;
+                    int lastSlash = imageUrl.lastIndexOf('/');
+                    if (lastSlash >= 0 && lastSlash < imageUrl.length() - 1) {
+                        fileName = imageUrl.substring(lastSlash + 1);
+                    }
+                    attachmentEntity.setAttachName(fileName);
+                    attachmentEntity.setAttachSize(BigDecimal.ZERO); // 稍后可以通过文件服务获取
+                    attachmentEntity.setType("product_detail");
+                    attachmentEntity.setBusinessId(skuId);
+                    plmAttachmentService.save(attachmentEntity);
+                    log.info("为图片创建attachment记录，id={}, url={}", attachmentEntity.getId(), imageUrl);
+                }
+
+                // 4.3 检查是否已有ref_product_img_attachment记录
+                RefProductImgAttachmentEntity existingRef = urlToRefMap.get(imageUrl);
+                
+                // 确定分类：第一个图片为主图，其他为未分类
+                String categoryId = imageUrl.equals(firstImageUrl) ? PRODUCT_MAIN_IMAGE_CATEGORY_ID : uncategorizedCategoryId;
+
+                if (existingRef == null) {
+                    // 创建ref_product_img_attachment记录
+                    RefProductImgAttachmentEntity refEntity = new RefProductImgAttachmentEntity();
+                    refEntity.setCategoryId(categoryId);
+                    refEntity.setProductDetailId(skuId);
+                    refEntity.setSkuNo(productDetailEntity.getSkuNo());
+                    refEntity.setAttachmentId(attachmentEntity.getId());
+                    super.save(refEntity);
+                    log.info("创建产品图片关联记录，id={}, skuId={}, url={}, categoryId={}", refEntity.getId(), skuId, imageUrl, categoryId);
+
+                    // 4.4 异步生成缩略图（不立即更新images_url）
+                    final String attachmentId = attachmentEntity.getId();
+                    final String skuNo = productDetailEntity.getSkuNo();
+                    final String finalOriginalUrl = imageUrl; // 保存原图URL用于后续替换
+                    
+                    CompletableFuture<Void> thumbnailTask = CompletableFuture.runAsync(() -> {
+                        try {
+                            log.info("开始异步生成缩略图，attachmentId={}, skuId={}, originalUrl={}", attachmentId, skuId, finalOriginalUrl);
+                            String thumbnailUrl = generateThumbnailWithoutUpdate(attachmentId, skuId, skuNo);
+                            // 将结果放入Map，不立即更新images_url
+                            if (StrUtil.isNotBlank(thumbnailUrl)) {
+                                originalToThumbnailMap.put(finalOriginalUrl, thumbnailUrl);
+                                log.info("成功异步生成缩略图，attachmentId={}, skuId={}, 原图URL={}, 缩略图URL={}", 
+                                        attachmentId, skuId, finalOriginalUrl, thumbnailUrl);
+                            } else {
+                                log.info("无需生成缩略图或生成失败，使用原图，attachmentId={}, skuId={}, 原图URL={}", 
+                                        attachmentId, skuId, finalOriginalUrl);
+                            }
+                        } catch (Exception e) {
+                            log.error("异步生成缩略图失败，attachmentId={}, skuId={}, 错误信息={}", 
+                                    attachmentId, skuId, e.getMessage(), e);
+                        }
+                    }, zipImageExecutorPool);
+                    
+                    thumbnailTasks.add(thumbnailTask);
+                }
+
+            } catch (Exception e) {
+                log.error("处理图片URL失败，url={}, skuId={}, 错误信息={}", imageUrl, skuId, e.getMessage(), e);
+                // 继续处理下一个URL，不中断整个流程
+            }
+        }
+
+        // 5. 等待所有异步缩略图生成任务完成，然后统一更新images_url
+        if (CollUtil.isNotEmpty(thumbnailTasks)) {
+            try {
+                // 等待所有任务完成（最多等待5分钟）
+                CompletableFuture.allOf(thumbnailTasks.toArray(new CompletableFuture[0]))
+                        .get(5, java.util.concurrent.TimeUnit.MINUTES);
+                
+                log.info("所有缩略图生成任务完成，skuId={}, 共生成{}个缩略图", skuId, originalToThumbnailMap.size());
+                
+                // 统一更新images_url：用缩略图URL替换原图URL
+                // 先从所有ref记录中获取已存在的缩略图URL
+                Map<String, String> allThumbnailMap = new HashMap<>(originalToThumbnailMap);
+                
+                // 查询所有图片记录，构建完整的缩略图映射
+                List<RefProductImgAttachmentEntity> allRefs = super.lambdaQuery()
+                        .eq(RefProductImgAttachmentEntity::getProductDetailId, skuId)
+                        .list();
+                
+                if (CollUtil.isNotEmpty(allRefs)) {
+                    // 收集所有缩略图attachmentId
+                    Set<String> thumbnailAttachmentIds = new HashSet<>();
+                    Map<String, String> attachmentIdToOriginalUrlMap = new HashMap<>();
+                    
+                    for (RefProductImgAttachmentEntity ref : allRefs) {
+                        String thumbAttachmentId = StrUtil.isNotBlank(ref.getThumbnailAttachmentId()) 
+                                ? ref.getThumbnailAttachmentId() 
+                                : ref.getAttachmentId();
+                        thumbnailAttachmentIds.add(thumbAttachmentId);
+                        
+                        // 找到对应的原图URL
+                        PlmAttachmentEntity originalAttachment = existingAttachmentMap.values().stream()
+                                .filter(att -> att.getId().equals(ref.getAttachmentId()))
+                                .findFirst()
+                                .orElse(null);
+                        if (originalAttachment != null && StrUtil.isNotBlank(originalAttachment.getAttachUrl())) {
+                            attachmentIdToOriginalUrlMap.put(ref.getAttachmentId(), originalAttachment.getAttachUrl());
+                        }
+                    }
+                    
+                    // 批量查询缩略图attachment
+                    if (CollUtil.isNotEmpty(thumbnailAttachmentIds)) {
+                        List<PlmAttachmentEntity> thumbnailAttachments = plmAttachmentService.listByIds(new ArrayList<>(thumbnailAttachmentIds));
+                        Map<String, PlmAttachmentEntity> thumbnailAttachmentMap = thumbnailAttachments.stream()
+                                .collect(Collectors.toMap(PlmAttachmentEntity::getId, ta -> ta));
+                        
+                        // 构建原图URL到缩略图URL的映射
+                        for (RefProductImgAttachmentEntity ref : allRefs) {
+                            String originalUrl = attachmentIdToOriginalUrlMap.get(ref.getAttachmentId());
+                            if (StrUtil.isNotBlank(originalUrl)) {
+                                String thumbAttachmentId = StrUtil.isNotBlank(ref.getThumbnailAttachmentId()) 
+                                        ? ref.getThumbnailAttachmentId() 
+                                        : ref.getAttachmentId();
+                                PlmAttachmentEntity thumbAttachment = thumbnailAttachmentMap.get(thumbAttachmentId);
+                                if (thumbAttachment != null && StrUtil.isNotBlank(thumbAttachment.getAttachUrl())) {
+                                    allThumbnailMap.put(originalUrl, thumbAttachment.getAttachUrl());
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                if (!allThumbnailMap.isEmpty()) {
+                    // 获取当前的images_url
+                    ProductDetailEntity currentProductDetail = productDetailService.getById(skuId);
+                    if (currentProductDetail != null && StrUtil.isNotBlank(currentProductDetail.getImagesUrl())) {
+                        List<String> currentImageUrls = Arrays.stream(currentProductDetail.getImagesUrl().split(","))
+                                .map(String::trim)
+                                .filter(StrUtil::isNotBlank)
+                                .collect(Collectors.toList());
+                        
+                        // 替换原图URL为缩略图URL
+                        for (int i = 0; i < currentImageUrls.size(); i++) {
+                            String originalUrl = currentImageUrls.get(i);
+                            String thumbnailUrl = allThumbnailMap.get(originalUrl);
+                            if (StrUtil.isNotBlank(thumbnailUrl)) {
+                                currentImageUrls.set(i, thumbnailUrl);
+                                log.debug("在images_url中替换原图URL为缩略图URL，原图={}, 缩略图={}", originalUrl, thumbnailUrl);
+                            }
+                        }
+                        
+                        // 更新images_url
+                        String newImagesUrl = String.join(",", currentImageUrls);
+                        currentProductDetail.setImagesUrl(newImagesUrl);
+                        productDetailService.updateById(currentProductDetail);
+                        log.info("统一更新product_detail的images_url完成，skuId={}, 新images_url={}", skuId, newImagesUrl);
+                    }
+                }
+            } catch (java.util.concurrent.TimeoutException e) {
+                log.warn("等待缩略图生成任务超时，skuId={}，将使用已完成的缩略图更新images_url", skuId);
+                // 即使超时，也使用已完成的缩略图进行更新（复用上面的逻辑）
+                // 查询所有ref记录，获取缩略图URL
+                Map<String, String> allThumbnailMap = new HashMap<>(originalToThumbnailMap);
+                List<RefProductImgAttachmentEntity> allRefs = super.lambdaQuery()
+                        .eq(RefProductImgAttachmentEntity::getProductDetailId, skuId)
+                        .list();
+                
+                if (CollUtil.isNotEmpty(allRefs)) {
+                    Set<String> thumbnailAttachmentIds = new HashSet<>();
+                    Map<String, String> attachmentIdToOriginalUrlMap = new HashMap<>();
+                    
+                    for (RefProductImgAttachmentEntity ref : allRefs) {
+                        String thumbAttachmentId = StrUtil.isNotBlank(ref.getThumbnailAttachmentId()) 
+                                ? ref.getThumbnailAttachmentId() 
+                                : ref.getAttachmentId();
+                        thumbnailAttachmentIds.add(thumbAttachmentId);
+                        
+                        PlmAttachmentEntity originalAttachment = existingAttachmentMap.values().stream()
+                                .filter(att -> att.getId().equals(ref.getAttachmentId()))
+                                .findFirst()
+                                .orElse(null);
+                        if (originalAttachment != null && StrUtil.isNotBlank(originalAttachment.getAttachUrl())) {
+                            attachmentIdToOriginalUrlMap.put(ref.getAttachmentId(), originalAttachment.getAttachUrl());
+                        }
+                    }
+                    
+                    if (CollUtil.isNotEmpty(thumbnailAttachmentIds)) {
+                        List<PlmAttachmentEntity> thumbnailAttachments = plmAttachmentService.listByIds(new ArrayList<>(thumbnailAttachmentIds));
+                        Map<String, PlmAttachmentEntity> thumbnailAttachmentMap = thumbnailAttachments.stream()
+                                .collect(Collectors.toMap(PlmAttachmentEntity::getId, ta -> ta));
+                        
+                        for (RefProductImgAttachmentEntity ref : allRefs) {
+                            String originalUrl = attachmentIdToOriginalUrlMap.get(ref.getAttachmentId());
+                            if (StrUtil.isNotBlank(originalUrl)) {
+                                String thumbAttachmentId = StrUtil.isNotBlank(ref.getThumbnailAttachmentId()) 
+                                        ? ref.getThumbnailAttachmentId() 
+                                        : ref.getAttachmentId();
+                                PlmAttachmentEntity thumbAttachment = thumbnailAttachmentMap.get(thumbAttachmentId);
+                                if (thumbAttachment != null && StrUtil.isNotBlank(thumbAttachment.getAttachUrl())) {
+                                    allThumbnailMap.put(originalUrl, thumbAttachment.getAttachUrl());
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                if (!allThumbnailMap.isEmpty()) {
+                    ProductDetailEntity currentProductDetail = productDetailService.getById(skuId);
+                    if (currentProductDetail != null && StrUtil.isNotBlank(currentProductDetail.getImagesUrl())) {
+                        List<String> currentImageUrls = Arrays.stream(currentProductDetail.getImagesUrl().split(","))
+                                .map(String::trim)
+                                .filter(StrUtil::isNotBlank)
+                                .collect(Collectors.toList());
+                        
+                        for (int i = 0; i < currentImageUrls.size(); i++) {
+                            String originalUrl = currentImageUrls.get(i);
+                            String thumbnailUrl = allThumbnailMap.get(originalUrl);
+                            if (StrUtil.isNotBlank(thumbnailUrl)) {
+                                currentImageUrls.set(i, thumbnailUrl);
+                            }
+                        }
+                        
+                        String newImagesUrl = String.join(",", currentImageUrls);
+                        currentProductDetail.setImagesUrl(newImagesUrl);
+                        productDetailService.updateById(currentProductDetail);
+                        log.info("超时后统一更新product_detail的images_url完成，skuId={}, 新images_url={}", skuId, newImagesUrl);
+                    }
+                }
+            } catch (Exception e) {
+                log.error("等待缩略图生成任务或更新images_url失败，skuId={}, 错误信息={}", skuId, e.getMessage(), e);
+            }
+        }
+
+        log.info("完成处理产品保存后的图片，skuId={}, 共处理{}个图片URL", skuId, imageUrls.size());
     }
 }
     

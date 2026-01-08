@@ -16,6 +16,7 @@
        <result column="product_detail_id" property="productDetailId" />
        <result column="sku_no" property="skuNo" />
        <result column="attachment_id" property="attachmentId" />
+       <result column="thumbnail_attachment_id" property="thumbnailAttachmentId" />
     </resultMap>
 
     <!-- 通用查询结果列 -->
@@ -29,7 +30,7 @@
         update_time,
         version,
         is_deleted,
-        category_id, product_detail_id, sku_no, attachment_id
+        category_id, product_detail_id, sku_no, attachment_id, thumbnail_attachment_id
     </sql>
 
     <select id="paging" resultType="com.erp.model.plm.dto.RefProductImgAttachmentDTO$ListDTO">
@@ -40,7 +41,10 @@
         rpia.sku_no AS skuNo,
         rpia.attachment_id AS attachmentId,
         att.attach_name as attachName,
-        att.attach_url as attachUrl,
+        -- 如果thumbnailAttachmentId不为空且不等于attachmentId，使用缩略图URL，否则使用原图URL
+        COALESCE(thumb_att.attach_url, att.attach_url) as attachUrl,
+        -- 主图URL（原图URL，用于前端下载）
+        att.attach_url as originalImageUrl,
         att.attach_size as attachSize,
         rpia.create_time AS createTime,
         rpia.create_user_name AS createUserName
@@ -48,6 +52,10 @@
         ref_product_img_attachment rpia
         LEFT JOIN product_detail pd ON pd.id = rpia.product_detail_id AND pd.is_deleted = FALSE
         LEFT JOIN attachment att ON att.id = rpia.attachment_id AND att.is_deleted = FALSE
+        LEFT JOIN attachment thumb_att ON thumb_att.id = rpia.thumbnail_attachment_id 
+            AND thumb_att.is_deleted = FALSE 
+            AND rpia.thumbnail_attachment_id IS NOT NULL 
+            AND rpia.thumbnail_attachment_id != rpia.attachment_id
         WHERE
         ${params.sqlMap.default}
         AND rpia.is_deleted = FALSE
