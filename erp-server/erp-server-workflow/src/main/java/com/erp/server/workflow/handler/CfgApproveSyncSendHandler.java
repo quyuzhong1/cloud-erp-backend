@@ -165,7 +165,7 @@ public class CfgApproveSyncSendHandler {
         CfgApproveNoticeEntity cfgApproveNoticeEntity = cfgApproveNoticeService.getByNoticeTypeAndMainId(cfgApproveSyncEntity.getId(), noticeTemplateEnum.getCode(), Boolean.TRUE);
         if (Objects.nonNull(cfgApproveNoticeEntity)) {
             List<String> sendUserIds = getSendUserIds(cfgApproveNoticeEntity, createUserId, approveIds, ccIds);
-            sendNotice(noticeTemplateEnum.getName(), summaries, operator, sendUserIds, thirdUnionMap, cfgApproveSyncEntity, pcLinkByEnv,syncRecordEntity);
+            sendNotice(noticeTemplateEnum.getName(), summaries, createUserId, sendUserIds, thirdUnionMap, cfgApproveSyncEntity, pcLinkByEnv,syncRecordEntity);
         }
     }
 
