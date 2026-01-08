@@ -218,9 +218,30 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         //映射sku
         dto.setShopId(entity.getShopId());
         dto.setPlatform(PlatformDictEnum.AMAZON.getCode());
-        dto.setId(skuDTOS.get(0).getId());
+        SkuMappingDTO.MappingSkuViewDTO mappingSkuViewDTO = skuDTOS.get(0);
+        dto.setId(mappingSkuViewDTO.getId());
         Boolean flag = omsListingInfoFeign.skuMapping(dto);
         if (flag) {
+            //更新awd的sku映射
+            FbaShipmentEntity fbaShipmentEntity = this.getById(detailEntity.getMainId());
+            AwdOutstockEntity awdOutstockEntity = awdOutstockService.lambdaQuery()
+                    .eq(AwdOutstockEntity::getFbaShipmentId,fbaShipmentEntity.getId())
+                    .one();
+            List<AwdOutstockDetailEntity> detailList = awdOutstockDetailService.lambdaQuery()
+                    .eq(AwdOutstockDetailEntity::getMainId, awdOutstockEntity.getId())
+                    .list();
+            for (AwdOutstockDetailEntity awdOutstockDetailEntity : detailList) {
+                if (awdOutstockDetailEntity.getMsku().equals(detailEntity.getMsku())) {
+                    awdOutstockDetailService.lambdaUpdate()
+                            .set(AwdOutstockDetailEntity::getSkuId,mappingSkuViewDTO.getProductSkuId())
+                            .set(AwdOutstockDetailEntity::getSkuNo,mappingSkuViewDTO.getProductSkuNo())
+                            .set(AwdOutstockDetailEntity::getAsin,mappingSkuViewDTO.getPlatformSpuNo())
+                            .set(AwdOutstockDetailEntity::getProductName,mappingSkuViewDTO.getProductName())
+                            .eq(AwdOutstockDetailEntity::getMsku,detailEntity.getMsku())
+                            .eq(AwdOutstockDetailEntity::getMainId,awdOutstockEntity.getId())
+                            .update();
+                }
+            }
 
             detailEntity.setSkuNo(dto.getSkuNo());
 
