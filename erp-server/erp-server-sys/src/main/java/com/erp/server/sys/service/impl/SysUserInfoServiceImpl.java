@@ -539,69 +539,29 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
             vo.setRoleIdList(roleIdMap.getOrDefault(vo.getUid(), Collections.emptyList()));
             vo.setRoleNames(roleMap.getOrDefault(vo.getUid(), ""));
             vo.setShopAuthType(shopAuthTypeMap.getOrDefault(vo.getUid(), AuthDataTypeEnum.ENUM_ALL.getCode()));
-            vo.setShopIdList(shopMap.getOrDefault(vo.getUid(),Collections.emptyList()));
+            vo.setShopIdList(shopMap.getOrDefault(vo.getUid(), Collections.emptyList()));
             vo.setWarehouseAuthType(warehouseAuthTypeMap.getOrDefault(vo.getUid(), AuthDataTypeEnum.ENUM_ALL.getCode()));
-            vo.setWarehouseIdList(warehouseMap.getOrDefault(vo.getUid(),Collections.emptyList()));
+            vo.setWarehouseIdList(warehouseMap.getOrDefault(vo.getUid(), Collections.emptyList()));
             vo.setDepartmentIdList(departmentIdMap.getOrDefault(vo.getUid(), Collections.emptyList()));
             vo.setDepartmentNames(departmentMap.getOrDefault(vo.getUid(), ""));
 
-            if(vo.getUserState() == 1){
+            if (vo.getUserState() == 1) {
                 vo.setUserStateName("启用");
-            }else if(vo.getUserState() == 0){
+            } else if (vo.getUserState() == 0) {
                 vo.setUserStateName("禁用");
 
-            String thirdAuthType = vo.getThirdAuthType();
-            if(StringUtils.isNotBlank(thirdAuthType)){
-                List<String> thirdAuthTypeList = Arrays.asList(thirdAuthType.split(";"));
-                String thirdAuthTypeName = thirdAuthTypeList.stream()
-                        .map(s -> SysUserInfoThirdAuthTypeEnum.getName(s))
-                        .filter(name -> StringUtils.isNotBlank(name))
-                        .collect(Collectors.joining(","));
-                vo.setThirdAuthTypeName(StrUtil.format("【{}】已授权",thirdAuthTypeName));
+                String thirdAuthType = vo.getThirdAuthType();
+                if (StringUtils.isNotBlank(thirdAuthType)) {
+                    List<String> thirdAuthTypeList = Arrays.asList(thirdAuthType.split(";"));
+                    String thirdAuthTypeName = thirdAuthTypeList.stream()
+                            .map(s -> SysUserInfoThirdAuthTypeEnum.getName(s))
+                            .filter(name -> StringUtils.isNotBlank(name))
+                            .collect(Collectors.joining(","));
+                    vo.setThirdAuthTypeName(StrUtil.format("【{}】已授权", thirdAuthTypeName));
+                }
             }
         }
     }
-
-
-//    @Override
-//    public PagingVO<UserManageDTO> paging(PagingDTO<SysUserPagingSearchDTO> dto) {
-//        Page<UserManageDTO> query = new Page<UserManageDTO>(dto.getCurrPage(), dto.getPageSize());
-//        SysUserPagingSearchDTO params = dto.getParams();
-//        IPage<UserManageDTO> pageData = baseMapper.paging(query, params, params.getRoleIds());
-//        List<UserManageDTO> list = pageData.getRecords();
-//        List<String> userIds = list.stream().map(UserManageDTO::getUid).collect(Collectors.toList());
-//        //角色
-//        List<SysRoleUserEntity> roleUserList = sysRoleUserService.findRoleIdsByUidList(userIds);
-//        Map<String, List<String>> roleMap = new HashMap<>();
-//        if (CollUtil.isNotEmpty(roleUserList)){
-//            roleMap = roleUserList.stream().collect(Collectors.groupingBy(SysRoleUserEntity::getUserId, Collectors.mapping(SysRoleUserEntity::getRoleId, Collectors.toList())));
-//        }
-//        //店铺
-//        List<SysUserDTO.ShopDTO> shopDTOList = authUserShopService.listShopIdByUserIds(userIds);
-//        Map<String, List<String>> shopMap = new HashMap<>();
-//        Map<String, String> shopAuthTypeMap = new HashMap<>();
-//        if (CollUtil.isNotEmpty(shopDTOList)){
-//            shopMap = shopDTOList.stream().collect(Collectors.groupingBy(SysUserDTO.ShopDTO::getUserId, Collectors.mapping(SysUserDTO.ShopDTO::getShopId, Collectors.toList())));
-//            shopAuthTypeMap = shopDTOList.stream().collect(Collectors.toMap(SysUserDTO.ShopDTO::getUserId, SysUserDTO.ShopDTO::getAuthType,(existing,replacement) -> existing));
-//        }
-//        //仓库
-//        List<SysUserDTO.WarehouseDTO> warehouseDTOList = authUserWarehouseService.listWarehouseIdByUserIds(userIds);
-//        Map<String, List<String>> warehouseMap = new HashMap<>();
-//        Map<String, String> warehouseAuthTypeMap = new HashMap<>();
-//        if (CollUtil.isNotEmpty(warehouseDTOList)){
-//            warehouseMap = warehouseDTOList.stream().collect(Collectors.groupingBy(SysUserDTO.WarehouseDTO::getUserId, Collectors.mapping(SysUserDTO.WarehouseDTO::getWarehouseId, Collectors.toList())));
-//            warehouseAuthTypeMap = warehouseDTOList.stream().collect(Collectors.toMap(SysUserDTO.WarehouseDTO::getUserId, SysUserDTO.WarehouseDTO::getAuthType,(existing,replacement) -> existing));
-//        }
-//        for (UserManageDTO vo : list) {
-//            vo.setRoleIdList(roleMap.getOrDefault(vo.getUid(), Collections.emptyList()));
-//            vo.setShopAuthType(shopAuthTypeMap.getOrDefault(vo.getUid(), AuthDataTypeEnum.ENUM_ALL.getCode()));
-//            vo.setShopIdList(shopMap.getOrDefault(vo.getUid(),Collections.emptyList()));
-//            vo.setWarehouseAuthType(warehouseAuthTypeMap.getOrDefault(vo.getUid(), AuthDataTypeEnum.ENUM_ALL.getCode()));
-//            vo.setWarehouseIdList(warehouseMap.getOrDefault(vo.getUid(),Collections.emptyList()));
-//        }
-//        return new PagingVO<>(pageData);
-//    }
-
 
     /**
      * 账号绑定第三方平台
