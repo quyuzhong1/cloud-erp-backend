@@ -407,9 +407,9 @@ public class InventoryTransactionServiceImpl extends SuperServiceImpl<InventoryT
     	}
     	if(CollUtil.isNotEmpty(transactionRedisParam)) {
     		inventoryRedisUtil.execute(InventoryRedisOpEnum.TRY , transactionId  , InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.OVERRIDE, ""),
-    				InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.CURRENT, ""),
-    				InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.TRANSACTION, ""),
-    				transactionRedisParam.stream().collect(Collectors.joining(InventoryRedisUtil.splitSign)));
+					InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.CURRENT, ""),
+					InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.TRANSACTION, ""),
+					transactionRedisParam.stream().collect(Collectors.joining(InventoryRedisUtil.splitSign)));
     	}
     	log.info("{}结束" , logMsg);
     }
