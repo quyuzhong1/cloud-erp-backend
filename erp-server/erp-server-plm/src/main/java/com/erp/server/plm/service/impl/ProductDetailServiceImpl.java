@@ -134,6 +134,8 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -252,6 +254,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
     @Resource
     private ProductAccessoriesService productAccessoriesService;
+
+    @Resource
+    private RefProductImgAttachmentService refProductImgAttachmentService;
 
     @Autowired
     private ProductUnitService productUnitService;
@@ -1509,6 +1514,28 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         List<ProductDetailDTO.NoticeDTO> noticeDTOList = Arrays.asList(noticeDTO);
         //发送消息
         handleProductChangeNotification(noticeDTOList,Boolean.TRUE);
+        
+        // 处理产品保存后的图片URL（创建attachment记录、创建ref记录、异步生成缩略图）
+        // 注意：handleProductImagesAfterSave方法内部已经异步处理，但会等待任务完成
+        // 为了不阻塞主流程，这里也异步调用，但使用独立的线程避免线程池嵌套死锁
+        String imagesUrl = productSkuBaseInfoDTO.getImagesUrl();
+        if (StrUtil.isNotBlank(imagesUrl)) {
+            final String finalSkuId = skuId;
+            final String finalImagesUrl = imagesUrl;
+            // 使用ForkJoinPool.commonPool()避免与zipImageExecutorPool嵌套导致死锁
+            // handleProductImagesAfterSave内部会使用zipImageExecutorPool，外部不能再使用同一个线程池
+            CompletableFuture.runAsync(() -> {
+                try {
+                    log.info("开始异步处理产品图片，skuId={}, imagesUrl={}", finalSkuId, finalImagesUrl);
+                    refProductImgAttachmentService.handleProductImagesAfterSave(finalSkuId, finalImagesUrl);
+                    log.info("完成异步处理产品图片，skuId={}", finalSkuId);
+                } catch (Exception e) {
+                    log.error("异步处理产品图片失败，skuId={}, imagesUrl={}, 错误信息={}", finalSkuId, finalImagesUrl, e.getMessage(), e);
+                    // 不抛出异常，避免影响主流程
+                }
+            });
+        }
+        
         return true;
     }
 
@@ -1860,6 +1887,30 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }
         //发送通知
         handleProductChangeNotification(noticeDTOList,Boolean.TRUE);
+        
+        // 处理产品保存后的图片URL（创建attachment记录、创建ref记录、异步生成缩略图）
+        for (ProductDetailDTO productDetailDTO : productDetailLists) {
+            String imagesUrl = productDetailDTO.getImagesUrl();
+            String skuId = productDetailDTO.getId();
+            if (StrUtil.isNotBlank(imagesUrl) && StrUtil.isNotBlank(skuId)) {
+                final String finalSkuId = skuId;
+                final String finalImagesUrl = imagesUrl;
+                // 异步执行，不阻塞主流程
+                // 注意：handleProductImagesAfterSave方法内部已经异步处理，但会等待任务完成
+                // 使用ForkJoinPool.commonPool()避免与zipImageExecutorPool嵌套导致死锁
+                CompletableFuture.runAsync(() -> {
+                    try {
+                        log.info("开始异步处理产品图片，skuId={}, imagesUrl={}", finalSkuId, finalImagesUrl);
+                        refProductImgAttachmentService.handleProductImagesAfterSave(finalSkuId, finalImagesUrl);
+                        log.info("完成异步处理产品图片，skuId={}", finalSkuId);
+                    } catch (Exception e) {
+                        log.error("异步处理产品图片失败，skuId={}, imagesUrl={}, 错误信息={}", finalSkuId, finalImagesUrl, e.getMessage(), e);
+                        // 不抛出异常，避免影响主流程
+                    }
+                });
+            }
+        }
+        
         return true;
     }
 

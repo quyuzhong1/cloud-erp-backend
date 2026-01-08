@@ -254,6 +254,21 @@ public class SampleTransferInfoDTO implements Serializable {
         private String  id;
 
         /**
+        * 创建人ID
+        */
+        private String createUserId;
+
+        /**
+        * 创建人名称
+        */
+        private String createUserName;
+
+        /**
+        * 创建时间
+        */
+        private LocalDateTime createTime;
+
+        /**
         * 转移单号
         */
         private String code;

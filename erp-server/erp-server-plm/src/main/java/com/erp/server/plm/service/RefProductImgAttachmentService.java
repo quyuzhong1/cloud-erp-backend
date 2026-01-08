@@ -146,4 +146,13 @@ public interface RefProductImgAttachmentService extends SuperService<RefProductI
      * @return List<String> 返回缩略图URL列表
      */
     List<String> uploadProductMainImageFile(MultipartFile[] multipartFileList, String skuId);
+
+    /**
+     * 处理产品保存后的图片URL（创建attachment记录、创建ref记录、异步生成缩略图）
+     * @param skuId SKU ID
+     * @param imagesUrl 图片URL字符串（逗号分隔）
+     * @author wuhaotian
+     * @date: 2025-12-29
+     */
+    void handleProductImagesAfterSave(String skuId, String imagesUrl);
 }

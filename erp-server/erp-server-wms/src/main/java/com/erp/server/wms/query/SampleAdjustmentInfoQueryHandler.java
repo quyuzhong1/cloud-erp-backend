@@ -7,13 +7,16 @@ import com.common.business.enums.QueryDataTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.query.AbstractQueryHandler;
 import com.common.business.threadlocal.AdvanceQueryContext;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.validator.ValidList;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
+import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
 import com.erp.rpc.workflow.WorkflowFeign;
 import jodd.util.StringUtil;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -75,14 +78,38 @@ public class SampleAdjustmentInfoQueryHandler extends AbstractQueryHandler {
         if ("all".equals(value)|| "".equals(value)){
             return getQueryAllSql();
         }
+        
+        String tabFlag = value.toString();
+        
+        switch (tabFlag) {
+            case "waitSubmitOrReject":
+                // 待提交/不通过：移动端合并标签，查询待提交和不通过状态
+                super.buildSplicingSQLDTO("sai.approve_status", QueryConditionEnum.IN_LIST,
+                    java.util.Arrays.asList("waitSubmit", "reject"), QueryDataTypeEnum.STRING);
+                break;
+            case "approveIng":
+                // 审核中
+                super.buildDefaultDTO("sai.approve_status", "approveIng");
 
-        if(Objects.equals(value, ApproveStatusEnum.APPROVE.getCode())){ //已审核
-            super.buildDefaultDTO("sai.approve_status", value);
-        }else if(Objects.equals(value, ApproveStatusEnum.WAIT_SUBMIT.getCode()+"/"+ApproveStatusEnum.REJECT.getCode())){ //待提交/审核不通过
-            return "sai.approve_status in ('"+ApproveStatusEnum.WAIT_SUBMIT.getCode()+"','"+ApproveStatusEnum.REJECT.getCode()+"')";
-        }else {
-            super.buildDefaultDTO("sai.approve_status", value);
+                //待我审批流程信息
+                ProcessManagementDTO.TaskKeyInfoDTO dto = new ProcessManagementDTO.TaskKeyInfoDTO();
+                dto.setBusinessKey(SourceTypeEnum.SAMPLE_ADJUSTMENT_INFO.getCode());
+                dto.setTaskStatus(ApproveStatusEnum.APPROVE_ING.getCode());
+                dto.setCurApproveId(UserContext.getNonLoginUser().getUid());
+                List<ProcessTaskManagementEntity> processTaskManagementList = workflowFeign.listProcessByBusinessKey(dto);
+                List<String> ids = processTaskManagementList.stream().map(ProcessTaskManagementEntity::getBusinessId).collect(Collectors.toList());
+                if(CollectionUtils.isNotEmpty(ids)){
+                    super.buildSplicingSQLDTO("sai.id", QueryConditionEnum.IN_LIST, ids, QueryDataTypeEnum.STRING);
+                }else {
+                    super.buildDefaultDTO("sai.id", "-1");
+                }
+                break;
+            default:
+                // 其他情况按审核状态处理
+                super.buildDefaultDTO("sai.approve_status", value);
+                break;
         }
+        
         return super.getSplicingSQL();
     }
 }

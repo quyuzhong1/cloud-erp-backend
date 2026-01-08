@@ -25,7 +25,10 @@ import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.plm.dto.RefProductImgAttachmentDTO;
 import com.erp.model.plm.entity.RefProductImgAttachmentEntity;
+import com.erp.server.plm.service.PlmAttachmentService;
+import com.erp.model.plm.entity.PlmAttachmentEntity;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.collection.CollUtil;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.springframework.http.MediaType;
@@ -47,6 +50,9 @@ public class RefProductImgAttachmentController extends BaseController {
 
     @Resource
     private RefProductImgAttachmentService refProductImgAttachmentService;
+    
+    @Resource
+    private PlmAttachmentService plmAttachmentService;
 
     /**
     * 新增 调用前先调用 /plm/attachment/upload
@@ -59,6 +65,66 @@ public class RefProductImgAttachmentController extends BaseController {
     @LogAction(value = LogActionEnum.INSERT, desc = "图片分类附件关联表新增")
     public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated RefProductImgAttachmentDTO.AddDTO dto) {
         return success(refProductImgAttachmentService.add(dto));
+    }
+
+    /**
+     * 批量新增 调用前先调用 /plm/attachment/batchUpload
+     * @author wuhaotian
+     * @date: 2025-12-29
+     * @param dto 批量新增参数（包含addDTOList）
+     * @return ApiResult<List<BatchResultDTO>>
+     */
+    @PostMapping("/batchAdd")
+    @LogAction(value = LogActionEnum.INSERT, desc = "图片分类附件关联表批量新增")
+    public ApiResult<?> batchAdd(@RequestBody @Validated RefProductImgAttachmentDTO.BatchAddDTO dto) {
+        List<RefProductImgAttachmentDTO.AddDTO> addDTOList = dto.getAddDTOList();
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(addDTOList.size());
+        
+        // 1. 收集所有attachmentId，批量查询附件，构建attachmentId -> attachName的map
+        List<String> attachmentIds = addDTOList.stream()
+                .map(RefProductImgAttachmentDTO.AddDTO::getAttachmentId)
+                .filter(StrUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        
+        Map<String, String> attachmentIdToNameMap = new HashMap<>();
+        if (CollUtil.isNotEmpty(attachmentIds)) {
+            List<PlmAttachmentEntity> attachments = plmAttachmentService.listByIds(attachmentIds);
+            if (CollUtil.isNotEmpty(attachments)) {
+                attachmentIdToNameMap = attachments.stream()
+                        .filter(att -> StrUtil.isNotBlank(att.getAttachName()))
+                        .collect(Collectors.toMap(
+                                PlmAttachmentEntity::getId,
+                                PlmAttachmentEntity::getAttachName,
+                                (v1, v2) -> v1 // 如果有重复key，保留第一个
+                        ));
+            }
+        }
+        
+        // 2. 循环每个addDTO，调用单个add方法
+        for (RefProductImgAttachmentDTO.AddDTO addDTO : addDTOList) {
+            BatchResultDTO addResult;
+            try {
+                BaseResultDTO.AddDTO result = refProductImgAttachmentService.add(addDTO);
+                // 使用附件名称作为code，如果找不到则使用attachmentId，再找不到则使用result.getId()
+                String code = attachmentIdToNameMap.getOrDefault(
+                        addDTO.getAttachmentId(),
+                        StrUtil.isNotBlank(addDTO.getAttachmentId()) ? addDTO.getAttachmentId() : result.getId()
+                );
+                addResult = BatchResultDTO.success(result.getId(), code);
+            } catch (Exception e) {
+                log.error("图片分类附件关联表新增失败", e);
+                // 使用附件名称作为code，如果找不到则使用attachmentId
+                String code = attachmentIdToNameMap.getOrDefault(
+                        addDTO.getAttachmentId(),
+                        StrUtil.isNotBlank(addDTO.getAttachmentId()) ? addDTO.getAttachmentId() : ""
+                );
+                addResult = BatchResultDTO.fail("", code, e.getMessage());
+            }
+            resultDTOS.add(addResult);
+        }
+        
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
 
