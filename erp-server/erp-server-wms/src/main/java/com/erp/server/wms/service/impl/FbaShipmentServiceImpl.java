@@ -955,7 +955,6 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
 
             awdOutStockDTO.setShopId(entity.getShopId());
             awdOutStockDTO.setShopName(entity.getShopName());
-            awdOutStockDTO.setBillDate(LocalDate.now());
             awdOutStockDTO.setFbaShipmentId(entity.getId());
             awdOutStockDTO.setFbaShipmentCode(entity.getCode());
 
