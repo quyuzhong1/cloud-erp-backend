@@ -3,6 +3,7 @@ package com.erp.rpc.sys.feign.aspect;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.lang.Tuple;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ReflectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.extra.spring.SpringUtil;
@@ -562,7 +563,7 @@ public class SysLoggingAspect {
             return;
         }
         List<BatchResultDTO> list = JSONUtil.toList(data, BatchResultDTO.class);
-        BatchResultDTO currentResult = list.stream().filter(e -> e.getId().equals(id)).findFirst().orElse(null);
+        BatchResultDTO currentResult = list.stream().filter(e -> CharSequenceUtil.isNotBlank(e.getId()) && e.getId().equals(id)).findFirst().orElse(null);
         if (null == currentResult) {
             return;
         }
