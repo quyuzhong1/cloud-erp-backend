@@ -1,5 +1,6 @@
 package com.erp.server.sys.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.dto.base.BaseSearchDTO;
@@ -12,10 +13,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 
 @Service
@@ -165,6 +163,14 @@ public class SysRoleUserServiceImpl extends ServiceImpl<SysRoleUserMapper, SysRo
         queryWrapper.eq(SysRoleUserEntity::getRoleId,roleId);
         return baseMapper.selectList(queryWrapper);
 
+    }
+
+    @Override
+    public List<SysUserDTO.RoleDTO> listRoleByUserIds(List<String> userIds) {
+        if(CollUtil.isEmpty(userIds)){
+            return  Collections.emptyList();
+        }
+        return baseMapper.listRoleByUserIds(userIds);
     }
 
 
