@@ -172,6 +172,17 @@ public class MoldRefSkuDTO implements Serializable {
         * 创建人名称
         */
         private String createUserName;
+
+
+        /**
+         * 产品经理id
+         */
+        private String chargeId;
+
+        /**
+         * 产品经理
+         */
+        private String chargeName;
     }
     /**
     * 详情

@@ -364,8 +364,8 @@ public class CfgApproveSyncSendHandler {
                         list.add(newRecord);
                     }else {
                         params.setThirdUserId(thirdUnionDTO.getThirdUserId());
-                        if(thirdUnionMap.containsKey(e.getCreateUserId()) && Objects.nonNull(thirdUnionMap.get(e.getCreateUserId()))){
-                            params.setTitleThirdUserId(thirdUnionMap.get(e.getCreateUserId()).getThirdUserId());
+                        if(thirdUnionMap.containsKey(titleUserId) && Objects.nonNull(thirdUnionMap.get(titleUserId))){
+                            params.setTitleThirdUserId(thirdUnionMap.get(titleUserId).getThirdUserId());
                         }
                         sendParams.add(params);
                         map.put(params.getThirdUserId(),newRecord);

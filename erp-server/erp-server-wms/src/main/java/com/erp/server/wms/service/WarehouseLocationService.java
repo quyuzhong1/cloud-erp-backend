@@ -79,6 +79,13 @@ public interface WarehouseLocationService extends SuperService<WarehouseLocation
     List<WarehouseLocationDTO.LocationSelectDTO> all();
 
     /**
+     * 根据关键词查询仓位名称符合的仓位数据
+     * @param keyword 关键词
+     * @return 仓位下拉列表
+     */
+    List<WarehouseLocationDTO.LocationSelectDTO> searchByKeyword(String keyword);
+
+    /**
      * 获取仓库的仓位信息
      * @param warehouseIds
      * @return

@@ -3929,7 +3929,9 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             addDTO.setDeliveryMode(DeliveryModeEnum.EXPRESS.getCode());
             addDTO.setShippingFee(dto.getShippingFee());
             addDTO.setIsCollectShippingFee(dto.getIsCollectShippingFee());
-            addDTO.setPlatformOrderCode(dto.getPlatformOrderCode());
+            if(StringUtils.isBlank(addDTO.getPlatformOrderCode())){
+                addDTO.setPlatformOrderCode(dto.getPlatformOrderCode());
+            }
             addDTO.setThirdCode(dto.getThirdCode());
             addDTO.setCustomerOrderNo(dto.getCustomerOrderNo());
             List<String> attachUrlList = dto.getAttachment().stream().map(AttachDTO::getAttachUrl).filter(StringUtils::isNotBlank).collect(Collectors.toList());

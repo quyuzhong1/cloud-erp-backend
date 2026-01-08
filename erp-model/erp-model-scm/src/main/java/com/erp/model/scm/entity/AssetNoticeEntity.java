@@ -95,6 +95,26 @@ public class AssetNoticeEntity extends BaseEntity<AssetNoticeEntity> {
     */
     @TableField("invalid_status")
     private Boolean invalidStatus;
+    /**
+    * 采购开发用户id
+    */
+    @TableField("purchase_dev_user_id")
+    private String purchaseDevUserId;
+    /**
+    * 采购开发用户名称（展示字段，不保存数据库）
+    */
+    @TableField(exist = false)
+    private String purchaseDevUserName;
+    /**
+    * 采购跟单用户id
+    */
+    @TableField("purchase_follow_user_id")
+    private String purchaseFollowUserId;
+    /**
+    * 采购跟单用户名称（展示字段，不保存数据库）
+    */
+    @TableField(exist = false)
+    private String purchaseFollowUserName;
 
 
     public static final String CODE = "code";
@@ -124,6 +144,10 @@ public class AssetNoticeEntity extends BaseEntity<AssetNoticeEntity> {
     public static final String APPLY_DATE = "apply_date";
 
     public static final String INVALID_STATUS = "invalid_status";
+
+    public static final String PURCHASE_DEV_USER_ID = "purchase_dev_user_id";
+
+    public static final String PURCHASE_FOLLOW_USER_ID = "purchase_follow_user_id";
 
     @Override
     public Serializable pkVal() {

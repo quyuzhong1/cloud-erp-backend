@@ -173,7 +173,7 @@ public class SysLoggingAspect {
      * 环切处理
      */
     @Around("logPointcut()")
-    public Object doAround(ProceedingJoinPoint joinPoint) {
+    public Object doAround(ProceedingJoinPoint joinPoint) throws Throwable {
         //接口重复提交校验
         String idempotentKey = getIdempotentKey(joinPoint);
         if (redisUtil.hasKey(idempotentKey)) {
@@ -221,8 +221,9 @@ public class SysLoggingAspect {
                 obj = joinPoint.proceed();
             } catch (Throwable e) {
                 log.debug("Sys Logging proceed error:{}", e.getMessage());
-                // 传递异常
-                obj = e;
+                // 传递异常 修改点 1（必须）：业务异常必须 throw
+//                obj = e;
+                throw e;
             }
             // 处理后操作
             Object newObject = afterFindObj(joinPoint, logAction, id);
@@ -232,10 +233,12 @@ public class SysLoggingAspect {
             // 添加日志到mq队列
             handleLog(joinPoint, logAction, description);
             log.debug("Sys Logging doAround.after:");
-            return checkAndResolveException(obj, null);
+            // AOP 里模拟 Spring 的异常分发 架构级越权
+//            return checkAndResolveException(obj, null);
         } catch (Throwable e) {
             log.error("[系统日志]添加系统日志-doAround-异常：{}", ExceptionUtil.stacktraceToString(e));
-            return checkAndResolveException(obj, e);
+//            return checkAndResolveException(obj, e);
+            throw e;
         } finally {
             UpdateRecordItemBO bo = LOG_INFO_THREAD_LOCAL.get();
             if (null != bo) {
@@ -245,6 +248,7 @@ public class SysLoggingAspect {
             //接口处理完成，清理已添加缓存key
             redisUtil.del(idempotentKey);
         }
+        return obj;
     }
 
     private String getIdempotentKey(ProceedingJoinPoint proceedingJoinPoint){
