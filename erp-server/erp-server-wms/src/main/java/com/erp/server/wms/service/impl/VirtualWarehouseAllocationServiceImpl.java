@@ -31,6 +31,7 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.MathUtil;
+import com.erp.model.dmp.enums.ThirdSysTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.*;
@@ -116,7 +117,8 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
     private TransferInfoService transferInfoService;
     @Resource
     private CfgRulePickingService cfgRulePickingService;
-
+    @Resource
+    private VirtualWarehousePushHandleDetailService virtualWarehousePushHandleDetailService;
 
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
@@ -206,6 +208,10 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
         //获取明细
         List<VirtualWarehouseAllocationDetailEntity> detailList = virtualWarehouseAllocationDetailService.list(new LambdaQueryWrapper<VirtualWarehouseAllocationDetailEntity>()
                 .eq(VirtualWarehouseAllocationDetailEntity::getMainId, id).orderByAsc(VirtualWarehouseAllocationDetailEntity::getId));
+
+        List<String> detailIdList = detailList.stream().map(VirtualWarehouseAllocationDetailEntity::getId).distinct().collect(Collectors.toList());
+        List<VirtualWarehousePushHandleDetailDTO.ThirdDataDTO> thirdList =  virtualWarehousePushHandleDetailService.listThirdDataByDetailIdList(detailIdList);
+
         //实体仓信息
         List<String> toWarehouseIdList = detailList.stream().map(VirtualWarehouseAllocationDetailEntity::getToWarehouseId).distinct().collect(Collectors.toList());
         List<WarehouseEntity> toWarehouseList = CollUtil.isEmpty(toWarehouseIdList) ? Collections.emptyList() : warehouseService.listByIds(toWarehouseIdList);
@@ -240,6 +246,32 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
                     }
                 }
             });
+
+            detailDto.setSyncStatus(VirtualWarehouseAllocationSyncStatusEnum.TO_BE_SYNC.getCode());
+            List<VirtualWarehousePushHandleDetailDTO.ThirdDataDTO> thisThirdList = thirdList.stream().filter(obj -> CharSequenceUtil.equals(obj.getDetailId(), detailDto.getId())).collect(Collectors.toList());
+            if (CollUtil.isNotEmpty(thisThirdList)) {
+                //同步平台单号
+                String thirdCodes = thisThirdList.stream().filter(obj-> CharSequenceUtil.isNotBlank(obj.getThirdCode())).map(VirtualWarehousePushHandleDetailDTO.ThirdDataDTO::getThirdCode).collect(Collectors.joining(","));
+                detailDto.setThirdCode(thirdCodes);
+                detailDto.setSysType(thisThirdList.get(0).getSysType());
+                detailDto.setSysTypeName(ThirdSysTypeEnum.getNameByCode(detailDto.getSysType()));
+                //处理同步状态
+                List<String> syncStatusList = thisThirdList.stream().map(VirtualWarehousePushHandleDetailDTO.ThirdDataDTO::getSyncStatus).collect(Collectors.toList());
+                if (syncStatusList.contains(VirtualWarehouseAllocationSyncStatusEnum.NO_NEED_SYNC.getCode())) {
+                    detailDto.setSyncStatus(VirtualWarehouseAllocationSyncStatusEnum.NO_NEED_SYNC.getCode());
+                } else if (syncStatusList.contains(VirtualWarehouseAllocationSyncStatusEnum.TO_BE_SYNC.getCode())) {
+                    detailDto.setSyncStatus(VirtualWarehouseAllocationSyncStatusEnum.TO_BE_SYNC.getCode());
+                } else if (syncStatusList.contains(VirtualWarehouseAllocationSyncStatusEnum.IN_SYNC.getCode())) {
+                    detailDto.setSyncStatus(VirtualWarehouseAllocationSyncStatusEnum.IN_SYNC.getCode());
+                } else if (syncStatusList.contains(VirtualWarehouseAllocationSyncStatusEnum.FAILED_SYNC.getCode())) {
+                    detailDto.setSyncStatus(VirtualWarehouseAllocationSyncStatusEnum.FAILED_SYNC.getCode());
+                } else if (syncStatusList.contains(VirtualWarehouseAllocationSyncStatusEnum.MANUAL_COMPLETION_SYNC.getCode())) {
+                    detailDto.setSyncStatus(VirtualWarehouseAllocationSyncStatusEnum.MANUAL_COMPLETION_SYNC.getCode());
+                } else {
+                    detailDto.setSyncStatus(VirtualWarehouseAllocationSyncStatusEnum.SUCCESS_SYNC.getCode());
+                }
+            }
+            detailDto.setSyncStatusName(VirtualWarehouseAllocationSyncStatusEnum.getNameByCode(detailDto.getSyncStatus()));
         });
         viewDTO.setDetailList(detailDtos);
         return viewDTO;
@@ -291,6 +323,9 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
         if (CollectionUtils.isEmpty(skuVOList)) {
             return;
         }
+        List<String> detailIdList = records.stream().map(VirtualWarehouseAllocationDTO.ListDTO::getDetailId).distinct().collect(Collectors.toList());
+        List<VirtualWarehousePushHandleDetailDTO.ThirdDataDTO> thirdList =  virtualWarehousePushHandleDetailService.listThirdDataByDetailIdList(detailIdList);
+
         for (VirtualWarehouseAllocationDTO.ListDTO record : records) {
             SkuVO skuVO = skuVOList.stream().filter(item -> Objects.equals(item.getSkuId(), record.getSkuId())).findFirst().orElse(null);
             if (Objects.nonNull(skuVO)) {
@@ -298,10 +333,38 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
                 record.setImageUrl(skuVO.getSkuImagesUrl());
                 record.setProductName(skuVO.getSkuName());
             }
-            record.setSyncStatusName(VirtualWarehouseAllocationSyncStatusEnum.getNameByCode(record.getSyncStatus()));
             //是否统计名称
             record.setIsStatisticsName(record.getIsStatistics() ? "是" : "否");
-            record.setIsVirtualScarceStr(record.getIsVirtualScarce()?"是":"否");
+            record.setIsVirtualScarceStr(record.getIsVirtualScarce() ? "是" : "否");
+            record.setSyncStatus(VirtualWarehouseAllocationSyncStatusEnum.TO_BE_SYNC.getCode());
+
+            List<VirtualWarehousePushHandleDetailDTO.ThirdDataDTO> thisThirdList = thirdList.stream().filter(obj -> CharSequenceUtil.equals(obj.getDetailId(), record.getDetailId())).collect(Collectors.toList());
+            if (CollUtil.isNotEmpty(thisThirdList)) {
+                //同步平台单号
+                String thirdCodes = thisThirdList.stream().filter(obj-> CharSequenceUtil.isNotBlank(obj.getThirdCode())).map(VirtualWarehousePushHandleDetailDTO.ThirdDataDTO::getThirdCode).collect(Collectors.joining(","));
+                record.setThirdCode(thirdCodes);
+                record.setSysType(thisThirdList.get(0).getSysType());
+                record.setSysTypeName(ThirdSysTypeEnum.getNameByCode(record.getSysType()));
+                //完结说明
+                String finishDescriptions = thisThirdList.stream().map(VirtualWarehousePushHandleDetailDTO.ThirdDataDTO::getFinishDescription).collect(Collectors.joining(","));
+                record.setFinishDescription(finishDescriptions);
+                //处理同步状态
+                List<String> syncStatusList = thisThirdList.stream().map(VirtualWarehousePushHandleDetailDTO.ThirdDataDTO::getSyncStatus).collect(Collectors.toList());
+                if (syncStatusList.contains(VirtualWarehouseAllocationSyncStatusEnum.NO_NEED_SYNC.getCode())) {
+                    record.setSyncStatus(VirtualWarehouseAllocationSyncStatusEnum.NO_NEED_SYNC.getCode());
+                } else if (syncStatusList.contains(VirtualWarehouseAllocationSyncStatusEnum.TO_BE_SYNC.getCode())) {
+                    record.setSyncStatus(VirtualWarehouseAllocationSyncStatusEnum.TO_BE_SYNC.getCode());
+                } else if (syncStatusList.contains(VirtualWarehouseAllocationSyncStatusEnum.IN_SYNC.getCode())) {
+                    record.setSyncStatus(VirtualWarehouseAllocationSyncStatusEnum.IN_SYNC.getCode());
+                } else if (syncStatusList.contains(VirtualWarehouseAllocationSyncStatusEnum.FAILED_SYNC.getCode())) {
+                    record.setSyncStatus(VirtualWarehouseAllocationSyncStatusEnum.FAILED_SYNC.getCode());
+                } else if (syncStatusList.contains(VirtualWarehouseAllocationSyncStatusEnum.MANUAL_COMPLETION_SYNC.getCode())) {
+                    record.setSyncStatus(VirtualWarehouseAllocationSyncStatusEnum.MANUAL_COMPLETION_SYNC.getCode());
+                } else {
+                    record.setSyncStatus(VirtualWarehouseAllocationSyncStatusEnum.SUCCESS_SYNC.getCode());
+                }
+            }
+            record.setSyncStatusName(VirtualWarehouseAllocationSyncStatusEnum.getNameByCode(record.getSyncStatus()));
         }
     }
 

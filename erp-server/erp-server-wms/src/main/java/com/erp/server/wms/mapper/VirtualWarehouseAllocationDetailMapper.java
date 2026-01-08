@@ -22,9 +22,7 @@ import java.util.List;
 public interface VirtualWarehouseAllocationDetailMapper extends BaseMapper<VirtualWarehouseAllocationDetailEntity> {
 
     void batchManualFinish(@Param("params") VirtualWarehouseAllocationDTO.ManualFinishDto params, @Param("code") Integer code, @Param("ids") List<String> ids);
-    void batchSync( @Param("code")String code, @Param("ids") List<String> ids);
 
-    void updateSyncStatus(@Param("params")VirtualWarehouseAllocationDTO.SyncUpdateDto dto, @Param("ids")List<String> ids);
     /**
      * 查询分货信息
      * @author will
