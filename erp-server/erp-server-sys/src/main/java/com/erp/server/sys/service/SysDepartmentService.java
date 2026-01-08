@@ -45,7 +45,7 @@ public interface SysDepartmentService extends IService<SysDepartmentEntity> {
      *
      * @return
      */
-    List<DepartmentDTO> findDepartmentTree();
+    List<DepartmentDTO> findDepartmentTree(SysDepartmentDTO.TreeParamsDTO dto);
 
     /**
      * 树形入参

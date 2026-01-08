@@ -43,9 +43,9 @@ public class SysDepartmentController extends BaseController {
     /**
      * 分页列表
      */
-    @RequestMapping("/tree")
-    public ApiResult tree() {
-        List<DepartmentDTO> treeVO=sysDepartmentService.findDepartmentTree();
+    @PostMapping("/tree")
+    public ApiResult tree(@RequestBody @Validated SysDepartmentDTO.TreeParamsDTO dto) {
+        List<DepartmentDTO> treeVO=sysDepartmentService.findDepartmentTree(dto);
         return success(treeVO);
     }
 

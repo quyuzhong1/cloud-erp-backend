@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.dto.FindUserDTO;
@@ -233,6 +234,34 @@ public class SysDepartmentUserServiceImpl extends ServiceImpl<SysDepartmentUserM
             return Collections.emptyList();
         }
         return baseMapper.listDeptUserByDeptIdList(deptIdList);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void batchSaveOrUpdate(String uid, List<String> departmentIdList, boolean ifAdd) {
+        if (StringUtils.isBlank(uid)){
+            return;
+        }
+        //如果是修改 则要先删除数据
+        if (!ifAdd) {
+            deleteUidDepartmentRef(uid);
+        }
+        List<SysDepartmentUserEntity> addList = new LinkedList<>();
+        for (String departmentId : departmentIdList) {
+            SysDepartmentUserEntity entity = new SysDepartmentUserEntity();
+            entity.setUserId(uid);
+            entity.setDepartmentId(departmentId);
+            addList.add(entity);
+        }
+        if (CollectionUtils.isNotEmpty(addList)) {
+            this.saveBatch(addList);
+        }
+    }
+
+    private void deleteUidDepartmentRef(String uid) {
+        LambdaQueryWrapper<SysDepartmentUserEntity> wrapper = new LambdaQueryWrapper();
+        wrapper.eq(SysDepartmentUserEntity::getUserId, uid);
+        baseMapper.delete(wrapper);
     }
 
 

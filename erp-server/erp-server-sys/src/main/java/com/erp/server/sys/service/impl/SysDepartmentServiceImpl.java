@@ -4,6 +4,7 @@ import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.baomidou.mybatisplus.extension.conditions.query.LambdaQueryChainWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.dto.base.BatchResultDTO;
@@ -126,8 +127,11 @@ public class SysDepartmentServiceImpl extends ServiceImpl<SysDepartmentMapper, S
      * @return
      */
     @Override
-    public List<DepartmentDTO> findDepartmentTree() {
-        List<SysDepartmentEntity> allList = this.list();
+    public List<DepartmentDTO> findDepartmentTree(SysDepartmentDTO.TreeParamsDTO dto) {
+        // 优化后的写法
+        List<SysDepartmentEntity> allList = lambdaQuery()
+                .eq(Objects.nonNull(dto) && Objects.nonNull(dto.getDisabled()), SysDepartmentEntity::getDisabled, dto.getDisabled())
+                .list();
         //获取所有部门人员
         List<SysDepartmentUserNumberDTO> userNumberList = sysDepartmentUserService.findUserNumber();
         List<DepartmentDTO> departList = BeanMapperUtils.copyList(DepartmentDTO.class, allList);

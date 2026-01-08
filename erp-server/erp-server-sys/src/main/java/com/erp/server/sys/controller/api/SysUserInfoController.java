@@ -2,11 +2,14 @@ package com.erp.server.sys.controller.api;
 
 
 import com.common.business.annotation.DataIdempotent;
+import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseSearchDTO;
 import com.common.business.dto.base.ForgotPasswordDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.enums.DataAttributeEnum;
 import com.common.business.enums.UserTypeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
@@ -15,6 +18,7 @@ import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
+import com.erp.model.plm.dto.MoldInfoDTO;
 import com.erp.model.sys.dto.*;
 import com.erp.model.sys.entity.SysUserInfoEntity;
 import com.erp.server.sys.query.SysUserInfoQueryHandler;
@@ -25,6 +29,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
@@ -47,6 +52,14 @@ public class SysUserInfoController extends BaseController {
     @Autowired
     private SysUserThirdService sysUserThirdService;
 
+    /**
+     * 获取状态统计
+     * @return
+     */
+    @PostMapping("/tabList")
+    public ApiResult<List<SysUserInfoDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
+        return success(sysUserInfoService.tabList(dto));
+    }
 
     /**
      * 列表
@@ -64,8 +77,8 @@ public class SysUserInfoController extends BaseController {
      * @return
      */
     @RequestMapping("/paging")
-    public ApiResult<PagingVO<UserManageDTO>> list(@RequestBody @Validated PagingDTO<SysUserPagingSearchDTO> dto) {
-        dto.getParams().setUserType(UserTypeEnum.ERP.code);
+    @WebAdvanceQuery(handler = SysUserInfoQueryHandler.class)
+    public ApiResult<PagingVO<UserManageDTO>> list(@RequestBody @Validated PagingDTO<SysUserInfoDTO.PagingParamDTO> dto) {
         PagingVO<UserManageDTO> pagingVO = sysUserInfoService.paging(dto);
         return success(pagingVO);
     }
@@ -243,5 +256,22 @@ public class SysUserInfoController extends BaseController {
     public ApiResult<List<FindUserDTO>> findList(@RequestBody @Validated BaseSearchDTO dto) {
         List<FindUserDTO> list = sysUserInfoService.getUserList(dto);
         return success(list);
+    }
+
+
+
+    /**
+     * 导出Excel数据
+     * @author jack
+     * @date:  2026-01-08
+     * @param dto
+     * @param response
+     * @return
+     */
+    @PostMapping("/export")
+    @WebAdvanceQuery(handler = SysUserInfoQueryHandler.class)
+    public ApiResult<Object> exportList(@RequestBody @Validated SysUserInfoDTO.PagingParamDTO dto, HttpServletResponse response) {
+        sysUserInfoService.exportList(dto, response);
+        return success();
     }
 }

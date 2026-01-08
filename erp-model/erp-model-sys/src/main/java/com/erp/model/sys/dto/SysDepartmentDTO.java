@@ -62,4 +62,19 @@ public class SysDepartmentDTO {
 
     }
 
+
+
+    /**
+     * 更新启禁用DTO
+     */
+    @Data
+    @NoArgsConstructor
+    public static class TreeParamsDTO {
+        /**
+         * 是否禁用 ： true 禁用  false 启用
+         */
+        private Boolean disabled;
+
+    }
+
 }

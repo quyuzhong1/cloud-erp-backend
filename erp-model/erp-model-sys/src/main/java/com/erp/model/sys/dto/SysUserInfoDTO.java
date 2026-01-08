@@ -2,8 +2,10 @@ package com.erp.model.sys.dto;
 
 
 import com.common.business.dto.AdvanceQueryDTO;
+import com.common.business.dto.base.SortDTO;
 import com.common.core.anno.RegularValid;
 import com.common.core.enums.FieldFormatPatternTypeEnum;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -41,7 +43,7 @@ public class SysUserInfoDTO implements Serializable {
     //电话
     @NotBlank(message = "电话不能为空")
     @Size(min = 7,max = 20, message = "电话最大20字符,最小长度为7")
-    @RegularValid(formatPattern= FieldFormatPatternTypeEnum.MOBILE,message = "电话格式有误")
+    @RegularValid(formatPattern= FieldFormatPatternTypeEnum.NUMBER_SPECIAL_CHARS,message = "电话格式有误，仅支持数字以及特殊字符-,(),+")
     private String mobile;
 
     //o 禁用 1 正常
@@ -79,6 +81,8 @@ public class SysUserInfoDTO implements Serializable {
     private List<String> roleIdList;
     //店铺id集合
     private List<String> shopIdList;
+    //部门id集合
+    private List<String> departmentIdList;
     /**
      * 店铺授权类型（all全部授权，part指定授权）
      */
@@ -190,5 +194,52 @@ public class SysUserInfoDTO implements Serializable {
          * 创建时间
          */
         private LocalDateTime createTime;
+    }
+
+
+
+    /**
+     * 状态统计
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class TabListDTO {
+        /**
+         * 类型
+         */
+        private String tabFlag;
+        /**
+         * 类型名称
+         */
+        private String tabFlagName;
+        /**
+         * 数量
+         */
+        private Integer count;
+
+    }
+
+    /**
+     * 分页列表查询参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PagingParamDTO extends SortDTO {
+
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String,String> sqlMap;
+        /**
+         * 勾选的id集合
+         */
+        private List<String> ids;
+
     }
 }
