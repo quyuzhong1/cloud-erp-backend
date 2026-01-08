@@ -18,6 +18,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.entity.ThirdMappingEntity;
+import com.erp.model.wms.dto.VirtualWarehouseAllocationDTO;
 import com.erp.model.wms.dto.VirtualWarehousePushHandleDetailDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.VirtualWarehouseAllocationSyncStatusEnum;
@@ -37,10 +38,7 @@ import org.springframework.transaction.support.TransactionSynchronizationAdapter
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -270,6 +268,27 @@ public class VirtualWarehousePushHandleDetailServiceImpl extends SuperServiceImp
                     .set(VirtualWarehouseAllocationDetailEntity::getSyncStatus, VirtualWarehouseAllocationSyncStatusEnum.NO_NEED_SYNC.getCode())
                     .in(VirtualWarehouseAllocationDetailEntity::getId, vmAllocationDetailList.stream().map(VirtualWarehouseAllocationDetailEntity::getId).collect(Collectors.toList())));
         }
+    }
+
+    @Override
+    public void updateSyncStatus(String syncStatus, List<String> ids) {
+        if (CollUtil.isEmpty(ids)) {
+            return;
+        }
+        lambdaUpdate().in(VirtualWarehousePushHandleDetailEntity::getId,ids).set(VirtualWarehousePushHandleDetailEntity::getSyncStatus,syncStatus).update();
+    }
+
+    @Override
+    public void updateThirdData(VirtualWarehouseAllocationDTO.SyncUpdateDto dto, String handelDetailId) {
+        baseMapper.updateThirdData(dto, handelDetailId);
+    }
+
+    @Override
+    public List<VirtualWarehousePushHandleDetailDTO.ThirdDataDTO> listThirdDataByDetailIdList(List<String> detailIdList) {
+        if (CollUtil.isEmpty(detailIdList)) {
+            return Collections.emptyList();
+        }
+        return baseMapper.listThirdDataByDetailIdList(detailIdList);
     }
 
 

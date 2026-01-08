@@ -172,7 +172,7 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
             return BeanMapperUtils.copyList(VirtualInventoryDTO.ViewQtyDTO.class, qtySearchList);
         }
         List<String> skuIds = qtySearchDTOS.stream().map(VirtualInventoryDTO.QtySearchDTO::getSkuId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
-        List<String> warehouseIds = qtySearchDTOS.stream().map(VirtualInventoryDTO.QtySearchDTO::getWarehouseId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+        List<String> warehouseIds = qtySearchDTOS.stream().flatMap(obj -> Stream.of(obj.getWarehouseId(),obj.getToWarehouseId())).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
         VirtualInventoryDTO.ParamDTO vmParamDto = new VirtualInventoryDTO.ParamDTO();
         vmParamDto.setSkuIdList(skuIds);
         vmParamDto.setWarehouseIdList(warehouseIds);
@@ -248,7 +248,7 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
             VirtualInventoryDTO.ViewQtyDTO fromQtyDto = vwUsableQtyList.stream().filter(item -> Objects.equals(item.getWarehouseId(), qtySearchDTO.getWarehouseId())
                             && Objects.equals(item.getSkuId(), qtySearchDTO.getSkuId()) && Objects.equals(item.getToVirtualWarehouseId(), qtySearchDTO.getFromVirtualWarehouseId()))
                     .findFirst().orElse(null);
-            VirtualInventoryDTO.ViewQtyDTO toQtyDto = vwUsableQtyList.stream().filter(item -> Objects.equals(item.getWarehouseId(), qtySearchDTO.getWarehouseId())
+            VirtualInventoryDTO.ViewQtyDTO toQtyDto = vwUsableQtyList.stream().filter(item -> Objects.equals(item.getWarehouseId(), qtySearchDTO.getToWarehouseId())
                             && Objects.equals(item.getSkuId(), qtySearchDTO.getSkuId()) && Objects.equals(item.getToVirtualWarehouseId(), qtySearchDTO.getToVirtualWarehouseId()))
                     .findFirst().orElse(null);
             viewQtyDTO.setToVirtualWarehouseUsableQty(Objects.isNull(toQtyDto) ? 0 : toQtyDto.getToVirtualWarehouseUsableQty());

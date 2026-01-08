@@ -66,14 +66,14 @@ public interface VirtualWarehouseAllocationDetailService extends SuperService<Vi
      * @param id
      * @return
      */
-    DmpPushTaskDTO.SyncInfoDTO viewSyncInfo(String id);
+    List<DmpPushTaskDTO.SyncInfoDTO> viewSyncInfo(String id);
 
-    VirtualWarehouseAllocationDTO.ThirdCodeDto view(String id);
+    List<VirtualWarehouseAllocationDTO.ThirdCodeDto> view(String id);
 
     /**
      * 修改同步状态
      */
-    void updateSyncStatus(VirtualWarehouseAllocationDTO.SyncUpdateDto dto);
+    void updateThirdData(VirtualWarehouseAllocationDTO.SyncUpdateDto dto);
 
     /**
      * 获取同步信息
