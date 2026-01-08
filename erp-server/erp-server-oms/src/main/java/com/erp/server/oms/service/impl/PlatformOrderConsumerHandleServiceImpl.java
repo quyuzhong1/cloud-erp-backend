@@ -200,7 +200,9 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
                 SoB2cHandler.handleRule(mainEntity);
             }
         }
-        SoB2cHandler.handleSoOutStock(dto, resultDTO, mainEntity);
+        if(!SoB2cErrorTypeEnum.GET_EXCHANGE_RATE.getCode().equals(mainEntity.getSignOrderError())){
+            SoB2cHandler.handleSoOutStock(dto, resultDTO, mainEntity);
+        }
         //平台取消订单后自动取消预报
         if(Objects.nonNull(mainEntity.getIsCancel()) && mainEntity.getIsCancel()){
             soB2cService.autoCancelOrderForecast(mainEntity);

@@ -29,9 +29,11 @@ import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
+import com.erp.model.sys.dto.DeptKingdeeDTO;
 import com.erp.model.sys.dto.KingdeeBusinessOperatorDTO;
 import com.erp.model.sys.dto.KingdeeOperatorRefPostDTO;
 import com.erp.model.sys.entity.CfgDeptRelationEntity;
+import com.erp.model.sys.entity.KingdeeDepartmentEntity;
 import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.model.sys.enums.KingdeeBusinessOperatorTypeEnum;
 import com.erp.model.wms.dto.WarehouseDTO;
@@ -333,9 +335,12 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
                 }
             }
             if(StringUtils.isNotBlank(deptId)){
-                List<SysDepartmentEntity> deptList = sysUserFeign.listDeptByIds(Arrays.asList(deptId));
-                if(org.apache.commons.collections4.CollectionUtils.isNotEmpty(deptList)){
-                    resultMap.put("sellerDeptCode",deptList.get(0).getCode());
+                DeptKingdeeDTO.FindDeptKingdeeDTO findDeptKingdeeDTO = new DeptKingdeeDTO.FindDeptKingdeeDTO();
+                findDeptKingdeeDTO.setDeptId(deptId);
+                findDeptKingdeeDTO.setOrgId(entity.getSalesOrgId());
+                KingdeeDepartmentEntity kingdeeDepartmentEntity = kingdeeFeign.getDeptKingdee(findDeptKingdeeDTO);
+                if(Objects.nonNull(kingdeeDepartmentEntity)){
+                    resultMap.put("sellerDeptCode",kingdeeDepartmentEntity.getKingdeeDeptCode());
                 }
             }
         }

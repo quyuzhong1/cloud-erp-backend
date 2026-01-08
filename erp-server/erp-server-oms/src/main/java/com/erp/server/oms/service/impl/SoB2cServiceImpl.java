@@ -2647,11 +2647,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             //物流映射列表
             List<LogisticsMappingDTO.ViewDTO> mappingList = logisticsMappingFeign.listByChannelIdAndType(logisticsChannelId, LogisticsMappingTypeEnum.PLATFORM.getCode());
             if(CollectionUtils.isEmpty(mappingList)){
-                throw new ServiceException(ApiError.SO_REPLACE_SKU_STATUS_INVALID, soCode,entity.getDictPlatform(),logisticsEntity.getLogisticsChannelName());
+                throw new ServiceException(ApiError.LOGISTICS_MAPPING_NOT_NULL, soCode,entity.getDictPlatform(),logisticsEntity.getLogisticsChannelName());
             }
             List<LogisticsMappingDTO.ViewDTO> collect = mappingList.stream().filter(v -> null != v.getSalesPlatform() && v.getSalesPlatform().equalsIgnoreCase(entity.getDictPlatform())).collect(Collectors.toList());
             if(CollectionUtils.isEmpty(collect)){
-                throw new ServiceException(ApiError.SO_REPLACE_SKU_STATUS_INVALID, soCode,entity.getDictPlatform(),logisticsEntity.getLogisticsChannelName());
+                throw new ServiceException(ApiError.LOGISTICS_MAPPING_NOT_NULL, soCode,entity.getDictPlatform(),logisticsEntity.getLogisticsChannelName());
             }
         }
         //库存验证
@@ -7245,6 +7245,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             }else{
                 entity.setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT);
             }
+            if(StringUtils.isBlank(entity.getId())){
+                entity.setId(IdWorker.getIdStr());
+            }
             //记录异常
             SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
             addError.setType(SoB2cErrorTypeEnum.GET_EXCHANGE_RATE.getCode());
@@ -11211,8 +11214,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
-    public BatchResultDTO getLogisticsLabel(SoB2cEntity entity, SoB2cLogisticsEntity soB2cLogisticsEntity) {
-        if (!SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode().equals(entity.getBillStatus())){
+    public BatchResultDTO getLogisticsLabel(SoB2cEntity entity, SoB2cLogisticsEntity soB2cLogisticsEntity, Boolean checkBillStatus) {
+        if (!SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode().equals(entity.getBillStatus()) && checkBillStatus){
             return BatchResultDTO.fail(entity.getId(), entity.getCode(), "仅支持配货中重新获取面单");
         }
         if (CharSequenceUtil.isBlank(soB2cLogisticsEntity.getLogisticsChannelId())){

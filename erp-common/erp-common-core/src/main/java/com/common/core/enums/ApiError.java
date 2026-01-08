@@ -1261,6 +1261,7 @@ public enum ApiError implements Serializable {
     PO_RECONCILIATION_DETAIL_QTY_EXCEEDS_AVAILABLE(94108,"单号【{0}】SKU【{1}】本期对账数量{2}超出可对账数量{3}"),
     PO_RECONCILIATION_DETAIL_ALREADY_IN_RECONCILIATION(94109,"单号【{0}】SKU【{1}】已加入对账单，不允许重复添加"),
     PO_RECONCILIATION_REMARK_REQUIRED(96009,"对账单备注不能为空"),
+    SO_B2C_GET_EXCHANGE_RATE_FAILED(10718,"获取汇率异常-汇率获取失败，请重新获取"),
     CUSTOMER_ADDRESS_NOT_MATCH(94108,"未匹配到客户地址，客户id：{0}，收货地址：{1}"),
     SO_B2C_GET_EXCHANGE_RATE_FAILED(10718,"获取汇率异常-汇率获取失败，请重新获取"),
 
@@ -1635,6 +1636,7 @@ public enum ApiError implements Serializable {
     LOGISTICS_SMALL_BAG_NOT_CONFIRMED(13611,"小包费用分摊未确认，不能生成物流大表"),
     LOGISTICS_SELF_SHIP_FEE_NOT_FOUND(13612,"自发货费用不存在"),
     LOGISTICS_ACTUAL_EXISTS_CANNOT_PUSH(13613,"已存在实际账单，不能再下推实际账单"),
+    LOGISTICS_MAPPING_NOT_NULL(13614,"【{}】所属的平台【{}】没有配置【{}】的标发信息，不允许提交发货"),
 
     /**
      * 财务管理 错误 信息 14000-14500

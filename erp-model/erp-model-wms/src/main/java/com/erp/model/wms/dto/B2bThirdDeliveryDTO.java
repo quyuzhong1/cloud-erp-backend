@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.AttachDTO;
+import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.SortDTO;
 import com.erp.model.wms.enums.WarehouseOperationTypeEnum;
 import io.seata.common.util.StringUtils;
@@ -636,7 +637,7 @@ public class B2bThirdDeliveryDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class ViewQueryDTO {
+    public static class ViewQueryDTO extends BaseIdDTO {
         /**
          * 订单id
          */

@@ -817,7 +817,7 @@ public class SoB2cController extends BaseController {
                 continue;
             }
             try {
-                result = soB2cService.getLogisticsLabel(entity,soB2cLogisticsEntity);
+                result = soB2cService.getLogisticsLabel(entity,soB2cLogisticsEntity, true);
             } catch (Exception e) {
                 log.error("B2C销售订单获取物流单号失败", e);
                 result = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
