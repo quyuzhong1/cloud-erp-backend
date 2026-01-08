@@ -105,6 +105,17 @@ public class SysUserInfoController extends BaseController {
         return success();
     }
 
+
+
+    /**
+     * 批量操作-分配店铺/仓库/权限
+     */
+    @RequestMapping("/batchRefUserIdByType")
+    public ApiResult batchRefUserIdByType(@RequestBody @Validated SysUserInfoDTO.RefParamseDTO refParamseDTO) {
+        sysUserInfoService.batchRefUserIdByType(refParamseDTO);
+        return success();
+    }
+
     /**
      * 修改用户
      */
@@ -274,4 +285,5 @@ public class SysUserInfoController extends BaseController {
         sysUserInfoService.exportList(dto, response);
         return success();
     }
+
 }

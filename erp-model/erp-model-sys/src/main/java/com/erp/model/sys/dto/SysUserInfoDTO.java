@@ -10,6 +10,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.time.LocalDate;
@@ -240,6 +241,45 @@ public class SysUserInfoDTO implements Serializable {
          * 勾选的id集合
          */
         private List<String> ids;
+
+    }
+
+
+    /**
+     *
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class RefParamseDTO {
+        /**
+         * 店铺授权类型（all全部授权，part指定授权）
+         */
+        @NotBlank(message = "用户id不能为空")
+        private String uid;
+        /**
+         * 操作类型：
+         *          reapportion = 重新分配：覆盖删除之前的权限，按照本次确认权限更新
+         *          add = 新增选择的内容，原权限不变动
+         */
+        @NotBlank(message = "操作类型不能为空")
+        private String type;
+        /**
+         *  关联id集合
+         */
+        @NotEmpty(message = "关联id集合不能为空")
+        private List<String> refIdList;
+        /**
+         *  关联类型 （shop店铺，warehouse仓库,role 权限）
+         */
+        @NotBlank(message = "关联类型不能为空")
+        private String refType;
+
+        /**
+         * 授权类型（all全部授权，part指定授权）
+         */
+        @NotBlank(message = "授权类型不能为空")
+        private String authType;
 
     }
 }

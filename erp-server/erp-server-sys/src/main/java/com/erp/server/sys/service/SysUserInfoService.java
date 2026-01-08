@@ -316,5 +316,7 @@ public interface SysUserInfoService extends IService<SysUserInfoEntity> {
     List<SysUserInfoDTO.TabListDTO> tabList(PermissionsDTO dto);
 
     void exportList(SysUserInfoDTO.PagingParamDTO dto, HttpServletResponse response);
+
+    void batchRefUserIdByType(SysUserInfoDTO.RefParamseDTO refParamseDTO);
 }
 

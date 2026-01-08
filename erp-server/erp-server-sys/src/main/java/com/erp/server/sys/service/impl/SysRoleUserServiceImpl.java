@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.util.*;
+import java.util.stream.Collectors;
 
 
 @Service
@@ -36,17 +37,26 @@ public class SysRoleUserServiceImpl extends ServiceImpl<SysRoleUserMapper, SysRo
             deleteUidRoleRef(uid);
         }
         if (CollectionUtils.isNotEmpty(roleIds)) {
-            List<SysRoleUserEntity> saveList = new LinkedList<>();
-            for (String roleId : roleIds) {
-                SysRoleUserEntity entity = new SysRoleUserEntity();
-                entity.setRoleId(roleId);
-                entity.setUserId(uid);
-                saveList.add(entity);
+            //排除已存在的关联数据
+            List<SysRoleUserEntity> oldRoleIds = lambdaQuery().in(SysRoleUserEntity::getRoleId, roleIds).list();
+            if(CollUtil.isNotEmpty(oldRoleIds)){
+                Set<String> existingIds = oldRoleIds.stream()
+                        .map(SysRoleUserEntity::getRoleId)
+                        .collect(Collectors.toSet());
+                //把oldList从roleIds中删除
+                roleIds.removeIf(existingIds::contains);
             }
-            this.saveBatch(saveList);
+            if(CollectionUtils.isNotEmpty(roleIds)){
+                List<SysRoleUserEntity> saveList = new LinkedList<>();
+                for (String roleId : roleIds) {
+                    SysRoleUserEntity entity = new SysRoleUserEntity();
+                    entity.setRoleId(roleId);
+                    entity.setUserId(uid);
+                    saveList.add(entity);
+                }
+                this.saveBatch(saveList);
+            }
         }
-
-
     }
 
     /**
