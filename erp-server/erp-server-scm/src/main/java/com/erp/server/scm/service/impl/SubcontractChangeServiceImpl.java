@@ -188,11 +188,11 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
         //非待提交和审核不通过不能作废
         long count = list.stream().filter(obj -> !ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(obj.getApproveStatus())).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_98005);
+            throw new ServiceException(ApiError.BILL_VOID_ALLOWED_STATUS_ONLY);
         }
         long invalidCount = list.stream().filter(obj -> InvalidStatusEnum.VOIDED.getStatus().equals(obj.getInvalidStatus())).count();
         if (invalidCount > 0) {
-            throw new ServiceException(ApiError.ERROR_98012);
+            throw new ServiceException(ApiError.BILL_ALREADY_VOID_CANNOT_VOID_AGAIN);
         }
         log.info("委外变更单作废，ids=【{}】", JSONUtil.toJsonStr(ids));
         //更新订单作废状态
@@ -241,7 +241,7 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
         SubcontractChangeEntity oldEntity = Optional.ofNullable(old).orElseThrow(() -> new ServiceException("未找到委外变更单"));
         // 待提交和审核不通过允许修改
         if (!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(old.getApproveStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(old.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_1029);
+            throw new ServiceException(ApiError.BILL_UPDATE_STATUS_NOT_ALLOWED);
         }
 
         SubcontractChangeEntity subcontractChangeEntity =  BeanMapperUtils.map(SubcontractChangeEntity.class, updateDTO);
@@ -267,7 +267,7 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
     @Override
     public void submit(List<String> ids) {
        if (CollUtil.isEmpty(ids)) {
-          throw new ServiceException(ApiError.ERROR_98004);
+          throw new ServiceException(ApiError.BILL_SELECTION_REQUIRED);
        }
        List<SubcontractChangeEntity> list = super.listByIds(ids);
        if (CollUtil.isEmpty(list)) {
@@ -276,7 +276,7 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
        // 待提交或审核不通过并且未作废允许提交
        long count = list.stream().filter(obj -> (!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(obj.getApproveStatus())) || !InvalidStatusEnum.NOT_VOIDED.getStatus().equals(obj.getInvalidStatus())).count();
        if (count > 0) {
-          throw new ServiceException(ApiError.ERROR_98010);
+          throw new ServiceException(ApiError.BILL_SUBMIT_ALLOWED_STATUS_ONLY);
        }
 
        // 更新单据审核状态
@@ -327,7 +327,7 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
         // 审核中的数据允许审核
         long count = list.stream().filter(obj -> !ApproveStatusEnum.APPROVE_ING.getStatus().equals(obj.getApproveStatus())).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_98006);
+            throw new ServiceException(ApiError.WF_APPROVE_ALLOWED_STATUS_ONLY);
         }
         // 新审核状态
         ApproveStatusEnum approveStatus = Objects.equals(ApproveTypeEnum.PASS, approveType) ? ApproveStatusEnum.APPROVE : ApproveStatusEnum.REJECT;
@@ -406,7 +406,7 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
         }
         List<SubcontractChangeDetailEntity> detailEntityList = subcontractChangeDetailService.listByMainIds(ids);
         if (CollectionUtils.isEmpty(detailEntityList)) {
-            throw new ServiceException(ApiError.ERROR_98085);
+            throw new ServiceException(ApiError.PO_SUBCONTRACT_CHANGE_DETAIL_NOT_FOUND);
         }
         //新增
         List<SubcontractChangeDetailEntity> addList = detailEntityList.stream().filter(obj -> OptChangeTypeEnum.ADD.getCode().equals(obj.getOptType())).collect(Collectors.toList());
@@ -422,7 +422,7 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
                 if (CollectionUtils.isNotEmpty(podList)) {
                     String codes = podList.stream().map(PurchaseOrderDetailEntity::getSkuNo).collect(Collectors.joining(","));
                     log.error("SKU【{}】已存在下推单据，不支持删除变更",codes);
-                    throw new ServiceException(new ApiResult(ApiError.ERROR_98086.code, StrUtil.format(ApiError.ERROR_98086.msg,codes)));
+                    throw new ServiceException(new ApiResult(ApiError.PO_SKU_HAS_PUSHED_DOC_CHANGE_DELETE_FORBIDDEN.getCode(), StrUtil.format(ApiError.PO_SKU_HAS_PUSHED_DOC_CHANGE_DELETE_FORBIDDEN.getMsg(),codes)));
                 }
                 //删除委外订单明细
                 subcontractOrderDetailService.removeByIds(sourceDetailIds);
@@ -459,7 +459,7 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
 
         List<SubcontractOrderDetailEntity> subcontractOrderDetailList = subcontractOrderDetailService.listByIds(sourceDetailIds);
         if (CollectionUtils.isEmpty(subcontractOrderDetailList)) {
-            throw new ServiceException(ApiError.ERROR_98070);
+            throw new ServiceException(ApiError.PO_SUBCONTRACT_DETAIL_NOT_FOUND);
         }
 
         List<String> podIds = podList.stream().map(PurchaseOrderDetailEntity::getId).collect(Collectors.toList());
@@ -472,12 +472,12 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
 
             SubcontractOrderDetailEntity detailEntity = subcontractOrderDetailList.stream().filter(obj -> obj.getId().equals(updateEntity.getSourceDetailId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(detailEntity)) {
-                throw new ServiceException(ApiError.ERROR_98070);
+                throw new ServiceException(ApiError.PO_SUBCONTRACT_DETAIL_NOT_FOUND);
             }
             //采购数量
             Integer purchaseQty = podList.stream().filter(obj -> obj.getSourceDetailId().equals(updateEntity.getSourceDetailId())).map(PurchaseOrderDetailEntity::getPurchaseQty).reduce(MathUtil.ZERO, Integer::sum);
             if (purchaseQty > updateEntity.getQty()) {
-                throw new ServiceException(new ApiResult(ApiError.ERROR_98087.code,StrUtil.format(ApiError.ERROR_98087.msg,updateEntity.getSkuNo(),updateEntity.getQty(),purchaseQty)));
+                throw new ServiceException(new ApiResult(ApiError.WH_TRANSFER_MB_UPDATE_NOT_ALLOWED.getCode(),StrUtil.format(ApiError.WH_TRANSFER_MB_UPDATE_NOT_ALLOWED.getMsg(),updateEntity.getSkuNo(),updateEntity.getQty(),purchaseQty)));
             }
             //仓库和供应商未改变则直接跳过
             if (updateEntity.getWarehouseId().equals(detailEntity.getWarehouseId()) && updateEntity.getSupplierId().equals(detailEntity.getSupplierId())) {
@@ -487,13 +487,13 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
             //收货数量
             long receiveCount = receiveDetailList.stream().filter(obj -> podIdList.contains(obj.getPurchaseOrderDetailId())).count();
             if (receiveCount > 0) {
-                throw new ServiceException(new ApiResult(ApiError.ERROR_98094.code,StrUtil.format(ApiError.ERROR_98094.msg,updateEntity.getSkuNo())));
+                throw new ServiceException(new ApiResult(ApiError.PO_ALREADY_GENERATED_DELIVERY_CANNOT_CHANGE_WH_OR_SUPPLIER.getCode(),StrUtil.format(ApiError.PO_ALREADY_GENERATED_DELIVERY_CANNOT_CHANGE_WH_OR_SUPPLIER.getMsg(),updateEntity.getSkuNo())));
             }
 
             //入库数量
             long instockCount = poInstockDetailList.stream().filter(obj -> podIdList.contains(obj.getPurchaseOrderDetailId())).count();
             if (instockCount > 0) {
-                throw new ServiceException(new ApiResult(ApiError.ERROR_98095.code,StrUtil.format(ApiError.ERROR_98095.msg,updateEntity.getSkuNo())));
+                throw new ServiceException(new ApiResult(ApiError.PO_ALREADY_GENERATED_INBOUND_CANNOT_CHANGE_WH_OR_SUPPLIER.getCode(),StrUtil.format(ApiError.PO_ALREADY_GENERATED_INBOUND_CANNOT_CHANGE_WH_OR_SUPPLIER.getMsg(),updateEntity.getSkuNo())));
             }
         }
     }
@@ -508,7 +508,7 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
         //明细父级sku
         List<SubcontractChangeDetailEntity> parentList = addList.stream().filter(obj -> StringUtils.isBlank(obj.getParentId())).collect(Collectors.toList());
         if (CollectionUtils.isEmpty(parentList)) {
-            throw new ServiceException(ApiError.ERROR_98082);
+            throw new ServiceException(ApiError.PO_SUBCONTRACT_CHANGE_DETAIL_PARENT_SKU_NOT_FOUND);
         }
         //新增(根据变更单分组)
         Map<String, List<SubcontractChangeDetailEntity>> map = parentList.stream().collect(Collectors.groupingBy(SubcontractChangeDetailEntity::getMainId));
@@ -517,7 +517,7 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
             List<SubcontractChangeDetailEntity> value = entry.getValue();
             SubcontractChangeEntity entity = list.stream().filter(obj -> obj.getId().equals(mainId)).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(entity)) {
-                throw new ServiceException(ApiError.ERROR_98073);
+                throw new ServiceException(ApiError.PO_SUBCONTRACT_ORDER_NOT_FOUND);
             }
             List<SubcontractOrderDetailDTO.UpdateDTO> detailList = new ArrayList<>();
             List<Pair<String,String>> pairList = new ArrayList<>();
@@ -531,7 +531,7 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
                 //子集SKU
                 List<SubcontractChangeDetailEntity> childList = addList.stream().filter(obj -> obj.getParentId().equals(addEntity.getId())).collect(Collectors.toList());
                 if (CollectionUtils.isEmpty(childList)) {
-                    throw new ServiceException(ApiError.ERROR_98083);
+                    throw new ServiceException(ApiError.PO_SUBCONTRACT_CHANGE_DETAIL_CHILD_SKU_NOT_FOUND);
                 }
                 List<SubcontractOrderDetailDTO.UpdateDTO> childDTOList = new ArrayList<>();
                 for (SubcontractChangeDetailEntity childEntity : childList) {
@@ -564,7 +564,7 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
         //明细父级sku
         List<SubcontractChangeDetailEntity> parentList = updateList.stream().filter(obj -> StringUtils.isBlank(obj.getParentId())).collect(Collectors.toList());
         if (CollectionUtils.isEmpty(parentList)) {
-            throw new ServiceException(ApiError.ERROR_98082);
+            throw new ServiceException(ApiError.PO_SUBCONTRACT_CHANGE_DETAIL_PARENT_SKU_NOT_FOUND);
         }
         //新增(根据变更单分组)
         Map<String, List<SubcontractChangeDetailEntity>> map = parentList.stream().collect(Collectors.groupingBy(SubcontractChangeDetailEntity::getMainId));
@@ -573,7 +573,7 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
             List<SubcontractChangeDetailEntity> value = entry.getValue();
             SubcontractChangeEntity entity = list.stream().filter(obj -> obj.getId().equals(mainId)).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(entity)) {
-                throw new ServiceException(ApiError.ERROR_98073);
+                throw new ServiceException(ApiError.PO_SUBCONTRACT_ORDER_NOT_FOUND);
             }
             List<SubcontractOrderDetailDTO.UpdateDTO> detailList = new ArrayList<>();
             for (SubcontractChangeDetailEntity updateEntity : value) {
@@ -583,7 +583,7 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
                 //子集SKU
                 List<SubcontractChangeDetailEntity> childList = updateList.stream().filter(obj -> obj.getParentId().equals(updateEntity.getId())).collect(Collectors.toList());
                 if (CollectionUtils.isEmpty(childList)) {
-                    throw new ServiceException(ApiError.ERROR_98083);
+                    throw new ServiceException(ApiError.PO_SUBCONTRACT_CHANGE_DETAIL_CHILD_SKU_NOT_FOUND);
                 }
                 List<SubcontractOrderDetailDTO.UpdateDTO> childDTOList = new ArrayList<>();
                 for (SubcontractChangeDetailEntity childEntity : childList) {
@@ -613,7 +613,7 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
         List<String> mainIds = list.stream().map(SubcontractChangeDetailEntity::getMainId).collect(Collectors.toList());
         List<SubcontractChangeEntity> subcontractChangeList = this.listByIds(mainIds);
         if (CollectionUtils.isEmpty(subcontractChangeList)) {
-            throw new ServiceException(ApiError.ERROR_98084);
+            throw new ServiceException(ApiError.PO_SUBCONTRACT_CHANGE_NOT_FOUND);
         }
         List<String> sourceDetailIds = list.stream().map(SubcontractChangeDetailEntity::getSourceDetailId).collect(Collectors.toList());
         List<PurchaseOrderDetailEntity> poList = purchaseOrderDetailService.listBySourceDetailIds(sourceDetailIds);
@@ -625,7 +625,7 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
             }
             SubcontractChangeEntity subcontractChangeEntity = subcontractChangeList.stream().filter(obj -> obj.getId().equals(detailEntity.getMainId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(subcontractChangeEntity)) {
-                throw new ServiceException(ApiError.ERROR_98084);
+                throw new ServiceException(ApiError.PO_SUBCONTRACT_CHANGE_NOT_FOUND);
             }
             //已下推采购订单数量
             Integer qty = poList.stream().filter(obj -> obj.getSourceDetailId().equals(detailEntity.getSourceDetailId())).map(PurchaseOrderDetailEntity::getPurchaseQty).reduce(MathUtil.ZERO, Integer::sum);
@@ -664,7 +664,7 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
         // 已审核支持反审核
         long count = list.stream().filter(obj -> !Objects.equals(ApproveStatusEnum.APPROVE.getStatus(), obj.getApproveStatus())).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_98014);
+            throw new ServiceException(ApiError.BILL_REVERSE_APPROVAL_ALLOWED_APPROVED_ONLY);
         }
         // TODO 检查是否有下推单据（如果支持下推的话）
 
@@ -686,7 +686,7 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
        // 只有待提交且未作废的数据允许删除
        long count = list.stream().filter(obj -> !ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus()) || obj.getInvalidStatus() ).count();
        if (count > 0) {
-         throw new ServiceException(ApiError.ERROR_98009);
+         throw new ServiceException(ApiError.BILL_DELETE_ALLOWED_STATUS_ONLY);
        }
        // 删除日志数据
        log.info("删除 开始删除委外变更单日志数据，id集合：【{}】", JSONObject.toJSONString(ids));
@@ -710,7 +710,7 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
         // 只有待提交的数据允许撤销
         long count = list.stream().filter(obj -> !ApproveStatusEnum.APPROVE_ING.getStatus().equals(obj.getApproveStatus())).count();
         if (count > 0) {
-           throw new ServiceException(ApiError.ERROR_98007);
+           throw new ServiceException(ApiError.WF_REVOKE_PROCESS_ALLOWED_STATUS_ONLY);
         }
         // TODO 撤销流程
         log.info("撤销 开始撤销流程，id集合：【{}】",JSONObject.toJSONString(ids));
@@ -731,13 +731,13 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
         //查询明细
         List<SubcontractChangeDetailEntity> subcontractChangeDetailList = subcontractChangeDetailService.listByMainIds(Arrays.asList(id));
         if (CollectionUtils.isEmpty(subcontractChangeDetailList)) {
-            throw new ServiceException(ApiError.ERROR_98070);
+            throw new ServiceException(ApiError.PO_SUBCONTRACT_DETAIL_NOT_FOUND);
         }
         //产品信息
         List<String> skuIds = subcontractChangeDetailList.stream().map(SubcontractChangeDetailEntity::getSkuId).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIds);
         if (CollectionUtils.isEmpty(skuList)) {
-            throw new ServiceException(ApiError.ERROR_95084);
+            throw new ServiceException(ApiError.PRODUCT_INFO_NOT_FOUND);
         }
         //供应商信息
         List<String> supplierIds = subcontractChangeDetailList.stream().filter(obj -> StringUtils.isNotBlank(obj.getSupplierId())).map(SubcontractChangeDetailEntity::getSupplierId).collect(Collectors.toList());
@@ -749,14 +749,14 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
         //明细父级sku
         List<SubcontractChangeDetailEntity> parentList = subcontractChangeDetailList.stream().filter(obj -> StringUtils.isBlank(obj.getParentId())).collect(Collectors.toList());
         if (CollectionUtils.isEmpty(parentList)) {
-            throw new ServiceException(ApiError.ERROR_98082);
+            throw new ServiceException(ApiError.PO_SUBCONTRACT_CHANGE_DETAIL_PARENT_SKU_NOT_FOUND);
         }
 
         List<String> parentSkuIds = parentList.stream().map(SubcontractChangeDetailEntity::getSkuId).collect(Collectors.toList());
         //BOM信息
         List<BomChildrenSkuDTO> bomChildrenList = plmTaskFeign.listBomChildBySkuIds(parentSkuIds);
         if (org.apache.commons.collections4.CollectionUtils.isEmpty(bomChildrenList)) {
-            throw new ServiceException(ApiError.ERROR_95163);
+            throw new ServiceException(ApiError.BOM_NOT_FOUND);
         }
 
 
@@ -783,7 +783,7 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
             //子集SKU
             List<SubcontractChangeDetailEntity> childList = subcontractChangeDetailList.stream().filter(obj -> obj.getParentId().equals(viewDTO.getId())).collect(Collectors.toList());
             if (CollectionUtils.isEmpty(childList)) {
-                throw new ServiceException(ApiError.ERROR_98072);
+                throw new ServiceException(ApiError.PO_SUBCONTRACT_DETAIL_CHILD_SKU_NOT_FOUND);
             }
             List<SubcontractChangeDetailDTO.ChildDTO> childDTOList = BeanMapperUtils.copyList(SubcontractChangeDetailDTO.ChildDTO.class, childList);
             for (SubcontractChangeDetailDTO.ChildDTO childViewDTO : childDTOList) {
@@ -791,7 +791,7 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
                 //bom信息
                 BomChildrenSkuDTO bomChildrenSkuDTO = bomChildrenList.stream().filter(obj -> obj.getParentSkuId().equals(viewDTO.getSkuId()) && obj.getSkuId().equals(childViewDTO.getSkuId())).findFirst().orElse(null);
                 if (ObjectUtils.isEmpty(bomChildrenSkuDTO)) {
-                    throw new ServiceException(ApiError.ERROR_95163);
+                    throw new ServiceException(ApiError.BOM_NOT_FOUND);
                 }
                 childViewDTO.setQuantity(bomChildrenSkuDTO.getQuantity());
 
@@ -890,7 +890,7 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
 
         SubcontractOrderEntity subcontractOrderEntity = subcontractOrderService.getById(entity.getSourceId());
         if (ObjectUtils.isEmpty(subcontractOrderEntity)) {
-            throw new ServiceException(ApiError.ERROR_98073);
+            throw new ServiceException(ApiError.PO_SUBCONTRACT_ORDER_NOT_FOUND);
         }
         entity.setPurchaseOrgId(subcontractOrderEntity.getPurchaseOrgId());
         entity.setPurchaseOrgName(subcontractOrderEntity.getPurchaseOrgName());

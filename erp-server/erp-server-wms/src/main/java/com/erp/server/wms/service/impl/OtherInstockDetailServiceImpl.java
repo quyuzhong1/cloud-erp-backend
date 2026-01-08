@@ -1,10 +1,8 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -66,7 +64,7 @@ public class OtherInstockDetailServiceImpl extends SuperServiceImpl<OtherInstock
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public void add(List<OtherInstockDetailDTO.AddDTO> detailList, String mainId) {
         if (CollectionUtils.isEmpty(detailList)) {
-            throw new ServiceException(ApiError.ERROR_1041,"其他出库明细");
+            throw new ServiceException(ApiError.BILL_DETAIL_REQUIRED,"其他出库明细");
         }
         List<OtherInstockDetailEntity> list = BeanMapperUtils.copyList(OtherInstockDetailEntity.class, detailList);
 
@@ -84,7 +82,7 @@ public class OtherInstockDetailServiceImpl extends SuperServiceImpl<OtherInstock
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public void update(List<OtherInstockDetailDTO.UpdateDTO> detailList, String mainId) {
         if (CollectionUtils.isEmpty(detailList)) {
-            throw new ServiceException(ApiError.ERROR_1041,"其他出库明细");
+            throw new ServiceException(ApiError.BILL_DETAIL_REQUIRED,"其他出库明细");
         }
         //原明细数据
         List<OtherInstockDetailEntity> oldList = this.listByMainId(mainId);
@@ -157,17 +155,17 @@ public class OtherInstockDetailServiceImpl extends SuperServiceImpl<OtherInstock
         List<String> skuIds = newList.stream().map(OtherInstockDetailEntity::getSkuId).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIds);
         if (CollectionUtils.isEmpty(skuList)) {
-            throw new ServiceException(ApiError.ERROR_95084);
+            throw new ServiceException(ApiError.PRODUCT_INFO_NOT_FOUND);
         }
 
         //主表信息
         OtherInstockEntity otherInstockEntity = otherInstockService.getById(mainId);
         if (ObjectUtils.isEmpty(otherInstockEntity)) {
-            throw new ServiceException(ApiError.ERROR_99059);
+            throw new ServiceException(ApiError.WH_OTHER_INBOUND_NOT_FOUND);
         }
         WarehouseEntity warehouseEntity = warehouseService.getById(otherInstockEntity.getWarehouseId());
         if (ObjectUtils.isEmpty(warehouseEntity)) {
-            throw new ServiceException(ApiError.ERROR_99002);
+            throw new ServiceException(ApiError.WH_PARAM_NOT_FOUND);
         }
         //仓位必填验证
         checkWarehouseLocation(warehouseEntity,newList);
@@ -180,11 +178,11 @@ public class OtherInstockDetailServiceImpl extends SuperServiceImpl<OtherInstock
             //修改操作日志
             if (CharSequenceUtil.isNotBlank(detail.getId())) {
                 if (CollectionUtils.isEmpty(list)) {
-                    throw new ServiceException(ApiError.ERROR_99044);
+                    throw new ServiceException(ApiError.WH_TRANSFER_APPLY_DETAIL_NOT_FOUND);
                 }
                 OtherInstockDetailEntity old = list.stream().filter(obj -> obj.getId().equals(detail.getId())).findFirst().orElse(null);
                 if (ObjectUtils.isEmpty(old)) {
-                    throw new ServiceException(ApiError.ERROR_99044);
+                    throw new ServiceException(ApiError.WH_TRANSFER_APPLY_DETAIL_NOT_FOUND);
                 }
                 operateLogService.addModuleOperateLogByObj(old,detail, ModuleTypeEnum.OTHER_INSTOCK.getCode(),mainId,"",String.format("【%s】",old.getSkuNo()));
             }
@@ -215,7 +213,7 @@ public class OtherInstockDetailServiceImpl extends SuperServiceImpl<OtherInstock
         long count = list.stream().filter(obj -> CharSequenceUtil.isBlank(obj.getWarehouseLocation())).count();
         //判断仓位是否需要必填
         if (warehouseIdList.contains(warehouseEntity.getId()) && count > 0) {
-            throw new ServiceException(ApiError.ERROR_WAREHOUSE_LOCATION_NOT_NULL,warehouseEntity.getName());
+            throw new ServiceException(ApiError.WH_LOCATION_REQUIRED,warehouseEntity.getName());
         }
     }
 }

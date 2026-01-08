@@ -4,7 +4,6 @@ import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.constant.RedisCacheConstants;
-import com.common.business.utils.RedisUtil;
 import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.dto.AmazonCreateReportResultDTO;
 import com.erp.model.dmp.dto.AmazonShopInfoDTO;

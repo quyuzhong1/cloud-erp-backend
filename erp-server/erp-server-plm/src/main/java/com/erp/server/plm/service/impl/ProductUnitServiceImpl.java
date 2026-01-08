@@ -45,7 +45,7 @@ public class ProductUnitServiceImpl extends ServiceImpl<ProductUnitMapper, Produ
                 }
                 ProductUnitEntity existEntity = this.getOne(queryWrapper);
                 if (existEntity != null) {
-                    throw new ServiceException(ApiError.ERROR_DUPLICATION_NAME);
+                    throw new ServiceException(ApiError.COMMON_DUPLICATION_NAME);
                 }
             }
         }
@@ -76,7 +76,7 @@ public class ProductUnitServiceImpl extends ServiceImpl<ProductUnitMapper, Produ
     public Boolean delete(String id){
         ProductUnitEntity entity = this.getById(id);
         if (entity.getOccupyStatus()) {
-            throw new ServiceException(ApiError.ERROR_95168);
+            throw new ServiceException(ApiError.PRODUCT_VARIANT_VALUES_REF_DELETE_FORBIDDEN);
         }
         LambdaQueryWrapper<ProductUnitEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(ProductUnitEntity::getId, id);

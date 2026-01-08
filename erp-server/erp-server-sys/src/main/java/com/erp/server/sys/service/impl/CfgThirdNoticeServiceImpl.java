@@ -21,6 +21,7 @@ import com.common.message.service.mq.MQProducerService;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.*;
 import com.erp.model.sys.entity.*;
+import com.erp.model.sys.enums.CfgThirdNoticeApplyScopeEnum;
 import com.erp.model.sys.enums.CfgThirdNoticeMethodEnum;
 import com.erp.model.sys.enums.RuleTypeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
@@ -306,7 +307,7 @@ public class CfgThirdNoticeServiceImpl extends SuperServiceImpl<CfgThirdNoticeMa
         handleUpdateConditionList(conditionList);
 
         CfgThirdNoticeEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "三方通知配置"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "三方通知配置"));
         CfgThirdNoticeEntity cfgThirdNoticeEntity =  BeanMapperUtils.map(CfgThirdNoticeEntity.class, addOrUpdateDTO);
 
         //校验重复
@@ -451,6 +452,8 @@ public class CfgThirdNoticeServiceImpl extends SuperServiceImpl<CfgThirdNoticeMa
         for (CfgThirdNoticeDTO.ListDTO record : records) {
             record.setBusinessTypeName(businessTypeMap.getOrDefault(record.getBusinessType(),""));
 
+            record.setApplyScopeName(CfgThirdNoticeApplyScopeEnum.getName(record.getApplyScope()));
+
             String method = record.getMethod();
             record.setMethodName(CfgThirdNoticeMethodEnum.getName(method));
 
@@ -517,6 +520,8 @@ public class CfgThirdNoticeServiceImpl extends SuperServiceImpl<CfgThirdNoticeMa
     private CfgThirdNoticeDTO.ViewDTO fillOne(CfgThirdNoticeEntity entity) {
         CfgThirdNoticeDTO.ViewDTO data = new CfgThirdNoticeDTO.ViewDTO();
         BeanMapper.copy(entity,data);
+
+        data.setApplyScopeName(CfgThirdNoticeApplyScopeEnum.getName(entity.getApplyScope()));
 
         //单据类型
         List<DictBasicDTO.ViewDTO> thirdNoticeBusinessType = dictBasicService.listByType("thirdNoticeBusinessType");
@@ -629,5 +634,10 @@ public class CfgThirdNoticeServiceImpl extends SuperServiceImpl<CfgThirdNoticeMa
                 .eq(CfgThirdNoticeEntity::getNoticeStatus, Boolean.TRUE)
                 .list();
 
+    }
+
+    @Override
+    public List<CfgThirdNoticeDTO.DropDownDTO> dropDownByMoldMonitor( String sourceType) {
+        return baseMapper.dropDownByMoldMonitor();
     }
 }

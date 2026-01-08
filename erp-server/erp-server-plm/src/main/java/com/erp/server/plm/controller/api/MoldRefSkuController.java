@@ -331,7 +331,7 @@ public class MoldRefSkuController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
             menuCode = "plm:moldInfo:updateOutputQtyById",
-            serviceClass = MoldInfoService.class,
+            serviceClass = MoldRefSkuService.class,
             keyIdName = "id")
     public ApiResult<?> updateOutputQtyById(@RequestBody @Validated MoldInfoDTO.UpdateQty dto) {
         Boolean result = moldRefSkuService.updateOutputQtyById(dto);
@@ -350,7 +350,7 @@ public class MoldRefSkuController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
             menuCode = "plm:moldInfo:updateSkuQtyById",
-            serviceClass = MoldInfoService.class,
+            serviceClass = MoldRefSkuService.class,
             keyIdName = "id")
     public ApiResult<?> updateSkuQtyById(@RequestBody @Validated MoldInfoDTO.UpdateQty dto) {
         Boolean result = moldRefSkuService.updateSkuQtyById(dto);

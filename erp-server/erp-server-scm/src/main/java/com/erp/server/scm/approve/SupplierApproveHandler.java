@@ -52,7 +52,7 @@ public class SupplierApproveHandler extends AbstractApproveHandler {
         //供应商
         SupplierEntity entity = supplierService.getById(dto.getId());
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_SUPPLIER_ABSENCE);
+            throw new ServiceException(ApiError.SUPPLIER_NOT_FOUND);
         }
         BatchResultDTO resultDTO = supplierService.disApprove(entity);
         return resultDTO.getSuccess();
@@ -63,11 +63,11 @@ public class SupplierApproveHandler extends AbstractApproveHandler {
         //供应商
         SupplierEntity entity = supplierService.getById(dto.getBusinessId());
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_SUPPLIER_ABSENCE);
+            throw new ServiceException(ApiError.SUPPLIER_NOT_FOUND);
         }
         Boolean approve = supplierService.approveEnd(entity, dto.getApproveStatus().getStatus(), dto.getComment());
         if (Boolean.FALSE.equals(approve)) {
-            throw new ServiceException(ApiError.ERROR_BILL_APPROVE, SourceTypeEnum.getName(dto.getBusinessKey()));
+            throw new ServiceException(ApiError.BILL_APPROVE_FAILED, SourceTypeEnum.getName(dto.getBusinessKey()));
         }
         //非erp审核添加日志
         if (ApprovePlatformEnum.ERP.equals(dto.getApprovePlatformEnum())) {

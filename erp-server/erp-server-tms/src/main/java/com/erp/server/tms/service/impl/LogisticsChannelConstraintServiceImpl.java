@@ -8,12 +8,9 @@ import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
-import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.ExcelUtil;
-import com.common.core.utils.date.DateUtil;
-import com.erp.model.oms.dto.excel.LogisticsProductExcelDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.tms.dto.LogisticsChannelConstraintDTO;
 import com.erp.model.tms.dto.excel.LogisticsChannelConstraintExcelDTO;
@@ -181,7 +178,7 @@ public class LogisticsChannelConstraintServiceImpl extends SuperServiceImpl<Logi
             wb.close();
         } catch (Exception e) {
             log.error(" LogisticsChannelConstraint downloadTemplate  出错了 e>>>>>>>{}", e);
-            throw new ServiceException(ApiError.ERROR_95131);
+            throw new ServiceException(ApiError.FILE_IMPORT_TEMPLATE_DOWNLOAD_FAILED);
         }
     }
 
@@ -192,10 +189,10 @@ public class LogisticsChannelConstraintServiceImpl extends SuperServiceImpl<Logi
             EasyExcel.read(excelFile.getInputStream(), LogisticsChannelConstraintExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (IOException e) {
             log.error("导入物流国家设置错误！", e);
-            throw new ServiceException(ApiError.ERROR_95124);
+            throw new ServiceException(ApiError.FILE_DATA_IMPORT_FAILED);
         } catch (ExcelCommonException e) {
             log.error("导入格式错误！", e);
-            throw new ServiceException(ApiError.ERROR_1016);
+            throw new ServiceException(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX);
         }
         List<LogisticsChannelConstraintDTO.AddOrUpdateDTO> addOrUpdateDTOList = excelListenerUtil.getAddOrUpdateDTOList();
         List<LogisticsChannelConstraintExcelDTO> errorList = excelListenerUtil.getErrorList();

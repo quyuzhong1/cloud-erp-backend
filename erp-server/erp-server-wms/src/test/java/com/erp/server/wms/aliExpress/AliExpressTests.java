@@ -114,7 +114,7 @@ public class AliExpressTests {
             Boolean success = jsonObject.getBool("result_success", Boolean.FALSE);
             if (!success) {
                 String msg = jsonObject.getOrDefault("result_error_desc", "").toString();
-                throw new ServiceException(ApiError.DEFAULT, msg);
+                throw new ServiceException(ApiError.HTTP_UNKNOWN, msg);
             }
         } catch (Exception e) {
             throw new ServiceException("查询速卖通订单地址失败" + JSONUtil.toJsonStr(e));

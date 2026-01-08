@@ -76,7 +76,7 @@ public class InitFirstMileAllocationDetailServiceImpl extends SuperServiceImpl<I
     @Override
     public Boolean update(InitFirstMileAllocationDetailDTO.UpdateDTO updateDTO) {
         InitFirstMileAllocationDetailEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "期初头程分摊明细"));
+        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "期初头程分摊明细"));
         InitFirstMileAllocationDetailEntity initFirstMileAllocationDetailEntity = BeanMapperUtils.map(InitFirstMileAllocationDetailEntity.class, updateDTO);
 
         // 数据处理

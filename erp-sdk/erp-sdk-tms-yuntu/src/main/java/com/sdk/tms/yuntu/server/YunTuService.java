@@ -2,9 +2,7 @@ package com.sdk.tms.yuntu.server;
 
 import com.alibaba.fastjson.JSON;
 import com.common.core.exception.ServiceException;
-import com.erp.model.tms.entity.LogisticsAuthEntity;
 import cn.hutool.core.bean.BeanUtil;
-import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.TypeReference;
 import com.common.core.utils.BeanMapUtil;
 import com.sdk.tms.yuntu.constants.YunTuConstants;
@@ -53,7 +51,7 @@ public class YunTuService {
         String url = authMap.get("url");
         validate(appKey,appSecret,url);
         List<Map<String,Object>> paramsMapList =  BeanMapUtil.beanToMapList(request);
-        log.warn("云途下单请求参数:{}", JSONObject.toJSONString(paramsMapList));
+        log.warn("云途下单请求参数:{}", JSON.toJSONString(paramsMapList));
         String response = YunTuUtils.sendPost(url,YunTuConstants.METHOD_CREATE_ORDER,paramsMapList,appKey,appSecret);
 
         log.warn("下单完成：{}", JSON.toJSONString(response));

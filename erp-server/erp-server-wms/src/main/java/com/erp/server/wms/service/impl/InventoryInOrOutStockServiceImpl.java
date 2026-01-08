@@ -3,13 +3,11 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.StrUtils;
 import com.common.core.utils.ValidatorUtil;
-import com.erp.model.wms.dto.StocktakingProfitLossDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.inventory.*;
 import com.erp.model.wms.entity.WarehouseLocationEntity;
@@ -20,7 +18,6 @@ import com.erp.server.wms.service.WarehouseService;
 import com.erp.server.wms.utils.InventoryUtils;
 import com.google.common.collect.Maps;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -73,7 +70,7 @@ public class InventoryInOrOutStockServiceImpl extends AbstractInventoryServiceIm
 
                 WarehouseDTO.UpdateDTO warehouseDetail = warehouseMap.computeIfAbsent(param.getWarehouseId(), v -> warehouseService.detailWithCache(v));
                 if (Objects.isNull(warehouseDetail) || CharSequenceUtil.isEmpty(warehouseDetail.getId())) {
-                    ServiceException.runError(ApiError.ERROR_99002);
+                    ServiceException.runError(ApiError.WH_PARAM_NOT_FOUND);
                 }
                 if (StrUtils.isNotEmpty(param.getWarehouseLocation())) {
                     WarehouseLocationEntity warehouseLocation = warehouseLocationMap.computeIfAbsent(param.getWarehouseLocation(), v -> warehouseLocationService.findByWarehouseIdAndCode(param.getWarehouseId(), v));
@@ -130,7 +127,7 @@ public class InventoryInOrOutStockServiceImpl extends AbstractInventoryServiceIm
     public <T extends InventoryStockBaseDTO> void singleHandler(T baseParam, InventoryBusinessTypeEnum businessType, List<TransactionRuleDTO> transactionRuleParams, String transactionNo) {
         InOutStockDTO param = (InOutStockDTO)baseParam;
         if(CollUtil.isEmpty(transactionRuleParams)) {
-            ServiceException.runError(ApiError.ERROR_99034.code, CharSequenceUtil.format(ApiError.ERROR_99034.msg, businessType.getName()));
+            ServiceException.runError(ApiError.WH_STOCK_RULE_BIZ_TYPE_ERROR.getCode(), CharSequenceUtil.format(ApiError.WH_STOCK_RULE_BIZ_TYPE_ERROR.getMsg(), businessType.getName()));
         }
         log.warn("从配置读取库存交易规则，业务类型：【{}】，单据类型：【{}】，单据id：【{}】，单据日期：【{}】,SKU编号：【{}】,交易配置信息：【{}】", businessType.getName(), param.getSourceType().getName(), param.getSourceId(), param.getBillDate(), param.getSkuNo(), JSONObject.toJSONString(transactionRuleParams));
         // 交易规则安装状态排序

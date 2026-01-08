@@ -36,7 +36,7 @@ public class SoReceiptApproveHandler extends AbstractApproveHandler {
     public Boolean disApprove(ApproveDTO.DisApproveDTO dto) {
         SoReceiptEntity soReceiptEntity = soReceiptService.getById(dto.getId());
         if (ObjectUtil.isEmpty(soReceiptEntity)) {
-            throw new ServiceException(ApiError.ERROR_92011);
+            throw new ServiceException(ApiError.CUSTOMER_NOT_FOUND);
         }
         BatchResultDTO resultDTO = soReceiptService.disApprove(soReceiptEntity.getId());
         return resultDTO.getSuccess();

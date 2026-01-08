@@ -77,10 +77,14 @@ public class SampleAdjustmentDetailDTO implements Serializable {
         private String remark;
 
         /**
-        * 样品台账id
-        */
+         * 样品台账id
+         */
         private String sampleLedgerId;
 
+        /**
+         * 使用方
+         */
+        private String userSide;
 
     }
 

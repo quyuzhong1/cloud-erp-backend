@@ -14,7 +14,6 @@ import com.baomidou.mybatisplus.extension.conditions.update.LambdaUpdateChainWra
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.*;
 import com.common.business.enums.ApproveStatusEnum;
-import com.common.business.enums.QueryConditionEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
@@ -61,7 +60,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_WAREHOUSE_LOCATION;
@@ -261,6 +259,34 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
     }
 
     @Override
+    public List<WarehouseLocationDTO.LocationSelectDTO> searchByKeyword(String keyword) {
+        LambdaQueryWrapper<WarehouseLocationEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(WarehouseLocationEntity::getType, WarehouseLocationTypeEnum.LOCATION.getCode());
+        if (StringUtils.isNotBlank(keyword)) {
+            queryWrapper.like(WarehouseLocationEntity::getName, keyword);
+        }
+        List<WarehouseLocationEntity> warehouseLocationList = this.list(queryWrapper);
+        if(CollUtil.isEmpty(warehouseLocationList)) {
+            return Lists.newArrayList();
+        }
+        List<WarehouseLocationDTO.LocationSelectDTO> dataList = Lists.newArrayListWithExpectedSize(warehouseLocationList.size());
+        // 让空仓位排前面
+        warehouseLocationList = warehouseLocationList.stream().sorted(Comparator.comparing(WarehouseLocationEntity::getCode)).collect(Collectors.toList());
+        // 根据编码+名称去重
+        warehouseLocationList = warehouseLocationList.stream().collect(
+                Collectors.collectingAndThen(Collectors.toCollection(() -> new TreeSet<>(Comparator.comparing(
+                        o -> StrUtils.null2EmptyWithTrim(o.getCode()) + "-" + StrUtils.null2EmptyWithTrim(o.getName())))), ArrayList::new));
+
+        warehouseLocationList.stream().forEach(warehouseLocation->{
+            WarehouseLocationDTO.LocationSelectDTO data = new WarehouseLocationDTO.LocationSelectDTO();
+            data.setCode(warehouseLocation.getCode());
+            data.setName(warehouseLocation.getName());
+            dataList.add(data);
+        });
+        return dataList;
+    }
+
+    @Override
     public List<WarehouseLocationEntity> list(List<String> warehouseIds) {
         if(CollUtil.isEmpty(warehouseIds)) {
             return Lists.newArrayList();
@@ -439,7 +465,7 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
     public void updateArea(WarehouseAreaDTO.Update dto) {
         WarehouseLocationEntity oldWarehouseLocationEntity = getById(dto.getId());
         if (Objects.isNull(oldWarehouseLocationEntity)) {
-            throw new ServiceException(ApiError.WAREHOUSE_AREA_NOT_EXIST.msg);
+            throw new ServiceException(ApiError.WH_AREA_NOT_EXIST.getMsg());
         }
         existCode(dto.getCode(), dto.getId(), WarehouseLocationTypeEnum.AREA.getCode(), dto.getWarehouseId());
         existName(dto.getName(), dto.getId(), WarehouseLocationTypeEnum.AREA.getCode(), dto.getWarehouseId());
@@ -449,13 +475,13 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
                 .eq(WarehouseLocationEntity::getId, dto.getId());
         //所属仓库禁止修改。
         if (StringUtils.isNotBlank(dto.getWarehouseId()) && !dto.getWarehouseId().equals(oldWarehouseLocationEntity.getWarehouseId())) {
-            throw new ServiceException(ApiError.WAREHOUSE_NOT_EDIT.msg);
+            throw new ServiceException(ApiError.WH_WAREHOUSE_NOT_EDITABLE.getMsg());
         }
         //库区被使用后，库存类型禁止修改。
         if (StringUtils.isNotBlank(dto.getAreaType()) && !dto.getAreaType().equals(oldWarehouseLocationEntity.getAreaType())) {
             Integer count = checkAreaUsedOrNot(dto.getId());
             if (count > 0) {
-                throw new ServiceException(ApiError.WAREHOUSE_AREA_USED.msg);
+                throw new ServiceException(ApiError.WH_AREA_USED_STOCK_TYPE_NOT_EDIT.getMsg());
             }
             updateWrapper.set(WarehouseLocationEntity::getAreaType, dto.getAreaType());
         }
@@ -498,7 +524,7 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
         List<BatchResultDTO> resultDTOList=new ArrayList<>();
         for (WarehouseLocationEntity entity : list) {
             if (entity.getOccupyStatus()){
-                resultDTOList.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.POSITION_BINDING_EXIST.msg));
+                resultDTOList.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.WH_POSITION_BINDING_EXIST.getMsg()));
                 continue;
             }
             removeList.add(entity);
@@ -523,7 +549,7 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
             );
             if (!CollectionUtils.isEmpty(occupyStatusAreas)) {
                 String occupyStatusArea = occupyStatusAreas.stream().map(WarehouseLocationEntity::getCode).collect(Collectors.joining(","));
-                throw new ServiceException(ApiError.POSITION_BINDING_EXIST, occupyStatusArea);
+                throw new ServiceException(ApiError.WH_POSITION_BINDING_EXIST, occupyStatusArea);
             }
         }
         update(Wrappers.<WarehouseLocationEntity>lambdaUpdate()
@@ -673,7 +699,7 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
         try {
             EasyExcel.read(file.getInputStream(), listener).sheet(0).doRead();
         } catch (IOException e) {
-            throw new ServiceException(ApiError.ERROR_95124);
+            throw new ServiceException(ApiError.FILE_DATA_IMPORT_FAILED);
         }
 
         List<WarehouseLocationExcelDto> errorList = listener.getErrorList();
@@ -685,7 +711,7 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
         for (WarehouseLocationExcelDto row : verifyList) {
             String warehouseId = warehouseName2IdMap.get(row.getWarehouseName());
             if(warehouseId == null){
-                row.setErrorMsg(ApiError.WAREHOUSE_NOT_EXIST_NO_PERMISSION.msg);
+                row.setErrorMsg(ApiError.WH_NOT_EXIST_OR_NO_PERMISSION.getMsg());
                 errorList.add(row);
                 continue;
             }
@@ -920,7 +946,7 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
                 .eq(WarehouseLocationEntity::getWarehouseId,warehouseId)
                 .ne(CharSequenceUtil.isNotBlank(id), WarehouseLocationEntity::getId, id));
         if (count > 0) {
-            throw new ServiceException(ApiError.WAREHOUSE_AREA_EXIST, "编码", code);
+            throw new ServiceException(ApiError.WH_AREA_EXIST, "编码", code);
         }
     }
 
@@ -931,7 +957,7 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
                 .eq(WarehouseLocationEntity::getWarehouseId, warehouseId)
                 .ne(CharSequenceUtil.isNotBlank(id), WarehouseLocationEntity::getId, id));
         if (count > 0) {
-            throw new ServiceException(ApiError.WAREHOUSE_AREA_EXIST, "名称", name);
+            throw new ServiceException(ApiError.WH_AREA_EXIST, "名称", name);
         }
     }
 

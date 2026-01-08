@@ -66,7 +66,7 @@ public class QcProductServiceImpl extends SuperServiceImpl<QcProductMapper, QcPr
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public void add(String billId, QcProductDTO.AddDTO qcProduct,String skuId) {
         if(CharSequenceUtil.isBlank(skuId)){
-            throw new ServiceException(ApiError.ERROR_95107);
+            throw new ServiceException(ApiError.PRODUCT_SKU_NOT_FOUND);
         }
         QcProductEntity qcProductEntity = new QcProductEntity();
         BeanMapper.copy(qcProduct, qcProductEntity);

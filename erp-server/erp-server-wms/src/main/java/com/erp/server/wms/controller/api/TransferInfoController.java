@@ -127,14 +127,14 @@ public class TransferInfoController extends BaseController {
             String id = transferInfoService.add(dto);
             entity = transferInfoService.getById(id);
             if (ObjUtil.isNull(entity)) {
-                throw new ServiceException(ApiError.NOT_EXIST_BILL,"直接调拨单");
+                throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE,"直接调拨单");
             }
         } catch (ServiceException e) {
             log.error("新增失败，dto: {}", dto, e);
             return failure(e.getMessage(),new BaseResultDTO.AddAndSubmmitDTO("","",Boolean.FALSE));
         } catch (Exception e) {
             log.error("新增失败，dto: {}", dto, e);
-            return  failure(ApiError.ERROR_1019.msg, new BaseResultDTO.AddAndSubmmitDTO("","",Boolean.FALSE));
+            return  failure(ApiError.BILL_SAVE_FAILED.getMsg(), new BaseResultDTO.AddAndSubmmitDTO("","",Boolean.FALSE));
         }
 
         //提审
@@ -145,7 +145,7 @@ public class TransferInfoController extends BaseController {
             return failure(e.getMessage(),new BaseResultDTO.AddAndSubmmitDTO(entity.getId(),entity.getCode(),Boolean.TRUE));
         } catch (Exception e) {
             log.error("提交审批失败，ID: {}", entity.getId(), e);
-            return failure(ApiError.RETRY_SUBMIT_ERROR.msg,new BaseResultDTO.AddAndSubmmitDTO(entity.getId(),entity.getCode(),Boolean.TRUE));
+            return failure(ApiError.BILL_APPROVE_SUBMIT_RETRY.getMsg(),new BaseResultDTO.AddAndSubmmitDTO(entity.getId(),entity.getCode(),Boolean.TRUE));
         }
 
         return success(new BaseResultDTO.AddAndSubmmitDTO(entity.getId(), entity.getCode(),Boolean.TRUE));
@@ -192,13 +192,13 @@ public class TransferInfoController extends BaseController {
             return failure(e.getMessage(), new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.FALSE));
         } catch (Exception e) {
             log.error("更新失败，dto: {}", dto, e);
-            return failure(ApiError.ERROR_1020.msg,new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.FALSE));
+            return failure(ApiError.BILL_UPDATE_FAILED.getMsg(),new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.FALSE));
         }
         //提审
         try {
             TransferInfoEntity entity = transferInfoService.getById(dto.getId());
             if (ObjUtil.isEmpty(entity)) {
-                throw new ServiceException(ApiError.ERROR_99047);
+                throw new ServiceException(ApiError.WH_TRANSFER_DIRECT_NOT_FOUND);
             }
             //提交
             BatchResultDTO submit = transferInfoService.submit(entity, Boolean.TRUE);
@@ -207,7 +207,7 @@ public class TransferInfoController extends BaseController {
             return failure( e.getMessage(),new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.TRUE));
         } catch (Exception e) {
             log.error("提交审批失败，ID: {}", dto.getId(), e);
-            return failure(ApiError.RETRY_SUBMIT_ERROR.msg,new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.TRUE));
+            return failure(ApiError.BILL_APPROVE_SUBMIT_RETRY.getMsg(),new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.TRUE));
         }
         return success(new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.TRUE));
     }

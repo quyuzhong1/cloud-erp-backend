@@ -52,7 +52,7 @@ public class TransferInApproveHandler extends AbstractApproveHandler {
     public Boolean disApprove(ApproveDTO.DisApproveDTO dto) {
         TransferInEntity entity = transferInService.getById(dto.getId());
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_99066);
+            throw new ServiceException(ApiError.WH_TRANSFER_INBOUND_NOT_FOUND);
         }
         BatchResultDTO resultDTO = transferInService.disApprove(entity);
         return resultDTO.getSuccess();
@@ -64,14 +64,14 @@ public class TransferInApproveHandler extends AbstractApproveHandler {
         //调入单
         TransferInEntity entity = transferInService.getById(dto.getBusinessId());
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_99066);
+            throw new ServiceException(ApiError.WH_TRANSFER_INBOUND_NOT_FOUND);
         }
         ApproveOneDTO approveOneDTO = new ApproveOneDTO();
         approveOneDTO.setType(dto.getApproveStatus().getStatus());
         approveOneDTO.setComment(dto.getComment());
         Boolean approve = transferInService.approveEnd(approveOneDTO, entity);
         if (Boolean.FALSE.equals(approve)) {
-            throw new ServiceException(ApiError.ERROR_BILL_APPROVE, SourceTypeEnum.getName(dto.getBusinessKey()));
+            throw new ServiceException(ApiError.BILL_APPROVE_FAILED, SourceTypeEnum.getName(dto.getBusinessKey()));
         }
         //非erp审核添加日志
         if (ApprovePlatformEnum.ERP.equals(dto.getApprovePlatformEnum())) {

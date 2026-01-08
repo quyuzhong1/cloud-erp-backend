@@ -83,7 +83,7 @@ public class PurchaseSkuOrgRefServiceImpl extends SuperServiceImpl<PurchaseSkuOr
     @Override
     public Boolean update(PurchaseSkuOrgRefDTO.UpdateDTO addOrUpdateDTO) {
         PurchaseSkuOrgRefEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "SKU与采购组织关系"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "SKU与采购组织关系"));
         PurchaseSkuOrgRefEntity purchaseSkuOrgRefEntity =  BeanMapperUtils.map(PurchaseSkuOrgRefEntity.class, addOrUpdateDTO);
 
         // 数据处理

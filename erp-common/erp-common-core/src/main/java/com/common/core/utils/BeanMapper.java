@@ -81,7 +81,7 @@ public class BeanMapper {
             }
             return target;
         } catch (IllegalAccessException e) {
-            throw new ServiceException(ApiError.ERROR_COPY_NOTNULL_ERROR,e.getMessage());
+            throw new ServiceException(ApiError.COMMON_COPY_FAILED,e.getMessage());
         }
     }
 

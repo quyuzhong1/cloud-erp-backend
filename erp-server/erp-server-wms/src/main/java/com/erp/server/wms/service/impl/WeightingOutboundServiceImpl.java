@@ -90,7 +90,7 @@ public class WeightingOutboundServiceImpl implements WeightingOutboundService {
         }
         SoB2cEntity soB2cEntity = soB2cFeign.getById(sourceId);
         if(ObjectUtil.isEmpty(soB2cEntity)) {
-            throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
+            throw new ServiceException(ApiError.SO_B2C_NOT_FOUND);
         }
 
         //验证订单平台是否取消
@@ -118,10 +118,10 @@ public class WeightingOutboundServiceImpl implements WeightingOutboundService {
         }*/
 
         if (soB2cEntity.getIsIntercept()) {
-            throw new ServiceException(ApiError.LOGISTICS_INTERCEPT_NOT_PACKAGE);
+            throw new ServiceException(ApiError.LOGISTICS_ORDER_INTERCEPTED_NOT_PACKAGE);
         }
         if (soB2cEntity.getInvalidStatus()) {
-            throw new ServiceException(ApiError.INVALID_NOT_PACKAGE);
+            throw new ServiceException(ApiError.LOGISTICS_ORDER_VOIDED_NOT_PACKAGE);
         }
 
         //查询订单物流信息获取跟踪号
@@ -186,7 +186,7 @@ public class WeightingOutboundServiceImpl implements WeightingOutboundService {
 
             if (SoB2cDeliveryStatusEnum.EXCEPTION_ORDER.getCode().equals(entity.getStatus())
                     || SoB2cDeliveryStatusEnum.WAIT_HANDLE.getCode().equals(entity.getStatus())){
-                throw new ServiceException(ApiError.ERROR_99114);
+                throw new ServiceException(ApiError.SO_ABNORMAL_ORDER_AUTO_DELIVERY_FORBIDDEN);
             }
             //如果是待上传或上传失败则直接返回
             if (CharSequenceUtil.equals(soB2cEntity.getTransferStatus(),TransferStatusEnum.WAIT.getCode()) || CharSequenceUtil.equals(declareDetailEntity.getOrderUploadStatus(),TransferDeclareUploadStatusEnum.WAIT_UPLOAD.getCode()) ||
@@ -252,7 +252,7 @@ public class WeightingOutboundServiceImpl implements WeightingOutboundService {
         }
         SoB2cEntity soB2cEntity = soB2cFeign.getById(entity.getSourceId());
         if(ObjectUtil.isEmpty(soB2cEntity)) {
-            throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
+            throw new ServiceException(ApiError.SO_B2C_NOT_FOUND);
         }
         entity.setIsWeigh(false);
         entity.setWeightUnit(UnitEnum.WeightUnitEnum.G.getCode());

@@ -70,7 +70,7 @@ public class VirtualInventoryTransCoreServiceImpl implements VirtualInventoryTra
 
     @Resource
     private VirtualTransFlowService virtualTransFlowService;
-    
+
     @Resource
     private CfgSettingService cfgSettingService;
 

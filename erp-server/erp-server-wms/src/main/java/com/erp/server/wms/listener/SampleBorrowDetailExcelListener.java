@@ -3,7 +3,6 @@ package com.erp.server.wms.listener;
 import cn.hutool.core.collection.CollUtil;
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
-import com.common.business.dto.FindUserDTO;
 import com.common.core.enums.ApiError;
 import com.common.core.utils.FieldValidUtil;
 import com.erp.model.plm.vo.SkuVO;
@@ -16,7 +15,6 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 /**
@@ -106,11 +104,11 @@ public class SampleBorrowDetailExcelListener extends AnalysisEventListener<Sampl
             dto.setChildId(id);
             List<SampleLedgerDTO.SkuAvailableQtyDTO> skuAvailableQtyDTOS = sampleLedgerService.listLedgerByUserId(dto);
             if(CollUtil.isEmpty(skuAvailableQtyDTOS)){
-                errorMsgList.add(ApiError.ERROR_SAMPLE_LEDGER_NOT_EXIST.msg);
+                errorMsgList.add(ApiError.SAMPLE_LEDGER_NOT_EXIST.getMsg());
             }else {
                 SampleLedgerDTO.SkuAvailableQtyDTO skuAvailableQtyDTO = skuAvailableQtyDTOS.stream().filter(e -> e.getSkuId().equals(addDTO.getSkuId()) && e.getUseUserName().equals(useUserName)).findFirst().orElse(null);
                 if(Objects.isNull(skuAvailableQtyDTO)){
-                    errorMsgList.add(ApiError.ERROR_SAMPLE_LEDGER_NOT_EXIST.msg);
+                    errorMsgList.add(ApiError.SAMPLE_LEDGER_NOT_EXIST.getMsg());
                 }else {
                     addDTO.setSampleLedgerId(skuAvailableQtyDTO.getSampleLedgerId());
                     addDTO.setAvailableQty(skuAvailableQtyDTO.getAvailableQty());

@@ -124,7 +124,7 @@ public class BiDataSourceCustomServiceImpl extends ServiceImpl<BiDataSourceCusto
             String fileName = biOrderInfoService.getFileName("自助数据表导出")+ ".xlsx";
             ExcelUtil.easyUtil(headList,head,list,fileName, response);
         } catch (IOException e) {
-            throw new ServiceException(ApiError.DEFAULT);
+            throw new ServiceException(ApiError.HTTP_UNKNOWN);
         }
         return false;
     }

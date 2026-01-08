@@ -1,7 +1,5 @@
 package com.erp.server.oms.service.impl;
 
-import cn.hutool.core.util.StrUtil;
-import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -13,20 +11,17 @@ import com.common.business.enums.ModuleOperateLogFieldTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.utils.OperationLogUtil;
-import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.constant.EnumMessage;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.EnumsUtil;
-import com.erp.model.oms.dto.CustomerCreditApplyDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.dto.OperateLogDTO;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.dto.DictCountryDTO;
 import com.erp.model.sys.entity.DictCityEntity;
 import com.erp.model.sys.entity.SysDepartmentEntity;
-import com.erp.model.wms.entity.OverseasTransferWarehouseEntity;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.oms.mapper.OperateLogMapper;
 import com.erp.server.oms.service.*;
@@ -592,7 +587,7 @@ public class OperateLogServiceImpl extends SuperServiceImpl<OperateLogMapper, Op
      */
     private Pair<String,String> setEnumValue (CfgOperateLogFieldEntity fieldEntity, Pair<String, String> valuePair) {
         if (StringUtils.isBlank(fieldEntity.getEnumClass())) {
-            throw new ServiceException(ApiError.ERROR_9028);
+            throw new ServiceException(ApiError.COMMON_ENUM_CONVERT_FAILED);
         }
         String  oldValue = "";
         String  newValue = "";
@@ -600,11 +595,11 @@ public class OperateLogServiceImpl extends SuperServiceImpl<OperateLogMapper, Op
         try {
             aClass = Class.forName(fieldEntity.getEnumClass());
         } catch (ClassNotFoundException e) {
-            throw new ServiceException(ApiError.ERROR_9028);
+            throw new ServiceException(ApiError.COMMON_ENUM_CONVERT_FAILED);
         }
         boolean anEnum = aClass.isEnum();
         if (!anEnum) {
-            throw new ServiceException(ApiError.ERROR_9028);
+            throw new ServiceException(ApiError.COMMON_ENUM_CONVERT_FAILED);
         }
         if (StringUtils.isNotBlank(valuePair.getKey())) {
             EnumMessage enumObject = EnumsUtil.getEnumObject(valuePair.getKey(), aClass);

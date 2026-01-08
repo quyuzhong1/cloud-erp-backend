@@ -20,10 +20,8 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.scm.dto.AttachmentDTO;
-import com.erp.model.scm.dto.DictBasicDTO;
 import com.erp.model.scm.dto.SupplierCredentialDTO;
 import com.erp.model.scm.entity.*;
-import com.erp.model.scm.enums.DictBasicEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.scm.enums.SupplierCredentialStatusEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
@@ -482,7 +480,7 @@ public class SupplierCredentialServiceImpl extends SuperServiceImpl<SupplierCred
             List<SupplierCredentialDTO.AddDTO> list = credentialList.stream().filter(c -> c.getEffectiveDate() != null && c.getExpireDate() != null).collect(Collectors.toList());
             long count = list.stream().filter(c -> c.getExpireDate().compareTo(c.getEffectiveDate()) < 0).count();
             if (count > 0) {
-                throw new ServiceException(ApiError.ERROR_98037);
+                throw new ServiceException(ApiError.SUPPLIER_QUALIFICATION_DATE_INVALID);
             }
         }
     }
@@ -500,7 +498,7 @@ public class SupplierCredentialServiceImpl extends SuperServiceImpl<SupplierCred
             LocalDate effectiveDate = supplierCredentialEntity.getEffectiveDate();
             LocalDate expireDate = supplierCredentialEntity.getExpireDate();
             if(Objects.nonNull(effectiveDate) && Objects.nonNull(expireDate) && expireDate.compareTo(effectiveDate) < 0){
-                throw new ServiceException(ApiError.ERROR_98037);
+                throw new ServiceException(ApiError.SUPPLIER_QUALIFICATION_DATE_INVALID);
             }
         }
     }

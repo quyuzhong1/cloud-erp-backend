@@ -22,7 +22,6 @@ import com.erp.model.tms.entity.CfgReconciliationFieldEntity;
 import com.erp.model.tms.entity.DictBasicEntity;
 import com.erp.model.tms.entity.TmsCfgCostEntity;
 import com.erp.model.tms.entity.TmsCostDetailEntity;
-import com.erp.model.tms.enums.AllocationFeeTypeEnum;
 import com.erp.model.tms.enums.DictBasicEnum;
 import com.erp.server.tms.mapper.TmsCfgCostMapper;
 import com.erp.server.tms.service.CfgReconciliationFieldService;
@@ -92,7 +91,7 @@ public class TmsCfgCostServiceImpl extends SuperServiceImpl<TmsCfgCostMapper, Tm
     @Override
     public Boolean update(TmsCfgCostDTO.UpdateDTO updateDTO) {
         TmsCfgCostEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "费用管理配置单"));
+        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "费用管理配置单"));
         TmsCfgCostEntity tmsCfgCostEntity =  BeanMapperUtils.map(TmsCfgCostEntity.class, updateDTO);
         if (!old.getIsAllocate().equals(updateDTO.getIsAllocate())){
             throw new ServiceException("分摊状态不能修改");
@@ -197,7 +196,7 @@ public class TmsCfgCostServiceImpl extends SuperServiceImpl<TmsCfgCostMapper, Tm
     private void checkData(TmsCfgCostEntity tmsCfgCostEntity) {
         TmsCfgCostEntity old = getByCostName(tmsCfgCostEntity);
         if (ObjUtil.isNotEmpty(old) && !CharSequenceUtil.equals(tmsCfgCostEntity.getId(),old.getId())) {
-            throw new ServiceException(ApiError.ERROR_CFG_COST_EXIST,tmsCfgCostEntity.getCostName());
+            throw new ServiceException(ApiError.LOGISTICS_COST_NAME_ALREADY_EXISTS,tmsCfgCostEntity.getCostName());
         }
     }
 

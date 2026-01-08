@@ -7,7 +7,6 @@ import com.common.business.dto.base.BaseDTO;
 import com.common.business.enums.DisabledEnum;
 import com.common.business.enums.FileTaskStatusEnum;
 import com.common.core.enums.ApiError;
-import com.common.core.exception.ServiceException;
 import com.common.core.utils.FieldValidUtil;
 import com.erp.model.plm.dto.excel.CfgMoldAlertImportExcelDTO;
 import com.erp.model.plm.entity.MoldInfoEntity;
@@ -22,10 +21,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author jack
@@ -48,6 +45,8 @@ public class CfgMoldAlertExcelListener extends AnalysisEventListener<CfgMoldAler
     //模具
     private Map<String, MoldInfoEntity> moldInfoMap;
 
+    private Map<String, String> cfgMoldAlertRuleMap;
+
     private final CfgMoldAlertRuleService cfgMoldAlertRuleService = SpringUtil.getBean(CfgMoldAlertRuleService.class);
 
     private final DownloadTaskFeign downloadTaskFeign = SpringUtil.getBean(DownloadTaskFeign.class);
@@ -64,11 +63,13 @@ public class CfgMoldAlertExcelListener extends AnalysisEventListener<CfgMoldAler
     public CfgMoldAlertExcelListener(String taskId,
                                      String importType,
                                      Integer importCount,
-                                     Map<String, MoldInfoEntity> moldInfoMap) {
+                                     Map<String, MoldInfoEntity> moldInfoMap,
+                                     Map<String, String>  cfgMoldAlertRuleMap) {
         this.taskId = taskId;
         this.importType = importType;
         this.importCount = importCount;
-        this.moldInfoMap = moldInfoMap;;
+        this.moldInfoMap = moldInfoMap;
+        this.cfgMoldAlertRuleMap = cfgMoldAlertRuleMap;
     }
 
     private final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
@@ -162,7 +163,7 @@ public class CfgMoldAlertExcelListener extends AnalysisEventListener<CfgMoldAler
 
         //结束日期不能小于开始日期
         if (Objects.nonNull(excelDTO.getEndDate()) && Objects.nonNull(excelDTO.getStartDate()) && excelDTO.getEndDate().isBefore(excelDTO.getStartDate())) {
-            errorMsgList.add(ApiError.ERROR_92008.msg);
+            errorMsgList.add(ApiError.COMMON_DATE_RANGE_INVALID.getMsg());
         }
 
         //预警数量和预警比例 不能同时为空
@@ -173,13 +174,28 @@ public class CfgMoldAlertExcelListener extends AnalysisEventListener<CfgMoldAler
         //校验寿命数量必须大于预警寿命（数量）
         if(Objects.nonNull(excelDTO.getAlertLifeQty()) && Objects.nonNull(excelDTO.getLifeQty())){
             if(excelDTO.getLifeQty() < excelDTO.getAlertLifeQty()){
-                errorMsgList.add(ApiError.ERROR_95302.msg);
+                errorMsgList.add(ApiError.MOULD_LIFESPAN_TOO_SMALL.getMsg());
             }
         }
 
         //预警寿命百分比在0-100
         if(Objects.nonNull(excelDTO.getAlertLifeRate()) && (excelDTO.getAlertLifeRate().compareTo(BigDecimal.ZERO) < 0 || excelDTO.getAlertLifeRate().compareTo(new BigDecimal(100)) > 0)){
             errorMsgList.add("预警寿命（%）取值范围0-100");
+        }
+
+        //通知类型
+        String noticeTypeName = excelDTO.getNoticeTypeName().replaceAll("\\s*", "");
+        if(StringUtils.isNotBlank(noticeTypeName)){
+            //noticeTypeName 去除所有空格、空字符串、回车、换行符
+            String noticeType = Arrays.stream(noticeTypeName.split(","))
+                    .map(cfgMoldAlertRuleMap::get)
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.joining(","));
+            if(StringUtils.isNotBlank(noticeType)){
+                excelDTO.setNoticeTypeList(Arrays.asList(noticeType.split(",")));
+            }else {
+                errorMsgList.add("通知类型不存在");
+            }
         }
 
         //存在错误数据则直接返回

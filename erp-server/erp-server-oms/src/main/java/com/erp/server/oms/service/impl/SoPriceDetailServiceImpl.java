@@ -107,7 +107,7 @@ public class SoPriceDetailServiceImpl extends SuperServiceImpl<SoPriceDetailMapp
 
        SoPriceEntity soPriceEntity = priceService.getById(soPriceId);
         if (com.baomidou.mybatisplus.core.toolkit.ObjectUtils.isEmpty(soPriceEntity)) {
-            throw new ServiceException(ApiError.ERROR_98024);
+            throw new ServiceException(ApiError.PURCHASE_PRICE_LIST_NOT_FOUND);
         }
         //验证时间
         checkSoPriceDetail(soPriceEntity.getCustomerId(),soPriceEntity.getSoOrgId(),addList);
@@ -152,11 +152,11 @@ public class SoPriceDetailServiceImpl extends SuperServiceImpl<SoPriceDetailMapp
             SoPriceDetailEntity entity = list.get(i);
             //检验失效时间需要大于生效时间
             if (entity.getExpireDate().isBefore(entity.getEffectiveDate())) {
-                throw new ServiceException(ApiError.ERROR_SO_PRICE_DATE,entity.getSkuNo());
+                throw new ServiceException(ApiError.SO_PRICE_EXPIRE_BEFORE_EFFECTIVE,entity.getSkuNo());
             }
             //校验区间到需要大于区间从
             if (entity.getMaxQty().compareTo(entity.getMinQty()) <= MathUtil.ZERO) {
-                throw new ServiceException(ApiError.ERROR_SO_PRICE_INTERVAL_SIZE,entity.getSkuNo());
+                throw new ServiceException(ApiError.SO_PRICE_INTERVAL_INVALID,entity.getSkuNo());
             }
             //校验录入数据是否存在时间重叠
             for (int j = 0;j < list.size();j++) {
@@ -192,7 +192,7 @@ public class SoPriceDetailServiceImpl extends SuperServiceImpl<SoPriceDetailMapp
             //时间不能重叠
             boolean overlap = LocalDateUtil.isOverlap(entity.getEffectiveDate(), entity.getExpireDate(), detailEntity.getEffectiveDate(), detailEntity.getExpireDate());
             if (overlap) {
-                throw new ServiceException(ApiError.ERROR_SO_PRICE_DATE_OVERLAP,entity.getSkuNo());
+                throw new ServiceException(ApiError.SO_PRICE_DATE_RANGE_OVERLAP,entity.getSkuNo());
             }
         }
         //时间重叠时
@@ -201,7 +201,7 @@ public class SoPriceDetailServiceImpl extends SuperServiceImpl<SoPriceDetailMapp
             //区间不能重叠
             if (entity.getMinQty().compareTo(detailEntity.getMaxQty()) < MathUtil.ZERO
                     && detailEntity.getMinQty().compareTo(entity.getMaxQty()) < MathUtil.ZERO ) {
-                throw new ServiceException(ApiError.ERROR_INTERVAL_CUSTOMER_OVERLAP);
+                throw new ServiceException(ApiError.CUSTOMER_SKU_INTERVAL_OVERLAP);
             }
         }
     }
@@ -237,7 +237,7 @@ public class SoPriceDetailServiceImpl extends SuperServiceImpl<SoPriceDetailMapp
         SoPriceChangeDTO.ViewDTO viewDTO = new SoPriceChangeDTO.ViewDTO();
         List<SoPriceDetailDTO.ViewDTO> viewList = this.listBySoPriceDetailIds(soPriceDetailIds);
         if (CollectionUtils.isEmpty(viewList)) {
-            throw new ServiceException(ApiError.ERROR_NOT_FOUND_SO_PRICE_DETAIL);
+            throw new ServiceException(ApiError.SO_PRICE_DETAIL_NOT_FOUND);
         }
 
         //查询价目信息
@@ -248,7 +248,7 @@ public class SoPriceDetailServiceImpl extends SuperServiceImpl<SoPriceDetailMapp
         for (SoPriceEntity SoPriceEntity : soPriceEntities) {
             String approveStatus = SoPriceEntity.getApproveStatus().getStatus();
             if (!approveStatus.equals(ApproveStatusEnum.APPROVE.getStatus())) {
-                throw new ServiceException(ApiError.ERROR_98029);
+                throw new ServiceException(ApiError.PURCHASE_PRICE_CHANGE_ALLOWED_APPROVED_ONLY);
             }
         }
 
@@ -287,7 +287,7 @@ public class SoPriceDetailServiceImpl extends SuperServiceImpl<SoPriceDetailMapp
             //销售价目信息
             SoPriceEntity soPriceEntity = soPriceEntities.stream().filter(req -> item.getMainId().equals(req.getId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(soPriceEntity)) {
-                throw new ServiceException(ApiError.ERROR_98024);
+                throw new ServiceException(ApiError.PURCHASE_PRICE_LIST_NOT_FOUND);
             }
 
             //供应商名称
@@ -398,7 +398,7 @@ public class SoPriceDetailServiceImpl extends SuperServiceImpl<SoPriceDetailMapp
 
        SoPriceEntity soPriceEntity = priceService.getById(soPriceId);
         if (com.baomidou.mybatisplus.core.toolkit.ObjectUtils.isEmpty(soPriceEntity)) {
-            throw new ServiceException(ApiError.ERROR_98024);
+            throw new ServiceException(ApiError.PURCHASE_PRICE_LIST_NOT_FOUND);
         }
         for (SoPriceDetailDTO.UpdateDTO item : soPriceDetailList) {
             SoPriceDetailEntity entity = new SoPriceDetailEntity();
@@ -477,7 +477,7 @@ public class SoPriceDetailServiceImpl extends SuperServiceImpl<SoPriceDetailMapp
             wb.close();
         } catch (Exception e) {
             log.error("warehouse downloadTemplate  出错了 e==", e);
-            throw new ServiceException(ApiError.ERROR_95131);
+            throw new ServiceException(ApiError.FILE_IMPORT_TEMPLATE_DOWNLOAD_FAILED);
         }
 
     }
@@ -498,12 +498,12 @@ public class SoPriceDetailServiceImpl extends SuperServiceImpl<SoPriceDetailMapp
             EasyExcel.read(excelFile.getInputStream(), SoPriceDetailImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (Exception e) {
             log.error("导入错误！", e);
-            throw new ServiceException(ApiError.ERROR_95124);
+            throw new ServiceException(ApiError.FILE_DATA_IMPORT_FAILED);
         }
         //验证导入数据是否为空
         List<SoPriceDetailImportExcelDTO> excelDateList = excelListenerUtil.getAllList();
         if (CollectionUtils.isEmpty(excelDateList)) {
-            throw new ServiceException(ApiError.ERROR_95123);
+            throw new ServiceException(ApiError.FILE_DATA_REQUIRED);
         }
 
         SoPriceDetailDTO.ImportDTO result = new SoPriceDetailDTO.ImportDTO();
@@ -590,7 +590,7 @@ public class SoPriceDetailServiceImpl extends SuperServiceImpl<SoPriceDetailMapp
         Boolean disabled = dto.getDisabled();
         long count = detailList.stream().filter(d -> !d.getDisabled() == disabled).count();
         if (count != detailList.size()) {
-            throw new ServiceException(ApiError.ERROR_98027);
+            throw new ServiceException(ApiError.COMMON_INCONSISTENT_DISABLE_STATUS);
         }
         detailList.forEach(d -> d.setDisabled(disabled));
 
@@ -753,7 +753,7 @@ public class SoPriceDetailServiceImpl extends SuperServiceImpl<SoPriceDetailMapp
 
         List<ProductDetailEntity> skuList = plmTaskFeign.getByIdList(Arrays.asList(dto.getSkuId()));
         if (CollectionUtils.isEmpty(skuList)) {
-            throw new ServiceException(ApiError.ERROR_95084);
+            throw new ServiceException(ApiError.PRODUCT_INFO_NOT_FOUND);
         }
 
         //销售价目表

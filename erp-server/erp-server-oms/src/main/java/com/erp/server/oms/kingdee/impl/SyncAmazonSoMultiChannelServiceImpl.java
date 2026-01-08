@@ -133,7 +133,7 @@ public class SyncAmazonSoMultiChannelServiceImpl implements SyncAmazonSoMultiCha
         if (Objects.isNull(soB2cEntity)) {
             throw new ServiceException("未找到销售订单【{}】信息", entity.getSoCode());
         }
-        List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cDetailService.listByMainId(soId);
+//        List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cDetailService.listByMainId(soId);
         List<SoMultiChannelDetailEntity> detailList = soMultiChannelDetailService.listByMainIds(Collections.singletonList(entity.getId()));
         if (CollectionUtils.isEmpty(detailList)) {
             throw new ServiceException("未找到多渠道订单【{}】明细信息", entity.getCode());
@@ -187,10 +187,12 @@ public class SyncAmazonSoMultiChannelServiceImpl implements SyncAmazonSoMultiCha
         addressMap.put("addressLine3", receiverInfo.getAddress3());
         addressMap.put("city", receiverInfo.getCity());
         addressMap.put("districtOrCounty", receiverInfo.getDistrict());
-        if (CharSequenceUtil.isBlank(receiverInfo.getProvince())) {
-            throw new ServiceException("收货人州省不能为空");
+//        if (CharSequenceUtil.isBlank(receiverInfo.getProvince())) {
+//            throw new ServiceException("收货人州省不能为空");
+//        }
+        if (CharSequenceUtil.isNotBlank(receiverInfo.getProvince())){
+            addressMap.put("stateOrRegion", receiverInfo.getProvince());
         }
-        addressMap.put("stateOrRegion", receiverInfo.getProvince());
         if (CharSequenceUtil.isBlank(receiverInfo.getZipCode())) {
             throw new ServiceException("收货人邮编不能为空");
         }
@@ -211,12 +213,12 @@ public class SyncAmazonSoMultiChannelServiceImpl implements SyncAmazonSoMultiCha
             itemMap.put("sellerFulfillmentOrderItemId", detail.getSoDetailId());
             itemMap.put("quantity", detail.getQty());
             itemMap.put("fulfillmentNetworkSku", detail.getFnSku());
-            soB2cDetailEntityList.stream().filter(e -> CharSequenceUtil.isNotBlank(detail.getSoDetailId()) && detail.getSoDetailId().equals(e.getId())).findFirst().ifPresent(e -> {
-                HashMap<String, Object> perUnitDeclaredValue = new HashMap<>();
-                perUnitDeclaredValue.put("currencyCode", e.getCurrency());
-                perUnitDeclaredValue.put("value", e.getPrice().toString());
-                itemMap.put("perUnitDeclaredValue", perUnitDeclaredValue);
-            });
+//            soB2cDetailEntityList.stream().filter(e -> CharSequenceUtil.isNotBlank(detail.getSoDetailId()) && detail.getSoDetailId().equals(e.getId())).findFirst().ifPresent(e -> {
+//                HashMap<String, Object> perUnitDeclaredValue = new HashMap<>();
+//                perUnitDeclaredValue.put("currencyCode", e.getCurrency());
+//                perUnitDeclaredValue.put("value", e.getPrice().toString());
+//                itemMap.put("perUnitDeclaredValue", perUnitDeclaredValue);
+//            });
             itemList.add(itemMap);
         }
         resultMap.put("items", itemList);

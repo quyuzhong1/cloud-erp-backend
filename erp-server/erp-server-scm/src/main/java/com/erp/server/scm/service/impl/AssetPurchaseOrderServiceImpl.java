@@ -11,7 +11,6 @@ import com.common.business.dto.FindUserDTO;
 import com.common.business.enums.*;
 import com.common.business.utils.JasperHelperUtil;
 import com.common.business.utils.PdfUtil;
-import com.common.business.utils.StringUtil;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 import cn.hutool.core.util.StrUtil;
@@ -24,7 +23,6 @@ import com.erp.model.plm.entity.MoldInfoEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.enums.MoldInfoTagEnum;
 import com.erp.model.plm.vo.SkuVO;
-import com.erp.model.scm.dto.excel.AssetNoticeImportExcelDTO;
 import com.erp.model.scm.dto.excel.AssetPurchaseOrderImportExcelDTO;
 
 import java.io.ByteArrayInputStream;
@@ -71,7 +69,6 @@ import org.apache.commons.math3.util.Pair;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
@@ -220,10 +217,10 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
     @Override
     public Boolean update(AssetPurchaseOrderDTO.UpdateDTO addOrUpdateDTO) {
         AssetPurchaseOrderEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, ""));
+        old = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, ""));
         // 待提交和审核不通过允许修改
         if (!ApproveStatusEnum.allowUpdateStatus(old.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_1029);
+            throw new ServiceException(ApiError.BILL_UPDATE_STATUS_NOT_ALLOWED);
         }
         AssetPurchaseOrderSupplierEntity assetPurchaseOrderSupplierEntity = new AssetPurchaseOrderSupplierEntity();
         AssetPurchaseOrderEntity assetPurchaseOrderEntity = BeanMapperUtils.map(AssetPurchaseOrderEntity.class, addOrUpdateDTO);
@@ -376,12 +373,12 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
     public BatchResultDTO approve(ApproveOneDTO dto) {
         ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(dto.getType());
         if (Objects.equals(approveType, ApproveTypeEnum.REJECT) && StrUtils.isEmpty(dto.getComment())) {
-            throw new ServiceException(ApiError.REJECT_COMMENT_NOT_EMPTY);
+            throw new ServiceException(ApiError.WF_REJECT_COMMENT_REQUIRED);
         }
         AssetPurchaseOrderEntity entity = getById(dto.getId());
         // 审核中的数据允许审核
         if(!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING.getCode())) {
-            throw new ServiceException(ApiError.ERROR_98006);
+            throw new ServiceException(ApiError.WF_APPROVE_ALLOWED_STATUS_ONLY);
         }
 
         // 调用流程审核
@@ -410,7 +407,7 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
         ApiResult<ProcessManagementDTO.ApproveResultDTO> approveResult = workflowFeign.approve(approveDTO);
         Integer code = approveResult.getCode();
         if (200 != code) {
-            throw new ServiceException(ApiError.ERROR_94006);
+            throw new ServiceException(ApiError.WF_APPROVE_FAILED);
         }
         ProcessManagementDTO.ApproveResultDTO data = approveResult.getData();
         if (ObjectUtil.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()) {
@@ -443,7 +440,7 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
     private Boolean validateDisApprove(AssetPurchaseOrderEntity entity) {
         // 已审核支持反审核
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus())) {
-            throw new ServiceException(ApiError.ERROR_98014);
+            throw new ServiceException(ApiError.BILL_REVERSE_APPROVAL_ALLOWED_APPROVED_ONLY);
         }
 
         LambdaQueryWrapper<AssetPurchaseChangeEntity> lambdaQueryWrapper = new LambdaQueryWrapper<>();
@@ -452,7 +449,7 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
 
         List<AssetPurchaseChangeEntity> purchaseChangeList = assetPurchaseChangeService.list(lambdaQueryWrapper);
         if (CollectionUtils.isNotEmpty(purchaseChangeList)) {
-            throw new ServiceException(ApiError.ERROR_98133);
+            throw new ServiceException(ApiError.MOULD_PURCHASE_ALREADY_CHANGED);
         }
 
         List<AssetPurchaseOrderDetailEntity> list = assetPurchaseOrderDetailService.lambdaQuery()
@@ -462,7 +459,7 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
             List<AssetAcceptDTO.AssetPurchaseOrderRefListDTO> acceptDetailList =
                     assetAceptFeign.getAcceptByDetailId(assetPurchaseOrderDetailEntity.getId()).getData();
             if (Objects.nonNull(acceptDetailList)) {
-                throw new ServiceException(ApiError.ERROR_98148);
+                throw new ServiceException(ApiError.PO_PUSHED_ACCEPT_REVIEW_FORBIDDEN);
             }
         }
 
@@ -476,7 +473,7 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
         AssetPurchaseOrderEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到数据"));
         // 只有待提交数据允许删除
         if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT.getCode(), entity.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_98032);
+            throw new ServiceException(ApiError.BILL_SUBMIT_ALLOWED_STATUS_ONLY);
         }
 
         List<AssetPurchaseOrderDetailEntity> list = assetPurchaseOrderDetailService.lambdaQuery()
@@ -485,7 +482,7 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
                 .list();
 
         if (list.isEmpty()) {
-            throw new ServiceException(ApiError.ERROR_98135);
+            throw new ServiceException(ApiError.MOULD_PURCHASE_DETAIL_NOT_FOUND);
         }
 
         //回写通知单生成状态
@@ -552,7 +549,7 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
         AssetPurchaseOrderEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到数据"));
         // 待提交或审核不通过并且未作废允许作废
         if ((!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(entity.getApproveStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(entity.getApproveStatus())) || !InvalidStatusEnum.NOT_VOIDED.getStatus().equals(entity.getInvalidStatus())) {
-           throw new ServiceException(ApiError.ERROR_98005);
+           throw new ServiceException(ApiError.BILL_VOID_ALLOWED_STATUS_ONLY);
         }
         log.info("作废 开始修改状态数据，id：【{}】", id);
         lambdaUpdate().eq(AssetPurchaseOrderEntity::getId, id)
@@ -579,7 +576,7 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
         AssetPurchaseOrderEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到数据"));
         // 只有审核中的单据允许撤销
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())) {
-            throw new ServiceException(ApiError.ERROR_98007);
+            throw new ServiceException(ApiError.WF_REVOKE_PROCESS_ALLOWED_STATUS_ONLY);
         }
 
         log.info("撤销 开始撤销流程，id：【{}】",id);
@@ -668,13 +665,13 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
             EasyExcel.read(new ByteArrayInputStream(bytes), AssetPurchaseOrderImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (ExcelCommonException e) {
             log.error("导入格式错误！", e);
-            throw new ServiceException(ApiError.ERROR_1016);
+            throw new ServiceException(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX);
         }
 
         //验证导入数据是否为空
         List<AssetPurchaseOrderImportExcelDTO> excelDateList = excelListenerUtil.getAllList();
         if (CollectionUtils.isEmpty(excelDateList)) {
-            throw new ServiceException(ApiError.ERROR_95123);
+            throw new ServiceException(ApiError.FILE_DATA_REQUIRED);
         }
 
 
@@ -774,7 +771,7 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
                 .eq(AssetPurchaseOrderSupplierEntity::getIsDeleted, Boolean.FALSE)
                 .one();
         if (Objects.isNull(assetPurchaseOrderSupplierEntity)){
-            throw new ServiceException(ApiError.ERROR_98144);
+            throw new ServiceException(ApiError.MOULD_PURCHASE_SUPPLIER_INFO_MISSING);
         }
         BeanUtils.copyProperties(assetPurchaseOrderSupplierEntity,supplierViewDTO);
         data.setAssetPurchaseOrderSupplierDTO(supplierViewDTO);
@@ -785,7 +782,7 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
                 .eq(AssetPurchaseOrderDetailEntity::getIsDeleted, Boolean.FALSE)
                 .list();
         if (CollectionUtils.isEmpty(detailList)) {
-            throw new ServiceException(ApiError.ERROR_98134);
+            throw new ServiceException(ApiError.MOULD_PURCHASE_ORDER_NOT_FOUND);
         }
         List<AssetPurchaseOrderDetailDTO.ViewDTO> detailViewList = BeanMapperUtils.copyList(AssetPurchaseOrderDetailDTO.ViewDTO.class, detailList);
         fillViewList(detailViewList);
@@ -894,9 +891,20 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
             listApiResult = workflowFeign.curApprover(dtoList);
             Integer code = listApiResult.getCode();
             if (200 != code) {
-                throw new ServiceException(new ApiResult(ApiError.DEFAULT.code, listApiResult.getMsg()));
+                throw new ServiceException(new ApiResult(ApiError.HTTP_UNKNOWN.getCode(), listApiResult.getMsg()));
             }
         }
+
+        //获取项目名称
+        List<String> moldCodes = list.stream().map(AssetPurchaseOrderDTO.ListDTO::getAssetCode).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+        Map<String, String> codeToProjectNameMap = new HashMap<>();
+        if (CollectionUtils.isNotEmpty(moldCodes)) {
+            List<MoldInfoEntity> moldInfoEntities = plmTaskFeign.listMoldInfoByCodes(moldCodes);
+            codeToProjectNameMap = moldInfoEntities.stream()
+                    .filter(x -> StringUtils.isNotBlank(x.getCode()) && StringUtils.isNotBlank(x.getProjectName()))
+                    .collect(Collectors.toMap(MoldInfoEntity::getCode, MoldInfoEntity::getProjectName, (oldValue, newValue) -> oldValue));
+        }
+
 
         // 属性赋值
         for(AssetPurchaseOrderDTO.ListDTO data : list) {
@@ -924,6 +932,7 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
                     data.setApproveUserName(curApprove);
                 }
             }
+            data.setProjectName(codeToProjectNameMap.getOrDefault(data.getAssetCode(),""));
 
         }
     }
@@ -933,10 +942,10 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
     private void validateSubmit(AssetPurchaseOrderEntity entity) {
         // 待提交或审核不通过并且未作废允许提交
         if(!ApproveStatusEnum.allowUpdateStatus(entity.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_98010);
+            throw new ServiceException(ApiError.BILL_SUBMIT_ALLOWED_STATUS_ONLY);
         }
         if(Objects.equals(entity.getInvalidStatus(), Boolean.TRUE)) {
-            throw new ServiceException(ApiError.ERROR_INVALID_TO_SUBMIT);
+            throw new ServiceException(ApiError.BILL_VOIDED_CANNOT_SUBMIT);
         }
         return;
     }
@@ -1432,14 +1441,14 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
 
         AssetPurchaseOrderEntity assetPurchaseOrderEntity = this.getById(id);
         if (com.baomidou.mybatisplus.core.toolkit.ObjectUtils.isEmpty(assetPurchaseOrderEntity)) {
-            throw new ServiceException(ApiError.ERROR_98134);
+            throw new ServiceException(ApiError.MOULD_PURCHASE_ORDER_NOT_FOUND);
         }
 
         List<AssetPurchaseOrderDetailEntity> list = assetPurchaseOrderDetailService.lambdaQuery()
                 .eq(AssetPurchaseOrderDetailEntity::getMainId,id)
                 .eq(AssetPurchaseOrderDetailEntity::getIsDeleted,Boolean.FALSE).list();
         if (CollectionUtils.isEmpty(list)) {
-            throw new ServiceException(ApiError.ERROR_98135);
+            throw new ServiceException(ApiError.MOULD_PURCHASE_DETAIL_NOT_FOUND);
         }
         //主数据处理
         exportPdfDTO.setCode(assetPurchaseOrderEntity.getCode());
@@ -1457,7 +1466,7 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
                 .eq(AssetPurchaseOrderSupplierEntity::getIsDeleted,Boolean.FALSE)
                 .one();
         if (com.baomidou.mybatisplus.core.toolkit.ObjectUtils.isEmpty(assetPurchaseOrderSupplier)) {
-            throw new ServiceException(ApiError.ERROR_98036);
+            throw new ServiceException(ApiError.PO_SUPPLIER_INFO_NOT_FOUND);
         }
         exportPdfDTO.setSupplierTel(assetPurchaseOrderSupplier.getContactTelNumber());
         // 采购订单供应商付款条件
@@ -1479,7 +1488,7 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
         //原供应商信息
         SupplierEntity supplier = supplierService.getById(assetPurchaseOrderSupplier.getSupplierId());
         if (com.baomidou.mybatisplus.core.toolkit.ObjectUtils.isEmpty(supplier)) {
-            throw new ServiceException(ApiError.ERROR_SUPPLIER_ABSENCE);
+            throw new ServiceException(ApiError.SUPPLIER_NOT_FOUND);
         }
         //供应商账号信息
         String supplierBankNo = "";
@@ -1503,7 +1512,7 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
         if (com.baomidou.mybatisplus.core.toolkit.StringUtils.isNotBlank(assetPurchaseOrderSupplier.getContactId())) {
             SupplierContactEntity supplierContact = supplierContactService.getById(assetPurchaseOrderSupplier.getContactId());
             if (ObjectUtils.isEmpty(supplierContact)) {
-                throw new ServiceException(ApiError.ERROR_98039);
+                throw new ServiceException(ApiError.SUPPLIER_CONTACT_NOT_FOUND);
             }
             exportPdfDTO.setSupplierEmail(supplierContact.getEmail());
             exportPdfDTO.setSupplierContract(supplierContact.getPerson());
@@ -1574,7 +1583,7 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
                 in(AssetPurchaseOrderDetailEntity::getId, detailIdList)
                 .list();
         if(detailList.isEmpty()) {
-            throw new ServiceException(ApiError.ERROR_98135);
+            throw new ServiceException(ApiError.MOULD_PURCHASE_DETAIL_NOT_FOUND);
         }
 
         Map<String, BigDecimal> acceptableQtyMap = assetAceptFeign.getAcceptableQtyByDetailId(detailIdList);
@@ -1656,7 +1665,7 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
             BigDecimal acceptableQty = dto.getAcceptableQty();
             
             if (acceptQty != null && acceptableQty != null && acceptQty.compareTo(acceptableQty) > 0) {
-                throw new ServiceException(ApiError.ERROR_98153, dto.getAssetCode());
+                throw new ServiceException(ApiError.MOULD_CODE_ACCEPT_QTY_EXCEED, dto.getAssetCode());
             }
         }
 
@@ -1695,12 +1704,12 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
         }
 
         if (list.isEmpty()) {
-            throw new ServiceException(ApiError.ERROR_98147);
+            throw new ServiceException(ApiError.BILL_ROW_CHANGE_FORBIDDEN);
         }
 
         long count = list.stream().filter(obj -> !obj.getMainId().equals(list.get(0).getMainId())).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_98143);
+            throw new ServiceException(ApiError.MOULD_PURCHASE_DETAIL_MUST_BE_SAME_ORDER);
         }
 
         //单头信息
@@ -1710,7 +1719,7 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
                 .one();
 
         if (!assetPurchaseOrderEntity.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getCode())) {
-            throw new ServiceException(ApiError.ERROR_98136);
+            throw new ServiceException(ApiError.MOULD_PURCHASE_NO_PUSHABLE);
         }
 
         AssetPurchaseOrderDTO.ViewGeneratePurchaseChangeDTO viewGeneratePurchaseChangeOrderDTO = new AssetPurchaseOrderDTO.ViewGeneratePurchaseChangeDTO();
@@ -1729,7 +1738,7 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
             }
         } catch (Exception e) {
             log.error("获取部门信息失败", e);
-            throw new ServiceException(ApiError.ERROR_9029);
+            throw new ServiceException(ApiError.COMMON_DEPT_NOT_FOUND);
         }
 
         viewGeneratePurchaseChangeOrderDTO.setCode(docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_MPOCC));
@@ -1741,7 +1750,7 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
                 .eq(AssetPurchaseOrderSupplierEntity::getIsDeleted, Boolean.FALSE)
                 .one();
         if (Objects.isNull(assetPurchaseOrderSupplierEntity)) {
-            throw new ServiceException(ApiError.ERROR_96001);
+            throw new ServiceException(ApiError.SUPPLIER_REF_NOT_FOUND);
         }
         BeanUtils.copyProperties(assetPurchaseOrderSupplierEntity,supplierDTO);
         viewGeneratePurchaseChangeOrderDTO.setAssetPurchaseSupplierDTO(supplierDTO);
@@ -1800,7 +1809,7 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
                     .update();
         } else {
             // 已验收数量大于采购数量，抛异常
-            throw new ServiceException(ApiError.ERROR_100000);
+            throw new ServiceException(ApiError.SAMPLE_ASSET_ACCEPT_QTY_EXCEEDS_PURCHASE_QTY);
         }
         return Boolean.TRUE;
     }

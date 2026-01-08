@@ -1,7 +1,6 @@
 package com.erp.server.plm.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.threadlocal.UserContext;
@@ -15,9 +14,6 @@ import com.common.core.utils.FileUtil;
 import com.common.core.utils.MathUtil;
 import com.erp.model.dmp.entity.CfgSettingEntity;
 import com.erp.model.dmp.enums.SettingEnum;
-import com.erp.model.plm.dto.ZipTaskResultDTO;
-import com.erp.model.plm.entity.PlmAttachmentEntity;
-import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.sys.dto.FindUserByThirdDTO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.file.feign.FileFeign;
@@ -30,22 +26,15 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import java.io.*;
-import java.math.BigDecimal;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
 
 /**
  * @author Administrator
@@ -144,7 +133,7 @@ public class CommonServiceImpl implements CommonService {
         dtoList.add(approveActivityDTO);
         ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = workflowFeign.batchCurApproverByApprove(dtoList);
         if (200 != listApiResult.getCode()) {
-            throw new ServiceException(ApiError.ERROR_94006);
+            throw new ServiceException(ApiError.WF_APPROVE_FAILED);
         }
         List<String> businessIds = listApiResult.getData().stream().filter(obj -> StringUtils.isNotBlank(obj.getBusinessId())).map(ProcessManagementDTO.CurApproveInfoDTO::getBusinessId).collect(Collectors.toList());
         return  businessIds;
@@ -153,7 +142,7 @@ public class CommonServiceImpl implements CommonService {
     @Override
     public List<String> uploadImg(MultipartFile[] multipartFileList) {
         if (ObjectUtil.isNull(multipartFileList)) {
-            throw new ServiceException(ApiError.ERROR_95185);
+            throw new ServiceException(ApiError.FILE_NOT_FOUND);
         }
         Long size = 0L;
         //获取压缩图片大小的配置

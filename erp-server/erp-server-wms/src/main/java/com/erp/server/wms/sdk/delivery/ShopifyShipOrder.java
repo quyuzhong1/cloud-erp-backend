@@ -2,8 +2,6 @@ package com.erp.server.wms.sdk.delivery;
 
 import cn.hutool.core.lang.Tuple;
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.annotation.PlatformShipOrderAnno;
 import com.common.business.constant.BusinessCommonConstants;
@@ -12,14 +10,12 @@ import com.common.business.dto.PlatformOrderQueryDTO;
 import com.common.business.dto.PlatformShipOrderDTO;
 import com.common.business.enums.OrderDeliveryMarkTypeEnum;
 import com.common.business.enums.PlatformDictEnum;
-import com.common.business.enums.SourceTypeEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.oms.dto.SplitResultDTO;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
-import com.erp.model.oms.entity.SoB2cRefEntity;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.tms.dto.LogisticsChannelDTO;
 import com.erp.rpc.oms.feign.SoB2cFeign;
@@ -27,7 +23,6 @@ import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.rpc.tms.feign.LogisticsMappingFeign;
 import com.sdk.oms.shopify.api.graphql.ShopifyGraphQLClient;
 import com.sdk.oms.shopify.api.graphql.ShopifyGraphQLClientService;
-import com.sdk.oms.shopify.api.graphql.model.ShopifyOrderResponse;
 import com.sdk.oms.shopify.api.rest.ShopifyRestClient;
 import com.sdk.oms.shopify.api.rest.ShopifyRestClientService;
 import com.sdk.oms.shopify.api.rest.model.*;
@@ -79,7 +74,7 @@ public class ShopifyShipOrder extends AbstractShipOrder {
             //检查销售订单详情是否存在
             List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cDetailEntityListMap.get(mainEntity.getId());
             if (CollectionUtils.isEmpty(soB2cDetailEntityList)) {
-                throw new ServiceException(ApiError.ERROR_SO_B2C_DETAIL_NOT_EXIST);
+                throw new ServiceException(ApiError.SO_B2C_DETAIL_NOT_FOUND);
             }
             // 来源明细ID为空代表是手工添加的明细忽略
             soB2cDetailEntityList =  soB2cDetailEntityList.stream()

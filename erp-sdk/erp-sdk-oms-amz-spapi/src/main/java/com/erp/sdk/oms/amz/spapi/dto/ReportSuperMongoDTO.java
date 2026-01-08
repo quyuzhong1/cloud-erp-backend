@@ -2,14 +2,10 @@ package com.erp.sdk.oms.amz.spapi.dto;
 
 import cn.hutool.core.util.ReflectUtil;
 import cn.hutool.crypto.digest.DigestUtil;
-import com.alibaba.fastjson.JSONObject;
 import com.common.business.dto.MongoAbstractDTO;
-import com.common.business.dto.MongoSuperDTO;
-import com.common.business.dto.UniqueDto;
 import com.common.core.anno.Panno;
 import com.common.core.enums.PannoEnum;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.MapUtil;
 import com.common.core.utils.ReflectUtils;
 import com.erp.model.dmp.entity.DmpAmzReportInfoEntity;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonListingStatusEnum;

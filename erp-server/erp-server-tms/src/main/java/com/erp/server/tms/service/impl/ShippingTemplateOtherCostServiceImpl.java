@@ -218,7 +218,7 @@ public class ShippingTemplateOtherCostServiceImpl extends SuperServiceImpl<Shipp
         for (ShippingTemplateOtherCostEntity entity : list) {
             ShippingTemplateOtherCostEntity old = oldList.stream().filter(obj -> obj.getId().equals(entity.getId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(old)) {
-                throw new ServiceException(ApiError.ERROR_SHIPPING_OTHER_COST_NOT_EXIST);
+                throw new ServiceException(ApiError.LOGISTICS_SHIPPING_OTHER_COST_NOT_FOUND);
             }
             List<String> settingCodeList = settingList.stream().filter(obj -> obj.getOtherCostId().equals(entity.getId())).map(ShippingTemplateCostSettingEntity::getCode).collect(Collectors.toList());
             old.setSettingList(settingCodeList);

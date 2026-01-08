@@ -109,7 +109,7 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
         //根据任务id 获取任务信息
         ProjectTaskEntity taskEntity = projectTaskService.getById(dto.getTaskId());
         if (Objects.isNull(taskEntity)) {
-            throw new ServiceException(ApiError.ERROR_95027);
+            throw new ServiceException(ApiError.PROJECT_TASK_NOT_FOUND);
         }
         LoginUser loginUser = UserContext.getDefaultLoginUser();
         //文件名
@@ -144,17 +144,17 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
                     fileSize = size / (1024 * 1024);
                     fileSize = (double) Math.round(fileSize * 100) / 100;
                     if (fileSize > 300) {
-                        throw new ServiceException(ApiError.ERROR_95160, 300);
+                        throw new ServiceException(ApiError.FILE_SIZE_EXCEEDS_LIMIT, 300);
                     }
                     fileName = multipartFile.getOriginalFilename().toLowerCase();
                     fileSuffix = FilenameUtils.getExtension(fileName).toLowerCase();
                     File file = FileUtil.multiToFile(multipartFile);
                     String fileUrl = FastDFSClientUtil.uploadFile(file, fileName);
                     if (StringUtils.isBlank(fileUrl)) {
-                        throw new ServiceException(ApiError.ERROR_95018);
+                        throw new ServiceException(ApiError.FILE_UPLOAD_FAILED);
                     }
                     if (fileName.length() > 200) {
-                        throw new ServiceException(ApiError.ERROR_1018);
+                        throw new ServiceException(ApiError.COMMON_PARAM_NAME_TOO_LONG);
                     }
                     entity.setUploadType(IsConstant.NO);
                     entity.setTaskDocsId(uploadMultipartFileDTO.getTaskDocsId());
@@ -254,12 +254,12 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
         //需要判断能否删除
         TaskDocsFinishEntity entity = this.getById(id);
         if (Objects.isNull(entity)) {
-            throw new ServiceException(ApiError.ERROR_95028);
+            throw new ServiceException(ApiError.FILE_UPLOADED_NOT_FOUND);
         }
         String taskId = entity.getTaskId();
         ProjectTaskEntity taskEntity = projectTaskService.getById(taskId);
         if (Objects.isNull(taskEntity)) {
-            throw new ServiceException(ApiError.ERROR_95027);
+            throw new ServiceException(ApiError.PROJECT_TASK_NOT_FOUND);
         }
         Integer taskState = taskEntity.getStatus();
         //如果已完成了 或者有人审核了 就不能删除
@@ -269,7 +269,7 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
         //当是流程的时候
         if (generalApproval.equals(taskProperty) || reviewTask.equals(taskProperty)) {
             if (TaskStateEnum.FINISH.getCode().equals(taskState)) {
-                throw new ServiceException(ApiError.ERROR_95040);
+                throw new ServiceException(ApiError.FILE_DELETE_FORBIDDEN_APPROVED);
             }
         }
         //新增删除交付物操作日志
@@ -300,7 +300,7 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
         String taskId = dto.getTaskId();
         ProjectTaskEntity taskEntity = projectTaskService.getById(taskId);
         if (Objects.isNull(taskEntity)) {
-            throw new ServiceException(ApiError.ERROR_95027);
+            throw new ServiceException(ApiError.PROJECT_TASK_NOT_FOUND);
         }
         //只有任务完成了 或者 审核通过了  或者审核不通过才能变更流程
         Integer finishCode = TaskStateEnum.FINISH.getCode();
@@ -310,7 +310,7 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
         //当不为这两个的时候是不能变更的
         if (!taskState.equals(finishCode) && !approvalPassCode.equals(taskState)
                 && !approvalNoPassCode.equals(taskState)) {
-            throw new ServiceException(ApiError.ERROR_95039);
+            throw new ServiceException(ApiError.PROJECT_TASK_DOC_CHANGE_FORBIDDEN);
         }
         LoginUser loginUser = UserContext.getDefaultLoginUser();
         //完成的文档
@@ -318,7 +318,7 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
         //这个是已完成交付文档
         TaskDocsFinishEntity finishEntity = this.getById(finishDocsId);
         if (Objects.isNull(finishEntity)) {
-            throw new ServiceException(ApiError.ERROR_95028);
+            throw new ServiceException(ApiError.FILE_UPLOADED_NOT_FOUND);
         }
         //旧的文档  保存历史用到
         TaskDocsFinishEntity oldDocs = new TaskDocsFinishEntity();
@@ -331,13 +331,13 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
         //表示上传
         if (TaskConstant.LOCAL_UPLOAD.equals(uploadType)) {
             if (Objects.isNull(multipartFile)) {
-                throw new ServiceException(ApiError.ERROR_95185);
+                throw new ServiceException(ApiError.FILE_NOT_FOUND);
             }
             File file = FileUtil.multiToFile(multipartFile);
             //文件名
             fileName = multipartFile.getOriginalFilename().toLowerCase();
             if (fileName.length() > 200) {
-                throw new ServiceException(ApiError.ERROR_1018);
+                throw new ServiceException(ApiError.COMMON_PARAM_NAME_TOO_LONG);
             }
             finishEntity.setFileName(fileName);
             //文件后缀
@@ -347,7 +347,7 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
             double fileSize = size / (1024 * 1024);
             fileSize = (double) Math.round(fileSize * 100) / 100;
             if (fileSize > 300) {
-                throw new ServiceException(ApiError.ERROR_95160, 300);
+                throw new ServiceException(ApiError.FILE_SIZE_EXCEEDS_LIMIT, 300);
             }
             finishEntity.setFileSize(fileSize);
             fileUrl = FastDFSClientUtil.uploadFile(file, fileName);
@@ -359,7 +359,7 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
 
         }
         if (StringUtils.isEmpty(fileUrl)) {
-            throw new ServiceException(ApiError.ERROR_95186);
+            throw new ServiceException(ApiError.FILE_UPLOAD_FAILED_OR_LINK_INVALID);
         }
         finishEntity.setUploadType(dto.getUploadType());
         finishEntity.setFileUrl(fileUrl);
@@ -405,7 +405,7 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
 //        String taskId = dto.getTaskId();
 //        ProjectTaskEntity taskEntity = projectTaskService.getById(taskId);
 //        if (Objects.isNull(taskEntity)) {
-//            throw new ServiceException(ApiError.ERROR_95027);
+//            throw new ServiceException(ApiError.ERROR_PLM_TASK_NOT_FOUND);
 //        }
 //        //只有任务完成了 或者 审核通过了  或者审核不通过才能变更流程
 //        Integer finishCode = TaskStateEnum.FINISH.getCode();
@@ -415,7 +415,7 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
 //        //当不为这两个的时候是不能变更的
 //        if (!taskState.equals(finishCode) && !approvalPassCode.equals(taskState)
 //                && !approvalNoPassCode.equals(taskState)) {
-//            throw new ServiceException(ApiError.ERROR_95039);
+//            throw new ServiceException(ApiError.ERROR_PLM_DOC_CHANGE_FORBIDDEN_TASK_UNFINISHED);
 //        }
 //        LoginUser loginUser = UserContext.getDefaultLoginUser();
 //
@@ -458,10 +458,10 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
 //                        File file = FileUtil.multiToFile(multipartFile);
 //                        String fileUrl = FastDFSClientUtil.uploadFile(file, fileName);
 //                        if (StringUtils.isBlank(fileUrl)) {
-//                            throw new ServiceException(ApiError.ERROR_95018);
+//                            throw new ServiceException(ApiError.ERROR_PLM_FILE_UPLOAD_FAILED);
 //                        }
 //                        if (fileName.length() > 200) {
-//                            throw new ServiceException(ApiError.ERROR_1018);
+//                            throw new ServiceException(ApiError.ERROR_PARAM_NAME_TOO_LONG);
 //                        }
 //                        finishEntity.setUploadType(IsConstant.NO);
 //                        entity.setTaskDocsId(uploadMultipartFileDTO.getTaskDocsId());
@@ -553,7 +553,7 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
             //如果是 评审任务 就是任务负责人
             String chargeId = taskEntity.getChargeId();
             if (StringUtils.isEmpty(chargeId)) {
-                throw new ServiceException(ApiError.ERROR_95045);
+                throw new ServiceException(ApiError.WF_APPROVER_REQUIRED);
             }
             List<String> userIdList = Arrays.asList(chargeId.split(","));
             membersIds.add(userIdList);
@@ -610,7 +610,7 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
             //获取到该任务完成的文档数
             int finishDocsNum = getFinishDocsNum(taskId);
             if (docsList.size() != finishDocsNum) {
-                throw new ServiceException(ApiError.ERROR_95047);
+                throw new ServiceException(ApiError.PROJECT_TASK_DELIVERABLE_UNFINISHED);
             }
 
         }
@@ -660,7 +660,7 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
         String userId = UserContext.getDefaultLoginUser().getUid();
         ProjectTaskEntity taskEntity = projectTaskService.getById(taskId);
         if (Objects.isNull(taskEntity)) {
-            throw new ServiceException(ApiError.ERROR_95027);
+            throw new ServiceException(ApiError.PROJECT_TASK_NOT_FOUND);
         }
         return startChangeDocsProcess(userId, taskEntity);
 

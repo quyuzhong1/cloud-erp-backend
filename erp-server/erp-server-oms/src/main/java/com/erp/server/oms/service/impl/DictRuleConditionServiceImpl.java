@@ -66,7 +66,7 @@ public class DictRuleConditionServiceImpl extends SuperServiceImpl<DictRuleCondi
     public Boolean update(DictRuleConditionDTO.UpdateDTO updateDTO) {
         DictRuleConditionEntity old = super.getById(updateDTO.getId());
         if(null == old){
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, ModuleTypeEnum.DICT_RULE_CONDITION.getName());
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, ModuleTypeEnum.DICT_RULE_CONDITION.getName());
         }
         DictRuleConditionEntity dictRuleConditionEntity = BeanMapperUtils.map(DictRuleConditionEntity.class, updateDTO);
 

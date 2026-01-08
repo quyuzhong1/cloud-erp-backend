@@ -9,7 +9,6 @@ import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
-import com.baomidou.mybatisplus.extension.conditions.query.LambdaQueryChainWrapper;
 import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.SourceTypeEnum;
@@ -27,6 +26,7 @@ import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.dmp.enums.SettingEnum;
+import com.erp.model.plm.entity.MoldInfoEntity;
 import com.erp.model.scm.entity.AssetPurchaseOrderEntity;
 import com.erp.model.scm.entity.*;
 import com.erp.model.sys.dto.DeptKingdeeDTO;
@@ -38,6 +38,7 @@ import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.entity.PoReturnDetailEntity;
 import com.erp.model.wms.entity.PoReturnEntity;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.KingdeeFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
@@ -52,6 +53,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author Will
@@ -99,6 +101,8 @@ public class SyncKingdeePurchaseOrderServiceImpl implements SyncKingdeePurchaseO
     @Resource
     private KingdeeFeign kingdeeFeign;
 
+    @Resource
+    private PlmTaskFeign plmTaskFeign;
 
     /**
      * 组装数据发送到金蝶
@@ -181,7 +185,7 @@ public class SyncKingdeePurchaseOrderServiceImpl implements SyncKingdeePurchaseO
             //委外订单
             subcontractOrderEntity = subcontractOrderService.getById(entity.getSourceId());
             if (ObjectUtils.isEmpty(subcontractOrderEntity)) {
-                throw new ServiceException(ApiError.ERROR_98073);
+                throw new ServiceException(ApiError.PO_SUBCONTRACT_ORDER_NOT_FOUND);
             }
             //委外订单明细
             subcontractOrderDetailList = subcontractOrderDetailService.listByMainId(subcontractOrderEntity.getId());
@@ -269,7 +273,7 @@ public class SyncKingdeePurchaseOrderServiceImpl implements SyncKingdeePurchaseO
         //采购明细
         List<PurchaseOrderDetailEntity> details = purchaseOrderDetailService.listByPurchaseOrderId(entity.getId());
         if (CollectionUtils.isEmpty(details)) {
-            throw new ServiceException(ApiError.ERROR_98026);
+            throw new ServiceException(ApiError.PO_DETAIL_NOT_FOUND);
         }
         //组织机构编码
         List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(entity.getPurchaseOrgId(),entity.getReceiveOrgId()));
@@ -490,8 +494,12 @@ public class SyncKingdeePurchaseOrderServiceImpl implements SyncKingdeePurchaseO
         //采购明细
         List<AssetPurchaseOrderDetailEntity> details = assetPurchaseOrderDetailService.lambdaQuery().eq(AssetPurchaseOrderDetailEntity::getMainId, entity.getId()).list();
         if (CollectionUtils.isEmpty(details)) {
-            throw new ServiceException(ApiError.ERROR_98026);
+            throw new ServiceException(ApiError.PO_DETAIL_NOT_FOUND);
         }
+        List<MoldInfoEntity> moldInfoEntities = plmTaskFeign.listMoldInfoByCodes(details
+                .stream().map(AssetPurchaseOrderDetailEntity::getAssetCode).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList())
+                );
+        Map<String, String> codeToProjectNameMap = moldInfoEntities.stream().filter(x -> StringUtils.isNotBlank(x.getCode()) && StringUtils.isNotBlank(x.getProjectName())).collect(Collectors.toMap(MoldInfoEntity::getCode, MoldInfoEntity::getProjectName, (oldValue, newValue) -> oldValue));
         //组织机构编码
         List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(entity.getPurchaseOrgId(),entity.getPurchaseOrgId()));
         if (CollectionUtils.isNotEmpty(accountingCompanyList)) {
@@ -527,6 +535,7 @@ public class SyncKingdeePurchaseOrderServiceImpl implements SyncKingdeePurchaseO
             jsonObject.set("tag",detailEntity.getTag());
             jsonObject.set("endReceive",detailEntity.getEndReceive());
             jsonObject.set("detailRemark",detailEntity.getRemark());
+            jsonObject.set("projectName",codeToProjectNameMap.getOrDefault(detailEntity.getAssetCode(),""));
 
             list.add(jsonObject);
         }

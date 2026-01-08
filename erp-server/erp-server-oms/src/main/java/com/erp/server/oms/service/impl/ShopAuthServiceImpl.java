@@ -113,7 +113,7 @@ public class ShopAuthServiceImpl extends SuperServiceImpl<ShopAuthMapper, ShopAu
 
     private static void isExist(ShopAuthEntity old) {
         if(null == old){
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "店铺授权单") ;
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "店铺授权单") ;
         }
         if(StringUtils.isBlank(old.getShopeeId())){
             throw new ServiceException("店铺id不能为空");

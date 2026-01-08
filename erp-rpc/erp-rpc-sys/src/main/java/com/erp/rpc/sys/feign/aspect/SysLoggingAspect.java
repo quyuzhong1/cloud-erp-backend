@@ -3,6 +3,7 @@ package com.erp.rpc.sys.feign.aspect;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.lang.Tuple;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ReflectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.extra.spring.SpringUtil;
@@ -24,6 +25,7 @@ import com.common.core.enums.LogActionEnum;
 import com.common.core.enums.LogStatusEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.IpUtils;
+import com.common.core.utils.MessageUtils;
 import com.erp.model.sys.dto.SysLogRecordDTO;
 import com.erp.model.sys.dto.SysLogRecordFieldDTO;
 import com.erp.model.sys.dto.SysLogRecordFieldListDTO;
@@ -58,6 +60,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -101,6 +104,31 @@ public class SysLoggingAspect {
      * 数据缓存
      */
     private static final ThreadLocal<UpdateRecordItemBO> LOG_INFO_THREAD_LOCAL = new NamedThreadLocal<>("Log Info");
+
+    /**
+     * 异常处理方法缓存（按异常类型索引）
+     * Key: 异常类的Class对象，Value: 匹配的异常处理方法列表（已按优先级排序）
+     */
+    private static final Map<Class<?>, List<ExceptionHandlerMethod>> EXCEPTION_HANDLER_CACHE = new ConcurrentHashMap<>();
+
+    /**
+     * 继承深度缓存（用于优先级排序）
+     * Key: 异常类 + "->" + 处理器类，Value: 继承深度
+     */
+    private static final Map<String, Integer> INHERITANCE_DEPTH_CACHE = new ConcurrentHashMap<>();
+
+    /**
+     * 异常处理方法信息
+     */
+    private static class ExceptionHandlerMethod {
+        final Method method;
+        final Class<? extends Throwable>[] handlerClasses;
+
+        ExceptionHandlerMethod(Method method, Class<? extends Throwable>[] handlerClasses) {
+            this.method = method;
+            this.handlerClasses = handlerClasses;
+        }
+    }
 
     /**
      * 系统日志切入点
@@ -172,11 +200,11 @@ public class SysLoggingAspect {
      * 环切处理
      */
     @Around("logPointcut()")
-    public Object doAround(ProceedingJoinPoint joinPoint) {
+    public Object doAround(ProceedingJoinPoint joinPoint) throws Throwable {
         //接口重复提交校验
         String idempotentKey = getIdempotentKey(joinPoint);
         if (redisUtil.hasKey(idempotentKey)) {
-            throw new ServiceException(ApiError.ERROR_1014);
+            throw new ServiceException(ApiError.COMMON_DUPLICATE_OPERATION);
         }else {
             //如果没有表示不是重复提交并设置key存活的缓存时间
             redisUtil.set(idempotentKey, "", 3);
@@ -220,8 +248,9 @@ public class SysLoggingAspect {
                 obj = joinPoint.proceed();
             } catch (Throwable e) {
                 log.debug("Sys Logging proceed error:{}", e.getMessage());
-                // 传递异常
+                // 传递异常 修改点 1（必须）：业务异常必须 throw
                 obj = e;
+//                throw e;
             }
             // 处理后操作
             Object newObject = afterFindObj(joinPoint, logAction, id);
@@ -231,10 +260,12 @@ public class SysLoggingAspect {
             // 添加日志到mq队列
             handleLog(joinPoint, logAction, description);
             log.debug("Sys Logging doAround.after:");
+            // AOP 里模拟 Spring 的异常分发 架构级越权
             return checkAndResolveException(obj, null);
         } catch (Throwable e) {
             log.error("[系统日志]添加系统日志-doAround-异常：{}", ExceptionUtil.stacktraceToString(e));
             return checkAndResolveException(obj, e);
+//            throw e;
         } finally {
             UpdateRecordItemBO bo = LOG_INFO_THREAD_LOCAL.get();
             if (null != bo) {
@@ -244,6 +275,7 @@ public class SysLoggingAspect {
             //接口处理完成，清理已添加缓存key
             redisUtil.del(idempotentKey);
         }
+//        return obj;
     }
 
     private String getIdempotentKey(ProceedingJoinPoint proceedingJoinPoint){
@@ -531,7 +563,7 @@ public class SysLoggingAspect {
             return;
         }
         List<BatchResultDTO> list = JSONUtil.toList(data, BatchResultDTO.class);
-        BatchResultDTO currentResult = list.stream().filter(e -> e.getId().equals(id)).findFirst().orElse(null);
+        BatchResultDTO currentResult = list.stream().filter(e -> CharSequenceUtil.isNotBlank(e.getId()) && e.getId().equals(id)).findFirst().orElse(null);
         if (null == currentResult) {
             return;
         }
@@ -972,31 +1004,155 @@ public class SysLoggingAspect {
     private Object reflectResolveException(Object obj) {
         // 当前异常class
         Class<?> exceptionClass = obj.getClass();
+        
+        // 从缓存获取匹配的方法列表，如果没有则初始化
+        List<ExceptionHandlerMethod> matchedMethods = EXCEPTION_HANDLER_CACHE.computeIfAbsent(
+                exceptionClass, 
+                this::initializeExceptionHandlers
+        );
+        
+        // 如果没有匹配的方法，直接返回未知异常
+        if (matchedMethods.isEmpty()) {
+            ApiResult<?> result = new ApiResult<>();
+            result.setCode(ApiError.HTTP_UNKNOWN.getCode());
+            result.setMsg(MessageUtils.getMessage(ApiError.HTTP_UNKNOWN, JSONUtil.toJsonStr(obj)));
+            return result;
+        }
+        
+        // 提前获取 RequestContextHolder（避免在循环中重复获取）
+        RequestAttributes requestAttributes = RequestContextHolder.getRequestAttributes();
+        HttpServletResponse response = null;
+        HttpServletRequest request = null;
+        if (requestAttributes instanceof ServletRequestAttributes) {
+            ServletRequestAttributes servletRequestAttributes = (ServletRequestAttributes) requestAttributes;
+            response = servletRequestAttributes.getResponse();
+            request = servletRequestAttributes.getRequest();
+        }
+        
+        // 尝试调用匹配的方法（已按优先级排序）
+        for (ExceptionHandlerMethod handlerMethod : matchedMethods) {
+            Method method = handlerMethod.method;
+            try {
+                // 获取方法参数类型
+                Class<?>[] paramTypes = method.getParameterTypes();
+                Object[] args = new Object[paramTypes.length];
+                
+                // 根据参数类型填充参数
+                for (int i = 0; i < paramTypes.length; i++) {
+                    Class<?> paramType = paramTypes[i];
+                    // 检查异常对象是否可以赋值给参数类型（支持继承关系）
+                    if (paramType.isInstance(obj)) {
+                        // 异常对象参数
+                        args[i] = obj;
+                    } else if (HttpServletResponse.class.isAssignableFrom(paramType)) {
+                        // HttpServletResponse 参数
+                        args[i] = response;
+                    } else if (HttpServletRequest.class.isAssignableFrom(paramType)) {
+                        // HttpServletRequest 参数
+                        args[i] = request;
+                    } else {
+                        // 其他未知参数类型，传 null（可能导致方法调用失败，但至少会尝试）
+                        args[i] = null;
+                    }
+                }
+                
+                return method.invoke(globalExceptionHandler, args);
+            } catch (Exception e) {
+                // 调用globalExceptionHandler失败，记录错误但不返回通用错误，继续查找其他匹配的方法
+                log.warn("[系统日志]调用全局异常处理方法失败: method={}, error={}", 
+                        method.getName(), e.getMessage(), e);
+                continue;
+            }
+        }
+        
+        // 找不到匹配的globalExceptionHandler异常处理方法, 默认提示未知异常
+        ApiResult<?> result = new ApiResult<>();
+        result.setCode(ApiError.HTTP_UNKNOWN.getCode());
+        result.setMsg(MessageUtils.getMessage(ApiError.HTTP_UNKNOWN, JSONUtil.toJsonStr(obj)));
+        return result;
+    }
+    
+    /**
+     * 初始化异常处理器方法列表（针对特定异常类型）
+     * 只在第一次遇到该异常类型时调用，后续从缓存读取
+     */
+    private List<ExceptionHandlerMethod> initializeExceptionHandlers(Class<?> exceptionClass) {
         // 异常处理拥有的方法
         Method[] methods = ReflectUtil.getMethods(globalExceptionHandler.getClass());
+        
+        // 收集所有匹配的方法
+        List<ExceptionHandlerMethod> matchedMethods = new ArrayList<>();
         for (Method method : methods) {
             ExceptionHandler annotation = method.getAnnotation(ExceptionHandler.class);
             if (null == annotation) {
                 continue;
             }
-            Class<? extends Throwable> currentClass = Arrays.stream(annotation.value()).findFirst().orElse(null);
-            if (null != currentClass && exceptionClass == currentClass) {
-                try {
-                    return method.invoke(globalExceptionHandler, obj);
-                } catch (Exception e) {
-                    // 调用globalExceptionHandler失败：全局异常解析失败
-                    ApiResult<?> result = new ApiResult<>();
-                    result.setCode(ApiError.GLOBAL_EXCEPTION_HANDLER_METHOD_ERROR.code);
-                    result.setMsg(StrUtil.format(ApiError.GLOBAL_EXCEPTION_HANDLER_METHOD_ERROR.msg, e.getMessage()));
-                    return result;
+            // 检查异常类型是否匹配（支持继承关系）
+            boolean isMatch = Arrays.stream(annotation.value())
+                    .anyMatch(handlerClass -> handlerClass.isAssignableFrom(exceptionClass));
+            if (isMatch) {
+                matchedMethods.add(new ExceptionHandlerMethod(method, annotation.value()));
+            }
+        }
+        
+        // 按异常类型的具体性排序（更具体的异常类型优先）
+        matchedMethods.sort((m1, m2) -> {
+            int depth1 = getMinInheritanceDepthCached(exceptionClass, m1.handlerClasses);
+            int depth2 = getMinInheritanceDepthCached(exceptionClass, m2.handlerClasses);
+            return Integer.compare(depth1, depth2); // 深度越小越具体，优先级越高
+        });
+        
+        return matchedMethods;
+    }
+    
+    /**
+     * 计算异常类型与处理器的继承深度（用于优先级排序，带缓存）
+     * @param exceptionClass 实际异常类型
+     * @param handlerClasses 处理器能处理的异常类型
+     * @return 最小继承深度（0表示完全匹配，值越大表示越不具体）
+     */
+    private int getMinInheritanceDepthCached(Class<?> exceptionClass, Class<? extends Throwable>[] handlerClasses) {
+        int minDepth = Integer.MAX_VALUE;
+        for (Class<? extends Throwable> handlerClass : handlerClasses) {
+            if (handlerClass.isAssignableFrom(exceptionClass)) {
+                int depth = getInheritanceDepthCached(exceptionClass, handlerClass);
+                if (depth < minDepth) {
+                    minDepth = depth;
                 }
             }
         }
-        // 找不到globalExceptionHandler异常, 默认提示未知异常
-        ApiResult<?> result = new ApiResult<>();
-        result.setCode(ApiError.GLOBAL_EXCEPTION_UN_KNOW.code);
-        result.setMsg(StrUtil.format(ApiError.GLOBAL_EXCEPTION_UN_KNOW.msg, JSONUtil.toJsonStr(obj)));
-        return result;
+        return minDepth;
+    }
+    
+    /**
+     * 计算从子类到父类的继承深度（带缓存）
+     * @param childClass 子类
+     * @param parentClass 父类
+     * @return 继承深度（0表示相同类型，1表示直接子类，以此类推）
+     */
+    private int getInheritanceDepthCached(Class<?> childClass, Class<?> parentClass) {
+        if (childClass == null || parentClass == null) {
+            return Integer.MAX_VALUE;
+        }
+        if (childClass.equals(parentClass)) {
+            return 0;
+        }
+        
+        // 使用缓存键
+        String cacheKey = childClass.getName() + "->" + parentClass.getName();
+        return INHERITANCE_DEPTH_CACHE.computeIfAbsent(cacheKey, k -> {
+            int depth = 0;
+            Class<?> current = childClass;
+            while (current != null && !current.equals(parentClass)) {
+                current = current.getSuperclass();
+                depth++;
+                // 防止无限循环
+                if (depth > 100) {
+                    return Integer.MAX_VALUE;
+                }
+            }
+            return current != null ? depth : Integer.MAX_VALUE;
+        });
     }
 
 

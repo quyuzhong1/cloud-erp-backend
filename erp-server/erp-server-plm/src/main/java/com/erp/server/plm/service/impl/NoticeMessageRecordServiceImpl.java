@@ -34,7 +34,7 @@ public class NoticeMessageRecordServiceImpl extends ServiceImpl<NoticeMessageRec
         BaseSearchDTO params = dto.getParams();
         String fsUnionId = params.getFlagId();
         if (StringUtils.isBlank(fsUnionId)) {
-            throw new ServiceException(ApiError.ERROR_95062);
+            throw new ServiceException(ApiError.COMMON_UNIONID_REQUIRED);
         }
         String userId = commonService.getUidByUnionId(ThirdConstants.FS_PLATFORM, fsUnionId);
         params.setFlagId(userId);

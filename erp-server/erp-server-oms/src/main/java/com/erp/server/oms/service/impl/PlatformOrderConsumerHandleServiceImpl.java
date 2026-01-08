@@ -166,7 +166,7 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
                 SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
                 addError.setType(SoB2cErrorTypeEnum.ORDER_FETCH.getCode());
                 addError.setMainId(mainEntity.getId());
-                addError.setMessage(ApiError.ERROR_SO_B2C_ORDER_FETCH.msg);
+                addError.setMessage(ApiError.SO_B2C_ORDER_FETCH_FAILED.getMsg());
                 soB2cErrorService.add(addError);
 
                 //更新主表error标识
@@ -335,6 +335,9 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
         List<String> countryIds;
         if (Objects.nonNull(dto.getReceiver())){
             countryIds = Stream.of(shopInfo.getDictCountryCode(), dto.getReceiver().getCountry()).distinct().collect(Collectors.toList());
+            if(StringUtils.isBlank(dto.getReceiver().getCountry()) && PlatformDictEnum.TE_MU.getCode().equalsIgnoreCase(dto.getPlatform())){
+                dto.getReceiver().setCountry(shopInfo.getDictCountryCode());
+            }
         }else {
             countryIds = Stream.of(shopInfo.getDictCountryCode()).collect(Collectors.toList());
         }

@@ -5,6 +5,7 @@ import cn.hutool.extra.mail.MailAccount;
 import cn.hutool.extra.mail.MailUtil;
 import com.alibaba.fastjson.JSON;
 import com.common.core.enums.ApiError;
+import com.common.core.utils.MessageUtils;
 import com.common.core.utils.StrUtils;
 import com.erp.model.msg.dto.WarnMsgInfoDTO;
 import com.erp.model.msg.enums.MessageChannelEnum;
@@ -17,7 +18,6 @@ import com.erp.server.msg.service.BaseMessageSendService;
 import com.erp.server.msg.utils.MailSendUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.formula.functions.T;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -95,9 +95,9 @@ public class EmailSendServiceImpl extends BaseMessageSendService {
             msgResult.setCode(200);
             msgResult.setMsg("操作成功");
         } else {
-            ApiError sendMailError = ApiError.ERROR_1010;
-            msgResult.setCode(sendMailError.code);
-            msgResult.setMsg(sendMailError.msg);
+            ApiError sendMailError = ApiError.EMAIL_SEND_FAILED;
+            msgResult.setCode(sendMailError.getCode());
+            msgResult.setMsg(MessageUtils.getMessage(sendMailError));
         }
         return msgResult;
     }

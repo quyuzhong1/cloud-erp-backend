@@ -17,7 +17,6 @@ import com.erp.server.tms.service.LogisticsThirdChannelRefDetailService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.erp.server.tms.service.OperateLogService;
-import com.erp.server.tms.service.CommonService;
 import com.common.core.exception.ServiceException;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -76,7 +75,7 @@ public class LogisticsThirdChannelRefDetailServiceImpl extends SuperServiceImpl<
     @Override
     public Boolean update(LogisticsThirdChannelRefDetailDTO.UpdateDTO addOrUpdateDTO) {
         LogisticsThirdChannelRefDetailEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "物流-第三方渠道关系明细单"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "物流-第三方渠道关系明细单"));
         LogisticsThirdChannelRefDetailEntity logisticsThirdChannelRefDetailEntity =  BeanMapperUtils.map(LogisticsThirdChannelRefDetailEntity.class, addOrUpdateDTO);
 
         // 数据处理

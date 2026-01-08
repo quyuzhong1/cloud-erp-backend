@@ -102,7 +102,7 @@ public class SupplierVisitServiceImpl extends SuperServiceImpl<SupplierVisitMapp
         String supplierId = dto.getSupplierId();
         SupplierEntity supplier = supplierService.getById(supplierId);
         if (Objects.isNull(supplier)) {
-            throw new ServiceException(ApiError.ERROR_SUPPLIER_ABSENCE);
+            throw new ServiceException(ApiError.SUPPLIER_NOT_FOUND);
         }
 
         Class<SupplierVisitEntity> credentialClass = SupplierVisitEntity.class;
@@ -161,10 +161,10 @@ public class SupplierVisitServiceImpl extends SuperServiceImpl<SupplierVisitMapp
         }
         SupplierEntity supplier = supplierService.getById(dto.getSupplierId());
         if (Objects.isNull(supplier)) {
-            throw new ServiceException(ApiError.ERROR_SUPPLIER_ABSENCE);
+            throw new ServiceException(ApiError.SUPPLIER_NOT_FOUND);
         }
 
-        SupplierVisitEntity oldEntity = super.getByIdOpt(dto.getId()).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL,"现场考察"));
+        SupplierVisitEntity oldEntity = super.getByIdOpt(dto.getId()).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE,"现场考察"));
         SupplierVisitEntity entity = new SupplierVisitEntity();
         BeanMapper.copy(dto, entity);
 
@@ -350,7 +350,7 @@ public class SupplierVisitServiceImpl extends SuperServiceImpl<SupplierVisitMapp
         String supplierId = dto.getParams().getId();
         SupplierEntity supplier = supplierService.getById(supplierId);
         if(Objects.isNull(supplier)){
-            throw new ServiceException(ApiError.ERROR_SUPPLIER_ABSENCE);
+            throw new ServiceException(ApiError.SUPPLIER_NOT_FOUND);
         }
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         IPage pageData = baseMapper.paging(query, supplierId);
@@ -497,7 +497,7 @@ public class SupplierVisitServiceImpl extends SuperServiceImpl<SupplierVisitMapp
 
     @Override
     public SupplierVisitDTO.ViewDTO view(String id) {
-        SupplierVisitEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL,"现场考察"));
+        SupplierVisitEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE,"现场考察"));
         // 数据填充处理
         SupplierVisitDTO.ViewDTO view = fillOne(entity);
         return view;
@@ -601,7 +601,7 @@ public class SupplierVisitServiceImpl extends SuperServiceImpl<SupplierVisitMapp
             wb.close();
         } catch (Exception e) {
             log.error("warehouse downloadTemplate  出错了 e==", e);
-            throw new ServiceException(ApiError.ERROR_95131);
+            throw new ServiceException(ApiError.FILE_IMPORT_TEMPLATE_DOWNLOAD_FAILED);
         }
     }
 

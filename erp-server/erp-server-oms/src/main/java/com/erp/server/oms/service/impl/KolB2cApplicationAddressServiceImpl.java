@@ -68,7 +68,7 @@ public class KolB2cApplicationAddressServiceImpl extends SuperServiceImpl<KolB2c
     @Override
     public Boolean update(KolB2cApplicationAddressDTO.UpdateDTO addOrUpdateDTO) {
         KolB2cApplicationAddressEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "B2C寄样申请单地址信息"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "B2C寄样申请单地址信息"));
         KolB2cApplicationAddressEntity kolB2cApplicationAddressEntity =  BeanMapperUtils.map(KolB2cApplicationAddressEntity.class, addOrUpdateDTO);
 
         // 数据处理

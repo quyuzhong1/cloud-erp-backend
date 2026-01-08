@@ -10,7 +10,6 @@ import com.erp.model.wms.dto.OperateLogDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.excel.StocktakingTaskDetailExcelDTO;
 import com.erp.model.wms.entity.StocktakingTaskDetailEntity;
-import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.StocktakingTaskDetailService;
 import com.erp.server.wms.service.WarehouseService;
@@ -99,7 +98,7 @@ public class StocktakingTaskDetailExcelListener extends AnalysisEventListener<St
         String warehouseId = warehouseList.stream().filter(w -> w.getName().equals(warehouseName)).
                 findFirst().map(WarehouseDTO.ListDTO::getId).orElse("");
         if (CharSequenceUtil.isBlank(warehouseId)) {
-            errorMsgList.add(ApiError.WAREHOUSE_NOT_EXIST_NO_PERMISSION.msg);
+            errorMsgList.add(ApiError.WH_NOT_EXIST_OR_NO_PERMISSION.getMsg());
         }
         //仓位
         String warehouseLocation = Objects.isNull(excelDTO.getWarehouseLocation()) ? "" : excelDTO.getWarehouseLocation();

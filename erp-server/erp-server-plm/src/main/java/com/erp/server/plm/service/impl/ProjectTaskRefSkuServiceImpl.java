@@ -172,7 +172,7 @@ public class ProjectTaskRefSkuServiceImpl extends ServiceImpl<ProjectTaskRefSkuM
         String taskId = dto.getTaskId();
         ProjectTaskEntity projectTaskEntity = projectTaskService.getById(taskId);
         if (ObjectUtils.isEmpty(projectTaskEntity)) {
-            throw new ServiceException(ApiError.ERROR_95010);
+            throw new ServiceException(ApiError.PRODUCT_NOT_FOUND);
         }
         List<String> skuIdList = dto.getSkuIdList();
         List<String> allList = dto.getAllList();

@@ -77,6 +77,8 @@
             <groupId>net.sf.jasperreports</groupId>
             <artifactId>jasperreports-myfonts</artifactId>
             <version>6.19.1</version>
+<!--            <scope>compile</scope>-->
+<!--            <optional>true</optional>-->
         </dependency>
 
         <dependency>

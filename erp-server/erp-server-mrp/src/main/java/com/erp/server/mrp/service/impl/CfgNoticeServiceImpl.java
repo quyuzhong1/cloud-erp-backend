@@ -91,7 +91,7 @@ public class CfgNoticeServiceImpl extends SuperServiceImpl<CfgNoticeMapper, CfgN
     @Override
     public Boolean update(CfgNoticeDTO.UpdateDTO addOrUpdateDTO) {
         CfgNoticeEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "通知配置单"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "通知配置单"));
         CfgNoticeEntity cfgNoticeEntity = new CfgNoticeEntity();
         cfgNoticeEntity.setNoticeNode(addOrUpdateDTO.getNoticeNode());
         cfgNoticeEntity.setNoticeRule(JSONUtil.parseObj(addOrUpdateDTO.getNoticeRule()));
@@ -127,12 +127,12 @@ public class CfgNoticeServiceImpl extends SuperServiceImpl<CfgNoticeMapper, CfgN
     public CfgNoticeDTO.ViewDTO view(String id) {
         CfgNoticeEntity cfgNoticeEntity = super.getById(id);
         if(cfgNoticeEntity == null) {
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "通知配置单");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "通知配置单");
         }
         //明细信息
         List<CfgNoticeDetailEntity> cfgdetailList = cfgNoticeDetailService.listByMainIdList(Collections.singletonList(id));
         if (CollUtil.isEmpty(cfgdetailList)) {
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "通知配置单明细");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "通知配置单明细");
         }
         CfgNoticeDTO.ViewDTO viewDTO = BeanMapperUtils.map(CfgNoticeDTO.ViewDTO.class, cfgNoticeEntity);
         viewDTO.setNoticeRule(JSONUtil.toBean(cfgNoticeEntity.getNoticeRule(), CfgNoticeDTO.NoticeRuleDTO.class));
@@ -164,7 +164,7 @@ public class CfgNoticeServiceImpl extends SuperServiceImpl<CfgNoticeMapper, CfgN
     public void updateDisabled(CfgNoticeDTO.UpdateDisabledDTO dto) {
         CfgNoticeEntity cfgNoticeEntity = super.getById(dto.getId());
         if (ObjectUtil.isEmpty(cfgNoticeEntity)) {
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "通知配置单");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "通知配置单");
         }
         cfgNoticeEntity.setDisabled(dto.getDisabled());
         boolean update = super.updateById(cfgNoticeEntity);

@@ -204,7 +204,7 @@ public class ProjectRoleServiceImpl extends ServiceImpl<ProjectRoleMapper, Proje
         queryWrapper.last("LIMIT 1");
         int count = baseMapper.selectCount(queryWrapper);
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_95016);
+            throw new ServiceException(ApiError.PROJECT_ROLE_EXISTS);
         }
     }
 }

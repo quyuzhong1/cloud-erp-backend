@@ -20,7 +20,6 @@ import com.common.business.enums.WorkflowBusinessEnum;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
-import com.common.core.controller.vo.ApiResult;
 import com.common.core.dto.ProjectImportDTO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -62,7 +61,6 @@ import java.util.stream.Stream;
 
 import static cn.hutool.core.collection.CollUtil.isEmpty;
 import static cn.hutool.core.collection.CollUtil.isNotEmpty;
-import static cn.hutool.core.text.CharSequenceUtil.format;
 
 /**
  * 项目计划表(ProjectPlan)表服务实现类
@@ -125,7 +123,7 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
     public String saveSchedule(HandleTaskScheduleDTO dto) {
         List<String> taskIds = dto.getTaskIdList();
         if (CollectionUtils.isEmpty(taskIds)) {
-            throw new ServiceException(ApiError.ERROR_98004);
+            throw new ServiceException(ApiError.BILL_SELECTION_REQUIRED);
         }
         List<ProjectTaskEntity> taskList = taskService.getByTaskIds(taskIds);
         String productId = dto.getProductId();
@@ -155,7 +153,7 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
         projectPlan.setId(id);
         Boolean saveResult = this.save(projectPlan);
         if (!saveResult) {
-            throw new ServiceException(ApiError.ERROR_1002);
+            throw new ServiceException(ApiError.BILL_SAVE_FAILED);
         }
         return id;
     }
@@ -215,7 +213,7 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
             //这个是获取任务是不是有 审核人 大于0 就是没有
             long count = distributionList.stream().filter(d -> StringUtils.isBlank(d.getChargeIds())).count();
             if (count > 0) {
-                throw new ServiceException(ApiError.ERROR_95148);
+                throw new ServiceException(ApiError.PROJECT_TASK_APPROVER_MISSING);
             }
         }
     }
@@ -237,7 +235,7 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
         statusList.add(cancel);
         long count = taskList.stream().filter(t -> !statusList.contains(t.getScheduleStatus())).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_95116);
+            throw new ServiceException(ApiError.PROJECT_SCHEDULE_SUBMIT_REQUIRED);
         }
     }
 
@@ -255,11 +253,11 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
                 filter(t -> Objects.isNull(t.getPlanEndTime()) || Objects.isNull(t.getPlanStartTime())).
                 count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_95115);
+            throw new ServiceException(ApiError.PROJECT_SCHEDULE_TIME_NOT_FOUND);
         }
         long blankChargeIdCount = taskList.stream().filter(t -> StringUtils.isBlank(t.getChargeId())).count();
         if (blankChargeIdCount > 0) {
-            throw new ServiceException(ApiError.ERROR_95097);
+            throw new ServiceException(ApiError.PROJECT_PARAM_TASK_OWNER_REQUIRED);
         }
     }
 
@@ -275,12 +273,12 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
     public Boolean cancelSchedule(List<String> ids) {
         List<ProjectPlanEntity> planList = this.getByIds(ids);
         if (CollectionUtils.isEmpty(planList)) {
-            throw new ServiceException(ApiError.ERROR_95122);
+            throw new ServiceException(ApiError.PROJECT_PRODUCT_SCHEDULE_REQUIRED);
         }
         List<String> statusList = planList.stream().map(ProjectPlanEntity::getStatus).collect(Collectors.toList());
         String waitAudit = BaseStatusEnum.WAIT_AUDIT.getStatus();
         if (!statusList.contains(waitAudit)) {
-            throw new ServiceException(ApiError.ERROR_95121);
+            throw new ServiceException(ApiError.BILL_TASK_CANCEL_SUBMIT_INVALID);
         }
         String userId = UserContext.getDefaultLoginUser().getUid();
         //变更
@@ -418,7 +416,7 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
         ProjectPlanDetailsVO vo = new ProjectPlanDetailsVO();
         ProjectPlanEntity plan = this.getById(id);
         if (Objects.isNull(plan)) {
-            throw new ServiceException(ApiError.ERROR_95122);
+            throw new ServiceException(ApiError.PROJECT_PRODUCT_SCHEDULE_REQUIRED);
         }
         String productId = plan.getProductId();
         vo.setProductId(productId);
@@ -586,11 +584,11 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
     public Boolean restartSchedule(String id) {
         ProjectPlanEntity plan = this.getById(id);
         if (Objects.isNull(plan)) {
-            throw new ServiceException(ApiError.ERROR_95122);
+            throw new ServiceException(ApiError.PROJECT_PRODUCT_SCHEDULE_REQUIRED);
         }
         String status = plan.getStatus();
         if (!BaseStatusEnum.AUDIT_NO_PASS.getStatus().equals(status)) {
-            throw new ServiceException(ApiError.ERROR_95119);
+            throw new ServiceException(ApiError.BILL_RESUBMIT_STATUS_INVALID);
         }
 
         checkAuditor();
@@ -691,13 +689,13 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
             Map<String, Object> parameterMap = new HashMap<>();
 
             if (StringUtils.isBlank(pmoCharge)) {
-                throw new ServiceException(ApiError.ERROR_9036);
+                throw new ServiceException(ApiError.PROJECT_PMO_OWNER_REQUIRED);
             }
             parameterMap.put("pmoCharge", pmoCharge);
 
             List<String> departmentHeadList = productDetailService.getApproveLead(SkuApproveConfigureEnum.FIVE_APPROVE.getDesc());
             if (CollectionUtils.isEmpty(departmentHeadList)) {
-                throw new ServiceException(ApiError.ERROR_9032);
+                throw new ServiceException(ApiError.PROJECT_RND_CENTER_OWNER_REQUIRED);
             }
             parameterMap.put("departmentHead", departmentHeadList.get(0));
             startProcess.setParameterMap(parameterMap);
@@ -734,7 +732,7 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
         String id = dto.getId();
         ProjectPlanEntity plan = this.getById(id);
         if (Objects.isNull(plan)) {
-            throw new ServiceException(ApiError.ERROR_95122);
+            throw new ServiceException(ApiError.PROJECT_PRODUCT_SCHEDULE_REQUIRED);
         }
         LoginUser loginUser = UserContext.getDefaultLoginUser();
         String userId = loginUser.getUid();
@@ -745,7 +743,7 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
         //当前登陆人,启用流程后可删除
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         if (CharSequenceUtil.equals(plan.getCreateUserId(),userInfo.getUid()) && !CharSequenceUtil.equals(plan.getCreateUserId(), UserStateConstants.USER_SYSTEM_ID)) {
-            throw new ServiceException(ApiError.WORKFLOW_APPROVE_CREATE_APPROVE_DIFF,userInfo.getUserName());
+            throw new ServiceException(ApiError.WF_CREATOR_APPROVER_NOT_SAME,userInfo.getUserName());
         }
 
         //已存在的审核状态
@@ -766,7 +764,7 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
         //获取到用户该业务表的待办任务
         MyToDoTaskVO processTask = workflowFeign.getByBusinessTableId(tableDTO);
         if (Objects.isNull(processTask)) {
-            throw new ServiceException(ApiError.ERROR_94005);
+            throw new ServiceException(ApiError.WF_NOT_APPROVER);
         }
 
         //审核
@@ -813,7 +811,7 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
 
             }
         } else {
-            throw new ServiceException(ApiError.ERROR_94005);
+            throw new ServiceException(ApiError.WF_NOT_APPROVER);
         }
 
         return true;
@@ -833,7 +831,7 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
         String id = dto.getId();
         ProjectPlanEntity plan = this.getById(id);
         if (Objects.isNull(plan)) {
-            throw new ServiceException(ApiError.ERROR_95122);
+            throw new ServiceException(ApiError.PROJECT_PRODUCT_SCHEDULE_REQUIRED);
         }
         LoginUser loginUser = UserContext.getDefaultLoginUser();
         String userId = loginUser.getUid();
@@ -850,7 +848,7 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
         //获取到用户该业务表的待办任务
         MyToDoTaskVO processTask = workflowFeign.getByBusinessTableId(tableDTO);
         if (Objects.isNull(processTask)) {
-            throw new ServiceException(ApiError.ERROR_94005);
+            throw new ServiceException(ApiError.WF_NOT_APPROVER);
         }
 
         //审核
@@ -876,7 +874,7 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
                 noticeMessageService.scheduleTaskAudit(userName, taskEntityList, plan.getProductId(), status, comment);
             }
         } else {
-            throw new ServiceException(ApiError.ERROR_94005);
+            throw new ServiceException(ApiError.WF_NOT_APPROVER);
         }
         return true;
 
@@ -965,13 +963,13 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
     public void checkAuditor() {
 
         if (StringUtils.isBlank(pmoCharge)) {
-            throw new ServiceException(ApiError.ERROR_9036);
+            throw new ServiceException(ApiError.PROJECT_PMO_OWNER_REQUIRED);
         }
 
         //研发中心负责人
         List<String> departmentHeadList = productDetailService.getApproveLead(SkuApproveConfigureEnum.FIVE_APPROVE.getDesc());
         if (CollectionUtils.isEmpty(departmentHeadList)) {
-            throw new ServiceException(ApiError.ERROR_9032);
+            throw new ServiceException(ApiError.PROJECT_RND_CENTER_OWNER_REQUIRED);
         }
     }
 
@@ -1004,12 +1002,12 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
     public ProjectTaskPlanAutoVO autoSchedule(ProjectPlanTaskDTO.AutoDTo dto) {
         List<ProjectPlanTaskDTO.AutoDateDTO> list = dto.getList();
         if (isEmpty(list)) {
-            throw new ServiceException(ApiError.ERROR_1017);
+            throw new ServiceException(ApiError.COMMON_PARAM_LIST_REQUIRED);
         }
         List<String> taskIds = list.stream().map(ProjectPlanTaskDTO.AutoDateDTO::getId).collect(Collectors.toList());
         List<String> deTaskIds = taskIds.stream().distinct().collect(Collectors.toList());
         if (taskIds.size() != deTaskIds.size()) {
-            throw new ServiceException(ApiError.ERROR_95150);
+            throw new ServiceException(ApiError.PROJECT_TASK_DUPLICATE);
         }
 
         // 校验第一条是否有开始时间
@@ -1018,7 +1016,7 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
                 .collect(Collectors.toList());
         ProjectPlanTaskDTO.AutoDateDTO autoDTO = autoPlanTaskOrderList.get(0);
         if (null == autoDTO.getStartDate()) {
-            throw new ServiceException(ApiError.ERROR_95144);
+            throw new ServiceException(ApiError.PROJECT_FIRST_RECORD_START_TIME_REQUIRED);
         }
         // 查询所有休息日
         SysCalendarDTO.ListDTO listDTO = new SysCalendarDTO.ListDTO();
@@ -1043,7 +1041,7 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
             planEntityList = projectPlanTaskService.listByPlanId(planIdList);
         }
         if (isEmpty(planEntityList)) {
-            throw new ServiceException(ApiError.ERROR_95145);
+            throw new ServiceException(ApiError.PROJECT_TASK_DATA_NOT_FOUND);
         }
         // 查询任务列表
         Map<String, PlanTaskNameDTO> taskIdMap = planEntityList.stream().collect(Collectors.toMap(PlanTaskNameDTO::getId, e -> e));
@@ -1088,7 +1086,7 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
     public Boolean importProjectSchedule(MultipartFile excelFile, String productId) {
         List<Task> tasks = ProjectImportUtil.readMmpFile(excelFile);
         if (CollectionUtils.isEmpty(tasks)) {
-            throw new ServiceException(ApiError.ERROR_95123);
+            throw new ServiceException(ApiError.FILE_DATA_REQUIRED);
         }
         List<ProjectImportDTO> list = new ArrayList<>();
         Map<Integer, String> map = new LinkedHashMap<>();
@@ -1108,7 +1106,7 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
         //阶段信息
         List<ProjectImportDTO> phaseList = list.stream().filter(obj -> MathUtil.TWO.equals(obj.getTaskOutlineLevel())).collect(Collectors.toList());
         if (CollectionUtils.isEmpty(phaseList)) {
-            throw new ServiceException(new ApiResult<>(ApiError.ERROR_1034.code, format(ApiError.ERROR_1034.msg, "二级")));
+            throw new ServiceException(ApiError.PROJECT_TASK_REQUIRED, "二");
         }
         List<ProjectPhaseEntity> oldPhaseList = projectPhaseService.getByProductId(productId);
 
@@ -1125,18 +1123,18 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
         //查询阶段
         List<ProjectPhaseEntity> projectPhaseList = projectPhaseService.listByPhaseNames(oldPhaseNameList, productId);
         if (CollectionUtils.isEmpty(projectPhaseList)) {
-            throw new ServiceException(ApiError.ERROR_95041);
+            throw new ServiceException(ApiError.PROJECT_STAGE_TASK_NOT_FOUND);
         }
 
         //任务信息
         List<ProjectImportDTO> taskList = list.stream().filter(obj -> MathUtil.THREE.equals(obj.getTaskOutlineLevel())).collect(Collectors.toList());
         if (CollectionUtils.isEmpty(taskList)) {
-            throw new ServiceException(new ApiResult<>(ApiError.ERROR_1034.code, format(ApiError.ERROR_1034.msg, "三")));
+            throw new ServiceException(ApiError.PROJECT_TASK_REQUIRED,"三");
         }
         //任务负责人不能为空
         long chargeCount = taskList.stream().filter(obj -> ObjectUtils.isEmpty(obj.getCustomFieldValues()) || StringUtils.isBlank(obj.getCustomFieldValues().get("taskCharge"))).count();
         if (chargeCount > 0) {
-            throw new ServiceException(new ApiResult<>(ApiError.ERROR_1036.code, format(ApiError.ERROR_1036.msg, "二")));
+            throw new ServiceException(ApiError.PROJECT_TASK_OWNER_REQUIRED, "二");
         }
         //任务交付物
         List<DocsDTO> docsList = handleDocName(taskList, productId);
@@ -1150,7 +1148,7 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
         }).distinct().collect(Collectors.toList());
         List<FindUserDTO> findUserList = sysUserFeign.listUserByUserNames(taskChargeList, UserTypeEnum.ERP.code);
         if (CollectionUtils.isEmpty(findUserList)) {
-            throw new ServiceException(new ApiResult<>(ApiError.ERROR_1038.code, format(ApiError.ERROR_1038.msg, "二")));
+            throw new ServiceException(ApiError.PROJECT_OWNER_NOT_FOUND, "二");
         }
 
         //产品下已存在的任务
@@ -1164,7 +1162,7 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
 
             //任务名称
             if (StringUtils.isBlank(projectImportDTO.getTaskName())) {
-                throw new ServiceException(new ApiResult<>(ApiError.ERROR_1035.code, format(ApiError.ERROR_1035.msg, "二")));
+                throw new ServiceException(ApiError.PROJECT_TASK_NAME_REQUIRED,"二");
             }
             //任务负责人
             Map<String, String> customFieldValues = projectImportDTO.getCustomFieldValues();
@@ -1174,7 +1172,7 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
             for (String taskChargeName : taskChargeNameList) {
                 String chargeId = findUserList.stream().filter(obj -> obj.getUserName().equals(taskChargeName)).map(FindUserDTO::getUserId).findFirst().orElse("");
                 if (StringUtils.isBlank(chargeId)) {
-                    throw new ServiceException(new ApiResult<>(ApiError.ERROR_1037.code, format(ApiError.ERROR_1037.msg, taskChargeName)));
+                    throw new ServiceException(ApiError.AUTH_USER_NOT_FOUND, taskChargeName);
                 }
                 chargeIds.add(chargeId);
             }
@@ -1274,7 +1272,7 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
         }
         boolean saveOrUpdate = taskDocsNameService.saveOrUpdateBatch(docEntityList);
         if (!saveOrUpdate) {
-            throw new ServiceException(ApiError.ERROR_1019);
+            throw new ServiceException(ApiError.BILL_SAVE_FAILED);
         }
         List<DocsDTO> docList = BeanMapperUtils.copyList(DocsDTO.class, docEntityList);
         return docList;

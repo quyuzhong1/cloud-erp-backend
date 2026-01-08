@@ -5,11 +5,9 @@ import cn.hutool.core.text.CharSequenceUtil;
 import com.alibaba.fastjson2.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
-import com.common.business.annotation.DistributeLocker;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.wms.dto.WmsVirtualDetailMsgDTO;
-import com.erp.model.wms.dto.inventory.InventoryTransactionDTO;
 import com.erp.model.wms.dto.inventory.VirtualInventoryStockDTO;
 import com.erp.model.wms.entity.VirtualInventoryEntity;
 import com.erp.model.wms.entity.VirtualInventoryHisEntity;
@@ -86,7 +84,7 @@ public class VirtualInventoryTradingRedisServiceImpl implements VirtualInventory
             }
             log.warn("stopwatch4 ={}",stopwatch.elapsed(TimeUnit.MILLISECONDS));
         }catch (Exception e) {
-            throw new RuntimeException(e);
+            throw new ServiceException(e.getMessage());
         } finally {
             stopwatch.stop();
             // 计时器-结束
@@ -309,7 +307,7 @@ public class VirtualInventoryTradingRedisServiceImpl implements VirtualInventory
         log.info("####VirtualInventoryTradingServiceImpl===>updateVirtualInventory====>virtualInventoryEntity = {}  transactionDTO={}", JSON.toJSONString(virtualInventoryEntity), JSON.toJSONString(transactionDTO));
         if(null == virtualInventoryEntity || null == virtualInventoryEntity.getId()) {
             log.warn("####VirtualInventoryTradingServiceImpl===>updateVirtualInventory====>virtualInventoryEntity = {}  transactionDTO={}", JSON.toJSONString(virtualInventoryEntity), JSON.toJSONString(transactionDTO));
-            throw new ServiceException(ApiError.ERROR_INVENTORY_NOT_EXIST, transactionDTO.getWarehouseName(), transactionDTO.getSkuNo(), transactionDTO.getInventoryStatusName());
+            throw new ServiceException(ApiError.WH_INVENTORY_NOT_EXIST, transactionDTO.getWarehouseName(), transactionDTO.getSkuNo(), transactionDTO.getInventoryStatusName());
         }
         
         if(null == transactionDTO.getVirtualInventoryId()) {

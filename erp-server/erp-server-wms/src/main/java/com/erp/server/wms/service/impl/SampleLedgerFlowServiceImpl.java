@@ -8,7 +8,6 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
-import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.vo.PagingVO;
@@ -20,7 +19,6 @@ import com.erp.server.wms.service.SampleLedgerFlowService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.erp.server.wms.service.OperateLogService;
-import com.erp.server.wms.service.CommonService;
 import com.common.core.exception.ServiceException;
 import com.erp.server.wms.service.SampleLedgerService;
 import org.springframework.stereotype.Service;
@@ -95,7 +93,7 @@ public class SampleLedgerFlowServiceImpl extends SuperServiceImpl<SampleLedgerFl
     @Transactional(rollbackFor = Exception.class)
     public Boolean update(SampleLedgerFlowDTO.UpdateDTO addOrUpdateDTO) {
         SampleLedgerFlowEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "样品台账"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "样品台账"));
         SampleLedgerFlowEntity sampleLedgerFlowEntity =  BeanMapperUtils.map(SampleLedgerFlowEntity.class, addOrUpdateDTO);
 
         // 数据处理

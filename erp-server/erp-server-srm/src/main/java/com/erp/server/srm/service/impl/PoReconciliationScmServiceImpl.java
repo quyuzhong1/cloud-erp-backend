@@ -164,12 +164,12 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
     public Boolean update(PoReconciliationDTO.ScmUpdateDTO updateDTO) {
         PoReconciliationEntity old = super.getById(updateDTO.getId());
         if(null == old){
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "采购对账单");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "采购对账单");
         }
         //待供方确认/待采方确认
         if (!PoReconciliationEnum.PoReconciliationStatusEnum.TO_BE_SUPPLIER_CONFIRM.getCode().equals(old.getStatus())
                 && !PoReconciliationEnum.PoReconciliationStatusEnum.TO_BE_PURCHASE_CONFIRM.getCode().equals(old.getStatus())) {
-            throw new ServiceException(ApiError.ERROR_PO_RECONCILIATION_UPDATE);
+            throw new ServiceException(ApiError.PO_RECONCILIATION_UPDATE_STATUS_FORBIDDEN);
         }
         //添加上传附件url
         addMultipartFileUrl(updateDTO);
@@ -193,7 +193,7 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
     public void updateAmount (String id) {
         List<PoReconciliationRefDetailEntity> detailList = poReconciliationRefDetailService.listPoReconciliationIdList(Collections.singletonList(id));
         if (CollectionUtils.isEmpty(detailList)) {
-            throw new ServiceException(ApiError.ERROR_PO_RECONCILIATION_DETAIL_NOT_EXIST);
+            throw new ServiceException(ApiError.FIN_RECONCILIATION_DETAIL_NOT_FOUND);
         }
         BigDecimal amount = detailList.stream().map(PoReconciliationRefDetailEntity::getDiscountTaxAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
         //更新主表对账金额
@@ -226,15 +226,15 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
             EasyExcel.read(excelFile.getInputStream(), PoReconciliationDetailImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (IOException e) {
             log.error("导入错误！", e);
-            throw new ServiceException(ApiError.ERROR_95124);
+            throw new ServiceException(ApiError.FILE_DATA_IMPORT_FAILED);
         } catch (ExcelCommonException e) {
             log.error("导入格式错误！", e);
-            throw new ServiceException(ApiError.ERROR_1016);
+            throw new ServiceException(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX);
         }
         //验证导入数据是否为空
         List<PoReconciliationDetailImportExcelDTO> excelDateList = excelListenerUtil.getExcelDateList();
         if (CollectionUtils.isEmpty(excelDateList)) {
-            throw new ServiceException(ApiError.ERROR_95123);
+            throw new ServiceException(ApiError.FILE_DATA_REQUIRED);
         }
         PoReconciliationDetailDTO.ImportDTO importDTO = new PoReconciliationDetailDTO.ImportDTO();
         //导入数据处理
@@ -331,11 +331,11 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
     public BatchResultDTO cancelReceive(String id) {
         PoReconciliationEntity entity = getById(id);
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_PO_RECONCILIATION_NOT_EXIST);
+            throw new ServiceException(ApiError.FIN_RECONCILIATION_NOT_FOUND);
         }
         //确认待完结
         if (!PoReconciliationEnum.PoReconciliationStatusEnum.RECEIVED.getCode().equals(entity.getStatus())) {
-            throw new ServiceException(ApiError.ERROR_PO_RECONCILIATION_CANCAL_RECEIVE);
+            throw new ServiceException(ApiError.PO_RECONCILIATION_ONLY_RECEIVED_CANCEL_ALLOWED);
         }
         log.info("开始取消单据签收，id = {}",id);
         lambdaUpdate().eq(PoReconciliationEntity::getId, id)
@@ -367,7 +367,7 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
             wb.write(output);
             wb.close();
         } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_95131);
+            throw new ServiceException(ApiError.FILE_IMPORT_TEMPLATE_DOWNLOAD_FAILED);
         }
     }
 
@@ -515,7 +515,7 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
         List<String> mainIdList = list.stream().map(PoReconciliationDTO.ListDTO::getId).collect(Collectors.toList());
         List<PoReconciliationRefDetailEntity>  poReconciliationRefDetailList = poReconciliationRefDetailService.listPoReconciliationIdList(mainIdList);
         if (CollUtil.isEmpty(poReconciliationRefDetailList)) {
-            throw new ServiceException(ApiError.ERROR_PO_RECONCILIATION_REF_DETAIL_NOT_EXIST);
+            throw new ServiceException(ApiError.PO_RECONCILIATION_DETAIL_REF_NOT_FOUND);
         }
 
         for (PoReconciliationDTO.ListDTO listDTO : list) {
@@ -604,7 +604,7 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
             try {
                 new ExcelPrintUtils().patchExport(detailDTOList,exportDTO, response, sb.toString(), excelPath);
             } catch (Exception e) {
-                throw new ServiceException(ApiError.ERROR_1015);
+                throw new ServiceException(ApiError.FILE_EXPORT_FAILED);
             }
         }
     }
@@ -624,15 +624,15 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
     public BatchResultDTO confirm(String id) {
         PoReconciliationEntity entity = getById(id);
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_PO_RECONCILIATION_NOT_EXIST);
+            throw new ServiceException(ApiError.FIN_RECONCILIATION_NOT_FOUND);
         }
         //待供方确认
         if (!PoReconciliationEnum.PoReconciliationStatusEnum.TO_BE_PURCHASE_CONFIRM.getCode().equals(entity.getStatus())) {
-            throw new ServiceException(ApiError.ERROR_PO_RECONCILIATION_CANCEL_CONFIRM);
+            throw new ServiceException(ApiError.PO_RECONCILIATION_ONLY_PENDING_BUYER_CONFIRM_ALLOWED);
         }
         //备注不能为空
         if (CharSequenceUtil.isBlank(entity.getRemark())) {
-            throw new ServiceException(ApiError.ERROR_PO_RECONCILIATION_REMARK_NOT_BLANK);
+            throw new ServiceException(ApiError.PO_RECONCILIATION_REMARK_REQUIRED);
         }
 
         log.info("开始采购方确认，id = {}",id);
@@ -647,7 +647,7 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
         //明细
         List<PoReconciliationRefDetailEntity> refDetailList = poReconciliationRefDetailService.listPoReconciliationIdList(Collections.singletonList(id));
         if (CollUtil.isEmpty(refDetailList)) {
-            throw new ServiceException(ApiError.NOT_EXIST_BILL,"对账单");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE,"对账单");
         }
 
         //打系统标识
@@ -669,12 +669,12 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
     public BatchResultDTO cancelConfirm(String id) {
         PoReconciliationEntity entity = getById(id);
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_PO_RECONCILIATION_NOT_EXIST);
+            throw new ServiceException(ApiError.FIN_RECONCILIATION_NOT_FOUND);
         }
         //待采方确认/确认已完结
         if (!PoReconciliationEnum.PoReconciliationStatusEnum.TO_BE_PURCHASE_CONFIRM.getCode().equals(entity.getStatus())
                 && !PoReconciliationEnum.PoReconciliationStatusEnum.CONFIRM.getCode().equals(entity.getStatus())) {
-            throw new ServiceException(ApiError.ERROR_PO_RECONCILIATION_SCM_CANCEL_CONFIRM);
+            throw new ServiceException(ApiError.PO_RECONCILIATION_BUYER_CONFIRM_OR_CONFIRMED_ALLOWED);
         }
         log.info("开始取消确认，id = {}",id);
         lambdaUpdate().eq(PoReconciliationEntity::getId, id)
@@ -702,12 +702,12 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
     public BatchResultDTO delete(String id) {
         PoReconciliationEntity entity = getById(id);
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_PO_RECONCILIATION_NOT_EXIST);
+            throw new ServiceException(ApiError.FIN_RECONCILIATION_NOT_FOUND);
         }
         //待供方确认
         if (!PoReconciliationEnum.PoReconciliationStatusEnum.TO_BE_SUPPLIER_CONFIRM.getCode().equals(entity.getStatus())
             && !PoReconciliationEnum.PoReconciliationStatusEnum.TO_BE_PURCHASE_CONFIRM.getCode().equals(entity.getStatus())) {
-            throw new ServiceException(ApiError.ERROR_PO_RECONCILIATION_DELETE);
+            throw new ServiceException(ApiError.PO_RECONCILIATION_DELETE_STATUS_FORBIDDEN);
         }
         log.info("开始删除，id = {}",id);
         //反审核并且删除应付单
@@ -724,11 +724,11 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
     public BatchResultDTO receive(String id, LocalDate date) {
         PoReconciliationEntity entity = getById(id);
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_PO_RECONCILIATION_NOT_EXIST);
+            throw new ServiceException(ApiError.FIN_RECONCILIATION_NOT_FOUND);
         }
         //确认待完结
         if (!PoReconciliationEnum.PoReconciliationStatusEnum.CONFIRM.getCode().equals(entity.getStatus())) {
-            throw new ServiceException(ApiError.ERROR_PO_RECONCILIATION_RECEIVE);
+            throw new ServiceException(ApiError.PO_RECONCILIATION_ONLY_CONFIRMED_RECEIVABLE_ALLOWED);
         }
         log.info("开始单据签收，id = {}",id);
         lambdaUpdate().eq(PoReconciliationEntity::getId, id)
@@ -746,7 +746,7 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
     public PoReconciliationDTO.ViewDTO viewMain(String id) {
         PoReconciliationEntity entity = getById(id);
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_PO_RECONCILIATION_NOT_EXIST);
+            throw new ServiceException(ApiError.FIN_RECONCILIATION_NOT_FOUND);
         }
         PoReconciliationDTO.ViewDTO viewDTO = BeanMapperUtils.map(PoReconciliationDTO.ViewDTO.class, entity);
 
@@ -797,14 +797,14 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
         PoReconciliationEntity entity = new PoReconciliationEntity();
         //时间校验
         if (addDTO.getStartDate().isAfter(addDTO.getEndDate())) {
-            throw new ServiceException(ApiError.ERROR_PO_RECONCILIATION_DATE);
+            throw new ServiceException(ApiError.PO_RECONCILIATION_DATE_RANGE_INVALID);
         }
 
         //明细id集合
         List<String> detailIdList = addDTO.getDetailIdList();
         List<PoReconciliationDetailEntity> detailList = poReconciliationDetailScmService.listByIds(detailIdList);
         if (CollectionUtils.isEmpty(detailList)) {
-            throw new ServiceException(ApiError.ERROR_PO_RECONCILIATION_DETAIL_NOT_EXIST);
+            throw new ServiceException(ApiError.FIN_RECONCILIATION_DETAIL_NOT_FOUND);
         }
         long supplierCount = detailList.stream().map(PoReconciliationDetailEntity::getSupplierId).distinct().count();
         if (supplierCount > 1) {

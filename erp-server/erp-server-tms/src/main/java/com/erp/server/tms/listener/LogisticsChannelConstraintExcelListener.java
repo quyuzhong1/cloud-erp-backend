@@ -1,13 +1,11 @@
 package com.erp.server.tms.listener;
 
-import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.extra.spring.SpringUtil;
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.FieldValidUtil;
-import com.erp.model.plm.entity.ProductPurchaseEntity;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.tms.dto.LogisticsChannelConstraintDTO;
 import com.erp.model.tms.dto.LogisticsChannelDTO;

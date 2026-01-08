@@ -120,7 +120,7 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
     public Boolean downloadTemplate(HttpServletResponse response) {
         List<TmsCfgCostEntity> cfgCostList = tmsCfgCostService.listByCostAttribution(DictCostAttributionEnum.LAST_MILE.getCode());
         if (CollectionUtils.isEmpty(cfgCostList)) {
-            throw new ServiceException(ApiError.ERROR_CFG_COST_EMPTY,"尾程");
+            throw new ServiceException(ApiError.LOGISTICS_COST_CONFIG_NOT_FOUND,"尾程");
         }
         LinkedList<String> headerNameList = getHeaderNameList();
         LinkedList<String> costNameList = cfgCostList.stream().map(TmsCfgCostEntity::getCostName).distinct().collect(Collectors.toCollection(LinkedList::new));
@@ -180,7 +180,7 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
     public void handleImportSuccessList(List<JSONObject> successList, List<JSONObject> errorList, List<String> headList, Map<Integer,String> headMap, String importType) {
 
         if (headList.size() != headList.stream().distinct().collect(Collectors.toList()).size()) {
-            throw new ServiceException(ApiError.ERROR_EXCEL_IMPORT_HEAD_EXIST);
+            throw new ServiceException(ApiError.FILE_EXCEL_IMPORT_HEAD_EXIST);
         }
 
         if (CollectionUtils.isEmpty(successList)) {
@@ -431,7 +431,7 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
             EasyExcel.read(new ByteArrayInputStream(bytes), excelListenerUtil).sheet(0).doRead();
         } catch (ExcelCommonException e) {
             log.error("导入格式错误！", e);
-            throw new ServiceException(ApiError.ERROR_1016);
+            throw new ServiceException(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX);
         }
 
         BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();

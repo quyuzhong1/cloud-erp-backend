@@ -95,7 +95,7 @@ public class FirstMileChangeRecordServiceImpl extends SuperServiceImpl<FirstMile
     @Override
     public Boolean update(FirstMileChangeRecordDTO.UpdateDTO addOrUpdateDTO) {
         FirstMileChangeRecordEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "头程调整记录"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "头程调整记录"));
         FirstMileChangeRecordEntity firstMileChangeRecordEntity =  BeanMapperUtils.map(FirstMileChangeRecordEntity.class, addOrUpdateDTO);
         // 数据处理
         handleData(firstMileChangeRecordEntity);

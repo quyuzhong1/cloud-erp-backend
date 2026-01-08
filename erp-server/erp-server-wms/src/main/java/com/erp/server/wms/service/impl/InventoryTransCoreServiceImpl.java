@@ -4,7 +4,6 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.threadlocal.UserContext;
@@ -569,7 +568,7 @@ public class InventoryTransCoreServiceImpl implements InventoryTransCoreService 
         }
         warehouseName = CharSequenceUtil.isNotBlank(warehouseLocation) ? warehouseName : "空仓位";
         log.error("库位信息不存在,仓库id：{}，仓库名称:{},仓位编号:{}",warehouseId, warehouseName,warehouseLocation);
-        throw new ServiceException(ApiError.ERROR_WAREHOUSE_LOCATION_NOT_FOUND,warehouseName, warehouseLocation);
+        throw new ServiceException(ApiError.WH_WAREHOUSE_LOCATION_NOT_FOUND,warehouseName, warehouseLocation);
     }
 
 }

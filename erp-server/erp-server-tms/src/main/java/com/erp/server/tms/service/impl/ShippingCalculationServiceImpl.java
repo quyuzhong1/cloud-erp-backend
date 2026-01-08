@@ -290,18 +290,18 @@ public class ShippingCalculationServiceImpl implements ShippingCalculationServic
     private void checkThirdCalculationParam(ShippingCalculationDTO.PagingParamDTO params, OverseasProviderEntity overseasProviderEntity) {
         if (PlatformDictEnum.ANTU.getCode().equals(overseasProviderEntity.getCode())){
             if (CollUtil.isEmpty(params.getToCountryList())){
-                throw new ServiceException(ApiError.ERROR_92264);
+                throw new ServiceException(ApiError.COMMON_DEST_COUNTRY_REQUIRED);
             }
             if (Objects.isNull(params.getWeight())){
-                throw new ServiceException(ApiError.ERROR_92265);
+                throw new ServiceException(ApiError.COMMON_WEIGHT_REQUIRED);
             }
         }else if (PlatformDictEnum.GOOD_CANG.getCode().equals(overseasProviderEntity.getCode())){
             //邮政编码不能为空
             if (CharSequenceUtil.isBlank(params.getPostCode())){
-                throw new ServiceException(ApiError.ERROR_92267);
+                throw new ServiceException(ApiError.COMMON_POSTCODE_REQUIRED);
             }
             if (CollUtil.isEmpty(params.getToCountryList())){
-                throw new ServiceException(ApiError.ERROR_92264);
+                throw new ServiceException(ApiError.COMMON_DEST_COUNTRY_REQUIRED);
             }
         }
     }
@@ -447,7 +447,7 @@ public class ShippingCalculationServiceImpl implements ShippingCalculationServic
         //查询其他费用
         List<ShippingTemplateOtherCostEntity> otherCostList = shippingTemplateOtherCostService.listByMainId(entity.getId());
         if (CollectionUtils.isEmpty(otherCostList)) {
-            throw new ServiceException(ApiError.ERROR_SHIPPING_OTHER_COST_NOT_EXIST);
+            throw new ServiceException(ApiError.LOGISTICS_SHIPPING_OTHER_COST_NOT_FOUND);
         }
         ShippingCalculationDTO.ViewDTO shippingCalculationDTO = calculationFinalShippingCost(entity, shippingTemplateRule, new LogisticsChannelEntity(), otherCostList, weight, null, null, null);
         return shippingCalculationDTO;
@@ -460,7 +460,7 @@ public class ShippingCalculationServiceImpl implements ShippingCalculationServic
         //查询其他费用
         List<ShippingTemplateOtherCostEntity> otherCostList = shippingTemplateOtherCostService.listByMainId(entity.getId());
         if (CollectionUtils.isEmpty(otherCostList)) {
-            throw new ServiceException(ApiError.ERROR_SHIPPING_OTHER_COST_NOT_EXIST);
+            throw new ServiceException(ApiError.LOGISTICS_SHIPPING_OTHER_COST_NOT_FOUND);
         }
         ShippingCalculationDTO.ViewDTO shippingCalculationDTO = calculationFinalShippingCost(entity, shippingTemplateRule, channelEntity, otherCostList, weight, length, width, height);
         return shippingCalculationDTO;
@@ -570,7 +570,7 @@ public class ShippingCalculationServiceImpl implements ShippingCalculationServic
         } else {
             //验证录入重量是否在开始重量和结束重量之间
             if (MathUtil.compareTo(shippingTemplateRule.getStartWeight(), weight) >= MathUtil.ZERO || MathUtil.compareTo(weight, shippingTemplateRule.getEndWeight()) > MathUtil.ZERO) {
-                throw new ServiceException(ApiError.ERROR_SHIPPING_WEIGHT_NOT_INTERVAL, weight, shippingTemplateRule.getStartWeight(), shippingTemplateRule.getEndWeight());
+                throw new ServiceException(ApiError.LOGISTICS_WEIGHT_OUT_OF_RANGE, weight, shippingTemplateRule.getStartWeight(), shippingTemplateRule.getEndWeight());
             }
             shippingCost = MathUtil.multiplyWithTwo(shippingTemplateRule.getShippingPrice(), weight, 4);
         }

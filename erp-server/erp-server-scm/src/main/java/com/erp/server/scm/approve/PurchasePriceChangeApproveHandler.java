@@ -60,7 +60,7 @@ public class PurchasePriceChangeApproveHandler extends AbstractApproveHandler {
         PurchasePriceChangeEntity entity = purchasePriceChangeService.getById(dto.getBusinessId());
         BatchResultDTO resultDTO = purchasePriceChangeService.approveEnd(entity, dto.getApproveStatus().getStatus(), dto.getComment(), null);
         if (Boolean.FALSE.equals(resultDTO.getSuccess())) {
-            throw new ServiceException(ApiError.ERROR_BILL_APPROVE, SourceTypeEnum.getName(dto.getBusinessKey()));
+            throw new ServiceException(ApiError.BILL_APPROVE_FAILED, SourceTypeEnum.getName(dto.getBusinessKey()));
         }
         //非erp审核添加日志
         if (ApprovePlatformEnum.ERP.equals(dto.getApprovePlatformEnum())) {

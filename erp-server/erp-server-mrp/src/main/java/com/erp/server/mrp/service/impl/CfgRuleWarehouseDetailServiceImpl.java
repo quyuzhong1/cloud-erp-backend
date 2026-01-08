@@ -90,7 +90,7 @@ public class CfgRuleWarehouseDetailServiceImpl extends SuperServiceImpl<CfgRuleW
         }
         CfgRuleWarehouseEntity ruleWarehouseEntity = cfgRuleWarehouseService.getById(mainId);
         if (ObjectUtil.isEmpty(ruleWarehouseEntity)) {
-            throw new ServiceException(ApiError.NOT_EXIST_BILL,"仓库规则");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE,"仓库规则");
         }
         //仓库
         List<String> warehouseIdList = list.stream().map(CfgRuleWarehouseDetailEntity::getWarehouseId).distinct().collect(Collectors.toList());

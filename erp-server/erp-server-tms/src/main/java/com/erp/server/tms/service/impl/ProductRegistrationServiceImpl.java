@@ -267,7 +267,7 @@ public class ProductRegistrationServiceImpl extends SuperServiceImpl<ProductRegi
     @Override
     public ProductRegistrationDTO.ViewVO view(String id) {
         ProductRegistrationEntity old = super.getById(id);
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "产品备案单"));
+        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "产品备案单"));
 
         ProductRegistrationDTO.ViewVO view = BeanMapperUtils.map(ProductRegistrationDTO.ViewVO.class, old);
         view.setDeclarePlatformName(old.getDeclareSupplierName());

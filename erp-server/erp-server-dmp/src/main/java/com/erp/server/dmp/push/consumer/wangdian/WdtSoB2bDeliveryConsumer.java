@@ -130,7 +130,7 @@ public class WdtSoB2bDeliveryConsumer<T extends DmpSyncTaskIdDTO> extends Abstra
                 }
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
-                throw new ServiceException(ApiError.ERROR_1026);
+                throw new ServiceException(ApiError.BILL_DATA_LOCKED);
 
             } finally {
                 lock.unlock();

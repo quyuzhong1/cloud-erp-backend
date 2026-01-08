@@ -44,10 +44,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.security.SecureRandom;
-import java.time.Instant;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.ZoneOffset;
 import java.util.*;
 
 /**
@@ -113,7 +110,7 @@ public class TikTokFullyAuthorize implements IShopAuthorizeService<T> {
         }
 
         if (StringUtil.isBlank(tikTokTokenDTO.getData().getAccessToken())) {
-            throw new ServiceException(ApiError.ERROR_SHOP_AUTHORIZE_FAIL, PlatformDictEnum.TIK_TOK.getName(), JSONUtil.toJsonStr(apiResult));
+            throw new ServiceException(ApiError.SHOP_PARAM_AUTHORIZE_FAILED, PlatformDictEnum.TIK_TOK.getName(), JSONUtil.toJsonStr(apiResult));
         }
     }
     @Override
@@ -168,7 +165,7 @@ public class TikTokFullyAuthorize implements IShopAuthorizeService<T> {
         }
         String shopId = shopIdObj.toString();
         if (StringUtils.isBlank(shopId)) {
-            throw new ServiceException(ApiError.ERROR_SO_B2C_SHOP_USER_AUTH_PART);
+            throw new ServiceException(ApiError.SHOP_AUTH_REQUIRED);
         }
         ShopInfoEntity shopInfo = shopInfoService.getById(shopId);
         if (Objects.isNull(shopInfo)) {
@@ -176,7 +173,7 @@ public class TikTokFullyAuthorize implements IShopAuthorizeService<T> {
         }
         String code = dto.getCode();
         if (StringUtils.isBlank(code)) {
-            throw new ServiceException(ApiError.ERROR_AUTHORIZE_CODE_NOT_NULL);
+            throw new ServiceException(ApiError.SHOP_AUTHORIZE_CODE_REQUIRED);
         }
         AppClientEnum appClient = AppClientEnum.TIKTOK_FULLY_ACCESS_TOKEN;
         CfgAppClientDTO.FindDTO findDTO = new CfgAppClientDTO.FindDTO();

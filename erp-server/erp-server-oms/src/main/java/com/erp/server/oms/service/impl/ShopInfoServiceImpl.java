@@ -272,7 +272,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
     private void checkWarehouseExist(Boolean isHaveWarehouse, String warehouseId) {
         if (Objects.nonNull(isHaveWarehouse) && isHaveWarehouse) {
             if (StringUtils.isBlank(warehouseId)) {
-                throw new ServiceException(ApiError.ERROR_99001);
+                throw new ServiceException(ApiError.WH_REQUIRED);
             }
         }
     }
@@ -411,11 +411,11 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
                 list();
         if (CollectionUtils.isNotEmpty(shopInfoList)) {
             if (StringUtils.isBlank(dictAreaCode)) {
-                throw new ServiceException(ApiError.ERROR_SHOP_EXIST, dictPlatform, account);
+                throw new ServiceException(ApiError.SHOP_EXIST, dictPlatform, account);
             } else {
                 String countryName = shopInfoList.stream().map(ShopInfoEntity::getCountryName).distinct().
                         collect(Collectors.joining(","));
-                throw new ServiceException(ApiError.ERROR_SHOP_COUNTRY_EXIST, dictPlatform, account, countryName);
+                throw new ServiceException(ApiError.SHOP_COUNTRY_EXIST, dictPlatform, account, countryName);
             }
         }
 
@@ -569,7 +569,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
     public ShopInfoEntity updateShop(ShopDTO.UpdateDTO dto) {
         ShopInfoEntity shopInfo = this.getById(dto.getId());
         if (Objects.isNull(shopInfo)) {
-            throw new ServiceException(ApiError.ERROR_92058);
+            throw new ServiceException(ApiError.SHOP_NOT_FOUND);
         }
 
         String customerId = shopInfo.getCustomerId();
@@ -736,7 +736,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
     public ShopInfoEntity updateInternalShop(ShopDTO.UpdateInternalDTO dto) {
         ShopInfoEntity shopInfo = this.getById(dto.getId());
         if (Objects.isNull(shopInfo)) {
-            throw new ServiceException(ApiError.ERROR_92058);
+            throw new ServiceException(ApiError.SHOP_NOT_FOUND);
         }
 
         String customerId = shopInfo.getCustomerId();
@@ -812,7 +812,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         if (StringUtils.isNotBlank(customerId)) {
             CustomerInfoEntity customerInfoEntity = customerInfoService.getById(customerId);
             if (ObjectUtil.isEmpty(customerInfoEntity)) {
-                throw new ServiceException(ApiError.ERROR_92011);
+                throw new ServiceException(ApiError.CUSTOMER_NOT_FOUND);
             }
             ShopInfoEntity other = this.lambdaQuery().eq(ShopInfoEntity::getCustomerId,customerId).ne(StringUtils.isNotBlank(shopInfo.getId()),ShopInfoEntity::getId,shopInfo.getId()).last("limit 1").one();
             if(Objects.nonNull(other)){
@@ -836,7 +836,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
                 eq(ShopInfoEntity::getType, ShopTypeEnum.INTERNAL.getCode()).
                 list();
         if (CollectionUtils.isNotEmpty(shopInfoList)) {
-            throw new ServiceException(ApiError.ERROR_97007);
+            throw new ServiceException(ApiError.SHOP_NAME_EXISTS);
         }
     }
 
@@ -1774,7 +1774,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
             }
             //只有禁用的店铺允许删除
             if (Objects.equals(shopInfoEntity.getDisabled(), false)) {
-                deleteResult = BatchResultDTO.fail(id, shopInfoEntity.getAccount(), ApiError.ERROR_SHOP_UNDISABLED.msg);
+                deleteResult = BatchResultDTO.fail(id, shopInfoEntity.getAccount(), ApiError.SHOP_DELETE_ONLY_DISABLED.getMsg());
                 resultDTOS.add(deleteResult);
                 continue;
             }
@@ -2035,7 +2035,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         }
         ShopInfoEntity shopInfo = this.getById(dto.getId());
         if (Objects.isNull(shopInfo)) {
-            throw new ServiceException(ApiError.ERROR_92058);
+            throw new ServiceException(ApiError.SHOP_NOT_FOUND);
         }
         if(Objects.nonNull(dto.getIsMultiChannel())){
             shopInfo.setIsMultiChannel(dto.getIsMultiChannel());

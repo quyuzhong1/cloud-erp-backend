@@ -170,7 +170,7 @@ public enum PlatformDictEnum implements EnumMessage {
         return Arrays.stream(values())
                 .filter(e-> e.getCode().equalsIgnoreCase(platform))
                 .findFirst()
-                .orElseThrow(() -> new ServiceException(ApiError.ERROR_92053));
+                .orElseThrow(() -> new ServiceException(ApiError.COMMON_PLATFORM_NOT_FOUND));
     }
 
     /**

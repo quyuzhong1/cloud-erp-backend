@@ -193,7 +193,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
     @Override
     public Boolean update(FirstMileCostAllocationDTO.UpdateDTO updateDTO) {
         FirstMileCostAllocationEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, NAME));
+        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, NAME));
         FirstMileCostAllocationEntity firstMileCostAllocationEntity = BeanMapperUtils.map(FirstMileCostAllocationEntity.class, updateDTO);
 
         // 数据处理
@@ -280,7 +280,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
         if (!CollectionUtils.isEmpty(firstMileCostAllocationEntityList)){
             List<FirstMileCostAllocationEntity> list = firstMileCostAllocationEntityList.stream().filter(e ->
                             CharSequenceUtil.isNotBlank(e.getId()) && !Objects.equals(e.getId(), entity.getId())
-                    && CharSequenceUtil.isNotBlank(e.getReportPeriodId()) && !e.getReportPeriodId().equals(entity.getReportPeriodId())
+                    && ((CharSequenceUtil.isNotBlank(e.getReportPeriodId()) && CharSequenceUtil.isNotBlank(entity.getReportPeriodId()) && !e.getReportPeriodId().equals(entity.getReportPeriodId())) || (Objects.nonNull(entity.getReportPeriodMonth()) && Objects.nonNull(e.getReportPeriodMonth()) && !e.getReportPeriodMonth().equals(entity.getReportPeriodMonth())))
                     && ConfirmStatusEnum.WAIT_CONFIRM.getCode().equals(e.getStatus())).collect(Collectors.toList());
             if (!CollectionUtils.isEmpty(list)){
                 List<String> monthList = list.stream().filter(e -> Objects.nonNull(e) && Objects.nonNull(e.getReportPeriodMonth())).map(e-> dateTimeFormatter.format(e.getReportPeriodMonth())).distinct().collect(Collectors.toList());
@@ -1474,9 +1474,9 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
             try {
                 BatchResultDTO resultDTO = service.calcAllocatedCost(entity, deliveryEntity, deliveryDetailEntityList1);
                 if (Boolean.TRUE.equals(resultDTO.getSuccess())) {
-                    XxlJobHelper.log("自动计算费用分摊成功：{}", resultDTO.getMsg());
+                    XxlJobHelper.log("自动计算费用分摊成功：单号：{},内容：{}", entity.getSourceCode(), resultDTO.getMsg());
                 } else {
-                    XxlJobHelper.log("自动计算费用分摊失败：{}", resultDTO.getMsg());
+                    XxlJobHelper.log("自动计算费用分摊失败：单号：{},内容：{}", entity.getSourceCode(), resultDTO.getMsg());
                 }
             }catch (Exception e){
                 XxlJobHelper.log("自动计算费用分摊异常：{}", e.getMessage());
@@ -2033,7 +2033,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
             wb.write(output);
             wb.close();
         } catch (Exception e) {
-            throw new ServiceException(ApiError.DEFAULT);
+            throw new ServiceException(ApiError.HTTP_UNKNOWN);
         }
     }
 
@@ -2059,19 +2059,19 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
                 try {
                     new ExcelPrintUtils().patchExport(errorList, response, sb.toString(), excelPath);
                 } catch (IOException e) {
-                    throw new ServiceException(ApiError.ERROR_95125);
+                    throw new ServiceException(ApiError.FILE_EXPORT_ERROR_DATA_FAILED);
                 }
                 return Boolean.FALSE;
             }
         } catch (SocketTimeoutException e) {
             log.error("导入超时错误！>>>{}", JSONUtil.toJsonStr(e));
-            throw new ServiceException(ApiError.ERROR_IMPORT_TIMEOUT);
+            throw new ServiceException(ApiError.FILE_IMPORT_TIMEOUT);
         } catch (IOException e) {
             log.error("导入错误！>>>{}", JSONUtil.toJsonStr(e));
-            throw new ServiceException(ApiError.ERROR_95124);
+            throw new ServiceException(ApiError.FILE_DATA_IMPORT_FAILED);
         } catch (ExcelCommonException e) {
             log.error("导入错误！>>>{}", JSONUtil.toJsonStr(e));
-            throw new ServiceException(ApiError.ERROR_1016);
+            throw new ServiceException(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX);
         }
         return Boolean.TRUE;
     }

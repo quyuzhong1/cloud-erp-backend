@@ -3,24 +3,16 @@ package com.erp.server.plm.listener;
 import cn.hutool.extra.spring.SpringUtil;
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
-import com.common.business.config.DocNoGenHelper;
-import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseDTO;
-import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.DisabledEnum;
 import com.common.business.enums.FileTaskStatusEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.utils.FieldValidUtil;
 import com.erp.model.plm.dto.excel.CfgMoldReturnImportExcelDTO;
-import com.erp.model.plm.entity.BasicCategoryEntity;
 import com.erp.model.plm.entity.MoldInfoEntity;
 import com.erp.model.plm.enums.CfgMoldReturnAlertRuleCountDimEnum;
-import com.erp.model.plm.enums.MoldInfoTagEnum;
-import com.erp.model.scm.dto.SupplierDTO;
-import com.erp.model.wms.dto.excel.SampleBorrowImportExcelDTO;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.plm.service.CfgMoldReturnAlertRuleService;
-import com.erp.server.plm.service.MoldInfoService;
 import lombok.Getter;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -32,6 +24,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -54,6 +47,8 @@ public class CfgMoldReturnExcelListener extends AnalysisEventListener<CfgMoldRet
 
     //模具
     private Map<String, MoldInfoEntity> moldInfoMap;
+    //通知类型
+    private Map<String, String> cfgMoldReturnAlertRuleMap;
 
     private final CfgMoldReturnAlertRuleService cfgMoldReturnAlertRuleService = SpringUtil.getBean(CfgMoldReturnAlertRuleService.class);
 
@@ -71,11 +66,13 @@ public class CfgMoldReturnExcelListener extends AnalysisEventListener<CfgMoldRet
     public CfgMoldReturnExcelListener(String taskId,
                                       String importType,
                                       Integer importCount,
-                                      Map<String, MoldInfoEntity> moldInfoMap) {
+                                      Map<String, MoldInfoEntity> moldInfoMap,
+                                      Map<String, String>  cfgMoldReturnAlertRuleMap) {
         this.taskId = taskId;
         this.importType = importType;
         this.importCount = importCount;
-        this.moldInfoMap = moldInfoMap;;
+        this.moldInfoMap = moldInfoMap;
+        this.cfgMoldReturnAlertRuleMap = cfgMoldReturnAlertRuleMap;
     }
 
     private final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
@@ -169,7 +166,22 @@ public class CfgMoldReturnExcelListener extends AnalysisEventListener<CfgMoldRet
 
         //结束日期不能小于开始日期
         if (Objects.nonNull(excelDTO.getEndDate()) && Objects.nonNull(excelDTO.getStartDate()) && excelDTO.getEndDate().isBefore(excelDTO.getStartDate())) {
-            errorMsgList.add(ApiError.ERROR_92008.msg);
+            errorMsgList.add(ApiError.COMMON_DATE_RANGE_INVALID.getMsg());
+        }
+
+        //通知类型
+        String noticeTypeName = excelDTO.getNoticeTypeName().replaceAll("\\s*", "");
+        if(StringUtils.isNotBlank(noticeTypeName)){
+            //noticeTypeName 去除所有空格、空字符串、回车、换行符
+            String noticeType = Arrays.stream(noticeTypeName.split(","))
+                    .map(cfgMoldReturnAlertRuleMap::get)
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.joining(","));
+            if(StringUtils.isNotBlank(noticeType)){
+                excelDTO.setNoticeTypeList(Arrays.asList(noticeType.split(",")));
+            }else {
+                errorMsgList.add("通知类型不存在");
+            }
         }
 
         //存在错误数据则直接返回

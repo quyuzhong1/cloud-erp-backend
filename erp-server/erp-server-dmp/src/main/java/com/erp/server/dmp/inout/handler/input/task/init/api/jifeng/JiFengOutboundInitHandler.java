@@ -2,8 +2,6 @@ package com.erp.server.dmp.inout.handler.input.task.init.api.jifeng;
 
 import cn.hutool.core.collection.CollUtil;
 import com.alibaba.fastjson.JSONObject;
-import com.common.business.enums.OmsPlatformEnum;
-import com.common.business.enums.OverseasInstockStatusEnum;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
@@ -23,7 +21,6 @@ import com.erp.server.dmp.inout.dto.response.DmpInputTaskResponse;
 import com.erp.server.dmp.inout.handler.input.task.init.DmpInputInitHandler;
 import com.erp.server.dmp.inout.utils.DmpHandlerCache;
 import com.sdk.wms.jifeng.dto.response.JiFengBaseResp;
-import com.sdk.wms.jifeng.dto.response.JiFengInboundResp;
 import com.sdk.wms.jifeng.dto.response.JiFengOutboundResp;
 import com.sdk.wms.jifeng.service.JiFengService;
 import lombok.extern.slf4j.Slf4j;

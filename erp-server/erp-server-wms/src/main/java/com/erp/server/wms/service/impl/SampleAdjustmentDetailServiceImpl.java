@@ -11,7 +11,6 @@ import com.erp.server.wms.service.SampleAdjustmentDetailService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.erp.server.wms.service.OperateLogService;
-import com.erp.server.wms.service.CommonService;
 import com.common.core.exception.ServiceException;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -69,7 +68,7 @@ public class SampleAdjustmentDetailServiceImpl extends SuperServiceImpl<SampleAd
     @Override
     public Boolean update(SampleAdjustmentDetailDTO.UpdateDTO addOrUpdateDTO) {
         SampleAdjustmentDetailEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "样品调整单明细单"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "样品调整单明细单"));
         SampleAdjustmentDetailEntity sampleAdjustmentDetailEntity =  BeanMapperUtils.map(SampleAdjustmentDetailEntity.class, addOrUpdateDTO);
 
         // 数据处理

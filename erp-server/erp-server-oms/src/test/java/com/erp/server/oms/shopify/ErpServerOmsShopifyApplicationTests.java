@@ -2,7 +2,6 @@ package com.erp.server.oms.shopify;
 
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.common.business.constant.RedisCacheConstants;
 import com.common.business.enums.PlatformDictEnum;
@@ -276,7 +275,7 @@ public class ErpServerOmsShopifyApplicationTests {
         //检查销售订单是否存在
         SoB2cEntity mainEntity = soB2cService.getById(mainId);
         if (ObjectUtil.isEmpty(mainEntity)) {
-            throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
+            throw new ServiceException(ApiError.SO_B2C_NOT_FOUND);
         }
         if (!"Shopify".equalsIgnoreCase(mainEntity.getDictPlatform())) {
             throw new ServiceException("非Shopify平台");
@@ -284,14 +283,14 @@ public class ErpServerOmsShopifyApplicationTests {
         //检查销售订单物流信息是否存在
         List<SoB2cLogisticsEntity> soB2cLogisticsEntities = soB2cLogisticsService.listByMainIds(Collections.singletonList(mainEntity.getId()));
         if (CollectionUtils.isEmpty(soB2cLogisticsEntities)) {
-            throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_NOT_EXIST);
+            throw new ServiceException(ApiError.SO_B2C_LOGISTICS_NOT_FOUND);
         }
         SoB2cLogisticsEntity logisticsEntity = soB2cLogisticsEntities.get(0);
 
         //检查销售订单详情是否存在
         List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cDetailService.listByMainId(mainId);
         if (CollectionUtils.isEmpty(soB2cDetailEntityList)) {
-            throw new ServiceException(ApiError.ERROR_SO_B2C_DETAIL_NOT_EXIST);
+            throw new ServiceException(ApiError.SO_B2C_DETAIL_NOT_FOUND);
         }
         if (soB2cDetailEntityList.stream().anyMatch(e -> StringUtils.isBlank(e.getSourceDetailId()))) {
             throw new ServiceException("平台来源详情ID为空");

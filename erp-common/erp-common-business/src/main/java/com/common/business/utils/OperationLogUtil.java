@@ -1,7 +1,6 @@
 package com.common.business.utils;
 
 import cn.hutool.core.date.LocalDateTimeUtil;
-import cn.hutool.core.util.ReflectUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.core.enums.ApiError;
@@ -43,7 +42,7 @@ public class OperationLogUtil {
         }
         //如果两个对象Class不一致则提示
         if (!oldObject.getClass().equals(newObject.getClass())) {
-            throw new ServiceException(ApiError.DEFAULT);
+            throw new ServiceException(ApiError.HTTP_UNKNOWN);
         }
         //旧对象转Map
         Map<String,Object> oldMap = BeanMapUtil.objToMap(oldObject);
@@ -102,7 +101,7 @@ public class OperationLogUtil {
                 typeName = typeName.replace(">","");
             } catch (Exception e) {
                 log.error("获取字段{}类型失败",newKey,e);
-                throw new ServiceException(ApiError.DEFAULT);
+                throw new ServiceException(ApiError.HTTP_UNKNOWN);
             }
             List<Object> list = TransitionUtil.transitionType(value, List.class);
             List<String> stringList = new ArrayList<>();
@@ -147,7 +146,7 @@ public class OperationLogUtil {
                 declaredField.setAccessible(true);
                 type = declaredField.getType().toString();
             } catch (NoSuchFieldException e) {
-                throw new ServiceException(ApiError.DEFAULT);
+                throw new ServiceException(ApiError.HTTP_UNKNOWN);
             }
             Iterator<Map.Entry<String, Object>> iterator = map.size() == 0 ? null : map.entrySet().iterator();
             while (iterator .hasNext()){

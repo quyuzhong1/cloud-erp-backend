@@ -3,7 +3,6 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.nacos.common.utils.StringUtils;
-import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.utils.BeanMapper;
@@ -20,7 +19,6 @@ import com.erp.server.workflow.service.ApproveSyncRecordService;
 import com.erp.server.workflow.service.CfgApproveNoticeService;
 import com.erp.server.workflow.service.CfgSettingService;
 import com.erp.server.workflow.service.ProcessTaskManagementExtService;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -275,7 +273,7 @@ public class CfgApproveSyncSendHandler {
                 if(thirdUnionMap.containsKey(userId)){
                     newRecord.setReceiverName(thirdUnionMap.get(userId).getUserName());
                     if(StringUtils.isBlank(thirdUnionMap.get(userId).getThirdUserId())){
-                        newRecord.setErrorReason(ApiError.FS_USER_NOT_BIND.msg);
+                        newRecord.setErrorReason(ApiError.AUTH_FS_USER_NOT_BIND.getMsg());
                         list.add(newRecord);
                     }else {
                         if(thirdUnionMap.containsKey(titleUserId) && Objects.nonNull(thirdUnionMap.get(titleUserId))){
@@ -287,7 +285,7 @@ public class CfgApproveSyncSendHandler {
                     }
                 }else{
                     newRecord.setReceiverName("");
-                    newRecord.setErrorReason(ApiError.FS_USER_NOT_BIND.msg);
+                    newRecord.setErrorReason(ApiError.AUTH_FS_USER_NOT_BIND.getMsg());
                     list.add(newRecord);
                 }
             }
@@ -362,19 +360,19 @@ public class CfgApproveSyncSendHandler {
                     ThirdUnionDTO thirdUnionDTO = thirdUnionMap.get(e.getCurApproveId());
                     newRecord.setReceiverName(thirdUnionDTO.getUserName());
                     if(StringUtils.isBlank(thirdUnionDTO.getThirdUserId())){
-                        newRecord.setErrorReason(ApiError.FS_USER_NOT_BIND.msg);
+                        newRecord.setErrorReason(ApiError.AUTH_FS_USER_NOT_BIND.getMsg());
                         list.add(newRecord);
                     }else {
                         params.setThirdUserId(thirdUnionDTO.getThirdUserId());
-                        if(thirdUnionMap.containsKey(e.getCreateUserId()) && Objects.nonNull(thirdUnionMap.get(e.getCreateUserId()))){
-                            params.setTitleThirdUserId(thirdUnionMap.get(e.getCreateUserId()).getThirdUserId());
+                        if(thirdUnionMap.containsKey(titleUserId) && Objects.nonNull(thirdUnionMap.get(titleUserId))){
+                            params.setTitleThirdUserId(thirdUnionMap.get(titleUserId).getThirdUserId());
                         }
                         sendParams.add(params);
                         map.put(params.getThirdUserId(),newRecord);
                     }
                 }else{
                     newRecord.setReceiverName("");
-                    newRecord.setErrorReason(ApiError.FS_USER_NOT_BIND.msg);
+                    newRecord.setErrorReason(ApiError.AUTH_FS_USER_NOT_BIND.getMsg());
                     list.add(newRecord);
                 }
             }

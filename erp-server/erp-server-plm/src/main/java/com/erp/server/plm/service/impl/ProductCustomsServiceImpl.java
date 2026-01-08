@@ -301,7 +301,7 @@ public class ProductCustomsServiceImpl extends SuperServiceImpl<ProductCustomsMa
     public ProductCustomsDTO.ViewDTO view(String skuId) {
         List<ProductCustomsDTO.ViewDetailDTO> detailDTOList = baseMapper.view(skuId);
         if(CollUtil.isEmpty(detailDTOList)){
-            throw new ServiceException(ApiError.ERROR_95107);
+            throw new ServiceException(ApiError.PRODUCT_SKU_NOT_FOUND);
         }
         ProductCustomsDTO.ViewDTO view = new ProductCustomsDTO.ViewDTO();
         ProductCustomsDTO.ViewDetailDTO viewDetailDTO = detailDTOList.get(0);
@@ -382,7 +382,7 @@ public class ProductCustomsServiceImpl extends SuperServiceImpl<ProductCustomsMa
             wb.close();
         } catch (Exception e) {
             log.error("warehouse downloadTemplate  出错了 e==", e);
-            throw new ServiceException(ApiError.ERROR_95131);
+            throw new ServiceException(ApiError.FILE_IMPORT_TEMPLATE_DOWNLOAD_FAILED);
         }
     }
 

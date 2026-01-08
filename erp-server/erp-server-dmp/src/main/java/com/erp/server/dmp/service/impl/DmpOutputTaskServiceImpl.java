@@ -1,6 +1,5 @@
 package com.erp.server.dmp.service.impl;
 
-import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.util.ObjectUtil;
@@ -9,7 +8,6 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.enums.FileTaskEventEnum;
 import com.common.business.enums.OperationTypeEnum;
-import com.common.business.vo.LoginUser;
 
 import com.erp.model.dmp.dto.DmpOutputTaskDTO;
 import com.erp.model.dmp.entity.DmpOutputTaskEntity;
@@ -24,7 +22,6 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.common.business.dto.base.BaseResultDTO;
-import com.erp.model.dmp.entity.DmpOutputTaskEntity;
 import com.erp.server.dmp.mapper.DmpOutputTaskMapper;
 import com.erp.server.dmp.service.DmpOutputTaskService;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -32,32 +29,20 @@ import com.common.business.threadlocal.UserContext;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
-import com.erp.model.dmp.dto.DmpOutputTaskDTO;
-import com.erp.model.dmp.entity.DmpOutputTaskEntity;
-import com.erp.server.dmp.mapper.DmpOutputTaskMapper;
-import com.erp.server.dmp.service.DmpOutputTaskService;
 
-import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.util.StrUtil;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 
-import com.common.business.enums.ApproveStatusEnum;
-import com.common.business.enums.ApproveTypeEnum;
-import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.business.dto.base.*;
-import com.erp.model.sys.dto.SysCodeDTO;
-import com.common.core.excel.ExcelPrintUtils;
-import com.common.core.utils.date.DateUtil;
 
 import javax.servlet.http.HttpServletResponse;
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.util.stream.Collectors;
 import java.util.*;
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
+
 /**
  * <p>
  * 推送任务 服务实现类
@@ -108,7 +93,7 @@ public class DmpOutputTaskServiceImpl extends SuperServiceImpl<DmpOutputTaskMapp
     @Override
     public Boolean update(DmpOutputTaskDTO.UpdateDTO updateDTO) {
         DmpOutputTaskEntity old = super.getById(updateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "推送任务"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "推送任务"));
         DmpOutputTaskEntity dmpOutputTaskEntity =  BeanMapperUtils.map(DmpOutputTaskEntity.class, updateDTO);
 
         // 数据处理

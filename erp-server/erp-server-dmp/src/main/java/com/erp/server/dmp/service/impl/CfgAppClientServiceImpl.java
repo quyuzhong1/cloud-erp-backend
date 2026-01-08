@@ -7,7 +7,6 @@ import com.common.business.constant.RedisCacheConstants;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.utils.RedisUtil;
-import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
@@ -83,7 +82,7 @@ public class CfgAppClientServiceImpl extends SuperServiceImpl<CfgAppClientMapper
     @Override
     public Boolean update(CfgAppClientDTO.UpdateDTO updateDTO) {
         CfgAppClientEntity old = super.getById(updateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "第三方应用程序信息单"));
+        old = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "第三方应用程序信息单"));
         CfgAppClientEntity cfgAppClientEntity = BeanMapperUtils.map(CfgAppClientEntity.class, updateDTO);
 
         // 数据处理
@@ -134,10 +133,10 @@ public class CfgAppClientServiceImpl extends SuperServiceImpl<CfgAppClientMapper
         }
         ShopInfoEntity shopInfo = shopInfoFeign.getShopInfoById(shopId);
         if (null == shopInfo) {
-            throw new ServiceException(ApiError.ERROR_92058);
+            throw new ServiceException(ApiError.SHOP_NOT_FOUND);
         }
         if (shopInfo.getDisabled()){
-            throw new ServiceException(ApiError.ERROR_MARKETPLACE_UNAUTHORIZED, shopInfo.getId());
+            throw new ServiceException(ApiError.SHOP_FBA_MARKETPLACE_DISABLED, shopInfo.getId());
         }
         // 相同账号的关联店铺
         List<ShopInfoEntity> relatedshopInfoList = shopInfoFeign.getRelatedShopById(shopInfo);

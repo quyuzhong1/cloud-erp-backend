@@ -12,21 +12,16 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.oms.dto.SoB2cReturnDetailDTO;
 import com.erp.model.oms.entity.SoB2cReturnDetailEntity;
-import com.erp.model.wms.entity.SoReturnInstockDetailEntity;
-import com.erp.rpc.wms.feign.SoReturnInstockFeign;
-import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.oms.mapper.SoB2cReturnDetailMapper;
 import com.erp.server.oms.service.OperateLogService;
 import com.erp.server.oms.service.SoB2cReturnDetailService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 
 /**
  * <p>
@@ -62,7 +57,7 @@ public class SoB2cReturnDetailServiceImpl extends SuperServiceImpl<SoB2cReturnDe
     public Boolean update(SoB2cReturnDetailDTO.UpdateDTO updateDTO) {
         SoB2cReturnDetailEntity old = super.getById(updateDTO.getId());
         if(null == old){
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "b2c退货订单明细");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "b2c退货订单明细");
         }
         SoB2cReturnDetailEntity soB2cReturnDetailEntity =  BeanMapperUtils.map(SoB2cReturnDetailEntity.class, updateDTO);
 

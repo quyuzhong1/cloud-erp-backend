@@ -121,7 +121,7 @@ public class FbaInventoryServiceImpl extends SuperServiceImpl<FbaInventoryMapper
     public Boolean update(FbaInventoryDTO.UpdateDTO updateDTO) {
         FbaInventoryEntity old = super.getById(updateDTO.getId());
         if (Objects.isNull(old)){
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "FBA库存");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "FBA库存");
         }
         FbaInventoryEntity fbaInventoryEntity = BeanMapperUtils.map(FbaInventoryEntity.class, updateDTO);
 
