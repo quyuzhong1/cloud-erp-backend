@@ -1015,7 +1015,7 @@ public class SysLoggingAspect {
         if (matchedMethods.isEmpty()) {
             ApiResult<?> result = new ApiResult<>();
             result.setCode(ApiError.HTTP_UNKNOWN.getCode());
-            result.setMsg(MessageUtils.getMessage(ApiError.HTTP_UNKNOWN, JSONUtil.toJsonStr(obj)));
+            result.setMsg(MessageUtils.getMessage(ApiError.HTTP_UNKNOWN) + JSONUtil.toJsonStr(obj));
             return result;
         }
         
@@ -1068,7 +1068,7 @@ public class SysLoggingAspect {
         // 找不到匹配的globalExceptionHandler异常处理方法, 默认提示未知异常
         ApiResult<?> result = new ApiResult<>();
         result.setCode(ApiError.HTTP_UNKNOWN.getCode());
-        result.setMsg(MessageUtils.getMessage(ApiError.HTTP_UNKNOWN, JSONUtil.toJsonStr(obj)));
+        result.setMsg(MessageUtils.getMessage(ApiError.HTTP_UNKNOWN) + JSONUtil.toJsonStr(obj));
         return result;
     }
     
