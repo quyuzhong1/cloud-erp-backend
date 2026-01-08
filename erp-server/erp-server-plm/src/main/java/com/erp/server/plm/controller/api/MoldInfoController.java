@@ -3,6 +3,7 @@ package com.erp.server.plm.controller.api;
 
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.core.utils.ExcelUtil;
+import com.erp.model.plm.entity.CfgMoldReturnAlertRuleEntity;
 import com.erp.server.plm.query.MoldInfoQueryHandler;
 import lombok.extern.slf4j.Slf4j;
 
@@ -464,6 +465,18 @@ public class MoldInfoController extends BaseController {
     @PostMapping("/searchMold")
     public ApiResult<List<MoldInfoDTO.SearchMoldDTO>> searchMold(@RequestBody MoldInfoDTO.SearchDTO searchDTO) {
         return success(moldInfoService.searchMold(searchDTO));
+    }
+
+    /**
+     * 通过模具code获取供应商信息
+     * @author wuhaotian
+     * @date: 2025-12-29
+     * @param code 模具编码
+     * @return ApiResult<MoldInfoDTO.SupplierInfoByCodeDTO>
+     */
+    @GetMapping("/getSupplierInfoByCode")
+    public ApiResult<MoldInfoDTO.SupplierInfoByCodeDTO> getSupplierInfoByCode(@RequestParam("code") String code) {
+        return success(moldInfoService.getSupplierInfoByCode(code));
     }
 
 }

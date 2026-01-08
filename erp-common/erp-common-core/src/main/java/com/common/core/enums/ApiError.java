@@ -51,7 +51,7 @@ public enum ApiError implements Serializable {
     HTTP_PAYLOAD_TOO_LARGE(413, "请求数据过大"),
     HTTP_UNSUPPORTED_MEDIA_TYPE(415, "不支持的媒体类型"),
     HTTP_TOO_MANY_REQUESTS(429, "访问频率过高，请稍后再试"),
-    HTTP_UNKNOWN(500, "系统未知异常，请联系【实施人员】协调开发人员排查 {0}"),
+    HTTP_UNKNOWN(500, "系统未知异常，请联系【实施人员】协调开发人员排查：{0} "),
     HTTP_NOT_IMPLEMENTED(501, "接口未实现"),
     HTTP_BAD_GATEWAY(502, "网关错误"),
     HTTP_SERVICE_UNAVAILABLE(503, "服务不可用，服务器暂时过载或维护"),
@@ -188,11 +188,15 @@ public enum ApiError implements Serializable {
     COMMON_CONTRACT_TEMPLATE_NOT_AVAILABLE(1104,"合同模板不存在或被禁用"),
     COMMON_CONTRACT_TEMPLATE_BINDING_DUPLICATE(1105,"【{0}】已绑定【{1}】，不可重复绑定"),
     COMMON_CONTRACT_TEMPLATE_BOUND_BY_OTHER_SUPPLIER(1106,"【{0}】已被其他供应商绑定，请先解除关联再绑定所有供应商"),
+    COMMON_USER_NOT_FOUND(1107, "用户不存在"),
     COMMON_CATEGORY_LEVEL_EXCEED_MAX(1107,"分类级别最多支持{0}级"),
     COMMON_SYSTEM_CATEGORY_DELETE_FORBIDDEN(1108,"系统分类不允许删除"),
     COMMON_SYSTEM_CATEGORY_UPDATE_FORBIDDEN(1109,"系统分类不允许编辑"),
     COMMON_DELETE_CHILD_NODE_EXISTS(1110,"存在子节点，无法删除"),
     COMMON_CONTRACT_NOT_BINDING(98127,"无关联合同，请在合同管理页面关联后打印"),
+
+    COMMON_NO_DELIVERY_SKU(98128,"没有发货的SKU"),
+    COMMON_SKU_NOT_EXIST_OR_NOT_APPROVE(98129,"SKU【{0}】不存在或未审核"),
 
     /**
      * AUTH 授权与登录 相关 2000 - 2200
@@ -709,6 +713,8 @@ public enum ApiError implements Serializable {
     MOULD_PURCHASE_CHANGE_DETAIL_NOT_FOUND(6522,"未找到模具采购变更单明细"),
     MOULD_PURCHASE_AUDITED_ONLY_FOR_ACCEPTANCE(6523,"只有已审核的模具采购单才可以结束验收"),
     MOULD_CODE_ACCEPT_QTY_EXCEED(6524,"模具编码【{0}】验收数量不能超过可验收数量"),
+    MOULD_RETURN_EXIST(6525,"模具【{0}】已生成模具返还策略，无法再次生成"),
+    MOULD_ALERT_EXIST(6526,"模具【{0}】已生成模具预警策略，无法再次生成"),
 
     /**
      * BI 错误信息 7000 - 7499
@@ -1254,6 +1260,7 @@ public enum ApiError implements Serializable {
     PO_RECONCILIATION_DETAIL_QTY_EXCEEDS_AVAILABLE(94108,"单号【{0}】SKU【{1}】本期对账数量{2}超出可对账数量{3}"),
     PO_RECONCILIATION_DETAIL_ALREADY_IN_RECONCILIATION(94109,"单号【{0}】SKU【{1}】已加入对账单，不允许重复添加"),
     PO_RECONCILIATION_REMARK_REQUIRED(96009,"对账单备注不能为空"),
+    CUSTOMER_ADDRESS_NOT_MATCH(94108,"未匹配到客户地址，客户id：{0}，收货地址：{1}"),
 
     /**
      * 销售订单错误信息 11000-11500
@@ -1455,6 +1462,7 @@ public enum ApiError implements Serializable {
     SAMPLE_DETAIL_NOT_BELONG_TO_APPLY(10741,"部分明细不存在或不属于该样品领用单"),
     SAMPLE_AUDIT_QTY_EXCEEDS_APPLY_QTY(10742,"SKU【{0}】的审核数量【{1}】不能大于领用数量【{2}】"),
     SAMPLE_AUDIT_QTY_UPDATE_FAILED(10743,"修改审核数量失败"),
+    SAMPLE_PARTNER_IN_USE(10744,"企业达人已被引用，不允许删除"),
     /**
      * 虚拟仓 错误 信息 12500-13000
      */

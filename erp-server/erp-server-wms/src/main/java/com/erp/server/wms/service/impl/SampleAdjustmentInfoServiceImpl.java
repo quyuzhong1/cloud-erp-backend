@@ -566,10 +566,46 @@ public class SampleAdjustmentInfoServiceImpl extends SuperServiceImpl<SampleAdju
             new LambdaQueryWrapper<SampleAdjustmentDetailEntity>().eq(SampleAdjustmentDetailEntity::getMainId, id)
         );
         
+        // 提取所有样品台账ID，用于查询使用方信息
+        List<String> sampleLedgerIds = detailEntities.stream()
+                .map(SampleAdjustmentDetailEntity::getSampleLedgerId)
+                .filter(StrUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        
+        // 批量查询台账信息，获取使用方
+        Map<String, String> ledgerIdToUserSideMap = new HashMap<>();
+        if (CollUtil.isNotEmpty(sampleLedgerIds)) {
+            try {
+                List<SampleLedgerEntity> ledgerList = sampleLedgerService.listByIds(sampleLedgerIds);
+                if (CollUtil.isNotEmpty(ledgerList)) {
+                    ledgerIdToUserSideMap = ledgerList.stream()
+                            .filter(ledger -> StrUtil.isNotBlank(ledger.getUseUserName()))
+                            .collect(Collectors.toMap(
+                                    SampleLedgerEntity::getId,
+                                    SampleLedgerEntity::getUseUserName,
+                                    (existing, replacement) -> existing
+                            ));
+                }
+            } catch (Exception e) {
+                log.warn("查询样品台账使用方信息失败：{}", e.getMessage());
+            }
+        }
+        
+        // 设置明细列表，并填充使用方信息
+        Map<String, String> finalLedgerIdToUserSideMap = ledgerIdToUserSideMap;
         List<SampleAdjustmentDetailDTO.ViewDTO> detailList = detailEntities.stream()
             .map(detail -> {
                 SampleAdjustmentDetailDTO.ViewDTO detailDTO = new SampleAdjustmentDetailDTO.ViewDTO();
                 BeanMapperUtils.copy(detail, detailDTO);
+                // 从台账中获取使用方信息
+                String sampleLedgerId = detail.getSampleLedgerId();
+                if (StrUtil.isNotBlank(sampleLedgerId)) {
+                    String userSide = finalLedgerIdToUserSideMap.get(sampleLedgerId);
+                    if (StrUtil.isNotBlank(userSide)) {
+                        detailDTO.setUserSide(userSide);
+                    }
+                }
                 return detailDTO;
             })
             .collect(Collectors.toList());

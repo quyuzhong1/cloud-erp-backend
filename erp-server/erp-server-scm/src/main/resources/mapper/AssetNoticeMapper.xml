@@ -39,7 +39,7 @@
         update_user_id,
         version,
         is_deleted,
-        code, approve_user_id, approve_user_name, approve_time, approve_status, apply_user_id, apply_user_name, apply_dept_id, apply_dept_name, invalid_reason, remark, invalid_date, apply_date, invalid_status
+        code, approve_user_id, approve_user_name, approve_time, approve_status, apply_user_id, apply_user_name, apply_dept_id, apply_dept_name, invalid_reason, remark, invalid_date, apply_date, invalid_status, purchase_dev_user_id, purchase_follow_user_id
     </sql>
 
     <select id="paging" resultType="com.erp.model.scm.dto.AssetNoticeDTO$ListDTO">
@@ -62,7 +62,11 @@
             an.create_time AS createTime,
             an.approve_status as approveStatus,
             an.invalid_status as invalidStatus,
-            and1.create_po_type as createPoType
+            and1.create_po_type as createPoType,
+            an.purchase_dev_user_id AS purchaseDevUserId,
+            an.purchase_follow_user_id AS purchaseFollowUserId,
+            and1.supplier_id AS supplierId,
+            and1.supplier_name AS supplierName
         FROM
             asset_notice an
             LEFT JOIN asset_notice_detail and1 ON an.id = and1.main_id and and1.is_deleted = false
@@ -86,7 +90,52 @@
     </select>
 
     <select id="listExport" resultType="com.erp.model.scm.dto.AssetNoticeDTO$ListDTO">
-
+        SELECT
+            an.ID AS ID,
+            and1.id as detailId,
+            an.code AS code,
+            and1.asset_id AS assetId,
+            and1.asset_code AS assetCode,
+            and1.asset_name AS assetName,
+            and1.plan_delivery_date AS planDeliveryDate,
+            and1.apply_qty AS applyQty,
+            an.approve_user_id AS approveUserId,
+            an.approve_user_name AS approveUserName,
+            an.approve_time AS approveTime,
+            an.apply_user_id AS applyUserId,
+            an.apply_user_name as applyUserName,
+            an.create_user_id AS createUserId,
+            an.create_user_name AS createUserName,
+            an.create_time AS createTime,
+            an.approve_status as approveStatus,
+            an.invalid_status as invalidStatus,
+            and1.create_po_type as createPoType,
+            an.purchase_dev_user_id AS purchaseDevUserId,
+            an.purchase_follow_user_id AS purchaseFollowUserId,
+            and1.supplier_id AS supplierId,
+            and1.supplier_name AS supplierName
+        FROM
+            asset_notice an
+            LEFT JOIN asset_notice_detail and1 ON an.id = and1.main_id and and1.is_deleted = false
+        WHERE
+        <if test="params.sqlMap != null and params.sqlMap.default != null and params.sqlMap.default != ''">
+            ${params.sqlMap.default}
+        </if>
+        <if test="params.sqlMap == null or params.sqlMap.default == null or params.sqlMap.default == ''">
+            1=1
+        </if>
+        and an.is_deleted = false
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        <!--勾选的id集合-->
+        <if test="params.ids != null and params.ids.size > 0">
+            and an.id in
+            <foreach collection="params.ids" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        order by an.create_time desc
     </select>
     <select id="tabList" resultType="com.erp.model.scm.dto.AssetNoticeDTO$TabListDTO">
         SELECT

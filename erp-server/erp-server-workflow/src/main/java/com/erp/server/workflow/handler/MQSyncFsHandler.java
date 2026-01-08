@@ -68,7 +68,6 @@ public class MQSyncFsHandler {
             log.error("【{}】同步飞书审批实例失败，审批同步配置不存在", dto.getBusinessCode());
             return false;
         }
-
         ApproveSyncRecordEntity syncRecordEntity = buildSyncRecord(dto);
         String errorReason ="";
         //主流程

@@ -149,16 +149,12 @@ public class DmpOutputWdtB2bOrderRocketMQTaskHandler extends DmpOutputRocketMQTa
 		platformB2bOrderDTO.setPlatformWarehouseId(dmpSoInfoEntity.getWarehouseId());
 
 		String orderStatus = dmpSoInfoEntity.getOrderStatus();
-		if("55".equals(orderStatus)){
-			platformB2bOrderDTO.setStatus(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
-			platformB2bOrderDTO.setIsInvalid(false);
-		}else if("10".equals(orderStatus)){
-			platformB2bOrderDTO.setStatus(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
+		platformB2bOrderDTO.setStatus(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
+		if("5".equals(orderStatus)){
 			platformB2bOrderDTO.setIsInvalid(true);
 		}else{
-			return null;
+			platformB2bOrderDTO.setIsInvalid(false);
 		}
-
 
 		List<PlatformB2bOrderDetailDTO> details = new ArrayList<>();
 
@@ -167,8 +163,8 @@ public class DmpOutputWdtB2bOrderRocketMQTaskHandler extends DmpOutputRocketMQTa
 			DmpSoDetailEntity dmpSoDetailEntity = dmpSoDetailEntityList.get(i);
 			PlatformB2bOrderDetailDTO detailDTO = new PlatformB2bOrderDetailDTO();
 			detailDTO.setSkuNo(dmpSoDetailEntity.getSkuNo());
-			detailDTO.setPlatformSkuNo(dmpSoDetailEntity.getSkuId());
-			detailDTO.setCustomerSkuNo(dmpSoDetailEntity.getSkuId());
+			detailDTO.setPlatformSkuNo(dmpSoDetailEntity.getPlatformSpuNo());
+			detailDTO.setCustomerSkuNo(dmpSoDetailEntity.getPlatformSpuNo());
 			detailDTO.setQty(dmpSoDetailEntity.getQty());
 			detailDTO.setTaxRate(dmpSoInfoEntity.getTaxRate());
 			detailDTO.setTaxPrice(dmpSoDetailEntity.getSellPriceOrigin());
