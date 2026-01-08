@@ -9,6 +9,7 @@ import com.common.business.enums.DynamicDataSourceTypeEnum;
 import com.common.business.vo.LoginUser;
 import com.erp.model.sys.dto.SysUserDTO;
 import com.erp.model.sys.entity.AuthUserWarehouseEntity;
+import com.erp.model.sys.entity.SysDepartmentUserEntity;
 import com.erp.model.sys.enums.AuthDataTypeEnum;
 import com.erp.server.sys.constant.SysConstant;
 import com.erp.server.sys.mapper.AuthUserWarehouseMapper;
@@ -175,13 +176,13 @@ public class AuthUserWarehouseServiceImpl extends SuperServiceImpl<AuthUserWareh
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void batchSaveOrUpdate(String uid, List<String> warehouseIdList, String warehouseAuthType) {
+    public void batchSaveOrUpdate(String uid, List<String> warehouseIdList, String warehouseAuthType, boolean ifAdd) {
         if (CharSequenceUtil.isBlank(uid)){
             return;
         }
-        List<AuthUserWarehouseEntity> list = this.lambdaQuery().eq(AuthUserWarehouseEntity::getUserId, uid).list();
+        List<AuthUserWarehouseEntity> oldList = this.lambdaQuery().eq(AuthUserWarehouseEntity::getUserId, uid).list();
         if (AuthDataTypeEnum.ENUM_ALL.getCode().equals(warehouseAuthType)){
-            AuthUserWarehouseEntity auth = list.stream().filter(e -> AuthDataTypeEnum.ENUM_ALL.getCode().equals(e.getAuthType())).findFirst().orElse(null);
+            AuthUserWarehouseEntity auth = oldList.stream().filter(e -> AuthDataTypeEnum.ENUM_ALL.getCode().equals(e.getAuthType())).findFirst().orElse(null);
             if (Objects.isNull(auth)){
                 //清空历史
                 this.lambdaUpdate().eq(AuthUserWarehouseEntity::getUserId, uid).remove();
@@ -192,19 +193,22 @@ public class AuthUserWarehouseServiceImpl extends SuperServiceImpl<AuthUserWareh
                 this.save(entity);
             }
         }else if (AuthDataTypeEnum.ENUM_PART.getCode().equals(warehouseAuthType)){
-            //删除移除的权限
-            List<String> ids = new ArrayList<>();
-            if (CollUtil.isNotEmpty(list)){
-                ids = list.stream().map(AuthUserWarehouseEntity::getWarehouseId).collect(Collectors.toList());
-                List<String> deleteIdList = list.stream().filter(e -> !warehouseIdList.contains(e.getWarehouseId()) || AuthDataTypeEnum.ENUM_ALL.getCode().equals(e.getAuthType()))
-                        .map(AuthUserWarehouseEntity::getId).collect(Collectors.toList());
-                if (CollUtil.isNotEmpty(deleteIdList)){
-                    this.removeByIds(deleteIdList);
+            if (CollUtil.isNotEmpty(oldList)) {
+                if(!ifAdd){
+                    List<String> deleteIdList = oldList.stream().filter(e -> !warehouseIdList.contains(e.getWarehouseId()) || AuthDataTypeEnum.ENUM_ALL.getCode().equals(e.getAuthType()))
+                            .map(AuthUserWarehouseEntity::getId).collect(Collectors.toList());
+                    if (CollUtil.isNotEmpty(deleteIdList)) {
+                        this.removeByIds(deleteIdList);
+                    }
                 }
+
+                Set<String> existingIds = oldList.stream()
+                        .map(AuthUserWarehouseEntity::getWarehouseId)
+                        .collect(Collectors.toSet());
+                warehouseIdList.removeIf(existingIds::contains);
             }
             //添加新增权限
             List<AuthUserWarehouseEntity> addList = new ArrayList<>();
-            List<String> finalIds = ids;
             if (CollUtil.isEmpty(warehouseIdList)){
                 AuthUserWarehouseEntity entity = new AuthUserWarehouseEntity();
                 entity.setAuthType(AuthDataTypeEnum.ENUM_PART.getCode());
@@ -213,13 +217,11 @@ public class AuthUserWarehouseServiceImpl extends SuperServiceImpl<AuthUserWareh
                 addList.add(entity);
             }else {
                 warehouseIdList.forEach(warehouseId ->{
-                    if (CollUtil.isEmpty(finalIds) || !finalIds.contains(warehouseId)){
-                        AuthUserWarehouseEntity entity = new AuthUserWarehouseEntity();
-                        entity.setAuthType(AuthDataTypeEnum.ENUM_PART.getCode());
-                        entity.setUserId(uid);
-                        entity.setWarehouseId(warehouseId);
-                        addList.add(entity);
-                    }
+                    AuthUserWarehouseEntity entity = new AuthUserWarehouseEntity();
+                    entity.setAuthType(AuthDataTypeEnum.ENUM_PART.getCode());
+                    entity.setUserId(uid);
+                    entity.setWarehouseId(warehouseId);
+                    addList.add(entity);
                 });
             }
             if (CollUtil.isNotEmpty(addList)){

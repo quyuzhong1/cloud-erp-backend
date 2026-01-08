@@ -15,6 +15,7 @@ import com.common.business.vo.PagingVO;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.sys.dto.*;
 import com.erp.model.sys.entity.SysDepartmentUserEntity;
+import com.erp.model.sys.entity.SysRoleUserEntity;
 import com.erp.server.sys.mapper.SysDepartmentUserMapper;
 import com.erp.server.sys.service.SysDepartmentService;
 import com.erp.server.sys.service.SysDepartmentUserService;
@@ -246,15 +247,25 @@ public class SysDepartmentUserServiceImpl extends ServiceImpl<SysDepartmentUserM
         if (!ifAdd) {
             deleteUidDepartmentRef(uid);
         }
-        List<SysDepartmentUserEntity> addList = new LinkedList<>();
-        for (String departmentId : departmentIdList) {
-            SysDepartmentUserEntity entity = new SysDepartmentUserEntity();
-            entity.setUserId(uid);
-            entity.setDepartmentId(departmentId);
-            addList.add(entity);
-        }
-        if (CollectionUtils.isNotEmpty(addList)) {
-            this.saveBatch(addList);
+        if(CollectionUtils.isEmpty(departmentIdList)){
+            //排除已存在的关联数据
+            List<SysDepartmentUserEntity> oldDepartmentIds = lambdaQuery().in(SysDepartmentUserEntity::getDepartmentId, departmentIdList).list();
+            if(CollUtil.isNotEmpty(oldDepartmentIds)){
+                Set<String> existingIds = oldDepartmentIds.stream()
+                        .map(SysDepartmentUserEntity::getDepartmentId)
+                        .collect(Collectors.toSet());
+                departmentIdList.removeIf(existingIds::contains);
+            }
+            if(CollectionUtils.isEmpty(departmentIdList)){
+                List<SysDepartmentUserEntity> addList = new LinkedList<>();
+                for (String departmentId : departmentIdList) {
+                    SysDepartmentUserEntity entity = new SysDepartmentUserEntity();
+                    entity.setUserId(uid);
+                    entity.setDepartmentId(departmentId);
+                    addList.add(entity);
+                }
+                this.saveBatch(addList);
+            }
         }
     }
 

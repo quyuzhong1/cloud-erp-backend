@@ -222,9 +222,9 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
                 sysRoleUserService.batchInsertRef(entity.getUid(), roleIds, true);
             }
             //店铺授权
-            authUserShopService.batchSaveOrUpdate(entity.getUid(),sysUserInfoDTO.getShopIdList(),sysUserInfoDTO.getShopAuthType());
+            authUserShopService.batchSaveOrUpdate(entity.getUid(),sysUserInfoDTO.getShopIdList(),sysUserInfoDTO.getShopAuthType(),true);
             //仓库权限
-            authUserWarehouseService.batchSaveOrUpdate(entity.getUid(),sysUserInfoDTO.getWarehouseIdList(),sysUserInfoDTO.getWarehouseAuthType());
+            authUserWarehouseService.batchSaveOrUpdate(entity.getUid(),sysUserInfoDTO.getWarehouseIdList(),sysUserInfoDTO.getWarehouseAuthType(),true);
             //部门授权
             sysDepartmentUserService.batchSaveOrUpdate(entity.getUid(),sysUserInfoDTO.getDepartmentIdList(),true);
 
@@ -318,9 +318,9 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         if (updateResult) {
             sysRoleUserService.batchInsertRef(entity.getUid(), roleIds, false);
             //店铺授权
-            authUserShopService.batchSaveOrUpdate(entity.getUid(),sysUserInfoDTO.getShopIdList(),sysUserInfoDTO.getShopAuthType());
+            authUserShopService.batchSaveOrUpdate(entity.getUid(),sysUserInfoDTO.getShopIdList(),sysUserInfoDTO.getShopAuthType(),false);
             //仓库权限
-            authUserWarehouseService.batchSaveOrUpdate(entity.getUid(),sysUserInfoDTO.getWarehouseIdList(),sysUserInfoDTO.getWarehouseAuthType());
+            authUserWarehouseService.batchSaveOrUpdate(entity.getUid(),sysUserInfoDTO.getWarehouseIdList(),sysUserInfoDTO.getWarehouseAuthType(),false);
             //部门授权
             sysDepartmentUserService.batchSaveOrUpdate(entity.getUid(),sysUserInfoDTO.getDepartmentIdList(),false);
             //同步金蝶员工数据
@@ -1986,5 +1986,45 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
     @Override
     public void exportList(SysUserInfoDTO.PagingParamDTO param, HttpServletResponse response) {
         downloadTaskFeign.saveDownloadTask("用户管理导出", EXPORT_SYS_USER_INFO.getCode(), param);
+    }
+
+    @Override
+    public void batchRefUserIdByType(SysUserInfoDTO.RefParamseDTO refParamseDTO) {
+        String uid = refParamseDTO.getUid();
+        String type = refParamseDTO.getType();
+        String authType = refParamseDTO.getAuthType();
+        String refType = refParamseDTO.getRefType();
+        List<String> refIdList = refParamseDTO.getRefIdList();
+
+        if(Objects.equals(refType, "role")){
+            if(type.equals("reapportion")){
+                sysRoleUserService.batchInsertRef(uid, refIdList, false);
+            }else if(type.equals("add")){
+                sysRoleUserService.batchInsertRef(uid, refIdList, true);
+            }
+        }else if(Objects.equals(refType, "shop")){
+            //店铺授权
+            if(type.equals("reapportion")){
+                authUserShopService.batchSaveOrUpdate(uid,refIdList,authType,false);
+            }else if(type.equals("add")){
+                authUserShopService.batchSaveOrUpdate(uid,refIdList,authType,true);
+            }
+
+        }else if(Objects.equals(refType, "warehouse")){
+            //仓库权限
+            if(type.equals("reapportion")){
+                authUserWarehouseService.batchSaveOrUpdate(uid,refIdList,authType,false);
+            }else if(type.equals("add")){
+                authUserWarehouseService.batchSaveOrUpdate(uid,refIdList,authType,true);
+            }
+
+        }else if(Objects.equals(refType, "department")){
+            //部门授权
+            if(type.equals("reapportion")){
+                sysDepartmentUserService.batchSaveOrUpdate(uid,refIdList,false);
+            }else if(type.equals("add")){
+                sysDepartmentUserService.batchSaveOrUpdate(uid,refIdList,true);
+            }
+        }
     }
 }
