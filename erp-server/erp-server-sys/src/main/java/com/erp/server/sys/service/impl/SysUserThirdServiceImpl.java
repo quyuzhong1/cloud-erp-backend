@@ -15,14 +15,13 @@ import com.erp.model.sys.vo.ThirdUnionDTO;
 import com.erp.server.sys.mapper.SysUserThirdMapper;
 import com.erp.server.sys.service.SysUserInfoService;
 import com.erp.server.sys.service.SysUserThirdService;
+import io.seata.spring.annotation.GlobalTransactional;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 
@@ -115,12 +114,21 @@ public class SysUserThirdServiceImpl extends ServiceImpl<SysUserThirdMapper, Sys
      * @date 2022-07-26 14:20
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public boolean removeThirdParty(String bindingThird) {
         LoginUser loginUser = UserContext.getLoginUser();
         LambdaQueryWrapper<SysUserThirdEntity> queryWrapper = new LambdaQueryWrapper();
         queryWrapper.eq(SysUserThirdEntity::getThirdPartyType, bindingThird);
         queryWrapper.eq(SysUserThirdEntity::getUserId, loginUser.getUid());
-        return baseMapper.delete(queryWrapper) > 0 ? true : false;
+        boolean flag = baseMapper.delete(queryWrapper) > 0;
+        if(flag){
+            SysUserInfoEntity sysUserInfoEntity = sysUserInfoService.getById(loginUser.getUid());
+            if(Objects.nonNull(sysUserInfoEntity)){
+                sysUserInfoEntity.setThirdAuthType("");
+                sysUserInfoService.updateById(sysUserInfoEntity);
+            }
+        }
+        return flag;
     }
 
 
