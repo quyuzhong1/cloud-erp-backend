@@ -44,6 +44,7 @@ import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
+import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.DictKingdeeDTO;
@@ -970,15 +971,15 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
                 addDTO.setFnsku(StringUtils.isNotBlank(fbaShipmentDetailEntity.getFnSku()) ? fbaShipmentDetailEntity.getFnSku() : "");
                 addDTO.setMsku(StringUtils.isNotBlank(fbaShipmentDetailEntity.getMsku()) ? fbaShipmentDetailEntity.getMsku() : "");
                 addDTO.setQty(fbaShipmentDetailEntity.getDeclareQty());
-                FbaShipmentDetailEntity fbaDetail = newDetailEntityList.stream()
-                        .filter(item -> item.getMsku()
-                                .equals(fbaShipmentDetailEntity.getMsku()))
-                        .findFirst()
-                        .orElse(null);
-                if (Objects.nonNull(fbaDetail)) {
-                    addDTO.setSkuId(fbaDetail.getSkuId());
-                    addDTO.setSkuNo(fbaDetail.getSkuNo());
-                    addDTO.setProductName(mappingSkuViewDTO.getProductName());
+                ListingInfoWithSkuMappingDTO listingInfoWithSkuMappingDTO = listingInfoMap.get(fbaShipmentDetailEntity.getMsku());
+                if (Objects.nonNull(listingInfoWithSkuMappingDTO)) {
+                    addDTO.setSkuId(listingInfoWithSkuMappingDTO.getProductSkuId());
+                    addDTO.setSkuNo(listingInfoWithSkuMappingDTO.getProductSkuNo());
+                    List<ProductDetailEntity> productDetailList = plmTaskFeign.getByIdList(Collections.singletonList(listingInfoWithSkuMappingDTO.getProductSkuId()));
+                    if (!productDetailList.isEmpty()) {
+                        addDTO.setProductName(productDetailList.get(0).getName());
+                    }
+
                 }
                 awdOutStockDetailDTOList.add(addDTO);
             }
