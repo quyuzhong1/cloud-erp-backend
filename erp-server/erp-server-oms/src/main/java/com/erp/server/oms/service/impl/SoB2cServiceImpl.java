@@ -691,7 +691,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         soB2cEntity.setSignOrderError("");
         if(soB2cEntity.hasPlatformWarehouseOrder()){
             soB2cEntity.setApproveStatus(ApproveStatusEnum.APPROVE);
-            soB2cEntity.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode());
+            if(SoB2cPayStatusEnum.ENUM_PAYMENT.getCode().equals(soB2cEntity.getPayStatus())){
+                soB2cEntity.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
+            }else{
+                soB2cEntity.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode());
+            }
         }else{
             soB2cEntity.setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT);
             soB2cEntity.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
@@ -706,11 +710,23 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         });
         soB2cDetailService.updateBatchById(soB2cDetailEntityList);
         soB2cErrorService.removeErrorOrder(soB2cEntity.getId(), SoB2cErrorTypeEnum.GET_EXCHANGE_RATE.getCode());
-        //非平台仓走开票和审核规则
-        if(!soB2cEntity.hasPlatformWarehouseOrder() && !soB2cEntity.getIsCancel()){
+        operateLogService.addModuleOperateLog(
+                CharSequenceUtil.format("用户【{}】更新B2C销售订单表【{}】的汇率为【{}】", UserContext.getDefaultLoginUser().getUserName(), soB2cEntity.getCode(), exchangeRate),
+                ModuleTypeEnum.SO_B2C.getCode(),
+                soB2cEntity.getId(),
+                "更新汇率操作"
+        );
+        //重新清洗订单
+        if(soB2cEntity.hasPlatformWarehouseOrder()){
+            List<DmpInoutDTO.CreateInputDTO> createDTOList = SoB2cHandler.groupConvertCreateInputDTOList(Arrays.asList(soB2cEntity));
+            dmpInoutTaskFeign.doInputTask(createDTOList);
+        }else{
 
-            SoB2cHandler.handleRule(soB2cEntity);
+            if(!soB2cEntity.getIsCancel() && SoB2cPayStatusEnum.ENUM_PAID.getCode().equals(soB2cEntity.getPayStatus())){
+                SoB2cHandler.handleRule(soB2cEntity);
+            }
         }
+
         return BatchResultDTO.success(soB2cEntity.getId(),soB2cEntity.getCode());
     }
 
