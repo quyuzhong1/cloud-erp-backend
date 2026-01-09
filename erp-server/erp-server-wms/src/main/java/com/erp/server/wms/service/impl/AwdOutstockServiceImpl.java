@@ -10,6 +10,7 @@ import com.erp.model.wms.dto.AwdInventoryDTO;
 import com.erp.model.wms.dto.AwdOutstockDetailDTO;
 import com.erp.model.wms.entity.AwdOutstockDetailEntity;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.service.AwdOutstockDetailService;
 import com.erp.server.wms.service.FirstMileDeliveryService;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -66,6 +67,9 @@ public class AwdOutstockServiceImpl extends SuperServiceImpl<AwdOutstockMapper, 
 
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+
+    @Resource
+    private PlmTaskFeign plmTaskFeign;
 
     @Resource
     private DocNoGenHelper docNoGenHelper;
@@ -237,7 +241,7 @@ public class AwdOutstockServiceImpl extends SuperServiceImpl<AwdOutstockMapper, 
        List<String> skuNos = list.stream().map(req -> req.getSkuNo()).distinct().collect(Collectors.toList());
        List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(skuNos);
        // 属性赋值
-       for(AwdInventoryDTO.ListDTO data : list) {
+       for (AwdOutstockDTO.ListDTO data : list) {
            SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuNo().equals(data.getSkuNo())).findFirst().orElse(new SkuVO());
            data.setProductName(skuVO.getSkuName());
        }
