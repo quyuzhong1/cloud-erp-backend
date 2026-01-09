@@ -679,6 +679,7 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
             this.updateStatus(sourceId, ThirdDeliveryStatusEnum.FAILED.getCode(), ApiError.COMMON_NO_DELIVERY_SKU.getMsg(), "", "", "", null);
             return;
         }
+        req.setItems(items);
 
         ThirdWarehouseService service = thirdWarehouseRegistry.getHandler(req.getThirdWarehouseProvideCode());
         if (Objects.isNull(service)) {
