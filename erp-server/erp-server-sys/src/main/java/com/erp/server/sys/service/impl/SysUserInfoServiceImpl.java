@@ -607,8 +607,13 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
                 throw new ServiceException(ApiError.AUTH_ACCOUNT_ALREADY_BOUND);
             }
             sysUserThirdService.bindingThirdParty(uid, flagId,thirdOpenId,thirdUserId, bindingPlatform);
-        }
 
+            SysUserInfoEntity sysUserInfoEntity = getById(uid);
+            if(Objects.nonNull(sysUserInfoEntity)){
+                sysUserInfoEntity.setThirdAuthType(bindingPlatform);
+                updateById(sysUserInfoEntity);
+            }
+        }
     }
 
     /**

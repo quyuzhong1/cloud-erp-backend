@@ -13,7 +13,7 @@ import org.apache.commons.lang3.StringUtils;
  * @since 2026-01-08
  */
 public enum SysUserInfoThirdAuthTypeEnum implements EnumMessage {
-	FEISHU("feishu", "飞书"),
+	FS("FS", "飞书"),
 //	DD("dd", "钉钉"),
 //	QW("qw", "企业微信"),
     ;
