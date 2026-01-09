@@ -1,9 +1,11 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.enums.BusinessNoTypeEnum;
+import com.common.business.threadlocal.UserContext;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.AwdInventoryDTO;
@@ -143,7 +145,7 @@ public class AwdOutstockServiceImpl extends SuperServiceImpl<AwdOutstockMapper, 
         }
 
         //记录日志
-        String msg = StrUtil.format("更新发货时间从【】为【】",
+        String msg = CharSequenceUtil.format("更新发货时间从【{}】为【{}】",
                 Objects.nonNull(old.getBillDate()) ? old.getBillDate() : ""
                 , newEntity.getBillDate());
         operateLogService.addModuleOperateLogByObj(old, newEntity, ModuleTypeEnum.AWD_OUTSTOCK.getCode(), newEntity.getId(), msg);

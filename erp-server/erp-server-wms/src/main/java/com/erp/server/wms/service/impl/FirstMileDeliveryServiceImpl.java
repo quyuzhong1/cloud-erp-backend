@@ -2888,11 +2888,11 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
 
         ShopInfoEntity shopInfoEntity = shopInfoFeign.getShopInfoById(dto.getShopId());
         if (Objects.nonNull(shopInfoEntity)) {
-            addDTO.setDeliveryWarehouseId(shopInfoEntity.getWarehouseId());
-            addDTO.setDeliveryWarehouseName(shopInfoEntity.getWarehouseName());
+            addDTO.setDeliveryWarehouseId(StringUtils.isNotBlank(shopInfoEntity.getAwdWarehouseId()) ? shopInfoEntity.getAwdWarehouseId() : "");
+            addDTO.setDeliveryWarehouseName(StringUtils.isNotBlank(shopInfoEntity.getAwdWarehouseName()) ? shopInfoEntity.getAwdWarehouseName() : "");
             addDTO.setFulfillmentCenter(shopInfoEntity.getWarehouseName());
-            addDTO.setDestWarehouseId(StringUtils.isNotBlank(shopInfoEntity.getAwdWarehouseId()) ? shopInfoEntity.getAwdWarehouseId() : "");
-            addDTO.setDestWarehouseName(StringUtils.isNotBlank(shopInfoEntity.getAwdWarehouseName()) ? shopInfoEntity.getAwdWarehouseName() : "");
+            addDTO.setDestWarehouseId(shopInfoEntity.getWarehouseId());
+            addDTO.setDestWarehouseName(shopInfoEntity.getWarehouseName());
         }
 
         List<String> skuIdList = awdOutstockDetailEntityList.stream().map(item -> item.getSkuId()).collect(Collectors.toList());

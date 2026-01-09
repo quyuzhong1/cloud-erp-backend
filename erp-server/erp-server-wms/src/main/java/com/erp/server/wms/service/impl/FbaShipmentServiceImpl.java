@@ -941,31 +941,16 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
             }
         }
 
-        List<String> mSkuList = newDetailEntityList.stream().map(item -> item.getMsku()).collect(Collectors.toList());
-        //根据平台sku查询映射信息
-        ListingInfoParamDTO listingInfoParamDTO = new ListingInfoParamDTO();
-        listingInfoParamDTO.setPlatformSkuNoList(mSkuList);
-        listingInfoParamDTO.setPlatform(PlatformDictEnum.AMAZON.getCode());
-        listingInfoParamDTO.setShopIdList(Collections.singletonList(entity.getShopId()));
-        List<SkuMappingDTO.MappingSkuViewDTO> skuDTOS = skuMappingFeign.listByPlatformSkuNoAndPlatform(listingInfoParamDTO);
-
         if (Boolean.FALSE.equals(entity.getIsSta())) {
 
             AwdOutstockDTO.AddDTO awdOutStockDTO = new AwdOutstockDTO.AddDTO();
             List<AwdOutstockDetailDTO.AddDTO> awdOutStockDetailDTOList = new ArrayList<>();
-
             awdOutStockDTO.setShopId(entity.getShopId());
             awdOutStockDTO.setShopName(entity.getShopName());
             awdOutStockDTO.setFbaShipmentId(entity.getId());
             awdOutStockDTO.setFbaShipmentCode(entity.getCode());
 
             for (FbaShipmentDetailEntity fbaShipmentDetailEntity : newDetailEntityList) {
-                SkuMappingDTO.MappingSkuViewDTO mappingSkuViewDTO = skuDTOS.stream()
-                        .filter(req -> req.getPlatformSkuNo().equals(fbaShipmentDetailEntity.getMsku())
-                                && CharSequenceUtil.isNotBlank(req.getProductSkuNo()))
-                        .findFirst()
-                        .orElse(null);
-
                 AwdOutstockDetailDTO.AddDTO addDTO = new AwdOutstockDetailDTO.AddDTO();
                 addDTO.setAsin(StringUtils.isNotBlank(fbaShipmentDetailEntity.getAsin()) ? fbaShipmentDetailEntity.getAsin() : "");
                 addDTO.setFnsku(StringUtils.isNotBlank(fbaShipmentDetailEntity.getFnSku()) ? fbaShipmentDetailEntity.getFnSku() : "");
