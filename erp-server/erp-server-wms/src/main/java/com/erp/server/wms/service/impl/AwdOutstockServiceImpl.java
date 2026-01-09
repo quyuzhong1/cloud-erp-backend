@@ -153,16 +153,19 @@ public class AwdOutstockServiceImpl extends SuperServiceImpl<AwdOutstockMapper, 
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public List<AwdOutstockDTO.BatchUpdateBillDateViewDTO> batchUpdateBillDateView(BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
         ArrayList<AwdOutstockDTO.BatchUpdateBillDateViewDTO> batchUpdateBillDateViewDTOS = new ArrayList<>();
         List<AwdOutstockEntity> awdOutstockEntities = this.listByIds(ids);
-        for (AwdOutstockEntity awdOutstockEntity : awdOutstockEntities) {
-            if (awdOutstockEntity.getBillDate() == null) {
-                throw new ServiceException(ApiError.FIRST_MILE_SHIPMENT_GENERATE_NEED_BILL_DATE,awdOutstockEntity.getCode());
-            }
+        AwdOutstockEntity awdOutstockEntity = awdOutstockEntities.stream().filter(item -> item.getBillDate() == null).findFirst().orElse(null);
+        if (Objects.nonNull(awdOutstockEntity)) {
+            throw new ServiceException(ApiError.FIRST_MILE_SHIPMENT_GENERATE_NEED_BILL_DATE,awdOutstockEntity.getCode());
+
+        }
+        for (AwdOutstockEntity entity : awdOutstockEntities) {
             AwdOutstockDTO.BatchUpdateBillDateViewDTO billDateViewDTO = new AwdOutstockDTO.BatchUpdateBillDateViewDTO();
-            BeanUtils.copyProperties(awdOutstockEntity,billDateViewDTO);
+            BeanUtils.copyProperties(entity,billDateViewDTO);
             batchUpdateBillDateViewDTOS.add(billDateViewDTO);
         }
         return batchUpdateBillDateViewDTOS;
