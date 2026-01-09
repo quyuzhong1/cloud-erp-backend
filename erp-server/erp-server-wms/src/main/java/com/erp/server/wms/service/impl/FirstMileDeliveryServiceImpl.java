@@ -2932,6 +2932,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                 firstMildDetailDTO.setProductSizeLength(skuVO.getProductLength());
                 firstMildDetailDTO.setProductSizeWidth(skuVO.getProductWidth());
                 firstMildDetailDTO.setProductSizeHeight(skuVO.getProductHeight());
+                firstMildDetailDTO.setNetWeight(skuVO.getNetWeight());
             }
             addDetailDTOList.add(firstMildDetailDTO);
         }

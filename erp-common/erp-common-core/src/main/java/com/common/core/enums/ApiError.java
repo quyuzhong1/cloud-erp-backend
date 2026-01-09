@@ -1430,6 +1430,7 @@ public enum ApiError implements Serializable {
     FIRST_MILE_SHIPMENT_WAREHOUSE_REQUIRED(11527,"头程发货单【{0}】配置的发货仓库不能为空"),
     FIRST_MILE_SHIPMENT_DELIVERY_GENERATE_FAIL(11528,"下推头程发货单失败"),
     FIRST_MILE_SHIPMENT_AWD_OUTSTOCK_NOT_EXIST(11529,"AWD出库货件不存在"),
+    FIRST_MILE_SHIPMENT_GENERATE_NEED_BILL_DATE(11530,"出库货件【{}】没有发货时间，不支持生成头程发货单"),
     /**
      * 样品管理 错误 信息 12000-12500
      */
