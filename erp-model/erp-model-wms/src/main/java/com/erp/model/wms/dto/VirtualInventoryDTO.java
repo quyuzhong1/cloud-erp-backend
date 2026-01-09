@@ -754,4 +754,60 @@ public class VirtualInventoryDTO implements Serializable {
         private Integer virtualUsableQty;
 
     }
+
+
+    @Data
+    @NoArgsConstructor
+    public static class RedisVirtualInventoryParamDTO {
+        /**
+         * skuId
+         */
+        @NotEmpty(message = "SKU不能为空")
+        private List<String> skuIdList;
+        /**
+         * 仓库Id
+         */
+        @NotEmpty(message = "实体仓不能为空")
+        private List<String> warehouseIdList;
+        /**
+         * 虚拟仓库Id
+         */
+        @NotEmpty(message = "虚拟仓不能为空")
+        private List<String> virtualWarehouseIdList;
+        /**
+         * 库存状态
+         */
+        @NotEmpty(message = "库存状态不能为空")
+        private List<String> dictInventoryStatusList;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class RedisVirtualInventoryReturnDTO {
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * 仓库Id
+         */
+        private String warehouseId;
+        /**
+         * 虚拟仓库Id
+         */
+        private String virtualWarehouseId;
+        /**
+         * 库存状态
+         */
+        private String dictInventoryStatus;
+        /**
+         * 库存id
+         */
+        private String virtualInventoryId;
+
+        /**
+         * 数量
+         */
+        private Integer qty;
+    }
 }
