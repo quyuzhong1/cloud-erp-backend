@@ -158,6 +158,9 @@ public class AwdOutstockServiceImpl extends SuperServiceImpl<AwdOutstockMapper, 
         ArrayList<AwdOutstockDTO.BatchUpdateBillDateViewDTO> batchUpdateBillDateViewDTOS = new ArrayList<>();
         List<AwdOutstockEntity> awdOutstockEntities = this.listByIds(ids);
         for (AwdOutstockEntity awdOutstockEntity : awdOutstockEntities) {
+            if (awdOutstockEntity.getBillDate() == null) {
+                throw new ServiceException(ApiError.FIRST_MILE_SHIPMENT_GENERATE_NEED_BILL_DATE,awdOutstockEntity.getCode());
+            }
             AwdOutstockDTO.BatchUpdateBillDateViewDTO billDateViewDTO = new AwdOutstockDTO.BatchUpdateBillDateViewDTO();
             BeanUtils.copyProperties(awdOutstockEntity,billDateViewDTO);
             batchUpdateBillDateViewDTOS.add(billDateViewDTO);

@@ -1977,7 +1977,8 @@
         pd.warehouse_location_large as warehouseLocationLarge,
         pp.product_length as productLength,
         pp.product_width as productWidth,
-        pp.product_height as productHeight
+        pp.product_height as productHeight,
+        pp.net_weight as netWeight
         FROM product_detail pd
         LEFT JOIN product_info pi ON pi.id = pd.product_id AND pi.is_deleted = FALSE
         LEFT JOIN product_pack pp on pp.sku_id = pd.id and pp.is_deleted = FALSE
