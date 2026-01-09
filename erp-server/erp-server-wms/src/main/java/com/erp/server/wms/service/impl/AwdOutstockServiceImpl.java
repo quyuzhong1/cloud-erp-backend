@@ -158,11 +158,6 @@ public class AwdOutstockServiceImpl extends SuperServiceImpl<AwdOutstockMapper, 
         List<String> ids = dto.getIds();
         ArrayList<AwdOutstockDTO.BatchUpdateBillDateViewDTO> batchUpdateBillDateViewDTOS = new ArrayList<>();
         List<AwdOutstockEntity> awdOutstockEntities = this.listByIds(ids);
-        AwdOutstockEntity awdOutstockEntity = awdOutstockEntities.stream().filter(item -> item.getBillDate() == null).findFirst().orElse(null);
-        if (Objects.nonNull(awdOutstockEntity)) {
-            throw new ServiceException(ApiError.FIRST_MILE_SHIPMENT_GENERATE_NEED_BILL_DATE,awdOutstockEntity.getCode());
-
-        }
         for (AwdOutstockEntity entity : awdOutstockEntities) {
             AwdOutstockDTO.BatchUpdateBillDateViewDTO billDateViewDTO = new AwdOutstockDTO.BatchUpdateBillDateViewDTO();
             BeanUtils.copyProperties(entity,billDateViewDTO);
@@ -175,11 +170,15 @@ public class AwdOutstockServiceImpl extends SuperServiceImpl<AwdOutstockMapper, 
     @Transactional(rollbackFor = Exception.class)
     public boolean generateFirstMileDelivery(BaseIdsDTO.IdsDTO dto) {
         List<AwdOutstockEntity> awdOutstockEntities = this.listByIds(dto.getIds());
-        for (AwdOutstockEntity awdOutstockEntity : awdOutstockEntities) {
+        AwdOutstockEntity awdOutstockEntity = awdOutstockEntities.stream().filter(item -> item.getBillDate() == null).findFirst().orElse(null);
+        if (Objects.nonNull(awdOutstockEntity)) {
+            throw new ServiceException(ApiError.FIRST_MILE_SHIPMENT_GENERATE_NEED_BILL_DATE,awdOutstockEntity.getCode());
+        }
+        for (AwdOutstockEntity entity : awdOutstockEntities) {
             AwdOutstockDTO.GenerateDeliveryDTO generateDeliveryDTO = new AwdOutstockDTO.GenerateDeliveryDTO();
-            BeanUtils.copyProperties(awdOutstockEntity,generateDeliveryDTO);
+            BeanUtils.copyProperties(entity,generateDeliveryDTO);
             firstMileDeliveryService.generateFirstMileDeliveryByAwdOutStock(generateDeliveryDTO);
-            operateLogService.addModuleOperateLog("操作生成头程发货单", ModuleTypeEnum.AWD_OUTSTOCK.getCode(), awdOutstockEntity.getId(), "生成头程发货单");
+            operateLogService.addModuleOperateLog("操作生成头程发货单", ModuleTypeEnum.AWD_OUTSTOCK.getCode(), entity.getId(), "生成头程发货单");
         }
         return Boolean.TRUE;
     }
