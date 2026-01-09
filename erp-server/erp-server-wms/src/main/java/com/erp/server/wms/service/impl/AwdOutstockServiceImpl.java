@@ -148,7 +148,7 @@ public class AwdOutstockServiceImpl extends SuperServiceImpl<AwdOutstockMapper, 
         String msg = CharSequenceUtil.format("更新发货时间从【{}】为【{}】",
                 Objects.nonNull(old.getBillDate()) ? old.getBillDate() : ""
                 , newEntity.getBillDate());
-        operateLogService.addModuleOperateLogByObj(old, newEntity, ModuleTypeEnum.AWD_OUTSTOCK.getCode(), newEntity.getId(), msg);
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.AWD_OUTSTOCK.getCode(), newEntity.getId(), "编辑信息");
         return Boolean.TRUE;
     }
 
