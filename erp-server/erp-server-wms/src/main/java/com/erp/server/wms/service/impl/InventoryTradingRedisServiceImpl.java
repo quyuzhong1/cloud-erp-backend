@@ -1,23 +1,8 @@
 package com.erp.server.wms.service.impl;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
-
-import javax.annotation.Resource;
-
-import org.apache.commons.collections4.IteratorUtils;
-import org.springframework.stereotype.Service;
-import org.springframework.util.CollectionUtils;
-
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.ObjectUtil;
 import com.alibaba.fastjson2.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.enums.InventoryClosedRecordEnum;
@@ -37,20 +22,20 @@ import com.erp.model.wms.entity.TransactionFlowEntity;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
-import com.erp.server.wms.service.InventoryClosedRecordService;
-import com.erp.server.wms.service.InventoryHisService;
-import com.erp.server.wms.service.InventoryService;
-import com.erp.server.wms.service.InventoryTradingService;
-import com.erp.server.wms.service.InventoryTransactionService;
-import com.erp.server.wms.service.TransactionFlowService;
-import com.erp.server.wms.service.VirtualInventoryService;
-import com.erp.server.wms.service.WarehouseService;
+import com.erp.server.wms.service.*;
 import com.google.common.base.Stopwatch;
-
-import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.ObjectUtil;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.IteratorUtils;
+import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
+
+import javax.annotation.Resource;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 /**
  * 库存交易辅助类，用于处理各种库存交易操作。
@@ -366,7 +351,11 @@ public class InventoryTradingRedisServiceImpl implements InventoryTradingService
         List<String> skuIdList = checkTransactionList.stream().map(InventoryTransactionDTO::getSkuId).distinct().collect(Collectors.toList());
 
         //虚拟仓库存
-        List<VirtualInventoryDTO.WarehouseInventoryQtyDTO> warehouseInventoryQtyList = virtualInventoryService.listInventoryQtyByWarehouseId(warehouseIdList, skuIdList);
+        VirtualInventoryDTO.RedisVirtualInventoryParamDTO redisParamDTO = new VirtualInventoryDTO.RedisVirtualInventoryParamDTO();
+        redisParamDTO.setSkuIdList(skuIdList);
+        redisParamDTO.setWarehouseIdList(warehouseIdList);
+        List<VirtualInventoryDTO.RedisVirtualInventoryReturnDTO> redisVirtualInventoryList = virtualInventoryService.getRedisVirtualInventory(redisParamDTO);
+
 
         //实体仓可用库存
         InventoryQtyDTO.SkuInventoryStatusParamDTO dto = new InventoryQtyDTO.SkuInventoryStatusParamDTO();
@@ -381,8 +370,8 @@ public class InventoryTradingRedisServiceImpl implements InventoryTradingService
             String skuId = value.get(0).getSkuId();
             String warehouseId = value.get(0).getWarehouseId();
             //虚拟库存校验
-            Integer virtualQty = warehouseInventoryQtyList.stream().filter(obj -> CharSequenceUtil.equals(obj.getWarehouseId(),warehouseId) && CharSequenceUtil.equals(obj.getSkuId(),skuId))
-                    .map(VirtualInventoryDTO.WarehouseInventoryQtyDTO::getQty).findFirst().orElse(MathUtil.ZERO);
+            Integer virtualQty = redisVirtualInventoryList.stream().filter(obj -> CharSequenceUtil.equals(obj.getWarehouseId(),warehouseId) && CharSequenceUtil.equals(obj.getSkuId(),skuId))
+                    .map(VirtualInventoryDTO.RedisVirtualInventoryReturnDTO::getQty).findFirst().orElse(MathUtil.ZERO);
             if(MathUtil.compareTo(virtualQty,MathUtil.ZERO) == MathUtil.ZERO) {
                 continue;
             }
