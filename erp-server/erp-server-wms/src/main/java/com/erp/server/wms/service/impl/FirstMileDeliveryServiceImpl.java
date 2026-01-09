@@ -2859,6 +2859,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     public BatchResultDTO generateFirstMileDeliveryByAwdOutStock(AwdOutstockDTO.GenerateDeliveryDTO dto) {
         FirstMileDeliveryEntity firstMileDeliveryEntity = this.lambdaQuery()
                 .eq(FirstMileDeliveryEntity::getSourceId,dto.getId())
+                .eq(FirstMileDeliveryEntity::getInvalidStatus,InvalidStatusEnum.NOT_VOIDED.getStatus())
                 .one();
         if (Objects.nonNull(firstMileDeliveryEntity)) {
             throw new ServiceException(ApiError.BILL_ALREADY_EXIST,"头程发货单【" + dto.getCode() + "】");
