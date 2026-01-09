@@ -4,7 +4,9 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.enums.BusinessNoTypeEnum;
+import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.wms.dto.AwdInventoryDTO;
 import com.erp.model.wms.dto.AwdOutstockDetailDTO;
 import com.erp.model.wms.entity.AwdOutstockDetailEntity;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
@@ -29,6 +31,8 @@ import lombok.extern.slf4j.Slf4j;
 import com.erp.model.wms.dto.AwdOutstockDTO;
 import javax.annotation.Resource;
 import java.util.*;
+import java.util.stream.Collectors;
+
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -230,6 +234,13 @@ public class AwdOutstockServiceImpl extends SuperServiceImpl<AwdOutstockMapper, 
         if(CollUtil.isEmpty(list)) {
             return;
         }
+       List<String> skuNos = list.stream().map(req -> req.getSkuNo()).distinct().collect(Collectors.toList());
+       List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(skuNos);
+       // 属性赋值
+       for(AwdInventoryDTO.ListDTO data : list) {
+           SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuNo().equals(data.getSkuNo())).findFirst().orElse(new SkuVO());
+           data.setProductName(skuVO.getSkuName());
+       }
    }
 
     private void fillOne(AwdOutstockDTO.ViewDTO data) {

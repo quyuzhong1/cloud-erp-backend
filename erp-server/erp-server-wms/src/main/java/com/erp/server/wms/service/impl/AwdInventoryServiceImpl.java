@@ -135,13 +135,5 @@ public class AwdInventoryServiceImpl extends SuperServiceImpl<AwdInventoryMapper
         if(CollUtil.isEmpty(list)) {
             return;
         }
-       List<String> skuNos = list.stream().map(req -> req.getSkuNo()).distinct().collect(Collectors.toList());
-       List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(skuNos);
-        // 属性赋值
-        for(AwdInventoryDTO.ListDTO data : list) {
-            SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuNo().equals(data.getSkuNo())).findFirst().orElse(new SkuVO());
-            data.setProductName(skuVO.getSkuName());
-        }
-
    }
 }
