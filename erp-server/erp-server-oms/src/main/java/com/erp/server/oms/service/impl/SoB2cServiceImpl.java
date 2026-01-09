@@ -697,13 +697,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         soB2cEntity.setIsFrozen(false);
         soB2cEntity.setFrozenType("");
         soB2cEntity.setSignOrderError("");
-        if(soB2cEntity.hasPlatformWarehouseOrder()){
-            soB2cEntity.setApproveStatus(ApproveStatusEnum.APPROVE);
-            soB2cEntity.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode());
-        }else{
-            soB2cEntity.setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT);
-            soB2cEntity.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
-        }
+        soB2cEntity.setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT);
+        soB2cEntity.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
         boolean updateMainResult = this.updateById(soB2cEntity);
         if(!updateMainResult){
             return BatchResultDTO.fail(soB2cEntity.getId(),soB2cEntity.getCode(),"更新订单汇率失败");
@@ -714,11 +709,16 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         });
         soB2cDetailService.updateBatchById(soB2cDetailEntityList);
         soB2cErrorService.removeErrorOrder(soB2cEntity.getId(), SoB2cErrorTypeEnum.GET_EXCHANGE_RATE.getCode());
-        //非平台仓走开票和审核规则
-        if(!soB2cEntity.hasPlatformWarehouseOrder() && !soB2cEntity.getIsCancel()){
+        operateLogService.addModuleOperateLog(
+                CharSequenceUtil.format("用户【{}】更新B2C销售订单表【{}】的汇率为【{}】", UserContext.getDefaultLoginUser().getUserName(), soB2cEntity.getCode(), exchangeRate),
+                ModuleTypeEnum.SO_B2C.getCode(),
+                soB2cEntity.getId(),
+                "更新汇率操作"
+        );
+        //重新清洗订单
+        List<DmpInoutDTO.CreateInputDTO> createDTOList = SoB2cHandler.groupConvertCreateInputDTOList(Arrays.asList(soB2cEntity));
+        dmpInoutTaskFeign.doInputTask(createDTOList);
 
-            SoB2cHandler.handleRule(soB2cEntity);
-        }
         return BatchResultDTO.success(soB2cEntity.getId(),soB2cEntity.getCode());
     }
 
@@ -7276,6 +7276,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             addError.setMessage(ApiError.SO_B2C_GET_EXCHANGE_RATE_FAILED.getMsg());
             soB2cErrorService.add(addError);
 
+        }else{
+            if(SoB2cErrorTypeEnum.GET_EXCHANGE_RATE.getCode().equals(entity.getSignOrderError())){
+                soB2cErrorService.removeErrorOrder(entity.getId(),SoB2cErrorTypeEnum.GET_EXCHANGE_RATE.getCode());
+            }
         }
     }
 
