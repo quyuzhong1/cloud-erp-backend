@@ -51,8 +51,6 @@ public class AwdInventoryServiceImpl extends SuperServiceImpl<AwdInventoryMapper
     @Resource
     private OperateLogService operateLogService;
 
-    @Resource
-    private PlmTaskFeign plmTaskFeign;
 
     @Transactional(rollbackFor = Exception.class)
     @Override
