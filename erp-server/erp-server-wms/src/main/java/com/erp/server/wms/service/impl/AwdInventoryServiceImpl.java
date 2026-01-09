@@ -1,11 +1,13 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.util.StrUtil;
+import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.FbaInventoryDTO;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.common.business.dto.base.BaseResultDTO;
 import com.erp.model.wms.entity.AwdInventoryEntity;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.AwdInventoryMapper;
 import com.erp.server.wms.service.AwdInventoryService;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -20,6 +22,8 @@ import lombok.extern.slf4j.Slf4j;
 import com.erp.model.wms.dto.AwdInventoryDTO;
 import javax.annotation.Resource;
 import java.util.*;
+import java.util.stream.Collectors;
+
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import cn.hutool.core.collection.CollUtil;
@@ -46,6 +50,9 @@ public class AwdInventoryServiceImpl extends SuperServiceImpl<AwdInventoryMapper
 
     @Resource
     private OperateLogService operateLogService;
+
+    @Resource
+    private PlmTaskFeign plmTaskFeign;
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -128,9 +135,13 @@ public class AwdInventoryServiceImpl extends SuperServiceImpl<AwdInventoryMapper
         if(CollUtil.isEmpty(list)) {
             return;
         }
+       List<String> skuNos = list.stream().map(req -> req.getSkuNo()).distinct().collect(Collectors.toList());
+       List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(skuNos);
         // 属性赋值
         for(AwdInventoryDTO.ListDTO data : list) {
-        // TODO 其他如需要显示名称的字段赋值
+            SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuNo().equals(data.getSkuNo())).findFirst().orElse(new SkuVO());
+            data.setProductName(skuVO.getSkuName());
         }
+
    }
 }

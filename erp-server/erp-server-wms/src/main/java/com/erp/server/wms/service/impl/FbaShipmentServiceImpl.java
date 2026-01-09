@@ -970,9 +970,14 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
                 addDTO.setFnsku(StringUtils.isNotBlank(fbaShipmentDetailEntity.getFnSku()) ? fbaShipmentDetailEntity.getFnSku() : "");
                 addDTO.setMsku(StringUtils.isNotBlank(fbaShipmentDetailEntity.getMsku()) ? fbaShipmentDetailEntity.getMsku() : "");
                 addDTO.setQty(fbaShipmentDetailEntity.getDeclareQty());
-                if (Objects.nonNull(mappingSkuViewDTO)) {
-                    addDTO.setSkuId(mappingSkuViewDTO.getProductSkuId());
-                    addDTO.setSkuNo(mappingSkuViewDTO.getProductSkuNo());
+                FbaShipmentDetailEntity fbaDetail = newDetailEntityList.stream()
+                        .filter(item -> item.getMsku()
+                                .equals(fbaShipmentDetailEntity.getMsku()))
+                        .findFirst()
+                        .orElse(null);
+                if (Objects.nonNull(fbaDetail)) {
+                    addDTO.setSkuId(fbaDetail.getSkuId());
+                    addDTO.setSkuNo(fbaDetail.getSkuNo());
                     addDTO.setProductName(mappingSkuViewDTO.getProductName());
                 }
                 awdOutStockDetailDTOList.add(addDTO);
