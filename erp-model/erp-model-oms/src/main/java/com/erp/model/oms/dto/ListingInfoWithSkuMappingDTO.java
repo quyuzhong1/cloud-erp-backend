@@ -181,25 +181,40 @@ public class ListingInfoWithSkuMappingDTO {
      */
     public static ListingInfoWithSkuMappingDTO getActiveOne(@NotNull List<ListingInfoWithSkuMappingDTO> dtoList,
                                                             @NotNull LocalDateTime lastExpireDate) {
-        if (1 == dtoList.size()){
+        if (1 == dtoList.size()) {
             return dtoList.get(0);
         }
-        if (null == lastExpireDate){
+
+        // 创建比较器，处理getExpireTime为null的情况，null值排最后
+        Comparator<ListingInfoWithSkuMappingDTO> expireTimeComparator =
+                Comparator.comparing(
+                        ListingInfoWithSkuMappingDTO::getExpireTime,
+                        Comparator.nullsLast(Comparator.naturalOrder())
+                );
+
+        if (null == lastExpireDate) {
             // 无指定日期提供最新映射关系
-           return dtoList.stream()
-                   .filter(e-> !e.getIsExpire())
-                   .max(Comparator.comparing(ListingInfoWithSkuMappingDTO::getExpireTime))
-                   .orElse(null);
+            return dtoList.stream()
+                    .filter(e -> !e.getIsExpire())
+                    .max(expireTimeComparator)
+                    .orElse(null);
         }
 
         Optional<ListingInfoWithSkuMappingDTO> optional = dtoList.stream()
                 // 指定时间=生效时间 或 生效时间 < 指定时间 < 结束时间
-                .filter(dto -> lastExpireDate.isEqual(dto.getEffectiveTime()) || (lastExpireDate.isAfter(dto.getEffectiveTime()) && lastExpireDate.isBefore(dto.getExpireTime())))
-                .max(Comparator.comparing(ListingInfoWithSkuMappingDTO::getExpireTime));
+                .filter(dto -> {
+                    // 添加空值检查
+                    if (dto.getEffectiveTime() == null || dto.getExpireTime() == null) {
+                        return false;
+                    }
+                    return lastExpireDate.isEqual(dto.getEffectiveTime()) ||
+                            (lastExpireDate.isAfter(dto.getEffectiveTime()) && lastExpireDate.isBefore(dto.getExpireTime()));
+                })
+                .max(expireTimeComparator);
 
         return optional.orElseGet(() -> dtoList
                 .stream()
-                .max(Comparator.comparing(ListingInfoWithSkuMappingDTO::getExpireTime))
+                .max(expireTimeComparator)
                 .orElse(null));
     }
 

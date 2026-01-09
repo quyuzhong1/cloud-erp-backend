@@ -7732,7 +7732,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     List<SoOutstockDetailDTO.ListingInfoWithSkuMappingGenDTO> historyList = B2cOrderConverter.INSTANCE.skuMappingDTOListToGenDTOList(list);
                     // 按过期时间排序
                     List<SoOutstockDetailDTO.ListingInfoWithSkuMappingGenDTO> sortList = historyList.stream()
-                            .sorted(Comparator.comparing(SoOutstockDetailDTO.ListingInfoWithSkuMappingGenDTO::getExpireTime))
+                            .sorted(Comparator.comparing(
+                                    SoOutstockDetailDTO.ListingInfoWithSkuMappingGenDTO::getExpireTime,
+                                    Comparator.nullsFirst(Comparator.naturalOrder())
+                            ))
                             .collect(Collectors.toList());
                     addDTO.setHistorySkuMappingList(new LinkedList<>(sortList));
                 }

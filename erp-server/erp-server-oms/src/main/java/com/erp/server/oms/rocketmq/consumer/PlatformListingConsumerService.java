@@ -202,6 +202,9 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
                     if (StringUtils.isNotBlank(entity.getPlatformStatus())) {
                         oldEntity.setPlatformStatus(entity.getPlatformStatus());
                     }
+                    if (StringUtils.isNotBlank(entity.getPlatformSkuId())) {
+                        oldEntity.setPlatformSkuId(entity.getPlatformSkuId());
+                    }
                     oldEntity.setPlatformUpdateTime(entity.getPlatformUpdateTime());
                     listingInfoService.updateById(oldEntity);
 //                    if (!listingInfoService.updateById(oldEntity)) {
