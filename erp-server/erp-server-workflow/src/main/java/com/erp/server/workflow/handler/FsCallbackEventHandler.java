@@ -11,6 +11,7 @@ import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.dto.DmpInoutDTO;
 import com.erp.model.dmp.enums.DmpInputTaskTaskTypeEnum;
 import com.erp.model.workflow.dto.FsCallbackEventDTO;
+import com.erp.model.workflow.dto.FsCallbackUserEventDTO;
 import com.erp.model.workflow.enums.CfgApproveSyncSyncPlatformEnum;
 import com.erp.rpc.dmp.feign.DmpInoutTaskFeign;
 import com.erp.sdk.fs.config.FsProperties;
@@ -24,10 +25,7 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * 飞书回调事件处理
@@ -105,9 +103,116 @@ public class FsCallbackEventHandler {
                     public void handle(EventReq event) throws Exception {
                         log.warn("收到飞书补卡事件:event= {},fsProperties = {}", Jsons.DEFAULT.toJson(event),fsProperties);
                     }
+                }).onCustomizedEvent(FsEventConstant.USER_CREATED_EVENT, new CustomEventHandler() {  // 新增审批任务事件
+                    @Override
+                    public void handle(EventReq event) throws Exception {
+                        log.warn("收到员工入职事件:event= {},fsProperties = {}", Jsons.DEFAULT.toJson(event),fsProperties);
+                        // 处理员工入职事件的逻辑
+                        getUserCreatedHandle(event,FsEventConstant.USER_CREATED_EVENT);
+                    }
+                }).onCustomizedEvent(FsEventConstant.USER_DELETED_EVENT, new CustomEventHandler() {  // 新增审批任务事件
+                    @Override
+                    public void handle(EventReq event) throws Exception {
+                        log.warn("收到员工离职事件:event= {},fsProperties = {}", Jsons.DEFAULT.toJson(event),fsProperties);
+                        // 处理员工离职事件的逻辑
+                        getUserDeletedHandle(event,FsEventConstant.USER_DELETED_EVENT);
+                    }
                 })
                 .build();
     }
+
+
+    /**
+     * dmp生成即时推送任务
+     * 处理员工入职、离职状态
+     * @author jack
+     * @date 2026-01-09
+     * @return void
+     */
+    public void getUserDeletedHandle (EventReq event,String type) {
+        String plain = event.getPlain();
+        JSONObject jsonObject = JSON.parseObject(plain);
+        JSONObject thisEvent = jsonObject.getJSONObject("event");
+        if (ObjUtil.isEmpty(thisEvent)) {
+            return;
+        }
+        FsCallbackUserEventDTO.UserDeletedDTO bean = BeanUtil.toBean(thisEvent, FsCallbackUserEventDTO.UserDeletedDTO.class);
+        if (!CharSequenceUtil.equals(fsProperties.getClientId(), bean.getHeader().getAppId())) {
+            log.warn("飞书审批实例自定义事件，应用ID未匹配，跳过处理,clientId={}，appId={}",fsProperties.getClientId(), bean.getHeader().getAppId());
+            return;
+        }
+        if (!CharSequenceUtil.equals(type,bean.getHeader().getEventType())) {
+            log.warn("飞书审批实例自定义事件，事件类型未匹配，跳过处理，type={}", bean.getHeader().getEventType());
+            return;
+        }
+        //根据审批定义和审批实例id生成中台即时拉取任务
+        DmpInoutDTO.CreateInputDTO dto = new DmpInoutDTO.CreateInputDTO();
+        dto.setSystemCode(CfgApproveSyncSyncPlatformEnum.FEISHU.getCode());
+        dto.setBillType(DmpPullConstant.USER_DELETED);
+        dto.setTaskType(DmpInputTaskTaskTypeEnum.NORMAL.getCode());
+
+//        Map<String, Object> map = new HashMap<>();
+//        map.put("userId",bean.getEvent().getObject().getUserId());//
+//        map.put("isResigned",bean.getEvent().getObject().getStatus().getIsResigned());//是否为离职状态
+        Map<String, Object> map = Collections.singletonMap("userId",bean.getEvent().getObject().getUserId());
+        dto.setDetailExtendJson(JSON.toJSONString(map));
+
+        List<String> requestList = new ArrayList<>();
+        try {
+            requestList = dmpInoutTaskFeign.doHotfixReturnInputTask(Collections.singletonList(dto));
+        }catch (Exception e){
+            throw new ServiceException(e.getMessage());
+        }
+        if (CollUtil.isEmpty(requestList)) {
+            throw new ServiceException("所选数据未找到同步信息");
+        }
+    }
+
+    /**
+     * dmp生成即时推送任务
+     * 处理员工入职、离职状态
+     * @author jack
+     * @date 2026-01-09
+     * @return void
+     */
+    public void getUserCreatedHandle (EventReq event,String type) {
+        String plain = event.getPlain();
+        JSONObject jsonObject = JSON.parseObject(plain);
+        JSONObject thisEvent = jsonObject.getJSONObject("event");
+        if (ObjUtil.isEmpty(thisEvent)) {
+            return;
+        }
+        FsCallbackEventDTO.ApprovalInstanceEventDTO bean = BeanUtil.toBean(thisEvent, FsCallbackEventDTO.ApprovalInstanceEventDTO.class);
+        if (!CharSequenceUtil.equals(fsProperties.getClientId(), bean.getAppId())) {
+            log.warn("飞书审批实例自定义事件，应用ID未匹配，跳过处理,clientId={}，appId={}",fsProperties.getClientId(), bean.getAppId());
+            return;
+        }
+        if (!CharSequenceUtil.equals(type,bean.getType())) {
+            log.warn("飞书审批实例自定义事件，事件类型未匹配，跳过处理，type={}", bean.getType());
+            return;
+        }
+        //根据审批定义和审批实例id生成中台即时拉取任务
+        DmpInoutDTO.CreateInputDTO dto = new DmpInoutDTO.CreateInputDTO();
+        dto.setSystemCode(CfgApproveSyncSyncPlatformEnum.FEISHU.getCode());
+        dto.setBillType(DmpPullConstant.USER_CREATED);
+//        dto.setNextLevelId(bean.getApprovalCode());
+        dto.setTaskType(DmpInputTaskTaskTypeEnum.NORMAL.getCode());
+        // 手动指定创建审批实例id
+        Map<String, Object> map = Collections.singletonMap("instanceId",bean.getInstanceCode());
+        dto.setDetailExtendJson(JSON.toJSONString(map));
+
+        List<String> requestList = new ArrayList<>();
+        try {
+            requestList = dmpInoutTaskFeign.doHotfixReturnInputTask(Collections.singletonList(dto));
+        }catch (Exception e){
+            throw new ServiceException(e.getMessage());
+        }
+        if (CollUtil.isEmpty(requestList)) {
+            throw new ServiceException("所选数据未找到同步信息");
+        }
+    }
+
+
 
     /**
      * dmp生成即时推送任务
@@ -151,6 +256,8 @@ public class FsCallbackEventHandler {
             throw new ServiceException("所选数据未找到同步信息");
         }
     }
+
+
 
     public EventDispatcher getEventHandler() {
         return eventDispatcher;
