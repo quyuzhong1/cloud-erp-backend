@@ -296,7 +296,7 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        fs.create_time DESC
+        fs.shipment_create_time DESC
     </select>
 
     <sql id="FbaDataCompareByCondition">
