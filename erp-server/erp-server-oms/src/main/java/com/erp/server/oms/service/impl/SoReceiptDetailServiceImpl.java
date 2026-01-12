@@ -230,7 +230,15 @@ public class SoReceiptDetailServiceImpl extends SuperServiceImpl<SoReceiptDetail
     @Override
     public List<SoReceiptDetailEntity> listBySoId(String id) {
         if(StrUtil.isNotBlank(id)){
-            return super.lambdaQuery().eq(SoReceiptDetailEntity::getSoId, id).list();
+            return this.listBySoIds(Collections.singletonList(id));
+        }
+        return Collections.emptyList();
+    }
+
+    @Override
+    public List<SoReceiptDetailEntity> listBySoIds(List<String> soIds) {
+        if(CollectionUtils.isNotEmpty(soIds)){
+            return super.lambdaQuery().in(SoReceiptDetailEntity::getSoId, soIds).list();
         }
         return Collections.emptyList();
     }

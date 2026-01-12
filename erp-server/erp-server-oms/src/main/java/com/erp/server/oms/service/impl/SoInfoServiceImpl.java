@@ -1885,7 +1885,11 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         if (scmCount > 0) {
             throw new ServiceException(ApiError.BILL_IN_USE_DELETE_FORBIDDEN);
         }
-
+        List<SoReceiptEntity> soReceiptEntityList = soReceiptService.listBySoIds(soIds);
+        if(CollectionUtils.isNotEmpty(soReceiptEntityList)) {
+            List<String> receiptCodes = soReceiptEntityList.stream().map(SoReceiptEntity::getCode).distinct().collect(Collectors.toList());
+            throw new ServiceException(ApiError.BILL_IN_USE_SO_RECEIPT,receiptCodes);
+        }
     }
 
 
@@ -2061,23 +2065,6 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
     private void isExistDowmstream(List<String> ids) {
         //校验是否有下游单据
-        //订单变更
-//        Integer soChangeCount = soChangeService.lambdaQuery()
-//                .in(SoChangeEntity::getSoId, ids)
-//                .eq(SoChangeEntity::getInvalidStatus,Boolean.FALSE)
-//                .eq(SoChangeEntity::getIsDeleted,Boolean.FALSE)
-//                .count();
-//        if(soChangeCount > 0){
-//            throw new ServiceException(ApiError.ERROR_DOC_HAS_DOWNSTREAM_CANNOT_VOID);
-//        }
-//        //销售退货订单
-//        Integer soReturnCount = soReturnService.lambdaQuery().in(SoReturnEntity::getSourceId, ids)
-//                .eq(SoReturnEntity::getInvalidStatus,Boolean.FALSE)
-//                .eq(SoReturnEntity::getIsDeleted,Boolean.FALSE)
-//                .count();
-//        if(soReturnCount > 0){
-//            throw new ServiceException(ApiError.ERROR_DOC_HAS_DOWNSTREAM_CANNOT_VOID);
-//        }
         //发货通知单
         List<SoDeliveryNoticeEntity> soDeliveryNoticeList = FeignQuery.create(SoDeliveryNoticeEntity.class)
                 .in(SoDeliveryNoticeEntity::getSourceId,ids)
@@ -2087,20 +2074,12 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         if(!soDeliveryNoticeList.isEmpty()){
             throw new ServiceException(ApiError.BILL_HAS_DOWNSTREAM_VOID_FORBIDDEN);
         }
-//        //销售出库单
-//        List<SoOutstockEntity> soOutstockList = FeignQuery.create(SoOutstockEntity.class)
-//                .in(SoOutstockEntity::getSoId,ids)
-//                .eq(SoOutstockEntity::getInvalidStatus,Boolean.FALSE)
-//                .eq(SoOutstockEntity::getIsDeleted,Boolean.FALSE)
-//                .list();
-//        if(!soOutstockList.isEmpty()){
-//            throw new ServiceException(ApiError.ERROR_DOC_HAS_DOWNSTREAM_CANNOT_VOID);
-//        }
-//        //备货申请单
-//        List<SalesDemandEntity> salesDemandList = saleDemandFeign.listBySourceIds(ids);
-//        if(!salesDemandList.isEmpty()){
-//            throw new ServiceException(ApiError.ERROR_DOC_HAS_DOWNSTREAM_CANNOT_VOID);
-//        }
+        //收款单
+        List<SoReceiptEntity> soReceiptEntityList = soReceiptService.listBySoIds(ids);
+        if(CollectionUtils.isNotEmpty(soReceiptEntityList)) {
+            List<String> receiptCodes = soReceiptEntityList.stream().map(SoReceiptEntity::getCode).distinct().collect(Collectors.toList());
+            throw new ServiceException(ApiError.BILL_IN_USE_SO_RECEIPT,receiptCodes);
+        }
     }
 
 

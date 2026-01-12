@@ -347,6 +347,7 @@ public enum ApiError implements Serializable {
     BILL_LOGISTICS_STATUS_GENERATED_NOT_CHANGE_TO_NO_LOGISTICS(3057,"单据【{0}】物流状态已生成，不允许修改为【无需生成】"),
     BILL_DETAIL_IS_ZERO(3058, "单据【{0}】的明细条数为0，不允许提交"),
     BILL_IN_USE_DELETE_FORBIDDEN(3059,"销售订单已被引用，无法删除"),
+    BILL_IN_USE_SO_RECEIPT(3059,"销售订单已被收款单【{0}】引用，无法删除或作废"),
     BILL_VOID_FORBIDDEN(3060,"仅待提交、暂存或审核不通过状态的销售订单允许作废"),
     BILL_RECEIVER_ADDRESS_REQUIRED(3061,"订单买家地址不能全部为空"),
     BILL_RECEIVER_REQUIRED(3062,"订单买家信息不能为空"),
