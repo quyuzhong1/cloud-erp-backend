@@ -418,23 +418,22 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
                 map(BaseIdDTO.CodeDTO::getCode).findFirst().orElse("");
 
         //销售员
-//        String sellerId = entity.getSellerId();
-//        String salesDeptId = entity.getSalesDeptId();
-        //获取业务员信息
-//        if (StringUtils.isNotBlank(sellerId)) {
-//            KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO findBusinessOperator = new KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO();
-//            findBusinessOperator.setOrgId(salesOrgId);
-//            findBusinessOperator.setUserId(sellerId);
-//            findBusinessOperator.setSalesDeptId(salesDeptId);
-//            findBusinessOperator.setBusinessOperatorType(KingdeeBusinessOperatorTypeEnum.XSY.getCode());
-//            //获取员工业务信息
-//            KingdeeOperatorRefPostDTO.OperatorDTO kingdeeSeller = kingdeeFeign.getBusinessOperator(findBusinessOperator);
-//            //销售员
-//            if (!Objects.isNull(kingdeeSeller)) {
-//                resultMap.put("sellerCode", kingdeeSeller.getUserPostCode());
-//                resultMap.put("deptCode", kingdeeSeller.getDeptCode());
-//            }
-//        }
+        String sellerId = entity.getSellerId();
+        String salesDeptId = entity.getSalesDeptId();
+//        获取业务员信息
+        if (StringUtils.isNotBlank(sellerId)) {
+            KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO findBusinessOperator = new KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO();
+            findBusinessOperator.setOrgId(salesOrgId);
+            findBusinessOperator.setUserId(sellerId);
+            findBusinessOperator.setSalesDeptId(salesDeptId);
+            findBusinessOperator.setBusinessOperatorType(KingdeeBusinessOperatorTypeEnum.XSY.getCode());
+            //获取员工业务信息
+            KingdeeOperatorRefPostDTO.OperatorDTO kingdeeSeller = kingdeeFeign.getBusinessOperator(findBusinessOperator);
+            //销售员
+            if (!Objects.isNull(kingdeeSeller)) {
+                resultMap.put("sellerCode", kingdeeSeller.getUserPostCode());
+            }
+        }
         //通过军区和平台获取部门信息
 
         String currency = entity.getCurrency();
