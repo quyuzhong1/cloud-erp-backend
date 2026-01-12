@@ -140,11 +140,17 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
      */
     private LinkedList<String> getHeaderNameList() {
         LinkedList<String> headerNameList = new LinkedList<>();
-        headerNameList.add("*平台订单号");
-        headerNameList.add("*物流跟踪单号");
+        headerNameList.add("平台订单号");
+        headerNameList.add("销售订单号");
+        headerNameList.add("发货订单号");
+        headerNameList.add("物流跟踪单号");
         headerNameList.add("*计费重[物流商]");
         headerNameList.add("*对账类型");
         headerNameList.add("*币种");
+        headerNameList.add("尺寸长(物流商)");
+        headerNameList.add("尺寸宽(物流商)");
+        headerNameList.add("尺寸高(物流商)");
+        headerNameList.add("实重(物流商)");
         return headerNameList;
     }
 
@@ -156,11 +162,17 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
      */
     private JSONObject getHeaderNameJsonObject() {
         JSONObject jsonObject = new JSONObject();
-        jsonObject.set("*平台订单号","platformCode");
-        jsonObject.set("*物流跟踪单号","trackNo");
+        jsonObject.set("平台订单号","platformCode");
+        jsonObject.set("销售订单号","soCode");
+        jsonObject.set("发货订单号","soDeliveryCode");
+        jsonObject.set("物流跟踪单号","trackNo");
         jsonObject.set("*计费重[物流商]","billingWeightStr");
         jsonObject.set("*对账类型","payType");
         jsonObject.set("*币种","currency");
+        jsonObject.set("尺寸长(物流商)","thirdLength");
+        jsonObject.set("尺寸宽(物流商)","thirdWidth");
+        jsonObject.set("尺寸高(物流商)","thirdHeight");
+        jsonObject.set("实重(物流商)","thirdActualWeight");
         return jsonObject;
     }
 
@@ -302,7 +314,7 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
                 continue;
             }
             LogisticsBillDTO.LogisticsBillVo logisticsBillVo = logisticsBillVoList.get(0);
-
+            logisticsBillVo.setReconciliationMonth(reconciliationMonth);
             //数据验证
             List<String> importMsgList = checkImportData(excelDTO,logisticsBillCostList,logisticsBillVo,DictCostAttributionEnum.LAST_MILE.getCode(), importType);
             if (CollectionUtils.isNotEmpty(importMsgList)) {
@@ -404,6 +416,12 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
             addDataDTO.setBillingWeight(updateDataDTO.getBillingWeight());
             addDataDTO.setBillingWeightLogistics(updateDataDTO.getBillingWeightLogistics());
             addDataDTO.setCurrency(updateDataDTO.getCurrency());
+
+            addDataDTO.setReconciliationMonth(updateDataDTO.getReconciliationMonth());
+            addDataDTO.setThirdHeight(updateDataDTO.getThirdHeight());
+            addDataDTO.setThirdWidth(updateDataDTO.getThirdWidth());
+            addDataDTO.setThirdLength(updateDataDTO.getThirdLength());
+            addDataDTO.setThirdActualWeight(updateDataDTO.getThirdActualWeight());
             addDataDTO.setCfgCostId(u.getCfgCostId());
             addDataDTO.setCostValue(u.getCostValue());
             dtoList.add(addDataDTO);
@@ -435,14 +453,16 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
         //物流费用单
         List<LogisticsBillCostEntity> logisticsBillCostEntityList = logisticsBillCostList.stream().filter(obj ->
                 CharSequenceUtil.equals(logisticsBillVo.getDetailId(),obj.getLogisticsBillDetailId())
-                && CharSequenceUtil.equals(excelDTO.getPayType(),obj.getPayType()))
+                && CharSequenceUtil.equals(excelDTO.getPayType(),obj.getPayType())
+                && CharSequenceUtil.equals(logisticsBillVo.getReconciliationMonth(),obj.getReconciliationMonth())
+                )
         		.collect(Collectors.toList());
         if (CollUtil.isEmpty(logisticsBillCostEntityList)) {
-            errorMsgList.add("未找到出库单和运输单号对应对账类型的尾程费用单");
+            errorMsgList.add("未找到对应对账类型的尾程费用单");
             return errorMsgList;
         }
         if (logisticsBillCostEntityList.size() > 1) {
-            errorMsgList.add("出库单和运输单号对应对账类型的尾程费用单有多条，请在页面编辑指定物流费用单");
+            errorMsgList.add("对应对账类型的尾程费用单有多条，请在页面编辑指定物流费用单");
             return errorMsgList;
         }
         LogisticsBillCostEntity logisticsBillCostEntity = logisticsBillCostEntityList.get(0);
