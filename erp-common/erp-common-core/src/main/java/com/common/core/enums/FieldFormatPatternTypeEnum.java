@@ -43,7 +43,6 @@ public enum FieldFormatPatternTypeEnum  {
     ENUM_NUMBER_99("number_99", "0-99（保留两位小数）","^([1-9]|([1-9]{1}[0-9]{1}))(\\.(\\d){0,2})?$"),
     ENUM_NAME("name", "名称","^[a-zA-Z0-9\\u4e00-\\u9fa5]+$");
 
-
     public static final String BANK_CARD_NO = "bankCardNo";
     public static final String URL = "url";
     public static final String INTEGER = "integer";
