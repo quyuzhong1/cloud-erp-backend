@@ -161,8 +161,10 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         List<SysUserInfoDTO.TabListDTO> result = new ArrayList<>();
         result.add(new SysUserInfoDTO.TabListDTO("all","全部", 0));
         SysUserInfoDTO.TabListDTO fTab = list.stream().filter(e -> e.getTabFlag().equals("1")).findFirst().orElse(new SysUserInfoDTO.TabListDTO("1", "启用", 0));
+        fTab.setTabFlagName("启用");
         result.add(fTab);
         SysUserInfoDTO.TabListDTO tTab = list.stream().filter(e -> e.getTabFlag().equals("0")).findFirst().orElse(new SysUserInfoDTO.TabListDTO("0", "禁用", 0));
+        tTab.setTabFlagName("禁用");
         result.add(tTab);
         return result;
     }
