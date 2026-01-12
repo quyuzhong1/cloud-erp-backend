@@ -104,6 +104,15 @@ public class CfgRulePickingStagingDTO implements Serializable {
          */
         private String fbaWarehouseLocationName;
         /**
+         * AWD库位id
+         */
+        @NotBlank(message = "AWD库位id不能为空")
+        private String awdWarehouseLocationId;
+        /**
+         * AWD库位
+         */
+        private String awdWarehouseLocationName;
+        /**
          * 三方仓库位id
          */
         @NotBlank(message = "三方仓库位id不能为空")
