@@ -308,6 +308,9 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
             if (logisticsBillVoList.size() > 1){
                 errorMsgList.add("对应物流单有多条，请在补全导入订单信息后重新导入");
             }
+            if (CollUtil.isEmpty(updateList)) {
+                errorMsgList.add("物流费用项不能为空");
+            }
             if (CollectionUtils.isNotEmpty(errorMsgList)) {
                 jsonObject.set(errorIndex.toString(),FieldValidUtil.getMsgSort(errorMsgList));
                 errorList.add(jsonObject);
@@ -385,10 +388,6 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
             		jsonObject.set(errorIndex.toString(),FieldValidUtil.getMsgSort(new ArrayList<>(costIdTypeListMap.values())));
                     errorList.add(jsonObject);
             	}
-            }
-            
-            if(CollUtil.isEmpty(updateList)) {
-            	continue;
             }
             List<String> ids = new ArrayList<>();
             if (ImportTypeEnum.ADD.getCode().equals(importType)){
