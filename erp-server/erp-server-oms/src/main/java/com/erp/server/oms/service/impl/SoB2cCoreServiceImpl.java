@@ -16,7 +16,6 @@ import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.entity.DmpOutputTaskRecordEntity;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.*;
-import com.erp.model.oms.entity.CfgSettingEntity;
 import com.erp.model.oms.enums.*;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -25,11 +24,14 @@ import com.erp.model.wms.dto.OverseasProviderWarehouseDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.dto.SoOutstockDetailDTO;
 import com.erp.model.wms.dto.VirtualWarehouseChannelDTO;
-import com.erp.model.wms.entity.*;
+import com.erp.model.wms.entity.SoOutstockEntity;
+import com.erp.model.wms.entity.VirtualWarehouseRelationEntity;
+import com.erp.model.wms.entity.WarehouseEntity;
+import com.erp.model.wms.entity.WarehouseLocationEntity;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.wms.feign.*;
 import com.erp.server.oms.convert.SoB2cCoreConverter;
-import com.erp.server.oms.rocketmq.consumer.NewPlatformOrderConsumerService;
+import com.erp.server.oms.rocketmq.consumer.PlatformOrderConsumerService;
 import com.erp.server.oms.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -62,8 +64,7 @@ public class SoB2cCoreServiceImpl implements SoB2cCoreService {
 
     @Resource
     private DictBasicService dictBasicService;
-    @Resource
-    private SkuMappingService skuMappingService;
+
     @Resource
     private SoB2cReceiverService soB2cReceiverService;
     @Resource
@@ -84,19 +85,10 @@ public class SoB2cCoreServiceImpl implements SoB2cCoreService {
     private ThirdWarehouseDeliveryFeign thirdWarehouseDeliveryFeign;
 
     @Resource
-    private SoOutstockFeign soOutstockFeign;
-
-    @Resource
     private SoB2cDeliveryFeign soB2cDeliveryFeign;
 
     @Resource
-    private DocNoGenHelper docNoGenHelper;
-
-    @Resource
-    private WmsOverseasWarehouseFeign wmsOverseasWarehouseFeign;
-
-    @Resource
-    private NewPlatformOrderConsumerService platformOrderConsumerService;
+    private PlatformOrderConsumerService platformOrderConsumerService;
 
     @Override
     public List<SoB2cCoreDTO.ListRetryOutstockDTO> listRetryOutstock(BaseIdsDTO.IdsDTO dto) {
