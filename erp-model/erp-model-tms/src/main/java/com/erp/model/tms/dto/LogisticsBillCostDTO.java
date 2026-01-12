@@ -395,6 +395,41 @@ public class LogisticsBillCostDTO implements Serializable {
          * 创建时间
          */
         private LocalDateTime createTime;
+
+        /**
+         * 对账月份【可排序】
+         */
+        private String reconciliationMonth;
+
+        /**
+         * 销售发货单id【可排序】
+         */
+        private String soDeliveryId;
+        /**
+         * 销售发货编号【可排序】
+         */
+        private String soDeliveryCode;
+        /**
+         * 尺寸长（物流商）
+         */
+        private BigDecimal thirdLength;
+        /**
+         * 尺寸宽（物流商）【可排序】
+         */
+        private BigDecimal thirdWidth;
+        /**
+         * 尺寸高（物流商）【可排序】
+         */
+        private BigDecimal thirdHeight;
+
+        /**
+         * 包装尺寸（物流商），长*宽*高
+         */
+        private String thirdPackSize;
+        /**
+         * 实重（物流商）【可排序】
+         */
+        private BigDecimal thirdActualWeight;
     }
 
     /**
