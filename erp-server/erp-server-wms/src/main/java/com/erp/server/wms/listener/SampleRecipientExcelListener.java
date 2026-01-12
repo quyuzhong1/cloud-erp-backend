@@ -270,7 +270,12 @@ public class SampleRecipientExcelListener extends AnalysisEventListener<SampleRe
         if (StrUtil.isBlank(userId)) {
             errorMsgList.add("领用人【" + data.getUserName() + "】不存在");
         } else {
-            data.setUserId(userId);
+            // 验证查询到的ID不能是中文（防止查询逻辑异常返回中文名称）
+            if (containsChinese(userId)) {
+                errorMsgList.add("领用人【" + data.getUserName() + "】查询到的ID格式错误，请检查用户数据");
+            } else {
+                data.setUserId(userId);
+            }
         }
 
         // 验证部门名称是否存在并解析部门ID
@@ -300,7 +305,12 @@ public class SampleRecipientExcelListener extends AnalysisEventListener<SampleRe
             if (SampleUsageScopeEnum.INTERNAL_USE.getUsageScope().equals(usageScopeByName)) {
                 // 公司内部使用：使用方名称和ID都用领用人的
                 data.setUseUserName(data.getUserName());
-                data.setUseUserId(data.getUserId());
+                // 确保 userId 不是中文才设置
+                if (StringUtils.isNotBlank(data.getUserId()) && !containsChinese(data.getUserId())) {
+                    data.setUseUserId(data.getUserId());
+                } else {
+                    errorMsgList.add("领用人ID格式错误，无法设置使用方ID");
+                }
             } else if (SampleUsageScopeEnum.EXTERNAL_USE.getUsageScope().equals(usageScopeByName)) {
                 // 公司外部使用：通过nameList eq批量查询获取id
                 if (StringUtils.isNotBlank(data.getUseUserName())) {
@@ -308,7 +318,12 @@ public class SampleRecipientExcelListener extends AnalysisEventListener<SampleRe
                     if (StringUtils.isBlank(useUserId)) {
                         errorMsgList.add(CharSequenceUtil.format("未知使用方:{}",data.getUseUserName()));
                     } else {
-                        data.setUseUserId(useUserId);
+                        // 验证查询到的ID不能是中文
+                        if (containsChinese(useUserId)) {
+                            errorMsgList.add(CharSequenceUtil.format("使用方【{}】查询到的ID格式错误，请检查使用方数据", data.getUseUserName()));
+                        } else {
+                            data.setUseUserId(useUserId);
+                        }
                     }
                 } else {
                     errorMsgList.add(CharSequenceUtil.format("公司外部使用时 使用方不能为空"));
@@ -658,6 +673,21 @@ public class SampleRecipientExcelListener extends AnalysisEventListener<SampleRe
             log.error("查询产品名称失败，SKU ID：{}，错误：{}", skuId, e.getMessage(), e);
             return null;
         }
+    }
+
+    /**
+     * 检查字符串是否包含中文字符
+     */
+    private boolean containsChinese(String str) {
+        if (StringUtils.isBlank(str)) {
+            return false;
+        }
+        for (char c : str.toCharArray()) {
+            if (c >= 0x4E00 && c <= 0x9FA5) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
