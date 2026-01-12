@@ -513,7 +513,10 @@ public class WarehouseLocationDTO implements Serializable {
          * 仓位ID
          */
         private String id;
-
+        /**
+         * 仓位ID List
+         */
+        private List<String> ids;
         /**
          * 状态：false启用，true禁用
          */
