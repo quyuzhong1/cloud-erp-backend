@@ -81,6 +81,13 @@ public class MQSyncFsHandler {
             return Boolean.FALSE;
         }
 
+        //参数map
+        CfgQueryOptionDTO.VariablesParamsDTO variablesParamsDTO = new CfgQueryOptionDTO.VariablesParamsDTO();
+        variablesParamsDTO.setBusinessKey(dto.getBusinessKey());
+        variablesParamsDTO.setVariablesMap(dto.getVariablesMap());
+        Map<String, Object> variablesMap = cfgQueryOptionService.getVariablesMapByBusinessKey(variablesParamsDTO);
+        dto.setVariablesMap(variablesMap);
+
         //构建三方审批同步实例请求体
         //审批状态 默认审批中
         String approveType = dto.getApproveType();
@@ -154,8 +161,6 @@ public class MQSyncFsHandler {
                         .eq(CfgApproveNoticeEntity::getMainId, cfgApproveSyncEntity.getId())
                         .list();
 
-        Map<String, Object> variablesMap = dto.getVariablesMap();
-
         for (CfgApproveNoticeEntity notice : noticeList) {
 
             // 7.1 指定人员
@@ -217,12 +222,6 @@ public class MQSyncFsHandler {
 
         Map<String, ThirdUnionDTO> thirdUnionMap = cfgApproveSyncBuildHandler.getThirdUnionDTOMap(allUserIds);
 
-        //参数map
-        CfgQueryOptionDTO.VariablesParamsDTO variablesParamsDTO = new CfgQueryOptionDTO.VariablesParamsDTO();
-        variablesParamsDTO.setBusinessKey(dto.getBusinessKey());
-        variablesParamsDTO.setVariablesMap(dto.getVariablesMap());
-        Map<String, Object> variablesMap = cfgQueryOptionService.getVariablesMapByBusinessKey(variablesParamsDTO);
-        dto.setVariablesMap(variablesMap);
         //推送消息 (快捷审批)
         List<CfgApproveSyncFieldMapEntity> fieldMapEntities = cfgApproveSyncFieldMapService.listByMainIds(Arrays.asList(cfgApproveSyncEntity.getId())).stream()
                 .filter(e -> e.getIsQuick().equals(Boolean.TRUE))
