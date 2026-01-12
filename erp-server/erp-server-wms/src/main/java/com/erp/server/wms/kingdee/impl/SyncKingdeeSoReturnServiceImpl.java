@@ -270,23 +270,23 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
             resultMap.put("inventoryOrgCode", inventoryOrgCode);
         }
         //销售员
-//        String sellerId = entity.getSellerId();
-//        String salesDeptId = entity.getSalesDeptId();
-//        //获取业务员信息
-//        if (CharSequenceUtil.isNotBlank(sellerId)) {
-//            KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO findBusinessOperator = new KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO();
-//            findBusinessOperator.setOrgId(entity.getSalesOrgId());
-//            findBusinessOperator.setUserId(sellerId);
-//            findBusinessOperator.setSalesDeptId(salesDeptId);
-//            findBusinessOperator.setBusinessOperatorType(KingdeeBusinessOperatorTypeEnum.XSY.getCode());
-//            //获取员工业务信息
-//            KingdeeOperatorRefPostDTO.OperatorDTO kingSellerInfo = kingdeeFeign.getBusinessOperator(findBusinessOperator);
-//            //销售员
-//            if (!Objects.isNull(kingSellerInfo)) {
-//                resultMap.put("sellerUserCode", kingSellerInfo.getUserPostCode());
+        String sellerId = entity.getSellerId();
+        String salesDeptId = entity.getSalesDeptId();
+        //获取业务员信息
+        if (CharSequenceUtil.isNotBlank(sellerId)) {
+            KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO findBusinessOperator = new KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO();
+            findBusinessOperator.setOrgId(entity.getSalesOrgId());
+            findBusinessOperator.setUserId(sellerId);
+            findBusinessOperator.setSalesDeptId(salesDeptId);
+            findBusinessOperator.setBusinessOperatorType(KingdeeBusinessOperatorTypeEnum.XSY.getCode());
+            //获取员工业务信息
+            KingdeeOperatorRefPostDTO.OperatorDTO kingSellerInfo = kingdeeFeign.getBusinessOperator(findBusinessOperator);
+            //销售员
+            if (!Objects.isNull(kingSellerInfo)) {
+                resultMap.put("sellerUserCode", kingSellerInfo.getUserPostCode());
 //                resultMap.put("sellerDeptCode", kingSellerInfo.getDeptCode());
-//            }
-//        }
+            }
+        }
 
         if (CharSequenceUtil.isNotBlank(entity.getWarehouseKeeperId())) {
             //仓管员编码
