@@ -3147,6 +3147,11 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 return soOutstockService.handleCreateB2cSoOutstock(dto);
             }
         } catch (Exception e) {
+            Object isNotOutboundObj = redisUtil.get(CharSequenceUtil.format("so_b2c_not_outbound:{}", dto.getSoId()));
+            Boolean isNotOutbound = Objects.nonNull(isNotOutboundObj) && Boolean.TRUE.equals(isNotOutboundObj) ? Boolean.TRUE : Boolean.FALSE;
+            if (isNotOutbound){
+                throw new ServiceException(e.getMessage());
+            }
             String soB2cId = dto.getSoId();
             String type = SoB2cErrorTypeEnum.GENERATE_OUTSTOCK.getCode();
             String paramJson = JSONUtil.toJsonStr(dto);
@@ -3227,6 +3232,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean handleCreateB2cSoOutstockWithoutTx(SoOutstockDTO.GenerateB2cDTO dto) {
         SoOutstockEntity soOutstock = this.getBySoId(dto.getSoId());
         if(Objects.nonNull(soOutstock)
@@ -4024,6 +4030,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             this.generateB2cSoOutstock(generateB2cDTO);
         } catch (Exception e) {
             log.error("销售订单{} 生成销售出库单失败>>>>>>{}", generateB2cDTO.getSoCode(), e.getMessage());
+            throw new ServiceException(e.getMessage());
         }
     }
 

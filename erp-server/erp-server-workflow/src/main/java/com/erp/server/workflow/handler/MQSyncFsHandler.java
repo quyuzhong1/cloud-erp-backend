@@ -8,6 +8,7 @@ import com.common.business.enums.ApproveTypeEnum;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.sys.vo.ThirdUnionDTO;
 import com.erp.model.workflow.dto.CfgApproveSyncDTO;
+import com.erp.model.workflow.dto.CfgQueryOptionDTO;
 import com.erp.model.workflow.dto.FsBotParamsDTO;
 import com.erp.model.workflow.entity.*;
 import com.erp.model.workflow.enums.*;
@@ -216,6 +217,12 @@ public class MQSyncFsHandler {
 
         Map<String, ThirdUnionDTO> thirdUnionMap = cfgApproveSyncBuildHandler.getThirdUnionDTOMap(allUserIds);
 
+        //参数map
+        CfgQueryOptionDTO.VariablesParamsDTO variablesParamsDTO = new CfgQueryOptionDTO.VariablesParamsDTO();
+        variablesParamsDTO.setBusinessKey(dto.getBusinessKey());
+        variablesParamsDTO.setVariablesMap(dto.getVariablesMap());
+        Map<String, Object> variablesMap = cfgQueryOptionService.getVariablesMapByBusinessKey(variablesParamsDTO);
+        dto.setVariablesMap(variablesMap);
         //推送消息 (快捷审批)
         List<CfgApproveSyncFieldMapEntity> fieldMapEntities = cfgApproveSyncFieldMapService.listByMainIds(Arrays.asList(cfgApproveSyncEntity.getId())).stream()
                 .filter(e -> e.getIsQuick().equals(Boolean.TRUE))
@@ -226,6 +233,7 @@ public class MQSyncFsHandler {
         if(CollUtil.isNotEmpty(fieldMapEntities)){
             List<String> fieldIds = fieldMapEntities.stream().map(CfgApproveSyncFieldMapEntity::getFieldId).collect(Collectors.toList());
             List<CfgQueryOptionEntity> cfgQueryOptionList = cfgQueryOptionService.listByIds(fieldIds);
+
             //用户提交审批时填写的表单数据,用于所有审批列表中展示。最多展示3个
             int len = fieldMapEntities.size() > 5 ? 5 : fieldMapEntities.size();
             Map<String,String> handlerValueMap = new HashMap<>();
@@ -285,7 +293,7 @@ public class MQSyncFsHandler {
             return true;
         }
         log.info("MQSyncFsInstanceConsumerService 同步三方审批实例请求参数: {}" ,  new Gson().toJson(req.getExternalInstance()));
-        //三方审批同步
+        //三方审批同步w
         CreateExternalInstanceResp resp = fsService.createExternalInstance(req);
         log.info("MQSyncFsInstanceConsumerService 同步三方审批实例响应参数: {}" ,  new Gson().toJson(resp));
 
@@ -302,8 +310,10 @@ public class MQSyncFsHandler {
             //更新消息
             cfgApproveSyncSendHandler.updateNotice(dto,processTaskManagementEntities,syncRecordEntity);
 
-            //消息推送
-            cfgApproveSyncSendHandler.sendNotice(dto, fieldMapEntities,remoteValues, processManagementEntity, cfgApproveSyncEntity, userIdGroupByType,dto.getOperator(), thirdUnionMap, processTaskManagementEntities,syncRecordEntity);
+            if(dto.getIsSend()){
+                //消息推送
+                cfgApproveSyncSendHandler.sendNotice(dto, fieldMapEntities,remoteValues, processManagementEntity, cfgApproveSyncEntity, userIdGroupByType,dto.getOperator(), thirdUnionMap, processTaskManagementEntities,syncRecordEntity);
+            }
 
 //            //校验三方审批实例
 //            CheckExternalInstanceReq checkExternalInstanceReq = cfgApproveSyncBuildHandler.buildExternalInstanceReq(processManagementEntity, processTaskManagementEntities);

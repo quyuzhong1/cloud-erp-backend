@@ -53,16 +53,21 @@ public class CfgApproveSyncSendHandler {
                                 ApproveSyncRecordEntity syncRecordEntity) {
         //获取操作的taskId
         String curTaskId = dto.getCurTaskId();
+        //审批状态
+        String approveType = dto.getApproveType();
         if(StringUtils.isBlank(curTaskId)){
-
+            if(Objects.equals(approveType, FsActionStatusEnum.PROCESSED.getCode())){//强制通过
+                //更新审批结果通知
+                commonUpdateNotice(processTaskManagementEntities,FsActionStatusEnum.PROCESSED.getCode(),syncRecordEntity);
+            } else if(Objects.equals(approveType, FsActionStatusEnum.ROLLBACK.getCode())){//强制驳回
+                //更新审批结果通知
+                commonUpdateNotice(processTaskManagementEntities,FsActionStatusEnum.ROLLBACK.getCode(),syncRecordEntity);
+            }
         }else {
             //过滤出当前任务ID的审批记录 并且任务状态为通过或者拒绝
             List<ProcessTaskManagementEntity> approveTaskList = processTaskManagementEntities.stream()
                     .filter(item -> item.getTaskId().equals(curTaskId))
                     .collect(Collectors.toList());
-
-            //审批状态
-            String approveType = dto.getApproveType();
             if (Objects.equals(approveType, ApproveTypeEnum.PASS.getStatus())){//审核通过
                 //更新审批结果通知
                 commonUpdateNotice(approveTaskList,FsActionStatusEnum.APPROVED.getCode(),syncRecordEntity);
@@ -75,12 +80,6 @@ public class CfgApproveSyncSendHandler {
             } else if (Objects.equals(approveType, FsActionStatusEnum.FORWARDED.getCode())) {//转办
                 //更新审批结果通知
                 commonUpdateNotice(approveTaskList,FsActionStatusEnum.FORWARDED.getCode(),syncRecordEntity);
-            } else if(Objects.equals(approveType, FsActionStatusEnum.PROCESSED.getCode())){//强制通过
-                //更新审批结果通知
-                commonUpdateNotice(approveTaskList,FsActionStatusEnum.PROCESSED.getCode(),syncRecordEntity);
-            } else if(Objects.equals(approveType, FsActionStatusEnum.ROLLBACK.getCode())){//强制驳回
-                //更新审批结果通知
-                commonUpdateNotice(approveTaskList,FsActionStatusEnum.ROLLBACK.getCode(),syncRecordEntity);
             } else if(Objects.equals(approveType, FsActionStatusEnum.SUSPEND.getCode())){ //暂停
                 //更新审批结果通知
                 commonUpdateNotice(approveTaskList,FsActionStatusEnum.SUSPEND.getCode(),syncRecordEntity);

@@ -297,6 +297,7 @@ public class ApproveSyncRecordServiceImpl extends SuperServiceImpl<ApproveSyncRe
                     mqDto.setVariablesMap(variables);
                     mqDto.setBusinessKey(managementTask.getBusinessKey());
                     mqDto.setApproveType(managementTask.getApproveStatus().getStatus());
+                    mqDto.setIsSend(dto.getIsSend());
                     syncFsExternalInstance(mqDto);
 
                 }

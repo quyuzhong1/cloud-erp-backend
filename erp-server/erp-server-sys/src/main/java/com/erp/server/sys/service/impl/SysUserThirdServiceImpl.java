@@ -196,15 +196,17 @@ public class SysUserThirdServiceImpl extends ServiceImpl<SysUserThirdMapper, Sys
         if(StringUtils.isBlank(platform)){
             return Collections.emptyList();
         }
-        LambdaQueryChainWrapper<SysUserThirdEntity> lambdaQueryChainWrapper = lambdaQuery().eq(SysUserThirdEntity::getThirdPartyType, platform)
-                .ne(SysUserThirdEntity::getThirdOpenId, "")
-                .ne(SysUserThirdEntity::getThirdUserId, "")
-                .ne(SysUserThirdEntity::getThirdUnionId, "");
-
-        if(CollUtil.isNotEmpty(userIds)){
-            lambdaQueryChainWrapper.in(SysUserThirdEntity::getUserId, userIds);
+        LambdaQueryWrapper<SysUserThirdEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(SysUserThirdEntity::getThirdPartyType, platform);
+        // 只有当 userIds 不为空且不为 null 时才添加 in 条件
+        if (CollUtil.isNotEmpty(userIds)) {
+            queryWrapper.in(SysUserThirdEntity::getUserId, userIds);
         }
-        List<SysUserThirdEntity> list = lambdaQueryChainWrapper.list();
+        queryWrapper.ne(SysUserThirdEntity::getThirdOpenId, "");
+        queryWrapper.ne(SysUserThirdEntity::getThirdUserId, "");
+        queryWrapper.ne(SysUserThirdEntity::getThirdUnionId, "");
+
+        List<SysUserThirdEntity> list = this.list(queryWrapper);
         List<ThirdUnionDTO> thirdUnionDTOs = BeanMapperUtils.copyList(ThirdUnionDTO.class,list);
         if(CollUtil.isEmpty(thirdUnionDTOs)){
             return Collections.emptyList();
