@@ -2619,6 +2619,11 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         if(approveStatus.equals(ApproveStatusEnum.APPROVE_ING)){
             this.cancelProcess(Collections.singletonList(dto.getId()));
         }
+        dto.getAddressList().forEach(address -> {
+            if(StringUtils.isBlank(address.getType())){
+                address.setType("");
+            }
+        });
         //待提交，直接修改，
         String id = dto.getId();
         //客户联系人
