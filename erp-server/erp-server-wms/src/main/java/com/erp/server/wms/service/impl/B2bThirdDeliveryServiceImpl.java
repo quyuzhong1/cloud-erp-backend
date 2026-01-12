@@ -600,8 +600,7 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
         if (StrUtil.isNotBlank(deliveryTimeStr)) {
             deliveryTime = LocalDateTime.parse(deliveryTimeStr, DateTimeFormatter.ISO_LOCAL_DATE_TIME);
         }
-        if (response.getStatus().equals(B2BThirdDeliveryCancelResultEnum.EXCEPTION.getCode()) ||
-                response.getStatus().equals(B2BThirdDeliveryCancelResultEnum.DISCARD.getCode()) ||
+        if (    response.getStatus().equals(B2BThirdDeliveryCancelResultEnum.DISCARD.getCode()) ||
                 response.getStatus().equals(B2BThirdDeliveryCancelResultEnum.PROBLEM.getCode())) {
             //拦截成功，更新B2B三方发货单状态 取消发货
             service.updateStatus(id, ThirdDeliveryStatusEnum.CANCEL_DELIVERY.getCode(), "", response.getPlatformOrderCode(), "", response.getTrackNo(), deliveryTime);
@@ -620,6 +619,9 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
                 response.getStatus().equals(B2BThirdDeliveryCancelResultEnum.DISCARD_PROCESSED.getCode())) {
             //拦截中 记录拦截标识
             service.updateStatus(id, ThirdDeliveryStatusEnum.INTERCEPTING.getCode(), "", response.getPlatformOrderCode(), "", response.getTrackNo(), deliveryTime);
+        }  else if (response.getStatus().equals(B2BThirdDeliveryCancelResultEnum.EXCEPTION.getCode())) {
+
+            operateLogService.addModuleOperateLog("海外仓出库异常，系统应拦截，为保证发货时效运营要求不予拦截，直接海外仓后台修改提交", ModuleTypeEnum.B2B_THIRD_DELIVERY.getCode(), id, "出库异常");
         } else {
             XxlJobHelper.log("不操作的状态,id={},code={},status={}", id, response.getCode(), response.getStatus());
         }
