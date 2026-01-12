@@ -254,8 +254,22 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
             }
         }
         if(CharSequenceUtil.isNotBlank(logisticsBillEntity.getOutstockId())){
-            List<FirstMileDeliveryDTO.BusinessDTO> businessDTOList = wmsFirstMileDeliveryFeign.getBusinessCodeByIds(Collections.singletonList(logisticsBillEntity.getOutstockId()));
-            logisticsBillEntity.setBusinessCode(CollectionUtils.isNotEmpty(businessDTOList) ? businessDTOList.get(0).getBusinessCode() : "");
+
+            if (CharSequenceUtil.equals(logisticsBillEntity.getOrderType(), OrderTypeEnum.FIRST_MILE.getCode())) {
+                List<FirstMileDeliveryDTO.BusinessDTO> businessDTOList = wmsFirstMileDeliveryFeign.getBusinessCodeByIds(Collections.singletonList(logisticsBillEntity.getOutstockId()));
+                if (CollUtil.isNotEmpty(businessDTOList)) {
+                    FirstMileDeliveryDTO.BusinessDTO businessDTO = businessDTOList.get(0);
+                    logisticsBillEntity.setBusinessCode(businessDTO.getBusinessCode());
+                    logisticsBillEntity.setSoDeliveryId(businessDTO.getId());
+                    logisticsBillEntity.setSoDeliveryCode(businessDTO.getCode());
+                }
+            } else  {
+                SoOutstockEntity soOutstockEntity = FeignQuery.getById(SoOutstockEntity.class, logisticsBillEntity.getOutstockId());
+                if (ObjectUtil.isNotEmpty(soOutstockEntity) && Arrays.asList(SourceTypeEnum.SO_B2C_DELIVERY.getCode(),SourceTypeEnum.SO_DELIVERY_NOTICE.getCode()).contains(soOutstockEntity.getSourceType())) {
+                    logisticsBillEntity.setSoDeliveryCode(soOutstockEntity.getSourceCode());
+                    logisticsBillEntity.setSoDeliveryId(soOutstockEntity.getSourceId());
+                }
+            }
         }
         if (CharSequenceUtil.isNotBlank(logisticsBillEntity.getChannelId()) && CharSequenceUtil.isBlank(logisticsBillEntity.getChannelName())){
             LogisticsChannelEntity channelEntity = logisticsChannelService.getById(logisticsBillEntity.getChannelId());
