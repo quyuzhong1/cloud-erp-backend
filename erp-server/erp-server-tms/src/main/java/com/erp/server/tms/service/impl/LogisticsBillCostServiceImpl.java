@@ -851,13 +851,13 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         Boolean confirmStatus = (Boolean)extMap.get("confirmStatus");
 
         //平台订单号
-        List<String> platformCodeList = successList.stream().map(LogisticsBillCostExcelDTO::getPlatformCode).collect(Collectors.toList());
+        List<String> platformCodeList = successList.stream().map(LogisticsBillCostExcelDTO::getPlatformCode).filter(CharSequenceUtil::isNotBlank).collect(Collectors.toList());
         //销售订单号编码
-        List<String> soCodeList = successList.stream().map(LogisticsBillCostExcelDTO::getSoCode).collect(Collectors.toList());
+        List<String> soCodeList = successList.stream().map(LogisticsBillCostExcelDTO::getSoCode).filter(CharSequenceUtil::isNotBlank).collect(Collectors.toList());
         //发货单号
-        List<String> soDeliveryCodeList = successList.stream().map(LogisticsBillCostExcelDTO::getSoDeliveryCode).collect(Collectors.toList());
+        List<String> soDeliveryCodeList = successList.stream().map(LogisticsBillCostExcelDTO::getSoDeliveryCode).filter(CharSequenceUtil::isNotBlank).collect(Collectors.toList());
         //物流单
-        List<String> trackNoList = successList.stream().map(LogisticsBillCostExcelDTO::getTrackNo).collect(Collectors.toList());
+        List<String> trackNoList = successList.stream().map(LogisticsBillCostExcelDTO::getTrackNo).filter(CharSequenceUtil::isNotBlank).collect(Collectors.toList());
         List<LogisticsBillDTO.LogisticsBillVo> logisticsBillVos = logisticsBillService.listLogisticsBillVoByData(platformCodeList,soCodeList,soDeliveryCodeList,trackNoList);
 
         //物流单费用
@@ -1397,6 +1397,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         List<LogisticsBillCostEntity> logisticsBillCostEntityList = logisticsBillCostList.stream()
                 .filter(obj -> obj.getLogisticsBillId().equals(logisticsBillVo.getId())
                         && CharSequenceUtil.equals(logisticsBillVo.getTrackNo(),obj.getTrackNo())
+                        && CharSequenceUtil.equals(ReconciliationStatusEnum.TO_BE_CONFIRM.getCode(),obj.getReconciliationStatus())
                         && CharSequenceUtil.equals(excelDTO.getPayType(),obj.getPayType()))
                 .collect(Collectors.toList());
         LogisticsBillCostEntity logisticsBillCostEntity = null;
