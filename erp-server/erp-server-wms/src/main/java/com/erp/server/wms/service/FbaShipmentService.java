@@ -336,6 +336,4 @@ public interface FbaShipmentService extends SuperService<FbaShipmentEntity> {
     List<FbaShipmentDTO.AwdListDTO> viewAwdList(FbaShipmentDTO.ViewListReqDTO dto);
 
     BatchResultDTO manualAwdReceived(List<FbaShipmentDTO.ReceivedDTO> dtoList, FbaShipmentEntity entity);
-
-    BatchResultDTO regenerateAwdTransferOut(String id);
 }
