@@ -146,6 +146,7 @@ import org.apache.commons.math3.util.Pair;
 import org.apache.poi.ss.formula.functions.T;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.MDC;
 import org.springframework.beans.BeanUtils;
 import org.springframework.context.annotation.Lazy;
@@ -167,6 +168,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -671,7 +673,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO refreshExchangeRate(SoB2cEntity soB2cEntity) {
         LocalDateTime getExchangeRateTime = soB2cEntity.getCreateTime();
         List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cDetailService.listByMainId(soB2cEntity.getId());
@@ -691,14 +692,28 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         soB2cEntity.setSignOrderError("");
         soB2cEntity.setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT);
         soB2cEntity.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
-        boolean updateMainResult = this.updateById(soB2cEntity);
-        if(!updateMainResult){
-            return BatchResultDTO.fail(soB2cEntity.getId(),soB2cEntity.getCode(),"更新订单汇率失败");
-        }
         soB2cDetailEntityList.forEach(detail -> {
             //更新明细的汇率
             detail.setExchangeRate(exchangeRate);
         });
+        BatchResultDTO resultDTO = soB2cService.handleUpdateExchange(soB2cEntity, soB2cDetailEntityList, exchangeRate);
+        if(!resultDTO.getSuccess()){
+            return resultDTO;
+        }
+        // 异步重新清洗订单
+        CompletableFuture.runAsync(() -> {
+            soB2cCoreService.handleOrderRetryConsumer(soB2cEntity);
+        });
+
+        return BatchResultDTO.success(soB2cEntity.getId(),soB2cEntity.getCode());
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public BatchResultDTO handleUpdateExchange(SoB2cEntity soB2cEntity, List<SoB2cDetailEntity> soB2cDetailEntityList, BigDecimal exchangeRate) {
+        boolean updateMainResult = this.updateById(soB2cEntity);
+        if(!updateMainResult){
+            return BatchResultDTO.fail(soB2cEntity.getId(), soB2cEntity.getCode(), "更新订单汇率失败");
+        }
         soB2cDetailService.updateBatchById(soB2cDetailEntityList);
         soB2cErrorService.removeErrorOrder(soB2cEntity.getId(), SoB2cErrorTypeEnum.GET_EXCHANGE_RATE.getCode());
         operateLogService.addModuleOperateLog(
@@ -707,10 +722,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 soB2cEntity.getId(),
                 "更新汇率操作"
         );
-        //重新清洗订单
-        List<DmpInoutDTO.CreateInputDTO> createDTOList = SoB2cHandler.groupConvertCreateInputDTOList(Arrays.asList(soB2cEntity));
-        dmpInoutTaskFeign.doInputTask(createDTOList);
-
         return BatchResultDTO.success(soB2cEntity.getId(),soB2cEntity.getCode());
     }
 

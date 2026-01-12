@@ -68,4 +68,10 @@ public interface SoB2cCoreService {
     Boolean handleSoOutStock(String soId);
 
     void updateRemarkAndLog(SoB2cDTO.RemarkDTO remarkDTO);
+
+    /**
+     * 获取最新的中台订单推送数据，重新订单消费
+     * @return
+     */
+    Boolean handleOrderRetryConsumer(SoB2cEntity entity);
 }
