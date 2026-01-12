@@ -750,6 +750,30 @@ public class LogisticsBillCostDTO implements Serializable {
     	 * 计费重[预估]
     	 */
     	private BigDecimal billingWeight;
+
+        /**
+         * 对账月份
+         */
+        private String reconciliationMonth;
+        /**
+         * 尺寸长(物流商)
+         */
+        private BigDecimal thirdLength;
+
+        /**
+         * 尺寸宽(物流商)
+         */
+        private BigDecimal thirdWidth;
+
+        /**
+         * 尺寸高(物流商)
+         */
+        private BigDecimal thirdHeight;
+
+        /**
+         * 实重(物流商)
+         */
+        private BigDecimal thirdActualWeight;
     }
 
     @Data

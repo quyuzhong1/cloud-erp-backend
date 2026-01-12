@@ -190,7 +190,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
     */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Boolean update(LogisticsBillCostDTO.UpdateDTO updateDTO,Boolean isImport) {
+    public BaseResultDTO.UpdateDTO update(LogisticsBillCostDTO.UpdateDTO updateDTO,Boolean isImport) {
         LogisticsBillCostEntity old = null;
         if (Objects.nonNull(updateDTO.getId())){
             old = super.getById(updateDTO.getId());
@@ -291,7 +291,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         log.info("编辑 开始记录自发货费用日志数据，id：【{}】", logisticsBillCostEntity.getId());
         String msg = CharSequenceUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), logisticsBillCostEntity.getId(), "自发货费用");
         operateLogService.addModuleOperateLogByObj(old, logisticsBillCostEntity, ModuleTypeEnum.LOGISTICS_BILL_COST.getCode(), logisticsBillCostEntity.getId(), msg);
-        return Boolean.TRUE;
+        return new BaseResultDTO.UpdateDTO(logisticsBillCostEntity.getId(), logisticsBillCostEntity.getId());
     }
 
     @Override
@@ -847,6 +847,9 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         if (StrUtil.isBlank(reconciliationMonth)) {
             throw new ServiceException(ApiError.LOGISTICS_BILL_COST_IMPORT_NOT_EXIST_RECONCILIATION_MONTH);
         }
+        //是否确认
+        Boolean confirmStatus = (Boolean)extMap.get("confirmStatus");
+
         //平台订单号
         List<String> platformCodeList = successList.stream().map(LogisticsBillCostExcelDTO::getPlatformCode).collect(Collectors.toList());
         //销售订单号编码
@@ -951,6 +954,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             //物流费用单
             LogisticsBillCostEntity logisticsBillCostEntity = logisticsBillCostList.stream().filter(obj -> obj.getLogisticsBillId().equals(logisticsBillVo.getId())
                     && CharSequenceUtil.equals(obj.getLogisticsBillDetailId(),logisticsBillVo.getDetailId())
+                    && CharSequenceUtil.equals(obj.getReconciliationMonth(),reconciliationMonth)
             		&& CharSequenceUtil.equals(obj.getPayType(),billCostExcelDTO.getPayType()))
                     .findFirst().orElse(null);
             if (ImportTypeEnum.ADD.getCode().equals(importType) && Objects.isNull(logisticsBillCostEntity)){
@@ -973,7 +977,27 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             	updateDataDTO.setBillingWeightLogistics(new BigDecimal(billingWeightLogistics));
             }
             updateDataDTO.setCurrency(CharSequenceUtil.isBlank(billCostExcelDTO.getCurrency()) ? CurrencyEnum.CNY.getCurrencyCode() : billCostExcelDTO.getCurrency());
-            
+            //对账月份
+            updateDataDTO.setReconciliationMonth(reconciliationMonth);
+            //尺寸
+            String thirdHeight = billCostExcelDTO.getThirdHeight();
+            if(StringUtils.isNotBlank(thirdHeight)) {
+                updateDataDTO.setThirdHeight(new BigDecimal(thirdHeight));
+            }
+            String thirdWidth = billCostExcelDTO.getThirdWidth();
+            if(StringUtils.isNotBlank(thirdWidth)) {
+                updateDataDTO.setThirdWidth(new BigDecimal(thirdWidth));
+            }
+            String thirdLength = billCostExcelDTO.getThirdLength();
+            if(StringUtils.isNotBlank(thirdHeight)) {
+                updateDataDTO.setThirdLength(new BigDecimal(thirdLength));
+            }
+            //实重
+            String thirdActualWeight = billCostExcelDTO.getThirdActualWeight();
+            if(StringUtils.isNotBlank(thirdActualWeight)) {
+                updateDataDTO.setThirdActualWeight(new BigDecimal(thirdActualWeight));
+            }
+
             List<TmsCostDetailEntity> validateList = BeanMapperUtils.copyList(TmsCostDetailEntity.class, updateDetailList);
             List<TmsCostDetailEntity> tmsCostDetailEntityList = mainIdListMap.get(logisticsBillCostEntity.getId());
             if(CollUtil.isNotEmpty(tmsCostDetailEntityList)) {
@@ -1011,12 +1035,19 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             if(CollUtil.isEmpty(updateDetailList)) {
             	continue;
             }
+            List<String> ids = new ArrayList<>();
             if (ImportTypeEnum.ADD.getCode().equals(importType)){
                 List<LogisticsBillCostDTO.AddDataDTO> dtoList = buildAddDTO(updateDataDTO,value,tmsCfgCostList);
-                this.addPayAndRefund(dtoList);
+                List<AddDTO> addDTOS = this.addPayAndRefund(dtoList);
+                ids = addDTOS.stream().map(AddDTO::getId).collect(Collectors.toList());
             }else {
                 updateDataDTO.setCostDetailList(updateDetailList);
-                this.update(updateDataDTO,Boolean.TRUE);
+                BaseResultDTO.UpdateDTO update = this.update(updateDataDTO, Boolean.TRUE);
+                ids.add(update.getId());
+            }
+            //确认
+            if (confirmStatus) {
+                ids.forEach(id -> this.updateReconciliationStatus(id, ReconciliationStatusEnum.CONFIRMED.getCode(), LocalDateTime.now()));
             }
         }
     }

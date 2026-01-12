@@ -199,7 +199,11 @@ public class LogisticsBillCostEntity extends BaseEntity<LogisticsBillCostEntity>
     @TableField(value = "check_status")
     private String checkStatus;
 
-
+    /**
+     * 对账月份
+     */
+    @TableField("reconciliation_month")
+    private String reconciliationMonth;
     /**
      * 尺寸长(物流商)
      */
