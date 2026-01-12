@@ -16,7 +16,6 @@ import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.entity.DmpOutputTaskRecordEntity;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.*;
-import com.erp.model.oms.entity.CfgSettingEntity;
 import com.erp.model.oms.enums.*;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -25,10 +24,14 @@ import com.erp.model.wms.dto.OverseasProviderWarehouseDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.dto.SoOutstockDetailDTO;
 import com.erp.model.wms.dto.VirtualWarehouseChannelDTO;
-import com.erp.model.wms.entity.*;
+import com.erp.model.wms.entity.SoOutstockEntity;
+import com.erp.model.wms.entity.VirtualWarehouseRelationEntity;
+import com.erp.model.wms.entity.WarehouseEntity;
+import com.erp.model.wms.entity.WarehouseLocationEntity;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.wms.feign.*;
 import com.erp.server.oms.convert.SoB2cCoreConverter;
+import com.erp.server.oms.rocketmq.consumer.PlatformOrderConsumerService;
 import com.erp.server.oms.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -62,8 +65,7 @@ public class SoB2cCoreServiceImpl implements SoB2cCoreService {
 
     @Resource
     private DictBasicService dictBasicService;
-    @Resource
-    private SkuMappingService skuMappingService;
+
     @Resource
     private SoB2cReceiverService soB2cReceiverService;
     @Resource
@@ -84,16 +86,10 @@ public class SoB2cCoreServiceImpl implements SoB2cCoreService {
     private ThirdWarehouseDeliveryFeign thirdWarehouseDeliveryFeign;
 
     @Resource
-    private SoOutstockFeign soOutstockFeign;
-
-    @Resource
     private SoB2cDeliveryFeign soB2cDeliveryFeign;
 
     @Resource
-    private DocNoGenHelper docNoGenHelper;
-
-    @Resource
-    private WmsOverseasWarehouseFeign wmsOverseasWarehouseFeign;
+    private PlatformOrderConsumerService platformOrderConsumerService;
 
     @Override
     public List<SoB2cCoreDTO.ListRetryOutstockDTO> listRetryOutstock(BaseIdsDTO.IdsDTO dto) {
@@ -489,5 +485,48 @@ public class SoB2cCoreServiceImpl implements SoB2cCoreService {
         soB2cEntity.setRemark(remarkDTO.getRemark());
         soB2cService.updateById(soB2cEntity);
         operateLogService.batchAddModuleOperateLog(Collections.singletonList(remarkDTO.getOperateLogDTO()));
+    }
+
+    @Override
+    public Boolean handleOrderRetryConsumer(SoB2cEntity soB2cEntity) {
+        if(ObjectUtil.isEmpty(soB2cEntity)) {
+            throw new ServiceException(ApiError.SO_B2C_NOT_FOUND);
+        }
+        String outPutClass =  "";
+        String sourceCode = "";
+        if (PlatformDictEnum.MERCADOLIBRE.getCode().equals(soB2cEntity.getDictPlatform())) {
+            outPutClass = "MercadoOrderRocketMQTaskHandler";
+            sourceCode = soB2cEntity.getPlatformCode();
+        }  else if (PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode().equals(soB2cEntity.getDictPlatform())) {
+            outPutClass = "MercadoLocalOrderRocketMQTaskHandler";
+            sourceCode = soB2cEntity.getPlatformCode();
+        } else if (PlatformDictEnum.SHOPEE.getCode().equals(soB2cEntity.getDictPlatform())) {
+            outPutClass = "DmpOutputShopeeOrderRocketMQTaskHandler";
+            sourceCode = soB2cEntity.getPlatformCode();
+        }else if (PlatformDictEnum.LING_XING.getCode().equals(soB2cEntity.getThirdSystem())) {
+            outPutClass = "DmpOutputLxOrderRocketMQTaskHandler";
+            sourceCode = soB2cEntity.getThirdCode();
+        }else if (PlatformDictEnum.ALI_EXPRESS.getCode().equals(soB2cEntity.getDictPlatform())) {
+            outPutClass = "DmpOutputAliExpressOrderRocketMQTaskHandler";
+            sourceCode = soB2cEntity.getThirdCode();
+        }else if (PlatformDictEnum.AMAZON.getCode().equals(soB2cEntity.getDictPlatform())) {
+            outPutClass = "DmpOutputAmzOrderRocketMQTaskHandler";
+            sourceCode = soB2cEntity.getPlatformCode();
+        }else if (PlatformDictEnum.SHOPIFY.getCode().equals(soB2cEntity.getDictPlatform())) {
+            outPutClass = "ShopifyOrderRocketMQTaskHandler";
+            sourceCode = soB2cEntity.getPlatformCode();
+        }else if (PlatformDictEnum.TIK_TOK.getCode().equals(soB2cEntity.getDictPlatform())) {
+            outPutClass = "TikTokOrderRocketMQTaskHandler";
+            sourceCode = soB2cEntity.getPlatformCode();
+        }else if (PlatformDictEnum.TIK_TOK_FULLY.getCode().equals(soB2cEntity.getDictPlatform())) {
+            outPutClass = "TikTokFullyOrderRocketMQTaskHandler";
+            sourceCode = soB2cEntity.getPlatformCode();
+        }
+        List<DmpOutputTaskRecordEntity> dmpOutputTaskRecordEntityList = dmpTaskFeign.getOutputTaskRecord(sourceCode,outPutClass);
+        if(CollectionUtils.isNotEmpty(dmpOutputTaskRecordEntityList)) {
+            DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity = dmpOutputTaskRecordEntityList.get(0);
+            platformOrderConsumerService.handle(dmpOutputTaskRecordEntity.getRequestData());
+        }
+        return true;
     }
 }
