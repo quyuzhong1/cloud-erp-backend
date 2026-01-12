@@ -1060,7 +1060,15 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
     @Override
     public List<SoReceiptEntity> listBySoId(String soId) {
         if(StrUtils.isNotEmpty(soId)){
-            List<SoReceiptDetailEntity> detailList = soReceiptDetailService.listBySoId(soId);
+            return this.listBySoIds(Collections.singletonList(soId));
+        }
+        return new ArrayList<>();
+    }
+
+    @Override
+    public List<SoReceiptEntity> listBySoIds(List<String> soIds) {
+        if(StrUtils.isNotEmpty(soIds)){
+            List<SoReceiptDetailEntity> detailList = soReceiptDetailService.listBySoIds(soIds);
             if(CollectionUtils.isNotEmpty(detailList)){
                 List<String> mainIds = detailList.stream().map(SoReceiptDetailEntity::getMainId).distinct().collect(Collectors.toList());
                 if(CollectionUtils.isNotEmpty(mainIds)){
