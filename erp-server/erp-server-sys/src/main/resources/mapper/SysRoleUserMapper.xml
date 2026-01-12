@@ -15,9 +15,11 @@
 
     </select>
     <select id="listRoleByUserIds" resultType="com.erp.model.sys.dto.SysUserDTO$RoleDTO">
-        select sru.user_id, sru.role_id,sr.role_name
+        select sru.user_id,
+               sru.role_id,
+               sr.role_name
         FROM sys_role_user sru
-        INNER JOIN sys_role sr sru.role_id = sr.id
+        INNER JOIN sys_role sr on sru.role_id = sr.id
         where 1 = 1
         <if test="userIds !=null and userIds.size()>0">
             AND sru.user_id in
