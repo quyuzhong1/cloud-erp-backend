@@ -91,7 +91,7 @@ public class AwdOutstockController extends BaseController {
     @PostMapping("/generateFirstMileDelivery")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "wms:awdOutstock:update",
+            menuCode = "wms:awdOutstock:generateFirstMileDelivery",
             serviceClass = AwdOutstockService.class,
             keyIdName = "id")
     public ApiResult<?> generateFirstMileDelivery(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
