@@ -1436,6 +1436,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         List<RequisitionApplicationDTO.FbaBindShipmentViewDetailDTO> resultList = baseMapper.fbaBindShipmentView(cartonIds);
         resultList.forEach(v->{
             v.setId(id);
+            v.setType(entity.getType());
             cartonEntityList.stream().filter(e -> e.getId().equals(v.getCartonId())).findFirst().ifPresent(c -> {
                 v.setIsReleaseInventory(c.getIsReleaseInventory());
             });
