@@ -490,7 +490,8 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
 
     //生成三方仓发货单
     private ThirdWarehouseDeliveryEntity generateThirdWarehouseDelivery(List<SoB2cDetailEntity> detailList, PlatformOutboundDTO dto, SoB2cEntity mainEntity,String platformCode) {
-        ThirdWarehouseDeliveryEntity thirdWarehouseDeliveryEntity = thirdWarehouseDeliveryService.getLatestByCode(dto.getReferenceNo());
+        ThirdWarehouseDeliveryEntity thirdWarehouseDeliveryEntity = thirdWarehouseDeliveryService.lambdaQuery().eq(ThirdWarehouseDeliveryEntity::getSoId, mainEntity.getId())
+                .orderByDesc(ThirdWarehouseDeliveryEntity::getCreateTime).last("LIMIT 1").one();
 
         if(Objects.nonNull(thirdWarehouseDeliveryEntity)){
             return thirdWarehouseDeliveryEntity;
