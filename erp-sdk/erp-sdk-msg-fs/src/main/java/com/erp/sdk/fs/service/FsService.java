@@ -530,7 +530,7 @@ public class FsService {
      * @author jack
      * @date 2025-05-13
      */
-    public User[] getBatchFsUser(FindThirdUserDTO.UserParamsDTO dto) {
+    public User[] batchGetFsUser(FindThirdUserDTO.UserParamsDTO dto) {
         // 构建client
         Client client = getClient();
         // 创建请求对象
