@@ -39,6 +39,7 @@
         and sbd.create_time >= #{startTime}
         and sbd.create_time &lt; #{endTime}
         and sb2c.bill_status in ('inDistribution','waitShipped')
+        and sbd.status not in ('cancelDelivery','shipped')
         and sbl.logistics_channel_id != ''
         and sbl.code != ''
         and sb2c.invalid_status = false
