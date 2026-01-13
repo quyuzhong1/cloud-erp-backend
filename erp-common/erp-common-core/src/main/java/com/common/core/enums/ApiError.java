@@ -722,6 +722,7 @@ public enum ApiError implements Serializable {
     MAPPING_THIRD_SHOP_EXISTS(7509,"店铺【{0}】已存在第三方映射关系，请在【中台配置】页面中解除绑定后再进行操作!"),
     MAPPING_START_DATE_INVALID(7510,"启用日期不能早于上个映射关系的开始时间【{0}】"),
     MAPPING_MSKU_NOT_MAPPING(7511,"MSKU【{0}】未映射SKU"),
+    MAPPING_MSKU_NOT_EXIST(7512,"MSKU不存在"),
 
 
     /**
