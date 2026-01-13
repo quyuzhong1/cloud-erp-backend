@@ -58,6 +58,7 @@ public interface OtherOutStockConverter {
             @Mapping(target = "version", ignore = true),
             @Mapping(target = "billDate", source = "billDate"),
             @Mapping(target = "remark", source = "remark"),
+            @Mapping(target = "usage", source = "importExcelDTO.usage"),
             @Mapping(target = "inventoryDirection", source = "inventoryDirectionEnum.code"),
             @Mapping(target = "warehouseKeeperId", source = "uid"),
             @Mapping(target = "warehouseKeeperName", source = "userName"),

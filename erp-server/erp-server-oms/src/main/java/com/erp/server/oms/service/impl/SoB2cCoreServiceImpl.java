@@ -508,7 +508,7 @@ public class SoB2cCoreServiceImpl implements SoB2cCoreService {
             sourceCode = soB2cEntity.getThirdCode();
         }else if (PlatformDictEnum.ALI_EXPRESS.getCode().equals(soB2cEntity.getDictPlatform())) {
             outPutClass = "DmpOutputAliExpressOrderRocketMQTaskHandler";
-            sourceCode = soB2cEntity.getThirdCode();
+            sourceCode = soB2cEntity.getPlatformCode();
         }else if (PlatformDictEnum.AMAZON.getCode().equals(soB2cEntity.getDictPlatform())) {
             outPutClass = "DmpOutputAmzOrderRocketMQTaskHandler";
             sourceCode = soB2cEntity.getPlatformCode();

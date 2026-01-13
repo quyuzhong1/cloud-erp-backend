@@ -165,6 +165,8 @@
             lb.shop_name as customerName,
             lb.order_time as orderTime,
             lb.delivery_time as deliveryTime,
+            lb.so_delivery_id as soDeliveryId,
+            lb.so_delivery_code as soDeliveryCode,
             lbc.remark,
             lbc.weight_unit as weightUnit,
             lbc.currency,
@@ -177,7 +179,12 @@
             lbc.pay_type,
             lbc.pay_status,
             lbc.pay_time,
-            lbc.check_status
+            lbc.check_status,
+            lbc.reconciliation_month reconciliationMonth,
+            lbc.third_length thirdLength,
+            lbc.third_width thirdWidth,
+            lbc.third_height thirdHeight,
+            lbc.third_actual_weight thirdActualWeight
         from logistics_bill_cost lbc
         inner join logistics_bill lb on lbc.logistics_bill_id = lb.id and lb.is_deleted = false
         left join (

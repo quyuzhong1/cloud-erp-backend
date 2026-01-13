@@ -1076,7 +1076,7 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
 
     @Override
     public void downloadTemplate(HttpServletResponse response) {
-        String path = "classpath:excel/otherOutstockTemplate.xlsx";
+        String path = "excel/otherOutstockTemplate.xlsx";
         String excelName = "template.xlsx";
         ResourceLoader resourceLoader = new DefaultResourceLoader();
         try {

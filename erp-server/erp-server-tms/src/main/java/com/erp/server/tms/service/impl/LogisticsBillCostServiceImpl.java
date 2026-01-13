@@ -270,6 +270,14 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         Optional.ofNullable(updateDTO.getVolumeWeightLogistics()).ifPresent(logisticsBillCostEntity::setVolumeWeightLogistics);
         Optional.ofNullable(updateDTO.getWeightLogistics()).ifPresent(logisticsBillCostEntity::setWeightLogistics);
         Optional.ofNullable(updateDTO.getLogisticsBillDetailId()).ifPresent(logisticsBillCostEntity::setLogisticsBillDetailId);
+
+        Optional.ofNullable(updateDTO.getReconciliationMonth()).ifPresent(logisticsBillCostEntity::setReconciliationMonth);
+        Optional.ofNullable(updateDTO.getThirdLength()).ifPresent(logisticsBillCostEntity::setThirdLength);
+        Optional.ofNullable(updateDTO.getThirdWidth()).ifPresent(logisticsBillCostEntity::setThirdWidth);
+        Optional.ofNullable(updateDTO.getThirdHeight()).ifPresent(logisticsBillCostEntity::setThirdHeight);
+        Optional.ofNullable(updateDTO.getThirdActualWeight()).ifPresent(logisticsBillCostEntity::setThirdActualWeight);
+
+
         //物流单
         LogisticsBillEntity logisticsBillEntity = logisticsBillService.getById(logisticsBillCostEntity.getLogisticsBillId());
         if (ObjectUtil.isEmpty(logisticsBillEntity)) {
@@ -851,13 +859,13 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         Boolean confirmStatus = (Boolean)extMap.get("confirmStatus");
 
         //平台订单号
-        List<String> platformCodeList = successList.stream().map(LogisticsBillCostExcelDTO::getPlatformCode).collect(Collectors.toList());
+        List<String> platformCodeList = successList.stream().map(LogisticsBillCostExcelDTO::getPlatformCode).filter(CharSequenceUtil::isNotBlank).collect(Collectors.toList());
         //销售订单号编码
-        List<String> soCodeList = successList.stream().map(LogisticsBillCostExcelDTO::getSoCode).collect(Collectors.toList());
+        List<String> soCodeList = successList.stream().map(LogisticsBillCostExcelDTO::getSoCode).filter(CharSequenceUtil::isNotBlank).collect(Collectors.toList());
         //发货单号
-        List<String> soDeliveryCodeList = successList.stream().map(LogisticsBillCostExcelDTO::getSoDeliveryCode).collect(Collectors.toList());
+        List<String> soDeliveryCodeList = successList.stream().map(LogisticsBillCostExcelDTO::getSoDeliveryCode).filter(CharSequenceUtil::isNotBlank).collect(Collectors.toList());
         //物流单
-        List<String> trackNoList = successList.stream().map(LogisticsBillCostExcelDTO::getTrackNo).collect(Collectors.toList());
+        List<String> trackNoList = successList.stream().map(LogisticsBillCostExcelDTO::getTrackNo).filter(CharSequenceUtil::isNotBlank).collect(Collectors.toList());
         List<LogisticsBillDTO.LogisticsBillVo> logisticsBillVos = logisticsBillService.listLogisticsBillVoByData(platformCodeList,soCodeList,soDeliveryCodeList,trackNoList);
 
         //物流单费用
@@ -900,6 +908,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
                 continue;
             }
             LogisticsBillDTO.LogisticsBillVo logisticsBillVo = logisticsBillVoList.get(0);
+            logisticsBillVo.setReconciliationMonth(reconciliationMonth);
 
             List<TmsCostDetailDTO.UpdateDTO> updateDetailList = new ArrayList<>();
             for (LogisticsBillCostExcelDTO excelDTO : value) {
@@ -1068,6 +1077,11 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             addDataDTO.setBillingWeight(updateDataDTO.getBillingWeight());
             addDataDTO.setBillingWeightLogistics(updateDataDTO.getBillingWeightLogistics());
             addDataDTO.setCurrency(excelDTO.getCurrency());
+            addDataDTO.setReconciliationMonth(updateDataDTO.getReconciliationMonth());
+            addDataDTO.setThirdLength(updateDataDTO.getThirdLength());
+            addDataDTO.setThirdHeight(updateDataDTO.getThirdHeight());
+            addDataDTO.setThirdWidth(updateDataDTO.getThirdWidth());
+            addDataDTO.setThirdActualWeight(updateDataDTO.getThirdActualWeight());
 
             addDataDTO.setCfgCostId(tmsCfgCostEntity.getId());
             addDataDTO.setCostValue(new BigDecimal(excelDTO.getCostValue()));
@@ -1391,18 +1405,20 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         }
         //物流单明细
         if (CharSequenceUtil.isBlank(logisticsBillVo.getDetailId())) {
-            errorMsgList.add("未找到物流跟踪单号对应的物流单明细");
+            errorMsgList.add("未找到对应的物流单明细");
         }
         //物流费用单
         List<LogisticsBillCostEntity> logisticsBillCostEntityList = logisticsBillCostList.stream()
                 .filter(obj -> obj.getLogisticsBillId().equals(logisticsBillVo.getId())
                         && CharSequenceUtil.equals(logisticsBillVo.getTrackNo(),obj.getTrackNo())
+                        && CharSequenceUtil.equals(logisticsBillVo.getReconciliationMonth(),obj.getReconciliationMonth())
+                        && CharSequenceUtil.equals(ReconciliationStatusEnum.TO_BE_CONFIRM.getCode(),obj.getReconciliationStatus())
                         && CharSequenceUtil.equals(excelDTO.getPayType(),obj.getPayType()))
                 .collect(Collectors.toList());
         LogisticsBillCostEntity logisticsBillCostEntity = null;
         if (CollUtil.isEmpty(logisticsBillCostEntityList)) {
             if(!ImportTypeEnum.ADD.getCode().equals(importType)){
-                errorMsgList.add("未找到出库单和运输单号对应对账类型的物流费用单");
+                errorMsgList.add("未找到对应对账类型的物流费用单");
             }
         } else {
             if(logisticsBillCostEntityList.size() > 1) {
@@ -1545,6 +1561,12 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
     		addDTO.setChannelId(logisticsBillCostEntity.getChannelId());
     		addDTO.setWeightLogistics(logisticsBillCostEntity.getWeightLogistics());
     		addDTO.setVolumeWeightLogistics(logisticsBillCostEntity.getVolumeWeightLogistics());
+
+            addDTO.setReconciliationMonth(dto.getReconciliationMonth());
+            addDTO.setThirdHeight(dto.getThirdHeight());
+            addDTO.setThirdWidth(dto.getThirdWidth());
+            addDTO.setThirdLength(dto.getThirdLength());
+            addDTO.setThirdActualWeight(dto.getThirdActualWeight());
     		
     		List<TmsCostDetailDTO.AddDTO>  costDetailList = new ArrayList<>();
     		for(AddDataDTO detailDTO : value) {

@@ -1470,36 +1470,62 @@ public class RefProductImgAttachmentServiceImpl extends SuperServiceImpl<RefProd
         List<String> newImagesUrls = dto.getImagesUrls() != null ? dto.getImagesUrls() : new ArrayList<>();
         
         // 2. 查询现有的所有关联记录（不限制分类，因为需要处理主图和未分类）
+        // 注意：需要查询所有记录（包括已删除的），以便恢复已删除但仍在images_url中的记录
         List<RefProductImgAttachmentEntity> existingRefList = super.lambdaQuery()
+                .eq(RefProductImgAttachmentEntity::getProductDetailId, dto.getSkuId())
+                .eq(RefProductImgAttachmentEntity::getIsDeleted, false)
+                .list();
+        
+        // 查询所有记录（包括已删除的），用于恢复已删除但仍在images_url中的记录
+        List<RefProductImgAttachmentEntity> allRefListIncludingDeleted = super.lambdaQuery()
                 .eq(RefProductImgAttachmentEntity::getProductDetailId, dto.getSkuId())
                 .list();
         
-        // 获取现有的附件ID列表（包括原图和缩略图）
+        // 获取现有的附件ID列表（包括原图和缩略图）- 从未删除的记录中获取
         List<String> existingAttachmentIds = existingRefList.stream()
                 .map(RefProductImgAttachmentEntity::getAttachmentId)
                 .filter(StrUtil::isNotBlank)
                 .collect(Collectors.toList());
         
-        // 收集所有缩略图attachmentId
+        // 收集所有缩略图attachmentId - 从未删除的记录中获取
         List<String> thumbnailAttachmentIds = existingRefList.stream()
                 .map(RefProductImgAttachmentEntity::getThumbnailAttachmentId)
                 .filter(StrUtil::isNotBlank)
                 .collect(Collectors.toList());
         
-        // 合并所有attachmentId（去重）
+        // 同时收集已删除记录的attachmentId（包括原图和缩略图），以便查询对应的attachment
+        List<String> deletedAttachmentIds = allRefListIncludingDeleted.stream()
+                .filter(ref -> Boolean.TRUE.equals(ref.getIsDeleted()))
+                .map(RefProductImgAttachmentEntity::getAttachmentId)
+                .filter(StrUtil::isNotBlank)
+                .collect(Collectors.toList());
+        
+        List<String> deletedThumbnailAttachmentIds = allRefListIncludingDeleted.stream()
+                .filter(ref -> Boolean.TRUE.equals(ref.getIsDeleted()))
+                .map(RefProductImgAttachmentEntity::getThumbnailAttachmentId)
+                .filter(StrUtil::isNotBlank)
+                .collect(Collectors.toList());
+        
+        // 合并所有attachmentId（去重），包括已删除记录的
         Set<String> allAttachmentIds = new HashSet<>(existingAttachmentIds);
         allAttachmentIds.addAll(thumbnailAttachmentIds);
+        allAttachmentIds.addAll(deletedAttachmentIds);
+        allAttachmentIds.addAll(deletedThumbnailAttachmentIds);
         
         // 查询现有的附件记录，构建URL到原图附件的映射（原图URL -> 原图attachment）
         // 同时构建缩略图URL到原图附件的映射（缩略图URL -> 原图attachment）
         Map<String, PlmAttachmentEntity> existingAttachmentMap = new HashMap<>(); // 原图URL -> 原图attachment
         Map<String, PlmAttachmentEntity> thumbnailUrlToOriginalMap = new HashMap<>(); // 缩略图URL -> 原图attachment
-        Map<String, RefProductImgAttachmentEntity> urlToRefMap = new HashMap<>(); // 原图URL -> ref记录
+        Map<String, RefProductImgAttachmentEntity> urlToRefMap = new HashMap<>(); // 原图URL -> ref记录（只包含未删除的）
+        Map<String, RefProductImgAttachmentEntity> thumbnailUrlToDeletedRefMap = new HashMap<>(); // 缩略图URL -> 已删除的ref记录（用于恢复）
+        Map<String, RefProductImgAttachmentEntity> originalUrlToDeletedRefMap = new HashMap<>(); // 原图URL -> 已删除的ref记录（用于恢复）
+        Map<String, PlmAttachmentEntity> attachmentMap = new HashMap<>(); // attachmentId -> attachment（用于后续恢复已删除记录）
         if (CollUtil.isNotEmpty(allAttachmentIds)) {
             List<PlmAttachmentEntity> allAttachments = plmAttachmentService.listByIds(new ArrayList<>(allAttachmentIds));
-            Map<String, PlmAttachmentEntity> attachmentMap = allAttachments.stream()
+            attachmentMap = allAttachments.stream()
                     .collect(Collectors.toMap(PlmAttachmentEntity::getId, att -> att));
             
+            // 处理未删除的记录
             for (RefProductImgAttachmentEntity refEntity : existingRefList) {
                 PlmAttachmentEntity originalAttachment = attachmentMap.get(refEntity.getAttachmentId());
                 if (originalAttachment != null && StrUtil.isNotBlank(originalAttachment.getAttachUrl())) {
@@ -1518,6 +1544,29 @@ public class RefProductImgAttachmentServiceImpl extends SuperServiceImpl<RefProd
                     }
                 }
             }
+            
+            // 处理已删除的记录，构建映射以便后续恢复
+            for (RefProductImgAttachmentEntity refEntity : allRefListIncludingDeleted) {
+                if (Boolean.TRUE.equals(refEntity.getIsDeleted())) {
+                    PlmAttachmentEntity originalAttachment = attachmentMap.get(refEntity.getAttachmentId());
+                    if (originalAttachment != null && StrUtil.isNotBlank(originalAttachment.getAttachUrl())) {
+                        // 原图URL -> 已删除的ref记录
+                        originalUrlToDeletedRefMap.put(originalAttachment.getAttachUrl(), refEntity);
+                        
+                        // 如果有缩略图，构建缩略图URL -> 已删除的ref记录的映射（关键修复）
+                        String thumbnailAttachmentId = StrUtil.isNotBlank(refEntity.getThumbnailAttachmentId()) 
+                                ? refEntity.getThumbnailAttachmentId() 
+                                : refEntity.getAttachmentId();
+                        PlmAttachmentEntity thumbnailAttachment = attachmentMap.get(thumbnailAttachmentId);
+                        if (thumbnailAttachment != null && StrUtil.isNotBlank(thumbnailAttachment.getAttachUrl())) {
+                            // 缩略图URL -> 已删除的ref记录（用于通过缩略图URL找到已删除的记录并恢复）
+                            thumbnailUrlToDeletedRefMap.put(thumbnailAttachment.getAttachUrl(), refEntity);
+                            // 同时构建缩略图URL -> 原图attachment的映射
+                            thumbnailUrlToOriginalMap.put(thumbnailAttachment.getAttachUrl(), originalAttachment);
+                        }
+                    }
+                }
+            }
         }
         
         // 2.1 兼容旧数据：从product_detail.images_url中获取URL，如果不在新系统中，需要创建记录
@@ -1529,20 +1578,52 @@ public class RefProductImgAttachmentServiceImpl extends SuperServiceImpl<RefProd
                     .collect(Collectors.toList());
         }
         
-        // 2.2 收集需要获取文件大小的URL列表（旧数据中需要创建的）
+        // 2.2 处理旧数据：从product_detail.images_url中获取URL，恢复已删除的记录或创建新记录
         List<String> urlsToGetSize = new ArrayList<>();
-        List<String> oldUrlsToCreate = new ArrayList<>();
+        List<String> oldUrlsToCreate = new ArrayList<>(); // 记录需要创建新记录的URL，用于后续更新文件大小
         for (String oldUrl : oldUrlsFromImagesUrl) {
-            if (!existingAttachmentMap.containsKey(oldUrl)) {
-                oldUrlsToCreate.add(oldUrl);
-                urlsToGetSize.add(oldUrl);
+            // 先检查是否是缩略图URL，如果是，转换为原图URL
+            String originalUrl = oldUrl;
+            if (thumbnailUrlToOriginalMap.containsKey(oldUrl)) {
+                originalUrl = thumbnailUrlToOriginalMap.get(oldUrl).getAttachUrl();
             }
-        }
-        
-        // 对于旧URL中不在新系统中的，需要创建attachment和ref_product_img_attachment记录
-        for (String oldUrl : oldUrlsToCreate) {
+            
+            // 如果原图URL已经在现有映射中（未删除），跳过
+            if (existingAttachmentMap.containsKey(originalUrl)) {
+                continue;
+            }
+            
+            // 检查是否是已删除的记录（通过缩略图URL或原图URL）
+            RefProductImgAttachmentEntity deletedRef = thumbnailUrlToDeletedRefMap.get(oldUrl);
+            if (deletedRef == null) {
+                deletedRef = originalUrlToDeletedRefMap.get(originalUrl);
+            }
+            
+            if (deletedRef != null) {
+                // 从已查询的attachmentMap中获取对应的原图attachment
+                PlmAttachmentEntity originalAttachment = attachmentMap.get(deletedRef.getAttachmentId());
+                
+                if (originalAttachment != null) {
+                    // 恢复已删除的记录
+                    deletedRef.setIsDeleted(false);
+                    super.updateById(deletedRef);
+                    
+                    // 添加到映射中（使用原图URL作为key）
+                    existingAttachmentMap.put(originalUrl, originalAttachment);
+                    urlToRefMap.put(originalUrl, deletedRef);
+                    log.info("恢复已删除的ref_product_img_attachment记录，id={}, 缩略图url={}, 原图url={}", 
+                            deletedRef.getId(), oldUrl, originalUrl);
+                } else {
+                    log.warn("无法找到已删除记录对应的attachment，refId={}, attachmentId={}", 
+                            deletedRef.getId(), deletedRef.getAttachmentId());
+                }
+                continue;
+            }
+            
             // 这个URL在旧系统中，但不在新系统中，需要创建记录
             log.info("发现旧数据URL，需要创建记录：{}", oldUrl);
+            oldUrlsToCreate.add(oldUrl); // 记录需要创建新记录的URL
+            urlsToGetSize.add(oldUrl);
             
             // 先检查这个URL是否是缩略图URL，如果是，应该使用对应的原图attachment
             PlmAttachmentEntity attachmentEntity = null;
@@ -1581,8 +1662,8 @@ public class RefProductImgAttachmentServiceImpl extends SuperServiceImpl<RefProd
                         attachmentEntity.getId(), oldUrl, attachmentEntity.getAttachName());
             }
             
-            // 检查是否已有ref_product_img_attachment记录（不限制分类）
-            RefProductImgAttachmentEntity existingRef = urlToRefMap.get(oldUrl);
+            // 检查是否已有ref_product_img_attachment记录（不限制分类，包括已删除的）
+            RefProductImgAttachmentEntity existingRef = urlToRefMap.get(originalUrl);
             if (existingRef == null) {
                 existingRef = super.lambdaQuery()
                         .eq(RefProductImgAttachmentEntity::getProductDetailId, dto.getSkuId())
@@ -1595,7 +1676,17 @@ public class RefProductImgAttachmentServiceImpl extends SuperServiceImpl<RefProd
                 // 确定分类：旧数据中第一个URL为主图，其他为未分类
                 String uncategorizedCategoryId = getUncategorizedCategoryId();
                 String firstOldUrl = CollUtil.isNotEmpty(oldUrlsFromImagesUrl) ? oldUrlsFromImagesUrl.get(0) : null;
-                String categoryId = oldUrl.equals(firstOldUrl) ? PRODUCT_MAIN_IMAGE_CATEGORY_ID : uncategorizedCategoryId;
+                // 注意：这里应该使用originalUrl而不是oldUrl来判断是否是第一个
+                String firstOriginalUrl = null;
+                if (CollUtil.isNotEmpty(oldUrlsFromImagesUrl)) {
+                    String firstUrl = oldUrlsFromImagesUrl.get(0);
+                    if (thumbnailUrlToOriginalMap.containsKey(firstUrl)) {
+                        firstOriginalUrl = thumbnailUrlToOriginalMap.get(firstUrl).getAttachUrl();
+                    } else {
+                        firstOriginalUrl = firstUrl;
+                    }
+                }
+                String categoryId = originalUrl.equals(firstOriginalUrl) ? PRODUCT_MAIN_IMAGE_CATEGORY_ID : uncategorizedCategoryId;
                 
                 // 创建ref_product_img_attachment记录（但不调用add方法，避免重复生成缩略图）
                 RefProductImgAttachmentEntity refEntity = new RefProductImgAttachmentEntity();
@@ -1605,14 +1696,14 @@ public class RefProductImgAttachmentServiceImpl extends SuperServiceImpl<RefProd
                 refEntity.setAttachmentId(attachmentEntity.getId());
                 super.save(refEntity);
                 
-                // 添加到映射中
-                existingAttachmentMap.put(oldUrl, attachmentEntity);
-                urlToRefMap.put(oldUrl, refEntity);
-                log.info("为旧数据创建ref_product_img_attachment记录，id={}, url={}, categoryId={}", refEntity.getId(), oldUrl, categoryId);
+                // 添加到映射中（使用原图URL作为key）
+                existingAttachmentMap.put(originalUrl, attachmentEntity);
+                urlToRefMap.put(originalUrl, refEntity);
+                log.info("为旧数据创建ref_product_img_attachment记录，id={}, url={}, categoryId={}", refEntity.getId(), originalUrl, categoryId);
             } else {
-                // 如果已存在，添加到映射中
-                existingAttachmentMap.put(oldUrl, attachmentEntity);
-                urlToRefMap.put(oldUrl, existingRef);
+                // 如果已存在，添加到映射中（使用原图URL作为key）
+                existingAttachmentMap.put(originalUrl, attachmentEntity);
+                urlToRefMap.put(originalUrl, existingRef);
             }
         }
         
@@ -1722,9 +1813,19 @@ public class RefProductImgAttachmentServiceImpl extends SuperServiceImpl<RefProd
         // 注意：只更新文件大小，不修改attachName
         if (CollUtil.isNotEmpty(oldUrlsToCreate)) {
             for (String oldUrl : oldUrlsToCreate) {
-                PlmAttachmentEntity attachmentEntity = existingAttachmentMap.get(oldUrl);
+                // 先检查是否是缩略图URL，如果是，转换为原图URL
+                String originalUrl = oldUrl;
+                if (thumbnailUrlToOriginalMap.containsKey(oldUrl)) {
+                    originalUrl = thumbnailUrlToOriginalMap.get(oldUrl).getAttachUrl();
+                }
+                
+                PlmAttachmentEntity attachmentEntity = existingAttachmentMap.get(originalUrl);
                 if (attachmentEntity != null && attachmentEntity.getAttachSize().compareTo(BigDecimal.ZERO) == 0) {
+                    // 尝试从fileSizeMap中获取文件大小（可能使用原图URL或缩略图URL作为key）
                     Long fileSizeBytes = fileSizeMap.get(oldUrl);
+                    if (fileSizeBytes == null) {
+                        fileSizeBytes = fileSizeMap.get(originalUrl);
+                    }
                     if (fileSizeBytes != null && fileSizeBytes > 0) {
                         BigDecimal fileSizeMB = BigDecimal.valueOf(fileSizeBytes)
                                 .divide(BigDecimal.valueOf(1024 * 1024), 2, BigDecimal.ROUND_HALF_UP);

@@ -1,5 +1,6 @@
 package com.erp.model.tms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.SortDTO;
@@ -653,6 +654,30 @@ public class LogisticsBillCostDTO implements Serializable {
     	 * 计费重[物流商]
     	 */
     	private BigDecimal billingWeightLogistics;
+
+        /**
+         * 对账月份
+         */
+        private String reconciliationMonth;
+        /**
+         * 尺寸长(物流商)
+         */
+        private BigDecimal thirdLength;
+
+        /**
+         * 尺寸宽(物流商)
+         */
+        private BigDecimal thirdWidth;
+
+        /**
+         * 尺寸高(物流商)
+         */
+        private BigDecimal thirdHeight;
+
+        /**
+         * 实重(物流商)
+         */
+        private BigDecimal thirdActualWeight;
     	
     	/**
     	 * 实际金额币别
@@ -851,6 +876,30 @@ public class LogisticsBillCostDTO implements Serializable {
     	 * 计费重[物流商]
     	 */
     	private BigDecimal billingWeightLogistics;
+
+        /**
+         * 对账月份
+         */
+        private String reconciliationMonth;
+        /**
+         * 尺寸长(物流商)
+         */
+        private BigDecimal thirdLength;
+
+        /**
+         * 尺寸宽(物流商)
+         */
+        private BigDecimal thirdWidth;
+
+        /**
+         * 尺寸高(物流商)
+         */
+        private BigDecimal thirdHeight;
+
+        /**
+         * 实重(物流商)
+         */
+        private BigDecimal thirdActualWeight;
 
         /**
          * 费用明细

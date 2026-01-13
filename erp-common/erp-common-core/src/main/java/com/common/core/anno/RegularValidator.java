@@ -35,6 +35,10 @@ public class RegularValidator implements ConstraintValidator<RegularValid, Objec
         }
         switch (formatPattern) {
             //手机号
+            case FieldFormatPatternTypeEnum.NUMBER_SPECIAL_CHARS:
+                String newMobileRegex = FieldFormatPatternTypeEnum.getRegularByCode(FieldFormatPatternTypeEnum.NUMBER_SPECIAL_CHARS);
+                return Pattern.matches(newMobileRegex, value.toString());
+            //手机号
             case FieldFormatPatternTypeEnum.MOBILE:
                 String mobileRegex = FieldFormatPatternTypeEnum.getRegularByCode(FieldFormatPatternTypeEnum.MOBILE);
                 return Pattern.matches(mobileRegex, value.toString());

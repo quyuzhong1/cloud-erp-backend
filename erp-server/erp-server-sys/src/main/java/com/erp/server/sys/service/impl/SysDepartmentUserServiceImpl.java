@@ -247,7 +247,7 @@ public class SysDepartmentUserServiceImpl extends ServiceImpl<SysDepartmentUserM
         if (!ifAdd) {
             deleteUidDepartmentRef(uid);
         }
-        if(CollectionUtils.isEmpty(departmentIdList)){
+        if(CollectionUtils.isNotEmpty(departmentIdList)){
             //排除已存在的关联数据
             List<SysDepartmentUserEntity> oldDepartmentIds = lambdaQuery().in(SysDepartmentUserEntity::getDepartmentId, departmentIdList).list();
             if(CollUtil.isNotEmpty(oldDepartmentIds)){
@@ -256,7 +256,7 @@ public class SysDepartmentUserServiceImpl extends ServiceImpl<SysDepartmentUserM
                         .collect(Collectors.toSet());
                 departmentIdList.removeIf(existingIds::contains);
             }
-            if(CollectionUtils.isEmpty(departmentIdList)){
+            if(CollectionUtils.isNotEmpty(departmentIdList)){
                 List<SysDepartmentUserEntity> addList = new LinkedList<>();
                 for (String departmentId : departmentIdList) {
                     SysDepartmentUserEntity entity = new SysDepartmentUserEntity();

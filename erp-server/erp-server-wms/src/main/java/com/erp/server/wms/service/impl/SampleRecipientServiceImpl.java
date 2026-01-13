@@ -17,6 +17,7 @@ import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.core.utils.*;
+import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.model.wms.enums.*;
 import com.erp.model.workflow.dto.CfgQueryOptionDTO;
 import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
@@ -1387,6 +1388,15 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
                 userIdSet.add(dto.getWarehouseChargeId());
             }
         });
+        List<String> deptIdList = list.stream()
+                .map(SampleRecipientDTO.ListDTO::getDeptId)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        List<SysDepartmentEntity> sysDepartmentEntityList = sysUserFeign.getDeptByIds(deptIdList);
+        Map<String, String> deptNameMap = sysDepartmentEntityList.stream()
+                .collect(Collectors.toMap(SysDepartmentEntity::getId, SysDepartmentEntity::getName, (v1, v2) -> v1));
+
         List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(new ArrayList<>(userIdSet));
         // 如果存在重复的用户ID，保留第一个
         Map<String, String> userNameMap = userList.stream()
@@ -1399,6 +1409,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
         
         // 属性赋值
         for(SampleRecipientDTO.ListDTO data : list) {
+            data.setDeptName(deptNameMap.getOrDefault(data.getDeptId(),""));
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
             data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
             data.setUsage(usageNameMap.getOrDefault(data.getUsage(), ""));
