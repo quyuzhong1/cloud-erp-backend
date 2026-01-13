@@ -3,8 +3,13 @@ package com.erp.server.workflow.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.ObjUtil;
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.constant.DmpPullConstant;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -19,26 +24,31 @@ import com.common.message.constant.RocketMqConsumerGroup;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
+import com.erp.model.dmp.dto.DmpInoutDTO;
+import com.erp.model.dmp.enums.DmpInputTaskTaskTypeEnum;
 import com.erp.model.sys.vo.ThirdUnionDTO;
 import com.erp.model.wms.entity.SampleRecipientEntity;
-import com.erp.model.workflow.dto.CfgApproveSyncDTO;
-import com.erp.model.workflow.dto.FsBotParamsDTO;
-import com.erp.model.workflow.dto.WorkflowMqConsumerRecordDTO;
+import com.erp.model.workflow.dto.*;
 import com.erp.model.workflow.entity.*;
 import com.erp.model.workflow.enums.*;
+import com.erp.rpc.dmp.feign.DmpInoutTaskFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.sdk.fs.config.FsProperties;
 import com.erp.sdk.fs.service.FsService;
+import com.erp.server.workflow.constant.FsEventConstant;
 import com.erp.server.workflow.handler.CfgApproveSyncBuildHandler;
 import com.erp.server.workflow.handler.MQSyncFsHandler;
 import com.erp.server.workflow.mapper.ApproveSyncRecordMapper;
 import com.erp.server.workflow.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
+import com.lark.oapi.core.request.EventReq;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.workflow.dto.ApproveSyncRecordDTO;
 
 import java.time.LocalDateTime;
 import java.util.*;
@@ -85,6 +95,13 @@ public class ApproveSyncRecordServiceImpl extends SuperServiceImpl<ApproveSyncRe
     private MQProducerService mqProducerService;
     @Resource
     private MqConsumerRecordService workflowMqConsumerRecordService;
+
+
+    @Resource
+    private FsProperties fsProperties;
+
+    @Resource
+    private DmpInoutTaskFeign dmpInoutTaskFeign;
 
     @Override
     public List<ApproveSyncRecordDTO.TabListDTO> tabList(PermissionsDTO param) {
@@ -348,5 +365,52 @@ public class ApproveSyncRecordServiceImpl extends SuperServiceImpl<ApproveSyncRe
         }
         log.info("addMqConsumerRecord结束 保存MQ消费记录");
         return false;
+    }
+
+
+    @Override
+    public void aa(EventReq event) throws JsonProcessingException {
+        String plain = event.getPlain();
+        JSONObject jsonObject = JSON.parseObject(plain);
+        JSONObject thisEvent = jsonObject.getJSONObject("event");
+        if (ObjUtil.isEmpty(thisEvent)) {
+            return;
+        }
+
+        // 在使用地方替换
+        ObjectMapper objectMapper = new ObjectMapper();
+        FsCallbackUserEventDTO.UserDeletedDTO bean = objectMapper.readValue(plain, FsCallbackUserEventDTO.UserDeletedDTO.class);
+
+//        FsCallbackUserEventDTO.UserDeletedDTO bean = BeanUtil.toBean(plain, FsCallbackUserEventDTO.UserDeletedDTO.class);
+        if (!CharSequenceUtil.equals(fsProperties.getClientId(), bean.getHeader().getAppId())) {
+            log.warn("收到员工事件，应用ID未匹配，跳过处理,eventType={},clientId={}，appId={}",bean.getHeader().getEventType(),fsProperties.getClientId(), bean.getHeader().getAppId());
+            return;
+        }
+        if (!CharSequenceUtil.equals("contact.user.deleted_v3",bean.getHeader().getEventType())) {
+            log.warn("收到员工事件，事件类型未匹配，跳过处理,eventType={}", bean.getHeader().getEventType());
+            return;
+        }
+        //根据审批定义和审批实例id生成中台即时拉取任务
+        DmpInoutDTO.CreateInputDTO dto = new DmpInoutDTO.CreateInputDTO();
+        dto.setSystemCode(CfgApproveSyncSyncPlatformEnum.FEISHU.getCode());
+        dto.setBillType(DmpPullConstant.USER_DELETED);
+        dto.setTaskType(DmpInputTaskTaskTypeEnum.NORMAL.getCode());
+        dto.setNextLevelId("");
+
+        Map<String, Object> map = new HashMap<>();
+        map.put("userId",bean.getEvent().getObject().getUserId());
+        map.put("eventId",bean.getHeader().getEventId());
+        map.put("eventType",bean.getHeader().getEventType());
+        dto.setDetailExtendJson(JSON.toJSONString(map));
+
+        List<String> requestList = new ArrayList<>();
+        try {
+            requestList = dmpInoutTaskFeign.doHotfixReturnInputTask(Collections.singletonList(dto));
+        }catch (Exception e){
+            throw new ServiceException(e.getMessage());
+        }
+        if (CollUtil.isEmpty(requestList)) {
+            throw new ServiceException("所选数据未找到同步信息");
+        }
     }
 }
