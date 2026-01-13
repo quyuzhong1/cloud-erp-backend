@@ -238,7 +238,6 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
                             .set(AwdOutstockDetailEntity::getSkuNo,mappingSkuViewDTO.getProductSkuNo())
                             .set(AwdOutstockDetailEntity::getAsin,mappingSkuViewDTO.getPlatformSpuNo())
                             .set(AwdOutstockDetailEntity::getProductName,mappingSkuViewDTO.getProductName())
-                            .eq(AwdOutstockDetailEntity::getMsku,detailEntity.getMsku())
                             .eq(AwdOutstockDetailEntity::getId,awdOutstockDetailEntity.getId())
                             .update();
                 }
