@@ -1248,7 +1248,8 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
         for (InventoryEntity inventoryEntity : inventoryList) {
             InventoryDTO.RedisInventoryReturnDTO returnDTO = new InventoryDTO.RedisInventoryReturnDTO();
             BeanUtils.copyProperties(inventoryEntity, returnDTO);
-
+            returnDTO.setInventoryId(inventoryEntity.getId());
+            returnDTO.setInventoryStatus(inventoryEntity.getDictInventoryStatus());
             //查询redis中的库存
             Object redisQtyObj = inventoryRedisUtil.get(InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.CURRENT, inventoryEntity.getId()));
             if (ObjectUtil.isNotEmpty(redisQtyObj)) {
