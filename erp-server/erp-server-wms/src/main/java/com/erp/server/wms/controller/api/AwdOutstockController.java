@@ -61,7 +61,7 @@ public class AwdOutstockController extends BaseController {
     @PostMapping("/batchUpdateBillDate")
         @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
         tableField = "create_user_id",
-        menuCode = "wms:awdOutstock:update",
+        menuCode = "wms:awdOutstock:batchUpdateBillDate",
         serviceClass = AwdOutstockService.class,
         keyIdName = "id")
     public ApiResult<?> batchUpdateBillDate(@RequestBody @Validated List<AwdOutstockDTO.UpdateDTO> dtoList) {
@@ -77,11 +77,6 @@ public class AwdOutstockController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/batchUpdateBillDateView")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "wms:awdOutstock:batchUpdateBillDate",
-            serviceClass = AwdOutstockService.class,
-            keyIdName = "id")
     public ApiResult<List<AwdOutstockDTO.BatchUpdateBillDateViewDTO>> batchUpdateBillDateView(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         return success(awdOutstockService.batchUpdateBillDateView(dto));
     }
