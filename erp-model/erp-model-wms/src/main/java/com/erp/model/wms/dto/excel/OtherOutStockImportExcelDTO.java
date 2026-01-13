@@ -81,44 +81,52 @@ public class OtherOutStockImportExcelDTO implements Serializable {
     private String processApplyCode;
 
     /**
+     * 用途
+     */
+    @ExcelProperty(value = "用途", index = 8)
+    @FieldValid(fieldName = "用途",  maxLength = 50)
+    private String usage;
+
+
+    /**
+     * 备注
+     */
+    @ExcelProperty(value = "备注", index = 9)
+    @FieldValid(fieldName = "备注",  maxLength = 200)
+    private String remark;
+
+    /**
      * 客户名称
      */
-    @ExcelProperty(value = "客户名称", index = 8)
+    @ExcelProperty(value = "客户名称", index = 10)
     @FieldValid(fieldName = "客户名称", maxLength = 32)
     private String customerName;
 
     /**
      * SKU
      */
-    @ExcelProperty(value = "*SKU", index = 9)
+    @ExcelProperty(value = "*SKU", index = 11)
     @FieldValid(fieldName = "SKU", isNotBlank = true, maxLength = 50)
     private String skuNo;
 
     /**
      * 实发数量
      */
-    @ExcelProperty(value = "*实发数量", index = 10)
+    @ExcelProperty(value = "*实发数量", index = 12)
     @FieldValid(fieldName = "实发数量",  isNotBlank = true ,formatPattern = FieldFormatPatternTypeEnum.POSITIVEINTEGER,maxLength = 16)
     private String actualQtyStr;
 
     /**
      * 仓位
      */
-    @ExcelProperty(value = "仓位", index = 11)
+    @ExcelProperty(value = "仓位", index = 13)
     @FieldValid(fieldName = "仓位", maxLength = 200)
     private String warehouseLocation;
 
     /**
-     * 出库备注
-     */
-    @ExcelProperty(value = "*出库备注", index = 12)
-    @FieldValid(fieldName = "出库备注", maxLength = 200)
-    private String remark;
-
-    /**
      * 出库类型
      */
-    @ExcelProperty(value = "*出库类型", index = 13)
+    @ExcelProperty(value = "*出库类型", index = 14)
     @FieldValid(fieldName = "出库类型", isNotBlank = true, maxLength = 50)
     private String outType;
 
