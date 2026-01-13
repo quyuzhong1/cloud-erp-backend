@@ -145,7 +145,6 @@ public class SysDepartmentController extends BaseController {
      * @return ApiResult<?>
      */
     @PostMapping("/updateDisabled")
-    @LogAction(value = LogActionEnum.UPDATE, desc = "通知配置表启禁用")
     public ApiResult<?> updateDisabled(@RequestBody @Validated SysDepartmentDTO.UpdateDisabledDTO dto) {
         sysDepartmentService.updateDisabled(dto);
         return  success();
