@@ -7313,7 +7313,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             throw new ServiceException(ApiError.MAPPING_SKU_MAPPING_EXIST);
         }
         if (ObjectUtil.isEmpty(skuDTOS)) {
-            throw new ServiceException(ApiError.MAPPING_SKU_MAPPING_EXIST);
+            throw new ServiceException(ApiError.MAPPING_SKU_MAPPING_NOT_EXIST);
         }
 
         List<String> skuIds = Collections.singletonList(dto.getSkuId());

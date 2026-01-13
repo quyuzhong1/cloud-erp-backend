@@ -720,6 +720,7 @@ public enum ApiError implements Serializable {
     MAPPING_EN_DESC_DUPLICATE(7501,"同平台下存在相同英文描述"),
     MAPPING_NOT_SET_PUSH_FORBIDDEN(7502,"未设置字段映射，不支持推送"),
     MAPPING_SKU_MAPPING_EXIST(7503,"该平台SKU已存在SKU映射关系!"),
+    MAPPING_SKU_MAPPING_NOT_EXIST(7503,"该平台SKU在对照表不存在!"),
     MAPPING_SKU_RULE_REQUIRED(7504,"SKU匹配规则详情不能为空"),
     MAPPING_SKU_HISTORY_EXISTS(7505,"当前SKU映射关系在【{0}】中已存在历史记录，不支持修改"),
     MAPPING_WAREHOUSE_WDT_NOT_FOUND(7506,"同步旺店通B2C单据时未找到对应仓库映射【{0}】"),
