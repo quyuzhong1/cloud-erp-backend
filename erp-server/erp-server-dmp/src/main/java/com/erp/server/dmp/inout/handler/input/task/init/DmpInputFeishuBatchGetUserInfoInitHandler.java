@@ -42,12 +42,17 @@ public class DmpInputFeishuBatchGetUserInfoInitHandler extends DmpInputInitHandl
 
     @Override
     public List<DmpInputTaskInitDTO> getInitData(DmpInputInitRequest dmpRequest, DmpInputTaskResponse dmpResponse) {
+        log.error("调用飞书批量获取用户信息");
         //优先取扩展json中的实例id
         List<String> userIds = new ArrayList<>();
         String extendJson = dmpInputTaskEntity.getExtendJson();
+        String eventId = "";
+        String eventType = "";
         if (CharSequenceUtil.isNotBlank(extendJson)) {
             JSONObject jsonObject = JSON.parseObject(extendJson);
             String userId = jsonObject.getString("userId");
+            eventId = jsonObject.getString("eventId");
+            eventType = jsonObject.getString("eventType");
             if (CharSequenceUtil.isNotBlank(userId)) {
                 userIds.add(userId);
             }
@@ -62,8 +67,17 @@ public class DmpInputFeishuBatchGetUserInfoInitHandler extends DmpInputInitHandl
             if(Objects.nonNull(users) && users.length > 0){
                 for (User user : users) {
                     JSONObject object = new JSONObject();
+                    object.put("eventId", eventId);
+                    object.put("eventType", eventType);
+                    object.put("unionId", user.getUnionId());
                     object.put("userId", user.getUserId());
+                    object.put("openId", user.getOpenId());
+                    object.put("name", user.getName());
+                    object.put("email", user.getEmail());
+                    object.put("mobile", user.getMobile());
+                    object.put("gender", user.getGender());
                     object.put("isResigned", user.getStatus().getIsResigned());
+                    object.put("dataJson", JSON.toJSONString(user));
                     result.add(object);
                 }
             }
@@ -73,8 +87,6 @@ public class DmpInputFeishuBatchGetUserInfoInitHandler extends DmpInputInitHandl
         }
         return Collections.singletonList(DmpInputTaskInitDTO.initMsg(result.toJSONString()));
     }
-
-
 
     public static void main(String[] args) {
         // 转换为毫秒时间戳

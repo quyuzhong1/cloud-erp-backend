@@ -262,4 +262,9 @@ public class RocketMqNewConsumerGroup {
      */
     public static final String RESTCLOUD_YUNTING_SOCIAL_MEDIA_TO_OMS_GROUP = "${spring.cloud.nacos.discovery.namespace}-restcloud_yunting_social_media_to_oms_group";
 
+    /**
+     * 新中台飞书用户对接
+     */
+    public static final String DMP_FS_USER_TO_SYS_GROUP = "${spring.cloud.nacos.discovery.namespace}-dmp_fs_user_to_sys_group";
+
 }

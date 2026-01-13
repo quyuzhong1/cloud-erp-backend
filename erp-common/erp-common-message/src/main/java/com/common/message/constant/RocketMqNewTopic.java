@@ -271,4 +271,9 @@ public class RocketMqNewTopic {
      */
     public static final String DMP_WDT_KOL_B2C_APPLICATION_TO_OMS_TOPIC = "${spring.cloud.nacos.discovery.namespace}-dmp_wdt_kol_b2c_application_to_oms_topic";
 
+    /**
+     * 新中台飞书用户对接
+     */
+    public static final String DMP_FS_USER_TO_SYS_TOPIC = "${spring.cloud.nacos.discovery.namespace}-dmp_fs_user_to_sys_topic";
+
 }
