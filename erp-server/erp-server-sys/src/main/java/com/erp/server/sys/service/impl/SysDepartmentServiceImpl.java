@@ -648,8 +648,13 @@ public class SysDepartmentServiceImpl extends ServiceImpl<SysDepartmentMapper, S
                 }
             }
         }
-
-        lambdaUpdate().set(SysDepartmentEntity::getDisabled,dto.getDisabled()).in(SysDepartmentEntity::getId,resultList).update();
+        if(CollUtil.isNotEmpty(resultList)){
+            List<SysDepartmentEntity> sysDepartmentEntities = this.listByIdList(resultList);
+            for (SysDepartmentEntity sysDepartmentEntity : sysDepartmentEntities) {
+                sysDepartmentEntity.setDisabled(dto.getDisabled());
+            }
+            this.saveOrUpdateBatch(sysDepartmentEntities);
+        }
     }
 
 
