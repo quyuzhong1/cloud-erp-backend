@@ -33,10 +33,11 @@
         select distinct sb2c.id
         from so_b2c sb2c
         inner join so_b2c_logistics sbl on sb2c.id = sbl.main_id and sbl.is_deleted = false
+        inner join so_b2c_delivery sbd on sb2c.id = sbd.source_id and sbd.is_deleted = false
         left join so_b2c_label sbl2 on sb2c.id = sbl2.main_id and sbl2.is_deleted = false
         where sbl2.id is null and sb2c.is_deleted = false
-        and sb2c.create_time >= #{startTime}
-        and sb2c.create_time &lt; #{endTime}
+        and sbd.create_time >= #{startTime}
+        and sbd.create_time &lt; #{endTime}
         and sb2c.bill_status in ('inDistribution','waitShipped')
         and sbl.logistics_channel_id != ''
         and sbl.code != ''
