@@ -197,7 +197,8 @@ public enum ApiError implements Serializable {
 
     COMMON_NO_DELIVERY_SKU(98128,"没有发货的SKU"),
     COMMON_SKU_NOT_EXIST_OR_NOT_APPROVE(98129,"SKU【{0}】不存在或未审核"),
-
+    COMMON_FS_USER_NOT_BIND(98130,"飞书【0】事件,用户【{1}】未绑定飞书账号"),
+    COMMON_FS_EVENT_TYPE_NOT_FOUND(98131,"飞书事件订阅类型任务不存在【{0}】"),
     /**
      * AUTH 授权与登录 相关 2000 - 2200
      */
