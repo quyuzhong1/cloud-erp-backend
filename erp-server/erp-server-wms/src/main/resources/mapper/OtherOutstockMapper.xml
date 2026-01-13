@@ -38,6 +38,8 @@
     <select id="paging" resultType="com.erp.model.wms.dto.OtherOutstockDTO$ListDTO">
         select
             oo.id,
+            oo.usage,
+            oo.remark,
             ood.id as detailId,
             oo.code,
             oo.type,
@@ -125,6 +127,8 @@
         select
             oo.id,
             ood.id as detailId,
+            oo.remark,
+            oo.usage,
             oo.code,
             oo.type,
             oo.out_type as outType,

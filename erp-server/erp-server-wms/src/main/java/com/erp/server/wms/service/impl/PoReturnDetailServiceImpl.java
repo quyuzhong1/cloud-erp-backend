@@ -22,6 +22,8 @@ import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
+import com.erp.model.scm.entity.PurchaseOrderEntity;
+import com.erp.model.scm.enums.ExecutionStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
@@ -121,6 +123,7 @@ public class PoReturnDetailServiceImpl extends SuperServiceImpl<PoReturnDetailMa
         WarehouseEntity warehouse = warehouseService.getById(returnWarehouseId);
         String warehouseOrgId = Objects.nonNull(warehouse) ? warehouse.getOrgId() : "";
         if (CharSequenceUtil.isNotBlank(dto.getPurchaseOrderId())) {
+            PurchaseOrderEntity purchaseOrderEntity = scmTaskFeign.getPurchaseOrderById(dto.getPurchaseOrderId());
             //获取界面传过来的采购单详情表id集合
             List<String> orderDetailIds = dto.getPurchasePriceDetailList().stream().map(PurchaseReturnOrderDetailDTO.AddDTO::getPurchaseOrderDetailId).collect(Collectors.toList());
             //根据ids查询采购单详情
@@ -146,6 +149,9 @@ public class PoReturnDetailServiceImpl extends SuperServiceImpl<PoReturnDetailMa
                 poReturnDetailEntity.setMainId(id);
                 PurchaseOrderDetailEntity purchaseOrderDetailEntity = purchaseOrderDetailEntities.stream().filter(detail -> detail.getId().equals(addDTO.getPurchaseOrderDetailId())).findFirst().orElse(null);
                 if (ObjectUtil.isNotEmpty(purchaseOrderDetailEntity)) {
+                    if(ExecutionStatusEnum.CLOSED.getCode().equals(purchaseOrderDetailEntity.getExecutionStatus())){
+                        throw new ServiceException(ApiError.PO_RETURN_SKU_CLOSE.getCode(),purchaseOrderEntity.getCode(),purchaseOrderDetailEntity.getSkuNo());
+                    }
                     poReturnDetailEntity.setSkuId(purchaseOrderDetailEntity.getSkuId());
                     poReturnDetailEntity.setSkuNo(purchaseOrderDetailEntity.getSkuNo());
                     //非质检退货数量
