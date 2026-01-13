@@ -4,6 +4,8 @@ import com.erp.model.workflow.entity.ApproveSyncRecordEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.workflow.dto.ApproveSyncRecordDTO;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.lark.oapi.core.request.EventReq;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -30,4 +32,6 @@ public interface ApproveSyncRecordService extends SuperService<ApproveSyncRecord
     void insertBatch(List<ApproveSyncRecordEntity> list);
 
     void externalInstance(ApproveSyncRecordDTO.externalInstanceParamDTO dto) throws ClassNotFoundException;
+
+    void aa(EventReq event) throws JsonProcessingException;
 }

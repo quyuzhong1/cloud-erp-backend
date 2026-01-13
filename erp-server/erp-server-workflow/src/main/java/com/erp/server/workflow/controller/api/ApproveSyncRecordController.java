@@ -2,12 +2,16 @@ package com.erp.server.workflow.controller.api;
 
 
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.json.JSONUtil;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.vo.PagingVO;
+import com.erp.model.dmp.entity.DmpFeishuUserInfoEntity;
 import com.erp.model.sys.dto.ThirdNoticePushRecordDTO;
 import com.erp.model.sys.entity.ThirdNoticePushRecordEntity;
 import com.erp.model.workflow.entity.ApproveSyncRecordEntity;
 import com.erp.server.workflow.query.ApproveSyncRecordQueryHandler;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.lark.oapi.core.request.EventReq;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import javax.annotation.Resource;
@@ -137,6 +141,16 @@ public class ApproveSyncRecordController extends BaseController {
         approveSyncRecordService.externalInstance(dto);
     }
 
+
+    /**
+     * 获取状态统计
+     * @return
+     */
+    @PostMapping("/aa")
+    public void aa(@RequestBody String str) throws JsonProcessingException {
+        EventReq event = JSONUtil.toBean(str, EventReq.class);
+        approveSyncRecordService.aa(event);
+    }
 
 
 

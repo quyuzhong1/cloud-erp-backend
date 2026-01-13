@@ -1,5 +1,6 @@
 package com.erp.model.workflow.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -9,6 +10,7 @@ import java.util.List;
 
 @Data
 @NoArgsConstructor
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class FsCallbackUserEventDTO implements Serializable {
 
     /**
@@ -16,6 +18,7 @@ public class FsCallbackUserEventDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class UserDeletedDTO {
         @JsonProperty("header")
         private EventHeaderDTO header;
@@ -29,6 +32,7 @@ public class FsCallbackUserEventDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class EventHeaderDTO {
         @JsonProperty("event_id")
         private String eventId;
@@ -54,6 +58,7 @@ public class FsCallbackUserEventDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class UserDeletedEventDTO {
         @JsonProperty("object")
         private UserDeletedEventObjectDTO object;
@@ -67,6 +72,7 @@ public class FsCallbackUserEventDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class UserDeletedOldObjectDTO {
         @JsonProperty("department_ids")
         private List<String> departmentIds;
@@ -80,6 +86,7 @@ public class FsCallbackUserEventDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class UserDeletedEventObjectDTO {
         @JsonProperty("open_id")
         private String openId;
@@ -165,6 +172,7 @@ public class FsCallbackUserEventDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class AvatarDTO {
         @JsonProperty("avatar_72")
         private String avatar72;
@@ -184,6 +192,7 @@ public class FsCallbackUserEventDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class StatusDTO {
         @JsonProperty("is_frozen")
         private Boolean isFrozen;
@@ -206,6 +215,7 @@ public class FsCallbackUserEventDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class OrderDTO {
         @JsonProperty("department_id")
         private String departmentId;
@@ -225,6 +235,7 @@ public class FsCallbackUserEventDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class CustomAttrDTO {
         @JsonProperty("type")
         private String type;
@@ -241,6 +252,7 @@ public class FsCallbackUserEventDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class CustomAttrValueDTO {
         @JsonProperty("text")
         private String text;
@@ -272,6 +284,7 @@ public class FsCallbackUserEventDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class GenericUserDTO {
         @JsonProperty("id")
         private String id;
