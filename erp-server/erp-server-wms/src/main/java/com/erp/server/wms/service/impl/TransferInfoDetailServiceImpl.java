@@ -345,7 +345,7 @@ public class TransferInfoDetailServiceImpl extends SuperServiceImpl<TransferInfo
             }
             //调出仓库
             WarehouseEntity outWarehouse = warehouseList.stream().filter(obj -> obj.getId().equals(entity.getOutWarehouseId())).findFirst().orElse(new WarehouseEntity());
-            if (warehouseIdList.contains(outWarehouse.getId()) && CharSequenceUtil.isBlank(entity.getInWarehouseLocation())) {
+            if (warehouseIdList.contains(outWarehouse.getId()) && CharSequenceUtil.isBlank(entity.getOutWarehouseLocation())) {
                 throw new ServiceException(ApiError.WH_LOCATION_REQUIRED,outWarehouse.getName());
             }
         }
