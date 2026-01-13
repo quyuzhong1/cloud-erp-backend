@@ -702,7 +702,8 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
         for (VirtualInventoryEntity virtualInventoryEntity : virtualInventoryList) {
             VirtualInventoryDTO.RedisVirtualInventoryReturnDTO returnDTO = new VirtualInventoryDTO.RedisVirtualInventoryReturnDTO();
             BeanUtils.copyProperties(virtualInventoryEntity, returnDTO);
-
+            returnDTO.setVirtualInventoryId(virtualInventoryEntity.getId());
+            returnDTO.setDictInventoryStatus(virtualInventoryEntity.getDictInventoryStatus());
             //查询redis中的库存
             Object redisQtyObj = virtualInventoryRedisUtil.get(InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.CURRENT, virtualInventoryEntity.getId()));
             if (ObjectUtil.isNotEmpty(redisQtyObj)) {
