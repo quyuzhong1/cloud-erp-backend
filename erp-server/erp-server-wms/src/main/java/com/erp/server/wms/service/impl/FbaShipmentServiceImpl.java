@@ -2544,7 +2544,14 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         // 查询最新库存关账记录
         Map<String, LocalDate> closedDateMap = inventoryClosedRecordService.mapByOrgId(InventoryClosedRecordEnum.STK.getCode());
         // 根据签收时间作为调拨时间
-        handlerWarehouse(entity, addReceivedList, addReceivedList.get(0).getReceiveDate().toLocalDate(), closedDateMap);
+        try {
+            UserContext.setIsUserSystem(true);
+            handlerWarehouse(entity, addReceivedList, addReceivedList.get(0).getReceiveDate().toLocalDate(), closedDateMap);
+        }catch (Exception e){
+            throw new ServiceException(e.getMessage());
+        }finally {
+            UserContext.clearIsUserSystem();
+        }
         return BatchResultDTO.success(entity.getId(),entity.getCode(), "手动签收");
     }
 }
