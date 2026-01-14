@@ -65,6 +65,7 @@ import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.dto.SoB2cDTO.PagingParamDTO;
+import com.erp.model.oms.dto.SoB2cDTO.ListCountDto;
 import com.erp.model.oms.dto.excel.B2CSoImportExcelDTO;
 import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.OperateLogEntity;
@@ -598,17 +599,97 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         SoB2cTabEnum[] values = SoB2cTabEnum.values();
         List<SoB2cDTO.TabListDTO> list = new ArrayList<>();
         String permissionSql = getPermissionSql();
+        SoB2cDTO.PagingParamDTO searchParamDTO = new SoB2cDTO.PagingParamDTO();
+        searchParamDTO.setPermissionSql(permissionSql);
+        String tabSql = soB2cQueryHandler.getTabSql(SoB2cTabEnum.ENUM_ALL.getCode());
+        HashMap<String,String> map = new HashMap<>();
+        map.put("default",tabSql);
+        searchParamDTO.setSqlMap(map);
+        List<ListCountDto> listCount = this.baseMapper.listCount(searchParamDTO);
         for (SoB2cTabEnum item : values) {
-            SoB2cDTO.PagingParamDTO searchParamDTO = new SoB2cDTO.PagingParamDTO();
-            searchParamDTO.setPermissionSql(permissionSql);
             SoB2cDTO.TabListDTO resultDTO = new SoB2cDTO.TabListDTO();
-            String tabSql = soB2cQueryHandler.getTabSql(item.getCode());
-            HashMap<String,String> map = new HashMap<>();
-            map.put("default",tabSql);
-            searchParamDTO.setSqlMap(map);
+            Integer count = 0;
+            if (SoB2cTabEnum.ENUM_ALL == item) {
+            	count = listCount.stream().map(ListCountDto::getCount).reduce(Integer::sum).orElse(0);
+            }
+            if (SoB2cTabEnum.ENUM_PAYMENT == item) {
+            	count = listCount.stream().filter(l -> {
+            		return l.getPayStatus().equals(SoB2cPayStatusEnum.ENUM_PAYMENT.getCode()) 
+            				&& !l.getInvalidStatus();
+            	}).map(ListCountDto::getCount).reduce(Integer::sum).orElse(0);
+            }
+            //待提审  显示订单审核状态为待提交、审核不通过，订单状态非冻结的订单，订单非作废
+            if (SoB2cTabEnum.ENUM_PENDING == item) {
+                count = listCount.stream().filter(l -> {
+            		return l.getPayStatus().equals(SoB2cPayStatusEnum.ENUM_PAID.getCode()) 
+            				&& (l.getApproveStatus().equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus()) || l.getApproveStatus().equals(ApproveStatusEnum.REJECT.getStatus())) 
+            				&& !l.getInvalidStatus()
+            				&& !l.getIsFrozen()
+            				&& !l.getBillStatus().equals("frozen");
+            	}).map(ListCountDto::getCount).reduce(Integer::sum).orElse(0);
+            }
+            //待审核
+            if (SoB2cTabEnum.ENUM_APPROVE_ING == item) {
+                count = listCount.stream().filter(l -> {
+            		return l.getPayStatus().equals(SoB2cPayStatusEnum.ENUM_PAID.getCode()) 
+            				&& l.getApproveStatus().equals(ApproveStatusEnum.APPROVE_ING.getStatus()) 
+            				&& !l.getInvalidStatus()
+            				&& !l.getIsFrozen()
+            				&& !l.getBillStatus().equals("frozen");
+            	}).map(ListCountDto::getCount).reduce(Integer::sum).orElse(0);
+            }
+            //配货中
+            if (SoB2cTabEnum.ENUM_IN_DISTRIBUTION == item) {
+                count = listCount.stream().filter(l -> {
+            		return l.getPayStatus().equals(SoB2cPayStatusEnum.ENUM_PAID.getCode()) 
+            				&& l.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus()) 
+            				&& (l.getBillStatus().equals(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode()) || l.getBillStatus().equals(SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode())) 
+            				&& !l.getInvalidStatus();
+            	}).map(ListCountDto::getCount).reduce(Integer::sum).orElse(0);
+            }
+            //待发货
+            if (SoB2cTabEnum.ENUM_WAIT_SHIPPED == item) {
+                count = listCount.stream().filter(l -> {
+            		return l.getPayStatus().equals(SoB2cPayStatusEnum.ENUM_PAID.getCode()) 
+            				&& l.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus()) 
+            				&& l.getBillStatus().equals(SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode())
+            				&& !l.getInvalidStatus();
+            	}).map(ListCountDto::getCount).reduce(Integer::sum).orElse(0);
+            }
+            //已发货
+            if (SoB2cTabEnum.ENUM_SHIPPED == item) {
+                count = listCount.stream().filter(l -> {
+            		return l.getPayStatus().equals(SoB2cPayStatusEnum.ENUM_PAID.getCode()) 
+            				&& l.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus()) 
+            				&& l.getBillStatus().equals(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode())
+            				&& !l.getInvalidStatus();
+            	}).map(ListCountDto::getCount).reduce(Integer::sum).orElse(0);
+            }
+            //冻结中
+            if (SoB2cTabEnum.ENUM_FROZEN == item) {
+                count = listCount.stream().filter(l -> {
+            		return l.getPayStatus().equals(SoB2cPayStatusEnum.ENUM_PAID.getCode()) 
+            				&& l.getBillStatus().equals(SoB2cBillStatusEnum.ENUM_FROZEN.getCode())
+            				&& !l.getInvalidStatus();
+            	}).map(ListCountDto::getCount).reduce(Integer::sum).orElse(0);
+            }
+            //已作废
+            if (SoB2cTabEnum.ENUM_INVALID == item) {
+                count = listCount.stream().filter(l -> {
+            		return l.getPayStatus().equals(SoB2cPayStatusEnum.ENUM_PAID.getCode()) 
+            				&& l.getInvalidStatus();
+            	}).map(ListCountDto::getCount).reduce(Integer::sum).orElse(0);
+            }
+            //订单异常
+            if (SoB2cTabEnum.ENUM_ORDER_ERROR == item) {
+                count = listCount.stream().filter(l -> {
+            		return l.getPayStatus().equals(SoB2cPayStatusEnum.ENUM_PAID.getCode())
+            				&& org.apache.commons.lang3.StringUtils.isNotBlank(l.getSignOrderError())
+            				&& !l.getInvalidStatus();
+            	}).map(ListCountDto::getCount).reduce(Integer::sum).orElse(0);
+            }
             //查询店铺设置权限
-            Integer count = this.baseMapper.listCount(searchParamDTO);
-            resultDTO.setCount(ObjectUtils.isEmpty(count) ? MathUtil.ZERO : count);
+            resultDTO.setCount(count);
             resultDTO.setTabFlag(item.getCode());
             resultDTO.setTabFlagName(item.getName());
             list.add(resultDTO);
@@ -619,45 +700,44 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     @Override
     public String processOrderCreation(SoB2cDTO.AddDTO dto) {
-        SoB2cServiceImpl soB2cServiceImpl = ApplicationContextUtils.getBean(SoB2cServiceImpl.class);
         // 速卖通手工订单首次添加税后金额=订单金额(其他平台=0)
         dto.checkAndSetAfterTaxAmount();
         ShopInfoEntity shopInfoEntity = shopInfoService.getById(dto.getShopId());
         if(Objects.nonNull(shopInfoEntity) && shopInfoEntity.getDisabled()){
             throw new ServiceException("店铺已禁用，无法新增订单");
         }
-        SoB2cEntity add = soB2cServiceImpl.add(dto, null);
+        SoB2cEntity add = this.add(dto, null);
         String id = add.getId();
         //检查是否备案并修改状态
-        soB2cServiceImpl.checkProductRegistrationAndUpdate(id, "");
+        this.checkProductRegistrationAndUpdate(id, "");
 
         //速卖通平台仓订单不走任何规则
         if (PlatformDictEnum.ALI_EXPRESS.getCode().equals(add.getDictPlatform()) && add.hasPlatformWarehouseOrder()) {
             return add.getId();
         }
 
-        SoB2cDTO.RuleResultDTO orderRuleResult = soB2cServiceImpl.orderRule(id);
+        SoB2cDTO.RuleResultDTO orderRuleResult = this.orderRule(id);
         //匹配成功
         Boolean ruleMatch = orderRuleResult.getIsRuleMatch();
         Boolean isPass = orderRuleResult.getIsPass();
 
         if (ruleMatch && isPass) {
             //仓库规则
-            SoB2cDTO.RuleResultDTO warehouseRuleResult = soB2cServiceImpl.warehouseRule(orderRuleResult.getId(), orderRuleResult.getSoB2cDetailList(), orderRuleResult.getMap());
+            SoB2cDTO.RuleResultDTO warehouseRuleResult = this.warehouseRule(orderRuleResult.getId(), orderRuleResult.getSoB2cDetailList(), orderRuleResult.getMap());
             Boolean warehouseRuleMatch = warehouseRuleResult.getIsRuleMatch();
             if (warehouseRuleMatch) {
-                SoB2cDTO.RuleResultDTO logisticsRuleResult = soB2cServiceImpl.logisticsRule(id, new HashMap<>(), false);
+                SoB2cDTO.RuleResultDTO logisticsRuleResult = this.logisticsRule(id, new HashMap<>(), false);
                 Boolean autoGetTrackNo = logisticsRuleResult.getAutoGetTrackNo();
                 Boolean autoGetTrackNotOfRangeDelivery = logisticsRuleResult.getAutoGetTrackNotOfRangeDelivery();
                 Boolean isRuleMatch = logisticsRuleResult.getIsRuleMatch();
                 //表示成功
                 if(isRuleMatch){
                     //检查是否备案并修改状态
-                    soB2cServiceImpl.checkProductRegistrationAndUpdate(id, "");
+                    this.checkProductRegistrationAndUpdate(id, "");
                     //申报信息规则
-                    soB2cServiceImpl.declareRule(id, new HashMap<>(), Boolean.FALSE, false);
+                    this.declareRule(id, new HashMap<>(), Boolean.FALSE, false);
                 }
-                SoB2cEntity entity = soB2cServiceImpl.getById(id);
+                SoB2cEntity entity = this.getById(id);
                 Boolean isOutOfRangeDelivery = entity.getIsOutOfRangeDelivery();
                 if ((Objects.nonNull(autoGetTrackNo) && Boolean.TRUE.equals(autoGetTrackNo))
                         || (Boolean.FALSE.equals(isOutOfRangeDelivery) && Objects.nonNull(autoGetTrackNotOfRangeDelivery) && Boolean.TRUE.equals(autoGetTrackNotOfRangeDelivery))) {
@@ -666,7 +746,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             }
         }
         //自动计算预估运费到订单的预估运费字段
-        soB2cServiceImpl.autoCalcEstimatedShippingCost(Collections.singletonList(id));
+        this.autoCalcEstimatedShippingCost(Collections.singletonList(id));
         return add.getCode();
     }
 
