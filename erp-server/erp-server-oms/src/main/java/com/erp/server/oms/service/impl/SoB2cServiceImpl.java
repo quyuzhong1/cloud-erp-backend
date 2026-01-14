@@ -7370,6 +7370,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }else{
             if(SoB2cErrorTypeEnum.GET_EXCHANGE_RATE.getCode().equals(entity.getSignOrderError())){
                 soB2cErrorService.removeErrorOrder(entity.getId(),SoB2cErrorTypeEnum.GET_EXCHANGE_RATE.getCode());
+                entity.setSignOrderError("");
+                entity.setIsFrozen(false);
+                entity.setFrozenType("");
             }
         }
     }
