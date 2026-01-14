@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.oms.dto.*;
+import com.erp.model.oms.dto.SoB2cDTO.ListCountDto;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.tms.dto.TransferDeclareDetailDTO;
@@ -42,7 +43,7 @@ public interface SoB2cMapper extends BaseMapper<SoB2cEntity> {
      * @param params
      * @return
      */
-    Integer listCount(@Param("params") SoB2cDTO.PagingParamDTO params);
+    List<SoB2cDTO.ListCountDto> listCount(@Param("params") SoB2cDTO.PagingParamDTO params);
 
     /**
      * @param query

@@ -413,9 +413,9 @@
     </select>
 
     <!-- 列表数量查询 -->
-    <select id="listCount" resultType="java.lang.Integer">
+    <select id="listCount" resultType="com.erp.model.oms.dto.SoB2cDTO$ListCountDto">
         select
-        count(*)
+        sb2c.bill_status,sb2c.invalid_status,sb2c.is_frozen,sb2c.approve_status,sb2c.pay_status,sb2c.sign_order_error,count(*) count
         from so_b2c sb2c
         <where>
             ${params.sqlMap.default}
@@ -431,6 +431,7 @@
                 ${params.permissionSql}
             </if>
         </where>
+        group by sb2c.bill_status,sb2c.invalid_status,sb2c.is_frozen,sb2c.approve_status,sb2c.pay_status,sb2c.sign_order_error
     </select>
 
     <!-- 合并列表查询 -->
