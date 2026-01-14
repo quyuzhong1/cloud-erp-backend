@@ -74,7 +74,7 @@ public class DmpInputFeishuBatchGetUserInfoInitHandler extends DmpInputInitHandl
                     object.put("openId", user.getOpenId());
                     object.put("name", user.getName());
                     object.put("email", user.getEmail());
-                    object.put("mobile", user.getMobile());
+                    object.put("mobile", user.getMobile().replace("+86",""));
                     object.put("gender", user.getGender());
                     object.put("isResigned", user.getStatus().getIsResigned());
                     object.put("dataJson", JSON.toJSONString(user));

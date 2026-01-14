@@ -19,7 +19,7 @@ public class FsCallbackUserEventDTO implements Serializable {
     @Data
     @NoArgsConstructor
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public static class UserDeletedDTO {
+    public static class ThirdUserDTO {
         @JsonProperty("header")
         private EventHeaderDTO header;
 

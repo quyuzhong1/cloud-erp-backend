@@ -109,14 +109,15 @@ public class FsUseInfoConsumerService<T extends DmpSyncTaskIdDTO> extends Abstra
 
         String eventType = dto.getEventType();
         String userId = dto.getUserId();
+        String name = dto.getName();
         Boolean isResigned = dto.getIsResigned();
         if(Objects.equals(DmpPullConstant.USER_DELETED,eventType)){ //离职
             LambdaQueryWrapper<SysUserThirdEntity> queryWrapper = new LambdaQueryWrapper<>();
             queryWrapper.eq(SysUserThirdEntity::getThirdUserId, userId);
             List<SysUserThirdEntity> list = sysUserThirdService.list(queryWrapper);
             if(CollUtil.isEmpty(list)){
-                log.error(ApiError.COMMON_FS_USER_NOT_BIND.getMsg(),eventType,dto.getName());
-                throw new ServiceException(ApiError.COMMON_FS_USER_NOT_BIND,eventType,dto.getName());
+                log.error(ApiError.COMMON_FS_USER_NOT_BIND.getMsg(),eventType,name);
+                throw new ServiceException(ApiError.COMMON_FS_USER_NOT_BIND,eventType,name);
             }
             if(isResigned){
                 UpdateUserStateDTO stateDTO = new UpdateUserStateDTO();
@@ -126,8 +127,8 @@ public class FsUseInfoConsumerService<T extends DmpSyncTaskIdDTO> extends Abstra
             }
         }else if(Objects.equals(DmpPullConstant.USER_CREATED,eventType)){//入职
             SysUserInfoDTO sysUserInfoDTO = new SysUserInfoDTO();
-            sysUserInfoDTO.setRealName(dto.getName());
-            sysUserInfoDTO.setUserName(dto.getName());
+            sysUserInfoDTO.setRealName(name);
+            sysUserInfoDTO.setUserName(name);
             sysUserInfoDTO.setEmail(dto.getEmail());
             sysUserInfoDTO.setMobile(dto.getMobile());
             sysUserInfoDTO.setUserType(UserTypeEnum.ERP.code);
@@ -137,8 +138,8 @@ public class FsUseInfoConsumerService<T extends DmpSyncTaskIdDTO> extends Abstra
             sysUserInfoDTO.setIsSuper(Boolean.FALSE);
             sysUserInfoService.add(sysUserInfoDTO);
         }else {
-            log.error(ApiError.COMMON_FS_USER_NOT_BIND.getMsg(),eventType);
-            throw new ServiceException(ApiError.COMMON_FS_USER_NOT_BIND,eventType);
+            log.error(ApiError.COMMON_FS_USER_NOT_BIND.getMsg(),eventType,name);
+            throw new ServiceException(ApiError.COMMON_FS_USER_NOT_BIND,eventType,name);
         }
         return ApiResult.success();
     }
