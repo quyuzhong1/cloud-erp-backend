@@ -164,11 +164,13 @@ public class FsCallbackEventHandler {
         //根据审批定义和审批实例id生成中台即时拉取任务
         DmpInoutDTO.CreateInputDTO dto = new DmpInoutDTO.CreateInputDTO();
         dto.setSystemCode(CfgApproveSyncSyncPlatformEnum.FEISHU.getCode());
-        dto.setBillType(type);
+        dto.setBillType(FsEventConstant.FS_USER_BATCH);
         dto.setTaskType(DmpInputTaskTaskTypeEnum.NORMAL.getCode());
-        dto.setNextLevelId("");
-        dto.setStartTime(LocalDateTime.now());
-        dto.setEndTime(LocalDateTime.now());
+        dto.setNextLevelId(type);
+        //当前时间的一天前
+        dto.setStartTime(LocalDateTime.now().minusDays(1));
+        //当前时间一个月后
+        dto.setEndTime(LocalDateTime.now().plusMonths(1));
         Map<String, Object> map = new HashMap<>();
         map.put("userId",bean.getEvent().getObject().getUserId());
         map.put("eventId",bean.getHeader().getEventId());

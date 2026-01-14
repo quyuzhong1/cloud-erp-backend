@@ -36,6 +36,7 @@ import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.sdk.fs.config.FsProperties;
 import com.erp.sdk.fs.service.FsService;
+import com.erp.server.workflow.constant.FsEventConstant;
 import com.erp.server.workflow.handler.CfgApproveSyncBuildHandler;
 import com.erp.server.workflow.handler.MQSyncFsHandler;
 import com.erp.server.workflow.mapper.ApproveSyncRecordMapper;
@@ -371,7 +372,6 @@ public class ApproveSyncRecordServiceImpl extends SuperServiceImpl<ApproveSyncRe
     public void aa(EventReq event) throws JsonProcessingException {
         String plain = event.getPlain();
         if (ObjUtil.isEmpty(plain)) {
-            log.warn("收到员工{}事件:event= {},fsProperties = {},plain为空","contact.user.created_v3", Jsons.DEFAULT.toJson(event),fsProperties);
             return;
         }
 
@@ -380,12 +380,6 @@ public class ApproveSyncRecordServiceImpl extends SuperServiceImpl<ApproveSyncRe
         try {
             bean = objectMapper.readValue(plain, FsCallbackUserEventDTO.ThirdUserDTO.class);
         } catch (JsonProcessingException e) {
-            log.warn("收到员工{}事件:event= {},fsProperties = {},ObjectMapper转换异常","contact.user.created_v3", Jsons.DEFAULT.toJson(event),fsProperties);
-            return;
-        }
-
-        if (Objects.isNull(bean)) {
-            log.warn("收到员工{}事件:event= {},fsProperties = {},ObjectMapper转换后FsCallbackUserEventDTO.ThirdUserDTO为null","contact.user.created_v3", Jsons.DEFAULT.toJson(event),fsProperties);
             return;
         }
 
@@ -393,18 +387,16 @@ public class ApproveSyncRecordServiceImpl extends SuperServiceImpl<ApproveSyncRe
             log.warn("收到员工{}事件，应用ID未匹配，跳过处理,clientId={}，appId={}",bean.getHeader().getEventType(),fsProperties.getClientId(), bean.getHeader().getAppId());
             return;
         }
-        if (!CharSequenceUtil.equals("contact.user.created_v3",bean.getHeader().getEventType())) {
-            log.warn("收到员工{}事件，事件类型未匹配，跳过处理", bean.getHeader().getEventType());
-            return;
-        }
         //根据审批定义和审批实例id生成中台即时拉取任务
         DmpInoutDTO.CreateInputDTO dto = new DmpInoutDTO.CreateInputDTO();
         dto.setSystemCode(CfgApproveSyncSyncPlatformEnum.FEISHU.getCode());
-        dto.setBillType("contact.user.created_v3");
+        dto.setBillType(FsEventConstant.FS_USER_BATCH);
         dto.setTaskType(DmpInputTaskTaskTypeEnum.NORMAL.getCode());
-        dto.setNextLevelId("");
-        dto.setStartTime(LocalDateTime.now());
-        dto.setEndTime(LocalDateTime.now());
+        dto.setNextLevelId(bean.getHeader().getEventType());
+        //当前时间的一天前
+        dto.setStartTime(LocalDateTime.now().minusDays(1));
+        //当前时间一个月后
+        dto.setEndTime(LocalDateTime.now().plusMonths(1));
         Map<String, Object> map = new HashMap<>();
         map.put("userId",bean.getEvent().getObject().getUserId());
         map.put("eventId",bean.getHeader().getEventId());

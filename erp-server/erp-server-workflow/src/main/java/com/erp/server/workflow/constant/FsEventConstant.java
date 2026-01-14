@@ -48,6 +48,10 @@ public interface FsEventConstant {
      */
       String REMEDY_APPROVAL_EVENT = "remedy_approval";
     /**
+     * 飞书用户批量查询
+     */
+    String FS_USER_BATCH = "fsUserBatch";
+    /**
      * 员工入职事件订阅
      */
     String USER_CREATED_EVENT = "contact.user.created_v3";
