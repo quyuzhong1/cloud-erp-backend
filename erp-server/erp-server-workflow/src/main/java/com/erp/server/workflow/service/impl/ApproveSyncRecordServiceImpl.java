@@ -36,7 +36,6 @@ import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.sdk.fs.config.FsProperties;
 import com.erp.sdk.fs.service.FsService;
-import com.erp.server.workflow.constant.FsEventConstant;
 import com.erp.server.workflow.handler.CfgApproveSyncBuildHandler;
 import com.erp.server.workflow.handler.MQSyncFsHandler;
 import com.erp.server.workflow.mapper.ApproveSyncRecordMapper;
@@ -378,7 +377,7 @@ public class ApproveSyncRecordServiceImpl extends SuperServiceImpl<ApproveSyncRe
 
         // 在使用地方替换
         ObjectMapper objectMapper = new ObjectMapper();
-        FsCallbackUserEventDTO.UserDeletedDTO bean = objectMapper.readValue(plain, FsCallbackUserEventDTO.UserDeletedDTO.class);
+        FsCallbackUserEventDTO.ThirdUserDTO bean = objectMapper.readValue(plain, FsCallbackUserEventDTO.ThirdUserDTO.class);
 
 //        FsCallbackUserEventDTO.UserDeletedDTO bean = BeanUtil.toBean(plain, FsCallbackUserEventDTO.UserDeletedDTO.class);
         if (!CharSequenceUtil.equals(fsProperties.getClientId(), bean.getHeader().getAppId())) {
@@ -395,7 +394,8 @@ public class ApproveSyncRecordServiceImpl extends SuperServiceImpl<ApproveSyncRe
         dto.setBillType(DmpPullConstant.USER_DELETED);
         dto.setTaskType(DmpInputTaskTaskTypeEnum.NORMAL.getCode());
         dto.setNextLevelId("");
-
+        dto.setStartTime(LocalDateTime.now());
+        dto.setEndTime(LocalDateTime.now());
         Map<String, Object> map = new HashMap<>();
         map.put("userId",bean.getEvent().getObject().getUserId());
         map.put("eventId",bean.getHeader().getEventId());

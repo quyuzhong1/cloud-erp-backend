@@ -16,6 +16,8 @@ import com.erp.model.workflow.enums.CfgApproveSyncSyncPlatformEnum;
 import com.erp.rpc.dmp.feign.DmpInoutTaskFeign;
 import com.erp.sdk.fs.config.FsProperties;
 import com.erp.server.workflow.constant.FsEventConstant;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.lark.oapi.core.request.EventReq;
 import com.lark.oapi.core.utils.Jsons;
 import com.lark.oapi.event.CustomEventHandler;
@@ -25,6 +27,7 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
+import java.time.LocalDateTime;
 import java.util.*;
 
 /**
@@ -131,18 +134,31 @@ public class FsCallbackEventHandler {
      */
     public void getUserHandle(EventReq event, String type) {
         String plain = event.getPlain();
-        JSONObject jsonObject = JSON.parseObject(plain);
-        JSONObject thisEvent = jsonObject.getJSONObject("event");
-        if (ObjUtil.isEmpty(thisEvent)) {
+        if (ObjUtil.isEmpty(plain)) {
+            log.warn("收到员工{}事件:event= {},fsProperties = {},plain为空",type, Jsons.DEFAULT.toJson(event),fsProperties);
             return;
         }
-        FsCallbackUserEventDTO.UserDeletedDTO bean = BeanUtil.toBean(thisEvent, FsCallbackUserEventDTO.UserDeletedDTO.class);
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        FsCallbackUserEventDTO.ThirdUserDTO bean = null;
+        try {
+            bean = objectMapper.readValue(plain, FsCallbackUserEventDTO.ThirdUserDTO.class);
+        } catch (JsonProcessingException e) {
+            log.warn("收到员工{}事件:event= {},fsProperties = {},ObjectMapper转换异常",type, Jsons.DEFAULT.toJson(event),fsProperties);
+            return;
+        }
+
+        if (Objects.isNull(bean)) {
+            log.warn("收到员工{}事件:event= {},fsProperties = {},ObjectMapper转换后FsCallbackUserEventDTO.ThirdUserDTO为null",type, Jsons.DEFAULT.toJson(event),fsProperties);
+            return;
+        }
+
         if (!CharSequenceUtil.equals(fsProperties.getClientId(), bean.getHeader().getAppId())) {
-            log.warn("收到员工事件，应用ID未匹配，跳过处理,eventType={},clientId={}，appId={}",bean.getHeader().getEventType(),fsProperties.getClientId(), bean.getHeader().getAppId());
+            log.warn("收到员工{}事件，应用ID未匹配，跳过处理,clientId={}，appId={}",bean.getHeader().getEventType(),fsProperties.getClientId(), bean.getHeader().getAppId());
             return;
         }
-        if (!CharSequenceUtil.equals(type,bean.getHeader().getEventType())) {
-            log.warn("收到员工事件，事件类型未匹配，跳过处理,eventType={}", bean.getHeader().getEventType());
+        if (!CharSequenceUtil.equals("contact.user.deleted_v3",bean.getHeader().getEventType())) {
+            log.warn("收到员工{}事件，事件类型未匹配，跳过处理", bean.getHeader().getEventType());
             return;
         }
         //根据审批定义和审批实例id生成中台即时拉取任务
@@ -150,7 +166,9 @@ public class FsCallbackEventHandler {
         dto.setSystemCode(CfgApproveSyncSyncPlatformEnum.FEISHU.getCode());
         dto.setBillType(DmpPullConstant.USER_DELETED);
         dto.setTaskType(DmpInputTaskTaskTypeEnum.NORMAL.getCode());
-
+        dto.setNextLevelId("");
+        dto.setStartTime(LocalDateTime.now());
+        dto.setEndTime(LocalDateTime.now());
         Map<String, Object> map = new HashMap<>();
         map.put("userId",bean.getEvent().getObject().getUserId());
         map.put("eventId",bean.getHeader().getEventId());
