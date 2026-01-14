@@ -439,7 +439,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             throw new ServiceException(ApiError.BILL_WAIT_SUBMIT_TO_APPROVE_ING);
         }
         //提交流程
-        list.forEach(v->v.setIsUpdateAddress(isUpdateAddress));
+        list.forEach(v->v.setIsUpdateAddress(isUpdateAddress?"是":"否"));
         startProcess(list);
         // 启动流程
         List<Pair<String, String>> pairList = list.stream().filter(s -> s.getApproveStatus().getStatus().equals(waitSubmitStatus)).
