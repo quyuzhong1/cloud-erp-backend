@@ -744,6 +744,8 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
         List<VirtualWarehouseAllocationDTO.DetailDto> detailList = BeanMapperUtils.copyList(VirtualWarehouseAllocationDTO.DetailDto.class, detailEntityList);
         //校验总库存数量
         List<VirtualInventoryDTO.ViewQtyDTO> virtualInventoryQtyList = getQty(detailList, entity.getType());
+        checkTotalQty(detailList, entity.getType(), virtualInventoryQtyList);
+
 
         //查询虚拟仓下的借调仓
         List<String> vmIds = detailList.stream().map(VirtualWarehouseAllocationDTO.DetailDto::getToVirtualWarehouseId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
