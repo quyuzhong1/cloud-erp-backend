@@ -3845,6 +3845,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 detailDTO.setCurrency(dto.getCurrency());
                 detailDTO.setIsReissue(false);
                 detailDTO.setCustomerSkuNo(platformB2bOrderDetailDTO.getCustomerSkuNo());
+                detailDTO.setCustomerPO(platformB2bOrderDetailDTO.getCustomerPO());
+                detailDTO.setToCountry(platformB2bOrderDetailDTO.getToCountry());
                 detailDTO.setPrice(platformB2bOrderDetailDTO.getPrice());
                 detailDTO.setTaxPrice(platformB2bOrderDetailDTO.getTaxPrice());
                 detailDTO.setTaxRate(platformB2bOrderDetailDTO.getTaxRate());
@@ -3927,11 +3929,13 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 detailDTO.setIsGift(platformB2bOrderDetailDTO.getIsGift());
                 detailDTO.setPlatformDetailId(platformB2bOrderDetailDTO.getPlatformDetailId());
                 detailDTO.setCurrency(dto.getCurrency());
+                detailDTO.setCustomerPO(platformB2bOrderDetailDTO.getCustomerPO());
                 detailDTO.setIsReissue(false);
                 detailDTO.setCustomerSkuNo(platformB2bOrderDetailDTO.getCustomerSkuNo());
                 detailDTO.setPrice(platformB2bOrderDetailDTO.getPrice());
                 detailDTO.setTaxPrice(platformB2bOrderDetailDTO.getTaxPrice());
                 detailDTO.setTaxRate(platformB2bOrderDetailDTO.getTaxRate());
+                detailDTO.setToCountry(platformB2bOrderDetailDTO.getToCountry());
                 detailList.add(detailDTO);
             }
             addDTO.setDetailList(detailList);
