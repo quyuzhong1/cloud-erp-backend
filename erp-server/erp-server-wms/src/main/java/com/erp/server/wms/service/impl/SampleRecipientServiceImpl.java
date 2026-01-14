@@ -2552,7 +2552,8 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
             addDTO.setReceiveOrgId(sampleRecipient.getPickOrgId()); // 领料组织ID
             addDTO.setDeptId(sampleRecipient.getDeptId()); // 领料部门ID
             addDTO.setProcessApplyCode(firstItem.getSourceCode()); // 流程申请单号：样品领用单号
-            addDTO.setRemark("样品领用单【下推】其他出库单"); // 备注
+            addDTO.setRemark(sampleRecipient.getUsageDesc()); // 备注
+            addDTO.setUsage(sampleRecipient.getUsage());
             
             // 构建客户信息
             OtherOutstockCustomerDTO.AddDTO customerDTO = new OtherOutstockCustomerDTO.AddDTO();
