@@ -8258,6 +8258,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Transactional(rollbackFor = Exception.class)
     public void updatePackageAndTransferStatus(String soId, String packageStatus, String transferStatus, Boolean isRegistration, Boolean isUpdateTransferStatus) {
         if (isRegistration) {
+            log.warn("销售订单{}产品已备案，更新组包和中转状态，组包状态：{}，中转状态：{}", soId, packageStatus, transferStatus);
             this.lambdaUpdate().set(SoB2cEntity::getPackageStatus, packageStatus).
                     set(isUpdateTransferStatus, SoB2cEntity::getTransferStatus, transferStatus).
                     set(SoB2cEntity::getAbnormalType, "").
@@ -8266,6 +8267,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         //未备案清除渠道
         if (!isRegistration) {
+            log.warn("销售订单{}产品未备案，清除物流渠道和单号，更新组包状态为未组包，更新中转状态为未中转", soId);
             soB2cLogisticsService.lambdaUpdate().
                     set(SoB2cLogisticsEntity::getLogisticsChannelId, "").
                     set(SoB2cLogisticsEntity::getLogisticsChannelName, "").
