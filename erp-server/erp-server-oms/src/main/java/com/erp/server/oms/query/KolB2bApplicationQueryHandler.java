@@ -1,11 +1,13 @@
 package com.erp.server.oms.query;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.query.AbstractQueryHandler;
 import com.erp.model.oms.enums.KolB2bApplicationTableEnum;
 import com.erp.model.oms.enums.KolB2bRefStatusEnum;
 import com.erp.model.scm.enums.InvalidStatusEnum;
+import com.erp.model.wms.enums.DeliveryStatusEnum;
 import com.erp.server.oms.service.CommonService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Component;
@@ -31,24 +33,27 @@ public class KolB2bApplicationQueryHandler extends AbstractQueryHandler {
         }
         if ("b2bRefStatusName".equals(field)) {
             if (KolB2bRefStatusEnum.WAIT_GENERATE.getCode().equals(value)) {
-                return "not exists (SELECT sd.source_detail_id FROM so_info si inner join so_detail sd on si.id = sd.main_id and sd.is_deleted = false WHERE si.is_deleted= false and si.invalid_status = false and kbad.id = sd.source_detail_id)" ;
+                return " not exists (SELECT sd.source_detail_id FROM so_info si inner join so_detail sd on si.id = sd.main_id and sd.is_deleted = false WHERE si.is_deleted= false and si.invalid_status = false and kbad.id = sd.source_detail_id)" ;
             }
             if (KolB2bRefStatusEnum.WAIT_APPROVE.getCode().equals(value)) {
                 return " exists (SELECT sd.source_detail_id FROM so_info si inner join so_detail sd on si.id = sd.main_id and sd.is_deleted = false WHERE si.is_deleted= false and si.invalid_status = false and si.approve_status != 'approve' and kbad.id = sd.source_detail_id)" ;
             }
             if (KolB2bRefStatusEnum.APPROVED.getCode().equals(value)) {
-                return "not exists (SELECT sd.source_detail_id FROM so_info si inner join so_detail sd on si.id = sd.main_id and sd.is_deleted = false WHERE si.is_deleted= false and si.invalid_status = false and si.approve_status = 'approve' and kbad.id = sd.source_detail_id)" ;
+                return " exists (SELECT sd.source_detail_id FROM so_info si inner join so_detail sd on si.id = sd.main_id and sd.is_deleted = false WHERE si.is_deleted= false and si.invalid_status = false and si.approve_status = 'approve' and kbad.id = sd.source_detail_id)" ;
             }
         }
         if ("projectTag".equals(field)) {
             return " exists (select 1 from jsonb_array_elements_text(kbad.project_tag) AS elem where elem "+ compareCodeSplicingValueSql +")" ;
         }
         if ("deliveryStatusName".equals(field)) {
-            return "kbad.id IN (SELECT sd.source_detail_id FROM so_info si inner join so_detail sd on si.id = sd.main_id and sd.is_deleted = false WHERE si.is_deleted= false and si.invalid_status = false and sd.delivery_status "+ compareCodeSplicingValueSql +
+            if (CharSequenceUtil.equals(DeliveryStatusEnum.UN_SHIPPED.getCode(), value.toString())) {
+                return " not exists (SELECT sd.source_detail_id FROM so_info si inner join so_detail sd on si.id = sd.main_id and sd.is_deleted = false WHERE si.is_deleted= false and si.invalid_status = false and sd.delivery_status in ('partialShipment','completeShipment') and kbad.id = sd.source_detail_id)" ;
+            }
+            return "exists (SELECT sd.source_detail_id FROM so_info si inner join so_detail sd on si.id = sd.main_id and sd.is_deleted = false WHERE si.is_deleted= false and si.invalid_status = false and kbad.id = sd.source_detail_id and sd.delivery_status "+ compareCodeSplicingValueSql +
                     ")" ;
         }
         if ("feedbackUrl".equals(field)) {
-            return "kbad.id IN (SELECT source_detail_id FROM kol_feedback  WHERE is_deleted= false and url "+ compareCodeSplicingValueSql +
+            return " exists (SELECT source_detail_id FROM kol_feedback  WHERE is_deleted= false source_detail_id = kbad.id and url "+ compareCodeSplicingValueSql +
                     ")" ;
         }
         return null;
