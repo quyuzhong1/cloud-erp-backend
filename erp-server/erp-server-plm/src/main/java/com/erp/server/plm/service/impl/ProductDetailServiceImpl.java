@@ -2721,10 +2721,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                     req.setSaleCountry(Arrays.stream(req.getSaleCountry().split(",")).filter(StringUtils::isNotBlank)
                             .map(c -> finalDictValueMaps.get(c)).filter(d -> d != null).collect(Collectors.joining(",")));
                 }
-                if(StringUtils.isNotBlank(req.getImageUrl())){
-                    String[] imageArr = req.getImageUrl().split(",");
-                    req.setImage(FastDFSClientUtil.getFileByte(imageArr[0]));
-                }
+//                if(StringUtils.isNotBlank(req.getImageUrl())){
+//                    String[] imageArr = req.getImageUrl().split(",");
+//                    req.setImage(FastDFSClientUtil.getFileByte(imageArr[0]));
+//                }
             });
         }
         return new PagingVO<>(pageData);
