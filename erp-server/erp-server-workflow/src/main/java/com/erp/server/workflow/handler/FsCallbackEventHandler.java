@@ -157,7 +157,7 @@ public class FsCallbackEventHandler {
             log.warn("收到员工{}事件，应用ID未匹配，跳过处理,clientId={}，appId={}",bean.getHeader().getEventType(),fsProperties.getClientId(), bean.getHeader().getAppId());
             return;
         }
-        if (!CharSequenceUtil.equals("contact.user.deleted_v3",bean.getHeader().getEventType())) {
+        if (!CharSequenceUtil.equals(type,bean.getHeader().getEventType())) {
             log.warn("收到员工{}事件，事件类型未匹配，跳过处理", bean.getHeader().getEventType());
             return;
         }
