@@ -9,8 +9,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.Valid;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -254,6 +253,11 @@ public class PurchaseReturnOrderDTO {
         private String code;
 
         /**
+         * 单据类型
+         */
+        private String type;
+
+        /**
          * 采购订单id
          */
         private String purchaseOrderId;
@@ -477,6 +481,11 @@ public class PurchaseReturnOrderDTO {
          * 退货单号
          */
         private String code;
+
+        /**
+         * 单据类型
+         */
+        private String type;
 
         /**
          * 采购单号
@@ -1685,5 +1694,416 @@ public class PurchaseReturnOrderDTO {
             validateDTO.setReplenishQty(entity.getReplenishQty());
             return validateDTO;
         }
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class PushDownSubcontractOrderViewDTO{
+
+        /**
+         * 单据日期
+         */
+        private LocalDate billDate;
+
+        /**
+         * 单据类型
+         */
+        private String type;
+
+        /**
+         * 采购组织Id
+         */
+        private String purchaseOrgId;
+
+        /**
+         * 采购组织名称
+         */
+        private String purchaseOrgName;
+
+        /**
+         * 采购员id
+         */
+        private String purchaserId;
+
+        /**
+         * 采购员名称
+         */
+        private String purchaserName;
+
+        /**
+         * 采购部门id
+         */
+        private String deptId;
+
+        /**
+         * 采购部门名称
+         */
+        private String deptName;
+
+        /**
+         * 来源id
+         */
+        private String sourceId;
+
+        /**
+         * 来源编码
+         */
+        private String sourceCode;
+
+        /**
+         * 来源类型
+         */
+        private String sourceType;
+
+        /**
+         * 明细集合
+         */
+        private List<PushDownSubcontractOrderDetailViewDTO> detailList;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class PushDownSubcontractOrderDetailViewDTO{
+
+        /**
+         * skuId
+         */
+        private String skuId;
+
+        /**
+         * skuNo
+         */
+        private String skuNo;
+
+        /**
+         * productName
+         */
+        private String productName;
+
+        /**
+         * 供应商id
+         */
+        private String supplierId;
+
+        /**
+         * 供应商名称
+         */
+        private String supplierName;
+
+        /**
+         * 币别
+         */
+        private String currency;
+
+        /**
+         * 币别符号
+         */
+        private String currencySymbol;
+
+        /**
+         * 返修数量
+         */
+        private Integer repairQty;
+
+        /**
+         * 返修单价
+         */
+        private BigDecimal repairPrice;
+
+        /**
+         * 返修金额
+         */
+        private BigDecimal repairAmount;
+
+        /**
+         * 采购数量
+         */
+        private Integer qty;
+
+        /**
+         * 领料数量(发料数量)
+         */
+        private Integer deliveryQty;
+        /**
+         * 含税单价
+         */
+        private BigDecimal price;
+
+        /**
+         * 税率
+         */
+        private BigDecimal taxRate;
+
+        /**
+         * 价税合计
+         */
+        private BigDecimal amount;
+
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
+
+        /**
+         * 仓库名称
+         */
+        private String warehouseName;
+
+        /**
+         * 库位
+         */
+        private String warehouseLocation;
+
+        /**
+         * 付款条件
+         */
+        private String paymentCondition;
+
+        /**
+         * 预计交货日期
+         */
+        private LocalDate planDeliveryDate;
+
+        /**
+         * 是否是赠品（false否，true是）
+         */
+        private Boolean isGift;
+
+        /**
+         * 是否加急（false否，true是）
+         */
+        private Boolean isUrgent;
+
+        /**
+         * 新品首批（false否,true是）
+         */
+        private String firstMassProduct;
+
+        /**
+         * 备注
+         */
+        private String remark;
+
+        /**
+         * 是否自动生成采购订单
+         */
+        private Boolean isGeneratePo;
+
+        /**
+         * 是否自动生成入库单
+         * 勾选即为当成品采购订单入库时，以相应BOM数量对子件数量自动入库。
+         */
+        private Boolean isGenerateInStock;
+
+        /**
+         * 来源明细id
+         */
+        private String sourceDetailId;
+
+
+        private String kingdeeDetailId;
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class PushDownSubcontractOrderDTO{
+
+        /**
+         * 单据日期
+         */
+        private LocalDate billDate;
+
+        /**
+         * 采购组织Id
+         */
+        private String purchaseOrgId;
+
+        /**
+         * 采购组织名称
+         */
+        private String purchaseOrgName;
+
+        /**
+         * 采购员id
+         */
+        private String purchaserId;
+
+        /**
+         * 采购员名称
+         */
+        private String purchaserName;
+
+        /**
+         * 采购部门id
+         */
+        private String deptId;
+
+        /**
+         * 采购部门名称
+         */
+        private String deptName;
+
+        /**
+         * 来源id
+         */
+        private String sourceId;
+
+        /**
+         * 来源编码
+         */
+        private String sourceCode;
+
+        /**
+         * 来源类型
+         */
+        private String sourceType;
+
+        /**
+         * 明细集合
+         */
+        @NotNull(message = "明细不能为空")
+        private List<PushDownSubcontractOrderDetailDTO> detailList;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class PushDownSubcontractOrderDetailDTO{
+
+        /**
+         * skuId
+         */
+        @NotBlank(message = "skuId不能为空")
+        @Size(max = 19,message = "skuId最大长度不能超过19位")
+        private String skuId;
+
+        /**
+         * 供应商id
+         */
+        @Size(max = 19,message = "供应商id最大长度不能超过19位")
+        private String supplierId;
+
+        /**
+         * 币别
+         */
+        private String currency;
+
+        /**
+         * 币别符号
+         */
+        private String currencySymbol;
+
+        /**
+         * 返修数量
+         */
+        private Integer repairQty;
+
+        /**
+         * 返修单价
+         */
+        private BigDecimal repairPrice;
+
+        /**
+         * 返修金额
+         */
+        private BigDecimal repairAmount;
+
+        /**
+         * 采购数量
+         */
+        @NotNull(message = "采购数量不能为空")
+        private Integer qty;
+        /**
+         * 领料数量(发料数量)
+         */
+        @NotNull(message = "领料数量(发料数量)不能为空")
+        private Integer deliveryQty;
+        /**
+         * 含税单价
+         */
+        @Digits(integer = 12, fraction = 4, message = "含税单价整数位不能超过12位，小数位不能超过4位")
+        private BigDecimal price;
+
+        /**
+         * 税率
+         */
+        @Digits(integer = 16,fraction = 4,message = "税率最大16字符，小数位不能大于4个字符")
+        private BigDecimal taxRate;
+
+        /**
+         * 价税合计
+         */
+        private BigDecimal amount;
+
+        /**
+         * 仓库id
+         */
+        @NotBlank(message = "仓库id不能为空")
+        @Size(max = 19,message = "仓库id最大长度不能超过19位")
+        private String warehouseId;
+
+        /**
+         * 库位
+         */
+        private String warehouseLocation;
+
+        /**
+         * 预计交货日期
+         */
+        private LocalDate planDeliveryDate;
+
+        /**
+         * 是否是赠品（false否，true是）
+         */
+        private Boolean isGift;
+
+        /**
+         * 是否加急（false否，true是）
+         */
+        @NotNull(message = "是否加急（false否，true是）不能为空")
+        private Boolean isUrgent;
+
+        /**
+         * 新品首批（false否,true是）
+         */
+        private String firstMassProduct;
+
+        /**
+         * 备注
+         */
+        @Size(max = 255,message = "备注不能大于255字符")
+        private String remark;
+
+        /**
+         * 是否自动生成采购订单
+         */
+        @NotNull(message = "是否自动生成采购订单不能为空")
+        private Boolean isGeneratePo;
+
+        /**
+         * 是否自动生成入库单
+         * 勾选即为当成品采购订单入库时，以相应BOM数量对子件数量自动入库。
+         */
+        @NotNull(message = "是否自动生成入库单不能为空")
+        private Boolean isGenerateInStock;
+
+        /**
+         * 来源明细id
+         */
+        @Size(max = 19,message = "来源明细id最大长度不能超过19位")
+        private String sourceDetailId;
+
+        /**
+         * 付款条件
+         */
+        @NotBlank(message = "付款条件不能为空")
+        private String paymentCondition;
+
+
+        private String kingdeeDetailId;
     }
 }

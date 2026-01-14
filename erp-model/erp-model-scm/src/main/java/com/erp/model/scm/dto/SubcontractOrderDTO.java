@@ -9,7 +9,6 @@ import com.erp.model.scm.entity.SubcontractOrderEntity;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
 import javax.validation.constraints.*;
 import java.io.Serializable;
 import java.math.BigDecimal;
@@ -191,6 +190,11 @@ public class SubcontractOrderDTO implements Serializable {
          */
         private LocalDate billDate;
         /**
+         * 单据类型
+         * /dict/list?key=subcontractOrderType
+         */
+        private String type;
+        /**
         * 审核状态
         */
         private String approveStatus;
@@ -311,6 +315,12 @@ public class SubcontractOrderDTO implements Serializable {
         private String code;
 
         /**
+         * 单据类型
+         * /dict/list?key=subcontractOrderType
+         */
+        private String type;
+
+        /**
          * 审核状态
          */
         private String approveStatus;
@@ -394,6 +404,13 @@ public class SubcontractOrderDTO implements Serializable {
          */
         @NotNull(message = "单据日期不能为空")
         private LocalDate billDate;
+
+        /**
+         * 单据类型
+         * /dict/list?key=subcontractOrderType
+         */
+        @NotNull(message = "单据类型不能为空")
+        private String type;
 
         /**
          * 采购组织id

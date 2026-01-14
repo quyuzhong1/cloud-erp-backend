@@ -513,4 +513,24 @@ public class PoReturnController extends BaseController {
     public ApiResult<Boolean> pushDownPurchase(@RequestBody @Validated List<PurchasePriceDTO.PushDownPurchaseView> pushDownPurchaseViews) {
         return success(poReturnService.pushDownPurchase(pushDownPurchaseViews));
     }
+
+    /**
+     * 下推委外订单详情
+     * @param baseIdsDTO
+     * @return
+     */
+    @PostMapping("/pushDownSubcontractOrderView")
+    public ApiResult<PurchaseReturnOrderDTO.PushDownSubcontractOrderViewDTO> pushDownSubcontractOrderView(@RequestBody @Validated BaseIdsDTO.IdsDTO baseIdsDTO) {
+        return success(poReturnService.pushDownSubcontractOrderView(baseIdsDTO.getIds()));
+    }
+
+    /**
+     * 下推委外订单
+     * @param pushDownSubcontractOrderDTO
+     * @return
+     */
+    @PostMapping("/pushDownSubcontractOrder")
+    public ApiResult<Boolean> pushDownSubcontractOrder(@RequestBody @Validated PurchaseReturnOrderDTO.PushDownSubcontractOrderDTO pushDownSubcontractOrderDTO) {
+        return success(poReturnService.pushDownSubcontractOrder(pushDownSubcontractOrderDTO));
+    }
 }
