@@ -1092,7 +1092,7 @@ public class RefProductImgAttachmentServiceImpl extends SuperServiceImpl<RefProd
 
     /**
      * 单个删除
-     * 删除关联信息、附件表和文件
+     * 删除关联信息、附件表和文件，并同步更新product_detail的images_url
      */
     @Override
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
@@ -1106,59 +1106,226 @@ public class RefProductImgAttachmentServiceImpl extends SuperServiceImpl<RefProd
             throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "图片分类附件关联记录");
         }
         
-        // 2. 查询附件记录
+        String productDetailId = refEntity.getProductDetailId();
+        boolean isMainImage = PRODUCT_MAIN_IMAGE_CATEGORY_ID.equals(refEntity.getCategoryId());
+        
+        // 2. 查询附件记录（原图和缩略图）
         String attachmentId = refEntity.getAttachmentId();
+        String thumbnailAttachmentId = refEntity.getThumbnailAttachmentId();
+        String originalUrl = null;
+        String thumbnailUrl = null;
         String fileUrl = null;
+        
         if (StrUtil.isNotBlank(attachmentId)) {
             PlmAttachmentEntity attachmentEntity = plmAttachmentService.getById(attachmentId);
             if (attachmentEntity != null) {
-                fileUrl = attachmentEntity.getAttachUrl();
-                
-                // 3. 删除关联记录
-                boolean deleted = super.removeById(id);
-                if (!deleted) {
-                    throw new ServiceException(ApiError.BILL_DELETE_FAILED);
-                }
-                
-                // 4. 删除附件记录
-                boolean attachmentDeleted = plmAttachmentService.removeById(attachmentId);
-                if (!attachmentDeleted) {
-                    log.warn("删除附件记录失败，attachmentId={}", attachmentId);
-                }
-                
-                // 5. 删除FastDFS中的文件
-                if (StrUtil.isNotBlank(fileUrl)) {
-                    try {
-                        int deleteResult = fileFeign.deleteFile(fileUrl);
-                        if (deleteResult == 0) {
-                            log.info("删除文件成功，fileUrl={}", fileUrl);
-                        } else {
-                            log.warn("删除文件失败，fileUrl={}, result={}", fileUrl, deleteResult);
-                        }
-                    } catch (Exception e) {
-                        log.error("删除文件时出错，fileUrl={}", fileUrl, e);
-                        // 不抛出异常，避免影响主流程
-                    }
-                }
-            } else {
-                // 附件记录不存在，只删除关联记录
-                boolean deleted = super.removeById(id);
-                if (!deleted) {
-                    throw new ServiceException(ApiError.BILL_DELETE_FAILED);
-                }
+                originalUrl = attachmentEntity.getAttachUrl();
+                fileUrl = originalUrl;
             }
-        } else {
-            // 没有附件ID，只删除关联记录
-            boolean deleted = super.removeById(id);
-            if (!deleted) {
-                throw new ServiceException(ApiError.BILL_DELETE_FAILED);
+        }
+        
+        if (StrUtil.isNotBlank(thumbnailAttachmentId)) {
+            PlmAttachmentEntity thumbnailAttachmentEntity = plmAttachmentService.getById(thumbnailAttachmentId);
+            if (thumbnailAttachmentEntity != null) {
+                thumbnailUrl = thumbnailAttachmentEntity.getAttachUrl();
             }
+        }
+        
+        // 3. 删除关联记录
+        boolean deleted = super.removeById(id);
+        if (!deleted) {
+            throw new ServiceException(ApiError.BILL_DELETE_FAILED);
+        }
+        
+        // 4. 删除附件记录
+        if (StrUtil.isNotBlank(attachmentId)) {
+            boolean attachmentDeleted = plmAttachmentService.removeById(attachmentId);
+            if (!attachmentDeleted) {
+                log.warn("删除附件记录失败，attachmentId={}", attachmentId);
+            }
+        }
+        
+        if (StrUtil.isNotBlank(thumbnailAttachmentId) && !thumbnailAttachmentId.equals(attachmentId)) {
+            boolean thumbnailDeleted = plmAttachmentService.removeById(thumbnailAttachmentId);
+            if (!thumbnailDeleted) {
+                log.warn("删除缩略图附件记录失败，thumbnailAttachmentId={}", thumbnailAttachmentId);
+            }
+        }
+        
+        // 5. 删除FastDFS中的文件
+        if (StrUtil.isNotBlank(fileUrl)) {
+            try {
+                int deleteResult = fileFeign.deleteFile(fileUrl);
+                if (deleteResult == 0) {
+                    log.info("删除文件成功，fileUrl={}", fileUrl);
+                } else {
+                    log.warn("删除文件失败，fileUrl={}, result={}", fileUrl, deleteResult);
+                }
+            } catch (Exception e) {
+                log.error("删除文件时出错，fileUrl={}", fileUrl, e);
+                // 不抛出异常，避免影响主流程
+            }
+        }
+        
+        // 6. 同步更新product_detail的images_url
+        if (StrUtil.isNotBlank(productDetailId)) {
+            updateProductDetailImagesUrlAfterDelete(productDetailId, originalUrl, thumbnailUrl, isMainImage);
         }
         
         // 使用SKU编号作为code，如果没有则使用ID
         String code = StrUtil.isNotBlank(refEntity.getSkuNo()) ? refEntity.getSkuNo() : id;
         log.info("删除图片分类附件关联记录成功，id={}", id);
         return BatchResultDTO.success(id, code, "删除成功");
+    }
+    
+    /**
+     * 删除图片后更新product_detail的images_url
+     * @param productDetailId 产品明细ID
+     * @param originalUrl 原图URL
+     * @param thumbnailUrl 缩略图URL
+     * @param isMainImage 是否为主图
+     */
+    private void updateProductDetailImagesUrlAfterDelete(String productDetailId, String originalUrl, String thumbnailUrl, boolean isMainImage) {
+        try {
+            // 1. 获取product_detail记录
+            ProductDetailEntity productDetail = productDetailService.getById(productDetailId);
+            if (productDetail == null) {
+                log.warn("更新product_detail的images_url失败：产品明细不存在，productDetailId={}", productDetailId);
+                return;
+            }
+            
+            String oldImagesUrl = productDetail.getImagesUrl();
+            if (StrUtil.isBlank(oldImagesUrl)) {
+                log.info("product_detail的images_url为空，无需更新，productDetailId={}", productDetailId);
+                return;
+            }
+            
+            // 2. 解析当前的images_url列表
+            List<String> imageUrlList = Arrays.stream(oldImagesUrl.split(","))
+                    .map(String::trim)
+                    .filter(StrUtil::isNotBlank)
+                    .collect(Collectors.toList());
+            
+            if (CollUtil.isEmpty(imageUrlList)) {
+                log.info("product_detail的images_url列表为空，无需更新，productDetailId={}", productDetailId);
+                return;
+            }
+            
+            // 3. 判断删除的是否是主图（第一张）
+            boolean deletedIsMainImage = false;
+            if (isMainImage && CollUtil.isNotEmpty(imageUrlList)) {
+                // 检查第一张是否是当前删除的缩略图URL或原图URL
+                String firstUrl = imageUrlList.get(0);
+                if (firstUrl.equals(thumbnailUrl) || firstUrl.equals(originalUrl)) {
+                    deletedIsMainImage = true;
+                }
+            }
+            
+            // 4. 从列表中删除对应的URL（可能是缩略图URL或原图URL）
+            boolean removed = imageUrlList.remove(thumbnailUrl);
+            if (!removed) {
+                removed = imageUrlList.remove(originalUrl);
+            }
+            
+            if (!removed) {
+                log.warn("未在product_detail的images_url中找到要删除的URL，productDetailId={}, originalUrl={}, thumbnailUrl={}", 
+                        productDetailId, originalUrl, thumbnailUrl);
+            }
+            
+            // 5. 如果删除的是主图，需要把第二张移到第一位，并更新对应的ref_product_img_attachment分类
+            if (deletedIsMainImage && CollUtil.isNotEmpty(imageUrlList)) {
+                // 第二张图片的URL（现在会成为第一张）
+                String newMainImageUrl = imageUrlList.get(0);
+                
+                // 查找对应的ref_product_img_attachment记录
+                // 先通过缩略图URL查找，如果找不到，再通过原图URL查找
+                RefProductImgAttachmentEntity newMainImageRef = null;
+                
+                // 查询所有未删除的ref记录
+                List<RefProductImgAttachmentEntity> refList = super.lambdaQuery()
+                        .eq(RefProductImgAttachmentEntity::getProductDetailId, productDetailId)
+                        .eq(RefProductImgAttachmentEntity::getIsDeleted, false)
+                        .list();
+                
+                // 查询所有相关的attachment记录
+                Set<String> refAttachmentIds = refList.stream()
+                        .flatMap(ref -> {
+                            Set<String> ids = new HashSet<>();
+                            if (StrUtil.isNotBlank(ref.getAttachmentId())) {
+                                ids.add(ref.getAttachmentId());
+                            }
+                            if (StrUtil.isNotBlank(ref.getThumbnailAttachmentId())) {
+                                ids.add(ref.getThumbnailAttachmentId());
+                            }
+                            return ids.stream();
+                        })
+                        .collect(Collectors.toSet());
+                
+                if (CollUtil.isNotEmpty(refAttachmentIds)) {
+                    List<PlmAttachmentEntity> attachments = plmAttachmentService.listByIds(new ArrayList<>(refAttachmentIds));
+                    Map<String, PlmAttachmentEntity> attachmentMap = attachments.stream()
+                            .collect(Collectors.toMap(PlmAttachmentEntity::getId, att -> att));
+                    
+                    // 查找newMainImageUrl对应的ref记录
+                    for (RefProductImgAttachmentEntity ref : refList) {
+                        PlmAttachmentEntity refOriginalAttachment = attachmentMap.get(ref.getAttachmentId());
+                        String refThumbnailAttachmentId = StrUtil.isNotBlank(ref.getThumbnailAttachmentId()) 
+                                ? ref.getThumbnailAttachmentId() 
+                                : ref.getAttachmentId();
+                        PlmAttachmentEntity refThumbnailAttachment = attachmentMap.get(refThumbnailAttachmentId);
+                        
+                        if (refThumbnailAttachment != null && newMainImageUrl.equals(refThumbnailAttachment.getAttachUrl())) {
+                            newMainImageRef = ref;
+                            break;
+                        } else if (refOriginalAttachment != null && newMainImageUrl.equals(refOriginalAttachment.getAttachUrl())) {
+                            newMainImageRef = ref;
+                            break;
+                        }
+                    }
+                }
+                
+                // 更新新主图的分类
+                if (newMainImageRef != null) {
+                    if (!PRODUCT_MAIN_IMAGE_CATEGORY_ID.equals(newMainImageRef.getCategoryId())) {
+                        newMainImageRef.setCategoryId(PRODUCT_MAIN_IMAGE_CATEGORY_ID);
+                        super.updateById(newMainImageRef);
+                        log.info("更新新主图的分类，refId={}, url={}", newMainImageRef.getId(), newMainImageUrl);
+                    }
+                } else {
+                    log.warn("未找到新主图对应的ref_product_img_attachment记录，productDetailId={}, newMainImageUrl={}", 
+                            productDetailId, newMainImageUrl);
+                }
+            }
+            
+            // 6. 更新product_detail的images_url
+            String newImagesUrl = "";
+            if (CollUtil.isNotEmpty(imageUrlList)) {
+                newImagesUrl = String.join(",", imageUrlList);
+            }
+            
+            boolean updateResult = productDetailService.lambdaUpdate()
+                    .eq(ProductDetailEntity::getId, productDetailId)
+                    .set(ProductDetailEntity::getImagesUrl, newImagesUrl)
+                    .update();
+            
+            if (updateResult) {
+                // 记录操作日志
+                operateLogService.addSysLogBySave(
+                        "sku图片由[" + oldImagesUrl + "]变更为[" + newImagesUrl + "]",
+                        SKUCLASSPATH,
+                        productDetailId,
+                        productDetail.getProductId()
+                );
+                log.info("成功更新product_detail的images_url，productDetailId={}, 旧images_url={}, 新images_url={}", 
+                        productDetailId, oldImagesUrl, newImagesUrl);
+            } else {
+                log.warn("更新product_detail的images_url失败，productDetailId={}", productDetailId);
+            }
+        } catch (Exception e) {
+            log.error("更新product_detail的images_url时出错，productDetailId={}, originalUrl={}, thumbnailUrl={}, 错误信息={}", 
+                    productDetailId, originalUrl, thumbnailUrl, e.getMessage(), e);
+            // 不抛出异常，避免影响主流程
+        }
     }
 
     /**
