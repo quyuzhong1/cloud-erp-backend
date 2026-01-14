@@ -149,7 +149,7 @@ kcp.remark AS platformRemark
             AND   kpi.id = #{params.id}
         </if>
         <if test="params != null and params.searchKeyword != null and params.searchKeyword != ''">
-         AND  ( kai.country_name LIKE CONCAT('%', #{params.searchKeyword}, '%')  or kai.province LIKE CONCAT('%', #{params.searchKeyword}, '%') or kai.city LIKE CONCAT('%', #{params.searchKeyword}, '%') )
+         AND  ( kai.country_name ILIKE CONCAT('%', #{params.searchKeyword}::text, '%')  or kai.province ILIKE CONCAT('%', #{params.searchKeyword}::text, '%') or kai.city ILIKE CONCAT('%', #{params.searchKeyword}::text, '%') )
         </if>
         ORDER BY
             kai.is_default desc,
@@ -167,8 +167,6 @@ kcp.remark AS platformRemark
         kpi.country_id AS countryId,
         kpi.country_name AS countryName,
         kpi.language AS language,
-        kpi.email AS email,
-        kpi.phone AS phone,
         kpi.charge_id AS chargeId,
         kpi.charge_name AS chargeName,
         kpi.dept_id AS deptId,
@@ -198,8 +196,8 @@ kcp.remark AS platformRemark
         WHERE
         kpi.is_deleted = FALSE
         and kpi.disabled = FALSE
-        <if test="params != null and params.searchKeyword != null and params.searchKeyword != ''">
-        AND kpi.nickname LIKE CONCAT('%', #{params.searchKeyword}, '%')
+        <if test="searchKeyword != null and searchKeyword != ''">
+            AND kpi.nickname ILIKE concat('%',#{searchKeyword}::text,'%')
         </if>
         ORDER BY
         kpi.create_time desc
