@@ -164,7 +164,7 @@ public class FsCallbackEventHandler {
         //根据审批定义和审批实例id生成中台即时拉取任务
         DmpInoutDTO.CreateInputDTO dto = new DmpInoutDTO.CreateInputDTO();
         dto.setSystemCode(CfgApproveSyncSyncPlatformEnum.FEISHU.getCode());
-        dto.setBillType(DmpPullConstant.USER_DELETED);
+        dto.setBillType(type);
         dto.setTaskType(DmpInputTaskTaskTypeEnum.NORMAL.getCode());
         dto.setNextLevelId("");
         dto.setStartTime(LocalDateTime.now());

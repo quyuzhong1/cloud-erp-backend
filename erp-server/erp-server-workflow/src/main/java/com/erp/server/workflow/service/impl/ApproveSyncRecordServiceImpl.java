@@ -45,6 +45,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import com.lark.oapi.core.request.EventReq;
+import com.lark.oapi.core.utils.Jsons;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import lombok.extern.slf4j.Slf4j;
@@ -369,29 +370,37 @@ public class ApproveSyncRecordServiceImpl extends SuperServiceImpl<ApproveSyncRe
     @Override
     public void aa(EventReq event) throws JsonProcessingException {
         String plain = event.getPlain();
-        JSONObject jsonObject = JSON.parseObject(plain);
-        JSONObject thisEvent = jsonObject.getJSONObject("event");
-        if (ObjUtil.isEmpty(thisEvent)) {
+        if (ObjUtil.isEmpty(plain)) {
+            log.warn("收到员工{}事件:event= {},fsProperties = {},plain为空","contact.user.created_v3", Jsons.DEFAULT.toJson(event),fsProperties);
             return;
         }
 
-        // 在使用地方替换
         ObjectMapper objectMapper = new ObjectMapper();
-        FsCallbackUserEventDTO.ThirdUserDTO bean = objectMapper.readValue(plain, FsCallbackUserEventDTO.ThirdUserDTO.class);
-
-//        FsCallbackUserEventDTO.UserDeletedDTO bean = BeanUtil.toBean(plain, FsCallbackUserEventDTO.UserDeletedDTO.class);
-        if (!CharSequenceUtil.equals(fsProperties.getClientId(), bean.getHeader().getAppId())) {
-            log.warn("收到员工事件，应用ID未匹配，跳过处理,eventType={},clientId={}，appId={}",bean.getHeader().getEventType(),fsProperties.getClientId(), bean.getHeader().getAppId());
+        FsCallbackUserEventDTO.ThirdUserDTO bean = null;
+        try {
+            bean = objectMapper.readValue(plain, FsCallbackUserEventDTO.ThirdUserDTO.class);
+        } catch (JsonProcessingException e) {
+            log.warn("收到员工{}事件:event= {},fsProperties = {},ObjectMapper转换异常","contact.user.created_v3", Jsons.DEFAULT.toJson(event),fsProperties);
             return;
         }
-        if (!CharSequenceUtil.equals("contact.user.deleted_v3",bean.getHeader().getEventType())) {
-            log.warn("收到员工事件，事件类型未匹配，跳过处理,eventType={}", bean.getHeader().getEventType());
+
+        if (Objects.isNull(bean)) {
+            log.warn("收到员工{}事件:event= {},fsProperties = {},ObjectMapper转换后FsCallbackUserEventDTO.ThirdUserDTO为null","contact.user.created_v3", Jsons.DEFAULT.toJson(event),fsProperties);
+            return;
+        }
+
+        if (!CharSequenceUtil.equals(fsProperties.getClientId(), bean.getHeader().getAppId())) {
+            log.warn("收到员工{}事件，应用ID未匹配，跳过处理,clientId={}，appId={}",bean.getHeader().getEventType(),fsProperties.getClientId(), bean.getHeader().getAppId());
+            return;
+        }
+        if (!CharSequenceUtil.equals("contact.user.created_v3",bean.getHeader().getEventType())) {
+            log.warn("收到员工{}事件，事件类型未匹配，跳过处理", bean.getHeader().getEventType());
             return;
         }
         //根据审批定义和审批实例id生成中台即时拉取任务
         DmpInoutDTO.CreateInputDTO dto = new DmpInoutDTO.CreateInputDTO();
         dto.setSystemCode(CfgApproveSyncSyncPlatformEnum.FEISHU.getCode());
-        dto.setBillType(DmpPullConstant.USER_DELETED);
+        dto.setBillType("contact.user.created_v3");
         dto.setTaskType(DmpInputTaskTaskTypeEnum.NORMAL.getCode());
         dto.setNextLevelId("");
         dto.setStartTime(LocalDateTime.now());
