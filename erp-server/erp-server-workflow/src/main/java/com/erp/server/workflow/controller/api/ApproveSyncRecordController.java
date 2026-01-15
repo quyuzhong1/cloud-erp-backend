@@ -140,18 +140,4 @@ public class ApproveSyncRecordController extends BaseController {
     public void externalInstance(@RequestBody @Validated ApproveSyncRecordDTO.externalInstanceParamDTO dto) throws ClassNotFoundException {
         approveSyncRecordService.externalInstance(dto);
     }
-
-
-    /**
-     * 获取状态统计
-     * @return
-     */
-    @PostMapping("/aa")
-    public void aa(@RequestBody String str) throws JsonProcessingException {
-        EventReq event = JSONUtil.toBean(str, EventReq.class);
-        approveSyncRecordService.aa(event);
-    }
-
-
-
 }
