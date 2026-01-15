@@ -1437,28 +1437,56 @@ public class RefProductImgAttachmentServiceImpl extends SuperServiceImpl<RefProd
         // 5. 批量查询分类记录（包括所有父分类）
         Map<String, ProductImgCategoryEntity> categoryMap = new HashMap<>();
         if (CollUtil.isNotEmpty(categoryIds)) {
-            // 先查询直接分类
-            List<ProductImgCategoryEntity> categoryList = productImgCategoryService.listByIds(categoryIds);
-            categoryMap = categoryList.stream()
-                    .collect(Collectors.toMap(ProductImgCategoryEntity::getId, c -> c, (existing, replacement) -> existing));
-            
-            // 查询所有父分类
+            // 递归查询所有分类及其父分类
             Set<String> allCategoryIds = new HashSet<>(categoryIds);
-            for (ProductImgCategoryEntity category : categoryList) {
-                collectParentCategoryIds(category, allCategoryIds, categoryMap);
+            Set<String> processedIds = new HashSet<>();
+            
+            // 不断查询父分类，直到没有新的父分类为止
+            // 设置最大循环次数，防止数据异常导致死循环（一般分类层级不会超过10层）
+            int maxLoopCount = 20;
+            int loopCount = 0;
+            
+            while (loopCount < maxLoopCount) {
+                loopCount++;
+                
+                // 找出还未处理的分类ID
+                List<String> toQueryIds = allCategoryIds.stream()
+                        .filter(id -> !processedIds.contains(id) && !ALL_CATEGORY_ID.equals(id))
+                        .collect(Collectors.toList());
+                
+                if (CollUtil.isEmpty(toQueryIds)) {
+                    break; // 所有分类都已处理
+                }
+                
+                // 批量查询这批分类
+                List<ProductImgCategoryEntity> categoryList = productImgCategoryService.listByIds(toQueryIds);
+                if (CollUtil.isEmpty(categoryList)) {
+                    break; // 没有查询到新的分类，退出循环
+                }
+                
+                // 将查询到的分类添加到 categoryMap
+                boolean hasNewParent = false;
+                for (ProductImgCategoryEntity category : categoryList) {
+                    categoryMap.put(category.getId(), category);
+                    processedIds.add(category.getId());
+                    
+                    // 收集父分类ID
+                    String parentId = category.getParentId();
+                    if (StrUtil.isNotBlank(parentId) && !ALL_CATEGORY_ID.equals(parentId) && !processedIds.contains(parentId)) {
+                        allCategoryIds.add(parentId);
+                        hasNewParent = true;
+                    }
+                }
+                
+                // 如果本轮没有发现新的父分类，提前退出
+                if (!hasNewParent) {
+                    break;
+                }
             }
             
-            // 如果还有未查询的父分类，批量查询
-            Map<String, ProductImgCategoryEntity> finalCategoryMap = categoryMap;
-            List<String> missingParentIds = allCategoryIds.stream()
-                    .filter(id -> !finalCategoryMap.containsKey(id) && !ALL_CATEGORY_ID.equals(id))
-                    .collect(Collectors.toList());
-            
-            if (CollUtil.isNotEmpty(missingParentIds)) {
-                List<ProductImgCategoryEntity> parentCategoryList = productImgCategoryService.listByIds(missingParentIds);
-                for (ProductImgCategoryEntity parent : parentCategoryList) {
-                    categoryMap.put(parent.getId(), parent);
-                }
+            // 如果达到最大循环次数，记录警告日志
+            if (loopCount >= maxLoopCount) {
+                log.warn("批量下载图片-查询分类层级时达到最大循环次数限制，可能存在循环引用，categoryIds={}", categoryIds);
             }
         }
         
@@ -1530,28 +1558,6 @@ public class RefProductImgAttachmentServiceImpl extends SuperServiceImpl<RefProd
                 folderStructure.values().stream().mapToInt(List::size).sum(),
                 zipUrl);
         return zipUrl;
-    }
-    
-    /**
-     * 收集父分类ID
-     * @param category 分类实体
-     * @param allCategoryIds 所有分类ID集合（用于收集）
-     * @param categoryMap 已查询的分类映射
-     */
-    private void collectParentCategoryIds(ProductImgCategoryEntity category, Set<String> allCategoryIds, Map<String, ProductImgCategoryEntity> categoryMap) {
-        if (category == null) {
-            return;
-        }
-        
-        String parentId = category.getParentId();
-        if (StrUtil.isNotBlank(parentId) && !ALL_CATEGORY_ID.equals(parentId) && !allCategoryIds.contains(parentId)) {
-            allCategoryIds.add(parentId);
-            // 如果父分类已在categoryMap中，递归收集其父分类
-            ProductImgCategoryEntity parent = categoryMap.get(parentId);
-            if (parent != null) {
-                collectParentCategoryIds(parent, allCategoryIds, categoryMap);
-            }
-        }
     }
     
     /**
