@@ -5781,6 +5781,14 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 productSaleDTO.setProductProperty(propertyNames);
                 productSaleDTO.setProductPropertyId(propertyIds);
             }
+
+            /**
+             * 电池重量（g）
+             */
+            if(Objects.nonNull(batteryWeight)){
+                productSaleDTO.setBatteryWeight(dto.getBatteryWeight());
+            }
+
             productNoSpecDTO.setProductSaleDTO(productSaleDTO);
 
             //产品物流信息
