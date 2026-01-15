@@ -205,10 +205,10 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
             throw new ServiceException("样品领用单保存失败");
         }
 
-        // 库存校验：只有需要出库时才校验可领用库存
-        if (CollUtil.isNotEmpty(addDTO.getDetailList()) && Boolean.TRUE.equals(sampleRecipientEntity.getIsOutstockRequired())) {
-            validateRecipientQuantity(sampleRecipientEntity.getWarehouseId(), addDTO.getDetailList());
-        }
+//        // 库存校验：只有需要出库时才校验可领用库存
+//        if (CollUtil.isNotEmpty(addDTO.getDetailList()) && Boolean.TRUE.equals(sampleRecipientEntity.getIsOutstockRequired())) {
+//            validateRecipientQuantity(sampleRecipientEntity.getWarehouseId(), addDTO.getDetailList());
+//        }
 
         // 保存明细数据
         if (CollUtil.isNotEmpty(addDTO.getDetailList())) {
@@ -316,8 +316,11 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
             throw new ServiceException("样品领用单明细不能为空");
         }
 
-        // 库存校验：只有需要出库时才校验可领用库存
-        if (CollUtil.isNotEmpty(addOrUpdateDTO.getDetailList()) && Boolean.TRUE.equals(sampleRecipientEntity.getIsOutstockRequired())) {
+        // 库存校验：只有需要出库且用途类型不是PVT阶段-供应商时才校验可领用库存
+        boolean isPvtUsage = SampleUsageEnum.PVT.getUsage().equals(sampleRecipientEntity.getUsage());
+        if (CollUtil.isNotEmpty(addOrUpdateDTO.getDetailList()) 
+            && Boolean.TRUE.equals(sampleRecipientEntity.getIsOutstockRequired())
+            && !isPvtUsage) {
             validateRecipientQuantity(sampleRecipientEntity.getWarehouseId(), addOrUpdateDTO.getDetailList());
         }
 
