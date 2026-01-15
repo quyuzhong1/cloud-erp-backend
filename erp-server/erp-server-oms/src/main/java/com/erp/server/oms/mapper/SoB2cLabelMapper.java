@@ -3,6 +3,10 @@ import com.erp.model.oms.entity.SoB2cLabelEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
+import java.time.LocalDateTime;
+import java.util.List;
 
 
 /**
@@ -16,4 +20,5 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface SoB2cLabelMapper extends BaseMapper<SoB2cLabelEntity> {
 
+    List<String> getNotLabel(@Param("startTime")LocalDateTime startTime, @Param("endTime")LocalDateTime endTime);
 }

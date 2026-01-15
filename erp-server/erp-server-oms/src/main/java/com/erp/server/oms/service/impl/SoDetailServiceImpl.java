@@ -678,10 +678,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         return super.updateBatchById(soDetailList);
     }
 
-    @Override
-    public SoDetailDTO.ImportDivideSkuBoxDTO importDivideBoxFile(MultipartFile excelFile, HttpServletResponse response) {
-        return null;
-    }
+
 
     @Override
     public List<SoDetailEntity> listBySourceDetailIdList(List<String> sourceDetailIdList) {

@@ -225,7 +225,7 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
         // 仓库权限
         String warehousePermissionSql = authDataFeign.getWarehousePermissionSql("odp.to_warehouse_id");
         warehousePermissionSql = CharSequenceUtil.isBlank(warehousePermissionSql)? " AND 1=1 " : warehousePermissionSql;
-        return CharSequenceUtil.format("{} and ((odp.type = 'fba' {}) or (odp.type = 'thirdWarehouse' {}) or (odp.type = 'AliExpress' {}))", permissionSql, shopPermissionSql, warehousePermissionSql,shopPermissionSql);
+        return CharSequenceUtil.format("{} and (((odp.type = 'fba' or odp.type = 'awd') {}) or (odp.type = 'thirdWarehouse' {}) or (odp.type = 'AliExpress' {}))", permissionSql, shopPermissionSql, warehousePermissionSql,shopPermissionSql);
     }
 
     @Override
@@ -670,7 +670,14 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
                 viewDTO.setTypeName(RequisitionApplicationTypeEnum.ALIEXPRESS.getName());
                 viewDTO.setChannelId(viewDTO.getShopId());
                 viewDTO.setChannelName(viewDTO.getShopName());
+            }else if(DeliveryPlanTypeEnum.AWD.getCode().equals(viewDTO.getDeliveryPlanType())){
+                viewDTO.setType(RequisitionApplicationTypeEnum.AWD.getCode());
+                viewDTO.setTypeName(RequisitionApplicationTypeEnum.AWD.getName());
+                viewDTO.setChannelId(viewDTO.getShopId());
+                viewDTO.setChannelName(viewDTO.getShopName());
             }
+
+
 
             //来源类型
             viewDTO.setSourceType(SourceTypeEnum.DELIVERY_PLAN.getCode());
@@ -768,7 +775,7 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
             addDTO.setDetailList(detailAddList);
 
             // 检查和刷新fnSku
-            if (RequisitionApplicationTypeEnum.FBA.getCode().equalsIgnoreCase(addDTO.getType())){
+            if (RequisitionApplicationTypeEnum.FBA.getCode().equalsIgnoreCase(addDTO.getType()) || RequisitionApplicationTypeEnum.AWD.getCode().equalsIgnoreCase(addDTO.getType())){
                 fbaInventoryService.checkAndUpdateFnsku(addDTO);
             }
 
@@ -784,9 +791,9 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
     public List<WmsDeliveryPlanDTO.GenerateDeliverViewDTO> generateDeliverView(List<String> ids) {
         List<WmsDeliveryPlanDTO.GenerateDeliverViewDTO> list = baseMapper.generateDeliverView(ids);
 
-        List<String> fbaTypeCodes = list.stream().filter(v->v.getType().equals(DeliveryPlanTypeEnum.FBA.getCode())).map(WmsDeliveryPlanDTO.GenerateDeliverViewDTO::getSourceCode).collect(Collectors.toList());
+        List<String> fbaTypeCodes = list.stream().filter(v->v.getType().equals(DeliveryPlanTypeEnum.FBA.getCode()) || v.getType().equals(DeliveryPlanTypeEnum.AWD.getCode())).map(WmsDeliveryPlanDTO.GenerateDeliverViewDTO::getSourceCode).collect(Collectors.toList());
         if(CollectionUtils.isNotEmpty(fbaTypeCodes)){
-            throw new ServiceException(CharSequenceUtil.format("【{}】为FBA发货计划，发货单需要从FBA货件下推",fbaTypeCodes));
+            throw new ServiceException(CharSequenceUtil.format("【{}】为FBA或AWD发货计划，发货单需要从货件下推",fbaTypeCodes));
         }
 
         //审核通过才能下推
@@ -982,7 +989,7 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
 
             Integer deliveryQty = MathUtil.ZERO;
             //设置发货单号拿最新的一个发货单
-            if(entity.getType().equals(DeliveryPlanTypeEnum.FBA.getCode())){
+            if(entity.getType().equals(DeliveryPlanTypeEnum.FBA.getCode()) || entity.getType().equals(DeliveryPlanTypeEnum.AWD.getCode())){
                 List<RequisitionApplicationEntity> requisitionApplicationList = requisitionApplicationEntityList.stream().filter(req -> req.getSourceId().equals(entity.getId())).collect(Collectors.toList());
                 List<String> requisitionIdList = requisitionApplicationList.stream().map(v->v.getId()).collect(Collectors.toList());
                 List<FirstMileDeliveryEntity> deliveryEntities = firstMileDeliveryEntities.stream().filter(v->requisitionIdList.contains(v.getSourceId()) || v.getSourceId().equals(entity.getId())).sorted(Comparator.comparing(FirstMileDeliveryEntity::getCreateTime).reversed()).collect(Collectors.toList());
@@ -1096,8 +1103,8 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
             //映射详情信息
             List<FirstMileDeliveryDetailDTO.AddDTO> detailAddList = new ArrayList<>();
             for (WmsDeliveryPlanDTO.GenerateDeliverViewDTO viewDTO : value) {
-                if(DeliveryPlanTypeEnum.FBA.getCode().equals(viewDTO.getType())){
-                    throw new ServiceException(CharSequenceUtil.format("【{}】为FBA发货计划，发货单需要从FBA货件下推",viewDTO.getSourceCode()));
+                if(DeliveryPlanTypeEnum.FBA.getCode().equals(viewDTO.getType()) || DeliveryPlanTypeEnum.AWD.getCode().equals(viewDTO.getType())){
+                    throw new ServiceException(CharSequenceUtil.format("【{}】为FBA或AWD发货计划，发货单需要从货件下推",viewDTO.getSourceCode()));
                 }
                 //发货仓库中文
                 WarehouseDTO.UpdateDTO updateDTO = warehouseList.stream().filter(w -> w.getId().equals(viewDTO.getDeliveryWarehouseId())).findFirst().orElse(new WarehouseDTO.UpdateDTO());
@@ -1131,7 +1138,7 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
 
             BaseResultDTO.AddDTO add = firstMileDeliveryService.add(addDTO);
             if (isSubmit) {
-                firstMileDeliveryService.submit(add.getId());
+                firstMileDeliveryService.submit(add.getId(),Boolean.TRUE);
             }
         }
         return Boolean.TRUE;
@@ -1176,7 +1183,7 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
             //物流方式
             data.setExpectLogisticsMethodName(LogisticsMethodEnum.getName(data.getExpectLogisticsMethod()));
             //设置发货单号拿最新的一个发货单
-            if(data.getType().equals(DeliveryPlanTypeEnum.FBA.getCode())){
+            if(data.getType().equals(DeliveryPlanTypeEnum.FBA.getCode()) || data.getType().equals(DeliveryPlanTypeEnum.AWD.getCode())){
                 List<RequisitionApplicationEntity> requisitionApplicationList = requisitionApplicationEntityList.stream().filter(req -> req.getSourceId().equals(data.getId())).collect(Collectors.toList());
                 List<String> requisitionIdList = requisitionApplicationList.stream().map(v->v.getId()).collect(Collectors.toList());
                 List<FirstMileDeliveryEntity> deliveryEntities = firstMileDeliveryEntities.stream().filter(v->requisitionIdList.contains(v.getSourceId()) || v.getSourceId().equals(data.getId())).sorted(Comparator.comparing(FirstMileDeliveryEntity::getCreateTime).reversed()).collect(Collectors.toList());
@@ -1274,13 +1281,13 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
         if (CharSequenceUtil.isNotBlank(fromWarehouseName)){
             wmsDeliveryPlanEntity.setFromWarehouseName(fromWarehouseName);
         }
-        if(DeliveryPlanTypeEnum.FBA.getCode().equals(wmsDeliveryPlanEntity.getType())
+        if(DeliveryPlanTypeEnum.FBA.getCode().equals(wmsDeliveryPlanEntity.getType()) || DeliveryPlanTypeEnum.AWD.getCode().equals(wmsDeliveryPlanEntity.getType())
                 ||DeliveryPlanTypeEnum.ALIEXPRESS.getCode().equals(wmsDeliveryPlanEntity.getType())){
             if(CharSequenceUtil.isBlank(wmsDeliveryPlanEntity.getShopId())){
                 throw new ServiceException("店铺不能为空");
             }
             //明细中的fnsku不能为空
-            if(DeliveryPlanTypeEnum.FBA.getCode().equals(wmsDeliveryPlanEntity.getType())){
+            if(DeliveryPlanTypeEnum.FBA.getCode().equals(wmsDeliveryPlanEntity.getType()) || DeliveryPlanTypeEnum.AWD.getCode().equals(wmsDeliveryPlanEntity.getType())){
                 long count = detailList.stream().filter(obj -> CharSequenceUtil.isBlank(obj.getFnSku())).count();
                 if (count > 0) {
                     throw new ServiceException(ApiError.WH_FBA_FNSKU_NOT_BLANK);

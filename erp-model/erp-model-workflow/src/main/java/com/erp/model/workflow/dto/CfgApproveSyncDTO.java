@@ -433,6 +433,8 @@ public class CfgApproveSyncDTO implements Serializable {
          */
         private Map<String,Object> variablesMap;
 
+        private Boolean isSend = true;
+
     }
 
 }

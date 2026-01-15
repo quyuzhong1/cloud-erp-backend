@@ -317,7 +317,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         // 仓库权限
         String warehousePermissionSql = authDataFeign.getWarehousePermissionSql("ra.channel_id");
         warehousePermissionSql = CharSequenceUtil.isBlank(warehousePermissionSql)? " AND 1=1 " : warehousePermissionSql;
-        return CharSequenceUtil.format(" and ((ra.type = 'fba' {}) or (ra.type = 'thirdWarehouse' {}) or (ra.channel_id = '') or (ra.type = 'AliExpress' {}))", shopPermissionSql, warehousePermissionSql,shopPermissionSql);
+        return CharSequenceUtil.format(" and (((ra.type = 'fba' or ra.type = 'awd') {}) or (ra.type = 'thirdWarehouse' {}) or (ra.channel_id = '') or (ra.type = 'AliExpress' {}))", shopPermissionSql, warehousePermissionSql,shopPermissionSql);
     }
 
     @Override
@@ -1194,8 +1194,8 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                 resultDTOList.add(BatchResultDTO.fail(bindShipment.getId(),bindShipment.getId(), "单据不存在"));
                 continue;
             }
-            if(!RequisitionApplicationTypeEnum.FBA.getCode().equals(requisitionApplicationEntity.getType())){
-                resultDTOList.add(BatchResultDTO.fail(requisitionApplicationEntity.getId(),requisitionApplicationEntity.getCode(), "不是FBA要货单，无法绑定货件"));
+            if(!RequisitionApplicationTypeEnum.FBA.getCode().equals(requisitionApplicationEntity.getType()) && !RequisitionApplicationTypeEnum.AWD.getCode().equals(requisitionApplicationEntity.getType())){
+                resultDTOList.add(BatchResultDTO.fail(requisitionApplicationEntity.getId(),requisitionApplicationEntity.getCode(), "不是FBA/AWD要货单，无法绑定货件"));
                 continue;
             }
             if(!requisitionApplicationEntity.getStatus().equals(RequisitionApplicationStatusEnum.HANDLE.getCode())){
@@ -1304,8 +1304,8 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         if (count > 1) {
             throw new ServiceException(ApiError.SO_DEMAND_REQ_ALREADY_PUSHED_DELIVERY);
         }
-        if(list.stream().anyMatch(v->RequisitionApplicationTypeEnum.FBA.getCode().equals(v.getType()))){
-            throw new ServiceException("FBA要货申请不支持批量下推");
+        if(list.stream().anyMatch(v->RequisitionApplicationTypeEnum.FBA.getCode().equals(v.getType()) || RequisitionApplicationTypeEnum.AWD.getCode().equals(v.getType()))){
+            throw new ServiceException("FBA/AWD要货申请不支持批量下推");
         }
         List<FirstMileDeliveryEntity> entities = firstMileDeliveryService.listBySourceIds(ids);
         boolean invalidStatus = entities.stream().anyMatch(FirstMileDeliveryEntity::getInvalidStatus);
@@ -1335,6 +1335,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
             viewDTO.setCountry(wmsDeliveryPlanEntity.getCountry());
 
             if (RequisitionApplicationTypeEnum.FBA.getCode().equals(viewDTO.getType()) ||
+                    RequisitionApplicationTypeEnum.AWD.getCode().equals(viewDTO.getType()) ||
                     RequisitionApplicationTypeEnum.ALIEXPRESS.getCode().equals(viewDTO.getType())) {
                 ShopInfoEntity shopInfo = shopInfoEntities.stream()
                         .filter(req -> req.getId().equals(viewDTO.getChannelId()))
@@ -1420,8 +1421,8 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
     @Override
     public List<RequisitionApplicationDTO.FbaBindShipmentViewDetailDTO> fbaBindShipmentView(String id) {
         RequisitionApplicationEntity entity = Optional.ofNullable(this.getById(id)).orElseThrow(()-> new ServiceException("要货申请不存在"));
-        if(!entity.getType().equals(RequisitionApplicationTypeEnum.FBA.getCode())){
-            throw new ServiceException("非FBA来源无法绑定货件");
+        if(!entity.getType().equals(RequisitionApplicationTypeEnum.FBA.getCode()) && !entity.getType().equals(RequisitionApplicationTypeEnum.AWD.getCode())){
+            throw new ServiceException("非FBA/AWD来源无法绑定货件");
         }
 
         PackingTaskEntity packingTaskEntity = Optional.ofNullable(packingTaskService.getBySourceCode(entity.getCode())).orElseThrow(()-> new ServiceException("未生成装箱任务"));
@@ -1435,6 +1436,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         List<RequisitionApplicationDTO.FbaBindShipmentViewDetailDTO> resultList = baseMapper.fbaBindShipmentView(cartonIds);
         resultList.forEach(v->{
             v.setId(id);
+            v.setType(entity.getType());
             cartonEntityList.stream().filter(e -> e.getId().equals(v.getCartonId())).findFirst().ifPresent(c -> {
                 v.setIsReleaseInventory(c.getIsReleaseInventory());
             });
@@ -1676,7 +1678,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
     @Override
     public List<RequisitionApplicationDTO.DeliverRecordView> listDeliverRecord(String id) {
         RequisitionApplicationEntity requisitionApplicationEntity = Optional.ofNullable(this.getById(id)).orElseThrow(()->new ServiceException("要货申请为空"));
-        if(requisitionApplicationEntity.getType().equals(RequisitionApplicationTypeEnum.FBA.getCode())){
+        if(requisitionApplicationEntity.getType().equals(RequisitionApplicationTypeEnum.FBA.getCode()) || RequisitionApplicationTypeEnum.AWD.getCode().equals(requisitionApplicationEntity.getType())){
             return baseMapper.listFbaDeliverRecord(id);
         }else{
             return baseMapper.listWarehouseDeliverRecord(id);
@@ -1919,7 +1921,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         for (Map.Entry<String, List<RequisitionApplicationDTO.GenerateDeliverViewDTO>> entry : map.entrySet()) {
             List<RequisitionApplicationDTO.GenerateDeliverViewDTO> value = entry.getValue();
             RequisitionApplicationDTO.GenerateDeliverViewDTO view = value.get(MathUtil.ZERO);
-            if(RequisitionApplicationTypeEnum.FBA.getCode().equals(view.getType()) && CharSequenceUtil.isBlank(view.getFbaShipmentCode())){
+            if((RequisitionApplicationTypeEnum.FBA.getCode().equals(view.getType()) || RequisitionApplicationTypeEnum.AWD.getCode().equals(view.getType())) && CharSequenceUtil.isBlank(view.getFbaShipmentCode())){
                 throw new ServiceException(CharSequenceUtil.format("要货申请{}未绑定货件单号，无法下推发货单",view.getSourceCode()));
             }
             //映射主表信息
@@ -1928,6 +1930,8 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
             //备货类型
             if(RequisitionApplicationTypeEnum.FBA.getCode().equals(view.getType())){
                 addDTO.setDemandType(FbaDemandTypeEnum.DEMAND_PLATFORM_WAREHOUSE.getCode());
+            }else if (RequisitionApplicationTypeEnum.AWD.getCode().equals(view.getType())){
+                addDTO.setDemandType(FbaDemandTypeEnum.DEMAND_AWD_WAREHOUSE.getCode());
             }else if (RequisitionApplicationTypeEnum.THIRD_WAREHOUSE.getCode().equals(view.getType())){
                 addDTO.setDemandType(FbaDemandTypeEnum.DEMAND_OVERSEAS_WAREHOUSE.getCode());
             }else{
@@ -1987,7 +1991,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
             //回写要货申请的头程发货单生成状态
             writeBackRequisitionDeliveryPushDownStatus(addDTO.getSourceId());
             if (Boolean.TRUE.equals(isSubmit)) {
-                firstMileDeliveryService.submit(add.getId());
+                firstMileDeliveryService.submit(add.getId(),Boolean.TRUE);
             }
             if(CollectionUtils.isNotEmpty(updateDetailList)){
                 requisitionApplicationDetailService.updateBatchById(updateDetailList);
@@ -2041,11 +2045,20 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         }
 
         PickingListsDTO.AddDTO addDTO = new PickingListsDTO.AddDTO();
-        addDTO.setBillType(RequisitionApplicationTypeEnum.FBA.getCode().equals(application.getType()) ?
-                PickingBillTypeEnum.FBA.getCode() : PickingBillTypeEnum.THIRD.getCode());
+        if (RequisitionApplicationTypeEnum.AWD.getCode().equals(application.getType())) {
+            addDTO.setBillType(PickingBillTypeEnum.AWD.getCode());
+        }else if (RequisitionApplicationTypeEnum.FBA.getCode().equals(application.getType())){
+            addDTO.setBillType(PickingBillTypeEnum.FBA.getCode());
+        }else {
+            addDTO.setBillType(PickingBillTypeEnum.THIRD.getCode());
+        }
         if (RequisitionApplicationTypeEnum.FBA.getCode().equals(application.getType())) {
             ShopInfoEntity shopInfo = shopInfoFeign.getShopInfoById(application.getChannelId());
             addDTO.setDeliveryWarehouseId(shopInfo.getWarehouseId());
+            addDTO.setCountryCode(shopInfo.getDictCountryCode());
+        }else if (RequisitionApplicationTypeEnum.AWD.getCode().equals(application.getType())){
+            ShopInfoEntity shopInfo = shopInfoFeign.getShopInfoById(application.getChannelId());
+            addDTO.setDeliveryWarehouseId(shopInfo.getAwdWarehouseId());
             addDTO.setCountryCode(shopInfo.getDictCountryCode());
         }else {
             OverseasProviderWarehouseEntity overseasProviderWarehouseEntity = overseasProviderWarehouseService.getByWarehouseId(application.getChannelId());
@@ -2443,8 +2456,9 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                 return;
             }
             String channelName = "";
-            if(RequisitionApplicationTypeEnum.FBA.getCode().equals(requisitionApplicationEntity.getType())
-            ||RequisitionApplicationTypeEnum.ALIEXPRESS.getCode().equals(requisitionApplicationEntity.getType())){
+            if((RequisitionApplicationTypeEnum.FBA.getCode().equals(requisitionApplicationEntity.getType())
+                    || RequisitionApplicationTypeEnum.AWD.getCode().equals(requisitionApplicationEntity.getType()))
+                    || RequisitionApplicationTypeEnum.ALIEXPRESS.getCode().equals(requisitionApplicationEntity.getType())){
                 ShopInfoEntity shopInfoEntity = shopInfoFeign.getShopInfoById(requisitionApplicationEntity.getChannelId());
                 if(Objects.nonNull(shopInfoEntity)){
                     channelName = shopInfoEntity.getName();

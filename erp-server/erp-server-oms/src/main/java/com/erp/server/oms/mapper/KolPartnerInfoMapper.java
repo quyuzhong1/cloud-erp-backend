@@ -47,5 +47,5 @@ public interface KolPartnerInfoMapper extends BaseMapper<KolPartnerInfoEntity> {
 
     List<KolPartnerInfoDTO.PartnerAddressDTO> partnerAddressList(@Param("params") KolPartnerInfoDTO.AddressSelectDTO params);
 
-    List<KolPartnerInfoDTO.DropDownDTO> dropDown(@Param("params") KolPartnerInfoDTO.SelectDTO params);
+    List<KolPartnerInfoDTO.DropDownDTO> dropDown(@Param("searchKeyword") String searchKeyword);
 }

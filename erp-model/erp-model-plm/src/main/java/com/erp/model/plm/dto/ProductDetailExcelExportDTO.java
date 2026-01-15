@@ -27,10 +27,10 @@ public class ProductDetailExcelExportDTO {
     /**
      * 图片
      */
-    @ExcelProperty("图片")
-    @ColumnWidth(12)
-    @MenuCode("plm:product:detail:listProinfo")
-    private byte[] image;
+//    @ExcelProperty("图片")
+//    @ColumnWidth(12)
+//    @MenuCode("plm:product:detail:listProinfo")
+//    private byte[] image;
 
     /**
      * spuNo

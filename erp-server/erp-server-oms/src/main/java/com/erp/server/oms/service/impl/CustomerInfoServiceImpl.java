@@ -399,13 +399,14 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
      * 提交
      *
      * @param ids
+     * @param isUpdateAddress
      * @return java.lang.Boolean
      * @author yl
      * @date 2023-05-12 16:47
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean submit(List<String> ids) {
+    public Boolean submit(List<String> ids, Boolean isUpdateAddress) {
         if (CollectionUtils.isEmpty(ids)) {
             return false;
         }
@@ -438,6 +439,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             throw new ServiceException(ApiError.BILL_WAIT_SUBMIT_TO_APPROVE_ING);
         }
         //提交流程
+        list.forEach(v->v.setIsUpdateAddress(isUpdateAddress?"是":"否"));
         startProcess(list);
         // 启动流程
         List<Pair<String, String>> pairList = list.stream().filter(s -> s.getApproveStatus().getStatus().equals(waitSubmitStatus)).
@@ -647,7 +649,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         if (StringUtils.isBlank(id)) {
             throw new ServiceException(ApiError.BILL_SAVE_FAILED);
         }
-        Boolean result = this.submit(Arrays.asList(id));
+        Boolean result = this.submit(Arrays.asList(id), false);
         if (result) {
             return id;
         }
@@ -884,7 +886,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         if (StringUtils.isBlank(id)) {
             throw new ServiceException(ApiError.BILL_UPDATE_FAILED);
         }
-        return this.submit(Arrays.asList(id));
+        return this.submit(Arrays.asList(id), false);
     }
 
 
@@ -1283,6 +1285,8 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         CustomerAddressDTO.ViewDTO address = addressList.stream().filter(c -> c.getIsDefault()).findFirst().orElse(null);
         if (address != null) {
             base.setAddress(address.getAddress());
+            base.setAddress2(address.getAddress2());
+            base.setAddress3(address.getAddress3());
             base.setAddressId(address.getId());
             base.setAddressType(address.getType());
             base.setPerson(address.getPerson());
@@ -2599,5 +2603,56 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         }
         resultList = resultList.stream().sorted(Comparator.comparing(CustomerDTO.InfoDTO::getDisabled)).collect(Collectors.toList());
         return resultList;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public String updateCustomerAddress(CustomerDTO.UpdateDTO dto) {
+        CustomerInfoEntity customerInfoEntity = this.getById(dto.getId());
+        if (customerInfoEntity == null) {
+            throw new ServiceException("客户信息不存在，无法修改联系人及地址信息");
+        }
+        ApproveStatusEnum approveStatus = customerInfoEntity.getApproveStatus();
+        if(approveStatus.equals(ApproveStatusEnum.APPROVE)){
+            this.disApprove(customerInfoEntity);
+        }
+        if(approveStatus.equals(ApproveStatusEnum.APPROVE_ING)){
+            this.cancelProcess(Collections.singletonList(dto.getId()));
+        }
+        dto.getAddressList().forEach(address -> {
+            if(StringUtils.isBlank(address.getType())){
+                address.setType("");
+            }
+        });
+        //待提交，直接修改，
+        String id = dto.getId();
+        //客户联系人
+        List<CustomerContactDTO.ViewDTO> contactList = dto.getContactList();
+        List<CustomerContactDTO.AddDTO> contactAddList = BeanMapper.copyList(contactList, CustomerContactDTO.AddDTO.class);
+        //检查联系人默认是否多个
+        customerContactService.checkIsDefault(contactAddList);
+
+        //检查默认地址是否多个
+        List<CustomerAddressDTO.ViewDTO> addressList = dto.getAddressList();
+        List<CustomerAddressDTO.AddDTO> addressAddList = BeanMapper.copyList(addressList, CustomerAddressDTO.AddDTO.class);
+        customerAddressService.checkIsDefault(addressAddList);
+
+        //批量修改联系人信息
+        List<DmpPushTaskEntity> dmpPushTaskList= customerContactService.updateBatchContact(id, dto.getContactList());
+        //推送金蝶
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+            @Override
+            public void afterCommit() {
+                dmpMqFeign.sendTask(dmpPushTaskList);
+            }
+        });
+
+        //批量修改地址信息
+        customerAddressService.updateBatchAddress(id, dto.getAddressList());
+        if(approveStatus.equals(ApproveStatusEnum.APPROVE)||approveStatus.equals(ApproveStatusEnum.APPROVE_ING)){
+            this.submit(Collections.singletonList(dto.getId()),true);
+        }
+
+        return customerInfoEntity.getId();
     }
 }

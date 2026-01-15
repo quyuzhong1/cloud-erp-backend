@@ -26,6 +26,7 @@ import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.oms.enums.DeliveryModeEnum;
+import com.erp.model.plm.dto.LogisticsProductDTO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.tms.dto.LogisticsChannelDTO;
@@ -54,6 +55,7 @@ import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.CustomerFeign;
 import com.erp.rpc.oms.feign.SoInfoFeign;
+import com.erp.rpc.plm.feign.LogisticsProductFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.server.wms.convert.B2bThirdDeliveryConverter;
@@ -126,6 +128,9 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
     private B2bThirdDeliveryService service;
 
     @Resource
+    private LogisticsProductFeign logisticsProductFeign;
+
+    @Resource
     private ThirdWarehouseRegistry thirdWarehouseRegistry;
     private static final int MAX_RETRY_COUNT = 3;
     private static final long RETRY_DELAY_SECONDS = 10000;
@@ -141,7 +146,7 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
         BeanMapperUtils.copy(addDTO, b2bThirdDeliveryEntity);
 
         // 数据处理
-        handleData(b2bThirdDeliveryEntity);
+        handleData(b2bThirdDeliveryEntity,addDTO);
 
         log.info("开始新增B2B三方发货单");
         // 生成单号
@@ -259,7 +264,7 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
         B2bThirdDeliveryEntity b2bThirdDeliveryEntity = BeanMapperUtils.map(B2bThirdDeliveryEntity.class, addOrUpdateDTO);
 
         // 数据处理
-        handleData(b2bThirdDeliveryEntity);
+        handleData(b2bThirdDeliveryEntity,addOrUpdateDTO);
         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_SFFH);
         b2bThirdDeliveryEntity.setCode(code);
         log.info("编辑 开始修改B2B三方发货单数据，单号：【{}】", old.getCode());
@@ -320,7 +325,10 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
     private void fillList(List<B2bThirdDeliveryDTO.PagingViewDTO> records) {
         records.forEach(e -> {
             e.setStatusName(ThirdDeliveryStatusEnum.getName(e.getStatus()));
-            e.setWarehouseOperationTypeName(WarehouseOperationTypeEnum.getName(e.getWarehouseOperationType()));
+            String warehouseOperationType = e.getWarehouseOperationType();
+            List<String> operationTypeList = Arrays.asList(warehouseOperationType.split(","));
+            List<String> operationTypeNameList = operationTypeList.stream().map(WarehouseOperationTypeEnum::getName).collect(Collectors.toList());
+            e.setWarehouseOperationTypeName(String.join(",", operationTypeNameList));
             e.setDeliveryMethodName(DeliveryModeEnum.getName(e.getDeliveryMethod()));
             e.setPushTypeName(B2BDeliveryPushTypeEnum.getName(e.getPushType()));
         });
@@ -344,6 +352,10 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
             List<B2bThirdDeliveryDetailEntity> detailEntityList = b2bThirdDeliveryDetailService.listByMainIds(Collections.singletonList(dto.getId()));
             //客户信息要使用销售订单的，不能使用B2B三方发货单的客户信息（销售订单的客户信息可能会发生变化）
             B2bThirdDeliveryDTO.ViewDTO viewDTO = B2bThirdDeliveryConverter.INSTANCE.toB2bThirdDeliveryViewDTO(entity, detailEntityList);
+            String operationDesc = entity.getOperationDesc();
+            String warehouseOperationType = entity.getWarehouseOperationType();
+            viewDTO.setWarehouseOperationTypeDTOList(B2bThirdDeliveryDTO.WarehouseOperationTypeDTO.convert(warehouseOperationType,operationDesc));
+
             viewDTO.setAttachList(wmsAttachmentService.getByBusinessIds(Collections.singletonList(dto.getId()), ModuleTypeEnum.B2B_THIRD_DELIVERY.getCode()));
             if (Objects.nonNull(soInfoEntity)) {
                 viewDTO.setReceiverName(soInfoEntity.getReceiverName());
@@ -588,8 +600,7 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
         if (StrUtil.isNotBlank(deliveryTimeStr)) {
             deliveryTime = LocalDateTime.parse(deliveryTimeStr, DateTimeFormatter.ISO_LOCAL_DATE_TIME);
         }
-        if (response.getStatus().equals(B2BThirdDeliveryCancelResultEnum.EXCEPTION.getCode()) ||
-                response.getStatus().equals(B2BThirdDeliveryCancelResultEnum.DISCARD.getCode()) ||
+        if (    response.getStatus().equals(B2BThirdDeliveryCancelResultEnum.DISCARD.getCode()) ||
                 response.getStatus().equals(B2BThirdDeliveryCancelResultEnum.PROBLEM.getCode())) {
             //拦截成功，更新B2B三方发货单状态 取消发货
             service.updateStatus(id, ThirdDeliveryStatusEnum.CANCEL_DELIVERY.getCode(), "", response.getPlatformOrderCode(), "", response.getTrackNo(), deliveryTime);
@@ -608,6 +619,9 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
                 response.getStatus().equals(B2BThirdDeliveryCancelResultEnum.DISCARD_PROCESSED.getCode())) {
             //拦截中 记录拦截标识
             service.updateStatus(id, ThirdDeliveryStatusEnum.INTERCEPTING.getCode(), "", response.getPlatformOrderCode(), "", response.getTrackNo(), deliveryTime);
+        }  else if (response.getStatus().equals(B2BThirdDeliveryCancelResultEnum.EXCEPTION.getCode())) {
+
+            operateLogService.addModuleOperateLog("海外仓出库异常，系统应拦截，为保证发货时效运营要求不予拦截，直接海外仓后台修改提交", ModuleTypeEnum.B2B_THIRD_DELIVERY.getCode(), id, "出库异常");
         } else {
             XxlJobHelper.log("不操作的状态,id={},code={},status={}", id, response.getCode(), response.getStatus());
         }
@@ -649,6 +663,26 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
             log.error("B2BThirdDelivery创建订单失败，状态不是CREATING，当前状态：{}", entity.getStatus());
             return;
         }
+        //过滤掉服务费用SKU
+        List<ThirdWarehouseCreateFbaOutboundReq.Item> items = req.getItems();
+        List<String> skuIdList = items.stream().map(ThirdWarehouseCreateFbaOutboundReq.Item::getSkuId).distinct().collect(Collectors.toList());
+        List<LogisticsProductDTO.ProductDTO> skuInfoList = logisticsProductFeign.listLogisticsProduct(skuIdList);
+        items = items.stream().filter(v->{
+            LogisticsProductDTO.ProductDTO productDTO = skuInfoList.stream().filter(s->s.getSkuId().equals(v.getSkuId())).findFirst().orElse(null);
+            if(Objects.isNull(productDTO)){
+                return true;
+            }
+            if ("费用".equalsIgnoreCase(productDTO.getProperty()) || "服务".equalsIgnoreCase(productDTO.getProperty())){
+                return false;
+            }
+            return true;
+        }).collect(Collectors.toList());
+        if(CollectionUtils.isEmpty(items)){
+            this.updateStatus(sourceId, ThirdDeliveryStatusEnum.FAILED.getCode(), ApiError.COMMON_NO_DELIVERY_SKU.getMsg(), "", "", "", null);
+            return;
+        }
+        req.setItems(items);
+
         ThirdWarehouseService service = thirdWarehouseRegistry.getHandler(req.getThirdWarehouseProvideCode());
         if (Objects.isNull(service)) {
             this.updateStatus(sourceId, ThirdDeliveryStatusEnum.FAILED.getCode(), CharSequenceUtil.format(ApiError.COMMON_PROVIDER_SERVICE_NOT_ENABLED.getMsg(), req.getThirdWarehouseProvideCode()), "", "", "", null);
@@ -786,7 +820,18 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
     /**
      * 新增修改处理数据
      */
-    private void handleData(B2bThirdDeliveryEntity b2bThirdDeliveryEntity) {
+    private void handleData(B2bThirdDeliveryEntity b2bThirdDeliveryEntity, B2bThirdDeliveryDTO.CommonDTO commonDTO) {
+        List<B2bThirdDeliveryDTO.WarehouseOperationTypeDTO> warehouseOperationTypeDTOList = commonDTO.getWarehouseOperationTypeDTOList();
+        if (CollUtil.isNotEmpty(warehouseOperationTypeDTOList)) {
+            String operationDesc = warehouseOperationTypeDTOList.stream()
+                    .map(B2bThirdDeliveryDTO.WarehouseOperationTypeDTO::getOperationDesc)
+                    .collect(Collectors.joining(","));
+            String warehouseOperationType = warehouseOperationTypeDTOList.stream()
+                    .map(B2bThirdDeliveryDTO.WarehouseOperationTypeDTO::getWarehouseOperationType)
+                    .collect(Collectors.joining(","));
+            b2bThirdDeliveryEntity.setOperationDesc(operationDesc);
+            b2bThirdDeliveryEntity.setWarehouseOperationType(warehouseOperationType);
+        }
         if (CharSequenceUtil.isBlank(b2bThirdDeliveryEntity.getCountryName()) && CharSequenceUtil.isNotBlank(b2bThirdDeliveryEntity.getCountryId())) {
             DictCountryEntity countryEntity = FeignQuery.getById(DictCountryEntity.class, b2bThirdDeliveryEntity.getCountryId());
             b2bThirdDeliveryEntity.setCountryName(Objects.nonNull(countryEntity) ? countryEntity.getNameCn() : "");

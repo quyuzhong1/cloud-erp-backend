@@ -205,12 +205,6 @@ public class OverseasWarehouseInboundDetailServiceImpl extends SuperServiceImpl<
                     throw new ServiceException(msg);
                 }
             }
-            if (!OverseasInstockStatusEnum.TO_BE_SIGNED.getCode().equalsIgnoreCase(mainEntity.getInstockStatus()) &&
-                    !OverseasInstockStatusEnum.PARTIAL_SIGNED.getCode().equalsIgnoreCase(mainEntity.getInstockStatus())
-            ){
-                String msg = CharSequenceUtil.format("【{}】不等于待签收和部分签收，无法手动签收", mainEntity.getCode());
-                throw new ServiceException(msg);
-            }
             if (entity.getPackQty() < entity.getReceiveQty() + dto.getReceivedQty()){
                 throw new ServiceException("当前签收数量大于剩余签收数量");
             }

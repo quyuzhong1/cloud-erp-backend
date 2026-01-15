@@ -2,15 +2,18 @@ package com.erp.server.workflow.service.impl;
 
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.extra.spring.SpringUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.ApproveOneDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
@@ -30,6 +33,7 @@ import com.erp.model.workflow.dto.TaskShowDTO;
 import com.erp.model.workflow.dto.WorkOptionDTO;
 import com.erp.model.workflow.entity.ProcessManagementEntity;
 import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
+import com.erp.model.workflow.entity.WorkMenuEntity;
 import com.erp.model.workflow.entity.WorkOptionEntity;
 import com.erp.model.workflow.enums.ApproveSearchOptionEnum;
 import com.erp.model.workflow.enums.SysClassifyEnum;
@@ -40,6 +44,7 @@ import com.erp.rpc.scm.feign.ScmTaskFeign;
 import com.erp.rpc.scm.feign.SupplierFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
+import com.erp.rpc.workflow.handle.BaseWorkflowService;
 import com.erp.server.workflow.mapper.WorkOptionMapper;
 import com.erp.server.workflow.service.*;
 import com.erp.server.workflow.utils.GetHttpGatewayIpPortUtils;
@@ -774,6 +779,19 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
         baseApproveParamDTO.setType(dto.getType());
         baseApproveParamDTO.setComment(dto.getComment());
         List<BatchResultDTO> resultDTOList = new ArrayList<>();
+
+        WorkMenuEntity menuEntity = workMenuService.getByModuleCode(entity.getBusinessKey());
+        String feignBeanName = menuEntity.getFeignBeanName();
+        if (CharSequenceUtil.isBlank(feignBeanName)) {
+            throw new ServiceException(ApiError.WF_MENU_FEIGN_CLASS_NOT_FOUND);
+        }
+        BaseWorkflowService feignService = SpringUtil.getBean(feignBeanName);
+        ApproveDTO.ApproveOneDTO approveOneDTO = new ApproveDTO.ApproveOneDTO();
+        approveOneDTO.setId(dto.getId());
+        approveOneDTO.setType(dto.getType());
+        approveOneDTO.setComment(dto.getComment());
+        approveOneDTO.setBusinessKey(entity.getBusinessKey());
+        approveOneDTO.setIsNeedProcess(Boolean.TRUE);
         switch (SourceTypeEnum.getByCode(entity.getBusinessKey())) {
             case SO_INFO:
                 resultDTOList = soInfoFeign.approve(baseApproveParamDTO);
@@ -806,6 +824,12 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
                 break;
             case EXHIBITION_ORDER:
                 resultDTOList = exhibitionOrderFeign.approve(baseApproveParamDTO);
+                break;
+            case KOL_B2C_APPLICATION:
+                resultDTOList.add(feignService.approve(approveOneDTO));
+                break;
+            case KOL_B2B_APPLICATION:
+                resultDTOList.add(feignService.approve(approveOneDTO));
                 break;
             default:
                 throw new ServiceException(ApiError.WF_APPROVE_FAILED);

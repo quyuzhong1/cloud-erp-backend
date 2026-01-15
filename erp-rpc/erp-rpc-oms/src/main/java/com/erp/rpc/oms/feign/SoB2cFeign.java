@@ -733,4 +733,6 @@ public interface SoB2cFeign {
     @PostMapping("feign/soB2c/handleSoOutStock")
     Boolean handleSoOutStock(@RequestBody String soId);
 
+    @PostMapping("feign/soB2c/updateRemarkAndLog")
+    void updateRemarkAndLog(@RequestBody SoB2cDTO.RemarkDTO remarkDTO);
 }
