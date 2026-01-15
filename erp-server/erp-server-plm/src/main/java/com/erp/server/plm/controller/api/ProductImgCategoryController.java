@@ -102,11 +102,11 @@ public class ProductImgCategoryController extends BaseController {
     * @return ApiResult<List<ProductImgCategoryDTO.TreeDTO>>
     */
     @PostMapping("/listTree")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            menuCode = "plm:productImgCategory:listTree",
-            tableAlias = ""
-    )
+//    @DataPermission(operationType = DataAttributeEnum.LIST,
+//            tableField = "create_user_id",
+//            menuCode = "plm:productImgCategory:listTree",
+//            tableAlias = ""
+//    )
     public ApiResult<List<ProductImgCategoryDTO.TreeDTO>> listTree(@RequestBody(required = false) ProductImgCategoryDTO.ListTreeParamDTO dto) {
         if (dto == null) {
             dto = new ProductImgCategoryDTO.ListTreeParamDTO();
