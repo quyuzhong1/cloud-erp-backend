@@ -1,8 +1,11 @@
 package com.erp.model.wms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
 import java.io.Serializable;
+import java.math.BigDecimal;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
@@ -14,24 +17,22 @@ import javax.validation.constraints.Size;
  *
  * @author Luo_WG
  * @since 2023-10-30
-*/
+ */
 @Data
 @NoArgsConstructor
 public class FbaShipmentDetailDTO implements Serializable {
 
 
-
-
     /**
-    * 详情
-    */
+     * 详情
+     */
     @Data
     @NoArgsConstructor
     public static class ViewDTO {
 
         /**
-        * 主键id
-        */
+         * 主键id
+         */
         private String id;
 
         /**
@@ -40,59 +41,97 @@ public class FbaShipmentDetailDTO implements Serializable {
         private String imageUrl;
 
         /**
-        * 主表id
-        */
+         * 主表id
+         */
         private String mainId;
 
         /**
-        * 平台sku
-        */
+         * 平台sku
+         */
         private String asin;
 
         /**
-        * 卖家sku
-        */
+         * 卖家sku
+         */
         private String msku;
 
         /**
-        * FNSKU
-        */
+         * FNSKU
+         */
         private String fnSku;
 
         /**
-        * ERP的SKU
-        */
+         * ERP的SKU
+         */
         private String skuNo;
 
         /**
-        * 产品名称
-        */
+         * 产品名称
+         */
         private String productName;
 
         /**
-        * 申报数量
-        */
+         * 平台产品名称
+         */
+        private String platformProductName;
+
+        /**
+         * 申报数量
+         */
         private Integer declareQty;
 
         /**
-        * 签收数量
-        */
+         * 签收数量
+         */
         private Integer deliveryQty;
 
         /**
-        * 收发差异
-        */
+         * 收发差异
+         */
         private Integer diffQty;
 
         /**
          * 是否组合品
          */
         private Boolean isCombination;
+
+        /**
+         * 单箱数量
+         */
+        private String perBoxQty;
+        /**
+         * 箱子数量
+         */
+        private String boxQty;
+        /**
+         * 箱子长
+         */
+        private BigDecimal packageLength;
+        /**
+         * 箱子宽
+         */
+        private BigDecimal packageWidth;
+        /**
+         * 箱子高
+         */
+        private BigDecimal packageHeight;
+        /**
+         * 箱子尺寸单位
+         */
+        private String packageUnit;
+        /**
+         * 箱子重量
+         */
+        private BigDecimal packageWeight;
+        /**
+         * 箱子重量单位
+         */
+        private String packageWeightUnit;
     }
 
     /**
-    * 新增
-    */
+     * 新增
+     */
     @Data
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
@@ -101,15 +140,15 @@ public class FbaShipmentDetailDTO implements Serializable {
     }
 
     /**
-    * 修改
-    */
+     * 修改
+     */
     @Data
     @NoArgsConstructor
     public static class UpdateDTO extends CommonDTO {
 
         /**
-        * 主键id
-        */
+         * 主键id
+         */
         @NotBlank(message = "主键id不能为空")
         private String id;
 
@@ -120,61 +159,61 @@ public class FbaShipmentDetailDTO implements Serializable {
     public static class CommonDTO {
 
         /**
-        * 主表id
-        */
+         * 主表id
+         */
         @NotBlank(message = "主表id不能为空")
-        @Size(max = 19,message = "主表id最大长度不能超过19位")
+        @Size(max = 19, message = "主表id最大长度不能超过19位")
         private String mainId;
 
         /**
-        * 平台sku
-        */
+         * 平台sku
+         */
         @NotBlank(message = "平台sku不能为空")
-        @Size(max = 64,message = "平台sku最大长度不能超过64位")
+        @Size(max = 64, message = "平台sku最大长度不能超过64位")
         private String asin;
 
         /**
-        * 卖家sku
-        */
+         * 卖家sku
+         */
         @NotBlank(message = "卖家sku不能为空")
-        @Size(max = 64,message = "卖家sku最大长度不能超过64位")
+        @Size(max = 64, message = "卖家sku最大长度不能超过64位")
         private String msku;
 
         /**
-        * FNSKU
-        */
+         * FNSKU
+         */
         @NotBlank(message = "FNSKU不能为空")
-        @Size(max = 64,message = "FNSKU最大长度不能超过64位")
+        @Size(max = 64, message = "FNSKU最大长度不能超过64位")
         private String fnSku;
 
         /**
-        * ERP的SKU
-        */
+         * ERP的SKU
+         */
         @NotBlank(message = "ERP的SKU不能为空")
-        @Size(max = 64,message = "ERP的SKU最大长度不能超过64位")
+        @Size(max = 64, message = "ERP的SKU最大长度不能超过64位")
         private String skuNo;
 
         /**
-        * 申报数量
-        */
+         * 申报数量
+         */
         @NotNull(message = "申报数量不能为空")
         private Integer declareQty;
 
         /**
-        * 签收数量
-        */
+         * 签收数量
+         */
         @NotNull(message = "签收数量不能为空")
         private Integer deliveryQty;
 
         /**
-        * 收发差异
-        */
+         * 收发差异
+         */
         @NotNull(message = "收发差异不能为空")
         private Integer diffQty;
 
         /**
-        * 是否组合品
-        */
+         * 是否组合品
+         */
         @NotNull(message = "是否组合品不能为空")
         private Boolean isCombination;
 
