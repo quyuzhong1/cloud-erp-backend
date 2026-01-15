@@ -12,6 +12,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.config.DocNoGenHelper;
+import com.common.business.constant.ThirdConstants;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
@@ -310,7 +311,7 @@ public class KolB2bApplicationServiceImpl extends SuperServiceImpl<KolB2bApplica
         approveDTO.setApproveType(ApproveTypeEnum.getByCode(dto.getType()));
         approveDTO.setComment(dto.getComment());
         approveDTO.setUserId(userInfo.getUid());
-        approveDTO.setVariablesMap(BeanUtil.beanToMap(entity));
+        approveDTO.setVariablesMap(getVariablesMap(entity));
         ApiResult<ProcessManagementDTO.ApproveResultDTO> approveResult = workflowFeign.approve(approveDTO);
         Integer code = approveResult.getCode();
         if (200 != code) {
@@ -822,11 +823,28 @@ public class KolB2bApplicationServiceImpl extends SuperServiceImpl<KolB2bApplica
         startDTO.setBusinessKey(SourceTypeEnum.KOL_B2B_APPLICATION.getCode());
         startDTO.setBusinessName(entity.getCode());
         startDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
-        startDTO.setVariablesMap(BeanUtil.beanToMap(entity));
+        startDTO.setVariablesMap(getVariablesMap(entity));
         ApiResult<ProcessManagementDTO.StartResultDTO> result = workflowFeign.start(startDTO);
         if (!result.isSuccess()) {
             throw new ServiceException(result.getMsg());
         }
+    }
+
+    /**
+     * variablesMap值赋值
+     * @author will
+     * @date 2025/5/21 10:51
+     * @param entity
+     * @return Map<String,Object>
+     */
+    private Map<String,Object> getVariablesMap(KolB2bApplicationEntity entity) {
+        Map<String, Object> variablesMap = BeanUtil.beanToMap(entity);
+        List<KolB2bApplicationDetailEntity> detailList = kolB2bApplicationDetailService.listByMainIdList(Collections.singletonList(entity.getId()));
+        if(CollUtil.isEmpty(detailList)){
+            throw new ServiceException(ApiError.SAMPLE_B2B_APPLICATION_DETAIL_NOT_FOUND);
+        }
+        variablesMap.put(ThirdConstants.DETAIL_LIST, BeanUtil.copyToList(detailList,Map.class));
+        return variablesMap;
     }
 
     /**
