@@ -129,7 +129,9 @@ public class FsUseInfoConsumerService<T extends DmpSyncTaskIdDTO> extends Abstra
             SysUserInfoDTO sysUserInfoDTO = new SysUserInfoDTO();
             sysUserInfoDTO.setRealName(name);
             sysUserInfoDTO.setUserName(name);
-            sysUserInfoDTO.setEmail(dto.getEmail());
+            if(StringUtils.isNotBlank(dto.getEmail())){
+                sysUserInfoDTO.setEmail(dto.getEmail());
+            }
             sysUserInfoDTO.setMobile(dto.getMobile());
             sysUserInfoDTO.setUserType(UserTypeEnum.ERP.code);
             sysUserInfoDTO.setUserState(0);
