@@ -152,7 +152,7 @@ public class RefProductImgAttachmentController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "plm:refProductImgAttachment:paging",
-            tableAlias = ""
+            tableAlias = "rpia"
     )
     @WebAdvanceQuery(handler = RefProductImgAttachmentQueryHandler.class)
     public ApiResult<PagingVO<RefProductImgAttachmentDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<RefProductImgAttachmentDTO.PagingParamDTO> dto) {
