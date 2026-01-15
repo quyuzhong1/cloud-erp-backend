@@ -786,7 +786,7 @@ public class KolB2bApplicationServiceImpl extends SuperServiceImpl<KolB2bApplica
                 KolB2bApplicationDetailDTO.AddDTO detailDTO = new KolB2bApplicationDetailDTO.AddDTO();
                 BeanUtil.copyProperties(detailInfo, detailDTO);
                 detailDTO.setSkuId(skuId);
-                detailDTO.setPlanFeedbackDate(LocalDateUtil.stringToLocalDateTime(detailInfo.getPlanFeedbackDateStr()).toLocalDate());
+                detailDTO.setPlanFeedbackDate(CharSequenceUtil.isBlank(detailInfo.getPlanFeedbackDateStr()) ? null : LocalDateUtil.stringToLocalDateTime(detailInfo.getPlanFeedbackDateStr()).toLocalDate());
                 detailList.add(detailDTO);
             }
             addDTO.setDetailList(detailList);
@@ -948,6 +948,20 @@ public class KolB2bApplicationServiceImpl extends SuperServiceImpl<KolB2bApplica
         if(CollUtil.isEmpty(list)) {
            return;
         }
+        //最新审核人
+        ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = new ValidList<>();
+        list.forEach(obj -> {
+            dtoList.add(new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.KOL_B2B_APPLICATION.getCode(), obj.getId()));
+        });
+        ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = null;
+        if (CollectionUtils.isNotEmpty(dtoList)) {
+            listApiResult = workflowFeign.curApprover(dtoList);
+            Integer code = listApiResult.getCode();
+            if (200 != code) {
+                throw new ServiceException(new ApiResult(ApiError.HTTP_UNKNOWN.getCode(), listApiResult.getMsg()));
+            }
+        }
+
         //产品信息
         List<String> skuIdList = list.stream().map(KolB2bApplicationDTO.ListDTO::getSkuId).distinct().collect(Collectors.toList());
         List<ProductDetailEntity> skuList = FeignQuery.getByIds(ProductDetailEntity.class, skuIdList);
@@ -1017,6 +1031,21 @@ public class KolB2bApplicationServiceImpl extends SuperServiceImpl<KolB2bApplica
                 data.setDeliveryStatusName(DeliveryStatusEnum.getName(soDetailEntity.getDeliveryStatus()));
             }
             data.setB2bRefStatusName(b2bRefStatusName);
+
+            //最新审核人：先判断流程中的审核人是否存在，如果存在则使用流程中的，否则保持数据库原值
+            if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
+                List<ProcessManagementDTO.CurApproveInfoDTO> curApproveList = listApiResult.getData().stream()
+                        .filter(e -> e.getBusinessId().equals(data.getId()) && StringUtils.isNotBlank(e.getCurApproveName()))
+                        .collect(Collectors.toList());
+                if (CollectionUtils.isNotEmpty(curApproveList)) {
+                    String curApproveName = curApproveList.stream()
+                            .map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName)
+                            .collect(Collectors.joining(","));
+                    if (StringUtils.isNotBlank(curApproveName)) {
+                        data.setApproveUserName(curApproveName);
+                    }
+                }
+            }
 
             //回片信息
             KolFeedbackDTO.FeedbackQtyDTO feedbackQtyDTO = feedbackQtyMap.get(data.getDetailId());

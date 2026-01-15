@@ -34,6 +34,7 @@ import com.common.business.threadlocal.UserContext;
 import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
 import com.lark.oapi.service.approval.v4.model.*;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -102,6 +103,8 @@ public class CfgApproveSyncServiceImpl extends SuperServiceImpl<CfgApproveSyncMa
 
     @Resource
     private ProcessManagementService processManagementService;
+    @Resource
+    private CfgQueryOptionService cfgQueryOptionService;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -400,9 +403,18 @@ public class CfgApproveSyncServiceImpl extends SuperServiceImpl<CfgApproveSyncMa
             if(count > 5){
                 throw new ServiceException("快捷审批勾选不能超过5个");
             }
+            List<String> fieldIds = pushMsgList.stream().map(CfgApproveSyncFieldMapDTO.NoticeFieldMapDTO::getFieldId).collect(Collectors.toList());
+
+            List<CfgQueryOptionEntity> cfgQueryOptionEntities = cfgQueryOptionService.listByIds(fieldIds);
+
             int sort = 1;
             for (CfgApproveSyncFieldMapDTO.NoticeFieldMapDTO noticeFieldMapDTO : pushMsgList) {
+                CfgQueryOptionEntity cfgQueryOptionEntity = cfgQueryOptionEntities.stream().filter(e -> e.getId().equals(noticeFieldMapDTO.getFieldId())).findFirst().orElse(null);
+                if(Objects.isNull(cfgQueryOptionEntity)){
+                    throw new ServiceException(noticeFieldMapDTO.getFieldName()+"字段的映射不存在");
+                }
                 noticeFieldMapDTO.setMainId(id);
+                noticeFieldMapDTO.setFieldSource(cfgQueryOptionEntity.getConditionField());
                 noticeFieldMapDTO.setSort(sort++);
             }
             List<CfgApproveSyncFieldMapEntity> list = BeanMapper.copyList(pushMsgList, CfgApproveSyncFieldMapEntity.class);

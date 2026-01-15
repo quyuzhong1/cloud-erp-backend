@@ -1606,7 +1606,6 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 180000)
     public void generateDeliveryAndOutStock(GenerateDeliveryAndOutStockDTO generateDeliveryAndOutStockDTO) {
         SoB2cEntity soB2cEntity = generateDeliveryAndOutStockDTO.getEntity();
         SoB2cDTO.DeliveryWithNotOutboundDTO dto = generateDeliveryAndOutStockDTO.getDto();
