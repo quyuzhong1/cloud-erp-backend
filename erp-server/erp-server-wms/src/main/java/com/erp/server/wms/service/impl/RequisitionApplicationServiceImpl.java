@@ -266,6 +266,12 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         if (!Objects.equals(old.getDeliveryType(),updateDTO.getDeliveryType())){
             throw new ServiceException("要货申请单发货类型不允许修改");
         }
+        if (!old.getType().equals(updateDTO.getType())){
+            List<PackingTaskEntity> packingTaskEntityList = packingTaskService.listBySourceCodes(Collections.singletonList(old.getCode()));
+            if(CollectionUtils.isNotEmpty(packingTaskEntityList)) {
+                throw new ServiceException("要货申请单存在关联的装箱任务不能修改单据类型");
+            }
+        }
         // 数据处理
         handleData(requisitionApplicationEntity);
         log.info("编辑 开始修改要货申请单数据，单号：【{}】", old.getCode());
