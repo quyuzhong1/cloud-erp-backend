@@ -117,6 +117,10 @@ public class KolB2bApplicationServiceImpl extends SuperServiceImpl<KolB2bApplica
     private KolB2bApplicationQueryHandler kolB2bApplicationQueryHandler;
     @Resource
     private FileFeign fileFeign;
+    @Resource
+    private CustomerAddressService customerAddressService;
+
+
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -844,6 +848,31 @@ public class KolB2bApplicationServiceImpl extends SuperServiceImpl<KolB2bApplica
             throw new ServiceException(ApiError.SAMPLE_B2B_APPLICATION_DETAIL_NOT_FOUND);
         }
         variablesMap.put(ThirdConstants.DETAIL_LIST, BeanUtil.copyToList(detailList,Map.class));
+
+        //客户名称
+        CustomerInfoEntity customerInfo = customerInfoService.getById(entity.getCustomerId());
+        if (ObjectUtil.isNotEmpty(customerInfo)) {
+            variablesMap.put("customerName", customerInfo.getName());
+        }
+
+        //部门名称
+        List<SysDepartmentEntity> sysDepartmentList = sysUserFeign.listDeptByIds(Collections.singletonList(entity.getApplyDeptId()));
+        if (CollUtil.isNotEmpty(sysDepartmentList)) {
+            variablesMap.put("applyDeptName", sysDepartmentList.get(0).getName());
+        }
+        //申请人名称
+        FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(entity.getApplyUserId());
+        if (ObjectUtil.isNotEmpty(findUserDTO)) {
+            variablesMap.put("applyUserName", findUserDTO.getUserName());
+        }
+        //收货地址名称
+        CustomerAddressEntity addressEntity = customerAddressService.getById(entity.getReceiveAddressId());
+        if (ObjectUtil.isNotEmpty(addressEntity)) {
+            variablesMap.put("receiveAddressName",addressEntity.getAddress());
+        }
+        //地址类型名称
+        variablesMap.put("addressTypeName", CustomerAddressTypeEnum.getName(entity.getAddressType()));
+
         return variablesMap;
     }
 
