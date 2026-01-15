@@ -954,7 +954,7 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
             receiverDTO.setProvinceName(kolB2cApplicationAddressEntity.getProvince());
             receiverDTO.setCityName(kolB2cApplicationAddressEntity.getCity());
             receiverDTO.setDistrictName(kolB2cApplicationAddressEntity.getDistrict());
-            receiverDTO.setFullAddress(kolB2cApplicationAddressEntity.getDetailAddress());
+            receiverDTO.setFirstAddress(kolB2cApplicationAddressEntity.getDetailAddress());
             receiverDTO.setReceiverName(kolB2cApplicationAddressEntity.getReceiverName());
             receiverDTO.setReceiverTelNumber(kolB2cApplicationAddressEntity.getReceiverPhone());
             receiverDTO.setPostCode(kolB2cApplicationAddressEntity.getZipCode());
