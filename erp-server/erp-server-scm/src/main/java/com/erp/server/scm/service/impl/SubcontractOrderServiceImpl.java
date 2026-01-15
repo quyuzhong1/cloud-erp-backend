@@ -67,6 +67,7 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.constraints.NotBlank;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
@@ -1646,6 +1647,23 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
 
         }
         return listSubcontractOrderSkuPriceDTOS;
+    }
+
+    @Override
+    public List<SubcontractOrderDTO.ListRateDTO> listRateBySupplier(List<SubcontractOrderDTO.ListRateParamDTO> dto) {
+        if (dto.isEmpty()) {
+            return Collections.emptyList();
+        }
+        List<String> supplierIdList = dto.stream().map(item -> item.getSupplierId()).collect(Collectors.toList());
+        List<SupplierEntity> supplierList = supplierService.listByIds(supplierIdList);
+        List<SubcontractOrderDTO.ListRateDTO> listRateDTOS = new ArrayList<>();
+        for (SupplierEntity supplierEntity : supplierList) {
+            SubcontractOrderDTO.ListRateDTO listRateDTO = new SubcontractOrderDTO.ListRateDTO();
+            listRateDTO.setSupplierId(supplierEntity.getId());
+            listRateDTO.setRate(supplierEntity.getTaxRate());
+            listRateDTOS.add(listRateDTO);
+        }
+        return listRateDTOS;
     }
 
 }

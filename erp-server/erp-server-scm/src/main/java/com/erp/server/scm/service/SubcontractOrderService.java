@@ -12,6 +12,8 @@ import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.scm.dto.SubcontractChangeDTO;
 import com.erp.model.scm.dto.SubcontractOrderDTO;
 import com.erp.model.scm.entity.SubcontractOrderEntity;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.RequestBody;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -256,4 +258,6 @@ public interface SubcontractOrderService extends SuperService<SubcontractOrderEn
     void updateApproveStatus(SubcontractOrderDTO.UpdateApprovalStatusDTO updateApprovalStatusDTO);
 
     List<SubcontractOrderDTO.ListSubcontractOrderSkuPriceDTO> listSubcontractOrderSkuPrice(List<SubcontractOrderDTO.ListPriceParamDTO> dto);
+
+    List<SubcontractOrderDTO.ListRateDTO> listRateBySupplier(List<SubcontractOrderDTO.ListRateParamDTO> dto);
 }

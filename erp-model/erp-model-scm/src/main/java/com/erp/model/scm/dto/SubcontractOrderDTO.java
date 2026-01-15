@@ -1014,6 +1014,35 @@ public class SubcontractOrderDTO implements Serializable {
         @Min(1)
         @NotNull(message = "数量不能为空")
         private Integer qty;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ListRateDTO{
+
+        /**
+         * 供应商id
+         */
+        private String supplierId;
+
+        /**
+         * 税率
+         */
+        private BigDecimal rate;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ListRateParamDTO{
+
+        /**
+         * 供应商id
+         */
+        @NotBlank(message = "供应商id不能为空")
+        private String supplierId;
+
 
     }
 }
