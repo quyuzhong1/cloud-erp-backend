@@ -214,7 +214,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
             entity.setIsSuper(false);
         }
         boolean saveResult = this.save(entity);
-        if (needChangePwd){
+        if (needChangePwd && StringUtils.isNotBlank(entity.getEmail())){
             sendPwdEmail(entity,randomString);
         }
         //保存成功 就去更新角色表
