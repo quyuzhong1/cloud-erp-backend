@@ -394,7 +394,8 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
             addDTO.setThirdApprovalCode(code);
             approveTaskInfoService.add(addDTO);
         } catch (Exception e) {
-            throw new RuntimeException("飞书创建审批实例失败：" + e);
+            log.error("飞书创建审批实例失败：", e);
+            throw new RuntimeException("飞书创建审批实例失败：" , e);
         }
     }
 
