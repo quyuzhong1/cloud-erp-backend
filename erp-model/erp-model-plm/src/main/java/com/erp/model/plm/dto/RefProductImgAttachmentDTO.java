@@ -357,9 +357,27 @@ public class RefProductImgAttachmentDTO implements Serializable {
         private String skuId;
 
         /**
-         * 图片地址列表
+         * 图片地址列表（包含名称和URL）
          */
-        private List<String> imagesUrls;
+        private List<ImageInfo> imagesUrls;
+        
+        /**
+         * 图片信息（名称+URL）
+         */
+        @Data
+        @NoArgsConstructor
+        @AllArgsConstructor
+        public static class ImageInfo {
+            /**
+             * 图片名称（新增图片时传入，旧图片可为空）
+             */
+            private String imageName;
+            
+            /**
+             * 图片URL
+             */
+            private String imageUrl;
+        }
     }
 
 }

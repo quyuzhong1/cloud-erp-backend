@@ -1634,7 +1634,15 @@ public class RefProductImgAttachmentServiceImpl extends SuperServiceImpl<RefProd
         }
         
         String oldImagesUrl = productDetailEntity.getImagesUrl();
-        List<String> newImagesUrls = dto.getImagesUrls() != null ? dto.getImagesUrls() : new ArrayList<>();
+        List<RefProductImgAttachmentDTO.UploadProductMainImageDTO.ImageInfo> newImagesUrls = dto.getImagesUrls() != null ? dto.getImagesUrls() : new ArrayList<>();
+        
+        // 构建图片URL到名称的映射（用于后续设置图片名称）
+        Map<String, String> urlToNameMap = new HashMap<>();
+        for (RefProductImgAttachmentDTO.UploadProductMainImageDTO.ImageInfo imageInfo : newImagesUrls) {
+            if (StrUtil.isNotBlank(imageInfo.getImageUrl()) && StrUtil.isNotBlank(imageInfo.getImageName())) {
+                urlToNameMap.put(imageInfo.getImageUrl(), imageInfo.getImageName());
+            }
+        }
         
         // 2. 查询现有的所有关联记录（不限制分类，因为需要处理主图和未分类）
         // 注意：需要查询所有记录（包括已删除的），以便恢复已删除但仍在images_url中的记录
@@ -1811,22 +1819,39 @@ public class RefProductImgAttachmentServiceImpl extends SuperServiceImpl<RefProd
                 // 创建新的attachment记录（文件大小稍后批量获取后设置）
                 attachmentEntity = new PlmAttachmentEntity();
                 attachmentEntity.setAttachUrl(oldUrl);
-                // 从URL提取文件名（注意：这可能会丢失原始文件名，但如果是新上传的文件，只能这样处理）
-                String fileName = oldUrl;
-                int lastSlash = oldUrl.lastIndexOf('/');
-                if (lastSlash >= 0 && lastSlash < oldUrl.length() - 1) {
-                    fileName = oldUrl.substring(lastSlash + 1);
+                
+                // 优先使用传入的名称，如果传入的名称为空，从URL提取文件名
+                String fileName = urlToNameMap.get(oldUrl);
+                if (StrUtil.isBlank(fileName)) {
+                    fileName = oldUrl;
+                    int lastSlash = oldUrl.lastIndexOf('/');
+                    if (lastSlash >= 0 && lastSlash < oldUrl.length() - 1) {
+                        fileName = oldUrl.substring(lastSlash + 1);
+                    }
                 }
                 attachmentEntity.setAttachName(fileName);
                 attachmentEntity.setAttachSize(BigDecimal.ZERO); // 稍后批量获取后更新
                 attachmentEntity.setType("product_detail");
                 attachmentEntity.setBusinessId(dto.getSkuId());
                 plmAttachmentService.save(attachmentEntity);
-                log.info("为旧数据创建attachment记录，id={}, url={}", attachmentEntity.getId(), oldUrl);
+                log.info("为旧数据创建attachment记录，id={}, url={}, 名称={}", attachmentEntity.getId(), oldUrl, fileName);
             } else {
-                // 如果attachment已存在，保留原有的attachName，不修改
-                log.info("找到已存在的attachment记录，保留原有名称，id={}, url={}, attachName={}", 
-                        attachmentEntity.getId(), oldUrl, attachmentEntity.getAttachName());
+                // 如果attachment已存在，检查是否需要更新名称
+                String newName = urlToNameMap.get(oldUrl);
+                if (StrUtil.isNotBlank(newName) && !newName.equals(attachmentEntity.getAttachName())) {
+                    // 如果传入了新名称，更新名称
+                    plmAttachmentService.lambdaUpdate()
+                            .eq(PlmAttachmentEntity::getId, attachmentEntity.getId())
+                            .set(PlmAttachmentEntity::getAttachName, newName)
+                            .update();
+                    log.info("更新attachment名称，id={}, url={}, 旧名称={}, 新名称={}", 
+                            attachmentEntity.getId(), oldUrl, attachmentEntity.getAttachName(), newName);
+                    attachmentEntity.setAttachName(newName);
+                } else {
+                    // 保留原有名称
+                    log.info("找到已存在的attachment记录，保留原有名称，id={}, url={}, attachName={}", 
+                            attachmentEntity.getId(), oldUrl, attachmentEntity.getAttachName());
+                }
             }
             
             // 检查是否已有ref_product_img_attachment记录（不限制分类，包括已删除的）
@@ -1878,7 +1903,8 @@ public class RefProductImgAttachmentServiceImpl extends SuperServiceImpl<RefProd
         // 构建传入URL到原图URL的映射，同时保持原始顺序
         Map<String, String> inputUrlToOriginalUrlMap = new HashMap<>();
         List<String> normalizedNewImagesUrls = new ArrayList<>(); // 保持顺序，用于确定主图
-        for (String inputUrl : newImagesUrls) {
+        for (RefProductImgAttachmentDTO.UploadProductMainImageDTO.ImageInfo imageInfo : newImagesUrls) {
+            String inputUrl = imageInfo.getImageUrl();
             // 先检查是否是原图URL
             if (existingAttachmentMap.containsKey(inputUrl)) {
                 inputUrlToOriginalUrlMap.put(inputUrl, inputUrl);
@@ -1917,7 +1943,7 @@ public class RefProductImgAttachmentServiceImpl extends SuperServiceImpl<RefProd
         // 因为normalizedNewImagesUrls可能因为URL转换而改变顺序
         String firstImageUrl = null;
         if (CollUtil.isNotEmpty(newImagesUrls)) {
-            String firstInputUrl = newImagesUrls.get(0);
+            String firstInputUrl = newImagesUrls.get(0).getImageUrl();
             // 将第一个传入URL转换为原图URL
             firstImageUrl = inputUrlToOriginalUrlMap.getOrDefault(firstInputUrl, firstInputUrl);
             log.info("确定主图URL：传入的第一个URL={}, 转换后的原图URL={}", firstInputUrl, firstImageUrl);
@@ -2046,17 +2072,15 @@ public class RefProductImgAttachmentServiceImpl extends SuperServiceImpl<RefProd
                     attachmentEntity = new PlmAttachmentEntity();
                     attachmentEntity.setAttachUrl(imageUrl);
                     
-                    // 尝试从文件服务获取原始文件名（如果URL是FastDFS格式，可能需要从其他地方获取）
-                    // 如果无法获取，则从URL提取文件名（保留扩展名）
-                    String fileName = imageUrl;
-                    int lastSlash = imageUrl.lastIndexOf('/');
-                    if (lastSlash >= 0 && lastSlash < imageUrl.length() - 1) {
-                        fileName = imageUrl.substring(lastSlash + 1);
+                    // 优先使用传入的名称，如果传入的名称为空，从URL提取文件名
+                    String fileName = urlToNameMap.get(imageUrl);
+                    if (StrUtil.isBlank(fileName)) {
+                        fileName = imageUrl;
+                        int lastSlash = imageUrl.lastIndexOf('/');
+                        if (lastSlash >= 0 && lastSlash < imageUrl.length() - 1) {
+                            fileName = imageUrl.substring(lastSlash + 1);
+                        }
                     }
-                    // 如果文件名是FastDFS格式（类似rBBkDGldxKiAPCjWAAwlxJlwvGk304.png），
-                    // 尝试从文件服务获取原始文件名，如果获取不到，使用默认名称
-                    // 注意：这里假设FastDFS的文件名就是这样的格式，无法获取原始文件名
-                    // 如果需要保留原始文件名，应该在文件上传时就保存到attachment记录中
                     attachmentEntity.setAttachName(fileName);
                     
                     // 使用批量获取的文件大小
@@ -2074,9 +2098,22 @@ public class RefProductImgAttachmentServiceImpl extends SuperServiceImpl<RefProd
                     plmAttachmentService.save(attachmentEntity);
                     log.info("为新图片创建attachment记录，id={}, url={}, fileName={}", attachmentEntity.getId(), imageUrl, fileName);
                 } else {
-                    // 如果attachment已存在，保留原有的attachName，不修改
-                    log.info("找到已存在的attachment记录，保留原有名称，id={}, url={}, attachName={}", 
-                            attachmentEntity.getId(), imageUrl, attachmentEntity.getAttachName());
+                    // 如果attachment已存在，检查是否需要更新名称
+                    String newName = urlToNameMap.get(imageUrl);
+                    if (StrUtil.isNotBlank(newName) && !newName.equals(attachmentEntity.getAttachName())) {
+                        // 如果传入了新名称，更新名称
+                        plmAttachmentService.lambdaUpdate()
+                                .eq(PlmAttachmentEntity::getId, attachmentEntity.getId())
+                                .set(PlmAttachmentEntity::getAttachName, newName)
+                                .update();
+                        log.info("更新attachment名称，id={}, url={}, 旧名称={}, 新名称={}", 
+                                attachmentEntity.getId(), imageUrl, attachmentEntity.getAttachName(), newName);
+                        attachmentEntity.setAttachName(newName);
+                    } else {
+                        // 保留原有名称
+                        log.info("找到已存在的attachment记录，保留原有名称，id={}, url={}, attachName={}", 
+                                attachmentEntity.getId(), imageUrl, attachmentEntity.getAttachName());
+                    }
                 }
                 
                 // 确定分类：第一个图片为主图，其他为未分类（使用原图URL判断）
