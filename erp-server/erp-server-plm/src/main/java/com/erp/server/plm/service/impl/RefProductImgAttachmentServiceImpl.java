@@ -2399,12 +2399,25 @@ public class RefProductImgAttachmentServiceImpl extends SuperServiceImpl<RefProd
      */
     @Override
     public void handleProductImagesAfterSave(String skuId, String imagesUrl) {
+        handleProductImagesAfterSave(skuId, imagesUrl, null);
+    }
+    
+    /**
+     * 处理产品保存后的图片URL（创建attachment记录、创建ref记录、异步生成缩略图）
+     * @param skuId SKU ID
+     * @param imagesUrl 图片URL字符串（逗号分隔）
+     * @param urlToNameMap URL到图片名称的映射（可选，为null时从URL提取文件名）
+     * @author wuhaotian
+     * @date: 2025-12-29
+     */
+    public void handleProductImagesAfterSave(String skuId, String imagesUrl, Map<String, String> urlToNameMap) {
         if (StrUtil.isBlank(imagesUrl) || StrUtil.isBlank(skuId)) {
             log.debug("图片URL或SKU ID为空，跳过处理，skuId={}, imagesUrl={}", skuId, imagesUrl);
             return;
         }
 
-        log.info("开始处理产品保存后的图片，skuId={}, imagesUrl={}", skuId, imagesUrl);
+        log.info("开始处理产品保存后的图片，skuId={}, imagesUrl={}, 是否有名称映射={}", 
+                skuId, imagesUrl, urlToNameMap != null && !urlToNameMap.isEmpty());
 
         // 1. 查询产品明细信息
         ProductDetailEntity productDetailEntity = productDetailService.getById(skuId);
@@ -2505,18 +2518,42 @@ public class RefProductImgAttachmentServiceImpl extends SuperServiceImpl<RefProd
                     // 创建新的attachment记录
                     attachmentEntity = new PlmAttachmentEntity();
                     attachmentEntity.setAttachUrl(imageUrl);
-                    // 从URL提取文件名
-                    String fileName = imageUrl;
-                    int lastSlash = imageUrl.lastIndexOf('/');
-                    if (lastSlash >= 0 && lastSlash < imageUrl.length() - 1) {
-                        fileName = imageUrl.substring(lastSlash + 1);
+                    
+                    // 优先使用传入的名称，如果传入的名称为空，从URL提取文件名
+                    String fileName = (urlToNameMap != null && urlToNameMap.containsKey(imageUrl)) 
+                            ? urlToNameMap.get(imageUrl) 
+                            : null;
+                    if (StrUtil.isBlank(fileName)) {
+                        fileName = imageUrl;
+                        int lastSlash = imageUrl.lastIndexOf('/');
+                        if (lastSlash >= 0 && lastSlash < imageUrl.length() - 1) {
+                            fileName = imageUrl.substring(lastSlash + 1);
+                        }
                     }
                     attachmentEntity.setAttachName(fileName);
                     attachmentEntity.setAttachSize(BigDecimal.ZERO); // 稍后可以通过文件服务获取
                     attachmentEntity.setType("product_detail");
                     attachmentEntity.setBusinessId(skuId);
                     plmAttachmentService.save(attachmentEntity);
-                    log.info("为图片创建attachment记录，id={}, url={}", attachmentEntity.getId(), imageUrl);
+                    log.info("为图片创建attachment记录，id={}, url={}, fileName={}", attachmentEntity.getId(), imageUrl, fileName);
+                } else {
+                    // 如果attachment已存在，检查是否需要更新名称
+                    String newName = (urlToNameMap != null && urlToNameMap.containsKey(imageUrl)) 
+                            ? urlToNameMap.get(imageUrl) 
+                            : null;
+                    if (StrUtil.isNotBlank(newName) && !newName.equals(attachmentEntity.getAttachName())) {
+                        // 如果传入了新名称，更新名称
+                        plmAttachmentService.lambdaUpdate()
+                                .eq(PlmAttachmentEntity::getId, attachmentEntity.getId())
+                                .set(PlmAttachmentEntity::getAttachName, newName)
+                                .update();
+                        log.info("更新attachment名称，id={}, url={}, 旧名称={}, 新名称={}", 
+                                attachmentEntity.getId(), imageUrl, attachmentEntity.getAttachName(), newName);
+                        attachmentEntity.setAttachName(newName);
+                    } else {
+                        log.debug("保留原有attachment名称，id={}, url={}, attachName={}", 
+                                attachmentEntity.getId(), imageUrl, attachmentEntity.getAttachName());
+                    }
                 }
 
                 // 4.3 检查是否已有ref_product_img_attachment记录

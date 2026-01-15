@@ -1522,12 +1522,24 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (StrUtil.isNotBlank(imagesUrl)) {
             final String finalSkuId = skuId;
             final String finalImagesUrl = imagesUrl;
+            
+            // 构建URL到图片名称的映射（如果有imageInfoList的话）
+            final Map<String, String> urlToNameMap = new HashMap<>();
+            if (CollUtil.isNotEmpty(productSkuBaseInfoDTO.getImageInfoList())) {
+                for (ProductSkuBaseInfoDTO.ImageInfo imageInfo : productSkuBaseInfoDTO.getImageInfoList()) {
+                    if (StrUtil.isNotBlank(imageInfo.getImageUrl()) && StrUtil.isNotBlank(imageInfo.getImageName())) {
+                        urlToNameMap.put(imageInfo.getImageUrl(), imageInfo.getImageName());
+                    }
+                }
+            }
+            
             // 使用ForkJoinPool.commonPool()避免与zipImageExecutorPool嵌套导致死锁
             // handleProductImagesAfterSave内部会使用zipImageExecutorPool，外部不能再使用同一个线程池
             CompletableFuture.runAsync(() -> {
                 try {
-                    log.info("开始异步处理产品图片，skuId={}, imagesUrl={}", finalSkuId, finalImagesUrl);
-                    refProductImgAttachmentService.handleProductImagesAfterSave(finalSkuId, finalImagesUrl);
+                    log.info("开始异步处理产品图片，skuId={}, imagesUrl={}, 名称映射数量={}", 
+                            finalSkuId, finalImagesUrl, urlToNameMap.size());
+                    refProductImgAttachmentService.handleProductImagesAfterSave(finalSkuId, finalImagesUrl, urlToNameMap);
                     log.info("完成异步处理产品图片，skuId={}", finalSkuId);
                 } catch (Exception e) {
                     log.error("异步处理产品图片失败，skuId={}, imagesUrl={}, 错误信息={}", finalSkuId, finalImagesUrl, e.getMessage(), e);
@@ -1895,13 +1907,25 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             if (StrUtil.isNotBlank(imagesUrl) && StrUtil.isNotBlank(skuId)) {
                 final String finalSkuId = skuId;
                 final String finalImagesUrl = imagesUrl;
+                
+                // 构建URL到图片名称的映射（如果有imageInfoList的话）
+                final Map<String, String> urlToNameMap = new HashMap<>();
+                if (CollUtil.isNotEmpty(productDetailDTO.getImageInfoList())) {
+                    for (ProductDetailDTO.ImageInfo imageInfo : productDetailDTO.getImageInfoList()) {
+                        if (StrUtil.isNotBlank(imageInfo.getImageUrl()) && StrUtil.isNotBlank(imageInfo.getImageName())) {
+                            urlToNameMap.put(imageInfo.getImageUrl(), imageInfo.getImageName());
+                        }
+                    }
+                }
+                
                 // 异步执行，不阻塞主流程
                 // 注意：handleProductImagesAfterSave方法内部已经异步处理，但会等待任务完成
                 // 使用ForkJoinPool.commonPool()避免与zipImageExecutorPool嵌套导致死锁
                 CompletableFuture.runAsync(() -> {
                     try {
-                        log.info("开始异步处理产品图片，skuId={}, imagesUrl={}", finalSkuId, finalImagesUrl);
-                        refProductImgAttachmentService.handleProductImagesAfterSave(finalSkuId, finalImagesUrl);
+                        log.info("开始异步处理产品图片，skuId={}, imagesUrl={}, 名称映射数量={}", 
+                                finalSkuId, finalImagesUrl, urlToNameMap.size());
+                        refProductImgAttachmentService.handleProductImagesAfterSave(finalSkuId, finalImagesUrl, urlToNameMap);
                         log.info("完成异步处理产品图片，skuId={}", finalSkuId);
                     } catch (Exception e) {
                         log.error("异步处理产品图片失败，skuId={}, imagesUrl={}, 错误信息={}", finalSkuId, finalImagesUrl, e.getMessage(), e);
