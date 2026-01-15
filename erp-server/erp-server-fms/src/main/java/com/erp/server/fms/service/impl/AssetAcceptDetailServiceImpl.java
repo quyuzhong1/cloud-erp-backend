@@ -1,30 +1,40 @@
 package com.erp.server.fms.service.impl;
 
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.enums.ApproveStatusEnum;
 import com.erp.model.fms.entity.AssetAcceptEntity;
 import com.erp.server.fms.service.AssetAcceptService;
 import io.seata.spring.annotation.GlobalTransactional;
+import cn.hutool.json.JSONArray;
+import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.dto.base.BaseResultDTO;
-import com.erp.model.fms.entity.AssetAcceptDetailEntity;
-import com.erp.server.fms.mapper.AssetAcceptDetailMapper;
-import com.erp.server.fms.service.AssetAcceptDetailService;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
-import com.erp.server.fms.service.OperateLogService;
+import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
-import lombok.extern.slf4j.Slf4j;
+import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.fms.dto.AssetAcceptDetailDTO;
+import com.erp.model.fms.entity.AssetAcceptDetailEntity;
+import com.erp.model.fms.entity.AssetAcceptEntity;
+import com.erp.server.fms.mapper.AssetAcceptDetailMapper;
+import com.erp.server.fms.service.AssetAcceptDetailService;
+import com.erp.server.fms.service.AssetAcceptService;
+import com.erp.server.fms.service.OperateLogService;
+import io.seata.spring.annotation.GlobalTransactional;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
 
 /**
  * <p>
@@ -156,6 +166,30 @@ public class AssetAcceptDetailServiceImpl extends SuperServiceImpl<AssetAcceptDe
             return resultMap;
         }
         return resultMap;
+    }
+
+    @Override
+    public List<AssetAcceptDetailEntity> listByMainIdList(List<String> mainIdList) {
+        if (CollUtil.isEmpty(mainIdList)) {
+            return Collections.emptyList();
+        }
+        return  lambdaQuery().in(AssetAcceptDetailEntity::getMainId,mainIdList).list();
+    }
+
+    @Override
+    public void updateKingdeeDetailId(JSONArray list) {
+        if (CollectionUtils.isEmpty(list)) {
+            return;
+        }
+        for (Object obj : list) {
+            JSONObject jsonObject = JSONUtil.parseObj(obj);
+            String detailId = (String) jsonObject.get("detailId");
+            String kingdeeDetailId = (String) jsonObject.get("kingdeeDetailId");
+            this.lambdaUpdate()
+                    .set(AssetAcceptDetailEntity::getKingdeeDetailId, kingdeeDetailId)
+                    .eq(AssetAcceptDetailEntity::getId, detailId)
+                    .update();
+        }
     }
 
 

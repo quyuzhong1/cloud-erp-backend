@@ -1431,6 +1431,11 @@ public class SkuMappingDTO implements Serializable {
          * 平台产品名称
          */
         private String platformSpuName;
+
+        /**
+         * 平台SKU额外关联的FNSKU
+         */
+        private String platformFnSku;
     }
 
 
@@ -1793,4 +1798,30 @@ public class SkuMappingDTO implements Serializable {
         @NotNull(message = "结束时间不能为空")
         private LocalDateTime endTime;
     }
+
+
+    @Data
+    @NoArgsConstructor
+    public static class PlatformSkuNoParamDTO {
+        /**
+         *
+         */
+        private List<String> platformSkuList;
+        /**
+         *
+         */
+        private List<String> platformSpuList;
+        /**
+         *
+         */
+        private String dictPlatform;
+        /**
+         *
+         */
+        private String shopId;
+
+
+
+    }
+
 }

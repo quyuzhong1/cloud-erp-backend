@@ -20,6 +20,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.entity.FbaShipmentEntity;
+import com.erp.model.wms.enums.ShipmentSourceTypeEnum;
 import com.erp.server.wms.query.FbaShipmentSyncQueryHandler;
 import com.erp.server.wms.service.FbaShipmentPackingService;
 import com.erp.server.wms.service.FbaShipmentService;
@@ -63,6 +64,7 @@ public class FbaShipmentController extends BaseController {
     )
     @WebAdvanceQuery
     public ApiResult<PagingVO<FbaShipmentDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<FbaShipmentDTO.PagingParamDTO> dto) {
+        dto.getParams().setSourceType(ShipmentSourceTypeEnum.FBA.getCode());
         PagingVO<FbaShipmentDTO.ListDTO> list = fbaShipmentService.paging(dto);
         return success(list);
     }
@@ -71,6 +73,7 @@ public class FbaShipmentController extends BaseController {
      **/
     @PostMapping("/searchByCode")
     public ApiResult<PagingVO<FbaShipmentDTO.SearchResultDTO>> searchByCode(@RequestBody @Validated PagingDTO<FbaShipmentDTO.SearchDTO> dto) {
+        dto.getParams().setSourceType(ShipmentSourceTypeEnum.FBA.getCode());
         PagingVO<FbaShipmentDTO.SearchResultDTO> pagingVO = fbaShipmentService.search(dto);
         return success(pagingVO);
     }
@@ -82,6 +85,7 @@ public class FbaShipmentController extends BaseController {
      */
     @PostMapping("/export")
     public ApiResult export(@RequestBody @Validated FbaShipmentDTO.PagingParamDTO dto) {
+        dto.setSourceType(ShipmentSourceTypeEnum.FBA.getCode());
         fbaShipmentService.export(dto);
         return success();
     }
@@ -93,6 +97,7 @@ public class FbaShipmentController extends BaseController {
      */
     @PostMapping("/packingExport")
     public ApiResult packingExport(@RequestBody @Validated FbaShipmentDTO.PagingParamDTO dto) {
+        dto.setSourceType(ShipmentSourceTypeEnum.FBA.getCode());
         fbaShipmentPackingService.packingExport(dto);
         return success();
     }
@@ -399,6 +404,7 @@ public class FbaShipmentController extends BaseController {
      **/
     @PostMapping("/searchByCodeWithRequisition")
     public ApiResult<PagingVO<FbaShipmentDTO.SearchResultDTO>> searchByCodeWithRequisition(@RequestBody @Validated PagingDTO<FbaShipmentDTO.SearchDTO> dto) {
+        dto.getParams().setSourceType(ShipmentSourceTypeEnum.FBA.getCode());
         PagingVO<FbaShipmentDTO.SearchResultDTO> pagingVO = fbaShipmentService.searchByCodeWithRequisition(dto);
         return success(pagingVO);
     }
@@ -429,6 +435,7 @@ public class FbaShipmentController extends BaseController {
      */
     @PostMapping("/viewList")
     public ApiResult<List<FbaShipmentDTO.ListDTO>> view(@RequestBody @Validated FbaShipmentDTO.ViewListReqDTO dto) {
+        dto.setSourceType(ShipmentSourceTypeEnum.FBA.getCode());
         List<FbaShipmentDTO.ListDTO> resultList = fbaShipmentService.viewList(dto);
         return success(resultList);
     }
@@ -444,5 +451,18 @@ public class FbaShipmentController extends BaseController {
     public ApiResult changeReceived(@RequestBody @Validated List<FbaShipmentDTO.ReceivedDTO> dtoList) {
         List<BatchResultDTO> resultDTOS = fbaShipmentService.changeReceived(dtoList);
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+    /**
+     * 打印标签
+     *
+     * @return ApiResult
+     * @author zdy
+     * @date: 2025-12-24
+     */
+    @PostMapping("/printLabel")
+    public ApiResult<WmsAttachmentDTO.UpdateDTO> printLabel(@RequestBody @Validated FbaShipmentDTO.PrintLabelDTO dto) {
+        WmsAttachmentDTO.UpdateDTO updateDTO = fbaShipmentService.printLabel(dto);
+        return success(updateDTO);
     }
 }

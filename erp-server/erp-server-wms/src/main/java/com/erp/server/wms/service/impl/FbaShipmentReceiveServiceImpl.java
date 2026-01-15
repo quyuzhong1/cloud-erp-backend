@@ -108,7 +108,7 @@ public class FbaShipmentReceiveServiceImpl extends SuperServiceImpl<FbaShipmentR
         // 检查详情是否都有映射
         FbaShipmentDetailEntity missingSkuMappingEntity = oldDetailEntityList.stream().filter(e -> CharSequenceUtil.isBlank(e.getSkuId()) || CharSequenceUtil.isBlank(e.getSkuNo())).findFirst().orElse(null);
         if (null != missingSkuMappingEntity){
-            String msg = CharSequenceUtil.format("【FBA货件更新】未找到平台sku【{}】映射数据", missingSkuMappingEntity.getMsku());
+            String msg = CharSequenceUtil.format("【货件更新】未找到平台sku【{}】映射数据", missingSkuMappingEntity.getMsku());
             throw new ServiceException(msg);
         }
         Map<String, FbaShipmentDetailEntity> detailEntityMap = oldDetailEntityList.stream().collect(Collectors.toMap(FbaShipmentDetailEntity::getMsku, Function.identity()));
@@ -292,7 +292,7 @@ public class FbaShipmentReceiveServiceImpl extends SuperServiceImpl<FbaShipmentR
             entity.setHandleStatus(FbaReceiveHandleStatusEnum.ALREADY.getCode());
             FbaShipmentDetailEntity currentDetailEntity = detailEntityList.stream()
                     .filter(e -> e.getMsku().equalsIgnoreCase(entity.getMsku()) && e.getFnSku().equalsIgnoreCase(entity.getFnSku()))
-                    .findFirst().orElseThrow(() -> new ServiceException(CharSequenceUtil.format("[FBA签收记录数据消费异常]：未找到货件对应明细:fba_shipment_id={}, mSku={}, fnSku={}]", fbaShipmentEntity.getFbaShipmentId(), entity.getMsku(), entity.getFnSku())));
+                    .findFirst().orElseThrow(() -> new ServiceException(CharSequenceUtil.format("[货件签收记录数据消费异常]：未找到货件对应明细:fba_shipment_id={}, mSku={}, fnSku={}]", fbaShipmentEntity.getFbaShipmentId(), entity.getMsku(), entity.getFnSku())));
             entity.setDetailId(currentDetailEntity.getId());
             entity.setSkuNo(currentDetailEntity.getSkuNo());
             entity.setSkuId(currentDetailEntity.getSkuId());

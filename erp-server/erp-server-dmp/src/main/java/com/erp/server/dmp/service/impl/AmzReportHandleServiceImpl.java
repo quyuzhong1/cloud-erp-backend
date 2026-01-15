@@ -2,6 +2,7 @@ package com.erp.server.dmp.service.impl;
 
 
 import cn.hutool.core.date.DatePattern;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
@@ -22,9 +23,7 @@ import com.erp.model.dmp.dto.AmazonCreateReportResultDTO;
 import com.erp.model.dmp.dto.AmazonShopInfoDTO;
 import com.erp.model.dmp.dto.DmpPullShipmentDTO;
 import com.erp.model.dmp.entity.*;
-import com.erp.model.dmp.enums.ReportScheduleSubscribedStatusEnum;
-import com.erp.model.dmp.enums.ReportScheduleSubscribedTypeEnum;
-import com.erp.model.dmp.enums.SettingEnum;
+import com.erp.model.dmp.enums.*;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.ShopPlatformStatusEnum;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
@@ -48,14 +47,20 @@ import com.erp.sdk.oms.amz.spapi.model.reports.*;
 import com.erp.sdk.oms.amz.spapi.model.sellers.GetMarketplaceParticipationsResponse;
 import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiInitUtils;
 import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiRateLimitUtils;
+import com.erp.server.dmp.inout.dto.request.DmpInputCreateRequest;
+import com.erp.server.dmp.inout.dto.request.DmpInputFinishRequest;
 import com.erp.server.dmp.inout.dto.request.DmpInputHotfixCreateRequest;
+import com.erp.server.dmp.inout.dto.response.DmpInputCreateResponse;
 import com.erp.server.dmp.inout.handler.factory.DmpInputCreateFactory;
+import com.erp.server.dmp.inout.handler.factory.DmpInputTaskFactory;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.service.*;
 import com.xxl.job.core.context.XxlJobHelper;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -70,6 +75,7 @@ import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -123,6 +129,13 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
     private DmpCfgInputDetailService dmpCfgInputDetailService;
     @Resource
     private CfgSettingService cfgSettingService;
+    @Resource
+    private DmpFbaShipmentService dmpFbaShipmentService;
+    @Autowired
+    @Qualifier("dmpInputExecutorPool")
+    private ExecutorService dmpInputExecutorPool;
+    @Resource
+    private DmpInputTaskFactory dmpInputTaskFactory;
 
 
     @Override
@@ -677,12 +690,37 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
         }
         List<String> inputDetailIds = list.stream().map(BaseEntity::getId).collect(Collectors.toList());
 
+        if (!dto.getShipmentCodeList().isEmpty()) {
+            dmpFbaShipmentService.lambdaUpdate()
+                    .set(DmpFbaShipmentEntity::getDataEncrypt,"")
+                    .in(DmpFbaShipmentEntity::getFbaShipmentId,dto.getShipmentCodeList())
+                    .update();
+        }
+
         // 创建新中台hotfix任务
         DmpInputHotfixCreateRequest dmpInputHotfixCreateRequest = new DmpInputHotfixCreateRequest();
         dmpInputHotfixCreateRequest.setCfgInputDetailIdList(inputDetailIds);
         dmpInputHotfixCreateRequest.setCfgInputId(inputEntity.getId());
         dmpInputHotfixCreateRequest.setDetailExtendJson(JSON.toJSONString(dto));
-        dmpInputCreateFactory.doHotfixInputTask(dmpInputHotfixCreateRequest);
+        dmpInputHotfixCreateRequest.setTaskType(DmpInputTaskTaskTypeEnum.NORMAL.getCode());
+        //dmpInputCreateFactory.doHotfixInputTask(dmpInputHotfixCreateRequest);
+        // 创建任务
+        DmpInputCreateResponse response = dmpInputCreateFactory.createHotfixInputTask(dmpInputHotfixCreateRequest);
+        // 执行任务
+        if(!CollectionUtils.isEmpty(response.getAfterDmpInputTaskEntityList())) {
+            for (DmpInputTaskEntity dmpInputTaskEntity : response.getAfterDmpInputTaskEntityList()) {
+                //系统非dmp不立即执行，存在restcloud
+                if (!CharSequenceUtil.equals(dmpInputTaskEntity.getExecSystem(), DmpCfgInputExecSystemEnum.DMP.getCode())) {
+                    continue;
+                }
+                dmpInputExecutorPool.execute(() -> {
+                    DmpInputFinishRequest dmpInputFinishRequest = new DmpInputFinishRequest();
+                    dmpInputFinishRequest.setInputTaskId(dmpInputTaskEntity.getId());
+                    dmpInputFinishRequest.setExecTimeout(dmpInputTaskEntity.getExecTimeout());
+                    dmpInputTaskFactory.dealInputTask(dmpInputFinishRequest);
+                });
+            }
+        }
         return true;
     }
 }

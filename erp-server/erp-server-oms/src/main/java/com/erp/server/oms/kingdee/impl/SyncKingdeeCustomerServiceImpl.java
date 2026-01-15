@@ -319,7 +319,7 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
             List<CustomerAddressDTO.ViewDTO> collect = customerAddressList.stream().sorted(Comparator.comparing(CustomerAddressDTO.ViewDTO::getIsDefault).reversed()).collect(Collectors.toList());
             resultMap.put("telNumber", collect.get(MathUtil.ZERO).getTelNumber());
             resultMap.put("person", collect.get(MathUtil.ZERO).getPerson());
-            resultMap.put("address", collect.get(MathUtil.ZERO).getAddress());
+            resultMap.put("address", collect.get(MathUtil.ZERO).getAddress()+collect.get(MathUtil.ZERO).getAddress2()+collect.get(MathUtil.ZERO).getAddress3());
         }
         for (CustomerAddressDTO.ViewDTO viewDTO : customerAddressList) {
             viewDTO.setDisabled(viewDTO.getDisabled() ? Boolean.FALSE : Boolean.TRUE);

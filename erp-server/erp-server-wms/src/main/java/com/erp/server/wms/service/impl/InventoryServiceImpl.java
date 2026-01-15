@@ -30,15 +30,13 @@ import com.erp.model.scm.dto.SupplierDTO;
 import com.erp.model.sys.dto.CfgUserRangeDTO;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.sys.enums.UserRangeTypeEnum;
-import com.erp.model.wms.dto.DictBasicDTO;
-import com.erp.model.wms.dto.PickingDetailDTO;
-import com.erp.model.wms.dto.WarehouseDTO;
-import com.erp.model.wms.dto.WarehouseLocationDTO;
+import com.erp.model.wms.dto.*;
+import com.erp.model.wms.dto.inventory.InventoryTransactionDTO;
 import com.erp.model.wms.dto.inventory.*;
-import com.erp.model.wms.dto.VirtualInventoryDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.StocktakingTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryAgeTitleEnum;
+import com.erp.model.wms.enums.inventory.InventoryRedisOpKeyEnum;
 import com.erp.model.wms.enums.inventory.InventorySearchDimensionEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.rpc.dmp.feign.DmpSyncFeign;
@@ -49,11 +47,8 @@ import com.erp.rpc.sys.feign.AuthDataFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.constant.WmsConstant;
 import com.erp.server.wms.mapper.InventoryMapper;
-import com.erp.server.wms.service.DictBasicService;
-import com.erp.server.wms.service.InventoryService;
-import com.erp.server.wms.service.VirtualInventoryService;
-import com.erp.server.wms.service.WarehouseLocationService;
-import com.erp.server.wms.service.WarehouseService;
+import com.erp.server.wms.service.*;
+import com.erp.server.wms.utils.InventoryRedisUtil;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import lombok.extern.slf4j.Slf4j;
@@ -64,6 +59,7 @@ import org.apache.poi.xssf.usermodel.XSSFCellStyle;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -119,6 +115,10 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
 
     @Resource
     private VirtualInventoryService virtualInventoryService;
+
+    @Resource
+    private InventoryRedisUtil inventoryRedisUtil;
+
 
     @Override
     public InventoryEntity findInventory(String orgId, String warehouseId, String skuId, String warehouseLocationId, String status) {
@@ -1234,6 +1234,63 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
             result.add(recommendedLocation(locationParam)) ;
         }
         return result;
+    }
+
+    @Override
+    public List<InventoryDTO.RedisInventoryReturnDTO> getRedisInventory(InventoryDTO.RedisInventoryParamDTO dto) {
+        //查询库存
+        List<InventoryEntity> inventoryList = listInventory(dto.getSkuIdList(), dto.getWarehouseIdList(), dto.getInventoryStatusList(),dto.getWarehouseLocationIdList());
+        if (CollUtil.isEmpty(inventoryList)) {
+            return Collections.emptyList();
+        }
+
+        List<InventoryDTO.RedisInventoryReturnDTO> resultList = new ArrayList<>();
+        for (InventoryEntity inventoryEntity : inventoryList) {
+            InventoryDTO.RedisInventoryReturnDTO returnDTO = new InventoryDTO.RedisInventoryReturnDTO();
+            BeanUtils.copyProperties(inventoryEntity, returnDTO);
+            returnDTO.setInventoryId(inventoryEntity.getId());
+            returnDTO.setInventoryStatus(inventoryEntity.getDictInventoryStatus());
+            //查询redis中的库存
+            Object redisQtyObj = inventoryRedisUtil.get(InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.CURRENT, inventoryEntity.getId()));
+            if (ObjectUtil.isNotEmpty(redisQtyObj)) {
+                List<String> splitObj = Arrays.stream(redisQtyObj.toString().split(InventoryRedisUtil.splitSign)).collect(Collectors.toList());
+                Integer currentQty = Integer.parseInt(splitObj.get(0));
+                for (int i = 0;i < splitObj.size();i++) {
+                    if (i == 0) {
+                        continue;
+                    }
+                    List<String> progressObj = Arrays.stream(splitObj.get(i).split(InventoryRedisUtil.atSign)).collect(Collectors.toList());
+                    if (progressObj.size() > 1) {
+                        //进行中的数量
+                        Integer progressQty = Integer.parseInt(progressObj.get(1));
+                        if (progressQty >= 0) {
+                            continue;
+                        }
+                        currentQty = currentQty - progressQty;
+                    }
+                }
+                returnDTO.setQty(currentQty);
+            }
+            resultList.add(returnDTO);
+        }
+        return resultList;
+    }
+
+    /**
+     * 查询实体仓库存信息
+     * @author will
+     * @date 2026/1/8 18:19
+     * @param skuIdList
+     * @param warehouseIdList
+     * @param dictInventoryStatusList
+     * @return List<InventoryEntity>
+     */
+    private List<InventoryEntity> listInventory(List<String> skuIdList, List<String> warehouseIdList, List<String> dictInventoryStatusList,List<String> warehouseLocationIdList) {
+        return lambdaQuery().in(InventoryEntity::getSkuId,skuIdList)
+                .in(InventoryEntity::getWarehouseId,warehouseIdList)
+                .in(CollUtil.isNotEmpty(dictInventoryStatusList),InventoryEntity::getDictInventoryStatus,dictInventoryStatusList)
+                .in(CollUtil.isNotEmpty(warehouseLocationIdList),InventoryEntity::getWarehouseLocation,warehouseLocationIdList)
+                .list();
     }
 
 

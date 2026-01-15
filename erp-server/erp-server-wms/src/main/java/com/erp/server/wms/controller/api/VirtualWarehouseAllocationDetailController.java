@@ -2,33 +2,30 @@ package com.erp.server.wms.controller.api;
 
 
 import cn.hutool.core.text.CharSequenceUtil;
+import com.common.business.annotation.DataPermission;
+import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.enums.DataAttributeEnum;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
+import com.common.core.controller.BaseController;
+import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.dmp.dto.DmpPushTaskDTO;
 import com.erp.model.wms.dto.VirtualWarehouseAllocationDTO;
+import com.erp.model.wms.dto.VirtualWarehouseAllocationDetailDTO;
 import com.erp.model.wms.entity.VirtualWarehouseAllocationDetailEntity;
 import com.erp.model.wms.entity.VirtualWarehouseAllocationEntity;
 import com.erp.model.wms.enums.VirtualWarehouseAllocationStatusEnum;
 import com.erp.model.wms.enums.VirtualWarehouseAllocationSyncStatusEnum;
+import com.erp.server.wms.service.VirtualWarehouseAllocationDetailService;
 import com.erp.server.wms.service.VirtualWarehouseAllocationService;
 import lombok.extern.slf4j.Slf4j;
-
-import javax.annotation.Resource;
-
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import com.common.core.anno.LogAction;
-import com.common.core.anno.LogSystemModule;
-import com.common.core.enums.LogActionEnum;
-import com.common.business.dto.base.*;
-import org.springframework.web.bind.annotation.RestController;
 
-import com.common.core.controller.BaseController;
-import com.erp.server.wms.service.VirtualWarehouseAllocationDetailService;
-import com.common.core.controller.vo.ApiResult;
-import com.common.business.annotation.DataPermission;
-import com.common.business.enums.DataAttributeEnum;
-import com.erp.model.wms.dto.VirtualWarehouseAllocationDetailDTO;
-
+import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -201,7 +198,7 @@ public class VirtualWarehouseAllocationDetailController extends BaseController {
             serviceClass = VirtualWarehouseAllocationService.class,
             keyIdName = "ids"
     )
-    public ApiResult<DmpPushTaskDTO.SyncInfoDTO> viewSyncInfo(@RequestParam(value = "detailId") String detailId) {
+    public ApiResult<List<DmpPushTaskDTO.SyncInfoDTO>> viewSyncInfo(@RequestParam(value = "detailId") String detailId) {
        return success(virtualWarehouseAllocationDetailService.viewSyncInfo(detailId));
     }
 
@@ -219,7 +216,7 @@ public class VirtualWarehouseAllocationDetailController extends BaseController {
             serviceClass = VirtualWarehouseAllocationService.class,
             keyIdName = "ids"
     )
-    public ApiResult<VirtualWarehouseAllocationDTO.ThirdCodeDto> view(@RequestParam(value = "detailId") String detailId) {
+    public ApiResult<List<VirtualWarehouseAllocationDTO.ThirdCodeDto>> view(@RequestParam(value = "detailId") String detailId) {
        return success(virtualWarehouseAllocationDetailService.view(detailId));
     }
     /**

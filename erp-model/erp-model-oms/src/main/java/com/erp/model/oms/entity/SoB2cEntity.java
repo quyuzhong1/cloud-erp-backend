@@ -490,6 +490,7 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
                 ", totalTaxFee=" + totalTaxFee +
                 ", afterTaxAmount=" + afterTaxAmount +
                 ", totalDiscount=" + totalDiscount +
+                ", signOrderError=" + signOrderError +
                 '}';
     }
 

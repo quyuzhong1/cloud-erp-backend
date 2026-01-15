@@ -6,20 +6,28 @@ import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.dto.DmpPushTaskFeignDTO;
+import com.common.business.dto.DmpSyncTaskDTO;
 import com.common.business.dto.WdtSearchHandelDetailDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.WdtVirtualInventoryService;
 import com.common.business.wrapper.FeignQuery;
+import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
+import com.erp.model.dmp.dto.DmpPushTaskDTO;
 import com.erp.model.dmp.entity.CfgSettingEntity;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.dmp.enums.SettingEnum;
-import com.erp.model.wms.entity.*;
+import com.erp.model.wms.dto.VirtualWarehousePushHandleDetailDTO;
+import com.erp.model.wms.entity.VirtualWarehouseAllocationDetailEntity;
+import com.erp.model.wms.entity.VirtualWarehousePushHandleDetailEntity;
+import com.erp.model.wms.entity.VirtualWarehousePushHandleRelationEntity;
+import com.erp.model.wms.entity.WmsPushMsgEntity;
+import com.erp.rpc.dmp.feign.DmpInoutTaskFeign;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.server.wms.service.*;
 import com.erp.server.wms.wdt.SyncWdtVirtualWarehousePushOrderService;
@@ -33,9 +41,9 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -64,7 +72,58 @@ public class SyncWdtVirtualWarehousePushOrderServiceImpl implements SyncWdtVirtu
     private WmsPushMsgService wmsPushMsgService;
     @Resource
     private WdtVirtualInventoryService wdtVirtualInventoryService;
+    @Resource
+    private DmpInoutTaskFeign dmpInoutTaskFeign;
 
+    /**
+     * 校验分货单调出明细是否存在未同步成功的数据
+     * @author will
+     * @date 2025/12/29 11:36
+     * @param checkDataList
+     * @return void
+     */
+    private void checkHandleDetailListRepeat(List<VirtualWarehousePushHandleDetailDTO.CheckDataDTO> checkDataList) {
+        //来源仓库
+        List<String> fromWarehouseIdList = checkDataList.stream().map(VirtualWarehousePushHandleDetailDTO.CheckDataDTO::getWarehouseId).distinct().collect(Collectors.toList());
+        //来源虚拟仓
+        List<String> fromVirtualWarehouseIdList = checkDataList.stream().map(VirtualWarehousePushHandleDetailDTO.CheckDataDTO::getVirtualWarehouseId).distinct().collect(Collectors.toList());
+        //sku
+        List<String> skuIdList = checkDataList.stream().map(VirtualWarehousePushHandleDetailDTO.CheckDataDTO::getSkuId).distinct().collect(Collectors.toList());
+        //明细id集合
+        List<String> detailIdList = checkDataList.stream().map(VirtualWarehousePushHandleDetailDTO.CheckDataDTO::getDetailId)
+                .distinct().collect(Collectors.toList());
+
+        //查询已存在未同步成功的调出明细
+        List<VirtualWarehouseAllocationDetailEntity> oldDetailList = virtualWarehouseAllocationDetailService.listRepeatHandleDetail(fromWarehouseIdList, fromVirtualWarehouseIdList, skuIdList, detailIdList);
+        if (CollUtil.isEmpty(oldDetailList)) {
+            return;
+        }
+        List<String> oldHandleDetailIdList = oldDetailList.stream().map(VirtualWarehouseAllocationDetailEntity::getHandleDetailId).distinct().collect(Collectors.toList());
+        List<DmpPushTaskDTO.SyncInfoDTO>  syncInfoList = dmpInoutTaskFeign.listErrorData(new DmpSyncTaskDTO.ListDTO(SourceTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION.getCode(),
+                oldHandleDetailIdList, PlatformEnum.WANGDIAN.getDesc(), PlatformEnum.ERP.getDesc()));
+
+        for (VirtualWarehousePushHandleDetailDTO.CheckDataDTO checkDataDTO : checkDataList) {
+            //获取对应的已存在未同步成功的调出明细
+            List<VirtualWarehouseAllocationDetailEntity> warehouseAllocationDetailList = oldDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getWarehouseId(), checkDataDTO.getWarehouseId()) && CharSequenceUtil.equals(obj.getFromVirtualWarehouseId(), checkDataDTO.getVirtualWarehouseId()) && CharSequenceUtil.equals(obj.getSkuId(), checkDataDTO.getSkuId())).collect(Collectors.toList());
+            if (CollUtil.isEmpty(warehouseAllocationDetailList)) {
+               continue;
+            }
+            for (VirtualWarehouseAllocationDetailEntity entity : warehouseAllocationDetailList) {
+                List<DmpPushTaskDTO.SyncInfoDTO> thisSyncInfoList = syncInfoList.stream().filter(obj -> CharSequenceUtil.equals(entity.getHandleDetailId(), obj.getSourceId()))
+                        .collect(Collectors.toList());
+                long failCount = syncInfoList.stream().filter(obj -> CharSequenceUtil.equals(entity.getHandleDetailId(), obj.getSourceId())
+                                && Arrays.asList("cosumererror","mqerror","error").contains(obj.getStatus()))
+                        .count();
+                //未找到同步记录或者存在失败同步记录则报错
+                if (CollUtil.isEmpty(thisSyncInfoList) || failCount > 0) {
+                    throw new ServiceException(ApiError.VM_ALLOCATION_NOT_REPEAT,
+                            entity.getWarehouseName(),
+                            entity.getFromVirtualWarehouseName(),
+                            entity.getSkuNo());
+                }
+            }
+        }
+    }
 
     @Override
     public List<DmpPushTaskEntity> saveTaskList(List<VirtualWarehousePushHandleDetailEntity> handleDetailList,
@@ -78,11 +137,13 @@ public class SyncWdtVirtualWarehousePushOrderServiceImpl implements SyncWdtVirtu
         		.list();
     	List<DmpPushTaskFeignDTO> dmpPushTaskEntityList = new ArrayList<>();
     	List<WmsPushMsgEntity> wmsPushMsgEntityList = new ArrayList<>();
-        
+        List<VirtualWarehousePushHandleDetailDTO.CheckDataDTO> checkDataList = new ArrayList<>();
+
         //单据类型:1:锁定分配,2:释放出库,3:虚拟仓间调拨,4:采购入库
         handleDetailList.forEach(handleDetail -> {
             DmpPushTaskFeignDTO dmpSyncTaskDTO = new DmpPushTaskFeignDTO();
             VwPushHandelDetailPushDTO request = new VwPushHandelDetailPushDTO();
+
             //获取调出仓 调入仓关联的第三方仓（旺店通）
             if (StringUtils.isNotEmpty(handleDetail.getThirdFromVirtualWarehouseId())
                     && StringUtils.isNotEmpty(handleDetail.getThirdToVirtualWarehouseId())) {
@@ -116,32 +177,17 @@ public class SyncWdtVirtualWarehousePushOrderServiceImpl implements SyncWdtVirtu
                         detail.setWarehouse_no(handleDetail.getThirdWarehouseId());
                         detail.setSpec_no(skuNo);
                         detailList.add(detail);
+
+                        //添加校验数据
+                        list.forEach(obj -> {
+                            VirtualWarehousePushHandleDetailDTO.CheckDataDTO checkDataDTO = new VirtualWarehousePushHandleDetailDTO.CheckDataDTO();
+                            checkDataDTO.setWarehouseId(handleDetail.getWarehouseId());
+                            checkDataDTO.setVirtualWarehouseId(handleDetail.getFromVirtualWarehouseId());
+                            checkDataDTO.setSkuId(obj.getSkuId());
+                            checkDataDTO.setDetailId(obj.getId());
+                            checkDataList.add(checkDataDTO);
+                        });
                     });
-                    break;
-                case REQUISITION_APPLICATION:
-                    Map<String, List<RequisitionApplicationDetailEntity>> requireSkuMap = requisitionApplicationDetailService.listByIds(allocationDetailIds).stream().collect(Collectors.groupingBy(RequisitionApplicationDetailEntity::getSkuNo));
-                    log.info("获取要货申请明细：{}", requireSkuMap);
-                    requireSkuMap.forEach((skuNo, list) -> {
-                        VwPushHandelDetailPushDTO.DetailList detail = new VwPushHandelDetailPushDTO.DetailList();
-                        detail.setNum(BigDecimal.valueOf(list.stream().map(RequisitionApplicationDetailEntity::getApproveQty).reduce(0, Integer::sum)));
-                        detail.setWarehouse_no(handleDetail.getThirdWarehouseId());
-                        detail.setSpec_no(skuNo);
-                        detailList.add(detail);
-                    });
-                    //获取要货申请上次推送的id
-                    //获取最后一次合单的主单
-                    VirtualWarehousePushHandleEntity pushHandleEntity = virtualWarehousePushHandleService.list(new LambdaQueryWrapper<VirtualWarehousePushHandleEntity>()
-                            .eq(VirtualWarehousePushHandleEntity::getSourceId, handleDetail.getSourceId())
-                            .ne(VirtualWarehousePushHandleEntity::getId, handleDetail.getMainId()).orderByDesc(VirtualWarehousePushHandleEntity::getCreateTime)
-                            .last("limit 1")).stream().findFirst().orElse(null);
-//                    List<String> newHandleDetailIds = handleDetailList.stream().map(VirtualWarehouseAllocationHandleDetailEntity::getId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
-                    if (Objects.nonNull(pushHandleEntity)) {
-                        List<String> oldHandleDetailIds = virtualWarehousePushHandleDetailService
-                                .list(new LambdaQueryWrapper<VirtualWarehousePushHandleDetailEntity>().eq(VirtualWarehousePushHandleDetailEntity::getMainId, pushHandleEntity.getId()))
-                                .stream().map(VirtualWarehousePushHandleDetailEntity::getId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
-//                    oldHandleDetailIds.removeAll(newHandleDetailIds);
-                        dmpSyncTaskDTO.setParentId(oldHandleDetailIds.stream().collect(Collectors.joining(",")));
-                    }
                     break;
                 default:
                     break;
@@ -176,6 +222,10 @@ public class SyncWdtVirtualWarehousePushOrderServiceImpl implements SyncWdtVirtu
                 wmsPushMsgEntityList.add(wmsPushMsgEntity);
             }
         });
+        if (CollUtil.isNotEmpty(checkDataList)) {
+            //校验之前是否存在未同步成功的分货单调出
+            checkHandleDetailListRepeat(checkDataList);
+        }
         if(CollUtil.isNotEmpty(wmsPushMsgEntityList)) {
         	wmsPushMsgService.saveBatch(wmsPushMsgEntityList);
         }

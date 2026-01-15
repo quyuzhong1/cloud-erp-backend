@@ -26,8 +26,6 @@ import com.erp.rpc.wms.feign.SoB2cDeliveryFeign;
 import com.erp.rpc.wms.feign.SoOutstockFeign;
 import com.erp.server.oms.service.*;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -149,8 +147,7 @@ public class SoB2cAbnormalServiceImpl implements SoB2cAbnormalService {
                 break;
             case GET_LOGISTICS_LABEL:
                 SoB2cLogisticsEntity soB2cLogistics = soB2cLogisticsService.getByMainId(id);
-                soB2cEntity.setBillStatus(SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode());
-                BatchResultDTO resultDTO1 = soB2cService.getLogisticsLabel(soB2cEntity,soB2cLogistics);
+                BatchResultDTO resultDTO1 = soB2cService.getLogisticsLabel(soB2cEntity,soB2cLogistics, false);
                 if(resultDTO1.getSuccess()){
                     autoSubmitDelivery = getLogisticsRuleResult(id);
                     if(autoSubmitDelivery){
@@ -169,6 +166,10 @@ public class SoB2cAbnormalServiceImpl implements SoB2cAbnormalService {
                     }
                 }
                 resultDTOList.add(resultDTO1);
+                break;
+            case GET_EXCHANGE_RATE:
+                BatchResultDTO batchResultDTO1 = soB2cService.refreshExchangeRate(soB2cEntity);
+                resultDTOList.add(batchResultDTO1);
                 break;
             default:
                 break;

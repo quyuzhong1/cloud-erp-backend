@@ -654,7 +654,7 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
                 weightAllocationDTO.setBusinessCode(warehouseInboundEntity.get(0).getCode());
             }
         }
-        if(firstMileDeliveryEntity.getDemandType().equals(FbaDemandTypeEnum.DEMAND_PLATFORM_WAREHOUSE.getCode())){
+        if(firstMileDeliveryEntity.getDemandType().equals(FbaDemandTypeEnum.DEMAND_PLATFORM_WAREHOUSE.getCode()) || firstMileDeliveryEntity.getDemandType().equals(FbaDemandTypeEnum.DEMAND_AWD_WAREHOUSE.getCode())){
             //备货FBA仓：取FBA货件单号
             String fbaShipmentCode = firstMileDeliveryDetailList.get(0).getFbaShipmentCode();
             weightAllocationDTO.setBusinessCode(fbaShipmentCode);

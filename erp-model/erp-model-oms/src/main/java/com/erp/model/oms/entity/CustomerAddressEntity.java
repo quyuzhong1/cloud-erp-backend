@@ -88,6 +88,18 @@ public class CustomerAddressEntity extends BaseEntity<CustomerAddressEntity> {
     @TableField("country_id")
     private String countryId;
 
+    /**
+     * 地址2
+     */
+    @TableField("address2")
+    private String address2;
+
+    /**
+     * 地址3
+     */
+    @TableField("address3")
+    private String address3;
+
     @TableField(exist = false)
     private String countryName;
 

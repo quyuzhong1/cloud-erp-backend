@@ -85,6 +85,23 @@ public class PlatformFbaShipmentDTO extends UniqueDto {
     private LocalDateTime platformUpdateTime;
 
     /**
+     * 是否sta
+     */
+    private Boolean isSta;
+    /**
+     * 关联单号
+     */
+    private String referenceId;
+    /**
+     * 面单url
+     */
+    private String labelUrl;
+    /**
+     * 面单类型
+     */
+    private String pageType;
+
+    /**
      * 物流签收信息
      */
     List<PlatformFbaShipmentReceiveDTO> receiveDTOList;
