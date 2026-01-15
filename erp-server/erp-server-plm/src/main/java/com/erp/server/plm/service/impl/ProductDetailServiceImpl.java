@@ -7386,13 +7386,17 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
      * @param image       图片
      */
     private float getYPosition(PrintEanDTO printEanDTO, Document document, Image image) {
-        if (Element.ALIGN_TOP == printEanDTO.getTextVerticalPosition()) {
-            return  document.getPageSize().getHeight() - image.getScaledHeight() - 5; // 上对齐，距离50个单位
-        } else if (Element.ALIGN_MIDDLE == printEanDTO.getTextVerticalPosition()) {
-            return  (document.getPageSize().getHeight() - image.getScaledHeight()) / 2;
-        } else {
-            return  5; // 下对齐，距离50个单位
+//        if (Element.ALIGN_TOP == printEanDTO.getTextVerticalPosition()) {
+//            return  document.getPageSize().getHeight() - image.getScaledHeight() - 5; // 上对齐，距离50个单位
+//        } else if (Element.ALIGN_MIDDLE == printEanDTO.getTextVerticalPosition()) {
+//            return  (document.getPageSize().getHeight() - image.getScaledHeight()) / 2;
+//        } else {
+//            return  5; // 下对齐，距离50个单位
+//        }
+        if (Objects.nonNull(printEanDTO.getTextVerticalPosition()) && Element.ALIGN_MIDDLE == printEanDTO.getTextVerticalPosition()) {
+            return (document.getPageSize().getHeight() - image.getScaledHeight()) / 2;
         }
+        return document.getPageSize().getHeight() - image.getScaledHeight() - 5;
     }
 
     /**
