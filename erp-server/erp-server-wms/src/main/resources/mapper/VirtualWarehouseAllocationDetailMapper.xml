@@ -53,34 +53,7 @@
             #{id}
         </foreach>
     </update>
-    <update id="batchSync">
-        update virtual_warehouse_allocation_detail
-        set sync_status=#{code}
-        where id in
-        <foreach collection="ids" item="id" open="(" close=")" separator=",">
-            #{id}
-        </foreach>
-    </update>
-    <update id="updateSyncStatus">
-        update virtual_warehouse_allocation_detail
-        set sync_status=#{params.syncStatus}
-          <if test="params.thirdCode!=null and params.thirdCode!=''">
-              , third_code=#{params.thirdCode}
-          </if>
-        <if test="params.sysType!=null and params.sysType!=''">
-            , sys_type=#{params.sysType}
-        </if>
-        <if test="params.sysTypeName!=null and params.sysTypeName!=''">
-            , sys_type_name=#{params.sysTypeName}
-        </if>
-        <if test="params.finishDescription!=null">
-            , finish_description=#{params.finishDescription}
-        </if>
-        where id in
-        <foreach collection="ids" item="id" open="(" close=")" separator=",">
-            #{id}
-        </foreach>
-    </update>
+
 
     <!-- 查询分货信息 -->
     <select id="listAllocationData"
@@ -124,4 +97,66 @@
             </if>
         </where>
     </select>
+
+    <select id="listRepeatHandleDetail"
+            resultType="com.erp.model.wms.entity.VirtualWarehouseAllocationDetailEntity">
+            select
+                vwad.id,
+                vwad.create_user_id,
+                vwad.create_user_name,
+                vwad.create_time,
+                vwad.update_user_id,
+                vwad.update_user_name,
+                vwad.update_time,
+                vwad.version,
+                vwad.is_deleted,
+                vwad.disabled,
+                vwad.main_id,
+                vwad.sku_id,
+                vwad.sku_no,
+                vwad.warehouse_id,
+                vwad.warehouse_name,
+                vwad.from_virtual_warehouse_id,
+                vwad.from_virtual_warehouse_code,
+                vwad.from_virtual_warehouse_name,
+                vwad.qty,
+                vwad.to_virtual_warehouse_id,
+                vwad.to_virtual_warehouse_code,
+                vwad.to_virtual_warehouse_name,
+                vwad.finish_description,
+                vwad.third_code,
+                vwphd.handle_detail_id as handleDetailId
+            from virtual_warehouse_allocation_detail vwad
+            inner join virtual_warehouse_allocation vwa on vwa.id = vwad.main_id  and vwa.is_deleted = false and vwa.disabled = false
+            inner join virtual_warehouse_push_handle_relation vwphd on vwphd.source_detail_id = vwad.id and vwphd.is_deleted = false
+            <where>
+                vwad.is_deleted = false and vwad.disabled = false and vwa.status = 'handle'
+                <if test="fromWarehouseIdList != null and fromWarehouseIdList.size > 0">
+                    and vwad.warehouse_id in
+                    <foreach collection="fromWarehouseIdList" item="item" open="(" close=")" separator=",">
+                        #{item}
+                    </foreach>
+                </if>
+                <if test="fromVirtualWarehouseIdList != null and fromVirtualWarehouseIdList.size > 0">
+                    and vwad.from_virtual_warehouse_id in
+                    <foreach collection="fromVirtualWarehouseIdList" item="item" open="(" close=")" separator=",">
+                        #{item}
+                    </foreach>
+                </if>
+                <if test="skuIdList != null and skuIdList.size > 0">
+                    and vwad.sku_id in
+                    <foreach collection="skuIdList" item="item" open="(" close=")" separator=",">
+                        #{item}
+                    </foreach>
+                </if>
+                <if test="detailIdList != null and detailIdList.size > 0">
+                    and vwad.id not in
+                    <foreach collection="detailIdList" item="item" open="(" close=")" separator=",">
+                        #{item}
+                    </foreach>
+                </if>
+            </where>
+    </select>
+
+
 </mapper>

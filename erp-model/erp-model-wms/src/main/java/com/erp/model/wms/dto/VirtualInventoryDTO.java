@@ -370,6 +370,10 @@ public class VirtualInventoryDTO implements Serializable {
          */
         private String fromVirtualWarehouseId;
         /**
+         * 调入实体仓
+         */
+        private String toWarehouseId;
+        /**
          * 调入仓
          */
         private String toVirtualWarehouseId;
@@ -414,6 +418,10 @@ public class VirtualInventoryDTO implements Serializable {
          * 调出仓
          */
         private String fromVirtualWarehouseId;
+        /**
+         * 调入实体库Id
+         */
+        private String toWarehouseId;
         /**
          * 调入仓
          */
