@@ -301,7 +301,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
            throw new ServiceException("委外订单保存失败");
         }
         //新增明细
-        subcontractOrderDetailService.add(addDTO.getDetailList(),subcontractOrderEntity.getId());
+        subcontractOrderDetailService.add(addDTO.getDetailList(),subcontractOrderEntity);
 
         // 操作日志
         operateLogService.addModuleOperateLog(String.format("新增了一个委外订单【%s】", subcontractOrderEntity.getCode()), ModuleTypeEnum.SUBCONTRACT_ORDER.getCode(), subcontractOrderEntity.getId(), "新增操作");

@@ -245,6 +245,21 @@ public class SubcontractOrderDTO implements Serializable {
         private Boolean isUrgent;
 
         /**
+         * 返修数量
+         */
+        private Integer repairQty;
+
+        /**
+         * 返修单价
+         */
+        private BigDecimal repairPrice;
+
+        /**
+         * 返修金额
+         */
+        private BigDecimal repairAmount;
+
+        /**
          * 数量
          */
         private Integer qty;

@@ -1904,6 +1904,11 @@ public class PurchaseReturnOrderDTO {
 
 
         private String kingdeeDetailId;
+
+        /**
+         * 子件集合
+         */
+        private List<PushDownSubcontractOrderDetailViewDTO> childList;
     }
 
 
@@ -2105,5 +2110,23 @@ public class PurchaseReturnOrderDTO {
 
 
         private String kingdeeDetailId;
+
+        /**
+         * 子件集合
+         */
+        @NotNull(message = "子件集合不能为空")
+        private List<PushDownSubcontractOrderDetailDTO> childList;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class detailIdsDTO {
+
+        /**
+         * 发货通知单明细id
+         */
+        private List<String> detailIds;
+
     }
 }

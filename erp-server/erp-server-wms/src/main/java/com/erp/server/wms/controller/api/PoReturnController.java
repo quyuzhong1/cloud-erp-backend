@@ -516,12 +516,12 @@ public class PoReturnController extends BaseController {
 
     /**
      * 下推委外订单详情
-     * @param baseIdsDTO
+     * @param detailIdsDTO
      * @return
      */
     @PostMapping("/pushDownSubcontractOrderView")
-    public ApiResult<PurchaseReturnOrderDTO.PushDownSubcontractOrderViewDTO> pushDownSubcontractOrderView(@RequestBody @Validated BaseIdsDTO.IdsDTO baseIdsDTO) {
-        return success(poReturnService.pushDownSubcontractOrderView(baseIdsDTO.getIds()));
+    public ApiResult<PurchaseReturnOrderDTO.PushDownSubcontractOrderViewDTO> pushDownSubcontractOrderView(@RequestBody @Validated PurchaseReturnOrderDTO.detailIdsDTO detailIdsDTO) {
+        return success(poReturnService.pushDownSubcontractOrderView(detailIdsDTO));
     }
 
     /**

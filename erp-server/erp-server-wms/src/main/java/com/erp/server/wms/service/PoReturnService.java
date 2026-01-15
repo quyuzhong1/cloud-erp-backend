@@ -448,7 +448,7 @@ public interface PoReturnService extends SuperService<PoReturnEntity> {
      */
     PagingVO<PurchaseReturnOrderDTO.SupplierPagingViewDTO> exportSupplierPoReturn(PagingDTO<PurchaseReturnOrderDTO.SupplierPagingParamDTO> dto);
 
-    PurchaseReturnOrderDTO.PushDownSubcontractOrderViewDTO pushDownSubcontractOrderView(List<String> ids);
+    PurchaseReturnOrderDTO.PushDownSubcontractOrderViewDTO pushDownSubcontractOrderView(PurchaseReturnOrderDTO.detailIdsDTO detailIdsDTO);
 
     Boolean pushDownSubcontractOrder(PurchaseReturnOrderDTO.PushDownSubcontractOrderDTO pushDownSubcontractOrderDTO);
 }

@@ -100,7 +100,7 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
     }
 
     @Override
-    public void add(List<SubcontractOrderDetailDTO.AddDTO> detailList, String mainId) {
+    public void add(List<SubcontractOrderDetailDTO.AddDTO> detailList, SubcontractOrderEntity subcontractOrderEntity) {
         if (CollectionUtils.isEmpty(detailList)) {
             return;
         }
@@ -113,7 +113,7 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
             list.add(entity);
         }
         //处理父子级数据
-        List<SubcontractOrderDetailEntity> resultList = generateResultDetail(list, mainId,Boolean.TRUE);
+        List<SubcontractOrderDetailEntity> resultList = generateResultDetail(list, subcontractOrderEntity.getId(),Boolean.TRUE);
 
         this.saveBatch(resultList);
         //标记SKU
