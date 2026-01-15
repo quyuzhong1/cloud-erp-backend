@@ -129,6 +129,13 @@ public class LogisticsBillCostExcelDTO  implements Serializable {
     private String  estimatedCurrency;
 
     /**
+     * 账单确认时间
+     */
+    @ExcelProperty(value = "账单确认时间", index = 16)
+    @FieldValid(fieldName = "账单确认时间",formatPattern = FieldFormatPatternTypeEnum.DATETIME)
+    private String  confirmTimeStr;
+
+    /**
      * 错误信息
      */
     private String errorMsg;

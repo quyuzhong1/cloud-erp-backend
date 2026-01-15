@@ -2,6 +2,7 @@ package com.erp.server.tms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.lang.Pair;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
@@ -22,6 +23,7 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.FieldValidUtil;
+import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.tms.dto.LogisticsBillCostDTO;
 import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.dto.TmsCostDetailDTO;
@@ -151,6 +153,7 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
         headerNameList.add("尺寸宽(物流商)");
         headerNameList.add("尺寸高(物流商)");
         headerNameList.add("实重(物流商)");
+        headerNameList.add("账单确认时间");
         return headerNameList;
     }
 
@@ -173,6 +176,7 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
         jsonObject.set("尺寸宽(物流商)","thirdWidth");
         jsonObject.set("尺寸高(物流商)","thirdHeight");
         jsonObject.set("实重(物流商)","thirdActualWeight");
+        jsonObject.set("账单确认时间","confirmTimeStr");
         return jsonObject;
     }
 
@@ -364,6 +368,9 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
             if(StringUtils.isNotBlank(thirdActualWeight)) {
                 updateDataDTO.setThirdActualWeight(new BigDecimal(thirdActualWeight));
             }
+
+            //对账确认日期
+            LocalDateTime confirmTime = CharSequenceUtil.isBlank(excelDTO.getConfirmTimeStr()) ? LocalDateTime.now() : LocalDateUtil.stringToLocalDateTime(excelDTO.getConfirmTimeStr());
             
             updateList.forEach(u -> u.setCurrency(updateDataDTO.getCurrency()));
             List<TmsCostDetailEntity> validateList = BeanMapperUtils.copyList(TmsCostDetailEntity.class, updateList);
@@ -389,19 +396,21 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
                     errorList.add(jsonObject);
             	}
             }
-            List<String> ids = new ArrayList<>();
+            List<Pair<String,LocalDateTime>> pairList = new ArrayList<>();
             if (ImportTypeEnum.ADD.getCode().equals(importType)){
                 List<LogisticsBillCostDTO.AddDataDTO> dtoList = buildAddDTO(updateDataDTO,updateList);
                 List<BaseResultDTO.AddDTO> addDTOS = logisticsBillCostService.addPayAndRefund(dtoList);
-                ids = addDTOS.stream().map(BaseResultDTO.AddDTO::getId).collect(Collectors.toList());
+                pairList = addDTOS.stream()
+                        .map(obj -> new Pair<String, LocalDateTime>(obj.getId(), confirmTime))
+                        .collect(Collectors.toList());
             }else {
                 updateDataDTO.setCostDetailList(updateList);
                 BaseResultDTO.UpdateDTO update = this.update(updateDataDTO, Boolean.TRUE);
-                ids.add(update.getId());
+                pairList.add(new Pair<>(update.getId(),confirmTime));
             }
             //确认
             if (confirmStatus) {
-                ids.forEach(id -> this.updateReconciliationStatus(id, ReconciliationStatusEnum.CONFIRMED.getCode(), LocalDateTime.now()));
+                pairList.forEach(obj -> this.updateReconciliationStatus(obj.getKey(), ReconciliationStatusEnum.CONFIRMED.getCode(), obj.getValue()));
             }
         }
     }
