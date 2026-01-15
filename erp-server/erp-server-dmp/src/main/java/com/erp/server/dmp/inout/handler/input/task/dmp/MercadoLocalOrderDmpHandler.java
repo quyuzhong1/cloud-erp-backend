@@ -6,7 +6,10 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.PlatformDictEnum;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.anno.ParamData;
+import com.common.core.entity.BaseEntity;
 import com.common.core.enums.PannoEnum;
 import com.common.core.utils.MathUtil;
 import com.erp.model.dmp.entity.DmpInputTaskEntity;
@@ -14,6 +17,7 @@ import com.erp.model.dmp.entity.DmpSoDetailEntity;
 import com.erp.model.dmp.entity.DmpSoInfoEntity;
 import com.erp.model.dmp.entity.DmpSoReceiverEntity;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
+import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.MercadoOrderLogisticTypeEnum;
 import com.erp.model.oms.enums.OrderLogisticTypeEnum;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
@@ -29,6 +33,7 @@ import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -64,6 +69,23 @@ public class MercadoLocalOrderDmpHandler extends MercadoLocalDmpHandler {
         List<ParamData> paramSlaList = new ArrayList<>();
         paramSlaList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, PannoEnum.EQ, slaInputTaskEntity.getId()));
         List<Map<String, Object>> dmpInputMongoChildSlaList = mongoService.findMongoData(paramSlaList, "mercadolibreLocal_shipmentSla_data");
+
+        // 包裹历史状态变更记录
+        List<String> childTaskIds = list.stream().map(BaseEntity::getId).distinct().collect(Collectors.toList());
+        List<ParamData> paramDataHisList = new ArrayList<>();
+        paramDataHisList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, PannoEnum.IN, childTaskIds));
+        paramDataHisList.add(new ParamData("status", "status", PannoEnum.EQ, "shipped"));
+        paramDataHisList.add(new ParamData("substatus", "substatus", PannoEnum.EQ, ""));
+        List<Map<String, Object>> dmpInputMongoHistoryChildList = mongoService.findMongoData(paramDataHisList, "mercadolibreLocal_shipmentHistory_data");
+
+        Map<String, String> shopTimezoneMap = new HashMap<>();
+        // 查下已授权的美客多店铺
+        List<ShopInfoEntity> shopEntityList = FeignQuery.create(ShopInfoEntity.class)
+                .eq(ShopInfoEntity::getDictPlatform, PlatformDictEnum.MERCADOLIBRE.getCode())
+                .list();
+        if (CollectionUtil.isNotEmpty(shopEntityList)) {
+            shopTimezoneMap = shopEntityList.stream().collect(Collectors.toMap(BaseEntity::getId, ShopInfoEntity::getTimeZone));
+        }
 
         //使用 DateTimeFormatter 解析字符串日期
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
@@ -148,11 +170,26 @@ public class MercadoLocalOrderDmpHandler extends MercadoLocalDmpHandler {
                     //买家自选物流 （跟踪方式）
                     dmpDataMap.put("buyerSelectedLogistics", shipmentMap.get("trackingMethod"));
 
-                    Object dateCreated = shipmentMap.get("dateCreated");
-                    if (ObjectUtil.isNotEmpty(dateCreated)) {
-                        //发货时间
-                        OffsetDateTime offsetDateTime = OffsetDateTime.parse(String.valueOf(dateCreated), formatter);
-                        dmpDataMap.put("deliveryTime", offsetDateTime.toLocalDateTime());
+//                    Object dateCreated = shipmentMap.get("dateCreated");
+//                    if (ObjectUtil.isNotEmpty(dateCreated)) {
+//                        //发货时间
+//                        OffsetDateTime offsetDateTime = OffsetDateTime.parse(String.valueOf(dateCreated), formatter);
+//                        dmpDataMap.put("deliveryTime", offsetDateTime.toLocalDateTime());
+//                    }
+                    List<Map<String, Object>> curHistoryMapList = dmpInputMongoHistoryChildList.stream()
+                            .filter(e -> e.getOrDefault("shipmentFid", "").toString().equalsIgnoreCase(shipmentId.toString()))
+                            .collect(Collectors.toList());
+                    if (CollectionUtil.isNotEmpty(curHistoryMapList)) {
+                        Object shippedDateObj = curHistoryMapList.get(0).get("date");
+                        // 发货时间
+                        OffsetDateTime offsetDateTime = OffsetDateTime.parse(String.valueOf(shippedDateObj), formatter);
+                        // 存在时区配置按时区
+                        String timezone = shopTimezoneMap.get(dmpDataMap.getOrDefault("shopId", "").toString());
+                        if (org.apache.commons.lang3.StringUtils.isNotBlank(timezone)) {
+                            dmpDataMap.put("deliveryTime", offsetDateTime.atZoneSameInstant(ZoneId.of(timezone)));
+                        } else {
+                            dmpDataMap.put("deliveryTime", offsetDateTime.toLocalDateTime());
+                        }
                     }
                     if(shipmentMap.containsKey("substatus") && shipmentMap.get("substatus")!=null){
                         String subStatus = shipmentMap.get("substatus").toString();
