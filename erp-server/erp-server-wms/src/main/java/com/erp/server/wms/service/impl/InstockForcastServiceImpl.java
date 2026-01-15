@@ -153,8 +153,8 @@ public class InstockForcastServiceImpl extends SuperServiceImpl<InstockForcastMa
             return;
         }
         InventoryUnApproveDTO inventoryUnApproveDTO = new InventoryUnApproveDTO();
-        inventoryUnApproveDTO.setSourceType(InventorySourceTypeEnum.PURCHASE_ORDER);
-        inventoryUnApproveDTO.setBillId(purchaseOrderId);
+        inventoryUnApproveDTO.setSourceType(InventorySourceTypeEnum.INSTOCK_FORCAST);
+        inventoryUnApproveDTO.setBillId(instockForcastEntity.getId());
         inventoryTransCoreService.unApprove(inventoryUnApproveDTO);
         // 更新入库预报为已删除
         instockForcastMapper.updateDeletedById(instockForcastEntity.getId());
