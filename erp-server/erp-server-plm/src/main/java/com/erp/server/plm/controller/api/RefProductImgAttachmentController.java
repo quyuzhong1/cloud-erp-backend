@@ -101,7 +101,14 @@ public class RefProductImgAttachmentController extends BaseController {
             }
         }
         
-        // 2. 循环每个addDTO，调用单个add方法
+        // 2. 如果有多张图片，将第一张移到最后处理，确保第一张图片成为主图
+        // 因为add方法会把最新上传的图片设置为主图
+        if (addDTOList.size() > 1) {
+            RefProductImgAttachmentDTO.AddDTO firstDTO = addDTOList.remove(0);
+            addDTOList.add(firstDTO);
+        }
+        
+        // 3. 循环每个addDTO，调用单个add方法
         for (RefProductImgAttachmentDTO.AddDTO addDTO : addDTOList) {
             BatchResultDTO addResult;
             try {
@@ -122,6 +129,12 @@ public class RefProductImgAttachmentController extends BaseController {
                 addResult = BatchResultDTO.fail("", code, e.getMessage());
             }
             resultDTOS.add(addResult);
+        }
+        
+        // 4. 将最后一个结果（第一张图片的结果）移回第一个位置
+        if (resultDTOS.size() > 1) {
+            BatchResultDTO lastResult = resultDTOS.remove(resultDTOS.size() - 1);
+            resultDTOS.add(0, lastResult);
         }
         
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);

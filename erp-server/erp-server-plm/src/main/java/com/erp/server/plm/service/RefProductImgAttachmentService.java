@@ -7,6 +7,7 @@ import com.common.business.vo.PagingVO;
 import org.springframework.web.multipart.MultipartFile;
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -155,4 +156,6 @@ public interface RefProductImgAttachmentService extends SuperService<RefProductI
      * @date: 2025-12-29
      */
     void handleProductImagesAfterSave(String skuId, String imagesUrl);
+
+    void handleProductImagesAfterSave(String finalSkuId, String finalImagesUrl, Map<String, String> urlToNameMap);
 }

@@ -1712,12 +1712,12 @@ public class SampleTransferInfoServiceImpl extends SuperServiceImpl<SampleTransf
             appList.add(mergedItem);
         }
         
-        // 添加其他标签（审核中、已审核）
+        // 添加其他标签（待我审核、已审核）
         for (SampleTransferInfoDTO.TabListDTO item : list) {
             if (!ApproveStatusEnum.WAIT_SUBMIT.getCode().equals(item.getTabFlag()) 
                 && !ApproveStatusEnum.REJECT.getCode().equals(item.getTabFlag())) {
                 if (Objects.equals(ApproveStatusEnum.APPROVE_ING.getCode(), item.getTabFlag())) {
-                    item.setTabFlagName("审核中");
+                    item.setTabFlagName("待我审核");
                 } else if (Objects.equals(ApproveStatusEnum.APPROVE.getCode(), item.getTabFlag())) {
                     item.setTabFlagName("已审核");
                 }

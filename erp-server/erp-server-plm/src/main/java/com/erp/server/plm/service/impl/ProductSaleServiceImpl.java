@@ -207,6 +207,7 @@ public class ProductSaleServiceImpl extends ServiceImpl<ProductSaleMapper, Produ
             }
         }
         //处理数据
+
         handleSaveOrUpdate(saleEntity);
         this.saveOrUpdateParentPropertyIdByChildSkuId(Arrays.asList(productSaleDTO.getSkuId()));
         return this.saveOrUpdate(saleEntity);
