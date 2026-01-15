@@ -94,5 +94,20 @@ public class PurchaseReturnOrderFeignController extends BaseController {
 
     }
 
+    /**
+     * 根据skuid查询明细
+     * @param skuIdList
+     * @return
+     */
+    @PostMapping("/listPoReturnDetailBySkuIdList")
+    public List<PoReturnDetailEntity> listPoReturnDetailBySkuIdList(@RequestBody List<String> skuIdList) {
+        if (CollectionUtils.isEmpty(skuIdList)) {
+            return Collections.emptyList();
+        }
+        List<PoReturnDetailEntity> list = poReturnDetailService.listPoReturnDetailBySkuIdList(skuIdList);
+        return list;
+
+    }
+
 
 }

@@ -941,4 +941,71 @@ public class SubcontractOrderDTO implements Serializable {
         private SubcontractOrderEntity subcontractOrderEntity;
         private String approveStatus;
     }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ListSubcontractOrderSkuPriceDTO{
+        /**
+         * skuid
+         */
+        private String skuId;
+
+        /**
+         * sku编码
+         */
+        private String skuNo;
+
+        /**
+         * 单价
+         */
+        private Integer qty;
+
+        /**
+         * 单价
+         */
+        private BigDecimal price;
+
+        /**
+         * 总价
+         */
+        private BigDecimal amount;
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ListPriceParamDTO{
+        /**
+         * skuid
+         */
+        @NotBlank(message = "skuId不能为空")
+        private String skuId;
+
+        /**
+         * sku编码
+         */
+        @NotBlank(message = "sku编码不能为空")
+        private String skuNo;
+
+        /**
+         * 组织id
+         */
+        @NotBlank(message = "组织id不能为空")
+        private String orgId;
+
+        /**
+         * 供应商id
+         */
+        @NotBlank(message = "供应商id不能为空")
+        private String supplierId;
+
+        /**
+         * 数量
+         */
+        @Min(1)
+        private Integer qty;
+
+    }
 }

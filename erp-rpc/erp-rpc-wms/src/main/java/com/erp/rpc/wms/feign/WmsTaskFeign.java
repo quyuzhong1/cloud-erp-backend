@@ -526,4 +526,7 @@ public interface WmsTaskFeign {
      */
     @PostMapping("feign/wmsWorkOption/sampleAdjustmentApprove")
     List<BatchResultDTO> sampleAdjustmentApprove(@RequestBody BaseApproveParamDTO baseApproveParamDTO);
+
+    @PostMapping("feign/purchaseReturnOrder/listPoReturnDetailBySkuIdList")
+    List<PoReturnDetailEntity> listPoReturnDetailBySkuIdList(@RequestBody List<String> skuIdList);
 }

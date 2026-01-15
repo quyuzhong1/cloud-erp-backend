@@ -29,6 +29,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.StrUtils;
@@ -43,10 +44,7 @@ import com.erp.model.scm.enums.*;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
-import com.erp.model.wms.entity.PoInstockDetailEntity;
-import com.erp.model.wms.entity.SubcontractIssueEntity;
-import com.erp.model.wms.entity.WarehouseLocationEntity;
-import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
+import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
@@ -61,6 +59,7 @@ import com.erp.server.scm.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.math3.util.Pair;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronizationAdapter;
@@ -1600,6 +1599,50 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
                 .set(SubcontractOrderEntity::getApproveUserName, subcontractOrderEntity.getApproveUserName())
                 .set(SubcontractOrderEntity::getApproveTime, subcontractOrderEntity.getApproveTime())
                 .update();
+    }
+
+    @Override
+    public List<SubcontractOrderDTO.ListSubcontractOrderSkuPriceDTO> listSubcontractOrderSkuPrice(List<SubcontractOrderDTO.ListPriceParamDTO> dto) {
+        List<SubcontractOrderDTO.ListSubcontractOrderSkuPriceDTO> listSubcontractOrderSkuPriceDTOS = new ArrayList<>();
+        List<String> skuIdList = dto.stream().map(item -> item.getSkuId()).collect(Collectors.toList());
+        List<PoReturnDetailEntity> poReturnDetailList = wmsTaskFeign.listPoReturnDetailBySkuIdList(skuIdList);
+        List<PurchasePriceDTO.PriceDTO> priceParamDTOList = dto.stream()
+                .map(moldDetail -> PurchasePriceDTO.PriceDTO.builder()
+                        .purchaseOrgId(moldDetail.getOrgId())
+                        .skuId(moldDetail.getSkuId())
+                        .supplierId(moldDetail.getSupplierId())
+                        .qty(moldDetail.getQty() != null ? moldDetail.getQty() : null)
+                        .build())
+                .collect(Collectors.toList());
+        List<PurchasePriceDTO.PriceDTO> priceDTOList = purchasePriceService.batchGetPurchasePrice(priceParamDTOList);
+        //先从退货单获取价格，如果没有就从价目表获取
+        for (SubcontractOrderDTO.ListPriceParamDTO listPriceParamDTO : dto) {
+            SubcontractOrderDTO.ListSubcontractOrderSkuPriceDTO listSubcontractOrderSkuPriceDTO = new SubcontractOrderDTO.ListSubcontractOrderSkuPriceDTO();
+            PoReturnDetailEntity poReturnDetailEntity = poReturnDetailList.stream()
+                    .filter(item -> Objects.equals(listPriceParamDTO.getSkuId(), item.getSkuId()))
+                    .findFirst()
+                    .orElse(null);
+            if (Objects.isNull(poReturnDetailEntity)) {
+                PurchasePriceDTO.PriceDTO priceDTO = priceDTOList.stream()
+                        .filter(item -> Objects.equals(item.getSkuId(), listPriceParamDTO.getSkuId()))
+                        .findFirst()
+                        .orElse(null);
+                if (Objects.nonNull(priceDTO)){
+                    BeanUtils.copyProperties(priceDTO,listSubcontractOrderSkuPriceDTO);
+                    listSubcontractOrderSkuPriceDTOS.add(listSubcontractOrderSkuPriceDTO);
+                } else {
+                    throw new ServiceException(ApiError.PURCHASE_PRICE_SKU_PRICE_NOT_FOUND,listPriceParamDTO.getSkuNo());
+                }
+            } else {
+                BeanUtils.copyProperties(poReturnDetailEntity,listSubcontractOrderSkuPriceDTO);
+                listSubcontractOrderSkuPriceDTO.setQty(listPriceParamDTO.getQty());
+                listSubcontractOrderSkuPriceDTO.setPrice(poReturnDetailEntity.getReturnPrice());
+                listSubcontractOrderSkuPriceDTO.setAmount(MathUtil.multiplyWithTwo(poReturnDetailEntity.getReturnPrice(),listPriceParamDTO.getQty()));
+                listSubcontractOrderSkuPriceDTOS.add(listSubcontractOrderSkuPriceDTO);
+            }
+
+        }
+        return listSubcontractOrderSkuPriceDTOS;
     }
 
 }

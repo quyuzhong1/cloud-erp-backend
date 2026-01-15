@@ -510,4 +510,15 @@ public class SubcontractOrderController extends BaseController {
         return success(list);
     }
 
+    /**
+     * 委外订单获取价格
+     * @param dto
+     * @return
+     */
+    @PostMapping("/listSubcontractOrderSkuPrice")
+    public ApiResult<List<SubcontractOrderDTO.ListSubcontractOrderSkuPriceDTO>> listSubcontractOrderSkuPrice(@RequestBody @Validated List<SubcontractOrderDTO.ListPriceParamDTO> dto) {
+        List<SubcontractOrderDTO.ListSubcontractOrderSkuPriceDTO> list = subcontractOrderService.listSubcontractOrderSkuPrice(dto);
+        return success(list);
+    }
+
 }
