@@ -219,8 +219,6 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
 
     @Override
     public PagingVO<SoDeliveryNoticeDTO.PagingView> paging(PagingDTO<SoDeliveryNoticeDTO.PagingParam> pagingParamDTO) throws ExecutionException, InterruptedException {
-        StopWatch stopWatch = StopWatch.create("SoDeliveryNoticeServiceImpl paging");
-        stopWatch.start("paging");
         SoDeliveryNoticeDTO.PagingParam params = pagingParamDTO.getParams();
         DynamicDataSourceTypeEnum dynamicDataSourceTypeEnum = DynamicDataSourceThreadLocal.get();
         if(dynamicDataSourceTypeEnum == null) {
@@ -233,8 +231,6 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         if (CollectionUtils.isEmpty(pageData.getRecords())) {
             return new PagingVO<>(new Page<>());
         }
-        stopWatch.stop();
-        stopWatch.start("整理数据");
         //明细数据
         List<SoDeliveryNoticeDTO.PagingView> records = pageData.getRecords();
         List<String> customerIds = records.stream().filter(e -> CharSequenceUtil.isNotBlank(e.getCustomerId())).map(SoDeliveryNoticeDTO.PagingView::getCustomerId).distinct().collect(Collectors.toList());
@@ -278,8 +274,6 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
 //        List<SoDeliveryNoticeDTO.PickStatus> pickStatusList = pickStatusFuture.get();
         //查询装箱数量
         List<WmsCartonDTO.CountDTO> countDTOS = packingCountFuture.get();
-        stopWatch.stop();
-        stopWatch.start("合并数据");
         if (CollectionUtils.isNotEmpty(records)) {
             records.forEach(obj -> {
 //                pickStatusList.stream().filter(e -> e.getNoticeId().equals(obj.getId())).findFirst().ifPresent(p -> obj.setGenerationPickStatus(p.getGenerationPickStatus()));
@@ -347,8 +341,6 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
                 pagingView.setIsPicked(pagingView.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getCode())&&val.stream().allMatch(SoDeliveryNoticeDTO.PagingView::getIsPicked));
             }
         });
-        stopWatch.stop();
-        log.warn("SoDeliveryNoticeServiceImpl paging 耗时:{}",stopWatch.prettyPrint(TimeUnit.SECONDS));
         return new PagingVO<>(pageData);
     }
 

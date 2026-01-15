@@ -356,6 +356,7 @@ public class SoB2cDeliveryDTO implements Serializable {
          * 动态数据源
          */
         private String dynamicDataSource;
+
     }
 
     /**
