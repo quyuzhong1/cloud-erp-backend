@@ -1,6 +1,7 @@
 package com.erp.model.plm.dto;
 
 
+import com.alibaba.excel.annotation.ExcelIgnore;
 import com.alibaba.excel.annotation.ExcelProperty;
 import com.common.core.anno.FieldValid;
 import com.common.core.enums.FieldFormatPatternTypeEnum;
@@ -451,6 +452,9 @@ public class ProductDetailImprotUpdateExcelDTO {
      * 电池重量（g）
      */
     @FieldValid(fieldName = "电池重量（g）",formatPattern = FieldFormatPatternTypeEnum.AMOUNT4)
+    @ExcelProperty("电池重量（g）")
+    private String batteryWeightStr;
+    @ExcelIgnore
     private BigDecimal batteryWeight;
 
     /**
