@@ -352,6 +352,11 @@ public class SoB2cDeliveryDTO implements Serializable {
          */
         private Map<String,String> sqlMap;
 
+        /**
+         * 动态数据源
+         */
+        private String dynamicDataSource;
+
     }
 
     /**
