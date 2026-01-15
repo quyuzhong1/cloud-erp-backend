@@ -95,6 +95,13 @@ public class LogisticsLastMileCostExcelDTO implements Serializable {
     private String  thirdActualWeight;
 
     /**
+     * 账单确认时间
+     */
+    @ExcelProperty(value = "账单确认时间", index = 11)
+    @FieldValid(fieldName = "账单确认时间",formatPattern = FieldFormatPatternTypeEnum.DATETIME)
+    private String  confirmTimeStr;
+
+    /**
      * 错误数据
      */
     private String errorMsg;

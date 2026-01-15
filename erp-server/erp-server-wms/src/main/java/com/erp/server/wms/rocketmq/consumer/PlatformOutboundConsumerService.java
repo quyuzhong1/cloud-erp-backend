@@ -280,7 +280,7 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
                 SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO(
                         mainEntity.getId(),
                         SoB2cErrorTypeEnum.THIRD_WAREHOUSE_OUT_EXCEPTION.getCode(),
-                        null,
+                        JSONUtil.toJsonStr(dto),
                         dto.getAbnormalProblemReason(),
                         JSONUtil.toJsonStr(dto),
                         ""
@@ -373,7 +373,7 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
                 SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO(
                         mainEntity.getId(),
                         SoB2cErrorTypeEnum.RETRY_PLATFORM_OUTBOUND.getCode(),
-                        null,
+                        JSONUtil.toJsonStr(dto),
                         "自动生成销售出库单失败：订单未审核或审核不通过",
                         JSONUtil.toJsonStr(dto),
                         ""
@@ -433,7 +433,7 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
                 SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO(
                         mainEntity.getId(),
                         SoB2cErrorTypeEnum.RETRY_PLATFORM_OUTBOUND.getCode(),
-                        null,
+                        JSONUtil.toJsonStr(dto),
                         StrUtil.format("自动生成销售出库单失败：存在【{}】平台未映射SKU",PlatformDictEnum.getNameByCode(mainEntity.getDictPlatform()),skuMappingError),
                         JSONUtil.toJsonStr(dto),
                         ""
@@ -450,7 +450,7 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
                 SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO(
                         mainEntity.getId(),
                         SoB2cErrorTypeEnum.RETRY_PLATFORM_OUTBOUND.getCode(),
-                        null,
+                        JSONUtil.toJsonStr(dto),
                         "自动生成销售出库单失败：三方仓代码warehouseCode为空",
                         JSONUtil.toJsonStr(dto),
                         ""
@@ -467,7 +467,7 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
                 SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO(
                         mainEntity.getId(),
                         SoB2cErrorTypeEnum.RETRY_PLATFORM_OUTBOUND.getCode(),
-                        null,
+                        JSONUtil.toJsonStr(dto),
                         "自动生成销售出库单失败：三方仓库未映射",
                         JSONUtil.toJsonStr(dto),
                         ""
@@ -489,6 +489,15 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
             //5.“三方仓发货单”
             ThirdWarehouseDeliveryEntity thirdWarehouseDeliveryEntity = generateThirdWarehouseDelivery(detailList, dto, mainEntity, platformCode);
             resultMap.put(mainEntity,thirdWarehouseDeliveryEntity);
+
+            //6.清除自动出库异常异常
+            if(SoB2cErrorTypeEnum.RETRY_PLATFORM_OUTBOUND.getCode().equals(mainEntity.getSignOrderError())){
+                String type = SoB2cErrorTypeEnum.RETRY_PLATFORM_OUTBOUND.getCode();
+                SoB2cErrorDTO.DeleteDTO deleteDTO = new SoB2cErrorDTO.DeleteDTO();
+                deleteDTO.setMainId(mainEntity.getId());
+                deleteDTO.setType(type);
+                soB2cFeign.deleteError(deleteDTO);
+            }
         }
         return resultMap;
     }

@@ -4,6 +4,7 @@ package com.erp.server.tms.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.ListUtil;
+import cn.hutool.core.lang.Pair;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
@@ -29,6 +30,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.*;
+import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
@@ -1006,6 +1008,9 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             if(StringUtils.isNotBlank(thirdActualWeight)) {
                 updateDataDTO.setThirdActualWeight(new BigDecimal(thirdActualWeight));
             }
+            //对账确认日期
+            LocalDateTime confirmTime = CharSequenceUtil.isBlank(billCostExcelDTO.getConfirmTimeStr()) ? LocalDateTime.now() : LocalDateUtil.stringToLocalDateTime(billCostExcelDTO.getConfirmTimeStr());
+
 
             List<TmsCostDetailEntity> validateList = BeanMapperUtils.copyList(TmsCostDetailEntity.class, updateDetailList);
             List<TmsCostDetailEntity> tmsCostDetailEntityList = mainIdListMap.get(logisticsBillCostEntity.getId());
@@ -1044,19 +1049,21 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             if(CollUtil.isEmpty(updateDetailList)) {
             	continue;
             }
-            List<String> ids = new ArrayList<>();
+            List<Pair<String,LocalDateTime>> pairList = new ArrayList<>();
             if (ImportTypeEnum.ADD.getCode().equals(importType)){
                 List<LogisticsBillCostDTO.AddDataDTO> dtoList = buildAddDTO(updateDataDTO,value,tmsCfgCostList);
                 List<AddDTO> addDTOS = this.addPayAndRefund(dtoList);
-                ids = addDTOS.stream().map(AddDTO::getId).collect(Collectors.toList());
+                pairList = addDTOS.stream()
+                        .map(obj -> new Pair<String, LocalDateTime>(obj.getId(), confirmTime))
+                        .collect(Collectors.toList());
             }else {
                 updateDataDTO.setCostDetailList(updateDetailList);
                 BaseResultDTO.UpdateDTO update = this.update(updateDataDTO, Boolean.TRUE);
-                ids.add(update.getId());
+                pairList.add(new Pair<>(update.getId(),confirmTime));
             }
             //确认
             if (confirmStatus) {
-                ids.forEach(id -> this.updateReconciliationStatus(id, ReconciliationStatusEnum.CONFIRMED.getCode(), LocalDateTime.now()));
+                pairList.forEach(obj -> this.updateReconciliationStatus(obj.getKey(), ReconciliationStatusEnum.CONFIRMED.getCode(), obj.getValue()));
             }
         }
     }
@@ -1418,7 +1425,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         LogisticsBillCostEntity logisticsBillCostEntity = null;
         if (CollUtil.isEmpty(logisticsBillCostEntityList)) {
             if(!ImportTypeEnum.ADD.getCode().equals(importType)){
-                errorMsgList.add("未找到对应对账类型的物流费用单");
+                errorMsgList.add("未找到对应对账月份、对账类型的物流费用单");
             }
         } else {
             if(logisticsBillCostEntityList.size() > 1) {
