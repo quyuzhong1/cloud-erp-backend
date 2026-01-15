@@ -354,11 +354,6 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         }
         pagingParamDTO.getParams().setDynamicDataSource(dynamicDataSourceTypeEnum.getCode());
         pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
-        DynamicDataSourceTypeEnum dynamicDataSourceTypeEnum = DynamicDataSourceThreadLocal.get();
-        if(dynamicDataSourceTypeEnum == null) {
-            dynamicDataSourceTypeEnum = DynamicDataSourceTypeEnum.POSTGRES;
-        }
-        pagingParamDTO.getParams().setDynamicDataSource(dynamicDataSourceTypeEnum.getCode());
         Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
         IPage<SoB2cDeliveryDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingParamDTO.getParams());
         if (CollUtil.isEmpty(pageData.getRecords())) {
@@ -2567,11 +2562,6 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         }
         dto.getParams().setDynamicDataSource(dynamicDataSourceTypeEnum.getCode());
         dto.getParams().setPermissionSql(dto.getPermissionSql());
-        DynamicDataSourceTypeEnum dynamicDataSourceTypeEnum = DynamicDataSourceThreadLocal.get();
-        if(dynamicDataSourceTypeEnum == null) {
-            dynamicDataSourceTypeEnum = DynamicDataSourceTypeEnum.POSTGRES;
-        }
-        dto.getParams().setDynamicDataSource(dynamicDataSourceTypeEnum.getCode());
         Page<SoB2cDeliveryDTO.ListDTO> page = this.baseMapper.list(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
         if (CollUtil.isEmpty(page.getRecords())) {
             throw new ServiceException(ApiError.FILE_EXPORT_DATA_EMPTY);
