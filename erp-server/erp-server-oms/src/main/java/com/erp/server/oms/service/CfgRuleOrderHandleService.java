@@ -82,4 +82,12 @@ public interface CfgRuleOrderHandleService extends SuperService<CfgRuleOrderHand
     ThirdWarehouseCreateOutboundReq handleRuleOrderThirdWarehouse(ThirdWarehouseCreateOutboundReq createOutboundReq, Map<String, Object> map);
 
     SoMultiChannelDTO.ReceiverInfo handleRuleOrderSoMultiChannel(SoMultiChannelDTO.ReceiverInfo receiverInfo, Map<String, Object> map);
+
+    /**
+     * 检查发货限制
+     * @param map 订单规则匹配参数
+     * @param deliveryType 发货类型 {@link com.erp.model.oms.enums.RuleOrderHandleEnum.DeliveryRestrictionEnum}
+     * @return 如果有限制返回错误信息，否则返回null
+     */
+    String checkDeliveryRestriction(Map<String, Object> map, String deliveryType);
 }

@@ -1,12 +1,15 @@
 package com.erp.model.plm.dto;
 
 
+import com.alibaba.excel.annotation.ExcelIgnore;
 import com.alibaba.excel.annotation.ExcelProperty;
 import com.common.core.anno.FieldValid;
 import com.common.core.enums.FieldFormatPatternTypeEnum;
 import com.erp.model.plm.enums.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.math.BigDecimal;
 
 /**
  * @Description 产品sku信息导入
@@ -108,10 +111,10 @@ public class ProductDetailImprotUpdateExcelDTO {
     private String brandName;
 
     /**
-     * 研发团队
+     * 研发团队（产线）
      */
-    @FieldValid(fieldName = "研发团队" , maxLength = 50)
-    @ExcelProperty("研发团队")
+    @FieldValid(fieldName = "研发团队（产线）" , maxLength = 50)
+    @ExcelProperty("研发团队（产线）")
     private String rdtTeamName;
 
     /**
@@ -444,6 +447,15 @@ public class ProductDetailImprotUpdateExcelDTO {
     @FieldValid(fieldName = "保险属性")
     @ExcelProperty("保险属性")
     private String insuranceProperty;
+
+    /**
+     * 电池重量（g）
+     */
+    @FieldValid(fieldName = "电池重量（g）",formatPattern = FieldFormatPatternTypeEnum.AMOUNT4)
+    @ExcelProperty("电池重量（g）")
+    private String batteryWeightStr;
+    @ExcelIgnore
+    private BigDecimal batteryWeight;
 
     /**
      * 报关申报价（$）

@@ -2,6 +2,7 @@ package com.erp.server.plm.controller.feign;
 
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.DynamicExcelDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
@@ -63,6 +64,8 @@ public class ExportPlmFeignController {
     private CfgMoldAlertRuleService cfgMoldAlertRuleService;
     @Resource
     private MoldMonitorService moldMonitorService;
+    @Resource
+    private RefProductImgAttachmentService refProductImgAttachmentService;
 
     @PostMapping("/exportBom")
     @WebAdvanceQuery(handler = BomInfoHandler.class)
@@ -150,6 +153,11 @@ public class ExportPlmFeignController {
         return productDetailService.exportProductDetail(dto);
     }
 
+    @PostMapping("/exportDynamicProductDetail")
+    public PagingVO<DynamicExcelDTO> exportDynamicProductDetail(@RequestBody @Validated PagingDTO<ProductSkuExcelDTO> dto) {
+        return productDetailService.exportDynamicProductDetail(dto);
+    }
+
     @PostMapping("/exportProductCustoms")
     @WebAdvanceQuery
     public PagingVO<ProductCustomsDTO.ListDTO> exportProductCustoms(@RequestBody @Validated PagingDTO<ProductCustomsDTO.PagingParamDTO> dto) {
@@ -189,5 +197,10 @@ public class ExportPlmFeignController {
     @WebAdvanceQuery(handler = MoldMonitorQueryHandler.class)
     public PagingVO<MoldMonitorDTO.ListDTO> exportMoldMonitor(@RequestBody @Validated PagingDTO<MoldMonitorDTO.PagingParamDTO> dto) {
         return moldMonitorService.paging(dto);
+    }
+
+    @PostMapping("/buildProductImagesFolderStructure")
+    public String buildProductImagesFolderStructure(@RequestBody @Validated RefProductImgAttachmentDTO.BatchDownloadDTO dto) {
+        return refProductImgAttachmentService.buildProductImagesFolderStructure(dto);
     }
 }

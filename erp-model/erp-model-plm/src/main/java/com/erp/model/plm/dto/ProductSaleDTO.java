@@ -1,5 +1,6 @@
 package com.erp.model.plm.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -43,6 +44,12 @@ public class ProductSaleDTO implements Serializable {
      */
     private String insuranceProperty;
     private List<String> insurancePropertyList;
+
+    /**
+     * 电池重量（g）
+     */
+    private BigDecimal batteryWeight;
+
     /**
      * 年目标销售量
      */

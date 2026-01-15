@@ -16,7 +16,7 @@
         ps.input_electric,ps.output_electric,ps.electric_unit,
         ps.input_power,ps.output_power,ps.power_unit,
         ps.input_battery_capacity,ps.output_battery_capacity,ps.battery_capacity_unit,
-        ps.sales_platform,ps.is_marketable
+        ps.sales_platform,ps.is_marketable,ps.battery_weight as batteryWeight
     </sql>
 
     <select id="list" resultType="com.erp.model.plm.dto.ProductSaleShowDTO">
