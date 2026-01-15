@@ -1604,8 +1604,11 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
     @Override
     public List<SubcontractOrderDTO.ListSubcontractOrderSkuPriceDTO> listSubcontractOrderSkuPrice(List<SubcontractOrderDTO.ListPriceParamDTO> dto) {
         List<SubcontractOrderDTO.ListSubcontractOrderSkuPriceDTO> listSubcontractOrderSkuPriceDTOS = new ArrayList<>();
-        List<String> skuIdList = dto.stream().map(item -> item.getSkuId()).collect(Collectors.toList());
-        List<PoReturnDetailEntity> poReturnDetailList = wmsTaskFeign.listPoReturnDetailBySkuIdList(skuIdList);
+        List<String> sourceIdList = dto.stream().map(item -> item.getSourceId()).collect(Collectors.toList());
+        List<PoReturnEntity> poReturnList = wmsTaskFeign.listPoReturnByIdList(sourceIdList);
+        List<String> poReturnDetailIdList = poReturnList.stream().map(item -> item.getId()).collect(Collectors.toList());
+        List<PoReturnDetailEntity> poReturnDetailList = wmsTaskFeign.listPoReturnByMainIdList(poReturnDetailIdList);
+
         List<PurchasePriceDTO.PriceDTO> priceParamDTOList = dto.stream()
                 .map(moldDetail -> PurchasePriceDTO.PriceDTO.builder()
                         .purchaseOrgId(moldDetail.getOrgId())

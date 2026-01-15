@@ -962,7 +962,7 @@ public class SubcontractOrderDTO implements Serializable {
         private Integer qty;
 
         /**
-         * 单价
+         * 总价
          */
         private BigDecimal price;
 
@@ -977,6 +977,13 @@ public class SubcontractOrderDTO implements Serializable {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class ListPriceParamDTO{
+
+        /**
+         * 退货订单id
+         */
+        @NotBlank(message = "来源退货订单id不能为空")
+        private String sourceId;
+
         /**
          * skuid
          */
@@ -1005,6 +1012,7 @@ public class SubcontractOrderDTO implements Serializable {
          * 数量
          */
         @Min(1)
+        @NotNull(message = "数量不能为空")
         private Integer qty;
 
     }
