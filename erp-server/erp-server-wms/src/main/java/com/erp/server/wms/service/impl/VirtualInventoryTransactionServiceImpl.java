@@ -575,6 +575,7 @@ public class VirtualInventoryTransactionServiceImpl extends SuperServiceImpl<Vir
         // 当前单据日期需要进行流水重算
         List<VirtualTransFlowEntity> toDayFlowList = virtualTransFlowService.lambdaQuery().eq(VirtualTransFlowEntity::getVirtualInventoryId, inventoryId)
         		.eq(VirtualTransFlowEntity::getBillDate, billDate)
+        		.orderByAsc(VirtualTransFlowEntity::getTradeTime)
         		.orderByAsc(VirtualTransFlowEntity::getId)
         		.list();
         if(CollUtil.isNotEmpty(toDayFlowList)) {
