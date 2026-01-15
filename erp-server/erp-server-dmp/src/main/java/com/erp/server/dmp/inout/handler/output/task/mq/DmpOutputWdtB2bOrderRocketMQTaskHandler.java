@@ -22,6 +22,7 @@ import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
 import com.erp.server.dmp.service.ThirdMappingService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
@@ -29,6 +30,7 @@ import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -155,12 +157,15 @@ public class DmpOutputWdtB2bOrderRocketMQTaskHandler extends DmpOutputRocketMQTa
 		}else{
 			platformB2bOrderDTO.setIsInvalid(false);
 		}
-
+		Map<String,List<DmpSoDetailEntity>> combineDetailMap = dmpSoDetailEntityList.stream().filter(v-> StringUtils.isNotBlank(v.getSuiteNo())).collect(Collectors.groupingBy(DmpSoDetailEntity::getSuiteNo));
 		List<PlatformB2bOrderDetailDTO> details = new ArrayList<>();
 
-		//订单详情
+		//订单详情 ERP-15125 如果是组合品，推送组合品明细
 		for (int i = 0; i < dmpSoDetailEntityList.size(); i++) {
 			DmpSoDetailEntity dmpSoDetailEntity = dmpSoDetailEntityList.get(i);
+			if(StringUtils.isNotBlank(dmpSoDetailEntity.getSuiteNo())){
+				continue;
+			}
 			PlatformB2bOrderDetailDTO detailDTO = new PlatformB2bOrderDetailDTO();
 			detailDTO.setSkuNo(dmpSoDetailEntity.getSkuNo());
 			detailDTO.setPlatformSkuNo(dmpSoDetailEntity.getPlatformSpuNo());
@@ -168,9 +173,27 @@ public class DmpOutputWdtB2bOrderRocketMQTaskHandler extends DmpOutputRocketMQTa
 			detailDTO.setQty(dmpSoDetailEntity.getQty());
 			detailDTO.setTaxRate(dmpSoInfoEntity.getTaxRate());
 			detailDTO.setTaxPrice(dmpSoDetailEntity.getSellPriceOrigin());
+			detailDTO.setCustomerPO(dmpSoInfoEntity.getPlatformCode());
+			detailDTO.setToCountry(dmpSoInfoEntity.getSellRemark());
 			detailDTO.setPrice(detailDTO.getTaxPrice().divide(BigDecimal.ONE.add(detailDTO.getTaxRate().divide(new BigDecimal("100"), 4, RoundingMode.HALF_UP)), 2, RoundingMode.HALF_UP));
 			details.add(detailDTO);
 		}
+		combineDetailMap.forEach((suiteNo,list)->{
+			DmpSoDetailEntity dmpSoDetailEntity = list.get(0);
+			PlatformB2bOrderDetailDTO detailDTO = new PlatformB2bOrderDetailDTO();
+			detailDTO.setSkuNo(suiteNo);
+			detailDTO.setPlatformSkuNo(dmpSoDetailEntity.getPlatformSpuNo());
+			detailDTO.setCustomerPO(dmpSoInfoEntity.getPlatformCode());
+			detailDTO.setToCountry(dmpSoInfoEntity.getSellRemark());
+			detailDTO.setCustomerSkuNo(dmpSoDetailEntity.getPlatformSpuNo());
+			Integer totalQty = dmpSoDetailEntity.getSuiteQty();
+			detailDTO.setQty(totalQty);
+			detailDTO.setTaxRate(dmpSoInfoEntity.getTaxRate());
+			BigDecimal totalTaxPrice = list.stream().map(DmpSoDetailEntity::getSellPriceOrigin).reduce(BigDecimal.ZERO, BigDecimal::add);
+			detailDTO.setTaxPrice(totalTaxPrice);
+			detailDTO.setPrice(detailDTO.getTaxPrice().divide(BigDecimal.ONE.add(detailDTO.getTaxRate().divide(new BigDecimal("100"), 4, RoundingMode.HALF_UP)), 2, RoundingMode.HALF_UP));
+			details.add(detailDTO);
+		});
 		platformB2bOrderDTO.setDetail(details);
 		return platformB2bOrderDTO;
 	}
