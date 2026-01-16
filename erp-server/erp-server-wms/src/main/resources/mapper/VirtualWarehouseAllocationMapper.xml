@@ -60,9 +60,10 @@
         count(distinct vma.id)
         FROM virtual_warehouse_allocation_detail vmad
         inner JOIN virtual_warehouse_allocation vma
+        inner join virtual_warehouse_push_handle_detail vwphd on vma.id = vwphd.source_id and vwphd.is_deleted = false
         on vma.id = vmad.main_id and vma.is_deleted = false
         where vmad.is_deleted = false
-        and vmad.sync_status= #{params.syncStatus}
+        and vwphd.sync_status= #{params.syncStatus}
         <if test="params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
         </if>
@@ -186,8 +187,7 @@
             vmad.update_user_name AS updateUserName,
             vmad.update_time AS updateTime,
             third.third_code AS thirdCode,
-            vmad.sys_type AS sysType,
-            vmad.sys_type_name AS sysTypeName,
+            third.sys_type AS sysType,
             vma.is_statistics AS isStatistics,
             COALESCE(iv.realQty, 0) AS realQty,
             COALESCE(vi.distributionQty, 0) AS distributionQty,
@@ -210,7 +210,8 @@
             source_detail_id,
             string_agg(vwphd.third_code,',') as third_code,
             string_agg(vwphd.finish_description,',') as finish_description,
-            min(vwphd.sync_status) as sync_status
+            min(vwphd.sync_status) as sync_status,
+            min(vwphd.sys_type) as sys_type
             from virtual_warehouse_push_handle_detail vwphd
             inner join virtual_warehouse_push_handle_relation vwphr
             on vwphd.id = vwphr.handle_detail_id and vwphr.is_deleted = false
