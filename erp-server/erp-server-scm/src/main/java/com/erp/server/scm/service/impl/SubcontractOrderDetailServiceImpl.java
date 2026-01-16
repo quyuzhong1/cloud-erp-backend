@@ -632,11 +632,6 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
             }
         });
         List<PurchasePriceDTO.PriceDTO> priceList = purchasePriceService.batchGetPurchasePrice(list);
-        //BOM信息
-        List<BomChildrenSkuDTO> bomChildrenList = plmTaskFeign.listHistoryBomChildBySkuIds(parentSkuIds);
-        if (CollectionUtils.isEmpty(bomChildrenList)) {
-            throw new ServiceException(ApiError.BOM_NOT_FOUND);
-        }
         //产品信息
         List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(allSkuIds);
         if (CollectionUtils.isEmpty(skuList)) {
