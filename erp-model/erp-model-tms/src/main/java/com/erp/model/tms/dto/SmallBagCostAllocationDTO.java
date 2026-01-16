@@ -419,7 +419,10 @@ public class SmallBagCostAllocationDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class ListDTO extends ViewDTO{
-    	
+    	/**
+    	 * 平台订单号
+    	 */
+        private String platformCode;
     }
     
     /**

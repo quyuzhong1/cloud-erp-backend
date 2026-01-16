@@ -252,4 +252,6 @@ public class LogisticsSupplierController extends BaseController {
     public ApiResult<PagingVO<LogisticsSupplierDTO.PagingSelectDTO>> pagingSelect(@RequestBody @Validated PagingDTO<LogisticsSupplierDTO.SelectDTO> dto){
         return success(logisticsSupplierService.pagingSelect(dto));
     }
+
+
 }
