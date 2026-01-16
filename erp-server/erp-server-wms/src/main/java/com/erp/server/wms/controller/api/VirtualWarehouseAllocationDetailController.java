@@ -1,7 +1,6 @@
 package com.erp.server.wms.controller.api;
 
 
-import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
@@ -18,10 +17,11 @@ import com.erp.model.wms.dto.VirtualWarehouseAllocationDetailDTO;
 import com.erp.model.wms.entity.VirtualWarehouseAllocationDetailEntity;
 import com.erp.model.wms.entity.VirtualWarehouseAllocationEntity;
 import com.erp.model.wms.enums.VirtualWarehouseAllocationStatusEnum;
-import com.erp.model.wms.enums.VirtualWarehouseAllocationSyncStatusEnum;
 import com.erp.server.wms.service.VirtualWarehouseAllocationDetailService;
 import com.erp.server.wms.service.VirtualWarehouseAllocationService;
+import com.erp.server.wms.service.VirtualWarehousePushHandleRelationService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -46,6 +46,8 @@ public class VirtualWarehouseAllocationDetailController extends BaseController {
     private VirtualWarehouseAllocationService virtualWarehouseAllocationService;
     @Resource
     private VirtualWarehouseAllocationDetailService virtualWarehouseAllocationDetailService;
+    @Autowired
+    private VirtualWarehousePushHandleRelationService virtualWarehousePushHandleRelationService;
 
     /**
      * 新增
@@ -99,7 +101,6 @@ public class VirtualWarehouseAllocationDetailController extends BaseController {
         String id = dto.getDetailId();
         //已处理状态且同步失败状态
         String handleStatus = VirtualWarehouseAllocationStatusEnum.HANDLE.getCode();
-        String failedSyncStatus = VirtualWarehouseAllocationSyncStatusEnum.FAILED_SYNC.getCode();
         BatchResultDTO submit;
         String flagCode = id;
         try {
@@ -113,7 +114,7 @@ public class VirtualWarehouseAllocationDetailController extends BaseController {
                     submit = BatchResultDTO.fail(id, id, "分货单不存在");
                 } else {
                     //只有已处理状态且同步失败状态可以手动完结
-                    if (!Objects.equals(handleStatus, vmAllocationEntity.getStatus()) || !Objects.equals(failedSyncStatus, vmAllocationDetailEntity.getSyncStatus())) {
+                    if (!Objects.equals(handleStatus, vmAllocationEntity.getStatus())) {
                         submit = BatchResultDTO.fail(id, vmAllocationEntity.getCode(), ApiError.VM_MANUAL_STATUS_ERROR.getMsg());
                     } else {
                         flagCode = vmAllocationEntity.getCode();
@@ -146,7 +147,6 @@ public class VirtualWarehouseAllocationDetailController extends BaseController {
         String id = detailId;
         //已处理状态且同步失败状态
         String handleStatus = VirtualWarehouseAllocationStatusEnum.HANDLE.getCode();
-        String failedSyncStatus = VirtualWarehouseAllocationSyncStatusEnum.FAILED_SYNC.getCode();
         List<BatchResultDTO> resultDTOS = new ArrayList<>();
         BatchResultDTO submit;
         String flagCode = id;
@@ -161,17 +161,10 @@ public class VirtualWarehouseAllocationDetailController extends BaseController {
                     submit = BatchResultDTO.fail(id, id, "分货单不存在");
                 } else {
                     //只有已处理状态且同步失败状态可以同步
-                    if (!Objects.equals(handleStatus, vmAllocationEntity.getStatus()) || !Objects.equals(failedSyncStatus, vmAllocationDetailEntity.getSyncStatus())) {
+                    if (!Objects.equals(handleStatus, vmAllocationEntity.getStatus())) {
                         submit = BatchResultDTO.fail(id, vmAllocationEntity.getCode(), ApiError.VM_SYNC_ERROR_STATUS_ONLY.getMsg());
                     } else {
-                        String thirdCode = vmAllocationDetailEntity.getThirdCode();
-                        if (CharSequenceUtil.isBlank(thirdCode)){
-                            flagCode = vmAllocationEntity.getCode();
-                            submit = virtualWarehouseAllocationDetailService.sync(vmAllocationDetailEntity, vmAllocationEntity);
-                        }else {
-                            submit = BatchResultDTO.fail(id, id, "分货单明细已存在第三方编码不能重复同步");
-                        }
-
+                        submit = virtualWarehouseAllocationDetailService.sync(vmAllocationDetailEntity, vmAllocationEntity);
                     }
                 }
             }
@@ -244,14 +237,6 @@ public class VirtualWarehouseAllocationDetailController extends BaseController {
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "更新备注 id={id}, remark={remark}")
     public ApiResult<Boolean> updateRemark(@RequestBody @Validated VirtualWarehouseAllocationDTO.UpdateRemarkDTO updateRemarkDTO){
         return success(virtualWarehouseAllocationDetailService.updateRemark(updateRemarkDTO));
-    }
-    /**
-     * 处理推送失败的第三方编码问题
-     */
-    @PostMapping("/initFailThirdCode")
-    public ApiResult initFailThirdCode(@RequestBody String errorMsg){
-        virtualWarehouseAllocationDetailService.initFailThirdCode(errorMsg);
-        return success();
     }
 
 }
