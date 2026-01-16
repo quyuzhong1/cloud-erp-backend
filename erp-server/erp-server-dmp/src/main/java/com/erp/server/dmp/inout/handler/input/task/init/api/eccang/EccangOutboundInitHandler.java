@@ -46,7 +46,6 @@ public abstract class EccangOutboundInitHandler extends DmpInputInitHandler {
 				.modifyDateFrom(dmpInputTaskEntity.getStartTime())
 				.modifyDateTo(dmpInputTaskEntity.getEndTime())
 				.pageSize(100)
-				.orderStatus("D")
 //				.orderStatus(AntuEnums.OrderStatusEnum.INITIAL_RECEIVING.getCode())
 				.build();
 		Integer page = 1;

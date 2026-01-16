@@ -1266,7 +1266,7 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
                         if (progressQty >= 0) {
                             continue;
                         }
-                        currentQty = currentQty - progressQty;
+                        currentQty = currentQty + progressQty;
                     }
                 }
                 returnDTO.setQty(currentQty);
