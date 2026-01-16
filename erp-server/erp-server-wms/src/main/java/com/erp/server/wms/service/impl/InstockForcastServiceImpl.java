@@ -369,5 +369,15 @@ public class InstockForcastServiceImpl extends SuperServiceImpl<InstockForcastMa
         dataList.stream().forEach(this::poChange);
     }
 
+    @Override
+    public void fixData(List<String> ids) {
+        for (String id : ids) {
+            InventoryUnApproveDTO inventoryUnApproveDTO = new InventoryUnApproveDTO();
+            inventoryUnApproveDTO.setSourceType(InventorySourceTypeEnum.INSTOCK_FORCAST);
+            inventoryUnApproveDTO.setBillId(id);
+            inventoryTransCoreService.unApprove(inventoryUnApproveDTO);
+        }
+    }
+
 
 }
