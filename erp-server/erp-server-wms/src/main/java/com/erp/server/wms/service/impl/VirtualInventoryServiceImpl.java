@@ -720,7 +720,7 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
                        if (progressQty >= 0) {
                            continue;
                        }
-                        currentQty = currentQty - progressQty;
+                        currentQty = currentQty + progressQty;
                     }
                 }
                 returnDTO.setQty(currentQty);
