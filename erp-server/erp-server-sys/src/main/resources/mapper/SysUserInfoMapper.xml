@@ -461,6 +461,7 @@ sui.third_auth_type AS thirdAuthType
         count(*)  AS count
         FROM  sys_user_info sui
         WHERE sui.is_deleted=FALSE
+            and sui.user_type ='erp'
         <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
         </if>
