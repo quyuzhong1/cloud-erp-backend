@@ -1660,6 +1660,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         for (SupplierEntity supplierEntity : supplierList) {
             SubcontractOrderDTO.ListRateDTO listRateDTO = new SubcontractOrderDTO.ListRateDTO();
             listRateDTO.setSupplierId(supplierEntity.getId());
+            listRateDTO.setSupplierName(supplierEntity.getName());
             listRateDTO.setRate(supplierEntity.getTaxRate());
             listRateDTOS.add(listRateDTO);
         }

@@ -1027,6 +1027,11 @@ public class SubcontractOrderDTO implements Serializable {
         private String supplierId;
 
         /**
+         * 供应商名称
+         */
+        private String supplierName;
+
+        /**
          * 税率
          */
         private BigDecimal rate;
