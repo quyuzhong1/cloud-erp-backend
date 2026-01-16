@@ -1048,9 +1048,10 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      *
      * @param entity
      * @param soB2cLogisticsEntity
+     * @param checkBillStatus
      * @return
      */
-    BatchResultDTO getLogisticsLabel(SoB2cEntity entity, SoB2cLogisticsEntity soB2cLogisticsEntity);
+    BatchResultDTO getLogisticsLabel(SoB2cEntity entity, SoB2cLogisticsEntity soB2cLogisticsEntity, Boolean checkBillStatus);
 
     /**
      * 销售统计
@@ -1160,6 +1161,8 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * 5.创建发货单
      */
     String processOrderCreation(SoB2cDTO.AddDTO dto);
+
+    BatchResultDTO refreshExchangeRate(SoB2cEntity soB2cEntity);
 
     void retryPlatformOutbound( List<String> ids);
 }

@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.wms.mapper.AwdInventoryMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.wms.entity.AwdInventoryEntity">
+       <result column="id" property="id" />
+       <result column="create_time" property="createTime" />
+       <result column="update_time" property="updateTime" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="warehouse_id" property="warehouseId" />
+       <result column="warehouse_name " property="warehouseName " />
+       <result column="asin" property="asin" />
+       <result column="msku" property="msku" />
+       <result column="fnsku" property="fnsku" />
+       <result column="sku_id" property="skuId" />
+       <result column="sku_no" property="skuNo" />
+       <result column="product_name" property="productName" />
+       <result column="total_onhand_qty" property="totalOnhandQty" />
+       <result column="available_distributable_qty" property="availableDistributableQty" />
+       <result column="replenishment_qty" property="replenishmentQty" />
+       <result column="reserved_distributable_qty" property="reservedDistributableQty" />
+       <result column="total_inbound_qty" property="totalInboundQty" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_time,
+        update_time,
+        create_user_name,
+        create_user_id,
+        update_user_name,
+        update_user_id,
+        version,
+        is_deleted,
+        warehouse_id, warehouse_name , asin, msku, fnsku, sku_id, sku_no, product_name, total_onhand_qty, available_distributable_qty, replenishment_qty, reserved_distributable_qty, total_inbound_qty
+    </sql>
+
+    <select id="paging" resultType="com.erp.model.wms.dto.AwdInventoryDTO$ListDTO">
+        SELECT
+            ID AS ID,
+            ai.warehouse_id as warehouseId,
+            ai.warehouse_name as warehouseName,
+            ai.asin as asin,
+            ai.msku AS msku,
+            ai.fnsku as fnsku,
+            ai.sku_id AS skuId,
+            ai.sku_no AS skuNo,
+            ai.product_name AS productName,
+            ai.available_distributable_qty AS availableDistributableQty,
+            ai.replenishment_qty AS replenishmentQty,
+            ai.reserved_distributable_qty AS reservedDistributableQty,
+            ai.total_onhand_qty AS totalOnhandQty,
+            ai.total_inbound_qty AS totalInboundQty,
+            ai.update_time AS updateTime
+        FROM
+            awd_inventory ai
+        WHERE
+        1 = 1
+        <if test="params.sqlMap != null and params.sqlMap.default != null and params.sqlMap.default != ''">
+            AND ${params.sqlMap.default}
+        </if>
+        <!--数据权限-->
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+
+        <!--是否显示0库存-->
+        <if test="params.isShowZeroInventory">
+            AND NOT EXISTS (
+                SELECT
+                id
+                FROM
+                awd_inventory a
+                WHERE
+                a.id = ai.id
+                AND ai.available_distributable_qty = 0
+                AND ai.replenishment_qty = 0
+                AND ai.reserved_distributable_qty = 0
+                AND ai.total_onhand_qty = 0
+                AND ai.total_inbound_qty = 0
+            )
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        ai.create_time DESC
+    </select>
+
+    <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
+        select approve_status, count(id) from awd_inventory where is_deleted = false group by approve_status
+    </select>
+
+    <select id="listExport" resultType="com.erp.model.wms.dto.AwdInventoryDTO$ListDTO">
+
+    </select>
+    <select id="tabList" resultType="com.erp.model.wms.dto.AwdInventoryDTO$TabListDTO">
+        SELECT
+        approve_status AS tabFlag,
+        count(*)  AS count
+        FROM  awd_inventory
+        WHERE is_deleted=FALSE
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        GROUP BY approve_status
+    </select>
+    <select id="summaryNumber" resultType="com.erp.model.wms.dto.AwdInventoryDTO$SummaryNumber">
+        SELECT
+        SUM(ai.available_distributable_qty) AS availableDistributableQty,
+        SUM(ai.replenishment_qty) AS replenishmentQty,
+        SUM(ai.reserved_distributable_qty) AS reservedDistributableQty,
+        SUM(ai.total_onhand_qty) AS totalOnhandQty,
+        SUM(ai.total_inbound_qty) AS totalInboundQty
+        FROM awd_inventory ai
+        WHERE ai.is_deleted = FALSE
+        <!--数据权限-->
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+    </select>
+</mapper>

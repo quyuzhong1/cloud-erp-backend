@@ -351,6 +351,10 @@ public class DmpPushTaskDTO implements Serializable {
          * 目标平台名称
          */
         private String targetPlatformName;
+        /**
+         * 来源Id
+         */
+        private String sourceId;
 
         /**
          * 来源编码

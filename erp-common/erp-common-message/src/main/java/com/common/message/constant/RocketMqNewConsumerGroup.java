@@ -151,6 +151,10 @@ public class RocketMqNewConsumerGroup {
      */
     public static final String DMP_FBA_INVENTORY_TO_WMS_GROUP = "${spring.cloud.nacos.discovery.namespace}-dmp_fba_inventory_to_wms_group";
     public static final String DMP_B2B_TO_WMS_GROUP = "${spring.cloud.nacos.discovery.namespace}-dmp_b2b_to_wms_group";
+    /**
+     * 新中台平台AWD库存
+     */
+    public static final String DMP_AWD_INVENTORY_TO_WMS_GROUP = "${spring.cloud.nacos.discovery.namespace}-dmp_awd_inventory_to_wms_group";
 
     /**
      * 新中台推送产品上架时间
@@ -172,6 +176,7 @@ public class RocketMqNewConsumerGroup {
      * 新中台平台FBA货件
      */
     public static final String DMP_FBA_SHIPMENT_TO_WMS_GROUP = "${spring.cloud.nacos.discovery.namespace}-dmp_fba_shipment_to_wms_group";
+    public static final String DMP_THIRD_WAREHOUSE_TO_WMS_GROUP = "${spring.cloud.nacos.discovery.namespace}-erp_dmp_group";
     public static final String DMP_FULFILL_ORDER_TO_OMS_GROUP = "${spring.cloud.nacos.discovery.namespace}-dmp_fulfill_order_to_oms_group";
 
     /**
@@ -266,4 +271,5 @@ public class RocketMqNewConsumerGroup {
      */
     public static final String RESTCLOUD_YUNTING_SOCIAL_MEDIA_TO_OMS_GROUP = "${spring.cloud.nacos.discovery.namespace}-restcloud_yunting_social_media_to_oms_group";
 
+    public static final String DMP_AWD_SHIPMENT_TO_WMS_GROUP = "${spring.cloud.nacos.discovery.namespace}-dmp_awd_shipment_to_wms_group";
 }

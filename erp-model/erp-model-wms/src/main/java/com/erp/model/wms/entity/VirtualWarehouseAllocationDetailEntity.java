@@ -129,7 +129,11 @@ public class VirtualWarehouseAllocationDetailEntity extends BaseEntity<VirtualWa
     @TableField("detail_remark")
     private String detailRemark;
 
-    
+    /**
+     * 处理明细ID（非数据库字段）
+     */
+    @TableField(exist = false)
+    private String handleDetailId;
 
     public static final String MAIN_ID = "main_id";
 

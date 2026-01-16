@@ -20,6 +20,7 @@ import com.erp.model.wms.dto.inventory.InventoryReportDTO;
 import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
 import com.erp.model.wms.vo.WarehouseLocationExportVo;
 import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
@@ -406,4 +407,28 @@ public interface ExportWmsFeign {
      */
     @PostMapping("/feign/export/exportB2bThirdDelivery")
     PagingVO<B2bThirdDeliveryDTO.PagingViewDTO> exportB2bThirdDelivery(@RequestBody PagingDTO<B2bThirdDeliveryDTO.PagingParamDTO> dto);
+
+    /**
+     * 导出awd出库货件
+     * @param dto
+     * @return
+     */
+    @PostMapping("/feign/export/exportAwdOutStock")
+    PagingVO<AwdOutstockDTO.ListDTO> exportAwdOutStock(@RequestBody @Validated PagingDTO<AwdOutstockDTO.PagingParamDTO> dto);
+
+    /**
+     * 导出awd发货单
+     * @param dto
+     * @return
+     */
+    @PostMapping("/feign/export/exportAwdShipment")
+    PagingVO<FbaShipmentDTO.AwdListDTO> exportAwdShipment(@RequestBody PagingDTO<FbaShipmentDTO.PagingParamDTO> dto);
+    /**
+     * 导出awd库存
+     * @param dto
+     * @return
+     */
+    @PostMapping("/feign/export/exportAwdInventory")
+    PagingVO<AwdInventoryDTO.ListDTO> exportAwdInventory(@RequestBody @Validated PagingDTO<AwdInventoryDTO.PagingParamDTO> dto);
+
 }
