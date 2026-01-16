@@ -219,7 +219,35 @@ public class ServletUtils {
      * @return Mono<Void>
      */
     public static Mono<Void> webFluxResponseWriter(ServerHttpResponse response, Object value, int code) {
-        return webFluxResponseWriter(response, HttpStatus.OK, value, code);
+        // 根据业务错误码映射到对应的 HTTP 状态码
+        HttpStatus httpStatus = mapCodeToHttpStatus(code);
+        return webFluxResponseWriter(response, httpStatus, value, code);
+    }
+    
+    /**
+     * 将业务错误码映射到 HTTP 状态码
+     *
+     * @param code 业务错误码
+     * @return HTTP 状态码
+     */
+    private static HttpStatus mapCodeToHttpStatus(int code) {
+        if (code == ApiError.HTTP_UNAUTHORIZED.getCode()) {
+            return HttpStatus.UNAUTHORIZED;  // 401: 未认证
+        } else if (code == ApiError.HTTP_FORBIDDEN.getCode()) {
+            return HttpStatus.FORBIDDEN;  // 403: 无权限
+        } else if (code == ApiError.HTTP_BAD_REQUEST.getCode()) {
+            return HttpStatus.BAD_REQUEST;  // 400: 请求参数错误
+        } else if (code == ApiError.HTTP_NOT_FOUND.getCode()) {
+            return HttpStatus.NOT_FOUND;  // 404: 资源不存在
+        } else if (code == ApiError.HTTP_METHOD_NOT_ALLOWED.getCode()) {
+            return HttpStatus.METHOD_NOT_ALLOWED;  // 405: 方法不允许
+        } else if (code == ApiError.HTTP_TOO_MANY_REQUESTS.getCode()) {
+            return HttpStatus.TOO_MANY_REQUESTS;  // 429: 请求过于频繁
+        } else if (code >= 500 && code < 600) {
+            return HttpStatus.INTERNAL_SERVER_ERROR;  // 5xx: 服务器错误
+        } else {
+            return HttpStatus.OK;  // 200: 默认返回成功（业务错误）
+        }
     }
 
     /**
