@@ -568,10 +568,13 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
             throw new ServiceException(ApiError.PO_SUBCONTRACT_DETAIL_PARENT_SKU_NOT_FOUND);
         }
         List<String> parentSkuIds = parentList.stream().map(SubcontractOrderDetailEntity::getSkuId).collect(Collectors.toList());
-        //BOM信息
-        List<BomChildrenSkuDTO> bomChildrenList = plmTaskFeign.listHistoryBomChildBySkuIds(parentSkuIds);
-        if (CollectionUtils.isEmpty(bomChildrenList)) {
-            throw new ServiceException(ApiError.BOM_NOT_FOUND);
+        List<BomChildrenSkuDTO> bomChildrenList = new ArrayList<>();
+        if (!Objects.equals(SubcontractOrderTypeEnum.REPAIR_SUBCONTRACT.getCode(),subcontractOrderEntity.getType())){
+            //BOM信息
+            bomChildrenList.addAll(plmTaskFeign.listHistoryBomChildBySkuIds(parentSkuIds));
+            if (CollectionUtils.isEmpty(bomChildrenList)) {
+                throw new ServiceException(ApiError.BOM_NOT_FOUND);
+            }
         }
 
         //供应商付款条件
@@ -1644,6 +1647,9 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         List<String> poReturnDetailIdList = poReturnList.stream().map(item -> item.getId()).collect(Collectors.toList());
         List<PoReturnDetailEntity> poReturnDetailList = wmsTaskFeign.listPoReturnByMainIdList(poReturnDetailIdList);
 
+        List<String> supplierIdList = dto.stream().map(item -> item.getSupplierId()).collect(Collectors.toList());
+        List<SupplierEntity> supplierList = supplierService.listByIds(supplierIdList);
+
         List<PurchasePriceDTO.PriceDTO> priceParamDTOList = dto.stream()
                 .map(moldDetail -> PurchasePriceDTO.PriceDTO.builder()
                         .purchaseOrgId(moldDetail.getOrgId())
@@ -1656,10 +1662,34 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         //先从退货单获取价格，如果没有就从价目表获取
         for (SubcontractOrderDTO.ListPriceParamDTO listPriceParamDTO : dto) {
             SubcontractOrderDTO.ListSubcontractOrderSkuPriceDTO listSubcontractOrderSkuPriceDTO = new SubcontractOrderDTO.ListSubcontractOrderSkuPriceDTO();
+
+            List<DictCurrencyEntity> dictCurrencyList = sysUserFeign.currencyList();
+            SupplierEntity supplierEntity = supplierList.stream()
+                    .filter(item -> Objects.equals(item.getId(), listPriceParamDTO.getSupplierId()))
+                    .findFirst()
+                    .orElse(null);
+            //币种
+            if (Objects.nonNull(supplierEntity)) {
+                listSubcontractOrderSkuPriceDTO.setCurrency(supplierEntity.getPayCurrency());
+
+                DictCurrencyEntity dictCurrencyEntity = dictCurrencyList.stream()
+                        .filter(item -> Objects.equals(item.getId(), supplierEntity.getPayCurrency()))
+                        .findFirst()
+                        .orElse(null);
+
+                if (Objects.nonNull(dictCurrencyEntity)) {
+                    listSubcontractOrderSkuPriceDTO.setCurrencySymbol(dictCurrencyEntity.getSymbol());
+                }
+            }
+            //税率
+            listSubcontractOrderSkuPriceDTO.setTaxRate(MathUtil.multiplyWithTwo(supplierEntity.getTaxRate(),new BigDecimal("100")));
+
             PoReturnDetailEntity poReturnDetailEntity = poReturnDetailList.stream()
                     .filter(item -> Objects.equals(listPriceParamDTO.getSkuId(), item.getSkuId()))
                     .findFirst()
                     .orElse(null);
+
+            //价格
             if (Objects.isNull(poReturnDetailEntity)) {
                 PurchasePriceDTO.PriceDTO priceDTO = priceDTOList.stream()
                         .filter(item -> Objects.equals(item.getSkuId(), listPriceParamDTO.getSkuId()))

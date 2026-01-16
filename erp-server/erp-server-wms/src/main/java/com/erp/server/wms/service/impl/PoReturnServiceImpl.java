@@ -3170,6 +3170,8 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
             pushDownSubcontractOrderViewDTO.setPurchaseOrgName(purchaseOrderEntity.getPurchaseOrgName());
 
         }
+        //默认返修委外订单
+        pushDownSubcontractOrderViewDTO.setType(SubcontractOrderTypeEnum.REPAIR_SUBCONTRACT.getCode());
         pushDownSubcontractOrderViewDTO.setBillDate(LocalDate.now());
         pushDownSubcontractOrderViewDTO.setSourceId(poReturnEntity.getId());
         pushDownSubcontractOrderViewDTO.setSourceCode(poReturnEntity.getCode());

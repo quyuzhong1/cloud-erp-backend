@@ -976,6 +976,16 @@ public class SubcontractOrderDTO implements Serializable {
         private String skuNo;
 
         /**
+         * 币种
+         */
+        private String currency;
+
+        /**
+         * 币种符号
+         */
+        private String currencySymbol;
+
+        /**
          * 单价
          */
         private Integer qty;
@@ -989,6 +999,11 @@ public class SubcontractOrderDTO implements Serializable {
          * 总价
          */
         private BigDecimal amount;
+
+        /**
+         * 税率
+         */
+        private BigDecimal taxRate;
 
     }
 
