@@ -110,6 +110,9 @@ public class DmpOutputWdtB2BReturnRocketMQTaskHandler extends DmpOutputRocketMQT
 		if (CollUtil.isEmpty(itemList)) {
 			return null;
 		}
+		if(Objects.isNull(dmpSoReturnInfoEntity.getReturnTime())){
+			return null;
+		}
 		//查询店铺
 		String platformShopId = dmpSoReturnInfoEntity.getShopId();
 		ThirdMappingDTO.ViewParamDTO viewParamDTO = new ThirdMappingDTO.ViewParamDTO();
@@ -139,7 +142,9 @@ public class DmpOutputWdtB2BReturnRocketMQTaskHandler extends DmpOutputRocketMQT
 		platformB2BReturnOrderDTO.setPlatformWarehouseId(itemList.get(0).getWarehouseId());
 		platformB2BReturnOrderDTO.setReturnLogisticCode(dmpSoReturnInfoEntity.getTrackingNumber());
 		platformB2BReturnOrderDTO.setPlatformOrderType(dmpSoReturnInfoEntity.getPlatformOrderType());
-		platformB2BReturnOrderDTO.setBillDate(dmpSoReturnInfoEntity.getReturnTime().toLocalDate());
+		if(Objects.nonNull(dmpSoReturnInfoEntity.getReturnTime())){
+			platformB2BReturnOrderDTO.setBillDate(dmpSoReturnInfoEntity.getReturnTime().toLocalDate());
+		}
 		if("10".equals(dmpSoReturnInfoEntity.getStatus())){
 			platformB2BReturnOrderDTO.setInvalidStatus(true);
 		}
