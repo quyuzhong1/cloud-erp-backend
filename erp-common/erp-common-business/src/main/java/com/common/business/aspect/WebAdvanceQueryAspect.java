@@ -27,6 +27,8 @@ import javax.annotation.Resource;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Aspect
@@ -154,7 +156,9 @@ public class WebAdvanceQueryAspect {
                 			contentSql = contentSql.replace(likeQuery, " LOWER(" + likeQuery + ") ");
                 		}
                 	}
-            	}
+            	}else if(contentSql.contains(".")){
+                    contentSql = this.wrapFieldsWithLower(contentSql);
+                }
             }
         }else{
 
@@ -291,4 +295,33 @@ public class WebAdvanceQueryAspect {
         return null;
     }
 
+    /**
+     * 将SQL字符串中所有 [table_or_alias].[column] 格式的字段名，
+     * 替换为 LOWER([table_or_alias].[column]) 格式。
+     *
+     * @param originalSql 原始的SQL字符串
+     * @return 替换后的SQL字符串
+     */
+    public  String wrapFieldsWithLower(String originalSql) {
+        // 正则表达式解释：
+        // \\b    表示单词边界，确保我们匹配的是完整的标识符，而不是其他单词的一部分
+        // (\\w+) 第一个捕获组，匹配表名或别名（由字母、数字、下划线组成）
+        // \\.    匹配点号（.）本身，需要转义
+        // (\\w+) 第二个捕获组，匹配列名
+        // \\b    另一个单词边界，确保列名完整
+        String regex = "\\b(\\w+)\\.(\\w+)\\b";
+        Pattern pattern = Pattern.compile(regex);
+        Matcher matcher = pattern.matcher(originalSql);
+
+        // 使用StringBuffer进行高效的字符串构建和替换
+        StringBuffer result = new StringBuffer();
+        while (matcher.find()) {
+            // 将匹配到的整个“表.列”替换为“LOWER(表.列)”
+            String replacement = "LOWER(" + matcher.group(0) + ")";
+            matcher.appendReplacement(result, replacement);
+        }
+        matcher.appendTail(result);
+
+        return result.toString();
+    }
 }

@@ -260,4 +260,6 @@ public interface BusinessNoConstant {
 
     //差异策略配置
     String CYCL="CYCL";
+    //AWD出库
+    String AWD="AWD";
 }

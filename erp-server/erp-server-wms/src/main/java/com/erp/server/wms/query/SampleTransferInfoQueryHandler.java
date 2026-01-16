@@ -35,22 +35,38 @@ public class SampleTransferInfoQueryHandler extends AbstractQueryHandler {
         if ("all".equals(value)|| "".equals(value)){
             return getQueryAllSql();
         }
-        if(Objects.equals(value, ApproveStatusEnum.APPROVE_ING.getCode())){ //待我审核
-            //待我审批流程信息
-            ProcessManagementDTO.TaskKeyInfoDTO dto = new ProcessManagementDTO.TaskKeyInfoDTO();
-            dto.setBusinessKey(SourceTypeEnum.SAMPLE_TRANSFER_INFO.getCode());
-            dto.setTaskStatus(ApproveStatusEnum.APPROVE_ING.getCode());
-            dto.setCurApproveId(UserContext.getNonLoginUser().getUid());
-            List<ProcessTaskManagementEntity> processTaskManagementList = workflowFeign.listProcessByBusinessKey(dto);
-            List<String> ids = processTaskManagementList.stream().map(ProcessTaskManagementEntity::getBusinessId).collect(Collectors.toList());
-            if(CollectionUtils.isNotEmpty(ids)){
-                super.buildSplicingSQLDTO("sti.id", QueryConditionEnum.IN_LIST, ids, QueryDataTypeEnum.STRING);
-            }else {
-                super.buildDefaultDTO("sti.id", "-1");
-            }
+        
+        String tabFlag = value.toString();
+        
+        switch (tabFlag) {
+            case "waitSubmitOrReject":
+                // 待提交/不通过：移动端合并标签，查询待提交和不通过状态
+                super.buildSplicingSQLDTO("sti.approve_status", QueryConditionEnum.IN_LIST,
+                    java.util.Arrays.asList("waitSubmit", "reject"), QueryDataTypeEnum.STRING);
+                break;
+            case "approveIng":
+                // 审核中
+                super.buildDefaultDTO("sti.approve_status", "approveIng");
+
+                //待我审批流程信息
+                ProcessManagementDTO.TaskKeyInfoDTO dto = new ProcessManagementDTO.TaskKeyInfoDTO();
+                dto.setBusinessKey(SourceTypeEnum.SAMPLE_TRANSFER_INFO.getCode());
+                dto.setTaskStatus(ApproveStatusEnum.APPROVE_ING.getCode());
+                dto.setCurApproveId(UserContext.getNonLoginUser().getUid());
+                List<ProcessTaskManagementEntity> processTaskManagementList = workflowFeign.listProcessByBusinessKey(dto);
+                List<String> ids = processTaskManagementList.stream().map(ProcessTaskManagementEntity::getBusinessId).collect(Collectors.toList());
+                if(CollectionUtils.isNotEmpty(ids)){
+                    super.buildSplicingSQLDTO("sti.id", QueryConditionEnum.IN_LIST, ids, QueryDataTypeEnum.STRING);
+                }else {
+                    super.buildDefaultDTO("sti.id", "-1");
+                }
+                break;
+            default:
+                // 其他情况按审核状态处理
+                super.buildDefaultDTO("sti.approve_status", value);
+                break;
         }
-        // 其他情况按审核状态处理
-        super.buildDefaultDTO("sti.approve_status", value);
+        
         return super.getSplicingSQL();
     }
 }

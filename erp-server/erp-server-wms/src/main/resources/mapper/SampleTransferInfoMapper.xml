@@ -134,6 +134,53 @@
         </if>
         ORDER BY sti.create_time DESC
     </select>
+    <!-- 移动端分页查询 -->
+    <select id="pagingApp" resultType="com.erp.model.wms.dto.SampleTransferInfoDTO$ListDTO">
+        SELECT
+            DISTINCT ON (sti.id)
+            COUNT(std.id) OVER (PARTITION BY sti.id) AS skuCount,
+            sti.id,
+            sti.code,
+            sti.approve_status AS approveStatus,
+            sti.approve_user_id AS approveUserId,
+            sti.approve_user_name AS approveUserName,
+            sti.approve_time AS approveTime,
+            sti.invalid_status AS invalidStatus,
+            sti.invalid_remark AS invalidRemark,
+            sti.transfer_out_user_id AS transferOutUserId,
+            sti.transfer_out_user_name AS transferOutUserName,
+            sti.transfer_out_dept_id AS transferOutDeptId,
+            sti.transfer_out_dept_name AS transferOutDeptName,
+            sti.transfer_in_user_id AS transferInUserId,
+            sti.transfer_in_user_name AS transferInUserName,
+            sti.transfer_in_dept_id AS transferInDeptId,
+            sti.transfer_in_dept_name AS transferInDeptName,
+            sti.transfer_date AS transferDate,
+            sti.remark,
+            sti.create_time AS createTime,
+            sti.create_user_name AS createUserName,
+            std.id AS detailId,
+            std.sku_no AS skuNo,
+            std.sku_id AS skuId,
+            std.product_name AS productName,
+            std.transfer_qty AS transferQty,
+            std.remark AS detailRemark
+        FROM sample_transfer_info sti
+        LEFT JOIN sample_transfer_detail std
+        ON std.main_id = sti.id AND std.is_deleted = false
+        WHERE
+        ${params.sqlMap.default}
+        AND sti.is_deleted = false
+        <!--权限-->
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        sti.id DESC,
+        sti.create_time DESC,
+        std.id
+    </select>
+
     <select id="tabList" resultType="com.erp.model.wms.dto.SampleTransferInfoDTO$TabListDTO">
         SELECT
         'approveIng' AS tabFlag,

@@ -53,4 +53,12 @@ public interface SampleTransferInfoMapper extends BaseMapper<SampleTransferInfoE
     * @return
     */
     List<SampleTransferInfoDTO.TabListDTO> tabList(@Param("params") SampleTransferInfoDTO.PagingParamDTO searchParam);
+
+    /**
+     * 移动端分页查询
+     * @param query 分页参数
+     * @param params 查询参数
+     * @return 分页结果
+     */
+    IPage<SampleTransferInfoDTO.ListDTO> pagingApp(Page query, @Param("params") SampleTransferInfoDTO.PagingParamDTO params);
 }

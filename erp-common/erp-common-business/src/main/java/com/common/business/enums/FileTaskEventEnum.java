@@ -75,6 +75,7 @@ public enum FileTaskEventEnum implements EnumMessage {
     EXPORT_PLM_ORDER_TRACKING_DETAIL("EXPORT_PLM_ORDER_TRACKING_DETAIL", "下单跟踪明细导出","","",""),
     EXPORT_PLM_PRODUCT("EXPORT_PLM_PRODUCT", "产品开发","","",""),
     EXPORT_PLM_SKU("EXPORT_PLM_SKU", "产品管理导出","","",""),
+    EXPORT_PLM_SKU_DYNAMIC("EXPORT_PLM_SKU_DYNAMIC", "产品管理导出","","",""),
     IMPORT_PLM_SKU_IMAGES("IMPORT_PLM_SKU_IMAGES", "导入SKU图片","com.erp.rpc.plm.feign.ImportPlmFeign","productDetailImages",""),
     EXPORT_PLM_PRODUCT_CUSTOMS("EXPORT_PLM_PRODUCT_CUSTOMS", "目的国清关导出","","",""),
     EXPORT_PLM_SKU_STD_COST("EXPORT_PLM_SKU_STD_COST", "SKU标准成本导出","","",""),
@@ -89,6 +90,8 @@ public enum FileTaskEventEnum implements EnumMessage {
     IMPORT_PLM_CFG_MOLD_ALERT("IMPORT_PLM_CFG_MOLD_ALERT", "模具预警策略导入","com.erp.rpc.plm.feign.ImportPlmFeign","importCfgMoldAlert",""),
     EXPORT_PLM_MOLD_MONITOR_RETURN("EXPORT_PLM_MOLD_MONITOR_RETURN", "模具返还监控导出","","",""),
     EXPORT_PLM_MOLD_MONITOR_ALERT("EXPORT_PLM_MOLD_MONITOR_ALERT", "模具预警监控导出","","",""),
+    EXPORT_PLM_PRODUCT_IMAGES("EXPORT_PLM_PRODUCT_IMAGES", "批量下载图片","","","ExportPlmProductImagesHandler"),
+    IMPORT_PLM_PRODUCT_IMG_ATTACHMENT("IMPORT_PLM_PRODUCT_IMG_ATTACHMENT", "批量上传图片","com.erp.rpc.plm.feign.ImportPlmFeign","importBatchUpload",""),
 
 
 
@@ -202,6 +205,7 @@ public enum FileTaskEventEnum implements EnumMessage {
     EXPORT_WMS_OVERSEAS_DELIVERY_PLAN("EXPORT_WMS_OVERSEAS_DELIVERY_PLAN", "发货计划导出","","",""),
     EXPORT_WMS_PICKING_LISTS("EXPORT_WMS_PICKING_LISTS", "拣货单","","",""),
     EXPORT_WMS_FBA_SHIPMENT("EXPORT_WMS_FBA_SHIPMENT", "FBA货件导出","","",""),
+    EXPORT_WMS_AWD_SHIPMENT("EXPORT_WMS_AWD_SHIPMENT", "AWD货件导出","","",""),
     EXPORT_WMS_FBA_SHIPMENT_PACKING("EXPORT_WMS_FBA_SHIPMENT_PACKING", "FBA货件装箱导出","","",""),
     EXPORT_WMS_STOCKTAKING_PROFIT_LOSS("EXPORT_WMS_STOCKTAKING_PROFIT_LOSS", "盘盈盘亏单","","",""),
     EXPORT_WMS_STOCKTAKING_TASK_DETAIL("EXPORT_WMS_STOCKTAKING_TASK_DETAIL", "盘点任务明细列表","","",""),
@@ -299,6 +303,8 @@ public enum FileTaskEventEnum implements EnumMessage {
     IMPORT_WMS_SAMPLE_ADJUSTMENT_INFO("IMPORT_WMS_SAMPLE_ADJUSTMENT_INFO","样品调整单导入","com.erp.rpc.wms.feign.ImportWmsFeign","importSampleAdjustment",""),
 
     EXPORT_WMS_B2B_THIRD_DELIVERY_REPORT("EXPORT_WMS_B2B_THIRD_DELIVERY_REPORT", "B2B三方发货单导出","","",""),
+    EXPORT_WMS_AWD_OUT_STOCK("EXPORT_WMS_AWD_OUT_STOCK", "AWD出库货件导出","","",""),
+    EXPORT_WMS_AWD_INVENTORY("EXPORT_WMS_AWD_INVENTORY", "AWD库存导出","","",""),
 
 
     //tms

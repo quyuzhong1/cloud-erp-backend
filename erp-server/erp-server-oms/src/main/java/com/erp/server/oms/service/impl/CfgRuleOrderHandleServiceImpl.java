@@ -152,6 +152,7 @@ public class CfgRuleOrderHandleServiceImpl extends SuperServiceImpl<CfgRuleOrder
         logDTO.setAddressHandlerContent(ruleDTO.getAddressHandlerContent());
         logDTO.setPhoneHandleContent(ruleDTO.getPhoneHandleContent());
         logDTO.setZipCodeHandleContent(ruleDTO.getZipCodeHandleContent());
+        logDTO.setDeliveryRestrictionContent(ruleDTO.getDeliveryRestrictionContent());
         //日志组件不支持嵌套List,特殊处理，将List挪到外层
         if(Objects.nonNull(logDTO.getAddressHandlerContent()) && Objects.nonNull(logDTO.getAddressHandlerContent().getFilterAddress1TextList())){
             logDTO.setFilterAddressOneTextList(logDTO.getAddressHandlerContent().getFilterAddress1TextList());
@@ -181,6 +182,11 @@ public class CfgRuleOrderHandleServiceImpl extends SuperServiceImpl<CfgRuleOrder
             logDTO.getReceiveHandleContent().setFilterReceiveTextList(null);
             logDTO.getReceiveHandleContent().setFilterReceiveTextNameList(null);
         }
+        if(Objects.nonNull(logDTO.getDeliveryRestrictionContent()) && Objects.nonNull(logDTO.getDeliveryRestrictionContent().getDeliveryRestrictionList())){
+            logDTO.setDeliveryRestrictionList(logDTO.getDeliveryRestrictionContent().getDeliveryRestrictionList());
+            logDTO.getDeliveryRestrictionContent().setDeliveryRestrictionList(null);
+            logDTO.getDeliveryRestrictionContent().setDeliveryRestrictionNameList(null);
+        }
         return logDTO;
     }
 
@@ -207,6 +213,9 @@ public class CfgRuleOrderHandleServiceImpl extends SuperServiceImpl<CfgRuleOrder
         ruleDTO.getPhoneHandleContent().setFilterPhoneTextNameList(EnumMessage.listNameByCodes(RuleOrderHandleEnum.PhoneFilterEnum.class,ruleDTO.getPhoneHandleContent().getFilterPhoneTextList()));
         ruleDTO.getReceiveHandleContent().setFilterReceiveTextNameList(EnumMessage.listNameByCodes(RuleOrderHandleEnum.ReceiveFilterEnum.class,ruleDTO.getReceiveHandleContent().getFilterReceiveTextList()));
         ruleDTO.getZipCodeHandleContent().setFilterZipCodeTextNameList(EnumMessage.listNameByCodes(RuleOrderHandleEnum.ZipCodeFilterEnum.class,ruleDTO.getZipCodeHandleContent().getFilterZipCodeTextList()));
+        if (Objects.nonNull(ruleDTO.getDeliveryRestrictionContent())) {
+            ruleDTO.getDeliveryRestrictionContent().setDeliveryRestrictionNameList(EnumMessage.listNameByCodes(RuleOrderHandleEnum.DeliveryRestrictionEnum.class, ruleDTO.getDeliveryRestrictionContent().getDeliveryRestrictionList()));
+        }
 
         view.setRuleContent(ruleDTO);
         String type = DictBasicTypeEnum.FIELD.getType();
@@ -580,5 +589,33 @@ public class CfgRuleOrderHandleServiceImpl extends SuperServiceImpl<CfgRuleOrder
                 }
             }
 
+    }
+
+    @Override
+    public String checkDeliveryRestriction(Map<String, Object> map, String deliveryType) {
+        if (Objects.isNull(map) || StringUtils.isBlank(deliveryType)) {
+            return null;
+        }
+        CfgRuleOrderHandleDTO.RuleMatchDTO ruleMatchDTO = this.getRuleOrderHandleMatchResult(map);
+        if (Boolean.FALSE.equals(ruleMatchDTO.getApproveSuccess())) {
+            return null;
+        }
+        CfgRuleOrderHandleDTO.RuleContent ruleContent = ruleMatchDTO.getRuleContent();
+        if (Objects.isNull(ruleContent)) {
+            return null;
+        }
+        CfgRuleOrderHandleDTO.DeliveryRestrictionContent deliveryRestrictionContent = ruleContent.getDeliveryRestrictionContent();
+        if (Objects.isNull(deliveryRestrictionContent) || !deliveryRestrictionContent.isDeliveryRestrictionSwitch()) {
+            return null;
+        }
+        List<String> restrictionList = deliveryRestrictionContent.getDeliveryRestrictionList();
+        if (CollectionUtils.isEmpty(restrictionList) || !restrictionList.contains(deliveryType)) {
+            return null;
+        }
+        // 获取发货类型名称
+        RuleOrderHandleEnum.DeliveryRestrictionEnum restrictionEnum = EnumMessage.getByCode(
+                RuleOrderHandleEnum.DeliveryRestrictionEnum.class, deliveryType);
+        String deliveryTypeName = Objects.nonNull(restrictionEnum) ? restrictionEnum.getName() : deliveryType;
+        return CharSequenceUtil.format("订单规则已配置发货限制，无法{}", deliveryTypeName);
     }
 }

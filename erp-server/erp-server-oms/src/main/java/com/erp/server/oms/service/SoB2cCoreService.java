@@ -66,4 +66,12 @@ public interface SoB2cCoreService {
     void generateDeliveryAndOutStock(SoB2cEntity soB2cEntity, List<SoB2cDetailEntity> detailEntityList, SoB2cDTO.DeliveryWithNotOutboundDTO dto, SoB2cLogisticsEntity soB2cLogisticsEntity, SoB2cReceiverEntity soB2cReceiverEntity, OverseasProviderWarehouseDTO.ViewDTO overseasWarehouse);
 
     Boolean handleSoOutStock(String soId);
+
+    void updateRemarkAndLog(SoB2cDTO.RemarkDTO remarkDTO);
+
+    /**
+     * 获取最新的中台订单推送数据，重新订单消费
+     * @return
+     */
+    Boolean handleOrderRetryConsumer(SoB2cEntity entity);
 }

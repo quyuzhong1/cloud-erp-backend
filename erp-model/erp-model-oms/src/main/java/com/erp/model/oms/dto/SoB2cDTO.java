@@ -1450,6 +1450,44 @@ public class SoB2cDTO implements Serializable {
     }
 
     @Data
+    public static class ListCountDto{
+    	/**
+         * 单据状态
+         */
+        private String billStatus;
+        
+        /**
+         * 作废状态（false未作废，true已作废）
+         */
+        private Boolean invalidStatus;
+        
+        /**
+         * 是否冻结
+         */
+        private Boolean isFrozen;
+        
+        /**
+         * 审核状态
+         */
+        private String approveStatus;
+        
+        /**
+         * 付款状态
+         */
+        private String payStatus;
+        
+        /**
+         * 订单异常的标示
+         */
+        private String signOrderError;
+        
+        /**
+         * 数量
+         */
+        private Integer count;
+    }
+    
+    @Data
     @Builder
     @NoArgsConstructor
     @AllArgsConstructor
@@ -3519,6 +3557,14 @@ public class SoB2cDTO implements Serializable {
          * 备注
          */
         private String remark;
+
+        private OperateLogDTO.AddModuleOperateLogDTO operateLogDTO;
+
+        public RemarkDTO(String soB2cId, String remark) {
+            this.id = soB2cId;
+            this.remark = remark;
+
+        }
     }
 
     /**

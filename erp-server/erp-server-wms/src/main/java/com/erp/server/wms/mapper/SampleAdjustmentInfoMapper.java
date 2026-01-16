@@ -52,4 +52,12 @@ public interface SampleAdjustmentInfoMapper extends BaseMapper<SampleAdjustmentI
     * @return
     */
     List<SampleAdjustmentInfoDTO.TabListDTO> tabList(@Param("params") SampleAdjustmentInfoDTO.PagingParamDTO searchParam);
+
+    /**
+     * 移动端分页查询
+     * @param query 分页参数
+     * @param params 查询参数
+     * @return 分页结果
+     */
+    IPage<SampleAdjustmentInfoDTO.ListDTO> pagingApp(Page query, @Param("params") SampleAdjustmentInfoDTO.PagingParamDTO params);
 }

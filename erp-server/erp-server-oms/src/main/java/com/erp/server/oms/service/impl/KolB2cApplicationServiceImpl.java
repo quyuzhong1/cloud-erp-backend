@@ -139,7 +139,7 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
     @Resource
     private SyncWangDianSoB2cService syncWangDianSoB2cService;
     @Resource
-    private OrderCategoryService orderCategoryService;
+    private OrderCategoryDetailService orderCategoryDetailService;
     @Resource
     private DmpMqFeign dmpMqFeign;
 
@@ -907,7 +907,7 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         Map<String,String> resultMap = new HashMap<>();
 
         String orderCategoryId ="";
-        List<OrderCategoryEntity> orderCategoryEntityList = orderCategoryService.lambdaQuery().eq(OrderCategoryEntity::getGroupName, "网红财务审核").list();
+        List<OrderCategoryDetailEntity> orderCategoryEntityList = orderCategoryDetailService.lambdaQuery().eq(OrderCategoryDetailEntity::getName, "网红财务审核").list();
         if(CollUtil.isNotEmpty(orderCategoryEntityList)){
             orderCategoryId = orderCategoryEntityList.get(0).getId();
         }
@@ -954,7 +954,7 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
             receiverDTO.setProvinceName(kolB2cApplicationAddressEntity.getProvince());
             receiverDTO.setCityName(kolB2cApplicationAddressEntity.getCity());
             receiverDTO.setDistrictName(kolB2cApplicationAddressEntity.getDistrict());
-            receiverDTO.setFullAddress(kolB2cApplicationAddressEntity.getDetailAddress());
+            receiverDTO.setFirstAddress(kolB2cApplicationAddressEntity.getDetailAddress());
             receiverDTO.setReceiverName(kolB2cApplicationAddressEntity.getReceiverName());
             receiverDTO.setReceiverTelNumber(kolB2cApplicationAddressEntity.getReceiverPhone());
             receiverDTO.setPostCode(kolB2cApplicationAddressEntity.getZipCode());

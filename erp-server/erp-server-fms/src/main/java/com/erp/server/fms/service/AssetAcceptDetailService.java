@@ -1,10 +1,10 @@
 package com.erp.server.fms.service;
 
-import com.erp.model.fms.entity.AssetAcceptDetailEntity;
+import cn.hutool.json.JSONArray;
+import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
 import com.erp.model.fms.dto.AssetAcceptDetailDTO;
-import org.springframework.web.bind.annotation.RequestBody;
+import com.erp.model.fms.entity.AssetAcceptDetailEntity;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -41,5 +41,20 @@ public interface AssetAcceptDetailService extends SuperService<AssetAcceptDetail
     Integer getAcceptQtyByDetailId(String detailId);
 
     Map<String, BigDecimal> getAcceptableQtyByDetailId(List<String> detailId);
-
+    /**
+     * 根据主表id查询
+     * @author will
+     * @date 2025/12/30 12:31
+     * @param mainIdList
+     * @return List<AssetAcceptDetailEntity>
+     */
+    List<AssetAcceptDetailEntity> listByMainIdList(List<String> mainIdList);
+    /**
+     * 更新金蝶明细id
+     * @author will
+     * @date 2025/12/30 16:36
+     * @param list
+     * @return void
+     */
+    void updateKingdeeDetailId(JSONArray list);
 }

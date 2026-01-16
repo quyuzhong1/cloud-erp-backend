@@ -255,6 +255,16 @@ public class ShopInfoEntity extends BaseEntity<ShopInfoEntity> {
      */
     @TableField("time_zone")
     private String timeZone = "";
+    /**
+     * AWD仓库id
+     */
+    @TableField("awd_warehouse_id")
+    private String awdWarehouseId;
+    /**
+     * AWD仓库名称
+     */
+    @TableField("awd_warehouse_name")
+    private String awdWarehouseName;
 
     /**
      * 订单路由类型

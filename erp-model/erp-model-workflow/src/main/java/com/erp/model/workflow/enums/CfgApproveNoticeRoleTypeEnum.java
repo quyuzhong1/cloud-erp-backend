@@ -54,4 +54,16 @@ public enum CfgApproveNoticeRoleTypeEnum implements EnumMessage {
         }
         return "";
     }
+
+    public static boolean containsCode(String code) {
+        if (StringUtils.isBlank(code)) {
+            return false;
+        }
+        for (CfgApproveNoticeRoleTypeEnum statusEnum : CfgApproveNoticeRoleTypeEnum.values()) {
+            if (code.equals(statusEnum.getCode())) {
+                return true;
+            }
+        }
+        return false;
+    }
 }

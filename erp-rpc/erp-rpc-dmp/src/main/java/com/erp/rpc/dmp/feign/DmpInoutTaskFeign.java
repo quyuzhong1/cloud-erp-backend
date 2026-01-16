@@ -33,6 +33,12 @@ public interface DmpInoutTaskFeign {
     DmpPushTaskDTO.SyncInfoDTO getErrorData(@RequestBody @Valid DmpSyncTaskDTO.OneDTO oneDTO);
 
     /**
+     * 查询同步数据（集合）
+     */
+    @PostMapping("feign/inout/listErrorData")
+    List<DmpPushTaskDTO.SyncInfoDTO> listErrorData(@RequestBody @Valid DmpSyncTaskDTO.ListDTO listDTO);
+
+    /**
      * 公共-创建快速输入任务
      */
     @PostMapping("feign/inout/doHotfixInputTask")

@@ -9,14 +9,15 @@ import org.apache.commons.lang3.StringUtils;
  * 系统类型 枚举
  * </p>
  *
- * @author Jim
- * @since 2025-10-30 16:32:08
+ * @author zdy
+ * @since 2025-12-23 16:29:02
  */
 public enum DmpDmpBasicSystemTypeEnum implements EnumMessage {
 	WMS("wms", "仓储"),
 	TMS("tms", "物流"),
 	FINANCE("finance", "财务"),
 	THIRDERP("thirdErp", "第三方ERP"),
+	OMS("oms", "销售平台"),
     ;
     /**
      * 类型

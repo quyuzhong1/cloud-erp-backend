@@ -24,7 +24,6 @@ public interface B2bThirdDeliveryConverter {
     B2bThirdDeliveryConverter INSTANCE = Mappers.getMapper(B2bThirdDeliveryConverter.class);
 
     @Mapping(target = "attachList", ignore = true)
-    @Mapping(target = "warehouseOperationTypeName", expression = "java(com.erp.model.wms.enums.WarehouseOperationTypeEnum.getName(entity.getWarehouseOperationType()))")
     @Mapping(target = "statusName", expression = "java(com.erp.model.wms.enums.ThirdDeliveryStatusEnum.getName(entity.getStatus()))")
     @Mapping(target = "deliveryMethodName", expression = "java(com.erp.model.oms.enums.DeliveryModeEnum.getName(entity.getDeliveryMethod()))")
     @Mapping(target = "detailList", source = "detailEntityList")
@@ -58,8 +57,8 @@ public interface B2bThirdDeliveryConverter {
     @Mapping(target = "email", ignore = true)
     @Mapping(target = "deliveryMethod", source = "entity.deliveryMethod")
     @Mapping(target = "channelCode", source = "entity.logisticsChannelCode")
-    @Mapping(target = "address3", ignore = true)
-    @Mapping(target = "address2", ignore = true)
+    @Mapping(target = "address3", source = "entity.address3")
+    @Mapping(target = "address2", source = "entity.address2")
     @Mapping(target = "address1", source = "entity.receiveAddress")
     ThirdWarehouseCreateFbaOutboundReq toCreateFbaOutboundReq(B2bThirdDeliveryEntity entity, List<B2bThirdDeliveryDetailEntity> detailEntityList);
 

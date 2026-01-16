@@ -104,6 +104,17 @@ public class ShopSysUserAuthDTO implements Serializable {
          * 仓库名称
          */
         private String warehouseName;
+
+        /**
+         * AWD仓库id
+         */
+        private String awdWarehouseId;
+
+        /**
+         * AWD仓库名称
+         */
+        private String awdWarehouseName;
+
         /**
          * 店铺类型 overseas 海外, internal 国内'
          * ShopTypeEnum

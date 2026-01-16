@@ -1,10 +1,13 @@
 package com.erp.model.plm.dto;
 
 import com.common.core.anno.StateEnumValue;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.Size;
 import java.time.LocalDate;
+import java.util.List;
 
 @Data
 public class ProductSkuBaseInfoDTO {
@@ -51,9 +54,14 @@ public class ProductSkuBaseInfoDTO {
     private Integer productState;
 
     /**
-     * 产品图片
+     * 产品图片（逗号分隔的URL字符串，保持向后兼容）
      */
     private String imagesUrl;
+    
+    /**
+     * 产品图片信息列表（包含URL和名称）
+     */
+    private List<ImageInfo> imageInfoList;
 
     /**
      * 产品负责人id
@@ -107,4 +115,22 @@ public class ProductSkuBaseInfoDTO {
      * 推荐仓位(大货区)
      */
     private String warehouseLocationLarge;
+    
+    /**
+     * 图片信息（名称+URL）
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ImageInfo {
+        /**
+         * 图片名称（新增图片时传入，旧图片可为空）
+         */
+        private String imageName;
+        
+        /**
+         * 图片URL
+         */
+        private String imageUrl;
+    }
 }

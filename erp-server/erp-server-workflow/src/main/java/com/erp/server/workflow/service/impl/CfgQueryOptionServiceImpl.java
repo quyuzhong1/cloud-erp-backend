@@ -170,7 +170,7 @@ public class CfgQueryOptionServiceImpl extends SuperServiceImpl<CfgQueryOptionMa
         //获取配置明细
         List<CfgQueryOptionEntity> cfgQueryOptionList = lambdaQuery()
                 .eq(CfgQueryOptionEntity::getUseType,dto.getUseType())
-                .in(CfgQueryOptionEntity::getBussinessKey, dto.getBusinessKey())
+                .eq(CfgQueryOptionEntity::getBussinessKey, dto.getBusinessKey())
                 .list();
         if(CollUtil.isNotEmpty(cfgQueryOptionList)){
             //根据fieldBelongsType 进行分组
