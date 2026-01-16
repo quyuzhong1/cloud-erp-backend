@@ -118,5 +118,12 @@ public class PurchaseReturnOrderFeignController extends BaseController {
         return list;
     }
 
-
+    @PostMapping("/listPoReturnDetailByIdList")
+    List<PoReturnDetailEntity> listPoReturnDetailByIdList(@RequestBody List<String> poReturnDetailIdList){
+        if (CollectionUtils.isEmpty(poReturnDetailIdList)) {
+            return Collections.emptyList();
+        }
+        List<PoReturnDetailEntity> list = poReturnDetailService.listByIds(poReturnDetailIdList);
+        return list;
+    }
 }

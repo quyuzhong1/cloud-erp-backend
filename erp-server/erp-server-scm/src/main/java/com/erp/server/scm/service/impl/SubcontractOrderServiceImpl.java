@@ -617,13 +617,16 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
             viewDTO.setFirstMassProductName(FirstMassProductTypeEnum.getName(viewDTO.getFirstMassProduct()));
             List<SubcontractOrderDetailDTO.ChildDTO> childDTOList = BeanMapperUtils.copyList(SubcontractOrderDetailDTO.ChildDTO.class, childList);
             for (SubcontractOrderDetailDTO.ChildDTO childViewDTO : childDTOList) {
-                //bom信息
-                BomChildrenSkuDTO bomChildrenSkuDTO = bomChildrenList.stream().filter(obj -> childViewDTO.getBomVersion().equals(obj.getBomVersion()) && obj.getParentSkuId().equals(viewDTO.getSkuId()) && obj.getSkuId().equals(childViewDTO.getSkuId())).findFirst().orElse(null);
-                if (ObjectUtils.isEmpty(bomChildrenSkuDTO)) {
-                    log.error("未找到对应bom子件信息，viewDTO.skuId = 【{}】，childViewDTO = 【{}】，bomChildrenList = 【{}】",viewDTO.getSkuId(),childViewDTO,bomChildrenList);
-                    throw new ServiceException(ApiError.BOM_NOT_FOUND);
+                if (!Objects.equals(SubcontractOrderTypeEnum.REPAIR_SUBCONTRACT.getCode(),subcontractOrderEntity.getType())) {
+                    //bom信息
+                    BomChildrenSkuDTO bomChildrenSkuDTO = bomChildrenList.stream().filter(obj -> childViewDTO.getBomVersion().equals(obj.getBomVersion()) && obj.getParentSkuId().equals(viewDTO.getSkuId()) && obj.getSkuId().equals(childViewDTO.getSkuId())).findFirst().orElse(null);
+                    if (ObjectUtils.isEmpty(bomChildrenSkuDTO)) {
+                        log.error("未找到对应bom子件信息，viewDTO.skuId = 【{}】，childViewDTO = 【{}】，bomChildrenList = 【{}】",viewDTO.getSkuId(),childViewDTO,bomChildrenList);
+                        throw new ServiceException(ApiError.BOM_NOT_FOUND);
+                    }
+                    childViewDTO.setQuantity(bomChildrenSkuDTO.getQuantity());
                 }
-                childViewDTO.setQuantity(bomChildrenSkuDTO.getQuantity());
+
 
                 //产品名称
                 String childProductName = skuList.stream().filter(obj -> obj.getSkuId().equals(childViewDTO.getSkuId())).findFirst().flatMap(e -> Optional.ofNullable(e.getSkuName())).orElse("");
