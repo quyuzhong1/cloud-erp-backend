@@ -247,18 +247,20 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
             AwdOutstockEntity awdOutstockEntity = awdOutstockService.lambdaQuery()
                     .eq(AwdOutstockEntity::getFbaShipmentId,fbaShipmentEntity.getId())
                     .one();
-            List<AwdOutstockDetailEntity> detailList = awdOutstockDetailService.lambdaQuery()
-                    .eq(AwdOutstockDetailEntity::getMainId, awdOutstockEntity.getId())
-                    .list();
-            for (AwdOutstockDetailEntity awdOutstockDetailEntity : detailList) {
-                if (awdOutstockDetailEntity.getMsku().equals(detailEntity.getMsku())) {
-                    awdOutstockDetailService.lambdaUpdate()
-                            .set(AwdOutstockDetailEntity::getSkuId,skuVO.getSkuId())
-                            .set(AwdOutstockDetailEntity::getSkuNo,skuVO.getSkuNo())
-                            .set(AwdOutstockDetailEntity::getProductName,skuVO.getSkuName())
-                            .set(AwdOutstockDetailEntity::getAsin,mappingSkuViewDTO.getPlatformSpuNo())
-                            .eq(AwdOutstockDetailEntity::getId,awdOutstockDetailEntity.getId())
-                            .update();
+            if (Objects.nonNull(awdOutstockEntity)) {
+                List<AwdOutstockDetailEntity> detailList = awdOutstockDetailService.lambdaQuery()
+                        .eq(AwdOutstockDetailEntity::getMainId, awdOutstockEntity.getId())
+                        .list();
+                for (AwdOutstockDetailEntity awdOutstockDetailEntity : detailList) {
+                    if (awdOutstockDetailEntity.getMsku().equals(detailEntity.getMsku())) {
+                        awdOutstockDetailService.lambdaUpdate()
+                                .set(AwdOutstockDetailEntity::getSkuId,skuVO.getSkuId())
+                                .set(AwdOutstockDetailEntity::getSkuNo,skuVO.getSkuNo())
+                                .set(AwdOutstockDetailEntity::getProductName,skuVO.getSkuName())
+                                .set(AwdOutstockDetailEntity::getAsin,mappingSkuViewDTO.getPlatformSpuNo())
+                                .eq(AwdOutstockDetailEntity::getId,awdOutstockDetailEntity.getId())
+                                .update();
+                    }
                 }
             }
 
@@ -320,19 +322,21 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
                 AwdOutstockEntity awdOutstockEntity = awdOutstockService.lambdaQuery()
                         .eq(AwdOutstockEntity::getFbaShipmentId,fbaShipmentEntity.getId())
                         .one();
-                List<AwdOutstockDetailEntity> detailList = awdOutstockDetailService.lambdaQuery()
-                        .eq(AwdOutstockDetailEntity::getMainId, awdOutstockEntity.getId())
-                        .list();
-                for (AwdOutstockDetailEntity awdOutstockDetailEntity : detailList) {
-                    if (awdOutstockDetailEntity.getMsku().equals(detailEntity.getMsku())) {
-                        awdOutstockDetailService.lambdaUpdate()
-                                .set(AwdOutstockDetailEntity::getSkuId,skuDTO.getProductSkuId())
-                                .set(AwdOutstockDetailEntity::getSkuNo,skuDTO.getProductSkuNo())
-                                .set(AwdOutstockDetailEntity::getAsin,skuDTO.getPlatformSpuNo())
-                                .set(AwdOutstockDetailEntity::getProductName,skuDTO.getProductName())
-                                .eq(AwdOutstockDetailEntity::getMsku,detailEntity.getMsku())
-                                .eq(AwdOutstockDetailEntity::getMainId,awdOutstockEntity.getId())
-                                .update();
+                if (Objects.nonNull(awdOutstockEntity)) {
+                    List<AwdOutstockDetailEntity> detailList = awdOutstockDetailService.lambdaQuery()
+                            .eq(AwdOutstockDetailEntity::getMainId, awdOutstockEntity.getId())
+                            .list();
+                    for (AwdOutstockDetailEntity awdOutstockDetailEntity : detailList) {
+                        if (awdOutstockDetailEntity.getMsku().equals(detailEntity.getMsku())) {
+                            awdOutstockDetailService.lambdaUpdate()
+                                    .set(AwdOutstockDetailEntity::getSkuId,skuDTO.getProductSkuId())
+                                    .set(AwdOutstockDetailEntity::getSkuNo,skuDTO.getProductSkuNo())
+                                    .set(AwdOutstockDetailEntity::getAsin,skuDTO.getPlatformSpuNo())
+                                    .set(AwdOutstockDetailEntity::getProductName,skuDTO.getProductName())
+                                    .eq(AwdOutstockDetailEntity::getMsku,detailEntity.getMsku())
+                                    .eq(AwdOutstockDetailEntity::getMainId,awdOutstockEntity.getId())
+                                    .update();
+                        }
                     }
                 }
 
