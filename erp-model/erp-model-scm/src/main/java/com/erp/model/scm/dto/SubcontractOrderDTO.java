@@ -195,6 +195,10 @@ public class SubcontractOrderDTO implements Serializable {
          */
         private String type;
         /**
+         * 单据类型名称
+         */
+        private String typeName;
+        /**
         * 审核状态
         */
         private String approveStatus;
@@ -245,6 +249,16 @@ public class SubcontractOrderDTO implements Serializable {
         private Boolean isUrgent;
 
         /**
+         * 币种
+         */
+        private String currency;
+
+        /**
+         * 币种符号
+         */
+        private String currencySymbol;
+
+        /**
          * 返修数量
          */
         private Integer repairQty;
@@ -288,6 +302,11 @@ public class SubcontractOrderDTO implements Serializable {
          * 采购员
          */
         private String purchaserName;
+
+        /**
+         * 供应商id
+         */
+        private String supplierId;
 
         /**
         * 创建时间

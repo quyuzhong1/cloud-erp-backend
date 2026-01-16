@@ -1465,8 +1465,37 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
                 throw new ServiceException(new ApiResult(ApiError.HTTP_UNKNOWN.getCode(),listApiResult.getMsg()));
             }
         }
+
+        List<String> supplierIdList = list.stream().map(item -> item.getSupplierId()).collect(Collectors.toList());
+        List<SupplierEntity> supplierList = supplierService.listByIds(supplierIdList);
+        List<DictCurrencyEntity> dictCurrencyList = sysUserFeign.currencyList();
+
         // 属性赋值
         for(SubcontractOrderDTO.ListDTO data : list) {
+
+            data.setTypeName(SubcontractOrderTypeEnum.getName(data.getType()));
+
+            SupplierEntity supplierEntity = supplierList.stream()
+                    .filter(item -> Objects.equals(item.getId(), data.getSupplierId()))
+                    .findFirst()
+                    .orElse(null);
+
+
+
+            if (Objects.nonNull(supplierEntity)) {
+                data.setCurrency(supplierEntity.getPayCurrency());
+
+                DictCurrencyEntity dictCurrencyEntity = dictCurrencyList.stream()
+                        .filter(item -> Objects.equals(item.getId(), supplierEntity.getPayCurrency()))
+                        .findFirst()
+                        .orElse(null);
+
+                if (Objects.nonNull(dictCurrencyEntity)) {
+                    data.setCurrencySymbol(dictCurrencyEntity.getSymbol());
+                }
+            }
+
+
 
             if (CollectionUtils.isNotEmpty(podList)) {
                 List<String> podIds = podList.stream().filter(obj -> obj.getSourceDetailId().equals(data.getDetailId())).map(PurchaseOrderDetailEntity::getId).collect(Collectors.toList());
