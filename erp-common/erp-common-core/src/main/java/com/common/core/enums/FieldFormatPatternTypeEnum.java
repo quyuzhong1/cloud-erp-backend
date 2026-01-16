@@ -29,7 +29,7 @@ public enum FieldFormatPatternTypeEnum  {
     ENUM__DATETIME_("date_time_", "时间（横杠）","\\d{4}-([1-9]|0[1-9]|1[012])-([1-9]|0[1-9]|[12][0-9]|3[01] [0-9]{2}:[0-9]{2}:[0-9]{2})"),
     ENUM_YEAR_MONTH("year_month", "年-月","^\\d{4}-((0([1-9]))|(1(0|1|2)))$"),
     ENUM_MOBILE("mobile", "手机","^1\\d{10}$"),
-    ENUM_NUMBER_SPECIAL_CHARS("number_special_chars", "数字及特殊字符(+,-,括号)", "^[0-9()+\\-]+$"),
+    ENUM_NUMBER_SPECIAL_CHARS("number_special_chars", "数字,空格，空字符及特殊字符(+,-,括号)", "^[0-9\\s()+\\-]+$"),
     ENUM_TELEPHONE("telephone", "电话","0\\d{2,3}-\\d{7,8}"),
     ENUM_QQ("QQ", "QQ","[1-9][0-9]{4,}"),
     ENUM_MAILBOX("mailbox", "邮箱","^[a-zA-Z0-9._%+-]{1,64}@[a-zA-Z0-9.-]{1,253}\\.[a-zA-Z]{2,63}$"),
