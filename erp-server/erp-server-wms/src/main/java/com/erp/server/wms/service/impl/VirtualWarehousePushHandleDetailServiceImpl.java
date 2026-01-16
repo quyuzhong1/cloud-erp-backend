@@ -173,13 +173,27 @@ public class VirtualWarehousePushHandleDetailServiceImpl extends SuperServiceImp
                     //判断调拨出入的实体仓是否一致,不一致则需要拆分生成调出实体仓虚拟仓取消分货和调入实体仓虚拟仓新增分货推送单
                     if (!CharSequenceUtil.equals(vmAllocationDetail.getWarehouseId(), vmAllocationDetail.getToWarehouseId())) {
                         //取消调出仓库虚拟仓分货
-                        fromVwResultList.add(vmAllocationDetail);
-
-                        //新增调入仓虚拟仓分货
-                        toVwResultList.add(vmAllocationDetail);
+                        if (CollectionUtils.isNotEmpty(fromToThirdMappingMap.get(vmAllocationDetail.getFromVirtualWarehouseId()))) {
+                            fromVwResultList.add(vmAllocationDetail);
+                        }
+                        if (CollectionUtils.isNotEmpty(fromToThirdMappingMap.get(vmAllocationDetail.getToVirtualWarehouseId()))) {
+                            //新增调入仓虚拟仓分货
+                            toVwResultList.add(vmAllocationDetail);
+                        }
                     } else {
-                        //相同实体仓之间虚拟仓的调拨
-                        fromToVwResultList.add(vmAllocationDetail);
+                        //获取调出仓 调入仓关联的第三方仓（旺店通）
+                        if (CollectionUtils.isNotEmpty(fromToThirdMappingMap.get(vmAllocationDetail.getFromVirtualWarehouseId()))
+                                && CollectionUtils.isNotEmpty(fromToThirdMappingMap.get(vmAllocationDetail.getToVirtualWarehouseId()))) {
+                            fromToVwResultList.add(vmAllocationDetail);
+                        } else if (CollectionUtils.isNotEmpty(fromToThirdMappingMap.get(vmAllocationDetail.getFromVirtualWarehouseId()))
+                                && CollectionUtils.isEmpty(fromToThirdMappingMap.get(vmAllocationDetail.getToVirtualWarehouseId()))) {
+                            fromVwResultList.add(vmAllocationDetail);
+                        } else if (CollectionUtils.isEmpty(fromToThirdMappingMap.get(vmAllocationDetail.getFromVirtualWarehouseId()))
+                                && CollectionUtils.isNotEmpty(fromToThirdMappingMap.get(vmAllocationDetail.getToVirtualWarehouseId()))) {
+                            toVwResultList.add(vmAllocationDetail);
+                        } else {
+                            noSyncDetailList.add(vmAllocationDetail);
+                        }
                     }
                 });
                 if (CollectionUtils.isNotEmpty(fromToVwResultList)) {
