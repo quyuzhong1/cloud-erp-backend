@@ -296,9 +296,8 @@ public class DmpInputLxOrderDmpHandler extends DmpInputDbConvertDmpHandler {
             //400：等待修改确认
             //500：已发货
             //900：已付款
-            return (LingxingPlatformCodeEnum.TEMU_FBP.getCode().equals(platformCodeStr) && "CANCELED".equalsIgnoreCase(sourcePlatformOrderStatus))
-                    || (LingxingPlatformCodeEnum.EBAY.getCode().equals(platformCodeStr) && "Cancelled".equalsIgnoreCase(sourcePlatformOrderStatus))
-                    ;
+            return "CANCELED".equalsIgnoreCase(sourcePlatformOrderStatus)
+                    || "Cancelled".equalsIgnoreCase(sourcePlatformOrderStatus);
         }
         return false;
 
