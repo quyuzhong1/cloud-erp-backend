@@ -176,16 +176,16 @@
             vmad.detail_remark as detailRemark,
             vmad.to_virtual_warehouse_id AS toVirtualWarehouseId,
             vmad.to_virtual_warehouse_name AS toVirtualWarehouseName,
-            vmad.finish_description AS finishDescription,
+            third.finish_description AS finishDescription,
             vma.invalid_description AS invalidDescription,
-            vmad.sync_status AS syncStatus,
+            COALESCE(third.sync_status,'1') AS syncStatus,
             vmad.create_user_id AS createUserId,
             vmad.create_user_name AS createUserName,
             vmad.create_time AS createTime,
             vmad.update_user_id AS updateUserId,
             vmad.update_user_name AS updateUserName,
             vmad.update_time AS updateTime,
-            vmad.third_code AS thirdCode,
+            third.third_code AS thirdCode,
             vmad.sys_type AS sysType,
             vmad.sys_type_name AS sysTypeName,
             vma.is_statistics AS isStatistics,
@@ -205,6 +205,17 @@
         FROM virtual_warehouse_allocation_detail vmad
         INNER JOIN virtual_warehouse_allocation vma
         ON vma.id = vmad.main_id AND vma.is_deleted = FALSE
+        left join (
+            select
+            source_detail_id,
+            string_agg(vwphd.third_code,',') as third_code,
+            string_agg(vwphd.finish_description,',') as finish_description,
+            min(vwphd.sync_status) as sync_status
+            from virtual_warehouse_push_handle_detail vwphd
+            inner join virtual_warehouse_push_handle_relation vwphr
+            on vwphd.id = vwphr.handle_detail_id and vwphr.is_deleted = false
+            where vwphd.is_deleted = false and vwphd.third_code != '' group by vwphr.source_detail_id
+        ) third on vmad.id = third.source_detail_id
         LEFT JOIN inventory_data iv
         ON vmad.sku_id = iv.sku_id AND vmad.warehouse_id = iv.warehouse_id
         LEFT JOIN virtual_inventory_data vi

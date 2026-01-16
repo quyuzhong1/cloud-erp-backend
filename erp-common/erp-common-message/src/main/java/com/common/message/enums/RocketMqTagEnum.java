@@ -366,6 +366,12 @@ public enum RocketMqTagEnum {
      * 第三方仓库存取消业务处理实现
      */
     ERP_B2B_THIRD_WAREHOUSE_CANCEL_TAG(1040, RocketMqTagEnum.SYNC_B2B_THIRD_WAREHOUSE_CANCEL,"erp_b2b_third_delivery_cancel_tag"),
+
+
+    /**
+     * 资金验收单同步金蝶
+     */
+    KINGDEE_ASSET_ACCEPT_TAG(1041, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_asset_accept_tag"),
     //-----------------------------dmp数据更新编码从2001开始---------------------------------------------------------------
 
     /**

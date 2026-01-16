@@ -76,11 +76,19 @@ public class CfgRuleOrderHandleDTO implements Serializable {
          * 收货人处理
          */
         private ReceiveHandleContent receiveHandleContent;
+        /**
+         * 发货限制处理
+         */
+        private DeliveryRestrictionContent deliveryRestrictionContent;
 
         private List<String> filterAddressOneTextList;
         private List<String> filterPhoneTextList;
         private List<String> filterZipCodeTextList;
         private List<String> filterReceiveTextList;
+        /**
+         * 发货限制列表
+         */
+        private List<String> deliveryRestrictionList;
         /**
          * 省/州 转换列表
          */
@@ -307,6 +315,10 @@ public class CfgRuleOrderHandleDTO implements Serializable {
          * 订单号处理
          */
         private OrderCodeHandleContent orderCodeHandleContent;
+        /**
+         * 发货限制处理
+         */
+        private DeliveryRestrictionContent deliveryRestrictionContent;
     }
 
     /**
@@ -552,6 +564,27 @@ public class CfgRuleOrderHandleDTO implements Serializable {
          * 订单号 转换列表
          */
         private List<TransferDTO> orderCodeTransferDTOList;
+    }
+
+    /**
+     * 发货限制处理
+     */
+    @Data
+    @NoArgsConstructor
+    public static class DeliveryRestrictionContent{
+        /**
+         * 发货限制开关
+         */
+        private boolean deliveryRestrictionSwitch;
+        /**
+         * 发货限制类型 {@link com.erp.model.oms.enums.RuleOrderHandleEnum.DeliveryRestrictionEnum}
+         * oms/common/enumDropDown?type=DeliveryRestriction
+         */
+        private List<String> deliveryRestrictionList;
+        /**
+         * 发货限制类型名称列表（用于显示）
+         */
+        private List<String> deliveryRestrictionNameList;
     }
 
     /**

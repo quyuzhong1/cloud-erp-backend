@@ -230,7 +230,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     private InventoryClosedRecordService inventoryClosedRecordService;
 
     @Resource
-    private StocktakingProfitLossService stocktakingProfitLossService;
+    private StocktakingTaskDetailService stocktakingTaskDetailService;
 
     @Resource
     private TmsDeclareBillFeign tmsDeclareBillFeign;
@@ -3202,7 +3202,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             List<String> warehourseLocationList = dto.getDetailList().stream().map(SoOutstockDetailDTO.AddDTO::getWarehouseLocation).distinct().collect(Collectors.toList());
             // SKU信息
             List<String> skuIds = dto.getDetailList().stream().map(SoOutstockDetailDTO.AddDTO::getSkuId).distinct().collect(Collectors.toList());
-            boolean closed = stocktakingProfitLossService.checkClosed(
+            boolean closed = stocktakingTaskDetailService.checkClosed(
                     Collections.singletonList(dto.getWarehouseId()),
                     warehourseLocationList,
                     Collections.singletonList(dto.getWarehouseOrgId()),
@@ -3211,7 +3211,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             if (closed){
                 // 已有盘盈盘亏单不提交
                 // 记录明细(事务分开)
-                soOutstockDetailService.updateDetailRemark(soOutStockId, "因库已有盘盈盘亏单据时间停止提交",false);
+                soOutstockDetailService.updateDetailRemark(soOutStockId, "因库已有盘点任务单据时间停止提交",false);
                 return true;
             }
         }

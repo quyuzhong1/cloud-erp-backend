@@ -19,6 +19,7 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.vo.ThirdUnionDTO;
 import com.erp.model.workflow.dto.CfgApproveNoticeDTO;
 import com.erp.model.workflow.dto.CfgApproveSyncFieldMapDTO;
+import com.erp.model.workflow.dto.DictBasicDTO;
 import com.erp.model.workflow.entity.*;
 import com.erp.model.workflow.enums.*;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
@@ -749,8 +750,28 @@ public class CfgApproveSyncServiceImpl extends SuperServiceImpl<CfgApproveSyncMa
     }
 
     @Override
-    public void cleanFeishuTest() {
+    public List<Map<String, Object>> listApproveNoticeRoleType(CfgApproveSyncDTO.ApproveNoticeRoleTypeParamDTO dto) {
+        List<Map<String, Object>> resultList = new ArrayList<>();
+        Map<String,List<Map<String,Object>>> enumMaps = EnumCacheUtils.getInstance().getData();
+        List<Map<String, Object>> enumList = enumMaps.get("CfgApproveNoticeRoleType");
+        resultList.addAll(enumList);
 
+        if(Objects.nonNull(dto) && StringUtils.isNotBlank(dto.getBusinessType())){
+            List<DictBasicDTO.DropDownDTO> list = dictBasicService.listByType("processCondition", dto.getBusinessType());
+            if(CollUtil.isNotEmpty(list)){
+                for (DictBasicDTO.DropDownDTO dropDownDTO : list) {
+                    Map<String, Object> map = new HashMap<>();
+                    map.put("code", dropDownDTO.getCode());
+                    map.put("value", dropDownDTO.getName());
+                    resultList.add(map);
+                }
+            }
+        }
+        return resultList;
+    }
+
+    @Override
+    public void cleanFeishuTest() {
         List<CfgApproveSyncEntity> list = lambdaQuery().in(CfgApproveSyncEntity::getBusinessType,Arrays.asList( "pilotApplication", "purchaseOrder")).list();
         for (CfgApproveSyncEntity cfgApproveSyncEntity : list) {
             String businessType = cfgApproveSyncEntity.getBusinessType();

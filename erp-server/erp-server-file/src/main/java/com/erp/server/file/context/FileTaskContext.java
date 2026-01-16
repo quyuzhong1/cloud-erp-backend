@@ -36,6 +36,7 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
@@ -211,10 +212,30 @@ public class FileTaskContext {
                     ExceptionUtils.emptyThrow(eventHandler, String.format("事件Hanlder[%s]不存在,请联系IT人员检查配置", eventEnum.getHandler()));
                     eventHandler.handle(fileTask);
                 }else {
-                    BaseDTO.ImportDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<BaseDTO.ImportDTO>() {});
-                    dto.setTaskId(fileTask.getId());
-                    dto.setImportCount(fileTask.getCount());
-                    FeignQuery.invoke(eventEnum.getClassName(), eventEnum.getMethodName(), Collections.singletonList(dto));
+                    // 将 metaInfo JSON 字符串反序列化为 Map，然后添加 taskId 和 importCount
+                    // 这样可以支持自定义 DTO，而不仅仅是 BaseDTO.ImportDTO
+                    // 传递 Map 对象而不是 JSON 字符串，避免双重序列化问题
+                    Object metaInfoObj;
+                    try {
+                        String metaInfoJson = fileTask.getMetaInfo();
+                        if (metaInfoJson != null && metaInfoJson.startsWith("{")) {
+                            // 反序列化为 Map
+                            Map<String, Object> metaInfoMap = objectMapper.readValue(metaInfoJson, new TypeReference<Map<String, Object>>() {});
+                            // 添加 taskId 和 importCount
+                            metaInfoMap.put("taskId", fileTask.getId());
+                            if (fileTask.getCount() != null) {
+                                metaInfoMap.put("importCount", fileTask.getCount());
+                            }
+                            metaInfoObj = metaInfoMap;
+                        } else {
+                            // 如果不是 JSON 对象，使用原始值
+                            metaInfoObj = metaInfoJson;
+                        }
+                    } catch (Exception e) {
+                        log.warn("无法解析 metaInfo JSON，使用原始值", e);
+                        metaInfoObj = fileTask.getMetaInfo();
+                    }
+                    FeignQuery.invoke(eventEnum.getClassName(), eventEnum.getMethodName(), Collections.singletonList(metaInfoObj));
                 }
                 // 设置任务状态为 全部成功
                 importResultDTO.setStatus(FileTaskStatusEnum.FINISH.name());

@@ -31,6 +31,7 @@ public enum SoB2cErrorTypeEnum {
     GET_LOGISTICS_LABEL("getLogisticsLabel",  "获取物流面单异常"),
     OTHER("other",  "其他异常"),
     GET_EXCHANGE_RATE("getExchangeRate",  "获取汇率异常"),
+    RETRY_PLATFORM_OUTBOUND("retryPlatformOutbound",  "自动出库异常"),
     ;
     /**
      * 类型
@@ -39,6 +40,7 @@ public enum SoB2cErrorTypeEnum {
     @JsonValue
     private String code;
     /**
+     *
      * 名称
      */
     private String name;

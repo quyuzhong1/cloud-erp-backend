@@ -86,9 +86,10 @@ public class AntuServerTest {
     public void getOutboundBatchTest() {
         AntuGetOutboundReq req = AntuGetOutboundReq.builder()
                 .page(1)
-                .pageSize(100)
-                .modifyDateFrom(LocalDateTime.parse("2024-08-26T18:30:11"))
-                .modifyDateTo(LocalDateTime.parse("2024-08-28T18:40:11"))
+                .pageSize(1)
+//                .modifyDateFrom(LocalDateTime.parse("2025-07-25T18:30:11"))
+//                .modifyDateTo(LocalDateTime.parse("2025-08-28T18:40:11"))
+                .orderStatus("D")
                 .build();
         AntuResponse<List<AntuOutboundResp>> response = antuService.getOutboundBatch(req, OmsPlatformEnum.OMS_ANTU);
         System.out.println(response);

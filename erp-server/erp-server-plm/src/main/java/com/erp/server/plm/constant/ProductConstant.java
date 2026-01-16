@@ -108,4 +108,12 @@ public class ProductConstant implements Serializable {
      */
     public static final String HTML_BR = "</br>";
 
+
+    /**
+     * product_sale 属性
+     */
+    public static final String PRODUCT_BATTERY_LITHIUM_METAL = "锂金属电池（纽扣电池，干电池）";
+    public static final String PRODUCT_BATTERY_LITHIUM_ION = "锂离子电池（可充电式）";
+    public static final String PRODUCT_BATTERY_LITHIUM_POLYMER = "锂聚合物电池（充电式）";
+
 }
