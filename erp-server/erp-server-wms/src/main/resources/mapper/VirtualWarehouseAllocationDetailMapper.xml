@@ -85,6 +85,7 @@
         </where>
     </select>
 
+    <!-- 查询一天内分货的明细数据 -->
     <select id="listRepeatHandleDetail"
             resultType="com.erp.model.wms.entity.VirtualWarehouseAllocationDetailEntity">
             select
@@ -115,7 +116,7 @@
             inner join virtual_warehouse_allocation vwa on vwa.id = vwad.main_id  and vwa.is_deleted = false and vwa.disabled = false
             inner join virtual_warehouse_push_handle_relation vwphd on vwphd.source_detail_id = vwad.id and vwphd.is_deleted = false
             <where>
-                vwad.is_deleted = false and vwad.disabled = false and vwa.status = 'handle'
+                vwad.is_deleted = false and vwad.disabled = false and vwa.status = 'handle' and vwa.handle_date >= (CURRENT_DATE - INTERVAL '1 DAY')
                 <if test="fromWarehouseIdList != null and fromWarehouseIdList.size > 0">
                     and vwad.warehouse_id in
                     <foreach collection="fromWarehouseIdList" item="item" open="(" close=")" separator=",">

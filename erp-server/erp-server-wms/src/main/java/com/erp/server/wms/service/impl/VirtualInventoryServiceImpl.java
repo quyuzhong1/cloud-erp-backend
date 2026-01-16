@@ -83,7 +83,7 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
     private VirtualWarehouseChannelService virtualWarehouseChannelService;
 
     @Resource
-    private VirtualInventoryRedisUtil virtualInventoryRedisUtil;
+    private VirtualInventoryTransactionService virtualInventoryTransactionService;
 
     @Override
     public PagingVO<VirtualInventoryDTO.ListDTO> paging(PagingDTO<VirtualInventoryDTO.SearchParamDTO> dto) {
@@ -705,26 +705,8 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
             returnDTO.setVirtualInventoryId(virtualInventoryEntity.getId());
             returnDTO.setDictInventoryStatus(virtualInventoryEntity.getDictInventoryStatus());
             //查询redis中的库存
-            Object redisQtyObj = virtualInventoryRedisUtil.get(InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.CURRENT, virtualInventoryEntity.getId()));
-            if (ObjectUtil.isNotEmpty(redisQtyObj)) {
-                List<String> splitObj = Arrays.stream(redisQtyObj.toString().split(VirtualInventoryRedisUtil.splitSign)).collect(Collectors.toList());
-                Integer currentQty = Integer.parseInt(splitObj.get(0));
-                for (int i = 0;i < splitObj.size();i++) {
-                    if (i == 0) {
-                        continue;
-                    }
-                    List<String> progressObj = Arrays.stream(splitObj.get(i).split(VirtualInventoryRedisUtil.atSign)).collect(Collectors.toList());
-                    if (progressObj.size() > 1) {
-                        //进行中的数量
-                        Integer progressQty = Integer.parseInt(progressObj.get(1));
-                       if (progressQty >= 0) {
-                           continue;
-                       }
-                        currentQty = currentQty + progressQty;
-                    }
-                }
-                returnDTO.setQty(currentQty);
-            }
+            Integer redisQty = virtualInventoryTransactionService.getRedisQtyByInventory(virtualInventoryEntity.getId());
+            returnDTO.setQty(redisQty);
             resultList.add(returnDTO);
         }
         return resultList;
