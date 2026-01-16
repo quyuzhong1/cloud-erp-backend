@@ -60,9 +60,10 @@
         count(distinct vma.id)
         FROM virtual_warehouse_allocation_detail vmad
         inner JOIN virtual_warehouse_allocation vma
+        inner join virtual_warehouse_push_handle_detail vwphd on vma.id = vwphd.source_id and vwphd.is_deleted = false
         on vma.id = vmad.main_id and vma.is_deleted = false
         where vmad.is_deleted = false
-        and vmad.sync_status= #{params.syncStatus}
+        and vwphd.sync_status= #{params.syncStatus}
         <if test="params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
         </if>
