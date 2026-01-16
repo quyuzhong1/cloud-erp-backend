@@ -1701,7 +1701,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
             }
             listRateDTO.setSupplierId(supplierEntity.getId());
             listRateDTO.setSupplierName(supplierEntity.getName());
-            listRateDTO.setRate(supplierEntity.getTaxRate());
+            listRateDTO.setRate(supplierEntity.getTaxRate().multiply(new BigDecimal("100")));
             listRateDTOS.add(listRateDTO);
         }
         return listRateDTOS;
