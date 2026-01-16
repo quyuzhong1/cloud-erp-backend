@@ -1032,6 +1032,16 @@ public class SubcontractOrderDTO implements Serializable {
         private String supplierName;
 
         /**
+         * 币种
+         */
+        private String currency;
+
+        /**
+         * 币种符号
+         */
+        private String currencySymbol;
+
+        /**
          * 税率
          */
         private BigDecimal rate;

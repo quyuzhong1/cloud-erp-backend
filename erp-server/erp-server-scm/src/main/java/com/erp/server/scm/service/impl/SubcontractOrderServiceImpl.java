@@ -41,7 +41,9 @@ import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.*;
 import com.erp.model.scm.entity.*;
 import com.erp.model.scm.enums.*;
+import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
+import com.erp.model.sys.entity.DictCurrencyEntity;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.entity.*;
@@ -1656,9 +1658,18 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         }
         List<String> supplierIdList = dto.stream().map(item -> item.getSupplierId()).collect(Collectors.toList());
         List<SupplierEntity> supplierList = supplierService.listByIds(supplierIdList);
+        List<DictCurrencyEntity> dictCurrencyList = sysUserFeign.currencyList();
         List<SubcontractOrderDTO.ListRateDTO> listRateDTOS = new ArrayList<>();
         for (SupplierEntity supplierEntity : supplierList) {
             SubcontractOrderDTO.ListRateDTO listRateDTO = new SubcontractOrderDTO.ListRateDTO();
+            listRateDTO.setCurrency(supplierEntity.getPayCurrency());
+            DictCurrencyEntity dictCurrency = dictCurrencyList.stream()
+                    .filter(item -> Objects.equals(item.getId(), supplierEntity.getPayCurrency()))
+                    .findFirst()
+                    .orElse(null);
+            if (Objects.nonNull(dictCurrency)) {
+                listRateDTO.setCurrencySymbol(dictCurrency.getSymbol());
+            }
             listRateDTO.setSupplierId(supplierEntity.getId());
             listRateDTO.setSupplierName(supplierEntity.getName());
             listRateDTO.setRate(supplierEntity.getTaxRate());
