@@ -37,4 +37,14 @@ public interface VirtualWarehousePushHandleDetailMapper extends BaseMapper<Virtu
      * @return List<ThirdDataDTO>
      */
     List<VirtualWarehousePushHandleDetailDTO.ThirdDataDTO> listThirdDataByDetailIdList(@Param("detailIdList") List<String> detailIdList);
+    /**
+     * 批量手动完结
+     * @author will
+     * @date 2026/1/16 11:30
+     * @param params
+     * @param code
+     * @param handleDetailIdList
+     * @return void
+     */
+    void batchManualFinish(@Param("params")VirtualWarehouseAllocationDTO.ManualFinishDto params,@Param("code") String code,@Param("handleDetailIdList") List<String> handleDetailIdList);
 }

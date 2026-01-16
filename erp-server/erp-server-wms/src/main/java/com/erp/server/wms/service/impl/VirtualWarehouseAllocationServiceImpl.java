@@ -412,9 +412,6 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
         //调拨分货生成直接调拨单
         generateDirectTransferInfo(allocationEntity,detailEntityList,warehouseMap);
 
-        //变更明细同步状态
-        virtualWarehouseAllocationDetailService.updateByMainId(allocationEntity.getId(), VirtualWarehouseAllocationSyncStatusEnum.IN_SYNC.getCode());
-
         //非调拨类型需要先扣减实体仓库存
         if (!CharSequenceUtil.equals(allocationEntity.getType(),VirtualWarehouseAllocationTypeEnum.TRANSFER.getCode())) {
             //执行扣减库存

@@ -51,7 +51,6 @@ public interface VirtualWarehouseAllocationDetailService extends SuperService<Vi
 
     void submit(VirtualWarehouseAllocationEntity allocationEntity);
 
-    void updateByMainId(String mainId, String syncStatus);
     /**
      * 同步
      *
@@ -88,10 +87,6 @@ public interface VirtualWarehouseAllocationDetailService extends SuperService<Vi
      */
     Boolean updateRemark(VirtualWarehouseAllocationDTO.UpdateRemarkDTO updateRemarkDTO);
 
-    /**
-     * 初始化第三方编码存在异常的数据
-     */
-    void initFailThirdCode(String errorMsg);
     /**
      * 查询分货信息
      * @author will
