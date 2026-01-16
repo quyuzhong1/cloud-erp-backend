@@ -323,8 +323,6 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
         if (CollectionUtils.isEmpty(skuVOList)) {
             return;
         }
-        List<String> detailIdList = records.stream().map(VirtualWarehouseAllocationDTO.ListDTO::getDetailId).distinct().collect(Collectors.toList());
-        List<VirtualWarehousePushHandleDetailDTO.ThirdDataDTO> thirdList =  virtualWarehousePushHandleDetailService.listThirdDataByDetailIdList(detailIdList);
 
         for (VirtualWarehouseAllocationDTO.ListDTO record : records) {
             SkuVO skuVO = skuVOList.stream().filter(item -> Objects.equals(item.getSkuId(), record.getSkuId())).findFirst().orElse(null);
@@ -336,34 +334,7 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
             //是否统计名称
             record.setIsStatisticsName(record.getIsStatistics() ? "是" : "否");
             record.setIsVirtualScarceStr(record.getIsVirtualScarce() ? "是" : "否");
-            record.setSyncStatus(VirtualWarehouseAllocationSyncStatusEnum.TO_BE_SYNC.getCode());
-
-            List<VirtualWarehousePushHandleDetailDTO.ThirdDataDTO> thisThirdList = thirdList.stream().filter(obj -> CharSequenceUtil.equals(obj.getDetailId(), record.getDetailId())).collect(Collectors.toList());
-            if (CollUtil.isNotEmpty(thisThirdList)) {
-                //同步平台单号
-                String thirdCodes = thisThirdList.stream().filter(obj-> CharSequenceUtil.isNotBlank(obj.getThirdCode())).map(VirtualWarehousePushHandleDetailDTO.ThirdDataDTO::getThirdCode).collect(Collectors.joining(","));
-                record.setThirdCode(thirdCodes);
-                record.setSysType(thisThirdList.get(0).getSysType());
-                record.setSysTypeName(ThirdSysTypeEnum.getNameByCode(record.getSysType()));
-                //完结说明
-                String finishDescriptions = thisThirdList.stream().map(VirtualWarehousePushHandleDetailDTO.ThirdDataDTO::getFinishDescription).collect(Collectors.joining(","));
-                record.setFinishDescription(finishDescriptions);
-                //处理同步状态
-                List<String> syncStatusList = thisThirdList.stream().map(VirtualWarehousePushHandleDetailDTO.ThirdDataDTO::getSyncStatus).collect(Collectors.toList());
-                if (syncStatusList.contains(VirtualWarehouseAllocationSyncStatusEnum.NO_NEED_SYNC.getCode())) {
-                    record.setSyncStatus(VirtualWarehouseAllocationSyncStatusEnum.NO_NEED_SYNC.getCode());
-                } else if (syncStatusList.contains(VirtualWarehouseAllocationSyncStatusEnum.TO_BE_SYNC.getCode())) {
-                    record.setSyncStatus(VirtualWarehouseAllocationSyncStatusEnum.TO_BE_SYNC.getCode());
-                } else if (syncStatusList.contains(VirtualWarehouseAllocationSyncStatusEnum.IN_SYNC.getCode())) {
-                    record.setSyncStatus(VirtualWarehouseAllocationSyncStatusEnum.IN_SYNC.getCode());
-                } else if (syncStatusList.contains(VirtualWarehouseAllocationSyncStatusEnum.FAILED_SYNC.getCode())) {
-                    record.setSyncStatus(VirtualWarehouseAllocationSyncStatusEnum.FAILED_SYNC.getCode());
-                } else if (syncStatusList.contains(VirtualWarehouseAllocationSyncStatusEnum.MANUAL_COMPLETION_SYNC.getCode())) {
-                    record.setSyncStatus(VirtualWarehouseAllocationSyncStatusEnum.MANUAL_COMPLETION_SYNC.getCode());
-                } else {
-                    record.setSyncStatus(VirtualWarehouseAllocationSyncStatusEnum.SUCCESS_SYNC.getCode());
-                }
-            }
+            record.setSysTypeName(ThirdSysTypeEnum.getNameByCode(record.getSysType()));
             record.setSyncStatusName(VirtualWarehouseAllocationSyncStatusEnum.getNameByCode(record.getSyncStatus()));
         }
     }
@@ -411,9 +382,6 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
 
         //调拨分货生成直接调拨单
         generateDirectTransferInfo(allocationEntity,detailEntityList,warehouseMap);
-
-        //变更明细同步状态
-        virtualWarehouseAllocationDetailService.updateByMainId(allocationEntity.getId(), VirtualWarehouseAllocationSyncStatusEnum.IN_SYNC.getCode());
 
         //非调拨类型需要先扣减实体仓库存
         if (!CharSequenceUtil.equals(allocationEntity.getType(),VirtualWarehouseAllocationTypeEnum.TRANSFER.getCode())) {

@@ -287,6 +287,11 @@ public class VirtualWarehousePushHandleDetailServiceImpl extends SuperServiceImp
         return baseMapper.listThirdDataByDetailIdList(detailIdList);
     }
 
+    @Override
+    public void batchManualFinish(VirtualWarehouseAllocationDTO.ManualFinishDto dto, String code, List<String> handleDetailIdList) {
+        baseMapper.batchManualFinish(dto,code,handleDetailIdList);
+    }
+
 
     /**
      * 保存调出仓

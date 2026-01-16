@@ -1,8 +1,11 @@
 package com.erp.server.wms.service;
-import com.erp.model.wms.entity.VirtualWarehousePushHandleRelationEntity;
+
+import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
 import com.erp.model.wms.dto.VirtualWarehousePushHandleRelationDTO;
+import com.erp.model.wms.entity.VirtualWarehousePushHandleRelationEntity;
+
+import java.util.List;
 
 /**
  * <p>
@@ -32,5 +35,14 @@ public interface VirtualWarehousePushHandleRelationService extends SuperService<
     */
     Boolean update(VirtualWarehousePushHandleRelationDTO.UpdateDTO dto);
 
+    /**
+     * 根据来源id查询
+     * @author will
+     * @date 2026/1/16 10:26
+     * @param sourceIds
+     * @param sourceDetailIds
+     * @return List<VirtualWarehousePushHandleRelationEntity>
+     */
+    List<VirtualWarehousePushHandleRelationEntity> listBySourceIds(List<String> sourceIds,List<String> sourceDetailIds);
 
 }

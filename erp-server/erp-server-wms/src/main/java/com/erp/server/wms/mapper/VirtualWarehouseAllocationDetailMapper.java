@@ -21,8 +21,6 @@ import java.util.List;
 @Mapper
 public interface VirtualWarehouseAllocationDetailMapper extends BaseMapper<VirtualWarehouseAllocationDetailEntity> {
 
-    void batchManualFinish(@Param("params") VirtualWarehouseAllocationDTO.ManualFinishDto params, @Param("code") Integer code, @Param("ids") List<String> ids);
-
     /**
      * 查询分货信息
      * @author will

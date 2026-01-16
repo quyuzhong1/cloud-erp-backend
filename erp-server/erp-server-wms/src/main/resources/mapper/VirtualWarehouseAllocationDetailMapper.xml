@@ -25,8 +25,6 @@
        <result column="to_virtual_warehouse_id" property="toVirtualWarehouseId" />
        <result column="to_virtual_warehouse_code" property="toVirtualWarehouseCode" />
        <result column="to_virtual_warehouse_name" property="toVirtualWarehouseName" />
-       <result column="finish_description" property="finishDescription" />
-       <result column="third_code" property="thirdCode" />
     </resultMap>
 
     <!-- 通用查询结果列 -->
@@ -40,19 +38,8 @@
         update_time,
         version,
         is_deleted,
-        disabled, main_id, sku_id, sku_no, warehouse_id, warehouse_name, from_virtual_warehouse_id, from_virtual_warehouse_code, from_virtual_warehouse_name, qty, to_virtual_warehouse_id, to_virtual_warehouse_code, to_virtual_warehouse_name, finish_description, third_code
+        disabled, main_id, sku_id, sku_no, warehouse_id, warehouse_name, from_virtual_warehouse_id, from_virtual_warehouse_code, from_virtual_warehouse_name, qty, to_virtual_warehouse_id, to_virtual_warehouse_code, to_virtual_warehouse_name
     </sql>
-    <update id="batchManualFinish">
-        update virtual_warehouse_allocation_detail
-        set sync_status=#{code} , third_code=#{params.thirdCode} , sys_type=#{params.sysType}, sys_type_name=#{params.sysTypeName}
-        <if test="params.finishDescription!=null and params.finishDescription!=''">
-            , finish_description=#{params.finishDescription}
-        </if>
-        where id in
-        <foreach collection="ids" item="id" open="(" close=")" separator=",">
-            #{id}
-        </foreach>
-    </update>
 
 
     <!-- 查询分货信息 -->
@@ -123,8 +110,6 @@
                 vwad.to_virtual_warehouse_id,
                 vwad.to_virtual_warehouse_code,
                 vwad.to_virtual_warehouse_name,
-                vwad.finish_description,
-                vwad.third_code,
                 vwphd.handle_detail_id as handleDetailId
             from virtual_warehouse_allocation_detail vwad
             inner join virtual_warehouse_allocation vwa on vwa.id = vwad.main_id  and vwa.is_deleted = false and vwa.disabled = false
