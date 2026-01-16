@@ -1,9 +1,7 @@
 package com.erp.server.wms.controller.feign;
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.collection.CollectionUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.common.business.utils.CollectionUtils;
 import com.erp.model.wms.dto.VirtualWarehouseAllocationDTO;
 import com.erp.model.wms.entity.VirtualWarehouseAllocationDetailEntity;
 import com.erp.model.wms.entity.VirtualWarehousePushHandleRelationEntity;
@@ -30,7 +28,7 @@ public class VirtualWarehouseAllocationDetailFeignController {
 
     @PostMapping("/updateSyncStatus")
     public void updateSyncStatus(@RequestBody VirtualWarehouseAllocationDTO.SyncUpdateDto dto) {
-        virtualWarehouseAllocationDetailService.updateSyncStatus(dto);
+        virtualWarehouseAllocationDetailService.updateThirdData(dto);
     }
 
     /**

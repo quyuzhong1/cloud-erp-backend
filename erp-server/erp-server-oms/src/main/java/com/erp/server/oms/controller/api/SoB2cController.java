@@ -1878,4 +1878,19 @@ public class SoB2cController extends BaseController {
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
+
+    /**
+     * 重新执行平台出库消费
+     *
+     * @param
+     * @return
+     * @description
+     * @author jack
+     * @create 20256-01-06
+     */
+    @PostMapping("retryPlatformOutbound")
+    public ApiResult<String> retryPlatformOutbound(@RequestBody BaseIdsDTO.IdsDTO dto) {
+        soB2cService.retryPlatformOutbound(dto.getIds());
+        return success();
+    }
 }

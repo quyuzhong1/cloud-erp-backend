@@ -1664,4 +1664,90 @@ public class SampleTransferInfoServiceImpl extends SuperServiceImpl<SampleTransf
             return null;
         });
     }
+
+    @Override
+    public List<SampleTransferInfoDTO.TabListDTO> tabListApp(PermissionsDTO param) {
+        SampleTransferInfoDTO.PagingParamDTO searchParam = new SampleTransferInfoDTO.PagingParamDTO();
+        searchParam.setPermissionSql(param.getPermissionSql());
+        //待我审核
+        //根据单据id查询审核流程
+        ProcessManagementDTO.TaskKeyInfoDTO dto = new ProcessManagementDTO.TaskKeyInfoDTO();
+        dto.setBusinessKey(SourceTypeEnum.SAMPLE_TRANSFER_INFO.getCode());
+        dto.setTaskStatus(ApproveStatusEnum.APPROVE_ING.getCode());
+        dto.setCurApproveId(UserContext.getNonLoginUser().getUid());
+        List<ProcessTaskManagementEntity> processTaskManagementList = workflowFeign.listProcessByBusinessKey(dto);
+        if (CollectionUtils.isNotEmpty(processTaskManagementList)) {
+            List<String> ids = processTaskManagementList.stream().map(ProcessTaskManagementEntity::getBusinessId).collect(Collectors.toList());
+            searchParam.setIds(ids);
+        }else {
+            searchParam.setIds(Arrays.asList("-1"));
+        }
+        List<SampleTransferInfoDTO.TabListDTO> list = baseMapper.tabList(searchParam);
+        
+        // 移动端特殊处理：合并待提交和不通过
+        List<SampleTransferInfoDTO.TabListDTO> appList = new ArrayList<>();
+        
+        // 计算待提交/不通过的总数
+        int waitSubmitCount = 0;
+        int rejectCount = 0;
+        SampleTransferInfoDTO.TabListDTO waitSubmitItem = null;
+        SampleTransferInfoDTO.TabListDTO rejectItem = null;
+        
+        for (SampleTransferInfoDTO.TabListDTO item : list) {
+            if (ApproveStatusEnum.WAIT_SUBMIT.getCode().equals(item.getTabFlag())) {
+                waitSubmitCount = item.getCount();
+                waitSubmitItem = item;
+            } else if (ApproveStatusEnum.REJECT.getCode().equals(item.getTabFlag())) {
+                rejectCount = item.getCount();
+                rejectItem = item;
+            }
+        }
+        
+        // 创建合并后的待提交/不通过标签
+        if (waitSubmitItem != null || rejectItem != null) {
+            SampleTransferInfoDTO.TabListDTO mergedItem = new SampleTransferInfoDTO.TabListDTO();
+            mergedItem.setTabFlag("waitSubmitOrReject");
+            mergedItem.setTabFlagName("待提交/不通过");
+            mergedItem.setCount(waitSubmitCount + rejectCount);
+            appList.add(mergedItem);
+        }
+        
+        // 添加其他标签（待我审核、已审核）
+        for (SampleTransferInfoDTO.TabListDTO item : list) {
+            if (!ApproveStatusEnum.WAIT_SUBMIT.getCode().equals(item.getTabFlag()) 
+                && !ApproveStatusEnum.REJECT.getCode().equals(item.getTabFlag())) {
+                if (Objects.equals(ApproveStatusEnum.APPROVE_ING.getCode(), item.getTabFlag())) {
+                    item.setTabFlagName("待我审核");
+                } else if (Objects.equals(ApproveStatusEnum.APPROVE.getCode(), item.getTabFlag())) {
+                    item.setTabFlagName("已审核");
+                }
+                appList.add(item);
+            }
+        }
+
+        // 按照移动端指定顺序排序：待提交/不通过、审核中、已审核
+        List<String> orderList = Arrays.asList("waitSubmitOrReject", "approveIng", "approve");
+        appList.sort((a, b) -> {
+            int indexA = orderList.indexOf(a.getTabFlag());
+            int indexB = orderList.indexOf(b.getTabFlag());
+            if (indexA == -1) indexA = Integer.MAX_VALUE;
+            if (indexB == -1) indexB = Integer.MAX_VALUE;
+            return Integer.compare(indexA, indexB);
+        });
+
+        return appList;
+    }
+
+    @Override
+    public PagingVO<SampleTransferInfoDTO.ListDTO> pagingApp(PagingDTO<SampleTransferInfoDTO.PagingParamDTO> pagingParamDTO) {
+        pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
+        Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
+        IPage<SampleTransferInfoDTO.ListDTO> pageData = this.baseMapper.pagingApp(query, pagingParamDTO.getParams());
+        if(CollUtil.isEmpty(pageData.getRecords())) {
+           return new PagingVO(pageData);
+        }
+        // 数据处理
+        fillList(pageData.getRecords());
+        return new PagingVO(pageData);
+    }
 }

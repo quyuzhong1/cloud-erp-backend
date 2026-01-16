@@ -21,6 +21,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.constant.ApproveType;
 import com.common.business.constant.IsConstant;
 import com.common.business.dto.AdvanceQueryContainer;
+import com.common.business.dto.DynamicExcelDTO;
 import com.common.business.dto.ExcelImportFsDTO;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.ApproveOneDTO;
@@ -55,6 +56,7 @@ import com.erp.model.plm.vo.SkuSimpleVO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.PurchasePriceDTO;
 import com.erp.model.scm.dto.SupplierDTO;
+import com.erp.model.scm.dto.excel.SupplierExportExcelDTO;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.DictCountryDTO;
@@ -132,6 +134,8 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -143,6 +147,7 @@ import static com.alibaba.excel.EasyExcelFactory.read;
 import static com.alibaba.fastjson.JSON.parseObject;
 import static com.alibaba.fastjson.JSON.toJSONString;
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_PLM_SKU;
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_PLM_SKU_DYNAMIC;
 
 /**
  * @Description: 产品明细信息服务类
@@ -249,6 +254,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
     @Resource
     private ProductAccessoriesService productAccessoriesService;
+
+    @Resource
+    private RefProductImgAttachmentService refProductImgAttachmentService;
 
     @Autowired
     private ProductUnitService productUnitService;
@@ -1506,6 +1514,40 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         List<ProductDetailDTO.NoticeDTO> noticeDTOList = Arrays.asList(noticeDTO);
         //发送消息
         handleProductChangeNotification(noticeDTOList,Boolean.TRUE);
+        
+        // 处理产品保存后的图片URL（创建attachment记录、创建ref记录、异步生成缩略图）
+        // 注意：handleProductImagesAfterSave方法内部已经异步处理，但会等待任务完成
+        // 为了不阻塞主流程，这里也异步调用，但使用独立的线程避免线程池嵌套死锁
+        String imagesUrl = productSkuBaseInfoDTO.getImagesUrl();
+        if (StrUtil.isNotBlank(imagesUrl)) {
+            final String finalSkuId = skuId;
+            final String finalImagesUrl = imagesUrl;
+            
+            // 构建URL到图片名称的映射（如果有imageInfoList的话）
+            final Map<String, String> urlToNameMap = new HashMap<>();
+            if (CollUtil.isNotEmpty(productSkuBaseInfoDTO.getImageInfoList())) {
+                for (ProductSkuBaseInfoDTO.ImageInfo imageInfo : productSkuBaseInfoDTO.getImageInfoList()) {
+                    if (StrUtil.isNotBlank(imageInfo.getImageUrl()) && StrUtil.isNotBlank(imageInfo.getImageName())) {
+                        urlToNameMap.put(imageInfo.getImageUrl(), imageInfo.getImageName());
+                    }
+                }
+            }
+            
+            // 使用ForkJoinPool.commonPool()避免与zipImageExecutorPool嵌套导致死锁
+            // handleProductImagesAfterSave内部会使用zipImageExecutorPool，外部不能再使用同一个线程池
+            CompletableFuture.runAsync(() -> {
+                try {
+                    log.info("开始异步处理产品图片，skuId={}, imagesUrl={}, 名称映射数量={}", 
+                            finalSkuId, finalImagesUrl, urlToNameMap.size());
+                    refProductImgAttachmentService.handleProductImagesAfterSave(finalSkuId, finalImagesUrl, urlToNameMap);
+                    log.info("完成异步处理产品图片，skuId={}", finalSkuId);
+                } catch (Exception e) {
+                    log.error("异步处理产品图片失败，skuId={}, imagesUrl={}, 错误信息={}", finalSkuId, finalImagesUrl, e.getMessage(), e);
+                    // 不抛出异常，避免影响主流程
+                }
+            });
+        }
+        
         return true;
     }
 
@@ -1857,6 +1899,42 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }
         //发送通知
         handleProductChangeNotification(noticeDTOList,Boolean.TRUE);
+        
+        // 处理产品保存后的图片URL（创建attachment记录、创建ref记录、异步生成缩略图）
+        for (ProductDetailDTO productDetailDTO : productDetailLists) {
+            String imagesUrl = productDetailDTO.getImagesUrl();
+            String skuId = productDetailDTO.getId();
+            if (StrUtil.isNotBlank(imagesUrl) && StrUtil.isNotBlank(skuId)) {
+                final String finalSkuId = skuId;
+                final String finalImagesUrl = imagesUrl;
+                
+                // 构建URL到图片名称的映射（如果有imageInfoList的话）
+                final Map<String, String> urlToNameMap = new HashMap<>();
+                if (CollUtil.isNotEmpty(productDetailDTO.getImageInfoList())) {
+                    for (ProductDetailDTO.ImageInfo imageInfo : productDetailDTO.getImageInfoList()) {
+                        if (StrUtil.isNotBlank(imageInfo.getImageUrl()) && StrUtil.isNotBlank(imageInfo.getImageName())) {
+                            urlToNameMap.put(imageInfo.getImageUrl(), imageInfo.getImageName());
+                        }
+                    }
+                }
+                
+                // 异步执行，不阻塞主流程
+                // 注意：handleProductImagesAfterSave方法内部已经异步处理，但会等待任务完成
+                // 使用ForkJoinPool.commonPool()避免与zipImageExecutorPool嵌套导致死锁
+                CompletableFuture.runAsync(() -> {
+                    try {
+                        log.info("开始异步处理产品图片，skuId={}, imagesUrl={}, 名称映射数量={}", 
+                                finalSkuId, finalImagesUrl, urlToNameMap.size());
+                        refProductImgAttachmentService.handleProductImagesAfterSave(finalSkuId, finalImagesUrl, urlToNameMap);
+                        log.info("完成异步处理产品图片，skuId={}", finalSkuId);
+                    } catch (Exception e) {
+                        log.error("异步处理产品图片失败，skuId={}, imagesUrl={}, 错误信息={}", finalSkuId, finalImagesUrl, e.getMessage(), e);
+                        // 不抛出异常，避免影响主流程
+                    }
+                });
+            }
+        }
+        
         return true;
     }
 
@@ -2507,7 +2585,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
      **/
     @Override
     public void exportProduct(ProductSkuExcelDTO productSkuExcelDTO, HttpServletResponse response) {
-        downloadTaskFeign.saveDownloadTask("产品管理导出", EXPORT_PLM_SKU.getCode(), productSkuExcelDTO);
+        if (CollUtil.isEmpty(productSkuExcelDTO.getFieldList())) {
+            downloadTaskFeign.saveDownloadTask("产品管理导出", EXPORT_PLM_SKU.getCode(), productSkuExcelDTO);
+        }else {
+            downloadTaskFeign.saveDownloadTask("产品管理导出", EXPORT_PLM_SKU_DYNAMIC.getCode(), productSkuExcelDTO);
+        }
     }
 
     @Override
@@ -5017,6 +5099,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         //消息推送
         List<ProductDetailDTO.NoticeDTO> noticeDTOList = new ArrayList<>();
 
+        ProductDetailServiceImpl bean = ApplicationContextUtils.getBean(ProductDetailServiceImpl.class);
         for (ProductDetailImprotUpdateExcelDTO dto : successList) {
             List<String> errorMsgList = new ArrayList<>();
 
@@ -5357,6 +5440,18 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 }
             }
 
+
+            //电池重量（g）
+            BigDecimal batteryWeight = dto.getBatteryWeight();
+            List<String> productPropertyIds = declarePropertyList.stream().map(BasicDictEntity::getId).collect(Collectors.toList());
+            List<String> productPropertyNames = declarePropertyList.stream().map(BasicDictEntity::getValue).collect(Collectors.toList());
+            String propertyNames = StringUtils.join(productPropertyNames, ",");
+            String propertyIds = StringUtils.join(productPropertyIds, ",");
+            if( (Objects.isNull(batteryWeight) || batteryWeight.compareTo(BigDecimal.ZERO) <=0 )
+                    && ( propertyNames.contains(ProductConstant.PRODUCT_BATTERY_LITHIUM_METAL)|| propertyNames.contains(ProductConstant.PRODUCT_BATTERY_LITHIUM_ION)|| propertyNames.contains(ProductConstant.PRODUCT_BATTERY_LITHIUM_POLYMER) ) ){
+                errorMsgList.add(ApiError.PRODUCT_SALES_BATTERY_WEIGHT_NOT_NULL.getMsg());
+            }
+
             //存在错误信息则返回
             if (CollUtil.isNotEmpty(errorMsgList)) {
                 dto.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
@@ -5671,11 +5766,17 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 productSaleDTO.setInsuranceProperty(insurancePropertyName);
             }
             if(CollUtil.isNotEmpty(declarePropertyList)){
-                List<String> productPropertyIds = declarePropertyList.stream().map(BasicDictEntity::getId).collect(Collectors.toList());
-                List<String> productPropertyNames = declarePropertyList.stream().map(BasicDictEntity::getValue).collect(Collectors.toList());
-                productSaleDTO.setProductProperty(StringUtils.join(productPropertyNames, ","));
-                productSaleDTO.setProductPropertyId(StringUtils.join(productPropertyIds, ","));
+                productSaleDTO.setProductProperty(propertyNames);
+                productSaleDTO.setProductPropertyId(propertyIds);
             }
+
+            /**
+             * 电池重量（g）
+             */
+            if(Objects.nonNull(batteryWeight)){
+                productSaleDTO.setBatteryWeight(dto.getBatteryWeight());
+            }
+
             productNoSpecDTO.setProductSaleDTO(productSaleDTO);
 
             //产品物流信息
@@ -5691,10 +5792,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
              * 报关产品属性
              */
             if(CollUtil.isNotEmpty(declarePropertyList)){
-                List<String> productPropertyIds = declarePropertyList.stream().map(BasicDictEntity::getId).collect(Collectors.toList());
-                List<String> productPropertyNames = declarePropertyList.stream().map(BasicDictEntity::getValue).collect(Collectors.toList());
-                productLogisticsDTO.setProductProperty(StringUtils.join(productPropertyNames, ","));
-                productLogisticsDTO.setProductPropertyId(StringUtils.join(productPropertyIds, ","));
+                productLogisticsDTO.setProductProperty(propertyNames);
+                productLogisticsDTO.setProductPropertyId(propertyIds);
             }
             /**
              * 报关申报价（$）
@@ -5817,9 +5916,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             productIdList.add(productInfoDTO.getId());
 
             if(importType.equals(ImportTypeEnum.IMPORT_NOT_APPROVAL.getCode())){
-                this.inportExcel(productNoSpecDTO);
+                bean.inportExcel(productNoSpecDTO);
             }else if(importType.equals(ImportTypeEnum.IMPORT_APPROVAL.getCode())){
-                ProductDetailServiceImpl bean = ApplicationContextUtils.getBean(ProductDetailServiceImpl.class);
                 bean.inportExcelAndSync(productNoSpecDTO,productBy);
             }
         }
@@ -5899,6 +5997,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         List<BasicDictEntity> dictList = basicDictService.listByType(BasicDictTypeEnum.INSURANCE_PROPERTY.getCode());
         Map<String, BasicDictEntity>  insurancePropertyMap = dictList.stream()
                 .collect(Collectors.toMap(BasicDictEntity::getName, entity -> entity));
+
+        ProductDetailServiceImpl bean = ApplicationContextUtils.getBean(ProductDetailServiceImpl.class);
 
         for (ProductDetailExcelDTO dto : successList) {
             List<String> errorMsgList = new ArrayList<>();
@@ -6174,6 +6274,17 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 errorMsgList.add(ApiError.COMMON_GROSS_WEIGHT_LT_NET_WEIGHT_FORBIDDEN.getMsg());
             }
 
+            //电池重量（g）
+            BigDecimal batteryWeight = dto.getBatteryWeight();
+            List<String> productPropertyIds = declarePropertyList.stream().map(BasicDictEntity::getId).collect(Collectors.toList());
+            List<String> productPropertyNames = declarePropertyList.stream().map(BasicDictEntity::getValue).collect(Collectors.toList());
+            String propertyNames = StringUtils.join(productPropertyNames, ",");
+            String propertyIds = StringUtils.join(productPropertyIds, ",");
+            if( (Objects.isNull(batteryWeight) || batteryWeight.compareTo(BigDecimal.ZERO) <=0 )
+                    && ( propertyNames.contains(ProductConstant.PRODUCT_BATTERY_LITHIUM_METAL)|| propertyNames.contains(ProductConstant.PRODUCT_BATTERY_LITHIUM_ION)|| propertyNames.contains(ProductConstant.PRODUCT_BATTERY_LITHIUM_POLYMER) ) ){
+                errorMsgList.add(ApiError.PRODUCT_SALES_BATTERY_WEIGHT_NOT_NULL.getMsg());
+            }
+
             //存在错误信息则返回
             if (CollectionUtils.isNotEmpty(errorMsgList)) {
                 dto.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
@@ -6437,6 +6548,14 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
              * 销售平台
              */
             productSaleDTO.setSalesPlatform(productSalesPlatformEnum.getCode());
+
+            /**
+             * 电池重量（g）
+             */
+            productSaleDTO.setBatteryWeight(dto.getBatteryWeight());
+            productSaleDTO.setProductProperty(propertyNames);
+            productSaleDTO.setProductPropertyId(propertyIds);
+
             productNoSpecDTO.setProductSaleDTO(productSaleDTO);
 
             //产品物流信息
@@ -6449,10 +6568,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             /**
              * 报关产品属性
              */
-            List<String> productPropertyIds = declarePropertyList.stream().map(BasicDictEntity::getId).collect(Collectors.toList());
-            List<String> productPropertyNames = declarePropertyList.stream().map(BasicDictEntity::getValue).collect(Collectors.toList());
-            productLogisticsDTO.setProductProperty(StringUtils.join(productPropertyNames, ","));
-            productLogisticsDTO.setProductPropertyId(StringUtils.join(productPropertyIds, ","));
+            productLogisticsDTO.setProductProperty(propertyNames);
+            productLogisticsDTO.setProductPropertyId(propertyIds);
+
             /**
              * 报关申报价（$）
              */
@@ -6518,7 +6636,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             productPackDTO.setBoxQty(MathUtil.valueOf(dto.getBoxQty()));
             productNoSpecDTO.setProductPackDTO(productPackDTO);
 
-            String productId = this.inportExcel(productNoSpecDTO);
+            String productId = bean.inportExcel(productNoSpecDTO);
             prodcutIdList.add(productId);
         }
         return prodcutIdList;
@@ -7138,7 +7256,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         scaleFactor(UnitConverterUtil.mmToPoints(printEanDTO.getWidth()) - 10, image);
         // 计算条形码居中的 X 坐标
         float xPosition = getXPosition(printEanDTO, document, image);
-        float barcodeYPosition = document.getPageSize().getHeight() - image.getScaledHeight() - 5;
+        float barcodeYPosition = getYPosition(printEanDTO, document, image);
+//        float barcodeYPosition = document.getPageSize().getHeight() - image.getScaledHeight() - 5;
         Image eanImage = null;
         float eanPosition = 0;
         float eanBarcodeYPosition = 0;
@@ -7146,7 +7265,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             eanImage = getImage(dto.getEan(), printEanDTO, writer, baseFont);
             scaleFactor(UnitConverterUtil.mmToPoints(printEanDTO.getWidth()) - 10, eanImage);
             eanPosition = getXPosition(printEanDTO, document, eanImage);
-            eanBarcodeYPosition = document.getPageSize().getHeight() - image.getScaledHeight() - eanImage.getScaledHeight() - 15;
+            eanBarcodeYPosition = barcodeYPosition - 15;
         }
         // 绘制条形码
         PdfContentByte canvas = writer.getDirectContent();
@@ -7225,7 +7344,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         scaleFactor(UnitConverterUtil.mmToPoints(printEanDTO.getWidth()) - 10, image);
         // 计算条形码居中的 X 坐标
         float xPosition = getXPosition(printEanDTO, document, image);
-        float barcodeYPosition = document.getPageSize().getHeight() - image.getScaledHeight() - 5;
+        float barcodeYPosition = getYPosition(printEanDTO, document, image);
+//        float barcodeYPosition = document.getPageSize().getHeight() - image.getScaledHeight() - 5;
 
         Font font = new Font(baseFont, fontSize);
         List<String> textContent = printEanDTO.getTextContent();
@@ -7278,6 +7398,26 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             return document.getPageSize().getWidth() - image.getScaledWidth() - 5; // 右对齐，距离右边50个单位
         }
     }
+    /**
+     * 获取左边起点位置
+     *
+     * @param printEanDTO 参数
+     * @param document    页面
+     * @param image       图片
+     */
+    private float getYPosition(PrintEanDTO printEanDTO, Document document, Image image) {
+//        if (Element.ALIGN_TOP == printEanDTO.getTextVerticalPosition()) {
+//            return  document.getPageSize().getHeight() - image.getScaledHeight() - 5; // 上对齐，距离50个单位
+//        } else if (Element.ALIGN_MIDDLE == printEanDTO.getTextVerticalPosition()) {
+//            return  (document.getPageSize().getHeight() - image.getScaledHeight()) / 2;
+//        } else {
+//            return  5; // 下对齐，距离50个单位
+//        }
+        if (Objects.nonNull(printEanDTO.getTextVerticalPosition()) && Element.ALIGN_MIDDLE == printEanDTO.getTextVerticalPosition()) {
+            return (document.getPageSize().getHeight() - image.getScaledHeight()) / 2;
+        }
+        return document.getPageSize().getHeight() - image.getScaledHeight() - 5;
+    }
 
     /**
      * 打印ean
@@ -7297,7 +7437,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         scaleFactor(UnitConverterUtil.mmToPoints(printEanDTO.getWidth()) - 10, image);
         // 计算条形码居中的 X 坐标
         float xPosition = getXPosition(printEanDTO, document, image);
-        float barcodeYPosition = document.getPageSize().getHeight() - image.getScaledHeight() - 5;
+        float barcodeYPosition = getYPosition(printEanDTO, document, image);
+//        float barcodeYPosition = document.getPageSize().getHeight() - image.getScaledHeight() - 5;
+
         Font font = new Font(baseFont, fontSize);
         List<String> textContent = printEanDTO.getTextContent();
         textContent.remove(ProductContentEnum.EAN.getCode());
@@ -7348,7 +7490,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         scaleFactor(UnitConverterUtil.mmToPoints(printEanDTO.getWidth()) - 10, image);
         // 计算条形码居中的 X 坐标
         float xPosition = getXPosition(printEanDTO, document, image);
-        float barcodeYPosition = document.getPageSize().getHeight() - image.getScaledHeight() - 5;
+        // 计算条形码居中的 Y 坐标
+        float barcodeYPosition = getYPosition(printEanDTO, document, image);
+
+//        float barcodeYPosition = document.getPageSize().getHeight() - image.getScaledHeight() - 5;
+
         for (int i = 0; i < dto.getQty(); i++) {
             // 将图像添加到 PDF
             canvas.addImage(image, image.getScaledWidth(), 0, 0, image.getScaledHeight(), xPosition, barcodeYPosition);
@@ -7423,5 +7569,32 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             return Collections.emptyList();
         }
         return baseMapper.listByApprovePropertyNotAsset(skuNos);
+    }
+
+    @Override
+    public PagingVO<DynamicExcelDTO> exportDynamicProductDetail(PagingDTO<ProductSkuExcelDTO> dto) {
+        PagingVO<ProductDetailExcelExportDTO> paging  = this.exportProductDetail(dto);
+        List<ProductDetailExcelExportDTO> resultList = paging.getList();
+        DynamicExcelDTO dynamicExcelDTO = new DynamicExcelDTO();
+        List<LinkedHashMap<String, Object>> data = new ArrayList<>();
+        if(CollUtil.isNotEmpty(resultList)){
+            List<ProductSkuExcelDTO.ExportField> fieldList = dto.getParams().getFieldList();
+            List<String> fieldCodeList = fieldList.stream().map(ProductSkuExcelDTO.ExportField::getField).distinct().collect(Collectors.toList());
+            LinkedHashMap<String, String> fieldMap =  fieldList.stream().collect(Collectors.toMap(ProductSkuExcelDTO.ExportField::getField, ProductSkuExcelDTO.ExportField::getFieldName, (oldValue, newValue) -> oldValue, LinkedHashMap::new));
+            dynamicExcelDTO.setHeaders(fieldMap);
+            for (ProductDetailExcelExportDTO exportExcelDTO : resultList) {
+                LinkedHashMap<String, Object> excelMap = (LinkedHashMap<String, Object>)BeanUtil.beanToMap(exportExcelDTO);
+                //添加值
+                LinkedHashMap<String, Object> exportMap = new LinkedHashMap<>();
+                for (String fieldCode : fieldCodeList) {
+                    Object value = excelMap.get(fieldCode);
+                    exportMap.put(fieldCode,value);
+                }
+                data.add(exportMap);
+            }
+        }
+        dynamicExcelDTO.setData(data);
+        dynamicExcelDTO.setSheetName("产品sku明细表");
+        return new PagingVO<>(Collections.singletonList(dynamicExcelDTO), (int) paging.getTotalPage(), dto.getPageSize(), dto.getCurrPage());
     }
 }

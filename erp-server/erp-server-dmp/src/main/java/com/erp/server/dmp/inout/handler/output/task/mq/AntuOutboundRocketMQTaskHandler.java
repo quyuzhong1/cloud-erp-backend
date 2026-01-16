@@ -8,4 +8,4 @@ import org.springframework.stereotype.Service;
 @Scope("prototype")
 public class AntuOutboundRocketMQTaskHandler extends EccangOutboundRocketMQTaskHandler {
 
-	}
+}

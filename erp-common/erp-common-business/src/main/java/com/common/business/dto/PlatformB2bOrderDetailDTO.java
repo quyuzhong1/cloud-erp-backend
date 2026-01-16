@@ -1,5 +1,6 @@
 package com.common.business.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -30,6 +31,13 @@ public class PlatformB2bOrderDetailDTO extends UniqueDto {
      * 客户sku
      */
     private String customerSkuNo;
+
+    private String customerPO;
+
+    /**
+     * 目的地
+     */
+    private String toCountry;
     /**
      * 状态
      */

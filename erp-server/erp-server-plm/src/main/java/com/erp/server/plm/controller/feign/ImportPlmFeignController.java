@@ -6,6 +6,7 @@ import com.common.core.exception.ServiceException;
 import com.erp.model.plm.enums.SkuStdCostImportTypeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.plm.service.*;
+import com.erp.model.plm.dto.RefProductImgAttachmentDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -33,6 +34,9 @@ public class ImportPlmFeignController {
     private CfgMoldReturnAlertRuleService cfgMoldReturnAlertRuleService;
     @Resource
     private CfgMoldAlertRuleService cfgMoldAlertRuleService;
+    
+    @Resource
+    private RefProductImgAttachmentService refProductImgAttachmentService;
 
     private void updateTask(String taskId, Exception e) {
         BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
@@ -108,6 +112,18 @@ public class ImportPlmFeignController {
             cfgMoldAlertRuleService.importCfgMoldAlert(dto);
         } catch (Exception e) {
             log.error("导入模具返还策略失败", e);
+            updateTask(dto.getTaskId(), e);
+        }
+    }
+
+    @PostMapping("/importBatchUpload")
+    public void importBatchUpload(@RequestBody RefProductImgAttachmentDTO.BatchUploadDTO dto) {
+        try {
+            // FileTaskContext 现在直接传递 metaInfo JSON 字符串，parseParamVarArgs 会根据参数类型反序列化
+            // 所以 dto 中已经包含了完整的 BatchUploadDTO 数据（包括 categoryId 和 taskId）
+            refProductImgAttachmentService.batchUpload(dto);
+        } catch (Exception e) {
+            log.error("批量上传图片失败", e);
             updateTask(dto.getTaskId(), e);
         }
     }

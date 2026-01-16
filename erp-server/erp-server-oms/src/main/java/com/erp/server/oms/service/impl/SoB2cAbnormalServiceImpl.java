@@ -167,6 +167,10 @@ public class SoB2cAbnormalServiceImpl implements SoB2cAbnormalService {
                 }
                 resultDTOList.add(resultDTO1);
                 break;
+            case GET_EXCHANGE_RATE:
+                BatchResultDTO batchResultDTO1 = soB2cService.refreshExchangeRate(soB2cEntity);
+                resultDTOList.add(batchResultDTO1);
+                break;
             default:
                 break;
         }

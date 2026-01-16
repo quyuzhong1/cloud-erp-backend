@@ -1,15 +1,16 @@
 package com.erp.model.fms.entity;
 
-import com.baomidou.mybatisplus.annotation.TableName;
-import com.common.core.entity.BaseEntity;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
 import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
+import com.baomidou.mybatisplus.annotation.TableName;
+import com.common.business.enums.ApproveStatusEnum;
+import com.common.core.entity.BaseEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
+
+import java.io.Serializable;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 
 /**
@@ -115,6 +116,12 @@ public class AssetAcceptEntity extends BaseEntity<AssetAcceptEntity> {
     */
     @TableField("accept_desc")
     private String acceptDesc;
+
+    /**
+     * 金蝶id
+     */
+    @TableField("sync_kingdee_id")
+    private String syncKingdeeId;
 
 
     public static final String APPROVE_STATUS = "approve_status";

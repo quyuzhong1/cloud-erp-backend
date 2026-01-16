@@ -189,6 +189,10 @@ public enum ApiError implements Serializable {
     COMMON_CONTRACT_TEMPLATE_BINDING_DUPLICATE(1105,"【{0}】已绑定【{1}】，不可重复绑定"),
     COMMON_CONTRACT_TEMPLATE_BOUND_BY_OTHER_SUPPLIER(1106,"【{0}】已被其他供应商绑定，请先解除关联再绑定所有供应商"),
     COMMON_USER_NOT_FOUND(1107, "用户不存在"),
+    COMMON_CATEGORY_LEVEL_EXCEED_MAX(1107,"分类级别最多支持{0}级"),
+    COMMON_SYSTEM_CATEGORY_DELETE_FORBIDDEN(1108,"系统分类不允许删除"),
+    COMMON_SYSTEM_CATEGORY_UPDATE_FORBIDDEN(1109,"系统分类不允许编辑"),
+    COMMON_DELETE_CHILD_NODE_EXISTS(1110,"存在子节点，无法删除"),
     COMMON_CONTRACT_NOT_BINDING(98127,"无关联合同，请在合同管理页面关联后打印"),
 
     COMMON_NO_DELIVERY_SKU(98128,"没有发货的SKU"),
@@ -268,6 +272,17 @@ public enum ApiError implements Serializable {
     FILE_SIZE_EXCEEDS_LIMIT(2427,"文件不可超过{0}m"),
     FILE_NAME_DUPLICATE(2428, "文档名已存在,不可重复提交"),
     FILE_EXPORT_DATA_EMPTY(2429,"导出数据不能为空"),
+    FILE_PARAM_EMPTY(2430, "请求参数不能为空"),
+    FILE_STRUCTURE_AND_FILES_EMPTY(2431, "文件夹结构和文件列表不能同时为空"),
+    FILE_ZIP_CREATE_FAILED(2432, "创建ZIP文件失败: {0}"),
+    FILE_ZIP_EXTRACT_FAILED(2433, "解压缩ZIP文件失败: {0}"),
+    FILE_ZIP_NOT_FOUND(2434, "ZIP文件为空或不存在: {0}"),
+    FILE_IMAGE_COMPRESS_FAILED(2435, "压缩图片失败: {0}"),
+    FILE_OPERATION_FAILED(2436, "FastDFS操作失败: {0}"),
+    FILE_DOWNLOAD_TIMEOUT(2437, "文件下载超时"),
+    FILE_OPERATION_INTERRUPTED(2438, "操作被中断"),
+    FILE_ZIP_EMPTY(2439, "ZIP文件中没有找到文件"),
+    FILE_CHECK_SIZE_FAILED(2440, "检查ZIP文件大小失败: {0}"),
 
     /**
      * 单据相关提示 从3000 - 3500
@@ -639,6 +654,15 @@ public enum ApiError implements Serializable {
     PRODUCT_APP_CATEGORY_CODE_EXISTS(5104, "应用分类代号已存在"),
     PRODUCT_APP_CATEGORY_NAME_EXISTS(5105, "应用分类名称已存在"),
     PRODUCT_PROPERTY_ASSET_NOT_EXIST(98161,"SKU【{0}】产品属性非资产，与供应商付款条件不一致"),
+    PRODUCT_SALES_BATTERY_WEIGHT_NOT_NULL(5106,"产品销售信息电池重量（g）不能为空"),
+    PRODUCT_IMG_ATTACHMENT_SAVE_FAILED(5107, "图片分类附件关联单保存失败"),
+    PRODUCT_IMG_ATTACHMENT_NOT_FOUND(5108, "未找到图片分类附件关联单数据"),
+    PRODUCT_IMG_CATEGORY_MOVE_FORBIDDEN_ALL(5109, "不能移动到\"所有分类\""),
+    PRODUCT_IMG_CATEGORY_MOVE_FORBIDDEN_MAIN(5110, "不能移动到\"产品主图\"分类"),
+    PRODUCT_IMG_CATEGORY_MOVE_FORBIDDEN_THUMBNAIL(5111, "不能移动到\"产品缩略图\"分类"),
+    PRODUCT_IMG_DOWNLOAD_MIN_REQUIRED(5112, "请至少选择一张图片"),
+    PRODUCT_IMG_DOWNLOAD_MAX_LIMIT(5113, "最多支持50张图片下载"),
+    PRODUCT_IMG_DOWNLOAD_NOT_FOUND(5114, "未找到可下载的图片"),
 
     /**
      * BOM 错误信息 6000 - 6499
@@ -1446,6 +1470,16 @@ public enum ApiError implements Serializable {
     SAMPLE_AUDIT_QTY_EXCEEDS_APPLY_QTY(10742,"SKU【{0}】的审核数量【{1}】不能大于领用数量【{2}】"),
     SAMPLE_AUDIT_QTY_UPDATE_FAILED(10743,"修改审核数量失败"),
     SAMPLE_PARTNER_IN_USE(10744,"企业达人已被引用，不允许删除"),
+    SAMPLE_ASSET_ACCEPT_DETAIL_NOT_FOUND(10744,"资产验收单明细不存在"),
+    SAMPLE_ASSET_PURCHASE_ORDER_NOT_FOUND(10745,"资产采购订单不存在"),
+    SAMPLE_ASSET_PURCHASE_ORDER_DETAIL_NOT_FOUND(10746,"资产采购订单明细不存在"),
+
+
+
+    SAMPLE_USER_ID_CHINESE_NOT_FOUND(10745,"领用人【{0}】不存在，请传入正确的用户ID或用户名称"),
+    SAMPLE_USER_ID_CHINESE_QUERY_FAILED(10746,"领用人【{0}】查询失败，请传入正确的用户ID或用户名称"),
+    SAMPLE_USE_USER_ID_CHINESE_NOT_FOUND(10747,"使用方【{0}】不存在，请传入正确的使用方ID或使用方名称"),
+    SAMPLE_USE_USER_ID_CHINESE_QUERY_FAILED(10748,"使用方【{0}】查询失败，请传入正确的使用方ID或使用方名称"),
     /**
      * 虚拟仓 错误 信息 12500-13000
      */
@@ -1476,6 +1510,9 @@ public enum ApiError implements Serializable {
     VM_INVENTORY_INSUFFICIENT_FOR_TRANSFER(12524,"虚拟仓【{0}】库存不足"),
     VM_FROM_WAREHOUSE_NOT_BLANK(92290,"启动自动借调时，借调仓不能为空"),
     VM_NOT_CONTAINS_FROM_WAREHOUSE(92291,"虚拟仓关联实体仓不能包含借调仓"),
+    VM_ALLOCATION_NOT_REPEAT(92292,"存在未同步成功的虚拟仓分货单调出任务，调出仓库ID：{0}，调出虚拟仓ID：{1}，SKU：{2}，请确认后再操作"),
+    VM_ALLOCATION_FORM_VIRTUAL_WAREHOUSE_NOT_THIRD_MAPPING(92293,"调出虚拟仓【{0}】未找到三方仓映射信息"),
+    VM_ALLOCATION_TO_VIRTUAL_WAREHOUSE_NOT_THIRD_MAPPING(92294,"调入虚拟仓【{0}】未找到三方仓映射信息"),
 
     /**
      * 客户管理 错误 信息 13000-13500
@@ -1609,7 +1646,7 @@ public enum ApiError implements Serializable {
     LOGISTICS_SMALL_BAG_NOT_CONFIRMED(13611,"小包费用分摊未确认，不能生成物流大表"),
     LOGISTICS_SELF_SHIP_FEE_NOT_FOUND(13612,"自发货费用不存在"),
     LOGISTICS_ACTUAL_EXISTS_CANNOT_PUSH(13613,"已存在实际账单，不能再下推实际账单"),
-    LOGISTICS_MAPPING_NOT_NULL(13614,"【{}】所属的平台【{}】没有配置【{}】的标发信息，不允许提交发货"),
+    LOGISTICS_MAPPING_NOT_NULL(13614,"【{0}】所属的平台【{1}】没有配置【{2}】的标发信息，不允许提交发货"),
 
     /**
      * 财务管理 错误 信息 14000-14500
