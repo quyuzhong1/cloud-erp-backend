@@ -118,6 +118,13 @@ public class ProductDetailImprotUpdateExcelDTO {
     private String rdtTeamName;
 
     /**
+     * BU线
+     */
+    @FieldValid(fieldName = "BU线" , maxLength = 30)
+    @ExcelProperty("BU线")
+    private String buName;
+
+    /**
      * 产品开发状态
      */
     @FieldValid(fieldName = "产品开发状态",enumClass = ProductDetailStateEnum.class)

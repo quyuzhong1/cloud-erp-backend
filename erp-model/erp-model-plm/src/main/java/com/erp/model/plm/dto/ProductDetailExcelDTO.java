@@ -102,6 +102,12 @@ public class ProductDetailExcelDTO {
     private String rdtTeamName;
 
     /**
+     * BU线
+     */
+    @FieldValid(fieldName = "BU线", isNotBlank = true, maxLength = 50)
+    private String buName;
+
+    /**
      * 产品开发状态
      */
     @FieldValid(fieldName = "产品开发状态",enumClass = ProductDetailStateEnum.class)
