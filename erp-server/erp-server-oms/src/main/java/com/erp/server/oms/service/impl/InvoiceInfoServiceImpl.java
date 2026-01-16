@@ -13,6 +13,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.annotation.DistributeLocker;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
@@ -33,6 +34,7 @@ import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.MathUtil;
+import com.common.message.constant.RedisKeyConstant;
 import com.erp.model.dmp.entity.DmpSoBillDetailEntity;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.*;
@@ -237,7 +239,9 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @DistributeLocker(businessType = RedisKeyConstant.INVOICE_INFO_KEY,keyName = "id",waiteTime = 60)
     public BatchResultDTO batchGenerateNfeInvoice(String id,Boolean isAsync) {
+        log.warn("开始生成nfe发票，订单id：【{}】,是否异步：【{}】",id,isAsync);
         SoB2cEntity soB2cEntity = soB2cService.getById(id);
         if(ObjUtil.isEmpty(soB2cEntity)){
             throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "b2c订单");
