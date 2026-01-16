@@ -1668,10 +1668,13 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
                     .filter(item -> Objects.equals(item.getId(), listPriceParamDTO.getSupplierId()))
                     .findFirst()
                     .orElse(null);
+
+            listSubcontractOrderSkuPriceDTO.setSupplierId(listPriceParamDTO.getSupplierId());
             //币种
             if (Objects.nonNull(supplierEntity)) {
                 listSubcontractOrderSkuPriceDTO.setCurrency(supplierEntity.getPayCurrency());
-
+                //税率
+                listSubcontractOrderSkuPriceDTO.setTaxRate(MathUtil.multiplyWithTwo(supplierEntity.getTaxRate(),new BigDecimal("100")));
                 DictCurrencyEntity dictCurrencyEntity = dictCurrencyList.stream()
                         .filter(item -> Objects.equals(item.getId(), supplierEntity.getPayCurrency()))
                         .findFirst()
@@ -1680,9 +1683,9 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
                 if (Objects.nonNull(dictCurrencyEntity)) {
                     listSubcontractOrderSkuPriceDTO.setCurrencySymbol(dictCurrencyEntity.getSymbol());
                 }
+
             }
-            //税率
-            listSubcontractOrderSkuPriceDTO.setTaxRate(MathUtil.multiplyWithTwo(supplierEntity.getTaxRate(),new BigDecimal("100")));
+
 
             PoReturnDetailEntity poReturnDetailEntity = poReturnDetailList.stream()
                     .filter(item -> Objects.equals(listPriceParamDTO.getSkuId(), item.getSkuId()))
@@ -1697,6 +1700,8 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
                         .orElse(null);
                 if (Objects.nonNull(priceDTO)){
                     BeanUtils.copyProperties(priceDTO,listSubcontractOrderSkuPriceDTO);
+                    listSubcontractOrderSkuPriceDTO.setSkuNo(listPriceParamDTO.getSkuNo());
+                    listSubcontractOrderSkuPriceDTO.setPrice(priceDTO.getTaxPrice());
                     listSubcontractOrderSkuPriceDTOS.add(listSubcontractOrderSkuPriceDTO);
                 } else {
                     throw new ServiceException(ApiError.PURCHASE_PRICE_SKU_PRICE_NOT_FOUND,listPriceParamDTO.getSkuNo());

@@ -1005,6 +1005,12 @@ public class SubcontractOrderDTO implements Serializable {
          */
         private BigDecimal taxRate;
 
+        /**
+         * 供应商id
+         */
+        @NotBlank(message = "供应商id不能为空")
+        private String supplierId;
+
     }
 
     @Data
