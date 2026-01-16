@@ -1,5 +1,26 @@
 package com.erp.server.wms.service.impl;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+
+import javax.annotation.Resource;
+
+import cn.hutool.core.date.LocalDateTimeUtil;
+import com.erp.model.wms.dto.StocktakingTaskDetailDTO;
+import com.erp.server.wms.service.*;
+import org.apache.commons.collections4.IteratorUtils;
+import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
@@ -59,7 +80,7 @@ public class InventoryTradingRedisServiceImpl implements InventoryTradingService
     @Resource
     private InventoryClosedRecordService inventoryClosedRecordService;
     @Resource
-    private StocktakingProfitLossServiceImpl stocktakingProfitLossService;
+    private StocktakingTaskDetailService stocktakingTaskDetailService;
 
     @Resource
     private VirtualInventoryService virtualInventoryService;
@@ -272,15 +293,15 @@ public class InventoryTradingRedisServiceImpl implements InventoryTradingService
         List<String> orgIds = transactionList.stream().map(InventoryTransactionDTO::getOrgId).distinct().collect(Collectors.toList());
         List<String> skuIds = transactionList.stream().map(InventoryTransactionDTO::getSkuId).distinct().collect(Collectors.toList());
 
-        List<StocktakingProfitLossDetailDTO.LastDTO> lastStocktakingProfitLossList = stocktakingProfitLossService.maxDateByParams(warehouseIds, orgIds, skuIds);
-        if(CollectionUtils.isEmpty(lastStocktakingProfitLossList)) {
+        List<StocktakingTaskDetailDTO.LastDTO> lastStocktakingTaskDetailList = stocktakingTaskDetailService.maxDateByParams(warehouseIds, orgIds, skuIds);
+        if(CollectionUtils.isEmpty(lastStocktakingTaskDetailList)) {
             return;
         }
 
         for(InventoryTransactionDTO transactionDTO:transactionList) {
             if (!InventoryStatusEnum.IN_TRANSIT.getCode().equals(transactionDTO.getInventoryStatus())){
                 // 盘盈盘亏单 匹配 仓库ID, 组织ID，仓位，skuId
-                StocktakingProfitLossDetailDTO.LastDTO lastDTO = lastStocktakingProfitLossList.stream()
+                StocktakingTaskDetailDTO.LastDTO lastDTO = lastStocktakingTaskDetailList.stream()
                         .filter(e -> e.getSkuId().equalsIgnoreCase(transactionDTO.getSkuId())
                                 && e.getWarehouseOrgId().equalsIgnoreCase(transactionDTO.getOrgId())
                                 && e.getWarehouseId().equalsIgnoreCase(transactionDTO.getWarehouseId())
@@ -288,9 +309,11 @@ public class InventoryTradingRedisServiceImpl implements InventoryTradingService
                                 )
                         .findFirst()
                         .orElse(null);
-                if (null != lastDTO && (billDate.isBefore(lastDTO.getBillDate()) || billDate.equals(lastDTO.getBillDate()))){
+
+
+                if (null != lastDTO && billDate.isBefore(lastDTO.getBillDate())){
                     // 已有盘盈盘亏单【{}】不允许操作【{}】之前单据
-                    errList.append(CharSequenceUtil.format("sku:[{}]仓库:[{}]仓位:[{}]库存状态：[{}]单据日期:[{}],已有盘盈盘亏单【{}】不允许操作【{}】之前单据\n"
+                    errList.append(CharSequenceUtil.format("sku:[{}]仓库:[{}]仓位:[{}]库存状态：[{}]单据日期:[{}],已有盘点任务单据【{}】不允许操作【{}】之前单据\n"
                             , transactionDTO.getSkuNo()
                             , transactionDTO.getWarehouseName()
                             , transactionDTO.getWarehouseLocationName()

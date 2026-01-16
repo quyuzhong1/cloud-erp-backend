@@ -7,6 +7,7 @@ import javax.validation.constraints.DecimalMin;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
+import java.time.LocalDate;
 
 /**
  * @author Lambda
@@ -193,5 +194,34 @@ public class StocktakingTaskDetailDTO implements Serializable {
          */
         private String stocktakingUserName;
 
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class LastDTO {
+        /**
+         * 单据号
+         */
+        private String code;
+        /**
+         * 单据日期
+         */
+        private LocalDate billDate;
+        /**
+         * 库存组织
+         */
+        private String warehouseOrgId;
+        /**
+         * 仓库
+         */
+        private String warehouseId;
+        /**
+         * 仓位
+         */
+        private String warehouseLocation;
+        /**
+         * skuId
+         */
+        private String skuId;
     }
 }
