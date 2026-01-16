@@ -893,11 +893,11 @@ public class ProductDetailController extends BaseController {
         String path = "";
         String excelName = "template.xlsx";
         if(importType == 1){//导入新增
-            path = "classpath:excel/productNoSpecDetailTemplate.xlsx";
+            path = "excel/productNoSpecDetailTemplate.xlsx";
         }else if(importType == 2){//导入更新（待审核）
-            path = "classpath:excel/productUpdateNotApproveTemplate.xlsx";
+            path = "excel/productUpdateNotApproveTemplate.xlsx";
         }else if(importType == 3){//导入更新（已审核）
-            path = "classpath:excel/productUpdateApproveTemplate.xlsx";
+            path = "excel/productUpdateApproveTemplate.xlsx";
         }
         if(StringUtils.isEmpty(path)){
             throw new ServiceException(ApiError.HTTP_BAD_REQUEST);

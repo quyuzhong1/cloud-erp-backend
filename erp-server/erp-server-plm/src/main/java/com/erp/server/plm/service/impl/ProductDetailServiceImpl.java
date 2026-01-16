@@ -5308,14 +5308,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 BigDecimal boxLength = MathUtil.valueOf(dto.getBoxLength());
                 if(StringUtils.isBlank(dto.getBoxLength())){
                     boxLength = oldPackEntity.getBoxLength();
-                }else {
-                    boxLength = LengthConverterUtil.cmToMm(boxLength);
                 }
                 BigDecimal productLength = MathUtil.valueOf(dto.getProductLength());
                 if(StringUtils.isBlank(dto.getProductLength())){
                     productLength = oldPackEntity.getProductLength();
-                }else {
-                    productLength = LengthConverterUtil.cmToMm(productLength);
                 }
                 if(boxLength.compareTo(productLength)<0){
                     errorMsgList.add(ApiError.COMMON_BOX_LENGTH_LT_PRODUCT_FORBIDDEN.getMsg());
@@ -5325,14 +5321,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 BigDecimal boxWidth = MathUtil.valueOf(dto.getBoxWidth());
                 if(StringUtils.isBlank(dto.getBoxWidth())){
                     boxWidth = oldPackEntity.getBoxWidth();
-                }else {
-                    boxWidth = LengthConverterUtil.cmToMm(boxWidth);
                 }
                 BigDecimal productWidth = MathUtil.valueOf(dto.getProductWidth());
                 if(StringUtils.isBlank(dto.getProductWidth())){
                     productWidth = oldPackEntity.getProductWidth();
-                }else {
-                    productWidth = LengthConverterUtil.cmToMm(productWidth);
                 }
                 if(boxWidth.compareTo(productWidth)<0){
                     errorMsgList.add(ApiError.COMMON_BOX_WIDTH_LT_PRODUCT_FORBIDDEN.getMsg());
@@ -5342,14 +5334,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 BigDecimal boxHeight = MathUtil.valueOf(dto.getBoxHeight());
                 if(StringUtils.isBlank(dto.getBoxHeight())){
                     boxHeight = oldPackEntity.getBoxHeight();
-                }else {
-                    boxHeight = LengthConverterUtil.cmToMm(boxHeight);
                 }
                 BigDecimal productHeight = MathUtil.valueOf(dto.getProductHeight());
                 if(StringUtils.isBlank(dto.getProductHeight())){
                     productHeight = oldPackEntity.getProductHeight();
-                }else {
-                    productHeight = LengthConverterUtil.cmToMm(productHeight);
                 }
                 if(boxHeight.compareTo(productHeight)<0){
                     errorMsgList.add(ApiError.COMMON_BOX_HEIGHT_LT_PRODUCT_FORBIDDEN.getMsg());
@@ -5768,22 +5756,22 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             ProductPackDTO productPackDTO = new ProductPackDTO();
             BeanMapper.copy(dto, productPackDTO);
             if(MathUtil.valueOf(dto.getProductLength()).compareTo(BigDecimal.ZERO) > 0){
-                productPackDTO.setProductLength(LengthConverterUtil.cmToMm(MathUtil.valueOf(dto.getProductLength())));
+                productPackDTO.setProductLength(MathUtil.valueOf(dto.getProductLength()));
             }
             if(MathUtil.valueOf(dto.getProductWidth()).compareTo(BigDecimal.ZERO) > 0){
-                productPackDTO.setProductWidth(LengthConverterUtil.cmToMm(MathUtil.valueOf(dto.getProductWidth())));
+                productPackDTO.setProductWidth(MathUtil.valueOf(dto.getProductWidth()));
             }
             if(MathUtil.valueOf(dto.getProductHeight()).compareTo(BigDecimal.ZERO) > 0){
-                productPackDTO.setProductHeight(LengthConverterUtil.cmToMm(MathUtil.valueOf(dto.getProductHeight())));
+                productPackDTO.setProductHeight(MathUtil.valueOf(dto.getProductHeight()));
             }
             if(MathUtil.valueOf(dto.getBoxLength()).compareTo(BigDecimal.ZERO) > 0){
-                productPackDTO.setBoxLength(LengthConverterUtil.cmToMm(MathUtil.valueOf(dto.getBoxLength())));
+                productPackDTO.setBoxLength(MathUtil.valueOf(dto.getBoxLength()));
             }
             if(MathUtil.valueOf(dto.getBoxWidth()).compareTo(BigDecimal.ZERO) > 0){
-                productPackDTO.setBoxWidth(LengthConverterUtil.cmToMm(MathUtil.valueOf(dto.getBoxWidth())));
+                productPackDTO.setBoxWidth(MathUtil.valueOf(dto.getBoxWidth()));
             }
             if(MathUtil.valueOf(dto.getBoxHeight()).compareTo(BigDecimal.ZERO) > 0){
-                productPackDTO.setBoxHeight(LengthConverterUtil.cmToMm(MathUtil.valueOf(dto.getBoxHeight())));
+                productPackDTO.setBoxHeight(MathUtil.valueOf(dto.getBoxHeight()));
             }
             /**
              * 毛重
@@ -6506,12 +6494,12 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             //产品包装信息
             ProductPackDTO productPackDTO = new ProductPackDTO();
             BeanMapper.copy(dto, productPackDTO);
-            productPackDTO.setProductLength(LengthConverterUtil.cmToMm(MathUtil.valueOf(dto.getProductLength())));
-            productPackDTO.setProductWidth(LengthConverterUtil.cmToMm(MathUtil.valueOf(dto.getProductWidth())));
-            productPackDTO.setProductHeight(LengthConverterUtil.cmToMm(MathUtil.valueOf(dto.getProductHeight())));
-            productPackDTO.setBoxLength(LengthConverterUtil.cmToMm(MathUtil.valueOf(dto.getBoxLength())));
-            productPackDTO.setBoxWidth(LengthConverterUtil.cmToMm(MathUtil.valueOf(dto.getBoxWidth())));
-            productPackDTO.setBoxHeight(LengthConverterUtil.cmToMm(MathUtil.valueOf(dto.getBoxHeight())));
+            productPackDTO.setProductLength(MathUtil.valueOf(dto.getProductLength()));
+            productPackDTO.setProductWidth(MathUtil.valueOf(dto.getProductWidth()));
+            productPackDTO.setProductHeight(MathUtil.valueOf(dto.getProductHeight()));
+            productPackDTO.setBoxLength(MathUtil.valueOf(dto.getBoxLength()));
+            productPackDTO.setBoxWidth(MathUtil.valueOf(dto.getBoxWidth()));
+            productPackDTO.setBoxHeight(MathUtil.valueOf(dto.getBoxHeight()));
             /**
              * 毛重
              */
