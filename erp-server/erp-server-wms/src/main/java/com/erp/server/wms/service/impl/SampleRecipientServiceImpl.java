@@ -319,14 +319,6 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
             throw new ServiceException("样品领用单明细不能为空");
         }
 
-        // 库存校验：只有需要出库且用途类型不是PVT阶段-供应商时才校验可领用库存
-        boolean isPvtUsage = SampleUsageEnum.PVT.getUsage().equals(sampleRecipientEntity.getUsage());
-        if (CollUtil.isNotEmpty(addOrUpdateDTO.getDetailList()) 
-            && Boolean.TRUE.equals(sampleRecipientEntity.getIsOutstockRequired())
-            && !isPvtUsage) {
-            validateRecipientQuantity(sampleRecipientEntity.getWarehouseId(), addOrUpdateDTO.getDetailList());
-        }
-
         log.info("编辑 开始修改样品领用单数据，单号：【{}】", old.getCode());
         boolean save = super.updateById(sampleRecipientEntity);
         if(!save) {
@@ -627,6 +619,28 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
         }
 
         validateSubmit(entity);
+        
+        // 库存校验：只有需要出库且用途类型不是PVT阶段-供应商时才校验可领用库存
+        boolean isPvtUsage = SampleUsageEnum.PVT.getUsage().equals(entity.getUsage());
+        if (Boolean.TRUE.equals(entity.getIsOutstockRequired()) && !isPvtUsage) {
+            // 查询明细数据
+            List<SampleRecipientDetailEntity> detailList = sampleRecipientDetailService.lambdaQuery()
+                    .eq(SampleRecipientDetailEntity::getMainId, entity.getId())
+                    .list();
+            if (CollUtil.isNotEmpty(detailList)) {
+                // 转换为DTO格式进行校验
+                List<SampleRecipientDTO.ProductDTO> productDTOList = detailList.stream()
+                        .map(detail -> {
+                            SampleRecipientDTO.ProductDTO dto = new SampleRecipientDTO.ProductDTO();
+                            dto.setSkuId(detail.getSkuId());
+                            dto.setQuantity(detail.getRecipientQty());
+                            return dto;
+                        })
+                        .collect(Collectors.toList());
+                validateRecipientQuantity(entity.getWarehouseId(), productDTOList);
+            }
+        }
+        
         // 提交前同步审核数量 = 领用数量
         syncAuditQtyWithRecipientQty(entity.getId());
         // 更新单据审核状态

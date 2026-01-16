@@ -557,8 +557,8 @@ public class SysLoggingAspect {
             dto.setDescription(lastResult);
             // 新增或单响应记录单据编号
             if (StringUtils.isBlank(dto.getRecordCode())){
-                 String newRecordCode = parseRecordCodeFormResponse(data);
-                 dto.setRecordCode(newRecordCode);
+                String newRecordCode = parseRecordCodeFormResponse(data);
+                dto.setRecordCode(newRecordCode);
             }
             return;
         }
@@ -1217,7 +1217,7 @@ public class SysLoggingAspect {
             JSONObject jsonObject = JSONUtil.parseObj(item);
             String id = jsonObject.getStr(idKey);
             if(StringUtils.isBlank(id)){
-               ServiceException.runError("解析请求参数IDS异常:没有id或的keyIdName对应字段："+ requestParams);
+                ServiceException.runError("解析请求参数IDS异常:没有id或的keyIdName对应字段："+ requestParams);
             }
             ids.add(id);
         }
