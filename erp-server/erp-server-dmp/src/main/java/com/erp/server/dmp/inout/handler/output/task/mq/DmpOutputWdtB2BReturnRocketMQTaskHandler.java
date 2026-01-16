@@ -110,9 +110,6 @@ public class DmpOutputWdtB2BReturnRocketMQTaskHandler extends DmpOutputRocketMQT
 		if (CollUtil.isEmpty(itemList)) {
 			return null;
 		}
-		if(Objects.isNull(dmpSoReturnInfoEntity.getReturnTime())){
-			return null;
-		}
 		//查询店铺
 		String platformShopId = dmpSoReturnInfoEntity.getShopId();
 		ThirdMappingDTO.ViewParamDTO viewParamDTO = new ThirdMappingDTO.ViewParamDTO();
