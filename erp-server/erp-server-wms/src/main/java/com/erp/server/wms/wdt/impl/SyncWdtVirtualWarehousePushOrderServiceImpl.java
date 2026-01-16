@@ -124,12 +124,6 @@ public class SyncWdtVirtualWarehousePushOrderServiceImpl implements SyncWdtVirtu
                     log.warn("虚拟仓分货单调出明细【{}】调出虚拟仓【{}】无旺店通映射关系，跳过校验", entity.getId(), entity.getFromVirtualWarehouseId());
                     continue;
                 }
-                //无调入虚拟仓映射关系
-                ThirdMappingEntity toMapping = fromToThirdMappingList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSysId(), entity.getToVirtualWarehouseId())).findFirst().orElse(null);
-                if (CharSequenceUtil.isNotBlank(entity.getToVirtualWarehouseId()) && toMapping == null) {
-                    log.warn("虚拟仓分货单调出明细【{}】调入虚拟仓【{}】无旺店通映射关系，跳过校验", entity.getId(), entity.getToVirtualWarehouseId());
-                    continue;
-                }
                 List<DmpPushTaskDTO.SyncInfoDTO> thisSyncInfoList = syncInfoList.stream().filter(obj -> CharSequenceUtil.equals(entity.getHandleDetailId(), obj.getSourceId()))
                         .collect(Collectors.toList());
                 long failCount = syncInfoList.stream().filter(obj -> CharSequenceUtil.equals(entity.getHandleDetailId(), obj.getSourceId())
