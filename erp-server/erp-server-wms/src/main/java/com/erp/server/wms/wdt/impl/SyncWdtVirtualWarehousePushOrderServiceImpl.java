@@ -19,6 +19,7 @@ import com.common.message.enums.RocketMqTagEnum;
 import com.erp.model.dmp.dto.DmpPushTaskDTO;
 import com.erp.model.dmp.entity.CfgSettingEntity;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
+import com.erp.model.dmp.entity.ThirdMappingEntity;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.dmp.enums.SettingEnum;
@@ -29,6 +30,7 @@ import com.erp.model.wms.entity.VirtualWarehousePushHandleRelationEntity;
 import com.erp.model.wms.entity.WmsPushMsgEntity;
 import com.erp.rpc.dmp.feign.DmpInoutTaskFeign;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
+import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
 import com.erp.server.wms.service.*;
 import com.erp.server.wms.wdt.SyncWdtVirtualWarehousePushOrderService;
 import com.sdk.wangdian.sdk.api.virtualWarehouse.dto.VwPushHandelDetailPushDTO;
@@ -45,6 +47,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * 将erp虚拟仓分货单同步至旺店通
@@ -74,6 +77,8 @@ public class SyncWdtVirtualWarehousePushOrderServiceImpl implements SyncWdtVirtu
     private WdtVirtualInventoryService wdtVirtualInventoryService;
     @Resource
     private DmpInoutTaskFeign dmpInoutTaskFeign;
+    @Resource
+    private DmpThirdMappingFeign dmpThirdMappingFeign;
 
     /**
      * 校验分货单调出明细是否存在未同步成功的数据
@@ -98,6 +103,10 @@ public class SyncWdtVirtualWarehousePushOrderServiceImpl implements SyncWdtVirtu
         if (CollUtil.isEmpty(oldDetailList)) {
             return;
         }
+        //查询虚拟仓的wdt映射关系，无映射不校验
+        List<String> fromToIds = oldDetailList.stream().flatMap(obj -> Stream.of(obj.getFromVirtualWarehouseId(), obj.getToVirtualWarehouseId())).distinct().collect(Collectors.toList());
+        List<ThirdMappingEntity> fromToThirdMappingList = dmpThirdMappingFeign.getVwListBySysIds(fromToIds);
+
         List<String> oldHandleDetailIdList = oldDetailList.stream().map(VirtualWarehouseAllocationDetailEntity::getHandleDetailId).distinct().collect(Collectors.toList());
         List<DmpPushTaskDTO.SyncInfoDTO>  syncInfoList = dmpInoutTaskFeign.listErrorData(new DmpSyncTaskDTO.ListDTO(SourceTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION.getCode(),
                 oldHandleDetailIdList, PlatformEnum.WANGDIAN.getDesc(), PlatformEnum.ERP.getDesc()));
@@ -109,6 +118,18 @@ public class SyncWdtVirtualWarehousePushOrderServiceImpl implements SyncWdtVirtu
                continue;
             }
             for (VirtualWarehouseAllocationDetailEntity entity : warehouseAllocationDetailList) {
+                //无调出虚拟仓映射关系
+                ThirdMappingEntity fromMapping = fromToThirdMappingList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSysId(), entity.getFromVirtualWarehouseId())).findFirst().orElse(null);
+                if (CharSequenceUtil.isNotBlank(entity.getFromVirtualWarehouseId()) && fromMapping == null) {
+                    log.warn("虚拟仓分货单调出明细【{}】调出虚拟仓【{}】无旺店通映射关系，跳过校验", entity.getId(), entity.getFromVirtualWarehouseId());
+                    continue;
+                }
+                //无调入虚拟仓映射关系
+                ThirdMappingEntity toMapping = fromToThirdMappingList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSysId(), entity.getToVirtualWarehouseId())).findFirst().orElse(null);
+                if (CharSequenceUtil.isNotBlank(entity.getToVirtualWarehouseId()) && toMapping == null) {
+                    log.warn("虚拟仓分货单调出明细【{}】调入虚拟仓【{}】无旺店通映射关系，跳过校验", entity.getId(), entity.getToVirtualWarehouseId());
+                    continue;
+                }
                 List<DmpPushTaskDTO.SyncInfoDTO> thisSyncInfoList = syncInfoList.stream().filter(obj -> CharSequenceUtil.equals(entity.getHandleDetailId(), obj.getSourceId()))
                         .collect(Collectors.toList());
                 long failCount = syncInfoList.stream().filter(obj -> CharSequenceUtil.equals(entity.getHandleDetailId(), obj.getSourceId())
