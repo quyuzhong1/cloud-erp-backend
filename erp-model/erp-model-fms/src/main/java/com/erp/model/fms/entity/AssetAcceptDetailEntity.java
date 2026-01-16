@@ -1,14 +1,14 @@
 package com.erp.model.fms.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
+import com.erp.model.fms.enums.AssetCardStatusEnum;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
-import com.erp.model.fms.enums.AssetCardStatusEnum;
+
+import java.io.Serializable;
 
 
 /**
@@ -108,6 +108,12 @@ public class AssetAcceptDetailEntity extends BaseEntity<AssetAcceptDetailEntity>
     */
     @TableField("remark")
     private String remark;
+
+    /**
+     * 金蝶明细id
+     */
+    @TableField("kingdee_detail_id")
+    private String kingdeeDetailId;
 
 
     public static final String SOURCE_DETAIL_ID = "source_detail_id";

@@ -3,10 +3,10 @@ package com.erp.model.wms.dto;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.io.Serializable;
-import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
+import java.io.Serializable;
 
 /**
  * <p>
@@ -217,5 +217,69 @@ public class VirtualWarehousePushHandleDetailDTO implements Serializable {
 
     }
 
+    /**
+     * 校验数据DTO
+     */
+    @Data
+    @NoArgsConstructor
+    public static class CheckDataDTO {
+        /**
+         * 仓库ID
+         */
+        private String warehouseId;
+        /**
+         * 虚拟仓ID
+         */
+        private String virtualWarehouseId;
+        /**
+         * SKUId
+         */
+        private String skuId;
+        /**
+         * 明细id
+         */
+        private String detailId;
+    }
 
+
+    /**
+     * 三方数据DTO
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ThirdDataDTO {
+        /**
+         * 主表id
+         */
+        private String id;
+        /**
+         * 明细id
+         */
+        private String detailId;
+        /**
+         * 分货单拆单主表id
+         */
+        private String handleId;
+        /**
+         * 分货单拆单明细表id
+         */
+        private String handleDetailId;
+
+        /**
+         * 同步状态：0 无需同步 1 待同步 2 同步中，3同步成功，4同步失败，5手动同步
+         */
+        private String syncStatus;
+        /**
+         * 同步平台名称（字符串）
+         */
+        private String sysType;
+        /**
+         * 同步平台单号（字符串）
+         */
+        private String thirdCode;
+        /**
+         * 完结说明
+         */
+        private String finishDescription;
+    }
 }

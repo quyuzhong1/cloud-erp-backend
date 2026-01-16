@@ -25,6 +25,10 @@
        <result column="next_level_id" property="nextLevelId" />
        <result column="unique_encrypt" property="uniqueEncrypt" />
        <result column="data_encrypt" property="dataEncrypt" />
+       <result column="sw_order_number" property="swOrderNumber" />
+       <result column="warehouse_code" property="warehouseCode" />
+       <result column="shipping_method" property="shippingMethod" />
+       <result column="carrier_name" property="carrierName" />
     </resultMap>
 
     <!-- 通用查询结果列 -->

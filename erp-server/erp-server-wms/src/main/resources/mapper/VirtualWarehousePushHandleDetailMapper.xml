@@ -41,5 +41,41 @@
         status, source_id, warehouse_id, from_virtual_warehouse_id, to_virtual_warehouse_id, third_from_virtual_warehouse_id, third_to_virtual_warehouse_id, qty, type, direction, code, sys_type, handle_id
     </sql>
 
+    <!-- 根据第三方虚拟仓库ID更新数据 -->
+    <update id="updateThirdData">
+            update virtual_warehouse_push_handle_detail
+            set sync_status = #{params.syncStatus}
+            <if test="params.thirdCode!=null and params.thirdCode!=''">
+                , third_code = #{params.thirdCode}
+            </if>
+            <if test="params.sysType!=null and params.sysType!=''">
+                , sys_type = #{params.sysType}
+            </if>
+            <if test="params.finishDescription!=null">
+                , finish_description = #{params.finishDescription}
+            </if>
+            where is_deleted = false and  id = #{handelDetailId}
+    </update>
+
+    <!-- 根据明细ID列表查询第三方数据 -->
+    <select id="listThirdDataByDetailIdList"
+            resultType="com.erp.model.wms.dto.VirtualWarehousePushHandleDetailDTO$ThirdDataDTO">
+        select
+            vwphr.source_id as id,
+            vwphr.source_detail_id as detailId,
+            vwphr.handle_id,
+            vwphr.handle_detail_id,
+            vwphd.third_code as thirdCode,
+            vwphd.sys_type as sysType,
+            vwphd.finish_description as finishDescription,
+            vwphd.sync_status as syncStatus
+        from virtual_warehouse_push_handle_detail vwphd
+        left join virtual_warehouse_push_handle_relation vwphr on vwphd.id = vwphr.handle_detail_id and vwphr.is_deleted = false
+        where vwphd.is_deleted = false and vwphr.source_detail_id in
+        <foreach collection="detailIdList" item="detailId" open="(" close=")" separator=",">
+            #{detailId}
+        </foreach>
+    </select>
+
 
 </mapper>

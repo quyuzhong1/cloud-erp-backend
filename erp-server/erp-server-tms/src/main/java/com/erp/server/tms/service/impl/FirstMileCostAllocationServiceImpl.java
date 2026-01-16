@@ -280,7 +280,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
         if (!CollectionUtils.isEmpty(firstMileCostAllocationEntityList)){
             List<FirstMileCostAllocationEntity> list = firstMileCostAllocationEntityList.stream().filter(e ->
                             CharSequenceUtil.isNotBlank(e.getId()) && !Objects.equals(e.getId(), entity.getId())
-                    && CharSequenceUtil.isNotBlank(e.getReportPeriodId()) && !e.getReportPeriodId().equals(entity.getReportPeriodId())
+                    && ((CharSequenceUtil.isNotBlank(e.getReportPeriodId()) && CharSequenceUtil.isNotBlank(entity.getReportPeriodId()) && !e.getReportPeriodId().equals(entity.getReportPeriodId())) || (Objects.nonNull(entity.getReportPeriodMonth()) && Objects.nonNull(e.getReportPeriodMonth()) && !e.getReportPeriodMonth().equals(entity.getReportPeriodMonth())))
                     && ConfirmStatusEnum.WAIT_CONFIRM.getCode().equals(e.getStatus())).collect(Collectors.toList());
             if (!CollectionUtils.isEmpty(list)){
                 List<String> monthList = list.stream().filter(e -> Objects.nonNull(e) && Objects.nonNull(e.getReportPeriodMonth())).map(e-> dateTimeFormatter.format(e.getReportPeriodMonth())).distinct().collect(Collectors.toList());
@@ -1474,9 +1474,9 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
             try {
                 BatchResultDTO resultDTO = service.calcAllocatedCost(entity, deliveryEntity, deliveryDetailEntityList1);
                 if (Boolean.TRUE.equals(resultDTO.getSuccess())) {
-                    XxlJobHelper.log("自动计算费用分摊成功：{}", resultDTO.getMsg());
+                    XxlJobHelper.log("自动计算费用分摊成功：单号：{},内容：{}", entity.getSourceCode(), resultDTO.getMsg());
                 } else {
-                    XxlJobHelper.log("自动计算费用分摊失败：{}", resultDTO.getMsg());
+                    XxlJobHelper.log("自动计算费用分摊失败：单号：{},内容：{}", entity.getSourceCode(), resultDTO.getMsg());
                 }
             }catch (Exception e){
                 XxlJobHelper.log("自动计算费用分摊异常：{}", e.getMessage());

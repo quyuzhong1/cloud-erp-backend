@@ -58,6 +58,9 @@
         WHERE
         ${params.sqlMap.default}
         and fsp.is_deleted = FALSE
+        <if test="params.sourceType != null and params.sourceType != ''">
+            and fs.source_type = #{params.sourceType}
+        </if>
         <!--数据权限-->
         <if test="params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}

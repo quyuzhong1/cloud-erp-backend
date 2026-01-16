@@ -127,6 +127,52 @@
         </if>
         sai.create_time desc
     </select>
+    <!-- 移动端分页查询 -->
+    <select id="pagingApp" resultType="com.erp.model.wms.dto.SampleAdjustmentInfoDTO$ListDTO">
+        SELECT
+            DISTINCT ON (sai.id)
+            COUNT(sad.id) OVER (PARTITION BY sai.id) AS skuCount,
+            sai.id,
+            sai.code,
+            sai.approve_status AS approveStatus,
+            sai.approve_user_id AS approveUserId,
+            sai.approve_user_name AS approveUserName,
+            sai.approve_time AS approveTime,
+            sai.invalid_status AS invalidStatus,
+            sai.invalid_remark AS invalidRemark,
+            sai.adjustment_user_id AS adjustmentUserId,
+            sai.adjustment_user_name AS adjustmentUserName,
+            sai.adjustment_dept_id AS adjustmentDeptId,
+            sai.adjustment_dept_name AS adjustmentDeptName,
+            sai.adjustment_date AS adjustmentDate,
+            sai.adjustment_type AS adjustmentType,
+            sai.remark,
+            sai.create_time AS createTime,
+            sai.create_user_name AS createUserName,
+            sad.id AS detailId,
+            sad.sku_no AS skuNo,
+            sad.sku_id AS skuId,
+            sad.product_name AS productName,
+            sad.ledger_qty AS ledgerQty,
+            sad.actual_qty AS actualQty,
+            sad.difference_qty AS differenceQty,
+            sad.remark AS detailRemark
+        FROM sample_adjustment_info sai
+        LEFT JOIN sample_adjustment_detail sad
+        ON sad.main_id = sai.id AND sad.is_deleted = false
+        WHERE
+        ${params.sqlMap.default}
+        AND sai.is_deleted = false
+        <!--权限-->
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        sai.id DESC,
+        sai.create_time DESC,
+        sad.id
+    </select>
+
     <select id="tabList" resultType="com.erp.model.wms.dto.SampleAdjustmentInfoDTO$TabListDTO">
         SELECT
         'approveIng' AS tabFlag,

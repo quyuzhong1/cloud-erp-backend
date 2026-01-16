@@ -818,6 +818,9 @@ public class CustomerB2CDTO implements Serializable {
          */
         private String address;
 
+        private String address2;
+
+        private String address3;
         /**
          * 地址
          */

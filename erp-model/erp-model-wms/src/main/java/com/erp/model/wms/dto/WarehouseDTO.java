@@ -305,6 +305,16 @@ public class WarehouseDTO implements Serializable {
          * 是否b2b发货
          */
         private Boolean isB2BApiDelivery;
+
+        /**
+         * 在途归属仓id
+         */
+        private String onwayWarehouseId;
+
+        /**
+         * 在途归属仓名称
+         */
+        private String onwayWarehouseName;
     }
 
     @Data

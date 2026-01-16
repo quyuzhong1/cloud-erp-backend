@@ -826,7 +826,7 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
 
     @Override
     public List<KolPartnerInfoDTO.DropDownDTO> dropDown(KolPartnerInfoDTO.SelectDTO dto) {
-        return this.baseMapper.dropDown(dto);
+        return this.baseMapper.dropDown(dto.getSearchKeyword());
     }
 
     @Override

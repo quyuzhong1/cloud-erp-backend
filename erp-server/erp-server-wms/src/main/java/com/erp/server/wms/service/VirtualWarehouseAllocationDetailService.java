@@ -6,7 +6,6 @@ import com.common.business.service.SuperService;
 import com.erp.model.dmp.dto.DmpPushTaskDTO;
 import com.erp.model.wms.dto.VirtualWarehouseAllocationDTO;
 import com.erp.model.wms.dto.VirtualWarehouseAllocationDetailDTO;
-import com.erp.model.wms.dto.inventory.VirtualFlowRefactorDTO;
 import com.erp.model.wms.entity.VirtualWarehouseAllocationDetailEntity;
 import com.erp.model.wms.entity.VirtualWarehouseAllocationEntity;
 
@@ -67,14 +66,14 @@ public interface VirtualWarehouseAllocationDetailService extends SuperService<Vi
      * @param id
      * @return
      */
-    DmpPushTaskDTO.SyncInfoDTO viewSyncInfo(String id);
+    List<DmpPushTaskDTO.SyncInfoDTO> viewSyncInfo(String id);
 
-    VirtualWarehouseAllocationDTO.ThirdCodeDto view(String id);
+    List<VirtualWarehouseAllocationDTO.ThirdCodeDto> view(String id);
 
     /**
      * 修改同步状态
      */
-    void updateSyncStatus(VirtualWarehouseAllocationDTO.SyncUpdateDto dto);
+    void updateThirdData(VirtualWarehouseAllocationDTO.SyncUpdateDto dto);
 
     /**
      * 获取同步信息
@@ -111,4 +110,15 @@ public interface VirtualWarehouseAllocationDetailService extends SuperService<Vi
      * @return List<VirtualWarehouseAllocationDetailEntity>
      */
     List<VirtualWarehouseAllocationDetailEntity> listByMainIdList(List<String> mainIdList);
+    /**
+     * 查询重复处理的分货明细
+     * @author will
+     * @date 2025/12/29 10:42
+     * @param fromWarehouseIdList
+     * @param fromVirtualWarehouseIdList
+     * @param skuIdList
+     * @param detailIdList
+     * @return List<VirtualWarehouseAllocationDetailEntity>
+     */
+    List<VirtualWarehouseAllocationDetailEntity> listRepeatHandleDetail(List<String> fromWarehouseIdList, List<String> fromVirtualWarehouseIdList, List<String> skuIdList, List<String> detailIdList);
 }

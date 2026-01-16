@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -116,6 +117,11 @@ public class SoB2cLabelServiceImpl extends SuperServiceImpl<SoB2cLabelMapper, So
             soB2cLabelEntities.forEach(this::uploadFile);
         }
 
+    }
+
+    @Override
+    public List<String> getNotLabel(LocalDateTime startTime, LocalDateTime endTime) {
+        return this.baseMapper.getNotLabel(startTime, endTime);
     }
 
     private void uploadFile(SoB2cLabelEntity entity) {

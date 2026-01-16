@@ -4,7 +4,9 @@ import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.common.core.utils.FieldValidUtil;
 import com.erp.model.plm.dto.ProductDetailImprotUpdateExcelDTO;
+import io.seata.common.util.StringUtils;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -39,6 +41,14 @@ public class ProductDetailUpdateNotApproveExcelListener extends AnalysisEventLis
             errorList.add(dto);
             return;
         }
+
+        String batteryWeightStr = dto.getBatteryWeightStr();
+        if(StringUtils.isNotBlank(batteryWeightStr)){
+            //batteryWeightStr转BigDecimal
+            BigDecimal batteryWeight = new BigDecimal(batteryWeightStr);
+            dto.setBatteryWeight(batteryWeight);
+        }
+
         successList.add(dto);
     }
 
