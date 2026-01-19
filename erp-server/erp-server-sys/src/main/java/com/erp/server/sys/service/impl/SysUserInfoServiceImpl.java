@@ -36,6 +36,7 @@ import com.common.message.service.MailService;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.oms.dto.ShopSysUserAuthDTO;
 import com.erp.model.sys.dto.*;
+import com.erp.model.sys.entity.SysRoleEntity;
 import com.erp.model.sys.entity.SysUserInfoEntity;
 import com.erp.model.sys.entity.SysUserThirdEntity;
 import com.erp.model.sys.entity.password.PassEntity;
@@ -148,6 +149,8 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
 
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+    @Resource
+    private SysRoleService sysRoleService;
 
     //123456
     private static final String DEFAULT_PASS = "e10adc3949ba59abbe56e057f20f883e";
@@ -2004,6 +2007,10 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         List<String> refIdList = refParamseDTO.getRefIdList();
 
         if(Objects.equals(refType, "role")){
+            if (AuthDataTypeEnum.ENUM_ALL.getCode().equals(authType)){
+                refIdList = sysRoleService.list().stream().map(SysRoleEntity::getId).distinct().collect(Collectors.toList());
+            }
+
             if(type.equals("reapportion")){
                 sysRoleUserService.batchInsertRef(uid, refIdList, false);
             }else if(type.equals("add")){
