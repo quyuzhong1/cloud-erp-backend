@@ -313,7 +313,7 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
         viewParamDTO.setThirdId(addDTO.getThirdId());
         List<ThirdMappingEntity> thirdList = dmpThirdMappingFeign.getByThirdId(viewParamDTO);
         if (CollectionUtils.isNotEmpty(thirdList)) {
-            long count = thirdList.stream().filter(item -> !Objects.equals(item.getSysId(), virtualWarehouseId)).count();
+            long count = thirdList.stream().filter(item -> CharSequenceUtil.equals(addDTO.getThirdId(),item.getThirdId()) && !Objects.equals(item.getSysId(), virtualWarehouseId)).count();
             if (count > 0) {
                 throw new ServiceException(ApiError.VM_THIRD_VIRTUAL_WAREHOUSE_BINDED, thirdList.get(0).getThirdName(), thirdList.stream().map(ThirdMappingEntity::getSysName).collect(Collectors.joining()));
             }
