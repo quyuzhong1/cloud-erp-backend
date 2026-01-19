@@ -67,7 +67,7 @@ sui.third_auth_type AS thirdAuthType
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        sui.update_time desc
+        sui.create_time desc
     </select>
 
 <!--    <select id="paging" resultType="com.erp.model.sys.dto.UserManageDTO">-->
