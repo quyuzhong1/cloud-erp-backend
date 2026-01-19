@@ -587,7 +587,16 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
                     .collect(Collectors.toList());
         }
         //当前组织
-        String orgId = CharSequenceUtil.isBlank(allocationSettingDTO.getFirstOrgId()) || Objects.equals(CostAllocationOrgTypeEnum.BILL_ORG.getCode(),allocationSettingDTO.getFirstOrgId()) ? reportPeriodMonth.getOrgId() :  allocationSettingDTO.getFirstOrgId();
+        String orgId = "";
+        if(CharSequenceUtil.isBlank(allocationSettingDTO.getFirstOrgId()) || Objects.equals(CostAllocationOrgTypeEnum.BILL_ORG.getCode(),allocationSettingDTO.getFirstOrgId())){
+            //单据成本组织
+            orgId = reportPeriodMonth.getOrgId();
+        }else if(Objects.equals(CostAllocationOrgTypeEnum.LOGISTICS_SUPPLIER_ORG.getCode(),allocationSettingDTO.getFirstOrgId())){
+            //物流组织
+
+        }else {
+            orgId = allocationSettingDTO.getFirstOrgId();
+        }
         String toWarehouseId = CharSequenceUtil.isNotBlank(allocationSettingDTO.getFirstWarehouseId()) ? allocationSettingDTO.getFirstWarehouseId() : entity.getFromWarehouseId();
         //sku成本
         List<InventorySkuCostDTO.PagingVO> skuCostList = inventorySkuCostService.listDetailByOrgIdAndSkuIds(orgId, skuIds, ApproveStatusEnum.APPROVE.getStatus(), reportPeriodMonth.getMonth(),toWarehouseId);
