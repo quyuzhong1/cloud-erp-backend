@@ -5,6 +5,7 @@ import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.TypeReference;
 import com.common.core.exception.ServiceException;
+import com.sdk.third.tf.constant.TfApiConstants;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -27,8 +28,6 @@ import java.util.Map;
 @Slf4j
 public class TfApiClient {
 
-    private static final String BASE_URL = "https://tffiscal.com.br/api";
-    private static final String CONTENT_TYPE_JSON = "application/json";
     private static final int CONNECT_TIMEOUT = 30000;
     private static final int READ_TIMEOUT = 30000;
 
@@ -53,11 +52,24 @@ public class TfApiClient {
      * @return 响应对象
      */
     public <T> T doPost(String path, String requestBody, TypeReference<T> typeReference) {
-        String url = BASE_URL + path;
+        return doPost(path, requestBody, typeReference, null);
+    }
+
+    /**
+     * 执行POST请求（支持自定义Header）
+     * 
+     * @param path 请求路径
+     * @param requestBody 请求体（JSON字符串）
+     * @param typeReference 响应类型引用
+     * @param headers 自定义Header Map（key为Header名称，value为Header值）
+     * @return 响应对象
+     */
+    public <T> T doPost(String path, String requestBody, TypeReference<T> typeReference, Map<String, String> headers) {
+        String url = TfApiConstants.BASE_URL + path;
         log.debug("POST请求: {}, 请求体: {}", url, requestBody);
         
         try {
-            String responseBody = executePost(url, requestBody);
+            String responseBody = executePost(url, requestBody, headers);
             log.debug("POST响应: {}", responseBody);
             
             return JSON.parseObject(responseBody, typeReference);
@@ -86,11 +98,23 @@ public class TfApiClient {
      * @return 响应对象
      */
     public <T> T doGet(String path, TypeReference<T> typeReference) {
-        String url = BASE_URL + path;
+        return doGet(path, typeReference, null);
+    }
+
+    /**
+     * 执行GET请求（支持自定义Header）
+     * 
+     * @param path 请求路径（可包含查询参数）
+     * @param typeReference 响应类型引用
+     * @param headers 自定义Header Map（key为Header名称，value为Header值）
+     * @return 响应对象
+     */
+    public <T> T doGet(String path, TypeReference<T> typeReference, Map<String, String> headers) {
+        String url = TfApiConstants.BASE_URL + path;
         log.debug("GET请求: {}", url);
         
         try {
-            String responseBody = executeGet(url);
+            String responseBody = executeGet(url, headers);
             log.debug("GET响应: {}", responseBody);
             
             return JSON.parseObject(responseBody, typeReference);
@@ -104,7 +128,14 @@ public class TfApiClient {
      * 执行POST请求（底层实现）
      */
     private String executePost(String url, String jsonStr) throws Exception {
-        HttpURLConnection conn = createConnection(url, "POST");
+        return executePost(url, jsonStr, null);
+    }
+
+    /**
+     * 执行POST请求（底层实现，支持自定义Header）
+     */
+    private String executePost(String url, String jsonStr, Map<String, String> headers) throws Exception {
+        HttpURLConnection conn = createConnection(url, "POST", headers);
         
         try (OutputStream os = conn.getOutputStream()) {
             os.write(jsonStr.getBytes(StandardCharsets.UTF_8));
@@ -117,7 +148,14 @@ public class TfApiClient {
      * 执行GET请求（底层实现）
      */
     private String executeGet(String url) throws Exception {
-        HttpURLConnection conn = createConnection(url, "GET");
+        return executeGet(url, null);
+    }
+
+    /**
+     * 执行GET请求（底层实现，支持自定义Header）
+     */
+    private String executeGet(String url, Map<String, String> headers) throws Exception {
+        HttpURLConnection conn = createConnection(url, "GET", headers);
         return handleResponse(conn);
     }
 
@@ -125,12 +163,24 @@ public class TfApiClient {
      * 创建HTTP连接
      */
     private HttpURLConnection createConnection(String url, String method) throws Exception {
+        return createConnection(url, method, null);
+    }
+
+    /**
+     * 创建HTTP连接（支持自定义Header）
+     */
+    private HttpURLConnection createConnection(String url, String method, Map<String, String> headers) throws Exception {
         URL urlObj = new URL(url);
         HttpURLConnection conn = (HttpURLConnection) urlObj.openConnection();
         conn.setRequestMethod(method);
-        conn.setRequestProperty("Content-Type", CONTENT_TYPE_JSON);
+        conn.setRequestProperty("Content-Type", TfApiConstants.CONTENT_TYPE_JSON);
         conn.setConnectTimeout(CONNECT_TIMEOUT);
         conn.setReadTimeout(READ_TIMEOUT);
+        
+        // 设置自定义Header
+        if (headers != null && !headers.isEmpty()) {
+            headers.forEach(conn::setRequestProperty);
+        }
         
         if ("POST".equals(method)) {
             conn.setDoOutput(true);

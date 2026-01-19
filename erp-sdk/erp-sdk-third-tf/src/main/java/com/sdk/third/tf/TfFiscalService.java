@@ -12,6 +12,13 @@ import com.common.core.utils.HttpCommonUtil;
 import com.erp.model.oms.entity.CfgSettingEntity;
 import com.erp.model.oms.entity.DictBasicEntity;
 import com.sdk.third.tf.client.TaxCategoryApiClient;
+import com.sdk.third.tf.client.CompanyApiClient;
+import com.sdk.third.tf.constant.TfApiConstants;
+import com.sdk.third.tf.dto.CompanyDetailResponseDTO;
+import com.sdk.third.tf.dto.CompanyListResponseDTO;
+import com.sdk.third.tf.dto.CreateCompanyDTO;
+import com.sdk.third.tf.dto.CreateCompanyResponseDTO;
+import com.sdk.third.tf.dto.EditCompanyDTO;
 import com.sdk.third.tf.dto.NfeInvoiceDTO;
 import com.sdk.third.tf.dto.TaxCategoryDTO;
 import com.sdk.third.tf.entity.AddCompanyDTO;
@@ -25,10 +32,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.RequestMethod;
 
-import java.io.BufferedReader;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
+import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.HashMap;
@@ -43,9 +47,13 @@ public class TfFiscalService {
     @Autowired
     private TaxCategoryApiClient taxCategoryApiClient;
 
+    @Autowired
+    private CompanyApiClient companyApiClient;
+
     public final static String ACCESS_TOKEN = "19-04-2023_10-47-No37tBi0Yw39Fida4MdUYwmXdksxdY1sIjkmt4-Ymwx04dy1iu94m0b";
 
-    public final static String URL = "https://tffiscal.com.br/api";
+    @Deprecated
+    public final static String URL = TfApiConstants.BASE_URL;
 
     public static void main(String[] args) {
         String path = "/cadastrar_empresa";
@@ -96,10 +104,12 @@ public class TfFiscalService {
         System.out.println(companyInfoEntity);
     }
     /**
-     * 创建公司
+     * 创建公司（旧接口）
+     * @deprecated 请使用 {@link #createCompanyV2(CreateCompanyDTO)} 替代
      * @param addCompanyDTO
      * @return 成功返回公司token 失败抛出异常
      */
+    @Deprecated
     public String createCompany(AddCompanyDTO addCompanyDTO){
         String path = "/cadastrar_empresa";
         String accessToken = getAccessToken();
@@ -119,6 +129,109 @@ public class TfFiscalService {
         }
         CompanyInfoEntity companyInfoEntity = this.queryCompany(addCompanyDTO.getCnpj());
         return companyInfoEntity.getTokenEmpresa();
+    }
+
+    /**
+     * 创建公司（新接口）
+     * 使用新接口路径：/company/create
+     * 注意：新接口需要在Header中传递sign、timestamp、token（经销商token/b2b_token）
+     * 创建公司和获取公司列表接口使用经销商token（TF-ACCESS_TOKEN），其他接口使用公司token（cfg_invoice_setting.token）
+     * 
+     * @param createCompanyDTO 创建公司DTO
+     * @return 创建公司响应数据DTO（包含companyId和token）
+     */
+    public CreateCompanyResponseDTO.CreateCompanyDataDTO createCompanyV2(CreateCompanyDTO createCompanyDTO) {
+        // 获取经销商token（b2b_token）= TF-ACCESS_TOKEN（平台token）
+        // 注意：创建公司和获取公司列表接口使用经销商token
+        String b2bToken = getAccessToken();
+        // 获取AppKey（用于签名）
+        String appKey = getAppKey();
+        
+        log.info("创建公司（新接口）, cnpj: {}, 使用经销商token", createCompanyDTO.getCnpj());
+        
+        CreateCompanyResponseDTO.CreateCompanyDataDTO response = companyApiClient.createCompany(createCompanyDTO, b2bToken, appKey);
+        
+        log.info("创建公司成功, companyId: {}, token: {}", response.getCompanyId(), response.getToken());
+        return response;
+    }
+
+    /**
+     * 编辑公司（新接口）
+     * 使用新接口路径：/api/company/edit
+     * 注意：编辑公司接口使用公司token（cfg_invoice_setting.token），不是经销商token
+     * 
+     * @param editCompanyDTO 编辑公司DTO
+     * @param companyToken 公司token（cfg_invoice_setting.token）
+     */
+    public void editCompanyV2(EditCompanyDTO editCompanyDTO, String companyToken) {
+        // 获取AppKey（用于签名）
+        String appKey = getAppKey();
+        
+        log.info("编辑公司（新接口）, cnpj: {}, 使用公司token", editCompanyDTO.getCnpj());
+        
+        companyApiClient.editCompany(editCompanyDTO, companyToken, appKey);
+        
+        log.info("编辑公司成功, cnpj: {}", editCompanyDTO.getCnpj());
+    }
+
+    /**
+     * 查询公司详情（新接口）
+     * 使用新接口路径：/company/get_detail
+     * 注意：查询公司详情接口使用公司token（cfg_invoice_setting.token），不是经销商token
+     * 
+     * @param cnpj CNPJ
+     * @param companyToken 公司token（cfg_invoice_setting.token）
+     * @return 公司详情数据DTO（data部分）
+     */
+    public CompanyDetailResponseDTO.CompanyDetailDataDTO getCompanyDetailV2(String cnpj, String companyToken) throws UnsupportedEncodingException {
+        // 获取AppKey（用于签名）
+        String appKey = getAppKey();
+        
+        log.info("查询公司详情（新接口）, cnpj: {}, 使用公司token", cnpj);
+        
+        CompanyDetailResponseDTO.CompanyDetailDataDTO response = 
+            companyApiClient.getCompanyDetail(cnpj, companyToken, appKey);
+        
+        log.info("查询公司详情成功, cnpj: {}, companyId: {}", cnpj, response.getCompanyId());
+        return response;
+    }
+
+    /**
+     * 获取公司列表（新接口）
+     * 使用新接口路径：/api/company/get_list
+     * 注意：获取公司列表接口使用经销商token（TF-ACCESS_TOKEN），不是公司token
+     * 
+     * @param page 页码（必填）
+     * @param pageSize 页大小（必填，最大20）
+     * @return 公司列表数据DTO（data部分）
+     */
+    public CompanyListResponseDTO.CompanyListDataDTO getCompanyListV2(Integer page, Integer pageSize) {
+        // 获取经销商token（b2b_token）= TF-ACCESS_TOKEN（平台token）
+        String b2bToken = getAccessToken();
+        // 获取AppKey（用于签名）
+        String appKey = getAppKey();
+        
+        log.info("获取公司列表（新接口）, page: {}, pageSize: {}, 使用经销商token", page, pageSize);
+        
+        CompanyListResponseDTO.CompanyListDataDTO response = 
+            companyApiClient.getCompanyList(page, pageSize, b2bToken, appKey);
+        
+        log.info("获取公司列表成功, total: {}, totalPages: {}", response.getTotal(), response.getTotalPages());
+        return response;
+    }
+    
+    /**
+     * 获取AppKey（用于签名）
+     * 
+     * @return AppKey
+     */
+    private String getAppKey() {
+        List<DictBasicEntity> dictBasicEntityList = FeignQuery.create(DictBasicEntity.class)
+            .eq(DictBasicEntity::getType, TfApiConstants.DictType.TF_APP_KEY).list();
+        if (CollectionUtils.isEmpty(dictBasicEntityList)) {
+            throw new ServiceException("没有找到TF-APP-KEY的字典数据");
+        }
+        return dictBasicEntityList.get(0).getValue();
     }
 
     /**
@@ -272,12 +385,19 @@ public class TfFiscalService {
 
     /**
      * 创建税种
+     * 注意：税种接口使用公司token（cfg_invoice_setting.token），不是经销商token
+     * 
      * @param createDTO 创建税种DTO
+     * @param companyToken 公司token（cfg_invoice_setting.token）
      * @return 税种ID
      */
-    public String createTaxCategory(TaxCategoryDTO.CreateCategoryDTO createDTO) {
-        log.info("创建税种, descricao: {}", createDTO.getDescricao());
-        TaxCategoryDTO.CreateCategoryResponseDTO response = taxCategoryApiClient.createCategory(createDTO);
+    public String createTaxCategory(TaxCategoryDTO.CreateCategoryDTO createDTO, String companyToken) {
+        // 获取AppKey（用于签名）
+        String appKey = getAppKey();
+        
+        log.info("创建税种, descricao: {}, 使用公司token", createDTO.getDescricao());
+        TaxCategoryDTO.CreateCategoryResponseDTO response = 
+            taxCategoryApiClient.createCategory(createDTO, companyToken, appKey);
         if (response == null || StringUtils.isBlank(response.getCategoryId())) {
             throw new ServiceException("创建税种失败，未返回税种ID");
         }
@@ -287,39 +407,59 @@ public class TfFiscalService {
 
     /**
      * 查询税种列表
+     * 注意：税种接口使用公司token（cfg_invoice_setting.token），不是经销商token
+     * 
      * @param page 页码
      * @param pageSize 每页大小
+     * @param companyToken 公司token（cfg_invoice_setting.token）
      * @return 税种列表响应
      */
-    public TaxCategoryDTO.CategoryListResponseDTO getTaxCategoryList(Integer page, Integer pageSize) {
-        log.info("查询税种列表, page: {}, pageSize: {}", page, pageSize);
-        return taxCategoryApiClient.getCategoryList(page, pageSize);
+    public TaxCategoryDTO.CategoryListResponseDTO getTaxCategoryList(
+            Integer page, Integer pageSize, String companyToken) {
+        // 获取AppKey（用于签名）
+        String appKey = getAppKey();
+        
+        log.info("查询税种列表, page: {}, pageSize: {}, 使用公司token", page, pageSize);
+        return taxCategoryApiClient.getCategoryList(page, pageSize, companyToken, appKey);
     }
 
     /**
      * 查询税种详情
+     * 注意：税种接口使用公司token（cfg_invoice_setting.token），不是经销商token
+     * 
      * @param categoryId 税种ID
+     * @param companyToken 公司token（cfg_invoice_setting.token）
      * @return 税种详情
      */
-    public TaxCategoryDTO.CategoryDetailDTO getTaxCategoryDetail(String categoryId) {
+    public TaxCategoryDTO.CategoryDetailDTO getTaxCategoryDetail(String categoryId, String companyToken) {
         if (StringUtils.isBlank(categoryId)) {
             throw new ServiceException("税种ID不能为空");
         }
-        log.info("查询税种详情, categoryId: {}", categoryId);
-        return taxCategoryApiClient.getCategoryDetail(categoryId);
+        // 获取AppKey（用于签名）
+        String appKey = getAppKey();
+        
+        log.info("查询税种详情, categoryId: {}, 使用公司token", categoryId);
+        return taxCategoryApiClient.getCategoryDetail(categoryId, companyToken, appKey);
     }
 
     /**
      * 编辑税种
+     * 注意：税种接口使用公司token（cfg_invoice_setting.token），不是经销商token
+     * 
      * @param editDTO 编辑税种DTO
+     * @param companyToken 公司token（cfg_invoice_setting.token）
      * @return 税种ID
      */
-    public String editTaxCategory(TaxCategoryDTO.EditCategoryDTO editDTO) {
+    public String editTaxCategory(TaxCategoryDTO.EditCategoryDTO editDTO, String companyToken) {
         if (StringUtils.isBlank(editDTO.getCategoryId())) {
             throw new ServiceException("税种ID不能为空");
         }
-        log.info("编辑税种, categoryId: {}", editDTO.getCategoryId());
-        TaxCategoryDTO.EditCategoryResponseDTO response = taxCategoryApiClient.editCategory(editDTO);
+        // 获取AppKey（用于签名）
+        String appKey = getAppKey();
+        
+        log.info("编辑税种, categoryId: {}, 使用公司token", editDTO.getCategoryId());
+        TaxCategoryDTO.EditCategoryResponseDTO response = 
+            taxCategoryApiClient.editCategory(editDTO, companyToken, appKey);
         if (response == null || StringUtils.isBlank(response.getCategoryId())) {
             throw new ServiceException("编辑税种失败，未返回税种ID");
         }
@@ -329,19 +469,26 @@ public class TfFiscalService {
 
     /**
      * 删除税种
+     * 注意：税种接口使用公司token（cfg_invoice_setting.token），不是经销商token
+     * 
      * @param categoryId 税种ID
+     * @param companyToken 公司token（cfg_invoice_setting.token）
      */
-    public void deleteTaxCategory(String categoryId) {
+    public void deleteTaxCategory(String categoryId, String companyToken) {
         if (StringUtils.isBlank(categoryId)) {
             throw new ServiceException("税种ID不能为空");
         }
-        log.info("删除税种, categoryId: {}", categoryId);
-        taxCategoryApiClient.deleteCategory(categoryId);
+        // 获取AppKey（用于签名）
+        String appKey = getAppKey();
+        
+        log.info("删除税种, categoryId: {}, 使用公司token", categoryId);
+        taxCategoryApiClient.deleteCategory(categoryId, companyToken, appKey);
         log.info("删除税种成功, categoryId: {}", categoryId);
     }
 
     private String getAccessToken() {
-        List<DictBasicEntity> dictBasicEntityList = FeignQuery.create(DictBasicEntity.class).eq(DictBasicEntity::getType,"TF-ACCESS_TOKEN").list();
+        List<DictBasicEntity> dictBasicEntityList = FeignQuery.create(DictBasicEntity.class)
+            .eq(DictBasicEntity::getType, TfApiConstants.DictType.TF_ACCESS_TOKEN).list();
         if(CollectionUtils.isEmpty(dictBasicEntityList)){
             throw new ServiceException("没有找到TF-ACCESS_TOKEN的字典数据");
         }

@@ -2,11 +2,16 @@ package com.sdk.third.tf.client;
 
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.TypeReference;
+import com.sdk.third.tf.constant.TfApiConstants;
+import com.sdk.third.tf.dto.ApiResponseDTO;
 import com.sdk.third.tf.dto.TaxCategoryDTO;
+import com.sdk.third.tf.util.SignUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -25,19 +30,34 @@ public class TaxCategoryApiClient {
 
     /**
      * 创建税种
+     * 注意：税种接口使用公司token（cfg_invoice_setting.token），不是经销商token
      * 
      * @param createDTO 创建税种DTO
+     * @param companyToken 公司token（cfg_invoice_setting.token），用于Header中的token
+     * @param appKey AppKey（用于签名）
      * @return 创建响应DTO
      */
-    public TaxCategoryDTO.CreateCategoryResponseDTO createCategory(TaxCategoryDTO.CreateCategoryDTO createDTO) {
+    public TaxCategoryDTO.CreateCategoryResponseDTO createCategory(
+            TaxCategoryDTO.CreateCategoryDTO createDTO, String companyToken, String appKey) {
         String path = "/api/category/create";
         String requestBody = JSONUtil.toJsonStr(createDTO);
         
-        TypeReference<TaxCategoryDTO.ApiResponseDTO<TaxCategoryDTO.CreateCategoryResponseDTO>> typeRef = 
-            new TypeReference<TaxCategoryDTO.ApiResponseDTO<TaxCategoryDTO.CreateCategoryResponseDTO>>() {};
+        // 生成时间戳
+        String timestamp = SignUtil.generateTimestamp();
         
-        TaxCategoryDTO.ApiResponseDTO<TaxCategoryDTO.CreateCategoryResponseDTO> response = 
-            tfApiClient.doPost(path, requestBody, typeRef);
+        // 生成签名：MD5(AppKey + Path + bodyString + timestamp)
+        String sign = SignUtil.generateSign(appKey, path, requestBody, timestamp);
+        
+        // 构建Header：sign、timestamp、token（公司token）
+        Map<String, String> headers = buildHeaders(sign, timestamp, companyToken);
+        
+        log.info("创建税种, path: {}, timestamp: {}, sign: {}", path, timestamp, sign);
+        
+        TypeReference<ApiResponseDTO<TaxCategoryDTO.CreateCategoryResponseDTO>> typeRef = 
+            new TypeReference<ApiResponseDTO<TaxCategoryDTO.CreateCategoryResponseDTO>>() {};
+        
+        ApiResponseDTO<TaxCategoryDTO.CreateCategoryResponseDTO> response = 
+            tfApiClient.doPost(path, requestBody, typeRef, headers);
         
         validateResponse(response);
         return response.getData();
@@ -45,23 +65,39 @@ public class TaxCategoryApiClient {
 
     /**
      * 查询税种列表
+     * 注意：税种接口使用公司token（cfg_invoice_setting.token），不是经销商token
      * 
      * @param page 页码
      * @param pageSize 每页大小
+     * @param companyToken 公司token（cfg_invoice_setting.token），用于Header中的token
+     * @param appKey AppKey（用于签名）
      * @return 税种列表响应DTO
      */
-    public TaxCategoryDTO.CategoryListResponseDTO getCategoryList(Integer page, Integer pageSize) {
+    public TaxCategoryDTO.CategoryListResponseDTO getCategoryList(
+            Integer page, Integer pageSize, String companyToken, String appKey) {
         Map<String, Object> params = new HashMap<>();
         params.put("page", page != null ? page : 1);
         params.put("page_size", pageSize != null ? pageSize : 10);
         
         String path = "/api/category/get_list" + TfApiClient.buildQueryString(params);
         
-        TypeReference<TaxCategoryDTO.ApiResponseDTO<TaxCategoryDTO.CategoryListResponseDTO>> typeRef = 
-            new TypeReference<TaxCategoryDTO.ApiResponseDTO<TaxCategoryDTO.CategoryListResponseDTO>>() {};
+        // 生成时间戳
+        String timestamp = SignUtil.generateTimestamp();
         
-        TaxCategoryDTO.ApiResponseDTO<TaxCategoryDTO.CategoryListResponseDTO> response = 
-            tfApiClient.doGet(path, typeRef);
+        // 生成签名：MD5(AppKey + Path + bodyString + timestamp)
+        // GET请求bodyString为空字符串
+        String sign = SignUtil.generateSign(appKey, path, "", timestamp);
+        
+        // 构建Header：sign、timestamp、token（公司token）
+        Map<String, String> headers = buildHeaders(sign, timestamp, companyToken);
+        
+        log.info("查询税种列表, path: {}, timestamp: {}, sign: {}", path, timestamp, sign);
+        
+        TypeReference<ApiResponseDTO<TaxCategoryDTO.CategoryListResponseDTO>> typeRef = 
+            new TypeReference<ApiResponseDTO<TaxCategoryDTO.CategoryListResponseDTO>>() {};
+        
+        ApiResponseDTO<TaxCategoryDTO.CategoryListResponseDTO> response = 
+            tfApiClient.doGet(path, typeRef, headers);
         
         validateResponse(response);
         return response.getData();
@@ -69,22 +105,40 @@ public class TaxCategoryApiClient {
 
     /**
      * 查询税种详情
+     * 注意：税种接口使用公司token（cfg_invoice_setting.token），不是经销商token
      * 
      * @param categoryId 税种ID
+     * @param companyToken 公司token（cfg_invoice_setting.token），用于Header中的token
+     * @param appKey AppKey（用于签名）
      * @return 税种详情DTO
      */
-    public TaxCategoryDTO.CategoryDetailDTO getCategoryDetail(String categoryId) {
+    public TaxCategoryDTO.CategoryDetailDTO getCategoryDetail(
+            String categoryId, String companyToken, String appKey) {
         if (categoryId == null || categoryId.trim().isEmpty()) {
             throw new IllegalArgumentException("税种ID不能为空");
         }
         
-        String path = "/api/category/get_detail?category_id=" + categoryId;
+        // URL编码categoryId
+        String encodedCategoryId = URLEncoder.encode(categoryId, StandardCharsets.UTF_8.name());
+        String path = "/api/category/get_detail?category_id=" + encodedCategoryId;
         
-        TypeReference<TaxCategoryDTO.ApiResponseDTO<TaxCategoryDTO.CategoryDetailDTO>> typeRef = 
-            new TypeReference<TaxCategoryDTO.ApiResponseDTO<TaxCategoryDTO.CategoryDetailDTO>>() {};
+        // 生成时间戳
+        String timestamp = SignUtil.generateTimestamp();
         
-        TaxCategoryDTO.ApiResponseDTO<TaxCategoryDTO.CategoryDetailDTO> response = 
-            tfApiClient.doGet(path, typeRef);
+        // 生成签名：MD5(AppKey + Path + bodyString + timestamp)
+        // GET请求bodyString为空字符串
+        String sign = SignUtil.generateSign(appKey, path, "", timestamp);
+        
+        // 构建Header：sign、timestamp、token（公司token）
+        Map<String, String> headers = buildHeaders(sign, timestamp, companyToken);
+        
+        log.info("查询税种详情, path: {}, timestamp: {}, sign: {}", path, timestamp, sign);
+        
+        TypeReference<ApiResponseDTO<TaxCategoryDTO.CategoryDetailDTO>> typeRef = 
+            new TypeReference<ApiResponseDTO<TaxCategoryDTO.CategoryDetailDTO>>() {};
+        
+        ApiResponseDTO<TaxCategoryDTO.CategoryDetailDTO> response = 
+            tfApiClient.doGet(path, typeRef, headers);
         
         validateResponse(response);
         return response.getData();
@@ -92,19 +146,34 @@ public class TaxCategoryApiClient {
 
     /**
      * 编辑税种
+     * 注意：税种接口使用公司token（cfg_invoice_setting.token），不是经销商token
      * 
      * @param editDTO 编辑税种DTO
+     * @param companyToken 公司token（cfg_invoice_setting.token），用于Header中的token
+     * @param appKey AppKey（用于签名）
      * @return 编辑响应DTO
      */
-    public TaxCategoryDTO.EditCategoryResponseDTO editCategory(TaxCategoryDTO.EditCategoryDTO editDTO) {
+    public TaxCategoryDTO.EditCategoryResponseDTO editCategory(
+            TaxCategoryDTO.EditCategoryDTO editDTO, String companyToken, String appKey) {
         String path = "/api/category/edit";
         String requestBody = JSONUtil.toJsonStr(editDTO);
         
-        TypeReference<TaxCategoryDTO.ApiResponseDTO<TaxCategoryDTO.EditCategoryResponseDTO>> typeRef = 
-            new TypeReference<TaxCategoryDTO.ApiResponseDTO<TaxCategoryDTO.EditCategoryResponseDTO>>() {};
+        // 生成时间戳
+        String timestamp = SignUtil.generateTimestamp();
         
-        TaxCategoryDTO.ApiResponseDTO<TaxCategoryDTO.EditCategoryResponseDTO> response = 
-            tfApiClient.doPost(path, requestBody, typeRef);
+        // 生成签名：MD5(AppKey + Path + bodyString + timestamp)
+        String sign = SignUtil.generateSign(appKey, path, requestBody, timestamp);
+        
+        // 构建Header：sign、timestamp、token（公司token）
+        Map<String, String> headers = buildHeaders(sign, timestamp, companyToken);
+        
+        log.info("编辑税种, path: {}, timestamp: {}, sign: {}", path, timestamp, sign);
+        
+        TypeReference<ApiResponseDTO<TaxCategoryDTO.EditCategoryResponseDTO>> typeRef = 
+            new TypeReference<ApiResponseDTO<TaxCategoryDTO.EditCategoryResponseDTO>>() {};
+        
+        ApiResponseDTO<TaxCategoryDTO.EditCategoryResponseDTO> response = 
+            tfApiClient.doPost(path, requestBody, typeRef, headers);
         
         validateResponse(response);
         return response.getData();
@@ -112,10 +181,13 @@ public class TaxCategoryApiClient {
 
     /**
      * 删除税种
+     * 注意：税种接口使用公司token（cfg_invoice_setting.token），不是经销商token
      * 
      * @param categoryId 税种ID
+     * @param companyToken 公司token（cfg_invoice_setting.token），用于Header中的token
+     * @param appKey AppKey（用于签名）
      */
-    public void deleteCategory(String categoryId) {
+    public void deleteCategory(String categoryId, String companyToken, String appKey) {
         if (categoryId == null || categoryId.trim().isEmpty()) {
             throw new IllegalArgumentException("税种ID不能为空");
         }
@@ -124,19 +196,46 @@ public class TaxCategoryApiClient {
         TaxCategoryDTO.DeleteCategoryDTO deleteDTO = new TaxCategoryDTO.DeleteCategoryDTO(categoryId);
         String requestBody = JSONUtil.toJsonStr(deleteDTO);
         
-        TypeReference<TaxCategoryDTO.ApiResponseDTO<Object>> typeRef = 
-            new TypeReference<TaxCategoryDTO.ApiResponseDTO<Object>>() {};
+        // 生成时间戳
+        String timestamp = SignUtil.generateTimestamp();
         
-        TaxCategoryDTO.ApiResponseDTO<Object> response = 
-            tfApiClient.doPost(path, requestBody, typeRef);
+        // 生成签名：MD5(AppKey + Path + bodyString + timestamp)
+        String sign = SignUtil.generateSign(appKey, path, requestBody, timestamp);
+        
+        // 构建Header：sign、timestamp、token（公司token）
+        Map<String, String> headers = buildHeaders(sign, timestamp, companyToken);
+        
+        log.info("删除税种, path: {}, timestamp: {}, sign: {}", path, timestamp, sign);
+        
+        TypeReference<ApiResponseDTO<Object>> typeRef = 
+            new TypeReference<ApiResponseDTO<Object>>() {};
+        
+        ApiResponseDTO<Object> response = 
+            tfApiClient.doPost(path, requestBody, typeRef, headers);
         
         validateResponse(response);
     }
 
     /**
+     * 构建请求Header
+     * 
+     * @param sign 签名
+     * @param timestamp 时间戳
+     * @param token 公司token
+     * @return Header Map
+     */
+    private Map<String, String> buildHeaders(String sign, String timestamp, String token) {
+        Map<String, String> headers = new HashMap<>();
+        headers.put(TfApiConstants.Header.SIGN, sign);
+        headers.put(TfApiConstants.Header.TIMESTAMP, timestamp);
+        headers.put(TfApiConstants.Header.TOKEN, token);
+        return headers;
+    }
+
+    /**
      * 验证API响应
      */
-    private void validateResponse(TaxCategoryDTO.ApiResponseDTO<?> response) {
+    private void validateResponse(ApiResponseDTO<?> response) {
         if (response == null) {
             throw new RuntimeException("API响应为空");
         }

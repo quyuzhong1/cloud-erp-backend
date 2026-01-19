@@ -24,6 +24,9 @@ import com.erp.server.oms.mapper.CfgInvoiceSettingMapper;
 import com.erp.server.oms.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.sdk.third.tf.TfFiscalService;
+import com.sdk.third.tf.dto.CreateCompanyDTO;
+import com.sdk.third.tf.dto.CreateCompanyResponseDTO;
+import com.sdk.third.tf.dto.EditCompanyDTO;
 import com.sdk.third.tf.entity.AddCompanyDTO;
 import com.sdk.third.tf.entity.UpdateCompanyDTO;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -100,17 +103,18 @@ public class CfgInvoiceSettingServiceImpl extends SuperServiceImpl<CfgInvoiceSet
         TableName tableName = settingEntityClass.getDeclaredAnnotation(TableName.class);
         String type = tableName.value();
         omsAttachmentService.batchSaveOrUpdate(dto.getAttachmentUrlList(), dto.getAttachmentNameList(), type, entity.getId());
-        //CfgInvoiceSettingEntity -> AddCompanyDTO
-        AddCompanyDTO addCompanyDTO = InvoiceSettingConverter.INSTANCE.invoiceSettinToAddCompanyDTOTo(entity);
-        //username
-        addCompanyDTO.setUsername(addCompanyDTO.getRazaoSocial().replaceAll("[^a-zA-Z0-9\\u4e00-\\u9fa5]", ""));
-        //调用TF
-        String token = tfFiscalService.createCompany(addCompanyDTO);
-        //更新token
+        //CfgInvoiceSettingEntity -> CreateCompanyDTO（新接口）
+        CreateCompanyDTO createCompanyDTO = InvoiceSettingConverter.INSTANCE.invoiceSettingToCreateCompanyDTO(entity);
+        //调用TF新接口（创建公司时使用经销商token，不需要已有token）
+        CreateCompanyResponseDTO.CreateCompanyDataDTO response = tfFiscalService.createCompanyV2(createCompanyDTO);
+        String token = response.getToken();
+        String companyId = response.getCompanyId();
+        //更新token和company_id
         this.update(
                 new LambdaUpdateWrapper<CfgInvoiceSettingEntity>()
                         .eq(CfgInvoiceSettingEntity::getId, entity.getId())
                         .set(CfgInvoiceSettingEntity::getToken, token)
+                        .set(CfgInvoiceSettingEntity::getCompanyId, companyId)
         );
         // 操作日志
         String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "VAT发票设置", entity.getId());
@@ -157,10 +161,13 @@ public class CfgInvoiceSettingServiceImpl extends SuperServiceImpl<CfgInvoiceSet
             String type = tableName.value();
             omsAttachmentService.batchSaveOrUpdate(dto.getAttachmentUrlList(), dto.getAttachmentNameList(), type, cfgInvoiceSettingEntity.getId());
         }
-        //调用TF
-        UpdateCompanyDTO updateCompanyDTO = InvoiceSettingConverter.INSTANCE.invoiceSettinToUpdateCompanyDTOTo(cfgInvoiceSettingEntity);
-        updateCompanyDTO.setUsername(updateCompanyDTO.getRazaoSocial().replaceAll("[^a-zA-Z0-9\\u4e00-\\u9fa5]", ""));
-        tfFiscalService.updateCompany(updateCompanyDTO);
+        //调用TF新接口（编辑公司时使用公司token）
+        EditCompanyDTO editCompanyDTO = InvoiceSettingConverter.INSTANCE.invoiceSettingToEditCompanyDTO(cfgInvoiceSettingEntity);
+        String companyToken = cfgInvoiceSettingEntity.getToken();
+        if (CharSequenceUtil.isBlank(companyToken)) {
+            throw new ServiceException("公司token不能为空，请先创建公司");
+        }
+        tfFiscalService.editCompanyV2(editCompanyDTO, companyToken);
         //保存日志
         log.info("编辑 开始记录发票设置日志数据，id：【{}】", cfgInvoiceSettingEntity.getId());
         String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), cfgInvoiceSettingEntity.getId(), "发票设置");

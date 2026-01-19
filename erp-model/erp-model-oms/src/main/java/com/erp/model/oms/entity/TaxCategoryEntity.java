@@ -58,4 +58,10 @@ public class TaxCategoryEntity extends BaseEntity<TaxCategoryEntity> implements 
      */
     @TableField("disabled")
     private Boolean disabled;
+
+    /**
+     * 公司ID（关联cfg_invoice_setting.company_id，用于获取token请求税种接口）
+     */
+    @TableField("company_id")
+    private String companyId;
 }

@@ -84,6 +84,11 @@ public class CfgInvoiceSettingDetailEntity extends BaseEntity<CfgInvoiceSettingD
     @TableField(exist = false)
     private String token;
 
+    /**
+     * 税种ID（关联cfg_tax_category.category_id）
+     */
+    @TableField("tax_category_id")
+    private String taxCategoryId;
 
     public static final String MAIN_ID = "main_id";
 
@@ -102,6 +107,8 @@ public class CfgInvoiceSettingDetailEntity extends BaseEntity<CfgInvoiceSettingD
     public static final String INVOICE_NODE = "invoice_node";
 
     public static final String IS_AUTO_UPLOAD = "is_auto_upload";
+
+    public static final String TAX_CATEGORY_ID = "tax_category_id";
 
     @Override
     public Serializable pkVal() {
