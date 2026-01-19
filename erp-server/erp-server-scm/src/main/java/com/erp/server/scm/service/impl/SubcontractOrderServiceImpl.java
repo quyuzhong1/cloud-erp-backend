@@ -431,7 +431,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         }
         if (dto.getType().equals(ApproveType.PASS)) {
             //自动生成采购订单
-            //autoGeneratePo(entity.getId());
+            autoGeneratePo(entity.getId());
 
             //发送金蝶
             sendPushTask(Arrays.asList(entity),SyncOperateEnum.OPERATE_APPROVE.getCode());
@@ -1287,16 +1287,16 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         approveDTO.setComment(dto.getComment());
         approveDTO.setUserId(userInfo.getUid());
         approveDTO.setVariablesMap(getVariablesMap(entity));
-//        ApiResult<ProcessManagementDTO.ApproveResultDTO> approveResult = workflowFeign.approve(approveDTO);
-//        Integer code = approveResult.getCode();
-//        if (200 != code) {
-//            throw new ServiceException(ApiError.WF_APPROVE_FAILED);
-//        }
-//        ProcessManagementDTO.ApproveResultDTO data = approveResult.getData();
-//        if (ObjectUtil.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()) {
-//            // 无需走流程的数据则直接更新状态
-//            approveEnd(dto, entity);
-//        }
+        ApiResult<ProcessManagementDTO.ApproveResultDTO> approveResult = workflowFeign.approve(approveDTO);
+        Integer code = approveResult.getCode();
+        if (200 != code) {
+            throw new ServiceException(ApiError.WF_APPROVE_FAILED);
+        }
+        ProcessManagementDTO.ApproveResultDTO data = approveResult.getData();
+        if (ObjectUtil.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()) {
+            // 无需走流程的数据则直接更新状态
+            approveEnd(dto, entity);
+        }
         approveEnd(dto, entity);
     }
 
