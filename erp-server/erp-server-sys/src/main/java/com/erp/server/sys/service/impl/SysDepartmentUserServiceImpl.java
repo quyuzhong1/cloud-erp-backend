@@ -249,7 +249,7 @@ public class SysDepartmentUserServiceImpl extends ServiceImpl<SysDepartmentUserM
         }
         if(CollectionUtils.isNotEmpty(departmentIdList)){
             //排除已存在的关联数据
-            List<SysDepartmentUserEntity> oldDepartmentIds = lambdaQuery().in(SysDepartmentUserEntity::getDepartmentId, departmentIdList).list();
+            List<SysDepartmentUserEntity> oldDepartmentIds = lambdaQuery().in(SysDepartmentUserEntity::getDepartmentId, departmentIdList).eq(SysDepartmentUserEntity::getUserId,uid).list();
             if(CollUtil.isNotEmpty(oldDepartmentIds)){
                 Set<String> existingIds = oldDepartmentIds.stream()
                         .map(SysDepartmentUserEntity::getDepartmentId)

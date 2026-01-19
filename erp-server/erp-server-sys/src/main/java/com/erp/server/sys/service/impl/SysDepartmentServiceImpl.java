@@ -649,6 +649,12 @@ public class SysDepartmentServiceImpl extends ServiceImpl<SysDepartmentMapper, S
             }
         }
         if(CollUtil.isNotEmpty(resultList)){
+            //校验是否存在用户
+            List<SysDepartmentUserEntity> sysDepartmentUserEntities = sysDepartmentUserService.listByDepartmentIds(resultList);
+            if(CollUtil.isNotEmpty(sysDepartmentUserEntities)){
+                throw new ServiceException(ApiError.COMMON_DEPARTMENT_HAVE_USER, old.getName());
+            }
+
             List<SysDepartmentEntity> sysDepartmentEntities = this.listByIdList(resultList);
             for (SysDepartmentEntity sysDepartmentEntity : sysDepartmentEntities) {
                 sysDepartmentEntity.setDisabled(dto.getDisabled());

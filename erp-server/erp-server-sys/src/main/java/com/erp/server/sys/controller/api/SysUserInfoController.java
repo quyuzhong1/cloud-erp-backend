@@ -110,8 +110,44 @@ public class SysUserInfoController extends BaseController {
     /**
      * 批量操作-分配店铺/仓库/权限
      */
-    @RequestMapping("/batchRefUserIdByType")
-    public ApiResult batchRefUserIdByType(@RequestBody @Validated SysUserInfoDTO.RefParamseDTO refParamseDTO) {
+    @RequestMapping("/batchRefUserIdByShop")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "sys:user:batchRefUserIdByShop",
+            serviceClass = SysUserInfoService.class,
+            keyIdName = "uid")
+    public ApiResult batchRefUserIdByShop(@RequestBody @Validated SysUserInfoDTO.RefParamseDTO refParamseDTO) {
+        refParamseDTO.setRefType("shop");
+        sysUserInfoService.batchRefUserIdByType(refParamseDTO);
+        return success();
+    }
+
+    /**
+     * 批量操作-分配店铺/仓库/权限
+     */
+    @RequestMapping("/batchRefUserIdByWarehouse")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "sys:user:batchRefUserIdByWarehouse",
+            serviceClass = SysUserInfoService.class,
+            keyIdName = "uid")
+    public ApiResult batchRefUserIdByWarehouse(@RequestBody @Validated SysUserInfoDTO.RefParamseDTO refParamseDTO) {
+        refParamseDTO.setRefType("warehouse");
+        sysUserInfoService.batchRefUserIdByType(refParamseDTO);
+        return success();
+    }
+
+    /**
+     * 批量操作-分配店铺/仓库/权限
+     */
+    @RequestMapping("/batchRefUserIdByRole")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "sys:user:batchRefUserIdByRole",
+            serviceClass = SysUserInfoService.class,
+            keyIdName = "uid")
+    public ApiResult batchRefUserIdByRole(@RequestBody @Validated SysUserInfoDTO.RefParamseDTO refParamseDTO) {
+        refParamseDTO.setRefType("role");
         sysUserInfoService.batchRefUserIdByType(refParamseDTO);
         return success();
     }
@@ -146,6 +182,11 @@ public class SysUserInfoController extends BaseController {
      */
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "修改用户状态:ids={ids},状态={state}(1=启用,0=未启用)")
     @RequestMapping("/updateState")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "sys:user:updateState",
+            serviceClass = SysUserInfoService.class,
+            keyIdName = "ids")
     public ApiResult updateState(@RequestBody @Validated UpdateUserStateDTO stateDTO) {
         sysUserInfoService.updateState(stateDTO);
         return success();
@@ -281,6 +322,11 @@ public class SysUserInfoController extends BaseController {
      */
     @PostMapping("/export")
     @WebAdvanceQuery(handler = SysUserInfoQueryHandler.class)
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "sys:user:export",
+            tableAlias = "sui"
+    )
     public ApiResult<Object> exportList(@RequestBody @Validated SysUserInfoDTO.PagingParamDTO dto, HttpServletResponse response) {
         sysUserInfoService.exportList(dto, response);
         return success();

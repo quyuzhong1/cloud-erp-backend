@@ -551,16 +551,16 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
                 vo.setUserStateName("启用");
             } else if (vo.getUserState() == 0) {
                 vo.setUserStateName("禁用");
+            }
 
-                String thirdAuthType = vo.getThirdAuthType();
-                if (StringUtils.isNotBlank(thirdAuthType)) {
-                    List<String> thirdAuthTypeList = Arrays.asList(thirdAuthType.split(";"));
-                    String thirdAuthTypeName = thirdAuthTypeList.stream()
-                            .map(s -> SysUserInfoThirdAuthTypeEnum.getName(s))
-                            .filter(name -> StringUtils.isNotBlank(name))
-                            .collect(Collectors.joining(","));
-                    vo.setThirdAuthTypeName(StrUtil.format("【{}】已授权", thirdAuthTypeName));
-                }
+            String thirdAuthType = vo.getThirdAuthType();
+            if (StringUtils.isNotBlank(thirdAuthType)) {
+                List<String> thirdAuthTypeList = Arrays.asList(thirdAuthType.split(";"));
+                String thirdAuthTypeName = thirdAuthTypeList.stream()
+                        .map(s -> SysUserInfoThirdAuthTypeEnum.getName(s))
+                        .filter(name -> StringUtils.isNotBlank(name))
+                        .collect(Collectors.joining(","));
+                vo.setThirdAuthTypeName(StrUtil.format("【{}】已授权", thirdAuthTypeName));
             }
         }
     }

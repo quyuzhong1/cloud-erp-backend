@@ -280,7 +280,6 @@ public class AuthUserShopServiceImpl extends SuperServiceImpl<AuthUserShopMapper
                 AuthUserShopEntity entity = new AuthUserShopEntity();
                 entity.setAuthType(AuthDataTypeEnum.ENUM_PART.getCode());
                 entity.setUserId(uid);
-                entity.setAuthType(AuthDataTypeEnum.ENUM_PART.getCode());
                 entity.setShopId("-1");
                 addList.add(entity);
             }
