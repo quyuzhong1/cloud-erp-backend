@@ -162,7 +162,11 @@ public class SubcontractOrderEntity extends BaseEntity<SubcontractOrderEntity> {
     @TableField("sync_kingdee_id")
     private String syncKingdeeId;
 
-    
+    /**
+     * 用料清单id
+     */
+    @TableField("subcontract_bom_id")
+    private String subcontractBomId;
 
 
     public static final String APPROVE_STATUS = "approve_status";
