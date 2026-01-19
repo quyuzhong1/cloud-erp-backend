@@ -84,4 +84,11 @@ Map<String , Boolean> overrideDbInventory(LocalDate startDate , List<String> inv
      * 检查库存交易一致性
      */
     void queryInventoryCheckSame(Integer warnSize);
+    
+    /**
+     * 根据库存id获取redis可用库存
+     * @param inventoryId
+     * @return
+     */
+    Integer getRedisQtyByInventory(String inventoryId);
 }

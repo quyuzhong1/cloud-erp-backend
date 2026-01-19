@@ -65,4 +65,14 @@ public interface VirtualWarehousePushHandleDetailService extends SuperService<Vi
      * @return List<ThirdDataDTO>
      */
     List<VirtualWarehousePushHandleDetailDTO.ThirdDataDTO> listThirdDataByDetailIdList(List<String> detailIdList);
+    /**
+     * 手动完结
+     * @author will
+     * @date 2026/1/16 11:28
+     * @param dto
+     * @param code
+     * @param hanleDetailIdList
+     * @return void
+     */
+    void batchManualFinish(VirtualWarehouseAllocationDTO.ManualFinishDto dto, String code, List<String> hanleDetailIdList);
 }

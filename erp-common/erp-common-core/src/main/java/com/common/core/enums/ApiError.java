@@ -197,6 +197,7 @@ public enum ApiError implements Serializable {
 
     COMMON_NO_DELIVERY_SKU(98128,"没有发货的SKU"),
     COMMON_SKU_NOT_EXIST_OR_NOT_APPROVE(98129,"SKU【{0}】不存在或未审核"),
+    COMMON_FILE_EMPTY(1111, "文件为空{0}"),
 
     /**
      * AUTH 授权与登录 相关 2000 - 2200
@@ -1510,8 +1511,6 @@ public enum ApiError implements Serializable {
     VM_FROM_WAREHOUSE_NOT_BLANK(92290,"启动自动借调时，借调仓不能为空"),
     VM_NOT_CONTAINS_FROM_WAREHOUSE(92291,"虚拟仓关联实体仓不能包含借调仓"),
     VM_ALLOCATION_NOT_REPEAT(92292,"存在未同步成功的虚拟仓分货单调出任务，调出仓库ID：{0}，调出虚拟仓ID：{1}，SKU：{2}，请确认后再操作"),
-    VM_ALLOCATION_FORM_VIRTUAL_WAREHOUSE_NOT_THIRD_MAPPING(92293,"调出虚拟仓【{0}】未找到三方仓映射信息"),
-    VM_ALLOCATION_TO_VIRTUAL_WAREHOUSE_NOT_THIRD_MAPPING(92294,"调入虚拟仓【{0}】未找到三方仓映射信息"),
 
     /**
      * 客户管理 错误 信息 13000-13500

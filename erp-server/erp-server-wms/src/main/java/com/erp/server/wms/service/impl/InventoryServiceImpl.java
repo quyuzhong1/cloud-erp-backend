@@ -36,7 +36,6 @@ import com.erp.model.wms.dto.inventory.*;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.StocktakingTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryAgeTitleEnum;
-import com.erp.model.wms.enums.inventory.InventoryRedisOpKeyEnum;
 import com.erp.model.wms.enums.inventory.InventorySearchDimensionEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.rpc.dmp.feign.DmpSyncFeign;
@@ -48,7 +47,6 @@ import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.constant.WmsConstant;
 import com.erp.server.wms.mapper.InventoryMapper;
 import com.erp.server.wms.service.*;
-import com.erp.server.wms.utils.InventoryRedisUtil;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import lombok.extern.slf4j.Slf4j;
@@ -117,7 +115,7 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
     private VirtualInventoryService virtualInventoryService;
 
     @Resource
-    private InventoryRedisUtil inventoryRedisUtil;
+    private InventoryTransactionService inventoryTransactionService;
 
 
     @Override
@@ -1251,26 +1249,8 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
             returnDTO.setInventoryId(inventoryEntity.getId());
             returnDTO.setInventoryStatus(inventoryEntity.getDictInventoryStatus());
             //查询redis中的库存
-            Object redisQtyObj = inventoryRedisUtil.get(InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.CURRENT, inventoryEntity.getId()));
-            if (ObjectUtil.isNotEmpty(redisQtyObj)) {
-                List<String> splitObj = Arrays.stream(redisQtyObj.toString().split(InventoryRedisUtil.splitSign)).collect(Collectors.toList());
-                Integer currentQty = Integer.parseInt(splitObj.get(0));
-                for (int i = 0;i < splitObj.size();i++) {
-                    if (i == 0) {
-                        continue;
-                    }
-                    List<String> progressObj = Arrays.stream(splitObj.get(i).split(InventoryRedisUtil.atSign)).collect(Collectors.toList());
-                    if (progressObj.size() > 1) {
-                        //进行中的数量
-                        Integer progressQty = Integer.parseInt(progressObj.get(1));
-                        if (progressQty >= 0) {
-                            continue;
-                        }
-                        currentQty = currentQty + progressQty;
-                    }
-                }
-                returnDTO.setQty(currentQty);
-            }
+            Integer redisQty = inventoryTransactionService.getRedisQtyByInventory(inventoryEntity.getId());
+            returnDTO.setQty(redisQty);
             resultList.add(returnDTO);
         }
         return resultList;
