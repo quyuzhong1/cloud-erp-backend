@@ -333,9 +333,17 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
             return null;
         }
 
-        // 查询已有订单
-        List<SoB2cEntity> listBySwOrderNumber = FeignQuery.create(SoB2cEntity.class).eq (SoB2cEntity::getPlatformCode,swOrderNumber).ne(SoB2cEntity::getSourceType, SoB2cSourcePlatformEnum.ENUM_SELF_ADD.getCode()).list();
-        List<SoB2cEntity> listByReferenceNo = FeignQuery.create(SoB2cEntity.class).eq (SoB2cEntity::getPlatformCode, referenceNo).ne(SoB2cEntity::getSourceType, SoB2cSourcePlatformEnum.ENUM_SELF_ADD.getCode()).list();
+        List<SoB2cEntity> listBySwOrderNumber = new ArrayList<>();
+        List<SoB2cEntity> listByReferenceNo = new ArrayList<>();
+        if(StringUtils.isNotBlank(swOrderNumber)) {
+            // 查询已有订单
+            listBySwOrderNumber = FeignQuery.create(SoB2cEntity.class).eq(SoB2cEntity::getPlatformCode, swOrderNumber).ne(SoB2cEntity::getSourceType, SoB2cSourcePlatformEnum.ENUM_SELF_ADD.getCode()).list();
+        }
+        if(StringUtils.isNotBlank(referenceNo)){
+            // 查询已有订单
+            listByReferenceNo = FeignQuery.create(SoB2cEntity.class).eq (SoB2cEntity::getPlatformCode, referenceNo).ne(SoB2cEntity::getSourceType, SoB2cSourcePlatformEnum.ENUM_SELF_ADD.getCode()).list();
+        }
+
         if (CollUtil.isEmpty(listBySwOrderNumber) && CollUtil.isEmpty(listByReferenceNo)) {
             log.error("三方仓自动出库: 未找到B2C销售订单 >>>>>>>{}", JSONUtil.toJsonStr(dto));
             return null;
