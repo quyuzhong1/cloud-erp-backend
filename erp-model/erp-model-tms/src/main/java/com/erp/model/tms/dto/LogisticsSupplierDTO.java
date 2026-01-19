@@ -150,6 +150,15 @@ public class LogisticsSupplierDTO implements Serializable {
          * 是否能打印官方面单
          */
         private Boolean isPrintPlatform;
+
+        /**
+         * 核算组织id
+         */
+        private String orgId;
+        /**
+         * 核算组织名称
+         */
+        private String orgName;
         /**
          * 渠道列表
          */
@@ -320,6 +329,15 @@ public class LogisticsSupplierDTO implements Serializable {
          */
         private String type;
 
+        /**
+         * 核算组织id
+         */
+        private String orgId;
+        /**
+         * 核算组织名称
+         */
+        private String orgName;
+
     }
 
     /**
@@ -384,6 +402,16 @@ public class LogisticsSupplierDTO implements Serializable {
          */
         @NotNull(message = "类型不能为空")
         private LogisticsSupplierTypeEnum type;
+
+
+        /**
+         * 核算组织id
+         */
+        private String orgId;
+        /**
+         * 核算组织名称
+         */
+        private String orgName;
 
 
     }
