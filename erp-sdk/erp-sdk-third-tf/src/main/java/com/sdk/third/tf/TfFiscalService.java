@@ -13,12 +13,22 @@ import com.erp.model.oms.entity.CfgSettingEntity;
 import com.erp.model.oms.entity.DictBasicEntity;
 import com.sdk.third.tf.client.TaxCategoryApiClient;
 import com.sdk.third.tf.client.CompanyApiClient;
+import com.sdk.third.tf.client.InvoiceApiClient;
 import com.sdk.third.tf.constant.TfApiConstants;
 import com.sdk.third.tf.dto.CompanyDetailResponseDTO;
 import com.sdk.third.tf.dto.CompanyListResponseDTO;
 import com.sdk.third.tf.dto.CreateCompanyDTO;
 import com.sdk.third.tf.dto.CreateCompanyResponseDTO;
+import com.sdk.third.tf.dto.CancelInvoiceDTO;
+import com.sdk.third.tf.dto.CancelInvoiceResponseDTO;
+import com.sdk.third.tf.dto.CreateInvoiceDTO;
+import com.sdk.third.tf.dto.CreateInvoiceResponseDTO;
 import com.sdk.third.tf.dto.EditCompanyDTO;
+import com.sdk.third.tf.dto.InvalidInvoiceDTO;
+import com.sdk.third.tf.dto.InvalidInvoiceResponseDTO;
+import com.sdk.third.tf.dto.InvoiceDetailResponseDTO;
+import com.sdk.third.tf.dto.ReturnInvoiceDTO;
+import com.sdk.third.tf.dto.ReturnInvoiceResponseDTO;
 import com.sdk.third.tf.dto.NfeInvoiceDTO;
 import com.sdk.third.tf.dto.TaxCategoryDTO;
 import com.sdk.third.tf.entity.AddCompanyDTO;
@@ -49,6 +59,9 @@ public class TfFiscalService {
 
     @Autowired
     private CompanyApiClient companyApiClient;
+
+    @Autowired
+    private InvoiceApiClient invoiceApiClient;
 
     public final static String ACCESS_TOKEN = "19-04-2023_10-47-No37tBi0Yw39Fida4MdUYwmXdksxdY1sIjkmt4-Ymwx04dy1iu94m0b";
 
@@ -315,16 +328,130 @@ public class TfFiscalService {
 
 
     /**
-     * 生成发票
+     * 生成发票（旧接口，已废弃）
+     * @deprecated 请使用 createInvoiceV2 方法
      * @author will
      * @date 2025/4/11 12:12
      * @param nfeCreateDTO
      * @return Object
      */
+    @Deprecated
     public Object createInvoice(NfeInvoiceDTO.NfeCreateDTO nfeCreateDTO){
         String path = "/emitir_transparente";
         String body = JSONUtil.toJsonStr(nfeCreateDTO);
         return doPostUrl(URL + path, body);
+    }
+
+    /**
+     * 开具发票（新接口）
+     * 使用新接口路径：/api/invoice/create
+     * 注意：开具发票接口使用公司token（cfg_invoice_setting.token），不是经销商token
+     * 
+     * @param createInvoiceDTO 开具发票DTO
+     * @param companyToken 公司token（cfg_invoice_setting.token）
+     * @return 开具发票响应数据DTO（data部分）
+     */
+    public CreateInvoiceResponseDTO.CreateInvoiceDataDTO createInvoiceV2(
+            CreateInvoiceDTO createInvoiceDTO, String companyToken) {
+        // 获取AppKey（用于签名）
+        String appKey = getAppKey();
+        
+        log.info("开具发票（新接口）, id: {}, 使用公司token", createInvoiceDTO.getId());
+        
+        CreateInvoiceResponseDTO.CreateInvoiceDataDTO response = 
+            invoiceApiClient.createInvoice(createInvoiceDTO, companyToken, appKey);
+        
+        log.info("开具发票成功, uuid: {}, status: {}", response.getUuid(), response.getStatus());
+        return response;
+    }
+
+    /**
+     * 查询发票详情
+     * 使用新接口路径：/api/invoice/get_detail
+     * 
+     * @param uuid 发票UUID
+     * @param companyToken 公司token（cfg_invoice_setting.token）
+     * @return 发票详情响应数据DTO（data部分）
+     */
+    public InvoiceDetailResponseDTO.InvoiceDetailDataDTO getInvoiceDetailV2(String uuid, String companyToken) {
+        // 获取AppKey（用于签名）
+        String appKey = getAppKey();
+        
+        log.info("查询发票详情, uuid: {}, 使用公司token", uuid);
+        
+        InvoiceDetailResponseDTO.InvoiceDetailDataDTO response = 
+            invoiceApiClient.getInvoiceDetail(uuid, companyToken, appKey);
+        
+        log.info("查询发票详情成功, uuid: {}, status: {}", uuid, response.getStatus());
+        return response;
+    }
+
+    /**
+     * 取消发票（新接口）
+     * 使用新接口路径：/api/invoice/cancel
+     * 
+     * @param cancelInvoiceDTO 取消发票DTO
+     * @param companyToken 公司token（cfg_invoice_setting.token）
+     * @return 取消发票响应数据DTO（data部分）
+     */
+    public CancelInvoiceResponseDTO.CancelInvoiceDataDTO cancelInvoiceV2(
+            CancelInvoiceDTO cancelInvoiceDTO, String companyToken) {
+        // 获取AppKey（用于签名）
+        String appKey = getAppKey();
+        
+        log.info("取消发票（新接口）, uuid: {}, 使用公司token", cancelInvoiceDTO.getUuid());
+        
+        CancelInvoiceResponseDTO.CancelInvoiceDataDTO response = 
+            invoiceApiClient.cancelInvoice(cancelInvoiceDTO, companyToken, appKey);
+        
+        log.info("取消发票成功, uuid: {}, status: {}", cancelInvoiceDTO.getUuid(), response.getStatus());
+        return response;
+    }
+
+    /**
+     * 退货发票（新接口）
+     * 使用新接口路径：/api/invoice/return
+     * 
+     * @param returnInvoiceDTO 退货发票DTO
+     * @param companyToken 公司token（cfg_invoice_setting.token）
+     * @return 退货发票响应数据DTO（data部分）
+     */
+    public ReturnInvoiceResponseDTO.ReturnInvoiceDataDTO returnInvoiceV2(
+            ReturnInvoiceDTO returnInvoiceDTO, String companyToken) {
+        // 获取AppKey（用于签名）
+        String appKey = getAppKey();
+        
+        log.info("退货发票（新接口）, uuid/chave: {}, 使用公司token", returnInvoiceDTO.getUuidOrChave());
+        
+        ReturnInvoiceResponseDTO.ReturnInvoiceDataDTO response = 
+            invoiceApiClient.returnInvoice(returnInvoiceDTO, companyToken, appKey);
+        
+        log.info("退货发票成功, uuid: {}, status: {}", returnInvoiceDTO.getUuidOrChave(), response.getStatus());
+        return response;
+    }
+
+    /**
+     * 作废发票（新接口）
+     * 使用新接口路径：/api/invoice/invalid
+     * 作废发票一般使用场景为发票号跳号时使用
+     * 
+     * @param invalidInvoiceDTO 作废发票DTO
+     * @param companyToken 公司token（cfg_invoice_setting.token）
+     * @return 作废发票响应数据DTO（data部分）
+     */
+    public InvalidInvoiceResponseDTO.InvalidInvoiceDataDTO invalidInvoiceV2(
+            InvalidInvoiceDTO invalidInvoiceDTO, String companyToken) {
+        // 获取AppKey（用于签名）
+        String appKey = getAppKey();
+        
+        log.info("作废发票（新接口）, serie: {}, startNumber: {}, endNumber: {}, 使用公司token", 
+            invalidInvoiceDTO.getSerie(), invalidInvoiceDTO.getStartNumber(), invalidInvoiceDTO.getEndNumber());
+        
+        InvalidInvoiceResponseDTO.InvalidInvoiceDataDTO response = 
+            invoiceApiClient.invalidInvoice(invalidInvoiceDTO, companyToken, appKey);
+        
+        log.info("作废发票成功, uuid: {}", response.getUuid());
+        return response;
     }
 
 

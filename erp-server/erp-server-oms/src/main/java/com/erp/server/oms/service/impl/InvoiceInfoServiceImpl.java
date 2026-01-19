@@ -48,8 +48,10 @@ import com.erp.server.oms.mapper.InvoiceInfoMapper;
 import com.erp.server.oms.sdk.invoice.AmazonUploadInvoiceService;
 import com.erp.server.oms.sdk.invoice.NfeInvoiceService;
 import com.erp.server.oms.service.*;
+import com.sdk.third.tf.dto.CancelInvoiceResponseDTO;
 import com.google.common.collect.Lists;
 import com.sdk.third.tf.dto.NfeInvoiceDTO;
+import com.sdk.third.tf.dto.ReturnInvoiceResponseDTO;
 import com.xxl.job.core.context.XxlJobHelper;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -307,7 +309,7 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
         }else {
             //同步生成发票,调用第三方
             try {
-                Boolean result = nfeInvoiceService.createInvoice(soB2cEntity);
+                Boolean result = nfeInvoiceService.createInvoiceV2(soB2cEntity);
                 if (result){
                     //添加日志
                     operateLogService.addModuleOperateLog(CharSequenceUtil.format("用户【{}】销售订单【{}】生成NF-e发票【{}】",UserContext.getDefaultLoginUser().getUserName(),soB2cEntity.getCode(),invoiceInfoEntity.getCode()), ModuleTypeEnum.SO_B2C.getCode(), soB2cEntity.getId(), "生成NF-e发票操作");
@@ -770,14 +772,18 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
             throw new ServiceException(ApiError.FIN_INVOICE_OPERATION_NOT_ALLOWED);
         }
 
-        //取消发票,调用第三方
-        NfeInvoiceDTO.NfeCancelDTO nfeCancelDTO = NfeInvoiceConverter.INSTANCE.invoiceInfoEntityToNfeCancel(invoiceInfoEntity);
-        nfeInvoiceService.cancelInvoice(invoiceInfoEntity,nfeCancelDTO);
-
-        invoiceInfoEntity.setCancelReason(remark);
-        invoiceInfoEntity.setInvoiceNature(InvoiceNatureEnum.CANCEL.getCode());
-        this.updateById(invoiceInfoEntity);
-        return BatchResultDTO.success(id, invoiceInfoEntity.getCode(), "取消发票");
+        //取消发票,调用第三方（使用新接口V2）
+        try {
+            CancelInvoiceResponseDTO.CancelInvoiceDataDTO responseData = nfeInvoiceService.cancelInvoiceV2(invoiceInfoEntity, remark);
+            // cancelInvoiceV2方法内部已经更新了invoiceNature和cancelReason，以及上传了新的XML
+            // 如果上传平台失败，会在remark中记录失败原因
+            return BatchResultDTO.success(id, invoiceInfoEntity.getCode(), "取消发票成功");
+        } catch (Exception e) {
+            // 取消失败时，记录失败原因
+            invoiceInfoEntity.setRemark(CharSequenceUtil.format("取消发票失败: {}", e.getMessage()));
+            this.updateById(invoiceInfoEntity);
+            return BatchResultDTO.fail(id, invoiceInfoEntity.getCode(), CharSequenceUtil.format("取消发票失败: {}", e.getMessage()));
+        }
     }
 
     @Override
@@ -794,19 +800,22 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
         if (!InvoiceInfoStatusEnum.INVOICE_SUCCESS.getCode().equals(invoiceInfoEntity.getStatus())) {
             throw new ServiceException(ApiError.FIN_INVOICE_OPERATION_NOT_ALLOWED);
         }
-        NfeInvoiceDTO.NfeReturnDTO nfeReturnDTO = new NfeInvoiceDTO.NfeReturnDTO();
-        nfeReturnDTO.setMotivo(remark);
-        if (CharSequenceUtil.isBlank(invoiceInfoEntity.getQueryKey())){
-            throw new ServiceException("发票秘钥不存在，无法进行退票操作");
+        //退货发票,调用第三方（使用新接口V2）
+        try {
+            ReturnInvoiceResponseDTO.ReturnInvoiceDataDTO responseData = nfeInvoiceService.returnInvoiceV2(invoiceInfoEntity, remark, returnTaxCode);
+            // 退货成功，更新发票性质为退货
+            invoiceInfoEntity.setCancelReason(remark);
+            invoiceInfoEntity.setInvoiceNature(InvoiceNatureEnum.RETURN_INVOICE.getCode());
+            invoiceInfoEntity.setReturnTaxCode(returnTaxCode);
+            // 如果返回了新的XML，已经在上传方法中处理
+            this.updateById(invoiceInfoEntity);
+            return BatchResultDTO.success(id, invoiceInfoEntity.getCode(), "退货发票成功");
+        } catch (Exception e) {
+            // 退货失败时，记录失败原因
+            invoiceInfoEntity.setRemark(CharSequenceUtil.format("退货发票失败: {}", e.getMessage()));
+            this.updateById(invoiceInfoEntity);
+            return BatchResultDTO.fail(id, invoiceInfoEntity.getCode(), CharSequenceUtil.format("退货发票失败: {}", e.getMessage()));
         }
-        nfeReturnDTO.setChaveNfe(invoiceInfoEntity.getQueryKey());
-        //第三方对接
-        nfeInvoiceService.returnInvoice(invoiceInfoEntity,nfeReturnDTO);
-        invoiceInfoEntity.setCancelReason(remark);
-        invoiceInfoEntity.setInvoiceNature(InvoiceNatureEnum.RETURN_INVOICE.getCode());
-        invoiceInfoEntity.setReturnTaxCode(returnTaxCode);
-        this.updateById(invoiceInfoEntity);
-        return BatchResultDTO.success(id, invoiceInfoEntity.getCode(), "退票");
     }
 
     @Override

@@ -2,4 +2,5 @@ org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
   com.sdk.third.tf.TfFiscalService\
   com.sdk.third.tf.client.TaxCategoryApiClient\
   com.sdk.third.tf.client.TfApiClient\
-  com.sdk.third.tf.client.CompanyApiClient
+  com.sdk.third.tf.client.CompanyApiClient\
+  com.sdk.third.tf.client.InvoiceApiClient
