@@ -593,7 +593,15 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
             orgId = reportPeriodMonth.getOrgId();
         }else if(Objects.equals(CostAllocationOrgTypeEnum.LOGISTICS_SUPPLIER_ORG.getCode(),allocationSettingDTO.getFirstOrgId())){
             //物流组织
-
+            String supplierId = entity.getSupplierId();
+            if(StringUtils.isBlank(supplierId)){
+                return BatchResultDTO.fail(entity.getId(), entity.getSourceCode(), ApiError.LOGISTICS_SUPPLIER_NOT_FOUND.getMsg());
+            }
+            LogisticsSupplierEntity LogisticsSupplierEntity = logisticsSupplierService.getById(supplierId);
+            if(Objects.isNull(LogisticsSupplierEntity)){
+                return BatchResultDTO.fail(entity.getId(), entity.getSourceCode(), ApiError.LOGISTICS_SUPPLIER_NOT_EXIST.getMsg());
+            }
+            orgId = LogisticsSupplierEntity.getOrgId();
         }else {
             orgId = allocationSettingDTO.getFirstOrgId();
         }
