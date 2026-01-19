@@ -819,6 +819,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         List<SoB2cEntity> soB2cList = this.lambdaQuery()
                 .lt(SoB2cEntity::getCreateTime, LocalDateTime.now().minusDays(30)) // 30天前
                 .eq(SoB2cEntity::getApproveStatus, ApproveStatusEnum.WAIT_SUBMIT)
+                .eq(SoB2cEntity::getPayStatus,SoB2cPayStatusEnum.ENUM_PAYMENT.getCode())
                 .eq(SoB2cEntity::getIsDeleted, Boolean.FALSE)
                 .list();
 
