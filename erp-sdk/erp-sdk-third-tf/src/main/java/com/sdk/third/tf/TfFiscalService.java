@@ -11,7 +11,9 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.HttpCommonUtil;
 import com.erp.model.oms.entity.CfgSettingEntity;
 import com.erp.model.oms.entity.DictBasicEntity;
+import com.sdk.third.tf.client.TaxCategoryApiClient;
 import com.sdk.third.tf.dto.NfeInvoiceDTO;
+import com.sdk.third.tf.dto.TaxCategoryDTO;
 import com.sdk.third.tf.entity.AddCompanyDTO;
 import com.sdk.third.tf.entity.CompanyDTO;
 import com.sdk.third.tf.entity.CompanyInfoEntity;
@@ -19,6 +21,7 @@ import com.sdk.third.tf.entity.UpdateCompanyDTO;
 import io.seata.common.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.RequestMethod;
 
@@ -37,6 +40,8 @@ import java.util.Objects;
 @Slf4j
 public class TfFiscalService {
 
+    @Autowired
+    private TaxCategoryApiClient taxCategoryApiClient;
 
     public final static String ACCESS_TOKEN = "19-04-2023_10-47-No37tBi0Yw39Fida4MdUYwmXdksxdY1sIjkmt4-Ymwx04dy1iu94m0b";
 
@@ -261,6 +266,78 @@ public class TfFiscalService {
         String path = "/corrigirCce_api";
         String body = JSONUtil.toJsonStr(nfeCceDTO);
         return doPostUrl(URL + path, body);
+    }
+
+    // ==================== 税种相关接口 ====================
+
+    /**
+     * 创建税种
+     * @param createDTO 创建税种DTO
+     * @return 税种ID
+     */
+    public String createTaxCategory(TaxCategoryDTO.CreateCategoryDTO createDTO) {
+        log.info("创建税种, descricao: {}", createDTO.getDescricao());
+        TaxCategoryDTO.CreateCategoryResponseDTO response = taxCategoryApiClient.createCategory(createDTO);
+        if (response == null || StringUtils.isBlank(response.getCategoryId())) {
+            throw new ServiceException("创建税种失败，未返回税种ID");
+        }
+        log.info("创建税种成功, categoryId: {}", response.getCategoryId());
+        return response.getCategoryId();
+    }
+
+    /**
+     * 查询税种列表
+     * @param page 页码
+     * @param pageSize 每页大小
+     * @return 税种列表响应
+     */
+    public TaxCategoryDTO.CategoryListResponseDTO getTaxCategoryList(Integer page, Integer pageSize) {
+        log.info("查询税种列表, page: {}, pageSize: {}", page, pageSize);
+        return taxCategoryApiClient.getCategoryList(page, pageSize);
+    }
+
+    /**
+     * 查询税种详情
+     * @param categoryId 税种ID
+     * @return 税种详情
+     */
+    public TaxCategoryDTO.CategoryDetailDTO getTaxCategoryDetail(String categoryId) {
+        if (StringUtils.isBlank(categoryId)) {
+            throw new ServiceException("税种ID不能为空");
+        }
+        log.info("查询税种详情, categoryId: {}", categoryId);
+        return taxCategoryApiClient.getCategoryDetail(categoryId);
+    }
+
+    /**
+     * 编辑税种
+     * @param editDTO 编辑税种DTO
+     * @return 税种ID
+     */
+    public String editTaxCategory(TaxCategoryDTO.EditCategoryDTO editDTO) {
+        if (StringUtils.isBlank(editDTO.getCategoryId())) {
+            throw new ServiceException("税种ID不能为空");
+        }
+        log.info("编辑税种, categoryId: {}", editDTO.getCategoryId());
+        TaxCategoryDTO.EditCategoryResponseDTO response = taxCategoryApiClient.editCategory(editDTO);
+        if (response == null || StringUtils.isBlank(response.getCategoryId())) {
+            throw new ServiceException("编辑税种失败，未返回税种ID");
+        }
+        log.info("编辑税种成功, categoryId: {}", response.getCategoryId());
+        return response.getCategoryId();
+    }
+
+    /**
+     * 删除税种
+     * @param categoryId 税种ID
+     */
+    public void deleteTaxCategory(String categoryId) {
+        if (StringUtils.isBlank(categoryId)) {
+            throw new ServiceException("税种ID不能为空");
+        }
+        log.info("删除税种, categoryId: {}", categoryId);
+        taxCategoryApiClient.deleteCategory(categoryId);
+        log.info("删除税种成功, categoryId: {}", categoryId);
     }
 
     private String getAccessToken() {
