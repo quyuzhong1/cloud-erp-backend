@@ -199,6 +199,8 @@ public enum ApiError implements Serializable {
     COMMON_SKU_NOT_EXIST_OR_NOT_APPROVE(98129,"SKU【{0}】不存在或未审核"),
     COMMON_FS_USER_NOT_BIND(98130,"飞书【{0}】事件,用户【{1}】未绑定飞书账号"),
     COMMON_DEPARTMENT_HAVE_USER(98131,"【{0}】部门或下级部门存在用户"),
+    COMMON_FILE_EMPTY(1111, "文件为空{0}"),
+
     /**
      * AUTH 授权与登录 相关 2000 - 2200
      */

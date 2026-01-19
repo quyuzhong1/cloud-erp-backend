@@ -383,12 +383,10 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
         //调拨分货生成直接调拨单
         generateDirectTransferInfo(allocationEntity,detailEntityList,warehouseMap);
 
-        //借调后的校验
-        if (CollUtil.isNotEmpty(transferWarehouseList)) {
-            List<VirtualWarehouseAllocationDTO.DetailDto> detailList = BeanMapperUtils.copyList(VirtualWarehouseAllocationDTO.DetailDto.class, detailEntityList);
-            List<VirtualInventoryDTO.ViewQtyDTO> virtualInventoryQtyList = getQty(detailList, allocationEntity.getType());
-            checkTotalQty(detailList, allocationEntity.getType(), virtualInventoryQtyList);
-        }
+        //校验总库存
+        List<VirtualWarehouseAllocationDTO.DetailDto> detailList = BeanMapperUtils.copyList(VirtualWarehouseAllocationDTO.DetailDto.class, detailEntityList);
+        List<VirtualInventoryDTO.ViewQtyDTO> virtualInventoryQtyList = getQty(detailList, allocationEntity.getType());
+        checkTotalQty(detailList, allocationEntity.getType(), virtualInventoryQtyList);
 
         //非调拨类型需要先扣减实体仓库存
         if (!CharSequenceUtil.equals(allocationEntity.getType(),VirtualWarehouseAllocationTypeEnum.TRANSFER.getCode())) {
