@@ -38,7 +38,7 @@ public class SysRoleUserServiceImpl extends ServiceImpl<SysRoleUserMapper, SysRo
         }
         if (CollectionUtils.isNotEmpty(roleIds)) {
             //排除已存在的关联数据
-            List<SysRoleUserEntity> oldRoleIds = lambdaQuery().in(SysRoleUserEntity::getRoleId, roleIds).list();
+            List<SysRoleUserEntity> oldRoleIds = lambdaQuery().in(SysRoleUserEntity::getRoleId, roleIds).eq(SysRoleUserEntity::getUserId,uid).list();
             if(CollUtil.isNotEmpty(oldRoleIds)){
                 Set<String> existingIds = oldRoleIds.stream()
                         .map(SysRoleUserEntity::getRoleId)

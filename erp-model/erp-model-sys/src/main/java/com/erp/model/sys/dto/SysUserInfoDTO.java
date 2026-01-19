@@ -271,7 +271,6 @@ public class SysUserInfoDTO implements Serializable {
         /**
          *  关联类型 （shop店铺，warehouse仓库,role 权限）
          */
-        @NotBlank(message = "关联类型不能为空")
         private String refType;
 
         /**
