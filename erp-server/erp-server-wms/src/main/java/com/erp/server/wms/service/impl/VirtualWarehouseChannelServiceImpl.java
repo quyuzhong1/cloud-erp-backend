@@ -609,7 +609,7 @@ public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<Virtual
                 matchesOrWildcard(e1.getRelationId(), e2.getRelationId()) &&
                 matchesOrWildcard(e1.getPartitionId(), e2.getPartitionId()));
         if (isSame){
-            String format = CharSequenceUtil.format(ApiError.VM_CHANNEL_RELATION_ERROR.getMsg(),  dictPlatformName,CharSequenceUtil.isBlank(shopName) ? "全部" : shopName, CharSequenceUtil.isBlank(partitionName) ? "全部" : partitionName, virtualWarehouseName);
+            String format = ServiceException.resolveMessage(ApiError.VM_CHANNEL_RELATION_ERROR,  dictPlatformName,CharSequenceUtil.isBlank(shopName) ? "全部" : shopName, CharSequenceUtil.isBlank(partitionName) ? "全部" : partitionName, virtualWarehouseName);
             if (!msg.toString().contains(format)){
                 msg.append(format);
             }
