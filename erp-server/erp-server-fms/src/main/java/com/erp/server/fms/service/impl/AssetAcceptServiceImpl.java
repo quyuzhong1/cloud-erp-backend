@@ -49,7 +49,6 @@ import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.model.workflow.enums.CfgQueryOptionBussinessKeyEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.file.feign.FileFeign;
-import com.erp.rpc.oms.feign.OmsDropDownFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.scm.feign.AssetPurchaseOrderFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
