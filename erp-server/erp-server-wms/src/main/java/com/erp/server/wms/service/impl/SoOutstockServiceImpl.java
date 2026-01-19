@@ -3364,11 +3364,15 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                     if(Objects.isNull(deliveryTime)){
                        throw new ServiceException("发货日期不能为空");
                     }
-                    // 速卖通GMT时区转北京时区
-                    LocalDateTime targetDeliveryTime = DateUtil.convertZoneTime(deliveryTime,
-                            ZoneId.of("America/Los_Angeles"),
-                            ZoneId.of("Asia/Shanghai"));
-                    billDate = targetDeliveryTime.toLocalDate();
+                    if(PlatformDictEnum.ALI_EXPRESS.getCode().equals(dto.getDictPlatform())){
+                        // 速卖通GMT时区转北京时区
+                        LocalDateTime targetDeliveryTime = DateUtil.convertZoneTime(deliveryTime,
+                                ZoneId.of("America/Los_Angeles"),
+                                ZoneId.of("Asia/Shanghai"));
+                        billDate = targetDeliveryTime.toLocalDate();
+                    } else {
+                        billDate = deliveryTime.toLocalDate();
+                    }
                 }
             }
         }
