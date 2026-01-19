@@ -229,13 +229,14 @@ public class GlobalExceptionHandler {
         return result;
     }
 
-    /** 设置 HTTP 状态（401 → UNAUTHORIZED, 默认200） */
+    /** 设置 HTTP 状态码（401 → UNAUTHORIZED, 403 → FORBIDDEN, 默认200） */
     private void setHttpStatus(HttpServletResponse response, Integer code) {
-        if (Objects.equals(code, ApiError.HTTP_UNAUTHORIZED.getCode()) ||
-                Objects.equals(code, ApiError.HTTP_FORBIDDEN.getCode())) {
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        if (Objects.equals(code, ApiError.HTTP_UNAUTHORIZED.getCode())) {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);  // 401: 未认证
+        } else if (Objects.equals(code, ApiError.HTTP_FORBIDDEN.getCode())) {
+            response.setStatus(HttpServletResponse.SC_FORBIDDEN);  // 403: 无权限
         } else {
-            response.setStatus(HttpServletResponse.SC_OK);
+            response.setStatus(HttpServletResponse.SC_OK);  // 200: 默认
         }
     }
 }

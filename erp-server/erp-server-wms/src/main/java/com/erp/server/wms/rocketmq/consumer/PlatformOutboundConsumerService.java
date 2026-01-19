@@ -164,7 +164,6 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
 
         if(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(dto.getOrderStatus())
                 && (OmsPlatformEnum.OMS_ANTU.getCode().equals(dto.getPlatform()) || OmsPlatformEnum.OMS_SPT.getCode().equals(dto.getPlatform()))){
-            log.error("第三方出库单: 未找到三方仓发货单 >>>>>>>{}",JSONUtil.toJsonStr(dto));
             map = checkAndBuildMap(dto);
         }else if(referenceNo.contains(BusinessNoConstant.WFHD)){
             //查询三方仓发货单
