@@ -75,7 +75,7 @@ public class MercadoLocalOrderDmpHandler extends MercadoLocalDmpHandler {
         List<ParamData> paramDataHisList = new ArrayList<>();
         paramDataHisList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, PannoEnum.IN, childTaskIds));
         paramDataHisList.add(new ParamData("status", "status", PannoEnum.EQ, "shipped"));
-        paramDataHisList.add(new ParamData("substatus", "substatus", PannoEnum.EQ, ""));
+        paramDataHisList.add(new ParamData("substatus", "substatus", PannoEnum.EQ, null));
         List<Map<String, Object>> dmpInputMongoHistoryChildList = mongoService.findMongoData(paramDataHisList, "mercadolibreLocal_shipmentHistory_data");
 
         Map<String, String> shopTimezoneMap = new HashMap<>();
