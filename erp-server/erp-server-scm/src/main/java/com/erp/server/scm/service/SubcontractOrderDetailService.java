@@ -4,6 +4,7 @@ import cn.hutool.json.JSONArray;
 import com.common.business.service.SuperService;
 import com.erp.model.scm.dto.SubcontractOrderDetailDTO;
 import com.erp.model.scm.entity.SubcontractOrderDetailEntity;
+import com.erp.model.scm.entity.SubcontractOrderEntity;
 import org.apache.commons.math3.util.Pair;
 
 import java.util.List;
@@ -42,7 +43,7 @@ public interface SubcontractOrderDetailService extends SuperService<SubcontractO
      * @param detailList
      * @param mainId
      */
-    void add(List<SubcontractOrderDetailDTO.AddDTO> detailList, String mainId);
+    void add(List<SubcontractOrderDetailDTO.AddDTO> detailList, SubcontractOrderEntity subcontractOrderEntity);
     /**
      * @description: 修改明细
      * @author Will

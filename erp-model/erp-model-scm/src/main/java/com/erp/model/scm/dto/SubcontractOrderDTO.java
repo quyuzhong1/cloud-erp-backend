@@ -9,7 +9,6 @@ import com.erp.model.scm.entity.SubcontractOrderEntity;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
 import javax.validation.constraints.*;
 import java.io.Serializable;
 import java.math.BigDecimal;
@@ -191,6 +190,15 @@ public class SubcontractOrderDTO implements Serializable {
          */
         private LocalDate billDate;
         /**
+         * 单据类型
+         * /dict/list?key=subcontractOrderType
+         */
+        private String type;
+        /**
+         * 单据类型名称
+         */
+        private String typeName;
+        /**
         * 审核状态
         */
         private String approveStatus;
@@ -241,6 +249,31 @@ public class SubcontractOrderDTO implements Serializable {
         private Boolean isUrgent;
 
         /**
+         * 币种
+         */
+        private String currency;
+
+        /**
+         * 币种符号
+         */
+        private String currencySymbol;
+
+        /**
+         * 返修数量
+         */
+        private Integer repairQty;
+
+        /**
+         * 返修单价
+         */
+        private BigDecimal repairPrice;
+
+        /**
+         * 返修金额
+         */
+        private BigDecimal repairAmount;
+
+        /**
          * 数量
          */
         private Integer qty;
@@ -269,6 +302,11 @@ public class SubcontractOrderDTO implements Serializable {
          * 采购员
          */
         private String purchaserName;
+
+        /**
+         * 供应商id
+         */
+        private String supplierId;
 
         /**
         * 创建时间
@@ -309,6 +347,12 @@ public class SubcontractOrderDTO implements Serializable {
          * 委外订单编号
          */
         private String code;
+
+        /**
+         * 单据类型
+         * /dict/list?key=subcontractOrderType
+         */
+        private String type;
 
         /**
          * 审核状态
@@ -394,6 +438,13 @@ public class SubcontractOrderDTO implements Serializable {
          */
         @NotNull(message = "单据日期不能为空")
         private LocalDate billDate;
+
+        /**
+         * 单据类型
+         * /dict/list?key=subcontractOrderType
+         */
+        @NotNull(message = "单据类型不能为空")
+        private String type;
 
         /**
          * 采购组织id
@@ -908,5 +959,145 @@ public class SubcontractOrderDTO implements Serializable {
     public static class UpdateApprovalStatusDTO {
         private SubcontractOrderEntity subcontractOrderEntity;
         private String approveStatus;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ListSubcontractOrderSkuPriceDTO{
+        /**
+         * skuid
+         */
+        private String skuId;
+
+        /**
+         * sku编码
+         */
+        private String skuNo;
+
+        /**
+         * 币种
+         */
+        private String currency;
+
+        /**
+         * 币种符号
+         */
+        private String currencySymbol;
+
+        /**
+         * 单价
+         */
+        private Integer qty;
+
+        /**
+         * 总价
+         */
+        private BigDecimal price;
+
+        /**
+         * 总价
+         */
+        private BigDecimal amount;
+
+        /**
+         * 税率
+         */
+        private BigDecimal taxRate;
+
+        /**
+         * 供应商id
+         */
+        @NotBlank(message = "供应商id不能为空")
+        private String supplierId;
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ListPriceParamDTO{
+
+        /**
+         * 退货订单id
+         */
+        @NotBlank(message = "来源退货订单id不能为空")
+        private String sourceId;
+
+        /**
+         * skuid
+         */
+        @NotBlank(message = "skuId不能为空")
+        private String skuId;
+
+        /**
+         * sku编码
+         */
+        @NotBlank(message = "sku编码不能为空")
+        private String skuNo;
+
+        /**
+         * 组织id
+         */
+        @NotBlank(message = "组织id不能为空")
+        private String orgId;
+
+        /**
+         * 供应商id
+         */
+        @NotBlank(message = "供应商id不能为空")
+        private String supplierId;
+
+        /**
+         * 数量
+         */
+        @Min(1)
+        @NotNull(message = "数量不能为空")
+        private Integer qty;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ListRateDTO{
+
+        /**
+         * 供应商id
+         */
+        private String supplierId;
+
+        /**
+         * 供应商名称
+         */
+        private String supplierName;
+
+        /**
+         * 币种
+         */
+        private String currency;
+
+        /**
+         * 币种符号
+         */
+        private String currencySymbol;
+
+        /**
+         * 税率
+         */
+        private BigDecimal rate;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ListRateParamDTO{
+
+        /**
+         * 供应商id
+         */
+        @NotBlank(message = "供应商id不能为空")
+        private String supplierId;
+
+
     }
 }

@@ -46,6 +46,14 @@ public class SubcontractOrderEntity extends BaseEntity<SubcontractOrderEntity> {
     @TableField("bill_date")
     private LocalDate billDate;
 
+
+    /**
+     * 单据类型
+     * /dict/list?key=subcontractOrderType
+     */
+    @TableField("type")
+    private String type;
+
     /**
     * 采购组织id
     */

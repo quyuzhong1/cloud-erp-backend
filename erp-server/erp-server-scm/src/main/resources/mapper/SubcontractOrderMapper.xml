@@ -55,7 +55,12 @@
         so.approve_time as approveTime,
         so.purchaser_name as purchaserName,
         so.create_time as createTime,
-        so.create_user_name as createUserName
+        so.create_user_name as createUserName,
+        so.type as type,
+        sod.repair_qty as repairQty,
+        sod.repair_price as repairPrice,
+        sod.repair_amount as repairAmount,
+        sod.supplier_id as supplierId
     </sql>
 
     <select id="paging" resultType="com.erp.model.scm.dto.SubcontractOrderDTO$ListDTO">
