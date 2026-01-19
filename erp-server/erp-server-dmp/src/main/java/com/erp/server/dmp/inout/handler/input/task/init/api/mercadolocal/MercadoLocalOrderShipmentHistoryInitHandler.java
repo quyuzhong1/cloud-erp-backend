@@ -1,4 +1,4 @@
-package com.erp.server.dmp.inout.handler.input.task.init.api.mercado;
+package com.erp.server.dmp.inout.handler.input.task.init.api.mercadolocal;
 
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjectUtil;
@@ -30,9 +30,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestMethod;
 
 import javax.annotation.Resource;
-import java.time.OffsetDateTime;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -54,7 +51,14 @@ public class MercadoLocalOrderShipmentHistoryInitHandler extends DmpInputInitHan
 		if (CollectionUtil.isEmpty(list)) {
 			return new ArrayList<>();
 		}
-		List<DmpInputTaskEntity> parentTaskEntityList = dmpInputTaskService.lambdaQuery().eq(DmpInputTaskEntity::getId, list.get(0).getParentTaskId()).list();
+        List<String> taskIds = list.stream()
+                .map(DmpInputTaskEntity::getId)
+                .distinct()
+                .collect(Collectors.toList());
+        if (CollectionUtil.isEmpty(taskIds)) {
+            return new ArrayList<>();
+        }
+        List<DmpInputTaskEntity> parentTaskEntityList = dmpInputTaskService.lambdaQuery().in(DmpInputTaskEntity::getId, taskIds).list();
 		if (CollectionUtil.isEmpty(parentTaskEntityList)) {
 			return new ArrayList<>();
 		}
@@ -82,9 +86,14 @@ public class MercadoLocalOrderShipmentHistoryInitHandler extends DmpInputInitHan
 		DmpCfgApiEntity dmpCfgApiEntity = dmpCfgApiService.getById(typeId);
 
 		for (Map<String, Object> findMongoDatum : findMongoData) {
-			Map<String, Object> shipping = (Map<String, Object>)findMongoDatum.get("shipping");
-			String fid = shipping.get("fid").toString();
-			String path = dmpCfgApiEntity.getApiType().replace("{shippingId}", fid);
+            Map<String, Object> shipping = (Map<String, Object>)findMongoDatum.get("shipping");
+
+            String id = shipping.getOrDefault("id", "").toString();
+            if(StringUtils.isBlank(id) || "0".equals(id)){
+                continue;
+            }
+
+            String path = dmpCfgApiEntity.getApiType().replace("{shippingId}", shipping.get("id").toString());
 
 			//入参
 			HashMap<String, Object> orderParams = new HashMap<>(1);
@@ -127,7 +136,7 @@ public class MercadoLocalOrderShipmentHistoryInitHandler extends DmpInputInitHan
 
 			List<JSONObject> curJsonList = JSONArray.parseArray(apiResult.getData().toString())
                     .stream()
-                    .map(e -> fillDataJsonObject(e, fid)).collect(Collectors.toList());
+                    .map(e -> fillDataJsonObject(e, id)).collect(Collectors.toList());
             if (CollectionUtil.isEmpty(curJsonList)) {
                 continue;
             }
