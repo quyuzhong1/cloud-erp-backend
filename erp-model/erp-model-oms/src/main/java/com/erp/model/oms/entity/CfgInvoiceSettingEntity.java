@@ -125,6 +125,12 @@ public class CfgInvoiceSettingEntity extends BaseEntity<CfgInvoiceSettingEntity>
     @TableField("company_id")
     private String companyId;
 
+    /**
+     * 税种ID（关联cfg_tax_category.category_id，绑定到开票公司）
+     */
+    @TableField("tax_category_id")
+    private String taxCategoryId;
+
     public static final String TYPE = "type";
 
     public static final String COMPANY_NAME = "company_name";
@@ -164,6 +170,8 @@ public class CfgInvoiceSettingEntity extends BaseEntity<CfgInvoiceSettingEntity>
     public static final String TOKEN = "token";
 
     public static final String COMPANY_ID = "company_id";
+
+    public static final String TAX_CATEGORY_ID = "tax_category_id";
 
     @Override
     public Serializable pkVal() {

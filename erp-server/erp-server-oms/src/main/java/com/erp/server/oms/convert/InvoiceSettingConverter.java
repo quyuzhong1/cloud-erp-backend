@@ -97,8 +97,6 @@ public interface InvoiceSettingConverter {
             @Mapping(target = "certPwd", source = "certificatePassword"),  // 证书密码（原senhaCertificado）
             @Mapping(target = "serie", source = "no", qualifiedByName = "intToString"),  // 序列号（原numeroSerieNfe）
             @Mapping(target = "number", source = "startCode"),  // 起始编号（原ultimoNumeroNfe）
-            // 注意：categoryId 现在在 CfgInvoiceSettingDetailEntity 中，不在 CfgInvoiceSettingEntity 中
-            // 如果需要，需要单独处理或从其他地方获取
     })
     CreateCompanyDTO invoiceSettingToCreateCompanyDTO(CfgInvoiceSettingEntity entity);
 
