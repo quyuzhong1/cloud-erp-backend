@@ -156,6 +156,8 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
     private LogisticsLargeService logisticsLargeService;
     @Resource
     private FileFeign fileFeign;
+    @Resource
+    private LogisticsSupplierService logisticsSupplierService;
 
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
@@ -1900,7 +1902,17 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 				weightPackageAllocation = feeRule;
 			}
 		}
-		
+
+        //物流组织
+        String logisticsSupplierId = "";
+        LogisticsChannelEntity logisticsChannelEntity = logisticsChannelService.getById(entity.getChannelId());
+        if(Objects.nonNull(logisticsChannelEntity) && StringUtils.isNotBlank(logisticsChannelEntity.getMainId())){
+            LogisticsSupplierEntity LogisticsSupplierEntity = logisticsSupplierService.getById(logisticsChannelEntity.getMainId());
+            if(Objects.nonNull(LogisticsSupplierEntity)){
+                logisticsSupplierId = LogisticsSupplierEntity.getOrgId();
+            }
+        }
+
 		Map<String, BigDecimal> rateMap = new HashMap<>();
 		boolean skuCostFlag = false;
 		for(SoOutstockDetailEntity soOutstockDetailEntity : soOutstockDetailEntityList) {
@@ -1915,9 +1927,18 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 			smallBagCostAllocationEntity.setSkuNo(skuNo);
 			smallBagCostAllocationEntity.setOutstockDetailId(soOutstockDetailEntity.getId());
 
-            String orgId = CharSequenceUtil.isBlank(packageOrgId) ? wareIdOrgIdMaps.get(soOutstockDetailEntity.getWarehouseId()) : packageOrgId;
-			String orgName = orgIdNameMaps.get(orgId);
-			
+            //组织id
+            String orgId = "";
+            if(CharSequenceUtil.isBlank(packageOrgId) || Objects.equals(CostAllocationOrgTypeEnum.BILL_ORG.getCode(),packageOrgId)){
+                //单据成本组织
+                orgId =  wareIdOrgIdMaps.get(soOutstockDetailEntity.getWarehouseId());
+            }else if(Objects.equals(CostAllocationOrgTypeEnum.LOGISTICS_SUPPLIER_ORG.getCode(),packageOrgId)){
+                orgId = logisticsSupplierId;
+            }else {
+                orgId = packageOrgId;
+            }
+            String orgName = orgIdNameMaps.get(orgId);
+
 			Integer actualQty = soOutstockDetailEntity.getActualQty();
 			BigDecimal skuCostPre = BigDecimal.ZERO;
             String warehouseId = CharSequenceUtil.isBlank(packageWarehouseId) ? soOutstockDetailEntity.getWarehouseId() : packageWarehouseId;
