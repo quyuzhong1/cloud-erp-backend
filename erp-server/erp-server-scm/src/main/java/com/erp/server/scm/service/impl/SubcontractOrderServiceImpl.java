@@ -3,6 +3,7 @@ package com.erp.server.scm.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
@@ -21,6 +22,7 @@ import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
+import com.common.business.utils.IdGeneratorUtil;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
@@ -54,6 +56,7 @@ import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.*;
 import com.erp.rpc.workflow.WorkflowFeign;
+import com.erp.server.scm.kingdee.SyncKingdeeSubcontractBOMService;
 import com.erp.server.scm.kingdee.SyncKingdeeSubcontractOrderService;
 import com.erp.server.scm.mapper.PurchaseOrderMapper;
 import com.erp.server.scm.mapper.SubcontractOrderMapper;
@@ -133,6 +136,9 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
 
     @Resource
     private SyncKingdeeSubcontractOrderService syncKingdeeSubcontractOrderService;
+
+    @Resource
+    private SyncKingdeeSubcontractBOMService syncKingdeeSubcontractBOMService;
 
     @Resource
     private SubcontractChangeService subcontractChangeService;
@@ -425,10 +431,24 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         }
         if (dto.getType().equals(ApproveType.PASS)) {
             //自动生成采购订单
-            autoGeneratePo(entity.getId());
+            //autoGeneratePo(entity.getId());
 
             //发送金蝶
             sendPushTask(Arrays.asList(entity),SyncOperateEnum.OPERATE_APPROVE.getCode());
+
+            SubcontractBOMDTO.KingdeeSubcontractBOMDTO kingdeeSubcontractBOMDTO = new SubcontractBOMDTO.KingdeeSubcontractBOMDTO();
+
+            String id = IdUtil.getSnowflake().nextIdStr();
+            this.lambdaUpdate()
+                    .set(SubcontractOrderEntity::getSubcontractBomId,id)
+                    .eq(SubcontractOrderEntity::getId,entity.getId())
+                    .update();
+            kingdeeSubcontractBOMDTO.setId(id);
+            kingdeeSubcontractBOMDTO.setSourceId(entity.getId());
+            kingdeeSubcontractBOMDTO.setSourceCode(entity.getCode());
+            kingdeeSubcontractBOMDTO.setCode(entity.getSyncKingdeeId());
+            //下推委外用料清单变更单
+            sendSubcontractBOMPushTask(Arrays.asList(kingdeeSubcontractBOMDTO),SyncOperateEnum.OPERATE_PUSH.getCode());
         }
         return Boolean.TRUE;
     }
@@ -1267,16 +1287,17 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         approveDTO.setComment(dto.getComment());
         approveDTO.setUserId(userInfo.getUid());
         approveDTO.setVariablesMap(getVariablesMap(entity));
-        ApiResult<ProcessManagementDTO.ApproveResultDTO> approveResult = workflowFeign.approve(approveDTO);
-        Integer code = approveResult.getCode();
-        if (200 != code) {
-            throw new ServiceException(ApiError.WF_APPROVE_FAILED);
-        }
-        ProcessManagementDTO.ApproveResultDTO data = approveResult.getData();
-        if (ObjectUtil.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()) {
-            // 无需走流程的数据则直接更新状态
-            approveEnd(dto, entity);
-        }
+//        ApiResult<ProcessManagementDTO.ApproveResultDTO> approveResult = workflowFeign.approve(approveDTO);
+//        Integer code = approveResult.getCode();
+//        if (200 != code) {
+//            throw new ServiceException(ApiError.WF_APPROVE_FAILED);
+//        }
+//        ProcessManagementDTO.ApproveResultDTO data = approveResult.getData();
+//        if (ObjectUtil.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()) {
+//            // 无需走流程的数据则直接更新状态
+//            approveEnd(dto, entity);
+//        }
+        approveEnd(dto, entity);
     }
 
     /**
@@ -1594,6 +1615,22 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         List<DmpPushTaskEntity> resultList = new ArrayList<>();
         list.forEach(obj -> {
             DmpPushTaskEntity pushTaskEntity = syncKingdeeSubcontractOrderService.syncDataToKingdee(obj, operate);
+            resultList.add(pushTaskEntity);
+        });
+        //推送金蝶
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+            @Override
+            public void afterCommit() {
+                dmpMqFeign.sendTask(resultList);
+            }
+        });
+    }
+
+    private void sendSubcontractBOMPushTask (List<SubcontractBOMDTO.KingdeeSubcontractBOMDTO> list, String operate) {
+        //审核通过发送金蝶
+        List<DmpPushTaskEntity> resultList = new ArrayList<>();
+        list.forEach(obj -> {
+            DmpPushTaskEntity pushTaskEntity = syncKingdeeSubcontractBOMService.syncDataToKingdee(obj, operate);
             resultList.add(pushTaskEntity);
         });
         //推送金蝶

@@ -50,7 +50,7 @@ public enum KingdeePushModuleEnum {
     STK_TRANSFEROUT("STK_TRANSFEROUT","分步式调出单"),
     AP_PAYABLE("AP_Payable","应付单"),
     BD_RATE("BD_Rate","汇率"),
-
+    SUBCONTRACT_BOM("SUB_PPBOM","委外用料清单"),
 
 
     ;
