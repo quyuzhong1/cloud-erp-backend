@@ -1418,11 +1418,10 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         List<LogisticsBillCostEntity> logisticsBillCostEntityList = logisticsBillCostList.stream()
                 .filter(obj -> obj.getLogisticsBillId().equals(logisticsBillVo.getId())
                         && CharSequenceUtil.equals(logisticsBillVo.getTrackNo(),obj.getTrackNo())
-                        && CharSequenceUtil.equals(ReconciliationStatusEnum.TO_BE_CONFIRM.getCode(),obj.getReconciliationStatus())
                         && CharSequenceUtil.equals(excelDTO.getPayType(),obj.getPayType()))
                 .collect(Collectors.toList());
         LogisticsBillCostEntity logisticsBillCostEntity = null;
-        if (CollUtil.isEmpty(logisticsBillCostEntityList)) {
+        if (CollUtil.isEmpty(logisticsBillCostEntityList) || logisticsBillCostEntityList.stream().noneMatch(obj -> CharSequenceUtil.equals(obj.getReconciliationStatus(), ReconciliationStatusEnum.TO_BE_CONFIRM.getCode()))) {
             if(!ImportTypeEnum.ADD.getCode().equals(importType)){
                 errorMsgList.add("未找到对应对账类型的物流费用单");
             }
