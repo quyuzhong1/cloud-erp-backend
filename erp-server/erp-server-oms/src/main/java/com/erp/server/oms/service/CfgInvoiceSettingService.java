@@ -41,4 +41,12 @@ public interface CfgInvoiceSettingService extends SuperService<CfgInvoiceSetting
     void updateSerialNo(CfgInvoiceSettingDTO.UpdateSerialDTO dto);
 
     void updateSerialNoById(String id, Integer no, Integer startCode);
+
+    /**
+     * 初始化公司列表
+     * 从第三方系统获取公司列表并初始化到cfg_invoice_setting表
+     * 
+     * @return 初始化结果信息
+     */
+    Map<String, Object> initCompanyList();
 }

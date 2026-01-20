@@ -8,11 +8,13 @@ import com.erp.model.oms.entity.TaxCategoryEntity;
 import com.erp.server.oms.service.TaxCategoryService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -68,5 +70,20 @@ public class TaxCategoryController extends BaseController {
                         .orderByAsc(TaxCategoryEntity::getCategoryId)
         );
         return success(list);
+    }
+
+    /**
+     * 初始化税种列表
+     * 从第三方系统获取税种列表并初始化到cfg_tax_category表
+     * 复用定时任务的逻辑
+     *
+     * @author: system
+     * @date: 2025/01/XX
+     * @return: 初始化结果信息
+     */
+    @PostMapping("/initTaxCategoryList")
+    public ApiResult<Map<String, Object>> initTaxCategoryList() {
+        Map<String, Object> result = taxCategoryService.initTaxCategoryList();
+        return success(result);
     }
 }

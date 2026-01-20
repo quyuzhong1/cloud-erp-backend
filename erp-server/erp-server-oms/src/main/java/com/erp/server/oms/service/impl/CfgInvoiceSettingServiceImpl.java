@@ -26,6 +26,7 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.sdk.third.tf.TfFiscalService;
 import com.sdk.third.tf.dto.CreateCompanyDTO;
 import com.sdk.third.tf.dto.CreateCompanyResponseDTO;
+import com.sdk.third.tf.dto.CompanyListResponseDTO;
 import com.sdk.third.tf.dto.EditCompanyDTO;
 import com.sdk.third.tf.entity.AddCompanyDTO;
 import com.sdk.third.tf.entity.UpdateCompanyDTO;
@@ -323,5 +324,195 @@ public class CfgInvoiceSettingServiceImpl extends SuperServiceImpl<CfgInvoiceSet
                 throw new ServiceException("邮编格式不正确，格式应为：XXXXX-XXX");
             }
         }
+    }
+
+    /**
+     * 初始化公司列表
+     * 从第三方系统获取公司列表并初始化到cfg_invoice_setting表
+     * 
+     * @return 初始化结果信息
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Map<String, Object> initCompanyList() {
+        Map<String, Object> result = new HashMap<>();
+        int totalCount = 0;
+        int successCount = 0;
+        int updateCount = 0;
+        int insertCount = 0;
+        int errorCount = 0;
+        long startTime = System.currentTimeMillis();
+        
+        try {
+            log.info("=====开始初始化公司列表=====");
+            
+            // 第一步：获取第一页，确定总页数
+            int pageSize = 20; // 最大20
+            int currentPage = 1;
+            int totalPages = 1;
+            
+            CompanyListResponseDTO.CompanyListDataDTO firstPageResponse = 
+                tfFiscalService.getCompanyListV2(currentPage, pageSize);
+            
+            if (firstPageResponse == null || CollUtil.isEmpty(firstPageResponse.getCompanys())) {
+                log.warn("公司列表为空，初始化任务结束");
+                result.put("totalCount", 0);
+                result.put("successCount", 0);
+                result.put("updateCount", 0);
+                result.put("insertCount", 0);
+                result.put("errorCount", 0);
+                result.put("message", "公司列表为空");
+                return result;
+            }
+            
+            totalPages = firstPageResponse.getTotalPages() != null ? firstPageResponse.getTotalPages() : 1;
+            totalCount = firstPageResponse.getTotal() != null ? firstPageResponse.getTotal() : 0;
+            log.info("公司总数：{}，总页数：{}", totalCount, totalPages);
+            
+            // 处理第一页数据
+            int[] firstPageResult = processCompanyList(firstPageResponse.getCompanys(), successCount, updateCount, insertCount, errorCount);
+            successCount = firstPageResult[0];
+            updateCount = firstPageResult[1];
+            insertCount = firstPageResult[2];
+            errorCount = firstPageResult[3];
+            
+            // 循环获取剩余页数据
+            for (currentPage = 2; currentPage <= totalPages; currentPage++) {
+                log.info("获取公司列表，第{}页/共{}页", currentPage, totalPages);
+                CompanyListResponseDTO.CompanyListDataDTO pageResponse = 
+                    tfFiscalService.getCompanyListV2(currentPage, pageSize);
+                
+                if (pageResponse == null || CollUtil.isEmpty(pageResponse.getCompanys())) {
+                    log.warn("第{}页数据为空，跳过", currentPage);
+                    continue;
+                }
+                
+                int[] pageResult = processCompanyList(pageResponse.getCompanys(), successCount, updateCount, insertCount, errorCount);
+                successCount = pageResult[0];
+                updateCount = pageResult[1];
+                insertCount = pageResult[2];
+                errorCount = pageResult[3];
+            }
+            
+            long endTime = System.currentTimeMillis();
+            log.info("=====公司列表初始化完成=====");
+            log.info("总耗时：{}ms，总数={}，成功={}，更新={}，新增={}，失败={}", 
+                (endTime - startTime), totalCount, successCount, updateCount, insertCount, errorCount);
+            
+            result.put("totalCount", totalCount);
+            result.put("successCount", successCount);
+            result.put("updateCount", updateCount);
+            result.put("insertCount", insertCount);
+            result.put("errorCount", errorCount);
+            result.put("message", "初始化完成");
+            result.put("duration", endTime - startTime);
+            
+        } catch (Exception e) {
+            log.error("初始化公司列表失败", e);
+            result.put("totalCount", totalCount);
+            result.put("successCount", successCount);
+            result.put("updateCount", updateCount);
+            result.put("insertCount", insertCount);
+            result.put("errorCount", errorCount);
+            result.put("message", "初始化失败：" + e.getMessage());
+            throw new ServiceException("初始化公司列表失败：" + e.getMessage(), e);
+        }
+        
+        return result;
+    }
+
+    /**
+     * 处理公司列表
+     * 
+     * @param companyList 公司列表
+     * @param successCount 成功计数
+     * @param updateCount 更新计数
+     * @param insertCount 新增计数
+     * @param errorCount 错误计数
+     * @return [成功数, 更新数, 新增数, 错误数]
+     */
+    private int[] processCompanyList(List<CompanyListResponseDTO.CompanyInfoDTO> companyList, 
+                                     int successCount, int updateCount, int insertCount, int errorCount) {
+        for (CompanyListResponseDTO.CompanyInfoDTO companyInfo : companyList) {
+            try {
+                String companyId = companyInfo.getCompanyId() != null ? String.valueOf(companyInfo.getCompanyId()) : null;
+                String cnpj = companyInfo.getCnpj();
+                String token = companyInfo.getToken();
+                
+                if (StrUtil.isBlank(companyId) || StrUtil.isBlank(cnpj)) {
+                    log.warn("公司ID或CNPJ为空，跳过：companyId={}, cnpj={}", companyId, cnpj);
+                    errorCount++;
+                    continue;
+                }
+                
+                // 查询本地是否存在（根据company_id或cnpj）
+                CfgInvoiceSettingEntity localEntity = this.getOne(
+                    new LambdaQueryWrapper<CfgInvoiceSettingEntity>()
+                        .eq(CfgInvoiceSettingEntity::getCompanyId, companyId)
+                        .or()
+                        .eq(CfgInvoiceSettingEntity::getLeiCode, cnpj)
+                        .eq(CfgInvoiceSettingEntity::getIsDeleted, false)
+                        .last("LIMIT 1")
+                );
+                
+                if (localEntity == null) {
+                    // 新增
+                    localEntity = new CfgInvoiceSettingEntity();
+                    localEntity.setCompanyId(companyId);
+                    localEntity.setLeiCode(cnpj);
+                    localEntity.setCompanyName(companyInfo.getName());
+                    localEntity.setStateTaxNo(companyInfo.getIe());
+                    localEntity.setTaxType(companyInfo.getInvoiceType());
+                    localEntity.setDictCompanyType(companyInfo.getUnit());
+                    localEntity.setEmail(companyInfo.getEmail());
+                    localEntity.setPostCode(companyInfo.getCep());
+                    localEntity.setAddress(companyInfo.getAddress());
+                    localEntity.setDoorplateNo(companyInfo.getHouseNumber());
+                    localEntity.setDistrict(companyInfo.getTown());
+                    localEntity.setCity(companyInfo.getCity());
+                    localEntity.setState(companyInfo.getState());
+                    localEntity.setCertificateUrl(companyInfo.getCertFile());
+                    localEntity.setCertificatePassword(companyInfo.getCertPwd());
+                    localEntity.setNo(companyInfo.getSerie());
+                    localEntity.setStartCode(companyInfo.getNumber() != null ? String.valueOf(companyInfo.getNumber()) : null);
+                    localEntity.setToken(token);
+                    localEntity.setType("cnpj"); // 默认类型
+                    localEntity.setDisabled(false);
+                    
+                    this.save(localEntity);
+                    log.info("新增公司成功：companyId={}, cnpj={}, name={}", companyId, cnpj, companyInfo.getName());
+                    successCount++;
+                    insertCount++;
+                } else {
+                    // 更新（更新token、company_id等信息）
+                    boolean needUpdate = false;
+                    if (StrUtil.isBlank(localEntity.getCompanyId()) || !localEntity.getCompanyId().equals(companyId)) {
+                        localEntity.setCompanyId(companyId);
+                        needUpdate = true;
+                    }
+                    if (StrUtil.isBlank(localEntity.getToken()) || !localEntity.getToken().equals(token)) {
+                        localEntity.setToken(token);
+                        needUpdate = true;
+                    }
+                    // 可以更新其他字段，但这里只更新关键字段
+                    
+                    if (needUpdate) {
+                        this.updateById(localEntity);
+                        log.info("更新公司成功：companyId={}, cnpj={}", companyId, cnpj);
+                        successCount++;
+                        updateCount++;
+                    } else {
+                        log.info("公司数据未变化，跳过：companyId={}, cnpj={}", companyId, cnpj);
+                    }
+                }
+                
+            } catch (Exception e) {
+                log.error("处理公司失败：companyId={}, cnpj={}", 
+                    companyInfo.getCompanyId(), companyInfo.getCnpj(), e);
+                errorCount++;
+            }
+        }
+        
+        return new int[]{successCount, updateCount, insertCount, errorCount};
     }
 }

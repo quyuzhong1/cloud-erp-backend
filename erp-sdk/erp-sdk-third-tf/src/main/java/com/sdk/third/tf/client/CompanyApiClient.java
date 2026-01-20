@@ -355,4 +355,51 @@ public class CompanyApiClient {
             throw new RuntimeException("获取公司列表失败: 响应数据为空");
         }
     }
+
+    /**
+     * 测试main方法
+     * 用于测试获取公司列表接口
+     */
+    public static void main(String[] args) {
+        try {
+            String token = "2469149568994570b542f7ae950dcc1b";
+            
+            // 创建TfApiClient实例（由于CompanyApiClient依赖TfApiClient，需要先创建）
+            TfApiClient tfApiClient = new TfApiClient();
+            
+            // 创建CompanyApiClient实例并注入TfApiClient
+            CompanyApiClient companyApiClient = new CompanyApiClient();
+            // 使用反射设置私有字段（或者将TfApiClient改为public setter）
+            try {
+                java.lang.reflect.Field field = CompanyApiClient.class.getDeclaredField("tfApiClient");
+                field.setAccessible(true);
+                field.set(companyApiClient, tfApiClient);
+            } catch (Exception e) {
+                log.error("设置TfApiClient失败", e);
+                return;
+            }
+            
+            // 调用获取公司列表接口
+            // 签名的appKey就是header的token，所以appKey = token
+            CompanyListResponseDTO.CompanyListDataDTO result = companyApiClient.getCompanyList(1, 20, token, token);
+            
+            // 打印结果
+            log.info("获取公司列表成功:");
+            log.info("总数: {}", result.getTotal());
+            log.info("总页数: {}", result.getTotalPages());
+            log.info("当前页: {}", result.getPage());
+            log.info("公司列表: {}", JSONUtil.toJsonStr(result.getCompanys()));
+            
+            System.out.println("=================== 获取公司列表结果 ===================");
+            System.out.println("总数: " + result.getTotal());
+            System.out.println("总页数: " + result.getTotalPages());
+            System.out.println("当前页: " + result.getPage());
+            System.out.println("公司列表: " + JSONUtil.toJsonPrettyStr(result.getCompanys()));
+            System.out.println("=======================================================");
+            
+        } catch (Exception e) {
+            log.error("获取公司列表失败", e);
+            e.printStackTrace();
+        }
+    }
 }
