@@ -28,6 +28,8 @@ import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.file.feign.FileFeign;
 import com.erp.server.oms.convert.NfeInvoiceConverter;
 import com.erp.server.oms.service.*;
+import com.common.business.constant.BusinessCommonConstants;
+import com.erp.model.oms.entity.CfgSettingEntity;
 import com.sdk.oms.mercadolocal.dto.MercadoInvoiceDTO;
 import com.sdk.oms.mercadolocal.service.MercadoLocalSdkClientService;
 import com.sdk.third.tf.TfFiscalService;
@@ -37,6 +39,8 @@ import com.sdk.third.tf.dto.CreateInvoiceDTO;
 import com.sdk.third.tf.dto.CreateInvoiceResponseDTO;
 import com.sdk.third.tf.dto.GetDanfeDTO;
 import com.sdk.third.tf.dto.GetDanfeResponseDTO;
+import com.sdk.third.tf.dto.InvalidInvoiceDTO;
+import com.sdk.third.tf.dto.InvalidInvoiceResponseDTO;
 import com.sdk.third.tf.dto.InvoiceDetailResponseDTO;
 import com.sdk.third.tf.dto.NfeInvoiceDTO;
 import com.sdk.third.tf.dto.ReturnInvoiceDTO;
@@ -121,6 +125,8 @@ public class NfeInvoiceService {
     private FileFeign filefeign;
     @Resource
     private OperateLogService operateLogService;
+    @Resource
+    private CfgSettingService cfgSettingService;
     @Resource
     private CfgRuleInvoiceAmountService cfgRuleInvoiceAmountService;
 
@@ -451,7 +457,7 @@ public class NfeInvoiceService {
         dto.setTransactionType("1");
         dto.setModel("55");
         dto.setIssuanceType("1");
-        dto.setAmbiente("1");
+        dto.setAmbiente(getAmbiente());
         dto.setTotalDiscountAmount(BigDecimal.ZERO);
         dto.setCliente(buildClienteDTO(soB2cEntity, invoiceSettingDetail));
         dto.setProducts(buildProductDTOList(soB2cEntity, invoiceSettingDetail, invoiceSetting, dictInvoiceRule, ratio));
@@ -1272,7 +1278,7 @@ public class NfeInvoiceService {
         returnDetailDTO.setTransactionType("1"); // 出项发票
         returnDetailDTO.setModel("55"); // NFe
         returnDetailDTO.setIssuanceType("1"); // 正常
-        returnDetailDTO.setAmbiente("1"); // 生产环境
+        returnDetailDTO.setAmbiente(getAmbiente());
         returnDetailDTO.setTotalDiscountAmount(BigDecimal.ZERO);
         
         // 客户信息（和开具发票保持一致）
@@ -1300,9 +1306,11 @@ public class NfeInvoiceService {
         return returnDetailDTO;
     }
     /**
-     * 作废
+     * 作废发票号（旧接口）
+     * @deprecated 请使用 invalidInvoiceV2 方法
      * @param nfeVoidedDTO
      */
+    @Deprecated
     public void voidedInvoice(NfeInvoiceDTO.NfeVoidedDTO nfeVoidedDTO) {
         Object obj;
         try {
@@ -1314,6 +1322,69 @@ public class NfeInvoiceService {
         }
         //{"retorno":{"attributes":{"versao":"4.00"},"infInut":{"tpAmb":"1","verAplic":"SP_NFE_PL009_V4","cStat":"102","xMotivo":"Inutilização de número homologado","cUF":"35","ano":"25","CNPJ":"59399522000150","mod":"55","serie":"1","nNFIni":"1","nNFFin":"2","dhRecbto":"2025-07-10T00:53:25-03:00","nProt":"135251896535761"}}}
 
+    }
+
+    /**
+     * 作废发票号（新接口V2）
+     * 使用新接口路径：/api/invoice/invalid
+     * 作废发票一般使用场景为发票号跳号时使用
+     * 
+     * @param cfgInvoiceSettingId 发票设置ID
+     * @param serie 发票序列号
+     * @param startNumber 作废起始号
+     * @param endNumber 作废结束号
+     * @param motivo 作废原因
+     * @return 作废发票响应数据DTO（data部分）
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public InvalidInvoiceResponseDTO.InvalidInvoiceDataDTO invalidInvoiceV2(
+            String cfgInvoiceSettingId, String serie, String startNumber, String endNumber, String motivo) {
+        if (CharSequenceUtil.isBlank(cfgInvoiceSettingId)) {
+            throw new ServiceException("发票设置ID不能为空");
+        }
+        if (CharSequenceUtil.isBlank(serie)) {
+            throw new ServiceException("发票序列号不能为空");
+        }
+        if (CharSequenceUtil.isBlank(startNumber)) {
+            throw new ServiceException("作废起始号不能为空");
+        }
+        if (CharSequenceUtil.isBlank(endNumber)) {
+            throw new ServiceException("作废结束号不能为空");
+        }
+        if (CharSequenceUtil.isBlank(motivo)) {
+            throw new ServiceException("作废原因不能为空");
+        }
+        
+        // 获取发票设置信息
+        CfgInvoiceSettingEntity settingEntity = cfgInvoiceSettingService.getById(cfgInvoiceSettingId);
+        if (settingEntity == null || CharSequenceUtil.isBlank(settingEntity.getToken())) {
+            throw new ServiceException("发票授权信息不存在或token为空");
+        }
+        String companyToken = settingEntity.getToken();
+        
+        // 构建作废发票DTO
+        InvalidInvoiceDTO invalidInvoiceDTO = new InvalidInvoiceDTO();
+        invalidInvoiceDTO.setModelo("55"); // 默认NFe模式
+        invalidInvoiceDTO.setAmbiente(getAmbiente()); // 从配置获取ambiente
+        invalidInvoiceDTO.setSerie(serie);
+        invalidInvoiceDTO.setStartNumber(startNumber);
+        invalidInvoiceDTO.setEndNumber(endNumber);
+        invalidInvoiceDTO.setMotivo(motivo);
+        
+        log.info("作废发票号（新接口V2）, invoiceSettingId: {}, serie: {}, startNumber: {}, endNumber: {}", 
+            cfgInvoiceSettingId, serie, startNumber, endNumber);
+        
+        // 调用新接口
+        InvalidInvoiceResponseDTO.InvalidInvoiceDataDTO response;
+        try {
+            response = tfFiscalService.invalidInvoiceV2(invalidInvoiceDTO, companyToken);
+            log.info("作废发票号成功, uuid: {}, xml: {}", response.getUuid(), response.getXml());
+        } catch (Exception e) {
+            log.error("作废发票号失败", e);
+            throw new ServiceException("作废发票号失败: " + e.getMessage());
+        }
+        
+        return response;
     }
     /**
      * 更新Cce数据
@@ -1407,6 +1478,59 @@ public class NfeInvoiceService {
        }
       omsAttachmentService.batchAddOrUpdate(addOrUpdateList);
     }
+    /**
+     * 获取ambiente配置值
+     * ambiente用于区分线上和测试的开票环境
+     * 根据业务要求：测试和UAT系统传"1"，正式系统传"2"
+     * 
+     * 优先级：
+     * 1. 从cfg_setting表读取（key="tfAmbiente"），value可以是字符串"1"或"2"，也可以是JSON格式{"ambiente":"1"}或{"ambiente":"2"}
+     * 2. 如果没有配置，则根据Spring Profile判断：
+     *    - prod环境 → "2"（正式系统）
+     *    - 其他环境（test/uat/dev） → "1"（测试/UAT系统）
+     * 
+     * @return ambiente值，"1"或"2"
+     */
+    private String getAmbiente() {
+        try {
+            // 从cfg_setting表读取（key="tfAmbiente"）
+            CfgSettingEntity tfAmbienteSetting = cfgSettingService.getSettingByKey("tfAmbiente");
+            if (tfAmbienteSetting != null && CharSequenceUtil.isNotBlank(tfAmbienteSetting.getValue())) {
+                String ambiente = tfAmbienteSetting.getValue().trim();
+                // 如果是JSON格式，尝试解析
+                if (ambiente.startsWith("{")) {
+                    try {
+                        JSONObject jsonObject = JSONUtil.parseObj(ambiente);
+                        ambiente = jsonObject.getStr("ambiente");
+                    } catch (Exception e) {
+                        log.warn("解析cfg_setting(tfAmbiente)的JSON失败，将使用默认策略", e);
+                    }
+                }
+                // 验证值是否有效（只能是"1"或"2"）
+                if (CharSequenceUtil.isNotBlank(ambiente) && ("1".equals(ambiente) || "2".equals(ambiente))) {
+                    log.debug("从cfg_setting表(tfAmbiente)读取ambiente配置: {}", ambiente);
+                    return ambiente;
+                } else {
+                    log.warn("cfg_setting(tfAmbiente)的值无效: {}, 将使用默认策略", ambiente);
+                }
+            }
+            
+            // 根据Spring Profile判断
+            // 根据业务要求：测试和UAT系统传"1"，正式系统传"2"
+            boolean isProd = BusinessCommonConstants.hasProfile("prod");
+            // 正式系统传"2"，测试/UAT系统传"1"
+            String ambiente = isProd ? "2" : "1";
+            log.info("根据Spring Profile判断ambiente: profile包含prod={}, ambiente={} (prod传2, 其他传1)", isProd, ambiente);
+            return ambiente;
+            
+        } catch (Exception e) {
+            log.error("获取ambiente配置失败，使用默认值", e);
+            // 默认使用"1"（测试/UAT系统），避免误操作生产数据
+            // 如果系统是prod环境，建议在cfg_setting表中配置key="tfAmbiente", value="2"
+            return "1";
+        }
+    }
+
     /**
      * 读取文件
      * @author will
