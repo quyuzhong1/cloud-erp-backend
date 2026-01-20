@@ -497,9 +497,6 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
                     if (CharSequenceUtil.equals(ReconciliationStatusEnum.CONFIRMED.getCode(),logisticsBillCostEntity.getReconciliationStatus())) {
                         errorMsgList.add("物流费用单已确认不支持更新");
                     }
-                    if (CharSequenceUtil.isNotBlank(logisticsBillCostEntity.getReconciliationMonth()) &&  !CharSequenceUtil.equals(logisticsBillVo.getReconciliationMonth(),logisticsBillCostEntity.getReconciliationMonth())) {
-                        errorMsgList.add("物流费用单对账月份不一致，不支持更新");
-                    }
                 } else{
                     if (CharSequenceUtil.equals(logisticsBillVo.getReconciliationMonth(),logisticsBillCostEntity.getReconciliationMonth())) {
                         errorMsgList.add("已存在相同对账月份的物流费用单，不支持新增");
