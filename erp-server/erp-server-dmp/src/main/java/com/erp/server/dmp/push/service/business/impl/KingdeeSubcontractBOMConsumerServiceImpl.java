@@ -112,14 +112,10 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
             StringBuffer allKey = FastJsonUtil.getAllKey(json);
             ArrayList<String> apiFieldList = (ArrayList) Arrays.stream(allKey.toString().split(",")).collect(Collectors.toList());
             param.setNeedUpDateFields(apiFieldList);
-            //更新数据
-            Boolean isAdd = kingdeeCommonService.saveAndAutoApprove(platformEntity, map, apiUtils, json, param, type);
-            if (isAdd) {
-                //给明细id赋值
-                JSONArray jsonArray = setDetailIdForJSONObject(apiUtils, map);
-                //更新明细id
-                updateKingdeeDetailId(jsonArray);
-            }
+            //下推
+            kingdeeCommonService.push(platformEntity, map, apiUtils,apiUtils, json, param, type,json);
+            //Boolean isAdd = kingdeeCommonService.saveAndAutoApprove(platformEntity, map, apiUtils, json, param, type);
+
         }
 
     }

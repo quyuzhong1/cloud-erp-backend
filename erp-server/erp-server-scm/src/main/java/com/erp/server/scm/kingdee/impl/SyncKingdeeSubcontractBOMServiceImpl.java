@@ -29,25 +29,15 @@ import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.scm.dto.SubcontractBOMDTO;
 import com.erp.model.scm.entity.ScmPushMsgEntity;
-import com.erp.model.scm.entity.SubcontractOrderDetailEntity;
-import com.erp.model.scm.entity.SupplierEntity;
-import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
-import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.scm.kingdee.SyncKingdeeSubcontractBOMService;
 import com.erp.server.scm.service.ScmPushMsgService;
-import com.erp.server.scm.service.SubcontractOrderDetailService;
-import com.erp.server.scm.service.SupplierService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import javax.annotation.Resource;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * @Author: wtr
@@ -61,25 +51,10 @@ import java.util.stream.Collectors;
 public class SyncKingdeeSubcontractBOMServiceImpl implements SyncKingdeeSubcontractBOMService {
 
     @Resource
-    private SubcontractOrderDetailService subcontractOrderDetailService;
-
-    @Resource
-    private SupplierService supplierService;
-
-    @Resource
-    private WmsTaskFeign wmsTaskFeign;
-
-    @Resource
-    private SysUserFeign sysUserFeign;
-
-    @Resource
     private DmpMqFeign dmpMqFeign;
 
     @Resource
     private ScmPushMsgService scmPushMsgService;
-
-    @Resource
-    private IdGeneratorUtil idGeneratorUtil;
 
     /**
      * 组装数据发送到金蝶
@@ -146,7 +121,9 @@ public class SyncKingdeeSubcontractBOMServiceImpl implements SyncKingdeeSubcontr
         if (SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
             return resultMap;
         }
+
         resultMap.put("FPPbomBillNo", "SUBBOM00002303");
+
         resultMap.put("TargetBillTypeId", "SUB_OutSrcBOMChange");
         return resultMap;
     }

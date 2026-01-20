@@ -341,7 +341,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         }
 
         //新增明细
-        subcontractOrderDetailService.update(updateDTO.getDetailList(),subcontractOrderEntity.getId());
+        subcontractOrderDetailService.update(updateDTO.getDetailList(),subcontractOrderEntity);
 
         // 记录主单操作日志
         log.info("编辑 开始记录委外订单日志数据，单号：【{}】", subcontractOrderEntity.getCode());
@@ -1297,7 +1297,6 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
             // 无需走流程的数据则直接更新状态
             approveEnd(dto, entity);
         }
-        approveEnd(dto, entity);
     }
 
     /**
