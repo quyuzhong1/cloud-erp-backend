@@ -307,6 +307,11 @@ public class CfgInvoiceSettingDTO implements Serializable {
         private String certificatePassword;
 
         /**
+         * 税种ID（关联cfg_tax_category.category_id）
+         */
+        private String taxCategoryId;
+
+        /**
          * name、value、
          */
         private List<ShopInfoDTO> shopList;

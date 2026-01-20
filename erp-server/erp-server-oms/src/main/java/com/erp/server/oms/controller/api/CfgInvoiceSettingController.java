@@ -162,4 +162,21 @@ public class CfgInvoiceSettingController extends BaseController {
         return success(result);
     }
 
+    /**
+     * 绑定税种ID
+     * 将税种ID绑定到发票设置
+     *
+     * @author: system
+     * @date: 2025/01/XX
+     * @param id 发票设置ID
+     * @param taxCategoryId 税种ID（cfg_tax_category.category_id）
+     * @return: 是否成功
+     **/
+    @PostMapping("/bindTaxCategory")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "绑定税种")
+    public ApiResult<Boolean> bindTaxCategory(@RequestParam String id, @RequestParam(required = false) String taxCategoryId) {
+        Boolean result = cfgInvoiceSettingService.bindTaxCategory(id, taxCategoryId);
+        return success(result);
+    }
+
 }

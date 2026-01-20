@@ -307,4 +307,29 @@ public class TaxCategoryServiceImpl extends SuperServiceImpl<TaxCategoryMapper, 
 
         return new int[]{successCount, updateCount, skipCount, errorCount};
     }
+
+    /**
+     * 根据公司ID查询税种列表
+     * 查询指定公司关联的税种数据
+     * 
+     * @param companyId 公司ID（cfg_invoice_setting.company_id）
+     * @return 税种列表
+     */
+    @Override
+    public List<TaxCategoryEntity> getByCompanyId(String companyId) {
+        if (StrUtil.isBlank(companyId)) {
+            log.warn("公司ID为空，返回空列表");
+            return new ArrayList<>();
+        }
+        
+        List<TaxCategoryEntity> list = this.list(
+            new LambdaQueryWrapper<TaxCategoryEntity>()
+                .eq(TaxCategoryEntity::getCompanyId, companyId)
+                .eq(TaxCategoryEntity::getIsDeleted, false)
+                .orderByAsc(TaxCategoryEntity::getCategoryId)
+        );
+        
+        log.info("根据公司ID查询税种列表：companyId={}, 数量={}", companyId, list.size());
+        return list;
+    }
 }

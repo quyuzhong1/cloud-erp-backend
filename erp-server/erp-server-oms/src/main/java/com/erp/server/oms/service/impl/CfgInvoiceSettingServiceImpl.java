@@ -67,6 +67,8 @@ public class CfgInvoiceSettingServiceImpl extends SuperServiceImpl<CfgInvoiceSet
     private TfFiscalService tfFiscalService;
     @Resource
     private CfgInvoiceSettingService cfgInvoiceSettingService;
+    @Resource
+    private TaxCategoryService taxCategoryService;
 
     @Override
     public PagingVO<CfgInvoiceSettingDTO.PagingViewDTO> paging(PagingDTO<CfgInvoiceSettingDTO.PagingParamDTO> dto) {
@@ -514,5 +516,52 @@ public class CfgInvoiceSettingServiceImpl extends SuperServiceImpl<CfgInvoiceSet
         }
         
         return new int[]{successCount, updateCount, insertCount, errorCount};
+    }
+
+    /**
+     * 绑定税种ID
+     * 将税种ID绑定到发票设置
+     * 
+     * @param id 发票设置ID
+     * @param taxCategoryId 税种ID（cfg_tax_category.category_id）
+     * @return 是否成功
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean bindTaxCategory(String id, String taxCategoryId) {
+        // 查询发票设置是否存在
+        CfgInvoiceSettingEntity entity = super.getById(id);
+        if (ObjectUtil.isEmpty(entity)) {
+            throw new ServiceException("发票设置不存在");
+        }
+        
+        // 如果提供了taxCategoryId，验证税种是否存在
+        if (StrUtil.isNotBlank(taxCategoryId)) {
+            TaxCategoryEntity taxCategory = taxCategoryService.getByCategoryId(taxCategoryId);
+            if (ObjectUtil.isEmpty(taxCategory)) {
+                throw new ServiceException("税种不存在或已删除，税种ID：" + taxCategoryId);
+            }
+            // 验证税种是否已禁用
+            if (Boolean.TRUE.equals(taxCategory.getDisabled())) {
+                throw new ServiceException("税种已禁用，无法绑定，税种ID：" + taxCategoryId);
+            }
+            log.info("税种验证通过：taxCategoryId={}, descricao={}", taxCategoryId, taxCategory.getDescricao());
+        }
+        
+        // 更新taxCategoryId
+        boolean update = this.lambdaUpdate()
+                .eq(CfgInvoiceSettingEntity::getId, id)
+                .set(CfgInvoiceSettingEntity::getTaxCategoryId, taxCategoryId)
+                .update();
+        
+        if (update) {
+            log.info("绑定税种成功：invoiceSettingId={}, taxCategoryId={}", id, taxCategoryId);
+            // 记录操作日志
+            String msg = StrUtil.format("用户【{}】绑定税种，发票设置ID：{}，税种ID：{}", 
+                UserContext.getDefaultLoginUser().getUserName(), id, taxCategoryId);
+            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.CFG_VAT_INVOICE.getCode(), id, "绑定税种");
+        }
+        
+        return update;
     }
 }

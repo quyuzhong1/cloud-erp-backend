@@ -49,4 +49,14 @@ public interface CfgInvoiceSettingService extends SuperService<CfgInvoiceSetting
      * @return 初始化结果信息
      */
     Map<String, Object> initCompanyList();
+
+    /**
+     * 绑定税种ID
+     * 将税种ID绑定到发票设置
+     * 
+     * @param id 发票设置ID
+     * @param taxCategoryId 税种ID（cfg_tax_category.category_id）
+     * @return 是否成功
+     */
+    Boolean bindTaxCategory(String id, String taxCategoryId);
 }
