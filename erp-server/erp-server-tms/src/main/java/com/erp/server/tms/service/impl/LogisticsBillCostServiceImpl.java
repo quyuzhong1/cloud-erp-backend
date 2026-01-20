@@ -1407,7 +1407,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
     private void checkImportData (LogisticsBillCostExcelDTO excelDTO, LogisticsBillDTO.LogisticsBillVo logisticsBillVo,List<LogisticsBillCostEntity> logisticsBillCostList
             ,  String dictCostAttribution, String importType,List<String> errorMsgList) {
         if (CharSequenceUtil.isBlank(excelDTO.getPlatformCode()) && CharSequenceUtil.isBlank(excelDTO.getSoCode())
-           && CharSequenceUtil.isBlank(excelDTO.getSoDeliveryCode()) && CharSequenceUtil.isBlank(excelDTO.getTrackNo())) {
+                && CharSequenceUtil.isBlank(excelDTO.getSoDeliveryCode()) && CharSequenceUtil.isBlank(excelDTO.getTrackNo())) {
             throw new ServiceException(ApiError.LOGISTICS_BILL_COST_IMPORT_NOT_EXIST_BILL);
         }
         //物流单明细
@@ -1421,14 +1421,17 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
                         && CharSequenceUtil.equals(excelDTO.getPayType(),obj.getPayType()))
                 .collect(Collectors.toList());
         LogisticsBillCostEntity logisticsBillCostEntity = null;
-        if (CollUtil.isEmpty(logisticsBillCostEntityList) || logisticsBillCostEntityList.stream().noneMatch(obj -> CharSequenceUtil.equals(obj.getReconciliationStatus(), ReconciliationStatusEnum.TO_BE_CONFIRM.getCode()))) {
+        if (CollUtil.isEmpty(logisticsBillCostEntityList)) {
             if(!ImportTypeEnum.ADD.getCode().equals(importType)){
                 errorMsgList.add("未找到对应对账类型的物流费用单");
             }
         } else {
             if(logisticsBillCostEntityList.size() > 1) {
                 if (ImportTypeEnum.UPDATE.getCode().equals(importType)) {
-                    errorMsgList.add("出库单和运输单号对应对账类型的物流费用单有多条，请在页面编辑指定物流费用单");
+                    long count = logisticsBillCostEntityList.stream().filter(obj -> CharSequenceUtil.equals(obj.getReconciliationStatus(), ReconciliationStatusEnum.TO_BE_CONFIRM.getCode())).count();
+                    if (count > 1) {
+                        errorMsgList.add("出库单和运输单号对应对账类型的物流费用单有多条，请在页面编辑指定物流费用单");
+                    }
                 } else {
                     //新增时判断是否已存在相同对账月份
                     long hasCount = logisticsBillCostEntityList.stream().filter(obj -> CharSequenceUtil.equals(obj.getReconciliationMonth(), logisticsBillVo.getReconciliationMonth())).count();
@@ -1445,10 +1448,14 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
                 if (!CharSequenceUtil.equals(logisticsBillCostEntity.getType(),dictCostAttribution)) {
                     errorMsgList.add(CharSequenceUtil.format("需要导入【{}】物流单费用信息",DictCostAttributionEnum.getName(dictCostAttribution)));
                 }
-                if (ImportTypeEnum.UPDATE.getCode().equals(importType) && CharSequenceUtil.equals(ReconciliationStatusEnum.CONFIRMED.getCode(),logisticsBillCostEntity.getReconciliationStatus())) {
-                    errorMsgList.add("物流费用单已确认不支持更新");
-                }
-                if (ImportTypeEnum.ADD.getCode().equals(importType)) {
+                if (ImportTypeEnum.UPDATE.getCode().equals(importType) ) {
+                    if (CharSequenceUtil.equals(ReconciliationStatusEnum.CONFIRMED.getCode(),logisticsBillCostEntity.getReconciliationStatus())) {
+                        errorMsgList.add("物流费用单已确认不支持更新");
+                    }
+                    if (!CharSequenceUtil.equals(logisticsBillVo.getReconciliationMonth(),logisticsBillCostEntity.getReconciliationMonth())) {
+                        errorMsgList.add("物流费用单对账月份不一致，不支持更新");
+                    }
+                } else{
                     if (CharSequenceUtil.equals(logisticsBillVo.getReconciliationMonth(),logisticsBillCostEntity.getReconciliationMonth())) {
                         errorMsgList.add("已存在相同对账月份的物流费用单，不支持新增");
                     }
@@ -1458,7 +1465,6 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
                 }
             }
         }
-
         if (ObjectUtil.isNotEmpty(logisticsBillCostEntity)){
             String currency = CharSequenceUtil.isBlank(excelDTO.getCurrency()) ? logisticsBillCostEntity.getCurrency() : excelDTO.getCurrency();
             excelDTO.setCurrency(currency);
