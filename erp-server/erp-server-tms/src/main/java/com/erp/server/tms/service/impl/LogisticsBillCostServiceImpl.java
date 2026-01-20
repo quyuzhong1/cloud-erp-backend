@@ -6,6 +6,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
@@ -2164,6 +2165,86 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 
     @Override
     public LogisticsBillCostDTO.TotalCountDTO listTotalCount(PagingDTO<LogisticsBillCostDTO.PagingParamDTO> dto) {
-        return baseMapper.listTotalCount(dto);
+        List<LogisticsBillCostDTO.ListDTO> list = baseMapper.listTotalCount(dto);
+        if (CollUtil.isEmpty(list)) {
+            return new LogisticsBillCostDTO.TotalCountDTO();
+        }
+
+        List<String> mainIdList = list.stream().map(LogisticsBillCostDTO.ListDTO::getId).distinct().collect(Collectors.toList());
+        Map<String, List<CostViewDTO>> costListMap = tmsCostDetailService.listCostByMainIdList(mainIdList).stream()
+                .collect(Collectors.groupingBy(l -> l.getMainId() + "_" + l.getDictCostCategory() + "_" + l.getType()));
+
+        for (LogisticsBillCostDTO.ListDTO listDTO : list) {
+            //预计运费
+            List<CostViewDTO> shippingCostList = costListMap.get(listDTO.getId() + "_" + DictCostCategoryEnum.SHIPPING_COST.getCode() + "_" + LogisticsBillCostTypeEnum.ACTUAL.getCode());
+            if (CollUtil.isNotEmpty(shippingCostList)) {
+                String currency = StrUtil.blankToDefault(shippingCostList.get(0).getCurrency(), "CNY");
+                BigDecimal rate = dmpTaskFeign.getRate(listDTO.getDeliveryTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), currency);
+                if (ObjectUtil.isEmpty(rate)) {
+                    log.error("币别【{}】,汇率为空，请维护汇率后再提交", currency);
+                    throw new ServiceException(currency + "币别" + listDTO.getDeliveryTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")) + "日期" + "汇率为空，请维护汇率后再提交");
+                }
+                BigDecimal actualShippingCost = shippingCostList.stream().map(TmsCostDetailDTO.CostViewDTO::getCostValue).reduce(BigDecimal.ZERO, BigDecimal::add);
+                listDTO.setActualShippingCost(MathUtil.multiplyWithFour(actualShippingCost, rate));
+            }
+            //实际关税费用(总)
+            List<CostViewDTO> declareCostList = costListMap.get(listDTO.getId() + "_" + DictCostCategoryEnum.DECLARE_COST.getCode() + "_" + LogisticsBillCostTypeEnum.ACTUAL.getCode());
+            if (CollUtil.isNotEmpty(declareCostList)) {
+                String currency = StrUtil.blankToDefault(shippingCostList.get(0).getCurrency(), "CNY");
+                BigDecimal rate = dmpTaskFeign.getRate(listDTO.getDeliveryTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), currency);
+                if (ObjectUtil.isEmpty(rate)) {
+                    log.error("币别【{}】,汇率为空，请维护汇率后再提交", currency);
+                    throw new ServiceException(currency + "币别" + listDTO.getDeliveryTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")) + "日期" + "汇率为空，请维护汇率后再提交");
+                }
+                BigDecimal actualDeclareCost = declareCostList.stream().map(TmsCostDetailDTO.CostViewDTO::getCostValue).reduce(BigDecimal.ZERO, BigDecimal::add);
+                listDTO.setActualDeclareCost(MathUtil.multiplyWithFour(actualDeclareCost, rate));
+            }
+            //实际可抵扣税金[总]
+            List<CostViewDTO> deductibleTaxList = costListMap.get(listDTO.getId() + "_" + DictCostCategoryEnum.DEDUCTIBLE_TAX.getCode() + "_" + LogisticsBillCostTypeEnum.ACTUAL.getCode());
+            if (CollUtil.isNotEmpty(deductibleTaxList)) {
+                String currency = StrUtil.blankToDefault(shippingCostList.get(0).getCurrency(), "CNY");
+                BigDecimal rate = dmpTaskFeign.getRate(listDTO.getDeliveryTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), currency);
+                if (ObjectUtil.isEmpty(rate)) {
+                    log.error("币别【{}】,汇率为空，请维护汇率后再提交", currency);
+                    throw new ServiceException(currency + "币别" + listDTO.getDeliveryTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")) + "日期" + "汇率为空，请维护汇率后再提交");
+                }
+                BigDecimal actualDeductibleTax = deductibleTaxList.stream().map(TmsCostDetailDTO.CostViewDTO::getCostValue).reduce(BigDecimal.ZERO, BigDecimal::add);
+                listDTO.setActualDeductibleTax(MathUtil.multiplyWithFour(actualDeductibleTax, rate));
+            }
+
+            //实际其他费用(总)
+            List<CostViewDTO> otherCostList = costListMap.get(listDTO.getId() + "_" + DictCostCategoryEnum.OTHER_COST.getCode() + "_" + LogisticsBillCostTypeEnum.ACTUAL.getCode());
+            if (CollUtil.isNotEmpty(otherCostList)) {
+                String currency = StrUtil.blankToDefault(shippingCostList.get(0).getCurrency(), "CNY");
+                BigDecimal rate = dmpTaskFeign.getRate(listDTO.getDeliveryTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), currency);
+                if (ObjectUtil.isEmpty(rate)) {
+                    log.error("币别【{}】,汇率为空，请维护汇率后再提交", currency);
+                    throw new ServiceException(currency + "币别" + listDTO.getDeliveryTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")) + "日期" + "汇率为空，请维护汇率后再提交");
+                }
+                BigDecimal actualOtherCost = otherCostList.stream().map(TmsCostDetailDTO.CostViewDTO::getCostValue).reduce(BigDecimal.ZERO, BigDecimal::add);
+                listDTO.setActualOtherCost(MathUtil.multiplyWithFour(actualOtherCost, rate));
+            }
+        }
+        LogisticsBillCostDTO.TotalCountDTO resultDTO = new LogisticsBillCostDTO.TotalCountDTO();
+        //实际计费重
+        BigDecimal totalBillingWeight = list.stream().map(LogisticsBillCostDTO.ListDTO::getBillingWeight).reduce(BigDecimal.ZERO, BigDecimal::add);
+        resultDTO.setTotalBillingWeight(totalBillingWeight);
+        //实际运费(总)
+        BigDecimal totalActualShippingCost = list.stream().map(LogisticsBillCostDTO.ListDTO::getActualShippingCost).reduce(BigDecimal.ZERO, BigDecimal::add);
+        resultDTO.setTotalActualShippingCost(totalActualShippingCost);
+        resultDTO.setActualDeclareCostCurrencySymbol(CurrencyEnum.CNY.getCurrencySymbol());
+        //实际关税费用(总)
+        BigDecimal totalActualDeclareCost = list.stream().map(LogisticsBillCostDTO.ListDTO::getActualDeclareCost).reduce(BigDecimal.ZERO, BigDecimal::add);
+        resultDTO.setTotalActualDeclareCost(totalActualDeclareCost);
+        resultDTO.setActualDeclareCostCurrencySymbol(CurrencyEnum.CNY.getCurrencySymbol());
+        //实际可抵扣税金[总]
+        BigDecimal totalActualDeductibleTax = list.stream().map(LogisticsBillCostDTO.ListDTO::getActualDeductibleTax).reduce(BigDecimal.ZERO, BigDecimal::add);
+        resultDTO.setTotalActualDeductibleTax(totalActualDeductibleTax);
+        resultDTO.setActualDeductibleTaxCurrencySymbol(CurrencyEnum.CNY.getCurrencySymbol());
+        //实际其他费用(总)
+        BigDecimal totalActualOtherCost = list.stream().map(LogisticsBillCostDTO.ListDTO::getActualOtherCost).reduce(BigDecimal.ZERO, BigDecimal::add);
+        resultDTO.setTotalActualOtherCost(totalActualOtherCost);
+        resultDTO.setActualOtherCostCurrencySymbol(CurrencyEnum.CNY.getCurrencySymbol());
+        return resultDTO;
     }
 }

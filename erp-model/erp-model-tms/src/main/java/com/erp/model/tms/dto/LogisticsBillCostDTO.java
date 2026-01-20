@@ -1030,22 +1030,27 @@ public class LogisticsBillCostDTO implements Serializable {
         /**
          * 实际运费(总)
          */
-        private BigDecimal totalActualShippingCost;
+        private BigDecimal totalActualShippingCost = BigDecimal.ZERO;
+        private String actualShippingCostCurrencySymbol = "¥";
 
         /**
          * 实际关税费用(总)
          */
-        private BigDecimal totalActualDeclareCost;
+        private BigDecimal totalActualDeclareCost = BigDecimal.ZERO;
+        private String actualDeclareCostCurrencySymbol = "¥";
+
 
         /**
          * 实际可抵扣税金[总]
          */
-        private BigDecimal totalActualDeductibleTax;
+        private BigDecimal totalActualDeductibleTax = BigDecimal.ZERO;
+        private String actualDeductibleTaxCurrencySymbol = "¥";
 
         /**
          * 实际其他费用(总)
          */
-        private BigDecimal totalActualOtherCost;
+        private BigDecimal totalActualOtherCost = BigDecimal.ZERO;
+        private String actualOtherCostCurrencySymbol = "¥";
 
     }
 
