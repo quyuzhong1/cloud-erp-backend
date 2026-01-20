@@ -7,7 +7,6 @@ import com.alibaba.fastjson.TypeReference;
 import com.common.core.exception.ServiceException;
 import com.sdk.third.tf.constant.TfApiConstants;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
 
 import java.io.BufferedReader;
 import java.io.InputStream;

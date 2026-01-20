@@ -17,8 +17,6 @@ import com.sdk.third.tf.dto.ReturnInvoiceDTO;
 import com.sdk.third.tf.dto.ReturnInvoiceResponseDTO;
 import com.sdk.third.tf.util.SignUtil;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -40,8 +38,23 @@ public class InvoiceApiClient {
     private static final String PATH_INVALID_INVOICE = "/api/invoice/invalid";
     private static final String PATH_GET_DANFE = "/api/invoice/get_danfe";
 
-    @Autowired
     private TfApiClient tfApiClient;
+
+    /**
+     * 构造函数
+     * 用于依赖注入（SDK 不使用 Spring 注解）
+     */
+    public InvoiceApiClient() {
+        // 默认构造函数，用于 Spring Bean 创建
+    }
+
+    /**
+     * 构造函数（带依赖）
+     * 用于依赖注入（SDK 不使用 Spring 注解）
+     */
+    public InvoiceApiClient(TfApiClient tfApiClient) {
+        this.tfApiClient = tfApiClient;
+    }
 
     /**
      * 开具发票（新接口）

@@ -11,8 +11,6 @@ import com.sdk.third.tf.dto.CreateCompanyResponseDTO;
 import com.sdk.third.tf.dto.EditCompanyDTO;
 import com.sdk.third.tf.util.SignUtil;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
@@ -54,8 +52,23 @@ public class CompanyApiClient {
     private static final String FIELD_NUMBER = "number";
     private static final String FIELD_CATEGORY_ID = "category_id";
 
-    @Autowired
     private TfApiClient tfApiClient;
+
+    /**
+     * 构造函数
+     * 用于依赖注入（SDK 不使用 Spring 注解）
+     */
+    public CompanyApiClient() {
+        // 默认构造函数，用于 Spring Bean 创建
+    }
+
+    /**
+     * 构造函数（带依赖）
+     * 用于依赖注入（SDK 不使用 Spring 注解）
+     */
+    public CompanyApiClient(TfApiClient tfApiClient) {
+        this.tfApiClient = tfApiClient;
+    }
 
     /**
      * 创建公司（新接口）

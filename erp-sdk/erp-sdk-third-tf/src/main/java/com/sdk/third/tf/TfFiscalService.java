@@ -40,8 +40,6 @@ import com.sdk.third.tf.entity.UpdateCompanyDTO;
 import io.seata.common.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.RequestMethod;
 
 import java.io.*;
@@ -52,18 +50,35 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-@Component
 @Slf4j
 public class TfFiscalService {
 
-    @Autowired
     private TaxCategoryApiClient taxCategoryApiClient;
 
-    @Autowired
     private CompanyApiClient companyApiClient;
 
-    @Autowired
     private InvoiceApiClient invoiceApiClient;
+
+    /**
+     * 构造函数
+     * 用于依赖注入（SDK 不使用 Spring 注解）
+     */
+    public TfFiscalService() {
+        // 默认构造函数，用于 Spring Bean 创建
+    }
+
+    /**
+     * 构造函数（带依赖）
+     * 用于依赖注入（SDK 不使用 Spring 注解）
+     */
+    public TfFiscalService(
+            TaxCategoryApiClient taxCategoryApiClient,
+            CompanyApiClient companyApiClient,
+            InvoiceApiClient invoiceApiClient) {
+        this.taxCategoryApiClient = taxCategoryApiClient;
+        this.companyApiClient = companyApiClient;
+        this.invoiceApiClient = invoiceApiClient;
+    }
 
     public final static String ACCESS_TOKEN = "19-04-2023_10-47-No37tBi0Yw39Fida4MdUYwmXdksxdY1sIjkmt4-Ymwx04dy1iu94m0b";
 
