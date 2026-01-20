@@ -3231,22 +3231,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         //合并相同sku的明细
         Map<String, Integer> sameSkuMap = detailList.stream().collect(Collectors.toMap(v -> v.getId(), SoB2cDetailEntity::getQty, Integer::sum));
         List<SoB2cDeliveryDTO.DeliverySkuDTO> wantSkuList = listDeliverySku(entity.getShopId(), detailList, entity.getDictPlatform(), warehouseManageType, false);
-        //过滤服务sku
-        List<String> wantSkuIds = wantSkuList.stream().map(v->v.getSkuId()).collect(Collectors.toList());
-        List<LogisticsProductDTO.ProductDTO> skuInfoList = logisticsProductFeign.listLogisticsProduct(wantSkuIds);
-        wantSkuList = wantSkuList.stream().filter(v->{
-            LogisticsProductDTO.ProductDTO productDTO = skuInfoList.stream().filter(s->s.getSkuId().equals(v.getSkuId())).findFirst().orElse(null);
-            if(Objects.isNull(productDTO)){
-                return true;
-            }
-            if ("费用".equalsIgnoreCase(productDTO.getProperty()) || "服务".equalsIgnoreCase(productDTO.getProperty())){
-                return false;
-            }
-            return true;
-        }).collect(Collectors.toList());
-        if(CollectionUtils.isEmpty(wantSkuList)){
-            throw new ServiceException("订单{}没有发货的SKU",entity.getCode());
-        }
         List<SkuMappingDTO.ListingSkuParamDTO> listSkuParamList = new ArrayList<>();
         String mainId = entity.getId();
         //平台
@@ -3287,14 +3271,36 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
         List<SkuMappingDTO.ListSkuResultDTO> platformSkuList = skuMappingService.listBySkuList(listSkuParamList, dictPlatform, warehouseType, warehouseId);
         List<ThirdWarehouseCreateOutboundReq.Item> itemList = new ArrayList<>(detailList.size());
-
+        List<ThirdWarehouseCreateOutboundReq.Item> filterItemList = new ArrayList<>(detailList.size());
         List<SoB2cDeclareProductEntity> soB2cDeclareProductEntityList = soB2cDeclareProductService.listBySoId(entity.getId());
+        //过滤服务sku
+        List<String> wantSkuIds = wantSkuList.stream().map(SoB2cDeliveryDTO.DeliverySkuDTO::getSkuId).collect(Collectors.toList());
+        List<LogisticsProductDTO.ProductDTO> skuInfoList = logisticsProductFeign.listLogisticsProduct(wantSkuIds);
+
         for (SoB2cDeliveryDTO.DeliverySkuDTO deliverySkuDTO : wantSkuList) {
             Integer qty = sameSkuMap.get(deliverySkuDTO.getDetailId());
             if (qty == null) {
                 throw new ServiceException(CharSequenceUtil.format("发货sku{}查不到原sku", deliverySkuDTO.getSkuNo()));
             }
             Integer baseQty = qty * deliverySkuDTO.getQty();
+            LogisticsProductDTO.ProductDTO productDTO = skuInfoList.stream().filter(s->s.getSkuId().equals(deliverySkuDTO.getSkuId())).findFirst().orElse(null);
+
+            Boolean isFilter = false;
+            if (Objects.nonNull(productDTO) && ("费用".equalsIgnoreCase(productDTO.getProperty()) || "服务".equalsIgnoreCase(productDTO.getProperty()))){
+                isFilter = true;
+            }
+            if(isFilter){
+                ThirdWarehouseCreateOutboundReq.Item outboundReqItem = new ThirdWarehouseCreateOutboundReq.Item();
+                outboundReqItem.setQuantity(baseQty);
+                outboundReqItem.setSkuId(deliverySkuDTO.getSkuId());
+                outboundReqItem.setSkuNo(deliverySkuDTO.getSkuNo());
+                outboundReqItem.setSourceSkuId(deliverySkuDTO.getSourceSkuId());
+                outboundReqItem.setSourceSkuNo(deliverySkuDTO.getSourceSkuNo());
+                outboundReqItem.setPlatformDetailId(deliverySkuDTO.getPlatformDetailId());
+                outboundReqItem.setDetailId(deliverySkuDTO.getDetailId());
+                filterItemList.add(outboundReqItem);
+                continue;
+            }
             /**
              * 海外仓产品SKU
              */
@@ -3328,6 +3334,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             }
             itemList.add(outboundReqItem);
         }
+        if(CollectionUtils.isEmpty(itemList)){
+            throw new ServiceException("订单{}没有发货的SKU",entity.getCode());
+        }
         String platformWarehouseCode = overseasProviderWarehouse.getPlatformWarehouseCode();
         createOutboundReq.setPlatform(entity.getDictPlatform());
         createOutboundReq.setWarehouseCode(platformWarehouseCode);
@@ -3350,6 +3359,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         createOutboundReq.setLastMileCarrier(channelEntity.getLastMileCarrier());
         createOutboundReq.setIsApiSignName(Objects.isNull(channelEntity) ? "否" : channelEntity.getIsApiSign() ? "是" : "否");
         createOutboundReq.setItems(itemList);
+        createOutboundReq.setFilterItemList(filterItemList);
         createOutboundReq.setTrackingNo(logisticsEntity.getCode());
         //通过订单处理规则处理参数
         Map<String, Object> map = this.getRuleOrderHandleMap(entity, logisticsChannelId, receiver);
@@ -3599,6 +3609,18 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             thirdWarehouseDeliveryDetailEntity.setDeliveryQty(item.getQuantity());
             thirdWarehouseDeliveryDetailEntity.setWarehouseId(warehouseId);
             thirdWarehouseDeliveryDetailEntity.setPlatformSkuNo(item.getProductSku());
+            thirdWarehouseDeliveryDetailEntity.setPlatformWarehouseCode(createOutboundReq.getWarehouseCode());
+            thirdWarehouseDeliveryDetailEntity.setSourceSkuId(item.getSourceSkuId());
+            thirdWarehouseDeliveryDetailEntity.setSourceSkuNo(item.getSourceSkuNo());
+            thirdWarehouseDeliveryDetailEntity.setSoDetailId(item.getDetailId());
+            detailEntityList.add(thirdWarehouseDeliveryDetailEntity);
+        }
+        for (ThirdWarehouseCreateOutboundReq.Item item : createOutboundReq.getFilterItemList()) {
+            ThirdWarehouseDeliveryDetailEntity thirdWarehouseDeliveryDetailEntity = new ThirdWarehouseDeliveryDetailEntity();
+            thirdWarehouseDeliveryDetailEntity.setSkuId(item.getSkuId());
+            thirdWarehouseDeliveryDetailEntity.setSkuNo(item.getSkuNo());
+            thirdWarehouseDeliveryDetailEntity.setDeliveryQty(item.getQuantity());
+            thirdWarehouseDeliveryDetailEntity.setWarehouseId(warehouseId);
             thirdWarehouseDeliveryDetailEntity.setPlatformWarehouseCode(createOutboundReq.getWarehouseCode());
             thirdWarehouseDeliveryDetailEntity.setSourceSkuId(item.getSourceSkuId());
             thirdWarehouseDeliveryDetailEntity.setSourceSkuNo(item.getSourceSkuNo());
