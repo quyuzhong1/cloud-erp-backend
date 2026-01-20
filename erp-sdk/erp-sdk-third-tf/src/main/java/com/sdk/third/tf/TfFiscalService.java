@@ -24,6 +24,8 @@ import com.sdk.third.tf.dto.CancelInvoiceResponseDTO;
 import com.sdk.third.tf.dto.CreateInvoiceDTO;
 import com.sdk.third.tf.dto.CreateInvoiceResponseDTO;
 import com.sdk.third.tf.dto.EditCompanyDTO;
+import com.sdk.third.tf.dto.GetDanfeDTO;
+import com.sdk.third.tf.dto.GetDanfeResponseDTO;
 import com.sdk.third.tf.dto.InvalidInvoiceDTO;
 import com.sdk.third.tf.dto.InvalidInvoiceResponseDTO;
 import com.sdk.third.tf.dto.InvoiceDetailResponseDTO;
@@ -451,6 +453,29 @@ public class TfFiscalService {
             invoiceApiClient.invalidInvoice(invalidInvoiceDTO, companyToken, appKey);
         
         log.info("作废发票成功, uuid: {}", response.getUuid());
+        return response;
+    }
+
+    /**
+     * 获取发票Danfe（新接口）
+     * 使用新接口路径：/api/invoice/get_danfe
+     * Danfe URL链接就是PDF文件
+     * 
+     * @param getDanfeDTO 获取Danfe DTO
+     * @param companyToken 公司token（cfg_invoice_setting.token）
+     * @return 获取Danfe响应数据DTO（data部分）
+     */
+    public GetDanfeResponseDTO.GetDanfeDataDTO getDanfeV2(
+            GetDanfeDTO getDanfeDTO, String companyToken) {
+        // 获取AppKey（用于签名）
+        String appKey = getAppKey();
+        
+        log.info("获取发票Danfe（新接口）, uuid: {}, 使用公司token", getDanfeDTO.getUuid());
+        
+        GetDanfeResponseDTO.GetDanfeDataDTO response = 
+            invoiceApiClient.getDanfe(getDanfeDTO, companyToken, appKey);
+        
+        log.info("获取发票Danfe成功, uuid: {}, danfe: {}", getDanfeDTO.getUuid(), response.getDanfe());
         return response;
     }
 

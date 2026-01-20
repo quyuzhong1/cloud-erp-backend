@@ -8,6 +8,8 @@ import com.sdk.third.tf.dto.CancelInvoiceDTO;
 import com.sdk.third.tf.dto.CancelInvoiceResponseDTO;
 import com.sdk.third.tf.dto.CreateInvoiceDTO;
 import com.sdk.third.tf.dto.CreateInvoiceResponseDTO;
+import com.sdk.third.tf.dto.GetDanfeDTO;
+import com.sdk.third.tf.dto.GetDanfeResponseDTO;
 import com.sdk.third.tf.dto.InvalidInvoiceDTO;
 import com.sdk.third.tf.dto.InvalidInvoiceResponseDTO;
 import com.sdk.third.tf.dto.InvoiceDetailResponseDTO;
@@ -36,6 +38,7 @@ public class InvoiceApiClient {
     private static final String PATH_CANCEL_INVOICE = "/api/invoice/cancel";
     private static final String PATH_RETURN_INVOICE = "/api/invoice/return";
     private static final String PATH_INVALID_INVOICE = "/api/invoice/invalid";
+    private static final String PATH_GET_DANFE = "/api/invoice/get_danfe";
 
     @Autowired
     private TfApiClient tfApiClient;
@@ -313,6 +316,58 @@ public class InvoiceApiClient {
         if (response.getData() == null) {
             String message = response.getMessage() != null ? response.getMessage() : "未知错误";
             throw new RuntimeException("作废发票失败: " + message);
+        }
+    }
+
+    /**
+     * 获取发票Danfe（新接口）
+     * 注意：获取Danfe接口使用公司token（cfg_invoice_setting.token），不是经销商token
+     * Danfe URL链接就是PDF文件
+     * 
+     * @param getDanfeDTO 获取Danfe DTO
+     * @param companyToken 公司token（cfg_invoice_setting.token），用于Header中的token
+     * @param appKey AppKey（用于签名）
+     * @return 获取Danfe响应数据DTO（data部分）
+     */
+    public GetDanfeResponseDTO.GetDanfeDataDTO getDanfe(
+            GetDanfeDTO getDanfeDTO, String companyToken, String appKey) {
+        // 构建请求体
+        String requestBody = JSONUtil.toJsonStr(getDanfeDTO);
+        
+        // 生成时间戳
+        String timestamp = SignUtil.generateTimestamp();
+        
+        // 生成签名：MD5(AppKey + Path + bodyString + timestamp)
+        String sign = SignUtil.generateSign(appKey, PATH_GET_DANFE, requestBody, timestamp);
+        
+        // 构建Header：sign、timestamp、token（公司token）
+        Map<String, String> headers = buildHeaders(sign, timestamp, companyToken);
+        
+        log.info("获取发票Danfe（新接口）, uuid: {}, timestamp: {}, sign: {}", 
+            getDanfeDTO.getUuid(), timestamp, sign);
+        
+        // 响应格式：{"success": true/false, "message": "...", "data": {...}}
+        TypeReference<ApiResponseDTO<GetDanfeResponseDTO.GetDanfeDataDTO>> typeRef = 
+            new TypeReference<ApiResponseDTO<GetDanfeResponseDTO.GetDanfeDataDTO>>() {};
+        
+        ApiResponseDTO<GetDanfeResponseDTO.GetDanfeDataDTO> response = 
+            tfApiClient.doPost(PATH_GET_DANFE, requestBody, typeRef, headers);
+        
+        validateGetDanfeResponse(response);
+        return response.getData();
+    }
+
+    /**
+     * 验证获取Danfe API响应
+     */
+    private void validateGetDanfeResponse(ApiResponseDTO<GetDanfeResponseDTO.GetDanfeDataDTO> response) {
+        if (response == null) {
+            throw new RuntimeException("API响应为空");
+        }
+        
+        if (response.getData() == null) {
+            String message = response.getMessage() != null ? response.getMessage() : "未知错误";
+            throw new RuntimeException("获取发票Danfe失败: " + message);
         }
     }
 }

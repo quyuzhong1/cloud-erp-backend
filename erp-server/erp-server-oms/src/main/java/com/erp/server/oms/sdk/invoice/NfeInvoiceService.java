@@ -35,6 +35,8 @@ import com.sdk.third.tf.dto.CancelInvoiceDTO;
 import com.sdk.third.tf.dto.CancelInvoiceResponseDTO;
 import com.sdk.third.tf.dto.CreateInvoiceDTO;
 import com.sdk.third.tf.dto.CreateInvoiceResponseDTO;
+import com.sdk.third.tf.dto.GetDanfeDTO;
+import com.sdk.third.tf.dto.GetDanfeResponseDTO;
 import com.sdk.third.tf.dto.InvoiceDetailResponseDTO;
 import com.sdk.third.tf.dto.NfeInvoiceDTO;
 import com.sdk.third.tf.dto.ReturnInvoiceDTO;
@@ -405,8 +407,8 @@ public class NfeInvoiceService {
             // 上传xml、pdf（使用详情接口返回的XML链接）
             if (CharSequenceUtil.isNotBlank(xmlUrl)) {
                 uploadFile(invoiceInfoEntity.getId(), xmlUrl, "");
-                // 根据XML生成PDF
-                generateAndUploadPdfFromXml(invoiceInfoEntity.getId(), xmlUrl);
+                // 获取Danfe PDF并上传
+                generateAndUploadPdfFromDanfe(invoiceInfoEntity.getId(), responseData.getUuid(), invoiceSettingDetail.getToken());
             }
             
             if (invoiceSettingDetail.getIsAutoUpload() && CharSequenceUtil.equals(PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode(),soB2cEntity.getDictPlatform())) {
@@ -561,21 +563,53 @@ public class NfeInvoiceService {
     }
     
     /**
-     * 根据XML URL生成PDF并上传
+     * 根据Danfe接口获取PDF并上传
+     * 注意：不再通过XML填充PDF模板生成PDF，而是直接通过getDanfe接口获取PDF URL
+     * 
      * @param invoiceId 发票ID
-     * @param xmlUrl XML文件URL
+     * @param uuid 发票UUID
+     * @param companyToken 公司token（用于调用getDanfe接口）
      */
-    private void generateAndUploadPdfFromXml(String invoiceId, String xmlUrl) {
-        if (CharSequenceUtil.isBlank(xmlUrl)) return;
+    private void generateAndUploadPdfFromDanfe(String invoiceId, String uuid, String companyToken) {
+        if (CharSequenceUtil.isBlank(uuid) || CharSequenceUtil.isBlank(companyToken)) {
+            log.warn("获取Danfe PDF参数不完整, invoiceId:{}, uuid:{}, companyToken:{}", invoiceId, uuid, companyToken);
+            return;
+        }
         try {
-            // TODO: 根据XML URL下载XML内容，然后生成PDF
-            // 可以参考PurchaseOrderServiceImpl中的PDF生成逻辑
-            // 1. 下载XML内容
-            // 2. 解析XML生成PDF
-            // 3. 上传PDF文件
-            log.warn("根据XML生成PDF功能待实现, invoiceId:{}, xmlUrl:{}", invoiceId, xmlUrl);
+            // 调用getDanfe接口获取PDF URL
+            GetDanfeDTO getDanfeDTO = new GetDanfeDTO();
+            getDanfeDTO.setUuid(uuid);
+            
+            GetDanfeResponseDTO.GetDanfeDataDTO danfeData = tfFiscalService.getDanfeV2(getDanfeDTO, companyToken);
+            
+            // 优先使用danfe，如果没有则使用danfe_simples
+            String pdfUrl = CharSequenceUtil.isNotBlank(danfeData.getDanfe()) 
+                ? danfeData.getDanfe() 
+                : danfeData.getDanfeSimples();
+            
+            if (CharSequenceUtil.isBlank(pdfUrl)) {
+                log.warn("获取Danfe PDF URL为空, invoiceId:{}, uuid:{}", invoiceId, uuid);
+                return;
+            }
+            
+            // 上传PDF文件
+            uploadFile(invoiceId, "", pdfUrl);
+            log.info("获取Danfe PDF并上传成功, invoiceId:{}, uuid:{}, pdfUrl:{}", invoiceId, uuid, pdfUrl);
         } catch (Exception e) {
-            log.error("根据XML生成PDF失败", e);
+            log.error("获取Danfe PDF并上传失败, invoiceId:{}, uuid:{}", invoiceId, uuid, e);
+            // 失败时更新备注，但不抛出异常，避免影响主流程
+            try {
+                InvoiceInfoEntity invoiceInfoEntity = invoiceInfoService.getById(invoiceId);
+                if (invoiceInfoEntity != null) {
+                    String remark = CharSequenceUtil.isNotBlank(invoiceInfoEntity.getRemark()) 
+                        ? invoiceInfoEntity.getRemark() + "；获取Danfe PDF失败: " + e.getMessage()
+                        : "获取Danfe PDF失败: " + e.getMessage();
+                    invoiceInfoEntity.setRemark(remark);
+                    invoiceInfoService.updateNfeStatusById(invoiceInfoEntity);
+                }
+            } catch (Exception ex) {
+                log.error("更新发票备注失败, invoiceId:{}", invoiceId, ex);
+            }
         }
     }
 
