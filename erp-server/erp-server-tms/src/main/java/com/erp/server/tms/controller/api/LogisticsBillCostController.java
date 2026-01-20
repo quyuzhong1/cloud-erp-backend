@@ -421,6 +421,13 @@ public class LogisticsBillCostController extends BaseController {
      * @return ApiResult<TotalCountDTO>
      */
     @GetMapping("/listTotalCount")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            shopTableField = "lb.shop_id",
+            menuCode = "tms:logisticsBillCost:paging",
+            tableAlias = "lbc"
+    )
+    @WebAdvanceQuery(handler = LogisticsBillCostQueryHandler.class)
     public ApiResult<LogisticsBillCostDTO.TotalCountDTO> listTotalCount(@RequestBody @Validated PagingDTO<LogisticsBillCostDTO.PagingParamDTO> dto){
         return success(logisticsBillCostService.listTotalCount(dto));
     }

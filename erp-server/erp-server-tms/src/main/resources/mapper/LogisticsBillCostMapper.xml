@@ -316,7 +316,6 @@
         select
             lbc.id,
             lbc.billing_weight as billingWeight,
-            lbc.actual_shipping_cost as actualShippingCost,
             lb.delivery_time as deliveryTime,
             lbc.currency
         from logistics_bill_cost lbc
