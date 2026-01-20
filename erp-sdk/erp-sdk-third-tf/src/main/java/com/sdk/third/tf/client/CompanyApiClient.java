@@ -30,9 +30,9 @@ import java.util.Map;
 @Slf4j
 public class CompanyApiClient {
 
-    private static final String PATH_CREATE_COMPANY = "/company/create";
-    private static final String PATH_EDIT_COMPANY = "/company/edit";
-    private static final String PATH_GET_COMPANY_DETAIL = "/company/get_detail";
+    private static final String PATH_CREATE_COMPANY = "/api/company/create";
+    private static final String PATH_EDIT_COMPANY = "/api/company/edit";
+    private static final String PATH_GET_COMPANY_DETAIL = "/api/company/get_detail";
     private static final String PATH_GET_COMPANY_LIST = "/api/company/get_list";
     
     // 请求字段名常量

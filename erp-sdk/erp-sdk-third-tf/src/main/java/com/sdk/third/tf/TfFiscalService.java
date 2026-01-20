@@ -158,13 +158,12 @@ public class TfFiscalService {
     public CreateCompanyResponseDTO.CreateCompanyDataDTO createCompanyV2(CreateCompanyDTO createCompanyDTO) {
         // 获取经销商token（b2b_token）= TF-ACCESS_TOKEN（平台token）
         // 注意：创建公司和获取公司列表接口使用经销商token
+        // 签名的appKey就是header的token，所以这里appKey = b2bToken
         String b2bToken = getAccessToken();
-        // 获取AppKey（用于签名）
-        String appKey = getAppKey();
         
         log.info("创建公司（新接口）, cnpj: {}, 使用经销商token", createCompanyDTO.getCnpj());
         
-        CreateCompanyResponseDTO.CreateCompanyDataDTO response = companyApiClient.createCompany(createCompanyDTO, b2bToken, appKey);
+        CreateCompanyResponseDTO.CreateCompanyDataDTO response = companyApiClient.createCompany(createCompanyDTO, b2bToken, b2bToken);
         
         log.info("创建公司成功, companyId: {}, token: {}", response.getCompanyId(), response.getToken());
         return response;
@@ -179,12 +178,11 @@ public class TfFiscalService {
      * @param companyToken 公司token（cfg_invoice_setting.token）
      */
     public void editCompanyV2(EditCompanyDTO editCompanyDTO, String companyToken) {
-        // 获取AppKey（用于签名）
-        String appKey = getAppKey();
+        // 签名的appKey就是header的token，所以这里appKey = companyToken
         
         log.info("编辑公司（新接口）, cnpj: {}, 使用公司token", editCompanyDTO.getCnpj());
         
-        companyApiClient.editCompany(editCompanyDTO, companyToken, appKey);
+        companyApiClient.editCompany(editCompanyDTO, companyToken, companyToken);
         
         log.info("编辑公司成功, cnpj: {}", editCompanyDTO.getCnpj());
     }
@@ -199,13 +197,12 @@ public class TfFiscalService {
      * @return 公司详情数据DTO（data部分）
      */
     public CompanyDetailResponseDTO.CompanyDetailDataDTO getCompanyDetailV2(String cnpj, String companyToken) throws UnsupportedEncodingException {
-        // 获取AppKey（用于签名）
-        String appKey = getAppKey();
+        // 签名的appKey就是header的token，所以这里appKey = companyToken
         
         log.info("查询公司详情（新接口）, cnpj: {}, 使用公司token", cnpj);
         
         CompanyDetailResponseDTO.CompanyDetailDataDTO response = 
-            companyApiClient.getCompanyDetail(cnpj, companyToken, appKey);
+            companyApiClient.getCompanyDetail(cnpj, companyToken, companyToken);
         
         log.info("查询公司详情成功, cnpj: {}, companyId: {}", cnpj, response.getCompanyId());
         return response;
@@ -222,14 +219,13 @@ public class TfFiscalService {
      */
     public CompanyListResponseDTO.CompanyListDataDTO getCompanyListV2(Integer page, Integer pageSize) {
         // 获取经销商token（b2b_token）= TF-ACCESS_TOKEN（平台token）
+        // 签名的appKey就是header的token，所以这里appKey = b2bToken
         String b2bToken = getAccessToken();
-        // 获取AppKey（用于签名）
-        String appKey = getAppKey();
         
         log.info("获取公司列表（新接口）, page: {}, pageSize: {}, 使用经销商token", page, pageSize);
         
         CompanyListResponseDTO.CompanyListDataDTO response = 
-            companyApiClient.getCompanyList(page, pageSize, b2bToken, appKey);
+            companyApiClient.getCompanyList(page, pageSize, b2bToken, b2bToken);
         
         log.info("获取公司列表成功, total: {}, totalPages: {}", response.getTotal(), response.getTotalPages());
         return response;
@@ -355,13 +351,12 @@ public class TfFiscalService {
      */
     public CreateInvoiceResponseDTO.CreateInvoiceDataDTO createInvoiceV2(
             CreateInvoiceDTO createInvoiceDTO, String companyToken) {
-        // 获取AppKey（用于签名）
-        String appKey = getAppKey();
+        // 签名的appKey就是header的token，所以这里appKey = companyToken
         
         log.info("开具发票（新接口）, id: {}, 使用公司token", createInvoiceDTO.getId());
         
         CreateInvoiceResponseDTO.CreateInvoiceDataDTO response = 
-            invoiceApiClient.createInvoice(createInvoiceDTO, companyToken, appKey);
+            invoiceApiClient.createInvoice(createInvoiceDTO, companyToken, companyToken);
         
         log.info("开具发票成功, uuid: {}, status: {}", response.getUuid(), response.getStatus());
         return response;
@@ -376,13 +371,12 @@ public class TfFiscalService {
      * @return 发票详情响应数据DTO（data部分）
      */
     public InvoiceDetailResponseDTO.InvoiceDetailDataDTO getInvoiceDetailV2(String uuid, String companyToken) {
-        // 获取AppKey（用于签名）
-        String appKey = getAppKey();
+        // 签名的appKey就是header的token，所以这里appKey = companyToken
         
         log.info("查询发票详情, uuid: {}, 使用公司token", uuid);
         
         InvoiceDetailResponseDTO.InvoiceDetailDataDTO response = 
-            invoiceApiClient.getInvoiceDetail(uuid, companyToken, appKey);
+            invoiceApiClient.getInvoiceDetail(uuid, companyToken, companyToken);
         
         log.info("查询发票详情成功, uuid: {}, status: {}", uuid, response.getStatus());
         return response;
@@ -398,13 +392,12 @@ public class TfFiscalService {
      */
     public CancelInvoiceResponseDTO.CancelInvoiceDataDTO cancelInvoiceV2(
             CancelInvoiceDTO cancelInvoiceDTO, String companyToken) {
-        // 获取AppKey（用于签名）
-        String appKey = getAppKey();
+        // 签名的appKey就是header的token，所以这里appKey = companyToken
         
         log.info("取消发票（新接口）, uuid: {}, 使用公司token", cancelInvoiceDTO.getUuid());
         
         CancelInvoiceResponseDTO.CancelInvoiceDataDTO response = 
-            invoiceApiClient.cancelInvoice(cancelInvoiceDTO, companyToken, appKey);
+            invoiceApiClient.cancelInvoice(cancelInvoiceDTO, companyToken, companyToken);
         
         log.info("取消发票成功, uuid: {}, status: {}", cancelInvoiceDTO.getUuid(), response.getStatus());
         return response;
@@ -420,13 +413,12 @@ public class TfFiscalService {
      */
     public ReturnInvoiceResponseDTO.ReturnInvoiceDataDTO returnInvoiceV2(
             ReturnInvoiceDTO returnInvoiceDTO, String companyToken) {
-        // 获取AppKey（用于签名）
-        String appKey = getAppKey();
+        // 签名的appKey就是header的token，所以这里appKey = companyToken
         
         log.info("退货发票（新接口）, uuid/chave: {}, 使用公司token", returnInvoiceDTO.getUuidOrChave());
         
         ReturnInvoiceResponseDTO.ReturnInvoiceDataDTO response = 
-            invoiceApiClient.returnInvoice(returnInvoiceDTO, companyToken, appKey);
+            invoiceApiClient.returnInvoice(returnInvoiceDTO, companyToken, companyToken);
         
         log.info("退货发票成功, uuid: {}, status: {}", returnInvoiceDTO.getUuidOrChave(), response.getStatus());
         return response;
@@ -443,14 +435,13 @@ public class TfFiscalService {
      */
     public InvalidInvoiceResponseDTO.InvalidInvoiceDataDTO invalidInvoiceV2(
             InvalidInvoiceDTO invalidInvoiceDTO, String companyToken) {
-        // 获取AppKey（用于签名）
-        String appKey = getAppKey();
+        // 签名的appKey就是header的token，所以这里appKey = companyToken
         
         log.info("作废发票（新接口）, serie: {}, startNumber: {}, endNumber: {}, 使用公司token", 
             invalidInvoiceDTO.getSerie(), invalidInvoiceDTO.getStartNumber(), invalidInvoiceDTO.getEndNumber());
         
         InvalidInvoiceResponseDTO.InvalidInvoiceDataDTO response = 
-            invoiceApiClient.invalidInvoice(invalidInvoiceDTO, companyToken, appKey);
+            invoiceApiClient.invalidInvoice(invalidInvoiceDTO, companyToken, companyToken);
         
         log.info("作废发票成功, uuid: {}", response.getUuid());
         return response;
@@ -467,13 +458,12 @@ public class TfFiscalService {
      */
     public GetDanfeResponseDTO.GetDanfeDataDTO getDanfeV2(
             GetDanfeDTO getDanfeDTO, String companyToken) {
-        // 获取AppKey（用于签名）
-        String appKey = getAppKey();
+        // 签名的appKey就是header的token，所以这里appKey = companyToken
         
         log.info("获取发票Danfe（新接口）, uuid: {}, 使用公司token", getDanfeDTO.getUuid());
         
         GetDanfeResponseDTO.GetDanfeDataDTO response = 
-            invoiceApiClient.getDanfe(getDanfeDTO, companyToken, appKey);
+            invoiceApiClient.getDanfe(getDanfeDTO, companyToken, companyToken);
         
         log.info("获取发票Danfe成功, uuid: {}, danfe: {}", getDanfeDTO.getUuid(), response.getDanfe());
         return response;
@@ -544,12 +534,11 @@ public class TfFiscalService {
      * @return 税种ID
      */
     public String createTaxCategory(TaxCategoryDTO.CreateCategoryDTO createDTO, String companyToken) {
-        // 获取AppKey（用于签名）
-        String appKey = getAppKey();
+        // 签名的appKey就是header的token，所以这里appKey = companyToken
         
         log.info("创建税种, descricao: {}, 使用公司token", createDTO.getDescricao());
         TaxCategoryDTO.CreateCategoryResponseDTO response = 
-            taxCategoryApiClient.createCategory(createDTO, companyToken, appKey);
+            taxCategoryApiClient.createCategory(createDTO, companyToken, companyToken);
         if (response == null || StringUtils.isBlank(response.getCategoryId())) {
             throw new ServiceException("创建税种失败，未返回税种ID");
         }
@@ -568,11 +557,10 @@ public class TfFiscalService {
      */
     public TaxCategoryDTO.CategoryListResponseDTO getTaxCategoryList(
             Integer page, Integer pageSize, String companyToken) {
-        // 获取AppKey（用于签名）
-        String appKey = getAppKey();
+        // 签名的appKey就是header的token，所以这里appKey = companyToken
         
         log.info("查询税种列表, page: {}, pageSize: {}, 使用公司token", page, pageSize);
-        return taxCategoryApiClient.getCategoryList(page, pageSize, companyToken, appKey);
+        return taxCategoryApiClient.getCategoryList(page, pageSize, companyToken, companyToken);
     }
 
     /**
@@ -583,15 +571,14 @@ public class TfFiscalService {
      * @param companyToken 公司token（cfg_invoice_setting.token）
      * @return 税种详情
      */
-    public TaxCategoryDTO.CategoryDetailDTO getTaxCategoryDetail(String categoryId, String companyToken) {
+    public TaxCategoryDTO.CategoryDetailDTO getTaxCategoryDetail(String categoryId, String companyToken) throws UnsupportedEncodingException {
         if (StringUtils.isBlank(categoryId)) {
             throw new ServiceException("税种ID不能为空");
         }
-        // 获取AppKey（用于签名）
-        String appKey = getAppKey();
+        // 签名的appKey就是header的token，所以这里appKey = companyToken
         
         log.info("查询税种详情, categoryId: {}, 使用公司token", categoryId);
-        return taxCategoryApiClient.getCategoryDetail(categoryId, companyToken, appKey);
+        return taxCategoryApiClient.getCategoryDetail(categoryId, companyToken, companyToken);
     }
 
     /**
@@ -606,12 +593,11 @@ public class TfFiscalService {
         if (StringUtils.isBlank(editDTO.getCategoryId())) {
             throw new ServiceException("税种ID不能为空");
         }
-        // 获取AppKey（用于签名）
-        String appKey = getAppKey();
+        // 签名的appKey就是header的token，所以这里appKey = companyToken
         
         log.info("编辑税种, categoryId: {}, 使用公司token", editDTO.getCategoryId());
         TaxCategoryDTO.EditCategoryResponseDTO response = 
-            taxCategoryApiClient.editCategory(editDTO, companyToken, appKey);
+            taxCategoryApiClient.editCategory(editDTO, companyToken, companyToken);
         if (response == null || StringUtils.isBlank(response.getCategoryId())) {
             throw new ServiceException("编辑税种失败，未返回税种ID");
         }
@@ -630,11 +616,10 @@ public class TfFiscalService {
         if (StringUtils.isBlank(categoryId)) {
             throw new ServiceException("税种ID不能为空");
         }
-        // 获取AppKey（用于签名）
-        String appKey = getAppKey();
+        // 签名的appKey就是header的token，所以这里appKey = companyToken
         
         log.info("删除税种, categoryId: {}, 使用公司token", categoryId);
-        taxCategoryApiClient.deleteCategory(categoryId, companyToken, appKey);
+        taxCategoryApiClient.deleteCategory(categoryId, companyToken, companyToken);
         log.info("删除税种成功, categoryId: {}", categoryId);
     }
 
