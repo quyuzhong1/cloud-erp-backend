@@ -3198,7 +3198,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
 
             //供应商信息
             SupplierEntity supplierEntity = supplierList.stream()
-                    .filter(item -> Objects.equals(item.getId(), poReturnDetailEntity.getSkuId()))
+                    .filter(item -> Objects.equals(item.getId(), poReturnDetailEntity.getMainSupplierId()))
                     .findFirst()
                     .orElse(null);
 
