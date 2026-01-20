@@ -110,7 +110,12 @@
             lbc.pay_status payStatus,
             lbc.pay_time payTime,
             lbc.check_status checkStatus,
-            lbc.create_time createTime
+            lbc.create_time createTime,
+            lbc.region_code as regionCode,
+            lbc.dept_id as deptId,
+            lbc.partition_id as partitionId,
+            lb.is_allocate_required as isAllocateRequired,
+            lb.not_allocate_remark as notAllocateRemark
         from logistics_bill_cost lbc
         inner join logistics_bill lb on lbc.logistics_bill_id = lb.id and lb.is_deleted = false
         left join logistics_channel lc on lbc.channel_id = lc.id and lc.is_deleted = false

@@ -198,6 +198,24 @@ public class LogisticsBillCostEntity extends BaseEntity<LogisticsBillCostEntity>
      */
     @TableField(value = "check_status")
     private String checkStatus;
+
+    /**
+     * 区域编码
+     */
+    @TableField(value = "region_code")
+    private LocalDateTime regionCode;
+
+    /**
+     * 部门id
+     */
+    @TableField(value = "dept_id")
+    private LocalDateTime deptId;
+
+    /**
+     * 军区id
+     */
+    @TableField(value = "partition_id")
+    private LocalDateTime partitionId;
     
     /**
      * 费用编辑（导入数据返回）

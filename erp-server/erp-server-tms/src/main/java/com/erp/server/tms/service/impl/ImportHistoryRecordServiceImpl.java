@@ -1,6 +1,7 @@
 package com.erp.server.tms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -14,8 +15,10 @@ import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.tms.dto.ImportHistoryRecordDTO;
 import com.erp.model.tms.entity.ImportHistoryRecordEntity;
+import com.erp.model.tms.enums.ImportHistoryRecordStatusEnum;
 import com.erp.server.tms.mapper.ImportHistoryRecordMapper;
 import com.erp.server.tms.service.ImportHistoryRecordService;
 import com.erp.server.tms.service.OperateLogService;
@@ -25,6 +28,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
 
@@ -133,7 +137,12 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
         }
         // 属性赋值
         for(ImportHistoryRecordDTO.ListDTO data : list) {
-        // TODO 其他如需要显示名称的字段赋值
+            //对账月份
+            if (CharSequenceUtil.isNotBlank(data.getReconciliationMonth())) {
+                data.setReconciliationMonthStr(LocalDateUtil.parseStrToLocalDate(data.getReconciliationMonth()).format(DateTimeFormatter.ofPattern("yyyy年MM月")));
+            }
+            //处理状态名称
+            data.setStatusName(ImportHistoryRecordStatusEnum.getName(data.getStatus()));
         }
    }
 }

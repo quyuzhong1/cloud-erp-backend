@@ -395,6 +395,39 @@ public class LogisticsBillCostDTO implements Serializable {
          * 创建时间
          */
         private LocalDateTime createTime;
+        /**
+         * 区域编码
+         */
+        private String regionCode;
+        /**
+         * 区域名称
+         */
+        private String regionCodeName;
+        /**
+         * 部门id
+         */
+        private String deptId;
+        /**
+         * 部门名称
+         */
+        private String deptName;
+        /**
+         * 军区id
+         */
+        private String partition_id;
+        /**
+         * 军区名称
+         */
+        private String partitionName;
+        /**
+         * 是否分摊
+         */
+        private Boolean isAllocateRequired;
+        /**
+         * 不分摊原因
+         */
+        private String notAllocateRemark;
+
     }
 
     /**

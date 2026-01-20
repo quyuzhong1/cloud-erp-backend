@@ -1,14 +1,14 @@
 package com.erp.model.tms.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import lombok.experimental.Accessors;
 import lombok.NoArgsConstructor;
-import com.common.business.enums.ApproveStatusEnum;
+import lombok.experimental.Accessors;
+
+import java.io.Serializable;
 
 
 /**
@@ -59,8 +59,8 @@ public class ImportHistoryRecordEntity extends BaseEntity<ImportHistoryRecordEnt
     /**
     * 匹配数量
     */
-    @TableField("match_qty")
-    private Integer matchQty;
+    @TableField("match_count")
+    private Integer matchCount;
     /**
     * 处理状态
     */

@@ -18,7 +18,7 @@
        <result column="file_url" property="fileUrl" />
        <result column="file_name" property="fileName" />
        <result column="import_count" property="importCount" />
-       <result column="match_qty" property="matchQty" />
+       <result column="match_count" property="matchCount" />
        <result column="status" property="status" />
        <result column="type" property="type" />
        <result column="operation_user_id" property="operationUserId" />
@@ -35,30 +35,30 @@
         update_time,
         version,
         is_deleted,
-        code, reconciliation_month, business_type, file_url, file_name, import_count, match_qty, status, type, operation_user_id
+        code, reconciliation_month, business_type, file_url, file_name, import_count, match_count, status, type, operation_user_id
     </sql>
 
+    <!-- 分页查询 -->
     <select id="paging" resultType="com.erp.model.tms.dto.ImportHistoryRecordDTO$ListDTO">
-
-    </select>
-
-    <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
-        select approve_status, count(id) from import_history_record where is_deleted = false group by approve_status
-    </select>
-
-    <select id="listExport" resultType="com.erp.model.tms.dto.ImportHistoryRecordDTO$ListDTO">
-
-    </select>
-    <select id="tabList" resultType="com.erp.model.tms.dto.ImportHistoryRecordDTO$TabListDTO">
-        SELECT
-        approve_status AS tabFlag,
-        count(*)  AS count
-        FROM  import_history_record
-        WHERE is_deleted=FALSE
-        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
-            ${params.permissionSql}
+        select
+            <include refid="Base_Column_List" />
+        from import_history_record ihr
+        <where>
+            ${params.sqlMap.default}
+            and ihr.is_deleted = false
+            <!--权限-->
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
+            </if>
+        </where>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
         </if>
-        GROUP BY approve_status
+        ihr.id DESC
     </select>
+
 
 </mapper>

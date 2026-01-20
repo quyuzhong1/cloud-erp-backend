@@ -1,18 +1,18 @@
 package com.erp.model.tms.dto;
 
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
-import java.util.List;
+import com.common.business.dto.base.SuperDTO;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
-import java.io.Serializable;
-import com.common.business.dto.base.SuperDTO;
-import java.time.LocalDateTime;
-import javax.validation.constraints.NotNull;
+
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
-import javax.validation.constraints.NotEmpty;
-import com.common.business.dto.AdvanceQueryDTO;
+import java.io.Serializable;
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -91,6 +91,10 @@ public class ImportHistoryRecordDTO implements Serializable {
         * 对账月份
         */
         private String reconciliationMonth;
+        /**
+         * 对账月份，YYYY年MM月
+         */
+        private String reconciliationMonthStr;
 
         /**
         * 业务类型，自发货费用/尾程费用
@@ -115,12 +119,18 @@ public class ImportHistoryRecordDTO implements Serializable {
         /**
         * 匹配数量
         */
-        private Integer matchQty;
+        private Integer matchCount;
 
         /**
         * 处理状态
         */
         private String status;
+
+
+        /**
+         * 处理状态名称
+         */
+        private String statusName;
 
         /**
         * 类型
@@ -128,15 +138,16 @@ public class ImportHistoryRecordDTO implements Serializable {
         private String type;
 
         /**
+         * 类型名称
+         */
+        private String typeName;
+
+        /**
         * 操作人id
         */
         private String operationUserId;
 
 
-        /**
-        * 审核状态名称
-        */
-        private String approveStatusName;
 
 
         /**
@@ -149,6 +160,10 @@ public class ImportHistoryRecordDTO implements Serializable {
         */
         private String createUserName;
 
+        /**
+         * 下载结果
+         */
+        private String errorUrl;
     }
 
 
@@ -209,7 +224,7 @@ public class ImportHistoryRecordDTO implements Serializable {
         /**
         * 匹配数量
         */
-        private Integer matchQty;
+        private Integer matchCount;
 
         /**
         * 处理状态
@@ -296,7 +311,7 @@ public class ImportHistoryRecordDTO implements Serializable {
         * 匹配数量
         */
         @NotNull(message = "匹配数量不能为空")
-        private Integer matchQty;
+        private Integer matchCount;
 
         /**
         * 处理状态
