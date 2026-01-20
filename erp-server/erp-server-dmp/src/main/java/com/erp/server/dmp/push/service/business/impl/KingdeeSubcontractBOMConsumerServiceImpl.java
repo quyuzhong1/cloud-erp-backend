@@ -63,7 +63,9 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
             return;
         }
         //读取配置，初始化SDK
-        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.SUBCONTRACT_BOM.getCode());
+        KingdeeApiUtils bomApiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.SUBCONTRACT_BOM.getCode());
+        KingdeeApiUtils bomChangeApiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.SUBCONTRACT_BOM_CHANGE.getCode());
+        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.SUB_SUBREQORDER.getCode());
 
         //根据录入值和字段配置生成JSONObject
         JSONObject json = kingdeeCommonService.makeApiFieldJson(map, platformEntity.getId(),type);
@@ -79,8 +81,7 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
          * 下推
          */
         if (SyncOperateEnum.OPERATE_PUSH.getCode().equals(operate)) {
-
-            operatePush(apiUtils,platformEntity, map,json,type);
+            operatePush(bomApiUtils,bomChangeApiUtils,apiUtils,platformEntity, map,json,type);
         }
 
     }
@@ -88,7 +89,7 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
     /**
      * 下推
      */
-    public void operatePush(KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,JSONObject json,Integer type) {
+    public void operatePush(KingdeeApiUtils bomApiUtils,KingdeeApiUtils bomChangeApiUtils,KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,JSONObject json,Integer type) {
 
         //判断金蝶系统是否已存在该数据
         KingdeeParamDTO.SaveParamDTO param = new KingdeeParamDTO.SaveParamDTO(json);
@@ -96,28 +97,29 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
         try {
             model = kingdeeCommonService.view(apiUtils,platformEntity.getId(),map);
         } catch (Exception e) {
-            //新增或编辑
-            saveOrUpdate(apiUtils,platformEntity,map,type,json,param);
             return;
         }
 
         //查找到数据后，判断其审核状态
-        String documentStatus = (String)model.get("DocumentStatus");
+        Integer bomId = model.getJSONArray("TreeEntity")
+                .getJSONObject(0)  // 数组第一个元素
+                .getInt("BomId_Id");
         String id = String.valueOf(model.get("Id")) ;
         Boolean flag = Boolean.FALSE;
         //创建状态则直接修改、删除
-        if (KingdeeDocStatusEnum.CREATED.getCode().equals(documentStatus) || KingdeeDocStatusEnum.REAPPROVE.getCode().equals(documentStatus) || flag) {
-            //给修改json对象赋值ID
-            KingdeeUtils.makeFieldJson(json,"FId",".", id);
-            StringBuffer allKey = FastJsonUtil.getAllKey(json);
-            ArrayList<String> apiFieldList = (ArrayList) Arrays.stream(allKey.toString().split(",")).collect(Collectors.toList());
-            param.setNeedUpDateFields(apiFieldList);
-            //下推
-            kingdeeCommonService.push(platformEntity, map, apiUtils,apiUtils, json, param, type,json);
-            //Boolean isAdd = kingdeeCommonService.saveAndAutoApprove(platformEntity, map, apiUtils, json, param, type);
-
-        }
-
+//        if (KingdeeDocStatusEnum.CREATED.getCode().equals(documentStatus) || KingdeeDocStatusEnum.REAPPROVE.getCode().equals(documentStatus) || flag) {
+//            //给修改json对象赋值ID
+//            KingdeeUtils.makeFieldJson(json,"FId",".", id);
+//            StringBuffer allKey = FastJsonUtil.getAllKey(json);
+//            ArrayList<String> apiFieldList = (ArrayList) Arrays.stream(allKey.toString().split(",")).collect(Collectors.toList());
+//            param.setNeedUpDateFields(apiFieldList);
+//            //下推
+//            kingdeeCommonService.push(platformEntity, map, bomApiUtils,bomChangeApiUtils, json, param, type,json);
+//            //Boolean isAdd = kingdeeCommonService.saveAndAutoApprove(platformEntity, map, apiUtils, json, param, type);
+//
+//        }
+        KingdeeUtils.makeFieldJson(json,"Ids",".", bomId);
+        kingdeeCommonService.push(platformEntity, map, bomApiUtils,bomChangeApiUtils, json, param, type,json);
     }
 
 

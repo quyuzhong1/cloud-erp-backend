@@ -122,8 +122,9 @@ public class SyncKingdeeSubcontractBOMServiceImpl implements SyncKingdeeSubcontr
             return resultMap;
         }
 
-        resultMap.put("FPPbomBillNo", "SUBBOM00002303");
-
+        resultMap.put("FBillNo", "SUBBOM00002303");
+        //resultMap.put("syncKingdeeId", dto.getSourceCode());
+        resultMap.put("syncKingdeeId","103825");
         resultMap.put("TargetBillTypeId", "SUB_OutSrcBOMChange");
         return resultMap;
     }

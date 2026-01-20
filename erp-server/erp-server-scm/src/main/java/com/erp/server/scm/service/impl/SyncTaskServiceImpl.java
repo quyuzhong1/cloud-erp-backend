@@ -616,25 +616,6 @@ public class SyncTaskServiceImpl implements SyncTaskService {
         return resultList;
     }
 
-    private List<DmpPushTaskEntity> syncSubcontractBOM(List<DmpSyncMqDTO.SyncParamDetailDTO> sourceDetailList) {
-        List<String> sourceIdList = sourceDetailList.stream().map(DmpSyncMqDTO.SyncParamDetailDTO::getSourceId).collect(Collectors.toList());
-        List<AssetPurchaseChangeEntity> list = assetPurchaseChangeService.listByIds(sourceIdList);
-        if (CollectionUtils.isEmpty(list)) {
-            log.error("syncAssetPurchaseChange >>>> 未找到数据！");
-            return Collections.EMPTY_LIST;
-        }
-        List<DmpPushTaskEntity> resultList = new ArrayList<>();
-        for (DmpSyncMqDTO.SyncParamDetailDTO syncParamDetailDTO :  sourceDetailList) {
-            AssetPurchaseChangeEntity entity = list.stream().filter(obj -> obj.getId().equals(syncParamDetailDTO.getSourceId())).findFirst().orElse(null);
-            if (ObjectUtils.isEmpty(entity)) {
-                continue;
-            }
-            DmpPushTaskEntity pushTaskEntity = syncKingdeePurchaseChangeService.syncDataToKingdee(entity, syncParamDetailDTO.getSyncOperate());
-            resultList.add(pushTaskEntity);
-        }
-        return resultList;
-    }
-
     /**
      * @description: 同步订单变更
      * @author Will
@@ -681,6 +662,29 @@ public class SyncTaskServiceImpl implements SyncTaskService {
                 continue;
             }
             resultList.put(syncParamDetailDTO.getDataId(), syncKingdeeSubcontractBOMService.newSyncDataToKingdee(kingdeeSubcontractBOMDTO, syncParamDetailDTO.getSyncOperate()));
+        }
+        return resultList;
+    }
+
+    private List<DmpPushTaskEntity> syncSubcontractBOM(List<DmpSyncMqDTO.SyncParamDetailDTO> sourceDetailList) {
+        List<String> sourceIdList = sourceDetailList.stream().map(DmpSyncMqDTO.SyncParamDetailDTO::getSourceId).collect(Collectors.toList());
+        List<SubcontractOrderEntity> list = subcontractOrderService.listByIds(sourceIdList);
+        if (CollectionUtils.isEmpty(list)) {
+            log.error("syncSubcontractBOM >>>> 未找到数据！");
+            return Collections.EMPTY_LIST;
+        }
+        List<DmpPushTaskEntity> resultList = new ArrayList<>();
+        for (DmpSyncMqDTO.SyncParamDetailDTO syncParamDetailDTO :  sourceDetailList) {
+            SubcontractOrderEntity entity = list.stream().filter(obj -> obj.getId().equals(syncParamDetailDTO.getSourceId())).findFirst().orElse(null);
+            String sourceId = syncParamDetailDTO.getSourceId();
+            SubcontractBOMDTO.KingdeeSubcontractBOMDTO kingdeeSubcontractBOMDTO = new SubcontractBOMDTO.KingdeeSubcontractBOMDTO();
+            kingdeeSubcontractBOMDTO.setId(sourceId);
+            kingdeeSubcontractBOMDTO.setSourceCode(list.get(0).getSyncKingdeeId());
+            if (ObjectUtils.isEmpty(entity)) {
+                continue;
+            }
+            DmpPushTaskEntity pushTaskEntity = syncKingdeeSubcontractBOMService.syncDataToKingdee(kingdeeSubcontractBOMDTO, syncParamDetailDTO.getSyncOperate());
+            resultList.add(pushTaskEntity);
         }
         return resultList;
     }

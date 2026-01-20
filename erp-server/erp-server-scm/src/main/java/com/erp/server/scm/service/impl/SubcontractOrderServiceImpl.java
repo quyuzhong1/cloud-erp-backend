@@ -1738,6 +1738,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
                     BeanUtils.copyProperties(priceDTO,listSubcontractOrderSkuPriceDTO);
                     listSubcontractOrderSkuPriceDTO.setSkuNo(listPriceParamDTO.getSkuNo());
                     listSubcontractOrderSkuPriceDTO.setPrice(priceDTO.getTaxPrice());
+                    listSubcontractOrderSkuPriceDTO.setAmount(new BigDecimal(StringUtils.isNotBlank(priceDTO.getAmount()) ? priceDTO.getAmount() : "0"));
                     listSubcontractOrderSkuPriceDTOS.add(listSubcontractOrderSkuPriceDTO);
                 } else {
                     throw new ServiceException(ApiError.PURCHASE_PRICE_SKU_PRICE_NOT_FOUND,listPriceParamDTO.getSkuNo());
