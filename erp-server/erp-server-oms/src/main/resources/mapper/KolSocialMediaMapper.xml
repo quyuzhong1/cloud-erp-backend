@@ -69,7 +69,11 @@
             ksm.unique_key AS uniqueKey,
             ksm.create_time AS createTime,
             ksm.create_user_id AS createUserId,
-            ksm.create_user_name AS createUserName
+            ksm.create_user_name AS createUserName,
+        ksm.update_time AS updateTime,
+        ksm.update_user_id AS updateUserId,
+        ksm.update_user_name AS updateUserName
+
         FROM kol_social_media ksm
         WHERE
         ${params.sqlMap.default}
