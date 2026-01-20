@@ -613,6 +613,10 @@ public class KolPartnerInfoDTO implements Serializable {
 
 
         /**
+         * 收件人税号
+         */
+        private String receiverTaxNo;
+        /**
          * 区域
          */
         private String districtId;

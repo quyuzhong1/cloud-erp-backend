@@ -958,6 +958,7 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
             receiverDTO.setReceiverName(kolB2cApplicationAddressEntity.getReceiverName());
             receiverDTO.setReceiverTelNumber(kolB2cApplicationAddressEntity.getReceiverPhone());
             receiverDTO.setPostCode(kolB2cApplicationAddressEntity.getZipCode());
+            receiverDTO.setReceiverTaxNo(kolB2cApplicationAddressEntity.getReceiverTaxNo());
             b2cDto.setReceiverDTO(receiverDTO);
 
             //------------根据生成拆分单明细，以及生成B2C明细------------

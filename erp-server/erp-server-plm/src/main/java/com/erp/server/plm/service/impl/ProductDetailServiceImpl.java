@@ -331,6 +331,12 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     @Resource
     private MoldInfoService moldInfoService;
 
+    @Resource
+    private BasicProductBuService basicProductBuService;
+
+    @Resource
+    private ProductRefBuService productRefBuService;
+
     //变更财务人员审核
     @Value("${changeFinancialAudit}")
     private String financial;
@@ -389,6 +395,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             return new PagingVO<>(pageData);
         }
         List<String> productIdList = list.stream().map(ProductDetailShowDTO::getId).collect(Collectors.toList());
+        List<ProductRefBuEntity> productRefBuEntities = productRefBuService.listByProductIds(productIdList);
         List<ProjectInfoEntity> projectList = projectInfoService.getByProductIdList(productIdList);
         List<String> sourceIds = list.stream().map(ProductDetailShowDTO::getId).collect(Collectors.toList());
         List<String> changeIngSourceIds = productChangeService.getBySourceId(sourceIds);
@@ -406,6 +413,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         //获取子SKU集合
         List<BomChildrenSkuDTO> bomChildrenSkuDTOS = bomSkuService.listBomChildBySkuIds(skuIdList);
         for (ProductDetailShowDTO item : list) {
+            //BU名称
+            String buName = productRefBuEntities.stream().filter(p -> p.getProductId().
+                    equals(item.getId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getBuName())).orElse("");
+            item.setBuName(buName);
             if(StringUtils.isNotBlank(item.getApplicationCategoryId())){
                 List<String> applicationCategoryIdList = Arrays.stream(item.getApplicationCategoryId().split(","))
                         .map(String::trim)
@@ -505,6 +516,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         ApplicationCategoryEntity applicationCategory = applicationCategoryService.getById(noSpecDetailById.getApplicationCategoryId());
         if (ObjectUtils.isNotEmpty(applicationCategory)) {
             noSpecDetailById.setApplicationCategoryName(applicationCategory.getName());
+        }
+        ProductRefBuEntity productRefBuEntity = productRefBuService.getByProductIds(productId);
+        if(Objects.nonNull(productRefBuEntity)){
+            noSpecDetailById.setBuId(productRefBuEntity.getBuId());
+            noSpecDetailById.setBuName(productRefBuEntity.getBuName());
         }
         productNoSpecDetailAllDTO.setProductNoDetailDTO(noSpecDetailById);
         //产品成本信息查询列表
@@ -627,6 +643,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         //无规格产品信息明细
         ProductNoDetailDTO noSpecDetailById = productDetailMapper.getNoSpecDetailBySkuId(skuId);
 
+        ProductRefBuEntity productRefBuEntity = productRefBuService.getByProductIds(productId);
+        if(Objects.nonNull(productRefBuEntity)){
+            noSpecDetailById.setBuId(productRefBuEntity.getBuId());
+            noSpecDetailById.setBuName(productRefBuEntity.getBuName());
+        }
         if (ObjectUtils.isNotEmpty(noSpecDetailById)) {
             //获取多级分类
             List<String> categoryIdList = basicCategoryService.getPidList(noSpecDetailById.getCategoryId());
@@ -796,7 +817,12 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
         //多规格产品基础信息
         ProductManySpecBaseDTO manySpecDetailById = productDetailMapper.getManySpecDetailById(productId);
-        if (!Objects.isNull(manySpecDetailById)) {
+        if (Objects.nonNull(manySpecDetailById)) {
+            ProductRefBuEntity productRefBuEntity = productRefBuService.getByProductIds(productId);
+            if(Objects.nonNull(productRefBuEntity)){
+                manySpecDetailById.setBuId(productRefBuEntity.getBuId());
+                manySpecDetailById.setBuName(productRefBuEntity.getBuName());
+            }
             //基础信息 禁用字段
             List<String> manySpecBaseDisableFields = getByFileldFlag(ProductManyDetailConstant.PRODUCT_MANY_SPEC_BASE, refSkuFiledConfigList);
             manySpecDetailById.setDisableFieldList(manySpecBaseDisableFields);
@@ -1317,6 +1343,16 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             // 设置研发团队占用状态
             productRDTTeamService.setupOccupy(Arrays.asList(productSpuBaseInfoDTO.getRdtTeamId()));
         }
+        //研发团队
+        if (StringUtils.isNotBlank(productSpuBaseInfoDTO.getRdtTeamId())) {
+            //根据id查询研发团队表中的研发团队
+            ProductRDTTeamEntity productRDTTeam = productRDTTeamService.getById(productSpuBaseInfoDTO.getRdtTeamId());
+            if (ObjectUtils.isNotEmpty(productRDTTeam)) {
+                productSpuBaseInfoDTO.setRdtTeamName(productRDTTeam.getName());
+            }
+            // 设置研发团队占用状态
+            productRDTTeamService.setupOccupy(Arrays.asList(productSpuBaseInfoDTO.getRdtTeamId()));
+        }
 
         //产品款名和产品品名关系处理
         handleProductNames(productNoSpecDTO);
@@ -1340,6 +1376,15 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         productSpuBaseInfoDTO.setIsNoSpecAdd(MathUtil.ONE);
 
         String id = productInfoService.updateSpec(productSpuBaseInfoDTO);
+        //Bu线
+        if (StringUtils.isNotBlank(productSpuBaseInfoDTO.getBuId())) {
+            //查询BU线
+            BasicProductBuEntity basicProductBuEntity = basicProductBuService.getById(productSpuBaseInfoDTO.getBuId());
+            if (ObjectUtils.isNotEmpty(basicProductBuEntity)) {
+                productSpuBaseInfoDTO.setBuName(basicProductBuEntity.getName());
+            }
+            productRefBuService.addOrUpdate(id,basicProductBuEntity.getId());
+        }
 
         //2.修改/新增 sku信息
 
@@ -1756,6 +1801,16 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 addProductInfoLog(productInfoDTO, productInfoEntity, productInfoDTO.getId(), productInfoDTO.getId());
             }
             productInfoService.updateSpec(productInfoDTO);
+        }
+
+        //Bu线
+        if (StringUtils.isNotBlank(productManySpecDTO.getProductInfoDTO().getBuId())) {
+            //查询BU线
+            BasicProductBuEntity basicProductBuEntity = basicProductBuService.getById(productManySpecDTO.getProductInfoDTO().getBuId());
+            if (ObjectUtils.isNotEmpty(basicProductBuEntity)) {
+                productInfoDTO.setBuName(basicProductBuEntity.getName());
+            }
+            productRefBuService.addOrUpdate(id,basicProductBuEntity.getId());
         }
 
         //2.修改/新增 sku信息
@@ -2621,8 +2676,16 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             List<BasicDictEntity> insurancePropertyList = basicDictService.listByType(BasicDictTypeEnum.INSURANCE_PROPERTY.getCode());
             Map<String, BasicDictEntity>  insurancePropertyMap = insurancePropertyList.stream()
                     .collect(Collectors.toMap(BasicDictEntity::getValue, entity -> entity));
-
+            List<String> productIds = list.stream().map(ProductDetailExcelExportDTO::getProductId).distinct().collect(Collectors.toList());
+            List<ProductRefBuEntity> productRefBuEntities = productRefBuService.listByProductIds(productIds);
             for(ProductDetailExcelExportDTO l : list) {
+                ProductRefBuEntity productRefBuEntity = productRefBuEntities.stream()
+                        .filter(prb -> prb.getProductId().equals(l.getProductId()))
+                        .findFirst()
+                        .orElse(null);
+                if(Objects.nonNull(productRefBuEntity)){
+                    l.setBuName(productRefBuEntity.getBuName());
+                }
                 if(StringUtils.isNotBlank(l.getApplicationCategoryId())){
                     List<String> applicationCategoryIdList = Arrays.stream(l.getApplicationCategoryId().split(","))
                             .map(String::trim)
@@ -5176,6 +5239,16 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                         productInfoDTO.setRdtTeamName(productRDTTeam.getName());
                     }
                 }
+                //BU线
+                if(StringUtils.isNotBlank(dto.getBuName())){
+                    BasicProductBuEntity basicProductBuEntity = basicProductBuService.getByName(dto.getRdtTeamName());
+                    if (ObjectUtils.isEmpty(basicProductBuEntity)) {
+                        errorMsgList.add("BU线在系统中未找到");
+                    }else {
+                        productInfoDTO.setBuId(basicProductBuEntity.getId());
+                        productInfoDTO.setBuName(basicProductBuEntity.getName());
+                    }
+                }
 
                 //迭代产品校验
                 if (ProductTypeEnum.ITERATIVE_PRODUCT.getName().equals(dto.getTypeName())) {
@@ -6069,7 +6142,16 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                     productInfoDTO.setRdtTeamName(productRDTTeam.getName());
                 }
             }
-
+            //BU线
+            if(StringUtils.isNotBlank(dto.getBuName())){
+                BasicProductBuEntity basicProductBuEntity = basicProductBuService.getByName(dto.getRdtTeamName());
+                if (ObjectUtils.isEmpty(basicProductBuEntity)) {
+                    errorMsgList.add("BU线在系统中未找到");
+                }else {
+                    productInfoDTO.setBuId(basicProductBuEntity.getId());
+                    productInfoDTO.setBuName(basicProductBuEntity.getName());
+                }
+            }
             //迭代产品校验
             if (ProductTypeEnum.ITERATIVE_PRODUCT.getName().equals(dto.getTypeName())) {
                 if (isBlank(dto.getIterateRefSkuNo())) {
@@ -6312,6 +6394,16 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 }else {
                     productInfoDTO.setRdtTeamId(productRDTTeam.getId());
                     productInfoDTO.setRdtTeamName(productRDTTeam.getName());
+                }
+            }
+            //BU线
+            if(StringUtils.isNotBlank(dto.getBuName())){
+                BasicProductBuEntity basicProductBuEntity = basicProductBuService.getByName(dto.getRdtTeamName());
+                if (ObjectUtils.isEmpty(basicProductBuEntity)) {
+                    errorMsgList.add("BU线在系统中未找到");
+                }else {
+                    productInfoDTO.setBuId(basicProductBuEntity.getId());
+                    productInfoDTO.setBuName(basicProductBuEntity.getName());
                 }
             }
             productInfoDTO.setApprovalStatus(0);

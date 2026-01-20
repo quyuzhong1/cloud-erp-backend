@@ -93,6 +93,16 @@ public class ProductNoDetailDTO {
     private String rdtTeamId;
 
     /**
+     * BU线Id
+     */
+    private String buId;
+
+    /**
+     * BU线名称
+     */
+    private String buName;
+
+    /**
      * 产品属性
      */
     private String property;

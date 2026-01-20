@@ -186,7 +186,8 @@ kcp.remark AS platformRemark
         kai.phone AS phone,
         kai.zip_code AS zipCode,
         kai.disabled AS disabled,
-        kai.is_default AS isDefault
+        kai.is_default AS isDefault,
+        kai.receiver_tax_no as receiverTaxNo
         FROM
         kol_partner_info kpi
         LEFT JOIN kol_address_info AS kai ON kpi.ID = kai.main_id

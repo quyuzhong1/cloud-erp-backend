@@ -102,7 +102,10 @@ public class ProductSkuDTO extends PermissionsDTO {
      * 研发团队
      */
     private List<String> rdtTeamList;
-
+    /**
+     * BU线
+     */
+    private List<String> buIdList;
     /**
      * 产品 经理
      */

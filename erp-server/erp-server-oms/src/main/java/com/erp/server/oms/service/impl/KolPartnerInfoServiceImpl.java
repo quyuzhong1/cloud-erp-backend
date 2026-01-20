@@ -694,6 +694,7 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
                             kolAddressInfoDTO.setContactPerson(item.getContactPerson());
                             kolAddressInfoDTO.setPhone(item.getContactPersonPhone());
                             kolAddressInfoDTO.setZipCode(item.getZipCode());
+                            kolAddressInfoDTO.setReceiverTaxNo(item.getReceiverTaxNo());
 
                             String isDefaultName = item.getIsDefaultName();
                             if(StringUtils.isBlank(isDefaultName) || "是".equals(isDefaultName)){
