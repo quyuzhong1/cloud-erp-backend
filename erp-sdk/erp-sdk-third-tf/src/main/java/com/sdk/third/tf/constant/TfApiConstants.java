@@ -11,7 +11,7 @@ public class TfApiConstants {
     /**
      * API基础URL
      */
-    public static final String BASE_URL = "https://tffiscal.com.br/api";
+    public static final String BASE_URL = "https://api.tffiscal.com";
 
     /**
      * Content-Type
