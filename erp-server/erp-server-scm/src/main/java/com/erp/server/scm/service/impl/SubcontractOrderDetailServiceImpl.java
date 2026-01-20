@@ -676,7 +676,7 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
                 //已下推数量
                 Integer pushdownQty = purchaseQty + subcontractQty;
 
-                if (detailEntity.getQty() > returnQty - pushdownQty) {
+                if (detailEntity.getRepairQty() > returnQty - pushdownQty) {
                     errorMessages.add(StrUtil.format("SKU【{}】可下推数量为【{}】，请检查", skuVO.getSkuNo(), returnQty - pushdownQty));
                     continue;
                 }
