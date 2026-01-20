@@ -2252,6 +2252,18 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             String declareOrgId = resultDTO.getDeclareOrgId();
             soB2cLogisticsService.updateLogisticsCode(id, transportNo, trackNo,iossTaxNo,declareOrgId,pushPlatformCode);
 
+            //KOL-B2C订单需要回写跟踪单号
+            if(Objects.equals(SourceTypeEnum.KOL_B2C_APPLICATION.getCode(),entity.getSourceType())){
+                KolSubB2cApplicationEntity kolSubB2cApplicationEntity = kolSubB2cApplicationService.getById(entity.getSourceId());
+                if (StringUtils.isNotBlank(trackNo)) {
+                    kolSubB2cApplicationEntity.setDeliveryStatus(KolSubB2cApplicationDeliveryStatusEnum.SHIPPED.getCode());
+                }else {
+                    kolSubB2cApplicationEntity.setDeliveryStatus(KolSubB2cApplicationDeliveryStatusEnum.WAITSHIPPED.getCode());
+                }
+                kolSubB2cApplicationEntity.setTrackNo(trackNo);
+                kolSubB2cApplicationService.updateById(kolSubB2cApplicationEntity);
+            }
+
             //操作日志
             String msg = "获取物流单号成功，单号【{}/{}】，ioss税号【{}】，申报组织id【{}】，推送平台单号【{}】";
             operateLogService.addModuleOperateLog(CharSequenceUtil.format(msg, transportNo, trackNo, iossTaxNo,declareOrgId,pushPlatformCode), ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "获取物流单号");
