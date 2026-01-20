@@ -29,11 +29,11 @@ public class SoB2cLabelEntity extends BaseEntity<SoB2cLabelEntity> {
     */
     @TableField("main_id")
     private String mainId;
-    /**
-     * 平台物流面单base64
-     */
-    @TableField("logistics_label_base64")
-    private String logisticsLabelBase64;
+//    /**
+//     * 平台物流面单base64
+//     */
+//    @TableField("logistics_label_base64")
+//    private String logisticsLabelBase64;
     /**
      * 跨境物流面单url
      */
