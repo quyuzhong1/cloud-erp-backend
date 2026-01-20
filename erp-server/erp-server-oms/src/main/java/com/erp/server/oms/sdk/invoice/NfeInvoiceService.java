@@ -2,6 +2,7 @@ package com.erp.server.oms.sdk.invoice;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import cn.hutool.core.util.ObjUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
@@ -29,6 +30,7 @@ import com.erp.rpc.file.feign.FileFeign;
 import com.erp.server.oms.convert.NfeInvoiceConverter;
 import com.erp.server.oms.service.*;
 import com.common.business.constant.BusinessCommonConstants;
+import com.common.core.utils.Md5Util;
 import com.erp.model.oms.entity.CfgSettingEntity;
 import com.sdk.oms.mercadolocal.dto.MercadoInvoiceDTO;
 import com.sdk.oms.mercadolocal.service.MercadoLocalSdkClientService;
@@ -447,9 +449,9 @@ public class NfeInvoiceService {
      */
     private CreateInvoiceDTO buildCreateInvoiceDTO(SoB2cEntity soB2cEntity, CfgInvoiceSettingDetailEntity invoiceSettingDetail, CfgInvoiceSettingEntity invoiceSetting, String dictInvoiceRule, BigDecimal ratio) {
         CreateInvoiceDTO dto = new CreateInvoiceDTO();
-        String orderId = soB2cEntity.getId();
-        if (orderId.length() > 15) orderId = orderId.substring(0, 15);
-        dto.setId(orderId);
+        // 使用销售单号code生成15位唯一值，避免ID截取导致的重复问题
+        String invoiceId = generateUniqueInvoiceId(soB2cEntity.getCode());
+        dto.setId(invoiceId);
         List<InvoiceInfoEntity> existList = invoiceInfoService.listBySoIds(Collections.singletonList(soB2cEntity.getId()));
         boolean isReopen = existList.stream().anyMatch(e -> InvoiceInfoStatusEnum.INVOICE_FAILED.getCode().equals(e.getStatus()) && InvoiceInfoInvoiceTypeEnum.NFE.getCode().equals(e.getInvoiceType()));
         dto.setIsReopen(isReopen);
@@ -1272,9 +1274,9 @@ public class NfeInvoiceService {
         ReturnInvoiceDTO.ReturnDetailDTO returnDetailDTO = new ReturnInvoiceDTO.ReturnDetailDTO();
         
         // 基础字段
-        String orderId = soB2cEntity.getId();
-        if (orderId.length() > 15) orderId = orderId.substring(0, 15);
-        returnDetailDTO.setId(orderId);
+        // 使用销售单号code生成15位唯一值，避免ID截取导致的重复问题
+        String invoiceId = generateUniqueInvoiceId(soB2cEntity.getCode());
+        returnDetailDTO.setId(invoiceId);
         returnDetailDTO.setTransactionType("1"); // 出项发票
         returnDetailDTO.setModel("55"); // NFe
         returnDetailDTO.setIssuanceType("1"); // 正常
@@ -1478,6 +1480,120 @@ public class NfeInvoiceService {
        }
       omsAttachmentService.batchAddOrUpdate(addOrUpdateList);
     }
+
+    /**
+     * 生成15位唯一的发票ID
+     * 基于销售单号code生成，确保唯一性且可追溯
+     * 
+     * 方案：
+     * 1. 如果code长度<=15，直接使用（不补零）
+     * 2. 如果code长度>15，使用MD5哈希，取前15位
+     * 
+     * 追溯方式：
+     * 1. 如果code<=15位：
+     *    - 生成的ID就是原始code，可以直接使用
+     *    - 例如：code="SO12345" -> ID="SO12345"
+     * 
+     * 2. 如果code>15位（使用MD5）：
+     *    - MD5是单向哈希函数，无法从哈希值反向推导原始值
+     *    - 追溯方法：通过InvoiceInfoEntity.soCode字段查询
+     *      - 通过第三方返回的uuid查询：SELECT so_code FROM invoice_info WHERE query_id = 'uuid'
+     *      - 通过销售订单ID查询：SELECT so_code FROM invoice_info WHERE so_id = '销售订单ID'
+     * 
+     * 注意：InvoiceInfoEntity在创建时会设置soCode字段（见buildNfeInvoiceEntity方法），
+     *       所以可以通过soCode字段直接追溯原始销售单号，无需反向MD5
+     * 
+     * @param salesOrderCode 销售单号code
+     * @return 15位唯一的发票ID
+     */
+    private String generateUniqueInvoiceId(String salesOrderCode) {
+        if (CharSequenceUtil.isBlank(salesOrderCode)) {
+            throw new ServiceException("销售单号不能为空");
+        }
+        
+        // 如果code长度<=15，直接使用（不补零）
+        if (salesOrderCode.length() <= 15) {
+            log.debug("销售单号code: {}, 长度: {}, 生成的发票ID: {} (可直接追溯)", 
+                salesOrderCode, salesOrderCode.length(), salesOrderCode);
+            return salesOrderCode;
+        }
+        
+        // 如果code长度>15，使用MD5哈希，取前15位
+        // MD5哈希可以确保不同code生成不同的15位值（碰撞概率极低）
+        // 注意：MD5无法反向，需要通过InvoiceInfoEntity.soCode字段追溯原始code
+        String md5Hash = Md5Util.md5(salesOrderCode);
+        // MD5返回32位十六进制字符串，取前15位
+        String invoiceId = md5Hash.substring(0, 15);
+        
+        log.debug("销售单号code: {}, 长度: {}, MD5哈希: {}, 生成的发票ID: {} (需通过soCode字段追溯)", 
+            salesOrderCode, salesOrderCode.length(), md5Hash, invoiceId);
+        return invoiceId;
+    }
+
+    /**
+     * 从15位发票ID追溯原始销售单号code
+     * 
+     * 追溯逻辑：
+     * 1. 如果invoiceId长度<=15，可能就是原始code（但需要通过uuid验证确认）
+     *    - 例如：invoiceId="SO12345" 可能就是原始code="SO12345"
+     * 
+     * 2. 如果invoiceId长度=15且是MD5哈希格式（code>15位的情况）：
+     *    - MD5是单向哈希函数，无法从哈希值反向推导原始值
+     *    - 必须通过数据库查询InvoiceInfoEntity.soCode字段
+     *    - 推荐方式：通过第三方返回的uuid查询
+     *      SQL: SELECT so_code FROM invoice_info WHERE query_id = 'uuid'
+     *    - 或者通过销售订单ID查询：
+     *      SQL: SELECT so_code FROM invoice_info WHERE so_id = '销售订单ID'
+     * 
+     * 注意：InvoiceInfoEntity在创建时会设置soCode字段（见InvoiceInfoServiceImpl.buildNfeInvoiceEntity方法），
+     *       所以可以通过soCode字段直接追溯原始销售单号，无需反向MD5
+     * 
+     * @param invoiceId 15位发票ID（第三方接口返回的id字段）
+     * @param uuid 第三方返回的uuid（推荐使用，用于精确查询）
+     * @return 原始销售单号code，如果无法追溯则返回null
+     */
+    public String traceBackToSalesOrderCode(String invoiceId, String uuid) {
+        if (CharSequenceUtil.isBlank(invoiceId)) {
+            return null;
+        }
+        
+        // 方式1：如果invoiceId长度<=15，可能就是原始code（直接返回）
+        if (invoiceId.length() <= 15) {
+            log.debug("invoiceId长度<=15，可能是原始code, invoiceId: {}", invoiceId);
+            // 注意：这里不能直接返回，因为可能是MD5的前15位也是<=15的情况
+            // 但根据生成逻辑，如果code<=15，生成的ID就是code本身，所以这里可以尝试返回
+            // 如果需要更精确，可以通过uuid查询验证
+        }
+        
+        // 方式2：通过uuid查询InvoiceInfoEntity获取soCode（推荐方式）
+        if (CharSequenceUtil.isNotBlank(uuid)) {
+            try {
+                // 通过queryId（uuid）查询InvoiceInfoEntity
+                List<InvoiceInfoEntity> invoiceList = invoiceInfoService.list(
+                    new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<InvoiceInfoEntity>()
+                        .eq(InvoiceInfoEntity::getQueryId, uuid)
+                        .last("limit 1")
+                );
+                if (CollUtil.isNotEmpty(invoiceList)) {
+                    InvoiceInfoEntity invoiceInfo = invoiceList.get(0);
+                    if (CharSequenceUtil.isNotBlank(invoiceInfo.getSoCode())) {
+                        log.debug("通过uuid追溯销售单号成功, uuid: {}, invoiceId: {} -> code: {}", 
+                            uuid, invoiceId, invoiceInfo.getSoCode());
+                        return invoiceInfo.getSoCode();
+                    }
+                }
+            } catch (Exception e) {
+                log.warn("通过uuid追溯销售单号失败, uuid: {}, invoiceId: {}", uuid, invoiceId, e);
+            }
+        }
+        
+        // 方式3：如果invoiceId是MD5格式，无法直接反向
+        // 需要通过其他方式查询（如通过销售订单ID、时间范围等）
+        log.warn("无法直接追溯销售单号, invoiceId: {}, uuid: {} (MD5无法反向，需通过数据库查询soCode字段)", 
+            invoiceId, uuid);
+        return null;
+    }
+
     /**
      * 获取ambiente配置值
      * ambiente用于区分线上和测试的开票环境
