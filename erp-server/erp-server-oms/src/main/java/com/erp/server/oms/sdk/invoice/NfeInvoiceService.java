@@ -376,7 +376,9 @@ public class NfeInvoiceService {
         }
         
         String status = responseData.getStatus();
-        if ("Success".equals(status)) {
+        InvoiceInfoStatusEnum statusEnum = InvoiceStatusMapper.mapToEnum(status);
+        
+        if (InvoiceStatusMapper.isSuccess(status)) {
             // 开票成功后，查询发票详情以获取完整的发票信息（特别是XML链接）
             InvoiceDetailResponseDTO.InvoiceDetailDataDTO detailData = null;
             try {
@@ -403,7 +405,8 @@ public class NfeInvoiceService {
             invoiceInfoEntity.setStatus(invoiceStatus);
             invoiceInfoEntity.setUploadStatus(PlatformDictEnum.ALI_EXPRESS.getCode().equals(soB2cEntity.getDictPlatform()) ? InvoiceInfoUploadStatusEnum.NOT_NEED_UPLOAD.getCode() : uploadStatus);
             invoiceInfoEntity.setQueryId(responseData.getUuid());
-            invoiceInfoEntity.setQueryKey(getQueryKeyFromXml(xmlUrl));
+            // queryKey直接使用chave，不需要解析XML
+            invoiceInfoEntity.setQueryKey(chave);
             invoiceInfoEntity.setPlatformInvoiceNo(chave);
             invoiceInfoEntity.setNo(serie);
             invoiceInfoEntity.setStartCode(String.valueOf(number));
@@ -423,23 +426,46 @@ public class NfeInvoiceService {
                 invoiceInfoService.uploadNfeInvoice(soB2cEntity,invoiceInfoEntity.getId());
             }
             return Boolean.TRUE;
-        } else if ("Processing".equals(status)) {
+        } else if (InvoiceStatusMapper.isProcessing(status)) {
             InvoiceInfoEntity invoiceInfoEntity = invoiceInfoService.getInvoicingBySoId(soB2cEntity.getId());
             invoiceInfoEntity.setCfgId(invoiceSettingDetail.getId());
-            invoiceInfoEntity.setStatus(InvoiceInfoStatusEnum.INVOICING.getCode());
+            invoiceInfoEntity.setStatus(statusEnum.getCode());
             invoiceInfoEntity.setQueryId(responseData.getUuid());
             invoiceInfoEntity.setRemark(CharSequenceUtil.isNotBlank(responseData.getMotivo()) ? responseData.getMotivo() : "处理中");
             invoiceInfoService.updateNfeStatusById(invoiceInfoEntity);
             return Boolean.TRUE;
         } else {
-            String motivo = CharSequenceUtil.isNotBlank(responseData.getMotivo()) ? responseData.getMotivo() : "开票失败";
-            log.error("创建发票失败, status:{}, motivo:{}", status, motivo);
+            // 失败状态（包括 InvoicingFailed, Failed, Canceled, Voided 等）
+            String motivo = CharSequenceUtil.isNotBlank(responseData.getMotivo()) ? responseData.getMotivo() : statusEnum.getName();
+            boolean isErrorStatus = InvoiceStatusMapper.isFailed(status);
+            
+            if (isErrorStatus) {
+                if (InvoiceStatusMapper.isCanceled(status)) {
+                    log.warn("发票已取消, uuid: {}, motivo: {}", responseData.getUuid(), motivo);
+                } else if (InvoiceStatusMapper.isVoided(status)) {
+                    log.warn("发票已作废, uuid: {}, motivo: {}", responseData.getUuid(), motivo);
+                } else {
+                    log.error("创建发票失败, status:{}, motivo:{}", status, motivo);
+                }
+            } else {
+                log.error("创建发票返回未知状态, status:{}, motivo:{}", status, motivo);
+            }
+            
             InvoiceInfoEntity invoiceInfoEntity = invoiceInfoService.getInvoicingBySoId(soB2cEntity.getId());
             invoiceInfoEntity.setCfgId(invoiceSettingDetail.getId());
-            invoiceInfoEntity.setStatus(InvoiceInfoStatusEnum.INVOICE_FAILED.getCode());
+            invoiceInfoEntity.setStatus(statusEnum.getCode());
+            invoiceInfoEntity.setQueryId(responseData.getUuid());
             invoiceInfoEntity.setRemark(CharSequenceUtil.format("status:{}, motivo:{}", status, motivo));
             invoiceInfoService.updateNfeStatusById(invoiceInfoEntity);
-            operateLogService.addModuleOperateLog(CharSequenceUtil.format("开票失败, status:{}, motivo:{}", status, motivo), ModuleTypeEnum.INVOICE_INFO.getCode(), soB2cEntity.getId(),"开票失败");
+            
+            if (isErrorStatus) {
+                operateLogService.addModuleOperateLog(
+                    CharSequenceUtil.format("开票失败, status:{}, motivo:{}", status, motivo),
+                    ModuleTypeEnum.INVOICE_INFO.getCode(),
+                    soB2cEntity.getId(),
+                    "开票失败"
+                );
+            }
             return Boolean.FALSE;
         }
     }
@@ -480,12 +506,44 @@ public class NfeInvoiceService {
         clienteDTO.setEndereco(nfeClienteDTO.getRua());
         clienteDTO.setNumero(CharSequenceUtil.isNotBlank(nfeClienteDTO.getNumero()) ? nfeClienteDTO.getNumero() : "S/N");
         clienteDTO.setBairro(nfeClienteDTO.getBairro());
-        clienteDTO.setCity(nfeClienteDTO.getState());
+        
+        // 获取城市信息：优先从账单地址接口获取，否则从订单接口获取
+        clienteDTO.setCity(nfeClienteDTO.getCityId());
+        
         clienteDTO.setUf(nfeClienteDTO.getUf());
         clienteDTO.setCep(nfeClienteDTO.getCep());
         clienteDTO.setTelefone(nfeClienteDTO.getMobile());
         clienteDTO.setEmail(nfeClienteDTO.getEmail());
         return clienteDTO;
+    }
+    
+    /**
+     * 从数据源获取城市信息
+     * 优先从账单地址接口（DmpSoBillDetailEntity）获取，否则从订单接口（SoB2cReceiverEntity）获取
+     */
+    private String getCityFromSource(SoB2cEntity soB2cEntity) {
+        // 查询账单地址接口数据
+        List<DmpSoBillDetailEntity> allDmpSoBillDetailEntityList = FeignQuery.create(DmpSoBillDetailEntity.class)
+                .eq(DmpSoBillDetailEntity::getPlatformCode, soB2cEntity.getPlatformCode())
+                .eq(DmpSoBillDetailEntity::getShopId, soB2cEntity.getShopId())
+                .eq(DmpSoBillDetailEntity::getSourcePlatform, soB2cEntity.getDictPlatform())
+                .list();
+        
+        // 优先使用账单地址接口的城市信息（美客多：city_name）
+        if (CollUtil.isNotEmpty(allDmpSoBillDetailEntityList)) {
+            String city = allDmpSoBillDetailEntityList.get(0).getCity();
+            if (CharSequenceUtil.isNotBlank(city)) {
+                return city;
+            }
+        }
+        
+        // 如果没有账单地址数据，从订单接口获取（速卖通：city）
+        SoB2cReceiverEntity receiverEntity = soB2cReceiverService.getByMainId(soB2cEntity.getId());
+        if (ObjUtil.isNotEmpty(receiverEntity) && CharSequenceUtil.isNotBlank(receiverEntity.getCityName())) {
+            return receiverEntity.getCityName();
+        }
+        
+        return null;
     }
     
     private List<CreateInvoiceDTO.ProductDTO> buildProductDTOList(SoB2cEntity soB2cEntity, CfgInvoiceSettingDetailEntity invoiceSettingDetail, CfgInvoiceSettingEntity invoiceSetting, String dictInvoiceRule, BigDecimal ratio) {
@@ -522,7 +580,9 @@ public class NfeInvoiceService {
             productDTO.setDiscountPrice(BigDecimal.ZERO);
             if (CharSequenceUtil.isNotBlank(taxCategoryId)) productDTO.setCategoryId(taxCategoryId);
             productDTO.setOrigem("0");
-            productDTO.setIndicadorTotal("1");
+            // indicador_total: 若SKU为赠品传"1"，若SKU不为赠品传"0"
+            Boolean isGift = detailEntity.getIsGift();
+            productDTO.setIndicadorTotal(Boolean.TRUE.equals(isGift) ? "1" : "0");
             products.add(productDTO);
         }
         return products;
@@ -530,7 +590,7 @@ public class NfeInvoiceService {
     
     private CreateInvoiceDTO.TransportationDTO buildTransportationDTO(SoB2cEntity soB2cEntity, CfgInvoiceSettingDetailEntity invoiceSettingDetail) {
         CreateInvoiceDTO.TransportationDTO transportationDTO = new CreateInvoiceDTO.TransportationDTO();
-        transportationDTO.setTransportMode("3");
+        transportationDTO.setTransportMode("0");
         transportationDTO.setFreightAmount(getShipCost(soB2cEntity, invoiceSettingDetail));
         return transportationDTO;
     }
@@ -1086,37 +1146,37 @@ public class NfeInvoiceService {
         
         // 根据返回结果确认是否取消成功
         String status = responseData.getStatus();
-        if ("Canceled".equals(status)) {
+        if (InvoiceStatusMapper.isCanceled(status)) {
             // 取消成功
             // 修改原单据的性质从普通改为取消
             invoiceInfoEntity.setInvoiceNature(InvoiceNatureEnum.CANCEL.getCode());
             invoiceInfoEntity.setCancelReason(cancelReason);
             
             // 如果返回了新的XML，替换XML并重新上传
-            if (CharSequenceUtil.isNotBlank(responseData.getXml())) {
-                // 删除旧的XML附件
-                // TODO: 删除旧XML附件的逻辑
-                
-                // 上传新的XML
-                uploadFile(invoiceInfoEntity.getId(), responseData.getXml(), "");
-                
-                // 更新queryKey（如果chave有变化）
-                if (CharSequenceUtil.isNotBlank(responseData.getChave())) {
-                    invoiceInfoEntity.setQueryKey(responseData.getChave());
-                }
-                
-                // 重新上传至平台（如果配置了自动上传）
-                if (invoiceSettingDetail.getIsAutoUpload() && CharSequenceUtil.equals(PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode(), soB2cEntity.getDictPlatform())) {
-                    try {
-                        invoiceInfoService.uploadNfeInvoice(soB2cEntity, invoiceInfoEntity.getId());
-                    } catch (Exception e) {
-                        // 上传失败时，记录失败原因到备注
-                        String uploadErrorMsg = CharSequenceUtil.format("取消发票后重新上传平台失败: {}", e.getMessage());
-                        invoiceInfoEntity.setRemark(uploadErrorMsg);
-                        log.error("取消发票后重新上传平台失败, invoiceId: {}", invoiceInfoEntity.getId(), e);
-                    }
-                }
-            }
+//            if (CharSequenceUtil.isNotBlank(responseData.getXml())) {
+//                // 删除旧的XML附件
+//                // TODO: 删除旧XML附件的逻辑
+//
+//                // 上传新的XML
+//                uploadFile(invoiceInfoEntity.getId(), responseData.getXml(), "");
+//
+//                // 更新queryKey（如果chave有变化）
+//                if (CharSequenceUtil.isNotBlank(responseData.getChave())) {
+//                    invoiceInfoEntity.setQueryKey(responseData.getChave());
+//                }
+//
+//                // 重新上传至平台（如果配置了自动上传）
+//                if (invoiceSettingDetail.getIsAutoUpload() && CharSequenceUtil.equals(PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode(), soB2cEntity.getDictPlatform())) {
+//                    try {
+//                        invoiceInfoService.uploadNfeInvoice(soB2cEntity, invoiceInfoEntity.getId());
+//                    } catch (Exception e) {
+//                        // 上传失败时，记录失败原因到备注
+//                        String uploadErrorMsg = CharSequenceUtil.format("取消发票后重新上传平台失败: {}", e.getMessage());
+//                        invoiceInfoEntity.setRemark(uploadErrorMsg);
+//                        log.error("取消发票后重新上传平台失败, invoiceId: {}", invoiceInfoEntity.getId(), e);
+//                    }
+//                }
+//            }
             
             // 更新发票信息
             invoiceInfoService.updateById(invoiceInfoEntity);
@@ -1241,14 +1301,18 @@ public class NfeInvoiceService {
         
         // 根据返回结果确认是否退货成功
         String status = responseData.getStatus();
-        if ("Success".equals(status)) {
+        if (InvoiceStatusMapper.isSuccess(status)) {
             // 退货成功
             // 如果返回了XML，上传XML文件
             if (CharSequenceUtil.isNotBlank(responseData.getXml())) {
                 uploadFile(invoiceInfoEntity.getId(), responseData.getXml(), "");
             }
+            // 获取Danfe PDF并上传（退货发票的UUID）
+            if (CharSequenceUtil.isNotBlank(responseData.getUuid())) {
+                generateAndUploadPdfFromDanfe(invoiceInfoEntity.getId(), responseData.getUuid(), companyToken);
+            }
             log.warn("退货发票成功, invoiceId: {}, uuid/chave: {}", invoiceInfoEntity.getId(), uuidOrChave);
-        } else if ("Failed".equals(status)) {
+        } else if (InvoiceStatusMapper.isFailed(status)) {
             // 退货失败
             String motivo = CharSequenceUtil.isNotBlank(responseData.getMotivo()) ? responseData.getMotivo() : "退货发票失败";
             log.error("退货发票失败, uuid/chave: {}, motivo: {}", uuidOrChave, motivo);
@@ -1597,15 +1661,18 @@ public class NfeInvoiceService {
     /**
      * 获取ambiente配置值
      * ambiente用于区分线上和测试的开票环境
-     * 根据业务要求：测试和UAT系统传"1"，正式系统传"2"
+     * 
+     * ambiente值说明：
+     * - "1" = Produção(正式环境/生产环境)
+     * - "2" = Homologação(测试环境)
      * 
      * 优先级：
      * 1. 从cfg_setting表读取（key="tfAmbiente"），value可以是字符串"1"或"2"，也可以是JSON格式{"ambiente":"1"}或{"ambiente":"2"}
      * 2. 如果没有配置，则根据Spring Profile判断：
-     *    - prod环境 → "2"（正式系统）
-     *    - 其他环境（test/uat/dev） → "1"（测试/UAT系统）
+     *    - prod环境 → "1"（正式环境/生产环境）
+     *    - 其他环境（test/uat/dev） → "2"（测试环境）
      * 
-     * @return ambiente值，"1"或"2"
+     * @return ambiente值，"1"（正式环境）或"2"（测试环境）
      */
     private String getAmbiente() {
         try {
@@ -1632,18 +1699,18 @@ public class NfeInvoiceService {
             }
             
             // 根据Spring Profile判断
-            // 根据业务要求：测试和UAT系统传"1"，正式系统传"2"
+            // ambiente值："1"=正式环境，"2"=测试环境
             boolean isProd = BusinessCommonConstants.hasProfile("prod");
-            // 正式系统传"2"，测试/UAT系统传"1"
-            String ambiente = isProd ? "2" : "1";
-            log.info("根据Spring Profile判断ambiente: profile包含prod={}, ambiente={} (prod传2, 其他传1)", isProd, ambiente);
+            // 正式环境传"1"，测试环境传"2"
+            String ambiente = isProd ? "1" : "2";
+            log.info("根据Spring Profile判断ambiente: profile包含prod={}, ambiente={} (prod传1=正式环境, 其他传2=测试环境)", isProd, ambiente);
             return ambiente;
             
         } catch (Exception e) {
             log.error("获取ambiente配置失败，使用默认值", e);
-            // 默认使用"1"（测试/UAT系统），避免误操作生产数据
-            // 如果系统是prod环境，建议在cfg_setting表中配置key="tfAmbiente", value="2"
-            return "1";
+            // 默认使用"2"（测试环境），避免误操作生产数据
+            // 如果系统是prod环境，建议在cfg_setting表中配置key="tfAmbiente", value="1"
+            return "2";
         }
     }
 

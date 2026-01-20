@@ -807,6 +807,14 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
             invoiceInfoEntity.setCancelReason(remark);
             invoiceInfoEntity.setInvoiceNature(InvoiceNatureEnum.RETURN_INVOICE.getCode());
             invoiceInfoEntity.setReturnTaxCode(returnTaxCode);
+            // 更新退货发票的UUID和chave
+            if (CharSequenceUtil.isNotBlank(responseData.getUuid())) {
+                invoiceInfoEntity.setQueryId(responseData.getUuid());
+            }
+            if (CharSequenceUtil.isNotBlank(responseData.getChave())) {
+                invoiceInfoEntity.setQueryKey(responseData.getChave());
+                invoiceInfoEntity.setPlatformInvoiceNo(responseData.getChave());
+            }
             // 如果返回了新的XML，已经在上传方法中处理
             this.updateById(invoiceInfoEntity);
             return BatchResultDTO.success(id, invoiceInfoEntity.getCode(), "退货发票成功");
