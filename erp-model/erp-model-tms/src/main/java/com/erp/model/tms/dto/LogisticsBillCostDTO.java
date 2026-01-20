@@ -1025,7 +1025,7 @@ public class LogisticsBillCostDTO implements Serializable {
         /**
          * 计费重[物流商]
          */
-        private BigDecimal totalBillingWeight;
+        private BigDecimal totalBillingWeightLogistics = BigDecimal.ZERO;
 
         /**
          * 实际运费(总)

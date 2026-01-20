@@ -315,7 +315,7 @@
     <select id="listTotalCount" resultType="com.erp.model.tms.dto.LogisticsBillCostDTO$ListDTO">
         select
             lbc.id,
-            lbc.billing_weight as billingWeight,
+            lbc.billing_weight_logistics as billingWeightLogistics,
             lb.delivery_time as deliveryTime,
             lbc.currency
         from logistics_bill_cost lbc

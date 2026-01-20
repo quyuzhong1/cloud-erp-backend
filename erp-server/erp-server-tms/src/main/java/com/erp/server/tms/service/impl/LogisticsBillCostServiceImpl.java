@@ -2227,8 +2227,8 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         }
         LogisticsBillCostDTO.TotalCountDTO resultDTO = new LogisticsBillCostDTO.TotalCountDTO();
         //实际计费重
-        BigDecimal totalBillingWeight = list.stream().map(LogisticsBillCostDTO.ListDTO::getBillingWeight).reduce(BigDecimal.ZERO, BigDecimal::add);
-        resultDTO.setTotalBillingWeight(totalBillingWeight);
+        BigDecimal totalBillingWeightLogistics = list.stream().map(LogisticsBillCostDTO.ListDTO::getBillingWeightLogistics).reduce(BigDecimal.ZERO, BigDecimal::add);
+        resultDTO.setTotalBillingWeightLogistics(totalBillingWeightLogistics);
         //实际运费(总)
         BigDecimal totalActualShippingCost = list.stream().map(LogisticsBillCostDTO.ListDTO::getActualShippingCost).reduce(BigDecimal.ZERO, BigDecimal::add);
         resultDTO.setTotalActualShippingCost(totalActualShippingCost);
