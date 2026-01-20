@@ -235,4 +235,12 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
      * @return List<String>
      */
     List<String> listLogisticsBillCostId(LogisticsBillCostDTO.ListParamDTO dto);
+    /**
+     * 列表展示合计
+     * @author will
+     * @date 2026/1/20 12:18
+     * @param dto
+     * @return TotalCountDTO
+     */
+    LogisticsBillCostDTO.TotalCountDTO listTotalCount(PagingDTO<LogisticsBillCostDTO.PagingParamDTO> dto);
 }

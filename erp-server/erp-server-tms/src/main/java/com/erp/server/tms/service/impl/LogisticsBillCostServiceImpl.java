@@ -33,7 +33,10 @@ import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.plm.entity.ProductPackEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.entity.DictCurrencyEntity;
+import com.erp.model.sys.entity.DictGlobalAreaEntity;
+import com.erp.model.sys.entity.DictPartitionEntity;
 import com.erp.model.sys.entity.SysUserInfoEntity;
 import com.erp.model.tms.dto.CfgSettingValueDTO.AllocationSettingDTO;
 import com.erp.model.tms.dto.*;
@@ -635,6 +638,15 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         //运输状态
         List<DictBasicDTO.ViewDTO> transportStatusList = dictBasicService.getByKey(DictBasicEnum.LOGISTIC_TRACK_STATUS.getType());
 
+        //区域信息
+        Map<String, String> regionNameMap = FeignQuery.list(DictGlobalAreaEntity.class).stream().collect(Collectors.toMap(DictGlobalAreaEntity::getId, DictGlobalAreaEntity::getRegionName));
+
+        //部门信息
+        Map<String, String> deptNameMap = sysUserFeign.getDeptList().stream().collect(Collectors.toMap(SysDepartmentDTO::getId, SysDepartmentDTO::getName));
+
+        //军区信息
+        Map<String, String> militaryAreaNameMap = FeignQuery.list(DictPartitionEntity.class).stream().collect(Collectors.toMap(DictPartitionEntity::getId, DictPartitionEntity::getName));
+
         //币别信息
         Map<String, String> currencySymbolMap = FeignQuery.list(DictCurrencyEntity.class).stream().collect(Collectors.toMap(DictCurrencyEntity::getId, DictCurrencyEntity::getSymbol));
         //物流商信息
@@ -684,6 +696,12 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             if(deliveryTime == null) {
             	deliveryTime = LocalDateTime.now();
             }
+            //区域名称
+            listDTO.setRegionName(regionNameMap.getOrDefault(listDTO.getRegionId(), ""));
+            //部门名称
+            listDTO.setDeptName(deptNameMap.getOrDefault(listDTO.getDeptId(), ""));
+            //军区名称
+            listDTO.setPartitionName(militaryAreaNameMap.getOrDefault(listDTO.getPartitionId(),""));
             
             //预估运费
             BigDecimal exchangeEstimatedShippingCost = BigDecimal.ZERO;
@@ -2142,5 +2160,10 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
     @Override
     public List<String> listLogisticsBillCostId(LogisticsBillCostDTO.ListParamDTO dto) {
         return this.baseMapper.listLogisticsBillCostId(dto);
+    }
+
+    @Override
+    public LogisticsBillCostDTO.TotalCountDTO listTotalCount(PagingDTO<LogisticsBillCostDTO.PagingParamDTO> dto) {
+        return baseMapper.listTotalCount(dto);
     }
 }

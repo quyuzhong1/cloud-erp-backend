@@ -396,13 +396,13 @@ public class LogisticsBillCostDTO implements Serializable {
          */
         private LocalDateTime createTime;
         /**
-         * 区域编码
+         * 区域id
          */
-        private String regionCode;
+        private String regionId;
         /**
          * 区域名称
          */
-        private String regionCodeName;
+        private String regionName;
         /**
          * 部门id
          */
@@ -414,7 +414,7 @@ public class LogisticsBillCostDTO implements Serializable {
         /**
          * 军区id
          */
-        private String partition_id;
+        private String partitionId;
         /**
          * 军区名称
          */
@@ -1015,4 +1015,38 @@ public class LogisticsBillCostDTO implements Serializable {
         private String sourceType;
         private BigDecimal costValue;
     }
+
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class TotalCountDTO {
+
+        /**
+         * 计费重[物流商]
+         */
+        private BigDecimal totalBillingWeight;
+
+        /**
+         * 实际运费(总)
+         */
+        private BigDecimal totalActualShippingCost;
+
+        /**
+         * 实际关税费用(总)
+         */
+        private BigDecimal totalActualDeclareCost;
+
+        /**
+         * 实际可抵扣税金[总]
+         */
+        private BigDecimal totalActualDeductibleTax;
+
+        /**
+         * 实际其他费用(总)
+         */
+        private BigDecimal totalActualOtherCost;
+
+    }
+
 }
