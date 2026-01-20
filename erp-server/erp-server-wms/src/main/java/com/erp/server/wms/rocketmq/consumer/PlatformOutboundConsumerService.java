@@ -265,6 +265,13 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
                     deleteDTO.setType(type);
                     soB2cFeign.deleteError(deleteDTO);
                 }
+                //拦截中清除拦截状态
+                if(mainEntity.getIsIntercept()){
+                    mainEntity.setBillStatus(billStatus);
+                    mainEntity.setIsIntercept(false);
+                    mainEntity.setIsFrozen(false);
+                    soB2cFeign.updateStatus(mainEntity);
+                }
 
                 platformOutboundConsumerService.generateSoOut(mainEntity, thirdWarehouseDeliveryEntity, dto,"");
             }
