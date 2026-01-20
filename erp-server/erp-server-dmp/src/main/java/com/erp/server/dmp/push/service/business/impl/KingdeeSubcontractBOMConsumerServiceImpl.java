@@ -9,11 +9,9 @@ import com.common.business.dto.KingdeeParamDTO;
 import com.common.business.enums.SyncOperateEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.FastJsonUtil;
 import com.common.core.utils.MathUtil;
 import com.common.message.enums.ApiModuleTypeEnum;
 import com.erp.model.dmp.entity.PlatformEntity;
-import com.erp.model.dmp.enums.KingdeeDocStatusEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.rpc.scm.feign.ScmTaskFeign;
 import com.erp.sdk.third.kingdee.utils.KingdeeApi;
@@ -21,15 +19,12 @@ import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
 import com.erp.sdk.third.kingdee.utils.KingdeePushModuleEnum;
 import com.erp.sdk.third.kingdee.utils.KingdeeUtils;
 import com.erp.server.dmp.push.service.business.KingdeeSubcontractBOMConsumerService;
-import com.erp.server.dmp.push.service.business.KingdeeSubcontractOrderConsumerService;
 import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import javax.annotation.Resource;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * @Author: wtr
@@ -93,33 +88,17 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
 
         //判断金蝶系统是否已存在该数据
         KingdeeParamDTO.SaveParamDTO param = new KingdeeParamDTO.SaveParamDTO(json);
-        JSONObject model;
-        try {
-            model = kingdeeCommonService.view(apiUtils,platformEntity.getId(),map);
-        } catch (Exception e) {
-            return;
+        LinkedList<String> queryFilters = new LinkedList<>();
+        queryFilters.add(String.format("FSubReqId = '%s'", map.get("syncKingdeeId")));
+        String filterStr = String.join(" and ", queryFilters);
+        String fieldKeys = "FId,FBillNo";
+        List<Map<String, Object>> queryList = bomApiUtils.queryList(filterStr, fieldKeys, 1, 1, 1);
+        if (!queryList.isEmpty()) {
+            KingdeeUtils.makeFieldJson(json,"Ids",".", queryList.get(0).get("FId"));
+            KingdeeUtils.makeFieldJson(json,"RuleId",".", "SUB_PPBOM2PPBOMCHANGE");
+            kingdeeCommonService.push(platformEntity, map, bomApiUtils,bomChangeApiUtils, json, param, type,json);
         }
 
-        //查找到数据后，判断其审核状态
-        Integer bomId = model.getJSONArray("TreeEntity")
-                .getJSONObject(0)  // 数组第一个元素
-                .getInt("BomId_Id");
-        String id = String.valueOf(model.get("Id")) ;
-        Boolean flag = Boolean.FALSE;
-        //创建状态则直接修改、删除
-//        if (KingdeeDocStatusEnum.CREATED.getCode().equals(documentStatus) || KingdeeDocStatusEnum.REAPPROVE.getCode().equals(documentStatus) || flag) {
-//            //给修改json对象赋值ID
-//            KingdeeUtils.makeFieldJson(json,"FId",".", id);
-//            StringBuffer allKey = FastJsonUtil.getAllKey(json);
-//            ArrayList<String> apiFieldList = (ArrayList) Arrays.stream(allKey.toString().split(",")).collect(Collectors.toList());
-//            param.setNeedUpDateFields(apiFieldList);
-//            //下推
-//            kingdeeCommonService.push(platformEntity, map, bomApiUtils,bomChangeApiUtils, json, param, type,json);
-//            //Boolean isAdd = kingdeeCommonService.saveAndAutoApprove(platformEntity, map, apiUtils, json, param, type);
-//
-//        }
-        KingdeeUtils.makeFieldJson(json,"Ids",".", bomId);
-        kingdeeCommonService.push(platformEntity, map, bomApiUtils,bomChangeApiUtils, json, param, type,json);
     }
 
 
