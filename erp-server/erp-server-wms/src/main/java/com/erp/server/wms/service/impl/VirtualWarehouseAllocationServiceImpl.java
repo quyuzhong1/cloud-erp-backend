@@ -371,23 +371,14 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
         allocationEntity.setHandleDate(LocalDate.now());
         this.updateById(allocationEntity);
 
-        //调拨需要先扣减虚拟仓库存
-        if (CharSequenceUtil.equals(allocationEntity.getType(),VirtualWarehouseAllocationTypeEnum.TRANSFER.getCode())) {
-            //校验总库存
-            submitCheckQty(detailEntityList,allocationEntity);
-        }
-
         //生成自动借调直接调拨单
         generateAutoTransferInfo(allocationEntity,transferWarehouseList);
 
+        //校验总库存
+        submitCheckQty(detailEntityList,allocationEntity);
+
         //调拨分货生成直接调拨单
         generateDirectTransferInfo(allocationEntity,detailEntityList,warehouseMap);
-
-        //非调拨类型需要先扣减实体仓库存
-        if (!CharSequenceUtil.equals(allocationEntity.getType(),VirtualWarehouseAllocationTypeEnum.TRANSFER.getCode())) {
-            //校验总库存
-            submitCheckQty(detailEntityList,allocationEntity);
-        }
 
         // 记录操作日志
         log.info("提交 开始记录分货单主单日志数据，id：【{}】", allocationEntity.getId());
