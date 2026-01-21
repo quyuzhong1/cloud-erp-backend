@@ -93,9 +93,9 @@ public class DmpInputAmzFbaShipmentDmpHandler extends DmpInputDbConvertDmpHandle
 //                }
                 String shipmentName = mongoData.get("shipmentName").toString();
                 if (shipmentName.contains("ASDN")) {
-                    dmpDataMap.put("isSta",Boolean.TRUE);
-                }else {
                     dmpDataMap.put("isSta",Boolean.FALSE);
+                }else {
+                    dmpDataMap.put("isSta",Boolean.TRUE);
                 }
 
                 if (!labelData.isEmpty()) {
