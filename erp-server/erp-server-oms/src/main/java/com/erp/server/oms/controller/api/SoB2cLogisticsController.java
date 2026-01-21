@@ -98,13 +98,4 @@ public class SoB2cLogisticsController extends BaseController {
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
-    /**
-     * 转换物流标签成URL
-     * @return
-     */
-    @PostMapping("/changeLogisticsLabelToUrl")
-    public ApiResult changeLogisticsLabelToUrl(){
-        soB2cLabelService.changeLogisticsLabelToUrl();
-        return success();
-    }
 }

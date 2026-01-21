@@ -197,6 +197,7 @@ public enum ApiError implements Serializable {
 
     COMMON_NO_DELIVERY_SKU(98128,"没有发货的SKU"),
     COMMON_SKU_NOT_EXIST_OR_NOT_APPROVE(98129,"SKU【{0}】不存在或未审核"),
+    COMMON_FILE_EMPTY(1111, "文件为空{0}"),
 
     /**
      * AUTH 授权与登录 相关 2000 - 2200
