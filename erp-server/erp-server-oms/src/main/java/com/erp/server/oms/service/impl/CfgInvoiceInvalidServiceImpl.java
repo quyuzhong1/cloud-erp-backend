@@ -22,6 +22,7 @@ import com.common.business.threadlocal.UserContext;
 import com.erp.server.oms.service.CfgInvoiceSettingService;
 import com.erp.server.oms.service.OperateLogService;
 import com.common.core.exception.ServiceException;
+import com.sdk.third.tf.dto.InvalidInvoiceResponseDTO;
 import com.sdk.third.tf.dto.NfeInvoiceDTO;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -65,19 +66,23 @@ public class CfgInvoiceInvalidServiceImpl extends SuperServiceImpl<CfgInvoiceInv
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(CfgInvoiceInvalidDTO.AddDTO addDTO) {
-        CfgInvoiceSettingEntity settingEntity = cfgInvoiceSettingService.getById(addDTO.getCfgInvoiceSettingId());
-        if(Objects.isNull(settingEntity) || CharSequenceUtil.isBlank(settingEntity.getToken())) {
-            throw new ServiceException("发票授权信息不存在");
+        // 调用新接口作废发票号
+        InvalidInvoiceResponseDTO.InvalidInvoiceDataDTO response;
+        try {
+            response = nfeInvoiceService.invalidInvoiceV2(
+                addDTO.getCfgInvoiceSettingId(),
+                addDTO.getNo(),  // 序列号
+                addDTO.getStartInvoiceNo(),  // 起始号
+                addDTO.getEndInvoiceNo(),  // 结束号
+                addDTO.getReason()  // 作废原因
+            );
+            log.info("作废发票号接口调用成功, uuid: {}, xml: {}", response.getUuid(), response.getXml());
+        } catch (Exception e) {
+            log.error("作废发票号接口调用失败", e);
+            throw new ServiceException("作废发票号失败: " + e.getMessage());
         }
-        NfeInvoiceDTO.NfeVoidedDTO nfeVoidedDTO = new NfeInvoiceDTO.NfeVoidedDTO();
-        nfeVoidedDTO.setTokenEmpresa(settingEntity.getToken());
-        nfeVoidedDTO.setJustificativa(addDTO.getReason());
-        nfeVoidedDTO.setNumeroFinal(addDTO.getEndInvoiceNo());
-        nfeVoidedDTO.setNumeroInicial(addDTO.getStartInvoiceNo());
-        nfeVoidedDTO.setSerie(addDTO.getNo());
-        //调用第三方接口
-        nfeInvoiceService.voidedInvoice(nfeVoidedDTO);
 
+        // 保存作废发票号记录
         CfgInvoiceInvalidEntity cfgInvoiceInvalidEntity = new CfgInvoiceInvalidEntity();
         BeanMapperUtils.copy(addDTO, cfgInvoiceInvalidEntity);
         cfgInvoiceInvalidEntity.setDeactivateInvoiceNo(addDTO.getStartInvoiceNo() + "-" + addDTO.getEndInvoiceNo());

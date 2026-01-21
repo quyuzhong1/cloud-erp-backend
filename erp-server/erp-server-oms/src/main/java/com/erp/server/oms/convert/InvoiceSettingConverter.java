@@ -10,6 +10,8 @@ import com.common.business.mapper.ObjectMapperWork;
 import com.erp.model.oms.dto.CfgRuleInvoiceAmountDTO;
 import com.erp.model.oms.dto.RuleConditionDTO;
 import com.erp.model.oms.entity.CfgInvoiceSettingEntity;
+import com.sdk.third.tf.dto.CreateCompanyDTO;
+import com.sdk.third.tf.dto.EditCompanyDTO;
 import com.sdk.third.tf.entity.AddCompanyDTO;
 import com.sdk.third.tf.entity.UpdateCompanyDTO;
 import org.mapstruct.Mapper;
@@ -73,4 +75,52 @@ public interface InvoiceSettingConverter {
     @Mapping(target = "name", source = "value")
     RuleConditionDTO.UpdateDTO conditionViewToUpdateDTO(RuleConditionDTO.ViewDTO condition);
     List<RuleConditionDTO.UpdateDTO> conditionViewToUpdateDTO(List<RuleConditionDTO.ViewDTO> conditionList);
+
+    /**
+     * 实体类转换为新接口DTO（CfgInvoiceSettingEntity -> CreateCompanyDTO）
+     * 对应新接口路径：/company/create
+     */
+    @Mappings({
+            @Mapping(target = "invoiceType", source = "taxType"),  // 税务类型
+            @Mapping(target = "name", source = "companyName"),  // 公司名称
+            @Mapping(target = "cnpj", source = "leiCode"),  // CNPJ
+            @Mapping(target = "ie", source = "stateTaxNo"),  // 州税号
+            @Mapping(target = "unit", source = "dictCompanyType"),  // 公司类型（主公司或子公司）
+            @Mapping(target = "email", source = "email"),  // 公司邮箱
+            @Mapping(target = "cep", source = "postCode"),  // 邮编
+            @Mapping(target = "address", source = "address"),  // 详细地址（原rua）
+            @Mapping(target = "houseNumber", source = "doorplateNo"),  // 门牌号（原numero）
+            @Mapping(target = "town", source = "district"),  // 区镇（原bairro）
+            @Mapping(target = "city", source = "city"),  // 城市
+            @Mapping(target = "state", source = "state"),  // 州
+            @Mapping(target = "certFile", source = "certificateUrl"),  // 证书文件地址（原certificado）
+            @Mapping(target = "certPwd", source = "certificatePassword"),  // 证书密码（原senhaCertificado）
+            @Mapping(target = "serie", source = "no", qualifiedByName = "intToString"),  // 序列号（原numeroSerieNfe）
+            @Mapping(target = "number", source = "startCode"),  // 起始编号（原ultimoNumeroNfe）
+    })
+    CreateCompanyDTO invoiceSettingToCreateCompanyDTO(CfgInvoiceSettingEntity entity);
+
+    /**
+     * 实体类转换为编辑公司DTO（CfgInvoiceSettingEntity -> EditCompanyDTO）
+     * 对应新接口路径：/api/company/edit
+     */
+    @Mappings({
+            @Mapping(target = "invoiceType", source = "taxType"),  // 税务类型
+            @Mapping(target = "cnpj", source = "leiCode"),  // CNPJ
+            @Mapping(target = "name", source = "companyName"),  // 公司名称
+            @Mapping(target = "ie", source = "stateTaxNo"),  // 州税号
+            @Mapping(target = "unit", source = "dictCompanyType"),  // 公司类型（主公司或子公司）
+            @Mapping(target = "email", source = "email"),  // 公司邮箱
+            @Mapping(target = "cep", source = "postCode"),  // 邮编
+            @Mapping(target = "address", source = "address"),  // 详细地址
+            @Mapping(target = "houseNumber", source = "doorplateNo"),  // 门牌号
+            @Mapping(target = "town", source = "district"),  // 区镇
+            @Mapping(target = "city", source = "city"),  // 城市
+            @Mapping(target = "state", source = "state"),  // 州
+            @Mapping(target = "certFile", source = "certificateUrl"),  // 证书文件地址
+            @Mapping(target = "certPwd", source = "certificatePassword"),  // 证书密码
+            @Mapping(target = "serie", source = "no"),  // 序列号（Integer类型）
+            @Mapping(target = "number", source = "startCode", qualifiedByName = "stringToInt"),  // 起始编号（转换为Integer）
+    })
+    EditCompanyDTO invoiceSettingToEditCompanyDTO(CfgInvoiceSettingEntity entity);
 }
