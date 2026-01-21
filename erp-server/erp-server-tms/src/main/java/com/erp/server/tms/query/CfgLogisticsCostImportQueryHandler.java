@@ -5,6 +5,7 @@ import com.common.business.enums.QueryConditionEnum;
 import com.common.business.enums.QueryDataTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.query.AbstractQueryHandler;
+import com.common.business.threadlocal.AdvanceQueryContext;
 import com.common.business.threadlocal.UserContext;
 import com.erp.model.oms.enums.KolB2bApplicationTableEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
@@ -34,6 +35,10 @@ public class CfgLogisticsCostImportQueryHandler extends AbstractQueryHandler {
         if ("tab".equals(field)) {
             return getTabSql(value);
         }
+        QueryConditionEnum queryConditionEnum = AdvanceQueryContext.getCompareCode();
+        if ("logisticsSuppler".equals(field) || "platform".equals(field)) {
+            return " clci.dict_platform " + compareCodeSplicingValueSql;
+        }
         return null;
     }
 
@@ -41,29 +46,10 @@ public class CfgLogisticsCostImportQueryHandler extends AbstractQueryHandler {
         if ("all".equals(value)|| "".equals(value)){
             return getQueryAllSql();
         }
-        if(Objects.equals(value, KolB2bApplicationTableEnum.WAIT_SHIPPED.getCode())){ //待发货
-            super.buildDefaultDTO("kba.approve_status", ApproveStatusEnum.APPROVE.getCode());
-            super.buildDefaultDTO("ksba.delivery_status", KolB2bApplicationTableEnum.WAIT_SHIPPED.getCode());
-
-        }else if(Objects.equals(value, KolB2bApplicationTableEnum.SHIPPED.getCode())){ //已发货
-            super.buildDefaultDTO("kba.approve_status", ApproveStatusEnum.APPROVE.getCode());
-            super.buildDefaultDTO("ksba.delivery_status", KolB2bApplicationTableEnum.SHIPPED.getCode());
-        }else if(Objects.equals(value, ApproveStatusEnum.APPROVE_ING.getCode())){ //待我审核
-            super.buildDefaultDTO("kba.approve_status", value);
-            //待我审批流程信息
-            ProcessManagementDTO.TaskKeyInfoDTO dto = new ProcessManagementDTO.TaskKeyInfoDTO();
-            dto.setBusinessKey(SourceTypeEnum.KOL_B2C_APPLICATION.getCode());
-            dto.setTaskStatus(ApproveStatusEnum.APPROVE_ING.getCode());
-            dto.setCurApproveId(UserContext.getNonLoginUser().getUid());
-            List<ProcessTaskManagementEntity> processTaskManagementList = workflowFeign.listProcessByBusinessKey(dto);
-            List<String> ids = processTaskManagementList.stream().map(ProcessTaskManagementEntity::getBusinessId).collect(Collectors.toList());
-            if(CollectionUtils.isNotEmpty(ids)){
-                super.buildSplicingSQLDTO("kba.id", QueryConditionEnum.IN_LIST, ids, QueryDataTypeEnum.STRING);
-            }else {
-                super.buildDefaultDTO("kba.id", "-1");
-            }
-        }else  {
-            super.buildDefaultDTO("kba.approve_status", value);
+        if ("f".equals(value)){
+            super.buildDefaultDTO("clci.disabled", Boolean.FALSE);
+        }else if("t".equals(value)){
+            super.buildDefaultDTO("clci.disabled", Boolean.TRUE);
         }
         return super.getSplicingSQL();
     }

@@ -2,6 +2,8 @@ package com.erp.model.tms.dto;
 
 import com.common.business.dto.base.SortDTO;
 import java.util.List;
+
+import com.erp.model.tms.entity.CfgLogisticsCostImportDetailEntity;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
@@ -92,8 +94,8 @@ public class CfgLogisticsCostImportDTO implements Serializable {
         /**
         * 配置单据
         */
-        private String bussinessType;
-        private String bussinessTypeName;
+        private String businessType;
+        private String businessTypeName;
 
         /**
         * 配置类型：logistics_supplier=物流商,platform=平台
@@ -242,8 +244,8 @@ public class CfgLogisticsCostImportDTO implements Serializable {
         /**
         * 配置单据
         */
-        private String bussinessType;
-        private String bussinessTypeName;
+        private String businessType;
+        private String businessTypeName;
 
         /**
         * 配置类型：logistics_supplier=物流商,platform=平台
@@ -281,8 +283,9 @@ public class CfgLogisticsCostImportDTO implements Serializable {
         /**
         * 导入处理：import_update=导入更新,import_add_old=导入新增(按原单),import_add_new=导入新增(按新单)
         */
+        private List<String> importTypeNameList;
         private List<String> importTypeList;
-        private String importTypeName;
+        private String importType;
 
         /**
         * 启用状态
@@ -297,7 +300,7 @@ public class CfgLogisticsCostImportDTO implements Serializable {
         /**
          * 明细
          */
-        private List<CfgLogisticsCostImportDetailDTO.UpdateDTO> detailList;
+        private List<CfgLogisticsCostImportDetailEntity> detailList;
     }
 
     /**
@@ -338,7 +341,7 @@ public class CfgLogisticsCostImportDTO implements Serializable {
         */
         @NotBlank(message = "配置单据不能为空")
         @Size(max = 50,message = "配置单据最大长度不能超过50位")
-        private String bussinessType;
+        private String businessType;
 
         /**
         * 配置类型：api/tms/common/enumDropDown?type =CfgLogisticsCostImportCfgTyp
@@ -414,7 +417,7 @@ public class CfgLogisticsCostImportDTO implements Serializable {
          * 主键id
          */
         @NotBlank(message = "主键id不能为空")
-        private String id;
+        private List<String> ids;
 
         /**
          * 是否禁用 ： true 禁用  false 启用

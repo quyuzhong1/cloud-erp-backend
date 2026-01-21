@@ -3,6 +3,7 @@ package com.erp.server.tms.controller.api;
 
 import com.common.business.annotation.DataPermission;
 import com.common.business.dto.base.BaseDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
@@ -17,6 +18,8 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 物流授权表
@@ -79,8 +82,17 @@ public class ImportHistoryRecordController extends BaseController {
      * @return ApiResult<Object>
      */
     @PostMapping(value = "/preprocessingImportExcel")
-    public ApiResult<Object> preprocessingImportExcel(@RequestBody BaseDTO.ImportDTO dto) {
-        Boolean flag = importHistoryRecordService.preprocessingImportExcel(dto);
-        return flag ? success() : failure();
+    public ApiResult<List<BatchResultDTO>> preprocessingImportExcel(@RequestBody @Validated ImportHistoryRecordDTO.ImportDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getList().size());
+        for (BaseDTO.ImportDTO importDTO : dto.getList()) {
+            BatchResultDTO resultDTO;
+            try {
+                resultDTO = importHistoryRecordService.preprocessingImportExcel(importDTO,dto.getBusinessType(),dto.getCostType());
+            }catch (Exception e){
+                resultDTO = BatchResultDTO.fail(importDTO.getTaskId(), importDTO.getFileUrl(), e.getMessage());
+            }
+            resultDTOS.add(resultDTO);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 }

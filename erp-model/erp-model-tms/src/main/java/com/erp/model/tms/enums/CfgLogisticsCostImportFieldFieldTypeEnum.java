@@ -13,8 +13,14 @@ import org.apache.commons.lang3.StringUtils;
  * @since 2026-01-20 17:53:25
  */
 public enum CfgLogisticsCostImportFieldFieldTypeEnum implements EnumMessage {
-	API("api", "API"),
-	EXCEL("excel", "线下表格:"),
+	INTEGER("Integer", "整数"),
+	STRING("String", "字符串"),
+    LOCALDATE("LocalDate", "日期"),
+    LOCALDATETIME("LocalDateTime", "日期时间"),
+    BOOLEAN("Boolean", "布尔值"),
+    BIGDECIMAL("BigDecimal", "小数"),
+
+
     ;
     /**
      * 类型
