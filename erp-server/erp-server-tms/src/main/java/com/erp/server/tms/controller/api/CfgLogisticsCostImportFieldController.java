@@ -43,7 +43,7 @@ public class CfgLogisticsCostImportFieldController extends BaseController {
     @Resource
     private CfgLogisticsCostImportFieldService cfgLogisticsCostImportFieldService;
     /**
-    *
+    *根据BusinessType查询
     * @return
     */
     @GetMapping("/listByBusinessType")
@@ -53,7 +53,7 @@ public class CfgLogisticsCostImportFieldController extends BaseController {
 
 
     /**
-     * 分页列表
+     * 树状查询
      */
     @RequestMapping("/tree")
     public ApiResult tree(@RequestParam(value = "businessType",required = true) String businessType) {

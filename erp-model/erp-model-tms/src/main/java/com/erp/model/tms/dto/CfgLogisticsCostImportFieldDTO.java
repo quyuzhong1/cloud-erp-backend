@@ -61,9 +61,12 @@ public class CfgLogisticsCostImportFieldDTO implements Serializable {
         * ERP字段类型
         */
         private String fieldType;
+        /**
+        * ERP字段类型名称
+        */
+        private String fieldTypeName;
 
     }
-
 
     /**
      *
@@ -95,6 +98,10 @@ public class CfgLogisticsCostImportFieldDTO implements Serializable {
          * ERP字段类型
          */
         private String fieldType;
+        /**
+         * ERP字段类型名称
+         */
+        private String fieldTypeName;
         /**
          * 路径
          */
