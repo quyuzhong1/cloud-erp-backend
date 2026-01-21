@@ -307,6 +307,11 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         SoB2cDeliveryDTO.PagingParamDTO searchParam = new SoB2cDeliveryDTO.PagingParamDTO();
         String permissionSql = param.getPermissionSql();
         searchParam.setPermissionSql(permissionSql);
+        DynamicDataSourceTypeEnum dynamicDataSourceTypeEnum = DynamicDataSourceThreadLocal.get();
+        if(dynamicDataSourceTypeEnum == null) {
+            dynamicDataSourceTypeEnum = DynamicDataSourceTypeEnum.POSTGRES;
+        }
+        searchParam.setDynamicDataSource(dynamicDataSourceTypeEnum.getCode());
         List<SoB2cDeliveryDTO.TabListDTO> list = baseMapper.tabList(searchParam);
         // 获取状态列表
         List<String> statusList = SoB2cDeliveryStatusEnum.getStatusList();
@@ -343,6 +348,11 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
 
     @Override
     public PagingVO<SoB2cDeliveryDTO.ListDTO> paging(PagingDTO<SoB2cDeliveryDTO.PagingParamDTO> pagingParamDTO) {
+        DynamicDataSourceTypeEnum dynamicDataSourceTypeEnum = DynamicDataSourceThreadLocal.get();
+        if(dynamicDataSourceTypeEnum == null) {
+            dynamicDataSourceTypeEnum = DynamicDataSourceTypeEnum.POSTGRES;
+        }
+        pagingParamDTO.getParams().setDynamicDataSource(dynamicDataSourceTypeEnum.getCode());
         pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
         DynamicDataSourceTypeEnum dynamicDataSourceTypeEnum = DynamicDataSourceThreadLocal.get();
         if(dynamicDataSourceTypeEnum == null) {
@@ -2551,6 +2561,11 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
 
     @Override
     public PagingVO<SoB2cDeliveryDTO.ListDTO> exportB2cDelivery(PagingDTO<SoB2cDeliveryDTO.PagingParamDTO> dto) {
+        DynamicDataSourceTypeEnum dynamicDataSourceTypeEnum = DynamicDataSourceThreadLocal.get();
+        if(dynamicDataSourceTypeEnum == null) {
+            dynamicDataSourceTypeEnum = DynamicDataSourceTypeEnum.POSTGRES;
+        }
+        dto.getParams().setDynamicDataSource(dynamicDataSourceTypeEnum.getCode());
         dto.getParams().setPermissionSql(dto.getPermissionSql());
         DynamicDataSourceTypeEnum dynamicDataSourceTypeEnum = DynamicDataSourceThreadLocal.get();
         if(dynamicDataSourceTypeEnum == null) {
@@ -2864,8 +2879,10 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         List<WaveListDTO.WaveDeliveryDTO> deliveryList = waveListService.listByDeliverIds(ids);
         List<SoB2cLogisticsEntity> soB2cLogisticsEntities = FeignQuery.create(SoB2cLogisticsEntity.class).in(SoB2cLogisticsEntity::getMainId, soIds).list();
         //中转仓map
-        Map<String, String> warehouseMap =  warehouseService.list().stream().collect(Collectors.toMap(WarehouseEntity::getId, WarehouseEntity::getName));
-
+        List<String> warehouseIds = records.stream().filter(req -> CharSequenceUtil.isNotBlank(req.getTransferWarehouseIds()))
+                .flatMap(req -> Arrays.stream(req.getTransferWarehouseIds().split(",")))
+                .collect(Collectors.toList());
+        Map<String, String> warehouseMap =  CollUtil.isNotEmpty(warehouseIds) ? warehouseService.listWarehouseNameByIds(warehouseIds).stream().collect(Collectors.toMap(WarehouseDTO.UpdateDTO::getId, WarehouseDTO.UpdateDTO::getName)) : new HashMap<>();
         for (SoB2cDeliveryDTO.ListDTO record : records) {
             //拦截标识
             SoB2cEntity soB2cEntity = soB2cEntities.stream().filter(req -> req.getId().equals(record.getSourceId())).findFirst().orElse(null);

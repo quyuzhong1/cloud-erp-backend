@@ -218,7 +218,7 @@
             from virtual_warehouse_push_handle_detail vwphd
             inner join virtual_warehouse_push_handle_relation vwphr
             on vwphd.id = vwphr.handle_detail_id and vwphr.is_deleted = false
-            where vwphd.is_deleted = false and vwphd.third_code != '' group by vwphr.source_detail_id
+            where vwphd.is_deleted = false  group by vwphr.source_detail_id
         ) third on vmad.id = third.source_detail_id
         LEFT JOIN inventory_data iv
         ON vmad.sku_id = iv.sku_id AND vmad.warehouse_id = iv.warehouse_id

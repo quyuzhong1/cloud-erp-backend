@@ -381,4 +381,13 @@
             </foreach>
         </if>
     </select>
+    <select id="listWarehouseNameByIds" resultType="com.erp.model.wms.dto.WarehouseDTO$UpdateDTO">
+        select
+            id,
+            name
+        from warehouse where is_deleted = false and id in
+        <foreach collection="ids" item="item" open="(" close=")" separator=",">
+            #{item}
+        </foreach>
+    </select>
 </mapper>
