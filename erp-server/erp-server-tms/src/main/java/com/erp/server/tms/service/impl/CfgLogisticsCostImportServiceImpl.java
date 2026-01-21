@@ -1,50 +1,47 @@
 package com.erp.server.tms.service.impl;
 
-import cn.hutool.core.util.ObjUtil;
-import com.common.business.enums.BusinessNoTypeEnum;
-
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.annotation.DistributeLocker;
+import com.common.business.config.DocNoGenHelper;
+import com.common.business.dto.base.*;
+import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.OperationTypeEnum;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
+import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapper;
+import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.sys.entity.CfgNoticeEntity;
+import com.erp.model.tms.dto.CfgLogisticsCostImportDTO;
 import com.erp.model.tms.dto.CfgLogisticsCostImportDetailDTO;
 import com.erp.model.tms.dto.DictBasicDTO;
 import com.erp.model.tms.entity.CfgLogisticsCostImportDetailEntity;
+import com.erp.model.tms.entity.CfgLogisticsCostImportEntity;
 import com.erp.model.tms.entity.CfgLogisticsCostImportFieldEntity;
 import com.erp.model.tms.enums.CfgLogisticsCostImportCfgTypeEnum;
 import com.erp.model.tms.enums.CfgLogisticsCostImportCostTypeEnum;
 import com.erp.model.tms.enums.CfgLogisticsCostImportImportTypeEnum;
 import com.erp.model.tms.enums.DictBasicEnum;
-import com.erp.model.workflow.entity.ProcessDefinitionEntity;
+import com.erp.server.tms.mapper.CfgLogisticsCostImportMapper;
 import com.erp.server.tms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
-import com.common.business.annotation.DistributeLocker;
-import com.common.business.dto.base.BaseResultDTO;
-import com.erp.model.tms.entity.CfgLogisticsCostImportEntity;
-import com.erp.server.tms.mapper.CfgLogisticsCostImportMapper;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.threadlocal.UserContext;
-import com.common.core.exception.ServiceException;
-import com.common.business.config.DocNoGenHelper;
-import cn.hutool.core.util.ObjectUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import lombok.extern.slf4j.Slf4j;
-import com.erp.model.tms.dto.CfgLogisticsCostImportDTO;
+
 import javax.annotation.Resource;
-import java.util.stream.Collectors;
 import java.util.*;
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import cn.hutool.core.collection.CollUtil;
-import com.common.business.vo.PagingVO;
-import com.common.business.dto.base.*;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -337,5 +334,14 @@ public class CfgLogisticsCostImportServiceImpl extends SuperServiceImpl<CfgLogis
     @Override
     public Boolean importFile(BaseDTO.ImportDTO dto) {
         return null;
+    }
+
+    @Override
+    public List<CfgLogisticsCostImportEntity> listByImport(String fileName, String businessType, String costType) {
+        return lambdaQuery().eq(CfgLogisticsCostImportEntity::getName,fileName)
+                .eq(CfgLogisticsCostImportEntity::getBusinessType,businessType)
+                .eq(CfgLogisticsCostImportEntity::getCostType,costType)
+                .eq(CfgLogisticsCostImportEntity::getDisabled,Boolean.FALSE)
+                .list();
     }
 }

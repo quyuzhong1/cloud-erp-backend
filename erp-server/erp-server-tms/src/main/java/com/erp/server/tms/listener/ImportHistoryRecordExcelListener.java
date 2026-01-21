@@ -1,16 +1,24 @@
 package com.erp.server.tms.listener;
 
+import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.extra.spring.SpringUtil;
 import cn.hutool.json.JSONObject;
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
-import com.common.core.utils.FieldValidUtil;
+import com.common.business.dto.base.BaseDTO;
+import com.common.business.enums.FileTaskStatusEnum;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.server.tms.service.ImportHistoryRecordService;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import org.springframework.util.CollectionUtils;
+import lombok.Getter;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 
 /**
@@ -22,47 +30,83 @@ import java.util.Map;
 @EqualsAndHashCode(callSuper = true)
 public class ImportHistoryRecordExcelListener extends AnalysisEventListener<Map<Integer,String>> {
 
+
+    private static final int BATCH_COUNT = 1000;
+    private final String taskId;
+    private final String importType;
+    private final Integer importCount;
+    @Getter
+    private Integer count = 0;
     /**
      * 错误信息
      */
+    @Getter
     private List<JSONObject> errorList = new ArrayList<>();
     /**
      * 全部数据（用于判断导入是否为空）
      */
-    private List<JSONObject> dataList = new ArrayList<>();
+    private final List<JSONObject> dataList = new ArrayList<>();
 
     /**
      * 成功信息
      */
+    @Getter
     private List<JSONObject> successList = new ArrayList<>();
 
     private Map<Integer,String> headMap;
 
+    @Getter
     private List<String> headList;
 
-
-    public ImportHistoryRecordExcelListener() {
+    private final ImportHistoryRecordService importHistoryRecordService = SpringUtil.getBean(ImportHistoryRecordService.class);
+    private final DownloadTaskFeign downloadTaskFeign = SpringUtil.getBean(DownloadTaskFeign.class);
+    public ImportHistoryRecordExcelListener(String taskId, String importType, Integer importCount) {
+        this.taskId = taskId;
+        this.importType = importType;
+        this.importCount = importCount;
     }
 
-   /**
-    * 每解析一行数据回调一遍
-    */
+    /**
+     * 每解析一行数据回调一遍
+     * @author will
+     * @date 2026/1/21 15:42
+     * @param map
+     * @param analysisContext
+     * @return void
+     */
     @Override
-    public void invoke(Map<Integer,String> map, AnalysisContext analysisContext) {
-        JSONObject excelDTO = new JSONObject(map);
-        List<String> errorMsgList = new ArrayList<>();
-
-        //添加数据用于判断是否为空
-        dataList.add(excelDTO);
-        //存在错误数据则直接返回
-        if (!CollectionUtils.isEmpty(errorMsgList)) {
-            String errorMsg = FieldValidUtil.getMsgSort(errorMsgList);
-            excelDTO.set("错误信息",errorMsg);
-            errorList.add(excelDTO);
+    @Transactional(rollbackFor = Exception.class)
+    public void invoke(Map<Integer,String>  map, AnalysisContext analysisContext) {
+        count += 1;
+        //已经导入的数据跳过进度
+        if (Objects.nonNull(importCount) && count < importCount){
             return;
         }
-
+        //当导入的最后一列数据都是空时map无值导致表头size和map.size不一致，所以需要添加表头一致的数据
+        for (Map.Entry<Integer,String> entry : headMap.entrySet()) {
+            String value = map.get(entry.getKey());
+            if (ObjectUtil.isEmpty(value)) {
+                map.put(entry.getKey(),"");
+            }
+        }
+        JSONObject excelDTO = new JSONObject(map);
+        //添加数据用于判断是否为空
+        dataList.add(excelDTO);
         successList.add(excelDTO);
+        if (successList.size() >= BATCH_COUNT){
+            try {
+                List<JSONObject> errorList2 = new ArrayList<>();
+                importHistoryRecordService.handleImportSuccessList(successList, errorList2, headList, headMap,importType);
+                errorList.addAll(errorList2);
+            }catch (Exception e){
+                successList.forEach(jsonObject -> {
+                    jsonObject.set("错误信息",e.getMessage().length() > 50 ? e.getMessage().substring(0, 50) : e.getMessage());
+                });
+                errorList.addAll(successList);
+            }
+            successList.clear();
+            updateTask(count);
+        }
     }
 
     public List<JSONObject> getExcelDateList(){
@@ -70,18 +114,43 @@ public class ImportHistoryRecordExcelListener extends AnalysisEventListener<Map<
     }
 
     /**
-     * 数据全部解析完后删除明细
+     * @description: 数据全部解析完后删除明细
+     * @author Will
+     * @date: 2026/1/21 15:32
+     * @param analysisContext
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void doAfterAllAnalysed(AnalysisContext analysisContext) {
-
+        if (!successList.isEmpty()) {
+            try {
+                List<JSONObject> errorList2 = new ArrayList<>();
+                importHistoryRecordService.handleImportSuccessList(successList, errorList2, headList, headMap, importType);
+                errorList.addAll(errorList2);
+            }catch (Exception e){
+                successList.forEach(jsonObject -> {
+                    jsonObject.set("错误信息",e.getMessage().length() > 50 ? e.getMessage().substring(0, 50) : e.getMessage());
+                });
+                errorList.addAll(successList);
+            }
+        }
     }
 
     @Override
     public void invokeHeadMap(Map<Integer,String> map, AnalysisContext analysisContext) {
-        List<String> headList = new ArrayList<>(map.values());
+        List<String> headList = map.values().stream().map(String::toString).collect(Collectors.toList());
         headList.add("错误信息");
+        map.put(map.size(),"错误信息");
         this.headMap = map;
         this.headList = headList;
+    }
+
+    private void updateTask(Integer count){
+        BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
+        importResultDTO.setTaskId(taskId);
+        importResultDTO.setStatus(FileTaskStatusEnum.PROCESS.getCode());
+        importResultDTO.setRemark("处理中");
+        importResultDTO.setCount(count);
+        downloadTaskFeign.updateTask(importResultDTO);
     }
 }

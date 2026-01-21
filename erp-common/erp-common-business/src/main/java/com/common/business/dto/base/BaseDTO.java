@@ -45,6 +45,11 @@ public class BaseDTO implements Serializable {
          */
         private String fileUrl;
         /**
+         * 文件名称
+         */
+        private String fileName;
+
+        /**
          * 任务id[后端使用]
          */
         private String taskId;
