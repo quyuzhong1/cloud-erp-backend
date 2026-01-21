@@ -702,25 +702,25 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
         dmpInputHotfixCreateRequest.setCfgInputDetailIdList(inputDetailIds);
         dmpInputHotfixCreateRequest.setCfgInputId(inputEntity.getId());
         dmpInputHotfixCreateRequest.setDetailExtendJson(JSON.toJSONString(dto));
-        dmpInputHotfixCreateRequest.setTaskType(DmpInputTaskTaskTypeEnum.NORMAL.getCode());
-        //dmpInputCreateFactory.doHotfixInputTask(dmpInputHotfixCreateRequest);
+        //dmpInputHotfixCreateRequest.setTaskType(DmpInputTaskTaskTypeEnum.NORMAL.getCode());
+        dmpInputCreateFactory.doHotfixInputTask(dmpInputHotfixCreateRequest);
         // 创建任务
-        DmpInputCreateResponse response = dmpInputCreateFactory.createHotfixInputTask(dmpInputHotfixCreateRequest);
-        // 执行任务
-        if(!CollectionUtils.isEmpty(response.getAfterDmpInputTaskEntityList())) {
-            for (DmpInputTaskEntity dmpInputTaskEntity : response.getAfterDmpInputTaskEntityList()) {
-                //系统非dmp不立即执行，存在restcloud
-                if (!CharSequenceUtil.equals(dmpInputTaskEntity.getExecSystem(), DmpCfgInputExecSystemEnum.DMP.getCode())) {
-                    continue;
-                }
-                dmpInputExecutorPool.execute(() -> {
-                    DmpInputFinishRequest dmpInputFinishRequest = new DmpInputFinishRequest();
-                    dmpInputFinishRequest.setInputTaskId(dmpInputTaskEntity.getId());
-                    dmpInputFinishRequest.setExecTimeout(dmpInputTaskEntity.getExecTimeout());
-                    dmpInputTaskFactory.dealInputTask(dmpInputFinishRequest);
-                });
-            }
-        }
+//        DmpInputCreateResponse response = dmpInputCreateFactory.createHotfixInputTask(dmpInputHotfixCreateRequest);
+//        // 执行任务
+//        if(!CollectionUtils.isEmpty(response.getAfterDmpInputTaskEntityList())) {
+//            for (DmpInputTaskEntity dmpInputTaskEntity : response.getAfterDmpInputTaskEntityList()) {
+//                //系统非dmp不立即执行，存在restcloud
+//                if (!CharSequenceUtil.equals(dmpInputTaskEntity.getExecSystem(), DmpCfgInputExecSystemEnum.DMP.getCode())) {
+//                    continue;
+//                }
+//                dmpInputExecutorPool.execute(() -> {
+//                    DmpInputFinishRequest dmpInputFinishRequest = new DmpInputFinishRequest();
+//                    dmpInputFinishRequest.setInputTaskId(dmpInputTaskEntity.getId());
+//                    dmpInputFinishRequest.setExecTimeout(dmpInputTaskEntity.getExecTimeout());
+//                    dmpInputTaskFactory.dealInputTask(dmpInputFinishRequest);
+//                });
+//            }
+//        }
         return true;
     }
 }
