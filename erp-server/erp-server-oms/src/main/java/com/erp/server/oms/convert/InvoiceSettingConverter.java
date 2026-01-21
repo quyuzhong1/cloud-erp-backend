@@ -121,6 +121,7 @@ public interface InvoiceSettingConverter {
             @Mapping(target = "certPwd", source = "certificatePassword"),  // 证书密码
             @Mapping(target = "serie", source = "no"),  // 序列号（Integer类型）
             @Mapping(target = "number", source = "startCode", qualifiedByName = "stringToInt"),  // 起始编号（转换为Integer）
+            @Mapping(target = "companyId", source = "companyId"),  // 公司ID（第三方返回的公司ID）
     })
     EditCompanyDTO invoiceSettingToEditCompanyDTO(CfgInvoiceSettingEntity entity);
 }

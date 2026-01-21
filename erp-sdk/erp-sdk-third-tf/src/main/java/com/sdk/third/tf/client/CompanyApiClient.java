@@ -51,6 +51,7 @@ public class CompanyApiClient {
     private static final String FIELD_SERIE = "serie";
     private static final String FIELD_NUMBER = "number";
     private static final String FIELD_CATEGORY_ID = "category_id";
+    private static final String FIELD_COMPANY_ID = "company_id";
 
     private TfApiClient tfApiClient;
 
@@ -311,6 +312,7 @@ public class CompanyApiClient {
         requestBody.put(FIELD_CERT_PWD, editCompanyDTO.getCertPwd());
         requestBody.put(FIELD_SERIE, editCompanyDTO.getSerie());
         requestBody.put(FIELD_NUMBER, editCompanyDTO.getNumber());
+        requestBody.put(FIELD_COMPANY_ID, editCompanyDTO.getCompanyId());
         // 注意：编辑公司接口不包含category_id字段
         return requestBody;
     }
