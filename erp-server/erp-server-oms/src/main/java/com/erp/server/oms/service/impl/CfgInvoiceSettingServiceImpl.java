@@ -376,13 +376,13 @@ public class CfgInvoiceSettingServiceImpl extends SuperServiceImpl<CfgInvoiceSet
      * @date: 2025/4/17 13:05
      **/
     private void checkCode(String leiCode, String postCode) {
-        if (StrUtil.isNotBlank(leiCode)) {
-            // 示例格式：XX XXX XXX/XXX，例如：12 345 678/901
-            String regex = "^\\d{2}\\.\\d{3}\\.\\d{3}/\\d{4}-\\d{2}$";
-            if (!leiCode.matches(regex)) {
-                throw new ServiceException("CNPJ 格式不正确，格式应为：XX XXX XXX/XXXX-XX");
-            }
-        }
+//        if (StrUtil.isNotBlank(leiCode)) {
+//            // 示例格式：XX XXX XXX/XXX，例如：12 345 678/901
+//            String regex = "^\\d{2}\\.\\d{3}\\.\\d{3}/\\d{4}-\\d{2}$";
+//            if (!leiCode.matches(regex)) {
+//                throw new ServiceException("CNPJ 格式不正确，格式应为：XX XXX XXX/XXXX-XX");
+//            }
+//        }
         if (StrUtil.isNotBlank(postCode)) {
             // 示例格式：XXXXX-XXX
             String regex = "^\\d{5}-\\d{3}$";
