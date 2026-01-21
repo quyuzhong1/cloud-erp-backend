@@ -172,7 +172,7 @@ public class CfgInvoiceSettingController extends BaseController {
      * @param taxCategoryId 税种ID（cfg_tax_category.category_id）
      * @return: 是否成功
      **/
-    @PostMapping("/bindTaxCategory")
+    @GetMapping("/bindTaxCategory")
     @LogAction(value = LogActionEnum.UPDATE, desc = "绑定税种")
     public ApiResult<Boolean> bindTaxCategory(@RequestParam String id, @RequestParam(required = false) String taxCategoryId) {
         Boolean result = cfgInvoiceSettingService.bindTaxCategory(id, taxCategoryId);

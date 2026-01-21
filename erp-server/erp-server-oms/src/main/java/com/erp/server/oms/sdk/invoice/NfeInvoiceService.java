@@ -1153,30 +1153,40 @@ public class NfeInvoiceService {
             invoiceInfoEntity.setCancelReason(cancelReason);
             
             // 如果返回了新的XML，替换XML并重新上传
-//            if (CharSequenceUtil.isNotBlank(responseData.getXml())) {
-//                // 删除旧的XML附件
-//                // TODO: 删除旧XML附件的逻辑
-//
-//                // 上传新的XML
-//                uploadFile(invoiceInfoEntity.getId(), responseData.getXml(), "");
-//
-//                // 更新queryKey（如果chave有变化）
-//                if (CharSequenceUtil.isNotBlank(responseData.getChave())) {
-//                    invoiceInfoEntity.setQueryKey(responseData.getChave());
-//                }
-//
-//                // 重新上传至平台（如果配置了自动上传）
-//                if (invoiceSettingDetail.getIsAutoUpload() && CharSequenceUtil.equals(PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode(), soB2cEntity.getDictPlatform())) {
-//                    try {
-//                        invoiceInfoService.uploadNfeInvoice(soB2cEntity, invoiceInfoEntity.getId());
-//                    } catch (Exception e) {
-//                        // 上传失败时，记录失败原因到备注
-//                        String uploadErrorMsg = CharSequenceUtil.format("取消发票后重新上传平台失败: {}", e.getMessage());
-//                        invoiceInfoEntity.setRemark(uploadErrorMsg);
-//                        log.error("取消发票后重新上传平台失败, invoiceId: {}", invoiceInfoEntity.getId(), e);
-//                    }
-//                }
-//            }
+            if (CharSequenceUtil.isNotBlank(responseData.getXml())) {
+                // 删除旧的XML附件
+                // TODO: 删除旧XML附件的逻辑
+
+                // 上传新的XML
+                uploadFile(invoiceInfoEntity.getId(), responseData.getXml(), "");
+
+                // 更新queryKey（如果chave有变化）
+                if (CharSequenceUtil.isNotBlank(responseData.getChave())) {
+                    invoiceInfoEntity.setQueryKey(responseData.getChave());
+                }
+            }
+            
+            // 取消发票成功后，重新获取并上传PDF（PDF内容会更新为取消状态）
+            try {
+                generateAndUploadPdfFromDanfe(invoiceInfoEntity.getId(), uuid, companyToken);
+            } catch (Exception e) {
+                // PDF上传失败时，记录失败原因到备注，但不影响主流程
+                String pdfErrorMsg = CharSequenceUtil.format("取消发票后重新上传PDF失败: {}", e.getMessage());
+                invoiceInfoEntity.setRemark(pdfErrorMsg);
+                log.error("取消发票后重新上传PDF失败, invoiceId: {}, uuid: {}", invoiceInfoEntity.getId(), uuid, e);
+            }
+
+            // 重新上传至平台（如果配置了自动上传）
+            if (invoiceSettingDetail.getIsAutoUpload() && CharSequenceUtil.equals(PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode(), soB2cEntity.getDictPlatform())) {
+                try {
+                    invoiceInfoService.uploadNfeInvoice(soB2cEntity, invoiceInfoEntity.getId());
+                } catch (Exception e) {
+                    // 上传失败时，记录失败原因到备注
+                    String uploadErrorMsg = CharSequenceUtil.format("取消发票后重新上传平台失败: {}", e.getMessage());
+                    invoiceInfoEntity.setRemark(uploadErrorMsg);
+                    log.error("取消发票后重新上传平台失败, invoiceId: {}", invoiceInfoEntity.getId(), e);
+                }
+            }
             
             // 更新发票信息
             invoiceInfoService.updateById(invoiceInfoEntity);
