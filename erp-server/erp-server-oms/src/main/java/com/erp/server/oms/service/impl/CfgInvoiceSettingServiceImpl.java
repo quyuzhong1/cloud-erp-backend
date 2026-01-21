@@ -16,6 +16,7 @@ import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.FastDFSClientUtil;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.*;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -150,11 +151,8 @@ public class CfgInvoiceSettingServiceImpl extends SuperServiceImpl<CfgInvoiceSet
         omsAttachmentService.batchSaveOrUpdate(dto.getAttachmentUrlList(), dto.getAttachmentNameList(), type, entity.getId());
         //CfgInvoiceSettingEntity -> CreateCompanyDTO（新接口）
         CreateCompanyDTO createCompanyDTO = InvoiceSettingConverter.INSTANCE.invoiceSettingToCreateCompanyDTO(entity);
-        // CNPJ格式化：去除所有非数字字符，只保留14位数字
-        if (CharSequenceUtil.isNotBlank(createCompanyDTO.getCnpj())) {
-            String cnpj = createCompanyDTO.getCnpj().replaceAll("[^0-9]", "");
-            createCompanyDTO.setCnpj(cnpj);
-        }
+        // 格式化数据
+        formatCreateCompanyDTO(createCompanyDTO);
         //调用TF新接口（创建公司时使用经销商token，不需要已有token）
         CreateCompanyResponseDTO.CreateCompanyDataDTO response = tfFiscalService.createCompanyV2(createCompanyDTO);
         String token = response.getToken();
@@ -213,11 +211,8 @@ public class CfgInvoiceSettingServiceImpl extends SuperServiceImpl<CfgInvoiceSet
         }
         //调用TF新接口（编辑公司时使用公司token）
         EditCompanyDTO editCompanyDTO = InvoiceSettingConverter.INSTANCE.invoiceSettingToEditCompanyDTO(cfgInvoiceSettingEntity);
-        // CNPJ格式化：去除所有非数字字符，只保留14位数字
-        if (CharSequenceUtil.isNotBlank(editCompanyDTO.getCnpj())) {
-            String cnpj = editCompanyDTO.getCnpj().replaceAll("[^0-9]", "");
-            editCompanyDTO.setCnpj(cnpj);
-        }
+        // 格式化数据
+        formatEditCompanyDTO(editCompanyDTO);
         String companyToken = cfgInvoiceSettingEntity.getToken();
         if (CharSequenceUtil.isBlank(companyToken)) {
             throw new ServiceException("公司token不能为空，请先创建公司");
@@ -615,5 +610,83 @@ public class CfgInvoiceSettingServiceImpl extends SuperServiceImpl<CfgInvoiceSet
         }
         
         return update;
+    }
+
+    /**
+     * 格式化创建公司DTO数据
+     * 包括CNPJ格式化和证书文件URL处理
+     * 
+     * @param createCompanyDTO 创建公司DTO
+     */
+    private void formatCreateCompanyDTO(CreateCompanyDTO createCompanyDTO) {
+        // CNPJ格式化：去除所有非数字字符，只保留14位数字
+        formatCnpj(createCompanyDTO::getCnpj, createCompanyDTO::setCnpj);
+        // 证书文件URL处理：拼接publicUrl并验证格式
+        formatCertFileUrl(createCompanyDTO::getCertFile, createCompanyDTO::setCertFile);
+    }
+
+    /**
+     * 格式化编辑公司DTO数据
+     * 包括CNPJ格式化和证书文件URL处理
+     * 
+     * @param editCompanyDTO 编辑公司DTO
+     */
+    private void formatEditCompanyDTO(EditCompanyDTO editCompanyDTO) {
+        // CNPJ格式化：去除所有非数字字符，只保留14位数字
+        formatCnpj(editCompanyDTO::getCnpj, editCompanyDTO::setCnpj);
+        // 证书文件URL处理：拼接publicUrl并验证格式
+        formatCertFileUrl(editCompanyDTO::getCertFile, editCompanyDTO::setCertFile);
+    }
+
+    /**
+     * 格式化CNPJ：去除所有非数字字符，只保留14位数字
+     * 
+     * @param getter CNPJ获取函数
+     * @param setter CNPJ设置函数
+     */
+    private void formatCnpj(java.util.function.Supplier<String> getter, java.util.function.Consumer<String> setter) {
+        String cnpj = getter.get();
+        if (CharSequenceUtil.isNotBlank(cnpj)) {
+            String formattedCnpj = cnpj.replaceAll("[^0-9]", "");
+            setter.accept(formattedCnpj);
+            log.debug("CNPJ格式化: {} -> {}", cnpj, formattedCnpj);
+        }
+    }
+
+    /**
+     * 格式化证书文件URL：拼接publicUrl并验证格式
+     * 
+     * @param getter 证书文件URL获取函数
+     * @param setter 证书文件URL设置函数
+     */
+    private void formatCertFileUrl(java.util.function.Supplier<String> getter, java.util.function.Consumer<String> setter) {
+        String certFile = getter.get();
+        if (CharSequenceUtil.isBlank(certFile)) {
+            return;
+        }
+
+        // 如果URL不是以http://或https://开头，需要拼接FastDFS的publicUrl
+        if (!certFile.startsWith("http://") && !certFile.startsWith("https://")) {
+            if (CharSequenceUtil.isNotBlank(FastDFSClientUtil.publicUrl)) {
+                // 拼接publicUrl，确保publicUrl和certFile之间没有重复的斜杠
+                String publicUrl = FastDFSClientUtil.publicUrl.endsWith("/") 
+                    ? FastDFSClientUtil.publicUrl.substring(0, FastDFSClientUtil.publicUrl.length() - 1)
+                    : FastDFSClientUtil.publicUrl;
+                String filePath = certFile.startsWith("/") ? certFile : "/" + certFile;
+                certFile = publicUrl + filePath;
+                setter.accept(certFile);
+                log.info("证书文件URL已拼接publicUrl: {}", certFile);
+            } else {
+                log.warn("FastDFS publicUrl未配置，证书文件URL可能无法访问: {}", certFile);
+            }
+        }
+
+        // 验证URL格式是否有效
+        try {
+            new java.net.URL(certFile);
+        } catch (Exception e) {
+            log.error("证书文件URL格式错误: {}, 错误: {}", certFile, e.getMessage());
+            throw new ServiceException(CharSequenceUtil.format("证书文件URL格式错误: {}", certFile));
+        }
     }
 }
