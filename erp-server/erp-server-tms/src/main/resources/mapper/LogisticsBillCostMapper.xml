@@ -111,7 +111,7 @@
             lbc.pay_time payTime,
             lbc.check_status checkStatus,
             lbc.create_time createTime,
-            lbc.region_code as regionCode,
+            lbc.region_id as regionId,
             lbc.dept_id as deptId,
             lbc.partition_id as partitionId,
             lb.is_allocate_required as isAllocateRequired,
