@@ -431,6 +431,39 @@ public class LogisticsBillCostDTO implements Serializable {
          * 实重（物流商）【可排序】
          */
         private BigDecimal thirdActualWeight;
+        /**
+         * 区域id
+         */
+        private String regionId;
+        /**
+         * 区域名称
+         */
+        private String regionName;
+        /**
+         * 部门id
+         */
+        private String deptId;
+        /**
+         * 部门名称
+         */
+        private String deptName;
+        /**
+         * 军区id
+         */
+        private String partitionId;
+        /**
+         * 军区名称
+         */
+        private String partitionName;
+        /**
+         * 是否分摊
+         */
+        private Boolean isAllocateRequired;
+        /**
+         * 不分摊原因
+         */
+        private String notAllocateRemark;
+
     }
 
     /**
@@ -678,7 +711,7 @@ public class LogisticsBillCostDTO implements Serializable {
          * 实重(物流商)
          */
         private BigDecimal thirdActualWeight;
-    	
+
     	/**
     	 * 实际金额币别
     	 */
@@ -1090,4 +1123,43 @@ public class LogisticsBillCostDTO implements Serializable {
         private String sourceType;
         private BigDecimal costValue;
     }
+
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class TotalCountDTO {
+
+        /**
+         * 计费重[物流商]
+         */
+        private BigDecimal totalBillingWeightLogistics = BigDecimal.ZERO;
+
+        /**
+         * 实际运费(总)
+         */
+        private BigDecimal totalActualShippingCost = BigDecimal.ZERO;
+        private String actualShippingCostCurrencySymbol = "¥";
+
+        /**
+         * 实际关税费用(总)
+         */
+        private BigDecimal totalActualDeclareCost = BigDecimal.ZERO;
+        private String actualDeclareCostCurrencySymbol = "¥";
+
+
+        /**
+         * 实际可抵扣税金[总]
+         */
+        private BigDecimal totalActualDeductibleTax = BigDecimal.ZERO;
+        private String actualDeductibleTaxCurrencySymbol = "¥";
+
+        /**
+         * 实际其他费用(总)
+         */
+        private BigDecimal totalActualOtherCost = BigDecimal.ZERO;
+        private String actualOtherCostCurrencySymbol = "¥";
+
+    }
+
 }

@@ -177,4 +177,14 @@ public interface TmsFirstMileLogisticService extends SuperService<LogisticsBillE
      * */
 
     LogisticsTrackDTO.ViewDTO listTrack(String logisticsBillId);
+    /**
+     * 是否分摊状态更新
+     * @author will
+     * @date 2026/1/20 16:36
+     * @param id
+     * @param isAllocateRequired
+     * @param notAllocateRemark
+     * @return BatchResultDTO
+     */
+    BatchResultDTO updateIsAllocateRequired(String id,Boolean isAllocateRequired, String notAllocateRemark);
 }

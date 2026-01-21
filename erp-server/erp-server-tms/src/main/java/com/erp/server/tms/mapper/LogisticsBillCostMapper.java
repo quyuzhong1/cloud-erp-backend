@@ -3,6 +3,7 @@ package com.erp.server.tms.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.base.PagingDTO;
 import com.erp.model.tms.dto.LogisticsBillCostDTO;
 import com.erp.model.tms.entity.LogisticsBillCostEntity;
 import org.apache.ibatis.annotations.Mapper;
@@ -96,4 +97,12 @@ public interface LogisticsBillCostMapper extends BaseMapper<LogisticsBillCostEnt
      * @return List<String>
      */
     List<String> listLogisticsBillCostId(@Param("params") LogisticsBillCostDTO.ListParamDTO params);
+    /**
+     * 列表展示合计
+     * @author will
+     * @date 2026/1/20 12:20
+     * @param params
+     * @return ListDTO
+     */
+    List<LogisticsBillCostDTO.ListDTO> listTotalCount(@Param("params") PagingDTO<LogisticsBillCostDTO.PagingParamDTO> params);
 }

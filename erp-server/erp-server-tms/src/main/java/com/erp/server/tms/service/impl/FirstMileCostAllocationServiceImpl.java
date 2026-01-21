@@ -587,7 +587,24 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
                     .collect(Collectors.toList());
         }
         //当前组织
-        String orgId = CharSequenceUtil.isNotBlank(allocationSettingDTO.getFirstOrgId()) ? allocationSettingDTO.getFirstOrgId() : reportPeriodMonth.getOrgId();
+        String orgId = "";
+        if(CharSequenceUtil.isBlank(allocationSettingDTO.getFirstOrgId()) || Objects.equals(CostAllocationOrgTypeEnum.BILL_ORG.getCode(),allocationSettingDTO.getFirstOrgId())){
+            //单据成本组织
+            orgId = reportPeriodMonth.getOrgId();
+        }else if(Objects.equals(CostAllocationOrgTypeEnum.LOGISTICS_SUPPLIER_ORG.getCode(),allocationSettingDTO.getFirstOrgId())){
+            //物流组织
+            String supplierId = entity.getSupplierId();
+            if(StringUtils.isBlank(supplierId)){
+                return BatchResultDTO.fail(entity.getId(), entity.getSourceCode(), ApiError.LOGISTICS_SUPPLIER_NOT_FOUND.getMsg());
+            }
+            LogisticsSupplierEntity LogisticsSupplierEntity = logisticsSupplierService.getById(supplierId);
+            if(Objects.isNull(LogisticsSupplierEntity)){
+                return BatchResultDTO.fail(entity.getId(), entity.getSourceCode(), ApiError.LOGISTICS_SUPPLIER_NOT_EXIST.getMsg());
+            }
+            orgId = LogisticsSupplierEntity.getOrgId();
+        }else {
+            orgId = allocationSettingDTO.getFirstOrgId();
+        }
         String toWarehouseId = CharSequenceUtil.isNotBlank(allocationSettingDTO.getFirstWarehouseId()) ? allocationSettingDTO.getFirstWarehouseId() : entity.getFromWarehouseId();
         //sku成本
         List<InventorySkuCostDTO.PagingVO> skuCostList = inventorySkuCostService.listDetailByOrgIdAndSkuIds(orgId, skuIds, ApproveStatusEnum.APPROVE.getStatus(), reportPeriodMonth.getMonth(),toWarehouseId);

@@ -117,7 +117,12 @@
             lbc.third_length thirdLength,
             lbc.third_width thirdWidth,
             lbc.third_height thirdHeight,
-            lbc.third_actual_weight thirdActualWeight
+            lbc.third_actual_weight thirdActualWeight,
+            lbc.region_code as regionCode,
+            lbc.dept_id as deptId,
+            lbc.partition_id as partitionId,
+            lb.is_allocate_required as isAllocateRequired,
+            lb.not_allocate_remark as notAllocateRemark
         from logistics_bill_cost lbc
         inner join logistics_bill lb on lbc.logistics_bill_id = lb.id and lb.is_deleted = false
         left join logistics_channel lc on lbc.channel_id = lc.id and lc.is_deleted = false
@@ -314,6 +319,24 @@
             <if test="params.isUpdatePayStatus == true">
                and lbc.reconciliation_status = 'confirmed'
             </if>
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
+            </if>
+        </where>
+    </select>
+
+    <!-- 统计总数 -->
+    <select id="listTotalCount" resultType="com.erp.model.tms.dto.LogisticsBillCostDTO$ListDTO">
+        select
+            lbc.id,
+            lbc.billing_weight_logistics as billingWeightLogistics,
+            lb.delivery_time as deliveryTime,
+            lbc.currency
+        from logistics_bill_cost lbc
+        inner join logistics_bill lb on lbc.logistics_bill_id = lb.id and lb.is_deleted = false
+        <where>
+            ${params.sqlMap.default}
+            and lbc.is_deleted = false
             <if test="params.permissionSql!=null and params.permissionSql!=''">
                 ${params.permissionSql}
             </if>

@@ -1653,6 +1653,8 @@ public enum ApiError implements Serializable {
     LOGISTICS_SELF_SHIP_FEE_NOT_FOUND(13612,"自发货费用不存在"),
     LOGISTICS_ACTUAL_EXISTS_CANNOT_PUSH(13613,"已存在实际账单，不能再下推实际账单"),
     LOGISTICS_MAPPING_NOT_NULL(13614,"【{0}】所属的平台【{1}】没有配置【{2}】的标发信息，不允许提交发货"),
+    LOGISTICS_SUPPLIER_NOT_FOUND(13615,"头程费用分摊物流商为空"),
+    LOGISTICS_SUPPLIER_NOT_EXIST(13616,"头程费用分摊物流商不存在"),
 
     /**
      * 财务管理 错误 信息 14000-14500

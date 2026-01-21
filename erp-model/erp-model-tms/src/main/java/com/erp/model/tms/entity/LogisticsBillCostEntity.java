@@ -228,6 +228,25 @@ public class LogisticsBillCostEntity extends BaseEntity<LogisticsBillCostEntity>
     @TableField(value = "third_actual_weight")
     private BigDecimal thirdActualWeight;
 
+
+    /**
+     * 区域id
+     */
+    @TableField(value = "region_Id")
+    private String regionId;
+
+    /**
+     * 部门id
+     */
+    @TableField(value = "dept_id")
+    private String deptId;
+
+    /**
+     * 军区id
+     */
+    @TableField(value = "partition_id")
+    private String partitionId;
+
     /**
      * 费用编辑（导入数据返回）
      */

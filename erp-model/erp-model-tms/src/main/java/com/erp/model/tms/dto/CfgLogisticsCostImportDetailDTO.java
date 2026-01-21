@@ -1,0 +1,299 @@
+package com.erp.model.tms.dto;
+
+import com.common.business.dto.base.SortDTO;
+import java.util.List;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
+import java.io.Serializable;
+import com.common.business.dto.base.SuperDTO;
+import java.time.LocalDateTime;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Size;
+import javax.validation.constraints.NotEmpty;
+import com.common.business.dto.AdvanceQueryDTO;
+import java.util.Map;
+
+/**
+ * <p>
+ * 费用项配置字段配置请求响应实体
+ * </p>
+ *
+ * @author jack
+ * @since 2026-01-20
+*/
+@Data
+@NoArgsConstructor
+public class CfgLogisticsCostImportDetailDTO implements Serializable {
+
+
+
+     /**
+     * 状态统计
+     */
+     @Data
+     @NoArgsConstructor
+     @AllArgsConstructor
+     public static class TabListDTO {
+
+         /**
+         * 类型
+         */
+         private String tabFlag;
+
+         /**
+         * 数量
+         */
+         private Integer count;
+
+     }
+
+
+     /**
+     * 分页列表查询参数
+     */
+     @Data
+     @NoArgsConstructor
+     public static class PagingParamDTO extends SortDTO {
+
+         /**
+         * 页面高级查询
+         */
+         private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+            * sqlMap 默认key default
+        */
+        private Map<String,String> sqlMap;
+
+     }
+
+
+    /**
+    * 分页列表
+    */
+    @Data
+    @NoArgsConstructor
+    public static class ListDTO {
+
+        /**
+        * 主键id
+        */
+        private String  id;
+
+        /**
+        * 物流商抬头字段
+        */
+        private String sourceField;
+
+        /**
+        * 物流商明细字段
+        */
+        private String sourceDetailField;
+
+        /**
+        * 是否唯一
+        */
+        private Boolean isUniqueKey;
+
+        /**
+        * 是否绝对值
+        */
+        private Boolean isAbsoluteValue;
+
+        /**
+        * ERP字段id
+        */
+        private String targetFieldId;
+
+        /**
+        * ERP字段
+        */
+        private String targetField;
+
+        /**
+        * ERP字段名称
+        */
+        private String targetFieldName;
+
+        /**
+        * ERP字段类型
+        */
+        private String targetFieldType;
+
+
+        /**
+        * 审核状态名称
+        */
+        private String approveStatusName;
+
+
+        /**
+        * 创建时间
+        */
+        private LocalDateTime createTime;
+
+        /**
+        * 创建人名称
+        */
+        private String createUserName;
+
+    }
+
+
+    /**
+    * 导出Excel
+    */
+    @Data
+    @NoArgsConstructor
+    public static class ExportDTO extends PagingParamDTO {
+        /**
+        * 勾选的id集合
+        */
+        private List<String> ids;
+    }
+
+    /**
+    * 详情
+    */
+    @Data
+    @NoArgsConstructor
+    public static class ViewDTO {
+
+        /**
+        * 主键id
+        */
+        private String  id;
+
+        /**
+        * 物流商抬头字段
+        */
+        private String sourceField;
+
+        /**
+        * 物流商明细字段
+        */
+        private String sourceDetailField;
+
+        /**
+        * 是否唯一
+        */
+        private Boolean isUniqueKey;
+
+        /**
+        * 是否绝对值
+        */
+        private Boolean isAbsoluteValue;
+
+        /**
+        * ERP字段id
+        */
+        private String targetFieldId;
+
+        /**
+        * ERP字段
+        */
+        private String targetField;
+
+        /**
+        * ERP字段名称
+        */
+        private String targetFieldName;
+
+        /**
+        * ERP字段类型
+        */
+        private String targetFieldType;
+
+
+    }
+
+    /**
+    * 新增
+    */
+    @Data
+    @NoArgsConstructor
+    public static class AddDTO extends CommonDTO {
+
+
+    }
+
+    /**
+    * 修改
+    */
+    @Data
+    @NoArgsConstructor
+    public static class UpdateDTO extends CommonDTO {
+
+        /**
+        * 主键id
+        */
+        @NotBlank(message = "主键id不能为空")
+        private String id;
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class CommonDTO extends SuperDTO {
+
+        /**
+        * 物流商抬头字段
+        */
+        @NotBlank(message = "物流商抬头字段不能为空")
+        @Size(max = 200,message = "物流商抬头字段最大长度不能超过200位")
+        private String sourceField;
+
+        /**
+        * 物流商明细字段
+        */
+        @NotBlank(message = "物流商明细字段不能为空")
+        @Size(max = 200,message = "物流商明细字段最大长度不能超过200位")
+        private String sourceDetailField;
+
+        /**
+        * 是否唯一
+        */
+        @NotNull(message = "是否唯一不能为空")
+        private Boolean isUniqueKey;
+
+        /**
+        * 是否绝对值
+        */
+        @NotNull(message = "是否绝对值不能为空")
+        private Boolean isAbsoluteValue;
+
+        /**
+        * ERP字段id
+        */
+        @NotBlank(message = "ERP字段id不能为空")
+        @Size(max = 19,message = "ERP字段id最大长度不能超过19位")
+        private String targetFieldId;
+
+        /**
+        * ERP字段
+        */
+        @NotBlank(message = "ERP字段不能为空")
+        @Size(max = 200,message = "ERP字段最大长度不能超过200位")
+        private String targetField;
+
+        /**
+        * ERP字段名称
+        */
+        @NotBlank(message = "ERP字段名称不能为空")
+        @Size(max = 200,message = "ERP字段名称最大长度不能超过200位")
+        private String targetFieldName;
+
+        /**
+        * ERP字段类型
+        */
+        @NotBlank(message = "ERP字段类型不能为空")
+        @Size(max = 100,message = "ERP字段类型最大长度不能超过100位")
+        private String targetFieldType;
+
+
+    }
+
+
+}

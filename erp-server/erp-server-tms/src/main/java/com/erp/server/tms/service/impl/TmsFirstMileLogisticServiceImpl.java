@@ -2233,4 +2233,25 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
 
         return logisticsTrackService.listByTrackNo(counterNo);
     }
+
+    @Override
+    public BatchResultDTO updateIsAllocateRequired(String id, Boolean isAllocateRequired, String notAllocateRemark) {
+        LogisticsBillEntity logisticsBill = logisticsBillService.getById(id);
+        if (ObjectUtil.isEmpty(logisticsBill)) {
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE,"物流单");
+        }
+        if (logisticsBill.getIsAllocateRequired().equals(isAllocateRequired)) {
+            return BatchResultDTO.success(id,logisticsBill.getCounterNo(),"状态无变化，无需更新");
+        }
+        if (!isAllocateRequired && StringUtils.isBlank(notAllocateRemark)) {
+            return BatchResultDTO.fail(id,logisticsBill.getCounterNo(),"不分摊时，需填写不分摊备注");
+        }
+        logisticsBill.setIsAllocateRequired(isAllocateRequired);
+        logisticsBill.setNotAllocateRemark(notAllocateRemark);
+        boolean update = logisticsBillService.updateById(logisticsBill);
+        if (!update) {
+            return BatchResultDTO.fail(id,logisticsBill.getCounterNo(),"状态更新失败");
+        }
+        return BatchResultDTO.success(id,logisticsBill.getCounterNo(),"更新成功");
+    }
 }

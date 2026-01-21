@@ -411,4 +411,24 @@ public class LogisticsBillCostController extends BaseController {
         logisticsBillCostService.deleteLogisticsBillCostNoBill();
         return success();
     }
+
+
+    /**
+     * 列表展示合计
+     * @author will 
+     * @date 2026/1/20 12:17
+     * @param dto 
+     * @return ApiResult<TotalCountDTO>
+     */
+    @GetMapping("/listTotalCount")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            shopTableField = "lb.shop_id",
+            menuCode = "tms:logisticsBillCost:paging",
+            tableAlias = "lbc"
+    )
+    @WebAdvanceQuery(handler = LogisticsBillCostQueryHandler.class)
+    public ApiResult<LogisticsBillCostDTO.TotalCountDTO> listTotalCount(@RequestBody @Validated PagingDTO<LogisticsBillCostDTO.PagingParamDTO> dto){
+        return success(logisticsBillCostService.listTotalCount(dto));
+    }
 }

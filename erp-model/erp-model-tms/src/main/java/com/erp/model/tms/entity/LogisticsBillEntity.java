@@ -180,6 +180,18 @@ public class LogisticsBillEntity extends BaseEntity<LogisticsBillEntity> {
     private String soDeliveryCode;
 
 
+    /**
+     * 是否分摊
+     */
+    @TableField("is_allocate_required")
+    private Boolean isAllocateRequired;
+
+    /**
+     * 不分摊原因
+     */
+    @TableField("not_allocate_remark")
+    private String notAllocateRemark;
+
     public static final String SALES_PLATFORM = "sales_platform";
 
     public static final String SHOP_ID = "shop_id";
