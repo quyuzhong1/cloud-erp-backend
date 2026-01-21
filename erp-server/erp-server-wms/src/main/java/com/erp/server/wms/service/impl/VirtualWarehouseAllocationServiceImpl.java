@@ -389,6 +389,7 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
         return BatchResultDTO.success(allocationEntity.getId(), allocationEntity.getCode(), OperationTypeEnum.SUBMIT);
     }
 
+
     /**
      * 提交时校验库存并扣减
      * @author will
@@ -1065,11 +1066,7 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
                 VirtualInventoryDTO.ViewQtyDTO fromVmQty = virtualInventoryQtyList.stream().filter(item -> Objects.equals(item.getSkuId(), detailDto.getSkuId())
                         && Objects.equals(item.getWarehouseId(), detailDto.getWarehouseId()) && Objects.equals(item.getFromVirtualWarehouseId(), detailDto.getFromVirtualWarehouseId())).findFirst().orElse(new VirtualInventoryDTO.ViewQtyDTO());
                 if (fromVmQty.getFromVirtualWarehouseUsableQty() < qty) {
-                    if (!isAutoTransferEnabled) {
                         throw new ServiceException(ApiError.VM_SOURCE_INVENTORY_INSUFFICIENT, detailDto.getSkuNo(), detailDto.getFromVirtualWarehouseName(), fromVmQty.getFromVirtualWarehouseUsableQty());
-                    }
-                    //生成借调对象,调入仓库的借调仓->调入仓库
-                    return new VirtualWarehouseAllocationDTO.TransferWarehouseDTO(virtualWarehouseEntity.getFromWarehouseId(),detailDto.getToWarehouseId(),detailDto.getSkuId(),detailDto.getSkuNo(),qty - fromVmQty.getWarehouseAllocationQty());
                 }
                 break;
             default:
