@@ -87,7 +87,7 @@ public class ImportHistoryRecordController extends BaseController {
         for (BaseDTO.ImportDTO importDTO : dto.getList()) {
             BatchResultDTO resultDTO;
             try {
-                resultDTO = importHistoryRecordService.preprocessingImportExcel(importDTO,dto.getBusinessType(),dto.getCostType());
+                resultDTO = importHistoryRecordService.preprocessingImportExcel(importDTO,dto.getBusinessType(),dto.getCostType(),dto.getProcessingType());
             }catch (Exception e){
                 resultDTO = BatchResultDTO.fail(importDTO.getTaskId(), importDTO.getFileUrl(), e.getMessage());
             }

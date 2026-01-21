@@ -369,6 +369,11 @@ public class ImportHistoryRecordDTO implements Serializable {
          * 费用类型，api/manual
          */
         private String costType;
+
+        /**
+         * 处理类型，预处理（preprocessing）/正式导入（import）/导入确认（confirmImport）
+         */
+        private String processingType;
     }
 
 }
