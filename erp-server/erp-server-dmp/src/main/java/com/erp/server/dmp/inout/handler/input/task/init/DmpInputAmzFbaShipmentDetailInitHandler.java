@@ -100,9 +100,6 @@ public class DmpInputAmzFbaShipmentDetailInitHandler extends DmpInputAmzCommonIn
             }
             String rateLimitStr = requestTypeRateLimiterEnum.getRateLimit();
             try {
-                if (Boolean.TRUE){
-                    throw new ApiException("");
-                }
                 // 查询FBA货件item
                 GetShipmentItemsResponse response = api.getShipmentItemsByShipmentId(shipmentId, marketPlaceEnum.getMarketplaceId());
                 InboundShipmentItemList itemData = response.getPayload().getItemData();
