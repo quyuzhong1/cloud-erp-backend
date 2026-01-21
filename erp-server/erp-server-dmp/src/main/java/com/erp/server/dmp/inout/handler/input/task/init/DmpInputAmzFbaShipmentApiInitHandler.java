@@ -174,6 +174,12 @@ public class DmpInputAmzFbaShipmentApiInitHandler extends DmpInputInitHandler {
                     .collect(Collectors.toList());
             return Collections.singletonList(DmpInputTaskInitDTO.initMsg(JSON.toJSONString(curJsonList)));
         } catch (ApiException e) {
+            if (StringUtils.isNotBlank(dmpInputTaskEntity.getTaskType())) {
+                if (dmpInputTaskEntity.getTaskType().equals("hotfix")) {
+                    throw new ServiceException("【FBA货件列表拉取】超出限流: {}" + JSONUtil.toJsonStr(e));
+                }
+            }
+
             if (429 == e.getCode()) {
                 // 设置动态速率，失效时间=1/limit
                 BigDecimal timeOut = BigDecimal.ONE.max(BigDecimal.ONE.divide(new BigDecimal(rateLimitStr), 8, RoundingMode.DOWN));
