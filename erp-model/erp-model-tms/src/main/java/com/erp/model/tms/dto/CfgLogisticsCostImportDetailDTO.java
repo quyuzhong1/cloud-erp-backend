@@ -239,6 +239,11 @@ public class CfgLogisticsCostImportDetailDTO implements Serializable {
     public static class CommonDTO extends SuperDTO {
 
         /**
+         * 主表id
+         */
+        private String mainId;
+
+        /**
         * 物流商抬头字段
         */
         @NotBlank(message = "物流商抬头字段不能为空")
@@ -248,48 +253,38 @@ public class CfgLogisticsCostImportDetailDTO implements Serializable {
         /**
         * 物流商明细字段
         */
-        @NotBlank(message = "物流商明细字段不能为空")
         @Size(max = 200,message = "物流商明细字段最大长度不能超过200位")
         private String sourceDetailField;
 
         /**
         * 是否唯一
         */
-        @NotNull(message = "是否唯一不能为空")
-        private Boolean isUniqueKey;
+        private Boolean isUniqueKey = false;
 
         /**
         * 是否绝对值
         */
-        @NotNull(message = "是否绝对值不能为空")
-        private Boolean isAbsoluteValue;
+        private Boolean isAbsoluteValue = false;
 
         /**
         * ERP字段id
         */
         @NotBlank(message = "ERP字段id不能为空")
-        @Size(max = 19,message = "ERP字段id最大长度不能超过19位")
         private String targetFieldId;
 
         /**
         * ERP字段
         */
-        @NotBlank(message = "ERP字段不能为空")
-        @Size(max = 200,message = "ERP字段最大长度不能超过200位")
         private String targetField;
 
         /**
         * ERP字段名称
         */
-        @NotBlank(message = "ERP字段名称不能为空")
-        @Size(max = 200,message = "ERP字段名称最大长度不能超过200位")
         private String targetFieldName;
 
         /**
         * ERP字段类型
         */
-        @NotBlank(message = "ERP字段类型不能为空")
-        @Size(max = 100,message = "ERP字段类型最大长度不能超过100位")
         private String targetFieldType;
 
 

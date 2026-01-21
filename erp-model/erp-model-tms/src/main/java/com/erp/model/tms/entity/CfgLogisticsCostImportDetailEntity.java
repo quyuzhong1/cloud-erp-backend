@@ -27,6 +27,11 @@ import com.common.business.enums.ApproveStatusEnum;
 public class CfgLogisticsCostImportDetailEntity extends BaseEntity<CfgLogisticsCostImportDetailEntity> {
 
     /**
+    * 主表id
+    */
+    @TableField("main_id")
+    private String mainId;
+    /**
     * 物流商抬头字段
     */
     @TableField("source_field")

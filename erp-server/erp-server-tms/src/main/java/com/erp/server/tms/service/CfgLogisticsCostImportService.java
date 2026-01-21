@@ -64,13 +64,9 @@ public interface CfgLogisticsCostImportService extends SuperService<CfgLogistics
     CfgLogisticsCostImportDTO.ViewDTO view(String id);
 
 
-    /**
-    * 导出Excel
-    * @author jack
-    * @date: 2026-01-20
-    * @param dto
-    * @param response
-    * @return
-    */
-    void exportList(CfgLogisticsCostImportDTO.ExportDTO dto, HttpServletResponse response);
+    BatchResultDTO delete(String id);
+
+    void updateDisabled(CfgLogisticsCostImportDTO.UpdateDisabledDTO dto);
+
+    Boolean importFile(BaseDTO.ImportDTO dto);
 }
