@@ -414,7 +414,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Resource
     private PackagePlanService packagePlanService;
     private static final int MAX_RETRY_COUNT = 3;
-    private static final long RETRY_DELAY_SECONDS = 30000;
+    private static final long RETRY_DELAY_SECONDS = 60000;
 
     @Resource
     private SyncThirdWarehouseService syncThirdWarehouseService;
