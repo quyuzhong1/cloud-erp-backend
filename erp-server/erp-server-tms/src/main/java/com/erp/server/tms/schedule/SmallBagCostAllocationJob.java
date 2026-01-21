@@ -135,11 +135,10 @@ public class SmallBagCostAllocationJob {
                 .eq(LogisticsBillCostEntity::getCheckStatus, LogisticsBillCostCheckStatusEnum.CHECKING.getCode())
                 .list();
             if(CollUtil.isNotEmpty(list)) {
-            	DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM");
             	for(LogisticsBillCostEntity l : list) {
             		costAllocationPool.execute(() -> {
             			try {
-    						logisticsBillCostService.pushAllocation(l.getId(), l.getConfirmTime().format(formatter));
+    						logisticsBillCostService.pushAllocation(l.getId(), l.getReconciliationMonth());
     					} catch (Exception e) {
     						WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
     				        warnMsgInfo.setBizName("自动生成小包分摊");
