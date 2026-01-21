@@ -24,9 +24,8 @@ public class EditCompanyDTO {
     private String invoiceType;
 
     /**
-     * CNPJ
+     * CNPJ（编辑公司时不需要传递，CNPJ不允许修改）
      */
-    @NotBlank(message = "CNPJ不能为空")
     @JsonProperty("cnpj")
     private String cnpj;
 

@@ -297,7 +297,7 @@ public class CompanyApiClient {
     private Map<String, Object> buildEditRequestBody(EditCompanyDTO editCompanyDTO) {
         Map<String, Object> requestBody = new HashMap<>();
         requestBody.put(FIELD_INVOICE_TYPE, editCompanyDTO.getInvoiceType());
-        requestBody.put(FIELD_CNPJ, editCompanyDTO.getCnpj());
+        // 注意：编辑公司时不传递CNPJ，CNPJ不允许修改
         requestBody.put(FIELD_NAME, editCompanyDTO.getName());
         requestBody.put(FIELD_IE, editCompanyDTO.getIe());
         requestBody.put(FIELD_UNIT, editCompanyDTO.getUnit());
