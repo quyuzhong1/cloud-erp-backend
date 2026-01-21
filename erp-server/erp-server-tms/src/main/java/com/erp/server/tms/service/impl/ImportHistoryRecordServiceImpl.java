@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.config.DocNoGenHelper;
+import com.common.business.dto.base.BaseDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
@@ -120,6 +121,12 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
     fillOne(data);
     // TODO 查询明细数据（如果有的话）
     return data;
+    }
+
+    @Override
+    public Boolean preprocessingImportExcel(BaseDTO.ImportDTO dto) {
+
+        return null;
     }
 
     private void fillOne(ImportHistoryRecordDTO.ViewDTO data) {

@@ -46,6 +46,12 @@
         <where>
             ${params.sqlMap.default}
             and ihr.is_deleted = false
+            <if test="params.importType != null and params.importType == 'new'">
+                and ihr.create_time >= CURRENT_DATE - INTERVAL '1 month'
+            </if>
+            <if test="params.importType != null and params.importType == 'history'">
+                and CURRENT_DATE - INTERVAL '1 month' > ihr.create_time
+            </if>
             <!--权限-->
             <if test="params.permissionSql!=null and params.permissionSql!=''">
                 ${params.permissionSql}

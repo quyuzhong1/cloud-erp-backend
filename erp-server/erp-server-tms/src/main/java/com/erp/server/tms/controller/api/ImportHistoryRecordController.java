@@ -2,6 +2,7 @@ package com.erp.server.tms.controller.api;
 
 
 import com.common.business.annotation.DataPermission;
+import com.common.business.dto.base.BaseDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
@@ -70,4 +71,16 @@ public class ImportHistoryRecordController extends BaseController {
     }
 
 
+    /**
+     * 预处理导入的Excel数据
+     * @author will
+     * @date 2026/1/20 18:43
+     * @param dto
+     * @return ApiResult<Object>
+     */
+    @PostMapping(value = "/preprocessingImportExcel")
+    public ApiResult<Object> preprocessingImportExcel(@RequestBody BaseDTO.ImportDTO dto) {
+        Boolean flag = importHistoryRecordService.preprocessingImportExcel(dto);
+        return flag ? success() : failure();
+    }
 }
