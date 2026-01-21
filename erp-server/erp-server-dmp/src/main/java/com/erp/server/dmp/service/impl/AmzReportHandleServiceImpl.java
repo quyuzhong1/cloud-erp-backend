@@ -140,7 +140,7 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
+    //@GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public Boolean pullShipment(DmpPullShipmentDTO dto) {
         if (CollectionUtils.isEmpty(dto.getShipmentCodeList())){
             return true;
