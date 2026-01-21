@@ -1511,6 +1511,7 @@ public enum ApiError implements Serializable {
     VM_FROM_WAREHOUSE_NOT_BLANK(92290,"启动自动借调时，借调仓不能为空"),
     VM_NOT_CONTAINS_FROM_WAREHOUSE(92291,"虚拟仓关联实体仓不能包含借调仓"),
     VM_ALLOCATION_NOT_REPEAT(92292,"存在未同步成功的虚拟仓分货单调出任务，调出仓库ID：{0}，调出虚拟仓ID：{1}，SKU：{2}，请确认后再操作"),
+    VM_VIRTUAL_WAREHOUSE_NOT_FOUND(12524,"虚拟仓【{0}】未找到"),
 
     /**
      * 客户管理 错误 信息 13000-13500
