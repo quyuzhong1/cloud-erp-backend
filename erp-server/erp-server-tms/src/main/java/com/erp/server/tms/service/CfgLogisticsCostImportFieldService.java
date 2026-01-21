@@ -17,60 +17,9 @@ import java.util.List;
  */
 public interface CfgLogisticsCostImportFieldService extends SuperService<CfgLogisticsCostImportFieldEntity> {
 
-    /**
-    * 新增
-    * @author jack
-    * @date: 2026-01-20
-    * @param dto
-    * @return
-    */
-    BaseResultDTO.AddDTO add(CfgLogisticsCostImportFieldDTO.AddDTO dto);
-
-    /**
-    * 修改
-    * @author jack
-    * @date: 2026-01-20
-    * @param dto
-    * @return
-    */
-    Boolean update(CfgLogisticsCostImportFieldDTO.UpdateDTO dto);
 
 
-    /**
-    * 分页列表查询
-    * @author jack
-    * @date: 2026-01-20
-    * @param pagingParamDTO
-    * @return PagingVO<CfgLogisticsCostImportFieldDTO.ListDTO>>
-    */
-    PagingVO<CfgLogisticsCostImportFieldDTO.ListDTO> paging(PagingDTO<CfgLogisticsCostImportFieldDTO.PagingParamDTO> pagingParamDTO);
+    List<CfgLogisticsCostImportFieldDTO.ListDTO> listByBusinessType(String businessType);
 
-    /**
-    * 状态统计
-    * @author jack
-    * @date: 2026-01-20
-    * @param dto
-    * @return List<CfgLogisticsCostImportFieldDTO.TabListDTO>>
-    */
-    List<CfgLogisticsCostImportFieldDTO.TabListDTO> tabList(PermissionsDTO dto);
-
-    /**
-    * 详情
-    * @author jack
-    * @date: 2026-01-20
-    * @param id
-    * @return
-    */
-    CfgLogisticsCostImportFieldDTO.ViewDTO view(String id);
-
-
-    /**
-    * 导出Excel
-    * @author jack
-    * @date: 2026-01-20
-    * @param dto
-    * @param response
-    * @return
-    */
-    void exportList(CfgLogisticsCostImportFieldDTO.ExportDTO dto, HttpServletResponse response);
+    List<CfgLogisticsCostImportFieldDTO.TreeDTO> tree(String businessType);
 }

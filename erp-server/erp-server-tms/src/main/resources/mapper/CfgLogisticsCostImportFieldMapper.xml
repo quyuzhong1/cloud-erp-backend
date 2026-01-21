@@ -25,39 +25,44 @@
 
     <!-- 通用查询结果列 -->
     <sql id="Base_Column_List">
-        id,
-        create_user_id,
-        create_user_name,
-        create_time,
-        update_user_id,
-        update_user_name,
-        update_time,
-        version,
-        is_deleted,
-        sys_classify, business_type, table_name, table_cn_name, class_path, parent_id, field, field_name, field_type
+        clcif.id AS id,
+clcif.create_user_id AS createUserId,
+clcif.create_user_name AS createUserName,
+clcif.create_time AS createTime,
+clcif.update_user_id AS updateUserId,
+clcif.update_user_name AS updateUserName,
+clcif.update_time AS updateTime,
+clcif.version AS version,
+clcif.is_deleted AS isDeleted,
+clcif.sys_classify AS sysClassify,
+clcif.business_type AS businessType,
+clcif.table_name AS tableName,
+clcif.table_cn_name AS tableCnName,
+clcif.class_path AS classPath,
+clcif.parent_id AS parentId,
+clcif.field AS field,
+clcif.field_name AS fieldName,
+clcif.field_type AS fieldType
     </sql>
 
-    <select id="paging" resultType="com.erp.model.tms.dto.CfgLogisticsCostImportFieldDTO$ListDTO">
-
+    <select id="listByBusinessType" resultType="com.erp.model.tms.dto.CfgLogisticsCostImportFieldDTO$ListDTO">
+        select
+        <include refid="Base_Column_List"></include>
+        from cfg_logistics_cost_import_field clcif
+        where clcif.business_type = #{businessType}
+        and clcif.is_deleted = false
+        order by clcif.create_time
     </select>
 
-    <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
-        select approve_status, count(id) from cfg_logistics_cost_import_field where is_deleted = false group by approve_status
-    </select>
-
-    <select id="listExport" resultType="com.erp.model.tms.dto.CfgLogisticsCostImportFieldDTO$ListDTO">
-
-    </select>
-    <select id="tabList" resultType="com.erp.model.tms.dto.CfgLogisticsCostImportFieldDTO$TabListDTO">
-        SELECT
-        approve_status AS tabFlag,
-        count(*)  AS count
-        FROM  cfg_logistics_cost_import_field
-        WHERE is_deleted=FALSE
-        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
-            ${params.permissionSql}
-        </if>
-        GROUP BY approve_status
+    <select id="findTree" resultType="com.erp.model.tms.dto.CfgLogisticsCostImportFieldDTO$TreeDTO">
+        WITH RECURSIVE T ( ID, field,field_name,field_type, parent_id, PATH ) AS (
+            SELECT ID,field,field_name,field_type,PARENT_ID,ID::text AS PATH FROM cfg_logistics_cost_import_field
+            WHERE parent_id = '0' and business_type = #{businessType}
+            UNION ALL
+            SELECT st.ID,st.field,st.field_name,st.field_type,st.PARENT_ID,T.PATH ||','|| st.ID
+            FROM cfg_logistics_cost_import_field st JOIN T ON st.PARENT_ID = T.ID
+        )
+        SELECT ID,field,field_name,field_type,PARENT_ID,PATH FROM T ORDER BY 	PATH;
     </select>
 
 </mapper>
