@@ -66,7 +66,7 @@ public interface CfgLogisticsCostImportService extends SuperService<CfgLogistics
 
     BatchResultDTO delete(String id);
 
-    void updateDisabled(CfgLogisticsCostImportDTO.UpdateDisabledDTO dto);
+    BatchResultDTO updateDisabled(String id,Boolean disabled) ;
 
     Boolean importFile(BaseDTO.ImportDTO dto);
 }

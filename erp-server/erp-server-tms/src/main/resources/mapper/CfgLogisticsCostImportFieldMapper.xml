@@ -13,7 +13,7 @@
        <result column="version" property="version" />
        <result column="is_deleted" property="isDeleted" />
        <result column="sys_classify" property="sysClassify" />
-       <result column="bussiness_type" property="bussinessType" />
+       <result column="business_type" property="businessType" />
        <result column="table_name" property="tableName" />
        <result column="table_cn_name" property="tableCnName" />
        <result column="class_path" property="classPath" />
@@ -34,7 +34,7 @@
         update_time,
         version,
         is_deleted,
-        sys_classify, bussiness_type, table_name, table_cn_name, class_path, parent_id, field, field_name, field_type
+        sys_classify, business_type, table_name, table_cn_name, class_path, parent_id, field, field_name, field_type
     </sql>
 
     <select id="paging" resultType="com.erp.model.tms.dto.CfgLogisticsCostImportFieldDTO$ListDTO">

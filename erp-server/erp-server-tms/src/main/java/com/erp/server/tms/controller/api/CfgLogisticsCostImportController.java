@@ -186,9 +186,28 @@ public class CfgLogisticsCostImportController extends BaseController {
             menuCode = "tms:cfgLogisticsCostImport:updateDisabled",
             serviceClass = CfgLogisticsCostImportService.class,
             keyIdName = "ids")
-    public ApiResult<?> updateDisabled(@RequestBody @Validated CfgLogisticsCostImportDTO.UpdateDisabledDTO dto) {
-        cfgLogisticsCostImportService.updateDisabled(dto);
-        return  success();
+    public ApiResult<List<BatchResultDTO>> updateDisabled(@RequestBody @Validated CfgLogisticsCostImportDTO.UpdateDisabledDTO dto) {
+        List<String> ids = dto.getIds();
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+        List<CfgLogisticsCostImportEntity> list = cfgLogisticsCostImportService.lambdaQuery().in(CfgLogisticsCostImportEntity::getId, ids).list();
+        Map<String, CfgLogisticsCostImportEntity> idEntityMap = list.stream().collect(Collectors.toMap(CfgLogisticsCostImportEntity::getId, w -> w));
+        for (String id : dto.getIds()) {
+            BatchResultDTO result;
+            try {
+                result = cfgLogisticsCostImportService.updateDisabled(id, dto.getDisabled());
+            } catch (Exception e) {
+                log.error("B2C寄样申请单删除失败", e);
+                CfgLogisticsCostImportEntity entity = idEntityMap.get(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    result = BatchResultDTO.fail(id, id, "B2C寄样申请单不存在, 删除失败");
+                    resultDTOS.add(result);
+                    continue;
+                }
+                result = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(result);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**

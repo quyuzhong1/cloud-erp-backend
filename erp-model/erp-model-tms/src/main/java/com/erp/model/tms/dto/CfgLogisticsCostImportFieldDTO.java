@@ -90,7 +90,7 @@ public class CfgLogisticsCostImportFieldDTO implements Serializable {
         /**
         * 配置单据
         */
-        private String bussinessType;
+        private String businessType;
 
         /**
         * 数据表
@@ -179,7 +179,7 @@ public class CfgLogisticsCostImportFieldDTO implements Serializable {
         /**
         * 配置单据
         */
-        private String bussinessType;
+        private String businessType;
 
         /**
         * 数据表
@@ -260,7 +260,7 @@ public class CfgLogisticsCostImportFieldDTO implements Serializable {
         */
         @NotBlank(message = "配置单据不能为空")
         @Size(max = 50,message = "配置单据最大长度不能超过50位")
-        private String bussinessType;
+        private String businessType;
 
         /**
         * 数据表
