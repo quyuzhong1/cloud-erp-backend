@@ -104,21 +104,16 @@ public class CfgInvoiceSettingServiceImpl extends SuperServiceImpl<CfgInvoiceSet
             return;
         }
         
-        // 根据税种ID批量查询税种信息
-        Map<String, String> taxCategoryMap = new HashMap<>();
-        taxCategoryIdList.forEach(categoryId -> {
-            TaxCategoryEntity taxCategory = taxCategoryService.getByCategoryId(categoryId);
-            if (taxCategory != null) {
-                taxCategoryMap.put(categoryId, taxCategory.getDescricao());
-            }
-        });
-        
-        // 为每条记录设置税种描述
+        // 为每条记录设置税种描述（需要同时匹配categoryId和companyId）
         records.forEach(record -> {
             String categoryId = record.getTaxCategoryId();
+            String companyId = record.getCompanyId();
             if (StrUtil.isNotBlank(categoryId)) {
-                String taxCategoryName = taxCategoryMap.get(categoryId);
-                record.setTaxCategoryName(taxCategoryName);
+                // 使用categoryId和companyId一起查询，避免多条记录的问题
+                TaxCategoryEntity taxCategory = taxCategoryService.getByCategoryIdAndCompanyId(categoryId, companyId);
+                if (taxCategory != null) {
+                    record.setTaxCategoryName(taxCategory.getDescricao());
+                }
             }
         });
     }
@@ -584,7 +579,8 @@ public class CfgInvoiceSettingServiceImpl extends SuperServiceImpl<CfgInvoiceSet
         
         // 如果提供了taxCategoryId，验证税种是否存在
         if (StrUtil.isNotBlank(taxCategoryId)) {
-            TaxCategoryEntity taxCategory = taxCategoryService.getByCategoryId(taxCategoryId);
+            // 使用companyId查询，避免多条记录问题
+            TaxCategoryEntity taxCategory = taxCategoryService.getByCategoryIdAndCompanyId(taxCategoryId, entity.getCompanyId());
             if (ObjectUtil.isEmpty(taxCategory)) {
                 throw new ServiceException("税种不存在或已删除，税种ID：" + taxCategoryId);
             }
@@ -592,7 +588,7 @@ public class CfgInvoiceSettingServiceImpl extends SuperServiceImpl<CfgInvoiceSet
             if (Boolean.TRUE.equals(taxCategory.getDisabled())) {
                 throw new ServiceException("税种已禁用，无法绑定，税种ID：" + taxCategoryId);
             }
-            log.info("税种验证通过：taxCategoryId={}, descricao={}", taxCategoryId, taxCategory.getDescricao());
+            log.info("税种验证通过：taxCategoryId={}, companyId={}, descricao={}", taxCategoryId, entity.getCompanyId(), taxCategory.getDescricao());
         }
         
         // 更新taxCategoryId
