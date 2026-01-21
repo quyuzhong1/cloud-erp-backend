@@ -155,6 +155,23 @@ public class CfgInvoiceSettingServiceImpl extends SuperServiceImpl<CfgInvoiceSet
             String cnpj = createCompanyDTO.getCnpj().replaceAll("[^0-9]", "");
             createCompanyDTO.setCnpj(cnpj);
         }
+        // 验证证书文件URL格式
+        if (CharSequenceUtil.isNotBlank(createCompanyDTO.getCertFile())) {
+            String certFile = createCompanyDTO.getCertFile();
+            // 验证是否为有效的URL格式（必须以http://或https://开头）
+            if (!certFile.startsWith("http://") && !certFile.startsWith("https://")) {
+                log.warn("证书文件URL格式可能不正确: {}, 尝试添加协议前缀", certFile);
+                // 如果URL格式不正确，记录警告但不阻止请求（让API端验证）
+            } else {
+                // 验证URL格式是否有效
+                try {
+                    new java.net.URL(certFile);
+                } catch (Exception e) {
+                    log.error("证书文件URL格式错误: {}, 错误: {}", certFile, e.getMessage());
+                    throw new ServiceException(CharSequenceUtil.format("证书文件URL格式错误: {}", certFile));
+                }
+            }
+        }
         //调用TF新接口（创建公司时使用经销商token，不需要已有token）
         CreateCompanyResponseDTO.CreateCompanyDataDTO response = tfFiscalService.createCompanyV2(createCompanyDTO);
         String token = response.getToken();
