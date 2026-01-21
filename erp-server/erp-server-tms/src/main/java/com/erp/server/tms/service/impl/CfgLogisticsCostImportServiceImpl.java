@@ -1,19 +1,24 @@
 package com.erp.server.tms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.vo.LoginUser;
 
 import cn.hutool.core.util.StrUtil;
+import com.erp.model.oms.entity.KolB2cApplicationDetailEntity;
+import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.tms.dto.CfgLogisticsCostImportDetailDTO;
+import com.erp.model.tms.entity.CfgLogisticsCostImportDetailEntity;
+import com.erp.model.tms.entity.CfgLogisticsCostImportFieldEntity;
+import com.erp.server.tms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.dto.base.BaseResultDTO;
 import com.erp.model.tms.entity.CfgLogisticsCostImportEntity;
 import com.erp.server.tms.mapper.CfgLogisticsCostImportMapper;
-import com.erp.server.tms.service.CfgLogisticsCostImportService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
-import com.erp.server.tms.service.OperateLogService;
 import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
 import com.common.core.controller.vo.ApiResult;
@@ -56,32 +61,67 @@ public class CfgLogisticsCostImportServiceImpl extends SuperServiceImpl<CfgLogis
     private OperateLogService operateLogService;
     @Resource
     private DocNoGenHelper docNoGenHelper;
+    @Resource
+    private CfgLogisticsCostImportDetailService cfgLogisticsCostImportDetailService;
+    @Resource
+    private CfgLogisticsCostImportFieldService cfgLogisticsCostImportFieldService;
+    @Resource
+    private CommonService commonService;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BaseResultDTO.AddDTO add(CfgLogisticsCostImportDTO.AddDTO addDTO) {
+    public BaseResultDTO.AddDTO add(CfgLogisticsCostImportDTO.AddDTO dto) {
+        //校验是否已存在（配置生成单据+平台+识别名称+费用来源+sheet 为唯一）
+        Integer count = lambdaQuery()
+                .eq(CfgLogisticsCostImportEntity::getBussinessType, dto.getBussinessType())
+                .eq(CfgLogisticsCostImportEntity::getDictPlatform, dto.getDictPlatform())
+                .eq(CfgLogisticsCostImportEntity::getName, dto.getName())
+                .eq(CfgLogisticsCostImportEntity::getSheetName, dto.getSheetName())
+                .eq(CfgLogisticsCostImportEntity::getCostType, dto.getCostType())
+                .count();
+        if(count > 0){
+            throw new ServiceException(ApiError.COMMON_HAS_EXIST, "费用配置");
+        }
+
+
         CfgLogisticsCostImportEntity cfgLogisticsCostImportEntity = new CfgLogisticsCostImportEntity();
-        BeanMapperUtils.copy(addDTO, cfgLogisticsCostImportEntity);
-
-        // 数据处理
-        handleData(cfgLogisticsCostImportEntity);
-
+        cfgLogisticsCostImportEntity.setImportType(String.join(",", dto.getImportTypeList()));
+        BeanMapperUtils.copy(dto, cfgLogisticsCostImportEntity);
         log.info("开始新增费用项配置");
         // 生成单号
-        // TODO 此处的null需填写生成单号类型，type查看BusinessNoTypeEnum枚举类 注意需要填写prefix 为单号前缀
-        String code = docNoGenHelper.generateCode(null);
+        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_FYPZ);
         cfgLogisticsCostImportEntity.setCode(code);
         boolean save = super.save(cfgLogisticsCostImportEntity);
         if(!save) {
             throw new ServiceException("费用项配置保存失败");
         }
-
         // 操作日志
         String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "费用项配置" , cfgLogisticsCostImportEntity.getCode());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, cfgLogisticsCostImportEntity.getId(), "新增操作");
-        // TODO 新增明细（如果有明细的话）
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.CFG_LOGISTICS_COST_IMPORT.getCode(), cfgLogisticsCostImportEntity.getId(), "新增操作");
+
+        String id = cfgLogisticsCostImportEntity.getId();
+        //处理明细
+        List<CfgLogisticsCostImportDetailDTO.AddDTO> detailList = dto.getDetailList();
+        List<String> targetFieldIds = detailList.stream().map(CfgLogisticsCostImportDetailDTO.AddDTO::getTargetFieldId).collect(Collectors.toList());
+        List<CfgLogisticsCostImportFieldEntity> cfgLogisticsCostImportFieldEntities = cfgLogisticsCostImportFieldService.listByIds(targetFieldIds);
+        Map<String, CfgLogisticsCostImportFieldEntity> fieldMap = cfgLogisticsCostImportFieldEntities.stream().collect(Collectors.toMap(CfgLogisticsCostImportFieldEntity::getId, cfgLogisticsCostImportFieldEntity -> cfgLogisticsCostImportFieldEntity,(o1,o2)->o1));
+        for (CfgLogisticsCostImportDetailDTO.AddDTO addDTO : detailList) {
+            CfgLogisticsCostImportFieldEntity fieldEntity = fieldMap.get(addDTO.getTargetFieldId());
+            if(Objects.nonNull(fieldEntity)){
+                addDTO.setTargetField(fieldEntity.getField());
+                addDTO.setTargetFieldName(fieldEntity.getFieldName());
+                addDTO.setTargetFieldType(fieldEntity.getFieldType());
+                addDTO.setMainId(id);
+            }
+        }
+        List<CfgLogisticsCostImportDetailEntity> detailEntityList = BeanMapper.copyList(detailList, CfgLogisticsCostImportDetailEntity.class);
+
+
+
+
+
+        cfgLogisticsCostImportDetailService.saveBatch(detailEntityList);
 
         return new BaseResultDTO.AddDTO(cfgLogisticsCostImportEntity.getId(), code);
     }
@@ -89,28 +129,31 @@ public class CfgLogisticsCostImportServiceImpl extends SuperServiceImpl<CfgLogis
     /**
     * 修改
     */
-    @DistributeLocker(keyName = "addOrUpdateDTO.getId()")
+    @DistributeLocker(keyName = "dto.getId()")
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Boolean update(CfgLogisticsCostImportDTO.UpdateDTO addOrUpdateDTO) {
-        CfgLogisticsCostImportEntity old = super.getById(addOrUpdateDTO.getId());
+    public Boolean update(CfgLogisticsCostImportDTO.UpdateDTO dto) {
+        CfgLogisticsCostImportEntity old = super.getById(dto.getId());
         old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "费用项配置"));
-        CfgLogisticsCostImportEntity cfgLogisticsCostImportEntity =  BeanMapperUtils.map(CfgLogisticsCostImportEntity.class, addOrUpdateDTO);
-
-        // 数据处理
-        handleData(cfgLogisticsCostImportEntity);
+        dto.setImportType(String.join(",", dto.getImportTypeList()));
+        CfgLogisticsCostImportEntity cfgLogisticsCostImportEntity =  BeanMapperUtils.map(CfgLogisticsCostImportEntity.class, dto);
         log.info("编辑 开始修改费用项配置数据，单号：【{}】", old.getCode());
         boolean save = super.updateById(cfgLogisticsCostImportEntity);
         if(!save) {
             throw new ServiceException("费用项配置保存失败");
         }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
 
         // 记录主单操作日志
-            log.info("编辑 开始记录费用项配置日志数据，单号：【{}】", cfgLogisticsCostImportEntity.getCode());
-            String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), cfgLogisticsCostImportEntity.getCode(), "费用项配置");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLogByObj(old, cfgLogisticsCostImportEntity, null, cfgLogisticsCostImportEntity.getId(), msg);
+        log.info("编辑 开始记录费用项配置日志数据，单号：【{}】", cfgLogisticsCostImportEntity.getCode());
+        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), cfgLogisticsCostImportEntity.getCode(), "费用项配置");
+        operateLogService.addModuleOperateLogByObj(old, cfgLogisticsCostImportEntity, ModuleTypeEnum.CFG_LOGISTICS_COST_IMPORT.getCode(), cfgLogisticsCostImportEntity.getId(), msg);
+
+        String id = dto.getId();
+        List<CfgLogisticsCostImportDetailEntity> detailList = BeanMapper.copyList(dto.getDetailList(), CfgLogisticsCostImportDetailEntity.class);
+        detailList.forEach(e -> e.setMainId(id));
+
+        List<CfgLogisticsCostImportDetailEntity> oldDetailList = cfgLogisticsCostImportDetailService.lambdaQuery().eq(CfgLogisticsCostImportDetailEntity::getMainId, id).list();
+        commonService.updateDetail(id,ModuleTypeEnum.CFG_LOGISTICS_COST_IMPORT.getCode(),cfgLogisticsCostImportDetailService, detailList, oldDetailList,Arrays.asList("sourceField","sourceDetailField"));
         return Boolean.TRUE;
     }
 
@@ -134,47 +177,17 @@ public class CfgLogisticsCostImportServiceImpl extends SuperServiceImpl<CfgLogis
         searchParam.setPermissionSql(param.getPermissionSql());
         List<CfgLogisticsCostImportDTO.TabListDTO> list = baseMapper.tabList(searchParam);
         // 获取状态列表
-        // TODO 替换当前表Tab状态字段
-        List<String> statusList = null;
-        // 不存在的状态赋值为0
-        List<String> existStatusList = list.stream().map(CfgLogisticsCostImportDTO.TabListDTO::getTabFlag).collect(Collectors.toList());
-        statusList.parallelStream().forEach(status -> {
-            if(!existStatusList.contains(status)) {
-            list.add(new CfgLogisticsCostImportDTO.TabListDTO(status, 0));
-        }
-        });
-        list.add(new CfgLogisticsCostImportDTO.TabListDTO("all", list.stream().mapToInt(CfgLogisticsCostImportDTO.TabListDTO::getCount).sum()));
-        // 计算合计数量
-        return list;
+        List<CfgLogisticsCostImportDTO.TabListDTO> result = new ArrayList<>();
+        result.add(new CfgLogisticsCostImportDTO.TabListDTO("all","全部",0));
+        CfgLogisticsCostImportDTO.TabListDTO tTabListDTO = list.stream().filter(e -> e.getTabFlag().equals("t")).findFirst().orElse(new CfgLogisticsCostImportDTO.TabListDTO("t", "", 0));
+        tTabListDTO.setTabFlagName("启用");
+        CfgLogisticsCostImportDTO.TabListDTO fTabListDTO = list.stream().filter(e -> e.getTabFlag().equals("f")).findFirst().orElse(new CfgLogisticsCostImportDTO.TabListDTO("f", "", 0));
+        fTabListDTO.setTabFlagName("停用");
+        result.add(tTabListDTO);
+        result.add(fTabListDTO);
+        return result;
     }
 
-    @Override
-    public void exportList(CfgLogisticsCostImportDTO.ExportDTO param, HttpServletResponse response) {
-        List<CfgLogisticsCostImportDTO.ListDTO> list = this.baseMapper.listExport(param);
-        if(CollUtil.isEmpty(list)) {
-           return;
-        }
-        // 数据处理
-        fillList(list);
-
-        // 导出数据
-        StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/cfgLogisticsCostImport.xlsx";
-        String name = "费用项配置导出";
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date).append(name);
-        try {
-            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
-        } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_FILE_EXPORT_FAILED);
-        }
-    }
-    /**
-    * 新增修改处理数据
-    */
-    private void handleData(CfgLogisticsCostImportEntity cfgLogisticsCostImportEntity) {
-    // TODO 验证数据 & 数据赋值
-    }
 
     @Override
     public CfgLogisticsCostImportDTO.ViewDTO view(String id) {
@@ -204,4 +217,20 @@ public class CfgLogisticsCostImportServiceImpl extends SuperServiceImpl<CfgLogis
         // TODO 其他如需要显示名称的字段赋值
         }
    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public BatchResultDTO delete(String id) {
+        return null;
+    }
+
+    @Override
+    public void updateDisabled(CfgLogisticsCostImportDTO.UpdateDisabledDTO dto) {
+
+    }
+
+    @Override
+    public Boolean importFile(BaseDTO.ImportDTO dto) {
+        return null;
+    }
 }

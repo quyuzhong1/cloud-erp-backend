@@ -989,6 +989,12 @@ public class TmsFirstMileLogisticDTO implements Serializable {
         private String warnMsg;
 
         /**
+         * 是否分摊 true 分摊 false 不分摊
+         */
+        @ExcelIgnore
+        private Boolean isAllocateRequired;
+
+        /**
          * 备注
          */
         @ExcelProperty(value = "备注")

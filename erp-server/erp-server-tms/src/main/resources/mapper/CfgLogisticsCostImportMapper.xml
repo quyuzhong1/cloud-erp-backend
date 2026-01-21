@@ -52,14 +52,14 @@
     </select>
     <select id="tabList" resultType="com.erp.model.tms.dto.CfgLogisticsCostImportDTO$TabListDTO">
         SELECT
-        approve_status AS tabFlag,
+        disabled AS tabFlag,
         count(*)  AS count
         FROM  cfg_logistics_cost_import
         WHERE is_deleted=FALSE
         <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
         </if>
-        GROUP BY approve_status
+        GROUP BY disabled
     </select>
 
 </mapper>

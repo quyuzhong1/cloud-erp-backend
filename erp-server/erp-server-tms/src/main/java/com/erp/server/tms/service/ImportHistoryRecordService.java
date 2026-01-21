@@ -1,14 +1,12 @@
 package com.erp.server.tms.service;
 
+import com.common.business.dto.base.BaseDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.tms.dto.ImportHistoryRecordDTO;
 import com.erp.model.tms.entity.ImportHistoryRecordEntity;
-
-import java.util.List;
 
 /**
  * <p>
@@ -56,5 +54,12 @@ public interface ImportHistoryRecordService extends SuperService<ImportHistoryRe
     * @return
     */
     ImportHistoryRecordDTO.ViewDTO view(String id);
-
+    /**
+     * 预处理导入的Excel数据
+     * @author will
+     * @date 2026/1/20 18:43
+     * @param dto
+     * @return Boolean
+     */
+    Boolean preprocessingImportExcel(BaseDTO.ImportDTO dto);
 }

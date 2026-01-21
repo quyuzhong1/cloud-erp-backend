@@ -142,24 +142,7 @@ public class CfgLogisticsCostImportFieldServiceImpl extends SuperServiceImpl<Cfg
 
     @Override
     public void exportList(CfgLogisticsCostImportFieldDTO.ExportDTO param, HttpServletResponse response) {
-        List<CfgLogisticsCostImportFieldDTO.ListDTO> list = this.baseMapper.listExport(param);
-        if(CollUtil.isEmpty(list)) {
-           return;
-        }
-        // 数据处理
-        fillList(list);
 
-        // 导出数据
-        StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/cfgLogisticsCostImportField.xlsx";
-        String name = "费用项配置字段基础单导出";
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date).append(name);
-        try {
-            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
-        } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_FILE_EXPORT_FAILED);
-        }
     }
     /**
     * 新增修改处理数据

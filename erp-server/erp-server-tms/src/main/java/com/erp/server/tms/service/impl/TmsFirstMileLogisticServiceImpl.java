@@ -2248,10 +2248,20 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         }
         logisticsBill.setIsAllocateRequired(isAllocateRequired);
         logisticsBill.setNotAllocateRemark(notAllocateRemark);
+        if (!isAllocateRequired) {
+            logisticsBill.setNotAllocateRemark(notAllocateRemark);
+        }
         boolean update = logisticsBillService.updateById(logisticsBill);
         if (!update) {
             return BatchResultDTO.fail(id,logisticsBill.getCounterNo(),"状态更新失败");
         }
+        String msg = "";
+        if (isAllocateRequired) {
+            msg = CharSequenceUtil.format("是否分摊状态变更为是");
+        } else {
+            msg = CharSequenceUtil.format("是否分摊状态变更为否,不分摊备注：{},", notAllocateRemark);
+        }
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LOGISTICS_BILL.getCode(), logisticsBill.getId(), "新增操作");
         return BatchResultDTO.success(id,logisticsBill.getCounterNo(),"更新成功");
     }
 }
