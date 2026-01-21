@@ -28,7 +28,6 @@ import com.sdk.third.tf.dto.CreateCompanyDTO;
 import com.sdk.third.tf.dto.CreateCompanyResponseDTO;
 import com.sdk.third.tf.dto.CompanyListResponseDTO;
 import com.sdk.third.tf.dto.EditCompanyDTO;
-import com.sdk.third.tf.entity.AddCompanyDTO;
 import com.sdk.third.tf.entity.UpdateCompanyDTO;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -77,7 +76,50 @@ public class CfgInvoiceSettingServiceImpl extends SuperServiceImpl<CfgInvoiceSet
         Page<CfgInvoiceSettingDTO.PagingViewDTO> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
         // 直接通过一个SQL查询获取所有数据
         IPage<CfgInvoiceSettingDTO.PagingViewDTO> pageData = baseMapper.pagingWithShops(query, params);
+        
+        // 填充税种描述（名称）
+        fillList(pageData.getRecords());
+        
         return new PagingVO(pageData);
+    }
+
+    /**
+     * 
+     * @param records 分页查询结果列表
+     */
+    private void fillList(List<CfgInvoiceSettingDTO.PagingViewDTO> records) {
+        if (CollUtil.isEmpty(records)) {
+            return;
+        }
+        
+        // 获取所有税种ID集合（去重，过滤空值）
+        List<String> taxCategoryIdList = records.stream()
+                .map(CfgInvoiceSettingDTO.PagingViewDTO::getTaxCategoryId)
+                .filter(StrUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        
+        if (CollUtil.isEmpty(taxCategoryIdList)) {
+            return;
+        }
+        
+        // 根据税种ID批量查询税种信息
+        Map<String, String> taxCategoryMap = new HashMap<>();
+        taxCategoryIdList.forEach(categoryId -> {
+            TaxCategoryEntity taxCategory = taxCategoryService.getByCategoryId(categoryId);
+            if (taxCategory != null) {
+                taxCategoryMap.put(categoryId, taxCategory.getDescricao());
+            }
+        });
+        
+        // 为每条记录设置税种描述
+        records.forEach(record -> {
+            String categoryId = record.getTaxCategoryId();
+            if (StrUtil.isNotBlank(categoryId)) {
+                String taxCategoryName = taxCategoryMap.get(categoryId);
+                record.setTaxCategoryName(taxCategoryName);
+            }
+        });
     }
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)

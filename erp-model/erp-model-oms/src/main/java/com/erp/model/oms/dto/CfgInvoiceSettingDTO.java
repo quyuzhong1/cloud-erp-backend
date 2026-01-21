@@ -312,6 +312,11 @@ public class CfgInvoiceSettingDTO implements Serializable {
         private String taxCategoryId;
 
         /**
+         * 税种描述（名称）
+         */
+        private String taxCategoryName;
+
+        /**
          * name、value、
          */
         private List<ShopInfoDTO> shopList;
