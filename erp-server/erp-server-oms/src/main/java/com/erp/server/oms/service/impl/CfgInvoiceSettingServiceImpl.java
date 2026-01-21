@@ -124,16 +124,18 @@ public class CfgInvoiceSettingServiceImpl extends SuperServiceImpl<CfgInvoiceSet
     public BaseResultDTO.AddDTO add(CfgInvoiceSettingDTO.AddDTO dto) {
         //校验CNPJ、邮编格式
         checkCode(dto.getLeiCode(), dto.getPostCode());
-        //校验CNPJ是否唯一
-        if (StrUtil.isNotBlank(dto.getLeiCode())) {
-            LambdaQueryWrapper<CfgInvoiceSettingEntity> queryWrapper = new LambdaQueryWrapper<CfgInvoiceSettingEntity>().eq(CfgInvoiceSettingEntity::getLeiCode, dto.getLeiCode());
+        //校验CNPJ是否唯一（使用格式化后的CNPJ进行查询）
+        String formattedCnpj = formatCnpjToDatabase(dto.getLeiCode());
+        if (StrUtil.isNotBlank(formattedCnpj)) {
+            LambdaQueryWrapper<CfgInvoiceSettingEntity> queryWrapper = new LambdaQueryWrapper<CfgInvoiceSettingEntity>().eq(CfgInvoiceSettingEntity::getLeiCode, formattedCnpj);
             if (super.count(queryWrapper) > 0) {
                 throw new ServiceException("CNPJ 已存在，不能重复");
             }
         }
-        //保存
+        //保存（CNPJ保存到数据库前格式化，只保留数字）
         CfgInvoiceSettingEntity entity = new CfgInvoiceSettingEntity();
         BeanMapperUtils.copy(dto, entity);
+        entity.setLeiCode(formattedCnpj);  // 保存格式化后的CNPJ
         entity.setCertificateUrl(dto.getAttachmentUrlList().get(0));
         boolean save = super.save(entity);
         if (!save) {
@@ -174,17 +176,18 @@ public class CfgInvoiceSettingServiceImpl extends SuperServiceImpl<CfgInvoiceSet
         if (ObjectUtil.isEmpty(old)) {
             throw new ServiceException("此发票设置不存在");
         }
-        //校验CNPJ、是否被修改
-        if (!StrUtil.equals(old.getLeiCode(), dto.getLeiCode())) {
+        //校验CNPJ、是否被修改（使用格式化后的CNPJ进行比较）
+        String formattedCnpj = formatCnpjToDatabase(dto.getLeiCode());
+        if (!StrUtil.equals(old.getLeiCode(), formattedCnpj)) {
             throw new ServiceException("CNPJ 不允许修改");
         }
         //校验邮编格式
-        checkCode(dto.getLeiCode(), dto.getPostCode());
+        checkCode(formattedCnpj, dto.getPostCode());
         //转换格式
         CfgInvoiceSettingEntity cfgInvoiceSettingEntity = BeanMapperUtils.map(CfgInvoiceSettingEntity.class, dto);
-        //禁止更新以下字段
+        //禁止更新以下字段（CNPJ使用旧的格式化后的值）
         cfgInvoiceSettingEntity.setStartCode(old.getStartCode());
-        cfgInvoiceSettingEntity.setLeiCode(old.getLeiCode());
+        cfgInvoiceSettingEntity.setLeiCode(old.getLeiCode());  // 保持旧的格式化后的CNPJ
         cfgInvoiceSettingEntity.setStateTaxNo(old.getStateTaxNo());
         cfgInvoiceSettingEntity.setNo(old.getNo());
         cfgInvoiceSettingEntity.setCertificateUrl(dto.getAttachmentUrlList().get(0));
@@ -508,12 +511,14 @@ public class CfgInvoiceSettingServiceImpl extends SuperServiceImpl<CfgInvoiceSet
                     continue;
                 }
                 
+                // 格式化CNPJ（保存到数据库前格式化）
+                String formattedCnpj = formatCnpjToDatabase(cnpj);
                 // 查询本地是否存在（根据company_id或cnpj）
                 CfgInvoiceSettingEntity localEntity = this.getOne(
                     new LambdaQueryWrapper<CfgInvoiceSettingEntity>()
                         .eq(CfgInvoiceSettingEntity::getCompanyId, companyId)
                         .or()
-                        .eq(CfgInvoiceSettingEntity::getLeiCode, cnpj)
+                        .eq(CfgInvoiceSettingEntity::getLeiCode, formattedCnpj)
                         .eq(CfgInvoiceSettingEntity::getIsDeleted, false)
                         .last("LIMIT 1")
                 );
@@ -522,7 +527,7 @@ public class CfgInvoiceSettingServiceImpl extends SuperServiceImpl<CfgInvoiceSet
                     // 新增
                     localEntity = new CfgInvoiceSettingEntity();
                     localEntity.setCompanyId(companyId);
-                    localEntity.setLeiCode(cnpj);
+                    localEntity.setLeiCode(formattedCnpj);  // 保存格式化后的CNPJ
                     localEntity.setCompanyName(companyInfo.getName());
                     localEntity.setStateTaxNo(companyInfo.getIe());
                     localEntity.setTaxType(companyInfo.getInvoiceType());
@@ -655,6 +660,23 @@ public class CfgInvoiceSettingServiceImpl extends SuperServiceImpl<CfgInvoiceSet
 
     /**
      * 格式化CNPJ：去除所有非数字字符，只保留14位数字
+     * 用于保存到数据库前格式化
+     * 
+     * @param cnpj 原始CNPJ（可能包含格式字符如 12.345.678/0001-90）
+     * @return 格式化后的CNPJ（只包含数字，如 12345678000190）
+     */
+    private String formatCnpjToDatabase(String cnpj) {
+        if (CharSequenceUtil.isBlank(cnpj)) {
+            return cnpj;
+        }
+        String formattedCnpj = cnpj.replaceAll("[^0-9]", "");
+        log.debug("CNPJ格式化（保存到数据库）: {} -> {}", cnpj, formattedCnpj);
+        return formattedCnpj;
+    }
+
+    /**
+     * 格式化CNPJ：去除所有非数字字符，只保留14位数字
+     * 用于DTO格式化（通过函数式接口）
      * 
      * @param getter CNPJ获取函数
      * @param setter CNPJ设置函数
@@ -662,9 +684,9 @@ public class CfgInvoiceSettingServiceImpl extends SuperServiceImpl<CfgInvoiceSet
     private void formatCnpj(java.util.function.Supplier<String> getter, java.util.function.Consumer<String> setter) {
         String cnpj = getter.get();
         if (CharSequenceUtil.isNotBlank(cnpj)) {
-            String formattedCnpj = cnpj.replaceAll("[^0-9]", "");
+            String formattedCnpj = formatCnpjToDatabase(cnpj);
             setter.accept(formattedCnpj);
-            log.debug("CNPJ格式化: {} -> {}", cnpj, formattedCnpj);
+            log.debug("CNPJ格式化（DTO）: {} -> {}", cnpj, formattedCnpj);
         }
     }
 
