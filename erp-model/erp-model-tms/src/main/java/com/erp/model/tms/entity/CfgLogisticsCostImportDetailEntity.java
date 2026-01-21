@@ -72,6 +72,9 @@ public class CfgLogisticsCostImportDetailEntity extends BaseEntity<CfgLogisticsC
     @TableField("target_field_type")
     private String targetFieldType;
 
+    @TableField("index")
+    private Integer index;
+
 
     public static final String SOURCE_FIELD = "source_field";
 

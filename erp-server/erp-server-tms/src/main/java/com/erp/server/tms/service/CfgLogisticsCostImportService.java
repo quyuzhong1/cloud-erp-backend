@@ -1,10 +1,11 @@
 package com.erp.server.tms.service;
-import com.erp.model.tms.entity.CfgLogisticsCostImportEntity;
-import com.common.business.service.SuperService;
+
 import com.common.business.dto.base.*;
-import com.erp.model.tms.dto.CfgLogisticsCostImportDTO;
+import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
-import javax.servlet.http.HttpServletResponse;
+import com.erp.model.tms.dto.CfgLogisticsCostImportDTO;
+import com.erp.model.tms.entity.CfgLogisticsCostImportEntity;
+
 import java.util.List;
 
 /**
@@ -66,7 +67,17 @@ public interface CfgLogisticsCostImportService extends SuperService<CfgLogistics
 
     BatchResultDTO delete(String id);
 
-    void updateDisabled(CfgLogisticsCostImportDTO.UpdateDisabledDTO dto);
+    BatchResultDTO updateDisabled(String id,Boolean disabled) ;
 
     Boolean importFile(BaseDTO.ImportDTO dto);
+    /**
+     * 根据文件名、业务类型、导入类型查询导入数据
+     * @author will
+     * @date 2026/1/21 14:50
+     * @param fileName
+     * @param businessType
+     * @param costType
+     * @return List<CfgLogisticsCostImportEntity>
+     */
+    List<CfgLogisticsCostImportEntity> listByImport(String fileName, String businessType, String costType);
 }

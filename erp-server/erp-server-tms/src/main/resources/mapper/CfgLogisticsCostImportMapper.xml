@@ -13,7 +13,7 @@
        <result column="version" property="version" />
        <result column="is_deleted" property="isDeleted" />
        <result column="code" property="code" />
-       <result column="bussiness_type" property="bussinessType" />
+       <result column="business_type" property="businessType" />
        <result column="cfg_type" property="cfgType" />
        <result column="dict_platform" property="dictPlatform" />
        <result column="name" property="name" />
@@ -27,20 +27,56 @@
 
     <!-- 通用查询结果列 -->
     <sql id="Base_Column_List">
-        id,
-        create_user_id,
-        create_user_name,
-        create_time,
-        update_user_id,
-        update_user_name,
-        update_time,
-        version,
-        is_deleted,
-        code, bussiness_type, cfg_type, dict_platform, name, sheet_name, header_row, cost_type, import_type, disabled, remark
+        clci.id AS id,
+clci.create_user_id AS createUserId,
+clci.create_user_name AS createUserName,
+clci.create_time AS createTime,
+clci.update_user_id AS updateUserId,
+clci.update_user_name AS updateUserName,
+clci.update_time AS updateTime,
+clci.version AS version,
+clci.is_deleted AS isDeleted,
+clci.code AS code,
+clci.business_type AS businessType,
+clci.cfg_type AS cfgType,
+clci.dict_platform AS dictPlatform,
+clci.name AS name,
+clci.sheet_name AS sheetName,
+clci.header_row AS headerRow,
+clci.cost_type AS costType,
+clci.import_type AS importType,
+clci.disabled AS disabled,
+clci.remark AS remark
     </sql>
 
     <select id="paging" resultType="com.erp.model.tms.dto.CfgLogisticsCostImportDTO$ListDTO">
-
+        SELECT
+            <include refid="Base_Column_List"></include>
+            ,
+        clcid.source_field AS sourceField,
+        clcid.source_detail_field AS sourceDetailField,
+        clcid.is_unique_key AS isUniqueKey,
+        clcid.is_absolute_value AS isAbsoluteValue,
+        clcid.target_field_id AS targetFieldId,
+        clcid.target_field AS targetField,
+        clcid.target_field_name AS targetFieldName,
+        clcid.target_field_type AS targetFieldType
+        FROM
+            cfg_logistics_cost_import AS clci
+                LEFT JOIN cfg_logistics_cost_import_detail AS clcid ON clci.ID = clcid.main_id AND clcid.is_deleted = FALSE
+        WHERE
+        ${params.sqlMap.default}
+        and clci.is_deleted = FALSE
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        clci.create_time desc
     </select>
 
     <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">

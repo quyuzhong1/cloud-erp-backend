@@ -20,20 +20,31 @@
        <result column="target_field" property="targetField" />
        <result column="target_field_name" property="targetFieldName" />
        <result column="target_field_type" property="targetFieldType" />
+       <result column="index" property="index" />
     </resultMap>
 
     <!-- 通用查询结果列 -->
     <sql id="Base_Column_List">
-        id,
-        create_user_id,
-        create_user_name,
-        create_time,
-        update_user_id,
-        update_user_name,
-        update_time,
-        version,
-        is_deleted,
-        source_field, source_detail_field, is_unique_key, is_absolute_value, target_field_id, target_field, target_field_name, target_field_type
+        clcid.id AS id,
+clcid.create_user_id AS createUserId,
+clcid.create_user_name AS createUserName,
+clcid.create_time AS createTime,
+clcid.update_user_id AS updateUserId,
+clcid.update_user_name AS updateUserName,
+clcid.update_time AS updateTime,
+clcid.version AS version,
+clcid.is_deleted AS isDeleted,
+clcid.source_field AS sourceField,
+clcid.source_detail_field AS sourceDetailField,
+clcid.is_unique_key AS isUniqueKey,
+clcid.is_absolute_value AS isAbsoluteValue,
+clcid.target_field_id AS targetFieldId,
+clcid.target_field AS targetField,
+clcid.target_field_name AS targetFieldName,
+clcid.target_field_type AS targetFieldType,
+clcid.index AS index
+
+
     </sql>
 
     <select id="paging" resultType="com.erp.model.tms.dto.CfgLogisticsCostImportDetailDTO$ListDTO">
