@@ -59,6 +59,7 @@
         <result property="certificateUrl" column="certificate_url" />
         <result property="certificatePassword" column="certificate_password" />
         <result property="taxCategoryId" column="tax_category_id" />
+        <result property="companyId" column="company_id" />
         <collection property="shopList" ofType="com.erp.model.oms.dto.CfgInvoiceSettingDTO$ShopInfoDTO">
             <result property="name" column="shop_name" />
             <result property="dictPlatform" column="dict_platform" />
@@ -91,6 +92,7 @@
         cis.certificate_url,
         cis.certificate_password,
         cis.tax_category_id,
+        cis.company_id,
         si.name AS shop_name,
         si.dict_platform,
         db.name AS dict_platform_name
