@@ -1,21 +1,10 @@
 package com.erp.server.tms.schedule;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
-import java.util.Arrays;
-import java.util.List;
-import java.util.concurrent.ExecutorService;
-
-import javax.annotation.Resource;
-
-import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.scheduling.annotation.EnableScheduling;
-import org.springframework.stereotype.Component;
-
+import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.common.business.enums.ErpServerModuleEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.msg.dto.WarnMsgInfoDTO;
@@ -32,13 +21,21 @@ import com.erp.server.tms.service.LogisticsBillCostService;
 import com.xxl.job.core.biz.model.ReturnT;
 import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;
-
-import cn.hutool.core.bean.BeanUtil;
-import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.json.JSONObject;
-import cn.hutool.json.JSONUtil;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.stereotype.Component;
+
+import javax.annotation.Resource;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
+import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.ExecutorService;
 
 /**
  * @author zdy
@@ -135,10 +132,11 @@ public class SmallBagCostAllocationJob {
                 .eq(LogisticsBillCostEntity::getCheckStatus, LogisticsBillCostCheckStatusEnum.CHECKING.getCode())
                 .list();
             if(CollUtil.isNotEmpty(list)) {
+            	DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM");
             	for(LogisticsBillCostEntity l : list) {
             		costAllocationPool.execute(() -> {
             			try {
-    						logisticsBillCostService.pushAllocation(l.getId(), l.getReconciliationMonth());
+    						logisticsBillCostService.pushAllocation(l.getId(), StrUtil.blankToDefault(l.getReconciliationMonth(),l.getConfirmTime().format(formatter)));
     					} catch (Exception e) {
     						WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
     				        warnMsgInfo.setBizName("自动生成小包分摊");
