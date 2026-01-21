@@ -158,10 +158,10 @@ public class CfgLogisticsCostImportController extends BaseController {
             try {
                 deleteResult = cfgLogisticsCostImportService.delete(id);
             }catch (Exception e){
-                log.error("B2C寄样申请单删除失败",e);
+                log.error("费用项配置删除失败",e);
                 CfgLogisticsCostImportEntity entity = idEntityMap.get(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    deleteResult = BatchResultDTO.fail(id, id, "B2C寄样申请单不存在, 删除失败");
+                    deleteResult = BatchResultDTO.fail(id, id, "费用项配置不存在, 删除失败");
                     resultDTOS.add(deleteResult);
                     continue;
                 }
@@ -196,10 +196,10 @@ public class CfgLogisticsCostImportController extends BaseController {
             try {
                 result = cfgLogisticsCostImportService.updateDisabled(id, dto.getDisabled());
             } catch (Exception e) {
-                log.error("B2C寄样申请单删除失败", e);
+                log.error("费用项配置操作失败", e);
                 CfgLogisticsCostImportEntity entity = idEntityMap.get(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    result = BatchResultDTO.fail(id, id, "B2C寄样申请单不存在, 删除失败");
+                    result = BatchResultDTO.fail(id, id, "费用项配置不存在, 操作失败");
                     resultDTOS.add(result);
                     continue;
                 }
@@ -217,7 +217,7 @@ public class CfgLogisticsCostImportController extends BaseController {
      * @param dto
      * @return ApiResult
      */
-    @LogAction(value = LogActionEnum.IMPORT, desc = "导入B2C-KOL寄样申请")
+    @LogAction(value = LogActionEnum.IMPORT, desc = "导入费用项配置")
     @PostMapping("/import")
     public ApiResult importExcel(@RequestBody BaseDTO.ImportDTO dto) {
         Boolean result = cfgLogisticsCostImportService.importFile(dto);
@@ -231,7 +231,7 @@ public class CfgLogisticsCostImportController extends BaseController {
      * @param response
      * @return
      */
-    @LogAction(value = LogActionEnum.EXPORT, desc = "B2C-KOL寄样申请下载模板")
+    @LogAction(value = LogActionEnum.EXPORT, desc = "费用项配置下载模板")
     @GetMapping("/downloadTemplate")
     public ApiResult downloadTemplate(HttpServletResponse response) {
         String standardPath = "classpath:excel/kolB2cApplicationTemplate.xlsx";
