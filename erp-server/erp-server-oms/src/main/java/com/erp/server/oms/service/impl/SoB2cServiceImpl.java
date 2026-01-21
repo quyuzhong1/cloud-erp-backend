@@ -823,17 +823,20 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 .eq(SoB2cEntity::getIsDeleted, Boolean.FALSE)
                 .list();
 
-        List<String> soB2cIdList = soB2cList.stream().map(item -> item.getId()).collect(Collectors.toList());
-        if (!soB2cIdList.isEmpty()) {
-            soB2cDetailService.removeByIds(soB2cIdList);
-        }
-
-        String ids = soB2cList.stream()
+        //过滤出需要删除的记录（flag == false 的）
+        List<String> soB2cIdList = soB2cList.stream()
+                .filter(entity -> !Boolean.TRUE.equals(soB2cCoreService.listPayMethodSetting(entity)))
                 .map(SoB2cEntity::getId)
-                .collect(Collectors.joining(", "));
-        log.info("删除的b2c销售订单的ID为: [{}]", ids);
+                .collect(Collectors.toList());
 
-        this.removeByIds(soB2cIdList);
+        if (CollUtil.isNotEmpty(soB2cIdList)) {
+            soB2cDetailService.removeByIds(soB2cIdList);
+
+            this.removeByIds(soB2cIdList);
+
+            log.info("成功删除{}条b2c销售订单，ID为: [{}]", soB2cIdList.size(),
+                    soB2cIdList.stream().limit(10).collect(Collectors.joining(", ")));
+        }
     }
 
     @Override
