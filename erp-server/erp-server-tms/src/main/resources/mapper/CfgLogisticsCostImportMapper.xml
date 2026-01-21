@@ -61,7 +61,6 @@ clci.remark AS remark
         clcid.target_field AS targetField,
         clcid.target_field_name AS targetFieldName,
         clcid.target_field_type AS targetFieldType
-        clcid.source_field, source_detail_field
         FROM
             cfg_logistics_cost_import AS clci
                 LEFT JOIN cfg_logistics_cost_import_detail AS clcid ON clci.ID = clcid.main_id AND clcid.is_deleted = FALSE
