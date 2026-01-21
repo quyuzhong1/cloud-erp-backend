@@ -1198,6 +1198,7 @@ public class NfeInvoiceService {
             log.error("取消发票失败, uuid: {}, motivo: {}", uuid, motivo);
             throw new ServiceException(ApiError.FIN_INVOICE_NFE_CANCEL_FAILED, motivo);
         } else {
+
             // 其他状态
             String motivo = CharSequenceUtil.isNotBlank(responseData.getMotivo()) ? responseData.getMotivo() : "未知状态";
             log.error("取消发票返回未知状态, uuid: {}, status: {}, motivo: {}", uuid, status, motivo);
