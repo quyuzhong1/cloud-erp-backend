@@ -127,4 +127,11 @@ public class EditCompanyDTO {
     @NotNull(message = "发票起始编号不能为空")
     @JsonProperty("number")
     private Integer number;
+
+    /**
+     * 公司ID（第三方返回的公司ID，编辑公司时必填）
+     */
+    @NotBlank(message = "公司ID不能为空")
+    @JsonProperty("company_id")
+    private String companyId;
 }

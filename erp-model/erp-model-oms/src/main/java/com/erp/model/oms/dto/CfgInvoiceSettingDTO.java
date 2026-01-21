@@ -364,6 +364,21 @@ public class CfgInvoiceSettingDTO implements Serializable {
          * 主键id
          */
         private String id;
+
+        /**
+         * 公司ID（第三方返回的公司ID）
+         */
+        private String companyId;
+
+        /**
+         * 税种ID（关联cfg_tax_category.category_id）
+         */
+        private String taxCategoryId;
+
+        /**
+         * 税种描述（名称）
+         */
+        private String taxCategoryName;
     }
 
     @Data

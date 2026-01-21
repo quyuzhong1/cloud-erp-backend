@@ -3,12 +3,16 @@ package com.erp.server.tms.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.json.JSONObject;
+import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.base.BaseDTO;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -18,20 +22,30 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.tms.dto.ImportHistoryRecordDTO;
+import com.erp.model.tms.entity.CfgLogisticsCostImportDetailEntity;
+import com.erp.model.tms.entity.CfgLogisticsCostImportEntity;
 import com.erp.model.tms.entity.ImportHistoryRecordEntity;
 import com.erp.model.tms.enums.ImportHistoryRecordStatusEnum;
+import com.erp.rpc.file.feign.FileFeign;
+import com.erp.server.tms.listener.ImportHistoryRecordExcelListener;
 import com.erp.server.tms.mapper.ImportHistoryRecordMapper;
+import com.erp.server.tms.service.CfgLogisticsCostImportDetailService;
+import com.erp.server.tms.service.CfgLogisticsCostImportService;
 import com.erp.server.tms.service.ImportHistoryRecordService;
 import com.erp.server.tms.service.OperateLogService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
+import java.io.ByteArrayInputStream;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -48,6 +62,15 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
     private OperateLogService operateLogService;
     @Resource
     private DocNoGenHelper docNoGenHelper;
+    @Resource
+    private FileFeign fileFeign;
+    @Resource
+    private CfgLogisticsCostImportService cfgLogisticsCostImportService;
+    @Resource
+    private CfgLogisticsCostImportDetailService cfgLogisticsCostImportDetailService;
+
+
+
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -124,9 +147,58 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
     }
 
     @Override
-    public Boolean preprocessingImportExcel(BaseDTO.ImportDTO dto) {
+    public BatchResultDTO preprocessingImportExcel(BaseDTO.ImportDTO importDTO,String businessType,String costType) {
+        if (CharSequenceUtil.isNotBlank(importDTO.getFileName())) {
+            throw new ServiceException(ApiError.LOGISTICS_IMPORT_FILE_NAME_NOT_FOUND);
+        }
+        //查询配置主表信息
+        List<CfgLogisticsCostImportEntity> cfgLogisticsCostImportList = cfgLogisticsCostImportService.listByImport(importDTO.getFileName(), businessType, costType);
+        if (CollUtil.isEmpty(cfgLogisticsCostImportList)) {
+            return new BatchResultDTO(importDTO.getTaskId(),importDTO.getFileName(),"未找到配置信息",Boolean.TRUE);
+        }
+        //查询配置明细信息
+        List<String> mainIdList = cfgLogisticsCostImportList.stream().map(CfgLogisticsCostImportEntity::getId).distinct().collect(Collectors.toList());
+        List<CfgLogisticsCostImportDetailEntity> importDetailList =  cfgLogisticsCostImportDetailService.listByMainIdList(mainIdList);
+        if (CollUtil.isEmpty(importDetailList)) {
+            throw new ServiceException(ApiError.LOGISTICS_CFG_IMPORT_DETAIL_NOT_FOUND);
+        }
+        Map<String,List<CfgLogisticsCostImportDetailEntity>> impotyDetailMap = importDetailList.stream().collect(Collectors.groupingBy(CfgLogisticsCostImportDetailEntity::getMainId));
 
-        return null;
+        //下载文件
+        byte[] bytes = fileFeign.downloadFile(importDTO.getFileUrl());
+
+        for (CfgLogisticsCostImportEntity costImportEntity : cfgLogisticsCostImportList) {
+            List<CfgLogisticsCostImportDetailEntity> cfgImportDetailList = impotyDetailMap.get(costImportEntity.getId());
+            if (CollUtil.isEmpty(cfgImportDetailList)) {
+                throw new ServiceException(ApiError.LOGISTICS_CFG_IMPORT_DETAIL_NOT_FOUND);
+            }
+
+            ImportHistoryRecordExcelListener excelListenerUtil = new ImportHistoryRecordExcelListener(importDTO.getTaskId(),importDTO.getImportType(), importDTO.getImportCount());
+            try {
+                EasyExcel.read(new ByteArrayInputStream(bytes), excelListenerUtil).sheet(costImportEntity.getSheetName()).doRead();
+            } catch (ExcelCommonException e) {
+                log.error("导入格式错误！", e);
+                throw new ServiceException(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX);
+            }
+            //验证导入数据是否为空
+            List<JSONObject> excelDateList = excelListenerUtil.getExcelDateList();
+            if (CollectionUtils.isEmpty(excelDateList)) {
+                throw new ServiceException(ApiError.FILE_DATA_REQUIRED);
+            }
+            //导入数据处理
+            List<JSONObject> successList = excelListenerUtil.getSuccessList();
+            //导出错误数据
+            List<JSONObject> errorList = excelListenerUtil.getErrorList();
+            //表头
+            List<String> headList = excelListenerUtil.getHeadList();
+        }
+
+        return new BatchResultDTO(importDTO.getTaskId(),importDTO.getFileName(),"成功",Boolean.TRUE);
+    }
+
+    @Override
+    public void handleImportSuccessList(List<JSONObject> successList, List<JSONObject> errorList2, List<String> headList, Map<Integer, String> headMap, String importType) {
+
     }
 
     private void fillOne(ImportHistoryRecordDTO.ViewDTO data) {

@@ -104,21 +104,16 @@ public class CfgInvoiceSettingServiceImpl extends SuperServiceImpl<CfgInvoiceSet
             return;
         }
         
-        // 根据税种ID批量查询税种信息
-        Map<String, String> taxCategoryMap = new HashMap<>();
-        taxCategoryIdList.forEach(categoryId -> {
-            TaxCategoryEntity taxCategory = taxCategoryService.getByCategoryId(categoryId);
-            if (taxCategory != null) {
-                taxCategoryMap.put(categoryId, taxCategory.getDescricao());
-            }
-        });
-        
-        // 为每条记录设置税种描述
+        // 为每条记录设置税种描述（需要同时匹配categoryId和companyId）
         records.forEach(record -> {
             String categoryId = record.getTaxCategoryId();
+            String companyId = record.getCompanyId();
             if (StrUtil.isNotBlank(categoryId)) {
-                String taxCategoryName = taxCategoryMap.get(categoryId);
-                record.setTaxCategoryName(taxCategoryName);
+                // 使用categoryId和companyId一起查询，避免多条记录的问题
+                TaxCategoryEntity taxCategory = taxCategoryService.getByCategoryIdAndCompanyId(categoryId, companyId);
+                if (taxCategory != null) {
+                    record.setTaxCategoryName(taxCategory.getDescricao());
+                }
             }
         });
     }
@@ -194,6 +189,7 @@ public class CfgInvoiceSettingServiceImpl extends SuperServiceImpl<CfgInvoiceSet
         cfgInvoiceSettingEntity.setNo(old.getNo());
         cfgInvoiceSettingEntity.setCertificateUrl(dto.getAttachmentUrlList().get(0));
         cfgInvoiceSettingEntity.setToken(old.getToken());
+        cfgInvoiceSettingEntity.setCompanyId(old.getCompanyId());  // 保留公司ID，编辑公司接口需要
         log.info("编辑 开始修改发票设置数据，id：【{}】", old.getId());
         //修改
         boolean update = super.updateById(cfgInvoiceSettingEntity);
@@ -216,6 +212,10 @@ public class CfgInvoiceSettingServiceImpl extends SuperServiceImpl<CfgInvoiceSet
         String companyToken = cfgInvoiceSettingEntity.getToken();
         if (CharSequenceUtil.isBlank(companyToken)) {
             throw new ServiceException("公司token不能为空，请先创建公司");
+        }
+        // 验证公司ID是否存在
+        if (CharSequenceUtil.isBlank(editCompanyDTO.getCompanyId())) {
+            throw new ServiceException("公司ID不能为空，请先创建公司");
         }
         tfFiscalService.editCompanyV2(editCompanyDTO, companyToken);
         //保存日志
@@ -252,11 +252,25 @@ public class CfgInvoiceSettingServiceImpl extends SuperServiceImpl<CfgInvoiceSet
     @Override
     public CfgInvoiceSettingDTO.ViewDTO view(String id) {
         CfgInvoiceSettingEntity old = super.getById(id);
-        CfgInvoiceSettingDTO.ViewDTO dto = new CfgInvoiceSettingDTO.ViewDTO();
-        BeanUtil.copyProperties(old, dto);
         if (ObjectUtil.isEmpty(old)) {
             throw new ServiceException("此发票设置不存在");
         }
+        CfgInvoiceSettingDTO.ViewDTO dto = new CfgInvoiceSettingDTO.ViewDTO();
+        BeanUtil.copyProperties(old, dto);
+        
+        // 设置新增字段
+        dto.setCompanyId(old.getCompanyId());
+        dto.setTaxCategoryId(old.getTaxCategoryId());
+        
+        // 如果绑定了税种，查询税种描述
+        if (StrUtil.isNotBlank(old.getTaxCategoryId())) {
+            TaxCategoryEntity taxCategory = taxCategoryService.getByCategoryIdAndCompanyId(old.getTaxCategoryId(), old.getCompanyId());
+            if (taxCategory != null) {
+                dto.setTaxCategoryName(taxCategory.getDescricao());
+            }
+        }
+        
+        // 设置附件信息
         List<OmsAttachmentDTO.UpdateDTO> attchmentList = omsAttachmentService.getByBusinessIds(Arrays.asList(id));
         List<String> attachmentUrlList = attchmentList.stream().map(OmsAttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.toList());
         List<String> attachmentNameList = attchmentList.stream().map(OmsAttachmentDTO.UpdateDTO::getAttachName).collect(Collectors.toList());
@@ -584,7 +598,8 @@ public class CfgInvoiceSettingServiceImpl extends SuperServiceImpl<CfgInvoiceSet
         
         // 如果提供了taxCategoryId，验证税种是否存在
         if (StrUtil.isNotBlank(taxCategoryId)) {
-            TaxCategoryEntity taxCategory = taxCategoryService.getByCategoryId(taxCategoryId);
+            // 使用companyId查询，避免多条记录问题
+            TaxCategoryEntity taxCategory = taxCategoryService.getByCategoryIdAndCompanyId(taxCategoryId, entity.getCompanyId());
             if (ObjectUtil.isEmpty(taxCategory)) {
                 throw new ServiceException("税种不存在或已删除，税种ID：" + taxCategoryId);
             }
@@ -592,7 +607,7 @@ public class CfgInvoiceSettingServiceImpl extends SuperServiceImpl<CfgInvoiceSet
             if (Boolean.TRUE.equals(taxCategory.getDisabled())) {
                 throw new ServiceException("税种已禁用，无法绑定，税种ID：" + taxCategoryId);
             }
-            log.info("税种验证通过：taxCategoryId={}, descricao={}", taxCategoryId, taxCategory.getDescricao());
+            log.info("税种验证通过：taxCategoryId={}, companyId={}, descricao={}", taxCategoryId, entity.getCompanyId(), taxCategory.getDescricao());
         }
         
         // 更新taxCategoryId

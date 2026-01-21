@@ -8,7 +8,6 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 import lombok.NoArgsConstructor;
-import com.common.business.enums.ApproveStatusEnum;
 
 
 /**
@@ -34,8 +33,8 @@ public class CfgLogisticsCostImportEntity extends BaseEntity<CfgLogisticsCostImp
     /**
     * 配置单据
     */
-    @TableField("bussiness_type")
-    private String bussinessType;
+    @TableField("business_type")
+    private String businessType;
     /**
     * 配置类型：logistics_supplier=物流商,platform=平台  枚举：CfgLogisticsCostImportCfgTypeEnum
     */

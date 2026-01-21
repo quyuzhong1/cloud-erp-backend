@@ -73,4 +73,12 @@ public interface CfgLogisticsCostImportDetailService extends SuperService<CfgLog
     * @return
     */
     void exportList(CfgLogisticsCostImportDetailDTO.ExportDTO dto, HttpServletResponse response);
+    /**
+     * 根据主表id列表查询明细
+     * @author will
+     * @date 2026/1/21 15:03
+     * @param mainIdList
+     * @return List<CfgLogisticsCostImportDetailEntity>
+     */
+    List<CfgLogisticsCostImportDetailEntity> listByMainIdList(List<String> mainIdList);
 }

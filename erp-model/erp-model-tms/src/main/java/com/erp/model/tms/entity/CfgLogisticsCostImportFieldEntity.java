@@ -34,8 +34,8 @@ public class CfgLogisticsCostImportFieldEntity extends BaseEntity<CfgLogisticsCo
     /**
     * 配置单据
     */
-    @TableField("bussiness_type")
-    private String bussinessType;
+    @TableField("business_type")
+    private String businessType;
     /**
     * 数据表
     */

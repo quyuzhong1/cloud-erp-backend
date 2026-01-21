@@ -1,6 +1,7 @@
 package com.erp.model.tms.dto;
 
 import com.common.business.dto.AdvanceQueryDTO;
+import com.common.business.dto.base.BaseDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.dto.base.SuperDTO;
 import lombok.AllArgsConstructor;
@@ -8,6 +9,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
@@ -342,5 +344,31 @@ public class ImportHistoryRecordDTO implements Serializable {
 
     }
 
+
+
+    /**
+     * 导入dto
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ImportDTO {
+
+        /**
+         * 导入数据
+         */
+        @NotEmpty(message = "导入数据不能为空")
+        private List<BaseDTO.ImportDTO> list;
+
+        /**
+         * 类型, 自发货费用/尾程费用
+         */
+        private String businessType;
+
+        /**
+         * 费用类型，api/manual
+         */
+        private String costType;
+    }
 
 }
