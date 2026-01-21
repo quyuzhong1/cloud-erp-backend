@@ -21,8 +21,9 @@ import com.erp.server.dmp.inout.dto.response.DmpInputTaskResponse;
 import com.erp.server.dmp.inout.handler.input.task.init.DmpInputInitHandler;
 import com.erp.server.dmp.inout.handler.input.task.mongo.DmpInputMongoHandler;
 import com.sdk.oms.mercado.constant.MercadoConstant;
-import com.sdk.oms.mercado.dto.MercadoShopInfoDTO;
 import com.sdk.oms.mercado.service.MercadoSdkClientService;
+import com.sdk.oms.mercadolocal.dto.MercadoShopInfoDTO;
+import com.sdk.oms.mercadolocal.service.MercadoLocalSdkClientService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
@@ -43,42 +44,26 @@ import java.util.stream.Collectors;
 @Scope("prototype")
 public class MercadoLocalOrderShipmentHistoryInitHandler extends DmpInputInitHandler {
 	@Resource
-	private MercadoSdkClientService mercadoSdkClientService;
+	private MercadoLocalSdkClientService mercadoLocalSdkClientService;
 	
 	@Override
 	public List<DmpInputTaskInitDTO> getInitData(DmpInputInitRequest dmpRequest, DmpInputTaskResponse dmpResponse) {
-		List<DmpInputTaskEntity> list = dmpInputTaskService.lambdaQuery().eq(DmpInputTaskEntity::getId, dmpInputTaskEntity.getParentTaskId()).list();
-		if (CollectionUtil.isEmpty(list)) {
-			return new ArrayList<>();
-		}
-        List<String> taskIds = list.stream()
-                .map(DmpInputTaskEntity::getId)
-                .distinct()
-                .collect(Collectors.toList());
-        if (CollectionUtil.isEmpty(taskIds)) {
+        List<Map<String, Object>> findMongoData = null;
+        String parentStorageName = this.getParentStorageName(DmpInputTaskStatusEnum.MONGO);
+        if (StringUtils.isNotBlank(parentStorageName)) {
+            List<ParamData> paramDataList = new ArrayList<>();
+            paramDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, PannoEnum.EQ, dmpInputTaskEntity.getParentTaskId()));
+            findMongoData = mongoService.findMongoData(paramDataList, parentStorageName);
+        }
+        if (CollectionUtil.isEmpty(findMongoData)) {
             return new ArrayList<>();
         }
-        List<DmpInputTaskEntity> parentTaskEntityList = dmpInputTaskService.lambdaQuery().in(DmpInputTaskEntity::getId, taskIds).list();
-		if (CollectionUtil.isEmpty(parentTaskEntityList)) {
-			return new ArrayList<>();
-		}
-		List<Map<String, Object>> findMongoData = null;
-		String parentStorageName = this.getParentStorageName(DmpInputTaskStatusEnum.MONGO);
-		if (StringUtils.isNotBlank(parentStorageName)) {
-			List<ParamData> paramDataList = new ArrayList<>();
-			paramDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, PannoEnum.EQ, dmpInputTaskEntity.getParentTaskId()));
-			findMongoData = mongoService.findMongoData(paramDataList, parentStorageName);
-		}
-		if (findMongoData == null) {
-			return new ArrayList<>();
-		}
 
-		List<JSONObject> resultData = new ArrayList<>();
-
-		MercadoShopInfoDTO shopInfoDTO = mercadoSdkClientService.getShopInfoByShopId(parentTaskEntityList.get(0).getNextLevelId());
-		if (ObjectUtil.isEmpty(shopInfoDTO)) {
-			throw new ServiceException("美客多店铺id：" + this.nextLevelId + "未找到对应的店铺信息");
-		}
+        MercadoShopInfoDTO shopInfoDTO = mercadoLocalSdkClientService.getShopInfoByShopId(findMongoData.get(0).get("nextLevelId").toString());
+        if (ObjectUtil.isEmpty(shopInfoDTO)) {
+            throw new ServiceException("美客多店铺id：" + this.nextLevelId + "未找到对应的店铺信息");
+        }
+        List<JSONObject> resultData = new ArrayList<>();
 
 		//平台接口地址
 		String url = MercadoConstant.URL;
