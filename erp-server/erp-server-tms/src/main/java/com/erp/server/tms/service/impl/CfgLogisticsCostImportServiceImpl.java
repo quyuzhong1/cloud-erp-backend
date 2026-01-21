@@ -3,27 +3,37 @@ package com.erp.server.tms.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.config.DocNoGenHelper;
+import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.BusinessNoTypeEnum;
+import com.common.business.enums.FileTaskStatusEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
+import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.ExcelUtil;
+import com.common.core.utils.FastDFSClientUtil;
 import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
+import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.tms.dto.CfgLogisticsCostImportDTO;
 import com.erp.model.tms.dto.CfgLogisticsCostImportDetailDTO;
 import com.erp.model.tms.dto.DictBasicDTO;
+import com.erp.model.tms.dto.excel.CfgLogisticsCostExcelDTO;
 import com.erp.model.tms.entity.CfgLogisticsCostImportDetailEntity;
 import com.erp.model.tms.entity.CfgLogisticsCostImportEntity;
 import com.erp.model.tms.entity.CfgLogisticsCostImportFieldEntity;
@@ -31,17 +41,28 @@ import com.erp.model.tms.enums.CfgLogisticsCostImportCfgTypeEnum;
 import com.erp.model.tms.enums.CfgLogisticsCostImportCostTypeEnum;
 import com.erp.model.tms.enums.CfgLogisticsCostImportImportTypeEnum;
 import com.erp.model.tms.enums.DictBasicEnum;
+import com.erp.model.wms.dto.excel.SampleBorrowImportExcelDTO;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.file.feign.FileFeign;
+import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.server.tms.listener.CfgLogisticsCostExcelListener;
 import com.erp.server.tms.mapper.CfgLogisticsCostImportMapper;
 import com.erp.server.tms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static com.common.business.enums.FileTaskEventEnum.IMPORT_WMS_SAMPLE_BORROW_INFO;
 
 /**
  * <p>
@@ -68,6 +89,12 @@ public class CfgLogisticsCostImportServiceImpl extends SuperServiceImpl<CfgLogis
     private DictBasicService dictBasicService;
     @Resource
     private LogisticsSupplierService logisticsSupplierService;
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
+    @Resource
+    private SysUserFeign sysUserFeign;
+    @Resource
+    private FileFeign fileFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -276,6 +303,8 @@ public class CfgLogisticsCostImportServiceImpl extends SuperServiceImpl<CfgLogis
        //销售平台
        List<DictBasicEntity> salesPlatformList = FeignQuery.create(DictBasicEntity.class).eq(DictBasicEntity::getType, DictBasicTypeEnum.SALES_PLATFORM.getType()).list();
        Map<String, String> salesPlatformMap = salesPlatformList.stream().collect(Collectors.toMap(DictBasicEntity::getValue, DictBasicEntity::getName, (o1, o2) -> o1));
+       //目标字段
+
 
        // 属性赋值
         for(CfgLogisticsCostImportDTO.ListDTO data : list) {
@@ -333,7 +362,83 @@ public class CfgLogisticsCostImportServiceImpl extends SuperServiceImpl<CfgLogis
 
     @Override
     public Boolean importFile(BaseDTO.ImportDTO dto) {
-        return null;
+        dto.setUserId(UserContext.getDefaultLoginUser().getUid());
+        downloadTaskFeign.saveImportTask("导入费用配置", IMPORT_WMS_SAMPLE_BORROW_INFO.getCode(), dto);
+        return Boolean.TRUE;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void importCfgLogisticsCost(BaseDTO.ImportDTO dto) {
+        //费用配置-配置单据
+        List<DictBasicDTO.ViewDTO> dictBasicEntities = dictBasicService.getByKey(DictBasicEnum.CFG_COST_BUSINESSKEY.getType());
+        Map<String, String> dictBasicMap = dictBasicEntities.stream().collect(Collectors.toMap(DictBasicDTO.ViewDTO::getName, DictBasicDTO.ViewDTO::getCode, (o1, o2) -> o1));
+        //物流商
+        List<BaseDropDownDTO.DisabledDTO> logisticsSupplierList = logisticsSupplierService.listAll(false);
+        Map<String, String> logisticsSupplierMap = logisticsSupplierList.stream().collect(Collectors.toMap(BaseDropDownDTO.DisabledDTO::getValue, BaseDropDownDTO.DisabledDTO::getCode, (o1, o2) -> o1));
+        //销售平台
+        List<DictBasicEntity> salesPlatformList = FeignQuery.create(DictBasicEntity.class).eq(DictBasicEntity::getType, DictBasicTypeEnum.SALES_PLATFORM.getType()).list();
+        Map<String, String> salesPlatformMap = salesPlatformList.stream().collect(Collectors.toMap(DictBasicEntity::getName, DictBasicEntity::getValue, (o1, o2) -> o1));
+        //目标字段
+        List<CfgLogisticsCostImportFieldEntity> list = cfgLogisticsCostImportFieldService.list();
+        Map<String, List<CfgLogisticsCostImportFieldEntity>> fieldMap = list.stream().collect(Collectors.groupingBy(CfgLogisticsCostImportFieldEntity::getBusinessType));
+
+        //用户
+        List<FindUserDTO> userList = sysUserFeign.getUserList();
+        //设置操作人
+        FindUserDTO findUserDTO = userList.stream().filter(e -> StringUtils.isNotBlank(dto.getUserId()) && Objects.equals(e.getUserId(), dto.getUserId())).findFirst().orElse(null);
+        if(Objects.nonNull(findUserDTO)){
+            LoginUser user = new LoginUser();
+            user.setUid(findUserDTO.getUserId());
+            user.setUserName(findUserDTO.getUserName());
+            user.setRealName(findUserDTO.getRealName());
+            user.setUserAccount(findUserDTO.getMobile());
+            user.setMobile(findUserDTO.getMobile());
+            UserContext.setLoginUser(user);
+        }
+        CfgLogisticsCostExcelListener excelListenerUtil = new CfgLogisticsCostExcelListener(dto.getTaskId(),dto.getImportType(),dto.getImportCount(),dictBasicMap,logisticsSupplierMap, salesPlatformMap , fieldMap, userList);
+        try {
+            byte[] bytes = fileFeign.downloadFile(dto.getFileUrl());
+            EasyExcel.read(new ByteArrayInputStream(bytes), SampleBorrowImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+        } catch (ExcelCommonException e) {
+            log.error("导入格式错误！", e);
+            throw new ServiceException(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX);
+        }
+
+        BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
+        importResultDTO.setTaskId(dto.getTaskId());
+        importResultDTO.setCount(excelListenerUtil.getCount());
+        List<CfgLogisticsCostExcelDTO> errorList = excelListenerUtil.getErrorList();
+        String url = "";
+        if (CollectionUtils.isNotEmpty(errorList)) {
+            //排序
+            List<CfgLogisticsCostExcelDTO> sortedErrorList = errorList.stream()
+                    .filter(e -> e.getNo() != null && !e.getNo().isEmpty()) // 过滤掉 null 或空字符串
+                    .sorted(Comparator.comparingInt(e -> {
+                        try {
+                            return Integer.parseInt(e.getNo());
+                        } catch (Exception ex) {
+                            // 处理非数字字符串，可以返回一个默认值
+                            return 0;
+                        }
+                    }))
+                    .collect(Collectors.toList());
+            String fileName = "费用配置错误信息.xlsx";
+            File file = ExcelUtil.exportFile(fileName, "error", sortedErrorList, CfgLogisticsCostExcelDTO.class);
+            if (!file.isDirectory()) {
+                url = FastDFSClientUtil.uploadFile(file, fileName);
+            }
+        }
+        importResultDTO.setRemark("处理完成，失败" + errorList.size() + "条");
+        importResultDTO.setErrorUrl(url);
+        importResultDTO.setFinishTime(LocalDateTime.now());
+        importResultDTO.setStatus(FileTaskStatusEnum.FINISH.getCode());
+        downloadTaskFeign.updateTask(importResultDTO);
+    }
+
+    @Override
+    public void handleImportSuccessList(List<CfgLogisticsCostExcelDTO> successList, List<String> errorNoList, List<CfgLogisticsCostExcelDTO> errorList2, String importType) {
+
     }
 
     @Override

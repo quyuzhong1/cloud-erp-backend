@@ -234,8 +234,8 @@ public class CfgLogisticsCostImportController extends BaseController {
     @LogAction(value = LogActionEnum.EXPORT, desc = "费用项配置下载模板")
     @GetMapping("/downloadTemplate")
     public ApiResult downloadTemplate(HttpServletResponse response) {
-        String standardPath = "classpath:excel/kolB2cApplicationTemplate.xlsx";
-        String standardExcelName = "kolB2cApplicationTemplate.xlsx";
+        String standardPath = "classpath:excel/cfgLogisticsCostTemplate.xlsx";
+        String standardExcelName = "cfgLogisticsCostTemplate.xlsx";
         ExcelUtil.downloadTemplate(standardPath, standardExcelName, response);
         return success();
     }
