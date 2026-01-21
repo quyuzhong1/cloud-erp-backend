@@ -19,8 +19,19 @@ public interface TaxCategoryService extends SuperService<TaxCategoryEntity> {
      *
      * @param categoryId 税种ID
      * @return 税种实体
+     * @deprecated 请使用 {@link #getByCategoryIdAndCompanyId(String, String)} 方法，携带companyId参数以避免多条记录问题
      */
+    @Deprecated
     TaxCategoryEntity getByCategoryId(String categoryId);
+
+    /**
+     * 根据税种ID和公司ID查询
+     *
+     * @param categoryId 税种ID
+     * @param companyId 公司ID（可选，如果提供则精确匹配）
+     * @return 税种实体
+     */
+    TaxCategoryEntity getByCategoryIdAndCompanyId(String categoryId, String companyId);
 
     /**
      * 初始化税种列表

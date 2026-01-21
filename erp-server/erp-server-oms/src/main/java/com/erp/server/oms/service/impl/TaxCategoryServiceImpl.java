@@ -47,6 +47,23 @@ public class TaxCategoryServiceImpl extends SuperServiceImpl<TaxCategoryMapper, 
                 .eq(TaxCategoryEntity::getIsDeleted, false));
     }
 
+    @Override
+    public TaxCategoryEntity getByCategoryIdAndCompanyId(String categoryId, String companyId) {
+        if (categoryId == null || categoryId.trim().isEmpty()) {
+            return null;
+        }
+        LambdaQueryWrapper<TaxCategoryEntity> queryWrapper = new LambdaQueryWrapper<TaxCategoryEntity>()
+                .eq(TaxCategoryEntity::getCategoryId, categoryId)
+                .eq(TaxCategoryEntity::getIsDeleted, false);
+        
+        // 如果提供了companyId，则同时匹配companyId
+        if (StrUtil.isNotBlank(companyId)) {
+            queryWrapper.eq(TaxCategoryEntity::getCompanyId, companyId);
+        }
+        
+        return this.getOne(queryWrapper);
+    }
+
     /**
      * 初始化税种列表
      * 从第三方系统获取税种列表并初始化到cfg_tax_category表
@@ -245,8 +262,8 @@ public class TaxCategoryServiceImpl extends SuperServiceImpl<TaxCategoryMapper, 
                     continue;
                 }
 
-                // 查询本地数据
-                TaxCategoryEntity localEntity = this.getByCategoryId(categoryId);
+                // 查询本地数据（使用companyId避免多条记录问题）
+                TaxCategoryEntity localEntity = this.getByCategoryIdAndCompanyId(categoryId, companyId);
 
                 // 计算MD5
                 String detailJsonStr = JSONUtil.toJsonStr(detail);

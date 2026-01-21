@@ -206,8 +206,8 @@ public class TaxCategorySyncJob {
                     continue;
                 }
 
-                // 查询本地数据
-                TaxCategoryEntity localEntity = taxCategoryService.getByCategoryId(categoryId);
+                // 查询本地数据（使用companyId避免多条记录问题）
+                TaxCategoryEntity localEntity = taxCategoryService.getByCategoryIdAndCompanyId(categoryId, companyId);
 
                 // 计算MD5
                 String detailJsonStr = JSONUtil.toJsonStr(detail);
