@@ -150,6 +150,11 @@ public class CfgInvoiceSettingServiceImpl extends SuperServiceImpl<CfgInvoiceSet
         omsAttachmentService.batchSaveOrUpdate(dto.getAttachmentUrlList(), dto.getAttachmentNameList(), type, entity.getId());
         //CfgInvoiceSettingEntity -> CreateCompanyDTO（新接口）
         CreateCompanyDTO createCompanyDTO = InvoiceSettingConverter.INSTANCE.invoiceSettingToCreateCompanyDTO(entity);
+        // CNPJ格式化：去除所有非数字字符，只保留14位数字
+        if (CharSequenceUtil.isNotBlank(createCompanyDTO.getCnpj())) {
+            String cnpj = createCompanyDTO.getCnpj().replaceAll("[^0-9]", "");
+            createCompanyDTO.setCnpj(cnpj);
+        }
         //调用TF新接口（创建公司时使用经销商token，不需要已有token）
         CreateCompanyResponseDTO.CreateCompanyDataDTO response = tfFiscalService.createCompanyV2(createCompanyDTO);
         String token = response.getToken();
@@ -208,6 +213,11 @@ public class CfgInvoiceSettingServiceImpl extends SuperServiceImpl<CfgInvoiceSet
         }
         //调用TF新接口（编辑公司时使用公司token）
         EditCompanyDTO editCompanyDTO = InvoiceSettingConverter.INSTANCE.invoiceSettingToEditCompanyDTO(cfgInvoiceSettingEntity);
+        // CNPJ格式化：去除所有非数字字符，只保留14位数字
+        if (CharSequenceUtil.isNotBlank(editCompanyDTO.getCnpj())) {
+            String cnpj = editCompanyDTO.getCnpj().replaceAll("[^0-9]", "");
+            editCompanyDTO.setCnpj(cnpj);
+        }
         String companyToken = cfgInvoiceSettingEntity.getToken();
         if (CharSequenceUtil.isBlank(companyToken)) {
             throw new ServiceException("公司token不能为空，请先创建公司");
