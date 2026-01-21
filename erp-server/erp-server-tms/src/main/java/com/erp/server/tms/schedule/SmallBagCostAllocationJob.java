@@ -110,32 +110,13 @@ public class SmallBagCostAllocationJob {
                         .withMinute(0)
                         .withSecond(0)
                         .withNano(0);
-            }else if(ReconciliationTypeEnum.CREAT_BY_PERIOD.getCode().equals(dto.getPackageAllocationType())){
-                Integer packageBeginAllocationDate = dto.getPackageBeginAllocationDate();
-                if(packageBeginAllocationDate != null) {
-                	startTime = currentDateTime.minusMonths(2)
-                             .withDayOfMonth(packageBeginAllocationDate)
-                             .withHour(0)
-                             .withMinute(0)
-                             .withSecond(0)
-                             .withNano(0);
-                	endTime = currentDateTime.minusMonths(1)
-                            .withDayOfMonth(packageBeginAllocationDate)
-                            .withHour(0)
-                            .withMinute(0)
-                            .withSecond(0)
-                            .withNano(0);
-                }else {
-                	XxlJobHelper.log("====自动生成小包费用分摊周期生成指定日期不存在====");
-                	return ReturnT.SUCCESS;
-                }
-            }else {
+            } else {
                 XxlJobHelper.log("[生成小包费用分摊] autoGenerateSmallBagCostAllocation 任务结束: 生成类型【{}】不支持", dto.getFirstMileAllocationType());
                 return ReturnT.SUCCESS;
             }
             List<LogisticsBillCostEntity> list = logisticsBillCostService.lambdaQuery()
-                .ge(LogisticsBillCostEntity::getConfirmTime, startTime)
-                .lt(LogisticsBillCostEntity::getConfirmTime, endTime)
+                .ge(LogisticsBillCostEntity::getReconciliationMonth, startTime.format(DateTimeFormatter.ofPattern("yyyy-MM")))
+                .lt(LogisticsBillCostEntity::getReconciliationMonth, endTime.format(DateTimeFormatter.ofPattern("yyyy-MM")))
                 .in(LogisticsBillCostEntity::getType, Arrays.asList(DictCostAttributionEnum.SELF_DELIVER.getCode() , DictCostAttributionEnum.LAST_MILE.getCode()))
                 .eq(LogisticsBillCostEntity::getCheckStatus, LogisticsBillCostCheckStatusEnum.CHECKING.getCode())
                 .list();
