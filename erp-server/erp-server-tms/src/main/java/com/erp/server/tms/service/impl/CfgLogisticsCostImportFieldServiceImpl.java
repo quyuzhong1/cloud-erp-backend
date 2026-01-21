@@ -36,24 +36,24 @@ public class CfgLogisticsCostImportFieldServiceImpl extends SuperServiceImpl<Cfg
     @Override
     public List<CfgLogisticsCostImportFieldDTO.TreeDTO> tree(String businessType) {
         List<CfgLogisticsCostImportFieldDTO.TreeDTO> flagList = this. baseMapper.findTree(businessType);
-        flagList.forEach(e -> e.setFieldTypeName(CfgLogisticsCostImportFieldFieldTypeEnum.getName(e.getFieldType())));
 
-        List<CfgLogisticsCostImportFieldDTO.TreeDTO> departList = BeanMapperUtils.copyList(CfgLogisticsCostImportFieldDTO.TreeDTO.class, this.baseMapper.listByBusinessType(businessType));
+        List<CfgLogisticsCostImportFieldDTO.TreeDTO> feildList = BeanMapperUtils.copyList(CfgLogisticsCostImportFieldDTO.TreeDTO.class, this.baseMapper.listByBusinessType(businessType));
+        feildList.forEach(e -> e.setFieldTypeName(CfgLogisticsCostImportFieldFieldTypeEnum.getName(e.getFieldType())));
 
-        List<CfgLogisticsCostImportFieldDTO.TreeDTO> treeList = departList.stream().
+        List<CfgLogisticsCostImportFieldDTO.TreeDTO> treeList = feildList.stream().
                 filter(item -> "0".equals(item.getParentId()))
                 .map(item -> {
-                    item.setChildrenList(getChildren(item, departList, flagList));
+                    item.setChildrenList(getChildren(item, feildList, flagList));
                     return item;
                 }).collect(Collectors.toList());
 
         return treeList;
     }
 
-    private List<CfgLogisticsCostImportFieldDTO.TreeDTO> getChildren(CfgLogisticsCostImportFieldDTO.TreeDTO item, List<CfgLogisticsCostImportFieldDTO.TreeDTO> departList, List<CfgLogisticsCostImportFieldDTO.TreeDTO> flagList) {
-        List<CfgLogisticsCostImportFieldDTO.TreeDTO> collect = departList.stream().filter(dept -> item.getId().equals(dept.getParentId()))
+    private List<CfgLogisticsCostImportFieldDTO.TreeDTO> getChildren(CfgLogisticsCostImportFieldDTO.TreeDTO item, List<CfgLogisticsCostImportFieldDTO.TreeDTO> fieldList, List<CfgLogisticsCostImportFieldDTO.TreeDTO> flagList) {
+        List<CfgLogisticsCostImportFieldDTO.TreeDTO> collect = fieldList.stream().filter(dept -> item.getId().equals(dept.getParentId()))
                 .map(d -> {
-                    d.setChildrenList(getChildren(d, departList, flagList));
+                    d.setChildrenList(getChildren(d, fieldList, flagList));
                     return d;
                 }).collect(Collectors.toList());
         return CollectionUtils.isEmpty(collect) ? null : collect;
