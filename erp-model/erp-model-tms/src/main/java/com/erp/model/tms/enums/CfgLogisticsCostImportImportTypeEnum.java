@@ -43,6 +43,17 @@ public enum CfgLogisticsCostImportImportTypeEnum implements EnumMessage {
         return name;
     }
 
+    public static String getCode(String name) {
+        if (StringUtils.isBlank(name)) {
+            return "";
+        }
+        for (CfgLogisticsCostImportImportTypeEnum statusEnum : CfgLogisticsCostImportImportTypeEnum.values()) {
+            if (name.equals(statusEnum.getName())) {
+                return statusEnum.getCode();
+            }
+        }
+        return "";
+    }
     public static String getName(String code) {
         if (StringUtils.isBlank(code)) {
             return "";

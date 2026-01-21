@@ -4,6 +4,7 @@ import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.tms.dto.CfgLogisticsCostImportDTO;
+import com.erp.model.tms.dto.excel.CfgLogisticsCostExcelDTO;
 import com.erp.model.tms.entity.CfgLogisticsCostImportEntity;
 
 import java.util.List;
@@ -80,4 +81,8 @@ public interface CfgLogisticsCostImportService extends SuperService<CfgLogistics
      * @return List<CfgLogisticsCostImportEntity>
      */
     List<CfgLogisticsCostImportEntity> listByImport(String fileName, String businessType, String costType);
+
+    void importCfgLogisticsCost(BaseDTO.ImportDTO dto);
+
+    void handleImportSuccessList(List<CfgLogisticsCostExcelDTO> successList, List<String> errorNoList, List<CfgLogisticsCostExcelDTO> errorList2, String importType);
 }

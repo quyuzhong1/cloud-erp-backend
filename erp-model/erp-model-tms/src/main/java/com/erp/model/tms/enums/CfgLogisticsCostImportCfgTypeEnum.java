@@ -32,6 +32,7 @@ public enum CfgLogisticsCostImportCfgTypeEnum implements EnumMessage {
         this.name = name;
     }
 
+
     @Override
     public String getCode() {
         return code;
@@ -49,6 +50,18 @@ public enum CfgLogisticsCostImportCfgTypeEnum implements EnumMessage {
         for (CfgLogisticsCostImportCfgTypeEnum statusEnum : CfgLogisticsCostImportCfgTypeEnum.values()) {
             if (code.equals(statusEnum.getCode())) {
                 return statusEnum.getName();
+            }
+        }
+        return "";
+    }
+
+    public static String getCode(String name) {
+        if (StringUtils.isBlank(name)) {
+            return "";
+        }
+        for (CfgLogisticsCostImportCfgTypeEnum statusEnum : CfgLogisticsCostImportCfgTypeEnum.values()) {
+            if (name.equals(statusEnum.getName())) {
+                return statusEnum.getCode();
             }
         }
         return "";

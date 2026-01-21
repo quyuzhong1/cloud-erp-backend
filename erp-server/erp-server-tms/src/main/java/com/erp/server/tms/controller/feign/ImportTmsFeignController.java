@@ -3,6 +3,7 @@ package com.erp.server.tms.controller.feign;
 import com.common.business.dto.base.BaseDTO;
 import com.common.business.enums.FileTaskStatusEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.server.tms.service.CfgLogisticsCostImportService;
 import com.erp.server.tms.service.LogisticsBillCostService;
 import com.erp.server.tms.service.LogisticsLastMileCostService;
 import com.erp.server.tms.service.LogisticsTrackService;
@@ -26,6 +27,8 @@ public class ImportTmsFeignController {
     private LogisticsLastMileCostService logisticsLastMileCostService;
     @Resource
     private LogisticsTrackService logisticsTrackService;
+    @Resource
+    private CfgLogisticsCostImportService cfgLogisticsCostImportService;
 
     @PostMapping("/logisticsBillCost")
     public void importLogisticsBillCost(@RequestBody BaseDTO.ImportDTO dto) {
@@ -59,6 +62,20 @@ public class ImportTmsFeignController {
             logisticsTrackService.importLogisticsTrackInfo(dto);
         } catch (Exception e) {
             log.error("导入物流轨迹失败", e);
+            BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
+            importResultDTO.setTaskId(dto.getTaskId());
+            importResultDTO.setStatus(FileTaskStatusEnum.FAIL.getCode());
+            importResultDTO.setRemark(e.getMessage().length() > 490 ? e.getMessage().substring(0, 490) : e.getMessage());
+            downloadTaskFeign.updateTask(importResultDTO);
+        }
+    }
+
+    @PostMapping("/importCfgLogisticsCost")
+    public void importCfgLogisticsCost(@RequestBody BaseDTO.ImportDTO dto) {
+        try {
+            cfgLogisticsCostImportService.importCfgLogisticsCost(dto);
+        } catch (Exception e) {
+            log.error("导入费用配置失败", e);
             BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
             importResultDTO.setTaskId(dto.getTaskId());
             importResultDTO.setStatus(FileTaskStatusEnum.FAIL.getCode());

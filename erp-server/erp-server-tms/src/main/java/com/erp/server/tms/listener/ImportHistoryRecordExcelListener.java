@@ -7,6 +7,8 @@ import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.common.business.dto.base.BaseDTO;
 import com.common.business.enums.FileTaskStatusEnum;
+import com.erp.model.tms.entity.CfgLogisticsCostImportDetailEntity;
+import com.erp.model.tms.entity.CfgLogisticsCostImportEntity;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.tms.service.ImportHistoryRecordService;
 import lombok.Data;
@@ -35,6 +37,9 @@ public class ImportHistoryRecordExcelListener extends AnalysisEventListener<Map<
     private final String taskId;
     private final String importType;
     private final Integer importCount;
+    private final String processingType;
+    private final CfgLogisticsCostImportEntity costImportEntity;
+    private final List<CfgLogisticsCostImportDetailEntity> cfgImportDetailList;
     @Getter
     private Integer count = 0;
     /**
@@ -60,7 +65,10 @@ public class ImportHistoryRecordExcelListener extends AnalysisEventListener<Map<
 
     private final ImportHistoryRecordService importHistoryRecordService = SpringUtil.getBean(ImportHistoryRecordService.class);
     private final DownloadTaskFeign downloadTaskFeign = SpringUtil.getBean(DownloadTaskFeign.class);
-    public ImportHistoryRecordExcelListener(String taskId, String importType, Integer importCount) {
+    public ImportHistoryRecordExcelListener(CfgLogisticsCostImportEntity costImportEntity, List<CfgLogisticsCostImportDetailEntity> cfgImportDetailList,String processingType, String taskId, String importType, Integer importCount) {
+        this.costImportEntity = costImportEntity;
+        this.cfgImportDetailList = cfgImportDetailList;
+        this.processingType = processingType;
         this.taskId = taskId;
         this.importType = importType;
         this.importCount = importCount;
@@ -96,7 +104,7 @@ public class ImportHistoryRecordExcelListener extends AnalysisEventListener<Map<
         if (successList.size() >= BATCH_COUNT){
             try {
                 List<JSONObject> errorList2 = new ArrayList<>();
-                importHistoryRecordService.handleImportSuccessList(successList, errorList2, headList, headMap,importType);
+                importHistoryRecordService.handleImportSuccessList(processingType,costImportEntity,cfgImportDetailList,successList, errorList2, headList, headMap,importType);
                 errorList.addAll(errorList2);
             }catch (Exception e){
                 successList.forEach(jsonObject -> {
@@ -125,7 +133,7 @@ public class ImportHistoryRecordExcelListener extends AnalysisEventListener<Map<
         if (!successList.isEmpty()) {
             try {
                 List<JSONObject> errorList2 = new ArrayList<>();
-                importHistoryRecordService.handleImportSuccessList(successList, errorList2, headList, headMap, importType);
+                importHistoryRecordService.handleImportSuccessList(processingType,costImportEntity,cfgImportDetailList,successList, errorList2, headList, headMap, importType);
                 errorList.addAll(errorList2);
             }catch (Exception e){
                 successList.forEach(jsonObject -> {

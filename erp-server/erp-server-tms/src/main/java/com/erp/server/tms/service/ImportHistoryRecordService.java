@@ -8,6 +8,8 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.tms.dto.ImportHistoryRecordDTO;
+import com.erp.model.tms.entity.CfgLogisticsCostImportDetailEntity;
+import com.erp.model.tms.entity.CfgLogisticsCostImportEntity;
 import com.erp.model.tms.entity.ImportHistoryRecordEntity;
 
 import java.util.List;
@@ -66,7 +68,7 @@ public interface ImportHistoryRecordService extends SuperService<ImportHistoryRe
      * @param importDTO
      * @return BatchResultDTO
      */
-    BatchResultDTO preprocessingImportExcel(BaseDTO.ImportDTO importDTO,String businessType,String costType);
+    BatchResultDTO preprocessingImportExcel(BaseDTO.ImportDTO importDTO,String businessType,String costType,String processingType);
     /**
      * 导入数据处理
      * @author will
@@ -78,5 +80,5 @@ public interface ImportHistoryRecordService extends SuperService<ImportHistoryRe
      * @param importType
      * @return void
      */
-    void handleImportSuccessList(List<JSONObject> successList, List<JSONObject> errorList2, List<String> headList, Map<Integer, String> headMap, String importType);
+    void handleImportSuccessList(String processingType,CfgLogisticsCostImportEntity costImportEntity, List<CfgLogisticsCostImportDetailEntity> cfgImportDetailList,List<JSONObject> successList, List<JSONObject> errorList2, List<String> headList, Map<Integer, String> headMap, String importType);
 }

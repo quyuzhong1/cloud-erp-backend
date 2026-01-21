@@ -344,9 +344,9 @@ public class CfgLogisticsCostImportDTO implements Serializable {
         private String businessType;
 
         /**
-        * 配置类型：api/tms/common/enumDropDown?type =CfgLogisticsCostImportCfgTyp
+        * 配置类型：api/tms/common/enumDropDown?type =CfgLogisticsCostImportCfgType
         */
-        @NotBlank(message = "配置类型平台不能为空")
+        @NotBlank(message = "配置类型不能为空")
         @Size(max = 50,message = "配置类型最大长度不能超过50位")
         private String cfgType;
 
