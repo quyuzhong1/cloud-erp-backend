@@ -982,7 +982,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                             .findFirst().orElse(null);
                     printSkuSingleView.setWarehouseLocationName(Objects.nonNull(locationEntity) ? locationEntity.getName() : "");
                     printSkuSingleView.setThirdSku("");
-                    if (RequisitionApplicationTypeEnum.FBA.getCode().equals(application.getType())) {
+                    if (RequisitionApplicationTypeEnum.FBA.getCode().equals(application.getType()) || RequisitionApplicationTypeEnum.AWD.getCode().equals(application.getType())) {
                         printSkuSingleView.setThirdSku((requisitionApplicationDetail.getPlatformFnSku()));
                     } else if (RequisitionApplicationTypeEnum.THIRD_WAREHOUSE.getCode().equals(application.getType())) {
                         printSkuSingleView.setThirdSku((requisitionApplicationDetail.getPlatformSku()));
@@ -1006,7 +1006,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                             .findFirst().orElse(null);
                     combinationPrintDetailView.setWarehouseLocationName(Objects.nonNull(locationEntity) ? locationEntity.getName() : "");
                     combinationPrintDetailView.setThirdSku("");
-                    if (RequisitionApplicationTypeEnum.FBA.getCode().equals(application.getType())) {
+                    if (RequisitionApplicationTypeEnum.FBA.getCode().equals(application.getType()) || RequisitionApplicationTypeEnum.AWD.getCode().equals(application.getType())) {
                         combinationPrintDetailView.setThirdSku((requisitionApplicationDetail.getPlatformFnSku()));
                     } else if (RequisitionApplicationTypeEnum.THIRD_WAREHOUSE.getCode().equals(application.getType())) {
                         combinationPrintDetailView.setThirdSku((requisitionApplicationDetail.getPlatformSku()));

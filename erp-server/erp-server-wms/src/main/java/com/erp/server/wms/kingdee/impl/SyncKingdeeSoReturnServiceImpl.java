@@ -29,8 +29,12 @@ import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
+import com.erp.model.sys.dto.DeptKingdeeDTO;
 import com.erp.model.sys.dto.KingdeeBusinessOperatorDTO;
 import com.erp.model.sys.dto.KingdeeOperatorRefPostDTO;
+import com.erp.model.sys.entity.CfgDeptRelationEntity;
+import com.erp.model.sys.entity.KingdeeDepartmentEntity;
+import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.model.sys.enums.KingdeeBusinessOperatorTypeEnum;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.entity.SoReturnInstockDetailEntity;
@@ -280,7 +284,7 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
             //销售员
             if (!Objects.isNull(kingSellerInfo)) {
                 resultMap.put("sellerUserCode", kingSellerInfo.getUserPostCode());
-                resultMap.put("sellerDeptCode", kingSellerInfo.getDeptCode());
+//                resultMap.put("sellerDeptCode", kingSellerInfo.getDeptCode());
             }
         }
 
@@ -297,6 +301,10 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
             CustomerInfoEntity customerInfoEntity = customerInfoEntitieList.stream().filter(obj -> obj.getId().equals(entity.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
             resultMap.put("customerCode", customerInfoEntity.getCode());
             String platformType = customerInfoEntity.getPlatformType();
+            String partitionId = soInfoEntity.getPartitionId();
+            if(StringUtils.isBlank(partitionId)){
+                partitionId = customerInfoEntity.getPartitionId();
+            }
             if(StringUtils.isNotBlank(platformType)) {
             	List<DictBasicEntity> dictBasicEntityList = FeignQuery.create(DictBasicEntity.class)
                         .eq(DictBasicEntity::getType, DictBasicTypeEnum.SDY_SUB_PLATFORM.getType())
@@ -315,6 +323,26 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
             List<CurrencyDTO.ViewDTO> currencyListt = sysUserFeign.listByCurrency(Collections.singletonList(customerInfoEntity.getCurrency()));
             CurrencyDTO.ViewDTO currencyDTO = currencyListt.stream().filter(req -> req.getId().equals(customerInfoEntity.getCurrency())).findFirst().orElse(new CurrencyDTO.ViewDTO());
             resultMap.put("currencyCode", currencyDTO.getKingdeeCode());
+
+            String deptId = customerInfoEntity.getSalesDeptId();
+            if(StringUtils.isNotBlank(platformType) && StringUtils.isNotBlank(partitionId)) {
+                List<CfgDeptRelationEntity> cfgDeptRelationEntityList = FeignQuery.create(CfgDeptRelationEntity.class).eq(CfgDeptRelationEntity::getDictPlatform, platformType)
+                        .eq(CfgDeptRelationEntity::getPartitionId, partitionId)
+                        .eq(CfgDeptRelationEntity::getDisabled,false)
+                        .list();
+                if(org.apache.commons.collections4.CollectionUtils.isNotEmpty(cfgDeptRelationEntityList)) {
+                    deptId = cfgDeptRelationEntityList.get(0).getDeptId();
+                }
+            }
+            if(StringUtils.isNotBlank(deptId)){
+                DeptKingdeeDTO.FindDeptKingdeeDTO findDeptKingdeeDTO = new DeptKingdeeDTO.FindDeptKingdeeDTO();
+                findDeptKingdeeDTO.setDeptId(deptId);
+                findDeptKingdeeDTO.setOrgId(entity.getSalesOrgId());
+                KingdeeDepartmentEntity kingdeeDepartmentEntity = kingdeeFeign.getDeptKingdee(findDeptKingdeeDTO);
+                if(Objects.nonNull(kingdeeDepartmentEntity)){
+                    resultMap.put("sellerDeptCode",kingdeeDepartmentEntity.getKingdeeDeptCode());
+                }
+            }
         }
 
         //结算组织

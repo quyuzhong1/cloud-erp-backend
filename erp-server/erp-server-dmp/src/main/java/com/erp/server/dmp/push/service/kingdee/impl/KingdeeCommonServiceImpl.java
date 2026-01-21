@@ -27,7 +27,11 @@ import com.erp.model.dmp.dto.KingdeeDTO;
 import com.erp.model.dmp.entity.CfgApiAuthEntity;
 import com.erp.model.dmp.entity.CfgApiFieldMapValueEntity;
 import com.erp.model.dmp.entity.PlatformEntity;
-import com.erp.model.dmp.enums.*;
+import com.erp.model.dmp.enums.ApiFieldTypeEnum;
+import com.erp.model.dmp.enums.ApiGroupTypeEnum;
+import com.erp.model.dmp.enums.KingdeeDocStatusEnum;
+import com.erp.model.dmp.enums.SettingEnum;
+import com.erp.rpc.fms.feign.FmsTaskFeign;
 import com.erp.rpc.oms.feign.OmsTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.scm.feign.ScmTaskFeign;
@@ -99,6 +103,10 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
 
     @Resource
     private CfgSettingService cfgSettingService;
+
+    @Resource
+    private FmsTaskFeign fmsTaskFeign;
+
 
     @Override
     public JSONObject makeApiFieldJson(Map<String, Object> map, String apiPlatformId, Integer moduleType) {
@@ -547,6 +555,9 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
         }
         if (SystemConstants.SRM.equals(system)) {
             srmTaskFeign.updateBusinessSyncKingdeeStatus(params);
+        }
+        if (SystemConstants.FMS.equals(system)) {
+            fmsTaskFeign.updateBusinessSyncKingdeeStatus(params);
         }
     }
 

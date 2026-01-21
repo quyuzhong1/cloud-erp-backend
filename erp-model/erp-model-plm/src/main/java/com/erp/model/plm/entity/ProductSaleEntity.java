@@ -200,6 +200,13 @@ public class ProductSaleEntity extends BaseEntity<ProductSaleEntity> implements 
     @TableField(value = "battery_capacity_unit")
     private String batteryCapacityUnit;
 
+    /**
+     * 电池重量（g）
+     */
+    @TableField(value = "battery_weight")
+    private BigDecimal batteryWeight;
+
+
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
 }

@@ -1,25 +1,28 @@
 package com.erp.server.wms.service.impl;
 
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.wms.dto.VirtualWarehousePushHandleRelationDTO;
 import com.erp.model.wms.entity.VirtualWarehousePushHandleRelationEntity;
 import com.erp.server.wms.mapper.VirtualWarehousePushHandleRelationMapper;
-import com.erp.server.wms.service.VirtualWarehousePushHandleRelationService;
-import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.server.wms.service.OperateLogService;
-import com.common.core.exception.ServiceException;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import com.erp.server.wms.service.VirtualWarehousePushHandleRelationService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.wms.dto.VirtualWarehousePushHandleRelationDTO;
-import java.util.*;
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 
 /**
  * <p>
@@ -87,6 +90,14 @@ public class VirtualWarehousePushHandleRelationServiceImpl extends SuperServiceI
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLogByObj(old, virtualWarehousePushHandleRelationEntity, null, virtualWarehousePushHandleRelationEntity.getId(), msg);
         return Boolean.TRUE;
+    }
+
+    @Override
+    public List<VirtualWarehousePushHandleRelationEntity> listBySourceIds(List<String> sourceIds, List<String> sourceDetailIds) {
+        if (CollUtil.isEmpty(sourceIds) && CollUtil.isEmpty(sourceDetailIds)) {
+            return Collections.emptyList();
+        }
+        return lambdaQuery().in(VirtualWarehousePushHandleRelationEntity::getSourceId,sourceIds).in(VirtualWarehousePushHandleRelationEntity::getSourceDetailId,sourceDetailIds).list();
     }
 
 

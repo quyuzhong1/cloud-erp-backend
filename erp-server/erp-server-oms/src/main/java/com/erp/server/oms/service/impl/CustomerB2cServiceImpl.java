@@ -997,6 +997,8 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
         CustomerAddressDTO.ViewDTO address = addressList.stream().filter(c -> c.getIsDefault()).findFirst().orElse(null);
         if (address != null) {
             base.setAddress(address.getAddress());
+            base.setAddress2(address.getAddress2());
+            base.setAddress3(address.getAddress3());
             base.setAddressId(address.getId());
             base.setAddressType(address.getType());
             base.setPerson(address.getPerson());

@@ -20,7 +20,7 @@ public interface OmsWorkflowFeign extends BaseWorkflowService{
      * @param dto
      * @return
      */
-    @PostMapping("/feign/wmsWorkflow/approve")
+    @PostMapping("/feign/omsWorkflow/approve")
     BatchResultDTO approve(ApproveDTO.ApproveOneDTO dto);
     /**
      * 结束审核

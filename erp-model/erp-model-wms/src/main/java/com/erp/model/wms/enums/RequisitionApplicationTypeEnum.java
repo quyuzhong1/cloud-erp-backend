@@ -6,6 +6,7 @@ import com.fasterxml.jackson.annotation.JsonValue;
 
 public enum RequisitionApplicationTypeEnum implements EnumMessage {
     FBA("fba", "FBA要货单"),
+    AWD("awd", "AWD要货单"),
     THIRD_WAREHOUSE("thirdWarehouse", "第三方仓要货单"),
     ALIEXPRESS("AliExpress","速卖通要货单"),
 

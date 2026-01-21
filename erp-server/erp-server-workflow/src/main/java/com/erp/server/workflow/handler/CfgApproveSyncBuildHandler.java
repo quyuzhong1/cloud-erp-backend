@@ -314,11 +314,8 @@ public class CfgApproveSyncBuildHandler {
     }
 
     public Map<String, ThirdUnionDTO> getThirdUnionDTOMap(List<String> allUserIds) {
-        Map<String, ThirdUnionDTO> thirdUnionMap = new HashMap<>();
-        if(CollUtil.isNotEmpty(allUserIds)){
-            List<ThirdUnionDTO> thirdUnionDTOs = sysUserFeign.getThirdByUserIds(ThirdpartyPlatformEnum.FS.getCode(),allUserIds);
-            thirdUnionMap = thirdUnionDTOs.stream().collect(Collectors.toMap(ThirdUnionDTO::getUserId, e -> e));
-        }
+        List<ThirdUnionDTO> thirdUnionDTOs = sysUserFeign.getThirdByUserIds(ThirdpartyPlatformEnum.FS.getCode(),allUserIds);
+        Map<String, ThirdUnionDTO>  thirdUnionMap = thirdUnionDTOs.stream().collect(Collectors.toMap(ThirdUnionDTO::getUserId, e -> e));
         return thirdUnionMap;
     }
 

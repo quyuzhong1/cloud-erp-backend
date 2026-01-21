@@ -90,7 +90,7 @@ public class CfgRulePickingStagingController extends BaseController {
         List<WarehouseEntity> warehouseList = warehouseService.listByIds(warehouseIds);
         Map<String, String> warehouseMap = warehouseList.stream().collect(Collectors.toMap(WarehouseEntity::getId, WarehouseEntity::getName));
         List<String> warehouseLocationIdList = dtoList.stream()
-                .flatMap(obj -> Stream.of(obj.getB2bWarehouseLocationId(), obj.getFbaWarehouseLocationId(), obj.getThirdWarehouseLocationId()).filter(CharSequenceUtil::isNotBlank))
+                .flatMap(obj -> Stream.of(obj.getB2bWarehouseLocationId(), obj.getFbaWarehouseLocationId(), obj.getThirdWarehouseLocationId(), obj.getAwdWarehouseLocationId()).filter(CharSequenceUtil::isNotBlank))
                 .filter(value -> value != null && !value.isEmpty())
                 .collect(Collectors.toList());
         List<WarehouseLocationEntity> locationEntityList = warehouseLocationService.listByIds(warehouseLocationIdList);

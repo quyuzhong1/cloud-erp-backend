@@ -867,8 +867,8 @@
             pd.images_url AS productImgUrl,
             pi.spu_no AS spuNo,
             ps.sale_state AS saleState,
-        ppu.main_supplier AS mainSupplier,
-        ppu.second_supplier AS secondSupplier,
+            ppu.main_supplier AS mainSupplier,
+            ppu.second_supplier AS secondSupplier,
             SUM(CASE WHEN it.dict_inventory_status = 'usable' THEN it.qty ELSE 0 END) AS usableQty,
             SUM(CASE WHEN it.dict_inventory_status = 'frozen' THEN it.qty ELSE 0 END) AS frozenQty,
             SUM(CASE WHEN it.dict_inventory_status IN ('usable', 'frozen') THEN it.qty ELSE 0 END) AS realQty,
@@ -1170,9 +1170,11 @@
                 t.intransit_qty AS intransitQty,
                 t.waitqc_qty AS waitqcQty,
                 t.real_qty AS realQty,
+                t.main_supplier AS mainSupplier,
+                t.second_supplier AS secondSupplier,
                 t.id
         from (
-                select min(m.id) as id,
+                select min(m.id) as id, max(m.main_supplier) as main_supplier,max(m.second_supplier) as second_supplier,
                 max(m.warehouse_id) as warehouse_id,max(m.org_id) as org_id,max(m.sku_id) as sku_id,max(m.sku_no) as sku_no,max(m.product_name) as product_name,max(m.product_img_url) as product_img_url,max(m.spu_no) as spu_no,max(m.sale_state) as sale_state,
                 sum(m.usable_qty) as usable_qty,sum(m.frozen_qty) as frozen_qty,sum(m.intransit_qty) as intransit_qty,sum(m.waitqc_qty) as waitqc_qty,sum(m.usable_qty) + sum(m.frozen_qty) as real_qty from  (
                     select max(it.warehouse_id) as warehouse_id,
@@ -1183,6 +1185,8 @@
                     max(pd.images_url) as product_img_url,
                     max(pi.spu_no) as spu_no,
                     max(ps.sale_state) as sale_state,
+                    max(ppu.main_supplier) as main_supplier,
+                    max(ppu.second_supplier) as second_supplier,
                     sum(case when it.dict_inventory_status = 'usable' then it.qty else 0 end) as usable_qty,
                     sum(case when it.dict_inventory_status = 'frozen' then it.qty else 0 end) as frozen_qty,
                     sum(case when it.dict_inventory_status = 'inTransit' then it.qty else 0 end) as intransit_qty,
@@ -1192,6 +1196,7 @@
                     left join product_detail pd on pd.id = it.sku_id AND pd.is_deleted = FALSE
                     left join product_info pi on pd.product_id = pi.id  AND pi.is_deleted = FALSE
                     left join product_sale ps on ps.sku_id = pd.id AND  ps.is_deleted = FALSE
+                    left join product_purchase ppu on pd.id = ppu.sku_id AND ppu.is_deleted = FALSE
         <where>
             ${params.sqlMap.default} and it.is_deleted = false
             <if test="params.productName != null and params.productName != ''">
@@ -1270,9 +1275,13 @@
                t.usable_qty      AS usableQty,
                t.frozen_qty      AS frozenQty,
                t.real_qty        AS realQty,
-               t.area_code       AS warehouseArea
-              ,t.id
+               t.area_code       AS warehouseArea,
+               t.main_supplier       AS mainSupplier,
+               t.second_supplier       AS secondSupplier,
+               t.id
         from (select max(m.warehouse_id)                   as warehouse_id,
+                     max(m.main_supplier)                  as main_supplier,
+                     max(m.second_supplier)                as second_supplier,
                      max(m.org_id)                         as org_id,
                      max(m.sku_id)                         as sku_id,
                      max(m.sku_no)                         as sku_no,
@@ -1283,8 +1292,8 @@
                      max(m.area_code)                      as area_code,
                      sum(m.usable_qty)                     as usable_qty,
                      sum(m.frozen_qty)                     as frozen_qty,
-                     sum(m.usable_qty) + sum(m.frozen_qty) as real_qty
-                    ,min(m.id) AS id
+                     sum(m.usable_qty) + sum(m.frozen_qty) as real_qty,
+                     min(m.id) AS id
               from (select max(it.warehouse_id)                                                      as warehouse_id,
                            max(it.org_id)                                                            as org_id,
                            max(it.sku_id)                                                            as sku_id,
@@ -1294,6 +1303,8 @@
                            max(pi.spu_no)                                                            as spu_no,
                            max(ps.sale_state)                                                        as sale_state,
                            max(wl.area_code)                                                         as area_code,
+                           max(ppu.main_supplier)                                                    as main_supplier,
+                           max(ppu.second_supplier)                                                  as second_supplier,
                            sum(case when it.dict_inventory_status = 'usable' then it.qty else 0 end) as usable_qty,
                            sum(case when it.dict_inventory_status = 'frozen' then it.qty else 0 end) as frozen_qty
                            ,min(it.id) AS id
@@ -1301,6 +1312,7 @@
                              left join product_detail pd on pd.id = it.sku_id AND pd.is_deleted = FALSE
                              left join product_info pi on pd.product_id = pi.id AND pi.is_deleted = FALSE
                              left join product_sale ps on ps.sku_id = pd.id AND ps.is_deleted = FALSE
+                             left join product_purchase ppu on pd.id = ppu.sku_id AND ppu.is_deleted = FALSE
                              left join (select distinct s.code as location_code, wa.code as area_code, s.warehouse_id, wa.name as area_name
                                         from warehouse_location s
                                                  left join warehouse_location wa
@@ -1380,6 +1392,8 @@
     </select>
     <select id="exportByLocation" resultType="com.erp.model.wms.dto.inventory.InventoryDTO$PagingViewDTO">
         select t.warehouse_id AS warehouseId,
+                t.main_supplier AS mainSupplier,
+                t.second_supplier AS secondSupplier,
                 t.org_id AS orgId,
                 t.sku_id AS skuId,
                 t.sku_no AS skuNo,
@@ -1390,10 +1404,12 @@
                 t.usable_qty AS usableQty,
                 t.frozen_qty AS frozenQty,
                 t.real_qty AS realQty,
-                t.warehouse_location AS warehouseLocation
-                ,t.id
+                t.warehouse_location AS warehouseLocation ,
+                t.id
                 from (select max(m.warehouse_location) AS warehouse_location,
                             max(m.warehouse_id) as warehouse_id,
+                            max(m.main_supplier) AS main_supplier,
+                            max(m.second_supplier) AS second_supplier,
                             max(m.org_id) as org_id,
                             max(m.sku_id) as sku_id,
                             max(m.sku_no) as sku_no,
@@ -1403,8 +1419,8 @@
                             max(m.sale_state) as sale_state,
                             sum(m.usable_qty) as usable_qty,
                             sum(m.frozen_qty) as frozen_qty,
-                            sum(m.usable_qty) + sum(m.frozen_qty) as real_qty
-                            ,min(m.id) AS id
+                            sum(m.usable_qty) + sum(m.frozen_qty) as real_qty,
+                            min(m.id) AS id
                         from (select max(it.warehouse_id) as warehouse_id,
                                     max(it.org_id) as org_id,
                                     max(it.sku_id) as sku_id,
@@ -1414,6 +1430,8 @@
                                     max(pi.spu_no) as spu_no,
                                     max(ps.sale_state) as sale_state,
                                     max(it.warehouse_location) AS warehouse_location,
+                                    max(ppu.main_supplier) AS main_supplier,
+                                    max(ppu.second_supplier) AS second_supplier,
                                     sum(case when it.dict_inventory_status = 'usable' then it.qty else 0 end) as usable_qty,
                                     sum(case when it.dict_inventory_status = 'frozen' then it.qty else 0 end) as frozen_qty
                                     ,min(it.id) AS id
@@ -1421,6 +1439,7 @@
                                 left join product_detail pd on pd.id = it.sku_id AND pd.is_deleted = FALSE
                                 left join product_info pi on pd.product_id = pi.id AND pi.is_deleted = FALSE
                                 left join product_sale ps on ps.sku_id = pd.id AND ps.is_deleted = FALSE
+                                left join product_purchase ppu on pd.id = ppu.sku_id AND ppu.is_deleted = FALSE
         <where>
             ${params.sqlMap.default} and it.is_deleted = false
             <if test="params.productName != null and params.productName != ''">

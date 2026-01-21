@@ -1,10 +1,9 @@
 package com.erp.server.wms.mapper;
+
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.erp.model.wms.dto.VirtualWarehouseAllocationDTO;
 import com.erp.model.wms.dto.VirtualWarehouseAllocationDetailDTO;
-import com.erp.model.wms.dto.inventory.VirtualFlowRefactorDTO;
 import com.erp.model.wms.entity.VirtualWarehouseAllocationDetailEntity;
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -22,10 +21,6 @@ import java.util.List;
 @Mapper
 public interface VirtualWarehouseAllocationDetailMapper extends BaseMapper<VirtualWarehouseAllocationDetailEntity> {
 
-    void batchManualFinish(@Param("params") VirtualWarehouseAllocationDTO.ManualFinishDto params, @Param("code") Integer code, @Param("ids") List<String> ids);
-    void batchSync( @Param("code")String code, @Param("ids") List<String> ids);
-
-    void updateSyncStatus(@Param("params")VirtualWarehouseAllocationDTO.SyncUpdateDto dto, @Param("ids")List<String> ids);
     /**
      * 查询分货信息
      * @author will
@@ -36,5 +31,12 @@ public interface VirtualWarehouseAllocationDetailMapper extends BaseMapper<Virtu
      * @return List<AllocationDataDTO>
      */
     List<VirtualWarehouseAllocationDetailDTO.AllocationDataDTO> listAllocationData(@Param("skuIdList")List<String> skuIdList,@Param("warehouseIdList") List<String> warehouseIdList,@Param("virtualWarehouseIdList") List<String> virtualWarehouseIdList);
-
+   /**
+     * 查询重复处理的分货明细
+     * @author will 
+     * @date 2025/12/29 14:10
+     * @param fromWarehouseIdList
+     * @return VirtualWarehouseAllocationDetailEntity
+     */
+    List<VirtualWarehouseAllocationDetailEntity> listRepeatHandleDetail(@Param("fromWarehouseIdList")List<String> fromWarehouseIdList,@Param("fromVirtualWarehouseIdList") List<String> fromVirtualWarehouseIdList,@Param("skuIdList") List<String> skuIdList,@Param("detailIdList") List<String> detailIdList);
 }

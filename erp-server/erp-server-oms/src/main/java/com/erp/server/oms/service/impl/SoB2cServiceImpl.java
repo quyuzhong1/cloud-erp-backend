@@ -54,6 +54,8 @@ import com.common.core.utils.*;
 import com.common.core.utils.date.DateUtil;
 import com.common.core.utils.date.LocalDateUtil;
 import com.common.message.constant.RedisKeyConstant;
+import com.common.message.constant.RocketMqNewTag;
+import com.common.message.constant.RocketMqNewTopic;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
@@ -65,6 +67,7 @@ import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.dto.SoB2cDTO.PagingParamDTO;
+import com.erp.model.oms.dto.SoB2cDTO.ListCountDto;
 import com.erp.model.oms.dto.excel.B2CSoImportExcelDTO;
 import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.OperateLogEntity;
@@ -146,6 +149,7 @@ import org.apache.commons.math3.util.Pair;
 import org.apache.poi.ss.formula.functions.T;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.MDC;
 import org.springframework.beans.BeanUtils;
 import org.springframework.context.annotation.Lazy;
@@ -167,6 +171,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -598,17 +603,97 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         SoB2cTabEnum[] values = SoB2cTabEnum.values();
         List<SoB2cDTO.TabListDTO> list = new ArrayList<>();
         String permissionSql = getPermissionSql();
+        SoB2cDTO.PagingParamDTO searchParamDTO = new SoB2cDTO.PagingParamDTO();
+        searchParamDTO.setPermissionSql(permissionSql);
+        String tabSql = soB2cQueryHandler.getTabSql(SoB2cTabEnum.ENUM_ALL.getCode());
+        HashMap<String,String> map = new HashMap<>();
+        map.put("default",tabSql);
+        searchParamDTO.setSqlMap(map);
+        List<ListCountDto> listCount = this.baseMapper.listCount(searchParamDTO);
         for (SoB2cTabEnum item : values) {
-            SoB2cDTO.PagingParamDTO searchParamDTO = new SoB2cDTO.PagingParamDTO();
-            searchParamDTO.setPermissionSql(permissionSql);
             SoB2cDTO.TabListDTO resultDTO = new SoB2cDTO.TabListDTO();
-            String tabSql = soB2cQueryHandler.getTabSql(item.getCode());
-            HashMap<String,String> map = new HashMap<>();
-            map.put("default",tabSql);
-            searchParamDTO.setSqlMap(map);
+            Integer count = 0;
+            if (SoB2cTabEnum.ENUM_ALL == item) {
+            	count = listCount.stream().map(ListCountDto::getCount).reduce(Integer::sum).orElse(0);
+            }
+            if (SoB2cTabEnum.ENUM_PAYMENT == item) {
+            	count = listCount.stream().filter(l -> {
+            		return l.getPayStatus().equals(SoB2cPayStatusEnum.ENUM_PAYMENT.getCode()) 
+            				&& !l.getInvalidStatus();
+            	}).map(ListCountDto::getCount).reduce(Integer::sum).orElse(0);
+            }
+            //待提审  显示订单审核状态为待提交、审核不通过，订单状态非冻结的订单，订单非作废
+            if (SoB2cTabEnum.ENUM_PENDING == item) {
+                count = listCount.stream().filter(l -> {
+            		return l.getPayStatus().equals(SoB2cPayStatusEnum.ENUM_PAID.getCode()) 
+            				&& (l.getApproveStatus().equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus()) || l.getApproveStatus().equals(ApproveStatusEnum.REJECT.getStatus())) 
+            				&& !l.getInvalidStatus()
+            				&& !l.getIsFrozen()
+            				&& !l.getBillStatus().equals("frozen");
+            	}).map(ListCountDto::getCount).reduce(Integer::sum).orElse(0);
+            }
+            //待审核
+            if (SoB2cTabEnum.ENUM_APPROVE_ING == item) {
+                count = listCount.stream().filter(l -> {
+            		return l.getPayStatus().equals(SoB2cPayStatusEnum.ENUM_PAID.getCode()) 
+            				&& l.getApproveStatus().equals(ApproveStatusEnum.APPROVE_ING.getStatus()) 
+            				&& !l.getInvalidStatus()
+            				&& !l.getIsFrozen()
+            				&& !l.getBillStatus().equals("frozen");
+            	}).map(ListCountDto::getCount).reduce(Integer::sum).orElse(0);
+            }
+            //配货中
+            if (SoB2cTabEnum.ENUM_IN_DISTRIBUTION == item) {
+                count = listCount.stream().filter(l -> {
+            		return l.getPayStatus().equals(SoB2cPayStatusEnum.ENUM_PAID.getCode()) 
+            				&& l.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus()) 
+            				&& (l.getBillStatus().equals(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode()) || l.getBillStatus().equals(SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode())) 
+            				&& !l.getInvalidStatus();
+            	}).map(ListCountDto::getCount).reduce(Integer::sum).orElse(0);
+            }
+            //待发货
+            if (SoB2cTabEnum.ENUM_WAIT_SHIPPED == item) {
+                count = listCount.stream().filter(l -> {
+            		return l.getPayStatus().equals(SoB2cPayStatusEnum.ENUM_PAID.getCode()) 
+            				&& l.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus()) 
+            				&& l.getBillStatus().equals(SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode())
+            				&& !l.getInvalidStatus();
+            	}).map(ListCountDto::getCount).reduce(Integer::sum).orElse(0);
+            }
+            //已发货
+            if (SoB2cTabEnum.ENUM_SHIPPED == item) {
+                count = listCount.stream().filter(l -> {
+            		return l.getPayStatus().equals(SoB2cPayStatusEnum.ENUM_PAID.getCode()) 
+            				&& l.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus()) 
+            				&& l.getBillStatus().equals(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode())
+            				&& !l.getInvalidStatus();
+            	}).map(ListCountDto::getCount).reduce(Integer::sum).orElse(0);
+            }
+            //冻结中
+            if (SoB2cTabEnum.ENUM_FROZEN == item) {
+                count = listCount.stream().filter(l -> {
+            		return l.getPayStatus().equals(SoB2cPayStatusEnum.ENUM_PAID.getCode()) 
+            				&& l.getBillStatus().equals(SoB2cBillStatusEnum.ENUM_FROZEN.getCode())
+            				&& !l.getInvalidStatus();
+            	}).map(ListCountDto::getCount).reduce(Integer::sum).orElse(0);
+            }
+            //已作废
+            if (SoB2cTabEnum.ENUM_INVALID == item) {
+                count = listCount.stream().filter(l -> {
+            		return l.getPayStatus().equals(SoB2cPayStatusEnum.ENUM_PAID.getCode()) 
+            				&& l.getInvalidStatus();
+            	}).map(ListCountDto::getCount).reduce(Integer::sum).orElse(0);
+            }
+            //订单异常
+            if (SoB2cTabEnum.ENUM_ORDER_ERROR == item) {
+                count = listCount.stream().filter(l -> {
+            		return l.getPayStatus().equals(SoB2cPayStatusEnum.ENUM_PAID.getCode())
+            				&& org.apache.commons.lang3.StringUtils.isNotBlank(l.getSignOrderError())
+            				&& !l.getInvalidStatus();
+            	}).map(ListCountDto::getCount).reduce(Integer::sum).orElse(0);
+            }
             //查询店铺设置权限
-            Integer count = this.baseMapper.listCount(searchParamDTO);
-            resultDTO.setCount(ObjectUtils.isEmpty(count) ? MathUtil.ZERO : count);
+            resultDTO.setCount(count);
             resultDTO.setTabFlag(item.getCode());
             resultDTO.setTabFlagName(item.getName());
             list.add(resultDTO);
@@ -616,48 +701,53 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         return list;
     }
 
-
+    /**
+     * 1,创建订单
+     * 2,匹配订单规则
+     * 3.匹配物流仓储规则
+     * 4.创建物流运单
+     * 5.创建发货单
+     */
     @Override
     public String processOrderCreation(SoB2cDTO.AddDTO dto) {
-        SoB2cServiceImpl soB2cServiceImpl = ApplicationContextUtils.getBean(SoB2cServiceImpl.class);
         // 速卖通手工订单首次添加税后金额=订单金额(其他平台=0)
         dto.checkAndSetAfterTaxAmount();
         ShopInfoEntity shopInfoEntity = shopInfoService.getById(dto.getShopId());
         if(Objects.nonNull(shopInfoEntity) && shopInfoEntity.getDisabled()){
             throw new ServiceException("店铺已禁用，无法新增订单");
         }
-        SoB2cEntity add = soB2cServiceImpl.add(dto, null);
+        SoB2cEntity add = this.add(dto, null);
         String id = add.getId();
         //检查是否备案并修改状态
-        soB2cServiceImpl.checkProductRegistrationAndUpdate(id, "");
+        this.checkProductRegistrationAndUpdate(id, "");
 
         //速卖通平台仓订单不走任何规则
         if (PlatformDictEnum.ALI_EXPRESS.getCode().equals(add.getDictPlatform()) && add.hasPlatformWarehouseOrder()) {
             return add.getId();
         }
 
-        SoB2cDTO.RuleResultDTO orderRuleResult = soB2cServiceImpl.orderRule(id);
+        SoB2cDTO.RuleResultDTO orderRuleResult = this.orderRule(id);
         //匹配成功
         Boolean ruleMatch = orderRuleResult.getIsRuleMatch();
         Boolean isPass = orderRuleResult.getIsPass();
 
         if (ruleMatch && isPass) {
             //仓库规则
-            SoB2cDTO.RuleResultDTO warehouseRuleResult = soB2cServiceImpl.warehouseRule(orderRuleResult.getId(), orderRuleResult.getSoB2cDetailList(), orderRuleResult.getMap());
+            SoB2cDTO.RuleResultDTO warehouseRuleResult = this.warehouseRule(orderRuleResult.getId(), orderRuleResult.getSoB2cDetailList(), orderRuleResult.getMap());
             Boolean warehouseRuleMatch = warehouseRuleResult.getIsRuleMatch();
             if (warehouseRuleMatch) {
-                SoB2cDTO.RuleResultDTO logisticsRuleResult = soB2cServiceImpl.logisticsRule(id, new HashMap<>(), false);
+                SoB2cDTO.RuleResultDTO logisticsRuleResult = this.logisticsRule(id, new HashMap<>(), false);
                 Boolean autoGetTrackNo = logisticsRuleResult.getAutoGetTrackNo();
                 Boolean autoGetTrackNotOfRangeDelivery = logisticsRuleResult.getAutoGetTrackNotOfRangeDelivery();
                 Boolean isRuleMatch = logisticsRuleResult.getIsRuleMatch();
                 //表示成功
                 if(isRuleMatch){
                     //检查是否备案并修改状态
-                    soB2cServiceImpl.checkProductRegistrationAndUpdate(id, "");
+                    this.checkProductRegistrationAndUpdate(id, "");
                     //申报信息规则
-                    soB2cServiceImpl.declareRule(id, new HashMap<>(), Boolean.FALSE, false);
+                    this.declareRule(id, new HashMap<>(), Boolean.FALSE, false);
                 }
-                SoB2cEntity entity = soB2cServiceImpl.getById(id);
+                SoB2cEntity entity = this.getById(id);
                 Boolean isOutOfRangeDelivery = entity.getIsOutOfRangeDelivery();
                 if ((Objects.nonNull(autoGetTrackNo) && Boolean.TRUE.equals(autoGetTrackNo))
                         || (Boolean.FALSE.equals(isOutOfRangeDelivery) && Objects.nonNull(autoGetTrackNotOfRangeDelivery) && Boolean.TRUE.equals(autoGetTrackNotOfRangeDelivery))) {
@@ -666,8 +756,61 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             }
         }
         //自动计算预估运费到订单的预估运费字段
-        soB2cServiceImpl.autoCalcEstimatedShippingCost(Collections.singletonList(id));
+        this.autoCalcEstimatedShippingCost(Collections.singletonList(id));
         return add.getCode();
+    }
+
+    @Override
+    public BatchResultDTO refreshExchangeRate(SoB2cEntity soB2cEntity) {
+        LocalDateTime getExchangeRateTime = soB2cEntity.getCreateTime();
+        List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cDetailService.listByMainId(soB2cEntity.getId());
+        if(Objects.nonNull(soB2cEntity.getPayTime())){
+            getExchangeRateTime = soB2cEntity.getPayTime();
+        }
+        if(StringUtils.isBlank(soB2cEntity.getCurrency())){
+            return BatchResultDTO.fail(soB2cEntity.getId(),soB2cEntity.getCode(),"订单币种不能为空，无法获取汇率");
+        }
+        BigDecimal exchangeRate = dmpTaskFeign.getRate(getExchangeRateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), soB2cEntity.getCurrency());
+        if(Objects.isNull(exchangeRate)){
+            return BatchResultDTO.fail(soB2cEntity.getId(),soB2cEntity.getCode(),"未获取到对应的汇率，无法更新订单汇率");
+        }
+        soB2cEntity.setExchangeRate(exchangeRate);
+        soB2cEntity.setIsFrozen(false);
+        soB2cEntity.setFrozenType("");
+        soB2cEntity.setSignOrderError("");
+        soB2cEntity.setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT);
+        soB2cEntity.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
+        soB2cDetailEntityList.forEach(detail -> {
+            //更新明细的汇率
+            detail.setExchangeRate(exchangeRate);
+        });
+        BatchResultDTO resultDTO = soB2cService.handleUpdateExchange(soB2cEntity, soB2cDetailEntityList, exchangeRate);
+        if(!resultDTO.getSuccess()){
+            return resultDTO;
+        }
+        // 异步重新清洗订单
+        CompletableFuture.runAsync(() -> {
+            soB2cCoreService.handleOrderRetryConsumer(soB2cEntity);
+        });
+
+        return BatchResultDTO.success(soB2cEntity.getId(),soB2cEntity.getCode());
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public BatchResultDTO handleUpdateExchange(SoB2cEntity soB2cEntity, List<SoB2cDetailEntity> soB2cDetailEntityList, BigDecimal exchangeRate) {
+        boolean updateMainResult = this.updateById(soB2cEntity);
+        if(!updateMainResult){
+            return BatchResultDTO.fail(soB2cEntity.getId(), soB2cEntity.getCode(), "更新订单汇率失败");
+        }
+        soB2cDetailService.updateBatchById(soB2cDetailEntityList);
+        soB2cErrorService.removeErrorOrder(soB2cEntity.getId(), SoB2cErrorTypeEnum.GET_EXCHANGE_RATE.getCode());
+        operateLogService.addModuleOperateLog(
+                CharSequenceUtil.format("用户【{}】更新B2C销售订单表【{}】的汇率为【{}】", UserContext.getDefaultLoginUser().getUserName(), soB2cEntity.getCode(), exchangeRate),
+                ModuleTypeEnum.SO_B2C.getCode(),
+                soB2cEntity.getId(),
+                "更新汇率操作"
+        );
+        return BatchResultDTO.success(soB2cEntity.getId(),soB2cEntity.getCode());
     }
 
 
@@ -2443,6 +2586,18 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         return batchResultDTO;
     }
 
+    @Override
+    public String checkDeliveryRestriction(String id, String deliveryType) {
+        try {
+            List<SoB2cDetailEntity> detailList = soB2cDetailService.listByMainId(id);
+            Map<String, Object> map = this.handleMatchJson(id, detailList, new HashMap<>());
+            return cfgRuleOrderHandleService.checkDeliveryRestriction(map, deliveryType);
+        } catch (Exception e) {
+            log.error("检查发货限制失败,id:{}, deliveryType:{}", id, deliveryType, e);
+            return null;
+        }
+    }
+
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public BatchResultDTO submitDelivery(String id, String channelId) {
@@ -2527,6 +2682,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             throw new ServiceException(CharSequenceUtil.format("{}未成功预报无法提交发货", entity.getCode()));
         }
 
+        //检查发货限制
+        String restrictionMsg = this.checkDeliveryRestriction(id, RuleOrderHandleEnum.DeliveryRestrictionEnum.SUBMIT_DELIVERY.getCode());
+        if (CharSequenceUtil.isNotBlank(restrictionMsg)) {
+            throw new ServiceException(restrictionMsg);
+        }
+
         //物流渠道
         String logisticsChannelId = logisticsEntity.getLogisticsChannelId();
         //物流单号
@@ -2577,11 +2738,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             //物流映射列表
             List<LogisticsMappingDTO.ViewDTO> mappingList = logisticsMappingFeign.listByChannelIdAndType(logisticsChannelId, LogisticsMappingTypeEnum.PLATFORM.getCode());
             if(CollectionUtils.isEmpty(mappingList)){
-                throw new ServiceException(ApiError.SO_REPLACE_SKU_STATUS_INVALID, soCode,entity.getDictPlatform(),logisticsEntity.getLogisticsChannelName());
+                throw new ServiceException(ApiError.LOGISTICS_MAPPING_NOT_NULL, soCode,entity.getDictPlatform(),logisticsEntity.getLogisticsChannelName());
             }
             List<LogisticsMappingDTO.ViewDTO> collect = mappingList.stream().filter(v -> null != v.getSalesPlatform() && v.getSalesPlatform().equalsIgnoreCase(entity.getDictPlatform())).collect(Collectors.toList());
             if(CollectionUtils.isEmpty(collect)){
-                throw new ServiceException(ApiError.SO_REPLACE_SKU_STATUS_INVALID, soCode,entity.getDictPlatform(),logisticsEntity.getLogisticsChannelName());
+                throw new ServiceException(ApiError.LOGISTICS_MAPPING_NOT_NULL, soCode,entity.getDictPlatform(),logisticsEntity.getLogisticsChannelName());
             }
         }
         //库存验证
@@ -3110,14 +3271,36 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
         List<SkuMappingDTO.ListSkuResultDTO> platformSkuList = skuMappingService.listBySkuList(listSkuParamList, dictPlatform, warehouseType, warehouseId);
         List<ThirdWarehouseCreateOutboundReq.Item> itemList = new ArrayList<>(detailList.size());
-
+        List<ThirdWarehouseCreateOutboundReq.Item> filterItemList = new ArrayList<>(detailList.size());
         List<SoB2cDeclareProductEntity> soB2cDeclareProductEntityList = soB2cDeclareProductService.listBySoId(entity.getId());
+        //过滤服务sku
+        List<String> wantSkuIds = wantSkuList.stream().map(SoB2cDeliveryDTO.DeliverySkuDTO::getSkuId).collect(Collectors.toList());
+        List<LogisticsProductDTO.ProductDTO> skuInfoList = logisticsProductFeign.listLogisticsProduct(wantSkuIds);
+
         for (SoB2cDeliveryDTO.DeliverySkuDTO deliverySkuDTO : wantSkuList) {
             Integer qty = sameSkuMap.get(deliverySkuDTO.getDetailId());
             if (qty == null) {
                 throw new ServiceException(CharSequenceUtil.format("发货sku{}查不到原sku", deliverySkuDTO.getSkuNo()));
             }
             Integer baseQty = qty * deliverySkuDTO.getQty();
+            LogisticsProductDTO.ProductDTO productDTO = skuInfoList.stream().filter(s->s.getSkuId().equals(deliverySkuDTO.getSkuId())).findFirst().orElse(null);
+
+            Boolean isFilter = false;
+            if (Objects.nonNull(productDTO) && ("费用".equalsIgnoreCase(productDTO.getProperty()) || "服务".equalsIgnoreCase(productDTO.getProperty()))){
+                isFilter = true;
+            }
+            if(isFilter){
+                ThirdWarehouseCreateOutboundReq.Item outboundReqItem = new ThirdWarehouseCreateOutboundReq.Item();
+                outboundReqItem.setQuantity(baseQty);
+                outboundReqItem.setSkuId(deliverySkuDTO.getSkuId());
+                outboundReqItem.setSkuNo(deliverySkuDTO.getSkuNo());
+                outboundReqItem.setSourceSkuId(deliverySkuDTO.getSourceSkuId());
+                outboundReqItem.setSourceSkuNo(deliverySkuDTO.getSourceSkuNo());
+                outboundReqItem.setPlatformDetailId(deliverySkuDTO.getPlatformDetailId());
+                outboundReqItem.setDetailId(deliverySkuDTO.getDetailId());
+                filterItemList.add(outboundReqItem);
+                continue;
+            }
             /**
              * 海外仓产品SKU
              */
@@ -3151,6 +3334,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             }
             itemList.add(outboundReqItem);
         }
+        if(CollectionUtils.isEmpty(itemList)){
+            throw new ServiceException("订单{}没有发货的SKU",entity.getCode());
+        }
         String platformWarehouseCode = overseasProviderWarehouse.getPlatformWarehouseCode();
         createOutboundReq.setPlatform(entity.getDictPlatform());
         createOutboundReq.setWarehouseCode(platformWarehouseCode);
@@ -3173,6 +3359,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         createOutboundReq.setLastMileCarrier(channelEntity.getLastMileCarrier());
         createOutboundReq.setIsApiSignName(Objects.isNull(channelEntity) ? "否" : channelEntity.getIsApiSign() ? "是" : "否");
         createOutboundReq.setItems(itemList);
+        createOutboundReq.setFilterItemList(filterItemList);
         createOutboundReq.setTrackingNo(logisticsEntity.getCode());
         //通过订单处理规则处理参数
         Map<String, Object> map = this.getRuleOrderHandleMap(entity, logisticsChannelId, receiver);
@@ -3422,6 +3609,18 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             thirdWarehouseDeliveryDetailEntity.setDeliveryQty(item.getQuantity());
             thirdWarehouseDeliveryDetailEntity.setWarehouseId(warehouseId);
             thirdWarehouseDeliveryDetailEntity.setPlatformSkuNo(item.getProductSku());
+            thirdWarehouseDeliveryDetailEntity.setPlatformWarehouseCode(createOutboundReq.getWarehouseCode());
+            thirdWarehouseDeliveryDetailEntity.setSourceSkuId(item.getSourceSkuId());
+            thirdWarehouseDeliveryDetailEntity.setSourceSkuNo(item.getSourceSkuNo());
+            thirdWarehouseDeliveryDetailEntity.setSoDetailId(item.getDetailId());
+            detailEntityList.add(thirdWarehouseDeliveryDetailEntity);
+        }
+        for (ThirdWarehouseCreateOutboundReq.Item item : createOutboundReq.getFilterItemList()) {
+            ThirdWarehouseDeliveryDetailEntity thirdWarehouseDeliveryDetailEntity = new ThirdWarehouseDeliveryDetailEntity();
+            thirdWarehouseDeliveryDetailEntity.setSkuId(item.getSkuId());
+            thirdWarehouseDeliveryDetailEntity.setSkuNo(item.getSkuNo());
+            thirdWarehouseDeliveryDetailEntity.setDeliveryQty(item.getQuantity());
+            thirdWarehouseDeliveryDetailEntity.setWarehouseId(warehouseId);
             thirdWarehouseDeliveryDetailEntity.setPlatformWarehouseCode(createOutboundReq.getWarehouseCode());
             thirdWarehouseDeliveryDetailEntity.setSourceSkuId(item.getSourceSkuId());
             thirdWarehouseDeliveryDetailEntity.setSourceSkuNo(item.getSourceSkuNo());
@@ -5261,18 +5460,21 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         soB2cEntity.setBillDate(ObjectUtils.isEmpty(soB2cEntity.getBillDate()) ? LocalDate.now() : soB2cEntity.getBillDate());
         soB2cEntity.setCreateTime(ObjectUtils.isEmpty(soB2cEntity.getCreateTime()) ? LocalDateTime.now() : soB2cEntity.getCreateTime());
-        LocalDateTime createTime = soB2cEntity.getCreateTime();
+        LocalDateTime getExchangeRateTime = soB2cEntity.getCreateTime();
+        if(Objects.nonNull(soB2cEntity.getPayTime())){
+            getExchangeRateTime = soB2cEntity.getPayTime();
+        }
         //全托管订单设置币种
         if (isFullyManagedOrder(soB2cEntity.getDictPlatform())){
             if(CharSequenceUtil.isBlank(soB2cEntity.getCurrency())){
                 soB2cEntity.setCurrency(shopInfoEntity.getTradeCurrency());
             }
-            createTime = soB2cEntity.getPayTime();
+            getExchangeRateTime = soB2cEntity.getPayTime();
         }
         if (StringUtils.isNotBlank(soB2cEntity.getCurrency())) {
-            BigDecimal exchangeRate = dmpTaskFeign.getRate(createTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), soB2cEntity.getCurrency());
-            if (MathUtil.compareTo(exchangeRate, MathUtil.ZERO) == MathUtil.ZERO && exchangeRateThrow) {
-                throw new ServiceException(ApiError.COMMON_EXCHANGE_RATE_NOT_EXIST, createTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), soB2cEntity.getCurrency());
+            BigDecimal exchangeRate = dmpTaskFeign.getRate(getExchangeRateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), soB2cEntity.getCurrency());
+            if (MathUtil.compareTo(exchangeRate, MathUtil.ZERO) == MathUtil.ZERO  && exchangeRateThrow) {
+                throw new ServiceException(ApiError.COMMON_EXCHANGE_RATE_NOT_EXIST, getExchangeRateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), soB2cEntity.getCurrency());
             }
             soB2cEntity.setExchangeRate(null == exchangeRate ? BigDecimal.ZERO : exchangeRate);
         }
@@ -5639,6 +5841,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         map.put("packageWeight", logisticsEntity.getWeight());
         map.put("packageLength", logisticsEntity.getLength());
         map.put("packageHeight", logisticsEntity.getHeight());
+        map.put("orderSubType", soB2cEntity.getTransactionSubType());
         //产品尺寸(长+宽+高)
         BigDecimal packageSize = logisticsEntity.getLength()
                 .add(logisticsEntity.getWeight())
@@ -5753,7 +5956,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             detailMap.put("packageWidth", logisticsEntity.getWidth());
             detailMap.put("buyLogisticsChannelId", logisticsEntity.getName());
             detailMap.put("postCode", Objects.nonNull(receiverEntity) ?receiverEntity.getPostCode():"");
-
+            detailMap.put("orderSubType", soB2cEntity.getTransactionSubType());
             //如果是美客多，取订单标签里面的发货类型标识匹配订单规则
             if (PlatformDictEnum.MERCADOLIBRE.getCode().equals(soB2cEntity.getDictPlatform())
                     || PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode().equals(soB2cEntity.getDictPlatform())) {
@@ -5952,6 +6155,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             if (SoB2cDeliveryStatusEnum.SHIPPED.getCode().equals(deliveryEntity.getStatus())) {
                 throw new ServiceException(ApiError.SO_B2C_DELIVERY_STATUS_NOT_ALLOW_MANUAL_SHIP_FLAG, deliveryEntity.getCode());
             }
+        }
+
+        //检查发货限制
+        String restrictionMsg = this.checkDeliveryRestriction(id, RuleOrderHandleEnum.DeliveryRestrictionEnum.MANUAL_DELIVERY.getCode());
+        if (CharSequenceUtil.isNotBlank(restrictionMsg)) {
+            throw new ServiceException(restrictionMsg);
         }
 
         String msg = CharSequenceUtil.format("操作单据【{}】手动标发", entity.getCode());
@@ -6926,6 +7135,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             if(entity.getInvalidStatus()){
                 entity.setInvalidType(SoB2cInvalidTypeEnum.ENUM_AUTOMATIC.getCode());
             }
+            //校验汇率
+            checkExchangeRate(entity);
+
             // 生成单号
             String businessNo = "";
             if (isFullyManagedOrder(dto.getDictPlatform())){
@@ -7121,6 +7333,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             if (StringUtils.isNotBlank(dto.getSellerOrderCode())) {
                 entity.setSellerOrderCode(dto.getSellerOrderCode());
             }
+            checkExchangeRate(entity);
+
             if (!oldEntity.toString().equals(entity.toString())) {
                 if (!this.updateById(entity)) {
                     throw new ServiceException("soB2c订单更新失败");
@@ -7130,6 +7344,38 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             resultDTO.setSoB2cEntity(entity);
 
             return resultDTO;
+        }
+    }
+
+    private void checkExchangeRate(SoB2cEntity entity) {
+        if (0 == entity.getExchangeRate().compareTo(BigDecimal.ZERO)) {
+            //记录订单异常
+            entity.setIsFrozen(true);
+            entity.setBillStatus(SoB2cBillStatusEnum.ENUM_FROZEN.getCode());
+            entity.setFrozenType(SoB2cFrozenTypeEnum.ENUM_AUTOMATIC.getCode());
+            entity.setSignOrderError(SoB2cErrorTypeEnum.GET_EXCHANGE_RATE.getCode());
+            if(entity.hasPlatformWarehouseOrder()){
+                entity.setApproveStatus(ApproveStatusEnum.APPROVE);
+            }else{
+                entity.setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT);
+            }
+            if(StringUtils.isBlank(entity.getId())){
+                entity.setId(IdWorker.getIdStr());
+            }
+            //记录异常
+            SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
+            addError.setType(SoB2cErrorTypeEnum.GET_EXCHANGE_RATE.getCode());
+            addError.setMainId(entity.getId());
+            addError.setMessage(ApiError.SO_B2C_GET_EXCHANGE_RATE_FAILED.getMsg());
+            soB2cErrorService.add(addError);
+
+        }else{
+            if(SoB2cErrorTypeEnum.GET_EXCHANGE_RATE.getCode().equals(entity.getSignOrderError())){
+                soB2cErrorService.removeErrorOrder(entity.getId(),SoB2cErrorTypeEnum.GET_EXCHANGE_RATE.getCode());
+                entity.setSignOrderError("");
+                entity.setIsFrozen(false);
+                entity.setFrozenType("");
+            }
         }
     }
 
@@ -7205,7 +7451,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             throw new ServiceException(ApiError.MAPPING_SKU_MAPPING_EXIST);
         }
         if (ObjectUtil.isEmpty(skuDTOS)) {
-            throw new ServiceException(ApiError.MAPPING_SKU_MAPPING_EXIST);
+            throw new ServiceException(ApiError.MAPPING_SKU_MAPPING_NOT_EXIST);
         }
 
         List<String> skuIds = Collections.singletonList(dto.getSkuId());
@@ -7586,7 +7832,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     List<SoOutstockDetailDTO.ListingInfoWithSkuMappingGenDTO> historyList = B2cOrderConverter.INSTANCE.skuMappingDTOListToGenDTOList(list);
                     // 按过期时间排序
                     List<SoOutstockDetailDTO.ListingInfoWithSkuMappingGenDTO> sortList = historyList.stream()
-                            .sorted(Comparator.comparing(SoOutstockDetailDTO.ListingInfoWithSkuMappingGenDTO::getExpireTime))
+                            .sorted(Comparator.comparing(
+                                    SoOutstockDetailDTO.ListingInfoWithSkuMappingGenDTO::getExpireTime,
+                                    Comparator.nullsFirst(Comparator.naturalOrder())
+                            ))
                             .collect(Collectors.toList());
                     addDTO.setHistorySkuMappingList(new LinkedList<>(sortList));
                 }
@@ -8255,6 +8504,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Transactional(rollbackFor = Exception.class)
     public void updatePackageAndTransferStatus(String soId, String packageStatus, String transferStatus, Boolean isRegistration, Boolean isUpdateTransferStatus) {
         if (isRegistration) {
+            log.warn("销售订单{}产品已备案，更新组包和中转状态，组包状态：{}，中转状态：{}", soId, packageStatus, transferStatus);
             this.lambdaUpdate().set(SoB2cEntity::getPackageStatus, packageStatus).
                     set(isUpdateTransferStatus, SoB2cEntity::getTransferStatus, transferStatus).
                     set(SoB2cEntity::getAbnormalType, "").
@@ -8263,6 +8513,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         //未备案清除渠道
         if (!isRegistration) {
+            log.warn("销售订单{}产品未备案，清除物流渠道和单号，更新组包状态为未组包，更新中转状态为未中转", soId);
             soB2cLogisticsService.lambdaUpdate().
                     set(SoB2cLogisticsEntity::getLogisticsChannelId, "").
                     set(SoB2cLogisticsEntity::getLogisticsChannelName, "").
@@ -10980,6 +11231,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     @Override
     public BatchResultDTO deliveryWithNotOutbound(SoB2cDTO.DeliveryWithNotOutboundDTO dto, SoB2cEntity soB2cEntity, SoB2cLogisticsEntity soB2cLogisticsEntity, List<SoB2cDetailEntity> detailEntityList, SoB2cReceiverEntity soB2cReceiverEntity, LogisticsChannelDTO.BaseDTO baseDTO, List<String> noInventorySkuIdList, OverseasProviderWarehouseDTO.ViewDTO overseasWarehouse) {
+        //检查发货限制
+        String restrictionMsg = this.checkDeliveryRestriction(dto.getId(), RuleOrderHandleEnum.DeliveryRestrictionEnum.NO_OUTBOUND_DELIVERY.getCode());
+        if (CharSequenceUtil.isNotBlank(restrictionMsg)) {
+            throw new ServiceException(restrictionMsg);
+        }
         dto.setLogisticsChannelCode(baseDTO.getCode());
         //生成发货单和出库单
         try {
@@ -11078,8 +11334,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
-    public BatchResultDTO getLogisticsLabel(SoB2cEntity entity, SoB2cLogisticsEntity soB2cLogisticsEntity) {
-        if (!SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode().equals(entity.getBillStatus())){
+    public BatchResultDTO getLogisticsLabel(SoB2cEntity entity, SoB2cLogisticsEntity soB2cLogisticsEntity, Boolean checkBillStatus) {
+        if (!SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode().equals(entity.getBillStatus()) && checkBillStatus){
             return BatchResultDTO.fail(entity.getId(), entity.getCode(), "仅支持配货中重新获取面单");
         }
         if (CharSequenceUtil.isBlank(soB2cLogisticsEntity.getLogisticsChannelId())){
@@ -11546,5 +11802,33 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             }
         }
 
+    }
+
+
+    @Override
+    public void retryPlatformOutbound(List<String> ids) {
+        Map<String, SoB2cEntity> mainMap = listByIds(ids)
+                .stream()
+                .collect(Collectors.toMap(BaseEntity::getId, Function.identity()));
+        for (String id : ids) {
+            SoB2cEntity currentEntity = mainMap.get(id);
+            if (Objects.isNull(currentEntity)){
+                throw new ServiceException(ApiError.SO_B2C_NOT_FOUND);
+            }
+
+            SoB2cErrorEntity b2cError = soB2cErrorService.lambdaQuery().eq(SoB2cErrorEntity::getMainId, id).
+                    eq(SoB2cErrorEntity::getType,SoB2cErrorTypeEnum.RETRY_PLATFORM_OUTBOUND.getCode()).
+                    orderByDesc(SoB2cErrorEntity::getCreateTime).
+                    last("LIMIT 1").
+                    one();
+
+            if(Objects.isNull(b2cError)){
+                throw new ServiceException(ApiError.SO_B2C_NOT_FOUND);
+            }
+            SendResult result = mqProducerService.syncClassMsg(RocketMqNewTopic.DMP_PLATFORM_OUTBOUND_TO_WMS_TOPIC,  RocketMqNewTag.DMP_PLATFORM_OUTBOUND_TO_WMS_TAG,b2cError.getParamJson(),id);
+            if (!SendStatus.SEND_OK.equals(result.getSendStatus())){
+                throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
+            }
+        }
     }
 }

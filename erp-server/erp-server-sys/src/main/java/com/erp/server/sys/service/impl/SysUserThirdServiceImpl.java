@@ -2,6 +2,7 @@ package com.erp.server.sys.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.conditions.query.LambdaQueryChainWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.threadlocal.UserContext;
@@ -192,15 +193,20 @@ public class SysUserThirdServiceImpl extends ServiceImpl<SysUserThirdMapper, Sys
 
     @Override
     public List<ThirdUnionDTO> getThirdByUserIds(String platform, List<String> userIds) {
-        if(StringUtils.isBlank(platform) || CollUtil.isEmpty(userIds)){
+        if(StringUtils.isBlank(platform)){
             return Collections.emptyList();
         }
-        List<SysUserThirdEntity> list = lambdaQuery().eq(SysUserThirdEntity::getThirdPartyType, platform)
-                .in(SysUserThirdEntity::getUserId, userIds)
-                .ne(SysUserThirdEntity::getThirdOpenId, "")
-                .ne(SysUserThirdEntity::getThirdUserId, "")
-                .ne(SysUserThirdEntity::getThirdUnionId, "")
-                .list();
+        LambdaQueryWrapper<SysUserThirdEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(SysUserThirdEntity::getThirdPartyType, platform);
+        // 只有当 userIds 不为空且不为 null 时才添加 in 条件
+        if (CollUtil.isNotEmpty(userIds)) {
+            queryWrapper.in(SysUserThirdEntity::getUserId, userIds);
+        }
+        queryWrapper.ne(SysUserThirdEntity::getThirdOpenId, "");
+        queryWrapper.ne(SysUserThirdEntity::getThirdUserId, "");
+        queryWrapper.ne(SysUserThirdEntity::getThirdUnionId, "");
+
+        List<SysUserThirdEntity> list = this.list(queryWrapper);
         List<ThirdUnionDTO> thirdUnionDTOs = BeanMapperUtils.copyList(ThirdUnionDTO.class,list);
         if(CollUtil.isEmpty(thirdUnionDTOs)){
             return Collections.emptyList();

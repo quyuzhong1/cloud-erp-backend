@@ -198,6 +198,8 @@
         si.country_name as countryName,
         si.warehouse_id as warehouseId,
         si.warehouse_name as warehouseName,
+        si.awd_warehouse_id as awdWarehouseId,
+        si.awd_warehouse_name as awdWarehouseName,
         si.type as type,
         'true' as hasWarehouseAuth
         from shop_info si

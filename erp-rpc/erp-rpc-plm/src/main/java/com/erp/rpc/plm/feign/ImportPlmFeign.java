@@ -2,6 +2,7 @@ package com.erp.rpc.plm.feign;
 
 import com.common.business.config.ExportFeignConfig;
 import com.common.business.dto.base.BaseDTO;
+import com.erp.model.plm.dto.RefProductImgAttachmentDTO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -27,5 +28,8 @@ public interface ImportPlmFeign {
 
     @PostMapping("/feign/import/importCfgMoldAlert")
     void importCfgMoldAlert(@RequestBody BaseDTO.ImportDTO dto);
+
+    @PostMapping("/feign/import/importBatchUpload")
+    void importBatchUpload(@RequestBody RefProductImgAttachmentDTO.BatchUploadDTO dto);
 
 }

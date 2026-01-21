@@ -151,7 +151,7 @@ public class FirstMileDeliveryController extends BaseController {
         }
         //提审
         try {
-            firstMileDeliveryService.submit(resultAdd.getId());;
+            firstMileDeliveryService.submit(resultAdd.getId(),Boolean.TRUE);;
         } catch (ServiceException e) {
             log.error("提交审批失败，ID: {}", resultAdd.getId(), e);
             return failure(e.getMessage(),new BaseResultDTO.AddAndSubmmitDTO(resultAdd.getId(),resultAdd.getCode(),Boolean.TRUE));
@@ -189,7 +189,7 @@ public class FirstMileDeliveryController extends BaseController {
         }
         //提审
         try {
-            firstMileDeliveryService.submit(dto.getId());
+            firstMileDeliveryService.submit(dto.getId(),Boolean.TRUE);
         } catch (ServiceException e) {
             log.error("提交审批失败，ID: {}", dto.getId(), e);
             return failure( e.getMessage(),new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.TRUE));
@@ -220,7 +220,7 @@ public class FirstMileDeliveryController extends BaseController {
         for (String id : dto.getIds()) {
             BatchResultDTO submit;
             try {
-                submit = firstMileDeliveryService.submit(id);
+                submit = firstMileDeliveryService.submit(id,Boolean.TRUE);
             }catch (Exception e){
                 log.error("发货单 提交审核失败",e);
                 FirstMileDeliveryEntity entity = firstMileDeliveryService.getById(id);

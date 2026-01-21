@@ -48,4 +48,18 @@ public class AntuGetOutboundReq extends AntuBaseRequest {
     //订单状态
     @JSONField(name = "order_status")
     private String orderStatus;
+
+    //订单出库开始时间
+    @JSONField(name = "ship_date_from")
+    private LocalDateTime shipDateFrom;
+
+    //订单出库结束时间
+    @JSONField(name = "ship_date_to")
+    private LocalDateTime shipDateTo;
+
+    //公共平台订单号
+    @JSONField(name = "sw_order_number")
+    private String swOrderNumber;
+
+
 }

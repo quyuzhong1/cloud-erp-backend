@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.plm.mapper.RefProductImgAttachmentMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.plm.entity.RefProductImgAttachmentEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="category_id" property="categoryId" />
+       <result column="product_detail_id" property="productDetailId" />
+       <result column="sku_no" property="skuNo" />
+       <result column="attachment_id" property="attachmentId" />
+       <result column="thumbnail_attachment_id" property="thumbnailAttachmentId" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_user_id,
+        create_user_name,
+        create_time,
+        update_user_id,
+        update_user_name,
+        update_time,
+        version,
+        is_deleted,
+        category_id, product_detail_id, sku_no, attachment_id, thumbnail_attachment_id
+    </sql>
+
+    <select id="paging" resultType="com.erp.model.plm.dto.RefProductImgAttachmentDTO$ListDTO">
+        SELECT
+        rpia.id AS id,
+        rpia.category_id AS categoryId,
+        rpia.product_detail_id AS productDetailId,
+        rpia.sku_no AS skuNo,
+        rpia.attachment_id AS attachmentId,
+        att.attach_name as attachName,
+        -- 如果thumbnailAttachmentId不为空且不等于attachmentId，使用缩略图URL，否则使用原图URL
+        COALESCE(thumb_att.attach_url, att.attach_url) as attachUrl,
+        -- 主图URL（原图URL，用于前端下载）
+        att.attach_url as originalImageUrl,
+        att.attach_size as attachSize,
+        rpia.create_time AS createTime,
+        rpia.create_user_name AS createUserName
+        FROM
+        ref_product_img_attachment rpia
+        LEFT JOIN product_detail pd ON pd.id = rpia.product_detail_id AND pd.is_deleted = FALSE
+        LEFT JOIN attachment att ON att.id = rpia.attachment_id AND att.is_deleted = FALSE
+        LEFT JOIN attachment thumb_att ON thumb_att.id = rpia.thumbnail_attachment_id 
+            AND thumb_att.is_deleted = FALSE 
+            AND rpia.thumbnail_attachment_id IS NOT NULL 
+            AND rpia.thumbnail_attachment_id != rpia.attachment_id
+        WHERE
+        ${params.sqlMap.default}
+        AND rpia.is_deleted = FALSE
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        rpia.create_time desc
+    </select>
+
+    <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
+        select approve_status, count(id) from ref_product_img_attachment where is_deleted = false group by approve_status
+    </select>
+
+    <select id="listExport" resultType="com.erp.model.plm.dto.RefProductImgAttachmentDTO$ListDTO">
+
+    </select>
+    <select id="tabList" resultType="com.erp.model.plm.dto.RefProductImgAttachmentDTO$TabListDTO">
+        SELECT
+        approve_status AS tabFlag,
+        count(*)  AS count
+        FROM  ref_product_img_attachment
+        WHERE is_deleted=FALSE
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        GROUP BY approve_status
+    </select>
+
+</mapper>

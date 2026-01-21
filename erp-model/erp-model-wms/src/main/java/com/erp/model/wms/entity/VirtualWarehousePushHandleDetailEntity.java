@@ -1,12 +1,13 @@
 package com.erp.model.wms.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
+
+import java.io.Serializable;
 
 
 /**
@@ -104,7 +105,23 @@ public class VirtualWarehousePushHandleDetailEntity extends BaseEntity<VirtualWa
     @TableField("main_id")
     private String mainId;
 
+    /**
+     * 第三方单据单号
+     */
+    @TableField("third_code")
+    private String thirdCode;
 
+    /**
+     * 同步状态：0 无需同步 1 待同步 2 同步中，3同步成功，4同步失败，5手动同步
+     */
+    @TableField("sync_status")
+    private String syncStatus;
+
+    /**
+     * 完结说明
+     */
+    @TableField("finish_description")
+    private String finishDescription;
     
 
     public static final String ALLOCATION_ID = "allocation_id";

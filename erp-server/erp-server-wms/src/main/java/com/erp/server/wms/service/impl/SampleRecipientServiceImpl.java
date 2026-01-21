@@ -47,8 +47,10 @@ import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.sys.dto.SampleUseUserDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
+import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.tms.dto.InventorySkuCostDTO;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.excel.SampleRecipientExcelDTO;
@@ -205,10 +207,10 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
             throw new ServiceException("样品领用单保存失败");
         }
 
-        // 库存校验：只有需要出库时才校验可领用库存
-        if (CollUtil.isNotEmpty(addDTO.getDetailList()) && Boolean.TRUE.equals(sampleRecipientEntity.getIsOutstockRequired())) {
-            validateRecipientQuantity(sampleRecipientEntity.getWarehouseId(), addDTO.getDetailList());
-        }
+//        // 库存校验：只有需要出库时才校验可领用库存
+//        if (CollUtil.isNotEmpty(addDTO.getDetailList()) && Boolean.TRUE.equals(sampleRecipientEntity.getIsOutstockRequired())) {
+//            validateRecipientQuantity(sampleRecipientEntity.getWarehouseId(), addDTO.getDetailList());
+//        }
 
         // 保存明细数据
         if (CollUtil.isNotEmpty(addDTO.getDetailList())) {
@@ -314,11 +316,6 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
         // 校验明细不能为空
         if (CollUtil.isEmpty(addOrUpdateDTO.getDetailList())) {
             throw new ServiceException("样品领用单明细不能为空");
-        }
-
-        // 库存校验：只有需要出库时才校验可领用库存
-        if (CollUtil.isNotEmpty(addOrUpdateDTO.getDetailList()) && Boolean.TRUE.equals(sampleRecipientEntity.getIsOutstockRequired())) {
-            validateRecipientQuantity(sampleRecipientEntity.getWarehouseId(), addOrUpdateDTO.getDetailList());
         }
 
         log.info("编辑 开始修改样品领用单数据，单号：【{}】", old.getCode());
@@ -621,6 +618,28 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
         }
 
         validateSubmit(entity);
+        
+        // 库存校验：只有需要出库且用途类型不是PVT阶段-供应商时才校验可领用库存
+        boolean isPvtUsage = SampleUsageEnum.PVT.getUsage().equals(entity.getUsage());
+        if (Boolean.TRUE.equals(entity.getIsOutstockRequired()) && !isPvtUsage) {
+            // 查询明细数据
+            List<SampleRecipientDetailEntity> detailList = sampleRecipientDetailService.lambdaQuery()
+                    .eq(SampleRecipientDetailEntity::getMainId, entity.getId())
+                    .list();
+            if (CollUtil.isNotEmpty(detailList)) {
+                // 转换为DTO格式进行校验
+                List<SampleRecipientDTO.ProductDTO> productDTOList = detailList.stream()
+                        .map(detail -> {
+                            SampleRecipientDTO.ProductDTO dto = new SampleRecipientDTO.ProductDTO();
+                            dto.setSkuId(detail.getSkuId());
+                            dto.setQuantity(detail.getRecipientQty());
+                            return dto;
+                        })
+                        .collect(Collectors.toList());
+                validateRecipientQuantity(entity.getWarehouseId(), productDTOList);
+            }
+        }
+        
         // 提交前同步审核数量 = 领用数量
         syncAuditQtyWithRecipientQty(entity.getId());
         // 更新单据审核状态
@@ -1462,51 +1481,177 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
             throw new ServiceException("需要出库选择为否时，不出库原因必填");
         }
 
+        // 处理 user_id 和 use_user_id 可能是中文名称的情况：如果传入的是中文名称，尝试通过名称查询ID
+        String userId = sampleRecipientEntity.getUserId();
+        String useUserId = sampleRecipientEntity.getUseUserId();
+        
+        // 检查 userId 是否为中文名称，如果是则通过名称查询ID
+        if (StringUtils.isNotBlank(userId) && containsChinese(userId)) {
+            log.warn("检测到领用人ID是中文名称，尝试通过名称查询ID：{}", userId);
+            try {
+                FindUserDTO user = sysUserFeign.getUserByUserName(userId, null);
+                if (user != null && StringUtils.isNotBlank(user.getUserId())) {
+                    sampleRecipientEntity.setUserId(user.getUserId());
+                    userId = user.getUserId();
+                    log.info("通过用户名称查询到用户ID，名称：{}，ID：{}", sampleRecipientEntity.getUserId(), userId);
+                } else {
+                    throw new ServiceException(ApiError.SAMPLE_USER_ID_CHINESE_NOT_FOUND, userId);
+                }
+            } catch (ServiceException e) {
+                throw e;
+            } catch (Exception e) {
+                log.error("通过用户名称查询用户ID失败，用户名称：{}，错误：{}", userId, e.getMessage());
+                throw new ServiceException(ApiError.SAMPLE_USER_ID_CHINESE_QUERY_FAILED, userId);
+            }
+        }
+        
+        // 检查 useUserId 是否为中文名称，如果是则通过名称查询ID
+        if (StringUtils.isNotBlank(useUserId) && containsChinese(useUserId)) {
+            log.warn("检测到使用方ID是中文名称，尝试通过名称查询ID：{}", useUserId);
+            try {
+                // 先尝试查询内部用户
+                FindUserDTO user = sysUserFeign.getUserByUserName(useUserId, null);
+                if (user != null && StringUtils.isNotBlank(user.getUserId())) {
+                    sampleRecipientEntity.setUseUserId(user.getUserId());
+                    useUserId = user.getUserId();
+                    log.info("通过使用方名称查询到用户ID，名称：{}，ID：{}", sampleRecipientEntity.getUseUserId(), useUserId);
+                } else {
+                    // 如果内部用户查不到，尝试查询外部使用人字典
+                    List<String> nameList = Collections.singletonList(useUserId);
+                    ApiResult<List<SampleUseUserDTO.ViewDTO>> result = sysUserFeign.getSampleUseUserListByNameList(nameList);
+                    if (result != null && result.isSuccess() && CollectionUtils.isNotEmpty(result.getData())) {
+                        SampleUseUserDTO.ViewDTO externalUser = result.getData().get(0);
+                        if (externalUser != null && StringUtils.isNotBlank(externalUser.getId())) {
+                            sampleRecipientEntity.setUseUserId(externalUser.getId());
+                            useUserId = externalUser.getId();
+                            log.info("通过使用方名称查询到外部用户ID，名称：{}，ID：{}", sampleRecipientEntity.getUseUserId(), useUserId);
+                        } else {
+                            throw new ServiceException(ApiError.SAMPLE_USE_USER_ID_CHINESE_NOT_FOUND, useUserId);
+                        }
+                    } else {
+                        throw new ServiceException(ApiError.SAMPLE_USE_USER_ID_CHINESE_NOT_FOUND, useUserId);
+                    }
+                }
+            } catch (ServiceException e) {
+                throw e;
+            } catch (Exception e) {
+                log.error("通过使用方名称查询用户ID失败，使用方名称：{}，错误：{}", useUserId, e.getMessage());
+                throw new ServiceException(ApiError.SAMPLE_USE_USER_ID_CHINESE_QUERY_FAILED, useUserId);
+            }
+        }
+        
         // 查询用户信息
         List<String> userIds = new ArrayList<>();
-        userIds.add(sampleRecipientEntity.getUserId());
-        userIds.add(sampleRecipientEntity.getUseUserId());
+        if (StringUtils.isNotBlank(userId)) {
+            userIds.add(userId);
+        }
+        if (StringUtils.isNotBlank(useUserId)) {
+            userIds.add(useUserId);
+        }
         Map<String, String> userNameMap = new HashMap<>();
 
         if (CollUtil.isNotEmpty(userIds)) {
             try {
-                // 优先查询内部用户信息
-                List<SysDepartmentUserNumberDTO> userList = sysUserFeign.listDeptUserByUserIdList(userIds);
+                // 优先使用 getUserListByUserIds 查询内部用户信息（与列表查询保持一致）
+                List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(userIds);
                 if (CollUtil.isNotEmpty(userList)) {
                     // 如果存在重复的用户ID，保留第一个
                     userNameMap = userList.stream()
-                            .collect(Collectors.toMap(SysDepartmentUserNumberDTO::getUserId, SysDepartmentUserNumberDTO::getUserName, (existing, replacement) -> existing));
+                            .collect(Collectors.toMap(FindUserDTO::getUserId, FindUserDTO::getUserName, (existing, replacement) -> existing));
                 }
 
-                // 对于未找到的用户，尝试查询外部使用人字典
+                // 对于未找到的用户，尝试单个查询（可能 getUserListByUserIds 返回不完整）
                 Map<String, String> finalUserNameMap = userNameMap;
                 List<String> notFoundUserIds = userIds.stream()
-                        .filter(id -> !finalUserNameMap.containsKey(id))
+                        .filter(id -> !finalUserNameMap.containsKey(id) || StringUtils.isBlank(finalUserNameMap.get(id)))
                         .collect(Collectors.toList());
 
                 if (CollUtil.isNotEmpty(notFoundUserIds)) {
-                    log.info("尝试查询外部使用人字典，用户ID列表：{}", notFoundUserIds);
-                    try {
-                        List<BaseIdDTO> externalUsers = sysDictFeign.getByIds(notFoundUserIds);
-                        if (CollUtil.isNotEmpty(externalUsers)) {
-                            for (BaseIdDTO externalUser : externalUsers) {
-                                // 假设BaseIdDTO中有name字段，如果没有则需要调整
-                                if (externalUser.getName() != null) {
-                                    userNameMap.put(externalUser.getId(), externalUser.getName());
+                    log.info("部分用户未查询到名称，尝试单个查询，用户ID列表：{}", notFoundUserIds);
+                    for (String notFoundUserId : notFoundUserIds) {
+                        try {
+                            FindUserDTO user = sysUserFeign.getUserByUserId(notFoundUserId);
+                            if (user != null && StringUtils.isNotBlank(user.getUserName())) {
+                                userNameMap.put(user.getUserId(), user.getUserName());
+                                log.debug("通过单个查询获取到用户名称，用户ID：{}，用户名称：{}", user.getUserId(), user.getUserName());
+                            }
+                        } catch (Exception e) {
+                            log.debug("单个查询用户失败，用户ID：{}，错误：{}", notFoundUserId, e.getMessage());
+                        }
+                    }
+                    
+                    // 如果单个查询还是找不到，尝试查询外部使用人字典
+                    Map<String, String> finalUserNameMap1 = userNameMap;
+                    List<String> stillNotFoundUserIds = notFoundUserIds.stream()
+                            .filter(id -> !finalUserNameMap1.containsKey(id) || StringUtils.isBlank(finalUserNameMap1.get(id)))
+                            .collect(Collectors.toList());
+                    
+                    if (CollUtil.isNotEmpty(stillNotFoundUserIds)) {
+                        log.info("尝试查询外部使用人字典，用户ID列表：{}", stillNotFoundUserIds);
+                        try {
+                            List<BaseIdDTO> externalUsers = sysDictFeign.getByIds(stillNotFoundUserIds);
+                            if (CollUtil.isNotEmpty(externalUsers)) {
+                                for (BaseIdDTO externalUser : externalUsers) {
+                                    if (externalUser != null && StringUtils.isNotBlank(externalUser.getName())) {
+                                        userNameMap.put(externalUser.getId(), externalUser.getName());
+                                    }
                                 }
                             }
+                        } catch (Exception e) {
+                            log.warn("查询外部使用人字典失败，错误：{}", e.getMessage());
                         }
-                    } catch (Exception e) {
-                        log.warn("查询外部使用人字典失败，错误：{}", e.getMessage());
                     }
                 }
             } catch (Exception e) {
                 log.warn("查询用户信息失败，错误：{}", e.getMessage());
+                // 查询失败时，尝试单个查询作为备用方案
+                for (String userIdItem : userIds) {
+                    if (!userNameMap.containsKey(userIdItem) || StringUtils.isBlank(userNameMap.get(userIdItem))) {
+                        try {
+                            FindUserDTO user = sysUserFeign.getUserByUserId(userIdItem);
+                            if (user != null && StringUtils.isNotBlank(user.getUserName())) {
+                                userNameMap.put(user.getUserId(), user.getUserName());
+                            }
+                        } catch (Exception ex) {
+                            log.debug("备用查询用户失败，用户ID：{}", userIdItem);
+                        }
+                    }
+                }
             }
         }
 
-        sampleRecipientEntity.setUserName(userNameMap.get(sampleRecipientEntity.getUserId()));
-        sampleRecipientEntity.setUseUserName(userNameMap.get(sampleRecipientEntity.getUseUserId()));
+        // 设置用户名称，确保数据库字段被填充
+        if (StringUtils.isNotBlank(sampleRecipientEntity.getUserId())) {
+            String userName = userNameMap.get(sampleRecipientEntity.getUserId());
+            sampleRecipientEntity.setUserName(StringUtils.isNotBlank(userName) ? userName : "");
+        } else {
+            sampleRecipientEntity.setUserName("");
+        }
+        
+        if (StringUtils.isNotBlank(sampleRecipientEntity.getUseUserId())) {
+            String useUserName = userNameMap.get(sampleRecipientEntity.getUseUserId());
+            sampleRecipientEntity.setUseUserName(StringUtils.isNotBlank(useUserName) ? useUserName : "");
+        } else {
+            sampleRecipientEntity.setUseUserName("");
+        }
+
+        // 查询并设置领料组织名称，确保数据库字段被填充
+        if (StringUtils.isNotBlank(sampleRecipientEntity.getPickOrgId())) {
+            try {
+                SysAccountingCompanyEntity company = sysUserFeign.getCompanyById(sampleRecipientEntity.getPickOrgId());
+                if (company != null && StringUtils.isNotBlank(company.getCompanyName())) {
+                    sampleRecipientEntity.setPickOrgName(company.getCompanyName());
+                } else {
+                    log.warn("未找到组织ID对应的组织名称，组织ID：{}", sampleRecipientEntity.getPickOrgId());
+                    sampleRecipientEntity.setPickOrgName("");
+                }
+            } catch (Exception e) {
+                log.warn("查询组织名称失败，组织ID：{}，错误：{}", sampleRecipientEntity.getPickOrgId(), e.getMessage());
+                sampleRecipientEntity.setPickOrgName("");
+            }
+        } else {
+            sampleRecipientEntity.setPickOrgName("");
+        }
 
 
     }
@@ -2867,6 +3012,21 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
         }
         
         return originalQty;
+    }
+
+    /**
+     * 检查字符串是否包含中文字符
+     */
+    private boolean containsChinese(String str) {
+        if (StringUtils.isBlank(str)) {
+            return false;
+        }
+        for (char c : str.toCharArray()) {
+            if (c >= 0x4E00 && c <= 0x9FA5) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
