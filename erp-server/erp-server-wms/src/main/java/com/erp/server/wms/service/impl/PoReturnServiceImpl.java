@@ -3178,9 +3178,8 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         pushDownSubcontractOrderViewDTO.setSourceType(SourceTypeEnum.PO_RETURN.getCode());
 
         List<String> skuIdList = poReturnDetailList.stream().map(item -> item.getSkuId()).collect(Collectors.toList());
-        List<String> supplierIdList = poReturnDetailList.stream().map(item -> item.getMainSupplierId()).collect(Collectors.toList());
         List<ProductDetailEntity> skuList = plmTaskFeign.getByIdList(skuIdList);
-        List<SupplierEntity> supplierList = scmTaskFeign.getSupplierByIdList(supplierIdList);
+
 
         for (PoReturnDetailEntity poReturnDetailEntity : poReturnDetailList) {
             PurchaseReturnOrderDTO.PushDownSubcontractOrderDetailViewDTO pushDownSubcontractOrderDetailViewDTO = new PurchaseReturnOrderDTO.PushDownSubcontractOrderDetailViewDTO();
@@ -3197,11 +3196,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
             pushDownSubcontractOrderDetailViewDTO.setProductName(productName);
 
             //供应商信息
-            SupplierEntity supplierEntity = supplierList.stream()
-                    .filter(item -> Objects.equals(item.getId(), poReturnDetailEntity.getMainSupplierId()))
-                    .findFirst()
-                    .orElse(null);
-
+            SupplierEntity supplierEntity = scmTaskFeign.getSupplierById(poReturnEntity.getSupplierId());
             if (Objects.nonNull(supplierEntity)) {
                 pushDownSubcontractOrderDetailViewDTO.setSupplierId(poReturnDetailEntity.getMainSupplierId());
                 pushDownSubcontractOrderDetailViewDTO.setSupplierName(supplierEntity.getName());
