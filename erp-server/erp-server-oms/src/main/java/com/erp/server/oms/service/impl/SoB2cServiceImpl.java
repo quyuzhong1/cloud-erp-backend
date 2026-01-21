@@ -680,6 +680,15 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 .eq(SoB2cEntity::getIsDeleted, Boolean.FALSE)
                 .list();
 
+        Iterator<SoB2cEntity> iterator = soB2cList.iterator();
+        while (iterator.hasNext()) {
+            SoB2cEntity soB2cEntity = iterator.next();
+            Boolean flag = soB2cCoreService.listPayMethodSetting(soB2cEntity);
+            if (flag) {
+                iterator.remove();
+            }
+        }
+
         List<String> soB2cIdList = soB2cList.stream().map(item -> item.getId()).collect(Collectors.toList());
         if (!soB2cIdList.isEmpty()) {
             soB2cDetailService.removeByIds(soB2cIdList);
