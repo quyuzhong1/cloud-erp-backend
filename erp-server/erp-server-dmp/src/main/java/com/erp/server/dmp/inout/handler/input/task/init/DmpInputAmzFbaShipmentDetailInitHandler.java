@@ -10,6 +10,7 @@ import com.common.business.enums.PlatformDictEnum;
 import com.common.business.utils.RedisUtil;
 import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.dto.AmazonShopInfoDTO;
+import com.erp.model.dmp.entity.DmpInputTaskEntity;
 import com.erp.sdk.oms.amz.spapi.api.FbaInboundApi;
 import com.erp.sdk.oms.amz.spapi.client.ApiException;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
@@ -99,6 +100,9 @@ public class DmpInputAmzFbaShipmentDetailInitHandler extends DmpInputAmzCommonIn
             }
             String rateLimitStr = requestTypeRateLimiterEnum.getRateLimit();
             try {
+                if (Boolean.TRUE){
+                    throw new ApiException("");
+                }
                 // 查询FBA货件item
                 GetShipmentItemsResponse response = api.getShipmentItemsByShipmentId(shipmentId, marketPlaceEnum.getMarketplaceId());
                 InboundShipmentItemList itemData = response.getPayload().getItemData();
@@ -107,6 +111,15 @@ public class DmpInputAmzFbaShipmentDetailInitHandler extends DmpInputAmzCommonIn
                 redisUtil.set(shipmentIdResultKey, JSONArray.toJSONString(curJsonList), 300);
                 dmpInputTaskInitDTOList.add(DmpInputTaskInitDTO.initMsg(JSON.toJSONString(curJsonList)));
             } catch (ApiException e) {
+                if (StringUtils.isNotBlank(dmpInputTaskEntity.getParentTaskId())) {
+                    DmpInputTaskEntity entity = dmpInputTaskService.getById(dmpInputTaskEntity.getParentTaskId());
+                    if (Objects.nonNull(entity)) {
+                        if (entity.getTaskType().equals("hotfix")) {
+                            throw new ServiceException("【FBA货件列表拉取】超出限流: {}" + JSONUtil.toJsonStr(e));
+                        }
+                    }
+                }
+
                 if (429 == e.getCode()) {
                     // 设置动态速率，失效时间=1/limit
                     BigDecimal timeOut = BigDecimal.ONE.max(BigDecimal.ONE.divide(new BigDecimal(rateLimitStr), 8, RoundingMode.DOWN));
