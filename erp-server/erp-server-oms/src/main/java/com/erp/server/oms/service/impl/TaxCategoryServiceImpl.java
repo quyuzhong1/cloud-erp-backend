@@ -97,72 +97,90 @@ public class TaxCategoryServiceImpl extends SuperServiceImpl<TaxCategoryMapper, 
                 result.put("message", "未找到有效的公司配置");
                 return result;
             }
-            log.info("找到{}个有效的公司配置，开始初始化税种数据", companyList.size());
+            log.info("找到{}个有效的公司配置，开始为每个公司独立初始化税种数据", companyList.size());
 
-            // 使用第一个有效的公司配置进行同步（税种数据是全局的，用哪个token都一样）
-            CfgInvoiceSettingEntity firstCompany = companyList.get(0);
-            String companyId = firstCompany.getCompanyId();
-            String companyToken = firstCompany.getToken();
-            if (StrUtil.isBlank(companyToken)) {
-                log.warn("公司token为空，无法初始化税种数据");
-                result.put("totalCount", 0);
-                result.put("successCount", 0);
-                result.put("updateCount", 0);
-                result.put("skipCount", 0);
-                result.put("errorCount", 0);
-                result.put("message", "公司token为空");
-                return result;
-            }
-            log.info("使用公司ID: {}, token进行税种数据初始化", companyId);
-
-            // 第一步：查询税种列表，50个一页
+            // 遍历所有公司，为每个公司独立初始化税种数据（每个公司可能有不同的税种列表）
             int pageSize = 50;
-            int currentPage = 1;
-            int totalPages = 1;
-
-            // 先获取第一页，确定总页数
-            log.info("开始查询税种列表，第{}页，每页{}条", currentPage, pageSize);
-            TaxCategoryDTO.CategoryListResponseDTO firstPageResponse = 
-                tfFiscalService.getTaxCategoryList(currentPage, pageSize, companyToken);
-            
-            if (firstPageResponse == null || CollUtil.isEmpty(firstPageResponse.getList())) {
-                log.warn("税种列表为空，初始化任务结束");
-                result.put("totalCount", 0);
-                result.put("successCount", 0);
-                result.put("updateCount", 0);
-                result.put("skipCount", 0);
-                result.put("errorCount", 0);
-                result.put("message", "税种列表为空");
-                return result;
-            }
-
-            totalPages = firstPageResponse.getTotalPages() != null ? firstPageResponse.getTotalPages() : 1;
-            totalCount = firstPageResponse.getTotal() != null ? firstPageResponse.getTotal() : 0;
-            log.info("税种总数：{}，总页数：{}", totalCount, totalPages);
-
-            // 处理第一页数据
-            int[] firstPageResult = processCategoryList(firstPageResponse.getList(), successCount, updateCount, skipCount, errorCount, companyId, companyToken);
-            successCount = firstPageResult[0];
-            updateCount = firstPageResult[1];
-            skipCount = firstPageResult[2];
-            errorCount = firstPageResult[3];
-
-            // 循环获取剩余页数据
-            for (currentPage = 2; currentPage <= totalPages; currentPage++) {
-                log.info("查询税种列表，第{}页/共{}页", currentPage, totalPages);
-                TaxCategoryDTO.CategoryListResponseDTO pageResponse = 
-                    tfFiscalService.getTaxCategoryList(currentPage, pageSize, companyToken);
+            for (CfgInvoiceSettingEntity company : companyList) {
+                String companyId = company.getCompanyId();
+                String companyToken = company.getToken();
+                String companyName = company.getCompanyName();
                 
-                if (pageResponse == null || CollUtil.isEmpty(pageResponse.getList())) {
-                    log.warn("第{}页数据为空，跳过", currentPage);
+                if (StrUtil.isBlank(companyToken)) {
+                    log.warn("公司token为空，跳过公司：companyId={}, companyName={}", companyId, companyName);
+                    errorCount++;
                     continue;
                 }
+                
+                log.info("=====开始为公司初始化税种数据：companyId={}, companyName={}=====", companyId, companyName);
+                
+                try {
+                    // 查询税种列表，50个一页
+                    int currentPage = 1;
+                    int totalPages = 1;
+                    int companyTotalCount = 0;
+                    int companySuccessCount = 0;
+                    int companyUpdateCount = 0;
+                    int companySkipCount = 0;
+                    int companyErrorCount = 0;
 
-                int[] pageResult = processCategoryList(pageResponse.getList(), successCount, updateCount, skipCount, errorCount, companyId, companyToken);
-                successCount = pageResult[0];
-                updateCount = pageResult[1];
-                skipCount = pageResult[2];
-                errorCount = pageResult[3];
+                    // 先获取第一页，确定总页数
+                    log.info("查询公司税种列表，companyId={}, 第{}页，每页{}条", companyId, currentPage, pageSize);
+                    TaxCategoryDTO.CategoryListResponseDTO firstPageResponse = 
+                        tfFiscalService.getTaxCategoryList(currentPage, pageSize, companyToken);
+                    
+                    if (firstPageResponse == null || CollUtil.isEmpty(firstPageResponse.getList())) {
+                        log.warn("公司税种列表为空，跳过：companyId={}, companyName={}", companyId, companyName);
+                        skipCount++;
+                        continue;
+                    }
+
+                    totalPages = firstPageResponse.getTotalPages() != null ? firstPageResponse.getTotalPages() : 1;
+                    companyTotalCount = firstPageResponse.getTotal() != null ? firstPageResponse.getTotal() : 0;
+                    totalCount += companyTotalCount;  // 累加总数
+                    log.info("公司税种总数：{}，总页数：{}，companyId={}", companyTotalCount, totalPages, companyId);
+
+                    // 处理第一页数据
+                    int[] firstPageResult = processCategoryList(firstPageResponse.getList(), 
+                        companySuccessCount, companyUpdateCount, companySkipCount, companyErrorCount, companyId, companyToken);
+                    companySuccessCount = firstPageResult[0];
+                    companyUpdateCount = firstPageResult[1];
+                    companySkipCount = firstPageResult[2];
+                    companyErrorCount = firstPageResult[3];
+
+                    // 循环获取剩余页数据
+                    for (currentPage = 2; currentPage <= totalPages; currentPage++) {
+                        log.info("查询公司税种列表，companyId={}, 第{}页/共{}页", companyId, currentPage, totalPages);
+                        TaxCategoryDTO.CategoryListResponseDTO pageResponse = 
+                            tfFiscalService.getTaxCategoryList(currentPage, pageSize, companyToken);
+                        
+                        if (pageResponse == null || CollUtil.isEmpty(pageResponse.getList())) {
+                            log.warn("公司税种列表第{}页数据为空，跳过：companyId={}", currentPage, companyId);
+                            continue;
+                        }
+
+                        int[] pageResult = processCategoryList(pageResponse.getList(), 
+                            companySuccessCount, companyUpdateCount, companySkipCount, companyErrorCount, companyId, companyToken);
+                        companySuccessCount = pageResult[0];
+                        companyUpdateCount = pageResult[1];
+                        companySkipCount = pageResult[2];
+                        companyErrorCount = pageResult[3];
+                    }
+
+                    // 累加统计信息
+                    successCount += companySuccessCount;
+                    updateCount += companyUpdateCount;
+                    skipCount += companySkipCount;
+                    errorCount += companyErrorCount;
+
+                    log.info("=====公司税种数据初始化完成：companyId={}, companyName={}=====", companyId, companyName);
+                    log.info("公司统计：总数={}，成功={}，更新={}，跳过={}，失败={}", 
+                        companyTotalCount, companySuccessCount, companyUpdateCount, companySkipCount, companyErrorCount);
+
+                } catch (Exception e) {
+                    log.error("公司税种数据初始化失败：companyId={}, companyName={}", companyId, companyName, e);
+                    errorCount++;
+                }
             }
 
             long endTime = System.currentTimeMillis();
