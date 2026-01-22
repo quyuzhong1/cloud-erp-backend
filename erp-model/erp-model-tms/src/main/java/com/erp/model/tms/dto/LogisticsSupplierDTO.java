@@ -478,6 +478,7 @@ public class LogisticsSupplierDTO implements Serializable {
          * 简称
          */
         private String shortName;
+        private String mainId;
 
         /**
          * 禁用状态
@@ -530,5 +531,7 @@ public class LogisticsSupplierDTO implements Serializable {
          * 授权状态
          */
         private String authStatus;
+
+        private List<String> supplierIds;
     }
 }

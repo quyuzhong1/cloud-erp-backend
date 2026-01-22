@@ -69,4 +69,6 @@ public interface LogisticsSupplierMapper extends BaseMapper<LogisticsSupplierEnt
     LogisticsSupplierDTO.ViewDTO detail(String id);
 
     IPage<LogisticsSupplierDTO.PagingSelectDTO> pagingSelect(@Param("query") Page query, @Param("params") LogisticsSupplierDTO.SelectDTO params);
+
+    List<LogisticsSupplierDTO.ListChildTreeDTO> listSupplier(@Param("params") LogisticsSupplierDTO.SelectDTO params);
 }
