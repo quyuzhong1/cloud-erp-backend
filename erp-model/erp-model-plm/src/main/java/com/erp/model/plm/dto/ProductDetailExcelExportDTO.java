@@ -9,6 +9,8 @@ import com.common.business.annotation.MenuCode;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
+
 /**
  * @Description 产品sku信息导出
  **/
@@ -127,9 +129,9 @@ public class ProductDetailExcelExportDTO {
     private String brandName;
 
     /**
-     * 研发团队
+     * 研发团队（产线）
      */
-    @ExcelProperty("研发团队")
+    @ExcelProperty("研发团队（产线）")
     @MenuCode("plm:product:detail:listProinfo")
     private String rdtTeamName;
 
@@ -474,6 +476,12 @@ public class ProductDetailExcelExportDTO {
     @ExcelProperty("保险属性")
     @MenuCode("plm:product:detail:listLogistics")
     private String insuranceProperty;
+    /**
+     * 电池重量（g）
+     */
+    @ExcelProperty("电池重量（g）")
+    @MenuCode("plm:product:detail:listSale")
+    private BigDecimal batteryWeight;
 
     /**
      * 报关申报价（$）

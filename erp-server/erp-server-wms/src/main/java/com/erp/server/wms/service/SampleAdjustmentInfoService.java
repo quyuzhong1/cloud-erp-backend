@@ -188,4 +188,22 @@ public interface SampleAdjustmentInfoService extends SuperService<SampleAdjustme
      */
     void downloadTemplate(HttpServletResponse response);
 
+    /**
+     * APP端标签页列表
+     * @author wuhaotian
+     * @date: 2025-11-14
+     * @param dto
+     * @return List<SampleAdjustmentInfoDTO.TabListDTO>
+     */
+    List<SampleAdjustmentInfoDTO.TabListDTO> tabListApp(PermissionsDTO dto);
+
+    /**
+     * APP端分页列表查询
+     * @author wuhaotian
+     * @date: 2025-11-14
+     * @param pagingParamDTO
+     * @return PagingVO<SampleAdjustmentInfoDTO.ListDTO>
+     */
+    PagingVO<SampleAdjustmentInfoDTO.ListDTO> pagingApp(PagingDTO<SampleAdjustmentInfoDTO.PagingParamDTO> pagingParamDTO);
+
 }

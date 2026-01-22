@@ -93,6 +93,10 @@ public class RocketMqNewTag {
      * 新中台平台出库
      */
     public static final String DMP_PLATFORM_OUTBOUND_TO_WMS_TAG = "${spring.cloud.nacos.discovery.namespace}-dmp_platform_outbound_to_wms_tag";
+    /**
+     * 新中台平出库单更新B2C并下推出库
+     */
+    public static final String DMP_PLATFORM_OUTBOUND_TO_OMS_PUSH_DOWN_WMS_TAG = "${spring.cloud.nacos.discovery.namespace}-dmp_platform_outbound_to_oms_push_down_wms_tag";
     
     /**
      * 新中台旺店通仓库
@@ -269,5 +273,10 @@ public class RocketMqNewTag {
      *  WDT KOL B2C申请
      */
     public static final String DMP_WDT_KOL_B2C_APPLICATION_TO_OMS_TAG = "${spring.cloud.nacos.discovery.namespace}-dmp_wdt_kol_b2c_application_to_oms_tag";
+
+    /**
+     * 新中台飞书用户对接
+     */
+    public static final String DMP_FS_USER_TO_SYS_TAG = "${spring.cloud.nacos.discovery.namespace}-dmp_fs_user_to_sys_tag";
 
 }

@@ -197,6 +197,13 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      */
     BatchResultDTO submitDelivery(String id, String channelId);
     /**
+     * 检查发货限制
+     * @param id 订单ID
+     * @param deliveryType 发货类型 {@link com.erp.model.oms.enums.RuleOrderHandleEnum.DeliveryRestrictionEnum}
+     * @return 如果有限制返回错误信息，否则返回null
+     */
+    String checkDeliveryRestriction(String id, String deliveryType);
+    /**
      * @description: 发货拦截
      * @author Will
      * @date: 2023/8/18 16:52
@@ -1156,4 +1163,6 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
     String processOrderCreation(SoB2cDTO.AddDTO dto);
 
     BatchResultDTO refreshExchangeRate(SoB2cEntity soB2cEntity);
+
+    void retryPlatformOutbound( List<String> ids);
 }

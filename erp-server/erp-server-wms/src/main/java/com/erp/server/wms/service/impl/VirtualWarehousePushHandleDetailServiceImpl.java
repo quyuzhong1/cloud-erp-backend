@@ -1,10 +1,10 @@
 package com.erp.server.wms.service.impl;
 
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.enums.SourceTypeEnum;
@@ -17,6 +17,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.entity.ThirdMappingEntity;
+import com.erp.model.wms.dto.VirtualWarehouseAllocationDTO;
 import com.erp.model.wms.dto.VirtualWarehousePushHandleDetailDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.VirtualWarehouseAllocationSyncStatusEnum;
@@ -36,10 +37,7 @@ import org.springframework.transaction.support.TransactionSynchronizationAdapter
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -153,7 +151,7 @@ public class VirtualWarehousePushHandleDetailServiceImpl extends SuperServiceImp
         String type = allocationEntity.getType();
         switch (VirtualWarehouseAllocationTypeEnum.getEnum(type)) {
             case ALLOCATION:
-                saveToHandleDetail(vmAllocationDetailList, allocationEntity, pushHandleEntity, handleDetailList, noSyncDetailList);
+                saveToHandleDetail(vmAllocationDetailList, allocationEntity, pushHandleEntity, handleDetailList, noSyncDetailList,Boolean.FALSE);
                 break;
             case CANCEL:
                 saveFromHandleDetail(vmAllocationDetailList, allocationEntity, pushHandleEntity, handleDetailList, noSyncDetailList);
@@ -167,80 +165,37 @@ public class VirtualWarehousePushHandleDetailServiceImpl extends SuperServiceImp
                 List<ThirdMappingEntity> fromToThirdMappingList = dmpThirdMappingFeign.getVwListBySysIds(fromToIds);
                 Map<String, List<ThirdMappingEntity>> fromToThirdMappingMap = fromToThirdMappingList.stream().collect(Collectors.groupingBy(ThirdMappingEntity::getSysId));
 
-                List<VirtualWarehouseAllocationDetailEntity> fromToVwResultList = new ArrayList<>();
                 List<VirtualWarehouseAllocationDetailEntity> fromVwResultList = new ArrayList<>();
                 List<VirtualWarehouseAllocationDetailEntity> toVwResultList = new ArrayList<>();
                 //两种情况
                 vmAllocationDetailList.forEach(vmAllocationDetail -> {
-                    //获取调出仓 调入仓关联的第三方仓（旺店通）
-                    if (CollectionUtils.isNotEmpty(fromToThirdMappingMap.get(vmAllocationDetail.getFromVirtualWarehouseId()))
-                            && CollectionUtils.isNotEmpty(fromToThirdMappingMap.get(vmAllocationDetail.getToVirtualWarehouseId()))) {
-                        fromToVwResultList.add(vmAllocationDetail);
-                    } else if (CollectionUtils.isNotEmpty(fromToThirdMappingMap.get(vmAllocationDetail.getFromVirtualWarehouseId()))
-                            && CollectionUtils.isEmpty(fromToThirdMappingMap.get(vmAllocationDetail.getToVirtualWarehouseId()))) {
+                    //取消调出仓库虚拟仓分货
+                    if (CollectionUtils.isNotEmpty(fromToThirdMappingMap.get(vmAllocationDetail.getFromVirtualWarehouseId()))) {
                         fromVwResultList.add(vmAllocationDetail);
-                    } else if (CollectionUtils.isEmpty(fromToThirdMappingMap.get(vmAllocationDetail.getFromVirtualWarehouseId()))
-                            && CollectionUtils.isNotEmpty(fromToThirdMappingMap.get(vmAllocationDetail.getToVirtualWarehouseId()))) {
+                    }
+                    if (CollectionUtils.isNotEmpty(fromToThirdMappingMap.get(vmAllocationDetail.getToVirtualWarehouseId()))) {
+                        //新增调入仓虚拟仓分货
                         toVwResultList.add(vmAllocationDetail);
-                    } else {
-                        noSyncDetailList.add(vmAllocationDetail);
                     }
                 });
-                if (CollectionUtils.isNotEmpty(fromToVwResultList)) {
-                    Map<String, List<VirtualWarehouseAllocationDetailEntity>> fromToGroupMap = fromToVwResultList.stream().collect(Collectors.groupingBy(detail -> detail.getFromVirtualWarehouseId() + splitStr + detail.getToVirtualWarehouseId()));
-                    fromToGroupMap.forEach((fromToGroupId, groupList) -> {
-                        String[] split = fromToGroupId.split(splitStr);
-                        List<ThirdMappingEntity> fromMappingList = fromToThirdMappingMap.get(split[0]);
-                        List<ThirdMappingEntity> toMappingList = fromToThirdMappingMap.get(split[1]);
-                        //获取调出仓绑定的旺店通虚拟仓
-                        if (CollectionUtils.isNotEmpty(toMappingList)) {
-                            //保存合单明细
-                            VirtualWarehousePushHandleDetailEntity handleDetailEntity = getHandleDetailEntity(allocationEntity);
-                            handleDetailEntity.setFromVirtualWarehouseId(split[0]);
-                            handleDetailEntity.setToVirtualWarehouseId(split[1]);
-                            handleDetailEntity.setThirdFromVirtualWarehouseId(fromMappingList.get(0).getThirdId());
-                            handleDetailEntity.setThirdFromVirtualWarehouseNo(fromMappingList.get(0).getThirdCode());
-                            handleDetailEntity.setThirdToVirtualWarehouseId(toMappingList.get(0).getThirdId());
-                            handleDetailEntity.setThirdToVirtualWarehouseNo(toMappingList.get(0).getThirdCode());
-                            handleDetailEntity.setSysType(fromMappingList.get(0).getThirdSysType());
-                            handleDetailEntity.setMainId(pushHandleEntity.getId());
-                            handleDetailEntity.setWarehouseId(groupList.get(0).getWarehouseId());
-                            handleDetailEntity.setThirdWarehouseId(toMappingList.get(0).getRemark());
-                            Integer sumQty = groupList.stream().map(VirtualWarehouseAllocationDetailEntity::getQty).reduce(0, Integer::sum);
-                            handleDetailEntity.setQty(sumQty);
-                            this.save(handleDetailEntity);
-                            handleDetailList.add(handleDetailEntity);
-                            groupList.forEach(allocationDetail -> {
-                                VirtualWarehousePushHandleRelationEntity vmAllocationHandleRelationEntity = getHandleRelationEntity(allocationEntity, pushHandleEntity, allocationDetail, handleDetailEntity);
-                                virtualWarehousePushHandleRelationService.save(vmAllocationHandleRelationEntity);
-                            });
-                        }
-                    });
-                }
                 if (CollectionUtils.isNotEmpty(fromVwResultList)) {
                     saveFromHandleDetail(fromVwResultList, allocationEntity, pushHandleEntity, handleDetailList, noSyncDetailList);
                 }
                 if (CollectionUtils.isNotEmpty(toVwResultList)) {
-                    saveToHandleDetail(toVwResultList, allocationEntity, pushHandleEntity, handleDetailList, noSyncDetailList);
+                    saveToHandleDetail(toVwResultList, allocationEntity, pushHandleEntity, handleDetailList, noSyncDetailList,Boolean.TRUE);
                 }
                 break;
         }
+        List<String> noSyncDetailIdList = new ArrayList<>();
         if (CollectionUtils.isNotEmpty(handleDetailList)) {
 
             //推送中台任务:保存任务+发送mq
             List<DmpPushTaskEntity> dmpPushTaskEntityList = syncWdtVirtualWarehousePushOrderService.saveTaskList(handleDetailList,
                     allocationEntity.getCode(), SyncOperateEnum.OPERATE_APPROVE.getCode(), SourceTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION.getCode());
             if (CollectionUtils.isNotEmpty(dmpPushTaskEntityList)) {
-//                TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
-//                    @Override
-//                    public void afterCommit() {
                 //获取合单表和分货单明细关联关系，修改为同步中状态
                 List<String> handleDetailIds = dmpPushTaskEntityList.stream().map(DmpPushTaskEntity::getSourceId).collect(Collectors.toList());
-                List<String> allocationDetailList = virtualWarehousePushHandleRelationService.list(new LambdaQueryWrapper<VirtualWarehousePushHandleRelationEntity>()
-                                .in(VirtualWarehousePushHandleRelationEntity::getHandleDetailId, handleDetailIds))
-                        .stream().map(VirtualWarehousePushHandleRelationEntity::getSourceDetailId).distinct().collect(Collectors.toList());
-                virtualWarehouseAllocationDetailService.update(new LambdaUpdateWrapper<VirtualWarehouseAllocationDetailEntity>()
-                        .set(VirtualWarehouseAllocationDetailEntity::getSyncStatus, VirtualWarehouseAllocationSyncStatusEnum.IN_SYNC.getCode()).in(VirtualWarehouseAllocationDetailEntity::getId, allocationDetailList));
+                this.updateSyncStatus(VirtualWarehouseAllocationSyncStatusEnum.IN_SYNC.getCode(), handleDetailIds);
                 TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
                     @Override
                     public void afterCommit() {
@@ -252,23 +207,54 @@ public class VirtualWarehousePushHandleDetailServiceImpl extends SuperServiceImp
                     }
                 });
             }
-//                });
-//            }
+
             //设置没有关联虚拟仓的分货单子单无需同步
             if (CollectionUtils.isNotEmpty(noSyncDetailList)) {
-                //设置分货单子单无需同步
-                virtualWarehouseAllocationDetailService.update(new LambdaUpdateWrapper<VirtualWarehouseAllocationDetailEntity>()
-                        .set(VirtualWarehouseAllocationDetailEntity::getSyncStatus, VirtualWarehouseAllocationSyncStatusEnum.NO_NEED_SYNC.getCode())
-                        .in(VirtualWarehouseAllocationDetailEntity::getId, noSyncDetailList.stream().map(VirtualWarehouseAllocationDetailEntity::getId).collect(Collectors.toList())));
+                List<String> detailIdList = noSyncDetailList.stream().map(VirtualWarehouseAllocationDetailEntity::getId).collect(Collectors.toList());
+                noSyncDetailIdList.addAll(detailIdList);
             }
         } else {
             //删除合单表主单
             virtualWarehousePushHandleService.forceDeleteById(pushHandleEntity.getId());
-            //设置分货单子单无需同步
-            virtualWarehouseAllocationDetailService.update(new LambdaUpdateWrapper<VirtualWarehouseAllocationDetailEntity>()
-                    .set(VirtualWarehouseAllocationDetailEntity::getSyncStatus, VirtualWarehouseAllocationSyncStatusEnum.NO_NEED_SYNC.getCode())
-                    .in(VirtualWarehouseAllocationDetailEntity::getId, vmAllocationDetailList.stream().map(VirtualWarehouseAllocationDetailEntity::getId).collect(Collectors.toList())));
+            //无需同步
+            List<String> detailIdList = vmAllocationDetailList.stream().map(VirtualWarehouseAllocationDetailEntity::getId).collect(Collectors.toList());
+            noSyncDetailIdList.addAll(detailIdList);
         }
+        //无需同步数据
+        if (CollUtil.isNotEmpty(noSyncDetailIdList)) {
+            List<String> noSyncHandleDetailList = virtualWarehousePushHandleRelationService.list(new LambdaQueryWrapper<VirtualWarehousePushHandleRelationEntity>()
+                            .in(VirtualWarehousePushHandleRelationEntity::getSourceDetailId, noSyncDetailIdList))
+                    .stream().map(VirtualWarehousePushHandleRelationEntity::getHandleDetailId).distinct().collect(Collectors.toList());
+            if (CollUtil.isNotEmpty(noSyncHandleDetailList)) {
+                this.updateSyncStatus(VirtualWarehouseAllocationSyncStatusEnum.NO_NEED_SYNC.getCode(), noSyncHandleDetailList);
+            }
+        }
+    }
+
+    @Override
+    public void updateSyncStatus(String syncStatus, List<String> ids) {
+        if (CollUtil.isEmpty(ids)) {
+            return;
+        }
+        lambdaUpdate().in(VirtualWarehousePushHandleDetailEntity::getId,ids).set(VirtualWarehousePushHandleDetailEntity::getSyncStatus,syncStatus).update();
+    }
+
+    @Override
+    public void updateThirdData(VirtualWarehouseAllocationDTO.SyncUpdateDto dto, String handelDetailId) {
+        baseMapper.updateThirdData(dto, handelDetailId);
+    }
+
+    @Override
+    public List<VirtualWarehousePushHandleDetailDTO.ThirdDataDTO> listThirdDataByDetailIdList(List<String> detailIdList) {
+        if (CollUtil.isEmpty(detailIdList)) {
+            return Collections.emptyList();
+        }
+        return baseMapper.listThirdDataByDetailIdList(detailIdList);
+    }
+
+    @Override
+    public void batchManualFinish(VirtualWarehouseAllocationDTO.ManualFinishDto dto, String code, List<String> handleDetailIdList) {
+        baseMapper.batchManualFinish(dto,code,handleDetailIdList);
     }
 
 
@@ -282,17 +268,32 @@ public class VirtualWarehousePushHandleDetailServiceImpl extends SuperServiceImp
      * @param noSyncDetailList
      */
     private void saveFromHandleDetail(List<VirtualWarehouseAllocationDetailEntity> fromVmList, VirtualWarehouseAllocationEntity allocationEntity,
-                                      VirtualWarehousePushHandleEntity pushHandleEntity, List<VirtualWarehousePushHandleDetailEntity> handleDetailList, List<VirtualWarehouseAllocationDetailEntity> noSyncDetailList) {
+                                      VirtualWarehousePushHandleEntity pushHandleEntity, List<VirtualWarehousePushHandleDetailEntity> handleDetailList,
+                                      List<VirtualWarehouseAllocationDetailEntity> noSyncDetailList) {
         Map<String, List<VirtualWarehouseAllocationDetailEntity>> cancelMap = fromVmList.stream().collect(Collectors.groupingBy(VirtualWarehouseAllocationDetailEntity::getFromVirtualWarehouseId));
         List<String> fromVwId = fromVmList.stream().map(VirtualWarehouseAllocationDetailEntity::getFromVirtualWarehouseId).collect(Collectors.toList());
         List<ThirdMappingEntity> fromThirdMappingList = dmpThirdMappingFeign.getVwListBySysIds(fromVwId);
-        saveList(allocationEntity, pushHandleEntity, handleDetailList, noSyncDetailList, cancelMap, fromThirdMappingList, VwAllocationDirectionEnum.REVERSE);
+        saveList(allocationEntity, pushHandleEntity, handleDetailList, noSyncDetailList, cancelMap, fromThirdMappingList, VwAllocationDirectionEnum.REVERSE,Boolean.FALSE);
     }
 
+    /**
+     * 新增分货为正向、取消分货为反项,isTransfer调拨标识的取调入仓
+     * @author will
+     * @date 2025/12/31 15:47
+     * @param allocationEntity
+     * @param pushHandleEntity
+     * @param handleDetailList
+     * @param noSyncDetailList
+     * @param cancelMap
+     * @param fromThirdMappingList
+     * @param code
+     * @param isTransfer
+     * @return void
+     */
     public void saveList(VirtualWarehouseAllocationEntity allocationEntity, VirtualWarehousePushHandleEntity pushHandleEntity,
                          List<VirtualWarehousePushHandleDetailEntity> handleDetailList, List<VirtualWarehouseAllocationDetailEntity> noSyncDetailList,
                          Map<String, List<VirtualWarehouseAllocationDetailEntity>> cancelMap,
-                         List<ThirdMappingEntity> fromThirdMappingList, VwAllocationDirectionEnum code) {
+                         List<ThirdMappingEntity> fromThirdMappingList, VwAllocationDirectionEnum code,Boolean isTransfer) {
         cancelMap.forEach((fromVmId, allocationDetailList) -> {
             //获取调出仓绑定的旺店通虚拟仓
             if (CollectionUtils.isNotEmpty(fromThirdMappingList)) {
@@ -314,7 +315,11 @@ public class VirtualWarehousePushHandleDetailServiceImpl extends SuperServiceImp
                     }
                     handleDetailEntity.setSysType(thirdMapping.getThirdSysType());
                     handleDetailEntity.setMainId(pushHandleEntity.getId());
-                    handleDetailEntity.setWarehouseId(allocationDetailList.get(0).getWarehouseId());
+                    String warehouseId = allocationDetailList.get(0).getWarehouseId();
+                    if (isTransfer){
+                        warehouseId = allocationDetailList.get(0).getToWarehouseId();
+                    }
+                    handleDetailEntity.setWarehouseId(warehouseId);
                     handleDetailEntity.setThirdWarehouseId(thirdMapping.getRemark());
                     Integer sumQty = allocationDetailList.stream().map(VirtualWarehouseAllocationDetailEntity::getQty).reduce(0, Integer::sum);
                     handleDetailEntity.setQty(sumQty);
@@ -341,53 +346,16 @@ public class VirtualWarehousePushHandleDetailServiceImpl extends SuperServiceImp
      * @param pushHandleEntity
      * @param handleDetailList
      * @param noSyncDetailList
+     * @param isTransfer
      */
-    private void saveToHandleDetail(List<VirtualWarehouseAllocationDetailEntity> toVwResultList, VirtualWarehouseAllocationEntity allocationEntity, VirtualWarehousePushHandleEntity pushHandleEntity, List<VirtualWarehousePushHandleDetailEntity> handleDetailList, List<VirtualWarehouseAllocationDetailEntity> noSyncDetailList) {
+    private void saveToHandleDetail(List<VirtualWarehouseAllocationDetailEntity> toVwResultList, VirtualWarehouseAllocationEntity allocationEntity, VirtualWarehousePushHandleEntity pushHandleEntity,
+                                    List<VirtualWarehousePushHandleDetailEntity> handleDetailList, List<VirtualWarehouseAllocationDetailEntity> noSyncDetailList,Boolean isTransfer) {
         Map<String, List<VirtualWarehouseAllocationDetailEntity>> toVmMap = toVwResultList.stream().collect(Collectors.groupingBy(VirtualWarehouseAllocationDetailEntity::getToVirtualWarehouseId));
         List<String> toVwIds = toVwResultList.stream().map(VirtualWarehouseAllocationDetailEntity::getToVirtualWarehouseId).collect(Collectors.toList());
         List<ThirdMappingEntity> toMappingList = dmpThirdMappingFeign.getVwListBySysIds(toVwIds);
-        saveList(allocationEntity, pushHandleEntity, handleDetailList, noSyncDetailList, toVmMap, toMappingList, VwAllocationDirectionEnum.FORWARD);
+        saveList(allocationEntity, pushHandleEntity, handleDetailList, noSyncDetailList, toVmMap, toMappingList, VwAllocationDirectionEnum.FORWARD,isTransfer);
     }
 
-    private void saveToList(VirtualWarehouseAllocationEntity allocationEntity, VirtualWarehousePushHandleEntity pushHandleEntity,
-                            List<VirtualWarehousePushHandleDetailEntity> handleDetailList, List<VirtualWarehouseAllocationDetailEntity> noSyncDetailList,
-                            Map<String, List<VirtualWarehouseAllocationDetailEntity>> toVmMap,
-                            List<ThirdMappingEntity> toMappingList) {
-        toVmMap.forEach((toVmId, allocationDetailList) -> {
-            //获取调出仓绑定的旺店通虚拟仓
-            if (CollectionUtils.isNotEmpty(toMappingList)) {
-//                toMappingList.forEach(thirdMapping -> {
-                ThirdMappingEntity thirdMapping = toMappingList.stream().filter(item -> Objects.equals(item.getSysId(), toVmId)).findFirst().orElse(null);
-                if (Objects.nonNull(thirdMapping)) {
-                    //保存合单明细
-                    VirtualWarehousePushHandleDetailEntity handleDetailEntity = getHandleDetailEntity(allocationEntity);
-
-                    handleDetailEntity.setToVirtualWarehouseId(toVmId);
-                    handleDetailEntity.setThirdToVirtualWarehouseId(thirdMapping.getThirdId());
-                    handleDetailEntity.setThirdToVirtualWarehouseNo(thirdMapping.getThirdCode());
-                    handleDetailEntity.setThirdFromVirtualWarehouseId("");
-                    handleDetailEntity.setThirdFromVirtualWarehouseNo("");
-                    handleDetailEntity.setSysType(thirdMapping.getThirdSysType());
-                    handleDetailEntity.setMainId(pushHandleEntity.getId());
-                    handleDetailEntity.setWarehouseId(allocationDetailList.get(0).getWarehouseId());
-                    handleDetailEntity.setThirdWarehouseId(thirdMapping.getRemark());
-                    Integer sumQty = allocationDetailList.stream().map(VirtualWarehouseAllocationDetailEntity::getQty).reduce(0, Integer::sum);
-                    handleDetailEntity.setQty(sumQty);
-                    this.save(handleDetailEntity);
-                    handleDetailList.add(handleDetailEntity);
-                    allocationDetailList.forEach(allocationDetail -> {
-                        VirtualWarehousePushHandleRelationEntity vmAllocationHandleRelationEntity = getHandleRelationEntity(allocationEntity, pushHandleEntity, allocationDetail, handleDetailEntity);
-                        virtualWarehousePushHandleRelationService.save(vmAllocationHandleRelationEntity);
-                    });
-                } else {
-                    noSyncDetailList.addAll(allocationDetailList);
-                }
-//                });
-            } else {
-                noSyncDetailList.addAll(allocationDetailList);
-            }
-        });
-    }
 
 
     private static VirtualWarehousePushHandleRelationEntity getHandleRelationEntity(VirtualWarehouseAllocationEntity allocationEntity,

@@ -5,10 +5,15 @@ import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
+import com.common.core.controller.vo.ApiResult;
 import com.erp.model.sys.dto.*;
+import com.erp.server.sys.query.SysUserInfoQueryHandler;
 import com.erp.server.sys.query.TemplateManagementQueryHandler;
 import com.erp.server.sys.service.*;
 import javax.annotation.Resource;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -48,6 +53,8 @@ public class ExportSysFeignController {
     private TemplateManagementService templateManagementService;
     @Resource
     private DictBasicAllService dictBasicAllService;
+    @Resource
+    private SysUserInfoService sysUserInfoService;
 
     @PostMapping("/city")
     public PagingVO<DictCityDTO.PagingViewDTO> exportCity(@RequestBody PagingDTO<DictCityDTO.ProvincePagingParamDTO> dto) {
@@ -88,5 +95,11 @@ public class ExportSysFeignController {
     @WebAdvanceQuery(handler = DictBasicAllQueryHandler.class)
     public PagingVO<DictBasicAllDTO.ViewDTO> exportDictBasicAll(@RequestBody PagingDTO<DictBasicAllDTO.PagingParamDTO> dto){
     	return dictBasicAllService.paging(dto);
+    }
+
+    @RequestMapping("/exportUserInfo")
+    @WebAdvanceQuery(handler = SysUserInfoQueryHandler.class)
+    public PagingVO<UserManageDTO> exportUserInfo(@RequestBody @Validated PagingDTO<SysUserInfoDTO.PagingParamDTO> dto) {
+        return sysUserInfoService.paging(dto);
     }
 }

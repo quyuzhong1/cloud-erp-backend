@@ -168,6 +168,19 @@ public class LogisticsBillEntity extends BaseEntity<LogisticsBillEntity> {
     private String telNumber;
 
     /**
+     * 发货单id
+     */
+    @TableField("so_delivery_id")
+    private String soDeliveryId;
+
+    /**
+     * 发货单号
+     */
+    @TableField("so_delivery_code")
+    private String soDeliveryCode;
+
+
+    /**
      * 是否分摊
      */
     @TableField("is_allocate_required")

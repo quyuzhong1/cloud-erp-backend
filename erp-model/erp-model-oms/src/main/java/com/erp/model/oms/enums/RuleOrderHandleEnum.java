@@ -143,4 +143,20 @@ public enum RuleOrderHandleEnum {
         private final String name;
 
     }
+
+    /**
+     * 发货限制枚举
+     */
+    @Getter
+    @AllArgsConstructor
+    public enum DeliveryRestrictionEnum implements EnumMessage {
+        SUBMIT_DELIVERY("submitDelivery","提交发货"),
+        MANUAL_DELIVERY("manualDelivery","手动标发"),
+        NO_OUTBOUND_DELIVERY("noOutboundDelivery","不出库发货"),
+        MULTI_CHANNEL_DELIVERY("multiChannelDelivery","多渠道发货"),
+        ;
+        private final String code;
+        private final String name;
+
+    }
 }

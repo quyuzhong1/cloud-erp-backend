@@ -3,8 +3,13 @@ package com.erp.server.workflow.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.ObjUtil;
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.constant.DmpPullConstant;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -19,26 +24,32 @@ import com.common.message.constant.RocketMqConsumerGroup;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
+import com.erp.model.dmp.dto.DmpInoutDTO;
+import com.erp.model.dmp.enums.DmpInputTaskTaskTypeEnum;
 import com.erp.model.sys.vo.ThirdUnionDTO;
 import com.erp.model.wms.entity.SampleRecipientEntity;
-import com.erp.model.workflow.dto.CfgApproveSyncDTO;
-import com.erp.model.workflow.dto.FsBotParamsDTO;
-import com.erp.model.workflow.dto.WorkflowMqConsumerRecordDTO;
+import com.erp.model.workflow.dto.*;
 import com.erp.model.workflow.entity.*;
 import com.erp.model.workflow.enums.*;
+import com.erp.rpc.dmp.feign.DmpInoutTaskFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.sdk.fs.config.FsProperties;
 import com.erp.sdk.fs.service.FsService;
+import com.erp.server.workflow.constant.FsEventConstant;
 import com.erp.server.workflow.handler.CfgApproveSyncBuildHandler;
 import com.erp.server.workflow.handler.MQSyncFsHandler;
 import com.erp.server.workflow.mapper.ApproveSyncRecordMapper;
 import com.erp.server.workflow.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
+import com.lark.oapi.core.request.EventReq;
+import com.lark.oapi.core.utils.Jsons;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.workflow.dto.ApproveSyncRecordDTO;
 
 import java.time.LocalDateTime;
 import java.util.*;
@@ -85,6 +96,13 @@ public class ApproveSyncRecordServiceImpl extends SuperServiceImpl<ApproveSyncRe
     private MQProducerService mqProducerService;
     @Resource
     private MqConsumerRecordService workflowMqConsumerRecordService;
+
+
+    @Resource
+    private FsProperties fsProperties;
+
+    @Resource
+    private DmpInoutTaskFeign dmpInoutTaskFeign;
 
     @Override
     public List<ApproveSyncRecordDTO.TabListDTO> tabList(PermissionsDTO param) {

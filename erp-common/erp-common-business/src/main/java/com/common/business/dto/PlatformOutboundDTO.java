@@ -1,5 +1,6 @@
 package com.common.business.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.enums.OmsPlatformEnum;
 import com.common.business.enums.WarehousePlatformTypeEnum;
 import lombok.Data;
@@ -54,4 +55,24 @@ public class PlatformOutboundDTO extends UniqueDto {
      * 异常原因
      */
     private String abnormalProblemReason;
+
+    /**
+     *平台订单号
+     */
+    private String swOrderNumber;
+
+    /**
+     *仓库代码
+     */
+    private String warehouseCode;
+
+    /**
+     *运输方式
+     */
+    private String shippingMethod;
+
+    /**
+     *承运商
+     */
+    private String carrierName;
 }

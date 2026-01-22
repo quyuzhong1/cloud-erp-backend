@@ -3866,6 +3866,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 detailDTO.setCurrency(dto.getCurrency());
                 detailDTO.setIsReissue(false);
                 detailDTO.setCustomerSkuNo(platformB2bOrderDetailDTO.getCustomerSkuNo());
+                detailDTO.setCustomerPO(platformB2bOrderDetailDTO.getCustomerPO());
+                detailDTO.setToCountry(platformB2bOrderDetailDTO.getToCountry());
                 detailDTO.setPrice(platformB2bOrderDetailDTO.getPrice());
                 detailDTO.setTaxPrice(platformB2bOrderDetailDTO.getTaxPrice());
                 detailDTO.setTaxRate(platformB2bOrderDetailDTO.getTaxRate());
@@ -3948,11 +3950,13 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 detailDTO.setIsGift(platformB2bOrderDetailDTO.getIsGift());
                 detailDTO.setPlatformDetailId(platformB2bOrderDetailDTO.getPlatformDetailId());
                 detailDTO.setCurrency(dto.getCurrency());
+                detailDTO.setCustomerPO(platformB2bOrderDetailDTO.getCustomerPO());
                 detailDTO.setIsReissue(false);
                 detailDTO.setCustomerSkuNo(platformB2bOrderDetailDTO.getCustomerSkuNo());
                 detailDTO.setPrice(platformB2bOrderDetailDTO.getPrice());
                 detailDTO.setTaxPrice(platformB2bOrderDetailDTO.getTaxPrice());
                 detailDTO.setTaxRate(platformB2bOrderDetailDTO.getTaxRate());
+                detailDTO.setToCountry(platformB2bOrderDetailDTO.getToCountry());
                 detailList.add(detailDTO);
             }
             addDTO.setDetailList(detailList);
@@ -4224,7 +4228,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             viewDTO.setCustomerName(Objects.nonNull(customerInfo) ? customerInfo.getName() : "");
         }
         if (CharSequenceUtil.isNotBlank(soInfoEntity.getReceiveAddressId()) && CharSequenceUtil.isBlank(viewDTO.getReceiveAddress())){
-            CustomerAddressEntity customerAddressEntity = customerAddressService.getById(soInfoEntity.getReceiveAddressId());
+            CustomerAddressDTO.ViewDTO customerAddressEntity = customerAddressService.getCustomerAddressById(soInfoEntity.getReceiveAddressId());
             viewDTO.setReceiveAddress(Objects.nonNull(customerAddressEntity) ? customerAddressEntity.getAddress() : "");
             viewDTO.setAddress2(Objects.nonNull(customerAddressEntity) ? customerAddressEntity.getAddress2() : "");
             viewDTO.setAddress3(Objects.nonNull(customerAddressEntity) ? customerAddressEntity.getAddress3() : "");

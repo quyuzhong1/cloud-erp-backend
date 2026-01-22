@@ -11,6 +11,7 @@ import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Will
@@ -67,6 +68,11 @@ public class BaseDTO implements Serializable {
          * 用于业务权限
          */
         private String userId;
+
+        /**
+         * 业务传参
+         */
+        private Map<String,Object> extMap;
     }
 
     @EqualsAndHashCode(callSuper = true)

@@ -14,7 +14,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 @FeignClient(name = "erp-oms", contextId = "skuMappingFeign",configuration = {FeignErrorDecoder.class})
 public interface SkuMappingFeign {
@@ -82,4 +84,8 @@ public interface SkuMappingFeign {
      */
     @PostMapping("feign/skuMapping/listSkuBySkuNos")
     List<SkuMappingDTO.ProductSkuInfoDTO> listSkuBySkuNos(@RequestBody SkuMappingDTO.SkuParamDTO skuParamDTO);
+
+
+    @PostMapping("feign/skuMapping/mapListingByPlatformSkuNo")
+    Map<String, List<ListingInfoWithSkuMappingDTO>> mapListingByPlatformSkuNo(@RequestBody SkuMappingDTO.PlatformSkuNoParamDTO paramDTO);
 }

@@ -75,6 +75,7 @@ public enum FileTaskEventEnum implements EnumMessage {
     EXPORT_PLM_ORDER_TRACKING_DETAIL("EXPORT_PLM_ORDER_TRACKING_DETAIL", "下单跟踪明细导出","","",""),
     EXPORT_PLM_PRODUCT("EXPORT_PLM_PRODUCT", "产品开发","","",""),
     EXPORT_PLM_SKU("EXPORT_PLM_SKU", "产品管理导出","","",""),
+    EXPORT_PLM_SKU_DYNAMIC("EXPORT_PLM_SKU_DYNAMIC", "产品管理导出","","",""),
     IMPORT_PLM_SKU_IMAGES("IMPORT_PLM_SKU_IMAGES", "导入SKU图片","com.erp.rpc.plm.feign.ImportPlmFeign","productDetailImages",""),
     EXPORT_PLM_PRODUCT_CUSTOMS("EXPORT_PLM_PRODUCT_CUSTOMS", "目的国清关导出","","",""),
     EXPORT_PLM_SKU_STD_COST("EXPORT_PLM_SKU_STD_COST", "SKU标准成本导出","","",""),
@@ -89,6 +90,8 @@ public enum FileTaskEventEnum implements EnumMessage {
     IMPORT_PLM_CFG_MOLD_ALERT("IMPORT_PLM_CFG_MOLD_ALERT", "模具预警策略导入","com.erp.rpc.plm.feign.ImportPlmFeign","importCfgMoldAlert",""),
     EXPORT_PLM_MOLD_MONITOR_RETURN("EXPORT_PLM_MOLD_MONITOR_RETURN", "模具返还监控导出","","",""),
     EXPORT_PLM_MOLD_MONITOR_ALERT("EXPORT_PLM_MOLD_MONITOR_ALERT", "模具预警监控导出","","",""),
+    EXPORT_PLM_PRODUCT_IMAGES("EXPORT_PLM_PRODUCT_IMAGES", "批量下载图片","","","ExportPlmProductImagesHandler"),
+    IMPORT_PLM_PRODUCT_IMG_ATTACHMENT("IMPORT_PLM_PRODUCT_IMG_ATTACHMENT", "批量上传图片","com.erp.rpc.plm.feign.ImportPlmFeign","importBatchUpload",""),
 
 
 
@@ -182,6 +185,7 @@ public enum FileTaskEventEnum implements EnumMessage {
     EXPORT_SYS_THIRD_NOTICE_RECORD("EXPORT_SYS_THIRD_NOTICE_RECORD", "三方通知推送导出","","",""),
     EXPORT_DICT_BASIC_ALL("EXPORT_DICT_BASIC_ALL", "字典数据导出","","",""),
     EXPORT_SYS_TEMPLATE("EXPORT_SYS_TEMPLATE", "模板导出","","",""),
+    EXPORT_SYS_USER_INFO("EXPORT_SYS_USER_INFO","用户管理导出","","",""),
     //wms
     EXPORT_WMS_INVENTORY("EXPORT_WMS_INVENTORY","即时库存导出","","",""),
     EXPORT_WMS_B2C_DELIVERY_ORDER("EXPORT_WMS_B2C_DELIVERY_ORDER", "发货单导出","","",""),

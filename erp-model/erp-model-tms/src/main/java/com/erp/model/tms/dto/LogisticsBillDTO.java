@@ -628,6 +628,10 @@ public class LogisticsBillDTO implements Serializable {
          */
         private String outstockCode;
         /**
+         * 平台编码
+         */
+        private String platformCode;
+        /**
          * 运输单号
          */
         private String transportNo;
@@ -651,6 +655,22 @@ public class LogisticsBillDTO implements Serializable {
          * 跟踪单号
          */
         private String trackNo;
+        /**
+         * 发货单id
+         */
+        private String soDeliveryId;
+        /**
+         * 发货单号
+         */
+        private String soDeliveryCode;
+        /**
+         * 费用id
+         */
+        private String logisticsBillCostId;
+        /**
+         * 对账月份
+         */
+        private String reconciliationMonth;
     }
 
 

@@ -19,4 +19,5 @@ public class SystemConstants {
 
     public static final String OMS = "oms";
     public static final String SRM = "srm";
+    public static final String FMS = "fms";
 }
