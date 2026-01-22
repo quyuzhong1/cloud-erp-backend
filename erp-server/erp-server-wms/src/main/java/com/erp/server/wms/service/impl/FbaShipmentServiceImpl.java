@@ -2291,7 +2291,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         }
         // 保存标签URL
         if (CharSequenceUtil.isNotBlank(labelUrl)){
-            wmsAttachmentService.batchSave(Collections.singletonList(labelUrl),Collections.singletonList(entity.getFbaShipmentId() + ".pdf"),pageType, entity.getId());
+            wmsAttachmentService.batchSave(Collections.singletonList(labelUrl),Collections.singletonList(entity.getFbaShipmentId() + ".pdf"),pageType + pageSize, entity.getId());
             WmsAttachmentDTO.UpdateDTO updateDTO = new WmsAttachmentDTO.UpdateDTO();
             updateDTO.setAttachUrl(labelUrl);
             updateDTO.setAttachName(entity.getFbaShipmentId() + ".pdf");
